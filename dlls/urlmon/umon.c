@@ -513,6 +513,12 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
 
     TRACE("(%p, %s, %p, %08x)\n", pmkContext, debugstr_w(szURL), ppmk, dwFlags);
 
+    if (ppmk)
+        *ppmk = NULL;
+
+    if (!szURL || !ppmk)
+        return E_INVALIDARG;
+
     if (dwFlags & URL_MK_UNIFORM) FIXME("ignoring flag URL_MK_UNIFORM\n");
 
     if(!(obj = alloc_moniker()))

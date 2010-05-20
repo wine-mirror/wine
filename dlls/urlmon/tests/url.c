@@ -242,6 +242,26 @@ static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
     IMoniker *mon1 = NULL;
     IMoniker *mon2 = NULL;
 
+    hr = CreateURLMoniker(NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG,
+       "Expected CreateURLMoniker to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    mon1 = (IMoniker *)0xdeadbeef;
+    hr = CreateURLMoniker(NULL, NULL, &mon1);
+    ok(hr == E_INVALIDARG,
+       "Expected CreateURLMoniker to return E_INVALIDARG, got 0x%08x\n", hr);
+    ok(mon1 == NULL, "Expected the output pointer to be NULL, got %p\n", mon1);
+
+    hr = CreateURLMoniker(NULL, emptyW, NULL);
+    ok(hr == E_INVALIDARG,
+       "Expected CreateURLMoniker to return E_INVALIDARG, got 0x%08x\n", hr);
+
+    hr = CreateURLMoniker(NULL, emptyW, &mon1);
+    ok(hr == S_OK ||
+       broken(hr == MK_E_SYNTAX), /* IE5/IE5.01/IE6 SP2 */
+       "Expected CreateURLMoniker to return S_OK, got 0x%08x\n", hr);
+    if(mon1) IMoniker_Release(mon1);
+
     hr = CreateURLMoniker(NULL, url1, &mon1);
     ok(SUCCEEDED(hr), "failed to create moniker: 0x%08x\n", hr);
     if(SUCCEEDED(hr)) {
