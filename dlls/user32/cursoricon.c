@@ -2423,7 +2423,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
             WARN("Invalid/unsupported bitmap format!\n");
             goto end_close;
         }
-        offbits = bmfh->bfOffBits - sizeof(BITMAPFILEHEADER);
+        if (bmfh->bfOffBits) offbits = bmfh->bfOffBits - sizeof(BITMAPFILEHEADER);
     }
 
     if (info->bmiHeader.biHeight > 65535 || info->bmiHeader.biWidth > 65535) {
