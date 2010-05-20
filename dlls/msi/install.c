@@ -721,6 +721,7 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
         r = TRUE;
     }
 
+    msiobj_release( &package->hdr );
     return r;
 }
 
@@ -774,6 +775,7 @@ UINT WINAPI MsiSetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode, BOOL fState)
         r = ERROR_ACCESS_DENIED;
     }
 
+    msiobj_release( &package->hdr );
     return r;
 }
 
