@@ -1378,6 +1378,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     if ((get_cache_pitch_family(psc) & TMPF_TRUETYPE) && !psa->fNoGlyphIndex)
     {
         WCHAR *rChars = heap_alloc(sizeof(WCHAR) * cChars);
+        if (!rChars) return E_OUTOFMEMORY;
         for (i = 0; i < cChars; i++)
         {
             int idx = i;
