@@ -1156,7 +1156,7 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
         GetBitmapBits( hAndBits, sizeAnd, info + 1 );
         GetBitmapBits( hXorBits, sizeXor, (char *)(info + 1) + sizeAnd );
         release_icon_ptr( hObj, info );
-        USER_Driver->pCreateCursorIcon( hObj, &info->data );
+        USER_Driver->pCreateCursorIcon( hObj );
     }
     else
     {
@@ -1776,7 +1776,7 @@ HICON WINAPI CopyIcon( HICON hIcon )
     ptrNew->mask  = copy_bitmap( ptrOld->mask );
     release_icon_ptr( hIcon, ptrOld );
     release_icon_ptr( hNew, ptrNew );
-    USER_Driver->pCreateCursorIcon( hNew, &ptrNew->data );
+    USER_Driver->pCreateCursorIcon( hNew );
     return hNew;
 }
 
@@ -2241,7 +2241,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
             }
         }
         release_icon_ptr( hObj, info );
-        USER_Driver->pCreateCursorIcon( hObj, &info->data );
+        USER_Driver->pCreateCursorIcon( hObj );
     }
     return hObj;
 }
