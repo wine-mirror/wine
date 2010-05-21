@@ -1146,6 +1146,11 @@ static void ps_3_0_test(void) {
             "texkill v0\n",
             {0xffff0300, 0x01000041, 0x900f0000, 0x0000ffff}
         },
+        {   /* shader 11 */
+            "ps_3_0\n"
+            "add oC3, r0, r1\n",
+            {0xffff0300, 0x03000002, 0x800f0803, 0x80e40000, 0x80e40001, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1236,6 +1241,12 @@ static void failure_test(void) {
         /* shader 25: _x4 instruction modified not allowed in > ps_1_x */
         "ps_3_0\n"
         "add_x4 r0, r0, r1\n",
+        /* shader 26: there aren't oCx registers in ps_1_x */
+        "ps_1_3\n"
+        "add oC0, r0, r1\n",
+        /* shader 27: oC3 is the max in >= ps_2_0 */
+        "ps_3_0\n"
+        "add oC4, r0, r1\n",
     };
     HRESULT hr;
     unsigned int i;

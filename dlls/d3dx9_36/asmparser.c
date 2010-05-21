@@ -259,7 +259,7 @@ static const struct allowed_reg_type ps_3_reg_allowed[] = {
     { BWRITERSPR_MISCTYPE,      2 }, /* vPos and vFace */
     { BWRITERSPR_LOOP,          1 },
     { BWRITERSPR_LABEL,      2048 },
-    { BWRITERSPR_COLOROUT,    ~0U },
+    { BWRITERSPR_COLOROUT,      4 },
     { BWRITERSPR_DEPTHOUT,      1 },
     { ~0U, 0 } /* End tag */
 };
