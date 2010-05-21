@@ -34,7 +34,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION This->adapter->gl_info
+#define GLINFO_LOCATION (*gl_info)
 
 /* Define the default light parameters as specified by MSDN */
 const WINED3DLIGHT WINED3D_default_light = {
@@ -5232,6 +5232,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct wined3d_format_desc *src_format;
     const struct wined3d_format_desc *dst_format;
+    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     const unsigned char *data;
     UINT update_w, update_h;
@@ -5273,6 +5274,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
         return IWineD3DSurface_BltFast(dst_surface, dst_x, dst_y, src_surface, src_rect, 0);
 
     context = context_acquire(This, NULL);
+    gl_info = context->gl_info;
 
     ENTER_GL();
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
