@@ -541,7 +541,8 @@ typedef struct shader_reg_maps
     WORD usestexldl     : 1;
     WORD usesifc        : 1;
     WORD usescall       : 1;
-    WORD padding        : 4;
+    WORD usesrcp        : 1;
+    WORD padding        : 3;
 
     /* Whether or not loops are used in this shader, and nesting depth */
     unsigned loop_depth;

@@ -104,8 +104,9 @@ static BOOL need_helper_const(IWineD3DBaseShaderImpl *shader, const struct wined
     if (!gl_info->supported[NV_VERTEX_PROGRAM]) return TRUE; /* Need to init colors. */
     if (gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT) return TRUE; /* Load the immval offset. */
     if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
-    if (shader->baseShader.reg_maps.usesnrm) return TRUE; /* 0.0 */
     if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
+    if (shader->baseShader.reg_maps.usesnrm) return TRUE; /* 0.0 */
+    if (shader->baseShader.reg_maps.usesrcp) return TRUE; /* EPS */
     return FALSE;
 }
 
@@ -126,6 +127,7 @@ enum arb_helper_value
     ARB_ONE,
     ARB_TWO,
     ARB_0001,
+    ARB_EPS,
 
     ARB_VS_REL_OFFSET
 };
@@ -146,6 +148,7 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
             case ARB_ONE: return "ps_helper_const.y";
             case ARB_TWO: return "coefmul.x";
             case ARB_0001: return "helper_const.xxxy";
+            case ARB_EPS: return "ps_helper_const.z";
             default: break;
         }
     }
@@ -156,6 +159,7 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
             case ARB_ZERO: return "helper_const.x";
             case ARB_ONE: return "helper_const.y";
             case ARB_TWO: return "helper_const.z";
+            case ARB_EPS: return "helper_const.w";
             case ARB_0001: return "helper_const.xxxy";
             case ARB_VS_REL_OFFSET: return "rel_addr_const.y";
         }
@@ -168,6 +172,7 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
         case ARB_ONE: return "1.0";
         case ARB_TWO: return "2.0";
         case ARB_0001: return "{0.0, 0.0, 0.0, 1.0}";
+        case ARB_EPS: return "1e-8";
         default: return "bad";
     }
 }
@@ -2403,6 +2408,44 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void shader_hw_rcp(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    const char *flt_eps = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_EPS);
+
+    char dst[50];
+    char src[50];
+
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst); /* Destination */
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src);
+    if (ins->src[0].swizzle == WINED3DSP_NOSWIZZLE)
+    {
+        /* Dx sdk says .x is used if no swizzle is given, but our test shows that
+         * .w is used
+         */
+        strcat(src, ".w");
+    }
+
+    /* TODO: If the destination is readable, and not the same as the source, the destination
+     * can be used instead of TA
+     */
+    if (priv->target_version >= NV2)
+    {
+        shader_addline(buffer, "MOVC TA.x, %s;\n", src);
+        shader_addline(buffer, "MOV TA.x (EQ.x), %s;\n", flt_eps);
+        shader_addline(buffer, "RCP%s %s, TA.x;\n", shader_arb_get_modifier(ins), dst);
+    }
+    else
+    {
+        const char *zero = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_ZERO);
+        shader_addline(buffer, "ABS TA.x, %s;\n", src);
+        shader_addline(buffer, "SGE TA.y, -TA.x, %s;\n", zero);
+        shader_addline(buffer, "MAD TA.x, TA.y, %s, %s;\n", flt_eps, src);
+        shader_addline(buffer, "RCP%s %s, TA.x;\n", shader_arb_get_modifier(ins), dst);
+    }
+}
+
 static void shader_hw_scalar_op(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
@@ -3578,7 +3621,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     if(dcl_td) shader_addline(buffer, "TEMP TD;\n"); /* Used for sRGB writing */
     shader_addline(buffer, "PARAM coefdiv = { 0.5, 0.25, 0.125, 0.0625 };\n");
     shader_addline(buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
-    shader_addline(buffer, "PARAM ps_helper_const = { 0.0, 1.0, 0.0, 0.0 };\n");
+    shader_addline(buffer, "PARAM ps_helper_const = { 0.0, 1.0, %1.10f, 0.0 };\n", eps);
 
     if (reg_maps->shader_version.major < 2)
     {
@@ -4074,7 +4117,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
 
     shader_addline(buffer, "TEMP TMP_OUT;\n");
     if(need_helper_const((IWineD3DBaseShaderImpl *) This, gl_info)) {
-        shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, 0.0 };\n");
+        shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %1.10f};\n", eps);
     }
     if(need_rel_addr_const((IWineD3DBaseShaderImpl *) This, gl_info)) {
         shader_addline(buffer, "PARAM rel_addr_const = { 0.5, %d.0, 0.0, 0.0 };\n", This->rel_offset);
@@ -4949,7 +4992,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_NRM           */ shader_hw_nrm,
     /* WINED3DSIH_PHASE         */ NULL,
     /* WINED3DSIH_POW           */ shader_hw_log_pow,
-    /* WINED3DSIH_RCP           */ shader_hw_scalar_op,
+    /* WINED3DSIH_RCP           */ shader_hw_rcp,
     /* WINED3DSIH_REP           */ shader_hw_rep,
     /* WINED3DSIH_RET           */ shader_hw_ret,
     /* WINED3DSIH_RSQ           */ shader_hw_scalar_op,
