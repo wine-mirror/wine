@@ -734,6 +734,48 @@ out:
     return ret;
 }
 
+/***************************************************************************
+ *                              MCIQTZ_mciWindow                [internal]
+ */
+static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSW lpParms)
+{
+    WINE_MCIQTZ *wma = MCIQTZ_mciGetOpenDev(wDevID);
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+    if (dwFlags & MCI_TEST)
+        return 0;
+
+    if (dwFlags & MCI_DGV_WINDOW_HWND && (IsWindow(lpParms->hWnd) || !lpParms->hWnd)) {
+        LONG style = 0;
+        TRACE("Setting hWnd to %p\n", lpParms->hWnd);
+        IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
+        IVideoWindow_get_WindowStyle(wma->vidwin, &style);
+        style &= ~WS_CHILD;
+        if (lpParms->hWnd)
+            IVideoWindow_put_WindowStyle(wma->vidwin, style|WS_CHILD);
+        else
+            IVideoWindow_put_WindowStyle(wma->vidwin, style);
+        IVideoWindow_put_Owner(wma->vidwin, (OAHWND)lpParms->hWnd);
+        IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)lpParms->hWnd);
+        IVideoWindow_put_Visible(wma->vidwin, OATRUE);
+        wma->parent = lpParms->hWnd;
+    }
+    if (dwFlags & MCI_DGV_WINDOW_STATE) {
+        TRACE("Setting nCmdShow to %d\n", lpParms->nCmdShow);
+        IVideoWindow_put_WindowState(wma->vidwin, lpParms->nCmdShow);
+    }
+    if (dwFlags & MCI_DGV_WINDOW_TEXT) {
+        TRACE("Setting caption to %s\n", debugstr_w(lpParms->lpstrText));
+        IVideoWindow_put_Caption(wma->vidwin, lpParms->lpstrText);
+    }
+    return 0;
+}
+
 /******************************************************************************
  *              MCIAVI_mciUpdate            [internal]
  */
@@ -858,11 +900,12 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_SETAUDIO:      return MCIQTZ_mciSetAudio  (dwDevID, dwParam1, (LPMCI_DGV_SETAUDIO_PARMSW) dwParam2);
         case MCI_UPDATE:
             return MCIQTZ_mciUpdate(dwDevID, dwParam1, (LPMCI_DGV_UPDATE_PARMS)dwParam2);
+        case MCI_WINDOW:
+            return MCIQTZ_mciWindow(dwDevID, dwParam1, (LPMCI_DGV_WINDOW_PARMSW)dwParam2);
+        case MCI_PUT:
         case MCI_RECORD:
         case MCI_RESUME:
         case MCI_INFO:
-        case MCI_PUT:
-        case MCI_WINDOW:
         case MCI_LOAD:
         case MCI_SAVE:
         case MCI_FREEZE:
