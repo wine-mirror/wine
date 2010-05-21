@@ -70,6 +70,8 @@ enum joined_forms {
               (ULONG)_x1         )
 
 #define GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
+#define GSUB_E_NOFEATURE -2
+#define GSUB_E_NOGLYPH -1
 
 typedef struct {
     DWORD version;
@@ -348,7 +350,7 @@ static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, IN
             }
         }
     }
-    return -1;
+    return GSUB_E_NOGLYPH;
 }
 
 static INT GSUB_apply_LigatureSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
@@ -413,7 +415,7 @@ static INT GSUB_apply_LigatureSubst(const GSUB_LookupTable *look, WORD *glyphs, 
             }
         }
     }
-    return -1;
+    return GSUB_E_NOGLYPH;
 }
 
 static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
@@ -433,13 +435,13 @@ static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WO
         default:
             FIXME("We do not handle SubType %i\n",GET_BE_WORD(look->LookupType));
     }
-    return -1;
+    return GSUB_E_NOGLYPH;
 }
 
 static INT GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* feature, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int i;
-    int out_index = -1;
+    int out_index = GSUB_E_NOGLYPH;
     const GSUB_LookupList *lookup;
 
     lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
@@ -448,10 +450,10 @@ static INT GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* fe
     for (i = 0; i < GET_BE_WORD(feature->LookupCount); i++)
     {
         out_index = GSUB_apply_lookup(lookup, GET_BE_WORD(feature->LookupListIndex[i]), glyphs, glyph_index, write_dir, glyph_count);
-        if (out_index != -1)
+        if (out_index != GSUB_E_NOGLYPH)
             break;
     }
-    if (out_index == -1)
+    if (out_index == GSUB_E_NOGLYPH)
         TRACE("lookups found no glyphs\n");
     return out_index;
 }
@@ -508,7 +510,7 @@ static INT apply_GSUB_feature_to_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB
     const GSUB_Feature *feature;
 
     if (!GSUB_Table)
-        return -1;
+        return GSUB_E_NOFEATURE;
 
     header = GSUB_Table;
 
@@ -516,19 +518,19 @@ static INT apply_GSUB_feature_to_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB
     if (!script)
     {
         TRACE("Script not found\n");
-        return -1;
+        return GSUB_E_NOFEATURE;
     }
     language = GSUB_get_lang_table(script, "xxxx"); /* Need to get Lang tag */
     if (!language)
     {
         TRACE("Language not found\n");
-        return -1;
+        return GSUB_E_NOFEATURE;
     }
     feature  =  GSUB_get_feature(header, language, feat);
     if (!feature)
     {
         TRACE("%s feature not found\n",feat);
-        return -1;
+        return GSUB_E_NOFEATURE;
     }
     TRACE("applying feature %s\n",feat);
     return GSUB_apply_feature(header, feature, glyphs, index, write_dir, glyph_count);
@@ -647,9 +649,9 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
         {
             INT nextIndex;
             nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs, i, dirL, pcGlyphs, contextual_features[context_shape[i]]);
-            if (nextIndex != -1)
+            if (nextIndex > GSUB_E_NOGLYPH)
                 i = nextIndex;
-            shaped = (nextIndex != -1);
+            shaped = (nextIndex > GSUB_E_NOGLYPH);
         }
 
         if (!shaped)
@@ -663,6 +665,23 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
                     pwOutGlyphs[i] = newGlyph;
             }
             i++;
+        }
+    }
+
+    /* Required ligature substitution */
+    if (psc->GSUB_Table)
+    {
+        i = 0;
+        while(i < *pcGlyphs)
+        {
+                INT nextIndex;
+                nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs, i, dirL, pcGlyphs, "rlig");
+                if (nextIndex > GSUB_E_NOGLYPH)
+                    i = nextIndex;
+                else if (nextIndex == GSUB_E_NOFEATURE)
+                    break;
+                else
+                    i++;
         }
     }
 
