@@ -51,8 +51,8 @@ enum joining_types {
 
 enum joined_forms {
     Xn=0,
-    Xl,
     Xr,
+    Xl,
     Xm
 };
 
@@ -448,12 +448,12 @@ static CHAR neighbour_joining_type(int i, int delta, const CHAR* context_type, I
 
 static inline BOOL right_join_causing(CHAR joining_type)
 {
-    return (joining_type == jtR || joining_type == jtD || joining_type == jtC);
+    return (joining_type == jtL || joining_type == jtD || joining_type == jtC);
 }
 
 static inline BOOL left_join_causing(CHAR joining_type)
 {
-    return (joining_type == jtL || joining_type == jtD || joining_type == jtC);
+    return (joining_type == jtR || joining_type == jtD || joining_type == jtC);
 }
 
 /* SHAPE_ShapeArabicGlyphs
@@ -470,13 +470,13 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
 
     if (!psa->fLogicalOrder && psa->fRTL)
     {
-        dirR = -1;
-        dirL = 1;
+        dirR = 1;
+        dirL = -1;
     }
     else
     {
-        dirR = 1;
-        dirL = -1;
+        dirR = -1;
+        dirL = 1;
     }
 
     if (!psc->GSUB_Table)
