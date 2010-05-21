@@ -165,6 +165,24 @@ typedef struct {
     WORD Substitute[1];
 }GSUB_SingleSubstFormat2;
 
+typedef struct {
+    WORD SubstFormat; /* = 1 */
+    WORD Coverage;
+    WORD LigSetCount;
+    WORD LigatureSet[1];
+}GSUB_LigatureSubstFormat1;
+
+typedef struct {
+    WORD LigatureCount;
+    WORD Ligature[1];
+}GSUB_LigatureSet;
+
+typedef struct{
+    WORD LigGlyph;
+    WORD CompCount;
+    WORD Component[1];
+}GSUB_Ligature;
+
 /* the orders of joined_forms and contextual_features need to line up */
 static const char* contextual_features[] =
 {
@@ -287,64 +305,155 @@ static const GSUB_Feature * GSUB_get_feature(const GSUB_Header *header, const GS
     return NULL;
 }
 
-static UINT GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* feature, UINT glyph)
+static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+{
+    int j;
+    TRACE("Single Substitution Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        int offset;
+        const GSUB_SingleSubstFormat1 *ssf1;
+        offset = GET_BE_WORD(look->SubTable[j]);
+        ssf1 = (const GSUB_SingleSubstFormat1*)((const BYTE*)look+offset);
+        if (GET_BE_WORD(ssf1->SubstFormat) == 1)
+        {
+            int offset = GET_BE_WORD(ssf1->Coverage);
+            TRACE("  subtype 1, delta %i\n", GET_BE_WORD(ssf1->DeltaGlyphID));
+            if (GSUB_is_glyph_covered((const BYTE*)ssf1+offset, glyphs[glyph_index]) != -1)
+            {
+                TRACE("  Glyph 0x%x ->",glyphs[glyph_index]);
+                glyphs[glyph_index] = glyphs[glyph_index] + GET_BE_WORD(ssf1->DeltaGlyphID);
+                TRACE(" 0x%x\n",glyphs[glyph_index]);
+                return glyph_index + 1;
+            }
+        }
+        else
+        {
+            const GSUB_SingleSubstFormat2 *ssf2;
+            INT index;
+            INT offset;
+
+            ssf2 = (const GSUB_SingleSubstFormat2 *)ssf1;
+            offset = GET_BE_WORD(ssf1->Coverage);
+            TRACE("  subtype 2,  glyph count %i\n", GET_BE_WORD(ssf2->GlyphCount));
+            index = GSUB_is_glyph_covered((const BYTE*)ssf2+offset, glyphs[glyph_index]);
+            TRACE("  Coverage index %i\n",index);
+            if (index != -1)
+            {
+                TRACE("    Glyph is 0x%x ->",glyphs[glyph_index]);
+                glyphs[glyph_index] = GET_BE_WORD(ssf2->Substitute[index]);
+                TRACE("0x%x\n",glyphs[glyph_index]);
+                return glyph_index + 1;
+            }
+        }
+    }
+    return -1;
+}
+
+static INT GSUB_apply_LigatureSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+{
+    int j;
+
+    TRACE("Ligature Substitution Subtable\n");
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        const GSUB_LigatureSubstFormat1 *lsf1;
+        int offset,index;
+
+        offset = GET_BE_WORD(look->SubTable[j]);
+        lsf1 = (const GSUB_LigatureSubstFormat1*)((const BYTE*)look+offset);
+        offset = GET_BE_WORD(lsf1->Coverage);
+        index = GSUB_is_glyph_covered((const BYTE*)lsf1+offset, glyphs[glyph_index]);
+        TRACE("  Coverage index %i\n",index);
+        if (index != -1)
+        {
+            const GSUB_LigatureSet *ls;
+            int k, count;
+
+            offset = GET_BE_WORD(lsf1->LigatureSet[index]);
+            ls = (const GSUB_LigatureSet*)((const BYTE*)lsf1+offset);
+            count = GET_BE_WORD(ls->LigatureCount);
+            TRACE("  LigatureSet has %i members\n",count);
+            for (k = 0; k < count; k++)
+            {
+                const GSUB_Ligature *lig;
+                int CompCount,l,CompIndex;
+
+                offset = GET_BE_WORD(ls->Ligature[k]);
+                lig = (const GSUB_Ligature*)((const BYTE*)ls+offset);
+                CompCount = GET_BE_WORD(lig->CompCount) - 1;
+                CompIndex = glyph_index+write_dir;
+                for (l = 0; l < CompCount && CompIndex >= 0 && CompIndex < *glyph_count; l++)
+                {
+                    int CompGlyph;
+                    CompGlyph = GET_BE_WORD(lig->Component[l]);
+                    if (CompGlyph != glyphs[CompIndex])
+                        break;
+                    CompIndex += write_dir;
+                }
+                if (l == CompCount)
+                {
+                    int replaceIdx = glyph_index;
+                    if (write_dir < 0)
+                        replaceIdx = glyph_index - CompCount;
+
+                    TRACE("    Glyph is 0x%x (+%i) ->",glyphs[glyph_index],CompCount);
+                    glyphs[replaceIdx] = GET_BE_WORD(lig->LigGlyph);
+                    TRACE("0x%x\n",glyphs[replaceIdx]);
+                    if (CompCount > 0)
+                    {
+                        int j;
+                        for (j = replaceIdx + 1; j < *glyph_count; j++)
+                            glyphs[j] =glyphs[j+CompCount];
+                        *glyph_count = *glyph_count - CompCount;
+                    }
+                    return replaceIdx + 1;
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+{
+    int offset;
+    const GSUB_LookupTable *look;
+
+    offset = GET_BE_WORD(lookup->Lookup[lookup_index]);
+    look = (const GSUB_LookupTable*)((const BYTE*)lookup + offset);
+    TRACE("type %i, flag %x, subtables %i\n",GET_BE_WORD(look->LookupType),GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
+    switch(GET_BE_WORD(look->LookupType))
+    {
+        case 1:
+            return GSUB_apply_SingleSubst(look, glyphs, glyph_index, write_dir, glyph_count);
+        case 4:
+            return GSUB_apply_LigatureSubst(look, glyphs, glyph_index, write_dir, glyph_count);
+        default:
+            FIXME("We do not handle SubType %i\n",GET_BE_WORD(look->LookupType));
+    }
+    return -1;
+}
+
+static INT GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* feature, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int i;
-    int offset;
+    int out_index = -1;
     const GSUB_LookupList *lookup;
+
     lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
 
     TRACE("%i lookups\n", GET_BE_WORD(feature->LookupCount));
     for (i = 0; i < GET_BE_WORD(feature->LookupCount); i++)
     {
-        const GSUB_LookupTable *look;
-        offset = GET_BE_WORD(lookup->Lookup[GET_BE_WORD(feature->LookupListIndex[i])]);
-        look = (const GSUB_LookupTable*)((const BYTE*)lookup + offset);
-        TRACE("type %i, flag %x, subtables %i\n",GET_BE_WORD(look->LookupType),GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
-        if (GET_BE_WORD(look->LookupType) != 1)
-            FIXME("We only handle SubType 1 (%i)\n",GET_BE_WORD(look->LookupType));
-        else
-        {
-            int j;
-
-            for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
-            {
-                const GSUB_SingleSubstFormat1 *ssf1;
-                offset = GET_BE_WORD(look->SubTable[j]);
-                ssf1 = (const GSUB_SingleSubstFormat1*)((const BYTE*)look+offset);
-                if (GET_BE_WORD(ssf1->SubstFormat) == 1)
-                {
-                    int offset = GET_BE_WORD(ssf1->Coverage);
-                    TRACE("  subtype 1, delta %i\n", GET_BE_WORD(ssf1->DeltaGlyphID));
-                    if (GSUB_is_glyph_covered((const BYTE*)ssf1+offset, glyph) != -1)
-                    {
-                        TRACE("  Glyph 0x%x ->",glyph);
-                        glyph += GET_BE_WORD(ssf1->DeltaGlyphID);
-                        TRACE(" 0x%x\n",glyph);
-                    }
-                }
-                else
-                {
-                    const GSUB_SingleSubstFormat2 *ssf2;
-                    INT index;
-                    INT offset;
-
-                    ssf2 = (const GSUB_SingleSubstFormat2 *)ssf1;
-                    offset = GET_BE_WORD(ssf1->Coverage);
-                    TRACE("  subtype 2,  glyph count %i\n", GET_BE_WORD(ssf2->GlyphCount));
-                    index = GSUB_is_glyph_covered((const BYTE*)ssf2+offset, glyph);
-                    TRACE("  Coverage index %i\n",index);
-                    if (index != -1)
-                    {
-                        TRACE("    Glyph is 0x%x ->",glyph);
-                        glyph = GET_BE_WORD(ssf2->Substitute[index]);
-                        TRACE("0x%x\n",glyph);
-                    }
-                }
-            }
-        }
+        out_index = GSUB_apply_lookup(lookup, GET_BE_WORD(feature->LookupListIndex[i]), glyphs, glyph_index, write_dir, glyph_count);
+        if (out_index != -1)
+            break;
     }
-    return glyph;
+    if (out_index == -1)
+        TRACE("lookups found no glyphs\n");
+    return out_index;
 }
 
 static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa)
@@ -391,7 +500,7 @@ static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa)
     }
 }
 
-static WORD get_GSUB_feature_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB_Table, UINT glyph, const char* feat)
+static INT apply_GSUB_feature_to_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB_Table, WORD *glyphs, INT index, INT write_dir, INT* glyph_count, const char* feat)
 {
     const GSUB_Header *header;
     const GSUB_Script *script;
@@ -399,7 +508,7 @@ static WORD get_GSUB_feature_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB_Tab
     const GSUB_Feature *feature;
 
     if (!GSUB_Table)
-        return glyph;
+        return -1;
 
     header = GSUB_Table;
 
@@ -407,21 +516,22 @@ static WORD get_GSUB_feature_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB_Tab
     if (!script)
     {
         TRACE("Script not found\n");
-        return glyph;
+        return -1;
     }
     language = GSUB_get_lang_table(script, "xxxx"); /* Need to get Lang tag */
     if (!language)
     {
         TRACE("Language not found\n");
-        return glyph;
+        return -1;
     }
     feature  =  GSUB_get_feature(header, language, feat);
     if (!feature)
     {
         TRACE("%s feature not found\n",feat);
-        return glyph;
+        return -1;
     }
-    return GSUB_apply_feature(header, feature, glyph);
+    TRACE("applying feature %s\n",feat);
+    return GSUB_apply_feature(header, feature, glyphs, index, write_dir, glyph_count);
 }
 
 static VOID *load_gsub_table(HDC hdc)
@@ -474,7 +584,7 @@ static inline BOOL left_join_causing(CHAR joining_type)
 
 /* SHAPE_ShapeArabicGlyphs
  */
-void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT cMaxGlyphs)
+void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
 {
     CHAR *context_type;
     INT *context_shape;
@@ -483,6 +593,13 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
 
     if (psa->eScript != Script_Arabic)
         return;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
 
     if (!psa->fLogicalOrder && psa->fRTL)
     {
@@ -520,21 +637,33 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
             context_shape[i] = Xn;
     }
 
-    for (i = 0; i < cChars; i++)
+    /* Contextual Shaping */
+    i = 0;
+    while(i < *pcGlyphs)
     {
-        WORD newGlyph = pwOutGlyphs[i];
+        BOOL shaped = FALSE;
 
         if (psc->GSUB_Table)
-            newGlyph = get_GSUB_feature_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs[i], contextual_features[context_shape[i]]);
-        if (newGlyph == pwOutGlyphs[i] && pwcChars[i] >= FIRST_ARABIC_CHAR && pwcChars[i] <= LAST_ARABIC_CHAR)
         {
-            /* fall back to presentation form B */
-            WCHAR context_char = wine_shaping_forms[pwcChars[i] - FIRST_ARABIC_CHAR][context_shape[i]];
-            if (context_char != pwcChars[i] && GetGlyphIndicesW(hdc, &context_char, 1, &newGlyph, 0) != GDI_ERROR && newGlyph != 0x0000)
-                pwOutGlyphs[i] = newGlyph;
+            INT nextIndex;
+            nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs, i, dirL, pcGlyphs, contextual_features[context_shape[i]]);
+            if (nextIndex != -1)
+                i = nextIndex;
+            shaped = (nextIndex != -1);
         }
-        else if (newGlyph != pwOutGlyphs[i])
-            pwOutGlyphs[i] = newGlyph;
+
+        if (!shaped)
+        {
+            WORD newGlyph = pwOutGlyphs[i];
+            if (pwcChars[i] >= FIRST_ARABIC_CHAR && pwcChars[i] <= LAST_ARABIC_CHAR)
+            {
+                /* fall back to presentation form B */
+                WCHAR context_char = wine_shaping_forms[pwcChars[i] - FIRST_ARABIC_CHAR][context_shape[i]];
+                if (context_char != pwcChars[i] && GetGlyphIndicesW(hdc, &context_char, 1, &newGlyph, 0) != GDI_ERROR && newGlyph != 0x0000)
+                    pwOutGlyphs[i] = newGlyph;
+            }
+            i++;
+        }
     }
 
     HeapFree(GetProcessHeap(),0,context_shape);
