@@ -1681,7 +1681,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         }
 
         guid.guid = tlibattr->guid;
-        guid.hreftype = This->typelib->typelib_guids*12+2;
+        guid.hreftype = This->typelib->typelib_segdir[MSFT_SEG_IMPORTFILES].length+2;
         guid.next_hash = -1;
 
         guid_offset = ctl2_alloc_guid(This->typelib, &guid);
