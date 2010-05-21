@@ -44,6 +44,7 @@ RC_SRCS = \
 	rsrc_No.rc \
 	rsrc_Pt.rc \
 	rsrc_Ru.rc \
+	rsrc_Si.rc \
 	rsrc_Sv.rc
 
 LEX_SRCS   = debug.l
