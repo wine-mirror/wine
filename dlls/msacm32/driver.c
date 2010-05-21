@@ -77,8 +77,8 @@ MMRESULT WINAPI acmDriverAddA(PHACMDRIVERID phadid, HINSTANCE hinstModule,
 
     /* A->W translation of name */
     if ((fdwAdd & ACM_DRIVERADDF_TYPEMASK) == ACM_DRIVERADDF_NAME) {
-        unsigned long len;
-        
+        INT len;
+
         if (lParam == 0) return MMSYSERR_INVALPARAM;
         len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)lParam, -1, NULL, 0);
         driverW = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
