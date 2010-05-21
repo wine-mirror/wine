@@ -117,10 +117,9 @@ static void delete_gl_buffer(struct wined3d_buffer *This, const struct wined3d_g
 }
 
 /* Context activation is done by the caller. */
-static void buffer_create_buffer_object(struct wined3d_buffer *This)
+static void buffer_create_buffer_object(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info)
 {
     GLenum error, gl_usage;
-    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
 
     TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p Usage(%s)\n",
             This, debug_d3dusage(This->resource.usage));
@@ -613,7 +612,7 @@ static inline void fixup_transformed_pos(float *p)
 }
 
 /* Context activation is done by the caller. */
-const BYTE *buffer_get_memory(IWineD3DBuffer *iface, GLuint *buffer_object)
+const BYTE *buffer_get_memory(IWineD3DBuffer *iface, const struct wined3d_gl_info *gl_info, GLuint *buffer_object)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
@@ -622,7 +621,7 @@ const BYTE *buffer_get_memory(IWineD3DBuffer *iface, GLuint *buffer_object)
     {
         if (This->flags & WINED3D_BUFFER_CREATEBO)
         {
-            buffer_create_buffer_object(This);
+            buffer_create_buffer_object(This, gl_info);
             This->flags &= ~WINED3D_BUFFER_CREATEBO;
             if (This->buffer_object)
             {
@@ -946,7 +945,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         /* TODO: Make converting independent from VBOs */
         if (This->flags & WINED3D_BUFFER_CREATEBO)
         {
-            buffer_create_buffer_object(This);
+            buffer_create_buffer_object(This, gl_info);
             This->flags &= ~WINED3D_BUFFER_CREATEBO;
         }
         else
