@@ -747,6 +747,11 @@ static void vs_2_0_test(void) {
             "ret\n",
             {0xfffe0200, 0x01000019, 0xa0e41003, 0x0000001c, 0x0100001e, 0xa0e41003, 0x0000001c, 0x0000ffff}
         },
+        {   /* shader 29: labels up to 2047 are accepted even in vs_2_0 */
+            "vs_2_0\n"
+            "call l2047\n",
+            {0xfffe0200, 0x01000019, 0xa0e417ff, 0x0000ffff}
+        },
     };
 
     exec_tests("vs_2_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1088,6 +1093,13 @@ static void vs_3_0_test(void) {
             {0xfffe0300, 0x05000051, 0xa00f0000, 0x3f800000, 0x3f800000, 0x3f800000,
              0x3f000000, 0x0000ffff}
         },
+        {   /* shader 14: no register number checks with relative addressing */
+            "vs_3_0\n"
+            "add r0, v20[aL], r2\n",
+            {0xfffe0300, 0x04000002, 0x800f0000, 0x90e42014, 0xf0e40800, 0x80e40002,
+             0x0000ffff}
+        },
+
     };
 
     exec_tests("vs_3_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1255,6 +1267,21 @@ static void failure_test(void) {
         /* shader 27: oC3 is the max in >= ps_2_0 */
         "ps_3_0\n"
         "add oC4, r0, r1\n",
+        /* shader 28: register v17 doesn't exist */
+        "vs_3_0\n"
+        "add r0, r0, v17\n",
+        /* shader 29: register o13 doesn't exist */
+        "vs_3_0\n"
+        "add o13, r0, r1\n",
+        /* shader 30: label > 2047 not allowed */
+        "vs_3_0\n"
+        "call l2048\n",
+        /* shader 31: s20 register does not exist */
+        "ps_3_0\n"
+        "texld r0, r1, s20\n",
+        /* shader 32: t5 not allowed in ps_1_3 */
+        "ps_1_3\n"
+        "tex t5\n",
     };
     HRESULT hr;
     unsigned int i;
