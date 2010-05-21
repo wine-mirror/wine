@@ -230,7 +230,7 @@ static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     /* FPS support */
     if (TRACE_ON(fps))
     {
-        static long prev_time, frames;
+        static LONG prev_time, frames;
 
         DWORD time = GetTickCount();
         frames++;

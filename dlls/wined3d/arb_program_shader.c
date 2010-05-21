@@ -61,14 +61,14 @@ static char *get_line(char **ptr)
 
 static void shader_arb_dump_program_source(const char *source)
 {
-    unsigned long source_size;
+    ULONG source_size;
     char *ptr, *line, *tmp;
 
     source_size = strlen(source) + 1;
     tmp = HeapAlloc(GetProcessHeap(), 0, source_size);
     if (!tmp)
     {
-        ERR("Failed to allocate %lu bytes for shader source.\n", source_size);
+        ERR("Failed to allocate %u bytes for shader source.\n", source_size);
         return;
     }
     memcpy(tmp, source, source_size);

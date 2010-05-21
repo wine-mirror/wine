@@ -1470,7 +1470,7 @@ struct wined3d_adapter
 
 BOOL initPixelFormats(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor) DECLSPEC_HIDDEN;
 BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-extern long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram) DECLSPEC_HIDDEN;
+extern unsigned int WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, unsigned int glram) DECLSPEC_HIDDEN;
 extern void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -2546,7 +2546,7 @@ struct IWineD3DSwapChainImpl
     BOOL                      render_to_fbo;
     const struct wined3d_format_desc *ds_format;
 
-    long prev_time, frames;   /* Performance tracking */
+    LONG prev_time, frames;   /* Performance tracking */
     unsigned int vSyncCounter;
 
     struct wined3d_context **context;

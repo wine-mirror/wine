@@ -337,7 +337,7 @@ static void convert_r8g8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT widt
         Dest = dst + y * outpitch;
         for (x = 0; x < width; x++ )
         {
-            long color = (*Source++);
+            LONG color = (*Source++);
             /* B */ Dest[0] = 0xff;
             /* G */ Dest[1] = (color >> 8) + 128; /* V */
             /* R */ Dest[2] = (color) + 128;      /* U */
@@ -362,7 +362,7 @@ static void convert_r8g8_snorm_l8x8_unorm(const BYTE *src, BYTE *dst, UINT pitch
         Dest = dst + y * pitch;
         for (x = 0; x < width; x++ )
         {
-            long color = (*Source++);
+            LONG color = (*Source++);
             /* B */ Dest[0] = ((color >> 16) & 0xff);       /* L */
             /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
             /* R */ Dest[2] = (color         & 0xff) + 128; /* U */
@@ -386,7 +386,7 @@ static void convert_r8g8_snorm_l8x8_unorm_nv(const BYTE *src, BYTE *dst, UINT pi
         Dest = dst + y * pitch;
         for (x = 0; x < width; x++ )
         {
-            long color = (*Source++);
+            LONG color = (*Source++);
             /* L */ Dest[2] = ((color >> 16) & 0xff);   /* L */
             /* V */ Dest[1] = ((color >> 8 ) & 0xff);   /* V */
             /* U */ Dest[0] = (color         & 0xff);   /* U */
@@ -408,7 +408,7 @@ static void convert_r8g8b8a8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT 
         Dest = dst + y * pitch;
         for (x = 0; x < width; x++ )
         {
-            long color = (*Source++);
+            LONG color = (*Source++);
             /* B */ Dest[0] = ((color >> 16) & 0xff) + 128; /* W */
             /* G */ Dest[1] = ((color >> 8 ) & 0xff) + 128; /* V */
             /* R */ Dest[2] = (color         & 0xff) + 128; /* U */

@@ -3941,7 +3941,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
             {
                 struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
                 e->buffer_object = 0;
-                e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb, gl_info));
+                e->data = (BYTE *)((ULONG_PTR)e->data + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
                 ENTER_GL();
                 GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
                 vb->buffer_object = 0;

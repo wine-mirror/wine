@@ -71,7 +71,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     UINT vx_index;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const UINT *streamOffset = This->stateBlock->streamOffset;
-    long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
+    LONG                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     BOOL                      pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
@@ -423,7 +423,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
+    LONG                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;
@@ -536,7 +536,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
             {
                 struct wined3d_buffer *vb =
                         (struct wined3d_buffer *)stateblock->streamSource[si->elements[instancedData[j]].stream_idx];
-                ptr += (long)buffer_get_sysmem(vb, &This->adapter->gl_info);
+                ptr += (ULONG_PTR)buffer_get_sysmem(vb, &This->adapter->gl_info);
             }
 
             send_attribute(This, si->elements[instancedData[j]].format_desc->format, instancedData[j], ptr);
@@ -564,7 +564,7 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, const struct wined3d_gl
         {
             struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
             e->buffer_object = 0;
-            e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb, gl_info));
+            e->data = (BYTE *)((ULONG_PTR)e->data + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
         }
     }
 }
@@ -731,14 +731,14 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Diagnostics */
 #ifdef SHOW_FRAME_MAKEUP
     {
-        static long int primCounter = 0;
+        static LONG primCounter = 0;
         /* NOTE: set primCounter to the value reported by drawprim
            before you want to to write frame makeup to /tmp */
         if (primCounter >= 0) {
             WINED3DLOCKED_RECT r;
             char buffer[80];
             IWineD3DSurface_LockRect(This->render_targets[0], &r, NULL, WINED3DLOCK_READONLY);
-            sprintf(buffer, "/tmp/backbuffer_%ld.tga", primCounter);
+            sprintf(buffer, "/tmp/backbuffer_%d.tga", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
             IWineD3DSurface_SaveSnapshot(This->render_targets[0], buffer);
             IWineD3DSurface_UnlockRect(This->render_targets[0]);
@@ -749,7 +749,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             int textureNo;
             for (textureNo = 0; textureNo < MAX_COMBINED_SAMPLERS; ++textureNo) {
                 if (This->stateBlock->textures[textureNo] != NULL) {
-                    sprintf(buffer, "/tmp/texture_%p_%ld_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
+                    sprintf(buffer, "/tmp/texture_%p_%d_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
                     TRACE("Saving texture %s\n", buffer);
                     if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == WINED3DRTYPE_TEXTURE) {
                             IWineD3DTexture_GetSurfaceLevel(This->stateBlock->textures[textureNo], 0, &pSur);
@@ -763,7 +763,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
            }
 #endif
         }
-        TRACE("drawprim #%ld\n", primCounter);
+        TRACE("drawprim #%d\n", primCounter);
         ++primCounter;
     }
 #endif
@@ -832,7 +832,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     {
         struct wined3d_buffer *vb;
         vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
-        e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb, context->gl_info));
+        e->data = (BYTE *)((ULONG_PTR)e->data + (ULONG_PTR)buffer_get_sysmem(vb, context->gl_info));
     }
     vtxStride = e->stride;
     data = e->data +
