@@ -242,7 +242,7 @@ static void user_warning_fn(png_structp png_ptr, png_const_charp warning_message
     WINE_WARN("PNG warning: %s\n", wine_dbgstr_an(warning_message, -1));
 }
 
-static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, LPCWSTR commentW)
+static BOOL SaveTrueColorIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, LPCWSTR commentW)
 {
     static const char comment_key[] = "Created from";
     FILE *fp;
@@ -372,6 +372,150 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
     HeapFree(GetProcessHeap(), 0, copy);
     HeapFree(GetProcessHeap(), 0, comment.text);
     return FALSE;
+}
+
+static BOOL SavePalettedIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, LPCWSTR commentW)
+{
+    static const char comment_key[] = "Created from";
+    FILE *pngFile = NULL;
+    int i, j;
+    int nHeight;
+    int nXORWidthBytes;
+    int nANDWidthBytes;
+    BOOL b8BitColors;
+    int nColors;
+    const BYTE *pXOR;
+    const BYTE *pAND;
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_text comment;
+    jmp_buf jmpbuf;
+    unsigned char *row = NULL;
+    BOOL ret = FALSE;
+
+    comment.text = NULL;
+
+    if (!((pIcon->bmiHeader.biBitCount == 4) || (pIcon->bmiHeader.biBitCount == 8)))
+    {
+        WINE_FIXME("Unsupported color depth %d-bit\n", pIcon->bmiHeader.biBitCount);
+        goto done;
+    }
+
+    if (!(pngFile = fopen(png_filename, "w")))
+    {
+        WINE_TRACE("Unable to open '%s' for writing: %s\n", png_filename, strerror(errno));
+        goto done;
+    }
+
+    nHeight = pIcon->bmiHeader.biHeight / 2;
+    nXORWidthBytes = 4 * ((pIcon->bmiHeader.biWidth * pIcon->bmiHeader.biBitCount / 32)
+                          + ((pIcon->bmiHeader.biWidth * pIcon->bmiHeader.biBitCount % 32) > 0));
+    nANDWidthBytes = 4 * ((pIcon->bmiHeader.biWidth / 32)
+                          + ((pIcon->bmiHeader.biWidth % 32) > 0));
+    b8BitColors = pIcon->bmiHeader.biBitCount == 8;
+    nColors = pIcon->bmiHeader.biClrUsed ? pIcon->bmiHeader.biClrUsed
+        : 1 << pIcon->bmiHeader.biBitCount;
+    pXOR = (const BYTE*) pIcon + sizeof (BITMAPINFOHEADER) + (nColors * sizeof (RGBQUAD));
+    pAND = pXOR + nHeight * nXORWidthBytes;
+
+    row = HeapAlloc(GetProcessHeap(), 0, 4 * pIcon->bmiHeader.biWidth);
+    if (row == NULL)
+    {
+        WINE_ERR("out of memory\n");
+        goto done;
+    }
+
+    if (!libpng_handle && !load_libpng())
+    {
+        WINE_WARN("Unable to load libpng\n");
+        goto done;
+    }
+
+    if (!(png_ptr = ppng_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL)) ||
+        !(info_ptr = ppng_create_info_struct(png_ptr)))
+        goto done;
+
+    if (setjmp(jmpbuf))
+    {
+        /* All future errors jump here */
+        goto done;
+    }
+    ppng_set_error_fn(png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
+
+    ppng_init_io(png_ptr, pngFile);
+    ppng_set_IHDR(png_ptr, info_ptr, pIcon->bmiHeader.biWidth, nHeight, 8,
+                  PNG_COLOR_TYPE_RGB_ALPHA,
+                  PNG_INTERLACE_NONE,
+                  PNG_COMPRESSION_TYPE_DEFAULT,
+                  PNG_FILTER_TYPE_DEFAULT);
+
+    /* Set comment */
+    comment.compression = PNG_TEXT_COMPRESSION_NONE;
+    comment.key = (png_charp)comment_key;
+    i = WideCharToMultiByte(CP_UNIXCP, 0, commentW, -1, NULL, 0, NULL, NULL);
+    comment.text = HeapAlloc(GetProcessHeap(), 0, i);
+    if (comment.text == NULL)
+    {
+        WINE_ERR("out of memory\n");
+        goto done;
+    }
+    WideCharToMultiByte(CP_UNIXCP, 0, commentW, -1, comment.text, i, NULL, NULL);
+    comment.text_length = i - 1;
+    ppng_set_text(png_ptr, info_ptr, &comment, 1);
+
+    ppng_write_info(png_ptr, info_ptr);
+    for (i = 0; i < nHeight; i++)
+    {
+        unsigned char *p = row;
+        for (j = 0; j < pIcon->bmiHeader.biWidth; j++)
+        {
+            if MASK(j,i)
+            {
+                *p++ = 0;
+                *p++ = 0;
+                *p++ = 0;
+                *p++ = 0;
+            }
+            else
+            {
+#define COLOR(x,y) (b8BitColors ? pXOR[(x) + (nHeight - (y) - 1) * nXORWidthBytes] : (x) % 2 ? pXOR[(x) / 2 + (nHeight - (y) - 1) * nXORWidthBytes] & 0xF : (pXOR[(x) / 2 + (nHeight - (y) - 1) * nXORWidthBytes] & 0xF0) >> 4)
+                *p++ = pIcon->bmiColors[COLOR(j,i)].rgbRed;
+                *p++ = pIcon->bmiColors[COLOR(j,i)].rgbGreen;
+                *p++ = pIcon->bmiColors[COLOR(j,i)].rgbBlue;
+                *p++ = 0xFF;
+#undef COLOR
+            }
+        }
+        ppng_write_row(png_ptr, (png_bytep)row);
+    }
+    ppng_write_end(png_ptr, info_ptr);
+    ret = TRUE;
+
+done:
+    ppng_destroy_write_struct(&png_ptr, &info_ptr);
+    if (pngFile != NULL)
+        fclose(pngFile);
+    HeapFree(GetProcessHeap(), 0, comment.text);
+    HeapFree(GetProcessHeap(), 0, row);
+    return ret;
+}
+
+static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, LPCWSTR commentW)
+{
+    switch (pIcon->bmiHeader.biBitCount)
+    {
+    case 4:
+        return SavePalettedIconResAsPNG(pIcon, png_filename, commentW);
+    case 8:
+        return SavePalettedIconResAsPNG(pIcon, png_filename, commentW);
+    case 24:
+        return SaveTrueColorIconResAsPNG(pIcon, png_filename, commentW);
+    case 32:
+        return SaveTrueColorIconResAsPNG(pIcon, png_filename, commentW);
+    default:
+        WINE_FIXME("unsupported bpp %d, please report", pIcon->bmiHeader.biBitCount);
+        return FALSE;
+    }
 }
 #endif /* SONAME_LIBPNG */
 
