@@ -616,8 +616,8 @@ HRESULT WINAPI MediaSeekingImpl_GetPositions(IMediaSeeking * iface, LONGLONG * p
     TRACE("(%p, %p)\n", pCurrent, pStop);
 
     EnterCriticalSection(This->crst);
-    *pCurrent = This->llCurrent;
-    *pStop = This->llStop;
+    IMediaSeeking_GetCurrentPosition(iface, pCurrent);
+    IMediaSeeking_GetStopPosition(iface, pStop);
     LeaveCriticalSection(This->crst);
 
     return S_OK;
