@@ -625,9 +625,17 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
         case MCI_STATUS_NUMBER_OF_TRACKS:
             FIXME("MCI_STATUS_NUMBER_OF_TRACKS not implemented yet\n");
             return MCIERR_UNRECOGNIZED_COMMAND;
-        case MCI_STATUS_MODE:
-            FIXME("MCI_STATUS_MODE not implemented yet\n");
-            return MCIERR_UNRECOGNIZED_COMMAND;
+        case MCI_STATUS_MODE: {
+            LONG state = State_Stopped;
+            IMediaControl_GetState(wma->pmctrl, -1, &state);
+            if (state == State_Stopped)
+                state = MCI_MODE_STOP;
+            else if (state == State_Running)
+                state = MCI_MODE_PLAY;
+            else if (state == State_Paused)
+                state = MCI_MODE_PAUSE;
+            break;
+        }
         case MCI_STATUS_MEDIA_PRESENT:
             FIXME("MCI_STATUS_MEDIA_PRESENT not implemented yet\n");
             return MCIERR_UNRECOGNIZED_COMMAND;
