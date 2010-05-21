@@ -5740,7 +5740,6 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     GLenum gl_filter;
-    POINT offset = {0, 0};
     RECT src_rect, dst_rect;
 
     TRACE("device %p, src_surface %p, src_rect_in %s, dst_surface %p, dst_rect_in %s, filter %s (0x%08x).\n",
@@ -5788,19 +5787,11 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
 
         TRACE("Source surface %p is onscreen\n", src_surface);
 
-        if(buffer == GL_FRONT) {
-            RECT windowsize;
-            UINT h;
-            ClientToScreen(context->win_handle, &offset);
-            GetClientRect(context->win_handle, &windowsize);
-            h = windowsize.bottom - windowsize.top;
-            src_rect.left -= offset.x; src_rect.right -=offset.x;
-            src_rect.top =  offset.y + h - src_rect.top;
-            src_rect.bottom =  offset.y + h - src_rect.bottom;
-        } else {
-            src_rect.top = src_surface->currentDesc.Height - src_rect.top;
-            src_rect.bottom = src_surface->currentDesc.Height - src_rect.bottom;
-        }
+        if (buffer == GL_FRONT)
+            surface_translate_frontbuffer_coords(src_surface, context->win_handle, &src_rect);
+
+        src_rect.top = src_surface->currentDesc.Height - src_rect.top;
+        src_rect.bottom = src_surface->currentDesc.Height - src_rect.bottom;
 
         ENTER_GL();
         context_bind_fbo(context, GL_READ_FRAMEBUFFER, NULL);
@@ -5822,20 +5813,11 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);
 
-        if(buffer == GL_FRONT) {
-            RECT windowsize;
-            UINT h;
-            ClientToScreen(context->win_handle, &offset);
-            GetClientRect(context->win_handle, &windowsize);
-            h = windowsize.bottom - windowsize.top;
-            dst_rect.left -= offset.x; dst_rect.right -=offset.x;
-            dst_rect.top =  offset.y + h - dst_rect.top;
-            dst_rect.bottom =  offset.y + h - dst_rect.bottom;
-        } else {
-            /* Screen coords = window coords, surface height = window height */
-            dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
-            dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
-        }
+        if (buffer == GL_FRONT)
+            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
+
+        dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
+        dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
 
         ENTER_GL();
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);

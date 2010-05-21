@@ -3380,6 +3380,21 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
                                const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
                                const struct wined3d_format_desc *dst_format_desc);
 
+/* Front buffer coordinates are always full screen coordinates, but our GL
+ * drawable is limited to the window's client area. The sysmem and texture
+ * copies do have the full screen size. Note that GL has a bottom-left
+ * origin, while D3D has a top-left origin. */
+void surface_translate_frontbuffer_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect)
+{
+    POINT offset = {0, surface->currentDesc.Height};
+    RECT windowsize;
+
+    GetClientRect(window, &windowsize);
+    offset.y -= windowsize.bottom - windowsize.top;
+    ScreenToClient(window, &offset);
+    OffsetRect(rect, offset.x, offset.y);
+}
+
 /* Not called from the VTable */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface, const RECT *DestRect,
         IWineD3DSurfaceImpl *src_surface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx,
@@ -3674,25 +3689,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         context = context_acquire(device, dst_surface);
         context_apply_blit_state(context, device);
 
-        /* The coordinates of the ddraw front buffer are always fullscreen ('screen coordinates',
-         * while OpenGL coordinates are window relative.
-         * Also beware of the origin difference(top left vs bottom left).
-         * Also beware that the front buffer's surface size is screen width x screen height,
-         * whereas the real gl drawable size is the size of the window.
-         */
         if (dstSwapchain && dst_surface == dstSwapchain->front_buffer)
-        {
-            RECT windowsize;
-            POINT offset = {0,0};
-            UINT h;
-            ClientToScreen(context->win_handle, &offset);
-            GetClientRect(context->win_handle, &windowsize);
-            h = windowsize.bottom - windowsize.top;
-            dst_rect.left -= offset.x; dst_rect.right -=offset.x;
-            dst_rect.top -= offset.y; dst_rect.bottom -=offset.y;
-            dst_rect.top += dst_surface->currentDesc.Height - h;
-            dst_rect.bottom += dst_surface->currentDesc.Height - h;
-        }
+            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
 
         if (!device->blitter->blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
                 &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format_desc,
@@ -4351,22 +4349,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     }
 
     if ((This->Flags & SFLAG_SWAPCHAIN) && This == ((IWineD3DSwapChainImpl *)This->container)->front_buffer)
-    {
-        RECT windowsize;
-        POINT offset = {0, 0};
-        UINT h;
-
-        ClientToScreen(context->win_handle, &offset);
-        GetClientRect(context->win_handle, &windowsize);
-        h = windowsize.bottom - windowsize.top;
-
-        dst_rect.left -= offset.x;
-        dst_rect.right -=offset.x;
-        dst_rect.top -= offset.y;
-        dst_rect.bottom -=offset.y;
-        dst_rect.top += This->currentDesc.Height - h;
-        dst_rect.bottom += This->currentDesc.Height - h;
-    }
+        surface_translate_frontbuffer_coords(This, context->win_handle, &dst_rect);
 
     device->blitter->set_shader((IWineD3DDevice *) device, This);
 

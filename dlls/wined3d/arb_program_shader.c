@@ -7004,17 +7004,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
      * whereas the real gl drawable size is the size of the window. */
     dst_swapchain = (dst_surface->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)dst_surface->container : NULL;
     if (dst_swapchain && dst_surface == dst_swapchain->front_buffer)
-    {
-        RECT windowsize;
-        POINT offset = {0,0};
-        UINT h;
-        ClientToScreen(context->win_handle, &offset);
-        GetClientRect(context->win_handle, &windowsize);
-        h = windowsize.bottom - windowsize.top;
-        dst_rect.left -= offset.x; dst_rect.right -=offset.x;
-        dst_rect.top -= offset.y; dst_rect.bottom -=offset.y;
-        dst_rect.top += dst_surface->currentDesc.Height - h; dst_rect.bottom += dst_surface->currentDesc.Height - h;
-    }
+        surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
 
     arbfp_blit_set((IWineD3DDevice *)device, src_surface);
 
