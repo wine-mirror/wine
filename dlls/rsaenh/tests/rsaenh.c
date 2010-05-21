@@ -654,9 +654,7 @@ static void test_hashes(void)
     ok(result, "%08x\n", GetLastError());
     ok(len == 128, "expected len 128, got %d\n", len);
     result = CryptSignHash(hHash, AT_KEYEXCHANGE, NULL, 0, pbSigValue, &len);
-    todo_wine
     ok(result, "%08x\n", GetLastError());
-    todo_wine
     ok(!memcmp(pbSigValue, signed_ssl3_shamd5_hash, len), "unexpected value\n");
     if (len != 128 || memcmp(pbSigValue, signed_ssl3_shamd5_hash, len))
     {
