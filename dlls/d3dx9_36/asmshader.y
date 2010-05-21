@@ -724,12 +724,12 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                     | INSTR_TEXLDP omods dreg ',' sregs
                             {
                                 TRACE("TEXLDP\n");
-                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEX | ( BWRITERSI_TEXLD_PROJECT << BWRITER_OPCODESPECIFICCONTROL_SHIFT ), $2.mod, $2.shift, 0, &$3, &$5, 2);
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXLDP, $2.mod, $2.shift, 0, &$3, &$5, 2);
                             }
                     | INSTR_TEXLDB omods dreg ',' sregs
                             {
                                 TRACE("TEXLDB\n");
-                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEX | ( BWRITERSI_TEXLD_BIAS << BWRITER_OPCODESPECIFICCONTROL_SHIFT ), $2.mod, $2.shift, 0, &$3, &$5, 2);
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXLDB, $2.mod, $2.shift, 0, &$3, &$5, 2);
                             }
                     | INSTR_DSX omods dreg ',' sregs
                             {

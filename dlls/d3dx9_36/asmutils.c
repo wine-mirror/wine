@@ -209,8 +209,8 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         case BWRITERSIO_COMMENT:     return D3DSIO_COMMENT;
         case BWRITERSIO_END:         return D3DSIO_END;
 
-        case BWRITERSIO_TEX | ( BWRITERSI_TEXLD_PROJECT << BWRITER_OPCODESPECIFICCONTROL_SHIFT ):                    return D3DSIO_TEX | D3DSI_TEXLD_PROJECT;
-        case BWRITERSIO_TEX | ( BWRITERSI_TEXLD_BIAS << BWRITER_OPCODESPECIFICCONTROL_SHIFT ):                       return D3DSIO_TEX | D3DSI_TEXLD_BIAS;
+        case BWRITERSIO_TEXLDP:      return D3DSIO_TEX | D3DSI_TEXLD_PROJECT;
+        case BWRITERSIO_TEXLDB:      return D3DSIO_TEX | D3DSI_TEXLD_BIAS;
 
         default:
             FIXME("Unhandled BWRITERSIO token %u\n", bwriter_opcode);
@@ -484,8 +484,8 @@ const char *debug_print_opcode(DWORD opcode) {
         case BWRITERSIO_TEXLDL:       return "texldl";
         case BWRITERSIO_BREAKP:       return "breakp";
 
-        case BWRITERSIO_TEX | ( BWRITERSI_TEXLD_PROJECT << BWRITER_OPCODESPECIFICCONTROL_SHIFT ):                     return "texldp";
-        case BWRITERSIO_TEX | ( BWRITERSI_TEXLD_BIAS << BWRITER_OPCODESPECIFICCONTROL_SHIFT ):                        return "texldb";
+        case BWRITERSIO_TEXLDP:       return "texldp";
+        case BWRITERSIO_TEXLDB:       return "texldb";
 
         default:                      return "unknown";
     }

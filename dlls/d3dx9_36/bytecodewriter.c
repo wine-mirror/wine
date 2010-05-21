@@ -693,8 +693,8 @@ static const struct instr_handler_table ps_3_handlers[] = {
     {BWRITERSIO_TEXLDL,         instr_handler},
 
     {BWRITERSIO_TEX,            instr_handler},
-    {BWRITERSIO_TEX | ( BWRITERSI_TEXLD_PROJECT << BWRITER_OPCODESPECIFICCONTROL_SHIFT ),                       instr_handler},
-    {BWRITERSIO_TEX | ( BWRITERSI_TEXLD_BIAS << BWRITER_OPCODESPECIFICCONTROL_SHIFT ),                          instr_handler},
+    {BWRITERSIO_TEXLDP,         instr_handler},
+    {BWRITERSIO_TEXLDB,         instr_handler},
     {BWRITERSIO_TEXKILL,        instr_handler},
     {BWRITERSIO_DSX,            instr_handler},
     {BWRITERSIO_DSY,            instr_handler},
