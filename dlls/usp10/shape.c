@@ -347,13 +347,29 @@ static UINT GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* f
     return glyph;
 }
 
-static const char* get_opentype_script(HDC hdc)
+static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa)
 {
-    /*
-     * I am not sure if this is the correct way to generate our script tag
-     */
-    UINT charset = GetTextCharsetInfo(hdc, NULL, 0x0);
+    UINT charset;
 
+    switch (psa->eScript)
+    {
+        case Script_Arabic:
+            return "arab";
+        case Script_Syriac:
+            return "syrc";
+        case Script_Hebrew:
+            return "hebr";
+        case Script_Latin:
+        case Script_Numeric:
+        case Script_CR:
+        case Script_LF:
+            return "latn";
+    }
+
+    /*
+     * fall back to the font charset
+     */
+    charset = GetTextCharsetInfo(hdc, NULL, 0x0);
     switch (charset)
     {
         case ANSI_CHARSET: return "latn";
@@ -375,7 +391,7 @@ static const char* get_opentype_script(HDC hdc)
     }
 }
 
-static WORD get_GSUB_feature_glyph(HDC hdc, void* GSUB_Table, UINT glyph, const char* feat)
+static WORD get_GSUB_feature_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB_Table, UINT glyph, const char* feat)
 {
     const GSUB_Header *header;
     const GSUB_Script *script;
@@ -387,7 +403,7 @@ static WORD get_GSUB_feature_glyph(HDC hdc, void* GSUB_Table, UINT glyph, const 
 
     header = GSUB_Table;
 
-    script = GSUB_get_script_table(header, get_opentype_script(hdc));
+    script = GSUB_get_script_table(header, get_opentype_script(hdc,psa));
     if (!script)
     {
         TRACE("Script not found\n");
@@ -509,7 +525,7 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
         WORD newGlyph = pwOutGlyphs[i];
 
         if (psc->GSUB_Table)
-            newGlyph = get_GSUB_feature_glyph(hdc, psc->GSUB_Table, pwOutGlyphs[i], contextual_features[context_shape[i]]);
+            newGlyph = get_GSUB_feature_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs[i], contextual_features[context_shape[i]]);
         if (newGlyph == pwOutGlyphs[i] && pwcChars[i] >= FIRST_ARABIC_CHAR && pwcChars[i] <= LAST_ARABIC_CHAR)
         {
             /* fall back to presentation form B */
