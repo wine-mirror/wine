@@ -564,7 +564,7 @@ static DWORD MCICDA_GetDevCaps(UINT wDevID, DWORD dwFlags,
 
 static DWORD CDROM_Audio_GetSerial(CDROM_TOC* toc)
 {
-    unsigned long serial = 0;
+    DWORD serial = 0;
     int i;
     WORD wMagic;
     DWORD dwStart, dwEnd;
