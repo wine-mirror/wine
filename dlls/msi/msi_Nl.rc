@@ -1,5 +1,5 @@
 /*
- * Durch resources for MSI
+ * Dutch resources for MSI
  *
  * Copyright 2005 Hans Leidekker
  *
@@ -28,30 +28,30 @@ STRINGTABLE DISCARDABLE
 	5 "Pad %s niet gevonden"
 	9 "Plaats disk %s"
 	10 "Windows Installer %s\n\n" \
-	"Usage:\n" \
-	"msiexec command {required parameter} [optional parammeter]\n\n" \
-	"Install a product:\n" \
-	"\t/i {package|productcode} [property]\n" \
-	"\t/package {package|productcode} [property]\n" \
-	"\t/a package [property]\n" \
-	"Repair an installation:\n" \
-	"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n" \
-	"Uninstall a product:\n" \
-	"\t/uninstall {package|productcode} [property]\n" \
-	"\t/x {package|productcode} [property]\n" \
-	"Advertise a product:\n" \
-	"\t/j[u|m] package [/t transform] [/g languageid]\n" \
-	"Apply a patch:\n" \
-	"\t/p patchpackage [property]\n" \
-	"\t/p patchpackage /a package [property]\n" \
-	"Log and UI Modifiers for above commands:\n" \
-	"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n" \
+	"Gebruik:\n" \
+	"msiexec commando {vereiste parameter} [optionele parameter]\n\n" \
+	"Installeer een product:\n" \
+	"\t/i {pakket|productcode} [eigenschap]\n" \
+	"\t/package {pakket|productcode} [eigenschap]\n" \
+	"\t/a pakket [eigenschap]\n" \
+	"Herstel een installatie:\n" \
+	"\t/f[p|o|e|d|c|a|u|m|s|v] {pakket|productcode}\n" \
+	"Verwijder een product:\n" \
+	"\t/uninstall {pakket|productcode} [eigenschap]\n" \
+	"\t/x {pakket|productcode} [eigenschap]\n" \
+	"Adverteer een product:\n" \
+	"\t/j[u|m] pakket [/t transform] [/g languageid]\n" \
+	"Pas een patch toe:\n" \
+	"\t/p patchpakket [eigenschap]\n" \
+	"\t/p patchpakket /a pakket [eigenschap]\n" \
+	"Log en UI Modifiers voor bovenstaande commando's:\n" \
+	"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logbestand\n" \
 	"\t/q{|n|b|r|f|n+|b+|b-}\n" \
-	"Register MSI Service:\n" \
+	"Registreer MSI Service:\n" \
 	"\t/y\n" \
-	"Unregister MSI Service:\n" \
+	"Maak registratie MSI Service ongedaan:\n" \
 	"\t/z\n" \
-	"Display this help:\n" \
+	"Laat dit helpvenster zien:\n" \
 	"\t/help\n" \
 	"\t/?\n"
 	11 "Voer de map in die %s bevat"
