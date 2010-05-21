@@ -298,7 +298,7 @@ typedef struct tagAcmMpeg3Data
     OSStatus lastError;
 } AcmMpeg3Data;
 
-static inline const char* wine_dbgstr_fourcc(unsigned long fourcc)
+static inline const char* wine_dbgstr_fourcc(ULONG fourcc)
 {
     char buf[4] = { (char) (fourcc >> 24), (char) (fourcc >> 16),
                     (char) (fourcc >> 8),  (char) fourcc };
