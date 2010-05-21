@@ -469,48 +469,6 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
     }
 }
 
-
-/***********************************************************************
- *              check_alpha_zero
- *
- * Generally 32 bit bitmaps have an alpha channel which is used in favor of the
- * AND mask.  However, if all pixels have alpha = 0x00, the bitmap is treated
- * like one without alpha and the masks are used.  As soon as one pixel has
- * alpha != 0x00, and the mask ignored as described in the docs.
- *
- * This is most likely for applications which create the bitmaps with
- * CreateDIBitmap, which creates a device dependent bitmap, so the format that
- * arrives when loading depends on the screen's bpp.  Apps that were written at
- * 8 / 16 bpp times do not know about the 32 bit alpha, so they would get a
- * completely transparent cursor on 32 bit displays.
- *
- * Non-32 bit bitmaps always use the AND mask.
- */
-static BOOL check_alpha_zero(CURSORICONINFO *ptr, unsigned char *xor_bits)
-{
-    int x, y;
-    unsigned char *xor_ptr;
-
-    if (ptr->bBitsPerPixel == 32)
-    {
-        for (y = 0; y < ptr->nHeight; ++y)
-        {
-            xor_ptr = xor_bits + (y * ptr->nWidthBytes);
-            for (x = 0; x < ptr->nWidth; ++x)
-            {
-                if (xor_ptr[3] != 0x00)
-                {
-                    return FALSE;
-                }
-                xor_ptr+=4;
-            }
-        }
-    }
-
-    return TRUE;
-}
-
-
 #ifdef SONAME_LIBXCURSOR
 
 /***********************************************************************
@@ -588,310 +546,199 @@ static Cursor create_xcursor_cursor( HDC hdc, ICONINFO *icon, int width, int hei
 
 
 /***********************************************************************
- *		create_cursor
+ *		create_cursor_from_bitmaps
+ *
+ * Create an X11 cursor from source bitmaps.
+ */
+static Cursor create_cursor_from_bitmaps( HBITMAP src_xor, HBITMAP src_and, int width, int height,
+                                          int xor_y, int and_y, XColor *fg, XColor *bg,
+                                          int hotspot_x, int hotspot_y )
+{
+    HDC src = 0, dst = 0;
+    HBITMAP bits = 0, mask = 0, mask_inv = 0;
+    Cursor cursor = 0;
+
+    if (!(src = CreateCompatibleDC( 0 ))) goto done;
+    if (!(dst = CreateCompatibleDC( 0 ))) goto done;
+
+    if (!(bits = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
+    if (!(mask = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
+    if (!(mask_inv = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
+
+    /* We have to do some magic here, as cursors are not fully
+     * compatible between Windows and X11. Under X11, there are
+     * only 3 possible color cursor: black, white and masked. So
+     * we map the 4th Windows color (invert the bits on the screen)
+     * to black and an additional white bit on an other place
+     * (+1,+1). This require some boolean arithmetic:
+     *
+     *         Windows          |          X11
+     * And    Xor      Result   |   Bits     Mask     Result
+     *  0      0     black      |    0        1     background
+     *  0      1     white      |    1        1     foreground
+     *  1      0     no change  |    X        0     no change
+     *  1      1     inverted   |    0        1     background
+     *
+     * which gives:
+     *  Bits = not 'And' and 'Xor' or 'And2' and 'Xor2'
+     *  Mask = not 'And' or 'Xor' or 'And2' and 'Xor2'
+     */
+    SelectObject( src, src_and );
+    SelectObject( dst, bits );
+    BitBlt( dst, 0, 0, width, height, src, 0, and_y, SRCCOPY );
+    SelectObject( dst, mask );
+    BitBlt( dst, 0, 0, width, height, src, 0, and_y, SRCCOPY );
+    SelectObject( dst, mask_inv );
+    BitBlt( dst, 0, 0, width, height, src, 0, and_y, SRCCOPY );
+    SelectObject( src, src_xor );
+    BitBlt( dst, 0, 0, width, height, src, 0, xor_y, SRCAND /* src & dst */ );
+    SelectObject( dst, bits );
+    BitBlt( dst, 0, 0, width, height, src, 0, xor_y, SRCERASE /* src & ~dst */ );
+    SelectObject( dst, mask );
+    BitBlt( dst, 0, 0, width, height, src, 0, xor_y, 0xdd0228 /* src | ~dst */ );
+    /* additional white */
+    SelectObject( src, mask_inv );
+    BitBlt( dst, 1, 1, width, height, src, 0, 0, SRCPAINT /* src | dst */);
+    SelectObject( dst, bits );
+    BitBlt( dst, 1, 1, width, height, src, 0, 0, SRCPAINT /* src | dst */ );
+
+    wine_tsx11_lock();
+    cursor = XCreatePixmapCursor( gdi_display, X11DRV_get_pixmap(bits), X11DRV_get_pixmap(mask),
+                                  fg, bg, hotspot_x, hotspot_y );
+    wine_tsx11_unlock();
+
+done:
+    DeleteDC( src );
+    DeleteDC( dst );
+    DeleteObject( bits );
+    DeleteObject( mask );
+    DeleteObject( mask_inv );
+    return cursor;
+}
+
+/***********************************************************************
+ *		create_xlib_cursor
  *
  * Create an X cursor from a Windows one.
  */
-static Cursor create_xlib_cursor( Display *display, CURSORICONINFO *ptr )
+static Cursor create_xlib_cursor( HDC hdc, ICONINFO *icon, int width, int height )
 {
-    Pixmap pixmapBits, pixmapMask, pixmapMaskInv = 0, pixmapAll;
     XColor fg, bg;
     Cursor cursor = None;
-    POINT hotspot;
-    char *bitMask32 = NULL;
-    BOOL alpha_zero = TRUE;
+    HBITMAP xor_bitmap = 0;
+    BITMAPINFO *info;
+    unsigned int *color_bits = NULL, *ptr;
+    unsigned char *mask_bits = NULL, *xor_bits = NULL;
+    int i, x, y, has_alpha = 0;
+    int rfg, gfg, bfg, rbg, gbg, bbg, fgBits, bgBits;
+    unsigned int width_bytes = (width + 31) / 32 * 4;
 
-    /* Create the X cursor from the bits */
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ))))
+        return FALSE;
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biWidth = width;
+    info->bmiHeader.biHeight = -height;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = 1;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage = width_bytes * height;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed = 0;
+    info->bmiHeader.biClrImportant = 0;
+
+    if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
+    if (!GetDIBits( hdc, icon->hbmMask, 0, height, mask_bits, info, DIB_RGB_COLORS )) goto done;
+
+    info->bmiHeader.biBitCount = 32;
+    info->bmiHeader.biSizeImage = width * height * 4;
+    if (!(color_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
+    if (!(xor_bits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, width_bytes * height ))) goto done;
+    GetDIBits( hdc, icon->hbmColor, 0, height, color_bits, info, DIB_RGB_COLORS );
+
+    /* compute fg/bg color and xor bitmap based on average of the color values */
+
+    if (!(xor_bitmap = CreateBitmap( width, height, 1, 1, NULL ))) goto done;
+    rfg = gfg = bfg = rbg = gbg = bbg = fgBits = 0;
+    for (y = 0, ptr = color_bits; y < height; y++)
     {
-        XImage *image;
-        GC gc;
-
-        TRACE("Bitmap %dx%d planes=%d bpp=%d bytesperline=%d\n",
-            ptr->nWidth, ptr->nHeight, ptr->bPlanes, ptr->bBitsPerPixel,
-            ptr->nWidthBytes);
-
-        /* Create a pixmap and transfer all the bits to it */
-
-        /* NOTE: Following hack works, but only because XFree depth
-         *       1 images really use 1 bit/pixel (and so the same layout
-         *       as the Windows cursor data). Perhaps use a more generic
-         *       algorithm here.
-         */
-        /* This pixmap will be written with two bitmaps. The first is
-         *  the mask and the second is the image.
-         */
-        if (!(pixmapAll = XCreatePixmap( display, root_window,
-                  ptr->nWidth, ptr->nHeight * 2, 1 )))
-            return 0;
-        if (!(image = XCreateImage( display, visual,
-                1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
-                ptr->nHeight * 2, 16, ptr->nWidthBytes/ptr->bBitsPerPixel)))
+        for (x = 0; x < width; x++, ptr++)
         {
-            XFreePixmap( display, pixmapAll );
-            return 0;
-        }
-        gc = XCreateGC( display, pixmapAll, 0, NULL );
-        XSetGraphicsExposures( display, gc, False );
-        image->byte_order = MSBFirst;
-        image->bitmap_bit_order = MSBFirst;
-        image->bitmap_unit = 16;
-        _XInitImageFuncPtrs(image);
-        if (ptr->bPlanes * ptr->bBitsPerPixel == 1)
-        {
-            /* A plain old white on black cursor. */
-            fg.red = fg.green = fg.blue = 0xffff;
-            bg.red = bg.green = bg.blue = 0x0000;
-            XPutImage( display, pixmapAll, gc, image,
-                0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
-        }
-        else
-        {
-            int     rbits, gbits, bbits, red, green, blue;
-            int     rfg, gfg, bfg, rbg, gbg, bbg;
-            int     rscale, gscale, bscale;
-            int     x, y, xmax, ymax, byteIndex, xorIndex;
-            unsigned char *theMask, *theImage, theChar;
-            int     threshold, fgBits, bgBits, bitShifted;
-            BYTE    pXorBits[128];   /* Up to 32x32 icons */
-
-            switch (ptr->bBitsPerPixel)
+            int red   = (*ptr >> 16) & 0xff;
+            int green = (*ptr >> 8) & 0xff;
+            int blue  = (*ptr >> 0) & 0xff;
+            if (red + green + blue > 0x40)
             {
-            case 32:
-                bitMask32 = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                       ptr->nWidth * ptr->nHeight / 8 );
-                /* Fallthrough */
-            case 24:
-                rbits = 8;
-                gbits = 8;
-                bbits = 8;
-                threshold = 0x40;
-                break;
-            case 16:
-                rbits = 5;
-                gbits = 6;
-                bbits = 5;
-                threshold = 0x40;
-                break;
-            default:
-                FIXME("Currently no support for cursors with %d bits per pixel\n",
-                  ptr->bBitsPerPixel);
-                XFreePixmap( display, pixmapAll );
-                XFreeGC( display, gc );
-                image->data = NULL;
-                XDestroyImage( image );
-                return 0;
+                rfg += red;
+                gfg += green;
+                bfg += blue;
+                fgBits++;
+                xor_bits[y * width_bytes + x / 8] |= 0x80 >> (x % 8);
             }
-            /* The location of the mask. */
-            theMask = (unsigned char *)(ptr + 1);
-            /* The mask should still be 1 bit per pixel. The color image
-             * should immediately follow the mask.
-             */
-            theImage = &theMask[ptr->nWidth/8 * ptr->nHeight];
-            rfg = gfg = bfg = rbg = gbg = bbg = 0;
-            byteIndex = 0;
-            xorIndex = 0;
-            fgBits = 0;
-            bitShifted = 0x01;
-            xmax = (ptr->nWidth > 32) ? 32 : ptr->nWidth;
-            if (ptr->nWidth > 32) {
-                ERR("Got a %dx%d cursor. Cannot handle larger than 32x32.\n",
-                  ptr->nWidth, ptr->nHeight);
-            }
-            ymax = (ptr->nHeight > 32) ? 32 : ptr->nHeight;
-            alpha_zero = check_alpha_zero(ptr, theImage);
-
-            memset(pXorBits, 0, 128);
-            for (y=0; y<ymax; y++)
+            else
             {
-                for (x=0; x<xmax; x++)
-                {
-                   	red = green = blue = 0;
-                   	switch (ptr->bBitsPerPixel)
-                   	{
-			case 32:
-			    theChar = theImage[byteIndex++];
-			    blue = theChar;
-			    theChar = theImage[byteIndex++];
-			    green = theChar;
-			    theChar = theImage[byteIndex++];
-			    red = theChar;
-			    theChar = theImage[byteIndex++];
-                            /* If the alpha channel is >5% transparent,
-                             * assume that we can add it to the bitMask32.
-                             */
-                            if (theChar > 0x0D)
-                                *(bitMask32 + (y*xmax+x)/8) |= 1 << (x & 7);
-			    break;
-                   	case 24:
-                   	    theChar = theImage[byteIndex++];
-                   	    blue = theChar;
-                   	    theChar = theImage[byteIndex++];
-                   	    green = theChar;
-                   	    theChar = theImage[byteIndex++];
-                   	    red = theChar;
-                   	    break;
-                   	case 16:
-                   	    theChar = theImage[byteIndex++];
-                   	    blue = theChar & 0x1F;
-                   	    green = (theChar & 0xE0) >> 5;
-                   	    theChar = theImage[byteIndex++];
-                   	    green |= (theChar & 0x07) << 3;
-                   	    red = (theChar & 0xF8) >> 3;
-                   	    break;
-                   	}
-
-                    if (red+green+blue > threshold)
-                    {
-                        rfg += red;
-                        gfg += green;
-                        bfg += blue;
-                        fgBits++;
-                        pXorBits[xorIndex] |= bitShifted;
-                    }
-                    else
-                    {
-                        rbg += red;
-                        gbg += green;
-                        bbg += blue;
-                    }
-                    if (x%8 == 7)
-                    {
-                        bitShifted = 0x01;
-                        xorIndex++;
-                    }
-                    else
-                        bitShifted = bitShifted << 1;
-                }
-            }
-            rscale = 1 << (16 - rbits);
-            gscale = 1 << (16 - gbits);
-            bscale = 1 << (16 - bbits);
-            if (fgBits)
-            {
-                fg.red   = rfg * rscale / fgBits;
-                fg.green = gfg * gscale / fgBits;
-                fg.blue  = bfg * bscale / fgBits;
-            }
-            else fg.red = fg.green = fg.blue = 0;
-            bgBits = xmax * ymax - fgBits;
-            if (bgBits)
-            {
-                bg.red   = rbg * rscale / bgBits;
-                bg.green = gbg * gscale / bgBits;
-                bg.blue  = bbg * bscale / bgBits;
-            }
-            else bg.red = bg.green = bg.blue = 0;
-            pixmapBits = XCreateBitmapFromData( display, root_window, (char *)pXorBits, xmax, ymax );
-            if (!pixmapBits)
-            {
-                HeapFree( GetProcessHeap(), 0, bitMask32 );
-                XFreePixmap( display, pixmapAll );
-                XFreeGC( display, gc );
-                image->data = NULL;
-                XDestroyImage( image );
-                return 0;
-            }
-
-            /* Put the mask. */
-            XPutImage( display, pixmapAll, gc, image,
-                   0, 0, 0, 0, ptr->nWidth, ptr->nHeight );
-            XSetFunction( display, gc, GXcopy );
-            /* Put the image */
-            XCopyArea( display, pixmapBits, pixmapAll, gc,
-                       0, 0, xmax, ymax, 0, ptr->nHeight );
-            XFreePixmap( display, pixmapBits );
-        }
-        image->data = NULL;
-        XDestroyImage( image );
-
-        /* Now create the 2 pixmaps for bits and mask */
-
-        pixmapBits = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
-        if (alpha_zero)
-        {
-            pixmapMaskInv = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
-            pixmapMask = XCreatePixmap( display, root_window, ptr->nWidth, ptr->nHeight, 1 );
-
-            /* Make sure everything went OK so far */
-            if (pixmapBits && pixmapMask && pixmapMaskInv)
-            {
-                /* We have to do some magic here, as cursors are not fully
-                 * compatible between Windows and X11. Under X11, there are
-                 * only 3 possible color cursor: black, white and masked. So
-                 * we map the 4th Windows color (invert the bits on the screen)
-                 * to black and an additional white bit on an other place
-                 * (+1,+1). This require some boolean arithmetic:
-                 *
-                 *         Windows          |          X11
-                 * And    Xor      Result   |   Bits     Mask     Result
-                 *  0      0     black      |    0        1     background
-                 *  0      1     white      |    1        1     foreground
-                 *  1      0     no change  |    X        0     no change
-                 *  1      1     inverted   |    0        1     background
-                 *
-                 * which gives:
-                 *  Bits = not 'And' and 'Xor' or 'And2' and 'Xor2'
-                 *  Mask = not 'And' or 'Xor' or 'And2' and 'Xor2'
-                 *
-                 * FIXME: apparently some servers do support 'inverted' color.
-                 * I don't know if it's correct per the X spec, but maybe we
-                 * ought to take advantage of it.  -- AJ
-                 */
-                XSetFunction( display, gc, GXcopy );
-                XCopyArea( display, pixmapAll, pixmapBits, gc,
-                           0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-                XCopyArea( display, pixmapAll, pixmapMask, gc,
-                           0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-                XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
-                           0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-                XSetFunction( display, gc, GXand );
-                XCopyArea( display, pixmapAll, pixmapMaskInv, gc,
-                           0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-                XSetFunction( display, gc, GXandReverse );
-                XCopyArea( display, pixmapAll, pixmapBits, gc,
-                           0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-                XSetFunction( display, gc, GXorReverse );
-                XCopyArea( display, pixmapAll, pixmapMask, gc,
-                           0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-                /* Additional white */
-                XSetFunction( display, gc, GXor );
-                XCopyArea( display, pixmapMaskInv, pixmapMask, gc,
-                           0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
-                XCopyArea( display, pixmapMaskInv, pixmapBits, gc,
-                           0, 0, ptr->nWidth, ptr->nHeight, 1, 1 );
-                XSetFunction( display, gc, GXcopy );
+                rbg += red;
+                gbg += green;
+                bbg += blue;
             }
         }
-        else
-        {
-            pixmapMask = XCreateBitmapFromData( display, root_window,
-                                                bitMask32, ptr->nWidth,
-                                                ptr->nHeight );
-        }
-
-        /* Make sure hotspot is valid */
-        hotspot.x = ptr->ptHotSpot.x;
-        hotspot.y = ptr->ptHotSpot.y;
-        if (hotspot.x < 0 || hotspot.x >= ptr->nWidth ||
-            hotspot.y < 0 || hotspot.y >= ptr->nHeight)
-        {
-            hotspot.x = ptr->nWidth / 2;
-            hotspot.y = ptr->nHeight / 2;
-        }
-
-        if (pixmapBits && pixmapMask)
-            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
-                                          &fg, &bg, hotspot.x, hotspot.y );
-
-        /* Now free everything */
-
-        if (pixmapAll) XFreePixmap( display, pixmapAll );
-        if (pixmapBits) XFreePixmap( display, pixmapBits );
-        if (pixmapMask) XFreePixmap( display, pixmapMask );
-        if (pixmapMaskInv) XFreePixmap( display, pixmapMaskInv );
-        HeapFree( GetProcessHeap(), 0, bitMask32 );
-        XFreeGC( display, gc );
     }
+    if (fgBits)
+    {
+        fg.red   = rfg * 257 / fgBits;
+        fg.green = gfg * 257 / fgBits;
+        fg.blue  = bfg * 257 / fgBits;
+    }
+    else fg.red = fg.green = fg.blue = 0;
+    bgBits = width * height - fgBits;
+    if (bgBits)
+    {
+        bg.red   = rbg * 257 / bgBits;
+        bg.green = gbg * 257 / bgBits;
+        bg.blue  = bbg * 257 / bgBits;
+    }
+    else bg.red = bg.green = bg.blue = 0;
+
+    info->bmiHeader.biBitCount = 1;
+    info->bmiHeader.biSizeImage = width_bytes * height;
+    SetDIBits( hdc, xor_bitmap, 0, height, xor_bits, info, DIB_RGB_COLORS );
+
+    /* generate mask from the alpha channel if we have one */
+
+    for (i = 0, ptr = color_bits; i < width * height; i++, ptr++)
+        if ((has_alpha = (*ptr & 0xff000000) != 0)) break;
+
+    if (has_alpha)
+    {
+        memset( mask_bits, 0, width_bytes * height );
+        for (y = 0, ptr = color_bits; y < height; y++)
+            for (x = 0; x < width; x++, ptr++)
+                if ((*ptr >> 24) > 25) /* more than 10% alpha */
+                    mask_bits[y * width_bytes + x / 8] |= 0x80 >> (x % 8);
+
+        info->bmiHeader.biBitCount = 1;
+        info->bmiHeader.biSizeImage = width_bytes * height;
+        SetDIBits( hdc, icon->hbmMask, 0, height, mask_bits, info, DIB_RGB_COLORS );
+
+        wine_tsx11_lock();
+        cursor = XCreatePixmapCursor( gdi_display,
+                                      X11DRV_get_pixmap(xor_bitmap),
+                                      X11DRV_get_pixmap(icon->hbmMask),
+                                      &fg, &bg, icon->xHotspot, icon->yHotspot );
+        wine_tsx11_unlock();
+    }
+    else
+    {
+        cursor = create_cursor_from_bitmaps( xor_bitmap, icon->hbmMask, width, height, 0, 0,
+                                             &fg, &bg, icon->xHotspot, icon->yHotspot );
+    }
+
+done:
+    DeleteObject( xor_bitmap );
+    HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, color_bits );
+    HeapFree( GetProcessHeap(), 0, xor_bits );
+    HeapFree( GetProcessHeap(), 0, mask_bits );
     return cursor;
 }
 
@@ -900,7 +747,7 @@ static Cursor create_xlib_cursor( Display *display, CURSORICONINFO *ptr )
  *
  * Create an X cursor from a Windows one.
  */
-static Cursor create_cursor( HANDLE handle, CURSORICONINFO *ptr )
+static Cursor create_cursor( HANDLE handle )
 {
     Cursor cursor = 0;
     HDC hdc;
@@ -926,18 +773,23 @@ static Cursor create_cursor( HANDLE handle, CURSORICONINFO *ptr )
         info.yHotspot = bm.bmHeight / 2;
     }
 
-#ifdef SONAME_LIBXCURSOR
-    if (pXcursorImageLoadCursor && info.hbmColor)
-        cursor = create_xcursor_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
-#endif
-
-    if (!cursor)
+    if (info.hbmColor)
     {
-        wine_tsx11_lock();
-        cursor = create_xlib_cursor( gdi_display, ptr );
-        wine_tsx11_unlock();
+#ifdef SONAME_LIBXCURSOR
+        if (pXcursorImageLoadCursor) cursor = create_xcursor_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
+#endif
+        if (!cursor) cursor = create_xlib_cursor( hdc, &info, bm.bmWidth, bm.bmHeight );
+        DeleteObject( info.hbmColor );
     }
-    if (info.hbmColor) DeleteObject( info.hbmColor );
+    else
+    {
+        XColor fg, bg;
+        fg.red = fg.green = fg.blue = 0xffff;
+        bg.red = bg.green = bg.blue = 0;
+        cursor = create_cursor_from_bitmaps( info.hbmMask, info.hbmMask, bm.bmWidth, bm.bmHeight,
+                                             bm.bmHeight, 0, &fg, &bg, info.xHotspot, info.yHotspot );
+    }
+
     DeleteObject( info.hbmMask );
     DeleteDC( hdc );
     return cursor;
@@ -954,7 +806,7 @@ void CDECL X11DRV_CreateCursorIcon( HCURSOR handle, CURSORICONINFO *info )
     /* ignore icons (FIXME: shouldn't use magic hotspot value) */
     if (info->ptHotSpot.x == ICON_HOTSPOT && info->ptHotSpot.y == ICON_HOTSPOT) return;
 
-    cursor = create_cursor( handle, info );
+    cursor = create_cursor( handle );
     if (cursor)
     {
         wine_tsx11_lock();
