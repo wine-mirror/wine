@@ -39,7 +39,6 @@ MAKE_FUNCPTR(XcursorImageLoadCursor);
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
-#include "wine/winuser16.h"
 
 #include "x11drv.h"
 #include "wine/server.h"
@@ -90,6 +89,7 @@ static HWND cursor_window;
 static DWORD last_time_modified;
 static RECT cursor_clip; /* Cursor clipping rect */
 static XContext cursor_context;
+static Cursor create_cursor( HANDLE handle );
 
 BOOL CDECL X11DRV_SetCursorPos( INT x, INT y );
 
@@ -195,38 +195,42 @@ static Cursor get_empty_cursor(void)
 }
 
 /***********************************************************************
- *		get_x11_cursor
- */
-Cursor get_x11_cursor( HCURSOR handle )
-{
-    Cursor cursor;
-
-    if (!handle) return get_empty_cursor();
-
-    if (cursor_context && !XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
-        return cursor;
-    return 0;
-}
-
-/***********************************************************************
  *		set_window_cursor
  */
 void set_window_cursor( HWND hwnd, HCURSOR handle )
 {
     struct x11drv_win_data *data;
-    Cursor cursor;
+    Cursor cursor, prev;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     wine_tsx11_lock();
-    if ((cursor = get_x11_cursor( handle )))
+    if (!handle) cursor = get_empty_cursor();
+    else if (!cursor_context || XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
     {
-        TRACE( "%p xid %lx\n", handle, cursor );
-        XDefineCursor( gdi_display, data->whole_window, cursor );
-        /* Make the change take effect immediately */
-        XFlush( gdi_display );
-        data->cursor = handle;
+        /* try to create it */
+        wine_tsx11_unlock();
+        if (!(cursor = create_cursor( handle ))) return;
+
+        wine_tsx11_lock();
+        if (!cursor_context) cursor_context = XUniqueContext();
+        if (!XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&prev ))
+        {
+            /* someone else was here first */
+            XFreeCursor( gdi_display, cursor );
+            cursor = prev;
+        }
+        else
+        {
+            XSaveContext( gdi_display, (XID)handle, cursor_context, (char *)cursor );
+            TRACE( "cursor %p created %lx\n", handle, cursor );
+        }
     }
+
+    XDefineCursor( gdi_display, data->whole_window, cursor );
+    /* make the change take effect immediately */
+    XFlush( gdi_display );
+    data->cursor = handle;
     wine_tsx11_unlock();
 }
 
@@ -327,16 +331,8 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
 
     if (hwnd)
     {
-        Cursor xcursor;
         struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-        if (data && cursor != data->cursor)
-        {
-            wine_tsx11_lock();
-            if ((xcursor = get_x11_cursor( cursor )))
-                XDefineCursor( gdi_display, data->whole_window, xcursor );
-            data->cursor = cursor;
-            wine_tsx11_unlock();
-        }
+        if (data && cursor != data->cursor) set_window_cursor( hwnd, cursor );
     }
 }
 
@@ -796,36 +792,6 @@ static Cursor create_cursor( HANDLE handle )
 }
 
 /***********************************************************************
- *		CreateCursorIcon (X11DRV.@)
- */
-void CDECL X11DRV_CreateCursorIcon( HCURSOR handle, CURSORICONINFO *info )
-{
-    static const WORD ICON_HOTSPOT = 0x4242;
-    Cursor cursor, prev;
-
-    /* ignore icons (FIXME: shouldn't use magic hotspot value) */
-    if (info->ptHotSpot.x == ICON_HOTSPOT && info->ptHotSpot.y == ICON_HOTSPOT) return;
-
-    cursor = create_cursor( handle );
-    if (cursor)
-    {
-        wine_tsx11_lock();
-        if (!cursor_context) cursor_context = XUniqueContext();
-        if (!XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&prev ))
-        {
-            /* someone else was here first */
-            XFreeCursor( gdi_display, cursor );
-            cursor = prev;
-        }
-        else
-            XSaveContext( gdi_display, (XID)handle, cursor_context, (char *)cursor );
-        wine_tsx11_unlock();
-        TRACE( "cursor %p %ux%u, planes %u, bpp %u -> xid %lx\n",
-               handle, info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel, cursor );
-    }
-}
-
-/***********************************************************************
  *		DestroyCursorIcon (X11DRV.@)
  */
 void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
@@ -833,7 +799,7 @@ void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
     Cursor cursor;
 
     wine_tsx11_lock();
-    if ((cursor = get_x11_cursor( handle )))
+    if (cursor_context && !XFindContext( gdi_display, (XID)handle, cursor_context, (char **)&cursor ))
     {
         TRACE( "%p xid %lx\n", handle, cursor );
         XFreeCursor( gdi_display, cursor );
