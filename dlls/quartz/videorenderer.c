@@ -367,9 +367,12 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     if (FAILED(hr))
         ERR("Cannot get sample time (%x)\n", hr);
 
-    if (This->rtLastStop != tStart)
+    if (This->rtLastStop != tStart && This->state == State_Running)
     {
-        if (IMediaSample_IsDiscontinuity(pSample) == S_FALSE)
+        LONG64 delta;
+        delta = tStart - This->rtLastStop;
+        if ((delta < -100000 || delta > 100000) &&
+            IMediaSample_IsDiscontinuity(pSample) == S_FALSE)
             ERR("Unexpected discontinuity: Last: %u.%03u, tStart: %u.%03u\n",
                 (DWORD)(This->rtLastStop / 10000000),
                 (DWORD)((This->rtLastStop / 10000)%1000),
