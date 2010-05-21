@@ -277,7 +277,7 @@ static	DWORD 	WAVE_ConvertTimeFormatToByte(WINE_MCIWAVE* wmw, DWORD val)
 static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
 {
     MMCKINFO	mmckInfo;
-    long	r;
+    LONG	r;
     LPWAVEFORMATEX pwfx;
 
     mmckInfo.ckid = mmioFOURCC('f', 'm', 't', ' ');
@@ -300,7 +300,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
     TRACE("nAvgBytesPerSec=%d\n",  pwfx->nAvgBytesPerSec);
     TRACE("nBlockAlign=%d\n",      pwfx->nBlockAlign);
     TRACE("wBitsPerSample=%u !\n", pwfx->wBitsPerSample);
-    if (r >= (long)sizeof(WAVEFORMATEX))
+    if (r >= sizeof(WAVEFORMATEX))
 	TRACE("cbSize=%u !\n",     pwfx->cbSize);
     if ((pwfx->wFormatTag != WAVE_FORMAT_PCM)
 	&& (r < sizeof(WAVEFORMATEX) || (r < sizeof(WAVEFORMATEX) + pwfx->cbSize))) {
