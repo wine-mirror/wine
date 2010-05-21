@@ -2239,7 +2239,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     iter->name = offset;
 
     namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
-    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
+    if (*((INT*)namedata) == -1)
+	    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
 
     len = iter->u.data[0]/4 - iter->u.data[5]*3;
 
