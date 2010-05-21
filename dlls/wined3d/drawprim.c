@@ -85,14 +85,14 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     TRACE("Using slow vertex array code\n");
 
     /* Variable Initialization */
-    if (idxSize != 0) {
-        /* Immediate mode drawing can't make use of indices in a vbo - get the data from the index buffer.
-         * If the index buffer has no vbo(not supported or other reason), or with user pointer drawing
-         * idxData will be != NULL
-         */
-        if(idxData == NULL) {
-            idxData = buffer_get_sysmem((struct wined3d_buffer *) This->stateBlock->pIndexData);
-        }
+    if (idxSize)
+    {
+        /* Immediate mode drawing can't make use of indices in a vbo - get the
+         * data from the index buffer. If the index buffer has no vbo (not
+         * supported or other reason), or with user pointer drawing idxData
+         * will be non-NULL. */
+        if (!idxData)
+            idxData = buffer_get_sysmem((struct wined3d_buffer *)This->stateBlock->pIndexData, gl_info);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;
@@ -422,6 +422,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
         GLenum glPrimitiveType, const void *idxData, UINT idxSize, UINT startIdx)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     long                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
@@ -430,14 +431,14 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
     const BYTE *ptr;
 
-    if (idxSize != 0) {
-        /* Immediate mode drawing can't make use of indices in a vbo - get the data from the index buffer.
-         * If the index buffer has no vbo(not supported or other reason), or with user pointer drawing
-         * idxData will be != NULL
-         */
-        if(idxData == NULL) {
-            idxData = buffer_get_sysmem((struct wined3d_buffer *) This->stateBlock->pIndexData);
-        }
+    if (idxSize)
+    {
+        /* Immediate mode drawing can't make use of indices in a vbo - get the
+         * data from the index buffer. If the index buffer has no vbo (not
+         * supported or other reason), or with user pointer drawing idxData
+         * will be non-NULL. */
+        if (!idxData)
+            idxData = buffer_get_sysmem((struct wined3d_buffer *)This->stateBlock->pIndexData, gl_info);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;
@@ -535,7 +536,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
             {
                 struct wined3d_buffer *vb =
                         (struct wined3d_buffer *)stateblock->streamSource[si->elements[instancedData[j]].stream_idx];
-                ptr += (long) buffer_get_sysmem(vb);
+                ptr += (long)buffer_get_sysmem(vb, &This->adapter->gl_info);
             }
 
             send_attribute(This, si->elements[instancedData[j]].format_desc->format, instancedData[j], ptr);
@@ -547,7 +548,8 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
     }
 }
 
-static inline void remove_vbos(IWineD3DDeviceImpl *This, struct wined3d_stream_info *s)
+static inline void remove_vbos(IWineD3DDeviceImpl *This, const struct wined3d_gl_info *gl_info,
+        struct wined3d_stream_info *s)
 {
     unsigned int i;
 
@@ -562,7 +564,7 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, struct wined3d_stream_i
         {
             struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
             e->buffer_object = 0;
-            e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb));
+            e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb, gl_info));
         }
     }
 }
@@ -683,7 +685,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             if(emulation) {
                 stream_info = &stridedlcl;
                 memcpy(&stridedlcl, &This->strided_streams, sizeof(stridedlcl));
-                remove_vbos(This, &stridedlcl);
+                remove_vbos(This, context->gl_info, &stridedlcl);
             }
         }
 
@@ -830,7 +832,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     {
         struct wined3d_buffer *vb;
         vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
-        e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb));
+        e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb, context->gl_info));
     }
     vtxStride = e->stride;
     data = e->data +

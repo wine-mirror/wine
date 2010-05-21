@@ -225,7 +225,8 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             {
                 WARN("loadBaseVertexIndex is < 0 (%d), not using vbos\n", This->stateBlock->loadBaseVertexIndex);
                 buffer_object = 0;
-                data = buffer_get_sysmem((struct wined3d_buffer *)This->stateBlock->streamSource[element->input_slot]);
+                data = buffer_get_sysmem((struct wined3d_buffer *)This->stateBlock->streamSource[element->input_slot],
+                        &This->adapter->gl_info);
                 if ((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride)
                 {
                     FIXME("System memory vertex data load offset is negative!\n");
@@ -328,7 +329,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             if (buffer->buffer_object != element->buffer_object)
             {
                 element->buffer_object = 0;
-                element->data = buffer_get_sysmem(buffer) + (ptrdiff_t)element->data;
+                element->data = buffer_get_sysmem(buffer, &This->adapter->gl_info) + (ptrdiff_t)element->data;
             }
 
             query = ((struct wined3d_buffer *) buffer)->query;
@@ -3576,9 +3577,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
     /* We might access VBOs from this code, so hold the lock */
     ENTER_GL();
 
-    if (dest->resource.allocatedMemory == NULL) {
-        buffer_get_sysmem(dest);
-    }
+    if (!dest->resource.allocatedMemory)
+        buffer_get_sysmem(dest, gl_info);
 
     /* Get a pointer into the destination vbo(create one if none exists) and
      * write correct opengl data into it. It's cheap and allows us to run drawStridedFast
@@ -3625,7 +3625,7 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
            FIXME("Clipping is broken and disabled for now\n");
         }
     } else doClip = FALSE;
-    dest_ptr = ((char *) buffer_get_sysmem(dest)) + dwDestIndex * get_flexible_vertex_size(DestFVF);
+    dest_ptr = ((char *)buffer_get_sysmem(dest, gl_info)) + dwDestIndex * get_flexible_vertex_size(DestFVF);
 
     IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
                                  WINED3DTS_VIEW,
@@ -3901,6 +3901,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_info stream_info;
+    const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BOOL vbo = FALSE, streamWasUP = This->stateBlock->streamIsUP;
     HRESULT hr;
@@ -3913,6 +3914,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
 
     /* Need any context to write to the vbo. */
     context = context_acquire(This, NULL);
+    gl_info = context->gl_info;
 
     /* ProcessVertices reads from vertex buffers, which have to be assigned. DrawPrimitive and DrawPrimitiveUP
      * control the streamIsUP flag, thus restore it afterwards.
@@ -3939,7 +3941,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
             {
                 struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
                 e->buffer_object = 0;
-                e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb));
+                e->data = (BYTE *)((unsigned long)e->data + (unsigned long)buffer_get_sysmem(vb, gl_info));
                 ENTER_GL();
                 GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
                 vb->buffer_object = 0;

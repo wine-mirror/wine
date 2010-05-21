@@ -567,7 +567,7 @@ static void buffer_check_buffer_object_size(struct wined3d_buffer *This, const s
         /* Rescue the data before resizing the buffer object if we do not have our backup copy */
         if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
-            buffer_get_sysmem(This);
+            buffer_get_sysmem(This, gl_info);
         }
 
         ENTER_GL();
@@ -672,10 +672,8 @@ static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
 }
 
 /* Context activation is done by the caller. */
-BYTE *buffer_get_sysmem(struct wined3d_buffer *This)
+BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
-
     /* AllocatedMemory exists if the buffer is double buffered or has no buffer object at all */
     if(This->resource.allocatedMemory) return This->resource.allocatedMemory;
 
@@ -706,7 +704,7 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
         /* Download the buffer, but don't permanently enable double buffering */
         if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
-            buffer_get_sysmem(This);
+            buffer_get_sysmem(This, context->gl_info);
             This->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
         }
 
@@ -1065,7 +1063,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
 
     if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
     {
-        buffer_get_sysmem(This);
+        buffer_get_sysmem(This, gl_info);
     }
 
     /* Now for each vertex in the buffer that needs conversion */
@@ -1300,7 +1298,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
                     LEAVE_GL();
                     This->resource.allocatedMemory = NULL;
 
-                    buffer_get_sysmem(This);
+                    buffer_get_sysmem(This, gl_info);
                     TRACE("New pointer is %p\n", This->resource.allocatedMemory);
                 }
                 context_release(context);
