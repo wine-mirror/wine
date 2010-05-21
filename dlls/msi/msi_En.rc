@@ -30,7 +30,7 @@ STRINGTABLE DISCARDABLE
 	9 "insert disk %s"
 	10 "Windows Installer %s\n\n" \
 	"Usage:\n" \
-	"msiexec command {required parameter} [optional parammeter]\n\n" \
+	"msiexec command {required parameter} [optional parameter]\n\n" \
 	"Install a product:\n" \
 	"\t/i {package|productcode} [property]\n" \
 	"\t/package {package|productcode} [property]\n" \
