@@ -369,8 +369,11 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
 	    break;
 	}
     }
-    if (list_empty(&timer_list))
+    if (list_empty(&timer_list)) {
+        char c = 'q';
         TIME_TimeToDie = 1;
+        write(TIME_fdWake[1], &c, sizeof(c));
+    }
     LeaveCriticalSection(&WINMM_cs);
 
     if (!lpSelf)
