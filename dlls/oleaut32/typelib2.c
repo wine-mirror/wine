@@ -779,8 +779,8 @@ static int ctl2_alloc_importfile(
     encoded_string[0] |= 1;
 
     for (offset = 0; offset < This->typelib_segdir[MSFT_SEG_IMPORTFILES].length;
-	 offset += ((((This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xd] << 8) & 0xff)
-	     | (This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xc] & 0xff)) >> 2) + 0xc) {
+	 offset += ((((((This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xd] << 8) & 0xff00)
+	     | (This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xc] & 0xff)) >> 2) + 5) & 0xfffc) + 0xc) {
 	if (!memcmp(encoded_string, This->typelib_segment_data[MSFT_SEG_IMPORTFILES] + offset + 0xc, length)) return offset;
     }
 
