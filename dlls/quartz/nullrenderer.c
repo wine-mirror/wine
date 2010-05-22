@@ -53,6 +53,7 @@ typedef struct NullRendererImpl
 {
     const IBaseFilterVtbl * lpVtbl;
     const IUnknownVtbl * IInner_vtbl;
+    IUnknown *seekthru_unk;
 
     LONG refCount;
     CRITICAL_SECTION csFilter;
@@ -65,16 +66,18 @@ typedef struct NullRendererImpl
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
-    MediaSeekingImpl mediaSeeking;
 } NullRendererImpl;
 
 static HRESULT NullRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 {
     NullRendererImpl *This = iface;
     HRESULT hr = S_OK;
+    REFERENCE_TIME start, stop;
 
     TRACE("%p %p\n", iface, pSample);
 
+    if (SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
+        MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, start);
     EnterCriticalSection(&This->csFilter);
     if (This->pInputPin->flushing || This->pInputPin->end_of_stream)
         hr = S_FALSE;
@@ -86,62 +89,6 @@ static HRESULT NullRenderer_Sample(LPVOID iface, IMediaSample * pSample)
 static HRESULT NullRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
     TRACE("Not a stub!\n");
-    return S_OK;
-}
-
-static inline NullRendererImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
-{
-    return (NullRendererImpl *)((char*)iface - FIELD_OFFSET(NullRendererImpl, mediaSeeking.lpVtbl));
-}
-
-static HRESULT WINAPI NullRendererImpl_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
-{
-    NullRendererImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
-}
-
-static ULONG WINAPI NullRendererImpl_Seeking_AddRef(IMediaSeeking * iface)
-{
-    NullRendererImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_AddRef((IUnknown *)This);
-}
-
-static ULONG WINAPI NullRendererImpl_Seeking_Release(IMediaSeeking * iface)
-{
-    NullRendererImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_Release((IUnknown *)This);
-}
-
-static const IMediaSeekingVtbl TransformFilter_Seeking_Vtbl =
-{
-    NullRendererImpl_Seeking_QueryInterface,
-    NullRendererImpl_Seeking_AddRef,
-    NullRendererImpl_Seeking_Release,
-    MediaSeekingImpl_GetCapabilities,
-    MediaSeekingImpl_CheckCapabilities,
-    MediaSeekingImpl_IsFormatSupported,
-    MediaSeekingImpl_QueryPreferredFormat,
-    MediaSeekingImpl_GetTimeFormat,
-    MediaSeekingImpl_IsUsingTimeFormat,
-    MediaSeekingImpl_SetTimeFormat,
-    MediaSeekingImpl_GetDuration,
-    MediaSeekingImpl_GetStopPosition,
-    MediaSeekingImpl_GetCurrentPosition,
-    MediaSeekingImpl_ConvertTimeFormat,
-    MediaSeekingImpl_SetPositions,
-    MediaSeekingImpl_GetPositions,
-    MediaSeekingImpl_GetAvailable,
-    MediaSeekingImpl_SetRate,
-    MediaSeekingImpl_GetRate,
-    MediaSeekingImpl_GetPreroll
-};
-
-static HRESULT NullRendererImpl_Change(IBaseFilter *iface)
-{
-    TRACE("(%p)\n", iface);
     return S_OK;
 }
 
@@ -178,9 +125,15 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        MediaSeekingImpl_Init((IBaseFilter*)pNullRenderer, NullRendererImpl_Change, NullRendererImpl_Change, NullRendererImpl_Change, &pNullRenderer->mediaSeeking, &pNullRenderer->csFilter);
-        pNullRenderer->mediaSeeking.lpVtbl = &TransformFilter_Seeking_Vtbl;
-
+        ISeekingPassThru *passthru;
+        hr = CoCreateInstance(&CLSID_SeekingPassThru, pUnkOuter ? pUnkOuter : (IUnknown*)&pNullRenderer->IInner_vtbl, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pNullRenderer->seekthru_unk);
+        if (FAILED(hr)) {
+            IUnknown_Release((IUnknown*)pNullRenderer);
+            return hr;
+        }
+        IUnknown_QueryInterface(pNullRenderer->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
+        ISeekingPassThru_Init(passthru, TRUE, (IPin*)pNullRenderer->pInputPin);
+        ISeekingPassThru_Release(passthru);
         *ppv = pNullRenderer;
     }
     else
@@ -212,7 +165,7 @@ static HRESULT WINAPI NullRendererInner_QueryInterface(IUnknown * iface, REFIID 
     else if (IsEqualIID(riid, &IID_IBaseFilter))
         *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->mediaSeeking;
+        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
 
     if (*ppv)
     {
@@ -259,6 +212,8 @@ static ULONG WINAPI NullRendererInner_Release(IUnknown * iface)
         IPin_Release((IPin *)This->pInputPin);
 
         This->lpVtbl = NULL;
+        if (This->seekthru_unk)
+            IUnknown_Release(This->seekthru_unk);
 
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
@@ -350,6 +305,7 @@ static HRESULT WINAPI NullRenderer_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->csFilter);
     {
         This->state = State_Stopped;
+        MediaSeekingPassThru_ResetMediaTime(This->seekthru_unk);
     }
     LeaveCriticalSection(&This->csFilter);
 
@@ -550,13 +506,15 @@ static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
 {
     InputPin* This = (InputPin*)iface;
     IMediaEventSink* pEventSink;
+    NullRendererImpl *pNull;
     IFilterGraph *graph;
     HRESULT hr = S_OK;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
     InputPin_EndOfStream(iface);
-    graph = ((NullRendererImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph;
+    pNull = (NullRendererImpl*)This->pin.pinInfo.pFilter;
+    graph = pNull->filterInfo.pGraph;
     if (graph)
     {
         hr = IFilterGraph_QueryInterface(((NullRendererImpl*)This->pin.pinInfo.pFilter)->filterInfo.pGraph, &IID_IMediaEventSink, (LPVOID*)&pEventSink);
@@ -566,7 +524,22 @@ static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
             IMediaEventSink_Release(pEventSink);
         }
     }
+    MediaSeekingPassThru_EOS(pNull->seekthru_unk);
 
+    return hr;
+}
+
+static HRESULT WINAPI NullRenderer_InputPin_EndFlush(IPin * iface)
+{
+    InputPin* This = (InputPin*)iface;
+    NullRendererImpl *pNull;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    hr = InputPin_EndOfStream(iface);
+    pNull = (NullRendererImpl*)This->pin.pinInfo.pFilter;
+    MediaSeekingPassThru_ResetMediaTime(pNull->seekthru_unk);
     return hr;
 }
 
@@ -588,6 +561,6 @@ static const IPinVtbl NullRenderer_InputPin_Vtbl =
     IPinImpl_QueryInternalConnections,
     NullRenderer_InputPin_EndOfStream,
     InputPin_BeginFlush,
-    InputPin_EndFlush,
+    NullRenderer_InputPin_EndFlush,
     InputPin_NewSegment
 };
