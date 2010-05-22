@@ -1734,6 +1734,7 @@ START_TEST(usp10)
     lf.lfWidth = 10;
 
     hfont = SelectObject(hdc, CreateFontIndirectA(&lf));
+    ok(hfont != NULL, "SelectObject failed: %p\n", hfont);
 
     test_ScriptItemize();
     test_ScriptItemIzeShapePlace(hdc,pwOutGlyphs);
