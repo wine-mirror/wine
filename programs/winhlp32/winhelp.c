@@ -570,7 +570,6 @@ static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
     WINHELP_DeleteButtons(win);
 
     if (win->page) WINHELP_DeletePageLinks(win->page);
-    if (win->hShadowWnd) DestroyWindow(win->hShadowWnd);
     if (win->hHistoryWnd) DestroyWindow(win->hHistoryWnd);
 
     DeleteObject(win->hBrush);
@@ -843,7 +842,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     if (bPopup)
     {
         DWORD   mask = SendMessage(hTextWnd, EM_GETEVENTMASK, 0, 0);
-        RECT    rect;
 
         win->font_scale = Globals.active_win->font_scale;
         WINHELP_SetupText(hTextWnd, win, wpage->relative);
@@ -853,17 +851,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         SendMessage(hTextWnd, EM_SETEVENTMASK, 0, mask | ENM_REQUESTRESIZE);
         SendMessage(hTextWnd, EM_REQUESTRESIZE, 0, 0);
         SendMessage(hTextWnd, EM_SETEVENTMASK, 0, mask);
-
-        GetWindowRect(win->hMainWnd, &rect);
-        win->hShadowWnd = CreateWindowEx(WS_EX_TOOLWINDOW, SHADOW_WIN_CLASS_NAME,
-                                         "", WS_POPUP | WS_VISIBLE,
-                                         rect.left + SHADOW_DX, rect.top + SHADOW_DY,
-                                         rect.right - rect.left,
-                                         rect.bottom - rect.top,
-                                         Globals.active_win->hMainWnd, 0,
-                                         Globals.hInstance, NULL);
-        SetWindowPos(win->hMainWnd, win->hShadowWnd, 0, 0, 0, 0,
-                     SWP_NOSIZE | SWP_NOMOVE);
     }
     else
     {
@@ -1196,16 +1183,6 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         break;
     }
     return DefWindowProc(hWnd, msg, wParam, lParam);
-}
-
-/***********************************************************************
- *
- *           WINHELP_ShadowWndProc
- */
-static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    if (WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL)) return 0;
-    return WINHELP_CheckPopup(hWnd, msg, wParam, lParam, NULL) ? 0L : DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 /**************************************************************************
@@ -1629,7 +1606,7 @@ BOOL WINHELP_CreateIndexWindow(BOOL is_search)
  */
 static BOOL WINHELP_RegisterWinClasses(void)
 {
-    WNDCLASSEX class_main, class_button_box, class_shadow, class_history;
+    WNDCLASSEX class_main, class_button_box, class_history;
 
     class_main.cbSize              = sizeof(class_main);
     class_main.style               = CS_HREDRAW | CS_VREDRAW;
@@ -1652,19 +1629,12 @@ static BOOL WINHELP_RegisterWinClasses(void)
     class_button_box.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
     class_button_box.lpszClassName = BUTTON_BOX_WIN_CLASS_NAME;
 
-    class_shadow                   = class_main;
-    class_shadow.lpfnWndProc       = WINHELP_ShadowWndProc;
-    class_shadow.cbWndExtra        = 0;
-    class_shadow.hbrBackground     = (HBRUSH)(COLOR_3DDKSHADOW+1);
-    class_shadow.lpszClassName     = SHADOW_WIN_CLASS_NAME;
-
     class_history                  = class_main;
     class_history.lpfnWndProc      = WINHELP_HistoryWndProc;
     class_history.lpszClassName    = HISTORY_WIN_CLASS_NAME;
 
     return (RegisterClassEx(&class_main) &&
             RegisterClassEx(&class_button_box) &&
-            RegisterClassEx(&class_shadow) &&
             RegisterClassEx(&class_history));
 }
 
