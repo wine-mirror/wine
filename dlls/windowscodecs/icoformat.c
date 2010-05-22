@@ -192,7 +192,7 @@ static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
     if (bih.biBitCount <= 8)
     {
         /* read the palette */
-        colorcount = This->entry.bColorCount ? This->entry.bColorCount : 256;
+        colorcount = bih.biClrUsed ? bih.biClrUsed : 1 << bih.biBitCount;
 
         hr = IStream_Read(This->parent->stream, colors, sizeof(RGBQUAD)*colorcount, &bytesread);
         if (FAILED(hr) || bytesread != sizeof(RGBQUAD)*colorcount) goto fail;
