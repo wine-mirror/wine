@@ -32,9 +32,9 @@ IDR_TASKMANAGER MENU DISCARDABLE
 BEGIN
     POPUP "&Bestand"
     BEGIN
-        MENUITEM "&Nieuwe taak (Uitvoeren...)",     ID_FILE_NEW
+        MENUITEM "&Nieuwe taak (uitvoeren...)",     ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "B&eëindig Task Manager",          ID_FILE_EXIT
+        MENUITEM "B&eëindig Taakbeheer",            ID_FILE_EXIT
     END
     POPUP "&Opties"
     BEGIN
@@ -60,13 +60,13 @@ BEGIN
 
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Grote symbolen",         ID_VIEW_LARGE
-        MENUITEM "&Kleine symbolen",        ID_VIEW_SMALL
+        MENUITEM "&Grote pictogrammen",     ID_VIEW_LARGE
+        MENUITEM "&Kleine pictogrammen",    ID_VIEW_SMALL
         MENUITEM "&Details",                ID_VIEW_DETAILS, CHECKED
         MENUITEM "&Selecteer rijen...",     ID_VIEW_SELECTCOLUMNS
-        POPUP "&CPU historie"
+        POPUP "&CPU geschiedenis"
         BEGIN
-            MENUITEM "&Eén grafiek, alle CPUs",     ID_VIEW_CPUHISTORY_ONEGRAPHALL
+            MENUITEM "&Eén grafiek, alle CPU's",    ID_VIEW_CPUHISTORY_ONEGRAPHALL
 
             MENUITEM "Eén grafiek &per CPU",        ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
             , CHECKED
@@ -84,9 +84,9 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "Task Manager &helponderwerpen",   ID_HELP_TOPICS
+        MENUITEM "Taakbeheer &help-onderwerpen",  ID_HELP_TOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&Over Task Manager",              ID_HELP_ABOUT
+        MENUITEM "&Over Taakbeheer",              ID_HELP_ABOUT
     END
 END
 
@@ -106,8 +106,8 @@ BEGIN
     BEGIN
         MENUITEM "&Nieuwe taak (uitvoeren...)", ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Grote symbolen",             ID_VIEW_LARGE
-        MENUITEM "&Kleine symbolen",            ID_VIEW_SMALL
+        MENUITEM "&Grote pictogrammen",         ID_VIEW_LARGE
+        MENUITEM "&Kleine pictogrammen",        ID_VIEW_SMALL
         MENUITEM "&Details",                    ID_VIEW_DETAILS, CHECKED
     END
 END
@@ -116,16 +116,16 @@ IDR_APPLICATION_PAGE_CONTEXT2 MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Wissel naar",                ID_APPLICATION_PAGE_SWITCHTO
+        MENUITEM "&Activeren",                  ID_APPLICATION_PAGE_SWITCHTO
         MENUITEM "Naar de &voorgrond brengen",  ID_WINDOWS_BRINGTOFRONT
         MENUITEM SEPARATOR
         MENUITEM "&Boven elkaar",               ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "&Naast elkaar",               ID_WINDOWS_TILEVERTICALLY
         MENUITEM "&Minimaliseren",              ID_WINDOWS_MINIMIZE
         MENUITEM "Ma&ximaliseren",              ID_WINDOWS_MAXIMIZE
-        MENUITEM "&Achter elkaar",              ID_WINDOWS_CASCADE
+        MENUITEM "A&chter elkaar",              ID_WINDOWS_CASCADE
         MENUITEM SEPARATOR
-        MENUITEM "Taak &beëindigen",            ID_APPLICATION_PAGE_ENDTASK
+        MENUITEM "Taak b&eëindigen",            ID_APPLICATION_PAGE_ENDTASK
         MENUITEM "&Ga naar proces",             ID_APPLICATION_PAGE_GOTOPROCESS
     END
 END
@@ -145,7 +145,7 @@ IDR_PROCESS_PAGE_CONTEXT MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "Proces &beëindigen",              ID_PROCESS_PAGE_ENDPROCESS
+        MENUITEM "Proces b&eëindigen",              ID_PROCESS_PAGE_ENDPROCESS
         MENUITEM "&Beëindig procesboom",            ID_PROCESS_PAGE_ENDPROCESSTREE
 
         MENUITEM "&Debuggen",                       ID_PROCESS_PAGE_DEBUG
@@ -160,7 +160,7 @@ BEGIN
             MENUITEM "L&aag",                       ID_PROCESS_PAGE_SETPRIORITY_LOW
         END
         MENUITEM "&Affiniteit instellen...",        ID_PROCESS_PAGE_SETAFFINITY
-	      MENUITEM "Debug&kanalen instellen...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+        MENUITEM "Debug&kanalen instellen...",      ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -172,7 +172,7 @@ IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 264, 246
 STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
     WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
     WS_THICKFRAME
-CAPTION "Task Manager"
+CAPTION "Taakbeheer"
 MENU IDR_TASKMANAGER
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -185,9 +185,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
                     LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Nieuwe taak...",IDC_NEWTASK,187,189,53,14
-    PUSHBUTTON      "&Wissel naar",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
-    PUSHBUTTON      "&Beëindig taak",IDC_ENDTASK,75,189,53,14,WS_DISABLED
+    PUSHBUTTON      "&Nieuwe taak...",IDC_NEWTASK,181,189,59,14
+    PUSHBUTTON      "&Activeren",IDC_SWITCHTO,119,189,59,14,WS_DISABLED
+    PUSHBUTTON      "&Taak beëindigen",IDC_ENDTASK,57,189,59,14,WS_DISABLED
 END
 
 IDD_PROCESS_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
@@ -197,7 +197,7 @@ BEGIN
     CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
                     WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Beëindig proces",IDC_ENDPROCESS,171,189,69,14
+    PUSHBUTTON      "Proces &beëindigen",IDC_ENDPROCESS,171,189,69,14
     CONTROL         "&Toon processen van alle gebruikers",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,125,10
 END
@@ -212,7 +212,7 @@ BEGIN
     GROUPBOX        "Totaal",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Commit Charge (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Fysiek geheugen (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "Kernel geheugen (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Kernelgeheugen (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
     LTEXT           "Handles",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
     LTEXT           "Threads",IDS_TOTALS_THREAD_COUNT,12,140,27,8
     LTEXT           "Processen",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
@@ -249,15 +249,15 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_KERNEL_MEMORY_NONPAGED,195,193,38,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
-    GROUPBOX        "Historie van het CPU-gebruik",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
-    GROUPBOX        "Historie van het geheugengebruik",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Geschiedenis van het CPU-gebruik",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Geschiedenis van het geheugengebruik",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "CPU-gebruik",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
 		    WS_EX_CLIENTEDGE
     PUSHBUTTON      "Geheugengebruik",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
                     WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Historie van het CPU-gebruik",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
+    PUSHBUTTON      "Geschiedenis van het CPU-gebruik",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
                     153,37,0,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Historie van het geheugengebruik",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+    PUSHBUTTON      "Geschiedenis van het geheugengebruik",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
                     153,37,0,WS_EX_CLIENTEDGE
 END
 
@@ -354,7 +354,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
     PUSHBUTTON      "Annuleren",IDCANCEL,138,178,50,14
-    LTEXT           "Selecteer de kolommen die op de procespagina van de Task Manager moeten verschijnen",     
+    LTEXT           "Selecteer de kolommen die op de procespagina van Taakbeheer moeten verschijnen",
                     IDC_STATIC,7,7,181,17
     CONTROL         "&Naam",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
@@ -362,9 +362,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
     CONTROL         "&CPU-gebruik",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,50,90,10
-    CONTROL         "CPU-&tijd",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "CPU-ti&jd",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,61,48,10
-    CONTROL         "&Geheugengebruik",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Geheugenge&bruik",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,72,95,10
     CONTROL         "&Delta van het geheugengebruik",IDC_MEMORYUSAGEDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,83,115,10
@@ -380,15 +380,15 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,75,10
     CONTROL         "&Sessie-ID",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,50,10
-    CONTROL         "Gebruikers&naam",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Gebrui&kersnaam",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,80,10
-    CONTROL         "Delta van de &page faults",IDC_PAGEFAULTSDELTA,"Button",
+    CONTROL         "Delta van d&e page faults",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,28,100,10
     CONTROL         "&Grootte van virtueel geheugen",IDC_VIRTUALMEMORYSIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,39,115,10
-    CONTROL         "&Paged Pool",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Pag&ed Pool",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,132,50,90,10
-    CONTROL         "Non&paged Pool",IDC_NONPAGEDPOOL,"Button",
+    CONTROL         "N&on-paged Pool",IDC_NONPAGEDPOOL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,61,105,10
     CONTROL         "Basisp&rioriteit",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,72,55,10
@@ -414,20 +414,20 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APP_TITLE           "Task Manager"
-    IDC_TASKMGR             "Task Manager"
+    IDS_APP_TITLE           "Taakbeheer"
+    IDC_TASKMGR             "Taakbeheer"
     IDS_RUNDLG_CAPTION      "Start nieuwe taak"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_FILE_NEW                   "Start een nieuw programma"
-    ID_OPTIONS_ALWAYSONTOP        "De Task Manager blijft altijd met alle vensters op de voorgrond, totdat hij geminimaliseerd wordt"
-    ID_OPTIONS_MINIMIZEONUSE      "De Task Manager minimaliseerd zich als een 'Wissel naar' operatie uitgevoerd wordt"
-    ID_OPTIONS_HIDEWHENMINIMIZED  "Verberg de Task Manager als hij geminimaliseerd is"
+    ID_OPTIONS_ALWAYSONTOP        "Taakbeheer blijft altijd met alle vensters op de voorgrond, totdat hij geminimaliseerd wordt"
+    ID_OPTIONS_MINIMIZEONUSE      "Taakbeheer minimaliseert zich als een 'Wissel naar' operatie uitgevoerd wordt"
+    ID_OPTIONS_HIDEWHENMINIMIZED  "Verberg Taakbeheer als hij geminimaliseerd is"
     ID_VIEW_REFRESH               "Forceer een verversing, onafhankelijk van het verversingstempo"
-    ID_VIEW_LARGE                 "Toon taken met grote symbolen"
-    ID_VIEW_SMALL                 "Toon taken met kleine symbolen"
+    ID_VIEW_LARGE                 "Toon taken met grote pictogrammen"
+    ID_VIEW_SMALL                 "Toon taken met kleine pictogrammen"
     ID_VIEW_DETAILS               "Toon gedetailleerde informatie over iedere taak"
     ID_VIEW_UPDATESPEED_HIGH      "Ververs de weergave tweemaal per seconde"
     ID_VIEW_UPDATESPEED_NORMAL    "Ververs de weergave elke 2 seconden"
@@ -443,22 +443,22 @@ BEGIN
     ID_WINDOWS_MAXIMIZE               "Maximaliseer de vensters"
     ID_WINDOWS_CASCADE                "Plaats de vensters achter elkaar op de desktop"
     ID_WINDOWS_BRINGTOFRONT           "Haal het venster naar de voorgrond, maar wissel er niet naartoe"
-    ID_HELP_TOPICS                    "Toon de helponderwerpen van de Task Manager"
-    ID_HELP_ABOUT                     "Toon programmainformatie, versienummer en copyright"
-    ID_FILE_EXIT                      "Beëindig de Task Manager applicatie"
+    ID_HELP_TOPICS                    "Toon de help-onderwerpen van de Taakbeheer"
+    ID_HELP_ABOUT                     "Toon programma-informatie, versienummer en copyright"
+    ID_FILE_EXIT                      "Beëindig Taakbeheer"
     ID_OPTIONS_SHOW16BITTASKS         "Toon 16-bit taken onder de bijbehorende ntvdm.exe"
     ID_VIEW_SELECTCOLUMNS             "Selecteer de kolommen die op de procespagina zichtbaar moeten zijn"
     ID_VIEW_SHOWKERNELTIMES           "Toon de kerneltijden in prestatiegrafieken"
-    ID_VIEW_CPUHISTORY_ONEGRAPHALL    "Een enkele historiegrafiek toont het totale CPU-gebruik"
-    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Elke CPU heeft zijn eigen historiegrafiek"
+    ID_VIEW_CPUHISTORY_ONEGRAPHALL    "Een enkele geschiedenis-grafiek toont het totale CPU-gebruik"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Elke CPU heeft zijn eigen geschiedenis-grafiek"
     ID_APPLICATION_PAGE_SWITCHTO      "Brengt de taak naar de voorgrond en wisselt focus naar de taak"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_ENDTASK                              "Zeg de geselecteerde taken zich te beëindigen"
-    ID_GOTOPROCESS                          "Wissel de focus naar het proces van de geselecteerde taak"
-    ID_RESTORE                              "Herstel de Task Manager vanuit zijn verborgen status"
+    ID_ENDTASK                              "Zegt de geselecteerde taken zich te beëindigen"
+    ID_GOTOPROCESS                          "Verandert de focus naar het proces van de geselecteerde taak"
+    ID_RESTORE                              "Herstel Taakbeheer vanuit zijn verborgen status"
     ID_PROCESS_PAGE_ENDPROCESS              "Verwijder het proces van het systeem"
     ID_PROCESS_PAGE_ENDPROCESSTREE          "Verwijder het proces en al zijn kindprocessen van het systeem"
     ID_PROCESS_PAGE_DEBUG                   "Verbind de debugger met dit proces"
@@ -474,8 +474,8 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_VIEW_LARGE                     "&Grote symbolen"
-    IDS_VIEW_SMALL                     "&Kleine symbolen"
+    IDS_VIEW_LARGE                     "&Grote pictogrammen"
+    IDS_VIEW_SMALL                     "&Kleine pictogrammen"
     IDS_VIEW_DETAILS                   "&Details"
     IDS_WINDOWS                        "&Vensters"
     IDS_VIEW_SELECTCOLUMNS             "&Selecteer kolommen"
@@ -495,7 +495,7 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_IMAGENAME         "Procesnaam"
-    IDS_PID               "Process ID"
+    IDS_PID               "Proces-ID"
     IDS_CPUUSAGE          "CPU-gebruik"
     IDS_CPUTIME           "CPU-tijd"
     IDS_MEMORYUSAGE       "Geheugengebruik"
@@ -523,15 +523,15 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_WARNING_TITLE               "Task Manager Waarschuwing"
-    IDS_PRIORITY_CHANGE_MESSAGE     "WAARSCHUWING: Het veranderen van de prioriteits klasse van dit\n\
+    IDS_WARNING_TITLE               "Taakbeheer Waarschuwing"
+    IDS_PRIORITY_CHANGE_MESSAGE     "WAARSCHUWING: Het veranderen van de prioriteitsklasse van dit\n\
                                      proces kan ongewenste gevolgen hebben zoals instabiliteit van\n\
-                                     het systeem. Weet u zeker dat u de prioriteits klasse wilt veranderen?"
-    IDS_PRIORITY_UNABLE2CHANGE      "Prioriteit kan niet worden verandered"
+                                     het systeem. Weet u zeker dat u de prioriteitsklasse wilt veranderen?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Prioriteit kan niet worden veranderd"
     IDS_TERMINATE_MESSAGE           "WAARSCHUWING: Het stoppen van een proces kan ongewenste\n\
                                      gevolgen hebben zoals verlies van gegevens en instabiliteit\n\
                                      van het systeem. Het proces zal geen mogelijkheid worden gegeven\n\
-                                     om zijn gegevens of status op te slaan. Weet u zeker dat u dit process\n\
+                                     om zijn gegevens of status op te slaan. Weet u zeker dat u dit proces\n\
                                      wilt stoppen?"
     IDS_TERMINATE_UNABLE2TERMINATE  "Proces kan niet worden gestopt"
     IDS_DEBUG_MESSAGE               "WAARSCHUWING: Het debuggen van dit proces kan verlies van data tot\n\
@@ -539,7 +539,7 @@ BEGIN
     IDS_DEBUG_UNABLE2DEBUG          "Proces kan niet worden gedebugged"
     IDS_AFFINITY_ERROR_MESSAGE      "Het proces moet aan tenminste 1 processor worden gekoppeld"
     IDS_AFFINITY_ERROR_TITLE        "Ongeldige optie"
-    IDS_AFFINITY_UNABLE2ACCESS      "Proces affiniteit kan niet worden gelezen of gezet"
+    IDS_AFFINITY_UNABLE2ACCESS      "Procesaffiniteit kan niet worden gelezen of ingesteld"
 END
 
 STRINGTABLE DISCARDABLE
