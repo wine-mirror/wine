@@ -3095,7 +3095,9 @@ static void test_CreateFontIndirect(void)
         lstrcpyA(lf.lfFaceName, TestName[i]);
         hfont = CreateFontIndirectA(&lf);
         ok(hfont != 0, "CreateFontIndirectA failed\n");
+        SetLastError(0xdeadbeef);
         ret = GetObject(hfont, sizeof(getobj_lf), &getobj_lf);
+        ok(ret, "GetObject failed: %d\n", GetLastError());
         ok(lf.lfItalic == getobj_lf.lfItalic, "lfItalic: expect %02x got %02x\n", lf.lfItalic, getobj_lf.lfItalic);
         ok(lf.lfWeight == getobj_lf.lfWeight ||
            broken((SHORT)lf.lfWeight == getobj_lf.lfWeight), /* win9x */
