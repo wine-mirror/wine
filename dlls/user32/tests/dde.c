@@ -1447,6 +1447,7 @@ static void test_initialisation(void)
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
+    ok(hdata == NULL, "Expected NULL, got %p\n", hdata);
     ret = DdeGetLastError(client_pid);
 todo_wine
     ok(ret == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", ret);
