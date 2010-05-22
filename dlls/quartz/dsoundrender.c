@@ -54,6 +54,7 @@ typedef struct DSoundRenderImpl
     const IBasicAudioVtbl *IBasicAudio_vtbl;
     const IReferenceClockVtbl *IReferenceClock_vtbl;
     const IAMDirectSoundVtbl *IAMDirectSound_vtbl;
+    IUnknown *seekthru_unk;
 
     LONG refCount;
     CRITICAL_SECTION csFilter;
@@ -75,48 +76,12 @@ typedef struct DSoundRenderImpl
     DWORD in_loop;
 
     REFERENCE_TIME play_time;
-    MediaSeekingImpl mediaSeeking;
 
     HANDLE state_change, blocked;
 
     LONG volume;
     LONG pan;
 } DSoundRenderImpl;
-
-/* Seeking is not needed for a renderer, rely on newsegment for the appropriate changes */
-static HRESULT sound_mod_stop(IBaseFilter *iface)
-{
-    TRACE("(%p)\n", iface);
-    return S_OK;
-}
-
-static HRESULT sound_mod_start(IBaseFilter *iface)
-{
-    TRACE("(%p)\n", iface);
-
-    return S_OK;
-}
-
-static HRESULT sound_mod_rate(IBaseFilter *iface)
-{
-    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
-
-    WAVEFORMATEX *format = (WAVEFORMATEX*)This->pInputPin->pin.mtCurrent.pbFormat;
-    DWORD freq = format->nSamplesPerSec;
-    double rate = This->mediaSeeking.dRate;
-
-    freq = (DWORD)((double)freq * rate);
-
-    TRACE("(%p)\n", iface);
-
-    if (freq > DSBFREQUENCY_MAX)
-        return VFW_E_UNSUPPORTED_AUDIO;
-
-    if (freq < DSBFREQUENCY_MIN)
-        return VFW_E_UNSUPPORTED_AUDIO;
-
-    return S_OK;
-}
 
 static inline HRESULT DSoundRender_GetPos(DSoundRenderImpl *This, DWORD *pPlayPos, REFERENCE_TIME *pRefTime)
 {
@@ -319,6 +284,8 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     hr = IMediaSample_GetTime(pSample, &tStart, &tStop);
     if (FAILED(hr))
         ERR("Cannot get sample time (%x)\n", hr);
+    else
+        MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, tStart);
 
     if (This->rtLastStop != tStart && (IMediaSample_IsDiscontinuity(pSample) == S_FALSE))
         WARN("Unexpected discontinuity: Last: %u.%03u, tStart: %u.%03u\n",
@@ -352,6 +319,7 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
             LeaveCriticalSection(&This->csFilter);
             return S_OK;
         }
+        SetEvent(This->state_change);
     }
 
     cbSrcStream = IMediaSample_GetActualDataLength(pSample);
@@ -442,18 +410,19 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     if (SUCCEEDED(hr))
     {
-        MediaSeekingImpl_Init((IBaseFilter*)pDSoundRender, sound_mod_stop, sound_mod_start, sound_mod_rate, &pDSoundRender->mediaSeeking, &pDSoundRender->csFilter);
-        pDSoundRender->mediaSeeking.lpVtbl = &IMediaSeeking_Vtbl;
-
+        ISeekingPassThru *passthru;
         pDSoundRender->state_change = CreateEventW(NULL, TRUE, TRUE, NULL);
-        pDSoundRender->blocked = CreateEventW(NULL, FALSE, FALSE, NULL);
-
-        if (!pDSoundRender->state_change || !pDSoundRender->blocked)
+        pDSoundRender->blocked = CreateEventW(NULL, TRUE, TRUE, NULL);
+        hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)pDSoundRender, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pDSoundRender->seekthru_unk);
+        if (!pDSoundRender->state_change || !pDSoundRender->blocked || FAILED(hr))
         {
             IUnknown_Release((IUnknown *)pDSoundRender);
             return HRESULT_FROM_WIN32(GetLastError());
         }
 
+        IUnknown_QueryInterface(pDSoundRender->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
+        ISeekingPassThru_Init(passthru, TRUE, (IPin*)pDSoundRender->pInputPin);
+        ISeekingPassThru_Release(passthru);
         *ppv = pDSoundRender;
     }
     else
@@ -488,7 +457,7 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
     else if (IsEqualIID(riid, &IID_IReferenceClock))
         *ppv = &This->IReferenceClock_vtbl;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->mediaSeeking.lpVtbl;
+        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     else if (IsEqualIID(riid, &IID_IAMDirectSound))
         *ppv = &This->IAMDirectSound_vtbl;
 
@@ -546,7 +515,8 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
 
         This->lpVtbl = NULL;
         This->IBasicAudio_vtbl = NULL;
-        
+        if (This->seekthru_unk)
+            IUnknown_Release(This->seekthru_unk);
         This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
 
@@ -601,6 +571,7 @@ static HRESULT WINAPI DSoundRender_Stop(IBaseFilter * iface)
         /* Complete our transition */
         SetEvent(This->state_change);
         SetEvent(This->blocked);
+        MediaSeekingPassThru_ResetMediaTime(This->seekthru_unk);
     }
     LeaveCriticalSection(&This->csFilter);
     
@@ -967,6 +938,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
         hr = IMediaEventSink_Notify(pEventSink, EC_COMPLETE, S_OK, 0);
         IMediaEventSink_Release(pEventSink);
     }
+    MediaSeekingPassThru_EOS(me->seekthru_unk);
     LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
@@ -1024,6 +996,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndFlush(IPin * iface)
     }
     hr = InputPin_EndFlush(iface);
     LeaveCriticalSection(This->pin.pCritSec);
+    MediaSeekingPassThru_ResetMediaTime(pFilter->seekthru_unk);
 
     return hr;
 }
@@ -1299,56 +1272,6 @@ static const IReferenceClockVtbl IReferenceClock_Vtbl =
     ReferenceClock_AdviseTime,
     ReferenceClock_AdvisePeriodic,
     ReferenceClock_Unadvise
-};
-
-static inline DSoundRenderImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
-{
-    return (DSoundRenderImpl *)((char*)iface - FIELD_OFFSET(DSoundRenderImpl, mediaSeeking.lpVtbl));
-}
-
-static HRESULT WINAPI sound_seek_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
-{
-    DSoundRenderImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
-}
-
-static ULONG WINAPI sound_seek_AddRef(IMediaSeeking * iface)
-{
-    DSoundRenderImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_AddRef((IUnknown *)This);
-}
-
-static ULONG WINAPI sound_seek_Release(IMediaSeeking * iface)
-{
-    DSoundRenderImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_Release((IUnknown *)This);
-}
-
-static const IMediaSeekingVtbl IMediaSeeking_Vtbl =
-{
-    sound_seek_QueryInterface,
-    sound_seek_AddRef,
-    sound_seek_Release,
-    MediaSeekingImpl_GetCapabilities,
-    MediaSeekingImpl_CheckCapabilities,
-    MediaSeekingImpl_IsFormatSupported,
-    MediaSeekingImpl_QueryPreferredFormat,
-    MediaSeekingImpl_GetTimeFormat,
-    MediaSeekingImpl_IsUsingTimeFormat,
-    MediaSeekingImpl_SetTimeFormat,
-    MediaSeekingImpl_GetDuration,
-    MediaSeekingImpl_GetStopPosition,
-    MediaSeekingImpl_GetCurrentPosition,
-    MediaSeekingImpl_ConvertTimeFormat,
-    MediaSeekingImpl_SetPositions,
-    MediaSeekingImpl_GetPositions,
-    MediaSeekingImpl_GetAvailable,
-    MediaSeekingImpl_SetRate,
-    MediaSeekingImpl_GetRate,
-    MediaSeekingImpl_GetPreroll
 };
 
 /*** IUnknown methods ***/
