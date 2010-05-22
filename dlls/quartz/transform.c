@@ -73,80 +73,7 @@ static HRESULT TransformFilter_Output_QueryAccept(LPVOID iface, const AM_MEDIA_T
     return S_FALSE;
 }
 
-
-static inline TransformFilterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
-{
-    return (TransformFilterImpl *)((char*)iface - FIELD_OFFSET(TransformFilterImpl, mediaSeeking.lpVtbl));
-}
-
-static HRESULT WINAPI TransformFilter_Seeking_QueryInterface(IMediaSeeking * iface, REFIID riid, LPVOID * ppv)
-{
-    TransformFilterImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
-}
-
-static ULONG WINAPI TransformFilter_Seeking_AddRef(IMediaSeeking * iface)
-{
-    TransformFilterImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_AddRef((IUnknown *)This);
-}
-
-static ULONG WINAPI TransformFilter_Seeking_Release(IMediaSeeking * iface)
-{
-    TransformFilterImpl *This = impl_from_IMediaSeeking(iface);
-
-    return IUnknown_Release((IUnknown *)This);
-}
-
-static const IMediaSeekingVtbl TransformFilter_Seeking_Vtbl =
-{
-    TransformFilter_Seeking_QueryInterface,
-    TransformFilter_Seeking_AddRef,
-    TransformFilter_Seeking_Release,
-    MediaSeekingImpl_GetCapabilities,
-    MediaSeekingImpl_CheckCapabilities,
-    MediaSeekingImpl_IsFormatSupported,
-    MediaSeekingImpl_QueryPreferredFormat,
-    MediaSeekingImpl_GetTimeFormat,
-    MediaSeekingImpl_IsUsingTimeFormat,
-    MediaSeekingImpl_SetTimeFormat,
-    MediaSeekingImpl_GetDuration,
-    MediaSeekingImpl_GetStopPosition,
-    MediaSeekingImpl_GetCurrentPosition,
-    MediaSeekingImpl_ConvertTimeFormat,
-    MediaSeekingImpl_SetPositions,
-    MediaSeekingImpl_GetPositions,
-    MediaSeekingImpl_GetAvailable,
-    MediaSeekingImpl_SetRate,
-    MediaSeekingImpl_GetRate,
-    MediaSeekingImpl_GetPreroll
-};
-
-/* These shouldn't be implemented by default.
- * Usually only source filters should implement these
- * and even it's not needed all of the time
- */
-static HRESULT TransformFilter_ChangeCurrent(IBaseFilter *iface)
-{
-    TRACE("(%p) filter hasn't implemented current position change!\n", iface);
-    return S_OK;
-}
-
-static HRESULT TransformFilter_ChangeStop(IBaseFilter *iface)
-{
-    TRACE("(%p) filter hasn't implemented stop position change!\n", iface);
-    return S_OK;
-}
-
-static HRESULT TransformFilter_ChangeRate(IBaseFilter *iface)
-{
-    TRACE("(%p) filter hasn't implemented rate change!\n", iface);
-    return S_OK;
-}
-
-HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, const TransformFuncsTable* pFuncsTable, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
+HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, const TransformFuncsTable* pFuncsTable)
 {
     HRESULT hr;
     PIN_INFO piInput;
@@ -195,18 +122,14 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
             ERR("Cannot create output pin (%x)\n", hr);
         else
         {
-            if (!stop)
-                stop = TransformFilter_ChangeStop;
-            if (!current)
-                current = TransformFilter_ChangeCurrent;
-            if (!rate)
-                rate = TransformFilter_ChangeRate;
-
-            MediaSeekingImpl_Init((IBaseFilter*)pTransformFilter, stop, current, rate, &pTransformFilter->mediaSeeking, &pTransformFilter->csFilter);
-            pTransformFilter->mediaSeeking.lpVtbl = &TransformFilter_Seeking_Vtbl;
+            ISeekingPassThru *passthru;
+            hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)pTransformFilter, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pTransformFilter->seekthru_unk);
+            IUnknown_QueryInterface(pTransformFilter->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
+            ISeekingPassThru_Init(passthru, FALSE, (IPin*)pTransformFilter->ppPins[0]);
+            ISeekingPassThru_Release(passthru);
         }
     }
-    else
+    if (FAILED(hr))
     {
         CoTaskMemFree(pTransformFilter->ppPins);
         pTransformFilter->csFilter.DebugInfo->Spare[0] = 0;
@@ -233,7 +156,7 @@ static HRESULT WINAPI TransformFilter_QueryInterface(IBaseFilter * iface, REFIID
     else if (IsEqualIID(riid, &IID_IBaseFilter))
         *ppv = This;
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->mediaSeeking;
+        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
 
     if (*ppv)
     {

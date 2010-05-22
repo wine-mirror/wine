@@ -326,7 +326,7 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This = CoTaskMemAlloc(sizeof(ACMWrapperImpl));
     ZeroMemory(This, sizeof(ACMWrapperImpl));
 
-    hr = TransformFilter_Create(&(This->tf), &CLSID_ACMWrapper, &ACMWrapper_FuncsTable, NULL, NULL, NULL);
+    hr = TransformFilter_Create(&(This->tf), &CLSID_ACMWrapper, &ACMWrapper_FuncsTable);
 
     if (FAILED(hr))
         return hr;

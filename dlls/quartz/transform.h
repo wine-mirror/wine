@@ -34,6 +34,7 @@ typedef struct TransformFuncsTable {
 struct TransformFilterImpl
 {
     const IBaseFilterVtbl * lpVtbl;
+    IUnknown *seekthru_unk;
 
     LONG refCount;
     CRITICAL_SECTION csFilter;
@@ -42,7 +43,6 @@ struct TransformFilterImpl
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
     CLSID clsid;
-    struct MediaSeekingImpl mediaSeeking;
 
     IPin **ppPins;
     ULONG npins;
@@ -51,4 +51,4 @@ struct TransformFilterImpl
     const TransformFuncsTable * pFuncsTable;
 };
 
-HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, const TransformFuncsTable* pFuncsTable, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate);
+HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, const TransformFuncsTable* pFuncsTable);
