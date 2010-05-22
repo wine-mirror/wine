@@ -1725,22 +1725,29 @@ MSVCRT_size_t CDECL _mbstrlen(const char* str)
 MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_size_t tmp;
+    MSVCRT_size_t i, size;
 
     if(!locale)
         locale = get_locale();
 
-    tmp = _mbstrlen_l(mbstr, locale);
-    if(tmp>count && wcstr)
-        tmp = count;
+    /* Ignore count parameter */
+    if(!wcstr)
+        return MultiByteToWideChar(locale->locinfo->lc_codepage, 0, mbstr, -1, NULL, 0)-1;
 
-    tmp = MultiByteToWideChar(locale->locinfo->lc_codepage, 0,
-            mbstr, tmp, wcstr, count);
+    for(i=0, size=0; i<count; i++) {
+        if(mbstr[size] == '\0')
+            break;
 
-    if(tmp<count && wcstr)
-        wcstr[tmp] = '\0';
+        size += (MSVCRT_isleadbyte(mbstr[size]) ? 2 : 1);
+    }
 
-    return tmp;
+    size = MultiByteToWideChar(locale->locinfo->lc_codepage, 0,
+            mbstr, size, wcstr, count);
+
+    if(size<count && wcstr)
+        wcstr[size] = '\0';
+
+    return size;
 }
 
 /*********************************************************************
