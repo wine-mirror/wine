@@ -42,6 +42,9 @@ typedef struct PassThruImpl {
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
     BOOL renderer;
+    CRITICAL_SECTION time_cs;
+    BOOL timevalid;
+    REFERENCE_TIME time_earliest;
 } PassThruImpl;
 
 static HRESULT WINAPI SeekInner_QueryInterface(IUnknown * iface,
@@ -90,6 +93,8 @@ static ULONG WINAPI SeekInner_Release(IUnknown * iface) {
 
     if (ref == 0)
     {
+        This->time_cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->time_cs);
         CoTaskMemFree(This);
     }
     return ref;
@@ -213,6 +218,9 @@ HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     fimpl->IMediaSeeking_vtbl = &IMediaSeekingPassThru_Vtbl;
     fimpl->ref = 1;
     fimpl->pin = NULL;
+    fimpl->timevalid = 0;
+    InitializeCriticalSection(&fimpl->time_cs);
+    fimpl->time_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PassThruImpl.time_cs");
     return S_OK;
 }
 
@@ -854,8 +862,20 @@ static HRESULT WINAPI MediaSeekingPassThru_GetCurrentPosition(IMediaSeeking * if
 {
     ICOM_THIS_MULTI(PassThruImpl, IMediaSeeking_vtbl, iface);
     IMediaSeeking *seek;
-    HRESULT hr;
+    HRESULT hr = S_OK;
     TRACE("(%p/%p)->(%p)\n", iface, This, pCurrent);
+    if (!pCurrent)
+        return E_POINTER;
+    EnterCriticalSection(&This->time_cs);
+    if (This->timevalid)
+        *pCurrent = This->time_earliest;
+    else
+        hr = E_FAIL;
+    LeaveCriticalSection(&This->time_cs);
+    if (SUCCEEDED(hr)) {
+        hr = IMediaSeeking_ConvertTimeFormat(iface, pCurrent, NULL, *pCurrent, &TIME_FORMAT_MEDIA_TIME);
+        return hr;
+    }
     hr = get_connected(This, &seek);
     if (SUCCEEDED(hr)) {
         hr = IMediaSeeking_GetCurrentPosition(seek, pCurrent);
@@ -960,6 +980,35 @@ static HRESULT WINAPI MediaSeekingPassThru_GetPreroll(IMediaSeeking * iface, LON
         IMediaSeeking_Release(seek);
     }
     return hr;
+}
+
+void MediaSeekingPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start) {
+    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    EnterCriticalSection(&This->time_cs);
+    This->time_earliest = start;
+    This->timevalid = 1;
+    LeaveCriticalSection(&This->time_cs);
+}
+
+void MediaSeekingPassThru_ResetMediaTime(IUnknown *iface) {
+    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    EnterCriticalSection(&This->time_cs);
+    This->timevalid = 0;
+    LeaveCriticalSection(&This->time_cs);
+}
+
+void MediaSeekingPassThru_EOS(IUnknown *iface) {
+    ICOM_THIS_MULTI(PassThruImpl, IInner_vtbl, iface);
+    REFERENCE_TIME time;
+    HRESULT hr;
+    hr = IMediaSeeking_GetStopPosition((IMediaSeeking*)&This->IMediaSeeking_vtbl, &time);
+    EnterCriticalSection(&This->time_cs);
+    if (SUCCEEDED(hr)) {
+        This->timevalid = 1;
+        This->time_earliest = time;
+    } else
+        This->timevalid = 0;
+    LeaveCriticalSection(&This->time_cs);
 }
 
 static const IMediaSeekingVtbl IMediaSeekingPassThru_Vtbl =

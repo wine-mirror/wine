@@ -59,4 +59,8 @@ HRESULT WINAPI MediaSeekingImpl_SetRate(IMediaSeeking * iface, double dRate);
 HRESULT WINAPI MediaSeekingImpl_GetRate(IMediaSeeking * iface, double * dRate);
 HRESULT WINAPI MediaSeekingImpl_GetPreroll(IMediaSeeking * iface, LONGLONG * pPreroll);
 
+void MediaSeekingPassThru_RegisterMediaTime(IUnknown *iface, REFERENCE_TIME start);
+void MediaSeekingPassThru_ResetMediaTime(IUnknown *iface);
+void MediaSeekingPassThru_EOS(IUnknown *iface);
+
 #endif /*QUARTZ_CONTROL_H*/
