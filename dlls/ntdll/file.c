@@ -1227,7 +1227,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
     SERVER_START_REQ( ioctl )
     {
         req->code           = code;
-        req->blocking       = !apc && !event;
+        req->blocking       = !apc && !event && !cvalue;
         req->async.handle   = wine_server_obj_handle( handle );
         req->async.callback = wine_server_client_ptr( ioctl_completion );
         req->async.iosb     = wine_server_client_ptr( io );
