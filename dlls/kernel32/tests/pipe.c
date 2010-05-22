@@ -804,31 +804,37 @@ static void test_NamedPipe_2(void)
     trace("test_NamedPipe_2 starting\n");
     /* Set up a twenty second timeout */
     alarm_event = CreateEvent( NULL, TRUE, FALSE, NULL );
+    SetLastError(0xdeadbeef);
     alarmThread = CreateThread(NULL, 0, alarmThreadMain, (void *) 20000, 0, &alarmThreadId);
+    ok(alarmThread != NULL, "CreateThread failed: %d\n", GetLastError());
 
-    /* The servers we're about to exercize do try to clean up carefully,
-     * but to reduce the change of a test failure due to a pipe handle
+    /* The servers we're about to exercise do try to clean up carefully,
+     * but to reduce the chance of a test failure due to a pipe handle
      * leak in the test code, we'll use a different pipe name for each server.
      */
 
     /* Try server #1 */
+    SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain1, (void *)8, 0, &serverThreadId);
-    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
+    ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
     exercizeServer(PIPENAME "serverThreadMain1", serverThread);
 
     /* Try server #2 */
+    SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain2, 0, 0, &serverThreadId);
-    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
+    ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
     exercizeServer(PIPENAME "serverThreadMain2", serverThread);
 
     /* Try server #3 */
+    SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain3, 0, 0, &serverThreadId);
-    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
+    ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
     exercizeServer(PIPENAME "serverThreadMain3", serverThread);
 
     /* Try server #4 */
+    SetLastError(0xdeadbeef);
     serverThread = CreateThread(NULL, 0, serverThreadMain4, 0, 0, &serverThreadId);
-    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
+    ok(serverThread != NULL, "CreateThread failed: %d\n", GetLastError());
     exercizeServer(PIPENAME "serverThreadMain4", serverThread);
 
     ok(SetEvent( alarm_event ), "SetEvent\n");
