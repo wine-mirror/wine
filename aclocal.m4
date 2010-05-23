@@ -166,13 +166,15 @@ wine_fn_all_dir_rules ()
 {
     wine_fn_append_file ALL_DIRS $[1]
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"__clean__ .PHONY: $[1]/__clean__
+"__clean__: $[1]/__clean__
+.PHONY: $[1]/__clean__
 $[1]/__clean__: $[1]/Makefile
 	@cd $[1] && \$(MAKE) clean
 	\$(RM) $[1]/Makefile
 $[1]/Makefile: $[1]/Makefile.in config.status $[2]
 	@./config.status --file $[1]/Makefile && cd $[1] && \$(MAKE) depend
-depend .PHONY: $[1]/__depend__
+depend: $[1]/__depend__
+.PHONY: $[1]/__depend__
 $[1]/__depend__: \$(MAKEDEP) dummy
 	@./config.status --file $[1]/Makefile && cd $[1] && \$(MAKE) depend"
 }
@@ -184,7 +186,8 @@ wine_fn_config_makefile ()
     wine_fn_all_dir_rules $ac_dir "Make.rules \$(MAKEDEP)"
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all .PHONY: $ac_dir
+"all: $ac_dir
+.PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE)
 install:: $ac_dir
@@ -231,7 +234,8 @@ wine_fn_config_dll ()
               dnl enable_win16 is special in that it disables import libs too
               [test "$ac_enable" != enable_win16 || return 0],
               [wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all .PHONY: dlls/$ac_dir
+"all: dlls/$ac_dir
+.PHONY: dlls/$ac_dir
 dlls/$ac_dir: dlls/$ac_dir/Makefile __builddeps__ dummy
 	@cd dlls/$ac_dir && \$(MAKE)
 install:: dlls/$ac_dir/Makefile __builddeps__ 
@@ -286,7 +290,8 @@ wine_fn_config_program ()
     wine_fn_all_dir_rules programs/$ac_dir "programs/Makeprog.rules \$(MAKEDEP)"
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all .PHONY: programs/$ac_dir
+"all: programs/$ac_dir
+.PHONY: programs/$ac_dir
 programs/$ac_dir: programs/$ac_dir/Makefile __builddeps__ dummy
 	@cd programs/$ac_dir && \$(MAKE)"
 
@@ -320,13 +325,16 @@ $ac_name.res: $ac_name.rc $ac_name.exe"
     wine_fn_all_dir_rules $ac_dir "Maketest.rules \$(MAKEDEP)"
 
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"all programs/winetest .PHONY: $ac_dir
+"all programs/winetest: $ac_dir
+.PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)
-crosstest .PHONY: $ac_dir/__crosstest__
+crosstest: $ac_dir/__crosstest__
+.PHONY: $ac_dir/__crosstest__
 $ac_dir/__crosstest__: $ac_dir/Makefile __buildcrossdeps__ dummy
 	@cd $ac_dir && \$(MAKE) crosstest
-test .PHONY: $ac_dir/__test__
+test: $ac_dir/__test__
+.PHONY: $ac_dir/__test__
 $ac_dir/__test__: dummy
 	@cd $ac_dir && \$(MAKE) test
 testclean::
@@ -360,7 +368,8 @@ install-dev:: $ac_dir
       wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall
-all __tooldeps__ .PHONY: $ac_dir
+all __tooldeps__: $ac_dir
+.PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile libs/port dummy
 	@cd $ac_dir && \$(MAKE)"])
 }
