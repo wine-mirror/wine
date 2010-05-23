@@ -563,7 +563,7 @@ static HRESULT WINAPI IDirect3DRMMeshBuilderImpl_Load(IDirect3DRMMeshBuilder* if
             goto end;
         }
 
-        FIXME("toto: Found object type whose GUID = %s\n", debugstr_guid(pGuid));
+        FIXME("Found object type whose GUID = %s\n", debugstr_guid(pGuid));
 
         if (!IsEqualGUID(pGuid, &TID_D3DRMMeshNormals))
         {
