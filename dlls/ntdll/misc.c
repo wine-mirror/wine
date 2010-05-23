@@ -302,27 +302,20 @@ void * __cdecl
 NTDLL_bsearch( const void *key, const void *base, size_t nmemb,
                size_t size, int (__cdecl *compar)(const void *, const void *) )
 {
-    int begin, end, cursor;
+    ssize_t min = 0;
+    ssize_t max = nmemb - 1;
 
-    begin = 0;
-    end = nmemb-1;
-    while (1) {
-	int ret;
-        cursor = (end-begin)/2+begin;
-        ret = compar(key,(char*)base+(cursor*size));
+    while (min <= max)
+    {
+        ssize_t cursor = (min + max) / 2;
+        int ret = compar(key,(const char *)base+(cursor*size));
         if (!ret)
             return (char*)base+(cursor*size);
         if (ret < 0)
-            end = cursor;
+            max = cursor - 1;
         else
-            begin = cursor;
-        if ((end-begin)<=1)
-            break;
+            min = cursor + 1;
     }
-    if (!compar(key,(char*)base+(begin*size)))
-        return (char*)base+(begin*size);
-    if (!compar(key,(char*)base+(end*size)))
-        return (char*)base+(end*size);
     return NULL;
 }
 
