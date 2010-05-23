@@ -26,7 +26,6 @@
 #include "wingdi.h"
 
 #include "d3drm_private.h"
-#include "d3drm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
