@@ -382,6 +382,7 @@ static void check_ps_dstmod(struct asm_parser *This, DWORD dstmod) {
 struct allowed_reg_type {
     DWORD type;
     DWORD count;
+    BOOL reladdr;
 };
 
 static BOOL check_reg_type(const struct shader_reg *reg,
@@ -390,9 +391,13 @@ static BOOL check_reg_type(const struct shader_reg *reg,
 
     while(allowed[i].type != ~0U) {
         if(reg->type == allowed[i].type) {
-            if(reg->rel_reg) return TRUE; /* The relative addressing register
-                                             can have a negative value, we
-                                             can't check the register index */
+            if(reg->rel_reg) {
+                if(allowed[i].reladdr)
+                    return TRUE; /* The relative addressing register
+                                    can have a negative value, we
+                                    can't check the register index */
+                return FALSE;
+            }
             if(reg->regnum < allowed[i].count) return TRUE;
             return FALSE;
         }
@@ -403,18 +408,18 @@ static BOOL check_reg_type(const struct shader_reg *reg,
 
 /* Native assembler doesn't do separate checks for src and dst registers */
 static const struct allowed_reg_type vs_2_reg_allowed[] = {
-    { BWRITERSPR_TEMP,      12 },
-    { BWRITERSPR_INPUT,     16 },
-    { BWRITERSPR_CONST,    ~0U },
-    { BWRITERSPR_ADDR,       1 },
-    { BWRITERSPR_CONSTBOOL, 16 },
-    { BWRITERSPR_CONSTINT,  16 },
-    { BWRITERSPR_LOOP,       1 },
-    { BWRITERSPR_LABEL,   2048 },
-    { BWRITERSPR_PREDICATE,  1 },
-    { BWRITERSPR_RASTOUT,    3 }, /* oPos, oFog and oPts */
-    { BWRITERSPR_ATTROUT,    2 },
-    { BWRITERSPR_TEXCRDOUT,  8 },
+    { BWRITERSPR_TEMP,      12,  FALSE },
+    { BWRITERSPR_INPUT,     16,  FALSE },
+    { BWRITERSPR_CONST,    ~0U,   TRUE },
+    { BWRITERSPR_ADDR,       1,  FALSE },
+    { BWRITERSPR_CONSTBOOL, 16,  FALSE },
+    { BWRITERSPR_CONSTINT,  16,  FALSE },
+    { BWRITERSPR_LOOP,       1,  FALSE },
+    { BWRITERSPR_LABEL,   2048,  FALSE },
+    { BWRITERSPR_PREDICATE,  1,  FALSE },
+    { BWRITERSPR_RASTOUT,    3,  FALSE }, /* oPos, oFog and oPts */
+    { BWRITERSPR_ATTROUT,    2,  FALSE },
+    { BWRITERSPR_TEXCRDOUT,  8,  FALSE },
     { ~0U, 0 } /* End tag */
 };
 
@@ -437,17 +442,17 @@ static void asmparser_srcreg_vs_2(struct asm_parser *This,
 }
 
 static const struct allowed_reg_type vs_3_reg_allowed[] = {
-    { BWRITERSPR_TEMP,         32 },
-    { BWRITERSPR_INPUT,        16 },
-    { BWRITERSPR_CONST,       ~0U },
-    { BWRITERSPR_ADDR,          1 },
-    { BWRITERSPR_CONSTBOOL,    16 },
-    { BWRITERSPR_CONSTINT,     16 },
-    { BWRITERSPR_LOOP,          1 },
-    { BWRITERSPR_LABEL,      2048 },
-    { BWRITERSPR_PREDICATE,     1 },
-    { BWRITERSPR_SAMPLER,       4 },
-    { BWRITERSPR_OUTPUT,       12 },
+    { BWRITERSPR_TEMP,         32,  FALSE },
+    { BWRITERSPR_INPUT,        16,   TRUE },
+    { BWRITERSPR_CONST,       ~0U,   TRUE },
+    { BWRITERSPR_ADDR,          1,  FALSE },
+    { BWRITERSPR_CONSTBOOL,    16,  FALSE },
+    { BWRITERSPR_CONSTINT,     16,  FALSE },
+    { BWRITERSPR_LOOP,          1,  FALSE },
+    { BWRITERSPR_LABEL,      2048,  FALSE },
+    { BWRITERSPR_PREDICATE,     1,  FALSE },
+    { BWRITERSPR_SAMPLER,       4,  FALSE },
+    { BWRITERSPR_OUTPUT,       12,   TRUE },
     { ~0U, 0 } /* End tag */
 };
 
@@ -466,15 +471,15 @@ static void asmparser_srcreg_vs_3(struct asm_parser *This,
 }
 
 static const struct allowed_reg_type ps_2_0_reg_allowed[] = {
-    { BWRITERSPR_INPUT,         2 },
-    { BWRITERSPR_TEMP,         32 },
-    { BWRITERSPR_CONST,        32 },
-    { BWRITERSPR_CONSTINT,     16 },
-    { BWRITERSPR_CONSTBOOL,    16 },
-    { BWRITERSPR_SAMPLER,      16 },
-    { BWRITERSPR_TEXTURE,       8 },
-    { BWRITERSPR_COLOROUT,      4 },
-    { BWRITERSPR_DEPTHOUT,      1 },
+    { BWRITERSPR_INPUT,         2,  FALSE },
+    { BWRITERSPR_TEMP,         32,  FALSE },
+    { BWRITERSPR_CONST,        32,  FALSE },
+    { BWRITERSPR_CONSTINT,     16,  FALSE },
+    { BWRITERSPR_CONSTBOOL,    16,  FALSE },
+    { BWRITERSPR_SAMPLER,      16,  FALSE },
+    { BWRITERSPR_TEXTURE,       8,  FALSE },
+    { BWRITERSPR_COLOROUT,      4,  FALSE },
+    { BWRITERSPR_DEPTHOUT,      1,  FALSE },
     { ~0U, 0 } /* End tag */
 };
 
@@ -496,17 +501,17 @@ static void asmparser_srcreg_ps_2(struct asm_parser *This,
 }
 
 static const struct allowed_reg_type ps_2_x_reg_allowed[] = {
-    { BWRITERSPR_INPUT,         2 },
-    { BWRITERSPR_TEMP,         32 },
-    { BWRITERSPR_CONST,        32 },
-    { BWRITERSPR_CONSTINT,     16 },
-    { BWRITERSPR_CONSTBOOL,    16 },
-    { BWRITERSPR_PREDICATE,     1 },
-    { BWRITERSPR_SAMPLER,      16 },
-    { BWRITERSPR_TEXTURE,       8 },
-    { BWRITERSPR_LABEL,      2048 },
-    { BWRITERSPR_COLOROUT,      4 },
-    { BWRITERSPR_DEPTHOUT,      1 },
+    { BWRITERSPR_INPUT,         2,  FALSE },
+    { BWRITERSPR_TEMP,         32,  FALSE },
+    { BWRITERSPR_CONST,        32,  FALSE },
+    { BWRITERSPR_CONSTINT,     16,  FALSE },
+    { BWRITERSPR_CONSTBOOL,    16,  FALSE },
+    { BWRITERSPR_PREDICATE,     1,  FALSE },
+    { BWRITERSPR_SAMPLER,      16,  FALSE },
+    { BWRITERSPR_TEXTURE,       8,  FALSE },
+    { BWRITERSPR_LABEL,      2048,  FALSE },
+    { BWRITERSPR_COLOROUT,      4,  FALSE },
+    { BWRITERSPR_DEPTHOUT,      1,  FALSE },
     { ~0U, 0 } /* End tag */
 };
 
@@ -528,18 +533,18 @@ static void asmparser_srcreg_ps_2_x(struct asm_parser *This,
 }
 
 static const struct allowed_reg_type ps_3_reg_allowed[] = {
-    { BWRITERSPR_INPUT,        10 },
-    { BWRITERSPR_TEMP,         32 },
-    { BWRITERSPR_CONST,       224 },
-    { BWRITERSPR_CONSTINT,     16 },
-    { BWRITERSPR_CONSTBOOL,    16 },
-    { BWRITERSPR_PREDICATE,     1 },
-    { BWRITERSPR_SAMPLER,      16 },
-    { BWRITERSPR_MISCTYPE,      2 }, /* vPos and vFace */
-    { BWRITERSPR_LOOP,          1 },
-    { BWRITERSPR_LABEL,      2048 },
-    { BWRITERSPR_COLOROUT,      4 },
-    { BWRITERSPR_DEPTHOUT,      1 },
+    { BWRITERSPR_INPUT,        10,   TRUE },
+    { BWRITERSPR_TEMP,         32,  FALSE },
+    { BWRITERSPR_CONST,       224,  FALSE },
+    { BWRITERSPR_CONSTINT,     16,  FALSE },
+    { BWRITERSPR_CONSTBOOL,    16,  FALSE },
+    { BWRITERSPR_PREDICATE,     1,  FALSE },
+    { BWRITERSPR_SAMPLER,      16,  FALSE },
+    { BWRITERSPR_MISCTYPE,      2,  FALSE }, /* vPos and vFace */
+    { BWRITERSPR_LOOP,          1,  FALSE },
+    { BWRITERSPR_LABEL,      2048,  FALSE },
+    { BWRITERSPR_COLOROUT,      4,  FALSE },
+    { BWRITERSPR_DEPTHOUT,      1,  FALSE },
     { ~0U, 0 } /* End tag */
 };
 

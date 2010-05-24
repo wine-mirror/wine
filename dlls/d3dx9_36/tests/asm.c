@@ -1291,6 +1291,21 @@ static void failure_test(void) {
         /* shader 32: t5 not allowed in ps_1_3 */
         "ps_1_3\n"
         "tex t5\n",
+        /* shader 33: no temporary registers relative addressing */
+        "vs_3_0\n"
+        "add r0, r0[ a0.x ], r1\n",
+        /* shader 34: no input registers relative addressing in vs_2_0 */
+        "vs_2_0\n"
+        "add r0, v[ a0.x ], r1\n",
+        /* shader 35: no aL register in ps_2_0 */
+        "ps_2_0\n"
+        "add r0, v[ aL ], r1\n",
+        /* shader 36: no relative addressing in ps_2_0 */
+        "ps_2_0\n"
+        "add r0, v[ r0 ], r1\n",
+        /* shader 37: no a0 register in ps_3_0 */
+        "ps_3_0\n"
+        "add r0, v[ a0.x ], r1\n",
     };
     HRESULT hr;
     unsigned int i;
