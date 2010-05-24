@@ -2347,7 +2347,7 @@ static void test_VarMod(void)
   static const WCHAR szNum1[] = {'1','0','\0'};
   int l, r;
   BOOL lFound, rFound;
-  BOOL lValid, rValid;
+  BOOL lValid;
   BSTR strNum0, strNum1;
 
   CHECKPTR(VarMod);
@@ -2531,7 +2531,6 @@ static void test_VarMod(void)
 	}
 
       rFound = TRUE;
-      rValid = TRUE;
       switch(r)
 	{
 	case VT_EMPTY:
@@ -2558,7 +2557,6 @@ static void test_VarMod(void)
 	case VT_VARIANT:
 	case VT_UNKNOWN:
 	case VT_RECORD:
-	  rValid = FALSE;
 	  break;
 	default:
 	  rFound = FALSE;
