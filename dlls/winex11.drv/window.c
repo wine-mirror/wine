@@ -2330,7 +2330,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     if (data->mapped)
     {
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
-            (!event_type && !is_window_rect_mapped( rectWindow )))
+            (event_type != ConfigureNotify && !is_window_rect_mapped( rectWindow )))
             unmap_window( display, data );
     }
 
