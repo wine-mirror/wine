@@ -226,6 +226,7 @@ static HRESULT WINAPI JpegDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
 {
     JpegDecoder *This = (JpegDecoder*)iface;
     int ret;
+    LARGE_INTEGER seek;
     TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOptions);
 
     EnterCriticalSection(&This->lock);
@@ -244,6 +245,9 @@ static HRESULT WINAPI JpegDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
 
     This->stream = pIStream;
     IStream_AddRef(pIStream);
+
+    seek.QuadPart = 0;
+    IStream_Seek(This->stream, seek, STREAM_SEEK_SET, NULL);
 
     This->source_mgr.bytes_in_buffer = 0;
     This->source_mgr.init_source = source_mgr_init_source;
