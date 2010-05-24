@@ -4257,32 +4257,24 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     hIMC = ITextHost_TxImmGetContext(editor->texthost);
     ME_DeleteSelection(editor);
     ME_SaveTempStyle(editor);
-    if (lParam & GCS_RESULTSTR)
+    if (lParam & (GCS_RESULTSTR|GCS_COMPSTR))
     {
         LPWSTR lpCompStr = NULL;
         DWORD dwBufLen;
+        DWORD dwIndex = lParam & GCS_RESULTSTR;
+        if (!dwIndex)
+          dwIndex = GCS_COMPSTR;
 
-        dwBufLen = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
+        dwBufLen = ImmGetCompositionStringW(hIMC, dwIndex, NULL, 0);
         lpCompStr = HeapAlloc(GetProcessHeap(),0,dwBufLen + sizeof(WCHAR));
-        ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, lpCompStr, dwBufLen);
+        ImmGetCompositionStringW(hIMC, dwIndex, lpCompStr, dwBufLen);
         lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
         ME_InsertTextFromCursor(editor,0,lpCompStr,dwBufLen/sizeof(WCHAR),style);
         HeapFree(GetProcessHeap(), 0, lpCompStr);
-    }
-    else if (lParam & GCS_COMPSTR)
-    {
-        LPWSTR lpCompStr = NULL;
-        DWORD dwBufLen;
 
-        dwBufLen = ImmGetCompositionStringW(hIMC, GCS_COMPSTR, NULL, 0);
-        lpCompStr = HeapAlloc(GetProcessHeap(),0,dwBufLen + sizeof(WCHAR));
-        ImmGetCompositionStringW(hIMC, GCS_COMPSTR, lpCompStr, dwBufLen);
-        lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
-
-        ME_InsertTextFromCursor(editor,0,lpCompStr,dwBufLen/sizeof(WCHAR),style);
-        HeapFree(GetProcessHeap(), 0, lpCompStr);
-        ME_SetSelection(editor,editor->imeStartIndex,
-                        editor->imeStartIndex + dwBufLen/sizeof(WCHAR));
+        if (dwIndex == GCS_COMPSTR)
+          ME_SetSelection(editor,editor->imeStartIndex,
+                          editor->imeStartIndex + dwBufLen/sizeof(WCHAR));
     }
     ME_ReleaseStyle(style);
     ME_CommitUndo(editor);
