@@ -28,7 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION stateblock->device->adapter->gl_info
+#define GLINFO_LOCATION (*gl_info)
 
 /* GL locking for state handlers is done by the caller. */
 
@@ -137,7 +137,6 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
     GLenum portion = is_alpha ? GL_ALPHA : GL_RGB;
     GLenum target = GL_COMBINER0_NV + stage;
     GLenum output;
-    IWineD3DStateBlockImpl *stateblock = This->stateBlock; /* For GLINFO_LOCATION */
 
     TRACE("stage %d, is_alpha %d, op %s, arg1 %#x, arg2 %#x, arg3 %#x, texture_idx %d\n",
           stage, is_alpha, debug_d3dtop(op), arg1, arg2, arg3, texture_idx);
@@ -579,6 +578,7 @@ static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, str
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     DWORD mapped_stage = stateblock->device->texUnitMap[stage + 1];
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     float mat[2][2];
 
     /* Direct3D sets the matrix in the stage reading the perturbation map. The result is used to
@@ -587,7 +587,7 @@ static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, str
      * map is read from a specified source stage(always stage - 1 for d3d). Thus set the matrix
      * for stage + 1. Keep the nvrc tex unit mapping in mind too
      */
-    if (mapped_stage < context->gl_info->limits.textures)
+    if (mapped_stage < gl_info->limits.textures)
     {
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
         checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage))");
@@ -606,6 +606,7 @@ static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, str
 
 static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
