@@ -151,26 +151,30 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
                     (LPBYTE)&check, &sz);
             /* check min */
             ver = MSI_RecordGetString(rec,2);
-            comp_ver = msi_version_str_to_dword(ver);
-            r = check - comp_ver; 
-            if (r < 0 || (r == 0 && !(attributes &
-                                    msidbUpgradeAttributesVersionMinInclusive)))
+            if (ver)
             {
-                RegCloseKey(hukey);
-                index ++;
-                continue;
+                comp_ver = msi_version_str_to_dword(ver);
+                r = check - comp_ver;
+                if (r < 0 || (r == 0 && !(attributes & msidbUpgradeAttributesVersionMinInclusive)))
+                {
+                    RegCloseKey(hukey);
+                    index ++;
+                    continue;
+                }
             }
 
             /* check max */
             ver = MSI_RecordGetString(rec,3);
-            comp_ver = msi_version_str_to_dword(ver);
-            r = check - comp_ver;
-            if (r > 0 || (r == 0 && !(attributes & 
-                                    msidbUpgradeAttributesVersionMaxInclusive)))
+            if (ver)
             {
-                RegCloseKey(hukey);
-                index ++;
-                continue;
+                comp_ver = msi_version_str_to_dword(ver);
+                r = check - comp_ver;
+                if (r > 0 || (r == 0 && !(attributes & msidbUpgradeAttributesVersionMaxInclusive)))
+                {
+                    RegCloseKey(hukey);
+                    index ++;
+                    continue;
+                }
             }
 
             /* check language*/
