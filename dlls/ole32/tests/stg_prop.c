@@ -333,7 +333,6 @@ static void testProps(void)
 
     hr = IPropertySetStorage_Open(propSetStorage, &anyOldGuid,
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &propertyStorage);
-    todo_wine
     ok(hr == S_OK, "IPropertySetStorage_Open failed: 0x%08x\n", hr);
 
     spec.ulKind = PRSPEC_PROPID;
