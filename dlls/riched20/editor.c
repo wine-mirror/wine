@@ -4256,7 +4256,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_Style *style = ME_GetInsertStyle(editor, 0);
     hIMC = ITextHost_TxImmGetContext(editor->texthost);
     ME_DeleteSelection(editor);
-    ME_CommitUndo(editor);
     ME_SaveTempStyle(editor);
     if (lParam & GCS_RESULTSTR)
     {
@@ -4286,6 +4285,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                         editor->imeStartIndex + dwBufLen/sizeof(WCHAR));
     }
     ME_ReleaseStyle(style);
+    ME_CommitUndo(editor);
     ME_UpdateRepaint(editor);
     return 0;
   }
