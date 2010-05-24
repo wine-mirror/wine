@@ -2003,7 +2003,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
         unsigned file = 1;
         unsigned line = 1;
         unsigned is_stmt = default_stmt;
-        BOOL basic_block = FALSE, end_sequence = FALSE;
+        BOOL end_sequence = FALSE;
         unsigned opcode, extopcode, i;
 
         while (!end_sequence)
@@ -2017,7 +2017,6 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 
                 address += (delta / line_range) * insn_size;
                 line += line_base + (delta % line_range);
-                basic_block = TRUE;
                 dwarf2_set_line_number(ctx->module, address, &files, file, line);
             }
             else
@@ -2025,7 +2024,6 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                 switch (opcode)
                 {
                 case DW_LNS_copy:
-                    basic_block = FALSE;
                     dwarf2_set_line_number(ctx->module, address, &files, file, line);
                     break;
                 case DW_LNS_advance_pc:
@@ -2044,7 +2042,6 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                     is_stmt = !is_stmt;
                     break;
                 case DW_LNS_set_basic_block:
-                    basic_block = 1;
                     break;
                 case DW_LNS_const_add_pc:
                     address += ((255 - opcode_base) / line_range) * insn_size;
