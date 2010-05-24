@@ -1569,3 +1569,132 @@ interface IProfferService : IUnknown
 
     HRESULT RevokeService([in] DWORD cookie);
 }
+
+/*****************************************************************************
+ * IExplorerBrowserEvents interface
+ */
+[
+ object,
+ uuid(361BBDC7-E6EE-4E13-BE58-58E2240C810F)
+]
+interface IExplorerBrowserEvents : IUnknown
+{
+    HRESULT OnNavigationPending(
+        [in] PCIDLIST_ABSOLUTE pidlFolder);
+
+    HRESULT OnViewCreated(
+        [in] IShellView *psv);
+
+    HRESULT OnNavigationComplete(
+        [in] PCIDLIST_ABSOLUTE pidlFolder);
+
+    HRESULT OnNavigationFailed(
+        [in] PCIDLIST_ABSOLUTE pidlFolder);
+}
+
+typedef GUID EXPLORERPANE;
+typedef EXPLORERPANE *REFEXPLORERPANE;
+
+/*****************************************************************************
+ * IExplorerPaneVisibility interface
+ */
+[
+ object,
+ uuid(E07010EC-BC17-44C0-97B0-46C7C95B9EDC)
+]
+interface IExplorerPaneVisibility : IUnknown
+{
+    typedef enum tagEXPLORERPANESTATE {
+        EPS_DONTCARE     = 0x0,
+        EPS_DEFAULT_ON   = 0x1,
+        EPS_DEFAULT_OFF  = 0x2,
+        EPS_STATE_MASK   = 0xffff,
+        EPS_INITIALSTATE = 0x10000,
+        EPS_FORCE        = 0x20000
+    } EXPLORERPANESTATE;
+
+    HRESULT GetPaneState(
+        [in] REFEXPLORERPANE ep,
+        [out] EXPLORERPANESTATE *peps);
+}
+
+typedef [v1_enum] enum tagEXPLORER_BROWSER_FILL_FLAGS {
+    EBF_NONE                     = 0,
+    EBF_SELECTFROMDATAOBJECT     = 0x100,
+    EBF_NODROPTARGET             = 0x200
+} EXPLORER_BROWSER_FILL_FLAGS;
+
+typedef [v1_enum] enum tagEXPLORER_BROWSER_OPTIONS {
+    EBO_NONE               = 0x00,
+    EBO_NAVIGATEONCE       = 0x01,
+    EBO_SHOWFRAMES         = 0x02,
+    EBO_ALWAYSNAVIGATE     = 0x04,
+    EBO_NOTRAVELLOG        = 0x08,
+    EBO_NOWRAPPERWINDOW    = 0x10,
+    EBO_HTMLSHAREPOINTVIEW = 0x20
+} EXPLORER_BROWSER_OPTIONS;
+
+cpp_quote("#define SID_SExplorerBrowserFrame IID_ICommDlgBrowser")
+
+/*****************************************************************************
+ * IExplorerBrowser interface
+ */
+[
+ object,
+ uuid(DFD3B6B5-C10C-4BE9-85F6-A66969F402F6),
+ pointer_default(unique)
+]
+interface IExplorerBrowser : IUnknown
+{
+
+    [local] HRESULT Initialize(
+        [in] HWND hwndParent,
+        [in] const RECT *prc,
+        [in, unique] const FOLDERSETTINGS *pfs);
+
+    HRESULT Destroy();
+
+    [local] HRESULT SetRect(
+        [in,out,unique] HDWP *phdwp,
+        [in] RECT rcBrowser);
+
+    HRESULT SetPropertyBag(
+        [in, string] LPCWSTR pszPropertyBag);
+
+    HRESULT SetEmptyText(
+        [in, string] LPCWSTR pszEmptyText);
+
+    HRESULT SetFolderSettings(
+        [in] const FOLDERSETTINGS *pfs);
+
+    HRESULT Advise(
+        [in] IExplorerBrowserEvents *psbe,
+        [out] DWORD *pdwCookie);
+
+    HRESULT Unadvise(
+        [in] DWORD dwCookie);
+
+    HRESULT SetOptions(
+        [in] EXPLORER_BROWSER_OPTIONS dwFlag);
+
+    HRESULT GetOptions(
+        [out] EXPLORER_BROWSER_OPTIONS *pdwFlag);
+
+    HRESULT BrowseToIDList(
+        [in] PCUIDLIST_RELATIVE pidl,
+        [in] UINT uFlags);
+
+    HRESULT BrowseToObject(
+        [in] IUnknown *punk,
+        [in] UINT uFlags);
+
+    HRESULT FillFromObject(
+        [in] IUnknown *punk,
+        [in] EXPLORER_BROWSER_FILL_FLAGS dwFlags);
+
+    HRESULT RemoveAll();
+
+    HRESULT GetCurrentView(
+        [in] REFIID riid,
+        [out, iid_is(riid)] IUnknown **ppv);
+}
