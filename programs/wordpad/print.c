@@ -487,7 +487,6 @@ static void print(LPPRINTDLGW pd, LPWSTR wszFileName)
     StartDocW(fr.hdc, &di);
     do
     {
-        int bottom = fr.rc.bottom;
         if(StartPage(fr.hdc) <= 0)
             break;
 
@@ -495,7 +494,6 @@ static void print(LPPRINTDLGW pd, LPWSTR wszFileName)
 
         if(EndPage(fr.hdc) <= 0)
             break;
-        bottom = fr.rc.bottom;
 
         printedPages++;
         if((pd->Flags & PD_PAGENUMS) && (printedPages > (pd->nToPage - pd->nFromPage)))
