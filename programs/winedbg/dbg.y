@@ -274,7 +274,8 @@ info_command:
     | tINFO tALLREGS            { be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 1); }
     | tINFO tSEGMENTS expr_rvalue { info_win32_segments($3 >> 3, 1); }
     | tINFO tSEGMENTS           { info_win32_segments(0, -1); }
-    | tINFO tSTACK              { stack_info(); }
+    | tINFO tSTACK tNUM         { stack_info($3); }
+    | tINFO tSTACK              { stack_info(-1); }
     | tINFO tSYMBOL tSTRING     { symbol_info($3); }
     | tINFO tLOCAL              { symbol_info_locals(); }
     | tINFO tDISPLAY            { display_info(); }

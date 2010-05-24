@@ -33,11 +33,14 @@
 /***********************************************************************
  *           stack_info
  *
- * Dump the top of the stack
+ * Dump the top of the stack. If len <= 0, a default length is used.
  */
-void stack_info(void)
+void stack_info(int len)
 {
     struct dbg_lvalue lvalue;
+
+    if(len <= 0)
+        len = 24;
 
     lvalue.cookie = 0;
     lvalue.type.id = dbg_itype_segptr;
@@ -51,14 +54,14 @@ void stack_info(void)
     switch (lvalue.addr.Mode)
     {
     case AddrModeFlat: /* 32-bit or 64-bit mode */
-        memory_examine(&lvalue, 24, 'a');
+        memory_examine(&lvalue, len, 'a');
         break;
     case AddrMode1632: /* 32-bit mode */
-        memory_examine(&lvalue, 24, 'x');
+        memory_examine(&lvalue, len, 'x');
         break;
     case AddrModeReal:  /* 16-bit mode */
     case AddrMode1616:
-        memory_examine(&lvalue, 24, 'w');
+        memory_examine(&lvalue, len, 'w');
 	break;
     }
 }

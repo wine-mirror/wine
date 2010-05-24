@@ -182,7 +182,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, BOOL first_chance, const EXC
     {
 	/* This is a real crash, dump some info */
 	be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 0);
-	stack_info();
+	stack_info(-1);
         be_cpu->print_segment_info(dbg_curr_thread->handle, &dbg_context);
 	stack_backtrace(dbg_curr_tid);
     }

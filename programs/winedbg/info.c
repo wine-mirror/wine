@@ -106,7 +106,7 @@ void info_help(void)
             "  info segments <pid>  Displays information about all known segments",
             "  info share           Displays all loaded modules",
             "  info share <addr>    Displays internal module state",
-            "  info stack           Dumps information about top of stack",
+            "  info stack [<len>]   Dumps information about top of stack, up to len words",
             "  info symbol <sym>    Displays information about a given symbol",
             "  info thread          Shows all running threads",
             "  info wnd <handle>    Displays internal window state",

@@ -384,7 +384,7 @@ extern void             source_nuke_path(struct dbg_process* p);
 extern void             source_free_files(struct dbg_process* p);
 
   /* stack.c */
-extern void             stack_info(void);
+extern void             stack_info(int len);
 extern void             stack_backtrace(DWORD threadID);
 extern BOOL             stack_set_frame(int newframe);
 extern BOOL             stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf);
