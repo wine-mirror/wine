@@ -964,6 +964,30 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
             pFcPatternDestroy( pattern );
         }
 #endif  /* SONAME_LIBFONTCONFIG */
+
+        /* now check Xft resources */
+        {
+            char *value;
+            BOOL antialias = TRUE;
+
+            wine_tsx11_lock();
+            if ((value = XGetDefault( gdi_display, "Xft", "antialias" )))
+            {
+                if (tolower(value[0]) == 'f' || tolower(value[0]) == 'n' ||
+                    value[0] == '0' || !strcasecmp( value, "off" ))
+                    antialias = FALSE;
+            }
+            if ((value = XGetDefault( gdi_display, "Xft", "rgba" )))
+            {
+                TRACE( "Xft resource returned rgba '%s' antialias %u\n", value, antialias );
+                if (!strcmp( value, "rgb" )) entry->aa_default = AA_RGB;
+                else if (!strcmp( value, "bgr" )) entry->aa_default = AA_BGR;
+                else if (!strcmp( value, "vrgb" )) entry->aa_default = AA_VRGB;
+                else if (!strcmp( value, "vbgr" )) entry->aa_default = AA_VBGR;
+                else if (!strcmp( value, "none" )) entry->aa_default = antialias ? AA_Grey : AA_None;
+            }
+            wine_tsx11_unlock();
+        }
     }
     else
         entry->aa_default = AA_None;
