@@ -2064,21 +2064,32 @@ static void testAddSerialized(void)
 }
 
 static void compareStore(HCERTSTORE store, LPCSTR name, const BYTE *pb,
- DWORD cb)
+ DWORD cb, BOOL todo)
 {
     BOOL ret;
     CRYPT_DATA_BLOB blob = { 0, NULL };
 
     ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
      CERT_STORE_SAVE_TO_MEMORY, &blob, 0);
-    ok(blob.cbData == cb, "%s: expected size %d, got %d\n", name, cb,
-     blob.cbData);
+    ok(ret, "CertSaveStore failed: %08x\n", GetLastError());
+    if (todo)
+        todo_wine
+        ok(blob.cbData == cb, "%s: expected size %d, got %d\n", name, cb,
+         blob.cbData);
+    else
+        ok(blob.cbData == cb, "%s: expected size %d, got %d\n", name, cb,
+         blob.cbData);
     blob.pbData = HeapAlloc(GetProcessHeap(), 0, blob.cbData);
     if (blob.pbData)
     {
         ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
          CERT_STORE_SAVE_TO_MEMORY, &blob, 0);
-        ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
+        ok(ret, "CertSaveStore failed: %08x\n", GetLastError());
+        if (todo)
+            todo_wine
+            ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
+        else
+            ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
         HeapFree(GetProcessHeap(), 0, blob.pbData);
     }
 }
@@ -2330,7 +2341,7 @@ static void testAddCertificateLink(void)
         CertFreeCertificateContext(linked);
         compareStore(store2, "file store -> file store",
          serializedStoreWithCertWithFriendlyName,
-         sizeof(serializedStoreWithCertWithFriendlyName));
+         sizeof(serializedStoreWithCertWithFriendlyName), FALSE);
     }
     CertCloseStore(store2, 0);
     DeleteFileW(filename2);
@@ -2380,10 +2391,9 @@ static void testAddCertificateLink(void)
         ok(linked->hCertStore == store2, "unexpected store");
         ret = pCertControlStore(store2, 0, CERT_STORE_CTRL_COMMIT, NULL);
         ok(ret, "CertControlStore failed: %d\n", ret);
-        todo_wine
         compareStore(store2, "file store -> system store",
          serializedStoreWithCertAndHash,
-         sizeof(serializedStoreWithCertAndHash));
+         sizeof(serializedStoreWithCertAndHash), TRUE);
         CertFreeCertificateContext(linked);
     }
 
