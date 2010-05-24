@@ -1012,6 +1012,55 @@ cpp_quote("#define CDBOSC_STATECHANGE  0x00000004")
 
 
 /*****************************************************************************
+ * ICommDlgBrowser2 interface
+ */
+[
+ object,
+ uuid(10339516-2894-11D2-9039-00C04F8EEB3E),
+ pointer_default(unique)
+]
+interface ICommDlgBrowser2 : ICommDlgBrowser
+{
+
+    HRESULT Notify(
+        [in] IShellView *ppshv,
+        [in] DWORD dwNotifyType);
+
+    HRESULT GetDefaultMenuText(
+        [in] IShellView *ppshv,
+        [out, string, size_is(cchMax)] LPWSTR pszText,
+        [in] int cchMax);
+
+    HRESULT GetViewFlags(
+        [out] DWORD *pdwFlags);
+}
+
+
+/*****************************************************************************
+ * ICommDlgBrowser3 interface
+ */
+[
+ object,
+ uuid(C8AD25A1-3294-41EE-8165-71174BD01C57),
+ pointer_default(unique)
+]
+interface ICommDlgBrowser3 : ICommDlgBrowser2
+{
+
+    HRESULT OnColumnClicked(
+        [in] IShellView *ppshv,
+        [in] int iColumn);
+
+    HRESULT GetCurrentFilter(
+        [out, string, size_is(cchFileSpec)] LPWSTR pszFileSpec,
+        [in] int cchFileSpec);
+
+    HRESULT OnPreviewCreated(
+        [in] IShellView *ppshv);
+}
+
+
+/*****************************************************************************
  * IDockingWindowFrame interface
  */
 [
