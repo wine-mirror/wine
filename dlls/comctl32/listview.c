@@ -6953,7 +6953,7 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
  */
 static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 {
-    POINT Position;
+    POINT Position, Origin;
     LVITEMW lvItem;
     INT nColumn;
     
@@ -6986,7 +6986,8 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
         }
     }
 
-    LISTVIEW_GetOrigin(infoPtr, &Position);
+    if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
 
     if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;
 
@@ -6994,7 +6995,6 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
     lvItem.iItem = nItem;
     lvItem.iSubItem = nColumn;
     
-    if (lvItem.mask && !LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     switch(lprc->left)
     {
     case LVIR_ICON:
@@ -7011,7 +7011,9 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
 	return FALSE;
     }
 
-    OffsetRect(lprc, Position.x, Position.y);
+    OffsetRect(lprc, Origin.x, Position.y);
+    TRACE("return rect %s\n", wine_dbgstr_rect(lprc));
+
     return TRUE;
 }
 
