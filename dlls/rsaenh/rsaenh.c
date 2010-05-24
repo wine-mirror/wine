@@ -1167,16 +1167,6 @@ static void store_key_container_keys(KEYCONTAINER *pKeyContainer)
 static void store_key_container_permissions(KEYCONTAINER *pKeyContainer)
 {
     HKEY hKey;
-    DWORD dwFlags;
-
-    /* On WinXP, persistent keys are stored in a file located at:
-     * $AppData$\\Microsoft\\Crypto\\RSA\\$SID$\\some_hex_string
-     */
-
-    if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET)
-        dwFlags = CRYPTPROTECT_LOCAL_MACHINE;
-    else
-        dwFlags = 0;
 
     if (create_container_key(pKeyContainer, KEY_WRITE, &hKey))
     {
