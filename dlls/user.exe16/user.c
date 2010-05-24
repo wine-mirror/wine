@@ -60,6 +60,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
 
+static HINSTANCE16 gdi_inst;
+
 struct gray_string_info
 {
     GRAYSTRINGPROC16 proc;
@@ -1760,10 +1762,7 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
 {
     STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
     HANDLE16 oldDS = stack16->ds;
-    HINSTANCE16 gdi_inst;
     int userPercent, gdiPercent;
-
-    if ((gdi_inst = GetModuleHandle16( "gdi" )) < 32) return 0;
 
     switch(resType)
     {
@@ -2060,7 +2059,7 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE16 inst, WORD ds,
 
     USER_HeapSel = ds;
     register_wow_handlers();
-    LoadLibrary16( "gdi.exe" );
+    gdi_inst = LoadLibrary16( "gdi.exe" );
     LoadLibrary16( "display.drv" );
     LoadLibrary16( "keyboard.drv" );
     LoadLibrary16( "mouse.drv" );
