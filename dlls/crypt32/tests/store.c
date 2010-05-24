@@ -277,29 +277,35 @@ static void testMemStore(void)
     CertCloseStore(store1, 0);
 }
 
-static void compareFile(LPCWSTR filename, const BYTE *pb, DWORD cb)
+static void compareStore(HCERTSTORE store, LPCSTR name, const BYTE *pb,
+ DWORD cb, BOOL todo)
 {
-    HANDLE h;
-    BYTE buf[200];
     BOOL ret;
-    DWORD cbRead = 0, totalRead = 0;
+    CRYPT_DATA_BLOB blob = { 0, NULL };
 
-    h = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-     FILE_ATTRIBUTE_NORMAL, NULL);
-    if (h == INVALID_HANDLE_VALUE)
-        return;
-    do {
-        ret = ReadFile(h, buf, sizeof(buf), &cbRead, NULL);
-        if (ret && cbRead)
-        {
-            ok(totalRead + cbRead <= cb, "Expected total count %d, see %d\n",
-             cb, totalRead + cbRead);
-            ok(!memcmp(pb + totalRead, buf, cbRead),
-             "Unexpected data in file\n");
-            totalRead += cbRead;
-        }
-    } while (ret && cbRead);
-    CloseHandle(h);
+    ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
+     CERT_STORE_SAVE_TO_MEMORY, &blob, 0);
+    ok(ret, "CertSaveStore failed: %08x\n", GetLastError());
+    if (todo)
+        todo_wine
+        ok(blob.cbData == cb, "%s: expected size %d, got %d\n", name, cb,
+         blob.cbData);
+    else
+        ok(blob.cbData == cb, "%s: expected size %d, got %d\n", name, cb,
+         blob.cbData);
+    blob.pbData = HeapAlloc(GetProcessHeap(), 0, blob.cbData);
+    if (blob.pbData)
+    {
+        ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
+         CERT_STORE_SAVE_TO_MEMORY, &blob, 0);
+        ok(ret, "CertSaveStore failed: %08x\n", GetLastError());
+        if (todo)
+            todo_wine
+            ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
+        else
+            ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
+        HeapFree(GetProcessHeap(), 0, blob.pbData);
+    }
 }
 
 static const BYTE serializedStoreWithCert[] = {
@@ -689,11 +695,10 @@ static void testCollectionStore(void)
      GetLastError());
     ret = pCertControlStore(collection, 0, CERT_STORE_CTRL_COMMIT, NULL);
     ok(ret, "CertControlStore failed: %d\n", ret);
-
+    compareStore(collection, "serialized store with cert",
+     serializedStoreWithCert, sizeof(serializedStoreWithCert), FALSE);
     CertCloseStore(collection, 0);
 
-    compareFile(filename, serializedStoreWithCert,
-     sizeof(serializedStoreWithCert));
     DeleteFileW(filename);
 }
 
@@ -1294,8 +1299,8 @@ static void testFileStore(void)
         /* with commits enabled, commit is allowed */
         ret = pCertControlStore(store, 0, CERT_STORE_CTRL_COMMIT, NULL);
         ok(ret, "CertControlStore failed: %d\n", ret);
-        compareFile(filename, serializedStoreWithCert,
-         sizeof(serializedStoreWithCert));
+        compareStore(store, "serialized store with cert",
+         serializedStoreWithCert, sizeof(serializedStoreWithCert), FALSE);
         CertCloseStore(store, 0);
     }
     file = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL,
@@ -1311,9 +1316,10 @@ static void testFileStore(void)
         ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
          sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
         ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
+        compareStore(store, "serialized store with cert and CRL",
+         serializedStoreWithCertAndCRL, sizeof(serializedStoreWithCertAndCRL),
+         FALSE);
         CertCloseStore(store, 0);
-        compareFile(filename, serializedStoreWithCertAndCRL,
-         sizeof(serializedStoreWithCertAndCRL));
     }
 
     DeleteFileW(filename);
@@ -1517,9 +1523,9 @@ static void testFileNameStore(void)
          bigCert, sizeof(bigCert), CERT_STORE_ADD_ALWAYS, NULL);
         ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n",
          GetLastError());
+        compareStore(store, "serialized store with cert",
+         serializedStoreWithCert, sizeof(serializedStoreWithCert), FALSE);
         CertCloseStore(store, 0);
-        compareFile(filename, serializedStoreWithCert,
-         sizeof(serializedStoreWithCert));
     }
     store = CertOpenStore(CERT_STORE_PROV_FILENAME_W, 0, 0,
      CERT_FILE_STORE_COMMIT_ENABLE_FLAG, filename);
@@ -1529,9 +1535,10 @@ static void testFileNameStore(void)
         ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING,
          signedCRL, sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
         ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
+        compareStore(store, "serialized store with cert and CRL",
+         serializedStoreWithCertAndCRL, sizeof(serializedStoreWithCertAndCRL),
+         FALSE);
         CertCloseStore(store, 0);
-        compareFile(filename, serializedStoreWithCertAndCRL,
-         sizeof(serializedStoreWithCertAndCRL));
     }
     DeleteFileW(filename);
 
@@ -2061,37 +2068,6 @@ static void testAddSerialized(void)
     }
 
     CertCloseStore(store, 0);
-}
-
-static void compareStore(HCERTSTORE store, LPCSTR name, const BYTE *pb,
- DWORD cb, BOOL todo)
-{
-    BOOL ret;
-    CRYPT_DATA_BLOB blob = { 0, NULL };
-
-    ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
-     CERT_STORE_SAVE_TO_MEMORY, &blob, 0);
-    ok(ret, "CertSaveStore failed: %08x\n", GetLastError());
-    if (todo)
-        todo_wine
-        ok(blob.cbData == cb, "%s: expected size %d, got %d\n", name, cb,
-         blob.cbData);
-    else
-        ok(blob.cbData == cb, "%s: expected size %d, got %d\n", name, cb,
-         blob.cbData);
-    blob.pbData = HeapAlloc(GetProcessHeap(), 0, blob.cbData);
-    if (blob.pbData)
-    {
-        ret = CertSaveStore(store, X509_ASN_ENCODING, CERT_STORE_SAVE_AS_STORE,
-         CERT_STORE_SAVE_TO_MEMORY, &blob, 0);
-        ok(ret, "CertSaveStore failed: %08x\n", GetLastError());
-        if (todo)
-            todo_wine
-            ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
-        else
-            ok(!memcmp(pb, blob.pbData, cb), "%s: unexpected value\n", name);
-        HeapFree(GetProcessHeap(), 0, blob.pbData);
-    }
 }
 
 static const BYTE serializedCertWithFriendlyName[] = {
