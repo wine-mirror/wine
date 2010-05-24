@@ -33,18 +33,8 @@
 /* Define to 1 if you have the <asm/types.h> header file. */
 #undef HAVE_ASM_TYPES_H
 
-/* Define to 1 if you have the `AudioFileStreamOpen' function. */
-#undef HAVE_AUDIOFILESTREAMOPEN
-
 /* Define to 1 if you have the <AudioToolbox/AudioConverter.h> header file. */
 #undef HAVE_AUDIOTOOLBOX_AUDIOCONVERTER_H
-
-/* Define to 1 if you have the <AudioToolbox/AudioFileStream.h> header file.
-   */
-#undef HAVE_AUDIOTOOLBOX_AUDIOFILESTREAM_H
-
-/* Define to 1 if you have the <AudioToolbox/AudioFile.h> header file. */
-#undef HAVE_AUDIOTOOLBOX_AUDIOFILE_H
 
 /* Define to 1 if you have the <AudioUnit/AudioUnit.h> header file. */
 #undef HAVE_AUDIOUNIT_AUDIOUNIT_H

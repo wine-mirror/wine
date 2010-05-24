@@ -37,12 +37,6 @@
 # ifdef HAVE_AUDIOTOOLBOX_AUDIOCONVERTER_H
 #  include <AudioToolbox/AudioConverter.h>
 # endif
-# ifdef HAVE_AUDIOTOOLBOX_AUDIOFILE_H
-#  include <AudioToolbox/AudioFile.h>
-# endif
-# ifdef HAVE_AUDIOTOOLBOX_AUDIOFILESTREAM_H
-#  include <AudioToolbox/AudioFileStream.h>
-# endif
 #endif
 
 #include "windef.h"
@@ -279,31 +273,35 @@ static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
     return MMSYSERR_NOERROR;
 }
 
-#elif defined(HAVE_AUDIOFILESTREAMOPEN)
+#elif defined(HAVE_AUDIOTOOLBOX_AUDIOCONVERTER_H)
+
+static const unsigned short Mp3BitRates[2][16] =
+{
+    {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0},
+    {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0}
+};
+
+static const unsigned short Mp3SampleRates[2][4] =
+{
+    {44100, 48000, 32000, 0},
+    {22050, 24000, 16000, 0}
+};
 
 typedef struct tagAcmMpeg3Data
 {
-    LRESULT (*convert)(PACMDRVSTREAMINSTANCE adsi,
-            const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
+    LRESULT (*convert)(PACMDRVSTREAMINSTANCE adsi, const unsigned char*,
+                       LPDWORD, unsigned char*, LPDWORD);
     AudioConverterRef acr;
     AudioStreamBasicDescription in,out;
-    AudioFileStreamID afs;
 
     AudioBufferList outBuffer;
     AudioBuffer inBuffer;
 
+    SInt32 tagBytesLeft;
+
     UInt32 NumberPackets;
     AudioStreamPacketDescription *PacketDescriptions;
-
-    OSStatus lastError;
 } AcmMpeg3Data;
-
-static inline const char* wine_dbgstr_fourcc(ULONG fourcc)
-{
-    char buf[4] = { (char) (fourcc >> 24), (char) (fourcc >> 16),
-                    (char) (fourcc >> 8),  (char) fourcc };
-    return wine_dbgstr_an(buf, sizeof(buf));
-}
 
 /***********************************************************************
  *           MPEG3_drvOpen
@@ -321,8 +319,12 @@ static LRESULT MPEG3_drvClose(DWORD_PTR dwDevID)
     return 1;
 }
 
-
-static OSStatus Mp3AudioConverterComplexInputDataProc (
+/*
+ When it asks for data, give it all we have. If we have no data, we assume
+ we will in the future, so give it no packets and return an error, which
+ signals that we will have more later.
+ */
+static OSStatus Mp3AudioConverterComplexInputDataProc(
    AudioConverterRef             inAudioConverter,
    UInt32                        *ioNumberDataPackets,
    AudioBufferList               *ioData,
@@ -336,49 +338,218 @@ static OSStatus Mp3AudioConverterComplexInputDataProc (
     {
         *ioNumberDataPackets = amd->NumberPackets;
         ioData->mNumberBuffers = 1;
-        ioData->mBuffers[0].mDataByteSize =  amd->inBuffer.mDataByteSize;
-        ioData->mBuffers[0].mData =  amd->inBuffer.mData;
-        ioData->mBuffers[0].mNumberChannels =  amd->inBuffer.mNumberChannels;
+        ioData->mBuffers[0] = amd->inBuffer;
         amd->inBuffer.mDataByteSize = 0;
         if (outDataPacketDescription)
             *outDataPacketDescription = amd->PacketDescriptions;
+        return noErr;
     }
     else
+    {
         *ioNumberDataPackets = 0;
-    return noErr;
+        return -74;
+    }
 }
 
-static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
-                      const unsigned char* src, LPDWORD nsrc,
-                      unsigned char* dst, LPDWORD ndst)
+/*
+ Get the length of the current frame. We need to be at the start of a
+ frame now. The buffer must have at least the four bytes for the header.
+ */
+static SInt32 Mp3GetPacketLength(const unsigned char* src)
 {
-    AcmMpeg3Data*       amd = (AcmMpeg3Data*)adsi->dwDriver;
-    OSStatus            ret;
+    unsigned char mpegv;
+    unsigned short brate, srate;
+    unsigned int size;
 
-    TRACE("ndst %u %p  <-  %u %p\n",*ndst,dst,*nsrc, src);
-    amd->outBuffer.mNumberBuffers = 1;
-    amd->outBuffer.mBuffers[0].mDataByteSize =  *ndst;
-    amd->outBuffer.mBuffers[0].mData = dst;
-    amd->outBuffer.mBuffers[0].mNumberChannels =  amd->out.mChannelsPerFrame;
+    /*
+     Check that our position looks like an MP3 header and see which type
+     of MP3 file we have.
+     */
+    if (src[0] == 0xff && src[1] >> 1 == 0x7d) mpegv = 0; /* MPEG-1 File */
+    else if (src[0] == 0xff && src[1] >> 1 == 0x79) mpegv = 1; /* MPEG-2 File */
+    else return -1;
 
-    memset(dst,0xff,*ndst);
-    ret = AudioFileStreamParseBytes( amd->afs, *nsrc, src, 0 );
+    /* Fill in bit rate and sample rate. */
+    brate = Mp3BitRates[mpegv][(src[2] & 0xf0) >> 4];
+    srate = Mp3SampleRates[mpegv][(src[2] & 0xc) >> 2];
 
-    if (ret != noErr)
+    /* Certain values for bit rate and sample rate are invalid. */
+    if (brate == 0 || srate == 0) return -1;
+
+    /* Compute frame size, round down */
+    size = 72 * (2 - mpegv) * brate * 1000 / srate;
+
+    /* If there is padding, add one byte */
+    if (src[2] & 0x2) return size + 1;
+    else return size;
+}
+
+/*
+ Apple's AudioFileStream does weird things so we deal with parsing the
+ file ourselves. It was also designed for a different use case, so this
+ is not unexpected. We expect to have MP3 data as input (i.e. we can only
+ deal with MPEG-1 or MPEG-2 Layer III), which simplifies parsing a bit. We
+ understand the ID3v2 header and skip over it. Whenever we have data we
+ want to skip at the beginning of the input, we do this by setting *ndst=0
+ and *nsrc to the length of the unwanted data and return no error.
+ */
+static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
+                                 const unsigned char* src, LPDWORD nsrc,
+                                 unsigned char* dst, LPDWORD ndst)
+{
+    OSStatus err;
+    UInt32 size, aspdi, synci, syncSkip;
+    short framelen[4];
+    const unsigned char* psrc;
+    AcmMpeg3Data* amd = (AcmMpeg3Data*)adsi->dwDriver;
+
+    TRACE("ndst %u %p  <-  %u %p\n", *ndst, dst, *nsrc, src);
+
+    TRACE("First 16 bytes to input: %s\n", wine_dbgstr_an(src, 16));
+
+    /* Parse ID3 tag */
+    if (!memcmp(src, "ID3", 3) && amd->tagBytesLeft == -1)
     {
-        *nsrc = 0;
-        ERR("Feed Error %s\n", wine_dbgstr_fourcc(ret));
+        amd->tagBytesLeft = (src[6] << 21) + (src[7] << 14) + (src[8] << 7) + src[9];
+        if (src[5] & 0x10) amd->tagBytesLeft += 20; /* There is a footer */
+        else amd->tagBytesLeft += 10;
+    }
+
+    /* Consume the tag */
+    if (amd->tagBytesLeft >= (SInt32)*nsrc)
+    {
+        *ndst = 0;
+        amd->tagBytesLeft -= *nsrc;
+
+        TRACE("All %d bytes of source data is ID3 tag\n", *nsrc);
+        return MMSYSERR_NOERROR;
+    }
+    else if (amd->tagBytesLeft > 0)
+    {
+        src += amd->tagBytesLeft;
+        *nsrc -= amd->tagBytesLeft;
+        TRACE("Skipping %d for ID3 tag\n", amd->tagBytesLeft);
+    }
+
+    /*
+     Sync to initial MP3 frame. The largest possible MP3 frame is 1440.
+     Thus, in the first 1440 bytes we must find the beginning of 3 valid
+     frames in a row unless we reach the end of the file first.
+     */
+    syncSkip = 0;
+    for (psrc = src; psrc <= src + *nsrc - 4 && psrc < src + 1440; psrc++)
+    {
+        framelen[0] = 0;
+        for (synci = 1;
+             synci < 4 && psrc + framelen[synci-1] < src + *nsrc - 4;
+             synci++)
+        {
+            framelen[synci] = Mp3GetPacketLength(psrc + framelen[synci-1]);
+            if (framelen[synci] == -1)
+            {
+                synci = 0;
+                break;
+            }
+            framelen[synci] += framelen[synci-1];
+        }
+        if (synci > 0) /* We synced successfully */
+        {
+            if (psrc - src > 0)
+            {
+                syncSkip = psrc - src;
+                src += syncSkip;
+                *nsrc -= syncSkip;
+                TRACE("Skipping %d for frame sync\n", syncSkip);
+            }
+            break;
+        }
+    }
+
+    if (Mp3GetPacketLength(src) == -1)
+    {
+        *ndst = *nsrc = 0;
+        ERR("Frame sync failed. Cannot play file.\n");
         return MMSYSERR_ERROR;
     }
-    else if (amd->lastError != noErr)
+
+    /*
+     Fill in frame descriptions for all frames. We use an extra pointer
+     to keep track of our position in the input.
+     */
+
+    amd->NumberPackets = 25; /* This is the initial array capacity */
+    amd->PacketDescriptions = HeapAlloc(GetProcessHeap(), 0, amd->NumberPackets * sizeof(AudioStreamPacketDescription));
+    if (amd->PacketDescriptions == 0) return MMSYSERR_NOMEM;
+
+    for (aspdi = 0, psrc = src;
+         psrc <= src + *nsrc - 4;
+         psrc += amd->PacketDescriptions[aspdi].mDataByteSize, aspdi++)
     {
-        *nsrc = 0;
-        ERR("Error during feed %s\n", wine_dbgstr_fourcc(ret));
+        /* Return an error if we can't read the frame header */
+        if (Mp3GetPacketLength(psrc) == -1)
+        {
+            *ndst = *nsrc = 0;
+            ERR("Invalid header at %p.\n", psrc);
+            HeapFree(GetProcessHeap(), 0, amd->PacketDescriptions);
+            return MMSYSERR_ERROR;
+        }
+
+        /* If we run out of space, double size and reallocate */
+        if (aspdi >= amd->NumberPackets)
+        {
+            amd->NumberPackets *= 2;
+            amd->PacketDescriptions = HeapReAlloc(GetProcessHeap(), 0, amd->PacketDescriptions, amd->NumberPackets * sizeof(AudioStreamPacketDescription));
+            if (amd->PacketDescriptions == 0) return MMSYSERR_NOMEM;
+        }
+
+        /* Fill in packet data */
+        amd->PacketDescriptions[aspdi].mStartOffset = psrc - src;
+        amd->PacketDescriptions[aspdi].mVariableFramesInPacket = 0;
+        amd->PacketDescriptions[aspdi].mDataByteSize = Mp3GetPacketLength(psrc);
+
+        /* If this brings us past the end, the last one doesn't count */
+        if (psrc + amd->PacketDescriptions[aspdi].mDataByteSize > src + *nsrc) break;
+    }
+
+    /* Fill in correct number of frames */
+    amd->NumberPackets = aspdi;
+
+    /* Adjust nsrc to only include full frames */
+    *nsrc = psrc - src;
+
+    amd->inBuffer.mDataByteSize = *nsrc;
+    amd->inBuffer.mData = src;
+    amd->inBuffer.mNumberChannels = amd->in.mChannelsPerFrame;
+
+    amd->outBuffer.mNumberBuffers = 1;
+    amd->outBuffer.mBuffers[0].mDataByteSize = *ndst;
+    amd->outBuffer.mBuffers[0].mData = dst;
+    amd->outBuffer.mBuffers[0].mNumberChannels = amd->out.mChannelsPerFrame;
+
+    /* Convert the data */
+    size = amd->outBuffer.mBuffers[0].mDataByteSize / amd->out.mBytesPerPacket;
+    err = AudioConverterFillComplexBuffer(amd->acr, Mp3AudioConverterComplexInputDataProc, amd, &size, &amd->outBuffer, 0);
+
+    HeapFree(GetProcessHeap(), 0, amd->PacketDescriptions);
+
+    /* Add skipped bytes back into *nsrc */
+    if (amd->tagBytesLeft > 0)
+    {
+        *nsrc += amd->tagBytesLeft;
+        amd->tagBytesLeft = 0;
+    }
+    *nsrc += syncSkip;
+
+    if (err != noErr && err != -74)
+    {
+        *ndst = *nsrc = 0;
+        ERR("Feed Error: %ld\n", err);
         return MMSYSERR_ERROR;
     }
 
     *ndst = amd->outBuffer.mBuffers[0].mDataByteSize;
-    *nsrc = amd->inBuffer.mDataByteSize;
+
+    TRACE("convert %d -> %d\n", *nsrc, *ndst);
 
     return MMSYSERR_NOERROR;
 }
@@ -389,33 +560,7 @@ static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
  */
 static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
 {
-    SInt64 offset;
     AudioConverterReset(aad->acr);
-    AudioFileStreamSeek(aad->afs, 0, &offset, 0);
-}
-
-static void Mp3PropertyListenerProc ( void *inClientData,
-           AudioFileStreamID inAudioFileStream, UInt32 inPropertyID, UInt32 *ioFlags)
-{
-    /* No operation at this time */
-}
-
-static void Mp3PacketsProc ( void *inClientData, UInt32 inNumberBytes,
-   UInt32 inNumberPackets, const void *inInputData,
-   AudioStreamPacketDescription *inPacketDescriptions)
-{
-    AcmMpeg3Data *amd = (AcmMpeg3Data*)inClientData;
-    UInt32 size;
-
-    amd->inBuffer.mDataByteSize = inNumberBytes;
-    amd->inBuffer.mData = (void*)inInputData;
-    amd->inBuffer.mNumberChannels =  amd->in.mChannelsPerFrame;
-
-    amd->NumberPackets = inNumberPackets;
-    amd->PacketDescriptions = inPacketDescriptions;
-
-    size = amd->outBuffer.mBuffers[0].mDataByteSize / amd->out.mBytesPerPacket;
-    amd->lastError = AudioConverterFillComplexBuffer(amd->acr, Mp3AudioConverterComplexInputDataProc, inClientData, &size, &amd->outBuffer, NULL);
 }
 
 /***********************************************************************
@@ -437,13 +582,8 @@ static LRESULT MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 
     adsi->dwDriver = (DWORD_PTR)aad;
 
-    if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
+    if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
         adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
-    {
-        goto theEnd;
-    }
-    else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
     {
         OSStatus err;
 
@@ -458,7 +598,6 @@ static LRESULT MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
         aad->in.mFormatFlags = 0;
         aad->out.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;
         aad->in.mBytesPerFrame = 0;
-
         aad->out.mBytesPerFrame = (aad->out.mBitsPerChannel * aad->out.mChannelsPerFrame) / 8;
         aad->in.mBytesPerPacket =  0;
         aad->out.mBytesPerPacket = aad->out.mBytesPerFrame;
@@ -466,33 +605,26 @@ static LRESULT MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
         aad->out.mFramesPerPacket = 1;
         aad->in.mReserved = aad->out.mReserved = 0;
 
-        aad->acr = NULL;
+        aad->tagBytesLeft = -1;
 
-        err = AudioConverterNew(&aad->in, &aad->out ,&aad->acr);
+        aad->convert = mp3_leopard_horse;
+
+        err = AudioConverterNew(&aad->in, &aad->out, &aad->acr);
         if (err != noErr)
         {
-            ERR("Create failed: %s\n", wine_dbgstr_fourcc(err));
-            goto theEnd;
+            ERR("Create failed: %ld\n", err);
         }
         else
         {
-            aad->convert = mp3_leopard_horse;
-            err = AudioFileStreamOpen(aad, Mp3PropertyListenerProc, Mp3PacketsProc, kAudioFormatMPEGLayer3, &aad->afs);
-            if (err != noErr)
-            {
-                ERR("Stream Open failed: %s\n", wine_dbgstr_fourcc(err));
-                goto theEnd;
-            }
+            MPEG3_Reset(adsi, aad);
+
+            return MMSYSERR_NOERROR;
         }
     }
-    else goto theEnd;
-    MPEG3_Reset(adsi, aad);
 
-    return MMSYSERR_NOERROR;
-
- theEnd:
     HeapFree(GetProcessHeap(), 0, aad);
-    adsi->dwDriver = 0L;
+    adsi->dwDriver = 0;
+
     return MMSYSERR_NOTSUPPORTED;
 }
 
@@ -502,9 +634,13 @@ static LRESULT MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
  */
 static LRESULT MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
 {
-    AudioConverterDispose(((AcmMpeg3Data*)adsi->dwDriver)->acr);
-    AudioFileStreamClose(((AcmMpeg3Data*)adsi->dwDriver)->afs);
-    HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
+    AcmMpeg3Data* amd = (AcmMpeg3Data*)adsi->dwDriver;
+
+    AudioConverterDispose(amd->acr);
+
+    HeapFree(GetProcessHeap(), 0, amd);
+    adsi->dwDriver = 0;
+
     return MMSYSERR_NOERROR;
 }
 

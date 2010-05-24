@@ -367,8 +367,6 @@ AC_SYS_LARGEFILE()
 AC_CHECK_HEADERS(\
 	AL/al.h \
 	AudioToolbox/AudioConverter.h \
-	AudioToolbox/AudioFile.h \
-	AudioToolbox/AudioFileStream.h \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
@@ -707,13 +705,11 @@ case $host_os in
         dnl CoreServices needed by AudioUnit
         AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
         ac_save_LIBS="$LIBS"
-        if test "$ac_cv_header_AudioToolbox_AudioFile_h" = "yes"
+        if test "$ac_cv_header_AudioToolbox_AudioConverter_h" = "yes"
         then
             LIBS="$LIBS $COREAUDIO"
-            AC_CHECK_FUNCS(AudioFileStreamOpen)
             LIBS="$ac_save_LIBS"
         fi
-        test "x$ac_cv_func_AudioFileStreamOpen" = xyes || WINE_NOTICE([AudioToolbox version too old, mp3 codec won't be supported.])
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then
@@ -1534,7 +1530,7 @@ then
 fi
 WINE_NOTICE_WITH(mpg123,[test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes],
                  [libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.])
-test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes -o "x$ac_cv_func_AudioFileStreamOpen" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
+test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes -o "x$ac_cv_header_AudioToolbox_AudioConverter_h" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
 dnl **** Check for OpenAL 1.1 ****
 if test "$ac_cv_header_AL_al_h" = "yes"
