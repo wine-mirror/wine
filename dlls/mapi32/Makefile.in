@@ -20,6 +20,7 @@ RC_SRCS = \
 	Fr.rc \
 	Lt.rc \
 	Nl.rc \
+	Ro.rc \
 	Ru.rc \
 	Si.rc \
 	version.rc
