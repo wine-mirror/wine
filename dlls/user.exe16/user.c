@@ -1763,7 +1763,7 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
     HINSTANCE16 gdi_inst;
     int userPercent, gdiPercent;
 
-    if ((gdi_inst = LoadLibrary16( "GDI" )) < 32) return 0;
+    if ((gdi_inst = GetModuleHandle16( "gdi" )) < 32) return 0;
 
     switch(resType)
     {
@@ -1793,7 +1793,6 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
         userPercent = gdiPercent = 0;
         break;
     }
-    FreeLibrary16( gdi_inst );
     TRACE("<- userPercent %d, gdiPercent %d\n", userPercent, gdiPercent);
     return (WORD)min( userPercent, gdiPercent );
 }
@@ -2061,9 +2060,11 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE16 inst, WORD ds,
 
     USER_HeapSel = ds;
     register_wow_handlers();
+    LoadLibrary16( "gdi.exe" );
     LoadLibrary16( "display.drv" );
     LoadLibrary16( "keyboard.drv" );
     LoadLibrary16( "mouse.drv" );
+    LoadLibrary16( "user.exe" );  /* make sure it never gets unloaded */
     return TRUE;
 }
 
