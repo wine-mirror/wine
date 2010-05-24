@@ -4268,6 +4268,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, lpCompStr, dwBufLen);
         lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
         ME_InsertTextFromCursor(editor,0,lpCompStr,dwBufLen/sizeof(WCHAR),style);
+        HeapFree(GetProcessHeap(), 0, lpCompStr);
     }
     else if (lParam & GCS_COMPSTR)
     {
@@ -4280,6 +4281,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
 
         ME_InsertTextFromCursor(editor,0,lpCompStr,dwBufLen/sizeof(WCHAR),style);
+        HeapFree(GetProcessHeap(), 0, lpCompStr);
         ME_SetSelection(editor,editor->imeStartIndex,
                         editor->imeStartIndex + dwBufLen/sizeof(WCHAR));
     }
