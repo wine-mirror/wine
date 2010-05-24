@@ -232,7 +232,8 @@ static ME_DisplayItem *ME_MaximizeSplit(ME_WrapContext *wc, ME_DisplayItem *p, i
       }
       if (piter->member.run.nFlags & MERF_ENDWHITE)
       {
-        j = ME_ReverseFindNonWhitespaceV(piter->member.run.strText, i);
+        i = ME_ReverseFindNonWhitespaceV(piter->member.run.strText,
+                                         piter->member.run.strText->nLen);
         pp = ME_SplitRun(wc, piter, i);
         wc->pt = pp->member.run.pt;
         return pp;
