@@ -422,6 +422,7 @@ AC_CHECK_HEADERS(\
 	machine/cpu.h \
 	machine/limits.h \
 	machine/soundcard.h \
+	machine/sysarch.h \
 	mntent.h \
 	mpg123.h \
 	ncurses.h \

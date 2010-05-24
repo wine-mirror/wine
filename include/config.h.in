@@ -461,6 +461,9 @@
 /* Define to 1 if you have the <machine/soundcard.h> header file. */
 #undef HAVE_MACHINE_SOUNDCARD_H
 
+/* Define to 1 if you have the <machine/sysarch.h> header file. */
+#undef HAVE_MACHINE_SYSARCH_H
+
 /* Define to 1 if you have the <mach/machine.h> header file. */
 #undef HAVE_MACH_MACHINE_H
 

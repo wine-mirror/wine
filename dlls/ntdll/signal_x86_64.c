@@ -28,8 +28,13 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
+#endif
+
+#ifdef HAVE_MACHINE_SYSARCH_H
+# include <machine/sysarch.h>
 #endif
 
 #ifdef HAVE_SYS_PARAM_H
@@ -2288,8 +2293,10 @@ void signal_init_thread( TEB *teb )
 {
     stack_t ss;
 
-#ifdef __linux__
+#if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
+#elif defined __FreeBSD__
+    amd64_set_gsbase( teb );
 #else
 # error Please define setting %gs for your architecture
 #endif
