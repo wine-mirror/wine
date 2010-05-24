@@ -2329,6 +2329,8 @@ static void testAddCertificateLink(void)
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(linked, 0, buf, &size);
+            ok(ret, "CertSerializeCertificateStoreElement failed: %08x\n",
+             GetLastError());
             /* The serialized linked certificate now contains the friendly
              * name property.
              */
