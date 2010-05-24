@@ -2366,6 +2366,16 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
     return hasChanged;
 }
 
+static char *get_start_exe_path(void)
+ {
+    static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
+                                   '\\','s','t','a','r','t','.','e','x','e',0};
+    WCHAR start_path[MAX_PATH];
+    GetWindowsDirectoryW(start_path, MAX_PATH);
+    lstrcatW(start_path, startW);
+    return escape(start_path);
+}
+
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 {
     static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
@@ -2379,6 +2389,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     DWORD csidl = -1;
     HANDLE hsem = NULL;
     char *unix_link = NULL;
+    char *start_path = NULL;
 
     if ( !link )
     {
@@ -2503,6 +2514,13 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         goto cleanup;
     }
 
+    start_path = get_start_exe_path();
+    if (start_path == NULL)
+    {
+        WINE_ERR("out of memory\n");
+        goto cleanup;
+    }
+
     /* building multiple menus concurrently has race conditions */
     hsem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
     if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hsem, FALSE, INFINITE, QS_ALLINPUT ) )
@@ -2540,7 +2558,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
                 char *menuarg = heap_printf("/Unix %s", escaped_lnk);
                 if (menuarg)
                 {
-                    r = !write_menu_entry(unix_link, link_name, "start", menuarg, description, work_dir, icon_name);
+                    r = !write_menu_entry(unix_link, link_name, start_path, menuarg, description, work_dir, icon_name);
                     HeapFree(GetProcessHeap(), 0, menuarg);
                 }
                 HeapFree(GetProcessHeap(), 0, escaped_lnk);
@@ -2559,7 +2577,8 @@ cleanup:
     HeapFree( GetProcessHeap(), 0, escaped_args );
     HeapFree( GetProcessHeap(), 0, escaped_path );
     HeapFree( GetProcessHeap(), 0, description );
-    HeapFree( GetProcessHeap(), 0, unix_link);
+    HeapFree( GetProcessHeap(), 0, unix_link );
+    HeapFree( GetProcessHeap(), 0, start_path );
 
     if (r && !bWait)
         WINE_ERR("failed to build the menu\n" );
