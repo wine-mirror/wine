@@ -812,7 +812,7 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         }
     }
 
-    return INET_QueryOption(option, buffer, size, unicode);
+    return INET_QueryOption(hdr, option, buffer, size, unicode);
 }
 
 static const object_vtbl_t APPINFOVtbl = {
@@ -2194,7 +2194,7 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
     return res == ERROR_SUCCESS;
 }
 
-DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
+DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     static BOOL warn = TRUE;
 
@@ -2388,7 +2388,7 @@ BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
             WININET_Release(hdr);
         }
     }else {
-        res = INET_QueryOption(dwOption, lpBuffer, lpdwBufferLength, TRUE);
+        res = INET_QueryOption(NULL, dwOption, lpBuffer, lpdwBufferLength, TRUE);
     }
 
     if(res != ERROR_SUCCESS)
@@ -2421,7 +2421,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
             WININET_Release(hdr);
         }
     }else {
-        res = INET_QueryOption(dwOption, lpBuffer, lpdwBufferLength, FALSE);
+        res = INET_QueryOption(NULL, dwOption, lpBuffer, lpdwBufferLength, FALSE);
     }
 
     if(res != ERROR_SUCCESS)

@@ -1754,7 +1754,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     }
     }
 
-    return INET_QueryOption(option, buffer, size, unicode);
+    return INET_QueryOption(hdr, option, buffer, size, unicode);
 }
 
 static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer, DWORD size)
@@ -4166,7 +4166,7 @@ static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *b
         return ERROR_SUCCESS;
     }
 
-    return INET_QueryOption(option, buffer, size, unicode);
+    return INET_QueryOption(hdr, option, buffer, size, unicode);
 }
 
 static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buffer, DWORD size)
