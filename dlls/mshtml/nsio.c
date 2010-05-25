@@ -228,7 +228,7 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, PRBool *_retva
         }
 
         wine_uri->is_doc_uri = TRUE;
-        *_retval = translate_url(nscontainer->doc->basedoc.doc_obj, wine_uri);
+        *_retval = translate_url(nscontainer->doc, wine_uri);
     }
 
     nsIURI_Release(NSURI(wine_uri));
