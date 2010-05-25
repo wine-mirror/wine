@@ -541,15 +541,14 @@ static UINT MSI_ApplicablePatchW( MSIPACKAGE *package, LPCWSTR patch )
     si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
     if (!si)
     {
-        r = ERROR_FUNCTION_FAILED;
-        goto done;
+        msiobj_release( &patch_db->hdr );
+        return ERROR_FUNCTION_FAILED;
     }
 
     r = msi_check_patch_applicable( package, si );
     if (r != ERROR_SUCCESS)
         TRACE("patch not applicable\n");
 
-done:
     msiobj_release( &patch_db->hdr );
     msiobj_release( &si->hdr );
     return r;
