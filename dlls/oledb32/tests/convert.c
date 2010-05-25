@@ -370,7 +370,6 @@ static void test_converttoi2(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst == 0x1234, "got %08x\n", dst);
 
@@ -454,7 +453,6 @@ todo_wine
     hr = IDataConvert_DataConvert(convert, DBTYPE_ERROR, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst == 0x1234, "got %08x\n", dst);
 
@@ -482,10 +480,9 @@ todo_wine
 {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-}
     ok(dst_len == sizeof(dst), "got %d\n", dst_len);
-todo_wine
     ok(dst == 0x4321, "got %08x\n", dst);
+}
 
     dst_len = dst = 0x1234;
     memset(src, 0, sizeof(DECIMAL));
@@ -650,7 +647,6 @@ static void test_converttoi4(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(i4 == 0x12345678, "got %08x\n", i4);
 
@@ -733,7 +729,6 @@ todo_wine
     hr = IDataConvert_DataConvert(convert, DBTYPE_ERROR, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(i4 == 0x12345678, "got %08x\n", i4);
 
@@ -764,10 +759,9 @@ todo_wine
 {
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
-}
     ok(dst_len == sizeof(i4), "got %d\n", dst_len);
-todo_wine
     ok(i4 == 0x1234, "got %08x\n", i4);
+}
 
     i4 = 0x12345678;
     memset(src, 0, sizeof(DECIMAL));
@@ -984,7 +978,6 @@ static void test_converttowstr(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_WSTR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst[0] == 0xcccc, "got %02x\n", dst[0]);
 
@@ -1466,7 +1459,6 @@ static void test_converttostr(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_STR, 0, &dst_len, src, dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst[0] == (char)0xcc, "got %02x\n", dst[0]);
 
@@ -1964,7 +1956,6 @@ static void test_converttobyrefwstr(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_BYREF | DBTYPE_WSTR, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst == (void*)0x12345678, "got %p\n", dst);
 
@@ -2057,7 +2048,6 @@ static void test_converttoguid(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_GUID, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(IsEqualGUID(&dst, &IID_IDCInfo), "dst has changed\n");
 
@@ -2137,7 +2127,6 @@ static void test_converttoui1(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_UI1, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst == 0x12, "got %08x\n", dst);
 
@@ -2191,7 +2180,6 @@ static void test_converttoui4(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_UI4, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst == 0x12345678, "got %08x\n", dst);
 
@@ -2256,7 +2244,6 @@ static void test_converttor4(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_R4, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst == 1.0, "got %f\n", dst);
 
@@ -2310,7 +2297,6 @@ static void test_converttocy(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_CY, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst.int64 == 0xcc, "dst changed\n");
 
@@ -2364,7 +2350,6 @@ static void test_converttoui8(void)
     hr = IDataConvert_DataConvert(convert, DBTYPE_NULL, DBTYPE_UI8, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
     ok(hr == DB_E_UNSUPPORTEDCONVERSION, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_E_BADACCESSOR, "got %08x\n", dst_status);
-todo_wine
     ok(dst_len == 0x1234, "got %d\n", dst_len);
     ok(dst.QuadPart == 0xcc, "dst changed\n");
 

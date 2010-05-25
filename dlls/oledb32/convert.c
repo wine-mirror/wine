@@ -161,7 +161,6 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
           src_type, dst_type, src_len, dst_len, src, dst, dst_max_len,
           src_status, dst_status, precision, scale, flags);
 
-    *dst_len = get_length(dst_type);
     *dst_status = DBSTATUS_E_BADACCESSOR;
 
     if(IDataConvert_CanConvert(iface, src_type, dst_type) != S_OK)
@@ -571,10 +570,14 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
     if(hr == DISP_E_OVERFLOW)
     {
         *dst_status = DBSTATUS_E_DATAOVERFLOW;
+        *dst_len = get_length(dst_type);
         hr = DB_E_ERRORSOCCURRED;
     }
     else if(hr == S_OK)
+    {
         *dst_status = DBSTATUS_S_OK;
+        *dst_len = get_length(dst_type);
+    }
 
     return hr;
 }
