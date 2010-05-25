@@ -2561,8 +2561,16 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         break;
     }
     case INTERNET_OPTION_CONTEXT_VALUE:
-	 FIXME("Option INTERNET_OPTION_CONTEXT_VALUE; STUB\n");
-	 break;
+    {
+        if (!lpBuffer || dwBufferLength != sizeof(DWORD_PTR))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            ret = FALSE;
+        }
+        else
+            lpwhh->dwContext = *(DWORD_PTR *)lpBuffer;
+        break;
+    }
     case INTERNET_OPTION_SECURITY_FLAGS:
 	 FIXME("Option INTERNET_OPTION_SECURITY_FLAGS; STUB\n");
 	 break;
