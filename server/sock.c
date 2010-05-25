@@ -817,6 +817,7 @@ static int sock_get_ntstatus( int err )
         case ENOTCONN:          return STATUS_CONNECTION_DISCONNECTED;
         case ETIMEDOUT:         return STATUS_IO_TIMEOUT;
         case ENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
+        case EHOSTUNREACH:      return STATUS_HOST_UNREACHABLE;
         case ENETDOWN:          return STATUS_NETWORK_BUSY;
         case EPIPE:
         case ECONNRESET:        return STATUS_CONNECTION_RESET;
