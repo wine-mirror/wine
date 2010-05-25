@@ -929,7 +929,8 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
         'D','r','L','o','c','a','t','o','r',' ',
         'w','h','e','r','e',' ',
         'S','i','g','n','a','t','u','r','e','_',' ','=',' ', '\'','%','s','\'',0};
-    LPWSTR parentName = NULL, parent = NULL;
+    LPWSTR parent = NULL;
+    LPCWSTR parentName;
     WCHAR path[MAX_PATH];
     WCHAR expanded[MAX_PATH];
     MSIRECORD *row;
@@ -949,14 +950,15 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
     }
 
     /* check whether parent is set */
-    parentName = msi_dup_record_field(row,2);
+    parentName = MSI_RecordGetString(row, 2);
     if (parentName)
     {
         MSISIGNATURE parentSig;
 
         rc = ACTION_AppSearchSigName(package, parentName, &parentSig, &parent);
         ACTION_FreeSignature(&parentSig);
-        msi_free(parentName);
+        if (!parent)
+            return ERROR_SUCCESS;
     }
 
     sz = MAX_PATH;
