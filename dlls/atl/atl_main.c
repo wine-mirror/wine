@@ -439,6 +439,45 @@ HRESULT WINAPI AtlModuleUnregisterServer(_ATL_MODULEW *pm, const CLSID *clsid)
 }
 
 /***********************************************************************
+ *           AtlModuleRegisterWndClassInfoA           [ATL.@]
+ *
+ * See AtlModuleRegisterWndClassInfoW.
+ */
+ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA *wci, WNDPROC *pProc)
+{
+    ATOM atom;
+
+    FIXME("%p %p %p semi-stub\n", pm, wci, pProc);
+
+    atom = wci->m_atom;
+    if (!atom)
+    {
+        WNDCLASSEXA wc;
+
+        TRACE("wci->m_wc.lpszClassName = %s\n", wci->m_wc.lpszClassName);
+
+        if (!wci->m_wc.lpszClassName)
+        {
+            static const CHAR szFormat[] = "ATL%08x";
+            sprintf(wci->m_szAutoName, szFormat, (UINT)(UINT_PTR)wci);
+            TRACE("auto-generated class name %s\n", wci->m_szAutoName);
+            wci->m_wc.lpszClassName = wci->m_szAutoName;
+        }
+
+        atom = GetClassInfoExA(pm->m_hInst, wci->m_wc.lpszClassName, &wc);
+        if (!atom)
+            atom = RegisterClassExA(&wci->m_wc);
+
+        wci->pWndProc = wci->m_wc.lpfnWndProc;
+        wci->m_atom = atom;
+    }
+    *pProc = wci->pWndProc;
+
+    TRACE("returning 0x%04x\n", atom);
+    return atom;
+}
+
+/***********************************************************************
  *           AtlModuleRegisterWndClassInfoW           [ATL.@]
  *
  * PARAMS

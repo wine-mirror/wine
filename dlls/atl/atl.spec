@@ -37,7 +37,7 @@
 43 stdcall AtlModuleAddCreateWndData(ptr ptr ptr)
 44 stdcall AtlModuleExtractCreateWndData(ptr)
 45 stdcall AtlModuleRegisterWndClassInfoW(ptr ptr ptr)
-46 stub AtlModuleRegisterWndClassInfoA
+46 stdcall AtlModuleRegisterWndClassInfoA(ptr ptr ptr)
 47 stdcall AtlAxGetControl(long ptr)
 48 stdcall AtlAxGetHost(long ptr)
 49 stub AtlRegisterClassCategoriesHelper
