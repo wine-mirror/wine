@@ -2357,6 +2357,25 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
         return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
     case INTERNET_OPTION_POLICY:
         return ERROR_INVALID_PARAMETER;
+    case INTERNET_OPTION_CONTEXT_VALUE:
+    {
+        if (!hdr)
+            return ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
+        if (!size)
+            return ERROR_INVALID_PARAMETER;
+
+        if (*size < sizeof(DWORD_PTR))
+        {
+            *size = sizeof(DWORD_PTR);
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+        if (!buffer)
+            return ERROR_INVALID_PARAMETER;
+
+        *(DWORD_PTR *)buffer = hdr->dwContext;
+        *size = sizeof(DWORD_PTR);
+        return ERROR_SUCCESS;
+    }
     }
 
     FIXME("Stub for %d\n", option);
