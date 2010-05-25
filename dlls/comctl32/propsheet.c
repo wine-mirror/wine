@@ -1962,13 +1962,13 @@ static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
   PSHNOTIFY psn;
   BOOL res = FALSE;
 
-  TRACE("active_page %d\n", psInfo->active_page);
   if (!psInfo)
   {
      res = FALSE;
      goto end;
   }
 
+  TRACE("active_page %d\n", psInfo->active_page);
   if (psInfo->active_page < 0)
   {
      res = TRUE;
