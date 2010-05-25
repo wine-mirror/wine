@@ -60,6 +60,7 @@ static void init_function_pointers(void)
 {
     HMODULE hmod;
     HRESULT hr;
+    void *ptr;
 
     hmod = GetModuleHandleA("shell32.dll");
 
@@ -80,6 +81,33 @@ static void init_function_pointers(void)
     MAKEFUNC_ORD(ILCombine, 25);
     MAKEFUNC_ORD(ILFree, 155);
 #undef MAKEFUNC_ORD
+
+    /* test named exports */
+    ptr = GetProcAddress(hmod, "ILFree");
+    ok(broken(ptr == 0) || ptr != 0, "expected named export for ILFree\n");
+    if (ptr)
+    {
+#define TESTNAMED(f) \
+    ptr = (void*)GetProcAddress(hmod, #f); \
+    ok(ptr != 0, "expected named export for " #f "\n");
+
+        TESTNAMED(ILAppendID);
+        TESTNAMED(ILClone);
+        TESTNAMED(ILCloneFirst);
+        TESTNAMED(ILCombine);
+        TESTNAMED(ILCreateFromPath);
+        TESTNAMED(ILCreateFromPathA);
+        TESTNAMED(ILCreateFromPathW);
+        TESTNAMED(ILFindChild);
+        TESTNAMED(ILFindLastID);
+        TESTNAMED(ILGetNext);
+        TESTNAMED(ILGetSize);
+        TESTNAMED(ILIsEqual);
+        TESTNAMED(ILIsParent);
+        TESTNAMED(ILRemoveLastID);
+        TESTNAMED(ILSaveToStream);
+#undef TESTNAMED
+    }
 
     hmod = GetModuleHandleA("shlwapi.dll");
     pStrRetToBufW = (void*)GetProcAddress(hmod, "StrRetToBufW");

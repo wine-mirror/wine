@@ -833,7 +833,7 @@ LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST pidl)
 }
 
 /*************************************************************************
- * ILAppend                  [SHELL32.154]
+ * ILAppendID                [SHELL32.154]
  *
  * Adds the single ItemID item to the ItemIDList indicated by pidl.
  * If bEnd is FALSE, inserts the item in the front of the list,
@@ -847,26 +847,27 @@ LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST pidl)
  * NOTES
  *  Destroys the passed in idlist! (???)
  */
-LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl, LPCITEMIDLIST item, BOOL bEnd)
+LPITEMIDLIST WINAPI ILAppendID(LPITEMIDLIST pidl, LPCSHITEMID item, BOOL bEnd)
 {
     LPITEMIDLIST idlRet;
+    LPCITEMIDLIST itemid = (LPCITEMIDLIST)item;
 
     WARN("(pidl=%p,pidl=%p,%08u)semi-stub\n",pidl,item,bEnd);
 
     pdump (pidl);
-    pdump (item);
+    pdump (itemid);
 
     if (_ILIsDesktop(pidl))
     {
-        idlRet = ILClone(item);
+        idlRet = ILClone(itemid);
         SHFree (pidl);
         return idlRet;
     }
 
     if (bEnd)
-        idlRet = ILCombine(pidl, item);
+        idlRet = ILCombine(pidl, itemid);
     else
-        idlRet = ILCombine(item, pidl);
+        idlRet = ILCombine(itemid, pidl);
 
     SHFree(pidl);
     return idlRet;

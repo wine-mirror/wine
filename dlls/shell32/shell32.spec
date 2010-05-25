@@ -13,17 +13,17 @@
   11 stub -noname PifMgr_SetProperties
   13 stub -noname PifMgr_CloseProperties
   15 stdcall -noname ILGetDisplayName(ptr ptr)
-  16 stdcall -noname ILFindLastID(ptr)
-  17 stdcall -noname ILRemoveLastID(ptr)
-  18 stdcall -noname ILClone(ptr)
-  19 stdcall -noname ILCloneFirst(ptr)
+  16 stdcall -ordinal ILFindLastID(ptr)
+  17 stdcall -ordinal ILRemoveLastID(ptr)
+  18 stdcall -ordinal ILClone(ptr)
+  19 stdcall -ordinal ILCloneFirst(ptr)
   20 stdcall -noname ILGlobalClone(ptr)
-  21 stdcall -noname ILIsEqual(ptr ptr)
-  23 stdcall -noname ILIsParent(ptr ptr long)
-  24 stdcall -noname ILFindChild(ptr ptr)
-  25 stdcall -noname ILCombine(ptr ptr)
+  21 stdcall -ordinal ILIsEqual(ptr ptr)
+  23 stdcall -ordinal ILIsParent(ptr ptr long)
+  24 stdcall -ordinal ILFindChild(ptr ptr)
+  25 stdcall -ordinal ILCombine(ptr ptr)
   26 stdcall -noname ILLoadFromStream(ptr ptr)
-  27 stdcall -noname ILSaveToStream(ptr ptr)
+  27 stdcall -ordinal ILSaveToStream(ptr ptr)
   28 stdcall -noname SHILCreateFromPath(ptr ptr ptr) SHILCreateFromPathAW
   29 stdcall -noname PathIsRoot(ptr) PathIsRootAW
   30 stdcall -noname PathBuildRoot(ptr long) PathBuildRootAW
@@ -141,12 +141,12 @@
  149 stdcall -noname SHFind_InitMenuPopup(long long long long)
 
  151 stdcall -noname SHLoadOLE(long)
- 152 stdcall -noname ILGetSize(ptr)
- 153 stdcall -noname ILGetNext(ptr)
- 154 stdcall -noname ILAppend(long long long)
- 155 stdcall -noname ILFree(ptr)
+ 152 stdcall -ordinal ILGetSize(ptr)
+ 153 stdcall -ordinal ILGetNext(ptr)
+ 154 stdcall -ordinal ILAppendID(long long long)
+ 155 stdcall -ordinal ILFree(ptr)
  156 stdcall -noname ILGlobalFree(ptr)
- 157 stdcall -noname ILCreateFromPath(ptr) ILCreateFromPathAW
+ 157 stdcall -ordinal ILCreateFromPath(ptr) ILCreateFromPathAW
  158 stdcall -noname PathGetExtension(str long long) PathGetExtensionAW
  159 stdcall -noname PathIsDirectory(ptr) PathIsDirectoryAW
  160 stub SHNetConnectionDialog
@@ -178,8 +178,8 @@
  186 stdcall -noname ILGetDisplayNameEx(ptr ptr ptr long)
  187 stub ILGetPseudoNameW
  188 stdcall -noname ShellDDEInit(long)
- 189 stdcall -noname ILCreateFromPathA(str)
- 190 stdcall -noname ILCreateFromPathW(wstr)
+ 189 stdcall -ordinal ILCreateFromPathA(str)
+ 190 stdcall -ordinal ILCreateFromPathW(wstr)
  191 stdcall -noname SHUpdateImageA(str long long long)
  192 stdcall -noname SHUpdateImageW(wstr long long long)
  193 stdcall -noname SHHandleUpdateImage(ptr)
