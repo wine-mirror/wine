@@ -54,7 +54,8 @@ static const char property_dat[] =
     "UpgradeCode\t{A2E3D643-4E2C-477F-A309-F76F552D5F43}\n"
     "ProductLanguage\t1033\n"
     "ProductName\tmsitest\n"
-    "ProductVersion\t1.1.1\n";
+    "ProductVersion\t1.1.1\n"
+    "PATCHNEWSUMMARYSUBJECT\tInstaller Database\n";
 
 static const char media_dat[] =
     "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
@@ -708,6 +709,48 @@ static void test_simple_patch( void )
                             "InstallSource", install_source, &size );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
+    strcpy( path, CURR_DIR );
+    strcat( path, "\\" );
+    strcat( path, msifile );
+
+    r = MsiOpenPackageA( path, &hpackage );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    hdb = MsiGetActiveDatabase( hpackage );
+    ok( hdb, "failed to get database handle\n" );
+
+    query = "SELECT * FROM `Property` where `Property` = 'PATCHNEWPACKAGECODE'";
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r );
+
+    MsiCloseHandle( hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+
+    query = "SELECT * FROM `Property` WHERE `Property` = 'PATCHNEWSUMMARYSUBJECT' "
+            "AND `Value` = 'Installer Database'";
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    MsiCloseHandle( hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+
+    MsiCloseHandle( hdb );
+    MsiCloseHandle( hpackage );
+
     r = MsiApplyPatchA( mspfile, NULL, INSTALLTYPE_DEFAULT, NULL );
     ok( r == ERROR_SUCCESS || broken( r == ERROR_PATCH_PACKAGE_INVALID ), /* version 2.0 */
         "expected ERROR_SUCCESS, got %u\n", r );
@@ -720,10 +763,6 @@ static void test_simple_patch( void )
 
     size = get_pf_file_size( "msitest\\patch.txt" );
     ok( size == 1002, "expected 1002, got %u\n", size );
-
-    strcpy( path, CURR_DIR );
-    strcat( path, "\\" );
-    strcat( path, msifile );
 
     /* show that MsiOpenPackage applies registered patches */
     r = MsiOpenPackageA( path, &hpackage );
@@ -745,6 +784,22 @@ static void test_simple_patch( void )
     MsiCloseHandle( hrec );
     MsiViewClose( hview );
     MsiCloseHandle( hview );
+
+    query = "SELECT * FROM `Property` WHERE `Property` = 'PATCHNEWSUMMARYSUBJECT' "
+            "AND `Value` = 'Installation Database'";
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    MsiCloseHandle( hrec );
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+
     MsiCloseHandle( hdb );
     MsiCloseHandle( hpackage );
 
