@@ -476,13 +476,10 @@ todo_wine
     V_VT((VARIANT*)src) = VT_I2;
     V_I2((VARIANT*)src) = 0x4321;
     hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_I2, 0, &dst_len, src, &dst, sizeof(dst), 0, &dst_status, 0, 0, 0);
-todo_wine
-{
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(dst), "got %d\n", dst_len);
     ok(dst == 0x4321, "got %08x\n", dst);
-}
 
     dst_len = dst = 0x1234;
     memset(src, 0, sizeof(DECIMAL));
@@ -755,13 +752,10 @@ static void test_converttoi4(void)
     V_I2((VARIANT*)src) = 0x1234;
     dst_len = 0x1234;
     hr = IDataConvert_DataConvert(convert, DBTYPE_VARIANT, DBTYPE_I4, 0, &dst_len, src, &i4, sizeof(i4), 0, &dst_status, 0, 0, 0);
-todo_wine
-{
     ok(hr == S_OK, "got %08x\n", hr);
     ok(dst_status == DBSTATUS_S_OK, "got %08x\n", dst_status);
     ok(dst_len == sizeof(i4), "got %d\n", dst_len);
     ok(i4 == 0x1234, "got %08x\n", i4);
-}
 
     i4 = 0x12345678;
     memset(src, 0, sizeof(DECIMAL));

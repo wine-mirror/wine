@@ -231,6 +231,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI4:         hr = VarI2FromUI4(*(DWORD*)src, d);             break;
         case DBTYPE_I8:          hr = VarI2FromI8(*(LONGLONG*)src, d);           break;
         case DBTYPE_UI8:         hr = VarI2FromUI8(*(ULONGLONG*)src, d);         break;
+        case DBTYPE_VARIANT:     *d = V_I2((VARIANT*)src); hr = S_OK;            break;
         default: FIXME("Unimplemented conversion %04x -> I2\n", src_type); return E_NOTIMPL;
         }
         break;
@@ -257,6 +258,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_UI4:         hr = VarI4FromUI4(*(DWORD*)src, d);             break;
         case DBTYPE_I8:          hr = VarI4FromI8(*(LONGLONG*)src, d);           break;
         case DBTYPE_UI8:         hr = VarI4FromUI8(*(ULONGLONG*)src, d);         break;
+        case DBTYPE_VARIANT:     *d = V_I4((VARIANT*)src); hr = S_OK;            break;
         default: FIXME("Unimplemented conversion %04x -> I4\n", src_type); return E_NOTIMPL;
         }
         break;
