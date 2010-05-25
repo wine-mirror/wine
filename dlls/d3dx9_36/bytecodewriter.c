@@ -435,7 +435,7 @@ static HRESULT vs_find_builtin_varyings(struct bc_writer *This, const struct bwr
                 break;
 
             case BWRITERDECLUSAGE_TEXCOORD:
-                if(usage_idx > 8) {
+                if(usage_idx >= 8) {
                     WARN("dcl_color%u not supported in sm 1/2 shaders\n", usage_idx);
                     return E_INVALIDARG;
                 }
