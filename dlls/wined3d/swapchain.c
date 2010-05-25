@@ -33,8 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-#define GLINFO_LOCATION (*gl_info)
-
 /*IWineD3DSwapChain parts follow: */
 static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 {

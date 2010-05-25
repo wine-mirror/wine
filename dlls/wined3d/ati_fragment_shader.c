@@ -28,8 +28,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION (*gl_info)
-
 /* GL locking for state handlers is done by the caller. */
 
 /* Some private defines, Constant associations, etc.

@@ -29,8 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION (*gl_info)
-
 #define VB_MAXDECLCHANGES     100     /* After that number of decl changes we stop converting */
 #define VB_RESETDECLCHANGE    1000    /* Reset the decl changecount after that number of draws */
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */

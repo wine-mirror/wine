@@ -34,8 +34,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION (*gl_info)
-
 static void surface_cleanup(IWineD3DSurfaceImpl *This)
 {
     IWineD3DDeviceImpl *device = This->resource.device;

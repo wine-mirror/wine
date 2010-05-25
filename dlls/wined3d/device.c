@@ -34,7 +34,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION (*gl_info)
 
 /* Define the default light parameters as specified by MSDN */
 const WINED3DLIGHT WINED3D_default_light = {

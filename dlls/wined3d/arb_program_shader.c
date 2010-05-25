@@ -39,8 +39,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION      (*gl_info)
-
 /* Extract a line. Note that this modifies the source string. */
 static char *get_line(char **ptr)
 {
@@ -5873,7 +5871,6 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
     }
 }
 
-/* The stateblock is passed for GLINFO_LOCATION */
 static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWineD3DStateBlockImpl *stateblock)
 {
     const struct wined3d_gl_info *gl_info = &stateblock->device->adapter->gl_info;

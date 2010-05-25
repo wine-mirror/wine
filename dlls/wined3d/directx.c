@@ -30,7 +30,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 
-#define GLINFO_LOCATION (*gl_info)
 #define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
 
 /* The d3d device ID */

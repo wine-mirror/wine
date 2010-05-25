@@ -35,8 +35,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
-#define GLINFO_LOCATION (*gl_info)
-
 /* GL locking for state handlers is done by the caller. */
 
 static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
@@ -5545,7 +5543,6 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_SAMPLER(7),                                   { STATE_SAMPLER(7),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
-#undef GLINFO_LOCATION
 
 /* Context activation is done by the caller. */
 static void ffp_enable(IWineD3DDevice *iface, BOOL enable) { }

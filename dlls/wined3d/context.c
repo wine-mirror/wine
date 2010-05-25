@@ -28,8 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION (*gl_info)
-
 static DWORD wined3d_context_tls_idx;
 
 /* FBO helper functions */

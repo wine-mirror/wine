@@ -25,7 +25,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION (*gl_info)
 
 BOOL wined3d_event_query_supported(const struct wined3d_gl_info *gl_info)
 {

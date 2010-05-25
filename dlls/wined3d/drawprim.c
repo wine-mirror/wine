@@ -28,7 +28,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
-#define GLINFO_LOCATION (*gl_info)
 
 #include <stdio.h>
 #include <math.h>

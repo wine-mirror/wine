@@ -83,9 +83,6 @@ static inline unsigned short float_32_to_16(const float *in)
     return ret;
 }
 
-
-/* Do NOT define GLINFO_LOCATION in this file. THIS CODE MUST NOT USE IT */
-
 /* *******************************************
    IWineD3DSurface IUnknown parts follow
    ******************************************* */
