@@ -185,7 +185,7 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_GETTITLEBARINFOEX, sent|optional },
     { WM_PAINT, sent|optional },
     { WM_NCPAINT, sent|beginpaint|optional },
-    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
