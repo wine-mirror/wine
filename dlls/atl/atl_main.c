@@ -458,8 +458,7 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
 
         if (!wci->m_wc.lpszClassName)
         {
-            static const CHAR szFormat[] = "ATL%08x";
-            sprintf(wci->m_szAutoName, szFormat, (UINT)(UINT_PTR)wci);
+            sprintf(wci->m_szAutoName, "ATL%08lx", (UINT_PTR)wci);
             TRACE("auto-generated class name %s\n", wci->m_szAutoName);
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
@@ -510,8 +509,8 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
 
         if (!wci->m_wc.lpszClassName)
         {
-            static const WCHAR szFormat[] = {'A','T','L','%','0','8','x',0};
-            sprintfW(wci->m_szAutoName, szFormat, (UINT)(UINT_PTR)wci);
+            static const WCHAR szFormat[] = {'A','T','L','%','0','8','l','x',0};
+            sprintfW(wci->m_szAutoName, szFormat, (UINT_PTR)wci);
             TRACE("auto-generated class name %s\n", debugstr_w(wci->m_szAutoName));
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
