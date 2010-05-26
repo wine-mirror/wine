@@ -189,3 +189,17 @@ int CDECL _fstat64i32(int fd, struct _stat64i32* buf)
       msvcrt_stat64_to_stat64i32(&buf64, buf);
   return ret;
 }
+
+/*********************************************************************
+ *		_stat64i32 (MSVCRT.@)
+ */
+int CDECL _stat64i32(const char* path, struct _stat64i32 * buf)
+{
+  int ret;
+  struct _stat64 buf64;
+
+  ret = _stat64(path, &buf64);
+  if (!ret)
+    msvcrt_stat64_to_stat64i32(&buf64, buf);
+  return ret;
+}

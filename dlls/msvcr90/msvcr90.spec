@@ -912,7 +912,7 @@
 @ stub _stat32
 @ stub _stat32i64
 @ cdecl _stat64(str ptr) msvcrt._stat64
-@ stub _stat64i32
+@ cdecl _stat64i32(str ptr)
 @ cdecl _statusfp() msvcrt._statusfp
 @ stub _statusfp2
 @ stub _strcoll_l
