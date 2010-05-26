@@ -3348,8 +3348,6 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
     }
 
     if(parens) {
-        DWORD i;
-
         if(regexp->jsregexp->parenCount > *parens_size) {
             match_result_t *new_parens;
 
@@ -3362,6 +3360,22 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
 
             *parens = new_parens;
         }
+    }
+
+    /* FIXME: We often already have a copy of input string that we could use to store last match */
+    if(!(rem_flags & REM_NO_CTX_UPDATE) &&
+       (!ctx->last_match || len != SysStringLen(ctx->last_match) || strncmpW(ctx->last_match, str, len))) {
+        BSTR last_match;
+
+        last_match = SysAllocStringLen(str, len);
+        if(!last_match)
+            return E_OUTOFMEMORY;
+        SysFreeString(ctx->last_match);
+        ctx->last_match = last_match;
+    }
+
+    if(parens) {
+        DWORD i;
 
         *parens_cnt = regexp->jsregexp->parenCount;
 
@@ -3381,6 +3395,11 @@ static HRESULT do_regexp_match_next(script_ctx_t *ctx, RegExpInstance *regexp, D
     ret->str = result->cp-matchlen;
     ret->len = matchlen;
     set_last_index(regexp, result->cp-str);
+
+    if(!(rem_flags & REM_NO_CTX_UPDATE)) {
+        ctx->last_match_index = ret->str-str;
+        ctx->last_match_length = matchlen;
+    }
 
     return S_OK;
 }

@@ -272,6 +272,10 @@ struct _script_ctx_t {
 
     IDispatch *host_global;
 
+    BSTR last_match;
+    DWORD last_match_index;
+    DWORD last_match_length;
+
     DispatchEx *global;
     DispatchEx *function_constr;
     DispatchEx *activex_constr;
