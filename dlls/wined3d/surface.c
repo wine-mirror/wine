@@ -2145,8 +2145,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 {
     BOOL colorkey_active = need_alpha_ck && (This->CKeyFlags & WINEDDSD_CKSRCBLT);
     IWineD3DDeviceImpl *device = This->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL blit_supported = FALSE;
-    RECT rect = {0, 0, This->pow2Width, This->pow2Height};
 
     /* Copy the default values from the surface. Below we might perform fixups */
     /* TODO: get rid of color keying desc fixups by using e.g. a table. */
@@ -2161,10 +2161,19 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
                 Paletted Texture
                 **************** */
 
+            /* Below the call to blit_supported is disabled for Wine 1.2 because the function isn't operating correctly yet.
+             * At the moment 8-bit blits are handled in software and if certain GL extensions are around, surface conversion
+             * is performed at upload time. The blit_supported call recognizes it as a destination fixup. This type of upload 'fixup'
+             * and 8-bit to 8-bit blits need to be handled by the blit_shader.
+             * TODO: get rid of this #if 0
+             */
+#if 0
             blit_supported = device->blitter->blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
                                                              &rect, This->resource.usage, This->resource.pool,
                                                              This->resource.format_desc, &rect, This->resource.usage,
                                                              This->resource.pool, This->resource.format_desc);
+#endif
+            blit_supported = gl_info->supported[EXT_PALETTED_TEXTURE] || gl_info->supported[ARB_FRAGMENT_PROGRAM];
 
             /* Use conversion when the blit_shader backend supports it. It only supports this in case of
              * texturing. Further also use conversion in case of color keying.
