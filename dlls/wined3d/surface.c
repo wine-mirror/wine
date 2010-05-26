@@ -4355,7 +4355,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     draw_textured_quad(This, &src_rect, &dst_rect, WINED3DTEXF_POINT);
     LEAVE_GL();
 
-    device->blitter->set_shader((IWineD3DDevice *) device, This);
+    device->blitter->unset_shader((IWineD3DDevice *) device);
 
     swapchain = (This->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)This->container : NULL;
     if (wined3d_settings.strict_draw_ordering || (swapchain
