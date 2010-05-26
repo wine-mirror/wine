@@ -671,6 +671,7 @@ CPP
 OPENGL_LIBS
 XLIB
 PRELINK
+MAINTAINER_MODE
 ICOTOOL
 CONVERT
 RSVG
@@ -715,7 +716,6 @@ build_os
 build_vendor
 build_cpu
 build
-MAINTAINER_MODE
 target_alias
 host_alias
 build_alias
@@ -2490,9 +2490,6 @@ fi
 # Check whether --enable-maintainer-mode was given.
 if test "${enable_maintainer_mode+set}" = set; then :
   enableval=$enable_maintainer_mode;
-else
-  MAINTAINER_MODE=\#
-
 fi
 
 
@@ -5106,8 +5103,11 @@ done
 test -n "$ICOTOOL" || ICOTOOL="false"
 
 
-if test "${enable_maintainer_mode+set}" = set
+if test "x$enable_maintainer_mode" != "xyes"
 then
+  MAINTAINER_MODE=\#
+
+else
   if test "$FONTFORGE" = "false"; then as_fn_append wine_warnings "|fontforge is missing, fonts can't be rebuilt."; fi
   if test "$RSVG" = "false"; then as_fn_append wine_warnings "|rsvg is missing, icons can't be rebuilt."; fi
 
@@ -11895,7 +11895,7 @@ $as_echo "$ac_cv_c_string_h_warnings" >&6; }
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
 
-    if test "${enable_maintainer_mode+set}" = set
+    if test "x$enable_maintainer_mode" = "xyes"
   then
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Werror" >&5
 $as_echo_n "checking whether the compiler supports -Werror... " >&6; }
