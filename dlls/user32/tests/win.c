@@ -3213,10 +3213,12 @@ static void test_validatergn(HWND hwnd)
     GetWindowRect( child, &rc);
     MapWindowPoints( NULL, hwnd, (POINT*) &rc, 2);
     ret = GetUpdateRect( child, &rc2, 0);
+    ok( ret == 1, "Expected GetUpdateRect to return non-zero, got %d\n", ret);
     ok( rc2.right > rc2.left && rc2.bottom > rc2.top,
             "Update rectangle is empty!\n");
     ValidateRect( hwnd, &rc);
     ret = GetUpdateRect( child, &rc2, 0);
+    ok( !ret, "Expected GetUpdateRect to return zero, got %d\n", ret);
     ok( rc2.left == 0 && rc2.top == 0 && rc2.right == 0 && rc2.bottom == 0,
             "Update rectangle %d,%d-%d,%d is not empty!\n", rc2.left, rc2.top,
             rc2.right, rc2.bottom);
@@ -3228,6 +3230,7 @@ static void test_validatergn(HWND hwnd)
     rgn = CreateRectRgnIndirect( &rc);
     ValidateRgn( hwnd, rgn);
     ret = GetUpdateRect( child, &rc2, 0);
+    ok( !ret, "Expected GetUpdateRect to return zero, got %d\n", ret);
     ok( rc2.left == 0 && rc2.top == 0 && rc2.right == 0 && rc2.bottom == 0,
             "Update rectangle %d,%d-%d,%d is not empty!\n", rc2.left, rc2.top,
             rc2.right, rc2.bottom);
