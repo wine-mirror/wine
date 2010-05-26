@@ -1327,8 +1327,9 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             return CARD_NVIDIA_GEFORCE_9800GT;
         }
 
-        /* Geforce9 - midend */
-        if (strstr(gl_renderer, "9600"))
+        /* Geforce9 - midend (GT 140 uses the same core as the 9600GT) */
+        if (strstr(gl_renderer, "9600")
+                || strstr(gl_renderer, "GT 140"))
         {
             *vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
             return CARD_NVIDIA_GEFORCE_9600GT;
