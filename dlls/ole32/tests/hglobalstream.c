@@ -177,8 +177,8 @@ static void test_streamonhglobal(IStream *pStream)
     ll.u.HighPart = 0;
     ll.u.LowPart = -sizeof(data);
     hr = IStream_Seek(pStream, ll, STREAM_SEEK_CUR, &ull);
-    todo_wine ok_ole_success(hr, "IStream_Seek");
-    todo_wine ok(ull.u.LowPart == 0, "LowPart set to %d\n", ull.u.LowPart);
+    ok_ole_success(hr, "IStream_Seek");
+    ok(ull.u.LowPart == 0, "LowPart set to %d\n", ull.u.LowPart);
     ok(ull.u.HighPart == 0, "should have set HighPart to 0 instead of %d\n", ull.u.HighPart);
 
     /* IStream_Seek -- invalid LowPart value (seek to start of stream-1) */
