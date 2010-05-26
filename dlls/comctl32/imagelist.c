@@ -1157,7 +1157,8 @@ ImageList_DrawEx (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y,
 
 
 static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int dest_y,
-                               int src_x, int src_y, int cx, int cy, BLENDFUNCTION func )
+                               int src_x, int src_y, int cx, int cy, BLENDFUNCTION func,
+                               UINT style, COLORREF blend_col )
 {
     BOOL ret = FALSE;
     HDC hdc;
@@ -1183,6 +1184,30 @@ static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int des
     if (!(bmp = CreateDIBSection( himl->hdcImage, info, DIB_RGB_COLORS, &bits, 0, 0 ))) goto done;
     SelectObject( hdc, bmp );
     BitBlt( hdc, 0, 0, cx, cy, himl->hdcImage, src_x, src_y, SRCCOPY );
+
+    if (blend_col != CLR_NONE)
+    {
+        BYTE r = GetRValue( blend_col );
+        BYTE g = GetGValue( blend_col );
+        BYTE b = GetBValue( blend_col );
+
+        if (style & ILD_BLEND25)
+        {
+            for (i = 0, ptr = bits; i < cx * cy; i++, ptr++)
+                *ptr = ((*ptr & 0xff000000) |
+                        ((((*ptr & 0x00ff0000) * 3 + (r << 16)) / 4) & 0x00ff0000) |
+                        ((((*ptr & 0x0000ff00) * 3 + (g << 8))  / 4) & 0x0000ff00) |
+                        ((((*ptr & 0x000000ff) * 3 + (b << 0))  / 4) & 0x000000ff));
+        }
+        else if (style & ILD_BLEND50)
+        {
+            for (i = 0, ptr = bits; i < cx * cy; i++, ptr++)
+                *ptr = ((*ptr & 0xff000000) |
+                        ((((*ptr & 0x00ff0000) + (r << 16)) / 2) & 0x00ff0000) |
+                        ((((*ptr & 0x0000ff00) + (g << 8))  / 2) & 0x0000ff00) |
+                        ((((*ptr & 0x000000ff) + (b << 0))  / 2) & 0x000000ff));
+        }
+    }
 
     if (himl->uBitsPixel == 32)  /* we already have an alpha channel in this case */
     {
@@ -1302,8 +1327,15 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     has_alpha = (himl->has_alpha && himl->has_alpha[pimldp->i]);
     if (!bMask && (has_alpha || (fState & ILS_ALPHA)))
     {
-        COLORREF colour;
+        COLORREF colour, blend_col = CLR_NONE;
         BLENDFUNCTION func;
+
+        if (bBlend)
+        {
+            blend_col = pimldp->rgbFg;
+            if (blend_col == CLR_DEFAULT) blend_col = GetSysColor( COLOR_HIGHLIGHT );
+            else if (blend_col == CLR_NONE) blend_col = GetTextColor( pimldp->hdcDst );
+        }
 
         func.BlendOp = AC_SRC_OVER;
         func.BlendFlags = 0;
@@ -1313,7 +1345,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
         if (bIsTransparent)
         {
             bResult = alpha_blend_image( himl, pimldp->hdcDst, pimldp->x, pimldp->y,
-                                         pt.x, pt.y, cx, cy, func );
+                                         pt.x, pt.y, cx, cy, func, fStyle, blend_col );
             goto end;
         }
         colour = pimldp->rgbBk;
@@ -1322,7 +1354,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 
         hOldBrush = SelectObject (hImageDC, CreateSolidBrush (colour));
         PatBlt( hImageDC, 0, 0, cx, cy, PATCOPY );
-        alpha_blend_image( himl, hImageDC, 0, 0, pt.x, pt.y, cx, cy, func );
+        alpha_blend_image( himl, hImageDC, 0, 0, pt.x, pt.y, cx, cy, func, fStyle, blend_col );
         DeleteObject (SelectObject (hImageDC, hOldBrush));
         bResult = BitBlt( pimldp->hdcDst, pimldp->x,  pimldp->y, cx, cy, hImageDC, 0, 0, SRCCOPY );
         goto end;
