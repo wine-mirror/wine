@@ -1742,6 +1742,7 @@ static void test_ProcessName(void)
 static void test_Handles(void)
 {
     HANDLE handle = GetCurrentProcess();
+    HANDLE h2;
     BOOL ret;
     DWORD code;
 
@@ -1769,6 +1770,15 @@ static void test_Handles(void)
     ok( !ret, "GetExitCodeProcess succeeded for %p\n", handle );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
 #endif
+
+    handle = GetStdHandle( STD_ERROR_HANDLE );
+    ok( handle != 0, "handle %p\n", handle );
+    CloseHandle( (HANDLE)STD_ERROR_HANDLE );
+    h2 = GetStdHandle( STD_ERROR_HANDLE );
+    ok( h2 == 0 ||
+        broken( h2 == handle) || /* nt4, w2k */
+        broken( h2 == INVALID_HANDLE_VALUE),  /* win9x */
+        "wrong handle %p/%p\n", h2, handle );
 }
 
 static void test_SystemInfo(void)

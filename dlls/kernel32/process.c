@@ -2713,10 +2713,12 @@ BOOL WINAPI CloseHandle( HANDLE handle )
     NTSTATUS status;
 
     /* stdio handles need special treatment */
-    if ((handle == (HANDLE)STD_INPUT_HANDLE) ||
-        (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
-        (handle == (HANDLE)STD_ERROR_HANDLE))
-        handle = GetStdHandle( HandleToULong(handle) );
+    if (handle == (HANDLE)STD_INPUT_HANDLE)
+        handle = InterlockedExchangePointer( &NtCurrentTeb()->Peb->ProcessParameters->hStdInput, 0 );
+    else if (handle == (HANDLE)STD_OUTPUT_HANDLE)
+        handle = InterlockedExchangePointer( &NtCurrentTeb()->Peb->ProcessParameters->hStdOutput, 0 );
+    else if (handle == (HANDLE)STD_ERROR_HANDLE)
+        handle = InterlockedExchangePointer( &NtCurrentTeb()->Peb->ProcessParameters->hStdError, 0 );
 
     if (is_console_handle(handle))
         return CloseConsoleHandle(handle);
