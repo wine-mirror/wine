@@ -2581,6 +2581,11 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     }
     case INTERNET_OPTION_CONTEXT_VALUE:
     {
+        if (!lpwhh)
+        {
+            SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+            return FALSE;
+        }
         if (!lpBuffer || dwBufferLength != sizeof(DWORD_PTR))
         {
             SetLastError(ERROR_INVALID_PARAMETER);
