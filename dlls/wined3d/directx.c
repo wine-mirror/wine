@@ -1015,10 +1015,12 @@ static const struct driver_version_information driver_version_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           15, 11, 9745   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_210,        "NVIDIA GeForce 210",               15, 11, 9745   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT220,      "NVIDIA GeForce GT 220",            15, 11, 9745   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           15, 11, 9745   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX470,     "NVIDIA GeForce GTX 470",           15, 11, 9775   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX480,     "NVIDIA GeForce GTX 480",           15, 11, 9775   },
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode. */
@@ -1300,6 +1302,20 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         {
            *vidmem = 512;
            return CARD_NVIDIA_GEFORCE_GT240;
+        }
+
+        /* Geforce 200 lowend */
+        if (strstr(gl_renderer, "GT 220"))
+        {
+           *vidmem = 512; /* The GT 220 has 512-1024MB */
+           return CARD_NVIDIA_GEFORCE_GT220;
+        }
+        /* Geforce 200 lowend */
+        if (strstr(gl_renderer, "Geforce 210")
+                || strstr(gl_renderer, "G 210"))
+        {
+           *vidmem = 512;
+           return CARD_NVIDIA_GEFORCE_210;
         }
 
         /* Geforce9 - highend / Geforce 200 - midend (GTS 150/250 are based on the same core) */
