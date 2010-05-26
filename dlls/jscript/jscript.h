@@ -68,6 +68,7 @@ extern HINSTANCE jscript_hinstance;
 #define PROPF_METHOD  0x0100
 #define PROPF_ENUM    0x0200
 #define PROPF_CONSTR  0x0400
+#define PROPF_CONST   0x0800
 
 /* NOTE: Keep in sync with names in Object.toString implementation */
 typedef enum {
@@ -203,6 +204,7 @@ HRESULT disp_propget(script_ctx_t*,IDispatch*,DISPID,VARIANT*,jsexcept_t*,IServi
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propget(DispatchEx*,DISPID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propput_name(DispatchEx*,const WCHAR*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_propput_const(DispatchEx*,const WCHAR*,VARIANT*);
 HRESULT jsdisp_propput_idx(DispatchEx*,DWORD,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propget_name(DispatchEx*,LPCWSTR,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_get_idx(DispatchEx*,DWORD,VARIANT*,jsexcept_t*,IServiceProvider*);
@@ -318,8 +320,9 @@ typedef struct {
     DWORD len;
 } match_result_t;
 
-#define REM_CHECK_GLOBAL 0x0001
-#define REM_RESET_INDEX  0x0002
+#define REM_CHECK_GLOBAL   0x0001
+#define REM_RESET_INDEX    0x0002
+#define REM_NO_CTX_UPDATE  0x0004
 HRESULT regexp_match_next(script_ctx_t*,DispatchEx*,DWORD,const WCHAR*,DWORD,const WCHAR**,match_result_t**,
         DWORD*,DWORD*,match_result_t*);
 HRESULT regexp_match(script_ctx_t*,DispatchEx*,const WCHAR*,DWORD,BOOL,match_result_t**,DWORD*);
