@@ -1,5 +1,6 @@
 /*
  * Copyright 2010 Jacek Caban for CodeWeavers
+ * Copyright 2010 Thomas Mullaly
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -97,6 +98,20 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+
+    if(!pcchProperty)
+        return E_INVALIDARG;
+
+    /* Microsoft's implementation for the ZONE property of a URI seems to be lacking...
+     * From what I can tell, instead of checking which URLZONE the URI belongs to it
+     * simply assigns URLZONE_INVALID and returns E_NOTIMPL. This also applies the GetZone
+     * function.
+     */
+    if(uriProp == Uri_PROPERTY_ZONE) {
+        *pcchProperty = URLZONE_INVALID;
+        return E_NOTIMPL;
+    }
+
     return E_NOTIMPL;
 }
 

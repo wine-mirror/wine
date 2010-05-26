@@ -37,8 +37,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "urlmon.h"
+#include "shlwapi.h"
 
 #define URI_STR_PROPERTY_COUNT Uri_PROPERTY_STRING_LAST+1
+#define URI_DWORD_PROPERTY_COUNT (Uri_PROPERTY_DWORD_LAST - Uri_PROPERTY_DWORD_START)+1
 
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
@@ -65,6 +67,12 @@ typedef struct _uri_str_property {
     BOOL        todo;
 } uri_str_property;
 
+typedef struct _uri_dword_property {
+    DWORD   value;
+    HRESULT expected;
+    BOOL    todo;
+} uri_dword_property;
+
 typedef struct _uri_properties {
     const char*         uri;
     DWORD               create_flags;
@@ -72,6 +80,7 @@ typedef struct _uri_properties {
     BOOL                create_todo;
 
     uri_str_property    str_props[URI_STR_PROPERTY_COUNT];
+    uri_dword_property  dword_props[URI_DWORD_PROPERTY_COUNT];
 } uri_properties;
 
 static const uri_properties uri_tests[] = {
@@ -92,6 +101,12 @@ static const uri_properties uri_tests[] = {
             {"http",S_OK,TRUE},                                         /* SCHEME_NAME */
             {"",S_FALSE,TRUE},                                          /* USER_INFO */
             {"",S_FALSE,TRUE}                                           /* USER_NAME */
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},                                   /* HOST_TYPE */
+            {80,S_OK,TRUE},                                             /* PORT */
+            {URL_SCHEME_HTTP,S_OK,TRUE},                                /* SCHEME */
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}                           /* ZONE */
         }
     },
     {   "http://winehq.org/tests/.././tests", 0, S_OK, FALSE,
@@ -111,6 +126,12 @@ static const uri_properties uri_tests[] = {
             {"http",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
     {   "HtTp://www.winehq.org/tests/..?query=x&return=y", 0, S_OK, FALSE,
@@ -130,6 +151,12 @@ static const uri_properties uri_tests[] = {
             {"http",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE},
         }
     },
     {   "hTTp://us%45r%3Ainfo@examp%4CE.com:80/path/a/b/./c/../%2E%2E/Forbidden'<|> Characters", 0, S_OK, FALSE,
@@ -149,6 +176,12 @@ static const uri_properties uri_tests[] = {
             {"http",S_OK,TRUE},
             {"usEr%3Ainfo",S_OK,TRUE},
             {"usEr%3Ainfo",S_OK,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE},
         }
     },
     {   "ftp://winepass:wine@ftp.winehq.org:9999/dir/foo bar.txt", 0, S_OK, FALSE,
@@ -168,6 +201,12 @@ static const uri_properties uri_tests[] = {
             {"ftp",S_OK,TRUE},
             {"winepass:wine",S_OK,TRUE},
             {"winepass",S_OK,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {9999,S_OK,TRUE},
+            {URL_SCHEME_FTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
     {   "file://c:\\tests\\../tests/foo%20bar.mp3", 0, S_OK, FALSE,
@@ -187,6 +226,12 @@ static const uri_properties uri_tests[] = {
             {"file",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_FILE,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
     {   "FILE://localhost/test dir\\../tests/test%20file.README.txt", 0, S_OK, FALSE,
@@ -206,6 +251,12 @@ static const uri_properties uri_tests[] = {
             {"file",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_FILE,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
     {   "urn:nothing:should:happen here", 0, S_OK, FALSE,
@@ -225,6 +276,12 @@ static const uri_properties uri_tests[] = {
             {"urn",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     }
 };
@@ -340,6 +397,69 @@ static void test_IUri_GetPropertyBSTR(void) {
     }
 }
 
+static void test_IUri_GetPropertyDWORD(void) {
+    IUri *uri = NULL;
+    HRESULT hr;
+    DWORD i;
+
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        hr = IUri_GetPropertyDWORD(uri, Uri_PROPERTY_DWORD_START, NULL, 0);
+        ok(hr == E_INVALIDARG, "Error: GetPropertyDWORD returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    }
+    if(uri) IUri_Release(uri);
+
+    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+        uri_properties test = uri_tests[i];
+        LPWSTR uriW;
+        uri = NULL;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(test.create_todo) {
+            todo_wine {
+                ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x. Failed on uri_tests[%d].\n",
+                        hr, test.create_expected, i);
+            }
+        } else {
+            ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x. Failed on uri_tests[%d].\n",
+                    hr, test.create_expected, i);
+        }
+
+        if(SUCCEEDED(hr)) {
+            DWORD j;
+
+            /* Checks all the DWORD properties of the uri. */
+            for(j = 0; j < sizeof(test.dword_props)/sizeof(test.dword_props[0]); ++j) {
+                DWORD received;
+                uri_dword_property prop = test.dword_props[j];
+
+                hr = IUri_GetPropertyDWORD(uri, j+Uri_PROPERTY_DWORD_START, &received, 0);
+                if(prop.todo) {
+                    todo_wine {
+                        ok(hr == prop.expected, "GetPropertyDWORD returned 0x%08x, expected 0x%08x. On uri_tests[%d].dword_props[%d].\n",
+                                hr, prop.expected, i, j);
+                    }
+                    todo_wine {
+                        ok(prop.value == received, "Expected %d but got %d on uri_tests[%d].dword_props[%d].\n",
+                                prop.value, received, i, j);
+                    }
+                } else {
+                    ok(hr == prop.expected, "GetPropertyDWORD returned 0x%08x, expected 0x%08x. On uri_tests[%d].dword_props[%d].\n",
+                            hr, prop.expected, i, j);
+                    ok(prop.value == received, "Expected %d but got %d on uri_tests[%d].dword_props[%d].\n",
+                            prop.value, received, i, j);
+                }
+            }
+        }
+
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -359,4 +479,7 @@ START_TEST(uri) {
 
     trace("test IUri_GetPropertyBSTR...\n");
     test_IUri_GetPropertyBSTR();
+
+    trace("test IUri_GetPropretyDWORD...\n");
+    test_IUri_GetPropertyDWORD();
 }
