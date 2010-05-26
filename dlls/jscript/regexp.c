@@ -4025,8 +4025,27 @@ static HRESULT RegExpConstr_leftContext(script_ctx_t *ctx, vdisp_t *jsthis, WORD
 static HRESULT RegExpConstr_rightContext(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
          DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        BSTR ret;
+
+        ret = SysAllocString(ctx->last_match+ctx->last_match_index+ctx->last_match_length);
+        if(!ret)
+            return E_OUTOFMEMORY;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }
+    case DISPATCH_PROPERTYPUT:
+        return S_OK;
+    default:
+        FIXME("unsupported flags\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
