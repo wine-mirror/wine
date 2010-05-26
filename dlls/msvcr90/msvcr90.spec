@@ -433,7 +433,7 @@
 @ stub _fstat32
 @ stub _fstat32i64
 @ cdecl _fstat64(long ptr) msvcrt._fstat64
-@ stub _fstat64i32
+@ cdecl _fstat64i32(long ptr)
 @ stub _ftell_nolock
 @ stub _ftelli64
 @ stub _ftelli64_nolock
