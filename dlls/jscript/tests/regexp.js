@@ -96,6 +96,12 @@ ok(m[1] === "test", "m[1] = " + m[1]);
 b = /a*/.test();
 ok(b === true, "/a*/.test() returned " + b);
 
+b = /f/.test();
+ok(b === true, "/f/.test() returned " + b);
+
+b = /abc/.test();
+ok(b === false, "/abc/.test() returned " + b);
+
 m = "abcabc".match(re = /ca/);
 ok(typeof(m) === "object", "typeof m is not object");
 ok(m.length === 1, "m.length is not 1");

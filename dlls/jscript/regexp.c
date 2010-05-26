@@ -101,6 +101,7 @@ static const WCHAR leftContextW[] =
 static const WCHAR rightContextW[] =
     {'r','i','g','h','t','C','o','n','t','e','x','t',0};
 
+static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 static const WCHAR emptyW[] = {0};
 
 /* FIXME: Better error handling */
@@ -3717,12 +3718,24 @@ static HRESULT RegExp_test(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPP
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     match_result_t match;
+    VARIANT undef_var;
     VARIANT_BOOL b;
+    DWORD argc;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = run_exec(ctx, jsthis, arg_cnt(dp) ? get_arg(dp,0) : NULL, ei, NULL, &match, NULL, NULL, &b);
+    argc = arg_cnt(dp);
+    if(!argc) {
+        V_VT(&undef_var) = VT_BSTR;
+        V_BSTR(&undef_var) = SysAllocString(undefinedW);
+        if(!V_BSTR(&undef_var))
+            return E_OUTOFMEMORY;
+    }
+
+    hres = run_exec(ctx, jsthis, argc ? get_arg(dp,0) : &undef_var, ei, NULL, &match, NULL, NULL, &b);
+    if(!argc)
+        SysFreeString(V_BSTR(&undef_var));
     if(FAILED(hres))
         return hres;
 
