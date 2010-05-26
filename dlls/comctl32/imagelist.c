@@ -2037,7 +2037,7 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
     if (himlDst)
     {
         imagelist_point_from_index( himl1, i1, &pt1 );
-        imagelist_point_from_index( himl1, i2, &pt2 );
+        imagelist_point_from_index( himl2, i2, &pt2 );
 
         /* copy image */
         BitBlt (himlDst->hdcImage, 0, 0, cxDst, cyDst, himl1->hdcImage, 0, 0, BLACKNESS);
