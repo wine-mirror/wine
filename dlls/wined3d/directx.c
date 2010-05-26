@@ -1021,6 +1021,8 @@ static const struct driver_version_information driver_version_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           15, 11, 9745   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT325M,     "NVIDIA GeForce GT 325M",           15, 11, 9745   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTS350M,    "NVIDIA GeForce GTS 350M",          15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX470,     "NVIDIA GeForce GTX 470",           15, 11, 9775   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX480,     "NVIDIA GeForce GTX 480",           15, 11, 9775   },
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode. */
@@ -1275,6 +1277,22 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             return CARD_NVIDIA_GEFORCE_GTX470;
         }
 
+        /* Geforce 300 highend mobile */
+        if (strstr(gl_renderer, "GTS 350M")
+                || strstr(gl_renderer, "GTS 360M"))
+        {
+           *vidmem = 1024;
+           return CARD_NVIDIA_GEFORCE_GTS350M;
+        }
+
+        /* Geforce 300 midend mobile (Geforce GT 325M/330M use the same core) */
+        if (strstr(gl_renderer, "GT 325M")
+                || strstr(gl_renderer, "GT 330M"))
+        {
+           *vidmem = 1024;
+           return CARD_NVIDIA_GEFORCE_GT325M;
+        }
+
         /* Geforce 200 - highend */
         if (strstr(gl_renderer, "GTX 280")
                 || strstr(gl_renderer, "GTX 285")
@@ -1310,9 +1328,11 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
            *vidmem = 512; /* The GT 220 has 512-1024MB */
            return CARD_NVIDIA_GEFORCE_GT220;
         }
-        /* Geforce 200 lowend */
+        /* Geforce 200 lowend (Geforce 305/310 use the same core) */
         if (strstr(gl_renderer, "Geforce 210")
-                || strstr(gl_renderer, "G 210"))
+                || strstr(gl_renderer, "G 210")
+                || strstr(gl_renderer, "Geforce 305")
+                || strstr(gl_renderer, "Geforce 310"))
         {
            *vidmem = 512;
            return CARD_NVIDIA_GEFORCE_210;
