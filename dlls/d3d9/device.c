@@ -2822,6 +2822,19 @@ static const IWineD3DDeviceParentVtbl d3d9_wined3d_device_parent_vtbl =
     device_parent_CreateSwapChain,
 };
 
+static void setup_fpu(void)
+{
+    WORD cw;
+
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    __asm__ volatile ("fnstcw %0" : "=m" (cw));
+    cw = (cw & ~0xf3f) | 0x3f;
+    __asm__ volatile ("fldcw %0" : : "m" (cw));
+#else
+    FIXME("FPU setup not implemented for this platform.\n");
+#endif
+}
+
 HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapter, D3DDEVTYPE device_type,
         HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters)
 {
@@ -2832,6 +2845,8 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
     device->lpVtbl = &Direct3DDevice9_Vtbl;
     device->device_parent_vtbl = &d3d9_wined3d_device_parent_vtbl;
     device->ref = 1;
+
+    if (!(flags & D3DCREATE_FPU_PRESERVE)) setup_fpu();
 
     wined3d_mutex_lock();
     hr = IWineD3D_CreateDevice(wined3d, adapter, device_type, focus_window, flags, (IUnknown *)device,

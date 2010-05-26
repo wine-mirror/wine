@@ -2641,6 +2641,84 @@ done:
     UnregisterClassA("d3d9_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static inline void set_fpu_cw(WORD cw)
+{
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    __asm__ volatile ("fnclex");
+    __asm__ volatile ("fldcw %0" : : "m" (cw));
+#endif
+}
+
+static inline WORD get_fpu_cw(void)
+{
+    WORD cw = 0;
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    __asm__ volatile ("fnstcw %0" : "=m" (cw));
+#endif
+    return cw;
+}
+
+static void test_fpu_setup(void)
+{
+    D3DPRESENT_PARAMETERS present_parameters;
+    IDirect3DDevice9 *device;
+    HWND window = NULL;
+    IDirect3D9 *d3d9;
+    HRESULT hr;
+    WORD cw;
+
+    d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d9, "Failed to create a d3d9 object.\n");
+    if (!d3d9) return;
+
+    window = CreateWindowA("static", "d3d9_test", WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create a window.\n");
+    if (!window) goto done;
+
+    memset(&present_parameters, 0, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+    set_fpu_cw(0xf60);
+    cw = get_fpu_cw();
+    ok(cw == 0xf60, "cw is %#x, expected 0xf60.\n", cw);
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create a device, hr %#x.\n", hr);
+        set_fpu_cw(0x37f);
+        goto done;
+    }
+
+    cw = get_fpu_cw();
+    ok(cw == 0x7f, "cw is %#x, expected 0x7f.\n", cw);
+
+    IDirect3DDevice9_Release(device);
+
+    cw = get_fpu_cw();
+    ok(cw == 0x7f, "cw is %#x, expected 0x7f.\n", cw);
+    set_fpu_cw(0xf60);
+    cw = get_fpu_cw();
+    ok(cw == 0xf60, "cw is %#x, expected 0xf60.\n", cw);
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &present_parameters, &device);
+    ok(SUCCEEDED(hr), "CreateDevice failed, hr %#x.\n", hr);
+
+    cw = get_fpu_cw();
+    ok(cw == 0xf60, "cw is %#x, expected 0xf60.\n", cw);
+    set_fpu_cw(0x37f);
+
+    IDirect3DDevice9_Release(device);
+
+done:
+    if (window) DestroyWindow(window);
+    if (d3d9) IDirect3D9_Release(d3d9);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -2662,6 +2740,9 @@ START_TEST(device)
         }
         IDirect3D9_Release(d3d9);
 
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+        test_fpu_setup();
+#endif
         test_multi_device();
         test_display_formats();
         test_display_modes();
