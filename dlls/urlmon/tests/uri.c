@@ -38,6 +38,8 @@
 #include "winbase.h"
 #include "urlmon.h"
 
+#define URI_STR_PROPERTY_COUNT Uri_PROPERTY_STRING_LAST+1
+
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
 static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
@@ -56,6 +58,199 @@ static const uri_create_flag_test invalid_flag_tests[] = {
     {Uri_CREATE_PRE_PROCESS_HTML_URI | Uri_CREATE_NO_PRE_PROCESS_HTML_URI, E_INVALIDARG},
     {Uri_CREATE_IE_SETTINGS | Uri_CREATE_NO_IE_SETTINGS, E_INVALIDARG}
 };
+
+typedef struct _uri_str_property {
+    const char* value;
+    HRESULT     expected;
+    BOOL        todo;
+} uri_str_property;
+
+typedef struct _uri_properties {
+    const char*         uri;
+    DWORD               create_flags;
+    HRESULT             create_expected;
+    BOOL                create_todo;
+
+    uri_str_property    str_props[URI_STR_PROPERTY_COUNT];
+} uri_properties;
+
+static const uri_properties uri_tests[] = {
+    {   "http://www.winehq.org/tests/../tests/../..", 0, S_OK, FALSE,
+        {
+            {"http://www.winehq.org/",S_OK,TRUE},                       /* ABSOLUTE_URI */
+            {"www.winehq.org",S_OK,TRUE},                               /* AUTHORITY */
+            {"http://www.winehq.org/",S_OK,TRUE},                       /* DISPLAY_URI */
+            {"winehq.org",S_OK,TRUE},                                   /* DOMAIN */
+            {"",S_FALSE,TRUE},                                          /* EXTENSION */
+            {"",S_FALSE,TRUE},                                          /* FRAGMENT */
+            {"www.winehq.org",S_OK,TRUE},                               /* HOST */
+            {"",S_FALSE,TRUE},                                          /* PASSWORD */
+            {"/",S_OK,TRUE},                                            /* PATH */
+            {"/",S_OK,TRUE},                                            /* PATH_AND_QUERY */
+            {"",S_FALSE,TRUE},                                          /* QUERY */
+            {"http://www.winehq.org/tests/../tests/../..",S_OK,TRUE},   /* RAW_URI */
+            {"http",S_OK,TRUE},                                         /* SCHEME_NAME */
+            {"",S_FALSE,TRUE},                                          /* USER_INFO */
+            {"",S_FALSE,TRUE}                                           /* USER_NAME */
+        }
+    },
+    {   "http://winehq.org/tests/.././tests", 0, S_OK, FALSE,
+        {
+            {"http://winehq.org/tests",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"http://winehq.org/tests",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/tests",S_OK,TRUE},
+            {"/tests",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://winehq.org/tests/.././tests",S_OK,TRUE},
+            {"http",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        }
+    },
+    {   "HtTp://www.winehq.org/tests/..?query=x&return=y", 0, S_OK, FALSE,
+        {
+            {"http://www.winehq.org/?query=x&return=y",S_OK,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"http://www.winehq.org/?query=x&return=y",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/",S_OK,TRUE},
+            {"/?query=x&return=y",S_OK,TRUE},
+            {"?query=x&return=y",S_OK,TRUE},
+            {"HtTp://www.winehq.org/tests/..?query=x&return=y",S_OK,TRUE},
+            {"http",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        }
+    },
+    {   "hTTp://us%45r%3Ainfo@examp%4CE.com:80/path/a/b/./c/../%2E%2E/Forbidden'<|> Characters", 0, S_OK, FALSE,
+        {
+            {"http://usEr%3Ainfo@example.com/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,TRUE},
+            {"usEr%3Ainfo@example.com",S_OK,TRUE},
+            {"http://example.com/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,TRUE},
+            {"example.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"example.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,TRUE},
+            {"/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"hTTp://us%45r%3Ainfo@examp%4CE.com:80/path/a/b/./c/../%2E%2E/Forbidden'<|> Characters",S_OK,TRUE},
+            {"http",S_OK,TRUE},
+            {"usEr%3Ainfo",S_OK,TRUE},
+            {"usEr%3Ainfo",S_OK,TRUE}
+        }
+    },
+    {   "ftp://winepass:wine@ftp.winehq.org:9999/dir/foo bar.txt", 0, S_OK, FALSE,
+        {
+            {"ftp://winepass:wine@ftp.winehq.org:9999/dir/foo%20bar.txt",S_OK,TRUE},
+            {"winepass:wine@ftp.winehq.org:9999",S_OK,TRUE},
+            {"ftp://ftp.winehq.org:9999/dir/foo%20bar.txt",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {".txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"ftp.winehq.org",S_OK,TRUE},
+            {"wine",S_OK,TRUE},
+            {"/dir/foo%20bar.txt",S_OK,TRUE},
+            {"/dir/foo%20bar.txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"ftp://winepass:wine@ftp.winehq.org:9999/dir/foo bar.txt",S_OK,TRUE},
+            {"ftp",S_OK,TRUE},
+            {"winepass:wine",S_OK,TRUE},
+            {"winepass",S_OK,TRUE}
+        }
+    },
+    {   "file://c:\\tests\\../tests/foo%20bar.mp3", 0, S_OK, FALSE,
+        {
+            {"file:///c:/tests/foo%2520bar.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"file:///c:/tests/foo%2520bar.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {".mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/c:/tests/foo%2520bar.mp3",S_OK,TRUE},
+            {"/c:/tests/foo%2520bar.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"file://c:\\tests\\../tests/foo%20bar.mp3",S_OK,TRUE},
+            {"file",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        }
+    },
+    {   "FILE://localhost/test dir\\../tests/test%20file.README.txt", 0, S_OK, FALSE,
+        {
+            {"file:///tests/test%20file.README.txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"file:///tests/test%20file.README.txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {".txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/tests/test%20file.README.txt",S_OK,TRUE},
+            {"/tests/test%20file.README.txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"FILE://localhost/test dir\\../tests/test%20file.README.txt",S_OK,TRUE},
+            {"file",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        }
+    },
+    {   "urn:nothing:should:happen here", 0, S_OK, FALSE,
+        {
+            {"urn:nothing:should:happen here",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"urn:nothing:should:happen here",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"nothing:should:happen here",S_OK,TRUE},
+            {"nothing:should:happen here",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"urn:nothing:should:happen here",S_OK,TRUE},
+            {"urn",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        }
+    }
+};
+
+static inline LPWSTR a2w(LPCSTR str) {
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    }
+
+    return ret;
+}
+
+static inline BOOL heap_free(void* mem) {
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {
+    LPWSTR strAW = a2w(strA);
+    DWORD ret = lstrcmpW(strAW, strB);
+    heap_free(strAW);
+    return ret;
+}
 
 /*
  * Simple tests to make sure the CreateUri function handles invalid flag combinations
@@ -89,6 +284,62 @@ static void test_CreateUri_InvalidArgs(void) {
     ok(uri == NULL, "Error: Expected the IUri to be NULL, but it was %p instead\n", uri);
 }
 
+static void test_IUri_GetPropertyBSTR(void) {
+    DWORD i;
+
+    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+        uri_properties test = uri_tests[i];
+        HRESULT hr;
+        IUri *uri = NULL;
+        LPWSTR uriW;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(test.create_todo) {
+            todo_wine {
+                ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x. Failed on uri_tests[%d].\n",
+                        hr, test.create_expected, i);
+            }
+        } else {
+            ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x. Failed on uri_tests[%d].\n",
+                    hr, test.create_expected, i);
+        }
+
+        if(SUCCEEDED(hr)) {
+            DWORD j;
+
+            /* Checks all the string properties of the uri. */
+            for(j = Uri_PROPERTY_STRING_START; j <= Uri_PROPERTY_STRING_LAST; ++j) {
+                BSTR received = NULL;
+                uri_str_property prop = test.str_props[j];
+
+                hr = IUri_GetPropertyBSTR(uri, j, &received, 0);
+                if(prop.todo) {
+                    todo_wine {
+                        ok(hr == prop.expected, "GetPropertyBSTR returned 0x%08x, expected 0x%08x. On uri_tests[%d].str_props[%d].\n",
+                                hr, prop.expected, i, j);
+                    }
+                    todo_wine {
+                        ok(!strcmp_aw(prop.value, received), "Expected %s but got %s on uri_tests[%d].str_props[%d].\n",
+                                prop.value, wine_dbgstr_w(received), i, j);
+                    }
+                } else {
+                    ok(hr == prop.expected, "GetPropertyBSTR returned 0x%08x, expected 0x%08x. On uri_tests[%d].str_props[%d].\n",
+                            hr, prop.expected, i, j);
+                    ok(!strcmp_aw(prop.value, received), "Expected %s but got %s on uri_tests[%d].str_props[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i, j);
+                }
+
+                SysFreeString(received);
+            }
+        }
+
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -105,4 +356,7 @@ START_TEST(uri) {
 
     trace("test CreateUri invalid args...\n");
     test_CreateUri_InvalidArgs();
+
+    trace("test IUri_GetPropertyBSTR...\n");
+    test_IUri_GetPropertyBSTR();
 }
