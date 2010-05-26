@@ -1019,7 +1019,8 @@ static const struct driver_version_information driver_version_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            15, 11, 9745   },
-
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX470,     "NVIDIA GeForce GTX 470",           15, 11, 9775   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX480,     "NVIDIA GeForce GTX 480",           15, 11, 9775   },
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode. */
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  14, 10, 6764    },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               14, 10, 6764    },
@@ -1258,6 +1259,20 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
 {
     if (WINE_D3D10_CAPABLE(gl_info))
     {
+        /* Geforce 400 - highend */
+        if (strstr(gl_renderer, "GTX 480"))
+        {
+            *vidmem = 1536;
+            return CARD_NVIDIA_GEFORCE_GTX480;
+        }
+
+        /* Geforce 400 - midend high */
+        if (strstr(gl_renderer, "GTX 470"))
+        {
+            *vidmem = 1280;
+            return CARD_NVIDIA_GEFORCE_GTX470;
+        }
+
         /* Geforce 200 - highend */
         if (strstr(gl_renderer, "GTX 280")
                 || strstr(gl_renderer, "GTX 285")
