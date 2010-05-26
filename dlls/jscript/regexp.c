@@ -96,6 +96,11 @@ static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR execW[] = {'e','x','e','c',0};
 static const WCHAR testW[] = {'t','e','s','t',0};
 
+static const WCHAR leftContextW[] =
+    {'l','e','f','t','C','o','n','t','e','x','t',0};
+static const WCHAR rightContextW[] =
+    {'r','i','g','h','t','C','o','n','t','e','x','t',0};
+
 static const WCHAR emptyW[] = {0};
 
 /* FIXME: Better error handling */
@@ -3959,6 +3964,20 @@ HRESULT regexp_string_match(script_ctx_t *ctx, DispatchEx *re, BSTR str,
     return hres;
 }
 
+static HRESULT RegExpConstr_leftContext(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT RegExpConstr_rightContext(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -4019,6 +4038,20 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     return S_OK;
 }
 
+static const builtin_prop_t RegExpConstr_props[] = {
+    {leftContextW,    RegExpConstr_leftContext,    0},
+    {rightContextW,   RegExpConstr_rightContext,   0}
+};
+
+static const builtin_info_t RegExpConstr_info = {
+    JSCLASS_FUNCTION,
+    {NULL, Function_value, 0},
+    sizeof(RegExpConstr_props)/sizeof(*RegExpConstr_props),
+    RegExpConstr_props,
+    NULL,
+    NULL
+};
+
 HRESULT create_regexp_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
 {
     RegExpInstance *regexp;
@@ -4030,7 +4063,7 @@ HRESULT create_regexp_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, RegExpConstr_value, RegExpW, NULL,
+    hres = create_builtin_function(ctx, RegExpConstr_value, RegExpW, &RegExpConstr_info,
             PROPF_CONSTR|2, &regexp->dispex, ret);
 
     jsdisp_release(&regexp->dispex);
