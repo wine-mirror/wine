@@ -1207,7 +1207,7 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
         DWORD *ptr = (DWORD *)(((BYTE *)locked_rect.pBits) + (y * locked_rect.Pitch));
         for (x = 0; x < 64; ++x)
         {
-            *ptr++ = 0xff0000dd;
+            *ptr++ = 0xff0000ff;
         }
         for (x = 64; x < 128; ++x)
         {
@@ -1289,7 +1289,7 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff), 11),
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff), 1),
                 "Got color 0x%08x for addressing mode %s, expected 0x000000ff.\n",
                 color, address_modes[x].name);
 
