@@ -30,10 +30,38 @@ import "shobjidl.idl";
 ]
 library gameuxLib
 {
+    importlib("stdole2.tlb");
+
     typedef enum
     {
         GIS_NOT_INSTALLED  = 1,
         GIS_CURRENT_USER   = 2,
         GIS_ALL_USERS      = 3
     } GAME_INSTALL_SCOPE;
+
+    [
+      object,
+      uuid(E7B2FB72-D728-49B3-A5F2-18EBF5F1349E)
+    ]
+    interface IGameExplorer : IUnknown
+    {
+        HRESULT AddGame([in] BSTR sGDFBinaryPath,
+                    [in] BSTR sInstallDirectory,
+                    [in] GAME_INSTALL_SCOPE installScope,
+                    [in, out] GUID* pguidInstanceID);
+
+        HRESULT RemoveGame([in] GUID instanceID);
+
+        HRESULT UpdateGame([in] GUID instanceID);
+
+        HRESULT VerifyAccess([in] BSTR sGDFBinaryPath, [out] BOOL* pHasAccess);
+    };
+
+    [
+      uuid(9A5EA990-3034-4D6F-9128-01F3C61022BC)
+    ]
+    coclass GameExplorer
+    {
+        [default] interface IGameExplorer;
+    };
 }
