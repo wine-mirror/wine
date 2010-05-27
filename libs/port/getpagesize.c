@@ -30,7 +30,7 @@ size_t getpagesize(void)
 {
 # ifdef __svr4__
     return sysconf(_SC_PAGESIZE);
-# elif defined(__i386__)
+# elif defined(__i386__) || defined(__x86_64__)
     return 4096;
 # else
 #  error Cannot get the page size on this platform
