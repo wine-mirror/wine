@@ -363,6 +363,7 @@ static const IDirectMusicThruVtbl DirectMusicThru_Vtbl = {
 HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter, LPDMUS_PORTPARAMS pPortParams, LPDMUS_PORTCAPS pPortCaps) {
 	IDirectMusicPortImpl *obj;
 	HRESULT hr = E_FAIL;
+	UINT j;
 
 	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
 
@@ -382,7 +383,8 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj,
 	obj->pLatencyClock = NULL;
 	hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (LPVOID*)&obj->pLatencyClock, NULL);
 
-#if 0
+if(0)
+{
 	if (pPortParams->dwValidParams & DMUS_PORTPARAMS_CHANNELGROUPS) {
 	  obj->nrofgroups = pPortParams->dwChannelGroups;
 	  /* setting default priorities */			
@@ -406,7 +408,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj,
 	    obj->group[j].channel[15].priority = DAUD_CHAN16_DEF_VOICE_PRIORITY;
 	  }
 	}
-#endif
+}
 
 	return IDirectMusicPortImpl_QueryInterface ((LPDIRECTMUSICPORT)obj, lpcGUID, ppobj);
 }
