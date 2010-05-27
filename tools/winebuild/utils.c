@@ -54,6 +54,7 @@ static const struct
     { "i586",    CPU_x86 },
     { "i686",    CPU_x86 },
     { "i786",    CPU_x86 },
+    { "amd64",   CPU_x86_64 },
     { "x86_64",  CPU_x86_64 },
     { "sparc",   CPU_SPARC },
     { "alpha",   CPU_ALPHA },
