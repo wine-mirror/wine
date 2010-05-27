@@ -827,9 +827,13 @@ INT WINAPI GetDIBits(
     case 16:
         if (info->bmiHeader.biCompression == BI_BITFIELDS)
         {
-            ((PDWORD)info->bmiColors)[0] = 0xf800;
-            ((PDWORD)info->bmiColors)[1] = 0x07e0;
-            ((PDWORD)info->bmiColors)[2] = 0x001f;
+            if (bmp->dib) memcpy( info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
+            else
+            {
+                ((PDWORD)info->bmiColors)[0] = 0xf800;
+                ((PDWORD)info->bmiColors)[1] = 0x07e0;
+                ((PDWORD)info->bmiColors)[2] = 0x001f;
+            }
         }
         break;
 
@@ -837,9 +841,13 @@ INT WINAPI GetDIBits(
     case 32:
         if (info->bmiHeader.biCompression == BI_BITFIELDS)
         {
-            ((PDWORD)info->bmiColors)[0] = 0xff0000;
-            ((PDWORD)info->bmiColors)[1] = 0x00ff00;
-            ((PDWORD)info->bmiColors)[2] = 0x0000ff;
+            if (bmp->dib) memcpy( info->bmiColors, bmp->dib->dsBitfields, 3 * sizeof(DWORD) );
+            else
+            {
+                ((PDWORD)info->bmiColors)[0] = 0xff0000;
+                ((PDWORD)info->bmiColors)[1] = 0x00ff00;
+                ((PDWORD)info->bmiColors)[2] = 0x0000ff;
+            }
         }
         break;
     }
