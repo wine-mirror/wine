@@ -6390,6 +6390,9 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
   ULONG nextBlockIndex = BLOCK_END_OF_CHAIN;
   HRESULT res = S_OK;
   ULONG smallBlocksPerBigBlock;
+  DirEntry rootEntry;
+  ULONG blocksRequired;
+  ULARGE_INTEGER old_size, size_required;
 
   offsetOfBlockInDepot.u.HighPart = 0;
 
@@ -6449,34 +6452,29 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
   /*
    * Verify if we have to allocate big blocks to contain small blocks
    */
-  if (blockIndex % smallBlocksPerBigBlock == 0)
+  blocksRequired = (blockIndex / smallBlocksPerBigBlock) + 1;
+
+  size_required.QuadPart = blocksRequired * This->parentStorage->bigBlockSize;
+
+  old_size = BlockChainStream_GetSize(This->parentStorage->smallBlockRootChain);
+
+  if (size_required.QuadPart > old_size.QuadPart)
   {
-    DirEntry rootEntry;
-    ULONG blocksRequired = (blockIndex / smallBlocksPerBigBlock) + 1;
-    ULARGE_INTEGER old_size, size_required;
+    BlockChainStream_SetSize(
+      This->parentStorage->smallBlockRootChain,
+      size_required);
 
-    size_required.QuadPart = blocksRequired * This->parentStorage->bigBlockSize;
+    StorageImpl_ReadDirEntry(
+      This->parentStorage,
+      This->parentStorage->base.storageDirEntry,
+      &rootEntry);
 
-    old_size = BlockChainStream_GetSize(This->parentStorage->smallBlockRootChain);
+    rootEntry.size = size_required;
 
-    if (size_required.QuadPart > old_size.QuadPart)
-    {
-      BlockChainStream_SetSize(
-        This->parentStorage->smallBlockRootChain,
-        size_required);
-
-      StorageImpl_ReadDirEntry(
-        This->parentStorage,
-        This->parentStorage->base.storageDirEntry,
-        &rootEntry);
-
-      rootEntry.size = size_required;
-
-      StorageImpl_WriteDirEntry(
-        This->parentStorage,
-        This->parentStorage->base.storageDirEntry,
-        &rootEntry);
-    }
+    StorageImpl_WriteDirEntry(
+      This->parentStorage,
+      This->parentStorage->base.storageDirEntry,
+      &rootEntry);
   }
 
   return blockIndex;
