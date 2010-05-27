@@ -1401,10 +1401,9 @@ static int nas_add_buffer(WINE_WAVEOUT* wwo) {
 }
 
 static int nas_send_buffer(WINE_WAVEOUT* wwo) {
-  int oldb , len;
+  int len = 0;
   char *ptr, *newdata;
   newdata = NULL;
-  oldb = len = 0;
 
   if (wwo->freeBytes <= 0)
      return 0;
