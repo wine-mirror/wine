@@ -194,6 +194,17 @@ static const char* contextual_features[] =
     "medi"
 };
 
+static const char* arabic_GSUB_features[] =
+{
+    "rlig",
+    "calt",
+    "liga",
+    "dlig",
+    "cswh",
+    "mset",
+    NULL
+};
+
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
 {
     const GSUB_CoverageFormat1* cf1;
@@ -719,7 +730,12 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
         }
     }
 
-    apply_GSUB_feature(hdc, psa, psc->GSUB_Table, pwOutGlyphs, dirL, pcGlyphs, "rlig");
+    i = 0;
+    while (arabic_GSUB_features[i] != NULL)
+    {
+        apply_GSUB_feature(hdc, psa, psc->GSUB_Table, pwOutGlyphs, dirL, pcGlyphs, arabic_GSUB_features[i]);
+        i++;
+    }
 
     HeapFree(GetProcessHeap(),0,context_shape);
     HeapFree(GetProcessHeap(),0,context_type);
