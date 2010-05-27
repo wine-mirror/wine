@@ -549,6 +549,57 @@ static VOID *load_gsub_table(HDC hdc)
     return GSUB_Table;
 }
 
+static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, void* GSUB_Table, WORD *pwOutGlyphs, int write_dir, INT* pcGlyphs, const char* feat)
+{
+    int i;
+
+    if (GSUB_Table)
+    {
+        const GSUB_Header *header;
+        const GSUB_Script *script;
+        const GSUB_LangSys *language;
+        const GSUB_Feature *feature;
+
+        if (!GSUB_Table)
+            return GSUB_E_NOFEATURE;
+
+        header = GSUB_Table;
+
+        script = GSUB_get_script_table(header, get_opentype_script(hdc,psa));
+        if (!script)
+        {
+            TRACE("Script not found\n");
+            return GSUB_E_NOFEATURE;
+        }
+        language = GSUB_get_lang_table(script, "xxxx");
+        if (!language)
+        {
+            TRACE("Language not found\n");
+            return GSUB_E_NOFEATURE;
+        }
+        feature  =  GSUB_get_feature(header, language, feat);
+        if (!feature)
+        {
+            TRACE("%s feature not found\n",feat);
+            return GSUB_E_NOFEATURE;
+        }
+
+        i = 0;
+        TRACE("applying feature %s\n",feat);
+        while(i < *pcGlyphs)
+        {
+                INT nextIndex;
+                nextIndex = GSUB_apply_feature(header, feature, pwOutGlyphs, i, write_dir, pcGlyphs);
+                if (nextIndex > GSUB_E_NOGLYPH)
+                    i = nextIndex;
+                else
+                    i++;
+        }
+        return *pcGlyphs;
+    }
+    return GSUB_E_NOFEATURE;
+}
+
 static CHAR neighbour_joining_type(int i, int delta, const CHAR* context_type, INT cchLen, SCRIPT_ANALYSIS *psa)
 {
     if (i + delta < 0)
@@ -668,22 +719,7 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
         }
     }
 
-    /* Required ligature substitution */
-    if (psc->GSUB_Table)
-    {
-        i = 0;
-        while(i < *pcGlyphs)
-        {
-                INT nextIndex;
-                nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs, i, dirL, pcGlyphs, "rlig");
-                if (nextIndex > GSUB_E_NOGLYPH)
-                    i = nextIndex;
-                else if (nextIndex == GSUB_E_NOFEATURE)
-                    break;
-                else
-                    i++;
-        }
-    }
+    apply_GSUB_feature(hdc, psa, psc->GSUB_Table, pwOutGlyphs, dirL, pcGlyphs, "rlig");
 
     HeapFree(GetProcessHeap(),0,context_shape);
     HeapFree(GetProcessHeap(),0,context_type);
