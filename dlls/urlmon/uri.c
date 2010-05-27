@@ -210,6 +210,10 @@ static HRESULT WINAPI Uri_GetPath(IUri *iface, BSTR *pstrPath)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrPath);
+
+    if(!pstrPath)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -217,6 +221,10 @@ static HRESULT WINAPI Uri_GetPathAndQuery(IUri *iface, BSTR *pstrPathAndQuery)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrPathAndQuery);
+
+    if(!pstrPathAndQuery)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -224,6 +232,10 @@ static HRESULT WINAPI Uri_GetQuery(IUri *iface, BSTR *pstrQuery)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrQuery);
+
+    if(!pstrQuery)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -231,6 +243,10 @@ static HRESULT WINAPI Uri_GetRawUri(IUri *iface, BSTR *pstrRawUri)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrRawUri);
+
+    if(!pstrRawUri)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -238,6 +254,10 @@ static HRESULT WINAPI Uri_GetSchemeName(IUri *iface, BSTR *pstrSchemeName)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrSchemeName);
+
+    if(!pstrSchemeName)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -245,6 +265,10 @@ static HRESULT WINAPI Uri_GetUserInfo(IUri *iface, BSTR *pstrUserInfo)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrUserInfo);
+
+    if(!pstrUserInfo)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -252,6 +276,10 @@ static HRESULT WINAPI Uri_GetUserName(IUri *iface, BSTR *pstrUserName)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrUserName);
+
+    if(!pstrUserName)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 

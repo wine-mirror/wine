@@ -490,6 +490,27 @@ static void test_IUri_GetStrProperties(void) {
 
         hr = IUri_GetPassword(uri, NULL);
         ok(hr == E_POINTER, "Error: GetPassword returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetPath(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetPath returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetPathAndQuery(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetPathAndQuery returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetQuery(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetQuery returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetRawUri(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetRawUri returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetSchemeName(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetSchemeName returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetUserInfo(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetUserInfo returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetUserName(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetUserName returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
     }
     if(uri) IUri_Release(uri);
 
@@ -660,6 +681,152 @@ static void test_IUri_GetStrProperties(void) {
             }
             SysFreeString(received);
             received = NULL;
+
+            /* GetPath() tests. */
+            prop = test.str_props[Uri_PROPERTY_PATH];
+            hr = IUri_GetPath(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetPath returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetPath returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetPathAndQuery() tests. */
+            prop = test.str_props[Uri_PROPERTY_PATH_AND_QUERY];
+            hr = IUri_GetPathAndQuery(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetPathAndQuery returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetPathAndQuery returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetQuery() tests. */
+            prop = test.str_props[Uri_PROPERTY_QUERY];
+            hr = IUri_GetQuery(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetQuery returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetQuery returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetRawUri() tests. */
+            prop = test.str_props[Uri_PROPERTY_RAW_URI];
+            hr = IUri_GetRawUri(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetRawUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetRawUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetSchemeName() tests. */
+            prop = test.str_props[Uri_PROPERTY_SCHEME_NAME];
+            hr = IUri_GetSchemeName(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetSchemeName returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetSchemeName returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetUserInfo() tests. */
+            prop = test.str_props[Uri_PROPERTY_USER_INFO];
+            hr = IUri_GetUserInfo(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetUserInfo returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetUserInfo returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetUserName() tests. */
+            prop = test.str_props[Uri_PROPERTY_USER_NAME];
+            hr = IUri_GetUserName(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetUserName returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetUserName returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
         }
 
         if(uri) IUri_Release(uri);
