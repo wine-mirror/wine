@@ -22,7 +22,9 @@
  * - Private file where devenum globals are declared
  */
 
+#ifndef RC_INVOKED
 #include <stdarg.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -36,8 +38,11 @@
 #include "ole2.h"
 #include "strmif.h"
 #include "olectl.h"
-#include "wine/unicode.h"
 #include "uuids.h"
+
+#ifndef RC_INVOKED
+#include "wine/unicode.h"
+#endif
 
 /**********************************************************************
  * Dll lifetime tracking declaration for devenum.dll

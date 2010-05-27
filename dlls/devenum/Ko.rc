@@ -18,19 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "devenum_private.h"
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+
 #pragma code_page(65001)
 
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#define WINE_FILEDESCRIPTION_STR "Wine Device Enumerator Library"
-#define WINE_FILENAME_STR "devenum.dll"
-#define WINE_FILEVERSION 6,5,1,902
-#define WINE_FILEVERSION_STR "6.5.1.902"
-#define WINE_PRODUCTVERSION 6,5,1,902
-#define WINE_PRODUCTVERSION_STR "6.5"
-
-#include "wine/wine_common_ver.rc"
+STRINGTABLE DISCARDABLE
+{
+    IDS_DEVENUM_DSDEFAULT  "기본 다이렉트 사운드"
+    IDS_DEVENUM_DS         "다이렉트 사운드: %s"
+    IDS_DEVENUM_WODEFAULT  "기본 웨이브 출력 장치"
+    IDS_DEVENUM_MIDEFAULT  "기본 미디출력 장치"
+}

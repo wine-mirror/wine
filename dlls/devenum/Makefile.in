@@ -12,6 +12,23 @@ C_SRCS = \
 	mediacatenum.c \
 	parsedisplayname.c
 
-RC_SRCS = devenum.rc
+RC_SRCS = \
+	Cs.rc \
+	De.rc \
+	En.rc \
+	Es.rc \
+	Fr.rc \
+	It.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ro.rc \
+	Ru.rc \
+	Si.rc \
+	devenum.rc
 
 @MAKE_DLL_RULES@
