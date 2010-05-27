@@ -460,6 +460,214 @@ static void test_IUri_GetPropertyDWORD(void) {
     }
 }
 
+/* Tests all the 'Get*' property functions which deal with strings. */
+static void test_IUri_GetStrProperties(void) {
+    IUri *uri = NULL;
+    HRESULT hr;
+    DWORD i;
+
+    /* Make sure all the 'Get*' string property functions handle invalid args correctly. */
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        hr = IUri_GetAbsoluteUri(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetAbsoluteUri returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetAuthority(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetAuthority returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetDisplayUri(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetDisplayUri returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetDomain(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetDomain returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetExtension(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetExtension returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetFragment(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetFragment returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        hr = IUri_GetPassword(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetPassword returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+    }
+    if(uri) IUri_Release(uri);
+
+    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+        uri_properties test = uri_tests[i];
+        LPWSTR uriW;
+        uri = NULL;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(test.create_todo) {
+            todo_wine {
+                ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, test.create_expected, i);
+            }
+        } else {
+            ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                    hr, test.create_expected, i);
+        }
+
+        if(SUCCEEDED(hr)) {
+            uri_str_property prop;
+            BSTR received = NULL;
+
+            /* GetAbsoluteUri() tests. */
+            prop = test.str_props[Uri_PROPERTY_ABSOLUTE_URI];
+            hr = IUri_GetAbsoluteUri(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetAuthority() tests. */
+            prop = test.str_props[Uri_PROPERTY_AUTHORITY];
+            hr = IUri_GetAuthority(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetAuthority returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetAuthority returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetDisplayUri() tests. */
+            prop = test.str_props[Uri_PROPERTY_DISPLAY_URI];
+            hr = IUri_GetDisplayUri(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetDisplayUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_test[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetDisplayUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetDomain() tests. */
+            prop = test.str_props[Uri_PROPERTY_DOMAIN];
+            hr = IUri_GetDomain(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetDomain returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetDomain returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetExtension() tests. */
+            prop = test.str_props[Uri_PROPERTY_EXTENSION];
+            hr = IUri_GetExtension(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetExtension returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetExtension returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetFragment() tests. */
+            prop = test.str_props[Uri_PROPERTY_FRAGMENT];
+            hr = IUri_GetFragment(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetFragment returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetFragment returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetPassword() tests. */
+            prop = test.str_props[Uri_PROPERTY_PASSWORD];
+            hr = IUri_GetPassword(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetPassword returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetPassword returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+        }
+
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -480,6 +688,9 @@ START_TEST(uri) {
     trace("test IUri_GetPropertyBSTR...\n");
     test_IUri_GetPropertyBSTR();
 
-    trace("test IUri_GetPropretyDWORD...\n");
+    trace("test IUri_GetPropertyDWORD...\n");
     test_IUri_GetPropertyDWORD();
+
+    trace("test IUri_GetStrProperties...\n");
+    test_IUri_GetStrProperties();
 }

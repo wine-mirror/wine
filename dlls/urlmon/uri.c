@@ -126,6 +126,10 @@ static HRESULT WINAPI Uri_GetAbsoluteUri(IUri *iface, BSTR *pstrAbsoluteUri)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrAbsoluteUri);
+
+    if(!pstrAbsoluteUri)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -133,6 +137,10 @@ static HRESULT WINAPI Uri_GetAuthority(IUri *iface, BSTR *pstrAuthority)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrAuthority);
+
+    if(!pstrAuthority)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -140,6 +148,10 @@ static HRESULT WINAPI Uri_GetDisplayUri(IUri *iface, BSTR *pstrDisplayUri)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrDisplayUri);
+
+    if(!pstrDisplayUri)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -147,6 +159,10 @@ static HRESULT WINAPI Uri_GetDomain(IUri *iface, BSTR *pstrDomain)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrDomain);
+
+    if(!pstrDomain)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -154,6 +170,10 @@ static HRESULT WINAPI Uri_GetExtension(IUri *iface, BSTR *pstrExtension)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrExtension);
+
+    if(!pstrExtension)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -161,6 +181,10 @@ static HRESULT WINAPI Uri_GetFragment(IUri *iface, BSTR *pstrFragment)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrFragment);
+
+    if(!pstrFragment)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
@@ -175,6 +199,10 @@ static HRESULT WINAPI Uri_GetPassword(IUri *iface, BSTR *pstrPassword)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrPassword);
+
+    if(!pstrPassword)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 
