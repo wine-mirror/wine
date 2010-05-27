@@ -778,8 +778,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
             if (zeroend > zeropage)
               {
                 /* Map the remaining zero pages in from the zero fill FD.  */
-                caddr_t mapat;
-                mapat = wld_mmap ((caddr_t) zeropage, zeroend - zeropage,
+                wld_mmap ((caddr_t) zeropage, zeroend - zeropage,
                                 c->prot, MAP_ANON|MAP_PRIVATE|MAP_FIXED,
                                 -1, 0);
               }
