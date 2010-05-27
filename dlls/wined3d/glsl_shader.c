@@ -2213,10 +2213,15 @@ static void shader_glsl_pow(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
     shader_glsl_add_src_param(ins, &ins->src[1], WINED3DSP_WRITEMASK_0, &src1_param);
 
-    if (dst_size > 1) {
-        shader_addline(buffer, "vec%d(pow(abs(%s), %s)));\n", dst_size, src0_param.param_str, src1_param.param_str);
-    } else {
-        shader_addline(buffer, "pow(abs(%s), %s));\n", src0_param.param_str, src1_param.param_str);
+    if (dst_size > 1)
+    {
+        shader_addline(buffer, "vec%d(%s == 0.0 ? 0.0 : pow(abs(%s), %s)));\n",
+                dst_size, src0_param.param_str, src0_param.param_str, src1_param.param_str);
+    }
+    else
+    {
+        shader_addline(buffer, "%s == 0.0 ? 0.0 : pow(abs(%s), %s));\n",
+                src0_param.param_str, src0_param.param_str, src1_param.param_str);
     }
 }
 
