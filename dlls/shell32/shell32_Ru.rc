@@ -209,6 +209,10 @@ STRINGTABLE
     IDS_SHV_COLUMN11		"Группа"
     IDS_SHV_COLUMN_DELFROM	"Исходное местонаходение"
     IDS_SHV_COLUMN_DELDATE	"Время удаления"
+    IDS_SHV_COL_DOCS		"Документы"
+    IDS_SHV_COL_STATUS		"Состояние"
+    IDS_SHV_COL_LOCATION	"Размещение"
+    IDS_SHV_COL_MODEL		"Модель"
 
     /* special folders */
     IDS_DESKTOP			"Рабочий стол"
@@ -288,4 +292,5 @@ STRINGTABLE
     IDS_CPANEL_TITLE            "Панель Управления Wine"
     IDS_CPANEL_NAME             "Имя"
     IDS_CPANEL_DESCRIPTION      "Описание"
+    IDS_SHLEXEC_NOASSOC         "Программы для открытия файлов этого типа не сконфигурировано."
 }
