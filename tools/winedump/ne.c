@@ -30,7 +30,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/winbase16.h"
 #include "winedump.h"
 
 struct ne_segtable_entry
@@ -50,6 +49,23 @@ struct relocation_entry
     WORD target2;         /* Target specification */
 };
 
+typedef struct
+{
+    WORD  offset;
+    WORD  length;
+    WORD  flags;
+    WORD  id;
+    WORD  handle;
+    WORD  usage;
+} NE_NAMEINFO;
+
+typedef struct
+{
+    WORD  type_id;
+    WORD  count;
+    DWORD resloader;
+} NE_TYPEINFO;
+
 #define NE_RADDR_LOWBYTE      0
 #define NE_RADDR_SELECTOR     2
 #define NE_RADDR_POINTER32    3
@@ -62,6 +78,34 @@ struct relocation_entry
 #define NE_RELTYPE_NAME      2
 #define NE_RELTYPE_OSFIXUP   3
 #define NE_RELFLAG_ADDITIVE  4
+
+#define NE_SEGFLAGS_DATA        0x0001
+#define NE_SEGFLAGS_ALLOCATED   0x0002
+#define NE_SEGFLAGS_LOADED      0x0004
+#define NE_SEGFLAGS_ITERATED    0x0008
+#define NE_SEGFLAGS_MOVEABLE    0x0010
+#define NE_SEGFLAGS_SHAREABLE   0x0020
+#define NE_SEGFLAGS_PRELOAD     0x0040
+#define NE_SEGFLAGS_EXECUTEONLY 0x0080
+#define NE_SEGFLAGS_READONLY    0x0080
+#define NE_SEGFLAGS_RELOC_DATA  0x0100
+#define NE_SEGFLAGS_SELFLOAD    0x0800
+#define NE_SEGFLAGS_DISCARDABLE 0x1000
+#define NE_SEGFLAGS_32BIT       0x2000
+
+#define NE_RSCTYPE_CURSOR             0x8001
+#define NE_RSCTYPE_BITMAP             0x8002
+#define NE_RSCTYPE_ICON               0x8003
+#define NE_RSCTYPE_MENU               0x8004
+#define NE_RSCTYPE_DIALOG             0x8005
+#define NE_RSCTYPE_STRING             0x8006
+#define NE_RSCTYPE_FONTDIR            0x8007
+#define NE_RSCTYPE_FONT               0x8008
+#define NE_RSCTYPE_ACCELERATOR        0x8009
+#define NE_RSCTYPE_RCDATA             0x800a
+#define NE_RSCTYPE_GROUP_CURSOR       0x800c
+#define NE_RSCTYPE_GROUP_ICON         0x800e
+#define NE_RSCTYPE_SCALABLE_FONTPATH  0x80cc
 
 static inline WORD get_word( const BYTE *ptr )
 {
@@ -78,8 +122,8 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
     printf( "Auto data segment:   %x\n", ne->ne_autodata );
     printf( "Heap size:           %d bytes\n", ne->ne_heap );
     printf( "Stack size:          %d bytes\n", ne->ne_stack );
-    printf( "Stack pointer:       %x:%04x\n", SELECTOROF(ne->ne_sssp), OFFSETOF(ne->ne_sssp) );
-    printf( "Entry point:         %x:%04x\n", SELECTOROF(ne->ne_csip), OFFSETOF(ne->ne_csip) );
+    printf( "Stack pointer:       %x:%04x\n", HIWORD(ne->ne_sssp), LOWORD(ne->ne_sssp) );
+    printf( "Entry point:         %x:%04x\n", HIWORD(ne->ne_csip), LOWORD(ne->ne_csip) );
     printf( "Number of segments:  %d\n", ne->ne_cseg );
     printf( "Number of modrefs:   %d\n", ne->ne_cmod );
     printf( "Segment table:       %x\n", ne->ne_segtab );
