@@ -1168,7 +1168,21 @@ int CDECL _wsystem(const MSVCRT_wchar_t* cmd)
   unsigned int len;
   static const MSVCRT_wchar_t flag[] = {' ','/','c',' ',0};
 
-  if (!(comspec = msvcrt_get_comspec())) return -1;
+  comspec = msvcrt_get_comspec();
+
+  if (cmd == NULL)
+  {
+    if (comspec == NULL)
+    {
+        *MSVCRT__errno() = MSVCRT_ENOENT;
+        return 0;
+    }
+    return 1;
+  }
+
+  if ( comspec == NULL)
+    return -1;
+
   len = strlenW(comspec) + strlenW(flag) + strlenW(cmd) + 1;
 
   if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(MSVCRT_wchar_t))))
@@ -1194,6 +1208,9 @@ int CDECL MSVCRT_system(const char* cmd)
 {
   int res = -1;
   MSVCRT_wchar_t *cmdW;
+
+  if (cmd == NULL)
+    return _wsystem(NULL);
 
   if ((cmdW = msvcrt_wstrdupa(cmd)))
   {
