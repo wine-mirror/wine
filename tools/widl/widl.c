@@ -248,6 +248,7 @@ static void set_target( const char *target )
         { "i586",    SYS_WIN32 },
         { "i686",    SYS_WIN32 },
         { "i786",    SYS_WIN32 },
+        { "amd64",   SYS_WIN64 },
         { "x86_64",  SYS_WIN64 },
         { "sparc",   SYS_WIN32 },
         { "alpha",   SYS_WIN32 },
