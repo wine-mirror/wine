@@ -104,7 +104,7 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
 
     /* Microsoft's implementation for the ZONE property of a URI seems to be lacking...
      * From what I can tell, instead of checking which URLZONE the URI belongs to it
-     * simply assigns URLZONE_INVALID and returns E_NOTIMPL. This also applies the GetZone
+     * simply assigns URLZONE_INVALID and returns E_NOTIMPL. This also applies to the GetZone
      * function.
      */
     if(uriProp == Uri_PROPERTY_ZONE) {
@@ -287,6 +287,10 @@ static HRESULT WINAPI Uri_GetHostType(IUri *iface, DWORD *pdwHostType)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pdwHostType);
+
+    if(!pdwHostType)
+        return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 
@@ -294,6 +298,10 @@ static HRESULT WINAPI Uri_GetPort(IUri *iface, DWORD *pdwPort)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pdwPort);
+
+    if(!pdwPort)
+        return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 
@@ -301,6 +309,10 @@ static HRESULT WINAPI Uri_GetScheme(IUri *iface, DWORD *pdwScheme)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pdwScheme);
+
+    if(!pdwScheme)
+        return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 
@@ -308,6 +320,14 @@ static HRESULT WINAPI Uri_GetZone(IUri *iface, DWORD *pdwZone)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pdwZone);
+
+    if(!pdwZone)
+        return E_INVALIDARG;
+
+    /* Microsoft doesn't seem to have this implemented yet... See
+     * the comment in Uri_GetPropertyDWORD for more about this.
+     */
+    *pdwZone = URLZONE_INVALID;
     return E_NOTIMPL;
 }
 

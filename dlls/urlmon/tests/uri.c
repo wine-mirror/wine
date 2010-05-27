@@ -835,6 +835,133 @@ static void test_IUri_GetStrProperties(void) {
     }
 }
 
+static void test_IUri_GetDwordProperties(void) {
+    IUri *uri = NULL;
+    HRESULT hr;
+    DWORD i;
+
+    /* Make sure all the 'Get*' dword property functions handle invalid args correctly. */
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        hr = IUri_GetHostType(uri, NULL);
+        ok(hr == E_INVALIDARG, "Error: GetHostType returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+
+        hr = IUri_GetPort(uri, NULL);
+        ok(hr == E_INVALIDARG, "Error: GetPort returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+
+        hr = IUri_GetScheme(uri, NULL);
+        ok(hr == E_INVALIDARG, "Error: GetScheme returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+
+        hr = IUri_GetZone(uri, NULL);
+        ok(hr == E_INVALIDARG, "Error: GetZone returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    }
+    if(uri) IUri_Release(uri);
+
+    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+        uri_properties test = uri_tests[i];
+        LPWSTR uriW;
+        uri = NULL;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(test.create_todo) {
+            todo_wine {
+                ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, test.create_expected, i);
+            }
+        } else {
+            ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                    hr, test.create_expected, i);
+        }
+
+        if(SUCCEEDED(hr)) {
+            uri_dword_property prop;
+            DWORD received;
+
+            /* Assign an insane value so tests don't accidentally pass when
+             * they shouldn't!
+             */
+            received = -9999999;
+
+            /* GetHostType() tests. */
+            prop = test.dword_props[Uri_PROPERTY_HOST_TYPE-Uri_PROPERTY_DWORD_START];
+            hr = IUri_GetHostType(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetHostType returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetHostType returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+            }
+            received = -9999999;
+
+            /* GetPort() tests. */
+            prop = test.dword_props[Uri_PROPERTY_PORT-Uri_PROPERTY_DWORD_START];
+            hr = IUri_GetPort(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetPort returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetPort returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+            }
+            received = -9999999;
+
+            /* GetScheme() tests. */
+            prop = test.dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START];
+            hr = IUri_GetScheme(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetScheme returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetScheme returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+            }
+            received = -9999999;
+
+            /* GetZone() tests. */
+            prop = test.dword_props[Uri_PROPERTY_ZONE-Uri_PROPERTY_DWORD_START];
+            hr = IUri_GetZone(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetZone returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetZone returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(received == prop.value, "Error: Expected %d but got %d on uri_tests[%d].\n", prop.value, received, i);
+            }
+        }
+
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -860,4 +987,7 @@ START_TEST(uri) {
 
     trace("test IUri_GetStrProperties...\n");
     test_IUri_GetStrProperties();
+
+    trace("test IUri_GetDwordProperties...\n");
+    test_IUri_GetDwordProperties();
 }
