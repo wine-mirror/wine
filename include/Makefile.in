@@ -37,6 +37,7 @@ PUBLIC_IDL_H_SRCS = \
 	endpointvolume.idl \
 	exdisp.idl \
 	fusion.idl \
+	gameux.idl \
 	hlink.idl \
 	htiframe.idl \
 	iads.idl \

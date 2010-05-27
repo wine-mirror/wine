@@ -1,0 +1,39 @@
+ /*
+ *	Defines the COM interfaces of Game Explorer
+ *
+ * Copyright (C) 2008 Alistair Leslie-Hughes
+ * Copyright (C) 2010 Mariusz Pluciński
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "shobjidl.idl";
+
+[
+  uuid(1DE6CE3D-EA69-4671-941F-26F789F39C5B),
+  version(1.0),
+  helpstring("gameux public 1.0 Type Library")
+]
+library gameuxLib
+{
+    typedef enum
+    {
+        GIS_NOT_INSTALLED  = 1,
+        GIS_CURRENT_USER   = 2,
+        GIS_ALL_USERS      = 3
+    } GAME_INSTALL_SCOPE;
+}

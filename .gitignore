@@ -160,6 +160,7 @@ include/dxgitype.h
 include/endpointvolume.h
 include/exdisp.h
 include/fusion.h
+include/gameux.h
 include/hlink.h
 include/htiframe.h
 include/iads.h
