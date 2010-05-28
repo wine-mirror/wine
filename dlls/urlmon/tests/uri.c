@@ -283,6 +283,106 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK,TRUE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    {   "http://127.0.0.1/tests/../test dir/./test.txt", 0, S_OK, FALSE,
+        {
+            {"http://127.0.0.1/test%20dir/test.txt",S_OK,TRUE},
+            {"127.0.0.1",S_OK,TRUE},
+            {"http://127.0.0.1/test%20dir/test.txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {".txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"127.0.0.1",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/test%20dir/test.txt",S_OK,TRUE},
+            {"/test%20dir/test.txt",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://127.0.0.1/tests/../test dir/./test.txt",S_OK,TRUE},
+            {"http",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]", 0, S_OK, FALSE,
+        {
+            {"http://[fedc:ba98:7654:3210:fedc:ba98:7654:3210]/",S_OK,TRUE},
+            {"[fedc:ba98:7654:3210:fedc:ba98:7654:3210]",S_OK,TRUE},
+            {"http://[fedc:ba98:7654:3210:fedc:ba98:7654:3210]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"fedc:ba98:7654:3210:fedc:ba98:7654:3210",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]",S_OK,TRUE},
+            {"http",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "ftp://[::13.1.68.3]", 0, S_OK, FALSE,
+        {
+            {"ftp://[::13.1.68.3]/",S_OK,TRUE},
+            {"[::13.1.68.3]",S_OK,TRUE},
+            {"ftp://[::13.1.68.3]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"::13.1.68.3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"ftp://[::13.1.68.3]",S_OK,TRUE},
+            {"ftp",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {21,S_OK,TRUE},
+            {URL_SCHEME_FTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "http://[FEDC:BA98:0:0:0:0:0:3210]", 0, S_OK, FALSE,
+        {
+            {"http://[fedc:ba98::3210]/",S_OK,TRUE},
+            {"[fedc:ba98::3210]",S_OK,TRUE},
+            {"http://[fedc:ba98::3210]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"fedc:ba98::3210",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[FEDC:BA98:0:0:0:0:0:3210]",S_OK,TRUE},
+            {"http",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,TRUE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
