@@ -944,6 +944,28 @@ static void start_wineboot( HANDLE handles[2] )
 }
 
 
+#ifdef __i386__
+extern DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry );
+__ASM_GLOBAL_FUNC( call_process_entry,
+                    "pushl %ebp\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                    "movl %esp,%ebp\n\t"
+                    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                    "subl $12,%esp\n\t"  /* deliberately mis-align the stack by 8, Doom 3 needs this */
+                    "pushl 8(%ebp)\n\t"
+                    "call *12(%ebp)\n\t"
+                    "leave\n\t"
+                    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                    __ASM_CFI(".cfi_same_value %ebp\n\t")
+                    "ret" )
+#else
+static inline DWORD call_process_entry( PEB *peb, LPTHREAD_START_ROUTINE entry )
+{
+    return entry( peb );
+}
+#endif
+
 /***********************************************************************
  *           start_process
  *
@@ -971,7 +993,7 @@ static DWORD WINAPI start_process( PEB *peb )
 
     SetLastError( 0 );  /* clear error code */
     if (peb->BeingDebugged) DbgBreakPoint();
-    return entry( peb );
+    return call_process_entry( peb, entry );
 }
 
 
