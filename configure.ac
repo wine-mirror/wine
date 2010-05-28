@@ -704,12 +704,6 @@ case $host_os in
     then
         dnl CoreServices needed by AudioUnit
         AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
-        ac_save_LIBS="$LIBS"
-        if test "$ac_cv_header_AudioToolbox_AudioConverter_h" = "yes"
-        then
-            LIBS="$LIBS $COREAUDIO"
-            LIBS="$ac_save_LIBS"
-        fi
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then
