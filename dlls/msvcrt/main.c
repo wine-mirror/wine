@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include "msvcrt.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 
@@ -100,6 +101,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_init_args();
     msvcrt_init_signals();
     _setmbcp(_MB_CP_LOCALE);
+    /* don't allow unloading msvcrt, we can't setup file handles twice */
+    LdrAddRefDll( 0, hinstDLL );
     TRACE("finished process init\n");
     break;
   case DLL_THREAD_ATTACH:
