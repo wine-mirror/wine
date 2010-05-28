@@ -8813,7 +8813,6 @@ static void pointsize_test(IDirect3DDevice9 *device)
         384,    64,     0.1,
         448,    64,     0.1,
         512,    64,     0.1,
-        576,    64,     0.1,
     };
 
     /* Transforms the coordinate system [-1.0;1.0]x[-1.0;1.0] to [0.0;0.0]x[640.0;480.0]. Z is untouched */
@@ -8902,17 +8901,6 @@ static void pointsize_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[18], sizeof(float) * 3);
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
-        /* What happens if POINTSIZE_MAX < POINTSIZE_MIN?
-         * ptsize = 3.0, ptsize_max = 1.0, ptsize_min = 15.0 */
-        ptsize = 3.0;
-        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
-        ptsize = 15.0;
-        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsize)));
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[21], sizeof(float) * 3);
-        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
-
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MAX, *((DWORD *) (&ptsizemax_orig)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
 
@@ -8924,7 +8912,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
         ptsize = 15.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[24], sizeof(float) * 3);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[21], sizeof(float) * 3);
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsizemin_orig)));
@@ -8947,10 +8935,8 @@ static void pointsize_test(IDirect3DDevice9 *device)
     ok(point_match(device, 320, 64, 0), "point_match(320, 64, 0) failed, expected point size 1.\n");
     /* ptsize = 15, ptsize_max = 1 --> point has size 1 */
     ok(point_match(device, 448, 64, 0), "point_match(448, 64, 0) failed, expected point size 1.\n");
-    /* ptsize = 4, ptsize_max = 1, ptsize_min = 15 --> point has size 1 */
-    ok(point_match(device, 512, 64, 0), "point_match(512, 64, 0) failed, expected point size 1.\n");
     /* ptsize = 1, ptsize_max = default(64), ptsize_min = 15 --> point has size 15 */
-    ok(point_match(device, 576, 64, 7), "point_match(576, 64, 7) failed, expected point size 15.\n");
+    ok(point_match(device, 512, 64, 7), "point_match(512, 64, 7) failed, expected point size 15.\n");
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
