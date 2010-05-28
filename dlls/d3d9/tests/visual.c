@@ -8826,33 +8826,35 @@ static void pointsize_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed hr=%08x\n", hr);
-    if(SUCCEEDED(hr)) {
-        ptsize = 16.0;
+    if (SUCCEEDED(hr))
+    {
+        ptsize = 15.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[0], sizeof(float) * 3);
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
-        ptsize = 32.0;
+        ptsize = 31.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[3], sizeof(float) * 3);
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
-        ptsize = 31.5;
+        ptsize = 30.75;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[6], sizeof(float) * 3);
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
-        if(caps.MaxPointSize >= 64.0) {
-            ptsize = 64.0;
+        if (caps.MaxPointSize >= 63.0)
+        {
+            ptsize = 63.0;
             hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
             ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
             hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[9], sizeof(float) * 3);
             ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
-            ptsize = 63.75;
+            ptsize = 62.75;
             hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
             ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
             hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[15], sizeof(float) * 3);
@@ -8871,7 +8873,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed, hr=%08x\n", hr);
 
         /* What happens if point scaling is disabled, and POINTSIZE_MAX < POINTSIZE? */
-        ptsize = 16.0;
+        ptsize = 15.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
         ptsize = 1.0;
@@ -8881,12 +8883,11 @@ static void pointsize_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
         /* What happens if POINTSIZE_MAX < POINTSIZE_MIN?
-         * ptsize = 4.0, ptsize_max = 1.0, ptsize_min = 16.0
-         */
-        ptsize = 4.0;
+         * ptsize = 3.0, ptsize_max = 1.0, ptsize_min = 15.0 */
+        ptsize = 3.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
-        ptsize = 16.0;
+        ptsize = 15.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[21], sizeof(float) * 3);
@@ -8896,12 +8897,11 @@ static void pointsize_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
 
         /* pointsize < pointsize_min < pointsize_max?
-         * pointsize = 1.0, pointsize_min = 16.0, pointsize_max = default(usually 64.0)
-         */
+         * pointsize = 1.0, pointsize_min = 15.0, pointsize_max = default(usually 64.0) */
         ptsize = 1.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
-        ptsize = 16.0;
+        ptsize = 15.0;
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE_MIN, *((DWORD *) (&ptsize)));
         ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[24], sizeof(float) * 3);
@@ -8913,99 +8913,87 @@ static void pointsize_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed hr=%08x\n", hr);
     }
-    color = getPixelColor(device, 64-9, 64-9);
-    ok(color == 0x000000ff, "pSize: Pixel (64-9),(64-9) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 64-8, 64-8);
-    ok(color == 0x00ffffff, "pSize: Pixel (64-8),(64-8) has color 0x%08x, expected 0x00ffffff\n", color);
+
     color = getPixelColor(device, 64-7, 64-7);
     ok(color == 0x00ffffff, "pSize: Pixel (64-7),(64-7) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 64+7, 64+7);
     ok(color == 0x00ffffff, "pSize: Pixel (64+7),(64+7) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 64-8, 64-8);
+    ok(color == 0x000000ff, "pSize: Pixel (64-8),(64-8) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 64+8, 64+8);
     ok(color == 0x000000ff, "pSize: Pixel (64+8),(64+8) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 64+9, 64+9);
-    ok(color == 0x000000ff, "pSize: Pixel (64+9),(64+9) has color 0x%08x, expected 0x000000ff\n", color);
 
-    color = getPixelColor(device, 128-17, 64-17);
-    ok(color == 0x000000ff, "pSize: Pixel (128-17),(64-17) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 128-16, 64-16);
-    ok(color == 0x00ffffff, "pSize: Pixel (128-16),(64-16) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 128-15, 64-15);
     ok(color == 0x00ffffff, "pSize: Pixel (128-15),(64-15) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 128+15, 64+15);
     ok(color == 0x00ffffff, "pSize: Pixel (128+15),(64+15) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 128-16, 64-16);
+    ok(color == 0x000000ff, "pSize: Pixel (128-16),(64-16) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 128+16, 64+16);
     ok(color == 0x000000ff, "pSize: Pixel (128+16),(64+16) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 128+17, 64+17);
-    ok(color == 0x000000ff, "pSize: Pixel (128+17),(64+17) has color 0x%08x, expected 0x000000ff\n", color);
 
-    color = getPixelColor(device, 192-17, 64-17);
-    ok(color == 0x000000ff, "pSize: Pixel (192-17),(64-17) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 192-16, 64-16);
-    todo_wine ok(color == 0x000000ff, "pSize: Pixel (192-16),(64-16) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 192-15, 64-15);
     ok(color == 0x00ffffff, "pSize: Pixel (192-15),(64-15) has color 0x%08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 192+15, 64+15);
     ok(color == 0x00ffffff, "pSize: Pixel (192+15),(64+15) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 192-16, 64-16);
+    ok(color == 0x000000ff, "pSize: Pixel (192-16),(64-16) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 192+16, 64+16);
     ok(color == 0x000000ff, "pSize: Pixel (192+16),(64+16) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 192+17, 64+17);
-    ok(color == 0x000000ff, "pSize: Pixel (192+17),(64+17) has color 0x%08x, expected 0x000000ff\n", color);
 
-    if(caps.MaxPointSize >= 64.0) {
-        color = getPixelColor(device, 256-33, 64-33);
-        ok(color == 0x000000ff, "pSize: Pixel (256-33),(64-33) has color 0x%08x, expected 0x000000ff\n", color);
-        color = getPixelColor(device, 256-32, 64-32);
-        todo_wine ok(color == 0x00ffffff, "pSize: Pixel (256-32),(64-32) has color 0x%08x, expected 0x00ffffff\n", color);
+    if (caps.MaxPointSize >= 63.0)
+    {
         color = getPixelColor(device, 256-31, 64-31);
         ok(color == 0x00ffffff, "pSize: Pixel (256-31),(64-31) has color 0x%08x, expected 0x00ffffff\n", color);
         color = getPixelColor(device, 256+31, 64+31);
         ok(color == 0x00ffffff, "pSize: Pixel (256+31),(64+31) has color 0x%08x, expected 0x00ffffff\n", color);
+        color = getPixelColor(device, 256-32, 64-32);
+        ok(color == 0x000000ff, "pSize: Pixel (256-32),(64-32) has color 0x%08x, expected 0x000000ff\n", color);
         color = getPixelColor(device, 256+32, 64+32);
         ok(color == 0x000000ff, "pSize: Pixel (256+32),(64+32) has color 0x%08x, expected 0x000000ff\n", color);
-        color = getPixelColor(device, 256+33, 64+33);
-        ok(color == 0x000000ff, "pSize: Pixel (256+33),(64+33) has color 0x%08x, expected 0x000000ff\n", color);
 
-        color = getPixelColor(device, 384-33, 64-33);
-        ok(color == 0x000000ff, "pSize: Pixel (384-33),(64-33) has color 0x%08x, expected 0x000000ff\n", color);
-        color = getPixelColor(device, 384-32, 64-32);
-        ok(color == 0x000000ff, "pSize: Pixel (384-32),(64-32) has color 0x%08x, expected 0x000000ff\n", color);
         color = getPixelColor(device, 384-31, 64-31);
         ok(color == 0x00ffffff, "pSize: Pixel (384-31),(64-31) has color 0x%08x, expected 0x00ffffff\n", color);
         color = getPixelColor(device, 384+31, 64+31);
         ok(color == 0x00ffffff, "pSize: Pixel (384+31),(64+31) has color 0x%08x, expected 0x00ffffff\n", color);
+        color = getPixelColor(device, 384-32, 64-32);
+        ok(color == 0x000000ff, "pSize: Pixel (384-32),(64-32) has color 0x%08x, expected 0x000000ff\n", color);
         color = getPixelColor(device, 384+32, 64+32);
         ok(color == 0x000000ff, "pSize: Pixel (384+32),(64+32) has color 0x%08x, expected 0x000000ff\n", color);
-        color = getPixelColor(device, 384+33, 64+33);
-        ok(color == 0x000000ff, "pSize: Pixel (384+33),(64+33) has color 0x%08x, expected 0x000000ff\n", color);
     }
 
-    color = getPixelColor(device, 320-1, 64-1);
-    ok(color == 0x000000ff, "pSize: Pixel (320-1),(64-1) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 320-0, 64-0);
     ok(color == 0x00ffffff, "pSize: Pixel (320-0),(64-0) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 320-1, 64-1);
+    ok(color == 0x000000ff, "pSize: Pixel (320-1),(64-1) has color 0x%08x, expected 0x000000ff\n", color);
     color = getPixelColor(device, 320+1, 64+1);
     ok(color == 0x000000ff, "pSize: Pixel (320+1),(64+1) has color 0x%08x, expected 0x000000ff\n", color);
 
-    /* ptsize = 16, ptsize_max = 1 --> point has size 1 */
-    color = getPixelColor(device, 448-4, 64-4);
-    ok(color == 0x000000ff, "pSize: Pixel (448-4),(64-4) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 448+4, 64+4);
-    ok(color == 0x000000ff, "pSize: Pixel (448+4),(64+4) has color 0x%08x, expected 0x000000ff\n", color);
+    /* ptsize = 15, ptsize_max = 1 --> point has size 1 */
+    color = getPixelColor(device, 448-0, 64-0);
+    ok(color == 0x00ffffff, "pSize: Pixel (448-0),(64-0) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 448-1, 64-1);
+    ok(color == 0x000000ff, "pSize: Pixel (448-1),(64-1) has color 0x%08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 448+1, 64+1);
+    ok(color == 0x000000ff, "pSize: Pixel (448+1),(64+1) has color 0x%08x, expected 0x000000ff\n", color);
 
-    /* ptsize = 4, ptsize_max = 1, ptsize_min = 16 --> point has size 1 */
-    color = getPixelColor(device, 512-4, 64-4);
-    ok(color == 0x000000ff, "pSize: Pixel (512-4),(64-4) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 512+4, 64+4);
-    ok(color == 0x000000ff, "pSize: Pixel (512+4),(64+4) has color 0x%08x, expected 0x000000ff\n", color);
+    /* ptsize = 4, ptsize_max = 1, ptsize_min = 15 --> point has size 1 */
+    color = getPixelColor(device, 512-0, 64-0);
+    ok(color == 0x00ffffff, "pSize: Pixel (512-0),(64-0) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 512-1, 64-1);
+    ok(color == 0x000000ff, "pSize: Pixel (512-1),(64-1) has color 0x%08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 512+1, 64+1);
+    ok(color == 0x000000ff, "pSize: Pixel (512+1),(64+1) has color 0x%08x, expected 0x000000ff\n", color);
 
-    /* ptsize = 1, ptsize_max = default(64), ptsize_min = 16 --> point has size 16
-     * Don't be overly picky - just show that the point is bigger than 1 pixel
-     */
-    color = getPixelColor(device, 576-4, 64-4);
-    ok(color == 0x00ffffff, "pSize: Pixel (576-4),(64-4) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 576+4, 64+4);
-    ok(color == 0x00ffffff, "pSize: Pixel (576+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
+    /* ptsize = 1, ptsize_max = default(64), ptsize_min = 15 --> point has size 15 */
+    color = getPixelColor(device, 576-7, 64-7);
+    ok(color == 0x00ffffff, "pSize: Pixel (576-7),(64-7) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 576+7, 64+7);
+    ok(color == 0x00ffffff, "pSize: Pixel (576+7),(64+7) has color 0x%08x, expected 0x00ffffff\n", color);
+    color = getPixelColor(device, 576-8, 64-8);
+    ok(color == 0x000000ff, "pSize: Pixel (576-8),(64-8) has color 0x%08x, expected 0x000000ff\n", color);
+    color = getPixelColor(device, 576+8, 64+8);
+    ok(color == 0x000000ff, "pSize: Pixel (576+8),(64+8) has color 0x%08x, expected 0x000000ff\n", color);
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
