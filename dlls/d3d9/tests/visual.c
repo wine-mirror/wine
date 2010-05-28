@@ -8769,6 +8769,26 @@ static void vpos_register_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(backbuffer);
 }
 
+static BOOL point_match(IDirect3DDevice9 *device, UINT x, UINT y, UINT r)
+{
+    D3DCOLOR color;
+
+    color = D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff);
+    if (!color_match(getPixelColor(device, x + r, y), color, 1)) return FALSE;
+    if (!color_match(getPixelColor(device, x - r, y), color, 1)) return FALSE;
+    if (!color_match(getPixelColor(device, x, y + r), color, 1)) return FALSE;
+    if (!color_match(getPixelColor(device, x, y - r), color, 1)) return FALSE;
+
+    ++r;
+    color = D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff);
+    if (!color_match(getPixelColor(device, x + r, y), color, 1)) return FALSE;
+    if (!color_match(getPixelColor(device, x - r, y), color, 1)) return FALSE;
+    if (!color_match(getPixelColor(device, x, y + r), color, 1)) return FALSE;
+    if (!color_match(getPixelColor(device, x, y - r), color, 1)) return FALSE;
+
+    return TRUE;
+}
+
 static void pointsize_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -8914,86 +8934,23 @@ static void pointsize_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed hr=%08x\n", hr);
     }
 
-    color = getPixelColor(device, 64-7, 64-7);
-    ok(color == 0x00ffffff, "pSize: Pixel (64-7),(64-7) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 64+7, 64+7);
-    ok(color == 0x00ffffff, "pSize: Pixel (64+7),(64+7) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 64-8, 64-8);
-    ok(color == 0x000000ff, "pSize: Pixel (64-8),(64-8) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 64+8, 64+8);
-    ok(color == 0x000000ff, "pSize: Pixel (64+8),(64+8) has color 0x%08x, expected 0x000000ff\n", color);
-
-    color = getPixelColor(device, 128-15, 64-15);
-    ok(color == 0x00ffffff, "pSize: Pixel (128-15),(64-15) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 128+15, 64+15);
-    ok(color == 0x00ffffff, "pSize: Pixel (128+15),(64+15) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 128-16, 64-16);
-    ok(color == 0x000000ff, "pSize: Pixel (128-16),(64-16) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 128+16, 64+16);
-    ok(color == 0x000000ff, "pSize: Pixel (128+16),(64+16) has color 0x%08x, expected 0x000000ff\n", color);
-
-    color = getPixelColor(device, 192-15, 64-15);
-    ok(color == 0x00ffffff, "pSize: Pixel (192-15),(64-15) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 192+15, 64+15);
-    ok(color == 0x00ffffff, "pSize: Pixel (192+15),(64+15) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 192-16, 64-16);
-    ok(color == 0x000000ff, "pSize: Pixel (192-16),(64-16) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 192+16, 64+16);
-    ok(color == 0x000000ff, "pSize: Pixel (192+16),(64+16) has color 0x%08x, expected 0x000000ff\n", color);
+    ok(point_match(device, 64, 64, 7), "point_match(64, 64, 7) failed, expected point size 15.\n");
+    ok(point_match(device, 128, 64, 15), "point_match(128, 64, 15) failed, expected point size 31.\n");
+    ok(point_match(device, 192, 64, 15), "point_match(192, 64, 15) failed, expected point size 31.\n");
 
     if (caps.MaxPointSize >= 63.0)
     {
-        color = getPixelColor(device, 256-31, 64-31);
-        ok(color == 0x00ffffff, "pSize: Pixel (256-31),(64-31) has color 0x%08x, expected 0x00ffffff\n", color);
-        color = getPixelColor(device, 256+31, 64+31);
-        ok(color == 0x00ffffff, "pSize: Pixel (256+31),(64+31) has color 0x%08x, expected 0x00ffffff\n", color);
-        color = getPixelColor(device, 256-32, 64-32);
-        ok(color == 0x000000ff, "pSize: Pixel (256-32),(64-32) has color 0x%08x, expected 0x000000ff\n", color);
-        color = getPixelColor(device, 256+32, 64+32);
-        ok(color == 0x000000ff, "pSize: Pixel (256+32),(64+32) has color 0x%08x, expected 0x000000ff\n", color);
-
-        color = getPixelColor(device, 384-31, 64-31);
-        ok(color == 0x00ffffff, "pSize: Pixel (384-31),(64-31) has color 0x%08x, expected 0x00ffffff\n", color);
-        color = getPixelColor(device, 384+31, 64+31);
-        ok(color == 0x00ffffff, "pSize: Pixel (384+31),(64+31) has color 0x%08x, expected 0x00ffffff\n", color);
-        color = getPixelColor(device, 384-32, 64-32);
-        ok(color == 0x000000ff, "pSize: Pixel (384-32),(64-32) has color 0x%08x, expected 0x000000ff\n", color);
-        color = getPixelColor(device, 384+32, 64+32);
-        ok(color == 0x000000ff, "pSize: Pixel (384+32),(64+32) has color 0x%08x, expected 0x000000ff\n", color);
+        ok(point_match(device, 256, 64, 31), "point_match(256, 64, 31) failed, expected point size 63.\n");
+        ok(point_match(device, 384, 64, 31), "point_match(384, 64, 31) failed, expected point size 63.\n");
     }
 
-    color = getPixelColor(device, 320-0, 64-0);
-    ok(color == 0x00ffffff, "pSize: Pixel (320-0),(64-0) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 320-1, 64-1);
-    ok(color == 0x000000ff, "pSize: Pixel (320-1),(64-1) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 320+1, 64+1);
-    ok(color == 0x000000ff, "pSize: Pixel (320+1),(64+1) has color 0x%08x, expected 0x000000ff\n", color);
-
+    ok(point_match(device, 320, 64, 0), "point_match(320, 64, 0) failed, expected point size 1.\n");
     /* ptsize = 15, ptsize_max = 1 --> point has size 1 */
-    color = getPixelColor(device, 448-0, 64-0);
-    ok(color == 0x00ffffff, "pSize: Pixel (448-0),(64-0) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 448-1, 64-1);
-    ok(color == 0x000000ff, "pSize: Pixel (448-1),(64-1) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 448+1, 64+1);
-    ok(color == 0x000000ff, "pSize: Pixel (448+1),(64+1) has color 0x%08x, expected 0x000000ff\n", color);
-
+    ok(point_match(device, 448, 64, 0), "point_match(448, 64, 0) failed, expected point size 1.\n");
     /* ptsize = 4, ptsize_max = 1, ptsize_min = 15 --> point has size 1 */
-    color = getPixelColor(device, 512-0, 64-0);
-    ok(color == 0x00ffffff, "pSize: Pixel (512-0),(64-0) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 512-1, 64-1);
-    ok(color == 0x000000ff, "pSize: Pixel (512-1),(64-1) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 512+1, 64+1);
-    ok(color == 0x000000ff, "pSize: Pixel (512+1),(64+1) has color 0x%08x, expected 0x000000ff\n", color);
-
+    ok(point_match(device, 512, 64, 0), "point_match(512, 64, 0) failed, expected point size 1.\n");
     /* ptsize = 1, ptsize_max = default(64), ptsize_min = 15 --> point has size 15 */
-    color = getPixelColor(device, 576-7, 64-7);
-    ok(color == 0x00ffffff, "pSize: Pixel (576-7),(64-7) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 576+7, 64+7);
-    ok(color == 0x00ffffff, "pSize: Pixel (576+7),(64+7) has color 0x%08x, expected 0x00ffffff\n", color);
-    color = getPixelColor(device, 576-8, 64-8);
-    ok(color == 0x000000ff, "pSize: Pixel (576-8),(64-8) has color 0x%08x, expected 0x000000ff\n", color);
-    color = getPixelColor(device, 576+8, 64+8);
-    ok(color == 0x000000ff, "pSize: Pixel (576+8),(64+8) has color 0x%08x, expected 0x000000ff\n", color);
+    ok(point_match(device, 576, 64, 7), "point_match(576, 64, 7) failed, expected point size 15.\n");
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
