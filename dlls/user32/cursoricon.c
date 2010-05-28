@@ -1837,7 +1837,7 @@ static void stretch_blt_icon( HDC hdc_dst, int dst_x, int dst_y, int dst_width, 
 {
     HDC hdc = CreateCompatibleDC( 0 );
 
-    if (!SelectObject( hdc, src ) || 1)  /* do it the hard way */
+    if (!SelectObject( hdc, src ))  /* do it the hard way */
     {
         BITMAPINFO *info;
         void *bits;
