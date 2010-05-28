@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2002 Eric Pouech
  * Copyright (C) 2009 CodeWeavers, Aric Stewart
+ * Copyright (C) 2010 Kristofer Henriksson
  *
  *
  * This library is free software; you can redistribute it and/or
