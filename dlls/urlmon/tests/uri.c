@@ -1062,6 +1062,80 @@ static void test_IUri_GetDwordProperties(void) {
     }
 }
 
+static void test_IUri_GetPropertyLength(void) {
+    IUri *uri = NULL;
+    HRESULT hr;
+    DWORD i;
+
+    /* Make sure it handles invalid args correctly. */
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        DWORD received = 0xdeadbeef;
+
+        hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_STRING_START, NULL, 0);
+        ok(hr == E_INVALIDARG, "Error: GetPropertyLength returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+
+        hr = IUri_GetPropertyLength(uri, Uri_PROPERTY_DWORD_START, &received, 0);
+        ok(hr == E_INVALIDARG, "Error: GetPropertyLength return 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+        ok(received == 0xdeadbeef, "Error: Expected 0xdeadbeef but got 0x%08x.\n", received);
+    }
+    if(uri) IUri_Release(uri);
+
+    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+        uri_properties test = uri_tests[i];
+        LPWSTR uriW;
+        uri = NULL;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(test.create_todo) {
+            todo_wine {
+                ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, test.create_expected, i);
+            }
+        } else {
+            ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x on uri_test[%d].\n",
+                    hr, test.create_expected, i);
+        }
+
+        if(SUCCEEDED(hr)) {
+            DWORD j;
+
+            for(j = Uri_PROPERTY_STRING_START; j <= Uri_PROPERTY_STRING_LAST; ++j) {
+                DWORD expectedLen, receivedLen;
+                uri_str_property prop = test.str_props[j];
+
+                expectedLen = lstrlen(prop.value);
+
+                /* This won't be neccessary once GetPropertyLength is implemented. */
+                receivedLen = -1;
+
+                hr = IUri_GetPropertyLength(uri, j, &receivedLen, 0);
+                if(prop.todo) {
+                    todo_wine {
+                        ok(hr == prop.expected, "Error: GetPropertyLength returned 0x%08x, expected 0x%08x on uri_tests[%d].str_props[%d].\n",
+                                hr, prop.expected, i, j);
+                    }
+                    todo_wine {
+                        ok(receivedLen == expectedLen, "Error: Expected a length of %d but got %d on uri_tests[%d].str_props[%d].\n",
+                                expectedLen, receivedLen, i, j);
+                    }
+                } else {
+                    ok(hr == prop.expected, "Error: GetPropertyLength returned 0x%08x, expected 0x%08x on uri_tests[%d].str_props[%d].\n",
+                            hr, prop.expected, i, j);
+                    ok(receivedLen == expectedLen, "Error: Expected a length of %d but %d on uri_tests[%d].str_props[%d].\n",
+                            expectedLen, receivedLen, i, j);
+                }
+            }
+        }
+
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -1090,4 +1164,7 @@ START_TEST(uri) {
 
     trace("test IUri_GetDwordProperties...\n");
     test_IUri_GetDwordProperties();
+
+    trace("test IUri_GetPropertyLength...\n");
+    test_IUri_GetPropertyLength();
 }

@@ -91,6 +91,14 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+
+    if(!pcchProperty)
+        return E_INVALIDARG;
+
+    /* Can only return a length for a property if it's a string. */
+    if(uriProp > Uri_PROPERTY_STRING_LAST)
+        return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 
@@ -118,7 +126,7 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
 static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *pfHasProperty)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%d %p)\n", This, uriProp, pfHasProperty);
     return E_NOTIMPL;
 }
 
