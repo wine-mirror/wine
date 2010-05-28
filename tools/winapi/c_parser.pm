@@ -720,7 +720,7 @@ sub parse_c_file($$$$)
     my $previous_line = 0;
     my $previous_column = -1;
 
-    my $preprocessor_condition;
+    my $preprocessor_condition = "";
     my $if = 0;
     my $if0 = 0;
     my $extern_c = 0;
