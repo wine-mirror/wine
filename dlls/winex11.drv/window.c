@@ -1181,6 +1181,7 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
     /* set the WM_WINDOW_TYPE */
     if (style & WS_THICKFRAME) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
     else if (ex_style & WS_EX_APPWINDOW) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
+    else if (style & WS_MINIMIZEBOX) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
     else if (style & WS_DLGFRAME) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
     else if (ex_style & WS_EX_DLGMODALFRAME) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
     else if ((style & WS_POPUP) && owner) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
