@@ -214,7 +214,7 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
 
 
 /***********************************************************************
- *		X11DRV_is_window_rect_mapped
+ *		is_window_rect_mapped
  *
  * Check if the X whole window should be mapped based on its rectangle
  */
@@ -2329,7 +2329,8 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
     if (data->mapped)
     {
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
-            (event_type != ConfigureNotify && !is_window_rect_mapped( rectWindow )))
+            (event_type != ConfigureNotify &&
+             !is_window_rect_mapped( rectWindow ) && is_window_rect_mapped( &old_window_rect )))
             unmap_window( display, data );
     }
 
