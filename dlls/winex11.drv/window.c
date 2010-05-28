@@ -220,9 +220,6 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
  */
 static BOOL is_window_rect_mapped( const RECT *rect )
 {
-    /* don't map if rect is empty */
-    if (IsRectEmpty( rect )) return FALSE;
-
     /* don't map if rect is off-screen */
     if (rect->left >= virtual_screen_rect.right ||
         rect->top >= virtual_screen_rect.bottom ||
@@ -245,19 +242,6 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
     /* Metacity needs the window to be resizable to make it fullscreen */
     return (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
             data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height);
-}
-
-
-/***********************************************************************
- *              get_window_owner
- */
-static HWND get_window_owner( HWND hwnd )
-{
-    RECT rect;
-    HWND owner = GetWindow( hwnd, GW_OWNER );
-    /* ignore the zero-size owners used by Delphi apps */
-    if (owner && GetWindowRect( owner, &rect ) && IsRectEmpty( &rect )) owner = 0;
-    return owner;
 }
 
 
@@ -455,6 +439,16 @@ static void sync_window_region( Display *display, struct x11drv_win_data *data, 
 
     if (!data->whole_window) return;
     data->shaped = FALSE;
+
+    if (IsRectEmpty( &data->window_rect ))  /* set an empty shape */
+    {
+        static XRectangle empty_rect;
+        wine_tsx11_lock();
+        XShapeCombineRectangles( display, data->whole_window, ShapeBounding, 0, 0,
+                                 &empty_rect, 1, ShapeSet, YXBanded );
+        wine_tsx11_unlock();
+        return;
+    }
 
     if (hrgn == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
     {
@@ -1169,7 +1163,7 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
     {
         style = GetWindowLongW( data->hwnd, GWL_STYLE );
         ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
-        owner = get_window_owner( data->hwnd );
+        owner = GetWindow( data->hwnd, GW_OWNER );
         if ((owner_win = get_owner_whole_window( owner, data->managed ))) group_leader = owner_win;
     }
 
@@ -1260,7 +1254,7 @@ void update_net_wm_states( Display *display, struct x11drv_win_data *data )
         new_state |= (1 << NET_WM_STATE_ABOVE);
     if (ex_style & WS_EX_TOOLWINDOW)
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
-    if (!(ex_style & WS_EX_APPWINDOW) && get_window_owner( data->hwnd ))
+    if (!(ex_style & WS_EX_APPWINDOW) && GetWindow( data->hwnd, GW_OWNER ))
         new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
 
     if (!data->mapped)  /* set the _NET_WM_STATE atom directly */
@@ -1503,6 +1497,8 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
     XReconfigureWMWindow( display, data->whole_window,
                           DefaultScreen(display), mask, &changes );
 #ifdef HAVE_LIBXSHAPE
+    if (IsRectEmpty( old_window_rect ) != IsRectEmpty( &data->window_rect ))
+        sync_window_region( display, data, (HRGN)1 );
     if (data->shaped)
     {
         int old_x_offset = old_window_rect->left - old_whole_rect->left;
@@ -1690,7 +1686,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     sync_window_text( display, data->whole_window, text );
 
     /* set the window region */
-    if (win_rgn) sync_window_region( display, data, win_rgn );
+    if (win_rgn || IsRectEmpty( &data->window_rect )) sync_window_region( display, data, win_rgn );
 
     /* set the window opacity */
     if (!GetLayeredWindowAttributes( data->hwnd, &key, &alpha, &layered_flags )) layered_flags = 0;
