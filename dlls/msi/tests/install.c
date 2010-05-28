@@ -30,6 +30,7 @@
 #include <fci.h>
 #include <objidl.h>
 #include <srrestoreptapi.h>
+#include <shlobj.h>
 
 #include "wine/test.h"
 
@@ -56,6 +57,8 @@ static const char *mstfile = "winetest.mst";
 static CHAR CURR_DIR[MAX_PATH];
 static CHAR PROG_FILES_DIR[MAX_PATH];
 static CHAR COMMON_FILES_DIR[MAX_PATH];
+static CHAR APP_DATA_DIR[MAX_PATH];
+static CHAR WINDOWS_DIR[MAX_PATH];
 
 /* msi database data */
 
@@ -197,6 +200,28 @@ static const CHAR aup2_property_dat[] = "Property\tValue\n"
                                         "Manufacturer\tWine\n"
                                         "PIDTemplate\t12345<###-%%%%%%%>@@@@@\n"
                                         "ProductCode\t{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}\n"
+                                        "ProductID\tnone\n"
+                                        "ProductLanguage\t1033\n"
+                                        "ProductName\tMSITEST\n"
+                                        "ProductVersion\t1.1.1\n"
+                                        "PROMPTROLLBACKCOST\tP\n"
+                                        "Setup\tSetup\n"
+                                        "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}\n"
+                                        "AdminProperties\tPOSTADMIN\n"
+                                        "ROOTDRIVE\tC:\\\n"
+                                        "SERVNAME\tTestService\n"
+                                        "SERVDISP\tTestServiceDisp\n";
+
+static const CHAR icon_property_dat[] = "Property\tValue\n"
+                                        "s72\tl0\n"
+                                        "Property\tProperty\n"
+                                        "DefaultUIFont\tDlgFont8\n"
+                                        "HASUIRUN\t0\n"
+                                        "INSTALLLEVEL\t3\n"
+                                        "InstallMode\tTypical\n"
+                                        "Manufacturer\tWine\n"
+                                        "PIDTemplate\t12345<###-%%%%%%%>@@@@@\n"
+                                        "ProductCode\t{7DF88A49-996F-4EC8-A022-BF956F9B2CBB}\n"
                                         "ProductID\tnone\n"
                                         "ProductLanguage\t1033\n"
                                         "ProductName\tMSITEST\n"
@@ -2893,6 +2918,18 @@ static const msi_table fo_tables[] =
     ADD_TABLE(property)
 };
 
+static const msi_table icon_base_tables[] =
+{
+    ADD_TABLE(ci_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(pp_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(icon_property),
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
@@ -3179,7 +3216,18 @@ static void create_cab_file(const CHAR *name, DWORD max_size, const CHAR *files)
     ok(res, "Failed to destroy the cabinet\n");
 }
 
-static BOOL get_program_files_dir(LPSTR buf, LPSTR buf2)
+static BOOL get_user_dirs(void)
+{
+    HRESULT hres;
+
+    hres = SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, APP_DATA_DIR);
+    if(FAILED(hres))
+        return FALSE;
+
+    return TRUE;
+}
+
+static BOOL get_system_dirs(void)
 {
     HKEY hkey;
     DWORD type, size;
@@ -3189,18 +3237,22 @@ static BOOL get_program_files_dir(LPSTR buf, LPSTR buf2)
         return FALSE;
 
     size = MAX_PATH;
-    if (RegQueryValueExA(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size)) {
+    if (RegQueryValueExA(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)PROG_FILES_DIR, &size)) {
         RegCloseKey(hkey);
         return FALSE;
     }
 
     size = MAX_PATH;
-    if (RegQueryValueExA(hkey, "CommonFilesDir", 0, &type, (LPBYTE)buf2, &size)) {
+    if (RegQueryValueExA(hkey, "CommonFilesDir", 0, &type, (LPBYTE)COMMON_FILES_DIR, &size)) {
         RegCloseKey(hkey);
         return FALSE;
     }
 
     RegCloseKey(hkey);
+
+    if(GetWindowsDirectoryA(WINDOWS_DIR, MAX_PATH) != ERROR_SUCCESS)
+        return FALSE;
+
     return TRUE;
 }
 
@@ -9369,6 +9421,73 @@ static void test_register_mime_info(void)
     delete_test_files();
 }
 
+static void test_icon_table(void)
+{
+    MSIHANDLE hdb = 0, record;
+    LPCSTR query;
+    UINT res;
+    CHAR path[MAX_PATH];
+    static const char prodcode[] = "{7DF88A49-996F-4EC8-A022-BF956F9B2CBB}";
+
+    create_database(msifile, icon_base_tables, sizeof(icon_base_tables) / sizeof(msi_table));
+
+    res = MsiOpenDatabase(msifile, MSIDBOPEN_TRANSACT, &hdb);
+    ok(res == ERROR_SUCCESS, "failed to open db: %d\n", res);
+
+    query = "CREATE TABLE `Icon` (`Name` CHAR(72) NOT NULL, `Data` OBJECT NOT NULL  PRIMARY KEY `Name`)";
+    res = run_query( hdb, 0, query );
+    ok(res == ERROR_SUCCESS, "Can't create Icon table: %d\n", res);
+
+    create_file("icon.ico", 100);
+    record = MsiCreateRecord(1);
+    res = MsiRecordSetStream(record, 1, "icon.ico");
+    ok(res == ERROR_SUCCESS, "Failed to add stream data to record: %d\n", res);
+    DeleteFile("icon.ico");
+
+    query = "INSERT INTO `Icon` (`Name`, `Data`) VALUES ('testicon', ?)";
+    res = run_query(hdb, record, query);
+    ok(res == ERROR_SUCCESS, "Insert into Icon table failed: %d\n", res);
+
+    res = MsiCloseHandle(record);
+    ok(res == ERROR_SUCCESS, "Failed to close record handle: %d\n", res);
+    res = MsiDatabaseCommit(hdb);
+    ok(res == ERROR_SUCCESS, "Failed to commit database: %d\n", res);
+    res = MsiCloseHandle(hdb);
+    ok(res == ERROR_SUCCESS, "Failed to close database: %d\n", res);
+
+    /* per-user */
+    res = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
+    ok(res == ERROR_SUCCESS, "Failed to do per-user install: %d\n", res);
+
+    lstrcpyA(path, APP_DATA_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, "Microsoft\\Installer\\");
+    lstrcatA(path, prodcode);
+    lstrcatA(path, "\\testicon");
+    ok(file_exists(path), "Per-user icon file isn't where it's expected (%s)\n", path);
+
+    res = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(res == ERROR_SUCCESS, "Failed to uninstall per-user\n");
+
+    /* system-wide */
+    res = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1 ALLUSERS=1");
+    ok(res == ERROR_SUCCESS, "Failed to system-wide install: %d\n", res);
+
+    lstrcpyA(path, WINDOWS_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, "Installer\\");
+    lstrcatA(path, prodcode);
+    lstrcatA(path, "\\testicon");
+    ok(file_exists(path), "System-wide icon file isn't where it's expected (%s)\n", path);
+
+    res = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(res == ERROR_SUCCESS, "Failed to uninstall system-wide\n");
+
+    delete_pfmsitest_files();
+
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -9390,7 +9509,8 @@ START_TEST(install)
     if(len && (CURR_DIR[len - 1] == '\\'))
         CURR_DIR[len - 1] = 0;
 
-    get_program_files_dir(PROG_FILES_DIR, COMMON_FILES_DIR);
+    get_system_dirs();
+    get_user_dirs();
 
     /* Create a restore point ourselves so we circumvent the multitude of restore points
      * that would have been created by all the installation and removal tests.
@@ -9479,6 +9599,7 @@ START_TEST(install)
     test_register_class_info();
     test_register_extension_info();
     test_register_mime_info();
+    test_icon_table();
 
     DeleteFileA(log_file);
 
