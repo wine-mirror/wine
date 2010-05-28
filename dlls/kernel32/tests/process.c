@@ -1742,7 +1742,7 @@ static void test_ProcessName(void)
 static void test_Handles(void)
 {
     HANDLE handle = GetCurrentProcess();
-    HANDLE h2;
+    HANDLE h2, h3;
     BOOL ret;
     DWORD code;
 
@@ -1773,12 +1773,16 @@ static void test_Handles(void)
 
     handle = GetStdHandle( STD_ERROR_HANDLE );
     ok( handle != 0, "handle %p\n", handle );
+    DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(), &h3,
+                     0, TRUE, DUPLICATE_SAME_ACCESS );
+    SetStdHandle( STD_ERROR_HANDLE, h3 );
     CloseHandle( (HANDLE)STD_ERROR_HANDLE );
     h2 = GetStdHandle( STD_ERROR_HANDLE );
     ok( h2 == 0 ||
-        broken( h2 == handle) || /* nt4, w2k */
+        broken( h2 == h3) || /* nt4, w2k */
         broken( h2 == INVALID_HANDLE_VALUE),  /* win9x */
-        "wrong handle %p/%p\n", h2, handle );
+        "wrong handle %p/%p\n", h2, h3 );
+    SetStdHandle( STD_ERROR_HANDLE, handle );
 }
 
 static void test_SystemInfo(void)
