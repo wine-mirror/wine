@@ -93,7 +93,10 @@ DWORD WINAPI XInputGetKeystroke(DWORD dwUserIndex, DWORD dwReserve, PXINPUT_KEYS
 
 DWORD WINAPI XInputGetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities)
 {
-    FIXME("(%d %d %p)\n", dwUserIndex, dwFlags, pCapabilities);
+    static int warn_once;
+
+    if (!warn_once++)
+        FIXME("(%d %d %p)\n", dwUserIndex, dwFlags, pCapabilities);
 
     if (dwUserIndex < XUSER_MAX_COUNT)
     {
