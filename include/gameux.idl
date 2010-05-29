@@ -54,7 +54,59 @@ library gameuxLib
 
         HRESULT UpdateGame([in] GUID instanceID);
 
-        HRESULT VerifyAccess([in] BSTR sGDFBinaryPath, [out] BOOL* pHasAccess);
+        HRESULT VerifyAccess([in] BSTR sGDFBinaryPath,
+                    [out] BOOL* pHasAccess);
+    };
+
+    [
+      object,
+      uuid(3887C9CA-04A0-42ae-BC4C-5FA6C7721145)
+    ]
+    interface IGameStatistics : IUnknown
+    {
+        HRESULT GetMaxCategoryLength(
+                    [retval, out] UINT* cch);
+
+        HRESULT GetMaxNameLength(
+                    [retval, out] UINT* cch);
+
+        HRESULT GetMaxValueLength(
+                    [retval, out] UINT* cch);
+
+        HRESULT GetMaxCategories(
+                    [retval, out] WORD* pMax);
+
+        HRESULT GetMaxStatsPerCategory(
+                    [retval, out] WORD* pMax);
+
+        HRESULT SetCategoryTitle(
+                    [in] WORD categoryIndex,
+                    [string, in] LPCWSTR title);
+
+        HRESULT GetCategoryTitle(
+                    [in] WORD categoryIndex,
+                    [retval, string, out] LPWSTR* pTitle);
+
+        HRESULT GetStatistic(
+                    [in] WORD categoryIndex,
+                    [in] WORD statIndex,
+                    [string, unique, out, in] LPWSTR* pName,
+                    [string, unique, out, in] LPWSTR* pValue);
+
+        HRESULT SetStatistic(
+                    [in] WORD categoryIndex,
+                    [in] WORD statIndex,
+                    [string, in] LPCWSTR name,
+                    [string, in] LPCWSTR value);
+
+        HRESULT Save(
+                    [in] BOOL trackChanges);
+
+        HRESULT SetLastPlayedCategory(
+                    [in] UINT categoryIndex);
+
+        HRESULT GetLastPlayedCategory(
+                    [retval, out] UINT* pCategoryIndex);
     };
 
     [
@@ -63,5 +115,13 @@ library gameuxLib
     coclass GameExplorer
     {
         [default] interface IGameExplorer;
+    };
+
+    [
+      uuid(DBC85A2C-C0DC-4961-B6E2-D28B62C11AD4)
+    ]
+    coclass GameStatistics
+    {
+        [default] interface IGameStatistics;
     };
 }
