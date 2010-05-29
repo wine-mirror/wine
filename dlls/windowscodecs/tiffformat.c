@@ -59,6 +59,7 @@ MAKE_FUNCPTR(TIFFClientOpen);
 MAKE_FUNCPTR(TIFFClose);
 MAKE_FUNCPTR(TIFFCurrentDirectory);
 MAKE_FUNCPTR(TIFFGetField);
+MAKE_FUNCPTR(TIFFIsByteSwapped);
 MAKE_FUNCPTR(TIFFReadDirectory);
 MAKE_FUNCPTR(TIFFReadEncodedStrip);
 MAKE_FUNCPTR(TIFFSetDirectory);
@@ -85,6 +86,7 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFClose);
         LOAD_FUNCPTR(TIFFCurrentDirectory);
         LOAD_FUNCPTR(TIFFGetField);
+        LOAD_FUNCPTR(TIFFIsByteSwapped);
         LOAD_FUNCPTR(TIFFReadDirectory);
         LOAD_FUNCPTR(TIFFReadEncodedStrip);
         LOAD_FUNCPTR(TIFFSetDirectory);
@@ -197,6 +199,8 @@ typedef struct {
 
 typedef struct {
     const WICPixelFormatGUID *format;
+    int bps;
+    int samples;
     int bpp;
     int indexed;
     int reverse_bgr;
@@ -220,7 +224,7 @@ static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
 
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 {
-    uint16 photometric, bps, samples, planar;
+    uint16 photometric, bps, samples=1, planar;
     int ret;
 
     decode_info->indexed = 0;
@@ -235,6 +239,8 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 
     ret = pTIFFGetField(tiff, TIFFTAG_BITSPERSAMPLE, &bps);
     if (!ret) bps = 1;
+
+    decode_info->bps = bps;
 
     switch(photometric)
     {
@@ -312,6 +318,8 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         FIXME("unhandled PhotometricInterpretation %u\n", photometric);
         return E_FAIL;
     }
+
+    decode_info->samples = samples;
 
     ret = pTIFFGetField(tiff, TIFFTAG_IMAGEWIDTH, &decode_info->width);
     if (!ret)
@@ -667,6 +675,9 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
 {
     HRESULT hr=S_OK;
     tsize_t ret;
+    int swap_bytes;
+
+    swap_bytes = pTIFFIsByteSwapped(This->parent->tiff);
 
     ret = pTIFFSetDirectory(This->parent->tiff, This->index);
 
@@ -697,6 +708,34 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
                 pixel[0] = temp;
                 pixel += 3;
             }
+        }
+    }
+
+    if (hr == S_OK && swap_bytes && This->decode_info.bps > 8)
+    {
+        UINT row, i, samples_per_row;
+        BYTE *sample, temp;
+
+        samples_per_row = This->decode_info.tile_width * This->decode_info.samples;
+
+        switch(This->decode_info.bps)
+        {
+        case 16:
+            for (row=0; row<This->decode_info.tile_height; row++)
+            {
+                sample = This->cached_tile + row * This->decode_info.tile_stride;
+                for (i=0; i<samples_per_row; i++)
+                {
+                    temp = sample[1];
+                    sample[1] = sample[0];
+                    sample[0] = temp;
+                    sample += 2;
+                }
+            }
+            break;
+        default:
+            ERR("unhandled bps for byte swap %u\n", This->decode_info.bps);
+            return E_FAIL;
         }
     }
 
