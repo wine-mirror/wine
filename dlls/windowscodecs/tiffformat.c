@@ -361,6 +361,8 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     ret = pTIFFGetField(tiff, TIFFTAG_ROWSPERSTRIP, &decode_info->tile_height);
     if (ret)
     {
+        if (decode_info->tile_height > decode_info->height)
+            decode_info->tile_height = decode_info->height;
         decode_info->tile_width = decode_info->width;
         decode_info->tile_stride = ((decode_info->bpp * decode_info->tile_width + 7)/8);
         decode_info->tile_size = decode_info->tile_height * decode_info->tile_stride;
