@@ -39,6 +39,18 @@ library gameuxLib
         GIS_ALL_USERS      = 3
     } GAME_INSTALL_SCOPE;
 
+    typedef enum
+    {
+        GAMESTATS_OPEN_OPENORCREATE = 0,
+        GAMESTATS_OPEN_OPENONLY = 1
+    } GAMESTATS_OPEN_TYPE;
+
+    typedef enum
+    {
+        GAMESTATS_OPEN_CREATED = 0,
+        GAMESTATS_OPEN_OPENED = 1
+    } GAMESTATS_OPEN_RESULT;
+
     [
       object,
       uuid(E7B2FB72-D728-49B3-A5F2-18EBF5F1349E)
@@ -107,6 +119,22 @@ library gameuxLib
 
         HRESULT GetLastPlayedCategory(
                     [retval, out] UINT* pCategoryIndex);
+    };
+
+    [
+      object,
+      uuid(AFF3EA11-E70E-407d-95DD-35E612C41CE2)
+    ]
+    interface IGameStatisticsMgr : IUnknown
+    {
+        HRESULT GetGameStatistics(
+                    [string, in] LPCWSTR GDFBinaryPath,
+                    [in] GAMESTATS_OPEN_TYPE openType,
+                    [out] GAMESTATS_OPEN_RESULT* pOpenResult,
+                    [retval, out] IGameStatistics** ppiStats);
+
+        HRESULT RemoveGameStatistics(
+                    [string, in] LPCWSTR GDFBinaryPath);
     };
 
     [
