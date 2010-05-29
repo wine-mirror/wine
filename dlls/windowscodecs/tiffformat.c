@@ -257,9 +257,11 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         }
         break;
     case 2: /* RGB */
-        if (bps != 8)
+        ret = pTIFFGetField(tiff, TIFFTAG_PLANARCONFIG, &planar);
+        if (!ret) planar = 1;
+        if (planar != 1)
         {
-            FIXME("unhandled RGB bit count %u\n", bps);
+            FIXME("unhandled planar configuration %u\n", planar);
             return E_FAIL;
         }
         ret = pTIFFGetField(tiff, TIFFTAG_SAMPLESPERPIXEL, &samples);
@@ -268,16 +270,22 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             FIXME("unhandled RGB sample count %u\n", samples);
             return E_FAIL;
         }
-        ret = pTIFFGetField(tiff, TIFFTAG_PLANARCONFIG, &planar);
-        if (!ret) planar = 1;
-        if (planar != 1)
+
+        decode_info->bpp = bps * samples;
+
+        switch(bps)
         {
-            FIXME("unhandled planar configuration %u\n", planar);
+        case 8:
+            decode_info->reverse_bgr = 1;
+            decode_info->format = &GUID_WICPixelFormat24bppBGR;
+            break;
+        case 16:
+            decode_info->format = &GUID_WICPixelFormat48bppRGB;
+            break;
+        default:
+            FIXME("unhandled RGB bit count %u\n", bps);
             return E_FAIL;
         }
-        decode_info->bpp = bps * samples;
-        decode_info->reverse_bgr = 1;
-        decode_info->format = &GUID_WICPixelFormat24bppBGR;
         break;
     case 3: /* RGB Palette */
         decode_info->indexed = 1;

@@ -895,6 +895,7 @@ static GUID const * const tiff_formats[] = {
     &GUID_WICPixelFormat32bppBGR,
     &GUID_WICPixelFormat32bppBGRA,
     &GUID_WICPixelFormat32bppPBGRA,
+    &GUID_WICPixelFormat48bppRGB,
     NULL
 };
 
