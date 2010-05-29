@@ -205,6 +205,7 @@ typedef struct {
     int planar;
     int indexed;
     int reverse_bgr;
+    int invert_grayscale;
     UINT width, height;
     UINT tile_width, tile_height;
     UINT tile_stride;
@@ -230,6 +231,7 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 
     decode_info->indexed = 0;
     decode_info->reverse_bgr = 0;
+    decode_info->invert_grayscale = 0;
 
     ret = pTIFFGetField(tiff, TIFFTAG_PHOTOMETRIC, &photometric);
     if (!ret)
@@ -262,6 +264,8 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 
     switch(photometric)
     {
+    case 0: /* WhiteIsZero */
+        decode_info->invert_grayscale = 1;
     case 1: /* BlackIsZero */
         if (samples != 1)
         {
@@ -331,7 +335,6 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             return E_FAIL;
         }
         break;
-    case 0: /* WhiteIsZero */
     case 4: /* Transparency mask */
     case 5: /* CMYK */
     case 6: /* YCbCr */
@@ -757,6 +760,22 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
             ERR("unhandled bps for byte swap %u\n", This->decode_info.bps);
             return E_FAIL;
         }
+    }
+
+    if (hr == S_OK && This->decode_info.invert_grayscale)
+    {
+        BYTE *byte, *end;
+
+        if (This->decode_info.samples != 1)
+        {
+            ERR("cannot invert grayscale image with %u samples\n", This->decode_info.samples);
+            return E_FAIL;
+        }
+
+        end = This->cached_tile+This->decode_info.tile_size;
+
+        for (byte = This->cached_tile; byte != end; byte++)
+            *byte = ~(*byte);
     }
 
     if (hr == S_OK)
