@@ -692,8 +692,34 @@ static HRESULT WINAPI TiffFrameDecode_GetResolution(IWICBitmapFrameDecode *iface
 static HRESULT WINAPI TiffFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p)\n", iface, pIPalette);
-    return E_NOTIMPL;
+    TiffFrameDecode *This = (TiffFrameDecode*)iface;
+    uint16 *red, *green, *blue;
+    WICColor colors[256];
+    int color_count, ret, i;
+
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    color_count = 1<<This->decode_info.bps;
+
+    EnterCriticalSection(&This->parent->lock);
+    ret = pTIFFGetField(This->parent->tiff, TIFFTAG_COLORMAP, &red, &green, &blue);
+    LeaveCriticalSection(&This->parent->lock);
+
+    if (!ret)
+    {
+        WARN("Couldn't read color map\n");
+        return E_FAIL;
+    }
+
+    for (i=0; i<color_count; i++)
+    {
+        colors[i] = 0xff000000 |
+            ((red[i]<<8) & 0xff0000) |
+            (green[i] & 0xff00) |
+            ((blue[i]>>8) & 0xff);
+    }
+
+    return IWICPalette_InitializeCustom(pIPalette, colors, color_count);
 }
 
 static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT tile_y)
