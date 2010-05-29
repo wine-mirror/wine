@@ -202,6 +202,7 @@ typedef struct {
     int bps;
     int samples;
     int bpp;
+    int planar;
     int indexed;
     int reverse_bgr;
     UINT width, height;
@@ -224,7 +225,7 @@ static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
 
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 {
-    uint16 photometric, bps, samples=1, planar;
+    uint16 photometric, bps, samples, planar;
     int ret;
 
     decode_info->indexed = 0;
@@ -239,12 +240,35 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 
     ret = pTIFFGetField(tiff, TIFFTAG_BITSPERSAMPLE, &bps);
     if (!ret) bps = 1;
-
     decode_info->bps = bps;
+
+    ret = pTIFFGetField(tiff, TIFFTAG_SAMPLESPERPIXEL, &samples);
+    if (!ret) samples = 1;
+    decode_info->samples = samples;
+
+    if (samples == 1)
+        planar = 1;
+    else
+    {
+        ret = pTIFFGetField(tiff, TIFFTAG_PLANARCONFIG, &planar);
+        if (!ret) planar = 1;
+        if (planar != 1)
+        {
+            FIXME("unhandled planar configuration %u\n", planar);
+            return E_FAIL;
+        }
+    }
+    decode_info->planar = planar;
 
     switch(photometric)
     {
     case 1: /* BlackIsZero */
+        if (samples != 1)
+        {
+            FIXME("unhandled grayscale sample count %u\n", samples);
+            return E_FAIL;
+        }
+
         decode_info->bpp = bps;
         switch (bps)
         {
@@ -263,21 +287,13 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         }
         break;
     case 2: /* RGB */
-        ret = pTIFFGetField(tiff, TIFFTAG_PLANARCONFIG, &planar);
-        if (!ret) planar = 1;
-        if (planar != 1)
-        {
-            FIXME("unhandled planar configuration %u\n", planar);
-            return E_FAIL;
-        }
-        ret = pTIFFGetField(tiff, TIFFTAG_SAMPLESPERPIXEL, &samples);
+        decode_info->bpp = bps * samples;
+
         if (samples != 3)
         {
             FIXME("unhandled RGB sample count %u\n", samples);
             return E_FAIL;
         }
-
-        decode_info->bpp = bps * samples;
 
         switch(bps)
         {
@@ -294,6 +310,12 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         }
         break;
     case 3: /* RGB Palette */
+        if (samples != 1)
+        {
+            FIXME("unhandled indexed sample count %u\n", samples);
+            return E_FAIL;
+        }
+
         decode_info->indexed = 1;
         decode_info->bpp = bps;
         switch (bps)
@@ -318,8 +340,6 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         FIXME("unhandled PhotometricInterpretation %u\n", photometric);
         return E_FAIL;
     }
-
-    decode_info->samples = samples;
 
     ret = pTIFFGetField(tiff, TIFFTAG_IMAGEWIDTH, &decode_info->width);
     if (!ret)
