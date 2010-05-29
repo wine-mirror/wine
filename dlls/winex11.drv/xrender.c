@@ -988,6 +988,9 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
             }
             wine_tsx11_unlock();
         }
+
+        /* we can't support subpixel without xrender */
+        if (!X11DRV_XRender_Installed && entry->aa_default > AA_Grey) entry->aa_default = AA_Grey;
     }
     else
         entry->aa_default = AA_None;
