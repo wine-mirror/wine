@@ -227,6 +227,7 @@ static const IWICBitmapFrameDecodeVtbl TiffFrameDecode_Vtbl;
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 {
     uint16 photometric, bps, samples, planar;
+    uint16 extra_sample_count, *extra_samples;
     int ret;
 
     decode_info->indexed = 0;
@@ -293,7 +294,16 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     case 2: /* RGB */
         decode_info->bpp = bps * samples;
 
-        if (samples != 3)
+        if (samples == 4)
+        {
+            ret = pTIFFGetField(tiff, TIFFTAG_EXTRASAMPLES, &extra_sample_count, &extra_samples);
+            if (!ret)
+            {
+                WARN("Cannot get extra sample type for RGB data, ret=%i count=%i\n", ret, extra_sample_count);
+                return E_FAIL;
+            }
+        }
+        else if (samples != 3)
         {
             FIXME("unhandled RGB sample count %u\n", samples);
             return E_FAIL;
@@ -303,10 +313,38 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         {
         case 8:
             decode_info->reverse_bgr = 1;
-            decode_info->format = &GUID_WICPixelFormat24bppBGR;
+            if (samples == 3)
+                decode_info->format = &GUID_WICPixelFormat24bppBGR;
+            else
+                switch(extra_samples[0])
+                {
+                case 1: /* Associated (pre-multiplied) alpha data */
+                    decode_info->format = &GUID_WICPixelFormat32bppPBGRA;
+                    break;
+                case 2: /* Unassociated alpha data */
+                    decode_info->format = &GUID_WICPixelFormat32bppBGRA;
+                    break;
+                default:
+                    FIXME("unhandled extra sample type %i\n", extra_samples[0]);
+                    return E_FAIL;
+                }
             break;
         case 16:
-            decode_info->format = &GUID_WICPixelFormat48bppRGB;
+            if (samples == 3)
+                decode_info->format = &GUID_WICPixelFormat48bppRGB;
+            else
+                switch(extra_samples[0])
+                {
+                case 1: /* Associated (pre-multiplied) alpha data */
+                    decode_info->format = &GUID_WICPixelFormat64bppPRGBA;
+                    break;
+                case 2: /* Unassociated alpha data */
+                    decode_info->format = &GUID_WICPixelFormat64bppRGBA;
+                    break;
+                default:
+                    FIXME("unhandled extra sample type %i\n", extra_samples[0]);
+                    return E_FAIL;
+                }
             break;
         default:
             FIXME("unhandled RGB bit count %u\n", bps);
@@ -745,19 +783,20 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
 
     if (hr == S_OK && This->decode_info.reverse_bgr)
     {
-        if (This->decode_info.format == &GUID_WICPixelFormat24bppBGR)
+        if (This->decode_info.bps == 8)
         {
-            UINT i, total_pixels;
+            UINT i, total_pixels, sample_count;
             BYTE *pixel, temp;
 
             total_pixels = This->decode_info.tile_width * This->decode_info.tile_height;
             pixel = This->cached_tile;
+            sample_count = This->decode_info.samples;
             for (i=0; i<total_pixels; i++)
             {
                 temp = pixel[2];
                 pixel[2] = pixel[0];
                 pixel[0] = temp;
-                pixel += 3;
+                pixel += sample_count;
             }
         }
     }
