@@ -2,6 +2,7 @@
  * Copyright 1998 Juergen Schmied
  * Copyright 2003-2004 Puoti
  * Copyright 2006 Antonio Codazzi
+ * Copyright 2010 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +20,9 @@
  */
 
 #include "shresdef.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
@@ -68,7 +72,7 @@ BEGIN
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
-	  MENUITEM "Propriet�",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "Proprietà",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
@@ -90,7 +94,7 @@ BEGIN
 	  MENUITEM "&Cancella",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Rinomina",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
-	  MENUITEM "&Propriet�",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "&Proprietà",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
@@ -99,10 +103,10 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "&Esci", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Vista"
     BEGIN
         MENUITEM "Icone &Grandi", FCIDM_SHVIEW_BIGICON
         MENUITEM "Icone &Piccole", FCIDM_SHVIEW_SMALLICON
@@ -110,15 +114,15 @@ BEGIN
         MENUITEM "&Dettagli", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Aiuto"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&Sul Pannello di Controllo...", IDM_CPANEL_ABOUT
     END
 END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Sfoglia Cartella"
+CAPTION "Sfoglia cartelle"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -131,19 +135,50 @@ FONT 8, "MS Shell Dlg"
 	4, 40, 180, 120
 }
 
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Sfoglia cartelle"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Cartella:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+    TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+    WS_BORDER | WS_TABSTOP,
+    12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Nuova cartella", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Annulla", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Messaggio"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Sì", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Sì a &tutti", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&No", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Annulla", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Informazioni su %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine &license...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "&Licenza di Wine...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 170, 10
- LTEXT "Running on %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Wine � disponibile grazie a:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "In esecuzione su %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine è disponibile grazie a:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -152,7 +187,7 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Digitare il nome del programma, della cartella, del documento o della risorsa internet, e Wine la aprir�.", 12289, 36, 11, 182, 18
+ LTEXT "Digitare il nome del programma, della cartella, del documento o della risorsa internet, e Wine la aprirà.", 12289, 36, 11, 182, 18
  LTEXT "&Apri:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
@@ -172,15 +207,20 @@ STRINGTABLE
 	IDS_SHV_COLUMN7		"Spazio disponibile"
 	IDS_SHV_COLUMN8		"Nome"
 	IDS_SHV_COLUMN9		"Commenti"
-	IDS_SHV_COLUMN10	"Owner"
-	IDS_SHV_COLUMN11	"Group"
-	IDS_SHV_COLUMN_DELFROM	"Original location"
-	IDS_SHV_COLUMN_DELDATE	"Date deleted"
+	IDS_SHV_COLUMN10	"Proprietario"
+	IDS_SHV_COLUMN11	"Gruppo"
+	IDS_SHV_COLUMN_DELFROM	"Locazione originale"
+	IDS_SHV_COLUMN_DELDATE	"Data di eliminazione"
+    IDS_SHV_COL_DOCS    "Documenti"
+    IDS_SHV_COL_STATUS  "Status"
+    IDS_SHV_COL_LOCATION    "Locazione"
+    IDS_SHV_COL_MODEL   "Modello"
 
 	/* special folder */
 	IDS_DESKTOP		"Desktop"
 	IDS_MYCOMPUTER		"Risorse del Computer"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_RECYCLEBIN_FOLDER_NAME		"Cestino"
+	IDS_CONTROLPANEL	"Pannello di Controllo"
 
 	/*  context menus  */
 	IDS_VIEW_LARGE		"Icone &Grandi"
@@ -196,17 +236,17 @@ STRINGTABLE
 	IDS_DELETEFOLDER_CAPTION "Confermare la cancellazione della cartella"
 	IDS_DELETEITEM_TEXT "Sei sicuro di voler cancellare '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Sei sicuro di voler cancellare questi %1 elementi?"
-	IDS_DELETESELECTED_TEXT "Are you sure you want to delete the selected item(s)?"
-	IDS_TRASHITEM_TEXT "Are you sure that you want to send '%1' to the Trash?"
-	IDS_TRASHFOLDER_TEXT "Are you sure that you want to send '%1' and all its content to the Trash?"
-	IDS_TRASHMULTIPLE_TEXT "Are you sure that you want to send these %1 items to the Trash?"
-	IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_DELETESELECTED_TEXT "Sei sicuro di voler cancellare gli oggetti selezionati?"
+	IDS_TRASHITEM_TEXT "Sei sicuro di voler mandare '%1' Nel Cestino?"
+	IDS_TRASHFOLDER_TEXT "Sei sicuro di voler mandare '%1' e tutto il suo contenuto nel Cestino?"
+	IDS_TRASHMULTIPLE_TEXT "Sei sicuro di voler mandare qeusti %1 oggetti nel Cestino?"
+	IDS_CANTTRASH_TEXT "L'oggetto '%1' non può essere mandato al Cestino. Vuoi cancellarlo direttamente?"
+	IDS_OVERWRITEFILE_TEXT "Questa cartella contiene già un file chiamato '%1'.\n\nVuoi sostituirlo?"
 	IDS_OVERWRITEFILE_CAPTION "Confermare la sovrascrizione del File"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_OVERWRITEFOLDER_TEXT "Questa cartella contiene già una cartella chiamata '%1'.\n\n"\
+	    "Se i file nella cartella di destinazione hanno gli stessi nomi dei file nella\n"\
+	    "cartella selezionata, saranno sostituiti. Vuoi spostare o copiare\n"\
+	    "la cartella?"
 
 	/* message box strings */
        IDS_RESTART_TITLE       "Riavvia"
@@ -218,13 +258,13 @@ STRINGTABLE
 	IDS_STARTMENU               "Start Menu"
 	IDS_PROGRAMS                "Start Menu\\Programmi"
 	IDS_STARTUP                 "Start Menu\\Programmi\\StartUp"
-	IDS_ADMINTOOLS              "Start Menu\\Programmi\\Administrative Tools"
+	IDS_ADMINTOOLS              "Start Menu\\Programmi\\Strumenti di Amministrazione"
 	IDS_INTERNET_CACHE          "Settaggi Locali\\Temporary Internet Files"
 	IDS_HISTORY                 "Settaggi Locali\\Cronologia"
 	IDS_LOCAL_APPDATA           "Settaggi Locali\\Applicazioni"
 	IDS_CDBURN_AREA             "Settaggi Locali\\Applicazioni\\Microsoft\\CD Burning"
 	IDS_PROGRAM_FILES           "Programmi"
-	IDS_PROGRAM_FILES_COMMON    "Programmi\\Common Files"
+	IDS_PROGRAM_FILES_COMMON    "Programmi\\File Comuni"
 	IDS_COMMON_DOCUMENTS        "Documenti"
 	IDS_COMMON_MUSIC            "Documenti\\Musica"
 	IDS_COMMON_PICTURES         "Documenti\\Immagini"
@@ -243,9 +283,28 @@ STRINGTABLE
 	IDS_PRINTHOOD               "PrintHood"
 	IDS_COOKIES                 "Cookies"
 
-	IDS_NEWFOLDER		"New Folder"
+	IDS_NEWFOLDER		"Nuova cartella"
 
-	IDS_CPANEL_TITLE            "Wine Control Panel"
-	IDS_CPANEL_NAME             "Name"
-	IDS_CPANEL_DESCRIPTION      "Description"
+	IDS_CPANEL_TITLE            "Pannello di Controllo di Wine"
+	IDS_CPANEL_NAME             "Nome"
+	IDS_CPANEL_DESCRIPTION      "Descrizione"
+
+        IDS_SHLEXEC_NOASSOC         "Non c'è un programma Windows configurato per aprire questo tipo di file."
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Licenza di Wine"
+IDS_LICENSE,
+"Questo programma è software libero; puoi redistribuirlo e/o \
+modificarlo sotto i termini della GNU Lesser General Public \
+License come pubblicata dalla Free Software Foundation; sia la \
+versione 2.1 della LGPL, sia (a tua scelta) una versione più nuova.\n\
+Questo programma è distribuito nella speranza che sia utile, \
+ma SENZA ALCUNA GARANZIA; pure senza la garanzia implicita di \
+COMMERCIABILTÀ o ADEGUATEZZA PER UN PARTICOLARE SCOPO. Leggere la GNU \
+Lesser General Public License per più informazioni.\n\
+Dovresti aver ricevuto una copia della GNU Lesser General Public \
+License insieme a questo programma; altrimenti, scrivi alla Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
 }
