@@ -133,9 +133,19 @@ static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
     }
 }
 
-static void asmparser_dcl_sampler(struct asm_parser *This, DWORD samptype, DWORD regnum, unsigned int line_no) {
+static void asmparser_dcl_sampler(struct asm_parser *This, DWORD samptype,
+                                  DWORD mod, DWORD regnum,
+                                  unsigned int line_no) {
     if(!This->shader) return;
-    if(!record_sampler(This->shader, samptype, regnum)) {
+    if(mod != 0 &&
+       (This->shader->version != BWRITERPS_VERSION(3, 0) ||
+        (mod != BWRITERSPDM_MSAMPCENTROID &&
+         mod != BWRITERSPDM_PARTIALPRECISION))) {
+        asmparser_message(This, "Line %u: Unsupported modifier in dcl instruction\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+        return;
+    }
+    if(!record_sampler(This->shader, samptype, mod, regnum)) {
         ERR("Out of memory\n");
         set_parse_status(This, PARSE_ERR);
     }

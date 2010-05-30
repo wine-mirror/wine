@@ -191,6 +191,7 @@ struct declaration {
 struct samplerdecl {
     DWORD                   type;
     DWORD                   regnum;
+    DWORD                   mod;
 };
 
 #define INSTRARRAY_INITIAL_SIZE 8
@@ -272,8 +273,8 @@ struct asmparser_backend {
                        const struct shader_reg *reg);
     void (*dcl_input)(struct asm_parser *This, DWORD usage, DWORD num,
                       DWORD mod, const struct shader_reg *reg);
-    void (*dcl_sampler)(struct asm_parser *This, DWORD samptype, DWORD regnum,
-                        unsigned int line_no);
+    void (*dcl_sampler)(struct asm_parser *This, DWORD samptype, DWORD mod,
+                        DWORD regnum, unsigned int line_no);
 
     void (*end)(struct asm_parser *This);
 
@@ -288,7 +289,8 @@ BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, floa
 BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w);
 BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x);
 BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, DWORD mod, BOOL output, DWORD regnum, DWORD writemask);
-BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD regnum);
+BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype,
+                    DWORD mod, DWORD regnum);
 
 #define MESSAGEBUFFER_INITIAL_SIZE 256
 

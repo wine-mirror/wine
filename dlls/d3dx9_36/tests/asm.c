@@ -1185,6 +1185,16 @@ static void ps_3_0_test(void) {
             "dcl_texcoord0_centroid v0\n",
             {0xffff0300, 0x0200001f, 0x80000005, 0x904f0000, 0x0000ffff}
         },
+        {   /* shader 13 */
+            "ps_3_0\n"
+            "dcl_2d_centroid s0\n",
+            {0xffff0300, 0x0200001f, 0x90000000, 0xa04f0800, 0x0000ffff}
+        },
+        {   /* shader 14 */
+            "ps_3_0\n"
+            "dcl_2d_pp s0\n",
+            {0xffff0300, 0x0200001f, 0x90000000, 0xa02f0800, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1323,6 +1333,9 @@ static void failure_test(void) {
         /* shader 41: no modifier allowed with dcl instruction in vs */
         "vs_3_0\n"
         "dcl_texcoord0_centroid v0\n",
+        /* shader 42: no modifiers with vs dcl sampler instruction */
+        "vs_3_0\n"
+        "dcl_2d_pp s0\n",
     };
     HRESULT hr;
     unsigned int i;

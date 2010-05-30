@@ -573,19 +573,24 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.writemask = $5;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, $3.mod, &reg);
                             }
-                    | INSTR_DCL sampdcl REG_SAMPLER
+                    | INSTR_DCL sampdcl omods REG_SAMPLER
                             {
                                 TRACE("Sampler declared\n");
-                                asm_ctx.funcs->dcl_sampler(&asm_ctx, $2, $3, asm_ctx.line_no);
+                                if($3.shift != 0) {
+                                    asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
+                                asm_ctx.funcs->dcl_sampler(&asm_ctx, $2, $3.mod, $4, asm_ctx.line_no);
                             }
-                    | INSTR_DCL sampdcl REG_INPUT
+                    | INSTR_DCL sampdcl omods REG_INPUT
                             {
                                 TRACE("Error rule: sampler decl of input reg\n");
                                 asmparser_message(&asm_ctx, "Line %u: Sampler declarations of input regs is not valid\n",
                                                   asm_ctx.line_no);
                                 set_parse_status(&asm_ctx, PARSE_WARN);
                             }
-                    | INSTR_DCL sampdcl REG_OUTPUT
+                    | INSTR_DCL sampdcl omods REG_OUTPUT
                             {
                                 TRACE("Error rule: sampler decl of output reg\n");
                                 asmparser_message(&asm_ctx, "Line %u: Sampler declarations of output regs is not valid\n",

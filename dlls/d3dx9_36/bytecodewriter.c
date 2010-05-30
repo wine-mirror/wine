@@ -257,7 +257,7 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_
     return TRUE;
 }
 
-BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD regnum) {
+BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD mod, DWORD regnum) {
     unsigned int i;
 
     if(!shader) return FALSE;
@@ -290,6 +290,7 @@ BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD regnum)
     }
 
     shader->samplers[shader->num_samplers].type = samptype;
+    shader->samplers[shader->num_samplers].mod = mod;
     shader->samplers[shader->num_samplers].regnum = regnum;
     shader->num_samplers++;
     return TRUE;
@@ -1151,9 +1152,9 @@ static void write_samplers(const struct bwriter_shader *shader, struct bytecode_
     DWORD instr_dcl = D3DSIO_DCL | (2 << D3DSI_INSTLENGTH_SHIFT);
     DWORD token;
     const DWORD reg = (1<<31) |
-                      ((D3DSPR_SAMPLER << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
-                      ((D3DSPR_SAMPLER << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2) |
-                      D3DSP_WRITEMASK_ALL;
+        ((D3DSPR_SAMPLER << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK) |
+        ((D3DSPR_SAMPLER << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2) |
+        D3DSP_WRITEMASK_ALL;
 
     for(i = 0; i < shader->num_samplers; i++) {
         /* Write the DCL instruction */
@@ -1162,7 +1163,9 @@ static void write_samplers(const struct bwriter_shader *shader, struct bytecode_
         /* Already shifted */
         token |= (d3d9_sampler(shader->samplers[i].type)) & D3DSP_TEXTURETYPE_MASK;
         put_dword(buffer, token);
-        put_dword(buffer, reg | (shader->samplers[i].regnum & D3DSP_REGNUM_MASK));
+        token = reg | (shader->samplers[i].regnum & D3DSP_REGNUM_MASK);
+        token |= d3d9_dstmod(shader->samplers[i].mod);
+        put_dword(buffer, token);
     }
 }
 
