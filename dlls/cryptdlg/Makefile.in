@@ -12,6 +12,7 @@ RC_SRCS = \
 	cryptdlg_De.rc \
 	cryptdlg_En.rc \
 	cryptdlg_Fr.rc \
+	cryptdlg_It.rc \
 	cryptdlg_Ko.rc \
 	cryptdlg_Lt.rc \
 	cryptdlg_Nl.rc \
