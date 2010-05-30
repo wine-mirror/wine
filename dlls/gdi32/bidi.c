@@ -425,6 +425,11 @@ BOOL BIDI_Reorder(
         if (done)
         {
             HeapFree(GetProcessHeap(), 0, chartype);
+            if (lpOrder)
+            {
+                for (i = 0; i < uCount; i++)
+                    lpOrder[i] = i;
+            }
             return TRUE;
         }
     }
