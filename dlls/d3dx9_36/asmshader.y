@@ -539,29 +539,39 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.writemask = $4;
                                 asm_ctx.funcs->dcl_output(&asm_ctx, $2.dclusage, $2.regnum, &reg);
                             }
-                    | INSTR_DCL dclusage REG_INPUT
+                    | INSTR_DCL dclusage omods REG_INPUT
                             {
                                 struct shader_reg reg;
                                 TRACE("Input reg declaration\n");
+                                if($3.shift != 0) {
+                                    asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = BWRITERSPR_INPUT;
-                                reg.regnum = $3;
+                                reg.regnum = $4;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
                                 reg.writemask = BWRITERSP_WRITEMASK_ALL;
-                                asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, &reg);
+                                asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, $3.mod, &reg);
                             }
-                    | INSTR_DCL dclusage REG_INPUT writemask
+                    | INSTR_DCL dclusage omods REG_INPUT writemask
                             {
                                 struct shader_reg reg;
                                 TRACE("Input reg declaration\n");
+                                if($3.shift != 0) {
+                                    asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = BWRITERSPR_INPUT;
-                                reg.regnum = $3;
+                                reg.regnum = $4;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
-                                reg.writemask = $4;
-                                asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, &reg);
+                                reg.writemask = $5;
+                                asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, $3.mod, &reg);
                             }
                     | INSTR_DCL sampdcl REG_SAMPLER
                             {

@@ -209,7 +209,7 @@ BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) {
     return TRUE;
 }
 
-BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask) {
+BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, DWORD mod, BOOL output, DWORD regnum, DWORD writemask) {
     unsigned int *num;
     struct declaration **decl;
     unsigned int i;
@@ -250,6 +250,7 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_
     (*decl)[*num].usage = usage;
     (*decl)[*num].usage_idx = usage_idx;
     (*decl)[*num].regnum = regnum;
+    (*decl)[*num].mod = mod;
     (*decl)[*num].writemask = writemask;
     (*num)++;
 
@@ -363,6 +364,7 @@ static void write_declarations(struct bytecode_buffer *buffer, BOOL len,
         token |= (type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
         token |= (d3d9_writemask(decls[i].writemask)) & D3DSP_WRITEMASK_ALL;
         token |= decls[i].regnum & D3DSP_REGNUM_MASK;
+        token |= d3d9_dstmod(decls[i].mod);
         put_dword(buffer, token);
     }
 }

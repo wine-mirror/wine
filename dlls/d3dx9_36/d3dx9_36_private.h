@@ -184,6 +184,7 @@ struct instruction {
 struct declaration {
     DWORD                   usage, usage_idx;
     DWORD                   regnum;
+    DWORD                   mod;
     DWORD                   writemask;
 };
 
@@ -270,7 +271,7 @@ struct asmparser_backend {
     void (*dcl_output)(struct asm_parser *This, DWORD usage, DWORD num,
                        const struct shader_reg *reg);
     void (*dcl_input)(struct asm_parser *This, DWORD usage, DWORD num,
-                      const struct shader_reg *reg);
+                      DWORD mod, const struct shader_reg *reg);
     void (*dcl_sampler)(struct asm_parser *This, DWORD samptype, DWORD regnum,
                         unsigned int line_no);
 
@@ -286,7 +287,7 @@ BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr);
 BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w);
 BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w);
 BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x);
-BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, BOOL output, DWORD regnum, DWORD writemask);
+BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, DWORD mod, BOOL output, DWORD regnum, DWORD writemask);
 BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype, DWORD regnum);
 
 #define MESSAGEBUFFER_INITIAL_SIZE 256

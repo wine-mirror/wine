@@ -1180,6 +1180,11 @@ static void ps_3_0_test(void) {
             "add oC3, r0, r1\n",
             {0xffff0300, 0x03000002, 0x800f0803, 0x80e40000, 0x80e40001, 0x0000ffff}
         },
+        {   /* shader 12 */
+            "ps_3_0\n"
+            "dcl_texcoord0_centroid v0\n",
+            {0xffff0300, 0x0200001f, 0x80000005, 0x904f0000, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1309,6 +1314,15 @@ static void failure_test(void) {
         /* shader 38: only a0.x accepted in vs_1_1 */
         "vs_1_1\n"
         "mov r0, c0[ a0 ]\n",
+        /* shader 39: invalid modifier for dcl instruction */
+        "ps_3_0\n"
+        "dcl_texcoord0_sat v0\n",
+        /* shader 40: shift not allowed */
+        "ps_3_0\n"
+        "dcl_texcoord0_x2 v0\n",
+        /* shader 41: no modifier allowed with dcl instruction in vs */
+        "vs_3_0\n"
+        "dcl_texcoord0_centroid v0\n",
     };
     HRESULT hr;
     unsigned int i;

@@ -110,16 +110,24 @@ static void asmparser_dcl_output(struct asm_parser *This, DWORD usage, DWORD num
         asmparser_message(This, "Line %u: Output register declared in a pixel shader\n", This->line_no);
         set_parse_status(This, PARSE_ERR);
     }
-    if(!record_declaration(This->shader, usage, num, TRUE, reg->regnum, reg->writemask)) {
+    if(!record_declaration(This->shader, usage, num, 0, TRUE, reg->regnum, reg->writemask)) {
         ERR("Out of memory\n");
         set_parse_status(This, PARSE_ERR);
     }
 }
 
 static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
-                                const struct shader_reg *reg) {
+                                DWORD mod, const struct shader_reg *reg) {
     if(!This->shader) return;
-    if(!record_declaration(This->shader, usage, num, FALSE, reg->regnum, reg->writemask)) {
+    if(mod != 0 &&
+       (This->shader->version != BWRITERPS_VERSION(3, 0) ||
+        (mod != BWRITERSPDM_MSAMPCENTROID &&
+         mod != BWRITERSPDM_PARTIALPRECISION))) {
+        asmparser_message(This, "Line %u: Unsupported modifier in dcl instruction\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+        return;
+    }
+    if(!record_declaration(This->shader, usage, num, mod, FALSE, reg->regnum, reg->writemask)) {
         ERR("Out of memory\n");
         set_parse_status(This, PARSE_ERR);
     }
@@ -842,34 +850,34 @@ static const struct asmparser_backend parser_ps_3 = {
 };
 
 static void gen_oldvs_output(struct bwriter_shader *shader) {
-    record_declaration(shader, BWRITERDECLUSAGE_POSITION, 0, TRUE, OPOS_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 0, TRUE, OT0_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 1, TRUE, OT1_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 2, TRUE, OT2_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 3, TRUE, OT3_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 4, TRUE, OT4_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 5, TRUE, OT5_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 6, TRUE, OT6_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 7, TRUE, OT7_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_FOG, 0, TRUE, OFOG_REG, OFOG_WRITEMASK);
-    record_declaration(shader, BWRITERDECLUSAGE_PSIZE, 0, TRUE, OPTS_REG, OPTS_WRITEMASK);
-    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 0, TRUE, OD0_REG, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 1, TRUE, OD1_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_POSITION, 0, 0, TRUE, OPOS_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 0, 0, TRUE, OT0_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 1, 0, TRUE, OT1_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 2, 0, TRUE, OT2_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 3, 0, TRUE, OT3_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 4, 0, TRUE, OT4_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 5, 0, TRUE, OT5_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 6, 0, TRUE, OT6_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 7, 0, TRUE, OT7_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_FOG, 0, 0, TRUE, OFOG_REG, OFOG_WRITEMASK);
+    record_declaration(shader, BWRITERDECLUSAGE_PSIZE, 0, 0, TRUE, OPTS_REG, OPTS_WRITEMASK);
+    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 0, 0, TRUE, OD0_REG, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 1, 0, TRUE, OD1_REG, BWRITERSP_WRITEMASK_ALL);
 }
 
 static void gen_oldps_input(struct bwriter_shader *shader, DWORD texcoords) {
     switch(texcoords) {
-        case 8: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 7, FALSE, T7_VARYING, BWRITERSP_WRITEMASK_ALL);
-        case 7: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 6, FALSE, T6_VARYING, BWRITERSP_WRITEMASK_ALL);
-        case 6: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 5, FALSE, T5_VARYING, BWRITERSP_WRITEMASK_ALL);
-        case 5: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 4, FALSE, T4_VARYING, BWRITERSP_WRITEMASK_ALL);
-        case 4: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 3, FALSE, T3_VARYING, BWRITERSP_WRITEMASK_ALL);
-        case 3: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 2, FALSE, T2_VARYING, BWRITERSP_WRITEMASK_ALL);
-        case 2: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 1, FALSE, T1_VARYING, BWRITERSP_WRITEMASK_ALL);
-        case 1: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 0, FALSE, T0_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 8: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 7, 0, FALSE, T7_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 7: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 6, 0, FALSE, T6_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 6: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 5, 0, FALSE, T5_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 5: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 4, 0, FALSE, T4_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 4: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 3, 0, FALSE, T3_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 3: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 2, 0, FALSE, T2_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 2: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 1, 0, FALSE, T1_VARYING, BWRITERSP_WRITEMASK_ALL);
+        case 1: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 0, 0, FALSE, T0_VARYING, BWRITERSP_WRITEMASK_ALL);
     };
-    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 0, FALSE, C0_VARYING, BWRITERSP_WRITEMASK_ALL);
-    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 1, FALSE, C1_VARYING, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 0, 0, FALSE, C0_VARYING, BWRITERSP_WRITEMASK_ALL);
+    record_declaration(shader, BWRITERDECLUSAGE_COLOR, 1, 0, FALSE, C1_VARYING, BWRITERSP_WRITEMASK_ALL);
 }
 
 void create_vs10_parser(struct asm_parser *ret) {
