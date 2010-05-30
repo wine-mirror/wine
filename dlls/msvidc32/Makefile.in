@@ -14,6 +14,7 @@ RC_SRCS = \
 	msvidc32_En.rc \
 	msvidc32_Fr.rc \
 	msvidc32_Hu.rc \
+	msvidc32_It.rc \
 	msvidc32_Ja.rc \
 	msvidc32_Ko.rc \
 	msvidc32_Lt.rc \
