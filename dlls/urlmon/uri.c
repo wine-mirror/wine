@@ -84,6 +84,21 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
+
+    if(!pbstrProperty)
+        return E_POINTER;
+
+    if(uriProp > Uri_PROPERTY_STRING_LAST) {
+        /* Windows allocates an empty BSTR for invalid Uri_PROPERTY's. */
+        *pbstrProperty = SysAllocStringLen(NULL, 0);
+
+        /* It only returns S_FALSE for the ZONE property... */
+        if(uriProp == Uri_PROPERTY_ZONE)
+            return S_FALSE;
+        else
+            return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -118,6 +133,11 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
     if(uriProp == Uri_PROPERTY_ZONE) {
         *pcchProperty = URLZONE_INVALID;
         return E_NOTIMPL;
+    }
+
+    if(uriProp < Uri_PROPERTY_DWORD_START) {
+        *pcchProperty = 0;
+        return E_INVALIDARG;
     }
 
     return E_NOTIMPL;

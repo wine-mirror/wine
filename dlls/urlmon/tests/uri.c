@@ -442,13 +442,40 @@ static void test_CreateUri_InvalidArgs(void) {
 }
 
 static void test_IUri_GetPropertyBSTR(void) {
+    IUri *uri = NULL;
+    HRESULT hr;
     DWORD i;
+
+    /* Make sure GetPropertyBSTR handles invalid args correctly. */
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        BSTR received = NULL;
+
+        hr = IUri_GetPropertyBSTR(uri, Uri_PROPERTY_RAW_URI, NULL, 0);
+        ok(hr == E_POINTER, "Error: GetPropertyBSTR returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        /* Make sure it handles a invalid Uri_PROPERTY's correctly. */
+        hr = IUri_GetPropertyBSTR(uri, Uri_PROPERTY_PORT, &received, 0);
+        ok(hr == S_OK, "Error: GetPropertyBSTR returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+        ok(received != NULL, "Error: Expected the string not to be NULL.\n");
+        ok(!SysStringLen(received), "Error: Expected the string to be of len=0 but it was %d instead.\n", SysStringLen(received));
+        SysFreeString(received);
+
+        /* Make sure it handles the ZONE property correctly. */
+        received = NULL;
+        hr = IUri_GetPropertyBSTR(uri, Uri_PROPERTY_ZONE, &received, 0);
+        ok(hr == S_FALSE, "Error: GetPropertyBSTR returned 0x%08x, expected 0x%08x.\n", hr, S_FALSE);
+        ok(received != NULL, "Error: Expected the string not to be NULL.\n");
+        ok(!SysStringLen(received), "Error: Expected the string to be of len=0 but it was %d instead.\n", SysStringLen(received));
+        SysFreeString(received);
+    }
+    if(uri) IUri_Release(uri);
 
     for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
         uri_properties test = uri_tests[i];
-        HRESULT hr;
-        IUri *uri = NULL;
         LPWSTR uriW;
+        uri = NULL;
 
         uriW = a2w(test.uri);
         hr = pCreateUri(uriW, test.create_flags, 0, &uri);
@@ -505,8 +532,14 @@ static void test_IUri_GetPropertyDWORD(void) {
     hr = pCreateUri(http_urlW, 0, 0, &uri);
     ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
     if(SUCCEEDED(hr)) {
+        DWORD received = 0xdeadbeef;
+
         hr = IUri_GetPropertyDWORD(uri, Uri_PROPERTY_DWORD_START, NULL, 0);
         ok(hr == E_INVALIDARG, "Error: GetPropertyDWORD returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+
+        hr = IUri_GetPropertyDWORD(uri, Uri_PROPERTY_ABSOLUTE_URI, &received, 0);
+        ok(hr == E_INVALIDARG, "Error: GetPropertyDWORD returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+        ok(received == 0, "Error: Expected received=%d but instead received=%d.\n", 0, received);
     }
     if(uri) IUri_Release(uri);
 
