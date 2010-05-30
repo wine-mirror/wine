@@ -756,6 +756,8 @@ static int blacklist(const char *dev) {
         return 1;
     if (!strncmp(dev, "ALSA ", 5) && strstr(dev, "hw:"))
         return 1;
+    if (!strncmp(dev, "PortAudio ", 10))
+        return 1;
     return 0;
 }
 
