@@ -14,6 +14,7 @@ RC_SRCS = \
 	ui_De.rc \
 	ui_En.rc \
 	ui_Fr.rc \
+	ui_It.rc \
 	ui_Ko.rc \
 	ui_Lt.rc \
 	ui_Nl.rc \
