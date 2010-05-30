@@ -17,6 +17,7 @@ RC_SRCS = \
 	spl_En.rc \
 	spl_Es.rc \
 	spl_Fr.rc \
+	spl_It.rc \
 	spl_Ko.rc \
 	spl_Lt.rc \
 	spl_Nl.rc \
