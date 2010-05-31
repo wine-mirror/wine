@@ -6919,33 +6919,33 @@ static UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
         if (assembly->installed && !mi->is_continuous)
             continue;
 
-        if (assembly->file->Sequence > mi->last_sequence || mi->is_continuous ||
-            (assembly->file->IsCompressed && !mi->is_extracted))
+        if (assembly->file->IsCompressed)
         {
-            MSICABDATA data;
-
-            r = ready_media(package, assembly->file, mi);
-            if (r != ERROR_SUCCESS)
+            if (assembly->file->disk_id != mi->disk_id || mi->is_continuous)
             {
-                ERR("Failed to ready media\n");
-                break;
-            }
+                MSICABDATA data;
 
-            data.mi = mi;
-            data.package = package;
-            data.cb = installassembly_cb;
-            data.user = &assemblies;
+                r = ready_media(package, assembly->file, mi);
+                if (r != ERROR_SUCCESS)
+                {
+                    ERR("Failed to ready media\n");
+                    break;
+                }
 
-            if (assembly->file->IsCompressed &&
-                !msi_cabextract(package, mi, &data))
-            {
-                ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
-                r = ERROR_FUNCTION_FAILED;
-                break;
+                data.mi = mi;
+                data.package = package;
+                data.cb = installassembly_cb;
+                data.user = &assemblies;
+
+                if (!msi_cabextract(package, mi, &data))
+                {
+                    ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
+                    r = ERROR_FUNCTION_FAILED;
+                    break;
+                }
             }
         }
-
-        if (!assembly->file->IsCompressed)
+        else
         {
             LPWSTR source = resolve_file_source(package, assembly->file);
 

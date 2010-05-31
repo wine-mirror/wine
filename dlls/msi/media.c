@@ -629,12 +629,10 @@ static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
         '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
-        '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',
-        ' ','%','i',' ','A','N','D',' ','`','D','i','s','k','I','d','`',' ','>','=',
-        ' ','%','i',' ','O','R','D','E','R',' ','B','Y',' ',
-        '`','D','i','s','k','I','d','`',0};
+        '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',' ','%','i',
+        ' ','O','R','D','E','R',' ','B','Y',' ','`','D','i','s','k','I','d','`',0};
 
-    row = MSI_QueryGetRecord(package->db, query, file->Sequence, mi->disk_id);
+    row = MSI_QueryGetRecord(package->db, query, file->Sequence);
     if (!row)
     {
         TRACE("Unable to query row\n");
