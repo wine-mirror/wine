@@ -644,9 +644,13 @@ HRESULT WINAPI D3DXCompileShader(LPCSTR pSrcData,
                                  LPD3DXBUFFER* ppErrorMsgs,
                                  LPD3DXCONSTANTTABLE * ppConstantTable)
 {
-    FIXME("(%p, %d, %p, %p, %p, %p, %d, %p, %p, %p): stub\n",
-          pSrcData, srcDataLen, pDefines, pInclude, pFunctionName,
-          pProfile, Flags, ppShader, ppErrorMsgs, ppConstantTable);
+    FIXME("(%p, %d, %p, %p, %s, %s, %x, %p, %p, %p): stub\n",
+          pSrcData, srcDataLen, pDefines, pInclude, debugstr_a(pFunctionName),
+          debugstr_a(pProfile), Flags, ppShader, ppErrorMsgs, ppConstantTable);
+
+    TRACE("Shader source:\n");
+    TRACE("%s\n", debugstr_an(pSrcData, srcDataLen));
+
     return D3DERR_INVALIDCALL;
 }
 
