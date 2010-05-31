@@ -620,7 +620,7 @@ BOOL BIDI_Reorder(
                     }
                     res = ScriptShape(hDC, &psc, lpString + done + curItem->iCharPos, cChars, cMaxGlyphs, &curItem->a, run_glyphs, pwLogClust, psva, &cOutGlyphs);
                 }
-                if (res && res != USP_E_SCRIPT_NOT_IN_FONT)
+                if (res)
                 {
                     FIXME("Unable to shape string (%x)\n",res);
                     j = nItems;
