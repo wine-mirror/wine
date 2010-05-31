@@ -727,46 +727,6 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 
     TRACE("Done all gl drawing\n");
 
-    /* Diagnostics */
-#ifdef SHOW_FRAME_MAKEUP
-    {
-        static LONG primCounter = 0;
-        /* NOTE: set primCounter to the value reported by drawprim
-           before you want to to write frame makeup to /tmp */
-        if (primCounter >= 0) {
-            WINED3DLOCKED_RECT r;
-            char buffer[80];
-            IWineD3DSurface_LockRect(This->render_targets[0], &r, NULL, WINED3DLOCK_READONLY);
-            sprintf(buffer, "/tmp/backbuffer_%d.tga", primCounter);
-            TRACE("Saving screenshot %s\n", buffer);
-            IWineD3DSurface_SaveSnapshot(This->render_targets[0], buffer);
-            IWineD3DSurface_UnlockRect(This->render_targets[0]);
-
-#ifdef SHOW_TEXTURE_MAKEUP
-           {
-            IWineD3DSurface *pSur;
-            int textureNo;
-            for (textureNo = 0; textureNo < MAX_COMBINED_SAMPLERS; ++textureNo) {
-                if (This->stateBlock->textures[textureNo] != NULL) {
-                    sprintf(buffer, "/tmp/texture_%p_%d_%d.tga", This->stateBlock->textures[textureNo], primCounter, textureNo);
-                    TRACE("Saving texture %s\n", buffer);
-                    if (IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]) == WINED3DRTYPE_TEXTURE) {
-                            IWineD3DTexture_GetSurfaceLevel(This->stateBlock->textures[textureNo], 0, &pSur);
-                            IWineD3DSurface_SaveSnapshot(pSur, buffer);
-                            IWineD3DSurface_Release(pSur);
-                    } else  {
-                        FIXME("base Texture isn't of type texture %d\n", IWineD3DBaseTexture_GetType(This->stateBlock->textures[textureNo]));
-                    }
-                }
-            }
-           }
-#endif
-        }
-        TRACE("drawprim #%d\n", primCounter);
-        ++primCounter;
-    }
-#endif
-
     /* Control goes back to the device, stateblock values may change again */
     This->isInDraw = FALSE;
 }

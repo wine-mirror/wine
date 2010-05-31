@@ -176,27 +176,6 @@ IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
         return WINEDDERR_NOTLOCKED;
     }
 
-    /* Can be useful for debugging */
-#if 0
-        {
-            static unsigned int gen = 0;
-            char buffer[4096];
-            ++gen;
-            if ((gen % 10) == 0) {
-                snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm",
-                        This, This->texture_target, This->texture_level, gen);
-                IWineD3DSurfaceImpl_SaveSnapshot(iface, buffer);
-            }
-            /*
-             * debugging crash code
-            if (gen == 250) {
-              void** test = NULL;
-              *test = 0;
-            }
-            */
-        }
-#endif
-
     /* Tell the swapchain to update the screen */
     if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
     {
@@ -260,120 +239,6 @@ IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface, BOOL srgb_mode)
 {
     ERR("Unsupported on X11 surfaces\n");
     return WINED3DERR_INVALIDCALL;
-}
-
-/*****************************************************************************
- * IWineD3DSurface::SaveSnapshot, GDI version
- *
- * This method writes the surface's contents to the in tga format to the
- * file specified in filename.
- *
- * Params:
- *  filename: File to write to
- *
- * Returns:
- *  WINED3DERR_INVALIDCALL if the file couldn't be opened
- *  WINED3D_OK on success
- *
- *****************************************************************************/
-static int get_shift(DWORD color_mask) {
-    int shift = 0;
-    while (color_mask > 0xFF) {
-        color_mask >>= 1;
-        shift += 1;
-    }
-    while ((color_mask & 0x80) == 0) {
-        color_mask <<= 1;
-        shift -= 1;
-    }
-    return shift;
-}
-
-
-static HRESULT WINAPI
-IWineGDISurfaceImpl_SaveSnapshot(IWineD3DSurface *iface,
-const char* filename)
-{
-    FILE* f = NULL;
-    UINT y = 0, x = 0;
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
-    static char *output = NULL;
-    static UINT size = 0;
-
-    if (This->pow2Width > size) {
-        output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->pow2Width * 3);
-        size = This->pow2Width;
-    }
-
-
-    f = fopen(filename, "w+");
-    if (NULL == f) {
-        ERR("opening of %s failed with\n", filename);
-        return WINED3DERR_INVALIDCALL;
-    }
-    fprintf(f, "P6\n%d %d\n255\n", This->pow2Width, This->pow2Height);
-
-    if (This->resource.format_desc->format == WINED3DFMT_P8_UINT)
-    {
-        unsigned char table[256][3];
-        int i;
-
-        if (This->palette == NULL) {
-            fclose(f);
-            return WINED3DERR_INVALIDCALL;
-        }
-        for (i = 0; i < 256; i++) {
-            table[i][0] = This->palette->palents[i].peRed;
-            table[i][1] = This->palette->palents[i].peGreen;
-            table[i][2] = This->palette->palents[i].peBlue;
-        }
-        for (y = 0; y < This->pow2Height; y++) {
-            unsigned char *src = This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
-            for (x = 0; x < This->pow2Width; x++) {
-                unsigned char color = *src;
-                src += 1;
-
-                output[3 * x + 0] = table[color][0];
-                output[3 * x + 1] = table[color][1];
-                output[3 * x + 2] = table[color][2];
-            }
-            fwrite(output, 3 * This->pow2Width, 1, f);
-        }
-    } else {
-        int red_shift, green_shift, blue_shift, pix_width;
-
-        pix_width = format_desc->byte_count;
-
-        red_shift = get_shift(format_desc->red_mask);
-        green_shift = get_shift(format_desc->green_mask);
-        blue_shift = get_shift(format_desc->blue_mask);
-
-        for (y = 0; y < This->pow2Height; y++) {
-            const unsigned char *src = This->resource.allocatedMemory + (y * 1 * IWineD3DSurface_GetPitch(iface));
-            for (x = 0; x < This->pow2Width; x++) {
-                unsigned int color;
-                unsigned int comp;
-                int i;
-
-                color = 0;
-                for (i = 0; i < pix_width; i++) {
-                    color |= src[i] << (8 * i);
-                }
-                src += 1 * pix_width;
-
-                comp = color & format_desc->red_mask;
-                output[3 * x + 0] = red_shift > 0 ? comp >> red_shift : comp << -red_shift;
-                comp = color & format_desc->green_mask;
-                output[3 * x + 1] = green_shift > 0 ? comp >> green_shift : comp << -green_shift;
-                comp = color & format_desc->blue_mask;
-                output[3 * x + 2] = blue_shift > 0 ? comp >> blue_shift : comp << -blue_shift;
-            }
-            fwrite(output, 3 * This->pow2Width, 1, f);
-        }
-    }
-    fclose(f);
-    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
@@ -683,7 +548,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     /* Internal use: */
     IWineGDISurfaceImpl_LoadTexture,
     IWineD3DBaseSurfaceImpl_BindTexture,
-    IWineGDISurfaceImpl_SaveSnapshot,
     IWineD3DBaseSurfaceImpl_SetContainer,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,

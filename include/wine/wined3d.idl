@@ -2481,9 +2481,6 @@ interface IWineD3DSurface : IWineD3DResource
     void BindTexture(
         [in] BOOL srgb
     );
-    HRESULT SaveSnapshot(
-        [in] const char *filename
-    );
     HRESULT SetContainer(
         [in] IWineD3DBase *container
     );

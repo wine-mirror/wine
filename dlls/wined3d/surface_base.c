@@ -968,15 +968,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             DestRect->left, DestRect->top, DestRect->right, DestRect->bottom);
         if (SrcRect) TRACE("\tsrcrect  :%dx%d-%dx%d\n",
             SrcRect->left, SrcRect->top, SrcRect->right, SrcRect->bottom);
-#if 0
-        TRACE("\tflags: ");
-                      DDRAW_dump_DDBLT(Flags);
-                      if (Flags & WINEDDBLT_DDFX)
-              {
-                      TRACE("\tblitfx: ");
-                      DDRAW_dump_DDBLTFX(DDBltFx->dwDDFX);
-    }
-#endif
     }
 
     if ( (This->Flags & SFLAG_LOCKED) || ((Src != NULL) && (Src->Flags & SFLAG_LOCKED)))

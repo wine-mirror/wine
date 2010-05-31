@@ -2555,26 +2555,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
 
     IWineD3DSurface_LoadLocation(iface, flag, NULL /* no partial locking for textures yet */);
 
-#if 0
-    {
-        static unsigned int gen = 0;
-        char buffer[4096];
-        ++gen;
-        if ((gen % 10) == 0) {
-            snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm",
-                    This, This->texture_target, This->texture_level, gen);
-            IWineD3DSurfaceImpl_SaveSnapshot(iface, buffer);
-        }
-        /*
-         * debugging crash code
-         if (gen == 250) {
-         void** test = NULL;
-         *test = 0;
-         }
-         */
-    }
-#endif
-
     if (!(This->Flags & SFLAG_DONOTFREE)) {
         HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
         This->resource.allocatedMemory = NULL;
@@ -2638,147 +2618,6 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
 
         LEAVE_GL();
     }
-}
-
-#include <errno.h>
-#include <stdio.h>
-static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const char* filename)
-{
-    FILE* f = NULL;
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    char *allocatedMemory;
-    const char *textureRow;
-    IWineD3DSwapChain *swapChain = NULL;
-    int width, height, i, y;
-    GLuint tmpTexture = 0;
-    DWORD color;
-    /*FIXME:
-    Textures may not be stored in ->allocatedgMemory and a GlTexture
-    so we should lock the surface before saving a snapshot, or at least check that
-    */
-    /* TODO: Compressed texture images can be obtained from the GL in uncompressed form
-    by calling GetTexImage and in compressed form by calling
-    GetCompressedTexImageARB.  Queried compressed images can be saved and
-    later reused by calling CompressedTexImage[123]DARB.  Pre-compressed
-    texture images do not need to be processed by the GL and should
-    significantly improve texture loading performance relative to uncompressed
-    images. */
-
-/* Setup the width and height to be the internal texture width and height. */
-    width  = This->pow2Width;
-    height = This->pow2Height;
-/* check to see if we're a 'virtual' texture, e.g. we're not a pbuffer of texture, we're a back buffer*/
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapChain);
-
-    if (This->Flags & SFLAG_INDRAWABLE && !(This->Flags & SFLAG_INTEXTURE)) {
-        /* if were not a real texture then read the back buffer into a real texture */
-        /* we don't want to interfere with the back buffer so read the data into a temporary
-         * texture and then save the data out of the temporary texture
-         */
-        GLint prevRead;
-        ENTER_GL();
-        TRACE("(%p) Reading render target into texture\n", This);
-
-        glGenTextures(1, &tmpTexture);
-        glBindTexture(GL_TEXTURE_2D, tmpTexture);
-
-        glTexImage2D(GL_TEXTURE_2D,
-                        0,
-                        GL_RGBA,
-                        width,
-                        height,
-                        0/*border*/,
-                        GL_RGBA,
-                        GL_UNSIGNED_INT_8_8_8_8_REV,
-                        NULL);
-
-        glGetIntegerv(GL_READ_BUFFER, &prevRead);
-        checkGLcall("glGetIntegerv");
-        glReadBuffer(swapChain ? GL_BACK : This->resource.device->offscreenBuffer);
-        checkGLcall("glReadBuffer");
-        glCopyTexImage2D(GL_TEXTURE_2D,
-                            0,
-                            GL_RGBA,
-                            0,
-                            0,
-                            width,
-                            height,
-                            0);
-
-        checkGLcall("glCopyTexImage2D");
-        glReadBuffer(prevRead);
-        LEAVE_GL();
-
-    } else { /* bind the real texture, and make sure it up to date */
-        surface_internal_preload(This, SRGB_RGB);
-        surface_bind_and_dirtify(This, FALSE);
-    }
-    allocatedMemory = HeapAlloc(GetProcessHeap(), 0, width  * height * 4);
-    ENTER_GL();
-    FIXME("Saving texture level %d width %d height %d\n", This->texture_level, width, height);
-    glGetTexImage(GL_TEXTURE_2D, This->texture_level, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, allocatedMemory);
-    checkGLcall("glGetTexImage");
-    if (tmpTexture) {
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDeleteTextures(1, &tmpTexture);
-    }
-    LEAVE_GL();
-
-    f = fopen(filename, "w+");
-    if (NULL == f) {
-        ERR("opening of %s failed with: %s\n", filename, strerror(errno));
-        return WINED3DERR_INVALIDCALL;
-    }
-/* Save the data out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha channel */
-    TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format_desc->format));
-/* TGA header */
-    fputc(0,f);
-    fputc(0,f);
-    fputc(2,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-    fputc(0,f);
-/* short width*/
-    fwrite(&width,2,1,f);
-/* short height */
-    fwrite(&height,2,1,f);
-/* format rgba */
-    fputc(0x20,f);
-    fputc(0x28,f);
-/* raw data */
-    /* if the data is upside down if we've fetched it from a back buffer, so it needs flipping again to make it the correct way up */
-    if(swapChain)
-        textureRow = allocatedMemory + (width * (height - 1) *4);
-    else
-        textureRow = allocatedMemory;
-    for (y = 0 ; y < height; y++) {
-        for (i = 0; i < width;  i++) {
-            color = *((const DWORD*)textureRow);
-            fputc((color >> 16) & 0xFF, f); /* B */
-            fputc((color >>  8) & 0xFF, f); /* G */
-            fputc((color >>  0) & 0xFF, f); /* R */
-            fputc((color >> 24) & 0xFF, f); /* A */
-            textureRow += 4;
-        }
-        /* take two rows of the pointer to the texture memory */
-        if(swapChain)
-            (textureRow-= width << 3);
-
-    }
-    TRACE("Closing file\n");
-    fclose(f);
-
-    if(swapChain) {
-        IWineD3DSwapChain_Release(swapChain);
-    }
-    HeapFree(GetProcessHeap(), 0, allocatedMemory);
-    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
@@ -4766,7 +4605,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     /* Internal use: */
     IWineD3DSurfaceImpl_LoadTexture,
     IWineD3DSurfaceImpl_BindTexture,
-    IWineD3DSurfaceImpl_SaveSnapshot,
     IWineD3DSurfaceImpl_SetContainer,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,

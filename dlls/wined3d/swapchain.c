@@ -367,46 +367,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         }
     }
 
-#if defined(FRAME_DEBUGGING)
-{
-    if (GetFileAttributesA("C:\\D3DTRACE") != INVALID_FILE_ATTRIBUTES) {
-        if (!isOn) {
-            isOn = TRUE;
-            FIXME("Enabling D3D Trace\n");
-            __WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_d3d, 1);
-#if defined(SHOW_FRAME_MAKEUP)
-            FIXME("Singe Frame snapshots Starting\n");
-            isDumpingFrames = TRUE;
-            ENTER_GL();
-            glClear(GL_COLOR_BUFFER_BIT);
-            LEAVE_GL();
-#endif
-
-#if defined(SINGLE_FRAME_DEBUGGING)
-        } else {
-#if defined(SHOW_FRAME_MAKEUP)
-            FIXME("Singe Frame snapshots Finishing\n");
-            isDumpingFrames = FALSE;
-#endif
-            FIXME("Singe Frame trace complete\n");
-            DeleteFileA("C:\\D3DTRACE");
-            __WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_d3d, 0);
-#endif
-        }
-    } else {
-        if (isOn) {
-            isOn = FALSE;
-#if defined(SHOW_FRAME_MAKEUP)
-            FIXME("Single Frame snapshots Finishing\n");
-            isDumpingFrames = FALSE;
-#endif
-            FIXME("Disabling D3D Trace\n");
-            __WINE_SET_DEBUGGING(__WINE_DBCL_TRACE, __wine_dbch_d3d, 0);
-        }
-    }
-}
-#endif
-
     /* This is disabled, but the code left in for debug purposes.
      *
      * Since we're allowed to modify the new back buffer on a D3DSWAPEFFECT_DISCARD flip,
