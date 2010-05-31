@@ -212,6 +212,8 @@ static void print_version (void)
     static const char platform[] = "alpha";
 #elif defined(__powerpc__)
     static const char platform[] = "powerpc";
+#else
+# error CPU unknown
 #endif
     OSVERSIONINFOEX ver;
     BOOL ext, wow64;
