@@ -505,11 +505,9 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
     switch (pIcon->bmiHeader.biBitCount)
     {
     case 4:
-        return SavePalettedIconResAsPNG(pIcon, png_filename, commentW);
     case 8:
         return SavePalettedIconResAsPNG(pIcon, png_filename, commentW);
     case 24:
-        return SaveTrueColorIconResAsPNG(pIcon, png_filename, commentW);
     case 32:
         return SaveTrueColorIconResAsPNG(pIcon, png_filename, commentW);
     default:
