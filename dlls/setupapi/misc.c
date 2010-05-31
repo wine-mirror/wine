@@ -1561,3 +1561,27 @@ DWORD WINAPI SetupDecompressOrCopyFileW( PCWSTR source, PCWSTR target, PUINT typ
     TRACE("%s -> %s %d\n", debugstr_w(source), debugstr_w(target), comp);
     return ret;
 }
+
+static BOOL non_interactive_mode;
+
+/***********************************************************************
+ *              SetupGetNonInteractiveMode  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupGetNonInteractiveMode( void )
+{
+    FIXME("\n");
+    return non_interactive_mode;
+}
+
+/***********************************************************************
+ *              SetupSetNonInteractiveMode  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupSetNonInteractiveMode( BOOL flag )
+{
+    BOOL ret = non_interactive_mode;
+
+    FIXME("%d\n", flag);
+
+    non_interactive_mode = flag;
+    return ret;
+}
