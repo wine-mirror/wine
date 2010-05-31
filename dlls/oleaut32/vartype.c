@@ -6932,20 +6932,21 @@ HRESULT WINAPI VarBstrCat(BSTR pbstrLeft, BSTR pbstrRight, BSTR *pbstrOut)
   if (!pbstrOut)
     return E_INVALIDARG;
 
-  lenLeft = pbstrLeft ? SysStringLen(pbstrLeft) : 0;
-  lenRight = pbstrRight ? SysStringLen(pbstrRight) : 0;
+  /* use byte length here to properly handle ansi-allocated BSTRs */
+  lenLeft = pbstrLeft ? SysStringByteLen(pbstrLeft) : 0;
+  lenRight = pbstrRight ? SysStringByteLen(pbstrRight) : 0;
 
-  *pbstrOut = SysAllocStringLen(NULL, lenLeft + lenRight);
+  *pbstrOut = SysAllocStringByteLen(NULL, lenLeft + lenRight);
   if (!*pbstrOut)
     return E_OUTOFMEMORY;
 
   (*pbstrOut)[0] = '\0';
 
   if (pbstrLeft)
-    memcpy(*pbstrOut, pbstrLeft, lenLeft * sizeof(WCHAR));
+    memcpy(*pbstrOut, pbstrLeft, lenLeft);
 
   if (pbstrRight)
-    memcpy(*pbstrOut + lenLeft, pbstrRight, lenRight * sizeof(WCHAR));
+    memcpy((CHAR*)*pbstrOut + lenLeft, pbstrRight, lenRight);
 
   TRACE("%s\n", debugstr_wn(*pbstrOut, SysStringLen(*pbstrOut)));
   return S_OK;

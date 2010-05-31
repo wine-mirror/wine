@@ -5486,12 +5486,17 @@ static void test_VarBstrCat(void)
     static const WCHAR s1[] = { 'a',0 };
     static const WCHAR s2[] = { 'b',0 };
     static const WCHAR s1s2[] = { 'a',0,'b',0 };
+    static const char str1A[] = "Have ";
+    static const char str2A[] = "A Cigar";
     HRESULT ret;
     BSTR str1, str2, res;
+    UINT len;
 
-    /* Crash
+if (0)
+{
+    /* Crash */
     ret = VarBstrCat(NULL, NULL, NULL);
-     */
+}
 
     /* Concatenation of two NULL strings works */
     ret = VarBstrCat(NULL, NULL, &res);
@@ -5539,6 +5544,43 @@ static void test_VarBstrCat(void)
     ok(SysStringLen(res) == sizeof(s1s2) / sizeof(WCHAR),
      "Unexpected length\n");
     ok(!memcmp(res, s1s2, sizeof(s1s2)), "Unexpected value\n");
+    SysFreeString(res);
+
+    SysFreeString(str2);
+    SysFreeString(str1);
+
+    /* Concatenation of ansi BSTRs, both odd byte count not including termination */
+    str1 = SysAllocStringByteLen(str1A, sizeof(str1A)-1);
+    str2 = SysAllocStringByteLen(str2A, sizeof(str2A)-1);
+    len = SysStringLen(str1);
+    ok(len == (sizeof(str1A)-1)/sizeof(WCHAR), "got length %u\n", len);
+    len = SysStringLen(str2);
+    ok(len == (sizeof(str2A)-1)/sizeof(WCHAR), "got length %u\n", len);
+
+    ret = VarBstrCat(str1, str2, &res);
+    ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
+    ok(res != NULL, "Expected a string\n");
+    len = (sizeof(str1A) + sizeof(str2A) - 2)/sizeof(WCHAR);
+    ok(SysStringLen(res) == len, "got %d, expected %u\n", SysStringLen(res), len);
+    ok(!memcmp(res, "Have A Cigar", sizeof(str1A) + sizeof(str2A) - 1), "got (%s)\n", (char*)res);
+    SysFreeString(res);
+
+    SysFreeString(str2);
+    SysFreeString(str1);
+
+    /* Concatenation of ansi BSTRs, both 1 byte length not including termination */
+    str1 = SysAllocStringByteLen(str1A, 1);
+    str2 = SysAllocStringByteLen(str2A, 1);
+    len = SysStringLen(str1);
+    ok(len == 0, "got length %u\n", len);
+    len = SysStringLen(str2);
+    ok(len == 0, "got length %u\n", len);
+
+    ret = VarBstrCat(str1, str2, &res);
+    ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
+    ok(res != NULL, "Expected a string\n");
+    ok(SysStringLen(res) == 1, "got %d, expected 1\n", SysStringLen(res));
+    ok(!memcmp(res, "HA", 2), "got (%s)\n", (char*)res);
     SysFreeString(res);
 
     SysFreeString(str2);
