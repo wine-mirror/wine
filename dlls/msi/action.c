@@ -496,6 +496,7 @@ UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
 {
     MSIPATCHINFO *pi;
     UINT r = ERROR_SUCCESS;
+    WCHAR *p;
 
     pi = msi_alloc_zero( sizeof(MSIPATCHINFO) );
     if (!pi)
@@ -507,6 +508,30 @@ UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
         msi_free( pi );
         return ERROR_OUTOFMEMORY;
     }
+
+    p = pi->patchcode;
+    if (*p != '{')
+    {
+        msi_free( pi->patchcode );
+        msi_free( pi );
+        return ERROR_PATCH_PACKAGE_INVALID;
+    }
+
+    p = strchrW( p + 1, '}' );
+    if (!p)
+    {
+        msi_free( pi->patchcode );
+        msi_free( pi );
+        return ERROR_PATCH_PACKAGE_INVALID;
+    }
+
+    if (p[1])
+    {
+        FIXME("patch obsoletes %s\n", debugstr_w(p + 1));
+        p[1] = 0;
+    }
+
+    TRACE("patch code %s\n", debugstr_w(pi->patchcode));
 
     pi->transforms = msi_suminfo_dup_string( si, PID_LASTAUTHOR );
     if (!pi->transforms)
