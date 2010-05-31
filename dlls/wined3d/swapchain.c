@@ -969,7 +969,7 @@ struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *i
     }
     context_release(ctx);
 
-    newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * This->num_contexts + 1);
+    newArray = HeapAlloc(GetProcessHeap(), 0, sizeof(*newArray) * (This->num_contexts + 1));
     if(!newArray) {
         ERR("Out of memory when trying to allocate a new context array\n");
         context_destroy(This->device, ctx);
