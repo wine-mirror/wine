@@ -176,6 +176,8 @@ X(IOCTL_STORAGE_CHECK_VERIFY)
 X(IOCTL_STORAGE_EJECTION_CONTROL)
 X(IOCTL_STORAGE_EJECT_MEDIA)
 X(IOCTL_STORAGE_GET_DEVICE_NUMBER)
+X(IOCTL_STORAGE_GET_MEDIA_TYPES)
+X(IOCTL_STORAGE_GET_MEDIA_TYPES_EX)
 X(IOCTL_STORAGE_LOAD_MEDIA)
 X(IOCTL_STORAGE_MEDIA_REMOVAL)
 X(IOCTL_STORAGE_RESET_DEVICE)
@@ -743,6 +745,18 @@ static NTSTATUS CDROM_GetDriveGeometry(int dev, int fd, DISK_GEOMETRY* dg)
   dg->SectorsPerTrack = 32;  
   dg->BytesPerSector= 2048; 
   return ret;
+}
+
+/******************************************************************
+ *		CDROM_GetMediaType
+ *
+ */
+static NTSTATUS CDROM_GetMediaType(int dev, GET_MEDIA_TYPES* medtype)
+{
+    FIXME(": faking success\n");
+    medtype->DeviceType = FILE_DEVICE_CD_ROM;
+    medtype->MediaInfoCount = 0;
+    return STATUS_SUCCESS;
 }
 
 /**************************************************************************
@@ -2976,7 +2990,13 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         else status = CDROM_ControlEjection(fd, lpInBuffer);
         break;
 
-/* EPP     case IOCTL_STORAGE_GET_MEDIA_TYPES: */
+    case IOCTL_STORAGE_GET_MEDIA_TYPES:
+    case IOCTL_STORAGE_GET_MEDIA_TYPES_EX:
+        sz = sizeof(GET_MEDIA_TYPES);
+        if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
+        else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
+        else status = CDROM_GetMediaType(dev, lpOutBuffer);
+        break;
 
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
         sz = sizeof(STORAGE_DEVICE_NUMBER);
