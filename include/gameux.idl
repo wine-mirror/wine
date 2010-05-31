@@ -138,6 +138,26 @@ library gameuxLib
     };
 
     [
+      object,
+      uuid(86874AA7-A1ED-450d-A7EB-B89E20B2FFF3)
+    ]
+    interface IGameExplorer2 : IUnknown
+    {
+       HRESULT InstallGame(
+                    [string, in] LPCWSTR binaryGDFPath,
+                    [unique, in] LPCWSTR installDirectory,
+                    [in] GAME_INSTALL_SCOPE installScope);
+
+        HRESULT UninstallGame(
+                    [string, in] LPCWSTR binaryGDFPath);
+
+        HRESULT CheckAccess(
+                    [string, in] LPCWSTR binaryGDFPath,
+                    [retval, out] BOOL* pHasAccess);
+
+    }
+
+    [
       uuid(9A5EA990-3034-4D6F-9128-01F3C61022BC)
     ]
     coclass GameExplorer
