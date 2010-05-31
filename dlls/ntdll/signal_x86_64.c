@@ -29,6 +29,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef HAVE_UCONTEXT_H
+# include <ucontext.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -132,12 +136,45 @@ extern int arch_prctl(int func, void *ptr);
 
 #define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.fpregs))
 
-#endif /* linux */
+#elif defined(__FreeBSD__)
+#include <sys/ucontext.h>
 
-#if defined(__NetBSD__)
-# include <sys/ucontext.h>
-# include <sys/types.h>
-# include <signal.h>
+#define RAX_sig(context)     ((context)->uc_mcontext.mc_rax)
+#define RBX_sig(context)     ((context)->uc_mcontext.mc_rbx)
+#define RCX_sig(context)     ((context)->uc_mcontext.mc_rcx)
+#define RDX_sig(context)     ((context)->uc_mcontext.mc_rdx)
+#define RSI_sig(context)     ((context)->uc_mcontext.mc_rsi)
+#define RDI_sig(context)     ((context)->uc_mcontext.mc_rdi)
+#define RBP_sig(context)     ((context)->uc_mcontext.mc_rbp)
+#define R8_sig(context)      ((context)->uc_mcontext.mc_r8)
+#define R9_sig(context)      ((context)->uc_mcontext.mc_r9)
+#define R10_sig(context)     ((context)->uc_mcontext.mc_r10)
+#define R11_sig(context)     ((context)->uc_mcontext.mc_r11)
+#define R12_sig(context)     ((context)->uc_mcontext.mc_r12)
+#define R13_sig(context)     ((context)->uc_mcontext.mc_r13)
+#define R14_sig(context)     ((context)->uc_mcontext.mc_r14)
+#define R15_sig(context)     ((context)->uc_mcontext.mc_r15)
+
+#define CS_sig(context)      ((context)->uc_mcontext.mc_cs)
+#define DS_sig(context)      ((context)->uc_mcontext.mc_ds)
+#define ES_sig(context)      ((context)->uc_mcontext.mc_es)
+#define FS_sig(context)      ((context)->uc_mcontext.mc_fs)
+#define GS_sig(context)      ((context)->uc_mcontext.mc_gs)
+#define SS_sig(context)      ((context)->uc_mcontext.mc_ss)
+
+#define EFL_sig(context)     ((context)->uc_mcontext.mc_rflags)
+
+#define RIP_sig(context)     ((context)->uc_mcontext.mc_rip)
+#define RSP_sig(context)     ((context)->uc_mcontext.mc_rsp)
+#define TRAP_sig(context)    ((context)->uc_mcontext.mc_trapno)
+#define ERROR_sig(context)   ((context)->uc_mcontext.mc_err)
+
+#define FPU_sig(context)   ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.mc_fpstate))
+
+#elif defined(__NetBSD__)
+#include <sys/ucontext.h>
+#include <sys/types.h>
+#include <signal.h>
 
 #define RAX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RAX])
 #define RBX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RBX])
@@ -171,7 +208,9 @@ extern int arch_prctl(int func, void *ptr);
 #define ERROR_sig(context)  ((context)->uc_mcontext.__gregs[_REG_ERR])
 
 #define FPU_sig(context)   ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.__fpregs))
-#endif /* __NetBSD__ */
+#else
+#error You must define the signal context functions for your platform
+#endif
 
 enum i386_trap_code
 {
