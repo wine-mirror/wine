@@ -829,7 +829,6 @@ static void instr_handler(struct bc_writer *This,
                           const struct instruction *instr,
                           struct bytecode_buffer *buffer) {
     DWORD token = d3d9_opcode(instr->opcode);
-    TRACE("token: %x\n", token);
 
     This->funcs->opcode(This, instr, token, buffer);
     if(instr->has_dst) This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
