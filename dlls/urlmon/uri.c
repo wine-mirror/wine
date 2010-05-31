@@ -147,6 +147,10 @@ static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *p
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%d %p)\n", This, uriProp, pfHasProperty);
+
+    if(!pfHasProperty)
+        return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 

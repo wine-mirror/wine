@@ -1284,6 +1284,78 @@ static void test_IUri_GetProperties(void) {
     }
 }
 
+static void test_IUri_HasProperty(void) {
+    IUri *uri = NULL;
+    HRESULT hr;
+    DWORD i;
+
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        hr = IUri_HasProperty(uri, Uri_PROPERTY_RAW_URI, NULL);
+        ok(hr == E_INVALIDARG, "Error: HasProperty returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    }
+    if(uri) IUri_Release(uri);
+
+    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+        uri_properties test = uri_tests[i];
+        LPWSTR uriW;
+        uri = NULL;
+
+        uriW = a2w(test.uri);
+
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(test.create_todo) {
+            todo_wine {
+                ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, test.create_expected);
+            }
+        } else {
+            ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, test.create_expected);
+        }
+
+        if(SUCCEEDED(hr)) {
+            DWORD j;
+
+            for(j = 0; j <= Uri_PROPERTY_DWORD_LAST; ++j) {
+                /* Assign -1, then explicitly test for TRUE or FALSE later. */
+                BOOL received = -1;
+
+                hr = IUri_HasProperty(uri, j, &received);
+                if(test.props_todo) {
+                    todo_wine {
+                        ok(hr == S_OK, "Error: HasProperty returned 0x%08x, expected 0x%08x for property %d on uri_tests[%d].\n",
+                                hr, S_OK, j, i);
+                    }
+
+                    /* Check if the property should be true. */
+                    if(test.props & (1 << j)) {
+                        todo_wine {
+                            ok(received == TRUE, "Error: Expected to have property %d on uri_tests[%d].\n", j, i);
+                        }
+                    } else {
+                        todo_wine {
+                            ok(received == FALSE, "Error: Wasn't expecting to have property %d on uri_tests[%d].\n", j, i);
+                        }
+                    }
+                } else {
+                    ok(hr == S_OK, "Error: HasProperty returned 0x%08x, expected 0x%08x for property %d on uri_tests[%d].\n",
+                            hr, S_OK, j, i);
+
+                    if(test.props & (1 << j)) {
+                        ok(received == TRUE, "Error: Expected to have property %d on uri_tests[%d].\n", j, i);
+                    } else {
+                        ok(received == FALSE, "Error: Wasn't expecting to have property %d on uri_tests[%d].\n", j, i);
+                    }
+                }
+            }
+        }
+
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -1318,4 +1390,7 @@ START_TEST(uri) {
 
     trace("test IUri_GetProperties...\n");
     test_IUri_GetProperties();
+
+    trace("test IUri_HasProperty...\n");
+    test_IUri_HasProperty();
 }
