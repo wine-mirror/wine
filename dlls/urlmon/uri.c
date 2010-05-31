@@ -363,6 +363,10 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pdwProperties);
+
+    if(!pdwProperties)
+        return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 

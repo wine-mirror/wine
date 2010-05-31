@@ -78,6 +78,8 @@ typedef struct _uri_properties {
     DWORD               create_flags;
     HRESULT             create_expected;
     BOOL                create_todo;
+    DWORD               props;
+    BOOL                props_todo;
 
     uri_str_property    str_props[URI_STR_PROPERTY_COUNT];
     uri_dword_property  dword_props[URI_DWORD_PROPERTY_COUNT];
@@ -85,6 +87,11 @@ typedef struct _uri_properties {
 
 static const uri_properties uri_tests[] = {
     {   "http://www.winehq.org/tests/../tests/../..", 0, S_OK, FALSE,
+        /* A flag bitmap containing all the Uri_HAS_* flags that correspond to this uri. */
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
+        Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"http://www.winehq.org/",S_OK,TRUE},                       /* ABSOLUTE_URI */
             {"www.winehq.org",S_OK,TRUE},                               /* AUTHORITY */
@@ -110,6 +117,10 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://winehq.org/tests/.././tests", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
+        Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"http://winehq.org/tests",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
@@ -135,6 +146,10 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "HtTp://www.winehq.org/tests/..?query=x&return=y", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
+        Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"http://www.winehq.org/?query=x&return=y",S_OK,TRUE},
             {"www.winehq.org",S_OK,TRUE},
@@ -160,6 +175,10 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "hTTp://us%45r%3Ainfo@examp%4CE.com:80/path/a/b/./c/../%2E%2E/Forbidden'<|> Characters", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"http://usEr%3Ainfo@example.com/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,TRUE},
             {"usEr%3Ainfo@example.com",S_OK,TRUE},
@@ -185,6 +204,11 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp://winepass:wine@ftp.winehq.org:9999/dir/foo bar.txt", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_EXTENSION|
+        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
+        Uri_HAS_SCHEME,
+        TRUE,
         {
             {"ftp://winepass:wine@ftp.winehq.org:9999/dir/foo%20bar.txt",S_OK,TRUE},
             {"winepass:wine@ftp.winehq.org:9999",S_OK,TRUE},
@@ -210,6 +234,9 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "file://c:\\tests\\../tests/foo%20bar.mp3", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"file:///c:/tests/foo%2520bar.mp3",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -235,6 +262,9 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "FILE://localhost/test dir\\../tests/test%20file.README.txt", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"file:///tests/test%20file.README.txt",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -260,6 +290,9 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "urn:nothing:should:happen here", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
+        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"urn:nothing:should:happen here",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -285,6 +318,10 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://127.0.0.1/tests/../test dir/./test.txt", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"http://127.0.0.1/test%20dir/test.txt",S_OK,TRUE},
             {"127.0.0.1",S_OK,TRUE},
@@ -310,6 +347,10 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"http://[fedc:ba98:7654:3210:fedc:ba98:7654:3210]/",S_OK,TRUE},
             {"[fedc:ba98:7654:3210:fedc:ba98:7654:3210]",S_OK,TRUE},
@@ -335,6 +376,10 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "ftp://[::13.1.68.3]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"ftp://[::13.1.68.3]/",S_OK,TRUE},
             {"[::13.1.68.3]",S_OK,TRUE},
@@ -360,6 +405,10 @@ static const uri_properties uri_tests[] = {
         }
     },
     {   "http://[FEDC:BA98:0:0:0:0:0:3210]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
         {
             {"http://[fedc:ba98::3210]/",S_OK,TRUE},
             {"[fedc:ba98::3210]",S_OK,TRUE},
@@ -1157,8 +1206,74 @@ static void test_IUri_GetPropertyLength(void) {
                 } else {
                     ok(hr == prop.expected, "Error: GetPropertyLength returned 0x%08x, expected 0x%08x on uri_tests[%d].str_props[%d].\n",
                             hr, prop.expected, i, j);
-                    ok(receivedLen == expectedLen, "Error: Expected a length of %d but %d on uri_tests[%d].str_props[%d].\n",
+                    ok(receivedLen == expectedLen, "Error: Expected a length of %d but got %d on uri_tests[%d].str_props[%d].\n",
                             expectedLen, receivedLen, i, j);
+                }
+            }
+        }
+
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
+}
+
+static void test_IUri_GetProperties(void) {
+    IUri *uri = NULL;
+    HRESULT hr;
+    DWORD i;
+
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        hr = IUri_GetProperties(uri, NULL);
+        ok(hr == E_INVALIDARG, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    }
+    if(uri) IUri_Release(uri);
+
+    for(i = 0; i < sizeof(uri_tests)/sizeof(uri_tests[0]); ++i) {
+        uri_properties test = uri_tests[i];
+        LPWSTR uriW;
+        uri = NULL;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(test.create_todo) {
+            todo_wine {
+                ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, test.create_expected);
+            }
+        } else {
+            ok(hr == test.create_expected, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, test.create_expected);
+        }
+
+        if(SUCCEEDED(hr)) {
+            DWORD received = 0;
+            DWORD j;
+
+            hr = IUri_GetProperties(uri, &received);
+            if(test.props_todo) {
+                todo_wine {
+                    ok(hr == S_OK, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+                }
+            } else {
+                ok(hr == S_OK, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+
+            for(j = 0; j <= Uri_PROPERTY_DWORD_LAST; ++j) {
+                /* (1 << j) converts a Uri_PROPERTY to its corresponding Uri_HAS_* flag mask. */
+                if(test.props & (1 << j)) {
+                    if(test.props_todo) {
+                        todo_wine {
+                            ok(received & (1 << j), "Error: Expected flag for property %d on uri_tests[%d].\n", j, i);
+                        }
+                    } else {
+                        ok(received & (1 << j), "Error: Expected flag for property %d on uri_tests[%d].\n", j, i);
+                    }
+                } else {
+                    /* NOTE: Since received is initialized to 0, this test will always pass while
+                     * GetProperties is unimplemented.
+                     */
+                    ok(!(received & (1 << j)), "Error: Received flag for property %d when not expected on uri_tests[%d].\n", j, i);
                 }
             }
         }
@@ -1200,4 +1315,7 @@ START_TEST(uri) {
 
     trace("test IUri_GetPropertyLength...\n");
     test_IUri_GetPropertyLength();
+
+    trace("test IUri_GetProperties...\n");
+    test_IUri_GetProperties();
 }
