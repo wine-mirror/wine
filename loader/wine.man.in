@@ -160,8 +160,7 @@ Wine will also look in
 .TP
 .I WINEDLLOVERRIDES
 Defines the override type and load order of dlls used in the loading
-process for any dll. The default is set in the configuration
-file. There are currently two types of libraries that can be loaded
+process for any dll. There are currently two types of libraries that can be loaded
 into a process' address space: native windows dlls
 .RI ( native ),
 .B wine 

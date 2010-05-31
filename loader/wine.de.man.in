@@ -160,8 +160,7 @@ gesucht.
 .TP
 .I WINEDLLOVERRIDES
 Definiert die Bibliotheksüberschreibung und Ladereihenfolge der DLLs,
-die beim Laden jeder DLL berücksichtigt wird. Die Standardwerte sind
-in der Konfigurationsdatei enthalten.  Derzeit gibt es zwei Typen von
+die beim Laden jeder DLL berücksichtigt wird. Derzeit gibt es zwei Typen von
 DLLs, die in den Speicher eines Prozesses geladen werden können:
 Native Windows-DLLs
 .RI ( native ),

@@ -158,9 +158,8 @@ Wine utilisera aussi le répertoire
 .TP
 .I WINEDLLOVERRIDES
 Définit le type de remplacement et l'ordre de chargement des DLL utilisées lors du
-processus de chargement d'une DLL. Le comportement par défaut est spécifié dans le
-fichier de configuration. Deux types de bibliothèques peuvent actuellement être chargés
-dans l'espace d'adressage d'un processus : les DLL natives de
+processus de chargement d'une DLL. Deux types de bibliothèques peuvent actuellement
+être chargés dans l'espace d'adressage d'un processus : les DLL natives de
 Windows
 .RI ( native ),
 et les DLL fournies par
