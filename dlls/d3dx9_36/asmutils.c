@@ -264,13 +264,10 @@ static const char *get_regname(const struct shader_reg *reg, shader_type st) {
             return wine_dbg_sprintf("v%u", reg->regnum);
         case BWRITERSPR_CONST:
             return wine_dbg_sprintf("c%u", reg->regnum);
-        /* case BWRITERSPR_ADDR: */
+        case BWRITERSPR_ADDR:
+            return wine_dbg_sprintf("a%u", reg->regnum);
         case BWRITERSPR_TEXTURE:
-            if(st == ST_VERTEX) {
-                return wine_dbg_sprintf("a%u", reg->regnum);
-            } else {
-                return wine_dbg_sprintf("t%u", reg->regnum);
-            }
+            return wine_dbg_sprintf("t%u", reg->regnum);
         case BWRITERSPR_RASTOUT:
             switch(reg->regnum) {
                 case BWRITERSRO_POSITION:   return "oPos";
@@ -280,9 +277,10 @@ static const char *get_regname(const struct shader_reg *reg, shader_type st) {
             }
         case BWRITERSPR_ATTROUT:
             return wine_dbg_sprintf("oD%u", reg->regnum);
-        /* case BWRITERSPR_TEXCRDOUT: */
+        case BWRITERSPR_TEXCRDOUT:
+            return wine_dbg_sprintf("oT%u", reg->regnum);
         case BWRITERSPR_OUTPUT:
-            return wine_dbg_sprintf("o[T]%u", reg->regnum);
+            return wine_dbg_sprintf("o%u", reg->regnum);
         case BWRITERSPR_CONSTINT:
             return wine_dbg_sprintf("i%u", reg->regnum);
         case BWRITERSPR_COLOROUT:
@@ -305,7 +303,8 @@ static const char *get_regname(const struct shader_reg *reg, shader_type st) {
             return wine_dbg_sprintf("l%u", reg->regnum);
         case BWRITERSPR_PREDICATE:
             return wine_dbg_sprintf("p%u", reg->regnum);
-        default: return "unknown regname";
+        default:
+            return wine_dbg_sprintf("unknown regname %#x", reg->type);
     }
 }
 
