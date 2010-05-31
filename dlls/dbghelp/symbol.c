@@ -724,6 +724,10 @@ static void symt_fill_sym_info(struct module_pair* pair,
                         sym_info->Register = loc.reg ? loc.reg : CV_REG_EBP;
                         sym_info->Address = loc.offset;
                         break;
+                    case loc_absolute:
+                        sym_info->Flags |= SYMFLAG_VALUEPRESENT;
+                        sym_info->Value = loc.offset;
+                        break;
                     default:
                         FIXME("Shouldn't happen (kind=%d), debug reader backend is broken\n", loc.kind);
                         assert(0);

@@ -847,6 +847,10 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
                loc->kind = loc_dwarf2_block;
             }
             break;
+        case DW_OP_stack_value:
+            /* Expected behaviour is that this is the last instruction of this
+             * expression and just the "top of stack" value should be put to loc->offset. */
+            break;
         default:
             if (op < DW_OP_lo_user) /* as DW_OP_hi_user is 0xFF, we don't need to test against it */
                 FIXME("Unhandled attr op: %x\n", op);
