@@ -21,9 +21,8 @@
 
 /* TODO:
  *      + implement it correctly
- *      + finish asynchronous commands (especially for reading/record)
+ *      + finish asynchronous commands
  *      + better implement non waiting command (without the MCI_WAIT flag).
- *      + implement the recording features
  */
 
 #include <stdlib.h>
@@ -970,7 +969,6 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
 
     dwRet = midiOutOpen((LPHMIDIOUT)&wmm->hMidi, wmm->wPort, 0L, 0L, CALLBACK_NULL);
-    /*	dwRet = midiInOpen(&wmm->hMidi, wmm->wPort, 0L, 0L, CALLBACK_NULL);*/
     if (dwRet != MMSYSERR_NOERROR) {
 	return dwRet;
     }
@@ -1184,64 +1182,6 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 
     wmm->dwStatus = MCI_MODE_STOP;
     return dwRet;
-}
-
-/**************************************************************************
- * 				MIDI_mciRecord			[internal]
- */
-static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
-{
-    int			start, end;
-    MIDIHDR		midiHdr;
-    WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
-
-    TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpParms);
-
-    if (wmm == 0)	return MCIERR_INVALID_DEVICE_ID;
-
-    if (wmm->hFile == 0) {
-	WARN("Can't find file=%s!\n", debugstr_w(wmm->lpstrElementName));
-	return MCIERR_FILE_NOT_FOUND;
-    }
-    start = 1; 		end = 99999;
-    if (lpParms && (dwFlags & MCI_FROM)) {
-	start = lpParms->dwFrom;
-	TRACE("MCI_FROM=%d\n", start);
-    }
-    if (lpParms && (dwFlags & MCI_TO)) {
-	end = lpParms->dwTo;
-	TRACE("MCI_TO=%d\n", end);
-    }
-    midiHdr.lpData = HeapAlloc(GetProcessHeap(), 0, 1200);
-    if (!midiHdr.lpData)
-	return MCIERR_OUT_OF_MEMORY;
-    midiHdr.dwBufferLength = 1024;
-    midiHdr.dwUser = 0L;
-    midiHdr.dwFlags = 0L;
-    midiInPrepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
-    TRACE("After MIDM_PREPARE\n");
-    wmm->dwStatus = MCI_MODE_RECORD;
-    /* FIXME: there is no buffer added */
-    while (wmm->dwStatus != MCI_MODE_STOP) {
-	TRACE("wmm->dwStatus=%p %d\n",
-	      &wmm->dwStatus, wmm->dwStatus);
-	midiHdr.dwBytesRecorded = 0;
-	midiInStart((HMIDIIN)wmm->hMidi);
-	TRACE("midiInStart => dwBytesRecorded=%u\n", midiHdr.dwBytesRecorded);
-	if (midiHdr.dwBytesRecorded == 0) break;
-    }
-    TRACE("Before MIDM_UNPREPARE\n");
-    midiInUnprepareHeader((HMIDIIN)wmm->hMidi, &midiHdr, sizeof(MIDIHDR));
-    TRACE("After MIDM_UNPREPARE\n");
-    HeapFree(GetProcessHeap(), 0, midiHdr.lpData);
-    midiHdr.lpData = NULL;
-    wmm->dwStatus = MCI_MODE_STOP;
-    if (lpParms && (dwFlags & MCI_NOTIFY)) {
-	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
-	mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)),
-			wmm->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    }
-    return 0;
 }
 
 /**************************************************************************
@@ -1554,7 +1494,7 @@ static DWORD MIDI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 	    break;
 	case MCI_GETDEVCAPS_CAN_RECORD:
 	    TRACE("MCI_GETDEVCAPS_CAN_RECORD !\n");
-	    lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_GETDEVCAPS_CAN_SAVE:
@@ -1679,7 +1619,6 @@ LRESULT CALLBACK MCIMIDI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_OPEN_DRIVER:	return MIDI_mciOpen      (dwDevID, dwParam1, (LPMCI_OPEN_PARMSW)     dwParam2);
     case MCI_CLOSE_DRIVER:	return MIDI_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_PLAY:		return MIDI_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)      dwParam2);
-    case MCI_RECORD:		return MIDI_mciRecord    (dwDevID, dwParam1, (LPMCI_RECORD_PARMS)    dwParam2);
     case MCI_STOP:		return MIDI_mciStop      (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
     case MCI_SET:		return MIDI_mciSet       (dwDevID, dwParam1, (LPMCI_SEQ_SET_PARMS)       dwParam2);
     case MCI_PAUSE:		return MIDI_mciPause     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)   dwParam2);
@@ -1688,11 +1627,13 @@ LRESULT CALLBACK MCIMIDI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_GETDEVCAPS:	return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
     case MCI_INFO:		return MIDI_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSW)     dwParam2);
     case MCI_SEEK:		return MIDI_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)      dwParam2);
-    /* commands that should be supported */
+    /* commands that should report an error */
+    case MCI_RECORD:
     case MCI_LOAD:
     case MCI_SAVE:
     case MCI_FREEZE:
     case MCI_PUT:
+    case MCI_WINDOW:
     case MCI_REALIZE:
     case MCI_UNFREEZE:
     case MCI_UPDATE:
@@ -1704,11 +1645,7 @@ LRESULT CALLBACK MCIMIDI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_CUT:
     case MCI_DELETE:
     case MCI_PASTE:
-	WARN("Unsupported command [%u]\n", wMsg);
-	break;
-    /* commands that should report an error */
-    case MCI_WINDOW:
-	TRACE("Unsupported command [%u]\n", wMsg);
+	TRACE("Unsupported command [0x%x]\n", wMsg);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
@@ -1718,5 +1655,5 @@ LRESULT CALLBACK MCIMIDI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 	TRACE("Sending msg [%u] to default driver proc\n", wMsg);
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
-    return MCIERR_UNRECOGNIZED_COMMAND;
+    return MCIERR_UNSUPPORTED_FUNCTION;
 }
