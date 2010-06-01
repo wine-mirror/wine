@@ -377,6 +377,18 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
 static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
 {
     Uri *This = URI_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, pUri, pfEqual);
+
+    if(!pfEqual)
+        return E_POINTER;
+
+    if(!pUri) {
+        *pfEqual = FALSE;
+
+        /* For some reason Windows returns S_OK here... */
+        return S_OK;
+    }
+
     FIXME("(%p)->(%p %p)\n", This, pUri, pfEqual);
     return E_NOTIMPL;
 }

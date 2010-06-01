@@ -435,6 +435,46 @@ static const uri_properties uri_tests[] = {
     }
 };
 
+typedef struct _uri_equality {
+    const char* a;
+    DWORD       create_flags_a;
+    BOOL        create_todo_a;
+    const char* b;
+    DWORD       create_flags_b;
+    BOOL        create_todo_b;
+    BOOL        equal;
+    BOOL        todo;
+} uri_equality;
+
+static const uri_equality equality_tests[] = {
+    {
+        "HTTP://www.winehq.org/test dir/./",0,FALSE,
+        "http://www.winehq.org/test dir/../test dir/",0,FALSE,
+        TRUE, TRUE
+    },
+    {
+        /* http://www.winehq.org/test%20dir */
+        "http://%77%77%77%2E%77%69%6E%65%68%71%2E%6F%72%67/%74%65%73%74%20%64%69%72",0,FALSE,
+        "http://www.winehq.org/test dir",0,FALSE,
+        TRUE, TRUE,
+    },
+    {
+        "c:\\test.mp3",Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME,FALSE,
+        "file:///c:/test.mp3",0,FALSE,
+        TRUE,TRUE
+    },
+    {
+        "ftp://ftp.winehq.org/",0,FALSE,
+        "ftp://ftp.winehq.org",0,FALSE,
+        TRUE, TRUE
+    },
+    {
+        "ftp://ftp.winehq.org/test/test2/../../testB/",0,FALSE,
+        "ftp://ftp.winehq.org/t%45stB/",0,FALSE,
+        FALSE, TRUE
+    }
+};
+
 static inline LPWSTR a2w(LPCSTR str) {
     LPWSTR ret = NULL;
 
@@ -1356,6 +1396,86 @@ static void test_IUri_HasProperty(void) {
     }
 }
 
+static void test_IUri_IsEqual(void) {
+    IUri *uriA, *uriB;
+    HRESULT hrA, hrB;
+    DWORD i;
+
+    uriA = uriB = NULL;
+
+    /* Make sure IsEqual handles invalid args correctly. */
+    hrA = pCreateUri(http_urlW, 0, 0, &uriA);
+    hrB = pCreateUri(http_urlW, 0, 0, &uriB);
+    ok(hrA == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hrA, S_OK);
+    ok(hrB == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hrB, S_OK);
+    if(SUCCEEDED(hrA) && SUCCEEDED(hrB)) {
+        BOOL equal = -1;
+        hrA = IUri_IsEqual(uriA, NULL, &equal);
+        ok(hrA == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x.\n", hrA, S_OK);
+        ok(equal == FALSE, "Error: Expected equal to be FALSE, but was %d instead.\n", equal);
+
+        hrA = IUri_IsEqual(uriA, uriB, NULL);
+        ok(hrA == E_POINTER, "Error: IsEqual returned 0x%08x, expected 0x%08x.\n", hrA, E_POINTER);
+    }
+    if(uriA) IUri_Release(uriA);
+    if(uriB) IUri_Release(uriB);
+
+    for(i = 0; i < sizeof(equality_tests)/sizeof(equality_tests[0]); ++i) {
+        uri_equality test = equality_tests[i];
+        LPWSTR uriA_W, uriB_W;
+
+        uriA = uriB = NULL;
+
+        uriA_W = a2w(test.a);
+        uriB_W = a2w(test.b);
+
+        hrA = pCreateUri(uriA_W, test.create_flags_a, 0, &uriA);
+        if(test.create_todo_a) {
+            todo_wine {
+                ok(hrA == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].a\n",
+                        hrA, S_OK, i);
+            }
+        } else {
+            ok(hrA == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].a\n",
+                    hrA, S_OK, i);
+        }
+
+        hrB = pCreateUri(uriB_W, test.create_flags_b, 0, &uriB);
+        if(test.create_todo_b) {
+            todo_wine {
+                ok(hrB == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].b\n",
+                        hrB, S_OK, i);
+            }
+        } else {
+            ok(hrB == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].b\n",
+                    hrB, S_OK, i);
+        }
+
+        if(SUCCEEDED(hrA) && SUCCEEDED(hrB)) {
+            BOOL equal = -1;
+
+            hrA = IUri_IsEqual(uriA, uriB, &equal);
+            if(test.todo) {
+                todo_wine {
+                    ok(hrA == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x on equality_tests[%d].\n",
+                            hrA, S_OK, i);
+                }
+                todo_wine {
+                    ok(equal == test.equal, "Error: Expected the comparison to be %d on equality_tests[%d].\n", test.equal, i);
+                }
+            } else {
+                ok(hrA == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x on equality_tests[%d].\n", hrA, S_OK, i);
+                ok(equal == test.equal, "Error: Expected the comparison to be %d on equality_tests[%d].\n", test.equal, i);
+            }
+        }
+        if(uriA) IUri_Release(uriA);
+        if(uriB) IUri_Release(uriB);
+
+        heap_free(uriA_W);
+        heap_free(uriB_W);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -1393,4 +1513,7 @@ START_TEST(uri) {
 
     trace("test IUri_HasProperty...\n");
     test_IUri_HasProperty();
+
+    trace("test IUri_IsEqual...\n");
+    test_IUri_IsEqual();
 }
