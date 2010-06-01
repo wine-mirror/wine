@@ -34,6 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 /* Reads a string from the #STRINGS section in the CHM file */
 static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
 {
+    LPCSTR str;
+
     if(!chm->strings_stream)
         return NULL;
 
@@ -72,7 +74,9 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
         }
     }
 
-    return chm->strings[offset >> BLOCK_BITS] + (offset & BLOCK_MASK);
+    str = chm->strings[offset >> BLOCK_BITS] + (offset & BLOCK_MASK);
+    TRACE("offset %#x => %s\n", offset, debugstr_a(str));
+    return str;
 }
 
 static BOOL ReadChmSystem(CHMInfo *chm)
