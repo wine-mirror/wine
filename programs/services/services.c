@@ -38,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(service);
 HANDLE g_hStartedEvent;
 struct scmdatabase *active_database;
 
+static const int is_win64 = (sizeof(void *) > sizeof(int));
+
 static const WCHAR SZ_LOCAL_SYSTEM[] = {'L','o','c','a','l','S','y','s','t','e','m',0};
 
 /* Registry constants */
@@ -548,24 +550,35 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
 
     service_lock_exclusive(service_entry);
 
+    size = ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,NULL,0);
+    path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+    if (!path) return ERROR_NOT_ENOUGH_SERVER_MEMORY;
+    ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,path,size);
+
     if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER)
     {
         static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',' ',0};
-        DWORD len = GetSystemDirectoryW( NULL, 0 ) + sizeof(winedeviceW)/sizeof(WCHAR) + strlenW(service_entry->name);
+        WCHAR system_dir[MAX_PATH];
+        DWORD type, len;
 
+        GetSystemDirectoryW( system_dir, MAX_PATH );
+        if (is_win64)
+        {
+            if (!GetBinaryTypeW( path, &type ))
+            {
+                HeapFree( GetProcessHeap(), 0, path );
+                return GetLastError();
+            }
+            if (type == SCS_32BIT_BINARY) GetSystemWow64DirectoryW( system_dir, MAX_PATH );
+        }
+
+        len = strlenW( system_dir ) + sizeof(winedeviceW)/sizeof(WCHAR) + strlenW(service_entry->name);
+        HeapFree( GetProcessHeap(), 0, path );
         if (!(path = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
             return ERROR_NOT_ENOUGH_SERVER_MEMORY;
-        GetSystemDirectoryW( path, len );
+        lstrcpyW( path, system_dir );
         lstrcatW( path, winedeviceW );
         lstrcatW( path, service_entry->name );
-    }
-    else
-    {
-        size = ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,NULL,0);
-        path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
-        if (!path)
-            return ERROR_NOT_ENOUGH_SERVER_MEMORY;
-        ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,path,size);
     }
 
     ZeroMemory(&si, sizeof(STARTUPINFOW));
