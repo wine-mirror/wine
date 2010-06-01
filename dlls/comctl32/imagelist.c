@@ -143,7 +143,6 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                             int width, int height, HBITMAP hbmImage, HBITMAP hbmMask )
 {
     BOOL ret = FALSE;
-    HDC hdcMask = 0;
     BITMAP bm;
     BITMAPINFO *info, *mask_info = NULL;
     DWORD *bits = NULL;
@@ -184,8 +183,6 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
         mask_info->bmiHeader.biSizeImage = mask_width * height;
         if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
         if (!GetDIBits( hdc, hbmMask, 0, height, mask_bits, mask_info, DIB_RGB_COLORS )) goto done;
-        hdcMask = CreateCompatibleDC( 0 );
-        SelectObject( hdcMask, hbmMask );
     }
 
     for (n = 0; n < count; n++)
@@ -207,8 +204,6 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                         bits[i * bm.bmWidth + j] |= 0xff000000;
                     else
                         bits[i * bm.bmWidth + j] = 0;
-            if (hdcMask) StretchBlt( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                                     hdcMask, n * width, 0, width, height, SRCCOPY );
         }
         else
         {
@@ -222,18 +217,17 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                             mask_bits[i * mask_width + j / 8] &= ~(0x80 >> (j % 8));
                         else
                             mask_bits[i * mask_width + j / 8] |= 0x80 >> (j % 8);
-                StretchDIBits( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                               n * width, 0, width, height, mask_bits, mask_info, DIB_RGB_COLORS, SRCCOPY );
             }
         }
         StretchDIBits( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                        n * width, 0, width, height, bits, info, DIB_RGB_COLORS, SRCCOPY );
-
+        if (mask_info)
+            StretchDIBits( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
+                           n * width, 0, width, height, mask_bits, mask_info, DIB_RGB_COLORS, SRCCOPY );
     }
     ret = TRUE;
 
 done:
-    if (hdcMask) DeleteDC( hdcMask );
     HeapFree( GetProcessHeap(), 0, info );
     HeapFree( GetProcessHeap(), 0, mask_info );
     HeapFree( GetProcessHeap(), 0, bits );
