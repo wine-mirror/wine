@@ -22,6 +22,8 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
+#pragma code_page(65001)
+
 /* Menu */
 
 MAIN_MENU MENU
@@ -30,7 +32,7 @@ MAIN_MENU MENU
    MENUITEM "&Nieuw...",                    PM_NEW
    MENUITEM "&Openen\tEnter",               PM_OPEN
    MENUITEM "Ve&rplaatsen...\tF7",          PM_MOVE,      GRAYED
-   MENUITEM "&Kopiëren...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "&KopiÃ«ren...\tF8",             PM_COPY,      GRAYED
    MENUITEM "&Verwijderen\tEntf",           PM_DELETE
    MENUITEM "&Eigenschappen...\tAlt+Enter", PM_ATTRIBUTES
    MENUITEM SEPARATOR
@@ -50,7 +52,7 @@ MAIN_MENU MENU
  }
  
 POPUP "&Help" {
-   MENUITEM "Help-&onderwerpen", PM_CONTENTS
+   MENUITEM "Help-onder&werpen", PM_CONTENTS
    MENUITEM "&Zoeken...",        PM_SEARCH
    MENUITEM SEPARATOR
    MENUITEM "&Hulp bij Help",    PM_HELPONHELP
@@ -96,9 +98,9 @@ PUSHBUTTON    "&Help",                PM_HELP,           185, 45,  60, 15, WS_TA
 
 DIALOG_COPY DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Programma kopiëren"
+CAPTION "Programma kopiÃ«ren"
 {
-LTEXT         "Kopiëer programma:",    -1,            5,  5,  90, 15
+LTEXT         "KopiÃ«er programma:",    -1,            5,  5,  90, 15
 LTEXT         "",                      PM_PROGRAM,         95,  5,  90, 15
 LTEXT         "Van programmagroep:",   -1,            5, 13,  90, 15
 LTEXT         "",                      PM_FROM_GROUP,      95, 13,  90, 15
@@ -117,7 +119,7 @@ CAPTION "Eigenschappen van de programmagroep"
 {
 LTEXT     "B&eschrijving:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                    PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
-LTEXT     "&Groepbestand:", PM_FILE_TXT,          05, 38,  50, 10
+LTEXT    "&Groepsbestand:", PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                    PM_FILE,              60, 38,  90, 15, WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,                155,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuleren",  IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
@@ -192,7 +194,7 @@ IDS_INFO,			"Informatie"
 IDS_DELETE,			"Verwijderen"
 IDS_DELETE_GROUP_s,		"Wilt u groep `%s' verwijderen?"
 IDS_DELETE_PROGRAM_s,		"Wilt u programma `%s' verwijderen?"
-IDS_NOT_IMPLEMENTED,		"Niet geïmplementeerd"
+IDS_NOT_IMPLEMENTED,		"Niet geÃ¯mplementeerd"
 IDS_FILE_READ_ERROR_s,		"Fout bij het lezen van `%s'."
 IDS_FILE_WRITE_ERROR_s,		"Fout bij het schrijven van `%s'."
 IDS_GRPFILE_READ_ERROR_s,	"\
