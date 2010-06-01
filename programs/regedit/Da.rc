@@ -2,6 +2,7 @@
  * Regedit Danish resources
  *
  * Copyright 2008 Jens Albretsen <jens@albretsen.dk>
+ *           2010 Thomas Larsen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
 /*
@@ -30,11 +33,11 @@ IDR_REGEDIT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "&Register"
     BEGIN
-        MENUITEM "&Importér registeringsfil...",     ID_REGISTRY_IMPORTREGISTRYFILE
-        MENUITEM "&Eksportér registeringsfil...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM "&ImportÃ©r registeringsfil...",     ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&EksportÃ©r registeringsfil...",    ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
-        MENUITEM "&Tilslut netværksregisteringsdatabase...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
-        MENUITEM "&Frakobl netværksregisteringsdatabase...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Tilslut netvÃ¦rksregisteringsdatabase...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Frakobl netvÃ¦rksregisteringsdatabase...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Udskriv\tCtrl+P",                    ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
@@ -42,25 +45,25 @@ BEGIN
     END
     POPUP "R&ediger"
     BEGIN
-        MENUITEM "&Ændre",                              ID_EDIT_MODIFY
+        MENUITEM "&Ã†ndre",                              ID_EDIT_MODIFY
         MENUITEM SEPARATOR
         POPUP "&Ny"
         BEGIN
-            MENUITEM "Nø&gle",                          ID_EDIT_NEW_KEY
+            MENUITEM "NÃ¸&gle",                          ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Strengværdi",                    ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binærværdi",                     ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD værdi",                    ID_EDIT_NEW_DWORDVALUE
-            MENUITEM "&Flerstrengsværdi",               ID_EDIT_NEW_MULTI_STRINGVALUE
+            MENUITEM "&StrengvÃ¦rdi",                    ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&BinÃ¦rvÃ¦rdi",                     ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD vÃ¦rdi",                    ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&FlerstrengsvÃ¦rdi",               ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Slet\tDel",                          ID_EDIT_DELETE
-        MENUITEM "&Omdøb\tF2",                          ID_EDIT_RENAME
+        MENUITEM "&OmdÃ¸b\tF2",                          ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Kopier nøglenavn",                   ID_EDIT_COPYKEYNAME
+        MENUITEM "&Kopier nÃ¸glenavn",                   ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Find\tCtrl+F",                       ID_EDIT_FIND, GRAYED
-        MENUITEM "Find &næste\tF3",                     ID_EDIT_FINDNEXT, GRAYED
+        MENUITEM "Find &nÃ¦ste\tF3",                     ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&Vis"
     BEGIN
@@ -72,12 +75,12 @@ BEGIN
     END
     POPUP "&Favoritter"
     BEGIN
-        MENUITEM "Tilføj til f&avoritter...",              ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "TilfÃ¸j til f&avoritter...",              ID_FAVORITES_ADDTOFAVORITES
         MENUITEM "Fje&rn favorit...",                      ID_FAVORITES_REMOVEFAVORITE
     END
-    POPUP "&Hjælp"
+    POPUP "&HjÃ¦lp"
     BEGIN
-        MENUITEM "Emner i &hjælp\tF1",                  ID_HELP_HELPTOPICS
+        MENUITEM "Emner i &hjÃ¦lp\tF1",                  ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
         MENUITEM "&Om Registeringsdatabase editor",     ID_HELP_ABOUT
     END
@@ -87,29 +90,29 @@ IDR_POPUP_MENUS MENU DISCARDABLE
 BEGIN
   POPUP ""
   BEGIN
-	MENUITEM "&Ændre",                             ID_EDIT_MODIFY
-	MENUITEM "Ændre binærdata",                    ID_EDIT_MODIFY_BIN
+	MENUITEM "&Ã†ndre",                             ID_EDIT_MODIFY
+	MENUITEM "Ã†ndre binÃ¦rdata",                    ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
 	MENUITEM "&Slet\tDel",                         ID_EDIT_DELETE
-	MENUITEM "&Omdøb",                             ID_EDIT_RENAME
+	MENUITEM "&OmdÃ¸b",                             ID_EDIT_RENAME
   END
   POPUP ""
   BEGIN
         POPUP "&Ny"
         BEGIN
-            MENUITEM "Nø&gle",                          ID_EDIT_NEW_KEY
+            MENUITEM "NÃ¸&gle",                          ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
-            MENUITEM "&Strengværdi",                    ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binærværdi",                     ID_EDIT_NEW_BINARYVALUE
-            MENUITEM "&DWORD værdi",                    ID_EDIT_NEW_DWORDVALUE
-            MENUITEM "&Flerstrengsværdi",               ID_EDIT_NEW_MULTI_STRINGVALUE
+            MENUITEM "&StrengvÃ¦rdi",                    ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&BinÃ¦rvÃ¦rdi",                     ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD vÃ¦rdi",                    ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&FlerstrengsvÃ¦rdi",               ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Slet\tDel",                          ID_EDIT_DELETE
-        MENUITEM "&Omdøb\tF2",                          ID_EDIT_RENAME
+        MENUITEM "&OmdÃ¸b\tF2",                          ID_EDIT_RENAME
         MENUITEM SEPARATOR
         MENUITEM "&Export...",                          ID_EDIT_EXPORT
-        MENUITEM "&Kopier nøglenavn",                   ID_EDIT_COPYKEYNAME
+        MENUITEM "&Kopier nÃ¸glenavn",                   ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Find\tCtrl+F",                       ID_EDIT_FIND, GRAYED
   END
@@ -139,9 +142,9 @@ BEGIN
 LTEXT           "Find:",IDC_STATIC,5,7,119,8
 EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
 LTEXT           "Find i:",IDC_STATIC,5, 22, 119, 8
-CHECKBOX        "Nøgler", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-CHECKBOX        "Værdinavn", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
-CHECKBOX        "Værdiindhold", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+CHECKBOX        "NÃ¸gler", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+CHECKBOX        "VÃ¦rdinavn", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+CHECKBOX        "VÃ¦rdiindhold", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
 CHECKBOX        "Kun hele strenge", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
 DEFPUSHBUTTON   "Find",IDOK,175,5,30,11,WS_GROUP
 PUSHBUTTON      "Luk",IDCANCEL,175,22,30,11, WS_GROUP
@@ -149,7 +152,7 @@ END
 
 IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Tilføj til favorit"
+CAPTION "TilfÃ¸j til favorit"
 FONT 8, "MS Shell Dlg"
 BEGIN
 LTEXT           "Navn:",IDC_STATIC,5,5,119,8
@@ -174,9 +177,9 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Rediger streng"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Værdinavn:",IDC_STATIC,5,5,119,8
+    LTEXT           "VÃ¦rdinavn:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "Værdidata:",IDC_STATIC,5,30,119,8
+    LTEXT           "VÃ¦rdidata:",IDC_STATIC,5,30,119,8
     EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,140,60,30,11,WS_GROUP
     PUSHBUTTON   "Annuller",IDCANCEL,175,60,30,11,WS_GROUP
@@ -187,9 +190,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Rediger DWORD"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Værdinavn:",IDC_STATIC,5,5,119,8
+    LTEXT           "VÃ¦rdinavn:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "Værdidata:",IDC_STATIC,5,30,90,8
+    LTEXT           "VÃ¦rdidata:",IDC_STATIC,5,30,90,8
     EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
     GROUPBOX        "Base", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
     AUTORADIOBUTTON "Hexadecimal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
@@ -200,12 +203,12 @@ END
 
 IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Rediger binær"
+CAPTION "Rediger binÃ¦r"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Værdinavn:",IDC_STATIC,5,5,119,8
+    LTEXT           "VÃ¦rdinavn:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | WS_DISABLED
-    LTEXT           "Værdidata:",IDC_STATIC,5,30,90,8
+    LTEXT           "VÃ¦rdidata:",IDC_STATIC,5,30,90,8
     CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,160,40
     DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
     PUSHBUTTON   "Annuller",IDCANCEL,175,80,30,11,WS_GROUP
@@ -216,9 +219,9 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Rediger flerstreng"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "Værdinavn:",IDC_STATIC,5,5,119,8
+    LTEXT           "VÃ¦rdinavn:",IDC_STATIC,5,5,119,8
     EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
-    LTEXT           "Værdidata:",IDC_STATIC,5,30,119,8
+    LTEXT           "VÃ¦rdidata:",IDC_STATIC,5,30,119,8
     EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
     DEFPUSHBUTTON   "OK",IDOK,140,160,30,11,WS_GROUP
     PUSHBUTTON   "Annuller",IDCANCEL,175,160,30,11,WS_GROUP
@@ -243,61 +246,62 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_MENU        "Indeholder kommandoer for at arbejde med hele registeret"
-    ID_EDIT_MENU            "Indeholder kommandoer for at redigere værdier og nøgler"
+    ID_EDIT_MENU            "Indeholder kommandoer for at redigere vÃ¦rdier og nÃ¸gler"
     ID_VIEW_MENU            "Indeholder kommandoer for at tilpasse registervinduet"
-    ID_FAVORITES_MENU       "Indeholder kommandoer for at få tilgang til nøgler som bruges ofte"
-    ID_HELP_MENU            "Indeholder kommandoer for at vise hjælp og information om Registeringsdatabase editor"
-    ID_EDIT_NEW_MENU        "Indeholder kommandoer for at oprette nye nøgler eller værdier"
+    ID_FAVORITES_MENU       "Indeholder kommandoer for at fÃ¥ tilgang til nÃ¸gler som bruges ofte"
+    ID_HELP_MENU            "Indeholder kommandoer for at vise hjÃ¦lp og information om Registeringsdatabase editor"
+    ID_EDIT_NEW_MENU        "Indeholder kommandoer for at oprette nye nÃ¸gler eller vÃ¦rdier"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_EDIT_MODIFY          "Ændrer værdiens data"
-    ID_EDIT_NEW_KEY         "Tilføj en ny nøgle"
-    ID_EDIT_NEW_STRINGVALUE "Tilføj en ny strengværdi"
-    ID_EDIT_NEW_BINARYVALUE "Tilføj en ny binærværdi"
-    ID_EDIT_NEW_DWORDVALUE  "Tilføj en ny DWORD værdi"
-    ID_EDIT_NEW_MULTI_STRINGVALUE "Tilføj en ny flerstrengsværdi"
+    ID_EDIT_MODIFY          "Ã†ndrer vÃ¦rdiens data"
+    ID_EDIT_NEW_KEY         "TilfÃ¸j en ny nÃ¸gle"
+    ID_EDIT_NEW_STRINGVALUE "TilfÃ¸j en ny strengvÃ¦rdi"
+    ID_EDIT_NEW_BINARYVALUE "TilfÃ¸j en ny binÃ¦rvÃ¦rdi"
+    ID_EDIT_NEW_DWORDVALUE  "TilfÃ¸j en ny DWORD vÃ¦rdi"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "TilfÃ¸j en ny flerstrengsvÃ¦rdi"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importerer en tekstfil ind i registeringsdatabase"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Eksporterer hele eller dele af registeringsdatabase til en tekstfil"
     ID_REGISTRY_CONNECTNETWORKREGISTRY
-                            "Tilslut til registeringsdatabase på en anden maskine"
+                            "Tilslut til registeringsdatabase pÃ¥ en anden maskine"
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
-                            "Frakobl fra registeringsdatabase på en anden maskine"
+                            "Frakobl fra registeringsdatabase pÃ¥ en anden maskine"
     ID_REGISTRY_PRINT       "Skriver ut hele eller deler av registeret"
-/*    ID_HELP_HELPTOPICS      "Viser hjælp til Registerredigering" */
+/*    ID_HELP_HELPTOPICS      "Viser hjÃ¦lp til Registerredigering" */
     ID_HELP_ABOUT           "Viser programinformation, versionnummer og ophavsret"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Afslutter Registeringsdatabase editor"
-    ID_FAVORITES_ADDTOFAVORITES "Tilføjer nøgler til favoritlisten"
-    ID_FAVORITES_REMOVEFAVORITE "Fjerner nøgler fra favoritlisten"
+    ID_FAVORITES_ADDTOFAVORITES "TilfÃ¸jer nÃ¸gler til favoritlisten"
+    ID_FAVORITES_REMOVEFAVORITE "Fjerner nÃ¸gler fra favoritlisten"
     ID_VIEW_STATUSBAR       "Viser eller skjuler statuslinien"
-    ID_VIEW_SPLIT           "Ændrer positionen til delingslinien mellem to ruder"
+    ID_VIEW_SPLIT           "Ã†ndrer positionen til delingslinien mellem to ruder"
     ID_VIEW_REFRESH         "Opdaterer vinduet"
     ID_EDIT_DELETE          "Sletter utvalget"
-    ID_EDIT_RENAME          "Omdøber navn til utvalget"
-    ID_EDIT_COPYKEYNAME     "Kopierer navnet til den valgte nøgle til utklippstavlen"
-    ID_EDIT_FIND            "Finder en tekststreng i en nøgle, værdi eller data"
-    ID_EDIT_FINDNEXT        "Forsætter søgningen"
+    ID_EDIT_RENAME          "OmdÃ¸ber navn til utvalget"
+    ID_EDIT_COPYKEYNAME     "Kopierer navnet til den valgte nÃ¸gle til utklippstavlen"
+    ID_EDIT_FIND            "Finder en tekststreng i en nÃ¸gle, vÃ¦rdi eller data"
+    ID_EDIT_FINDNEXT        "ForsÃ¦tter sÃ¸gningen"
+    ID_EDIT_EXPORT          "Eksporter udvalgte gren af registreringsdatabasen til en tekst fil"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "Fejl"
-    IDS_BAD_KEY		    "Kunne ikke tilgå nøgleen '%s'"
-    IDS_BAD_VALUE           "Kunne ikke tilgå værdien '%s'"
-    IDS_UNSUPPORTED_TYPE    "Kunne ikke redigere nøgler af typen '%u'"
-    IDS_TOO_BIG_VALUE       "Værdien er for stor (%u)"
-    IDS_DELETE_BOX_TITLE    "Bekræft sletning af værdi"
-    IDS_DELETE_BOX_TEXT     "Er du sikker på at ville slette værdien '%s'?"
+    IDS_BAD_KEY		    "Kunne ikke tilgÃ¥ nÃ¸gleen '%s'"
+    IDS_BAD_VALUE           "Kunne ikke tilgÃ¥ vÃ¦rdien '%s'"
+    IDS_UNSUPPORTED_TYPE    "Kunne ikke redigere nÃ¸gler af typen '%u'"
+    IDS_TOO_BIG_VALUE       "VÃ¦rdien er for stor (%u)"
+    IDS_DELETE_BOX_TITLE    "BekrÃ¦ft sletning af vÃ¦rdi"
+    IDS_DELETE_BOX_TEXT     "Er du sikker pÃ¥ at ville slette vÃ¦rdien '%s'?"
     IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
-    IDS_NEWKEY              "Ny nøgle #%d"
-    IDS_NEWVALUE            "Ny værdi #%d"
-    IDS_NOTFOUND            "Fandt ikke søgestrengen «%s»"
+    IDS_NEWKEY              "Ny nÃ¸gle #%d"
+    IDS_NEWVALUE            "Ny vÃ¦rdi #%d"
+    IDS_NOTFOUND            "Fandt ikke sÃ¸gestrengen Â«%sÂ»"
 END
 
 STRINGTABLE DISCARDABLE
@@ -311,8 +315,8 @@ STRINGTABLE DISCARDABLE
 BEGIN
 IDS_REGISTRY_ROOT_NAME           "Min computer"
 IDS_REGISTRY_DEFAULT_VALUE       "(Standard)"
-IDS_REGISTRY_VALUE_NOT_SET       "(værdi ikke sat)"
-IDS_REGISTRY_VALUE_CANT_DISPLAY  "(kunne ikke vise værdi)"
+IDS_REGISTRY_VALUE_NOT_SET       "(vÃ¦rdi ikke sat)"
+IDS_REGISTRY_VALUE_CANT_DISPLAY  "(kunne ikke vise vÃ¦rdi)"
 IDS_REGISTRY_UNKNOWN_TYPE        "(ukendt %d)"
 END
 
