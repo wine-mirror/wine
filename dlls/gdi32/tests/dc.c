@@ -162,15 +162,35 @@ static void test_savedc(void)
     ret = RestoreDC(hdc, 3);
     ok(!ret, "ret = %d\n", ret);
 
-    /* Under win98 the following two succeed and both clear the save stack
+    /* Under Win9x the following RestoreDC call succeeds and clears the save stack. */
+    ret = RestoreDC(hdc, -3);
+    ok(!ret ||
+       broken(ret), /* Win9x */
+       "ret = %d\n", ret);
+
+    /* Trying to clear an empty save stack fails. */
     ret = RestoreDC(hdc, -3);
     ok(!ret, "ret = %d\n", ret);
+
+    ret = SaveDC(hdc);
+    ok(ret == 3 ||
+       broken(ret == 1), /* Win9x */
+       "ret = %d\n", ret);
+
+    /* Under Win9x the following RestoreDC call succeeds and clears the save stack. */
+    ret = RestoreDC(hdc, 0);
+    ok(!ret ||
+       broken(ret), /* Win9x */
+       "ret = %d\n", ret);
+
+    /* Trying to clear an empty save stack fails. */
     ret = RestoreDC(hdc, 0);
     ok(!ret, "ret = %d\n", ret);
-    */
 
     ret = RestoreDC(hdc, 1);
-    ok(ret, "ret = %d\n", ret);
+    ok(ret ||
+       broken(!ret), /* Win9x */
+       "ret = %d\n", ret);
 
     DeleteDC(hdc);
 }
