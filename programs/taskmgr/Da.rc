@@ -2,6 +2,7 @@
  *  Danish resources for Task Manager
  *
  *  Copyright 2008 Jens Albretsen <jens@albretsen.dk>
+ *            2010 Thomas Larsen
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +22,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
 /*
@@ -31,17 +34,17 @@ IDR_TASKMANAGER MENU DISCARDABLE
 BEGIN
     POPUP "&Fil"
     BEGIN
-        MENUITEM "&Ny opgave (Kør...)",         ID_FILE_NEW
+        MENUITEM "&Ny opgave (KÃ¸r...)",         ID_FILE_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Afslut opgavebehandleren",   ID_FILE_EXIT
     END
     POPUP "&Indstillinger"
     BEGIN
-        MENUITEM "&Altid øverst",               ID_OPTIONS_ALWAYSONTOP
+        MENUITEM "&Altid Ã¸verst",               ID_OPTIONS_ALWAYSONTOP
         , CHECKED
-        MENUITEM "&Minimér ved brug",           ID_OPTIONS_MINIMIZEONUSE
+        MENUITEM "&MinimÃ©r ved brug",           ID_OPTIONS_MINIMIZEONUSE
         , CHECKED
-        MENUITEM "S&kjul når minimert",         ID_OPTIONS_HIDEWHENMINIMIZED
+        MENUITEM "S&kjul nÃ¥r minimert",         ID_OPTIONS_HIDEWHENMINIMIZED
         , CHECKED
         MENUITEM "Vi&s 16-bits job",            ID_OPTIONS_SHOW16BITTASKS
         , CHECKED
@@ -51,7 +54,7 @@ BEGIN
         MENUITEM "Opdate&r nu",                 ID_VIEW_REFRESH
         POPUP "&Opdateringsfrekvens"
         BEGIN
-            MENUITEM "&Høj",                    ID_VIEW_UPDATESPEED_HIGH
+            MENUITEM "&HÃ¸j",                    ID_VIEW_UPDATESPEED_HIGH
             MENUITEM "&Normal",                 ID_VIEW_UPDATESPEED_NORMAL
             , CHECKED
             MENUITEM "&Lav",                    ID_VIEW_UPDATESPEED_LOW
@@ -60,9 +63,9 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "S&tore ikoner",               ID_VIEW_LARGE
-        MENUITEM "S&må ikoner",                 ID_VIEW_SMALL
+        MENUITEM "S&mÃ¥ ikoner",                 ID_VIEW_SMALL
         MENUITEM "&Detaljer",                   ID_VIEW_DETAILS, CHECKED
-        MENUITEM "&Vælg kolonner...",           ID_VIEW_SELECTCOLUMNS
+        MENUITEM "&VÃ¦lg kolonner...",           ID_VIEW_SELECTCOLUMNS
         POPUP "&Processorhistorik"
         BEGIN
             MENUITEM "En graf, alle pr&ocessorer",ID_VIEW_CPUHISTORY_ONEGRAPHALL
@@ -76,14 +79,14 @@ BEGIN
     BEGIN
         MENUITEM "Opstil &vandret",             ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "Opstil &lodret",              ID_WINDOWS_TILEVERTICALLY
-        MENUITEM "&Minimér",                    ID_WINDOWS_MINIMIZE
-        MENUITEM "Ma&ksimér",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "&MinimÃ©r",                    ID_WINDOWS_MINIMIZE
+        MENUITEM "Ma&ksimÃ©r",                   ID_WINDOWS_MAXIMIZE
         MENUITEM "&Kortstak",                   ID_WINDOWS_CASCADE
-        MENUITEM "&Vis øverst",                 ID_WINDOWS_BRINGTOFRONT
+        MENUITEM "&Vis Ã¸verst",                 ID_WINDOWS_BRINGTOFRONT
     END
-    POPUP "&Hjælp"
+    POPUP "&HjÃ¦lp"
     BEGIN
-        MENUITEM "Emner i &hjælp for Opgavebehandler", ID_HELP_TOPICS
+        MENUITEM "Emner i &hjÃ¦lp for Opgavebehandler", ID_HELP_TOPICS
         MENUITEM SEPARATOR
         MENUITEM "&Om Opgavebehandler",         ID_HELP_ABOUT
     END
@@ -93,20 +96,20 @@ IDR_WINDOWSMENU MENU DISCARDABLE
 BEGIN
     MENUITEM "Opstil &vandret",                 ID_WINDOWS_TILEHORIZONTALLY
     MENUITEM "Opstil &lodret",                  ID_WINDOWS_TILEVERTICALLY
-    MENUITEM "&Minimér",                        ID_WINDOWS_MINIMIZE
-    MENUITEM "Ma&ksimér",                       ID_WINDOWS_MAXIMIZE
+    MENUITEM "&MinimÃ©r",                        ID_WINDOWS_MINIMIZE
+    MENUITEM "Ma&ksimÃ©r",                       ID_WINDOWS_MAXIMIZE
     MENUITEM "&Kortstak",                       ID_WINDOWS_CASCADE
-    MENUITEM "V&is øverst",                     ID_WINDOWS_BRINGTOFRONT
+    MENUITEM "V&is Ã¸verst",                     ID_WINDOWS_BRINGTOFRONT
 END
 
 IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Ny opgave (Kør...)",         ID_FILE_NEW
+        MENUITEM "&Ny opgave (KÃ¸r...)",         ID_FILE_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Store ikoner",               ID_VIEW_LARGE
-        MENUITEM "S&må ikoner",                 ID_VIEW_SMALL
+        MENUITEM "S&mÃ¥ ikoner",                 ID_VIEW_SMALL
         MENUITEM "&Detaljer",                   ID_VIEW_DETAILS, CHECKED
     END
 END
@@ -116,16 +119,16 @@ BEGIN
     POPUP "DUMMY"
     BEGIN
         MENUITEM "S&kift til",                  ID_APPLICATION_PAGE_SWITCHTO
-        MENUITEM "Vis &øverst",                 ID_WINDOWS_BRINGTOFRONT
+        MENUITEM "Vis &Ã¸verst",                 ID_WINDOWS_BRINGTOFRONT
         MENUITEM SEPARATOR
         MENUITEM "Opstil &vandret",             ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "Opstill &lodret",             ID_WINDOWS_TILEVERTICALLY
-        MENUITEM "&Minimér",                    ID_WINDOWS_MINIMIZE
-        MENUITEM "Ma&ksimér",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "&MinimÃ©r",                    ID_WINDOWS_MINIMIZE
+        MENUITEM "Ma&ksimÃ©r",                   ID_WINDOWS_MAXIMIZE
         MENUITEM "&Kortstak",                   ID_WINDOWS_CASCADE
         MENUITEM SEPARATOR
         MENUITEM "Afslut opgav&e",              ID_APPLICATION_PAGE_ENDTASK
-        MENUITEM "&Gå til process",             ID_APPLICATION_PAGE_GOTOPROCESS
+        MENUITEM "&GÃ¥ til process",             ID_APPLICATION_PAGE_GOTOPROCESS
     END
 END
 
@@ -136,7 +139,7 @@ BEGIN
         MENUITEM "Genop&ret",                   ID_RESTORE
         MENUITEM "Afslu&t",                     ID_FILE_EXIT
         MENUITEM SEPARATOR
-        MENUITEM "&Altid øverst",               ID_OPTIONS_ALWAYSONTOP
+        MENUITEM "&Altid Ã¸verst",               ID_OPTIONS_ALWAYSONTOP
     END
 END
 
@@ -145,15 +148,15 @@ BEGIN
     POPUP "DUMMY"
     BEGIN
         MENUITEM "Afslut proc&ess",                 ID_PROCESS_PAGE_ENDPROCESS
-        MENUITEM "Afslu&t processtræ",              ID_PROCESS_PAGE_ENDPROCESSTREE
+        MENUITEM "Afslu&t processtrÃ¦",              ID_PROCESS_PAGE_ENDPROCESSTREE
 
-        MENUITEM "&Fejlsøg",                        ID_PROCESS_PAGE_DEBUG
+        MENUITEM "&FejlsÃ¸g",                        ID_PROCESS_PAGE_DEBUG
         MENUITEM SEPARATOR
         POPUP "Angi &prioritet"
         BEGIN
             MENUITEM "&Samtid",                     ID_PROCESS_PAGE_SETPRIORITY_REALTIME
 
-            MENUITEM "&Høj",                        ID_PROCESS_PAGE_SETPRIORITY_HIGH
+            MENUITEM "&HÃ¸j",                        ID_PROCESS_PAGE_SETPRIORITY_HIGH
 
             MENUITEM "Over norm&al",                ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
 
@@ -164,8 +167,8 @@ BEGIN
             MENUITEM "&Lav",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
 
         END
-        MENUITEM "&Angiv slægtskab...",             ID_PROCESS_PAGE_SETAFFINITY
-	MENUITEM "&Rediger fejlsøgningskanaler...", ID_PROCESS_PAGE_DEBUGCHANNELS
+        MENUITEM "&Angiv slÃ¦gtskab...",             ID_PROCESS_PAGE_SETAFFINITY
+	MENUITEM "&Rediger fejlsÃ¸gningskanaler...", ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -218,8 +221,8 @@ BEGIN
     GROUPBOX        "Virtuel hukommelse (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Fysisk hukommelse (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "Kerne hukommelse (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
-    LTEXT           "Håndtag",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
-    LTEXT           "Tråde",IDS_TOTALS_THREAD_COUNT,12,140,27,8
+    LTEXT           "HÃ¥ndtag",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
+    LTEXT           "TrÃ¥de",IDS_TOTALS_THREAD_COUNT,12,140,27,8
     LTEXT           "Processer",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
     EDITTEXT        IDC_TOTALS_HANDLE_COUNT,65,131,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
@@ -228,7 +231,7 @@ BEGIN
     EDITTEXT        IDC_TOTALS_PROCESS_COUNT,65,149,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Totalt",IDS_COMMIT_CHARGE_TOTAL,12,175,27,8
-    LTEXT           "Grænse",IDS_COMMIT_CHARGE_LIMIT,12,184,25,8
+    LTEXT           "GrÃ¦nse",IDS_COMMIT_CHARGE_LIMIT,12,184,25,8
     LTEXT           "Top",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
     EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
@@ -237,7 +240,7 @@ BEGIN
     EDITTEXT        IDC_COMMIT_CHARGE_PEAK,65,193,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     LTEXT           "Totalt",IDS_PHYSICAL_MEMORY_TOTAL,137,131,27,8
-    LTEXT           "Tilgængelig",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,35,8
+    LTEXT           "TilgÃ¦ngelig",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,35,8
     LTEXT           "System",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,35,8
     EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,185,131,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
@@ -268,7 +271,7 @@ END
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Fejlsøgningskanaler"
+CAPTION "FejlsÃ¸gningskanaler"
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
@@ -279,12 +282,12 @@ END
 
 IDD_AFFINITY_DIALOG DIALOG DISCARDABLE  0, 0, 231, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Processlægtskab"
+CAPTION "ProcesslÃ¦gtskab"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,120,133,50,14
     PUSHBUTTON      "Annuller",IDCANCEL,174,133,50,14
-    LTEXT           "Indstillingen for processlægtskab bestemmer hvilke processorer processen kan køre på.",
+    LTEXT           "Indstillingen for processlÃ¦gtskab bestemmer hvilke processorer processen kan kÃ¸re pÃ¥.",
                     IDC_STATIC,5,5,220,16
                     CONTROL         "Processor 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     11,28,37,10
@@ -354,12 +357,12 @@ END
 
 IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 240, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Vælg kolonner"
+CAPTION "VÃ¦lg kolonner"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
     PUSHBUTTON      "Annuller",IDCANCEL,138,178,50,14
-    LTEXT           "Vælg kolonnerne som vises på processiden i opgavebehandleren.",
+    LTEXT           "VÃ¦lg kolonnerne som vises pÃ¥ processiden i opgavebehandleren.",
                     IDC_STATIC,7,7,181,17
     CONTROL         "&Programnavn",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,100,10
@@ -373,15 +376,15 @@ BEGIN
                     WS_TABSTOP,7,72,100,10
     CONTROL         "Hukommelsesbrug-&delta",IDC_MEMORYUSAGEDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,83,100,10
-    CONTROL         "Højeste Hukommelsesbru&g",IDC_PEAKMEMORYUSAGE,"Button",
+    CONTROL         "HÃ¸jeste Hukommelsesbru&g",IDC_PEAKMEMORYUSAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,94,100,10
     CONTROL         "Side&fejl",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,105,100,10
     CONTROL         "Br&ugerobjekter",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,116,100,10
-    CONTROL         "Ind/Ud læsinger",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Ind/Ud lÃ¦singer",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,127,100,10
-    CONTROL         "Ind/Ud læste bytes",IDC_IOREADBYTES,"Button",
+    CONTROL         "Ind/Ud lÃ¦ste bytes",IDC_IOREADBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,100,10
     CONTROL         "&Session ID",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,100,10
@@ -389,7 +392,7 @@ BEGIN
                     WS_TABSTOP,7,160,100,10
     CONTROL         "Sidefejl-delt&a",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,117,28,100,10
-    CONTROL         "Størrelse på &virtuelt hukommelse",IDC_VIRTUALMEMORYSIZE,"Button",
+    CONTROL         "StÃ¸rrelse pÃ¥ &virtuelt hukommelse",IDC_VIRTUALMEMORYSIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,117,39,120,10
     CONTROL         "Pa&gineret samling",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,117,50,100,10
@@ -397,9 +400,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,117,61,100,10
     CONTROL         "Basisp&rioritet",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,117,72,100,10
-    CONTROL         "Antal &håndtag",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Antal &hÃ¥ndtag",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,117,83,100,10
-    CONTROL         "Antal &tråde",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Antal &trÃ¥de",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,117,94,100,10
     CONTROL         "GDI-objekter",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,117,105,100,10
@@ -426,14 +429,14 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_FILE_NEW             "Kører et nyt program"
-    ID_OPTIONS_ALWAYSONTOP  "Opgavebehandleren vises foran andre programmer med mindre den minimerés"
+    ID_FILE_NEW             "KÃ¸rer et nyt program"
+    ID_OPTIONS_ALWAYSONTOP  "Opgavebehandleren vises foran andre programmer med mindre den minimerÃ©s"
     ID_OPTIONS_MINIMIZEONUSE
-                            "Opgavebehandler minimerés når du skifter til en anden process"
-    ID_OPTIONS_HIDEWHENMINIMIZED "Skjul opgavebehandleren når den minimerés"
+                            "Opgavebehandler minimerÃ©s nÃ¥r du skifter til en anden process"
+    ID_OPTIONS_HIDEWHENMINIMIZED "Skjul opgavebehandleren nÃ¥r den minimerÃ©s"
     ID_VIEW_REFRESH         "Tving opgavebehandleren til at opdatere nu, uanset opdateringsfrekvens"
     ID_VIEW_LARGE           "Viser opgaver med store ikoner"
-    ID_VIEW_SMALL           "Viser opgaver med små ikoner"
+    ID_VIEW_SMALL           "Viser opgaver med smÃ¥ ikoner"
     ID_VIEW_DETAILS         "Viser information om hver opgave"
     ID_VIEW_UPDATESPEED_HIGH "Opdaterer visningen to ganger per sekund"
     ID_VIEW_UPDATESPEED_NORMAL "Opdaterer visningen hvert andet sekund"
@@ -444,24 +447,24 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_VIEW_UPDATESPEED_PAUSED "Opdaterer ikke automatisk"
     ID_WINDOWS_TILEHORIZONTALLY
-                            "Stiller vinduerne på skrivebordet op vandret "
-    ID_WINDOWS_TILEVERTICALLY "Stiller vinduerne på skrivebordet op lodret "
-    ID_WINDOWS_MINIMIZE     "Minimerér vinduerne"
-    ID_WINDOWS_MAXIMIZE     "Maksimerér vinduerne"
-    ID_WINDOWS_CASCADE      "Viser vinduerne ovenpå hinanden diagonalt henover skrivebordet"
-    ID_WINDOWS_BRINGTOFRONT "Henter vinduet frem, men sætter det ikke i fokus"
-    ID_HELP_TOPICS          "Viser hjælpeemner om opgavebehandleren"
+                            "Stiller vinduerne pÃ¥ skrivebordet op vandret "
+    ID_WINDOWS_TILEVERTICALLY "Stiller vinduerne pÃ¥ skrivebordet op lodret "
+    ID_WINDOWS_MINIMIZE     "MinimerÃ©r vinduerne"
+    ID_WINDOWS_MAXIMIZE     "MaksimerÃ©r vinduerne"
+    ID_WINDOWS_CASCADE      "Viser vinduerne ovenpÃ¥ hinanden diagonalt henover skrivebordet"
+    ID_WINDOWS_BRINGTOFRONT "Henter vinduet frem, men sÃ¦tter det ikke i fokus"
+    ID_HELP_TOPICS          "Viser hjÃ¦lpeemner om opgavebehandleren"
     ID_HELP_ABOUT           "Viser programinformation, versionnummer og ophavsret"
     ID_FILE_EXIT            "Afslutter Opgavebehandleren"
     ID_OPTIONS_SHOW16BITTASKS
                             "Viser 16-bits programmer under 'ntvdm.exe'"
-    ID_VIEW_SELECTCOLUMNS   "Vælger hvilke kolonner som vises på processiden"
+    ID_VIEW_SELECTCOLUMNS   "VÃ¦lger hvilke kolonner som vises pÃ¥ processiden"
     ID_VIEW_SHOWKERNELTIMES "Viser kernetid i ydelsesgraferne"
     ID_VIEW_CPUHISTORY_ONEGRAPHALL
                             "En enkelt historik viser total processorbrug"
     ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Hver processor har sin egen graf"
     ID_APPLICATION_PAGE_SWITCHTO
-                            "Henter en opgave til forgrunden, og sætter den i fokus"
+                            "Henter en opgave til forgrunden, og sÃ¦tter den i fokus"
 END
 
 STRINGTABLE DISCARDABLE
@@ -472,17 +475,103 @@ BEGIN
     ID_PROCESS_PAGE_ENDPROCESS "Fjerner processen fra systemet"
     ID_PROCESS_PAGE_ENDPROCESSTREE
                             "Fjerner denne process og alle efterkommere fra systemet"
-    ID_PROCESS_PAGE_DEBUG   "Tilslutter fejlsøgeren til denne process"
+    ID_PROCESS_PAGE_DEBUG   "Tilslutter fejlsÃ¸geren til denne process"
     ID_PROCESS_PAGE_SETAFFINITY
-                            "Kontrollerer hvilke processorer processen kan køre på"
+                            "Kontrollerer hvilke processorer processen kan kÃ¸re pÃ¥"
     ID_PROCESS_PAGE_SETPRIORITY_REALTIME
-                            "Sætter processen til samtidsprioritet"
-    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Sætter processen til høj prioritet"
+                            "SÃ¦tter processen til samtidsprioritet"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "SÃ¦tter processen til hÃ¸j prioritet"
     ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
-                            "Sætter processen til over normal prioritet"
+                            "SÃ¦tter processen til over normal prioritet"
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
-                            "Sætter processen til normal prioritet"
+                            "SÃ¦tter processen til normal prioritet"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
-                            "Sætter processen til under normal prioritet"
-    ID_PROCESS_PAGE_SETPRIORITY_LOW "Sætter processen til lav prioritet"
+                            "SÃ¦tter processen til under normal prioritet"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW "SÃ¦tter processen til lav prioritet"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Kontrollere FejlsÃ¸gnings Kanaler"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "St&ore Ikoner"
+    IDS_VIEW_SMALL                     "S&mÃ¥ Ikoner"
+    IDS_VIEW_DETAILS                   "&Detaljer"
+    IDS_WINDOWS                        "&Winduer"
+    IDS_VIEW_SELECTCOLUMNS             "&VÃ¦lg Kolonner..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&Vis 16-bit opgaver"
+    IDS_VIEW_CPUHISTORY                "&CPU Historie"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&En graf, til alle CPUÂ´er"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "En graf &pr. CPU"
+    IDS_VIEW_SHOWKERNELTIMES           "&Vis Kernetider"
+    IDS_APPLICATIONS                   "Programmer"
+    IDS_PROCESSES                      "Processer"
+    IDS_PERFORMANCE                    "Ydeevne"
+    IDS_STATUS_BAR_CPU_USAGE           "CPU Forbrug: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Processer: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Hukommelses Forbrug: %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Procesnavn"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "CPU"
+    IDS_CPUTIME           "CPU-tid"
+    IDS_MEMORYUSAGE       "Hukommelse Forbrug"
+    IDS_MEMORYUSAGEDELTA  "Hukommelse Delta"
+    IDS_PEAKMEMORYUSAGE   "Hukommelse Peak Forbrug"
+    IDS_PAGEFAULTS        "Sidefejl"
+    IDS_USEROBJECTS       "USER Objekter"
+    IDS_IOREADS           "I/O LÃ¦sninger"
+    IDS_IOREADBYTES       "I/O LÃ¦ste Bytes"
+    IDS_SESSIONID         "Sessions ID"
+    IDS_USERNAME          "Brugernavn"
+    IDS_PAGEFAULTSDELTA   "PF Delta"
+    IDS_VIRTUALMEMORYSIZE "VM StÃ¸rrelse"
+    IDS_PAGEDPOOL         "Paged Pool"
+    IDS_NONPAGEDPOOL      "NP Pool"
+    IDS_BASEPRIORITY      "Basisprioritet"
+    IDS_HANDLECOUNT       "Handles"
+    IDS_THREADCOUNT       "TrÃ¥de"
+    IDS_GDIOBJECTS        "GDI Objekter"
+    IDS_IOWRITES          "I/O Skrivninger"
+    IDS_IOWRITEBYTES      "I/O Skrevet Bytes"
+    IDS_IOOTHER           "I/O Andet"
+    IDS_IOOTHERBYTES      "I/O Andre Bytes"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Opgavestyring Advarsel"
+    IDS_PRIORITY_CHANGE_MESSAGE     "Advarsel: Hvis du Ã¦ndrer prioriteringen af denne proces, kan det\n\
+                                     forÃ¥rsage uÃ¸nsket resultater, herunder system ustabilitet. Er du\n\
+                                     sikker pÃ¥ at du vil Ã¦ndre pÃ¥ prioriteten?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Kunne ikke skifte priotet"
+    IDS_TERMINATE_MESSAGE           "Advarsel: Afslutning af en proces kan forÃ¥rsage uÃ¸nsket\n\
+                                     resultater, herunder tab af data og system ustabilitet.\n\
+                                     processen vil ikke fÃ¥ mulighed for at gemme sin tilstand eller\n\
+                                     data, fÃ¸r den er afsluttet. Er du sikker pÃ¥ du vil\n\
+                                     afslutte processen?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Er ikke i stand til at afslutte processen"
+    IDS_DEBUG_MESSAGE               "Advarsel: FejlsÃ¸gning af denne proces, kan medfÃ¸re tab af data.\n\
+                                     Er du sikker pÃ¥ du Ã¸nsker at vedhÃ¦fte fejlsÃ¸geren?"
+    IDS_DEBUG_UNABLE2DEBUG          "Er ikke i stand til at FejlsÃ¸ge Processen"
+    IDS_AFFINITY_ERROR_MESSAGE      "Processen skal have affinitet, med mindst en processor."
+    IDS_AFFINITY_ERROR_TITLE        "Ugyldigt Valg"
+    IDS_AFFINITY_UNABLE2ACCESS      "Kan ikke fÃ¥ adgang til, eller sÃ¦tte processens affinitet"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Realtid"
+    IDS_APPLICATION_NOT_RESPONDING     "Svarer Ikke"
+    IDS_APPLICATION_RUNNING            "KÃ¸rer"
+    IDS_APPLICATION_TASK               "Opgave"
+    IDS_APPLICATION_STATUS             "Status"
+    IDS_DEBUG_CHANNEL                  "FejlsÃ¸gnings Kanaler"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
