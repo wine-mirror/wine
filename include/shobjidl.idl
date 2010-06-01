@@ -1644,6 +1644,8 @@ interface IExplorerBrowserEvents : IUnknown
 typedef GUID EXPLORERPANE;
 typedef EXPLORERPANE *REFEXPLORERPANE;
 
+cpp_quote("#define SID_ExplorerPaneVisibility IID_IExplorerPaneVisibility")
+
 /*****************************************************************************
  * IExplorerPaneVisibility interface
  */
