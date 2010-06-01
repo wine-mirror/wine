@@ -181,7 +181,8 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
         mask_info->bmiHeader = info->bmiHeader;
         mask_info->bmiHeader.biBitCount = 1;
         mask_info->bmiHeader.biSizeImage = mask_width * height;
-        if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto done;
+        if (!(mask_bits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage )))
+            goto done;
         if (!GetDIBits( hdc, hbmMask, 0, height, mask_bits, mask_info, DIB_RGB_COLORS )) goto done;
     }
 
