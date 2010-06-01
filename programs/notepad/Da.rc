@@ -4,6 +4,7 @@
  *  Copyright 1998 Henrik Olsen <henrik@iaeste.dk>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *  Copyright 2008 Jens Albretsen <jens@albretsen.dk>
+ *            2010 Thomas Larsen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,18 +23,20 @@
 
 #include "notepad_res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
 MAIN_MENU MENU
 {
  POPUP "&Filer" {
   MENUITEM "&Ny\tCtrl+N",            CMD_NEW
-  MENUITEM "Å&bn...\tCtrl+O",       CMD_OPEN
+  MENUITEM "Ã…&bn...\tCtrl+O",       CMD_OPEN
   MENUITEM "&Gem\tCtrl+S",              CMD_SAVE
   MENUITEM "Gem so&m...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "&Udskriv...\tCtrl+P",          CMD_PRINT
-  MENUITEM "Side&opsætning...", CMD_PAGE_SETUP
+  MENUITEM "Side&opsÃ¦tning...", CMD_PAGE_SETUP
   MENUITEM "&Indstil printer...",       CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "&Afslut",           CMD_EXIT
@@ -43,7 +46,7 @@ POPUP "&Rediger" {
   MENUITEM SEPARATOR
   MENUITEM "&Klip\tCtrl+X",     CMD_CUT
   MENUITEM "K&opier\tCtrl+C",   CMD_COPY
-  MENUITEM "&Indsæt\tCtrl+V",  CMD_PASTE
+  MENUITEM "&IndsÃ¦t\tCtrl+V",  CMD_PASTE
   MENUITEM "&Slet\tDel",        CMD_DELETE
   MENUITEM SEPARATOR
   MENUITEM "Marker &alt",       CMD_SELECT_ALL
@@ -52,14 +55,15 @@ POPUP "&Rediger" {
   MENUITEM "Automatisk &linjeskift",    CMD_WRAP
   MENUITEM "&Font...",          CMD_FONT
  }
-POPUP "&Søg" {
-  MENUITEM "&Søg...",           CMD_SEARCH
-  MENUITEM "&Find næste\tF3",   CMD_SEARCH_NEXT
+POPUP "&SÃ¸g" {
+  MENUITEM "&SÃ¸g...",           CMD_SEARCH
+  MENUITEM "&Find nÃ¦ste\tF3",   CMD_SEARCH_NEXT
+  MENUITEM "&Erstat...\tCtrl+H", CMD_REPLACE
  }
-POPUP "&Hjælp" {
+POPUP "&HjÃ¦lp" {
   MENUITEM "&Indhold",          CMD_HELP_CONTENTS
-  MENUITEM "&Søg efter hjælp om...",    CMD_HELP_SEARCH
-  MENUITEM "&Brug af Hjælp",    CMD_HELP_ON_HELP
+  MENUITEM "&SÃ¸g efter hjÃ¦lp om...",    CMD_HELP_SEARCH
+  MENUITEM "&Brug af HjÃ¦lp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   MENUITEM "&Om Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
@@ -70,7 +74,7 @@ POPUP "&Hjælp" {
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
-CAPTION "Sideopsætning"
+CAPTION "SideopsÃ¦tning"
 {
 LTEXT    "&Sidehoved:",  0x140,   10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
@@ -82,15 +86,23 @@ LTEXT    "&Venstre:",        0x145,   20, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Top:",         0x148,    20, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "&Højre:",       0x14B, 100, 55, 30, 10, WS_CHILD
+LTEXT    "&HÃ¸jre:",       0x14B, 100, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_RIGHTVALUE,   130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Bund:",      0x14E,100, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
 DEFPUSHBUTTON "OK",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Annuller",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
-PUSHBUTTON    "&Hjælp",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&HjÃ¦lp",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
+
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Kodning:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
 
 STRINGTABLE DISCARDABLE
 {
@@ -110,14 +122,23 @@ STRING_TEXT_FILES_TXT,                  "Tekst filer (*.txt)"
 STRING_TOOLARGE,                                "Filen '%s' er for stor til Notesblok. \
 \nBrug en anden editor til at redigere filen."
 STRING_NOTEXT,                                  "Du har ikke skrevet noget tekst. \
-\nSkriv noget tekst, og prøv så igen"
+\nSkriv noget tekst, og prÃ¸v sÃ¥ igen"
 STRING_DOESNOTEXIST,                            "Filen '%s'\nfindes ikke\n\n \
-Ønsker du at oprette en ny fil ?"
-STRING_NOTSAVED,                                "Filen '%s'\ner blevet ændret\n\n \
-Vil du gemme ændringerne ?"
+Ã˜nsker du at oprette en ny fil ?"
+STRING_NOTSAVED,                                "Filen '%s'\ner blevet Ã¦ndret\n\n \
+Vil du gemme Ã¦ndringerne ?"
 STRING_NOTFOUND,                                        "Kan ikke finde '%s'."
-STRING_OUT_OF_MEMORY,                   "Der er ikke nok hukommelse til at udføre \
-denne operation.\nAfslut et eller flere aktive programmer for at frigøre \
-hukommelse, og prøv igen."
+STRING_OUT_OF_MEMORY,                   "Der er ikke nok hukommelse til at udfÃ¸re \
+denne operation.\nAfslut et eller flere aktive programmer for at frigÃ¸re \
+hukommelse, og prÃ¸v igen."
 
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+Denne fil indeholder Unicode-tegn, som vil gÃ¥ tabt, hvis\n\
+du gemmer denne fil med %s som kodning.\n\
+For at beholde disse tegn, skal du klikke pÃ¥ Annuller og derefter vÃ¦lge\n\
+en af Unicode mulighederne i Kodnings rullelisten.\n\
+FortsÃ¦t?"
 }
