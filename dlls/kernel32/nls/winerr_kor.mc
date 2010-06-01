@@ -664,7 +664,7 @@ MessageId=160
 SymbolicName=ERROR_BAD_ARGUMENTS
 Language=KOR
 DosExecPgm의 나쁜 주장
- 
+.
 MessageId=161
 SymbolicName=ERROR_BAD_PATHNAME
 Language=KOR
@@ -974,7 +974,7 @@ MessageId=534
 SymbolicName=ERROR_ARITHMETIC_OVERFLOW
 Language=KOR
 Arithmetic 오버플로우
-
+.
 MessageId=535
 SymbolicName=ERROR_PIPE_CONNECTED
 Language=KOR
@@ -3109,7 +3109,7 @@ MessageId=1739
 SymbolicName=RPC_S_UUID_NO_ADDRESS
 Language=KOR
 네트워크 주소가 없습니다.
-
+.
 MessageId=1740
 SymbolicName=RPC_S_DUPLICATE_ENDPOINT
 Language=KOR
@@ -3489,7 +3489,7 @@ MessageId=1816
 SymbolicName=ERROR_NOT_ENOUGH_QUOTA
 Language=KOR
 쿼터가 충분하지 않습니다
-
+.
 MessageId=1817
 SymbolicName=RPC_S_NO_INTERFACES
 Language=KOR
@@ -3579,7 +3579,7 @@ MessageId=1899
 SymbolicName=EPT_S_CANT_CREATE
 Language=KOR
 엔드포인트 매퍼 DB를 만들 수 없습니다
-
+.
 MessageId=1900
 SymbolicName=RPC_S_INVALID_OBJECT
 Language=KOR
