@@ -494,6 +494,68 @@ todo_wine
     ok(ret, "UnregisterClassA failed\n");
 }
 
+static void test_boundsrect_invalid(void)
+{
+    HDC hdc;
+    RECT rect, expect;
+    UINT ret;
+
+    hdc = GetDC(NULL);
+    ok(hdc != NULL, "GetDC failed\n");
+
+    ret = GetBoundsRect(hdc, NULL, 0);
+    ok(ret == 0 ||
+       broken(ret == DCB_RESET), /* Win9x */
+       "Expected GetBoundsRect to return 0, got %u\n", ret);
+
+    ret = GetBoundsRect(hdc, NULL, ~0U);
+    ok(ret == 0 ||
+       broken(ret == DCB_RESET), /* Win9x */
+       "Expected GetBoundsRect to return 0, got %u\n", ret);
+
+    if (GetBoundsRect(hdc, NULL, 0) == DCB_RESET)
+        win_skip("Win9x fails catastrophically with first GetBoundsRect call\n");
+    else
+    {
+        /* Test parameter handling order. */
+        SetRect(&rect, 0, 0, 50, 50);
+        ret = SetBoundsRect(hdc, &rect, DCB_SET);
+        ok(ret & DCB_RESET,
+           "Expected return flag DCB_RESET to be set, got %u\n", ret);
+
+        ret = GetBoundsRect(hdc, NULL, DCB_RESET);
+        ok(ret == 0,
+           "Expected GetBoundsRect to return 0, got %u\n", ret);
+
+        ret = GetBoundsRect(hdc, &rect, 0);
+        ok(ret == DCB_RESET,
+           "Expected GetBoundsRect to return DCB_RESET, got %u\n", ret);
+        SetRect(&expect, 0, 0, 0, 0);
+        ok(EqualRect(&rect, &expect),
+           "Expected output rectangle (0,0)-(0,0), got (%d,%d)-(%d,%d)\n",
+           rect.left, rect.top, rect.right, rect.bottom);
+    }
+
+    if (GetBoundsRect(hdc, NULL, 0) == DCB_RESET)
+        win_skip("Win9x fails catastrophically with NULL device context parameter\n");
+    else
+    {
+        ret = GetBoundsRect(NULL, NULL, 0);
+        ok(ret == 0, "Expected GetBoundsRect to return 0, got %u\n", ret);
+
+        ret = GetBoundsRect(NULL, NULL, ~0U);
+        ok(ret == 0, "Expected GetBoundsRect to return 0, got %u\n", ret);
+
+        ret = SetBoundsRect(NULL, NULL, 0);
+        ok(ret == 0, "Expected SetBoundsRect to return 0, got %u\n", ret);
+
+        ret = SetBoundsRect(NULL, NULL, ~0U);
+        ok(ret == 0, "Expected SetBoundsRect to return 0, got %u\n", ret);
+    }
+
+    DeleteDC(hdc);
+}
+
 START_TEST(dc)
 {
     test_savedc();
@@ -502,4 +564,5 @@ START_TEST(dc)
     test_CreateCompatibleDC();
     test_DC_bitmap();
     test_DeleteDC();
+    test_boundsrect_invalid();
 }
