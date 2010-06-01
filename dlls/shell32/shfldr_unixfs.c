@@ -2158,13 +2158,15 @@ static const IDropTargetVtbl UnixFolder_IDropTarget_Vtbl = {
 static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, const CLSID *pCLSID) 
 {
     HRESULT hr = E_FAIL;
-    UnixFolder *pUnixFolder = SHAlloc((ULONG)sizeof(UnixFolder));
+    UnixFolder *pUnixFolder;
    
     if (pUnkOuter) {
         FIXME("Aggregation not yet implemented!\n");
         return CLASS_E_NOAGGREGATION;
     }
     
+    pUnixFolder = SHAlloc((ULONG)sizeof(UnixFolder));
+
     if(pUnixFolder) {
         pUnixFolder->lpIShellFolder2Vtbl = &UnixFolder_IShellFolder2_Vtbl;
         pUnixFolder->lpIPersistFolder3Vtbl = &UnixFolder_IPersistFolder3_Vtbl;
