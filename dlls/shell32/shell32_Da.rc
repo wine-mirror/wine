@@ -1,6 +1,7 @@
 /*
  * Copyright 1998 Juergen Schmied
  * Copyright 2008 Jens Albretsen
+ *           2010 Thomas Larsen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,12 +20,14 @@
 
 #include "shresdef.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
 MENU_001 MENU DISCARDABLE
 BEGIN
         MENUITEM "&Store Ikoner",       FCIDM_SHVIEW_BIGICON
-        MENUITEM "S&må Ikoner" ,        FCIDM_SHVIEW_SMALLICON
+        MENUITEM "S&mÃ¥ Ikoner" ,        FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Liste",              FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Detaljer",           FCIDM_SHVIEW_REPORTVIEW
 END
@@ -39,26 +42,26 @@ BEGIN
           POPUP "&View"
           BEGIN
             MENUITEM "&Store Ikoner",   FCIDM_SHVIEW_BIGICON
-            MENUITEM "S&må Ikoner",     FCIDM_SHVIEW_SMALLICON
+            MENUITEM "S&mÃ¥ Ikoner",     FCIDM_SHVIEW_SMALLICON
             MENUITEM "&Liste",          FCIDM_SHVIEW_LISTVIEW
             MENUITEM "&Detaljer",       FCIDM_SHVIEW_REPORTVIEW
           END
           MENUITEM SEPARATOR
-          POPUP "Arrangér &Ikoner"
+          POPUP "ArrangÃ©r &Ikoner"
           BEGIN
             MENUITEM "efter &navn",        0x30    /* column 0 */
             MENUITEM "efter &type",        0x32    /* column 2 */
-            MENUITEM "efter &størrelse",        0x31    /* ... */
+            MENUITEM "efter &stÃ¸rrelse",        0x31    /* ... */
             MENUITEM "efter &dato",        0x33
             MENUITEM SEPARATOR
-            MENUITEM "&Autoarrangér",   FCIDM_SHVIEW_AUTOARRANGE
+            MENUITEM "&AutoarrangÃ©r",   FCIDM_SHVIEW_AUTOARRANGE
           END
           MENUITEM "Opstil ikoner",     FCIDM_SHVIEW_SNAPTOGRID
           MENUITEM SEPARATOR
           MENUITEM "Opdater",           FCIDM_SHVIEW_REFRESH
           MENUITEM SEPARATOR
-          MENUITEM "Indsæt",            FCIDM_SHVIEW_INSERT
-          MENUITEM "Indsæt som genvej", FCIDM_SHVIEW_INSERTLINK
+          MENUITEM "IndsÃ¦t",            FCIDM_SHVIEW_INSERT
+          MENUITEM "IndsÃ¦t som genvej", FCIDM_SHVIEW_INSERTLINK
           MENUITEM SEPARATOR
           POPUP "New"
           BEGIN
@@ -78,16 +81,16 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Vælg"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&VÃ¦lg"		FCIDM_SHVIEW_OPEN
 	  MENUITEM "U&dforsk",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Åben",		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Ã…ben",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "K&lip",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopier",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
 	  MENUITEM "Opret &genvej",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "&Slet",		FCIDM_SHVIEW_DELETE
-	  MENUITEM "&Omdøb",		FCIDM_SHVIEW_RENAME
+	  MENUITEM "&OmdÃ¸b",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Egenskaber",	FCIDM_SHVIEW_PROPERTIES
 	END
@@ -104,7 +107,7 @@ BEGIN
     POPUP "&View"
     BEGIN
         MENUITEM "&Store Ikoner", FCIDM_SHVIEW_BIGICON
-        MENUITEM "S&må Ikoner", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "S&mÃ¥ Ikoner", FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Liste", FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Detaljer", FCIDM_SHVIEW_REPORTVIEW
     END
@@ -117,7 +120,7 @@ END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Vælg folder"
+CAPTION "VÃ¦lg folder"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -132,7 +135,7 @@ FONT 8, "MS Shell Dlg"
 
 SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Vælg Folder"
+CAPTION "VÃ¦lg Folder"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "", IDD_TITLE, 10, 8, 198, 24
@@ -172,8 +175,8 @@ FONT 10, "MS Shell Dlg"
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
- LTEXT "Kører på %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Wine havde ikke været mulig uden hjælp fra disse personer:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "KÃ¸rer pÃ¥ %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine havde ikke vÃ¦ret mulig uden hjÃ¦lp fra disse personer:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -182,8 +185,8 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Skriv navnet på et Program, Mappe, Document eller Internet Ressource, for at få Wine til at åbne det.", 12289, 36, 11, 182, 18
- LTEXT "&Åben:", 12305, 7, 39, 24, 10
+ LTEXT "Skriv navnet pÃ¥ et Program, Mappe, Document eller Internet Ressource, for at fÃ¥ Wine til at Ã¥bne det.", 12289, 36, 11, 182, 18
+ LTEXT "&Ã…ben:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Annuller", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
@@ -194,18 +197,22 @@ STRINGTABLE
 {
         /* columns in the shellview */
         IDS_SHV_COLUMN1         "Fil"
-        IDS_SHV_COLUMN2         "Størrelse"
+        IDS_SHV_COLUMN2         "StÃ¸rrelse"
         IDS_SHV_COLUMN3         "Type"
         IDS_SHV_COLUMN4         "Modificeret"
         IDS_SHV_COLUMN5         "Attributer"
-        IDS_SHV_COLUMN6         "Størrelse"
-        IDS_SHV_COLUMN7         "Størrelse ledig"
+        IDS_SHV_COLUMN6         "StÃ¸rrelse"
+        IDS_SHV_COLUMN7         "StÃ¸rrelse ledig"
         IDS_SHV_COLUMN8         "Navn"
         IDS_SHV_COLUMN9         "Kommentare"
         IDS_SHV_COLUMN10        "Ejer"
         IDS_SHV_COLUMN11        "Gruppe"
         IDS_SHV_COLUMN_DELFROM  "Original sted"
         IDS_SHV_COLUMN_DELDATE  "Dato slettet"
+        IDS_SHV_COL_DOCS        "Dokumenter"
+        IDS_SHV_COL_STATUS      "Status"
+        IDS_SHV_COL_LOCATION    "Placering"
+        IDS_SHV_COL_MODEL       "Model"
 
         /* special folders */
         IDS_DESKTOP             "Skrivebord"
@@ -215,22 +222,22 @@ STRINGTABLE
 
         /* context menus */
         IDS_VIEW_LARGE          "Store Ikoner"
-        IDS_VIEW_SMALL          "S&må Ikoner"
+        IDS_VIEW_SMALL          "S&mÃ¥ Ikoner"
         IDS_VIEW_LIST           "&Liste"
         IDS_VIEW_DETAILS        "&Detaljer"
-        IDS_SELECT              "Vælg"
-        IDS_OPEN                "Åben"
+        IDS_SELECT              "VÃ¦lg"
+        IDS_OPEN                "Ã…ben"
 
         IDS_CREATEFOLDER_DENIED "Kan ikke lave ny folder: Ingen rettigheder."
         IDS_CREATEFOLDER_CAPTION "Error during creation of a new folder"
         IDS_DELETEITEM_CAPTION "Confirm file deletion"
         IDS_DELETEFOLDER_CAPTION "Confirm folder deletion"
-        IDS_DELETEITEM_TEXT "Er du sikker på at du vil slette '%1'?"
-        IDS_DELETEMULTIPLE_TEXT "Er du sikker på at du vil slette disse %1 filer?"
-        IDS_DELETESELECTED_TEXT "Er du sikker på at du vil slette de markede filer?"
-        IDS_TRASHITEM_TEXT "Er du sikker på at du vil smide '%1' i skraldespanden?"
-        IDS_TRASHFOLDER_TEXT "Er du sikker på at du vil smide '%1' og al dens indhold ned i skraldespanden?"
-        IDS_TRASHMULTIPLE_TEXT "Er du sikker på at du vil smide disse %1 filer ned i skraldespanden?"
+        IDS_DELETEITEM_TEXT "Er du sikker pÃ¥ at du vil slette '%1'?"
+        IDS_DELETEMULTIPLE_TEXT "Er du sikker pÃ¥ at du vil slette disse %1 filer?"
+        IDS_DELETESELECTED_TEXT "Er du sikker pÃ¥ at du vil slette de markede filer?"
+        IDS_TRASHITEM_TEXT "Er du sikker pÃ¥ at du vil smide '%1' i skraldespanden?"
+        IDS_TRASHFOLDER_TEXT "Er du sikker pÃ¥ at du vil smide '%1' og al dens indhold ned i skraldespanden?"
+        IDS_TRASHMULTIPLE_TEXT "Er du sikker pÃ¥ at du vil smide disse %1 filer ned i skraldespanden?"
         IDS_CANTTRASH_TEXT "filen '%1' kan ikke smides i skraldespanden. Vil du slette den istedet for?"
         IDS_OVERWRITEFILE_TEXT "Folderen har allerede en fil kaldt '%1'.\n\nVil du overskrive den?"
         IDS_OVERWRITEFILE_CAPTION "Confirm file overwrite"
@@ -244,6 +251,12 @@ STRINGTABLE
         IDS_RESTART_PROMPT      "Vil du simulere en genstart af Windows?"
         IDS_SHUTDOWN_TITLE      "Luk ned"
         IDS_SHUTDOWN_PROMPT     "Vil du lukke din Wine session?"
+
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Kan ikke vise KÃ¸r Fil dialogboksen (intern fejl)"
+        IDS_RUNDLG_BROWSE_ERROR    "Kan ikke vise Gennemse dialogboksen (intern fejl)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Gennemse"
+        IDS_RUNDLG_BROWSE_FILTER   "Program Filer\0*.exe\0Alle Filer\0*.*\0\0"
 
         /* shell folder path default values */
         IDS_PROGRAMS                "Start Menu\\Programmer"
@@ -279,21 +292,23 @@ STRINGTABLE
         IDS_CPANEL_TITLE            "Wine Control Panel"
         IDS_CPANEL_NAME             "Name"
         IDS_CPANEL_DESCRIPTION      "Description"
+
+        IDS_SHLEXEC_NOASSOC         "Der er ikke noget Windows program, konfigureret til at Ã¥bne denne type fil."
 }
 
 STRINGTABLE
 {
 IDS_LICENSE_CAPTION,            "Licensbetingelser"
 IDS_LICENSE,
-"Wine er fri software; du må distribuere det og/eller \
-ændre det i henhold til vilkårene i «GNU Lesser General Public \
-License», udgivet af the Free Software Foundation; enten \
-version 2.1 af Licensen, eller (hvis du ønsker det) en nyere version.\n\n\
-Wine udgives i håb om at det er nyttigt, \
+"Wine er fri software; du mÃ¥ distribuere det og/eller \
+Ã¦ndre det i henhold til vilkÃ¥rene i Â«GNU Lesser General Public \
+LicenseÂ», udgivet af the Free Software Foundation; enten \
+version 2.1 af Licensen, eller (hvis du Ã¸nsker det) en nyere version.\n\n\
+Wine udgives i hÃ¥b om at det er nyttigt, \
 men UDEN ENHVER GARANTI; uden engang den antydede garanti om \
-HANDELSEGNETHED eller EGNETHED FOR ET SPECIELT FORMÅL.  Se «GNU \
-Lesser General Public License» for flere detaljer.\n\n\
-Du skal have modtaget et eksemplar af «GNU Lesser General Public \
-License» sammen med dette program; hvis ikke, skriv til: the Free Software \
+HANDELSEGNETHED eller EGNETHED FOR ET SPECIELT FORMÃ…L.  Se Â«GNU \
+Lesser General Public LicenseÂ» for flere detaljer.\n\n\
+Du skal have modtaget et eksemplar af Â«GNU Lesser General Public \
+LicenseÂ» sammen med dette program; hvis ikke, skriv til: the Free Software \
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 }
