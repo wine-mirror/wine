@@ -886,7 +886,7 @@ static int GetCacheEntry(X11DRV_PDEVICE *physDev, LFANDSIZE *plfsz)
         {
             case ANTIALIASED_QUALITY:
                 entry->aa_default = get_antialias_type( physDev, FALSE, hinter );
-                break;
+                return ret;  /* ignore further configuration */
             case CLEARTYPE_QUALITY:
             case CLEARTYPE_NATURAL_QUALITY:
                 entry->aa_default = get_antialias_type( physDev, subpixel, hinter );
