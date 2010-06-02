@@ -224,6 +224,10 @@ static HRESULT WINAPI Uri_GetHost(IUri *iface, BSTR *pstrHost)
 {
     Uri *This = URI_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstrHost);
+
+    if(!pstrHost)
+        return E_POINTER;
+
     return E_NOTIMPL;
 }
 

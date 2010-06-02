@@ -710,6 +710,9 @@ static void test_IUri_GetStrProperties(void) {
         hr = IUri_GetFragment(uri, NULL);
         ok(hr == E_POINTER, "Error: GetFragment returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
 
+        hr = IUri_GetHost(uri, NULL);
+        ok(hr == E_POINTER, "Error: GetHost returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
         hr = IUri_GetPassword(uri, NULL);
         ok(hr == E_POINTER, "Error: GetPassword returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
 
@@ -876,6 +879,27 @@ static void test_IUri_GetStrProperties(void) {
                 }
             } else {
                 ok(hr == prop.expected, "Error: GetFragment returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+            /* GetHost() tests. */
+            prop = test.str_props[Uri_PROPERTY_HOST];
+            hr = IUri_GetHost(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetHost returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetHost returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
                         hr, prop.expected, i);
                 ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
                         prop.value, wine_dbgstr_w(received), i);
