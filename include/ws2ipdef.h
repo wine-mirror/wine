@@ -133,19 +133,19 @@ typedef struct WS(sockaddr_in6)
  * Multicast group information
  */
 
-struct WS(ip_mreq)
+typedef struct WS(ip_mreq)
 {
     struct WS(in_addr) imr_multiaddr;
     struct WS(in_addr) imr_interface;
 } WS(IP_MREQ), *WS(PIP_MREQ);
 
-struct WS(ip_mreq_source) {
+typedef struct WS(ip_mreq_source) {
     struct WS(in_addr) imr_multiaddr;
     struct WS(in_addr) imr_sourceaddr;
     struct WS(in_addr) imr_interface;
 } WS(IP_MREQ_SOURCE), *WS(PIP_MREQ_SOURCE);
 
-struct WS(ip_msfilter) {
+typedef struct WS(ip_msfilter) {
     struct WS(in_addr) imsf_multiaddr;
     struct WS(in_addr) imsf_interface;
     ULONG              imsf_fmode;
