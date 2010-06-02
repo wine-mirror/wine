@@ -716,6 +716,14 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
                 SIZE    sz = {0, 0};
                 DWORD   flags = SWP_NOSIZE | SWP_NOMOVE;
 
+                if (win->page == wpage->page && win->info == wpage->wininfo)
+                {
+                    /* see #22979, some hlp files have a macro (run at page opening), which
+                     * jumps to the very same page
+                     * Exit gracefully in that case
+                     */
+                    return TRUE;
+                }
                 WINHELP_DeleteButtons(win);
                 bReUsed = TRUE;
                 SetWindowText(win->hMainWnd, WINHELP_GetCaption(wpage));
