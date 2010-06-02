@@ -2710,6 +2710,9 @@ TOOLBAR_AddBitmapToImageList(TOOLBAR_INFO *infoPtr, HIMAGELIST himlDef, const TB
     /* Add bitmaps to the default image list */
     if (bitmap->hInst == NULL)         /* a handle was passed */
         hbmLoad = CopyImage(ULongToHandle(bitmap->nID), IMAGE_BITMAP, 0, 0, 0);
+    else if (bitmap->hInst == COMCTL32_hModule)
+        hbmLoad = LoadImageW( bitmap->hInst, MAKEINTRESOURCEW(bitmap->nID),
+                              IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION );
     else
         hbmLoad = CreateMappedBitmap(bitmap->hInst, bitmap->nID, 0, NULL, 0);
 
