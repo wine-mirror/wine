@@ -153,8 +153,9 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
 
     if (!GetObjectW( hbmImage, sizeof(bm), &bm )) return FALSE;
 
-    /* if neither the imagelist nor the source bitmap can have an alpha channel, bail out now */
-    if (himl->uBitsPixel != 32 && bm.bmBitsPixel != 32) return FALSE;
+    /* if either the imagelist or the source bitmap don't have an alpha channel, bail out now */
+    if (!himl->has_alpha) return FALSE;
+    if (bm.bmBitsPixel != 32) return FALSE;
 
     SelectObject( hdc, hbmImage );
     mask_width = (bm.bmWidth + 31) / 32 * 4;
@@ -208,7 +209,7 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
         }
         else
         {
-            if (himl->has_alpha) himl->has_alpha[pos + n] = 1;
+            himl->has_alpha[pos + n] = 1;
 
             if (mask_info && himl->hbmMask)  /* generate the mask from the alpha channel */
             {
@@ -751,7 +752,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     else
         himl->hbmMask = 0;
 
-    if (himl->uBitsPixel == 32)
+    if (ilc == ILC_COLOR32)
         himl->has_alpha = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, himl->cMaxImage );
     else
         himl->has_alpha = NULL;
@@ -1204,7 +1205,7 @@ static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int des
         }
     }
 
-    if (himl->uBitsPixel == 32)  /* we already have an alpha channel in this case */
+    if (himl->has_alpha)  /* we already have an alpha channel in this case */
     {
         /* pre-multiply by the alpha channel */
         for (i = 0, ptr = bits; i < cx * cy; i++, ptr++)
@@ -2515,7 +2516,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
     if (hdcImage == 0)
 	ERR("invalid hdcImage!\n");
 
-    if (himl->uBitsPixel == 32)
+    if (himl->has_alpha)
     {
         if (!ii.hbmColor)
         {
@@ -2525,13 +2526,13 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
             SelectObject( hdcImage, color );
             SelectObject( hdcMask, ii.hbmMask );
             BitBlt( hdcImage, 0, 0, bmp.bmWidth, height, hdcMask, 0, height, SRCCOPY );
-            add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, height, color, ii.hbmMask );
+            ret = add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, height, color, ii.hbmMask );
             DeleteDC( hdcMask );
             DeleteObject( color );
+            if (ret) goto done;
         }
-        else add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, bmp.bmHeight, ii.hbmColor, ii.hbmMask );
-
-        goto done;
+        else if (add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, bmp.bmHeight,
+                                 ii.hbmColor, ii.hbmMask )) goto done;
     }
 
     imagelist_point_from_index(himl, nIndex, &pt);
