@@ -262,7 +262,7 @@ static void stateblock_savedstates_set_all(SAVEDSTATES *states, DWORD vs_consts,
     stateblock_set_bits(states->transform, HIGHEST_TRANSFORMSTATE + 1);
     stateblock_set_bits(states->renderState, WINEHIGHEST_RENDER_STATE + 1);
     for (i = 0; i < MAX_TEXTURES; ++i) states->textureState[i] = 0x3ffff;
-    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = 0x3fff;
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i) states->samplerState[i] = 0x3ffe;
     states->clipplane = 0xffffffff;
     states->pixelShaderConstantsB = 0xffff;
     states->pixelShaderConstantsI = 0xffff;
