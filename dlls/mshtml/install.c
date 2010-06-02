@@ -235,13 +235,13 @@ static BOOL install_from_registered_dir(void)
         return FALSE;
 
     file_name = heap_alloc(size+sizeof(GECKO_FILE_NAME));
-    res = RegQueryValueExA(hkey, "GeckoCabDir", NULL, &type, (PBYTE)file_name, &size);
+    res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)file_name, &size);
     if(res == ERROR_MORE_DATA) {
         file_name = heap_realloc(file_name, size+sizeof(GECKO_FILE_NAME));
-        res = RegQueryValueExA(hkey, "GeckoCabDir", NULL, &type, (PBYTE)file_name, &size);
+        res = RegGetValueA(hkey, NULL, "GeckoCabDir", RRF_RT_ANY, &type, (PBYTE)file_name, &size);
     }
     RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS || type != REG_SZ) {
+    if(res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ)) {
         heap_free(file_name);
         return FALSE;
     }
