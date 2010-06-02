@@ -60,66 +60,6 @@ PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
     return 0;
 }
 
-static INT_PTR CALLBACK
-AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    char *owner, *org;
-
-    switch (uMsg) {
-
-	case WM_NOTIFY:
-	    switch(((LPNMHDR)lParam)->code)
-	    {
-            case PSN_APPLY:
-                /*save registration info to registry */
-                owner = get_text(hDlg, IDC_ABT_OWNER);
-                org   = get_text(hDlg, IDC_ABT_ORG);
-
-                set_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion",
-                            "RegisteredOwner", owner ? owner : "");
-                set_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion",
-                            "RegisteredOrganization", org ? org : "");
-                set_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion",
-                            "RegisteredOwner", owner ? owner : "");
-                set_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion",
-                            "RegisteredOrganization", org ? org : "");
-                apply();
-
-                HeapFree(GetProcessHeap(), 0, owner);
-                HeapFree(GetProcessHeap(), 0, org);
-                break;
-            }
-            break;
-
-        case WM_INITDIALOG:
-            /* read owner and organization info from registry, load it into text box */
-            owner = get_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion",
-                                "RegisteredOwner", "");
-            org =   get_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion",
-                                "RegisteredOrganization", "");
-
-            SetDlgItemText(hDlg, IDC_ABT_OWNER, owner);
-            SetDlgItemText(hDlg, IDC_ABT_ORG, org);
-
-            SendMessage(GetParent(hDlg), PSM_UNCHANGED, 0, 0);
-
-            HeapFree(GetProcessHeap(), 0, owner);
-            HeapFree(GetProcessHeap(), 0, org);
-            break;
-
-	case WM_COMMAND:
-            switch(HIWORD(wParam))
-            {
-            case EN_CHANGE:
-		/* enable apply button */
-                SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-                break;
-            }
-            break;
-    }
-    return FALSE;
-}
-
 #define NUM_PROPERTY_PAGES 7
 
 static INT_PTR
