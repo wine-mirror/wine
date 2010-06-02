@@ -236,26 +236,27 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
             if(i >= Cursel) break;
             i++;
         }
-	TRACE("Setting pagesize to item %d Winpage = %d\n", Cursel,
-	      ps->WinPage);
-	di->dlgdm->dmPublic.u1.s1.dmPaperSize = ps->WinPage;
+        TRACE("Setting pagesize to item %d Winpage = %d\n", Cursel, ps->WinPage);
+        di->dlgdm->dmPublic.u1.s1.dmPaperSize = ps->WinPage;
+        SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
       }
       break;
     case IDD_ORIENT_PORTRAIT:
     case IDD_ORIENT_LANDSCAPE:
       TRACE("Setting orientation to %s\n", wParam == IDD_ORIENT_PORTRAIT ?
-	    "portrait" : "landscape");
+            "portrait" : "landscape");
       di->dlgdm->dmPublic.u1.s1.dmOrientation = wParam == IDD_ORIENT_PORTRAIT ?
-	DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
+        DMORIENT_PORTRAIT : DMORIENT_LANDSCAPE;
+      SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
       break;
     case IDD_DUPLEX:
       if(HIWORD(wParam) == CBN_SELCHANGE) {
 	Cursel = SendDlgItemMessageA(hwnd, LOWORD(wParam), CB_GETCURSEL, 0, 0);
 	for(i = 0, duplex = di->pi->ppd->Duplexes; i < Cursel; i++, duplex = duplex->next)
 	  ;
-	TRACE("Setting duplex to item %d Winduplex = %d\n", Cursel,
-	      duplex->WinDuplex);
-	di->dlgdm->dmPublic.dmDuplex = duplex->WinDuplex;
+        TRACE("Setting duplex to item %d Winduplex = %d\n", Cursel, duplex->WinDuplex);
+        di->dlgdm->dmPublic.dmDuplex = duplex->WinDuplex;
+        SendMessageW(GetParent(hwnd), PSM_CHANGED, 0, 0);
       }
       break;
     }
