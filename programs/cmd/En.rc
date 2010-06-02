@@ -25,7 +25,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Help about ATTRIB\n"
+  WCMD_ATTRIB, "ATTRIB shows or changes DOS file attributes.\n"
   WCMD_CALL,
 "CALL <batchfilename> is used within a batch file to execute commands\n\
 from another batch file. When the batch file exits, control returns to\n\
@@ -35,16 +35,17 @@ called procedure.\n\
 Changes to default directory, environment variables etc made within a\n\
 called procedure are inherited by the caller.\n"
 
-  WCMD_CD,     "Help about CD\n"
-  WCMD_CHDIR,  "Help about CHDIR\n"
+  WCMD_CD,     "CD <dir> is the short version of CHDIR. It changes the current\n\
+default directory.\n"
+  WCMD_CHDIR,  "CHDIR <dir> changes the current default directory.\n"
 
-  WCMD_CLS,    "CLS clears the console screen\n"
+  WCMD_CLS,    "CLS clears the console screen.\n"
 
-  WCMD_COPY,   "Help about COPY\n"
-  WCMD_CTTY,   "Help about CTTY\n"
-  WCMD_DATE,   "Help about DATE\n"
-  WCMD_DEL,    "Help about DEL\n"
-  WCMD_DIR,    "Help about DIR\n"
+  WCMD_COPY,   "COPY <filename> copies a file.\n"
+  WCMD_CTTY,   "CTTY changes the input/output device.\n"
+  WCMD_DATE,   "DATE shows or changes the system date.\n"
+  WCMD_DEL,    "DEL <filename> deletes a file or set of files.\n"
+  WCMD_DIR,    "DIR lists the contents of a directory.\n"
 
   WCMD_ECHO,
 "ECHO <string> displays <string> on the current terminal device.\n\
@@ -56,7 +57,7 @@ ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n\
 default). The ECHO OFF command can be prevented from displaying by\n\
 preceding it with an @ sign.\n"
 
-  WCMD_ERASE,  "Help about ERASE\n"
+  WCMD_ERASE,  "ERASE <filename> deletes a file or set of files.\n"
 
   WCMD_FOR,
 "The FOR command is used to execute a command for each of a set of files.\n\
@@ -78,7 +79,8 @@ label terminates the batch file execution.\n\
 \n\
 GOTO has no effect when used interactively.\n"
 
-  WCMD_HELP,   "Help about HELP\n"
+  WCMD_HELP,   "HELP <command> shows brief help details on a topic.\n\
+HELP without an argument shows all CMD built-in commands.\n"
 
   WCMD_IF,
 "IF is used to conditionally execute a command.\n\
@@ -96,8 +98,9 @@ Syntax: LABEL [drive:]\n\
 The command will prompt you for the new volume label for the given drive.\n\
 You can display the disk volume label with the VOL command.\n"
 
-  WCMD_MD,     "Help about MD\n"
-  WCMD_MKDIR,  "Help about MKDIR\n"
+  WCMD_MD,
+"MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
+  WCMD_MKDIR,  "MKDIR <name> creates a subdirectory.\n"
   WCMD_MOVE,
 "MOVE relocates a file or directory to a new point within the file system.\n\
 \n\
@@ -148,10 +151,12 @@ so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 "A command line beginning REM (followed by a space) performs no\n\
 action, and can therefore be used as a comment in a batch file.\n"
 
-  WCMD_REN,    "Help about REN\n"
-  WCMD_RENAME, "Help about RENAME\n"
-  WCMD_RD,     "Help about RD\n"
-  WCMD_RMDIR,  "Help about RMDIR\n"
+  WCMD_REN,
+"REN <filename> is the short version of RENAME. It renames a file.\n"
+  WCMD_RENAME, "RENAME <filename> renames a file\n"
+  WCMD_RD,
+"RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
+  WCMD_RMDIR,  "RMDIR <dir> deletes a subdirectory.\n"
 
   WCMD_SET,
 "SET displays or changes the cmd environment variables.\n\
@@ -176,7 +181,7 @@ not possible to affect the operating system environment from within cmd.\n"
 the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n\
 if called from the command line.\n"
 
-  WCMD_TIME,   "Help about TIME\n"
+  WCMD_TIME,   "TIME sets or shows the current system time.\n"
 
   WCMD_TITLE,  "Sets the window title for the cmd window, syntax TITLE [string]\n"
 
@@ -187,16 +192,16 @@ if redirected). No check is made that the file is readable text.\n"
   WCMD_VERIFY,
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n\
 \n\
-VERIFY ON	Set the flag\n\
-VERIFY OFF	Clear the flag\n\
-VERIFY		Displays ON or OFF as appropriate.\n\
+VERIFY ON\tSet the flag\n\
+VERIFY OFF\tClear the flag\n\
+VERIFY\t\tDisplays ON or OFF as appropriate.\n\
 \n\
 The verify flag has no function in Wine.\n"
 
   WCMD_VER,
 "VER displays the version of cmd you are running\n"
 
-  WCMD_VOL,    "Help about VOL\n"
+  WCMD_VOL,    "VOL shows the volume label of a disk device.\n"
 
   WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
 stack, and then changes the current directory to the supplied one.\n"
