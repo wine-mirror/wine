@@ -3,6 +3,7 @@
  *
  *  Copyright 1999-2001 Brian Palmer
  *  Copyright 2006 Mikolaj Zalewski
+ *  Copyright 2010 £ukasz Wojni³owicz
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +57,7 @@ BEGIN
             MENUITEM "&Normalna",                     ID_VIEW_UPDATESPEED_NORMAL
             , CHECKED
             MENUITEM "N&iska",                        ID_VIEW_UPDATESPEED_LOW
-            MENUITEM "&Zapauzowane",                     ID_VIEW_UPDATESPEED_PAUSED
+            MENUITEM "&Wstrzymana",                     ID_VIEW_UPDATESPEED_PAUSED
 
         END
         MENUITEM SEPARATOR
@@ -485,4 +486,90 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "Ustala priorytet procesu na poni¿ej normalnego"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Ustala priorytet procesu na niski"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Kontroluj kana³y debugowania"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "Du&¿e ikony"
+    IDS_VIEW_SMALL                     "M&a³e ikony"
+    IDS_VIEW_DETAILS                   "&Szczegó³y"
+    IDS_WINDOWS                        "&Okna"
+    IDS_VIEW_SELECTCOLUMNS             "&Wybierz kolumny..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&Poka¿ zadania 16-bitowe"
+    IDS_VIEW_CPUHISTORY                "&Historia u¿ycia procesora CPU"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&Jeden wykres dla wszystkich procesorów CPU"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Jeden wykres dla ka¿dego procesora CPU"
+    IDS_VIEW_SHOWKERNELTIMES           "&Poka¿ czas j¹dra"
+    IDS_APPLICATIONS                   "Aplikacje"
+    IDS_PROCESSES                      "Procesy"
+    IDS_PERFORMANCE                    "Wydajnoœæ"
+    IDS_STATUS_BAR_CPU_USAGE           "U¿ycie procesora: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Procesy: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Pam. zadeklar.: %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Nazwa obrazu"
+    IDS_PID               "PID (identyfikator procesu)"
+    IDS_CPUUSAGE          "U¿ycie procesora CPU"
+    IDS_CPUTIME           "Czas procesora CPU"
+    IDS_MEMORYUSAGE       "U¿ycie pamiêci"
+    IDS_MEMORYUSAGEDELTA  "Zmiana u¿ycia pamiêci"
+    IDS_PEAKMEMORYUSAGE   "Szczytowe u¿ycie pamiêci"
+    IDS_PAGEFAULTS        "B³êdy stron"
+    IDS_USEROBJECTS       "Obiekty USER"
+    IDS_IOREADS           "Odczyty We/Wy"
+    IDS_IOREADBYTES       "Odczyty We/Wy w bajtach"
+    IDS_SESSIONID         "Identyfikator sesji"
+    IDS_USERNAME          "Nazwa u¿ytkowinka"
+    IDS_PAGEFAULTSDELTA   "Zmiana b³êdów stron"
+    IDS_VIRTUALMEMORYSIZE "Rozmiar pamiêci wirtualnej"
+    IDS_PAGEDPOOL         "Pula stronnicowania"
+    IDS_NONPAGEDPOOL      "Pula niestronnicowania"
+    IDS_BASEPRIORITY      "Priorytet podstawowy"
+    IDS_HANDLECOUNT       "Liczba dojœæ"
+    IDS_THREADCOUNT       "Liczba w¹tków"
+    IDS_GDIOBJECTS        "Obiekty GDI"
+    IDS_IOWRITES          "Zapisy We/Wy"
+    IDS_IOWRITEBYTES      "Zapisy We/Wy w bajtach"
+    IDS_IOOTHER           "Inne We/Wy"
+    IDS_IOOTHERBYTES      "Inne We/Wy w bajtach"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Ostrze¿enie menad¿era zadañ"
+    IDS_PRIORITY_CHANGE_MESSAGE     "OSTRZE¯ENIE: Zmiana priorytetu tego rprcesu mo¿e przynieœæ\n\
+                                     nieporz¹dane skutki, w tym równie¿ niestabilnoœæ systemu\n\
+                                     Czy na pewno chcesz zmieniæ priorytet?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Nie mozna zmieniæ priorytetu"
+    IDS_TERMINATE_MESSAGE           "OSTRZE¯ENIE: Zakoñczenie procesu mo¿e przynieœæ\n\
+                                     nieporz¹dane skutki, w tym równie¿\n\
+                                     utratê danych i niestabilnoœæ systemu.\n\
+                                     Proces nie bêdzie mia³ szansy na zapisanie danych\n\
+                                     Czy na pewno chcesz zakoñczyæ?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Nie mo¿na zakoñczyæ procesu"
+    IDS_DEBUG_MESSAGE               "OSTRZE¯ENIE: Debugowanie tego procesu mo¿e spowodowaæ utratê tanych.\n\
+                                     Czy na pewno chcesz uruchomiæ debugera?"
+    IDS_DEBUG_UNABLE2DEBUG          "Nie mo¿na debugowaæ procesu"
+    IDS_AFFINITY_ERROR_MESSAGE      "Proces musi byæ skoligacony z co najmniej jednym procesorem"
+    IDS_AFFINITY_ERROR_TITLE        "Niew³aœciwa opcja"
+    IDS_AFFINITY_UNABLE2ACCESS      "Nie mo¿na uzyskaæ dostêpu lub ustawiæ koligacji procesu"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "System Idle Process"
+    IDS_APPLICATION_NOT_RESPONDING     "Nie odpowiada"
+    IDS_APPLICATION_RUNNING            "Uruchomiony"
+    IDS_APPLICATION_TASK               "Zadanie"
+    IDS_APPLICATION_STATUS             "Stan"
+    IDS_DEBUG_CHANNEL                  "Kana³y debugowania"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
