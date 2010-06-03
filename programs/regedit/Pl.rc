@@ -2,6 +2,7 @@
  * Regedit resources
  *
  * Copyright 2002 Robert Dickenson
+ * Copyright 2010 £ukasz Wojni³owicz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -125,7 +126,7 @@ STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
     WS_BORDER
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX "&Eksportuj registr", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    GROUPBOX "&Eksportuj rejestr", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
     AUTORADIOBUTTON "&Ca³y rejestr", IDC_EXPORT_ALL, 12, 15, 244, 12
     AUTORADIOBUTTON "&Wybran¹ ga³¹Ÿ:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
     EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
@@ -266,8 +267,8 @@ BEGIN
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "Od³¹cza siê od rejestru innego komputera"
     ID_REGISTRY_PRINT       "Drukuje ca³oœæ lub czêœæ rejestru"
-/*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
-    ID_HELP_ABOUT           "Wyœwietla informacjê o programie, numerze wersji i prawach autorskich"
+/*    ID_HELP_HELPTOPICS      "Otwiera pomoc edytora rejestru" */
+    ID_HELP_ABOUT           "Wyœwietla informacje o programie, numerze wersji i prawach autorskich"
 END
 
 STRINGTABLE DISCARDABLE
@@ -283,18 +284,19 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Kopiuje nazwê zaznaczonego klucza do schowka"
     ID_EDIT_FIND            "Znajduje ci¹g znaków w kluczu lub danej"
     ID_EDIT_FINDNEXT        "Znajduje nastêpne wyst¹pienie ostatnio szukanego ci¹gu"
+    ID_EDIT_EXPORT          "Eksportuje zaznaczon¹ ga³¹Ÿ rejestru do pliku tekstowego"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR		    "B³¹d"
-    IDS_BAD_KEY		    "Nie uda³o sie przeczytaæ klucza '%s'"
-    IDS_BAD_VALUE           "Nie uda³o sie przeczytaæ danej '%s'"
+    IDS_BAD_KEY		    "Nie uda³o siê przeczytaæ klucza '%s'"
+    IDS_BAD_VALUE           "Nie uda³o siê przeczytaæ danej '%s'"
     IDS_UNSUPPORTED_TYPE    "Nie da siê modyfikowaæ kluczy tego typu (%u)"
     IDS_TOO_BIG_VALUE       "Wartoœæ jest zbyt du¿a (%u)"
     IDS_DELETE_BOX_TITLE    "Potwierdzenie kasowania"
     IDS_DELETE_BOX_TEXT     "Jesteœ pewien, ¿e chcesz usun¹æ dan¹ '%s'?"
-    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Czy jesteœ pewien, ¿e chcesz usun¹æ te wartoœci?"
     IDS_NEWKEY              "Nowy klucz #%d"
     IDS_NEWVALUE            "Nowa dana #%d"
     IDS_NOTFOUND            "Nie uda³o siê wyszukaæ ci¹gu '%s'"
