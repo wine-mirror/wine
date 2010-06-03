@@ -1000,7 +1000,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         if(!buffer_add_dirty_area(This, 0, 0))
         {
             ERR("buffer_add_dirty_area failed, this is not expected\n");
-            return;
+            goto end;
         }
         /* Avoid unfenced updates, we might overwrite more areas of the buffer than the application
          * cleared for unsynchronized updates
