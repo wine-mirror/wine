@@ -2,6 +2,7 @@
  * Polish resources for SETUPAPI
  *
  * Copyright 2005 Sebastian Gasiorek
+ * Copyright 2010 £ukasz Wojni³owicz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,14 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
+STRINGTABLE DISCARDABLE
+{
+        IDS_PROMPTDISK   "Potrzebny plik o nazwie '%s' znajduj¹cy siê  na %s"
+        IDS_UNKNOWN      "Nieznany"
+        IDS_COPYFROM     "Kopiuj pliki z:"
+        IDS_INFO         "Podaj œcie¿kê do pliku, a nastêpnie naciœnij przycisk OK."
+}
+
 COPYFILEDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Kopiowanie plików..."
@@ -33,4 +42,18 @@ BEGIN
 	LTEXT "Kopiuj pliki do:", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+IDPROMPTFORDISK DIALOG MOVEABLE DISCARDABLE 0, 0, 250, 120
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Potrzebne pliki"
+FONT 8, "MS Shell Dlg"
+BEGIN
+	LTEXT "W³ó¿ dysk instalacyjny producenta, a nastêpnie\nupewnij siê, ¿e poni¿ej zaznaczono poprawny napêd", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Kopiuj pliki producenta z:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
+	PUSHBUTTON "OK", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Anuluj", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Przegl¹daj...", IDC_RUNDLG_BROWSE, 195, 100, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
