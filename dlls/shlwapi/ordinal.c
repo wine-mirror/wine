@@ -4506,12 +4506,18 @@ INT WINAPIV ShellMessageBoxWrapW(HINSTANCE hInstance, HWND hWnd, LPCWSTR lpText,
     {
         const WCHAR *ptr;
         UINT len = LoadStringW(hInstance, LOWORD(lpText), (LPWSTR)&ptr, 0);
+
         if (len)
         {
             szText = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
             if (szText) LoadStringW(hInstance, LOWORD(lpText), szText, len + 1);
         }
         pszText = szText;
+        if (!pszText) {
+            WARN("Failed to load id %d\n", LOWORD(lpText));
+            __ms_va_end(args);
+            return 0;
+        }
     }
     else
         pszText = lpText;
