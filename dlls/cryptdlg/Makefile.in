@@ -9,6 +9,7 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = \
+	cryptdlg_Da.rc \
 	cryptdlg_De.rc \
 	cryptdlg_En.rc \
 	cryptdlg_Fr.rc \
