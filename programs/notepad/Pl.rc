@@ -5,6 +5,7 @@
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *  Copyright 2004 Jacek Caban <jack@itma.pwr.wroc.pl>
+ *  Copyright 2010 £ukasz Wojni³owicz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,13 +57,14 @@ POPUP "&Edycja" {
 POPUP "&ZnajdŸ" {
   MENUITEM "&ZnajdŸ...\tCtrl+F",   CMD_SEARCH
   MENUITEM "Z&najdŸ nastêpny\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Zamieñ...\tCtrl+H", CMD_REPLACE
  }
 POPUP "Pomo&c" {
   MENUITEM "&Tematy pomocy",         CMD_HELP_CONTENTS
   MENUITEM "&Szukaj...",        CMD_HELP_SEARCH
   MENUITEM "&Pomoc",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "Notepad - &informacje", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "Notatnik - &informacje", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -93,6 +95,14 @@ PUSHBUTTON    "Anuluj",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Pomoc",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
 
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Kodowanie:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
+
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&f"
@@ -120,4 +130,13 @@ STRING_NOTFOUND,                                        "Nie mo¿na odnaleŸæ '%s'
 STRING_OUT_OF_MEMORY,                   "Za ma³o pamiêci do wykonania tego zadania.\n \
 Zamknij jedn¹ lub wiêcej aplikacji aby zwiêkszyæ iloœæ wolnej pamiêci."
 
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+Plik ten zawiera znaki Unicode, które zostan¹ utracone je¿eli\n\
+zapiszesz ten plik przy u¿yciu kodowania %s.\n\
+Aby zachowaæ te znaki, naciœnij Anuluj, a póŸniej zaznacz\n\
+jedn¹ z opcji Unicode z rozwijalnej listy kodowañ.\n\
+Czy chcesz kontynuowaæ mimo tego?"
 }
