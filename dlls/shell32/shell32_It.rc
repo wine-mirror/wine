@@ -254,6 +254,12 @@ STRINGTABLE
        IDS_SHUTDOWN_TITLE      "Termina sessione"
        IDS_SHUTDOWN_PROMPT     "Vuoi terminare la sessione di Wine?"
 
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Impossibile mostrare la finestra Esegui File (errore interno)"
+        IDS_RUNDLG_BROWSE_ERROR    "Impossibile mostrare la finestra Sfoglia (errore interno)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Sfoglia"
+        IDS_RUNDLG_BROWSE_FILTER   "File eseguibili\0*.exe\0Tutti i files\0*.*\0\0"
+
 	/* shell folder path default values */
 	IDS_STARTMENU               "Start Menu"
 	IDS_PROGRAMS                "Start Menu\\Programmi"
