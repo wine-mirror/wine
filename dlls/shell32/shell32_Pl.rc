@@ -1,6 +1,7 @@
 /*
  * Copyright 1998 Juergen Schmied
  * Copyright 2004 Piotr Caban
+ * Copyright 2010 £ukasz Wojni³owicz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -95,10 +96,10 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Plik"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "W&yjœcie", IDM_CPANEL_EXIT
     END
 
     POPUP "&View"
@@ -109,9 +110,9 @@ BEGIN
         MENUITEM "&Szczegó³y", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Pomoc"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&O panelu sterowania...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -204,14 +205,18 @@ STRINGTABLE
 	IDS_SHV_COLUMN9		"Komentarz"
 	IDS_SHV_COLUMN10        "W³aœciciel"
 	IDS_SHV_COLUMN11        "Grupa"
-	IDS_SHV_COLUMN_DELFROM	"Lokacja oryginalna"
+	IDS_SHV_COLUMN_DELFROM	"Oryginalne po³o¿enie"
 	IDS_SHV_COLUMN_DELDATE	"Data usuniêcia"
+	IDS_SHV_COL_DOCS	"Dokumenty"
+	IDS_SHV_COL_STATUS	"Status"
+	IDS_SHV_COL_LOCATION	"Po³o¿enie"
+	IDS_SHV_COL_MODEL	"Model"
 
         /* special folders */
 	IDS_DESKTOP		"Pulpit"
 	IDS_MYCOMPUTER		"Mój komputer"
 	IDS_RECYCLEBIN_FOLDER_NAME	"Kosz"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_CONTROLPANEL	"Panel sterowania"
 
 	/* context menus */
 	IDS_VIEW_LARGE		"&Du¿e Ikony"
@@ -282,9 +287,11 @@ STRINGTABLE
 
 	IDS_NEWFOLDER		"Nowy Folder"
 
-	IDS_CPANEL_TITLE            "Wine Control Panel"
-	IDS_CPANEL_NAME             "Name"
-	IDS_CPANEL_DESCRIPTION      "Description"
+	IDS_CPANEL_TITLE            "Panel sterowania Wine"
+	IDS_CPANEL_NAME             "Nazwa"
+	IDS_CPANEL_DESCRIPTION      "Opis"
+
+        IDS_SHLEXEC_NOASSOC         "Nie ma przypisanego programu Windowsowego do otwierania tego typu plików."
 }
 
 STRINGTABLE
