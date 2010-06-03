@@ -1,0 +1,88 @@
+/*
+ * Add/Remove Programs Danish resources
+ *
+ * Copyright 2010 Thomas Larsen
+ *                Paul Vriens
+ *
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+#include "res.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+   IDS_CPL_TITLE,        "Tilføj/Fjern Programmer"
+   IDS_CPL_DESC,         "Giver dig mulighed for at installere ny software, eller fjerne eksisterende software fra din computer."
+   IDS_TAB1_TITLE,       "Applikationer"
+
+   IDS_UNINSTALL_FAILED, "Er ikke i stand til at starte afinstallationen, '%s'. Ønsker du at fjerne fjernes posten, for dette program fra registreringsdatabasen?"
+   IDS_NOT_SPECIFIED,    "Ikke specificeret"
+
+   IDS_COLUMN_NAME,      "Navn"
+   IDS_COLUMN_PUBLISHER, "Udgiver"
+   IDS_COLUMN_VERSION,   "Version"
+   IDS_INSTALL_FILTER,   "Installations Programmer\\0*instal*.exe;*setup*.exe;*.msi\\0Programmer (*.exe)\\0*.exe\\0Alle Filer (*.*)\\0*.*\\0\\0"
+
+   IDS_REMOVE,           "&Fjern..."
+   IDS_MODIFY_REMOVE,    "&Rediger/Fjern..."
+}
+
+IDD_MAIN DIALOG 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Installer/Fjern"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "For at installere et nyt program fra en diskette, cd-rom-drev, eller din harddisk, skal du klikke på Installer.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "&Installer…", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
+ CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
+ CONTROL "Følgende software kan blive fjernet automatisk. Hvis du vil fjerne et program eller ændre dets installerede komponenter, skal du vælge det fra listen, og klik på Rediger / Fjern.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
+ CONTROL "&Support Information", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 104, 198, 64, 14
+ CONTROL "&Rediger...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "&Fjern...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
+ CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
+}
+
+IDD_INFO DIALOG 0, 0, 256, 138
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Support Information"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
+ CONTROL "Følgende oplysninger kan bruges til at få teknisk support for% s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "Udgiver:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
+ CONTROL "Version:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "Kontakt:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
+ CONTROL "Support Information:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "Support Telefon:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
+ CONTROL "Læs mig:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "Produkt Opdateringer:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "Kommentarer:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
+ CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
+ CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
+ CONTROL "", IDC_INFO_SUPPORT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 60, 136, 8
+ CONTROL "", IDC_INFO_PHONE, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 70, 136, 8
+ CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
+ CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
+ CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}

@@ -9,6 +9,7 @@ C_SRCS = \
 	appwiz.c
 
 RC_SRCS = \
+	Da.rc \
 	De.rc \
 	En.rc \
 	Es.rc \
