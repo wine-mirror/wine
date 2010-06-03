@@ -51,6 +51,7 @@ RC_SRCS = \
 	version.rc
 
 MC_SRCS = \
+	nls/winerr_dan.mc \
 	nls/winerr_deu.mc \
 	nls/winerr_enu.mc \
 	nls/winerr_fra.mc \
