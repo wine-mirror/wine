@@ -11,6 +11,7 @@ C_SRCS = start.c
 
 RC_SRCS = \
 	Cs.rc \
+	Da.rc \
 	De.rc \
 	En.rc \
 	Es.rc \
