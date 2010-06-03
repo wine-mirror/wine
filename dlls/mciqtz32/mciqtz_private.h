@@ -31,6 +31,9 @@ typedef struct {
     BOOL           uninit;
     IGraphBuilder* pgraph;
     IMediaControl* pmctrl;
+    IMediaSeeking* seek;
+    IVideoWindow*  vidwin;
+    IBasicVideo*   vidbasic;
     DWORD          time_format;
     UINT           command_table;
     HWND parent;

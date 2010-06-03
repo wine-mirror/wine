@@ -145,8 +145,8 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 {
     WINE_MCIQTZ* wma;
     HRESULT hr;
-    IBasicVideo *vidbasic;
-    IVideoWindow *vidwin;
+    DWORD style = 0;
+    RECT rc = { 0, 0, 0, 0 };
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpOpenParms);
 
@@ -174,6 +174,24 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaSeeking, (void**)&wma->seek);
+    if (FAILED(hr)) {
+        TRACE("Cannot get IMediaSeeking interface (hr = %x)\n", hr);
+        goto err;
+    }
+
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&wma->vidwin);
+    if (FAILED(hr)) {
+        TRACE("Cannot get IVideoWindow interface (hr = %x)\n", hr);
+        goto err;
+    }
+
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IBasicVideo, (void**)&wma->vidbasic);
+    if (FAILED(hr)) {
+        TRACE("Cannot get IBasicVideo interface (hr = %x)\n", hr);
+        goto err;
+    }
+
     if (!(dwFlags & MCI_OPEN_ELEMENT) || (dwFlags & MCI_OPEN_ELEMENT_ID)) {
         TRACE("Wrong dwFlags %x\n", dwFlags);
         goto err;
@@ -192,33 +210,21 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
-    hr = IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
-    if (SUCCEEDED(hr))
-        hr = IFilterGraph2_QueryInterface(wma->pgraph, &IID_IBasicVideo, (void**)&vidbasic);
-    if (SUCCEEDED(hr)) {
-        DWORD style;
-        RECT rc = { 0, 0, 0, 0 };
-        IVideoWindow_put_AutoShow(vidwin, OAFALSE);
-        IVideoWindow_put_Visible(vidwin, OAFALSE);
-        style = 0;
-        if (dwFlags & MCI_DGV_OPEN_WS)
-            style |= lpOpenParms->dwStyle;
-        if (dwFlags & MCI_DGV_OPEN_PARENT) {
-            IVideoWindow_put_MessageDrain(vidwin, (OAHWND)lpOpenParms->hWndParent);
-            IVideoWindow_put_WindowState(vidwin, SW_HIDE);
-            IVideoWindow_put_WindowStyle(vidwin, WS_CHILD);
-            IVideoWindow_put_Owner(vidwin, (OAHWND)lpOpenParms->hWndParent);
-            wma->parent = (HWND)lpOpenParms->hWndParent;
-        }
-        else if (style)
-            IVideoWindow_put_WindowStyle(vidwin, style);
-        IBasicVideo_GetVideoSize(vidbasic, &rc.right, &rc.bottom);
-        IVideoWindow_SetWindowPosition(vidwin, rc.left, rc.top, rc.right, rc.bottom);
-        IBasicVideo_Release(vidbasic);
+    IVideoWindow_put_AutoShow(wma->vidwin, OAFALSE);
+    IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
+    if (dwFlags & MCI_DGV_OPEN_WS)
+        style = lpOpenParms->dwStyle;
+    if (dwFlags & MCI_DGV_OPEN_PARENT) {
+        IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)lpOpenParms->hWndParent);
+        IVideoWindow_put_WindowState(wma->vidwin, SW_HIDE);
+        IVideoWindow_put_WindowStyle(wma->vidwin, style|WS_CHILD);
+        IVideoWindow_put_Owner(wma->vidwin, (OAHWND)lpOpenParms->hWndParent);
+        GetClientRect(lpOpenParms->hWndParent, &rc);
+        IVideoWindow_SetWindowPosition(wma->vidwin, rc.left, rc.top, rc.right - rc.top, rc.bottom - rc.top);
+        wma->parent = (HWND)lpOpenParms->hWndParent;
     }
-    if (vidwin)
-        IVideoWindow_Release(vidwin);
-
+    else if (style)
+        IVideoWindow_put_WindowStyle(wma->vidwin, style);
     wma->opened = TRUE;
 
     if (dwFlags & MCI_NOTIFY)
@@ -227,6 +233,15 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
     return 0;
 
 err:
+    if (wma->vidbasic)
+        IUnknown_Release(wma->vidbasic);
+    wma->vidbasic = NULL;
+    if (wma->seek)
+        IUnknown_Release(wma->seek);
+    wma->seek = NULL;
+    if (wma->vidwin)
+        IUnknown_Release(wma->vidwin);
+    wma->vidwin = NULL;
     if (wma->pgraph)
         IGraphBuilder_Release(wma->pgraph);
     wma->pgraph = NULL;
@@ -256,6 +271,9 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (wma->opened) {
+        IUnknown_Release(wma->vidwin);
+        IUnknown_Release(wma->vidbasic);
+        IUnknown_Release(wma->seek);
         IGraphBuilder_Release(wma->pgraph);
         IMediaControl_Release(wma->pmctrl);
         if (wma->uninit)
@@ -289,14 +307,8 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
         return MCIERR_INTERNAL;
     }
 
-    if (!wma->parent) {
-        IVideoWindow *vidwin;
-        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
-        if (vidwin) {
-            IVideoWindow_put_Visible(vidwin, OATRUE);
-            IVideoWindow_Release(vidwin);
-        }
-    }
+    if (!wma->parent)
+        IVideoWindow_put_Visible(wma->vidwin, OATRUE);
 
     return 0;
 }
@@ -308,7 +320,6 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 {
     WINE_MCIQTZ* wma;
     HRESULT hr;
-    IMediaPosition* pmpos;
     LONGLONG newpos;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
@@ -335,20 +346,11 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
         return MCIERR_MISSING_PARAMETER;
     }
 
-    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaPosition, (LPVOID*)&pmpos);
-    if (FAILED(hr)) {
-        FIXME("Cannot get IMediaPostion interface (hr = %x)\n", hr);
-        return MCIERR_INTERNAL;
-    }
-
-    hr = IMediaPosition_put_CurrentPosition(pmpos, newpos);
+    hr = IMediaSeeking_SetPositions(wma->seek, &newpos, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
     if (FAILED(hr)) {
         FIXME("Cannot set position (hr = %x)\n", hr);
-        IMediaPosition_Release(pmpos);
         return MCIERR_INTERNAL;
     }
-
-    IMediaPosition_Release(pmpos);
 
     if (dwFlags & MCI_NOTIFY)
         mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
@@ -379,14 +381,8 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
         return MCIERR_INTERNAL;
     }
 
-    if (!wma->parent) {
-        IVideoWindow *vidwin;
-        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
-        if (vidwin) {
-            IVideoWindow_put_Visible(vidwin, OAFALSE);
-            IVideoWindow_Release(vidwin);
-        }
-    }
+    if (!wma->parent)
+        IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
 
     return 0;
 }
@@ -592,7 +588,6 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
 
     switch (lpParms->dwItem) {
         case MCI_STATUS_LENGTH: {
-            IMediaSeeking *seek;
             LONGLONG duration = -1;
             GUID format;
             switch (wma->time_format) {
@@ -600,20 +595,13 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
                 case MCI_FORMAT_FRAMES: format = TIME_FORMAT_FRAME; break;
                 default: ERR("Unhandled format %x\n", wma->time_format); break;
             }
-            hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaSeeking, (void**)&seek);
+            hr = IMediaSeeking_SetTimeFormat(wma->seek, &format);
             if (FAILED(hr)) {
-                FIXME("Cannot get IMediaPostion interface (hr = %x)\n", hr);
-                return MCIERR_INTERNAL;
-            }
-            hr = IMediaSeeking_SetTimeFormat(seek, &format);
-            if (FAILED(hr)) {
-                IMediaSeeking_Release(seek);
                 FIXME("Cannot set time format (hr = %x)\n", hr);
                 lpParms->dwReturn = 0;
                 break;
             }
-            hr = IMediaSeeking_GetDuration(seek, &duration);
-            IMediaSeeking_Release(seek);
+            hr = IMediaSeeking_GetDuration(wma->seek, &duration);
             if (FAILED(hr) || duration < 0) {
                 FIXME("Cannot read duration (hr = %x)\n", hr);
                 lpParms->dwReturn = 0;
@@ -624,25 +612,14 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
             break;
         }
         case MCI_STATUS_POSITION: {
-            IMediaPosition* pmpos;
-            REFTIME curpos;
+            REFERENCE_TIME curpos;
 
-            hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaPosition, (LPVOID*)&pmpos);
-            if (FAILED(hr)) {
-                FIXME("Cannot get IMediaPostion interface (hr = %x)\n", hr);
-                return MCIERR_INTERNAL;
-            }
-
-            hr = IMediaPosition_get_CurrentPosition(pmpos, &curpos);
+            hr = IMediaSeeking_GetCurrentPosition(wma->seek, &curpos);
             if (FAILED(hr)) {
                 FIXME("Cannot get position (hr = %x)\n", hr);
-                IMediaPosition_Release(pmpos);
                 return MCIERR_INTERNAL;
             }
-
-            IMediaPosition_Release(pmpos);
             lpParms->dwReturn = curpos / 10000;
-
             break;
         }
         case MCI_STATUS_NUMBER_OF_TRACKS:
@@ -680,8 +657,6 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
 static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 {
     WINE_MCIQTZ* wma;
-    IVideoWindow* pVideoWindow;
-    IBasicVideo *pBasicVideo;
     HRESULT hr;
     HWND hWnd;
     RECT rc;
@@ -696,34 +671,19 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
-    /* Find if there is a video stream and get the display window */
-    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
-    if (FAILED(hr)) {
-        ERR("Cannot get IVideoWindow interface (hr = %x)\n", hr);
-        return MCIERR_INTERNAL;
-    }
-
-    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IBasicVideo, (LPVOID*)&pBasicVideo);
-    if (FAILED(hr)) {
-        ERR("Cannot get IBasicVideo interface (hr = %x)\n", hr);
-        IUnknown_Release(pVideoWindow);
-        return MCIERR_INTERNAL;
-    }
-
-    hr = IVideoWindow_get_Owner(pVideoWindow, (OAHWND*)&hWnd);
+    hr = IVideoWindow_get_Owner(wma->vidwin, (OAHWND*)&hWnd);
     if (FAILED(hr)) {
         TRACE("No video stream, returning no window error\n");
-        IUnknown_Release(pVideoWindow);
         return MCIERR_NO_WINDOW;
     }
 
     if (dwFlags & MCI_DGV_WHERE_SOURCE) {
         if (dwFlags & MCI_DGV_WHERE_MAX)
             FIXME("MCI_DGV_WHERE_SOURCE_MAX stub %s\n", wine_dbgstr_rect(&rc));
-        IBasicVideo_get_SourceLeft(pBasicVideo, &rc.left);
-        IBasicVideo_get_SourceTop(pBasicVideo, &rc.top);
-        IBasicVideo_get_SourceWidth(pBasicVideo, &rc.right);
-        IBasicVideo_get_SourceHeight(pBasicVideo, &rc.bottom);
+        IBasicVideo_get_SourceLeft(wma->vidbasic, &rc.left);
+        IBasicVideo_get_SourceTop(wma->vidbasic, &rc.top);
+        IBasicVideo_get_SourceWidth(wma->vidbasic, &rc.right);
+        IBasicVideo_get_SourceHeight(wma->vidbasic, &rc.bottom);
         /* Undo conversion done below */
         rc.right += rc.left;
         rc.bottom += rc.top;
@@ -766,8 +726,6 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
 out:
     /* In MCI, RECT structure is used differently: rc.right = width & rc.bottom = height
      * So convert the normal RECT into a MCI RECT before returning */
-    IVideoWindow_Release(pVideoWindow);
-    IBasicVideo_Release(pBasicVideo);
     lpParms->rc.left = rc.left;
     lpParms->rc.top = rc.top;
     lpParms->rc.right = rc.right - rc.left;
@@ -794,51 +752,40 @@ static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
         return MCIERR_INVALID_DEVICE_ID;
 
     if (dwFlags & MCI_DGV_UPDATE_HDC) {
-        IBasicVideo *vidbasic;
-        IVideoWindow *vidwin;
+        LONG state, size;
+        BYTE *data;
+        BITMAPINFO *info;
+        HRESULT hr;
+        RECT src, dest;
+
         res = MCIERR_INTERNAL;
-        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IVideoWindow, (void**)&vidwin);
-        IFilterGraph2_QueryInterface(wma->pgraph, &IID_IBasicVideo, (void**)&vidbasic);
-        if (vidbasic && vidwin) {
-            LONG state, size;
-            BYTE *data;
-            BITMAPINFO *info;
-            HRESULT hr;
-            RECT src, dest;
-
-            /* If in stopped state, nothing has been drawn to screen
-             * moving to pause, which is needed for the old dib renderer, will result
-             * in a single frame drawn, so hide the window here */
-            IVideoWindow_put_Visible(vidwin, OAFALSE);
-            /* FIXME: Should we check the original state and restore it? */
-            IMediaControl_Pause(wma->pmctrl);
-            IMediaControl_GetState(wma->pmctrl, -1, &state);
-            if (FAILED(hr = IBasicVideo_GetCurrentImage(vidbasic, &size, NULL))) {
-                WARN("Could not get image size (hr = %x)\n", hr);
-                goto out;
-            }
-            data = HeapAlloc(GetProcessHeap(), 0, size);
-            info = (BITMAPINFO*)data;
-            IBasicVideo_GetCurrentImage(vidbasic, &size, (LONG*)data);
-            data += info->bmiHeader.biSize;
-
-            IBasicVideo_GetSourcePosition(vidbasic, &src.left, &src.top, &src.right, &src.bottom);
-            IBasicVideo_GetDestinationPosition(vidbasic, &dest.left, &dest.top, &dest.right, &dest.bottom);
-            StretchDIBits(lpParms->hDC,
-                  dest.left, dest.top, dest.right + dest.left, dest.bottom + dest.top,
-                  src.left, src.top, src.right + src.left, src.bottom + src.top,
-                  data, info, DIB_RGB_COLORS, SRCCOPY);
-            HeapFree(GetProcessHeap(), 0, data);
+        /* If in stopped state, nothing has been drawn to screen
+         * moving to pause, which is needed for the old dib renderer, will result
+         * in a single frame drawn, so hide the window here */
+        IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
+        /* FIXME: Should we check the original state and restore it? */
+        IMediaControl_Pause(wma->pmctrl);
+        IMediaControl_GetState(wma->pmctrl, -1, &state);
+        if (FAILED(hr = IBasicVideo_GetCurrentImage(wma->vidbasic, &size, NULL))) {
+            WARN("Could not get image size (hr = %x)\n", hr);
+            goto out;
         }
+        data = HeapAlloc(GetProcessHeap(), 0, size);
+        info = (BITMAPINFO*)data;
+        IBasicVideo_GetCurrentImage(wma->vidbasic, &size, (LONG*)data);
+        data += info->bmiHeader.biSize;
+
+        IBasicVideo_GetSourcePosition(wma->vidbasic, &src.left, &src.top, &src.right, &src.bottom);
+        IBasicVideo_GetDestinationPosition(wma->vidbasic, &dest.left, &dest.top, &dest.right, &dest.bottom);
+        StretchDIBits(lpParms->hDC,
+              dest.left, dest.top, dest.right + dest.left, dest.bottom + dest.top,
+              src.left, src.top, src.right + src.left, src.bottom + src.top,
+              data, info, DIB_RGB_COLORS, SRCCOPY);
+        HeapFree(GetProcessHeap(), 0, data);
         res = 0;
 out:
-        if (vidbasic)
-            IBasicVideo_Release(vidbasic);
-        if (vidwin) {
-            if (wma->parent)
-                IVideoWindow_put_Visible(vidwin, OATRUE);
-            IVideoWindow_Release(vidwin);
-        }
+        if (wma->parent)
+            IVideoWindow_put_Visible(wma->vidwin, OATRUE);
     }
     else if (dwFlags)
         FIXME("Unhandled flags %x\n", dwFlags);
