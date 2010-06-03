@@ -6,6 +6,7 @@ MODULE    = jscript.dll
 IMPORTS   = oleaut32 ole32 user32 advapi32 kernel32
 
 RC_SRCS = \
+	jscript_Da.rc \
 	jscript_De.rc \
 	jscript_En.rc \
 	jscript_Fr.rc \
