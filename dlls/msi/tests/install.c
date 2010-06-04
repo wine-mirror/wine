@@ -3218,12 +3218,21 @@ static void create_cab_file(const CHAR *name, DWORD max_size, const CHAR *files)
 
 static BOOL get_user_dirs(void)
 {
-    HRESULT hres;
+    HKEY hkey;
+    DWORD type, size;
 
-    hres = SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, APP_DATA_DIR);
-    if(FAILED(hres))
+    if(RegOpenKey(HKEY_CURRENT_USER,
+                   "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",
+                   &hkey))
         return FALSE;
 
+    size = MAX_PATH;
+    if(RegQueryValueExA(hkey, "AppData", 0, &type, (LPBYTE)APP_DATA_DIR, &size)){
+        RegCloseKey(hkey);
+        return FALSE;
+    }
+
+    RegCloseKey(hkey);
     return TRUE;
 }
 
@@ -9426,7 +9435,7 @@ static void test_icon_table(void)
     MSIHANDLE hdb = 0, record;
     LPCSTR query;
     UINT res;
-    CHAR path[MAX_PATH];
+    CHAR path[MAX_PATH], win9xpath[MAX_PATH];
     static const char prodcode[] = "{7DF88A49-996F-4EC8-A022-BF956F9B2CBB}";
 
     create_database(msifile, icon_base_tables, sizeof(icon_base_tables) / sizeof(msi_table));
@@ -9473,12 +9482,20 @@ static void test_icon_table(void)
     res = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1 ALLUSERS=1");
     ok(res == ERROR_SUCCESS, "Failed to system-wide install: %d\n", res);
 
+    /* win9x with MSI 2.0 installs the icon to a different folder, same as above */
+    lstrcpyA(win9xpath, APP_DATA_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, "Microsoft\\Installer\\");
+    lstrcatA(path, prodcode);
+    lstrcatA(path, "\\testicon");
+
     lstrcpyA(path, WINDOWS_DIR);
     lstrcatA(path, "\\");
     lstrcatA(path, "Installer\\");
     lstrcatA(path, prodcode);
     lstrcatA(path, "\\testicon");
-    ok(file_exists(path), "System-wide icon file isn't where it's expected (%s)\n", path);
+    ok(file_exists(path) || file_exists(win9xpath),
+            "System-wide icon file isn't where it's expected (%s)\n", path);
 
     res = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(res == ERROR_SUCCESS, "Failed to uninstall system-wide\n");
