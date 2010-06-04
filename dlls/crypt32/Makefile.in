@@ -42,6 +42,7 @@ RC_SRCS = \
 	crypt32_Lt.rc \
 	crypt32_Nl.rc \
 	crypt32_No.rc \
+	crypt32_Pl.rc \
 	crypt32_Pt.rc \
 	crypt32_Ro.rc \
 	crypt32_Sv.rc \
