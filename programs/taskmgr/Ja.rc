@@ -217,10 +217,10 @@ STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "CPU 使用率",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
-    GROUPBOX        "メモリ",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
+    GROUPBOX        "メモリ使用量",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
     GROUPBOX        "合計",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "コミットチャージ (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "物理メモリPhysical Memory (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "物理メモリ (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
     GROUPBOX        "カーネル メモリ (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
     LTEXT           "ハンドル",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
     LTEXT           "スレッド",IDS_TOTALS_THREAD_COUNT,12,140,27,8
@@ -259,20 +259,20 @@ BEGIN
     EDITTEXT        IDC_KERNEL_MEMORY_NONPAGED,185,193,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     GROUPBOX        "CPU 使用率の履歴",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
-    GROUPBOX        "物理メモリの使用率の履歴",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
+    GROUPBOX        "メモリ使用量の履歴",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "CPU 使用率",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
 		    WS_EX_CLIENTEDGE
     PUSHBUTTON      "メモリ 使用率",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
                     WS_EX_CLIENTEDGE
     PUSHBUTTON      "CPU 使用率の履歴",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
                     153,37,0,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "メモリ使用率の履歴",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+    PUSHBUTTON      "メモリ使用量の履歴",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
                     153,37,0,WS_EX_CLIENTEDGE
 END
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ダンプのプロセス"
+CAPTION "デバッグ チャンネル"
 FONT 9, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
@@ -365,7 +365,7 @@ BEGIN
     PUSHBUTTON      "キャンセル",IDCANCEL,138,178,50,14
     LTEXT           "タスク マネージャの [プロセス] ページに表示する列を選択します。",
                     IDC_STATIC,7,7,181,17
-    CONTROL         "イメージ パス名(&I)",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "イメージ名(&I)",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
     CONTROL         "PID (プロセス ID)(&P)",IDC_PID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
@@ -373,11 +373,11 @@ BEGIN
                     WS_TABSTOP,7,50,53,10
     CONTROL         "CPU 時間(&E)",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,61,48,10
-    CONTROL         "メモリ - コミットサイズ(&M)",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "メモリ使用量(&M)",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,72,63,10
-    CONTROL         "メモリ - ワーキング セット デルタ(&D)",IDC_MEMORYUSAGEDELTA,"Button",
+    CONTROL         "メモリ使用量 デルタ(&D)",IDC_MEMORYUSAGEDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,83,82,10
-    CONTROL         "メモリ - ピーク ワーキング セット(&K)",IDC_PEAKMEMORYUSAGE,"Button",
+    CONTROL         "最大メモリ使用量(&K)",IDC_PEAKMEMORYUSAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,94,82,10
     CONTROL         "ページ フォルト(&F)",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,105,53,10
@@ -395,9 +395,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
     CONTROL         "仮想メモリ サイズ(&V)",IDC_VIRTUALMEMORYSIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,39,77,10
-    CONTROL         "メモリ - ページ プール(&G)",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "ページ プール(&G)",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,50,53,10
-    CONTROL         "メモリ - 非ページ プール(&O)",IDC_NONPAGEDPOOL,"Button",
+    CONTROL         "非ページ プール(&O)",IDC_NONPAGEDPOOL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,61,67,10
     CONTROL         "基本優先度(&R)",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,72,55,10
@@ -425,7 +425,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "タスク マネージャ"
     IDC_TASKMGR             "タスク マネージャ"
-    IDS_RUNDLG_CAPTION      "Create New Task"
+    IDS_RUNDLG_CAPTION      "新しいタスクの作成"
 END
 
 STRINGTABLE DISCARDABLE
@@ -436,8 +436,8 @@ BEGIN
                             "[切り替え] 操作を実行すると、タスク マネージャが最小化されます。"
     ID_OPTIONS_HIDEWHENMINIMIZED "最小化されたときに、タスク マネージャを隠します。"
     ID_VIEW_REFRESH         "[更新の頻度] の設定にかかわらず、今すぐタスク マネージャを更新します。"
-    ID_VIEW_LARGE           "タスクの表示に 大アイコン を使用します。"
-    ID_VIEW_SMALL           "タスクの表示に 小アイコン を使用します。"
+    ID_VIEW_LARGE           "タスクの表示に 大きいアイコン を使用します。"
+    ID_VIEW_SMALL           "タスクの表示に 小さいアイコン を使用します。"
     ID_VIEW_DETAILS         "各タスクの情報を表示します。"
     ID_VIEW_UPDATESPEED_HIGH "毎秒 2回表示を更新します。"
     ID_VIEW_UPDATESPEED_NORMAL "2秒に 1回表示を更新します。"
@@ -490,4 +490,87 @@ BEGIN
                             "プロセスの優先クラスを 通常以下 に設定します。"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "プロセスの優先クラスを 低 に設定します。"
     ID_PROCESS_PAGE_DEBUGCHANNELS "デバッグのチャンネルをコントロールします。"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "大きいアイコン(&G)"
+    IDS_VIEW_SMALL                     "小さいアイコン(&M)"
+    IDS_VIEW_DETAILS                   "詳細(&D)"
+    IDS_WINDOWS                        "ウィンドウ(&W)"
+    IDS_VIEW_SELECTCOLUMNS             "カラムの選択(&S)..."
+    IDS_OPTIONS_SHOW16BITTASKS         "16ビット タスクの表示(&S)"
+    IDS_VIEW_CPUHISTORY                "CPUの履歴(&C)"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "全CPUを表示(&O)"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "CPUごとに表示(&P)"
+    IDS_VIEW_SHOWKERNELTIMES           "カーネル時間を表示(&S)"
+    IDS_APPLICATIONS                   "アプリケーション"
+    IDS_PROCESSES                      "プロセス"
+    IDS_PERFORMANCE                    "パフォーマンス"
+    IDS_STATUS_BAR_CPU_USAGE           "CPU 使用率: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "プロセス数: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "メモリ使用量: %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "イメージ名"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "CPU"
+    IDS_CPUTIME           "CPU 時間"
+    IDS_MEMORYUSAGE       "メモリ使用量"
+    IDS_MEMORYUSAGEDELTA  "メモリ使用量 デルタ"
+    IDS_PEAKMEMORYUSAGE   "最大メモリ使用量"
+    IDS_PAGEFAULTS        "ページ フォルト"
+    IDS_USEROBJECTS       "USER オブジェクト"
+    IDS_IOREADS           "I/O 読み取り"
+    IDS_IOREADBYTES       "I/O 読み取りバイト数"
+    IDS_SESSIONID         "セッション ID"
+    IDS_USERNAME          "ユーザー名"
+    IDS_PAGEFAULTSDELTA   "ページ フォルト デルタ"
+    IDS_VIRTUALMEMORYSIZE "仮想メモリ サイズ"
+    IDS_PAGEDPOOL         "ページ プール"
+    IDS_NONPAGEDPOOL      "非ページ プール"
+    IDS_BASEPRIORITY      "基本優先度"
+    IDS_HANDLECOUNT       "ハンドル"
+    IDS_THREADCOUNT       "スレッド"
+    IDS_GDIOBJECTS        "GDI オブジェクト"
+    IDS_IOWRITES          "I/O 書き込み"
+    IDS_IOWRITEBYTES      "I/O 書き込みバイト数"
+    IDS_IOOTHER           "I/O その他"
+    IDS_IOOTHERBYTES      "I/O その他のバイト数"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "タスク　マネージャによる警告"
+    IDS_PRIORITY_CHANGE_MESSAGE     "警告: このプロセスの優先度クラスを変更すると、システムが\n\
+                                     不安定になるなど好ましくない動作の要因となるかもしれません。\n\
+                                     優先度クラスを変更しますか?"
+    IDS_PRIORITY_UNABLE2CHANGE      "優先度を変更できません"
+    IDS_TERMINATE_MESSAGE           "警告: プロセスを終了すると、データが失われたり、\n\
+                                     システムが不安定になるかもしれません。\n\
+                                     プロセスを終了する前にプロセスの状態やデータは保存されません。\n\
+                                     プロセスを終了しますか?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "プロセスを終了できません"
+    IDS_DEBUG_MESSAGE               "警告: このプロセスをデバッグすることでデータが\n\
+                                     失われるかもしれません。デバッガにアタッチしますか?"
+    IDS_DEBUG_UNABLE2DEBUG          "プロセスをデバッグできません"
+    IDS_AFFINITY_ERROR_MESSAGE      "プロセスは少なくとも 1 つのプロセッサと関係付ける必要があります。"
+    IDS_AFFINITY_ERROR_TITLE        "無効なオプション"
+    IDS_AFFINITY_UNABLE2ACCESS      "プロセスの関係を設定またはアクセスできませんでした。"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "システム アイドル プロセス"
+    IDS_APPLICATION_NOT_RESPONDING     "応答なし"
+    IDS_APPLICATION_RUNNING            "実行中"
+    IDS_APPLICATION_TASK               "タスク"
+    IDS_APPLICATION_STATUS             "状態"
+    IDS_DEBUG_CHANNEL                  "デバッグ チャンネル"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
