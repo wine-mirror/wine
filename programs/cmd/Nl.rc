@@ -23,62 +23,70 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
+#pragma code_page(65001)
+
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Uitleg bij ATTRIB\n"
+  WCMD_ATTRIB, "ATTRIB toont of wijzigt DOS bestandsattributen.\n"
   WCMD_CALL,
-"CALL <batchbestandsnaam> wordt gebruikt binnen een batchbestand om opdrachten uit\n\
-een ander batchbestand aan te roepen. Als het batchbestand bestaat keert de controle terug\n\
-naar het bestand dat het aanriep. The CALL opdracht kan parameters meegeven aan de aan te\n\
-roepen procedure.\n\
+"CALL <batchbestandsnaam> wordt gebruikt binnen een batchbestand om\n\
+opdrachten uit een ander batchbestand aan te roepen. Als het batchbestand\n\
+bestaat keert de controle terug naar het bestand dat het aanriep. De CALL\n\
+opdracht kan parameters meegeven aan de aan te roepen procedure.\n\
 \n\
-Veranderingen m.b.t directory, omgevingsvariabelen, etc die tot stand komen binnen een\n\
-aangeroepen procedure worden gëerft door de aanroepende procedure.\n"
+Veranderingen m.b.t , map, omgevingsvariabelen, etc die tot stand komen\n\
+binnen een aangeroepen procedure worden geÃ«rfd door de aanroepende procedure.\n"
 
-  WCMD_CD,     "Uitleg bij CD\n"
-  WCMD_CHDIR,  "Uitleg bij CHDIR\n"
+  WCMD_CD,
+"CD <mapnaam> is de korte versie van CHDIR. Het wijzigt de huidige map.\n"
+  WCMD_CHDIR,  "CHDIR <mapnaam> wijzigt de huidige map.\n"
 
-  WCMD_CLS,    "CLS schoont het scherm\n"
+  WCMD_CLS,    "CLS wist het scherm\n"
 
-  WCMD_COPY,   "Uitleg bij COPY\n"
-  WCMD_CTTY,   "Uitleg bij CTTY\n"
-  WCMD_DATE,   "Uitleg bij DATE\n"
-  WCMD_DEL,    "Uitleg bij DEL\n"
-  WCMD_DIR,    "Uitleg bij DIR\n"
+  WCMD_COPY,   "COPY <bestandsnaam> kopieert een bestand.\n"
+  WCMD_CTTY,   "CTTY wijzigt het invoer-/uitvoerapparaat.\n"
+  WCMD_DATE,   "DATE toont of wijzigt de systeemdatum.\n"
+  WCMD_DEL,
+"DEL <bestandsnaam> verwijdert een bestand of een verzameling bestanden.\n"
+  WCMD_DIR,    "DIR toont de inhoud van een map.\n"
 
   WCMD_ECHO,
 "ECHO <tekenreeks> geeft <tekenreeks> weer op het actieve uitvoerapparaat.\n\
 \n\
-ECHO ON zorgt ervoor dat alle hierop volgende opdrachten in een batchbestand worden weergegeven\n\
-op het uitvoerapparaat voordat ze worden uitgevoerd.\n\
+ECHO ON zorgt ervoor dat alle hierop volgende opdrachten in een batchbestand\n\
+worden weergegeven op het uitvoerapparaat voordat ze worden uitgevoerd.\n\
 \n\
 ECHO OFF keert het effect van een voorafgaande ECHO ON om (ECHO OFF is\n\
-de standaardinstelling). Weergave van de ECHO OFF opdracht kan worden voorkomen door\n\
-het te laten voorafgaan door het @-teken.\n"
+de standaardinstelling). Weergave van de ECHO OFF opdracht kan worden\n\
+voorkomen door het te laten voorafgaan door het @-teken.\n"
 
-  WCMD_ERASE,  "Uitleg bij ERASE\n"
+  WCMD_ERASE,
+"ERASE <bestandsnaam> verwijdert een bestand of een verzameling bestanden.\n"
 
   WCMD_FOR,
-"De FOR opdracht wordt gebruikt om een opdracht uit te voeren voor ieder van een verzameling bestanden.\n\
+"De FOR opdracht wordt gebruikt om een opdracht uit te voeren voor ieder\n\
+van een verzameling bestanden.\n\
 \n\
 Syntax: FOR %variabele IN (verzameling) DO opdracht\n\
 \n\
-In cmd is het niet vereist om het %-teken in een FOR opdracht in een batchbestand te\n\
-verdubbelen.\n"
+In cmd is het niet vereist om het %-teken in een FOR opdracht in een\n\
+batchbestand te verdubbelen.\n"
 
   WCMD_GOTO,
 "De GOTO opdracht verplaatst uitvoering naar een andere opdracht binnen een\n\
 batchbestand.\n\
 \n\
-Het doel van een GOTO opdracht wordt aangegeven met een label. Dat label mag uit maximaal 255 tekens\n\
-bestaan maar er mogen geen spaties in voorkomen (dit verschilt bij andere besturingssystemen).\n\
-Als er twee of meer identieke labels bestaan in een batchbestand dan\n\
-wordt altijd naar de eerste gesprongen. Een poging om te springen naar een niet bestaand\n\
-label beëindigt het uitvoeren van het batchbestand.\n\
+Het doel van een GOTO opdracht wordt aangegeven met een label. Dat label\n\
+mag uit maximaal 255 tekens bestaan maar er mogen geen spaties in voorkomen\n\
+(dit verschilt bij andere besturingssystemen). Als er twee of meer\n\
+identieke labels bestaan in een batchbestand dan wordt altijd naar de eerste\n\
+gesprongen. Een poging om te springen naar een niet bestaand label beÃ«indigt\n\
+het uitvoeren van het batchbestand.\n\
 \n\
 GOTO heeft geen effect als het in een interactieve sessie wordt gebruikt.\n"
 
-  WCMD_HELP,   "Uitleg bij HELP\n"
+  WCMD_HELP,   "HELP <opdracht> toont een korte uitleg over een onderwerp.\n\
+Help zonder argument laat alle ingebouwde opdrachten van CMD zien.\n"
 
   WCMD_IF,
 "IF wordt gebruikt om een opdracht voorwaardelijk uit te voeren.\n\
@@ -87,9 +95,9 @@ Syntax:	IF [NOT] EXIST bestandsnaam opdracht\n\
 	IF [NOT] tekenreeks1==tekenreeks2 opdracht\n\
 	IF [NOT] ERRORLEVEL getal opdracht\n\
 \n\
-In de tweede vorm van de opdracht moeten tekenreeks1 en tekenreeks2 tussen dubbele\n\
-aanhalingsteken staan. De vergelijking is niet gevoelig voor het onderscheid tussen\n\
-hoofd- en kleine letters.\n"
+In de tweede vorm van de opdracht moeten tekenreeks1 en tekenreeks2 tussen\n\
+dubbele aanhalingsteken staan. De vergelijking is niet gevoelig voor het\n\
+onderscheid tussen hoofd- en kleine letters.\n"
 
   WCMD_LABEL,  "LABEL wordt gebruikt om een schijflabel te wijzigen.\n\
 \n\
@@ -97,32 +105,34 @@ Syntax: LABEL [schijf:]\n\
 De opdracht vraagt u om een nieuw label in te tikken voor de opgegeven schijf.\n\
 U kunt het label van een schijf tonen met behulp van de VOL opdracht.\n"
 
-  WCMD_MD,     "Uitleg bij MD\n"
-  WCMD_MKDIR,  "Uitleg bij MKDIR\n"
+  WCMD_MD,     "MD <naam> is de korte versie van MKDIR. Het maakt een map aan.\n"
+  WCMD_MKDIR,  "MKDIR <naam> maakt een map aan\n"
   WCMD_MOVE,
-"MOVE verplaatst een bestand of directory naar een andere plek binnen het bestandssysteem.\n\
+"MOVE verplaatst een bestand of map naar een andere plek binnen het\n\
+bestandssysteem.\n\
 \n\
-Als het om een directory gaat dan worden alle bestanden en directories\n\
+Als het om een map gaat dan worden alle bestanden en mappen\n\
 daaronder ook verplaatst.\n\
 \n\
-MOVE werkt niet als de oude en nieuwe locaties zich op verschillende DOS-schijven bevinden.\n"
+MOVE werkt niet als de oude en nieuwe locaties zich op verschillende\n\
+DOS-schijven bevinden.\n"
 
   WCMD_PATH,
 "PATH toon of wijzigt het zoekpad van cmd.\n\
 \n\
 De opdracht PATH toont het huidige zoekpad (de beginwaarde wordt in\n\
-het bestand genaamd wine.conf toegekend). Om het zoekpad te wijzigen laat u de PATH\n\
-opdracht volgen door de nieuwe waarde.\n\
+het bestand genaamd wine.conf toegekend). Om het zoekpad te wijzigen laat\n\
+u de PATH opdracht volgen door de nieuwe waarde.\n\
 \n\
-Het is ook mogelijk om het zoekpad te wijzigen met behulp van de PATH omgevingsvariabele,\n\
-bij voorbeeld:\n\
+Het is ook mogelijk om het zoekpad te wijzigen met behulp van de PATH\n\
+omgevingsvariabele, bij voorbeeld:\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE toont een bericht op het scherm: 'Toets Enter om door te gaan'\n\
-en wacht totdat de gebruiker de Enter-toets indrukt. Dit is vooral handig in\n\
-batchbestanden om de gebruiker in staat te stellen om de uitvoer van een voorafgaande opdracht\n\
-te bekijken, voordat het van het scherm schuift.\n"
+en wacht totdat de gebruiker de Enter-toets indrukt. Dit is vooral handig\n\
+in batchbestanden om de gebruiker in staat te stellen om de uitvoer van\n\
+een voorafgaande opdracht te bekijken, voordat het van het scherm schuift.\n"
 
   WCMD_PROMPT,
 "PROMPT wijzigt de prompt van de opdrachtregel.\n\
@@ -134,25 +144,29 @@ De volgende tekenreeksen hebben een speciale betekenis:\n\
 \n\
 $$    dollar-teken             $_    nieuwe regel      $b    pijp-teken (|)\n\
 $d    huidige datum            $e    escape            $g    groter-dan-teken (>)\n\
-$l    kleiner-dan-teken (<)    $n    huidige schijf    $p    huidige directory\n\
+$l    kleiner-dan-teken (<)    $n    huidige schijf    $p    huidige map\n\
 $q    is-gelijk-teken (=)      $t    huidige tijd      $v    cmd versie\n\
 \n\
 Merk op dat het uitvoeren van de PROMPT opdracht zonder een tekenreeks de\n\
-prompt terugzet naar de standaardinstelling. Dat is de huidige directory\n\
+prompt terugzet naar de standaardinstelling. Dat is de huidige map\n\
 (inclusief schijfaanduiding) gevolgd een groter-dan-teken (>).\n\
 (dat staat gelijk aan de opdracht: PROMPT $p$g).\n\
 \n\
 De prompt kan ook gewijzigd worden via de PROMPT omgevingsvariabele,\n\
-dus de opdracht 'SET PROMPT=tekenreeks' heeft hetzelfde effect als 'PROMPT tekenreeks'\n"
+dus de opdracht 'SET PROMPT=tekenreeks' heeft hetzelfde effect als 'PROMPT\n\
+tekenreeks'\n"
 
   WCMD_REM,
 "Een opdrachtregel die begint met REM (gevold door een spatie) wordt niet\n\
-uitgevoerd, en kan daarom worden gebruikt als een commentaarregel in een batchbestand.\n"
+uitgevoerd, en kan daarom worden gebruikt als een commentaar-regel in een\n\
+batchbestand.\n"
 
-  WCMD_REN,    "Uitleg bij REN\n"
-  WCMD_RENAME, "Uitleg bij RENAME\n"
-  WCMD_RD,     "Uitleg bij RD\n"
-  WCMD_RMDIR,  "Uitleg bij RMDIR\n"
+  WCMD_REN,
+"REN <bestandsnaam> is de korte versie van RENAME. Het hernoemt een bestand.\n"
+  WCMD_RENAME, "RENAME hernoemt een bestand.\n"
+  WCMD_RD,
+"RD <mapnaam> is de korte versie van RMDIR. Het verwijdert een map.\n"
+  WCMD_RMDIR,  "RMDIR <mapnaam> verwijdert een map.\n"
 
   WCMD_SET,
 "SET toont of wijzigt omgevingsvariabelen van cmd.\n\
@@ -163,74 +177,78 @@ De syntax voor het maken of wijzigen van een omgevingsvariabele is:\n\
 \n\
       SET <variable>=<waarde>\n\
 \n\
-waarbij <variable> en <waarde> uit tekenreeksen bestaan. Er mogen geen spaties\n\
-voor het is-gelijk-teken staan, noch mogen er in de variabelenaam\n\
+waarbij <variable> en <waarde> uit tekenreeksen bestaan. Er mogen geen\n\
+spaties voor het is-gelijk-teken staan, noch mogen er in de variabelenaam\n\
 spaties voorkomen.\n\
 \n\
-Onder Wine worden de omgevingsvariabelen van het onderliggende besturingssysteem\n\
-opgenomen in de Win32 omgeving. Er zullen daarom doorgaans veel meer\n\
-variabelen in voorkomen dan in een oorspronkelijke Win32 implementatie. Merk op dat het\n\
-niet mogelijk is om de omgevingsvariabelen van het onderliggende besturingssysteem te\n\
-wijzigen vanuit cmd.\n"
+Onder Wine worden de omgevingsvariabelen van het onderliggende\n\
+besturingssysteem opgenomen in de Win32 omgeving. Er zullen daarom\n\
+doorgaans veel meer variabelen in voorkomen dan in een oorspronkelijke\n\
+Win32 implementatie. Merk op dat het niet mogelijk is om de omgevings-\n\
+variabelen van het onderliggende besturingssysteem te wijzigen vanuit cmd.\n"
 
   WCMD_SHIFT,
-"SHIFT wordt gebruikt in een batchbestand om een parameter te verwijderen van het begin van\n\
-de lijst. Dus de tweede parameter wordt dan de eerste, enzovoort. Deze opdracht heeft geen effect\n\
-als hij wordt aangeroepen vanaf de opdrachtregel.\n"
+"SHIFT wordt gebruikt in een batchbestand om een parameter te verwijderen\n\
+van het begin van de lijst. Dus de tweede parameter wordt dan de eerste,\n\
+enzovoort. Deze opdracht heeft geen effect als hij wordt aangeroepen vanaf\n\
+de opdrachtregel.\n"
 
-  WCMD_TIME,   "Uitleg bij TIME\n"
+  WCMD_TIME,   "TIME wijzigt of toont de systeemtijd.\n"
 
-  WCMD_TITLE,  "Wijzigt de naam van het cmd-venster, syntax: TITLE [tekenreeks]\n"
+  WCMD_TITLE,
+"Wijzigt de naam van het cmd-venster, syntax: TITLE [tekenreeks]\n"
 
   WCMD_TYPE,
-"TYPE <bestandsnaam> kopiëert <bestandsnaam> naar het uitvoerapparaat.\n\
+"TYPE <bestandsnaam> kopieert <bestandsnaam> naar het uitvoerapparaat.\n\
 Er wordt niet gecontroleerd of het bestand leesbare tekst bevat.\n"
 
   WCMD_VERIFY,
-"VERIFY wordt gebruikt om de VERIFY-schakelaar aan of uit te zetten of om hem te testen. Geldige aanroepen zijn:\n\
+"VERIFY wordt gebruikt om de VERIFY-schakelaar aan of uit te zetten of\n\
+om hem te testen. Geldige aanroepen zijn:\n\
 \n\
-VERIFY ON	Zet de schakelaar aan\n\
-VERIFY OFF	Zet de schakelaar uit\n\
-VERIFY		Toont ON of OFF naar gelang de stand.\n\
+VERIFY ON\tZet de schakelaar aan\n\
+VERIFY OFF\tZet de schakelaar uit\n\
+VERIFY\t\tToont ON of OFF naar gelang de stand.\n\
 \n\
 De verify-schakelaar heeft geen functie binnen Wine.\n"
 
   WCMD_VER,
 "VER toont de versie van cmd die u draait\n"
 
-  WCMD_VOL,    "Uitleg bij VOL\n"
+  WCMD_VOL,    "VOL toont het label van een schijf\n"
 
-  WCMD_PUSHD,  "PUSHD <directory naam> bewaart de huidige directory op een\n\
-stapel, en verandert dan de huidige directory naar de opgegeven naam.\n"
+  WCMD_PUSHD,  "PUSHD <mapnaam> bewaart de huidige map op een\n\
+stapel, en verandert dan de huidige map naar de opgegeven naam.\n"
 
-  WCMD_POPD,   "POPD verandert de huidige directory naar de meest recente die\n\
+  WCMD_POPD,   "POPD verandert de huidige map naar de meest recente die\n\
 op de stapel werd gezet met PUSHD.\n"
 
-  WCMD_MORE,   "MORE toont de uitvoer van programma's of herleidde invoer per bladzijde.\n"
+  WCMD_MORE,   "MORE toont de uitvoer van programma's of herleidde invoer\n\
+per bladzijde.\n"
 
   WCMD_EXIT,
-"EXIT beëindigt de lopende sessie en keert terug\n\
+"EXIT beÃ«indigt de lopende sessie en keert terug\n\
 naar het besturingssysteem of de schil van waaruit cmd werd gestart.\n"
 
   WCMD_ALLHELP, "CMD's ingebouwde opdrachten zijn:\n\
 ATTRIB\t\tToon of wijzig DOS bestandsattributen\n\
 CALL\t\tRoep een batchbestand aan vanuit een ander bestand\n\
-CD (CHDIR)\tWijzig de huidige directory\n\
+CD (CHDIR)\tWijzig de huidige map\n\
 CLS\t\tWis het scherm\n\
-COPY\t\tKopiëer een bestand\n\
+COPY\t\tKopieer een bestand\n\
 CTTY\t\tWijzig het invoer-/uitvoerapparaat\n\
 DATE\t\tToon of wijzig de systeemdatum\n\
 DEL (ERASE)\tVerwijder een bestand of een verzameling van bestanden\n\
-DIR\t\tToon de inhoud van een directory\n\
-ECHO\t\tKopiëer tekst direct naar het uitvoerapparaat\n\
+DIR\t\tToon de inhoud van een map\n\
+ECHO\t\tKopieer tekst direct naar het uitvoerapparaat\n\
 HELP\t\tToon een korte uitleg over een onderwerp\n\
-MD (MKDIR)\tMaak een directory\n\
+MD (MKDIR)\tMaak een map\n\
 MORE\t\tDisplay output in pages\n\
-MOVE\t\tVerplaats een bestand, een verzameling bestanden of een directory\n\
+MOVE\t\tVerplaats een bestand, een verzameling bestanden of een map\n\
 PATH\t\tWijzig of toon het zoekpad\n\
 PROMPT\t\tWijzig de prompt\n\
 REN (RENAME)\tHernoem een bestand\n\
-RD (RMDIR)\tVerwijder een directory\n\
+RD (RMDIR)\tVerwijder een map\n\
 SET\t\tWijzig of toon de omgevingsvariabelen\n\
 TIME\t\tWijzig of toon de systeemtijd\n\
 TITLE\t\tWijzig de vensternaam van de CMD-sessie\n\
@@ -243,12 +261,12 @@ type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
   WCMD_CONFIRM, "Bent u zeker"
   WCMD_YES, "J"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "Bestands associatie ontbreekt voor extentie %s\n"
+  WCMD_NOASSOC, "Bestandsassociatie ontbreekt voor extensie %s\n"
   WCMD_NOFTYPE, "Geen open commando verbonden met bestand type '%s'\n"
   WCMD_OVERWRITE, "Overschrijf %s"
   WCMD_MORESTR, "Meer..."
   WCMD_TRUNCATEDLINE, "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
-  WCMD_NYI, "Nog Niet Geïmplementeerd\n\n"
+  WCMD_NYI, "Nog niet geÃ¯mplementeerd\n\n"
   WCMD_NOARG, "Argument ontbreekt\n"
   WCMD_SYNTAXERR, "Fout in de syntax\n"
   WCMD_FILENOTFOUND, "%s : Bestand Niet Gevonden\n"
@@ -258,7 +276,7 @@ type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
   WCMD_CURRENTTIME, "Huidige Tijd is %s\n"
   WCMD_NEWDATE, "Voer de nieuwe datum in: "
   WCMD_NEWTIME, "voer de nieuwe tijd in: "
-  WCMD_MISSINGENV, "Omgevings variable %s niet gedefinieerd\n"
+  WCMD_MISSINGENV, "Omgevingsvariable %s niet gedefinieerd\n"
   WCMD_READFAIL, "Openen van '%s' is mislukt\n"
   WCMD_CALLINSCRIPT, "Onmogelijk om een batch label aan te roepen van buiten een batch script\n"
   WCMD_ALL, "A"
@@ -267,12 +285,12 @@ type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
   WCMD_VERIFYPROMPT, "Verify staat %s\n"
   WCMD_VERIFYERR, "Verify moet ON of OFF zijn\n";
   WCMD_ARGERR, "Parameter onjuist\n"
-  WCMD_VOLUMEDETAIL, "Schijf in drive %c is %s\nSchijf Serienummer is %04x-%04x\n\n"
+  WCMD_VOLUMEDETAIL, "Schijf in drive %c is %s\nHet serienummer van de schijf is %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Schijf naam (11 karakters, ENTER voor geen)?"
   WCMD_NOPATH, "PATH niet gevonden\n"
-  WCMD_ANYKEY,"Druk op de Return toets om verder te gaan: "
+  WCMD_ANYKEY,"Druk op de Return-toets om verder te gaan: "
   WCMD_CONSTITLE,"Wine Command Prompt"
   WCMD_VERSION,"CMD Versie %s\n\n"
   WCMD_MOREPROMPT, "Meer? "
-  WCMD_LINETOOLONG, "The input line is too long.\n"
+  WCMD_LINETOOLONG, "De invoerregel is te lang.\n"
 }
