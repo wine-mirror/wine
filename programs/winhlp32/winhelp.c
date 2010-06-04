@@ -712,10 +712,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
         {
             if (!lstrcmpi(win->info->name, wpage->wininfo->name))
             {
-                POINT   pt = {0, 0};
-                SIZE    sz = {0, 0};
-                DWORD   flags = SWP_NOSIZE | SWP_NOMOVE;
-
                 if (win->page == wpage->page && win->info == wpage->wininfo)
                 {
                     /* see #22979, some hlp files have a macro (run at page opening), which
@@ -727,19 +723,26 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
                 WINHELP_DeleteButtons(win);
                 bReUsed = TRUE;
                 SetWindowText(win->hMainWnd, WINHELP_GetCaption(wpage));
-                if (wpage->wininfo->origin.x != CW_USEDEFAULT &&
-                    wpage->wininfo->origin.y != CW_USEDEFAULT)
+                if (win->info != wpage->wininfo)
                 {
-                    pt = wpage->wininfo->origin;
-                    flags &= ~SWP_NOSIZE;
+                    POINT   pt = {0, 0};
+                    SIZE    sz = {0, 0};
+                    DWORD   flags = SWP_NOSIZE | SWP_NOMOVE;
+
+                    if (wpage->wininfo->origin.x != CW_USEDEFAULT &&
+                        wpage->wininfo->origin.y != CW_USEDEFAULT)
+                    {
+                        pt = wpage->wininfo->origin;
+                        flags &= ~SWP_NOSIZE;
+                    }
+                    if (wpage->wininfo->size.cx != CW_USEDEFAULT &&
+                        wpage->wininfo->size.cy != CW_USEDEFAULT)
+                    {
+                        sz = wpage->wininfo->size;
+                        flags &= ~SWP_NOMOVE;
+                    }
+                    SetWindowPos(win->hMainWnd, HWND_TOP, pt.x, pt.y, sz.cx, sz.cy, flags);
                 }
-                if (wpage->wininfo->size.cx != CW_USEDEFAULT &&
-                    wpage->wininfo->size.cy != CW_USEDEFAULT)
-                {
-                    sz = wpage->wininfo->size;
-                    flags &= ~SWP_NOMOVE;
-                }
-                SetWindowPos(win->hMainWnd, HWND_TOP, pt.x, pt.y, sz.cx, sz.cy, flags);
 
                 if (wpage->page && win->page && wpage->page->file != win->page->file)
                     WINHELP_DeleteBackSet(win);
