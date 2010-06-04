@@ -967,7 +967,7 @@ static BOOL WINHELP_CheckPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
         }
         break;
     case WM_ACTIVATE:
-        if (wParam != WA_INACTIVE || (HWND)lParam == Globals.active_win->hMainWnd ||
+        if (LOWORD(wParam) != WA_INACTIVE || (HWND)lParam == Globals.active_win->hMainWnd ||
             (HWND)lParam == Globals.active_popup->hMainWnd ||
             GetWindow((HWND)lParam, GW_OWNER) == Globals.active_win->hMainWnd)
             break;
@@ -975,7 +975,6 @@ static BOOL WINHELP_CheckPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
         if (WINHELP_HandleTextMouse(Globals.active_popup, msg, lParam))
             return FALSE;
         /* fall through */
-    case WM_LBUTTONUP:
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
     case WM_NCLBUTTONDOWN:
