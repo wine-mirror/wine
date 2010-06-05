@@ -108,6 +108,12 @@ typedef enum WICBitmapTransformOptions {
     WICBITMAPTRANSFORMOPTIONS_FORCE_DWORD = CODEC_FORCE_DWORD
 } WICBitmapTransformOptions;
 
+typedef enum WICColorContextType {
+    WICColorContextUninitialized = 0x00000000,
+    WICColorContextProfile = 0x00000001,
+    WICColorContextExifColorSpace = 0x00000002
+} WICColorContextType;
+
 typedef enum WICComponentType {
     WICDecoder = 0x00000001,
     WICEncoder = 0x00000002,
@@ -188,11 +194,38 @@ cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
 cpp_quote("#define WINCODEC_ERR_INSUFFICIENTBUFFER 0x88982f8c")
 
 interface IWICPalette;
-interface IWICColorContext;
 interface IWICColorTransform;
 interface IWICFastMetadataEncoder;
 interface IWICMetadataQueryReader;
 interface IWICMetadataQueryWriter;
+
+[
+    object,
+    uuid(3c613a02-34b2-44ea-9a7c-45aea9c6fd6d)
+]
+interface IWICColorContext : IUnknown
+{
+    HRESULT InitializeFromFilename(
+        [in] LPCWSTR wzFilename);
+
+    HRESULT InitializeFromMemory(
+        [in, size_is(cbBufferSize)] const BYTE *pbBuffer,
+        [in] UINT cbBufferSize);
+
+    HRESULT InitializeFromExifColorSpace(
+        [in] UINT value);
+
+    HRESULT GetType(
+        [out] WICColorContextType *pType);
+
+    HRESULT GetProfileBytes(
+        [in] UINT cbBuffer,
+        [in, out, unique, size_is(cbBuffer)] BYTE *pbBuffer,
+        [out] UINT *pcbActual);
+
+    HRESULT GetExifColorSpace(
+        [out] UINT *pValue);
+}
 
 [
     object,
