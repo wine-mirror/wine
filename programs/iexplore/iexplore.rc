@@ -25,3 +25,8 @@
 #define WINE_PRODUCTVERSION_STR "6.0.2900.2180"
 
 #include "wine/wine_common_ver.rc"
+
+#define IDI_APPICON 101
+
+/* @makedep: iexplore.ico */
+IDI_APPICON ICON iexplore.ico
