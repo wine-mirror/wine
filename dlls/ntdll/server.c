@@ -947,9 +947,9 @@ static int get_unix_tid(void)
 {
     int ret = -1;
 #if defined(linux) && defined(__i386__)
-    __asm__("int $0x80" : "=a" (ret) : "0" (224) /* SYS_gettid */);
+    ret = syscall(224 /*SYS_gettid*/);
 #elif defined(linux) && defined(__x86_64__)
-    __asm__("syscall" : "=a" (ret) : "0" (186) /* SYS_gettid */);
+    ret = syscall(186 /*SYS_gettid*/);
 #elif defined(__sun)
     ret = pthread_self();
 #elif defined(__APPLE__)

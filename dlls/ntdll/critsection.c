@@ -60,26 +60,18 @@ static inline void small_pause(void)
 
 static inline int futex_wait( int *addr, int val, struct timespec *timeout )
 {
-    int res;
-    __asm__ __volatile__( "xchgl %2,%%ebx\n\t"
-                          "int $0x80\n\t"
-                          "xchgl %2,%%ebx"
-                          : "=a" (res)
-                          : "0" (240) /* SYS_futex */, "D" (addr),
-                            "c" (0) /* FUTEX_WAIT */, "d" (val), "S" (timeout) );
-    return res;
+    int ret = syscall( 240/*SYS_futex*/, addr, 0/*FUTEX_WAIT*/, val, timeout, 0, 0 );
+    if (ret < 0)
+        return -errno;
+    return ret;
 }
 
 static inline int futex_wake( int *addr, int val )
 {
-    int res;
-    __asm__ __volatile__( "xchgl %2,%%ebx\n\t"
-                          "int $0x80\n\t"
-                          "xchgl %2,%%ebx"
-                          : "=a" (res)
-                          : "0" (240) /* SYS_futex */, "D" (addr),
-                            "c" (1)  /* FUTEX_WAKE */, "d" (val) );
-    return res;
+    int ret = syscall( 240/*SYS_futex*/, addr, 1/*FUTEX_WAKE*/, val, NULL, 0, 0 );
+    if (ret < 0)
+        return -errno;
+    return ret;
 }
 
 static inline int use_futexes(void)
