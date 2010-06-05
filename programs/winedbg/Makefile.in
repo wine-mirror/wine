@@ -43,6 +43,7 @@ RC_SRCS = \
 	rsrc_Lt.rc \
 	rsrc_Nl.rc \
 	rsrc_No.rc \
+	rsrc_Pl.rc \
 	rsrc_Pt.rc \
 	rsrc_Ru.rc \
 	rsrc_Si.rc \
