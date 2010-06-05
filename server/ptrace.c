@@ -215,22 +215,12 @@ static inline int tkill( int tgid, int pid, int sig )
 #ifdef __linux__
     int ret = -ENOSYS;
 # ifdef __i386__
-    __asm__( "pushl %%ebx\n\t"
-             "movl %2,%%ebx\n\t"
-             "int $0x80\n\t"
-             "popl %%ebx\n\t"
-             : "=a" (ret)
-             : "0" (270) /*SYS_tgkill*/, "r" (tgid), "c" (pid), "d" (sig) );
-    if (ret == -ENOSYS)
-        __asm__( "pushl %%ebx\n\t"
-                 "movl %2,%%ebx\n\t"
-                 "int $0x80\n\t"
-                 "popl %%ebx\n\t"
-                 : "=a" (ret)
-                 : "0" (238) /*SYS_tkill*/, "r" (pid), "c" (sig) );
+    ret = syscall(270 /*SYS_tgkill*/, tgid, pid, sig);
+    if (ret < 0 && errno == -ENOSYS)
+        ret = syscall(238 /*SYS_tkill*/, pid, sig);
+    return ret;
 # elif defined(__x86_64__)
-    __asm__( "syscall" : "=a" (ret)
-             : "0" (200) /*SYS_tkill*/, "D" (pid), "S" (sig) );
+    return syscall(200 /*SYS_tkill*/, pid, sig);
 # endif
     if (ret >= 0) return ret;
     errno = -ret;
