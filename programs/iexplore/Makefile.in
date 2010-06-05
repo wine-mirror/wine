@@ -10,6 +10,6 @@ IMPORTS   = shdocvw user32 gdi32 kernel32
 C_SRCS = \
 	main.c
 
-RC_SRCS = version.rc
+RC_SRCS = iexplore.rc
 
 @MAKE_PROG_RULES@
