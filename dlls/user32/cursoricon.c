@@ -2233,11 +2233,6 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
         if (bmfh->bfOffBits) offbits = bmfh->bfOffBits - sizeof(BITMAPFILEHEADER);
     }
 
-    if (info->bmiHeader.biHeight > 65535 || info->bmiHeader.biWidth > 65535) {
-        WARN("Broken BitmapInfoHeader!\n");
-        goto end_close;
-    }
-
     size = bitmap_info_size(info, DIB_RGB_COLORS);
     fix_info = HeapAlloc(GetProcessHeap(), 0, size);
     scaled_info = HeapAlloc(GetProcessHeap(), 0, size);
@@ -2269,6 +2264,12 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     }
     else
     {
+        /* Some sanity checks for BITMAPINFO (not applicable to BITMAPCOREINFO) */
+        if (info->bmiHeader.biHeight > 65535 || info->bmiHeader.biWidth > 65535) {
+            WARN("Broken BitmapInfoHeader!\n");
+            goto end;
+        }
+
         scaled_info->bmiHeader.biWidth = new_width;
         scaled_info->bmiHeader.biHeight = new_height;
     }

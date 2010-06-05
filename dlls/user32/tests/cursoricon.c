@@ -716,6 +716,13 @@ static unsigned char bmpimage[70] = {
 0xFF,0xFF,0x00,0x00,0x00,0x00
 };
 
+/* 1x1 pixel bmp using BITMAPCOREHEADER */
+static unsigned char bmpcoreimage[38] = {
+0x42,0x4d,0x26,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x22,0x00,0x00,0x00,0x0c,0x00,
+0x00,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0xff,0xff,0xff,0x00,0x55,0x55,
+0x55,0x00,0x00,0x00,0x00,0x00
+};
+
 /* 2x2 pixel gif */
 static unsigned char gif4pixel[42] = {
 0x47,0x49,0x46,0x38,0x37,0x61,0x02,0x00,0x02,0x00,0xa1,0x00,0x00,0x00,0x00,0x00,
@@ -723,7 +730,7 @@ static unsigned char gif4pixel[42] = {
 0x02,0x00,0x00,0x02,0x03,0x14,0x16,0x05,0x00,0x3b
 };
 
-static void test_LoadImageBitmap(HBITMAP hbm)
+static void test_LoadImageBitmap(const char * test_desc, HBITMAP hbm)
 {
     BITMAP bm;
     BITMAPINFO bmi;
@@ -741,12 +748,12 @@ static void test_LoadImageBitmap(HBITMAP hbm)
     bmi.bmiHeader.biBitCount= 24;
     bmi.bmiHeader.biCompression= BI_RGB;
     ret = GetDIBits(hdc, hbm, 0, bm.bmHeight, &pixel, &bmi, DIB_RGB_COLORS);
-    ok(ret == bm.bmHeight, "%d lines were converted, not %d\n", ret, bm.bmHeight);
+    ok(ret == bm.bmHeight, "%s: %d lines were converted, not %d\n", test_desc, ret, bm.bmHeight);
 
-    ok(color_match(pixel, 0x00ffffff), "Pixel is 0x%08x\n", pixel);
+    ok(color_match(pixel, 0x00ffffff), "%s: Pixel is 0x%08x\n", test_desc, pixel);
 }
 
-static void test_LoadImageFile(unsigned char * image_data,
+static void test_LoadImageFile(const char * test_desc, unsigned char * image_data,
     unsigned int image_size, const char * ext, BOOL expect_success)
 {
     HANDLE handle;
@@ -768,7 +775,7 @@ static void test_LoadImageFile(unsigned char * image_data,
     /* Load as cursor. For all tested formats, this should fail */
     SetLastError(0xdeadbeef);
     handle = LoadImageA(NULL, filename, IMAGE_CURSOR, 0, 0, LR_LOADFROMFILE);
-    ok(handle == NULL, "LoadImage(%s) as IMAGE_CURSOR succeeded incorrectly.\n", ext);
+    ok(handle == NULL, "%s: IMAGE_CURSOR succeeded incorrectly.\n", test_desc);
     error = GetLastError();
     ok(error == 0 ||
         broken(error == 0xdeadbeef) || /* Win9x */
@@ -779,7 +786,7 @@ static void test_LoadImageFile(unsigned char * image_data,
     /* Load as icon. For all tested formats, this should fail */
     SetLastError(0xdeadbeef);
     handle = LoadImageA(NULL, filename, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
-    ok(handle == NULL, "LoadImage(%s) as IMAGE_ICON succeeded incorrectly.\n", ext);
+    ok(handle == NULL, "%s: IMAGE_ICON succeeded incorrectly.\n", test_desc);
     error = GetLastError();
     ok(error == 0 ||
         broken(error == 0xdeadbeef) || /* Win9x */
@@ -796,10 +803,10 @@ static void test_LoadImageFile(unsigned char * image_data,
         "Last error: %u\n", error);
 
     if (expect_success) {
-        ok(handle != NULL, "LoadImage(%s) as IMAGE_BITMAP failed.\n", ext);
-        if (handle != NULL) test_LoadImageBitmap(handle);
+        ok(handle != NULL, "%s: IMAGE_BITMAP failed.\n", test_desc);
+        if (handle != NULL) test_LoadImageBitmap(test_desc, handle);
     }
-    else ok(handle == NULL, "LoadImage(%s) as IMAGE_BITMAP succeeded incorrectly.\n", ext);
+    else ok(handle == NULL, "%s: IMAGE_BITMAP succeeded incorrectly.\n", test_desc);
 
     if (handle != NULL) DeleteObject(handle);
     DeleteFileA(filename);
@@ -892,17 +899,18 @@ static void test_LoadImage(void)
     HeapFree(GetProcessHeap(), 0, icon_data);
     DeleteFileA("icon.ico");
 
-    test_LoadImageFile(bmpimage, sizeof(bmpimage), "bmp", 1);
-    test_LoadImageFile(gifimage, sizeof(gifimage), "gif", 0);
-    test_LoadImageFile(gif4pixel, sizeof(gif4pixel), "gif", 0);
-    test_LoadImageFile(jpgimage, sizeof(jpgimage), "jpg", 0);
-    test_LoadImageFile(pngimage, sizeof(pngimage), "png", 0);
+    test_LoadImageFile("BMP", bmpimage, sizeof(bmpimage), "bmp", 1);
+    test_LoadImageFile("BMP (coreinfo)", bmpcoreimage, sizeof(bmpcoreimage), "bmp", 1);
+    test_LoadImageFile("GIF", gifimage, sizeof(gifimage), "gif", 0);
+    test_LoadImageFile("GIF (2x2 pixel)", gif4pixel, sizeof(gif4pixel), "gif", 0);
+    test_LoadImageFile("JPG", jpgimage, sizeof(jpgimage), "jpg", 0);
+    test_LoadImageFile("PNG", pngimage, sizeof(pngimage), "png", 0);
     /* Check failure for broken BMP images */
     bmpimage[0x14]++; /* biHeight > 65535 */
-    test_LoadImageFile(bmpimage, sizeof(bmpimage), "bmp", 0);
+    test_LoadImageFile("BMP (too high)", bmpimage, sizeof(bmpimage), "bmp", 0);
     bmpimage[0x14]--;
     bmpimage[0x18]++; /* biWidth > 65535 */
-    test_LoadImageFile(bmpimage, sizeof(bmpimage), "bmp", 0);
+    test_LoadImageFile("BMP (too wide)", bmpimage, sizeof(bmpimage), "bmp", 0);
     bmpimage[0x18]--;
 }
 
