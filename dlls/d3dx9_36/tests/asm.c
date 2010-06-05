@@ -1435,6 +1435,25 @@ static void assembleshader_test(void) {
     }
     if(shader) ID3DXBuffer_Release(shader);
 
+    /* NULL messages test */
+    shader = NULL;
+    hr = D3DXAssembleShader(test1, strlen(test1),
+                            defines, NULL, D3DXSHADER_SKIPVALIDATION,
+                            &shader, NULL);
+    ok(hr == D3D_OK, "NULL messages test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if(shader) ID3DXBuffer_Release(shader);
+
+    /* NULL shader test */
+    messages = NULL;
+    hr = D3DXAssembleShader(test1, strlen(test1),
+                            defines, NULL, D3DXSHADER_SKIPVALIDATION,
+                            NULL, &messages);
+    ok(hr == D3D_OK, "NULL shader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if(messages) {
+        trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+
     /* pInclude test */
     shader = NULL;
     messages = NULL;
