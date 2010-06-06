@@ -47,6 +47,8 @@ typedef struct
 #define _MAX_PATH           260
 #endif
 
+/* Make the secure string functions (names end in "_s") truncate their output */
+#define _TRUNCATE  ((size_t)-1)
 
 typedef struct _div_t {
     int quot;
