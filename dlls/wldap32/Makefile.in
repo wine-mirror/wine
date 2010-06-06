@@ -35,6 +35,7 @@ RC_SRCS = \
 	wldap32_En.rc \
 	wldap32_Es.rc \
 	wldap32_Fr.rc \
+	wldap32_It.rc \
 	wldap32_Ko.rc \
 	wldap32_Lt.rc \
 	wldap32_Nl.rc \
