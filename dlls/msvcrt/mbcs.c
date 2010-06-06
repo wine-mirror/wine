@@ -1783,7 +1783,7 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
         return MSVCRT_EINVAL;
     }
 
-    if(count==_TRUNCATE || size<count)
+    if(count==MSVCRT__TRUNCATE || size<count)
         conv = size;
     else
         conv = count;
@@ -1791,7 +1791,7 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
     conv = MSVCRT__mbstowcs_l(wcstr, mbstr, conv, locale);
     if(conv<size)
         wcstr[conv++] = '\0';
-    else if(conv==size && (count==_TRUNCATE || wcstr[conv-1]=='\0'))
+    else if(conv==size && (count==MSVCRT__TRUNCATE || wcstr[conv-1]=='\0'))
         wcstr[conv-1] = '\0';
     else {
         MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);

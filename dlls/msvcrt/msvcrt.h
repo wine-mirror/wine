@@ -709,7 +709,7 @@ typedef void (__cdecl *MSVCRT___sighandler_t)(int);
 #define _MB_CP_ANSI     -3
 #define _MB_CP_LOCALE   -4
 
-#define _TRUNCATE ((MSVCRT_size_t)-1)
+#define MSVCRT__TRUNCATE ((MSVCRT_size_t)-1)
 
 void  __cdecl    MSVCRT_free(void*);
 void* __cdecl    MSVCRT_malloc(MSVCRT_size_t);
