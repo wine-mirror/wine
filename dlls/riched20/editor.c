@@ -3502,16 +3502,18 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     CHARFORMAT2W fmt;
     HDC hDC;
     BOOL bRepaint = LOWORD(lParam);
-    ME_Cursor start;
 
     if (!wParam)
-      wParam = (WPARAM)GetStockObject(SYSTEM_FONT); 
+      wParam = (WPARAM)GetStockObject(SYSTEM_FONT);
     GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf);
     hDC = ITextHost_TxGetDC(editor->texthost);
-    ME_CharFormatFromLogFont(hDC, &lf, &fmt); 
+    ME_CharFormatFromLogFont(hDC, &lf, &fmt);
     ITextHost_TxReleaseDC(editor->texthost, hDC);
-    ME_SetCursorToStart(editor, &start);
-    ME_SetCharFormat(editor, &start, NULL, &fmt);
+    if (editor->mode & TM_RICHTEXT) {
+      ME_Cursor start;
+      ME_SetCursorToStart(editor, &start);
+      ME_SetCharFormat(editor, &start, NULL, &fmt);
+    }
     ME_SetDefaultCharFormat(editor, &fmt);
 
     ME_CommitUndo(editor);
