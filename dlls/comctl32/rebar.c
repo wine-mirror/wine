@@ -2779,7 +2779,7 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, INT iBand, BOOL show)
 {
     REBAR_BAND *lpBand;
 
-    if (iBand < 0 || iBand > infoPtr->uNumBands)
+    if (iBand < 0 || iBand >= infoPtr->uNumBands)
 	return FALSE;
 
     lpBand = REBAR_GetBand(infoPtr, iBand);
