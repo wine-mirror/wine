@@ -32,7 +32,7 @@ BEGIN
         MENUITEM "Op&slaan\tCtrl+S",      ID_FILE_SAVE
         MENUITEM "Ops&laan als...",       ID_FILE_SAVEAS
         MENUITEM SEPARATOR
-        MENUITEM "&Afdrukken...\tCtrl+P",     ID_PRINT
+        MENUITEM "Af&drukken...\tCtrl+P",     ID_PRINT
         MENUITEM "Afdruk&voorbeeld...",     ID_PREVIEW
         MENUITEM "Pa&gina-instellingen...",        ID_PRINTSETUP
         MENUITEM SEPARATOR
@@ -41,7 +41,7 @@ BEGIN
     POPUP "Be&werken"
     BEGIN
         MENUITEM "&Ongedaan maken\tCtrl+Z",     ID_EDIT_UNDO
-        MENUITEM "O&pnieuw\tCtrl+Y",            ID_EDIT_REDO
+        MENUITEM "Opn&ieuw\tCtrl+Y",            ID_EDIT_REDO
         MENUITEM SEPARATOR
         MENUITEM "K&nippen\tCtrl+X",            ID_EDIT_CUT
         MENUITEM "&Kopiëren\tCtrl+C",           ID_EDIT_COPY
@@ -237,8 +237,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "Vorige pagina"
     STRING_PREVIEW_TWOPAGES,         "Twee pagina's"
     STRING_PREVIEW_ONEPAGE,          "Een pagina"
-    STRING_PREVIEW_ZOOMIN,           "Zoom in"
-    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
+    STRING_PREVIEW_ZOOMIN,           "Inzoomen"
+    STRING_PREVIEW_ZOOMOUT,          "Uitzoomen"
     STRING_PREVIEW_CLOSE,            "Sluiten"
     STRING_PREVIEW_PAGE,             "Pagina"
     STRING_PREVIEW_PAGES,            "Pagina's"
