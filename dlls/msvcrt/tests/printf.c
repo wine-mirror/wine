@@ -864,6 +864,13 @@ START_TEST(printf)
     p__vscprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscprintf");
     p__vscwprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscwprintf");
 
-    if (p__vscprintf) test_vscprintf();
-    if (p__vscwprintf) test_vscwprintf();
+    if (p__vscprintf)
+        test_vscprintf();
+    else
+        win_skip("_vscprintf not available\n");
+
+    if (p__vscwprintf)
+        test_vscwprintf();
+    else
+        win_skip("_vscwprintf not available\n");
 }
