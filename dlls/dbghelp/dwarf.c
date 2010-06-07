@@ -1122,14 +1122,17 @@ static struct symt* dwarf2_parse_array_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    if (!di->abbrev->have_child)
-    {
-        FIXME("array without range information\n");
-        return NULL;
-    }
     ref_type = dwarf2_lookup_type(ctx, di);
 
-    for (i=0; i<vector_length(&di->children); i++)
+    if (!di->abbrev->have_child)
+    {
+        /* fake an array with unknown size */
+        /* FIXME: int4 even on 64bit machines??? */
+        idx_type = ctx->symt_cache[sc_int4];
+        min.u.uvalue = 0;
+        max.u.uvalue = -1;
+    }
+    else for (i = 0; i < vector_length(&di->children); i++)
     {
         child = *(dwarf2_debug_info_t**)vector_at(&di->children, i);
         switch (child->abbrev->tag)
