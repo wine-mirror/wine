@@ -1126,6 +1126,11 @@ static void export_hkey(FILE *file, HKEY key,
             if ((*val_name_buf)[0]) {
                 const WCHAR val_start[] = {'"','%','s','"','=',0};
 
+                line_len = 0;
+                REGPROC_export_string(line_buf, line_buf_size, &line_len, *val_name_buf, lstrlenW(*val_name_buf));
+                REGPROC_resize_char_buffer(val_name_buf, val_name_size, lstrlenW(*line_buf) + 1);
+                lstrcpyW(*val_name_buf, *line_buf);
+
                 line_len = 3 + lstrlenW(*val_name_buf);
                 REGPROC_resize_char_buffer(line_buf, line_buf_size, line_len);
                 sprintfW(*line_buf, val_start, *val_name_buf);
