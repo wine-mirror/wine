@@ -354,8 +354,66 @@ static HRESULT WINAPI TgaDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI TgaDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    TRACE("(%p,%p): stub\n", iface, pPixelFormat);
-    return E_NOTIMPL;
+    TgaDecoder *This = decoder_from_frame(iface);
+    int attribute_bitcount;
+
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
+
+    attribute_bitcount = This->header.image_descriptor & IMAGE_ATTRIBUTE_BITCOUNT_MASK;
+
+    if (attribute_bitcount)
+    {
+        FIXME("Need to read footer to find meaning of attribute bits\n");
+        return E_NOTIMPL;
+    }
+
+    switch (This->header.image_type & ~IMAGETYPE_RLE)
+    {
+    case IMAGETYPE_COLORMAPPED:
+        switch (This->header.depth)
+        {
+        case 8:
+            memcpy(pPixelFormat, &GUID_WICPixelFormat8bppIndexed, sizeof(GUID));
+            break;
+        default:
+            FIXME("Unhandled indexed color depth %u\n", This->header.depth);
+            return E_NOTIMPL;
+        }
+        break;
+    case IMAGETYPE_TRUECOLOR:
+        switch (This->header.depth)
+        {
+        case 16:
+            memcpy(pPixelFormat, &GUID_WICPixelFormat16bppBGR555, sizeof(GUID));
+            break;
+        case 24:
+            memcpy(pPixelFormat, &GUID_WICPixelFormat24bppBGR, sizeof(GUID));
+            break;
+        default:
+            FIXME("Unhandled truecolor depth %u\n", This->header.depth);
+            return E_NOTIMPL;
+        }
+        break;
+    case IMAGETYPE_GRAYSCALE:
+        switch (This->header.depth)
+        {
+        case 8:
+            memcpy(pPixelFormat, &GUID_WICPixelFormat8bppGray, sizeof(GUID));
+            break;
+        case 16:
+            memcpy(pPixelFormat, &GUID_WICPixelFormat16bppGray, sizeof(GUID));
+            break;
+        default:
+            FIXME("Unhandled grayscale depth %u\n", This->header.depth);
+            return E_NOTIMPL;
+        }
+        break;
+    default:
+        ERR("Unknown image type %u\n", This->header.image_type);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TgaDecoder_Frame_GetResolution(IWICBitmapFrameDecode *iface,
