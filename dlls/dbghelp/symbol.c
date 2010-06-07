@@ -476,7 +476,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     locsym->hash_elt.name = pool_strdup(&module->pool, name);
     locsym->hash_elt.next = NULL;
     locsym->kind          = dt;
-    locsym->container     = &block->symt;
+    locsym->container     = block ? &block->symt : &func->symt;
     locsym->type          = type;
     locsym->u.var         = *loc;
     if (block)
