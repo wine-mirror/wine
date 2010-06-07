@@ -28,8 +28,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct {
     const IUriVtbl  *lpIUriVtbl;
     LONG ref;
+    BSTR        raw_uri;
 
-    BSTR raw_uri;
+    /* Information about the canonicalized URI's buffer. */
+    WCHAR       *canon_uri;
+    DWORD       canon_size;
+    DWORD       canon_len;
+
+    INT         scheme_start;
+    DWORD       scheme_len;
+    URL_SCHEME  scheme_type;
 } Uri;
 
 typedef struct {
@@ -39,7 +47,6 @@ typedef struct {
 
 typedef struct {
     BSTR            uri;
-
 
     BOOL            is_relative;
 
@@ -243,6 +250,109 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
     return TRUE;
 }
 
+/* Canonicalizes the scheme information specified in the parse_data using the specified flags. */
+static BOOL canonicalize_scheme(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    uri->scheme_start = -1;
+    uri->scheme_len = 0;
+
+    if(!data->scheme) {
+        /* The only type of URI that doesn't have to have a scheme is a relative
+         * URI.
+         */
+        if(!data->is_relative) {
+            FIXME("(%p %p %x): Unable to determine the scheme type of %s.\n", data,
+                    uri, flags, debugstr_w(data->uri));
+            return FALSE;
+        }
+    } else {
+        if(!computeOnly) {
+            DWORD i;
+            INT pos = uri->canon_len;
+
+            for(i = 0; i < data->scheme_len; ++i) {
+                /* Scheme name must be lower case after canonicalization. */
+                uri->canon_uri[i + pos] = tolowerW(data->scheme[i]);
+            }
+
+            uri->canon_uri[i + pos] = ':';
+            uri->scheme_start = pos;
+
+            TRACE("(%p %p %x): Canonicalized scheme=%s, len=%d.\n", data, uri, flags,
+                    debugstr_wn(uri->canon_uri,  uri->scheme_len), data->scheme_len);
+        }
+
+        /* This happens in both compute only and non-compute only. */
+        uri->canon_len += data->scheme_len + 1;
+        uri->scheme_len = data->scheme_len;
+    }
+    return TRUE;
+}
+
+/* Compute's what the length of the URI specified by the parse_data will be
+ * after canonicalization occurs using the specified flags.
+ *
+ * This function will return a non-zero value indicating the length of the canonicalized
+ * URI, or -1 on error.
+ */
+static int compute_canonicalized_length(const parse_data *data, DWORD flags) {
+    Uri uri;
+
+    memset(&uri, 0, sizeof(Uri));
+
+    TRACE("(%p %x): Beginning to compute canonicalized length for URI %s\n", data, flags,
+            debugstr_w(data->uri));
+
+    if(!canonicalize_scheme(data, &uri, flags, TRUE)) {
+        ERR("(%p %x): Failed to compute URI scheme length.\n", data, flags);
+        return -1;
+    }
+
+    TRACE("(%p %x): Finished computing canonicalized URI length. length=%d\n", data, flags, uri.canon_len);
+
+    return uri.canon_len;
+}
+
+/* Canonicalizes the URI data specified in the parse_data, using the given flags. If the
+ * canonicalization succeededs it will store all the canonicalization information
+ * in the pointer to the Uri.
+ *
+ * To canonicalize a URI this function first computes what the length of the URI
+ * specified by the parse_data will be. Once this is done it will then perfom the actual
+ * canonicalization of the URI.
+ */
+static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
+    INT len;
+
+    uri->canon_uri = NULL;
+    len = uri->canon_size = uri->canon_len = 0;
+
+    TRACE("(%p %p %x): beginning to canonicalize URI %s.\n", data, uri, flags, debugstr_w(data->uri));
+
+    /* First try to compute the length of the URI. */
+    len = compute_canonicalized_length(data, flags);
+    if(len == -1) {
+        ERR("(%p %p %x): Could not compute the canonicalized length of %s.\n", data, uri, flags,
+                debugstr_w(data->uri));
+        return E_INVALIDARG;
+    }
+
+    uri->canon_uri = heap_alloc((len+1)*sizeof(WCHAR));
+    if(!uri->canon_uri)
+        return E_OUTOFMEMORY;
+
+    if(!canonicalize_scheme(data, uri, flags, FALSE)) {
+        ERR("(%p %p %x): Unable to canonicalize the scheme of the URI.\n", data, uri, flags);
+        heap_free(uri->canon_uri);
+        return E_INVALIDARG;
+    }
+    uri->scheme_type = data->scheme_type;
+
+    uri->canon_uri[uri->canon_len] = '\0';
+    TRACE("(%p %p %x): finished canonicalizing the URI.\n", data, uri, flags);
+
+    return S_OK;
+}
+
 #define URI(x)         ((IUri*)  &(x)->lpIUriVtbl)
 #define URIBUILDER(x)  ((IUriBuilder*)  &(x)->lpIUriBuilderVtbl)
 
@@ -287,6 +397,7 @@ static ULONG WINAPI Uri_Release(IUri *iface)
 
     if(!ref) {
         SysFreeString(This->raw_uri);
+        heap_free(This->canon_uri);
         heap_free(This);
     }
 
@@ -684,6 +795,7 @@ static const IUriVtbl UriVtbl = {
 HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IUri **ppURI)
 {
     Uri *ret;
+    HRESULT hr;
     parse_data data;
 
     TRACE("(%s %x %x %p)\n", debugstr_w(pwzURI), dwFlags, (DWORD)dwReserved, ppURI);
@@ -713,12 +825,22 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     memset(&data, 0, sizeof(parse_data));
     data.uri = ret->raw_uri;
 
+    /* Validate and parse the URI into it's components. */
     if(!parse_uri(&data, dwFlags)) {
         /* Encountered an unsupported or invalid URI */
         SysFreeString(ret->raw_uri);
         heap_free(ret);
         *ppURI = NULL;
         return E_INVALIDARG;
+    }
+
+    /* Canonicalize the URI. */
+    hr = canonicalize_uri(&data, ret, dwFlags);
+    if(FAILED(hr)) {
+        SysFreeString(ret->raw_uri);
+        heap_free(ret);
+        *ppURI = NULL;
+        return hr;
     }
 
     *ppURI = URI(ret);
