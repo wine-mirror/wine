@@ -20,6 +20,9 @@
 #include "urlmon_main.h"
 #include "wine/debug.h"
 
+#define NO_SHLWAPI_REG
+#include "shlwapi.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
@@ -33,6 +36,146 @@ typedef struct {
     const IUriBuilderVtbl  *lpIUriBuilderVtbl;
     LONG ref;
 } UriBuilder;
+
+typedef struct {
+    BSTR            uri;
+
+
+    BOOL            is_relative;
+
+    const WCHAR     *scheme;
+    DWORD           scheme_len;
+} parse_data;
+
+static inline BOOL is_alpha(WCHAR val) {
+	return ((val >= 'a' && val <= 'z') || (val >= 'A' && val <= 'Z'));
+}
+
+static inline BOOL is_num(WCHAR val) {
+	return (val >= '0' && val <= '9');
+}
+
+/* A URI is implicitly a file path if it begins with
+ * a drive letter (eg X:) or starts with "\\" (UNC path).
+ */
+static inline BOOL is_implicit_file_path(const WCHAR *str) {
+    if(is_alpha(str[0]) && str[1] == ':')
+        return TRUE;
+    else if(str[0] == '\\' && str[1] == '\\')
+        return TRUE;
+
+    return FALSE;
+}
+
+/* Tries to parse the scheme name of the URI.
+ *
+ * scheme = ALPHA *(ALPHA | NUM | '+' | '-' | '.') as defined by RFC 3896.
+ * NOTE: Windows accepts a number as the first character of a scheme.
+ */
+static BOOL parse_scheme_name(const WCHAR **ptr, parse_data *data) {
+    const WCHAR *start = *ptr;
+
+    data->scheme = NULL;
+    data->scheme_len = 0;
+
+    while(**ptr) {
+        if(!is_num(**ptr) && !is_alpha(**ptr) && **ptr != '+' &&
+           **ptr != '-' && **ptr != '.')
+            break;
+
+        (*ptr)++;
+    }
+
+    if(*ptr == start)
+        return FALSE;
+
+    /* Schemes must end with a ':' */
+    if(**ptr != ':') {
+        *ptr = start;
+        return FALSE;
+    }
+
+    data->scheme = start;
+    data->scheme_len = *ptr - start;
+
+    ++(*ptr);
+    return TRUE;
+}
+
+/* Tries to parse (or deduce) the scheme_name of a URI. If it can't
+ * parse a scheme from the URI it will try to deduce the scheme_name and scheme_type
+ * using the flags specified in 'flags' (if any). Flags that affect how this function
+ * operates are the Uri_CREATE_ALLOW_* flags.
+ *
+ * All parsed/deduced information will be stored in 'data' when the function returns.
+ *
+ * Returns TRUE if it was able to successfully parse the information.
+ */
+static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    static const WCHAR fileW[] = {'f','i','l','e',0};
+    static const WCHAR wildcardW[] = {'*',0};
+
+    /* First check to see if the uri could implicitly be a file path. */
+    if(is_implicit_file_path(*ptr)) {
+        if(flags & Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME) {
+            data->scheme = fileW;
+            data->scheme_len = lstrlenW(fileW);
+            TRACE("(%p %p %x): URI is an implicit file path.\n", ptr, data, flags);
+        } else {
+            /* Window's does not consider anything that can implicitly be a file
+             * path to be a valid URI if the ALLOW_IMPLICIT_FILE_SCHEME flag is not set...
+             */
+            TRACE("(%p %p %x): URI is implicitly a file path, but, the ALLOW_IMPLICIT_FILE_SCHEME flag wasn't set.\n",
+                    ptr, data, flags);
+            return FALSE;
+        }
+    } else if(!parse_scheme_name(ptr, data)) {
+        /* No Scheme was found, this means it could be:
+         *      a) an implicit Wildcard scheme
+         *      b) a relative URI
+         *      c) a invalid URI.
+         */
+        if(flags & Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME) {
+            data->scheme = wildcardW;
+            data->scheme_len = lstrlenW(wildcardW);
+
+            TRACE("(%p %p %x): URI is an implicit wildcard scheme.\n", ptr, data, flags);
+        } else if (flags & Uri_CREATE_ALLOW_RELATIVE) {
+            data->is_relative = TRUE;
+            TRACE("(%p %p %x): URI is relative.\n", ptr, data, flags);
+        } else {
+            TRACE("(%p %p %x): Malformed URI found. Unable to deduce scheme name.\n", ptr, data, flags);
+            return FALSE;
+        }
+    }
+
+    if(!data->is_relative)
+        TRACE("(%p %p %x): Found scheme=%s scheme_len=%d\n", ptr, data, flags,
+                debugstr_wn(data->scheme, data->scheme_len), data->scheme_len);
+
+    return TRUE;
+}
+
+/* Parses and validates the components of the specified by data->uri
+ * and stores the information it parses into 'data'.
+ *
+ * Returns TRUE if it successfully parsed the URI. False otherwise.
+ */
+static BOOL parse_uri(parse_data *data, DWORD flags) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+
+    ptr = data->uri;
+    pptr = &ptr;
+
+    TRACE("(%p %x): BEGINNING TO PARSE URI %s.\n", data, flags, debugstr_w(data->uri));
+
+    if(!parse_scheme(pptr, data, flags))
+        return FALSE;
+
+    TRACE("(%p %x): FINISHED PARSING URI.\n", data, flags);
+    return TRUE;
+}
 
 #define URI(x)         ((IUri*)  &(x)->lpIUriVtbl)
 #define URIBUILDER(x)  ((IUriBuilder*)  &(x)->lpIUriBuilderVtbl)
@@ -475,6 +618,7 @@ static const IUriVtbl UriVtbl = {
 HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IUri **ppURI)
 {
     Uri *ret;
+    parse_data data;
 
     TRACE("(%s %x %x %p)\n", debugstr_w(pwzURI), dwFlags, (DWORD)dwReserved, ppURI);
 
@@ -495,10 +639,20 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
 
     /* Create a copy of pwzURI and store it as the raw_uri. */
     ret->raw_uri = SysAllocString(pwzURI);
-
     if(!ret->raw_uri) {
         heap_free(ret);
         return E_OUTOFMEMORY;
+    }
+
+    memset(&data, 0, sizeof(parse_data));
+    data.uri = ret->raw_uri;
+
+    if(!parse_uri(&data, dwFlags)) {
+        /* Encountered an unsupported or invalid URI */
+        SysFreeString(ret->raw_uri);
+        heap_free(ret);
+        *ppURI = NULL;
+        return E_INVALIDARG;
     }
 
     *ppURI = URI(ret);
