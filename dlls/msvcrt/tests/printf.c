@@ -812,6 +812,9 @@ static void test_vsnwprintf(void)
 
 static int (__cdecl *p__vscprintf)(const char *format, __ms_va_list valist);
 static int (__cdecl *p__vscwprintf)(const wchar_t *format, __ms_va_list valist);
+static int (__cdecl *p__vsnwprintf_s)(wchar_t *str, size_t sizeOfBuffer,
+                                      size_t count, const wchar_t *format,
+                                      __ms_va_list valist);
 
 static int __cdecl _vscprintf_wrapper(const char *format, ...)
 {
@@ -852,6 +855,58 @@ static void test_vscwprintf(void)
     ok( ret == 8, "got %d expected 8\n", ret );
 }
 
+static int __cdecl _vsnwprintf_s_wrapper(wchar_t *str, size_t sizeOfBuffer,
+                                 size_t count, const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p__vsnwprintf_s(str, sizeOfBuffer, count, format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_vsnwprintf_s(void)
+{
+    const wchar_t format[] = { 'A','B','%','u','C',0 };
+    const wchar_t out7[] = { 'A','B','1','2','3','C',0 };
+    const wchar_t out6[] = { 'A','B','1','2','3',0 };
+    const wchar_t out2[] = { 'A',0 };
+    const wchar_t out1[] = { 0 };
+    wchar_t buffer[14] = { 0 };
+    int exp, got;
+
+    /* Enough room. */
+    exp = wcslen(out7);
+
+    got = _vsnwprintf_s_wrapper(buffer, 14, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !wcscmp(out7, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 12, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !wcscmp(out7, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 7, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !wcscmp(out7, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    /* Not enough room. */
+    exp = -1;
+
+    got = _vsnwprintf_s_wrapper(buffer, 6, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !wcscmp(out6, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 2, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !wcscmp(out2, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+
+    got = _vsnwprintf_s_wrapper(buffer, 1, _TRUNCATE, format, 123);
+    ok( exp == got, "length wrong, expect=%d, got=%d\n", exp, got);
+    ok( !wcscmp(out1, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
+}
+
 START_TEST(printf)
 {
     test_sprintf();
@@ -863,6 +918,7 @@ START_TEST(printf)
 
     p__vscprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscprintf");
     p__vscwprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscwprintf");
+    p__vsnwprintf_s = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vsnwprintf_s");
 
     if (p__vscprintf)
         test_vscprintf();
@@ -873,4 +929,9 @@ START_TEST(printf)
         test_vscwprintf();
     else
         win_skip("_vscwprintf not available\n");
+
+    if (p__vsnwprintf_s)
+        test_vsnwprintf_s();
+    else
+        win_skip("_vsnwprintf_s not available\n");
 }
