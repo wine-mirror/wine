@@ -886,6 +886,11 @@ static void ps_2_0_test(void) {
             {0xffff0200, 0x0200001f, 0x90000000, 0xa00f0802, 0x03020042, 0x800f0000,
              0xb0e40001, 0xa0e40802, 0x0000ffff}
         },
+        {   /* shader 11 */
+            "ps_2_0\n"
+            "dcl v0\n",
+            {0xffff0200, 0x0200001f, 0x80000000, 0x900f0000, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_2_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1195,6 +1200,11 @@ static void ps_3_0_test(void) {
             "dcl_2d_pp s0\n",
             {0xffff0300, 0x0200001f, 0x90000000, 0xa02f0800, 0x0000ffff}
         },
+        {   /* shader 15 */
+            "ps_3_0\n"
+            "dcl v0\n",
+            {0xffff0300, 0x0200001f, 0x80000000, 0x900f0000, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1336,6 +1346,9 @@ static void failure_test(void) {
         /* shader 42: no modifiers with vs dcl sampler instruction */
         "vs_3_0\n"
         "dcl_2d_pp s0\n",
+        /* shader 43: can't explicitely declare input registers in ps_2_0 */
+        "ps_2_0\n"
+        "dcl_texcoord0 t0\n",
     };
     HRESULT hr;
     unsigned int i;

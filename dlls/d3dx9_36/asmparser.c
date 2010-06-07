@@ -133,6 +133,25 @@ static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
     }
 }
 
+static void asmparser_dcl_input_ps_2(struct asm_parser *This, DWORD usage, DWORD num,
+                                     DWORD mod, const struct shader_reg *reg) {
+    struct instruction instr;
+
+    if(!This->shader) return;
+    if(usage != 0) {
+        asmparser_message(This, "Line %u: Unsupported usage in dcl instruction\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+        return;
+    }
+    instr.dstmod = mod;
+    instr.shift = 0;
+    This->funcs->dstreg(This, &instr, reg);
+    if(!record_declaration(This->shader, usage, num, mod, FALSE, instr.dst.regnum, instr.dst.writemask, FALSE)) {
+        ERR("Out of memory\n");
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
 static void asmparser_dcl_sampler(struct asm_parser *This, DWORD samptype,
                                   DWORD mod, DWORD regnum,
                                   unsigned int line_no) {
@@ -811,7 +830,7 @@ static const struct asmparser_backend parser_ps_2 = {
     asmparser_coissue_unsupported,
 
     asmparser_dcl_output,
-    asmparser_dcl_input,
+    asmparser_dcl_input_ps_2,
     asmparser_dcl_sampler,
 
     asmparser_end,
@@ -831,7 +850,7 @@ static const struct asmparser_backend parser_ps_2_x = {
     asmparser_coissue_unsupported,
 
     asmparser_dcl_output,
-    asmparser_dcl_input,
+    asmparser_dcl_input_ps_2,
     asmparser_dcl_sampler,
 
     asmparser_end,

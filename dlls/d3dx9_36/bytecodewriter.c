@@ -343,11 +343,15 @@ static void put_dword(struct bytecode_buffer *buffer, DWORD value) {
 /******************************************************
  * Implementation of the writer functions starts here *
  ******************************************************/
-static void write_declarations(struct bytecode_buffer *buffer, BOOL len,
+static void write_declarations(struct bc_writer *This,
+                               struct bytecode_buffer *buffer, BOOL len,
                                const struct declaration *decls, unsigned int num, DWORD type) {
     DWORD i;
     DWORD instr_dcl = D3DSIO_DCL;
     DWORD token;
+    struct shader_reg reg;
+
+    ZeroMemory(&reg, sizeof(reg));
 
     if(len) {
         instr_dcl |= 2 << D3DSI_INSTLENGTH_SHIFT;
@@ -366,12 +370,10 @@ static void write_declarations(struct bytecode_buffer *buffer, BOOL len,
         put_dword(buffer, token);
 
         /* Write the dest register */
-        token = (1 << 31); /* Bit 31 of non-instruction opcodes is 1 */
-        token |= (type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
-        token |= (d3d9_writemask(decls[i].writemask)) & D3DSP_WRITEMASK_ALL;
-        token |= decls[i].regnum & D3DSP_REGNUM_MASK;
-        token |= d3d9_dstmod(decls[i].mod);
-        put_dword(buffer, token);
+        reg.type = type;
+        reg.regnum = decls[i].regnum;
+        reg.writemask = decls[i].writemask;
+        This->funcs->dstreg(This, &reg, buffer, 0, decls[i].mod);
     }
 }
 
@@ -514,7 +516,7 @@ static void vs_1_x_header(struct bc_writer *This, const struct bwriter_shader *s
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
 
-    write_declarations(buffer, FALSE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
+    write_declarations(This, buffer, FALSE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, FALSE);
     return;
 }
@@ -908,7 +910,7 @@ static void vs_2_header(struct bc_writer *This,
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
 
-    write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
+    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
@@ -1187,6 +1189,7 @@ static void ps_2_header(struct bc_writer *This, const struct bwriter_shader *sha
 
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
+    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
     write_samplers(shader, buffer);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
@@ -1424,8 +1427,8 @@ static void sm_3_header(struct bc_writer *This, const struct bwriter_shader *sha
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
 
-    write_declarations(buffer, TRUE, shader->inputs, shader->num_inputs, D3DSPR_INPUT);
-    write_declarations(buffer, TRUE, shader->outputs, shader->num_outputs, D3DSPR_OUTPUT);
+    write_declarations(This, buffer, TRUE, shader->inputs, shader->num_inputs, BWRITERSPR_INPUT);
+    write_declarations(This, buffer, TRUE, shader->outputs, shader->num_outputs, BWRITERSPR_OUTPUT);
     write_constF(shader, buffer, TRUE);
     write_constB(shader, buffer, TRUE);
     write_constI(shader, buffer, TRUE);
