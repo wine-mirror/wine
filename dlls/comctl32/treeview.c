@@ -213,21 +213,11 @@ static VOID TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr);
 static LRESULT TREEVIEW_HScroll(TREEVIEW_INFO *, WPARAM);
 
 /* Random Utilities *****************************************************/
-
-#ifndef NDEBUG
-static inline void
-TREEVIEW_VerifyTree(TREEVIEW_INFO *infoPtr)
-{
-    (void)infoPtr;
-}
-#else
-/* The definition is at the end of the file. */
 static void TREEVIEW_VerifyTree(TREEVIEW_INFO *infoPtr);
-#endif
 
 /* Returns the treeview private data if hwnd is a treeview.
  * Otherwise returns an undefined value. */
-static TREEVIEW_INFO *
+static inline TREEVIEW_INFO *
 TREEVIEW_GetInfoPtr(HWND hwnd)
 {
     return (TREEVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
@@ -5818,7 +5808,6 @@ TREEVIEW_Unregister(void)
 
 /* Tree Verification ****************************************************/
 
-#ifdef NDEBUG
 static inline void
 TREEVIEW_VerifyChildren(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item);
 
@@ -5905,8 +5894,8 @@ TREEVIEW_VerifyRoot(TREEVIEW_INFO *infoPtr)
 static void
 TREEVIEW_VerifyTree(TREEVIEW_INFO *infoPtr)
 {
-    assert(infoPtr != NULL);
+    if (!TRACE_ON(treeview)) return;
 
+    assert(infoPtr != NULL);
     TREEVIEW_VerifyRoot(infoPtr);
 }
-#endif
