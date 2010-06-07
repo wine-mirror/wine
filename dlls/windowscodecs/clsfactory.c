@@ -53,6 +53,7 @@ static classinfo wic_classes[] = {
     {&CLSID_WICTiffDecoder, TiffDecoder_CreateInstance},
     {&CLSID_WICIcnsEncoder, IcnsEncoder_CreateInstance},
     {&CLSID_WICDefaultFormatConverter, FormatConverter_CreateInstance},
+    {&CLSID_WineTgaDecoder, TgaDecoder_CreateInstance},
     {0}};
 
 typedef struct {

@@ -19,7 +19,11 @@
 #ifndef WINCODECS_PRIVATE_H
 #define WINCODECS_PRIVATE_H
 
+DEFINE_GUID(CLSID_WineTgaDecoder, 0xb11fc79a,0x67cc,0x43e6,0xa9,0xce,0xe3,0xd5,0x49,0x45,0xd3,0x04);
+
 DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0x54,0xd4,0xf0,0x5c);
+
+DEFINE_GUID(GUID_WineContainerFormatTga, 0x0c44fda1,0xa5c5,0x4298,0x96,0x85,0x47,0x3f,0xc1,0x7c,0xd3,0x22);
 
 DEFINE_GUID(GUID_VendorWine, 0xddf46da1,0x7dc1,0x404e,0x98,0xf2,0xef,0xa4,0x8d,0xfc,0x95,0x0a);
 
@@ -37,6 +41,7 @@ extern HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void*
 extern HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
 extern HRESULT IcoDibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
+extern HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
 extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator);
 extern HRESULT PaletteImpl_Create(IWICPalette **palette);
