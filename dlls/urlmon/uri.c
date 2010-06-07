@@ -45,7 +45,37 @@ typedef struct {
 
     const WCHAR     *scheme;
     DWORD           scheme_len;
+    URL_SCHEME      scheme_type;
 } parse_data;
+
+/* List of scheme types/scheme names that are recognized by the IUri interface as of IE 7. */
+static const struct {
+    URL_SCHEME  scheme;
+    WCHAR       scheme_name[16];
+} recognized_schemes[] = {
+    {URL_SCHEME_FTP,            {'f','t','p',0}},
+    {URL_SCHEME_HTTP,           {'h','t','t','p',0}},
+    {URL_SCHEME_GOPHER,         {'g','o','p','h','e','r',0}},
+    {URL_SCHEME_MAILTO,         {'m','a','i','l','t','o',0}},
+    {URL_SCHEME_NEWS,           {'n','e','w','s',0}},
+    {URL_SCHEME_NNTP,           {'n','n','t','p',0}},
+    {URL_SCHEME_TELNET,         {'t','e','l','n','e','t',0}},
+    {URL_SCHEME_WAIS,           {'w','a','i','s',0}},
+    {URL_SCHEME_FILE,           {'f','i','l','e',0}},
+    {URL_SCHEME_MK,             {'m','k',0}},
+    {URL_SCHEME_HTTPS,          {'h','t','t','p','s',0}},
+    {URL_SCHEME_SHELL,          {'s','h','e','l','l',0}},
+    {URL_SCHEME_SNEWS,          {'s','n','e','w','s',0}},
+    {URL_SCHEME_LOCAL,          {'l','o','c','a','l',0}},
+    {URL_SCHEME_JAVASCRIPT,     {'j','a','v','a','s','c','r','i','p','t',0}},
+    {URL_SCHEME_VBSCRIPT,       {'v','b','s','c','r','i','p','t',0}},
+    {URL_SCHEME_ABOUT,          {'a','b','o','u','t',0}},
+    {URL_SCHEME_RES,            {'r','e','s',0}},
+    {URL_SCHEME_MSSHELLROOTED,  {'m','s','-','s','h','e','l','l','-','r','o','o','t','e','d',0}},
+    {URL_SCHEME_MSSHELLIDLIST,  {'m','s','-','s','h','e','l','l','-','i','d','l','i','s','t',0}},
+    {URL_SCHEME_MSHELP,         {'h','c','p',0}},
+    {URL_SCHEME_WILDCARD,       {'*',0}}
+};
 
 static inline BOOL is_alpha(WCHAR val) {
 	return ((val >= 'a' && val <= 'z') || (val >= 'A' && val <= 'Z'));
@@ -102,6 +132,38 @@ static BOOL parse_scheme_name(const WCHAR **ptr, parse_data *data) {
     return TRUE;
 }
 
+/* Tries to deduce the corresponding URL_SCHEME for the given URI. Stores
+ * the deduced URL_SCHEME in data->scheme_type.
+ */
+static BOOL parse_scheme_type(parse_data *data) {
+    /* If there's scheme data then see if it's a recognized scheme. */
+    if(data->scheme && data->scheme_len) {
+        DWORD i;
+
+        for(i = 0; i < sizeof(recognized_schemes)/sizeof(recognized_schemes[0]); ++i) {
+            if(lstrlenW(recognized_schemes[i].scheme_name) == data->scheme_len) {
+                /* Has to be a case insensitive compare. */
+                if(!StrCmpNIW(recognized_schemes[i].scheme_name, data->scheme, data->scheme_len)) {
+                    data->scheme_type = recognized_schemes[i].scheme;
+                    return TRUE;
+                }
+            }
+        }
+
+        /* If we get here it means it's not a recognized scheme. */
+        data->scheme_type = URL_SCHEME_UNKNOWN;
+        return TRUE;
+    } else if(data->is_relative) {
+        /* Relative URI's have no scheme. */
+        data->scheme_type = URL_SCHEME_UNKNOWN;
+        return TRUE;
+    } else {
+        /* Should never reach here! what happened... */
+        FIXME("(%p): Unable to determine scheme type for URI %s\n", data, debugstr_w(data->uri));
+        return FALSE;
+    }
+}
+
 /* Tries to parse (or deduce) the scheme_name of a URI. If it can't
  * parse a scheme from the URI it will try to deduce the scheme_name and scheme_type
  * using the flags specified in 'flags' (if any). Flags that affect how this function
@@ -153,6 +215,10 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
         TRACE("(%p %p %x): Found scheme=%s scheme_len=%d\n", ptr, data, flags,
                 debugstr_wn(data->scheme, data->scheme_len), data->scheme_len);
 
+    if(!parse_scheme_type(data))
+        return FALSE;
+
+    TRACE("(%p %p %x): Assigned %d as the URL_SCHEME.\n", ptr, data, flags, data->scheme_type);
     return TRUE;
 }
 
