@@ -72,6 +72,13 @@ typedef struct {
     BOOL initialized;
     IStream *stream;
     tga_header header;
+    BYTE *imagebits;
+    BYTE *origin;
+    int stride;
+    ULONG id_offset;
+    ULONG colormap_length;
+    ULONG colormap_offset;
+    ULONG image_offset;
     CRITICAL_SECTION lock;
 } TgaDecoder;
 
@@ -125,6 +132,7 @@ static ULONG WINAPI TgaDecoder_Release(IWICBitmapDecoder *iface)
         DeleteCriticalSection(&This->lock);
         if (This->stream)
             IStream_Release(This->stream);
+        HeapFree(GetProcessHeap(), 0, This->imagebits);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -208,6 +216,15 @@ static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         WARN("bad tga header\n");
         goto end;
     }
+
+    /* Locate data in the file based on the header. */
+    This->id_offset = sizeof(tga_header);
+    This->colormap_offset = This->id_offset + This->header.id_length;
+    if (This->header.colormap_type == 1)
+        This->colormap_length = ((This->header.colormap_entrysize+7)/8) * This->header.colormap_length;
+    else
+        This->colormap_length = 0;
+    This->image_offset = This->colormap_offset + This->colormap_length;
 
     /* FIXME: Read footer if there is one. */
 
@@ -436,11 +453,97 @@ static HRESULT WINAPI TgaDecoder_Frame_CopyPalette(IWICBitmapFrameDecode *iface,
     return E_NOTIMPL;
 }
 
+static HRESULT TgaDecoder_ReadImage(TgaDecoder *This)
+{
+    HRESULT hr=S_OK;
+    int datasize;
+    LARGE_INTEGER seek;
+    ULONG bytesread;
+
+    if (This->imagebits)
+        return S_OK;
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->imagebits)
+    {
+        if (This->header.image_descriptor & IMAGE_RIGHTTOLEFT)
+        {
+            FIXME("Right to left image reading not implemented\n");
+            hr = E_NOTIMPL;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            datasize = This->header.width * This->header.height * (This->header.depth / 8);
+            This->imagebits = HeapAlloc(GetProcessHeap(), 0, datasize);
+            if (!This->imagebits) hr = E_OUTOFMEMORY;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            seek.QuadPart = This->image_offset;
+            hr = IStream_Seek(This->stream, seek, STREAM_SEEK_SET, NULL);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            if (This->header.image_type & IMAGETYPE_RLE)
+            {
+                FIXME("RLE decoding not implemented\n");
+                hr = E_NOTIMPL;
+            }
+            else
+            {
+                hr = IStream_Read(This->stream, This->imagebits, datasize, &bytesread);
+                if (SUCCEEDED(hr) && bytesread != datasize)
+                    hr = E_FAIL;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            if (This->header.image_descriptor & IMAGE_TOPTOBOTTOM)
+            {
+                This->origin = This->imagebits;
+                This->stride = This->header.width * (This->header.depth / 8);
+            }
+            else
+            {
+                This->stride = -This->header.width * (This->header.depth / 8);
+                This->origin = This->imagebits + This->header.width * (This->header.height - 1) * (This->header.depth / 8);
+            }
+        }
+        else
+        {
+            HeapFree(GetProcessHeap(), 0, This->imagebits);
+            This->imagebits = NULL;
+        }
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
+}
+
 static HRESULT WINAPI TgaDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p):stub\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
-    return E_NOTIMPL;
+    TgaDecoder *This = decoder_from_frame(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    hr = TgaDecoder_ReadImage(This);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = copy_pixels(This->header.depth, This->origin,
+            This->header.width, This->header.height, This->stride,
+            prc, cbStride, cbBufferSize, pbBuffer);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI TgaDecoder_Frame_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
@@ -497,6 +600,7 @@ HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->ref = 1;
     This->initialized = FALSE;
     This->stream = NULL;
+    This->imagebits = NULL;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TgaDecoder.lock");
 
