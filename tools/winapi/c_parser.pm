@@ -513,6 +513,12 @@ sub parse_c_declaration($$$$)
 	if(s/\)//) {
 	    $column++;
 	}
+    } elsif(s/^__ASM_STDCALL_FUNC\(\s*(\w+)\s*,\s*\d+\s*,\s*//s) { # FIXME: Wine specific kludge
+	$self->_update_c_position($&, \$line, \$column);
+	$self->_parse_c_until_one_of("\)", \$_, \$line, \$column);
+	if(s/\)//) {
+	    $column++;
+	}
     } elsif(s/^(?:DEFINE_AVIGUID|DEFINE_OLEGUID)\s*(?=\()//s) { # FIXME: Wine specific kludge
 	$self->_update_c_position($&, \$line, \$column);
 
@@ -934,7 +940,7 @@ sub parse_c_file($$$$)
 		$self->_parse_c_error($_, $line, $column, "file", ") without (");
 	    }
 	    $declaration .= $&;
-	    if($plevel == 1 && $declaration =~ /^__ASM_GLOBAL_FUNC/) {
+	    if($plevel == 1 && $declaration =~ /^(__ASM_GLOBAL_FUNC|__ASM_STDCALL_FUNC)/) {
 		if(!$self->parse_c_declaration(\$declaration, \$declaration_line, \$declaration_column)) {
 		    return 0;
 		}
@@ -1390,11 +1396,11 @@ sub parse_c_struct_union($$$$$$$$$)
 
     $self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
 
-    if (!s/^(interface|struct|union)\s+((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
+    if (!s/^(interface|struct|union)(\s+((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+))?\s*\{\s*//s) {
 	return 0;
     }
     $kind = $1;
-    $_name = $2 || "";
+    $_name = $3 || "";
 
     $self->_update_c_position($&, \$line, \$column);
 
