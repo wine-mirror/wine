@@ -236,38 +236,46 @@ sub parse_files($) {
 	}
     }
 
-    if($#c_files == -1 && $#h_files == -1 && $#paths == -1)
+    if($#c_files == -1 && $#h_files == -1 && $#paths == -1 && -d ".git")
     {
-        @paths = ".";
+	@$c_files = sort split /\0/, `git ls-files -z \\*.c`;
+	@$h_files = sort split /\0/, `git ls-files -z \\*.h`;
     }
+    else
+    {
+        if($#c_files == -1 && $#h_files == -1 && $#paths == -1)
+        {
+            @paths = ".";
+        }
 
-    if($#paths != -1 || $#c_files != -1) {
-	my $c_command = "find " . join(" ", @paths, @c_files) . " -name \\*.c";
-	my %found;
-	@$c_files = sort(map {
-	    s/^\.\/(.*)$/$1/;
-	    if(defined($found{$_})) {
-		();
-	    } else {
-		$found{$_}++;
-		$_;
-	    }
-	} split(/\n/, `$c_command`));
-    }
+        if($#paths != -1 || $#c_files != -1) {
+            my $c_command = "find " . join(" ", @paths, @c_files) . " -name \\*.c";
+            my %found;
+            @$c_files = sort(map {
+                s/^\.\/(.*)$/$1/;
+                if(defined($found{$_})) {
+                    ();
+                } else {
+                    $found{$_}++;
+                    $_;
+                }
+                             } split(/\n/, `$c_command`));
+        }
 
-    if($#paths != -1 || $#h_files != -1) {
-	my $h_command = "find " . join(" ", @paths, @h_files) . " -name \\*.h";
-	my %found;
+        if($#paths != -1 || $#h_files != -1) {
+            my $h_command = "find " . join(" ", @paths, @h_files) . " -name \\*.h";
+            my %found;
 
-	@$h_files = sort(map {
-	    s/^\.\/(.*)$/$1/;
-	    if(defined($found{$_})) {
-		();
-	    } else {
-		$found{$_}++;
-		$_;
-	    }
-	} split(/\n/, `$h_command`));
+            @$h_files = sort(map {
+                s/^\.\/(.*)$/$1/;
+                if(defined($found{$_})) {
+                    ();
+                } else {
+                    $found{$_}++;
+                    $_;
+                }
+                             } split(/\n/, `$h_command`));
+        }
     }
 
     my %dirs;
