@@ -277,7 +277,8 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, const BYTE *ibuf
     DirectSoundDevice *device = dsb->device;
     INT istep = dsb->pwfx->wBitsPerSample / 8, ostep = device->pwfx->wBitsPerSample / 8;
 
-    if (device->pwfx->nChannels == dsb->pwfx->nChannels) {
+    if (device->pwfx->nChannels == dsb->pwfx->nChannels ||
+        (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 6)) {
         dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
         if (device->pwfx->nChannels == 2)
             dsb->convert(ibuf + istep, obuf + ostep, istride, ostride, count, freqAcc, adj);
