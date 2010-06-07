@@ -37,9 +37,9 @@ STRINGTABLE DISCARDABLE
 
 IDR_BROWSE_CONTEXT_MENU MENU
 {
-    POPUP "Default"
+    POPUP "Predefinito"
     {
-        MENUITEM "&Indietra",                  IDM_GOBACKWARD
+        MENUITEM "&Indietro",                  IDM_GOBACKWARD
         MENUITEM "&Avanti",               IDM_GOFORWARD
         MENUITEM SEPARATOR
         MENUITEM "&Salva sfondo come...", IDM_SAVEBACKGROUND
@@ -193,7 +193,6 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "&Incolla",                   IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "Aggiungi ai &Preferiti...",     IDM_ADDFAVORITES
-        MENUITEM SEPARATOR
         MENUITEM SEPARATOR
         MENUITEM "Riproduci",                     IDM_DYNSRCPLAY
         MENUITEM "Ferma",                     IDM_DYNSRCSTOP
