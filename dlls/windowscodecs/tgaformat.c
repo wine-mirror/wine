@@ -347,8 +347,14 @@ static ULONG WINAPI TgaDecoder_Frame_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI TgaDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p)\n", iface);
-    return E_NOTIMPL;
+    TgaDecoder *This = decoder_from_frame(iface);
+
+    *puiWidth = This->header.width;
+    *puiHeight = This->header.height;
+
+    TRACE("(%p)->(%u,%u)\n", iface, *puiWidth, *puiHeight);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TgaDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *iface,
