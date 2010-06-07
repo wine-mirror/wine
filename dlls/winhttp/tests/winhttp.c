@@ -211,6 +211,11 @@ static void test_OpenRequest (void)
     ok(request != NULL, "WinHttpOpenrequest failed to open a request, error: %u.\n", GetLastError());
 
     ret = WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, NULL, 0, 0, 0);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("Connection failed, skipping.\n");
+        goto done;
+    }
     ok(ret == TRUE, "WinHttpSendRequest failed: %u\n", GetLastError());
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
@@ -781,6 +786,11 @@ static void test_secure_connection(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    {
+        skip("Connection failed, skipping.\n");
+        goto cleanup;
+    }
     ok(ret, "failed to send request %u\n", GetLastError());
 
     ret = WinHttpReceiveResponse(req, NULL);
