@@ -2,7 +2,7 @@
  * Wine command prompt
  * Lithuanian Language Support
  *
- * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ * Copyright 2009-2010 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@ LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Informacija apie ATTRIB\n"
+  WCMD_ATTRIB, "ATTRIB parodo arba pakeičia DOS atributus.\n"
   WCMD_CALL,
 "CALL <komandųfailovardas> yra naudojama komandų failo viduje komandoms iš\n\
 kito komandų failo vykdyti. Kai komandų failas egzistuoja, valdymas\n\
@@ -38,16 +38,17 @@ kviečiamai procedūrai.\n\
 Numatytojo katalogo, aplinkos kintamųjų ir pan. pakeitimai atlikti\n\
 iškviestoje procedūroje yra paveldimi kviečiančiosios procedūros.\n"
 
-  WCMD_CD,     "Informacija apie CD\n"
-  WCMD_CHDIR,  "Informacija apie CHDIR\n"
+  WCMD_CD,     "CD <direktorija> yra trumpa CHDIR versija. Pakeičia dabartinį\n\
+numatytą katalogą.\n"
+  WCMD_CHDIR,  "CHDIR <direktorija> pakeičia dabartinį numatytą katalogą.\n"
 
-  WCMD_CLS,    "CLS išvalo pulto ekraną\n"
+  WCMD_CLS,    "CLS išvalo pulto ekraną.\n"
 
-  WCMD_COPY,   "Informacija apie COPY\n"
-  WCMD_CTTY,   "Informacija apie CTTY\n"
-  WCMD_DATE,   "Informacija apie DATE\n"
-  WCMD_DEL,    "Informacija apie DEL\n"
-  WCMD_DIR,    "Informacija apie DIR\n"
+  WCMD_COPY,   "COPY <failas> kopijuoja failą.\n"
+  WCMD_CTTY,   "CTTY pakeičia įvedimo/išvedimo įrenginį.\n"
+  WCMD_DATE,   "DATE parodo arba pakeičia sistemos datą.\n"
+  WCMD_DEL,    "DEL <failas> pašalina failą ar failų rinkinį.\n"
+  WCMD_DIR,    "DIR parodo katalogo turinį.\n"
 
   WCMD_ECHO,
 "ECHO <eilutė> parodo <eilutę> dabartiniame terminale.\n\
@@ -59,7 +60,7 @@ ECHO OFF panaikina ankstesnės ECHO ON komandos veikimą (ECHO OFF yra\n\
 numatyta). ECHO OFF komandos rodymo galima išvengti prieš ją pridedant\n\
 simbolį @.\n"
 
-  WCMD_ERASE,  "Informacija apie ERASE\n"
+  WCMD_ERASE,  "ERASE <failas> pašalina failą ar failų rinkinį.\n"
 
   WCMD_FOR,
 "FOR komanda yra naudojama įvykdyti komandą kiekvienam failų aibės elementui.\n\
@@ -80,7 +81,8 @@ komandų failo vykdymą.\n\
 \n\
 GOTO neturi poveikio naudojant interaktyviai.\n"
 
-  WCMD_HELP,   "Informacija apie HELP\n"
+  WCMD_HELP,   "HELP <komanda> parodo trumpą informaciją apie komandą.\n\
+HELP be argumentų parodo visas įtaisytas CMD komandas.\n"
 
   WCMD_IF,
 "IF yra naudojama vykdyti komandą su sąlyga.\n\
@@ -98,8 +100,8 @@ Sintaksė: LABEL [diskas:]\n\
 Komanda paklaus naujo tomo vardo duotam diskui.\n\
 Parodyti disko tomo vardą galima su komanda VOL.\n"
 
-  WCMD_MD,     "Informacija apie MD\n"
-  WCMD_MKDIR,  "Informacija apie MKDIR\n"
+  WCMD_MD,     "MD <vardas> yra trumpa MKDIR versija. Sukuria katalogą.\n"
+  WCMD_MKDIR,  "MKDIR <vardas> sukuria katalogą.\n"
   WCMD_MOVE,
 "MOVE perkelia failą ar katalogą į naują failų sistemos vietą.\n\
 \n\
@@ -144,16 +146,16 @@ dabartinio disko raidę) ir daugiau-už (>) simbolis.\n\
 (Taip pat, kaip komanda PROMPT $p$g).\n\
 \n\
 Raginimas taip pat gali būti pakeistas keičiant PROMPT aplinkos kintamąjį,\n\
-taigi, komanda „SET PROMPT=tekstas“ turi tą patį efektą kaip „PROMPT tekstas“\n"
+taigi, komanda „SET PROMPT=tekstas“ turi tą patį efektą kaip „PROMPT tekstas“.\n"
 
   WCMD_REM,
 "Komandos eilutė prasidedanti REM (ir tarpu) neatlieka jokio veiksmo\n\
 ir todėl gali būti naudojama kaip komentaras komandų faile.\n"
 
-  WCMD_REN,    "Informacija apie REN\n"
-  WCMD_RENAME, "Informacija apie RENAME\n"
-  WCMD_RD,     "Informacija apie RD\n"
-  WCMD_RMDIR,  "Informacija apie RMDIR\n"
+  WCMD_REN,    "REN <failas> yra trumpa RENAME versija. Pervadina failą.\n"
+  WCMD_RENAME, "RENAME <failas> pervadina failą.\n"
+  WCMD_RD,     "RD <katalogas> yra trumpa RMDIR versija. Pašalina katalogą.\n"
+  WCMD_RMDIR,  "RMDIR <katalogas> pašalina katalogą.\n"
 
   WCMD_SET,
 "SET parodo ar pakeičia CMD aplinkos kintamuosius.\n\
@@ -174,12 +176,12 @@ aplinkos iš komandų interpretatoriaus.\n"
 
   WCMD_SHIFT,
 "SHIFT yra naudojamas komandų faile pašalinti vienam parametrui iš sąrašo\n\
-priekio, taip parametras 2 tampa parametru 1 ir t.t. Ši komanda neturi\n\
+priekio, taip parametras 2 tampa parametru 1 ir t. t. Ši komanda neturi\n\
 jokio poveikio, kai kviečiama iš komandos eilutės.\n"
 
-  WCMD_TIME,   "Informacija apie TIME\n"
+  WCMD_TIME,   "TIME parodo arba nustato sistemos laiką.\n"
 
-  WCMD_TITLE,  "Nustato CMD lango antraštę, sintaksė TITLE [tekstas]\n"
+  WCMD_TITLE,  "Nustato CMD lango antraštę, sintaksė TITLE [tekstas].\n"
 
   WCMD_TYPE,
 "TYPE <failas> nukopijuoja <failą> į pulto įrenginį (arba kitur, jei\n\
@@ -189,16 +191,15 @@ nukreipta). Nėra tikrinama ar faile yra skaitomas tekstas.\n"
 "VERIFY yra naudojama nustatyti, išvalyti ar testuoti tikrinimo žymos bitą.\n\
 Galimos formos yra:\n\
 \n\
-VERIFY ON	Nustatyti žymos bitą\n\
-VERIFY OFF	Išvalyti žymos bitą\n\
-VERIFY		Parodo ON arba OFF, kuris tinkamas.\n\
+VERIFY ON\tNustatyti žymos bitą\n\
+VERIFY OFF\tIšvalyti žymos bitą\n\
+VERIFY\t\tParodo ON arba OFF, kuris tinkamas.\n\
 \n\
 Tikrinimo žymos bitas neturi jokios funkcijos Wine.\n"
 
-  WCMD_VER,
-"VER parodo dabar vykdomo CMD versiją\n"
+  WCMD_VER,    "VER parodo dabar vykdomo CMD versiją.\n"
 
-  WCMD_VOL,    "Informacija apie VOL\n"
+  WCMD_VOL,    "VOL parodo disko įrenginio tomo vardą.\n"
 
   WCMD_PUSHD,  "PUSHD <katalogas> išsaugo dabartinį katalogą į dėklą,\n\
 o po to pakeičia dabartinį katalogą į nurodytą.\n"
@@ -239,7 +240,7 @@ TYPE\t\tIšvesti tekstinio failo turinį\n\
 VER\t\tParodyti dabartinę CMD versiją\n\
 VOL\t\tParodyti tomo vardą\n\
 EXIT\t\tUžveria CMD\n\n\
-Įveskite HELP <komanda> platesnei informacijai apie išvardintas komandas gauti\n"
+Įveskite HELP <komanda> platesnei informacijai apie išvardintas komandas gauti.\n"
 
   WCMD_CONFIRM,       "Ar tikrai"
   WCMD_YES,           "T"
@@ -263,7 +264,7 @@ EXIT\t\tUžveria CMD\n\n\
   WCMD_READFAIL,      "Nepavyko atverti „%s“\n"
   WCMD_CALLINSCRIPT,  "Negalima iškviesti žymės esančios už komandos failo ribų\n"
   WCMD_ALL,           "V"
-  WCMD_DELPROMPT,     "%s, trinti"
+  WCMD_DELPROMPT,     "%s, šalinti"
   WCMD_ECHOPROMPT,    "ECHO yra %s\n"
   WCMD_VERIFYPROMPT,  "VERIFY yra %s\n"
   WCMD_VERIFYERR,     "VERIFY turi būti ON arba OFF\n";
