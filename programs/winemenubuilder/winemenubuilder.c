@@ -172,6 +172,9 @@ static char *xdg_config_dir;
 static char *xdg_data_dir;
 static char *xdg_desktop_dir;
 
+static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra);
+static char *extract_icon(LPCWSTR path, int index, const char *destFilename, BOOL bWait);
+
 /* Icon extraction routines
  *
  * FIXME: should use PrivateExtractIcons and friends
@@ -814,6 +817,39 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
     return 0;
 }
 
+static int ExtractFromFileType(LPCWSTR szFileName, char *szXPMFileName)
+{
+    int ret = 1;
+    WCHAR *extension;
+    WCHAR *icon = NULL;
+    WCHAR *comma;
+    int index = 0;
+    char *output_path = NULL;
+
+    extension = strrchrW(szFileName, '.');
+    if (extension == NULL)
+        goto end;
+
+    icon = assoc_query(ASSOCSTR_DEFAULTICON, extension, NULL);
+    if (icon == NULL)
+        goto end;
+
+    comma = strrchrW(icon, ',');
+    if (comma)
+    {
+        *comma = 0;
+        index = atoiW(comma + 1);
+    }
+    output_path = extract_icon(icon, index, NULL, FALSE);
+    if (output_path)
+        ret = rename(output_path, szXPMFileName);
+
+end:
+    HeapFree(GetProcessHeap(), 0, icon);
+    HeapFree(GetProcessHeap(), 0, output_path);
+    return ret;
+}
+
 static BOOL create_default_icon( const char *filename, const char* comment )
 {
     FILE *fXPM;
@@ -1030,6 +1066,8 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
     else
         sprintf(xpm_path,"%s/%04x_%s.png",iconsdir,crc,ico_name);
     if (ExtractFromICO( path, xpm_path))
+        goto end;
+    if (ExtractFromFileType( path, xpm_path ))
         goto end;
     if (!bWait)
     {
