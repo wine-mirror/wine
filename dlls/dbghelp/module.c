@@ -142,6 +142,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
 
     pool_init(&module->pool, 65536);
 
+    module->process = pcs;
     module->module.SizeOfStruct = sizeof(module->module);
     module->module.BaseOfImage = mod_addr;
     module->module.ImageSize = size;

@@ -347,6 +347,7 @@ struct module_format
 
 struct module
 {
+    struct process*             process;
     IMAGEHLP_MODULEW64          module;
     /* ANSI copy of module.ModuleName for efficiency */
     char                        module_name[MAX_PATH];
