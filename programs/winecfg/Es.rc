@@ -3,6 +3,7 @@
  * Spanish Language Support
  *
  * Copyright 2003-2009 José Manuel Ferrer Ortiz
+ * Copyright 2010 José Rostagno
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -122,6 +123,16 @@ BEGIN
     PUSHBUTTON      "Cancelar",IDCANCEL,62,74,50,14,WS_GROUP
 END
 
+IDD_DRIVECHOOSE DIALOG DISCARDABLE  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Seleccionar letra de la unidad"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "Aceptar",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "Cancelar",IDCANCEL,105,30,45,14,WS_GROUP
+END
+
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
@@ -164,8 +175,8 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Selección de manejador ",IDC_STATIC,8,4,244,210
-    LTEXT           "Seleccione un manejador de sonido marcando la casilla del deseado. Para deshabilitar el sonido no seleccione ninguno. No se recomienda la selección de más de un manejador. Para configurar un manejador haga doble click sobre él.",IDC_STATIC,15,15,227,35
+    GROUPBOX        "Selección de controlador ",IDC_STATIC,8,4,244,210
+    LTEXT           " Seleccione un controlador de sonido marcando la casilla del deseado. Para deshabilitar el sonido no seleccione ninguno. No se recomienda la selección de más de un controlador. Para configurar un controlador haga doble click sobre él.",IDC_STATIC,15,15,227,35
     CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,155
     PUSHBUTTON      "Probar sonido",IDC_AUDIO_TEST,170,50,59,14
     PUSHBUTTON      "Panel de control",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
@@ -223,7 +234,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Configuración de Wine para %s"
     IDS_THEMEFILE           "Ficheros de tema (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Seleccione un fichero de tema"
-    IDS_AUDIO_MISSING       "Actualmente no hay ningún manejador de audio especificado en el registro.\n\nSe ha seleccionado para usted un manejador recomendado. Puede usar éste o seleccionar otro manejador disponible.\n\nDebe pulsar Aplicar para que la selección surja efecto."
+    IDS_AUDIO_MISSING       "Actualmente no hay ningún controlador de audio especificado en el registro.\n\nSe ha seleccionado para usted un controlador recomendado. Puede usar éste o seleccionar otro controlador disponible.\n\nDebe pulsar Aplicar para que la selección surja efecto."
     IDS_SHELL_FOLDER        "Carpeta del sistema"
     IDS_LINKS_TO            "Enlaza a"
 END
@@ -270,22 +281,22 @@ BEGIN
     IDS_ACCEL_STANDARD          "Estándar"
     IDS_ACCEL_BASIC             "Básica"
     IDS_ACCEL_EMULATION         "Emulación"
-    IDS_DRIVER_ALSA             "Manejador ALSA"
-    IDS_DRIVER_ESOUND           "Manejador EsounD"
-    IDS_DRIVER_OSS              "Manejador OSS"
-    IDS_DRIVER_JACK             "Manejador JACK"
-    IDS_DRIVER_NAS              "Manejador NAS"
-    IDS_DRIVER_AUDIOIO          "Manejador Audio IO (Solaris)"
-    IDS_DRIVER_COREAUDIO        "Manejador CoreAudio"
+    IDS_DRIVER_ALSA             "Controlador ALSA"
+    IDS_DRIVER_ESOUND           "Controlador EsounD"
+    IDS_DRIVER_OSS              "Controlador OSS"
+    IDS_DRIVER_JACK             "Controlador JACK"
+    IDS_DRIVER_NAS              "Controlador NAS"
+    IDS_DRIVER_AUDIOIO          "Controlador Audio IO (Solaris)"
+    IDS_DRIVER_COREAUDIO        "Controlador CoreAudio"
     IDS_OPEN_DRIVER_ERROR       "¡No se ha podido abrir %s!"
-    IDS_SOUNDDRIVERS            "Manejadores de sonido"
+    IDS_SOUNDDRIVERS            "Controladores de sonido"
     IDS_DEVICES_WAVEOUT         "Dispositivos de salida de onda"
     IDS_DEVICES_WAVEIN          "Dispositivos de entrada de onda"
     IDS_DEVICES_MIDIOUT         "Dispositivos de salida MIDI"
     IDS_DEVICES_MIDIIN          "Dispositivos de entrada MIDI"
     IDS_DEVICES_AUX             "Dispositivos auxiliares"
     IDS_DEVICES_MIXER           "Dispositivos mezcladores"
-    IDS_UNAVAILABLE_DRIVER      "¡Se ha encontrado en el registro un manejador que no está disponible!\n\n¿Eliminar \"%s\" del registro?"
+    IDS_UNAVAILABLE_DRIVER      "¡Se ha encontrado en el registro un Controlador que no está disponible!\n\n¿Eliminar \"%s\" del registro?"
     IDS_WARNING                 "Advertencia"
 END
 
