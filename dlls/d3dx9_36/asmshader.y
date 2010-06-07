@@ -255,6 +255,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %type <modshift> omodifier
 %type <comptype> comp
 %type <declaration> dclusage
+%type <reg> dcl_inputreg
 %type <samplertype> sampdcl
 %type <rel_reg> rel_reg
 %type <reg> predicate
@@ -539,7 +540,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 reg.writemask = $4;
                                 asm_ctx.funcs->dcl_output(&asm_ctx, $2.dclusage, $2.regnum, &reg);
                             }
-                    | INSTR_DCL dclusage omods REG_INPUT
+                    | INSTR_DCL dclusage omods dcl_inputreg
                             {
                                 struct shader_reg reg;
                                 TRACE("Input reg declaration\n");
@@ -549,14 +550,14 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
-                                reg.type = BWRITERSPR_INPUT;
-                                reg.regnum = $4;
+                                reg.type = $4.type;
+                                reg.regnum = $4.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
                                 reg.writemask = BWRITERSP_WRITEMASK_ALL;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, $3.mod, &reg);
                             }
-                    | INSTR_DCL dclusage omods REG_INPUT writemask
+                    | INSTR_DCL dclusage omods dcl_inputreg writemask
                             {
                                 struct shader_reg reg;
                                 TRACE("Input reg declaration\n");
@@ -566,14 +567,14 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
-                                reg.type = BWRITERSPR_INPUT;
-                                reg.regnum = $4;
+                                reg.type = $4.type;
+                                reg.regnum = $4.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
                                 reg.writemask = $5;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, $2.dclusage, $2.regnum, $3.mod, &reg);
                             }
-                    | INSTR_DCL omods REG_INPUT
+                    | INSTR_DCL omods dcl_inputreg
                             {
                                 struct shader_reg reg;
                                 TRACE("Input reg declaration\n");
@@ -583,14 +584,14 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
-                                reg.type = BWRITERSPR_INPUT;
-                                reg.regnum = $3;
+                                reg.type = $3.type;
+                                reg.regnum = $3.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
                                 reg.writemask = BWRITERSP_WRITEMASK_ALL;
                                 asm_ctx.funcs->dcl_input(&asm_ctx, 0, 0, $2.mod, &reg);
                             }
-                    | INSTR_DCL omods REG_INPUT writemask
+                    | INSTR_DCL omods dcl_inputreg writemask
                             {
                                 struct shader_reg reg;
                                 TRACE("Input reg declaration\n");
@@ -600,8 +601,8 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }
                                 ZeroMemory(&reg, sizeof(reg));
-                                reg.type = BWRITERSPR_INPUT;
-                                reg.regnum = $3;
+                                reg.type = $3.type;
+                                reg.regnum = $3.regnum;
                                 reg.rel_reg = NULL;
                                 reg.srcmod = 0;
                                 reg.writemask = $4;
@@ -617,7 +618,7 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 }
                                 asm_ctx.funcs->dcl_sampler(&asm_ctx, $2, $3.mod, $4, asm_ctx.line_no);
                             }
-                    | INSTR_DCL sampdcl omods REG_INPUT
+                    | INSTR_DCL sampdcl omods dcl_inputreg
                             {
                                 TRACE("Error rule: sampler decl of input reg\n");
                                 asmparser_message(&asm_ctx, "Line %u: Sampler declarations of input regs is not valid\n",
@@ -1340,6 +1341,15 @@ dclusage:             USAGE_POSITION
                             TRACE("dcl_sample%u\n", $1);
                             $$.regnum = $1;
                             $$.dclusage = BWRITERDECLUSAGE_SAMPLE;
+                        }
+
+dcl_inputreg:         REG_INPUT
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_INPUT;
+                        }
+                    | REG_TEXTURE
+                        {
+                            $$.regnum = $1; $$.type = BWRITERSPR_TEXTURE;
                         }
 
 sampdcl:              SAMPTYPE_1D
