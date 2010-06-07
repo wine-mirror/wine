@@ -35,10 +35,44 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+#include "pshpack1.h"
+
+typedef struct {
+    BYTE id_length;
+    BYTE colormap_type;
+    BYTE image_type;
+    /* Colormap Specification */
+    WORD colormap_firstentry;
+    WORD colormap_length;
+    BYTE colormap_entrysize;
+    /* Image Specification */
+    WORD xorigin;
+    WORD yorigin;
+    WORD width;
+    WORD height;
+    BYTE depth;
+    BYTE image_descriptor;
+} tga_header;
+
+#define IMAGETYPE_COLORMAPPED 1
+#define IMAGETYPE_TRUECOLOR 2
+#define IMAGETYPE_GRAYSCALE 3
+#define IMAGETYPE_RLE 8
+
+#define IMAGE_ATTRIBUTE_BITCOUNT_MASK 0xf
+#define IMAGE_RIGHTTOLEFT 0x10
+#define IMAGE_TOPTOBOTTOM 0x20
+
+#include "poppack.h"
+
 typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
     const IWICBitmapFrameDecodeVtbl *lpFrameVtbl;
     LONG ref;
+    BOOL initialized;
+    IStream *stream;
+    tga_header header;
+    CRITICAL_SECTION lock;
 } TgaDecoder;
 
 static inline TgaDecoder *decoder_from_frame(IWICBitmapFrameDecode *iface)
@@ -87,6 +121,10 @@ static ULONG WINAPI TgaDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
+        if (This->stream)
+            IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -103,8 +141,83 @@ static HRESULT WINAPI TgaDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
 static HRESULT WINAPI TgaDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOptions);
-    return E_NOTIMPL;
+    TgaDecoder *This = (TgaDecoder*)iface;
+    HRESULT hr=S_OK;
+    DWORD bytesread;
+    LARGE_INTEGER seek;
+
+    TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->initialized)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    seek.QuadPart = 0;
+    hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr)) goto end;
+
+    hr = IStream_Read(pIStream, &This->header, sizeof(tga_header), &bytesread);
+    if (SUCCEEDED(hr) && bytesread != sizeof(tga_header))
+    {
+        TRACE("got only %u bytes\n", bytesread);
+        hr = E_FAIL;
+    }
+    if (FAILED(hr)) goto end;
+
+    TRACE("imagetype=%u, colormap type=%u, depth=%u, image descriptor=0x%x\n",
+        This->header.image_type, This->header.colormap_type,
+        This->header.depth, This->header.image_descriptor);
+
+    /* Sanity checking. Since TGA has no clear identifying markers, we need
+     * to be careful to not load a non-TGA image. */
+    switch (This->header.image_type)
+    {
+    case IMAGETYPE_COLORMAPPED:
+    case IMAGETYPE_COLORMAPPED|IMAGETYPE_RLE:
+        if (This->header.colormap_type != 1)
+            hr = E_FAIL;
+        break;
+    case IMAGETYPE_TRUECOLOR:
+    case IMAGETYPE_TRUECOLOR|IMAGETYPE_RLE:
+        if (This->header.colormap_type != 0 && This->header.colormap_type != 1)
+            hr = E_FAIL;
+        break;
+    case IMAGETYPE_GRAYSCALE:
+    case IMAGETYPE_GRAYSCALE|IMAGETYPE_RLE:
+        if (This->header.colormap_type != 0)
+            hr = E_FAIL;
+        break;
+    default:
+        hr = E_FAIL;
+    }
+
+    if (This->header.depth != 8 && This->header.depth != 16 &&
+        This->header.depth != 24 && This->header.depth != 32)
+        hr = E_FAIL;
+
+    if ((This->header.image_descriptor & IMAGE_ATTRIBUTE_BITCOUNT_MASK) > 8 ||
+        (This->header.image_descriptor & 0xc0) != 0)
+        hr = E_FAIL;
+
+    if (FAILED(hr))
+    {
+        WARN("bad tga header\n");
+        goto end;
+    }
+
+    /* FIXME: Read footer if there is one. */
+
+    IStream_AddRef(pIStream);
+    This->stream = pIStream;
+    This->initialized = TRUE;
+
+end:
+    LeaveCriticalSection(&This->lock);
+    return hr;
 }
 
 static HRESULT WINAPI TgaDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -309,6 +422,10 @@ HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->lpVtbl = &TgaDecoder_Vtbl;
     This->lpFrameVtbl = &TgaDecoder_Frame_Vtbl;
     This->ref = 1;
+    This->initialized = FALSE;
+    This->stream = NULL;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TgaDecoder.lock");
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
