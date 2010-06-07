@@ -279,8 +279,17 @@ static HRESULT WINAPI TgaDecoder_GetFrameCount(IWICBitmapDecoder *iface,
 static HRESULT WINAPI TgaDecoder_GetFrame(IWICBitmapDecoder *iface,
     UINT index, IWICBitmapFrameDecode **ppIBitmapFrame)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIBitmapFrame);
-    return E_NOTIMPL;
+    TgaDecoder *This = (TgaDecoder*)iface;
+    TRACE("(%p,%p)\n", iface, ppIBitmapFrame);
+
+    if (!This->initialized) return WINCODEC_ERR_NOTINITIALIZED;
+
+    if (index != 0) return E_INVALIDARG;
+
+    IWICBitmapDecoder_AddRef(iface);
+    *ppIBitmapFrame = (IWICBitmapFrameDecode*)&This->lpFrameVtbl;
+
+    return S_OK;
 }
 
 static const IWICBitmapDecoderVtbl TgaDecoder_Vtbl = {
