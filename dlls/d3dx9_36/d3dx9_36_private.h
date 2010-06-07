@@ -186,6 +186,7 @@ struct declaration {
     DWORD                   regnum;
     DWORD                   mod;
     DWORD                   writemask;
+    BOOL                    builtin;
 };
 
 struct samplerdecl {
@@ -288,7 +289,9 @@ BOOL add_instruction(struct bwriter_shader *shader, struct instruction *instr);
 BOOL add_constF(struct bwriter_shader *shader, DWORD reg, float x, float y, float z, float w);
 BOOL add_constI(struct bwriter_shader *shader, DWORD reg, INT x, INT y, INT z, INT w);
 BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x);
-BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, DWORD mod, BOOL output, DWORD regnum, DWORD writemask);
+BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
+                        DWORD usage_idx, DWORD mod, BOOL output,
+                        DWORD regnum, DWORD writemask, BOOL builtin);
 BOOL record_sampler(struct bwriter_shader *shader, DWORD samptype,
                     DWORD mod, DWORD regnum);
 

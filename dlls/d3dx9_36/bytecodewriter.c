@@ -209,7 +209,9 @@ BOOL add_constB(struct bwriter_shader *shader, DWORD reg, BOOL x) {
     return TRUE;
 }
 
-BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_idx, DWORD mod, BOOL output, DWORD regnum, DWORD writemask) {
+BOOL record_declaration(struct bwriter_shader *shader, DWORD usage,
+                        DWORD usage_idx, DWORD mod, BOOL output,
+                        DWORD regnum, DWORD writemask, BOOL builtin) {
     unsigned int *num;
     struct declaration **decl;
     unsigned int i;
@@ -252,6 +254,7 @@ BOOL record_declaration(struct bwriter_shader *shader, DWORD usage, DWORD usage_
     (*decl)[*num].regnum = regnum;
     (*decl)[*num].mod = mod;
     (*decl)[*num].writemask = writemask;
+    (*decl)[*num].builtin = builtin;
     (*num)++;
 
     return TRUE;
@@ -351,6 +354,8 @@ static void write_declarations(struct bytecode_buffer *buffer, BOOL len,
     }
 
     for(i = 0; i < num; i++) {
+        if(decls[i].builtin) continue;
+
         /* Write the DCL instruction */
         put_dword(buffer, instr_dcl);
 
@@ -403,11 +408,14 @@ static void write_constF(const struct bwriter_shader *shader, struct bytecode_bu
     write_const(shader->constF, shader->num_cf, D3DSIO_DEF, D3DSPR_CONST, buffer, len);
 }
 
+/* This function looks for VS 1/2 registers mapping to VS 3 output registers */
 static HRESULT vs_find_builtin_varyings(struct bc_writer *This, const struct bwriter_shader *shader) {
     DWORD i;
     DWORD usage, usage_idx, writemask, regnum;
 
     for(i = 0; i < shader->num_outputs; i++) {
+        if(!shader->outputs[i].builtin) continue;
+
         usage = shader->outputs[i].usage;
         usage_idx = shader->outputs[i].usage_idx;
         writemask = shader->outputs[i].writemask;
@@ -521,6 +529,8 @@ static HRESULT find_ps_builtin_semantics(struct bc_writer *This,
     for(i = 0; i < 8; i++) This->t_regnum[i] = -1;
 
     for(i = 0; i < shader->num_inputs; i++) {
+        if(!shader->inputs[i].builtin) continue;
+
         usage = shader->inputs[i].usage;
         usage_idx = shader->inputs[i].usage_idx;
         writemask = shader->inputs[i].writemask;
