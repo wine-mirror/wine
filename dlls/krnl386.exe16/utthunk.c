@@ -241,6 +241,14 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
     UTINFO *ut;
     HMODULE16 hModule16;
     FARPROC16 target16, init16;
+    static int done;
+
+    if (!done)
+    {
+        LoadLibrary16( "gdi.exe" );
+        LoadLibrary16( "user.exe" );
+        done = TRUE;
+    }
 
     /* Load 16-bit DLL and get UTProc16 entry point */
 
