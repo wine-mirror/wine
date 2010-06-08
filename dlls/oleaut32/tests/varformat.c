@@ -328,6 +328,7 @@ static void test_VarFormat(void)
   VARFMT(VT_I4,V_I4,1,"000###",S_OK,"000001");
   VARFMT(VT_I4,V_I4,1,"#00##00#0",S_OK,"00000001");
   VARFMT(VT_I4,V_I4,1,"1#####0000",S_OK,"10001");
+  VARFMT(VT_I4,V_I4,1,"##abcdefghijklmnopqrstuvwxyz",S_OK,"1abcdefghijklmnopqrstuvwxyz");
   VARFMT(VT_I4,V_I4,100000,"#,###,###,###",S_OK,"100,000");
   VARFMT(VT_I4,V_I4,1,"0,000,000,000",S_OK,"0,000,000,001");
   VARFMT(VT_I4,V_I4,123456789,"#,#.#",S_OK,"123,456,789.");
