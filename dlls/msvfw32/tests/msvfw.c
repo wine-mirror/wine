@@ -183,7 +183,7 @@ static void test_Locate(void)
 
         bi.biCompression = mmioFOURCC('m','s','v','c');
         err = ICDecompressQuery(h, &bi, &bo);
-        todo_wine ok(err == ICERR_BADFORMAT, "Query msvc->RGB16: %d\n", err);
+        ok(err == ICERR_BADFORMAT, "Query msvc->RGB16: %d\n", err);
 
         ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
     }
