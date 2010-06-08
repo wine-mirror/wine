@@ -661,7 +661,7 @@ static void test_Startup(void)
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
 
     okChildInt("StartupInfoA", "cb", startup.cb);
-    todo_wine okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
@@ -701,8 +701,8 @@ static void test_Startup(void)
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
     result = getChildString( "StartupInfoA", "lpTitle" );
-    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
-                  "expected '%s' or null, got '%s'\n", selfname, result );
+    ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+        "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -740,7 +740,7 @@ static void test_Startup(void)
 
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
-    todo_wine okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
+    okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -777,8 +777,8 @@ static void test_Startup(void)
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
 
     okChildInt("StartupInfoA", "cb", startup.cb);
-    todo_wine okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
-    todo_wine okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
+    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -1214,8 +1214,8 @@ static  void    test_SuspendFlag(void)
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     result = getChildString( "StartupInfoA", "lpTitle" );
-    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
-                  "expected '%s' or null, got '%s'\n", selfname, result );
+    ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+        "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -1276,8 +1276,8 @@ static  void    test_DebuggingFlag(void)
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     result = getChildString( "StartupInfoA", "lpTitle" );
-    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
-                  "expected '%s' or null, got '%s'\n", selfname, result );
+    ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+        "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -1389,8 +1389,8 @@ static void test_Console(void)
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
     result = getChildString( "StartupInfoA", "lpTitle" );
-    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
-                  "expected '%s' or null, got '%s'\n", selfname, result );
+    ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+        "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);

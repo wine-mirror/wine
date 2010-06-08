@@ -1481,6 +1481,7 @@ static startup_info_t *create_startup_info( LPCWSTR filename, LPCWSTR cmdline,
                                             const STARTUPINFOW *startup, DWORD *info_size )
 {
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
+    const WCHAR *title;
     startup_info_t *info;
     DWORD size;
     void *ptr;
@@ -1510,13 +1511,14 @@ static startup_info_t *create_startup_info( LPCWSTR filename, LPCWSTR cmdline,
         else
             cur_dir = cur_params->CurrentDirectory.DosPath.Buffer;
     }
+    title = startup->lpTitle ? startup->lpTitle : imagepath;
 
     size = sizeof(*info);
     size += strlenW( cur_dir ) * sizeof(WCHAR);
     size += cur_params->DllPath.Length;
     size += strlenW( imagepath ) * sizeof(WCHAR);
     size += strlenW( cmdline ) * sizeof(WCHAR);
-    if (startup->lpTitle) size += strlenW( startup->lpTitle ) * sizeof(WCHAR);
+    size += strlenW( title ) * sizeof(WCHAR);
     if (startup->lpDesktop) size += strlenW( startup->lpDesktop ) * sizeof(WCHAR);
     /* FIXME: shellinfo */
     if (startup->lpReserved2 && startup->cbReserved2) size += startup->cbReserved2;
@@ -1575,7 +1577,7 @@ static startup_info_t *create_startup_info( LPCWSTR filename, LPCWSTR cmdline,
     ptr = (char *)ptr + cur_params->DllPath.Length;
     info->imagepath_len = append_string( &ptr, imagepath );
     info->cmdline_len = append_string( &ptr, cmdline );
-    if (startup->lpTitle) info->title_len = append_string( &ptr, startup->lpTitle );
+    info->title_len = append_string( &ptr, title );
     if (startup->lpDesktop) info->desktop_len = append_string( &ptr, startup->lpDesktop );
     if (startup->lpReserved2 && startup->cbReserved2)
     {

@@ -468,11 +468,9 @@ void ENV_CopyStartupInformation(void)
 
     startup_infoA.cb                   = sizeof(startup_infoA);
     startup_infoA.lpReserved           = NULL;
-    startup_infoA.lpDesktop = (rupp->Desktop.Length &&
-                               RtlUnicodeStringToAnsiString( &ansi, &rupp->Desktop, TRUE) == STATUS_SUCCESS) ?
+    startup_infoA.lpDesktop = RtlUnicodeStringToAnsiString( &ansi, &rupp->Desktop, TRUE ) == STATUS_SUCCESS ?
         ansi.Buffer : NULL;
-    startup_infoA.lpTitle = (rupp->WindowTitle.Length &&
-                             RtlUnicodeStringToAnsiString( &ansi, &rupp->WindowTitle, TRUE) == STATUS_SUCCESS) ?
+    startup_infoA.lpTitle = RtlUnicodeStringToAnsiString( &ansi, &rupp->WindowTitle, TRUE ) == STATUS_SUCCESS ?
         ansi.Buffer : NULL;
     startup_infoA.dwX                  = rupp->dwX;
     startup_infoA.dwY                  = rupp->dwY;
