@@ -33,6 +33,21 @@
 
 #include "wine/test.h"
 
+static int (__cdecl *p__vscprintf)(const char *format, __ms_va_list valist);
+static int (__cdecl *p__vscwprintf)(const wchar_t *format, __ms_va_list valist);
+static int (__cdecl *p__vsnwprintf_s)(wchar_t *str, size_t sizeOfBuffer,
+                                      size_t count, const wchar_t *format,
+                                      __ms_va_list valist);
+
+static void init( void )
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    p__vscprintf = (void *)GetProcAddress(hmod, "_vscprintf");
+    p__vscwprintf = (void *)GetProcAddress(hmod, "_vscwprintf");
+    p__vsnwprintf_s = (void *)GetProcAddress(hmod, "_vsnwprintf_s");
+}
+
 static void test_sprintf( void )
 {
     char buffer[100];
@@ -810,12 +825,6 @@ static void test_vsnwprintf(void)
     ok( !strcmp(buf, "onetwothree"), "got %s expected 'onetwothree'\n", buf );
 }
 
-static int (__cdecl *p__vscprintf)(const char *format, __ms_va_list valist);
-static int (__cdecl *p__vscwprintf)(const wchar_t *format, __ms_va_list valist);
-static int (__cdecl *p__vsnwprintf_s)(wchar_t *str, size_t sizeOfBuffer,
-                                      size_t count, const wchar_t *format,
-                                      __ms_va_list valist);
-
 static int __cdecl _vscprintf_wrapper(const char *format, ...)
 {
     int ret;
@@ -829,6 +838,12 @@ static int __cdecl _vscprintf_wrapper(const char *format, ...)
 static void test_vscprintf(void)
 {
     int ret;
+
+    if (!p__vscprintf)
+    {
+       win_skip("_vscprintf not available\n");
+       return;
+    }
 
     ret = _vscprintf_wrapper( "%s %d", "number", 1 );
     ok( ret == 8, "got %d expected 8\n", ret );
@@ -850,6 +865,12 @@ static void test_vscwprintf(void)
     const wchar_t number[] = {'n','u','m','b','e','r',0};
 
     int ret;
+
+    if (!p__vscwprintf)
+    {
+        win_skip("_vscwprintf not available\n");
+        return;
+    }
 
     ret = _vscwprintf_wrapper( format, number, 1 );
     ok( ret == 8, "got %d expected 8\n", ret );
@@ -875,6 +896,12 @@ static void test_vsnwprintf_s(void)
     const wchar_t out1[] = { 0 };
     wchar_t buffer[14] = { 0 };
     int exp, got;
+
+    if (!p__vsnwprintf_s)
+    {
+        win_skip("_vsnwprintf_s not available\n");
+        return;
+    }
 
     /* Enough room. */
     exp = wcslen(out7);
@@ -909,29 +936,15 @@ static void test_vsnwprintf_s(void)
 
 START_TEST(printf)
 {
+    init();
+
     test_sprintf();
     test_swprintf();
     test_snprintf();
     test_fcvt();
     test_xcvt();
     test_vsnwprintf();
-
-    p__vscprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscprintf");
-    p__vscwprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscwprintf");
-    p__vsnwprintf_s = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vsnwprintf_s");
-
-    if (p__vscprintf)
-        test_vscprintf();
-    else
-        win_skip("_vscprintf not available\n");
-
-    if (p__vscwprintf)
-        test_vscwprintf();
-    else
-        win_skip("_vscwprintf not available\n");
-
-    if (p__vsnwprintf_s)
-        test_vsnwprintf_s();
-    else
-        win_skip("_vsnwprintf_s not available\n");
+    test_vscprintf();
+    test_vscwprintf();
+    test_vsnwprintf_s();
 }
