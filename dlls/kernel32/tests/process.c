@@ -527,6 +527,7 @@ static void test_Startup(void)
     char                buffer[MAX_PATH];
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup,si;
+    char *result;
     static CHAR title[]   = "I'm the title string",
                 desktop[] = "winsta0\\default",
                 empty[]   = "";
@@ -699,8 +700,9 @@ static void test_Startup(void)
 
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
-    ok (startup.lpTitle == NULL || !strcmp(startup.lpTitle, selfname),
-        "StartupInfoA:lpTitle expected '%s' or null, got '%s'\n", selfname, startup.lpTitle);
+    result = getChildString( "StartupInfoA", "lpTitle" );
+    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+                  "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -1185,6 +1187,7 @@ static  void    test_SuspendFlag(void)
     PROCESS_INFORMATION	info;
     STARTUPINFOA       startup, us;
     DWORD               exit_status;
+    char *result;
 
     /* let's start simplistic */
     memset(&startup, 0, sizeof(startup));
@@ -1210,8 +1213,9 @@ static  void    test_SuspendFlag(void)
 
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
-    ok (startup.lpTitle == NULL || !strcmp(startup.lpTitle, selfname),
-        "StartupInfoA:lpTitle expected '%s' or null, got '%s'\n", selfname, startup.lpTitle);
+    result = getChildString( "StartupInfoA", "lpTitle" );
+    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+                  "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -1233,6 +1237,7 @@ static  void    test_DebuggingFlag(void)
     STARTUPINFOA       startup, us;
     DEBUG_EVENT         de;
     unsigned            dbg = 0;
+    char *result;
 
     /* let's start simplistic */
     memset(&startup, 0, sizeof(startup));
@@ -1270,8 +1275,9 @@ static  void    test_DebuggingFlag(void)
 
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
-    ok (startup.lpTitle == NULL || !strcmp(startup.lpTitle, selfname),
-        "StartupInfoA:lpTitle expected '%s' or null, got '%s'\n", selfname, startup.lpTitle);
+    result = getChildString( "StartupInfoA", "lpTitle" );
+    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+                  "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -1304,6 +1310,7 @@ static void test_Console(void)
     const char*         msg = "This is a std-handle inheritance test.";
     unsigned            msg_len;
     BOOL                run_tests = TRUE;
+    char *result;
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -1381,8 +1388,9 @@ static void test_Console(void)
 
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", us.lpDesktop);
-    ok (startup.lpTitle == NULL || !strcmp(startup.lpTitle, selfname),
-        "StartupInfoA:lpTitle expected '%s' or null, got '%s'\n", selfname, startup.lpTitle);
+    result = getChildString( "StartupInfoA", "lpTitle" );
+    todo_wine ok( broken(!result) || (result && !strCmp( result, selfname, 0 )),
+                  "expected '%s' or null, got '%s'\n", selfname, result );
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
