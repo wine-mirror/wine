@@ -2853,6 +2853,17 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 
     DeleteDC (hdcBitmap);
 
+    if (himl->has_alpha)
+    {
+        char *new_alpha = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, himl->has_alpha, nNewCount );
+        if (new_alpha) himl->has_alpha = new_alpha;
+        else
+        {
+            HeapFree( GetProcessHeap(), 0, himl->has_alpha );
+            himl->has_alpha = NULL;
+        }
+    }
+
     /* Update max image count and current image count */
     himl->cMaxImage = nNewCount;
     himl->cCurImage = iImageCount;
