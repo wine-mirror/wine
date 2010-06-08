@@ -432,6 +432,313 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    {   "1234://www.winehq.org", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"1234://www.winehq.org/",S_OK,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"1234://www.winehq.org/",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"1234://www.winehq.org",S_OK,FALSE},
+            {"1234",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "://www.winehq.org", 0, E_INVALIDARG, FALSE,
+        0, TRUE,
+        {
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
+    {   "C:/test/test.mp3", 0, E_INVALIDARG, FALSE,
+        0, TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
+    {   "\\\\Server/test/test.mp3", 0, E_INVALIDARG, FALSE,
+        0, TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
+    {   "\\\\Server/test/test.mp3", Uri_CREATE_ALLOW_RELATIVE, E_INVALIDARG, FALSE,
+        0, TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
+    {   "C:/test/test.mp3", Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, E_INVALIDARG, FALSE,
+        0, TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Test's to make sure the parser/canonicalizer handles implicit file schemes correctly. */
+    {   "C:/test/test.mp3", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"file:///C:/test/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"file:///C:/test/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {".mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/C:/test/test.mp3",S_OK,TRUE},
+            {"/C:/test/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"C:/test/test.mp3",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Test's to make sure the parser/canonicalizer handles implicit file schemes correctly. */
+    {   "\\\\Server/test.mp3", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"file://server/test.mp3",S_OK,TRUE},
+            {"server",S_OK,TRUE},
+            {"file://server/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {".mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"server",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/test.mp3",S_OK,TRUE},
+            {"/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"\\\\Server/test.mp3",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "www.winehq.org/test", Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
+        Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"*:www.winehq.org/test",S_OK,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"*:www.winehq.org/test",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/test",S_OK,TRUE},
+            {"/test",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.winehq.org/test",S_OK,FALSE},
+            {"*",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_WILDCARD,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "/../some dir/test.ext", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"/../some dir/test.ext",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/../some dir/test.ext",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {".ext",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/../some dir/test.ext",S_OK,TRUE},
+            {"/../some dir/test.ext",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/../some dir/test.ext",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "//implicit/wildcard/uri scheme", Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"*://implicit/wildcard/uri%20scheme",S_OK,TRUE},
+            {"",S_OK,TRUE},
+            {"*://implicit/wildcard/uri%20scheme",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"//implicit/wildcard/uri%20scheme",S_OK,TRUE},
+            {"//implicit/wildcard/uri%20scheme",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"//implicit/wildcard/uri scheme",S_OK,FALSE},
+            {"*",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_WILDCARD,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
