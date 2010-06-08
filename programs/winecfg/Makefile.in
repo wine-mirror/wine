@@ -46,6 +46,7 @@ RC_SRCS = \
 	winecfg.rc
 
 SVG_SRCS = \
+	logo.svg \
 	winecfg.svg
 
 @MAKE_PROG_RULES@
