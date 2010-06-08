@@ -819,10 +819,11 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
 
 static int ExtractFromFileType(LPCWSTR szFileName, char *szXPMFileName)
 {
-    int ret = 1;
+    int ret = 0;
     WCHAR *extension;
     WCHAR *icon = NULL;
     WCHAR *comma;
+    WCHAR *executable = NULL;
     int index = 0;
     char *output_path = NULL;
 
@@ -831,21 +832,30 @@ static int ExtractFromFileType(LPCWSTR szFileName, char *szXPMFileName)
         goto end;
 
     icon = assoc_query(ASSOCSTR_DEFAULTICON, extension, NULL);
-    if (icon == NULL)
-        goto end;
-
-    comma = strrchrW(icon, ',');
-    if (comma)
+    if (icon)
     {
-        *comma = 0;
-        index = atoiW(comma + 1);
+        comma = strrchrW(icon, ',');
+        if (comma)
+        {
+            *comma = 0;
+            index = atoiW(comma + 1);
+        }
+        output_path = extract_icon(icon, index, NULL, FALSE);
+        WINE_TRACE("defaulticon %s -> icon %s\n", wine_dbgstr_w(icon), wine_dbgstr_a(output_path));
     }
-    output_path = extract_icon(icon, index, NULL, FALSE);
+    else
+    {
+        executable = assoc_query(ASSOCSTR_EXECUTABLE, extension, NULL);
+        if (executable)
+            output_path = extract_icon(executable, 0, NULL, FALSE);
+        WINE_TRACE("executable %s -> icon %s\n", wine_dbgstr_w(executable), wine_dbgstr_a(output_path));
+    }
     if (output_path)
-        ret = rename(output_path, szXPMFileName);
+        ret = (rename(output_path, szXPMFileName) == 0);
 
 end:
     HeapFree(GetProcessHeap(), 0, icon);
+    HeapFree(GetProcessHeap(), 0, executable);
     HeapFree(GetProcessHeap(), 0, output_path);
     return ret;
 }
