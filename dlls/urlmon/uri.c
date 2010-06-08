@@ -500,6 +500,8 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DWORD *pcchProperty, DWORD dwFlags)
 {
     Uri *This = URI_THIS(iface);
+    HRESULT hres;
+
     TRACE("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
 
     if(!pcchProperty)
@@ -520,7 +522,17 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
         return E_INVALIDARG;
     }
 
-    return E_NOTIMPL;
+    switch(uriProp) {
+    case Uri_PROPERTY_SCHEME:
+        *pcchProperty = This->scheme_type;
+        hres = S_OK;
+        break;
+    default:
+        FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+        hres = E_NOTIMPL;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *pfHasProperty)
@@ -718,12 +730,8 @@ static HRESULT WINAPI Uri_GetPort(IUri *iface, DWORD *pdwPort)
 static HRESULT WINAPI Uri_GetScheme(IUri *iface, DWORD *pdwScheme)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pdwScheme);
-
-    if(!pdwScheme)
-        return E_INVALIDARG;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pdwScheme);
+    return Uri_GetPropertyDWORD(iface, Uri_PROPERTY_SCHEME, pdwScheme, 0);
 }
 
 static HRESULT WINAPI Uri_GetZone(IUri *iface, DWORD *pdwZone)
