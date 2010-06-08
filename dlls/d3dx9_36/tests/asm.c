@@ -1374,6 +1374,9 @@ static void failure_test(void) {
         /* shader 46: no tx registers in ps_3_0 */
         "ps_3_0\n"
         "dcl t2\n",
+        /* shader 47: no samplers in vs_2_0 */
+        "vs_2_0\n"
+        "dcl_2d s2\n",
     };
     HRESULT hr;
     unsigned int i;

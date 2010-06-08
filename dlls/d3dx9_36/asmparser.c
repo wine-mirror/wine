@@ -178,6 +178,13 @@ static void asmparser_dcl_sampler(struct asm_parser *This, DWORD samptype,
     }
 }
 
+static void asmparser_dcl_sampler_unsupported(struct asm_parser *This, DWORD samptype,
+					      DWORD mod, DWORD regnum,
+					      unsigned int line_no) {
+    asmparser_message(This, "Line %u: Sampler declaration unsupported in this shader version\n", This->line_no);
+    set_parse_status(This, PARSE_ERR);
+}
+
 static void asmparser_sincos(struct asm_parser *This, DWORD mod, DWORD shift,
                              const struct shader_reg *dst,
                              const struct src_regs *srcs) {
@@ -779,7 +786,7 @@ static const struct asmparser_backend parser_vs_1 = {
 
     asmparser_dcl_output,
     asmparser_dcl_input,
-    asmparser_dcl_sampler,
+    asmparser_dcl_sampler_unsupported,
 
     asmparser_end,
 
@@ -799,7 +806,7 @@ static const struct asmparser_backend parser_vs_2 = {
 
     asmparser_dcl_output,
     asmparser_dcl_input,
-    asmparser_dcl_sampler,
+    asmparser_dcl_sampler_unsupported,
 
     asmparser_end,
 
