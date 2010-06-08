@@ -287,9 +287,11 @@ STRINGTABLE
 
 	IDS_NEWFOLDER		"Nueva carpeta"
 
-	IDS_CPANEL_TITLE            "Wine Control Panel"
-	IDS_CPANEL_NAME             "Name"
-	IDS_CPANEL_DESCRIPTION      "Description"
+	IDS_CPANEL_TITLE            "Panel de Control de Wine"
+	IDS_CPANEL_NAME             "Nombre"
+	IDS_CPANEL_DESCRIPTION      "Descripción"
+
+        IDS_SHLEXEC_NOASSOC         "No hay un programa de Windows configurado para abrir este tipo de archivo."
 }
 
 STRINGTABLE
