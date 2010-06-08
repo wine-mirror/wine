@@ -194,8 +194,8 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Aggiungi ai &Preferiti...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
-        MENUITEM "Riproduci",                     IDM_DYNSRCPLAY
-        MENUITEM "Ferma",                     IDM_DYNSRCSTOP
+        MENUITEM "Riproduci",                     IDM_IMGARTPLAY
+        MENUITEM "Ferma",                     IDM_IMGARTSTOP
         MENUITEM "Indietro",                   IDM_IMGARTREWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
@@ -204,7 +204,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
 
     POPUP "Debug"
     {
-        MENUITEM "Traccia etichette",         IDM_TRACETAGS
+        MENUITEM "Etichette di trace",         IDM_TRACETAGS
         MENUITEM "Fallimenti della risorsa",  IDM_RESOURCEFAILURES
         MENUITEM "Dump Tracking Info", IDM_DUMPTRACKINGINFO
         MENUITEM "Break del Debug",        IDM_DEBUGBREAK
