@@ -2549,6 +2549,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,ddhelp.exe
 11,,dosx.exe
 11,,dsound.vxd
+11,,winhlp32.exe
 
 ; Wow64-only fake dlls
 [FakeDllsWow64]
