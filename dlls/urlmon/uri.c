@@ -416,6 +416,8 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
     if(uriProp > Uri_PROPERTY_STRING_LAST) {
         /* Windows allocates an empty BSTR for invalid Uri_PROPERTY's. */
         *pbstrProperty = SysAllocStringLen(NULL, 0);
+        if(!(*pbstrProperty))
+            return E_OUTOFMEMORY;
 
         /* It only returns S_FALSE for the ZONE property... */
         if(uriProp == Uri_PROPERTY_ZONE)
@@ -437,6 +439,19 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
         else
             hres = S_OK;
+        break;
+    case Uri_PROPERTY_SCHEME_NAME:
+        if(This->scheme_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri + This->scheme_start, This->scheme_len);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
         break;
     default:
         FIXME("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
@@ -470,6 +485,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         *pcchProperty = SysStringLen(This->raw_uri);
         hres = S_OK;
         break;
+    case Uri_PROPERTY_SCHEME_NAME:
+        *pcchProperty = This->scheme_len;
+        hres = (This->scheme_start > -1) ? S_OK : S_FALSE;
+        break;
     default:
         FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
         hres = E_NOTIMPL;
@@ -481,7 +500,7 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DWORD *pcchProperty, DWORD dwFlags)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+    TRACE("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
 
     if(!pcchProperty)
         return E_INVALIDARG;
@@ -648,12 +667,8 @@ static HRESULT WINAPI Uri_GetRawUri(IUri *iface, BSTR *pstrRawUri)
 static HRESULT WINAPI Uri_GetSchemeName(IUri *iface, BSTR *pstrSchemeName)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrSchemeName);
-
-    if(!pstrSchemeName)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pstrSchemeName);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_SCHEME_NAME, pstrSchemeName, 0);
 }
 
 static HRESULT WINAPI Uri_GetUserInfo(IUri *iface, BSTR *pstrUserInfo)
