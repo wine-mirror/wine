@@ -852,15 +852,9 @@ static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nC
 static VOID
 TREEVIEW_ComputeItemInternalMetrics(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 {
-    /* Same effect, different optimisation. */
-#if 0
-    BOOL lar = ((infoPtr->dwStyle & TVS_LINESATROOT)
-		&& (infoPtr->dwStyle & (TVS_HASLINES|TVS_HASBUTTONS)));
-#else
-    BOOL lar = ((infoPtr->dwStyle
-		 & (TVS_LINESATROOT|TVS_HASLINES|TVS_HASBUTTONS))
+    /* has TVS_LINESATROOT and (TVS_HASLINES|TVS_HASBUTTONS) */
+    BOOL lar = ((infoPtr->dwStyle & (TVS_LINESATROOT|TVS_HASLINES|TVS_HASBUTTONS))
 		> TVS_LINESATROOT);
-#endif
 
     item->linesOffset = infoPtr->uIndent * (lar ? item->iLevel : item->iLevel - 1)
 	- infoPtr->scrollX;
@@ -3451,10 +3445,6 @@ TREEVIEW_ExpandMsg(TREEVIEW_INFO *infoPtr, UINT flag, HTREEITEM wineItem)
     default:
 	return 0;
     }
-
-#if 0
-    TRACE("Exiting, Item %p state is now %d...\n", wineItem, wineItem->state);
-#endif
 }
 
 /* Hit-Testing **********************************************************/
@@ -5028,10 +5018,6 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->root->visibleOrder = -1;
 
     infoPtr->hwndNotify = lpcs->hwndParent;
-#if 0
-    infoPtr->bTransparent = ( GetWindowLongW( hwnd, GWL_STYLE) & TBSTYLE_FLAT);
-#endif
-
     infoPtr->hwndToolTip = 0;
 
     infoPtr->bNtfUnicode = IsWindowUnicode (hwnd);
