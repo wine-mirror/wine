@@ -22,8 +22,13 @@
  *
  */
 
+#define COBJMACROS
+
+#include "config.h"
+
 #include <windows.h>
 #include <commctrl.h>
+#include <shellapi.h>
 #include <wine/debug.h>
 
 #include "resource.h"
@@ -31,9 +36,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
+static HICON logo = NULL;
+static HFONT titleFont = NULL;
+
 INT_PTR CALLBACK
 AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    HWND hWnd;
+    HDC hDC;
+    RECT rcClient, rcRect;
     char *owner, *org;
 
     switch (uMsg)
@@ -59,10 +70,19 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             HeapFree(GetProcessHeap(), 0, owner);
             HeapFree(GetProcessHeap(), 0, org);
             break;
+
+        case NM_CLICK:
+        case NM_RETURN:
+            if(wParam == IDC_ABT_WEB_LINK)
+                ShellExecuteA(NULL, "open", PACKAGE_URL, NULL, NULL, SW_SHOW);
+            break;
         }
         break;
 
     case WM_INITDIALOG:
+
+        hDC = GetDC(hDlg);
+
         /* read owner and organization info from registry, load it into text box */
         owner = get_reg_key(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion",
                             "RegisteredOwner", "");
@@ -76,6 +96,52 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         HeapFree(GetProcessHeap(), 0, owner);
         HeapFree(GetProcessHeap(), 0, org);
+
+        /* prepare the panel */
+        hWnd = GetDlgItem(hDlg, IDC_ABT_PANEL);
+        if(hWnd)
+        {
+            GetClientRect(hDlg, &rcClient);
+            GetClientRect(hWnd, &rcRect);
+            MoveWindow(hWnd, 0, 0, rcClient.right, rcRect.bottom, FALSE);
+
+            logo = LoadImageW((HINSTANCE)GetWindowLongPtrW(hDlg, GWLP_HINSTANCE),
+                MAKEINTRESOURCEW(IDI_LOGO), IMAGE_ICON, 0, 0, LR_SHARED);
+        }
+
+        /* prepare the title text */
+        hWnd = GetDlgItem(hDlg, IDC_ABT_TITLE_TEXT);
+        if(hWnd)
+        {
+            titleFont = CreateFont(
+                -MulDiv(24, GetDeviceCaps(hDC, LOGPIXELSY), 72),
+                0, 0, 0, 0, FALSE, 0, 0, 0, 0, 0, 0, 0,
+                "Tahoma");
+            SendMessage(hWnd, WM_SETFONT, (WPARAM)titleFont, TRUE);
+        }
+
+        /* prepare the web link */
+        hWnd = GetDlgItem(hDlg, IDC_ABT_WEB_LINK);
+        if(hWnd)
+            SetWindowTextA(hWnd, "<a href=\"" PACKAGE_URL "\">" PACKAGE_URL "</a>");
+
+        ReleaseDC(hDlg, hDC);
+
+        break;
+
+    case WM_DESTROY:
+        if(logo)
+        {
+            DestroyIcon(logo);
+            logo = NULL;
+        }
+
+        if(titleFont)
+        {
+            DeleteObject(titleFont);
+            titleFont = NULL;
+        }
+
         break;
 
     case WM_COMMAND:
@@ -87,6 +153,29 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         }
         break;
+
+    case WM_DRAWITEM:
+        if(wParam == IDC_ABT_PANEL)
+        {
+            LPDRAWITEMSTRUCT pDIS = (LPDRAWITEMSTRUCT)lParam;
+            FillRect(pDIS->hDC, &pDIS->rcItem, (HBRUSH) (COLOR_WINDOW+1));
+            DrawIconEx(pDIS->hDC, 0, 0, logo, 0, 0, 0, 0, DI_IMAGE);
+            DrawEdge(pDIS->hDC, &pDIS->rcItem, EDGE_SUNKEN, BF_BOTTOM);
+        }
+        break;
+
+    case WM_CTLCOLORSTATIC:
+        switch(GetDlgCtrlID((HWND)lParam))
+        {
+        case IDC_ABT_TITLE_TEXT:
+            /* set the title to a wine color */
+            SetTextColor((HDC)wParam, 0x0000007F);
+        case IDC_ABT_PANEL_TEXT:
+        case IDC_ABT_LICENSE_TEXT:
+            return (BOOL)CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+        }
+        break;
     }
+
     return FALSE;
 }

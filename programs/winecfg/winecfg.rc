@@ -26,8 +26,8 @@
 /* @makedep: winecfg.ico */
 IDI_WINECFG ICON winecfg.ico
 
-/* @makedep: idb_wine.bmp */
-IDB_WINE BITMAP idb_wine.bmp
+/* @makedep: logo.ico */
+IDI_LOGO ICON logo.ico
 
 /* @makedep: idb_checkbox.bmp */
 IDB_CHECKBOX BITMAP idb_checkbox.bmp

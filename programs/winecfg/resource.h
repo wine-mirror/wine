@@ -47,7 +47,7 @@
 #define IDS_WINECFG_TITLE_APP           18   /* App specific title */
 #define IDI_WINECFG                     100
 #define IDD_MAINDLG                     101
-#define IDB_WINE                        104
+#define IDI_LOGO                        102
 #define IDD_ABOUTCFG                    107
 #define IDD_APPCFG                      108
 #define IDD_AUDIOCFG                    109
@@ -261,3 +261,8 @@
 /* About tab */
 #define IDC_ABT_OWNER                8432
 #define IDC_ABT_ORG                  8433
+#define IDC_ABT_PANEL                8434
+#define IDC_ABT_PANEL_TEXT           8435
+#define IDC_ABT_TITLE_TEXT           8436
+#define IDC_ABT_WEB_LINK             8437
+#define IDC_ABT_LICENSE_TEXT         8438

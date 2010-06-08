@@ -43,16 +43,16 @@ IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
+    CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
     CONTROL         IDB_WINE,IDC_STATIC,"Static", SS_BITMAP, 15,17,157,111
-    LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
+    CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
-                    IDC_STATIC,119,44,124,72
-    GROUPBOX        " Informações de registro do Windows ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "Proprietário:", IDC_STATIC, 22, 126, 40, 20
-    EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Organização:", IDC_STATIC, 22, 140, 50, 20
-    EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+                    IDC_ABT_PANEL_TEXT,105,64,145,60
+    GROUPBOX        " Informações de registro do Windows ", IDC_STATIC, 15, 155, 230, 55
+    LTEXT           "Proprietário:", IDC_STATIC, 22, 171, 40, 20
+    EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Organização:", IDC_STATIC, 22, 185, 50, 20
+    EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -61,16 +61,16 @@ IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
+    CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
     CONTROL         IDB_WINE,IDC_STATIC,"Static", SS_BITMAP, 15,17,157,111
-    LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
+    CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "Esta biblioteca é de código livre; pode-a redistribuir e/ou modificar nos termos da Licença Publica Geral Lesser GNU como publicado pela Fundação de Programas Livres; também a versão 2.1 da Licença, ou (na sua opinião) qualquer versão posterior.",
-                    IDC_STATIC,119,44,124,72
-    GROUPBOX        " Informações de registro do Windows ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "Proprietário:", IDC_STATIC, 22, 126, 40, 20
-    EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Organização:", IDC_STATIC, 22, 140, 50, 20
-    EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+                    IDC_ABT_PANEL_TEXT,105,64,145,60
+    GROUPBOX        " Informações de registro do Windows ", IDC_STATIC, 15, 155, 230, 55
+    LTEXT           "Proprietário:", IDC_STATIC, 22, 171, 40, 20
+    EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Organização:", IDC_STATIC, 22, 185, 50, 20
+    EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
 
