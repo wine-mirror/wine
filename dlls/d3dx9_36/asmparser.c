@@ -118,6 +118,8 @@ static void asmparser_dcl_output(struct asm_parser *This, DWORD usage, DWORD num
 
 static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
                                 DWORD mod, const struct shader_reg *reg) {
+    struct instruction instr;
+
     if(!This->shader) return;
     if(mod != 0 &&
        (This->shader->version != BWRITERPS_VERSION(3, 0) ||
@@ -127,6 +129,12 @@ static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
         set_parse_status(This, PARSE_ERR);
         return;
     }
+
+    /* Check register type and modifiers */
+    instr.dstmod = mod;
+    instr.shift = 0;
+    This->funcs->dstreg(This, &instr, reg);
+
     if(!record_declaration(This->shader, usage, num, mod, FALSE, reg->regnum, reg->writemask, FALSE)) {
         ERR("Out of memory\n");
         set_parse_status(This, PARSE_ERR);

@@ -1365,6 +1365,15 @@ static void failure_test(void) {
         /* shader 43: can't explicitely declare input registers in ps_2_0 */
         "ps_2_0\n"
         "dcl_texcoord0 t0\n",
+        /* shader 44: can't implicitely declare registers in vs */
+        "vs_2_0\n"
+        "dcl o0\n",
+        /* shader 45: can't implicitely declare samplers in vs */
+        "vs_3_0\n"
+        "dcl s2\n",
+        /* shader 46: no tx registers in ps_3_0 */
+        "ps_3_0\n"
+        "dcl t2\n",
     };
     HRESULT hr;
     unsigned int i;
