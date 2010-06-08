@@ -1216,6 +1216,11 @@ static void ps_3_0_test(void) {
             "dcl v0\n",
             {0xffff0300, 0x0200001f, 0x80000000, 0x900f0000, 0x0000ffff}
         },
+        {   /* shader 16 */
+            "ps_3_0\n"
+            "dcl s2\n",
+            {0xffff0300, 0x0200001f, 0x80000000, 0xa00f0802, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_3_0", tests, sizeof(tests) / sizeof(tests[0]));

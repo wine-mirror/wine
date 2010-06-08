@@ -618,6 +618,21 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 }
                                 asm_ctx.funcs->dcl_sampler(&asm_ctx, $2, $3.mod, $4, asm_ctx.line_no);
                             }
+                    | INSTR_DCL omods REG_SAMPLER
+                            {
+                                TRACE("Sampler declared\n");
+                                if($2.shift != 0) {
+                                    asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
+                                if(asm_ctx.shader->type != ST_PIXEL) {
+                                    asmparser_message(&asm_ctx, "Line %u: Declaration needs a sampler type\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
+                                asm_ctx.funcs->dcl_sampler(&asm_ctx, BWRITERSTT_UNKNOWN, $2.mod, $3, asm_ctx.line_no);
+                            }
                     | INSTR_DCL sampdcl omods dcl_inputreg
                             {
                                 TRACE("Error rule: sampler decl of input reg\n");
