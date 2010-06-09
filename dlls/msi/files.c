@@ -50,21 +50,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *action )
 {
     MSIRECORD *uirow;
-    LPWSTR uipath, p;
 
-    /* the UI chunk */
     uirow = MSI_CreateRecord( 9 );
     MSI_RecordSetStringW( uirow, 1, f->FileName );
-    uipath = strdupW( f->TargetPath );
-    p = strrchrW(uipath,'\\');
-    if (p)
-        p[1]=0;
-    MSI_RecordSetStringW( uirow, 9, uipath);
+    MSI_RecordSetStringW( uirow, 9, f->Component->Directory );
     MSI_RecordSetInteger( uirow, 6, f->FileSize );
-    ui_actiondata( package, action, uirow);
+    ui_actiondata( package, action, uirow );
     msiobj_release( &uirow->hdr );
-    msi_free( uipath );
-    ui_progress( package, 2, f->FileSize, 0, 0);
+    ui_progress( package, 2, f->FileSize, 0, 0 );
 }
 
 /* compares the version of a file read from the filesystem and
@@ -987,7 +980,7 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
         MSIRECORD *uirow;
-        LPWSTR dir, uipath, p;
+        LPWSTR dir, p;
 
         if ( file->state == msifs_installed )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
@@ -1016,17 +1009,11 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         }
         file->state = msifs_missing;
 
-        /* the UI chunk */
         uirow = MSI_CreateRecord( 9 );
         MSI_RecordSetStringW( uirow, 1, file->FileName );
-        uipath = strdupW( file->TargetPath );
-        p = strrchrW(uipath,'\\');
-        if (p)
-            p[1]=0;
-        MSI_RecordSetStringW( uirow, 9, uipath);
-        ui_actiondata( package, szRemoveFiles, uirow);
+        MSI_RecordSetStringW( uirow, 9, file->Component->Directory );
+        ui_actiondata( package, szRemoveFiles, uirow );
         msiobj_release( &uirow->hdr );
-        msi_free( uipath );
         /* FIXME: call ui_progress here? */
     }
 

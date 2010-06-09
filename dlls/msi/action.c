@@ -1063,7 +1063,7 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
     TRACE("folder is %s\n", debugstr_w(full_path));
 
     uirow = MSI_CreateRecord( 1 );
-    MSI_RecordSetStringW( uirow, 1, full_path );
+    MSI_RecordSetStringW( uirow, 1, dir );
     ui_actiondata( package, szRemoveFolders, uirow );
     msiobj_release( &uirow->hdr );
 
@@ -4257,7 +4257,6 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
     PROCESS_INFORMATION info;
     BOOL brc;
     MSIRECORD *uirow;
-    LPWSTR uipath, p;
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
@@ -4290,14 +4289,11 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
 
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, filename );
-    uipath = strdupW( file->TargetPath );
-    if ((p = strrchrW( uipath,'\\' ))) *p = 0;
-    MSI_RecordSetStringW( uirow, 2, uipath );
+    MSI_RecordSetStringW( uirow, 2, file->Component->Directory );
     ui_actiondata( package, szSelfRegModules, uirow );
     msiobj_release( &uirow->hdr );
 
     msi_free( FullName );
-    msi_free( uipath );
     return ERROR_SUCCESS;
 }
 
@@ -4336,7 +4332,6 @@ static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
     PROCESS_INFORMATION pi;
     BOOL ret;
     MSIRECORD *uirow;
-    LPWSTR uipath, p;
 
     memset( &si, 0, sizeof(STARTUPINFOW) );
 
@@ -4368,14 +4363,11 @@ static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
 
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, filename );
-    uipath = strdupW( file->TargetPath );
-    if ((p = strrchrW( uipath,'\\' ))) *p = 0;
-    MSI_RecordSetStringW( uirow, 2, uipath );
+    MSI_RecordSetStringW( uirow, 2, file->Component->Directory );
     ui_actiondata( package, szSelfUnregModules, uirow );
     msiobj_release( &uirow->hdr );
 
     msi_free( cmdline );
-    msi_free( uipath );
     return ERROR_SUCCESS;
 }
 
@@ -5761,7 +5753,7 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
     uirow = MSI_CreateRecord( 5 );
     MSI_RecordSetStringW( uirow, 1, desc );
     MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
-    MSI_RecordSetStringW( uirow, 3, driver_path );
+    MSI_RecordSetStringW( uirow, 3, driver_file->Component->Directory );
     ui_actiondata( package, szInstallODBC, uirow );
     msiobj_release( &uirow->hdr );
 
@@ -5834,7 +5826,7 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     uirow = MSI_CreateRecord( 5 );
     MSI_RecordSetStringW( uirow, 1, desc );
     MSI_RecordSetStringW( uirow, 2, MSI_RecordGetString(rec, 2) );
-    MSI_RecordSetStringW( uirow, 3, translator_path );
+    MSI_RecordSetStringW( uirow, 3, translator_file->Component->Directory );
     ui_actiondata( package, szInstallODBC, uirow );
     msiobj_release( &uirow->hdr );
 
