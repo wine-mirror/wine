@@ -36,7 +36,7 @@ BEGIN
     END
 END
 
-IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 220
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -68,7 +68,7 @@ BEGIN
     COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -88,25 +88,25 @@ BEGIN
     COMBOBOX    IDC_D3D_VSHADER_MODE,110,108,135,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL     "Leisti &Pixel Shader (jei palaiko aparatinė įranga)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Ekrano &skiriamoji geba ",IDC_STATIC,8,151,244,93
+    GROUPBOX    " Ekrano &skiriamoji geba ",IDC_STATIC,8,151,244,63
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,167,15
     EDITTEXT    IDC_RES_DPIEDIT,184,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "tašk./col.",IDC_STATIC,215,163,30,8
-    LTEXT       "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
+    LTEXT       "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,28
 END
 
-IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " DLL nustelbimai ",IDC_STATIC,8,4,244,240
+    GROUPBOX        " DLL nustelbimai ",IDC_STATIC,8,4,244,210
     LTEXT           "Kiekviena dinaminė biblioteka gali būti įtaisyta (pateikta su Wine) ar sava (paimta iš Windows ar pateikta programos)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "&Naujas nustelbimas bibliotekai:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "&Pridėti",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
     LTEXT           "Egzistuojantys n&ustelbimai:",IDC_STATIC,16,86,100,8
-    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Redaguoti...",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "Pa&šalinti",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
@@ -173,7 +173,7 @@ IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Tvarkyklių parinkimas ",IDC_STATIC,8,4,244,160
+    GROUPBOX        " Tvarkyklių parinkimas ",IDC_STATIC,8,4,244,144
     LTEXT           "Pasirinkite garso tvarkyklę pažymėdami norimos tvarkyklės langelį. Garsą išjungti galima nepažymint nė vienos tvarkyklės. Kelių tvarkyklių pasirinkimas yra nerekomenduojamas. Tvarkyklę konfigūruoti galima spustelėjus dešiniuoju pelės klavišu.",IDC_STATIC,15,15,227,35
     CONTROL         "Įrenginiai",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,89
     PUSHBUTTON      "&Testuoti garsą",IDC_AUDIO_TEST,170,50,63,14
@@ -187,7 +187,7 @@ BEGIN
     COMBOBOX        IDC_DSOUND_BITS,160,193,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN

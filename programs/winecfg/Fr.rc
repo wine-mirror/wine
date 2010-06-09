@@ -37,7 +37,7 @@ BEGIN
     END
 END
 
-IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 220
 STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -69,7 +69,7 @@ BEGIN
     COMBOBOX        IDC_WINVER,95,194,151,31,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 260
+IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -84,30 +84,30 @@ BEGIN
     EDITTEXT    IDC_DESKTOP_WIDTH,74,76,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,127,76,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX    " Direct3D ",IDC_STATIC,8,103,244,49
-    LTEXT       "Support du Vertex Shader: ",IDC_STATIC,15,118,90,32
-    COMBOBOX    IDC_D3D_VSHADER_MODE,110,116,135,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Utiliser le Pixel Shader (si supporté par le matériel)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,134,230,10
+    GROUPBOX    " Direct3D ",IDC_STATIC,8,100,244,49
+    LTEXT       "Support du Vertex Shader: ",IDC_STATIC,15,115,90,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,110,113,135,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Utiliser le Pixel Shader (si supporté par le matériel)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,131,230,10
 
-    GROUPBOX    " Résolution de l'écran ",IDC_STATIC,8,159,244,93
-    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,169,187,15
-    EDITTEXT    IDC_RES_DPIEDIT,204,169,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT       "dpi",IDC_STATIC,233,171,12,8 /* units shouldn't be translated */
-    LTEXT       "Ceci est un exemple utilisant du Tahoma 10 points",IDC_RES_FONT_PREVIEW,15,189,230,55
+    GROUPBOX    " Résolution de l'écran ",IDC_STATIC,8,153,244,63
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,163,187,15
+    EDITTEXT    IDC_RES_DPIEDIT,204,163,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "dpi",IDC_STATIC,233,165,12,8 /* units shouldn't be translated */
+    LTEXT       "Ceci est un exemple utilisant du Tahoma 10 points",IDC_RES_FONT_PREVIEW,15,183,230,28
 END
 
-IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Remplacement de DLL ",IDC_STATIC,8,4,244,240
+    GROUPBOX        " Remplacement de DLL ",IDC_STATIC,8,4,244,210
     LTEXT           "Il est possible de spécifier si Wine doit utiliser une version native (importée depuis Windows ou installée par l'application) ou bien une version intégrée (distribuée avec Wine) de chaque bibliothèque partagée (DLL) utilisée par un programme."
                     , IDC_STATIC,16,16,220,32
     LTEXT           "&Nouveau remplacement pour :",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "&Ajouter",IDC_DLLS_ADDDLL, 164,68,82,14,BS_DEFPUSHBUTTON
     LTEXT           "Remplacements existants :",IDC_STATIC,16,86,100,8
-    LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Modifier",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "&Supprimer",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
