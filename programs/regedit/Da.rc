@@ -298,10 +298,10 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Værdien er for stor (%u)"
     IDS_DELETE_BOX_TITLE    "Bekræft sletning af værdi"
     IDS_DELETE_BOX_TEXT     "Er du sikker på at ville slette værdien '%s'?"
-    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Er du sikker på du vil slette disse værdier?"
     IDS_NEWKEY              "Ny nøgle #%d"
     IDS_NEWVALUE            "Ny værdi #%d"
-    IDS_NOTFOUND            "Fandt ikke søgestrengen «%s»"
+    IDS_NOTFOUND            "Fandt ikke søgestrengen '%s'"
 END
 
 STRINGTABLE DISCARDABLE
