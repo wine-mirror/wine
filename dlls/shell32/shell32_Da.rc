@@ -39,7 +39,7 @@ MENU_002 MENU DISCARDABLE
 BEGIN
         POPUP ""
         BEGIN
-          POPUP "&View"
+          POPUP "&Vis"
           BEGIN
             MENUITEM "&Store Ikoner",   FCIDM_SHVIEW_BIGICON
             MENUITEM "S&må Ikoner",     FCIDM_SHVIEW_SMALLICON
@@ -47,26 +47,26 @@ BEGIN
             MENUITEM "&Detaljer",       FCIDM_SHVIEW_REPORTVIEW
           END
           MENUITEM SEPARATOR
-          POPUP "Arrangér &Ikoner"
+          POPUP "Sortere &Ikoner"
           BEGIN
-            MENUITEM "efter &navn",        0x30    /* column 0 */
-            MENUITEM "efter &type",        0x32    /* column 2 */
-            MENUITEM "efter &størrelse",        0x31    /* ... */
-            MENUITEM "efter &dato",        0x33
+            MENUITEM "Efter &Navn",         0x30    /* column 0 */
+            MENUITEM "Efter &Type",         0x32    /* column 2 */
+            MENUITEM "Efter &Størrelse",    0x31    /* ... */
+            MENUITEM "Efter &Ændringsdato", 0x33
             MENUITEM SEPARATOR
-            MENUITEM "&Autoarrangér",   FCIDM_SHVIEW_AUTOARRANGE
+            MENUITEM "&Arranger Automatisk", FCIDM_SHVIEW_AUTOARRANGE
           END
-          MENUITEM "Opstil ikoner",     FCIDM_SHVIEW_SNAPTOGRID
+          MENUITEM "A&rranger ikoner i forhold til gitter", FCIDM_SHVIEW_SNAPTOGRID
           MENUITEM SEPARATOR
           MENUITEM "Opdater",           FCIDM_SHVIEW_REFRESH
           MENUITEM SEPARATOR
           MENUITEM "Indsæt",            FCIDM_SHVIEW_INSERT
           MENUITEM "Indsæt som genvej", FCIDM_SHVIEW_INSERTLINK
           MENUITEM SEPARATOR
-          POPUP "New"
+          POPUP "Ny"
           BEGIN
-            MENUITEM "Ny &folder",      FCIDM_SHVIEW_NEWFOLDER
-            MENUITEM "Ny &genvej",      FCIDM_SHVIEW_NEWLINK
+            MENUITEM "&Mappe",      FCIDM_SHVIEW_NEWFOLDER
+            MENUITEM "&Genvej",     FCIDM_SHVIEW_NEWLINK
             MENUITEM SEPARATOR
           END
           MENUITEM SEPARATOR
@@ -104,7 +104,7 @@ BEGIN
         MENUITEM "E&xit", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Vis"
     BEGIN
         MENUITEM "&Store Ikoner", FCIDM_SHVIEW_BIGICON
         MENUITEM "S&må Ikoner", FCIDM_SHVIEW_SMALLICON
@@ -112,15 +112,15 @@ BEGIN
         MENUITEM "&Detaljer", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Hjælp"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&Om Kontrolpanelet...", IDM_CPANEL_ABOUT
     END
 END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Vælg folder"
+CAPTION "Søg efter mappe"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -185,8 +185,8 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Skriv navnet på et Program, Mappe, Document eller Internet Ressource, for at få Wine til at åbne det.", 12289, 36, 11, 182, 18
- LTEXT "&Åben:", 12305, 7, 39, 24, 10
+ LTEXT "Skriv navnet på et program, en mappe, et dokument eller Internet ressource, og Wine åbner det for dig.", 12289, 36, 11, 182, 18
+ LTEXT "&Åbn:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Annuller", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
@@ -217,7 +217,7 @@ STRINGTABLE
         /* special folders */
         IDS_DESKTOP             "Skrivebord"
         IDS_MYCOMPUTER          "Min Computer"
-        IDS_RECYCLEBIN_FOLDER_NAME "Skraldespand"
+        IDS_RECYCLEBIN_FOLDER_NAME "Papirkurven"
 	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
@@ -228,23 +228,23 @@ STRINGTABLE
         IDS_SELECT              "Vælg"
         IDS_OPEN                "Åben"
 
-        IDS_CREATEFOLDER_DENIED "Kan ikke lave ny folder: Ingen rettigheder."
-        IDS_CREATEFOLDER_CAPTION "Error during creation of a new folder"
-        IDS_DELETEITEM_CAPTION "Confirm file deletion"
-        IDS_DELETEFOLDER_CAPTION "Confirm folder deletion"
-        IDS_DELETEITEM_TEXT "Er du sikker på at du vil slette '%1'?"
-        IDS_DELETEMULTIPLE_TEXT "Er du sikker på at du vil slette disse %1 filer?"
-        IDS_DELETESELECTED_TEXT "Er du sikker på at du vil slette de markede filer?"
-        IDS_TRASHITEM_TEXT "Er du sikker på at du vil smide '%1' i skraldespanden?"
-        IDS_TRASHFOLDER_TEXT "Er du sikker på at du vil smide '%1' og al dens indhold ned i skraldespanden?"
-        IDS_TRASHMULTIPLE_TEXT "Er du sikker på at du vil smide disse %1 filer ned i skraldespanden?"
-        IDS_CANTTRASH_TEXT "filen '%1' kan ikke smides i skraldespanden. Vil du slette den istedet for?"
-        IDS_OVERWRITEFILE_TEXT "Folderen har allerede en fil kaldt '%1'.\n\nVil du overskrive den?"
-        IDS_OVERWRITEFILE_CAPTION "Confirm file overwrite"
-        IDS_OVERWRITEFOLDER_TEXT "Denne folder har allerede en folder med navnet '%1'.\n\n"\
-            "Hvis filerne i destination folderen har de samme navne som filerne i den\n"\
-            "markerede folder vil de blive overskrevet. Vil du stadig rykke eller kopiere\n"\
-            "denne folder?"
+        IDS_CREATEFOLDER_DENIED "Kunne ikke oprette en ny mappe: Adgang nægtet."
+        IDS_CREATEFOLDER_CAPTION "Fejl ved oprettelse af ny mappe"
+        IDS_DELETEITEM_CAPTION "Bekræft sletning af fil"
+        IDS_DELETEFOLDER_CAPTION "Bekræft sletning af mappe"
+        IDS_DELETEITEM_TEXT "Er du sikker på du vil slette '%1'?"
+        IDS_DELETEMULTIPLE_TEXT "Er du sikker på du vil slette disse %1 filer?"
+        IDS_DELETESELECTED_TEXT "Er du sikker på du vil slette de(n) valgte fil(er)?"
+        IDS_TRASHITEM_TEXT "Er du sikker på at du vil sende '%1' til papirkurven?"
+        IDS_TRASHFOLDER_TEXT "Er du sikker på at du vil sende '%1' og alt dens indhold til papirkurven?"
+        IDS_TRASHMULTIPLE_TEXT "Er du sikker på at du vil sende disse %1 filer til papirkurven?"
+        IDS_CANTTRASH_TEXT "Filen '%1' kunne ikke sendes til papirkurven. Ønsker du at slette den permanent istedet for?"
+        IDS_OVERWRITEFILE_TEXT "Denne mappe indeholder allerede en fil kaldet '%1'.\n\nVil du overskrive den?"
+        IDS_OVERWRITEFILE_CAPTION "Bekræft overskrivning af fil"
+        IDS_OVERWRITEFOLDER_TEXT "Denne mappe indeholder allerede en mappe med navnet '%1'.\n\n"\
+            "Hvis filerne i destinationsmappen har de samme navne som filerne i\n"\
+            "den markerede mappe, vil de blive erstattet. Ønsker du stadig at flytte eller kopiere\n"\
+            "mappen?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Genstart"
@@ -278,18 +278,18 @@ STRINGTABLE
         IDS_COOKIES                 "Cookies"
         IDS_HISTORY                 "Lokale indstillinger\\History"
         IDS_PROGRAM_FILES           "Program Files"
-        IDS_MYPICTURES              "My Pictures"
-        IDS_PROGRAM_FILES_COMMON    "Programmer\\Common Files"
+        IDS_MYPICTURES              "Mine Billeder"
+        IDS_PROGRAM_FILES_COMMON    "Programmer\Fælles Filer"
         IDS_COMMON_DOCUMENTS        "Documenter"
-        IDS_ADMINTOOLS              "Start Menu\\Programs\\Administrative Tools"
+        IDS_ADMINTOOLS              "Start Menu\Programmer\Administrative Værktøjer"
         IDS_COMMON_MUSIC            "Dokumenter\\Min Musik"
         IDS_COMMON_PICTURES         "Dokumenter\\Mine Billeder"
         IDS_COMMON_VIDEO            "Dokumenter\\Mine Film"
-        IDS_CDBURN_AREA             "Lokale indstillinger\\Application Data\\Microsoft\\CD Burning"
+        IDS_CDBURN_AREA             "Lokale indstillinger\Applikations Data\Microsoft\CD Brændning"
 
-        IDS_NEWFOLDER           "Ny Folder"
+        IDS_NEWFOLDER               "Ny Mappe"
 
-        IDS_CPANEL_TITLE            "Wine Control Panel"
+        IDS_CPANEL_TITLE            "Wine Kontrolpanel"
         IDS_CPANEL_NAME             "Name"
         IDS_CPANEL_DESCRIPTION      "Description"
 
