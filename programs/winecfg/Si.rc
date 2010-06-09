@@ -135,12 +135,12 @@ BEGIN
     PUSHBUTTON      "Prekliči",IDCANCEL,105,30,45,14,WS_GROUP
 END
 
-IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Preslikave &pogonov ",IDC_STATIC,8,4,244,240
-    LTEXT           "Napaka pri povezovanju z upravljalnikom priklopov (mount manager); nastavitev pogonov ne bo mogoče urejati.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    GROUPBOX        " Preslikave &pogonov ",IDC_STATIC,8,4,244,195
+    LTEXT           "Napaka pri povezovanju z upravljalnikom priklopov (mount manager); nastavitev pogonov ne bo mogoče urejati.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Dodaj ...",IDC_BUTTON_ADD,15,98,37,14
@@ -155,22 +155,17 @@ BEGIN
     LTEXT           "&Vrsta:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Oznaka in serijska številka",IDC_LABELSERIAL_STATIC,15,155,95,10
+    PUSHBUTTON      "Pokaži &napredno",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,135,60,13
+    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
+    EDITTEXT        IDC_EDIT_DEVICE,41,150,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Brskaj ...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
 
-    PUSHBUTTON      "Pokaži &napredno",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,136,60,13
-    CONTROL         "Samozaznaj &z naprave:",IDC_RADIO_AUTODETECT,"Button",
-                    BS_AUTORADIOBUTTON,15,166,93,10
-    EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Brskaj ...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
-    CONTROL         "&Ročno dodeli:",IDC_RADIO_ASSIGN,"Button",
-                    BS_AUTORADIOBUTTON,15,195,69,10
+    LTEXT           "&Oznaka:",IDC_STATIC_LABEL,15,168,39,12
+    EDITTEXT        IDC_EDIT_LABEL,55,165,68,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "S&erijska št.:",IDC_STATIC_SERIAL,15,183,39,12
+    EDITTEXT        IDC_EDIT_SERIAL,55,180,68,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    LTEXT           "&Oznaka:",IDC_STATIC_LABEL,33,208,39,12
-    EDITTEXT        IDC_EDIT_LABEL,73,205,68,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "S&erijska št.:",IDC_STATIC_SERIAL,33,225,39,12
-    EDITTEXT        IDC_EDIT_SERIAL,73,221,68,13,ES_AUTOHSCROLL | WS_TABSTOP
-
-    CONTROL         "Pokaži &datoteke s piko",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+    CONTROL         "Pokaži &datoteke s piko",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250

@@ -137,12 +137,12 @@ BEGIN
     PUSHBUTTON      "Annulla",IDCANCEL,105,30,45,14,WS_GROUP
 END
 
-IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Mappature delle unità ",IDC_STATIC,8,4,244,245
-    LTEXT           "Impossibile connettersi al gestore delle unità, la configurazione dell'unità non può essere modificata.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    GROUPBOX        " Mappature delle unità ",IDC_STATIC,8,4,244,195
+    LTEXT           "Impossibile connettersi al gestore delle unità, la configurazione dell'unità non può essere modificata.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "Aggiungi...",IDC_BUTTON_ADD,15,98,45,14
@@ -157,22 +157,17 @@ BEGIN
     LTEXT           "&Tipo:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,51,136,97,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Etichetta e numero seriale",IDC_LABELSERIAL_STATIC,15,155,95,10
+    PUSHBUTTON      "Mostra controlli &avanzati",IDC_BUTTON_SHOW_HIDE_ADVANCED,154,135,92,13
+    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
+    EDITTEXT        IDC_EDIT_DEVICE,51,150,150,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Na&viga...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
 
-    PUSHBUTTON      "Mostra controlli &avanzati",IDC_BUTTON_SHOW_HIDE_ADVANCED,154,136,92,13
-    CONTROL         "S&copri automaticamente:",IDC_RADIO_AUTODETECT,"Button",
-                    BS_AUTORADIOBUTTON,15,167,93,10
-    EDITTEXT        IDC_EDIT_DEVICE,27,177,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Na&viga...",IDC_BUTTON_BROWSE_DEVICE,206,177,40,13
-    CONTROL         "Assegna &manualmente:",IDC_RADIO_ASSIGN,"Button",
-                    BS_AUTORADIOBUTTON,15,195,84,10
+    LTEXT           "&Etichetta:",IDC_STATIC_LABEL,15,168,32,12
+    EDITTEXT        IDC_EDIT_LABEL,70,165,80,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Numero &seriale:",IDC_STATIC_SERIAL,15,183,54,12
+    EDITTEXT        IDC_EDIT_SERIAL,70,180,80,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    LTEXT           "&Etichetta:",IDC_STATIC_LABEL,33,210,32,12
-    EDITTEXT        IDC_EDIT_LABEL,85,208,80,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Numero &seriale:",IDC_STATIC_SERIAL,33,226,54,12
-    EDITTEXT        IDC_EDIT_SERIAL,85,224,80,13,ES_AUTOHSCROLL | WS_TABSTOP
-
-    CONTROL         "Mostra file &dot",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+    CONTROL         "Mostra file &dot",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250

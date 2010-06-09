@@ -41,16 +41,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-#define BOX_MODE_CD_ASSIGN 1
-#define BOX_MODE_CD_AUTODETECT 2
-#define BOX_MODE_NONE 3
-#define BOX_MODE_NORMAL 4
+#define BOX_MODE_DEVICE 1
+#define BOX_MODE_NORMAL 2
 
 static BOOL advanced = FALSE;
 static BOOL updating_ui = FALSE;
 static struct drive* current_drive;
 
-static void get_etched_rect(HWND dialog, RECT *rect);
 static void update_controls(HWND dialog);
 
 static DWORD driveui_msgbox (HWND parent, UINT messageId, DWORD flags)
@@ -120,7 +117,6 @@ static void set_advanced(HWND dialog)
 {
     int state;
     WCHAR text[256];
-    RECT rect;
 
     if (advanced)
     {
@@ -133,25 +129,18 @@ static void set_advanced(HWND dialog)
         LoadStringW(GetModuleHandle(NULL), IDS_SHOW_ADVANCED, text, 256);
     }
 
-    ShowWindow(GetDlgItem(dialog, IDC_RADIO_AUTODETECT), state);
-    ShowWindow(GetDlgItem(dialog, IDC_RADIO_ASSIGN), state);
-    ShowWindow(GetDlgItem(dialog, IDC_EDIT_LABEL), state);
     ShowWindow(GetDlgItem(dialog, IDC_EDIT_DEVICE), state);
+    ShowWindow(GetDlgItem(dialog, IDC_STATIC_DEVICE), state);
+    ShowWindow(GetDlgItem(dialog, IDC_EDIT_LABEL), state);
     ShowWindow(GetDlgItem(dialog, IDC_STATIC_LABEL), state);
     ShowWindow(GetDlgItem(dialog, IDC_BUTTON_BROWSE_DEVICE), state);
     ShowWindow(GetDlgItem(dialog, IDC_EDIT_SERIAL), state);
     ShowWindow(GetDlgItem(dialog, IDC_STATIC_SERIAL), state);
-    ShowWindow(GetDlgItem(dialog, IDC_LABELSERIAL_STATIC), state);
     ShowWindow(GetDlgItem(dialog, IDC_COMBO_TYPE), state);
     ShowWindow(GetDlgItem(dialog, IDC_STATIC_TYPE), state);
 
     /* update the button text based on the state */
     SetWindowTextW(GetDlgItem(dialog, IDC_BUTTON_SHOW_HIDE_ADVANCED), text);
-
-    /* redraw for the etched line */
-    get_etched_rect(dialog, &rect);
-    InflateRect(&rect, 5, 5);
-    InvalidateRect(dialog, &rect, TRUE);
 }
 
 struct drive_typemap {
@@ -175,44 +164,19 @@ static void enable_labelserial_box(HWND dialog, int mode)
 
     switch (mode)
     {
-        case BOX_MODE_CD_ASSIGN:
-            enable(IDC_RADIO_ASSIGN);
-            disable(IDC_EDIT_DEVICE);
-            disable(IDC_BUTTON_BROWSE_DEVICE);
-            enable(IDC_EDIT_SERIAL);
-            enable(IDC_EDIT_LABEL);
-            enable(IDC_STATIC_SERIAL);
-            enable(IDC_STATIC_LABEL);
-            break;
-
-        case BOX_MODE_CD_AUTODETECT:
-            enable(IDC_RADIO_ASSIGN);
-            enable(IDC_EDIT_DEVICE);
-            enable(IDC_BUTTON_BROWSE_DEVICE);
-            disable(IDC_EDIT_SERIAL);
-            disable(IDC_EDIT_LABEL);
-            disable(IDC_STATIC_SERIAL);
-            disable(IDC_STATIC_LABEL);
-            break;
-
-        case BOX_MODE_NONE:
-            disable(IDC_RADIO_ASSIGN);
+        case BOX_MODE_DEVICE:
+            /* FIXME: enable device editing */
             disable(IDC_EDIT_DEVICE);
             disable(IDC_BUTTON_BROWSE_DEVICE);
             disable(IDC_EDIT_SERIAL);
             disable(IDC_EDIT_LABEL);
-            disable(IDC_STATIC_SERIAL);
-            disable(IDC_STATIC_LABEL);
             break;
 
         case BOX_MODE_NORMAL:
-            enable(IDC_RADIO_ASSIGN);
             disable(IDC_EDIT_DEVICE);
             disable(IDC_BUTTON_BROWSE_DEVICE);
             enable(IDC_EDIT_SERIAL);
             enable(IDC_EDIT_LABEL);
-            enable(IDC_STATIC_SERIAL);
-            enable(IDC_STATIC_LABEL);
             break;
     }
 }
@@ -433,7 +397,6 @@ static void update_controls(HWND dialog)
     WCHAR *path;
     unsigned int type;
     char serial[16];
-    const char *device;
     int i, selection = -1;
     LVITEMW item;
 
@@ -494,32 +457,12 @@ static void update_controls(HWND dialog)
     sprintf( serial, "%X", current_drive->serial );
     set_text(dialog, IDC_EDIT_SERIAL, serial);
 
-    /* TODO: get the device here to put into the edit box */
-    device = "Not implemented yet";
-    set_text(dialog, IDC_EDIT_DEVICE, device);
-    device = NULL;
+    set_text(dialog, IDC_EDIT_DEVICE, current_drive->device);
 
-    selection = IDC_RADIO_ASSIGN;
     if ((type == DRIVE_CDROM) || (type == DRIVE_REMOVABLE))
-    {
-        if (device)
-        {
-            selection = IDC_RADIO_AUTODETECT;
-            enable_labelserial_box(dialog, BOX_MODE_CD_AUTODETECT);
-        }
-        else
-        {
-            selection = IDC_RADIO_ASSIGN;
-            enable_labelserial_box(dialog, BOX_MODE_CD_ASSIGN);
-        }
-    }
+        enable_labelserial_box(dialog, BOX_MODE_DEVICE);
     else
-    {
         enable_labelserial_box(dialog, BOX_MODE_NORMAL);
-        selection = IDC_RADIO_ASSIGN;
-    }
-
-    CheckRadioButton(dialog, IDC_RADIO_AUTODETECT, IDC_RADIO_ASSIGN, selection);
 
     updating_ui = FALSE;
 
@@ -605,36 +548,6 @@ static void on_edit_changed(HWND dialog, WORD id)
             break;
         }
     }
-}
-
-static void get_etched_rect(HWND dialog, RECT *rect)
-{
-    GetClientRect(dialog, rect);
-
-    /* these dimensions from the labelserial static in En.rc  */
-    rect->top = 265;
-    rect->bottom = 265;
-    rect->left += 25;
-    rect->right -= 25;
-}
-
-/* this just draws a nice line to separate the advanced gui from the n00b gui :) */
-static void paint(HWND dialog)
-{
-    PAINTSTRUCT ps;
-
-    BeginPaint(dialog, &ps);
-
-    if (advanced)
-    {
-        RECT rect;
-
-        get_etched_rect(dialog, &rect);
-
-        DrawEdge(ps.hdc, &rect, EDGE_ETCHED, BF_TOP);
-    }
-
-    EndPaint(dialog, &ps);
 }
 
 BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath)
@@ -772,10 +685,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
             set_window_title(dialog);
             break;
 
-        case WM_PAINT:
-            paint(dialog);
-            break;
-
         case WM_COMMAND:
             switch (HIWORD(wParam))
             {
@@ -834,25 +743,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     break;
                 }
 
-                case IDC_RADIO_ASSIGN:
-                {
-                    WCHAR *str = get_textW(dialog, IDC_EDIT_LABEL);
-                    HeapFree(GetProcessHeap(), 0, current_drive->label);
-                    current_drive->label = str;
-
-                    str = get_textW(dialog, IDC_EDIT_SERIAL);
-                    current_drive->serial = str ? strtoulW( str, NULL, 16 ) : 0;
-                    HeapFree(GetProcessHeap(), 0, str);
-                    current_drive->modified = TRUE;
-
-                    /* TODO: we don't have a device at this point */
-
-                    enable_labelserial_box(dialog, BOX_MODE_CD_ASSIGN);
-
-                    break;
-                }
-
-
                 case IDC_COMBO_TYPE:
                 {
                     int mode = BOX_MODE_NORMAL;
@@ -865,12 +755,9 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     if (selection >= 0 &&
                         (type_pairs[selection].sCode == DRIVE_CDROM ||
                          type_pairs[selection].sCode == DRIVE_REMOVABLE))
-                    {
-                        if (IsDlgButtonChecked(dialog, IDC_RADIO_AUTODETECT))
-                            mode = BOX_MODE_CD_AUTODETECT;
-                        else
-                            mode = BOX_MODE_CD_ASSIGN;
-                    }
+                        mode = BOX_MODE_DEVICE;
+                    else
+                        mode = BOX_MODE_NORMAL;
 
                     enable_labelserial_box(dialog, mode);
 

@@ -122,8 +122,7 @@
 #define IDC_COMBO_TYPE                  1065
 #define IDC_EDIT_DEVICE                 1066
 #define IDC_BUTTON_BROWSE_PATH          1067
-#define IDC_RADIO_AUTODETECT            1068
-#define IDC_RADIO_ASSIGN                1069
+#define IDC_STATIC_DEVICE               1068
 #define IDC_BUTTON_BROWSE_DEVICE        1070
 #define IDC_STATIC_SERIAL               1072
 #define IDC_STATIC_LABEL                1073
@@ -131,7 +130,6 @@
 #define IDS_DRIVE_NO_C                  1075
 #define IDC_BUTTON_SHOW_HIDE_ADVANCED   1076
 #define IDC_STATIC_TYPE                 1077
-#define IDC_LABELSERIAL_STATIC          1078
 #define IDC_SHOW_DOT_FILES              1080
 
 #define IDC_DRIVE_LABEL                 1078
