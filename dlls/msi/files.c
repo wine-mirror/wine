@@ -174,6 +174,24 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
     return gle;
 }
 
+static UINT msi_create_directory( MSIPACKAGE *package, const WCHAR *dir )
+{
+    MSIFOLDER *folder;
+    WCHAR *install_path;
+
+    install_path = resolve_folder( package, dir, FALSE, FALSE, TRUE, &folder );
+    if (!install_path)
+        return ERROR_FUNCTION_FAILED;
+
+    if (folder->State == 0)
+    {
+        create_full_pathW( install_path );
+        folder->State = 2;
+    }
+    msi_free( install_path );
+    return ERROR_SUCCESS;
+}
+
 static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
                             LPWSTR *path, DWORD *attrs, PVOID user)
 {
@@ -193,6 +211,7 @@ static BOOL installfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
             return FALSE;
 
         msi_file_update_ui(package, f, szInstallFiles);
+        msi_create_directory(package, f->Component->Directory);
 
         *path = strdupW(f->TargetPath);
         *attrs = f->Attributes;
@@ -223,14 +242,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     ui_progress(package,1,1,0,0);
 
     schedule_install_files(package);
-
-    /*
-     * Despite MSDN specifying that the CreateFolders action
-     * should be called before InstallFiles, some installers don't
-     * do that, and they seem to work correctly.  We need to create
-     * directories here to make sure that the files can be copied.
-     */
-    msi_create_component_directories( package );
 
     mi = msi_alloc_zero( sizeof(MSIMEDIAINFO) );
 
@@ -273,6 +284,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
                   debugstr_w(file->TargetPath));
 
             msi_file_update_ui(package, file, szInstallFiles);
+            msi_create_directory(package, file->Component->Directory);
+
             rc = copy_install_file(package, file, source);
             if (rc != ERROR_SUCCESS)
             {

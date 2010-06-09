@@ -3981,10 +3981,7 @@ static void test_caborder(void)
     ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
     ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
     ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
-    todo_wine
-    {
-        ok(!delete_pf("msitest", FALSE), "File is installed\n");
-    }
+    ok(!delete_pf("msitest", FALSE), "File is installed\n");
 
     delete_cab_files();
     DeleteFile(msifile);

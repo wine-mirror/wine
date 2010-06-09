@@ -1003,43 +1003,6 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-/* FIXME: probably should merge this with the above function */
-static UINT msi_create_directory( MSIPACKAGE* package, LPCWSTR dir )
-{
-    UINT rc = ERROR_SUCCESS;
-    MSIFOLDER *folder;
-    LPWSTR install_path;
-
-    install_path = resolve_folder(package, dir, FALSE, FALSE, TRUE, &folder);
-    if (!install_path)
-        return ERROR_FUNCTION_FAILED; 
-
-    /* create the path */
-    if (folder->State == 0)
-    {
-        create_full_pathW(install_path);
-        folder->State = 2;
-    }
-    msi_free(install_path);
-
-    return rc;
-}
-
-UINT msi_create_component_directories( MSIPACKAGE *package )
-{
-    MSICOMPONENT *comp;
-
-    /* create all the folders required by the components are going to install */
-    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
-    {
-        if (comp->ActionRequest != INSTALLSTATE_LOCAL)
-            continue;
-        msi_create_directory( package, comp->Directory );
-    }
-
-    return ERROR_SUCCESS;
-}
-
 static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 {
     static const WCHAR ExecSeqQuery[] =
