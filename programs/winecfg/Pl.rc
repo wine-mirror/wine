@@ -170,22 +170,22 @@ BEGIN
     CONTROL         "Pokazuj pliki zaczynaj¹ce siê od kropki",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
-IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Wybór sterownika ",IDC_STATIC,8,4,244,210
+    GROUPBOX        " Wybór sterownika ",IDC_STATIC,8,4,244,160
     LTEXT           "Wybierz sterownik przez wstawienie krzy¿yka. Je¿eli chcesz wy³¹czyæ dŸwiêk, zostaw wszystkie pola puste. Wybór wielu sterowników na raz nie jest zalecany. Aby skonfigurowaæ sterownik kliknij prawym przyciskiem myszy na nim.",IDC_STATIC,15,20,227,40
-    CONTROL         "Urz¹dzenia",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,58,140,147
+    CONTROL         "Urz¹dzenia",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,58,140,97
     PUSHBUTTON      "Test dŸwiêku",IDC_AUDIO_TEST,165,58,69,14
     PUSHBUTTON	    "Panel sterowania",IDC_AUDIO_CONTROL_PANEL,165,78,69,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,220,244,45
-    LTEXT	    "Przyœpieszenie sprzêtowe: ",IDC_STATIC,15,230,90,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,228,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Domyœlna czêstoœæ próbkowania:",IDC_STATIC,15,245,105,8
-    COMBOBOX        IDC_DSOUND_RATES,121,243,38,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Bitów na próbkê:",IDC_STATIC,165,245,55,8
-    COMBOBOX        IDC_DSOUND_BITS,223,243,27,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
+    LTEXT	    "Przyœpieszenie sprzêtowe: ",IDC_STATIC,15,180,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Domyœlna czêstoœæ próbkowania:",IDC_STATIC,15,195,105,8
+    COMBOBOX        IDC_DSOUND_RATES,121,193,38,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bitów na próbkê:",IDC_STATIC,165,195,55,8
+    COMBOBOX        IDC_DSOUND_BITS,223,193,27,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250

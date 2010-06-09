@@ -170,22 +170,22 @@ BEGIN
     CONTROL         "Montrer les fichiers cachés",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
-IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 270
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Sélection du pilote ",IDC_STATIC,8,4,244,210
+    GROUPBOX        " Sélection du pilote ",IDC_STATIC,8,4,244,160
     LTEXT           "Sélectionnez un pilote audio en cochant la case en regard du pilote désiré. Désactivez le son en ne sélectionnant aucun pilote. La sélection de pilotes multiples n'est pas recommandée. Configurez le pilote en effectuant un clic droit dessus.",IDC_STATIC,15,20,227,35
-    CONTROL         "Matériel",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,55,140,154
+    CONTROL         "Matériel",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,55,140,105
     PUSHBUTTON      "&Tester le son",IDC_AUDIO_TEST,159,56,89,14
     PUSHBUTTON	    "Panneau de &configuration",IDC_AUDIO_CONTROL_PANEL,159,76,89,14
-    GROUPBOX        " DirectSound ",IDC_STATIC,8,220,244,45
-    LTEXT	    "Accélération matérielle : ",IDC_STATIC,15,230,80,10
-    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,228,148,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Échantillonage (défaut) :",IDC_STATIC,15,245,80,8
-    COMBOBOX        IDC_DSOUND_RATES,100,243,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Bits par échantillon :",IDC_STATIC,153,245,80,8
-    COMBOBOX        IDC_DSOUND_BITS,223,243,25,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
+    LTEXT	    "Accélération matérielle : ",IDC_STATIC,15,180,80,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,178,148,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Échantillonage (défaut) :",IDC_STATIC,15,195,80,8
+    COMBOBOX        IDC_DSOUND_RATES,100,193,38,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Bits par échantillon :",IDC_STATIC,153,195,80,8
+    COMBOBOX        IDC_DSOUND_BITS,223,193,25,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 220
