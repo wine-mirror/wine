@@ -57,19 +57,19 @@ BEGIN
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Настройка приложений ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        " Настройка приложений ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine может имитировать любую версию Windows для каждого приложения. Эта вкладка связана с вкладками Библиотеки и Графика, что позволяет изменение настроек в этих вкладках как для определённого приложения, так и глобально.",
                     IDC_STATIC,15,20,227,60
     CONTROL         "Приложения",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,65,230,134
-    PUSHBUTTON	    "&Добавить приложение...",IDC_APP_ADDAPP, 68,204,94,14
-    PUSHBUTTON	    "&Удалить приложение",IDC_APP_REMOVEAPP, 164,204,78,14
-    LTEXT           "&Версия Windows:",IDC_STATIC,17,226,58,8
-    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+                    15,65,230,104
+    PUSHBUTTON	    "&Добавить приложение...",IDC_APP_ADDAPP, 68,174,94,14
+    PUSHBUTTON	    "&Удалить приложение",IDC_APP_REMOVEAPP, 164,174,78,14
+    LTEXT           "&Версия Windows:",IDC_STATIC,17,196,58,8
+    COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250

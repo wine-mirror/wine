@@ -54,19 +54,19 @@ BEGIN
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Paramètres des applications ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        " Paramètres des applications ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine peut imiter différentes versions de Windows pour chaque application. Cet onglet est lié aux onglets Bibliothèques et Affichage pour vous permettre de changer des paramètres globaux ou par application dans ces onglets.",
                     IDC_STATIC,15,20,227,40
     CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,60,230,140
-    PUSHBUTTON	    "&Ajouter une application...",IDC_APP_ADDAPP, 16,204,90,14
-    PUSHBUTTON	    "&Supprimer une application",IDC_APP_REMOVEAPP, 110,204,90,14
-    LTEXT           "Version de &Windows :",IDC_STATIC,17,225,70,8
-    COMBOBOX        IDC_WINVER,95,224,151,31,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    15,60,230,110
+    PUSHBUTTON	    "&Ajouter une application...",IDC_APP_ADDAPP, 16,174,90,14
+    PUSHBUTTON	    "&Supprimer une application",IDC_APP_REMOVEAPP, 110,174,90,14
+    LTEXT           "Version de &Windows :",IDC_STATIC,17,195,70,8
+    COMBOBOX        IDC_WINVER,95,194,151,31,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 260

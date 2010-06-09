@@ -51,19 +51,19 @@ BEGIN
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Sovellusten asetukset ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        " Sovellusten asetukset ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine voi j‰ljitell‰ Windowsin eri versioita eri sovelluksille. T‰m‰ v‰lilehti toimii yhdess‰ Kirjastot- ja Grafiikka-v‰lilehtien kanssa sallien sovelluskohtaiset asetukset.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Sovellukset",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,150
-    PUSHBUTTON	    "&Lis‰‰ sovellus...",IDC_APP_ADDAPP, 90,204,75,14
-    PUSHBUTTON	    "&Poista sovellus",IDC_APP_REMOVEAPP, 170,204,75,14
-    LTEXT           "&Windowsin versio:",IDC_STATIC,17,226,58,8
-    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+                    15,50,230,120
+    PUSHBUTTON	    "&Lis‰‰ sovellus...",IDC_APP_ADDAPP, 90,174,75,14
+    PUSHBUTTON	    "&Poista sovellus",IDC_APP_REMOVEAPP, 170,174,75,14
+    LTEXT           "&Windowsin versio:",IDC_STATIC,17,196,58,8
+    COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250

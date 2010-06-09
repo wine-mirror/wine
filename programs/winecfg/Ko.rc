@@ -54,19 +54,19 @@ BEGIN
 END
 
 
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " 프로그램 설정 ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        " 프로그램 설정 ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine은 각각의 프로그램에 대해서 다른 버전의 윈도우즈를 흉내낼 수 있습니다. 이 탭은 라이브러리 탭, 그래픽 탭과 연결되어 있어서, 이들 탭을 이용하여 시스템 전체 또는 프로그램별로 설정이 가능합니다.",
                     IDC_STATIC,17,14,227,33
     CONTROL         "프로그램",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,150
-    PUSHBUTTON      "프로그램 추가(&A)...",IDC_APP_ADDAPP, 90,204,75,14
-    PUSHBUTTON      "프로그램 제거(&R)",IDC_APP_REMOVEAPP, 170,204,75,14
-    LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,227,75,14
-    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
+                    15,50,230,120
+    PUSHBUTTON      "프로그램 추가(&A)...",IDC_APP_ADDAPP, 90,174,75,14
+    PUSHBUTTON      "프로그램 제거(&R)",IDC_APP_REMOVEAPP, 170,174,75,14
+    LTEXT           "윈도우즈 버젼(&W):",IDC_STATIC,16,197,75,14
+    COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250

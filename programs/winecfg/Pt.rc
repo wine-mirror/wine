@@ -76,34 +76,34 @@ END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Configurações da aplicação ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        " Configurações da aplicação ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine pode imitar vários estilos e versões do Windows para cada aplicação",
                     IDC_STATIC,15,20,227,20
     CONTROL         "Aplicações",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,150
-    PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,204,75,14
-    PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,204,75,14
-    LTEXT           "Versão do &Windows:",IDC_STATIC,17,226,58,8
-    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    15,50,230,120
+    PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,174,75,14
+    PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,174,75,14
+    LTEXT           "Versão do &Windows:",IDC_STATIC,17,196,58,8
+    COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Definições da aplicação ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        " Definições da aplicação ",IDC_STATIC, 8,4,244,210
     LTEXT           "O Wine pode imitar vários estilos e versões do Windows para cada aplicação. Esta aba está ligada às abas de Ligações e Gráficos para permitir alterar definições por aplicação ou no sistema assim como também nessas abas.",
                     IDC_STATIC,15,20,227,45
     CONTROL         "Aplicações",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,55,230,140
-    PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,204,75,14
-    PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,204,75,14
+                    15,55,230,115
+    PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,174,75,14
+    PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,174,75,14
     LTEXT           "Versão do &Windows:",IDC_STATIC,17,226,68,8
     COMBOBOX        IDC_WINVER,90,224,156,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END

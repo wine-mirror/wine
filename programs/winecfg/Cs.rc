@@ -56,19 +56,19 @@ BEGIN
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
-IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
+IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "NastavenÌ aplikacÌ",IDC_STATIC, 8,4,244,240
+    GROUPBOX        "NastavenÌ aplikacÌ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine umÌ p¯edstÌrat r˘znÈ verze Windows pro kaûdou jednu applikaci. Tato z·loûka je spojen· se sloûkami Knihovny a Obraz a umoûÚuje zmÏnit nastavenÌ celÈho systÈmu nebo nastavenÌ kaûdÈ aplikace zvl·öù.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Aplikace",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,150
-    PUSHBUTTON	    "P¯id&at aplikaci...",IDC_APP_ADDAPP, 90,204,75,14
-    PUSHBUTTON	    "Odeb&rat aplikaci",IDC_APP_REMOVEAPP, 170,204,75,14
-    LTEXT           "Verze &Windows:",IDC_STATIC,17,226,58,8
-    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    15,50,230,120
+    PUSHBUTTON	    "P¯id&at aplikaci...",IDC_APP_ADDAPP, 90,174,75,14
+    PUSHBUTTON	    "Odeb&rat aplikaci",IDC_APP_REMOVEAPP, 170,174,75,14
+    LTEXT           "Verze &Windows:",IDC_STATIC,17,196,58,8
+    COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
