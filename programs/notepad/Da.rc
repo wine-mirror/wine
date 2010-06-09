@@ -49,11 +49,11 @@ POPUP "&Rediger" {
   MENUITEM "&Indsæt\tCtrl+V",  CMD_PASTE
   MENUITEM "&Slet\tDel",        CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Marker &alt",       CMD_SELECT_ALL
-  MENUITEM "&Dato/tid\tF5",     CMD_TIME_DATE
+  MENUITEM "Marker &alt\tCtrl+A",       CMD_SELECT_ALL
+  MENUITEM "&Dato og klokkeslæt\tF5",     CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "Automatisk &linjeskift",    CMD_WRAP
-  MENUITEM "&Font...",          CMD_FONT
+  MENUITEM "&Tekstombrydning",    CMD_WRAP
+  MENUITEM "&Skrifttype...",          CMD_FONT
  }
 POPUP "&Søg" {
   MENUITEM "&Søg...",           CMD_SEARCH
@@ -65,7 +65,7 @@ POPUP "&Hjælp" {
   MENUITEM "&Søg efter hjælp om...",    CMD_HELP_SEARCH
   MENUITEM "&Brug af Hjælp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&Om Notepad", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Om Notesblok", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
