@@ -491,9 +491,9 @@ NTSTATUS WINAPI LsaLookupSids(
 
             if (domain_size)
             {
-                domain.Length = domain_size*sizeof(WCHAR);
+                domain.Length = (domain_size - 1) * sizeof(WCHAR);
                 domain.MaximumLength = domain_size*sizeof(WCHAR);
-                domain.Buffer = HeapAlloc(GetProcessHeap(),0,domain.Length);
+                domain.Buffer = HeapAlloc(GetProcessHeap(),0,domain.MaximumLength);
             }
             else
             {
@@ -503,7 +503,7 @@ NTSTATUS WINAPI LsaLookupSids(
             }
 
             (*Names)[i].Use = use;
-            (*Names)[i].Name.Length = name_size * sizeof(WCHAR);
+            (*Names)[i].Name.Length = (name_size - 1) * sizeof(WCHAR);
             (*Names)[i].Name.MaximumLength = name_size * sizeof(WCHAR);
             (*Names)[i].Name.Buffer = HeapAlloc(GetProcessHeap(),0,name_size * sizeof(WCHAR));
             LookupAccountSidW(NULL, Sids[i], (*Names)[i].Name.Buffer, &name_size, domain.Buffer, &domain_size, &use);
