@@ -4,6 +4,7 @@
  *
  * Copyright 2003 Sylvain Petreolle
  * Copyright 2007 Jonathan Ernst
+ * Copyright 2009-2010 Frédéric Delanoy
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +30,7 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Aide d'ATTRIB\n"
+  WCMD_ATTRIB, "ATTRIB affiche ou modifie les attributs de fichiers DOS.\n"
   WCMD_CALL,
 "CALL <fichierbatch> sert à appeler un fichier batch\n\
 depuis un autre fichier batch. Quand le fichier batch sort, le contrôle revient\n\
@@ -39,17 +40,18 @@ de la procédure appelée.\n\
 Les changements de répertoire courant, de variables d'environnement etc. faits\n\
 dans une procédure appelée sont transmis à l'appelant.\n"
 
-  WCMD_CD,     "Aide de CD\n"
-  WCMD_CHDIR,  "Aide de CHDIR\n"
+  WCMD_CD,     "CD <rép> est la version courte de CHDIR. Elle change le\
+répertoire courant par défaut.\n"
+  WCMD_CHDIR,  "CHDIR <rép> change le répertoire courant par défaut.\n"
 
   WCMD_CLS,
-"CLS efface l'écran de la console\n"
+"CLS efface l'écran de la console.\n"
 
-  WCMD_COPY,   "Aide de COPY\n"
-  WCMD_CTTY,   "Aide de CTTY\n"
-  WCMD_DATE,   "Aide de DATE\n"
-  WCMD_DEL,    "Aide de DEL\n"
-  WCMD_DIR,    "Aide de DIR\n"
+  WCMD_COPY,   "COPY copie un ou plusieurs fichiers.\n"
+  WCMD_CTTY,   "CTTY change le périphérique d'entrée/sortie.\n"
+  WCMD_DATE,   "DATE affiche ou modifie la date système.\n"
+  WCMD_DEL,    "DEL <fichiers> efface un fichier ou un groupe de fichiers.\n"
+  WCMD_DIR,    "DIR liste le contenu d'un répertoire.\n"
 
   WCMD_ECHO,
 "ECHO <chaîne> affiche <chaîne> sur la console courante.\n\
@@ -61,7 +63,7 @@ ECHO OFF annule l'effet de tout ECHO ON antérieur (ECHO est OFF par\n\
 défaut). On peut empêcher l'affichage de ECHO OFF en le faisant\n\
 précéder d'un signe @.\n"
 
-  WCMD_ERASE,  "Aide de ERASE\n"
+  WCMD_ERASE,  "ERASE <fichiers> efface un ou plusieurs fichiers.\n"
 
   WCMD_FOR,
 "La commande FOR sert à exécuter une commande pour chaque fichier d'un groupe de fichiers.\n\
@@ -101,8 +103,8 @@ Syntaxe : LABEL [lecteur:]\n\
 La commande demande le nouveau nom de volume pour le lecteur spécifié.\n\
 Vous pouvez afficher le nom de volume avec la commande VOL.\n"
 
-  WCMD_MD,     "Aide de MD\n"
-  WCMD_MKDIR,  "Aide de MKDIR\n"
+  WCMD_MD,     "MD est la version courte de MKDIR. Elle crée un répertoire.\n"
+  WCMD_MKDIR,  "MKDIR <rép> crée un répertoire.\n"
   WCMD_MOVE,
 "MOVE déplace un fichier, un groupe de fichiers ou un répertoire\n\
 à un autre endroit dans le système de fichiers. Si l'objet déplacé est un répertoire, alors\n\
@@ -150,10 +152,10 @@ L'invite peut aussi être adaptée en modifiant la variable d'environnement\n\
 "Une ligne de commande commençant par REM (suivi d'une espace) n'engendre\n\
 aucune action, et peut donc servir de commentaire dans un fichier batch.\n"
 
-  WCMD_REN,    "Aide de REN\n"
-  WCMD_RENAME, "Aide de RENAME\n"
-  WCMD_RD,     "Aide de RD.\n"
-  WCMD_RMDIR,  "Aide de RMDIR.\n"
+  WCMD_REN,    "REN est la version courte de RENAME. Elle renomme un fichier.\n"
+  WCMD_RENAME, "RENAME renomme un fichier.\n"
+  WCMD_RD,     "RD est la version courte de RMDIR. Elle efface un répertoire.\n"
+  WCMD_RMDIR,  "RMDIR efface un sous-répertoire.\n"
 
   WCMD_SET,
 "SET affiche ou change les variables d'environnement de cmd.\n\
@@ -178,7 +180,7 @@ n'est pas possible de modifier l'environnement du système d'exploitation dans c
 liste ; ainsi, le paramètre 2 devient paramètre 1 et ainsi de suite. Il est sans effet\n\
 s'il est appelé depuis la ligne de commande.\n"
 
-  WCMD_TIME,   "Aide de TIME\n"
+  WCMD_TIME,   "TIME règle ou affiche l'heure système courante.\n"
 
   WCMD_TITLE,
 "Définit le titre de la fenêtre pour la session cmd, Syntaxe : TITLE [chaîne]\n"
