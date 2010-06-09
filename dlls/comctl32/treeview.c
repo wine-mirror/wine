@@ -2875,7 +2875,7 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, HDC hdc_ref)
     PAINTSTRUCT ps;
     RECT rc;
 
-    TRACE("\n");
+    TRACE("(%p %p)\n", infoPtr, hdc_ref);
 
     if (hdc_ref)
     {
@@ -3280,7 +3280,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     RECT scrollRect;
     TREEVIEW_ITEM *nextItem, *tmpItem;
 
-    TRACE("\n");
+    TRACE("(%p, %p, partial=%d, %d\n", infoPtr, wineItem, bExpandPartial, bUser);
 
     if (wineItem->state & TVIS_EXPANDED)
        return TRUE;
@@ -3422,9 +3422,9 @@ TREEVIEW_ExpandMsg(TREEVIEW_INFO *infoPtr, UINT flag, HTREEITEM wineItem)
     if (!TREEVIEW_ValidItem(infoPtr, wineItem))
 	return 0;
 
-    TRACE("For (%s) item:%d, flags %x, state:%d\n",
-	      TREEVIEW_ItemName(wineItem), flag,
-	      TREEVIEW_GetItemIndex(infoPtr, wineItem), wineItem->state);
+    TRACE("For (%s) item:%d, flags 0x%x, state:%d\n",
+	      TREEVIEW_ItemName(wineItem), TREEVIEW_GetItemIndex(infoPtr, wineItem),
+              flag, wineItem->state);
 
     switch (flag & TVE_TOGGLE)
     {
