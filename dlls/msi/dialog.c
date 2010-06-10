@@ -1010,6 +1010,8 @@ MSIScrollText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch( msg )
     {
+    case WM_GETDLGCODE:
+        return DLGC_WANTARROWS;
     case WM_NCDESTROY:
         msi_free( info );
         RemovePropW( hWnd, szButtonData );
