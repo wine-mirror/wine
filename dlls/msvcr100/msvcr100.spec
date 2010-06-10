@@ -1012,7 +1012,7 @@
 @ stub _scprintf_l
 @ stub _scprintf_p
 @ stub _scprintf_p_l
-@ stub _scwprintf
+@ varargs _scwprintf(wstr) msvcrt._scwprintf
 @ stub _scwprintf_l
 @ stub _scwprintf_p
 @ stub _scwprintf_p_l

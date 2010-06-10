@@ -801,7 +801,7 @@
 # stub _scprintf
 # stub _scprintf_l
 # stub _scprintf_p_l
-# stub _scwprintf
+@ varargs _scwprintf(wstr) MSVCRT__scwprintf
 # stub _scwprintf_l
 # stub _scwprintf_p_l
 @ cdecl _searchenv(str str ptr)
