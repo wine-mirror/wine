@@ -541,10 +541,11 @@ struct MSVCRT_lconv * CDECL MSVCRT_localeconv(void)
 /*********************************************************************
  *		__lconv_init (MSVCRT.@)
  */
-void CDECL __lconv_init(void)
+int CDECL __lconv_init(void)
 {
     /* this is used to make chars unsigned */
     charmax = 255;
+    return 0;
 }
 
 /*********************************************************************

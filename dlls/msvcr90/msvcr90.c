@@ -93,6 +93,7 @@ int CDECL _initterm_e(_INITTERM_E_FN *table, _INITTERM_E_FN *end)
 
     while (!res && table < end) {
         if (*table) {
+            TRACE("calling %p\n", **table);
             res = (**table)();
             if (res)
                 TRACE("function %p failed: 0x%x\n", *table, res);
