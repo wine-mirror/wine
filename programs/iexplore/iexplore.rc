@@ -26,7 +26,5 @@
 
 #include "wine/wine_common_ver.rc"
 
-#define IDI_APPICON 101
-
 /* @makedep: iexplore.ico */
-IDI_APPICON ICON iexplore.ico
+1 ICON iexplore.ico

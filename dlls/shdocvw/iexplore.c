@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
-#define IDI_APPICON 101
+#define IDI_APPICON 1
 
 static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
 
