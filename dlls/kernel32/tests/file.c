@@ -598,6 +598,10 @@ static void test_CopyFileA(void)
     ok( retok && ret == sizeof(prefix),
        "WriteFile error %d\n", GetLastError());
     ok(GetFileSize(hfile, NULL) == sizeof(prefix), "source file has wrong size\n");
+    /* copying a file to itself must fail */
+    retok = CopyFileA(source, source, FALSE);
+    ok( !retok && (GetLastError() == ERROR_SHARING_VIOLATION || broken(GetLastError() == ERROR_FILE_EXISTS) /* Win 9x */),
+        "copying a file to itself didn't fail (ret=%d, err=%d)\n", retok, GetLastError());
     /* get the file time and change it to prove the difference */
     ret = GetFileTime(hfile, NULL, NULL, &ft1);
     ok( ret, "GetFileTime error %d\n", GetLastError());
@@ -617,6 +621,14 @@ static void test_CopyFileA(void)
 
     ret = CopyFileA(source, dest, FALSE);
     ok(ret, "CopyFileA: error %d\n", GetLastError());
+
+    /* destination file is write-locked during copy */
+    hfile = CreateFileA(dest, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file, error %d\n", GetLastError());
+    retok = CopyFileA(source, dest, FALSE);
+    ok(!retok && GetLastError() == ERROR_SHARING_VIOLATION,
+        "copying to a write-locked file didn't fail (ret=%d, err=%d)\n", ret, GetLastError());
+    CloseHandle(hfile);
 
     /* make sure that destination has correct size */
     hfile = CreateFileA(dest, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
