@@ -830,7 +830,7 @@
 # stub _snprintf_c
 # stub _snprintf_c_l
 # stub _snprintf_l
-# stub _snprintf_s
+@ varargs _snprintf_s(ptr long long str) MSVCRT__snprintf_s
 # stub _snprintf_s_l
 # stub _snscanf
 # stub _snscanf_l
