@@ -899,7 +899,7 @@
 @ stub _snscanf_s_l
 @ varargs _snwprintf(ptr long wstr) msvcrt._snwprintf
 @ stub _snwprintf_l
-@ stub _snwprintf_s
+@ varargs _snwprintf_s(ptr long long wstr) msvcrt._snwprintf_s
 @ stub _snwprintf_s_l
 @ stub _snwscanf
 @ stub _snwscanf_l
