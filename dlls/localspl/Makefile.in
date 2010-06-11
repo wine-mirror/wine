@@ -28,6 +28,7 @@ RC_SRCS = \
 	spl_Ru.rc \
 	spl_Si.rc \
 	spl_Sv.rc \
+	spl_Uk.rc \
 	spl_Zh.rc
 
 @MAKE_DLL_RULES@
