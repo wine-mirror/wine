@@ -406,7 +406,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
             if (ret == -EPIPE)
             {
                 WARN("Underrun occurred\n");
-                snd_pcm_recover(This->pcm, -EPIPE, 1);
+                wine_snd_pcm_recover(This->pcm, -EPIPE, 1);
                 ret = snd_pcm_writei(This->pcm, pvAudio1, writelen);
 
                 /* Advance mmap pointer a little to make dsound notice the underrun and respond to it */

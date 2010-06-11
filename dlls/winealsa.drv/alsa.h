@@ -187,7 +187,7 @@ const char * ALSA_getFormat(WORD wFormatTag);
 BOOL	ALSA_NearMatch(int rate1, int rate2);
 DWORD	ALSA_bytes_to_mmtime(LPMMTIME lpTime, DWORD position, WAVEFORMATPCMEX* format);
 void	ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t * sw, int full);
-int	ALSA_XRUNRecovery(WINE_WAVEDEV * wwo, int err);
+int	wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent);
 void	ALSA_copyFormat(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2);
 BOOL	ALSA_supportedFormat(LPWAVEFORMATEX wf);
 

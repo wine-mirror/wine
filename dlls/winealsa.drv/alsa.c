@@ -2,6 +2,7 @@
  * Wine Driver for ALSA
  *
  * Copyright	2002 Eric Pouech
+ * Copyright	2006 Jaroslav Kysela
  * Copyright	2007 Maarten Lankhorst
  *
  * This file has a few shared generic subroutines shared among the alsa
@@ -556,24 +557,42 @@ out:
 
 
 /**************************************************************************
- * 			ALSA_XRUNRecovery		[internal]
+ * 			wine_snd_pcm_recover		[internal]
  *
- * used to recovery from XRUN errors (buffer underflow/overflow)
+ * Code slightly modified from alsa-lib v1.0.23 snd_pcm_recover implementation.
+ * used to recover from XRUN errors (buffer underflow/overflow)
  */
-int ALSA_XRUNRecovery(WINE_WAVEDEV * wwo, int err)
+int wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent)
 {
-    if (err == -EPIPE) {    /* under-run */
-        err = snd_pcm_prepare(wwo->pcm);
-        if (err < 0)
-             ERR( "underrun recovery failed. prepare failed: %s\n", snd_strerror(err));
+    if (err > 0)
+        err = -err;
+    if (err == -EINTR)	/* nothing to do, continue */
         return 0;
-    } else if (err == -ESTRPIPE) {
-        while ((err = snd_pcm_resume(wwo->pcm)) == -EAGAIN)
-            sleep(1);       /* wait until the suspend flag is released */
+    if (err == -EPIPE) {
+        const char *s;
+        if (snd_pcm_stream(pcm) == SND_PCM_STREAM_PLAYBACK)
+            s = "underrun";
+        else
+            s = "overrun";
+        if (!silent)
+            ERR("%s occurred", s);
+        err = snd_pcm_prepare(pcm);
         if (err < 0) {
-            err = snd_pcm_prepare(wwo->pcm);
-            if (err < 0)
-                ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
+            ERR("cannot recover from %s, prepare failed: %s", s, snd_strerror(err));
+            return err;
+        }
+        return 0;
+    }
+    if (err == -ESTRPIPE) {
+        while ((err = snd_pcm_resume(pcm)) == -EAGAIN)
+            /* wait until suspend flag is released */
+            poll(NULL, 0, 1000);
+        if (err < 0) {
+            err = snd_pcm_prepare(pcm);
+            if (err < 0) {
+                ERR("cannot recover from suspend, prepare failed: %s", snd_strerror(err));
+                return err;
+            }
         }
         return 0;
     }
