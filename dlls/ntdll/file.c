@@ -87,6 +87,7 @@
 #include "ddk/ntddser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 mode_t FILE_umask = 0;
 
@@ -202,6 +203,11 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
             io->Information = FILE_OVERWRITTEN;
             break;
         }
+    }
+    else if (io->u.Status == STATUS_TOO_MANY_OPENED_FILES)
+    {
+        static int once;
+        if (!once++) ERR_(winediag)( "Too many open files, ulimit -n probably needs to be increased\n" );
     }
 
     return io->u.Status;
