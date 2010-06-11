@@ -8797,7 +8797,9 @@ static void pointsize_test(IDirect3DDevice9 *device)
     D3DMATRIX identity;
     float ptsize, ptsize_orig, ptsizemax_orig, ptsizemin_orig;
     DWORD color;
+    IDirect3DSurface9 *rt, *backbuffer;
     IDirect3DTexture9 *tex1, *tex2;
+    RECT rect = {0, 0, 128, 128};
     D3DLOCKED_RECT lr;
     const DWORD tex1_data[4] = {0x00ff0000, 0x00ff0000,
                                 0x00000000, 0x00000000};
@@ -9006,6 +9008,53 @@ static void pointsize_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 64+4, 64-4);
     ok(color == 0x00ffff00, "pSprite: Pixel (64+4),(64-4) has color 0x%08x, expected 0x00ffff00\n", color);
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    U(matrix).m[0][0] =  1.0f / 64.0f;
+    U(matrix).m[1][1] = -1.0f / 64.0f;
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &matrix);
+    ok(SUCCEEDED(hr), "SetTransform failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &backbuffer);
+    ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &rt, NULL );
+    ok(SUCCEEDED(hr), "CreateRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[0], sizeof(float) * 3);
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, rt, &rect, backbuffer, &rect, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+    ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(backbuffer);
+    IDirect3DSurface9_Release(rt);
+
+    color = getPixelColor(device, 64-4, 64-4);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00), 0),
+            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    color = getPixelColor(device, 64+4, 64-4);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00), 0),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    color = getPixelColor(device, 64-4, 64+4);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00), 0),
+            "Expected color 0x00000000, got 0x%08x.\n", color);
+    color = getPixelColor(device, 64+4, 64+4);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 0),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
