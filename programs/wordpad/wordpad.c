@@ -1302,6 +1302,7 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
 static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
 {
     static WCHAR findBuffer[MAX_STRING_LEN];
+    static WCHAR replaceBuffer[MAX_STRING_LEN];
 
     /* Allow only one search/replace dialog to open */
     if(hFindWnd != NULL)
@@ -1315,8 +1316,10 @@ static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
     fr->hwndOwner = hMainWnd;
     fr->Flags = FR_HIDEUPDOWN;
     fr->lpstrFindWhat = findBuffer;
+    fr->lpstrReplaceWith = replaceBuffer;
     fr->lCustData = -1;
-    fr->wFindWhatLen = MAX_STRING_LEN*sizeof(WCHAR);
+    fr->wFindWhatLen = sizeof(findBuffer);
+    fr->wReplaceWithLen = sizeof(replaceBuffer);
 
     if(replace)
         hFindWnd = ReplaceTextW(fr);
