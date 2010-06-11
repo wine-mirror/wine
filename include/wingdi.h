@@ -610,6 +610,30 @@ typedef struct
 DECL_WINELIB_TYPE_AW(ENUMLOGFONTEX)
 DECL_WINELIB_TYPE_AW(LPENUMLOGFONTEX)
 
+#define MM_MAX_NUMAXES    16
+
+typedef struct
+{
+  DWORD      dvReserved;
+  DWORD      dvNumAxes;
+  LONG       dvValues[MM_MAX_NUMAXES];
+} DESIGNVECTOR, *PDESIGNVECTOR;
+
+typedef struct
+{
+  ENUMLOGFONTEXA    elfEnumLogfontEx;
+  DESIGNVECTOR      elfDesignVector;
+} ENUMLOGFONTEXDVA, *PENUMLOGFONTEXDVA;
+
+typedef struct
+{
+  ENUMLOGFONTEXW    elfEnumLogfontEx;
+  DESIGNVECTOR      elfDesignVector;
+} ENUMLOGFONTEXDVW, *PENUMLOGFONTEXDVW;
+
+DECL_WINELIB_TYPE_AW(ENUMLOGFONTEXDV)
+DECL_WINELIB_TYPE_AW(PENUMLOGFONTEXDV)
+
 /*
  * The FONTSIGNATURE tells which Unicode ranges and which code pages
  * have glyphs in a font.
@@ -3356,6 +3380,9 @@ WINGDIAPI HFONT       WINAPI CreateFontW(INT,INT,INT,INT,INT,DWORD,DWORD,DWORD,D
 WINGDIAPI HFONT       WINAPI CreateFontIndirectA(const LOGFONTA*);
 WINGDIAPI HFONT       WINAPI CreateFontIndirectW(const LOGFONTW*);
 #define                      CreateFontIndirect WINELIB_NAME_AW(CreateFontIndirect)
+WINGDIAPI HFONT       WINAPI CreateFontIndirectExA(const ENUMLOGFONTEXDVA*);
+WINGDIAPI HFONT       WINAPI CreateFontIndirectExW(const ENUMLOGFONTEXDVW*);
+#define                      CreateFontIndirectEx WINELIB_NAME_AW(CreateFontIndirectEx)
 WINGDIAPI HPALETTE    WINAPI CreateHalftonePalette(HDC);
 WINGDIAPI HBRUSH      WINAPI CreateHatchBrush(INT,COLORREF);
 WINGDIAPI HDC         WINAPI CreateICA(LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);

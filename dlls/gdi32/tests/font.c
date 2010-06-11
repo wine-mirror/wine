@@ -43,6 +43,7 @@ DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 BOOL  (WINAPI *pGdiRealizationInfo)(HDC hdc, DWORD *);
+HFONT (WINAPI *pCreateFontIndirectExA)(const ENUMLOGFONTEXDV *);
 
 static HMODULE hgdi32 = 0;
 
@@ -57,6 +58,7 @@ static void init(void)
     pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
     pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
     pGdiRealizationInfo = (void *)GetProcAddress(hgdi32, "GdiRealizationInfo");
+    pCreateFontIndirectExA = (void *)GetProcAddress(hgdi32, "CreateFontIndirectExA");
 }
 
 static INT CALLBACK is_truetype_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
@@ -3109,6 +3111,37 @@ static void test_CreateFontIndirect(void)
     }
 }
 
+static void test_CreateFontIndirectEx(void)
+{
+    ENUMLOGFONTEXDVA lfex;
+    HFONT hfont;
+
+    if (!pCreateFontIndirectExA)
+    {
+        win_skip("CreateFontIndirectExA is not available\n");
+        return;
+    }
+
+    if (!is_truetype_font_installed("Arial"))
+    {
+        skip("Arial is not installed\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    hfont = pCreateFontIndirectExA(NULL);
+    ok(hfont == NULL, "got %p\n", hfont);
+    ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
+
+    memset(&lfex, 0, sizeof(lfex));
+    lstrcpyA(lfex.elfEnumLogfontEx.elfLogFont.lfFaceName, "Arial");
+    hfont = pCreateFontIndirectExA(&lfex);
+    ok(hfont != 0, "CreateFontIndirectEx failed\n");
+    if (hfont)
+        check_font("Arial", &lfex.elfEnumLogfontEx.elfLogFont, hfont);
+    DeleteObject(hfont);
+}
+
 START_TEST(font)
 {
     init();
@@ -3155,5 +3188,6 @@ START_TEST(font)
     test_GetTextMetrics2("Arial", -55);
     test_GetTextMetrics2("Arial", -110);
     test_CreateFontIndirect();
+    test_CreateFontIndirectEx();
     test_oemcharset();
 }
