@@ -2287,6 +2287,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         }
     }
 
+    if (gl_version >= MAKEDWORD_VERSION(2, 0)) gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
+
     if (gl_info->supported[APPLE_FENCE])
     {
         /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.

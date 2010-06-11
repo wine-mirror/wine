@@ -1353,6 +1353,7 @@ void (WINE_GLAPI *glVertex4sv)(const GLshort *v) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glVertexPointer)(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glViewport)(GLint x, GLint y, GLsizei width, GLsizei height) DECLSPEC_HIDDEN;
 void (WINE_GLAPI *glPointParameterfv)(GLenum pname, const GLfloat *params) DECLSPEC_HIDDEN;
+void (WINE_GLAPI *glPointParameteri)(GLenum name, GLint value) DECLSPEC_HIDDEN;
 
 /* glFinish and glFlush are always loaded from opengl32.dll, thus they always have
  * __stdcall calling convention.
@@ -1708,6 +1709,7 @@ BOOL (WINAPI *pwglShareLists)(HGLRC, HGLRC) DECLSPEC_HIDDEN;
     USE_GL_FUNC(glVertexPointer) \
     USE_GL_FUNC(glViewport) \
     USE_GL_FUNC(glPointParameterfv) \
+    USE_GL_FUNC(glPointParameteri) \
 
 #define WGL_FUNCS_GEN \
     USE_WGL_FUNC(wglCreateContext) \
@@ -1835,6 +1837,7 @@ typedef enum wined3d_gl_extension
     WGL_WINE_PIXEL_FORMAT_PASSTHROUGH,
     /* Internally used */
     WINE_NORMALIZED_TEXRECT,
+    WINED3D_GL_VERSION_2_0,
 
     WINED3D_GL_EXT_COUNT,
 } GL_SupportedExt;

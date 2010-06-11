@@ -644,6 +644,13 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         }
     }
 
+    if (!context->gl_info->supported[WINED3D_GL_VERSION_2_0] && context->render_offscreen
+            && This->stateBlock->renderState[WINED3DRS_POINTSPRITEENABLE]
+            && This->stateBlock->gl_primitive_type == GL_POINTS)
+    {
+        FIXME("Point sprite coordinate origin switching not supported.\n");
+    }
+
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
     {
