@@ -62,14 +62,15 @@ STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
-    CONTROL         IDB_WINE,IDC_STATIC,"Static", SS_BITMAP, 15,17,157,111
+    LTEXT           PACKAGE_NAME,IDC_ABT_TITLE_TEXT,105,30,55,30
+    LTEXT           PACKAGE_VERSION,IDC_ABT_PANEL_TEXT,160,43,140,8
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "Esta biblioteca é de código livre; pode-a redistribuir e/ou modificar nos termos da Licença Publica Geral Lesser GNU como publicado pela Fundação de Programas Livres; também a versão 2.1 da Licença, ou (na sua opinião) qualquer versão posterior.",
-                    IDC_ABT_PANEL_TEXT,105,64,145,60
-    GROUPBOX        " Informações de registro do Windows ", IDC_STATIC, 15, 155, 230, 55
-    LTEXT           "Proprietário:", IDC_STATIC, 22, 171, 40, 20
+                    IDC_ABT_LICENSE_TEXT,105,64,145,60
+    GROUPBOX        " &Informações de registro do Windows ", IDC_STATIC, 15, 155, 230, 55
+    LTEXT           "&Proprietário:", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Organização:", IDC_STATIC, 22, 185, 50, 20
+    LTEXT           "&Organização:", IDC_STATIC, 22, 185, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
@@ -238,6 +239,18 @@ BEGIN
     EDITTEXT        IDC_EDIT_SERIAL,45,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
     CONTROL         "Show &dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+IDD_DRIVECHOOSE DIALOG DISCARDABLE  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Seleccione a letra da drive"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "Cancelar",IDCANCEL,105,30,45,14,WS_GROUP
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
