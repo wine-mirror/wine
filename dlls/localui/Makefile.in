@@ -26,6 +26,7 @@ RC_SRCS = \
 	ui_Ru.rc \
 	ui_Si.rc \
 	ui_Sv.rc \
+	ui_Uk.rc \
 	ui_Zh.rc
 
 @MAKE_DLL_RULES@
