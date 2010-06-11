@@ -19,6 +19,10 @@ m4_ifdef([AS_VAR_IF],,[AC_DEFUN([AS_VAR_IF],
   [AS_IF([test "x$$1" = x""$2], [$3], [$4])],
   [eval as_val=\$$1
    AS_IF([test "x$as_val" = x""$2], [$3], [$4])])])])dnl
+dnl autoconf versions before 2.64 don't have AC_PACKAGE_URL
+m4_ifdef([AC_PACKAGE_URL],,
+  [AC_DEFINE([PACKAGE_URL], ["http://www.winehq.org"], [Define to the home page for this package.])
+   AC_SUBST([PACKAGE_URL], ["http://www.winehq.org"])])dnl
 
 dnl **** Command-line arguments ****
 
