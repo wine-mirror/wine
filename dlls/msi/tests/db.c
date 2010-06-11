@@ -1933,7 +1933,7 @@ static void test_where(void)
     rec = 0;
     query = "SELECT * FROM `Media` WHERE `DiskPrompt` <> 'Cabinet'";
     r = do_query(hdb, query, &rec);
-    todo_wine ok( r == ERROR_SUCCESS, "query failed: %d\n", r );
+    ok( r == ERROR_SUCCESS, "query failed: %d\n", r );
     MsiCloseHandle( rec );
 
     rec = 0;
