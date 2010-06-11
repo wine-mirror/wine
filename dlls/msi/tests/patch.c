@@ -794,7 +794,7 @@ static void test_simple_patch( void )
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
     r = MsiViewFetch( hview, &hrec );
-    todo_wine ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
     MsiCloseHandle( hrec );
     MsiViewClose( hview );
