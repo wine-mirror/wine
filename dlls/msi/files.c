@@ -60,24 +60,6 @@ static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *ac
     ui_progress( package, 2, f->FileSize, 0, 0 );
 }
 
-/* compares the version of a file read from the filesystem and
- * the version specified in the File table
- */
-static int msi_compare_file_version(MSIFILE *file)
-{
-    WCHAR version[MAX_PATH];
-    DWORD size;
-    UINT r;
-
-    size = MAX_PATH;
-    version[0] = '\0';
-    r = MsiGetFileVersionW(file->TargetPath, version, &size, NULL, NULL);
-    if (r != ERROR_SUCCESS)
-        return 0;
-
-    return lstrcmpW(version, file->Version);
-}
-
 static void schedule_install_files(MSIPACKAGE *package)
 {
     MSIFILE *file;
@@ -981,6 +963,7 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
     {
         MSIRECORD *uirow;
         LPWSTR dir, p;
+        VS_FIXEDFILEINFO *ver;
 
         if ( file->state == msifs_installed )
             ERR("removing installed file %s\n", debugstr_w(file->TargetPath));
@@ -989,11 +972,17 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
              file->Component->Installed == INSTALLSTATE_SOURCE )
             continue;
 
-        /* don't remove a file if the old file
-         * is strictly newer than the version to be installed
-         */
-        if ( msi_compare_file_version( file ) < 0 )
-            continue;
+        if (file->Version)
+        {
+            ver = msi_get_disk_file_version( file->TargetPath );
+            if (ver && msi_compare_file_versions( ver, file->Version ) > 0)
+            {
+                TRACE("newer version detected, not removing file\n");
+                msi_free( ver );
+                continue;
+            }
+            msi_free( ver );
+        }
 
         TRACE("removing %s\n", debugstr_w(file->File) );
         if (!DeleteFileW( file->TargetPath ))

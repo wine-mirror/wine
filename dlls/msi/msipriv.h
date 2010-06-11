@@ -32,6 +32,7 @@
 #include "objbase.h"
 #include "objidl.h"
 #include "winnls.h"
+#include "winver.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -811,6 +812,10 @@ extern LPWSTR msi_reg_get_val_str( HKEY hkey, LPCWSTR name );
 extern BOOL msi_reg_get_val_dword( HKEY hkey, LPCWSTR name, DWORD *val);
 
 extern DWORD msi_version_str_to_dword(LPCWSTR p);
+extern void msi_parse_version_string(LPCWSTR, PDWORD, PDWORD);
+extern VS_FIXEDFILEINFO *msi_get_disk_file_version(LPCWSTR);
+extern int msi_compare_file_versions(VS_FIXEDFILEINFO *, const WCHAR *);
+
 
 extern LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value );
 extern LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value );

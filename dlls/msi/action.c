@@ -1964,16 +1964,12 @@ static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static LPWSTR get_disk_file_version( LPCWSTR filename )
+VS_FIXEDFILEINFO *msi_get_disk_file_version( LPCWSTR filename )
 {
-    static const WCHAR name_fmt[] =
-        {'%','u','.','%','u','.','%','u','.','%','u',0};
     static const WCHAR name[] = {'\\',0};
-    VS_FIXEDFILEINFO *lpVer;
-    WCHAR filever[0x100];
+    VS_FIXEDFILEINFO *ret;
     LPVOID version;
-    DWORD versize;
-    DWORD handle;
+    DWORD versize, handle;
     UINT sz;
 
     TRACE("%s\n", debugstr_w(filename));
@@ -1983,23 +1979,32 @@ static LPWSTR get_disk_file_version( LPCWSTR filename )
         return NULL;
 
     version = msi_alloc( versize );
+    if (!version)
+        return NULL;
+
     GetFileVersionInfoW( filename, 0, versize, version );
 
-    if (!VerQueryValueW( version, name, (LPVOID*)&lpVer, &sz ))
+    if (!VerQueryValueW( version, name, (LPVOID *)&ret, &sz ))
     {
         msi_free( version );
         return NULL;
     }
 
-    sprintfW( filever, name_fmt,
-        HIWORD(lpVer->dwFileVersionMS),
-        LOWORD(lpVer->dwFileVersionMS),
-        HIWORD(lpVer->dwFileVersionLS),
-        LOWORD(lpVer->dwFileVersionLS));
-
     msi_free( version );
+    return ret;
+}
 
-    return strdupW( filever );
+int msi_compare_file_versions( VS_FIXEDFILEINFO *fi, const WCHAR *version )
+{
+    DWORD ms, ls;
+
+    msi_parse_version_string( version, &ms, &ls );
+
+    if (fi->dwFileVersionMS > ms) return 1;
+    else if (fi->dwFileVersionMS < ms) return -1;
+    else if (fi->dwFileVersionLS > ls) return 1;
+    else if (fi->dwFileVersionLS < ls) return -1;
+    return 0;
 }
 
 static DWORD get_disk_file_size( LPCWSTR filename )
@@ -2033,7 +2038,7 @@ static BOOL hash_matches( MSIFILE *file )
 
 static UINT set_file_install_states( MSIPACKAGE *package )
 {
-    LPWSTR file_version;
+    VS_FIXEDFILEINFO *file_version;
     MSIFILE *file;
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
@@ -2050,18 +2055,14 @@ static UINT set_file_install_states( MSIPACKAGE *package )
 
         /* calculate target */
         p = resolve_folder(package, comp->Directory, FALSE, FALSE, TRUE, NULL);
-
         msi_free(file->TargetPath);
 
-        TRACE("file %s is named %s\n",
-               debugstr_w(file->File), debugstr_w(file->FileName));
+        TRACE("file %s is named %s\n", debugstr_w(file->File), debugstr_w(file->FileName));
 
         file->TargetPath = build_directory_name(2, p, file->FileName);
-
         msi_free(p);
 
-        TRACE("file %s resolves to %s\n",
-               debugstr_w(file->File), debugstr_w(file->TargetPath));
+        TRACE("file %s resolves to %s\n", debugstr_w(file->File), debugstr_w(file->TargetPath));
 
         if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
@@ -2069,11 +2070,15 @@ static UINT set_file_install_states( MSIPACKAGE *package )
             comp->Cost += file->FileSize;
             continue;
         }
-        if (file->Version && (file_version = get_disk_file_version( file->TargetPath )))
+        if (file->Version && (file_version = msi_get_disk_file_version( file->TargetPath )))
         {
-            TRACE("new %s old %s\n", debugstr_w(file->Version), debugstr_w(file_version));
+            TRACE("new %s old %u.%u.%u.%u\n", debugstr_w(file->Version),
+                  HIWORD(file_version->dwFileVersionMS),
+                  LOWORD(file_version->dwFileVersionMS),
+                  HIWORD(file_version->dwFileVersionLS),
+                  LOWORD(file_version->dwFileVersionLS));
 
-            if (strcmpiW(file_version, file->Version) < 0)
+            if (msi_compare_file_versions( file_version, file->Version ) < 0)
             {
                 file->state = msifs_overwrite;
                 comp->Cost += file->FileSize;
