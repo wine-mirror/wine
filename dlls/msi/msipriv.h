@@ -381,7 +381,6 @@ typedef struct tagMSIFEATURE
     INSTALLSTATE Action;
     struct list Children;
     struct list Components;
-    INT Cost;
 } MSIFEATURE;
 
 typedef struct tagMSICOMPONENT
