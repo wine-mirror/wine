@@ -27,6 +27,7 @@ RC_SRCS = \
 	iccvid_Ru.rc \
 	iccvid_Si.rc \
 	iccvid_Sv.rc \
-	iccvid_Tr.rc
+	iccvid_Tr.rc \
+	iccvid_Uk.rc
 
 @MAKE_DLL_RULES@
