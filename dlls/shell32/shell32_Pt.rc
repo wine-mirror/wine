@@ -441,6 +441,10 @@ STRINGTABLE
 	IDS_SHV_COLUMN11	"Grupo"
 	IDS_SHV_COLUMN_DELFROM	"Localização original"
 	IDS_SHV_COLUMN_DELDATE	"Data de exclusão"
+	IDS_SHV_COL_DOCS	"Documentos"
+	IDS_SHV_COL_STATUS	"Estado"
+	IDS_SHV_COL_LOCATION	"Localização"
+	IDS_SHV_COL_MODEL	"Modelo"
 
         /* special folders */
 	IDS_DESKTOP		"Ambiente de trabalho"
