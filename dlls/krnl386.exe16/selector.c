@@ -553,65 +553,185 @@ __ASM_STDCALL_FUNC( SUnMapLS, 0,
 
 /***********************************************************************
  *		SMapLS_IP_EBP_8 (KERNEL32.@)
- *		SMapLS_IP_EBP_12 (KERNEL32.@)
- *		SMapLS_IP_EBP_16 (KERNEL32.@)
- *		SMapLS_IP_EBP_20 (KERNEL32.@)
- *		SMapLS_IP_EBP_24 (KERNEL32.@)
- *		SMapLS_IP_EBP_28 (KERNEL32.@)
- *		SMapLS_IP_EBP_32 (KERNEL32.@)
- *		SMapLS_IP_EBP_36 (KERNEL32.@)
- *		SMapLS_IP_EBP_40 (KERNEL32.@)
  *
  * These functions map linear pointers at [EBP+xxx] to segmented pointers
  * and return them.
  * Win95 uses some kind of alias structs, which it stores in [EBP+x] to
  * unravel them at SUnMapLS. We just store the segmented pointer there.
  */
-#define DEFINE_SMapLS(n) \
-  __ASM_STDCALL_FUNC( SMapLS_IP_EBP_ ## n, 0, \
-                     "movl " #n "(%ebp),%eax\n\t" \
-                     "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t" \
-                     "movl %edx," #n "(%ebp)\n\t" \
-                     "ret" )
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_8, 0,
+                    "movl 8(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,8(%ebp)\n\t"
+                    "ret" )
 
-DEFINE_SMapLS(8)
-DEFINE_SMapLS(12)
-DEFINE_SMapLS(16)
-DEFINE_SMapLS(20)
-DEFINE_SMapLS(24)
-DEFINE_SMapLS(28)
-DEFINE_SMapLS(32)
-DEFINE_SMapLS(36)
-DEFINE_SMapLS(40)
+/***********************************************************************
+ *		SMapLS_IP_EBP_12 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_12, 0,
+                    "movl 12(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,12(%ebp)\n\t"
+                    "ret" )
 
+/***********************************************************************
+ *		SMapLS_IP_EBP_16 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_16, 0,
+                    "movl 16(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,16(%ebp)\n\t"
+                    "ret" )
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_20 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_20, 0,
+                    "movl 20(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,20(%ebp)\n\t"
+                    "ret" )
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_24 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_24, 0,
+                    "movl 24(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,24(%ebp)\n\t"
+                    "ret" )
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_28 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_28, 0,
+                    "movl 28(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,28(%ebp)\n\t"
+                    "ret" )
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_32 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_32, 0,
+                    "movl 32(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,32(%ebp)\n\t"
+                    "ret" )
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_36 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_36, 0,
+                    "movl 36(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,36(%ebp)\n\t"
+                    "ret" )
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_40 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SMapLS_IP_EBP_40, 0,
+                    "movl 40(%ebp),%eax\n\t"
+                    "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl %edx,40(%ebp)\n\t"
+                    "ret" )
 
 /***********************************************************************
  *		SUnMapLS_IP_EBP_8 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_8, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 8(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,8(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_12 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_12, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 12(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,12(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_16 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_16, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 16(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,16(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_20 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_20, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 20(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,20(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_24 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_24, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 24(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,24(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_28 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_28, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 28(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,28(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_32 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_32, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 32(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,32(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_36 (KERNEL32.@)
+ */
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_36, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 36(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,36(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
+
+/***********************************************************************
  *		SUnMapLS_IP_EBP_40 (KERNEL32.@)
  */
-
-#define DEFINE_SUnMapLS(n) \
-  __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_ ## n, 0, \
-                     "pushl %eax\n\t"  /* preserve eax */ \
-                     "pushl " #n "(%ebp)\n\t" \
-                     "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t" \
-                     "movl $0," #n "(%ebp)\n\t" \
-                     "popl %eax\n\t" \
-                     "ret" )
-
-DEFINE_SUnMapLS(8)
-DEFINE_SUnMapLS(12)
-DEFINE_SUnMapLS(16)
-DEFINE_SUnMapLS(20)
-DEFINE_SUnMapLS(24)
-DEFINE_SUnMapLS(28)
-DEFINE_SUnMapLS(32)
-DEFINE_SUnMapLS(36)
-DEFINE_SUnMapLS(40)
+__ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_40, 0,
+                    "pushl %eax\n\t"  /* preserve eax */
+                    "pushl 40(%ebp)\n\t"
+                    "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
+                    "movl $0,40(%ebp)\n\t"
+                    "popl %eax\n\t"
+                    "ret" )
