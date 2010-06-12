@@ -575,13 +575,17 @@ static void CALLBACK MACRO_JumpID(LPCSTR lpszPathWindow, LPCSTR topic_id)
     if ((ptr = strchr(lpszPathWindow, '>')) != NULL)
     {
         LPSTR   tmp;
-        size_t  sz = ptr - lpszPathWindow;
+        size_t  sz;
 
-        tmp = HeapAlloc(GetProcessHeap(), 0, sz + 1);
+        tmp = HeapAlloc(GetProcessHeap(), 0, strlen(lpszPathWindow) + 1);
         if (tmp)
         {
-            memcpy(tmp, lpszPathWindow, sz);
-            tmp[sz] = '\0';
+            strcpy(tmp, lpszPathWindow);
+            tmp[ptr - lpszPathWindow] = '\0';
+            ptr += tmp - lpszPathWindow; /* ptr now points to '>' in tmp buffer */
+            /* in some cases, we have a trailing space that we need to get rid of */
+            /* FIXME: check if it has to be done in lexer rather than here */
+            for (sz = strlen(ptr + 1); sz >= 1 && ptr[sz] == ' '; sz--) ptr[sz] = '\0';
             MACRO_JumpHash(tmp, ptr + 1, HLPFILE_Hash(topic_id));
             HeapFree(GetProcessHeap(), 0, tmp);
         }
