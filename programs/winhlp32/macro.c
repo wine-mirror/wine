@@ -281,24 +281,32 @@ static void CALLBACK MACRO_CheckItem(LPCSTR str)
 static void CALLBACK MACRO_CloseSecondarys(void)
 {
     WINHELP_WINDOW *win;
+    WINHELP_WINDOW *next;
 
     WINE_TRACE("()\n");
-    for (win = Globals.win_list; win; win = win->next)
+    for (win = Globals.win_list; win; win = next)
+    {
+        next = win->next;
         if (lstrcmpi(win->info->name, "main"))
             WINHELP_ReleaseWindow(win);
+    }
 }
 
 static void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
 {
     WINHELP_WINDOW *win;
+    WINHELP_WINDOW *next;
 
     WINE_TRACE("(\"%s\")\n", lpszWindow);
 
     if (!lpszWindow || !lpszWindow[0]) lpszWindow = "main";
 
-    for (win = Globals.win_list; win; win = win->next)
+    for (win = Globals.win_list; win; win = next)
+    {
+        next = win->next;
         if (!lstrcmpi(win->info->name, lpszWindow))
             WINHELP_ReleaseWindow(win);
+    }
 }
 
 static void CALLBACK MACRO_Compare(LPCSTR str)
