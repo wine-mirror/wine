@@ -823,6 +823,36 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_WILDCARD,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* URI is considered opaque since CREATE_NO_CRACK_UNKNOWN_SCHEMES is set and its an unknown scheme. */
+    {   "zip://google.com", Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip:/.//google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip:/.//google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {".com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/.//google.com",S_OK,TRUE},
+            {"/.//google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://google.com",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 

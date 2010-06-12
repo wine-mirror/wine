@@ -49,6 +49,8 @@ typedef struct {
     BSTR            uri;
 
     BOOL            is_relative;
+    BOOL            is_opaque;
+    BOOL            has_implicit_scheme;
 
     const WCHAR     *scheme;
     DWORD           scheme_len;
@@ -102,6 +104,25 @@ static inline BOOL is_implicit_file_path(const WCHAR *str) {
         return TRUE;
 
     return FALSE;
+}
+
+/* Checks if the URI is a hierarchical URI. A hierarchical
+ * URI is one that has "//" after the scheme.
+ */
+static BOOL check_hierarchical(const WCHAR **ptr) {
+    const WCHAR *start = *ptr;
+
+    if(**ptr != '/')
+        return FALSE;
+
+    ++(*ptr);
+    if(**ptr != '/') {
+        *ptr = start;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    return TRUE;
 }
 
 /* Tries to parse the scheme name of the URI.
@@ -195,6 +216,8 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
         if(flags & Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME) {
             data->scheme = fileW;
             data->scheme_len = lstrlenW(fileW);
+            data->has_implicit_scheme = TRUE;
+
             TRACE("(%p %p %x): URI is an implicit file path.\n", ptr, data, flags);
         } else {
             /* Window's does not consider anything that can implicitly be a file
@@ -213,6 +236,7 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
         if(flags & Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME) {
             data->scheme = wildcardW;
             data->scheme_len = lstrlenW(wildcardW);
+            data->has_implicit_scheme = TRUE;
 
             TRACE("(%p %p %x): URI is an implicit wildcard scheme.\n", ptr, data, flags);
         } else if (flags & Uri_CREATE_ALLOW_RELATIVE) {
@@ -235,6 +259,65 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
     return TRUE;
 }
 
+/* Determines how the URI should be parsed after the scheme information.
+ *
+ * If the scheme is followed, by "//" then, it is treated as an hierarchical URI
+ * which then the authority and path information will be parsed out. Otherwise, the
+ * URI will be treated as an opaque URI which the authority information is not parsed
+ * out.
+ *
+ * RFC 3896 defenition of hier-part:
+ *
+ * hier-part   = "//" authority path-abempty
+ *                 / path-absolute
+ *                 / path-rootless
+ *                 / path-empty
+ *
+ * MSDN opaque URI definition:
+ *  scheme ":" path [ "#" fragment ]
+ *
+ * NOTES:
+ *  If the URI is of an unknown scheme type and has a "//" following the scheme then it
+ *  is treated as a hierarchical URI, but, if the CREATE_NO_CRACK_UNKNOWN_SCHEMES flag is
+ *  set then it is considered an opaque URI reguardless of what follows the scheme information
+ *  (per MSDN documentation).
+ */
+static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    /* Checks if the authority information needs to be parsed.
+     *
+     * Relative URI's aren't hierarchical URI's, but, they could trick
+     * "check_hierarchical" into thinking it is, so we need to explicitly
+     * make sure it's not relative. Also, if the URI is an implicit file
+     * scheme it might not contain a "//", but, it's considered hierarchical
+     * anyways. Wildcard Schemes are always considered hierarchical
+     */
+    if(data->scheme_type == URL_SCHEME_WILDCARD ||
+       data->scheme_type == URL_SCHEME_FILE ||
+       (!data->is_relative && check_hierarchical(ptr))) {
+        /* Only treat it as a hierarchical URI if the scheme_type is known or
+         * the Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES flag is not set.
+         */
+        if(data->scheme_type != URL_SCHEME_UNKNOWN ||
+           !(flags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES)) {
+            TRACE("(%p %p %x): Treating URI as an hierarchical URI.\n", ptr, data, flags);
+            data->is_opaque = FALSE;
+
+            /* TODO: Handle hierarchical URI's, parse authority then parse the path. */
+            return TRUE;
+        }
+    }
+
+    /* If it reaches here, then the URI will be treated as an opaque
+     * URI.
+     */
+
+    TRACE("(%p %p %x): Treating URI as an opaque URI.\n", ptr, data, flags);
+
+    data->is_opaque = TRUE;
+    /* TODO: Handle opaque URI's, parse path. */
+    return TRUE;
+}
+
 /* Parses and validates the components of the specified by data->uri
  * and stores the information it parses into 'data'.
  *
@@ -250,6 +333,9 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
     TRACE("(%p %x): BEGINNING TO PARSE URI %s.\n", data, flags, debugstr_w(data->uri));
 
     if(!parse_scheme(pptr, data, flags))
+        return FALSE;
+
+    if(!parse_hierpart(pptr, data, flags))
         return FALSE;
 
     TRACE("(%p %x): FINISHED PARSING URI.\n", data, flags);
