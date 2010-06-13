@@ -1988,6 +1988,17 @@ static void test_create(void)
     if( SUCCEEDED(r) ) IXMLDOMNode_Release( node );
     SysFreeString(str);
 
+    /* a name is required for attribute, try a BSTR with first null wchar */
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = NODE_ATTRIBUTE;
+    str = SysAllocString( szstr1 );
+    str[0] = 0;
+    node = (IXMLDOMNode*)0x1;
+    r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
+    ok( r == E_FAIL, "returns %08x\n", r );
+    ok( node == (void*)0x1, "expected same ptr, got %p\n", node);
+    SysFreeString(str);
+
     /* NODE_PROCESSING_INSTRUCTION */
     V_VT(&var) = VT_I1;
     V_I1(&var) = NODE_PROCESSING_INSTRUCTION;
