@@ -745,7 +745,7 @@ static HIMAGELIST AddListViewImageList(HWND hWnd)
     HICON hDefaultIcon;
 
     hSmall = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-        ILC_MASK, 1, 1);
+                              ILC_COLOR32 | ILC_MASK, 1, 1);
 
     /* Add default icon to image list */
     hDefaultIcon = LoadIconW(hInst, MAKEINTRESOURCEW(ICO_MAIN));
