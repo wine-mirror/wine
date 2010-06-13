@@ -216,9 +216,9 @@ static BOOL Control_CreateListView (CPanel *panel)
 
     /* Create image lists for list view */
     panel->hImageListSmall = ImageList_Create(GetSystemMetrics(SM_CXSMICON),
-        GetSystemMetrics(SM_CYSMICON), ILC_MASK, 1, 1);
+        GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 1, 1);
     panel->hImageListLarge = ImageList_Create(GetSystemMetrics(SM_CXICON),
-        GetSystemMetrics(SM_CYICON), ILC_MASK, 1, 1);
+        GetSystemMetrics(SM_CYICON), ILC_COLOR32 | ILC_MASK, 1, 1);
 
     SendMessageW(panel->hWndListView, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)panel->hImageListSmall);
     SendMessageW(panel->hWndListView, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)panel->hImageListLarge);
