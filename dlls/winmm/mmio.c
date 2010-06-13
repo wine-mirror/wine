@@ -667,7 +667,13 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
                                         (LPARAM)szFileName, 0, FALSE);
 
     /* grab file size, when possible */
-    if ((pos = _llseek((HFILE)wm->info.adwInfo[0], 0, SEEK_CUR)) != -1)
+    /* FIXME: the code around dwFileSize is:
+     * - probably broken
+     * - needs to be tested when the app installs its own IOproc
+     * - likely to be removed
+     * So, restrict dwFileSize usage to DOS ioprocs
+     */
+    if (wm->info.fccIOProc == FOURCC_DOS && (pos = _llseek((HFILE)wm->info.adwInfo[0], 0, SEEK_CUR)) != -1)
     {
         wm->dwFileSize = _llseek((HFILE)wm->info.adwInfo[0], 0, SEEK_END);
         _llseek((HFILE)wm->info.adwInfo[0], pos, SEEK_SET);
