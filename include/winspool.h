@@ -1133,6 +1133,298 @@ typedef struct _BIDI_RESPONSE_CONTAINER {
  BIDI_RESPONSE_DATA aData[1];
 } BIDI_RESPONSE_CONTAINER, *LPBIDI_RESPONSE_CONTAINER, *PBIDI_RESPONSE_CONTAINER;
 
+/* string constants */
+
+#define SPLREG_DEFAULT_SPOOL_DIRECTORYA "DefaultSpoolDirectory"
+#ifdef _MSC_VER
+#define SPLREG_DEFAULT_SPOOL_DIRECTORYW L"DefaultSpoolDirectory"
+#elif defined(__GNUC__)
+#define SPLREG_DEFAULT_SPOOL_DIRECTORYW (const WCHAR[]){'D','e','f','a','u','l','t','S','p','o','o','l','D','i','r','e','c','t','o','r','y',0}
+#else
+static const WCHAR SPLREG_DEFAULT_SPOOL_DIRECTORYW[] = {'D','e','f','a','u','l','t','S','p','o','o','l','D','i','r','e','c','t','o','r','y',0};
+#endif
+#define SPLREG_DEFAULT_SPOOL_DIRECTORY WINELIB_NAME_AW(SPLREG_DEFAULT_SPOOL_DIRECTORY)
+
+#define SPLREG_PORT_THREAD_PRIORITY_DEFAULTA "PortThreadPriorityDefault"
+#ifdef _MSC_VER
+#define SPLREG_PORT_THREAD_PRIORITY_DEFAULTW L"PortThreadPriorityDefault"
+#elif defined(__GNUC__)
+#define SPLREG_PORT_THREAD_PRIORITY_DEFAULTW (const WCHAR[]){'P','o','r','t','T','h','r','e','a','d','P','r','i','o','r','i','t','y','D','e','f','a','u','l','t',0}
+#else
+static const WCHAR SPLREG_PORT_THREAD_PRIORITY_DEFAULTW[] = {'P','o','r','t','T','h','r','e','a','d','P','r','i','o','r','i','t','y','D','e','f','a','u','l','t',0};
+#endif
+#define SPLREG_PORT_THREAD_PRIORITY_DEFAULT WINELIB_NAME_AW(SPLREG_PORT_THREAD_PRIORITY_DEFAULT)
+
+#define SPLREG_PORT_THREAD_PRIORITYA "PortThreadPriority"
+#ifdef _MSC_VER
+#define SPLREG_PORT_THREAD_PRIORITYW L"PortThreadPriority"
+#elif defined(__GNUC__)
+#define SPLREG_PORT_THREAD_PRIORITYW (const WCHAR[]){'P','o','r','t','T','h','r','e','a','d','P','r','i','o','r','i','t','y',0}
+#else
+static const WCHAR SPLREG_PORT_THREAD_PRIORITYW[] = {'P','o','r','t','T','h','r','e','a','d','P','r','i','o','r','i','t','y',0};
+#endif
+#define SPLREG_PORT_THREAD_PRIORITY WINELIB_NAME_AW(SPLREG_PORT_THREAD_PRIORITY)
+
+#define SPLREG_SCHEDULER_THREAD_PRIORITY_DEFAULTA "SchedulerThreadPriorityDefault"
+#ifdef _MSC_VER
+#define SPLREG_SCHEDULER_THREAD_PRIORITY_DEFAULTW L"SchedulerThreadPriorityDefault"
+#elif defined(__GNUC__)
+#define SPLREG_SCHEDULER_THREAD_PRIORITY_DEFAULTW (const WCHAR[]){'S','c','h','e','d','u','l','e','r','T','h','r','e','a','d','P','r','i','o','r','i','t','y','D','e','f','a','u','l','t',0}
+#else
+static const WCHAR SPLREG_SCHEDULER_THREAD_PRIORITY_DEFAULTW[] = {'S','c','h','e','d','u','l','e','r','T','h','r','e','a','d','P','r','i','o','r','i','t','y','D','e','f','a','u','l','t',0};
+#endif
+#define SPLREG_SCHEDULER_THREAD_PRIORITY_DEFAULT WINELIB_NAME_AW(SPLREG_SCHEDULER_THREAD_PRIORITY_DEFAULT)
+
+#define SPLREG_SCHEDULER_THREAD_PRIORITYA "SchedulerThreadPriority"
+#ifdef _MSC_VER
+#define SPLREG_SCHEDULER_THREAD_PRIORITYW L"SchedulerThreadPriority"
+#elif defined(__GNUC__)
+#define SPLREG_SCHEDULER_THREAD_PRIORITYW (const WCHAR[]){'S','c','h','e','d','u','l','e','r','T','h','r','e','a','d','P','r','i','o','r','i','t','y',0}
+#else
+static const WCHAR SPLREG_SCHEDULER_THREAD_PRIORITYW[] = {'S','c','h','e','d','u','l','e','r','T','h','r','e','a','d','P','r','i','o','r','i','t','y',0};
+#endif
+#define SPLREG_SCHEDULER_THREAD_PRIORITY WINELIB_NAME_AW(SPLREG_SCHEDULER_THREAD_PRIORITY)
+
+#define SPLREG_BEEP_ENABLEDA "BeepEnabled"
+#ifdef _MSC_VER
+#define SPLREG_BEEP_ENABLEDW L"BeepEnabled"
+#elif defined(__GNUC__)
+#define SPLREG_BEEP_ENABLEDW (const WCHAR[]){'B','e','e','p','E','n','a','b','l','e','d',0}
+#else
+static const WCHAR SPLREG_BEEP_ENABLEDW[] = {'B','e','e','p','E','n','a','b','l','e','d',0};
+#endif
+#define SPLREG_BEEP_ENABLED WINELIB_NAME_AW(SPLREG_BEEP_ENABLED)
+
+#define SPLREG_NET_POPUPA "NetPopup"
+#ifdef _MSC_VER
+#define SPLREG_NET_POPUPW L"NetPopup"
+#elif defined(__GNUC__)
+#define SPLREG_NET_POPUPW (const WCHAR[]){'N','e','t','P','o','p','u','p',0}
+#else
+static const WCHAR SPLREG_NET_POPUPW[] = {'N','e','t','P','o','p','u','p',0};
+#endif
+#define SPLREG_NET_POPUP WINELIB_NAME_AW(SPLREG_NET_POPUP)
+
+#define SPLREG_RETRY_POPUPA "RetryPopup"
+#ifdef _MSC_VER
+#define SPLREG_RETRY_POPUPW L"RetryPopup"
+#elif defined(__GNUC__)
+#define SPLREG_RETRY_POPUPW (const WCHAR[]){'R','e','t','r','y','P','o','p','u','p',0}
+#else
+static const WCHAR SPLREG_RETRY_POPUPW[] = {'R','e','t','r','y','P','o','p','u','p',0};
+#endif
+#define SPLREG_RETRY_POPUP WINELIB_NAME_AW(SPLREG_RETRY_POPUP)
+
+#define SPLREG_NET_POPUP_TO_COMPUTERA "NetPopupToComputer"
+#ifdef _MSC_VER
+#define SPLREG_NET_POPUP_TO_COMPUTERW L"NetPopupToComputer"
+#elif defined(__GNUC__)
+#define SPLREG_NET_POPUP_TO_COMPUTERW (const WCHAR[]){'N','e','t','P','o','p','u','p','T','o','C','o','m','p','u','t','e','r',0}
+#else
+static const WCHAR SPLREG_NET_POPUP_TO_COMPUTERW[] = {'N','e','t','P','o','p','u','p','T','o','C','o','m','p','u','t','e','r',0};
+#endif
+#define SPLREG_NET_POPUP_TO_COMPUTER WINELIB_NAME_AW(SPLREG_NET_POPUP_TO_COMPUTER)
+
+#define SPLREG_EVENT_LOGA "EventLog"
+#ifdef _MSC_VER
+#define SPLREG_EVENT_LOGW L"EventLog"
+#elif defined(__GNUC__)
+#define SPLREG_EVENT_LOGW (const WCHAR[]){'E','v','e','n','t','L','o','g',0}
+#else
+static const WCHAR SPLREG_EVENT_LOGW[] = {'E','v','e','n','t','L','o','g',0};
+#endif
+#define SPLREG_EVENT_LOG WINELIB_NAME_AW(SPLREG_EVENT_LOG)
+
+#define SPLREG_MAJOR_VERSIONA "MajorVersion"
+#ifdef _MSC_VER
+#define SPLREG_MAJOR_VERSIONW L"MajorVersion"
+#elif defined(__GNUC__)
+#define SPLREG_MAJOR_VERSIONW (const WCHAR[]){'M','a','j','o','r','V','e','r','s','i','o','n',0}
+#else
+static const WCHAR SPLREG_MAJOR_VERSIONW[] = {'M','a','j','o','r','V','e','r','s','i','o','n',0};
+#endif
+#define SPLREG_MAJOR_VERSION WINELIB_NAME_AW(SPLREG_MAJOR_VERSION)
+
+#define SPLREG_MINOR_VERSIONA "MinorVersion"
+#ifdef _MSC_VER
+#define SPLREG_MINOR_VERSIONW L"MinorVersion"
+#elif defined(__GNUC__)
+#define SPLREG_MINOR_VERSIONW (const WCHAR[]){'M','i','n','o','r','V','e','r','s','i','o','n',0}
+#else
+static const WCHAR SPLREG_MINOR_VERSIONW[] = {'M','i','n','o','r','V','e','r','s','i','o','n',0};
+#endif
+#define SPLREG_MINOR_VERSION WINELIB_NAME_AW(SPLREG_MINOR_VERSION)
+
+#define SPLREG_ARCHITECTUREA "Architecture"
+#ifdef _MSC_VER
+#define SPLREG_ARCHITECTUREW L"Architecture"
+#elif defined(__GNUC__)
+#define SPLREG_ARCHITECTUREW (const WCHAR[]){'A','r','c','h','i','t','e','c','t','u','r','e',0}
+#else
+static const WCHAR SPLREG_ARCHITECTUREW[] = {'A','r','c','h','i','t','e','c','t','u','r','e',0};
+#endif
+#define SPLREG_ARCHITECTURE WINELIB_NAME_AW(SPLREG_ARCHITECTURE)
+
+#define SPLREG_OS_VERSIONA "OSVersion"
+#ifdef _MSC_VER
+#define SPLREG_OS_VERSIONW L"OSVersion"
+#elif defined(__GNUC__)
+#define SPLREG_OS_VERSIONW (const WCHAR[]){'O','S','V','e','r','s','i','o','n',0}
+#else
+static const WCHAR SPLREG_OS_VERSIONW[] = {'O','S','V','e','r','s','i','o','n',0};
+#endif
+#define SPLREG_OS_VERSION WINELIB_NAME_AW(SPLREG_OS_VERSION)
+
+#define SPLREG_OS_VERSIONEXA "OSVersionEx"
+#ifdef _MSC_VER
+#define SPLREG_OS_VERSIONEXW L"OSVersionEx"
+#elif defined(__GNUC__)
+#define SPLREG_OS_VERSIONEXW (const WCHAR[]){'O','S','V','e','r','s','i','o','n','E','x',0}
+#else
+static const WCHAR SPLREG_OS_VERSIONEXW[] = {'O','S','V','e','r','s','i','o','n','E','x',0};
+#endif
+#define SPLREG_OS_VERSIONEX WINELIB_NAME_AW(SPLREG_OS_VERSIONEX)
+
+#define SPLREG_DS_PRESENTA "DsPresent"
+#ifdef _MSC_VER
+#define SPLREG_DS_PRESENTW L"DsPresent"
+#elif defined(__GNUC__)
+#define SPLREG_DS_PRESENTW (const WCHAR[]){'D','s','P','r','e','s','e','n','t',0}
+#else
+static const WCHAR SPLREG_DS_PRESENTW[] = {'D','s','P','r','e','s','e','n','t',0};
+#endif
+#define SPLREG_DS_PRESENT WINELIB_NAME_AW(SPLREG_DS_PRESENT)
+
+#define SPLREG_DS_PRESENT_FOR_USERA "DsPresentForUser"
+#ifdef _MSC_VER
+#define SPLREG_DS_PRESENT_FOR_USERW L"DsPresentForUser"
+#elif defined(__GNUC__)
+#define SPLREG_DS_PRESENT_FOR_USERW (const WCHAR[]){'D','s','P','r','e','s','e','n','t','F','o','r','U','s','e','r',0}
+#else
+static const WCHAR SPLREG_DS_PRESENT_FOR_USERW[] = {'D','s','P','r','e','s','e','n','t','F','o','r','U','s','e','r',0};
+#endif
+#define SPLREG_DS_PRESENT_FOR_USER WINELIB_NAME_AW(SPLREG_DS_PRESENT_FOR_USER)
+
+#define SPLREG_REMOTE_FAXA "RemoteFax"
+#ifdef _MSC_VER
+#define SPLREG_REMOTE_FAXW L"RemoteFax"
+#elif defined(__GNUC__)
+#define SPLREG_REMOTE_FAXW (const WCHAR[]){'R','e','m','o','t','e','F','a','x',0}
+#else
+static const WCHAR SPLREG_REMOTE_FAXW[] = {'R','e','m','o','t','e','F','a','x',0};
+#endif
+#define SPLREG_REMOTE_FAX WINELIB_NAME_AW(SPLREG_REMOTE_FAX)
+
+#define SPLREG_RESTART_JOB_ON_POOL_ERRORA "RestartJobOnPoolError"
+#ifdef _MSC_VER
+#define SPLREG_RESTART_JOB_ON_POOL_ERRORW L"RestartJobOnPoolError"
+#elif defined(__GNUC__)
+#define SPLREG_RESTART_JOB_ON_POOL_ERRORW (const WCHAR[]){'R','e','s','t','a','r','t','J','o','b','O','n','P','o','o','l','E','r','r','o','r',0}
+#else
+static const WCHAR SPLREG_RESTART_JOB_ON_POOL_ERRORW[] = {'R','e','s','t','a','r','t','J','o','b','O','n','P','o','o','l','E','r','r','o','r',0};
+#endif
+#define SPLREG_RESTART_JOB_ON_POOL_ERROR WINELIB_NAME_AW(SPLREG_RESTART_JOB_ON_POOL_ERROR)
+
+#define SPLREG_RESTART_JOB_ON_POOL_ENABLEDA "RestartJobOnPoolEnabled"
+#ifdef _MSC_VER
+#define SPLREG_RESTART_JOB_ON_POOL_ENABLEDW L"RestartJobOnPoolEnabled"
+#elif defined(__GNUC__)
+#define SPLREG_RESTART_JOB_ON_POOL_ENABLEDW (const WCHAR[]){'R','e','s','t','a','r','t','J','o','b','O','n','P','o','o','l','E','n','a','b','l','e','d',0}
+#else
+static const WCHAR SPLREG_RESTART_JOB_ON_POOL_ENABLEDW[] = {'R','e','s','t','a','r','t','J','o','b','O','n','P','o','o','l','E','n','a','b','l','e','d',0};
+#endif
+#define SPLREG_RESTART_JOB_ON_POOL_ENABLED WINELIB_NAME_AW(SPLREG_RESTART_JOB_ON_POOL_ENABLED)
+
+#define SPLREG_DNS_MACHINE_NAMEA "DNSMachineName"
+#ifdef _MSC_VER
+#define SPLREG_DNS_MACHINE_NAMEW L"DNSMachineName"
+#elif defined(__GNUC__)
+#define SPLREG_DNS_MACHINE_NAMEW (const WCHAR[]){'D','N','S','M','a','c','h','i','n','e','N','a','m','e',0}
+#else
+static const WCHAR SPLREG_DNS_MACHINE_NAMEW[] = {'D','N','S','M','a','c','h','i','n','e','N','a','m','e',0};
+#endif
+#define SPLREG_DNS_MACHINE_NAME WINELIB_NAME_AW(SPLREG_DNS_MACHINE_NAME)
+
+#define SPLREG_ALLOW_USER_MANAGEFORMSA "AllowUserManageForms"
+#ifdef _MSC_VER
+#define SPLREG_ALLOW_USER_MANAGEFORMSW L"AllowUserManageForms"
+#elif defined(__GNUC__)
+#define SPLREG_ALLOW_USER_MANAGEFORMSW (const WCHAR[]){'A','l','l','o','w','U','s','e','r','M','a','n','a','g','e','F','o','r','m','s',0}
+#else
+static const WCHAR SPLREG_ALLOW_USER_MANAGEFORMSW[] = {'A','l','l','o','w','U','s','e','r','M','a','n','a','g','e','F','o','r','m','s',0};
+#endif
+#define SPLREG_ALLOW_USER_MANAGEFORMS WINELIB_NAME_AW(SPLREG_ALLOW_USER_MANAGEFORMS)
+
+#define SPLREG_WEBSHAREMGMTA "WebShareMgmt"
+#ifdef _MSC_VER
+#define SPLREG_WEBSHAREMGMTW L"WebShareMgmt"
+#elif defined(__GNUC__)
+#define SPLREG_WEBSHAREMGMTW (const WCHAR[]){'W','e','b','S','h','a','r','e','M','g','m','t',0}
+#else
+static const WCHAR SPLREG_WEBSHAREMGMTW[] = {'W','e','b','S','h','a','r','e','M','g','m','t',0};
+#endif
+#define SPLREG_WEBSHAREMGMT WINELIB_NAME_AW(SPLREG_WEBSHAREMGMT)
+
+#define SPLREG_PRINT_DRIVER_ISOLATION_GROUPSA "PrintDriverIsolationGroups"
+#ifdef _MSC_VER
+#define SPLREG_PRINT_DRIVER_ISOLATION_GROUPSW L"PrintDriverIsolationGroups"
+#elif defined(__GNUC__)
+#define SPLREG_PRINT_DRIVER_ISOLATION_GROUPSW (const WCHAR[]){'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','G','r','o','u','p','s',0}
+#else
+static const WCHAR SPLREG_PRINT_DRIVER_ISOLATION_GROUPSW[] = {'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','G','r','o','u','p','s',0};
+#endif
+#define SPLREG_PRINT_DRIVER_ISOLATION_GROUPS WINELIB_NAME_AW(SPLREG_PRINT_DRIVER_ISOLATION_GROUPS)
+
+#define SPLREG_PRINT_DRIVER_ISOLATION_TIME_BEFORE_RECYCLEA "PrintDriverIsolationTimeBeforeRecycle"
+#ifdef _MSC_VER
+#define SPLREG_PRINT_DRIVER_ISOLATION_TIME_BEFORE_RECYCLEW L"PrintDriverIsolationTimeBeforeRecycle"
+#elif defined(__GNUC__)
+#define SPLREG_PRINT_DRIVER_ISOLATION_TIME_BEFORE_RECYCLEW (const WCHAR[]){'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','T','i','m','e','B','e','f','o','r','e','R','e','c','y','c','l','e',0}
+#else
+static const WCHAR SPLREG_PRINT_DRIVER_ISOLATION_TIME_BEFORE_RECYCLEW[] = {'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','T','i','m','e','B','e','f','o','r','e','R','e','c','y','c','l','e',0};
+#endif
+#define SPLREG_PRINT_DRIVER_ISOLATION_TIME_BEFORE_RECYCLE WINELIB_NAME_AW(SPLREG_PRINT_DRIVER_ISOLATION_TIME_BEFORE_RECYCLE)
+
+#define SPLREG_PRINT_DRIVER_ISOLATION_MAX_OBJECTS_BEFORE_RECYCLEA "PrintDriverIsolationMaxobjsBeforeRecycle"
+#ifdef _MSC_VER
+#define SPLREG_PRINT_DRIVER_ISOLATION_MAX_OBJECTS_BEFORE_RECYCLEW L"PrintDriverIsolationMaxobjsBeforeRecycle"
+#elif defined(__GNUC__)
+#define SPLREG_PRINT_DRIVER_ISOLATION_MAX_OBJECTS_BEFORE_RECYCLEW (const WCHAR[]){'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','M','a','x','o','b','j','s','B','e','f','o','r','e','R','e','c','y','c','l','e',0}
+#else
+static const WCHAR SPLREG_PRINT_DRIVER_ISOLATION_MAX_OBJECTS_BEFORE_RECYCLEW[] = {'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','M','a','x','o','b','j','s','B','e','f','o','r','e','R','e','c','y','c','l','e',0};
+#endif
+#define SPLREG_PRINT_DRIVER_ISOLATION_MAX_OBJECTS_BEFORE_RECYCLE WINELIB_NAME_AW(SPLREG_PRINT_DRIVER_ISOLATION_MAX_OBJECTS_BEFORE_RECYCLE)
+
+#define SPLREG_PRINT_DRIVER_ISOLATION_IDLE_TIMEOUTA "PrintDriverIsolationIdleTimeout"
+#ifdef _MSC_VER
+#define SPLREG_PRINT_DRIVER_ISOLATION_IDLE_TIMEOUTW L"PrintDriverIsolationIdleTimeout"
+#elif defined(__GNUC__)
+#define SPLREG_PRINT_DRIVER_ISOLATION_IDLE_TIMEOUTW (const WCHAR[]){'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','I','d','l','e','T','i','m','e','o','u','t',0}
+#else
+static const WCHAR SPLREG_PRINT_DRIVER_ISOLATION_IDLE_TIMEOUTW[] = {'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','I','d','l','e','T','i','m','e','o','u','t',0};
+#endif
+#define SPLREG_PRINT_DRIVER_ISOLATION_IDLE_TIMEOUT WINELIB_NAME_AW(SPLREG_PRINT_DRIVER_ISOLATION_IDLE_TIMEOUT)
+
+#define SPLREG_PRINT_DRIVER_ISOLATION_EXECUTION_POLICYA "PrintDriverIsolationExecutionPolicy"
+#ifdef _MSC_VER
+#define SPLREG_PRINT_DRIVER_ISOLATION_EXECUTION_POLICYW L"PrintDriverIsolationExecutionPolicy"
+#elif defined(__GNUC__)
+#define SPLREG_PRINT_DRIVER_ISOLATION_EXECUTION_POLICYW (const WCHAR[]){'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','E','x','e','c','u','t','i','o','n','P','o','l','i','c','y',0}
+#else
+static const WCHAR SPLREG_PRINT_DRIVER_ISOLATION_EXECUTION_POLICYW[] = {'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','E','x','e','c','u','t','i','o','n','P','o','l','i','c','y',0};
+#endif
+#define SPLREG_PRINT_DRIVER_ISOLATION_EXECUTION_POLICY WINELIB_NAME_AW(SPLREG_PRINT_DRIVER_ISOLATION_EXECUTION_POLICY)
+
+#define SPLREG_PRINT_DRIVER_ISOLATION_OVERRIDE_POLICYA "PrintDriverIsolationOverrideCompat"
+#ifdef _MSC_VER
+#define SPLREG_PRINT_DRIVER_ISOLATION_OVERRIDE_POLICYW L"PrintDriverIsolationOverrideCompat"
+#elif defined(__GNUC__)
+#define SPLREG_PRINT_DRIVER_ISOLATION_OVERRIDE_POLICYW (const WCHAR[]){'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','O','v','e','r','r','i','d','e','C','o','m','p','a','t',0}
+#else
+static const WCHAR SPLREG_PRINT_DRIVER_ISOLATION_OVERRIDE_POLICYW[] = {'P','r','i','n','t','D','r','i','v','e','r','I','s','o','l','a','t','i','o','n','O','v','e','r','r','i','d','e','C','o','m','p','a','t',0};
+#endif
+#define SPLREG_PRINT_DRIVER_ISOLATION_OVERRIDE_POLICY WINELIB_NAME_AW(SPLREG_PRINT_DRIVER_ISOLATION_OVERRIDE_POLICY)
+
 /* DECLARATIONS */
 INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort,WORD fwCapability,
 			       LPSTR pOutput, LPDEVMODEA pDevMode);
