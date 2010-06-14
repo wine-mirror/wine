@@ -452,7 +452,9 @@ static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, const char *gl
 {
     if (card_vendor == HW_VENDOR_NVIDIA)
     {
-        if (device == CARD_NVIDIA_GEFORCEFX_5800 || device == CARD_NVIDIA_GEFORCEFX_5600)
+        if (device == CARD_NVIDIA_GEFORCEFX_5200 ||
+            device == CARD_NVIDIA_GEFORCEFX_5600 ||
+            device == CARD_NVIDIA_GEFORCEFX_5800)
         {
             return TRUE;
         }
