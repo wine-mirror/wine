@@ -2160,6 +2160,9 @@ INSTALLSTATE WINAPI MsiLocateComponentA(LPCSTR szComponent, LPSTR lpPathBuf,
 
     TRACE("%s %p %p\n", debugstr_a(szComponent), lpPathBuf, pcchBuf);
 
+    if (!szComponent || !pcchBuf)
+        return INSTALLSTATE_INVALIDARG;
+
     if (MsiGetProductCodeA( szComponent, szProduct ) != ERROR_SUCCESS)
         return INSTALLSTATE_UNKNOWN;
 
@@ -2172,6 +2175,9 @@ INSTALLSTATE WINAPI MsiLocateComponentW(LPCWSTR szComponent, LPWSTR lpPathBuf,
     WCHAR szProduct[GUID_SIZE];
 
     TRACE("%s %p %p\n", debugstr_w(szComponent), lpPathBuf, pcchBuf);
+
+    if (!szComponent || !pcchBuf)
+        return INSTALLSTATE_INVALIDARG;
 
     if (MsiGetProductCodeW( szComponent, szProduct ) != ERROR_SUCCESS)
         return INSTALLSTATE_UNKNOWN;

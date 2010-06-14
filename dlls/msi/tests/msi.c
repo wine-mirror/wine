@@ -1555,9 +1555,19 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(NULL, path, &size);
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     /* NULL lpPathBuf */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, NULL, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, NULL, &size);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
@@ -1567,9 +1577,19 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, NULL);
+    ok(state == INSTALLSTATE_INVALIDARG, "Expected INSTALLSTATE_INVALIDARG, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     /* all params valid */
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
@@ -1586,12 +1606,25 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* product value exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1609,8 +1642,16 @@ static void test_MsiGetComponentPath(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* install properties key exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1618,8 +1659,16 @@ static void test_MsiGetComponentPath(void)
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1647,12 +1696,25 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* product value exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1670,8 +1732,16 @@ static void test_MsiGetComponentPath(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* install properties key exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1679,8 +1749,16 @@ static void test_MsiGetComponentPath(void)
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1708,6 +1786,11 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\");
     lstrcatA(keypath, usersid);
@@ -1723,12 +1806,25 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* product value exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1746,8 +1842,16 @@ static void test_MsiGetComponentPath(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* install properties key exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1755,8 +1859,16 @@ static void test_MsiGetComponentPath(void)
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1783,6 +1895,11 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\");
     lstrcatA(keypath, usersid);
@@ -1798,12 +1915,25 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* product value exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1811,8 +1941,16 @@ static void test_MsiGetComponentPath(void)
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1836,6 +1974,11 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Components\\");
     lstrcatA(keypath, comp_squashed);
@@ -1849,12 +1992,25 @@ static void test_MsiGetComponentPath(void)
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
+    ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"C:\\imapath", 10);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* product value exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
@@ -1862,8 +2018,16 @@ static void test_MsiGetComponentPath(void)
     create_file("C:\\imapath", "C:\\imapath", 11);
 
     /* file exists */
+    path[0] = 0;
     size = MAX_PATH;
     state = MsiGetComponentPathA(prodcode, component, path, &size);
+    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
+    ok(size == 10, "Expected 10, got %d\n", size);
+
+    path[0] = 0;
+    size = MAX_PATH;
+    state = MsiLocateComponentA(component, path, &size);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
     ok(!lstrcmpA(path, "C:\\imapath"), "Expected C:\\imapath, got %s\n", path);
     ok(size == 10, "Expected 10, got %d\n", size);
