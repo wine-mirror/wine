@@ -825,7 +825,7 @@ UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer)
     UINT r;
     WCHAR szwBuffer[GUID_SIZE];
 
-    TRACE("%s %s\n",debugstr_a(szComponent), debugstr_a(szBuffer));
+    TRACE("%s %p\n", debugstr_a(szComponent), szBuffer);
 
     if( szComponent )
     {
