@@ -545,6 +545,32 @@ void WINAPI AtlPixelToHiMetric(const SIZEL* lpPix, SIZEL* lpHiMetric)
 }
 
 /***********************************************************************
+ *           AtlCreateTargetDC         [ATL.@]
+ */
+HDC WINAPI AtlCreateTargetDC( HDC hdc, DVTARGETDEVICE *dv )
+{
+    static const WCHAR displayW[] = {'d','i','s','p','l','a','y',0};
+    const WCHAR *driver = NULL, *device = NULL, *port = NULL;
+    DEVMODEW *devmode = NULL;
+
+    TRACE( "(%p, %p)\n", hdc, dv );
+
+    if (dv)
+    {
+        if (dv->tdDriverNameOffset) driver  = (WCHAR *)((char *)dv + dv->tdDriverNameOffset);
+        if (dv->tdDeviceNameOffset) device  = (WCHAR *)((char *)dv + dv->tdDeviceNameOffset);
+        if (dv->tdPortNameOffset)   port    = (WCHAR *)((char *)dv + dv->tdPortNameOffset);
+        if (dv->tdExtDevmodeOffset) devmode = (DEVMODEW *)((char *)dv + dv->tdExtDevmodeOffset);
+    }
+    else
+    {
+        if (hdc) return hdc;
+        driver = displayW;
+    }
+    return CreateDCW( driver, device, port, devmode );
+}
+
+/***********************************************************************
  *           AtlModuleAddCreateWndData          [ATL.@]
  */
 void WINAPI AtlModuleAddCreateWndData(_ATL_MODULEW *pM, _AtlCreateWndData *pData, void* pvObject)

@@ -18,7 +18,7 @@
 23 stdcall AtlModuleUpdateRegistryFromResourceD(ptr wstr long ptr ptr)
 24 stub AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo
-26 stub AtlCreateTargetDC
+26 stdcall AtlCreateTargetDC(long ptr)
 27 stdcall AtlHiMetricToPixel(ptr ptr)
 28 stdcall AtlPixelToHiMetric(ptr ptr)
 29 stub AtlDevModeW2A
