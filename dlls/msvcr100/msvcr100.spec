@@ -607,7 +607,7 @@
 @ stub _fstat32
 @ stub _fstat32i64
 @ cdecl _fstat64(long ptr) msvcrt._fstat64
-@ stub _fstat64i32
+@ cdecl _fstat64i32(long ptr) msvcr90._fstat64i32
 @ stub _ftell_nolock
 @ stub _ftelli64
 @ stub _ftelli64_nolock
@@ -1079,7 +1079,7 @@
 @ stub _stat32
 @ stub _stat32i64
 @ cdecl _stat64(str ptr) msvcrt._stat64
-@ stub _stat64i32
+@ cdecl _stat64i32(str ptr) msvcr90._stat64i32
 @ cdecl _statusfp() msvcrt._statusfp
 @ stub _statusfp2
 @ stub _strcoll_l
