@@ -50,14 +50,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 HRESULT WINAPI PSRegisterPropertySchema(PCWSTR path)
 {
-    FIXME("%s\n", debugstr_w(path));
+    FIXME("%s stub\n", debugstr_w(path));
 
     return S_OK;
 }
 
 HRESULT WINAPI PSUnregisterPropertySchema(PCWSTR path)
 {
-    FIXME("%s\n", debugstr_w(path));
+    FIXME("%s stub\n", debugstr_w(path));
 
     return E_NOTIMPL;
 }
