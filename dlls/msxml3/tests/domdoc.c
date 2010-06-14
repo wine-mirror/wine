@@ -90,6 +90,16 @@ static const WCHAR szComplete5[] = {
     '<','/','S',':','s','e','a','r','c','h','>',0
 };
 
+static const WCHAR szComplete6[] = {
+    '<','?','x','m','l',' ','v','e','r','s','i','o','n','=','\'','1','.','0','\'',' ',
+    'e','n','c','o','d','i','n','g','=','\'','W','i','n','d','o','w','s','-','1','2','5','2','\'','?','>','\n',
+    '<','o','p','e','n','>','<','/','o','p','e','n','>','\n',0
+};
+
+static const CHAR szNonUnicodeXML[] =
+"<?xml version='1.0' encoding='Windows-1252'?>\n"
+"<open></open>\n";
+
 static const CHAR szExampleXML[] =
 "<?xml version='1.0' encoding='utf-8'?>\n"
 "<root xmlns:foo='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
@@ -617,6 +627,22 @@ if (0)
     r = IXMLDOMDocument_loadXML( doc, &buff[2], &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* loadXML ignores the encoding attribute and always expects Unicode */
+    b = VARIANT_FALSE;
+    str = SysAllocString( szComplete6 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    /* try a BSTR containing a Windows-1252 document */
+    b = VARIANT_TRUE;
+    str = SysAllocStringByteLen( szNonUnicodeXML, sizeof(szNonUnicodeXML) - 1 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_FALSE, "loadXML succeeded\n");
+    ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
+    SysFreeString( str );
 
     /* try to load something valid */
     b = VARIANT_FALSE;

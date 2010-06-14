@@ -148,7 +148,7 @@ static xmlDocPtr doparse( char *ptr, int len )
      * use xmlReadMemory if possible so we can suppress
      * writing errors to stderr
      */
-    return xmlReadMemory( ptr, len, NULL, NULL,
+    return xmlReadMemory( ptr, len, NULL, "UTF-8",
                           XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NOBLANKS );
 #else
     return xmlParseMemory( ptr, len );
