@@ -1350,6 +1350,9 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
 {
     *ppv = NULL;
 
+    if(!winetest_interactive)
+        return E_NOINTERFACE;
+
     if (IsEqualGUID(&SID_STopLevelBrowser, guidService))
         trace("Service SID_STopLevelBrowser\n");
     else if (IsEqualGUID(&SID_SEditCommandTarget, guidService))
