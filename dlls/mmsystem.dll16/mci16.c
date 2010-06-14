@@ -627,7 +627,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
     BOOL                to32;
     DWORD_PTR           dwParam2 = p2;
 
-    TRACE("(%04X, %u, %08X, %08lX)\n", wDevID, wMsg, dwParam1, dwParam2);
+    TRACE("(%04X, %s, %08X, %08lX)\n", wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
     switch (wMsg) {
     case MCI_CLOSE:
@@ -651,11 +651,11 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 
         switch (res = MCI_MapMsg16To32W(wMsg, dwParam1, &dwParam2)) {
         case MMSYSTEM_MAP_MSGERROR:
-            TRACE("Not handled yet (%u)\n", wMsg);
+            TRACE("%s not handled yet\n", MCI_MessageToString(wMsg));
             dwRet = MCIERR_DRIVER_INTERNAL;
             break;
         case MMSYSTEM_MAP_NOMEM:
-            TRACE("Problem mapping msg=%u from 16 to 32a\n", wMsg);
+            TRACE("Problem mapping %s from 16 to 32a\n", MCI_MessageToString(wMsg));
             dwRet = MCIERR_OUT_OF_MEMORY;
             break;
         case MMSYSTEM_MAP_OK:
