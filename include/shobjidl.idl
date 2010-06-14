@@ -384,6 +384,25 @@ typedef enum tagNWMF {
     NWMF_USERALLOWED      = 0x0100
 } NWMF;
 
+[
+    uuid(d2bc4c84-3f72-4a52-a604-7bcbf3982cbb),
+    object,
+    pointer_default(unique)
+]
+interface INewWindowManager : IUnknown
+{
+    HRESULT EvaluateNewWindow(
+        [in, string] LPCWSTR pszUrl,
+        [in, string] LPCWSTR pszName,
+        [in, string] LPCWSTR pszUrlContext,
+        [in, string] LPCWSTR pszFeatures,
+        [in]         BOOL fReplace,
+        [in]         DWORD dwFlags,
+        [in]         DWORD dwUserActionTime);
+}
+
+cpp_quote("#define SID_SNewWindowManager IID_INewWindowManager")
+
 /*****************************************************************************
  * FOLDERSETTINGS
  */
