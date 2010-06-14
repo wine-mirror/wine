@@ -261,7 +261,7 @@ static char* try_lib_path(const char* dir, const char* pre,
 static file_type guess_lib_type(enum target_platform platform, const char* dir,
                                 const char* library, const char *suffix, char** file)
 {
-    if (platform != PLATFORM_WINDOWS)
+    if (platform != PLATFORM_WINDOWS && platform != PLATFORM_CYGWIN)
     {
         /* Unix shared object */
         if ((*file = try_lib_path(dir, "lib", library, ".so", file_so)))

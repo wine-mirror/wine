@@ -173,6 +173,7 @@ static const struct
     { "macos",   PLATFORM_APPLE },
     { "darwin",  PLATFORM_APPLE },
     { "solaris", PLATFORM_SOLARIS },
+    { "cygwin",  PLATFORM_CYGWIN },
     { "mingw32", PLATFORM_WINDOWS },
     { "windows", PLATFORM_WINDOWS },
     { "winnt",   PLATFORM_WINDOWS }
@@ -230,6 +231,8 @@ static const enum target_cpu build_cpu = CPU_ARM;
 static enum target_platform build_platform = PLATFORM_APPLE;
 #elif defined(__sun)
 static enum target_platform build_platform = PLATFORM_SOLARIS;
+#elif defined(__CYGWIN__)
+static enum target_platform build_platform = PLATFORM_CYGWIN;
 #elif defined(_WIN32)
 static enum target_platform build_platform = PLATFORM_WINDOWS;
 #else
@@ -332,7 +335,8 @@ static void compile(struct options* opts, const char* lang)
             break;
     }
 
-    if (opts->target_platform == PLATFORM_WINDOWS) goto no_compat_defines;
+    if (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN)
+        goto no_compat_defines;
 
     if (opts->processor != proc_cpp)
     {
@@ -678,7 +682,7 @@ static void build(struct options* opts)
 
     /* building for Windows is completely different */
 
-    if (opts->target_platform == PLATFORM_WINDOWS)
+    if (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN)
     {
         strarray *resources = strarray_alloc();
         char *res_o_name = NULL;
@@ -732,6 +736,7 @@ static void build(struct options* opts)
 
         if (!opts->nostartfiles) add_library(opts, lib_dirs, files, "winecrt0");
         if (opts->shared && !opts->nostdlib) add_library(opts, lib_dirs, files, "wine");
+        if (!opts->shared && opts->use_msvcrt) add_library(opts, lib_dirs, files, "msvcrt");
 
         for ( j = 0; j < files->size; j++ )
         {
@@ -763,8 +768,12 @@ static void build(struct options* opts)
 
                         if (ext) *ext = 0;
                         p += 3;
-                        strarray_add(link_args, strmake("-L%s", lib ));
-                        strarray_add(link_args, strmake("-l%s", p ));
+                        /* don't use Wine's msvcrt on mingw */
+                        if (strcmp( p, "msvcrt" ) || opts->target_platform == PLATFORM_CYGWIN)
+                        {
+                            strarray_add(link_args, strmake("-L%s", lib ));
+                            strarray_add(link_args, strmake("-l%s", p ));
+                        }
                         free( lib );
                         break;
                     }
@@ -782,7 +791,6 @@ static void build(struct options* opts)
                 break;
             }
         }
-        if (!opts->shared && (opts->use_msvcrt || opts->unicode_app)) strarray_add(link_args, "-lmsvcrt");
 
         if (res_o_name) compile_resources_to_object( opts, resources, res_o_name );
 
