@@ -563,11 +563,11 @@ if (0)
 
     /* try some stupid things */
     r = IXMLDOMDocument_loadXML( doc, NULL, NULL );
-    ok( r == S_FALSE, "loadXML failed\n");
+    ok( r == S_FALSE, "loadXML succeeded\n");
 
     b = VARIANT_TRUE;
     r = IXMLDOMDocument_loadXML( doc, NULL, &b );
-    ok( r == S_FALSE, "loadXML failed\n");
+    ok( r == S_FALSE, "loadXML succeeded\n");
     ok( b == VARIANT_FALSE, "failed to load XML string\n");
 
     /* try to load a document from a nonexistent file */
@@ -578,16 +578,16 @@ if (0)
     V_BSTR(&var) = str;
 
     r = IXMLDOMDocument_load( doc, var, &b);
-    ok( r == S_FALSE, "load (from file) failed\n");
-    ok( b == VARIANT_FALSE, "failed to load XML file\n");
+    ok( r == S_FALSE, "loadXML succeeded\n");
+    ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
     SysFreeString( str );
 
     /* try load an empty document */
     b = VARIANT_TRUE;
     str = SysAllocString( szEmpty );
     r = IXMLDOMDocument_loadXML( doc, str, &b );
-    ok( r == S_FALSE, "loadXML failed\n");
-    ok( b == VARIANT_FALSE, "failed to load XML string\n");
+    ok( r == S_FALSE, "loadXML succeeded\n");
+    ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
     SysFreeString( str );
 
     r = IXMLDOMDocument_get_async( doc, &b );
@@ -609,8 +609,8 @@ if (0)
     b = VARIANT_TRUE;
     str = SysAllocString( szIncomplete );
     r = IXMLDOMDocument_loadXML( doc, str, &b );
-    ok( r == S_FALSE, "loadXML failed\n");
-    ok( b == VARIANT_FALSE, "failed to load XML string\n");
+    ok( r == S_FALSE, "loadXML succeeded\n");
+    ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
     SysFreeString( str );
 
     /* check that there's no document element */
