@@ -472,7 +472,9 @@ static BOOL CRYPT_ReadSerializedStore(void *handle,
                         buf = CryptMemAlloc(propHdr.cb);
                         bufSize = propHdr.cb;
                     }
-                    if (buf)
+                    if (!propHdr.cb)
+                        ; /* Property is empty, nothing to do */
+                    else if (buf)
                     {
                         ret = read_func(handle, buf, propHdr.cb, &read);
                         if (ret && read == propHdr.cb)
@@ -516,7 +518,7 @@ static BOOL CRYPT_ReadSerializedStore(void *handle,
                     else
                         ret = FALSE;
                 }
-            } while (ret && read > 0);
+            } while (ret && read > 0 && propHdr.cb);
             if (contextInterface && context)
             {
                 /* Free the last context added */
