@@ -14288,6 +14288,7 @@ wine_fn_config_dll amstream enable_amstream
 wine_fn_config_test dlls/amstream/tests amstream_test
 wine_fn_config_dll appwiz.cpl enable_appwiz_cpl
 wine_fn_config_dll atl enable_atl atl
+wine_fn_config_test dlls/atl/tests atl_test
 wine_fn_config_dll authz enable_authz
 wine_fn_config_dll avicap32 enable_avicap32 avicap32
 wine_fn_config_dll avifil32 enable_avifil32 avifil32

@@ -53,7 +53,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-#define ATLVer1Size 100
+#define ATLVer1Size FIELD_OFFSET(_ATL_MODULEW, dwAtlBuildVer)
 
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE h)
 {
@@ -63,9 +63,16 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE 
     FIXME("SEMI-STUB (%p %p %p)\n",pM,p,h);
 
     size = pM->cbSize;
-    if  (size != sizeof(_ATL_MODULEW) && size != ATLVer1Size)
+    switch (size)
     {
-        FIXME("Unknown structure version (size %i)\n",size);
+    case ATLVer1Size:
+    case sizeof(_ATL_MODULEW):
+#ifdef _WIN64
+    case sizeof(_ATL_MODULEW) + sizeof(void *):
+#endif
+        break;
+    default:
+        WARN("Unknown structure version (size %i)\n",size);
         return E_INVALIDARG;
     }
 
