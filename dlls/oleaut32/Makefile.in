@@ -31,6 +31,7 @@ C_SRCS = \
 
 RC_SRCS = \
 	oleaut32_Bg.rc \
+	oleaut32_Cy.rc \
 	oleaut32_Cz.rc \
 	oleaut32_Da.rc \
 	oleaut32_De.rc \
