@@ -561,10 +561,17 @@ static const char *mingw_unicode_hack( struct options *opts )
     char *main_stub = get_temp_file( opts->output_name, ".c" );
 
     create_file( main_stub, 0644,
-                 "#include <stdlib.h>\n"
-                 "extern int wmain(int,wchar_t**);\n"
+                 "#include <stdarg.h>\n"
+                 "#include <windef.h>\n"
+                 "#include <winbase.h>\n"
                  "int main( int argc, char *argv[] )\n{\n"
-                 "    return wmain( argc, __wargv );\n}\n" );
+                 "    int wargc;\n"
+                 "    wchar_t **wargv, **wenv;\n"
+                 "    HMODULE msvcrt = LoadLibraryA( \"msvcrt.dll\" );\n"
+                 "    void __cdecl (*__wgetmainargs)(int *argc, wchar_t** *wargv, wchar_t** *wenvp, int expand_wildcards,\n"
+                 "                                   int *new_mode) = (void *)GetProcAddress( msvcrt, \"__wgetmainargs\" );\n"
+                 "    __wgetmainargs( &wargc, &wargv, &wenv, 0, NULL );\n"
+                 "    return wmain( wargc, wargv );\n}\n" );
     return compile_to_object( opts, main_stub, NULL );
 }
 
@@ -736,7 +743,8 @@ static void build(struct options* opts)
 
         if (!opts->nostartfiles) add_library(opts, lib_dirs, files, "winecrt0");
         if (opts->shared && !opts->nostdlib) add_library(opts, lib_dirs, files, "wine");
-        if (!opts->shared && opts->use_msvcrt) add_library(opts, lib_dirs, files, "msvcrt");
+        if (!opts->shared && opts->use_msvcrt && opts->target_platform == PLATFORM_CYGWIN)
+            add_library(opts, lib_dirs, files, "msvcrt");
 
         for ( j = 0; j < files->size; j++ )
         {
@@ -768,12 +776,8 @@ static void build(struct options* opts)
 
                         if (ext) *ext = 0;
                         p += 3;
-                        /* don't use Wine's msvcrt on mingw */
-                        if (strcmp( p, "msvcrt" ) || opts->target_platform == PLATFORM_CYGWIN)
-                        {
-                            strarray_add(link_args, strmake("-L%s", lib ));
-                            strarray_add(link_args, strmake("-l%s", p ));
-                        }
+                        strarray_add(link_args, strmake("-L%s", lib ));
+                        strarray_add(link_args, strmake("-l%s", p ));
                         free( lib );
                         break;
                     }
