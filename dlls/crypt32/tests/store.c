@@ -1780,11 +1780,9 @@ static void testSerializedStore(void)
     blob.pbData = (BYTE *)serializedStoreWithCert;
     store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0,
      CERT_STORE_DELETE_FLAG, &blob);
-    todo_wine
     ok(!store && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
      "Expected ERROR_CALL_NOT_IMPLEMENTED, got %08x\n", GetLastError());
     store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0, 0, &blob);
-    todo_wine
     ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
     if (store)
     {
@@ -1806,7 +1804,6 @@ static void testSerializedStore(void)
     blob.cbData = sizeof(serializedStoreWithCertAndCRL);
     blob.pbData = (BYTE *)serializedStoreWithCertAndCRL;
     store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0, 0, &blob);
-    todo_wine
     ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
     if (store)
     {
