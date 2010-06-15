@@ -640,7 +640,7 @@ static void test_CopyFileA(void)
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file, error %d\n", GetLastError());
     retok = CopyFileA(source, dest, FALSE);
     ok(retok,
-        "copying from an r+w opened and r shared file failed (ret=%d, err=%d)\n", ret, GetLastError());
+        "copying from an r+w opened and r shared file failed (ret=%d, err=%d)\n", retok, GetLastError());
     CloseHandle(hfile);
 
     /* copying from a delete-locked source is unreliable */
@@ -648,7 +648,7 @@ static void test_CopyFileA(void)
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open source file, error %d\n", GetLastError());
     retok = CopyFileA(source, dest, FALSE);
     ok((!retok && GetLastError() == ERROR_SHARING_VIOLATION) || broken(retok) /* 98, Vista, 2k8, 7 */,
-        "copying from a delete-locked file failed (ret=%d, err=%d)\n", ret, GetLastError());
+        "copying from a delete-locked file failed (ret=%d, err=%d)\n", retok, GetLastError());
     CloseHandle(hfile);
 
     /* copying to a write-locked destination fails */
@@ -656,7 +656,7 @@ static void test_CopyFileA(void)
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file, error %d\n", GetLastError());
     retok = CopyFileA(source, dest, FALSE);
     ok(!retok && GetLastError() == ERROR_SHARING_VIOLATION,
-        "copying to a write-locked file didn't fail (ret=%d, err=%d)\n", ret, GetLastError());
+        "copying to a write-locked file didn't fail (ret=%d, err=%d)\n", retok, GetLastError());
     CloseHandle(hfile);
 
     /* copying to a r+w opened, w shared destination mostly succeeds */
@@ -664,7 +664,7 @@ static void test_CopyFileA(void)
     ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file, error %d\n", GetLastError());
     retok = CopyFileA(source, dest, FALSE);
     ok(retok || broken(!retok && GetLastError() == ERROR_SHARING_VIOLATION) /* Win 9x */,
-        "copying to a r+w opened and w shared file failed (ret=%d, err=%d)\n", ret, GetLastError());
+        "copying to a r+w opened and w shared file failed (ret=%d, err=%d)\n", retok, GetLastError());
     CloseHandle(hfile);
 
     /* copying to a delete-locked destination fails, even when the destination is delete-shared */
@@ -675,9 +675,17 @@ static void test_CopyFileA(void)
     {
         retok = CopyFileA(source, dest, FALSE);
         ok(!retok && GetLastError() == ERROR_SHARING_VIOLATION,
-            "copying to a delete-locked shared file didn't fail (ret=%d, err=%d)\n", ret, GetLastError());
+            "copying to a delete-locked shared file didn't fail (ret=%d, err=%d)\n", retok, GetLastError());
         CloseHandle(hfile);
     }
+
+    /* copy to a file that's opened the way Wine opens the source */
+    hfile = CreateFileA(dest, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to open destination file, error %d\n", GetLastError());
+    retok = CopyFileA(source, dest, FALSE);
+    ok(retok || broken(GetLastError() == ERROR_SHARING_VIOLATION) /* Win 9x */,
+        "copying to a file opened the way Wine opens the source failed (ret=%d, err=%d)\n", retok, GetLastError());
+    CloseHandle(hfile);
 
     /* make sure that destination has correct size */
     hfile = CreateFileA(dest, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
