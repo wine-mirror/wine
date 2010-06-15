@@ -1764,6 +1764,72 @@ static void testMessageStore(void)
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
 }
 
+static void testSerializedStore(void)
+{
+    HCERTSTORE store;
+    CRYPT_DATA_BLOB blob;
+
+    if (0)
+    {
+        /* Crash */
+        store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0, 0, NULL);
+        store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0,
+         CERT_STORE_DELETE_FLAG, NULL);
+    }
+    blob.cbData = sizeof(serializedStoreWithCert);
+    blob.pbData = (BYTE *)serializedStoreWithCert;
+    store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0,
+     CERT_STORE_DELETE_FLAG, &blob);
+    todo_wine
+    ok(!store && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
+     "Expected ERROR_CALL_NOT_IMPLEMENTED, got %08x\n", GetLastError());
+    store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0, 0, &blob);
+    todo_wine
+    ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
+    if (store)
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+
+        cert = CertEnumCertificatesInStore(store, NULL);
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08x\n",
+         GetLastError());
+        cert = CertEnumCertificatesInStore(store, cert);
+        ok(!cert, "Expected only one cert\n");
+        if (pCertEnumCRLsInStore)
+        {
+            crl = pCertEnumCRLsInStore(store, NULL);
+            ok(!crl, "Expected no CRLs\n");
+        }
+        CertCloseStore(store, 0);
+    }
+    blob.cbData = sizeof(serializedStoreWithCertAndCRL);
+    blob.pbData = (BYTE *)serializedStoreWithCertAndCRL;
+    store = CertOpenStore(CERT_STORE_PROV_SERIALIZED, 0, 0, 0, &blob);
+    todo_wine
+    ok(store != NULL, "CertOpenStore failed: %08x\n", GetLastError());
+    if (store)
+    {
+        PCCERT_CONTEXT cert;
+        PCCRL_CONTEXT crl;
+
+        cert = CertEnumCertificatesInStore(store, NULL);
+        ok(cert != NULL, "CertEnumCertificatesInStore failed: %08x\n",
+         GetLastError());
+        cert = CertEnumCertificatesInStore(store, cert);
+        ok(!cert, "Expected only one cert\n");
+        if (pCertEnumCRLsInStore)
+        {
+            crl = pCertEnumCRLsInStore(store, NULL);
+            ok(crl != NULL, "CertEnumCRLsInStore failed: %08x\n",
+             GetLastError());
+            crl = pCertEnumCRLsInStore(store, crl);
+            ok(!crl, "Expected only one CRL\n");
+        }
+        CertCloseStore(store, 0);
+    }
+}
+
 static void testCertOpenSystemStore(void)
 {
     HCERTSTORE store;
@@ -2520,6 +2586,7 @@ START_TEST(store)
     testFileStore();
     testFileNameStore();
     testMessageStore();
+    testSerializedStore();
 
     testCertOpenSystemStore();
     testCertEnumSystemStore();
