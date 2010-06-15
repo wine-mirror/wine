@@ -2364,6 +2364,14 @@ static void test_GetPrinterData(void)
     ok( !res && (type == REG_SZ) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
         "got %d, type %d, needed: %d and '%s' (expected ERROR_SUCCESS, REG_SZ and %d or %d)\n",
         res, type, needed, buffer, len, len * sizeof(WCHAR));
+
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = GetPrinterDataA(hprn, defaultspooldirectory, NULL, NULL, 0, &needed);
+    ok( (res == ERROR_MORE_DATA) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, needed: %d (expected ERROR_MORE_DATA and %d or %d)\n",
+        res, needed, len, len * sizeof(WCHAR));
+
     /* ToDo: test SPLREG_*  */
 
     SetLastError(0xdeadbeef);
@@ -2450,6 +2458,13 @@ static void test_GetPrinterDataEx(void)
     ok( !res && (type == REG_SZ) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
         "got %d, type %d, needed: %d and '%s' (expected ERROR_SUCCESS, REG_SZ and %d or %d)\n",
         res, type, needed, buffer, len, len * sizeof(WCHAR));
+
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pGetPrinterDataExA(hprn, NULL, defaultspooldirectory, NULL, NULL, 0, &needed);
+    ok( (res == ERROR_MORE_DATA) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, needed: %d (expected ERROR_MORE_DATA and %d or %d)\n",
+        res, needed, len, len * sizeof(WCHAR));
 
     SetLastError(0xdeadbeef);
     res = ClosePrinter(hprn);

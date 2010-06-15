@@ -5367,6 +5367,8 @@ DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters);
     if (ret) return ret;
 
+    TRACE("printer->name: %s\n", debugstr_w(printer->name));
+
     if (printer->name) {
 
         ret = RegOpenKeyW(hkeyPrinters, printer->name, &hkeyPrinter);
@@ -5385,9 +5387,13 @@ DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     ret = RegQueryValueExA(printer->name ? hkeySubkey : hkeyPrinters, pValueName,
                           0, pType, pData, pcbNeeded);
 
+    if (!ret && !pData) ret = ERROR_MORE_DATA;
+
     RegCloseKey(hkeySubkey);
     RegCloseKey(hkeyPrinter);
     RegCloseKey(hkeyPrinters);
+
+    TRACE("--> %d\n", ret);
     return ret;
 }
 
@@ -5411,6 +5417,8 @@ DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters);
     if (ret) return ret;
 
+    TRACE("printer->name: %s\n", debugstr_w(printer->name));
+
     if (printer->name) {
 
         ret = RegOpenKeyW(hkeyPrinters, printer->name, &hkeyPrinter);
@@ -5429,9 +5437,13 @@ DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     ret = RegQueryValueExW(printer->name ? hkeySubkey : hkeyPrinters, pValueName,
                           0, pType, pData, pcbNeeded);
 
+    if (!ret && !pData) ret = ERROR_MORE_DATA;
+
     RegCloseKey(hkeySubkey);
     RegCloseKey(hkeyPrinter);
     RegCloseKey(hkeyPrinters);
+
+    TRACE("--> %d\n", ret);
     return ret;
 }
 
