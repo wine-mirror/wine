@@ -1355,6 +1355,10 @@ void virtual_init(void)
     virtual_heap = RtlCreateHeap( HEAP_NO_SERIALIZE, heap_base, VIRTUAL_HEAP_SIZE,
                                   VIRTUAL_HEAP_SIZE, NULL, NULL );
     create_view( &heap_view, heap_base, VIRTUAL_HEAP_SIZE, VPROT_COMMITTED | VPROT_READ | VPROT_WRITE );
+
+    /* make the DOS area accessible to hide bugs in broken apps like Excel 2003 */
+    if (wine_mmap_is_in_reserved_area( (void *)0x10000, 0x100000 ) == 1)
+        wine_anon_mmap( (void *)0x10000, 0x100000, PROT_READ | PROT_WRITE, MAP_FIXED );
 }
 
 
