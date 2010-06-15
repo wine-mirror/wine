@@ -506,6 +506,22 @@ static void test_SetupDecompressOrCopyFile(void)
     DWORD ret;
     char source[MAX_PATH], target[MAX_PATH], temp[MAX_PATH], *p;
     UINT type;
+    int i;
+
+    const struct
+    {
+        PCSTR source;
+        PCSTR target;
+        PUINT type;
+    } invalid_parameters[] =
+    {
+        {NULL,   NULL,   NULL},
+        {NULL,   NULL,   &type},
+        {NULL,   target, NULL},
+        {NULL,   target, &type},
+        {source, NULL,   NULL},
+        {source, NULL,   &type},
+    };
 
     GetTempPathA(sizeof(temp), temp);
     GetTempFileNameA(temp, "doc", 0, source);
@@ -515,15 +531,25 @@ static void test_SetupDecompressOrCopyFile(void)
 
     create_source_file(source, uncompressed, sizeof(uncompressed));
 
-    ret = SetupDecompressOrCopyFileA(NULL, NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "SetupDecompressOrCopyFile failed unexpectedly\n");
+    for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
+    {
+        type = FILE_COMPRESSION_NONE;
+        ret = SetupDecompressOrCopyFileA(invalid_parameters[i].source,
+                                         invalid_parameters[i].target,
+                                         invalid_parameters[i].type);
+        ok(ret == ERROR_INVALID_PARAMETER,
+           "[%d] Expected SetupDecompressOrCopyFileA to return ERROR_INVALID_PARAMETER, got %u\n",
+           i, ret);
 
-    type = FILE_COMPRESSION_NONE;
-    ret = SetupDecompressOrCopyFileA(NULL, target, &type);
-    ok(ret == ERROR_INVALID_PARAMETER, "SetupDecompressOrCopyFile failed unexpectedly\n");
-
-    ret = SetupDecompressOrCopyFileA(source, NULL, &type);
-    ok(ret == ERROR_INVALID_PARAMETER, "SetupDecompressOrCopyFile failed unexpectedly\n");
+        /* try an invalid compression type */
+        type = 5;
+        ret = SetupDecompressOrCopyFileA(invalid_parameters[i].source,
+                                         invalid_parameters[i].target,
+                                         invalid_parameters[i].type);
+        ok(ret == ERROR_INVALID_PARAMETER,
+           "[%d] Expected SetupDecompressOrCopyFileA to return ERROR_INVALID_PARAMETER, got %u\n",
+           i, ret);
+    }
 
     type = 5; /* try an invalid compression type */
     ret = SetupDecompressOrCopyFileA(source, target, &type);
