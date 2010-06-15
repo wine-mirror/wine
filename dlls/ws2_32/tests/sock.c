@@ -20,20 +20,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-
-#include "ntstatus.h"
+#include <ntstatus.h>
 #define WIN32_NO_STATUS
-#include <windef.h>
-#include <winbase.h>
-#include <winsock2.h>
+#include <windows.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
+#include <stdio.h>
 #include "wine/test.h"
-#include <winnt.h>
-#include <winerror.h>
-#include <winuser.h>
 
 #define MAX_CLIENTS 4      /* Max number of clients */
 #define NUM_TESTS   4      /* Number of tests performed */
