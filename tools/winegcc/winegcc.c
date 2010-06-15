@@ -1189,6 +1189,10 @@ int main(int argc, char **argv)
 		    if (strcmp("-framework", argv[i]) == 0)
 			next_is_arg = 1;
 		    break;
+		case '-':
+		    if (strcmp("--param", argv[i]) == 0)
+			next_is_arg = 1;
+		    break;
 	    }
 	    if (next_is_arg) option_arg = argv[i+1];
 
