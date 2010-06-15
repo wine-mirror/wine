@@ -23,6 +23,8 @@
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
+#pragma code_page(65001)
+
 STRINGTABLE
 {
    IDS_NO_MAPI_CLIENT, "O envio de correio falhou porque não existe um cliente de correio MAPI instalado."
