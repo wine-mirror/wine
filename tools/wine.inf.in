@@ -1009,6 +1009,7 @@ HKLM,"Software\Microsoft\OLE","EnableRemoteConnect",,"N"
 
 [Printing]
 HKLM,%Control%\Print\Monitors\Local Port,"Driver",2,"localspl.dll"
+HKLM,%Control%\Print\Printers,"DefaultSpoolDirectory",2,"%11%\spool\printers"
 HKLM,%CurrentVersionNT%\Ports,"FILE:",,""
 HKLM,%CurrentVersionNT%\Ports,"LPT1:",,""
 HKLM,%CurrentVersionNT%\Ports,"LPT2:",,""
