@@ -12,6 +12,7 @@ C_SRCS = \
 
 RC_SRCS = \
 	localspl.rc \
+	spl_Cy.rc \
 	spl_Da.rc \
 	spl_De.rc \
 	spl_En.rc \
