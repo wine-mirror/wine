@@ -10,6 +10,7 @@ C_SRCS = msrle32.c
 RC_SRCS = \
 	msrle_Bg.rc \
 	msrle_Cs.rc \
+	msrle_Cy.rc \
 	msrle_Da.rc \
 	msrle_De.rc \
 	msrle_En.rc \
