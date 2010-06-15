@@ -38,6 +38,7 @@
 #define MAGIC_DEAD  0xdeadbeef
 #define DEFAULT_PRINTER_SIZE 1000
 
+static CHAR defaultspooldirectory[] = "DefaultSpoolDirectory";
 static CHAR does_not_exist_dll[]= "does_not_exist.dll";
 static CHAR does_not_exist[]    = "does_not_exist";
 static CHAR empty[]             = "";
@@ -66,13 +67,14 @@ static WCHAR portname_lpt1W[] = {'L','P','T','1',':',0};
 static WCHAR portname_lpt2W[] = {'L','P','T','2',':',0};
 
 static HANDLE  hwinspool;
-static BOOL  (WINAPI * pGetDefaultPrinterA)(LPSTR, LPDWORD);
-static BOOL  (WINAPI * pSetDefaultPrinterA)(LPCSTR);
-static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
 static BOOL  (WINAPI * pAddPortExA)(LPSTR, DWORD, LPBYTE, LPSTR);
+static BOOL  (WINAPI * pEnumPrinterDriversW)(LPWSTR, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD, LPDWORD);
+static BOOL  (WINAPI * pGetDefaultPrinterA)(LPSTR, LPDWORD);
+static DWORD (WINAPI * pGetPrinterDataExA)(HANDLE, LPCSTR, LPCSTR, LPDWORD, LPBYTE, DWORD, LPDWORD);
 static BOOL  (WINAPI * pGetPrinterDriverW)(HANDLE, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD);
 static BOOL  (WINAPI * pGetPrinterW)(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
-static BOOL  (WINAPI * pEnumPrinterDriversW)(LPWSTR, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD, LPDWORD);
+static BOOL  (WINAPI * pSetDefaultPrinterA)(LPCSTR);
+static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
 
 
 /* ################################ */
@@ -2329,6 +2331,133 @@ static void test_GetPrinter(void)
 
 /* ########################### */
 
+static void test_GetPrinterData(void)
+{
+    HANDLE hprn = 0;
+    DWORD res;
+    DWORD type;
+    CHAR  buffer[MAX_PATH + 1];
+    DWORD needed;
+    DWORD len;
+
+    /* ToDo: test parameter validation, test with the default printer */
+
+    SetLastError(0xdeadbeef);
+    res = OpenPrinter(NULL, &hprn, NULL);
+    if (!res)
+    {
+        /* printserver not available on win9x */
+        if (!on_win9x)
+            win_skip("Unable to open the printserver: %d\n", GetLastError());
+        return;
+    }
+
+    memset(buffer, '#', sizeof(buffer));
+    buffer[MAX_PATH] = 0;
+    type = 0xdeadbeef;
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = GetPrinterDataA(hprn, defaultspooldirectory, &type, (LPBYTE) buffer, sizeof(buffer), &needed);
+
+    len = lstrlenA(buffer) + sizeof(CHAR);
+    /* NT4 and w2k require a buffer to save the UNICODE result also for the ANSI function */
+    ok( !res && (type == REG_SZ) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, type %d, needed: %d and '%s' (expected ERROR_SUCCESS, REG_SZ and %d or %d)\n",
+        res, type, needed, buffer, len, len * sizeof(WCHAR));
+    /* ToDo: test SPLREG_*  */
+
+    SetLastError(0xdeadbeef);
+    res = ClosePrinter(hprn);
+    ok(res, "ClosePrinter error %d\n", GetLastError());
+}
+
+/* ########################### */
+
+static void test_GetPrinterDataEx(void)
+{
+    HANDLE hprn = 0;
+    DWORD res;
+    DWORD type;
+    CHAR  buffer[MAX_PATH + 1];
+    DWORD needed;
+    DWORD len;
+
+    /* not present before w2k */
+    if (!pGetPrinterDataExA) {
+        win_skip("GetPrinterDataEx not found\n");
+        return;
+    }
+
+    /* ToDo: test parameter validation, test with the default printer */
+
+    SetLastError(0xdeadbeef);
+    res = OpenPrinter(NULL, &hprn, NULL);
+    if (!res)
+    {
+        win_skip("Unable to open the printserver: %d\n", GetLastError());
+        return;
+    }
+
+    /* keyname is ignored, when hprn is a HANDLE for a printserver */
+    memset(buffer, '#', sizeof(buffer));
+    buffer[MAX_PATH] = 0;
+    type = 0xdeadbeef;
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pGetPrinterDataExA(hprn, NULL, defaultspooldirectory, &type,
+                             (LPBYTE) buffer, sizeof(buffer), &needed);
+
+    len = lstrlenA(buffer) + sizeof(CHAR);
+    /* NT4 and w2k require a buffer to save the UNICODE result also for the ANSI function */
+    ok( !res && (type == REG_SZ) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, type %d, needed: %d and '%s' (expected ERROR_SUCCESS, REG_SZ and %d or %d)\n",
+        res, type, needed, buffer, len, len * sizeof(WCHAR));
+
+    memset(buffer, '#', sizeof(buffer));
+    buffer[MAX_PATH] = 0;
+    type = 0xdeadbeef;
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pGetPrinterDataExA(hprn, "", defaultspooldirectory, &type,
+                             (LPBYTE) buffer, sizeof(buffer), &needed);
+    len = lstrlenA(buffer) + sizeof(CHAR);
+    ok( !res && (type == REG_SZ) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, type %d, needed: %d and '%s' (expected ERROR_SUCCESS, REG_SZ and %d or %d)\n",
+        res, type, needed, buffer, len, len * sizeof(WCHAR));
+
+    memset(buffer, '#', sizeof(buffer));
+    buffer[MAX_PATH] = 0;
+    type = 0xdeadbeef;
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    /* Wine uses GetPrinterDataEx with "PrinterDriverData" to implement GetPrinterData */
+    res = pGetPrinterDataExA(hprn, "PrinterDriverData", defaultspooldirectory,
+                             &type, (LPBYTE) buffer, sizeof(buffer), &needed);
+    len = lstrlenA(buffer) + sizeof(CHAR);
+    ok( !res && (type == REG_SZ) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, type %d, needed: %d and '%s' (expected ERROR_SUCCESS, REG_SZ and %d or %d)\n",
+        res, type, needed, buffer, len, len * sizeof(WCHAR));
+
+
+    memset(buffer, '#', sizeof(buffer));
+    buffer[MAX_PATH] = 0;
+    type = 0xdeadbeef;
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pGetPrinterDataExA(hprn, does_not_exist, defaultspooldirectory, &type,
+                             (LPBYTE) buffer, sizeof(buffer), &needed);
+    len = lstrlenA(buffer) + sizeof(CHAR);
+    ok( !res && (type == REG_SZ) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, type %d, needed: %d and '%s' (expected ERROR_SUCCESS, REG_SZ and %d or %d)\n",
+        res, type, needed, buffer, len, len * sizeof(WCHAR));
+
+    SetLastError(0xdeadbeef);
+    res = ClosePrinter(hprn);
+    ok(res, "ClosePrinter error %d\n", GetLastError());
+}
+
+/* ########################### */
+
 static void test_GetPrinterDriver(void)
 {
     HANDLE hprn;
@@ -2691,13 +2820,14 @@ static void test_DeviceCapabilities(void)
 START_TEST(info)
 {
     hwinspool = GetModuleHandleA("winspool.drv");
-    pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
-    pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
-    pGetPrinterDriverW = (void *) GetProcAddress(hwinspool, "GetPrinterDriverW");
-    pEnumPrinterDriversW = (void *) GetProcAddress(hwinspool, "EnumPrinterDriversW");
-    pGetPrinterW = (void *) GetProcAddress(hwinspool, "GetPrinterW");
-    pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
     pAddPortExA = (void *) GetProcAddress(hwinspool, "AddPortExA");
+    pEnumPrinterDriversW = (void *) GetProcAddress(hwinspool, "EnumPrinterDriversW");
+    pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
+    pGetPrinterDataExA = (void *) GetProcAddress(hwinspool, "GetPrinterDataExA");
+    pGetPrinterDriverW = (void *) GetProcAddress(hwinspool, "GetPrinterDriverW");
+    pGetPrinterW = (void *) GetProcAddress(hwinspool, "GetPrinterW");
+    pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
+    pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
 
     on_win9x = check_win9x();
     if (on_win9x)
@@ -2727,6 +2857,8 @@ START_TEST(info)
     test_GetPrintProcessorDirectory();
     test_OpenPrinter();
     test_GetPrinter();
+    test_GetPrinterData();
+    test_GetPrinterDataEx();
     test_GetPrinterDriver();
     test_SetDefaultPrinter();
     test_XcvDataW_MonitorUI();
