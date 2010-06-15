@@ -2546,7 +2546,7 @@ static LRESULT OnSize( HWND hWnd, WPARAM wParam, LPARAM lParam )
     HWND hwndEditor = preview_isactive() ? GetDlgItem(hWnd, IDC_PREVIEW) : GetDlgItem(hWnd, IDC_EDITOR);
     HWND hwndStatusBar = GetDlgItem(hWnd, IDC_STATUSBAR);
     HWND hwndReBar = GetDlgItem(hWnd, IDC_REBAR);
-    HWND hRulerWnd = GetDlgItem(hWnd, IDC_RULER);
+    HWND hRulerWnd = GetDlgItem(hwndReBar, IDC_RULER);
     int rebarHeight = 0;
 
     if (hwndStatusBar)
