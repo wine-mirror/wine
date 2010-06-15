@@ -799,6 +799,8 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
         openFunc = CRYPT_FileOpenStore;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM))
         openFunc = CRYPT_SysOpenStoreW;
+    else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_PKCS7))
+        openFunc = CRYPT_PKCSOpenStore;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_COLLECTION))
         openFunc = CRYPT_CollectionOpenStore;
     else if (!strcasecmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM_REGISTRY))
