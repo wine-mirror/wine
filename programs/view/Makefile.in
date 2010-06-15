@@ -13,6 +13,7 @@ C_SRCS = \
 
 RC_SRCS = \
 	Cs.rc \
+	Cy.rc \
 	Da.rc \
 	De.rc \
 	En.rc \
