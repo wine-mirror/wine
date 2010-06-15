@@ -42,6 +42,8 @@ static const BYTE comp_cab_zip_multi[] = {
     0x4d, 0xe1, 0xe5, 0x2a, 0x2e, 0x49, 0x2d, 0xca, 0x03, 0x8a, 0x02, 0x00
 };
 
+static const WCHAR docW[] = {'d','o','c',0};
+
 static void create_source_fileA(LPSTR filename, const BYTE *data, DWORD size)
 {
     HANDLE handle;
@@ -150,7 +152,6 @@ static void test_invalid_parametersA(void)
 static void test_invalid_parametersW(void)
 {
     static const WCHAR nonexistentW[] = {'c',':','\\','n','o','n','e','x','i','s','t','e','n','t','.','c','a','b',0};
-    static const WCHAR docW[] = {'d','o','c',0};
     static const WCHAR emptyW[] = {0};
 
     BOOL ret;
@@ -282,8 +283,6 @@ static void test_invalid_callbackA(void)
 
 static void test_invalid_callbackW(void)
 {
-    static const WCHAR docW[] = {'d','o','c',0};
-
     BOOL ret;
     WCHAR source[MAX_PATH], temp[MAX_PATH];
 
@@ -373,6 +372,73 @@ static void test_simple_enumerationA(void)
     DeleteFileA(source);
 }
 
+static const WCHAR tristramW[] = {'t','r','i','s','t','r','a','m',0};
+static const WCHAR wineW[] = {'w','i','n','e',0};
+static const WCHAR shandyW[] = {'s','h','a','n','d','y',0};
+static const WCHAR *expected_filesW[] = {tristramW, wineW, shandyW};
+
+static UINT CALLBACK simple_callbackW(PVOID Context, UINT Notification,
+                                      UINT_PTR Param1, UINT_PTR Param2)
+{
+    static int index;
+    int *file_count = Context;
+
+    switch (Notification)
+    {
+    case SPFILENOTIFY_CABINETINFO:
+        index = 0;
+        return NO_ERROR;
+    case SPFILENOTIFY_FILEINCABINET:
+    {
+        FILE_IN_CABINET_INFO_W *info = (FILE_IN_CABINET_INFO_W *)Param1;
+
+        (*file_count)++;
+
+        if (index < sizeof(expected_filesW)/sizeof(WCHAR *))
+        {
+            ok(!lstrcmpW(expected_filesW[index], info->NameInCabinet),
+               "[%d] Expected file %s, got %s\n",
+               index, wine_dbgstr_w(expected_filesW[index]), wine_dbgstr_w(info->NameInCabinet));
+            index++;
+            return FILEOP_SKIP;
+        }
+        else
+        {
+            ok(0, "Unexpectedly enumerated more than number of files in cabinet, index = %d\n", index);
+            return FILEOP_ABORT;
+        }
+    }
+    default:
+        return NO_ERROR;
+    }
+}
+
+static void test_simple_enumerationW(void)
+{
+    BOOL ret;
+    WCHAR source[MAX_PATH], temp[MAX_PATH];
+    int enum_count = 0;
+
+    ret = SetupIterateCabinetW(NULL, 0, NULL, NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("SetupIterateCabinetW is not available\n");
+        return;
+    }
+
+    GetTempPathW(sizeof(temp)/sizeof(WCHAR), temp);
+    GetTempFileNameW(temp, docW, 0, source);
+
+    create_source_fileW(source, comp_cab_zip_multi, sizeof(comp_cab_zip_multi));
+
+    ret = SetupIterateCabinetW(source, 0, simple_callbackW, &enum_count);
+    ok(ret == 1, "Expected SetupIterateCabinetW to return 1, got %d\n", ret);
+    ok(enum_count == sizeof(expected_files)/sizeof(WCHAR *),
+       "Unexpectedly enumerated %d files\n", enum_count);
+
+    DeleteFileW(source);
+}
+
 START_TEST(setupcab)
 {
     test_invalid_parametersA();
@@ -386,4 +452,5 @@ START_TEST(setupcab)
     }
 
     test_simple_enumerationA();
+    test_simple_enumerationW();
 }
