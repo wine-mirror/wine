@@ -203,10 +203,13 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
         "Fragment shader was successfully compiled to run on hardware.\n",  /* fglrx, with \n */
         "Fragment shader was successfully compiled to run on hardware.",    /* fglrx, no \n   */
         "Fragment shader(s) linked, vertex shader(s) linked. \n ",          /* fglrx, with \n */
+        "Fragment shader(s) linked, vertex shader(s) linked. \n",           /* fglrx, with \n */
         "Fragment shader(s) linked, vertex shader(s) linked.",              /* fglrx, no \n   */
         "Vertex shader(s) linked, no fragment shader(s) defined. \n ",      /* fglrx, with \n */
+        "Vertex shader(s) linked, no fragment shader(s) defined. \n",       /* fglrx, with \n */
         "Vertex shader(s) linked, no fragment shader(s) defined.",          /* fglrx, no \n   */
         "Fragment shader(s) linked, no vertex shader(s) defined. \n ",      /* fglrx, with \n */
+        "Fragment shader(s) linked, no vertex shader(s) defined. \n",       /* fglrx, with \n */
         "Fragment shader(s) linked, no vertex shader(s) defined.",          /* fglrx, no \n   */
     };
 
