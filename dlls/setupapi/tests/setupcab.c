@@ -316,6 +316,63 @@ static void test_invalid_callbackW(void)
     DeleteFileW(source);
 }
 
+static const char *expected_files[] = {"tristram", "wine", "shandy"};
+
+static UINT CALLBACK simple_callbackA(PVOID Context, UINT Notification,
+                                      UINT_PTR Param1, UINT_PTR Param2)
+{
+    static int index;
+    int *file_count = Context;
+
+    switch (Notification)
+    {
+    case SPFILENOTIFY_CABINETINFO:
+        index = 0;
+        return NO_ERROR;
+    case SPFILENOTIFY_FILEINCABINET:
+    {
+        FILE_IN_CABINET_INFO_A *info = (FILE_IN_CABINET_INFO_A *)Param1;
+
+        (*file_count)++;
+
+        if (index < sizeof(expected_files)/sizeof(char *))
+        {
+            ok(!strcmp(expected_files[index], info->NameInCabinet),
+               "[%d] Expected file \"%s\", got \"%s\"\n",
+               index, expected_files[index], info->NameInCabinet);
+            index++;
+            return FILEOP_SKIP;
+        }
+        else
+        {
+            ok(0, "Unexpectedly enumerated more than number of files in cabinet, index = %d\n", index);
+            return FILEOP_ABORT;
+        }
+    }
+    default:
+        return NO_ERROR;
+    }
+}
+
+static void test_simple_enumerationA(void)
+{
+    BOOL ret;
+    char source[MAX_PATH], temp[MAX_PATH];
+    int enum_count = 0;
+
+    GetTempPathA(sizeof(temp), temp);
+    GetTempFileNameA(temp, "doc", 0, source);
+
+    create_source_fileA(source, comp_cab_zip_multi, sizeof(comp_cab_zip_multi));
+
+    ret = SetupIterateCabinetA(source, 0, simple_callbackA, &enum_count);
+    ok(ret == 1, "Expected SetupIterateCabinetA to return 1, got %d\n", ret);
+    ok(enum_count == sizeof(expected_files)/sizeof(char *),
+       "Unexpectedly enumerated %d files\n", enum_count);
+
+    DeleteFileA(source);
+}
+
 START_TEST(setupcab)
 {
     test_invalid_parametersA();
@@ -327,4 +384,6 @@ START_TEST(setupcab)
         test_invalid_callbackA();
         test_invalid_callbackW();
     }
+
+    test_simple_enumerationA();
 }
