@@ -562,6 +562,12 @@ static BOOL read_blob_wrapper(void *handle, void *buffer, DWORD bytesToRead,
     {
         *bytesRead = min(bytesToRead, reader->blob->cbData - reader->current);
         memcpy(buffer, reader->blob->pbData + reader->current, *bytesRead);
+        reader->current += *bytesRead;
+        ret = TRUE;
+    }
+    else if (reader->current == reader->blob->cbData)
+    {
+        *bytesRead = 0;
         ret = TRUE;
     }
     else
