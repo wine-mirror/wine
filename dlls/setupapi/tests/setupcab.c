@@ -29,6 +29,19 @@
 #include "setupapi.h"
 #include "wine/test.h"
 
+static const BYTE comp_cab_zip_multi[] = {
+    0x4d, 0x53, 0x43, 0x46, 0x00, 0x00, 0x00, 0x00, 0x9c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x2c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x01, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x71, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x0a, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xd1, 0x38, 0xf0, 0x48, 0x20, 0x00, 0x74, 0x72, 0x69, 0x73,
+    0x74, 0x72, 0x61, 0x6d, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0xd1,
+    0x38, 0xf0, 0x48, 0x20, 0x00, 0x77, 0x69, 0x6e, 0x65, 0x00, 0x08, 0x00, 0x00, 0x00, 0x18, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0xd1, 0x38, 0xf0, 0x48, 0x20, 0x00, 0x73, 0x68, 0x61, 0x6e, 0x64, 0x79,
+    0x00, 0x67, 0x2c, 0x03, 0x85, 0x23, 0x00, 0x20, 0x00, 0x43, 0x4b, 0xcb, 0x49, 0x2c, 0x2d, 0x4a,
+    0xcd, 0x4b, 0x4e, 0xe5, 0xe5, 0x2a, 0xcd, 0x4b, 0xce, 0xcf, 0x2d, 0x28, 0x4a, 0x2d, 0x2e, 0x4e,
+    0x4d, 0xe1, 0xe5, 0x2a, 0x2e, 0x49, 0x2d, 0xca, 0x03, 0x8a, 0x02, 0x00
+};
+
 static void create_source_fileA(LPSTR filename, const BYTE *data, DWORD size)
 {
     HANDLE handle;
@@ -226,8 +239,92 @@ static void test_invalid_parametersW(void)
     DeleteFileW(source);
 }
 
+static UINT CALLBACK crash_callbackA(PVOID Context, UINT Notification,
+                                     UINT_PTR Param1, UINT_PTR Param2)
+{
+    *(volatile char*)0 = 2;
+    return 0;
+}
+
+static UINT CALLBACK crash_callbackW(PVOID Context, UINT Notification,
+                                     UINT_PTR Param1, UINT_PTR Param2)
+{
+    *(volatile char*)0 = 2;
+    return 0;
+}
+
+static void test_invalid_callbackA(void)
+{
+    BOOL ret;
+    char source[MAX_PATH], temp[MAX_PATH];
+
+    GetTempPathA(sizeof(temp), temp);
+    GetTempFileNameA(temp, "doc", 0, source);
+
+    create_source_fileA(source, comp_cab_zip_multi, sizeof(comp_cab_zip_multi));
+
+    SetLastError(0xdeadbeef);
+    ret = SetupIterateCabinetA(source, 0, NULL, NULL);
+    ok(!ret, "Expected SetupIterateCabinetA to return 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_DATA,
+       "Expected GetLastError() to return ERROR_INVALID_DATA, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupIterateCabinetA(source, 0, crash_callbackA, NULL);
+    ok(!ret, "Expected SetupIterateCabinetA to return 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_DATA,
+       "Expected GetLastError() to return ERROR_INVALID_DATA, got %u\n",
+       GetLastError());
+
+    DeleteFileA(source);
+}
+
+static void test_invalid_callbackW(void)
+{
+    static const WCHAR docW[] = {'d','o','c',0};
+
+    BOOL ret;
+    WCHAR source[MAX_PATH], temp[MAX_PATH];
+
+    ret = SetupIterateCabinetW(NULL, 0, NULL, NULL);
+    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("SetupIterateCabinetW is not available\n");
+        return;
+    }
+
+    GetTempPathW(sizeof(temp)/sizeof(WCHAR), temp);
+    GetTempFileNameW(temp, docW, 0, source);
+
+    create_source_fileW(source, comp_cab_zip_multi, sizeof(comp_cab_zip_multi));
+
+    SetLastError(0xdeadbeef);
+    ret = SetupIterateCabinetW(source, 0, NULL, NULL);
+    ok(!ret, "Expected SetupIterateCabinetW to return 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_DATA,
+       "Expected GetLastError() to return ERROR_INVALID_DATA, got %u\n",
+       GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupIterateCabinetW(source, 0, crash_callbackW, NULL);
+    ok(!ret, "Expected SetupIterateCabinetW to return 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_DATA,
+       "Expected GetLastError() to return ERROR_INVALID_DATA, got %u\n",
+       GetLastError());
+
+    DeleteFileW(source);
+}
+
 START_TEST(setupcab)
 {
     test_invalid_parametersA();
     test_invalid_parametersW();
+
+    /* Tests crash on NT4/Win9x/Win2k and Wine. */
+    if (0)
+    {
+        test_invalid_callbackA();
+        test_invalid_callbackW();
+    }
 }
