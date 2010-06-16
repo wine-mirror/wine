@@ -1285,7 +1285,9 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
             (nt->OptionalHeader.AddressOfEntryPoint < sec->VirtualAddress + size))
             vprot |= VPROT_EXEC;
 
-        VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
+        if (!VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot ) && (vprot & VPROT_EXEC))
+            ERR( "failed to set %08x protection on section %.8s, noexec filesystem?\n",
+                 sec->Characteristics, sec->Name );
     }
 
  done:
