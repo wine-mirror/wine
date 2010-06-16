@@ -1474,6 +1474,8 @@ static UINT CALLBACK decompress_or_copy_callback( PVOID context, UINT notificati
         if (context_info->has_extracted)
             return FILEOP_ABORT;
 
+        TRACE("Requesting extraction of cabinet file %s\n",
+              wine_dbgstr_w(info->NameInCabinet));
         strcpyW( info->FullTargetName, context_info->target );
         context_info->has_extracted = 1;
         return FILEOP_DOIT;
@@ -1537,10 +1539,20 @@ DWORD WINAPI SetupDecompressOrCopyFileW( PCWSTR source, PCWSTR target, PUINT typ
     UINT comp;
     DWORD ret = ERROR_INVALID_PARAMETER;
 
+    TRACE("(%s, %s, %p)\n", debugstr_w(source), debugstr_w(target), type);
+
     if (!source || !target) return ERROR_INVALID_PARAMETER;
 
-    if (!type) comp = detect_compression_type( source );
-    else comp = *type;
+    if (!type)
+    {
+        comp = detect_compression_type( source );
+        TRACE("Detected compression type %u\n", comp);
+    }
+    else
+    {
+        comp = *type;
+        TRACE("Using specified compression type %u\n", comp);
+    }
 
     switch (comp)
     {
