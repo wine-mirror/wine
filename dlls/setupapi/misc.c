@@ -1456,26 +1456,27 @@ static DWORD decompress_file_lz( LPCWSTR source, LPCWSTR target )
     return ret;
 }
 
+struct callback_context
+{
+    int has_extracted;
+    LPCWSTR target;
+};
+
 static UINT CALLBACK decompress_or_copy_callback( PVOID context, UINT notification, UINT_PTR param1, UINT_PTR param2 )
 {
+    struct callback_context *context_info = context;
     FILE_IN_CABINET_INFO_W *info = (FILE_IN_CABINET_INFO_W *)param1;
 
     switch (notification)
     {
     case SPFILENOTIFY_FILEINCABINET:
     {
-        LPCWSTR filename, targetname = context;
-        WCHAR *p;
+        if (context_info->has_extracted)
+            return FILEOP_ABORT;
 
-        if ((p = strrchrW( targetname, '\\' ))) filename = p + 1;
-        else filename = targetname;
-
-        if (!lstrcmpiW( filename, info->NameInCabinet ))
-        {
-            strcpyW( info->FullTargetName, targetname );
-            return FILEOP_DOIT;
-        }
-        return FILEOP_SKIP;
+        strcpyW( info->FullTargetName, context_info->target );
+        context_info->has_extracted = 1;
+        return FILEOP_DOIT;
     }
     default: return NO_ERROR;
     }
@@ -1483,9 +1484,10 @@ static UINT CALLBACK decompress_or_copy_callback( PVOID context, UINT notificati
 
 static DWORD decompress_file_cab( LPCWSTR source, LPCWSTR target )
 {
+    struct callback_context context = {0, target};
     BOOL ret;
 
-    ret = SetupIterateCabinetW( source, 0, decompress_or_copy_callback, (PVOID)target );
+    ret = SetupIterateCabinetW( source, 0, decompress_or_copy_callback, &context );
 
     if (ret) return ERROR_SUCCESS;
     else return GetLastError();
