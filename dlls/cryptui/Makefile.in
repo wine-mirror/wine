@@ -15,6 +15,7 @@ RC_SRCS = \
 	cryptui_De.rc \
 	cryptui_En.rc \
 	cryptui_Fr.rc \
+	cryptui_It.rc \
 	cryptui_Ko.rc \
 	cryptui_Lt.rc \
 	cryptui_Nl.rc \
