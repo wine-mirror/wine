@@ -38,6 +38,7 @@ RC_SRCS = \
 	crypt32_De.rc \
 	crypt32_En.rc \
 	crypt32_Fr.rc \
+	crypt32_It.rc \
 	crypt32_Ko.rc \
 	crypt32_Lt.rc \
 	crypt32_Nl.rc \
