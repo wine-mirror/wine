@@ -1243,7 +1243,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
  */
 
     HRESULT         hr;
-    WCHAR           teststr1[] = {'T', 'e', 's', 't', 'e', '1', '2', ' ', 'a', '\0'};
+    WCHAR           teststr1[] = {'T', 'e', 's', 't', 'e', 'a', 'b', ' ', 'a', '\0'};
     void            *String = (WCHAR *) &teststr1;      /* ScriptStringAnalysis needs void */
     int             String_len = (sizeof(teststr1)/sizeof(WCHAR))-1;
     int             Glyphs = String_len * 2 + 16;       /* size of buffer as recommended  */
