@@ -2461,8 +2461,19 @@ static void test_GetPrinterDataEx(void)
 
     needed = 0xdeadbeef;
     SetLastError(0xdeadbeef);
+    /* vista and w2k8 have a bug in GetPrinterDataEx:
+       the current LastError value is returned as result */
     res = pGetPrinterDataExA(hprn, NULL, defaultspooldirectory, NULL, NULL, 0, &needed);
-    ok( (res == ERROR_MORE_DATA) && ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+    ok( ((res == ERROR_MORE_DATA) || broken(res == 0xdeadbeef)) &&
+        ((needed == len) || (needed == (len * sizeof(WCHAR)))),
+        "got %d, needed: %d (expected ERROR_MORE_DATA and %d or %d)\n",
+        res, needed, len, len * sizeof(WCHAR));
+
+    needed = 0xdeadbeef;
+    SetLastError(0xdeaddead);
+    res = pGetPrinterDataExA(hprn, NULL, defaultspooldirectory, NULL, NULL, 0, &needed);
+    ok( ((res == ERROR_MORE_DATA) || broken(res == 0xdeaddead)) &&
+        ((needed == len) || (needed == (len * sizeof(WCHAR)))),
         "got %d, needed: %d (expected ERROR_MORE_DATA and %d or %d)\n",
         res, needed, len, len * sizeof(WCHAR));
 
