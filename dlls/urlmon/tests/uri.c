@@ -853,6 +853,37 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* Windows uses the first occurence of ':' to delimit the userinfo. */
+    {   "ftp://user:pass:word@winehq.org/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|
+        Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"ftp://user:pass:word@winehq.org/",S_OK,TRUE},
+            {"user:pass:word@winehq.org",S_OK,TRUE},
+            {"ftp://winehq.org/",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"pass:word",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"ftp://user:pass:word@winehq.org/",S_OK,FALSE},
+            {"ftp",S_OK,FALSE},
+            {"user:pass:word",S_OK,TRUE},
+            {"user",S_OK,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {21,S_OK,TRUE},
+            {URL_SCHEME_FTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 

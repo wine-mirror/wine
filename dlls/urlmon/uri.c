@@ -55,6 +55,10 @@ typedef struct {
     const WCHAR     *scheme;
     DWORD           scheme_len;
     URL_SCHEME      scheme_type;
+
+    const WCHAR     *userinfo;
+    DWORD           userinfo_len;
+    INT             userinfo_split;
 } parse_data;
 
 /* List of scheme types/scheme names that are recognized by the IUri interface as of IE 7. */
@@ -117,6 +121,71 @@ static BOOL check_hierarchical(const WCHAR **ptr) {
 
     ++(*ptr);
     if(**ptr != '/') {
+        *ptr = start;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    return TRUE;
+}
+
+/* unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~" */
+static inline BOOL is_unreserved(WCHAR val) {
+    return (is_alpha(val) || is_num(val) || val == '-' || val == '.' ||
+            val == '_' || val == '~');
+}
+
+/* sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
+ *               / "*" / "+" / "," / ";" / "="
+ */
+static inline BOOL is_subdelim(WCHAR val) {
+    return (val == '!' || val == '$' || val == '&' ||
+            val == '\'' || val == '(' || val == ')' ||
+            val == '*' || val == '+' || val == ',' ||
+            val == ';' || val == '=');
+}
+
+/* gen-delims  = ":" / "/" / "?" / "#" / "[" / "]" / "@" */
+static inline BOOL is_gendelim(WCHAR val) {
+    return (val == ':' || val == '/' || val == '?' ||
+            val == '#' || val == '[' || val == ']' ||
+            val == '@');
+}
+
+/* Characters that delimit the end of the authority
+ * section of a URI. Sometimes a '\\' is considered
+ * an authority delimeter.
+ */
+static inline BOOL is_auth_delim(WCHAR val, BOOL acceptSlash) {
+    return (val == '#' || val == '/' || val == '?' ||
+            val == '\0' || (acceptSlash && val == '\\'));
+}
+
+static inline BOOL is_hexdigit(WCHAR val) {
+    return ((val >= 'a' && val <= 'f') ||
+            (val >= 'A' && val <= 'F') ||
+            (val >= '0' && val <= '9'));
+}
+
+/* Checks if the characters pointed to by 'ptr' are
+ * a percent encoded data octet.
+ *
+ * pct-encoded = "%" HEXDIG HEXDIG
+ */
+static BOOL check_pct_encoded(const WCHAR **ptr) {
+    const WCHAR *start = *ptr;
+
+    if(**ptr != '%')
+        return FALSE;
+
+    ++(*ptr);
+    if(!is_hexdigit(**ptr)) {
+        *ptr = start;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    if(!is_hexdigit(**ptr)) {
         *ptr = start;
         return FALSE;
     }
@@ -259,6 +328,80 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
     return TRUE;
 }
 
+/* Parses the userinfo part of the URI (if it exists). The userinfo field of
+ * a URI can consist of "username:password@", or just "username@".
+ *
+ * RFC def:
+ * userinfo    = *( unreserved / pct-encoded / sub-delims / ":" )
+ *
+ * NOTES:
+ *  1)  If there is more than one ':' in the userinfo part of the URI Windows
+ *      uses the first occurence of ':' to delimit the username and password
+ *      components.
+ *
+ *      ex:
+ *          ftp://user:pass:word@winehq.org
+ *
+ *      Would yield, "user" as the username and "pass:word" as the password.
+ *
+ *  2)  Windows allows any character to appear in the "userinfo" part of
+ *      a URI, as long as it's not an authority delimeter character set.
+ */
+static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    data->userinfo = *ptr;
+    data->userinfo_split = -1;
+
+    while(**ptr != '@') {
+        if(**ptr == ':' && data->userinfo_split == -1)
+            data->userinfo_split = *ptr - data->userinfo;
+        else if(**ptr == '%') {
+            /* If it's a known scheme type, it has to be a valid percent
+             * encoded value.
+             */
+            if(!check_pct_encoded(ptr)) {
+                if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+                    *ptr = data->userinfo;
+                    data->userinfo = NULL;
+                    data->userinfo_split = -1;
+
+                    TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
+                    return;
+                }
+            } else
+                continue;
+        } else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN))
+            break;
+
+        ++(*ptr);
+    }
+
+    if(**ptr != '@') {
+        *ptr = data->userinfo;
+        data->userinfo = NULL;
+        data->userinfo_split = -1;
+
+        TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
+        return;
+    }
+
+    data->userinfo_len = *ptr - data->userinfo;
+    TRACE("(%p %p %x): Found userinfo=%s userinfo_len=%d split=%d.\n", ptr, data, flags,
+            debugstr_wn(data->userinfo, data->userinfo_len), data->userinfo_len, data->userinfo_split);
+    ++(*ptr);
+}
+
+/* Parses the authority information from the URI.
+ *
+ * authority   = [ userinfo "@" ] host [ ":" port ]
+ */
+static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    parse_userinfo(ptr, data, flags);
+
+    /* TODO: Parse host and port information. */
+
+    return TRUE;
+}
+
 /* Determines how the URI should be parsed after the scheme information.
  *
  * If the scheme is followed, by "//" then, it is treated as an hierarchical URI
@@ -266,7 +409,7 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
  * URI will be treated as an opaque URI which the authority information is not parsed
  * out.
  *
- * RFC 3896 defenition of hier-part:
+ * RFC 3896 definition of hier-part:
  *
  * hier-part   = "//" authority path-abempty
  *                 / path-absolute
@@ -303,6 +446,9 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
             data->is_opaque = FALSE;
 
             /* TODO: Handle hierarchical URI's, parse authority then parse the path. */
+            if(!parse_authority(ptr, data, flags))
+                return FALSE;
+
             return TRUE;
         }
     }
