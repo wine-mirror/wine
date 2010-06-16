@@ -869,6 +869,24 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
     return ret;
 }
 
+static BOOL is_same_file(HANDLE h1, HANDLE h2)
+{
+    int fd1;
+    BOOL ret = FALSE;
+    if (wine_server_handle_to_fd(h1, 0, &fd1, NULL) == STATUS_SUCCESS)
+    {
+        int fd2;
+        if (wine_server_handle_to_fd(h2, 0, &fd2, NULL) == STATUS_SUCCESS)
+        {
+            struct stat stat1, stat2;
+            if (fstat(fd1, &stat1) == 0 && fstat(fd2, &stat2) == 0)
+                ret = (stat1.st_dev == stat2.st_dev && stat1.st_ino == stat2.st_ino);
+            wine_server_release_fd(h2, fd2);
+        }
+        wine_server_release_fd(h1, fd1);
+    }
+    return ret;
+}
 
 /**************************************************************************
  *           CopyFileW   (KERNEL32.@)
@@ -909,6 +927,25 @@ BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )
         HeapFree( GetProcessHeap(), 0, buffer );
         CloseHandle( h1 );
         return FALSE;
+    }
+
+    if (!fail_if_exists)
+    {
+        BOOL same_file = FALSE;
+        h2 = CreateFileW( dest, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                         OPEN_EXISTING, 0, 0);
+        if (h2 != INVALID_HANDLE_VALUE)
+        {
+            same_file = is_same_file( h1, h2 );
+            CloseHandle( h2 );
+        }
+        if (same_file)
+        {
+            HeapFree( GetProcessHeap(), 0, buffer );
+            CloseHandle( h1 );
+            SetLastError( ERROR_SHARING_VIOLATION );
+            return FALSE;
+        }
     }
 
     if ((h2 = CreateFileW( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,

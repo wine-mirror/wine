@@ -593,7 +593,7 @@ static void test_CopyFileA(void)
 
     /* copying a file to itself must fail */
     retok = CopyFileA(source, source, FALSE);
-    todo_wine ok( !retok && (GetLastError() == ERROR_SHARING_VIOLATION || broken(GetLastError() == ERROR_FILE_EXISTS) /* Win 9x */),
+    ok( !retok && (GetLastError() == ERROR_SHARING_VIOLATION || broken(GetLastError() == ERROR_FILE_EXISTS) /* Win 9x */),
         "copying a file to itself didn't fail (ret=%d, err=%d)\n", retok, GetLastError());
 
     /* make the source have not zero size */
