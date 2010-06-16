@@ -161,6 +161,7 @@ void          __cdecl _splitpath(const char*,char*,char*,char*,char*);
 long double   __cdecl _strtold(const char*,char**);
 void          __cdecl _swab(char*,char*,int);
 char*         __cdecl _ui64toa(unsigned __int64,char*,int);
+errno_t       __cdecl _ui64toa_s(unsigned __int64,char*,size_t,int);
 char*         __cdecl _ultoa(__msvcrt_ulong,char*,int);
 
 void          __cdecl _exit(int);
@@ -183,6 +184,7 @@ void*         __cdecl malloc(size_t);
 int           __cdecl mblen(const char*,size_t);
 void          __cdecl perror(const char*);
 int           __cdecl rand(void);
+errno_t       __cdecl rand_s(unsigned int*);
 void*         __cdecl realloc(void*,size_t);
 void          __cdecl srand(unsigned int);
 double        __cdecl strtod(const char*,char**);
@@ -206,16 +208,21 @@ void          __cdecl _wperror(const wchar_t*);
 int           __cdecl _wputenv(const wchar_t*);
 void          __cdecl _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
 void          __cdecl _wsplitpath(const wchar_t*,wchar_t*,wchar_t*,wchar_t*,wchar_t*);
+errno_t       __cdecl _wsplitpath_s(const wchar_t*,wchar_t*,size_t,wchar_t*,size_t,
+                                       wchar_t*,size_t,wchar_t*,size_t);
 int           __cdecl _wsystem(const wchar_t*);
+double        __cdecl _wtof(const wchar_t*);
 int           __cdecl _wtoi(const wchar_t*);
 __int64       __cdecl _wtoi64(const wchar_t*);
 __msvcrt_long __cdecl _wtol(const wchar_t*);
 
 size_t        __cdecl mbstowcs(wchar_t*,const char*,size_t);
+errno_t       __cdecl mbstowcs_s(size_t*,wchar_t*,size_t,const char*,size_t);
 int           __cdecl mbtowc(wchar_t*,const char*,size_t);
 double        __cdecl wcstod(const wchar_t*,wchar_t**);
 __msvcrt_long __cdecl wcstol(const wchar_t*,wchar_t**,int);
 size_t        __cdecl wcstombs(char*,const wchar_t*,size_t);
+errno_t       __cdecl wcstombs_s(size_t*,char*,size_t,const wchar_t*,size_t);
 __msvcrt_ulong __cdecl wcstoul(const wchar_t*,wchar_t**,int);
 int           __cdecl wctomb(char*,wchar_t);
 #endif /* _WSTDLIB_DEFINED */

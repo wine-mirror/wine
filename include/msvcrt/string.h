@@ -29,12 +29,13 @@ extern "C" {
 
 #ifndef _CRT_MEMORY_DEFINED
 #define _CRT_MEMORY_DEFINED
-void* __cdecl memchr(const void*,int,size_t);
-int   __cdecl memcmp(const void*,const void*,size_t);
-void* __cdecl memcpy(void*,const void*,size_t);
-void* __cdecl memset(void*,int,size_t);
-void* __cdecl _memccpy(void*,const void*,int,unsigned int);
-int   __cdecl _memicmp(const void*,const void*,unsigned int);
+void*   __cdecl memchr(const void*,int,size_t);
+int     __cdecl memcmp(const void*,const void*,size_t);
+void*   __cdecl memcpy(void*,const void*,size_t);
+errno_t __cdecl memcpy_s(void*,size_t,const void*,size_t);
+void*   __cdecl memset(void*,int,size_t);
+void*   __cdecl _memccpy(void*,const void*,int,unsigned int);
+int     __cdecl _memicmp(const void*,const void*,unsigned int);
 
 static inline int memicmp(const void* s1, const void* s2, size_t len) { return _memicmp(s1, s2, len); }
 static inline void* memccpy(void *s1, const void *s2, int c, size_t n) { return _memccpy(s1, s2, c, n); }
@@ -52,24 +53,30 @@ char* __cdecl _strrev(char*);
 char* __cdecl _strset(char*,int);
 char* __cdecl _strupr(char*);
 
-void*  __cdecl memmove(void*,const void*,size_t);
-char*  __cdecl strcat(char*,const char*);
-char*  __cdecl strchr(const char*,int);
-int    __cdecl strcmp(const char*,const char*);
-int    __cdecl strcoll(const char*,const char*);
-char*  __cdecl strcpy(char*,const char*);
-size_t __cdecl strcspn(const char*,const char*);
-char*  __cdecl strerror(int);
-size_t __cdecl strlen(const char*);
-char*  __cdecl strncat(char*,const char*,size_t);
-int    __cdecl strncmp(const char*,const char*,size_t);
-char*  __cdecl strncpy(char*,const char*,size_t);
-char*  __cdecl strpbrk(const char*,const char*);
-char*  __cdecl strrchr(const char*,int);
-size_t __cdecl strspn(const char*,const char*);
-char*  __cdecl strstr(const char*,const char*);
-char*  __cdecl strtok(char*,const char*);
-size_t __cdecl strxfrm(char*,const char*,size_t);
+void*   __cdecl memmove(void*,const void*,size_t);
+errno_t __cdecl memmove_s(void*,size_t,const void*,size_t);
+char*   __cdecl strcat(char*,const char*);
+errno_t __cdecl strcat_s(char*,size_t,const char*);
+char*   __cdecl strchr(const char*,int);
+int     __cdecl strcmp(const char*,const char*);
+int     __cdecl strcoll(const char*,const char*);
+char*   __cdecl strcpy(char*,const char*);
+errno_t __cdecl strcpy_s(char*,size_t,const char*);
+size_t  __cdecl strcspn(const char*,const char*);
+char*   __cdecl strerror(int);
+size_t  __cdecl strlen(const char*);
+char*   __cdecl strncat(char*,const char*,size_t);
+int     __cdecl strncmp(const char*,const char*,size_t);
+char*   __cdecl strncpy(char*,const char*,size_t);
+errno_t __cdecl strncpy_s(char*,size_t,const char*,size_t);
+size_t  __cdecl strnlen(const char*,size_t);
+char*   __cdecl strpbrk(const char*,const char*);
+char*   __cdecl strrchr(const char*,int);
+size_t  __cdecl strspn(const char*,const char*);
+char*   __cdecl strstr(const char*,const char*);
+char*   __cdecl strtok(char*,const char*);
+char*   __cdecl strtok_s(char*,const char*,char**);
+size_t  __cdecl strxfrm(char*,const char*,size_t);
 
 #ifndef _WSTRING_DEFINED
 #define _WSTRING_DEFINED
@@ -84,15 +91,18 @@ wchar_t* __cdecl _wcsset(wchar_t*,wchar_t);
 wchar_t* __cdecl _wcsupr(wchar_t*);
 
 wchar_t* __cdecl wcscat(wchar_t*,const wchar_t*);
+errno_t  __cdecl wcscat_s(wchar_t*,size_t,const wchar_t*);
 wchar_t* __cdecl wcschr(const wchar_t*,wchar_t);
 int      __cdecl wcscmp(const wchar_t*,const wchar_t*);
 int      __cdecl wcscoll(const wchar_t*,const wchar_t*);
 wchar_t* __cdecl wcscpy(wchar_t*,const wchar_t*);
+errno_t  __cdecl wcscpy_s(wchar_t*,size_t,const wchar_t*);
 size_t   __cdecl wcscspn(const wchar_t*,const wchar_t*);
 size_t   __cdecl wcslen(const wchar_t*);
 wchar_t* __cdecl wcsncat(wchar_t*,const wchar_t*,size_t);
 int      __cdecl wcsncmp(const wchar_t*,const wchar_t*,size_t);
 wchar_t* __cdecl wcsncpy(wchar_t*,const wchar_t*,size_t);
+errno_t  __cdecl wcsncpy_s(wchar_t*,size_t,const wchar_t*,size_t);
 wchar_t* __cdecl wcspbrk(const wchar_t*,const wchar_t*);
 wchar_t* __cdecl wcsrchr(const wchar_t*,wchar_t wcFor);
 size_t   __cdecl wcsspn(const wchar_t*,const wchar_t*);

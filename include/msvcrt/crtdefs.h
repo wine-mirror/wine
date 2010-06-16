@@ -172,3 +172,8 @@ typedef unsigned short  wint_t;
 typedef unsigned short  wctype_t;
 #define _WCTYPE_T_DEFINED
 #endif
+
+#ifndef _ERRNO_T_DEFINED
+typedef int errno_t;
+#define _ERRNO_T_DEFINED
+#endif
