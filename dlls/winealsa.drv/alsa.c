@@ -575,10 +575,10 @@ int wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent)
         else
             s = "overrun";
         if (!silent)
-            ERR("%s occurred", s);
+            ERR("%s occurred\n", s);
         err = snd_pcm_prepare(pcm);
         if (err < 0) {
-            ERR("cannot recover from %s, prepare failed: %s", s, snd_strerror(err));
+            ERR("cannot recover from %s, prepare failed: %s\n", s, snd_strerror(err));
             return err;
         }
         return 0;
@@ -590,7 +590,7 @@ int wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent)
         if (err < 0) {
             err = snd_pcm_prepare(pcm);
             if (err < 0) {
-                ERR("cannot recover from suspend, prepare failed: %s", snd_strerror(err));
+                ERR("cannot recover from suspend, prepare failed: %s\n", snd_strerror(err));
                 return err;
             }
         }
