@@ -553,11 +553,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                 }
             }
 
-            /* Simulate pressing Alt+F4 */
-            keybd_event(VK_MENU, 0, 0, 0);
-            keybd_event(VK_F4, 0, 0, 0);
-            keybd_event(VK_F4, 0, KEYEVENTF_KEYUP, 0);
-            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+            PostMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
         }
     }
     else if (protocol == x11drv_atom(WM_TAKE_FOCUS))
