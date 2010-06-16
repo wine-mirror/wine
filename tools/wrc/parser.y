@@ -2172,7 +2172,9 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
 
     if(key->type == str_char)
     {
-	if((flags & WRC_AF_VIRTKEY) && (!isupper(key->str.cstr[0] & 0xff) && !isdigit(key->str.cstr[0] & 0xff)))
+	if((flags & WRC_AF_VIRTKEY) &&
+           !((key->str.cstr[0] >= 'A' && key->str.cstr[0] <= 'Z') ||
+             (key->str.cstr[0] >= '0' && key->str.cstr[0] <= '9')))
 		yyerror("VIRTKEY code is not equal to ascii value");
 
 	if(key->str.cstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
@@ -2181,7 +2183,7 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
 	}
 	else if(key->str.cstr[0] == '^')
 	{
-		keycode = toupper(key->str.cstr[1]) - '@';
+		keycode = toupper((unsigned char)key->str.cstr[1]) - '@';
 		if(keycode >= ' ')
 			yyerror("Control-code out of range");
 	}
@@ -2190,7 +2192,9 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
     }
     else
     {
-	if((flags & WRC_AF_VIRTKEY) && !isupperW(key->str.wstr[0]) && !isdigitW(key->str.wstr[0]))
+	if((flags & WRC_AF_VIRTKEY) &&
+           !((key->str.wstr[0] >= 'A' && key->str.wstr[0] <= 'Z') ||
+             (key->str.wstr[0] >= '0' && key->str.wstr[0] <= '9')))
 		yyerror("VIRTKEY code is not equal to ascii value");
 
 	if(key->str.wstr[0] == '^' && (flags & WRC_AF_CONTROL) != 0)
