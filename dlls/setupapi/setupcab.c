@@ -622,7 +622,7 @@ BOOL WINAPI SetupIterateCabinetW(PCWSTR CabinetFile, DWORD Reserved,
   UINT len;
   SC_HSC_W my_hsc;
   ERF erf;
-  WCHAR pszCabPathW[MAX_PATH], *p;
+  WCHAR pszCabPathW[MAX_PATH], *p = NULL;
   DWORD fpnsize;
   BOOL ret;
 
@@ -632,7 +632,11 @@ BOOL WINAPI SetupIterateCabinetW(PCWSTR CabinetFile, DWORD Reserved,
   if (!LoadCABINETDll())
     return FALSE;
 
-  if (!CabinetFile) return FALSE;
+  if (!CabinetFile)
+  {
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
 
   fpnsize = GetFullPathNameW(CabinetFile, MAX_PATH, pszCabPathW, &p);
   if (fpnsize > MAX_PATH) {
