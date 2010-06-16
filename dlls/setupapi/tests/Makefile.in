@@ -11,6 +11,7 @@ C_SRCS = \
 	misc.c \
 	parser.c \
 	query.c \
+	setupcab.c \
 	stringtable.c
 
 @MAKE_TEST_RULES@

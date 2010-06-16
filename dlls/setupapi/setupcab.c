@@ -555,16 +555,21 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
 
   SC_HSC_A my_hsc;
   ERF erf;
-  CHAR pszCabinet[MAX_PATH], pszCabPath[MAX_PATH], *p;
+  CHAR pszCabinet[MAX_PATH], pszCabPath[MAX_PATH], *p = NULL;
   DWORD fpnsize;
   BOOL ret;
-
 
   TRACE("(CabinetFile == %s, Reserved == %u, MsgHandler == ^%p, Context == ^%p)\n",
         debugstr_a(CabinetFile), Reserved, MsgHandler, Context);
 
   if (!LoadCABINETDll())
     return FALSE;
+
+  if (!CabinetFile)
+  {
+    SetLastError(ERROR_INVALID_PARAMETER);
+    return FALSE;
+  }
 
   fpnsize = strlen(CabinetFile);
   if (fpnsize >= MAX_PATH) {
