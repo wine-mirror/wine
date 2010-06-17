@@ -38,6 +38,10 @@ typedef struct {
     INT         scheme_start;
     DWORD       scheme_len;
     URL_SCHEME  scheme_type;
+
+    INT         userinfo_start;
+    DWORD       userinfo_len;
+    INT         userinfo_split;
 } Uri;
 
 typedef struct {
@@ -60,6 +64,8 @@ typedef struct {
     DWORD           userinfo_len;
     INT             userinfo_split;
 } parse_data;
+
+static const CHAR hexDigits[] = "0123456789ABCDEF";
 
 /* List of scheme types/scheme names that are recognized by the IUri interface as of IE 7. */
 static const struct {
@@ -161,10 +167,62 @@ static inline BOOL is_auth_delim(WCHAR val, BOOL acceptSlash) {
             val == '\0' || (acceptSlash && val == '\\'));
 }
 
+/* reserved = gen-delims / sub-delims */
+static inline BOOL is_reserved(WCHAR val) {
+    return (is_subdelim(val) || is_gendelim(val));
+}
+
 static inline BOOL is_hexdigit(WCHAR val) {
     return ((val >= 'a' && val <= 'f') ||
             (val >= 'A' && val <= 'F') ||
             (val >= '0' && val <= '9'));
+}
+
+/* Taken from dlls/jscript/lex.c */
+static int hex_to_int(WCHAR val) {
+    if(val >= '0' && val <= '9')
+        return val - '0';
+    else if(val >= 'a' && val <= 'f')
+        return val - 'a' + 10;
+    else if(val >= 'A' && val <= 'F')
+        return val - 'A' + 10;
+
+    return -1;
+}
+
+/* Helper function for converting a percent encoded string
+ * representation of a WCHAR value into its actual WCHAR value. If
+ * the two characters following the '%' aren't valid hex values then
+ * this function returns the NULL character.
+ *
+ * Eg.
+ *  "%2E" will result in '.' being returned by this function.
+ */
+static WCHAR decode_pct_val(const WCHAR *ptr) {
+    WCHAR ret = '\0';
+
+    if(*ptr == '%' && is_hexdigit(*(ptr + 1)) && is_hexdigit(*(ptr + 2))) {
+        INT a = hex_to_int(*(ptr + 1));
+        INT b = hex_to_int(*(ptr + 2));
+
+        ret = a << 4;
+        ret += b;
+    }
+
+    return ret;
+}
+
+/* Helper function for percent encoding a given character
+ * and storing the encoded value into a given buffer (dest).
+ *
+ * It's up to the calling function to ensure that there is
+ * at least enough space in 'dest' for the percent encoded
+ * value to be stored (so dest + 3 spaces available).
+ */
+static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
+    dest[0] = '%';
+    dest[1] = hexDigits[(val >> 4) & 0xf];
+    dest[2] = hexDigits[val & 0xf];
 }
 
 /* Checks if the characters pointed to by 'ptr' are
@@ -488,6 +546,126 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
     return TRUE;
 }
 
+/* Canonicalizes the userinfo of the URI represented by the parse_data.
+ *
+ * Canonicalization of the userinfo is a simple process. If there are any percent
+ * encoded characters that fall in the "unreserved" character set, they are decoded
+ * to their actual value. If a character is not in the "unreserved" or "reserved" sets
+ * then it is percent encoded. Other than that the characters are copied over without
+ * change.
+ */
+static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    DWORD i = 0;
+
+    uri->userinfo_start = uri->userinfo_split = -1;
+    uri->userinfo_len = 0;
+
+    if(!data->userinfo)
+        /* URI doesn't have userinfo, so nothing to do here. */
+        return TRUE;
+
+    uri->userinfo_start = uri->canon_len;
+
+    while(i < data->userinfo_len) {
+        if(data->userinfo[i] == ':' && uri->userinfo_split == -1)
+            /* Windows only considers the first ':' as the delimiter. */
+            uri->userinfo_split = uri->canon_len - uri->userinfo_start;
+        else if(data->userinfo[i] == '%') {
+            /* Only decode % encoded values for known scheme types. */
+            if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+                /* See if the value really needs decoded. */
+                WCHAR val = decode_pct_val(data->userinfo + i);
+                if(is_unreserved(val)) {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = val;
+
+                    ++uri->canon_len;
+
+                    /* Move pass the hex characters. */
+                    i += 3;
+                    continue;
+                }
+            }
+        } else if(!is_reserved(data->userinfo[i]) && !is_unreserved(data->userinfo[i]) &&
+                  data->userinfo[i] != '\\') {
+            /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
+             * is NOT set.
+             */
+            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
+                if(!computeOnly)
+                    pct_encode_val(data->userinfo[i], uri->canon_uri + uri->canon_len);
+
+                uri->canon_len += 3;
+                ++i;
+                continue;
+            }
+        }
+
+        if(!computeOnly)
+            /* Nothing special, so just copy the character over. */
+            uri->canon_uri[uri->canon_len] = data->userinfo[i];
+
+        ++uri->canon_len;
+        ++i;
+    }
+
+    uri->userinfo_len = uri->canon_len - uri->userinfo_start;
+    if(!computeOnly)
+        TRACE("(%p %p %x %d): Canonicalized userinfo, userinfo_start=%d, userinfo=%s, userinfo_split=%d userinfo_len=%d.\n",
+                data, uri, flags, computeOnly, uri->userinfo_start, debugstr_wn(uri->canon_uri + uri->userinfo_start, uri->userinfo_len),
+                uri->userinfo_split, uri->userinfo_len);
+
+    /* Now insert the '@' after the userinfo. */
+    if(!computeOnly)
+        uri->canon_uri[uri->canon_len] = '@';
+
+    ++uri->canon_len;
+    return TRUE;
+}
+
+/* Canonicalizes the authority of the URI represented by the parse_data. */
+static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    if(!canonicalize_userinfo(data, uri, flags, computeOnly))
+        return FALSE;
+
+    /* TODO: canonicalize the host and port information. */
+
+    return TRUE;
+}
+
+/* Determines how the URI represented by the parse_data should be canonicalized.
+ *
+ * Essentially, if the parse_data represents an hierarchical URI then it calls
+ * canonicalize_authority and the canonicalization functions for the path. If the
+ * URI is opaque it canonicalizes the path of the URI.
+ */
+static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    if(!data->is_opaque) {
+        /* "//" is only added for non-wildcard scheme types. */
+        if(data->scheme_type != URL_SCHEME_WILDCARD) {
+            if(!computeOnly) {
+                INT pos = uri->canon_len;
+
+                uri->canon_uri[pos] = '/';
+                uri->canon_uri[pos+1] = '/';
+           }
+           uri->canon_len += 2;
+        }
+
+        if(!canonicalize_authority(data, uri, flags, computeOnly))
+            return FALSE;
+
+       /* TODO: Canonicalize the path of the URI. */
+
+    } else {
+        /* Opaque URI's don't have userinfo. */
+        uri->userinfo_start = uri->userinfo_split = -1;
+        uri->userinfo_len = 0;
+    }
+
+    return TRUE;
+}
+
 /* Canonicalizes the scheme information specified in the parse_data using the specified flags. */
 static BOOL canonicalize_scheme(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     uri->scheme_start = -1;
@@ -519,7 +697,7 @@ static BOOL canonicalize_scheme(const parse_data *data, Uri *uri, DWORD flags, B
                     debugstr_wn(uri->canon_uri,  uri->scheme_len), data->scheme_len);
         }
 
-        /* This happens in both compute only and non-compute only. */
+        /* This happens in both computation modes. */
         uri->canon_len += data->scheme_len + 1;
         uri->scheme_len = data->scheme_len;
     }
@@ -542,6 +720,11 @@ static int compute_canonicalized_length(const parse_data *data, DWORD flags) {
 
     if(!canonicalize_scheme(data, &uri, flags, TRUE)) {
         ERR("(%p %x): Failed to compute URI scheme length.\n", data, flags);
+        return -1;
+    }
+
+    if(!canonicalize_hierpart(data, &uri, flags, TRUE)) {
+        ERR("(%p %x): Failed to compute URI hierpart length.\n", data, flags);
         return -1;
     }
 
@@ -584,6 +767,12 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
         return E_INVALIDARG;
     }
     uri->scheme_type = data->scheme_type;
+
+    if(!canonicalize_hierpart(data, uri, flags, FALSE)) {
+        ERR("(%p %p %x): Unable to canonicalize the heirpart of the URI\n", data, uri, flags);
+        heap_free(uri->canon_uri);
+        return E_INVALIDARG;
+    }
 
     uri->canon_uri[uri->canon_len] = '\0';
     TRACE("(%p %p %x): finished canonicalizing the URI.\n", data, uri, flags);
