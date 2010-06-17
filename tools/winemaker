@@ -2251,9 +2251,13 @@ sub generate_list($$$;$)
     foreach my $item (@$list) {
       my $value;
       if (defined $data) {
-	$value=&$data($item);
+        $value=&$data($item);
       } else {
-	$value=$item;
+        if (defined $item) {
+          $value=$item;
+        } else {
+          $value="";
+        }
       }
       if ($value ne "") {
 	if ($first) {
