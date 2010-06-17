@@ -53,6 +53,7 @@ POPUP "&Редактиране" {
 POPUP "&Търсене" {
   MENUITEM "&Търси...\tCtrl+F",   CMD_SEARCH
   MENUITEM "Намери &следващ\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Замяна...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Помощ" {
   MENUITEM "&Съдържание",         CMD_HELP_CONTENTS
