@@ -1388,13 +1388,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
         ok(hr == E_INVALIDARG, "ScriptStringCPtoX should return E_INVALIDARG not %08x\n", hr);
 
-        hr = ScriptStringFree(&ssa);
-        /*
-         * ScriptStringCPtoX should free ssa, hence ScriptStringFree should fail
-         */
-        ok(hr == E_INVALIDARG ||
-           hr == E_FAIL, /* win2k3 */
-           "ScriptStringFree should return E_INVALIDARG or E_FAIL not %08x\n", hr);
+        ScriptStringFree(&ssa);
     }
 }
 
