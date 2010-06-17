@@ -262,8 +262,8 @@ static void test_ScriptShape(HDC hdc)
     hr = ScriptShape(hdc, &sc, test2, 4, 4, &items[0].a, glyphs2, logclust, attrs, &nb);
     ok(hr == S_OK, "ScriptShape should return S_OK not %08x\n", hr);
     ok(nb == 4, "Wrong number of items\n");
-    ok(glyphs2[0] == 0, "Incorrect glyph for 0x202B\n");
-    ok(glyphs2[3] == 0, "Incorrect glyph for 0x202C\n");
+    ok(glyphs2[0] == 0 || broken(glyphs2[0] == 0x80), "Incorrect glyph for 0x202B\n");
+    ok(glyphs2[3] == 0 || broken(glyphs2[3] == 0x80), "Incorrect glyph for 0x202C\n");
     ok(logclust[0] == 0, "clusters out of order\n");
     ok(logclust[1] == 1, "clusters out of order\n");
     ok(logclust[2] == 2, "clusters out of order\n");
@@ -640,8 +640,8 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     hr = ScriptGetCMap(hdc, &psc, TestItem2, cInChars, dwFlags, pwOutGlyphs3);
     ok (hr == S_FALSE, "ScriptGetCMap should return S_FALSE not (%08x)\n", hr);
     ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
-    ok(pwOutGlyphs3[0] == 0, "Glyph 0 should be default glyph\n");
-    ok(pwOutGlyphs3[3] == 0, "Glyph 0 should be default glyph\n");
+    ok(pwOutGlyphs3[0] == 0 || broken(pwOutGlyphs3[0] == 0x80), "Glyph 0 should be default glyph\n");
+    ok(pwOutGlyphs3[3] == 0 || broken(pwOutGlyphs3[0] == 0x80), "Glyph 0 should be default glyph\n");
 
 
     cInChars = cChars = 9;
