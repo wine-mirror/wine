@@ -272,7 +272,7 @@ HRESULT WINAPI AtlInternalQueryInterface(void* this, const _ATL_INTMAP_ENTRY* pE
             else
             {
                 TRACE("Function\n");
-                rc = pEntries[i].pFunc(this, iid, ppvObject,0);
+                rc = pEntries[i].pFunc(this, iid, ppvObject, pEntries[i].dw);
             }
             break;
         }
