@@ -2344,6 +2344,16 @@ void signal_init_thread( TEB *teb )
     ss.ss_size  = signal_stack_size;
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
+
+    if (teb->Peb->ProcessHeap) /* Not for the inital thread. */
+    {
+        const WORD fpu_cw = 0x27f;
+#ifdef __GNUC__
+        __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
+#else
+        FIXME("FPU setup not implemented for this platform.\n");
+#endif
+    }
 }
 
 /**********************************************************************

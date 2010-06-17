@@ -2177,6 +2177,16 @@ void signal_init_thread( TEB *teb )
     wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
     wine_ldt_init_fs( thread_data->fs, &fs_entry );
     thread_data->gs = wine_get_gs();
+
+    if (teb->Peb->ProcessHeap) /* Not for the inital thread. */
+    {
+        const WORD fpu_cw = 0x27f;
+#ifdef __GNUC__
+        __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
+#else
+        FIXME("FPU setup not implemented for this platform.\n");
+#endif
+    }
 }
 
 /**********************************************************************
