@@ -48,11 +48,11 @@ IDM_MENU MENU
             MENUITEM "CLSCTX_&REMOTE_SERVER",    IDM_FLAG_REMSERV
         }
         MENUITEM SEPARATOR
-        MENUITEM "Просмотр &Type info",    IDM_TYPEINFO, GRAYED
+        MENUITEM "Просмотр &информации о типе",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Create &Instance",    IDM_CREATEINST, GRAYED
-        MENUITEM "Create Instance &On...",    IDM_CREATEINSTON, GRAYED
-        MENUITEM "&Release Instance",    IDM_RELEASEINST, GRAYED
+        MENUITEM "Создать &Экземпляр",    IDM_CREATEINST, GRAYED
+        MENUITEM "Создать Экземпляр &на...",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Удалить Экземпляр",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Копировать C&LSID в буфер",    IDM_COPYCLSID, GRAYED
         MENUITEM "Копировать &HTML object Tag в буфер", IDM_HTMLTAG, GRAYED
@@ -63,7 +63,7 @@ IDM_MENU MENU
     {
         MENUITEM "&Режим эксперта",    IDM_EXPERT,CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "&Hidden component categories",    IDM_HIDDEN, GRAYED
+        MENUITEM "&Скрытые категории компонентов",    IDM_HIDDEN, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Панель инструментов",    IDM_TOOLBAR,CHECKED
         MENUITEM "&Строка состояния",    IDM_STATUSBAR,CHECKED
@@ -85,7 +85,7 @@ IDM_TYPELIB MENU
     }
     POPUP "&Вид"
     {
-        MENUITEM "&Group by type kind", IDM_GROUP
+        MENUITEM "&Группировать по типу", IDM_GROUP
         MENUITEM SEPARATOR
         MENUITEM "&Панель инструментов",    IDM_TOOLBAR
         MENUITEM "&Строка состояния", IDM_STATUSBAR,CHECKED
@@ -97,28 +97,28 @@ STRINGTABLE
     IDS_APPNAME            "OleView"
     IDS_APPTITLE           "OleView"
     IDS_READY              "Готово"
-    IDS_ABOUT              "OleView - OLE/COM Object Viewer"
+    IDS_ABOUT              "OleView - просмотрщик объектов OLE/COM"
     IDS_ABOUTVER           "версия 1.0"
     IDS_TYPELIBTITLE       "ITypeLib viewer"
     IDS_OPEN               "Открыть"
     IDS_OPEN_TYPELIB_FILTER "Файлы TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
 
-    IDM_BIND,              "Bind to file via a File Moniker"
-    IDM_TYPELIB,           "Open a TypeLib file and view the contents"
-    IDM_SYSCONF,           "Change machine wide Distributed COM settings"
+    IDM_BIND,              "Привязать к файлу через File Moniker"
+    IDM_TYPELIB,           "Открыть файл TypeLib и просмотреть содержимое"
+    IDM_SYSCONF,           "Изменить общесистемные настройки Distributed COM"
     IDM_REGEDIT,           "Запустить Редактор реестра Wine"
     IDM_EXIT,              "Выйти из приложения с предложением сохранить изменения"
-    IDM_CREATEINST,        "Create an instance of the selected object"
-    IDM_CREATEINSTON,      "Create an instance of the selected object on a specific machine"
-    IDM_RELEASEINST,       "Release the currently selected object instance"
+    IDM_CREATEINST,        "Создать экземпляр выбранного объекта"
+    IDM_CREATEINSTON,      "Создать экземпляр выбранного объекта на указанной машине"
+    IDM_RELEASEINST,       "Удалить экземпляр выбранного объекта"
     IDM_COPYCLSID,         "Копировать GUID выделенного элемента в буфер"
-    IDM_VIEW,              "Display the viewer for the selected item"
+    IDM_VIEW,              "Открыть просмотр для выбранного пункта"
     IDM_FLAG_INSERV,       "Использовать CLSCTX_INPROC_SERVER при вызове CoGetClassObject"
     IDM_FLAG_INHANDL,      "Использовать CLSCTX_INPROC_HANDLER при вызове CoGetClassObject"
     IDM_FLAG_LOCSERV,      "Использовать CLSCTX_LOCAL_SERVER при вызове CoGetClassObject"
     IDM_FLAG_REMSERV,      "Использовать CLSCTX_REMOTE_SERVER при вызове CoGetClassObject"
     IDM_EXPERT,            "Переключиться между режимом эксперт/новичок"
-    IDM_HIDDEN,            "Toggle the display of component categories that are not meant to be visible"
+    IDM_HIDDEN,            "Переключить отображение категорий компонентов, которые не должны быть видимы"
     IDM_TOOLBAR,           "Показать/скрыть панель инструментов"
     IDM_STATUSBAR,         "Показать/скрыть строку состояния"
     IDM_REFRESH,           "Обновить все списки"
@@ -142,7 +142,7 @@ STRINGTABLE
     IDS_TAB_IMPL,          "Implementation"
     IDS_TAB_ACTIV,         "Activation"
 
-    IDS_CGCOFAIL,          "CoGetClassObject failed."
+    IDS_CGCOFAIL,          "CoGetClassObject завершилась наудачно."
     IDS_ERROR_UNKN,        "Неизвестная ошибка"
     IDS_TRUE,              "True"
     IDS_FALSE,             "False"
@@ -169,8 +169,8 @@ CAPTION "Конфигурация системы"
 FONT 8, "MS Shell Dlg"
 {
     LTEXT   "Настройки системы", -1, 5, 6, 160, 8
-    CHECKBOX    "&Разрешить распределенный COM", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    CHECKBOX    "Разрешить &удаленные подключения (только Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "&Разрешить распределённый COM", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "Разрешить &удалённые подключения (только Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     LTEXT   "Эти настройки изменяют только значения реестра и не оказывают влияния на производительность Wine.", -1, 5, 50, 160, 40
     DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
     PUSHBUTTON  "&Отмена", IDCANCEL, 120, 80, 45, 14

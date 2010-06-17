@@ -28,7 +28,7 @@
 #pragma code_page(65001)
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
-                                                                                
+
 IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
@@ -96,7 +96,7 @@ BEGIN
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,28
+    LTEXT       "Пример текста (This is a sample text). Шрифт Tahoma 10 пунктов.",IDC_RES_FONT_PREVIEW,15,181,230,28
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
@@ -111,13 +111,13 @@ BEGIN
     PUSHBUTTON      "&Добавить",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
     LTEXT           "Существующие замещения:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
-    PUSHBUTTON      "&Редактировать",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "&Изменить",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "&Удалить",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 150, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Редактировать замещение"
+CAPTION "Изменить замещение"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Порядок загрузки ",IDC_STATIC,8,4,135,66
@@ -125,7 +125,7 @@ BEGIN
     CONTROL         "С&торонняя (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,105,10
     CONTROL         "В&строенная, затем сторонняя",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,115,10
     CONTROL         "Ст&оронняя, затем встроенная",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,115,10
-    CONTROL         "&Блокировать",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,105,10
+    CONTROL         "&Блокировать загрузку",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,105,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "Отмена",IDCANCEL,57,74,45,14,WS_GROUP
 END

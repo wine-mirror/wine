@@ -43,7 +43,7 @@ MAIN_MENU MENU
    MENUITEM "Вы&ход из Wine...",             PM_EXIT
  }
  POPUP "&Параметры" {
-   MENUITEM "&Автоупорядочение",  PM_AUTO_ARRANGE
+   MENUITEM "&Автоупорядочивание",  PM_AUTO_ARRANGE
    MENUITEM "&Свернуть при запуске",    PM_MIN_ON_RUN
    MENUITEM "&Сохранять настройки при выходе", PM_SAVE_SETTINGS
  }

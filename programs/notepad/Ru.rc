@@ -47,7 +47,7 @@ POPUP "&Правка" {
   MENUITEM "Вст&авить\tCtrl+V",    CMD_PASTE
   MENUITEM "&Удалить\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Выделить в&се",       CMD_SELECT_ALL
+  MENUITEM "Выделить в&сё",       CMD_SELECT_ALL
   MENUITEM "Врем&я и дата\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "&Перенос по словам",  CMD_WRAP
@@ -123,7 +123,7 @@ STRING_NOTEXT,                                  "Вы не ввели никак
 \nВведите что-нибудь и попробуйте еще."
 STRING_DOESNOTEXIST,                            "Файл '%s'\nне существует\n\n \
 Хотите создать новый файл?"
-STRING_NOTSAVED,                                "Файл '%s'\nбыл изменен\n\n \
+STRING_NOTSAVED,                                "Файл '%s'\nбыл изменён\n\n \
 Хотите сохранить изменения?"
 STRING_NOTFOUND,                                        "'%s' не найден."
 STRING_OUT_OF_MEMORY,                   "Недостаточно памяти для завершения этой операции \

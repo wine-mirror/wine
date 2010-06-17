@@ -48,7 +48,7 @@ END
 
 IDPROMPTFORDISK DIALOG MOVEABLE DISCARDABLE 0, 0, 250, 120
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Необходимы файлы"
+CAPTION "Необходимые файлы"
 FONT 8, "MS Shell Dlg"
 BEGIN
 	LTEXT "Вставьте установочный диск, и затем\nпроверьте что выбран нужный привод", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP

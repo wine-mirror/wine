@@ -300,7 +300,7 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "Удалить значение '%s'?"
     IDS_DELETE_BOX_TEXT_MULTIPLE "Вы уверены что хотите удалить эти значения?"
     IDS_NEWKEY              "Новый ключ #%d"
-    IDS_NEWVALUE            "Новое значени #%d"
+    IDS_NEWVALUE            "Новое значение #%d"
     IDS_NOTFOUND            "Искомая строка '%s' не найдена"
 END
 

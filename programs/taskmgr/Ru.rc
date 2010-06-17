@@ -46,7 +46,7 @@ BEGIN
         , CHECKED
         MENUITEM "С&крывать свернутое",                         ID_OPTIONS_HIDEWHENMINIMIZED
         , CHECKED
-        MENUITEM "&Отображать 16-разрядные программы",          ID_OPTIONS_SHOW16BITTASKS
+        MENUITEM "П&оказывать 16-разрядные программы",          ID_OPTIONS_SHOW16BITTASKS
         , CHECKED
     END
     POPUP "&Вид"
@@ -168,7 +168,7 @@ BEGIN
 
         END
         MENUITEM "Задать &соответствие...",                     ID_PROCESS_PAGE_SETAFFINITY
-	MENUITEM "Редактировать &каналы отладки...",            ID_PROCESS_PAGE_DEBUGCHANNELS
+	MENUITEM "Изменить &каналы отладки...",            ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -400,9 +400,9 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,118,59,120,10
     CONTROL         "&Базовый приоритет",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,118,70,120,10
-    CONTROL         "Счетчик &дескрипторов",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Счётчик &дескрипторов",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,118,81,120,10
-    CONTROL         "С&четчик потоков",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "С&чётчик потоков",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,118,92,120,10
     CONTROL         "Объ&екты GDI",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,118,103,120,10
@@ -449,12 +449,12 @@ ID_VIEW_UPDATESPEED_PAUSED "Изображение не обновляется �
     ID_WINDOWS_TILEHORIZONTALLY
     "Размещает выбранные окна слева направо"
     ID_WINDOWS_TILEVERTICALLY "Размещает выбранные окна одно над другим"
-    ID_WINDOWS_MINIMIZE     "Свертывает окна выбранных задач"
-    ID_WINDOWS_MAXIMIZE     "Развертывает окна на весь рабочий стол"
+    ID_WINDOWS_MINIMIZE     "Свёртывает окна выбранных задач"
+    ID_WINDOWS_MAXIMIZE     "Развёртывает окна на весь рабочий стол"
     ID_WINDOWS_CASCADE      "Размещает выбранные окна каскадом"
     ID_WINDOWS_BRINGTOFRONT "Перемещает окно на передний план, но не активизирует его"
     ID_HELP_TOPICS          "Открывает окно встроенной справки Диспетчера задач"
-    ID_HELP_ABOUT           "Вывод сведений о программе, ее версии и авторских правах"
+    ID_HELP_ABOUT           "Вывод сведений о программе, её версии и авторских правах"
     ID_FILE_EXIT            "Завершает Диспетчер задач"
     ID_OPTIONS_SHOW16BITTASKS
     "Отображает 16-разрядные задачи, обрабатываемые ntvdm.exe"
