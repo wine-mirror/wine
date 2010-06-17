@@ -59,6 +59,7 @@ POPUP "U&pravit" {
 POPUP "&Hledání" {
   MENUITEM "&Hledej...\tCtrl+F",   CMD_SEARCH
   MENUITEM "&Najdi další\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "Nah&radit...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Nápovìda" {
   MENUITEM "&Obsah",         CMD_HELP_CONTENTS
