@@ -1935,7 +1935,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         if (align & TA_UPDATECP)
         {
             pt.x = x + width.x;
-            pt.y = y - width.y;
+            pt.y = y + width.y;
             DPtoLP(hdc, &pt, 1);
             MoveToEx(hdc, pt.x, pt.y, NULL);
         }
@@ -1943,12 +1943,12 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     case TA_CENTER:
         x -= width.x / 2;
-        y += width.y / 2;
+        y -= width.y / 2;
         break;
 
     case TA_RIGHT:
         x -= width.x;
-        y += width.y;
+        y -= width.y;
         if (align & TA_UPDATECP)
         {
             pt.x = x;
@@ -2129,7 +2129,7 @@ done:
                 pts[0].x = x - underlinePos * sinEsc;
                 pts[0].y = y - underlinePos * cosEsc;
                 pts[1].x = x + width.x - underlinePos * sinEsc;
-                pts[1].y = y - width.y - underlinePos * cosEsc;
+                pts[1].y = y + width.y - underlinePos * cosEsc;
                 pts[2].x = pts[1].x + underlineWidth * sinEsc;
                 pts[2].y = pts[1].y + underlineWidth * cosEsc;
                 pts[3].x = pts[0].x + underlineWidth * sinEsc;
@@ -2145,7 +2145,7 @@ done:
                 pts[0].x = x - strikeoutPos * sinEsc;
                 pts[0].y = y - strikeoutPos * cosEsc;
                 pts[1].x = x + width.x - strikeoutPos * sinEsc;
-                pts[1].y = y - width.y - strikeoutPos * cosEsc;
+                pts[1].y = y + width.y - strikeoutPos * cosEsc;
                 pts[2].x = pts[1].x + strikeoutWidth * sinEsc;
                 pts[2].y = pts[1].y + strikeoutWidth * cosEsc;
                 pts[3].x = pts[0].x + strikeoutWidth * sinEsc;
@@ -2172,7 +2172,7 @@ done:
                 pts[0].x = x;
                 pts[0].y = y;
                 pts[1].x = x + width.x;
-                pts[1].y = y - width.y;
+                pts[1].y = y + width.y;
                 DPtoLP(hdc, pts, 2);
                 MoveToEx(hdc, pts[0].x - underlinePos * sinEsc, pts[0].y - underlinePos * cosEsc, &oldpt);
                 LineTo(hdc, pts[1].x - underlinePos * sinEsc, pts[1].y - underlinePos * cosEsc);
@@ -2187,7 +2187,7 @@ done:
                 pts[0].x = x;
                 pts[0].y = y;
                 pts[1].x = x + width.x;
-                pts[1].y = y - width.y;
+                pts[1].y = y + width.y;
                 DPtoLP(hdc, pts, 2);
                 MoveToEx(hdc, pts[0].x - strikeoutPos * sinEsc, pts[0].y - strikeoutPos * cosEsc, &oldpt);
                 LineTo(hdc, pts[1].x - strikeoutPos * sinEsc, pts[1].y - strikeoutPos * cosEsc);
