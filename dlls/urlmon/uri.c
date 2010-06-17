@@ -880,6 +880,19 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_USER_INFO:
+        if(This->userinfo_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->userinfo_start, This->userinfo_len);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     default:
         FIXME("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
         hres = E_NOTIMPL;
@@ -915,6 +928,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     case Uri_PROPERTY_SCHEME_NAME:
         *pcchProperty = This->scheme_len;
         hres = (This->scheme_start > -1) ? S_OK : S_FALSE;
+        break;
+    case Uri_PROPERTY_USER_INFO:
+        *pcchProperty = This->userinfo_len;
+        hres = (This->userinfo_start > -1) ? S_OK : S_FALSE;
         break;
     default:
         FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
@@ -1112,13 +1129,8 @@ static HRESULT WINAPI Uri_GetSchemeName(IUri *iface, BSTR *pstrSchemeName)
 
 static HRESULT WINAPI Uri_GetUserInfo(IUri *iface, BSTR *pstrUserInfo)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrUserInfo);
-
-    if(!pstrUserInfo)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrUserInfo);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_USER_INFO, pstrUserInfo, 0);
 }
 
 static HRESULT WINAPI Uri_GetUserName(IUri *iface, BSTR *pstrUserName)
