@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "ddeml.h"
 #include "shellapi.h"
 
@@ -36,9 +37,17 @@ static HSZ hszAsterisk;
 static HSZ hszShell;
 static HSZ hszAppProperties;
 static HSZ hszFolders;
+static HSZ hszGroups;
 /* DDE Instance ID */
 static DWORD dwDDEInst;
 
+static const char *debugstr_hsz( HSZ hsz )
+{
+    WCHAR buffer[256];
+    if (!DdeQueryStringW( dwDDEInst, hsz, buffer, sizeof(buffer)/sizeof(WCHAR), CP_WINUNICODE ))
+        return "<unknown>";
+    return debugstr_w( buffer );
+}
 
 static inline BOOL Dde_OnConnect(HSZ hszTopic, HSZ hszService)
 {
@@ -55,7 +64,7 @@ static inline BOOL Dde_OnConnect(HSZ hszTopic, HSZ hszService)
 
 static inline void Dde_OnConnectConfirm(HCONV hconv, HSZ hszTopic, HSZ hszService)
 {
-    FIXME("stub\n");
+    TRACE( "%p %s %s\n", hconv, debugstr_hsz(hszTopic), debugstr_hsz(hszService) );
 }
 
 static inline BOOL Dde_OnWildConnect(HSZ hszTopic, HSZ hszService)
@@ -67,7 +76,13 @@ static inline BOOL Dde_OnWildConnect(HSZ hszTopic, HSZ hszService)
 static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
                                      HSZ hszItem)
 {
-    FIXME("stub\n");
+    if (hszTopic == hszProgmanTopic && hszItem == hszGroups && uFmt == CF_TEXT)
+    {
+        static BYTE groups_data[] = "Accessories\r\nStartup\r\n";
+        FIXME( "returning fake program groups list\n" );
+        return DdeCreateDataHandle( dwDDEInst, groups_data, sizeof(groups_data), 0, hszGroups, uFmt, 0 );
+    }
+    FIXME( "%u %p %s %s: stub\n", uFmt, hconv, debugstr_hsz(hszTopic), debugstr_hsz(hszItem) );
     return NULL;
 }
 
@@ -79,7 +94,7 @@ static inline DWORD Dde_OnExecute(HCONV hconv, HSZ hszTopic, HDDEDATA hdata)
     if (!pszCommand)
         return DDE_FNOTPROCESSED;
 
-    FIXME("stub: %s\n", pszCommand);
+    FIXME("stub: %s %s\n", debugstr_hsz(hszTopic), pszCommand);
 
     DdeUnaccessData(hdata);
 
@@ -88,7 +103,7 @@ static inline DWORD Dde_OnExecute(HCONV hconv, HSZ hszTopic, HDDEDATA hdata)
 
 static inline void Dde_OnDisconnect(HCONV hconv)
 {
-    FIXME("stub\n");
+    TRACE( "%p\n", hconv );
 }
 
 static HDDEDATA CALLBACK DdeCallback(      
@@ -146,6 +161,7 @@ void WINAPI ShellDDEInit(BOOL bInit)
         static const WCHAR wszAppProperties[] =
             {'A','p','p','P','r','o','p','e','r','t','i','e','s',0};
         static const WCHAR wszFolders[] = {'F','o','l','d','e','r','s',0};
+        static const WCHAR wszGroups[] = {'G','r','o','u','p','s',0};
 
         DdeInitializeW(&dwDDEInst, DdeCallback, CBF_FAIL_ADVISES | CBF_FAIL_POKES, 0);
 
@@ -155,6 +171,7 @@ void WINAPI ShellDDEInit(BOOL bInit)
         hszShell = DdeCreateStringHandleW(dwDDEInst, wszShell, CP_WINUNICODE);
         hszAppProperties = DdeCreateStringHandleW(dwDDEInst, wszAppProperties, CP_WINUNICODE);
         hszFolders = DdeCreateStringHandleW(dwDDEInst, wszFolders, CP_WINUNICODE);
+        hszGroups = DdeCreateStringHandleW(dwDDEInst, wszGroups, CP_WINUNICODE);
 
         DdeNameService(dwDDEInst, hszFolders, 0, DNS_REGISTER);
         DdeNameService(dwDDEInst, hszProgmanService, 0, DNS_REGISTER);
