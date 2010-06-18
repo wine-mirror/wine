@@ -1015,6 +1015,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
 
     LoadString( hInst, IDS_APPNAME, appname, sizeof(appname));
 
+    wc.cbSize = sizeof(wc);
     wc.style = 0;
     wc.lpfnWndProc = MainProc;
     wc.cbClsExtra = 0;
