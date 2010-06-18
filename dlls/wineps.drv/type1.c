@@ -494,7 +494,7 @@ static BOOL append_glyph_outline(HDC hdc, DWORD index, glyph_outline *outline)
     SHORT num_conts;
 
     glyph_data = get_glyph_data(hdc, index);
-    if(!glyph_data) return FALSE;
+    if(!glyph_data) return TRUE;
 
     num_conts = get_be_word(glyph_data);
 
