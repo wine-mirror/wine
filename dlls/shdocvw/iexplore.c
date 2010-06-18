@@ -90,6 +90,7 @@ void register_iewindow_class(void)
     WNDCLASSEXW wc;
 
     memset(&wc, 0, sizeof wc);
+    wc.cbSize = sizeof(wc);
     wc.style = 0;
     wc.lpfnWndProc = ie_window_proc;
     wc.cbClsExtra = 0;
