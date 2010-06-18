@@ -3007,7 +3007,12 @@ typedef struct _CTL_FIND_SUBJECT_PARA
 #define szOID_AUTO_ENROLL_CTL_USAGE          "1.3.6.1.4.1.311.20.1"
 #define szOID_ENROLL_CERTTYPE_EXTENSION      "1.3.6.1.4.1.311.20.2"
 #define szOID_ENROLLMENT_AGENT               "1.3.6.1.4.1.311.20.2.1"
+#ifndef szOID_KP_SMARTCARD_LOGON
 #define szOID_KP_SMARTCARD_LOGON             "1.3.6.1.4.1.311.20.2.2"
+#endif
+#ifndef szOID_NT_PRINCIPAL_NAME
+#define szOID_NT_PRINCIPAL_NAME              "1.3.6.1.4.1.311.20.2.3"
+#endif
 #define szOID_CERT_MANIFOLD                  "1.3.6.1.4.1.311.20.3"
 #ifndef szOID_CERTSRV_CA_VERSION
 #define szOID_CERTSRV_CA_VERSION             "1.3.6.1.4.1.311.21.1"
@@ -3077,21 +3082,6 @@ typedef struct _CTL_FIND_SUBJECT_PARA
 
 #ifndef szOID_SERIALIZED
 #define szOID_SERIALIZED                     "1.3.6.1.4.1.311.10.3.3.1"
-#endif
-
-#define szOID_AUTO_ENROLL_CTL_USAGE          "1.3.6.1.4.1.311.20.1"
-#define szOID_ENROLL_CERTTYPE_EXTENSION      "1.3.6.1.4.1.311.20.2"
-#define szOID_ENROLLMENT_AGENT               "1.3.6.1.4.1.311.20.2.1"
-#ifndef szOID_KP_SMARTCARD_LOGON
-#define szOID_KP_SMARTCARD_LOGON             "1.3.6.1.4.1.311.20.2.2"
-#endif
-#ifndef szOID_NT_PRINCIPAL_NAME
-#define szOID_NT_PRINCIPAL_NAME              "1.3.6.1.4.1.311.20.2.3"
-#endif
-#define szOID_CERT_MANIFOLD                  "1.3.6.1.4.1.311.20.3"
-
-#ifndef szOID_CERTSRV_CA_VERSION
-#define szOID_CERTSRV_CA_VERSION             "1.3.6.1.4.1.311.21.1"
 #endif
 
 #ifndef szOID_PRODUCT_UPDATE
