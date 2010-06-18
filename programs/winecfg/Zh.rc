@@ -348,8 +348,8 @@ BEGIN
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
     GROUPBOX        " Windows 註冊信息 ", IDC_STATIC, 15, 155, 230, 55
     LTEXT           "姓名:", IDC_STATIC, 22, 171, 40, 20
-    LTEXT           "單位:", IDC_STATIC, 22, 185, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "單位:", IDC_STATIC, 22, 185, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
