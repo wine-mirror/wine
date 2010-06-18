@@ -242,37 +242,6 @@ DDRAW_Create(const GUID *guid,
     This->wineD3DDevice = wineD3DDevice;
     TRACE("wineD3DDevice created at %p\n", This->wineD3DDevice);
 
-    /* Register the window class
-     *
-     * It is used to create a hidden window for D3D
-     * rendering, if the application didn't pass one.
-     * It can also be used for Creating a device window
-     * from SetCooperativeLevel
-     *
-     * The name: DDRAW_<address>. The classname is
-     * 32 bit long, so a 64 bit address will fit nicely
-     * (Will this be compiled for 64 bit anyway?)
-     *
-     */
-    sprintf(This->classname, "DDRAW_%p", This);
-
-    memset(&This->wnd_class, 0, sizeof(This->wnd_class));
-    This->wnd_class.style = CS_HREDRAW | CS_VREDRAW;
-    This->wnd_class.lpfnWndProc = DefWindowProcA;
-    This->wnd_class.cbClsExtra = 0;
-    This->wnd_class.cbWndExtra = 0;
-    This->wnd_class.hInstance = GetModuleHandleA(0);
-    This->wnd_class.hIcon = 0;
-    This->wnd_class.hCursor = 0;
-    This->wnd_class.hbrBackground = GetStockObject(BLACK_BRUSH);
-    This->wnd_class.lpszMenuName = NULL;
-    This->wnd_class.lpszClassName = This->classname;
-    if(!RegisterClassA(&This->wnd_class))
-    {
-        ERR("RegisterClassA failed!\n");
-        goto err_out;
-    }
-
     /* Get the amount of video memory */
     This->total_vidmem = IWineD3DDevice_GetAvailableTextureMem(This->wineD3DDevice);
 
@@ -817,7 +786,27 @@ DllMain(HINSTANCE hInstDLL,
         DWORD size = sizeof(buffer);
         HKEY hkey = 0;
         HKEY appkey = 0;
+        WNDCLASSA wc;
         DWORD len;
+
+        /* Register the window class. This is used to create a hidden window
+         * for D3D rendering, if the application didn't pass one. It can also
+         * be used for creating a device window from SetCooperativeLevel(). */
+        wc.style = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc = DefWindowProcA;
+        wc.cbClsExtra = 0;
+        wc.cbWndExtra = 0;
+        wc.hInstance = hInstDLL;
+        wc.hIcon = 0;
+        wc.hCursor = 0;
+        wc.hbrBackground = GetStockObject(BLACK_BRUSH);
+        wc.lpszMenuName = NULL;
+        wc.lpszClassName = DDRAW_WINDOW_CLASS_NAME;
+        if (!RegisterClassA(&wc))
+        {
+            ERR("Failed to register ddraw window class, last error %#x.\n", GetLastError());
+            return FALSE;
+        }
 
        /* @@ Wine registry key: HKCU\Software\Wine\Direct3D */
        if ( RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Direct3D", &hkey ) ) hkey = 0;
@@ -955,6 +944,9 @@ DllMain(HINSTANCE hInstDLL,
                 while(IDirectDraw7_Release((IDirectDraw7 *)ddraw));
             }
         }
+
+        /* Unregister the window class. */
+        UnregisterClassA(DDRAW_WINDOW_CLASS_NAME, hInstDLL);
     }
 
     return TRUE;

@@ -143,11 +143,6 @@ struct IDirectDrawImpl
     /* The surface type to request */
     WINED3DSURFTYPE         ImplType;
 
-
-    /* Our private window class */
-    char classname[32];
-    WNDCLASSA wnd_class;
-
     /* Helpers for surface creation */
     IDirectDrawSurfaceImpl *tex_root;
     BOOL                    depthstencil;
@@ -164,6 +159,8 @@ struct IDirectDrawImpl
     struct FvfToDecl       *decls;
     UINT                    numConvertedDecls, declArraySize;
 };
+
+#define DDRAW_WINDOW_CLASS_NAME "ddraw_wc"
 
 /* Declare the VTables. They can be found ddraw.c */
 extern const IDirectDraw7Vtbl IDirectDraw7_Vtbl DECLSPEC_HIDDEN;
