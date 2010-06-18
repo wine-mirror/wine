@@ -1038,6 +1038,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
     if(exstyle & WS_EX_STATICEDGE) TRACE(" WS_EX_STATICEDGE");
     if(exstyle & WS_EX_APPWINDOW) TRACE(" WS_EX_APPWINDOW");
     if(exstyle & WS_EX_LAYERED) TRACE(" WS_EX_LAYERED");
+    if(exstyle & WS_EX_LAYOUTRTL) TRACE(" WS_EX_LAYOUTRTL");
 
 #define DUMPED_EX_STYLES \
     (WS_EX_DLGMODALFRAME | \
@@ -1057,7 +1058,8 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_EX_CONTROLPARENT | \
      WS_EX_STATICEDGE | \
      WS_EX_APPWINDOW | \
-     WS_EX_LAYERED)
+     WS_EX_LAYERED | \
+     WS_EX_LAYOUTRTL)
 
     if(exstyle & ~DUMPED_EX_STYLES) TRACE(" %08lx", exstyle & ~DUMPED_EX_STYLES);
     TRACE("\n");
