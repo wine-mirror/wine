@@ -2812,7 +2812,7 @@ static void test_ConvertSecurityDescriptorToString(void)
 
 #define CHECK_ONE_OF_AND_FREE(exp_str1, exp_str2) \
     ok(strcmp(string, (exp_str1)) == 0 || strcmp(string, (exp_str2)) == 0, "String mismatch (expected\n\"%s\" or\n\"%s\", got\n\"%s\")\n", (exp_str1), (exp_str2), string); \
-    ok(len >= (strlen(string) + 1), "Length mismatch (expected %d, got %d)\n", lstrlen(string) + 1, len); \
+    ok(len >= (strlen(exp_str1) + 1) || len >= (strlen(exp_str2) + 1), "Length mismatch (expected %d or %d, got %d)\n", lstrlen(exp_str1) + 1, lstrlen(exp_str2) + 1, len); \
     LocalFree(string);
 
     InitializeSecurityDescriptor(&desc, SECURITY_DESCRIPTOR_REVISION);
