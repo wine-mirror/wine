@@ -55,6 +55,7 @@ MC_SRCS = \
 	nls/winerr_deu.mc \
 	nls/winerr_enu.mc \
 	nls/winerr_fra.mc \
+	nls/winerr_ita.mc \
 	nls/winerr_jpn.mc \
 	nls/winerr_kor.mc \
 	nls/winerr_lth.mc \

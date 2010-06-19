@@ -57,6 +57,7 @@ dlls/kernel32/nls/winerr_dan.mc.rc
 dlls/kernel32/nls/winerr_deu.mc.rc
 dlls/kernel32/nls/winerr_enu.mc.rc
 dlls/kernel32/nls/winerr_fra.mc.rc
+dlls/kernel32/nls/winerr_ita.mc.rc
 dlls/kernel32/nls/winerr_jpn.mc.rc
 dlls/kernel32/nls/winerr_kor.mc.rc
 dlls/kernel32/nls/winerr_lth.mc.rc
