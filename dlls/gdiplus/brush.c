@@ -579,6 +579,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
         GdipFree((*grad)->blendfac);
         GdipFree((*grad)->blendpos);
         GdipFree(*grad);
+        *grad = NULL;
         return OutOfMemory;
     }
     (*grad)->blendfac[0] = 1.0;
@@ -672,6 +673,7 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
         GdipFree((*grad)->blendfac);
         GdipFree((*grad)->blendpos);
         GdipFree(*grad);
+        *grad = NULL;
         return OutOfMemory;
     }
     (*grad)->blendfac[0] = 1.0;
