@@ -470,7 +470,7 @@
 @ stdcall GdipRecordMetafileFileName(wstr long long ptr long wstr ptr)
 @ stdcall GdipRecordMetafileFileNameI(wstr long long ptr long wstr ptr)
 @ stdcall GdipRecordMetafileI(long long ptr long wstr ptr)
-@ stub GdipRecordMetafileStream
+@ stdcall GdipRecordMetafileStream(ptr long long ptr long wstr ptr)
 @ stub GdipRecordMetafileStreamI
 @ stdcall GdipReleaseDC(ptr ptr)
 @ stdcall GdipRemovePropertyItem(ptr long)
