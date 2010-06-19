@@ -315,7 +315,7 @@
 @ stdcall GdipGetLogFontW(ptr ptr ptr)
 @ stdcall GdipGetMatrixElements(ptr ptr)
 @ stub GdipGetMetafileDownLevelRasterizationLimit
-@ stub GdipGetMetafileHeaderFromEmf
+@ stdcall GdipGetMetafileHeaderFromEmf(ptr ptr)
 @ stub GdipGetMetafileHeaderFromFile
 @ stdcall GdipGetMetafileHeaderFromMetafile(ptr ptr)
 @ stub GdipGetMetafileHeaderFromStream
