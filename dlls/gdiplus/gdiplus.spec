@@ -488,7 +488,7 @@
 @ stdcall GdipRotateLineTransform(ptr long long)
 @ stdcall GdipRotateMatrix(ptr long long)
 @ stub GdipRotatePathGradientTransform
-@ stub GdipRotatePenTransform
+@ stdcall GdipRotatePenTransform(ptr long long)
 @ stdcall GdipRotateTextureTransform(ptr long long)
 @ stdcall GdipRotateWorldTransform(ptr long long)
 @ stub GdipSaveAdd
