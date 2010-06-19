@@ -1064,6 +1064,19 @@ GpStatus WINGDIPAPI GdipGetPathGradientCenterPointI(GpPathGradient *grad,
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientCenterColor(GpPathGradient *grad,
+    ARGB *colors)
+{
+    static int calls;
+
+    TRACE("(%p,%p)\n", grad, colors);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipGetPathGradientFocusScales(GpPathGradient *grad,
     REAL *x, REAL *y)
 {
