@@ -419,6 +419,21 @@ GpStatus WINGDIPAPI GdipSetPenTransform(GpPen *pen, GpMatrix *matrix)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetPenTransform(GpPen *pen, GpMatrix *matrix)
+{
+    static int calls;
+
+    TRACE("(%p,%p)\n", pen, matrix);
+
+    if(!pen || !matrix)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipScalePenTransform(GpPen *pen, REAL sx, REAL sy, GpMatrixOrder order)
 {
     static int calls;
