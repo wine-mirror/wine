@@ -443,6 +443,16 @@ GpStatus WINGDIPAPI GdipSetPenColor(GpPen *pen, ARGB argb)
     return GdipSetSolidFillColor(((GpSolidFill*)pen->brush), argb);
 }
 
+GpStatus WINGDIPAPI GdipGetPenCompoundCount(GpPen *pen, INT *count)
+{
+    FIXME("(%p, %p): stub\n", pen, count);
+
+    if (!pen || !count)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPenCompoundArray(GpPen *pen, GDIPCONST REAL *dash,
     INT count)
 {
