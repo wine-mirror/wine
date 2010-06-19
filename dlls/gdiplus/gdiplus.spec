@@ -316,7 +316,7 @@
 @ stdcall GdipGetMatrixElements(ptr ptr)
 @ stub GdipGetMetafileDownLevelRasterizationLimit
 @ stdcall GdipGetMetafileHeaderFromEmf(ptr ptr)
-@ stub GdipGetMetafileHeaderFromFile
+@ stdcall GdipGetMetafileHeaderFromFile(wstr ptr)
 @ stdcall GdipGetMetafileHeaderFromMetafile(ptr ptr)
 @ stub GdipGetMetafileHeaderFromStream
 @ stub GdipGetMetafileHeaderFromWmf
