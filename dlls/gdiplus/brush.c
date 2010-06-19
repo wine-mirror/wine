@@ -574,12 +574,15 @@ GpStatus WINGDIPAPI GdipCreatePathGradient(GDIPCONST GpPointF* points,
     if (!*grad) return OutOfMemory;
 
     (*grad)->blendfac = GdipAlloc(sizeof(REAL));
-    if(!(*grad)->blendfac){
+    (*grad)->blendpos = GdipAlloc(sizeof(REAL));
+    if(!(*grad)->blendfac || !(*grad)->blendpos){
+        GdipFree((*grad)->blendfac);
+        GdipFree((*grad)->blendpos);
         GdipFree(*grad);
         return OutOfMemory;
     }
     (*grad)->blendfac[0] = 1.0;
-    (*grad)->blendpos    = NULL;
+    (*grad)->blendpos[0] = 1.0;
     (*grad)->blendcount  = 1;
 
     (*grad)->pathdata.Count = count;
@@ -664,12 +667,15 @@ GpStatus WINGDIPAPI GdipCreatePathGradientFromPath(GDIPCONST GpPath* path,
     if (!*grad) return OutOfMemory;
 
     (*grad)->blendfac = GdipAlloc(sizeof(REAL));
-    if(!(*grad)->blendfac){
+    (*grad)->blendpos = GdipAlloc(sizeof(REAL));
+    if(!(*grad)->blendfac || !(*grad)->blendpos){
+        GdipFree((*grad)->blendfac);
+        GdipFree((*grad)->blendpos);
         GdipFree(*grad);
         return OutOfMemory;
     }
     (*grad)->blendfac[0] = 1.0;
-    (*grad)->blendpos    = NULL;
+    (*grad)->blendpos[0] = 1.0;
     (*grad)->blendcount  = 1;
 
     (*grad)->pathdata.Count = path->pathdata.Count;
