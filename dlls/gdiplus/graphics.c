@@ -4731,6 +4731,13 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF *frameRect,
+                                       MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
+{
+    FIXME("(%p %d %p %d %p %p): stub\n", hdc, type, frameRect, frameUnit, desc, metafile);
+    return NotImplemented;
+}
+
 /*****************************************************************************
  * GdipRecordMetafileI [GDIPLUS.@]
  */
