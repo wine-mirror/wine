@@ -442,7 +442,7 @@
 @ stdcall GdipMeasureCharacterRanges(ptr wstr long ptr ptr ptr long ptr)
 @ stdcall GdipMeasureDriverString(ptr ptr long ptr ptr long ptr ptr)
 @ stdcall GdipMeasureString(ptr wstr long ptr ptr ptr ptr ptr ptr)
-@ stub GdipMultiplyLineTransform
+@ stdcall GdipMultiplyLineTransform(ptr ptr long)
 @ stdcall GdipMultiplyMatrix(ptr ptr long)
 @ stub GdipMultiplyPathGradientTransform
 @ stub GdipMultiplyPenTransform
