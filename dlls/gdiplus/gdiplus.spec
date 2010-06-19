@@ -309,7 +309,7 @@
 @ stdcall GdipGetLineRect(ptr ptr)
 @ stdcall GdipGetLineRectI(ptr ptr)
 @ stdcall GdipGetLineSpacing(ptr long ptr)
-@ stub GdipGetLineTransform
+@ stdcall GdipGetLineTransform(ptr ptr)
 @ stdcall GdipGetLineWrapMode(ptr ptr)
 @ stdcall GdipGetLogFontA(ptr ptr ptr)
 @ stdcall GdipGetLogFontW(ptr ptr ptr)

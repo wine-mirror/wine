@@ -1784,6 +1784,18 @@ GpStatus WINGDIPAPI GdipSetLineTransform(GpLineGradient *brush,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetLineTransform(GpLineGradient *brush, GpMatrix *matrix)
+{
+    static int calls;
+
+    TRACE("(%p,%p)\n", brush, matrix);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipScaleLineTransform(GpLineGradient *brush, REAL sx, REAL sy,
     GpMatrixOrder order)
 {
