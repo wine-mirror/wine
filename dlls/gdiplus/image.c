@@ -2246,6 +2246,24 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromFile(GDIPCONST WCHAR *filename,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetMetafileHeaderFromStream(IStream *stream,
+    MetafileHeader *header)
+{
+    static int calls;
+
+    TRACE("(%p,%p)\n", stream, header);
+
+    if(!stream || !header)
+        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    memset(header, 0, sizeof(MetafileHeader));
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
     UINT num, PropertyItem* items)
 {

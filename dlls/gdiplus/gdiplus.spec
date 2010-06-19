@@ -318,7 +318,7 @@
 @ stdcall GdipGetMetafileHeaderFromEmf(ptr ptr)
 @ stdcall GdipGetMetafileHeaderFromFile(wstr ptr)
 @ stdcall GdipGetMetafileHeaderFromMetafile(ptr ptr)
-@ stub GdipGetMetafileHeaderFromStream
+@ stdcall GdipGetMetafileHeaderFromStream(ptr ptr)
 @ stub GdipGetMetafileHeaderFromWmf
 @ stdcall GdipGetNearestColor(ptr ptr)
 @ stdcall GdipGetPageScale(ptr ptr)
