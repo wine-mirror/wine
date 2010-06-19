@@ -577,7 +577,7 @@
 @ stdcall GdipSetPenMiterLimit(ptr long)
 @ stdcall GdipSetPenMode(ptr long)
 @ stdcall GdipSetPenStartCap(ptr long)
-@ stub GdipSetPenTransform
+@ stdcall GdipSetPenTransform(ptr ptr)
 @ stub GdipSetPenUnit
 @ stdcall GdipSetPenWidth(ptr long)
 @ stdcall GdipSetPixelOffsetMode(ptr long)
