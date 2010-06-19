@@ -262,7 +262,7 @@
 @ stub GdipGetEffectParameters
 @ stdcall GdipGetEmHeight(ptr long ptr)
 @ stub GdipGetEncoderParameterList
-@ stub GdipGetEncoderParameterListSize
+@ stdcall GdipGetEncoderParameterListSize(ptr ptr ptr)
 @ stdcall GdipGetFamily(ptr ptr)
 @ stdcall GdipGetFamilyName(ptr ptr long)
 @ stdcall GdipGetFontCollectionFamilyCount(ptr ptr)

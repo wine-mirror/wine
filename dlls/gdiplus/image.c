@@ -3297,6 +3297,21 @@ GpStatus WINGDIPAPI GdipGetImageEncoders(UINT numEncoders, UINT size, ImageCodec
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetEncoderParameterListSize(GpImage *image,
+    GDIPCONST CLSID* clsidEncoder, UINT *size)
+{
+    static int calls;
+
+    TRACE("(%p,%s,%p)\n", image, debugstr_guid(clsidEncoder), size);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    *size = 0;
+
+    return NotImplemented;
+}
+
 /*****************************************************************************
  * GdipCreateBitmapFromHBITMAP [GDIPLUS.@]
  */
