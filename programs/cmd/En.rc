@@ -112,8 +112,8 @@ MOVE fails if the old and new locations are on different DOS drive letters.\n"
   WCMD_PATH,
 "PATH displays or changes the cmd search path.\n\
 \n\
-Entering PATH will display the current PATH setting (initially this is\n\
-the value given in your wine.conf file). To change the setting follow the\n\
+Entering PATH will display the current PATH setting (initially taken\n\
+from the registry). To change the setting follow the\n\
 PATH command with the new value.\n\
 \n\
 It is also possible to modify the PATH by using the PATH environment\n\
