@@ -4515,6 +4515,11 @@ static void test_QueryInterface(IHTMLDocument2 *doc)
     hres = IUnknown_QueryInterface(doc, &IID_IStdMarshalInfo, (void**)&qi);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(qi == NULL, "qi=%p, expected NULL\n", qi);
+
+    hres = IUnknown_QueryInterface(doc, &IID_IDispatch, (void**)&qi);
+    ok(hres == S_OK, "Could not get IDispatch interface: %08x\n", hres);
+    ok(qi != (IUnknown*)doc, "disp == doc\n");
+    IUnknown_Release(qi);
 }
 
 static void init_test(enum load_state_t ls) {
