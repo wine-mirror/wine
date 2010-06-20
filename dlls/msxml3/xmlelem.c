@@ -723,21 +723,28 @@ static ULONG WINAPI xmlelem_collection_IEnumVARIANT_Release(
 }
 
 static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Next(
-    IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+    IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *fetched)
 {
     xmlelem_collection *This = impl_from_IEnumVARIANT(iface);
     xmlNodePtr ptr = This->current;
 
-    TRACE("(%p, %d, %p, %p)\n", iface, celt, rgVar, pCeltFetched);
+    TRACE("(%p, %d, %p, %p)\n", iface, celt, rgVar, fetched);
 
     if (!rgVar)
         return E_INVALIDARG;
 
     /* FIXME: handle celt */
-    if (pCeltFetched)
-        *pCeltFetched = 1;
+    if (fetched)
+        *fetched = 1;
 
-    This->current = This->current->next;
+    if (This->current)
+        This->current = This->current->next;
+    else
+    {
+        V_VT(rgVar) = VT_EMPTY;
+        if (fetched) *fetched = 0;
+        return S_FALSE;
+    }
 
     V_VT(rgVar) = VT_DISPATCH;
     return XMLElement_create((IUnknown *)iface, ptr, (LPVOID *)&V_DISPATCH(rgVar), FALSE);
