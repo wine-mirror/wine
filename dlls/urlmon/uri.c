@@ -893,6 +893,27 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_USER_NAME:
+        if(This->userinfo_start > -1) {
+            /* If userinfo_split is set, that means a password exists
+             * so the username is only from userinfo_start to userinfo_split.
+             */
+            if(This->userinfo_split > -1) {
+                *pbstrProperty = SysAllocStringLen(This->canon_uri + This->userinfo_start, This->userinfo_split);
+                hres = S_OK;
+            } else {
+                *pbstrProperty = SysAllocStringLen(This->canon_uri + This->userinfo_start, This->userinfo_len);
+                hres = S_OK;
+            }
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            return E_OUTOFMEMORY;
+
+        break;
     default:
         FIXME("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
         hres = E_NOTIMPL;
@@ -931,6 +952,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         break;
     case Uri_PROPERTY_USER_INFO:
         *pcchProperty = This->userinfo_len;
+        hres = (This->userinfo_start > -1) ? S_OK : S_FALSE;
+        break;
+    case Uri_PROPERTY_USER_NAME:
+        *pcchProperty = (This->userinfo_split > -1) ? This->userinfo_split : This->userinfo_len;
         hres = (This->userinfo_start > -1) ? S_OK : S_FALSE;
         break;
     default:
@@ -1135,13 +1160,8 @@ static HRESULT WINAPI Uri_GetUserInfo(IUri *iface, BSTR *pstrUserInfo)
 
 static HRESULT WINAPI Uri_GetUserName(IUri *iface, BSTR *pstrUserName)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrUserName);
-
-    if(!pstrUserName)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrUserName);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_USER_NAME, pstrUserName, 0);
 }
 
 static HRESULT WINAPI Uri_GetHostType(IUri *iface, DWORD *pdwHostType)
