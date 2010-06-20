@@ -1003,7 +1003,7 @@ static int is_linker_arg(const char* arg)
     {
 	"-nostartfiles", "-nodefaultlibs", "-nostdlib", "-s", 
 	"-static", "-static-libgcc", "-shared", "-shared-libgcc", "-symbolic",
-	"-framework"
+	"-framework", "--coverage", "-fprofile-generate", "-fprofile-use"
     };
     unsigned int j;
 
