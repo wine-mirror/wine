@@ -25,6 +25,7 @@
 #include "wine/winbase16.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "wownt32.h"
 #include "winemm16.h"
 #include "digitalv.h"
@@ -796,9 +797,10 @@ static struct mmsystdrv_thunk
     BYTE                        pushl_this;     /* pushl this (this very thunk) */
     struct mmsystdrv_thunk*     this;
     BYTE                        pushl_eax;      /* pushl %eax */
-    BYTE                        jmp;            /* ljmp MMDRV_Callback1632 */
-    DWORD                       callback;
-    DWORD                       pfn16;          /* 16bit callback function */
+    BYTE                        jmp;            /* ljmp MMDRV_Callback3216 */
+    DWORD                       callback3216;
+    DWORD                       callback;       /* callback value (function, window, event...) */
+    DWORD                       flags;          /* flags to control callback value (CALLBACK_???) */
     void*                       hMmdrv;         /* Handle to 32bit mmdrv object */
     enum MMSYSTEM_DriverType    kind;
 } *MMSYSTDRV_Thunks;
@@ -834,25 +836,48 @@ static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, HD
 
     MMSYSTEM_DriversType[thunk->kind].mapcb(wMsg, &dwUser, &dwParam1, &dwParam2);
 
-    /* 16 bit func, call it */
-    TRACE("Function (16 bit) %x!\n", thunk->pfn16);
+    switch (thunk->flags & CALLBACK_TYPEMASK) {
+    case CALLBACK_NULL:
+        TRACE("Null !\n");
+        break;
+    case CALLBACK_WINDOW:
+        TRACE("Window(%04X) handle=%p!\n", thunk->callback, hDev);
+        PostMessageA((HWND)thunk->callback, wMsg, (WPARAM)hDev, dwParam1);
+        break;
+    case CALLBACK_TASK: /* aka CALLBACK_THREAD */
+        TRACE("Task(%04x) !\n", thunk->callback);
+        PostThreadMessageA(thunk->callback, wMsg, (WPARAM)hDev, dwParam1);
+        break;
+    case CALLBACK_FUNCTION:
+        /* 16 bit func, call it */
+        TRACE("Function (16 bit) %x!\n", thunk->callback);
 
-    args[7] = HDRVR_16(hDev);
-    args[6] = wMsg;
-    args[5] = HIWORD(dwUser);
-    args[4] = LOWORD(dwUser);
-    args[3] = HIWORD(dwParam1);
-    args[2] = LOWORD(dwParam1);
-    args[1] = HIWORD(dwParam2);
-    args[0] = LOWORD(dwParam2);
-    return WOWCallback16Ex(thunk->pfn16, WCB16_PASCAL, sizeof(args), args, NULL);
+        args[7] = HDRVR_16(hDev);
+        args[6] = wMsg;
+        args[5] = HIWORD(dwUser);
+        args[4] = LOWORD(dwUser);
+        args[3] = HIWORD(dwParam1);
+        args[2] = LOWORD(dwParam1);
+        args[1] = HIWORD(dwParam2);
+        args[0] = LOWORD(dwParam2);
+        return WOWCallback16Ex(thunk->callback, WCB16_PASCAL, sizeof(args), args, NULL);
+    case CALLBACK_EVENT:
+        TRACE("Event(%08x) !\n", thunk->callback);
+        SetEvent((HANDLE)thunk->callback);
+        break;
+    default:
+        WARN("Unknown callback type %lx\n", thunk->flags & CALLBACK_TYPEMASK);
+        return FALSE;
+    }
+    TRACE("Done\n");
+    return TRUE;
 }
 
 /******************************************************************
  *		MMSYSTDRV_AddThunk
  *
  */
-struct mmsystdrv_thunk*       MMSYSTDRV_AddThunk(DWORD pfn16, enum MMSYSTEM_DriverType kind)
+struct mmsystdrv_thunk*       MMSYSTDRV_AddThunk(DWORD callback, DWORD flags, enum MMSYSTEM_DriverType kind)
 {
     struct mmsystdrv_thunk* thunk;
 
@@ -873,17 +898,19 @@ struct mmsystdrv_thunk*       MMSYSTDRV_AddThunk(DWORD pfn16, enum MMSYSTEM_Driv
             thunk->this         = thunk;
             thunk->pushl_eax    = 0x50;   /* pushl %eax */
             thunk->jmp          = 0xe9;   /* jmp MMDRV_Callback3216 */
-            thunk->callback     = (char *)MMSYSTDRV_Callback3216 - (char *)(&thunk->callback + 1);
-            thunk->pfn16        = 0;
+            thunk->callback3216 = (char *)MMSYSTDRV_Callback3216 - (char *)(&thunk->callback3216 + 1);
+            thunk->callback     = 0;
+            thunk->flags        = CALLBACK_NULL;
             thunk->hMmdrv       = NULL;
             thunk->kind         = MMSYSTDRV_MAX;
         }
     }
     for (thunk = MMSYSTDRV_Thunks; thunk < &MMSYSTDRV_Thunks[MMSYSTDRV_MAX_THUNKS]; thunk++)
     {
-        if (thunk->pfn16 == 0 && thunk->hMmdrv == NULL)
+        if (thunk->callback == 0 && thunk->hMmdrv == NULL)
         {
-            thunk->pfn16 = pfn16;
+            thunk->callback = callback;
+            thunk->flags = flags;
             thunk->hMmdrv = NULL;
             thunk->kind = kind;
             LeaveCriticalSection(&mmdrv_cs);
@@ -930,7 +957,8 @@ void    MMSYSTDRV_SetHandle(struct mmsystdrv_thunk* thunk, void* h)
  */
 void    MMSYSTDRV_DeleteThunk(struct mmsystdrv_thunk* thunk)
 {
-    thunk->pfn16 = 0;
+    thunk->callback = 0;
+    thunk->flags = CALLBACK_NULL;
     thunk->hMmdrv = NULL;
     thunk->kind = MMSYSTDRV_MAX;
 }

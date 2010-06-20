@@ -73,7 +73,7 @@ enum MMSYSTEM_DriverType
     MMSYSTDRV_MAX
 };
 
-extern  struct mmsystdrv_thunk* MMSYSTDRV_AddThunk(DWORD pfn16, enum MMSYSTEM_DriverType kind);
+extern  struct mmsystdrv_thunk* MMSYSTDRV_AddThunk(DWORD callback, DWORD flags, enum MMSYSTEM_DriverType kind);
 extern  void                    MMSYSTDRV_DeleteThunk(struct mmsystdrv_thunk* thunk);
 extern  void                    MMSYSTDRV_SetHandle(struct mmsystdrv_thunk* thunk, void* h);
 extern  void                    MMSYSTDRV_CloseHandle(void* h);

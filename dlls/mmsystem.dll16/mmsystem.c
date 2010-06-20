@@ -400,16 +400,13 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
     UINT	                ret;
     struct mmsystdrv_thunk*     thunk;
 
-    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIXER)))
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, fdwOpen, MMSYSTDRV_MIXER)))
     {
         return MMSYSERR_NOMEM;
     }
-    if ((fdwOpen & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
-    {
-        dwCallback = (DWORD)thunk;
-    }
-
-    ret = mixerOpen(&hmix, uDeviceID, dwCallback, dwInstance, fdwOpen);
+    if ((fdwOpen & CALLBACK_TYPEMASK) != CALLBACK_NULL)
+        fdwOpen = (fdwOpen & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    ret = mixerOpen(&hmix, uDeviceID, (DWORD)thunk, dwInstance, fdwOpen);
     if (ret == MMSYSERR_NOERROR)
     {
         if (lphmix) *lphmix = HMIXER_16(hmix);
@@ -747,15 +744,13 @@ UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
     UINT	                ret;
     struct mmsystdrv_thunk*     thunk;
 
-    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIDIOUT)))
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, dwFlags, MMSYSTDRV_MIDIOUT)))
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
-    {
-        dwCallback = (DWORD)thunk;
-    }
-    ret = midiOutOpen(&hmo, uDeviceID, dwCallback, dwInstance, dwFlags);
+    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
+        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    ret = midiOutOpen(&hmo, uDeviceID, (DWORD)thunk, dwInstance, dwFlags);
     if (ret == MMSYSERR_NOERROR)
     {
         if (lphMidiOut != NULL) *lphMidiOut = HMIDIOUT_16(hmo);
@@ -953,15 +948,13 @@ UINT16 WINAPI midiInOpen16(HMIDIIN16* lphMidiIn, UINT16 uDeviceID,
     UINT 	ret;
     struct mmsystdrv_thunk*     thunk;
 
-    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIDIIN)))
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, dwFlags, MMSYSTDRV_MIDIIN)))
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
-    {
-        dwCallback = (DWORD)thunk;
-    }
-    ret = midiInOpen(&hmid, uDeviceID, dwCallback, dwInstance, dwFlags);
+    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
+        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    ret = midiInOpen(&hmid, uDeviceID, (DWORD)thunk, dwInstance, dwFlags);
     if (ret == MMSYSERR_NOERROR)
     {
         if (lphMidiIn) *lphMidiIn = HMIDIIN_16(hmid);
@@ -1116,15 +1109,13 @@ MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phMidiStrm, LPUINT16 devid,
 	return MMSYSERR_INVALPARAM;
     devid32 = *devid;
 
-    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_MIDIOUT)))
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, fdwOpen, MMSYSTDRV_MIDIOUT)))
     {
         return MMSYSERR_NOMEM;
     }
-    if ((fdwOpen & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
-    {
-        dwCallback = (DWORD)thunk;
-    }
-    ret = midiStreamOpen(&hMidiStrm32, &devid32, cMidi, dwCallback, dwInstance, fdwOpen);
+    if ((fdwOpen & CALLBACK_TYPEMASK) != CALLBACK_NULL)
+        fdwOpen = (fdwOpen & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
+    ret = midiStreamOpen(&hMidiStrm32, &devid32, cMidi, (DWORD)thunk, dwInstance, fdwOpen);
     if (ret == MMSYSERR_NOERROR)
     {
         *phMidiStrm = HMIDISTRM_16(hMidiStrm32);
@@ -1252,21 +1243,19 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
     UINT		        ret;
     struct mmsystdrv_thunk*     thunk;
 
-    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_WAVEOUT)))
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, dwFlags, MMSYSTDRV_WAVEOUT)))
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
-    {
-        dwCallback = (DWORD)thunk;
-    }
+    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
+        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
      * however, we need to promote correctly the wave mapper id
      * (0xFFFFFFFF and not 0x0000FFFF)
      */
     ret = waveOutOpen(&hWaveOut, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
-                      lpFormat, dwCallback, dwInstance, dwFlags);
+                      lpFormat, (DWORD)thunk, dwInstance, dwFlags);
 
     if (ret == MMSYSERR_NOERROR)
     {
@@ -1547,21 +1536,19 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
     UINT		        ret;
     struct mmsystdrv_thunk*     thunk;
 
-    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, MMSYSTDRV_WAVEIN)))
+    if (!(thunk = MMSYSTDRV_AddThunk(dwCallback, dwFlags, MMSYSTDRV_WAVEIN)))
     {
         return MMSYSERR_NOMEM;
     }
-    if ((dwFlags & CALLBACK_TYPEMASK) == CALLBACK_FUNCTION)
-    {
-        dwCallback = (DWORD)thunk;
-    }
+    if ((dwFlags & CALLBACK_TYPEMASK) != CALLBACK_NULL)
+        dwFlags = (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION;
     /* since layout of WAVEFORMATEX is the same for 16/32 bits, we directly
      * call the 32 bit version
      * however, we need to promote correctly the wave mapper id
      * (0xFFFFFFFF and not 0x0000FFFF)
      */
     ret = waveInOpen(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
-                     lpFormat, dwCallback, dwInstance, dwFlags);
+                     lpFormat, (DWORD)thunk, dwInstance, dwFlags);
 
     if (ret == MMSYSERR_NOERROR)
     {
