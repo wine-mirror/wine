@@ -121,7 +121,7 @@ Laufwerken sind.\n"
 "PATH ändert oder zeigt den CMD Suchpfad an.\n\
 \n\
 Nach der Eingabe von PATH, wird die aktuelle PATH Einstellung angezeigt\n\
-(nach dem Start wird der Wert aus der wine.conf Datei genommen). Um die\n\
+(nach dem Start wird der Wert aus der Registry genommen). Um die\n\
 Einstellungen zu ändern, muss nach dem PATH Befehl der neue Wert angegeben\n\
 werden\n\
 \n\
