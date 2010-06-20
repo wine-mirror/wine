@@ -28,7 +28,10 @@ C_SRCS = \
 	view.c \
 	webbrowser.c
 
-RC_SRCS = shdocvw.rc
+RC_SRCS = \
+	En.rc \
+	shdocvw.rc
+
 IDL_TLB_SRCS = shdocvw_v1.idl
 
 @MAKE_DLL_RULES@

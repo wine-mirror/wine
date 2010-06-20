@@ -136,6 +136,7 @@ static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
         return NULL;
 
     IWebBrowser2_put_Visible(wb, VARIANT_TRUE);
+    IWebBrowser2_put_MenuBar(wb, VARIANT_TRUE);
 
     if(!*cmdline) {
         IWebBrowser2_GoHome(wb);
