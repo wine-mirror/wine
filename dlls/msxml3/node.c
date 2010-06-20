@@ -437,6 +437,7 @@ static HRESULT WINAPI xmlnode_get_firstChild(
     IXMLDOMNode** firstChild)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
+    TRACE("(%p)->(%p)\n", This, firstChild);
     return get_node( This, "firstChild", This->node->children, firstChild );
 }
 

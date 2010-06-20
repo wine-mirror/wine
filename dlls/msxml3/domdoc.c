@@ -141,14 +141,14 @@ static xmldoc_priv * create_priv(void)
     return priv;
 }
 
-static xmlDocPtr doparse( char *ptr, int len )
+static xmlDocPtr doparse( char *ptr, int len, const char *encoding )
 {
 #ifdef HAVE_XMLREADMEMORY
     /*
      * use xmlReadMemory if possible so we can suppress
      * writing errors to stderr
      */
-    return xmlReadMemory( ptr, len, NULL, "UTF-8",
+    return xmlReadMemory( ptr, len, NULL, encoding,
                           XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NOBLANKS );
 #else
     return xmlParseMemory( ptr, len );
@@ -1447,7 +1447,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     domdoc *This = obj;
     xmlDocPtr xmldoc;
 
-    xmldoc = doparse( ptr, len );
+    xmldoc = doparse( ptr, len, NULL );
     if(xmldoc) {
         xmldoc->_private = create_priv();
         return attach_xmldoc(&This->node, xmldoc);
@@ -1683,9 +1683,9 @@ static HRESULT WINAPI domdoc_loadXML(
     {
         *isSuccessful = VARIANT_FALSE;
 
-        if ( bstrXML  && bstr_to_utf8( bstrXML, &str, &len ) )
+        if ( bstrXML && bstr_to_utf8( bstrXML, &str, &len ) )
         {
-            xmldoc = doparse( str, len );
+            xmldoc = doparse( str, len, "UTF-8" );
             heap_free( str );
             if ( !xmldoc )
                 This->error = E_FAIL;
