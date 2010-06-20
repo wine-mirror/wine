@@ -819,12 +819,15 @@ static void test_get_set_unicodeformat(void)
 
 static TVITEMA g_item_expanding, g_item_expanded;
 static BOOL g_get_from_expand;
+static BOOL g_get_rect_in_expand;
 
 static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
     struct message msg;
     LRESULT ret;
+    RECT rect;
+    HTREEITEM visibleItem;
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -906,6 +909,17 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                   g_item_expanded.hItem = hRoot;
                   ret = SendMessageA(pHdr->hwndFrom, TVM_GETITEMA, 0, (LPARAM)&g_item_expanded);
                   ok(ret == TRUE, "got %lu\n", ret);
+                }
+                if (g_get_rect_in_expand) {
+                  visibleItem = TreeView_GetNextItem(pHdr->hwndFrom, NULL, TVGN_FIRSTVISIBLE);
+                  ok(pTreeView->itemNew.hItem == visibleItem, "expanded item == first visible item\n");
+                  *(HTREEITEM*)&rect = visibleItem;
+                  ok(SendMessage(pHdr->hwndFrom, TVM_GETITEMRECT, TRUE, (LPARAM)&rect), "Failed to get rect for first visible item.\n");
+                  visibleItem = TreeView_GetNextItem(pHdr->hwndFrom, visibleItem, TVGN_NEXTVISIBLE);
+                  *(HTREEITEM*)&rect = visibleItem;
+                  ok(visibleItem != NULL, "There must be a visible item after the first visisble item.\n");
+                  todo_wine
+                  ok(SendMessage(pHdr->hwndFrom, TVM_GETITEMRECT, TRUE, (LPARAM)&rect), "Failed to get rect for second visible item.\n");
                 }
                 break;
             }
@@ -1167,6 +1181,17 @@ static void test_expandnotify(void)
     DestroyWindow(hTree);
 }
 
+static void test_rect_retrieval_after_expand_with_select(void) {
+  BOOL ret;
+  HWND hTree;
+  hTree = create_treeview_control();
+  fill_tree(hTree);
+  g_get_rect_in_expand = TRUE;
+  ret = TreeView_Select(hTree, hChild, TVGN_CARET);
+  g_get_rect_in_expand = FALSE;
+  ok(ret,"TreeView_Select should return true\n");
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1227,6 +1252,7 @@ START_TEST(treeview)
     test_itemedit();
     test_treeview_classinfo();
     test_expandnotify();
+    test_rect_retrieval_after_expand_with_select();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
