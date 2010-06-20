@@ -450,5 +450,5 @@ Please send questions and bug reports to jon_p_griffiths@yahoo.com.
 References
 ----------
 
-[1] See the wine and wine.conf man pages for details on how to tell Wine
+[1] See the wine man page for details on how to tell Wine
     whether to use native (Win32) or internal DLL's.
