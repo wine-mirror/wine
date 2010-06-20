@@ -32,6 +32,7 @@
 #include "oleidl.h"
 
 #include "shdocvw.h"
+#include "mshtmcid.h"
 
 #include "wine/debug.h"
 
@@ -66,6 +67,30 @@ static LRESULT iewnd_OnDestroy(InternetExplorer *This)
     return 0;
 }
 
+static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch(LOWORD(wparam))
+    {
+        case ID_BROWSE_PRINT:
+            if(This->doc_host.document)
+            {
+                IOleCommandTarget* target;
+
+                if(FAILED(IUnknown_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target)))
+                    break;
+
+                IOleCommandTarget_Exec(target, &CGID_MSHTML, IDM_PRINT, OLECMDEXECOPT_DODEFAULT, NULL, NULL);
+
+                IOleCommandTarget_Release(target);
+            }
+            break;
+
+        default:
+            return DefWindowProcW(hwnd, msg, wparam, lparam);
+    }
+    return 0;
+}
+
 static LRESULT CALLBACK
 ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -79,6 +104,8 @@ ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         return iewnd_OnDestroy(This);
     case WM_SIZE:
         return iewnd_OnSize(This, LOWORD(lparam), HIWORD(lparam));
+    case WM_COMMAND:
+        return iewnd_OnCommand(This, hwnd, msg, wparam, lparam);
     case WM_DOCHOSTTASK:
         return process_dochost_task(&This->doc_host, lparam);
     }
