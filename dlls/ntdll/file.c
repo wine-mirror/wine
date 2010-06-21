@@ -582,6 +582,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     ULONG total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
+    BOOL send_completion = FALSE;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
@@ -730,7 +731,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     }
 
 done:
-    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
+    send_completion = cvalue != 0;
 
 err:
     if (needs_close) close( unix_handle );
@@ -748,6 +749,9 @@ err:
         TRACE("= 0x%08x\n", status);
         if (status != STATUS_PENDING && hEvent) NtResetEvent( hEvent, NULL );
     }
+
+    if (send_completion) NTDLL_AddCompletion( hFile, cvalue, status, total );
+
     return status;
 }
 
@@ -767,6 +771,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     ULONG pos = 0, total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
+    BOOL send_completion = FALSE;
 
     TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
            file, event, apc, apc_user, io_status, segments, length, offset, key);
@@ -814,7 +819,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
         }
     }
 
-    if (cvalue) NTDLL_AddCompletion( file, cvalue, status, total );
+    send_completion = cvalue != 0;
 
  error:
     if (needs_close) close( unix_handle );
@@ -832,6 +837,9 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
         TRACE("= 0x%08x\n", status);
         if (status != STATUS_PENDING && event) NtResetEvent( event, NULL );
     }
+
+    if (send_completion) NTDLL_AddCompletion( file, cvalue, status, total );
+
     return status;
 }
 
@@ -921,6 +929,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     ULONG total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
+    BOOL send_completion = FALSE;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
@@ -1054,7 +1063,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     }
 
 done:
-    if (cvalue) NTDLL_AddCompletion( hFile, cvalue, status, total );
+    send_completion = cvalue != 0;
 
 err:
     if (needs_close) close( unix_handle );
@@ -1072,6 +1081,9 @@ err:
         TRACE("= 0x%08x\n", status);
         if (status != STATUS_PENDING && hEvent) NtResetEvent( hEvent, NULL );
     }
+
+    if (send_completion) NTDLL_AddCompletion( hFile, cvalue, status, total );
+
     return status;
 }
 
@@ -1091,6 +1103,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     ULONG pos = 0, total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
+    BOOL send_completion = FALSE;
 
     TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
            file, event, apc, apc_user, io_status, segments, length, offset, key);
@@ -1143,7 +1156,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
         }
     }
 
-    if (cvalue) NTDLL_AddCompletion( file, cvalue, status, total );
+    send_completion = cvalue != 0;
 
  error:
     if (needs_close) close( unix_handle );
@@ -1161,6 +1174,9 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
         TRACE("= 0x%08x\n", status);
         if (status != STATUS_PENDING && event) NtResetEvent( event, NULL );
     }
+
+    if (send_completion) NTDLL_AddCompletion( file, cvalue, status, total );
+
     return status;
 }
 
