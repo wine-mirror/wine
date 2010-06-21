@@ -463,7 +463,7 @@ static int IO_pp_sort(const void *p1,const  void *p2)
 
 /* IO_pp_init
  *
- * Read the ppdev entries from wine.conf, open the device and check
+ * Read the ppdev entries from registry, open the device and check
  * for necessary IOCTRL
  * Report verbose about possible errors
  */
