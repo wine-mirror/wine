@@ -666,6 +666,13 @@ IDirect3DImpl_3_FindDevice(IDirect3D3 *iface,
 
     TRACE("(%p)->(%p,%p)\n", This, D3DDFS, D3DFDR);
 
+    if (!D3DDFS || !D3DFDR)
+        return DDERR_INVALIDPARAMS;
+
+    if (D3DDFS->dwSize != sizeof(D3DFINDDEVICESEARCH) ||
+        D3DFDR->dwSize != sizeof(D3DFINDDEVICERESULT))
+        return DDERR_INVALIDPARAMS;
+
     if ((D3DDFS->dwFlags & D3DFDS_COLORMODEL) &&
         (D3DDFS->dcmColorModel != D3DCOLOR_RGB))
     {

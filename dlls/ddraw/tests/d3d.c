@@ -3391,6 +3391,40 @@ static void VertexBufferLockRest(void)
     IDirect3DVertexBuffer7_Release(buffer);
 }
 
+static void FindDevice(void)
+{
+    D3DFINDDEVICESEARCH search = {0};
+    D3DFINDDEVICERESULT result = {0};
+    HRESULT hr;
+
+    /* Test invalid parameters. */
+    hr = IDirect3D_FindDevice(Direct3D1, NULL, NULL);
+    ok(hr == DDERR_INVALIDPARAMS,
+       "Expected IDirect3D1::FindDevice to return DDERR_INVALIDPARAMS, got 0x%08x\n", hr);
+
+    hr = IDirect3D_FindDevice(Direct3D1, NULL, &result);
+    ok(hr == DDERR_INVALIDPARAMS,
+       "Expected IDirect3D1::FindDevice to return DDERR_INVALIDPARAMS, got 0x%08x\n", hr);
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, NULL);
+    ok(hr == DDERR_INVALIDPARAMS,
+       "Expected IDirect3D1::FindDevice to return DDERR_INVALIDPARAMS, got 0x%08x\n", hr);
+
+    search.dwSize = 0;
+    result.dwSize = 0;
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+    ok(hr == DDERR_INVALIDPARAMS,
+       "Expected IDirect3D1::FindDevice to return DDERR_INVALIDPARAMS, got 0x%08x\n", hr);
+
+    search.dwSize = sizeof(search) + 1;
+    result.dwSize = sizeof(result) + 1;
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+    ok(hr == DDERR_INVALIDPARAMS,
+       "Expected IDirect3D1::FindDevice to return DDERR_INVALIDPARAMS, got 0x%08x\n", hr);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -3425,6 +3459,7 @@ START_TEST(d3d)
         Direct3D1Test();
         TextureLoadTest();
         ViewportTest();
+        FindDevice();
         D3D1_releaseObjects();
     }
 
