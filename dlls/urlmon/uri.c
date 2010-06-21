@@ -23,6 +23,8 @@
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
 
+#define UINT_MAX 0xffffffff
+
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
@@ -55,6 +57,8 @@ typedef struct {
     BOOL            is_relative;
     BOOL            is_opaque;
     BOOL            has_implicit_scheme;
+    BOOL            has_implicit_ip;
+    UINT            implicit_ipv4;
 
     const WCHAR     *scheme;
     DWORD           scheme_len;
@@ -63,6 +67,10 @@ typedef struct {
     const WCHAR     *userinfo;
     DWORD           userinfo_len;
     INT             userinfo_split;
+
+    const WCHAR     *host;
+    DWORD           host_len;
+    Uri_HOST_TYPE   host_type;
 } parse_data;
 
 static const CHAR hexDigits[] = "0123456789ABCDEF";
@@ -252,6 +260,135 @@ static BOOL check_pct_encoded(const WCHAR **ptr) {
     return TRUE;
 }
 
+/* dec-octet   = DIGIT                 ; 0-9
+ *             / %x31-39 DIGIT         ; 10-99
+ *             / "1" 2DIGIT            ; 100-199
+ *             / "2" %x30-34 DIGIT     ; 200-249
+ *             / "25" %x30-35          ; 250-255
+ */
+static BOOL check_dec_octet(const WCHAR **ptr) {
+    const WCHAR *c1, *c2, *c3;
+
+    c1 = *ptr;
+    /* A dec-octet must be at least 1 digit long. */
+    if(*c1 < '0' || *c1 > '9')
+        return FALSE;
+
+    ++(*ptr);
+
+    c2 = *ptr;
+    /* Since the 1 digit requirment was meet, it doesn't
+     * matter if this is a DIGIT value, it's considered a
+     * dec-octet.
+     */
+    if(*c2 < '0' || *c2 > '9')
+        return TRUE;
+
+    ++(*ptr);
+
+    c3 = *ptr;
+    /* Same explanation as above. */
+    if(*c3 < '0' || *c3 > '9')
+        return TRUE;
+
+    /* Anything > 255 isn't a valid IP dec-octet. */
+    if(*c1 >= '2' && *c2 >= '5' && *c3 >= '5') {
+        *ptr = c1;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    return TRUE;
+}
+
+/* Checks if there is an implicit IPv4 address in the host component of the URI.
+ * The max value of an implicit IPv4 address is UINT_MAX.
+ *
+ *  Ex:
+ *      "234567" would be considered an implicit IPv4 address.
+ */
+static BOOL check_implicit_ipv4(const WCHAR **ptr, UINT *val) {
+    const WCHAR *start = *ptr;
+    ULONGLONG ret = 0;
+    *val = 0;
+
+    while(is_num(**ptr)) {
+        ret = ret*10 + (**ptr - '0');
+
+        if(ret > UINT_MAX) {
+            *ptr = start;
+            return FALSE;
+        }
+        ++(*ptr);
+    }
+
+    if(*ptr == start)
+        return FALSE;
+
+    *val = ret;
+    return TRUE;
+}
+
+/* Checks if the string contains an IPv4 address.
+ *
+ * This function has a strict mode or a non-strict mode of operation
+ * When 'strict' is set to FALSE this function will return TRUE if
+ * the string contains at least 'dec-octet "." dec-octet' since partial
+ * IPv4 addresses will be normalized out into full IPv4 addresses. When
+ * 'strict' is set this function expects there to be a full IPv4 address.
+ *
+ * IPv4address = dec-octet "." dec-octet "." dec-octet "." dec-octet
+ */
+static BOOL check_ipv4address(const WCHAR **ptr, BOOL strict) {
+    const WCHAR *start = *ptr;
+
+    if(!check_dec_octet(ptr)) {
+        *ptr = start;
+        return FALSE;
+    }
+
+    if(**ptr != '.') {
+        *ptr = start;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    if(!check_dec_octet(ptr)) {
+        *ptr = start;
+        return FALSE;
+    }
+
+    if(**ptr != '.') {
+        if(strict) {
+            *ptr = start;
+            return FALSE;
+        } else
+            return TRUE;
+    }
+
+    ++(*ptr);
+    if(!check_dec_octet(ptr)) {
+        *ptr = start;
+        return FALSE;
+    }
+
+    if(**ptr != '.') {
+        if(strict) {
+            *ptr = start;
+            return FALSE;
+        } else
+            return TRUE;
+    }
+
+    ++(*ptr);
+    if(!check_dec_octet(ptr)) {
+        *ptr = start;
+        return FALSE;
+    }
+
+    /* Found a four digit ip address. */
+    return TRUE;
+}
 /* Tries to parse the scheme name of the URI.
  *
  * scheme = ALPHA *(ALPHA | NUM | '+' | '-' | '.') as defined by RFC 3896.
@@ -448,6 +585,68 @@ static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
     ++(*ptr);
 }
 
+/* Attempts to parse a IPv4 address from the URI.
+ *
+ * NOTES:
+ *  Window's normalizes IPv4 addresses, This means there's three
+ *  possibilities for the URI to contain an IPv4 address.
+ *      1)  A well formed address (ex. 192.2.2.2).
+ *      2)  A partially formed address. For example "192.0" would
+ *          normalize to "192.0.0.0" during canonicalization.
+ *      3)  An implicit IPv4 address. For example "256" would
+ *          normalize to "0.0.1.0" during canonicalization. Also
+ *          note that the maximum value for an implicit IP address
+ *          is UINT_MAX, if the value in the URI exceeds this then
+ *          it is not considered an IPv4 address.
+ */
+static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const BOOL is_unknown = data->scheme_type == URL_SCHEME_UNKNOWN;
+    data->host = *ptr;
+
+    if(!check_ipv4address(ptr, FALSE)) {
+        if(!check_implicit_ipv4(ptr, &data->implicit_ipv4)) {
+            TRACE("(%p %p %x): URI didn't contain anything looking like an IPv4 address.\n",
+                ptr, data, flags);
+            *ptr = data->host;
+            data->host = NULL;
+            return FALSE;
+        } else
+            data->has_implicit_ip = TRUE;
+    }
+
+    /* Check if what we found is the only part of the host name (if it isn't
+     * we don't have an IPv4 address).
+     */
+    if(!is_auth_delim(**ptr, !is_unknown) && **ptr != ':') {
+        *ptr = data->host;
+        data->host = NULL;
+        data->has_implicit_ip = FALSE;
+        return FALSE;
+    }
+
+    data->host_len = *ptr - data->host;
+    data->host_type = Uri_HOST_IPV4;
+    TRACE("(%p %p %x): IPv4 address found. host=%s host_len=%d host_type=%d\n",
+        ptr, data, flags, debugstr_wn(data->host, data->host_len),
+        data->host_len, data->host_type);
+    return TRUE;
+}
+
+/* Parses the host information from the URI.
+ *
+ * host = IP-literal / IPv4address / reg-name
+ */
+static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    if(!parse_ipv4address(ptr, data, flags)) {
+        WARN("(%p %p %x): Only IPv4 parsing is implemented so far.\n", ptr, data, flags);
+        data->host_type = Uri_HOST_UNKNOWN;
+    }
+
+    /* TODO parse IP-Literal / reg-name. */
+
+    return TRUE;
+}
+
 /* Parses the authority information from the URI.
  *
  * authority   = [ userinfo "@" ] host [ ":" port ]
@@ -455,7 +654,8 @@ static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
 static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
     parse_userinfo(ptr, data, flags);
 
-    /* TODO: Parse host and port information. */
+    if(!parse_host(ptr, data, flags))
+        return FALSE;
 
     return TRUE;
 }
