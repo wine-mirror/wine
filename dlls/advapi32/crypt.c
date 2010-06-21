@@ -284,40 +284,30 @@ static void CRYPT_CreateMachineGuid(void)
 		r = RegQueryValueExW(key, machineGuidW, NULL, NULL, NULL, &size);
 		if (r == ERROR_FILE_NOT_FOUND)
 		{
-			static const WCHAR rpcrt4[] = {
-				'r','p','c','r','t','4',0 };
-			HMODULE lib = LoadLibraryW(rpcrt4);
+                    UUID uuid;
+                    WCHAR buf[37];
+                    RPC_STATUS rs;
+                    static const WCHAR uuidFmt[] = {
+                        '%','0','8','x','-','%','0','4','x','-',
+                        '%','0','4','x','-','%','0','2','x',
+                        '%','0','2','x','-','%','0','2','x',
+                        '%','0','2','x','%','0','2','x',
+                        '%','0','2','x','%','0','2','x',
+                        '%','0','2','x',0 };
 
-			if (lib)
-			{
-				RPC_STATUS (RPC_ENTRY *pUuidCreate)(UUID *);
-				UUID uuid;
-                                WCHAR buf[37];
-                                RPC_STATUS rs;
-                                static const WCHAR uuidFmt[] = {
-                                    '%','0','8','x','-','%','0','4','x','-',
-                                    '%','0','4','x','-','%','0','2','x',
-                                    '%','0','2','x','-','%','0','2','x',
-                                    '%','0','2','x','%','0','2','x',
-                                    '%','0','2','x','%','0','2','x',
-                                    '%','0','2','x',0 };
-
-                                pUuidCreate = (void *)GetProcAddress(lib, "UuidCreate");
-                                rs = pUuidCreate(&uuid);
-                                if (rs == S_OK)
-                                {
-                                    sprintfW(buf, uuidFmt,
-                                             uuid.Data1, uuid.Data2, uuid.Data3,
-                                             uuid.Data4[0], uuid.Data4[1],
-                                             uuid.Data4[2], uuid.Data4[3],
-                                             uuid.Data4[4], uuid.Data4[5],
-                                             uuid.Data4[6], uuid.Data4[7] );
-                                    RegSetValueExW(key, machineGuidW, 0, REG_SZ,
-                                                   (const BYTE *)buf,
-                                                   (lstrlenW(buf)+1)*sizeof(WCHAR));
-                                }
-				FreeLibrary(lib);
-			}
+                    rs = UuidCreate(&uuid);
+                    if (rs == S_OK)
+                    {
+                        sprintfW(buf, uuidFmt,
+                                 uuid.Data1, uuid.Data2, uuid.Data3,
+                                 uuid.Data4[0], uuid.Data4[1],
+                                 uuid.Data4[2], uuid.Data4[3],
+                                 uuid.Data4[4], uuid.Data4[5],
+                                 uuid.Data4[6], uuid.Data4[7] );
+                        RegSetValueExW(key, machineGuidW, 0, REG_SZ,
+                                       (const BYTE *)buf,
+                                       (lstrlenW(buf)+1)*sizeof(WCHAR));
+                    }
 		}
 		RegCloseKey(key);
 	}
