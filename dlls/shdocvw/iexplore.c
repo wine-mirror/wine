@@ -49,15 +49,45 @@ static const WCHAR wszWineInternetExplorer[] =
 
 static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+    static InternetExplorer* This;
+
     switch(msg)
     {
         case WM_INITDIALOG:
+            This = (InternetExplorer*)lparam;
+            EnableWindow(GetDlgItem(hwnd, IDOK), FALSE);
             return TRUE;
 
         case WM_COMMAND:
             switch(LOWORD(wparam))
             {
+                case IDC_BROWSE_OPEN_URL:
+                {
+                    HWND hwndurl = GetDlgItem(hwnd, IDC_BROWSE_OPEN_URL);
+                    int len = GetWindowTextLengthW(hwndurl);
+
+                    EnableWindow(GetDlgItem(hwnd, IDOK), len ? TRUE : FALSE);
+                    break;
+                }
                 case IDOK:
+                {
+                    HWND hwndurl = GetDlgItem(hwnd, IDC_BROWSE_OPEN_URL);
+                    int len = GetWindowTextLengthW(hwndurl);
+
+                    if(len)
+                    {
+                        VARIANT url;
+
+                        V_VT(&url) = VT_BSTR;
+                        V_BSTR(&url) = SysAllocStringLen(NULL, len);
+
+                        GetWindowTextW(hwndurl, V_BSTR(&url), len);
+                        IWebBrowser2_Navigate2(WEBBROWSER2(This), &url, NULL, NULL, NULL, NULL);
+
+                        SysFreeString(V_BSTR(&url));
+                    }
+                }
+                /* fall through */
                 case IDCANCEL:
                     EndDialog(hwnd, wparam);
                     return TRUE;
@@ -105,7 +135,7 @@ static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT 
     switch(LOWORD(wparam))
     {
         case ID_BROWSE_OPEN:
-            DialogBoxW(shdocvw_hinstance, MAKEINTRESOURCEW(IDD_BROWSE_OPEN), hwnd, ie_dialog_open_proc);
+            DialogBoxParamW(shdocvw_hinstance, MAKEINTRESOURCEW(IDD_BROWSE_OPEN), hwnd, ie_dialog_open_proc, (LPARAM)This);
             break;
 
         case ID_BROWSE_PRINT:
