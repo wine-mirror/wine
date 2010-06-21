@@ -114,8 +114,8 @@ MOVE échoue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS diff
   WCMD_PATH,
 "PATH affiche ou change le chemin de recherche de cmd.\n\
 \n\
-Entrer PATH seul affiche le réglage courant de PATH (initialement\n\
-c'est la valeur donnée dans le fichier wine.conf). Pour changer\n\
+Entrer PATH seul affiche le réglage courant de PATH (dont la valeur\n\
+initiale provient de la base de registre). Pour changer\n\
 le réglage, faites suivre la commande PATH par la nouvelle valeur.\n\
 Il est aussi possible de modifier le PATH en utilisant la variable\n\
 d'environnement PATH, par exemple :\n\
