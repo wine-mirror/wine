@@ -158,7 +158,7 @@ static xmlDocPtr doparse( char *ptr, int len, const char *encoding )
 LONG xmldoc_add_ref(xmlDocPtr doc)
 {
     LONG ref = InterlockedIncrement(&priv_from_xmlDocPtr(doc)->refs);
-    TRACE("%d\n", ref);
+    TRACE("(%p)->(%d)\n", doc, ref);
     return ref;
 }
 
@@ -166,7 +166,7 @@ LONG xmldoc_release(xmlDocPtr doc)
 {
     xmldoc_priv *priv = priv_from_xmlDocPtr(doc);
     LONG ref = InterlockedDecrement(&priv->refs);
-    TRACE("%d\n", ref);
+    TRACE("(%p)->(%d)\n", doc, ref);
     if(ref == 0)
     {
         orphan_entry *orphan, *orphan2;
