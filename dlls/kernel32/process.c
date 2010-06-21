@@ -70,8 +70,6 @@ typedef struct
     DWORD dwReserved;
 } LOADPARMS32;
 
-static UINT process_error_mode;
-
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static BOOL is_wow64;
@@ -2450,8 +2448,12 @@ BOOL WINAPI GetExitCodeProcess( HANDLE hProcess, LPDWORD lpExitCode )
  */
 UINT WINAPI SetErrorMode( UINT mode )
 {
-    UINT old = process_error_mode;
-    process_error_mode = mode;
+    UINT old;
+
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessDefaultHardErrorMode,
+                               &old, sizeof(old), NULL );
+    NtSetInformationProcess( GetCurrentProcess(), ProcessDefaultHardErrorMode,
+                             &mode, sizeof(mode) );
     return old;
 }
 
@@ -2460,7 +2462,11 @@ UINT WINAPI SetErrorMode( UINT mode )
  */
 UINT WINAPI GetErrorMode( void )
 {
-    return process_error_mode;
+    UINT mode;
+
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessDefaultHardErrorMode,
+                               &mode, sizeof(mode), NULL );
+    return mode;
 }
 
 /**********************************************************************
