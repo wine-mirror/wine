@@ -2330,6 +2330,7 @@ void signal_free_thread( TEB *teb )
  */
 void signal_init_thread( TEB *teb )
 {
+    const WORD fpu_cw = 0x27f;
     stack_t ss;
 
 #if defined __linux__
@@ -2345,15 +2346,11 @@ void signal_init_thread( TEB *teb )
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
 
-    if (teb->Peb->ProcessHeap) /* Not for the inital thread. */
-    {
-        const WORD fpu_cw = 0x27f;
 #ifdef __GNUC__
-        __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
+    __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
 #else
-        FIXME("FPU setup not implemented for this platform.\n");
+    FIXME("FPU setup not implemented for this platform.\n");
 #endif
-    }
 }
 
 /**********************************************************************

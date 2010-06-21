@@ -1387,10 +1387,11 @@ static WORD get_thread_fpu_cw(void)
 
 static void test_thread_fpu_cw(void)
 {
-    WORD initial_cw, cw;
+    WORD initial_cw, cw, expect;
 
     initial_cw = get_fpu_cw();
-    ok(initial_cw == 0x37f, "Expected FPU control word 0x37f, got %#x.\n", initial_cw);
+    expect = sizeof(void *) > sizeof(int) ? 0x27f : 0x37f;
+    ok(initial_cw == expect, "Expected FPU control word expect, got %#x.\n", initial_cw);
 
     cw = get_thread_fpu_cw();
     ok(cw == 0x27f, "Expected FPU control word 0x27f, got %#x.\n", cw);
