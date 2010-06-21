@@ -5,7 +5,7 @@
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
  * Copyright 2003-2004 Mike Hearn
- * Copyright 2005,2006,2007 YunSong Hwang
+ * Copyright 2005,2006,2007,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,46 +26,48 @@
 #include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "¼³Á¤", IDC_AUDIO_CONFIGURE
+        MENUITEM "ì„¤ì •", IDC_AUDIO_CONFIGURE
     END
 END
 
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 220
 STYLE WS_CHILD
-FONT 9, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
     LTEXT           PACKAGE_NAME,IDC_ABT_TITLE_TEXT,105,30,55,30
     LTEXT           PACKAGE_VERSION,IDC_ABT_PANEL_TEXT,160,43,140,8
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
-    LTEXT           "ÀÌ ¶óÀÌºê·¯¸®´Â ÀÚÀ¯ ¼ÒÇÁÆ®¿þ¾îÀÔ´Ï´Ù. ´ç½ÅÀº ÀÚÀ¯ ¼ÒÇÁÆ®¿þ¾î Àç´Ü(Free Software Foundation)¿¡¼­ ¸¸µç GNU LGPL(Lesser General Public License) ¾Æ·¡¿¡¼­ ÀÌ ÇÁ·Î±×·¥À» Àç¹èÆ÷ ¶Ç´Â ¼öÁ¤ÇÒ ¼ö ÀÖ½À´Ï´Ù. ¶óÀÌ¼¾½ºÀÇ ¹öÀüÀº 2.1 ¶Ç´Â (¼±ÅÃÀûÀ¸·Î) ±× ÀÌÈÄ ¹öÀüÀ» µû¸£¸é µË´Ï´Ù.",
+    LTEXT           "ì´ ë¼ì´ë¸ŒëŸ¬ë¦¬ëŠ” ìžìœ  ì†Œí”„íŠ¸ì›¨ì–´ìž…ë‹ˆë‹¤. ë‹¹ì‹ ì€ ìžìœ  ì†Œí”„íŠ¸ì›¨ì–´ ìž¬ë‹¨(Free Software Foundation)ì—ì„œ ë§Œë“  GNU LGPL(Lesser General Public License) ì•„ëž˜ì—ì„œ ì´ í”„ë¡œê·¸ëž¨ì„ ìž¬ë°°í¬ ë˜ëŠ” ìˆ˜ì •í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤. ë¼ì´ì„¼ìŠ¤ì˜ ë²„ì „ì€ 2.1 ë˜ëŠ” (ì„ íƒì ìœ¼ë¡œ) ê·¸ ì´í›„ ë²„ì „ì„ ë”°ë¥´ë©´ ë©ë‹ˆë‹¤.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
-    GROUPBOX        " À©µµ¿ìÁî µî·Ï Á¤º¸ ", IDC_STATIC, 15, 155, 230, 55
-    LTEXT           "¼ÒÀ¯ÀÚ(&O):", IDC_STATIC, 22, 171, 40, 20
+    GROUPBOX        " ìœˆë„ìš°ì¦ˆ ë“±ë¡ ì •ë³´ ", IDC_STATIC, 15, 155, 230, 55
+    LTEXT           "ì†Œìœ ìž(&O):", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "´ÜÃ¼(&Z):", IDC_STATIC, 22, 185, 50, 20
+    LTEXT           "ë‹¨ì²´(&Z):", IDC_STATIC, 22, 185, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
-
 IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " ÇÁ·Î±×·¥ ¼³Á¤ ",IDC_STATIC, 8,4,244,210
-    LTEXT           "WineÀº °¢°¢ÀÇ ÇÁ·Î±×·¥¿¡ ´ëÇØ¼­ ´Ù¸¥ ¹öÀüÀÇ À©µµ¿ìÁî¸¦ Èä³»³¾ ¼ö ÀÖ½À´Ï´Ù. ÀÌ ÅÇÀº ¶óÀÌºê·¯¸® ÅÇ, ±×·¡ÇÈ ÅÇ°ú ¿¬°áµÇ¾î ÀÖ¾î¼­, ÀÌµé ÅÇÀ» ÀÌ¿ëÇÏ¿© ½Ã½ºÅÛ ÀüÃ¼ ¶Ç´Â ÇÁ·Î±×·¥º°·Î ¼³Á¤ÀÌ °¡´ÉÇÕ´Ï´Ù.",
-                    IDC_STATIC,17,14,227,33
-    CONTROL         "ÇÁ·Î±×·¥",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+    GROUPBOX        " ì–´í”Œë¦¬ì¼€ì´ì…˜ ì„¤ì • ",IDC_STATIC, 8,4,244,210
+    LTEXT           "Wineì€ ê°ê°ì˜ í”„ë¡œê·¸ëž¨ì— ëŒ€í•´ì„œ ë‹¤ë¥¸ ë²„ì „ì˜ ìœˆë„ìš°ì¦ˆë¥¼ í‰ë‚´ë‚¼ ìˆ˜ ìžˆìŠµë‹ˆë‹¤. ì´ íƒ­ì€ ë¼ì´ë¸ŒëŸ¬ë¦¬ íƒ­, ê·¸ëž˜í”½ íƒ­ê³¼ ì—°ê²°ë˜ì–´ ìžˆì–´ì„œ, ì´ë“¤ íƒ­ì„ ì´ìš©í•˜ì—¬ ì‹œìŠ¤í…œ ì „ì²´ ë˜ëŠ” í”„ë¡œê·¸ëž¨ë³„ë¡œ ì„¤ì •ì´ ê°€ëŠ¥í•©ë‹ˆë‹¤.",
+                    IDC_STATIC,15,20,227,30
+    CONTROL         "ì–´í”Œë¦¬ì¼€ì´ì…˜",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,120
-    PUSHBUTTON      "ÇÁ·Î±×·¥ Ãß°¡(&A)...",IDC_APP_ADDAPP, 90,174,75,14
-    PUSHBUTTON      "ÇÁ·Î±×·¥ Á¦°Å(&R)",IDC_APP_REMOVEAPP, 170,174,75,14
-    LTEXT           "À©µµ¿ìÁî ¹öÁ¯(&W):",IDC_STATIC,16,197,75,14
+    PUSHBUTTON	    "ì–´í”Œë¦¬ì¼€ì´ì…˜ ì¶”ê°€(&A)...",IDC_APP_ADDAPP, 90,174,80,14
+    PUSHBUTTON	    "ì–´í”Œë¦¬ì¼€ì´ì…˜ ì œê±°(&R)",IDC_APP_REMOVEAPP, 170,174,75,14
+    LTEXT           "ìœˆë„ìš°ì¦ˆ ë²„ì ¼(&W):",IDC_STATIC,17,196,64,8
     COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
@@ -73,23 +75,23 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX    " Ã¢ ¼³Á¤ ",IDC_STATIC,8,4,244,84
-    CONTROL     "¸¶¿ì½º Ä¿¼­¸¦ DirectX ÇÁ·Î±×·¥ Ã¢¾È¿¡ Àâ¾ÆµÎ±â(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Ã¢°ü¸®ÀÚ°¡ WineÃ¢À» ²Ù¹Ìµµ·Ï ÇÔ(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Ã¢°ü¸®ÀÚ°¡ WineÃ¢À» °ü¸®ÇÏµµ·Ï ÇÔ(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "°¡»ó µ¥½ºÅ©Å¾ Èä³»³»±â(&E)",IDC_ENABLE_DESKTOP,"Button",
+    GROUPBOX    " ì°½ ì„¤ì • ",IDC_STATIC,8,4,244,84
+    CONTROL     "ë§ˆìš°ìŠ¤ ì»¤ì„œë¥¼ DirectX í”„ë¡œê·¸ëž¨ ì°½ì•ˆì— ìž¡ì•„ë‘ê¸°(&M)",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "ì°½ê´€ë¦¬ìžê°€ Wineì°½ì„ ê¾¸ë¯¸ë„ë¡ í•¨(&D)",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "ì°½ê´€ë¦¬ìžê°€ Wineì°½ì„ ê´€ë¦¬í•˜ë„ë¡ í•¨(&W)",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "ê°€ìƒ ë°ìŠ¤í¬íƒ‘ í‰ë‚´ë‚´ê¸°(&E)",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "µ¥½ºÅ©Å¾ Å©±â(&S):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "ë°ìŠ¤í¬íƒ‘ í¬ê¸°(&S):",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX    " ´ÙÀÌ·ºÆ® 3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "¹öÅØ½º ½¦ÀÌ´õ Áö¿ø(&V): ",IDC_STATIC,15,110,80,32
+    GROUPBOX    " ë‹¤ì´ë ‰íŠ¸ 3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "ë²„í…ìŠ¤ ì‰ì´ë” ì§€ì›(&V): ",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "ÇÏµå¿þ¾î¿¡¼­ Áö¿øÇÒ °æ¿ì, ÇÈ¼¿ ½¦ÀÌ´õ Çã¿ë(&P)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "(ë§Œì•½ í•˜ë“œì›¨ì–´ì—ì„œ ì§€ì›í•  ê²½ìš° ) í”½ì…€ ì‰ì´ë” í—ˆìš©(&P)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " È­¸é ÇØ»óµµ(&R) ",IDC_STATIC,8,151,244,63
+    GROUPBOX    " í™”ë©´ í•´ìƒë„(&R) ",IDC_STATIC,8,151,244,63
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
@@ -100,238 +102,237 @@ IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " DLL ¿À¹ö¶óÀÌµå ",IDC_STATIC,8,4,244,210
-    LTEXT           "µ¿Àû ¸µÅ© ¶óÀÌºê·¯¸®´Â °³º°ÀûÀ¸·Î ³»Àå(Wine¿¡ ÀÇÇØ Á¦°ø)ÀÌ³ª ³×ÀÌÆ¼ºê(À©µµ¿ìÁî³ª ÇÁ·Î±×·¥¿¡ ÀÇÇØ Á¦°ø)À¸·Î ÁöÁ¤µÉ¼ö ÀÖ½À´Ï´Ù."
+    GROUPBOX        " DLL ì˜¤ë²„ë¼ì´ë“œ ",IDC_STATIC,8,4,244,210
+    LTEXT           "ë™ì  ë§í¬ ë¼ì´ë¸ŒëŸ¬ë¦¬ëŠ” ê°œë³„ì ìœ¼ë¡œ ë‚´ìž¥(Wineì— ì˜í•´ ì œê³µ)ì´ë‚˜ ë„¤ì´í‹°ë¸Œ(ìœˆë„ìš°ì¦ˆë‚˜ í”„ë¡œê·¸ëž¨ì— ì˜í•´ ì œê³µ)ìœ¼ë¡œ ì§€ì •ë ìˆ˜ ìžˆìŠµë‹ˆë‹¤."
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "»õ·Î ¿À¹ö¶óÀÌµåÇÒ ¶óÀÌºê·¯¸®(&N):",IDC_STATIC,16,58,108,8
+    LTEXT           "ìƒˆë¡œ ì˜¤ë²„ë¼ì´ë“œí•  ë¼ì´ë¸ŒëŸ¬ë¦¬(&N):",IDC_STATIC,16,58,112,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
-    PUSHBUTTON      "´õÇÏ±â(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "ÇöÀç ¿À¹ö¶óÀÌµå ¸ñ·Ï(&O):",IDC_STATIC,16,86,100,8
+    PUSHBUTTON      "ë”í•˜ê¸°(&A)",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    LTEXT           "í˜„ìž¬ ì˜¤ë²„ë¼ì´ë“œ ëª©ë¡(&O):",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
-    PUSHBUTTON      "°íÄ¡±â(&E)...",IDC_DLLS_EDITDLL,164,96,82,14
-    PUSHBUTTON      "Áö¿ì±â(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14 
+    PUSHBUTTON      "ê³ ì¹˜ê¸°(&E)...",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "ì§€ìš°ê¸°(&R)",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "¿À¹ö¶óÀÌµå ¼öÁ¤"
+CAPTION "ì˜¤ë²„ë¼ì´ë“œ ìˆ˜ì •"
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " ·Îµå ¼ø¼­ ",IDC_STATIC,8,4,94,66
-    CONTROL         "³»Àå(&B)(Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
-    CONTROL         "³×ÀÌÆ¼ºê(&N)(Win)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "³»Àå, ³×ÀÌÆ¼ºê(&L)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "³×ÀÌÆ¼ºê, ³»Àå(&V)",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
-    CONTROL         "»ç¿ëÇÏÁö ¾ÊÀ½(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
-    DEFPUSHBUTTON   "È®ÀÎ",IDOK,8,74,45,14,WS_GROUP
-    PUSHBUTTON      "Ãë¼Ò",IDCANCEL,57,74,45,14,WS_GROUP
+    GROUPBOX        "ë¶ˆëŸ¬ì˜¤ê¸° ìˆœì„œ ",IDC_STATIC,8,4,94,66
+    CONTROL         "ë‚´ìž¥(&B)(Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "ë„¤ì´í‹°ë¸Œ(&N)(Win)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "ë‚´ìž¥, ë„¤ì´í‹°ë¸Œ(&L)",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "ë„¤ì´í‹°ë¸Œ, ë‚´ìž¥(&V)",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "ì‚¬ìš©í•˜ì§€ ì•ŠìŒ(&D)",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "í™•ì¸",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "ì·¨ì†Œ",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
 IDD_DRIVECHOOSE DIALOG DISCARDABLE  60, 70, 170, 60
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "µå¶óÀÌºê ¹®ÀÚ ¼±ÅÃ"
+CAPTION "ë“œë¼ì´ë¸Œ ë¬¸ìž ì„ íƒ"
 FONT 8, "MS Shell Dlg"
 BEGIN
 	COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-	DEFPUSHBUTTON   "È®ÀÎ",IDOK,105,10,45,14,WS_GROUP
-	PUSHBUTTON      "Ãë¼Ò",IDCANCEL,105,30,45,14,WS_GROUP
+	DEFPUSHBUTTON   "í™•ì¸",IDOK,105,10,45,14,WS_GROUP
+	PUSHBUTTON      "ì·¨ì†Œ",IDCANCEL,105,30,45,14,WS_GROUP
 END
-
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
-FONT 9, "MS Shell Dlg"
+FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " µå¶óÀÌºê ¿¬°á(&M) ",IDC_STATIC,8,4,244,195
-    LTEXT           "¿¬°á °ü¸®ÀÚ°¡ ¿¬°áÇÏ´Â µ¥ ½ÇÆÐÇÔ, ÀÌ µå¶óÀÌºê ¼³Á¤À» ¼öÁ¤µÉ ¼ö ¾ø½À´Ï´Ù.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
-    CONTROL         "¸ñ·Ïº¸±â",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+    GROUPBOX        " ë“œë¼ì´ë¸Œ ì—°ê²°(&M) ",IDC_STATIC,8,4,244,195
+    LTEXT           "ì—°ê²° ê´€ë¦¬ìžê°€ ì—°ê²°í•˜ëŠ” ë° ì‹¤íŒ¨í•¨, ì´ ë“œë¼ì´ë¸Œ ì„¤ì •ì„ ìˆ˜ì •ë  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
+    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
-    PUSHBUTTON      "Ãß°¡(&A)...",IDC_BUTTON_ADD,15,98,37,14
-    PUSHBUTTON      "Á¦°Å(&R)",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "ÀÚµ¿ Ã£±â(&D)...",IDC_BUTTON_AUTODETECT,195,98,51,14
+    PUSHBUTTON      "ì¶”ê°€(&A)...",IDC_BUTTON_ADD,15,98,37,14
+    PUSHBUTTON      "ì œê±°(&R)",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "ìžë™ì°¾ê¸°(&D)...",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
-    LTEXT           "°æ·Î(&P):",IDC_STATIC_PATH,15,123,30,10
-    EDITTEXT        IDC_EDIT_PATH,50,120,140,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Ã£¾Æº¸±â(&B)...",IDC_BUTTON_BROWSE_PATH,195,120,51,13
+    LTEXT           "ê²½ë¡œ(&P):",IDC_STATIC_PATH,13,123,25,9
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "ì°¾ì•„ë³´ê¸°(&B)...",IDC_BUTTON_BROWSE_PATH,200,120,48,13
     
-    LTEXT           "Á¾·ù(&T):",IDC_STATIC_TYPE,15,138,30,10
-    COMBOBOX        IDC_COMBO_TYPE,50,135,70,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "í˜•ì‹(&T):",IDC_STATIC_TYPE,13,138,25,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     
-    PUSHBUTTON      "Ãß°¡¿É¼Ç º¸ÀÌ±â(&A)",IDC_BUTTON_SHOW_HIDE_ADVANCED,175,135,71,13
-    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
-    EDITTEXT        IDC_EDIT_DEVICE,50,150,140,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Ã£¾Æº¸±â(&W)...",IDC_BUTTON_BROWSE_DEVICE,195,150,51,13
+    PUSHBUTTON      "ì¶”ê°€ì˜µì…˜ ë³´ì´ê¸°(&A)",IDC_BUTTON_SHOW_HIDE_ADVANCED,179,135,67,13
+    LTEXT           "ìž¥ì¹˜(&V):",IDC_STATIC_DEVICE,13,153,26,9
+    EDITTEXT        IDC_EDIT_DEVICE,41,150,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "ì°¾ì•„ë³´ê¸°(&W)...",IDC_BUTTON_BROWSE_DEVICE,200,150,48,13
 
-    LTEXT           "¶óº§(&L):",IDC_STATIC_LABEL,15,168,35,12
-    EDITTEXT        IDC_EDIT_LABEL,50,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "½Ã¸®¾ó(&E):",IDC_STATIC_SERIAL,15,183,35,12
-    EDITTEXT        IDC_EDIT_SERIAL,50,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "ë¼ë²¨(&L):",IDC_STATIC_LABEL,13,168,26,12
+    EDITTEXT        IDC_EDIT_LABEL,41,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "ì‹œë¦¬ì–¼(&E):",IDC_STATIC_SERIAL,13,183,34,12
+    EDITTEXT        IDC_EDIT_SERIAL,47,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "¼û±è ÆÄÀÏ(.À¸·Î ½ÃÀÛÇÏ´Â ÆÄÀÏ) º¸¿©ÁÖ±â(&D)",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
+    CONTROL         "ë‹· íŒŒì¼ ë³´ì´ê¸°(&D)",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " µå¶óÀÌ¹ö ¼±ÅÃ ",IDC_STATIC,8,4,244,160
-    LTEXT           "¿øÇÏ´Â µå¶óÀÌ¹öÀÇ ¹Ú½º¸¦ Ã¼Å©ÇÏ¿© »ç¿îµå µå¶óÀÌ¹ö¸¦ ¼±ÅÃÇÕ´Ï´Ù. ¾î¶² µå¶óÀÌ¹öµµ ¼±ÅÃÇÏÁö ¾ÊÀ¸¸é »ç¿îµå°¡ ÇØÁ¦µË´Ï´Ù. ¿©·¯ µå¶óÀÌ¹ö¸¦ ¼±ÅÃÇÏ´Â °ÍÀº ÃßÃµÇÏÁö ¾Ê½À´Ï´Ù. µå¶óÀÌ¹ö À§¿¡¼­ ¸¶¿ì½º ¿À¸¥ÂÊ ¹öÆ° Å¬¸¯ÇÏ¿© µå¶óÀÌ¹ö¸¦ ¼³Á¤ÇÕ´Ï´Ù.",IDC_STATIC,15,20,227,33
-    CONTROL         "ÀåÄ¡",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,56,140,99
-    PUSHBUTTON      "¼Ò¸® Å×½ºÆ®(&T)",IDC_AUDIO_TEST,170,57,59,14
-    PUSHBUTTON      "Á¦¾îÆÇ(&C)",IDC_AUDIO_CONTROL_PANEL,170,77,59,14
-    GROUPBOX        " ´ÙÀÌ·ºÆ® »ç¿îµå ",IDC_STATIC,8,170,244,45
-    LTEXT           "ÇÏµå¿þ¾î °¡¼Ó(&H): ",IDC_STATIC,15,180,90,10
-    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,178,146,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "±âº» »ùÇÃ/ÃÊ(&S):",IDC_STATIC,15,197,70,8
+    GROUPBOX        " ë“œë¼ì´ë²„ ì„ íƒ ",IDC_STATIC,8,4,244,160
+    LTEXT           "ì›í•˜ëŠ” ë“œë¼ì´ë²„ì˜ ë°•ìŠ¤ë¥¼ ì²´í¬í•˜ì—¬ ì‚¬ìš´ë“œ ë“œë¼ì´ë²„ë¥¼ ì„ íƒí•©ë‹ˆë‹¤. ì–´ë–¤ ë“œë¼ì´ë²„ë„ ì„ íƒí•˜ì§€ ì•Šìœ¼ë©´ ì‚¬ìš´ë“œê°€ í•´ì œë©ë‹ˆë‹¤. ì—¬ëŸ¬ ë“œë¼ì´ë²„ë¥¼ ì„ íƒí•˜ëŠ” ê²ƒì€ ì¶”ì²œí•˜ì§€ ì•ŠìŠµë‹ˆë‹¤. ë“œë¼ì´ë²„ ìœ„ì—ì„œ ë§ˆìš°ìŠ¤ ì˜¤ë¥¸ìª½ ë²„íŠ¼ í´ë¦­í•˜ì—¬ ë“œë¼ì´ë²„ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.",IDC_STATIC,16,17,227,33
+    CONTROL         "ìž¥ì¹˜",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,155,105
+    PUSHBUTTON      "ì†Œë¦¬ í…ŒìŠ¤íŠ¸(&T)",IDC_AUDIO_TEST,180,50,59,14
+    PUSHBUTTON      "ì œì–´íŒ(&C)",IDC_AUDIO_CONTROL_PANEL,180,70,59,14
+    GROUPBOX        " ë‹¤ì´ë ‰íŠ¸ ì‚¬ìš´ë“œ ",IDC_STATIC,8,170,244,44
+    LTEXT           "í•˜ë“œì›¨ì–´ ê°€ì†(&H): ",IDC_STATIC,15,180,90,10
+    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "ê¸°ë³¸ ìƒ˜í”Œ ë¹„ìœ¨(&S):",IDC_STATIC,15,197,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "±âº» ºñÆ®/»ùÇÃ(&B):",IDC_STATIC,137,197,80,8
-    COMBOBOX        IDC_DSOUND_BITS,220,195,26,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "ê¸°ë³¸ ë¹„íŠ¸/ìƒ˜í”Œ(&B):",IDC_STATIC,197,247,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " ¿Ü°ü ",IDC_STATIC,8,4,244,106
-    LTEXT           "Å×¸¶(&T):",IDC_STATIC,15,16,130,8
+    GROUPBOX        "ì™¸ê´€ ",IDC_STATIC,8,4,244,106
+    LTEXT           "í…Œë§ˆ(&T):",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Å×¸¶ ¼³Ä¡(&I)...",IDC_THEME_INSTALL,152,23,93,14
-    LTEXT           "»ö»ó(&C):",IDC_THEME_COLORTEXT,15,40,112,8
+    PUSHBUTTON      "í…Œë§ˆ ì„¤ì¹˜(&I)...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "ìƒ‰ìƒ(&C):",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Å©±â(&S):",IDC_THEME_SIZETEXT,135,40,110,8
+    LTEXT           "í¬ê¸°(&S):",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "¸ñ·Ï(&E):",IDC_STATIC,15,64,112,8
+    LTEXT           "ëª©ë¡(&E):",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
-    LTEXT           "»ö»ó(&O):",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    LTEXT           "ìƒ‰ìƒ(&O):",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Å©±â(&Z):",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "í¬ê¸°(&Z):",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "±Û²Ã(&F)...",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " Æú´õ(&D) ",IDC_STATIC,8,114,244,100
-    CONTROL         "¸ñ·Ïº¸±â",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+    PUSHBUTTON      "ê¸€ê¼´(&F)...",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " í´ë”(&D) ",IDC_STATIC,8,114,244,100
+    CONTROL         "ëª©ë¡ë³´ê¸°",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "¿¬°á À§Ä¡(&L):",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,55,13
+    CONTROL         "ì—°ê²° ìœ„ì¹˜(&L):",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,55,13
     EDITTEXT         IDC_EDIT_SFPATH,75,195,135,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Ã£±â(&R)...",IDC_BROWSE_SFPATH,215,195,34,13,WS_DISABLED
+    PUSHBUTTON      "ì°¾ê¸°(&R)...",IDC_BROWSE_SFPATH,215,195,34,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_TAB_APPLICATIONS    "ÇÁ·Î±×·¥"
-    IDS_TAB_DLLS            "¶óÀÌºê·¯¸®"
-    IDS_TAB_DRIVES          "µå¶óÀÌºê"
-    IDS_CHOOSE_PATH         "À¯´Ð½º ¸ñÀû Æú´õ¸¦ ¼±ÅÃÇÏ½Ê½Ã¿À."
-    IDS_HIDE_ADVANCED       "Ãß°¡¿É¼Ç ¼û±â±â(&A)"
-    IDS_SHOW_ADVANCED       "Ãß°¡¿É¼Ç º¸ÀÌ±â(&A)"
-    IDS_NOTHEME             "(Å×¸¶ ¾øÀ½)"
-    IDS_TAB_GRAPHICS        "±×·¡ÇÈ"
-    IDS_TAB_DESKTOP_INTEGRATION "µ¥½ºÅ©Å¾ ¼³Á¤"
-    IDS_TAB_AUDIO           "¿Àµð¿À"
-    IDS_TAB_ABOUT           "Á¤º¸"
-    IDS_WINECFG_TITLE       "Wine ¼³Á¤"
-    IDS_WINECFG_TITLE_APP   "%s¸¦ À§ÇÑ Wine ¼³Á¤"
-    IDS_THEMEFILE           "Å×¸¶ ÆÄÀÏ (*.msstyles; *.theme)"
-    IDS_THEMEFILE_SELECT    "Å×¸¶ ÆÄÀÏ ¼±ÅÃ"
-    IDS_AUDIO_MISSING       "ÇöÀç ·¹Áö½ºÆ®¸®¿¡ ¿Àµð¿À µå¶óÀÌ¹ö°¡ ÁöÁ¤µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.\n\nÃßÃµ µå¶óÀÌ¹ö°¡ ¼±ÅÃµÇ¾ú½À´Ï´Ù.\nÀÌ µå¶óÀÌ¹ö¸¦ »ç¿ëÇÏ°Å³ª °¡´ÉÇÑ ´Ù¸¥ µå¶óÀÌ¹ö¸¦ ¼±ÅÃÇÒ ¼ö ÀÖ½À´Ï´Ù.\n\n¼±ÅÃ »çÇ×ÀÌ È¿°ú¸¦ ³ªÅ¸³»±â À§ÇØ¼­´Â Àû¿ë ¹öÆ°À» ´­·¯¾ß ÇÕ´Ï´Ù."
-    IDS_SHELL_FOLDER        "Æú´õ"
-    IDS_LINKS_TO            "¿¬°á À§Ä¡"
+    IDS_TAB_APPLICATIONS    "í”„ë¡œê·¸ëž¨"
+    IDS_TAB_DLLS            "ë¼ì´ë¸ŒëŸ¬ë¦¬"
+    IDS_TAB_DRIVES          "ë“œë¼ì´ë¸Œ"
+    IDS_CHOOSE_PATH         "ìœ ë‹‰ìŠ¤ ëª©ì  í´ë”ë¥¼ ì„ íƒí•˜ì‹­ì‹œì˜¤."
+    IDS_HIDE_ADVANCED       "ì¶”ê°€ì˜µì…˜ ìˆ¨ê¸°ê¸°(&A)"
+    IDS_SHOW_ADVANCED       "ì¶”ê°€ì˜µì…˜ ë³´ì´ê¸°(&A)"
+    IDS_NOTHEME             "(í…Œë§ˆ ì—†ìŒ)"
+    IDS_TAB_GRAPHICS        "ê·¸ëž˜í”½"
+    IDS_TAB_DESKTOP_INTEGRATION "ë°ìŠ¤í¬íƒ‘ ì„¤ì •"
+    IDS_TAB_AUDIO           "ì˜¤ë””ì˜¤"
+    IDS_TAB_ABOUT           "ì •ë³´"
+    IDS_WINECFG_TITLE       "Wine ì„¤ì •"
+    IDS_WINECFG_TITLE_APP   "%së¥¼ ìœ„í•œ Wine ì„¤ì •"
+    IDS_THEMEFILE           "í…Œë§ˆ íŒŒì¼ (*.msstyles; *.theme)"
+    IDS_THEMEFILE_SELECT    "í…Œë§ˆ íŒŒì¼ ì„ íƒ"
+    IDS_AUDIO_MISSING       "í˜„ìž¬ ë ˆì§€ìŠ¤íŠ¸ë¦¬ì— ì˜¤ë””ì˜¤ ë“œë¼ì´ë²„ê°€ ì§€ì •ë˜ì–´ ìžˆì§€ ì•ŠìŠµë‹ˆë‹¤.\n\nì¶”ì²œ ë“œë¼ì´ë²„ê°€ ì„ íƒë˜ì—ˆìŠµë‹ˆë‹¤.\nì´ ë“œë¼ì´ë²„ë¥¼ ì‚¬ìš©í•˜ê±°ë‚˜ ê°€ëŠ¥í•œ ë‹¤ë¥¸ ë“œë¼ì´ë²„ë¥¼ ì„ íƒí•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.\n\nì„ íƒ ì‚¬í•­ì´ íš¨ê³¼ë¥¼ ë‚˜íƒ€ë‚´ê¸° ìœ„í•´ì„œëŠ” ì ìš© ë²„íŠ¼ì„ ëˆŒëŸ¬ì•¼ í•©ë‹ˆë‹¤."
+    IDS_SHELL_FOLDER        "í´ë”"
+    IDS_LINKS_TO            "ì—°ê²° ìœ„ì¹˜"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING         "ÀÌ ¶óÀÌºê·¯¸®ÀÇ ·Îµå ¼ø¼­¸¦ ¹Ù²Ù´Â °ÍÀ» ÃßÃµÇÏÁö ¾Ê½À´Ï´Ù..\nÁ¤¸»·Î ¹Ù²Ù½Ã°Ú½À´Ï±î?"
-    IDS_DLL_WARNING_CAPTION "°æ°í: ½Ã½ºÅÛ ¶óÀÌºê·¯¸®"
-    IDS_DLL_NATIVE          "³×ÀÌÆ¼ºê"
-    IDS_DLL_BUILTIN         "³»Àå"
-    IDS_DLL_NATIVE_BUILTIN  "³×ÀÌÆ¼ºê, ³»Àå"
-    IDS_DLL_BUILTIN_NATIVE  "³»Àå, ³×ÀÌÆ¼ºê"
-    IDS_DLL_DISABLED        "»ç¿ëÇÏÁö ¾ÊÀ½"
-    IDS_DEFAULT_SETTINGS    "±âº» ¼³Á¤"
-    IDS_EXECUTABLE_FILTER   "Wine ÇÁ·Î±×·¥ (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS "ÀüÃ¼ ¼³Á¤ »ç¿ë"
-    IDS_SELECT_EXECUTABLE   "½ÇÇà ÆÄÀÏ ¼±ÅÃ"
+    IDS_DLL_WARNING         "ì´ ë¼ì´ë¸ŒëŸ¬ë¦¬ì˜ ë¡œë“œ ìˆœì„œë¥¼ ë°”ê¾¸ëŠ” ê²ƒì„ ì¶”ì²œí•˜ì§€ ì•ŠìŠµë‹ˆë‹¤..\nì •ë§ë¡œ ë°”ê¾¸ì‹œê² ìŠµë‹ˆê¹Œ?"
+    IDS_DLL_WARNING_CAPTION "ê²½ê³ : ì‹œìŠ¤í…œ ë¼ì´ë¸ŒëŸ¬ë¦¬"
+    IDS_DLL_NATIVE          "ë„¤ì´í‹°ë¸Œ"
+    IDS_DLL_BUILTIN         "ë‚´ìž¥"
+    IDS_DLL_NATIVE_BUILTIN  "ë„¤ì´í‹°ë¸Œ, ë‚´ìž¥"
+    IDS_DLL_BUILTIN_NATIVE  "ë‚´ìž¥, ë„¤ì´í‹°ë¸Œ"
+    IDS_DLL_DISABLED        "ì‚¬ìš©í•˜ì§€ ì•ŠìŒ"
+    IDS_DEFAULT_SETTINGS    "ê¸°ë³¸ ì„¤ì •"
+    IDS_EXECUTABLE_FILTER   "Wine í”„ë¡œê·¸ëž¨ (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "ì „ì²´ ì„¤ì • ì‚¬ìš©"
+    IDS_SELECT_EXECUTABLE   "ì‹¤í–‰ íŒŒì¼ ì„ íƒ"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_SHADER_MODE_HARDWARE    "ÇÏµå¿þ¾î"
-    IDS_SHADER_MODE_NONE        "¾øÀ½"
+    IDS_SHADER_MODE_HARDWARE    "í•˜ë“œì›¨ì–´"
+    IDS_SHADER_MODE_NONE        "ì—†ìŒ"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-   IDS_DRIVE_UNKNOWN           "ÀÚµ¿À¸·Î Ã£±â"
-   IDS_DRIVE_FIXED             "¿¬°áµÈ ÇÏµå µð½ºÅ©"
-   IDS_DRIVE_REMOTE            "³×Æ®¿öÅ© °øÀ¯"
-   IDS_DRIVE_REMOVABLE         "ÇÃ·ÎÇÇ µð½ºÅ©"
+   IDS_DRIVE_UNKNOWN           "ìžë™ìœ¼ë¡œ ì°¾ê¸°"
+   IDS_DRIVE_FIXED             "ì—°ê²°ëœ í•˜ë“œ ë””ìŠ¤í¬"
+   IDS_DRIVE_REMOTE            "ë„¤íŠ¸ì›Œí¬ ê³µìœ "
+   IDS_DRIVE_REMOVABLE         "í”Œë¡œí”¼ ë””ìŠ¤í¬"
    IDS_DRIVE_CDROM             "CD-ROM"
-   IDS_DRIVE_LETTERS_EXCEEDED  "´ç½ÅÀº ´õ ÀÌ»ó µå¶óÀÌºê¸¦ Ãß°¡ÇÒ ¼ö ¾ø½À´Ï´Ù.\n\n°¢ µå¶óÀÌºê´Â ¹Ýµå½Ã A~Z±îÁöÀÇ ¹®ÀÚ¸¦ °¡Áý´Ï´Ù, ±×·¡¼­ ´ç½ÅÀº 26°³º¸´Ù ´õ ¸¹ÀÌ Ãß°¡ÇÒ ¼ö ¾ø½À´Ï´Ù"
-   IDS_SYSTEM_DRIVE_LABEL      "½Ã½ºÅÛ µå¶óÀÌºê"
-   IDS_CONFIRM_DELETE_C        "´ç½ÅÀº ÇÏµå µå¶óÀÌºê  C¸¦ Áö¿ì±â¸¦ ¿øÇÕ´Ï±î?\n\n´ëºÎºÐÀÇ À©µµ¿ì ÇÁ·Î±×·¥Àº Cµå¶óÀÌºê°¡ ÀÖ´Ù°í ¿¹»óÇÏ°í,  ¾øÀ¸¸é ´Ù¿îµÉ°ÍÀÔ´Ï´Ù. ¸¸¾à ´ç½ÅÀÌ °è¼Ó ÁøÇàÇÏ±â¸¦ ¿øÇÑ´Ù¸é ¹Ýµå½Ã ´Ù½Ã ¸¸µå½Ê½Ã¿À!"
-   IDS_COL_DRIVELETTER         "¹®ÀÚ"
-   IDS_COL_DRIVEMAPPING        "µå¶óÀÌºê ÇÒ´ç"
-   IDS_NO_DRIVE_C              "´ç½ÅÀº  Cµå¶óÀÌºê¸¦ °¡Áö°í ÀÖÁö ¾Ê½À´Ï´Ù. ÀÌ°ÍÀº ÁÁÀº ÀÏÀÌ ¾Æ´Õ´Ï´Ù.\n\nµå¶óÀÌºê ÅÇ¿¡¼­ 'Ãß°¡'¸¦ Å¬¸¯ÇØ¼­ ¸¸µå´Â °ÍÀ» ÀØÁö ¸¶½Ê½Ã¿À!\n"
+   IDS_DRIVE_LETTERS_EXCEEDED  "ë‹¹ì‹ ì€ ë” ì´ìƒ ë“œë¼ì´ë¸Œë¥¼ ì¶”ê°€í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n\nê° ë“œë¼ì´ë¸ŒëŠ” ë°˜ë“œì‹œ A~Zê¹Œì§€ì˜ ë¬¸ìžë¥¼ ê°€ì§‘ë‹ˆë‹¤, ê·¸ëž˜ì„œ ë‹¹ì‹ ì€ 26ê°œë³´ë‹¤ ë” ë§Žì´ ì¶”ê°€í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤"
+   IDS_SYSTEM_DRIVE_LABEL      "ì‹œìŠ¤í…œ ë“œë¼ì´ë¸Œ"
+   IDS_CONFIRM_DELETE_C        "ë‹¹ì‹ ì€ í•˜ë“œ ë“œë¼ì´ë¸Œ  Cë¥¼ ì§€ìš°ê¸°ë¥¼ ì›í•©ë‹ˆê¹Œ?\n\nëŒ€ë¶€ë¶„ì˜ ìœˆë„ìš° í”„ë¡œê·¸ëž¨ì€ Cë“œë¼ì´ë¸Œê°€ ìžˆë‹¤ê³  ì˜ˆìƒí•˜ê³ ,  ì—†ìœ¼ë©´ ë‹¤ìš´ë ê²ƒìž…ë‹ˆë‹¤. ë§Œì•½ ë‹¹ì‹ ì´ ê³„ì† ì§„í–‰í•˜ê¸°ë¥¼ ì›í•œë‹¤ë©´ ë°˜ë“œì‹œ ë‹¤ì‹œ ë§Œë“œì‹­ì‹œì˜¤!"
+   IDS_COL_DRIVELETTER         "ë¬¸ìž"
+   IDS_COL_DRIVEMAPPING        "ë“œë¼ì´ë¸Œ í• ë‹¹"
+   IDS_NO_DRIVE_C              "ë‹¹ì‹ ì€  Cë“œë¼ì´ë¸Œë¥¼ ê°€ì§€ê³  ìžˆì§€ ì•ŠìŠµë‹ˆë‹¤. ì´ê²ƒì€ ì¢‹ì€ ì¼ì´ ì•„ë‹™ë‹ˆë‹¤.\n\në“œë¼ì´ë¸Œ íƒ­ì—ì„œ 'ì¶”ê°€'ë¥¼ í´ë¦­í•´ì„œ ë§Œë“œëŠ” ê²ƒì„ ìžŠì§€ ë§ˆì‹­ì‹œì˜¤!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-   IDS_ACCEL_FULL              "ÀüÃ¼"
-   IDS_ACCEL_STANDARD          "Ç¥ÁØ"
-   IDS_ACCEL_BASIC             "±âº»"
-   IDS_ACCEL_EMULATION         "¾Ö¹Ä·¹ÀÌ¼Ç"
-   IDS_DRIVER_ALSA             "ALSA µå¶óÀÌ¹ö"
-   IDS_DRIVER_ESOUND           "EsounD µå¶óÀÌ¹ö"
-   IDS_DRIVER_OSS              "OSS µå¶óÀÌ¹ö"
-   IDS_DRIVER_JACK             "JACK µå¶óÀÌ¹ö"
-   IDS_DRIVER_NAS              "NAS µå¶óÀÌ¹ö"
-   IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) µå¶óÀÌ¹ö"
-   IDS_DRIVER_COREAUDIO        "CoreAudio µå¶óÀÌ¹ö"
-   IDS_OPEN_DRIVER_ERROR       "%s¸¦ ¿­ ¼ö ¾ø½À´Ï´Ù!"
-   IDS_SOUNDDRIVERS            "»ç¿îµå µå¶óÀÌ¹ö"
-   IDS_DEVICES_WAVEOUT         "Wave Ãâ·Â ÀåÄ¡"
-   IDS_DEVICES_WAVEIN          "Wave ÀÔ·Â ÀåÄ¡"
-   IDS_DEVICES_MIDIOUT         "MIDI Ãâ·Â ÀåÄ¡"
-   IDS_DEVICES_MIDIIN          "MIDI ÀÔ·Â ÀåÄ¡"
-   IDS_DEVICES_AUX             "Aux ÀåÄ¡"
-   IDS_DEVICES_MIXER           "Mixer ÀåÄ¡"
-   IDS_UNAVAILABLE_DRIVER      "·¹Áö½ºÆ®¸®¿¡¼­ °¡´ÉÇÏÁö ¾ÊÀº µå¶óÀÌ¹ö°¡ ¹ß°ßµÇ¾ú½À´Ï´Ù!\n\n '%s'¸¦ ·¹Áö½ºÆ®¸®¿¡¼­ Áö¿ì°Ú½À´Ï±î?"
-   IDS_WARNING                 "°æ°í"
+   IDS_ACCEL_FULL              "ì „ì²´"
+   IDS_ACCEL_STANDARD          "í‘œì¤€"
+   IDS_ACCEL_BASIC             "ê¸°ë³¸"
+   IDS_ACCEL_EMULATION         "ì• ë®¬ë ˆì´ì…˜"
+   IDS_DRIVER_ALSA             "ALSA ë“œë¼ì´ë²„"
+   IDS_DRIVER_ESOUND           "EsounD ë“œë¼ì´ë²„"
+   IDS_DRIVER_OSS              "OSS ë“œë¼ì´ë²„"
+   IDS_DRIVER_JACK             "JACK ë“œë¼ì´ë²„"
+   IDS_DRIVER_NAS              "NAS ë“œë¼ì´ë²„"
+   IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) ë“œë¼ì´ë²„"
+   IDS_DRIVER_COREAUDIO        "CoreAudio ë“œë¼ì´ë²„"
+   IDS_OPEN_DRIVER_ERROR       "%së¥¼ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!"
+   IDS_SOUNDDRIVERS            "ì‚¬ìš´ë“œ ë“œë¼ì´ë²„"
+   IDS_DEVICES_WAVEOUT         "Wave ì¶œë ¥ ìž¥ì¹˜"
+   IDS_DEVICES_WAVEIN          "Wave ìž…ë ¥ ìž¥ì¹˜"
+   IDS_DEVICES_MIDIOUT         "MIDI ì¶œë ¥ ìž¥ì¹˜"
+   IDS_DEVICES_MIDIIN          "MIDI ìž…ë ¥ ìž¥ì¹˜"
+   IDS_DEVICES_AUX             "Aux ìž¥ì¹˜"
+   IDS_DEVICES_MIXER           "Mixer ìž¥ì¹˜"
+   IDS_UNAVAILABLE_DRIVER      "ë ˆì§€ìŠ¤íŠ¸ë¦¬ì—ì„œ ê°€ëŠ¥í•˜ì§€ ì•Šì€ ë“œë¼ì´ë²„ê°€ ë°œê²¬ë˜ì—ˆìŠµë‹ˆë‹¤!\n\n '%s'ë¥¼ ë ˆì§€ìŠ¤íŠ¸ë¦¬ì—ì„œ ì§€ìš°ê² ìŠµë‹ˆê¹Œ?"
+   IDS_WARNING                 "ê²½ê³ "
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-   IDC_SYSPARAMS_BUTTON            "ÄÁÆ®·Ñ ¹è°æ"
-   IDC_SYSPARAMS_BUTTON_TEXT       "ÄÁÆ®·Ñ ¹®ÀÚ"
-   IDC_SYSPARAMS_DESKTOP           "¹ÙÅÁÈ­¸é"
-   IDC_SYSPARAMS_MENU              "¸Þ´º ¹è°æ"
-   IDC_SYSPARAMS_MENU_TEXT         "¸Þ´º ¹®ÀÚ"
-   IDC_SYSPARAMS_SCROLLBAR         "¸ñ·Ï¹Ù"
-   IDC_SYSPARAMS_SELECTION         "¼±ÅÃµÈ ¹è°æ"
-   IDC_SYSPARAMS_SELECTION_TEXT    "¼±ÅÃµÈ ¹®ÀÚ"
-   IDC_SYSPARAMS_TOOLTIP           "µµ±¸ÆÁ ¹è°æ"
-   IDC_SYSPARAMS_TOOLTIP_TEXT      "µµ±¸ÆÁ ¹®ÀÚ"
-   IDC_SYSPARAMS_WINDOW            "Ã¢ ¹è°æ"
-   IDC_SYSPARAMS_WINDOW_TEXT       "Ã¢ ¹®ÀÚ"
-   IDC_SYSPARAMS_ACTIVE_TITLE      "È°¼ºµÈ Á¦¸ñ ¸·´ë"
-   IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "È°¼ºµÈ Á¦¸ñ ¹®ÀÚ"
-   IDC_SYSPARAMS_INACTIVE_TITLE    "ºñÈ°¼ºµÈ Á¦¸ñ ¸·´ë"
-   IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "ºñÈ°¼ºµÈ Á¦¸ñ ¹®ÀÚ"
-   IDC_SYSPARAMS_MSGBOX_TEXT       "¸Þ¼¼Áö »óÀÚ ÅØ½ºÆ®"
-   IDC_SYSPARAMS_APPWORKSPACE      "¾îÇÃ¸®ÄÉÀÌ¼Ç ÀÛ¾÷°ø°£"
-   IDC_SYSPARAMS_WINDOW_FRAME      "Ã¢ ÇÁ·¹ÀÓ"
-   IDC_SYSPARAMS_ACTIVE_BORDER     "È°¼ºÈ­µÈ Ã¢Æ²"
-   IDC_SYSPARAMS_INACTIVE_BORDER   "ºñ È°¼ºÈ­µÈ Ã¢Æ²"
-   IDC_SYSPARAMS_BUTTON_SHADOW     "ÄÁÆ®·Ñ ±×ÇÔÁö"
-   IDC_SYSPARAMS_GRAY_TEXT         "È¸»ö ¹®ÀÚ"
-   IDC_SYSPARAMS_BUTTON_HILIGHT    "ÄÁÆ®·Ñ ÇÏÀÌ¶óÀÌÆ®"
-   IDC_SYSPARAMS_BUTTON_DARK_SHADOW "ÄÁÆ®·Ñ ¾îµÎ¿î ±×¸²ÀÚ"
-   IDC_SYSPARAMS_BUTTON_LIGHT      "ÄÁÆ®·Ñ ¹àÀ½"
-   IDC_SYSPARAMS_BUTTON_ALTERNATE  "ÄÁÆ®·Ñ ¹Ù²ð¶§ ¹è°æ"
-   IDC_SYSPARAMS_HOT_TRACKING      "ÇÖ Æ®·¢µÈ ¾ÆÀÌÅÛ"
-   IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "È°¼ºÈ­µÈ  Á¦¸ñ ¹Ù  »ö±ò º¯È­"
-   IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "ºñÈ°¼ºÈ­µÈ Á¦¸ñ¹Ù »ö±ò º¯È­"
-   IDC_SYSPARAMS_MENU_HILIGHT      "¸Þ´º ÇÏÀÌ¶óÀÌÆ®"
-   IDC_SYSPARAMS_MENUBAR           "¸Þ´º¹Ù"
+   IDC_SYSPARAMS_BUTTON            "ì»¨íŠ¸ë¡¤ ë°°ê²½"
+   IDC_SYSPARAMS_BUTTON_TEXT       "ì»¨íŠ¸ë¡¤ ë¬¸ìž"
+   IDC_SYSPARAMS_DESKTOP           "ë°”íƒ•í™”ë©´"
+   IDC_SYSPARAMS_MENU              "ë©”ë‰´ ë°°ê²½"
+   IDC_SYSPARAMS_MENU_TEXT         "ë©”ë‰´ ë¬¸ìž"
+   IDC_SYSPARAMS_SCROLLBAR         "ëª©ë¡ë°”"
+   IDC_SYSPARAMS_SELECTION         "ì„ íƒëœ ë°°ê²½"
+   IDC_SYSPARAMS_SELECTION_TEXT    "ì„ íƒëœ ë¬¸ìž"
+   IDC_SYSPARAMS_TOOLTIP           "ë„êµ¬íŒ ë°°ê²½"
+   IDC_SYSPARAMS_TOOLTIP_TEXT      "ë„êµ¬íŒ ë¬¸ìž"
+   IDC_SYSPARAMS_WINDOW            "ì°½ ë°°ê²½"
+   IDC_SYSPARAMS_WINDOW_TEXT       "ì°½ ë¬¸ìž"
+   IDC_SYSPARAMS_ACTIVE_TITLE      "í™œì„±ëœ ì œëª© ë§‰ëŒ€"
+   IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "í™œì„±ëœ ì œëª© ë¬¸ìž"
+   IDC_SYSPARAMS_INACTIVE_TITLE    "ë¹„í™œì„±ëœ ì œëª© ë§‰ëŒ€"
+   IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "ë¹„í™œì„±ëœ ì œëª© ë¬¸ìž"
+   IDC_SYSPARAMS_MSGBOX_TEXT       "ë©”ì„¸ì§€ ìƒìž í…ìŠ¤íŠ¸"
+   IDC_SYSPARAMS_APPWORKSPACE      "ì–´í”Œë¦¬ì¼€ì´ì…˜ ìž‘ì—…ê³µê°„"
+   IDC_SYSPARAMS_WINDOW_FRAME      "ì°½ í”„ë ˆìž„"
+   IDC_SYSPARAMS_ACTIVE_BORDER     "í™œì„±í™”ëœ ì°½í‹€"
+   IDC_SYSPARAMS_INACTIVE_BORDER   "ë¹„ í™œì„±í™”ëœ ì°½í‹€"
+   IDC_SYSPARAMS_BUTTON_SHADOW     "ì»¨íŠ¸ë¡¤ ê·¸í•¨ì§€"
+   IDC_SYSPARAMS_GRAY_TEXT         "íšŒìƒ‰ ë¬¸ìž"
+   IDC_SYSPARAMS_BUTTON_HILIGHT    "ì»¨íŠ¸ë¡¤ í•˜ì´ë¼ì´íŠ¸"
+   IDC_SYSPARAMS_BUTTON_DARK_SHADOW "ì»¨íŠ¸ë¡¤ ì–´ë‘ìš´ ê·¸ë¦¼ìž"
+   IDC_SYSPARAMS_BUTTON_LIGHT      "ì»¨íŠ¸ë¡¤ ë°ìŒ"
+   IDC_SYSPARAMS_BUTTON_ALTERNATE  "ì»¨íŠ¸ë¡¤ ë°”ë€”ë•Œ ë°°ê²½"
+   IDC_SYSPARAMS_HOT_TRACKING      "í•« íŠ¸ëž™ëœ ì•„ì´í…œ"
+   IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "í™œì„±í™”ëœ  ì œëª© ë°”  ìƒ‰ê¹” ë³€í™”"
+   IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "ë¹„í™œì„±í™”ëœ ì œëª©ë°” ìƒ‰ê¹” ë³€í™”"
+   IDC_SYSPARAMS_MENU_HILIGHT      "ë©”ë‰´ í•˜ì´ë¼ì´íŠ¸"
+   IDC_SYSPARAMS_MENUBAR           "ë©”ë‰´ë°”"
 END
