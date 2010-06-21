@@ -2024,7 +2024,6 @@ static void test_SHCreateShellItem(void)
 
 static void test_SHParseDisplayName(void)
 {
-    static const WCHAR prefixW[] = {'w','t',0};
     LPITEMIDLIST pidl1, pidl2;
     IShellFolder *desktop;
     WCHAR dirW[MAX_PATH];
@@ -2066,9 +2065,7 @@ if (0)
     pILFree(pidl2);
 
     /* with path */
-    GetTempPathW(sizeof(dirW)/sizeof(WCHAR), dirW);
-    GetTempFileNameW(dirW, prefixW, 0, dirW);
-    CreateFileW(dirW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    GetWindowsDirectoryW( dirW, MAX_PATH );
 
     hr = pSHParseDisplayName(dirW, NULL, &pidl1, 0, NULL);
     ok(hr == S_OK, "failed %08x\n", hr);
@@ -2079,8 +2076,6 @@ if (0)
     ok(ret == TRUE, "expected equal idls\n");
     pILFree(pidl1);
     pILFree(pidl2);
-
-    DeleteFileW(dirW);
 
     IShellFolder_Release(desktop);
 }
