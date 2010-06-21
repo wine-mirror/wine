@@ -1405,15 +1405,14 @@ void WCMD_execute (WCHAR *command, WCHAR *redirects,
     }
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-        whichcmd, count, inbuilt[i], -1) == 2) break;
+        whichcmd, count, inbuilt[i], -1) == CSTR_EQUAL) break;
     }
     p = WCMD_strtrim_leading_spaces (&whichcmd[count]);
     WCMD_parse (p, quals, param1, param2);
     WINE_TRACE("param1: %s, param2: %s\n", wine_dbgstr_w(param1), wine_dbgstr_w(param2));
 
-    if((p[0] == '/') && (p[1] == '?')) {
-
-      /*this is a help request for a program*/
+    if (i <= WCMD_EXIT && (p[0] == '/') && (p[1] == '?')) {
+      /* this is a help request for a builtin program */
       i = WCMD_HELP;
       memcpy(p, whichcmd, count * sizeof(WCHAR));
       p[count] = '\0';
