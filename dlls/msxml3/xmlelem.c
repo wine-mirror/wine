@@ -262,7 +262,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR name,
         xmlNsPtr ns;
         ns = xmlSearchNs(This->node->doc, This->node, (xmlChar*)"xml");
         val = xmlGetNsProp(This->node, (xmlChar*)"lang", ns->href);
-        xmlFree(ns);
+        xmlFreeNs(ns);
     }
     else
     {
