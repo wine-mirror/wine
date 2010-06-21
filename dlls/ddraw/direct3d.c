@@ -684,10 +684,11 @@ IDirect3DImpl_3_FindDevice(IDirect3D3 *iface,
         TRACE(" trying to match guid %s.\n", debugstr_guid(&(D3DDFS->guid)));
         if ((IsEqualGUID(&IID_D3DDEVICE_WineD3D, &(D3DDFS->guid)) == 0) &&
             (IsEqualGUID(&IID_IDirect3DHALDevice, &(D3DDFS->guid)) == 0) &&
-            (IsEqualGUID(&IID_IDirect3DRefDevice, &(D3DDFS->guid)) == 0))
+            (IsEqualGUID(&IID_IDirect3DRefDevice, &(D3DDFS->guid)) == 0) &&
+            (IsEqualGUID(&IID_IDirect3DRGBDevice, &(D3DDFS->guid)) == 0))
         {
             TRACE(" no match for this GUID.\n");
-            return DDERR_INVALIDPARAMS;
+            return DDERR_NOTFOUND;
         }
     }
 

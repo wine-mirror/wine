@@ -3393,9 +3393,20 @@ static void VertexBufferLockRest(void)
 
 static void FindDevice(void)
 {
+    static const struct
+    {
+        const GUID *guid;
+        int todo;
+    } deviceGUIDs[] =
+    {
+        {&IID_IDirect3DRampDevice, 1},
+        {&IID_IDirect3DRGBDevice},
+    };
+
     D3DFINDDEVICESEARCH search = {0};
     D3DFINDDEVICERESULT result = {0};
     HRESULT hr;
+    int i;
 
     /* Test invalid parameters. */
     hr = IDirect3D_FindDevice(Direct3D1, NULL, NULL);
@@ -3423,6 +3434,59 @@ static void FindDevice(void)
     hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
     ok(hr == DDERR_INVALIDPARAMS,
        "Expected IDirect3D1::FindDevice to return DDERR_INVALIDPARAMS, got 0x%08x\n", hr);
+
+    /* Specifying no flags is permitted. */
+    search.dwSize = sizeof(search);
+    search.dwFlags = 0;
+    result.dwSize = sizeof(result);
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+    ok(hr == D3D_OK,
+       "Expected IDirect3D1::FindDevice to return D3D_OK, got 0x%08x\n", hr);
+
+    /* Try an arbitrary non-device GUID. */
+    search.dwSize = sizeof(search);
+    search.dwFlags = D3DFDS_GUID;
+    search.guid = IID_IDirect3D;
+    result.dwSize = sizeof(result);
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+    ok(hr == DDERR_NOTFOUND,
+       "Expected IDirect3D1::FindDevice to return DDERR_NOTFOUND, got 0x%08x\n", hr);
+
+    /* The reference device GUID can't be enumerated. */
+    search.dwSize = sizeof(search);
+    search.dwFlags = D3DFDS_GUID;
+    search.guid = IID_IDirect3DRefDevice;
+    result.dwSize = sizeof(result);
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+    todo_wine
+    ok(hr == DDERR_NOTFOUND,
+       "Expected IDirect3D1::FindDevice to return DDERR_NOTFOUND, got 0x%08x\n", hr);
+
+    /* These GUIDs appear to be always present. */
+    for (i = 0; i < sizeof(deviceGUIDs)/sizeof(deviceGUIDs[0]); i++)
+    {
+        search.dwSize = sizeof(search);
+        search.dwFlags = D3DFDS_GUID;
+        search.guid = *deviceGUIDs[i].guid;
+        result.dwSize = sizeof(result);
+
+        hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+
+        if (deviceGUIDs[i].todo)
+        {
+            todo_wine
+            ok(hr == D3D_OK,
+               "[%d] Expected IDirect3D1::FindDevice to return D3D_OK, got 0x%08x\n", i, hr);
+        }
+        else
+        {
+            ok(hr == D3D_OK,
+               "[%d] Expected IDirect3D1::FindDevice to return D3D_OK, got 0x%08x\n", i, hr);
+        }
+    }
 }
 
 START_TEST(d3d)
