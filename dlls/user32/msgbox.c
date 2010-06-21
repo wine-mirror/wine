@@ -512,7 +512,11 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 
     if (!(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG,
                                  msg_box_res_nameW, msgbox->dwLanguageId)))
-        return 0;
+    {
+        if (!msgbox->dwLanguageId ||
+            !(hRes = FindResourceExW(user32_module, (LPWSTR)RT_DIALOG, msg_box_res_nameW, LANG_NEUTRAL)))
+            return 0;
+    }
     if (!(tmplate = LoadResource(user32_module, hRes)))
         return 0;
 
