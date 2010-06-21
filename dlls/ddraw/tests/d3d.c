@@ -3487,6 +3487,17 @@ static void FindDevice(void)
                "[%d] Expected IDirect3D1::FindDevice to return D3D_OK, got 0x%08x\n", i, hr);
         }
     }
+
+    /* Curiously the color model criteria seem to be ignored. */
+    search.dwSize = sizeof(search);
+    search.dwFlags = D3DFDS_COLORMODEL;
+    search.dcmColorModel = 0xdeadbeef;
+    result.dwSize = sizeof(result);
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+    todo_wine
+    ok(hr == D3D_OK,
+       "Expected IDirect3D1::FindDevice to return D3D_OK, got 0x%08x\n", hr);
 }
 
 START_TEST(d3d)
