@@ -120,8 +120,8 @@ DOS-schijven bevinden.\n"
   WCMD_PATH,
 "PATH toon of wijzigt het zoekpad van cmd.\n\
 \n\
-De opdracht PATH toont het huidige zoekpad (de beginwaarde wordt in\n\
-het bestand genaamd wine.conf toegekend). Om het zoekpad te wijzigen laat\n\
+De opdracht PATH toont het huidige zoekpad (de beginwaarde wordt uit\n\
+het register gehaald). Om het zoekpad te wijzigen laat\n\
 u de PATH opdracht volgen door de nieuwe waarde.\n\
 \n\
 Het is ook mogelijk om het zoekpad te wijzigen met behulp van de PATH\n\
