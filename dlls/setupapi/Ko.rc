@@ -1,7 +1,9 @@
 /*
  * Korean resources for SETUPAPI
  *
- * Copyright 2005 YunSong Hwang
+ * Copyright 2001 Andreas Mohr
+ * Copyright 2009 Ricardo Filipe
+ * Copyright 2005,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,7 +52,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
 	LTEXT "제작사의 설치 디스크를 삽입하고, \ 아래의 선택된 드라이브가 올바른지 확인하시오 ", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
-	LTEXT "제작사의 파일들 복사할 곳:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "제작사의 파일이 복사할 곳:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
 	PUSHBUTTON "확인", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 	PUSHBUTTON "취소", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
