@@ -848,6 +848,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct win
     {
         GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level,
                 internal, width, height, 0, This->resource.size, mem));
+        checkGLcall("glCompressedTexImage2DARB");
     }
     else
     {
