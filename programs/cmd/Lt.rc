@@ -113,8 +113,8 @@ MOVE nepavyksta jei sena ir nauja vietos yra su skirtingomis DOS raidėmis.\n"
   WCMD_PATH,
 "PATH parodo ar pakeičia paieškos kelią.\n\
 \n\
-Įvedus PATH bus parodyta dabartinė PATH reikšmė (iš pradžių tai reikšmė\n\
-nurodyta jūsų wine.conf faile). Norėdami pakeisti nuostatą nurodykite PATH\n\
+Įvedus PATH bus parodyta dabartinė PATH reikšmė (iš pradžių reikšmė\n\
+paimama iš registro). Norėdami pakeisti nuostatą nurodykite PATH\n\
 komandai naują reikšmę kaip parametrą.\n\
 \n\
 PATH modifikuoti taip pat galima naudojant PATH aplinkos kintamąjį,\n\
