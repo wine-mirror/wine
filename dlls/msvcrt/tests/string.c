@@ -975,7 +975,7 @@ static void test__strtoi64(void)
     ok(res == 123, "res != 123\n");
     ok(endpos == oct+strlen(oct), "Incorrect endpos (%p-%p)\n", oct, endpos);
     res = p_strtoi64(blanks, &endpos, 10);
-    ok(res == 12, "res != 12");
+    ok(res == 12, "res != 12\n");
     ok(endpos == blanks+10, "Incorrect endpos (%p-%p)\n", blanks, endpos);
     ok(errno == 0xdeadbeef, "errno = %x\n", errno);
 
