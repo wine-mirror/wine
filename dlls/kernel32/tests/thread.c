@@ -1329,6 +1329,8 @@ static void test_ThreadErrorMode(void)
     pSetThreadErrorMode(oldmode, NULL);
 }
 
+void _fpreset(void) {} /* override the mingw fpu init code */
+
 static inline void set_fpu_cw(WORD cw)
 {
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
@@ -1387,11 +1389,10 @@ static WORD get_thread_fpu_cw(void)
 
 static void test_thread_fpu_cw(void)
 {
-    WORD initial_cw, cw, expect;
+    WORD initial_cw, cw;
 
     initial_cw = get_fpu_cw();
-    expect = sizeof(void *) > sizeof(int) ? 0x27f : 0x37f;
-    ok(initial_cw == expect, "Expected FPU control word expect, got %#x.\n", initial_cw);
+    ok(initial_cw == 0x27f, "Expected FPU control word 0x27f, got %#x.\n", initial_cw);
 
     cw = get_thread_fpu_cw();
     ok(cw == 0x27f, "Expected FPU control word 0x27f, got %#x.\n", cw);

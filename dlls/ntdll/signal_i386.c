@@ -2155,6 +2155,7 @@ void signal_free_thread( TEB *teb )
  */
 void signal_init_thread( TEB *teb )
 {
+    const WORD fpu_cw = 0x27f;
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SpareBytes1;
     LDT_ENTRY fs_entry;
     stack_t ss;
@@ -2178,15 +2179,11 @@ void signal_init_thread( TEB *teb )
     wine_ldt_init_fs( thread_data->fs, &fs_entry );
     thread_data->gs = wine_get_gs();
 
-    if (teb->Peb->ProcessHeap) /* Not for the inital thread. */
-    {
-        const WORD fpu_cw = 0x27f;
 #ifdef __GNUC__
-        __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
+    __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
 #else
-        FIXME("FPU setup not implemented for this platform.\n");
+    FIXME("FPU setup not implemented for this platform.\n");
 #endif
-    }
 }
 
 /**********************************************************************
