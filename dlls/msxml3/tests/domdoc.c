@@ -656,6 +656,11 @@ if (0)
     r = IXMLDOMDocument_get_nodeName( doc, NULL );
     ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
 
+    str = (BSTR)0xdeadbeef;
+    r = IXMLDOMDocument_get_baseName( doc, &str );
+    ok ( r == S_FALSE, "got 0x%08x\n", r);
+    ok (str == NULL, "got %p\n", str);
+
     /* content doesn't matter here */
     str = NULL;
     r = IXMLDOMDocument_get_nodeName( doc, &str );
