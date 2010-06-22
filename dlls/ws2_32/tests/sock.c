@@ -2564,7 +2564,7 @@ typedef struct async_message
     struct async_message *next;
 } async_message;
 
-static struct async_message *messages_recieved;
+static struct async_message *messages_received;
 
 #define WM_SOCKET (WM_USER+100)
 static LRESULT CALLBACK ws2_test_WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -2579,14 +2579,14 @@ static LRESULT CALLBACK ws2_test_WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         message->lparam = lparam;
         message->next = NULL;
 
-        if (messages_recieved)
+        if (messages_received)
         {
-            struct async_message *last = messages_recieved;
+            struct async_message *last = messages_received;
             while (last->next) last = last->next;
             last->next = message;
         }
         else
-            messages_recieved = message;
+            messages_received = message;
         return 0;
     }
 
@@ -2650,7 +2650,7 @@ static char *dbgstr_event_seq(const LPARAM *seq)
 static char *dbgstr_event_seq_result(SOCKET s, WSANETWORKEVENTS *netEvents)
 {
     static char message[1024];
-    struct async_message *curr = messages_recieved;
+    struct async_message *curr = messages_received;
     int index, error, bit = 0;
     char name[10];
 
@@ -2693,7 +2693,7 @@ static char *dbgstr_event_seq_result(SOCKET s, WSANETWORKEVENTS *netEvents)
 static void flush_events(SOCKET s, HANDLE hEvent)
 {
     WSANETWORKEVENTS netEvents;
-    struct async_message *prev = NULL, *curr = messages_recieved;
+    struct async_message *prev = NULL, *curr = messages_received;
     int ret;
     DWORD dwRet;
 
@@ -2714,12 +2714,12 @@ static void flush_events(SOCKET s, HANDLE hEvent)
             if (curr->socket == s)
             {
                 if (prev) prev->next = curr->next;
-                else messages_recieved = curr->next;
+                else messages_received = curr->next;
 
                 HeapFree(GetProcessHeap(), 0, curr);
 
                 if (prev) curr = prev->next;
-                else curr = messages_recieved;
+                else curr = messages_received;
             }
             else
             {
@@ -2759,7 +2759,7 @@ static int match_event_sequence(SOCKET s, WSANETWORKEVENTS *netEvents, const LPA
     }
     else
     {
-        curr = messages_recieved;
+        curr = messages_received;
         while (curr)
         {
             if (curr->socket == s)
