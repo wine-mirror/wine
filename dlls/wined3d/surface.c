@@ -1495,6 +1495,15 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     struct wined3d_context *context;
     GLint prevRead;
 
+    if (!surface_is_offscreen(This))
+    {
+        /* We would need to flip onscreen surfaces, but there's no efficient
+         * way to do that here. It makes more sense for the caller to
+         * explicitly go through sysmem. */
+        ERR("Not supported for onscreen targets.\n");
+        return;
+    }
+
     /* Activate the surface to read from. In some situations it isn't the currently active target(e.g. backbuffer
      * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
      * states in the stateblock, and no driver was found yet that had bugs in that regard.
@@ -1505,42 +1514,13 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     surface_prepare_texture(This, gl_info, srgb);
     surface_bind_and_dirtify(This, srgb);
 
+    TRACE("Reading back offscreen render target %p.\n", This);
+
     ENTER_GL();
+
     glGetIntegerv(GL_READ_BUFFER, &prevRead);
-    LEAVE_GL();
-
-    /* Select the correct read buffer, and give some debug output.
-     * There is no need to keep track of the current read buffer or reset it, every part of the code
-     * that reads sets the read buffer as desired.
-     */
-    if (!surface_is_offscreen(This))
-    {
-        GLenum buffer = surface_get_gl_buffer(This);
-        TRACE("Locking %#x buffer\n", buffer);
-
-        ENTER_GL();
-        glReadBuffer(buffer);
-        checkGLcall("glReadBuffer");
-        LEAVE_GL();
-    }
-    else
-    {
-        /* Locking the primary render target which is not on a swapchain(=offscreen render target).
-         * Read from the back buffer
-         */
-        TRACE("Locking offscreen render target\n");
-        ENTER_GL();
-        glReadBuffer(device->offscreenBuffer);
-        checkGLcall("glReadBuffer");
-        LEAVE_GL();
-    }
-
-    ENTER_GL();
-    /* If !SrcIsUpsideDown we should flip the surface.
-     * This can be done using glCopyTexSubImage2D but this
-     * is VERY slow, so don't do that. We should prevent
-     * this code from getting called in such cases or perhaps
-     * we can use FBOs */
+    glReadBuffer(device->offscreenBuffer);
+    checkGLcall("glReadBuffer");
 
     glCopyTexSubImage2D(This->texture_target, This->texture_level,
             0, 0, 0, 0, This->currentDesc.Width, This->currentDesc.Height);
@@ -1552,8 +1532,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     LEAVE_GL();
 
     context_release(context);
-
-    TRACE("Updated target %d\n", This->texture_target);
 }
 
 /* Context activation is done by the caller. */
@@ -4239,11 +4217,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    BOOL drawable_read_ok = surface_is_offscreen(This);
     struct wined3d_format_desc desc;
     CONVERT_TYPES convert;
     int width, pitch, outpitch;
     BYTE *mem;
-    BOOL drawable_read_ok = TRUE;
     BOOL in_fbo = FALSE;
 
     if (This->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
@@ -4402,9 +4380,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                     IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
                 }
             }
-            if(!(This->Flags & SFLAG_INSYSMEM)) {
-                /* Should not happen */
-                ERR("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set\n");
+            if (!(This->Flags & SFLAG_INSYSMEM))
+            {
+                WARN("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set.\n");
                 /* Lets hope we get it from somewhere... */
                 IWineD3DSurfaceImpl_LoadLocation(iface, SFLAG_INSYSMEM, rect);
             }
