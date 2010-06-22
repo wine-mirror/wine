@@ -132,7 +132,7 @@ DWORD WINAPI RtlGetLastWin32Error(void)
  *      NtRaiseHardError (NTDLL.@)
  */
 NTSTATUS WINAPI NtRaiseHardError( NTSTATUS ErrorStatus, ULONG NumberOfParameters,
-                                  PUNICODE_STRING UnicodeStringParameterMask, PVOID *Paramaters,
+                                  PUNICODE_STRING UnicodeStringParameterMask, PVOID *Parameters,
                                   HARDERROR_RESPONSE_OPTION ResponseOption, PHARDERROR_RESPONSE Response )
 {
     FIXME(": stub. Errorstatus was %08x\n", ErrorStatus);
