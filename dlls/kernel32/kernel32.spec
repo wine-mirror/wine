@@ -1095,9 +1095,9 @@
 @ stdcall Thread32Next(long ptr)
 @ stdcall -i386 -private ThunkConnect32(ptr str str str ptr ptr) krnl386.exe16.ThunkConnect32
 @ stdcall TlsAlloc()
-@ stub TlsAllocInternal
+@ stdcall TlsAllocInternal() TlsAlloc
 @ stdcall TlsFree(long)
-@ stub TlsFreeInternal
+@ stdcall TlsFreeInternal(long) TlsFree
 @ stdcall TlsGetValue(long)
 @ stdcall TlsSetValue(long ptr)
 @ stdcall Toolhelp32ReadProcessMemory(long ptr ptr long ptr)
