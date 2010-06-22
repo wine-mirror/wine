@@ -514,7 +514,7 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
     case 32:
         return SaveTrueColorIconResAsPNG(pIcon, png_filename, commentW);
     default:
-        WINE_FIXME("unsupported bpp %d, please report", pIcon->bmiHeader.biBitCount);
+        WINE_FIXME("unsupported bpp %d, please report\n", pIcon->bmiHeader.biBitCount);
         return FALSE;
     }
 }
