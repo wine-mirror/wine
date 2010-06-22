@@ -143,9 +143,9 @@ static const struct exception
 /* 20 */
     /* test overlong instruction (limit is 15 bytes, 5 on Win7) */
     { { 0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0x64,0xfa,0xc3 },
-      0, 16, FALSE, STATUS_ILLEGAL_INSTRUCTION, 0 },
+      0, 16, TRUE, STATUS_ILLEGAL_INSTRUCTION, 0 },
     { { 0x64,0x64,0x64,0x64,0xfa,0xc3 },
-      0, 5, FALSE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+      0, 5, TRUE, STATUS_PRIVILEGED_INSTRUCTION, 0 },
 
     /* test invalid interrupt */
     { { 0xcd, 0xff, 0xc3 },   /* 21: int $0xff; ret */
@@ -246,7 +246,9 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
        rec->ExceptionAddress, (char *)code_mem + 0xb);
 
     if (pNtCurrentTeb()->Peb->BeingDebugged)
-        ok((void *)context->Eax == pRtlRaiseException, "debugger managed to modify Eax to %x should be %p\n",
+        ok((void *)context->Eax == pRtlRaiseException ||
+           broken( is_wow64 && context->Eax == 0xf00f00f1 ), /* broken on vista */
+           "debugger managed to modify Eax to %x should be %p\n",
            context->Eax, pRtlRaiseException);
 
     /* check that context.Eip is fixed up only for EXCEPTION_BREAKPOINT
@@ -773,7 +775,9 @@ static void test_debugger(void)
                         /* ctx.Eip is the same value the exception handler got */
                         if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
                         {
-                            ok((char *)ctx.Eip == (char *)code_mem_address + 0xa, "Eip at 0x%x instead of %p\n",
+                            ok((char *)ctx.Eip == (char *)code_mem_address + 0xa ||
+                               broken(is_wow64 && (char *)ctx.Eip == (char *)code_mem_address + 0xb),
+                               "Eip at 0x%x instead of %p\n",
                                 ctx.Eip, (char *)code_mem_address + 0xa);
                             /* need to fixup Eip for debuggee */
                             if ((char *)ctx.Eip == (char *)code_mem_address + 0xa)
@@ -824,7 +828,8 @@ static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
         ok( rec->ExceptionCode ==  STATUS_FLOAT_MULTIPLE_TRAPS,
             "exception code: %#x, should be %#x\n",
             rec->ExceptionCode,  STATUS_FLOAT_MULTIPLE_TRAPS);
-        ok( rec->NumberParameters == 1, "# of params: %i, should be 1\n",
+        ok( rec->NumberParameters == 1 || broken(is_wow64 && rec->NumberParameters == 2),
+            "# of params: %i, should be 1\n",
             rec->NumberParameters);
         if( rec->NumberParameters == 1 )
             ok( rec->ExceptionInformation[0] == 0, "param #1: %lx, should be 0\n", rec->ExceptionInformation[0]);
