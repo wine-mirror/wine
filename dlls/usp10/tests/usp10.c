@@ -148,7 +148,7 @@ static void test_ScriptItemize( void )
     ok (hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG if pItems is NULL\n");
 
     hr = ScriptItemize(test1, 4, 1, &Control, &State, items, NULL);
-    ok (hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG if cMaxItems < 2.");
+    ok (hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG if cMaxItems < 2.\n");
 
     hr = ScriptItemize(test1, 0, 10, NULL, NULL, items, &nItems);
     ok (hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG if cInChars is 0\n");
