@@ -960,6 +960,133 @@ static void test_lpFile_parsed(void)
         "expected success (33), got %s (%d), lpFile: %s\n",
         rc > 32 ? "success" : "failure", rc, fileA
         );
+
+}
+
+static void test_argify(void)
+{
+    char fileA[MAX_PATH];
+
+    int rc;
+
+    sprintf(fileA, "%s\\test file.shlexec", tmpdir);
+
+    /* %2 */
+    rc=shell_execute("NoQuotesParam2", fileA, "a b", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        okChildInt("argcA", 5);
+        okChildString("argvA4", "a");
+    }
+
+    /* %2 */
+    /* '"a"""'   -> 'a"' */
+    rc=shell_execute("NoQuotesParam2", fileA, "\"a:\"\"some string\"\"\"", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        okChildInt("argcA", 5);
+        todo_wine {
+            okChildString("argvA4", "a:some string");
+        }
+    }
+
+    /* %2 */
+    /* backslash isn't escape char
+     * '"a\""'   -> '"a\""' */
+    rc=shell_execute("NoQuotesParam2", fileA, "\"a:\\\"some string\\\"\"", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        okChildInt("argcA", 5);
+        todo_wine {
+            okChildString("argvA4", "a:\\");
+        }
+    }
+
+    /* "%2" */
+    /* \t isn't whitespace */
+    rc=shell_execute("QuotedParam2", fileA, "a\tb c", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        okChildInt("argcA", 5);
+        todo_wine {
+            okChildString("argvA4", "a\tb");
+        }
+    }
+
+    /* %* */
+    rc=shell_execute("NoQuotesAllParams", fileA, "a b c d e f g h", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        todo_wine {
+            okChildInt("argcA", 12);
+            okChildString("argvA4", "a");
+            okChildString("argvA11", "h");
+        }
+    }
+
+    /* %* can sometimes contain only whitespaces and no args */
+    rc=shell_execute("QuotedAllParams", fileA, "   ", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        todo_wine {
+            okChildInt("argcA", 5);
+            okChildString("argvA4", "   ");
+        }
+    }
+
+    /* %~3 */
+    rc=shell_execute("NoQuotesParams345etc", fileA, "a b c d e f g h", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        todo_wine {
+            okChildInt("argcA", 11);
+            okChildString("argvA4", "b");
+            okChildString("argvA10", "h");
+        }
+    }
+
+    /* %~3 is rest of command line starting with whitespaces after 2nd arg */
+    rc=shell_execute("QuotedParams345etc", fileA, "a    ", NULL);
+    ok(rc>32,
+        "expected success (33), got %s (%d), lpFile: %s\n",
+        rc > 32 ? "success" : "failure", rc, fileA
+        );
+    if (rc>32)
+    {
+        okChildInt("argcA", 5);
+        todo_wine {
+            okChildString("argvA4", "    ");
+        }
+    }
+
 }
 
 static void test_filename(void)
@@ -1935,6 +2062,15 @@ static void init_test(void)
     create_test_verb(".shlexec", "QuotedLowerL", 0, "QuotedLowerL \"%l\"");
     create_test_verb(".shlexec", "UpperL", 0, "UpperL %L");
     create_test_verb(".shlexec", "QuotedUpperL", 0, "QuotedUpperL \"%L\"");
+
+    create_test_verb(".shlexec", "NoQuotesParam2", 0, "NoQuotesParam2 %2");
+    create_test_verb(".shlexec", "QuotedParam2", 0, "QuotedParam2 \"%2\"");
+
+    create_test_verb(".shlexec", "NoQuotesAllParams", 0, "NoQuotesAllParams %*");
+    create_test_verb(".shlexec", "QuotedAllParams", 0, "QuotedAllParams \"%*\"");
+
+    create_test_verb(".shlexec", "NoQuotesParams345etc", 0, "NoQuotesParams345etc %~3");
+    create_test_verb(".shlexec", "QuotedParams345etc", 0, "QuotedParams345etc \"%~3\"");
 }
 
 static void cleanup_test(void)
@@ -2048,6 +2184,7 @@ START_TEST(shlexec)
 
     init_test();
 
+    test_argify();
     test_lpFile_parsed();
     test_filename();
     test_find_executable();
