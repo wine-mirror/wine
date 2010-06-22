@@ -456,7 +456,8 @@ DlgProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                        MAKEINTRESOURCE (IDD_ABOUT), hwnd, AboutProc);
             return TRUE;
         case IDABORT:
-            report (R_WARNING, "Not implemented");
+            report (R_STATUS, "Aborting, please wait...");
+            aborting = TRUE;
             return TRUE;
         }
     }

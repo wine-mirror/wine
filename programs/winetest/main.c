@@ -49,6 +49,7 @@ struct wine_test
 
 char *tag = NULL;
 char *email = NULL;
+BOOL aborting = FALSE;
 static struct wine_test *wine_tests;
 static int nr_of_files, nr_of_tests;
 static int nr_native_dlls;
@@ -677,6 +678,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     HMODULE dll;
     DWORD err;
 
+    if (aborting) return TRUE;
     if (test_filtered_out( lpszName, NULL )) return TRUE;
 
     /* Check if the main dll is present on this system */
@@ -840,6 +842,8 @@ run_tests (char *logname, char *outdir)
 
     FreeLibrary(hmscoree);
 
+    if (aborting) return logname;
+
     xprintf ("Test output:\n" );
 
     report (R_DELTA, 0, "Extracting: Done");
@@ -853,12 +857,15 @@ run_tests (char *logname, char *outdir)
         struct wine_test *test = wine_tests + i;
         int j;
 
+        if (aborting) break;
+
         if (test->maindllpath) {
             /* We need to add the path (to the main dll) to PATH */
             append_path(test->maindllpath);
         }
 
 	for (j = 0; j < test->subtest_count; j++) {
+            if (aborting) break;
             report (R_STEP, "Running: %s:%s", test->name,
                     test->subtests[j]);
 	    run_test (test, test->subtests[j], logfile, tempdir);
@@ -1105,6 +1112,10 @@ int main( int argc, char *argv[] )
 
         if (!logname) {
             logname = run_tests (NULL, outdir);
+            if (aborting) {
+                DeleteFileA(logname);
+                exit (0);
+            }
             if (build_id[0] && !nb_filters && !nr_native_dlls &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && !DeleteFileA(logname))
