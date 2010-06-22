@@ -44,7 +44,7 @@ int cb_called[4];
 
 /* ########## */
 
-void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
+static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
         unsigned line, uintptr_t arg)
 {
