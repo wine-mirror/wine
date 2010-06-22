@@ -553,7 +553,7 @@ static void test_bitmap_rendering(void)
 
     if(!iPixelFormat)
     {
-        skip("Unable to find a suitable pixel format");
+        skip("Unable to find a suitable pixel format\n");
     }
     else
     {
