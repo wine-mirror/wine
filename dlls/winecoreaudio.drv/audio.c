@@ -442,7 +442,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
 
 static BOOL supportedFormat(LPWAVEFORMATEX wf)
 {
-    if (wf->nSamplesPerSec == 0)
+    if (wf->nSamplesPerSec < DSBFREQUENCY_MIN || wf->nSamplesPerSec > DSBFREQUENCY_MAX)
         return FALSE;
 
     if (wf->wFormatTag == WAVE_FORMAT_PCM) {
@@ -464,7 +464,7 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
         } else
             WARN("only KSDATAFORMAT_SUBTYPE_PCM supported\n");
     } else
-        WARN("only WAVE_FORMAT_PCM supported\n");
+        WARN("only WAVE_FORMAT_PCM and WAVE_FORMAT_EXTENSIBLE supported\n");
 
     return FALSE;
 }
