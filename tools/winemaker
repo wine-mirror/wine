@@ -1163,6 +1163,8 @@ sub source_scan_workspace_file($)
                 next;
             } elsif (/^#/) {
                 # ignore Comments
+            } elsif (/^Global:/) {
+                # ignore the Global section
             } elsif (/\w:/) {
                 print STDERR "unknown section $_\n";
             } elsif (/^Microsoft(.*)Studio(.*)File,\sFormat Version\s(.*)/) {
