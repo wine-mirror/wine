@@ -3536,7 +3536,7 @@ static void test_effect_get_variable_by(ID3D10Device *device)
 
     /* variable f1 */
     variable_by_index = effect->lpVtbl->GetVariableByIndex(effect, 0);
-    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p", variable_by_index);
+    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p\n", variable_by_index);
 
     variable = effect->lpVtbl->GetVariableByName(effect, "f1");
     ok(variable_by_index == variable, "GetVariableByName got %p, expected %p\n", variable, variable_by_index);
@@ -3546,7 +3546,7 @@ static void test_effect_get_variable_by(ID3D10Device *device)
 
     /* variable f2 */
     variable_by_index = effect->lpVtbl->GetVariableByIndex(effect, 1);
-    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p", variable_by_index);
+    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p\n", variable_by_index);
 
     variable = effect->lpVtbl->GetVariableByName(effect, "f2");
     ok(variable_by_index == variable, "GetVariableByName got %p, expected %p\n", variable, variable_by_index);
@@ -3556,18 +3556,18 @@ static void test_effect_get_variable_by(ID3D10Device *device)
 
     /* variable f3 */
     variable_by_index = effect->lpVtbl->GetVariableByIndex(effect, 2);
-    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p", variable_by_index);
+    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p\n", variable_by_index);
 
     variable = effect->lpVtbl->GetVariableByName(effect, "f3");
     ok(variable_by_index == variable, "GetVariableByName got %p, expected %p\n", variable, variable_by_index);
 
     variable = effect->lpVtbl->GetVariableBySemantic(effect, "SV_POSITION");
-    ok(variable != null_variable, "GetVariableBySemantic failed %p", variable);
-    ok(variable != variable_by_index, "GetVariableBySemantic failed %p", variable);
+    ok(variable != null_variable, "GetVariableBySemantic failed %p\n", variable);
+    ok(variable != variable_by_index, "GetVariableBySemantic failed %p\n", variable);
 
     /* variable f4 */
     variable_by_index = effect->lpVtbl->GetVariableByIndex(effect, 3);
-    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p", variable_by_index);
+    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p\n", variable_by_index);
 
     variable = effect->lpVtbl->GetVariableByName(effect, "f4");
     ok(variable_by_index == variable, "GetVariableByName got %p, expected %p\n", variable, variable_by_index);
@@ -3577,7 +3577,7 @@ static void test_effect_get_variable_by(ID3D10Device *device)
 
     /* variable tex1 */
     variable_by_index = effect->lpVtbl->GetVariableByIndex(effect, 4);
-    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p", variable_by_index);
+    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p\n", variable_by_index);
 
     variable = effect->lpVtbl->GetVariableByName(effect, "tex1");
     ok(variable_by_index == variable, "GetVariableByName got %p, expected %p\n", variable, variable_by_index);
@@ -3587,14 +3587,14 @@ static void test_effect_get_variable_by(ID3D10Device *device)
 
     /* variable tex2 */
     variable_by_index = effect->lpVtbl->GetVariableByIndex(effect, 5);
-    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p", variable_by_index);
+    ok(null_variable != variable_by_index, "GetVariableByIndex failed %p\n", variable_by_index);
 
     variable = effect->lpVtbl->GetVariableByName(effect, "tex2");
     ok(variable_by_index == variable, "GetVariableByName got %p, expected %p\n", variable, variable_by_index);
 
     variable = effect->lpVtbl->GetVariableBySemantic(effect, "COLOR1");
-    ok(variable != null_variable, "GetVariableBySemantic failed %p", variable);
-    ok(variable != variable_by_index, "GetVariableBySemantic failed %p", variable);
+    ok(variable != null_variable, "GetVariableBySemantic failed %p\n", variable);
+    ok(variable != variable_by_index, "GetVariableBySemantic failed %p\n", variable);
 
     effect->lpVtbl->Release(effect);
 }
