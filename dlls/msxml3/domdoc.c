@@ -1060,7 +1060,7 @@ static HRESULT WINAPI domdoc_createElement(
     V_VT(&type) = VT_I1;
     V_I1(&type) = NODE_ELEMENT;
 
-    hr = IXMLDOMDocument_createNode(iface, type, tagname, NULL, &node);
+    hr = IXMLDOMDocument2_createNode(iface, type, tagname, NULL, &node);
     if (hr == S_OK)
     {
         IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)element);
@@ -1089,7 +1089,7 @@ static HRESULT WINAPI domdoc_createDocumentFragment(
     V_VT(&type) = VT_I1;
     V_I1(&type) = NODE_DOCUMENT_FRAGMENT;
 
-    hr = IXMLDOMDocument_createNode(iface, type, NULL, NULL, &node);
+    hr = IXMLDOMDocument2_createNode(iface, type, NULL, NULL, &node);
     if (hr == S_OK)
     {
         IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocumentFragment, (void**)frag);
@@ -1249,7 +1249,7 @@ static HRESULT WINAPI domdoc_createAttribute(
     V_VT(&type) = VT_I1;
     V_I1(&type) = NODE_ATTRIBUTE;
 
-    hr = IXMLDOMDocument_createNode(iface, type, name, NULL, &node);
+    hr = IXMLDOMDocument2_createNode(iface, type, name, NULL, &node);
     if (hr == S_OK)
     {
         IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMAttribute, (void**)attribute);
@@ -1747,23 +1747,23 @@ static HRESULT WINAPI domdoc_save(
     if(V_VT(&destination) == VT_UNKNOWN)
     {
         IUnknown *pUnk = V_UNKNOWN(&destination);
-        IXMLDOMDocument *pDocument;
+        IXMLDOMDocument2 *pDocument;
 
-        ret = IXMLDOMDocument_QueryInterface(pUnk, &IID_IXMLDOMDocument2, (void**)&pDocument);
+        ret = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMDocument2, (void**)&pDocument);
         if(ret == S_OK)
         {
             BSTR bXML;
             VARIANT_BOOL bSuccessful;
 
-            ret = IXMLDOMDocument_get_xml(iface, &bXML);
+            ret = IXMLDOMDocument2_get_xml(iface, &bXML);
             if(ret == S_OK)
             {
-                ret = IXMLDOMDocument_loadXML(pDocument, bXML, &bSuccessful);
+                ret = IXMLDOMDocument2_loadXML(pDocument, bXML, &bSuccessful);
 
                 SysFreeString(bXML);
             }
 
-            IXMLDOMDocument_Release(pDocument);
+            IXMLDOMDocument2_Release(pDocument);
         }
 
         TRACE("ret %d\n", ret);
