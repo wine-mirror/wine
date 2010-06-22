@@ -113,8 +113,8 @@ MOVE fallisce se la nuova e la vecchia locazione sono su lettere di unità DOS d
   WCMD_PATH,
 "PATH mostra o cambia il percorso di ricerca di cmd.\n\
 \n\
-Usando PATH, verrà mostrato la configurazione corrente di PATH (inizialmente questa è\n\
-il valore nel tuo file wine.conf). Per cambiarla, fai seguire al\n\
+Usando PATH, verrà mostrato l'impostazione corrente di PATH (il cui valore è preso\n\
+inizialmente dal registro). Per cambiarla, fai seguire al\n\
 comando PATH il nuovo valore.\n\
 \n\
 È anche possibile modificare il PATH usando la variabile d'ambiente\n\
