@@ -27,6 +27,7 @@ RC_SRCS = \
 	gphoto2_No.rc \
 	gphoto2_Pl.rc \
 	gphoto2_Pt.rc \
+	gphoto2_Ro.rc \
 	gphoto2_Ru.rc \
 	gphoto2_Si.rc \
 	gphoto2_Sv.rc \
