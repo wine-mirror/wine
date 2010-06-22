@@ -782,6 +782,7 @@ sub source_scan_project_file($$$)
             } elsif (/^SOURCE=(.*)$/) {
                 my @components=split /[\/\\]+/, $1;
                 $sfilet=search_from($path, \@components);
+                if (!defined $sfilet) { next; }
                 if ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
                     push @sources_c,$sfilet;
                 } elsif ($sfilet =~ /\.(cpp|cxx)$/i) {
