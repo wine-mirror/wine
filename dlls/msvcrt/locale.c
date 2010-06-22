@@ -466,6 +466,18 @@ int CDECL __crtLCMapStringA(
 }
 
 /*********************************************************************
+ *              __crtLCMapStringW (MSVCRT.@)
+ */
+int CDECL __crtLCMapStringW(LCID lcid, DWORD mapflags, const MSVCRT_wchar_t *src,
+        int srclen, MSVCRT_wchar_t *dst, int dstlen, unsigned int codepage, int xflag)
+{
+    FIXME("(lcid %x, flags %x, %s(%d), %p(%d), %x, %d), partial stub!\n",
+            lcid, mapflags, debugstr_w(src), srclen, dst, dstlen, codepage, xflag);
+
+    return LCMapStringW(lcid, mapflags, src, srclen, dst, dstlen);
+}
+
+/*********************************************************************
  *		__crtCompareStringA (MSVCRT.@)
  */
 int CDECL __crtCompareStringA( LCID lcid, DWORD flags, const char *src1, int len1,

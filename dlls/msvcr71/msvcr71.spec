@@ -105,7 +105,7 @@
 @ cdecl __crtGetLocaleInfoW(long long ptr long)
 @ cdecl __crtGetStringTypeW(long long wstr long ptr) msvcrt.__crtGetStringTypeW
 @ cdecl __crtLCMapStringA(long long str long ptr long long long) msvcrt.__crtLCMapStringA
-@ stub __crtLCMapStringW
+@ cdecl __crtLCMapStringW(long long wstr long ptr long long long) msvcrt.__crtLCMapStringW
 @ cdecl __dllonexit(ptr ptr ptr) msvcrt.__dllonexit
 @ cdecl __doserrno() msvcrt.__doserrno
 @ cdecl __fpecode() msvcrt.__fpecode
