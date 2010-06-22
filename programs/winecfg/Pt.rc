@@ -4,6 +4,7 @@
  *
  * Copyright 2003 Marcelo Duarte
  * Copyright 2004,2007,2008 Américo José Melo
+ * Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +27,7 @@
 
 #pragma code_page(65001)
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 IDR_WINECFG MENU DISCARDABLE
 BEGIN
@@ -44,14 +45,15 @@ STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
-    CONTROL         IDB_WINE,IDC_STATIC,"Static", SS_BITMAP, 15,17,157,111
+    LTEXT           PACKAGE_NAME,IDC_ABT_TITLE_TEXT,105,30,55,30
+    LTEXT           PACKAGE_VERSION,IDC_ABT_PANEL_TEXT,160,43,140,8
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
-    LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
-                    IDC_ABT_PANEL_TEXT,105,64,145,60
+    LTEXT           "Este programa é software livre; você pode redistribui-lo e/ou modificá-lo nos termos da GNU Lesser General Public License (LGPL) conforme publicado pela Free Software Foundation; tanto na versão 2.1 desta licença ou (à sua escolha) qualquer versão posterior.",
+                    IDC_ABT_LICENSE_TEXT,105,64,145,60
     GROUPBOX        " Informações de registro do Windows ", IDC_STATIC, 15, 155, 230, 55
-    LTEXT           "Proprietário:", IDC_STATIC, 22, 171, 40, 20
+    LTEXT           "&Proprietário:", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Organização:", IDC_STATIC, 22, 185, 50, 20
+    LTEXT           "&Organização:", IDC_STATIC, 22, 185, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
@@ -81,15 +83,15 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Configurações da aplicação ",IDC_STATIC, 8,4,244,210
-    LTEXT           "Wine pode imitar vários estilos e versões do Windows para cada aplicação",
-                    IDC_STATIC,15,20,227,20
+    GROUPBOX        " Configurações de Aplicativo",IDC_STATIC, 8,4,244,210
+    LTEXT           "O Wine pode imitar diferentes versões do Windows para cada aplicativo. Esta aba é ligada às abas Bibliotecas e Gráficos para permitir alterar configurações globais ou por aplicativo também nessas abas.",
+                    IDC_STATIC,15,20,227,45
     CONTROL         "Aplicações",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,50,230,120
-    PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,174,75,14
-    PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,174,75,14
-    LTEXT           "Versão do &Windows:",IDC_STATIC,17,196,58,8
-    COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    15,55,230,115
+    PUSHBUTTON	    "&Adicionar aplicativo...",IDC_APP_ADDAPP, 90,174,75,14
+    PUSHBUTTON	    "&Remover aplicativo",IDC_APP_REMOVEAPP, 170,174,75,14
+    LTEXT           "Versão do &Windows:",IDC_STATIC,17,196,68,8
+    COMBOBOX        IDC_WINVER,90,194,153,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -105,8 +107,8 @@ BEGIN
                     15,55,230,115
     PUSHBUTTON	    "&Adicionar aplicação...",IDC_APP_ADDAPP, 90,174,75,14
     PUSHBUTTON	    "&Remover aplicação",IDC_APP_REMOVEAPP, 170,174,75,14
-    LTEXT           "Versão do &Windows:",IDC_STATIC,17,226,68,8
-    COMBOBOX        IDC_WINVER,90,224,156,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Versão do &Windows:",IDC_STATIC,17,196,68,8
+    COMBOBOX        IDC_WINVER,90,194,153,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 
@@ -116,27 +118,27 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX    " Configurações de janela ",IDC_STATIC,8,4,244,84
-    CONTROL     "Programas DirectX podem impedir que o mouse deixe a janela?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "Emular uma área de trabalho virtual",IDC_ENABLE_DESKTOP,"Button",
+    GROUPBOX    " Configurações de Janela ",IDC_STATIC,8,4,244,84
+    CONTROL     "Permitir aos aplicativos DirectX impedir que o &mouse deixe a janela",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Permitir que o gerenciador de janelas &decore as janelas",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Permitir que o gerenciador de janelas controle as &janelas",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "&Emular uma área de trabalho virtual",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "Tamanho da área de trabalho:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "Tamanho da Tela:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "&Vertex Shader Support: ",IDC_STATIC,15,110,80,32
-    COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Allow &Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    LTEXT       "Suporte a &Vertex Shader:",IDC_STATIC,15,110,90,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,110,108,135,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Permitir &Pixel Shader (se suportado pelo hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Screen &Resolution ",IDC_STATIC,8,151,244,63
+    GROUPBOX    " &Resolução da Tela ",IDC_STATIC,8,151,244,63
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,28
+    LTEXT       "Este é um texto exemplo usando Tahoma 10 pontos",IDC_RES_FONT_PREVIEW,15,180,230,28
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -169,6 +171,24 @@ BEGIN
 END
 
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Substituição de DLL ",IDC_STATIC,8,4,244,210
+    LTEXT           "As bibliotecas de dinâmicas (DLLs) podem ser especificadas individualmente como embutidas (fornecidas pelo Wine) ou nativas (tiradas do Windows ou fornecidas pelo aplicativo)."
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "&Nova substituição para a biblioteca:",IDC_STATIC,16,58,150,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "&Adicionar",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    LTEXT           "Substituições e&xistentes:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "&Editar...",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "&Remover",IDC_DLLS_REMOVEDLL,164,114,82,14
+END
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
@@ -187,6 +207,23 @@ BEGIN
     PUSHBUTTON      "&Remover",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Editar Substituição"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Ordem de Carregamento ",IDC_STATIC,8,4,94,66
+    CONTROL         "&Embutida (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "&Nativa (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "E&mbutida depois Nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "Nati&va depois Embutida",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "&Desativar",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "Cancelar",IDCANCEL,57,74,45,14,WS_GROUP
+END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
@@ -208,37 +245,49 @@ END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
+IDD_DRIVECHOOSE DIALOG DISCARDABLE  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Selecione a Letra"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "Cancelar",IDCANCEL,105,30,45,14,WS_GROUP
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Outras unidades",IDC_STATIC,8,4,244,195
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
-    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+    GROUPBOX        " &Mapeamentos de unidade ",IDC_STATIC,8,4,244,195
+    LTEXT           "Falha de conexão com o gerenciador de montagem, a configuração da unidade não pôde ser alterada.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
+    CONTROL         "Listagem",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Adicionar...",IDC_BUTTON_ADD,15,98,44,14
     PUSHBUTTON      "&Remover",IDC_BUTTON_REMOVE,62,98,37,14
-    PUSHBUTTON      "Auto&detectar...",IDC_BUTTON_AUTODETECT,190,98,56,14
+    PUSHBUTTON      "Auto&detectar",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
-    LTEXT           "&Path:",IDC_STATIC_PATH,15,123,20,9
-    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Browse...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+    LTEXT           "&Caminho:",IDC_STATIC_PATH,15,123,30,9
+    EDITTEXT        IDC_EDIT_PATH,51,120,150,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Navegar...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
 
-    LTEXT           "&Type:",IDC_STATIC_TYPE,15,138,21,10
+    LTEXT           "&Tipo:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    PUSHBUTTON      "Show &Advanced",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,135,60,13
-    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
+    PUSHBUTTON      "Mostrar &Avançado",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,135,60,13
+    LTEXT           "Dispositi&vo",IDC_STATIC_DEVICE,15,153,26,9
     EDITTEXT        IDC_EDIT_DEVICE,41,150,160,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Bro&wse...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
+    PUSHBUTTON      "Nave&gar",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
 
-    LTEXT           "&Label:",IDC_STATIC_LABEL,15,168,29,12
-    EDITTEXT        IDC_EDIT_LABEL,45,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "S&erial:",IDC_STATIC_SERIAL,15,183,29,12
-    EDITTEXT        IDC_EDIT_SERIAL,45,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "&Rótulo:",IDC_STATIC_LABEL,15,168,26,12
+    EDITTEXT        IDC_EDIT_LABEL,41,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "S&erial:",IDC_STATIC_SERIAL,15,183,26,12
+    EDITTEXT        IDC_EDIT_SERIAL,41,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "Show &dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
+    CONTROL         "Mostrar arquivos com &ponto",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -268,8 +317,8 @@ BEGIN
     PUSHBUTTON      "Auto&detectar...",IDC_BUTTON_AUTODETECT,190,98,56,14
 
     /* editing drive details */
-    LTEXT           "&Localização:",IDC_STATIC_PATH,15,123,20,9
-    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "&Localização:",IDC_STATIC_PATH,15,123,38,9
+    EDITTEXT        IDC_EDIT_PATH,59,120,142,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Procurar...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
 
     LTEXT           "&Tipo:",IDC_STATIC_TYPE,15,138,21,10
@@ -288,6 +337,26 @@ BEGIN
     CONTROL         "Mostrar &ficheiros com pontos",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Seleção de Driver ",IDC_STATIC,8,4,244,160
+    LTEXT           "Selecione um driver de som selecionando a caixa do driver desejado. Não marque nenhuma opção para desabilitar o som. Não é recomendado selecionar mais de um driver. Configure um driver clicando com o botão direito sobre ele.:",IDC_STATIC,15,20,227,30
+    CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,55,140,105
+    PUSHBUTTON      "&Testar Som",IDC_AUDIO_TEST,170,55,65,14
+    PUSHBUTTON	    "Painel de &Controle",IDC_AUDIO_CONTROL_PANEL,170,75,65,14
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,45
+    LTEXT	    "Aceleração via &Hardware: ",IDC_STATIC,15,180,90,10
+    COMBOBOX	    IDC_DSOUND_HW_ACCEL,110,178,140,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Taxa de Amo&stra:",IDC_STATIC,15,197,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Bits por Amostra:",IDC_STATIC,137,197,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
@@ -316,28 +385,28 @@ IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
-    LTEXT           "&Theme:",IDC_STATIC,15,16,130,8
+    GROUPBOX        " Aparência ",IDC_STATIC,8,4,244,106
+    LTEXT           "&Tema:",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Install theme...",IDC_THEME_INSTALL,152,23,93,14
-    LTEXT           "&Color:",IDC_THEME_COLORTEXT,15,40,112,8
+    PUSHBUTTON      "&Instalar tema...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "&Cor:",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "&Size:",IDC_THEME_SIZETEXT,135,40,110,8
+    LTEXT           "&Tamanho:",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "It&em:",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
-    LTEXT           "C&olor:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    LTEXT           "C&or:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Si&ze:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "Ta&manho:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "&Font",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " S&hell Folder ",IDC_STATIC,8,114,244,100
-    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+    PUSHBUTTON      "&Fonte:",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " &Diretórios ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listagem",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "&Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
-    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "B&rowse",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    CONTROL         "&Link para:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,125,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "&Navegar...",IDC_BROWSE_SFPATH,195,195,50,13,WS_DISABLED
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -375,24 +444,24 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_TAB_APPLICATIONS    "Applications"
+    IDS_TAB_APPLICATIONS    "Aplicativos"
     IDS_TAB_DLLS            "Bibliotecas"
     IDS_TAB_DRIVES          "Unidades"
-    IDS_CHOOSE_PATH         "Select the unix target directory, please."
-    IDS_HIDE_ADVANCED       "Hide &Advanced"
-    IDS_SHOW_ADVANCED       "Show &Advanced"
-    IDS_NOTHEME             "(No Theme)"
-    IDS_TAB_GRAPHICS        "Graphics"
-    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
-    IDS_TAB_AUDIO           "Audio"
-    IDS_TAB_ABOUT           "About"
+    IDS_CHOOSE_PATH         "Por favor, selecione o diretório unix alvo."
+    IDS_HIDE_ADVANCED       "Ocult&ar"
+    IDS_SHOW_ADVANCED       "&Avançado"
+    IDS_NOTHEME             "(Sem Tema)"
+    IDS_TAB_GRAPHICS        "Gráficos"
+    IDS_TAB_DESKTOP_INTEGRATION "Integração com Área de Trabalho"
+    IDS_TAB_AUDIO           "Áudio"
+    IDS_TAB_ABOUT           "Sobre"
     IDS_WINECFG_TITLE       "Configuração do Wine"
     IDS_WINECFG_TITLE_APP   "Configuração do Wine para %s"
-    IDS_THEMEFILE           "Theme files (*.msstyles; *.theme)"
-    IDS_THEMEFILE_SELECT    "Select a theme file"
-    IDS_AUDIO_MISSING       "There is no audio driver currently specified in the registry.\n\nA recommended driver has been selected for you.\nYou can use this driver or select another driver if available.\n\nYou must click Apply for the selection to take effect."
-    IDS_SHELL_FOLDER        "Diretórios"
-    IDS_LINKS_TO            "Links para"
+    IDS_THEMEFILE           "Arquivos de tema (*.msstyles; *.theme)"
+    IDS_THEMEFILE_SELECT    "Selecione um arquivo de tema"
+    IDS_AUDIO_MISSING       "Não existe nenhum driver de áudio especificado no registro.\n\nUm driver recomendado foi selecionado.\nVocê pode usar este driver ou selecionar outro que esteja disponível.\n\nVocê deve clicar em Aplicar para que a alteração tenha efeito."
+    IDS_SHELL_FOLDER        "Pasta"
+    IDS_LINKS_TO            "Link para"
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -420,6 +489,23 @@ BEGIN
 END
 
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DLL_WARNING         "Não é recomendado alterar a ordem de carregamento desta biblioteca.\nTem certeza que quer fazer isto?"
+    IDS_DLL_WARNING_CAPTION "Aviso: biblioteca do sistema"
+    IDS_DLL_NATIVE          "nativa"
+    IDS_DLL_BUILTIN         "embutida"
+    IDS_DLL_NATIVE_BUILTIN  "nativa, embutida"
+    IDS_DLL_BUILTIN_NATIVE  "embutida, nativa"
+    IDS_DLL_DISABLED        "desativada"
+    IDS_DEFAULT_SETTINGS    "Configurações Padrão"
+    IDS_EXECUTABLE_FILTER   "Programas Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS "Usar configurações globais"
+    IDS_SELECT_EXECUTABLE   "Selecione um arquivo executável"
+END
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
@@ -438,6 +524,14 @@ BEGIN
 END
 
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "Hardware"
+    IDS_SHADER_MODE_NONE        "Nenhum"
+END
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
@@ -446,6 +540,23 @@ BEGIN
     IDS_SHADER_MODE_NONE        "Nenhum"
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "Autodetectar"
+    IDS_DRIVE_FIXED             "Disco rígido local"
+    IDS_DRIVE_REMOTE            "Compartilhamento de rede"
+    IDS_DRIVE_REMOVABLE         "Disquete"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Não é possível adicionar mais unidades.\n\nCada unidade deve ter uma letra, de A a Z, então não é possível ter mais que 26"
+    IDS_SYSTEM_DRIVE_LABEL      "Unidade do sistema"
+    IDS_CONFIRM_DELETE_C        "Tem certeza que deseja apaga a unidade C?\n\nA maior parte das aplicações Windows esperam que a unidade C exista, e irá danificar-se se não existir. Se continuar lembre-se de recriar a unidade!"
+    IDS_COL_DRIVELETTER         "Letra"
+    IDS_COL_DRIVEMAPPING        "Unidades"
+    IDS_NO_DRIVE_C              "Não existe uma unidade C. Isto não é nada bom.\n\nLembre-se de clicar em 'Adicionar' na aba Unidades para criar uma!\n"
+END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
@@ -464,6 +575,33 @@ BEGIN
     IDS_NO_DRIVE_C              "se não tem uma unidade C. Isto não é nada bom.\n\nCertifique-se que clica em  ?Adicionar? no seprador Unidades para criar uma!\n"
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ACCEL_FULL              "Total"
+    IDS_ACCEL_STANDARD          "Padrão"
+    IDS_ACCEL_BASIC             "Básico"
+    IDS_ACCEL_EMULATION         "Emulação"
+    IDS_DRIVER_ALSA             "Driver ALSA"
+    IDS_DRIVER_ESOUND           "Driver EsounD"
+    IDS_DRIVER_OSS              "Driver OSS"
+    IDS_DRIVER_JACK             "Driver JACK"
+    IDS_DRIVER_NAS              "Driver NAS"
+    IDS_DRIVER_AUDIOIO          "Driver IO de Áudio (Solaris)"
+    IDS_DRIVER_COREAUDIO        "Driver CoreAudio"
+    IDS_OPEN_DRIVER_ERROR       "Não foi possível abrir %s!"
+    IDS_SOUNDDRIVERS            "Drivers de Som"
+    IDS_DEVICES_WAVEOUT         "Dispositivos de Saída Wave"
+    IDS_DEVICES_WAVEIN          "Dispositivos de Entrada Wave"
+    IDS_DEVICES_MIDIOUT         "Dispositivos de Saída MIDI"
+    IDS_DEVICES_MIDIIN          "Dispositivos de Entrada MIDI"
+    IDS_DEVICES_AUX             "Dispositivos Auxiliares"
+    IDS_DEVICES_MIXER           "Dispositivos Misturadores"
+    IDS_UNAVAILABLE_DRIVER      "Foi encontrado um driver no registo que não está disponível!\n\nRemover '%s' do registo?"
+    IDS_WARNING                 "Aviso"
+END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
@@ -492,6 +630,44 @@ BEGIN
     IDS_WARNING                 "Aviso"
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Fundo do Botão"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Texto do Botão"
+    IDC_SYSPARAMS_DESKTOP           "Área de Trabalho"
+    IDC_SYSPARAMS_MENU              "Fundo do Menu"
+    IDC_SYSPARAMS_MENU_TEXT         "Texto do Menu"
+    IDC_SYSPARAMS_SCROLLBAR         "Barra de Rolagem"
+    IDC_SYSPARAMS_SELECTION         "Fundo de Seleção"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Texto de Seleção"
+    IDC_SYSPARAMS_TOOLTIP           "Fundo da Dica"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Texto da Dica"
+    IDC_SYSPARAMS_WINDOW            "Fundo da Janela"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Texto da Janela"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Barra de Título Ativa"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Texto de Título Ativo"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Barra de Título Inativa"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Texto de Título Inativo"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Texto da Caixa de Mensagens"
+    IDC_SYSPARAMS_APPWORKSPACE      "Área do Aplicativo"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Corpo da Janela"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Borda Ativa"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Borda Inativa"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Sombra dos Botões"
+    IDC_SYSPARAMS_GRAY_TEXT         "Texto Inativo"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Realce do Botão"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Sombra Escura do Botão"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Luz do Botão"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Fundo Alternativo do Botão"
+    IDC_SYSPARAMS_HOT_TRACKING      "Hot Tracked Item"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Gradiente da Barra Ativa"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Gradiente da Barra Inativa"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Realce de Menu"
+    IDC_SYSPARAMS_MENUBAR           "Barra de Menu"
+END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
