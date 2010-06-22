@@ -691,19 +691,19 @@ sub source_scan_project_file($$$)
                         # this option is always present and is already specified in the suffix rules
                     } elsif (/^GB$/) {
                         # Blend Optimization
-                        $prj_target_cflags.="-mcpu=pentiumpro -D_M_IX86=500 ";
+                        $prj_target_cflags.="-march=pentiumpro -D_M_IX86=500 ";
                     } elsif (/^G6$/) {
                         # Pentium Pro Optimization
                         $prj_target_cflags.="-march=pentiumpro -D_M_IX86=600 ";
                     } elsif (/^G5$/) {
                         # Pentium Optimization
-                        $prj_target_cflags.="-mcpu=pentium -D_M_IX86=500 ";
+                        $prj_target_cflags.="-march=pentium -D_M_IX86=500 ";
                     } elsif (/^G3$/) {
                         # 80386 Optimization
-                        $prj_target_cflags.="-mcpu=i386 -D_M_IX86=300 ";
+                        $prj_target_cflags.="-march=i386 -D_M_IX86=300 ";
                     } elsif (/^G4$/) {
                         # 80486 Optimization
-                        $prj_target_cflags.="-mcpu=i486 -D_M_IX86=400 ";
+                        $prj_target_cflags.="-march=i486 -D_M_IX86=400 ";
                     } elsif (/^Yc/) {
                         # Create Precompiled Header
                     } elsif (/^Yu/) {
