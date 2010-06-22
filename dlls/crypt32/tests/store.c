@@ -2228,7 +2228,7 @@ static void testAddCertificateLink(void)
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
-        ok(linked->hCertStore == store1, "unexpected store");
+        ok(linked->hCertStore == store1, "unexpected store\n");
         ret = CertSerializeCertificateStoreElement(linked, 0, NULL, &size);
         ok(ret, "CertSerializeCertificateStoreElement failed: %08x\n",
          GetLastError());
@@ -2300,7 +2300,7 @@ static void testAddCertificateLink(void)
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
-        ok(linked->hCertStore == store2, "unexpected store");
+        ok(linked->hCertStore == store2, "unexpected store\n");
         ret = CertSerializeCertificateStoreElement(linked, 0, NULL, &size);
         ok(ret, "CertSerializeCertificateStoreElement failed: %08x\n",
          GetLastError());
@@ -2360,7 +2360,7 @@ static void testAddCertificateLink(void)
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
-        ok(linked->hCertStore == store2, "unexpected store");
+        ok(linked->hCertStore == store2, "unexpected store\n");
         ret = CertSerializeCertificateStoreElement(linked, 0, NULL, &size);
         ok(ret, "CertSerializeCertificateStoreElement failed: %08x\n",
          GetLastError());
@@ -2429,7 +2429,7 @@ static void testAddCertificateLink(void)
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
-        ok(linked->hCertStore == store2, "unexpected store");
+        ok(linked->hCertStore == store2, "unexpected store\n");
         ret = pCertControlStore(store2, 0, CERT_STORE_CTRL_COMMIT, NULL);
         ok(ret, "CertControlStore failed: %d\n", ret);
         compareStore(store2, "file store -> system store",
@@ -2452,7 +2452,7 @@ static void testAddCertificateLink(void)
     ok(ret, "CertAddCertificateLinkToStore failed: %08x\n", GetLastError());
     if (ret)
     {
-        ok(linked->hCertStore == store2, "unexpected store");
+        ok(linked->hCertStore == store2, "unexpected store\n");
         CertDeleteCertificateFromStore(linked);
     }
     CertCloseStore(store2, 0);
