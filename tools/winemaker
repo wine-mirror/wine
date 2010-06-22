@@ -670,7 +670,11 @@ sub source_scan_project_file($$$)
                         # Additional Include Directories
                         $sfilet=$1;
                         $sfilet=~s/\\/\//g;
-                        push @{@$project_settings[$T_INCLUDE_PATH]},"-I".$sfilet." ";
+                        if ($sfilet=~/^\w:/) {
+                            print STDERR "warning: Can't fix path $sfilet\n"
+                        } else {
+                            push @{@$project_settings[$T_INCLUDE_PATH]},"-I".$sfilet." ";
+                        }
                     } elsif (/^U\s*\"(.*)\"/) {
                         # Undefines a previously defined symbol
                         $prj_target_cflags.="-U".$1." ";
