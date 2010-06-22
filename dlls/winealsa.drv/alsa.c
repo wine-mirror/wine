@@ -358,10 +358,6 @@ void ALSA_copyFormat(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
         iLength = sizeof(WAVEFORMATPCMEX);
     else
         iLength = sizeof(WAVEFORMATEX) + wf1->cbSize;
-    if (iLength > sizeof(WAVEFORMATPCMEX)) {
-        ERR("calculated %u bytes, capping\n", iLength);
-        iLength = sizeof(WAVEFORMATPCMEX);
-    }
     memcpy(wf2, wf1, iLength);
 }
 
@@ -395,17 +391,6 @@ BOOL ALSA_supportedFormat(LPWAVEFORMATEX wf)
         } else
             WARN("only KSDATAFORMAT_SUBTYPE_PCM and KSDATAFORMAT_SUBTYPE_IEEE_FLOAT "
                  "supported\n");
-    } else if (wf->wFormatTag == WAVE_FORMAT_MULAW || wf->wFormatTag == WAVE_FORMAT_ALAW) {
-        if (wf->wBitsPerSample==8)
-            return TRUE;
-        else
-            ERR("WAVE_FORMAT_MULAW and WAVE_FORMAT_ALAW wBitsPerSample must = 8\n");
-
-    } else if (wf->wFormatTag == WAVE_FORMAT_ADPCM) {
-        if (wf->wBitsPerSample==4)
-            return TRUE;
-        else
-            ERR("WAVE_FORMAT_ADPCM wBitsPerSample must = 4\n");
     } else
         WARN("only WAVE_FORMAT_PCM and WAVE_FORMAT_EXTENSIBLE supported\n");
 

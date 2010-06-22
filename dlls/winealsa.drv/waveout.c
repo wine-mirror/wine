@@ -716,18 +716,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     } else if ((wwo->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
         IsEqualGUID(&wwo->format.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)){
         format = (wwo->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_FLOAT_LE : -1;
-    } else if (wwo->format.Format.wFormatTag == WAVE_FORMAT_MULAW) {
-        FIXME("unimplemented format: WAVE_FORMAT_MULAW\n");
-        retcode = WAVERR_BADFORMAT;
-        goto errexit;
-    } else if (wwo->format.Format.wFormatTag == WAVE_FORMAT_ALAW) {
-        FIXME("unimplemented format: WAVE_FORMAT_ALAW\n");
-        retcode = WAVERR_BADFORMAT;
-        goto errexit;
-    } else if (wwo->format.Format.wFormatTag == WAVE_FORMAT_ADPCM) {
-        FIXME("unimplemented format: WAVE_FORMAT_ADPCM\n");
-        retcode = WAVERR_BADFORMAT;
-        goto errexit;
     } else {
         ERR("invalid format: %0x04x\n", wwo->format.Format.wFormatTag);
         retcode = WAVERR_BADFORMAT;
