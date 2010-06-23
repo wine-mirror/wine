@@ -194,8 +194,8 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "お気に入りに追加(&F)...",  IDM_ADDFAVORITES
         MENUITEM SEPARATOR
-        MENUITEM "再生",                     IDM_DYNSRCPLAY
-        MENUITEM "停止",                     IDM_DYNSRCSTOP
+        MENUITEM "再生",                     IDM_IMGARTPLAY
+        MENUITEM "停止",                     IDM_IMGARTSTOP
         MENUITEM "巻き戻し",                 IDM_IMGARTREWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
