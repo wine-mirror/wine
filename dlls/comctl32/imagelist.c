@@ -260,12 +260,12 @@ IMAGELIST_InternalExpandBitmaps(HIMAGELIST himl, INT nImageCount)
     INT     nNewCount;
     SIZE    sz;
 
-    TRACE("%p has %d allocated %d images\n", himl, himl->cCurImage, himl->cMaxImage);
+    TRACE("%p has allocated %d, max %d, grow %d images\n", himl, himl->cCurImage, himl->cMaxImage, himl->cGrow);
 
-    if (himl->cCurImage + nImageCount <= himl->cMaxImage)
-	return;
+    if (himl->cCurImage + nImageCount < himl->cMaxImage)
+        return;
 
-    nNewCount = himl->cCurImage + max(nImageCount, himl->cGrow) + 1;
+    nNewCount = himl->cMaxImage + max(nImageCount, himl->cGrow) + 1;
 
     imagelist_get_bitmap_size(himl, nNewCount, &sz);
 
