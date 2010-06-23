@@ -65,5 +65,5 @@ Mire el archivo COPYING.LIB para información sobre la licencia.\n\
 
 STRING_EXECFAIL "La aplicación no se pudo ejecutar, o no hay ninguna aplicación asociada con el archivo especificado.\nShellExecuteEx fallido"
 
-STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
+STRING_UNIXFAIL "No se pudo traducir el nombre de archivo UNIX especificado a un nombre de archivo de DOS."
 }
