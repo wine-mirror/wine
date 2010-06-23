@@ -27,6 +27,7 @@ RC_SRCS = \
 	oledlg_No.rc \
 	oledlg_Pl.rc \
 	oledlg_Pt.rc \
+	oledlg_Ro.rc \
 	oledlg_Ru.rc \
 	oledlg_Si.rc \
 	oledlg_Sv.rc \
