@@ -1257,11 +1257,10 @@ UINT16 WINAPI waveOutOpen16(HWAVEOUT16* lphWaveOut, UINT16 uDeviceID,
     ret = waveOutOpen(&hWaveOut, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
                       lpFormat, (DWORD)thunk, dwInstance, dwFlags);
 
-    if (ret == MMSYSERR_NOERROR)
-    {
-        if (lphWaveOut != NULL) *lphWaveOut = HWAVEOUT_16(hWaveOut);
-        MMSYSTDRV_SetHandle(thunk, (void*)hWaveOut);
-    }
+    if (lphWaveOut != NULL && ret == MMSYSERR_NOERROR)
+       *lphWaveOut = HWAVEOUT_16(hWaveOut);
+    if (ret == MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY))
+         MMSYSTDRV_SetHandle(thunk, (void*)hWaveOut);
     else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
@@ -1550,11 +1549,10 @@ UINT16 WINAPI waveInOpen16(HWAVEIN16* lphWaveIn, UINT16 uDeviceID,
     ret = waveInOpen(&hWaveIn, (uDeviceID == (UINT16)-1) ? (UINT)-1 : uDeviceID,
                      lpFormat, (DWORD)thunk, dwInstance, dwFlags);
 
-    if (ret == MMSYSERR_NOERROR)
-    {
-        if (lphWaveIn != NULL) *lphWaveIn = HWAVEIN_16(hWaveIn);
-        MMSYSTDRV_SetHandle(thunk, (void*)hWaveIn);
-    }
+    if (lphWaveIn != NULL && ret == MMSYSERR_NOERROR)
+       *lphWaveIn = HWAVEIN_16(hWaveIn);
+    if (ret == MMSYSERR_NOERROR && !(dwFlags & WAVE_FORMAT_QUERY))
+         MMSYSTDRV_SetHandle(thunk, (void*)hWaveIn);
     else MMSYSTDRV_DeleteThunk(thunk);
     return ret;
 }
