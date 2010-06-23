@@ -67,7 +67,8 @@ static HMODULE load_driver_module( const WCHAR *name )
     IMAGE_NT_HEADERS *nt;
     const IMAGE_IMPORT_DESCRIPTOR *imports;
     size_t page_size = getpagesize();
-    int i, delta;
+    int i;
+    INT_PTR delta;
     ULONG size;
     HMODULE module = LoadLibraryW( name );
 
