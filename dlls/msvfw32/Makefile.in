@@ -25,6 +25,7 @@ RC_SRCS = \
 	msvfw32_No.rc \
 	msvfw32_Pl.rc \
 	msvfw32_Pt.rc \
+	msvfw32_Ro.rc \
 	msvfw32_Ru.rc \
 	msvfw32_Si.rc \
 	msvfw32_Sv.rc \
