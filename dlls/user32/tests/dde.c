@@ -162,7 +162,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         lstrcpyA((LPSTR)data->Value, str);
         GlobalUnlock(hglobal);
 
-        lparam = PackDDElParam(WM_DDE_ACK, (UINT_PTR)hglobal, HIWORD(lparam));
+        lparam = PackDDElParam(WM_DDE_DATA, (UINT_PTR)hglobal, HIWORD(lparam));
         PostMessageA(client, WM_DDE_DATA, (WPARAM)hwnd, lparam);
 
         break;
@@ -188,7 +188,7 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         if (msg_index == 5)
         {
             size = GlobalSize((HGLOBAL)lo);
-            ok(size == 4, "got %d\n", size);
+            ok(size == 4 || broken(size == 32), /* sizes are rounded up on win9x */ "got %d\n", size);
         }
         else
             ok(!lstrcmpA((LPSTR)poke->Value, "poke data\r\n"),
@@ -229,6 +229,11 @@ static LRESULT WINAPI dde_server_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPA
 
         break;
     }
+
+    case WM_DDE_ACK:  /* happens on win9x when fAckReq is TRUE, ignore it */
+        ok(msg_index == 4, "Expected 4, got %d\n", msg_index);
+        msg_index--;
+        break;
 
     default:
         ok(FALSE, "Unhandled msg: %08x\n", msg);
@@ -300,14 +305,15 @@ static void test_ddeml_client(void)
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
-    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %08x\n", res);
-    if (hdata == NULL)
-        ok(FALSE, "hdata is NULL\n");
-    else
+    ok(res == DDE_FNOTPROCESSED || broken(res == 0xdeadbeef), /* win9x */
+       "Expected DDE_FNOTPROCESSED, got %08x\n", res);
+    ok( hdata != NULL, "hdata is NULL\n" );
+    if (hdata)
     {
         str = (LPSTR)DdeAccessData(hdata, &size);
         ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
-        ok(size == 19, "Expected 19, got %d\n", size);
+        ok(size == 19 || broken(size == 28), /* sizes are rounded up on win9x */
+           "Expected 19, got %d\n", size);
 
         ret = DdeUnaccessData(hdata);
         ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -318,16 +324,18 @@ static void test_ddeml_client(void)
     DdeGetLastError(client_pid);
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
+    ok(res == DDE_FNOTPROCESSED || broken(res == 0xdeadbeef), /* win9x */
+       "Expected DDE_FNOTPROCESSED, got %x\n", res);
 todo_wine
-    ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
-    if (hdata == NULL)
-        ok(FALSE, "hdata is NULL\n");
-    else
+    ok(ret == DMLERR_MEMORY_ERROR || broken(ret == 0), /* win9x */
+       "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
+    ok( hdata != NULL, "hdata is NULL\n" );
+    if (hdata)
     {
         str = (LPSTR)DdeAccessData(hdata, &size);
         ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
-        ok(size == 19, "Expected 19, got %d\n", size);
+        ok(size == 19 || broken(size == 28), /* sizes are rounded up on win9x */
+           "Expected 19, got %d\n", size);
 
         ret = DdeUnaccessData(hdata);
         ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -339,14 +347,16 @@ todo_wine
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
-    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
+    ok(res == DDE_FNOTPROCESSED || broken(res == 0xdeadbeef), /* win9x */
+       "Expected DDE_FNOTPROCESSED, got %x\n", res);
     if (hdata == NULL)
         ok(FALSE, "hdata is NULL\n");
     else
     {
         str = (LPSTR)DdeAccessData(hdata, &size);
         ok(!lstrcmpA(str, "requested data\r\n"), "Expected 'requested data\\r\\n', got %s\n", str);
-        ok(size == 19, "Expected 19, got %d\n", size);
+        ok(size == 19 || broken(size == 28), /* sizes are rounded up on win9x */
+           "Expected 19, got %d\n", size);
 
         ret = DdeUnaccessData(hdata);
         ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -394,7 +404,7 @@ todo_wine
     op = DdeClientTransaction((LPBYTE)hdata, 0, conversation, item, CF_TEXT, XTYP_POKE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
-    ok(res == DDE_FACK, "Expected DDE_FACK, got %d\n", res);
+    ok(res == DDE_FACK || broken(res == 0xdeadbeef), /* win9x */ "Expected DDE_FACK, got %x\n", res);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
 
     /* XTYP_POKE, correct params */
@@ -403,7 +413,8 @@ todo_wine
     op = DdeClientTransaction((LPBYTE)hdata, -1, conversation, item, CF_TEXT, XTYP_POKE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
-    ok(res == DDE_FACK, "Expected DDE_FACK, got %d\n", res);
+    ok(res == DDE_FACK || broken(res == (0xdead0000 | DDE_FACK)), /* win9x */
+       "Expected DDE_FACK, got %x\n", res);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
 
     DdeFreeDataHandle(hdata);
@@ -420,7 +431,7 @@ todo_wine
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
     ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
-    ok(res == DDE_FACK, "Expected DDE_FACK, got %d\n", res);
+    ok(res == DDE_FACK || broken(res == 0xdeadbeef), /* win9x */ "Expected DDE_FACK, got %x\n", res);
 
     /* XTYP_EXECUTE, no data */
     res = 0xdeadbeef;
@@ -585,9 +596,16 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
         ok(size == 13, "Expected 13, got %d\n", size);
 
         size = DdeQueryStringA(server_pid, hsz2, str, MAX_PATH, CP_WINANSI);
-        ok(!strncmp(str, "TestDDEServer(", 14), "Expected TestDDEServer(, got %s\n", str);
-        ok(str[size - 1] == ')', "Expected ')', got %c\n", str[size - 1]);
-        ok(size == 17 + 2*sizeof(ULONG_PTR), "Got size %d for %s\n", size, str);
+        if (!strncmp( str, "TestDDEServer:(", 15 ))  /* win9x style */
+        {
+            ok(size == 16 + 2*sizeof(WORD), "Got size %d for %s\n", size, str);
+        }
+        else
+        {
+            ok(!strncmp(str, "TestDDEServer(", 14), "Expected TestDDEServer(, got %s\n", str);
+            ok(size == 17 + 2*sizeof(ULONG_PTR), "Got size %d for %s\n", size, str);
+        }
+            ok(str[size - 1] == ')', "Expected ')', got %c\n", str[size - 1]);
 
         return (HDDEDATA)TRUE;
     }
