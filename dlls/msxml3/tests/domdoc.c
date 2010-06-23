@@ -2969,6 +2969,8 @@ static void test_XPath(void)
     expect_list_and_release(list, "");
     ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("//elem[4]"), &list));
     expect_list_and_release(list, "");
+    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//elem[0]"), &list));
+    expect_list_and_release(list, "");
 
     /* foo undeclared in document node */
     ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
@@ -5524,6 +5526,38 @@ static void test_document_IObjectSafety(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_XSLPattern(void)
+{
+    IXMLDOMDocument2 *doc;
+    IXMLDOMNodeList *list;
+    VARIANT_BOOL b;
+    HRESULT r;
+    LONG len;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void**)&doc );
+    ok( r == S_OK, "CoCreateInstance(CLSID_DOMDocument) should have succeeded instead of failing with 0x%08x\n", r );
+    if( r != S_OK )
+        return;
+
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* switch to XPath */
+    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
+
+    /* for XSLPattern start index is 0, for XPath it's 1 */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[0]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    todo_wine ok(len != 0, "expected filled list\n");
+    if (len)
+        todo_wine expect_list_and_release(list, "E1.E2.D1");
+
+    IXMLDOMDocument2_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -5552,6 +5586,7 @@ START_TEST(domdoc)
         test_removeNamedItem();
         test_IXMLDOMDocument2();
         test_XPath();
+        test_XSLPattern();
         test_cloneNode();
         test_xmlTypes();
         test_nodeTypeTests();
