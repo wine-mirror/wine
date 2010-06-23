@@ -181,6 +181,16 @@ Gostaria de salvar as alterações?"
 STRING_NOTFOUND,					"'%s' não pode ser encontrado."
 STRING_OUT_OF_MEMORY,			"Não há memória suficiente para completar essa \
 tarefa.\nFeche um ou mais aplicativos para aumentar a quantidade de memória livre."
+
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+Este arquivo contém caracteres Unicode que serão perdidos se\n\
+for salvo na codificação %s.\n\
+Para manter estes caracteres, clique em Cancelar e depois selecione\n\
+uma das opções Unicode na lista de Codificações.\n\
+Continuar?"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
