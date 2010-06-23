@@ -57,6 +57,7 @@ POPUP "&Candjî" {
 POPUP "C&werî" {
   MENUITEM "Cwerî...",          CMD_SEARCH
   MENUITEM "&Shûvant\tF3",      CMD_SEARCH_NEXT
+  MENUITEM "&Replaecî...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Aide" {
   MENUITEM "Å&dvins",           CMD_HELP_CONTENTS
