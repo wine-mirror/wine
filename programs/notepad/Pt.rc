@@ -6,6 +6,7 @@
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * Copyright 2003 Marcelo Duarte
  * Copyright 2004 Américo José Melo
+ * Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -124,16 +125,16 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
 CAPTION "Configurar página"
 {
-LTEXT    "&Cabeçalho (mm):",  0x140,  10, 07, 40, 15
+LTEXT    "&Cabeçalho:",  0x140,  10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
 LTEXT    "&Rodapé:",  0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-GROUPBOX "&Margens:",      0x144,     10, 43,160, 45
-LTEXT    "&Esquerda:",        0x145,   20, 55, 30, 10, WS_CHILD
-EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "&Superior:",         0x148,    20, 73, 30, 10, WS_CHILD
-EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+GROUPBOX "&Margens (milímetros):",      0x144,     10, 43,160, 45
+LTEXT    "&Esquerda:",        0x145,   20, 55, 35, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_LEFTVALUE,     55, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&Superior:",         0x148,    20, 73, 35, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_TOPVALUE,      55, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Direita:",       0x14B, 100, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_RIGHTVALUE,   130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Inferior:",      0x14E,100, 73, 30, 10, WS_CHILD
@@ -176,10 +177,10 @@ STRING_NOTEXT,					"Você não digitou nenhum texto. \
 STRING_DOESNOTEXIST,				"Arquivo '%s'\nnão existe\n\n \
 Você deseja criar um novo arquivo?"
 STRING_NOTSAVED,				"Arquivo '%s'\nfoi modificado\n\n \
-Gostaria de salvar as alteraçÕes?"
+Gostaria de salvar as alterações?"
 STRING_NOTFOUND,					"'%s' não pode ser encontrado."
 STRING_OUT_OF_MEMORY,			"Não há memória suficiente para completar essa \
-tarefa.\nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
+tarefa.\nFeche um ou mais aplicativos para aumentar a quantidade de memória livre."
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -206,7 +207,7 @@ STRINGTABLE DISCARDABLE
  STRING_DOESNOTEXIST,		"Ficheiro '%s'\nnão existe\n\n \
 Deseja criar um novo ficheiro?"
  STRING_NOTSAVED,		"Ficheiro '%s'\nfoi modificado\n\n \
-Gostaria de gravar as alteraçÕes?"
+Gostaria de gravar as alterações?"
  STRING_NOTFOUND,		"'%s' não pode ser encontrado."
  STRING_OUT_OF_MEMORY,		"Não há memória suficiente para completar esta \
 tarefa.\nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
