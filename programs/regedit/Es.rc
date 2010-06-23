@@ -298,7 +298,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "El valor es demasiado grande (%u)"
     IDS_DELETE_BOX_TITLE    "Confirmar eliminación de valor"
     IDS_DELETE_BOX_TEXT     "¿Seguro que desea eliminar el valor '%s'?"
-    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "¿Está seguro que desea eliminar estos valores?"
     IDS_NEWKEY              "Nueva clave #%d"
     IDS_NEWVALUE            "Nuevo valor #%d"
     IDS_NOTFOUND            "Cadena de búsqueda '%s' no encontrada"
@@ -307,7 +307,7 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importar archivo de registro"
-    IDS_FILEDIALOG_EXPORT_TITLE   "Exportar arvhivo de registro"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Exportar archivo de registro"
     IDS_FILEDIALOG_FILTER         "Archivos de registro\0*.reg\0Archivos de registro de Win9x/NT4 (REGEDIT4)\0*.reg\0Todos los archivos (*.*)\0*.*\0\0"
 END
 
