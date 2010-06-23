@@ -160,7 +160,9 @@ static const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"A", 0, S_OK, "A", FALSE},
     {"/uri-res/N2R?urn:sha1:B3K", URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/, S_OK, "/uri-res/N2R?urn:sha1:B3K", FALSE} /*LimeWire online installer calls this*/,
     {"http:www.winehq.org/dir/../index.html", 0, S_OK, "http:www.winehq.org/index.html"},
-    {"http://localhost/test.html", URL_FILE_USE_PATHURL, S_OK, "http://localhost/test.html"}
+    {"http://localhost/test.html", URL_FILE_USE_PATHURL, S_OK, "http://localhost/test.html"},
+    {"http://localhost/te%20st.html", URL_FILE_USE_PATHURL, S_OK, "http://localhost/te%20st.html"},
+    {"http://www.winehq.org/%E6%A1%9C.html", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org/%E6%A1%9C.html"}
 };
 
 /* ################ */
