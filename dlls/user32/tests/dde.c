@@ -35,7 +35,9 @@
 static const WCHAR TEST_DDE_SERVICE[] = {'T','e','s','t','D','D','E','S','e','r','v','i','c','e',0};
 
 static char exec_cmdA[] = "ANSI dde command";
+static WCHAR exec_cmdAW[] = {'A','N','S','I',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
 static WCHAR exec_cmdW[] = {'u','n','i','c','o','d','e',' ','d','d','e',' ','c','o','m','m','a','n','d',0};
+static char exec_cmdWA[] = "unicode dde command";
 
 static WNDPROC old_dde_client_wndproc;
 
@@ -1152,11 +1154,11 @@ static void test_msg_client(void)
     destroy_dde_window(&client_hwnd, "dde_client");
 }
 
-static LRESULT WINAPI hook_dde_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT WINAPI hook_dde_client_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     UINT_PTR lo, hi;
 
-    trace("hook_dde_client_wndproc: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
+    trace("hook_dde_client_wndprocA: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
 
     switch (msg)
     {
@@ -1171,9 +1173,29 @@ static LRESULT WINAPI hook_dde_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam
     return CallWindowProcA(old_dde_client_wndproc, hwnd, msg, wparam, lparam);
 }
 
-static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT WINAPI hook_dde_client_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    trace("dde_server_wndprocW: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
+    UINT_PTR lo, hi;
+
+    trace("hook_dde_client_wndprocW: %p %04x %08lx %08lx\n", hwnd, msg, wparam, lparam);
+
+    switch (msg)
+    {
+    case WM_DDE_ACK:
+        UnpackDDElParam(WM_DDE_ACK, lparam, &lo, &hi);
+        trace("WM_DDE_ACK: status %04lx hglobal %p\n", lo, (HGLOBAL)hi);
+        break;
+
+    default:
+        break;
+    }
+    return CallWindowProcW(old_dde_client_wndproc, hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI dde_server_wndprocA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    static BOOL client_unicode, conv_unicode;
+    static int step;
 
     switch (msg)
     {
@@ -1181,12 +1203,21 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
     {
         ATOM aService = GlobalAddAtomW(TEST_DDE_SERVICE);
 
-        trace("server: got WM_DDE_INITIATE from %p with %08lx\n", (HWND)wparam, lparam);
+        trace("server A: got WM_DDE_INITIATE from %p (%s) with %08lx\n",
+              (HWND)wparam, client_unicode ? "Unicode" : "ANSI", lparam);
 
         if (LOWORD(lparam) == aService)
         {
-            ok(!IsWindowUnicode((HWND)wparam), "client should be an ANSI window\n");
-            old_dde_client_wndproc = (WNDPROC)SetWindowLongPtrA((HWND)wparam, GWLP_WNDPROC, (ULONG_PTR)hook_dde_client_wndproc);
+            client_unicode = IsWindowUnicode((HWND)wparam);
+            conv_unicode = client_unicode;
+            if (step >= 10) client_unicode = !client_unicode;  /* change the client window type */
+
+            if (client_unicode)
+                old_dde_client_wndproc = (WNDPROC)SetWindowLongPtrW((HWND)wparam, GWLP_WNDPROC,
+                                                                    (ULONG_PTR)hook_dde_client_wndprocW);
+            else
+                old_dde_client_wndproc = (WNDPROC)SetWindowLongPtrA((HWND)wparam, GWLP_WNDPROC,
+                                                                    (ULONG_PTR)hook_dde_client_wndprocA);
             trace("server: sending WM_DDE_ACK to %p\n", (HWND)wparam);
             SendMessageW((HWND)wparam, WM_DDE_ACK, (WPARAM)hwnd, PackDDElParam(WM_DDE_ACK, aService, 0));
         }
@@ -1202,7 +1233,7 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
         LPCSTR cmd;
         UINT_PTR lo, hi;
 
-        trace("server: got WM_DDE_EXECUTE from %p with %08lx\n", (HWND)wparam, lparam);
+        trace("server A: got WM_DDE_EXECUTE from %p with %08lx\n", (HWND)wparam, lparam);
 
         UnpackDDElParam(WM_DDE_EXECUTE, lparam, &lo, &hi);
         trace("%08lx => lo %04lx hi %04lx\n", lparam, lo, hi);
@@ -1210,23 +1241,57 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
         ack.bAppReturnCode = 0;
         ack.reserved = 0;
         ack.fBusy = 0;
+        /* We have to send a negative acknowledge even if we don't
+         * accept the command, otherwise Windows goes mad and next time
+         * we send an acknowledge DDEML drops the connection.
+         * Not sure how to call it: a bug or a feature.
+         */
+        ack.fAck = 0;
 
-        cmd = GlobalLock((HGLOBAL)hi);
-        if (!cmd || (lstrcmpA(cmd, exec_cmdA) && lstrcmpW((LPCWSTR)cmd, exec_cmdW)))
+        if ((cmd = GlobalLock((HGLOBAL)hi)))
         {
-            trace("ignoring unknown WM_DDE_EXECUTE command\n");
-            /* We have to send a negative acknowledge even if we don't
-             * accept the command, otherwise Windows goes mad and next time
-             * we send an acknowledge DDEML drops the connection.
-             * Not sure how to call it: a bug or a feature.
-             */
-            ack.fAck = 0;
-        }
-        else
-            ack.fAck = 1;
-        GlobalUnlock((HGLOBAL)hi);
+            ack.fAck = !lstrcmpA(cmd, exec_cmdA) || !lstrcmpW((LPCWSTR)cmd, exec_cmdW);
 
-        trace("server: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
+            switch (step % 5)
+            {
+            case 0:  /* bad command */
+                trace( "server A got unhandled command\n" );
+                break;
+
+            case 1:  /* ANSI command */
+                if (!conv_unicode)
+                    ok( !lstrcmpA(cmd, exec_cmdA), "server A got wrong command '%s'\n", cmd );
+                else  /* we get garbage as the A command was mapped W->A */
+                    ok( cmd[0] == '?', "server A got wrong command '%s'\n", cmd );
+                break;
+
+            case 2:  /* ANSI command in Unicode format */
+                if (conv_unicode)
+                    ok( !lstrcmpA(cmd, exec_cmdA), "server A got wrong command '%s'\n", cmd );
+                else
+                    ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdAW), "server A got wrong command '%s'\n", cmd );
+                break;
+
+            case 3:  /* Unicode command */
+                if (!conv_unicode)
+                    ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdW), "server A got wrong command '%s'\n", cmd );
+                else  /* correctly mapped W->A */
+                    ok( !lstrcmpA(cmd, exec_cmdWA), "server A got wrong command '%s'\n", cmd );
+                break;
+
+            case 4:  /* Unicode command in ANSI format */
+                if (!conv_unicode)
+                    ok( !lstrcmpA(cmd, exec_cmdWA), "server A got wrong command '%s'\n", cmd );
+                else  /* we get garbage as the A command was mapped W->A */
+                    ok( cmd[0] == '?', "server A got wrong command '%s'\n", cmd );
+                break;
+            }
+            GlobalUnlock((HGLOBAL)hi);
+        }
+        else ok( 0, "bad command data %lx\n", hi );
+
+        step++;
+        trace("server A: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
 
         status = *((WORD *)&ack);
         lparam = ReuseDDElParam(lparam, WM_DDE_EXECUTE, WM_DDE_ACK, status, hi);
@@ -1240,14 +1305,159 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
         DDEACK ack;
         WORD status;
 
-        trace("server: got WM_DDE_TERMINATE from %p with %08lx\n", (HWND)wparam, lparam);
+        trace("server A: got WM_DDE_TERMINATE from %p with %08lx\n", (HWND)wparam, lparam);
 
         ack.bAppReturnCode = 0;
         ack.reserved = 0;
         ack.fBusy = 0;
         ack.fAck = 1;
 
-        trace("server: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
+        trace("server A: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
+
+        status = *((WORD *)&ack);
+        lparam = PackDDElParam(WM_DDE_ACK, status, 0);
+
+        PostMessageW((HWND)wparam, WM_DDE_ACK, (WPARAM)hwnd, lparam);
+        return 0;
+    }
+
+    default:
+        break;
+    }
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    static BOOL client_unicode, conv_unicode;
+    static int step;
+
+    switch (msg)
+    {
+    case WM_DDE_INITIATE:
+    {
+        ATOM aService = GlobalAddAtomW(TEST_DDE_SERVICE);
+
+        if (LOWORD(lparam) == aService)
+        {
+            client_unicode = IsWindowUnicode((HWND)wparam);
+            conv_unicode = client_unicode;
+            if (step >= 10) client_unicode = !client_unicode;  /* change the client window type */
+
+            if (client_unicode)
+                old_dde_client_wndproc = (WNDPROC)SetWindowLongPtrW((HWND)wparam, GWLP_WNDPROC,
+                                                                    (ULONG_PTR)hook_dde_client_wndprocW);
+            else
+                old_dde_client_wndproc = (WNDPROC)SetWindowLongPtrA((HWND)wparam, GWLP_WNDPROC,
+                                                                    (ULONG_PTR)hook_dde_client_wndprocA);
+            trace("server W: sending WM_DDE_ACK to %p\n", (HWND)wparam);
+            SendMessageW((HWND)wparam, WM_DDE_ACK, (WPARAM)hwnd, PackDDElParam(WM_DDE_ACK, aService, 0));
+        }
+        else
+            GlobalDeleteAtom(aService);
+
+        trace("server W: got WM_DDE_INITIATE from %p with %08lx (client %s conv %s)\n", (HWND)wparam,
+              lparam, client_unicode ? "Unicode" : "ANSI", conv_unicode ? "Unicode" : "ANSI" );
+
+        return 0;
+    }
+
+    case WM_DDE_EXECUTE:
+    {
+        DDEACK ack;
+        WORD status;
+        LPCSTR cmd;
+        UINT_PTR lo, hi;
+
+        trace("server W: got WM_DDE_EXECUTE from %p with %08lx\n", (HWND)wparam, lparam);
+
+        UnpackDDElParam(WM_DDE_EXECUTE, lparam, &lo, &hi);
+        trace("%08lx => lo %04lx hi %04lx\n", lparam, lo, hi);
+
+        ack.bAppReturnCode = 0;
+        ack.reserved = 0;
+        ack.fBusy = 0;
+        /* We have to send a negative acknowledge even if we don't
+         * accept the command, otherwise Windows goes mad and next time
+         * we send an acknowledge DDEML drops the connection.
+         * Not sure how to call it: a bug or a feature.
+         */
+        ack.fAck = 0;
+
+        if ((cmd = GlobalLock((HGLOBAL)hi)))
+        {
+            ack.fAck = !lstrcmpA(cmd, exec_cmdA) || !lstrcmpW((LPCWSTR)cmd, exec_cmdW);
+
+            switch (step % 5)
+            {
+            case 0:  /* bad command */
+                trace( "server W got unhandled command\n" );
+                break;
+
+            case 1:  /* ANSI command */
+                if (conv_unicode && !client_unicode) /* W->A mapping -> garbage */
+                    ok( cmd[0] == '?', "server W got wrong command '%s'\n", cmd );
+                else if (!conv_unicode && client_unicode)  /* A->W mapping */
+                    ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdAW), "server W got wrong command '%s'\n", cmd );
+                else
+                    ok( !lstrcmpA(cmd, exec_cmdA), "server W got wrong command '%s'\n", cmd );
+                break;
+
+            case 2:  /* ANSI command in Unicode format */
+                if (conv_unicode && !client_unicode) /* W->A mapping */
+                    ok( !lstrcmpA(cmd, exec_cmdA), "server W got wrong command '%s'\n", cmd );
+                else if (!conv_unicode && client_unicode)  /* A->W mapping */
+                    ok( *(WCHAR *)cmd == exec_cmdAW[0], "server W got wrong command '%s'\n", cmd );
+                else
+                    ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdAW), "server W got wrong command '%s'\n", cmd );
+                break;
+
+            case 3:  /* Unicode command */
+                if (conv_unicode && !client_unicode) /* W->A mapping */
+                    ok( !lstrcmpA(cmd, exec_cmdWA), "server W got wrong command '%s'\n", cmd );
+                else if (!conv_unicode && client_unicode)  /* A->W mapping */
+                    ok( *(WCHAR *)cmd == exec_cmdW[0], "server W got wrong command '%s'\n", cmd );
+                else
+                    ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdW), "server W got wrong command '%s'\n", cmd );
+                break;
+
+            case 4:  /* Unicode command in ANSI format */
+                if (conv_unicode && !client_unicode) /* W->A mapping -> garbage */
+                    ok( cmd[0] == '?', "server W got wrong command '%s'\n", cmd );
+                else if (!conv_unicode && client_unicode)  /* A->W mapping */
+                    ok( !lstrcmpW((LPCWSTR)cmd, exec_cmdW), "server W got wrong command '%s'\n", cmd );
+                else
+                    ok( !lstrcmpA(cmd, exec_cmdWA), "server W got wrong command '%s'\n", cmd );
+                break;
+            }
+            GlobalUnlock((HGLOBAL)hi);
+        }
+        else ok( 0, "bad command data %lx\n", hi );
+
+        step++;
+        trace("server W: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
+
+        status = *((WORD *)&ack);
+        lparam = ReuseDDElParam(lparam, WM_DDE_EXECUTE, WM_DDE_ACK, status, hi);
+
+        PostMessageW((HWND)wparam, WM_DDE_ACK, (WPARAM)hwnd, lparam);
+        return 0;
+    }
+
+    case WM_DDE_TERMINATE:
+    {
+        DDEACK ack;
+        WORD status;
+
+        trace("server W: got WM_DDE_TERMINATE from %p with %08lx\n", (HWND)wparam, lparam);
+
+        ack.bAppReturnCode = 0;
+        ack.reserved = 0;
+        ack.fBusy = 0;
+        ack.fAck = 1;
+
+        trace("server W: posting %s WM_DDE_ACK to %p\n", ack.fAck ? "POSITIVE" : "NEGATIVE", (HWND)wparam);
 
         status = *((WORD *)&ack);
         lparam = PackDDElParam(WM_DDE_ACK, status, 0);
@@ -1263,50 +1473,40 @@ static LRESULT WINAPI dde_server_wndprocW(HWND hwnd, UINT msg, WPARAM wparam, LP
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
-static LRESULT WINAPI dde_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    return DefWindowProcA(hwnd, msg, wparam, lparam);
-}
-
-static BOOL create_dde_windows(HWND *client, HWND *server)
+static HWND create_dde_server( BOOL unicode )
 {
     WNDCLASSA wcA;
     WNDCLASSW wcW;
-    static const WCHAR server_class_name[] = {'d','d','e','_','s','e','r','v','e','r','_','w','i','n','d','o','w',0};
-    static const char client_class_name[] = "dde_client_window";
+    HWND server;
+    static const char server_class_nameA[] = "dde_server_windowA";
+    static const WCHAR server_class_nameW[] = {'d','d','e','_','s','e','r','v','e','r','_','w','i','n','d','o','w','W',0};
 
-    memset(&wcW, 0, sizeof(wcW));
-    wcW.lpfnWndProc = dde_server_wndprocW;
-    wcW.lpszClassName = server_class_name;
-    wcW.hInstance = GetModuleHandleA(0);
-    if (!RegisterClassW(&wcW)) return FALSE;
+    if (unicode)
+    {
+        memset(&wcW, 0, sizeof(wcW));
+        wcW.lpfnWndProc = dde_server_wndprocW;
+        wcW.lpszClassName = server_class_nameW;
+        wcW.hInstance = GetModuleHandleA(0);
+        RegisterClassW(&wcW);
 
-    memset(&wcA, 0, sizeof(wcA));
-    wcA.lpfnWndProc = dde_client_wndproc;
-    wcA.lpszClassName = client_class_name;
-    wcA.hInstance = GetModuleHandleA(0);
-    assert(RegisterClassA(&wcA));
+        server = CreateWindowExW(0, server_class_nameW, NULL, WS_POPUP,
+                                 100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
+                                 GetDesktopWindow(), 0, GetModuleHandleA(0), NULL);
+    }
+    else
+    {
+        memset(&wcA, 0, sizeof(wcA));
+        wcA.lpfnWndProc = dde_server_wndprocA;
+        wcA.lpszClassName = server_class_nameA;
+        wcA.hInstance = GetModuleHandleA(0);
+        RegisterClassA(&wcA);
 
-    *server = CreateWindowExW(0, server_class_name, NULL,
-                              WS_POPUP,
-                              100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
-                              GetDesktopWindow(), 0,
-                              GetModuleHandleA(0), NULL);
-    assert(*server);
-
-    *client = CreateWindowExA(0, client_class_name, NULL,
-                              WS_POPUP,
-                              100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
-                              GetDesktopWindow(), 0,
-                              GetModuleHandleA(0), NULL);
-    assert(*client);
-
-    trace("server hwnd %p, client hwnd %p\n", *server, *client);
-
-    ok(IsWindowUnicode(*server), "server has to be a unicode window\n");
-    ok(!IsWindowUnicode(*client), "client has to be an ANSI window\n");
-
-    return TRUE;
+        server = CreateWindowExA(0, server_class_nameA, NULL, WS_POPUP,
+                                 100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
+                                 GetDesktopWindow(), 0, GetModuleHandleA(0), NULL);
+    }
+    ok(!IsWindowUnicode(server) == !unicode, "wrong unicode type\n");
+    return server;
 }
 
 static HDDEDATA CALLBACK client_dde_callback(UINT uType, UINT uFmt, HCONV hconv,
@@ -1329,21 +1529,24 @@ static HDDEDATA CALLBACK client_dde_callback(UINT uType, UINT uFmt, HCONV hconv,
     return 0;
 }
 
-static void test_dde_aw_transaction(void)
+static void test_dde_aw_transaction( BOOL client_unicode, BOOL server_unicode )
 {
     HSZ hsz_server;
     DWORD dde_inst, ret, err;
     HCONV hconv;
-    HWND hwnd_client, hwnd_server;
+    HWND hwnd_server;
     CONVINFO info;
     HDDEDATA hdata;
+    BOOL conv_unicode = client_unicode;
     static char test_cmd[] = "test dde command";
 
-    /* server: unicode, client: ansi */
-    if (!create_dde_windows(&hwnd_client, &hwnd_server)) return;
+    if (!(hwnd_server = create_dde_server( server_unicode ))) return;
 
     dde_inst = 0;
-    ret = DdeInitializeA(&dde_inst, client_dde_callback, APPCMD_CLIENTONLY, 0);
+    if (client_unicode)
+        ret = DdeInitializeW(&dde_inst, client_dde_callback, APPCMD_CLIENTONLY, 0);
+    else
+        ret = DdeInitializeA(&dde_inst, client_dde_callback, APPCMD_CLIENTONLY, 0);
     ok(ret == DMLERR_NO_ERROR, "DdeInitializeA failed with error %04x (%x)\n",
        ret, DdeGetLastError(dde_inst));
 
@@ -1357,8 +1560,8 @@ static void test_dde_aw_transaction(void)
     info.cb = sizeof(info);
     ret = DdeQueryConvInfo(hconv, QID_SYNC, &info);
     ok(ret, "wrong info size %d, DdeQueryConvInfo error %x\n", ret, DdeGetLastError(dde_inst));
-    /* should be CP_WINANSI since we used DdeInitializeA */
-    ok(info.ConvCtxt.iCodePage == CP_WINANSI, "wrong iCodePage %d\n", info.ConvCtxt.iCodePage);
+    ok(info.ConvCtxt.iCodePage == client_unicode ? CP_WINUNICODE : CP_WINANSI,
+       "wrong iCodePage %d\n", info.ConvCtxt.iCodePage);
     ok(!info.hConvPartner, "unexpected info.hConvPartner: %p\n", info.hConvPartner);
 todo_wine {
     ok((info.wStatus & DDE_FACK), "unexpected info.wStatus: %04x\n", info.wStatus);
@@ -1367,7 +1570,8 @@ todo_wine {
     ok(info.wConvst == XST_CONNECTED, "unexpected info.wConvst: %04x\n", info.wConvst);
     ok(info.wType == 0, "unexpected info.wType: %04x\n", info.wType);
 
-    trace("hwnd %p, hwndPartner %p\n", info.hwnd, info.hwndPartner);
+    client_unicode = IsWindowUnicode( info.hwnd );
+    trace("hwnd %p, hwndPartner %p, unicode %u\n", info.hwnd, info.hwndPartner, client_unicode);
 
     trace("sending test client transaction command\n");
     ret = 0xdeadbeef;
@@ -1380,19 +1584,95 @@ todo_wine {
     trace("sending ANSI client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdA, lstrlenA(exec_cmdA) + 1, hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
-    ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, DdeGetLastError(dde_inst));
-    ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
-
     err = DdeGetLastError(dde_inst);
-    ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
+    if (conv_unicode && (!client_unicode || !server_unicode))  /* W->A mapping -> garbage */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
+    else if (!conv_unicode && client_unicode && server_unicode)  /* A->W mapping -> wrong cmd */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
+    else  /* no mapping */
+    {
+        ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
+    }
+
+    trace("sending ANSI-as-Unicode client transaction command\n");
+    ret = 0xdeadbeef;
+    hdata = DdeClientTransaction((LPBYTE)exec_cmdAW, (lstrlenW(exec_cmdAW) + 1) * sizeof(WCHAR),
+                                 hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
+    err = DdeGetLastError(dde_inst);
+    if (conv_unicode && (!client_unicode || !server_unicode))  /* W->A mapping */
+    {
+        ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
+    }
+    else if (!conv_unicode && client_unicode && server_unicode)  /* A->W mapping -> garbage */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
+    else  /* no mapping */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
 
     trace("sending unicode client transaction command\n");
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)exec_cmdW, (lstrlenW(exec_cmdW) + 1) * sizeof(WCHAR), hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
-    ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, DdeGetLastError(dde_inst));
-    ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
     err = DdeGetLastError(dde_inst);
-    ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
+    if (conv_unicode && (!client_unicode || !server_unicode))  /* W->A mapping -> wrong cmd */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
+    else if (!conv_unicode && client_unicode && server_unicode)  /* A->W mapping -> garbage */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
+    else  /* no mapping */
+    {
+        ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
+    }
+
+    trace("sending Unicode-as-ANSI client transaction command\n");
+    ret = 0xdeadbeef;
+    hdata = DdeClientTransaction((LPBYTE)exec_cmdWA, lstrlenA(exec_cmdWA) + 1, hconv, 0, 0, XTYP_EXECUTE, 1000, &ret);
+    err = DdeGetLastError(dde_inst);
+    if (conv_unicode && (!client_unicode || !server_unicode))  /* W->A mapping -> garbage */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
+    else if (!conv_unicode && client_unicode && server_unicode)  /* A->W mapping */
+    {
+        ok(hdata != 0, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FACK, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NO_ERROR, "wrong dde error %x\n", err);
+    }
+    else  /* no mapping */
+    {
+        ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
+        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
+    }
 
     ok(DdeDisconnect(hconv), "DdeDisconnect error %x\n", DdeGetLastError(dde_inst));
 
@@ -1409,7 +1689,6 @@ todo_wine {
     /* This call hangs on win2k SP4 and XP SP1.
     DdeUninitialize(dde_inst);*/
 
-    DestroyWindow(hwnd_client);
     DestroyWindow(hwnd_server);
 }
 
@@ -2419,9 +2698,17 @@ START_TEST(dde)
                        CREATE_SUSPENDED, NULL, NULL, &startup, &proc);
 
         test_end_to_end_server(proc.hProcess, proc.hThread, TRUE);
-    }
 
-    test_dde_aw_transaction();
+        test_dde_aw_transaction( FALSE, TRUE );
+        test_dde_aw_transaction( TRUE, FALSE );
+        test_dde_aw_transaction( TRUE, TRUE );
+        test_dde_aw_transaction( FALSE, FALSE );
+
+        test_dde_aw_transaction( FALSE, TRUE );
+        test_dde_aw_transaction( TRUE, FALSE );
+        test_dde_aw_transaction( TRUE, TRUE );
+    }
+    test_dde_aw_transaction( FALSE, FALSE );
 
     test_DdeCreateDataHandle();
     test_DdeCreateStringHandle();
