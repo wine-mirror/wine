@@ -310,37 +310,44 @@ BEGIN
     STRING_ALL_FILES,              "Todos os documentos (*.*)"
 END
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    STRING_ALIGN_LEFT,            "Esquerda"
-    STRING_ALIGN_RIGHT,           "Direita"
-    STRING_ALIGN_CENTER,          "Centro"
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-    STRING_NEWFILE_RICHTEXT,     "Documento rich text"
-    STRING_NEWFILE_TXT,          "Documento de texto"
-    STRING_NEWFILE_TXT_UNICODE,  "Documento de texto Unicode"
-END
-
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_PRINTER_FILES_PRN,        "Arquivos de impressora (*.PRN)"
+    STRING_ALL_FILES,              "Todos os documentos (*.*)"
+    STRING_TEXT_FILES_TXT,         "Documentos de texto (*.txt)"
+    STRING_TEXT_FILES_UNICODE_TXT, "Documentos de texto Unicode (*.txt)"
+    STRING_RICHTEXT_FILES_RTF,     "Formato rich text (*.rtf)"
+    STRING_NEWFILE_RICHTEXT,       "Documento rich text"
+    STRING_NEWFILE_TXT,            "Documento de texto"
+    STRING_NEWFILE_TXT_UNICODE,    "Documento de texto Unicode"
+    STRING_PRINTER_FILES_PRN,      "Arquivos de impressora (*.PRN)"
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    STRING_PRINTER_FILES_PRN,        "Ficheiros de impressora (*.PRN)"
+    STRING_ALL_FILES,              "Todos os documentos (*.*)"
+    STRING_TEXT_FILES_TXT,         "Documentos de texto (*.txt)"
+    STRING_TEXT_FILES_UNICODE_TXT, "Documentos de texto Unicode (*.txt)"
+    STRING_RICHTEXT_FILES_RTF,     "Formato rich text (*.rtf)"
+    STRING_NEWFILE_RICHTEXT,       "Documento rich text"
+    STRING_NEWFILE_TXT,            "Documento de texto"
+    STRING_NEWFILE_TXT_UNICODE,    "Documento de texto Unicode"
+    STRING_PRINTER_FILES_PRN,      "Ficheiros de impressora (*.PRN)"
 END
 
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_ALIGN_LEFT,            "Esquerda"
+    STRING_ALIGN_RIGHT,           "Direita"
+    STRING_ALIGN_CENTER,          "Centro"
+END
 
 STRINGTABLE DISCARDABLE
 BEGIN
