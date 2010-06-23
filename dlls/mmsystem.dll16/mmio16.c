@@ -248,7 +248,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
 	memset(&mmioinfo, 0, sizeof(mmioinfo));
 
         EnterCriticalSection(&mmio_cs);
-        if (lpmmioinfo16->pIOProc && !(thunk = MMIO_AddThunk(lpmmioinfo16->pIOProc, lpmmioinfo16->pchBuffer)))
+        if (!(thunk = MMIO_AddThunk(lpmmioinfo16->pIOProc, lpmmioinfo16->pchBuffer)))
         {
             LeaveCriticalSection(&mmio_cs);
             return 0;
@@ -256,7 +256,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
 
 	mmioinfo.dwFlags     = lpmmioinfo16->dwFlags;
 	mmioinfo.fccIOProc   = lpmmioinfo16->fccIOProc;
-	mmioinfo.pIOProc     = (LPMMIOPROC)thunk;
+	mmioinfo.pIOProc     = lpmmioinfo16->pIOProc ? (LPMMIOPROC)thunk : 0;
 	mmioinfo.cchBuffer   = lpmmioinfo16->cchBuffer;
 	mmioinfo.pchBuffer   = MapSL((DWORD)lpmmioinfo16->pchBuffer);
         mmioinfo.adwInfo[0]  = lpmmioinfo16->adwInfo[0];
@@ -267,14 +267,19 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
 	mmioinfo.adwInfo[2]  = lpmmioinfo16->adwInfo[2];
 
 	ret = mmioOpenA(szFileName, &mmioinfo, dwOpenFlags);
-        if (thunk)
+        if (!ret || (dwOpenFlags & (MMIO_PARSE|MMIO_EXIST)))
         {
-            if (!ret || (dwOpenFlags & (MMIO_PARSE|MMIO_EXIST)))
-            {
-                thunk->pfn16 = NULL;
-                thunk->hMmio = NULL;
-            }
-            else thunk->hMmio = ret;
+            thunk->pfn16 = NULL;
+            thunk->hMmio = NULL;
+        }
+        else thunk->hMmio = ret;
+        if (ret && (dwOpenFlags & MMIO_ALLOCBUF))
+        {
+            MMIOINFO    m;
+            if (lpmmioinfo16->pchBuffer) FIXME("ooch\n");
+            /* FIXME: check whether mmioOpen should set pchBuffer */
+            mmioGetInfo(ret, &m, 0);
+            thunk->segbuffer = MapLS(m.pchBuffer);
         }
         LeaveCriticalSection(&mmio_cs);
 
