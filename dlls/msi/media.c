@@ -785,13 +785,17 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
     {
         WCHAR temppath[MAX_PATH], *p;
 
-        msi_download_file(cabinet_file, temppath);
+        rc = msi_download_file(cabinet_file, temppath);
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Failed to download %s (%u)\n", debugstr_w(cabinet_file), rc);
+            msi_free(cabinet_file);
+            return rc;
+        }
         if ((p = strrchrW(temppath, '\\'))) *p = 0;
-
-        msi_free(mi->sourcedir);
         strcpyW(mi->sourcedir, temppath);
         msi_free(mi->cabinet);
-        strcpyW(mi->cabinet, p + 1);
+        mi->cabinet = strdupW(p + 1);
 
         msi_free(cabinet_file);
         return ERROR_SUCCESS;
