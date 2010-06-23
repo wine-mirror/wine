@@ -33,6 +33,7 @@
 #include "d3dx9mesh.h"
 #include "d3dx9shader.h"
 #include "d3dx9effect.h"
+#include "d3dx9shape.h"
 #include "d3dx9tex.h"
 
 #define _FACDD 0x876
