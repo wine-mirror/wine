@@ -383,7 +383,7 @@
 @ stub GdipGetRegionScans
 @ stdcall GdipGetRegionScansCount(ptr ptr ptr)
 @ stub GdipGetRegionScansI
-@ stub GdipGetRenderingOrigin
+@ stdcall GdipGetRenderingOrigin(ptr ptr ptr)
 @ stdcall GdipGetSmoothingMode(ptr ptr)
 @ stdcall GdipGetSolidFillColor(ptr ptr)
 @ stdcall GdipGetStringFormatAlign(ptr ptr)

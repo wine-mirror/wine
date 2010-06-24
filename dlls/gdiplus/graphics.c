@@ -4216,6 +4216,20 @@ GpStatus WINGDIPAPI GdipSetRenderingOrigin(GpGraphics *graphics, INT x, INT y)
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetRenderingOrigin(GpGraphics *graphics, INT *x, INT *y)
+{
+    static int calls;
+
+    TRACE("(%p,%p,%p)\n", graphics, x, y);
+
+    if (!(calls++))
+        FIXME("not implemented\n");
+
+    *x = *y = 0;
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mode)
 {
     TRACE("(%p, %d)\n", graphics, mode);
