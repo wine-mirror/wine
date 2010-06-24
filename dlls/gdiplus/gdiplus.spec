@@ -334,7 +334,7 @@
 @ stdcall GdipGetPathGradientGammaCorrection(ptr ptr)
 @ stub GdipGetPathGradientPath
 @ stdcall GdipGetPathGradientPointCount(ptr ptr)
-@ stub GdipGetPathGradientPresetBlend
+@ stdcall GdipGetPathGradientPresetBlend(ptr ptr ptr long)
 @ stdcall GdipGetPathGradientPresetBlendCount(ptr ptr)
 @ stdcall GdipGetPathGradientRect(ptr ptr)
 @ stdcall GdipGetPathGradientRectI(ptr ptr)
