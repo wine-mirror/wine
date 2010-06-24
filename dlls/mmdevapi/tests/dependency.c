@@ -94,7 +94,7 @@ START_TEST(dependency)
             hr = IBaseFilter_GetClassID(bf, &clsid);
             ok(hr == S_OK, "GetClassId failed with 0x%08x\n", hr);
             if (hr == S_OK)
-                ok(IsEqualCLSID(&clsid, &CLSID_DSoundRender), "Wrong class id %s", dump_guid(&clsid));
+                ok(IsEqualCLSID(&clsid, &CLSID_DSoundRender), "Wrong class id %s\n", dump_guid(&clsid));
         }
     }
 
