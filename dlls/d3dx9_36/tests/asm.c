@@ -1362,13 +1362,13 @@ static void failure_test(void) {
         /* shader 42: no modifiers with vs dcl sampler instruction */
         "vs_3_0\n"
         "dcl_2d_pp s0\n",
-        /* shader 43: can't explicitely declare input registers in ps_2_0 */
+        /* shader 43: can't explicitly declare input registers in ps_2_0 */
         "ps_2_0\n"
         "dcl_texcoord0 t0\n",
-        /* shader 44: can't implicitely declare registers in vs */
+        /* shader 44: can't implicitly declare registers in vs */
         "vs_2_0\n"
         "dcl o0\n",
-        /* shader 45: can't implicitely declare samplers in vs */
+        /* shader 45: can't implicitly declare samplers in vs */
         "vs_3_0\n"
         "dcl s2\n",
         /* shader 46: no tx registers in ps_3_0 */

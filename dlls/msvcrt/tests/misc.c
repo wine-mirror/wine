@@ -96,7 +96,7 @@ static void test_memcpy_s(void)
     ret = pmemcpy_s(data, 10, data, 10);
     ok(ret == 0, "ret = %x\n", ret);
     ok(errno == 0xdeadbeef, "errno = %x\n", errno);
-    ok(!memcmp(dest, data, 5), "data was destroyed during overwritting\n");
+    ok(!memcmp(dest, data, 5), "data was destroyed during overwriting\n");
 
     errno = 0xdeadbeef;
     dest[0] = 'x';

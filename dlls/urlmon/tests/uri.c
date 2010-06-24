@@ -1254,7 +1254,7 @@ static void test_IUri_GetPropertyLength(void) {
 
                 expectedLen = lstrlen(prop.value);
 
-                /* This won't be neccessary once GetPropertyLength is implemented. */
+                /* This won't be necessary once GetPropertyLength is implemented. */
                 receivedLen = -1;
 
                 hr = IUri_GetPropertyLength(uri, j, &receivedLen, 0);

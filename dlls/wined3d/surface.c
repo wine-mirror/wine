@@ -3276,7 +3276,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             && dst_surface == dstSwapchain->front_buffer
             && src_surface == dstSwapchain->back_buffers[0])
     {
-        /* Half-life does a Blt from the back buffer to the front buffer,
+        /* Half-Life does a Blt from the back buffer to the front buffer,
          * Full surface size, no flags... Use present instead
          *
          * This path will only be entered for d3d7 and ddraw apps, because d3d8/9 offer no way to blit TO the front buffer

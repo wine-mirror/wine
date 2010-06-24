@@ -345,7 +345,7 @@ IDirectDrawImpl_Release(IDirectDraw7 *iface)
  *  DDSCL_SETDEVICEWINDOW: Sets a window specially used for rendering (I don't
  *  expect any difference to a normal window for wine)
  *  DDSCL_CREATEDEVICEWINDOW: Tells ddraw to create its own window for
- *  rendering (Possible test case: Half-life)
+ *  rendering (Possible test case: Half-Life)
  *
  * Unsure about these: DDSCL_FPUSETUP DDSCL_FPURESERVE
  *

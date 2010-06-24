@@ -727,7 +727,7 @@ static void doChild(const char *arg)
 
             trace("CSIDL_FAVORITES was changed to %s\n", path);
             ret = CreateDirectoryA(path, NULL);
-            ok(!ret, "expected failure with with ERROR_ALREADY_EXISTS\n");
+            ok(!ret, "expected failure with ERROR_ALREADY_EXISTS\n");
             if (!ret)
                 ok(GetLastError() == ERROR_ALREADY_EXISTS,
                   "got %d, expected ERROR_ALREADY_EXISTS\n", GetLastError());

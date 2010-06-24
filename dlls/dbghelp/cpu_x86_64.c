@@ -238,7 +238,7 @@ static void dump_unwind_info(HANDLE hProcess, ULONG64 base, RUNTIME_FUNCTION *fu
     }
 }
 
-/* highly derivated from dlls/ntdlls/signal_x86_64.c */
+/* highly derived from dlls/ntdll/signal_x86_64.c */
 static ULONG64 get_int_reg(CONTEXT *context, int reg)
 {
     return *(&context->Rax + reg);

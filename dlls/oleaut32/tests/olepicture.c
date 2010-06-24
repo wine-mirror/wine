@@ -829,7 +829,7 @@ static void test_OleLoadPicturePath(void)
 
     DeleteFileA(temp_file);
 
-    /* Try with a non-existent file. */
+    /* Try with a nonexistent file. */
     hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
        hres == E_UNEXPECTED || /* NT4/Win95 */
@@ -865,7 +865,7 @@ static void test_OleLoadPicturePath(void)
 
     DeleteFileA(temp_file);
 
-    /* Try with a non-existent file. */
+    /* Try with a nonexistent file. */
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
        hres == E_UNEXPECTED || /* NT4/Win95 */

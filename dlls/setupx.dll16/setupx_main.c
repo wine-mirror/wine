@@ -29,7 +29,7 @@
  * Stuff tested with:
  * - rs405deu.exe (German Acroread 4.05 setup)
  * - ie5setup.exe
- * - Netmeeting
+ * - NetMeeting
  *
  * FIXME:
  * - string handling is... weird ;) (buflen etc.)

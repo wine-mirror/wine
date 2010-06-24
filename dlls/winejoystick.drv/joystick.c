@@ -230,10 +230,10 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
     lpCaps->wZmin = 0;
     lpCaps->wZmax = (nrOfAxes >= 3) ? 0xFFFF : 0;
 #ifdef BODGE_THE_HAT
-    /* HalfLife won't allow you to map an axis event to things like
+    /* Half-Life won't allow you to map an axis event to things like
        "next weapon" and "use". Linux reports the hat on my stick as
        axis U and V. So, IFF BODGE_THE_HAT is defined, lie through our
-       teeth and say we have 32 buttons, and we will map the axises to
+       teeth and say we have 32 buttons, and we will map the axes to
        the high buttons. Really, perhaps this should be a registry entry,
        or even a parameter to the Linux joystick driver (which would completely
        remove the need for this.)
