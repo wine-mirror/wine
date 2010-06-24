@@ -551,7 +551,7 @@ BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
     {
         /* This check isn't necessary, but may help debugging problems. */
         WARN( "Disabled by Wine Configuration.\n" );
-        WARN( "Set \"UseDnsComputerName\" = \"N\" in category [Network] to enable.\n" );
+        WARN( "Set \"UseDnsComputerName\" = \"N\" in HKCU\\Software\\Wine\\Network to enable.\n" );
         SetLastError ( ERROR_ACCESS_DENIED );
         return FALSE;
     }
