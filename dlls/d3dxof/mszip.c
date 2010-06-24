@@ -607,12 +607,12 @@ static int ZIPfdi_decomp(int inlen, int outlen, fdi_decomp_state *decomp_state)
   return DECR_OK;
 }
 
-void * __cdecl fdi_alloc(ULONG cb)
+static void * __cdecl fdi_alloc(ULONG cb)
 {
   return HeapAlloc(GetProcessHeap(), 0, cb);
 }
 
-void __cdecl fdi_free(void *pv)
+static void __cdecl fdi_free(void *pv)
 {
   HeapFree(GetProcessHeap(), 0, pv);
 }
