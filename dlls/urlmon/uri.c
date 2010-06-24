@@ -30,20 +30,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct {
     const IUriVtbl  *lpIUriVtbl;
     LONG ref;
-    BSTR        raw_uri;
+
+    BSTR            raw_uri;
 
     /* Information about the canonicalized URI's buffer. */
-    WCHAR       *canon_uri;
-    DWORD       canon_size;
-    DWORD       canon_len;
+    WCHAR           *canon_uri;
+    DWORD           canon_size;
+    DWORD           canon_len;
 
-    INT         scheme_start;
-    DWORD       scheme_len;
-    URL_SCHEME  scheme_type;
+    INT             scheme_start;
+    DWORD           scheme_len;
+    URL_SCHEME      scheme_type;
 
-    INT         userinfo_start;
-    DWORD       userinfo_len;
-    INT         userinfo_split;
+    INT             userinfo_start;
+    DWORD           userinfo_len;
+    INT             userinfo_split;
+
+    INT             host_start;
+    DWORD           host_len;
+    Uri_HOST_TYPE   host_type;
 } Uri;
 
 typedef struct {
@@ -231,6 +236,34 @@ static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
     dest[0] = '%';
     dest[1] = hexDigits[(val >> 4) & 0xf];
     dest[2] = hexDigits[val & 0xf];
+}
+
+/* Converts an IPv4 address in numerical form into it's fully qualified
+ * string form. This function returns the number of characters written
+ * to 'dest'. If 'dest' is NULL this function will return the number of
+ * characters that would have been written.
+ *
+ * It's up to the caller to ensure there's enough space in 'dest' for the
+ * address.
+ */
+static DWORD ui2ipv4(WCHAR *dest, UINT address) {
+    static const WCHAR formatW[] =
+        {'%','u','.','%','u','.','%','u','.','%','u',0};
+    DWORD ret = 0;
+    UCHAR digits[4];
+
+    digits[0] = (address >> 24) & 0xff;
+    digits[1] = (address >> 16) & 0xff;
+    digits[2] = (address >> 8) & 0xff;
+    digits[3] = address & 0xff;
+
+    if(!dest) {
+        WCHAR tmp[16];
+        ret = sprintfW(tmp, formatW, digits[0], digits[1], digits[2], digits[3]);
+    } else
+        ret = sprintfW(dest, formatW, digits[0], digits[1], digits[2], digits[3]);
+
+    return ret;
 }
 
 /* Checks if the characters pointed to by 'ptr' are
@@ -823,12 +856,160 @@ static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags,
     return TRUE;
 }
 
+/* Attempts to canonicalize an implicit IPv4 address. */
+static BOOL canonicalize_implicit_ipv4address(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    uri->host_start = uri->canon_len;
+
+    TRACE("%u\n", data->implicit_ipv4);
+    /* For unknown scheme types Window's doesn't convert
+     * the value into an IP address, but, it still considers
+     * it an IPv4 address.
+     */
+    if(data->scheme_type == URL_SCHEME_UNKNOWN) {
+        if(!computeOnly)
+            memcpy(uri->canon_uri+uri->canon_len, data->host, data->host_len*sizeof(WCHAR));
+        uri->canon_len += data->host_len;
+    } else {
+        if(!computeOnly)
+            uri->canon_len += ui2ipv4(uri->canon_uri+uri->canon_len, data->implicit_ipv4);
+        else
+            uri->canon_len += ui2ipv4(NULL, data->implicit_ipv4);
+    }
+
+    uri->host_len = uri->canon_len - uri->host_start;
+    uri->host_type = Uri_HOST_IPV4;
+
+    if(!computeOnly)
+        TRACE("%p %p %x %d): Canonicalized implicit IP address=%s len=%d\n",
+            data, uri, flags, computeOnly,
+            debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len),
+            uri->host_len);
+
+    return TRUE;
+}
+
+/* Attempts to canonicalize an IPv4 address.
+ *
+ * If the parse_data represents a URI that has an implicit IPv4 address
+ * (ex. http://256/, this function will convert 256 into 0.0.1.0). If
+ * the implicit IP address exceeds the value of UINT_MAX (maximum value
+ * for an IPv4 address) it's canonicalized as if were a reg-name.
+ *
+ * If the parse_data contains a partial or full IPv4 address it normalizes it.
+ * A partial IPv4 address is something like "192.0" and would be normalized to
+ * "192.0.0.0". With a full (or partial) IPv4 address like "192.002.01.003" would
+ * be normalized to "192.2.1.3".
+ *
+ * NOTES:
+ *  Window's ONLY normalizes IPv4 address for known scheme types (one that isn't
+ *  URL_SCHEME_UNKNOWN). For unknown scheme types, it simply copies the data from
+ *  the original URI into the canonicalized URI, but, it still recognizes URI's
+ *  host type as HOST_IPV4.
+ */
+static BOOL canonicalize_ipv4address(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    if(data->has_implicit_ip)
+        return canonicalize_implicit_ipv4address(data, uri, flags, computeOnly);
+    else {
+        uri->host_start = uri->canon_len;
+
+        /* Windows only normalizes for known scheme types. */
+        if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+            /* parse_data contains a partial or full IPv4 address, so normalize it. */
+            DWORD i, octetDigitCount = 0, octetCount = 0;
+            BOOL octetHasDigit = FALSE;
+
+            for(i = 0; i < data->host_len; ++i) {
+                if(data->host[i] == '0' && !octetHasDigit) {
+                    /* Can ignore leading zeros if:
+                     *  1) It isn't the last digit of the octet.
+                     *  2) i+1 != data->host_len
+                     *  3) i+1 != '.'
+                     */
+                    if(octetDigitCount == 2 ||
+                       i+1 == data->host_len ||
+                       data->host[i+1] == '.') {
+                        if(!computeOnly)
+                            uri->canon_uri[uri->canon_len] = data->host[i];
+                        ++uri->canon_len;
+                        TRACE("Adding zero\n");
+                    }
+                } else if(data->host[i] == '.') {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = data->host[i];
+                    ++uri->canon_len;
+
+                    octetDigitCount = 0;
+                    octetHasDigit = FALSE;
+                    ++octetCount;
+                } else {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = data->host[i];
+                    ++uri->canon_len;
+
+                    ++octetDigitCount;
+                    octetHasDigit = TRUE;
+                }
+            }
+
+            /* Make sure the canonicalized IP address has 4 dec-octets.
+             * If doesn't add "0" ones until there is 4;
+             */
+            for( ; octetCount < 3; ++octetCount) {
+                if(!computeOnly) {
+                    uri->canon_uri[uri->canon_len] = '.';
+                    uri->canon_uri[uri->canon_len+1] = '0';
+                }
+
+                uri->canon_len += 2;
+            }
+        } else {
+            /* Windows doesn't normalize addresses in unknown schemes. */
+            if(!computeOnly)
+                memcpy(uri->canon_uri+uri->canon_len, data->host, data->host_len*sizeof(WCHAR));
+            uri->canon_len += data->host_len;
+        }
+
+        uri->host_len = uri->canon_len - uri->host_start;
+        if(!computeOnly)
+            TRACE("(%p %p %x %d): Canonicalized IPv4 address, ip=%s len=%d\n",
+                data, uri, flags, computeOnly,
+                debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len),
+                uri->host_len);
+    }
+
+    return TRUE;
+}
+
+static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    uri->host_start = -1;
+    uri->host_len = 0;
+
+    if(data->host) {
+        switch(data->host_type) {
+        case Uri_HOST_IPV4:
+            uri->host_type = Uri_HOST_IPV4;
+            if(!canonicalize_ipv4address(data, uri, flags, computeOnly))
+                return FALSE;
+
+            break;
+        default:
+            WARN("(%p %p %x %d): Canonicalization not supported yet\n", data,
+                    uri, flags, computeOnly);
+       }
+   }
+
+   return TRUE;
+}
+
 /* Canonicalizes the authority of the URI represented by the parse_data. */
 static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     if(!canonicalize_userinfo(data, uri, flags, computeOnly))
         return FALSE;
 
-    /* TODO: canonicalize the host and port information. */
+    if(!canonicalize_host(data, uri, flags, computeOnly))
+        return FALSE;
+
+    /* TODO Canonicalize port information. */
 
     return TRUE;
 }
