@@ -1601,6 +1601,19 @@ GpStatus WINGDIPAPI GdipSetPathGradientWrapMode(GpPathGradient *grad,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipMultiplyPathGradientTransform(GpPathGradient *grad,
+    GDIPCONST GpMatrix *matrix, GpMatrixOrder order)
+{
+    static int calls;
+
+    TRACE("(%p,%p,%i)\n", grad, matrix, order);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
 {
     TRACE("(%p, %x)\n", sf, argb);

@@ -444,7 +444,7 @@
 @ stdcall GdipMeasureString(ptr wstr long ptr ptr ptr ptr ptr ptr)
 @ stdcall GdipMultiplyLineTransform(ptr ptr long)
 @ stdcall GdipMultiplyMatrix(ptr ptr long)
-@ stub GdipMultiplyPathGradientTransform
+@ stdcall GdipMultiplyPathGradientTransform(ptr ptr long)
 @ stdcall GdipMultiplyPenTransform(ptr ptr long)
 @ stdcall GdipMultiplyTextureTransform(ptr ptr long)
 @ stdcall GdipMultiplyWorldTransform(ptr ptr long)
