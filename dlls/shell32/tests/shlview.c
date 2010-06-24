@@ -94,7 +94,7 @@ typedef struct {
 
 static const IDataObjectVtbl IDataObjectImpl_Vtbl;
 
-IDataObject* IDataObjectImpl_Construct(void)
+static IDataObject* IDataObjectImpl_Construct(void)
 {
     IDataObjectImpl *obj;
 
@@ -216,7 +216,7 @@ typedef struct {
 
 static const IShellBrowserVtbl IShellBrowserImpl_Vtbl;
 
-IShellBrowser* IShellBrowserImpl_Construct(void)
+static IShellBrowser* IShellBrowserImpl_Construct(void)
 {
     IShellBrowserImpl *browser;
 
