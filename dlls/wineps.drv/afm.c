@@ -273,9 +273,10 @@ static BOOL AddBuiltinAFMs(void)
  *
  *	PSDRV_GetFontMetrics
  *
- * Parses all afm files listed in [afmdirs] and [TrueType Font Directories]
- * sections of Wine configuration file.  Adds built-in data last, so it can
- * be overridden by user-supplied AFM or TTF files.
+ * Parses all afm files listed in the
+ * HKEY_CURRENT_USER\\Software\\Wine\\Fonts registry key.
+ * Adds built-in data last, so it can be overridden by
+ * user-supplied AFM or TTF files.
  *
  * If this function fails, PSDRV_Init will destroy PSDRV_Heap, so don't worry
  * about freeing all the memory that's been allocated.

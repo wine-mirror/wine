@@ -570,7 +570,7 @@ static BOOL ReadTrueTypeDir(FT_Library library, LPCSTR dirname)
  *  PSDRV_GetTrueTypeMetrics
  *
  *  Reads font metrics from TrueType font files in directories listed in the
- *  [TrueType Font Directories] section of the Wine configuration file.
+ *  HKEY_CURRENT_USER\\Software\\Wine\\Fonts\\Path registry string.
  *
  *  If this function fails (returns FALSE), the driver will fail to initialize
  *  and the driver heap will be destroyed, so it's not necessary to HeapFree

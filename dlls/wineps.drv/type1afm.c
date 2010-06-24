@@ -1167,7 +1167,7 @@ static BOOL ReadAFMDir(LPCSTR dirname)
  *  PSDRV_GetType1Metrics
  *
  *  Reads font metrics from Type 1 AFM font files in directories listed in the
- *  [afmdirs] section of the Wine configuration file.
+ *  HKEY_CURRENT_USER\\Software\\Wine\\Fonts\\AFMPath registry string.
  *
  *  If this function fails (returns FALSE), the driver will fail to initialize
  *  and the driver heap will be destroyed, so it's not necessary to HeapFree
