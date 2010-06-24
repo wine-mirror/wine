@@ -335,7 +335,7 @@
 @ stub GdipGetPathGradientPath
 @ stdcall GdipGetPathGradientPointCount(ptr ptr)
 @ stub GdipGetPathGradientPresetBlend
-@ stub GdipGetPathGradientPresetBlendCount
+@ stdcall GdipGetPathGradientPresetBlendCount(ptr ptr)
 @ stdcall GdipGetPathGradientRect(ptr ptr)
 @ stdcall GdipGetPathGradientRectI(ptr ptr)
 @ stdcall GdipGetPathGradientSurroundColorCount(ptr ptr)

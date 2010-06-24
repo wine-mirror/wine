@@ -1474,6 +1474,13 @@ GpStatus WINGDIPAPI GdipSetPathGradientPresetBlend(GpPathGradient *brush,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientPresetBlendCount(GpPathGradient *brush,
+    INT *count)
+{
+    FIXME("(%p,%p): stub\n", brush, count);
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetPathGradientCenterColor(GpPathGradient *grad,
     ARGB argb)
 {
