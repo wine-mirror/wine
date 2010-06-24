@@ -199,27 +199,15 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
             return (HDDEDATA)FALSE;
 
         case XTYP_EXECUTE:
-        {
-            char *buffer = NULL;
-
             if (!(size = DdeGetData(hData, NULL, 0, 0)))
                 WINE_ERR("DdeGetData returned zero size of execute string\n");
-            else if (!(buffer = HeapAlloc(GetProcessHeap(), 0, size)))
+            else if (!(ddeString = HeapAlloc(GetProcessHeap(), 0, size)))
                 WINE_ERR("Out of memory\n");
-            else if (DdeGetData(hData, (LPBYTE)buffer, size, 0) != size)
+            else if (DdeGetData(hData, (LPBYTE)ddeString, size, 0) != size)
                 WINE_WARN("DdeGetData did not return %d bytes\n", size);
-            else
-            {
-                int len = MultiByteToWideChar(CP_ACP, 0, buffer, -1, NULL, 0);
-                if (!(ddeString = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
-                    WINE_ERR("Out of memory\n");
-                else
-                    MultiByteToWideChar(CP_ACP, 0, buffer, -1, ddeString, len);
-            }
-            HeapFree(GetProcessHeap(), 0, buffer);
             DdeFreeDataHandle(hData);
             return (HDDEDATA)DDE_FACK;
-        }
+
         case XTYP_REQUEST:
             ret = -3; /* error */
             if (!(size = DdeQueryStringW(ddeInst, hsz2, NULL, 0, CP_WINUNICODE)))
