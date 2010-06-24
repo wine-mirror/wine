@@ -142,8 +142,9 @@ on all relay messages (API calls).
 .TP
 WINEDEBUG=relay
 will turn on all relay messages. For more control on including or excluding
-functions and dlls from the relay trace look into the [Debug] section
-of the wine configuration file.
+functions and dlls from the relay trace, look into the
+.B HKEY_CURRENT_USER\\\\Software\\\\Wine\\\\Debug
+registry key.
 .PP
 For more information on debugging messages, see the
 .I Running Wine
@@ -203,6 +204,19 @@ Try to load comdlg32 as builtin first and try the native version if
 the builtin load fails; load shell32 always as builtin and comctl32
 always as native. Oleaut32 will be disabled.
 .RE
+.TP
+.I WINEARCH
+Specifies the Windows architecture to support. It can be set either to
+.B win32
+(support only 32-bit applications), or to
+.B win64
+(support both 64-bit applications and 32-bit ones in WoW64 mode).
+.br
+The architecture supported by a given Wine prefix is set at prefix
+creation time and cannot be changed afterwards. When running with an
+existing prefix, Wine will refuse to start if
+.I WINEARCH
+doesn't match the prefix architecture.
 .TP
 .I DISPLAY
 Specifies the X11 display to use.

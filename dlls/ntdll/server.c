@@ -752,6 +752,18 @@ static void setup_config_dir(void)
 
         mkdir( config_dir, 0777 );
         if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s\n", config_dir );
+
+        if ((p = getenv( "WINEARCH" )) && !strcmp( p, "win32" ))
+        {
+            /* force creation of a 32-bit prefix */
+            int fd = open( "system.reg", O_WRONLY | O_CREAT | O_EXCL, 0666 );
+            if (fd != -1)
+            {
+                static const char regfile[] = "WINE REGISTRY Version 2\n\n#arch=win32\n";
+                write( fd, regfile, sizeof(regfile) - 1 );
+                close( fd );
+            }
+        }
         MESSAGE( "wine: created the configuration directory '%s'\n", config_dir );
     }
 
@@ -1040,6 +1052,7 @@ NTSTATUS server_init_process_done(void)
 size_t server_init_thread( void *entry_point )
 {
     static const int is_win64 = (sizeof(void *) > sizeof(int));
+    const char *arch = getenv( "WINEARCH" );
     int ret;
     int reply_pipe[2];
     struct sigaction sig_act;
@@ -1090,6 +1103,15 @@ size_t server_init_thread( void *entry_point )
     switch (ret)
     {
     case STATUS_SUCCESS:
+        if (arch)
+        {
+            if (!strcmp( arch, "win32" ) && (is_win64 || is_wow64))
+                fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n",
+                             wine_get_config_dir() );
+            if (!strcmp( arch, "win64" ) && !is_wow64)
+                fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n",
+                             wine_get_config_dir() );
+        }
         return info_size;
     case STATUS_NOT_REGISTRY_FILE:
         fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n",
