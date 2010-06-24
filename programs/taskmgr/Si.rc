@@ -497,7 +497,7 @@ BEGIN
     IDS_VIEW_SMALL                     "M&ale ikone"
     IDS_VIEW_DETAILS                   "Po&drobnosti"
     IDS_WINDOWS                        "&Okna"
-    IDS_VIEW_SELECTCOLUMNS             "&Izbiranje stolcev..."
+    IDS_VIEW_SELECTCOLUMNS             "&Izbiranje stolcev ..."
     IDS_OPTIONS_SHOW16BITTASKS         "&Prikaz 16-bitnih opravil"
     IDS_VIEW_CPUHISTORY                "&Zgodovina procesorja"
     IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&En grafikon za vse procesorje"
