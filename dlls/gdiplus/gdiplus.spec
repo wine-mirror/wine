@@ -613,7 +613,7 @@
 @ stdcall GdipTranslateClipI(ptr long long)
 @ stdcall GdipTranslateLineTransform(ptr long long long)
 @ stdcall GdipTranslateMatrix(ptr long long long)
-@ stub GdipTranslatePathGradientTransform
+@ stdcall GdipTranslatePathGradientTransform(ptr long long long)
 @ stub GdipTranslatePenTransform
 @ stdcall GdipTranslateRegion(ptr long long)
 @ stdcall GdipTranslateRegionI(ptr long long)

@@ -1679,6 +1679,19 @@ GpStatus WINGDIPAPI GdipScalePathGradientTransform(GpPathGradient *grad,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipTranslatePathGradientTransform(GpPathGradient *grad,
+    REAL dx, REAL dy, GpMatrixOrder order)
+{
+    static int calls;
+
+    TRACE("(%p,%0.2f,%0.2f,%i)\n", grad, dx, dy, order);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetSolidFillColor(GpSolidFill *sf, ARGB argb)
 {
     TRACE("(%p, %x)\n", sf, argb);
