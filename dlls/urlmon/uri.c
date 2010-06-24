@@ -1241,6 +1241,22 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
     }
 
     switch(uriProp) {
+    case Uri_PROPERTY_HOST:
+        if(This->host_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start, This->host_len);
+            hres = S_OK;
+        } else {
+            /* Canonicalizing/parsing the host of a URI is only partially
+             * implemented, so return E_NOTIMPL for now.
+             */
+            FIXME("(%p)->(%d %p %x) Partially implemented\n", This, uriProp, pbstrProperty, dwFlags);
+            return E_NOTIMPL;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     case Uri_PROPERTY_PASSWORD:
         if(This->userinfo_split > -1) {
             *pbstrProperty = SysAllocStringLen(
@@ -1338,6 +1354,18 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     }
 
     switch(uriProp) {
+    case Uri_PROPERTY_HOST:
+        if(This->host_start == -1) {
+            /* Canonicalizing/parsing the host of a URI is only partially
+             * implemented, so return E_NOTIMPL for now.
+             */
+            FIXME("(%p)->(%d %p %x) Partially implemented\n", This, uriProp, pcchProperty, dwFlags);
+            return E_NOTIMPL;
+        }
+
+        *pcchProperty = This->host_len;
+        hres = (This->host_start > -1) ? S_OK : S_FALSE;
+        break;
     case Uri_PROPERTY_PASSWORD:
         *pcchProperty = (This->userinfo_split > -1) ? This->userinfo_len-This->userinfo_split-1 : 0;
         hres = (This->userinfo_split > -1) ? S_OK : S_FALSE;
@@ -1483,13 +1511,8 @@ static HRESULT WINAPI Uri_GetFragment(IUri *iface, BSTR *pstrFragment)
 
 static HRESULT WINAPI Uri_GetHost(IUri *iface, BSTR *pstrHost)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrHost);
-
-    if(!pstrHost)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrHost);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_HOST, pstrHost, 0);
 }
 
 static HRESULT WINAPI Uri_GetPassword(IUri *iface, BSTR *pstrPassword)
