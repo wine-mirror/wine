@@ -405,7 +405,8 @@ todo_wine
     op = DdeClientTransaction((LPBYTE)hdata, 0, conversation, item, CF_TEXT, XTYP_POKE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
-    ok(res == DDE_FACK || broken(res == 0xdeadbeef), /* win9x */ "Expected DDE_FACK, got %x\n", res);
+    ok(res == DDE_FACK || broken(res == (0xdead0000 | DDE_FACK)), /* win9x */
+       "Expected DDE_FACK, got %x\n", res);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
 
     /* XTYP_POKE, correct params */
@@ -432,16 +433,25 @@ todo_wine
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
     ok(op == (HDDEDATA)TRUE, "Expected TRUE, got %p\n", op);
-    ok(res == DDE_FACK || broken(res == 0xdeadbeef), /* win9x */ "Expected DDE_FACK, got %x\n", res);
+    ok(res == DDE_FACK || broken(res == (0xdead0000 | DDE_FACK)), /* win9x */
+       "Expected DDE_FACK, got %x\n", res);
 
     /* XTYP_EXECUTE, no data */
     res = 0xdeadbeef;
     DdeGetLastError(client_pid);
     op = DdeClientTransaction(NULL, 0, conversation, NULL, 0, XTYP_EXECUTE, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
-    ok(op == NULL, "Expected NULL, got %p\n", op);
-    ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
-    ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
+    ok(op == NULL || broken(op == (HDDEDATA)TRUE), /* win9x */ "Expected NULL, got %p\n", op);
+    if (!op)
+    {
+        ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
+        ok(ret == DMLERR_MEMORY_ERROR, "Expected DMLERR_MEMORY_ERROR, got %d\n", ret);
+    }
+    else  /* win9x */
+    {
+        ok(res == (0xdead0000 | DDE_FACK), "Expected DDE_FACK, got %x\n", res);
+        ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
+    }
 
     /* XTYP_EXECUTE, no data, -1 size */
     res = 0xdeadbeef;
@@ -450,7 +460,8 @@ todo_wine
     ret = DdeGetLastError(client_pid);
     ok(op == NULL, "Expected NULL, got %p\n", op);
     ok(res == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", res);
-    ok(ret == DMLERR_INVALIDPARAMETER, "Expected DMLERR_INVALIDPARAMETER, got %d\n", ret);
+    ok(ret == DMLERR_INVALIDPARAMETER || broken(ret == DMLERR_NO_ERROR), /* win9x */
+       "Expected DMLERR_INVALIDPARAMETER, got %d\n", ret);
 
     DdeFreeStringHandle(client_pid, topic);
     DdeFreeDataHandle(hdata);
@@ -463,14 +474,16 @@ todo_wine
     hdata = DdeClientTransaction(NULL, 0, conversation, item, CF_TEXT, XTYP_REQUEST, default_timeout, &res);
     ret = DdeGetLastError(client_pid);
     ok(ret == DMLERR_NO_ERROR, "Expected DMLERR_NO_ERROR, got %d\n", ret);
-    ok(res == DDE_FNOTPROCESSED, "Expected DDE_FNOTPROCESSED, got %d\n", res);
+    ok(res == DDE_FNOTPROCESSED || broken(res == (0xdead0000 | DDE_FNOTPROCESSED)), /* win9x */
+       "Expected DDE_FNOTPROCESSED, got %d\n", res);
     if (hdata == NULL)
         ok(FALSE, "hdata is NULL\n");
     else
     {
         str = (LPSTR)DdeAccessData(hdata, &size);
         ok(!lstrcmpA(str, "command executed\r\n"), "Expected 'command executed\\r\\n', got %s\n", str);
-        ok(size == 21, "Expected 21, got %d\n", size);
+        ok(size == 21 || broken(size == 28), /* sizes are rounded up on win9x */
+           "Expected 21, got %d\n", size);
 
         ret = DdeUnaccessData(hdata);
         ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
@@ -710,7 +723,8 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
 
         ptr = (LPSTR)DdeAccessData(hdata, &size);
         ok(!lstrcmpA(ptr, "poke data\r\n"), "Expected 'poke data\\r\\n', got %s\n", ptr);
-        ok(size == 12, "Expected 12, got %d\n", size);
+        ok(size == 12 || broken(size == 28), /* sizes are rounded up on win9x */
+           "Expected 12, got %d\n", size);
         DdeUnaccessData(hdata);
 
         size = DdeQueryStringA(server_pid, hsz2, str, MAX_PATH, CP_WINANSI);
@@ -904,7 +918,7 @@ static LRESULT WINAPI dde_msg_client_wndproc(HWND hwnd, UINT msg, WPARAM wparam,
             ok(ack->reserved == 0, "Expected 0, got %d\n", ack->reserved);
             ok(ack->fBusy == FALSE, "Expected FALSE, got %d\n", ack->fBusy);
 
-            ok(hi == (UINT_PTR)execute_hglobal, "Execpted execute hglobal, got %08lx\n", hi);
+            ok(hi == (UINT_PTR)execute_hglobal, "Expected execute hglobal, got %08lx\n", hi);
             ptr = GlobalLock((HGLOBAL)hi);
 
             if (msg_index == 9)
@@ -1596,7 +1610,8 @@ todo_wine {
     ret = 0xdeadbeef;
     hdata = DdeClientTransaction((LPBYTE)test_cmd, strlen(test_cmd) + 1, hconv, (HSZ)0xdead, 0xbeef, XTYP_EXECUTE, 1000, &ret);
     ok(!hdata, "DdeClientTransaction succeeded\n");
-    ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+    ok(ret == DDE_FNOTPROCESSED || broken(ret == (0xdead0000 | DDE_FNOTPROCESSED)), /* win9x */
+       "wrong status code %04x\n", ret);
     err = DdeGetLastError(dde_inst);
     ok(err == DMLERR_NOTPROCESSED, "wrong dde error %x\n", err);
 
@@ -1643,7 +1658,8 @@ todo_wine {
     else  /* no mapping */
     {
         ok(!hdata, "DdeClientTransaction returned %p, error %x\n", hdata, err);
-        ok(ret == DDE_FNOTPROCESSED, "wrong status code %04x\n", ret);
+        ok(ret == DDE_FNOTPROCESSED || broken(ret == (0xdead0000 | DDE_FNOTPROCESSED)), /* win9x */
+           "wrong status code %04x\n", ret);
         ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
     }
 
