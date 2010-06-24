@@ -177,6 +177,7 @@ send_file_direct (const char *name)
     report (R_PROGRESS, 2, filesize);
     total = 0;
     while (total < filesize && ReadFile( file, buffer, BUFLEN/2, &bytes_read, NULL )) {
+        if (aborting) goto abort2;
         if (!bytes_read) break;
         total += bytes_read;
         if (total > filesize) bytes_read -= total - filesize;
@@ -344,6 +345,7 @@ send_file_wininet (const char *name)
     report (R_PROGRESS, 2, filesize);
     total = 0;
     while (total < filesize && ReadFile( file, buffer, BUFLEN/2, &bytes_read, NULL )) {
+        if (aborting) goto done;
         if (!bytes_read) break;
         total += bytes_read;
         if (total > filesize) bytes_read -= total - filesize;
