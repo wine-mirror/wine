@@ -2373,6 +2373,9 @@ static void test_UnpackDDElParam(void)
 static char test_cmd_a_to_a[] = "Test dde command";
 static WCHAR test_cmd_w_to_w[][32] = {
     {'t','e','s','t',' ','d','d','e',' ','c','o','m','m','a','n','d',0},
+    { 0x2018, 0x2019, 0x0161, 0x0041, 0x02dc, 0 },  /* some chars that should map properly to CP1252 */
+    { 0x2026, 0x2020, 0x2021, 0x0d0a, 0 },  /* false negative for IsTextUnicode */
+    { 0x4efa, 0x4efc, 0x0061, 0x4efe, 0 },  /* some Chinese chars */
 };
 static const int nb_callbacks = 5 + sizeof(test_cmd_w_to_w)/sizeof(test_cmd_w_to_w[0]);
 
@@ -2506,6 +2509,35 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                    size, size_w_to_a, msg_index);
                 ok(!lstrcmpA((CHAR*)buffer, test_cmd_w_to_a), "Expected %s, got %s, msg_index=%d\n",
                    test_cmd_w_to_a, buffer, msg_index);
+            }
+            break;
+
+        case 2:  /* normal Unicode string */
+        case 3:  /* IsTextUnicode false negative */
+        case 4:  /* Chinese chars */
+            if (unicode_server) todo_wine
+            {
+                /* double A->W mapping */
+                /* NT uses the full size, XP+ only until the first null */
+                DWORD nt_size = MultiByteToWideChar( CP_ACP, 0, (char *)cmd_w, size_w, test_cmd_a_to_w,
+                                                     sizeof(test_cmd_a_to_w)/sizeof(WCHAR) ) * sizeof(WCHAR);
+                DWORD xp_size = MultiByteToWideChar( CP_ACP, 0, (char *)cmd_w, -1, NULL, 0 ) * sizeof(WCHAR);
+                ok(size == xp_size || broken(size == nt_size),
+                   "Wrong size %d/%d, msg_index=%d\n", size, size_a_to_w, msg_index);
+                ok(!lstrcmpW((WCHAR*)buffer, test_cmd_a_to_w),
+                   "Expected %s, msg_index=%d\n", wine_dbgstr_w(test_cmd_a_to_w), msg_index);
+            }
+            else if (unicode_client)
+            {
+                ok(size == size_w_to_a, "Wrong size %d/%d, msg_index=%d\n", size, size_w_to_a, msg_index);
+                ok(!lstrcmpA((CHAR*)buffer, test_cmd_w_to_a), "Expected %s, got %s, msg_index=%d\n",
+                   test_cmd_w_to_a, buffer, msg_index);
+            }
+            else
+            {
+                ok(size == size_w, "Wrong size %d/%d, msg_index=%d\n", size, size_w, msg_index);
+                ok(!lstrcmpW((WCHAR*)buffer, cmd_w),
+                   "Expected %s, msg_index=%d\n", wine_dbgstr_w(cmd_w), msg_index);
             }
             break;
 
