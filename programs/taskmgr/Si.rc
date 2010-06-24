@@ -547,9 +547,9 @@ BEGIN
                                      nezaželjene posledice, vključno z nesabilnostjo sistema. Ali ste\n\
                                      prepričani, da želite spremeniti prioriteto?"
     IDS_PRIORITY_UNABLE2CHANGE      "Ne morem spremeniti prioritete"
-    IDS_TERMINATE_MESSAGE           "OPOZORILO: Prekinjanje procesa lahko povzroči nezaželjene \n\
+    IDS_TERMINATE_MESSAGE           "OPOZORILO: Prekinjanje procesa lahko povzroči nezaželjene\n\
                                      posledice, vključno z izgubo podatkov in nestabilnostjo sistema.\n\
-                                     Pred prekinitvijo proces ne bo imel možnosti shraniti svojega \n\
+                                     Pred prekinitvijo proces ne bo imel možnosti shraniti svojega\n\
                                      stanja ali podatkov. Ali ste prepričani, da želite\n\
                                      prekiniti proces?"
     IDS_TERMINATE_UNABLE2TERMINATE  "Ne morem prekiniti procesa"

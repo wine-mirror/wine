@@ -133,7 +133,7 @@ STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
 
 STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
 Ta datoteka vsebuje Unicode znake, ki bodo izgubljeni,\n\
-če datoteko shranite v %s kodiranju. \n\
+če datoteko shranite v %s kodiranju.\n\
 Da bi te znake obdržali, kliknite Prekliči in izberite\n\
 eno izmed Unicode možnosti v seznamu kodiranj.\n\
 Nadaljujem?"

@@ -64,7 +64,7 @@ XCOPY sursă [destinație] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n\
 [/T]  Creează o structură de directoare goale, dar nu copiază fișiere\n\
 [/Y]  Nu solicita confirmarea la suprascrierea fișierelor\n\
 [/-Y] Solicită confirmarea la suprascrierea fișierelor\n\
-[/P]  Solicită confirmarea înainte de copierea fiecărui fișier sursă \n\
+[/P]  Solicită confirmarea înainte de copierea fiecărui fișier sursă\n\
 [/N]  Copiază utilizând prescurtări de nume\n\
 [/U]  Copiază numai fișierele care există deja în destinație\n\
 [/R]  Suprascrie orice fișiere cu protecție la modificări\n\
