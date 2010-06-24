@@ -29,12 +29,10 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <shellapi.h>
-#include <wine/debug.h>
 
 #include "resource.h"
 #include "winecfg.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 static HICON logo = NULL;
 static HFONT titleFont = NULL;
