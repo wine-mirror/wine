@@ -2537,6 +2537,14 @@ static void BltParamTest(void)
     ok(hr == DDERR_INVALIDRECT, "BltFast with a rectangle resulting in an off-surface write returned %08x\n", hr);
     hr = IDirectDrawSurface_BltFast(surface1, 90, 90, surface2, NULL, 0);
     ok(hr == DDERR_INVALIDRECT, "BltFast with a rectangle resulting in an off-surface write returned %08x\n", hr);
+
+    hr = IDirectDrawSurface_BltFast(surface1, -10, 0, surface2, NULL, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with an offset resulting in an off-surface write returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface1, 0, -10, surface2, NULL, 0);
+    ok(hr == DDERR_INVALIDRECT, "BltFast with an offset resulting in an off-surface write returned %08x\n", hr);
+    hr = IDirectDrawSurface_BltFast(surface2, 20, 20, surface1, &valid, 0);
+    ok(hr == DD_OK, "BltFast from bigger to smaller surface using a valid rectangle and offset returned %08x\n", hr);
+
     hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface1, &invalid1, 0);
     ok(hr == DDERR_INVALIDRECT, "BltFast with invalid rectangle 1 returned %08x\n", hr);
     hr = IDirectDrawSurface_BltFast(surface2, 0, 0, surface1, &invalid2, 0);

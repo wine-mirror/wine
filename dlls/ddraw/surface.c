@@ -2077,8 +2077,12 @@ IDirectDrawSurfaceImpl_BltFast(IDirectDrawSurface7 *iface,
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *src = (IDirectDrawSurfaceImpl *)Source;
+    DWORD src_w, src_h, dst_w, dst_h;
     HRESULT hr;
     TRACE("(%p)->(%d,%d,%p,%p,%d): Relay\n", This, dstx, dsty, Source, rsrc, trans);
+
+    dst_w = This->surface_desc.dwWidth;
+    dst_h = This->surface_desc.dwHeight;
 
     /* Source must be != NULL, This is not checked by windows. Windows happily throws a 0xc0000005
      * in that case
@@ -2092,21 +2096,21 @@ IDirectDrawSurfaceImpl_BltFast(IDirectDrawSurface7 *iface,
             WARN("Source rectangle is invalid, returning DDERR_INVALIDRECT\n");
             return DDERR_INVALIDRECT;
         }
-        if(dstx + rsrc->right - rsrc->left > This->surface_desc.dwWidth ||
-           dsty + rsrc->bottom - rsrc->top > This->surface_desc.dwHeight)
-        {
-            WARN("Destination area out of bounds, returning DDERR_INVALIDRECT\n");
-            return DDERR_INVALIDRECT;
-        }
+
+        src_w = rsrc->right - rsrc->left;
+        src_h = rsrc->bottom - rsrc->top;
     }
     else
     {
-        if(dstx + src->surface_desc.dwWidth > This->surface_desc.dwWidth ||
-           dsty + src->surface_desc.dwHeight > This->surface_desc.dwHeight)
-        {
-            WARN("Destination area out of bounds, returning DDERR_INVALIDRECT\n");
-            return DDERR_INVALIDRECT;
-        }
+        src_w = src->surface_desc.dwWidth;
+        src_h = src->surface_desc.dwHeight;
+    }
+
+    if (src_w > dst_w || dstx > dst_w - src_w
+            || src_h > dst_h || dsty > dst_h - src_h)
+    {
+        WARN("Destination area out of bounds, returning DDERR_INVALIDRECT.\n");
+        return DDERR_INVALIDRECT;
     }
 
     EnterCriticalSection(&ddraw_cs);
