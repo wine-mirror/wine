@@ -35,8 +35,8 @@ MAIN_MENU MENU
    MENUITEM "A&brir\tEnter",             PM_OPEN
    MENUITEM "&Mover...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copiar...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Excluir\tEntf",           PM_DELETE
-   MENUITEM "&Atributos...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM "E&xcluir\tEntf",           PM_DELETE
+   MENUITEM "A&tributos...\tAlt+Enter",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Executar...",          PM_EXECUTE
    MENUITEM SEPARATOR
@@ -74,7 +74,7 @@ MAIN_MENU MENU
    MENUITEM "A&brir\tEnter",             PM_OPEN
    MENUITEM "&Mover...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copiar...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Excluir\tEntf",           PM_DELETE
+   MENUITEM "E&xcluir\tEntf",           PM_DELETE
    MENUITEM "&Atributos...\tAlt+Enter",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Executar...",          PM_EXECUTE
@@ -99,7 +99,7 @@ POPUP "Aj&uda" {
    MENUITEM "&Ajuda da ajuda",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
-   MENUITEM "&Acerca do Wine",     PM_ABOUT_WINE
+   MENUITEM "Acerca do &Wine",     PM_ABOUT_WINE
  }
 }
 
@@ -170,13 +170,13 @@ DIALOG_GROUP DIALOG 0, 0, 230, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos do grupo de programas"
 {
-LTEXT     "&Descrição:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
-EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Descrição:", PM_DESCRIPTION_TXT,   05, 18,  60, 10
+EDITTEXT                            PM_DESCRIPTION,       70, 18,  90, 15, WS_TABSTOP
 LTEXT     "&Grupo de arquivo:",        PM_FILE_TXT,          05, 38,  50, 10
-EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
-DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Aj&uda",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+EDITTEXT                            PM_FILE,              70, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                165,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",        IDCANCEL,            165, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aj&uda",          PM_HELP,             165, 45,  60, 15, WS_TABSTOP
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -185,13 +185,13 @@ DIALOG_GROUP DIALOG 0, 0, 230, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos do grupo de programas"
 {
-LTEXT     "&Descrição:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
-EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Descrição:", PM_DESCRIPTION_TXT,   05, 18,  60, 10
+EDITTEXT                            PM_DESCRIPTION,       70, 18,  90, 15, WS_TABSTOP
 LTEXT     "&Grupo de ficheiro:",        PM_FILE_TXT,          05, 38,  50, 10
-EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
-DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Cancelar",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Aj&uda",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+EDITTEXT                            PM_FILE,              70, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                165,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",        IDCANCEL,            165, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aj&uda",          PM_HELP,             165, 45,  60, 15, WS_TABSTOP
 }
 
 
@@ -294,12 +294,12 @@ IDS_DELETE_PROGRAM_s,		"Excluir programa '%s' ?"
 IDS_NOT_IMPLEMENTED,		"Não implementado"
 IDS_FILE_READ_ERROR_s,		"Erro lendo '%s'."
 IDS_FILE_WRITE_ERROR_s,		"Erro escrevendo '%s'."
-IDS_GRPFILE_READ_ERROR_s,	"O arquivo de grupo '%s' não pode ser aberto.\nDeverá ser tentado outras vezes?"
+IDS_GRPFILE_READ_ERROR_s,	"O arquivo de grupo '%s' não pode ser aberto.\nTentar novamente?"
 IDS_OUT_OF_MEMORY,		"Sem memória."
 IDS_WINHELP_ERROR,		"Ajuda não disponível."
 IDS_UNKNOWN_FEATURE_s,		"Recurso desconhecido em %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Arquivo '%s' existe. Não sobreescrevendo."
-IDS_SAVE_GROUP_AS_s,		"Salvar grupo como '%s' para prevenir a sobreescrita dos arquivos originais."
+IDS_FILE_NOT_OVERWRITTEN_s,	"Arquivo '%s' existe. Não foi sobrescrito."
+IDS_SAVE_GROUP_AS_s,		"Salvar grupo como '%s' para prevenir a sobrescrita dos arquivos originais."
 IDS_NO_HOT_KEY,			"Nenhuma"
 IDS_ALL_FILES,			"Todos os arquivos (*.*)"
 IDS_PROGRAMS,			"Programas"
