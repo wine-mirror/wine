@@ -1219,6 +1219,216 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* It normalizes IPv4 addresses correctly. */
+    {   "http://127.000.000.100/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://127.0.0.100/",S_OK,TRUE},
+            {"127.0.0.100",S_OK,TRUE},
+            {"http://127.0.0.100/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"127.0.0.100",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://127.000.000.100/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Make sure it normalizes partial IPv4 addresses correctly. */
+    {   "http://127.0/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://127.0.0.0/",S_OK,TRUE},
+            {"127.0.0.0",S_OK,TRUE},
+            {"http://127.0.0.0/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"127.0.0.0",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://127.0/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Make sure it converts implicit IPv4's correctly. */
+    {   "http://123456/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://0.1.226.64/",S_OK,TRUE},
+            {"0.1.226.64",S_OK,TRUE},
+            {"http://0.1.226.64/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"0.1.226.64",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://123456/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* UINT_MAX */
+    {   "http://4294967295/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://255.255.255.255/",S_OK,TRUE},
+            {"255.255.255.255",S_OK,TRUE},
+            {"http://255.255.255.255/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"255.255.255.255",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://4294967295/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* UINT_MAX+1 */
+    {   "http://4294967296/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://4294967296/",S_OK,TRUE},
+            {"4294967296",S_OK,TRUE},
+            {"http://4294967296/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"4294967296",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://4294967296/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Window's doesn't normalize IP address for unknown schemes. */
+    {   "1234://4294967295/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"1234://4294967295/",S_OK,TRUE},
+            {"4294967295",S_OK,TRUE},
+            {"1234://4294967295/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"4294967295",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"1234://4294967295/",S_OK,FALSE},
+            {"1234",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Window's doesn't normalize IP address for unknown schemes. */
+    {   "1234://127.001/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"1234://127.001/",S_OK,TRUE},
+            {"127.001",S_OK,TRUE},
+            {"1234://127.001/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"127.001",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"1234://127.001/",S_OK,FALSE},
+            {"1234",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
