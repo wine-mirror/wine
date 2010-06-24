@@ -554,7 +554,7 @@
 @ stdcall GdipSetPathGradientCenterPointI(ptr ptr)
 @ stdcall GdipSetPathGradientFocusScales(ptr long long)
 @ stdcall GdipSetPathGradientGammaCorrection(ptr long)
-@ stub GdipSetPathGradientLinearBlend
+@ stdcall GdipSetPathGradientLinearBlend(ptr long long)
 @ stub GdipSetPathGradientPath
 @ stdcall GdipSetPathGradientPresetBlend(ptr ptr ptr long)
 @ stdcall GdipSetPathGradientSigmaBlend(ptr long long)
