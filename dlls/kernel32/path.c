@@ -684,7 +684,10 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR 
         /* get a "random" unique number and try to create the file */
         HANDLE handle;
         UINT num = GetTickCount() & 0xffff;
+        static UINT last;
 
+        /* avoid using the same name twice in a short interval */
+        if (last - num < 10) num = last + 1;
         if (!num) num = 1;
         unique = num;
         do
@@ -696,6 +699,7 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR 
             {  /* We created it */
                 TRACE("created %s\n", debugstr_w(buffer) );
                 CloseHandle( handle );
+                last = unique;
                 break;
             }
             if (GetLastError() != ERROR_FILE_EXISTS &&
