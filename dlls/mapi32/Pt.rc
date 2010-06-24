@@ -2,6 +2,7 @@
 * MAPI32 Portuguese resources
 *
 * Copyright 2010 Ricardo Filipe
+* Copyright 2010 Gustavo Henrique Milaré
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -21,9 +22,17 @@
 
 #include "res.h"
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
 #pragma code_page(65001)
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE
+{
+   IDS_NO_MAPI_CLIENT, "O envio do e-mail falhou porque não existe um cliente de e-mail MAPI instalado."
+   IDS_SEND_MAIL, "Enviar E-mail"
+}
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE
 {
