@@ -1627,6 +1627,19 @@ GpStatus WINGDIPAPI GdipSetPathGradientTransform(GpPathGradient *grad,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipGetPathGradientTransform(GpPathGradient *grad,
+    GpMatrix *matrix)
+{
+    static int calls;
+
+    TRACE("(%p,%p)\n", grad, matrix);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipMultiplyPathGradientTransform(GpPathGradient *grad,
     GDIPCONST GpMatrix *matrix, GpMatrixOrder order)
 {
