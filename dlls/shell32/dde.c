@@ -88,13 +88,13 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
 
 static inline DWORD Dde_OnExecute(HCONV hconv, HSZ hszTopic, HDDEDATA hdata)
 {
-    BYTE * pszCommand;
+    WCHAR * pszCommand;
 
-    pszCommand = DdeAccessData(hdata, NULL);
+    pszCommand = (WCHAR *)DdeAccessData(hdata, NULL);
     if (!pszCommand)
         return DDE_FNOTPROCESSED;
 
-    FIXME("stub: %s %s\n", debugstr_hsz(hszTopic), pszCommand);
+    FIXME("stub: %s %s\n", debugstr_hsz(hszTopic), debugstr_w(pszCommand));
 
     DdeUnaccessData(hdata);
 
