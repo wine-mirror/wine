@@ -382,7 +382,7 @@ static int wpp_close_output(void)
     return 1;
 }
 
-HRESULT assemble_shader(const char *preprocShader, const char *preprocMessages,
+static HRESULT assemble_shader(const char *preprocShader, const char *preprocMessages,
                         LPD3DXBUFFER* ppShader, LPD3DXBUFFER* ppErrorMsgs)
 {
     struct bwriter_shader *shader;
