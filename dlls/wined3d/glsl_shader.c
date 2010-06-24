@@ -1832,7 +1832,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         case WINED3DSTT_CUBE:
             if (shadow)
             {
-                FIXME("Unsupported Cube shadow function.\n ");
+                FIXME("Unsupported Cube shadow function.\n");
                 sample_function->name = "unsupportedCubeShadow";
                 sample_function->coord_mask = 0;
             }
@@ -1865,7 +1865,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
         case WINED3DSTT_VOLUME:
             if (shadow)
             {
-                FIXME("Unsupported 3D shadow function.\n ");
+                FIXME("Unsupported 3D shadow function.\n");
                 sample_function->name = "unsupported3DShadow";
                 sample_function->coord_mask = 0;
             }
