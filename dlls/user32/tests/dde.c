@@ -2486,11 +2486,9 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         case 0:  /* ASCII string */
             if (unicode_server)
             {
-                todo_wine {
                 ok(size == size_a_to_w, "Wrong size %d/%d, msg_index=%d\n", size, size_a_to_w, msg_index);
                 ok(!lstrcmpW((WCHAR*)buffer, test_cmd_a_to_w),
                    "Expected %s, msg_index=%d\n", wine_dbgstr_w(test_cmd_a_to_w), msg_index);
-                }
             }
             else if (unicode_client)
             {
@@ -2519,7 +2517,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
                 ok(!lstrcmpA((CHAR*)buffer, test_cmd_w_to_a), "Expected %s, got %s, msg_index=%d\n",
                    test_cmd_w_to_a, buffer, msg_index);
             }
-            else todo_wine
+            else
             {
                 ok(size == size_w_to_a, "Wrong size %d/%d, msg_index=%d\n",
                    size, size_w_to_a, msg_index);
@@ -2531,7 +2529,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         case 2:  /* normal Unicode string */
         case 3:  /* IsTextUnicode false negative */
         case 4:  /* Chinese chars */
-            if (unicode_server) todo_wine
+            if (unicode_server)
             {
                 /* double A->W mapping */
                 /* NT uses the full size, XP+ only until the first null */
