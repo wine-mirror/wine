@@ -125,14 +125,21 @@ PURB WINAPI USBD_CreateConfigurationRequestEx(
                 interfaceInfo->Pipes[i].MaximumPacketSize = endpointDescriptor->wMaxPacketSize;
                 interfaceInfo->Pipes[i].EndpointAddress = endpointDescriptor->bEndpointAddress;
                 interfaceInfo->Pipes[i].Interval = endpointDescriptor->bInterval;
-                if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_CONTROL)
+                switch (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_MASK)
+                {
+                case USB_ENDPOINT_TYPE_CONTROL:
                     interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeControl;
-                else if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_BULK)
+                    break;
+                case USB_ENDPOINT_TYPE_BULK:
                     interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeBulk;
-                else if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_INTERRUPT)
+                    break;
+                case USB_ENDPOINT_TYPE_INTERRUPT:
                     interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeInterrupt;
-                else if (endpointDescriptor->bmAttributes & USB_ENDPOINT_TYPE_ISOCHRONOUS)
+                    break;
+                case USB_ENDPOINT_TYPE_ISOCHRONOUS:
                     interfaceInfo->Pipes[i].PipeType = UsbdPipeTypeIsochronous;
+                    break;
+                }
                 endpointDescriptor = (PUSB_ENDPOINT_DESCRIPTOR) USBD_ParseDescriptors(
                     ConfigurationDescriptor, ConfigurationDescriptor->wTotalLength,
                     endpointDescriptor + 1, USB_ENDPOINT_DESCRIPTOR_TYPE );
