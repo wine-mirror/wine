@@ -3653,7 +3653,7 @@ struct measure_ranges_args {
     GpRegion **regions;
 };
 
-GpStatus measure_ranges_callback(GpGraphics *graphics,
+static GpStatus measure_ranges_callback(GpGraphics *graphics,
     GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
     INT lineno, const RectF *bounds, void *user_data)
