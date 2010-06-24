@@ -2637,16 +2637,6 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 }
 
 
-/***********************************************************************
- *           GetProcessDword    (KERNEL32.18)
- */
-DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
-{
-    FIXME( "(%d, %d): not supported\n", dwProcessID, offset );
-    return 0;
-}
-
-
 /*********************************************************************
  *           OpenProcess   (KERNEL32.@)
  *
