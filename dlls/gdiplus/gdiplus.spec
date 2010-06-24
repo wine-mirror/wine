@@ -498,7 +498,7 @@
 @ stdcall GdipSaveImageToStream(ptr ptr ptr ptr)
 @ stdcall GdipScaleLineTransform(ptr long long long)
 @ stdcall GdipScaleMatrix(ptr long long long)
-@ stub GdipScalePathGradientTransform
+@ stdcall GdipScalePathGradientTransform(ptr long long long)
 @ stdcall GdipScalePenTransform(ptr long long long)
 @ stdcall GdipScaleTextureTransform(ptr long long long)
 @ stdcall GdipScaleWorldTransform(ptr long long long)
