@@ -1089,8 +1089,8 @@
 @ extern _winminor MSVCRT__winminor
 # stub _winput_s
 @ extern _winver MSVCRT__winver
-@ cdecl _wmakepath(wstr wstr wstr wstr wstr)
-# stub _wmakepath_s
+@ cdecl _wmakepath(ptr wstr wstr wstr wstr)
+@ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr)
 @ cdecl _wmkdir(wstr)
 @ cdecl _wmktemp(wstr)
 # stub _wmktemp_s

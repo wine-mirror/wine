@@ -1182,6 +1182,110 @@ range:
 }
 
 /*********************************************************************
+ *		_wmakepath_s (MSVCRT.@)
+ *
+ * Safe version of _wmakepath.
+ */
+int CDECL _wmakepath_s(MSVCRT_wchar_t *path, MSVCRT_size_t size, const MSVCRT_wchar_t *drive,
+                       const MSVCRT_wchar_t *directory, const MSVCRT_wchar_t *filename,
+                       const MSVCRT_wchar_t *extension)
+{
+    MSVCRT_wchar_t *p = path;
+
+    if (!path || !size)
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if (drive && drive[0])
+    {
+        if (size <= 2)
+            goto range;
+
+        *p++ = drive[0];
+        *p++ = ':';
+        size -= 2;
+    }
+
+    if (directory && directory[0])
+    {
+        unsigned int len = strlenW(directory);
+        unsigned int needs_separator = directory[len - 1] != '/' && directory[len - 1] != '\\';
+        unsigned int copylen = min(size - 1, len);
+
+        if (size < 2)
+            goto range;
+
+        memmove(p, directory, copylen * sizeof(MSVCRT_wchar_t));
+
+        if (size <= len)
+            goto range;
+
+        p += copylen;
+        size -= copylen;
+
+        if (needs_separator)
+        {
+            if (size < 2)
+                goto range;
+
+            *p++ = '\\';
+            size -= 1;
+        }
+    }
+
+    if (filename && filename[0])
+    {
+        unsigned int len = strlenW(filename);
+        unsigned int copylen = min(size - 1, len);
+
+        if (size < 2)
+            goto range;
+
+        memmove(p, filename, copylen * sizeof(MSVCRT_wchar_t));
+
+        if (size <= len)
+            goto range;
+
+        p += len;
+        size -= len;
+    }
+
+    if (extension && extension[0])
+    {
+        unsigned int len = strlenW(extension);
+        unsigned int needs_period = extension[0] != '.';
+        unsigned int copylen;
+
+        if (size < 2)
+            goto range;
+
+        if (needs_period)
+        {
+            *p++ = '.';
+            size -= 1;
+        }
+
+        copylen = min(size - 1, len);
+        memcpy(p, extension, copylen * sizeof(MSVCRT_wchar_t));
+
+        if (size <= len)
+            goto range;
+
+        p += copylen;
+    }
+
+    *p = '\0';
+    return 0;
+
+range:
+    path[0] = '\0';
+    *MSVCRT__errno() = MSVCRT_ERANGE;
+    return MSVCRT_ERANGE;
+}
+
+/*********************************************************************
  *		_searchenv (MSVCRT.@)
  *
  * Search for a file in a list of paths from an environment variable.

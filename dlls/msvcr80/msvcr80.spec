@@ -1159,8 +1159,8 @@
 @ extern _winmajor msvcrt._winmajor
 @ extern _winminor msvcrt._winminor
 @ extern _winver msvcrt._winver
-@ cdecl _wmakepath(wstr wstr wstr wstr wstr) msvcrt._wmakepath
-@ stub _wmakepath_s
+@ cdecl _wmakepath(ptr wstr wstr wstr wstr) msvcrt._wmakepath
+@ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr) msvcrt._wmakepath_s
 @ cdecl _wmkdir(wstr) msvcrt._wmkdir
 @ cdecl _wmktemp(wstr) msvcrt._wmktemp
 @ stub _wmktemp_s

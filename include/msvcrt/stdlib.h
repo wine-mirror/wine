@@ -205,6 +205,7 @@ wchar_t*      __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);
 wchar_t*      __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
 wchar_t*      __cdecl _wgetenv(const wchar_t*);
 void          __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
+int           __cdecl _wmakepath_s(wchar_t*,size_t,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
 void          __cdecl _wperror(const wchar_t*);
 int           __cdecl _wputenv(const wchar_t*);
 void          __cdecl _wsearchenv(const wchar_t*,const wchar_t*,wchar_t*);
