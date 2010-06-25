@@ -7,6 +7,7 @@ IMPORTS   = winmm user32 kernel32
 
 C_SRCS = \
 	capture.c \
+	generated.c \
 	mci.c \
 	midi.c \
 	mixer.c \
