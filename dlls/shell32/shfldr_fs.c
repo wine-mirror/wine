@@ -1068,7 +1068,7 @@ static ULONG WINAPI ISFHelper_fnRelease (ISFHelper * iface)
 }
 
 /****************************************************************************
- * ISFHelper_fnAddFolder
+ * ISFHelper_fnGetUniqueName
  *
  * creates a unique folder name
  */
