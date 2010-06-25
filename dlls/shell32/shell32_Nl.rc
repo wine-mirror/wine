@@ -25,8 +25,8 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "&Grote Pictogrammen",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "&Kleine Pictogrammen",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Grote pictogrammen",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&Kleine pictogrammen",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Lijst",			FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Details",		FCIDM_SHVIEW_REPORTVIEW
 END
@@ -40,32 +40,32 @@ BEGIN
 	BEGIN
 	  POPUP "&Bekijken"
 	  BEGIN
-	    MENUITEM "&Grote Pictogrammen",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "&Kleine Pictogrammen",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Grote pictogrammen",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "&Kleine pictogrammen",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Lijst",		FCIDM_SHVIEW_LISTVIEW
 	    MENUITEM "&Details",	FCIDM_SHVIEW_REPORTVIEW
 	  END
 	  MENUITEM SEPARATOR
-	  POPUP "P&ictogrammen Sorteren"
+	  POPUP "P&ictogrammen sorteren"
 	  BEGIN
-	    MENUITEM "Op &Naam",	0x30	/* column 0 */
-	    MENUITEM "Op &Type",	0x32	/* column 2 */
-	    MENUITEM "Op &Grootte",	0x31	/* ... */
-	    MENUITEM "Op &Datum",	0x33
+	    MENUITEM "Op &naam",	0x30	/* column 0 */
+	    MENUITEM "Op &type",	0x32	/* column 2 */
+	    MENUITEM "Op &grootte",	0x31	/* ... */
+	    MENUITEM "Op &datum",	0x33
 	    MENUITEM SEPARATOR
 	    MENUITEM "&Automatisch",	FCIDM_SHVIEW_AUTOARRANGE
 	  END
-	  MENUITEM "Pictogrammen Uitlijnen",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM "Pictogrammen uitlijnen",	FCIDM_SHVIEW_SNAPTOGRID
 	  MENUITEM SEPARATOR
 	  MENUITEM "Vernieuwen",		FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
 	  MENUITEM "Plakken",		FCIDM_SHVIEW_INSERT
-	  MENUITEM "Plakken als Snelkoppeling",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM "Plakken als snelkoppeling",	FCIDM_SHVIEW_INSERTLINK
 	  MENUITEM SEPARATOR
 	  POPUP "Nieuw"
 	  BEGIN
-	    MENUITEM "Nieuwe &Map",	FCIDM_SHVIEW_NEWFOLDER
-	    MENUITEM "Nieuwe Sne&lkoppeling",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM "Nieuwe &map",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Nieuwe sne&lkoppeling",	FCIDM_SHVIEW_NEWLINK
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
@@ -88,7 +88,7 @@ BEGIN
 	  MENUITEM "K&nippen",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopiëren",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Maak Sne&lkoppeling",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Maak sne&lkoppeling",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "Ver&wijderen",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Hernoemen",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
@@ -106,8 +106,8 @@ BEGIN
 
     POPUP "B&eeld"
     BEGIN
-        MENUITEM "&Grote Pictogrammen", FCIDM_SHVIEW_BIGICON
-        MENUITEM "&Kleine Pictogrammen", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Grote pictogrammen", FCIDM_SHVIEW_BIGICON
+        MENUITEM "&Kleine pictogrammen", FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Lijst", FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Details", FCIDM_SHVIEW_REPORTVIEW
     END
@@ -120,7 +120,7 @@ END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Bladeren naar Map"
+CAPTION "Bladeren naar map"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -135,7 +135,7 @@ FONT 8, "MS Shell Dlg"
 
 SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Bladeren naar Map"
+CAPTION "Bladeren naar map"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "", IDD_TITLE, 10, 8, 198, 24
@@ -217,26 +217,26 @@ STRINGTABLE
         /* special folders */
 	IDS_DESKTOP		"Bureaublad"
 	IDS_MYCOMPUTER		"Mijn Computer"
-	IDS_RECYCLEBIN_FOLDER_NAME      "Vuilnisbak"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Prullenbak"
 	IDS_CONTROLPANEL	"Configuratiescherm"
 
         /* context menus */
-	IDS_VIEW_LARGE		"Grote Pictogrammen"
-	IDS_VIEW_SMALL		"&Kleine Pictogrammen"
+	IDS_VIEW_LARGE		"Grote pictogrammen"
+	IDS_VIEW_SMALL		"&Kleine pictogrammen"
 	IDS_VIEW_LIST		"&Lijst"
 	IDS_VIEW_DETAILS	"&Details"
 	IDS_SELECT		"Selecteren"
 	IDS_OPEN		"Openen"
 
-	IDS_CREATEFOLDER_DENIED "Niet mogelijk om nieuwe map te maken: Geen permissies."
+	IDS_CREATEFOLDER_DENIED "Niet mogelijk om nieuwe map te maken: geen permissies."
 	IDS_CREATEFOLDER_CAPTION "Fout tijdens het maken van een nieuwe map"
 	IDS_DELETEITEM_CAPTION "Bevestig bestandsverwijdering"
 	IDS_DELETEFOLDER_CAPTION "Bevestig mapverwijdering"
 	IDS_DELETEITEM_TEXT "Weet u zeker dat u '%1' wilt verwijderen?"
 	IDS_DELETEMULTIPLE_TEXT "Weet u zeker dat u deze %1 bestanden wilt verwijderen?"
 	IDS_DELETESELECTED_TEXT "Weet u zeker dat u de geselecteerde bestand(en) wilt verwijderen?"
-	IDS_TRASHITEM_TEXT "Weet u zeker dat u '%1' naar de Vuilnisbak wilt verplaatsen?"
-	IDS_TRASHFOLDER_TEXT "Weet u zeker dat u '%1' en zijn gehele inhoud naar de Vuilnisbak wilt verplaatsen?"
+	IDS_TRASHITEM_TEXT "Weet u zeker dat u '%1' naar de Prullenbak wilt verplaatsen?"
+	IDS_TRASHFOLDER_TEXT "Weet u zeker dat u '%1' en zijn gehele inhoud naar de Prullenbak wilt verplaatsen?"
 	IDS_TRASHMULTIPLE_TEXT "Weet u zeker dat u deze %1 bestanden naar de Vuilnisbak wilt verplaatsen?"
 	IDS_CANTTRASH_TEXT "Bestand '%1' kan niet naar de Vuilnisbak worden verplaatst. Wilt u het bestand permanent verwijderen?"
 	IDS_OVERWRITEFILE_TEXT "Deze map bevat reeds een bestand genaamd '%1'.\n\nWilt u het vervangen?"
@@ -281,7 +281,7 @@ STRINGTABLE
 	IDS_MYPICTURES              "Mijn Afbeeldingen"
 	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
 	IDS_COMMON_DOCUMENTS        "Documenten"
-	IDS_ADMINTOOLS              "Start Menu\\Programmas\\Administratieve Tools"
+	IDS_ADMINTOOLS              "Start Menu\\Programma's\\Administratieve Tools"
 	IDS_COMMON_MUSIC            "Documenten\\Mijn Muziek"
 	IDS_COMMON_PICTURES         "Documenten\\Mijn Afbeeldingen"
 	IDS_COMMON_VIDEO            "Documenten\\Mijn Videos"
