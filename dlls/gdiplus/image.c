@@ -1391,6 +1391,8 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromGraphics(INT width, INT height,
     static int calls;
     GpStatus ret;
 
+    TRACE("(%d, %d, %p, %p)\n", width, height, target, bitmap);
+
     if(!target || !bitmap)
         return InvalidParameter;
 
@@ -2133,6 +2135,8 @@ GpStatus WINGDIPAPI GdipGetImagePixelFormat(GpImage *image, PixelFormat *format)
 
 GpStatus WINGDIPAPI GdipGetImageRawFormat(GpImage *image, GUID *format)
 {
+    TRACE("(%p, %p)\n", image, format);
+
     if(!image || !format)
         return InvalidParameter;
 
@@ -2195,6 +2199,8 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
 {
     static int calls;
 
+    TRACE("(%p, %p)\n", metafile, header);
+
     if(!metafile || !header)
         return InvalidParameter;
 
@@ -2211,6 +2217,8 @@ GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
 {
     static int calls;
 
+    TRACE("(%p, %u, %u, %p)\n", image, size, num, items);
+
     if(!(calls++))
         FIXME("not implemented\n");
 
@@ -2220,6 +2228,8 @@ GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
 GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT* num)
 {
     static int calls;
+
+    TRACE("(%p, %p)\n", image, num);
 
     if(!(calls++))
         FIXME("not implemented\n");
@@ -2231,6 +2241,8 @@ GpStatus WINGDIPAPI GdipGetPropertyIdList(GpImage *image, UINT num, PROPID* list
 {
     static int calls;
 
+    TRACE("(%p, %u, %p)\n", image, num, list);
+
     if(!(calls++))
         FIXME("not implemented\n");
 
@@ -2241,6 +2253,8 @@ GpStatus WINGDIPAPI GdipGetPropertyItem(GpImage *image, PROPID id, UINT size,
     PropertyItem* buffer)
 {
     static int calls;
+
+    TRACE("(%p, %u, %u, %p)\n", image, id, size, buffer);
 
     if(!(calls++))
         FIXME("not implemented\n");
@@ -2311,6 +2325,8 @@ GpStatus WINGDIPAPI GdipImageGetFrameCount(GpImage *image,
 GpStatus WINGDIPAPI GdipImageGetFrameDimensionsCount(GpImage *image,
     UINT* count)
 {
+    TRACE("(%p, %p)\n", image, count);
+
     /* Native gdiplus 1.1 does not yet support multiple frame dimensions. */
 
     if(!image || !count)
@@ -2353,6 +2369,8 @@ GpStatus WINGDIPAPI GdipImageSelectActiveFrame(GpImage *image,
     GDIPCONST GUID* dimensionID, UINT frameidx)
 {
     static int calls;
+
+    TRACE("(%p, %s, %u)\n", image, debugstr_guid(dimensionID), frameidx);
 
     if(!image || !dimensionID)
         return InvalidParameter;
