@@ -3729,3 +3729,8 @@ SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=PLK
 RPC_S_GRP_ELT_NOT_REMOVED
 .
+MessageId=2221
+SymbolicName=NERR_UserNotFound
+Language=PLK
+Nie znaleziono nazwy u¿ytkownika
+.
