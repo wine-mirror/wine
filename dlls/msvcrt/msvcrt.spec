@@ -600,7 +600,7 @@
 @ cdecl _ltow(long ptr long) ntdll._ltow
 # stub _ltow_s
 @ cdecl _makepath(ptr str str str str)
-# stub _makepath_s
+@ cdecl _makepath_s(ptr long str str str str)
 # stub _malloc_dbg
 @ cdecl _matherr(ptr) MSVCRT__matherr
 @ cdecl _mbbtombc(long)

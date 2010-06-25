@@ -31,6 +31,15 @@
 #include <process.h>
 #include <errno.h>
 
+static int (__cdecl *p_makepath_s)(char *, size_t, const char *, const char *, const char *, const char *);
+
+static void init(void)
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    p_makepath_s = (void *)GetProcAddress(hmod, "_makepath_s");
+}
+
 typedef struct
 {
     const char* buffer;
@@ -121,6 +130,117 @@ static void test_makepath(void)
     }
 }
 
+typedef struct
+{
+    const char* buffer;
+    size_t length;
+    const char* drive;
+    const char* dir;
+    const char* file;
+    const char* ext;
+    const char* expected;
+    size_t expected_length;
+} makepath_s_case;
+
+static const makepath_s_case makepath_s_cases[] =
+{
+    /* Behavior with directory parameter containing backslash. */
+    {NULL, 1, "c:", "d\\", "file", "ext", "\0XXXXXXXXXXXX", 13},
+    {NULL, 2, "c:", "d\\", "file", "ext", "\0XXXXXXXXXXXX", 13},
+    {NULL, 3, "c:", "d\\", "file", "ext", "\0:XXXXXXXXXXX", 13},
+    {NULL, 4, "c:", "d\\", "file", "ext", "\0:dXXXXXXXXXX", 13},
+    {NULL, 5, "c:", "d\\", "file", "ext", "\0:d\\XXXXXXXXX", 13},
+    {NULL, 6, "c:", "d\\", "file", "ext", "\0:d\\fXXXXXXXX", 13},
+    {NULL, 7, "c:", "d\\", "file", "ext", "\0:d\\fiXXXXXXX", 13},
+    {NULL, 8, "c:", "d\\", "file", "ext", "\0:d\\filXXXXXX", 13},
+    {NULL, 9, "c:", "d\\", "file", "ext", "\0:d\\fileXXXXX", 13},
+    {NULL, 10, "c:", "d\\", "file", "ext", "\0:d\\file.XXXX", 13},
+    {NULL, 11, "c:", "d\\", "file", "ext", "\0:d\\file.eXXX", 13},
+    {NULL, 12, "c:", "d\\", "file", "ext", "\0:d\\file.exXX", 13},
+    /* Behavior with directory parameter lacking backslash. */
+    {NULL, 3, "c:", "dir", "f", "ext", "\0:XXXXXXXX", 10},
+    {NULL, 4, "c:", "dir", "f", "ext", "\0:dXXXXXXX", 10},
+    {NULL, 5, "c:", "dir", "f", "ext", "\0:diXXXXXX", 10},
+    {NULL, 6, "c:", "dir", "f", "ext", "\0:dirXXXXX", 10},
+    {NULL, 7, "c:", "dir", "f", "ext", "\0:dir\\XXXX", 10},
+    /* Behavior with overlapped buffer. */
+    {"foo", 2, USE_BUFF, NULL, NULL, NULL, "\0oo", 3},
+    {"foo", 4, NULL, USE_BUFF, NULL, NULL, "\0oo\0X", 5},
+    {"foo", 3, NULL, NULL, USE_BUFF, NULL, "\0oo\0", 4},
+    {"foo", 4, NULL, USE_BUFF, "file", NULL, "\0oo\0XXXXX", 9},
+    {"foo", 8, NULL, USE_BUFF, "file", NULL, "\0oo\\filXX", 9},
+    {"foo", 4, NULL, USE_BUFF, "file", "ext", "\0oo\0XXXXXXXXX", 13},
+    {"foo", 8, NULL, USE_BUFF, "file", "ext", "\0oo\\filXXXXXX", 13},
+    {"foo", 12, NULL, USE_BUFF, "file", "ext", "\0oo\\file.exXX", 13},
+    {"foo", 4, NULL, NULL, USE_BUFF, "ext", "\0oo\0XXXX", 8},
+    {"foo", 7, NULL, NULL, USE_BUFF, "ext", "\0oo.exXX", 8},
+};
+
+static void test_makepath_s(void)
+{
+    char buffer[MAX_PATH];
+    int ret;
+    unsigned int i;
+
+    if (!p_makepath_s)
+    {
+        win_skip("_makepath_s is not available\n");
+        return;
+    }
+
+    errno = EBADF;
+    ret = p_makepath_s(NULL, 0, NULL, NULL, NULL, NULL);
+    ok(ret == EINVAL, "Expected _makepath_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    ret = p_makepath_s(buffer, 0, NULL, NULL, NULL, NULL);
+    ok(ret == EINVAL, "Expected _makepath_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    /* Test with the normal _makepath cases. */
+    for (i = 0; i < sizeof(makepath_cases)/sizeof(makepath_cases[0]); i++)
+    {
+        const makepath_case *p = makepath_cases + i;
+
+        memset(buffer, 'X', MAX_PATH);
+        if (p->buffer)
+            strcpy(buffer, p->buffer);
+
+        /* Ascii */
+        ret = p_makepath_s(buffer, MAX_PATH,
+                           p->drive == USE_BUFF ? buffer : p->drive,
+                           p->dir == USE_BUFF ? buffer : p->dir,
+                           p->file == USE_BUFF? buffer : p->file,
+                           p->ext == USE_BUFF ? buffer : p->ext);
+        ok(ret == 0, "[%d] Expected _makepath_s to return 0, got %d\n", i, ret);
+
+        buffer[MAX_PATH - 1] = '\0';
+        ok(!strcmp(p->expected, buffer), "got '%s' for case %d\n", buffer, i);
+    }
+
+    /* Try insufficient length cases. */
+    for (i = 0; i < sizeof(makepath_s_cases)/sizeof(makepath_s_cases[0]); i++)
+    {
+        const makepath_s_case *p = makepath_s_cases + i;
+
+        memset(buffer, 'X', MAX_PATH);
+        if (p->buffer)
+            strcpy(buffer, p->buffer);
+
+        /* Ascii */
+        errno = EBADF;
+        ret = p_makepath_s(buffer, p->length,
+                           p->drive == USE_BUFF ? buffer : p->drive,
+                           p->dir == USE_BUFF ? buffer : p->dir,
+                           p->file == USE_BUFF? buffer : p->file,
+                           p->ext == USE_BUFF ? buffer : p->ext);
+        ok(ret == ERANGE, "[%d] Expected _makepath_s to return ERANGE, got %d\n", i, ret);
+        ok(errno == ERANGE, "[%d] Expected errno to be ERANGE, got %d\n", i, errno);
+        ok(!memcmp(p->expected, buffer, p->expected_length), "unexpected output for case %d\n", i);
+    }
+}
+
 static void test_fullpath(void)
 {
     char full[MAX_PATH];
@@ -180,6 +300,9 @@ static void test_fullpath(void)
 
 START_TEST(dir)
 {
+    init();
+
     test_fullpath();
     test_makepath();
+    test_makepath_s();
 }

@@ -148,6 +148,7 @@ char*         __cdecl _ltoa(__msvcrt_long,char*,int);
 __msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
 __msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);
 void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
+int           __cdecl _makepath_s(char*,size_t,const char*,const char*,const char*,const char*);
 size_t        __cdecl _mbstrlen(const char*);
 _onexit_t     __cdecl _onexit(_onexit_t);
 int           __cdecl _putenv(const char*);
