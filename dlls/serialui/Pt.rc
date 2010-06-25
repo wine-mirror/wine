@@ -1,6 +1,7 @@
 /*
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 AmÈrico JosÈ Melo
+ * Copyright 2004 Am√©rico Jos√© Melo
+ * Copyright 2010 Gustavo Henrique Milar√©
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,18 +20,20 @@
 
 #include "serialui.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 IDD_SERIALUICONFIG DIALOG DISCARDABLE 0, 0, 160, 159
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE
-CAPTION "Propriedades para "
+CAPTION "Propriedades de "
 FONT 8, "MS Shell Dlg"
 BEGIN
   LTEXT         "Bits por segundo", -1,5,20,55,10
   COMBOBOX      IDC_BAUD, 60, 20, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
   LTEXT         "Paridade", -1,5,40,55,10
   COMBOBOX      IDC_PARITY, 60, 40, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Control de fluxo", -1,5,60,55,10
+  LTEXT         "Controle de fluxo", -1,5,60,55,10
   COMBOBOX      IDC_FLOW, 60, 60, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
   LTEXT         "Bits de dados", -1,5,80,55,10
   COMBOBOX      IDC_DATA, 60, 80, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
