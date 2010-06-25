@@ -181,7 +181,7 @@
 @ stub CryptSignAndEncryptMessage
 @ stdcall CryptSignCertificate(long long long ptr long ptr ptr ptr ptr)
 @ stub CryptSignHashU
-@ stub CryptSignMessage
+@ stdcall CryptSignMessage(ptr long long ptr ptr ptr ptr)
 @ stub CryptSignMessageWithKey
 @ stdcall CryptUnprotectData(ptr ptr ptr ptr ptr long ptr)
 @ stdcall CryptUnregisterDefaultOIDFunction(long str wstr)

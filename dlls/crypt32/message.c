@@ -415,3 +415,12 @@ BOOL WINAPI CryptVerifyMessageHash(PCRYPT_HASH_MESSAGE_PARA pHashPara,
     }
     return ret;
 }
+
+BOOL WINAPI CryptSignMessage(PCRYPT_SIGN_MESSAGE_PARA pSignPara,
+ BOOL fDetachedSignature, DWORD cToBeSigned, const BYTE *rgpbToBeSigned[],
+ DWORD rgcbToBeSigned[], BYTE *pbSignedBlob, DWORD *pcbSignedBlob)
+{
+    FIXME("(%p, %d, %d, %p, %p, %p, %p): stub\n", pSignPara, fDetachedSignature,
+     cToBeSigned, rgpbToBeSigned, rgcbToBeSigned, pbSignedBlob, pcbSignedBlob);
+    return FALSE;
+}
