@@ -177,17 +177,17 @@ unsigned pe_get_map_size(const struct image_section_map* ism)
  * Checks whether the PointerToSymbolTable and NumberOfSymbols in file_header contain
  * valid information.
  */
-static BOOL pe_is_valid_pointer_table(const IMAGE_NT_HEADERS* nthdr, const void* mapping)
+static BOOL pe_is_valid_pointer_table(const IMAGE_NT_HEADERS* nthdr, const void* mapping, DWORD64 sz)
 {
     DWORD64     offset;
 
-    /* is the iSym table inside file image ? */
+    /* is the iSym table inside file size ? (including first DWORD of string table, which is its size) */
     offset = (DWORD64)nthdr->FileHeader.PointerToSymbolTable;
-    offset += (DWORD64)nthdr->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
-    if (offset > (DWORD64)nthdr->OptionalHeader.SizeOfImage) return FALSE;
-    /* is string table (following iSym table) inside file image ? */
+    offset += (DWORD64)nthdr->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL) + sizeof(DWORD);
+    if (offset > sz) return FALSE;
+    /* is string table (following iSym table) inside file size ? */
     offset += *(DWORD*)((const char*)mapping + offset);
-    return offset <= (DWORD64)nthdr->OptionalHeader.SizeOfImage;
+    return offset <= sz;
 }
 
 /******************************************************************
@@ -228,7 +228,9 @@ static BOOL pe_map_file(HANDLE file, struct image_file_map* fmap, enum module_ty
             }
             if (nthdr->FileHeader.PointerToSymbolTable && nthdr->FileHeader.NumberOfSymbols)
             {
-                if (pe_is_valid_pointer_table(nthdr, mapping))
+                LARGE_INTEGER li;
+
+                if (GetFileSizeEx(file, &li) && pe_is_valid_pointer_table(nthdr, mapping, li.QuadPart))
                 {
                     /* FIXME ugly: should rather map the relevant content instead of copying it */
                     const char* src = (const char*)mapping +
@@ -243,6 +245,7 @@ static BOOL pe_map_file(HANDLE file, struct image_file_map* fmap, enum module_ty
                 }
                 else
                 {
+                    WARN("Bad coff table... wipping out\n");
                     /* we have bad information here, wipe it out */
                     fmap->u.pe.ntheader.FileHeader.PointerToSymbolTable = 0;
                     fmap->u.pe.ntheader.FileHeader.NumberOfSymbols = 0;
