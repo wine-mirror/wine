@@ -542,6 +542,8 @@ DECLARE_INTERFACE_(IShellFolderViewCB,IUnknown)
  * IShellFolderView interface
  */
 
+#include <pshpack8.h>
+
 typedef struct _ITEMSPACING
 {
     int cxSmall;
@@ -549,6 +551,8 @@ typedef struct _ITEMSPACING
     int cxLarge;
     int cyLarge;
 } ITEMSPACING;
+
+#include <poppack.h>
 
 #define INTERFACE IShellFolderView
 DEFINE_GUID(IID_IShellFolderView,0x37a378c0,0xf82d,0x11ce,0xae,0x65,0x08,0x00,0x2b,0x2e,0x12,0x62);
@@ -779,6 +783,8 @@ typedef HRESULT (CALLBACK *LPFNVIEWCALLBACK)(
 	WPARAM wParam,
 	LPARAM lParam);
 
+#include <pshpack8.h>
+
 typedef struct _CSFV
 {
   UINT             cbSize;
@@ -789,6 +795,8 @@ typedef struct _CSFV
   LPFNVIEWCALLBACK pfnCallback;
   FOLDERVIEWMODE   fvm;
 } CSFV, *LPCSFV;
+
+#include <poppack.h>
 
 HRESULT WINAPI SHCreateShellFolderViewEx(LPCSFV pshfvi, IShellView **ppshv);
 
@@ -850,6 +858,8 @@ HRESULT WINAPI SHCreateShellFolderViewEx(LPCSFV pshfvi, IShellView **ppshv);
 #define SFVM_GET_WEBVIEW_THEME        86 /* undocumented */
 #define SFVM_GETDEFERREDVIEWSETTINGS  92 /* undocumented */
 
+#include <pshpack8.h>
+
 typedef struct _SFV_CREATE
 {
     UINT cbSize;
@@ -857,6 +867,8 @@ typedef struct _SFV_CREATE
     IShellView *psvOuter;
     IShellFolderViewCB *psfvcb;
 } SFV_CREATE;
+
+#include <poppack.h>
 
 HRESULT WINAPI SHCreateShellFolderView(const SFV_CREATE *pscfv, IShellView **ppsv);
 

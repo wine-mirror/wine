@@ -1386,25 +1386,25 @@ static void test_pack_CIDA(void)
 
 static void test_pack_CSFV(void)
 {
-    /* CSFV (pack 1) */
+    /* CSFV (pack 8) */
     TEST_FIELD_SIZE  (CSFV, cbSize, 4)
-    TEST_FIELD_ALIGN (CSFV, cbSize, 1)
+    TEST_FIELD_ALIGN (CSFV, cbSize, 4)
     TEST_FIELD_OFFSET(CSFV, cbSize, 0)
     TEST_FIELD_SIZE  (CSFV, pshf, 8)
-    TEST_FIELD_ALIGN (CSFV, pshf, 1)
-    TEST_FIELD_OFFSET(CSFV, pshf, 4)
+    TEST_FIELD_ALIGN (CSFV, pshf, 8)
+    TEST_FIELD_OFFSET(CSFV, pshf, 8)
     TEST_FIELD_SIZE  (CSFV, psvOuter, 8)
-    TEST_FIELD_ALIGN (CSFV, psvOuter, 1)
-    TEST_FIELD_OFFSET(CSFV, psvOuter, 12)
+    TEST_FIELD_ALIGN (CSFV, psvOuter, 8)
+    TEST_FIELD_OFFSET(CSFV, psvOuter, 16)
     TEST_FIELD_SIZE  (CSFV, pidl, 8)
-    TEST_FIELD_ALIGN (CSFV, pidl, 1)
-    TEST_FIELD_OFFSET(CSFV, pidl, 20)
+    TEST_FIELD_ALIGN (CSFV, pidl, 8)
+    TEST_FIELD_OFFSET(CSFV, pidl, 24)
     TEST_FIELD_SIZE  (CSFV, lEvents, 4)
-    TEST_FIELD_ALIGN (CSFV, lEvents, 1)
-    TEST_FIELD_OFFSET(CSFV, lEvents, 28)
+    TEST_FIELD_ALIGN (CSFV, lEvents, 4)
+    TEST_FIELD_OFFSET(CSFV, lEvents, 32)
     TEST_FIELD_SIZE  (CSFV, pfnCallback, 8)
-    TEST_FIELD_ALIGN (CSFV, pfnCallback, 1)
-    TEST_FIELD_OFFSET(CSFV, pfnCallback, 32)
+    TEST_FIELD_ALIGN (CSFV, pfnCallback, 8)
+    TEST_FIELD_OFFSET(CSFV, pfnCallback, 40)
 }
 
 static void test_pack_DROPFILES(void)
@@ -1530,6 +1530,25 @@ static void test_pack_FILEGROUPDESCRIPTORW(void)
     TEST_FIELD_SIZE  (FILEGROUPDESCRIPTORW, fgd, 592)
     TEST_FIELD_ALIGN (FILEGROUPDESCRIPTORW, fgd, 1)
     TEST_FIELD_OFFSET(FILEGROUPDESCRIPTORW, fgd, 4)
+}
+
+static void test_pack_ITEMSPACING(void)
+{
+    /* ITEMSPACING (pack 8) */
+    TEST_TYPE_SIZE   (ITEMSPACING, 16)
+    TEST_TYPE_ALIGN  (ITEMSPACING, 4)
+    TEST_FIELD_SIZE  (ITEMSPACING, cxSmall, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cxSmall, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cxSmall, 0)
+    TEST_FIELD_SIZE  (ITEMSPACING, cySmall, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cySmall, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cySmall, 4)
+    TEST_FIELD_SIZE  (ITEMSPACING, cxLarge, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cxLarge, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cxLarge, 8)
+    TEST_FIELD_SIZE  (ITEMSPACING, cyLarge, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cyLarge, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cyLarge, 12)
 }
 
 static void test_pack_LPBROWSEINFOA(void)
@@ -1754,6 +1773,25 @@ static void test_pack_QCMINFO_IDMAP_PLACEMENT(void)
     TEST_FIELD_SIZE  (QCMINFO_IDMAP_PLACEMENT, fFlags, 4)
     TEST_FIELD_ALIGN (QCMINFO_IDMAP_PLACEMENT, fFlags, 4)
     TEST_FIELD_OFFSET(QCMINFO_IDMAP_PLACEMENT, fFlags, 4)
+}
+
+static void test_pack_SFV_CREATE(void)
+{
+    /* SFV_CREATE (pack 8) */
+    TEST_TYPE_SIZE   (SFV_CREATE, 32)
+    TEST_TYPE_ALIGN  (SFV_CREATE, 8)
+    TEST_FIELD_SIZE  (SFV_CREATE, cbSize, 4)
+    TEST_FIELD_ALIGN (SFV_CREATE, cbSize, 4)
+    TEST_FIELD_OFFSET(SFV_CREATE, cbSize, 0)
+    TEST_FIELD_SIZE  (SFV_CREATE, pshf, 8)
+    TEST_FIELD_ALIGN (SFV_CREATE, pshf, 8)
+    TEST_FIELD_OFFSET(SFV_CREATE, pshf, 8)
+    TEST_FIELD_SIZE  (SFV_CREATE, psvOuter, 8)
+    TEST_FIELD_ALIGN (SFV_CREATE, psvOuter, 8)
+    TEST_FIELD_OFFSET(SFV_CREATE, psvOuter, 16)
+    TEST_FIELD_SIZE  (SFV_CREATE, psfvcb, 8)
+    TEST_FIELD_ALIGN (SFV_CREATE, psfvcb, 8)
+    TEST_FIELD_OFFSET(SFV_CREATE, psfvcb, 24)
 }
 
 static void test_pack_SHChangeDWORDAsIDList(void)
@@ -3166,24 +3204,24 @@ static void test_pack_CIDA(void)
 
 static void test_pack_CSFV(void)
 {
-    /* CSFV (pack 1) */
+    /* CSFV (pack 8) */
     TEST_FIELD_SIZE  (CSFV, cbSize, 4)
-    TEST_FIELD_ALIGN (CSFV, cbSize, 1)
+    TEST_FIELD_ALIGN (CSFV, cbSize, 4)
     TEST_FIELD_OFFSET(CSFV, cbSize, 0)
     TEST_FIELD_SIZE  (CSFV, pshf, 4)
-    TEST_FIELD_ALIGN (CSFV, pshf, 1)
+    TEST_FIELD_ALIGN (CSFV, pshf, 4)
     TEST_FIELD_OFFSET(CSFV, pshf, 4)
     TEST_FIELD_SIZE  (CSFV, psvOuter, 4)
-    TEST_FIELD_ALIGN (CSFV, psvOuter, 1)
+    TEST_FIELD_ALIGN (CSFV, psvOuter, 4)
     TEST_FIELD_OFFSET(CSFV, psvOuter, 8)
     TEST_FIELD_SIZE  (CSFV, pidl, 4)
-    TEST_FIELD_ALIGN (CSFV, pidl, 1)
+    TEST_FIELD_ALIGN (CSFV, pidl, 4)
     TEST_FIELD_OFFSET(CSFV, pidl, 12)
     TEST_FIELD_SIZE  (CSFV, lEvents, 4)
-    TEST_FIELD_ALIGN (CSFV, lEvents, 1)
+    TEST_FIELD_ALIGN (CSFV, lEvents, 4)
     TEST_FIELD_OFFSET(CSFV, lEvents, 16)
     TEST_FIELD_SIZE  (CSFV, pfnCallback, 4)
-    TEST_FIELD_ALIGN (CSFV, pfnCallback, 1)
+    TEST_FIELD_ALIGN (CSFV, pfnCallback, 4)
     TEST_FIELD_OFFSET(CSFV, pfnCallback, 20)
 }
 
@@ -3310,6 +3348,25 @@ static void test_pack_FILEGROUPDESCRIPTORW(void)
     TEST_FIELD_SIZE  (FILEGROUPDESCRIPTORW, fgd, 592)
     TEST_FIELD_ALIGN (FILEGROUPDESCRIPTORW, fgd, 1)
     TEST_FIELD_OFFSET(FILEGROUPDESCRIPTORW, fgd, 4)
+}
+
+static void test_pack_ITEMSPACING(void)
+{
+    /* ITEMSPACING (pack 8) */
+    TEST_TYPE_SIZE   (ITEMSPACING, 16)
+    TEST_TYPE_ALIGN  (ITEMSPACING, 4)
+    TEST_FIELD_SIZE  (ITEMSPACING, cxSmall, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cxSmall, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cxSmall, 0)
+    TEST_FIELD_SIZE  (ITEMSPACING, cySmall, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cySmall, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cySmall, 4)
+    TEST_FIELD_SIZE  (ITEMSPACING, cxLarge, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cxLarge, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cxLarge, 8)
+    TEST_FIELD_SIZE  (ITEMSPACING, cyLarge, 4)
+    TEST_FIELD_ALIGN (ITEMSPACING, cyLarge, 4)
+    TEST_FIELD_OFFSET(ITEMSPACING, cyLarge, 12)
 }
 
 static void test_pack_LPBROWSEINFOA(void)
@@ -3536,6 +3593,25 @@ static void test_pack_QCMINFO_IDMAP_PLACEMENT(void)
     TEST_FIELD_OFFSET(QCMINFO_IDMAP_PLACEMENT, fFlags, 4)
 }
 
+static void test_pack_SFV_CREATE(void)
+{
+    /* SFV_CREATE (pack 8) */
+    TEST_TYPE_SIZE   (SFV_CREATE, 16)
+    TEST_TYPE_ALIGN  (SFV_CREATE, 4)
+    TEST_FIELD_SIZE  (SFV_CREATE, cbSize, 4)
+    TEST_FIELD_ALIGN (SFV_CREATE, cbSize, 4)
+    TEST_FIELD_OFFSET(SFV_CREATE, cbSize, 0)
+    TEST_FIELD_SIZE  (SFV_CREATE, pshf, 4)
+    TEST_FIELD_ALIGN (SFV_CREATE, pshf, 4)
+    TEST_FIELD_OFFSET(SFV_CREATE, pshf, 4)
+    TEST_FIELD_SIZE  (SFV_CREATE, psvOuter, 4)
+    TEST_FIELD_ALIGN (SFV_CREATE, psvOuter, 4)
+    TEST_FIELD_OFFSET(SFV_CREATE, psvOuter, 8)
+    TEST_FIELD_SIZE  (SFV_CREATE, psfvcb, 4)
+    TEST_FIELD_ALIGN (SFV_CREATE, psfvcb, 4)
+    TEST_FIELD_OFFSET(SFV_CREATE, psfvcb, 12)
+}
+
 static void test_pack_SHChangeDWORDAsIDList(void)
 {
     /* SHChangeDWORDAsIDList (pack 1) */
@@ -3682,6 +3758,7 @@ static void test_pack(void)
     test_pack_HYPER_SIZEDARR();
     test_pack_IID();
     test_pack_ITEMIDLIST();
+    test_pack_ITEMSPACING();
     test_pack_LPBLOB();
     test_pack_LPBROWSEINFOA();
     test_pack_LPBROWSEINFOW();
@@ -3740,6 +3817,7 @@ static void test_pack(void)
     test_pack_RemHMETAFILEPICT();
     test_pack_RemHPALETTE();
     test_pack_SCODE();
+    test_pack_SFV_CREATE();
     test_pack_SHChangeDWORDAsIDList();
     test_pack_SHChangeNotifyEntry();
     test_pack_SHChangeProductKeyAsIDList();
