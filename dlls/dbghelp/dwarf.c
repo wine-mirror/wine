@@ -3077,10 +3077,9 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     struct module_format* dwarf2_modfmt;
 
     if (!dwarf2_init_section(&section[section_debug],  fmap, ".debug_info", &debug_sect))
-    {
-        /* no Dwarf debug info here, so there's no error */
-        return TRUE;
-    }
+        /* no Dwarf debug info here */
+        return FALSE;
+
     dwarf2_init_section(&section[section_abbrev], fmap, ".debug_abbrev", &debug_abbrev_sect);
     dwarf2_init_section(&section[section_string], fmap, ".debug_str",    &debug_str_sect);
     dwarf2_init_section(&section[section_line],   fmap, ".debug_line",   &debug_line_sect);

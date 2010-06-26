@@ -183,8 +183,8 @@ static BOOL pe_is_valid_pointer_table(const IMAGE_NT_HEADERS* nthdr, const void*
 
     /* is the iSym table inside file size ? (including first DWORD of string table, which is its size) */
     offset = (DWORD64)nthdr->FileHeader.PointerToSymbolTable;
-    offset += (DWORD64)nthdr->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL) + sizeof(DWORD);
-    if (offset > sz) return FALSE;
+    offset += (DWORD64)nthdr->FileHeader.NumberOfSymbols * sizeof(IMAGE_SYMBOL);
+    if (offset + sizeof(DWORD) > sz) return FALSE;
     /* is string table (following iSym table) inside file size ? */
     offset += *(DWORD*)((const char*)mapping + offset);
     return offset <= sz;
