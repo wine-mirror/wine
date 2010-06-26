@@ -238,11 +238,11 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
         info->WinType.pszIndex = strdupW(null);
         info->WinType.fsValidMembers=0;
         info->WinType.fsWinProperties=HHWIN_PROP_TRI_PANE;
-        info->WinType.pszCaption=strdupW(info->pCHMInfo->defTitle);
+        info->WinType.pszCaption=strdupW(info->pCHMInfo->defTitle ? info->pCHMInfo->defTitle : null);
         info->WinType.dwStyles=WS_POPUP;
         info->WinType.dwExStyles=0;
         info->WinType.nShowState=SW_SHOW;
-        info->WinType.pszFile=strdupW(info->pCHMInfo->defTopic);
+        info->WinType.pszFile=strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : null);
         info->WinType.curNavType=HHWIN_NAVTYPE_TOC;
         return TRUE;
     }
