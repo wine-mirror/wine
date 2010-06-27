@@ -2877,7 +2877,12 @@ static void apply_frame_info(struct module* module, struct cpu_stack_walk* csw,
     switch (info->cfa_rule)
     {
     case RULE_EXPRESSION:
-        *cfa = *(ULONG_PTR*)eval_expression(module, csw, (const unsigned char*)info->cfa_offset, context);
+        *cfa = eval_expression(module, csw, (const unsigned char*)info->cfa_offset, context);
+        if (!sw_read_mem(csw, *cfa, cfa, sizeof(*cfa)))
+        {
+            WARN("Couldn't read memory at %p\n", (void*)*cfa);
+            return;
+        }
         break;
     case RULE_VAL_EXPRESSION:
         *cfa = eval_expression(module, csw, (const unsigned char*)info->cfa_offset, context);
