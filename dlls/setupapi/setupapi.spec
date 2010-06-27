@@ -273,7 +273,7 @@
 @ stdcall SetupDiBuildClassInfoList(long ptr long ptr)
 @ stdcall SetupDiBuildClassInfoListExA(long ptr long ptr str ptr)
 @ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr)
-@ stub SetupDiBuildDriverInfoList
+@ stdcall SetupDiBuildDriverInfoList(ptr ptr long)
 @ stdcall SetupDiCallClassInstaller(long ptr ptr)
 @ stub SetupDiCancelDriverInfoSearch
 @ stub SetupDiChangeState
@@ -297,7 +297,7 @@
 @ stdcall SetupDiCreateDeviceInterfaceRegKeyA(ptr ptr long long ptr ptr)
 @ stdcall SetupDiCreateDeviceInterfaceRegKeyW(ptr ptr long long ptr ptr)
 @ stdcall SetupDiDeleteDevRegKey(ptr ptr long long long)
-@ stub SetupDiDeleteDeviceInfo
+@ stdcall SetupDiDeleteDeviceInfo(ptr ptr)
 @ stub SetupDiDeleteDeviceInterfaceData
 @ stdcall SetupDiDeleteDeviceInterfaceRegKey(ptr ptr long)
 @ stub SetupDiDeleteDeviceRegKey
