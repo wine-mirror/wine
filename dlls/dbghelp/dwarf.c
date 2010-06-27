@@ -2075,6 +2075,10 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                         dwarf2_leb128_as_unsigned(&traverse);
                         dwarf2_leb128_as_unsigned(&traverse);
                         break;
+                    case DW_LNE_set_discriminator:
+                        WARN("not handled %s\n", traverse.data);
+                        dwarf2_leb128_as_unsigned(&traverse);
+                        break;
                     default:
                         FIXME("Unsupported extended opcode %x\n", extopcode);
                         break;

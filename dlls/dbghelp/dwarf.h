@@ -421,6 +421,8 @@ enum dwarf_calling_convention
 #define DW_LNE_end_sequence             0x01
 #define DW_LNE_set_address              0x02
 #define DW_LNE_define_file              0x03
+/* Dwarf4 new values */
+#define DW_LNE_set_discriminator        0x04
 
 #define DW_CIE_ID                       ~(0x0)
 
