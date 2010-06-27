@@ -1,0 +1,73 @@
+/*
+ * Start
+ *
+ * Copyright 2003 Dan Kegel
+ * Copyright 2010 Claudia Cotună
+ *                Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resources.h"
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+STRINGTABLE DISCARDABLE
+{
+STRING_USAGE, "Lansați un program sau deschideți un document în programul utilizat\n\
+de obicei pentru fișierele cu acel sufix.\n\
+Utilizare:\n\
+start [opțiuni] cale_program [...]\n\
+start [opțiuni] cale_document\n\
+\n\
+Opțiuni:\n\
+/M[inimizat] Pornește programul minimizat.\n\
+/MAX[imizat] Pornește programul maximizat.\n\
+/R[estaurat] Pornește programul normal (nici minimizat, nici maximizat).\n\
+/W           Așteaptă ca programul pornit să termine, apoi ieși din el\n\
+\             cu codul său de ieșire.\n\
+/Unix        Utilizează un nume de fișier Unix și pornește fișierul ca\n\
+\             windows explorer.\n\
+/ProgIDOpen  Deschide un document utilizând următorul progID.\n\
+/L           Afișează licența utilizatorului final.\n\
+\n\
+start.exe versiunea 0.2 Drepturi de autor (C) 2003, Dan Kegel\n\
+Start nu implică ABSOLUT NICIO GARANȚIE; pentru detalii, alegeți opțiunea /L.\n\
+Acesta este un software liber și îl puteți redistribui în anumite condiții;\n\
+executați „start /L” pentru detalii.\n"
+
+STRING_LICENSE, "start.exe versiunea 0.2 Drepturi de autor (C) 2003, Dan Kegel\n\
+Acest program este un software liber; îl puteți redistribui și/sau\n\
+modifica respectând termenii GNU Lesser Public License așa cum este\n\
+publicată de către Free Software Foundation; fie versiunea 2.1\n\
+a Licenței, fie (la alegere) orice versiune mai recentă.\n\
+\n\
+Acest program este distribuit cu speranța că va fi util,\n\
+dar FĂRĂ NICIO GARANȚIE; nici măcar cu garanția implicită de\n\
+VANDABILITATE sau POTRIVIRE PENTRU UN ANUMIT SCOP. Consultați\n\
+GNU Lesser Public License pentru mai multe detalii.\n\
+\n\
+Ar fi trebuit să primiți o copie a GNU Lesser Public License\n\
+împreună cu acest program; dacă nu, scrieți la Free Software\n\
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
+\n\
+Consultați fișierul COPYING.LIB pentru informații despre licență.\n"
+
+STRING_EXECFAIL, "Aplicația nu a putut fi pornită sau nu există nici o aplicație asociată\ncu fișierul specificat. ShellExecuteEx a eșuat"
+
+STRING_UNIXFAIL "Nu a putut fi tradus numele de fișier Unix specificat într-un nume de fișier DOS."
+}
