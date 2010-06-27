@@ -23,9 +23,9 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
-STRING_USAGE,                                   "Start a program, or open a document in the program normally used for files with that suffix.\n\
+STRING_USAGE, "Start a program, or open a document in the program normally used for files with that suffix.\n\
 Usage:\n\
 start [options] program_filename [...]\n\
 start [options] document_filename\n\
