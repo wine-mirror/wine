@@ -410,8 +410,23 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
         sw_read_mem(csw, frame->AddrFrame.Offset + 2 * sizeof(DWORD),
                     frame->Params, sizeof(frame->Params));
     }
-    goto done_pep; /* just to ensure done_pep label is referenced */
+#ifdef __i386__
+    if (context)
+    {
+#define SET(field, seg, reg) \
+        switch (frame->field.Mode) \
+        { \
+        case AddrModeFlat: context->reg = frame->field.Offset; break; \
+        case AddrMode1616: context->seg = frame->field.Segment; context->reg = frame->field.Offset; break; \
+        default: assert(0); \
+        }
+        SET(AddrStack,  SegSs, Esp);
+        SET(AddrFrame,  SegSs, Ebp);
+        SET(AddrReturn, SegCs, Eip);
+#undef SET
+    }
 done_pep:
+#endif
 
     frame->Far = TRUE;
     frame->Virtual = TRUE;
