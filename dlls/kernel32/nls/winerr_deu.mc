@@ -3729,3 +3729,8 @@ SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=DEU
 RPC_S_GRP_ELT_NOT_REMOVED
 .
+MessageId=2221
+SymbolicName=NERR_UserNotFound
+Language=DEU
+Der Benutzername konnte nicht gefunden werden
+.
