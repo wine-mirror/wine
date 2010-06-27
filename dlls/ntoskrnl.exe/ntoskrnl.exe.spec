@@ -656,7 +656,7 @@
 @ stub MmAdjustWorkingSetSize
 @ stub MmAdvanceMdl
 @ stdcall MmAllocateContiguousMemory(long double)
-@ stub MmAllocateContiguousMemorySpecifyCache
+@ stdcall MmAllocateContiguousMemorySpecifyCache(long double double double long)
 @ stub MmAllocateMappingAddress
 @ stdcall MmAllocateNonCachedMemory(long)
 @ stdcall MmAllocatePagesForMdl(double double double long)

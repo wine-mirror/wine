@@ -1275,6 +1275,19 @@ PVOID WINAPI MmAllocateContiguousMemory( SIZE_T size, PHYSICAL_ADDRESS highest_v
 }
 
 /***********************************************************************
+ *           MmAllocateContiguousMemorySpecifyCache   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI MmAllocateContiguousMemorySpecifyCache( SIZE_T size,
+                                                     PHYSICAL_ADDRESS lowest_valid_address,
+                                                     PHYSICAL_ADDRESS highest_valid_address,
+                                                     PHYSICAL_ADDRESS BoundaryAddressMultiple,
+                                                     MEMORY_CACHING_TYPE CacheType )
+{
+    FIXME(": stub\n");
+    return NULL;
+}
+
+/***********************************************************************
  *           MmAllocatePagesForMdl   (NTOSKRNL.EXE.@)
  */
 PMDL WINAPI MmAllocatePagesForMdl(PHYSICAL_ADDRESS lowaddress, PHYSICAL_ADDRESS highaddress,
