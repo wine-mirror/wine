@@ -2756,7 +2756,8 @@ static void copy_context_reg(CONTEXT *dstcontext, ULONG_PTR dwregdst, CONTEXT* s
     memcpy(ptrdst, ptrsrc, szdst);
 }
 
-static ULONG_PTR eval_expression(struct cpu_stack_walk* csw, const unsigned char* zp, CONTEXT *context)
+static ULONG_PTR eval_expression(struct module* module, struct cpu_stack_walk* csw,
+                                 const unsigned char* zp, CONTEXT *context)
 {
     dwarf2_traverse_context_t    ctx;
     ULONG_PTR reg, sz, tmp, stack[64];
@@ -2767,7 +2768,7 @@ static ULONG_PTR eval_expression(struct cpu_stack_walk* csw, const unsigned char
     ctx.end_data = zp + 4;
     len = dwarf2_leb128_as_unsigned(&ctx);
     ctx.end_data = ctx.data + len;
-    ctx.word_size = 8; /* FIXME: wordsize!! */
+    ctx.word_size = module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
 
     while (ctx.data < ctx.end_data)
     {
@@ -2866,7 +2867,8 @@ static ULONG_PTR eval_expression(struct cpu_stack_walk* csw, const unsigned char
     return stack[sp];
 }
 
-static void apply_frame_info(struct cpu_stack_walk* csw, CONTEXT *context, struct frame_info *info, ULONG_PTR* cfa)
+static void apply_frame_info(struct module* module, struct cpu_stack_walk* csw,
+                             CONTEXT *context, struct frame_info *info, ULONG_PTR* cfa)
 {
     unsigned int i;
     ULONG_PTR value;
@@ -2875,10 +2877,10 @@ static void apply_frame_info(struct cpu_stack_walk* csw, CONTEXT *context, struc
     switch (info->cfa_rule)
     {
     case RULE_EXPRESSION:
-        *cfa = *(ULONG_PTR*)eval_expression(csw, (const unsigned char*)info->cfa_offset, context);
+        *cfa = *(ULONG_PTR*)eval_expression(module, csw, (const unsigned char*)info->cfa_offset, context);
         break;
     case RULE_VAL_EXPRESSION:
-        *cfa = eval_expression(csw, (const unsigned char*)info->cfa_offset, context);
+        *cfa = eval_expression(module, csw, (const unsigned char*)info->cfa_offset, context);
         break;
     default:
         *cfa = get_context_reg(context, info->cfa_reg) + info->cfa_offset;
@@ -2901,11 +2903,11 @@ static void apply_frame_info(struct cpu_stack_walk* csw, CONTEXT *context, struc
             copy_context_reg(&new_context, i, context, info->regs[i]);
             break;
         case RULE_EXPRESSION:
-            value = eval_expression(csw, (const unsigned char*)info->regs[i], context);
+            value = eval_expression(module, csw, (const unsigned char*)info->regs[i], context);
             set_context_reg(csw, &new_context, i, value, TRUE);
             break;
         case RULE_VAL_EXPRESSION:
-            value = eval_expression(csw, (const unsigned char*)info->regs[i], context);
+            value = eval_expression(module, csw, (const unsigned char*)info->regs[i], context);
             set_context_reg(csw, &new_context, i, value, FALSE);
             break;
         }
@@ -2973,7 +2975,7 @@ BOOL dwarf2_virtual_unwind(struct cpu_stack_walk* csw, ULONG_PTR ip, CONTEXT* co
     if (end) fde_ctx.data = end;
 
     execute_cfa_instructions(&fde_ctx, ip, &info);
-    apply_frame_info(csw, context, &info, cfa);
+    apply_frame_info(pair.effective, csw, context, &info, cfa);
 
     return TRUE;
 }
