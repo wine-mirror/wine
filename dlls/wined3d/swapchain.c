@@ -334,9 +334,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         surface_load_location(This->back_buffers[0], SFLAG_INTEXTURE, NULL);
         surface_modify_location(This->back_buffers[0], SFLAG_INDRAWABLE, FALSE);
         This->render_to_fbo = TRUE;
-
-        /* Force the context manager to update the render target configuration next draw. */
-        context->current_rt = NULL;
     }
 
     if(This->render_to_fbo)

@@ -2242,8 +2242,8 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
     const struct StateEntry *StateTable = device->StateTable;
 
     if (!target) return;
-    else if (context->current_rt == target) return;
     render_offscreen = surface_is_offscreen(target);
+    if (context->current_rt == target && render_offscreen == old_render_offscreen) return;
 
     context_set_render_offscreen(context, StateTable, render_offscreen);
 
