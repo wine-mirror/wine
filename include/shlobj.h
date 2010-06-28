@@ -1297,10 +1297,16 @@ typedef struct _SHChangeNotifyEntry
 #define SHCNF_PRINTERW		0x0006
 #define SHCNF_TYPE		0x00FF
 #define SHCNF_FLUSH		0x1000
-#define SHCNF_FLUSHNOWAIT	0x2000
+#define SHCNF_FLUSHNOWAIT	0x3000
+#define SHCNF_NOTIFYRECURSIVE	0x10000
 
 #define SHCNF_PATH              WINELIB_NAME_AW(SHCNF_PATH)
 #define SHCNF_PRINTER           WINELIB_NAME_AW(SHCNF_PRINTER)
+
+#define SHCNRF_InterruptLevel 0x0001
+#define SHCNRF_ShellLevel 0x0002
+#define SHCNRF_RecursiveInterrupt 0x1000
+#define SHCNRF_NewDelivery 0x8000
 
 void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2);
 
