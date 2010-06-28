@@ -95,7 +95,6 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 #include "wine/list.h"
-#include "wine.xpm"
 
 #ifdef HAVE_PNG_H
 #undef FAR
@@ -865,27 +864,11 @@ end:
     return ret;
 }
 
-static BOOL create_default_icon( const char *filename, const char* comment )
+static BOOL create_default_icon( char *filename )
 {
-    FILE *fXPM;
-    unsigned int i;
+    static const WCHAR user32W[] = {'u','s','e','r','3','2',0};
 
-    if (!(fXPM = fopen(filename, "w"))) return FALSE;
-    if (fprintf(fXPM, "/* XPM */\n/* %s */\nstatic char * icon[] = {", comment) <= 0)
-        goto error;
-    for (i = 0; i < sizeof(wine_xpm)/sizeof(wine_xpm[0]); i++) {
-        if (fprintf( fXPM, "\n\"%s\",", wine_xpm[i]) <= 0)
-            goto error;
-    }
-    if (fprintf( fXPM, "};\n" ) <=0)
-        goto error;
-    fclose( fXPM );
-    return TRUE;
- error:
-    fclose( fXPM );
-    unlink( filename );
-    return FALSE;
-
+    return extract_icon32( user32W, -(INT_PTR)IDI_WINLOGO, filename );
 }
 
 static unsigned short crc16(const char* string)
@@ -1084,15 +1067,8 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
         goto end;
     if (ExtractFromFileType( path, xpm_path ))
         goto end;
-    if (!bWait)
-    {
-        if (destFilename)
-            sprintf(xpm_path,"%s/%s.xpm",iconsdir,destFilename);
-        else
-            sprintf(xpm_path,"%s/%04x_%s.xpm",iconsdir,crc,ico_name);
-        if (create_default_icon( xpm_path, ico_path ))
-            goto end;
-    }
+    if (!bWait && create_default_icon( xpm_path ))
+        goto end;
 
     HeapFree( GetProcessHeap(), 0, xpm_path );
     xpm_path=NULL;
