@@ -13,6 +13,7 @@ RC_SRCS = \
 	oleacc_De.rc \
 	oleacc_En.rc \
 	oleacc_Fr.rc \
+	oleacc_Hu.rc \
 	oleacc_It.rc \
 	oleacc_Ko.rc \
 	oleacc_Lt.rc \
