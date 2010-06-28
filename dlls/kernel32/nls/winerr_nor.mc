@@ -3730,3 +3730,8 @@ SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=NOR
 RPC_S_GRP_ELT_NOT_REMOVED
 .
+MessageId=2221
+SymbolicName=NERR_UserNotFound
+Language=NOR
+Brukernavnet finnes ikke
+.
