@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Andras Kovacs
+ * Copyright 2010 Andras Kovacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,60 @@
 
 #include "shresdef.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+
+MENU_001 MENU DISCARDABLE
+BEGIN
+	MENUITEM "Na&gy ikonok",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "Ki&s ikonok",		FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Részletek",		FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  POPUP "Né&zet"
+	  BEGIN
+	    MENUITEM "Na&gy ikonok",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "Ki&s ikonok",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Részletek",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "&Ikonok elrendezése"
+	  BEGIN
+	    MENUITEM "&Név szerint",	0x30	/* column 0 */
+	    MENUITEM "&Típus szerint",	0x32	/* column 2 */
+	    MENUITEM "&Méret szerint",	0x31	/* ... */
+	    MENUITEM "&Dátum szerint",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "&Automatikus elrendezés",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Ikonok igazítása",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "Frissítés",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "Beillesztés",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Beillesztés linkként",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "Új"
+	  BEGIN
+	    MENUITEM "Új ma&ppa",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Új &link",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "Tulajdonságok",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
 
 /*
  shellview item menu
@@ -27,56 +80,102 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "E&xplore",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Open",		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Kijelölés"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "B&öngészés",	FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "&Megnyitás",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
-	  MENUITEM "C&ut",		FCIDM_SHVIEW_CUT
-	  MENUITEM "&Copy",		FCIDM_SHVIEW_COPY
+	  MENUITEM "Ki&vágás",		FCIDM_SHVIEW_CUT
+	  MENUITEM "M&ásolás",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Create &Link",	FCIDM_SHVIEW_CREATELINK
-	  MENUITEM "&Delete",		FCIDM_SHVIEW_DELETE
-	  MENUITEM "&Rename",		FCIDM_SHVIEW_RENAME
+	  MENUITEM "&Link létrehozása",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Tö&rlés",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "Átneve&zés",	FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
-	  MENUITEM "&Properties",	FCIDM_SHVIEW_PROPERTIES
+	  MENUITEM "Tula&jdonságok",	FCIDM_SHVIEW_PROPERTIES
 	END
 END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Fájl"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "Ki&lépés", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "Né&zet"
     BEGIN
-        MENUITEM "Lar&ge Icons", FCIDM_SHVIEW_BIGICON
-        MENUITEM "S&mall Icons", FCIDM_SHVIEW_SMALLICON
-        MENUITEM "&List", FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "&Details", FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "Na&gy ikonok", FCIDM_SHVIEW_BIGICON
+        MENUITEM "Ki&s ikonok", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Lista", FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Részletek", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Súgó"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&Vezérlőpult névjegye...", IDM_CPANEL_ABOUT
     END
 END
 
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Mappa tallózása"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Mégse", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
+
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Mappa tallózása"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Mappa:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Új mappa létrehozása", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Mégse", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Üzenet"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Igen", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Összesre igen", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Nem", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Mégse", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "N�vjegy: %s"
+CAPTION "%s névjegye"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine &license...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Wine &licensz...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
- LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
- LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 170, 10
- LTEXT "Running on %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "A WINE-t �rt�k:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
+ LTEXT "Ezen fut: %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "A Wine-t készítették:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -84,17 +183,134 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
- ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "�rja be a program, mappa, doumentum c�m�t, vagy internet er�forr�st, a Wine meg fogja �nnek nyitni.", 12289, 36, 11, 182, 18
- LTEXT "&Megnyit�s:", 12305, 7, 39, 24, 10
- CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+ ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "Írjon be programot, mappát, dokumentumot, Internetes erőforrást és a Wine megnyitja Önnek.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "&Megnyitás:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
+ CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "M�gse", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Tall�z�s...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Mégse", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Tallózás...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
 }
 
 STRINGTABLE
 {
-    IDS_CPANEL_NAME             "Name"
-    IDS_CPANEL_DESCRIPTION      "Description"
+        /* columns in the shellview */
+	IDS_SHV_COLUMN1		"Fájl"
+	IDS_SHV_COLUMN2		"Méret"
+	IDS_SHV_COLUMN3		"Típus"
+	IDS_SHV_COLUMN4		"Módosítva"
+	IDS_SHV_COLUMN5		"Attribútumok"
+	IDS_SHV_COLUMN6		"Méret"
+	IDS_SHV_COLUMN7		"Elérhető méret"
+	IDS_SHV_COLUMN8		"Név"
+	IDS_SHV_COLUMN9		"Megjegyzések"
+	IDS_SHV_COLUMN10	"Tulajdonos"
+	IDS_SHV_COLUMN11	"Csoport"
+	IDS_SHV_COLUMN_DELFROM	"Eredeti hely"
+	IDS_SHV_COLUMN_DELDATE	"Törlési dátum"
+	IDS_SHV_COL_DOCS	"Dokumentumok"
+	IDS_SHV_COL_STATUS	"Állapot"
+	IDS_SHV_COL_LOCATION	"Hely"
+	IDS_SHV_COL_MODEL	"Modell"
+
+        /* special folders */
+	IDS_DESKTOP		"Asztal"
+	IDS_MYCOMPUTER		"Sajátgép"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Lomtár"
+	IDS_CONTROLPANEL	"Vezérlőpult"
+
+        /* context menus */
+	IDS_VIEW_LARGE		"Na&gy ikonok"
+	IDS_VIEW_SMALL		"Ki&s ikonok"
+	IDS_VIEW_LIST		"&Lista"
+	IDS_VIEW_DETAILS	"&Részletek"
+	IDS_SELECT		"Kiválasztás"
+	IDS_OPEN		"Megnyitás"
+
+	IDS_CREATEFOLDER_DENIED "Nem lehet új mappát létrehozni: Hozzáférés megtagadva."
+	IDS_CREATEFOLDER_CAPTION "Hiba az új mappa létrehozása során"
+	IDS_DELETEITEM_CAPTION "Fájl törlési megerősítés"
+	IDS_DELETEFOLDER_CAPTION "Mappa törlési megerősítés"
+	IDS_DELETEITEM_TEXT "Biztos hogy törölni szeretné ezt: '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Biztos hogy törölni szeretné ezt a(z) %1 elemet?"
+	IDS_DELETESELECTED_TEXT "Biztos hogy törölni szeretné a kiváalsztott elem(eke)t?"
+	IDS_TRASHITEM_TEXT "Biztos hogy bele szeretné helyezni ezt: '%1' a lomtárba?"
+	IDS_TRASHFOLDER_TEXT "Biztos hogy bele szeretné helyezni ezt: '%1' és teljes tartalmát a lomtárba?"
+	IDS_TRASHMULTIPLE_TEXT "Biztos ohgy bele szeretné helyezni ezt a(z) %1 elemet a lomtárba?"
+	IDS_CANTTRASH_TEXT "A(z) '%1' elem nem helyezhető bele a lomtárba. Szeretné törölni ehelyett?"
+	IDS_OVERWRITEFILE_TEXT "Ez a mappa már tartalmaz egy '%1' nevű fájlt.\n\nLe szeretné cserélni?"
+	IDS_OVERWRITEFILE_CAPTION "Fájl felülírási megerősítés"
+	IDS_OVERWRITEFOLDER_TEXT "Ez a mapp már tartalmaz egy '%1' nevű mappát.\n\n"\
+	    "Ha a célmappában lévő  fájloknak egyezik a nevük a kiválasztott mappában\n"\
+	    "akkor le lesznek cserélve. Még mindig folytatni szeretné a mappa\n"\
+	    "másolását vagy áthelyezését?"
+
+        /* message box strings */
+        IDS_RESTART_TITLE       "Újraindítás"
+        IDS_RESTART_PROMPT      "Szimulálni szeretne egy Windows újraindítást?"
+        IDS_SHUTDOWN_TITLE      "Leállítás"
+        IDS_SHUTDOWN_PROMPT     "Le szeretné állítani a Wine munkamenetét?"
+
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Nem tudom megjeleníteni a fájl futtatás dialógusablakot (belső hiba)"
+        IDS_RUNDLG_BROWSE_ERROR    "Nem tudom megjeleníteni a tallózás dialógusablakot (belső hiba)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Tallózás"
+        IDS_RUNDLG_BROWSE_FILTER   "Futtatható fájlok\0*.exe\0Összes fájl\0*.*\0\0"
+
+        /* shell folder path default values */
+	IDS_PROGRAMS                "Start Menu\\Programs"
+	IDS_PERSONAL                "My Documents"
+	IDS_FAVORITES               "Favorites"
+	IDS_STARTUP                 "Start Menu\\Programs\\StartUp"
+	IDS_RECENT                  "Recent"
+	IDS_SENDTO                  "SendTo"
+	IDS_STARTMENU               "Start Menu"
+	IDS_MYMUSIC                 "My Music"
+	IDS_MYVIDEO                 "My Videos"
+	IDS_DESKTOPDIRECTORY        "Desktop"
+	IDS_NETHOOD                 "NetHood"
+	IDS_TEMPLATES               "Templates"
+	IDS_APPDATA                 "Application Data"
+	IDS_PRINTHOOD               "PrintHood"
+	IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
+	IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "Local Settings\\History"
+	IDS_PROGRAM_FILES           "Program Files"
+	IDS_MYPICTURES              "My Pictures"
+	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+	IDS_COMMON_DOCUMENTS        "Documents"
+	IDS_ADMINTOOLS              "Start Menu\\Programs\\Administrative Tools"
+	IDS_COMMON_MUSIC            "Music"
+	IDS_COMMON_PICTURES         "Pictures"
+	IDS_COMMON_VIDEO            "Videos"
+	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+	IDS_NEWFOLDER		"Új mappa"
+
+	IDS_CPANEL_TITLE            "Wine vezérlőpult"
+	IDS_CPANEL_NAME             "Név"
+	IDS_CPANEL_DESCRIPTION      "Leírás"
+
+        IDS_SHLEXEC_NOASSOC         "Nincs Windowsos program társítva ennek a fájltípusnak a megnyitásához."
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Wine Licensz"
+IDS_LICENSE,
+"A Wine szabad szoftver; szabadon terjesztheti, vagy \
+módosíthatja a GNU Lesser General Public Liszenc \
+feltételei szerint, amit a Free Software Foundation \
+készített; mind a 2.1 verziójú licensz, vagy \
+(választása szerint) bármely későbbi verzió használható.\n\n\
+A Winet abban a reményben terjesztik, hogy hasznos lesz, \
+ugyanakkor SEMILYEN GARANCIA NINCS RÁ; még garancia az \
+ELADHATÓSÁGRA, illetve az ALKALMASSÁG AZ ELADHATÓSÁGI \
+SZÁNDÉKRA sem. Nézze meg a GNU Lesser General Public \
+Licenszt a további részletekért.\n\n\
+Önnek kapnia kellett egy másolatot a GNU Lesser General \
+Public Licenszből, ha nem írjon a Free Software \
+Foundation, Inc-nek: 51 Franklin St, Fifth Floor, \
+Boston, MA 02110-1301, USA."
 }
