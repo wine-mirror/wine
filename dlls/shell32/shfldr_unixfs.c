@@ -1183,9 +1183,9 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
 
     static const WCHAR awcInvalidChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
     char szSrc[FILENAME_MAX], szDest[FILENAME_MAX];
-    WCHAR wszSrcRelative[MAX_PATH];
+    WCHAR wszSrcRelative[MAX_PATH], *pwszExt = NULL;
     unsigned int i;
-    int cBasePathLen = lstrlenA(This->m_pszPath);
+    int cBasePathLen = lstrlenA(This->m_pszPath), cNameLen;
     struct stat statDest;
     LPITEMIDLIST pidlSrc, pidlDest, pidlRelativeDest;
     LPOLESTR lpwszName;
@@ -1221,8 +1221,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
         _ILSimpleGetTextW(pidl, wszSrcRelative, MAX_PATH) && 
         SHELL_FS_HideExtension(wszSrcRelative))
     {
-        WCHAR *pwszExt = PathFindExtensionW(wszSrcRelative);
         int cLenDest = strlen(szDest);
+        pwszExt = PathFindExtensionW(wszSrcRelative);
         WideCharToMultiByte(CP_UNIXCP, 0, pwszExt, -1, szDest + cLenDest, 
             FILENAME_MAX - cLenDest, NULL, NULL);
     }
@@ -1238,8 +1238,14 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
         return E_FAIL;
     
     /* Build a pidl for the path of the renamed file */
-    lpwszName = SHAlloc((lstrlenW(lpcwszName)+1)*sizeof(WCHAR)); /* due to const correctness. */
+    cNameLen = lstrlenW(lpcwszName) + 1;
+    if(pwszExt)
+        cNameLen += lstrlenW(pwszExt);
+    lpwszName = SHAlloc(cNameLen*sizeof(WCHAR)); /* due to const correctness. */
     lstrcpyW(lpwszName, lpcwszName);
+    if(pwszExt)
+        lstrcatW(lpwszName, pwszExt);
+
     hr = IShellFolder2_ParseDisplayName(iface, NULL, NULL, lpwszName, NULL, &pidlRelativeDest, NULL);
     SHFree(lpwszName);
     if (FAILED(hr)) {
