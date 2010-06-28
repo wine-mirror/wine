@@ -684,8 +684,13 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
         {
             if ((pIconDir = LockResource(hResData)))
             {
+                lpName = MAKEINTRESOURCEW(pIconDir->idEntries[0].nID);  /* default to first entry */
                 for (i = 0; i < pIconDir->idCount; i++)
                 {
+#ifndef SONAME_LIBPNG
+		    if (pIconDir->idEntries[i].wBitCount != 4 && pIconDir->idEntries[i].wBitCount != 8)
+                        continue;
+#endif
 		    if (pIconDir->idEntries[i].wBitCount >= nMaxBits)
 		    {
 			if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) >= nMax)
@@ -694,7 +699,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
 			    nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
 			    nMaxBits = pIconDir->idEntries[i].wBitCount;
 			}
-		    }		    
+		    }
                 }
             }
 
