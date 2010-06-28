@@ -2807,7 +2807,7 @@ static void test_ConvertSecurityDescriptorToString(void)
  * don't replicate this feature so we only test len >= strlen+1. */
 #define CHECK_RESULT_AND_FREE(exp_str) \
     ok(strcmp(string, (exp_str)) == 0, "String mismatch (expected \"%s\", got \"%s\")\n", (exp_str), string); \
-    ok(len >= (lstrlen(exp_str) + 1), "Length mismatch (expected %d, got %d)\n", lstrlen(exp_str) + 1, len); \
+    ok(len >= (strlen(exp_str) + 1), "Length mismatch (expected %d, got %d)\n", lstrlen(exp_str) + 1, len); \
     LocalFree(string);
 
 #define CHECK_ONE_OF_AND_FREE(exp_str1, exp_str2) \
