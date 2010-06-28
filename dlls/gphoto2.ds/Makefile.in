@@ -19,6 +19,7 @@ RC_SRCS = \
 	gphoto2_En.rc \
 	gphoto2_Es.rc \
 	gphoto2_Fr.rc \
+	gphoto2_Hu.rc \
 	gphoto2_It.rc \
 	gphoto2_Ja.rc \
 	gphoto2_Ko.rc \
