@@ -1,7 +1,7 @@
 /*
  * Hungarian resources for SETUPAPI
  *
- * Copyright 2006 Andras Kovacs
+ * Copyright 2010 Andras Kovacs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,17 +20,42 @@
 
 #include "setupapi_private.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE
+{
+        IDS_PROMPTDISK   "A(z) '%s' fájl szükséges ezen: %s"
+        IDS_UNKNOWN      "Ismeretlen"
+        IDS_COPYFROM     "Fájlok másolása innen:"
+        IDS_INFO         "Írja be az útvonalat ahol a fájl található majd nyomja meg az OK gombot."
+}
 
 COPYFILEDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "F�jlok m�sol�sa..."
+CAPTION "Fájlok másolása..."
 FONT 8, "MS Shell Dlg"
 BEGIN
-	PUSHBUTTON "M�gse", IDCANCEL, 79, 84, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-	LTEXT "Forr�s:", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	PUSHBUTTON "Mégse", IDCANCEL, 79, 84, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	LTEXT "Forrás:", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", SOURCESTRORD, 7, 18, 194, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
-	LTEXT "C�l:", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Cél:", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+IDPROMPTFORDISK DIALOG MOVEABLE DISCARDABLE 0, 0, 250, 120
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Szükséges fájlok"
+FONT 8, "MS Shell Dlg"
+BEGIN
+	LTEXT "Helyezze be a gyártó lemezét és ellenőrizze,\nhogy a megfelelő meghajtó van alább kiválasztva", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Gyártó fájlainak másolása innen:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
+	PUSHBUTTON "OK", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Mégse", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Tallózás...", IDC_RUNDLG_BROWSE, 195, 100, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
