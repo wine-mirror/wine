@@ -301,7 +301,7 @@ static HRESULT WINAPI WebBrowser_Stop(IWebBrowser2 *iface)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
     FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_Application(IWebBrowser2 *iface, IDispatch **ppDisp)
