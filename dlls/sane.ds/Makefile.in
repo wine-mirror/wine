@@ -21,6 +21,7 @@ RC_SRCS = \
 	sane_Es.rc \
 	sane_Fi.rc \
 	sane_Fr.rc \
+	sane_Hu.rc \
 	sane_It.rc \
 	sane_Ja.rc \
 	sane_Ko.rc \
