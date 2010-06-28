@@ -213,21 +213,36 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
 
         if (*lpszDisplayName)
         {
-            WCHAR szPath[MAX_PATH];
-            LPWSTR pathPtr;
-
-            /* build a complete path to create a simple pidl */
-            lstrcpynW(szPath, This->sPathTarget, MAX_PATH);
-            pathPtr = PathAddBackslashW(szPath);
-            if (pathPtr)
+            if (*lpszDisplayName == '/')
             {
-                lstrcpynW(pathPtr, lpszDisplayName, MAX_PATH - (pathPtr - szPath));
-                hr = _ILCreateFromPathW(szPath, &pidlTemp);
+                /* UNIX paths should be parsed by unixfs */
+                IShellFolder *unixFS;
+                hr = UnixFolder_Constructor(NULL, &IID_IShellFolder, (LPVOID*)&unixFS);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IShellFolder_ParseDisplayName(unixFS, NULL, NULL,
+                            lpszDisplayName, NULL, &pidlTemp, NULL);
+                    IShellFolder_Release(unixFS);
+                }
             }
             else
             {
-                /* should never reach here, but for completeness */
-                hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+                /* build a complete path to create a simple pidl */
+                WCHAR szPath[MAX_PATH];
+                LPWSTR pathPtr;
+
+                lstrcpynW(szPath, This->sPathTarget, MAX_PATH);
+                pathPtr = PathAddBackslashW(szPath);
+                if (pathPtr)
+                {
+                    lstrcpynW(pathPtr, lpszDisplayName, MAX_PATH - (pathPtr - szPath));
+                    hr = _ILCreateFromPathW(szPath, &pidlTemp);
+                }
+                else
+                {
+                    /* should never reach here, but for completeness */
+                    hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+                }
             }
         }
         else
