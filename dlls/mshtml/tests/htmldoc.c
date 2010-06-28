@@ -1368,6 +1368,74 @@ static const IOleContainerVtbl OleContainerVtbl = {
 
 static IOleContainer OleContainer = { &OleContainerVtbl };
 
+static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI ClientSite_AddRef(IOleClientSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClientSite_Release(IOleClientSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClientSite_SaveObject(IOleClientSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAssign, DWORD dwWhichMoniker,
+        IMoniker **ppmon)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
+{
+    CHECK_EXPECT(GetContainer);
+    ok(ppContainer != NULL, "ppContainer = NULL\n");
+    *ppContainer = &OleContainer;
+    return S_OK;
+}
+
+static HRESULT WINAPI ClientSite_ShowObject(IOleClientSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_OnShowWindow(IOleClientSite *iface, BOOL fShow)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_RequestNewObjectLayout(IOleClientSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleClientSiteVtbl ClientSiteVtbl = {
+    ClientSite_QueryInterface,
+    ClientSite_AddRef,
+    ClientSite_Release,
+    ClientSite_SaveObject,
+    ClientSite_GetMoniker,
+    ClientSite_GetContainer,
+    ClientSite_ShowObject,
+    ClientSite_OnShowWindow,
+    ClientSite_RequestNewObjectLayout
+};
+
+static IOleClientSite ClientSite = { &ClientSiteVtbl };
+
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
 {
     static const GUID undocumented_frame_iid = {0xfbece6c9,0x48d7,0x4a37,{0x8f,0xe3,0x6a,0xd4,0x27,0x2f,0xdd,0xac}};
@@ -1558,9 +1626,23 @@ static ULONG WINAPI InPlaceSiteWindowless_Release(IOleInPlaceSiteWindowless *ifa
 static HRESULT WINAPI InPlaceSiteWindowless_GetWindow(
         IOleInPlaceSiteWindowless *iface, HWND *phwnd)
 {
+    IOleClientSite *client_site;
+    IOleObject *ole_obj;
+    HRESULT hres;
+
     CHECK_EXPECT2(GetWindow);
     ok(phwnd != NULL, "phwnd = NULL\n");
     *phwnd = container_hwnd;
+
+    hres = IUnknown_QueryInterface(doc_unk, &IID_IOleObject, (void**)&ole_obj);
+    ok(hres == S_OK, "Could not get IOleObject: %08x\n", hres);
+
+    hres = IOleObject_GetClientSite(ole_obj, &client_site);
+    IOleObject_Release(ole_obj);
+    ok(hres == S_OK, "GetClientSite failed: %08x\n", hres);
+    ok(client_site == &ClientSite, "client_site != ClientSite\n");
+    IOleClientSite_Release(client_site);
+
     return S_OK;
 }
 
@@ -1820,74 +1902,6 @@ static const IOleInPlaceSiteWindowlessVtbl InPlaceSiteWindowlessVtbl = {
 };
 
 static IOleInPlaceSiteWindowless InPlaceSiteWindowless = { &InPlaceSiteWindowlessVtbl };
-
-static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
-{
-    return QueryInterface(riid, ppv);
-}
-
-static ULONG WINAPI ClientSite_AddRef(IOleClientSite *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI ClientSite_Release(IOleClientSite *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI ClientSite_SaveObject(IOleClientSite *iface)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAssign, DWORD dwWhichMoniker,
-        IMoniker **ppmon)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
-{
-    CHECK_EXPECT(GetContainer);
-    ok(ppContainer != NULL, "ppContainer = NULL\n");
-    *ppContainer = &OleContainer;
-    return S_OK;
-}
-
-static HRESULT WINAPI ClientSite_ShowObject(IOleClientSite *iface)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ClientSite_OnShowWindow(IOleClientSite *iface, BOOL fShow)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI ClientSite_RequestNewObjectLayout(IOleClientSite *iface)
-{
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
-}
-
-static const IOleClientSiteVtbl ClientSiteVtbl = {
-    ClientSite_QueryInterface,
-    ClientSite_AddRef,
-    ClientSite_Release,
-    ClientSite_SaveObject,
-    ClientSite_GetMoniker,
-    ClientSite_GetContainer,
-    ClientSite_ShowObject,
-    ClientSite_OnShowWindow,
-    ClientSite_RequestNewObjectLayout
-};
-
-static IOleClientSite ClientSite = { &ClientSiteVtbl };
 
 static HRESULT WINAPI DocumentSite_QueryInterface(IOleDocumentSite *iface, REFIID riid, void **ppv)
 {
