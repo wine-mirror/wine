@@ -2186,6 +2186,15 @@ HANDLE WINAPI CreateMemoryResourceNotification(MEMORY_RESOURCE_NOTIFICATION_TYPE
     return NULL;
 }
 
+/***********************************************************************
+ *          QueryMemoryResourceNotification   (KERNEL32.@)
+ */
+BOOL WINAPI QueryMemoryResourceNotification(HANDLE rnh, PBOOL rs)
+{
+    FIXME("(%p, %p) stub\n", rnh, rs);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
 
 #ifdef __i386__
 

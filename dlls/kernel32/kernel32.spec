@@ -873,7 +873,7 @@
 @ stdcall QueryFullProcessImageNameA(ptr long ptr ptr)
 @ stdcall QueryFullProcessImageNameW(ptr long ptr ptr)
 @ stdcall QueryInformationJobObject(long long ptr long ptr)
-# @ stub QueryMemoryResourceNotification
+@ stdcall QueryMemoryResourceNotification(ptr ptr)
 @ stub QueryNumberOfEventLogRecords
 @ stub QueryOldestEventLogRecord
 @ stdcall QueryPerformanceCounter(ptr)
