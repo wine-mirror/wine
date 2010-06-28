@@ -486,7 +486,7 @@ static HRESULT create_moniker(LPCWSTR url, IMoniker **mon)
             return hres;
         }
     }else {
-        size = sizeof(new_url);
+        size = sizeof(new_url)/sizeof(WCHAR);
         hres = UrlApplySchemeW(url, new_url, &size, URL_APPLY_GUESSSCHEME);
         TRACE("got %s\n", debugstr_w(new_url));
         if(FAILED(hres)) {
