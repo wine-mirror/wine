@@ -1,0 +1,87 @@
+/*
+* Add/Remove Programs Hungarian resources
+*
+* Copyright 2010 Andras Kovacs
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+*
+*/
+
+#include "res.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+   IDS_CPL_TITLE, "Programok hozzáadása/eltávolítása"
+   IDS_CPL_DESC, "Lehetõvé teszi új programok telepítését illetve eltávolítását az Ön számítógépérõl."
+   IDS_TAB1_TITLE, "Alkalmazások"
+
+   IDS_UNINSTALL_FAILED, "Nem tudom elindítani az eltávolító programot: '%s'. Szeretné az ehhez a programhoz tartozó eltávolítási bejegyzést törölni a regisztrációs adatbázisból?"
+   IDS_NOT_SPECIFIED, "Nincs megadva"
+
+   IDS_COLUMN_NAME, "Név"
+   IDS_COLUMN_PUBLISHER, "Kiadó"
+   IDS_COLUMN_VERSION, "Verzió"
+   IDS_INSTALL_FILTER, "Telepítõ programok\0*instal*.exe;*setup*.exe;*.msi\0Programok (*.exe)\0*.exe\0Minden fájl (*.*)\0*.*\0\0"
+
+   IDS_REMOVE, "&Eltávolítás..."
+   IDS_MODIFY_REMOVE, "&Módosítás/Eltávolítás..."
+}
+
+IDD_MAIN DIALOG 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Telepítés/Eltávolítás"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "Új program telepítéséhez hajlékonylemezrõl, CD-ROM meghajtóról vagy merevlemezrõl kattintson a Telepítés gombra.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "&Telepítés...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
+ CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
+ CONTROL "A következõ programot automatikusan el lehet távolítani. Program eltávolításához vagy a telepített komponenseinek módosításához válassza ki a szoftvert a listából, majd kattintson Módosítás/Eltávolítás gombra.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
+ CONTROL "Tám&ogatási Információ...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 64, 198, 84, 14
+ CONTROL "&Módosítás...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 152, 198, 68, 14
+ CONTROL "&Eltávolítás...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 224, 198, 88, 14
+ CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
+}
+
+IDD_INFO DIALOG 0, 0, 256, 138
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Támogatási információ"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
+ CONTROL "A következõ információk használhatóak a(z) %s technikai támogatásának igénybevételéhez:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "Kiadó:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
+ CONTROL "Verzió:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "Kapcsolat:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
+ CONTROL "Támogatási információ:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "Telefonos támogatás:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
+ CONTROL "OlvassEl fájl:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "Termékfrissítések:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "Megjegyzések:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
+ CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
+ CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
+ CONTROL "", IDC_INFO_SUPPORT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 60, 136, 8
+ CONTROL "", IDC_INFO_PHONE, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 70, 136, 8
+ CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
+ CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
+ CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}
