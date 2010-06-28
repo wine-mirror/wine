@@ -11,6 +11,7 @@ RC_SRCS = \
 	jscript_En.rc \
 	jscript_Es.rc \
 	jscript_Fr.rc \
+	jscript_Hu.rc \
 	jscript_It.rc \
 	jscript_Ja.rc \
 	jscript_Ko.rc \
