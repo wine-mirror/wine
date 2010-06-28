@@ -317,30 +317,30 @@ static inline domdoc *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
 }
 
 /************************************************************************
- * xmldoc implementation of IPersistStream.
+ * domdoc implementation of IPersistStream.
  */
-static HRESULT WINAPI xmldoc_IPersistStreamInit_QueryInterface(
-    IPersistStreamInit *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI domdoc_IPersistStreamInit_QueryInterface(
+    IPersistStreamInit *iface, REFIID riid, void **ppvObj)
 {
     domdoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDocument_QueryInterface((IXMLDocument *)this, riid, ppvObj);
+    return IXMLDOMDocument2_QueryInterface((IXMLDOMDocument2 *)this, riid, ppvObj);
 }
 
-static ULONG WINAPI xmldoc_IPersistStreamInit_AddRef(
+static ULONG WINAPI domdoc_IPersistStreamInit_AddRef(
     IPersistStreamInit *iface)
 {
     domdoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDocument_AddRef((IXMLDocument *)this);
+    return IXMLDOMDocument2_AddRef((IXMLDOMDocument2 *)this);
 }
 
-static ULONG WINAPI xmldoc_IPersistStreamInit_Release(
+static ULONG WINAPI domdoc_IPersistStreamInit_Release(
     IPersistStreamInit *iface)
 {
     domdoc *this = impl_from_IPersistStreamInit(iface);
-    return IXMLDocument_Release((IXMLDocument *)this);
+    return IXMLDOMDocument2_Release((IXMLDOMDocument2 *)this);
 }
 
-static HRESULT WINAPI xmldoc_IPersistStreamInit_GetClassID(
+static HRESULT WINAPI domdoc_IPersistStreamInit_GetClassID(
     IPersistStreamInit *iface, CLSID *classid)
 {
     TRACE("(%p,%p): stub!\n", iface, classid);
@@ -353,17 +353,15 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_GetClassID(
     return S_OK;
 }
 
-static HRESULT WINAPI xmldoc_IPersistStreamInit_IsDirty(
+static HRESULT WINAPI domdoc_IPersistStreamInit_IsDirty(
     IPersistStreamInit *iface)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
-
     FIXME("(%p): stub!\n", This);
-
     return S_FALSE;
 }
 
-static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
+static HRESULT WINAPI domdoc_IPersistStreamInit_Load(
     IPersistStreamInit *iface, LPSTREAM pStm)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -416,7 +414,7 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
     return attach_xmldoc( &This->node, xmldoc );
 }
 
-static HRESULT WINAPI xmldoc_IPersistStreamInit_Save(
+static HRESULT WINAPI domdoc_IPersistStreamInit_Save(
     IPersistStreamInit *iface, LPSTREAM pStm, BOOL fClearDirty)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -441,7 +439,7 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_Save(
     return hr;
 }
 
-static HRESULT WINAPI xmldoc_IPersistStreamInit_GetSizeMax(
+static HRESULT WINAPI domdoc_IPersistStreamInit_GetSizeMax(
     IPersistStreamInit *iface, ULARGE_INTEGER *pcbSize)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -449,7 +447,7 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_GetSizeMax(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmldoc_IPersistStreamInit_InitNew(
+static HRESULT WINAPI domdoc_IPersistStreamInit_InitNew(
     IPersistStreamInit *iface)
 {
     domdoc *This = impl_from_IPersistStreamInit(iface);
@@ -459,15 +457,15 @@ static HRESULT WINAPI xmldoc_IPersistStreamInit_InitNew(
 
 static const IPersistStreamInitVtbl xmldoc_IPersistStreamInit_VTable =
 {
-    xmldoc_IPersistStreamInit_QueryInterface,
-    xmldoc_IPersistStreamInit_AddRef,
-    xmldoc_IPersistStreamInit_Release,
-    xmldoc_IPersistStreamInit_GetClassID,
-    xmldoc_IPersistStreamInit_IsDirty,
-    xmldoc_IPersistStreamInit_Load,
-    xmldoc_IPersistStreamInit_Save,
-    xmldoc_IPersistStreamInit_GetSizeMax,
-    xmldoc_IPersistStreamInit_InitNew
+    domdoc_IPersistStreamInit_QueryInterface,
+    domdoc_IPersistStreamInit_AddRef,
+    domdoc_IPersistStreamInit_Release,
+    domdoc_IPersistStreamInit_GetClassID,
+    domdoc_IPersistStreamInit_IsDirty,
+    domdoc_IPersistStreamInit_Load,
+    domdoc_IPersistStreamInit_Save,
+    domdoc_IPersistStreamInit_GetSizeMax,
+    domdoc_IPersistStreamInit_InitNew
 };
 
 /* ISupportErrorInfo interface */
@@ -476,21 +474,21 @@ static HRESULT WINAPI support_error_QueryInterface(
     REFIID riid, void** ppvObj )
 {
     domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDocument_QueryInterface((IXMLDocument *)This, riid, ppvObj);
+    return IXMLDOMDocument2_QueryInterface((IXMLDOMDocument2 *)This, riid, ppvObj);
 }
 
 static ULONG WINAPI support_error_AddRef(
     ISupportErrorInfo *iface )
 {
     domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDocument_AddRef((IXMLDocument *)This);
+    return IXMLDOMDocument2_AddRef((IXMLDOMDocument2 *)This);
 }
 
 static ULONG WINAPI support_error_Release(
     ISupportErrorInfo *iface )
 {
     domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDocument_Release((IXMLDocument *)This);
+    return IXMLDOMDocument2_Release((IXMLDOMDocument2 *)This);
 }
 
 static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
