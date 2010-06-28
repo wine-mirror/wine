@@ -3,7 +3,7 @@
  * Korean Language Support
  *
  * Copyright (C) 1999 D A Pickles
- * Copyright 2005,2007 YunSong Hwang
+ * Copyright 2005,2007,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,249 +22,257 @@
 
 #include "wcmd.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "ATTRIB µµ¿ò¸»\n"
+  WCMD_ATTRIB, "ATTRIBëŠ” ë„ìŠ¤ íŒŒì¼ ì†ì„±ì„ ë³´ì—¬ì£¼ê±°ë‚˜ ê³ ì¹©ë‹ˆë‹¤.\n"
   WCMD_CALL,
-"<¹èÄ¡ÆÄÀÏ ÀÌ¸§>À» È£Ãâ(CALL)ÇÏ´Â °ÍÀº ¹èÄ¡ ÆÄÀÏ¾È¿¡¼­  ´Ù¸¥ ¹èÄ¡ ÆÄÀÏ ¾ÈÀÇ\n\
-¸í·ÉÀ» »ç¿ëÇÏ´Â °ÍÀÔ´Ï´Ù. ¹èÄ¡ ÆÄÀÏÀÌ Á¾·áÇÏ¸é , Á¦¾î±ÇÀº  ±×°ÍÀ» È£ÃâÇÑ\n\
-ÆÄÀÏÇÑÅ× µ¹¾Æ°©´Ï´Ù.  CALL ¸í·ÉÀº È£ÃâÇÏ´Â °úÁ¤¿¡¼­ ¸Å°³º¯¼ö¸¦ °¡Áý´Ï´Ù.\n\
+"<ë°°ì¹˜íŒŒì¼ ì´ë¦„>ì„ í˜¸ì¶œ(CALL)í•˜ëŠ” ê²ƒì€ ë°°ì¹˜ íŒŒì¼ì•ˆì—ì„œ  ë‹¤ë¥¸ ë°°ì¹˜ íŒŒì¼ ì•ˆì˜\n\
+ëª…ë ¹ì„ ì‚¬ìš©í•˜ëŠ” ê²ƒìž…ë‹ˆë‹¤. ë°°ì¹˜ íŒŒì¼ì´ ì¢…ë£Œí•˜ë©´ , ì œì–´ê¶Œì€  ê·¸ê²ƒì„ í˜¸ì¶œí•œ\n\
+íŒŒì¼í•œí…Œ ëŒì•„ê°‘ë‹ˆë‹¤.  CALL ëª…ë ¹ì€ í˜¸ì¶œí•˜ëŠ” ê³¼ì •ì—ì„œ ë§¤ê°œë³€ìˆ˜ë¥¼ ê°€ì§‘ë‹ˆë‹¤.\n\
 \n\
-±âº» µð·ºÅä¸®³ª È¯°æº¯¼ö³ª ±âÅ¸¸¦ ¹Ù²Ù´Â °ÍÀº È£ÃâÀÚ¿¡ ÀÇÇØ »ó¼ÓµÇ¾î¼­ È£ÃâµÈ\n\
-°úÁ¤¿¡¸¸ Àû¿ëµË´Ï´Ù.\n"
+ê¸°ë³¸ ë””ë ‰í† ë¦¬ë‚˜ í™˜ê²½ë³€ìˆ˜ë‚˜ ê¸°íƒ€ë¥¼ ë°”ê¾¸ëŠ” ê²ƒì€ í˜¸ì¶œìžì— ì˜í•´ ìƒì†ë˜ì–´ì„œ í˜¸ì¶œëœ\n\
+ê³¼ì •ì—ë§Œ ì ìš©ë©ë‹ˆë‹¤.\n"
 
-  WCMD_CD,     " CD µµ¿ò¸»\n"
-  WCMD_CHDIR,  " CHDIR µµ¿ò¸»\n"
+  WCMD_CD,     "CD <ë””ë ‰í† ë¦¬> ëŠ”  CHDIRì˜ ë‹¨ì¶•ë²„ì ¼ìž…ë‹ˆë‹¤. í˜„ìž¬ ê¸°ë³¸ ë””ë ‰í† ë¦¬ë¥¼\n\
+ë°”ê¿‰ë‹ˆë‹¤.\n"
+  WCMD_CHDIR,  "CHDIR <ë””ë ‰í† ë¦¬> ëŠ” í˜„ìž¬ ê¸°ë³¸ ë””ë ‰í† ë¦¬ë¥¼ ë°”ê¿‰ë‹ˆë‹¤.\n"
 
-  WCMD_CLS,    "CLS ÄÜ¼Ö È­¸é ±ú²ýÈ÷\n"
+  WCMD_CLS,    "CLSëŠ” ì½˜ì†” í™”ë©´ì„ ê¹¨ë—í•˜ê²Œ í•©ë‹ˆë‹¤.\n"
 
-  WCMD_COPY,   "COPY µµ¿ò¸»\n"
-  WCMD_CTTY,   "CTTY µµ¿ò¸»\n"
-  WCMD_DATE,   "DATE µµ¿ò¸»\n"
-  WCMD_DEL,    "DEL µµ¿ò¸»\n"
-  WCMD_DIR,    "DIR µµ¿ò¸»\n"
+  WCMD_COPY,   "COPY <íŒŒì¼ì´ë¦„> ì€ íŒŒì¼ì„ ë³µì‚¬í•©ë‹ˆë‹¤.\n"
+  WCMD_CTTY,   "CTTY ëŠ” ìž…ë ¥/ì¶œë ¥ ìž¥ì¹˜ë¥¼ ë°”ê¿‰ë‹ˆë‹¤.\n"
+  WCMD_DATE,   "DATE ëŠ” ì‹œìŠ¤í…œ ë‚ ì§œë¥¼ ë³´ì—¬ì£¼ê±°ë‚˜ ë°”ê¿‰ë‹ˆë‹¤.\n"
+  WCMD_DEL,    "DEL <íŒŒì¼ì´ë¦„> ì€ í•˜ë‚˜ì˜ íŒŒì¼ì´ë‚˜ ì—¬ëŸ¬ íŒŒì¼ì„ ì§€ì›ë‹ˆë‹¤.\n"
+  WCMD_DIR,    "DIR ëŠ” ë””ë ‰í† ë¦¬ì˜ ë‚´ìš©ì„ ë³´ì—¬ì¤ë‹ˆë‹¤.\n"
 
   WCMD_ECHO,
-"ECHO <¹®ÀÚ¿­>Àº <¹®ÀÚ¿­>À» ÇöÀç ÅÍ¹Ì³Î¿¡ º¸¿©ÁÝ´Ï´Ù.\n\
+"ECHO <ë¬¸ìžì—´>ì€ <ë¬¸ìžì—´>ì„ í˜„ìž¬ í„°ë¯¸ë„ì— ë³´ì—¬ì¤ë‹ˆë‹¤.\n\
 \n\
-ECHO ON´Â ¹èÄ¡ÆÄÀÏ¿¡¼­ ´ÙÀ½¿¡ ¿À´Â ¸ðµç ¸í·ÉÀ» ½ÇÇà±«±â Àü¿¡ ÅÍ¹Ì³Î¿¡ º¸¿©ÁÝ´Ï´Ù\n\
+ECHO ONëŠ” ë°°ì¹˜íŒŒì¼ì—ì„œ ë‹¤ìŒì— ì˜¤ëŠ” ëª¨ë“  ëª…ë ¹ì„ ì‹¤í–‰ê´´ê¸° ì „ì— í„°ë¯¸ë„ì— ë³´ì—¬ì¤ë‹ˆë‹¤\n\
 \n\
-ECHO OFF ´Â ECHO ON°ú ¹Ý´ëÀÇ ÀÏÀ» ÇÕ´Ï´Ù. (ECHO ´Â OFF°¡ ±âº»)\n\
-ECHO OFF ¸í·ÉÀº  ½ÅÈ£°¡ ÁøÇàµÇ´Â °É º¸¿©ÁÖ´Â°É ¸·½À´Ï´Ù.\n"
+ECHO OFF ëŠ” ECHO ONê³¼ ë°˜ëŒ€ì˜ ì¼ì„ í•©ë‹ˆë‹¤. (ECHO ëŠ” OFFê°€ ê¸°ë³¸)\n\
+ECHO OFF ëª…ë ¹ì€  ì‹ í˜¸ê°€ ì§„í–‰ë˜ëŠ” ê±¸ ë³´ì—¬ì£¼ëŠ”ê±¸ ë§‰ìŠµë‹ˆë‹¤.\n"
 
-  WCMD_ERASE,  "ERASE µµ¿ò¸»\n"
+  WCMD_ERASE,  "ERASE <íŒŒì¼ì´ë¦„>ì€ í•˜ë‚˜ì˜ íŒŒì¼ì´ëƒ ì—¬ëŸ¬ íŒŒì¼ì„ ì§€ì›ë‹ˆë‹¤.\n"
 
   WCMD_FOR,
-"FOR ¸í·ÉÀº  ÆÄÀÏ  ¸ðÀ½¿¡¼­ °¢°¢ÀÇ ¸í·ÉÀ» ½ÇÇà½ÃÅ³ ¶§ »ç¿ë.\n\
+"FOR ëª…ë ¹ì€  íŒŒì¼  ëª¨ìŒì—ì„œ ê°ê°ì˜ ëª…ë ¹ì„ ì‹¤í–‰ì‹œí‚¬ ë•Œ ì‚¬ìš©.\n\
 \n\
-¹®¹ý: FOR º¯¼ö IN (set) DO ¸í·É\n\
+ë¬¸ë²•: FOR ë³€ìˆ˜ IN (set) DO ëª…ë ¹\n\
 \n\
- wineÀÇ cmd ¾È¿¡¼­ Á¸ÀçÇÏÁö ¾Ê´Â ¹èÄ¡ ÆÄÀÏ¿¡ FOR¸¦ »ç¿ëÇÒ·Á¸é µÎ °³ÀÇ %°¡ ÇÊ¿äÇÕ´Ï´Ù.\n"
+ wineì˜ cmd ì•ˆì—ì„œ ì¡´ìž¬í•˜ì§€ ì•ŠëŠ” ë°°ì¹˜ íŒŒì¼ì— FORë¥¼ ì‚¬ìš©í• ë ¤ë©´ ë‘ ê°œì˜ %ê°€ í•„ìš”í•©ë‹ˆë‹¤.\n"
 
   WCMD_GOTO,
-"The GOTO  ¸í·ÉÀº ¹èÄ¡ÆÄÀÏ ¾È¿¡¼­ ´Ù¸¥ ºÎºÐÀ¸·Î ½ÇÇàÈå¸§À» ¹Ù²ß´Ï´Ù.\n\
+"The GOTO  ëª…ë ¹ì€ ë°°ì¹˜íŒŒì¼ ì•ˆì—ì„œ ë‹¤ë¥¸ ë¶€ë¶„ìœ¼ë¡œ ì‹¤í–‰íë¦„ì„ ë°”ê¿‰ë‹ˆë‹¤.\n\
 \n\
-GOTOÀÇ Å¸°ÙÀÎ ¶óº§Àº °ø¹éÀ» Æ÷ÇÔÇØ¼­ 255ÀÚ±îÁö °¡´ÉÇÕ´Ï´Ù\n\
-(´Ù¸¥ ¿î¿µÃ¼Á¦¿¡¼­´Â ´Ù¸¦ ¼öµµ ÀÖ½À´Ï´Ù).\n\
- ¸¸¾à 2°³³ª ´õ ¸¹Àº µ¿ÀÏÇÑ ¶óº§ÀÌ Á¸ÀçÇÒ °æ¿ì ¹èÄ¡ÆÄÀÏÀº Ã¹¹øÂ° °Í¸¸\n\
-½ÇÇà½ÃÅ³ °ÍÀÔ´Ï´Ù. Á¸ÀçÇÏÁö ¾Ê´Â ¶óº§·Î GOTO¸¦ ½ÃµµÇÑ´Ù¸é ¹èÄ¡ÆÄÀÏ ½ÇÇàÀº\n\
-Áß´ÜµË´Ï´Ù.\n\
+GOTOì˜ íƒ€ê²Ÿì¸ ë¼ë²¨ì€ ê³µë°±ì„ í¬í•¨í•´ì„œ 255ìžê¹Œì§€ ê°€ëŠ¥í•©ë‹ˆë‹¤\n\
+(ë‹¤ë¥¸ ìš´ì˜ì²´ì œì—ì„œëŠ” ë‹¤ë¥¼ ìˆ˜ë„ ìžˆìŠµë‹ˆë‹¤).\n\
+ ë§Œì•½ 2ê°œë‚˜ ë” ë§Žì€ ë™ì¼í•œ ë¼ë²¨ì´ ì¡´ìž¬í•  ê²½ìš° ë°°ì¹˜íŒŒì¼ì€ ì²«ë²ˆì§¸ ê²ƒë§Œ\n\
+ì‹¤í–‰ì‹œí‚¬ ê²ƒìž…ë‹ˆë‹¤. ì¡´ìž¬í•˜ì§€ ì•ŠëŠ” ë¼ë²¨ë¡œ GOTOë¥¼ ì‹œë„í•œë‹¤ë©´ ë°°ì¹˜íŒŒì¼ ì‹¤í–‰ì€\n\
+ì¤‘ë‹¨ë©ë‹ˆë‹¤.\n\
 \n\
-GOTO´Â ´ëÈ­½ÄÀ¸·Î »ç¿ëµÉ °æ¿ì ¾Æ¹« ÀÏµµ ¾ÈÇÕ´Ï´Ù.\n"
+GOTOëŠ” ëŒ€í™”ì‹ìœ¼ë¡œ ì‚¬ìš©ë  ê²½ìš° ì•„ë¬´ ì¼ë„ ì•ˆí•©ë‹ˆë‹¤.\n"
 
-  WCMD_HELP,   "HELP µµ¿ò¸»\n"
+  WCMD_HELP,    "HELP <ëª…ë ¹>ì€  ì£¼ì œì˜ ê°„ë‹¨í•œ ë„ì›€ë§ ì •ë³´ë¥¼ ë³´ì—¬ì¤ë‹ˆ ë‹¤.\n\
+ì•„ë¬´ ë§¤ê°œë³€ìˆ˜ê°€ ì—†ëŠ” HELPëˆˆ CMDì˜ ëª¨ë“  ë‚´ìž¥ ëª…ë ¹ì„ ë³´ì—¬ì¤ë‹ˆë‹¤.\n"
 
   WCMD_IF,
-"IF´Â ¸í·ÉÀ» ¼±ÅÃÀûÀ¸·Î ½ÇÇà ÇÒ ¶§ »ç¿ëÇÑ´Ù.\n\
+"IFëŠ” ëª…ë ¹ì„ ì„ íƒì ìœ¼ë¡œ ì‹¤í–‰ í•  ë•Œ ì‚¬ìš©í•œë‹¤.\n\
 \n\
-Syntax:	IF [NOT] EXIST ÆÄÀÏÀÌ¸§ ¸í·É\n\
-	IF [NOT] string1==string2 ¸í·É\n\
-	IF [NOT] ERRORLEVEL ¼ýÀÚ ¸í·É\n\
+Syntax:	IF [NOT] EXIST íŒŒì¼ì´ë¦„ ëª…ë ¹\n\
+	IF [NOT] string1==string2 ëª…ë ¹\n\
+	IF [NOT] ERRORLEVEL ìˆ«ìž ëª…ë ¹\n\
 \n\
-¸í·ÉÀÇ Ã¹¹øÂ° Çü½Ä¿¡¼­, string1 °ú string2´Â ¹Ýµå½Ã 2°³ÀÇ µû¿ÈÇ¥·Î\n\
-µÑ·Á³õ¾Æ¾ß ÇÕ´Ï´Ù. ´ë¼Ò¹®ÀÚ´Â ±¸ºÐÇÏÁö ¾Ê½À´Ï´Ù.\n"
+ëª…ë ¹ì˜ ì²«ë²ˆì§¸ í˜•ì‹ì—ì„œ, string1 ê³¼ string2ëŠ” ë°˜ë“œì‹œ 2ê°œì˜ ë”°ì˜´í‘œë¡œ\n\
+ë‘˜ë ¤ë†“ì•„ì•¼ í•©ë‹ˆë‹¤. ëŒ€ì†Œë¬¸ìžëŠ” êµ¬ë¶„í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.\n"
 
-  WCMD_LABEL,  "LABELÀº µð½ºÅ© º¼·ý ¶óº§À» ¼³Á¤ÇÒ ¶§ »ç¿ë.\n\
+  WCMD_LABEL,  "LABELì€ ë””ìŠ¤í¬ ë³¼ë¥¨ ë¼ë²¨ì„ ì„¤ì •í•  ë•Œ ì‚¬ìš©.\n\
 \n\
-Syntax: LABEL [µå¶óÀÌºê:]\n\
-ÀÌ ¸í·ÉÀº ´ç½ÅÀÌ ÁÖ¾îÁø µå¶óÀÌºê¿¡ »õ º¼·ý ¶óº§¿ï ³ÖÀ»¼ö ÀÖµµ·Ï ÇÒ°ÍÀÌ´Ù.\n\
-VOL ¸í·ÉÀ¸·Î µð½ºÅ© º¼·ý ¶óº§À» º¼ ¼ö ÀÖ´Ù.\n"
+Syntax: LABEL [ë“œë¼ì´ë¸Œ:]\n\
+ì´ ëª…ë ¹ì€ ë‹¹ì‹ ì´ ì£¼ì–´ì§„ ë“œë¼ì´ë¸Œì— ìƒˆ ë³¼ë¥¨ ë¼ë²¨ìš¸ ë„£ì„ìˆ˜ ìžˆë„ë¡ í• ê²ƒì´ë‹¤.\n\
+VOL ëª…ë ¹ìœ¼ë¡œ ë””ìŠ¤í¬ ë³¼ë¥¨ ë¼ë²¨ì„ ë³¼ ìˆ˜ ìžˆë‹¤.\n"
 
-  WCMD_MD,     "MD µµ¿ò¸»\n"
-  WCMD_MKDIR,  "MKDIR µµ¿ò¸»\n"
+  WCMD_MD,
+"MD <ì•„ë¦„> ìš´ MKDIRì˜ ë‹¨ì¶• ë²„ì ¼ìž…ë‹ˆë‹¤. ì´ê²ƒì€ í•˜ìœ„ ë””ë ‰í† ë¦¬ë¥¼ ë§Œë“­ë‹ˆë‹¤ .\n"
+  WCMD_MKDIR,  "MKDIR <ëª…ë ¹> ìš´ í•˜ìœ„ ë””ë ‰í† ë¦¬ë¥¼ ë§Œë“­ë‹ˆë‹¤.\n"
   WCMD_MOVE,
-"MOVE´Â ÆÄÀÏÀÌ³ª µð·ºÅä¸®¸¦ ÆÄÀÏ½Ã½ºÅÛ ¾È¿¡ ÀÖ´Â »õ·Î¿î °÷À¸·Î  Àç¹èÄ¡ÇÔ.\n\
+"MOVEëŠ” íŒŒì¼ì´ë‚˜ ë””ë ‰í† ë¦¬ë¥¼ íŒŒì¼ì‹œìŠ¤í…œ ì•ˆì— ìžˆëŠ” ìƒˆë¡œìš´ ê³³ìœ¼ë¡œ  ìž¬ë°°ì¹˜í•¨.\n\
 \n\
-¸¸¾à ¿Å°ÜÁö´Â ¾ÆÀÌÅÛÀÌ ÇÏ³ªÀÇ µð·ºÅä¸®¶ó¸é ¸ðµç ÆÄÀÏ°ú ÇÏÀ§ µð·ºÅä¸® ¹Ø¿¡\n\
-ÀÖ´Â ÆÄÀÏµµ ÀÌµ¿µÉ °ÍÀÌ´Ù.\n\
-MOVE´Â ¸¸¾à ¿À·¡µÇ°í »õ·Î¿î ÆÄÀÏÀÌ ´Ù¸¥ µµ½º µå¶óÀÌºê ¹®ÀÚ¸¦ °¡Áö°í ÀÖ´Ù¸é\n\
-½ÇÆÐÇÕ´Ï´Ù.\n"
+ë§Œì•½ ì˜®ê²¨ì§€ëŠ” ì•„ì´í…œì´ í•˜ë‚˜ì˜ ë””ë ‰í† ë¦¬ë¼ë©´ ëª¨ë“  íŒŒì¼ê³¼ í•˜ìœ„ ë””ë ‰í† ë¦¬ ë°‘ì—\n\
+ìžˆëŠ” íŒŒì¼ë„ ì´ë™ë  ê²ƒì´ë‹¤.\n\
+MOVEëŠ” ë§Œì•½ ì˜¤ëž˜ë˜ê³  ìƒˆë¡œìš´ íŒŒì¼ì´ ë‹¤ë¥¸ ë„ìŠ¤ ë“œë¼ì´ë¸Œ ë¬¸ìžë¥¼ ê°€ì§€ê³  ìžˆë‹¤ë©´\n\
+ì‹¤íŒ¨í•©ë‹ˆë‹¤.\n"
 
   WCMD_PATH,
-"PATH ´Â cmd Å½»ö °æ·Î¸¦ º¸¿©ÁÖ°Å³ª ¹Ù²Þ.\n\
+"PATHëŠ” cmd ì°¾ê¸° ê²½ë¡œë¥¼ ë³´ì—¬ì£¼ê±°ë‚˜ ë°”ê¿‰ë‹ˆë‹¤.\n\
 \n\
-PATH¸¦ Ä¡¸é  ÇöÀç PATH ¼³Á¤À» º¸¿©ÁÙ °ÍÀÔ´Ï´Ù (ÀÌ°ÍÀº ´ç½ÅÀÇ wine.conf ÆÄÀÏ¿¡\n\
-ÁÖ¾îÁø °ªÀ¸·Î ½ÃÀÛµÊ). PATH ¸í·É¿¡ »õ °ªÀ» ÁÜÀ¸·Î½á ¼³Á¤À» ¹Ù²Ü ¼ö ÀÖ½À´Ï´Ù.\n\
+PATH ìž…ë ¥ì€ í˜„ìž¬ PATH ì„¤ì •ì„ ë³´ì—¬ì¤„ ê²ƒìž…ë‹ˆë‹¤   (ì²˜ìŒì—ëŠ”\n\
+ë ˆì§€ìŠ¤íŠ¸ë¦¬ë¡œë¶€í„° ê°€ì ¸ì˜´). PATH ëª…ë ¹ê³¼ í•¨ê»˜ ìƒˆë¡œìš´ ê°’ì„ ì£¼ë©´\n\
+ì„¤ì •ì„ ë°”ì‘¬ ìˆ˜ ìžˆìŠµë‹ˆë‹¤.\n\
 \n\
-¶ÇÇÑ  PATH È¯°æ º¯¼ö¸¦ »ç¿ëÇØ¼­ PATH¸¦ °íÄ¥ ¼öµµ ÀÖ½À´Ï´Ù\n\
-, ¿¹:\n\
+PATH í™˜ê²½ë³€ìˆ˜ë¥¼ ì‚¬ìš©í•´ì„œ PATHë¥¼ ê³ ì¹˜ëŠ” ê²ƒë„ ê°€ëŠ¥í•©ë‹ˆë‹¤\n\
+,ì˜ˆë¥¼ ë“¤ì–´:\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
-"PAUSE´Â 'Press Return key to continue' ¸Þ¼¼Áö¸¦ È­¸é¿¡ º¸¿©ÁÖ°í\n\
-»ç¿ëÀÚ°¡ ¸®ÅÏ Å°¸¦ ´©¸¦ ¶§±îÁö ±â´Ù¸². ÀÌ°ÍÀº ÁÖ·Î ¹èÄ¡ÆÄÀÏ¿¡¼­  ½ºÅ©¸°À»\n\
-³ÑÄ¡°Ô ÇÏ´Â ÀÌÀü ¸í·ÉÀÇ °á°ú¸¦ ÀÐµµ·Ï ÇÑ´Ù\n"
+"PAUSEëŠ” 'Press Return key to continue' ë©”ì„¸ì§€ë¥¼ í™”ë©´ì— ë³´ì—¬ì£¼ê³ \n\
+ì‚¬ìš©ìžê°€ ë¦¬í„´ í‚¤ë¥¼ ëˆ„ë¥¼ ë•Œê¹Œì§€ ê¸°ë‹¤ë¦¼. ì´ê²ƒì€ ì£¼ë¡œ ë°°ì¹˜íŒŒì¼ì—ì„œ  ìŠ¤í¬ë¦°ì„\n\
+ë„˜ì¹˜ê²Œ í•˜ëŠ” ì´ì „ ëª…ë ¹ì˜ ê²°ê³¼ë¥¼ ì½ë„ë¡ í•œë‹¤\n"
 
   WCMD_PROMPT,
-"PROMPT  ¸í·É¶óÀÎ ÇÁ·ÒÇÁÆ® ¼³Á¤.\n\
+"PROMPT  ëª…ë ¹ë¼ì¸ í”„ë¡¬í”„íŠ¸ ì„¤ì •.\n\
 \n\
-ÀÌ ¹®ÀÚ´Â cmd°¡ ÀÔ·ÂÀ» ±â´Ù¸®°í ÀÖÀ» ¶§ ½ÃÀÛ ÁÙ¿¡ ³ªÅ¸³ª´Â PROMPT\n\
- ¸í·É(±×¸®°í ½ºÆäÀÌ½º ´ÙÀ½¿¡)¿¡ µÚµû¸¥´Ù.\n\
+ì´ ë¬¸ìžëŠ” cmdê°€ ìž…ë ¥ì„ ê¸°ë‹¤ë¦¬ê³  ìžˆì„ ë•Œ ì‹œìž‘ ì¤„ì— ë‚˜íƒ€ë‚˜ëŠ” PROMPT\n\
+ ëª…ë ¹(ê·¸ë¦¬ê³  ìŠ¤íŽ˜ì´ìŠ¤ ë‹¤ìŒì—)ì— ë’¤ë”°ë¥¸ë‹¤.\n\
 \n\
-µÚÀÇ ¹®ÀÚÀÇ ¹®ÀÚ¿­ÀÇ Æ¯º°ÇÑ ÀÇ¹Ì ¼³¸í:\n\
+ë’¤ì˜ ë¬¸ìžì˜ ë¬¸ìžì—´ì˜ íŠ¹ë³„í•œ ì˜ë¯¸ ì„¤ëª…:\n\
 \n\
-$$    ´Þ·¯ ±âÈ£         $_   ¶óÀÎÇÇµå            $b    ÆÄÀÌÇÁ ±âÈ£ (|)\n\
-$d    CÇöÀç ³¯Â¥        $e    ÀÌ½ºÄÉÀÌÇÁ         $g    > ±âÈ£\n\
-$l    < ±âÈ£            $n    ÇöÀç µå¶óÀÌºê      $p    ÇöÀç °æ·Î\n\
-$q    µîÈ£ ±âÈ£         $t    ÇöÀç ½Ã°£          $v    cmd ¹öÁ¯\n\
+$$    ë‹¬ëŸ¬ ê¸°í˜¸         $_   ë¼ì¸í”¼ë“œ            $b    íŒŒì´í”„ ê¸°í˜¸ (|)\n\
+$d    Cí˜„ìž¬ ë‚ ì§œ        $e    ì´ìŠ¤ì¼€ì´í”„         $g    > ê¸°í˜¸\n\
+$l    < ê¸°í˜¸            $n    í˜„ìž¬ ë“œë¼ì´ë¸Œ      $p    í˜„ìž¬ ê²½ë¡œ\n\
+$q    ë“±í˜¸ ê¸°í˜¸         $t    í˜„ìž¬ ì‹œê°„          $v    cmd ë²„ì ¼\n\
 \n\
-ÇÁ·ÒÇÁÆ®°¡ ±âº»»óÅÂÀÎ Ã¤·Î ÇÁ·ÒÇÁÆ®¹®ÀÚ¸¦ Àç¼³Á¤ÇÏÁö ¾Ê°í PROMPT ¸í·ÉÀ»\n\
-»ç¿ëÇßÀ» ¶§ ,ÀÌ°ÍÀº ÇöÀç µð·ºÅä¸® (Æ÷ÇÔÇØ¼­ÇöÀç µå¶óÀÌºê ¹®ÀÚ) ¿¡ \"º¸´Ù Å«(>)\"\n\
-±âÈ£°¡ µÚµû¸¥´Ù´Â °É ÁÖÀÇÇÏ½Ã¿À. (¸í·É PROMPT $p$g·Ö °°ÀÌ).\n\
+í”„ë¡¬í”„íŠ¸ê°€ ê¸°ë³¸ìƒíƒœì¸ ì±„ë¡œ í”„ë¡¬í”„íŠ¸ë¬¸ìžë¥¼ ìž¬ì„¤ì •í•˜ì§€ ì•Šê³  PROMPT ëª…ë ¹ì„\n\
+ì‚¬ìš©í–ˆì„ ë•Œ ,ì´ê²ƒì€ í˜„ìž¬ ë””ë ‰í† ë¦¬ (í¬í•¨í•´ì„œí˜„ìž¬ ë“œë¼ì´ë¸Œ ë¬¸ìž) ì— \"ë³´ë‹¤ í°(>)\"\n\
+ê¸°í˜¸ê°€ ë’¤ë”°ë¥¸ë‹¤ëŠ” ê±¸ ì£¼ì˜í•˜ì‹œì˜¤. (ëª…ë ¹ PROMPT $p$gë¡¸ ê°™ì´).\n\
 \n\
-ÀÌ ÇÁ·ÒÇÁÆ®´Â PROMPT È¯°æ º¯¼ö °ªÀÇ º¯°æ¿¡ ÀÇÇØ ¹Ù²ð ¼ö ÀÖ½À´Ï´Ù,\n\
-±×·¡¼­ ¸í·É 'SET PROMPT=ÅØ½ºÆ®'´Â 'PROMPT ÅØ½ºÆ®¿Í °°Àº ÀÏÀ» ÇÕ´Ï´Ù\n"
+ì´ í”„ë¡¬í”„íŠ¸ëŠ” PROMPT í™˜ê²½ ë³€ìˆ˜ ê°’ì˜ ë³€ê²½ì— ì˜í•´ ë°”ë€” ìˆ˜ ìžˆìŠµë‹ˆë‹¤,\n\
+ê·¸ëž˜ì„œ ëª…ë ¹ 'SET PROMPT=í…ìŠ¤íŠ¸'ëŠ” 'PROMPT í…ìŠ¤íŠ¸ì™€ ê°™ì€ ì¼ì„ í•©ë‹ˆë‹¤\n"
 
   WCMD_REM,
-"REM·Î ½ÃÀÛÇÏ´Â ¸í·É ¶óÀÎÀº (°ø¹éÀ» Æ÷ÇÔÇØ¼­) ¾Æ¹«ÀÏµµ ¾È ÇÕ´Ï´Ù,\n\
-±×¸®°í ¹èÄ¡ÆÄÀÏ¿¡ ¼³¸íÀ» ³Ö´Âµ¥ »ç¿ëÇÕ´Ï´Ù.\n"
+"REMìœ¼ë¡œ ì‹œìž‘í•˜ëŠ” ëª…ë ¹ ë¼ì¸ (ê³µë°±ë’¤ì— ì˜¤ëŠ”) ì€ ì•„ë¬´ì¼ë„ ì•ˆí•©ë‹ˆë‹¤\n\
+, ê·¸ëŸ¬ë¯€ë¡œ ë°°ì¹˜ íŒŒì¼ì—ì„œ ì£¼ì„ìœ¼ë¡œ ì‚¬ìš©ë©ë‹ˆë‹¤\n"
 
-  WCMD_REN,    "REN  µµ¿ò¸»\n"
-  WCMD_RENAME, "RENAME µµ¿ò¸»\n"
-  WCMD_RD,     "RD  µµ¿ò¸»\n"
-  WCMD_RMDIR,  "RMDIR µµ¿ò¸»\n"
+  WCMD_REN,
+"REN <íŒŒì¼ì´ë¦„> ì€    REANMEì˜ ë‹¨ì¶• ë²„ì ¼ìž…ë‹ˆë‹¤.ì´ê²ƒì€ íŒŒì¼ì˜ ì´ë¦„ì„ ë°”ê¿‰ë‹ˆë‹¤.\n"
+  WCMD_RENAME, "RENAME <íŒŒì¼ì´ë¦„> ì€ íŒŒì¼ì˜ ì´ë¦„ì„ ë°”ê¿ˆ\n"
+  WCMD_RD,
+"RD <ë””ë ‰í† ë¦¬> ëŠ” RMDIRì˜ ë‹¨ì¶•ë²„ì ¼ìž…ë‹ˆë‹¤. ì´ê²ƒì€ í•˜ìœ„ ë””ë ‰í† ë¦¬ë¥¼ ì§€ì›ë‹ˆë‹¤.\n"
+  WCMD_RMDIR,  "RMDIR <ë””ë ‰í† ë¦¬>ëŠ” í•˜ìœ„ ë””ë ‰í† ë¦¬ë¥¼ ì§€ì›€.\n"
 
   WCMD_SET,
-"SET  cmd È¯°æ º¯¼ö º¸¿©ÁÖ°Å³ª ¹Ù²Ù±â.\n\
+"SET  cmd í™˜ê²½ ë³€ìˆ˜ ë³´ì—¬ì£¼ê±°ë‚˜ ë°”ê¾¸ê¸°.\n\
 \n\
-¾Æ¹« ¸Å°³º¯¼ö°¡ ¾ø´Â SETÀº ¸ðµç ÇöÀç È¯°æº¯¼ö¸¦ º¸¿©ÁÜ.\n\
+ì•„ë¬´ ë§¤ê°œë³€ìˆ˜ê°€ ì—†ëŠ” SETì€ ëª¨ë“  í˜„ìž¬ í™˜ê²½ë³€ìˆ˜ë¥¼ ë³´ì—¬ì¤Œ.\n\
 \n\
-È¯°æ º¯¼ö¸¦ ¸¸µé°Å³ª °íÄ¥¶§ »ç¿ëÇÏ´Â ¹®¹ý:\n\
+í™˜ê²½ ë³€ìˆ˜ë¥¼ ë§Œë“¤ê±°ë‚˜ ê³ ì¹ ë•Œ ì‚¬ìš©í•˜ëŠ” ë¬¸ë²•:\n\
 \n\
-      SET <º¯¼ö>=<°ª>\n\
+      SET <ë³€ìˆ˜>=<ê°’>\n\
 \n\
-<º¯¼ö> °ú <°ª>Àº Ä³¸¯ÅÍ-¹®ÀÚ¿­ ÀÌ´Ù. ¹Ýµå½Ã µîÈ£(=)±âÈ£ ¾Õ¿¡ ¾î¶²\n\
-°ø¹éµµ ÀÖ¾î¼± ¾ÈµÇ°í, º¯¼ö ÀÌ¸§¿¡ ³»ºÎ °ø¹éµµ ÀÖÀ» ¼ö ¾ø´Ù.\n\
+<ë³€ìˆ˜> ê³¼ <ê°’>ì€ ìºë¦­í„°-ë¬¸ìžì—´ ì´ë‹¤. ë°˜ë“œì‹œ ë“±í˜¸(=)ê¸°í˜¸ ì•žì— ì–´ë–¤\n\
+ê³µë°±ë„ ìžˆì–´ì„  ì•ˆë˜ê³ , ë³€ìˆ˜ ì´ë¦„ì— ë‚´ë¶€ ê³µë°±ë„ ìžˆì„ ìˆ˜ ì—†ë‹¤.\n\
 \n\
-Wine ¾Æ·¡¿¡¼­, ¿î¿µÃ¼Á¦ ¹ØÀÇ È¯°æÀº Win32 È¯°æ¿¡ Æ÷ÇÔµË´Ï´Ù, ±×°ÍÀº\n\
-ÀÏ¹ÝÀûÀ¸·Î ³×ÀÌÆ¼ºê Win32 ±¸Çö¿¡´Â ´õ ¸¹Àº °ªÀÌ ÀÖ¾î¾ß µÈ ´Ù´Â °ÍÀ»\n\
-ÀÇ¹ÌÇÕ´Ï´Ù. ÀÌ°ÍÀº cmd¾È¿¡¼­ ¿î¿µÃ¼Á¦ È¯°æÀÌ ¿µÇâÀ» ¹ÌÄ¡´Â°Å °ÍÀº\n\
-°¡´ÉÇÏÁö ¾Ê´Ù´Â °ÍÀ» ±â¾ïÇÏ½Ã¿À.\n"
+Wine ì•„ëž˜ì—ì„œ, ìš´ì˜ì²´ì œ ë°‘ì˜ í™˜ê²½ì€ Win32 í™˜ê²½ì— í¬í•¨ë©ë‹ˆë‹¤, ê·¸ê²ƒì€\n\
+ì¼ë°˜ì ìœ¼ë¡œ ë„¤ì´í‹°ë¸Œ Win32 êµ¬í˜„ì—ëŠ” ë” ë§Žì€ ê°’ì´ ìžˆì–´ì•¼ ëœ ë‹¤ëŠ” ê²ƒì„\n\
+ì˜ë¯¸í•©ë‹ˆë‹¤. ì´ê²ƒì€ cmdì•ˆì—ì„œ ìš´ì˜ì²´ì œ í™˜ê²½ì´ ì˜í–¥ì„ ë¯¸ì¹˜ëŠ”ê±° ê²ƒì€\n\
+ê°€ëŠ¥í•˜ì§€ ì•Šë‹¤ëŠ” ê²ƒì„ ê¸°ì–µí•˜ì‹œì˜¤.\n"
 
   WCMD_SHIFT,
-"SHIFT ´Â ¹èÄ¡ÆÄÀÏ¿¡¼­ ¸Å°³º¯¼öÀÇ Ã¹¹øÂ° °ÍÀ» Áö¿ì´Âµ¥ »ç¿ëÇÑ´Ù,\n\
-±×·¡¼­ ¸Å°³º¯¼ö 2°¡ ¸Å°³º¯¼ö 1ÀÌ µÈ´Ù. ÀÌ°ÍÀº ¸í·É ¶óÀÎ¿¡¼­ »ç¿ëÇßÀ»\n\
-°æ¿ì ¾Æ¹« ÀÏµµ ¾È ÇÕ´Ï´Ù.\n"
+"SHIFT ëŠ” ë°°ì¹˜íŒŒì¼ì—ì„œ ë§¤ê°œë³€ìˆ˜ì˜ ì²«ë²ˆì§¸ ê²ƒì„ ì§€ìš°ëŠ”ë° ì‚¬ìš©í•œë‹¤,\n\
+ê·¸ëž˜ì„œ ë§¤ê°œë³€ìˆ˜ 2ê°€ ë§¤ê°œë³€ìˆ˜ 1ì´ ëœë‹¤. ì´ê²ƒì€ ëª…ë ¹ ë¼ì¸ì—ì„œ ì‚¬ìš©í–ˆì„\n\
+ê²½ìš° ì•„ë¬´ ì¼ë„ ì•ˆ í•©ë‹ˆë‹¤.\n"
 
-  WCMD_TIME,   "TIME  µµ¿ò¸»\n"
+  WCMD_TIME,    "TIME ì€ í˜„ìž¬ ì‹œìŠ¤í…œ ì‹œê°„ì„ ë³´ì—¬ ì¤ë‹ˆë‹¤.\n"
 
-  WCMD_TITLE,  "cmdÃ¢ÀÇ Ã¢ Á¦¸ñ ¼³Á¤, ¹®¹ý TITLE [¹®ÀÚ¿­]\n"
+  WCMD_TITLE,  "cmdì°½ì˜ ì°½ ì œëª© ì„¤ì •, ë¬¸ë²• TITLE [ë¬¸ìžì—´]\n"
 
   WCMD_TYPE,
-"TYPE <ÆÄÀÏÀÌ¸§>  <ÆÄÀÏ ÀÌ¸§>¸¦ ÄÜ¼Ö ÀåÄ¡·Î º¹»ç (¸¸¾à ¹æÇâÀÌ ÀçÁ¤ÀÇ µÈ´Ù¸é\n\
-¾îµð³ª). ¾Æ¹« ¿¡·¯°¡ ¾øÀ¸¸é ±× ÆÄÀÏÀ» ÀÐÀ» ¼ö ÀÖ´Â ÅØ½ºÆ®ÀÔ´Ï´Ù.\n"
+"TYPE <íŒŒì¼ì´ë¦„>  <íŒŒì¼ ì´ë¦„>ë¥¼ ì½˜ì†” ìž¥ì¹˜ë¡œ ë³µì‚¬ (ë§Œì•½ ë°©í–¥ì´ ìž¬ì •ì˜ ëœë‹¤ë©´\n\
+ì–´ë””ë‚˜). ì•„ë¬´ ì—ëŸ¬ê°€ ì—†ìœ¼ë©´ ê·¸ íŒŒì¼ì„ ì½ì„ ìˆ˜ ìžˆëŠ” í…ìŠ¤íŠ¸ìž…ë‹ˆë‹¤.\n"
 
   WCMD_VERIFY,
-"VERIFY´Â  verify ÇÃ·¡±×¸¦ ¼³Á¤ÇÏ°í, Áö¿ì°í, Å×½ºÆ® ÇÏ´Âµ¥ »ç¿ëµÈ´Ù.\n\
-¿Ã¹Ù¸¥ ÇüÅÂ´Â:\n\
+"VERIFYëŠ” ê²€ì¦ í”Œëž˜ê·¸ë¥¼ ì„¤ì •í•˜ê³  ì œê±°í•˜ê±°ë‚˜ í…ŒìŠ¤íŠ¸í•˜ëŠ”ë° ì‚¬ìš©ë©ë‹ˆë‹¤. ì˜¬ë°”ë¥¸ í˜•ì‹ì€:\n\
 \n\
-VERIFY ON	ÇÃ·¡±× ÄÄ\n\
-VERIFY OFFÇÃ·¡±× ²û\n\
-VERIFY		 ON ÀÌ³ª OFF¸¦ ÀûÀýÇÏ°Ôº¸¿©ÁÜ .\n\
+VERIFY ON\tí”Œëž˜ê·¸ ì„¤ì •\n\
+VERIFY OFF\tí”Œëž˜ê·¸ ì œê±°\n\
+VERIFY\t\tON ì´ë‚˜ OF ê°™ì´ ì ì ˆí•˜ê²Œ ë³´ì—¬ì¤Œ.\n\
 \n\
-verify ÇÃ·¡±×´Â Wine¿¡¼­´Â ¾î¶² ÀÏµµ ¾ÈÇÕ´Ï´Ù.\n"
+ì´ ê²€ì¦ í”Œëž˜ê·¸ëŠ” Wineì—ì„œëŠ” ì•„ë¬´ ê¸°ëŠ¥ì„ ì•ˆí•¨.\n"
 
   WCMD_VER,
-"VER  ´ç½ÅÀÌ ½ÇÇà½ÃÅ² cmd ¹öÁ¯ º¸¿©ÁÜ\n"
+"VER  ë‹¹ì‹ ì´ ì‹¤í–‰ì‹œí‚¨ cmd ë²„ì ¼ ë³´ì—¬ì¤Œ\n"
 
-  WCMD_VOL,    "VOL µµ¿ò¸»\n"
+  WCMD_VOL,    "VOL ì€ ë””ìŠ¤í¬ ìž¥ì¹˜ì˜ ë³¼ë¥¨ ë¼ë²¨ì„ ë³´ì—¬ì¤ë‹ˆë‹¤.\n"
 
-  WCMD_PUSHD,  "PUSHD <µð·ºÅä¸® ÀÌ¸§> Àº ÇöÀç µð·ºÅä¸®¸¦ ½ºÅÃ¿¡ ÀúÀåÇÑ´Ù.\n\
-	   ±×¸®°í ÇöÀç µð·ºÅä¸®¸¦ ¿äÃ»ÇÑ µð·ºÅä¸®·Î ¹Ù²Û´Ù.\n"
+  WCMD_PUSHD,  "PUSHD <ë””ë ‰í† ë¦¬ ì´ë¦„> ì€ í˜„ìž¬ ë””ë ‰í† ë¦¬ë¥¼ ìŠ¤íƒì— ì €ìž¥í•œë‹¤.\n\
+	   ê·¸ë¦¬ê³  í˜„ìž¬ ë””ë ‰í† ë¦¬ë¥¼ ìš”ì²­í•œ ë””ë ‰í† ë¦¬ë¡œ ë°”ê¾¼ë‹¤.\n"
 
-  WCMD_POPD,   "POPD´Â ÇöÀç µð·ºÅä¸®¸¦ PUSH·Î ¸¶Áö¸·À¸·Î ÀúÀåÇß´ø °ÍÀ¸·Î ¹Ù²Û´Ù.\n"
+  WCMD_POPD,   "POPDëŠ” í˜„ìž¬ ë””ë ‰í† ë¦¬ë¥¼ PUSHë¡œ ë§ˆì§€ë§‰ìœ¼ë¡œ ì €ìž¥í–ˆë˜ ê²ƒìœ¼ë¡œ ë°”ê¾¼ë‹¤.\n"
 
-  WCMD_MORE,   "MORE´Â ÆÄÀÏ Ãâ·ÂÀ» º¸¿©ÁÖ°Å³ª ÆäÀÌÁöÀÇ ÆÄÀÌÇÁ·Îµµ µÈ ÀÔ·ÂÀ» º¸¿©ÁØ´Ù.\n"
+  WCMD_MORE,   "MOREëŠ” íŒŒì¼ ì¶œë ¥ì„ ë³´ì—¬ì£¼ê±°ë‚˜ íŽ˜ì´ì§€ì˜ íŒŒì´í”„ë¡œë„ ëœ ìž…ë ¥ì„ ë³´ì—¬ì¤€ë‹¤.\n"
 
   WCMD_EXIT,
-"EXIT´Â ÇöÀç ¸í·É ¼¼¼ÇÀ» Áß´Ü½ÃÅ°°í ¿î¿µÃ¼Á¦·Î µ¹¾Æ°¡°Å³ª cmd¸¦\n\
-È£ÃâÇÑ ¼¿·Î µ¹¾Æ°©´Ï´Ù.\n"
+"EXITëŠ” í˜„ìž¬ ëª…ë ¹ ì„¸ì…˜ì„ ì¤‘ë‹¨ì‹œí‚¤ê³  ìš´ì˜ì²´ì œë¡œ ëŒì•„ê°€ê±°ë‚˜ cmdë¥¼\n\
+í˜¸ì¶œí•œ ì…€ë¡œ ëŒì•„ê°‘ë‹ˆë‹¤.\n"
 
-  WCMD_ALLHELP, "CMD ³»ºÎ ¸í·Éµé:\n\
-ATTRIB\t\tµµ½º ÆÄÀÏ ¼Ó º¸¿©ÁÖ°Å³ª ¹Ù²Ù±â\n\
-CALL\t\tI¹èÄ¡ ÆÄÀÏ ¾È¿¡¼­ ´Ù¸¥ ÆÄÀÏ  ºÒ·¯¿À±â\n\
-CD (CHDIR)\tÇöÁ¦ ±âº» µð·ºÅä¸® ¹Ù²Ù±â\n\
-CLS\t\tÄÜ¼Ö È­¸é ±ú²ýÇÏ°Ô\n\
-COPY\t\tÆÄÀÏ º¹»ç\n\
-CTTY\t\tÀÔÃâ·Â ÀåÄ¡ ¹Ù²Ù±â\n\
-DATE\t\t½Ã½ºÅÛ ³¯Â¥ º¸¿©ÁÖ°Å³ª ¹Ù²Ù±â\n\
-DEL (ERASE)\tÇÏ³ªÀÇ ÆÄÀÏÀÌ³ª ¿©·¯ ÆÄÀÏÀ» Áö¿ì±â\n\
-DIR\t\tµð·ºÅä¸® ³»¿ë º¸¿©ÁÖ±â\n\
-ECHO\t\t¹®ÀÚ¸¦ ¹Ù·Î È­¸é Ãâ·ÂÀ¸·Î º¹»ç\n\
-HELP\t\t ¸ñÂ÷ÀÇ Â©¸·ÇÑ µµ¿ò¸» Ç×¸ñ º¸¿©ÁÜ\n\
-MD (MKDIR)\tÇÏÀ§ µð·ºÅä¸® ¸¸µé±â\n\
-MORE\t\tÆäÀÌÁö Ãâ·Â º¸¿©ÁÖ±â\n\
-MOVE\t\tÆÄÀÏ ÀÌ³ª ¿©·¯ ÆÄÀÏ,±×¸®°í µð·ºÅä¸® ±¸Á¶ ÀÌµ¿\n\
-PATH\t\tÅ½»ö °æ·Î º¸¿©ÁÖ°Å³ª ¼³Á¤ÇÏ±â\n\
-POPD\t\tPUSHD·Î ¸¶Áö¸·À¸·Î ÀúÀåÇß´ø µð·ºÅä¸®·Î µ¹¾Æ°¡±â\n\
-PROMPT\t\t¸í·É ÇÁ·ÒÇÁÆ® ¹Ù²Ù±â\n\
-PUSHD\t\tÇöÀç µð·ºÅä¸®¸¦ ÀúÀåÇÏ°í, »õ µð·ºÅä¸®·Ñ ¹Ù²Ù±â\n\
-REN (RENAME)\tÆÄÀÏ ÀÌ¸§ ¹Ù²Ù±â\n\
-RD (RMDIR)\tÇÏÀ§ µð·ºÅä¸® Áö¿ì±â\n\
-SET\t\tÈ¯°æ º¯¼ö º¸¿©ÁÖ°Å³ª ¹Ù²Ù±â\n\
-TIME\t\t½Ã½ºÅÛ ³¯Â¥ ¹Ù²Ù°Å³ª º¸¿©ÁÖ±â\n\
-TITLE\t\tCMD  ¼¼¼ÇÀÇ Ã¢ Á¦¸ñ ¼³Á¤\n\
-TYPE\t\tÅØ½ºÆ® ÆÄÀÏÀÇ ³»¿ë º¸¿©ÁÖ±â\n\
-VER\t\tCMD ÇöÀç ¹öÁ¯ º¸¿©ÁÖ±â\n\
-VOL\t\tµð½ºÅ© ÀåÄ¡ÀÇ ºÒ·ý ¶óº§ º¸¿©ÁÖ±â\n\
-EXIT\t\tCMD ´Ý±â\n\n\
-HELP <¸í·É>À» Ä¡¸é ±× ¸í·ÉÀÇ »ó¼¼ÇÑ Á¤º¸¸¦ º¸¿©ÁÜ\n"
+  WCMD_ALLHELP, "CMD ë‚´ë¶€ ëª…ë ¹ë“¤:\n\
+ATTRIB\t\të„ìŠ¤ íŒŒì¼ ì† ë³´ì—¬ì£¼ê±°ë‚˜ ë°”ê¾¸ê¸°\n\
+CALL\t\tIë°°ì¹˜ íŒŒì¼ ì•ˆì—ì„œ ë‹¤ë¥¸ íŒŒì¼  ë¶ˆëŸ¬ì˜¤ê¸°\n\
+CD (CHDIR)\tí˜„ì œ ê¸°ë³¸ ë””ë ‰í† ë¦¬ ë°”ê¾¸ê¸°\n\
+CLS\t\tì½˜ì†” í™”ë©´ ê¹¨ë—í•˜ê²Œ\n\
+COPY\t\tíŒŒì¼ ë³µì‚¬\n\
+CTTY\t\tìž…ì¶œë ¥ ìž¥ì¹˜ ë°”ê¾¸ê¸°\n\
+DATE\t\tì‹œìŠ¤í…œ ë‚ ì§œ ë³´ì—¬ì£¼ê±°ë‚˜ ë°”ê¾¸ê¸°\n\
+DEL (ERASE)\tí•˜ë‚˜ì˜ íŒŒì¼ì´ë‚˜ ì—¬ëŸ¬ íŒŒì¼ì„ ì§€ìš°ê¸°\n\
+DIR\t\të””ë ‰í† ë¦¬ ë‚´ìš© ë³´ì—¬ì£¼ê¸°\n\
+ECHO\t\të¬¸ìžë¥¼ ë°”ë¡œ í™”ë©´ ì¶œë ¥ìœ¼ë¡œ ë³µì‚¬\n\
+HELP\t\t ëª©ì°¨ì˜ ì§¤ë§‰í•œ ë„ì›€ë§ í•­ëª© ë³´ì—¬ì¤Œ\n\
+MD (MKDIR)\tí•˜ìœ„ ë””ë ‰í† ë¦¬ ë§Œë“¤ê¸°\n\
+MORE\t\tíŽ˜ì´ì§€ ì¶œë ¥ ë³´ì—¬ì£¼ê¸°\n\
+MOVE\t\tíŒŒì¼ ì´ë‚˜ ì—¬ëŸ¬ íŒŒì¼,ê·¸ë¦¬ê³  ë””ë ‰í† ë¦¬ êµ¬ì¡° ì´ë™\n\
+PATH\t\tíƒìƒ‰ ê²½ë¡œ ë³´ì—¬ì£¼ê±°ë‚˜ ì„¤ì •í•˜ê¸°\n\
+POPD\t\tPUSHDë¡œ ë§ˆì§€ë§‰ìœ¼ë¡œ ì €ìž¥í–ˆë˜ ë””ë ‰í† ë¦¬ë¡œ ëŒì•„ê°€ê¸°\n\
+PROMPT\t\tëª…ë ¹ í”„ë¡¬í”„íŠ¸ ë°”ê¾¸ê¸°\n\
+PUSHD\t\tí˜„ìž¬ ë””ë ‰í† ë¦¬ë¥¼ ì €ìž¥í•˜ê³ , ìƒˆ ë””ë ‰í† ë¦¬ë¡¤ ë°”ê¾¸ê¸°\n\
+REN (RENAME)\tíŒŒì¼ ì´ë¦„ ë°”ê¾¸ê¸°\n\
+RD (RMDIR)\tí•˜ìœ„ ë””ë ‰í† ë¦¬ ì§€ìš°ê¸°\n\
+SET\t\tí™˜ê²½ ë³€ìˆ˜ ë³´ì—¬ì£¼ê±°ë‚˜ ë°”ê¾¸ê¸°\n\
+TIME\t\tì‹œìŠ¤í…œ ë‚ ì§œ ë°”ê¾¸ê±°ë‚˜ ë³´ì—¬ì£¼ê¸°\n\
+TITLE\t\tCMD  ì„¸ì…˜ì˜ ì°½ ì œëª© ì„¤ì •\n\
+TYPE\t\tí…ìŠ¤íŠ¸ íŒŒì¼ì˜ ë‚´ìš© ë³´ì—¬ì£¼ê¸°\n\
+VER\t\tCMD í˜„ìž¬ ë²„ì ¼ ë³´ì—¬ì£¼ê¸°\n\
+VOL\t\të””ìŠ¤í¬ ìž¥ì¹˜ì˜ ë¶ˆë¥¨ ë¼ë²¨ ë³´ì—¬ì£¼ê¸°\n\
+EXIT\t\tCMD ë‹«ê¸°\n\n\
+HELP <ëª…ë ¹>ì„ ì¹˜ë©´ ê·¸ ëª…ë ¹ì˜ ìƒì„¸í•œ ì •ë³´ë¥¼ ë³´ì—¬ì¤Œ\n"
 
-  WCMD_CONFIRM, "´ç½ÅÀº È®½ÅÇÕ´Ï±î?"
-  WCMD_YES, "¿¹"
-  WCMD_NO, "¾Æ´Ï¿À"
-  WCMD_NOASSOC, "ÀÌ ÆÄÀÏÈ®ÀåÀÚ %s¿¡ ¿¬°áµÈ Ç®±×¸²ÀÌ ¾ø½À´Ï´Ù.\n"
-  WCMD_NOFTYPE, "ÀÌ ÆÄÀÏ Çü½Ä '%s'°ú ¿¬°áµÈ ¾î¶°ÇÑ ¸í·Éµµ ¾ø½À´Ï´Ù.'\n"
-  WCMD_OVERWRITE, "%s µ¤¾î¾²±â"
-  WCMD_MORESTR, "´õ ¸¹ÀÌ..."
-  WCMD_TRUNCATEDLINE, "¹èÄ¡ ÀÛ¾÷ÀÇ ÁÙÀº ¾Æ¸¶µµ ºÒ¿ÏÀüÇÑ °Í °°½À´Ï´Ù. »ç¿ë¹ý:\n"
-  WCMD_NYI, "¾ÆÁ÷ ±¸ÇöµÇÁö ¾Ê¾Ò½À´Ï´Ù\n\n"
-  WCMD_NOARG, "ÀÎ¼ö°¡ ¾ø½À´Ï´Ù\n"
-  WCMD_SYNTAXERR, "¹®¹ý ¿¡·¯\n"
-  WCMD_FILENOTFOUND, "%s :ÆÄÀÏÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù\n"
-  WCMD_NOCMDHELP, "%s¸¦ À§ÇÑ ¾î¶°ÇÑ µµ¿ò¸»µµ Ã£À» ¼ö ¾ø½À´Ï´Ù\n"
-  WCMD_NOTARGET, "GOTO Å¸°ÙÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù\n"
-  WCMD_CURRENTDATE, "ÇöÀç ³¯Â¥´Â %s\n"
-  WCMD_CURRENTTIME, "ÇöÀç ½Ã°£Àº %s\n"
-  WCMD_NEWDATE, "»õ ³¯Â¥ ÀÔ·Â: "
-  WCMD_NEWTIME, "»õ ½Ã°£ ÀÔ·Â: "
-  WCMD_MISSINGENV, "È¯°æ º¯¼ö %s ´Â Á¤ÀÇµÇÁö ¾Ê¾Ò½À´Ï´Ù\n"
-  WCMD_READFAIL, "'%s' ¿­±â ½ÇÆÐ\n"
-  WCMD_CALLINSCRIPT, "¹èÄ¡ ½ºÅ©¸³Æ® ¹ÛÀÇ ¹èÄ¡ ¶óº§Àº ºÒ·¯¿Ã¼ö ¾ø½À´Ï´Ù\n"
+  WCMD_CONFIRM, "ë‹¹ì‹ ì€ í™•ì‹ í•©ë‹ˆê¹Œ?"
+  WCMD_YES, "ì˜ˆ"
+  WCMD_NO, "ì•„ë‹ˆì˜¤"
+  WCMD_NOASSOC, "ì´ íŒŒì¼í™•ìž¥ìž %sì— ì—°ê²°ëœ í’€ê·¸ë¦¼ì´ ì—†ìŠµë‹ˆë‹¤.\n"
+  WCMD_NOFTYPE, "ì´ íŒŒì¼ í˜•ì‹ '%s'ê³¼ ì—°ê²°ëœ ì–´ë– í•œ ëª…ë ¹ë„ ì—†ìŠµë‹ˆë‹¤.'\n"
+  WCMD_OVERWRITE, "%s ë®ì–´ì“°ê¸°"
+  WCMD_MORESTR, "ë” ë§Žì´..."
+  WCMD_TRUNCATEDLINE, "ë°°ì¹˜ ìž‘ì—…ì˜ ì¤„ì€ ì•„ë§ˆë„ ë¶ˆì™„ì „í•œ ê²ƒ ê°™ìŠµë‹ˆë‹¤. ì‚¬ìš©ë²•:\n"
+  WCMD_NYI, "ì•„ì§ êµ¬í˜„ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤\n\n"
+  WCMD_NOARG, "ì¸ìˆ˜ê°€ ì—†ìŠµë‹ˆë‹¤\n"
+  WCMD_SYNTAXERR, "ë¬¸ë²• ì—ëŸ¬\n"
+  WCMD_FILENOTFOUND, "%s :íŒŒì¼ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
+  WCMD_NOCMDHELP, "%së¥¼ ìœ„í•œ ì–´ë– í•œ ë„ì›€ë§ë„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
+  WCMD_NOTARGET, "GOTO íƒ€ê²Ÿì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
+  WCMD_CURRENTDATE, "í˜„ìž¬ ë‚ ì§œëŠ” %s\n"
+  WCMD_CURRENTTIME, "í˜„ìž¬ ì‹œê°„ì€ %s\n"
+  WCMD_NEWDATE, "ìƒˆ ë‚ ì§œ ìž…ë ¥: "
+  WCMD_NEWTIME, "ìƒˆ ì‹œê°„ ìž…ë ¥: "
+  WCMD_MISSINGENV, "í™˜ê²½ ë³€ìˆ˜ %s ëŠ” ì •ì˜ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤\n"
+  WCMD_READFAIL, "'%s' ì—´ê¸° ì‹¤íŒ¨\n"
+  WCMD_CALLINSCRIPT, "ë°°ì¹˜ ìŠ¤í¬ë¦½íŠ¸ ë°–ì˜ ë°°ì¹˜ ë¼ë²¨ì€ ë¶ˆëŸ¬ì˜¬ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
   WCMD_ALL, "A"
-  WCMD_DELPROMPT, "%s, »èÁ¦"
-  WCMD_ECHOPROMPT, "¿¡ÄÚ(Echo)´Â %s\n"
-  WCMD_VERIFYPROMPT, "°ËÁõ(Verify)Àº %s\n"
-  WCMD_VERIFYERR, "°ËÁõ(Verify)Àº ¹Ýµå½Ã ON ÀÌ³ª OFF°¡ µÇ¾î¾ß ÇÕ´Ï´Ù.\n";
-  WCMD_ARGERR, "¸Å°³º¯¼ö ¿¡·¯\n"
-  WCMD_VOLUMEDETAIL, "%c µå¶óÀÌºêÀÇ º¼·ýÀº %s\n º¼·ý ½Ã¸®¾ó ¹øÈ£´Â %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "º¼·ý ¶óº§ (11 ±ÛÀÚ, ENTER´Â ¾øÀ½°ú °°À½)?"
-  WCMD_NOPATH, "PATH¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù\n"
-  WCMD_ANYKEY,"¸®ÅÏ Å°¸¦ ´©¸£¸é °è¼Ó: "
-  WCMD_CONSTITLE,"Wine ¸í·É ÀÔ·Â´ë±â"
-  WCMD_VERSION,"CMD ¹öÁ¯ %s\n\n"
-  WCMD_MOREPROMPT, " ´õ? "
-  WCMD_LINETOOLONG, "ÀÌ Ãâ·Â ÁÙÀº ³Ê¹« ±é´Ï´Ù.\n"
+  WCMD_DELPROMPT, "%s, ì‚­ì œ"
+  WCMD_ECHOPROMPT, "ì—ì½”(Echo)ëŠ” %s\n"
+  WCMD_VERIFYPROMPT, "ê²€ì¦(Verify)ì€ %s\n"
+  WCMD_VERIFYERR, "ê²€ì¦(Verify)ì€ ë°˜ë“œì‹œ ON ì´ë‚˜ OFFê°€ ë˜ì–´ì•¼ í•©ë‹ˆë‹¤.\n";
+  WCMD_ARGERR, "ë§¤ê°œë³€ìˆ˜ ì—ëŸ¬\n"
+  WCMD_VOLUMEDETAIL, "%c ë“œë¼ì´ë¸Œì˜ ë³¼ë¥¨ì€ %s\n ë³¼ë¥¨ ì‹œë¦¬ì–¼ ë²ˆí˜¸ëŠ” %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "ë³¼ë¥¨ ë¼ë²¨ (11 ê¸€ìž, ENTERëŠ” ì—†ìŒê³¼ ê°™ìŒ)?"
+  WCMD_NOPATH, "PATHë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤\n"
+  WCMD_ANYKEY,"ë¦¬í„´ í‚¤ë¥¼ ëˆ„ë¥´ë©´ ê³„ì†: "
+  WCMD_CONSTITLE,"Wine ëª…ë ¹ ìž…ë ¥ëŒ€ê¸°"
+  WCMD_VERSION,"CMD ë²„ì ¼ %s\n\n"
+  WCMD_MOREPROMPT, " ë”? "
+  WCMD_LINETOOLONG, "ì´ ì¶œë ¥ ì¤„ì€ ë„ˆë¬´ ê¹ë‹ˆë‹¤.\n"
 }
