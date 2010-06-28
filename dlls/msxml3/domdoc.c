@@ -66,7 +66,7 @@ typedef struct _domdoc
 {
     xmlnode node;
     const struct IXMLDOMDocument2Vtbl *lpVtbl;
-    const struct IPersistStreamVtbl   *lpvtblIPersistStream;
+    const struct IPersistStreamInitVtbl   *lpvtblIPersistStreamInit;
     const struct IObjectWithSiteVtbl  *lpvtblIObjectWithSite;
     const struct IObjectSafetyVtbl    *lpvtblIObjectSafety;
     const struct ISupportErrorInfoVtbl *lpvtblISupportErrorInfo;
@@ -296,9 +296,9 @@ static inline xmlDocPtr get_doc( domdoc *This )
     return (xmlDocPtr)This->node.node;
 }
 
-static inline domdoc *impl_from_IPersistStream(IPersistStream *iface)
+static inline domdoc *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
 {
-    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIPersistStream));
+    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIPersistStreamInit));
 }
 
 static inline domdoc *impl_from_IObjectWithSite(IObjectWithSite *iface)
@@ -319,29 +319,29 @@ static inline domdoc *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
 /************************************************************************
  * xmldoc implementation of IPersistStream.
  */
-static HRESULT WINAPI xmldoc_IPersistStream_QueryInterface(
-    IPersistStream *iface, REFIID riid, LPVOID *ppvObj)
+static HRESULT WINAPI xmldoc_IPersistStreamInit_QueryInterface(
+    IPersistStreamInit *iface, REFIID riid, LPVOID *ppvObj)
 {
-    domdoc *this = impl_from_IPersistStream(iface);
+    domdoc *this = impl_from_IPersistStreamInit(iface);
     return IXMLDocument_QueryInterface((IXMLDocument *)this, riid, ppvObj);
 }
 
-static ULONG WINAPI xmldoc_IPersistStream_AddRef(
-    IPersistStream *iface)
+static ULONG WINAPI xmldoc_IPersistStreamInit_AddRef(
+    IPersistStreamInit *iface)
 {
-    domdoc *this = impl_from_IPersistStream(iface);
+    domdoc *this = impl_from_IPersistStreamInit(iface);
     return IXMLDocument_AddRef((IXMLDocument *)this);
 }
 
-static ULONG WINAPI xmldoc_IPersistStream_Release(
-    IPersistStream *iface)
+static ULONG WINAPI xmldoc_IPersistStreamInit_Release(
+    IPersistStreamInit *iface)
 {
-    domdoc *this = impl_from_IPersistStream(iface);
+    domdoc *this = impl_from_IPersistStreamInit(iface);
     return IXMLDocument_Release((IXMLDocument *)this);
 }
 
-static HRESULT WINAPI xmldoc_IPersistStream_GetClassID(
-    IPersistStream *iface, CLSID *classid)
+static HRESULT WINAPI xmldoc_IPersistStreamInit_GetClassID(
+    IPersistStreamInit *iface, CLSID *classid)
 {
     TRACE("(%p,%p): stub!\n", iface, classid);
 
@@ -353,20 +353,20 @@ static HRESULT WINAPI xmldoc_IPersistStream_GetClassID(
     return S_OK;
 }
 
-static HRESULT WINAPI xmldoc_IPersistStream_IsDirty(
-    IPersistStream *iface)
+static HRESULT WINAPI xmldoc_IPersistStreamInit_IsDirty(
+    IPersistStreamInit *iface)
 {
-    domdoc *This = impl_from_IPersistStream(iface);
+    domdoc *This = impl_from_IPersistStreamInit(iface);
 
     FIXME("(%p): stub!\n", This);
 
     return S_FALSE;
 }
 
-static HRESULT WINAPI xmldoc_IPersistStream_Load(
-    IPersistStream *iface, LPSTREAM pStm)
+static HRESULT WINAPI xmldoc_IPersistStreamInit_Load(
+    IPersistStreamInit *iface, LPSTREAM pStm)
 {
-    domdoc *This = impl_from_IPersistStream(iface);
+    domdoc *This = impl_from_IPersistStreamInit(iface);
     HRESULT hr;
     HGLOBAL hglobal;
     DWORD read, written, len;
@@ -416,10 +416,10 @@ static HRESULT WINAPI xmldoc_IPersistStream_Load(
     return attach_xmldoc( &This->node, xmldoc );
 }
 
-static HRESULT WINAPI xmldoc_IPersistStream_Save(
-    IPersistStream *iface, LPSTREAM pStm, BOOL fClearDirty)
+static HRESULT WINAPI xmldoc_IPersistStreamInit_Save(
+    IPersistStreamInit *iface, LPSTREAM pStm, BOOL fClearDirty)
 {
-    domdoc *This = impl_from_IPersistStream(iface);
+    domdoc *This = impl_from_IPersistStreamInit(iface);
     HRESULT hr;
     BSTR xmlString;
 
@@ -441,24 +441,33 @@ static HRESULT WINAPI xmldoc_IPersistStream_Save(
     return hr;
 }
 
-static HRESULT WINAPI xmldoc_IPersistStream_GetSizeMax(
-    IPersistStream *iface, ULARGE_INTEGER *pcbSize)
+static HRESULT WINAPI xmldoc_IPersistStreamInit_GetSizeMax(
+    IPersistStreamInit *iface, ULARGE_INTEGER *pcbSize)
 {
-    domdoc *This = impl_from_IPersistStream(iface);
+    domdoc *This = impl_from_IPersistStreamInit(iface);
     TRACE("(%p)->(%p): stub!\n", This, pcbSize);
     return E_NOTIMPL;
 }
 
-static const IPersistStreamVtbl xmldoc_IPersistStream_VTable =
+static HRESULT WINAPI xmldoc_IPersistStreamInit_InitNew(
+    IPersistStreamInit *iface)
 {
-    xmldoc_IPersistStream_QueryInterface,
-    xmldoc_IPersistStream_AddRef,
-    xmldoc_IPersistStream_Release,
-    xmldoc_IPersistStream_GetClassID,
-    xmldoc_IPersistStream_IsDirty,
-    xmldoc_IPersistStream_Load,
-    xmldoc_IPersistStream_Save,
-    xmldoc_IPersistStream_GetSizeMax,
+    domdoc *This = impl_from_IPersistStreamInit(iface);
+    TRACE("(%p)\n", This);
+    return S_OK;
+}
+
+static const IPersistStreamInitVtbl xmldoc_IPersistStreamInit_VTable =
+{
+    xmldoc_IPersistStreamInit_QueryInterface,
+    xmldoc_IPersistStreamInit_AddRef,
+    xmldoc_IPersistStreamInit_Release,
+    xmldoc_IPersistStreamInit_GetClassID,
+    xmldoc_IPersistStreamInit_IsDirty,
+    xmldoc_IPersistStreamInit_Load,
+    xmldoc_IPersistStreamInit_Save,
+    xmldoc_IPersistStreamInit_GetSizeMax,
+    xmldoc_IPersistStreamInit_InitNew
 };
 
 /* ISupportErrorInfo interface */
@@ -520,9 +529,10 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument2 *iface, REFIID rii
     {
         *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
-    else if (IsEqualGUID(&IID_IPersistStream, riid))
+    else if (IsEqualGUID(&IID_IPersistStream, riid) ||
+             IsEqualGUID(&IID_IPersistStreamInit, riid))
     {
-        *ppvObject = &(This->lpvtblIPersistStream);
+        *ppvObject = &(This->lpvtblIPersistStreamInit);
     }
     else if (IsEqualGUID(&IID_IObjectWithSite, riid))
     {
@@ -1575,7 +1585,7 @@ static HRESULT WINAPI domdoc_load(
             hr = IUnknown_QueryInterface(iface, &IID_IPersistStream, (void**)&pDocStream);
             if(hr == S_OK)
             {
-                hr = xmldoc_IPersistStream_Load(pDocStream, pStream);
+                hr = IPersistStream_Load(pDocStream, pStream);
                 IStream_Release(pStream);
                 if(hr == S_OK)
                 {
@@ -2337,7 +2347,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument2 **docu
         return E_OUTOFMEMORY;
 
     doc->lpVtbl = &domdoc_vtbl;
-    doc->lpvtblIPersistStream = &xmldoc_IPersistStream_VTable;
+    doc->lpvtblIPersistStreamInit = &xmldoc_IPersistStreamInit_VTable;
     doc->lpvtblIObjectWithSite = &domdocObjectSite;
     doc->lpvtblIObjectSafety = &domdocObjectSafetyVtbl;
     doc->lpvtblISupportErrorInfo = &support_error_vtbl;

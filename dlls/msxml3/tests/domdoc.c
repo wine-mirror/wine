@@ -1242,6 +1242,27 @@ if (0)
     free_bstrs();
 }
 
+static void test_persiststreaminit(void)
+{
+    IXMLDOMDocument *doc;
+    IPersistStreamInit *streaminit;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc );
+    ok( hr == S_OK, "failed with 0x%08x\n", hr );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&streaminit);
+    ok( hr == S_OK, "failed with 0x%08x\n", hr );
+
+    hr = IPersistStreamInit_InitNew(streaminit);
+    ok( hr == S_OK, "failed with 0x%08x\n", hr );
+
+    IXMLDOMDocument_Release(doc);
+}
+
 static void test_domnode( void )
 {
     HRESULT r;
@@ -5597,6 +5618,7 @@ START_TEST(domdoc)
         IXMLDOMDocument_Release(doc);
 
         test_domdoc();
+        test_persiststreaminit();
         test_domnode();
         test_refs();
         test_create();
