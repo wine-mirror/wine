@@ -470,20 +470,8 @@ static void node_to_string(IXMLDOMNode *node, char *buf)
         }
         else
         {
-            int pos = get_node_position(node);
-            DOMNodeType parent_type = NODE_INVALID;
             r = IXMLDOMNode_get_parentNode(node, &new_node);
-
-            /* currently wine doesn't create a node for the <?xml ... ?>. To be able to test query
-             * results we "fix" it */
-            if (r == S_OK)
-                ole_check(IXMLDOMNode_get_nodeType(new_node, &parent_type));
-            if ((parent_type == NODE_DOCUMENT) && type != NODE_PROCESSING_INSTRUCTION && pos==1)
-            {
-                todo_wine ok(FALSE, "The first child of the document node in MSXML is the <?xml ... ?> processing instruction\n");
-                pos++;
-            }
-            wsprintf(buf, "%d", pos);
+            wsprintf(buf, "%d", get_node_position(node));
             buf += strlen(buf);
         }
 
@@ -2474,6 +2462,40 @@ static void test_get_childNodes(void)
     IXMLDOMNode_Release( node );
     IXMLDOMNodeList_Release( node_list );
     IXMLDOMElement_Release( element );
+    IXMLDOMDocument_Release( doc );
+}
+
+static void test_get_firstChild(void)
+{
+    static WCHAR xmlW[] = {'x','m','l',0};
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    HRESULT r;
+    BSTR str;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc );
+    ok( r == S_OK, "failed with 0x%08x\n", r );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    r = IXMLDOMDocument_get_firstChild( doc, &node );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNode_get_nodeName( node, &str );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    ok(memcmp(str, xmlW, sizeof(xmlW)) == 0, "expected \"xml\" node name\n");
+
+    SysFreeString(str);
+    IXMLDOMNode_Release( node );
     IXMLDOMDocument_Release( doc );
 }
 
@@ -5581,6 +5603,7 @@ START_TEST(domdoc)
         test_getElementsByTagName();
         test_get_text();
         test_get_childNodes();
+        test_get_firstChild();
         test_removeChild();
         test_replaceChild();
         test_removeNamedItem();

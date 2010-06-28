@@ -1382,6 +1382,7 @@ static HRESULT WINAPI xmlnode_get_xml(
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlBufferPtr pXmlBuf;
+    xmlNodePtr xmldecl;
     int nSize;
 
     TRACE("(%p %d)->(%p)\n", This, This->node->type, xmlString);
@@ -1390,6 +1391,8 @@ static HRESULT WINAPI xmlnode_get_xml(
         return E_INVALIDARG;
 
     *xmlString = NULL;
+
+    xmldecl = xmldoc_unlink_xmldecl( This->node->doc );
 
     pXmlBuf = xmlBufferCreate();
     if(pXmlBuf)
@@ -1423,6 +1426,8 @@ static HRESULT WINAPI xmlnode_get_xml(
 
         xmlBufferFree(pXmlBuf);
     }
+
+    xmldoc_link_xmldecl( This->node->doc, xmldecl );
 
     /* Always returns a string. */
     if(*xmlString == NULL)  *xmlString = SysAllocStringLen( NULL, 0 );

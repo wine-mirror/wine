@@ -141,18 +141,75 @@ static xmldoc_priv * create_priv(void)
     return priv;
 }
 
+/* links a "<?xml" node as a first child */
+void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node)
+{
+    assert(doc != NULL);
+    if (doc->standalone != -1) xmlAddPrevSibling( doc->children, node );
+}
+
+/* unlinks a first "<?xml" child if it was created */
+xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc)
+{
+    xmlNodePtr node;
+
+    assert(doc != NULL);
+
+    if (doc->standalone != -1)
+    {
+        node = doc->children;
+        xmlUnlinkNode( node );
+    }
+    else
+        node = NULL;
+
+    return node;
+}
+
 static xmlDocPtr doparse( char *ptr, int len, const char *encoding )
 {
+    xmlDocPtr doc;
+
 #ifdef HAVE_XMLREADMEMORY
     /*
      * use xmlReadMemory if possible so we can suppress
      * writing errors to stderr
      */
-    return xmlReadMemory( ptr, len, NULL, encoding,
-                          XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NOBLANKS );
+    doc = xmlReadMemory( ptr, len, NULL, encoding,
+                           XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NOBLANKS );
 #else
-    return xmlParseMemory( ptr, len );
+    doc = xmlParseMemory( ptr, len );
 #endif
+
+    /* create first child as a <?xml...?> */
+    if (doc && doc->standalone != -1)
+    {
+        xmlNodePtr node;
+        char buff[30];
+        xmlChar *xmlbuff = (xmlChar*)buff;
+
+        node = xmlNewDocPI( doc, (xmlChar*)"xml", NULL );
+
+        /* version attribute can't be omitted */
+        sprintf(buff, "version=\"%s\"", doc->version ? (char*)doc->version : "1.0");
+        xmlNodeAddContent( node, xmlbuff );
+
+        if (doc->encoding)
+        {
+            sprintf(buff, " encoding=\"%s\"", doc->encoding);
+            xmlNodeAddContent( node, xmlbuff );
+        }
+
+        if (doc->standalone != -2)
+        {
+            sprintf(buff, " standalone=\"%s\"", doc->standalone == 0 ? "no" : "yes");
+            xmlNodeAddContent( node, xmlbuff );
+        }
+
+        xmldoc_link_xmldecl( doc, node );
+    }
+
+    return doc;
 }
 
 LONG xmldoc_add_ref(xmlDocPtr doc)
@@ -345,7 +402,7 @@ static HRESULT WINAPI xmldoc_IPersistStream_Load(
     len = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
     if (len != 0)
-        xmldoc = parse_xml(ptr, len);
+        xmldoc = doparse(ptr, len, NULL);
     GlobalUnlock(hglobal);
 
     if (!xmldoc)
@@ -1524,7 +1581,7 @@ static HRESULT WINAPI domdoc_load(
                 {
                     *isSuccessful = VARIANT_TRUE;
 
-                    TRACE("Using ID_IStream to load Document\n");
+                    TRACE("Using IStream to load Document\n");
                     return S_OK;
                 }
                 else
@@ -1733,6 +1790,7 @@ static HRESULT WINAPI domdoc_save(
     domdoc *This = impl_from_IXMLDOMDocument2( iface );
     HANDLE handle;
     xmlSaveCtxtPtr ctx;
+    xmlNodePtr xmldecl;
     HRESULT ret = S_OK;
 
     TRACE("(%p)->(var(vt %d, %s))\n", This, V_VT(&destination),
@@ -1788,7 +1846,10 @@ static HRESULT WINAPI domdoc_save(
         return S_FALSE;
     }
 
+    xmldecl = xmldoc_unlink_xmldecl(get_doc(This));
     if (xmlSaveDoc(ctx, get_doc(This)) == -1) ret = S_FALSE;
+    xmldoc_link_xmldecl(get_doc(This), xmldecl);
+
     /* will close file through close callback */
     xmlSaveClose(ctx);
 
