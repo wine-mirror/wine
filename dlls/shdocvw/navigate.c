@@ -222,6 +222,8 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface,
           debugstr_w(szStatusText));
 
     switch(ulStatusCode) {
+    case BINDSTATUS_REDIRECTING:
+        return set_dochost_url(This->doc_host, szStatusText);
     case BINDSTATUS_BEGINDOWNLOADDATA:
         set_status_text(This, szStatusText); /* FIXME: "Start downloading from site: %s" */
         return S_OK;
