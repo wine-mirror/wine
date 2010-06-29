@@ -770,6 +770,8 @@ DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int 
     if (!connection->useSSL)
     {
 	*recvd = recv(connection->socketFD, buf, len, flags);
+        if(!*recvd)
+            NETCON_close(connection);
 	return *recvd == -1 ? sock_get_error(errno) :  ERROR_SUCCESS;
     }
     else
@@ -779,8 +781,10 @@ DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int 
 
         /* Check if EOF was received */
         if(!*recvd && (pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_ZERO_RETURN
-                    || pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_SYSCALL))
+                    || pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_SYSCALL)) {
+            NETCON_close(connection);
             return ERROR_SUCCESS;
+        }
 
         return *recvd > 0 ? ERROR_SUCCESS : ERROR_INTERNET_CONNECTION_ABORTED;
 #else

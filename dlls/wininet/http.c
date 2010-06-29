@@ -3454,6 +3454,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
     do
     {
         DWORD len;
+        BOOL reusing_connection;
         char *ascii_req;
 
         loop_next = FALSE;
@@ -3504,6 +3505,11 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
         /* Send the request and store the results */
+        if(NETCON_connected(&lpwhr->netConnection))
+            reusing_connection = TRUE;
+        else
+            reusing_connection = FALSE;
+
         if ((res = HTTP_OpenConnection(lpwhr)) != ERROR_SUCCESS)
             goto lend;
 
@@ -3545,6 +3551,13 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                 goto lend;
     
             responseLen = HTTP_GetResponseHeaders(lpwhr, TRUE);
+            /* FIXME: We should know that connection is closed before sending
+             * headers. Otherwise wrong callbacks are executed */
+            if(!responseLen && reusing_connection) {
+                TRACE("Connection closed by server, reconnecting\n");
+                loop_next = TRUE;
+                continue;
+            }
     
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                 INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen,
@@ -4457,9 +4470,6 @@ static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
 
     TRACE("-->\n");
 
-    /* clear old response headers (eg. from a redirect response) */
-    if (clear) HTTP_clear_response_headers( lpwhr );
-
     if (!NETCON_connected(&lpwhr->netConnection))
         goto lend;
 
@@ -4471,6 +4481,13 @@ static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
         buflen = MAX_REPLY_LEN;
         if (!read_line(lpwhr, bufferA, &buflen))
             goto lend;
+
+        /* clear old response headers (eg. from a redirect response) */
+        if (clear) {
+            HTTP_clear_response_headers( lpwhr );
+            clear = FALSE;
+        }
+
         rc += buflen;
         MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
         /* check is this a status code line? */
