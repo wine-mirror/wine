@@ -32,7 +32,6 @@
 #include <winnls.h>
 #include <winerror.h>
 #include <winnt.h>
-#include <initguid.h>
 #include <wtypes.h>
 #include <olectl.h>
 #include <ocidl.h>
