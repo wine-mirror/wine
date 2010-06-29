@@ -111,6 +111,23 @@ static void set_status_text(BindStatusCallback *This, LPCWSTR str)
         IOleInPlaceFrame_SetStatusText(This->doc_host->frame, str);
 }
 
+static HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
+{
+    WCHAR *new_url;
+
+    if(url) {
+        new_url = heap_strdupW(url);
+        if(!new_url)
+            return E_OUTOFMEMORY;
+    }else {
+        new_url = NULL;
+    }
+
+    heap_free(This->url);
+    This->url = new_url;
+    return S_OK;
+}
+
 #define BINDSC_THIS(iface) DEFINE_THIS(BindStatusCallback, BindStatusCallback, iface)
 
 static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
@@ -502,6 +519,7 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
                               IBindStatusCallback *callback)
 {
     IUnknown *unk = NULL;
+    WCHAR *display_name;
     HRESULT hres;
 
     if(mon) {
@@ -512,10 +530,16 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
             return hres;
     }
 
-    CoTaskMemFree(This->url);
-    hres = IMoniker_GetDisplayName(mon, 0, NULL, &This->url);
-    if(FAILED(hres))
+    hres = IMoniker_GetDisplayName(mon, 0, NULL, &display_name);
+    if(FAILED(hres)) {
         FIXME("GetDisplayName failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = set_dochost_url(This, display_name);
+    CoTaskMemFree(display_name);
+    if(FAILED(hres))
+        return hres;
 
     IBindCtx_RegisterObjectParam(bindctx, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
                                  (IUnknown*)CLIENTSITE(This));
@@ -538,18 +562,12 @@ static HRESULT bind_to_object(DocHost *This, IMoniker *mon, LPCWSTR url, IBindCt
 static void html_window_navigate(DocHost *This, IHTMLPrivateWindow *window, BSTR url, BSTR headers, SAFEARRAY *post_data)
 {
     VARIANT headers_var, post_data_var;
-    WCHAR *new_url;
     BSTR empty_str;
-    DWORD size;
     HRESULT hres;
 
-    size = (strlenW(url)+1)*sizeof(WCHAR);
-    new_url = CoTaskMemAlloc(size);
-    if(!new_url)
+    hres = set_dochost_url(This, url);
+    if(FAILED(hres))
         return;
-    memcpy(new_url, url, size);
-    CoTaskMemFree(This->url);
-    This->url = new_url;
 
     empty_str = SysAllocStringLen(NULL, 0);
 
