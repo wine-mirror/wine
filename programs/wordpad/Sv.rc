@@ -254,6 +254,9 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     STRING_UNITS_CM,             "cm"
+    STRING_UNITS_IN,             "in"
+    STRING_UNITS_INCH,           "tum"
+    STRING_UNITS_PT,             "pt"
 END
 
 STRINGTABLE DISCARDABLE
