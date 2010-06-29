@@ -485,4 +485,6 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "Ger processen prioritet under normal"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Ger processen låg prioritet"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Ställer in felsökningskanaler"
 END
