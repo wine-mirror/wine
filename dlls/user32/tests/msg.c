@@ -4717,10 +4717,10 @@ static void test_messages(void)
     ok(hwnd != 0, "Failed to create custom dialog window\n");
     ok_sequence(WmCreateCustomDialogSeq, "CreateCustomDialog", TRUE);
 
-    /*
+    if(0) {
     trace("testing scroll APIs on a visible dialog %p\n", hwnd);
     test_scroll_messages(hwnd);
-    */
+    }
 
     flush_sequence();
 
