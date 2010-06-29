@@ -862,6 +862,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4Gb */
         if (totalSize < commitSize) totalSize = commitSize;
         if (flags & HEAP_SHARED) commitSize = totalSize;  /* always commit everything in a shared heap */
+        commitSize = min( totalSize, (commitSize + COMMIT_MASK) & ~COMMIT_MASK );
 
         /* allocate the memory block */
         if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 5, &totalSize,
