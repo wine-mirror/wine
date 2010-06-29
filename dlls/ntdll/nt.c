@@ -1945,3 +1945,15 @@ NTSTATUS WINAPI NtAccessCheckAndAuditAlarm(PUNICODE_STRING SubsystemName, HANDLE
 
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ *  NtSystemDebugControl   (NTDLL.@)
+ *  ZwSystemDebugControl   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSystemDebugControl(SYSDBG_COMMAND command, PVOID inbuffer, ULONG inbuflength, PVOID outbuffer,
+                                     ULONG outbuflength, PULONG retlength)
+{
+    FIXME("(%d, %p, %d, %p, %d, %p), stub\n", command, inbuffer, inbuflength, outbuffer, outbuflength, retlength);
+
+    return STATUS_NOT_IMPLEMENTED;
+}

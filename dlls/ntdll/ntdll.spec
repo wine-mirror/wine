@@ -353,7 +353,7 @@
 @ stub NtStopProfile
 # @ stub NtSuspendProcess
 @ stdcall NtSuspendThread(long ptr)
-@ stub NtSystemDebugControl
+@ stdcall NtSystemDebugControl(long ptr long ptr long ptr)
 @ stdcall NtTerminateJobObject(long long)
 @ stdcall NtTerminateProcess(long long)
 @ stdcall NtTerminateThread(long long)
@@ -1209,7 +1209,7 @@
 @ stub ZwStopProfile
 # @ stub ZwSuspendProcess
 @ stdcall ZwSuspendThread(long ptr) NtSuspendThread
-@ stub ZwSystemDebugControl
+@ stdcall ZwSystemDebugControl(long ptr long ptr long ptr) NtSystemDebugControl
 @ stdcall ZwTerminateJobObject(long long) NtTerminateJobObject
 @ stdcall ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall ZwTerminateThread(long long) NtTerminateThread
