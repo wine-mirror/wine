@@ -3,7 +3,8 @@
  * Portuguese Language Support
  *
  * Copyright (C) 2003 Marcelo Duarte
- * Copyright 2004 AmÈrico JosÈ Melo
+ * Copyright 2004 Am√©rico Jos√© Melo
+ * Copyright 2010 Gustavo Henrique Milar√©
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,19 +23,21 @@
 
 #include "wcmd.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE
 {
   WCMD_ATTRIB, "Ajuda do comando ATTRIB\n"
   WCMD_CALL,
-"CALL <arquivo_de_lote> È usado dentro de um arquivo de lote para executar\n\
+"CALL <arquivo_de_lote> √© usado dentro de um arquivo de lote para executar\n\
 comando de outro arquivo de lote. Quando o arquivo existe, o controle retorna\n\
-ao arquivo que o chamou. O comando CALL pode passar par‚metros ao procedimento\n\
+ao arquivo que o chamou. O comando CALL pode passar par√¢metros ao procedimento\n\
 chamado.\n\
 \n\
-MudannÁas no diretÛrio padr„o, vari·veis de ambiente, etc, feitas dentro\n\
-do procedimente chamado s„o herdados pelo chamador.\n"
+Mudan√ßas no diret√≥rio padr√£o, vari√°veis de ambiente, etc, feitas dentro\n\
+do procedimente chamado s√£o herdados pelo chamador.\n"
 
   WCMD_CD,     "Ajuda do comando CD\n"
   WCMD_CHDIR,  "Ajuda do comando CHDIR\n"
@@ -50,103 +53,103 @@ do procedimente chamado s„o herdados pelo chamador.\n"
   WCMD_ECHO,
 "ECHO <string> mostra a <string> no dispositivo terminal atual.\n\
 \n\
-ECHO ON ativa a exibiÁ„o de todos os comandos subsequentes em um\n\
+ECHO ON ativa a exibi√ß√£o de todos os comandos subsequentes em um\n\
 arquivo de lote no terminal antes deles serem executados.\n\
 \n\
-ECHO OFF desativa o efeito de um comando ECHO ON (ECHO È OFF por padr„o).\n\
+ECHO OFF desativa o efeito de um comando ECHO ON (ECHO √© OFF por padr√£o).\n\
 O comando ECHO OFF pode ser impedido de ser mostrado colocando-se um\n\
-sÌmbolo @ precedendo o mesmo.\n"
+s√≠mbolo @ precedendo o mesmo.\n"
 
   WCMD_ERASE,  "Ajuda do comando ERASE\n"
 
   WCMD_FOR,
-"O comando FOR È usado para executar um comando a cada vez em\num conjunto de arquivos.\n\
+"O comando FOR √© usado para executar um comando a cada vez em\num conjunto de arquivos.\n\
 \n\
-Sintaxe: FOR %vari·vel IN (conjunto) DO comando\n\
+Sintaxe: FOR %vari√°vel IN (conjunto) DO comando\n\
 \n\
-No cmd, n„o existe a necessidade de usar dois sinais % no\n\
+No cmd, n√£o existe a necessidade de usar dois sinais % no\n\
 comando FOR nos arquivos de lote.\n"
 
   WCMD_GOTO,
-"O comando GOTO transfere a execuÁ„o para outra declaraÁ„o dentro\n\
+"O comando GOTO transfere a execu√ß√£o para outra declara√ß√£o dentro\n\
 do arquivo de lote.\n\
 \n\
-O rÛtulo que ser· o destino do comando GOTO pode ter atÈ 255 caracteres\n\
-mas n„o pode incluir espaÁos (diferentemente de outros sistemas operacionais).\n\
-Se dois ou mais rÛtulos forem identicos no arquivo de lote, o primeiro deles\n\
-ser· sempre executado. A tentativa de usar o GOTO para um rÛtulo inexistente\n\
-termina a execuÁ„o do arquivo de lote.\n\
+O r√≥tulo que ser√° o destino do comando GOTO pode ter at√© 255 caracteres\n\
+mas n√£o pode incluir espa√ßos (diferentemente de outros sistemas operacionais).\n\
+Se dois ou mais r√≥tulos forem identicos no arquivo de lote, o primeiro deles\n\
+ser√° sempre executado. A tentativa de usar o GOTO para um r√≥tulo inexistente\n\
+termina a execu√ß√£o do arquivo de lote.\n\
 \n\
-GOTO n„o tem efeito quando usando interativamente.\n"
+GOTO n√£o tem efeito quando usando interativamente.\n"
 
   WCMD_HELP,   "Ajuda do comando HELP\n"
 
   WCMD_IF,
-"IF È usado para executar um comando condicionalmente.\n\
+"IF √© usado para executar um comando condicionalmente.\n\
 \n\
 Sintaxe:	IF [NOT] EXIST arquivo comando\n\
 	IF [NOT] texto1==texto2 comando\n\
-	IF [NOT] ERRORLEVEL n˙mero comando\n\
+	IF [NOT] ERRORLEVEL n√∫mero comando\n\
 \n\
 Na segunda forma do comando, texto1 e texto2 devem estar usando aspas.\n\
-A comparaÁ„o n„o diferencia mai˙sculas de minusculas.\n"
+A compara√ß√£o n√£o diferencia mai√∫sculas de minusculas.\n"
 
-  WCMD_LABEL,  "LABEL È usado para rotular um volume do disco.\n\
+  WCMD_LABEL,  "LABEL √© usado para rotular um volume do disco.\n\
 \n\
 Sintaxe: LABEL [drive:]\n\
-O comando LABEL ir· aguardar que vc informe o novo rÛtulo para o drive\n\
-especificado. VocÍ pode mostrar o rÛtulo do disco com o comando VOL.\n"
+O comando LABEL ir√° aguardar que vc informe o novo r√≥tulo para o drive\n\
+especificado. Voc√™ pode mostrar o r√≥tulo do disco com o comando VOL.\n"
 
   WCMD_MD,     "Ajuda do comando MD\n"
   WCMD_MKDIR,  "Ajuda do comando MKDIR\n"
   WCMD_MOVE,
-"MOVE realoca um arquivo ou diretÛrio em um novo ponto no sistema de arquivos.\n\
+"MOVE realoca um arquivo ou diret√≥rio em um novo ponto no sistema de arquivos.\n\
 \n\
-Se o item sendo movido È um diretÛrio ent„o todos os arquivos e subdiretÛrios\n\
-abaixo do item s„o movidos com o mesmo.\n\
+Se o item sendo movido √© um diret√≥rio ent√£o todos os arquivos e subdiret√≥rios\n\
+abaixo do item s√£o movidos com o mesmo.\n\
 \n\
-MOVE falhar· se o local antigo e o novo local est„o em diferentes unidades.\n"
+MOVE falhar√° se o local antigo e o novo local est√£o em diferentes unidades.\n"
 
   WCMD_PATH,
 "PATH mostra ou permite mudar o caminho de procura de programas do cmd.\n\
 \n\
-Digitando PATH mostrar· a atual configuraÁ„o do comando PATH (inicialmente este\n\
-valor È especificado no arquivo wine.conf). Para mudar as configuraÁıes, digite\n\
+Digitando PATH mostrar√° a atual configura√ß√£o do comando PATH (inicialmente este\n\
+valor √© especificado no arquivo wine.conf). Para mudar as configura√ß√µes, digite\n\
 novos valores no comando PATH.\n\
 \n\
-TambÈm È possÌvel modificar o comando PATH usando a vari·vel de ambiente PATH,\n\
+Tamb√©m √© poss√≠vel modificar o comando PATH usando a vari√°vel de ambiente PATH,\n\
 por exemplo:\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
 "PAUSE mostra a seguinte mensagem na tela 'Pressione Enter para continuar'\n\
-e aguarda que o usu·rio pressione a tecla Enter. Isto È ˙til principalmente\n\
-em arquivos de lote para permitir ao usu·rio ler a saÌda de um comando anterior\n\
+e aguarda que o usu√°rio pressione a tecla Enter. Isto √© √∫til principalmente\n\
+em arquivos de lote para permitir ao usu√°rio ler a sa√≠da de um comando anterior\n\
 antes que a tela sofra um rolamento.\n"
 
   WCMD_PROMPT,
 "PROMPT configura o 'prompt' da linha de comando.\n\
 \n\
-O texto seguindo o comando PROMPT (e os espaÁos imediatamente depois)\n\
-aparecem no comeÁo da linha enquanto o cmd est· aguardando por comandos.\n\
+O texto seguindo o comando PROMPT (e os espa√ßos imediatamente depois)\n\
+aparecem no come√ßo da linha enquanto o cmd est√° aguardando por comandos.\n\
 \n\
 Os seguintes caracteres tem um significado especial, conforme mostrado:\n\
 \n\
-$$    Cifr„o ($)          $_    AvanÁo de linha     $b    SÌmbolo pipe (|)\n\
-$d    Data atual          $e    CÛdigo de escape    $g    Sinal de maior (>)\n\
+$$    Cifr√£o ($)          $_    Avan√ßo de linha     $b    S√≠mbolo pipe (|)\n\
+$d    Data atual          $e    C√≥digo de escape    $g    Sinal de maior (>)\n\
 $l    Sinal de menor (<)  $n    Unidade atual       $p    Caminho atual\n\
-$q    Sinal de igual (=)  $t    Hora atual          $v    Vers„o do cmd\n\
+$q    Sinal de igual (=)  $t    Hora atual          $v    Vers√£o do cmd\n\
 \n\
-Note que digitando o comando PROMPT sem par‚metros reconfigura o padr„o,\n\
-que È a letra da unidade atual seguida pelo diretÛrio e um sinal de maior\n\
+Note que digitando o comando PROMPT sem par√¢metros reconfigura o padr√£o,\n\
+que √© a letra da unidade atual seguida pelo diret√≥rio e um sinal de maior\n\
 (equivalente a um comando PROMPT $p$g).\n\
 \n\
-O 'prompt' tambÈm pode ser mudado alterando a vari·vel PROMPT, assim,\n\
+O 'prompt' tamb√©m pode ser mudado alterando a vari√°vel PROMPT, assim,\n\
 o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'\n"
 
   WCMD_REM,
-"Uma linha de comando iniciando com REM (seguindo de um espaÁo) n„o faz\n\
-aÁ„o alguma, e os carateres usando s„o considerados coment·rios em um\n\
+"Uma linha de comando iniciando com REM (seguindo de um espa√ßo) n√£o faz\n\
+a√ß√£o alguma, e os carateres usando s√£o considerados coment√°rios em um\n\
 arquivo de lote\n"
 
   WCMD_REN,    "Ajuda do comando REN\n"
@@ -155,46 +158,46 @@ arquivo de lote\n"
   WCMD_RMDIR,  "Ajuda do comando RMDIR\n"
 
   WCMD_SET,
-"SET mostra ou muda as var·vel de ambiente de cmd.\n\
+"SET mostra ou muda as vari√°vel de ambiente de cmd.\n\
 \n\
-SET sem parÍmtros mostra todas as var·vel de ambiente atuais\n\
+SET sem par√™mtros mostra todas as vari√°vel de ambiente atuais\n\
 \n\
-Para criar ou modificar vari·vel de ambiente, a sintaxe È:\n\
+Para criar ou modificar vari√°vel de ambiente, a sintaxe √©:\n\
 \n\
-      SET <vari·vel>=<valor>\n\
+      SET <vari√°vel>=<valor>\n\
 \n\
-sendo que <vari·vel> e <valor> s„o textos. N„o devem existir espaÁos\n\
-antes do sinal de igualdade, nem a var·vel pode conter espaÁos.\n\
+sendo que <vari√°vel> e <valor> s√£o textos. N√£o devem existir espa√ßos\n\
+antes do sinal de igualdade, nem a vari√°vel pode conter espa√ßos.\n\
 \n\
-No Wine, o ambiente do sistema operacional È incluido no ambiente Win32,\n\
-onde sempre haver· mais valores que em um sistema Win32 nativo. Note que\n\
-n„o È possÌvel afetar o ambiente do sistema operacional a partir do cmd.\n"
+No Wine, o ambiente do sistema operacional √© incluido no ambiente Win32,\n\
+onde sempre haver√° mais valores que em um sistema Win32 nativo. Note que\n\
+n√£o √© poss√≠vel afetar o ambiente do sistema operacional a partir do cmd.\n"
 
   WCMD_SHIFT,
-"SHIFT È usado em arquivos de lote para remover um par‚metro que inicia a\n\
-lista, assim ent„o o par‚mentro2 sobrepÙe o parametro1 e assim por diante.\n\
-Isto n„o tem efeito se chamado a partir da linha de comando.\n"
+"SHIFT √© usado em arquivos de lote para remover um par√¢metro que inicia a\n\
+lista, assim ent√£o o par√¢mentro2 sobrep√¥e o parametro1 e assim por diante.\n\
+Isto n√£o tem efeito se chamado a partir da linha de comando.\n"
 
   WCMD_TIME,   "Ajuda do comando TIME\n"
 
-  WCMD_TITLE,  "Configura o tÌtulo da janela do cmd, e a sintaxe È TITLE [texto]\n"
+  WCMD_TITLE,  "Configura o t√≠tulo da janela do cmd, e a sintaxe √© TITLE [texto]\n"
 
   WCMD_TYPE,
 "TYPE <arquivo> copia <arquvo> para o dispositivo console (ou outro, se\n\
-redirecionado). Nehuma verificaÁ„o È feita se o arquivo pode ser lido.\n"
+redirecionado). Nehuma verifica√ß√£o √© feita se o arquivo pode ser lido.\n"
 
   WCMD_VERIFY,
-"VERIFY È usado para configurar, limpar e testar o 'flag' de verificaÁ„o. As\n\
-formas v·lidas s„o>\n\
+"VERIFY √© usado para configurar, limpar e testar o 'flag' de verifica√ß√£o. As\n\
+formas v√°lidas s√£o>\n\
 \n\
 VERIFY ON	Configura o flag\n\
 VERIFY OFF	Limpa o flag\n\
 VERIFY		Mostra ON ou OFF qdo apropriado.\n\
 \n\
-O flag de verificaÁ„o n„o tem funÁ„o no Wine.\n"
+O flag de verifica√ß√£o n√£o tem fun√ß√£o no Wine.\n"
 
   WCMD_VER,
-"VER mostra a vers„o em execuÁ„o do cmd.\n"
+"VER mostra a vers√£o em execu√ß√£o do cmd.\n"
 
   WCMD_VOL,    "Ajuda do comando VOL\n"
 
@@ -207,46 +210,74 @@ PUSHD.\n"
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_EXIT,
-"EXIT termina a sess„o de comando atual e retorna ao sistema operacional\n\
+"EXIT termina a sess√£o de comando atual e retorna ao sistema operacional\n\
 ou shell que tenha invocado o cmd.\n"
 
-  WCMD_ALLHELP, "CMD - os comando internos s„o:\n\
+  WCMD_ALLHELP, "CMD - os comando internos s√£o:\n\
 ATTRIB\t\tMostra ou troca atributos de arquivo DOS\n\
 CALL\t\tInvoca um arquivo de lote dentro de outro\n\
-CD (CHDIR)\tMuda o diretÛrio padr„o atual\n\
+CD (CHDIR)\tMuda o diret√≥rio padr√£o atual\n\
 CLS\t\tLimpa a tela do console\n\
 COPY\t\tCopia arquivos\n\
-CTTY\t\tMuda o dispositivo de entrada/saÌda\n\
+CTTY\t\tMuda o dispositivo de entrada/sa√≠da\n\
 DATE\t\tMostra ou muda a data do sistema\n\
 DEL (ERASE)\tApaga um arquivo ou conjunto de arquivos\n\
-DIR\t\tMostra o conte˙do de um diretÛrios\n\
-ECHO\t\tCopia texto diretamente na saÌda do console\n\
-HELP\t\tMostra breves detalhes de um tÛpico\n\
-MD (MKDIR)\tCria um subdiretÛrio\n\
+DIR\t\tMostra o conte√∫do de um diret√≥rios\n\
+ECHO\t\tCopia texto diretamente na sa√≠da do console\n\
+HELP\t\tMostra breves detalhes de um t√≥pico\n\
+MD (MKDIR)\tCria um subdiret√≥rio\n\
 MORE\t\tDisplay output in pages\n\
-MOVE\t\tMove um arquivo, conjunto de arquivos ou uma ·rvore de diretÛrios\n\
+MOVE\t\tMove um arquivo, conjunto de arquivos ou uma √°rvore de diret√≥rios\n\
 PATH\t\tConfigira o caminho de procura\n\
 POPD\t\tRestores the directory to the last one saved with PUSHD\n\
-PROMPT\t\tMuda o 'prompt' de comando\n\
+PROMPT\t\tMuda o prompt de comando\n\
 PUSHD\t\tChanges to a new directory, saving the current one\n\
 REN (RENAME)\tRenomeia um arquivo\n\
-RD (RMDIR)\tApaga um subdiretÛrio\n\
-SET\t\tConfigura ou mostra vari·veis de ambiente\n\
+RD (RMDIR)\tApaga um subdiret√≥rio\n\
+SET\t\tConfigura ou mostra vari√°veis de ambiente\n\
 TIME\t\tConfigura ou mostra a hora atual do sistema\n\
-TITLE\t\tConfigura o tÌtulo da janela de comando CMD\n\
-TYPE\t\tMostra o conte˙do de um arquivo texto\n\
-VER\t\tMostra a vers„o atual do CMD\n\
-VOL\t\tMostra o rÛtulo do volume de uma unidade de disco\n\
+TITLE\t\tConfigura o t√≠tulo da janela de comando CMD\n\
+TYPE\t\tMostra o conte√∫do de um arquivo texto\n\
+VER\t\tMostra a vers√£o atual do CMD\n\
+VOL\t\tMostra o r√≥tulo do volume de uma unidade de disco\n\
 EXIT\t\tFecha o CMD\n\n\
-Entre HELP <comando> para maiores informaÁıes sobre alguns dos comandos acima\n"
+Entre HELP <comando> para maiores informa√ß√µes sobre alguns dos comandos acima\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Tem certeza"
+  WCMD_YES, "S"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
-  WCMD_OVERWRITE, "Overwrite %s"
-  WCMD_MORESTR, "More..."
+  WCMD_NOASSOC, "Associa√ß√£o de arquivo faltando para a extens√£o %s\n"
+  WCMD_NOFTYPE, "Nenhum comando de abertura associado ao tipo de arquivo '%s'\n"
+  WCMD_OVERWRITE, "Sobrescrever %s"
+  WCMD_MORESTR, "Mais..."
+  WCMD_TRUNCATEDLINE, "Linha no processamento do Batch possivelmente truncada. Usando:\n"
+  WCMD_NYI, "Ainda n√£o implementado\n\n"
+  WCMD_NOARG, "Faltando argumento\n"
+  WCMD_SYNTAXERR, "Erro de sintaxe\n"
+  WCMD_FILENOTFOUND, "%s : Arquivo N√£o Encontrado\n"
+  WCMD_NOCMDHELP, "Sem ajuda dispon√≠vel para %s\n"
+  WCMD_NOTARGET, "Alvo para GOTO n√£o encontrado\n"
+  WCMD_CURRENTDATE, "A Data Atual √© %s\n"
+  WCMD_CURRENTTIME, "A Hora Atual √© %s\n"
+  WCMD_NEWDATE, "Entre nova data: "
+  WCMD_NEWTIME, "Entre nova hora: "
+  WCMD_MISSINGENV, "Vari√°vel de ambiente %s n√£o definida\n"
+  WCMD_READFAIL, "Falha ao abrir '%s'\n"
+  WCMD_CALLINSCRIPT, "N√£o pode chamar um r√≥tulo batch fora de um script batch\n"
+  WCMD_ALL, "A"
+  WCMD_DELPROMPT, "%s, Excluir"
+  WCMD_ECHOPROMPT, "Echo √© %s\n"
+  WCMD_VERIFYPROMPT, "Verify √© %s\n"
+  WCMD_VERIFYERR, "Verify deve ser ON ou OFF\n";
+  WCMD_ARGERR, "Erro de par√¢metro\n"
+  WCMD_VOLUMEDETAIL, "Volume no drive %c √© %s\nO N√∫mero de S√©rie do Volume √© %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "R√≥tulo do Volume (11 characters, ENTER for none)?"
+  WCMD_NOPATH, "PATH n√£o encontrado\n"
+  WCMD_ANYKEY,"Pressione a tecla Enter para continuar: "
+  WCMD_CONSTITLE,"Prompt de Comando Wine"
+  WCMD_VERSION,"CMD Vers√£o %s\n\n"
+  WCMD_MOREPROMPT, "Mais? "
+  WCMD_LINETOOLONG, "A linha de entrada √© muito longa.\n"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -255,18 +286,18 @@ STRINGTABLE
 {
   WCMD_ATTRIB, "Ajuda do comando ATTRIB\n"
   WCMD_CALL,
-"CALL <ficheiro_de_lote> È usado dentro de um ficheiro de lote para executar o\n\
+"CALL <ficheiro_de_lote> √© usado dentro de um ficheiro de lote para executar o\n\
 comando de outro ficheiro de lote. Quando o ficheiro existe, o controle retorna\n\
-ao ficheiro que o chamou. O comando CALL pode passar par‚metros ao procedimento\n\
+ao ficheiro que o chamou. O comando CALL pode passar par√¢metros ao procedimento\n\
 chamado.\n\
 \n\
-MudanÁas no directÛrio padr„o, vari·veis de ambiente, etc, feitas dentro\n\
-do procedimente chamado s„o herdados pelo chamador.\n"
+Mudan√ßas no direct√≥rio padr√£o, vari√°veis de ambiente, etc, feitas dentro\n\
+do procedimente chamado s√£o herdados pelo chamador.\n"
 
   WCMD_CD,     "Ajuda do comando CD\n"
   WCMD_CHDIR,  "Ajuda do comando CHDIR\n"
 
-  WCMD_CLS,    "CLS limpa a ecr„ da consola\n"
+  WCMD_CLS,    "CLS limpa a ecr√£ da consola\n"
 
   WCMD_COPY,   "Ajuda do comando COPY\n"
   WCMD_CTTY,   "Ajuda do comando CTTY\n"
@@ -277,103 +308,103 @@ do procedimente chamado s„o herdados pelo chamador.\n"
   WCMD_ECHO,
 "ECHO <string> mostra a <string> no dispositivo terminal actual.\n\
 \n\
-ECHO ON activa a exibiÁ„o de todos os comandos subsequentes num\n\
+ECHO ON activa a exibi√ß√£o de todos os comandos subsequentes num\n\
 ficheiro de lote no terminal antes deles serem executados.\n\
 \n\
-ECHO OFF desactiva o efeito de um comando ECHO ON (ECHO È OFF por padr„o).\n\
+ECHO OFF desactiva o efeito de um comando ECHO ON (ECHO √© OFF por padr√£o).\n\
 O comando ECHO OFF pode ser impedido de ser mostrado colocando-se um\n\
-sÌmbolo @ precedendo o mesmo.\n"
+s√≠mbolo @ precedendo o mesmo.\n"
 
   WCMD_ERASE,  "Ajuda do comando ERASE\n"
 
   WCMD_FOR,
-"O comando FOR È usado para executar um comando a cada vez num conjunto de ficheiros.\n\
+"O comando FOR √© usado para executar um comando a cada vez num conjunto de ficheiros.\n\
 \n\
-Sintaxe: FOR %vari·vel IN (conjunto) DO comando\n\
+Sintaxe: FOR %vari√°vel IN (conjunto) DO comando\n\
 \n\
-No cmd, n„o existe a necessidade de usar dois sinais % no\n\
+No cmd, n√£o existe a necessidade de usar dois sinais % no\n\
 comando FOR nos ficheiros de lote.\n"
 
   WCMD_GOTO,
-"O comando GOTO transfere a execuÁ„o para outra declaraÁ„o dentro\n\
+"O comando GOTO transfere a execu√ß√£o para outra declara√ß√£o dentro\n\
 do ficheiro de lote.\n\
 \n\
-O rÛtulo que ser· o destino do comando GOTO pode ter atÈ 255 caracteres\n\
-mas n„o pode conter espaÁos (diferentemente de outros sistemas operacionais).\n\
-Se dois ou mais rÛtulos forem identicos no ficheiro de lote, o primeiro deles\n\
-ser· sempre executado. A tentativa de usar o GOTO para um rÛtulo inexistente\n\
-termina a execuÁ„o do ficheiro de lote.\n\
+O r√≥tulo que ser√° o destino do comando GOTO pode ter at√© 255 caracteres\n\
+mas n√£o pode conter espa√ßos (diferentemente de outros sistemas operacionais).\n\
+Se dois ou mais r√≥tulos forem identicos no ficheiro de lote, o primeiro deles\n\
+ser√° sempre executado. A tentativa de usar o GOTO para um r√≥tulo inexistente\n\
+termina a execu√ß√£o do ficheiro de lote.\n\
 \n\
-GOTO n„o tem efeito quando usado interactivamente.\n"
+GOTO n√£o tem efeito quando usado interactivamente.\n"
 
   WCMD_HELP,   "Ajuda do comando HELP\n"
 
   WCMD_IF,
-"IF È usado para executar um comando condicionalmente.\n\
+"IF √© usado para executar um comando condicionalmente.\n\
 \n\
 Sintaxe:	IF [NOT] EXIST ficheiro comando\n\
 	IF [NOT] texto1==texto2 comando\n\
-	IF [NOT] ERRORLEVEL n˙mero comando\n\
+	IF [NOT] ERRORLEVEL n√∫mero comando\n\
 \n\
 Na segunda forma do comando, texto1 e texto2 devem estar a usar aspas.\n\
-A comparaÁ„o n„o diferencia mai˙sculas de minusculas.\n"
+A compara√ß√£o n√£o diferencia mai√∫sculas de minusculas.\n"
 
-  WCMD_LABEL,  "LABEL È usado para rotular um volume do disco.\n\
+  WCMD_LABEL,  "LABEL √© usado para rotular um volume do disco.\n\
 \n\
 Sintaxe: LABEL [drive:]\n\
-O comando LABEL ir· aguardar que informe o novo rÛtulo para o drive\n\
-especificado. Pode mostrar o rÛtulo do disco com o comando VOL.\n"
+O comando LABEL ir√° aguardar que informe o novo r√≥tulo para o drive\n\
+especificado. Pode mostrar o r√≥tulo do disco com o comando VOL.\n"
 
   WCMD_MD,     "Ajuda do comando MD\n"
   WCMD_MKDIR,  "Ajuda do comando MKDIR\n"
   WCMD_MOVE,
-"MOVE realoca um ficheiro ou directÛrio num novo ponto no sistema de ficheiros.\n\
+"MOVE realoca um ficheiro ou direct√≥rio num novo ponto no sistema de ficheiros.\n\
 \n\
-Se o item ao ser movido È um directÛrio ent„o todos os ficheiros e subdirectÛrios\n\
-abaixo do item ser„o movidos com o mesmo.\n\
+Se o item ao ser movido √© um direct√≥rio ent√£o todos os ficheiros e subdirect√≥rios\n\
+abaixo do item ser√£o movidos com o mesmo.\n\
 \n\
-MOVE falhar· se o local antigo e o novo local est„o em diferentes unidades.\n"
+MOVE falhar√° se o local antigo e o novo local est√£o em diferentes unidades.\n"
 
   WCMD_PATH,
 "PATH mostra ou permite mudar o caminho de procura de programas do cmd.\n\
 \n\
-Ao digitar PATH mostrar· a actual configuraÁ„o do comando PATH (inicialmente este\n\
-valor È especificado no ficheiro wine.conf). Para mudar as configuraÁıes, digite\n\
+Ao digitar PATH mostrar√° a actual configura√ß√£o do comando PATH (inicialmente este\n\
+valor √© especificado no ficheiro wine.conf). Para mudar as configura√ß√µes, digite\n\
 novos valores no comando PATH.\n\
 \n\
-TambÈm È possÌvel modificar o comando PATH usando a vari·vel de ambiente PATH,\n\
+Tamb√©m √© poss√≠vel modificar o comando PATH usando a vari√°vel de ambiente PATH,\n\
 por exemplo:\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
-"PAUSE mostra a seguinte mensagem no ecr„ 'Prima Enter para continuar'\n\
-e aguarda que o utilizador prima a tecla Enter. Isto È ˙til principalmente\n\
-em ficheiros de lote para permitir ao utilizador ler a saÌda de um comando anterior\n\
-antes que o ecr„ sofra um rolamento.\n"
+"PAUSE mostra a seguinte mensagem no ecr√£ 'Prima Enter para continuar'\n\
+e aguarda que o utilizador prima a tecla Enter. Isto √© √∫til principalmente\n\
+em ficheiros de lote para permitir ao utilizador ler a sa√≠da de um comando anterior\n\
+antes que o ecr√£ sofra um rolamento.\n"
 
   WCMD_PROMPT,
 "PROMPT configura o 'prompt' da linha de comando.\n\
 \n\
-O texto a seguir o comando PROMPT (e os espaÁos imediatamente depois)\n\
-aparecem no comeÁo da linha enquanto o cmd est· a aguardar por comandos.\n\
+O texto a seguir o comando PROMPT (e os espa√ßos imediatamente depois)\n\
+aparecem no come√ßo da linha enquanto o cmd est√° a aguardar por comandos.\n\
 \n\
 Os seguintes caracteres tem um significado especial, conforme mostrado:\n\
 \n\
-$$    Cifr„o ($)          $_    AvanÁo de linha     $b    SÌmbolo pipe (|)\n\
-$d    Data actual          $e    CÛdigo de escape    $g    Sinal de maior (>)\n\
+$$    Cifr√£o ($)          $_    Avan√ßo de linha     $b    S√≠mbolo pipe (|)\n\
+$d    Data actual          $e    C√≥digo de escape    $g    Sinal de maior (>)\n\
 $l    Sinal de menor (<)  $n    Unidade actual       $p    Caminho actual\n\
-$q    Sinal de igual (=)  $t    Hora actual          $v    Vers„o do cmd\n\
+$q    Sinal de igual (=)  $t    Hora actual          $v    Vers√£o do cmd\n\
 \n\
-Note que ao digitar o comando PROMPT sem par‚metros reconfigura o padr„o,\n\
-que È a letra da unidade actual seguida pelo directÛrio e um sinal de maior\n\
+Note que ao digitar o comando PROMPT sem par√¢metros reconfigura o padr√£o,\n\
+que √© a letra da unidade actual seguida pelo direct√≥rio e um sinal de maior\n\
 (equivalente a um comando PROMPT $p$g).\n\
 \n\
-O 'prompt' tambÈm pode ser mudado alterando a vari·vel PROMPT, assim,\n\
+O 'prompt' tamb√©m pode ser mudado alterando a vari√°vel PROMPT, assim,\n\
 o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'\n"
 
   WCMD_REM,
-"Uma linha de comando a iniciar com REM (seguido de um espaÁo) n„o faz\n\
-nenhuma acÁ„o, e os carateres a usar s„o considerados coment·rios num\n\
+"Uma linha de comando a iniciar com REM (seguido de um espa√ßo) n√£o faz\n\
+nenhuma ac√ß√£o, e os carateres a usar s√£o considerados coment√°rios num\n\
 ficheiro de lote\n"
 
   WCMD_REN,    "Ajuda do comando REN\n"
@@ -382,46 +413,46 @@ ficheiro de lote\n"
   WCMD_RMDIR,  "Ajuda do comando RMDIR\n"
 
   WCMD_SET,
-"SET mostra ou muda as var·vel de ambiente de cmd.\n\
+"SET mostra ou muda as vari√°vel de ambiente de cmd.\n\
 \n\
-SET sem parÍmtros mostra todas as var·vel de ambiente actuais\n\
+SET sem par√™mtros mostra todas as vari√°vel de ambiente actuais\n\
 \n\
-Para criar ou modificar vari·vel de ambiente, a sintaxe È:\n\
+Para criar ou modificar vari√°vel de ambiente, a sintaxe √©:\n\
 \n\
-      SET <vari·vel>=<valor>\n\
+      SET <vari√°vel>=<valor>\n\
 \n\
-sendo que <vari·vel> e <valor> s„o textos. N„o devem existir espaÁos\n\
-antes do sinal de igualdade, nem a var·vel pode conter espaÁos.\n\
+sendo que <vari√°vel> e <valor> s√£o textos. N√£o devem existir espa√ßos\n\
+antes do sinal de igualdade, nem a vari√°vel pode conter espa√ßos.\n\
 \n\
-No Wine, o ambiente do sistema operacional È incluido no ambiente Win32,\n\
-onde sempre haver· mais valores que num sistema Win32 nativo. Note que\n\
-n„o È possÌvel afectar o ambiente do sistema operacional a partir do cmd.\n"
+No Wine, o ambiente do sistema operacional √© incluido no ambiente Win32,\n\
+onde sempre haver√° mais valores que num sistema Win32 nativo. Note que\n\
+n√£o √© poss√≠vel afectar o ambiente do sistema operacional a partir do cmd.\n"
 
   WCMD_SHIFT,
-"SHIFT È usado em ficheiros de lote para remover um par‚metro que inicia a\n\
-lista, assim ent„o o par‚mentro2 sobrepÙe o parametro1 e assim por diante.\n\
-Isto n„o tem efeito se chamado a partir da linha de comando.\n"
+"SHIFT √© usado em ficheiros de lote para remover um par√¢metro que inicia a\n\
+lista, assim ent√£o o par√¢mentro2 sobrep√¥e o parametro1 e assim por diante.\n\
+Isto n√£o tem efeito se chamado a partir da linha de comando.\n"
 
   WCMD_TIME,   "Ajuda do comando TIME\n"
 
-  WCMD_TITLE,  "Configura o tÌtulo da janela do cmd, e a sintaxe È TITLE [texto]\n"
+  WCMD_TITLE,  "Configura o t√≠tulo da janela do cmd, e a sintaxe √© TITLE [texto]\n"
 
   WCMD_TYPE,
 "TYPE <ficheiro> copia <ficheiro> para o dispositivo consola (ou outro, se\n\
-redireccionado). Nehuma verificaÁ„o È feita se o ficheiro pode ser lido.\n"
+redireccionado). Nehuma verifica√ß√£o √© feita se o ficheiro pode ser lido.\n"
 
   WCMD_VERIFY,
-"VERIFY È usado para configurar, limpar e testar o 'flag' de verificaÁ„o. As\n\
-formas v·lidas s„o>\n\
+"VERIFY √© usado para configurar, limpar e testar o 'flag' de verifica√ß√£o. As\n\
+formas v√°lidas s√£o>\n\
 \n\
 VERIFY ON	Configura o flag\n\
 VERIFY OFF	Limpa o flag\n\
 VERIFY		Mostra ON ou OFF qdo apropriado.\n\
 \n\
-O flag de verificaÁ„o n„o tem funÁ„o no Wine.\n"
+O flag de verifica√ß√£o n√£o tem fun√ß√£o no Wine.\n"
 
   WCMD_VER,
-"VER mostra a vers„o em execuÁ„o do cmd.\n"
+"VER mostra a vers√£o em execu√ß√£o do cmd.\n"
 
   WCMD_VOL,    "Ajuda do comando VOL\n"
 
@@ -434,38 +465,38 @@ PUSHD.\n"
   WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
 
   WCMD_EXIT,
-"EXIT termina a sess„o de comando actual e retorna ao sistema operacional\n\
+"EXIT termina a sess√£o de comando actual e retorna ao sistema operacional\n\
 ou shell que tenha invocado o cmd.\n"
 
-  WCMD_ALLHELP, "CMD - os comando internos s„o:\n\
+  WCMD_ALLHELP, "CMD - os comando internos s√£o:\n\
 ATTRIB\t\tMostra ou troca atributos do ficheiro DOS\n\
 CALL\t\tInvoca um ficheiro de lote dentro de outro\n\
-CD (CHDIR)\tMuda o directÛrio padr„o actual\n\
-CLS\t\tLimpa o ecr„ da consola\n\
+CD (CHDIR)\tMuda o direct√≥rio padr√£o actual\n\
+CLS\t\tLimpa o ecr√£ da consola\n\
 COPY\t\tCopia ficheiros\n\
-CTTY\t\tMuda o dispositivo de entrada/saÌda\n\
+CTTY\t\tMuda o dispositivo de entrada/sa√≠da\n\
 DATE\t\tMostra ou muda a data do sistema\n\
 DEL (ERASE)\tApaga um ficheiro ou conjunto de ficheiros\n\
-DIR\t\tMostra o conte˙do de um directÛrio\n\
-ECHO\t\tCopia o texto diretamente na saÌda da consola\n\
-HELP\t\tMostra breves detalhes de um tÛpico\n\
-MD (MKDIR)\tCria um subdirectÛrio\n\
+DIR\t\tMostra o conte√∫do de um direct√≥rio\n\
+ECHO\t\tCopia o texto diretamente na sa√≠da da consola\n\
+HELP\t\tMostra breves detalhes de um t√≥pico\n\
+MD (MKDIR)\tCria um subdirect√≥rio\n\
 MORE\t\tDisplay output in pages\n\
-MOVE\t\tMove um ficheiro, conjunto de ficheiros ou uma ·rvore de directÛrios\n\
+MOVE\t\tMove um ficheiro, conjunto de ficheiros ou uma √°rvore de direct√≥rios\n\
 PATH\t\tConfigura o caminho de procura\n\
 POPD\t\tRestores the directory to the last one saved with PUSHD\n\
 PROMPT\t\tMuda a 'prompt' de comando\n\
 PUSHD\t\tChanges to a new directory, saving the current one\n\
 REN (RENAME)\tRenomeia um ficheiro\n\
-RD (RMDIR)\tApaga um subdirectÛrio\n\
-SET\t\tConfigura ou mostra vari·veis de ambiente\n\
+RD (RMDIR)\tApaga um subdirect√≥rio\n\
+SET\t\tConfigura ou mostra vari√°veis de ambiente\n\
 TIME\t\tConfigura ou mostra a hora atual do sistema\n\
-TITLE\t\tConfigura o tÌtulo da janela de comando CMD\n\
-TYPE\t\tMostra o conte˙do de um ficheiro texto\n\
-VER\t\tMostra a vers„o atual do CMD\n\
-VOL\t\tMostra o rÛtulo do volume de uma unidade de disco\n\
+TITLE\t\tConfigura o t√≠tulo da janela de comando CMD\n\
+TYPE\t\tMostra o conte√∫do de um ficheiro texto\n\
+VER\t\tMostra a vers√£o atual do CMD\n\
+VOL\t\tMostra o r√≥tulo do volume de uma unidade de disco\n\
 EXIT\t\tFecha o CMD\n\n\
-Digite HELP <comando> para mais informaÁıes sobre alguns dos comandos acima\n"
+Digite HELP <comando> para mais informa√ß√µes sobre alguns dos comandos acima\n"
 
   WCMD_CONFIRM, "Are you sure"
   WCMD_YES, "Y"
