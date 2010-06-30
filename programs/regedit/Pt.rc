@@ -4,6 +4,7 @@
  * Copyright 2003 Marcelo Duarte
  * Copyright 2004 Américo José Melo
  * Copyright 2009 Ricardo Filipe
+ * Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -81,7 +82,7 @@ BEGIN
     END
     POPUP "Aj&uda"
     BEGIN
-        MENUITEM "&Topics da Ajuda",            ID_HELP_HELPTOPICS
+        MENUITEM "&Tópicos da Ajuda",            ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
         MENUITEM "&Sobre o Editor do Registro", ID_HELP_ABOUT
     END
@@ -140,7 +141,7 @@ BEGIN
     END
     POPUP "Aj&uda"
     BEGIN
-        MENUITEM "&Topicos da Ajuda",            ID_HELP_HELPTOPICS
+        MENUITEM "&Tópicos da Ajuda",            ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
         MENUITEM "&Acerca do Editor de Registo", ID_HELP_ABOUT
     END
@@ -186,7 +187,20 @@ END
  * Dialog
  */
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Exportar registro", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Todos", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "&Ramo selecionado:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
 STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
@@ -198,6 +212,8 @@ BEGIN
     AUTORADIOBUTTON "&Ramo seleccionado:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
     EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
 END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 IDD_FIND DIALOG DISCARDABLE  22, 17, 220, 85
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
@@ -353,6 +369,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Adiciona um novo valor texto."
     ID_EDIT_NEW_BINARYVALUE "Adiciona um novo valor binário."
     ID_EDIT_NEW_DWORDVALUE  "Adiciona um novo valor DWORD."
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Adiciona um novo valor de múltiplas strings"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importa um arquivo texto para o registro."
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exporta todo ou parte do registro para um arquivo texto."
@@ -403,6 +420,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Copia o nome da chave selecionada para a Área de transferência."
     ID_EDIT_FIND            "Localiza um texto em uma chave, valor ou dado."
     ID_EDIT_FINDNEXT        "Localiza a próxima ocorrência do texto especificado na pesquisa anterior."
+    ID_EDIT_EXPORT          "Exporta o ramo do registro selecionado para um arquivo de texto"
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -435,7 +453,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "Valor é muito grande (%u)"
     IDS_DELETE_BOX_TITLE    "Confirmar exclusão de valor"
     IDS_DELETE_BOX_TEXT     "Tem certeza que deseja excluir o valor '%s'?"
-    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Tem a certeza que deseja excluir estes valores?"
     IDS_NEWKEY              "Nova chave #%d"
     IDS_NEWVALUE            "Novo valor #%d"
     IDS_NOTFOUND            "Chave de busca '%s' não encontrada"
@@ -458,12 +476,26 @@ BEGIN
     IDS_NOTFOUND            "Chave de pesquisa '%s' não encontrada"
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Importar Arquivo de Registro"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Exportar Arquivo de Registro"
+    IDS_FILEDIALOG_FILTER         "Arquivos de Registro\0*.reg\0Arquivos de Registro Win9x/NT4 (REGEDIT4)\0*.reg\0Todos os Arquivos (*.*)\0*.*\0\0"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importar Ficheiro de Registo"
     IDS_FILEDIALOG_EXPORT_TITLE   "Exportar Ficheiro de Registo"
     IDS_FILEDIALOG_FILTER         "Ficheiros de Registo\0*.reg\0Ficheiros de Registo Win9x/NT4 (REGEDIT4)\0*.reg\0Todos os Ficheiros (*.*)\0*.*\0\0"
 END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 BEGIN
