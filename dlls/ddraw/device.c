@@ -4299,6 +4299,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     DWORD stride = get_flexible_vertex_size(vb->fvf);
     WORD *LockedIndices;
     HRESULT hr;
+    WINED3DBUFFER_DESC desc;
 
     TRACE("(%p)->(%08x,%p,%d,%d,%p,%d,%08x)\n", This, PrimitiveType, vb, StartVertex, NumVertices, Indices, IndexCount, Flags);
 
@@ -4320,6 +4321,37 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
         return hr;
     }
 
+    /* check that the buffer is large enough to hold the indices,
+     * reallocate if necessary.
+     */
+    hr = IWineD3DBuffer_GetDesc(This->indexbuffer, &desc);
+    if(desc.Size < IndexCount * sizeof(WORD))
+    {
+        UINT size = max(desc.Size * 2, IndexCount * sizeof(WORD));
+        IWineD3DBuffer *buffer;
+        IUnknown *parent;
+
+        TRACE("Growing index buffer to %u bytes\n", size);
+
+        IWineD3DBuffer_GetParent(This->indexbuffer, &parent);
+        hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, size,
+                WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, &buffer, parent,
+                &ddraw_null_wined3d_parent_ops);
+        if(hr != D3D_OK)
+        {
+            ERR("(%p) IWineD3DDevice::CreateIndexBuffer failed with hr = %08x\n", This, hr);
+            IParent_Release(parent);
+            LeaveCriticalSection(&ddraw_cs);
+            return hr;
+        }
+
+        IWineD3DBuffer_Release(This->indexbuffer);
+        This->indexbuffer = buffer;
+
+        ((IParentImpl *)parent)->child = (IUnknown *)buffer;
+        IParent_Release(parent);
+    }
+
     /* copy the index stream into the index buffer.
      * A new IWineD3DDevice method could be created
      * which takes an user pointer containing the indices
@@ -4331,7 +4363,6 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
                             IndexCount * sizeof(WORD),
                             (BYTE **) &LockedIndices,
                             0 /* Flags */);
-    assert(IndexCount < 0x100000);
     if(hr != D3D_OK)
     {
         ERR("(%p) IWineD3DBuffer::Map failed with hr = %08x\n", This, hr);
