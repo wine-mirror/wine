@@ -20,6 +20,7 @@ RC_SRCS = \
 	cryptui_Lt.rc \
 	cryptui_Nl.rc \
 	cryptui_Pl.rc \
-	cryptui_Pt.rc
+	cryptui_Pt.rc \
+	cryptui_Ro.rc
 
 @MAKE_DLL_RULES@
