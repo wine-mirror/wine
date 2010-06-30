@@ -634,33 +634,36 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(OUT PHANDLE SymbolicLinkHandle,IN ACC
  *  ZwQuerySymbolicLinkObject	[NTDLL.@]
  *
  * Query a namespace symbolic link object target name.
- * 
+ *
  * PARAMS
- *  LinkHandle     [I] Handle to a symbolic link object
- *  LinkTarget     [O] Destination for the symbolic link target
- *  ReturnedLength [O] Size of returned data
+ *  handle     [I] Handle to a symbolic link object
+ *  target     [O] Destination for the symbolic link target
+ *  length     [O] Size of returned data
  *
  * RETURNS
  *  Success: ERROR_SUCCESS.
  *  Failure: An NTSTATUS error code.
  */
-NTSTATUS WINAPI NtQuerySymbolicLinkObject(IN HANDLE LinkHandle, IN OUT PUNICODE_STRING LinkTarget,
-                                          OUT PULONG ReturnedLength OPTIONAL)
+NTSTATUS WINAPI NtQuerySymbolicLinkObject( HANDLE handle, PUNICODE_STRING target, PULONG length )
 {
     NTSTATUS ret;
-    TRACE("(%p,%p,%p)\n", LinkHandle, LinkTarget, ReturnedLength);
 
-    if (!LinkTarget) return STATUS_ACCESS_VIOLATION;
+    TRACE("(%p,%p,%p)\n", handle, target, length );
+
+    if (!target) return STATUS_ACCESS_VIOLATION;
 
     SERVER_START_REQ(query_symlink)
     {
-        req->handle = wine_server_obj_handle( LinkHandle );
-        wine_server_set_reply( req, LinkTarget->Buffer, LinkTarget->MaximumLength );
+        req->handle = wine_server_obj_handle( handle );
+        if (target->MaximumLength >= sizeof(WCHAR))
+            wine_server_set_reply( req, target->Buffer, target->MaximumLength - sizeof(WCHAR) );
         if (!(ret = wine_server_call( req )))
         {
-            LinkTarget->Length = wine_server_reply_size(reply);
-            if (ReturnedLength) *ReturnedLength = LinkTarget->Length;
+            target->Length = wine_server_reply_size(reply);
+            target->Buffer[target->Length / sizeof(WCHAR)] = 0;
+            if (length) *length = reply->total + sizeof(WCHAR);
         }
+        else if (length && ret == STATUS_BUFFER_TOO_SMALL) *length = reply->total + sizeof(WCHAR);
     }
     SERVER_END_REQ;
     return ret;
