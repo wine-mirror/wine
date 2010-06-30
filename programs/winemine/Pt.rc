@@ -3,7 +3,8 @@
  * Portuguese Language Support
  *
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 AmÈrico JosÈ Melo
+ * Copyright 2004 Am√©rico Jos√© Melo
+ * Copyright 2010 Gustavo Henrique Milar√©
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,23 +23,25 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE {
      IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "NinguÈm"
+     IDS_NOBODY,  "Ningu√©m"
      IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
 }
 
 MENU_WINEMINE MENU DISCARDABLE
 {
-    POPUP "&OpÁıes" {
+    POPUP "&Op√ß√µes" {
         MENUITEM "&Novo\tF2",           IDM_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Marcas", IDM_MARKQ
         MENUITEM SEPARATOR
         MENUITEM "&Principiante",      IDM_BEGINNER
-        MENUITEM "&Intermedi·rio",      IDM_ADVANCED
+        MENUITEM "&Intermedi√°rio",      IDM_ADVANCED
         MENUITEM "&Experiente",        IDM_EXPERT
         MENUITEM "Personali&zar...",        IDM_CUSTOM
         MENUITEM SEPARATOR
@@ -54,19 +57,19 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE {
      IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "NinguÈm"
+     IDS_NOBODY,  "Ningu√©m"
      IDS_ABOUT,   "Direitos de autor 2000, Joshua Thielen"
 }
 
 MENU_WINEMINE MENU DISCARDABLE
 {
-    POPUP "&OpÁıes" {
+    POPUP "&Op√ß√µes" {
         MENUITEM "&Novo\tF2",           IDM_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Marcas", IDM_MARKQ
         MENUITEM SEPARATOR
         MENUITEM "&Principiante",      IDM_BEGINNER
-        MENUITEM "&Intermedi·rio",      IDM_ADVANCED
+        MENUITEM "&Intermedi√°rio",      IDM_ADVANCED
         MENUITEM "&Experiente",        IDM_EXPERT
         MENUITEM "Personali&zar...",        IDM_CUSTOM
         MENUITEM SEPARATOR
@@ -81,51 +84,36 @@ MENU_WINEMINE MENU DISCARDABLE
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
-DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
+DLG_TIMES DIALOG DISCARDABLE 0, 0, 170, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
 CAPTION "Melhores tempos"
 {
-    GROUPBOX        "Melhores tempos", -1,  10,  10, 140,  45
-    LTEXT           "Principiante",      -1,  20,  20,  40,   8
-    LTEXT           "Intermedi·rio",      -1,  20,  30,  40,   8
-    LTEXT           "Experiente",        -1,  20,  40,  40,   8
-    LTEXT           "999",          IDC_TIME1,  70,  20,  15,   8
-    LTEXT           "999",          IDC_TIME2,  70,  30,  15,   8
-    LTEXT           "999",          IDC_TIME3,  70,  40,  15,   8
-    LTEXT           "",             IDC_NAME1,  90,  20,  55,   8
-    LTEXT           "",             IDC_NAME2,  90,  30,  55,   8
-    LTEXT           "",             IDC_NAME3,  90,  40,  55,   8
-    DEFPUSHBUTTON   "OK",                IDOK,  55,  60,  50,  15
+    GROUPBOX        "Melhores tempos", -1,  10,  10, 150,  45
+    LTEXT           "Principiante",      -1,  20,  20,  50,   8
+    LTEXT           "Intermedi√°rio",      -1,  20,  30,  50,   8
+    LTEXT           "Experiente",        -1,  20,  40,  50,   8
+    LTEXT           "999",          IDC_TIME1,  80,  20,  15,   8
+    LTEXT           "999",          IDC_TIME2,  80,  30,  15,   8
+    LTEXT           "999",          IDC_TIME3,  80,  40,  15,   8
+    LTEXT           "",             IDC_NAME1,  100,  20,  55,   8
+    LTEXT           "",             IDC_NAME2,  100,  30,  55,   8
+    LTEXT           "",             IDC_NAME3,  100,  40,  55,   8
+    DEFPUSHBUTTON   "OK",                IDOK,  60,  60,  50,  15
 }
 
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "CongratulaÁıes!"
-{
-    LTEXT           "Por favor, entre o seu nome", -1,  10,  10, 150,  10
-    EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
-    DEFPUSHBUTTON   "OK",                         IDOK,  60,  40,  40,  15
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
-STYLE  DS_MODALFRAME | DS_3DLOOK |
-    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Parabens!"
+CAPTION "Parab√©ns!"
 {
     LTEXT           "Por favor, indique o seu nome", -1,  10,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
     DEFPUSHBUTTON   "OK",                         IDOK,  60,  40,  40,  15
 }
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DLG_CUSTOM DIALOG DISCARDABLE  0, 0, 100, 100
 STYLE  DS_MODALFRAME | DS_3DLOOK |
