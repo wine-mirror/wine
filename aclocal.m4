@@ -183,9 +183,10 @@ wine_fn_config_makefile ()
 {
     ac_dir=$[1]
     ac_enable=$[2]
-    wine_fn_all_dir_rules $ac_dir "Make.rules \$(MAKEDEP)"
+    AS_VAR_IF([$ac_enable],[no],[return 0])
 
-    AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+    wine_fn_all_dir_rules $ac_dir "Make.rules \$(MAKEDEP)"
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all: $ac_dir
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile dummy
@@ -197,7 +198,7 @@ install-lib:: $ac_dir
 install-dev:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install-dev
 uninstall:: $ac_dir/Makefile
-	@cd $ac_dir && \$(MAKE) uninstall"])
+	@cd $ac_dir && \$(MAKE) uninstall"
 }
 
 wine_fn_config_lib ()
