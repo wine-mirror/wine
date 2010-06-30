@@ -4395,7 +4395,9 @@ struct query_symlink_request
 struct query_symlink_reply
 {
     struct reply_header __header;
+    data_size_t    total;
     /* VARARG(target_name,unicode_str); */
+    char __pad_12[4];
 };
 
 
@@ -5485,6 +5487,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 401
+#define SERVER_PROTOCOL_VERSION 402
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

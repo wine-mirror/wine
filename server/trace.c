@@ -3594,7 +3594,8 @@ static void dump_query_symlink_request( const struct query_symlink_request *req 
 
 static void dump_query_symlink_reply( const struct query_symlink_reply *req )
 {
-    dump_varargs_unicode_str( " target_name=", cur_size );
+    fprintf( stderr, " total=%u", req->total );
+    dump_varargs_unicode_str( ", target_name=", cur_size );
 }
 
 static void dump_get_object_info_request( const struct get_object_info_request *req )
@@ -4607,6 +4608,7 @@ static const struct
     { "GENERIC_NOT_MAPPED",          STATUS_GENERIC_NOT_MAPPED },
     { "HANDLES_CLOSED",              STATUS_HANDLES_CLOSED },
     { "HANDLE_NOT_CLOSABLE",         STATUS_HANDLE_NOT_CLOSABLE },
+    { "HOST_UNREACHABLE",            STATUS_HOST_UNREACHABLE },
     { "ILLEGAL_FUNCTION",            STATUS_ILLEGAL_FUNCTION },
     { "INSTANCE_NOT_AVAILABLE",      STATUS_INSTANCE_NOT_AVAILABLE },
     { "INSUFFICIENT_RESOURCES",      STATUS_INSUFFICIENT_RESOURCES },

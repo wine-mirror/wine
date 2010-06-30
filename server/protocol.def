@@ -3057,6 +3057,7 @@ enum message_type
 @REQ(query_symlink)
     obj_handle_t   handle;        /* handle to the symlink */
 @REPLY
+    data_size_t    total;         /* total needed size for name */
     VARARG(target_name,unicode_str); /* target name */
 @END
 

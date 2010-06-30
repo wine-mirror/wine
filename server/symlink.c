@@ -214,6 +214,7 @@ DECL_HANDLER(query_symlink)
                                                 SYMBOLIC_LINK_QUERY, &symlink_ops );
     if (!symlink) return;
 
+    reply->total = symlink->len;
     if (get_reply_max_size() < symlink->len)
         set_error( STATUS_BUFFER_TOO_SMALL );
     else
