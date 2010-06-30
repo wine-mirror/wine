@@ -5,6 +5,7 @@
  * Copyright 2003 Marcelo Duarte
  * Copyright 2004 Américo José Melo
  * Copyright 2009 Ricardo Filipe
+ * Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,7 +47,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Substituir texto", CM_U_REPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir", CM_U_PRINT
-  MENUITEM "Pa&ge Setup", CM_U_PAGESETUP
+  MENUITEM "Configurar &Página", CM_U_PAGESETUP
  }
 
  POPUP "F&lags"
@@ -59,10 +60,10 @@ CmdlgtstMenu MENU
   MENUITEM "&Localizar/Substituir", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir", CM_F_PRINT
-  MENUITEM "Pa&ge Setup", CM_F_PAGESETUP
+  MENUITEM "Configurar &Página", CM_F_PAGESETUP
  }
 
- POPUP "Aj&uda"
+ POPUP "A&juda"
  {
   MENUITEM "&Uso", CM_H_USAGE
   MENUITEM "&Sobre", CM_H_ABOUT
@@ -120,7 +121,7 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 Color_Flags_Dialog DIALOG 11, 20, 207, 107
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Flags do diálode de cores"
+CAPTION "Flags do diálogo de cores"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -259,7 +260,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Marcas flags que são configurados pelo sistema e devem ser limpos pelo usuário.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Marca flags que são configuradas pelo sistema e devem ser limpas pelo usuário.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -294,7 +295,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Marcas de opções que são configuradas pelo sistema e devem ser limpos pelo utilizador.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Marca opções que são configuradas pelo sistema e devem ser limpas pelo utilizador.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 
@@ -365,6 +366,9 @@ FONT 8, "MS Shell Dlg"
  CHECKBOX "PD_SHOWHELP", I_PD_SHOWHELP, 12, 252, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "PD_USEDEVMODECOPIES", I_PD_USEDEVMODECOPIES, 12, 264, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 }
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 PageSetup_Flags_Dialog DIALOG 4, 17, 239, 245
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
@@ -462,7 +466,7 @@ FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
  LTEXT "Common Dialog Test Jig Exerciser, versão 1.20", -1, 13, 36, 168, 12
- LTEXT "(c) 1999-2000, Eric Williams.  Direitos garantidos pelo licença do WINE.  Don't hoard code... share it", -1, 18, 60, 157, 24
+ LTEXT "(c) 1999-2000, Eric Williams.  Direitos garantidos pela licença do WINE.  Não oculte o código... compartilhe-o", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
 
@@ -492,9 +496,9 @@ FONT 8, "MS Shell Dlg"
  LTEXT "Esta ferramenta testa COMMDLG para o Wine.", -1, 12, 72, 168, 12
  LTEXT "Flags são especificados no menu Flags.", -1, 12, 96, 168, 12
  LTEXT "Diálogo de cores muda a cor de fundo.", -1, 12, 120, 168, 12
- LTEXT "Diálogo de fontes muda todas as fontes, cores das fontes se CF_EFFECTS está selecionado.", -1, 12, 144, 168, 24
+ LTEXT "Diálogo de fontes muda todas as fontes e cores das fontes se CF_EFFECTS estiver selecionado.", -1, 12, 144, 168, 24
  LTEXT "O canto superior esquerdo indica o caminho completo e o título dos último sucesso de Abrir ou Salvar.", -1, 12, 180, 168, 24
- LTEXT "(c) 1999-2000, Eric Williams.  Direitos garantidos pelo licença do WINE.  Don't hoard code... share it", -1, 18, 60, 157, 24
+ LTEXT "(c) 1999-2000, Eric Williams.  Direitos garantidos pela licença do WINE.  Não reserve o código... compartilhe-o", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 86, 12, 18, 20
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
 }
@@ -517,6 +521,9 @@ FONT 8, "MS Shell Dlg"
  ICON "AboutIcon", -1, 86, 12, 18, 20
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
 }
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 PAGESETUPDLGORD_CSTM DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
