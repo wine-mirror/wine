@@ -3,6 +3,7 @@
  * Portuguese language support
  *
  * Copyright (C) 2008 Ricardo Filipe
+ * Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,26 +22,52 @@
 
 #include "resources.h"
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+#pragma code_page(65001)
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE
 {
-    STRING_USAGE, "A sintaxe deste comando �:\n\nNET [ HELP | START | STOP | USE ]\n"
-    STRING_START_USAGE, "Especifique o nome do servi�o para iniciar.\n"
-    STRING_STOP_USAGE, "Especifique o nome do servi�o para parar.\n"
-    STRING_STOP_DEP, "A parar o servi�o dependente: %s\n"
-    STRING_CANT_STOP, "N�o foi poss�vel parar o servi�o %s\n"
-    STRING_NO_SCM, "N�o foi poss�vel entregar o handle ao controlador de servi�os.\n"
-    STRING_NO_SVCHANDLE, "N�o foi poss�vel entregar o handle ao servi�o.\n"
-    STRING_START_SVC, "O servi�o %s est� a iniciar.\n"
-    STRING_START_SVC_SUCCESS, "O servi�o %s foi iniciado com sucesso.\n"
-    STRING_START_SVC_FAIL, "O servi�o %s falhou ao iniciar.\n"
-    STRING_STOP_SVC, "O servi�o %s est� a parar.\n"
-    STRING_STOP_SVC_SUCCESS, "O servi�o %s foi parado com sucesso.\n"
-    STRING_STOP_SVC_FAIL, "O servi�o %s falhou a parar.\n"
-    STRING_HELP_USAGE, "A sintaxe deste comando �:\n\nNET HELP command\n    -or-\nNET command /HELP\n\n"\
-                       "   Os comandos dispon�veis s�o:\n   NET HELP    NET START    NET STOP    NET USE\n"
-    STRING_NO_ENTRIES, "N�o h� entradas na lista.\n"
+    STRING_USAGE, "A sintaxe deste comando é:\n\nNET [ HELP | START | STOP | USE ]\n"
+    STRING_START_USAGE, "Especifique o nome do serviço para iniciar.\n"
+    STRING_STOP_USAGE, "Especifique o nome do serviço para parar.\n"
+    STRING_STOP_DEP, "Parando o serviço dependente: %s\n"
+    STRING_CANT_STOP, "Não foi possível parar o serviço %s\n"
+    STRING_NO_SCM, "Não foi possível entregar o handle ao gerenciador de serviços.\n"
+    STRING_NO_SVCHANDLE, "Não foi possível entregar o handle ao serviço.\n"
+    STRING_START_SVC, "O serviço %s está iniciando.\n"
+    STRING_START_SVC_SUCCESS, "O serviço %s iniciou com sucesso.\n"
+    STRING_START_SVC_FAIL, "O serviço %s falhou ao iniciar.\n"
+    STRING_STOP_SVC, "O serviço %s está parando.\n"
+    STRING_STOP_SVC_SUCCESS, "O serviço %s parou com sucesso.\n"
+    STRING_STOP_SVC_FAIL, "O serviço %s falhou ao parar.\n"
+    STRING_HELP_USAGE, "A sintaxe deste comando é:\n\nNET HELP comando\n    -ou-\nNET comando /HELP\n\n"\
+                       "   Os comandos disponíveis são:\n   NET HELP    NET START    NET STOP    NET USE\n"
+    STRING_NO_ENTRIES, "Não há entradas na lista.\n"
     STRING_USE_HEADER, "\nEstado  Local   Remoto\n---------------------------------------------------------------\n"
-    STRING_USE_ENTRY,  "%s      %S      %S      Recursos dispon�veis: %lu\n"
+    STRING_USE_ENTRY,  "%s      %S      %S      Recursos disponíveis: %lu\n"
+}
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE
+{
+    STRING_USAGE, "A sintaxe deste comando é:\n\nNET [ HELP | START | STOP | USE ]\n"
+    STRING_START_USAGE, "Especifique o nome do serviço para iniciar.\n"
+    STRING_STOP_USAGE, "Especifique o nome do serviço para parar.\n"
+    STRING_STOP_DEP, "A parar o serviço dependente: %s\n"
+    STRING_CANT_STOP, "Não foi possível parar o serviço %s\n"
+    STRING_NO_SCM, "Não foi possível entregar o handle ao controlador de serviços.\n"
+    STRING_NO_SVCHANDLE, "Não foi possível entregar o handle ao serviço.\n"
+    STRING_START_SVC, "O serviço %s está a iniciar.\n"
+    STRING_START_SVC_SUCCESS, "O serviço %s foi iniciado com sucesso.\n"
+    STRING_START_SVC_FAIL, "O serviço %s falhou ao iniciar.\n"
+    STRING_STOP_SVC, "O serviço %s está a parar.\n"
+    STRING_STOP_SVC_SUCCESS, "O serviço %s foi parado com sucesso.\n"
+    STRING_STOP_SVC_FAIL, "O serviço %s falhou a parar.\n"
+    STRING_HELP_USAGE, "A sintaxe deste comando é:\n\nNET HELP command\n    -or-\nNET command /HELP\n\n"\
+                       "   Os comandos disponíveis são:\n   NET HELP    NET START    NET STOP    NET USE\n"
+    STRING_NO_ENTRIES, "Não há entradas na lista.\n"
+    STRING_USE_HEADER, "\nEstado  Local   Remoto\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY,  "%s      %S      %S      Recursos disponíveis: %lu\n"
 }
