@@ -2,6 +2,7 @@
  * WineBoot Portuguese Language resources
  *
  * Copyright (C) 2008 Ricardo Filipe
+ * Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,18 +22,20 @@
 
 #include "resource.h"
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+#pragma code_page(65001)
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "� espera do programa"
+CAPTION "Esperando o programa"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "Cancelar",IDCANCEL,129,49,50,15
     PUSHBUTTON      "Terminar Processo",IDOK,51,49,71,15
-    LTEXT           "Um encerramento ou t�rmino de sess�o simulado est� em curso, mas este programa n�o est� a responder.",
+    LTEXT           "Uma simulação de encerramento de sessão ou desligamento está em curso, mas este programa não está respondendo.",
                     IDC_STATIC,7,7,172,19
-    LTEXT           "Se terminar o processo pode perder todos os dados n�o guardados.",
+    LTEXT           "Se este processo for finalizado você pode perder todos os dados não salvos.",
                     IDC_STATIC,7,28,172,15
 END
 
@@ -42,6 +45,31 @@ CAPTION "Wine"
 FONT 8, "MS Shell Dlg"
 BEGIN
     ICON "", IDC_WAITICON, 3, 3, 10, 10
-    LTEXT "A configura��o do Wine em %s est� a ser actualizada, por favor aguarde...",
+    LTEXT "A configuração do Wine em %s está sendo atualizada, por favor aguarde...",
+          IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "À espera do programa"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "Cancelar",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "Terminar Processo",IDOK,51,49,71,15
+    LTEXT           "Um encerramento ou término de sessão simulado está em curso, mas este programa não está a responder.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "Se terminar o processo pode perder todos os dados não guardados.",
+                    IDC_STATIC,7,28,172,15
+END
+
+IDD_WAITDLG DIALOG 0, 0, 200, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_DISABLED
+CAPTION "Wine"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON "", IDC_WAITICON, 3, 3, 10, 10
+    LTEXT "A configuração do Wine em %s está a ser actualizada, por favor aguarde...",
           IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
 END
