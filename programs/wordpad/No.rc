@@ -128,7 +128,7 @@ BEGIN
         MENUITEM "Fuchsia"    ID_COLOR_FUCHSIA
         MENUITEM "Aqua"       ID_COLOR_AQUA
         MENUITEM "Hvit"       ID_COLOR_WHITE
-        MENUITEM "Automatic"  ID_COLOR_AUTOMATIC
+        MENUITEM "Automatisk" ID_COLOR_AUTOMATIC
     END
 END
 
@@ -192,7 +192,7 @@ Caption ""
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX "Linjebryting", -1, 10, 10, 130, 85
-    RADIOBUTTON "No line wrapping", IDC_PAGEFMT_WN, 18, 25, 117, 15
+    RADIOBUTTON "Ingen linjebryting", IDC_PAGEFMT_WN, 18, 25, 117, 15
     RADIOBUTTON "Bryt tekst etter v&indusbredden", IDC_PAGEFMT_WW, 18, 45, 117, 15
     RADIOBUTTON "Bryt tekst etter &margen", IDC_PAGEFMT_WM, 18, 65, 117, 15
     GROUPBOX "Verktøylinjer", -1, 150, 10, 120, 85
@@ -247,6 +247,12 @@ BEGIN
     STRING_PREVIEW_ZOOMIN,           "Zoom in"
     STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "Lukk"
+    STRING_PREVIEW_PAGE,             "Side"
+    STRING_PREVIEW_PAGES,            "Sider"
+    STRING_UNITS_CM,                 "cm"
+    STRING_UNITS_IN,                 "in"
+    STRING_UNITS_INCH,               "inch"
+    STRING_UNITS_PT,                 "pt"
 END
 
 STRINGTABLE DISCARDABLE
@@ -259,7 +265,7 @@ BEGIN
                                  "vil føre til at all formatering går tapt. Er du " \
                                  "sikker på at du vil fortsette?"
     STRING_INVALID_NUMBER,       "Ugyldig tallformat"
-    STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE storage documents are not supported"
+    STRING_OLE_STORAGE_NOT_SUPPORTED, "OLE storage-dokumenter støttes ikke"
     STRING_WRITE_FAILED,              "Klarte ikke lagre filen."
     STRING_WRITE_ACCESS_DENIED,       "Du har ikke tilgang til å lagre filen."
     STRING_OPEN_FAILED,               "Klarte ikke åpne filen."
