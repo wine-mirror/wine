@@ -2,6 +2,7 @@
  * Portuguese Language Support
  *
  * Copyright 2009 Ricardo Filipe
+ * Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +23,7 @@
 
 #pragma code_page(65001)
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 IDM_DEBUG_POPUP MENU
 BEGIN
@@ -31,6 +32,28 @@ BEGIN
         MENUITEM "&Depuração", ID_DEBUG
     END
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Erro no programa"
+FONT 8, "Tahoma"
+BEGIN
+    LTEXT           "",IDC_STATIC_BG,0,0,273,52,WS_BORDER,0
+    LTEXT           "O programa %s encontrou um problema sério e precisa \
+                    ser encerrado. Pedimos desculpa pelo incômodo.",
+                    IDC_STATIC_TXT1,27,10,224,30
+    LTEXT           "Isto pode ter sido causado por um problema no programa ou no Wine. \
+                    Pode-se visitar http://appdb.winehq.org para dicas de como rodar \
+                    esta aplicativo.\n\n\
+                    Se este problema não existe no Windows e não foi relatado ainda \
+                    você pode fazê-lo em http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
+    DEFPUSHBUTTON   "Fechar", IDOK, 205, 151, 60, 16, WS_TABSTOP
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDD_CRASH_DLG DIALOGEX 100, 100, 273, 175
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -48,6 +71,9 @@ BEGIN
                     você pode fazê-lo em http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Fechar", IDOK, 205, 151, 60, 16, WS_TABSTOP
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 STRINGTABLE
 BEGIN
