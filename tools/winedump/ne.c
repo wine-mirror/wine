@@ -151,12 +151,12 @@ static void dump_ne_names( const IMAGE_OS2_HEADER *ne )
     }
     if (ne->ne_cbnrestab)
     {
+        unsigned int pos = ne->ne_nrestab;
         printf( "\nNon-resident name table:\n" );
-        pstr = PRD(ne->ne_nrestab, 0);
-        while (*pstr)
+        while ((pstr = PRD(pos, 0)) && *pstr)
         {
             printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr, pstr + 1 );
-            pstr += *pstr + 1 + sizeof(WORD);
+            pos += *pstr + 1 + sizeof(WORD);
         }
     }
 }
