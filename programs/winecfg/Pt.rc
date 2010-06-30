@@ -345,7 +345,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Seleção de Driver ",IDC_STATIC,8,4,244,160
-    LTEXT           "Selecione um driver de som selecionando a caixa do driver desejado. Não marque nenhuma opção para desabilitar o som. Não é recomendado selecionar mais de um driver. Configure um driver clicando com o botão direito sobre ele.:",IDC_STATIC,15,20,227,30
+    LTEXT           "Selecione um driver de som selecionando a caixa do driver desejado. Não marque nenhuma opção para desabilitar o som. Não é recomendado selecionar mais de um driver. Configure um driver clicando com o botão direito sobre ele.:",IDC_STATIC,15,18,227,35
     CONTROL         "Dispositivos",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,55,140,105
     PUSHBUTTON      "&Testar Som",IDC_AUDIO_TEST,170,55,65,14
     PUSHBUTTON	    "Painel de &Controle",IDC_AUDIO_CONTROL_PANEL,170,75,65,14
