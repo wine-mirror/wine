@@ -220,9 +220,9 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
     dbg_curr_thread->frames = NULL;
 
     memset(&sf, 0, sizeof(sf));
-    memory_get_current_frame(&sf.AddrFrame);
-    memory_get_current_pc(&sf.AddrPC);
-    memory_get_current_stack(&sf.AddrStack);
+    be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_frame, &sf.AddrFrame);
+    be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_pc, &sf.AddrPC);
+    be_cpu->get_addr(dbg_curr_thread->handle, &ctx, be_cpu_addr_stack, &sf.AddrStack);
 
     /* don't confuse StackWalk by passing in inconsistent addresses */
     if ((sf.AddrPC.Mode == AddrModeFlat) && (sf.AddrFrame.Mode != AddrModeFlat))
