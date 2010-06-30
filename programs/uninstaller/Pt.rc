@@ -1,6 +1,7 @@
 /*
  * Uninstaller (Portuguese Resources)
  *
+ * Copyright 2010 Gustavo Henrique Milar√©
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +21,18 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE {
+     IDS_APPNAME, "Desinstalador de Aplicativos Wine"
+     IDS_UNINSTALLFAILED, "Falha ao executar o comando de desinstala√ß√£o '%s', talvez devido √† falta do execut√°vel.\r\nDeseja remover a entrada de desinstala√ß√£o do registro?"
+}
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE {
-     IDS_APPNAME, "Desinstalador de AplicaÁıes Wine"
-     IDS_UNINSTALLFAILED, "ExecuÁ„o do comando de desinstalaÁ„o '%s' falhado, talvez devido a faltar o execut·vel.\r\nDeseja remover a entrada de desinstalaÁ„o do registo ?"
+     IDS_APPNAME, "Desinstalador de Aplica√ß√µes Wine"
+     IDS_UNINSTALLFAILED, "Execu√ß√£o do comando de desinstala√ß√£o '%s' falhado, talvez devido a faltar o execut√°vel.\r\nDeseja remover a entrada de desinstala√ß√£o do registo ?"
 }
