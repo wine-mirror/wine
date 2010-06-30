@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Wine Windows Program Loader
+Name[cs]=Zavaděč programů pro Wine
 Name[de]=Wine Windows-Programmstarter
 Name[es]=Wine Cargador de programas de Windows
 Name[lt]=Wine Windows programų paleidyklė
