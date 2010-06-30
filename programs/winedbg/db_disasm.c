@@ -226,9 +226,9 @@ static const struct inst db_inst_0f0x[] = {
 /*02*/	{ "lar",   TRUE,  LONG,  op2(E,R),    0 },
 /*03*/	{ "lsl",   TRUE,  LONG,  op2(E,R),    0 },
 /*04*/	{ "",      FALSE, NONE,  0,	      0 },
-/*05*/	{ "",      FALSE, NONE,  0,	      0 },
+/*05*/	{ "syscall", FALSE, NONE,  0,	      0 },
 /*06*/	{ "clts",  FALSE, NONE,  0,	      0 },
-/*07*/	{ "",      FALSE, NONE,  0,	      0 },
+/*07*/	{ "sysret", FALSE, NONE,  0,	      0 },
 
 /*08*/	{ "invd",  FALSE, NONE,  0,	      0 },
 /*09*/	{ "wbinvd",FALSE, NONE,  0,	      0 },
@@ -992,7 +992,7 @@ static const struct inst db_inst_table[256] = {
 /*ef*/	{ "out",   FALSE, LONG,  op2(A, DX) , 0 },
 
 /*f0*/	{ "",      FALSE, NONE,  0,	     0 },
-/*f1*/	{ "",      FALSE, NONE,  0,	     0 },
+/*f1*/	{ "icebp", FALSE, NONE,  0,	     0 },
 /*f2*/	{ "",      FALSE, NONE,  0,	     0 },
 /*f3*/	{ "",      FALSE, NONE,  0,	     0 },
 /*f4*/	{ "hlt",   FALSE, NONE,  0,	     0 },
