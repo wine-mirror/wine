@@ -17,6 +17,7 @@ RC_SRCS = \
 	jscript_Ko.rc \
 	jscript_Lt.rc \
 	jscript_Nl.rc \
+	jscript_No.rc \
 	jscript_Pl.rc \
 	jscript_Pt.rc \
 	jscript_Ro.rc \
