@@ -4,6 +4,7 @@
  *  Portuguese Language support
  *
  *  Copyright 2008 Ricardo Filipe
+ *  Copyright 2010 Gustavo Henrique Milaré
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,11 +25,75 @@
 
 #pragma code_page(65001)
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
 /*
  Menu
 */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDR_TASKMANAGER MENU DISCARDABLE
+BEGIN
+    POPUP "&Arquivo"
+    BEGIN
+        MENUITEM "&Nova Tarefa (Executar...)",          ID_FILE_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "&Sair",          ID_FILE_EXIT
+    END
+    POPUP "&Opções"
+    BEGIN
+        MENUITEM "&Sempre Visível",              ID_OPTIONS_ALWAYSONTOP
+        , CHECKED
+        MENUITEM "&Executar minimizado",            ID_OPTIONS_MINIMIZEONUSE
+        , CHECKED
+        MENUITEM "&Ocultar quando minimizado",        ID_OPTIONS_HIDEWHENMINIMIZED
+        , CHECKED
+        MENUITEM "&Mostrar tarefas de 16-bits",          ID_OPTIONS_SHOW16BITTASKS
+        , CHECKED
+    END
+    POPUP "&Ver"
+    BEGIN
+        MENUITEM "&Atualizar agora",                ID_VIEW_REFRESH
+        POPUP "&Frequência de atualização"
+        BEGIN
+            MENUITEM "&Alta",                       ID_VIEW_UPDATESPEED_HIGH
+            MENUITEM "&Normal",                     ID_VIEW_UPDATESPEED_NORMAL
+            , CHECKED
+            MENUITEM "&Baixa",                        ID_VIEW_UPDATESPEED_LOW
+            MENUITEM "&Pausa",                     ID_VIEW_UPDATESPEED_PAUSED
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Ícones grandes",                ID_VIEW_LARGE
+        MENUITEM "Ícones &pequenos",                ID_VIEW_SMALL
+        MENUITEM "&Detalhes",                    ID_VIEW_DETAILS, CHECKED
+        MENUITEM "&Selecionar colunas...",          ID_VIEW_SELECTCOLUMNS
+        POPUP "&Histórico do CPU"
+        BEGIN
+            MENUITEM "&Um gráfico, todos os CPUs",        ID_VIEW_CPUHISTORY_ONEGRAPHALL
+
+            MENUITEM "Um &gráfico por CPU",          ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
+            , CHECKED
+        END
+        MENUITEM "&Mostrar tempos do kernel",          ID_VIEW_SHOWKERNELTIMES
+    END
+    POPUP "&Janelas"
+    BEGIN
+        MENUITEM "Organizar &Horizontalmente",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "Organizar &Verticalmente",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "&Minimizar",                   ID_WINDOWS_MINIMIZE
+        MENUITEM "Ma&ximizar",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "&Em cascata",                    ID_WINDOWS_CASCADE
+        MENUITEM "&Trazer para a frente",             ID_WINDOWS_BRINGTOFRONT
+    END
+    POPUP "&Ajuda"
+    BEGIN
+        MENUITEM "&Tópicos da ajuda do Gerenciador de Tarefas",   ID_HELP_TOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&Sobre o Gerenciador de Tarefas",         ID_HELP_ABOUT
+    END
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDR_TASKMANAGER MENU DISCARDABLE
 BEGIN
@@ -62,8 +127,8 @@ BEGIN
 
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Icones grandes",                ID_VIEW_LARGE
-        MENUITEM "Icones &pequenos",                ID_VIEW_SMALL
+        MENUITEM "&Ícones grandes",                ID_VIEW_LARGE
+        MENUITEM "Ícones &pequenos",                ID_VIEW_SMALL
         MENUITEM "&Detalhes",                    ID_VIEW_DETAILS, CHECKED
         MENUITEM "&Seleccionar colunas...",          ID_VIEW_SELECTCOLUMNS
         POPUP "&Histórico do CPU"
@@ -92,6 +157,21 @@ BEGIN
     END
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDR_WINDOWSMENU MENU DISCARDABLE
+BEGIN
+        MENUITEM "Organizar &Horizontalmente",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "Organizar &Verticalmente",            ID_WINDOWS_TILEVERTICALLY
+	MENUITEM "&Minimizar",                   ID_WINDOWS_MINIMIZE
+	MENUITEM "Ma&ximizar",                   ID_WINDOWS_MAXIMIZE
+	MENUITEM "&Em cascata",                    ID_WINDOWS_CASCADE
+	MENUITEM "&Trazer para a frente",             ID_WINDOWS_BRINGTOFRONT
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
 IDR_WINDOWSMENU MENU DISCARDABLE
 BEGIN
 	MENUITEM "Em mosaico na &Horizontal",          ID_WINDOWS_TILEHORIZONTALLY
@@ -102,17 +182,43 @@ BEGIN
 	MENUITEM "&Trazer para a frente",             ID_WINDOWS_BRINGTOFRONT
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+
 IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
         MENUITEM "&Nova Tarefa (Executar...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Icones Grandes",                ID_VIEW_LARGE
-        MENUITEM "Icones &Pequenos",                ID_VIEW_SMALL
+        MENUITEM "&Ícones Grandes",                ID_VIEW_LARGE
+        MENUITEM "Ícones &Pequenos",                ID_VIEW_SMALL
         MENUITEM "&Detalhes",                    ID_VIEW_DETAILS, CHECKED
     END
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDR_APPLICATION_PAGE_CONTEXT2 MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&Mudar para",                  ID_APPLICATION_PAGE_SWITCHTO
+        MENUITEM "&Trazer para a frente",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM SEPARATOR
+        MENUITEM "Organizar &Horizontalmente",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "Organizar &Verticalmente",            ID_WINDOWS_TILEVERTICALLY
+	MENUITEM "&Minimizar",                   ID_WINDOWS_MINIMIZE
+	MENUITEM "Ma&ximizar",                   ID_WINDOWS_MAXIMIZE
+	MENUITEM "&Em cascata",                    ID_WINDOWS_CASCADE
+        MENUITEM SEPARATOR
+        MENUITEM "&Terminar Tarefa",                   ID_APPLICATION_PAGE_ENDTASK
+        MENUITEM "&Ir para Processo",              ID_APPLICATION_PAGE_GOTOPROCESS
+    END
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDR_APPLICATION_PAGE_CONTEXT2 MENU DISCARDABLE
 BEGIN
@@ -132,6 +238,9 @@ BEGIN
     END
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+
 IDR_TRAY_POPUP MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
@@ -142,6 +251,9 @@ BEGIN
         MENUITEM "&Sempre Visível",              ID_OPTIONS_ALWAYSONTOP
     END
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 IDR_PROCESS_PAGE_CONTEXT MENU DISCARDABLE
 BEGIN
@@ -172,9 +284,25 @@ BEGIN
     END
 END
 
+
 /*
  Dialog
 */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 264, 246
+STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
+    WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
+    WS_THICKFRAME
+CAPTION "Gerenciador de Tarefas"
+MENU IDR_TASKMANAGER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "Tab1",IDC_TAB,"SysTabControl32",WS_TABSTOP,3,3,257,228
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 264, 246
 STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
@@ -186,6 +314,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "Tab1",IDC_TAB,"SysTabControl32",WS_TABSTOP,3,3,257,228
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 IDD_APPLICATION_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
@@ -209,6 +340,70 @@ BEGIN
     CONTROL         "&Mostrar Processos de todos os utilizadores",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,111,10
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+/*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
+IDD_PERFORMANCE_PAGE DIALOGEX DISCARDABLE  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Utilização CPU",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
+    GROUPBOX        "Memória",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
+    GROUPBOX        "Totais",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Carga de Commit (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Memória Física (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Memória kernel (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
+    LTEXT           "Identificadores",IDS_TOTALS_HANDLE_COUNT,12,131,40,8
+    LTEXT           "Threads",IDS_TOTALS_THREAD_COUNT,12,140,27,8
+    LTEXT           "Processos",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
+    EDITTEXT        IDC_TOTALS_HANDLE_COUNT,65,131,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_THREAD_COUNT,65,140,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_PROCESS_COUNT,65,149,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Total",IDS_COMMIT_CHARGE_TOTAL,12,175,27,8
+    LTEXT           "Limite",IDS_COMMIT_CHARGE_LIMIT,12,184,20,8
+    LTEXT           "Pico",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
+    EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_LIMIT,65,184,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_PEAK,65,193,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Total",IDS_PHYSICAL_MEMORY_TOTAL,137,131,27,8
+    LTEXT           "Livre",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,30,8
+    LTEXT           "Em Cache",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,46,8
+    EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,185,131,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_AVAILABLE,185,140,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Total",IDS_KERNEL_MEMORY_TOTAL,137,174,27,8
+    LTEXT           "Paginada",IDS_KERNEL_MEMORY_PAGED,137,184,21,8
+    LTEXT           "Não paginada",IDS_KERNEL_MEMORY_NONPAGED,137,193,34,8
+    EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_PAGED,185,184,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_NONPAGED,185,193,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    GROUPBOX        "Histórico de utilização da CPU", IDC_CPU_USAGE_HISTORY_FRAME, 74,5,168,54,0, WS_EX_TRANSPARENT
+    GROUPBOX        "Histórico de Utilização da Memória Física", IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
+    PUSHBUTTON      "Mostrar Uso da CPU",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
+		    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Mostrar Uso da MEM",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
+                    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Histórico de Uso CPU",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
+                    153,37,0,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Histórico de Uso MEM",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+                    153,37,0,WS_EX_CLIENTEDGE
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 /*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
 IDD_PERFORMANCE_PAGE DIALOGEX DISCARDABLE  0, 0, 247, 210
@@ -268,6 +463,9 @@ BEGIN
     PUSHBUTTON      "MEM Usage History",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
                     153,37,0,WS_EX_CLIENTEDGE
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -355,6 +553,72 @@ BEGIN
                     WS_DISABLED | WS_TABSTOP,175,119,41,10
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 195, 199
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Selecionar Colunas"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
+    PUSHBUTTON      "Cancelar",IDCANCEL,138,178,50,14
+    LTEXT           "Selecione as colunas que vão aparecer na página de Processos do Gerenciador de Tarefas.",
+                    IDC_STATIC,7,7,181,17
+    CONTROL         "&Nome da Imagem",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,7,28,56,10
+    CONTROL         "&PID (Identificador do Processo)",IDC_PID,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
+    CONTROL         "&Utilização da CPU",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,50,53,10
+    CONTROL         "&Tempo da CPU",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,61,48,10
+    CONTROL         "U&so de Memória",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,72,63,10
+    CONTROL         "&Delta do uso de Memória",IDC_MEMORYUSAGEDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,82,10
+    CONTROL         "P&ico do uso de Memória",IDC_PEAKMEMORYUSAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,94,82,10
+    CONTROL         "&Falhas de paginação",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,105,53,10
+    CONTROL         "&Objetos de USUÁRIO",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,116,62,10
+    CONTROL         "&Leituras de E/S",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,127,49,10
+    CONTROL         "Leitura de E/S em &Bytes",IDC_IOREADBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,138,65,10
+    CONTROL         "&ID da sessão",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,149,50,10
+    CONTROL         "&Nome de usuário",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,160,51,10
+    CONTROL         "D&elta de Falhas de Paginação",IDC_PAGEFAULTSDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
+    CONTROL         "&Tamanho de Memória Virtual",IDC_VIRTUALMEMORYSIZE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,39,77,10
+    CONTROL         "&Conjunto Paginado",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,50,53,10
+    CONTROL         "Conjunto Não Paginado",IDC_NONPAGEDPOOL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,61,67,10
+    CONTROL         "Prioridade &Base",IDC_BASEPRIORITY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,72,55,10
+    CONTROL         "Número de &Handles",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,83,59,10
+    CONTROL         "Número de &Threads",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,94,59,10
+    CONTROL         "Objetos GDI",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,105,55,10
+    CONTROL         "Escritas de E/S",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,116,49,10
+    CONTROL         "Escrita de E/S em Bytes",IDC_IOWRITEBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,127,65,10
+    CONTROL         "Outros E/S",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,138,46,10
+    CONTROL         "Outros E/S em Bytes",IDC_IOOTHERBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,149,65,10
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
 IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 195, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Seleccionar Colunas"
@@ -416,9 +680,21 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,149,65,10
 END
 
+
 /*
  String Table
 */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Gerenciador de Tarefas"
+    IDC_TASKMGR             "Gerenciador de Tarefas"
+    IDS_RUNDLG_CAPTION      "Criar Nova Tarefa"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
 BEGIN
@@ -426,6 +702,27 @@ BEGIN
     IDC_TASKMGR             "Gestor de Tarefas"
     IDS_RUNDLG_CAPTION      "Criar Nova Tarefa"
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_FILE_NEW             "Executa um novo programa"
+    ID_OPTIONS_ALWAYSONTOP  "O Gerenciador de Tarefas permanece à frente de todas as outras janelas a não ser que esteja minimizado"
+    ID_OPTIONS_MINIMIZEONUSE
+                            "O Gerenciador de Tarefas é minimizado quando se efetua uma operação de Mudar Para"
+    ID_OPTIONS_HIDEWHENMINIMIZED "Esconder o Gerenciador de Tarefas quando está minimizado"
+    ID_VIEW_REFRESH         "Forçar o Gerenciador de Tarefas a atualizar agora, independentemente da velocidade de atualização definida."
+    ID_VIEW_LARGE           "Mostra as tarefas usando ícones grandes"
+    ID_VIEW_SMALL           "Mostra as tarefas usando ícones pequenos"
+    ID_VIEW_DETAILS         "Mostra informação sobre cada tarefa"
+    ID_VIEW_UPDATESPEED_HIGH "Atualiza duas vezes por segundo"
+    ID_VIEW_UPDATESPEED_NORMAL "Atualiza a cada dois segundos"
+    ID_VIEW_UPDATESPEED_LOW "Atualiza a cada quatro segundos"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
 BEGIN
@@ -435,13 +732,42 @@ BEGIN
                             "O Gestor de Tarefas é minimizado quando se efectua uma operação de Mudar Para"
     ID_OPTIONS_HIDEWHENMINIMIZED "Esconder o Gestor de Tarefas quando está minimizado"
     ID_VIEW_REFRESH         "Forçar o Gestor de Tarefas a actualizar agora, independentemente da velocidade de actualização definida."
-    ID_VIEW_LARGE           "Mostra as tarefas usando icones grandes"
-    ID_VIEW_SMALL           "Mostra as tarefas usando icones pequenos"
+    ID_VIEW_LARGE           "Mostra as tarefas usando ícones grandes"
+    ID_VIEW_SMALL           "Mostra as tarefas usando ícones pequenos"
     ID_VIEW_DETAILS         "Mostra informação sobre cada tarefa"
     ID_VIEW_UPDATESPEED_HIGH "Actualiza o display duas vezes por segundo"
     ID_VIEW_UPDATESPEED_NORMAL "Actualiza o display a cada dois segundos"
     ID_VIEW_UPDATESPEED_LOW "Actualiza o display a cada quatro segundos"
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_VIEW_UPDATESPEED_PAUSED "Não actualiza automaticamente"
+    ID_WINDOWS_TILEHORIZONTALLY
+                            "Organiza as janelas horizontalmente pela área de trabalho"
+    ID_WINDOWS_TILEVERTICALLY "Organiza as janelas verticalmente pela área de trabalho"
+    ID_WINDOWS_MINIMIZE     "Minimiza as janelas"
+    ID_WINDOWS_MAXIMIZE     "Maximiza as janelas"
+    ID_WINDOWS_CASCADE      "Dispõe as janelas em cascata diagonal pelo desktop"
+    ID_WINDOWS_BRINGTOFRONT "Traz a janela para a frente, mas sem mudar para ela"
+    ID_HELP_TOPICS          "Mostra os tópicos de ajuda do Gerenciador de Tarefas"
+    ID_HELP_ABOUT           "Mostra informação sobre o programa, versão e direitos de autor"
+    ID_FILE_EXIT            "Sai do Gerenciador de Tarefas"
+    ID_OPTIONS_SHOW16BITTASKS
+                            "Mostra as tarefas de 16-bits no ntvdm.exe associado"
+    ID_VIEW_SELECTCOLUMNS   "Seleciona as colunas que serão visíveis na página de processos"
+    ID_VIEW_SHOWKERNELTIMES "Mostra o tempo do kernel nos gráficos de performance"
+    ID_VIEW_CPUHISTORY_ONEGRAPHALL
+                            "Um único gráfico de histórico mostra o uso total do CPU"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Cada CPU tem o seu gráfico de histórico"
+    ID_APPLICATION_PAGE_SWITCHTO
+                            "Coloca a tarefa no fundo e muda o foco para ela"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
 BEGIN
@@ -467,6 +793,35 @@ BEGIN
                             "Coloca a tarefa no fundo e muda o foco para ela"
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_ENDTASK              "Termina as tarefas selecionadas"
+    ID_GOTOPROCESS          "Muda o foco para o processo da tarefa selecionada"
+    ID_RESTORE              "Restaura o Gerenciador de Tarefas do seu estado oculto"
+    ID_PROCESS_PAGE_ENDPROCESS "Remove o processo do sistema"
+    ID_PROCESS_PAGE_ENDPROCESSTREE
+                            "Remove o processo e os seus descendentes do sistema"
+    ID_PROCESS_PAGE_DEBUG   "Anexa o depurador a este processo"
+    ID_PROCESS_PAGE_SETAFFINITY
+                            "Controla em que processadores o processo ficará autorizado a rodar"
+    ID_PROCESS_PAGE_SETPRIORITY_REALTIME "Coloca o processo na classe de prioridade em Tempo Real"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Coloca o processo na classe de prioridade Alta"
+    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+                            "Coloca o processo na classe de prioridade Acima do Normal"
+    ID_PROCESS_PAGE_SETPRIORITY_NORMAL
+                            "Coloca o processo na classe de prioridade Normal"
+    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+                            "Coloca o processo na classe de prioridade Abaixo do Normal"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW "Coloca o processo na classe de prioridade Baixa"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Controla os canais de Depuração"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_ENDTASK              "Diz às tarefas seleccionadas para fechar"
@@ -491,10 +846,35 @@ BEGIN
                             "Controla os canais de Depuração"
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_VIEW_LARGE                     "&Icones Grandes"
-    IDS_VIEW_SMALL                     "I&cones Pequenos"
+    IDS_VIEW_LARGE                     "&Ícones Grandes"
+    IDS_VIEW_SMALL                     "Í&cones Pequenos"
+    IDS_VIEW_DETAILS                   "&Detalhes"
+    IDS_WINDOWS                        "&Janelas"
+    IDS_VIEW_SELECTCOLUMNS             "&Selecionar colunas..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&Mostrar tarefas 16-bit"
+    IDS_VIEW_CPUHISTORY                "&Histórico do CPU"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&Um gráfico, todos os CPUs"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Um gráfico &por CPU"
+    IDS_VIEW_SHOWKERNELTIMES           "&Mostrar tempos do kernel"
+    IDS_APPLICATIONS                   "Aplicativos"
+    IDS_PROCESSES                      "Processos"
+    IDS_PERFORMANCE                    "Desempenho"
+    IDS_STATUS_BAR_CPU_USAGE           "Utilização da CPU: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Processos: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Utilização da memória: %dK / %dK"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "&Ícones Grandes"
+    IDS_VIEW_SMALL                     "Í&cones Pequenos"
     IDS_VIEW_DETAILS                   "&Detalhes"
     IDS_WINDOWS                        "&Janelas"
     IDS_VIEW_SELECTCOLUMNS             "&Seleccionar colunas..."
@@ -510,6 +890,40 @@ BEGIN
     IDS_STATUS_BAR_PROCESSES           "Processos: %d"
     IDS_STATUS_BAR_MEMORY_USAGE        "Utilização da memória: %dK / %dK"
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Nome da Imagem"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "CPU"
+    IDS_CPUTIME           "Tempo de CPU"
+    IDS_MEMORYUSAGE       "Utilização de Memória"
+    IDS_MEMORYUSAGEDELTA  "Intervalo de Memória"
+    IDS_PEAKMEMORYUSAGE   "Pico de Utilização de Memória"
+    IDS_PAGEFAULTS        "Falhas de Páginas"
+    IDS_USEROBJECTS       "Objetos do Usuário"
+    IDS_IOREADS           "Leituras I/O"
+    IDS_IOREADBYTES       "Leituras I/O em Bytes"
+    IDS_SESSIONID         "ID da Sessão"
+    IDS_USERNAME          "Nome de Usuário"
+    IDS_PAGEFAULTSDELTA   "Intervalo de PF"
+    IDS_VIRTUALMEMORYSIZE "Tamanho da Memória Virtual"
+    IDS_PAGEDPOOL         "Pool Paginada"
+    IDS_NONPAGEDPOOL      "NP Pool"
+    IDS_BASEPRIORITY      "Prioridade Base"
+    IDS_HANDLECOUNT       "Handles"
+    IDS_THREADCOUNT       "Threads"
+    IDS_GDIOBJECTS        "Objetos GDI"
+    IDS_IOWRITES          "Escritas I/O"
+    IDS_IOWRITEBYTES      "Escritas I/O em Bytes"
+    IDS_IOOTHER           "Outros I/O"
+    IDS_IOOTHERBYTES      "Outros I/O em Bytes"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
 BEGIN
@@ -540,6 +954,31 @@ BEGIN
     IDS_IOOTHERBYTES      "Bytes de Outros I/O"
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Aviso do Gerenciador de Tarefas"
+    IDS_PRIORITY_CHANGE_MESSAGE     "AVISO: Mudar a prioridade deste processo pode causar\n\
+                                     resultados indesejáveis, incluindo instabilidade do sistema.\n\
+                                     Tem certeza que deseja mudar a prioridade?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Incapaz de mudar a Prioridade"
+    IDS_TERMINATE_MESSAGE           "AVISO: Terminar um processo pode causar resultados indesejá-\n\
+                                     veis, incluindo perda de dados e instabilidade do sistema.\n\
+                                     O processo não vai poder salvar seus estado ou dados antes\n\
+                                     de terminar. Tem certeza que deseja terminar o processo?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Incapaz de Terminar o Processo"
+    IDS_DEBUG_MESSAGE               "AVISO: Depurar este processo pode resultar em perda de dados.\n\
+                                     Tem a certeza que deseja ativar o depurador?"
+    IDS_DEBUG_UNABLE2DEBUG          "Incapaz de depurar o processo"
+    IDS_AFFINITY_ERROR_MESSAGE      "O processo tem que ter afinidade com pelo menos um processador"
+    IDS_AFFINITY_ERROR_TITLE        "Opção Inválida"
+    IDS_AFFINITY_UNABLE2ACCESS      "Incapaz de Acessar ou Alterar a Afinidade do Processo"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WARNING_TITLE               "Aviso do Gestor de Tarefas"
@@ -560,6 +999,25 @@ BEGIN
     IDS_AFFINITY_ERROR_TITLE        "Opção Inválida"
     IDS_AFFINITY_UNABLE2ACCESS      "Incapaz de aceder ou alterar a Afinidade do Processo"
 END
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Processo de Sistema Parado"
+    IDS_APPLICATION_NOT_RESPONDING     "Não Está Respondendo"
+    IDS_APPLICATION_RUNNING            "Executando"
+    IDS_APPLICATION_TASK               "Tarefa"
+    IDS_APPLICATION_STATUS             "Estado"
+    IDS_DEBUG_CHANNEL                  "Canais de Depuração"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
 BEGIN
