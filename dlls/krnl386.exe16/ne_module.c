@@ -728,7 +728,7 @@ static HMODULE16 build_module( const void *mapping, SIZE_T mapping_size, LPCSTR 
         if (!NE_READ_DATA( pModule, buffer, ne_header->ne_nrestab, ne_header->ne_cbnrestab ))
         {
             GlobalFree16( pModule->nrname_handle );
-            goto failed;
+            pModule->nrname_handle = 0;
         }
     }
     else pModule->nrname_handle = 0;
