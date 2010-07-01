@@ -926,6 +926,23 @@ static void test_GetDlgItem(void)
     hwnd2 = GetDlgItem(hwnd, 0);
     ok(hwnd2 == child2, "expected second child, got %p\n", hwnd2);
 
+    /* Now test how GetDlgItem searches */
+    DestroyWindow(child2);
+    child2 = CreateWindowA("button", "child2", WS_VISIBLE|WS_CHILD, 0, 0, 10, 10, child1, 0, g_hinst, NULL);
+    ok(child2 != NULL, "failed to create second child\n");
+
+    /* give child2 an ID */
+    SetWindowLong(child2, GWLP_ID, 100);
+
+    hwnd2 = GetDlgItem(hwnd, 100);
+    ok(!hwnd2, "expected child to not be found, got %p\n", hwnd2);
+
+    /* make the ID of child2 public with a WS_EX_CONTROLPARENT parent */
+    SetWindowLong(child1, GWL_EXSTYLE, WS_EX_CONTROLPARENT);
+
+    hwnd2 = GetDlgItem(hwnd, 100);
+    ok(!hwnd2, "expected child to not be found, got %p\n", hwnd2);
+
     DestroyWindow(child1);
     DestroyWindow(child2);
     DestroyWindow(hwnd);
