@@ -2160,7 +2160,7 @@ static DWORD HTTPREQ_ReadFileExA(object_header_t *hdr, INTERNET_BUFFERSA *buffer
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    if ((hdr->dwFlags & INTERNET_FLAG_ASYNC) && !get_avail_data(req))
+    if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
 
