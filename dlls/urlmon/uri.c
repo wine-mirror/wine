@@ -57,6 +57,27 @@ typedef struct {
 } UriBuilder;
 
 typedef struct {
+    const WCHAR *str;
+    DWORD       len;
+} h16;
+
+typedef struct {
+    /* IPv6 addresses can hold up to 8 h16 components. */
+    h16         components[8];
+    DWORD       h16_count;
+
+    /* An IPv6 can have 1 elision ("::"). */
+    const WCHAR *elision;
+
+    /* An IPv6 can contain 1 IPv4 address as the last 32bits of the address. */
+    const WCHAR *ipv4;
+    DWORD       ipv4_len;
+
+    INT         components_size;
+    INT         elision_size;
+} ipv6_address;
+
+typedef struct {
     BSTR            uri;
 
     BOOL            is_relative;
@@ -76,6 +97,9 @@ typedef struct {
     const WCHAR     *host;
     DWORD           host_len;
     Uri_HOST_TYPE   host_type;
+
+    BOOL            has_ipv6;
+    ipv6_address    ipv6_address;
 } parse_data;
 
 static const CHAR hexDigits[] = "0123456789ABCDEF";
@@ -189,6 +213,31 @@ static inline BOOL is_hexdigit(WCHAR val) {
     return ((val >= 'a' && val <= 'f') ||
             (val >= 'A' && val <= 'F') ||
             (val >= '0' && val <= '9'));
+}
+
+/* Computes the size of the given IPv6 address.
+ * Each h16 component is 16bits, if there is an IPv4 address, it's
+ * 32bits. If there's an elision it can be 16bits to 128bits, depending
+ * on the number of other components.
+ *
+ * Modeled after google-url's CheckIPv6ComponentsSize function
+ */
+static void compute_ipv6_comps_size(ipv6_address *address) {
+    address->components_size = address->h16_count * 2;
+
+    if(address->ipv4)
+        /* IPv4 address is 4 bytes. */
+        address->components_size += 4;
+
+    if(address->elision) {
+        /* An elision can be anywhere from 2 bytes up to 16 bytes.
+         * It size depends on the size of the h16 and IPv4 components.
+         */
+        address->elision_size = 16 - address->components_size;
+        if(address->elision_size < 2)
+            address->elision_size = 2;
+    } else
+        address->elision_size = 0;
 }
 
 /* Taken from dlls/jscript/lex.c */
@@ -665,17 +714,211 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
     return TRUE;
 }
 
+/* Attempts to parse an IPv6 address out of the URI.
+ *
+ * IPv6address =                               6( h16 ":" ) ls32
+ *                /                       "::" 5( h16 ":" ) ls32
+ *                / [               h16 ] "::" 4( h16 ":" ) ls32
+ *                / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
+ *                / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
+ *                / [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
+ *                / [ *4( h16 ":" ) h16 ] "::"              ls32
+ *                / [ *5( h16 ":" ) h16 ] "::"              h16
+ *                / [ *6( h16 ":" ) h16 ] "::"
+ *
+ * ls32        = ( h16 ":" h16 ) / IPv4address
+ *             ; least-significant 32 bits of address.
+ *
+ * h16         = 1*4HEXDIG
+ *             ; 16 bits of address represented in hexadecimal.
+ *
+ * Modeled after google-url's 'DoParseIPv6' function.
+ */
+static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const WCHAR *start, *cur_start;
+    ipv6_address ip;
+
+    start = cur_start = *ptr;
+    memset(&ip, 0, sizeof(ipv6_address));
+
+    for(;; ++(*ptr)) {
+        /* Check if we're on the last character of the host. */
+        BOOL is_end = (is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)
+                        || **ptr == ']');
+
+        BOOL is_split = (**ptr == ':');
+        BOOL is_elision = (is_split && !is_end && *(*ptr+1) == ':');
+
+        /* Check if we're at the end of of the a component, or
+         * if we're at the end of the IPv6 address.
+         */
+        if(is_split || is_end) {
+            DWORD cur_len = 0;
+
+            cur_len = *ptr - cur_start;
+
+            /* h16 can't have a length > 4. */
+            if(cur_len > 4) {
+                *ptr = start;
+
+                TRACE("(%p %p %x): h16 component to long.\n",
+                    ptr, data, flags);
+                return FALSE;
+            }
+
+            if(cur_len == 0) {
+                /* An h16 component can't have the length of 0 unless
+                 * the elision is at the beginning of the address, or
+                 * at the end of the address.
+                 */
+                if(!((*ptr == start && is_elision) ||
+                    (is_end && (*ptr-2) == ip.elision))) {
+                    *ptr = start;
+                    TRACE("(%p %p %x): IPv6 component can not have a length of 0.\n",
+                        ptr, data, flags);
+                    return FALSE;
+                }
+            }
+
+            if(cur_len > 0) {
+                /* An IPv6 address can have no more than 8 h16 components. */
+                if(ip.h16_count >= 8) {
+                    *ptr = start;
+                    TRACE("(%p %p %x): Not a IPv6 address, to many h16 components.\n",
+                        ptr, data, flags);
+                    return FALSE;
+                }
+
+                ip.components[ip.h16_count].str = cur_start;
+                ip.components[ip.h16_count].len = cur_len;
+
+                TRACE("(%p %p %x): Found h16 component %s, len=%d, h16_count=%d\n",
+                    ptr, data, flags, debugstr_wn(cur_start, cur_len), cur_len,
+                    ip.h16_count);
+                ++ip.h16_count;
+            }
+        }
+
+        if(is_end)
+            break;
+
+        if(is_elision) {
+            /* A IPv6 address can only have 1 elision ('::'). */
+            if(ip.elision) {
+                *ptr = start;
+
+                TRACE("(%p %p %x): IPv6 address cannot have 2 elisions.\n",
+                    ptr, data, flags);
+                return FALSE;
+            }
+
+            ip.elision = *ptr;
+            ++(*ptr);
+        }
+
+        if(is_split)
+            cur_start = *ptr+1;
+        else {
+            if(!check_ipv4address(ptr, TRUE)) {
+                if(!is_hexdigit(**ptr)) {
+                    /* Not a valid character for an IPv6 address. */
+                    *ptr = start;
+                    return FALSE;
+                }
+            } else {
+                /* Found an IPv4 address. */
+                ip.ipv4 = cur_start;
+                ip.ipv4_len = *ptr - cur_start;
+
+                TRACE("(%p %p %x): Found an attached IPv4 address %s len=%d.\n",
+                    ptr, data, flags, debugstr_wn(ip.ipv4, ip.ipv4_len),
+                    ip.ipv4_len);
+
+                /* IPv4 addresses can only appear at the end of a IPv6. */
+                break;
+            }
+        }
+    }
+
+    compute_ipv6_comps_size(&ip);
+
+    /* Make sure the IPv6 address adds up to 16 bytes. */
+    if(ip.components_size + ip.elision_size != 16) {
+        *ptr = start;
+        TRACE("(%p %p %x): Invalid IPv6 address, did not add up to 16 bytes.\n",
+            ptr, data, flags);
+        return FALSE;
+    }
+
+    if(ip.elision_size == 2) {
+        /* For some reason on Windows if an elision that represents
+         * only 1 h16 component is encountered at the very begin or
+         * end of an IPv6 address, Windows does not consider it a
+         * valid IPv6 address.
+         *
+         *  Ex: [::2:3:4:5:6:7] is not valid, even though the sum
+         *      of all the components == 128bits.
+         */
+         if(ip.elision < ip.components[0].str ||
+            ip.elision > ip.components[ip.h16_count-1].str) {
+            *ptr = start;
+            TRACE("(%p %p %x): Invalid IPv6 address. Detected elision of 2 bytes at the beginning or end of the address.\n",
+                ptr, data, flags);
+            return FALSE;
+        }
+    }
+
+    data->host_type = Uri_HOST_IPV6;
+    data->has_ipv6 = TRUE;
+    data->ipv6_address = ip;
+
+    TRACE("(%p %p %x): Found valid IPv6 literal %s len=%d\n",
+        ptr, data, flags, debugstr_wn(start, *ptr-start),
+        *ptr-start);
+    return TRUE;
+}
+
+/* IP-literal = "[" ( IPv6address / IPvFuture  ) "]" */
+static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    data->host = *ptr;
+
+    if(**ptr != '[') {
+        data->host = NULL;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    if(!parse_ipv6address(ptr, data, flags)) {
+        WARN("(%p %p %x): IPvFuture addresses are not supported yet.\n",
+            ptr, data, flags);
+        *ptr = data->host;
+        data->host = NULL;
+        return FALSE;
+    }
+
+    if(**ptr != ']') {
+        *ptr = data->host;
+        data->host = NULL;
+        return FALSE;
+    }
+
+    ++(*ptr);
+
+    data->host_len = *ptr - data->host;
+    return TRUE;
+}
+
 /* Parses the host information from the URI.
  *
  * host = IP-literal / IPv4address / reg-name
  */
 static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD flags) {
-    if(!parse_ipv4address(ptr, data, flags)) {
-        WARN("(%p %p %x): Only IPv4 parsing is implemented so far.\n", ptr, data, flags);
-        data->host_type = Uri_HOST_UNKNOWN;
+    if(!parse_ip_literal(ptr, data, flags)) {
+        if(!parse_ipv4address(ptr, data, flags)) {
+            WARN("(%p %p %x): reg-name parsing is not supported yet.\n",
+                ptr, data, flags);
+        }
     }
-
-    /* TODO parse IP-Literal / reg-name. */
 
     return TRUE;
 }
