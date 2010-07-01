@@ -878,6 +878,49 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
     return TRUE;
 }
 
+/*  IPvFuture  = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" ) */
+static BOOL parse_ipvfuture(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const WCHAR *start = *ptr;
+
+    /* IPvFuture has to start with a 'v' or 'V'. */
+    if(**ptr != 'v' && **ptr != 'V')
+        return FALSE;
+
+    /* Following the v their must be atleast 1 hexdigit. */
+    ++(*ptr);
+    if(!is_hexdigit(**ptr)) {
+        *ptr = start;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    while(is_hexdigit(**ptr))
+        ++(*ptr);
+
+    /* End of the hexdigit sequence must be a '.' */
+    if(**ptr != '.') {
+        *ptr = start;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    if(!is_unreserved(**ptr) && !is_subdelim(**ptr) && **ptr != ':') {
+        *ptr = start;
+        return FALSE;
+    }
+
+    ++(*ptr);
+    while(is_unreserved(**ptr) || is_subdelim(**ptr) || **ptr == ':')
+        ++(*ptr);
+
+    data->host_type = Uri_HOST_UNKNOWN;
+
+    TRACE("(%p %p %x): Parsed IPvFuture address %s len=%d\n", ptr, data, flags,
+        debugstr_wn(start, *ptr-start), *ptr-start);
+
+    return TRUE;
+}
+
 /* IP-literal = "[" ( IPv6address / IPvFuture  ) "]" */
 static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags) {
     data->host = *ptr;
@@ -889,11 +932,11 @@ static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags) {
 
     ++(*ptr);
     if(!parse_ipv6address(ptr, data, flags)) {
-        WARN("(%p %p %x): IPvFuture addresses are not supported yet.\n",
-            ptr, data, flags);
-        *ptr = data->host;
-        data->host = NULL;
-        return FALSE;
+        if(!parse_ipvfuture(ptr, data, flags)) {
+            *ptr = data->host;
+            data->host = NULL;
+            return FALSE;
+        }
     }
 
     if(**ptr != ']') {
