@@ -50,7 +50,7 @@ CAPTION "Instalador Wine Gecko"
 FONT 8, "MS Shell Dlg"
 {
     LTEXT "O Wine não pôde encontrar o pacote Gecko que é necessário para aplicações com HTML embutido" \
-          "funcionarem corretamente. O Wine pode automaticamente efetuar o download instalá-lo para você.\n\n" \
+          "funcionarem corretamente. O Wine pode automaticamente efetuar o download e instalá-lo para você.\n\n" \
           "Nota: é recomendável usar os pacotes da sua distribuição ao invés disso. \n\
 Veja http://wiki.winehq.org/Gecko para mais detalhes.",
           ID_DWL_STATUS, 10, 10, 240, 60, SS_LEFT
