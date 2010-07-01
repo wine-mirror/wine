@@ -714,6 +714,91 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
     return TRUE;
 }
 
+/* Attempts to parse the reg-name from the URI.
+ *
+ * reg-name = *( unreserved / pct-encoded / sub-delims )
+ *
+ * NOTE:
+ *  Windows allows everything, but, the characters in "auth_delims" and ':'
+ *  to appear in a reg-name.
+ *
+ *  Windows doesn't like host names which start with '[' and end with ']'
+ *  and don't contain a valid IP literal address in between them.
+ *
+ *  On Windows if an '[' is encountered in the host name the ':' no longer
+ *  counts as a delimiter until you reach the next ']' or an "authority delimeter".
+ *
+ *  A reg-name CAN be empty.
+ */
+static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const BOOL has_start_bracket = **ptr == '[';
+    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+    BOOL inside_brackets = has_start_bracket;
+
+    /* We have to be careful with file schemes. */
+    if(data->scheme_type == URL_SCHEME_FILE) {
+        /* This is because an implicit file scheme could be "C:\\test" and it
+         * would trick this function into thinking the host is "C", when after
+         * canonicalization the host would end up being an empty string.
+         */
+        if(is_alpha(**ptr) && *(*ptr+1) == ':') {
+            /* Regular old drive paths don't have a host type (or host name). */
+            data->host_type = Uri_HOST_UNKNOWN;
+            data->host = *ptr;
+            data->host_len = 0;
+            return TRUE;
+        } else if(**ptr == '\\' && *(*ptr+1) == '\\')
+            /* Skip past the "\\" of a UNC path. */
+            *ptr += 2;
+    }
+
+    data->host = *ptr;
+
+    while(!is_auth_delim(**ptr, known_scheme)) {
+        if(**ptr == ':') {
+            /* We can ignore ':' if were inside brackets.*/
+            if(!inside_brackets)
+                break;
+        } else if(**ptr == '%' && known_scheme) {
+            /* Has to be a legit % encoded value. */
+            if(!check_pct_encoded(ptr)) {
+                *ptr = data->host;
+                data->host = NULL;
+                return FALSE;
+            } else
+                continue;
+        } else if(**ptr == ']')
+            inside_brackets = FALSE;
+        else if(**ptr == '[')
+            inside_brackets = TRUE;
+
+        ++(*ptr);
+    }
+
+    if(has_start_bracket) {
+        /* Make sure the last character of the host wasn't a ']'. */
+        if(*(*ptr-1) == ']') {
+            TRACE("(%p %p %x): Expected an IP literal inside of the host\n",
+                ptr, data, flags);
+            *ptr = data->host;
+            data->host = NULL;
+            return FALSE;
+        }
+    }
+
+    data->host_len = *ptr - data->host;
+
+    /* If the host is empty, then it's an unknown host type. */
+    if(data->host_len == 0)
+        data->host_type = Uri_HOST_UNKNOWN;
+    else
+        data->host_type = Uri_HOST_DNS;
+
+    TRACE("(%p %p %x): Parsed reg-name. host=%s len=%d\n", ptr, data, flags,
+        debugstr_wn(data->host, data->host_len), data->host_len);
+    return TRUE;
+}
+
 /* Attempts to parse an IPv6 address out of the URI.
  *
  * IPv6address =                               6( h16 ":" ) ls32
@@ -958,8 +1043,11 @@ static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags) {
 static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD flags) {
     if(!parse_ip_literal(ptr, data, flags)) {
         if(!parse_ipv4address(ptr, data, flags)) {
-            WARN("(%p %p %x): reg-name parsing is not supported yet.\n",
-                ptr, data, flags);
+            if(!parse_reg_name(ptr, data, flags)) {
+                TRACE("(%p %p %x): Malformed URI, Unknown host type.\n",
+                    ptr, data, flags);
+                return FALSE;
+            }
         }
     }
 
