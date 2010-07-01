@@ -3,7 +3,7 @@
  * Portuguese Language Support
  *
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 AmÈrico JosÈ Melo
+ * Copyright 2004 Am√©rico Jos√© Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,30 +22,33 @@
 
 #include "resources.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 {
-STRING_USAGE, "Inicia um programa, ou abre um documento no programa normalmente usado para arquivos com determinado sufuxo.\n\
+STRING_USAGE, "Inicia um programa, ou abre um documento no programa normalmente usado para arquivos com determinado sufixo.\n\
 Uso:\n\
-start [opÁıes] arquivo_de_programa [argumentos...]\n\
-start [opÁıes] arquivo_de_documento.ext\n\
+start [op√ß√µes] arquivo_de_programa [argumentos...]\n\
+start [op√ß√µes] arquivo_de_documento.ext\n\
 \n\
 Options:\n\
 /M[inimized] Inicia o programa minimizado.\n\
 /MAX[imized] Inicia o programa maximizado.\n\
 /R[estored]  Inicia o programa normalmente (sem minimizar nem maximizar).\n\
-/W[ait]      Aguarda que o programa iniciado termine e ent„o retorno um cÛdigo (exit code).\n\
+/W[ait]      Aguarda que o programa iniciado termine e ent√£o retorna \n\
+\t\tseu valor de sa√≠da (exit code).\n\
 /ProgIDOpen  Open a document using the following progID.\n\
-/L           Mostra a licenÁa ao usu·rio.\n\
+/L           Mostra a licen√ßa ao usu√°rio.\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
-Start n„o vem com ABSOLUTAMENTE NENHUMA GARANTIA; para detahes execute com a opÁ„o /L.\n\
-Este È um software livre (free software), e vocÍ È benvindo a redistribuÌ-lo sob\n\
-certas condiÁıes; execute 'start /L' para detalhes.\n\
+Start n√£o vem com ABSOLUTAMENTE NENHUMA GARANTIA; para detalhes execute com a op√ß√£o /L.\n\
+Este √© um software livre (free software), e voc√™ √© bem-vindo a redistribu√≠-lo sob\n\
+certas condi√ß√µes; execute 'start /L' para detalhes.\n\
 "
 
-STRING_LICENSE, "start.exe vers„o 0.2 Copyright (C) 2003, Dan Kegel\n\
+STRING_LICENSE, "start.exe vers√£o 0.2 Copyright (C) 2003, Dan Kegel\n\
 This program is free software; you can redistribute it and/or\n\
 modify it under the terms of the GNU Lesser Public License\n\
 as published by the Free Software Foundation; either version 2.1\n\
@@ -60,12 +63,12 @@ You should have received a copy of the GNU Lesser Public License\n\
 along with this program; if not, write to the Free Software\n\
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
 \n\
-Veja o arquivo COPYING.LIB para informaÁ„o sobre a licenÁa.\n\
+Veja o arquivo COPYING.LIB para informa√ß√£o sobre a licen√ßa.\n\
 "
 
-STRING_EXECFAIL "AplicaÁ„o n„o pode ser iniciada, ou n„o existe aplicaÁ„o associada com o arquivo especificado.\nShellExecuteEx falhou"
+STRING_EXECFAIL "O aplicativo n√£o p√¥de ser iniciado ou n√£o existe aplicativo associado ao arquivo especificado.\nShellExecuteEx falhou"
 
-STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
+STRING_UNIXFAIL "N√£o foi poss√≠vel traduzir o nome de arquivo Unix para um nome de arquivo DOS."
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -74,23 +77,23 @@ STRINGTABLE DISCARDABLE
 {
 STRING_USAGE, "Inicia um programa, ou abre um documento no programa normalmente usado para ficheiros com determinado sufixo.\n\
 Uso:\n\
-start [opÁıes] ficheiro_de_programa [argumentos...]\n\
-start [opÁıes] ficheiro_de_documento.ext\n\
+start [op√ß√µes] ficheiro_de_programa [argumentos...]\n\
+start [op√ß√µes] ficheiro_de_documento.ext\n\
 \n\
 Options:\n\
 /M[inimized] Inicia o programa minimizado.\n\
 /MAX[imized] Inicia o programa maximizado.\n\
 /R[estored]  Inicia o programa normalmente (sem minimizar nem maximizar).\n\
-/W[ait]      Aguarda que o programa iniciado termine e ent„o retorne um cÛdigo (exit code).\n\
-/L           Mostra a licenÁa ao utilizador.\n\
+/W[ait]      Aguarda que o programa iniciado termine e ent√£o retorne um c√≥digo (exit code).\n\
+/L           Mostra a licen√ßa ao utilizador.\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
-Start n„o vem com ABSOLUTAMENTE NENHUMA GARANTIA; para detahes execute com a opÁ„o /L.\n\
-Este È um software livre (free software), e È bem-vindo a redistribuÌ-lo sob certas\n\
-condiÁıes; execute 'start /L' para detalhes.\n\
+Start n√£o vem com ABSOLUTAMENTE NENHUMA GARANTIA; para detalhes execute com a op√ß√£o /L.\n\
+Este √© um software livre (free software), e √© bem-vindo a redistribu√≠-lo sob certas\n\
+condi√ß√µes; execute 'start /L' para detalhes.\n\
 "
 
-STRING_LICENSE, "start.exe vers„o 0.2 Copyright (C) 2003, Dan Kegel\n\
+STRING_LICENSE, "start.exe vers√£o 0.2 Copyright (C) 2003, Dan Kegel\n\
 This program is free software; you can redistribute it and/or\n\
 modify it under the terms of the GNU Lesser Public License\n\
 as published by the Free Software Foundation; either version 2.1\n\
@@ -105,10 +108,10 @@ You should have received a copy of the GNU Lesser Public License\n\
 along with this program; if not, write to the Free Software\n\
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
 \n\
-Veja o ficheiro COPYING.LIB para informaÁ„o sobre a licenÁa.\n\
+Veja o ficheiro COPYING.LIB para informa√ß√£o sobre a licen√ßa.\n\
 "
 
-STRING_EXECFAIL "A aplicaÁ„o n„o pode ser iniciada, ou n„o existe aplicaÁ„o associada com o ficheiro especificado.\nShellExecuteEx falhado"
+STRING_EXECFAIL "A aplica√ß√£o n√£o pode ser iniciada, ou n√£o existe aplica√ß√£o associada com o ficheiro especificado.\nShellExecuteEx falhado"
 
 STRING_UNIXFAIL "Could not translate the specified Unix filename to a DOS filename."
 }
