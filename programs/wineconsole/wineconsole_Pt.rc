@@ -44,6 +44,20 @@ IDS_DLG_TIT_DEFAULT,    "Setup - configurações padrões"
 IDS_DLG_TIT_CURRENT,    "Setup - configurações atuais"
 IDS_DLG_TIT_ERROR,	"Erro de configuração"
 IDS_DLG_ERR_SBWINSIZE,	"Tamanho do buffer de tela deve ser maior ou igual ao da janela"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Impossível extrair o id do evento\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Estrutura inválida\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Opção de linha de comandos desconhecida\n"
+IDS_CMD_ABOUT              "Inicializa um programa num console do Wine\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Falha ao inicializar programa %s.\n"\
+                           "O comando é inválido.\n"
+
+IDS_USAGE_HEADER           "\nUso:\n  wineconsole [opções] <comando>\n\nOpções:\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  A opção user vai abrir uma nova janela e curses vai\n"\
+                           "                            tentar configurar o terminal actual como um console do Wine\n"
+IDS_USAGE_COMMAND          "  <comando>                 O programa Wine a ser aberto no console\n"
+IDS_USAGE_FOOTER           "\nExemplo:\n  wineconsole cmd\nInicializa a linha de comandos do Wine numa console do Wine\n\n"
+
 END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -178,7 +192,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Configuração "
 FONT 8, "MS Shell Dlg"
 {
-	GROUPBOX "Buffer zone", -1, 10, 11, 100, 42, BS_GROUPBOX
+	GROUPBOX "Zona do buffer", -1, 10, 11, 100, 42, BS_GROUPBOX
 	LTEXT "&Largura :", -1, 14, 25, 54, 9
 	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
@@ -186,7 +200,7 @@ FONT 8, "MS Shell Dlg"
 	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
-	GROUPBOX "Window size", -1, 10, 55, 100, 42
+	GROUPBOX "Tamanho da janela", -1, 10, 55, 100, 42
 	LTEXT "L&argura :", -1, 14, 69, 54, 9
 	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
