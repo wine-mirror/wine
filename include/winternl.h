@@ -1886,7 +1886,21 @@ typedef enum _SYSDBG_COMMAND {
   SysDbgSetTracepoint,
   SysDbgSetSpecialCall,
   SysDbgClearSpecialCalls,
-  SysDbgQuerySpecialCalls
+  SysDbgQuerySpecialCalls,
+  SysDbgBreakPoint,
+  SysDbgQueryVersion,
+  SysDbgReadVirtual,
+  SysDbgWriteVirtual,
+  SysDbgReadPhysical,
+  SysDbgWritePhysical,
+  SysDbgReadControlSpace,
+  SysDbgWriteControlSpace,
+  SysDbgReadIoSpace,
+  SysDbgWriteIoSpace,
+  SysDbgReadMsr,
+  SysDbgWriteMsr,
+  SysDbgReadBusData,
+  SysDbgWriteBusData
 } SYSDBG_COMMAND, *PSYSDBG_COMMAND;
 
 
