@@ -32,7 +32,7 @@ STRINGTABLE
    IDS_CPL_DESC, "Permite a instalação de novo software, ou a remoção de software existente no seu computador."
    IDS_TAB1_TITLE, "Aplicativos"
 
-   IDS_UNINSTALL_FAILED, "Não foi possível executar o desinstalador, '%s'. Deseja remover do registo a entrada de desinstalação para este programa?"
+   IDS_UNINSTALL_FAILED, "Não foi possível executar o desinstalador, '%s'. Deseja remover do registro a entrada de desinstalação para este programa?"
    IDS_NOT_SPECIFIED, "Não especificado"
 
    IDS_COLUMN_NAME, "Nome"
@@ -72,11 +72,11 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Instalar/Desinstalar"
 FONT 8, "MS Shell Dlg"
 {
- CONTROL "Para instalar um programa novo a partir de uma disquete, CD-ROM ou do seu disco rígido, clique em Instalar.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "Para instalar um programa novo a partir de um disquete, CD-ROM ou do seu disco rígido, clique em Instalar.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "&Instalar...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "O software seguinte pode ser automaticamente removido. Para remover um programa ou modificar os seus componentes instalados selecione-o na lista e clique em Adicionar/Remover.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "O software a seguir pode ser automaticamente removido. Para remover um programa ou modificar os seus componentes instalados, selecione-o na lista e clique em Adicionar/Remover.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "&Informação de Suporte...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 74, 198, 94, 14
  CONTROL "&Modificar...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
