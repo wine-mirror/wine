@@ -1517,6 +1517,232 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Too many h16 components. */
+    {   "http://[1:2:3:4:5:6:7:8:9]", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not enough room for IPv4 address. */
+    {   "http://[1:2:3:4:5:6:7:192.0.1.0]", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not enough h16 component */
+    {   "http://[1:2:3:4]", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not enough components including IPv4 address. */
+    {   "http://[1:192.0.1.0]", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not valid to have a partial IPv4 address in a IPv6 address. */
+    {   "http://[::192.0]", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not valid because a elision of 2 bytes appears at the beginning of address. */
+    {   "http://[::2:3:4:5:6:7:8]", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not valid because a elision of 2 bytes appears at the end of address. */
+    {   "http://[1:2:3:4:5:6:7::]", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Valid even with 2 byte elision because it doesn't appear the beginning or end. */
+    {   "http://[1::3:4:5:6:7:8]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://[1:0:3:4:5:6:7:8]/",S_OK,TRUE},
+            {"[1:0:3:4:5:6:7:8]",S_OK,TRUE},
+            {"http://[1:0:3:4:5:6:7:8]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"1:0:3:4:5:6:7:8",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[1::3:4:5:6:7:8]",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     {   "http://[v2.34]/", 0, S_OK, FALSE,
         Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
         Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
@@ -1541,6 +1767,278 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Windows ignores ':' if they appear after a '[' on a non-IPLiteral host. */
+    {   "http://[xyz:12345.com/test", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://[xyz:12345.com/test",S_OK,TRUE},
+            {"[xyz:12345.com",S_OK,TRUE},
+            {"http://[xyz:12345.com/test",S_OK,TRUE},
+            {"[xyz:12345.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"[xyz:12345.com",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/test",S_OK,TRUE},
+            {"/test",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[xyz:12345.com/test",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Invalid URI since the host begins with '[' and ends with ']' but doesn't have
+     * a valid IP literal inside.
+     */
+    {   "ftp://[not.valid.uri]/", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Valid URI since the '[' and ']' don't appear at the begining and end
+     * of the host name (respectively).
+     */
+    {   "ftp://www.[works].com/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"ftp://www.[works].com/",S_OK,TRUE},
+            {"www.[works].com",S_OK,TRUE},
+            {"ftp://www.[works].com/",S_OK,TRUE},
+            {"[works].com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.[works].com",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"ftp://www.[works].com/",S_OK,FALSE},
+            {"ftp",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {21,S_OK,TRUE},
+            {URL_SCHEME_FTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Considers ':' a delimiter since it appears after the ']'. */
+    {   "http://www.google.com]:12345/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://www.google.com]:12345/",S_OK,TRUE},
+            {"www.google.com]:12345",S_OK,TRUE},
+            {"http://www.google.com]:12345/",S_OK,TRUE},
+            {"google.com]",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.google.com]",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://www.google.com]:12345/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {12345,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Unknown scheme types can have invalid % encoded data in the hostname. */
+    {   "zip://w%XXw%GEw.google.com/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://w%XXw%GEw.google.com/",S_OK,TRUE},
+            {"w%XXw%GEw.google.com",S_OK,TRUE},
+            {"zip://w%XXw%GEw.google.com/",S_OK,TRUE},
+            {"google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"w%XXw%GEw.google.com",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://w%XXw%GEw.google.com/",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not allowed to have invalid % encoded data. */
+    {   "ftp://google.co%XX/", 0, E_INVALIDARG, FALSE,
+        0,
+        TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Unknown scheme types hostname doesn't get lower cased. */
+    {   "zip://GOOGLE.com/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://GOOGLE.com/",S_OK,TRUE},
+            {"GOOGLE.com",S_OK,TRUE},
+            {"zip://GOOGLE.com/",S_OK,TRUE},
+            {"GOOGLE.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"GOOGLE.com",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://GOOGLE.com/",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Hostname get's lower cased for known scheme types. */
+    {   "http://WWW.GOOGLE.com/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://www.google.com/",S_OK,TRUE},
+            {"www.google.com",S_OK,TRUE},
+            {"http://www.google.com/",S_OK,TRUE},
+            {"google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.google.com",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://WWW.GOOGLE.com/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Characters that get % encoded in the hostname also have their percent
+     * encoded forms lower cased.
+     */
+    {   "http://www.%7Cgoogle|.com/", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://www.%7cgoogle%7c.com/",S_OK,TRUE},
+            {"www.%7cgoogle%7c.com",S_OK,TRUE},
+            {"http://www.%7cgoogle%7c.com/",S_OK,TRUE},
+            {"%7cgoogle%7c.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.%7cgoogle%7c.com",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://www.%7Cgoogle|.com/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
             {80,S_OK,TRUE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
