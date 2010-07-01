@@ -683,7 +683,7 @@ TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
       if (pressed)
         TAB_DeselectAll (infoPtr, FALSE);
       else
-        TAB_SetCurSel(infoPtr, newItem);
+        TAB_SetCurFocus(infoPtr, newItem);
 
       TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
     }
