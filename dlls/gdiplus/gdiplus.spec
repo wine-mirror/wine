@@ -614,7 +614,7 @@
 @ stdcall GdipTranslateLineTransform(ptr long long long)
 @ stdcall GdipTranslateMatrix(ptr long long long)
 @ stdcall GdipTranslatePathGradientTransform(ptr long long long)
-@ stub GdipTranslatePenTransform
+@ stdcall GdipTranslatePenTransform(ptr long long long)
 @ stdcall GdipTranslateRegion(ptr long long)
 @ stdcall GdipTranslateRegionI(ptr long long)
 @ stdcall GdipTranslateTextureTransform(ptr long long long)
