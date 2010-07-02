@@ -2606,6 +2606,18 @@ static GpStatus decode_image_wic(IStream* stream, REFCLSID clsid, GpImage **imag
                     *image = NULL;
                     GdipDisposeImage((GpImage*)bitmap);
                 }
+
+                if (SUCCEEDED(hr) && status == Ok)
+                {
+                    double dpix, dpiy;
+                    hr = IWICBitmapSource_GetResolution(source, &dpix, &dpiy);
+                    if (SUCCEEDED(hr))
+                    {
+                        bitmap->image.xres = dpix;
+                        bitmap->image.yres = dpiy;
+                    }
+                    hr = S_OK;
+                }
             }
 
             IWICBitmapSource_Release(source);
@@ -2620,6 +2632,12 @@ end:
     if (SUCCEEDED(initresult)) CoUninitialize();
 
     if (FAILED(hr) && status == Ok) status = hresult_to_status(hr);
+
+    if (status == Ok)
+    {
+        /* Native GDI+ used to be smarter, but since Win7 it just sets these flags. */
+        bitmap->image.flags |= ImageFlagsReadOnly|ImageFlagsHasRealPixelSize|ImageFlagsHasRealDPI|ImageFlagsColorSpaceRGB;
+    }
 
     return status;
 }
