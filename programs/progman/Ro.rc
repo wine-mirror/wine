@@ -1,0 +1,215 @@
+/*
+ * Program Manager
+ *
+ * Copyright 1996 Ulrich Schmid
+ * Copyright 2002 Sylvain Petreolle
+ * Copyright 2010 Claudia Cotună
+ *                Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "progman.h"
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+/* Menu */
+
+MAIN_MENU MENU
+{
+ POPUP "&Fișier" {
+   MENUITEM "&Nou...",                  PM_NEW
+   MENUITEM "Desc&hide\tEnter",         PM_OPEN
+   MENUITEM "&Mutare...\tF7",           PM_MOVE, GRAYED
+   MENUITEM "&Copiere...\tF8",          PM_COPY, GRAYED
+   MENUITEM "&Șterge\tEntf",            PM_DELETE
+   MENUITEM "&Atribute...\tAlt+Enter",  PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "&Executare...",            PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "Î&nchidere Windows...",    PM_EXIT
+ }
+ POPUP "&Opțiuni" {
+   MENUITEM "&Aranjează automat",       PM_AUTO_ARRANGE
+   MENUITEM "&Minimizează la execuție", PM_MIN_ON_RUN
+   MENUITEM "&Salvează configurația la închidere", PM_SAVE_SETTINGS
+ }
+ POPUP "F&erestre" {
+   MENUITEM "&Cascadă\tShift+F5",       PM_OVERLAP
+   MENUITEM "&Una lângă alta\tShift+F4", PM_SIDE_BY_SIDE
+   MENUITEM "&Aranjează pictogramele",  PM_ARRANGE
+ }
+
+POPUP "A&jutor" {
+   MENUITEM "&Conținut",                PM_CONTENTS
+   MENUITEM "Că&utare...",              PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "A&jutor pentru Ajutor",    PM_HELPONHELP
+   MENUITEM "&Tutorial",                PM_TUTORIAL
+   MENUITEM SEPARATOR
+   MENUITEM "Des&pre Wine",             PM_ABOUT_WINE
+ }
+}
+
+/* Dialog `New' */
+
+DIALOG_NEW DIALOG 0, 0, 170, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Nou"
+{
+RADIOBUTTON   "",               PM_NEW_GROUP, 10, 15, 10, 15
+LTEXT         "&Grup programe", -1, 20, 18, 80, 15
+RADIOBUTTON   "",               PM_NEW_PROGRAM, 10, 35, 10, 15
+LTEXT         "&Program",       -1, 20, 38, 80, 15
+DEFPUSHBUTTON "OK",             IDOK, 105, 5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 105, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 105, 45, 60, 15, WS_TABSTOP
+}
+
+/* Dialog `Move' */
+
+DIALOG_MOVE DIALOG 0, 0, 250, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mutare program"
+{
+LTEXT         "Mutare program:", -1, 5, 5, 90, 15
+LTEXT         "",               PM_PROGRAM, 95, 5, 90, 15
+LTEXT         "Din grupul:",    -1, 5, 13, 90, 15
+LTEXT         "",               PM_FROM_GROUP, 95, 13, 90, 15
+LTEXT         "În &grupul:",    PM_TO_GROUP_TXT, 5, 28, 140, 15
+COMBOBOX                        PM_TO_GROUP, 5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",             IDOK, 185, 5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 185, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 185, 45, 60, 15, WS_TABSTOP
+}
+
+/* Dialog `Copy' */
+
+DIALOG_COPY DIALOG 0, 0, 250, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Copiere program"
+{
+LTEXT         "Copiere program:", -1, 5, 5, 90, 15
+LTEXT         "",               PM_PROGRAM, 95, 5, 90, 15
+LTEXT         "Din grupul:",    -1, 5, 13, 90, 15
+LTEXT         "",               PM_FROM_GROUP, 95, 13, 90, 15
+LTEXT         "În &grupul:",    PM_TO_GROUP_TXT, 5, 28, 140, 15
+COMBOBOX                        PM_TO_GROUP, 5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",             IDOK, 185, 5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 185, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 185, 45, 60, 15, WS_TABSTOP
+}
+
+/* Dialog `Group attributes' */
+
+DIALOG_GROUP DIALOG 0, 0, 230, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Atributele grupului de programe"
+{
+LTEXT         "&Descriere:",    PM_DESCRIPTION_TXT, 05, 18, 50, 10
+EDITTEXT                        PM_DESCRIPTION, 60, 18, 90, 15, WS_TABSTOP
+LTEXT         "Fișier &grup:",  PM_FILE_TXT, 05, 38, 50, 10
+EDITTEXT                        PM_FILE, 60, 38, 90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",             IDOK, 155, 5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 155, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 155, 45, 60, 15, WS_TABSTOP
+}
+
+/* Dialog `Program attributes' */
+
+DIALOG_PROGRAM DIALOG 0, 0, 270, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Atributele programului"
+{
+LTEXT         "&Descriere:",    PM_DESCRIPTION_TXT, 05, 10, 60, 10
+EDITTEXT                        PM_DESCRIPTION, 80, 10, 90, 15, WS_TABSTOP
+LTEXT         "Linie de &comandă:", PM_COMMAND_LINE_TXT, 05, 25, 60, 10
+EDITTEXT                        PM_COMMAND_LINE, 80, 25, 90, 15, WS_TABSTOP
+LTEXT         "Director de &lucru:", PM_DIRECTORY_TXT, 05, 40, 60, 10
+EDITTEXT                        PM_DIRECTORY, 80, 40, 90, 15, WS_TABSTOP
+LTEXT         "Com&binație de taste:", PM_HOT_KEY_TXT, 05, 55, 70, 10
+EDITTEXT                        PM_HOT_KEY, 80, 55, 90, 15, WS_TABSTOP
+ICON          "",               PM_ICON, 20, 70
+CHECKBOX      "",               PM_SYMBOL, 80, 75, 10, 10, WS_TABSTOP
+LTEXT         "&Minimizează la lansare", -1, 95, 75, 95, 10
+DEFPUSHBUTTON "OK",             IDOK, 185, 5, 80, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 185, 25, 80, 15, WS_TABSTOP
+PUSHBUTTON    "Na&vigare...",   PM_BROWSE, 185, 45, 80, 15, WS_TABSTOP
+PUSHBUTTON    "Schimbare p&ictogramă...", PM_OTHER_SYMBOL, 185, 65, 80, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 185, 85, 80, 15, WS_TABSTOP
+}
+
+/* Dialog `Symbol' */
+
+DIALOG_SYMBOL DIALOG 0, 0, 200, 85
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Schimbare pictogramă"
+{
+LTEXT     "Nume de &fișier:",   PM_ICON_FILE_TXT, 5, 15, 40, 10
+EDITTEXT                        PM_ICON_FILE, 45, 15, 85, 15, WS_TABSTOP
+LTEXT     "P&ictogramă curentă:", PM_SYMBOL_LIST_TXT, 5, 30, 125, 10
+COMBOBOX                        PM_SYMBOL_LIST, 5, 40, 125, 50,
+                                CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",             IDOK, 135, 5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 135, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Na&vigare...",   PM_BROWSE, 135, 45, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 135, 65, 60, 15, WS_TABSTOP
+}
+
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE DIALOG 0, 0, 200, 85
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Executare program"
+{
+LTEXT         "&Linie de comandă:", -1, 05, 15, 120, 10
+EDITTEXT                        PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",               PM_SYMBOL, 05, 45, 10, 10, WS_TABSTOP
+LTEXT         "&Minimizează la lansare", -1, 20, 45, 120, 10
+DEFPUSHBUTTON "OK",             IDOK, 135, 5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 135, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Na&vigare...",   PM_BROWSE, 135, 45, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 135, 65, 60, 15, WS_TABSTOP
+}
+
+/* Strings */
+
+STRINGTABLE DISCARDABLE
+{
+IDS_PROGRAM_MANAGER,            "Administrator programe"
+IDS_ERROR,                      "EROARE"
+IDS_WARNING,                    "AVERTIZARE"
+IDS_INFO,                       "Informații"
+IDS_DELETE,                     "Șterge"
+IDS_DELETE_GROUP_s,             "Se șterge grupul „%s” ?"
+IDS_DELETE_PROGRAM_s,           "Se șterge programul „%s” ?"
+IDS_NOT_IMPLEMENTED,            "Neimplementat"
+IDS_FILE_READ_ERROR_s,          "Eroare la citirea „%s”."
+IDS_FILE_WRITE_ERROR_s,         "Eroare la scrierea „%s”."
+IDS_GRPFILE_READ_ERROR_s,       "Fișierul grup „%s” nu se poate deschide.\nDoriți să se mai încerce deschiderea?"
+IDS_OUT_OF_MEMORY,              "Memorie insuficientă."
+IDS_WINHELP_ERROR,              "Nu este disponibil ajutor."
+IDS_UNKNOWN_FEATURE_s,          "Caracteristică necunoscută în %s"
+IDS_FILE_NOT_OVERWRITTEN_s,     "Fișierul „%s” există. Nu a fost suprascris."
+IDS_SAVE_GROUP_AS_s,            "Salvează grupul ca „%s” pentru a preveni suprascrierea fișierelor originale."
+IDS_NO_HOT_KEY,                 "Niciuna"
+IDS_ALL_FILES,                  "Toate fișierele (*.*)"
+IDS_PROGRAMS,                   "Programe"
+IDS_LIBRARIES_DLL,              "Biblioteci (*.dll)"
+IDS_SYMBOL_FILES,               "Fișiere pictogramă"
+IDS_SYMBOLS_ICO,                "Pictograme (*.ico)"
+}
