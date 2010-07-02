@@ -168,6 +168,36 @@ static LRESULT iewnd_OnSize(InternetExplorer *This, INT width, INT height)
     return 0;
 }
 
+static LRESULT iewnd_OnNotify(InternetExplorer *This, WPARAM wparam, LPARAM lparam)
+{
+    NMHDR* hdr = (NMHDR*)lparam;
+
+    if(hdr->idFrom == IDC_BROWSE_ADDRESSBAR && hdr->code == CBEN_ENDEDITW)
+    {
+        NMCBEENDEDITW* info = (NMCBEENDEDITW*)lparam;
+
+        if(info->fChanged && info->iWhy == CBENF_RETURN && info->szText)
+        {
+            VARIANT vt;
+            HWND hwndEdit = (HWND)SendMessageW(hdr->hwndFrom, CBEM_GETEDITCONTROL, 0, 0);
+
+            V_VT(&vt) = VT_BSTR;
+            V_BSTR(&vt) = SysAllocString(info->szText);
+
+            IWebBrowser2_Navigate2(WEBBROWSER2(This), &vt, NULL, NULL, NULL, NULL);
+
+            SysFreeString(V_BSTR(&vt));
+
+            /* Clear the address bar, as we don't change it when
+               the user navigates to a new page */
+            SendMessageW(hwndEdit, WM_SETTEXT, 0, 0);
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 static LRESULT iewnd_OnDestroy(InternetExplorer *This)
 {
     TRACE("%p\n", This);
@@ -225,6 +255,8 @@ ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         return iewnd_OnSize(This, LOWORD(lparam), HIWORD(lparam));
     case WM_COMMAND:
         return iewnd_OnCommand(This, hwnd, msg, wparam, lparam);
+    case WM_NOTIFY:
+        return iewnd_OnNotify(This, wparam, lparam);
     case WM_DOCHOSTTASK:
         return process_dochost_task(&This->doc_host, lparam);
     }
