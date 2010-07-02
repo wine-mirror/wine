@@ -32,6 +32,22 @@ static int get_refcount(IUnknown *object)
     return IUnknown_Release( object );
 }
 
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
 static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9, HWND device_window, HWND focus_window, BOOL windowed)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -2348,8 +2364,8 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 {
     if (filter_messages && filter_messages == hwnd)
     {
-        ok(message == WM_DISPLAYCHANGE || message == WM_IME_NOTIFY,
-                "Received unexpected message %#x for window %p.\n", message, hwnd);
+        if (message != WM_DISPLAYCHANGE && message != WM_IME_NOTIFY)
+            todo_wine ok( 0, "Received unexpected message %#x for window %p.\n", message, hwnd);
     }
 
     if (expect_message.window == hwnd && expect_message.message == message) expect_message.message = 0;
@@ -2399,7 +2415,6 @@ static void test_wndproc(void)
     LONG_PTR proc;
     ULONG ref;
     DWORD res, tid;
-    MSG msg;
 
     if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
     {
@@ -2445,7 +2460,7 @@ static void test_wndproc(void)
     expect_message.window = focus_window;
     expect_message.message = WM_SETFOCUS;
 
-    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    flush_events();
 
     device = create_device(d3d9, device_window, focus_window, FALSE);
     if (!device)
@@ -2464,6 +2479,7 @@ static void test_wndproc(void)
         ok(tmp == focus_window, "Expected foreground window %p, got %p.\n", focus_window, tmp);
     }
     SetForegroundWindow(focus_window);
+    flush_events();
 
     filter_messages = focus_window;
 
