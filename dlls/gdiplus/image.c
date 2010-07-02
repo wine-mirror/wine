@@ -1742,6 +1742,10 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     (*bitmap)->stride = dib_stride;
     (*bitmap)->own_bits = own_bits;
 
+    /* set format-related flags */
+    if (format & (PixelFormatAlpha|PixelFormatPAlpha|PixelFormatIndexed))
+        (*bitmap)->image.flags |= ImageFlagsHasAlpha;
+
     if (format == PixelFormat1bppIndexed ||
         format == PixelFormat4bppIndexed ||
         format == PixelFormat8bppIndexed)

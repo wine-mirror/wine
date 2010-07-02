@@ -734,6 +734,115 @@ static void test_GdipGetImageFlags(void)
 
     stat = GdipGetImageFlags(img, NULL);
     expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat1bppIndexed, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsHasAlpha, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat4bppIndexed, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsHasAlpha, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat8bppIndexed, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsHasAlpha, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat16bppGrayScale, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsNone, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat16bppRGB555, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsNone, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat16bppRGB565, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsNone, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat16bppARGB1555, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsHasAlpha, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat24bppRGB, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsNone, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat32bppRGB, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsNone, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat32bppARGB, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsHasAlpha, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat32bppPARGB, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    stat = GdipGetImageFlags(img, &flags);
+    expect(Ok, stat);
+    expect(ImageFlagsHasAlpha, flags);
+    GdipDisposeImage(img);
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat48bppRGB, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        stat = GdipGetImageFlags(img, &flags);
+        expect(Ok, stat);
+        expect(ImageFlagsNone, flags);
+        GdipDisposeImage(img);
+    }
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat64bppARGB, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        expect(Ok, stat);
+        stat = GdipGetImageFlags(img, &flags);
+        expect(Ok, stat);
+        expect(ImageFlagsHasAlpha, flags);
+        GdipDisposeImage(img);
+    }
+
+    stat = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat64bppPARGB, NULL, (GpBitmap**)&img);
+    expect(Ok, stat);
+    if (stat == Ok)
+    {
+        expect(Ok, stat);
+        stat = GdipGetImageFlags(img, &flags);
+        expect(Ok, stat);
+        expect(ImageFlagsHasAlpha, flags);
+        GdipDisposeImage(img);
+    }
 }
 
 static void test_GdipCloneImage(void)
