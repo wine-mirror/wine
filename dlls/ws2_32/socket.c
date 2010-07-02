@@ -615,6 +615,7 @@ static inline DWORD NtStatusToWSAError( const DWORD status )
     case STATUS_CANT_WAIT:                  wserr = WSAEWOULDBLOCK;        break;
     case STATUS_BUFFER_OVERFLOW:            wserr = WSAEMSGSIZE;           break;
     case STATUS_NOT_SUPPORTED:              wserr = WSAEOPNOTSUPP;         break;
+    case STATUS_HOST_UNREACHABLE:           wserr = WSAEHOSTUNREACH;       break;
 
     default:
         wserr = RtlNtStatusToDosError( status );
