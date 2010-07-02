@@ -2008,10 +2008,16 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
         IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args)
 {
     IWineD3DBaseTextureImpl *texture;
+    IWineD3DDeviceImpl *device = stateblock->device;
     UINT i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
-    args->srgb_correction = stateblock->renderState[WINED3DRS_SRGBWRITEENABLE] ? 1 : 0;
+    if (stateblock->renderState[WINED3DRS_SRGBWRITEENABLE])
+    {
+        IWineD3DSurfaceImpl *rt = device->render_targets[0];
+        if(rt->resource.format_desc->Flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
+    }
+
     args->np2_fixup = 0;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
@@ -2036,7 +2042,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
     }
     if (shader->baseShader.reg_maps.shader_version.major >= 3)
     {
-        if (((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.position_transformed)
+        if (device->strided_streams.position_transformed)
         {
             args->vp_mode = pretransformed;
         }
@@ -2058,8 +2064,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
             switch (stateblock->renderState[WINED3DRS_FOGTABLEMODE])
             {
                 case WINED3DFOG_NONE:
-                    if (((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.position_transformed
-                            || use_vs(stateblock))
+                    if (device->strided_streams.position_transformed || use_vs(stateblock))
                     {
                         args->fog = FOG_LINEAR;
                         break;

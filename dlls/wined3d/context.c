@@ -2192,6 +2192,11 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
             {
                 Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
             }
+            /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
+            if ((old->Flags & WINED3DFMT_FLAG_SRGB_WRITE) != (new->Flags & WINED3DFMT_FLAG_SRGB_WRITE))
+            {
+                Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SRGBWRITEENABLE), StateTable);
+            }
         }
 
         /* When switching away from an offscreen render target, and we're not

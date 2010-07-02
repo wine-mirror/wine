@@ -2698,6 +2698,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
     IWineD3DDeviceImpl *device = stateblock->device;
+    IWineD3DSurfaceImpl *rt = device->render_targets[0];
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
@@ -2886,7 +2887,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                 break;
         }
     }
-    if(stateblock->renderState[WINED3DRS_SRGBWRITEENABLE]) {
+    if(stateblock->renderState[WINED3DRS_SRGBWRITEENABLE] &&
+       rt->resource.format_desc->Flags & WINED3DFMT_FLAG_SRGB_WRITE) {
         settings->sRGB_write = 1;
     } else {
         settings->sRGB_write = 0;
