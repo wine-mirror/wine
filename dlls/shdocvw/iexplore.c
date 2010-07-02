@@ -142,15 +142,23 @@ static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
     }else {
         VARIANT var_url;
         DWORD len;
+        int cmdlen;
 
         if(!strncasecmp(cmdline, "-nohome", 7))
             cmdline += 7;
+        while(*cmdline == ' ' || *cmdline == '\t')
+            cmdline++;
+        cmdlen = lstrlenA(cmdline);
+        if(cmdlen > 2 && cmdline[0] == '"' && cmdline[cmdlen-1] == '"') {
+            cmdline++;
+            cmdlen -= 2;
+        }
 
         V_VT(&var_url) = VT_BSTR;
 
-        len = MultiByteToWideChar(CP_ACP, 0, cmdline, -1, NULL, 0);
+        len = MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, NULL, 0);
         V_BSTR(&var_url) = SysAllocStringLen(NULL, len);
-        MultiByteToWideChar(CP_ACP, 0, cmdline, -1, V_BSTR(&var_url), len);
+        MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, V_BSTR(&var_url), len);
 
         /* navigate to the first page */
         IWebBrowser2_Navigate2(wb, &var_url, NULL, NULL, NULL, NULL);
