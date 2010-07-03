@@ -5460,7 +5460,15 @@ static void nested_loop_test(IDirect3DDevice9 *device) {
         0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0          */
         0x0000ffff                                                              /* end                  */
     };
+    const DWORD vshader_code[] = {
+        0xfffe0300,                                                             /* vs_3_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0      */
+        0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0      */
+        0x02000001, 0xe00f0000, 0x90e40000,                                     /* mov o0, v0           */
+        0x0000ffff                                                              /* end                  */
+    };
     IDirect3DPixelShader9 *shader;
+    IDirect3DVertexShader9 *vshader;
     HRESULT hr;
     DWORD color;
     const float quad[] = {
@@ -5474,6 +5482,10 @@ static void nested_loop_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetPixelShader(device, shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed with %08x\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vshader_code, &vshader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, vshader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x0000ff00, 0.0, 0);
@@ -5498,7 +5510,10 @@ static void nested_loop_test(IDirect3DDevice9 *device) {
 
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with %08x\n", hr);
     IDirect3DPixelShader9_Release(shader);
+    IDirect3DVertexShader9_Release(vshader);
 }
 
 struct varying_test_struct
@@ -11317,20 +11332,16 @@ START_TEST(visual)
             cnd_test(device_ptr);
             if (caps.PixelShaderVersion >= D3DPS_VERSION(2, 0)) {
                 dp2add_ps_test(device_ptr);
-                if (caps.PixelShaderVersion >= D3DPS_VERSION(3, 0)) {
+                if (caps.PixelShaderVersion >= D3DPS_VERSION(3, 0) && caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
                     nested_loop_test(device_ptr);
                     fixed_function_varying_test(device_ptr);
                     vFace_register_test(device_ptr);
                     vpos_register_test(device_ptr);
                     multiple_rendertargets_test(device_ptr);
-                    if(caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
-                        vshader_version_varying_test(device_ptr);
-                        pshader_version_varying_test(device_ptr);
-                    } else {
-                        skip("No vs_3_0 support\n");
-                    }
+                    vshader_version_varying_test(device_ptr);
+                    pshader_version_varying_test(device_ptr);
                 } else {
-                    skip("No ps_3_0 support\n");
+                    skip("No ps_3_0 or vs_3_0 support\n");
                 }
             } else {
                 skip("No ps_2_0 support\n");
