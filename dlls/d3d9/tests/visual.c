@@ -10862,6 +10862,17 @@ static void depth_clamp_test(IDirect3DDevice9 *device)
     vp.MaxZ = 7.5;
 
     hr = IDirect3DDevice9_SetViewport(device, &vp);
+    if(FAILED(hr))
+    {
+        /* Windows 7 rejects MaxZ > 1.0, Windows XP allows it. This doesn't break
+         * the tests because the 7.5 is just intended to show that it doesn't have
+         * any influence on the drawing or D3DRS_CLIPPING = FALSE. Set an accepted
+         * viewport and continue.
+         */
+        ok(broken(hr == D3DERR_INVALIDCALL), "D3D rejected maxZ > 1.0\n");
+        vp.MaxZ = 1.0;
+        hr = IDirect3DDevice9_SetViewport(device, &vp);
+    }
     ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0, 0);
