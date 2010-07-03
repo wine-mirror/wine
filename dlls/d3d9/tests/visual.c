@@ -10730,6 +10730,7 @@ static void viewport_test(IDirect3DDevice9 *device) {
     HRESULT hr;
     DWORD color;
     D3DVIEWPORT9 vp, old_vp;
+    BOOL draw_failed = TRUE;
     const float quad[] =
     {
         -0.5,   -0.5,   0.1,
@@ -10749,6 +10750,10 @@ static void viewport_test(IDirect3DDevice9 *device) {
      *
      * TODO: Test Width < surface.width, but X + Width > surface.width
      * TODO: Test Width < surface.width, what happens with the height?
+     *
+     * Note that Windows 7 rejects MinZ / MaxZ outside [0;1], but accepts Width
+     * and Height fields bigger than the framebuffer. However, it later refuses
+     * to draw.
      */
     memset(&vp, 0, sizeof(vp));
     vp.X = 0;
@@ -10767,29 +10772,32 @@ static void viewport_test(IDirect3DDevice9 *device) {
     if(SUCCEEDED(hr))
     {
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
-        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+        ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "DrawPrimitiveUP failed (%08x)\n", hr);
+        draw_failed = FAILED(hr);
         hr = IDirect3DDevice9_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
     }
 
-    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
-    color = getPixelColor(device, 158, 118);
-    ok(color == 0x00ff0000, "viewport test: (158,118) has color %08x\n", color);
-    color = getPixelColor(device, 162, 118);
-    ok(color == 0x00ff0000, "viewport test: (162,118) has color %08x\n", color);
-    color = getPixelColor(device, 158, 122);
-    ok(color == 0x00ff0000, "viewport test: (158,122) has color %08x\n", color);
-    color = getPixelColor(device, 162, 122);
-    ok(color == 0x00ffffff, "viewport test: (162,122) has color %08x\n", color);
+    if(!draw_failed)
+    {
+        color = getPixelColor(device, 158, 118);
+        ok(color == 0x00ff0000, "viewport test: (158,118) has color %08x\n", color);
+        color = getPixelColor(device, 162, 118);
+        ok(color == 0x00ff0000, "viewport test: (162,118) has color %08x\n", color);
+        color = getPixelColor(device, 158, 122);
+        ok(color == 0x00ff0000, "viewport test: (158,122) has color %08x\n", color);
+        color = getPixelColor(device, 162, 122);
+        ok(color == 0x00ffffff, "viewport test: (162,122) has color %08x\n", color);
 
-    color = getPixelColor(device, 478, 358);
-    ok(color == 0x00ffffff, "viewport test: (478,358 has color %08x\n", color);
-    color = getPixelColor(device, 482, 358);
-    ok(color == 0x00ff0000, "viewport test: (482,358) has color %08x\n", color);
-    color = getPixelColor(device, 478, 362);
-    ok(color == 0x00ff0000, "viewport test: (478,362) has color %08x\n", color);
-    color = getPixelColor(device, 482, 362);
-    ok(color == 0x00ff0000, "viewport test: (482,362) has color %08x\n", color);
+        color = getPixelColor(device, 478, 358);
+        ok(color == 0x00ffffff, "viewport test: (478,358 has color %08x\n", color);
+        color = getPixelColor(device, 482, 358);
+        ok(color == 0x00ff0000, "viewport test: (482,358) has color %08x\n", color);
+        color = getPixelColor(device, 478, 362);
+        ok(color == 0x00ff0000, "viewport test: (478,362) has color %08x\n", color);
+        color = getPixelColor(device, 482, 362);
+        ok(color == 0x00ff0000, "viewport test: (482,362) has color %08x\n", color);
+    }
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
