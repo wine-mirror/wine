@@ -287,6 +287,96 @@ static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
     dest[2] = hexDigits[val & 0xf];
 }
 
+/* Computes the location where the elision should occur in the IPv6
+ * address using the numerical values of each component stored in
+ * 'values'. If the address shouldn't contain an elision then 'index'
+ * is assigned -1 as it's value. Otherwise 'index' will contain the
+ * starting index (into values) where the elision should be, and 'count'
+ * will contain the number of cells the elision covers.
+ *
+ * NOTES:
+ *  Windows will expand an elision if the elision only represents 1 h16
+ *  component of the URI.
+ *
+ *  Ex: [1::2:3:4:5:6:7] -> [1:0:2:3:4:5:6:7]
+ *
+ *  If the IPv6 address contains an IPv4 address, the IPv4 address is also
+ *  considered for being included as part of an elision if all it's components
+ *  are zeros.
+ *
+ *  Ex: [1:2:3:4:5:6:0.0.0.0] -> [1:2:3:4:5:6::]
+ */
+static void compute_elision_location(const ipv6_address *address, const USHORT values[8],
+                                     INT *index, DWORD *count) {
+    DWORD i, max_len, cur_len;
+    INT max_index, cur_index;
+
+    max_len = cur_len = 0;
+    max_index = cur_index = -1;
+    for(i = 0; i < 8; ++i) {
+        BOOL check_ipv4 = (address->ipv4 && i == 6);
+        BOOL is_end = (check_ipv4 || i == 7);
+
+        if(check_ipv4) {
+            /* Check if the IPv4 address contains only zeros. */
+            if(values[i] == 0 && values[i+1] == 0) {
+                if(cur_index == -1)
+                    cur_index = i;
+
+                cur_len += 2;
+                ++i;
+            }
+        } else if(values[i] == 0) {
+            if(cur_index == -1)
+                cur_index = i;
+
+            ++cur_len;
+        }
+
+        if(is_end || values[i] != 0) {
+            /* We only consider it for an elision if it's
+             * more then 1 component long.
+             */
+            if(cur_len > 1 && cur_len > max_len) {
+                /* Found the new elision location. */
+                max_len = cur_len;
+                max_index = cur_index;
+            }
+
+            /* Reset the current range for the next range of zeros. */
+            cur_index = -1;
+            cur_len = 0;
+        }
+    }
+
+    *index = max_index;
+    *count = max_len;
+}
+
+/* Converts the specified IPv4 address into an uint value.
+ *
+ * This function assumes that the IPv4 address has already been validated.
+ */
+static UINT ipv4toui(const WCHAR *ip, DWORD len) {
+    UINT ret = 0;
+    DWORD comp_value = 0;
+    const WCHAR *ptr;
+
+    for(ptr = ip; ptr < ip+len; ++ptr) {
+        if(*ptr == '.') {
+            ret <<= 8;
+            ret += comp_value;
+            comp_value = 0;
+        } else
+            comp_value = comp_value*10 + (*ptr-'0');
+    }
+
+    ret <<= 8;
+    ret += comp_value;
+
+    return ret;
+}
+
 /* Converts an IPv4 address in numerical form into it's fully qualified
  * string form. This function returns the number of characters written
  * to 'dest'. If 'dest' is NULL this function will return the number of
@@ -313,6 +403,70 @@ static DWORD ui2ipv4(WCHAR *dest, UINT address) {
         ret = sprintfW(dest, formatW, digits[0], digits[1], digits[2], digits[3]);
 
     return ret;
+}
+
+/* Converts an h16 component (from an IPv6 address) into it's
+ * numerical value.
+ *
+ * This function assumes that the h16 component has already been validated.
+ */
+static USHORT h16tous(h16 component) {
+    DWORD i;
+    USHORT ret = 0;
+
+    for(i = 0; i < component.len; ++i) {
+        ret <<= 4;
+        ret += hex_to_int(component.str[i]);
+    }
+
+    return ret;
+}
+
+/* Converts an IPv6 address into it's 128 bits (16 bytes) numerical value.
+ *
+ * This function assumes that the ipv6_address has already been validated.
+ */
+static BOOL ipv6_to_number(const ipv6_address *address, USHORT number[8]) {
+    DWORD i, cur_component = 0;
+    BOOL already_passed_elision = FALSE;
+
+    for(i = 0; i < address->h16_count; ++i) {
+        if(address->elision) {
+            if(address->components[i].str > address->elision && !already_passed_elision) {
+                /* Means we just passed the elision and need to add it's values to
+                 * 'number' before we do anything else.
+                 */
+                DWORD j = 0;
+                for(j = 0; j < address->elision_size; j+=2)
+                    number[cur_component++] = 0;
+
+                already_passed_elision = TRUE;
+            }
+        }
+
+        number[cur_component++] = h16tous(address->components[i]);
+    }
+
+    /* Case when the elision appears after the h16 components. */
+    if(!already_passed_elision && address->elision) {
+        for(i = 0; i < address->elision_size; i+=2)
+            number[cur_component++] = 0;
+        already_passed_elision = TRUE;
+    }
+
+    if(address->ipv4) {
+        UINT value = ipv4toui(address->ipv4, address->ipv4_len);
+
+        if(cur_component != 6) {
+            ERR("(%p %p): Failed sanity check with %d\n", address, number, cur_component);
+            return FALSE;
+        }
+
+        number[cur_component++] = (value >> 16) & 0xffff;
+        number[cur_component] = value & 0xffff;
+    }
+
+    return TRUE;
 }
 
 /* Checks if the characters pointed to by 'ptr' are
@@ -1354,6 +1508,153 @@ static BOOL canonicalize_ipv4address(const parse_data *data, Uri *uri, DWORD fla
     return TRUE;
 }
 
+/* Attempts to canonicalize the IPv6 address of the URI.
+ *
+ * Multiple things happen during the canonicalization of an IPv6 address:
+ *  1)  Any leading zero's in an h16 component are removed.
+ *      Ex: [0001:0022::] -> [1:22::]
+ *
+ *  2)  The longest sequence of zero h16 components are compressed
+ *      into a "::" (elision). If there's a tie, the first is choosen.
+ *
+ *      Ex: [0:0:0:0:1:6:7:8]   -> [::1:6:7:8]
+ *          [0:0:0:0:1:2::]     -> [::1:2:0:0]
+ *          [0:0:1:2:0:0:7:8]   -> [::1:2:0:0:7:8]
+ *
+ *  3)  If an IPv4 address is attached to the IPv6 address, it's
+ *      also normalized.
+ *      Ex: [::001.002.022.000] -> [::1.2.22.0]
+ *
+ *  4)  If an elision is present, but, only represents 1 h16 component
+ *      it's expanded.
+ *
+ *      Ex: [1::2:3:4:5:6:7] -> [1:0:2:3:4:5:6:7]
+ *
+ *  5)  If the IPv6 address contains an IPv4 address and there exists
+ *      at least 1 non-zero h16 component the IPv4 address is converted
+ *      into two h16 components, otherwise it's normalized and kept as is.
+ *
+ *      Ex: [::192.200.003.4]       -> [::192.200.3.4]
+ *          [ffff::192.200.003.4]   -> [ffff::c0c8:3041]
+ *
+ * NOTE:
+ *  For unknown scheme types Windows simply copies the address over without any
+ *  changes.
+ *
+ *  IPv4 address can be included in an elision if all its components are 0's.
+ */
+static BOOL canonicalize_ipv6address(const parse_data *data, Uri *uri,
+                                     DWORD flags, BOOL computeOnly) {
+    uri->host_start = uri->canon_len;
+
+    if(data->scheme_type == URL_SCHEME_UNKNOWN) {
+        if(!computeOnly)
+            memcpy(uri->canon_uri+uri->canon_len, data->host, data->host_len*sizeof(WCHAR));
+        uri->canon_len += data->host_len;
+    } else {
+        USHORT values[8];
+        INT elision_start;
+        DWORD i, elision_len;
+
+        if(!ipv6_to_number(&(data->ipv6_address), values)) {
+            TRACE("(%p %p %x %d): Failed to compute numerical value for IPv6 address.\n",
+                data, uri, flags, computeOnly);
+            return FALSE;
+        }
+
+        if(!computeOnly)
+            uri->canon_uri[uri->canon_len] = '[';
+        ++uri->canon_len;
+
+        /* Find where the elision should occur (if any). */
+        compute_elision_location(&(data->ipv6_address), values, &elision_start, &elision_len);
+
+        TRACE("%p %p %x %d): Elision starts at %d, len=%u\n", data, uri, flags,
+            computeOnly, elision_start, elision_len);
+
+        for(i = 0; i < 8; ++i) {
+            BOOL in_elision = (elision_start > -1 && i >= elision_start &&
+                               i < elision_start+elision_len);
+            BOOL do_ipv4 = (i == 6 && data->ipv6_address.ipv4 && !in_elision &&
+                            data->ipv6_address.h16_count == 0);
+
+            if(i == elision_start) {
+                if(!computeOnly) {
+                    uri->canon_uri[uri->canon_len] = ':';
+                    uri->canon_uri[uri->canon_len+1] = ':';
+                }
+                uri->canon_len += 2;
+            }
+
+            /* We can ignore the current component if we're in the elision. */
+            if(in_elision)
+                continue;
+
+            /* We only add a ':' if we're not at i == 0, or when we're at
+             * the very end of elision range since the ':' colon was handled
+             * earlier. Otherwise we would end up with ":::" after elision.
+             */
+            if(i != 0 && !(elision_start > -1 && i == elision_start+elision_len)) {
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = ':';
+                ++uri->canon_len;
+            }
+
+            if(do_ipv4) {
+                UINT val;
+                DWORD len;
+
+                /* Combine the two parts of the IPv4 address values. */
+                val = values[i];
+                val <<= 16;
+                val += values[i+1];
+
+                if(!computeOnly)
+                    len = ui2ipv4(uri->canon_uri+uri->canon_len, val);
+                else
+                    len = ui2ipv4(NULL, val);
+
+                uri->canon_len += len;
+                ++i;
+            } else {
+                /* Write a regular h16 component to the URI. */
+
+                /* Short circuit for the trivial case. */
+                if(values[i] == 0) {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = '0';
+                    ++uri->canon_len;
+                } else {
+                    static const WCHAR formatW[] = {'%','x',0};
+
+                    if(!computeOnly)
+                        uri->canon_len += sprintfW(uri->canon_uri+uri->canon_len,
+                                            formatW, values[i]);
+                    else {
+                        WCHAR tmp[5];
+                        uri->canon_len += sprintfW(tmp, formatW, values[i]);
+                    }
+                }
+            }
+        }
+
+        /* Add the closing ']'. */
+        if(!computeOnly)
+            uri->canon_uri[uri->canon_len] = ']';
+        ++uri->canon_len;
+    }
+
+    uri->host_len = uri->canon_len - uri->host_start;
+
+    if(!computeOnly)
+        TRACE("(%p %p %x %d): Canonicalized IPv6 address %s, len=%d\n", data, uri, flags,
+            computeOnly, debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len),
+            uri->host_len);
+
+    return TRUE;
+}
+
+/* Attempts to canonicalize the host of the URI (if any). */
 static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     uri->host_start = -1;
     uri->host_len = 0;
@@ -1365,6 +1666,12 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
             if(!canonicalize_ipv4address(data, uri, flags, computeOnly))
                 return FALSE;
 
+            break;
+        case Uri_HOST_IPV6:
+            if(!canonicalize_ipv6address(data, uri, flags, computeOnly))
+                return FALSE;
+
+            uri->host_type = Uri_HOST_IPV6;
             break;
         default:
             WARN("(%p %p %x %d): Canonicalization not supported yet\n", data,
@@ -1617,7 +1924,12 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
     switch(uriProp) {
     case Uri_PROPERTY_HOST:
         if(This->host_start > -1) {
-            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start, This->host_len);
+            /* The '[' and ']' aren't included for IPv6 addresses. */
+            if(This->host_type == Uri_HOST_IPV6)
+                *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start+1, This->host_len-2);
+            else
+                *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start, This->host_len);
+
             hres = S_OK;
         } else {
             /* Canonicalizing/parsing the host of a URI is only partially
@@ -1738,6 +2050,11 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         }
 
         *pcchProperty = This->host_len;
+
+        /* '[' and ']' aren't included in the length. */
+        if(This->host_type == Uri_HOST_IPV6)
+            *pcchProperty -= 2;
+
         hres = (This->host_start > -1) ? S_OK : S_FALSE;
         break;
     case Uri_PROPERTY_PASSWORD:
