@@ -7992,7 +7992,15 @@ static void vFace_register_test(IDirect3DDevice9 *device)
         0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                */
         0x0000ffff                                                              /* END                        */
     };
+    const DWORD vshader_code[] = {
+        0xfffe0300,                                                             /* vs_3_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0      */
+        0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0      */
+        0x02000001, 0xe00f0000, 0x90e40000,                                     /* mov o0, v0           */
+        0x0000ffff                                                              /* end                  */
+    };
     IDirect3DPixelShader9 *shader;
+    IDirect3DVertexShader9 *vshader;
     IDirect3DTexture9 *texture;
     IDirect3DSurface9 *surface, *backbuffer;
     const float quad[] = {
@@ -8019,6 +8027,8 @@ static void vFace_register_test(IDirect3DDevice9 *device)
          1.0,    1.0,   0.1,    1.0,    1.0,
     };
 
+    hr = IDirect3DDevice9_CreateVertexShader(device, vshader_code, &vshader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code, &shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
@@ -8027,6 +8037,8 @@ static void vFace_register_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetPixelShader(device, shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, vshader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
@@ -8051,6 +8063,8 @@ static void vFace_register_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
         /* Blit the texture onto the back buffer to make it visible */
+        hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_SetPixelShader(device, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
@@ -8082,6 +8096,7 @@ static void vFace_register_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed hr=%08x\n", hr);
     IDirect3DDevice9_SetTexture(device, 0, NULL);
     IDirect3DPixelShader9_Release(shader);
+    IDirect3DVertexShader9_Release(vshader);
     IDirect3DSurface9_Release(surface);
     IDirect3DSurface9_Release(backbuffer);
     IDirect3DTexture9_Release(texture);
