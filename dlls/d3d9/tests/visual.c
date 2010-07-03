@@ -9766,13 +9766,13 @@ static void np2_stretch_rect_test(IDirect3DDevice9 *device) {
     hr = IDirect3DTexture9_GetSurfaceLevel(dsttex, 0, &dst);
     ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %08x\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 1, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     /* Clear the StretchRect destination for debugging */
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, dst);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed with %08x\n", hr);
-    hr = IDirect3DDevice9_Clear(device, 1, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, src);
