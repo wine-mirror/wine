@@ -69,7 +69,10 @@ DWORD WINAPI XInputSetState(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration)
 
 DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
 {
-    FIXME("(%u %p)\n", dwUserIndex, pState);
+    static int warn_once;
+
+    if (!warn_once++)
+        FIXME("(%u %p)\n", dwUserIndex, pState);
 
     if (dwUserIndex < XUSER_MAX_COUNT)
     {
