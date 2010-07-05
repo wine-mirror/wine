@@ -531,3 +531,14 @@ BOOL WINAPI CryptSignMessage(PCRYPT_SIGN_MESSAGE_PARA pSignPara,
         CryptReleaseContext(hCryptProv, 0);
     return ret;
 }
+
+BOOL WINAPI CryptEncryptMessage(PCRYPT_ENCRYPT_MESSAGE_PARA pEncryptPara,
+ DWORD cRecipientCert, PCCERT_CONTEXT rgpRecipientCert[],
+ const BYTE *pbToBeEncrypted, DWORD cbToBeEncrypted, BYTE *pbEncryptedBlob,
+ DWORD *pcbEncryptedBlob)
+{
+    FIXME("(%p, %d, %p, %p, %d, %p, %p): stub\n", pEncryptPara, cRecipientCert,
+     rgpRecipientCert, pbToBeEncrypted, cbToBeEncrypted, pbEncryptedBlob,
+     pcbEncryptedBlob);
+    return FALSE;
+}

@@ -113,7 +113,7 @@
 @ stub CryptDecryptMessage
 @ stdcall CryptEncodeObject(long str ptr ptr ptr)
 @ stdcall CryptEncodeObjectEx(long str ptr long ptr ptr ptr)
-@ stub CryptEncryptMessage
+@ stdcall CryptEncryptMessage(ptr long ptr ptr long ptr ptr)
 @ stub CryptEnumOIDFunction
 @ stdcall CryptEnumOIDInfo(long long ptr ptr)
 @ stub CryptEnumProvidersU
