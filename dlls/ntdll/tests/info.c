@@ -28,6 +28,7 @@ static NTSTATUS (WINAPI * pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PV
 static NTSTATUS (WINAPI * pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtSetInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
+static NTSTATUS (WINAPI * pNtQueryVirtualMemory)(HANDLE, LPCVOID, MEMORY_INFORMATION_CLASS , PVOID , SIZE_T , SIZE_T *);
 static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 static BOOL is_wow64;
@@ -61,6 +62,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtSetInformationProcess);
     NTDLL_GET_PROC(NtSetInformationThread);
     NTDLL_GET_PROC(NtReadVirtualMemory);
+    NTDLL_GET_PROC(NtQueryVirtualMemory);
 
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandle("kernel32.dll"), "IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
@@ -970,6 +972,56 @@ static void test_readvirtualmemory(void)
     CloseHandle(process);
 }
 
+static void test_queryvirtualmemory(void)
+{
+    NTSTATUS status;
+    SIZE_T readcount;
+    static const char teststring[] = "test string";
+    static char rwtestbuf[42];
+    MEMORY_BASIC_INFORMATION mbi;
+    char stackbuf[42];
+
+    trace("Check flags of a function entry in NTDLL.DLL\n");
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), pNtQueryVirtualMemory, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
+    ok (mbi.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_EXECUTE_WRITECOPY);
+    ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%x\n", mbi.State, MEM_COMMIT);
+    todo_wine ok (mbi.Protect == PAGE_EXECUTE_READ, "mbi.Protect is 0x%x, expected 0x%x\n", mbi.Protect, PAGE_EXECUTE_READ);
+
+    trace("Check flags of heap\n");
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), GetProcessHeap(), MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
+    ok (mbi.AllocationProtect == PAGE_READWRITE, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_READWRITE);
+    ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%x\n", mbi.State, MEM_COMMIT);
+    ok (mbi.Protect == PAGE_READWRITE, "mbi.Protect is 0x%x, expected 0x%x\n", mbi.Protect, PAGE_READWRITE);
+
+    trace("Check flags of stack\n");
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), stackbuf, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
+    ok (mbi.AllocationProtect == PAGE_READWRITE, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_READWRITE);
+    ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%x\n", mbi.State, MEM_COMMIT);
+    ok (mbi.Protect == PAGE_READWRITE, "mbi.Protect is 0x%x, expected 0x%x\n", mbi.Protect, PAGE_READWRITE);
+
+    trace("Check flags of read-only data\n");
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), teststring, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
+    ok (mbi.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_EXECUTE_WRITECOPY);
+    ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
+    todo_wine ok (mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x, expected 0x%X\n", mbi.Protect, PAGE_READONLY);
+
+    trace("Check flags of read-write global data (.bss)\n");
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), rwtestbuf, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
+    ok (mbi.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_EXECUTE_WRITECOPY);
+    ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
+    todo_wine ok (mbi.Protect == PAGE_READWRITE, "mbi.Protect is 0x%x, expected 0x%X\n", mbi.Protect, PAGE_READWRITE);
+}
+
 static void test_affinity(void)
 {
     NTSTATUS status;
@@ -1154,6 +1206,8 @@ START_TEST(info)
     /* belongs into it's own file */
     trace("Starting test_readvirtualmemory()\n");
     test_readvirtualmemory();
+    trace("Starting test_queryvirtualmemory()\n");
+    test_queryvirtualmemory();
 
     trace("Starting test_affinity()\n");
     test_affinity();
