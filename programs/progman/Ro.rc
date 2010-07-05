@@ -155,19 +155,19 @@ PUSHBUTTON    "A&jutor",        PM_HELP, 185, 85, 80, 15, WS_TABSTOP
 
 /* Dialog `Symbol' */
 
-DIALOG_SYMBOL DIALOG 0, 0, 200, 85
+DIALOG_SYMBOL DIALOG 0, 0, 215, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Schimbare pictogramă"
 {
-LTEXT     "Nume de &fișier:",   PM_ICON_FILE_TXT, 5, 15, 40, 10
-EDITTEXT                        PM_ICON_FILE, 45, 15, 85, 15, WS_TABSTOP
-LTEXT     "P&ictogramă curentă:", PM_SYMBOL_LIST_TXT, 5, 30, 125, 10
-COMBOBOX                        PM_SYMBOL_LIST, 5, 40, 125, 50,
+LTEXT     "Nume de &fișier:",   PM_ICON_FILE_TXT, 5, 15, 50, 10
+EDITTEXT                        PM_ICON_FILE, 60, 15, 85, 15, WS_TABSTOP
+LTEXT     "P&ictogramă curentă:", PM_SYMBOL_LIST_TXT, 5, 35, 125, 10
+COMBOBOX                        PM_SYMBOL_LIST, 5, 45, 140, 50,
                                 CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
-DEFPUSHBUTTON "OK",             IDOK, 135, 5, 60, 15, WS_TABSTOP
-PUSHBUTTON    "Renunță",        IDCANCEL, 135, 25, 60, 15, WS_TABSTOP
-PUSHBUTTON    "Na&vigare...",   PM_BROWSE, 135, 45, 60, 15, WS_TABSTOP
-PUSHBUTTON    "A&jutor",        PM_HELP, 135, 65, 60, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",             IDOK, 150, 5, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Renunță",        IDCANCEL, 150, 25, 60, 15, WS_TABSTOP
+PUSHBUTTON    "Na&vigare...",   PM_BROWSE, 150, 45, 60, 15, WS_TABSTOP
+PUSHBUTTON    "A&jutor",        PM_HELP, 150, 65, 60, 15, WS_TABSTOP
 }
 
 /* Dialog `Execute' */
