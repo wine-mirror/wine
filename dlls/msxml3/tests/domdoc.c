@@ -5589,6 +5589,14 @@ static void test_XSLPattern(void)
     /* switch to XPath */
     ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
 
+    /* XPath doesn't select elements with non-null default namespace with unqualified selectors, XSLPattern does */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//elem/c"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    /* should select <elem><c> and <elem xmlns='...'><c> but not <elem><foo:c> */
+    todo_wine ok(len == 3, "expected 3 entries in list, got %d\n", len);
+    IXMLDOMNodeList_Release(list);
+
     /* for XSLPattern start index is 0, for XPath it's 1 */
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[0]"), &list));
     len = 0;
