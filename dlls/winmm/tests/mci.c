@@ -259,6 +259,12 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(err==MCIERR_PARAM_OVERFLOW || broken(!err /* Win9x */),"mciCommand MCI_SYSINFO all name 1 open too small: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"mysound"), "sysinfo short name returned %s\n", buf);
 
+    err = mciSendString("sysinfo mysound quantity open", buf, sizeof(buf), hwnd);
+    todo_wine ok(err==MCIERR_DEVICE_TYPE_REQUIRED,"sysinfo alias quantity returned %s\n", dbg_mcierr(err));
+
+    err = mciSendString("sysinfo nosuchalias quantity open", buf, sizeof(buf), hwnd);
+    todo_wine ok(err==MCIERR_DEVICE_TYPE_REQUIRED,"sysinfo unknown quantity open returned %s\n", dbg_mcierr(err));
+
     err = mciGetDeviceID("all");
     ok(MCI_ALL_DEVICE_ID==err || /* Win9x */(UINT16)MCI_ALL_DEVICE_ID==err,"mciGetDeviceID all returned %u, expected %d\n", err, MCI_ALL_DEVICE_ID);
 
@@ -281,6 +287,21 @@ static void test_openCloseWAVE(HWND hwnd)
         err = mciSendString("close y", NULL, 0, NULL);
         ok(!err,"close y returned %s\n", dbg_mcierr(err));
     }
+
+    err = mciSendString("open ! alias no", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_INVALID_DEVICE_NAME,"open !(void): %s\n", dbg_mcierr(err));
+
+    err = mciSendString("open !no-such-file-exists.wav alias no", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_FILE_NOT_FOUND || /* Win9X */err==MCIERR_INVALID_DEVICE_NAME,"open !name: %s\n", dbg_mcierr(err));
+
+    /* FILE_NOT_FOUND stems from mciwave,
+     * the complete name including ! is passed through since NT */
+    err = mciSendString("open nosuchdevice!tempfile.wav alias no", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_FILE_NOT_FOUND || /* Win9X */err==MCIERR_INVALID_DEVICE_NAME,"open nosuchdevice!name: %s\n", dbg_mcierr(err));
+    /* FIXME? use broken(INVALID_DEVICE_NAME) and have Wine not mimic Win9X? */
+
+    err = mciSendString("close waveaudio", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_INVALID_DEVICE_NAME,"open nosuchdevice!name: %s\n", dbg_mcierr(err));
 
     err = mciSendString(command_close_all, NULL, 0, NULL);
     ok(!err,"mci %s (without buffer) returned %s\n", command_close_all, dbg_mcierr(err));
@@ -316,6 +337,9 @@ static void test_openCloseWAVE(HWND hwnd)
     }
 
     ok(0xDEADF00D==intbuf[0] && 0xABADCAFE==intbuf[2],"DWORD buffer corruption\n");
+
+    err = mciGetDeviceID("waveaudio");
+    ok(err==1,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
 
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0); /* from MSDN */
     ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0) returned %s\n", dbg_mcierr(err));
