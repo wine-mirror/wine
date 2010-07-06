@@ -528,17 +528,17 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
     case CBR_38400:     port.c_ospeed = B38400; break;
 #ifdef B57600
     case 57600:
-    case CBR_57600:     port.c_cflag |= B57600; break;
+    case CBR_57600:     port.c_ospeed = B57600; break;
 #endif
 #ifdef B115200
     case 115200:
-    case CBR_115200:    port.c_cflag |= B115200;break;
+    case CBR_115200:    port.c_ospeed = B115200;break;
 #endif
 #ifdef B230400
-    case 230400:	port.c_cflag |= B230400;break;
+    case 230400:	port.c_ospeed = B230400;break;
 #endif
 #ifdef B460800
-    case 460800:	port.c_cflag |= B460800;break;
+    case 460800:	port.c_ospeed = B460800;break;
 #endif
     default:
         ERR("baudrate %d\n", sbr->BaudRate);
