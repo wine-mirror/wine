@@ -186,6 +186,91 @@ static void test_mciParser(HWND hwnd)
     test_notification(hwnd, "MCI_OPEN", MCI_NOTIFY_SUCCESSFUL);
     test_notification(hwnd, "MCI_OPEN no #2", 0);
 
+    err = mciSendString("open avivideo alias a", buf, sizeof(buf), hwnd);
+    ok(!err,"open another: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_MISSING_COMMAND_STRING,"empty string: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("open", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_MISSING_DEVICE_NAME,"open void: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("open notify", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_INVALID_DEVICE_NAME,"open notify: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("open new", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_NEW_REQUIRES_ALIAS,"open new: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("open new type waveaudio alias r shareable shareable", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_DUPLICATE_FLAGS,"open new: %s\n", dbg_mcierr(err));
+    if(!err) mciSendString("close r", NULL, 0, NULL);
+
+    err = mciSendString("status x position wait wait", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_DUPLICATE_FLAGS,"status wait wait: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status x length length", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"status 2xlength: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status x length position", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"status length+position: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("set x time format milliseconds time format ms", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"status length+position: %s\n", dbg_mcierr(err));
+
+    /* device's response, not a parser test */
+    err = mciSendString("status x", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_MISSING_PARAMETER,"status waveaudio nokeyword: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status a", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_UNSUPPORTED_FUNCTION,"status avivideo nokeyword: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status x track", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_BAD_INTEGER,"status waveaudio no track: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status x track 3", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_MISSING_PARAMETER,"status waveaudio track 3: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status x 2 track 3", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_OUTOFRANGE,"status 2(position) track 3: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status x 4", buf, sizeof(buf), hwnd);
+    ok(!err,"status 4(mode): %s\n", dbg_mcierr(err));
+    if(!err)ok(!strcmp(buf,"stopped"), "status 4(mode), got: %s\n", buf);
+
+    err = mciSendString("status x 4 notify", buf, sizeof(buf), hwnd);
+    todo_wine ok(!err,"status 4(mode) notify: %s\n", dbg_mcierr(err));
+    if(!err)ok(!strcmp(buf,"stopped"), "status 4(mode), got: %s\n", buf);
+    test_notification(hwnd, "status 4 notify", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
+
+    err = mciSendString("set x milliseconds", buf, sizeof(buf), hwnd);
+    todo_wine ok(err==MCIERR_UNRECOGNIZED_KEYWORD,"set milliseconds: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("set x milliseconds ms", buf, sizeof(buf), hwnd);
+    todo_wine ok(err==MCIERR_UNRECOGNIZED_KEYWORD,"set milliseconds ms: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("capability x can   save", buf, sizeof(buf), hwnd);
+    todo_wine ok(!err,"capability can (space) save: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status x nsa", buf, sizeof(buf), hwnd);
+    todo_wine ok(err==MCIERR_BAD_CONSTANT,"status nsa: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("status all time format", buf, sizeof(buf), hwnd);
+    ok(err==MCIERR_CANNOT_USE_ALL,"status all: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("cue all", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_UNRECOGNIZED_COMMAND,"cue all: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("open all", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_CANNOT_USE_ALL,"open all: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("put a window at 0 0", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_BAD_INTEGER,"put incomplete rect: %s\n", dbg_mcierr(err));
+
+    /*w9X-w2k report code from device last opened, newer versions compare them all
+     * and return the one error code or MCIERR_MULTIPLE if they differ. */
+    err = mciSendString("pause all", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_MULTIPLE || broken(err==MCIERR_NONAPPLICABLE_FUNCTION),"pause all: %s\n", dbg_mcierr(err));
+
     /* MCI_STATUS' dwReturn is a DWORD_PTR, others' a plain DWORD. */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
     parm.status.dwReturn = 0xFEEDABAD;
@@ -235,6 +320,9 @@ static void test_mciParser(HWND hwnd)
 
     err = mciSendCommand(wDeviceID, MCI_CLOSE, 0, 0);
     ok(!err,"mciCommand close returned %s\n", dbg_mcierr(err));
+
+    err = mciSendString("close a", buf, sizeof(buf), hwnd);
+    ok(!err,"close avi: %s\n", dbg_mcierr(err));
 
     test_notification(hwnd, "-end of 1st set-", 0);
 }
