@@ -164,10 +164,16 @@ STRINGTABLE DISCARDABLE
     IDS_FILE_RECOVERY "Recuperação de Arquivos"
     IDS_ROOT_LIST_SIGNER "Assinador de Lista Raiz"
     IDS_ANY_APPLICATION_POLICIES "Políticas para todas as aplicações"
-    IDS_DS_EMAIL_REPLICATION "Replicação do Directório de Serviço E-mail"
+    IDS_DS_EMAIL_REPLICATION "Replicação do Diretório de Serviço E-mail"
     IDS_ENROLLMENT_AGENT "Agente de Requisição de Certificados"
     IDS_LIFETIME_SIGNING "Assinatura de Tempo de Vida"
     IDS_ANY_CERT_POLICY "Políticas para todas as emissões"
+    IDS_LOCALIZEDNAME_ROOT "Autoridades de Certificação de Raiz Confiáveis"
+    IDS_LOCALIZEDNAME_MY "Pessoal"
+    IDS_LOCALIZEDNAME_CA "Autoridades de Certificação Intermédias"
+    IDS_LOCALIZEDNAME_ADDRESSBOOK "Outras pessoas"
+    IDS_LOCALIZEDNAME_TRUSTEDPUBLISHER "Publicadores Confiáveis"
+    IDS_LOCALIZEDNAME_DISALLOWED "Certificados Desconfiáveis"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -315,13 +321,6 @@ STRINGTABLE DISCARDABLE
     IDS_ENROLLMENT_AGENT "Agente de Pedido de Certificados"
     IDS_LIFETIME_SIGNING "Assinatura de tempo de vida"
     IDS_ANY_CERT_POLICY "Políticas para todas as emissões"
-}
-
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
-
-STRINGTABLE DISCARDABLE
-{
     IDS_LOCALIZEDNAME_ROOT "Autoridades de Certificação de Raiz Confiáveis"
     IDS_LOCALIZEDNAME_MY "Pessoal"
     IDS_LOCALIZEDNAME_CA "Autoridades de Certificação Intermédias"
