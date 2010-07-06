@@ -760,12 +760,7 @@ static INT_PTR CALLBACK focusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
        return TRUE;
 
     case WM_COMMAND:
-       if (LOWORD(wParam) == IDCANCEL)
-       {
-           EndDialog(hDlg, LOWORD(wParam));
-           return TRUE;
-       }
-       else if (LOWORD(wParam) == 200)
+       if (LOWORD(wParam) == 200)
        {
            if (HIWORD(wParam) == EN_SETFOCUS)
                g_hwndInitialFocusT1 = (HWND)lParam;
