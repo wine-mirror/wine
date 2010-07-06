@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 by Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2006-2010 by Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -118,7 +118,7 @@ BEGIN
         MENUITEM "Oliven"     ID_COLOR_OLIVE
         MENUITEM "Marineblå"  ID_COLOR_NAVY
         MENUITEM "Purpur"     ID_COLOR_PURPLE
-        MENUITEM "Teal"       ID_COLOR_TEAL
+        MENUITEM "Blågrønn"   ID_COLOR_TEAL
         MENUITEM "Grå"        ID_COLOR_GRAY
         MENUITEM "Sølv"       ID_COLOR_SILVER
         MENUITEM "Rød"        ID_COLOR_RED
@@ -126,7 +126,7 @@ BEGIN
         MENUITEM "Gul"        ID_COLOR_YELLOW
         MENUITEM "Blå"        ID_COLOR_BLUE
         MENUITEM "Fuchsia"    ID_COLOR_FUCHSIA
-        MENUITEM "Aqua"       ID_COLOR_AQUA
+        MENUITEM "Turkis"     ID_COLOR_AQUA
         MENUITEM "Hvit"       ID_COLOR_WHITE
         MENUITEM "Automatisk" ID_COLOR_AUTOMATIC
     END
@@ -244,14 +244,14 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "Forrige side"
     STRING_PREVIEW_TWOPAGES,         "To sider"
     STRING_PREVIEW_ONEPAGE,          "Én side"
-    STRING_PREVIEW_ZOOMIN,           "Zoom in"
-    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
+    STRING_PREVIEW_ZOOMIN,           "Forstørr"
+    STRING_PREVIEW_ZOOMOUT,          "Forminsk"
     STRING_PREVIEW_CLOSE,            "Lukk"
     STRING_PREVIEW_PAGE,             "Side"
     STRING_PREVIEW_PAGES,            "Sider"
     STRING_UNITS_CM,                 "cm"
     STRING_UNITS_IN,                 "in"
-    STRING_UNITS_INCH,               "inch"
+    STRING_UNITS_INCH,               "tommer"
     STRING_UNITS_PT,                 "pt"
 END
 
