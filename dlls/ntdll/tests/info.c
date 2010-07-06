@@ -993,9 +993,11 @@ static void test_queryvirtualmemory(void)
     status = pNtQueryVirtualMemory(NtCurrentProcess(), GetProcessHeap(), MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
-    ok (mbi.AllocationProtect == PAGE_READWRITE, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_READWRITE);
+    ok (mbi.AllocationProtect == PAGE_READWRITE || mbi.AllocationProtect == PAGE_EXECUTE_READWRITE,
+        "mbi.AllocationProtect is 0x%x\n", mbi.AllocationProtect);
     ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%x\n", mbi.State, MEM_COMMIT);
-    ok (mbi.Protect == PAGE_READWRITE, "mbi.Protect is 0x%x, expected 0x%x\n", mbi.Protect, PAGE_READWRITE);
+    ok (mbi.Protect == PAGE_READWRITE || mbi.Protect == PAGE_EXECUTE_READWRITE,
+        "mbi.Protect is 0x%x\n", mbi.Protect);
 
     trace("Check flags of stack\n");
     status = pNtQueryVirtualMemory(NtCurrentProcess(), stackbuf, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
@@ -1011,7 +1013,8 @@ static void test_queryvirtualmemory(void)
     ok( readcount == sizeof(MEMORY_BASIC_INFORMATION), "Expected to read %d bytes, got %ld\n",(int)sizeof(MEMORY_BASIC_INFORMATION),readcount);
     ok (mbi.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_EXECUTE_WRITECOPY);
     ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
-    todo_wine ok (mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x, expected 0x%X\n", mbi.Protect, PAGE_READONLY);
+    if (mbi.Protect != PAGE_READONLY)
+        todo_wine ok( mbi.Protect == PAGE_READONLY, "mbi.Protect is 0x%x, expected 0x%X\n", mbi.Protect, PAGE_READONLY);
 
     trace("Check flags of read-write global data (.bss)\n");
     status = pNtQueryVirtualMemory(NtCurrentProcess(), rwtestbuf, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
