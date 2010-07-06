@@ -25,6 +25,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct {
     const IUriVtbl  *lpIUriVtbl;
     LONG ref;
+
+    BSTR raw_uri;
 } Uri;
 
 typedef struct {
@@ -74,8 +76,10 @@ static ULONG WINAPI Uri_Release(IUri *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        SysFreeString(This->raw_uri);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -83,7 +87,8 @@ static ULONG WINAPI Uri_Release(IUri *iface)
 static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BSTR *pbstrProperty, DWORD dwFlags)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
+    HRESULT hres;
+    TRACE("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
 
     if(!pbstrProperty)
         return E_POINTER;
@@ -99,13 +104,33 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             return S_OK;
     }
 
-    return E_NOTIMPL;
+    /* Don't have support for flags yet. */
+    if(dwFlags) {
+        FIXME("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
+        return E_NOTIMPL;
+    }
+
+    switch(uriProp) {
+    case Uri_PROPERTY_RAW_URI:
+        *pbstrProperty = SysAllocString(This->raw_uri);
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+        else
+            hres = S_OK;
+        break;
+    default:
+        FIXME("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
+        hres = E_NOTIMPL;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, DWORD *pcchProperty, DWORD dwFlags)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+    HRESULT hres;
+    TRACE("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
 
     if(!pcchProperty)
         return E_INVALIDARG;
@@ -114,7 +139,23 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     if(uriProp > Uri_PROPERTY_STRING_LAST)
         return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    /* Don't have support for flags yet. */
+    if(dwFlags) {
+        FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+        return E_NOTIMPL;
+    }
+
+    switch(uriProp) {
+    case Uri_PROPERTY_RAW_URI:
+        *pcchProperty = SysStringLen(This->raw_uri);
+        hres = S_OK;
+        break;
+    default:
+        FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+        hres = E_NOTIMPL;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DWORD *pcchProperty, DWORD dwFlags)
@@ -278,12 +319,10 @@ static HRESULT WINAPI Uri_GetQuery(IUri *iface, BSTR *pstrQuery)
 static HRESULT WINAPI Uri_GetRawUri(IUri *iface, BSTR *pstrRawUri)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrRawUri);
+    TRACE("(%p)->(%p)\n", This, pstrRawUri);
 
-    if(!pstrRawUri)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    /* Just forward the call to GetPropertyBSTR. */
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_RAW_URI, pstrRawUri, 0);
 }
 
 static HRESULT WINAPI Uri_GetSchemeName(IUri *iface, BSTR *pstrSchemeName)
@@ -453,6 +492,14 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
 
     ret->lpIUriVtbl = &UriVtbl;
     ret->ref = 1;
+
+    /* Create a copy of pwzURI and store it as the raw_uri. */
+    ret->raw_uri = SysAllocString(pwzURI);
+
+    if(!ret->raw_uri) {
+        heap_free(ret);
+        return E_OUTOFMEMORY;
+    }
 
     *ppURI = URI(ret);
     return S_OK;
