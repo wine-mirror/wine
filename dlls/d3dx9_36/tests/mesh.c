@@ -229,7 +229,7 @@ static void D3DXDeclaratorFromFVFTest(void)
 {
     D3DVERTEXELEMENT9 decl[MAX_FVF_DECL_SIZE];
     HRESULT hr;
-    int i;
+    int i, size;
 
     static const D3DVERTEXELEMENT9 exp1[6] = {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
@@ -262,7 +262,8 @@ static void D3DXDeclaratorFromFVFTest(void)
 
         if (hr == D3D_OK)
         {
-            for (i=0; i<4; i++)
+            size = sizeof(exp1)/sizeof(exp1[0]);
+            for (i=0; i<size-1; i++)
             {
                 ok(decl[i].Stream == exp1[i].Stream, "Returned stream %d, expected %d\n", decl[i].Stream, exp1[i].Stream);
                 ok(decl[i].Type == exp1[i].Type, "Returned type %d, expected %d\n", decl[i].Type, exp1[i].Type);
@@ -271,7 +272,7 @@ static void D3DXDeclaratorFromFVFTest(void)
                 ok(decl[i].UsageIndex == exp1[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp1[i].UsageIndex);
 	        ok(decl[i].Offset == exp1[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp1[i].Offset);
             }
-            ok(decl[5].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+            ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
         }
     }
 
@@ -282,7 +283,8 @@ static void D3DXDeclaratorFromFVFTest(void)
 
         if (hr == D3D_OK)
         {
-            for (i=0; i<1; i++)
+            size = sizeof(exp2)/sizeof(exp2[0]);
+            for (i=0; i<size-1; i++)
             {
                 ok(decl[i].Stream == exp2[i].Stream, "Returned stream %d, expected %d\n", decl[i].Stream, exp2[i].Stream);
                 ok(decl[i].Type == exp2[i].Type, "Returned type %d, expected %d\n", decl[i].Type, exp1[i].Type);
@@ -291,7 +293,7 @@ static void D3DXDeclaratorFromFVFTest(void)
                 ok(decl[i].UsageIndex == exp2[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp2[i].UsageIndex);
                 ok(decl[i].Offset == exp2[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp2[i].Offset);
             }
-            ok(decl[2].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+            ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
         }
     }
 
@@ -305,7 +307,8 @@ static void D3DXDeclaratorFromFVFTest(void)
 
         if (hr == D3D_OK)
         {
-            for (i=0; i<2; i++)
+            size = sizeof(exp3)/sizeof(exp3[0]);
+            for (i=0; i<size-1; i++)
             {
                 ok(decl[i].Stream == exp3[i].Stream, "Returned stream %d, expected %d\n", decl[i].Stream, exp3[i].Stream);
                 ok(decl[i].Type == exp3[i].Type, "Returned type %d, expected %d\n", decl[i].Type, exp3[i].Type);
@@ -314,7 +317,7 @@ static void D3DXDeclaratorFromFVFTest(void)
                 ok(decl[i].UsageIndex == exp3[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp3[i].UsageIndex);
                 ok(decl[i].Offset == exp3[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp3[i].Offset);
             }
-            ok(decl[3].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+            ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
         }
     }
 }
