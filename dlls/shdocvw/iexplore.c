@@ -372,7 +372,7 @@ static void create_rebar(HWND hwnd)
     add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_FORWARD);
     add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_STOP);
     add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_REFRESH);
-    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_HOME);
+    add_tb_button(hwndToolbar, I_IMAGENONE, ID_BROWSE_HOME, IDS_TB_HOME);
     add_tb_separator(hwndToolbar);
     add_tb_button(hwndToolbar, I_IMAGENONE, ID_BROWSE_PRINT, IDS_TB_PRINT);
     SendMessageW(hwndToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(50,40));
@@ -489,6 +489,10 @@ static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT 
 
                 IOleCommandTarget_Release(target);
             }
+            break;
+
+        case ID_BROWSE_HOME:
+            IWebBrowser2_GoHome(WEBBROWSER2(This));
             break;
 
         case ID_BROWSE_ABOUT:
