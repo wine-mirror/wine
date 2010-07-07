@@ -90,6 +90,7 @@ RC_SRCS= \
 	wps_Sk.rc \
 	wps_Sv.rc \
 	wps_Tr.rc \
+	wps_Uk.rc \
 	wps_Zh.rc
 
 EXTRASUBDIRS = data
