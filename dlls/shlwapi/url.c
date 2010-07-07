@@ -276,10 +276,11 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     LPWSTR lpszUrlCpy, wk2, mp, mp2;
     INT state;
     DWORD nByteLen, nLen, nWkLen;
-    WCHAR slash = '/';
+    WCHAR slash = '\0';
 
     static const WCHAR wszFile[] = {'f','i','l','e',':'};
     static const WCHAR wszRes[] = {'r','e','s',':'};
+    static const WCHAR wszHttp[] = {'h','t','t','p',':'};
     static const WCHAR wszLocalhost[] = {'l','o','c','a','l','h','o','s','t'};
     static const WCHAR wszFilePrefix[] = {'f','i','l','e',':','/','/','/'};
 
@@ -298,6 +299,12 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     /* Allocate memory for simplified URL (before escaping) */
     lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0,
             nByteLen+sizeof(wszFilePrefix)+sizeof(WCHAR));
+
+    if ((nByteLen >= sizeof(wszHttp) &&
+         !memcmp(wszHttp, pszUrl, sizeof(wszHttp))) ||
+        (nByteLen >= sizeof(wszFile) &&
+         !memcmp(wszFile, pszUrl, sizeof(wszFile))))
+        slash = '/';
 
     if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
             && !memcmp(wszFile, pszUrl, sizeof(wszFile)))
