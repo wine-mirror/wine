@@ -745,7 +745,7 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_VIEW_UPDATESPEED_PAUSED "Não actualiza automaticamente"
+    ID_VIEW_UPDATESPEED_PAUSED "Não atualiza automaticamente"
     ID_WINDOWS_TILEHORIZONTALLY
                             "Organiza as janelas horizontalmente pela área de trabalho"
     ID_WINDOWS_TILEVERTICALLY "Organiza as janelas verticalmente pela área de trabalho"
