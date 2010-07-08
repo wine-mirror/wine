@@ -16,7 +16,7 @@
 ; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 ;
 
-LanguageNames=(PTG=0x16:winerr)
+LanguageNames=(PTG=0x816:winerr)
 CodePages=(PTG=65001:0)
 
 MessageId=0
@@ -52,7 +52,7 @@ Acesso negado
 MessageId=6
 SymbolicName=ERROR_INVALID_HANDLE
 Language=PTG
-Handle Inválido
+Handle inválido
 .
 MessageId=7
 SymbolicName=ERROR_ARENA_TRASHED
@@ -67,7 +67,7 @@ Memória insuficiente
 MessageId=9
 SymbolicName=ERROR_INVALID_BLOCK
 Language=PTG
-Bloco Inválido
+Bloco inválido
 .
 MessageId=10
 SymbolicName=ERROR_BAD_ENVIRONMENT
@@ -82,12 +82,12 @@ Mau formato
 MessageId=12
 SymbolicName=ERROR_INVALID_ACCESS
 Language=PTG
-Acesso Inválido
+Acesso inválido
 .
 MessageId=13
 SymbolicName=ERROR_INVALID_DATA
 Language=PTG
-Dados Inválidos
+Dados inválidos
 .
 MessageId=14
 SymbolicName=ERROR_OUTOFMEMORY
@@ -97,7 +97,7 @@ Sem memória
 MessageId=15
 SymbolicName=ERROR_INVALID_DRIVE
 Language=PTG
-Disco Inválido
+Disco inválido
 .
 MessageId=16
 SymbolicName=ERROR_CURRENT_DIRECTORY
@@ -137,7 +137,7 @@ Mau comando
 MessageId=23
 SymbolicName=ERROR_CRC
 Language=PTG
-erro CRC
+Erro CRC
 .
 MessageId=24
 SymbolicName=ERROR_BAD_LENGTH
@@ -147,7 +147,7 @@ Mau comprimento
 MessageId=25
 SymbolicName=ERROR_SEEK
 Language=PTG
-Procurar erro
+Erro ao procurar
 .
 MessageId=26
 SymbolicName=ERROR_NOT_DOS_DISK
@@ -317,7 +317,7 @@ Partilha pausada
 MessageId=71
 SymbolicName=ERROR_REQ_NOT_ACCEP
 Language=PTG
-Pedido não aceite
+Pedido não aceito
 .
 MessageId=72
 SymbolicName=ERROR_REDIR_PAUSED
@@ -447,12 +447,12 @@ Handle alvo inválido
 MessageId=117
 SymbolicName=ERROR_INVALID_CATEGORY
 Language=PTG
-IOCTL Inválido
+IOCTL inválido
 .
 MessageId=118
 SymbolicName=ERROR_INVALID_VERIFY_SWITCH
 Language=PTG
-Verificar switch inválido
+Switch de verificação inválido
 .
 MessageId=119
 SymbolicName=ERROR_BAD_DRIVER_LEVEL
@@ -692,7 +692,7 @@ Recurso em uso
 MessageId=173
 SymbolicName=ERROR_CANCEL_VIOLATION
 Language=PTG
-Cancelar violação
+Violação ao cancelar
 .
 MessageId=174
 SymbolicName=ERROR_ATOMIC_LOCKS_NOT_SUPPORTED
@@ -787,7 +787,7 @@ Segmento de dados automático excede 64k
 MessageId=200
 SymbolicName=ERROR_RING2SEG_MUST_BE_MOVABLE
 Language=PTG
-Anel para segmento tem de ser amovível
+Anel para segmento 2 tem de ser amovível
 .
 MessageId=201
 SymbolicName=ERROR_RELOC_CHAIN_XEEDS_SEGLIM
@@ -817,7 +817,7 @@ Nome de ficheiro é muito comprido
 MessageId=207
 SymbolicName=ERROR_RING2_STACK_IN_USE
 Language=PTG
-Anel para stack em uso
+Anel para stack 2 em uso
 .
 MessageId=208
 SymbolicName=ERROR_META_EXPANSION_TOO_LONG
@@ -1402,7 +1402,7 @@ Contador de I/O de série expirou
 MessageId=1122
 SymbolicName=ERROR_FLOPPY_ID_MARK_NOT_FOUND
 Language=PTG
-Marca de endereço do ID de disquetes não encontrado
+Marca de endereço do ID de disquete não encontrado
 .
 MessageId=1123
 SymbolicName=ERROR_FLOPPY_WRONG_CYLINDER
@@ -1492,7 +1492,7 @@ Aplicação de modo real
 MessageId=1154
 SymbolicName=ERROR_INVALID_DLL
 Language=PTG
-DLL Inválido
+DLL inválido
 .
 MessageId=1155
 SymbolicName=ERROR_NO_ASSOCIATION
@@ -1792,7 +1792,7 @@ Anfitrião inatingível
 MessageId=1233
 SymbolicName=ERROR_PROTOCOL_UNREACHABLE
 Language=PTG
-Protocolo Inatingível
+Protocolo inatingível
 .
 MessageId=1234
 SymbolicName=ERROR_PORT_UNREACHABLE
@@ -2462,12 +2462,12 @@ Language=PTG
 MessageId=1414
 SymbolicName=ERROR_INVALID_ICON_HANDLE
 Language=PTG
-Handle de icone inválido
+Handle de ícone inválido
 .
 MessageId=1415
 SymbolicName=ERROR_PRIVATE_DIALOG_INDEX
 Language=PTG
-ìndice de diálogo privado
+Índice de diálogo privado
 .
 MessageId=1416
 SymbolicName=ERROR_LISTBOX_ID_NOT_FOUND
@@ -2512,7 +2512,7 @@ Não é uma janela de combobox
 MessageId=1424
 SymbolicName=ERROR_INVALID_EDIT_HEIGHT
 Language=PTG
-Editar altura inválida
+Edição de altura inválida
 .
 MessageId=1425
 SymbolicName=ERROR_DC_NOT_FOUND
@@ -3442,7 +3442,7 @@ Sem mais bindings
 MessageId=1807
 SymbolicName=ERROR_NOLOGON_INTERDOMAIN_TRUST_ACCOUNT
 Language=PTG
-Não consegue ligar com conta confiáveil interdomínio
+Não consegue ligar com conta confiável interdomínio
 .
 MessageId=1808
 SymbolicName=ERROR_NOLOGON_WORKSTATION_TRUST_ACCOUNT
