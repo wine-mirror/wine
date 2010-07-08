@@ -6174,6 +6174,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice *i
     TRACE("iface %p.\n", iface);
 
     IWineD3DDevice_EnumResources(iface, evict_managed_resource, NULL);
+    /* Invalidate stream sources, the buffer(s) may have been evicted. */
+    IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)iface, STATE_STREAMSRC);
+
     return WINED3D_OK;
 }
 
