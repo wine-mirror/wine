@@ -88,8 +88,8 @@ int   __cdecl _CrtCheckMemory(void);
 int   __cdecl _CrtDbgReport(int reportType, const char *filename, int linenumber,
                             const char *moduleName, const char *format, ...);
 int   __cdecl _CrtDumpMemoryLeaks(void);
-int   __cdecl _CrtSetBreakAlloc(int new);
-int   __cdecl _CrtSetDbgFlag(int new);
+int   __cdecl _CrtSetBreakAlloc(int);
+int   __cdecl _CrtSetDbgFlag(int);
 void *__cdecl _CrtSetDumpClient(void *dumpClient);
 int   __cdecl _CrtSetReportMode(int reportType, int reportMode);
 
