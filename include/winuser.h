@@ -1501,6 +1501,9 @@ WINUSERAPI BOOL     WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define ENUM_CURRENT_SETTINGS  ((DWORD) -1)
 #define ENUM_REGISTRY_SETTINGS ((DWORD) -2)
 
+#define EDS_RAWMODE       0x00000002
+#define EDS_ROTATEDMODE   0x00000004
+
 /* Used for PrintWindow */
 #define PW_CLIENTONLY   0x00000001
 
