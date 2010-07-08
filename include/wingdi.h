@@ -2965,6 +2965,8 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DM_PAPERWIDTH		0x00000008L
 #define DM_SCALE		0x00000010L
 #define DM_POSITION             0x00000020L
+#define DM_NUP                  0x00000040L
+#define DM_DISPLAYORIENTATION   0x00000080L
 #define DM_COPIES		0x00000100L
 #define DM_DEFAULTSOURCE	0x00000200L
 #define DM_PRINTQUALITY		0x00000400L
@@ -3173,6 +3175,11 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DMDITHER_LINEART        4
 #define DMDITHER_GRAYSCALE      5
 #define DMDITHER_USER           256
+
+#define DMDO_DEFAULT            0
+#define DMDO_90                 1
+#define DMDO_180                2
+#define DMDO_270                3
 
 typedef struct
 {
