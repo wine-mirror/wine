@@ -2043,6 +2043,126 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* IPv4 addresses attached to IPv6 can be included in elisions. */
+    {   "http://[1:2:3:4:5:6:0.0.0.0]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://[1:2:3:4:5:6::]/",S_OK,TRUE},
+            {"[1:2:3:4:5:6::]",S_OK,TRUE},
+            {"http://[1:2:3:4:5:6::]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"1:2:3:4:5:6::",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[1:2:3:4:5:6:0.0.0.0]",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* IPv4 addresses get normalized. */
+    {   "http://[::001.002.003.000]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://[::1.2.3.0]/",S_OK,TRUE},
+            {"[::1.2.3.0]",S_OK,TRUE},
+            {"http://[::1.2.3.0]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"::1.2.3.0",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[::001.002.003.000]",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Windows doesn't do anything to IPv6's in unknown schemes. */
+    {   "zip://[0001:0:000:0004:0005:0006:001.002.003.000]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://[0001:0:000:0004:0005:0006:001.002.003.000]/",S_OK,TRUE},
+            {"[0001:0:000:0004:0005:0006:001.002.003.000]",S_OK,TRUE},
+            {"zip://[0001:0:000:0004:0005:0006:001.002.003.000]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"0001:0:000:0004:0005:0006:001.002.003.000",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://[0001:0:000:0004:0005:0006:001.002.003.000]",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* IPv4 address is converted into 2 h16 components. */
+    {   "http://[ffff::192.222.111.32]", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://[ffff::c0de:6f20]/",S_OK,TRUE},
+            {"[ffff::c0de:6f20]",S_OK,TRUE},
+            {"http://[ffff::c0de:6f20]/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"ffff::c0de:6f20",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[ffff::192.222.111.32]",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,TRUE},
+            {80,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
