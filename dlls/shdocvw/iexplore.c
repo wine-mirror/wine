@@ -355,6 +355,8 @@ static void create_rebar(HWND hwnd)
     REBARINFO rebarinf;
     REBARBANDINFOW bandinf;
     WCHAR addr[] = {'A','d','d','r','e','s','s',0};
+    HIMAGELIST imagelist;
+    WCHAR idb_ietoolbar[] = {'I','D','B','_','I','E','T','O','O','L','B','A','R',0};
 
     hwndRebar = CreateWindowExW(WS_EX_TOOLWINDOW, REBARCLASSNAMEW, NULL, WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|RBS_VARHEIGHT|CCS_TOP|CCS_NODIVIDER, 0, 0, 0, 0, hwnd, (HMENU)IDC_BROWSE_REBAR, shdocvw_hinstance, NULL);
 
@@ -367,22 +369,25 @@ static void create_rebar(HWND hwnd)
 
     hwndToolbar = CreateWindowExW(TBSTYLE_EX_MIXEDBUTTONS, TOOLBARCLASSNAMEW, NULL, TBSTYLE_FLAT | WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, hwndRebar, (HMENU)IDC_BROWSE_TOOLBAR, shdocvw_hinstance, NULL);
 
+    imagelist = ImageList_LoadImageW(shdocvw_hinstance, idb_ietoolbar, 32, 0, RGB(255,0,255), IMAGE_BITMAP, LR_DEFAULTCOLOR);
+
+    SendMessageW(hwndToolbar, TB_SETIMAGELIST, 0, (LPARAM)imagelist);
     SendMessageW(hwndToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
-    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_BACK);
-    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_FORWARD);
-    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_STOP);
-    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_REFRESH);
-    add_tb_button(hwndToolbar, I_IMAGENONE, ID_BROWSE_HOME, IDS_TB_HOME);
+    add_tb_button(hwndToolbar, 0, 0, IDS_TB_BACK);
+    add_tb_button(hwndToolbar, 1, 0, IDS_TB_FORWARD);
+    add_tb_button(hwndToolbar, 2, 0, IDS_TB_STOP);
+    add_tb_button(hwndToolbar, 3, 0, IDS_TB_REFRESH);
+    add_tb_button(hwndToolbar, 4, ID_BROWSE_HOME, IDS_TB_HOME);
     add_tb_separator(hwndToolbar);
-    add_tb_button(hwndToolbar, I_IMAGENONE, ID_BROWSE_PRINT, IDS_TB_PRINT);
-    SendMessageW(hwndToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(50,40));
+    add_tb_button(hwndToolbar, 5, ID_BROWSE_PRINT, IDS_TB_PRINT);
+    SendMessageW(hwndToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(55,50));
     SendMessageW(hwndToolbar, TB_AUTOSIZE, 0, 0);
 
     bandinf.cbSize = sizeof(bandinf);
     bandinf.fMask = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE;
     bandinf.fStyle = RBBS_CHILDEDGE;
     bandinf.cx = 100;
-    bandinf.cyMinChild = 42;
+    bandinf.cyMinChild = 52;
     bandinf.hwndChild = hwndToolbar;
 
     SendMessageW(hwndRebar, RB_INSERTBANDW, -1, (LPARAM)&bandinf);
@@ -460,9 +465,14 @@ static LRESULT iewnd_OnNotify(InternetExplorer *This, WPARAM wparam, LPARAM lpar
 
 static LRESULT iewnd_OnDestroy(InternetExplorer *This)
 {
+    HWND hwndRebar = GetDlgItem(This->frame_hwnd, IDC_BROWSE_REBAR);
+    HWND hwndToolbar = GetDlgItem(hwndRebar, IDC_BROWSE_TOOLBAR);
+    HIMAGELIST list = (HIMAGELIST)SendMessageW(hwndToolbar, TB_GETIMAGELIST, 0, 0);
+
     TRACE("%p\n", This);
 
     free_fav_menu_data(get_fav_menu(This->menu));
+    ImageList_Destroy(list);
     This->frame_hwnd = NULL;
     PostQuitMessage(0); /* FIXME */
 

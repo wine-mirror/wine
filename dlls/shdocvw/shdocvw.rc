@@ -33,3 +33,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: shdocvw.inf */
 REGINST REGINST shdocvw.inf
+
+/* @makedep: ietoolbar.bmp */
+IDB_IETOOLBAR BITMAP ietoolbar.bmp
