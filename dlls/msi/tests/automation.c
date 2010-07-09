@@ -1081,6 +1081,20 @@ static HRESULT Installer_VersionGet(LPWSTR szVersion)
     return hr;
 }
 
+static HRESULT Installer_UILevelPut(int level)
+{
+    VARIANT varresult;
+    VARIANTARG vararg;
+    DISPID dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dispparams = {&vararg, &dispid, sizeof(vararg)/sizeof(VARIANTARG), 1};
+
+    VariantInit(&vararg);
+    V_VT(&vararg) = VT_I4;
+    V_I4(&vararg) = level;
+
+    return invoke(pInstaller, "UILevel", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
+}
+
 static HRESULT Session_Installer(IDispatch *pSession, IDispatch **pInst)
 {
     VARIANT varresult;
@@ -2382,6 +2396,10 @@ static void test_Installer_InstallProduct(void)
     IDispatch *pStringList = NULL;
 
     create_test_files();
+
+    /* Avoid an interactive dialog in case of insufficient privileges. */
+    hr = Installer_UILevelPut(INSTALLUILEVEL_NONE);
+    ok(hr == S_OK, "Expected UILevel propery put invoke to return S_OK, got 0x%08x\n", hr);
 
     /* Installer::InstallProduct */
     hr = Installer_InstallProduct(szMsifile, NULL);
