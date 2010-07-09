@@ -841,6 +841,7 @@ static void test_simple_patch( void )
 
     DeleteFileA( msifile );
     DeleteFileA( mspfile );
+    DeleteFileA( "msitest\\patch.txt" );
     RemoveDirectoryA( "msitest" );
 }
 
@@ -1058,6 +1059,7 @@ static void test_system_tables( void )
 
     DeleteFileA( msifile );
     DeleteFileA( mspfile );
+    DeleteFileA( "msitest\\patch.txt" );
     RemoveDirectoryA( "msitest" );
 }
 
@@ -1148,6 +1150,7 @@ static void test_patch_registration( void )
 
     DeleteFileA( msifile );
     DeleteFileA( mspfile );
+    DeleteFileA( "msitest\\patch.txt" );
     RemoveDirectoryA( "msitest" );
 }
 
