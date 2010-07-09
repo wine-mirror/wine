@@ -419,9 +419,12 @@ static void test_directory(void)
         memset( buffer, 0xaa, sizeof(buffer) );
         status = pNtQuerySymbolicLinkObject( dir, &str, &len );
         ok( status == STATUS_SUCCESS, "NtQuerySymbolicLinkObject failed %08x\n", status );
+        if (status != STATUS_SUCCESS)
+            goto error;
         full_len = str.Length + sizeof(WCHAR);
         ok( len == full_len, "bad length %u/%u\n", len, full_len );
-        ok( buffer[len / sizeof(WCHAR) - 1] == 0, "no terminating null\n" );
+        if (len == full_len)
+            ok( buffer[len / sizeof(WCHAR) - 1] == 0, "no terminating null\n" );
 
         str.MaximumLength = str.Length;
         len = 0xdeadbeef;
@@ -441,6 +444,7 @@ static void test_directory(void)
         ok( status == STATUS_SUCCESS, "NtQuerySymbolicLinkObject failed %08x\n", status );
         ok( len == full_len, "bad length %u/%u\n", len, full_len );
 
+error:
         pNtClose(dir);
     }
 
