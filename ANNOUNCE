@@ -1,13 +1,15 @@
-The Wine development release 1.2-rc6 is now available.
+The Wine development release 1.2-rc7 is now available.  Barring any
+last minute problems, this should be the last release candidate before
+the final 1.2. Please give it a good testing.
 
 What's new in this release (see below for details):
-  - Many translation updates.
-  - A lot of bug fixes.
+  - Translation updates.
+  - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.2-rc6.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-1.2-rc6.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-1.2-rc7.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.2-rc7.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -23,270 +25,166 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.2-rc6:
+Bugs fixed in 1.2-rc7:
 
-   6189  AutoCAD 2007 fails to install
-   7574  urlmon.HlinkSimpleNavigateToString unimplemented
-   9830  Crash when closing Titan Poker application
-  10209  Jericho crashes when entering game menu
-  11168  DVRManager + MFServer: Crashes
-  11614  Adobe Premiere Pro 2 tryout installer fails on first run
-  12025  Objects in Alien Shooter 2 demo and Nvidia legacy driver aren't drawn
-  14287  Windows Live Installer does not start
-  14694  Grandia2: Selected mode is not supported by the video
-  15732  BPM Studio crashes when playing a sound
-  15754  ripp it's installer is hidden, z - order issue
-  15953  Firefox: drag (and drop) doesn't work at all
-  16390  ct offline update: cmd crash by starting the downloads
-  16435  spss 17 "SPSSWinWrapIDE.exe" aborts with ITypeInfo_fnInvoke error
-  16437  installing spss 17 makes other apps fail to find MSVCR80?
-  16480  shlfolder tests fail when the unix namespace is disabled
-  16508  Macromedia Fireworks 8 trial sliders do not work properly
-  16539  Sanity: Aiken's Artifact demo menu is not drawn properly
-  16572  Intercon Accessible FormNet VisualFill crashes
-  17593  Starcraft Willin't make games on battle.net
-  18602  IZArc v4.0 beta 1 installation crashes with exception
-  18849  PuTTY never times out when given an invalid server
-  20223  incredimail installer crashes
-  20500  Serious performance regression under Heroes of the pacific.
-  21233  Anarchy Online crashes in a certain room in every Alien Mission (missions cannot be done)
-  21802  Mozilla firefox - main window is mostly black
-  21815  Troopmaster 2010 fails on startup
-  22092  Starcraft II patcher/WoW Trial installer pops up 3-5 error dialogs without native ie6
-  22420  SimTower crashes
-  22429  VMWare ThinApps don't run
-  22527  VirtualDub: crash when opening `Compression...' dialog
-  22639  Sid Meier's Railroads: train never arrives
-  22723  AutoCad R14 crashes on start
-  23006  no way to disable font smoothing on fontconfig level
-  23015  PL\SQL Developer: shows standard message boxes behind main window
-  23247  hhctrl.ocx - crash when showing HTML help
-  23249  Fallout 3, Oblivion: Most sound effects missing.
-  23341  wine wordpad format tabs menu option wrong
-  23353  Steam windows don't close after major update
-  23381  Newsbin Pro MOTD dialog fails to dismiss correctly
-  23389  HEAP_ValidateInUseArena memory tail overwritten when updating Wine
-  23419  winedbg 'bt all' doesn't work
-  23425  unimplemented function KERNEL32.dll.QueryMemoryResourceNotification
-  23431  provide a stub for ntdll.NtSystemDebugControl() (Ollydbg 2.x)
-  23432  Stranded II does not start
-  23443  Font in some lists displayed incorrectly when screen resolution > 96
-  23452  Some 16-bit Windows NE executables are not recognized
-  23465  eVoice Player: installer does not complete
+   1567  Capella 2002 - welcome-screen doesn't disappear
+   9216  Gothic 2 won't start - complains about hook process
+  12287  CommFort: cannot use sound capture
+  12298  Notation Composer: crashes when opening menus when using ALSA
+  13743  Checkboxes are drawn as buttons in Voyage Century
+  14869  Error closing internal windows in Hy-Tek Team Manager 4.0
+  15471  Adobe Contribute 4 locks up X
+  15548  Voyage Century Online crashes to desktop after logging in
+  16087  wine spews innumerable "Unable to check compatibility for Format..." errors in some games
+  16162  Settlers 3 crashes with "wine client error: partial write"
+  16863  Control drwaing over each other in very simple dotnet application
+  17239  Fiesta does not work - D3D issue?
+  18210  Fallout 3: game hangs after childbirth
+  18475  Fallout 3: No sound device detected. Fallout 3 cannot run.
+  18924  OutputDebugString does not do what it's supposed to do
+  19659  EverQuest 2: EQ2 Crashed shortly after entering game.
+  20650  Wargames crashes instantly if choosing hardware mode (rather than Software Rasterizer)
+  21422  winedbg cannot find local symbols in EXE.
+  22213  The Witcher, Enhanced edition crashes
+  22215  Goldwave - Window Close event freezes application
+  22944  Goldwave dialog windows drawn behind parent window
+  23265  The Neverhood: movies do not play
+  23417  EverQuest II: Crashes immediately after hitting "Play" at character select screen
+  23469  Spectrum Lab crashes on loud sounds
+  23479  notepad++: can no longer select file tabs when multiple files are open
 
 ----------------------------------------------------------------
 
-Changes since 1.2-rc5:
+Changes since 1.2-rc6:
 
-Alexander Nicolaysen Sørnes (3):
+Alexander Nicolaysen Sørnes (1):
       wordpad: Update Norwegian Bokmål translation.
-      mapi32: Add Norwegian Bokmål translation.
-      jscript: Add Norwegian Bokmål translation.
 
-Alexandre Julliard (23):
-      atl: Fix off-by-one buffer allocation.
-      msvcrt: Use the correct strdup function for locale data.
-      winemenubuilder: Load only low bit count icons if we are going to save to XPM format.
-      winemenubuilder: Use the new wine glass icon from user32 as default icon.
-      ntdll: Round up the initial commit size to the commit granularity.
-      winex11: Set the user time property on top-level windows.
-      winex11: Disable antialiasing if either fontconfig or Xft disable it explicitly.
-      ntdll/tests: Add a test for the exception resulting from an icebp instruction.
-      gdiplus/tests: Comment out a test that corrupts the stack on Vista.
-      server: Return the total length of the target in query_symlink.
-      ntdll: Append a terminating null and return the correct length in NtQuerySymbolicLinkObject.
-      ntdll/tests: Add some tests for NtQuerySymbolicLinkObject.
-      configure: Disable clean and depend rules for disabled top-level directories.
-      winedump: Don't crash on an invalid nrestab NE header value.
-      krnl386.exe: Ignore non-resident name table if value is invalid.
-      winedbg: Use the correct context when fetching the frame state for backtraces.
-      winedbg: Add a name for a couple of instructions in the disassembler.
-      gdiplus/tests: Use Tahoma instead of Courier New for testing font metrics.
-      gdiplus/tests: Don't fail if we do find Microsoft Sans Serif on Wine.
-      msi/tests: Reset the enumeration index for MsiEnumProducts before testing it.
-      d3d8/tests: Fix some test failures with the focus messages.
-      d3d9/tests: Fix some test failures with the focus messages.
-      msi/tests: Check the x86 program directory first for installed files.
+Alexandre Goujon (1):
+      ws2_32: Add host unreachable case.
 
-Andrew Eikum (5):
-      shell32: Fix a comment typo.
-      shell32: Use ParseURL to detect URLs.
-      shell32: UNIX paths should be parsed by unixfs.
-      include: Add new SHCNRF flags.
-      shell32: Pass the file extension to ParseDisplayName in unixfs's SetNameOf.
+Alexandre Julliard (3):
+      Revert "comctl32: Fix selection of tab via mouse."
+      ntdll/tests: Fix a few test failures in the new exe protection tests.
+      msvcrt/tests: Add some alternative locale names that happen on Windows.
 
-Andrew Nguyen (1):
-      atl: Accept a NULL output container pointer in AtlAxAttachControl.
+Andrew Nguyen (8):
+      msi/tests: Run the automation tests in silent mode to avoid a dialog.
+      msi/tests: Delete the test patch file for proper patch test cleanup.
+      msi/test: Uninstall the test product when skipping patch tests.
+      msi/tests: Skip patch tests if product installation failed.
+      msi/tests: Free the user SID string buffer with the correct deallocator in the source tests.
+      msi/tests: Remove a redundant source test.
+      msi/tests: Fix a source test comment.
+      msi/tests: Skip some source tests if a required product key cannot be created.
 
-André Hentschel (7):
-      kernel32: Add NERR_UserNotFound to german winerr.
-      urlmon: Partially implement HlinkSimpleNavigateToString.
-      user32/tests: Use if(0) instead of a comment to make sure code still compiles.
-      include: Add some SYSDBG_COMMANDs.
-      winecfg: Remove BS_DEFPUSHBUTTON style for AddDll.
-      urlmon: Implement HlinkSimpleNavigateToMoniker.
-      user32/tests: Test that GetDlgItem does not recurse.
+Andrey Turkin (1):
+      msxml3: Add test to highlight another difference between XSLPattern and XPath.
 
-Austin English (7):
-      setupapi: Add stubs for SetupDiBuildDriverInfoList and SetupDiDeleteDeviceInfo:.
-      ntoskrnl.exe: Add stub for MmAllocateContiguousMemorySpecifyCache:.
-      kernel32: Add NERR_UserNotFound to Norwegian winerr.
-      kernel32: Add stub for QueryMemoryResourceNotification.
-      ntdll: Add stub for NtSystemDebugControl.
-      user32: Fix a compiler warning on mingw.
-      wininet: Avoid size_t in ERR().
+André Hentschel (1):
+      user32/tests: The dialog for that proc has no IDCANCEL.
 
-David Hedberg (2):
-      wordpad: Small update to the Swedish translation.
-      taskmgr: Small update to the Swedish translation.
+Aric Stewart (1):
+      shlwapi: Correct slash/backslashs in UrlCanonicalize.
 
-Dmitry Timoshkov (1):
-      comdlg32: Not all messages depend on initialized custom choose font dialog data.
+Austin Lund (1):
+      riched20: Process messages which arrive before WM_NCCREATE.
 
-Eric Pouech (8):
-      dbghelp: Fix the localization of section table while loading COFF information.
-      dbghelp: Test validity of COFF symbol table against file size (and not image size).
-      dbghelp: Ensure we can try to load COFF symbols if none is found in other debug formats.
-      winmm: Added a couple of tests for structure alignment.
-      dbghelp: Set the correct word size when unwinding stacks with Dwarf debug info.
-      dbghelp: Correctly handle the RULE_EXPRESSION when computing CFA in dwarf debug info.
-      dbghelp: When unwinding i386 stacks, update CONTEXT with sp/bp/ip.
-      dbghelp: Parse correctly DW_LNE_set_discriminator.
+David Adam (1):
+      d3dx9_36/test: Fix a copy/paste typo.
 
-Gustavo Henrique Milaré (30):
-      winecfg: Fix Portuguese (Brazilian) translation.
-      cmd: Update Portuguese (Brazilian) translation.
-      cmdlgtst: Update Portuguese (Brazilian) translation.
-      net: Update Portuguese (Brazilian) translation.
-      oleview: Update Portuguese (Brazilian) translation.
-      reg: Update Portuguese (Brazilian) translation.
-      start: Update Portuguese (Brazilian) translation.
-      taskmgr: Update Portuguese (Brazilian) translation.
-      uninstaller: Update Portuguese (Brazilian) translation.
-      view: Update Portuguese (Brazilian) translation.
-      wineboot: Update Portuguese (Brazilian) translation.
-      wineconsole: Update Portuguese (Brazilian) translation.
-      winedbg: Update Portuguese (Brazilian) translation.
-      winemine: Update Portuguese (Brazilian) translation.
-      winhlp32: Update Portuguese (Brazilian) translation.
-      xcopy: Update Portuguese (Brazilian) translation.
-      mshtml: Fix Portuguese (Brazilian) translation.
-      regedit: Update Portuguese (Brazilian) translation.
-      winhlp32: Update Portuguese (Brazilian) translation.
-      shdoclc: Update Portuguese translation.
-      oleacc: Fix Portuguese (Brazilian) translation.
-      shlwapi: Fix Portuguese (Brazilian) translation.
-      winspool.drv: Update Portuguese (Brazilian) translation.
-      wldap32: Update Portuguese (Brazilian) translation.
-      wininet: Update Portuguese (Brazilian) translation.
-      setupapi: Update Portuguese (Brazilian) translation.
-      appwiz.cpl: Fix Portuguese (Brazilian) translation.
-      cryptdlg: Update Portuguese (Brazilian) translation.
-      hhctrl.ocx: Fix Portuguese (Brazilian) translation.
-      mshtml: Fix Portuguese translation.
+Eric Pouech (1):
+      dbghelp: Added support for CFA save/restore operation.
 
-Hwang YunSong (2):
-      cmd: Update Korean resource.
-      xcopy: Update Korean resource.
+Frédéric Delanoy (1):
+      comdlg32: Ensure French print dialogs sizes match English ones.
 
-Igor Paliychuk (11):
-      wordpad: Ukrainian translation update.
-      cryptdlg: Ukrainian translation update.
-      wldap32: Ukrainian translation update.
-      winefile: Ukrainian translation update.
-      mshtml: Ukrainian translation update.
-      crypt32: Ukrainian translation update.
-      oleacc: Added Ukrainian translation.
-      reg: Ukrainian translation update.
-      xcopy: Ukrainian translation update.
+Gustavo Henrique Milaré (9):
+      cryptui: Update Portuguese (Brazilian) translation.
+      crypt32: Update Portuguese (Brazilian) translation.
+      crypt32: Update Portuguese (Brazilian) translation.
+      shell32: Update Portuguese (Brazilian) translation.
+      comdlg32: Fix Portuguese translation.
+      kernel32: Added Brazilian Portuguese winerr file.
+      kernel32: Fixed typos in Portuguese translation and changed LanguageName.
+      taskmgr: Fixed Portuguese (Brazilian) translation.
+      shdoclc: Fix Portuguese translation.
+
+Henri Verbeet (1):
+      wined3d: Invalidate STATE_STREAMSRC in IWineD3DDeviceImpl_EvictManagedResources().
+
+Igor Paliychuk (10):
+      clock: Add Ukrainian translation.
+      devenum: Add Ukrainian translation.
+      mapi32: Add Ukrainian translation.
+      serialui: Add Ukrainian translation.
+      uninstaller: Add Ukrainian translation.
+      view: Add Ukrainian translation.
+      wineps.drv: Add Ukrainian translation.
       comdlg32: Ukrainian translation update.
-      comctl32: Ukrainian translation update.
+      winemine: Add Ukrainian translation.
+      winhlp32: Ukrainian translation update.
 
-Ilya Basin (1):
-      include: Fix packing bug in shlobj.h. pragma pack 8 for ITEMSPACING, CSFV, SFV_CREATE.
+Jörg Höhle (1):
+      kernel32/tests: Skip fewer tests on Win9x.
 
-Jacek Caban (6):
-      mshtml: Store client site in HTMLDocumentObj as soon as possible in SetClientSite.
-      shdocvw: Try to guess scheme for IHTMLPrivateWindow navigation too.
-      shdocvw: Pass correct buffer size to UrlApplySchemeW.
-      shdocvw: Return S_OK in IWebBrowser2::Stop.
-      shdocvw: Store DocHost url on a regular heap.
-      shdocvw: Added IBindStatusCallback::OnProgress(BINDSTATUS_REDIRECTING) implementation.
+Ken Sharp (12):
+      msvidc32: Add Welsh resource.
+      localspl: Add Welsh resource.
+      oleaut32: Add Welsh resource.
+      kernel32: Update Gaelic resource.
+      mapi32: Add Welsh resource.
+      msrle32: Add Welsh resource.
+      view: Add Welsh resource.
+      uninstaller: Add Welsh resource.
+      devenum: Add Welsh resource.
+      kernel32: Update Cornish resource.
+      kernel32: Update Welsh resource.
+      mapi32: Add Gaelic resource.
 
-Jaroslav Šmíd (1):
-      hhctrl.ocx: Make sure pszCaption and pszFile are never 0.
+Ken Thomases (1):
+      ntdll: Fix set_baud_rate for high rates for non-Linux (bad copy/paste).
 
-Ken Sharp (1):
-      iccvid: Add Welsh resource.
+Louis Lenders (4):
+      xinput1_3: Quiet a noisy fixme.
+      include: Add EnumDisplaySettingsEx flags.
+      include: Add dmDisplayOrientation definitions.
+      d3d9: Add a few tests for GetAdapterDisplayModeEx.
 
-Kovács András (23):
-      appwiz.cpl: Add Hungarian translation.
-      browseui: Add Hungarian translation.
-      credui: Add Hungarian translation.
-      comdlg32: Hungarian translation update and conversion to UTF-8.
-      cryptdlg: Add Hungarian translation.
-      crypt32: Add Hungarian translation.
-      gphoto2.ds: Add Hungarian translation.
-      jscript: Add Hungarian translation.
-      localspl: Add Hungarian translation.
-      localui: Add Hungarian translation.
-      mapi32: Add Hungarian translation.
-      mshtml: Update Hungarian translation.
-      oleacc: Add Hungarian translation.
-      oledlg: Update Hungarian translation.
-      sane.ds: Add Hungarian translation.
-      setupapi: Update Hungarian translation.
-      shdoclc: Update Hungarian translation.
-      shell32: Update Hungarian translation.
-      shlwapi: Update Hungarian translation.
-      wininet: Update Hungarian translation.
-      winspool.drv: Add Hungarian translation.
-      wldap32: Add Hungarian translation.
-      devenum: Add Hungarian translation.
+Marcus Meissner (3):
+      ntdll: Add tests for NtQueryVirtualMemory.
+      mscvrt: Fix include to be C++ compatible.
+      ntdll: Handle error cases in om test (Coverity).
 
-Marko Nikolic (2):
-      advapi32/tests: Replaced function lstrlen with strlen in condition check.
-      advapi32/tests: Removed sign comparison warning in test_LookupAccountName.
+Michael Stefaniuc (3):
+      winhlp32: Remove an untranslated resource from the Romansh translation.
+      progman: Fix the sizes of a dialog in the Romanian translation.
+      wordpad: Add the Romanian translation.
 
-Matthias Kupfer (1):
-      comctl32: Fix selection of tab via mouse.
+Misha Koshelev (1):
+      d3dx9: Test penultimate declaration element in D3DXDeclaratorFromFVFTest.
 
-Michael Stefaniuc (4):
-      start: Add the Romanian translation.
-      start: One language specifier in the English resource is enough.
-      cryptui: Add the Romanian translation.
-      progman: Add the Romanian translation.
+Paul Vriens (2):
+      notepad: Use SUBLANG_NEUTRAL for the Arabic resources.
+      comdlg32: Prevent a NULL pointer dereference (Coverity).
 
-Mikko Rasa (1):
-      ddraw: Grow index buffer as needed.
+Stefan Dösinger (5):
+      d3d9: Nvidia drivers don't like unused output formats.
+      d3d9: Pass count=0 when clearing the whole surface.
+      d3d9: Ignore a Windows 7 failure in the d3d9 depth clamp test.
+      d3d9: Windows7 doesn't draw with Viewports bigger than the framebuffer.
+      d3d9: Use color_match in the coissue tests.
 
-Nikolay Sivov (3):
-      msxml3: Create additional node for xml declaration.
-      msxml3: Add support for IPersistStreamInit for IXMLDOMDocument.
-      msxml3: Use proper pointer types for IPersistStreamInit methods.
+Vincent Povirk (5):
+      gdiplus: Check for null pt in GdipCreateMatrix3.
+      gdiplus: Set result to NULL when CreatePathGradient fails.
+      gdiplus: Stub GdipRecordMetafile.
+      gdiplus: Stub GdipRecordMetafileStream.
+      gdiplus: Stub GdipGetMetafileHeaderFromEmf.
 
-Paul Chitescu (4):
-      dbghelp: Provide a non-NULL number of bytes read to ReadProcessMemoryProc64 callback.
-      mshtml: Do not try to use IDocHostUIHandler for context menu if hostui is NULL.
-      mshtml: Pass the data read from resource to FindMimeFromData.
-      shdocvw: Strip out initial whitespaces and quotes around an URL on iexplore command line.
-
-Piotr Caban (3):
-      msxml3: Fix illegal memory access.
-      wininet: Reconnect if persistent connection was closed by server.
-      wininet: Remove get_avail_data check from HTTPREQ_ReadFileExA.
-
-Ricardo Filipe (1):
-      mshtml: Fix Portuguese Portugal translation.
-
-Scott Ritchie (1):
-      wine.desktop: Add Czech translation by Sven Augustin.
-
-Tim Cadogan-Cowper (1):
-      winmm: Correctly calculate dwFileSize for apps installing their own IOproc.
-
-Vitaly Lipatov (1):
-      kernel32: Add Russian translation.
+Yaron Shahrabani (2):
+      notepad: Add Hebrew translation.
+      notepad: Add Arabic translation by Khaled Hosny.
 
 --
 Alexandre Julliard
