@@ -759,7 +759,7 @@ static void test_simple_patch( void )
     if (r == ERROR_PATCH_PACKAGE_INVALID)
     {
         win_skip("Windows Installer < 3.0 detected\n");
-        return;
+        goto uninstall;
     }
 
     size = get_pf_file_size( "msitest\\patch.txt" );
@@ -827,6 +827,7 @@ static void test_simple_patch( void )
     MsiCloseHandle( hview );
     MsiCloseHandle( hdb );
 
+uninstall:
     size = sizeof(path);
     r = MsiGetProductInfoA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}",
                             "InstallSource", path, &size );
@@ -990,7 +991,7 @@ static void test_system_tables( void )
     if (r == ERROR_PATCH_PACKAGE_INVALID)
     {
         win_skip("Windows Installer < 3.0 detected\n");
-        return;
+        goto uninstall;
     }
 
     r = MsiOpenProductA( "{913B8D18-FBB6-4CAC-A239-C74C11E3FA74}", &hproduct );
@@ -1054,6 +1055,7 @@ static void test_system_tables( void )
     MsiCloseHandle( hdb );
     MsiCloseHandle( hproduct );
 
+uninstall:
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
@@ -1092,7 +1094,7 @@ static void test_patch_registration( void )
     if (r == ERROR_PATCH_PACKAGE_INVALID)
     {
         win_skip("Windows Installer < 3.0 detected\n");
-        return;
+        goto uninstall;
     }
 
     buffer[0] = 0;
@@ -1137,6 +1139,7 @@ static void test_patch_registration( void )
                            0, patch_code, NULL, NULL, NULL, NULL );
     ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r );
 
+uninstall:
     r = MsiInstallProductA( msifile, "REMOVE=ALL" );
     ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
 
