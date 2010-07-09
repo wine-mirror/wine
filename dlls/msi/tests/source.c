@@ -1001,7 +1001,7 @@ static void test_MsiSourceListAddSourceEx(void)
 
     RegCloseKey(url);
     RegCloseKey(prodkey);
-    HeapFree(GetProcessHeap(), 0, usersid);
+    LocalFree(usersid);
 }
 
 static void test_MsiSourceListEnumSources(void)
