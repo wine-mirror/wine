@@ -270,7 +270,7 @@ static void D3DXDeclaratorFromFVFTest(void)
                 ok(decl[i].Method == exp1[i].Method, "Returned method %d, expected %d\n", decl[i].Method, exp1[i].Method);
                 ok(decl[i].Usage == exp1[i].Usage, "Returned usage %d, expected %d\n", decl[i].Usage, exp1[i].Usage);
                 ok(decl[i].UsageIndex == exp1[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp1[i].UsageIndex);
-	        ok(decl[i].Offset == exp1[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp1[i].Offset);
+	        ok(decl[i].Offset == exp1[i].Offset, "Returned offset %d, expected %d\n", decl[i].Offset, exp1[i].Offset);
             }
             ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
         }
@@ -291,7 +291,7 @@ static void D3DXDeclaratorFromFVFTest(void)
                 ok(decl[i].Method == exp2[i].Method, "Returned method %d, expected %d\n", decl[i].Method, exp2[i].Method);
                 ok(decl[i].Usage == exp2[i].Usage, "Returned usage %d, expected %d\n", decl[i].Usage, exp2[i].Usage);
                 ok(decl[i].UsageIndex == exp2[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp2[i].UsageIndex);
-                ok(decl[i].Offset == exp2[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp2[i].Offset);
+                ok(decl[i].Offset == exp2[i].Offset, "Returned offset %d, expected %d\n", decl[i].Offset, exp2[i].Offset);
             }
             ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
         }
@@ -315,7 +315,7 @@ static void D3DXDeclaratorFromFVFTest(void)
                 ok(decl[i].Method == exp3[i].Method, "Returned method %d, expected %d\n", decl[i].Method, exp3[i].Method);
                 ok(decl[i].Usage == exp3[i].Usage, "Returned usage %d, expected %d\n", decl[i].Usage, exp3[i].Usage);
                 ok(decl[i].UsageIndex == exp3[i].UsageIndex, "Returned usage index %d, expected %d\n", decl[i].UsageIndex, exp3[i].UsageIndex);
-                ok(decl[i].Offset == exp3[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, exp3[i].Offset);
+                ok(decl[i].Offset == exp3[i].Offset, "Returned offset %d, expected %d\n", decl[i].Offset, exp3[i].Offset);
             }
             ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
         }
