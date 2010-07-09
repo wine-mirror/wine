@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 Stefan Dösinger(for CodeWeavers)
+ * Copyright (C) 2010 Louis Lenders
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,11 +22,16 @@
  */
 
 #define COBJMACROS
+#include "wine/test.h"
+#include "winuser.h"
+#include "wingdi.h"
 #include <initguid.h>
 #include <d3d9.h>
-#include "wine/test.h"
 
 static HMODULE d3d9_handle = 0;
+
+static BOOL (WINAPI *pEnumDisplaySettingsExA)(LPCSTR, DWORD, DEVMODEA *, DWORD);
+static LONG (WINAPI *pChangeDisplaySettingsExA)(LPCSTR, LPDEVMODE, HWND, DWORD, LPVOID);
 
 static IDirect3D9 * (WINAPI *pDirect3DCreate9)(UINT SDKVersion);
 static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9ex);
@@ -216,6 +222,105 @@ static void test_get_adapter_luid(void)
     IDirect3D9Ex_Release(d3d9ex);
 }
 
+static void test_get_adapter_displaymode_ex(void)
+{
+    HWND window = create_window();
+    IDirect3D9 *d3d9 = (void *) 0xdeadbeef;
+    IDirect3D9Ex *d3d9ex;
+    UINT count;
+    HRESULT hr;
+    D3DDISPLAYMODE mode;
+    D3DDISPLAYMODEEX mode_ex;
+    D3DDISPLAYROTATION rotation;
+    HANDLE hdll;
+    DEVMODEA startmode;
+    LONG retval;
+
+    hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
+    if (FAILED(hr))
+    {
+        skip("Direct3D9Ex is not available (%#x)\n", hr);
+        DestroyWindow(window);
+        return;
+    }
+
+    count = IDirect3D9Ex_GetAdapterCount(d3d9ex);
+    if (!count)
+    {
+        skip("No adapters available.\n");
+        IDirect3D9Ex_Release(d3d9ex);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3D9Ex_QueryInterface(d3d9ex, &IID_IDirect3D9, (void **) &d3d9);
+    ok(hr == D3D_OK,
+       "IDirect3D9Ex::QueryInterface for IID_IDirect3D9 returned %08x, expected D3D_OK\n",
+       hr);
+    ok(d3d9 != NULL && d3d9 != (void *) 0xdeadbeef,
+       "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", d3d9);
+    /* change displayorientation*/
+    hdll = GetModuleHandleA("user32.dll");
+    pEnumDisplaySettingsExA = (void*)GetProcAddress(hdll, "EnumDisplaySettingsExA");
+    pChangeDisplaySettingsExA = (void*)GetProcAddress(hdll, "ChangeDisplaySettingsExA");
+
+    if (!pEnumDisplaySettingsExA || !pChangeDisplaySettingsExA) goto out;
+
+    memset(&startmode, 0, sizeof(startmode));
+    startmode.dmSize = sizeof(startmode);
+    startmode.dmFields = DM_DISPLAYORIENTATION;
+    startmode.dmDisplayOrientation = DMDO_180;
+
+    retval = pChangeDisplaySettingsExA(NULL, &startmode, NULL, 0, NULL);
+
+    if(retval == DISP_CHANGE_BADMODE)
+    {
+        trace(" Test skipped: graphics mode is not supported\n");
+        goto out;
+    }
+
+    ok(retval == DISP_CHANGE_SUCCESSFUL,"ChangeDisplaySettingsEx failed with %d\n", retval);
+    /* try retrieve orientation info with EnumDisplaySettingsEx*/
+    startmode.dmFields = 0;
+    startmode.dmDisplayOrientation = 0;
+    ok(pEnumDisplaySettingsExA(NULL, ENUM_CURRENT_SETTINGS, &startmode, EDS_ROTATEDMODE), "EnumDisplaySettingsEx failed\n");
+
+    /*now that orientation has changed start tests for GetAdapterDisplayModeEx: invalid Size*/
+    memset(&mode_ex, 0, sizeof(mode_ex));
+    hr = IDirect3D9Ex_GetAdapterDisplayModeEx(d3d9ex, D3DADAPTER_DEFAULT, &mode_ex, &rotation);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "GetAdapterDisplayModeEx returned %#x instead of D3DERR_INVALIDCALL\n", hr);
+
+    mode_ex.Size = sizeof(D3DDISPLAYMODEEX);
+    /* invalid count*/
+    hr = IDirect3D9Ex_GetAdapterDisplayModeEx(d3d9ex, count + 1, &mode_ex, &rotation);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "GetAdapterDisplayModeEx returned %#x instead of D3DERR_INVALIDCALL\n", hr);
+    /*valid count and valid Size*/
+    hr = IDirect3D9Ex_GetAdapterDisplayModeEx(d3d9ex, D3DADAPTER_DEFAULT, &mode_ex, &rotation);
+    todo_wine ok(SUCCEEDED(hr), "GetAdapterDisplayModeEx failed, hr %#x.\n", hr);
+
+    /* Compare what GetAdapterDisplayMode returns with what GetAdapterDisplayModeEx returns*/
+    hr = IDirect3D9_GetAdapterDisplayMode(d3d9, D3DADAPTER_DEFAULT, &mode);
+    ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#x.\n", hr);
+
+    ok(mode_ex.Size == sizeof(D3DDISPLAYMODEEX), "size is %d instead of %d\n", mode_ex.Size, sizeof(D3DDISPLAYMODEEX));
+    todo_wine ok(mode_ex.Width == mode.Width, "width is %d instead of %d\n", mode_ex.Width, mode.Width);
+    todo_wine ok(mode_ex.Height == mode.Height, "height is %d instead of %d\n", mode_ex.Height, mode.Height);
+    todo_wine ok(mode_ex.RefreshRate == mode.RefreshRate, "RefreshRate is %d instead of %d\n", mode_ex.RefreshRate, mode.RefreshRate);
+    todo_wine ok(mode_ex.Format == mode.Format, "format is %x instead of %x\n", mode_ex.Format, mode.Format);
+    /* don't know yet how to test for ScanLineOrdering, just testing that it is set to a value by GetAdapterDisplayModeEx*/
+    todo_wine ok(mode_ex.ScanLineOrdering != 0, "ScanLineOrdering returned 0\n");
+    /* check that orientation is returned correctly by GetAdapterDisplayModeEx and EnumDisplaySettingsEx*/
+    todo_wine ok(startmode.dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180, "rotation is %d instead of %d\n", rotation, startmode.dmDisplayOrientation);
+
+    /* return to the default mode */
+    pChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
+    trace("GetAdapterDisplayModeEx returned Width = %d,Height = %d, RefreshRate = %d, Format = %x, ScanLineOrdering = %x, rotation = %d\n",
+          mode_ex.Width, mode_ex.Height, mode_ex.RefreshRate, mode_ex.Format, mode_ex.ScanLineOrdering, rotation);
+out:
+    IDirect3D9_Release(d3d9);
+    IDirect3D9Ex_Release(d3d9ex);
+}
+
 START_TEST(d3d9ex)
 {
     d3d9_handle = LoadLibraryA("d3d9.dll");
@@ -239,4 +344,5 @@ START_TEST(d3d9ex)
     test_qi_base_to_ex();
     test_qi_ex_to_base();
     test_get_adapter_luid();
+    test_get_adapter_displaymode_ex();
 }
