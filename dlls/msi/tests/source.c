@@ -1479,7 +1479,7 @@ static void test_MsiSourceListEnumSources(void)
     ok(!lstrcmpA(value, "aaa"), "Expected value to be unchanged, got %s\n", value);
     ok(size == MAX_PATH, "Expected MAX_PATH, got %d\n", size);
 
-    /* szUserSid is non-NULL */
+    /* szUserSid is NULL */
     size = MAX_PATH;
     lstrcpyA(value, "aaa");
     r = pMsiSourceListEnumSourcesA(prodcode, NULL,
