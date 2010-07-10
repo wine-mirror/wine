@@ -1,11 +1,11 @@
 1. INTRODUCTION
 
 Wine is a program which allows running Microsoft Windows programs
-(including DOS, Windows 3.x and Win32 executables) on Unix.  It
-consists of a program loader which loads and executes a Microsoft
+(including DOS, Windows 3.x, Win32, and Win64 executables) on Unix.
+It consists of a program loader which loads and executes a Microsoft
 Windows binary, and a library (called Winelib) that implements Windows
 API calls using their Unix or X11 equivalents.  The library may also
-be used for porting Win32 code into native Unix executables.
+be used for porting Windows code into native Unix executables.
 
 Wine is free software, released under the GNU LGPL; see the file
 LICENSE for the details.
@@ -46,7 +46,7 @@ Linux info:
 FreeBSD info:
   Wine will generally not work properly on versions before FreeBSD
   6.3 or 7.0, and FreeBSD 6.3 has additional patches available. See
-  <http://wiki.freebsd.org/Wine> for more information.
+  http://wiki.freebsd.org/Wine for more information.
 
 Solaris info:
   You will most likely need to build Wine with the GNU toolchain
@@ -75,16 +75,18 @@ Basic requirements:
 
   Of course you also need "make" (most likely GNU make).
 
-  You also need flex version 2.5 or later and bison.
+  You also need flex version 2.5.33 or later and bison.
 
 Optional support libraries:
   Configure will display notices when optional libraries are not found
   on your system. See http://wiki.winehq.org/Recommended_Packages for
   hints about the packages you should install.
 
-  On 64-bit platforms you have to make sure to install the 32-bit
-  versions of these libraries; see http://wiki.winehq.org/WineOn64bit
-  for details.
+  On 64-bit platforms, if compiling Wine as 32-bit (default), you have
+  to make sure to install the 32-bit versions of these libraries; see
+  http://wiki.winehq.org/WineOn64bit for details. If you want a true
+  64-bit Wine (or a mixed 32-bit and 64-bit Wine setup), see
+  http://wiki.winehq.org/Wine64 for details.
 
 4. COMPILATION
 
@@ -92,7 +94,6 @@ In case you chose to not use wineinstall, run the following commands
 to build Wine:
 
 ./configure
-make depend
 make
 
 This will build the program "wine" and numerous support libraries/binaries.
@@ -102,22 +103,11 @@ Windows source code under Unix.
 
 To see compile configuration options, do ./configure --help.
 
-To upgrade to a new release by using a patch file, first cd to the
-top-level directory of the release (the one containing this README
-file). Then do a "make clean", and patch the release with:
-
-    bunzip2 -c patch-file | patch -p1
-
-where "patch-file" is the name of the patch file (something like
-wine-1.0.x.diff.bz2). You can then re-run "./configure", and then
-run "make depend && make".
-
-
 5. SETUP
 
 Once Wine has been built correctly, you can do "make install"; this
-will install the wine executable, the Wine man page, and a few other
-needed files.
+will install the wine executable and libraries, the Wine man page, and
+other needed files.
 
 Don't forget to uninstall any conflicting previous Wine installation
 first.  Try either "dpkg -r wine" or "rpm -e wine" or "make uninstall"
@@ -134,20 +124,18 @@ or a filename only.
 
 For example: to run Notepad:
 
-	wine notepad		   (using the search Path as specified in
-	wine notepad.exe	    the config file to locate the file)
+    wine notepad            (using the search Path as specified in
+    wine notepad.exe         the registry to locate the file)
 
-	wine c:\\windows\\notepad.exe  (using DOS filename syntax)
+    wine c:\\windows\\notepad.exe      (using DOS filename syntax)
 
-	wine ~/.wine/drive_c/windows/notepad.exe  (using Unix filename syntax)
+    wine ~/.wine/drive_c/windows/notepad.exe  (using Unix filename syntax)
 
-        wine notepad.exe /parameter1 -parameter2 parameter3
-				   (calling program with parameters)
+    wine notepad.exe readme.txt          (calling program with parameters)
 
-Wine is not yet complete, so several programs may crash. In that crash
-you will be dropped into the debugger so that you can investigate and
-fix the problem.  For more information on how to do this, please check
-the debugging section of the Wine Developer's Guide.
+Wine is not perfect, so some programs may crash. If that happens you
+will get a crash log that you should attach to your report when filing
+a bug.
 
 
 7. GETTING MORE INFORMATION
@@ -158,28 +146,24 @@ WWW:	A great deal of information about Wine is available from WineHQ at
 
 FAQ:	The Wine FAQ is located at http://www.winehq.org/FAQ
 
-Usenet:	You can discuss Wine-related issues and get help
-	on comp.emulators.ms-windows.wine.
-
-Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.org
-	Please search the bugzilla database to check whether your
-	problem is already found before posting a bug report.  You can
-	also post bug reports to comp.emulators.ms-windows.wine.
-
-IRC:	Online help is available at channel #WineHQ on irc.freenode.net.
-
-Git:	The current Wine development tree is available through Git.
-	Go to http://www.winehq.org/site/git for more information.
+Wiki:	The Wine Wiki is located at http://wiki.winehq.org
 
 Mailing lists:
 	There are several mailing lists for Wine users and developers;
 	see http://www.winehq.org/forums for more information.
 
-Wiki:	The Wine Wiki is located at http://wiki.winehq.org
+Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.org
+	Please search the bugzilla database to check whether your
+	problem is already known or fixed before posting a bug report.
 
-If you add something, or fix a bug, please send a patch (in 'diff -u'
-format) to wine-patches@winehq.org list for inclusion in the next
-release.
+IRC:	Online help is available at channel #WineHQ on irc.freenode.net.
+
+Git:	The current Wine development tree is available through Git.
+	Go to http://www.winehq.org/git for more information.
+
+If you add something, or fix a bug, please send a patch (preferably
+using git-format-patch) to the wine-patches@winehq.org list for
+inclusion in the next release.
 
 --
 Alexandre Julliard
