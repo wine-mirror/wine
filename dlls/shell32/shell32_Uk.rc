@@ -1,5 +1,6 @@
 /*
  * Copyright 2004 Ilya Korniyko
+ * Copyright 2010 Igor Paliychuk
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -77,7 +78,7 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Вибрати"		FCIDM_SHVIEW_OPEN
 	  MENUITEM "&Провідник",		FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "&Відкрити",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
@@ -94,13 +95,13 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Файл"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "В&ихід", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Вигляд"
     BEGIN
         MENUITEM "&Великі Іконки", FCIDM_SHVIEW_BIGICON
         MENUITEM "&Малі Іконки", FCIDM_SHVIEW_SMALLICON
@@ -108,9 +109,9 @@ BEGIN
         MENUITEM "&Подробиці", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Допомога"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&Про панель керування...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -120,7 +121,7 @@ CAPTION "Огляд до теки"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "Відміна", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Скасувати", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
  LTEXT "", IDD_TITLE, 4, 4, 180, 12
  LTEXT "", IDD_STATUS, 4, 25, 180, 12
  CONTROL "", IDD_TREEVIEW, "SysTreeView32",
@@ -129,18 +130,49 @@ FONT 8, "MS Shell Dlg"
 	4, 40, 180, 120
 }
 
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Огляд до теки"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Тека:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Зробити нову теку", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Скасувати", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Повідомлення"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Так", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Так для &всіх", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Ні", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Скасувати", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Про %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine &license...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "&Ліцензія Wine...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 170, 10
- LTEXT "Running on %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Працює на %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
  LTEXT "Розробники Wine:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
 }
 
@@ -154,18 +186,36 @@ FONT 8, "MS Shell Dlg"
  LTEXT "&Відкрити:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Відміна", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Скасувати", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "&Огляд...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
-/*
-	special folders
-*/
 STRINGTABLE
 {
-	IDS_DESKTOP		"Стільниця"
+/*	columns in the shellview	*/
+	IDS_SHV_COLUMN1		"Файл"
+	IDS_SHV_COLUMN2		"Розмір"
+	IDS_SHV_COLUMN3		"Тип"
+	IDS_SHV_COLUMN4		"Змінено"
+	IDS_SHV_COLUMN5		"Атрибути"
+	IDS_SHV_COLUMN6		"Розмір"
+	IDS_SHV_COLUMN7		"Вільний Розмір"
+	IDS_SHV_COLUMN8		"Ім'я"
+	IDS_SHV_COLUMN9		"Коментарі"
+	IDS_SHV_COLUMN10	"Власник"
+	IDS_SHV_COLUMN11	"Група"
+	IDS_SHV_COLUMN_DELFROM	"Оригінальне розміщення"
+	IDS_SHV_COLUMN_DELDATE	"Дата видалення"
+	IDS_SHV_COL_DOCS	"Документи"
+	IDS_SHV_COL_STATUS	"Стан"
+	IDS_SHV_COL_LOCATION	"Розміщення"
+	IDS_SHV_COL_MODEL	"Модель"
+
+	/* special folders */
+	IDS_DESKTOP		"Робочий стіл"
 	IDS_MYCOMPUTER		"Мій Комп'ютер"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Кошик"
+	IDS_CONTROLPANEL	"Панель керування"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Великі Іконки"
@@ -181,36 +231,81 @@ STRINGTABLE
 	IDS_DELETEFOLDER_CAPTION "Підтвердження вилучення теки"
 	IDS_DELETEITEM_TEXT "Ви впевнені, що хочете вилучити '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Ви впевнені, що хочете вилучити ці %1 елементи(ів)?"
-	IDS_DELETESELECTED_TEXT "Are you sure you want to delete the selected item(s)?"
-	IDS_TRASHITEM_TEXT "Are you sure that you want to send '%1' to the Trash?"
-	IDS_TRASHFOLDER_TEXT "Are you sure that you want to send '%1' and all its content to the Trash?"
-	IDS_TRASHMULTIPLE_TEXT "Are you sure that you want to send these %1 items to the Trash?"
-	IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_DELETESELECTED_TEXT "Ви впевнені, що хочете вилучити обрані елементи?"
+	IDS_TRASHITEM_TEXT "Ви впевнені, що хочете відіслати '%1' в Кошик?"
+	IDS_TRASHFOLDER_TEXT "Ви впевнені, що хочете відіслати '%1' та весь її вміст в Кошик?"
+	IDS_TRASHMULTIPLE_TEXT "Ви впевнені, що хочете відіслати ці %1 елементи(ів) в Кошик?"
+	IDS_CANTTRASH_TEXT "Елемент '%1' не може бути відісланий в Кошик. Видалити його замість цього?"
+	IDS_OVERWRITEFILE_TEXT "Ця тека вже містить файл з іменем '%1'.\n\nХочете замінити його?"
 	IDS_OVERWRITEFILE_CAPTION "Підтвердження Перезапису Файлу"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_OVERWRITEFOLDER_TEXT "Ця тека вже містить теку з іменем '%1'.\n\n"\
+	    "Якщо файли в теці призначення мають ті ж імена що файли в\n"\
+	    "обраній теці, вони будуть замінені. Ви все ще бажаєте перемістити чи\n"\
+	    "скопіювати теку?"
 
-/*	columns in the shellview	*/
-	IDS_SHV_COLUMN1		"Файл"
-	IDS_SHV_COLUMN2		"Розмір"
-	IDS_SHV_COLUMN3		"Тип"
-	IDS_SHV_COLUMN4		"Змінено"
-	IDS_SHV_COLUMN5		"Атрибути"
-	IDS_SHV_COLUMN6		"Розмір"
-	IDS_SHV_COLUMN7		"Вільний Розмір"
-	IDS_SHV_COLUMN8		"Name"
-	IDS_SHV_COLUMN9		"Comments"
-	IDS_SHV_COLUMN10	"Owner"
-	IDS_SHV_COLUMN11	"Group"
-	IDS_SHV_COLUMN_DELFROM	"Original location"
-	IDS_SHV_COLUMN_DELDATE	"Date deleted"
+        /* message box strings */
+        IDS_RESTART_TITLE       "Перезавантажити"
+        IDS_RESTART_PROMPT      "Симулювати перезавантаження Windows?"
+        IDS_SHUTDOWN_TITLE      "Вимкнути"
+        IDS_SHUTDOWN_PROMPT     "Завершити сесію роботи Wine?"
 
-	IDS_NEWFOLDER		"New Folder"
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Неможливо відобразити діалог Запуск Файлу (внутрішня помилка)"
+        IDS_RUNDLG_BROWSE_ERROR    "Неможливо відобразити діалог Огляд (внутрішня помилка)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Огляд"
+        IDS_RUNDLG_BROWSE_FILTER   "Виконувані Файли\0*.exe\0Всі Файли\0*.*\0\0"
 
-	IDS_CPANEL_TITLE	"Wine Control Panel"
-	IDS_CPANEL_NAME		"Name"
-	IDS_CPANEL_DESCRIPTION	"Description"
+        /* shell folder path default values */
+	IDS_PROGRAMS                "Головне меню\\Програми"
+	IDS_PERSONAL                "Мої документи"
+	IDS_FAVORITES               "Обране"
+	IDS_STARTUP                 "Головне меню\\Програми\\Автозапуск"
+	IDS_RECENT                  "Недавнє"
+	IDS_SENDTO                  "Відіслати"
+	IDS_STARTMENU               "Головне меню"
+	IDS_MYMUSIC                 "Моя Музика"
+	IDS_MYVIDEO                 "Мої Фільми"
+	IDS_DESKTOPDIRECTORY        "Робочий стіл"
+	IDS_NETHOOD                 "Мережне оточення"
+	IDS_TEMPLATES               "Шаблони"
+	IDS_APPDATA                 "Application Data"
+	IDS_PRINTHOOD               "Принтери"
+	IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
+	IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "Local Settings\\History"
+	IDS_PROGRAM_FILES           "Program Files"
+	IDS_MYPICTURES              "Мої Малюнки"
+	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+	IDS_COMMON_DOCUMENTS        "Документи"
+	IDS_ADMINTOOLS              "Start Menu\\Programs\\Administrative Tools"
+	IDS_COMMON_MUSIC            "Музика"
+	IDS_COMMON_PICTURES         "Малюнки"
+	IDS_COMMON_VIDEO            "Фільми"
+	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+	IDS_NEWFOLDER		"Нова Тека"
+
+	IDS_CPANEL_TITLE            "Панель керування Wine"
+	IDS_CPANEL_NAME             "Ім'я"
+	IDS_CPANEL_DESCRIPTION      "Опис"
+
+        IDS_SHLEXEC_NOASSOC         "Не сконфігуровано програми Windows для відкриття файлів цього типу."
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Ліцензія Wine"
+IDS_LICENSE,
+"Wine є вільним ПЗ; ви можете поширювати його та/або \
+змінювати згідно умов GNU Lesser General Public \
+License, яка опублікована Free Software Foundation; версії \
+2.1 Ліцензії, чи (на ваш розсуд) новішої версії.\n\n\
+Wine розповсюджується з надією, що буде корисним, \
+але БЕЗ БУДЬ-ЯКИХ ГАРАНТІЙ; навіть без непрямих гарантій щодо\
+ПРОДАЖУ чи ПРИДАТНОСТІ ДЛЯ ПЕВНИХ ЦІЛЕЙ.  Дивіться GNU \
+Lesser General Public License для детальної інформації.\n\n\
+Ви повинні були отримати копію GNU Lesser General Public \
+License разом з Wine; якщо ні, напишіть до Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 }
