@@ -1384,6 +1384,106 @@ static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags,
     return TRUE;
 }
 
+/* Attempts to canonicalize a reg_name.
+ *
+ * Things that happen:
+ *  1)  If Uri_CREATE_NO_CANONICALIZE flag is not set, then the reg_name is
+ *      lower cased. Unless it's an unknown scheme type, which case it's
+ *      no lower cased reguardless.
+ *
+ *  2)  Unreserved % encoded characters are decoded for known
+ *      scheme types.
+ *
+ *  3)  Forbidden characters are % encoded as long as
+ *      Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS flag is not set and
+ *      it isn't an unknown scheme type.
+ *
+ *  4)  If it's a file scheme and the host is "localhost" it's removed.
+ */
+static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
+                                  DWORD flags, BOOL computeOnly) {
+    static const WCHAR localhostW[] =
+            {'l','o','c','a','l','h','o','s','t',0};
+    const WCHAR *ptr;
+    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+
+    uri->host_start = uri->canon_len;
+
+    if(data->scheme_type == URL_SCHEME_FILE &&
+       data->host_len == lstrlenW(localhostW)) {
+        if(!StrCmpNIW(data->host, localhostW, data->host_len)) {
+            uri->host_start = -1;
+            uri->host_len = 0;
+            uri->host_type = Uri_HOST_UNKNOWN;
+            return TRUE;
+        }
+    }
+
+    for(ptr = data->host; ptr < data->host+data->host_len; ++ptr) {
+        if(*ptr == '%' && known_scheme) {
+            WCHAR val = decode_pct_val(ptr);
+            if(is_unreserved(val)) {
+                /* If NO_CANONICALZE is not set, then windows lower cases the
+                 * decoded value.
+                 */
+                if(!(flags & Uri_CREATE_NO_CANONICALIZE) && isupperW(val)) {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = tolowerW(val);
+                } else {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = val;
+                }
+                ++uri->canon_len;
+
+                /* Skip past the % encoded character. */
+                ptr += 2;
+                continue;
+            } else {
+                /* Just copy the % over. */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
+            }
+        } else if(*ptr == '\\') {
+            /* Only unknown scheme types could have made it here with a '\\' in the host name. */
+            if(!computeOnly)
+                uri->canon_uri[uri->canon_len] = *ptr;
+            ++uri->canon_len;
+        } else if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) &&
+                  !is_unreserved(*ptr) && !is_reserved(*ptr) && known_scheme) {
+            if(!computeOnly) {
+                pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
+
+                /* The percent encoded value gets lower cased also. */
+                if(!(flags & Uri_CREATE_NO_CANONICALIZE)) {
+                    uri->canon_uri[uri->canon_len+1] = tolowerW(uri->canon_uri[uri->canon_len+1]);
+                    uri->canon_uri[uri->canon_len+2] = tolowerW(uri->canon_uri[uri->canon_len+2]);
+                }
+            }
+
+            uri->canon_len += 3;
+        } else {
+            if(!computeOnly) {
+                if(!(flags & Uri_CREATE_NO_CANONICALIZE) && known_scheme)
+                    uri->canon_uri[uri->canon_len] = tolowerW(*ptr);
+                else
+                    uri->canon_uri[uri->canon_len] = *ptr;
+            }
+
+            ++uri->canon_len;
+        }
+    }
+
+    uri->host_len = uri->canon_len - uri->host_start;
+
+    if(!computeOnly)
+        TRACE("(%p %p %x %d): Canonicalize reg_name=%s len=%d\n", data, uri, flags,
+            computeOnly, debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len),
+            uri->host_len);
+
+    return TRUE;
+}
+
 /* Attempts to canonicalize an implicit IPv4 address. */
 static BOOL canonicalize_implicit_ipv4address(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     uri->host_start = uri->canon_len;
@@ -1661,6 +1761,12 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
 
     if(data->host) {
         switch(data->host_type) {
+        case Uri_HOST_DNS:
+            uri->host_type = Uri_HOST_DNS;
+            if(!canonicalize_reg_name(data, uri, flags, computeOnly))
+                return FALSE;
+
+            break;
         case Uri_HOST_IPV4:
             uri->host_type = Uri_HOST_IPV4;
             if(!canonicalize_ipv4address(data, uri, flags, computeOnly))
@@ -1672,6 +1778,18 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
                 return FALSE;
 
             uri->host_type = Uri_HOST_IPV6;
+            break;
+        case Uri_HOST_UNKNOWN:
+            if(data->host_len > 0 || data->scheme_type != URL_SCHEME_FILE) {
+                uri->host_start = uri->canon_len;
+
+                /* Nothing happens to unknown host types. */
+                if(!computeOnly)
+                    memcpy(uri->canon_uri+uri->canon_len, data->host, data->host_len*sizeof(WCHAR));
+                uri->canon_len += data->host_len;
+                uri->host_len = data->host_len;
+            }
+
             break;
         default:
             WARN("(%p %p %x %d): Canonicalization not supported yet\n", data,
@@ -1720,9 +1838,11 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
        /* TODO: Canonicalize the path of the URI. */
 
     } else {
-        /* Opaque URI's don't have userinfo. */
+        /* Opaque URI's don't have an authority. */
         uri->userinfo_start = uri->userinfo_split = -1;
         uri->userinfo_len = 0;
+        uri->host_start = -1;
+        uri->host_len = 0;
     }
 
     return TRUE;
@@ -1932,11 +2052,8 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
 
             hres = S_OK;
         } else {
-            /* Canonicalizing/parsing the host of a URI is only partially
-             * implemented, so return E_NOTIMPL for now.
-             */
-            FIXME("(%p)->(%d %p %x) Partially implemented\n", This, uriProp, pbstrProperty, dwFlags);
-            return E_NOTIMPL;
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
         }
 
         if(!(*pbstrProperty))
@@ -2041,14 +2158,6 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 
     switch(uriProp) {
     case Uri_PROPERTY_HOST:
-        if(This->host_start == -1) {
-            /* Canonicalizing/parsing the host of a URI is only partially
-             * implemented, so return E_NOTIMPL for now.
-             */
-            FIXME("(%p)->(%d %p %x) Partially implemented\n", This, uriProp, pcchProperty, dwFlags);
-            return E_NOTIMPL;
-        }
-
         *pcchProperty = This->host_len;
 
         /* '[' and ']' aren't included in the length. */
