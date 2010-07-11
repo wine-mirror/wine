@@ -1,0 +1,335 @@
+/*
+ * Regedit resources
+ *
+ * Copyright 2002 Robert Dickenson
+ * Copyright 2010 Claudia Cotună
+ *                Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+/*
+ * Menu
+ */
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Registru"
+    BEGIN
+        MENUITEM "&Importare fișier registru...",  ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Exportare fișier registru...",  ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Conectare registru rețea...",   ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Deconectare registru rețea...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Im&primare\tCtrl+P",             ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Înc&hide",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&Editare"
+    BEGIN
+        MENUITEM "&Modifică",                      ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Nou"
+        BEGIN
+            MENUITEM "Che&ie",                     ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Valoare șir",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "Valoare &binară",            ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "Valoare &DWORD",             ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valoare șir &multiplu",      ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Ș&terge\tDel",                   ID_EDIT_DELETE
+        MENUITEM "&Redenumește\tF2",               ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Copiază numele cheii",          ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Caută\tCtrl+F",                 ID_EDIT_FIND, GRAYED
+        MENUITEM "Caută urmă&torul\tF3",           ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&Vizualizare"
+    BEGIN
+        MENUITEM "&Bara de stare",                 ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Se&pară",                        ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "Actua&lizează\tF5",              ID_VIEW_REFRESH
+    END
+    POPUP "&Favorite"
+    BEGIN
+        MENUITEM "&Adăugare la favorite...",       ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Elimina&re favorită...",         ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "A&jutor"
+    BEGIN
+        MENUITEM "Subiecte în a&jutor\tF1",        ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "Des&pre editorul de registru",   ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+        MENUITEM "&Modifică",                   ID_EDIT_MODIFY
+        MENUITEM "Modifică date binare",        ID_EDIT_MODIFY_BIN
+        MENUITEM SEPARATOR
+        MENUITEM "Ș&terge\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Redenumește\tF2",            ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Nou"
+        BEGIN
+            MENUITEM "Che&ie",                  ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Valoare șir",            ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "Valoare &binară",         ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "Valoare &DWORD",          ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "Valoare șir &multiplu",   ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Ș&terge\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Redenumește\tF2",            ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Exportare...",               ID_EDIT_EXPORT
+        MENUITEM "&Copiază numele cheii",       ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Caută\tCtrl+F",              ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Exportă registrul", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "To&ate", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "Ramura s&electată:", IDC_EXPORT_SELECTED, 12, 30, 72, 12
+    EDITTEXT IDC_EXPORT_PATH, 84, 30, 184, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 220, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Căutare"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Caută:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Caută în:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Chei", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Nume valori", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Conținut valori", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Doar șirul întreg", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Caută",IDOK,175,5,40,15,WS_GROUP
+    PUSHBUTTON      "Închide",IDCANCEL,175,24,40,15, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Adăugare favorită"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nume:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,36,40,15,WS_GROUP
+    PUSHBUTTON      "Anulează",IDCANCEL,165,36,40,15,WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Eliminare favorită"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nume:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,72,40,15,WS_GROUP
+    PUSHBUTTON      "Anulează",IDCANCEL,165,72,40,15,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Editare șir"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nume valoare:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Date valoare:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,56,40,15,WS_GROUP
+    PUSHBUTTON      "Anulează",IDCANCEL,165,56,40,15,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Editare DWORD"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nume valoare:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Date valoare:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Bază", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Hexadecimal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Decimal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,120,78,40,15,WS_GROUP
+    PUSHBUTTON      "Anulează",IDCANCEL,165,78,40,15,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Editare binar"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nume valoare:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,160,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Date valoare:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,5,40,160,40
+    DEFPUSHBUTTON   "OK",IDOK,80,83,40,15,WS_GROUP
+    PUSHBUTTON      "Anulează",IDCANCEL,125,83,40,15,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Editare șir multiplu"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Nume valoare:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Date valoare:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,120,156,40,15,WS_GROUP
+    PUSHBUTTON      "Anulează",IDCANCEL,165,156,40,15,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Nume"
+    IDS_LIST_COLUMN_TYPE    "Tip"
+    IDS_LIST_COLUMN_DATA    "Date"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Editor registru"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Conține comenzi pentru lucrul cu întregul registru"
+    ID_EDIT_MENU            "Conține comenzi pentru editare de valori sau chei"
+    ID_VIEW_MENU            "Conține comenzi pentru personalizarea ferestrei de registru"
+    ID_FAVORITES_MENU       "Conține comenzi pentru accesarea cheilor utilizate frecvent"
+    ID_HELP_MENU            "Conține comenzi pentru afișare ajutor și informații despre editorul de registru"
+    ID_EDIT_NEW_MENU        "Conține comenzi pentru crearea de chei sau valori noi"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Modifică datele valorii"
+    ID_EDIT_NEW_KEY         "Adaugă o nouă cheie"
+    ID_EDIT_NEW_STRINGVALUE "Adaugă o nouă valoare de șir"
+    ID_EDIT_NEW_BINARYVALUE "Adaugă o nouă valoare de binar"
+    ID_EDIT_NEW_DWORDVALUE  "Adaugă o nouă valoare de DWORD"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Adaugă o nouă valoare de șir multiplu"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Importă un fișier text în registru"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Exportă întregul registru sau o parte ca fișier text"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Se conectează la registrul unui calculator de la distanță"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Se deconectează de la registrul unui calculator de la distanță"
+    ID_REGISTRY_PRINT       "Imprimă întregul registru sau o parte"
+/*  ID_HELP_HELPTOPICS      "Deschide ajutorul pentru editorul de registru" */
+    ID_HELP_ABOUT           "Afișează informații despre program, numărul versiunii și licența"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Închide editorul de registru"
+    ID_FAVORITES_ADDTOFAVORITES "Adaugă chei în lista de favorite"
+    ID_FAVORITES_REMOVEFAVORITE "Elimină chei din lista de favorite"
+    ID_VIEW_STATUSBAR       "Afișează sau ascunde bara de stare"
+    ID_VIEW_SPLIT           "Schimbă poziția separatorului între două panouri"
+    ID_VIEW_REFRESH         "Actualizează fereastra"
+    ID_EDIT_DELETE          "Șterge selecția"
+    ID_EDIT_RENAME          "Redenumește selecția"
+    ID_EDIT_COPYKEYNAME     "Copiază numele cheii selectate în clipboard"
+    ID_EDIT_FIND            "Caută un șir text într-o cheie, valoare sau dată"
+    ID_EDIT_FINDNEXT        "Caută următoarea apariție a textului specificat în căutarea precedentă"
+    ID_EDIT_EXPORT          "Exportă ramura de registru selectată ca fișier text"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR               "Eroare"
+    IDS_BAD_KEY             "Nu se poate interoga cheia „%s”"
+    IDS_BAD_VALUE           "Nu se poate interoga valoarea „%s”"
+    IDS_UNSUPPORTED_TYPE    "Nu se pot edita chei de acest tip (%u)"
+    IDS_TOO_BIG_VALUE       "Valoarea este prea mare (%u)"
+    IDS_DELETE_BOX_TITLE    "Confirmă ștergerea valorii"
+    IDS_DELETE_BOX_TEXT     "Sigur doriți să ștergeți valoarea „%s”?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Sigur doriți să ștergeți aceste valori?"
+    IDS_NEWKEY              "Cheie nouă #%d"
+    IDS_NEWVALUE            "Valoare nouă #%d"
+    IDS_NOTFOUND            "Șirul de căutare „%s” nu a fost găsit"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Importă fișierul registru"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Exportă fișierul registru"
+    IDS_FILEDIALOG_FILTER         "Fișiere registru\\0*.reg\\0Win9x/NT4 Fișiere registru (REGEDIT4)\\0*.reg\\0Toate fișierele (*.*)\\0*.*\\0\\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Calculatorul meu"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Implicit)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(valoare nestabilită)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(valoarea nu poate fi afișată)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(%d necunoscut)"
+END
+
+/*****************************************************************/
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+/*****************************************************************/
