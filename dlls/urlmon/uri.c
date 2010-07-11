@@ -24,6 +24,7 @@
 #include "shlwapi.h"
 
 #define UINT_MAX 0xffffffff
+#define USHORT_MAX 0xffff
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
@@ -100,6 +101,10 @@ typedef struct {
 
     BOOL            has_ipv6;
     ipv6_address    ipv6_address;
+
+    const WCHAR     *port;
+    DWORD           port_len;
+    USHORT          port_value;
 } parse_data;
 
 static const CHAR hexDigits[] = "0123456789ABCDEF";
@@ -821,6 +826,44 @@ static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
     ++(*ptr);
 }
 
+/* Attempts to parse a port from the URI.
+ *
+ * NOTES:
+ *  Windows seems to have a cap on what the maximum value
+ *  for a port can be. The max value is USHORT_MAX.
+ *
+ * port = *DIGIT
+ */
+static BOOL parse_port(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    UINT port = 0;
+    data->port = *ptr;
+
+    while(!is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
+        if(!is_num(**ptr)) {
+            *ptr = data->port;
+            data->port = NULL;
+            return FALSE;
+        }
+
+        port = port*10 + (**ptr-'0');
+
+        if(port > USHORT_MAX) {
+            *ptr = data->port;
+            data->port = NULL;
+            return FALSE;
+        }
+
+        ++(*ptr);
+    }
+
+    data->port_value = port;
+    data->port_len = *ptr - data->port;
+
+    TRACE("(%p %p %x): Found port %s len=%d value=%u\n", ptr, data, flags,
+        debugstr_wn(data->port, data->port_len), data->port_len, data->port_value);
+    return TRUE;
+}
+
 /* Attempts to parse a IPv4 address from the URI.
  *
  * NOTES:
@@ -853,7 +896,15 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
     /* Check if what we found is the only part of the host name (if it isn't
      * we don't have an IPv4 address).
      */
-    if(!is_auth_delim(**ptr, !is_unknown) && **ptr != ':') {
+    if(**ptr == ':') {
+        ++(*ptr);
+        if(!parse_port(ptr, data, flags)) {
+            *ptr = data->host;
+            data->host = NULL;
+            return FALSE;
+        }
+    } else if(!is_auth_delim(**ptr, !is_unknown)) {
+        /* Found more data which belongs the host, so this isn't an IPv4. */
         *ptr = data->host;
         data->host = NULL;
         data->has_implicit_ip = FALSE;
@@ -862,6 +913,7 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
 
     data->host_len = *ptr - data->host;
     data->host_type = Uri_HOST_IPV4;
+
     TRACE("(%p %p %x): IPv4 address found. host=%s host_len=%d host_type=%d\n",
         ptr, data, flags, debugstr_wn(data->host, data->host_len),
         data->host_len, data->host_type);
@@ -870,11 +922,15 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
 
 /* Attempts to parse the reg-name from the URI.
  *
+ * Because of the way Windows handles ':' this function also
+ * handles parsing the port.
+ *
  * reg-name = *( unreserved / pct-encoded / sub-delims )
  *
  * NOTE:
  *  Windows allows everything, but, the characters in "auth_delims" and ':'
- *  to appear in a reg-name.
+ *  to appear in a reg-name, unless it's an unknown scheme type then ':' is
+ *  allowed to appear (even if a valid port isn't after it).
  *
  *  Windows doesn't like host names which start with '[' and end with ']'
  *  and don't contain a valid IP literal address in between them.
@@ -888,6 +944,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const BOOL has_start_bracket = **ptr == '[';
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
     BOOL inside_brackets = has_start_bracket;
+    BOOL ignore_col = FALSE;
 
     /* We have to be careful with file schemes. */
     if(data->scheme_type == URL_SCHEME_FILE) {
@@ -909,10 +966,29 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
     data->host = *ptr;
 
     while(!is_auth_delim(**ptr, known_scheme)) {
-        if(**ptr == ':') {
+        if(**ptr == ':' && !ignore_col) {
             /* We can ignore ':' if were inside brackets.*/
-            if(!inside_brackets)
-                break;
+            if(!inside_brackets) {
+                const WCHAR *tmp = (*ptr)++;
+
+                /* Attempt to parse the port. */
+                if(!parse_port(ptr, data, flags)) {
+                    /* Windows expects there to be a valid port for known scheme types. */
+                    if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+                        *ptr = data->host;
+                        data->host = NULL;
+                        TRACE("(%p %p %x): Expected valid port\n", ptr, data, flags);
+                        return FALSE;
+                    } else
+                        /* Windows gives up on trying to parse a port when it
+                         * encounters 1 invalid port.
+                         */
+                        ignore_col = TRUE;
+                } else {
+                    data->host_len = tmp - data->host;
+                    break;
+                }
+            }
         } else if(**ptr == '%' && known_scheme) {
             /* Has to be a legit % encoded value. */
             if(!check_pct_encoded(ptr)) {
@@ -940,7 +1016,9 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
         }
     }
 
-    data->host_len = *ptr - data->host;
+    /* Don't overwrite our length if we found a port earlier. */
+    if(!data->port)
+        data->host_len = *ptr - data->host;
 
     /* If the host is empty, then it's an unknown host type. */
     if(data->host_len == 0)
@@ -1185,8 +1263,19 @@ static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags) {
     }
 
     ++(*ptr);
+    if(**ptr == ':') {
+        ++(*ptr);
+        /* If a valid port is not found, then let it trickle down to
+         * parse_reg_name.
+         */
+        if(!parse_port(ptr, data, flags)) {
+            *ptr = data->host;
+            data->host = NULL;
+            return FALSE;
+        }
+    } else
+        data->host_len = *ptr - data->host;
 
-    data->host_len = *ptr - data->host;
     return TRUE;
 }
 
@@ -1215,6 +1304,9 @@ static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD flags) {
 static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
     parse_userinfo(ptr, data, flags);
 
+    /* Parsing the port will happen during one of the host parsing
+     * routines (if the URI has a port).
+     */
     if(!parse_host(ptr, data, flags))
         return FALSE;
 
