@@ -1,0 +1,218 @@
+/*
+ * OleView
+ *
+ * Copyright 2006 Piotr Caban
+ * Copyright 2010 Claudia Cotună
+ *                Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+IDM_MENU MENU
+{
+    POPUP "&Fișier"
+    {
+        MENUITEM "&Legare de fișier...",                IDM_BIND
+        MENUITEM "&Afișare TypeLib...",                 IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "&Configurare sistem...",              IDM_SYSCONF
+        MENUITEM "Execută editorul de &registru",       IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "În&chide",                            IDM_EXIT
+    }
+    POPUP "&Obiect"
+    {
+        POPUP "Fanion &CoCreateInstance"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER",           IDM_FLAG_INSERV, CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER",          IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER",            IDM_FLAG_LOCSERV, CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER",           IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "Afișează informații despre &tip",     IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Creează o &instanță",                 IDM_CREATEINST, GRAYED
+        MENUITEM "Creează &o instanță pe...",           IDM_CREATEINSTON, GRAYED
+        MENUITEM "Elibe&rează instanța",                IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Copiază C&LSID în clipboard",         IDM_COPYCLSID, GRAYED
+        MENUITEM "Copiază marcajul &HTML al obiectului în clipboard", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Afișare...",                         IDM_VIEW, GRAYED
+    }
+    POPUP "&Vizualizare"
+    {
+        MENUITEM "Mod &expert",                         IDM_EXPERT, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Categorii de componente asc&unse",    IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Bara de instrumen&te",                IDM_TOOLBAR, CHECKED
+        MENUITEM "Bara de &stare",                      IDM_STATUSBAR, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Actualiza&re\tF5",                    IDM_REFRESH
+    }
+    POPUP "A&jutor"
+    {
+        MENUITEM "&Despre OleView",                     IDM_ABOUT
+    }
+}
+
+IDM_TYPELIB MENU
+{
+    POPUP "&Fișier"
+    {
+        MENUITEM "&Salvare ca...",              IDM_SAVEAS
+        MENUITEM "În&chide",                    IDM_CLOSE
+    }
+    POPUP "&Vizualizare"
+    {
+        MENUITEM "&Grupează după tip",          IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "Bara de instrumen&te",        IDM_TOOLBAR
+        MENUITEM "Bara de &stare",              IDM_STATUSBAR, CHECKED
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OleView"
+    IDS_APPTITLE           "OleView"
+    IDS_READY              "Pregătit"
+    IDS_ABOUT              "OleView - Vizualizator de obiecte OLE/COM"
+    IDS_ABOUTVER           "versiunea 1.0"
+    IDS_TYPELIBTITLE       "Vizualizator ITypeLib"
+    IDS_OPEN               "Deschide"
+    IDS_OPEN_TYPELIB_FILTER "Fișiere TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\\0*.tlb;*.olb;*.dll;*.ocx;*.exe\\0Toate fișierele (*.*)\\0*.*\\0\\0"
+
+    IDM_BIND,              "Leagă la fișier printr-un File Moniker"
+    IDM_TYPELIB,           "Deschide un fișier TypeLib și afișează conținutul"
+    IDM_SYSCONF,           "Modifică parametrii COM distribuiți în întregul calculator"
+    IDM_REGEDIT,           "Execută editorul de registru Wine"
+    IDM_EXIT,              "Închide aplicația. Solicită salvarea modificărilor"
+    IDM_CREATEINST,        "Creează o instanță a obiectului selectat"
+    IDM_CREATEINSTON,      "Creează o instanță a obiectului selectat pe un calculator specificat"
+    IDM_RELEASEINST,       "Eliberează instanța obiectului selectat "
+    IDM_COPYCLSID,         "Copiază GUID al obiectului selectat în clipboard"
+    IDM_VIEW,              "Afișează vizualizatorul pentru obiectul selectat"
+    IDM_FLAG_INSERV,       "Utilizează CLSCTX_INPROC_SERVER când se apelează CoGetClassObject"
+    IDM_FLAG_INHANDL,      "Utilizează CLSCTX_INPROC_HANDLER când se apelează CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "Utilizează CLSCTX_LOCAL_SERVER când se apelează CoGetClassObject"
+    IDM_FLAG_REMSERV,      "Utilizează CLSCTX_REMOTE_SERVER când se apelează CoGetClassObject"
+    IDM_EXPERT,            "Comută între modul de afișare pentru experți și cel pentru începători"
+    IDM_HIDDEN,            "Activează/dezactivează afișarea categoriilor de componente care nu sunt prevăzute a fi vizibile"
+    IDM_TOOLBAR,           "Afișează sau ascunde bara de instrumente"
+    IDM_STATUSBAR,         "Afișează sau ascunde bara de stare"
+    IDM_REFRESH,           "Actualizează toate listele"
+    IDM_ABOUT,             "Afișează numărul versiunii, drepturile de autor și informații despre program "
+
+    IDM_SAVEAS,            "Salvează ca fișier .IDL sau .H"
+    IDM_CLOSE,             "Închide fereastra"
+    IDM_GROUP,             "Grupează typeinfo-urile pe categorii"
+
+    IDS_TREE_OC,           "ObjectClasses"
+    IDS_TREE_GBCC,         "Grupate pe categorii de componente"
+    IDS_TREE_O1O,          "Obiecte OLE 1.0"
+    IDS_TREE_CLO,          "Obiecte de bibliotecă COM"
+    IDS_TREE_AO,           "Toate obiectele"
+    IDS_TREE_AID,          "Identificatoare de aplicații"
+    IDS_TREE_TL,           "Biblioteci de tipuri"
+    IDS_TL_VER,            "ver."
+    IDS_TREE_I,            "Interfețe"
+
+    IDS_TAB_REG,           "Registru"
+    IDS_TAB_IMPL,          "Implementare"
+    IDS_TAB_ACTIV,         "Activare"
+
+    IDS_CGCOFAIL,          "CoGetClassObject a eșuat."
+    IDS_ERROR_UNKN,        "Eroare necunoscută"
+    IDS_TRUE,              "Adevărat"
+    IDS_FALSE,             "Fals"
+    IDS_BYTES,             "octeți"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) a eșuat ($%x)"
+    IDS_INHERITINTERFACES, "Interfețe moștenite"
+}
+
+DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Conectează la alt calculator"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Nu&me calculator:", -1, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&OK", IDOK, 200, 5, 45, 14
+    PUSHBUTTON  "A&nulează", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Configurare sistem"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Configurație sistem", -1, 5, 6, 160, 8
+    CHECKBOX    "Activ&ează COM distribuit", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "Activea&ză conexiunile la distanță (doar Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "These settings changes only register values.\nIt has no effect on Wine performance.", -1, 5, 50, 160, 40
+    DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
+    PUSHBUTTON  "A&nulează", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Vizualizator interfață implicit"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Interfață", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "În&chide", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&Afișează informațiile de tip", IDC_VIEWTYPEINFO, 6, 31, 100, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Vizualizator interfață IPersist"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Nume clasă:", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "În&chide", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Vizualizator interfață IPersistStream"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Nume clasă:", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "În&chide", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
