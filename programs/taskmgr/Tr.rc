@@ -485,4 +485,5 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "Süreci NORMAL ALTI öncelik sýnýfýnda çalýþmaya ayarlar"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Süreci DÜÞÜK öncelik sýnýfýnda çalýþmaya ayarlar"
+    ID_PROCESS_PAGE_DEBUGCHANNELS "Controls Debug Channels"
 END
