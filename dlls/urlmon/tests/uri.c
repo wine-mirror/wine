@@ -65,6 +65,7 @@ typedef struct _uri_str_property {
     const char* value;
     HRESULT     expected;
     BOOL        todo;
+    const char* broken_value;
 } uri_str_property;
 
 typedef struct _uri_dword_property {
@@ -1867,6 +1868,64 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* Port is just copied over. */
+    {   "http://google.com:00035", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://google.com:00035",S_OK,TRUE},
+            {"google.com:00035",S_OK,TRUE},
+            {"http://google.com:00035",S_OK,TRUE,"http://google.com:35"},
+            {"google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://google.com:00035",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {35,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Default port is copied over. */
+    {   "http://google.com:80", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://google.com:80",S_OK,TRUE},
+            {"google.com:80",S_OK,TRUE},
+            {"http://google.com:80",S_OK,TRUE},
+            {"google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://google.com:80",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -2108,7 +2167,8 @@ static void test_IUri_GetPropertyBSTR(void) {
                                 hr, prop.expected, i, j);
                     }
                     todo_wine {
-                        ok(!strcmp_aw(prop.value, received), "Expected %s but got %s on uri_tests[%d].str_props[%d].\n",
+                        ok(!strcmp_aw(prop.value, received) || broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
+                                "Expected %s but got %s on uri_tests[%d].str_props[%d].\n",
                                 prop.value, wine_dbgstr_w(received), i, j);
                     }
                     if (hr == E_NOTIMPL)  /* no point in continuing */
@@ -2120,7 +2180,8 @@ static void test_IUri_GetPropertyBSTR(void) {
                 } else {
                     ok(hr == prop.expected, "GetPropertyBSTR returned 0x%08x, expected 0x%08x. On uri_tests[%d].str_props[%d].\n",
                             hr, prop.expected, i, j);
-                    ok(!strcmp_aw(prop.value, received), "Expected %s but got %s on uri_tests[%d].str_props[%d].\n",
+                    ok(!strcmp_aw(prop.value, received) || broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
+                            "Expected %s but got %s on uri_tests[%d].str_props[%d].\n",
                             prop.value, wine_dbgstr_w(received), i, j);
                 }
 
@@ -2339,13 +2400,15 @@ static void test_IUri_GetStrProperties(void) {
                             hr, prop.expected, i);
                 }
                 todo_wine {
-                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_test[%d].\n",
+                    ok(!strcmp_aw(prop.value, received) || broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
+                            "Error: Expected %s but got %s on uri_test[%d].\n",
                             prop.value, wine_dbgstr_w(received), i);
                 }
             } else {
                 ok(hr == prop.expected, "Error: GetDisplayUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
                         hr, prop.expected, i);
-                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                ok(!strcmp_aw(prop.value, received) || broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
+                        "Error: Expected %s but got %s on uri_tests[%d].\n",
                         prop.value, wine_dbgstr_w(received), i);
             }
             SysFreeString(received);
@@ -2780,10 +2843,11 @@ static void test_IUri_GetPropertyLength(void) {
             DWORD j;
 
             for(j = Uri_PROPERTY_STRING_START; j <= Uri_PROPERTY_STRING_LAST; ++j) {
-                DWORD expectedLen, receivedLen;
+                DWORD expectedLen, brokenLen, receivedLen;
                 uri_str_property prop = test.str_props[j];
 
                 expectedLen = lstrlen(prop.value);
+                brokenLen = lstrlen(prop.broken_value);
 
                 /* This won't be necessary once GetPropertyLength is implemented. */
                 receivedLen = -1;
@@ -2795,7 +2859,8 @@ static void test_IUri_GetPropertyLength(void) {
                                 hr, prop.expected, i, j);
                     }
                     todo_wine {
-                        ok(receivedLen == expectedLen, "Error: Expected a length of %d but got %d on uri_tests[%d].str_props[%d].\n",
+                        ok(receivedLen == expectedLen || broken(receivedLen == brokenLen),
+                                "Error: Expected a length of %d but got %d on uri_tests[%d].str_props[%d].\n",
                                 expectedLen, receivedLen, i, j);
                     }
                     if (hr == E_NOTIMPL)  /* no point in continuing */
@@ -2807,7 +2872,8 @@ static void test_IUri_GetPropertyLength(void) {
                 } else {
                     ok(hr == prop.expected, "Error: GetPropertyLength returned 0x%08x, expected 0x%08x on uri_tests[%d].str_props[%d].\n",
                             hr, prop.expected, i, j);
-                    ok(receivedLen == expectedLen, "Error: Expected a length of %d but got %d on uri_tests[%d].str_props[%d].\n",
+                    ok(receivedLen == expectedLen || broken(receivedLen == brokenLen),
+                            "Error: Expected a length of %d but got %d on uri_tests[%d].str_props[%d].\n",
                             expectedLen, receivedLen, i, j);
                 }
             }
