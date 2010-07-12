@@ -111,7 +111,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},                                   /* HOST_TYPE */
-            {80,S_OK,TRUE},                                             /* PORT */
+            {80,S_OK,FALSE},                                            /* PORT */
             {URL_SCHEME_HTTP,S_OK,FALSE},                               /* SCHEME */
             {URLZONE_INVALID,E_NOTIMPL,FALSE}                           /* ZONE */
         }
@@ -140,7 +140,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -169,7 +169,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE},
         }
@@ -198,7 +198,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE},
         }
@@ -228,7 +228,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {9999,S_OK,TRUE},
+            {9999,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -256,7 +256,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -284,7 +284,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -312,7 +312,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -341,7 +341,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV4,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -370,7 +370,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -399,7 +399,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -428,7 +428,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -457,7 +457,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -486,7 +486,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -516,7 +516,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -545,7 +545,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_WILDCARD,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -575,7 +575,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_WILDCARD,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -603,7 +603,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -631,7 +631,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_WILDCARD,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -661,7 +661,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -692,7 +692,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -723,7 +723,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -754,7 +754,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -785,7 +785,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -816,7 +816,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -847,7 +847,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -877,7 +877,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -909,7 +909,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -939,7 +939,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -968,7 +968,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -997,7 +997,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1027,7 +1027,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1057,7 +1057,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV4,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1087,7 +1087,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV4,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1117,7 +1117,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV4,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1147,7 +1147,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV4,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1177,7 +1177,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1207,7 +1207,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV4,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1237,7 +1237,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV4,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1266,7 +1266,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1295,7 +1295,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1324,7 +1324,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1354,7 +1354,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1383,7 +1383,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_UNKNOWN,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1413,7 +1413,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1445,7 +1445,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {21,S_OK,TRUE},
+            {21,S_OK,FALSE},
             {URL_SCHEME_FTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1475,7 +1475,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {12345,S_OK,TRUE},
+            {12345,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1505,7 +1505,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1535,7 +1535,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1565,7 +1565,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1597,7 +1597,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1627,7 +1627,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1657,7 +1657,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1687,7 +1687,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1717,7 +1717,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_IPV6,S_OK,TRUE},
-            {80,S_OK,TRUE},
+            {80,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1747,7 +1747,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {65535,S_OK,TRUE},
+            {65535,S_OK,FALSE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1776,7 +1776,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1805,7 +1805,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1834,7 +1834,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -1863,7 +1863,7 @@ static const uri_properties uri_tests[] = {
         },
         {
             {Uri_HOST_DNS,S_OK,TRUE},
-            {0,S_FALSE,TRUE},
+            {0,S_FALSE,FALSE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
@@ -2678,6 +2678,7 @@ static void test_IUri_GetDwordProperties(void) {
             }
             received = -9999999;
 
+        skip_unimplemented:
             /* GetPort() tests. */
             prop = test.dword_props[Uri_PROPERTY_PORT-Uri_PROPERTY_DWORD_START];
             hr = IUri_GetPort(uri, &received);
@@ -2696,7 +2697,6 @@ static void test_IUri_GetDwordProperties(void) {
             }
             received = -9999999;
 
-        skip_unimplemented:
             /* GetScheme() tests. */
             prop = test.dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START];
             hr = IUri_GetScheme(uri, &received);
