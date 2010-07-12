@@ -1,5 +1,4 @@
-/* Hey, Emacs, open this file with -*- coding: cp1250 -*-
- *
+/*
  * Uninstaller (Czech Resources)
  *
  *
@@ -22,9 +21,9 @@
 
 LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
 
-/* Czech strings in CP1250 */
-
+#pragma code_page(65001)
 
 STRINGTABLE DISCARDABLE {
-     IDS_APPNAME, "Deinstal�tor"
+    IDS_APPNAME, "Deinstalátor"
+    IDS_UNINSTALLFAILED, "Spuštění příkazu %s selhalo, možná příčína je chybějící aplikace.\nPřejete si odstranit instalační záznam z registru?"
 }
