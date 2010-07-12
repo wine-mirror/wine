@@ -302,14 +302,6 @@ BEGIN
     LTEXT "", IDC_PAGEFMT_ID, 0,0,0,0
 END
 
-STRINGTABLE DISCARDABLE
-BEGIN
-    STRING_RICHTEXT_FILES_RTF,     "Formato rich text (*.rtf)"
-    STRING_TEXT_FILES_TXT,         "Documentos de texto (*.txt)"
-    STRING_TEXT_FILES_UNICODE_TXT, "Documentos de texto Unicode (*.txt)"
-    STRING_ALL_FILES,              "Todos os documentos (*.*)"
-END
-
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
