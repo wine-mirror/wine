@@ -75,8 +75,8 @@ CAPTION "Impressió"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "Impressora:", 1088, 6, 6, 40, 9
- LTEXT "Impressió del document", 1089, 60, 6, 150, 9
- GROUPBOX "", 1072, 6, 30, 160, 65, BS_GROUPBOX
+ LTEXT "", 1089, 60, 6, 150, 9
+ GROUPBOX "Print Range", grp1, 6, 30, 160, 65, BS_GROUPBOX
  RADIOBUTTON "&Sencer", 1056, 16, 45, 60, 12
  RADIOBUTTON "&Part seleccionada", 1057, 16, 60, 60, 12
  RADIOBUTTON "Pà&gines", 1058, 16, 75, 60, 12
