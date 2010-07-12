@@ -462,140 +462,6 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    {   "://www.winehq.org", 0, E_INVALIDARG, FALSE,
-        0, TRUE,
-        {
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE},
-            {"",S_FALSE,TRUE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,TRUE},
-            {0,S_FALSE,TRUE},
-            {URL_SCHEME_UNKNOWN,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
-    {   "C:/test/test.mp3", 0, E_INVALIDARG, FALSE,
-        0, TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
-    {   "\\\\Server/test/test.mp3", 0, E_INVALIDARG, FALSE,
-        0, TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
-    {   "\\\\Server/test/test.mp3", Uri_CREATE_ALLOW_RELATIVE, E_INVALIDARG, FALSE,
-        0, TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Window's doesn't like URI's which are implicitly file paths without the ALLOW_IMPLICIT_FILE_SCHEME flag set. */
-    {   "C:/test/test.mp3", Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, E_INVALIDARG, FALSE,
-        0, TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
     /* Test's to make sure the parser/canonicalizer handles implicit file schemes correctly. */
     {   "C:/test/test.mp3", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
         Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
@@ -711,60 +577,6 @@ static const uri_properties uri_tests[] = {
             {Uri_HOST_DNS,S_OK,TRUE},
             {0,S_FALSE,TRUE},
             {URL_SCHEME_WILDCARD,S_OK,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not valid since a '*' is only allowed to appear if its the only character in scheme. */
-    {   "*abcd://not.valid.com", 0, E_INVALIDARG, FALSE,
-        0, TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not valid since a '*' is only allowed to appear if its the only character in scheme. */
-    {   "*a*b*c*d://not.valid.com", 0, E_INVALIDARG, FALSE,
-        0, TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
@@ -1517,202 +1329,6 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Too many h16 components. */
-    {   "http://[1:2:3:4:5:6:7:8:9]", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not enough room for IPv4 address. */
-    {   "http://[1:2:3:4:5:6:7:192.0.1.0]", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not enough h16 component */
-    {   "http://[1:2:3:4]", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not enough components including IPv4 address. */
-    {   "http://[1:192.0.1.0]", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not valid to have a partial IPv4 address in a IPv6 address. */
-    {   "http://[::192.0]", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not valid because a elision of 2 bytes appears at the beginning of address. */
-    {   "http://[::2:3:4:5:6:7:8]", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not valid because a elision of 2 bytes appears at the end of address. */
-    {   "http://[1:2:3:4:5:6:7::]", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
     /* Valid even with 2 byte elision because it doesn't appear the beginning or end. */
     {   "http://[1::3:4:5:6:7:8]", 0, S_OK, FALSE,
         Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
@@ -1799,36 +1415,6 @@ static const uri_properties uri_tests[] = {
             {Uri_HOST_DNS,S_OK,TRUE},
             {80,S_OK,TRUE},
             {URL_SCHEME_HTTP,S_OK,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Invalid URI since the host begins with '[' and ends with ']' but doesn't have
-     * a valid IP literal inside.
-     */
-    {   "ftp://[not.valid.uri]/", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
@@ -1921,34 +1507,6 @@ static const uri_properties uri_tests[] = {
             {Uri_HOST_DNS,S_OK,TRUE},
             {0,S_FALSE,TRUE},
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
-            {URLZONE_INVALID,E_NOTIMPL,FALSE}
-        }
-    },
-    /* Not allowed to have invalid % encoded data. */
-    {   "ftp://google.co%XX/", 0, E_INVALIDARG, FALSE,
-        0,
-        TRUE,
-        {
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE},
-            {"",S_FALSE,FALSE}
-        },
-        {
-            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
-            {0,S_FALSE,FALSE},
-            {URL_SCHEME_INVALID,S_FALSE,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
@@ -2163,7 +1721,200 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* Max value for a port. */
+    {   "http://google.com:65535", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://google.com:65535/",S_OK,TRUE},
+            {"google.com:65535",S_OK,TRUE},
+            {"http://google.com:65535/",S_OK,TRUE},
+            {"google.com",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://google.com:65535",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {65535,S_OK,TRUE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "zip://google.com:65536", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://google.com:65536/",S_OK,TRUE},
+            {"google.com:65536",S_OK,TRUE},
+            {"zip://google.com:65536/",S_OK,TRUE},
+            {"google.com:65536",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"google.com:65536",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://google.com:65536",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "zip://google.com:65536:25", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://google.com:65536:25/",S_OK,TRUE},
+            {"google.com:65536:25",S_OK,TRUE},
+            {"zip://google.com:65536:25/",S_OK,TRUE},
+            {"google.com:65536:25",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"google.com:65536:25",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://google.com:65536:25",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "zip://[::ffff]:abcd", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://[::ffff]:abcd/",S_OK,TRUE},
+            {"[::ffff]:abcd",S_OK,TRUE},
+            {"zip://[::ffff]:abcd/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"[::ffff]:abcd",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://[::ffff]:abcd",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "zip://127.0.0.1:abcd", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://127.0.0.1:abcd/",S_OK,TRUE},
+            {"127.0.0.1:abcd",S_OK,TRUE},
+            {"zip://127.0.0.1:abcd/",S_OK,TRUE},
+            {"0.1:abcd",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"127.0.0.1:abcd",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,TRUE},
+            {"/",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://127.0.0.1:abcd",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
+};
+
+typedef struct _invalid_uri {
+    const char* uri;
+    DWORD       flags;
+    BOOL        todo;
+} invalid_uri;
+
+static const invalid_uri invalid_uri_tests[] = {
+    /* Has to have a scheme name. */
+    {"://www.winehq.org",0,FALSE},
+    /* Window's doesn't like URI's which are implicitly file paths without the
+     * ALLOW_IMPLICIT_FILE_SCHEME flag set.
+     */
+    {"C:/test/test.mp3",0,FALSE},
+    {"\\\\Server/test/test.mp3",0,FALSE},
+    {"C:/test/test.mp3",Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME,FALSE},
+    {"\\\\Server/test/test.mp3",Uri_CREATE_ALLOW_RELATIVE,FALSE},
+    /* Invalid schemes. */
+    {"*abcd://not.valid.com",0,FALSE},
+    {"*a*b*c*d://not.valid.com",0,FALSE},
+    /* Not allowed to have invalid % encoded data. */
+    {"ftp://google.co%XX/",0,FALSE},
+    /* To many h16 components. */
+    {"http://[1:2:3:4:5:6:7:8:9]",0,FALSE},
+    /* Not enough room for IPv4 address. */
+    {"http://[1:2:3:4:5:6:7:192.0.1.0]",0,FALSE},
+    /* Not enough h16 components. */
+    {"http://[1:2:3:4]",0,FALSE},
+    /* Not enough components including IPv4. */
+    {"http://[1:192.0.1.0]",0,FALSE},
+    /* Not allowed to have partial IPv4 in IPv6. */
+    {"http://[::192.0]",0,FALSE},
+    /* Can't have elision of 1 h16 at beginning of address. */
+    {"http://[::2:3:4:5:6:7:8]",0,FALSE},
+    /* Can't have elision of 1 h16 at end of address. */
+    {"http://[1:2:3:4:5:6:7::]",0,FALSE},
+    /* Expects a valid IP Literal. */
+    {"ftp://[not.valid.uri]/",0,FALSE},
+    /* Expects valid port for a known scheme type. */
+    {"ftp://www.winehq.org:123fgh",0,FALSE},
+    /* Port exceeds USHORT_MAX for known scheme type. */
+    {"ftp://www.winehq.org:65536",0,FALSE},
+    /* Invalid port with IPv4 address. */
+    {"http://www.winehq.org:1abcd",0,FALSE},
+    /* Invalid port with IPv6 address. */
+    {"http://[::ffff]:32xy",0,FALSE}
 };
 
 typedef struct _uri_equality {
@@ -2266,6 +2017,32 @@ static void test_CreateUri_InvalidArgs(void) {
     hr = pCreateUri(invalidW, 0, 0, &uri);
     ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
     ok(uri == NULL, "Error: Expected the IUri to be NULL, but it was %p instead\n", uri);
+}
+
+static void test_CreateUri_InvalidUri(void) {
+    DWORD i;
+
+    for(i = 0; i < sizeof(invalid_uri_tests)/sizeof(invalid_uri_tests[0]); ++i) {
+        invalid_uri test = invalid_uri_tests[i];
+        IUri *uri = NULL;
+        LPWSTR uriW;
+        HRESULT hr;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.flags, 0, &uri);
+        if(test.todo) {
+            todo_wine {
+                ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08x, expected 0x%08x on invalid_uri_tests[%d].\n",
+                    hr, E_INVALIDARG, i);
+            }
+        } else {
+            ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08x, expected 0x%08x on invalid_uri_tests[%d].\n",
+                hr, E_INVALIDARG, i);
+        }
+        if(uri) IUri_Release(uri);
+
+        heap_free(uriW);
+    }
 }
 
 static void test_IUri_GetPropertyBSTR(void) {
@@ -3288,6 +3065,9 @@ START_TEST(uri) {
 
     trace("test CreateUri invalid args...\n");
     test_CreateUri_InvalidArgs();
+
+    trace("test CreateUri invalid URIs...\n");
+    test_CreateUri_InvalidUri();
 
     trace("test IUri_GetPropertyBSTR...\n");
     test_IUri_GetPropertyBSTR();
