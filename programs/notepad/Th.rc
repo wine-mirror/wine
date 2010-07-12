@@ -53,6 +53,7 @@ MAIN_MENU MENU
  POPUP "คันหา" {
   MENUITEM "ค้นหา\tCtrl+F",   CMD_SEARCH
   MENUITEM "ค้นหาต่อไป\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Replace...\tCtrl+H", CMD_REPLACE
  }
  POPUP "ช่วยเหลีอ" {
   MENUITEM "เนื้อหา",         CMD_HELP_CONTENTS
