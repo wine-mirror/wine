@@ -1,0 +1,133 @@
+/*
+ * Copyright 1999 Eric Pouech
+ * Copyright 2010 Claudia Cotună
+ *                Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "windef.h"
+#include "mmddk.h"
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+STRINGTABLE
+BEGIN
+/* MMSYS errors */
+MMSYSERR_NOERROR,               "Comanda specificată a fost executată."
+MMSYSERR_ERROR,                 "Eroare externă nedeterminată."
+MMSYSERR_BADDEVICEID,           "A fost utilizat un ID de dispozitiv incompatibil cu sistemul dvs."
+MMSYSERR_NOTENABLED,            "Driverul nu a fost activat."
+MMSYSERR_ALLOCATED,             "Dispozitivul specificat se află deja în uz. Așteptați până se eliberează și încercați din nou."
+MMSYSERR_INVALHANDLE,           "Handle specificat pentru dispozitiv nu este valid."
+MMSYSERR_NODRIVER,              "Nu este instalat nici un driver în sistem !\n"
+MMSYSERR_NOMEM,                 "Memoria disponibilă nu este suficientă pentru această sarcină. Închideți una sau mai multe aplicații pentru a mări memoria disponibilă, apoi încercați din nou."
+MMSYSERR_NOTSUPPORTED,          "Această funcție nu este suportată. Utilizați funcția Capabilities pentru a determina funcțiile și mesajele suportate de driver."
+MMSYSERR_BADERRNUM,             "A fost specificat un număr de eroare care nu este definit în sistem."
+MMSYSERR_INVALFLAG,             "Sa pasat un fanion nevalid unei funcții a sistemului."
+MMSYSERR_INVALPARAM,            "Sa pasat un parametru nevalid unei funcții a sistemului."
+
+/* WAVE errors */
+WAVERR_BADFORMAT,               "Formatul specificat nu este suportat sau nu poate fi interpretat. Utilizați funcția Capabilities pentru a determina formatele suportate."
+WAVERR_STILLPLAYING,            "Nu se poate realiza această operațiune în timp ce se redau datele media. Resetați dispozitivul sau așteptați finalizarea redării."
+WAVERR_UNPREPARED,              "Antetul wave nu a fost pregătit. Utilizați funcția Prepare pentru a pregăti antetul, apoi încercați din nou."
+WAVERR_SYNC,                    "Nu se poate deschide dispozitivul fără utilizarea fanionului WAVE_ALLOWSYNC. Utilizați fanionul și apoi încercați din nou."
+
+/* MIDI errors */
+MIDIERR_UNPREPARED,             "Antetul MIDI nu a fost pregătit. Utilizați funcția Prepare pentru a pregăti antetul, apoi încercați din nou."
+MIDIERR_STILLPLAYING,           "Nu se poate realiza această operațiune în timp ce se redau datele media. Resetați dispozitivul sau așteptați finalizarea redării."
+MIDIERR_NOMAP,                  "Nu a fost găsită o mapare MIDI. Poate exista o problemă la driver sau fișierul MIDIMAP.CFG poate să fie corupt sau să lipsească."
+MIDIERR_NOTREADY,               "Portul transmite date către dispozitiv. Așteptați finalizarea transmiterii și apoi încercați din nou."
+MIDIERR_NODEVICE,               "Configurația curentă pentru MIDI Mapper se referă la un dispozitiv MIDI care nu este instalat în sistem. Utilizați MIDI Mapper pentru a edita configurația."
+MIDIERR_INVALIDSETUP,           "Configurația curentă MIDI este deteriorată. Copiați fișierul MIDIMAP.CFG original în directorul Windows SYSTEM și apoi încercați din nou."
+
+/* MCI errors */
+MCIERR_INVALID_DEVICE_ID,       "ID-ul pentru dispozitivul MCI nu este valid. Utilizați ID-ul primit la deschiderea dispozitivului MCI."
+MCIERR_UNRECOGNIZED_KEYWORD,    "Driverul nu poate recunoaște parametrul de comandă specificat."
+MCIERR_UNRECOGNIZED_COMMAND,    "Driverul nu poate recunoaște comanda specificată."
+MCIERR_HARDWARE,                "Există o problemă la dispozitivul media. Asigurați-vă că acesta funcționează corect sau contactați producătorul său."
+MCIERR_INVALID_DEVICE_NAME,     "Dispozitivul specificat nu este deschis sau nu este recunoscut de MCI."
+MCIERR_OUT_OF_MEMORY,           "Memoria disponibilă nu este suficientă pentru această sarcină.\nÎnchideți una sau mai multe aplicații pentru a mări memoria disponibilă, apoi încercați din nou."
+MCIERR_DEVICE_OPEN,             "Numele dispozitivului este deja utilizat ca alias de către această aplicație. Utilizați un alias unic."
+MCIERR_CANNOT_LOAD_DRIVER,      "Există o problemă nedetectabilă la încărcarea driverului pentru dispozitivul specificat."
+MCIERR_MISSING_COMMAND_STRING,  "Nu a fost specificată nici o comandă."
+MCIERR_PARAM_OVERFLOW,          "Șirul rezultant era prea mare pentru memoria tampon. Măriți zona de memorie tampon."
+MCIERR_MISSING_STRING_ARGUMENT, "Comanda specificată necesită un parametru șir de caractere. Furnizați unul."
+MCIERR_BAD_INTEGER,             "Numărul întreg specificat nu este valid pentru această comandă."
+MCIERR_PARSER_INTERNAL,         "Driverul dispozitivului a returnat un tip nevalid de răspuns. Încercați să obțineți un nou driver de la producătorul dispozitivului."
+MCIERR_DRIVER_INTERNAL,         "Există o problemă la driverul dispozitivului. Încercați să obțineți un nou driver de la producătorul dispozitivului."
+MCIERR_MISSING_PARAMETER,       "Comanda specificată necesită un parametru. Furnizați unul."
+MCIERR_UNSUPPORTED_FUNCTION,    "Dispozitivul MCI pe care îl utilizați nu suportă comanda specificată."
+MCIERR_FILE_NOT_FOUND,          "Fișierul specificat nu poate fi găsit. Asigurați-vă că numele fișierului și calea sunt corecte."
+MCIERR_DEVICE_NOT_READY,        "Driverul dispozitivului nu este pregătit."
+MCIERR_INTERNAL,                "A intervenit o problemă la inițializarea MCI. Încercați să reporniți Windows."
+MCIERR_DRIVER,                  "Există o problemă la driverul dispozitivului. Driverul s-a închis și eroarea nu poate fi accesată."
+MCIERR_CANNOT_USE_ALL,          "Nu se poate utiliza „toate” ca nume de dispozitiv pentru comanda specificată."
+MCIERR_MULTIPLE,                "Au survenit erori în mai multe dispozitive. Specificați separat fiecare comandă și dispozitiv pentru a determina care dispozitive au provocat eroarea"
+MCIERR_EXTENSION_NOT_FOUND,     "Nu se poate determina tipul dispozitivului după extensia numelui fișierului dat."
+MCIERR_OUTOFRANGE,              "Parametrul specificat nu se încadrează în domeniul comenzii specificate."
+MCIERR_FLAGS_NOT_COMPATIBLE,    "Parametrii specificați nu pot fi utilizați împreună."
+MCIERR_FILE_NOT_SAVED,          "Fișierul specificat nu poate fi salvat. Asigurați-vă că aveți suficient spațiu pe disc sau că mai sunteți conectat la rețea."
+MCIERR_DEVICE_TYPE_REQUIRED,    "Dispozitivul specificat nu poate fi găsit. Asigurați-vă că este instalat sau că numele său este scris corect."
+MCIERR_DEVICE_LOCKED,           "Dispozitivul specificat este în curs de închidere. Așteptați câteva secunde, apoi încercați din nou."
+MCIERR_DUPLICATE_ALIAS,         "Aliasul specificat este deja utilizat de către această aplicație. Utilizați un alias unic."
+MCIERR_BAD_CONSTANT,            "Parametrul specificat nu este valid pentru această comandă."
+MCIERR_MUST_USE_SHAREABLE,      "Driverul dispozitivului este deja utilizat. Pentru a-l partaja, utilizați parametrul „partajabil” pentru fiecare comandă „deschide”."
+MCIERR_MISSING_DEVICE_NAME,     "Comanda specificată necesită un alias, fișier, driver sau nume de dispozitiv. Furnizați unul."
+MCIERR_BAD_TIME_FORMAT,         "Valoarea specificată pentru formatul orei nu este validă. Consultați documentația MCI pentru formatele valide."
+MCIERR_NO_CLOSING_QUOTE,        "Din valoarea parametrului lipsesc ghilimelele duble de închidere. Furnizați-le."
+MCIERR_DUPLICATE_FLAGS,         "Un parametru sau o valoare a fost specificat(ă) de două ori. Specificați-l(o) o singură dată. "
+MCIERR_INVALID_FILE,            "Fișierul specificat nu poate fi redat pe dispozitivul MCI specificat. Fișierul poate fi corupt sau într-un format incorect."
+MCIERR_NULL_PARAMETER_BLOCK,    "Un parametru de block nul a fost pasat la MCI."
+MCIERR_UNNAMED_RESOURCE,        "Nu se poate salva un fișier nedenumit. Specificați un nume de fișier."
+MCIERR_NEW_REQUIRES_ALIAS,      "Trebuie să specificați un alias când utilizați parametrul „nou”."
+MCIERR_NOTIFY_ON_AUTO_OPEN,     "Nu se poate utiliza fanionul „notificare” pentru dispozitive cu deschidere automată."
+MCIERR_NO_ELEMENT_ALLOWED,      "Nu se poate utiliza un nume de fișier pentru dispozitivul specificat."
+MCIERR_NONAPPLICABLE_FUNCTION,  "Comenzile nu pot fi executate în ordinea specificată. Corectați ordinea comenzilor, apoi încercați din nou."
+MCIERR_ILLEGAL_FOR_AUTO_OPEN,   "Comanda specificată nu se poate executa pe un dispozitiv cu deschidere automată. Așteptați închiderea dispozitivului, apoi încercați din nou."
+MCIERR_FILENAME_REQUIRED,       "Numele de fișier nu este valid. Asigurați-vă că nu este mai mare de 8 caractere, urmate de un punct și o extensie."
+MCIERR_EXTRA_CHARACTERS,        "Nu pot fi specificate caractere suplimentare după un șir încadrat între ghilimele."
+MCIERR_DEVICE_NOT_INSTALLED,    "Dispozitivul specificat nu este instalat în sistem. Utilizați opțiunea Drivere din Panoul de control pentru a instala dispozitivul."
+MCIERR_GET_CD,                  "Fișierul sau dispozitivul MCI specificat nu poate fi accesat. Încercați să schimbați directoarele sau să reporniți calculatorul."
+MCIERR_SET_CD,                  "Fișierul sau dispozitivul MCI specificat nu poate fi accesat pentru că aplicația nu poate schimba directoarele."
+MCIERR_SET_DRIVE,               "Fișierul sau dispozitivul MCI specificat nu poate fi accesat pentru că aplicația nu poate schimba unitățile."
+MCIERR_DEVICE_LENGTH,           "Specificați un nume de dispozitiv sau de driver cu mai puțin de 79 de caractere."
+MCIERR_DEVICE_ORD_LENGTH,       "Specificați un nume de dispozitiv sau de driver cu mai puțin de 69 de caractere."
+MCIERR_NO_INTEGER,              "Comanda specificată necesită un parametru de număr integral. Furnizați unul."
+MCIERR_WAVE_OUTPUTSINUSE,       "Toate dispozitivele wave care pot reda fișiere în formatul curent sunt deja în uz. Așteptați eliberarea unuia dintre ele, apoi încercați din nou."
+MCIERR_WAVE_SETOUTPUTINUSE,     "Dispozitivul wave curent nu poate fi configurat pentru redare pentru că este deja în uz. Așteptați să se elibereze, apoi încercați din nou."
+MCIERR_WAVE_INPUTSINUSE,        "Toate dispozitivele wave care pot înregistra fișiere în formatul curent sunt deja în uz. Așteptați eliberarea unuia dintre ele, apoi încercați din nou."
+MCIERR_WAVE_SETINPUTINUSE,      "Dispozitivul wave curent nu poate fi configurat pentru înregistrare pentru că este deja în uz. Așteptați să se elibereze, apoi încercați din nou."
+MCIERR_WAVE_OUTPUTUNSPECIFIED,  "Orice dispozitiv compatibil de redare poate fi utilizat pentru formatul wave."
+MCIERR_WAVE_INPUTUNSPECIFIED,   "Orice dispozitiv compatibil de înregistrare poate fi utilizat pentru formatul wave."
+MCIERR_WAVE_OUTPUTSUNSUITABLE,  "Nu este instalat nici un dispozitiv care poate reda fișierele în formatul curent. Utilizați opțiunea „Drivere” pentru a instala dispozitivul wave."
+MCIERR_WAVE_SETOUTPUTUNSUITABLE,"Dispozitivul cu care încercați redarea nu poate recunoaște formatul de fișier curent."
+MCIERR_WAVE_INPUTSUNSUITABLE,   "Nu este instalat nici un dispozitiv care poate înregistra fișierele în formatul curent. Utilizați opțiunea „Drivere” pentru a instala dispozitivul wave."
+MCIERR_WAVE_SETINPUTUNSUITABLE, "Dispozitivul de pe care încercați înregistrarea nu poate recunoaște formatul de fișier curent."
+MCIERR_NO_WINDOW,               "Nu există fereastră de afișare."
+MCIERR_CREATEWINDOW,            "Fereastra nu a putut fi creată sau utilizată."
+MCIERR_FILE_READ,               "Fișierul specificat nu poate fi citit. Asigurați-vă că acesta mai este prezent sau verificați discul sau conexiunea la rețea."
+MCIERR_FILE_WRITE,              "Nu se poate scrie în fișierul specificat. Asigurați-vă că aveți suficient spațiu pe disc sau că mai sunteți conectat la rețea."
+MCIERR_SEQ_DIV_INCOMPATIBLE,    "Formatele de timp ale ""song pointer"" și SMPTE se exclud reciproc. Nu le puteți utiliza împreună."
+MCIERR_SEQ_NOMIDIPRESENT,       "Sistemul nu are instalate dispozitive MIDI. Utilizați opțiunea Drivere din Panoul de control pentru a instala un driver MIDI."
+MCIERR_SEQ_PORT_INUSE,          "Portul MIDI specificat este deja utilizat. Așteptați până când va fi liber, apoi încercați din nou."
+MCIERR_SEQ_PORT_MAPNODEVICE,    "Configurația curentă a MIDI Mapper se referă la un dispozitiv MIDI care nu este instalat în sistem. Utilizați opțiunea MIDI Mapper din panoul de control pentru a edita configurația."
+MCIERR_SEQ_PORT_MISCERROR,      "A apărut o eroare la portul specificat."
+MCIERR_SEQ_PORT_NONEXISTENT,    "Dispozitivul MIDI specificat nu este instalat în sistem. Utilizați opțiunea Drivere din Panoul de control pentru a instala un dispozitiv MIDI."
+MCIERR_SEQ_PORTUNSPECIFIED,     "Sistemul nu are specificat un port MIDI curent."
+MCIERR_SEQ_TIMER,               "Toate cronometrele multimedia sunt utilizate de alte aplicații. Închideți una dintre aceste aplicații, apoi încercați din nou."
+END

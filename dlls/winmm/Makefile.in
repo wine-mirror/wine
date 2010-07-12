@@ -32,6 +32,7 @@ RC_SRCS = \
 	winmm_No.rc \
 	winmm_Pl.rc \
 	winmm_Pt.rc \
+	winmm_Ro.rc \
 	winmm_Ru.rc \
 	winmm_Si.rc \
 	winmm_Sk.rc \
