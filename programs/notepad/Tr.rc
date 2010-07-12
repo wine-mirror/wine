@@ -53,6 +53,7 @@ POPUP "D&üzenle" {
 POPUP "&Bul" {
   MENUITEM "&Bul...\tCtrl+F",         CMD_SEARCH
   MENUITEM "&Sonrakini bul\tF3",   CMD_SEARCH_NEXT
+  MENUITEM "&Replace...\tCtrl+H",  CMD_REPLACE
  }
 POPUP "&Yardým" {
   MENUITEM "&Ýçindekiler",              CMD_HELP_CONTENTS
