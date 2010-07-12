@@ -431,6 +431,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 儲存槽對映(&m) ",IDC_STATIC,8,4,244,195
+    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "加入(&A)",IDC_BUTTON_ADD,15,98,37,14
@@ -438,7 +439,7 @@ BEGIN
     PUSHBUTTON      "自動偵測(&d)...",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
-    LTEXT           "路徑(&P)：",IDC_STATIC,15,123,20,9
+    LTEXT           "路徑(&P)：",IDC_STATIC_PATH,15,123,20,9
     EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "瀏覽(&B)...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
 
