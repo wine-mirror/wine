@@ -1009,6 +1009,7 @@ static const struct driver_version_information driver_version_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           15, 11, 9745   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8400GS,     "NVIDIA GeForce 8400 GS",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          15, 11, 9745   },
@@ -1405,14 +1406,20 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             return CARD_NVIDIA_GEFORCE_8600GT;
         }
 
+	/* Geforce8 - mid-lowend */
+	if (strstr(gl_renderer, "8400")
+		|| strstr(gl_renderer, "8500"))
+	{
+	    *vidmem = 128; /* 128-256MB for a 8400, 256-512MB for a 8500 */
+            return CARD_NVIDIA_GEFORCE_8400GS;
+	}
+
         /* Geforce8 - lowend */
         if (strstr(gl_renderer, "8100")
                 || strstr(gl_renderer, "8200")
-                || strstr(gl_renderer, "8300")
-                || strstr(gl_renderer, "8400")
-                || strstr(gl_renderer, "8500"))
+                || strstr(gl_renderer, "8300"))
         {
-            *vidmem = 128; /* 128-256MB for a 8300, 256-512MB for a 8400 */
+            *vidmem = 128; /* 128-256MB for a 8300 */
             return CARD_NVIDIA_GEFORCE_8300GS;
         }
 
