@@ -54,6 +54,7 @@ POPUP "S&zerkesztés" {
 POPUP "&Keresés" {
   MENUITEM "&Keresés...",           CMD_SEARCH
   MENUITEM "Köve&tkezõ keresése\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Replace...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Súgó" {
   MENUITEM "&Témakörök",         CMD_HELP_CONTENTS
