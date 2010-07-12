@@ -53,6 +53,7 @@ POPUP "&Redakto" {
 POPUP "&Seræu" {
   MENUITEM "Seræu\tCtrl+F",   CMD_SEARCH
   MENUITEM "Seræu sekvanta\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Replace...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Helpo" {
   MENUITEM "Enhavo",         CMD_HELP_CONTENTS
