@@ -50,6 +50,9 @@ typedef struct {
     INT             host_start;
     DWORD           host_len;
     Uri_HOST_TYPE   host_type;
+
+    USHORT          port;
+    BOOL            has_port;
 } Uri;
 
 typedef struct {
@@ -136,6 +139,20 @@ static const struct {
     {URL_SCHEME_MSSHELLIDLIST,  {'m','s','-','s','h','e','l','l','-','i','d','l','i','s','t',0}},
     {URL_SCHEME_MSHELP,         {'h','c','p',0}},
     {URL_SCHEME_WILDCARD,       {'*',0}}
+};
+
+/* List of default ports Windows recognizes. */
+static const struct {
+    URL_SCHEME  scheme;
+    USHORT      port;
+} default_ports[] = {
+    {URL_SCHEME_FTP,    21},
+    {URL_SCHEME_HTTP,   80},
+    {URL_SCHEME_GOPHER, 70},
+    {URL_SCHEME_NNTP,   119},
+    {URL_SCHEME_TELNET, 23},
+    {URL_SCHEME_WAIS,   210},
+    {URL_SCHEME_HTTPS,  443},
 };
 
 static inline BOOL is_alpha(WCHAR val) {
@@ -1893,6 +1910,72 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
    return TRUE;
 }
 
+static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    BOOL has_default_port = FALSE;
+    USHORT default_port = 0;
+    DWORD i;
+
+    uri->has_port = FALSE;
+
+    /* Check if the scheme has a default port. */
+    for(i = 0; i < sizeof(default_ports)/sizeof(default_ports[0]); ++i) {
+        if(default_ports[i].scheme == data->scheme_type) {
+            has_default_port = TRUE;
+            default_port = default_ports[i].port;
+            break;
+        }
+    }
+
+    if(data->port || has_default_port)
+        uri->has_port = TRUE;
+
+    /* Possible cases:
+     *  1)  Has a port which is the default port.
+     *  2)  Has a port (not the default).
+     *  3)  Doesn't have a port, but, scheme has a default port.
+     *  4)  No port.
+     */
+    if(has_default_port && data->port && data->port_value == default_port) {
+        /* If it's the default port and this flag isn't set, don't do anything. */
+        if(flags & Uri_CREATE_NO_CANONICALIZE) {
+            /* Copy the original port over. */
+            if(!computeOnly) {
+                uri->canon_uri[uri->canon_len] = ':';
+                memcpy(uri->canon_uri+uri->canon_len+1, data->port, data->port_len*sizeof(WCHAR));
+            }
+            uri->canon_len += data->port_len+1;
+        }
+
+        uri->port = default_port;
+    } else if(data->port) {
+        if(!computeOnly)
+            uri->canon_uri[uri->canon_len] = ':';
+        ++uri->canon_len;
+
+        if(flags & Uri_CREATE_NO_CANONICALIZE) {
+            /* Copy the original over without changes. */
+            if(!computeOnly)
+                memcpy(uri->canon_uri+uri->canon_len, data->port, data->port_len*sizeof(WCHAR));
+            uri->canon_len += data->port_len;
+        } else {
+            const WCHAR formatW[] = {'%','u',0};
+            INT len = 0;
+            if(!computeOnly)
+                len = sprintfW(uri->canon_uri+uri->canon_len, formatW, data->port_value);
+            else {
+                WCHAR tmp[6];
+                len = sprintfW(tmp, formatW, data->port_value);
+            }
+            uri->canon_len += len;
+        }
+
+        uri->port = data->port_value;
+    } else if(has_default_port)
+        uri->port = default_port;
+
+    return TRUE;
+}
+
 /* Canonicalizes the authority of the URI represented by the parse_data. */
 static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     if(!canonicalize_userinfo(data, uri, flags, computeOnly))
@@ -1901,7 +1984,8 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
     if(!canonicalize_host(data, uri, flags, computeOnly))
         return FALSE;
 
-    /* TODO Canonicalize port information. */
+    if(!canonicalize_port(data, uri, flags, computeOnly))
+        return FALSE;
 
     return TRUE;
 }
@@ -2050,7 +2134,7 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     }
 
     uri->canon_uri[uri->canon_len] = '\0';
-    TRACE("(%p %p %x): finished canonicalizing the URI.\n", data, uri, flags);
+    TRACE("(%p %p %x): finished canonicalizing the URI. uri=%s\n", data, uri, flags, debugstr_w(uri->canon_uri));
 
     return S_OK;
 }
