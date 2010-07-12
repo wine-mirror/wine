@@ -156,6 +156,7 @@ POPUP "編輯(&E)" {
 POPUP "搜尋(&S)" {
   MENUITEM "尋找(&S)...", CMD_SEARCH
   MENUITEM "找下一個(&N)\tF3", CMD_SEARCH_NEXT
+  MENUITEM "&Replace...\tCtrl+H", CMD_REPLACE
  }
 POPUP "幫助(&H)" {
   MENUITEM "主要內容(&C)", CMD_HELP_CONTENTS
