@@ -1,0 +1,286 @@
+/*
+ * Wine command prompt
+ *
+ * Copyright (C) 1999 D A Pickles
+ * Copyright (C) 2010 Claudia Cotună
+ *                    Michael Stefaniuc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "wcmd.h"
+
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
+
+#pragma code_page(65001)
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "ATTRIB afișează sau schimbă atributele fișierelor DOS.\n"
+  WCMD_CALL,
+"CALL <numefișierbatch> se utilizează într-un fișier batch pentru a\n\
+executa comenzi dintr-un alt fișier batch. Când se închide fișierul\n\
+batch, controlul revine la fișierul care l-a apelat. Comanda CALL poate\n\
+furniza parametri pentru procedura apelată.\n\
+\n\
+Modificările la directorul curent, variabilele de mediu etc. efectuate\n\
+într-o procedură apelată se reflectă asupra apelantului.\n"
+
+  WCMD_CD, "CD <dir> este versiunea scurtă pentru CHDIR. CD schimbă directorul curent.\n"
+  WCMD_CHDIR, "CHDIR <dir> schimbă directorul curent.\n"
+
+  WCMD_CLS, "CLS golește ecranul consolei\n"
+
+  WCMD_COPY, "COPY <fișier> copiază un fișier.\n"
+  WCMD_CTTY, "CTTY schimbă dizpozitivul de intrăre/ieșire.\n"
+  WCMD_DATE, "DATE afișează sau schimbă data sistemului.\n"
+  WCMD_DEL, "DEL <fișier> șterge un fișier sau un set de fișiere.\n"
+  WCMD_DIR, "DIR afișează conținutul unui director.\n"
+
+  WCMD_ECHO,
+"ECHO <șir> afișează <șir> pe dispozitivul terminal curent.\n\
+\n\
+ECHO ON determină afișarea tuturor comenzilor succesive dintr-un fișier\n\
+batch pe terminal înainte de a fi executate.\n\
+\n\
+ECHO OFF anulează efectului unui ECHO ON anterior (ECHO este OFF în mod\n\
+implicit). Se poate împiedica afișarea comenzii ECHO OFF dacă este\n\
+precedată de semnul @.\n"
+
+  WCMD_ERASE, "ERASE <fișier> șterge un fișier sau un set de fișiere.\n"
+
+  WCMD_FOR,
+"Comanda FOR se utilizează pentru a executa o comandă pentru fiecare set\n\
+de fișere.\n\
+\n\
+Sintaxă: FOR %variabilă IN (set) comandă DO\n\
+\n\
+Necesitatea de a dubla semnul % când se utilizează FOR într-un fișier\n\
+batch nu există în cmd în Wine.\n"
+
+  WCMD_GOTO,
+"Comanda GOTO transferă execuția la o altă comandă dintr-un fișier batch.\n\
+\n\
+Eticheta vizată de GOTO poate avea maxim 255 de caractere dar nu poate\n\
+include spații (spre deosebire de alte sisteme de operare). Dacă există\n\
+două sau mai multe etichete identice într-un fișier batch, va fi\n\
+executată exclusiv prima. Încercarea GOTO spre o etichetă inexistentă\n\
+va termina execuția fișierului batch.\n\
+\n\
+GOTO nu are efect când se utilizează interactiv.\n"
+
+  WCMD_HELP,
+"HELP <comandă> arată un scurt ajutor pentru <comandă>\n\
+HELP fără nici un parametru enumerează toate comenzile integrate în cmd."
+
+  WCMD_IF,
+"IF este utilizat pentru a executa o comandă în mod condiționat.\n\
+\n\
+Sintaxă: IF [NOT] EXIST numefișier comandă\n\
+\         IF [NOT] șir1==șir2 comandă\n\
+\         IF [NOT] ERRORLEVEL număr comandă\n\
+\n\
+În a doua formă a comenzii, șir1 și șir2 trebuie să fie între ghilimele\n\
+duble. Comparația este insensibilă la majuscule.\n"
+
+  WCMD_LABEL,
+"LABEL se utilizează pentru a stabili eticheta  volumului unui disc.\n\
+\n\
+Sintaxă: LABEL [unitate:]\n\
+Comanda vă va solicita noua etichetă de volum pentru unitatea dată.\n\
+Puteți afișa eticheta de volum a discului cu comanda VOL.\n"
+
+  WCMD_MD, "MD <nume> este versiunea scurtă pentru MKDIR. MD creează un subdosar.\n"
+  WCMD_MKDIR, "MKDIR <nume> creează un subdosar.\n"
+  WCMD_MOVE,
+"MOVE deplasează un fișier sau un dosar în alt loc din sistemul de fișiere.\n\
+\n\
+Dacă elementul mutat este un dosar, atunci toate fișierele și subdosarele\n\
+de sub el vor fi mutate și ele.\n\
+\n\
+MOVE eșuează dacă locația veche și cea nouă se află în directoare DOS\n\
+diferite.\n"
+
+  WCMD_PATH,
+"PATH afișează sau schimbă calea de căutare pentru cmd.\n\
+\n\
+Dacă se introduce PATH, se va afișa configurația curentă pentru PATH\n\
+(inițial, este valoarea dată în registru). Pentru a o modifica, adăugați\n\
+noua valoare după comanda PATH.\n\
+\n\
+PATH se poate modifica și utilizând variabila de mediu PATH, de exemplu:\n\
+\tPATH %PATH%;c:\\temp\n"
+
+  WCMD_PAUSE,
+"PAUSE afișează un mesaj pe ecran „Apăsați pe Enter pentru a continua”\n\
+și așteaptă ca utilizatorul să apese tasta Enter. Este util mai ales în\n\
+fișierele batch, pentru a permite utilizatorului să citească rezultatul\n\
+unei comenzi anterioare, înainte de a dispărea de pe ecran.\n"
+
+  WCMD_PROMPT,
+"PROMPT configurează prompterul pentru linia de comandă.\n\
+\n\
+Șirul care urmează după comanda PROMPT (și spațiul imediat următor)\n\
+apare la începutul liniei când cmd așteaptă introducerea de date.\n\
+\n\
+Următoarele șiruri de caractere au semnificație specială:\n\
+\n\
+$$  Semnul dollar       $_   Salt de rând       $b  Bara verticală (|)\n\
+$d  Data curentă        $e   Escape             $g  Semnul >\n\
+$l  Semnul <            $n   Unitatea curenta   $p  Calea curentă\n\
+$q  Semnul egal         $t   Ora curentă        $v  Versiunea de cmd\n\
+\n\
+Rețineți că, dacă introduceți comanda PROMPT fără un șir, se va restabili\n\
+la valoarea implicită, care este directorul curent (care include litera\n\
+unității curente) urmat de semnul mai mare ca (>).\n\
+(ca o comandă PROMPT $p$g).\n\
+\n\
+Și prompterul poate fi modificat schimbând variabila de mediu PROMPT,\n\
+astfel încât comanda „SET PROMPT=text” are același efect ca și „PROMPT text”\n"
+
+  WCMD_REM,
+"O linie de comandă începând cu REM (urmat de spațiu) nu realizează nici o\n\
+acțiune și de aceea poate fi utilizată ca un comentariu într-un fișier batch.\n"
+
+  WCMD_REN, "REN <fișier> este versiunea scurtă pentru RENAME. REN redenumește fișierul.\n"
+  WCMD_RENAME, "RENAME <fișier> redenumește fișierul.\n"
+  WCMD_RD, "RD <dir> este versiunea scurtă pentru RMDIR. RD șterge subdosarul.\n"
+  WCMD_RMDIR, "RMDIR <dir> șterge subdosarul.\n"
+
+  WCMD_SET,
+"SET afișează sau schimbă variabilele de mediu ale cmd.\n\
+\n\
+SET fără parametri afișează variabilele de mediu currente.\n\
+\n\
+Pentru a crea sau modifica o variabilă de mediu, sintaxa este:\n\
+\n\
+      SET <variabilă>=<valoare>\n\
+\n\
+unde <variabilă> și <valoare> sunt șiruri de caractere. Nu trebuie să\n\
+existe nici un spațiu înainte de semnul egal și nici în numele variabilei.\n\
+\n\
+În Wine, mediul sistemului de operare de bază este inclus în mediul Win32,\n\
+astfel că vor fi, în general, mult mai multe valori decât într-o\n\
+implementare Win32 nativă. Rețineți că nu poate fi modificat mediul\n\
+sistemului de operare din cmd.\n"
+
+  WCMD_SHIFT,
+"SHIFT se utilizează într-un fișier batch pentru a elimina primul parametru\n\
+din listă; astfel, parametrul 2 devine parametrul 1 și așa mai departe.\n\
+Nu are efect dacă este apelat din linia de comandă.\n"
+
+  WCMD_TIME, "TIME afișează sau schimbă ora sistemului.\n"
+
+  WCMD_TITLE, "Definește titlul pentru fereastra cmd, cu sintaxa TITLE [șir]\n"
+
+  WCMD_TYPE,
+"TYPE <numefișier> copiază <numefișier> în consolă (sau unde este\n\
+redirecționat). Nu se verifică dacă fișierul conține text lizibil.\n"
+
+  WCMD_VERIFY,
+"VERIFY se utilizează pentru a activa, a elimina sau a testa indicatorul\n\
+de verificare. Sunt valabile formele:\n\
+\n\
+VERIFY ON\tActivează indicatorul\n\
+VERIFY OFF\tElimină indicatorul\n\
+VERIFY\t\tAfișează ON sau OFF după cum este cazul.\n\
+\n\
+Indicatorul de verificare nu are nici o funcție în Wine.\n"
+
+  WCMD_VER, "VER afișează versiunea de cmd utilizată\n"
+
+  WCMD_VOL, "VOL Afișează eticheta de volum a unui disc\n"
+
+  WCMD_PUSHD,
+"PUSHD <numedirector> salvează directorul curent într-o stivă și apoi\n\
+înlocuiește directorul curent cu cel specificat.\n"
+
+  WCMD_POPD, "POPD schimbă directorul curent cu ultimul salvat cu PUSHD.\n"
+
+  WCMD_MORE, "MORE afișează în pagini conținutul fișierelor sau datele introduse.\n"
+
+  WCMD_EXIT,
+"EXIT termină sesiunea curentă a liniei de comandă și revine la sistemul\n\
+de operare sau shell-ul din care ați invocat cmd.\n"
+
+  WCMD_ALLHELP,
+"Comenzile integrate în CMD sunt:\n\
+ATTRIB\t\tAfișează sau schimbă atributele fișierelor DOS\n\
+CALL\t\tInvocă un fișier batch din interiorul altuia\n\
+CD (CHDIR)\tSchimbă directorul implicit curent\n\
+CLS\t\tGolește ecranul consolei\n\
+COPY\t\tCopiază fișierul\n\
+CTTY\t\tSchimbă dispozitivul de intrare/ieșire\n\
+DATE\t\tAfișează sau schimbă data sistemului\n\
+DEL (ERASE)\tȘterge un fișier sau un set de fișiere\n\
+DIR\t\tListează conținutul unui director\n\
+ECHO\t\tCopiază textul direct în consolă\n\
+HELP\t\tAfișează pe scurt detalii de ajutor pentru un subiect\n\
+MD (MKDIR)\tCreează un subdirector\n\
+MORE\t\tAfișează textul în pagini\n\
+MOVE\t\tMută un fișier, un set de fișiere sau un arbore de directoare\n\
+PATH\t\tStabilește sau afișează calea de căutare\n\
+POPD\t\tRestabilește directorul în ultima sa formă salvată cu PUSHD\n\
+PROMPT\t\tSchimbă prompterul de comandă\n\
+PUSHD\t\tTrece la un nou director, salvându-l pe cel curent\n\
+REN (RENAME)\tRedenumește un fișier\n\
+RD (RMDIR)\tȘterge un subdirector\n\
+SET\t\tStabilește sau afișează variabilele de mediu\n\
+TIME\t\tStabilește sau afișează ora curentă a sistemului\n\
+TITLE\t\tStabilește titlul ferestrei pentru sesiunea CMD\n\
+TYPE\t\tAfișează conținutul unui fișier text\n\
+VER\t\tAfișează versiunea curentă de CMD\n\
+VOL\t\tAfișează eticheta de volum a unui disc\n\
+EXIT\t\tÎnchide CMD\n\
+\n\
+Introduceți HELP <comandă> pentru informații suplimentare despre\n\
+comenzile de mai sus\n"
+
+  WCMD_CONFIRM, "Sunteți sigur"
+  WCMD_YES, "D"
+  WCMD_NO, "N"
+  WCMD_NOASSOC, "Lipsește asocierea cu fișiere pentru extensia %s\n"
+  WCMD_NOFTYPE, "Nici o comandă de deschidere nu este asociată cu tipul de fișier „%s”\n"
+  WCMD_OVERWRITE, "Suprascrie %s"
+  WCMD_MORESTR, "Mai mult..."
+  WCMD_TRUNCATEDLINE, "Linie posibil trunchiată în procesarea fișierului batch. Se utilizează:\n"
+  WCMD_NYI, "Încă neimplementat\n\n"
+  WCMD_NOARG, "Argument lipsă\n"
+  WCMD_SYNTAXERR, "Eroare de sintaxă\n"
+  WCMD_FILENOTFOUND, "%s : fișier negăsit\n"
+  WCMD_NOCMDHELP, "Nu există ajutor pentru %s\n"
+  WCMD_NOTARGET, "Destinația pentru GOTO nu a fost găsită\n"
+  WCMD_CURRENTDATE, "Data curentă este %s\n"
+  WCMD_CURRENTTIME, "Ora curentă este %s\n"
+  WCMD_NEWDATE, "Introduceți noua dată: "
+  WCMD_NEWTIME, "Introduceți noua oră: "
+  WCMD_MISSINGENV, "Variabila de mediu %s nu este definită\n"
+  WCMD_READFAIL, "Nu s-a putut deschide „%s”\n"
+  WCMD_CALLINSCRIPT, "Nu se poate apela eticheta pentru batch în afara unui script batch\n"
+  WCMD_ALL, "T"
+  WCMD_DELPROMPT, "%s, Șterge"
+  WCMD_ECHOPROMPT, "Echo este %s\n"
+  WCMD_VERIFYPROMPT, "Verify este %s\n"
+  WCMD_VERIFYERR, "Verify trebuie să fie ON sau OFF\n"
+  WCMD_ARGERR, "Eroare de parametri\n"
+  WCMD_VOLUMEDETAIL, "Volumul din unitatea %c este %s\nNumărul de serie al volumului este %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Etichetă pentru volum (11 caractere, ENTER pentru nici una)?"
+  WCMD_NOPATH, "PATH negăsită\n"
+  WCMD_ANYKEY,"Apăsați pe Enter pentru a continua: "
+  WCMD_CONSTITLE,"Linia de comandă Wine"
+  WCMD_VERSION,"CMD versiunea %s\n\n"
+  WCMD_MOREPROMPT, "Mai mult? "
+  WCMD_LINETOOLONG, "Șirul introdus este prea lung.\n"
+}
