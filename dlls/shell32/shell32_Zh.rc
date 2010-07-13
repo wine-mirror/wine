@@ -218,6 +218,12 @@ STRINGTABLE
 	IDS_SHV_COL_LOCATION	"位置"
 	IDS_SHV_COL_MODEL	"型号" /**/
 
+	        /* special folders */
+	IDS_DESKTOP		"桌面"
+	IDS_MYCOMPUTER		"我的电脑"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Trash"
+	IDS_CONTROLPANEL	"控制面板"
+
 		/* context menus */
 	IDS_VIEW_LARGE		"大图标 (&G)"
 	IDS_VIEW_SMALL		"小图标 (&M)"
@@ -288,6 +294,8 @@ STRINGTABLE
 	IDS_CPANEL_TITLE	"Wine 控制面板"
 	IDS_CPANEL_NAME		"名称"
 	IDS_CPANEL_DESCRIPTION	"描述"
+
+        IDS_SHLEXEC_NOASSOC         "找不到用于打开此类文件的 Windows 程序."
 }
 
 STRINGTABLE
