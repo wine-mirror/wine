@@ -1,5 +1,6 @@
 ;
 ; Copyright 2009 Frans Kool
+; Copyright 2010 Sven Baars
 ;
 ; This library is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU Lesser General Public
@@ -17,7 +18,7 @@
 ;
 
 LanguageNames=(NLD=0x0013:winerr)
-CodePages=(NLD=1252:0)
+CodePages=(NLD=65001:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS
@@ -27,7 +28,7 @@ Succes
 MessageId=1
 SymbolicName=ERROR_INVALID_FUNCTION
 Language=NLD
-Foutieve functie
+Ongeldige functie
 .
 MessageId=2
 SymbolicName=ERROR_FILE_NOT_FOUND
@@ -52,12 +53,12 @@ Toegang geweigerd
 MessageId=6
 SymbolicName=ERROR_INVALID_HANDLE
 Language=NLD
-Foutieve handle
+Ongeldige handle
 .
 MessageId=7
 SymbolicName=ERROR_ARENA_TRASHED
 Language=NLD
-Geheugen probleem
+Geheugenprobleem
 .
 MessageId=8
 SymbolicName=ERROR_NOT_ENOUGH_MEMORY
@@ -67,17 +68,17 @@ Onvoldoende beschikbaar geheugen
 MessageId=9
 SymbolicName=ERROR_INVALID_BLOCK
 Language=NLD
-Foutief blok
+Ongeldig blok
 .
 MessageId=10
 SymbolicName=ERROR_BAD_ENVIRONMENT
 Language=NLD
-Foutieve systeemomgeving
+Slechte systeemomgeving
 .
 MessageId=11
 SymbolicName=ERROR_BAD_FORMAT
 Language=NLD
-Foutief formaat
+Slecht formaat
 .
 MessageId=12
 SymbolicName=ERROR_INVALID_ACCESS
@@ -87,7 +88,7 @@ Ongeldige toegang
 MessageId=13
 SymbolicName=ERROR_INVALID_DATA
 Language=NLD
-Foutieve data
+Ongeldige data
 .
 MessageId=14
 SymbolicName=ERROR_OUTOFMEMORY
@@ -97,12 +98,12 @@ Geen geheugen meer beschikbaar
 MessageId=15
 SymbolicName=ERROR_INVALID_DRIVE
 Language=NLD
-Verkeerde disk
+Verkeerde drive
 .
 MessageId=16
 SymbolicName=ERROR_CURRENT_DIRECTORY
 Language=NLD
-De huidige folder kan niet verwijderd worden
+De huidige map kan niet verwijderd worden
 .
 MessageId=17
 SymbolicName=ERROR_NOT_SAME_DEVICE
@@ -117,7 +118,7 @@ Geen bestanden meer
 MessageId=19
 SymbolicName=ERROR_WRITE_PROTECT
 Language=NLD
-Schrijf beveiligd
+Schrijf-beveiligd
 .
 MessageId=20
 SymbolicName=ERROR_BAD_UNIT
@@ -192,12 +193,12 @@ Lock fout
 MessageId=34
 SymbolicName=ERROR_WRONG_DISK
 Language=NLD
-Verkeerde disk
+Verkeerde schijf
 .
 MessageId=36
 SymbolicName=ERROR_SHARING_BUFFER_EXCEEDED
 Language=NLD
-Delings buffer overlopen
+Delingsbuffer overschreden
 .
 MessageId=38
 SymbolicName=ERROR_HANDLE_EOF
@@ -207,7 +208,7 @@ Einde van bestand
 MessageId=39
 SymbolicName=ERROR_HANDLE_DISK_FULL
 Language=NLD
-Disk vol
+Schijf vol
 .
 MessageId=50
 SymbolicName=ERROR_NOT_SUPPORTED
@@ -217,17 +218,17 @@ Verzoek niet ondersteund
 MessageId=51
 SymbolicName=ERROR_REM_NOT_LIST
 Language=NLD
-Remote machine luistert niet
+Machine op afstand luistert niet
 .
 MessageId=52
 SymbolicName=ERROR_DUP_NAME
 Language=NLD
-Dubbele network naam
+Dubbele netwerknaam
 .
 MessageId=53
 SymbolicName=ERROR_BAD_NETPATH
 Language=NLD
-Foutief netwerk pad
+Slecht netwerkpad
 .
 MessageId=54
 SymbolicName=ERROR_NETWORK_BUSY
@@ -247,27 +248,27 @@ Te veel commando's
 MessageId=57
 SymbolicName=ERROR_ADAP_HDW_ERR
 Language=NLD
-Adaptor hardware fout
+Adapter hardware fout
 .
 MessageId=58
 SymbolicName=ERROR_BAD_NET_RESP
 Language=NLD
-Verkeerd netwerk antwoord
+Verkeerd netwerkantwoord
 .
 MessageId=59
 SymbolicName=ERROR_UNEXP_NET_ERR
 Language=NLD
-Onverwachtte netwerk fout
+Onverwachte netwerk fout
 .
 MessageId=60
 SymbolicName=ERROR_BAD_REM_ADAP
 Language=NLD
-Slechte remote adapter
+Slechte adapter op afstand
 .
 MessageId=61
 SymbolicName=ERROR_PRINTQ_FULL
 Language=NLD
-Printeropdrachtrij vol
+Printerwachtrij vol
 .
 MessageId=62
 SymbolicName=ERROR_NO_SPOOL_SPACE
@@ -282,37 +283,37 @@ Printopdracht geannuleerd
 MessageId=64
 SymbolicName=ERROR_NETNAME_DELETED
 Language=NLD
-Netwerk naam verwijderd
+Netwerknaam verwijderd
 .
 MessageId=65
 SymbolicName=ERROR_NETWORK_ACCESS_DENIED
 Language=NLD
-Network toegang geweigerd
+Netwerktoegang geweigerd
 .
 MessageId=66
 SymbolicName=ERROR_BAD_DEV_TYPE
 Language=NLD
-Slecht device type
+Slecht devicetype
 .
 MessageId=67
 SymbolicName=ERROR_BAD_NET_NAME
 Language=NLD
-Foutieve netwerk naam
+Slechte netwerknaam
 .
 MessageId=68
 SymbolicName=ERROR_TOO_MANY_NAMES
 Language=NLD
-Te veel netwerk namen
+Te veel netwerknamen
 .
 MessageId=69
 SymbolicName=ERROR_TOO_MANY_SESS
 Language=NLD
-Te veel netwerk sessies
+Te veel netwerksessies
 .
 MessageId=70
 SymbolicName=ERROR_SHARING_PAUSED
 Language=NLD
-Delen gepauseerd
+Delen gepauzeerd
 .
 MessageId=71
 SymbolicName=ERROR_REQ_NOT_ACCEP
@@ -322,7 +323,7 @@ Verzoek niet geaccepteerd
 MessageId=72
 SymbolicName=ERROR_REDIR_PAUSED
 Language=NLD
-Redirector gepauzeerd
+Herleider gepauzeerd
 .
 MessageId=80
 SymbolicName=ERROR_FILE_EXISTS
@@ -337,92 +338,92 @@ Kan niet maken
 MessageId=83
 SymbolicName=ERROR_FAIL_I24
 Language=NLD
-Int24 fout
+Int24-fout
 .
 MessageId=84
 SymbolicName=ERROR_OUT_OF_STRUCTURES
 Language=NLD
-Out of structures
+Geen structuren over
 .
 MessageId=85
 SymbolicName=ERROR_ALREADY_ASSIGNED
 Language=NLD
-Already assigned
+Reeds toegewezen
 .
 MessageId=86
 SymbolicName=ERROR_INVALID_PASSWORD
 Language=NLD
-Invalid password
+Ongeldig wachtwoord
 .
 MessageId=87
 SymbolicName=ERROR_INVALID_PARAMETER
 Language=NLD
-Invalid parameter
+Ongeldige parameter
 .
 MessageId=88
 SymbolicName=ERROR_NET_WRITE_FAULT
 Language=NLD
-Net write fault
+Net schrijffout
 .
 MessageId=89
 SymbolicName=ERROR_NO_PROC_SLOTS
 Language=NLD
-No process slots
+Geen processloten
 .
 MessageId=100
 SymbolicName=ERROR_TOO_MANY_SEMAPHORES
 Language=NLD
-Too many semaphores
+Te veel semaforen
 .
 MessageId=101
 SymbolicName=ERROR_EXCL_SEM_ALREADY_OWNED
 Language=NLD
-Exclusive semaphore already owned
+Exclusieve semafoor reeds toegeëigend
 .
 MessageId=102
 SymbolicName=ERROR_SEM_IS_SET
 Language=NLD
-Semaphore is set
+Semafoor is ingesteld
 .
 MessageId=103
 SymbolicName=ERROR_TOO_MANY_SEM_REQUESTS
 Language=NLD
-Too many semaphore requests
+Te veel semafoor aanvragen
 .
 MessageId=104
 SymbolicName=ERROR_INVALID_AT_INTERRUPT_TIME
 Language=NLD
-Invalid at interrupt time
+Ongeldig op interruptietijd
 .
 MessageId=105
 SymbolicName=ERROR_SEM_OWNER_DIED
 Language=NLD
-Semaphore owner died
+Eigenaar van semafoor gestorven
 .
 MessageId=106
 SymbolicName=ERROR_SEM_USER_LIMIT
 Language=NLD
-Semaphore user limit
+Semafoor gebruikerslimiet
 .
 MessageId=107
 SymbolicName=ERROR_DISK_CHANGE
 Language=NLD
-Insert disk for drive %1
+Stop schijf in speler %1
 .
 MessageId=108
 SymbolicName=ERROR_DRIVE_LOCKED
 Language=NLD
-Drive locked
+Speler op slot
 .
 MessageId=109
 SymbolicName=ERROR_BROKEN_PIPE
 Language=NLD
-Broken pipe
+Kapotte pipe
 .
 MessageId=110
 SymbolicName=ERROR_OPEN_FAILED
 Language=NLD
-Open failed
+Openen mislukt
 .
 MessageId=111
 SymbolicName=ERROR_BUFFER_OVERFLOW
@@ -432,62 +433,62 @@ Buffer overflow
 MessageId=112
 SymbolicName=ERROR_DISK_FULL
 Language=NLD
-Disk full
+Schijf vol
 .
 MessageId=113
 SymbolicName=ERROR_NO_MORE_SEARCH_HANDLES
 Language=NLD
-No more search handles
+Geen verdere zoekhandles
 .
 MessageId=114
 SymbolicName=ERROR_INVALID_TARGET_HANDLE
 Language=NLD
-Invalid target handle
+Ongeldige doelhandle
 .
 MessageId=117
 SymbolicName=ERROR_INVALID_CATEGORY
 Language=NLD
-Invalid IOCTL
+Ongeldige IOCTL
 .
 MessageId=118
 SymbolicName=ERROR_INVALID_VERIFY_SWITCH
 Language=NLD
-Invalid verify switch
+Ongeldige verificatieswitch
 .
 MessageId=119
 SymbolicName=ERROR_BAD_DRIVER_LEVEL
 Language=NLD
-Bad driver level
+Slecht driverniveau
 .
 MessageId=120
 SymbolicName=ERROR_CALL_NOT_IMPLEMENTED
 Language=NLD
-Call not implemented
+Aanroep niet geïmplementeerd
 .
 MessageId=121
 SymbolicName=ERROR_SEM_TIMEOUT
 Language=NLD
-Semaphore timeout
+Semafoor timeout
 .
 MessageId=122
 SymbolicName=ERROR_INSUFFICIENT_BUFFER
 Language=NLD
-Insufficient buffer
+Ontoerijkbare buffer
 .
 MessageId=123
 SymbolicName=ERROR_INVALID_NAME
 Language=NLD
-Invalid name
+Ongeldige naam
 .
 MessageId=124
 SymbolicName=ERROR_INVALID_LEVEL
 Language=NLD
-Invalid level
+Ongeldig niveau
 .
 MessageId=125
 SymbolicName=ERROR_NO_VOLUME_LABEL
 Language=NLD
-No volume label
+Geen volumelabel
 .
 MessageId=126
 SymbolicName=ERROR_MOD_NOT_FOUND
@@ -502,42 +503,42 @@ Procedure niet gevonden
 MessageId=128
 SymbolicName=ERROR_WAIT_NO_CHILDREN
 Language=NLD
-No children to wait for
+Geen kinderen om op te wachten
 .
 MessageId=129
 SymbolicName=ERROR_CHILD_NOT_COMPLETE
 Language=NLD
-Child process has not completed
+Kindproces is niet afgemaakt
 .
 MessageId=130
 SymbolicName=ERROR_DIRECT_ACCESS_HANDLE
 Language=NLD
-Invalid use of direct access handle
+Ongeldig gebruik van een directe toegangshandle
 .
 MessageId=131
 SymbolicName=ERROR_NEGATIVE_SEEK
 Language=NLD
-Negative seek
+Negatieve zoekactie
 .
 MessageId=132
 SymbolicName=ERROR_SEEK_ON_DEVICE
 Language=NLD
-Seek error
+Zoekfout
 .
 MessageId=133
 SymbolicName=ERROR_IS_JOIN_TARGET
 Language=NLD
-Drive is a JOIN target
+Schijf is een JOIN doel
 .
 MessageId=134
 SymbolicName=ERROR_IS_JOINED
 Language=NLD
-Drive is already JOINed
+Schijf is al JOINed
 .
 MessageId=135
 SymbolicName=ERROR_IS_SUBSTED
 Language=NLD
-Drive is already SUBSTed
+Schijf is al SUBSTed
 .
 MessageId=136
 SymbolicName=ERROR_NOT_JOINED
@@ -547,257 +548,257 @@ Drive is not JOINed
 MessageId=137
 SymbolicName=ERROR_NOT_SUBSTED
 Language=NLD
-Drive is not SUBSTed
+Schijf is niet SUBSTed
 .
 MessageId=138
 SymbolicName=ERROR_JOIN_TO_JOIN
 Language=NLD
-Attempt to JOIN onto a JOINed drive
+Poging om JOIN op een JOINed schijf te doen
 .
 MessageId=139
 SymbolicName=ERROR_SUBST_TO_SUBST
 Language=NLD
-Attempt to SUBST onto a SUBSTed drive
+Poging om SUBST op een SUBSTed schijf te doen
 .
 MessageId=140
 SymbolicName=ERROR_JOIN_TO_SUBST
 Language=NLD
-Attempt to JOIN to a SUBSTed drive
+Poging om JOIN op een SUBSTed schijf te doen
 .
 MessageId=141
 SymbolicName=ERROR_SUBST_TO_JOIN
 Language=NLD
-Attempt to SUBST to a JOINed drive
+Poging om SUBST op een JOINed schijf te doen
 .
 MessageId=142
 SymbolicName=ERROR_BUSY_DRIVE
 Language=NLD
-Drive is busy
+Schijf is bezig
 .
 MessageId=143
 SymbolicName=ERROR_SAME_DRIVE
 Language=NLD
-Same drive
+Zelfde schijf
 .
 MessageId=144
 SymbolicName=ERROR_DIR_NOT_ROOT
 Language=NLD
-Not toplevel directory
+Geen toplevel directory
 .
 MessageId=145
 SymbolicName=ERROR_DIR_NOT_EMPTY
 Language=NLD
-Directory is not empty
+Directory is niet leeg
 .
 MessageId=146
 SymbolicName=ERROR_IS_SUBST_PATH
 Language=NLD
-Path is in use as a SUBST
+Pad is in gebruik als een SUBST
 .
 MessageId=147
 SymbolicName=ERROR_IS_JOIN_PATH
 Language=NLD
-Path is in use as a JOIN
+Pad is in gebruik als een JOIN
 .
 MessageId=148
 SymbolicName=ERROR_PATH_BUSY
 Language=NLD
-Path is busy
+Pad is bezig
 .
 MessageId=149
 SymbolicName=ERROR_IS_SUBST_TARGET
 Language=NLD
-Already a SUBST target
+Reeds een SUBST doel
 .
 MessageId=150
 SymbolicName=ERROR_SYSTEM_TRACE
 Language=NLD
-System trace not specified or disallowed
+Systeemtrace niet gespecificeerd of niet toegestaan
 .
 MessageId=151
 SymbolicName=ERROR_INVALID_EVENT_COUNT
 Language=NLD
-Event count for DosMuxSemWait incorrect
+Gebeurtenistelling voor DosMuxSemWait incorrect
 .
 MessageId=152
 SymbolicName=ERROR_TOO_MANY_MUXWAITERS
 Language=NLD
-Too many waiters for DosMuxSemWait
+Te veel wachtenden voor DosMuxSemWait
 .
 MessageId=153
 SymbolicName=ERROR_INVALID_LIST_FORMAT
 Language=NLD
-DosSemMuxWait list invalid
+DosSemMuxWait lijst ongeldig
 .
 MessageId=154
 SymbolicName=ERROR_LABEL_TOO_LONG
 Language=NLD
-Volume label too long
+Volumelabel te lang
 .
 MessageId=155
 SymbolicName=ERROR_TOO_MANY_TCBS
 Language=NLD
-Too many TCBs
+Te veel TCBs
 .
 MessageId=156
 SymbolicName=ERROR_SIGNAL_REFUSED
 Language=NLD
-Signal refused
+Signaal geweigerd
 .
 MessageId=157
 SymbolicName=ERROR_DISCARDED
 Language=NLD
-Segment discarded
+Segment verworpen
 .
 MessageId=158
 SymbolicName=ERROR_NOT_LOCKED
 Language=NLD
-Segment not locked
+Segment niet op slot
 .
 MessageId=159
 SymbolicName=ERROR_BAD_THREADID_ADDR
 Language=NLD
-Bad thread ID address
+Slechte thread ID adres
 .
 MessageId=160
 SymbolicName=ERROR_BAD_ARGUMENTS
 Language=NLD
-Bad arguments to DosExecPgm
+Slechte argumenten naar DosExecPgm
 .
 MessageId=161
 SymbolicName=ERROR_BAD_PATHNAME
 Language=NLD
-Path is invalid
+Pad is ongeldig
 .
 MessageId=162
 SymbolicName=ERROR_SIGNAL_PENDING
 Language=NLD
-Signal pending
+Signaal wachtende
 .
 MessageId=164
 SymbolicName=ERROR_MAX_THRDS_REACHED
 Language=NLD
-Max systemwide thread count reached
+Max systeemwijde threadaantal bereikt
 .
 MessageId=167
 SymbolicName=ERROR_LOCK_FAILED
 Language=NLD
-Lock failed
+Sluiten mislukt
 .
 MessageId=170
 SymbolicName=ERROR_BUSY
 Language=NLD
-Resource in use
+Resource in gebruik
 .
 MessageId=173
 SymbolicName=ERROR_CANCEL_VIOLATION
 Language=NLD
-Cancel violation
+Annuleerovertreding
 .
 MessageId=174
 SymbolicName=ERROR_ATOMIC_LOCKS_NOT_SUPPORTED
 Language=NLD
-Atomic locks not supported
+Atomic locks niet ondersteund
 .
 MessageId=180
 SymbolicName=ERROR_INVALID_SEGMENT_NUMBER
 Language=NLD
-Invalid segment number
+Ongeldig segmentnummer
 .
 MessageId=182
 SymbolicName=ERROR_INVALID_ORDINAL
 Language=NLD
-Invalid ordinal for %1
+Ongeldige rangschikking voor %1
 .
 MessageId=183
 SymbolicName=ERROR_ALREADY_EXISTS
 Language=NLD
-File already exists
+Bestand bestaat al
 .
 MessageId=186
 SymbolicName=ERROR_INVALID_FLAG_NUMBER
 Language=NLD
-Invalid flag number
+Olgeldig vlagnumer
 .
 MessageId=187
 SymbolicName=ERROR_SEM_NOT_FOUND
 Language=NLD
-Semafoor naam niet gevonden
+Semafoornaam niet gevonden
 .
 MessageId=188
 SymbolicName=ERROR_INVALID_STARTING_CODESEG
 Language=NLD
-Invalid starting code segment for %1
+Ongeldig startcode segment voor %1
 .
 MessageId=189
 SymbolicName=ERROR_INVALID_STACKSEG
 Language=NLD
-Invalid starting stack segment for %1
+Ongeldig startstack segment voor %1
 .
 MessageId=190
 SymbolicName=ERROR_INVALID_MODULETYPE
 Language=NLD
-Invalid module type for %1
+Ongeldig moduletype voor %1
 .
 MessageId=191
 SymbolicName=ERROR_INVALID_EXE_SIGNATURE
 Language=NLD
-Invalid EXE signature in %1
+Ongeldige EXE-handtekening in %1
 .
 MessageId=192
 SymbolicName=ERROR_EXE_MARKED_INVALID
 Language=NLD
-EXE %1 is marked invalid
+EXE %1 is gemarkeerd als ongeldig
 .
 MessageId=193
 SymbolicName=ERROR_BAD_EXE_FORMAT
 Language=NLD
-Bad EXE format for %1
+Slecht EXE-formaat voor %1
 .
 MessageId=194
 SymbolicName=ERROR_ITERATED_DATA_EXCEEDS_64k
 Language=NLD
-Iterated data exceeds 64k in %1
+Geïtereerde data overschrijdt 64k in %1
 .
 MessageId=195
 SymbolicName=ERROR_INVALID_MINALLOCSIZE
 Language=NLD
-Invalid MinAllocSize in %1
+Ongeldige MinAllocSize in %1
 .
 MessageId=196
 SymbolicName=ERROR_DYNLINK_FROM_INVALID_RING
 Language=NLD
-Dynlink from invalid ring
+Dynlink van ongeldige ring
 .
 MessageId=197
 SymbolicName=ERROR_IOPL_NOT_ENABLED
 Language=NLD
-IOPL not enabled
+IOPL niet geactiveerd
 .
 MessageId=198
 SymbolicName=ERROR_INVALID_SEGDPL
 Language=NLD
-Invalid SEGDPL in %1
+Ongeldige SEGDPL in %1
 .
 MessageId=199
 SymbolicName=ERROR_AUTODATASEG_EXCEEDS_64k
 Language=NLD
-Auto data segment exceeds 64k
+Auto data segment overschrijdt 64k
 .
 MessageId=200
 SymbolicName=ERROR_RING2SEG_MUST_BE_MOVABLE
 Language=NLD
-Ring 2 segment must be moveable
+Ring 2 segment moet verplaatsbaar zijn
 .
 MessageId=201
 SymbolicName=ERROR_RELOC_CHAIN_XEEDS_SEGLIM
 Language=NLD
-Relocation chain exceeds segment limit in %1
+Verplaatsketting overschrijdt segment limiet in %1
 .
 MessageId=202
 SymbolicName=ERROR_INFLOOP_IN_RELOC_CHAIN
 Language=NLD
-Infinite loop in relocation chain in %1
+Oneindige lus in verplaatsketting in %1
 .
 MessageId=203
 SymbolicName=ERROR_ENVVAR_NOT_FOUND
@@ -807,147 +808,147 @@ Omgevingsvariable niet gevonden
 MessageId=205
 SymbolicName=ERROR_NO_SIGNAL_SENT
 Language=NLD
-No signal sent
+Geen signaal verzonden
 .
 MessageId=206
 SymbolicName=ERROR_FILENAME_EXCED_RANGE
 Language=NLD
-File name is too long
+Bestandsnaam is te lang
 .
 MessageId=207
 SymbolicName=ERROR_RING2_STACK_IN_USE
 Language=NLD
-Ring 2 stack in use
+Ring 2 stack in gebruik
 .
 MessageId=208
 SymbolicName=ERROR_META_EXPANSION_TOO_LONG
 Language=NLD
-Error in use of filename wildcards
+Fout in het gebruik van bestandsnaamwildcards
 .
 MessageId=209
 SymbolicName=ERROR_INVALID_SIGNAL_NUMBER
 Language=NLD
-Invalid signal number
+Ongeldig signaalnummer
 .
 MessageId=210
 SymbolicName=ERROR_THREAD_1_INACTIVE
 Language=NLD
-Error setting signal handler
+Fout bij instellen signaalhandler
 .
 MessageId=212
 SymbolicName=ERROR_LOCKED
 Language=NLD
-Segment locked
+Segment op slot
 .
 MessageId=214
 SymbolicName=ERROR_TOO_MANY_MODULES
 Language=NLD
-Too many modules
+Te veel modules
 .
 MessageId=215
 SymbolicName=ERROR_NESTING_NOT_ALLOWED
 Language=NLD
-Nesting LoadModule calls not allowed
+Nestelen LoadModule calls niet toegestaan
 .
 MessageId=216
 SymbolicName=ERROR_EXE_MACHINE_TYPE_MISMATCH
 Language=NLD
-Machine type mismatch
+Machinetype mismatch
 .
 MessageId=230
 SymbolicName=ERROR_BAD_PIPE
 Language=NLD
-Bad pipe
+Slechte pipe
 .
 MessageId=231
 SymbolicName=ERROR_PIPE_BUSY
 Language=NLD
-Pipe busy
+Pipe bezig
 .
 MessageId=232
 SymbolicName=ERROR_NO_DATA
 Language=NLD
-Pipe closed
+Pipe gesloten
 .
 MessageId=233
 SymbolicName=ERROR_PIPE_NOT_CONNECTED
 Language=NLD
-Pipe not connected
+Pipe niet verbonden
 .
 MessageId=234
 SymbolicName=ERROR_MORE_DATA
 Language=NLD
-More data available
+Meer data beschikbaar
 .
 MessageId=240
 SymbolicName=ERROR_VC_DISCONNECTED
 Language=NLD
-Session cancelled
+Sessie geannuleerd
 .
 MessageId=254
 SymbolicName=ERROR_INVALID_EA_NAME
 Language=NLD
-Invalid extended attribute name
+Ongeldige uitgebreide attribuutnaam
 .
 MessageId=255
 SymbolicName=ERROR_EA_LIST_INCONSISTENT
 Language=NLD
-Extended attribute list inconsistent
+Uitgebreide attribuutlijst inconsistent
 .
 MessageId=259
 SymbolicName=ERROR_NO_MORE_ITEMS
 Language=NLD
-No more data available
+Niet meer data beschikbaar
 .
 MessageId=266
 SymbolicName=ERROR_CANNOT_COPY
 Language=NLD
-Cannot use Copy API
+Kan de Copy API niet gebuiken
 .
 MessageId=267
 SymbolicName=ERROR_DIRECTORY
 Language=NLD
-Directory name invalid
+Directorynaam ongeldig
 .
 MessageId=275
 SymbolicName=ERROR_EAS_DIDNT_FIT
 Language=NLD
-Extended attributes didn't fit
+Uitgebreide attributen pasten niet
 .
 MessageId=276
 SymbolicName=ERROR_EA_FILE_CORRUPT
 Language=NLD
-Extended attribute file corrupt
+Uitgebreid attribuutbestand corrupt
 .
 MessageId=277
 SymbolicName=ERROR_EA_TABLE_FULL
 Language=NLD
-Extended attribute table full
+Uitgebreide attribuuttabel vol
 .
 MessageId=278
 SymbolicName=ERROR_INVALID_EA_HANDLE
 Language=NLD
-Invalid extended attribute handle
+Ongeldige uitgebreide attribuuthandle
 .
 MessageId=282
 SymbolicName=ERROR_EAS_NOT_SUPPORTED
 Language=NLD
-Extended attributes not supported
+Uitgebreide attributen niet ondersteund
 .
 MessageId=288
 SymbolicName=ERROR_NOT_OWNER
 Language=NLD
-Mutex not owned by caller
+Mutex niet in bezit van de aanroeper
 .
 MessageId=298
 SymbolicName=ERROR_TOO_MANY_POSTS
 Language=NLD
-Too many posts to semaphore
+Te veel posts naar semafoor
 .
 MessageId=299
 SymbolicName=ERROR_PARTIAL_COPY
 Language=NLD
-Read/WriteProcessMemory partially completed
+Read/WriteProcessMemory gedeeltelijk klaar
 .
 MessageId=300
 SymbolicName=ERROR_OPLOCK_NOT_GRANTED
@@ -967,7 +968,7 @@ Bericht 0x%1 niet gevonden in bestand %2
 MessageId=487
 SymbolicName=ERROR_INVALID_ADDRESS
 Language=NLD
-Invalid address
+Ongeldig adres
 .
 MessageId=534
 SymbolicName=ERROR_ARITHMETIC_OVERFLOW
@@ -977,42 +978,42 @@ Arithmetic overflow
 MessageId=535
 SymbolicName=ERROR_PIPE_CONNECTED
 Language=NLD
-Pipe connected
+Pipe verbonden
 .
 MessageId=536
 SymbolicName=ERROR_PIPE_LISTENING
 Language=NLD
-Pipe listening
+Pipe luistert
 .
 MessageId=994
 SymbolicName=ERROR_EA_ACCESS_DENIED
 Language=NLD
-Extended attribute access denied
+Uitgebreide attribuuttoegang geweigerd
 .
 MessageId=995
 SymbolicName=ERROR_OPERATION_ABORTED
 Language=NLD
-I/O operation aborted
+I/O operatie onderbroken
 .
 MessageId=996
 SymbolicName=ERROR_IO_INCOMPLETE
 Language=NLD
-Overlapped I/O incomplete
+Overlapte I/O incompleet
 .
 MessageId=997
 SymbolicName=ERROR_IO_PENDING
 Language=NLD
-Overlapped I/O pending
+Overlapte I/O hangende
 .
 MessageId=998
 SymbolicName=ERROR_NOACCESS
 Language=NLD
-No access to memory location
+Geen toegang tot geheugenlocatie
 .
 MessageId=999
 SymbolicName=ERROR_SWAPERROR
 Language=NLD
-Swap error
+Swap-fout
 .
 MessageId=1001
 SymbolicName=ERROR_STACK_OVERFLOW
@@ -1022,47 +1023,47 @@ Stack overflow
 MessageId=1002
 SymbolicName=ERROR_INVALID_MESSAGE
 Language=NLD
-Invalid message
+Ongeldig bericht
 .
 MessageId=1003
 SymbolicName=ERROR_CAN_NOT_COMPLETE
 Language=NLD
-Cannot complete
+Kan niet voltooien
 .
 MessageId=1004
 SymbolicName=ERROR_INVALID_FLAGS
 Language=NLD
-Invalid flags
+Ongeldige vlaggen
 .
 MessageId=1005
 SymbolicName=ERROR_UNRECOGNIZED_VOLUME
 Language=NLD
-Unrecognised volume
+Niet herkend volume
 .
 MessageId=1006
 SymbolicName=ERROR_FILE_INVALID
 Language=NLD
-File invalid
+Bestand ongeldig
 .
 MessageId=1007
 SymbolicName=ERROR_FULLSCREEN_MODE
 Language=NLD
-Cannot run full-screen
+Kan geen full-screen runnen
 .
 MessageId=1008
 SymbolicName=ERROR_NO_TOKEN
 Language=NLD
-Nonexistent token
+Niet-bestaande token
 .
 MessageId=1009
 SymbolicName=ERROR_BADDB
 Language=NLD
-Registry corrupt
+Register corrupt
 .
 MessageId=1010
 SymbolicName=ERROR_BADKEY
 Language=NLD
-Invalid key
+Ongeldige sleutel
 .
 MessageId=1011
 SymbolicName=ERROR_CANTOPEN
@@ -1072,152 +1073,152 @@ ERROR_CANTOPEN
 MessageId=1012
 SymbolicName=ERROR_CANTREAD
 Language=NLD
-Can't read registry key
+Kan registersleutel niet lezen
 .
 MessageId=1013
 SymbolicName=ERROR_CANTWRITE
 Language=NLD
-Can't write registry key
+Kan registersleutel niet schrijven
 .
 MessageId=1014
 SymbolicName=ERROR_REGISTRY_RECOVERED
 Language=NLD
-Registry has been recovered
+Register is hersteld
 .
 MessageId=1015
 SymbolicName=ERROR_REGISTRY_CORRUPT
 Language=NLD
-Registry is corrupt
+Register is corrupt
 .
 MessageId=1016
 SymbolicName=ERROR_REGISTRY_IO_FAILED
 Language=NLD
-I/O to registry failed
+I/O naar register mislukt
 .
 MessageId=1017
 SymbolicName=ERROR_NOT_REGISTRY_FILE
 Language=NLD
-Not registry file
+Geen registerbestand
 .
 MessageId=1018
 SymbolicName=ERROR_KEY_DELETED
 Language=NLD
-Key deleted
+Sleutel verwijderd
 .
 MessageId=1019
 SymbolicName=ERROR_NO_LOG_SPACE
 Language=NLD
-No registry log space
+Geen register log ruimte
 .
 MessageId=1020
 SymbolicName=ERROR_KEY_HAS_CHILDREN
 Language=NLD
-Registry key has subkeys
+Registersleutel heeft subsleutels
 .
 MessageId=1021
 SymbolicName=ERROR_CHILD_MUST_BE_VOLATILE
 Language=NLD
-Subkey must be volatile
+Subsleutel moet vluchtig zijn
 .
 MessageId=1022
 SymbolicName=ERROR_NOTIFY_ENUM_DIR
 Language=NLD
-Notify change request in progress
+Aanvraag voor notificatieverandering in uitvoering
 .
 MessageId=1051
 SymbolicName=ERROR_DEPENDENT_SERVICES_RUNNING
 Language=NLD
-Dependent services are running
+Afhankelijke services draaien al
 .
 MessageId=1052
 SymbolicName=ERROR_INVALID_SERVICE_CONTROL
 Language=NLD
-Invalid service control
+Ongeldige service-aanstuur
 .
 MessageId=1053
 SymbolicName=ERROR_SERVICE_REQUEST_TIMEOUT
 Language=NLD
-Service request timeout
+Service aanvraag timeout
 .
 MessageId=1054
 SymbolicName=ERROR_SERVICE_NO_THREAD
 Language=NLD
-Cannot create service thread
+Kan service thread niet aanmaken
 .
 MessageId=1055
 SymbolicName=ERROR_SERVICE_DATABASE_LOCKED
 Language=NLD
-Service database locked
+Service database op slot
 .
 MessageId=1056
 SymbolicName=ERROR_SERVICE_ALREADY_RUNNING
 Language=NLD
-Service already running
+Service draait al
 .
 MessageId=1057
 SymbolicName=ERROR_INVALID_SERVICE_ACCOUNT
 Language=NLD
-Invalid service account
+Ongeldige service-account
 .
 MessageId=1058
 SymbolicName=ERROR_SERVICE_DISABLED
 Language=NLD
-Service is disabled
+Service is uitgeschakeld
 .
 MessageId=1059
 SymbolicName=ERROR_CIRCULAR_DEPENDENCY
 Language=NLD
-Circular dependency
+Cirkelafhankelijkheid
 .
 MessageId=1060
 SymbolicName=ERROR_SERVICE_DOES_NOT_EXIST
 Language=NLD
-Service does not exist
+Service bestaat niet
 .
 MessageId=1061
 SymbolicName=ERROR_SERVICE_CANNOT_ACCEPT_CTRL
 Language=NLD
-Service cannot accept control message
+Service kan aanstuurbericht niet accepteren
 .
 MessageId=1062
 SymbolicName=ERROR_SERVICE_NOT_ACTIVE
 Language=NLD
-Service not active
+Service niet actief
 .
 MessageId=1063
 SymbolicName=ERROR_FAILED_SERVICE_CONTROLLER_CONNECT
 Language=NLD
-Service controller connect failed
+Service-controllerverbinding mislukt
 .
 MessageId=1064
 SymbolicName=ERROR_EXCEPTION_IN_SERVICE
 Language=NLD
-Exception in service
+Uitzondering in service
 .
 MessageId=1065
 SymbolicName=ERROR_DATABASE_DOES_NOT_EXIST
 Language=NLD
-Database does not exist
+Database bestaat niet
 .
 MessageId=1066
 SymbolicName=ERROR_SERVICE_SPECIFIC_ERROR
 Language=NLD
-Service-specific error
+Service-specifieke fout
 .
 MessageId=1067
 SymbolicName=ERROR_PROCESS_ABORTED
 Language=NLD
-Process aborted
+Proces afgebroken
 .
 MessageId=1068
 SymbolicName=ERROR_SERVICE_DEPENDENCY_FAIL
 Language=NLD
-Service dependency failed
+Service-afhankelijkheid mislukt
 .
 MessageId=1069
 SymbolicName=ERROR_SERVICE_LOGON_FAILED
 Language=NLD
-Service login failed
+Service-login mislukt
 .
 MessageId=1070
 SymbolicName=ERROR_SERVICE_START_HANG
@@ -1227,47 +1228,47 @@ Service start-hang
 MessageId=1071
 SymbolicName=ERROR_INVALID_SERVICE_LOCK
 Language=NLD
-Invalid service lock
+Ongeldig service-slot
 .
 MessageId=1072
 SymbolicName=ERROR_SERVICE_MARKED_FOR_DELETE
 Language=NLD
-Service marked for delete
+Service gemarkeerd voor verwijdering
 .
 MessageId=1073
 SymbolicName=ERROR_SERVICE_EXISTS
 Language=NLD
-Service exists
+Service bestaat reeds
 .
 MessageId=1074
 SymbolicName=ERROR_ALREADY_RUNNING_LKG
 Language=NLD
-System running last-known-good config
+Systeem draait laatst bekende goede configuratie
 .
 MessageId=1075
 SymbolicName=ERROR_SERVICE_DEPENDENCY_DELETED
 Language=NLD
-Service dependency deleted
+Service-afhankelijkheid verwijderd
 .
 MessageId=1076
 SymbolicName=ERROR_BOOT_ALREADY_ACCEPTED
 Language=NLD
-Boot already accepted as last-good config
+Boot al geaccepteerd als laatste goede configuratie
 .
 MessageId=1077
 SymbolicName=ERROR_SERVICE_NEVER_STARTED
 Language=NLD
-Service not started since last boot
+Service niet gestart sinds laatste boot
 .
 MessageId=1078
 SymbolicName=ERROR_DUPLICATE_SERVICE_NAME
 Language=NLD
-Duplicate service name
+Dubbele servicenaam
 .
 MessageId=1079
 SymbolicName=ERROR_DIFFERENT_SERVICE_ACCOUNT
 Language=NLD
-Different service account
+Andere service-account
 .
 MessageId=1080
 SymbolicName=ERROR_CANNOT_DETECT_DRIVER_FAILURE
@@ -1292,57 +1293,57 @@ ERROR_SERVICE_NOT_IN_EXE
 MessageId=1100
 SymbolicName=ERROR_END_OF_MEDIA
 Language=NLD
-End of media
+Einde van media
 .
 MessageId=1101
 SymbolicName=ERROR_FILEMARK_DETECTED
 Language=NLD
-Filemark detected
+Filemark gevonden
 .
 MessageId=1102
 SymbolicName=ERROR_BEGINNING_OF_MEDIA
 Language=NLD
-Beginning of media
+Begin van media
 .
 MessageId=1103
 SymbolicName=ERROR_SETMARK_DETECTED
 Language=NLD
-Setmark detected
+Setmark gevonden
 .
 MessageId=1104
 SymbolicName=ERROR_NO_DATA_DETECTED
 Language=NLD
-No data detected
+Geen data gevonden
 .
 MessageId=1105
 SymbolicName=ERROR_PARTITION_FAILURE
 Language=NLD
-Partition failure
+Partitiefout
 .
 MessageId=1106
 SymbolicName=ERROR_INVALID_BLOCK_LENGTH
 Language=NLD
-Invalid block length
+Ongeldige bloklengte
 .
 MessageId=1107
 SymbolicName=ERROR_DEVICE_NOT_PARTITIONED
 Language=NLD
-Device not partitioned
+Device niet gepartitioneerd
 .
 MessageId=1108
 SymbolicName=ERROR_UNABLE_TO_LOCK_MEDIA
 Language=NLD
-Unable to lock media
+Niet in staat media te sluiten
 .
 MessageId=1109
 SymbolicName=ERROR_UNABLE_TO_UNLOAD_MEDIA
 Language=NLD
-Unable to unload media
+Niet in staat media te ontladen
 .
 MessageId=1110
 SymbolicName=ERROR_MEDIA_CHANGED
 Language=NLD
-Media changed
+Media veranderd
 .
 MessageId=1111
 SymbolicName=ERROR_BUS_RESET
@@ -1352,52 +1353,52 @@ I/O bus reset
 MessageId=1112
 SymbolicName=ERROR_NO_MEDIA_IN_DRIVE
 Language=NLD
-No media in drive
+Geen media in drive
 .
 MessageId=1113
 SymbolicName=ERROR_NO_UNICODE_TRANSLATION
 Language=NLD
-No unicode translation
+Geen Unicode-vertaling
 .
 MessageId=1114
 SymbolicName=ERROR_DLL_INIT_FAILED
 Language=NLD
-DLL init failed
+DLL init mislukt
 .
 MessageId=1115
 SymbolicName=ERROR_SHUTDOWN_IN_PROGRESS
 Language=NLD
-Shutdown in progress
+Bezig af te sluiten
 .
 MessageId=1116
 SymbolicName=ERROR_NO_SHUTDOWN_IN_PROGRESS
 Language=NLD
-No shutdown in progress
+Niet bezig af te sluiten
 .
 MessageId=1117
 SymbolicName=ERROR_IO_DEVICE
 Language=NLD
-I/O device error
+I/O device-fout
 .
 MessageId=1118
 SymbolicName=ERROR_SERIAL_NO_DEVICE
 Language=NLD
-No serial devices found
+Geen seriële devices gevonden
 .
 MessageId=1119
 SymbolicName=ERROR_IRQ_BUSY
 Language=NLD
-Shared IRQ busy
+Gedeelde IRQ bezig
 .
 MessageId=1120
 SymbolicName=ERROR_MORE_WRITES
 Language=NLD
-Serial I/O completed
+Seriële I/O voltooid
 .
 MessageId=1121
 SymbolicName=ERROR_COUNTER_TIMEOUT
 Language=NLD
-Serial I/O counter timeout
+Seriële I/O-teller timeout
 .
 MessageId=1122
 SymbolicName=ERROR_FLOPPY_ID_MARK_NOT_FOUND
@@ -1407,102 +1408,102 @@ Floppy ID adresteken niet gevonden
 MessageId=1123
 SymbolicName=ERROR_FLOPPY_WRONG_CYLINDER
 Language=NLD
-Floppy reports wrong cylinder
+Floppy rapporteert verkeerde cilinder
 .
 MessageId=1124
 SymbolicName=ERROR_FLOPPY_UNKNOWN_ERROR
 Language=NLD
-Unknown floppy error
+Onbekende floppy-fout
 .
 MessageId=1125
 SymbolicName=ERROR_FLOPPY_BAD_REGISTERS
 Language=NLD
-Floppy registers inconsistent
+Floppyregisters inconsistent
 .
 MessageId=1126
 SymbolicName=ERROR_DISK_RECALIBRATE_FAILED
 Language=NLD
-Hard disk recalibrate failed
+Harde schijf rekalibratie mislukt
 .
 MessageId=1127
 SymbolicName=ERROR_DISK_OPERATION_FAILED
 Language=NLD
-Hard disk operation failed
+Harde schijf operatie mislukt
 .
 MessageId=1128
 SymbolicName=ERROR_DISK_RESET_FAILED
 Language=NLD
-Hard disk reset failed
+Harde schijf reset mislukt
 .
 MessageId=1129
 SymbolicName=ERROR_EOM_OVERFLOW
 Language=NLD
-End of tape media
+Einde van tape media
 .
 MessageId=1130
 SymbolicName=ERROR_NOT_ENOUGH_SERVER_MEMORY
 Language=NLD
-Not enough server memory
+Niet genoeg server-geheugen
 .
 MessageId=1131
 SymbolicName=ERROR_POSSIBLE_DEADLOCK
 Language=NLD
-Possible deadlock
+Mogelijke deadlock
 .
 MessageId=1132
 SymbolicName=ERROR_MAPPED_ALIGNMENT
 Language=NLD
-Incorrect alignment
+Incorrecte groepering
 .
 MessageId=1140
 SymbolicName=ERROR_SET_POWER_STATE_VETOED
 Language=NLD
-Set-power-state vetoed
+Set-power-state gevetood
 .
 MessageId=1141
 SymbolicName=ERROR_SET_POWER_STATE_FAILED
 Language=NLD
-Set-power-state failed
+Set-power-state mislukt
 .
 MessageId=1142
 SymbolicName=ERROR_TOO_MANY_LINKS
 Language=NLD
-Too many links
+Te veel links
 .
 MessageId=1150
 SymbolicName=ERROR_OLD_WIN_VERSION
 Language=NLD
-Newer windows version needed
+Nieuwere windows-versie nodig
 .
 MessageId=1151
 SymbolicName=ERROR_APP_WRONG_OS
 Language=NLD
-Wrong operating system
+Verkeerd besturingssysteem
 .
 MessageId=1152
 SymbolicName=ERROR_SINGLE_INSTANCE_APP
 Language=NLD
-Single-instance application
+Single-instance applicatie
 .
 MessageId=1153
 SymbolicName=ERROR_RMODE_APP
 Language=NLD
-Real-mode application
+Real-mode applicatie
 .
 MessageId=1154
 SymbolicName=ERROR_INVALID_DLL
 Language=NLD
-Invalid DLL
+Ongeldige DLL
 .
 MessageId=1155
 SymbolicName=ERROR_NO_ASSOCIATION
 Language=NLD
-No associated application
+Geen geassocieerde applicatie
 .
 MessageId=1156
 SymbolicName=ERROR_DDE_FAIL
 Language=NLD
-DDE failure
+DDE-fout
 .
 MessageId=1157
 SymbolicName=ERROR_DLL_NOT_FOUND
@@ -1627,22 +1628,22 @@ ERROR_JOURNAL_ENTRY_DELETED
 MessageId=1200
 SymbolicName=ERROR_BAD_DEVICE
 Language=NLD
-Invalid device name
+Ongeldige device-naam
 .
 MessageId=1201
 SymbolicName=ERROR_CONNECTION_UNAVAIL
 Language=NLD
-Connection unavailable
+Verbinding niet beschikbaar
 .
 MessageId=1202
 SymbolicName=ERROR_DEVICE_ALREADY_REMEMBERED
 Language=NLD
-Device already remembered
+Device al onthouden
 .
 MessageId=1203
 SymbolicName=ERROR_NO_NET_OR_BAD_PATH
 Language=NLD
-No network or bad path
+Geen netwerk of slecht pad
 .
 MessageId=1204
 SymbolicName=ERROR_BAD_PROVIDER
