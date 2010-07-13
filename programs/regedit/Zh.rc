@@ -587,6 +587,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "把關鍵詞的名稱複製到剪貼板"
     ID_EDIT_FIND            "在關鍵詞、值或數據中找字符串"
     ID_EDIT_FINDNEXT        "查找下一個剛找過的字符串"
+    ID_EDIT_EXPORT          "Exports selected branch of the registry to a text file"
 END
 
 STRINGTABLE DISCARDABLE
