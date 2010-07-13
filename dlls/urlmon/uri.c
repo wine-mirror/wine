@@ -1902,8 +1902,9 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
             uri->host_type = Uri_HOST_UNKNOWN;
             break;
         default:
-            WARN("(%p %p %x %d): Canonicalization not supported yet\n", data,
-                    uri, flags, computeOnly);
+            FIXME("(%p %p %x %d): Canonicalization for host type %d not supported.\n", data,
+                    uri, flags, computeOnly, data->host_type);
+            return FALSE;
        }
    }
 
@@ -2020,6 +2021,7 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         uri->userinfo_len = 0;
         uri->host_start = -1;
         uri->host_len = 0;
+        uri->host_type = Uri_HOST_UNKNOWN;
         uri->has_port = FALSE;
     }
 
@@ -2398,8 +2400,8 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
     }
 
     switch(uriProp) {
-    case Uri_PROPERTY_SCHEME:
-        *pcchProperty = This->scheme_type;
+    case Uri_PROPERTY_HOST_TYPE:
+        *pcchProperty = This->host_type;
         hres = S_OK;
         break;
     case Uri_PROPERTY_PORT:
@@ -2411,6 +2413,10 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
             hres = S_OK;
         }
 
+        break;
+    case Uri_PROPERTY_SCHEME:
+        *pcchProperty = This->scheme_type;
+        hres = S_OK;
         break;
     default:
         FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
@@ -2572,13 +2578,8 @@ static HRESULT WINAPI Uri_GetUserName(IUri *iface, BSTR *pstrUserName)
 
 static HRESULT WINAPI Uri_GetHostType(IUri *iface, DWORD *pdwHostType)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pdwHostType);
-
-    if(!pdwHostType)
-        return E_INVALIDARG;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pdwHostType);
+    return Uri_GetPropertyDWORD(iface, Uri_PROPERTY_HOST_TYPE, pdwHostType, 0);
 }
 
 static HRESULT WINAPI Uri_GetPort(IUri *iface, DWORD *pdwPort)
