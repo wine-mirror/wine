@@ -934,4 +934,5 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "將進程設為中等優先級"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "將進程設為中等以下優先級"
     ID_PROCESS_PAGE_SETPRIORITY_LOW          "將進程設為低優先級"
+    ID_PROCESS_PAGE_DEBUGCHANNELS           "Controls Debug Channels"
 END
