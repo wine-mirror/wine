@@ -2,6 +2,7 @@
 * Add/Remove Programs (Simplified and Traditional Chinese Resources)
 *
 * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+* Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -29,8 +30,8 @@ LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 STRINGTABLE
 {
    IDS_CPL_TITLE, "添加/删除程序"
-   IDS_CPL_DESC, "允许你安装新软件, 和从你的电脑里删除现有程序."
-   IDS_TAB1_TITLE, "运用程序"
+   IDS_CPL_DESC, "允许你安装新软件或删除现有程序."
+   IDS_TAB1_TITLE, "应用程序"
 
    IDS_UNINSTALL_FAILED, "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表中删除吗?"
    IDS_NOT_SPECIFIED, "没指定"
@@ -38,9 +39,10 @@ STRINGTABLE
    IDS_COLUMN_NAME, "名称"
    IDS_COLUMN_PUBLISHER, "生产商"
    IDS_COLUMN_VERSION, "版本"
+   IDS_INSTALL_FILTER, "安装程序\0*instal*.exe;*setup*.exe;*.msi\0程序 (*.exe)\0*.exe\0所有文件 (*.*)\0*.*\0\0"
 
-   IDS_REMOVE, "&Remove..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_REMOVE, "删除 (&R)..."
+   IDS_MODIFY_REMOVE, "修改或删除 (&M)..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
