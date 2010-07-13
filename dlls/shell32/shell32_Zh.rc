@@ -4,6 +4,7 @@
  * Copyright 1998 Juergen Schmied
  * Copyright 2002 Tisheng Chen
  * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ * Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +28,56 @@
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
+MENU_001 MENU DISCARDABLE
+BEGIN
+	MENUITEM "大图标 (&G)",		FCIDM_SHVIEW_BIGICON
+	MENUITEM "小图标 (&M)",		FCIDM_SHVIEW_SMALLICON
+	MENUITEM "列表 (&L)",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "详细信息 (&D)",	FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  POPUP "查看 (&V)"
+	  BEGIN
+	    MENUITEM "大图标 (&G)",		FCIDM_SHVIEW_BIGICON
+	    MENUITEM "小图标 (&M)",		FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "列表 (&L)",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "详细信息 (&D)",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "排列图标 (&I)"
+	  BEGIN
+	    MENUITEM "按名字 (&N)",	0x30	/* column 0 */
+	    MENUITEM "按类型 (&T)",	0x32	/* column 2 */
+	    MENUITEM "按大小 (&S)",	0x31	/* ... */
+	    MENUITEM "按日期 (&D)",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "自动排列 (&A)",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "对齐图标",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "刷新",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "粘贴",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "粘贴快捷方式",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "新建"
+	  BEGIN
+	    MENUITEM "新文件夹 (&F)",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "新快捷方式 (&L)",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "属性",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
 /*
  shellview item menu
 */
@@ -35,13 +86,13 @@ BEGIN
 	POPUP ""
 	BEGIN
 	  MENUITEM "选择(&S)"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "文件管理器(&x)",FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "文件管理器(&X)",FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "打开(&O)",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
-	  MENUITEM "剪切(&u)",		FCIDM_SHVIEW_CUT
+	  MENUITEM "剪切(&U)",		FCIDM_SHVIEW_CUT
 	  MENUITEM "复制(&C)",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "生成连接(&L)",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "创建快捷方式(&L)",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "删除(&D)",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "改名(&R)",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
@@ -62,7 +113,7 @@ BEGIN
         MENUITEM "大图标(&g)", FCIDM_SHVIEW_BIGICON
         MENUITEM "小图标(&m)", FCIDM_SHVIEW_SMALLICON
         MENUITEM "列表(&L)", FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "详情(&D)", FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "详细信息(&D)", FCIDM_SHVIEW_REPORTVIEW
     END
 
     POPUP "帮助(&H)"
@@ -71,13 +122,59 @@ BEGIN
     END
 END
 
+SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "选择文件夹"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "确定", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "取消", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
+
+SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "选择文件夹"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "文件夹:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "创建新文件夹 (&M)", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "确定", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "取消", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "消息"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "是 (&Y)", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "全部选是 (&A)", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "否 (&N)", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "取消 (&C)", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "关于 %s"
 FONT 9, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "确定", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "使用许可(&l)...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "使用许可(&L)...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
@@ -100,9 +197,9 @@ FONT 9, "MS Shell Dlg"
  PUSHBUTTON "浏览(&B)...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
-/*	columns in the shellview	*/
 STRINGTABLE
-BEGIN
+{
+		/*	columns in the shellview	*/
 	IDS_SHV_COLUMN1		"文件"
 	IDS_SHV_COLUMN2		"大小"
 	IDS_SHV_COLUMN3		"类型"
@@ -112,12 +209,103 @@ BEGIN
 	IDS_SHV_COLUMN7		"剩余空间"
 	IDS_SHV_COLUMN8		"名称"
 	IDS_SHV_COLUMN9		"备注"
+	IDS_SHV_COLUMN10	"所有者" /**/
+	IDS_SHV_COLUMN11	"群组" /**/
+	IDS_SHV_COLUMN_DELFROM	"原位置" /**/
+	IDS_SHV_COLUMN_DELDATE	"删除日期"
+	IDS_SHV_COL_DOCS	"文档" /**/
+	IDS_SHV_COL_STATUS	"状态"
+	IDS_SHV_COL_LOCATION	"位置"
+	IDS_SHV_COL_MODEL	"型号" /**/
+
+		/* context menus */
+	IDS_VIEW_LARGE		"大图标 (&G)"
+	IDS_VIEW_SMALL		"小图标 (&M)"
+	IDS_VIEW_LIST		"列表 (&L)"
+	IDS_VIEW_DETAILS	"详细信息 (&D)"
+	IDS_SELECT		"选择"
+	IDS_OPEN		"打开"
+
+	IDS_CREATEFOLDER_DENIED "无法创建新文件夹: 拒绝访问."
+	IDS_CREATEFOLDER_CAPTION "创建新文件夹时发生了错误"
+	IDS_DELETEITEM_CAPTION "确认删除文件"
+	IDS_DELETEFOLDER_CAPTION "确认删除文件夹"
+	IDS_DELETEITEM_TEXT "真的删除 '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "真的删除这 %1 项?"
+	IDS_DELETESELECTED_TEXT "真的删除选中项?"
+	IDS_TRASHITEM_TEXT "真的把 '%1' 送入回收站?"
+	IDS_TRASHFOLDER_TEXT "真的把 '%1' 及其全部内容送入回收站?"
+	IDS_TRASHMULTIPLE_TEXT "真的把这 %1 项送入回收站?"
+	IDS_CANTTRASH_TEXT "'%1' 一项无法送入回收站. 要彻底删除吗?"
+	IDS_OVERWRITEFILE_TEXT "已存在名为 '%1' 的文件.\n\n要替换吗?"
+	IDS_OVERWRITEFILE_CAPTION "确认覆盖文件"
+	IDS_OVERWRITEFOLDER_TEXT "已存在名为 '%1' 的文件夹.\n\n"\
+	    "若选择合并原有同名文件将被替换. 真的要合并吗?"
+
+	    /* message box strings */
+	    IDS_RESTART_TITLE       "重启"
+	    IDS_RESTART_PROMPT      "要模拟 Windows 重启吗?"
+	    IDS_SHUTDOWN_TITLE      "关闭" /**/
+	    IDS_SHUTDOWN_PROMPT     "要关闭 Wine 会话吗?"
+
+	    /* Run File dialog */
+	    IDS_RUNDLG_ERROR           "无法显示运行文件对话框 (内部错误)"
+	    IDS_RUNDLG_BROWSE_ERROR    "无法显示浏览对话框 (内部错误)"
+	    IDS_RUNDLG_BROWSE_CAPTION  "浏览"
+	    IDS_RUNDLG_BROWSE_FILTER   "可执行文件\0*.exe\0所有文件\0*.*\0\0"
+
+	    /* shell folder path default values */
+	IDS_PROGRAMS                "Start Menu\\Programs"
+	IDS_PERSONAL                "My Documents"
+	IDS_FAVORITES               "Favorites"
+	IDS_STARTUP                 "Start Menu\\Programs\\StartUp"
+	IDS_RECENT                  "Recent"
+	IDS_SENDTO                  "SendTo"
+	IDS_STARTMENU               "Start Menu"
+	IDS_MYMUSIC                 "My Music"
+	IDS_MYVIDEO                 "My Videos"
+	IDS_DESKTOPDIRECTORY        "Desktop"
+	IDS_NETHOOD                 "NetHood"
+	IDS_TEMPLATES               "Templates"
+	IDS_APPDATA                 "Application Data"
+	IDS_PRINTHOOD               "PrintHood"
+	IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
+	IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "Local Settings\\History"
+	IDS_PROGRAM_FILES           "Program Files"
+	IDS_MYPICTURES              "My Pictures"
+	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+	IDS_COMMON_DOCUMENTS        "Documents"
+	IDS_ADMINTOOLS              "Start Menu\\Programs\\Administrative Tools"
+	IDS_COMMON_MUSIC            "Music"
+	IDS_COMMON_PICTURES         "Pictures"
+	IDS_COMMON_VIDEO            "Videos"
+	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+	IDS_NEWFOLDER		"新文件夹" /**/
 
 	IDS_CPANEL_TITLE	"Wine 控制面板"
 	IDS_CPANEL_NAME		"名称"
 	IDS_CPANEL_DESCRIPTION	"描述"
-END
+}
 
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Wine 使用许可"
+IDS_LICENSE,
+"Wine is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\n\
+Wine is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with Wine; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+}
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
 
