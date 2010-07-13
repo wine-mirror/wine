@@ -2,7 +2,7 @@
  * WineCfg resources
  * Norwegian Bokmål Language Support
  *
- * Copyright 2005-2009 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2010 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -59,7 +59,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Programminnstillinger ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine kan etterligne forskjellige Windows-versjoner for hvert program. Denne fanen er koblet med bibliotek- og grafikkfanene, sånn at du kan endre innstillinger for hele systemet eller enkelte programmer der også.",
-                    IDC_STATIC,15,20,227,30
+                    IDC_STATIC,15,20,229,30
     CONTROL         "Programmer",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,120
     PUSHBUTTON	    "Legg til progr&am...",IDC_APP_ADDAPP, 90,174,75,14
@@ -141,7 +141,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Stasjonkartlegging ",IDC_STATIC,8,4,244,195
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
+    LTEXT           "Klarte ikke koble til monteringsbehandleren; diskstasjonene kan derfor ikke redigeres.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "Listevisning",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Legg til...",IDC_BUTTON_ADD,15,98,45,14
@@ -157,7 +157,7 @@ BEGIN
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     PUSHBUTTON      "Avan&sert visning",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,135,60,13
-    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
+    LTEXT           "En&het:",IDC_STATIC_DEVICE,15,153,26,9
     EDITTEXT        IDC_EDIT_DEVICE,41,150,160,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Bla...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
 
@@ -232,7 +232,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Oppsett av Wine for «%s»"
     IDS_THEMEFILE           "Temafiler (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Velg en temafil"
-    IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\n\nog trykk «Bruk» for at endringene skal tre i kraft."
+    IDS_AUDIO_MISSING       "Ingen lyddriver er oppgitt i registeret.\n\nEn anbefalt driver er valgt for deg;\nbruk den eller velg en annen,\nog trykk «Bruk» for at endringene skal tre i kraft."
     IDS_SHELL_FOLDER        "Mappe"
     IDS_LINKS_TO            "Peker til"
 END
