@@ -29,6 +29,7 @@ RC_SRCS = \
 	wineboot_Ro.rc \
 	wineboot_Ru.rc \
 	wineboot_Si.rc \
+	wineboot_Sr.rc \
 	wineboot_Sv.rc \
 	wineboot_Zh.rc
 
