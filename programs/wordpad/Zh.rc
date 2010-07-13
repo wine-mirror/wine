@@ -426,6 +426,7 @@ Caption ""
 FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX "自動換行", -1, 10, 10, 130, 85
+    RADIOBUTTON "No line wrapping", IDC_PAGEFMT_WN, 18, 25, 117, 15
     RADIOBUTTON "按視窗寬度(&W)", IDC_PAGEFMT_WW, 18, 25, 117, 15
     RADIOBUTTON "按紙張寬度(&M)", IDC_PAGEFMT_WM, 18, 45, 117, 15
     GROUPBOX "工具欄", -1, 150, 10, 120, 85
@@ -477,6 +478,8 @@ BEGIN
     STRING_PREVIEW_PREVPAGE,         "上一頁"
     STRING_PREVIEW_TWOPAGES,         "雙頁"
     STRING_PREVIEW_ONEPAGE,          "單頁"
+    STRING_PREVIEW_ZOOMIN,           "Zoom in"
+    STRING_PREVIEW_ZOOMOUT,          "Zoom out"
     STRING_PREVIEW_CLOSE,            "關閉"
 END
 
@@ -495,4 +498,5 @@ BEGIN
     STRING_WRITE_ACCESS_DENIED,       "你沒有儲存檔案的權力."
     STRING_OPEN_FAILED,               "不能開啟檔案."
     STRING_OPEN_ACCESS_DENIED,        "你沒有開啟檔案的權力."
+    STRING_PRINTING_NOT_IMPLEMENTED,  "Printing not implemented"
 END
