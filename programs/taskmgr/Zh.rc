@@ -2,6 +2,7 @@
  * Task Manager (Simplified and Traditional Chinese Resource)
  *
  * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ * Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -477,6 +478,7 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "将进程设为中等优先级"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "将进程设为中等以下优先级"
     ID_PROCESS_PAGE_SETPRIORITY_LOW          "将进程设为低优先级"
+    ID_PROCESS_PAGE_DEBUGCHANNELS			 "控制调试频道"
 END
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
