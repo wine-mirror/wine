@@ -22,18 +22,21 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
 IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Cekanje programa"
+CAPTION "Čekanje programa"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    DEFPUSHBUTTON   "Otkazi",IDCANCEL,129,49,50,15
+    DEFPUSHBUTTON   "Otkaži",IDCANCEL,129,49,50,15
     PUSHBUTTON      "Prekini proces",IDOK,51,49,71,15
     LTEXT           "Simulacija odjave ili restarta je u toku, ali ovaj program ne reaguje.",
                     IDC_STATIC,7,7,172,19
-    LTEXT           "Ako prekinete proces izgubicete sve sto nije sacuvano.",
+    LTEXT           "Ako prekinete proces izgubićete sve sto nije sačuvano.",
                     IDC_STATIC,7,28,172,15
 END
 
@@ -43,6 +46,6 @@ CAPTION "Wine"
 FONT 8, "MS Shell Dlg"
 BEGIN
     ICON "", IDC_WAITICON, 3, 3, 10, 10
-    LTEXT "Wine konfiguracija u %s se osvezava. Molim sacekajte...",
+    LTEXT "Wine konfiguracija u %s se osvežava. Molim sačekajte...",
           IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
 END
