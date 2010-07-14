@@ -37,6 +37,7 @@ RC_SRCS = \
 	winmm_Si.rc \
 	winmm_Sk.rc \
 	winmm_Tr.rc \
+	winmm_Uk.rc \
 	winmm_res.rc
 
 @MAKE_DLL_RULES@
