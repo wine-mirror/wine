@@ -33,7 +33,7 @@ STRINGTABLE DISCARDABLE
     IDS_CERT_INFO_UNTRUSTED_ROOT "Dette sertifikatet kunne ikke godkjennes med et rotsertifikat."
     IDS_CERT_INFO_PARTIAL_CHAIN "Klarte ikke finne sertifikatets utsteder."
     IDS_CERT_INFO_BAD_PURPOSES "Klarte ikke godkjenne alle formålene til dette sertifikatet."
-    IDS_CERT_INFO_PURPOSES "Dette sertifikatet er ment for følgende formål::"
+    IDS_CERT_INFO_PURPOSES "Dette sertifikatet er ment for følgende formål:"
     IDS_SUBJECT_HEADING "Utstedt til: "
     IDS_ISSUER_HEADING "Utstedt av: "
     IDS_VALID_FROM "Gyldig fra "
