@@ -48,6 +48,7 @@ RC_SRCS = \
 	Sk.rc \
 	Sv.rc \
 	Tr.rc \
+	Uk.rc \
 	Zh.rc
 
 @MAKE_DLL_RULES@
