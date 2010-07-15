@@ -53,6 +53,9 @@ typedef struct {
 
     USHORT          port;
     BOOL            has_port;
+
+    INT             authority_start;
+    DWORD           authority_len;
 } Uri;
 
 typedef struct {
@@ -1979,6 +1982,9 @@ static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOO
 
 /* Canonicalizes the authority of the URI represented by the parse_data. */
 static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    uri->authority_start = uri->canon_len;
+    uri->authority_len = 0;
+
     if(!canonicalize_userinfo(data, uri, flags, computeOnly))
         return FALSE;
 
@@ -1987,6 +1993,11 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
 
     if(!canonicalize_port(data, uri, flags, computeOnly))
         return FALSE;
+
+    if(uri->host_start != -1)
+        uri->authority_len = uri->canon_len - uri->authority_start;
+    else
+        uri->authority_start = -1;
 
     return TRUE;
 }
@@ -2023,6 +2034,8 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         uri->host_len = 0;
         uri->host_type = Uri_HOST_UNKNOWN;
         uri->has_port = FALSE;
+        uri->authority_start = -1;
+        uri->authority_len = 0;
     }
 
     return TRUE;
@@ -2222,6 +2235,19 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
     }
 
     switch(uriProp) {
+    case Uri_PROPERTY_AUTHORITY:
+        if(This->authority_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->authority_start, This->authority_len);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     case Uri_PROPERTY_HOST:
         if(This->host_start > -1) {
             /* The '[' and ']' aren't included for IPv6 addresses. */
@@ -2337,6 +2363,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     }
 
     switch(uriProp) {
+    case Uri_PROPERTY_AUTHORITY:
+        *pcchProperty = This->authority_len;
+        hres = (This->authority_start > -1) ? S_OK : S_FALSE;
+        break;
     case Uri_PROPERTY_HOST:
         *pcchProperty = This->host_len;
 
@@ -2450,13 +2480,8 @@ static HRESULT WINAPI Uri_GetAbsoluteUri(IUri *iface, BSTR *pstrAbsoluteUri)
 
 static HRESULT WINAPI Uri_GetAuthority(IUri *iface, BSTR *pstrAuthority)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrAuthority);
-
-    if(!pstrAuthority)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrAuthority);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_AUTHORITY, pstrAuthority, 0);
 }
 
 static HRESULT WINAPI Uri_GetDisplayUri(IUri *iface, BSTR *pstrDisplayUri)

@@ -95,7 +95,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://www.winehq.org/",S_OK,TRUE},                       /* ABSOLUTE_URI */
-            {"www.winehq.org",S_OK,TRUE},                               /* AUTHORITY */
+            {"www.winehq.org",S_OK,FALSE},                              /* AUTHORITY */
             {"http://www.winehq.org/",S_OK,TRUE},                       /* DISPLAY_URI */
             {"winehq.org",S_OK,TRUE},                                   /* DOMAIN */
             {"",S_FALSE,TRUE},                                          /* EXTENSION */
@@ -124,7 +124,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://winehq.org/tests",S_OK,TRUE},
-            {"winehq.org",S_OK,TRUE},
+            {"winehq.org",S_OK,FALSE},
             {"http://winehq.org/tests",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -153,7 +153,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://www.winehq.org/?query=x&return=y",S_OK,TRUE},
-            {"www.winehq.org",S_OK,TRUE},
+            {"www.winehq.org",S_OK,FALSE},
             {"http://www.winehq.org/?query=x&return=y",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -182,7 +182,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://usEr%3Ainfo@example.com/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,TRUE},
-            {"usEr%3Ainfo@example.com",S_OK,TRUE},
+            {"usEr%3Ainfo@example.com",S_OK,FALSE},
             {"http://example.com/path/a/Forbidden'%3C%7C%3E%20Characters",S_OK,TRUE},
             {"example.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -212,7 +212,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://winepass:wine@ftp.winehq.org:9999/dir/foo%20bar.txt",S_OK,TRUE},
-            {"winepass:wine@ftp.winehq.org:9999",S_OK,TRUE},
+            {"winepass:wine@ftp.winehq.org:9999",S_OK,FALSE},
             {"ftp://ftp.winehq.org:9999/dir/foo%20bar.txt",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {".txt",S_OK,TRUE},
@@ -240,7 +240,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"file:///c:/tests/foo%2520bar.mp3",S_OK,TRUE},
-            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
             {"file:///c:/tests/foo%2520bar.mp3",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {".mp3",S_OK,TRUE},
@@ -268,7 +268,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"file:///tests/test%20file.README.txt",S_OK,TRUE},
-            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
             {"file:///tests/test%20file.README.txt",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {".txt",S_OK,TRUE},
@@ -296,7 +296,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"urn:nothing:should:happen here",S_OK,TRUE},
-            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
             {"urn:nothing:should:happen here",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -325,7 +325,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://127.0.0.1/test%20dir/test.txt",S_OK,TRUE},
-            {"127.0.0.1",S_OK,TRUE},
+            {"127.0.0.1",S_OK,FALSE},
             {"http://127.0.0.1/test%20dir/test.txt",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {".txt",S_OK,TRUE},
@@ -354,7 +354,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[fedc:ba98:7654:3210:fedc:ba98:7654:3210]/",S_OK,TRUE},
-            {"[fedc:ba98:7654:3210:fedc:ba98:7654:3210]",S_OK,TRUE},
+            {"[fedc:ba98:7654:3210:fedc:ba98:7654:3210]",S_OK,FALSE},
             {"http://[fedc:ba98:7654:3210:fedc:ba98:7654:3210]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -383,7 +383,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://[::13.1.68.3]/",S_OK,TRUE},
-            {"[::13.1.68.3]",S_OK,TRUE},
+            {"[::13.1.68.3]",S_OK,FALSE},
             {"ftp://[::13.1.68.3]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -412,7 +412,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[fedc:ba98::3210]/",S_OK,TRUE},
-            {"[fedc:ba98::3210]",S_OK,TRUE},
+            {"[fedc:ba98::3210]",S_OK,FALSE},
             {"http://[fedc:ba98::3210]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -441,7 +441,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"1234://www.winehq.org/",S_OK,TRUE},
-            {"www.winehq.org",S_OK,TRUE},
+            {"www.winehq.org",S_OK,FALSE},
             {"1234://www.winehq.org/",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -470,7 +470,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"file:///C:/test/test.mp3",S_OK,TRUE},
-            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
             {"file:///C:/test/test.mp3",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {".mp3",S_OK,TRUE},
@@ -500,7 +500,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"file://server/test.mp3",S_OK,TRUE},
-            {"server",S_OK,TRUE},
+            {"server",S_OK,FALSE},
             {"file://server/test.mp3",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {".mp3",S_OK,TRUE},
@@ -529,7 +529,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"*:www.winehq.org/test",S_OK,TRUE},
-            {"www.winehq.org",S_OK,TRUE},
+            {"www.winehq.org",S_OK,FALSE},
             {"*:www.winehq.org/test",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -559,7 +559,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"*:www.winehq.org/test",S_OK,TRUE},
-            {"www.winehq.org",S_OK,TRUE},
+            {"www.winehq.org",S_OK,FALSE},
             {"*:www.winehq.org/test",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -587,7 +587,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"/../some dir/test.ext",S_OK,TRUE},
-            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
             {"/../some dir/test.ext",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {".ext",S_OK,TRUE},
@@ -615,7 +615,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"*://implicit/wildcard/uri%20scheme",S_OK,TRUE},
-            {"",S_OK,TRUE},
+            {"",S_OK,FALSE},
             {"*://implicit/wildcard/uri%20scheme",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -645,7 +645,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip:/.//google.com",S_OK,TRUE},
-            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
             {"zip:/.//google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {".com",S_OK,TRUE},
@@ -676,7 +676,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://user:pass:word@winehq.org/",S_OK,TRUE},
-            {"user:pass:word@winehq.org",S_OK,TRUE},
+            {"user:pass:word@winehq.org",S_OK,FALSE},
             {"ftp://winehq.org/",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -707,7 +707,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://wINe:PASS@ftp.google.com/",S_OK,TRUE},
-            {"wINe:PASS@ftp.google.com",S_OK,TRUE},
+            {"wINe:PASS@ftp.google.com",S_OK,FALSE},
             {"ftp://ftp.google.com/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -738,7 +738,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://w%5D%5Be:PA%7B%7D@ftp.google.com/",S_OK,TRUE},
-            {"w%5D%5Be:PA%7B%7D@ftp.google.com",S_OK,TRUE},
+            {"w%5D%5Be:PA%7B%7D@ftp.google.com",S_OK,FALSE},
             {"ftp://ftp.google.com/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -769,7 +769,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://empty:@ftp.google.com/",S_OK,TRUE},
-            {"empty:@ftp.google.com",S_OK,TRUE},
+            {"empty:@ftp.google.com",S_OK,FALSE},
             {"ftp://ftp.google.com/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -800,7 +800,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://%22%20%22weird@ftp.google.com/",S_OK,TRUE},
-            {"%22%20%22weird@ftp.google.com",S_OK,TRUE},
+            {"%22%20%22weird@ftp.google.com",S_OK,FALSE},
             {"ftp://ftp.google.com/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -831,7 +831,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://\" \"weird@ftp.google.com/",S_OK,TRUE},
-            {"\" \"weird@ftp.google.com",S_OK,TRUE},
+            {"\" \"weird@ftp.google.com",S_OK,FALSE},
             {"ftp://ftp.google.com/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -861,7 +861,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://%xy:word@winehq.org/",S_OK,TRUE},
-            {"%xy:word@winehq.org",S_OK,TRUE},
+            {"%xy:word@winehq.org",S_OK,FALSE},
             {"zip://%xy:word@winehq.org/",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -893,7 +893,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://%2E:%52%53ord@winehq.org/",S_OK,TRUE},
-            {"%2E:%52%53ord@winehq.org",S_OK,TRUE},
+            {"%2E:%52%53ord@winehq.org",S_OK,FALSE},
             {"zip://%2E:%52%53ord@winehq.org/",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -923,7 +923,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://[](),'test':word@winehq.org/",S_OK,TRUE},
-            {"[](),'test':word@winehq.org",S_OK,TRUE},
+            {"[](),'test':word@winehq.org",S_OK,FALSE},
             {"ftp://winehq.org/",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -952,7 +952,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://test/?:word@winehq.org/",S_OK,TRUE},
-            {"test",S_OK,TRUE},
+            {"test",S_OK,FALSE},
             {"ftp://test/?:word@winehq.org/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -981,7 +981,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://test/#:word@winehq.org/",S_OK,TRUE},
-            {"test",S_OK,TRUE},
+            {"test",S_OK,FALSE},
             {"ftp://test/#:word@winehq.org/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1011,7 +1011,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://test\\:word@winehq.org/",S_OK,TRUE},
-            {"test\\:word@winehq.org",S_OK,TRUE},
+            {"test\\:word@winehq.org",S_OK,FALSE},
             {"zip://test\\:word@winehq.org/",S_OK,TRUE},
             {"winehq.org",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1041,7 +1041,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://127.0.0.100/",S_OK,TRUE},
-            {"127.0.0.100",S_OK,TRUE},
+            {"127.0.0.100",S_OK,FALSE},
             {"http://127.0.0.100/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1071,7 +1071,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://127.0.0.0/",S_OK,TRUE},
-            {"127.0.0.0",S_OK,TRUE},
+            {"127.0.0.0",S_OK,FALSE},
             {"http://127.0.0.0/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1101,7 +1101,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://0.1.226.64/",S_OK,TRUE},
-            {"0.1.226.64",S_OK,TRUE},
+            {"0.1.226.64",S_OK,FALSE},
             {"http://0.1.226.64/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1131,7 +1131,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://255.255.255.255/",S_OK,TRUE},
-            {"255.255.255.255",S_OK,TRUE},
+            {"255.255.255.255",S_OK,FALSE},
             {"http://255.255.255.255/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1161,7 +1161,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://4294967296/",S_OK,TRUE},
-            {"4294967296",S_OK,TRUE},
+            {"4294967296",S_OK,FALSE},
             {"http://4294967296/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1191,7 +1191,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"1234://4294967295/",S_OK,TRUE},
-            {"4294967295",S_OK,TRUE},
+            {"4294967295",S_OK,FALSE},
             {"1234://4294967295/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1221,7 +1221,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"1234://127.001/",S_OK,TRUE},
-            {"127.001",S_OK,TRUE},
+            {"127.001",S_OK,FALSE},
             {"1234://127.001/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1250,7 +1250,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[fedc:ba98::3210]/",S_OK,TRUE},
-            {"[fedc:ba98::3210]",S_OK,TRUE},
+            {"[fedc:ba98::3210]",S_OK,FALSE},
             {"http://[fedc:ba98::3210]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1279,7 +1279,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[::]/",S_OK,TRUE},
-            {"[::]",S_OK,TRUE},
+            {"[::]",S_OK,FALSE},
             {"http://[::]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1308,7 +1308,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[fedc:ba98::]/",S_OK,TRUE},
-            {"[fedc:ba98::]",S_OK,TRUE},
+            {"[fedc:ba98::]",S_OK,FALSE},
             {"http://[fedc:ba98::]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1338,7 +1338,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[1:0:3:4:5:6:7:8]/",S_OK,TRUE},
-            {"[1:0:3:4:5:6:7:8]",S_OK,TRUE},
+            {"[1:0:3:4:5:6:7:8]",S_OK,FALSE},
             {"http://[1:0:3:4:5:6:7:8]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1367,7 +1367,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[v2.34]/",S_OK,TRUE},
-            {"[v2.34]",S_OK,TRUE},
+            {"[v2.34]",S_OK,FALSE},
             {"http://[v2.34]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1397,7 +1397,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[xyz:12345.com/test",S_OK,TRUE},
-            {"[xyz:12345.com",S_OK,TRUE},
+            {"[xyz:12345.com",S_OK,FALSE},
             {"http://[xyz:12345.com/test",S_OK,TRUE},
             {"[xyz:12345.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1429,7 +1429,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"ftp://www.[works].com/",S_OK,TRUE},
-            {"www.[works].com",S_OK,TRUE},
+            {"www.[works].com",S_OK,FALSE},
             {"ftp://www.[works].com/",S_OK,TRUE},
             {"[works].com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1459,7 +1459,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://www.google.com]:12345/",S_OK,TRUE},
-            {"www.google.com]:12345",S_OK,TRUE},
+            {"www.google.com]:12345",S_OK,FALSE},
             {"http://www.google.com]:12345/",S_OK,TRUE},
             {"google.com]",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1489,7 +1489,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://w%XXw%GEw.google.com/",S_OK,TRUE},
-            {"w%XXw%GEw.google.com",S_OK,TRUE},
+            {"w%XXw%GEw.google.com",S_OK,FALSE},
             {"zip://w%XXw%GEw.google.com/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1519,7 +1519,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://GOOGLE.com/",S_OK,TRUE},
-            {"GOOGLE.com",S_OK,TRUE},
+            {"GOOGLE.com",S_OK,FALSE},
             {"zip://GOOGLE.com/",S_OK,TRUE},
             {"GOOGLE.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1549,7 +1549,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://www.google.com/",S_OK,TRUE},
-            {"www.google.com",S_OK,TRUE},
+            {"www.google.com",S_OK,FALSE},
             {"http://www.google.com/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1581,7 +1581,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://www.%7cgoogle%7c.com/",S_OK,TRUE},
-            {"www.%7cgoogle%7c.com",S_OK,TRUE},
+            {"www.%7cgoogle%7c.com",S_OK,FALSE},
             {"http://www.%7cgoogle%7c.com/",S_OK,TRUE},
             {"%7cgoogle%7c.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1611,7 +1611,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[1:2:3:4:5:6::]/",S_OK,TRUE},
-            {"[1:2:3:4:5:6::]",S_OK,TRUE},
+            {"[1:2:3:4:5:6::]",S_OK,FALSE},
             {"http://[1:2:3:4:5:6::]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1641,7 +1641,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[::1.2.3.0]/",S_OK,TRUE},
-            {"[::1.2.3.0]",S_OK,TRUE},
+            {"[::1.2.3.0]",S_OK,FALSE},
             {"http://[::1.2.3.0]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1671,7 +1671,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://[0001:0:000:0004:0005:0006:001.002.003.000]/",S_OK,TRUE},
-            {"[0001:0:000:0004:0005:0006:001.002.003.000]",S_OK,TRUE},
+            {"[0001:0:000:0004:0005:0006:001.002.003.000]",S_OK,FALSE},
             {"zip://[0001:0:000:0004:0005:0006:001.002.003.000]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1701,7 +1701,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://[ffff::c0de:6f20]/",S_OK,TRUE},
-            {"[ffff::c0de:6f20]",S_OK,TRUE},
+            {"[ffff::c0de:6f20]",S_OK,FALSE},
             {"http://[ffff::c0de:6f20]/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1731,7 +1731,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://google.com:65535/",S_OK,TRUE},
-            {"google.com:65535",S_OK,TRUE},
+            {"google.com:65535",S_OK,FALSE},
             {"http://google.com:65535/",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1760,7 +1760,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://google.com:65536/",S_OK,TRUE},
-            {"google.com:65536",S_OK,TRUE},
+            {"google.com:65536",S_OK,FALSE},
             {"zip://google.com:65536/",S_OK,TRUE},
             {"google.com:65536",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1789,7 +1789,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://google.com:65536:25/",S_OK,TRUE},
-            {"google.com:65536:25",S_OK,TRUE},
+            {"google.com:65536:25",S_OK,FALSE},
             {"zip://google.com:65536:25/",S_OK,TRUE},
             {"google.com:65536:25",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1818,7 +1818,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://[::ffff]:abcd/",S_OK,TRUE},
-            {"[::ffff]:abcd",S_OK,TRUE},
+            {"[::ffff]:abcd",S_OK,FALSE},
             {"zip://[::ffff]:abcd/",S_OK,TRUE},
             {"",S_FALSE,TRUE},
             {"",S_FALSE,TRUE},
@@ -1847,7 +1847,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"zip://127.0.0.1:abcd/",S_OK,TRUE},
-            {"127.0.0.1:abcd",S_OK,TRUE},
+            {"127.0.0.1:abcd",S_OK,FALSE},
             {"zip://127.0.0.1:abcd/",S_OK,TRUE},
             {"0.1:abcd",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1876,7 +1876,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://google.com:00035",S_OK,TRUE},
-            {"google.com:00035",S_OK,TRUE},
+            {"google.com:00035",S_OK,FALSE},
             {"http://google.com:00035",S_OK,TRUE,"http://google.com:35"},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -1905,7 +1905,7 @@ static const uri_properties uri_tests[] = {
         TRUE,
         {
             {"http://google.com:80",S_OK,TRUE},
-            {"google.com:80",S_OK,TRUE},
+            {"google.com:80",S_OK,FALSE},
             {"http://google.com:80",S_OK,TRUE},
             {"google.com",S_OK,TRUE},
             {"",S_FALSE,TRUE},
@@ -2364,27 +2364,6 @@ static void test_IUri_GetStrProperties(void) {
             SysFreeString(received);
             received = NULL;
 
-            /* GetAuthority() tests. */
-            prop = test.str_props[Uri_PROPERTY_AUTHORITY];
-            hr = IUri_GetAuthority(uri, &received);
-            if(prop.todo) {
-                todo_wine {
-                    ok(hr == prop.expected, "Error: GetAuthority returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
-                            hr, prop.expected, i);
-                }
-                todo_wine {
-                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
-                            prop.value, wine_dbgstr_w(received), i);
-                }
-            } else {
-                ok(hr == prop.expected, "Error: GetAuthority returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
-                        hr, prop.expected, i);
-                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
-                        prop.value, wine_dbgstr_w(received), i);
-            }
-            SysFreeString(received);
-            received = NULL;
-
             /* GetDisplayUri() tests. */
             prop = test.str_props[Uri_PROPERTY_DISPLAY_URI];
             hr = IUri_GetDisplayUri(uri, &received);
@@ -2493,6 +2472,27 @@ static void test_IUri_GetStrProperties(void) {
             received = NULL;
 
         skip_unimplemented:
+            /* GetAuthority() tests. */
+            prop = test.str_props[Uri_PROPERTY_AUTHORITY];
+            hr = IUri_GetAuthority(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetAuthority returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetAuthority returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
             /* GetHost() tests. */
             prop = test.str_props[Uri_PROPERTY_HOST];
             hr = IUri_GetHost(uri, &received);
