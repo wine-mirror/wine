@@ -107,6 +107,7 @@ static void test_TypeComp(void)
     static WCHAR wszOLE_COLOR[] = {'O','L','E','_','C','O','L','O','R',0};
     static WCHAR wszClone[] = {'C','l','o','n','e',0};
     static WCHAR wszclone[] = {'c','l','o','n','e',0};
+    static WCHAR wszJunk[] = {'J','u','n','k',0};
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
@@ -281,6 +282,17 @@ static void test_TypeComp(void)
     ok(bindptr.lpfuncdesc != NULL, "bindptr.lpfuncdesc should not have been set to NULL\n");
     ITypeInfo_ReleaseFuncDesc(pTypeInfo, bindptr.lpfuncdesc);
     ITypeInfo_Release(pTypeInfo);
+
+    /* tests non-existent members */
+    desckind = 0xdeadbeef;
+    bindptr.lptcomp = (ITypeComp*)0xdeadbeef;
+    pTypeInfo = (ITypeInfo*)0xdeadbeef;
+    ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszJunk);
+    hr = ITypeComp_Bind(pTypeComp, wszJunk, ulHash, 0, &pTypeInfo, &desckind, &bindptr);
+    ok_ole_success(hr, ITypeComp_Bind);
+    ok(desckind == DESCKIND_NONE, "desckind should have been DESCKIND_NONE, was: %d\n", desckind);
+    ok(pTypeInfo == NULL, "pTypeInfo should have been NULL, was: %p\n", pTypeInfo);
+    ok(bindptr.lptcomp == NULL, "bindptr should have been NULL, was: %p\n", bindptr.lptcomp);
 
     ITypeComp_Release(pTypeComp);
     ITypeInfo_Release(pFontTypeInfo);

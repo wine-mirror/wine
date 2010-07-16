@@ -7654,9 +7654,9 @@ static HRESULT WINAPI ITypeComp_fnBind(
     ITypeInfoImpl *This = info_impl_from_ITypeComp(iface);
     const TLBFuncDesc *pFDesc;
     const TLBVarDesc *pVDesc;
-    HRESULT hr = DISP_E_MEMBERNOTFOUND;
+    HRESULT hr = S_OK;
 
-    TRACE("(%s, %x, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
+    TRACE("(%p)->(%s, %x, 0x%x, %p, %p, %p)\n", This, debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
     *pDescKind = DESCKIND_NONE;
     pBindPtr->lpfuncdesc = NULL;
@@ -7716,7 +7716,7 @@ static HRESULT WINAPI ITypeComp_fnBind(
         }
         WARN("Could not search inherited interface!\n");
     }
-    WARN("did not find member with name %s, flags 0x%x!\n", debugstr_w(szName), wFlags);
+    TRACE("did not find member with name %s, flags 0x%x\n", debugstr_w(szName), wFlags);
     return hr;
 }
 
