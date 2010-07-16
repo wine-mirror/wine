@@ -436,7 +436,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     /* get the displayname */
     if (SUCCEEDED(hr) && (flags & SHGFI_DISPLAYNAME))
     {
-        if (flags & SHGFI_USEFILEATTRIBUTES)
+        if (flags & SHGFI_USEFILEATTRIBUTES && !(flags & SHGFI_PIDL))
         {
             lstrcpyW (psfi->szDisplayName, PathFindFileNameW(szFullPath));
         }
@@ -455,7 +455,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
         static const WCHAR szFile[] = { 'F','i','l','e',0 };
         static const WCHAR szDashFile[] = { '-','f','i','l','e',0 };
 
-        if (!(flags & SHGFI_USEFILEATTRIBUTES))
+        if (!(flags & SHGFI_USEFILEATTRIBUTES) || (flags & SHGFI_PIDL))
         {
             char ftype[80];
 
@@ -508,7 +508,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
     {
         UINT uDummy,uFlags;
 
-        if (flags & SHGFI_USEFILEATTRIBUTES)
+        if (flags & SHGFI_USEFILEATTRIBUTES && !(flags & SHGFI_PIDL))
         {
             if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
