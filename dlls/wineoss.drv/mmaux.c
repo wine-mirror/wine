@@ -78,10 +78,11 @@ static LRESULT OSS_AuxExit(void)
 static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSW lpCaps, DWORD dwSize)
 {
     int 	mixer, volume;
-    static const WCHAR ini[] = {'O','S','S',' ','A','u','x',0};
+    static const WCHAR ini[] = {'O','S','S',' ','A','u','x',' ','#','0',0};
 
     TRACE("(%04X, %p, %u);\n", wDevID, lpCaps, dwSize);
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
+    if (wDevID >= NumDev) return MMSYSERR_BADDEVICEID;
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
@@ -93,10 +94,11 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSW lpCaps, DWORD dwSize)
     }
     close(mixer);
     lpCaps->wMid = 0xAA;
-    lpCaps->wPid = 0x55;
+    lpCaps->wPid = 0x55 + wDevID;
     lpCaps->vDriverVersion = 0x0100;
     strcpyW(lpCaps->szPname, ini);
-    lpCaps->wTechnology = AUXCAPS_CDAUDIO;
+    lpCaps->szPname[9] = '0' + wDevID; /* 6  at max */
+    lpCaps->wTechnology = wDevID == 2 ? AUXCAPS_CDAUDIO : AUXCAPS_AUXIN;
     lpCaps->dwSupport = AUXCAPS_VOLUME | AUXCAPS_LRVOLUME;
 
     return MMSYSERR_NOERROR;
