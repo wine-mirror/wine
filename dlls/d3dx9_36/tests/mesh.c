@@ -479,6 +479,67 @@ static void D3DXIntersectTriTest(void)
     ok( got_res == exp_res, "Expected result = %d, got %d\n",exp_res,got_res);
 }
 
+static void D3DXCreateSphereTest(void)
+{
+    HRESULT hr;
+    HWND wnd;
+    IDirect3D9* d3d;
+    IDirect3DDevice9* device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh* sphere = NULL;
+
+    hr = D3DXCreateSphere(NULL, 0.0f, 0, 0, NULL, NULL);
+    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateSphere(NULL, 0.1f, 0, 0, NULL, NULL);
+    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateSphere(NULL, 0.0f, 1, 0, NULL, NULL);
+    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateSphere(NULL, 0.0f, 0, 1, NULL, NULL);
+    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = D3DXCreateSphere(device, 1.0f, 1, 1, &sphere, NULL);
+    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateSphere(device, 1.0f, 2, 2, &sphere, NULL);
+    todo_wine ok( hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+
+    if (sphere)
+        sphere->lpVtbl->Release(sphere);
+
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(wnd);
+}
+
 static void test_get_decl_vertex_size(void)
 {
     static const D3DVERTEXELEMENT9 declaration1[] =
@@ -559,5 +620,6 @@ START_TEST(mesh)
     D3DXDeclaratorFromFVFTest();
     D3DXGetFVFVertexSizeTest();
     D3DXIntersectTriTest();
+    D3DXCreateSphereTest();
     test_get_decl_vertex_size();
 }

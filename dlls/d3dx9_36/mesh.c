@@ -335,3 +335,11 @@ HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT slices,
+                                UINT stacks, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
+{
+    FIXME("(%p, %f, %d, %d, %p, %p): stub\n", device, radius, slices, stacks, mesh, adjacency);
+
+    return E_NOTIMPL;
+}
