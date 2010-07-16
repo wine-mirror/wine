@@ -351,8 +351,8 @@ static const WCHAR *str_last_of(const WCHAR *str, const WCHAR *end, WCHAR ch) {
  * a valid domain name it will assign 'domain_start' the offset
  * into 'host' where the domain name starts.
  *
- * It's implied that if a domain name is found that it goes
- * from [host+domain_start, host+host_len).
+ * It's implied that if a domain name its range is implied to be
+ * [host+domain_start, host+host_len).
  */
 static void find_domain_name(const WCHAR *host, DWORD host_len,
                              INT *domain_start) {
@@ -2023,6 +2023,7 @@ static BOOL canonicalize_ipv6address(const parse_data *data, Uri *uri,
 static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     uri->host_start = -1;
     uri->host_len = 0;
+    uri->domain_offset = -1;
 
     if(data->host) {
         switch(data->host_type) {
@@ -2189,6 +2190,7 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         uri->has_port = FALSE;
         uri->authority_start = -1;
         uri->authority_len = 0;
+        uri->domain_offset = -1;
     }
 
     return TRUE;
@@ -2401,6 +2403,20 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_DOMAIN:
+        if(This->domain_offset > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start+This->domain_offset,
+                                               This->host_len-This->domain_offset);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     case Uri_PROPERTY_HOST:
         if(This->host_start > -1) {
             /* The '[' and ']' aren't included for IPv6 addresses. */
@@ -2519,6 +2535,14 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     case Uri_PROPERTY_AUTHORITY:
         *pcchProperty = This->authority_len;
         hres = (This->authority_start > -1) ? S_OK : S_FALSE;
+        break;
+    case Uri_PROPERTY_DOMAIN:
+        if(This->domain_offset > -1)
+            *pcchProperty = This->host_len - This->domain_offset;
+        else
+            *pcchProperty = 0;
+
+        hres = (This->domain_offset > -1) ? S_OK : S_FALSE;
         break;
     case Uri_PROPERTY_HOST:
         *pcchProperty = This->host_len;
@@ -2650,13 +2674,8 @@ static HRESULT WINAPI Uri_GetDisplayUri(IUri *iface, BSTR *pstrDisplayUri)
 
 static HRESULT WINAPI Uri_GetDomain(IUri *iface, BSTR *pstrDomain)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrDomain);
-
-    if(!pstrDomain)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrDomain);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_DOMAIN, pstrDomain, 0);
 }
 
 static HRESULT WINAPI Uri_GetExtension(IUri *iface, BSTR *pstrExtension)
