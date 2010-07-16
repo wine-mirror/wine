@@ -56,6 +56,8 @@ typedef struct {
 
     INT             authority_start;
     DWORD           authority_len;
+
+    INT             domain_offset;
 } Uri;
 
 typedef struct {
@@ -156,6 +158,21 @@ static const struct {
     {URL_SCHEME_TELNET, 23},
     {URL_SCHEME_WAIS,   210},
     {URL_SCHEME_HTTPS,  443},
+};
+
+/* List of 3 character top level domain names Windows seems to recognize.
+ * There might be more, but, these are the only ones I've found so far.
+ */
+static const struct {
+    WCHAR tld_name[4];
+} recognized_tlds[] = {
+    {{'c','o','m',0}},
+    {{'e','d','u',0}},
+    {{'g','o','v',0}},
+    {{'i','n','t',0}},
+    {{'m','i','l',0}},
+    {{'n','e','t',0}},
+    {{'o','r','g',0}}
 };
 
 static inline BOOL is_alpha(WCHAR val) {
@@ -310,6 +327,138 @@ static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
     dest[0] = '%';
     dest[1] = hexDigits[(val >> 4) & 0xf];
     dest[2] = hexDigits[val & 0xf];
+}
+
+/* Scans the range of characters [str, end] and returns the last occurence
+ * of 'ch' or returns NULL.
+ */
+static const WCHAR *str_last_of(const WCHAR *str, const WCHAR *end, WCHAR ch) {
+    const WCHAR *ptr = end;
+
+    while(ptr >= str) {
+        if(*ptr == ch)
+            return ptr;
+        --ptr;
+    }
+
+    return NULL;
+}
+
+/* Attempts to parse the domain name from the host.
+ *
+ * This function also includes the Top-level Domain (TLD) name
+ * of the host when it tries to find the domain name. If it finds
+ * a valid domain name it will assign 'domain_start' the offset
+ * into 'host' where the domain name starts.
+ *
+ * It's implied that if a domain name is found that it goes
+ * from [host+domain_start, host+host_len).
+ */
+static void find_domain_name(const WCHAR *host, DWORD host_len,
+                             INT *domain_start) {
+    const WCHAR *last_tld, *sec_last_tld, *end;
+
+    end = host+host_len-1;
+
+    *domain_start = -1;
+
+    /* There has to be at least enough room for a '.' followed by a
+     * 3 character TLD for a domain to even exist in the host name.
+     */
+    if(host_len < 4)
+        return;
+
+    last_tld = str_last_of(host, end, '.');
+    if(!last_tld)
+        /* http://hostname -> has no domain name. */
+        return;
+
+    sec_last_tld = str_last_of(host, last_tld-1, '.');
+    if(!sec_last_tld) {
+        /* If the '.' is at the beginning of the host there
+         * has to be at least 3 characters in the TLD for it
+         * to be valid.
+         *  Ex: .com -> .com as the domain name.
+         *      .co  -> has no domain name.
+         */
+        if(last_tld-host == 0) {
+            if(end-(last_tld-1) < 3)
+                return;
+        } else if(last_tld-host == 3) {
+            DWORD i;
+
+            /* If there's three characters in front of last_tld and
+             * they are on the list of recognized TLDs, then this
+             * host doesn't have a domain (since the host only contains
+             * a TLD name.
+             *  Ex: edu.uk -> has no domain name.
+             *      foo.uk -> foo.uk as the domain name.
+             */
+            for(i = 0; i < sizeof(recognized_tlds)/sizeof(recognized_tlds[0]); ++i) {
+                if(!StrCmpNIW(host, recognized_tlds[i].tld_name, 3))
+                    return;
+            }
+        } else if(last_tld-host < 3)
+            /* Anything less then 3 characters is considered part
+             * of the TLD name.
+             *  Ex: ak.uk -> Has no domain name.
+             */
+            return;
+
+        /* Otherwise the domain name is the whole host name. */
+        *domain_start = 0;
+    } else if(end+1-last_tld > 3) {
+        /* If the last_tld has more then 3 characters then it's automatically
+         * considered the TLD of the domain name.
+         *  Ex: www.winehq.org.uk.test -> uk.test as the domain name.
+         */
+        *domain_start = (sec_last_tld+1)-host;
+    } else if(last_tld - (sec_last_tld+1) < 4) {
+        DWORD i;
+        /* If the sec_last_tld is 3 characters long it HAS to be on the list of
+         * recognized to still be considered part of the TLD name, otherwise
+         * its considered the domain name.
+         *  Ex: www.google.com.uk -> google.com.uk as the domain name.
+         *      www.google.foo.uk -> foo.uk as the domain name.
+         */
+        if(last_tld - (sec_last_tld+1) == 3) {
+            for(i = 0; i < sizeof(recognized_tlds)/sizeof(recognized_tlds[0]); ++i) {
+                if(!StrCmpNIW(sec_last_tld+1, recognized_tlds[i].tld_name, 3)) {
+                    const WCHAR *domain = str_last_of(host, sec_last_tld-1, '.');
+
+                    if(!domain)
+                        *domain_start = 0;
+                    else
+                        *domain_start = (domain+1) - host;
+                    TRACE("Found domain name %s\n", debugstr_wn(host+*domain_start,
+                                                        (host+host_len)-(host+*domain_start)));
+                    return;
+                }
+            }
+
+            *domain_start = (sec_last_tld+1)-host;
+        } else {
+            /* Since the sec_last_tld is less then 3 characters it's considered
+             * part of the TLD.
+             *  Ex: www.google.fo.uk -> google.fo.uk as the domain name.
+             */
+            const WCHAR *domain = str_last_of(host, sec_last_tld-1, '.');
+
+            if(!domain)
+                *domain_start = 0;
+            else
+                *domain_start = (domain+1) - host;
+        }
+    } else {
+        /* The second to last TLD has more then 3 characters making it
+         * the domain name.
+         *  Ex: www.google.test.us -> test.us as the domain name.
+         */
+        *domain_start = (sec_last_tld+1)-host;
+    }
+
+    TRACE("Found domain name %s\n", debugstr_wn(host+*domain_start,
+                                        (host+host_len)-(host+*domain_start)));
 }
 
 /* Computes the location where the elision should occur in the IPv6
@@ -1592,6 +1741,10 @@ static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
         TRACE("(%p %p %x %d): Canonicalize reg_name=%s len=%d\n", data, uri, flags,
             computeOnly, debugstr_wn(uri->canon_uri+uri->host_start, uri->host_len),
             uri->host_len);
+
+    if(!computeOnly)
+        find_domain_name(uri->canon_uri+uri->host_start, uri->host_len,
+            &(uri->domain_offset));
 
     return TRUE;
 }
