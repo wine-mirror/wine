@@ -601,7 +601,7 @@ static void test_get_displayname(void)
     ok(ret, "Expected success, got error %u\n", GetLastError());
     /* Test that shows that if the buffersize is enough, it's not changed */
     ok(displaysize == tempsize * 2, "Expected no change for the needed buffer size\n");
-    ok(lstrlen(displayname) == tempsize/2,
+    ok(strlen(displayname) == tempsize/2,
        "Expected the buffer to be twice the length of the string\n") ;
 
     /* Do the buffer(size) tests also for GetServiceDisplayNameW */
@@ -671,7 +671,7 @@ static void test_get_displayname(void)
     displaysize = -1;
     ret = GetServiceDisplayNameA(scm_handle, servicename, NULL, &displaysize);
     ok(!ret, "Expected failure\n");
-    ok(displaysize == lstrlen(servicename) * 2,
+    ok(displaysize == strlen(servicename) * 2,
        "Expected the displaysize to be twice the size of the servicename\n");
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
@@ -856,7 +856,7 @@ static void test_get_servicekeyname(void)
     ok(ret, "Expected success, got error %u\n", GetLastError());
     if (ret)
     {
-        ok(lstrlen(servicename) == tempsize/2,
+        ok(strlen(servicename) == tempsize/2,
            "Expected the buffer to be twice the length of the string\n") ;
         ok(!lstrcmpi(servicename, spooler), "Expected %s, got %s\n", spooler, servicename);
         ok(servicesize == (tempsize * 2),
@@ -870,7 +870,7 @@ static void test_get_servicekeyname(void)
     ok(ret, "Expected success, got error %u\n", GetLastError());
     if (ret)
     {
-        ok(lstrlen(servicename) == tempsize/2,
+        ok(strlen(servicename) == tempsize/2,
            "Expected the buffer to be twice the length of the string\n") ;
         ok(servicesize == lstrlenW(servicenameW),
            "Expected servicesize not to change if buffer not insufficient\n") ;
@@ -1039,7 +1039,7 @@ static void test_enum_svc(void)
     DWORD servicecountactive, servicecountinactive;
     ENUM_SERVICE_STATUS *services;
     ENUM_SERVICE_STATUS_PROCESS *exservices;
-    INT i;
+    UINT i;
 
     /* All NULL or wrong  */
     SetLastError(0xdeadbeef);
