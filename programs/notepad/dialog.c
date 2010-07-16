@@ -717,11 +717,67 @@ static int notepad_print_header(HDC hdc, RECT *rc, BOOL dopage, BOOL header, int
     return 0;
 }
 
+static WCHAR *expand_header_vars(WCHAR *pattern, int page)
+{
+    int length = 0;
+    int i;
+    BOOL inside = FALSE;
+    WCHAR *buffer = NULL;
+
+    for (i = 0; pattern[i]; i++)
+    {
+        if (inside)
+        {
+            if (pattern[i] == '&')
+                length++;
+            else if (pattern[i] == 'p')
+                length += 11;
+            inside = FALSE;
+        }
+        else if (pattern[i] == '&')
+            inside = TRUE;
+        else
+            length++;
+    }
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, (length + 1) * sizeof(WCHAR));
+    if (buffer)
+    {
+        int j = 0;
+        inside = FALSE;
+        for (i = 0; pattern[i]; i++)
+        {
+            if (inside)
+            {
+                if (pattern[i] == '&')
+                    buffer[j++] = '&';
+                else if (pattern[i] == 'p')
+                {
+                    static const WCHAR percent_dW[] = {'%','d',0};
+                    j += wnsprintfW(&buffer[j], 11, percent_dW, page);
+                }
+                inside = FALSE;
+            }
+            else if (pattern[i] == '&')
+                inside = TRUE;
+            else
+                buffer[j++] = pattern[i];
+        }
+        buffer[j++] = 0;
+    }
+    return buffer;
+}
+
 static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTINFO tInfo)
 {
     int b, y;
     TEXTMETRICW tm;
     SIZE szMetrics;
+    WCHAR *footer_text = NULL;
+
+    footer_text = expand_header_vars(Globals.szFooter, page);
+    if (footer_text == NULL)
+        return FALSE;
 
     if (dopage)
     {
@@ -730,13 +786,14 @@ static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTI
             static const WCHAR failedW[] = { 'S','t','a','r','t','P','a','g','e',' ','f','a','i','l','e','d',0 };
             static const WCHAR errorW[] = { 'P','r','i','n','t',' ','E','r','r','o','r',0 };
             MessageBoxW(Globals.hMainWnd, failedW, errorW, MB_ICONEXCLAMATION);
+            HeapFree(GetProcessHeap(), 0, footer_text);
             return FALSE;
         }
     }
 
     GetTextMetricsW(hdc, &tm);
     y = rc->top + notepad_print_header(hdc, rc, dopage, TRUE, page, Globals.szFileName) * tm.tmHeight;
-    b = rc->bottom - 2 * notepad_print_header(hdc, rc, FALSE, FALSE, page, Globals.szFooter) * tm.tmHeight;
+    b = rc->bottom - 2 * notepad_print_header(hdc, rc, FALSE, FALSE, page, footer_text) * tm.tmHeight;
 
     do {
         INT m, n;
@@ -804,11 +861,12 @@ static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTI
         }
     } while (tInfo->mptr < tInfo->mend && y < b);
 
-    notepad_print_header(hdc, rc, dopage, FALSE, page, Globals.szFooter);
+    notepad_print_header(hdc, rc, dopage, FALSE, page, footer_text);
     if (dopage)
     {
         EndPage(hdc);
     }
+    HeapFree(GetProcessHeap(), 0, footer_text);
     return TRUE;
 }
 
