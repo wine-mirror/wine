@@ -33,7 +33,7 @@
 @ stub SCardIntroduceReaderGroupA
 @ stub SCardIntroduceReaderGroupW
 @ stub SCardIntroduceReaderW
-@ stub SCardIsValidContext
+@ stdcall SCardIsValidContext(long)
 @ stdcall SCardListCardsA(long ptr ptr long str long)
 @ stub SCardListCardsW
 @ stub SCardListInterfacesA
@@ -47,7 +47,7 @@
 @ stub SCardLocateCardsByATRW
 @ stub SCardLocateCardsW
 @ stub SCardReconnect
-@ stub SCardReleaseContext
+@ stdcall SCardReleaseContext(long)
 @ stub SCardReleaseStartedEvent
 @ stub SCardRemoveReaderFromGroupA
 @ stub SCardRemoveReaderFromGroupW

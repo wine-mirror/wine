@@ -95,9 +95,23 @@ LONG WINAPI SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
     return SCARD_F_INTERNAL_ERROR;
 }
 
+LONG WINAPI SCardIsValidContext(SCARDCONTEXT context)
+{
+    FIXME("(%lx) stub\n", context);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SCARD_F_INTERNAL_ERROR;
+}
+
 LONG WINAPI SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr, LPCGUID rgguidInterfaces, DWORD cguidInterfaceCount, LPSTR mszCards, LPDWORD pcchCards)
 {
     FIXME(": stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SCARD_F_INTERNAL_ERROR;
+}
+
+LONG WINAPI SCardReleaseContext(SCARDCONTEXT context)
+{
+    FIXME("(%lx) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
