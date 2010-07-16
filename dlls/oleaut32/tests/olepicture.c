@@ -216,6 +216,13 @@ test_pic_with_stream(LPSTREAM stream, unsigned int imgsize)
 	ok(hres == S_OK,"IPicture_get_Handle does not return S_OK, but 0x%08x\n", hres);
 	ok(handle != 0, "IPicture_get_Handle returns a NULL handle, but it should be non NULL\n");
 
+        if (handle)
+        {
+            BITMAP bmp;
+            GetObject((HGDIOBJ)handle, sizeof(BITMAP), &bmp);
+            todo_wine ok(bmp.bmBits != 0, "not a dib\n");
+        }
+
 	width = 0;
 	hres = IPicture_get_Width (pic, &width);
 	ok(hres == S_OK,"IPicture_get_Width does not return S_OK, but 0x%08x\n", hres);
