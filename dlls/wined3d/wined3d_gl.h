@@ -1818,6 +1818,7 @@ typedef enum wined3d_gl_extension
     NV_FRAGMENT_PROGRAM_OPTION,
     NV_HALF_FLOAT,
     NV_LIGHT_MAX_EXPONENT,
+    NV_POINT_SPRITE,
     NV_REGISTER_COMBINERS,
     NV_REGISTER_COMBINERS2,
     NV_TEXGEN_REFLECTION,
@@ -3482,6 +3483,16 @@ typedef void (WINE_GLAPI *PGLFNVERTEXATTRIBS4HVNVPROC)(GLuint index, GLsizei n, 
 #define GL_MAX_SPOT_EXPONENT_NV                             0x8505
 #endif
 
+/* GL_NV_point_sprite */
+#ifndef GL_NV_point_sprite
+#define GL_NV_point_sprite 1
+#define GL_NV_POINT_SPRITE_NV                               0x8861
+#define GL_NV_COORD_REPLACE_NV                              0x8862
+#define GL_NV_POINT_SPRITE_R_MODE_NV                        0x8863
+#endif
+typedef void (WINE_GLAPI *PGLFNPOINTPARAMETERIVNVPROC)(GLenum pname, const GLint *params);
+typedef void (WINE_GLAPI *PGLFNPOINTPARAMETERINVPROC)(GLenum pname, GLint param);
+
 /* GL_NV_register_combiners */
 #ifndef GL_NV_register_combiners
 #define GL_NV_register_combiners 1
@@ -4477,6 +4488,11 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
             glVertexAttribs3hvNV,                       NV_HALF_FLOAT,                  NULL) \
     USE_GL_FUNC(PGLFNVERTEXATTRIBS4HVNVPROC, \
             glVertexAttribs4hvNV,                       NV_HALF_FLOAT,                  NULL) \
+    /* GL_NV_point_sprite */ \
+    USE_GL_FUNC(PGLFNPOINTPARAMETERIVNVPROC, \
+            glPointParameterivNV,                       NV_POINT_SPRITE,                NULL) \
+    USE_GL_FUNC(PGLFNPOINTPARAMETERINVPROC, \
+            glPointParameteriNV,                        NV_POINT_SPRITE,                NULL) \
     /* GL_NV_register_combiners */ \
     USE_GL_FUNC(PGLFNCOMBINERINPUTNVPROC, \
             glCombinerInputNV,                          NV_REGISTER_COMBINERS,          NULL) \

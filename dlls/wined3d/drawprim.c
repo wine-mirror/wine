@@ -644,7 +644,9 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         }
     }
 
-    if (!context->gl_info->supported[WINED3D_GL_VERSION_2_0] && context->render_offscreen
+    if ((!context->gl_info->supported[WINED3D_GL_VERSION_2_0]
+            || (!glPointParameteri && !context->gl_info->supported[NV_POINT_SPRITE]))
+            && context->render_offscreen
             && This->stateBlock->renderState[WINED3DRS_POINTSPRITEENABLE]
             && This->stateBlock->gl_primitive_type == GL_POINTS)
     {
