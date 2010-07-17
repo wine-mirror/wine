@@ -3621,6 +3621,12 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                             break;
                         }
                     }
+
+                    if(!loop_next) {
+                        TRACE("Cleaning wrong authorization data\n");
+                        destroy_authinfo(lpwhr->pAuthInfo);
+                        lpwhr->pAuthInfo = NULL;
+                    }
                 }
                 if (dwStatusCode == HTTP_STATUS_PROXY_AUTH_REQ)
                 {
@@ -3636,6 +3642,12 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                             loop_next = TRUE;
                             break;
                         }
+                    }
+
+                    if(!loop_next) {
+                        TRACE("Cleaning wrong proxy authorization data\n");
+                        destroy_authinfo(lpwhr->pProxyAuthInfo);
+                        lpwhr->pProxyAuthInfo = NULL;
                     }
                 }
             }
