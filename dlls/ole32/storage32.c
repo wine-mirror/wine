@@ -92,6 +92,7 @@ static StorageInternalImpl* StorageInternalImpl_Construct(StorageBaseImpl* paren
                                                           DWORD openFlags, DirRef storageDirEntry);
 static void StorageImpl_Destroy(StorageBaseImpl* iface);
 static void StorageImpl_Invalidate(StorageBaseImpl* iface);
+static HRESULT StorageImpl_Flush(StorageBaseImpl* iface);
 static BOOL StorageImpl_ReadBigBlock(StorageImpl* This, ULONG blockIndex, void* buffer);
 static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, const void* buffer);
 static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex, ULONG nextBlock);
@@ -1815,16 +1816,15 @@ static HRESULT WINAPI StorageBaseImpl_MoveElementTo(
  * Ensures that any changes made to a storage object open in transacted mode
  * are reflected in the parent storage
  *
- * NOTES
- *  Wine doesn't implement transacted mode, which seems to be a basic
- *  optimization, so we can ignore this stub for now.
+ * In a non-transacted mode, this ensures all cached writes are completed.
  */
 static HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
   DWORD         grfCommitFlags)/* [in] */
 {
-  FIXME("(%p %d): stub\n", iface, grfCommitFlags);
-  return S_OK;
+  StorageBaseImpl* const base=(StorageBaseImpl*)iface;
+  TRACE("(%p %d)\n", iface, grfCommitFlags);
+  return StorageBaseImpl_Flush(base);
 }
 
 /*************************************************************************
@@ -2625,6 +2625,7 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
 {
   StorageImpl_Destroy,
   StorageImpl_Invalidate,
+  StorageImpl_Flush,
   StorageImpl_GetFilename,
   StorageImpl_CreateDirEntry,
   StorageImpl_BaseWriteDirEntry,
@@ -2868,6 +2869,8 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   int i;
   TRACE("(%p)\n", This);
 
+  StorageImpl_Flush(iface);
+
   StorageImpl_Invalidate(iface);
 
   BlockChainStream_Destroy(This->smallBlockRootChain);
@@ -2880,6 +2883,13 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   if (This->lockBytes)
     ILockBytes_Release(This->lockBytes);
   HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT StorageImpl_Flush(StorageBaseImpl* iface)
+{
+  StorageImpl *This = (StorageImpl*) iface;
+
+  return ILockBytes_Flush(This->lockBytes);
 }
 
 /******************************************************************************
@@ -4525,9 +4535,12 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
   else
     dir_root_ref = This->entries[root_entry->data.dirRootEntry].newTransactedParentEntry;
 
+  hr = StorageBaseImpl_Flush(This->transactedParent);
+
   /* Update the storage to use the new data in one step. */
-  hr = StorageBaseImpl_ReadDirEntry(This->transactedParent,
-    root_entry->transactedParentEntry, &data);
+  if (SUCCEEDED(hr))
+    hr = StorageBaseImpl_ReadDirEntry(This->transactedParent,
+      root_entry->transactedParentEntry, &data);
 
   if (SUCCEEDED(hr))
   {
@@ -4539,6 +4552,11 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
     hr = StorageBaseImpl_WriteDirEntry(This->transactedParent,
       root_entry->transactedParentEntry, &data);
   }
+
+  /* Try to flush after updating the root storage, but if the flush fails, keep
+   * going, on the theory that it'll either succeed later or the subsequent
+   * writes will fail. */
+  StorageBaseImpl_Flush(This->transactedParent);
 
   if (SUCCEEDED(hr))
   {
@@ -4578,6 +4596,9 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
   {
     TransactedSnapshotImpl_DestroyTemporaryCopy(This, DIRENTRY_NULL);
   }
+
+  if (SUCCEEDED(hr))
+    hr = StorageBaseImpl_Flush(This->transactedParent);
 
   return hr;
 }
@@ -4640,6 +4661,12 @@ static void TransactedSnapshotImpl_Destroy( StorageBaseImpl *iface)
   HeapFree(GetProcessHeap(), 0, This->entries);
 
   HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT TransactedSnapshotImpl_Flush(StorageBaseImpl* iface)
+{
+  /* We only need to flush when committing. */
+  return S_OK;
 }
 
 static HRESULT TransactedSnapshotImpl_GetFilename(StorageBaseImpl* iface, LPWSTR *result)
@@ -4896,6 +4923,7 @@ static const StorageBaseImplVtbl TransactedSnapshotImpl_BaseVtbl =
 {
   TransactedSnapshotImpl_Destroy,
   TransactedSnapshotImpl_Invalidate,
+  TransactedSnapshotImpl_Flush,
   TransactedSnapshotImpl_GetFilename,
   TransactedSnapshotImpl_CreateDirEntry,
   TransactedSnapshotImpl_WriteDirEntry,
@@ -5042,6 +5070,13 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
   HeapFree(GetProcessHeap(), 0, This);
 }
 
+static HRESULT StorageInternalImpl_Flush(StorageBaseImpl* iface)
+{
+  StorageInternalImpl* This = (StorageInternalImpl*) iface;
+
+  return StorageBaseImpl_Flush(This->parentStorage);
+}
+
 static HRESULT StorageInternalImpl_GetFilename(StorageBaseImpl* iface, LPWSTR *result)
 {
   StorageInternalImpl* This = (StorageInternalImpl*) iface;
@@ -5130,8 +5165,9 @@ static HRESULT WINAPI StorageInternalImpl_Commit(
   IStorage*            iface,
   DWORD                  grfCommitFlags)  /* [in] */
 {
-  FIXME("(%p,%x): stub\n", iface, grfCommitFlags);
-  return S_OK;
+  StorageBaseImpl* base = (StorageBaseImpl*) iface;
+  TRACE("(%p,%x)\n", iface, grfCommitFlags);
+  return StorageBaseImpl_Flush(base);
 }
 
 /******************************************************************************
@@ -5474,6 +5510,7 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 {
   StorageInternalImpl_Destroy,
   StorageInternalImpl_Invalidate,
+  StorageInternalImpl_Flush,
   StorageInternalImpl_GetFilename,
   StorageInternalImpl_CreateDirEntry,
   StorageInternalImpl_WriteDirEntry,

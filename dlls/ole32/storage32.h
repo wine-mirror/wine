@@ -234,6 +234,7 @@ struct StorageBaseImpl
 struct StorageBaseImplVtbl {
   void (*Destroy)(StorageBaseImpl*);
   void (*Invalidate)(StorageBaseImpl*);
+  HRESULT (*Flush)(StorageBaseImpl*);
   HRESULT (*GetFilename)(StorageBaseImpl*,LPWSTR*);
   HRESULT (*CreateDirEntry)(StorageBaseImpl*,const DirEntry*,DirRef*);
   HRESULT (*WriteDirEntry)(StorageBaseImpl*,DirRef,const DirEntry*);
@@ -253,6 +254,11 @@ static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
 static inline void StorageBaseImpl_Invalidate(StorageBaseImpl *This)
 {
   This->baseVtbl->Invalidate(This);
+}
+
+static inline HRESULT StorageBaseImpl_Flush(StorageBaseImpl *This)
+{
+  return This->baseVtbl->Flush(This);
 }
 
 static inline HRESULT StorageBaseImpl_GetFilename(StorageBaseImpl *This, LPWSTR *result)
