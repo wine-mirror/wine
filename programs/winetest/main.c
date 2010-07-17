@@ -65,6 +65,12 @@ static unsigned int nb_filters = 0;
 static HMODULE hmscoree;
 static HRESULT (WINAPI *pLoadLibraryShim)(LPCWSTR, LPCWSTR, LPVOID, HMODULE *);
 
+/* For SxS DLLs e.g. msvcr90 */
+static HANDLE (WINAPI *pCreateActCtxA)(PACTCTXA);
+static BOOL (WINAPI *pActivateActCtx)(HANDLE, ULONG_PTR *);
+static BOOL (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
+static void (WINAPI *pReleaseActCtx)(HANDLE);
+
 /* To store the current PATH setting (related to .NET only provided dlls) */
 static char *curpath;
 
@@ -512,7 +518,6 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
         goto quit;
     }
 
-    extract_test (test, tempdir, res_name);
     cmd = strmake (NULL, "%s --list", test->exename);
     if (test->maindllpath) {
         /* We need to add the path (to the main dll) to PATH */
@@ -677,14 +682,36 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     WCHAR dllnameW[MAX_PATH];
     HMODULE dll;
     DWORD err;
+    HANDLE actctx;
+    ULONG_PTR cookie;
 
     if (aborting) return TRUE;
     if (test_filtered_out( lpszName, NULL )) return TRUE;
 
-    /* Check if the main dll is present on this system */
     CharLowerA(lpszName);
+    extract_test (&wine_tests[nr_of_files], tempdir, lpszName);
+
+    /* Check if the main dll is present on this system */
     strcpy(dllname, lpszName);
     *strstr(dllname, testexe) = 0;
+
+    if (pCreateActCtxA != NULL && pActivateActCtx != NULL &&
+        pDeactivateActCtx != NULL && pReleaseActCtx != NULL)
+    {
+        ACTCTXA actctxinfo;
+        memset(&actctxinfo, 0, sizeof(ACTCTXA));
+        actctxinfo.cbSize = sizeof(ACTCTXA);
+        actctxinfo.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+        actctxinfo.lpSource = wine_tests[nr_of_files].exename;
+        actctxinfo.lpResourceName = CREATEPROCESS_MANIFEST_RESOURCE_ID;
+        actctx = pCreateActCtxA(&actctxinfo);
+        if (actctx != INVALID_HANDLE_VALUE &&
+            ! pActivateActCtx(actctx, &cookie))
+        {
+            pReleaseActCtx(actctx);
+            actctx = INVALID_HANDLE_VALUE;
+        }
+    } else actctx = INVALID_HANDLE_VALUE;
 
     wine_tests[nr_of_files].maindllpath = NULL;
     strcpy(filename, dllname);
@@ -707,6 +734,11 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     if (!dll)
     {
         xprintf ("    %s=dll is missing\n", dllname);
+        if (actctx != INVALID_HANDLE_VALUE)
+        {
+            pDeactivateActCtx(0, cookie);
+            pReleaseActCtx(actctx);
+        }
         return TRUE;
     }
     if (is_native_dll(dll))
@@ -714,6 +746,11 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
         FreeLibrary(dll);
         xprintf ("    %s=load error Configured as native\n", dllname);
         nr_native_dlls++;
+        if (actctx != INVALID_HANDLE_VALUE)
+        {
+            pDeactivateActCtx(0, cookie);
+            pReleaseActCtx(actctx);
+        }
         return TRUE;
     }
     FreeLibrary(dll);
@@ -728,6 +765,12 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
     {
         xprintf ("    %s=load error %u\n", dllname, err);
     }
+
+    if (actctx != INVALID_HANDLE_VALUE)
+    {
+        pDeactivateActCtx(0, cookie);
+        pReleaseActCtx(actctx);
+    }
     return TRUE;
 }
 
@@ -740,6 +783,7 @@ run_tests (char *logname, char *outdir)
     SECURITY_ATTRIBUTES sa;
     char tmppath[MAX_PATH], tempdir[MAX_PATH+4];
     DWORD needed;
+    HMODULE kernel32;
 
     /* Get the current PATH only once */
     needed = GetEnvironmentVariableA("PATH", NULL, 0);
@@ -831,6 +875,11 @@ run_tests (char *logname, char *outdir)
     pLoadLibraryShim = NULL;
     if (hmscoree)
         pLoadLibraryShim = (void *)GetProcAddress(hmscoree, "LoadLibraryShim");
+    kernel32 = GetModuleHandleA("kernel32.dll");
+    pCreateActCtxA = (void *)GetProcAddress(kernel32, "CreateActCtxA");
+    pActivateActCtx = (void *)GetProcAddress(kernel32, "ActivateActCtx");
+    pDeactivateActCtx = (void *)GetProcAddress(kernel32, "DeactivateActCtx");
+    pReleaseActCtx = (void *)GetProcAddress(kernel32, "ReleaseActCtx");
 
     report (R_STATUS, "Extracting tests");
     report (R_PROGRESS, 0, nr_of_files);
