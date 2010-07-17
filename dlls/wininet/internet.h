@@ -71,6 +71,27 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     return ret;
 }
 
+static inline LPWSTR heap_strndupW(LPCWSTR str, UINT max_len)
+{
+    LPWSTR ret;
+    UINT len;
+
+    if(!str)
+        return NULL;
+
+    for(len=0; len<max_len; len++)
+        if(str[len] == '\0')
+            break;
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
+    if(ret) {
+        memcpy(ret, str, sizeof(WCHAR)*len);
+        ret[len] = '\0';
+    }
+
+    return ret;
+}
+
 static inline WCHAR *heap_strdupAtoW(const char *str)
 {
     LPWSTR ret = NULL;
