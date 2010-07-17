@@ -3279,6 +3279,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     LONG orgNextTop = 0;
     RECT scrollRect;
     TREEVIEW_ITEM *nextItem, *tmpItem;
+    BOOL sendsNotifications;
 
     TRACE("(%p, %p, partial=%d, %d\n", infoPtr, wineItem, bExpandPartial, bUser);
 
@@ -3301,8 +3302,9 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     TRACE("TVE_EXPAND %p %s\n", wineItem, TREEVIEW_ItemName(wineItem));
 
-    if (bUser || ((wineItem->cChildren != 0) &&
-                  !(wineItem->state & TVIS_EXPANDEDONCE)))
+    sendsNotifications = bUser || ((wineItem->cChildren != 0) &&
+                                    !(wineItem->state & TVIS_EXPANDEDONCE));
+    if (sendsNotifications)
     {
 	if (!TREEVIEW_SendExpanding(infoPtr, wineItem, TVE_EXPAND))
 	{
@@ -3314,8 +3316,6 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
             return FALSE;
 
 	wineItem->state |= TVIS_EXPANDED;
-	TREEVIEW_SendExpanded(infoPtr, wineItem, TVE_EXPAND);
-	wineItem->state |= TVIS_EXPANDEDONCE;
     }
     else
     {
@@ -3382,6 +3382,11 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
                 }
             }
         }
+    }
+
+    if (sendsNotifications) {
+        TREEVIEW_SendExpanded(infoPtr, wineItem, TVE_EXPAND);
+        wineItem->state |= TVIS_EXPANDEDONCE;
     }
 
     return TRUE;

@@ -918,7 +918,6 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                   visibleItem = TreeView_GetNextItem(pHdr->hwndFrom, visibleItem, TVGN_NEXTVISIBLE);
                   *(HTREEITEM*)&rect = visibleItem;
                   ok(visibleItem != NULL, "There must be a visible item after the first visisble item.\n");
-                  todo_wine
                   ok(SendMessage(pHdr->hwndFrom, TVM_GETITEMRECT, TRUE, (LPARAM)&rect), "Failed to get rect for second visible item.\n");
                 }
                 break;
