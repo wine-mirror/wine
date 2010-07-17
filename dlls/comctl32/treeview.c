@@ -1208,6 +1208,11 @@ TREEVIEW_DoSetItemT(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	wineItem->state |= (tvItem->state & tvItem->stateMask);
     }
 
+    if (tvItem->mask & TVIF_STATEEX)
+    {
+        FIXME("New extended state: %x\n", tvItem->uStateEx);
+    }
+
     wineItem->callbackMask |= callbackSet;
     wineItem->callbackMask &= ~callbackClear;
 
