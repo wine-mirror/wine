@@ -180,7 +180,6 @@ static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
 {
     DWORD dLen, dLast;
-    LPWSTR str;
     BSTR bstr;
 
     if(!name) return NULL;
@@ -190,16 +189,13 @@ static BSTR QName_from_xmlChar(const xmlChar *prefix, const xmlChar *name)
 
     dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, NULL, 0)
         + MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, NULL, 0);
-    str = heap_alloc(dLen * sizeof(WCHAR));
-    if(!str)
+    bstr = SysAllocStringLen(NULL, dLen-1);
+    if(!bstr)
         return NULL;
 
-    dLast = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, str, dLen);
-    str[dLast-1] = ':';
-    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, &str[dLast], dLen-dLast);
-    bstr = SysAllocString(str);
-
-    heap_free(str);
+    dLast = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)prefix, -1, bstr, dLen);
+    bstr[dLast-1] = ':';
+    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)name, -1, &bstr[dLast], dLen-dLast);
 
     return bstr;
 }
