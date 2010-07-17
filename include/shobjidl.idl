@@ -30,7 +30,7 @@ import "propidl.idl";
 /* FIXME: import "prsht.idl";*/
 import "msxml.idl";
 import "wtypes.idl";
-/* FIXME: import "propsys.idl"; */
+import "propsys.idl";
 /* FIXME: import "structuredquery.idl"; */
 
 cpp_quote("/* FIXME: #include <sherrors.h> */")
@@ -440,6 +440,76 @@ interface IEnumShellItems : IUnknown
 
     HRESULT Clone(
         [out] IEnumShellItems **ppenum);
+}
+
+/*****************************************************************************
+ * IShellItemArray interface
+ */
+[
+ object,
+ uuid(B63EA76D-1F85-456F-A19C-48159EFA858B),
+ pointer_default(unique)
+]
+interface IShellItemArray : IUnknown
+{
+    typedef [v1_enum] enum SIATTRIBFLAGS {
+        SIATTRIBFLAGS_AND            = 0x0001,
+        SIATTRIBFLAGS_OR             = 0x0002,
+        SIATTRIBFLAGS_APPCOMPAT      = 0x0003,
+        SIATTRIBFLAGS_MASK           = 0x0003,
+        SIATTRIBFLAGS_ALLITEMS       = 0x4000
+    } SIATTRIBFLAGS;
+    cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(SIATTRIBFLAGS)")
+
+    HRESULT BindToHandler(
+        [in, unique] IBindCtx *pbc,
+        [in] REFGUID bhid,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppvOut);
+
+    HRESULT GetPropertyStore(
+        [in] GETPROPERTYSTOREFLAGS flags,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT GetPropertyDescriptionList(
+        [in] REFPROPERTYKEY keyType,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT GetAttributes(
+        [in] SIATTRIBFLAGS AttribFlags,
+        [in] SFGAOF sfgaoMask,
+        [out] SFGAOF *psfgaoAttribs);
+
+    HRESULT GetCount(
+        [out] DWORD *pdwNumItems);
+
+    HRESULT GetItemAt(
+        [in] DWORD dwIndex,
+        [out] IShellItem **ppsi);
+
+    HRESULT EnumItems(
+        [out] IEnumShellItems **ppenumShellItems);
+
+}
+
+/*****************************************************************************
+ * IShellItemFilter interface
+ */
+[
+ object,
+ uuid(2659B475-EEB8-48B7-8F07-B378810F48CF),
+ pointer_default(unique)
+]
+interface IShellItemFilter : IUnknown
+{
+    HRESULT IncludeItem(
+        [in] IShellItem *psi);
+
+    HRESULT GetEnumFlagsForItem(
+        [in] IShellItem *psi,
+        [out] SHCONTF *pgrfFlags);
 }
 
 /*****************************************************************************
