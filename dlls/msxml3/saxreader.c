@@ -139,7 +139,7 @@ static HRESULT namespacePush(saxlocator *locator, int ns)
         int *new_stack;
 
         new_stack = HeapReAlloc(GetProcessHeap(), 0,
-                locator->nsStack, locator->nsStackSize*2);
+                locator->nsStack, sizeof(int)*locator->nsStackSize*2);
         if(!new_stack) return E_OUTOFMEMORY;
         locator->nsStack = new_stack;
         locator->nsStackSize *= 2;
@@ -1752,7 +1752,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     locator->ret = S_OK;
     locator->nsStackSize = 8;
     locator->nsStackLast = 0;
-    locator->nsStack = heap_alloc(locator->nsStackSize);
+    locator->nsStack = heap_alloc(sizeof(int)*locator->nsStackSize);
     if(!locator->nsStack)
     {
         ISAXXMLReader_Release((ISAXXMLReader*)&reader->lpSAXXMLReaderVtbl);
