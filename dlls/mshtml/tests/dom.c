@@ -2875,6 +2875,21 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
     ok(hres == S_OK, "get_top failed: %08x\n", hres);
     ok(l != 0xdeadbeef, "l = 0xdeadbeef\n");
 
+    l = 0xdeadbeef;
+    hres = IHTMLRect_get_left(rect, &l);
+    ok(hres == S_OK, "get_left failed: %08x\n", hres);
+    ok(l != 0xdeadbeef, "l = 0xdeadbeef\n");
+
+    l = 0xdeadbeef;
+    hres = IHTMLRect_get_bottom(rect, &l);
+    ok(hres == S_OK, "get_bottom failed: %08x\n", hres);
+    ok(l != 0xdeadbeef, "l = 0xdeadbeef\n");
+
+    l = 0xdeadbeef;
+    hres = IHTMLRect_get_right(rect, &l);
+    ok(hres == S_OK, "get_right failed: %08x\n", hres);
+    ok(l != 0xdeadbeef, "l = 0xdeadbeef\n");
+
     IHTMLRect_Release(rect);
 }
 

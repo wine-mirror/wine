@@ -138,8 +138,19 @@ static HRESULT WINAPI HTMLRect_put_left(IHTMLRect *iface, LONG v)
 static HRESULT WINAPI HTMLRect_get_left(IHTMLRect *iface, LONG *p)
 {
     HTMLRect *This = HTMLRECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    float left;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMClientRect_GetLeft(This->nsrect, &left);
+    if(NS_FAILED(nsres)) {
+        ERR("GetLeft failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = floor(left+0.5);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLRect_put_top(IHTMLRect *iface, LONG v)
@@ -177,8 +188,19 @@ static HRESULT WINAPI HTMLRect_put_right(IHTMLRect *iface, LONG v)
 static HRESULT WINAPI HTMLRect_get_right(IHTMLRect *iface, LONG *p)
 {
     HTMLRect *This = HTMLRECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    float right;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMClientRect_GetRight(This->nsrect, &right);
+    if(NS_FAILED(nsres)) {
+        ERR("GetRight failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = floor(right+0.5);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLRect_put_bottom(IHTMLRect *iface, LONG v)
@@ -191,8 +213,19 @@ static HRESULT WINAPI HTMLRect_put_bottom(IHTMLRect *iface, LONG v)
 static HRESULT WINAPI HTMLRect_get_bottom(IHTMLRect *iface, LONG *p)
 {
     HTMLRect *This = HTMLRECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    float bottom;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMClientRect_GetBottom(This->nsrect, &bottom);
+    if(NS_FAILED(nsres)) {
+        ERR("GetBottom failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = floor(bottom+0.5);
+    return S_OK;
 }
 
 #undef HTMLRECT_THIS
