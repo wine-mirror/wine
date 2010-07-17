@@ -1825,7 +1825,8 @@ static HRESULT call_instr_handler(struct bc_writer *writer,
         i++;
     }
 
-    FIXME("Unhandled instruction %u\n", instr->opcode);
+    FIXME("Unhandled instruction %u - %s\n", instr->opcode,
+          debug_print_opcode(instr->opcode));
     return E_INVALIDARG;
 }
 
