@@ -1791,5 +1791,5 @@ interface IExplorerBrowser : IUnknown
 
     HRESULT GetCurrentView(
         [in] REFIID riid,
-        [out, iid_is(riid)] IUnknown **ppv);
+        [out, iid_is(riid)] void **ppv);
 }
