@@ -218,6 +218,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 	UINT uFlags)
 {
 	ItemCmImpl *This = (ItemCmImpl *)iface;
+	INT uIDMax;
 
 	TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
@@ -231,7 +232,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 	  if(uFlags & CMF_EXPLORE)
             RemoveMenu(hmenures, FCIDM_SHVIEW_OPEN, MF_BYCOMMAND);
 
-          Shell_MergeMenus(hmenu, GetSubMenu(hmenures, 0), indexMenu, idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
+          uIDMax = Shell_MergeMenus(hmenu, GetSubMenu(hmenures, 0), indexMenu, idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
 
           DestroyMenu(hmenures);
 
@@ -255,7 +256,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
           else
             EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND | ISvItemCm_CanRenameItems(This) ? MFS_ENABLED : MFS_DISABLED);
 
-	  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (FCIDM_SHVIEWLAST));
+	  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax);
 	}
 	return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 }
@@ -561,6 +562,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
             break;
         default:
             FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb));
+            return E_INVALIDARG;
         }
     }
     else
@@ -570,8 +572,10 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
             DoDelete(iface);
         else if (strcmp(lpcmi->lpVerb,"properties")==0)
             DoOpenProperties(iface, lpcmi->hwnd);
-        else
+        else {
             FIXME("Unhandled string verb %s\n",debugstr_a(lpcmi->lpVerb));
+            return E_FAIL;
+        }
     }
     return NOERROR;
 }

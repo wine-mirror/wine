@@ -2110,6 +2110,114 @@ static void test_desktop_IPersist(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_GetUIObject(void)
+{
+    IShellFolder *psf_desktop;
+    IContextMenu *pcm;
+    LPITEMIDLIST pidl;
+    HRESULT hr;
+    WCHAR path[MAX_PATH];
+    const WCHAR filename[] =
+        {'\\','t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
+
+    if(!pSHBindToParent)
+    {
+        win_skip("SHBindToParent missing.\n");
+        return;
+    }
+
+    GetCurrentDirectoryW(MAX_PATH, path);
+    if(!lstrlenW(path))
+    {
+        skip("GetCurrentDirectoryW returned an empty string.\n");
+        return;
+    }
+    lstrcatW(path, filename);
+    SHGetDesktopFolder(&psf_desktop);
+
+    CreateFilesFolders();
+
+    hr = IShellFolder_ParseDisplayName(psf_desktop, NULL, NULL, path, NULL, &pidl, 0);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        IShellFolder *psf;
+        LPCITEMIDLIST pidl_child;
+        hr = pSHBindToParent(pidl, &IID_IShellFolder, (void**)&psf, &pidl_child);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = IShellFolder_GetUIObjectOf(psf, NULL, 1, (LPCITEMIDLIST*)&pidl_child,
+                                            &IID_IContextMenu, NULL, (void**)&pcm);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                HMENU hmenu = CreatePopupMenu();
+                INT max_id, max_id_check;
+                UINT count, i;
+                const int id_upper_limit = 32767;
+                hr = IContextMenu_QueryContextMenu(pcm, hmenu, 0, 0, id_upper_limit, CMF_NORMAL);
+                ok(SUCCEEDED(hr), "Got 0x%08x\n", hr);
+                max_id = HRESULT_CODE(hr) - 1; /* returns max_id + 1 */
+                ok(max_id <= id_upper_limit, "Got %d\n", max_id);
+                count = GetMenuItemCount(hmenu);
+                ok(count, "Got %d\n", count);
+
+                max_id_check = 0;
+                for(i = 0; i < count; i++)
+                {
+                    MENUITEMINFOA mii;
+                    INT res;
+                    ZeroMemory(&mii, sizeof(MENUITEMINFOA));
+                    mii.cbSize = sizeof(MENUITEMINFOA);
+                    mii.fMask = MIIM_ID | MIIM_FTYPE;
+
+                    SetLastError(0);
+                    res = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
+                    ok(res, "Failed (last error: %d).\n", GetLastError());
+
+                    ok( (mii.wID <= id_upper_limit) || (mii.fType & MFT_SEPARATOR),
+                        "Got non-separator ID out of range: %d (type: %x) \n", mii.wID, mii.fType);
+                    if(!(mii.fType & MFT_SEPARATOR))
+                        max_id_check = (mii.wID>max_id_check)?mii.wID:max_id_check;
+                }
+                ok((max_id_check == max_id) ||
+                   (max_id_check == max_id-1 /* Win 7 */),
+                   "Not equal (or near equal), got %d and %d\n", max_id_check, max_id);
+
+#define is_win2k() (pSHGetFolderPathA && !pSHGetFolderPathAndSubDirA)
+
+                if(count && !is_win2k())   /* Test is interactive on w2k, so skip */
+                {
+                    CMINVOKECOMMANDINFO cmi;
+                    ZeroMemory(&cmi, sizeof(CMINVOKECOMMANDINFO));
+                    cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
+
+                    /* Attempt to execute non-existing command */
+                    cmi.lpVerb = MAKEINTRESOURCEA(9999);
+                    hr = IContextMenu_InvokeCommand(pcm, &cmi);
+                    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+
+                    cmi.lpVerb = "foobar_wine_test";
+                    hr = IContextMenu_InvokeCommand(pcm, &cmi);
+                    ok( (hr == E_INVALIDARG) || (hr == E_FAIL /* Win7 */) ||
+                        (hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /* Vista */),
+                        "Got 0x%08x\n", hr);
+                }
+#undef is_win2k
+
+                DestroyMenu(hmenu);
+                IContextMenu_Release(pcm);
+            }
+            IShellFolder_Release(psf);
+        }
+        if(pILFree) pILFree(pidl);
+    }
+
+    IShellFolder_Release(psf_desktop);
+    Cleanup();
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -2131,6 +2239,7 @@ START_TEST(shlfolder)
     test_LocalizedNames();
     test_SHCreateShellItem();
     test_desktop_IPersist();
+    test_GetUIObject();
 
     OleUninitialize();
 }
