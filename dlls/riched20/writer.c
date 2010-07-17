@@ -838,7 +838,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
     TRACE("flags %xh\n", cursor.pRun->member.run.nFlags);
     /* TODO: emit embedded objects */
     if (cursor.pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND))
-      break;
+      continue;
     if (cursor.pRun->member.run.nFlags & MERF_GRAPHICS) {
       FIXME("embedded objects are not handled\n");
     } else if (cursor.pRun->member.run.nFlags & MERF_TAB) {
