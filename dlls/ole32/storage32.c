@@ -1306,6 +1306,8 @@ static HRESULT StorageImpl_CreateDirEntry(
         entryIndex,
         emptyData);
     }
+
+    StorageImpl_SaveFileHeader(storage);
   }
 
   UpdateRawDirEntry(currentData, newData);
@@ -3465,6 +3467,7 @@ static void StorageImpl_SaveFileHeader(
   HRESULT hr;
   ULARGE_INTEGER offset;
   DWORD bytes_read, bytes_written;
+  DWORD major_version, dirsectorcount;
 
   /*
    * Get a pointer to the big block of data containing the header.
@@ -3474,6 +3477,16 @@ static void StorageImpl_SaveFileHeader(
   hr = StorageImpl_ReadAt(This, offset, headerBigBlock, HEADER_SIZE, &bytes_read);
   if (SUCCEEDED(hr) && bytes_read != HEADER_SIZE)
     hr = STG_E_FILENOTFOUND;
+
+  if (This->bigBlockSizeBits == 0x9)
+    major_version = 3;
+  else if (This->bigBlockSizeBits == 0xc)
+    major_version = 4;
+  else
+  {
+    ERR("invalid big block shift 0x%x\n", This->bigBlockSizeBits);
+    major_version = 4;
+  }
 
   /*
    * If the block read failed, the file is probably new.
@@ -3489,18 +3502,26 @@ static void StorageImpl_SaveFileHeader(
      * Initialize the magic number.
      */
     memcpy(headerBigBlock, STORAGE_magic, sizeof(STORAGE_magic));
-
-    /*
-     * And a bunch of things we don't know what they mean
-     */
-    StorageUtl_WriteWord(headerBigBlock,  0x18, 0x3b);
-    StorageUtl_WriteWord(headerBigBlock,  0x1a, 0x3);
-    StorageUtl_WriteWord(headerBigBlock,  0x1c, (WORD)-2);
   }
 
   /*
    * Write the information to the header.
    */
+  StorageUtl_WriteWord(
+    headerBigBlock,
+    OFFSET_MINORVERSION,
+    0x3e);
+
+  StorageUtl_WriteWord(
+    headerBigBlock,
+    OFFSET_MAJORVERSION,
+    major_version);
+
+  StorageUtl_WriteWord(
+    headerBigBlock,
+    OFFSET_BYTEORDERMARKER,
+    (WORD)-2);
+
   StorageUtl_WriteWord(
     headerBigBlock,
     OFFSET_BIGBLOCKSIZEBITS,
@@ -3510,6 +3531,23 @@ static void StorageImpl_SaveFileHeader(
     headerBigBlock,
     OFFSET_SMALLBLOCKSIZEBITS,
     This->smallBlockSizeBits);
+
+  if (major_version >= 4)
+  {
+    if (This->rootBlockChain)
+      dirsectorcount = BlockChainStream_GetCount(This->rootBlockChain);
+    else
+      /* This file is being created, and it will start out with one block. */
+      dirsectorcount = 1;
+  }
+  else
+    /* This field must be 0 in versions older than 4 */
+    dirsectorcount = 0;
+
+  StorageUtl_WriteDWord(
+    headerBigBlock,
+    OFFSET_DIRSECTORCOUNT,
+    dirsectorcount);
 
   StorageUtl_WriteDWord(
     headerBigBlock,
