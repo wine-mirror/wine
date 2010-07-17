@@ -158,7 +158,6 @@ static int namespacePop(saxlocator *locator)
 static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 {
     DWORD dLen;
-    LPWSTR str;
     BSTR bstr;
 
     if (!buf)
@@ -166,13 +165,11 @@ static BSTR bstr_from_xmlCharN(const xmlChar *buf, int len)
 
     dLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, NULL, 0);
     if(len != -1) dLen++;
-    str = heap_alloc(dLen * sizeof (WCHAR));
-    if (!str)
+    bstr = SysAllocStringLen(NULL, dLen-1);
+    if (!bstr)
         return NULL;
-    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, dLen);
-    if(len != -1) str[dLen-1] = '\0';
-    bstr = SysAllocString(str);
-    heap_free(str);
+    MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, bstr, dLen);
+    if(len != -1) bstr[dLen-1] = '\0';
 
     return bstr;
 }
