@@ -2852,6 +2852,23 @@ static void _test_style_set_csstext(unsigned line, IHTMLStyle *style, const char
     SysFreeString(tmp);
 }
 
+static void test_elem_bounding_client_rect(IUnknown *unk)
+{
+    IHTMLElement2 *elem2;
+    IHTMLRect *rect;
+    HRESULT hres;
+
+    elem2 = get_elem2_iface(unk);
+    hres = IHTMLElement2_getBoundingClientRect(elem2, &rect);
+    IHTMLElement2_Release(elem2);
+    ok(hres == S_OK, "getBoundingClientRect failed: %08x\n", hres);
+    ok(rect != NULL, "rect == NULL\n");
+
+    test_disp((IUnknown*)rect, &IID_IHTMLRect, "[object]");
+
+    IHTMLRect_Release(rect);
+}
+
 static void test_elem_col_item(IHTMLElementCollection *col, const char *n,
         const elem_type_t *elem_types, LONG len)
 {
@@ -5862,6 +5879,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_set_title((IUnknown*)select, "Title");
         test_elem_title((IUnknown*)select, "Title");
         test_elem_offset((IUnknown*)select);
+        test_elem_bounding_client_rect((IUnknown*)select);
 
         node = get_first_child((IUnknown*)select);
         ok(node != NULL, "node == NULL\n");
