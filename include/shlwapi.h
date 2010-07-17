@@ -319,6 +319,12 @@ BOOL WINAPI AssocIsDangerous(LPCWSTR);
 
 #endif /* NO_SHLWAPI_REG */
 
+void WINAPI IUnknown_Set(IUnknown **ppunk, IUnknown *punk);
+void WINAPI IUnknown_AtomicRelease(IUnknown **punk);
+HRESULT WINAPI IUnknown_GetWindow(IUnknown *punk, HWND *phwnd);
+HRESULT WINAPI IUnknown_SetSite(IUnknown *punk, IUnknown *punkSite);
+HRESULT WINAPI IUnknown_GetSite(IUnknown *punk, REFIID riid, void **ppv);
+HRESULT WINAPI IUnknown_QueryService(IUnknown *punk, REFGUID guidService, REFIID riid, void **ppvOut);
 
 /* Path functions */
 #ifndef NO_SHLWAPI_PATH
