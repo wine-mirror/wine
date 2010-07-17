@@ -3311,20 +3311,11 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	    TRACE("  TVN_ITEMEXPANDING returned TRUE, exiting...\n");
 	    return FALSE;
 	}
-
-        if (!wineItem->firstChild)
-            return FALSE;
-
-	wineItem->state |= TVIS_EXPANDED;
     }
-    else
-    {
-        if (!wineItem->firstChild)
-            return FALSE;
+    if (!wineItem->firstChild)
+        return FALSE;
 
-	/* this item has already been expanded */
-	wineItem->state |= TVIS_EXPANDED;
-    }
+    wineItem->state |= TVIS_EXPANDED;
 
     if (bExpandPartial)
 	FIXME("TVE_EXPANDPARTIAL not implemented\n");
