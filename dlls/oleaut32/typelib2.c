@@ -797,71 +797,128 @@ static int ctl2_alloc_importfile(
 }
 
 /****************************************************************************
- *	ctl2_alloc_custdata
+ *      ctl2_encode_variant
  *
- *  Allocates and initializes a "custom data" value in a type library.
+ *  Encodes a variant, inline if possible or in custom data segment
  *
  * RETURNS
  *
- *  Success: The offset of the new custdata.
- *  Failure:
- *
- *    -1: Out of memory.
- *    -2: Unable to encode VARIANT data (typically a bug).
+ *  Success: S_OK
+ *  Failure: Error code from winerror.h
  */
-static int ctl2_alloc_custdata(
-	ICreateTypeLib2Impl *This, /* [I] The type library in which to encode the value. */
-	VARIANT *pVarVal)          /* [I] The value to encode. */
+static HRESULT ctl2_encode_variant(
+        ICreateTypeLib2Impl *This, /* [I] The typelib to allocate data in */
+        int *encoded_value,        /* [O] The encoded default value or data offset */
+        VARIANT *value,            /* [I] Default value to be encoded */
+        VARTYPE arg_type)          /* [I] Argument type */
 {
-    int offset;
+    VARIANT v;
+    HRESULT hres;
+    int mask = 0;
 
-    TRACE("(%p,%p(%d))\n",This,pVarVal,V_VT(pVarVal));
+    TRACE("%p %d %d\n", This, V_VT(value), arg_type);
 
-    switch (V_VT(pVarVal)) {
+    if(arg_type == VT_INT)
+        arg_type = VT_I4;
+    if(arg_type == VT_UINT)
+        arg_type = VT_UI4;
+
+    v = *value;
+    if(V_VT(value) != arg_type) {
+        hres = VariantChangeType(&v, value, 0, arg_type);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    /* Check if default value can be stored in encoded_value */
+    switch(arg_type) {
+    case VT_I4:
     case VT_UI4:
+        mask = 0x3ffffff;
+        if(V_UI4(&v)>0x3ffffff)
+            break;
+    case VT_I1:
+    case VT_UI1:
+    case VT_BOOL:
+         if(!mask)
+             mask = 0xff;
+    case VT_I2:
+    case VT_UI2:
+        if(!mask)
+            mask = 0xffff;
+        *encoded_value = (V_UI4(&v)&mask) | ((0x80+0x4*arg_type)<<24);
+        return S_OK;
+    }
+
+    switch(arg_type) {
     case VT_I4:
     case VT_R4:
+    case VT_UI4:
     case VT_INT:
     case VT_UINT:
     case VT_HRESULT:
-	offset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, 8, 0);
-	if (offset == -1) return offset;
+    case VT_PTR: {
+        /* Construct the data to be allocated */
+        int data[2];
+        data[0] = arg_type + (V_UI4(&v)<<16);
+        data[1] = (V_UI4(&v)>>16) + 0x57570000;
 
-	*((unsigned short *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = V_VT(pVarVal);
-	*((DWORD *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = V_UI4(pVarVal);
-	break;
+        /* Check if the data was already allocated */
+        /* Currently the structures doesn't allow to do it in a nice way */
+        for(*encoded_value=0; *encoded_value<=This->typelib_segdir[MSFT_SEG_CUSTDATA].length-8; *encoded_value+=4)
+            if(!memcmp(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, 8))
+                return S_OK;
 
-    case VT_BSTR: {
-	    /* Construct the data */
-	    UINT cp = CP_ACP;
-	    int stringlen = SysStringLen(V_BSTR(pVarVal));
-	    int len = 0;
-	    if (stringlen > 0) {
-		GetLocaleInfoA(This->typelib_header.lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-			(LPSTR)&cp, sizeof(cp));
-		len = WideCharToMultiByte(cp, 0, V_BSTR(pVarVal), SysStringLen(V_BSTR(pVarVal)), NULL, 0, NULL, NULL);
-		if (!len)
-		    return -1;
-	    }
+        /* Allocate the data */
+        *encoded_value = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, 8, 0);
+        if(*encoded_value == -1)
+            return E_OUTOFMEMORY;
 
-	    offset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, (6 + len + 3) & ~0x3, 0);
-	    if (offset == -1) return offset;
-
-	    *((unsigned short *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = V_VT(pVarVal);
-	    *((DWORD *)&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = (DWORD)len;
-	    if (stringlen > 0) {
-		WideCharToMultiByte(cp, 0, V_BSTR(pVarVal), SysStringLen(V_BSTR(pVarVal)),
-			&This->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6], len, NULL, NULL);
-	    }
-	}
-	break;
-
-    default:
-	FIXME("Unknown variable encoding vt %d.\n", V_VT(pVarVal));
-	return -2;
+        memcpy(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, 8);
+        return S_OK;
     }
+    case VT_BSTR: {
+        /* Construct the data */
+        int i, len = (6+SysStringLen(V_BSTR(&v))+3) & ~0x3;
+        char *data = HeapAlloc(GetProcessHeap(), 0, len);
 
-    return offset;
+        if(!data)
+            return E_OUTOFMEMORY;
+
+        *((unsigned short*)data) = arg_type;
+        *((unsigned*)(data+2)) = SysStringLen(V_BSTR(&v));
+        for(i=0; i<SysStringLen(V_BSTR(&v)); i++) {
+            if(V_BSTR(&v)[i] <= 0x7f)
+                data[i+6] = V_BSTR(&v)[i];
+            else
+                data[i+6] = '?';
+        }
+        WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), SysStringLen(V_BSTR(&v)), &data[6], len-6, NULL, NULL);
+        for(i=6+SysStringLen(V_BSTR(&v)); i<len; i++)
+            data[i] = 0x57;
+
+        /* Check if the data was already allocated */
+        for(*encoded_value=0; *encoded_value<=This->typelib_segdir[MSFT_SEG_CUSTDATA].length-len; *encoded_value+=4)
+            if(!memcmp(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, len)) {
+                HeapFree(GetProcessHeap(), 0, data);
+                return S_OK;
+            }
+
+        /* Allocate the data */
+        *encoded_value = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, len, 0);
+        if(*encoded_value == -1) {
+            HeapFree(GetProcessHeap(), 0, data);
+            return E_OUTOFMEMORY;
+        }
+
+        memcpy(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, len);
+        HeapFree(GetProcessHeap(), 0, data);
+        return S_OK;
+    }
+    default:
+        FIXME("Argument type not yet handled\n");
+        return E_NOTIMPL;
+    }
 }
 
 /****************************************************************************
@@ -881,10 +938,26 @@ static HRESULT ctl2_set_custdata(
 	int *offset)               /* [I/O] The list of custom data to prepend to. */
 {
     MSFT_GuidEntry guidentry;
+    HRESULT status;
     int dataoffset;
     int guidoffset;
     int custoffset;
     int *custdata;
+
+    switch(V_VT(pVarVal))
+    {
+    case VT_I4:
+    case VT_R4:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
+    case VT_BSTR:
+	/* empty */
+	break;
+    default:
+	return DISP_E_BADVARTYPE;
+    }
 
     guidentry.guid = *guid;
 
@@ -893,9 +966,10 @@ static HRESULT ctl2_set_custdata(
 
     guidoffset = ctl2_alloc_guid(This, &guidentry);
     if (guidoffset == -1) return E_OUTOFMEMORY;
-    dataoffset = ctl2_alloc_custdata(This, pVarVal);
-    if (dataoffset == -1) return E_OUTOFMEMORY;
-    if (dataoffset == -2) return DISP_E_BADVARTYPE;
+
+    status = ctl2_encode_variant(This, &dataoffset, pVarVal, V_VT(pVarVal));
+    if (status)
+	return status;
 
     custoffset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATAGUID, 12, 0);
     if (custoffset == -1) return E_OUTOFMEMORY;
@@ -1194,131 +1268,6 @@ static HRESULT ctl2_find_typeinfo_from_offset(
     ERR("Failed to find typeinfo, invariant varied.\n");
 
     return TYPE_E_ELEMENTNOTFOUND;
-}
-
-/****************************************************************************
- *      ctl2_add_default_value
- *
- *  Adds default value of an argument
- *
- * RETURNS
- *
- *  Success: S_OK
- *  Failure: Error code from winerror.h
- */
-static HRESULT ctl2_add_default_value(
-        ICreateTypeLib2Impl *This, /* [I] The typelib to allocate data in */
-        int *encoded_value,        /* [O] The encoded default value or data offset */
-        VARIANT *value,            /* [I] Default value to be encoded */
-        VARTYPE arg_type)          /* [I] Argument type */
-{
-    VARIANT v;
-    HRESULT hres;
-    int mask = 0;
-
-    TRACE("%p %d %d\n", This, V_VT(value), arg_type);
-
-    if(arg_type == VT_INT)
-        arg_type = VT_I4;
-    if(arg_type == VT_UINT)
-        arg_type = VT_UI4;
-
-    v = *value;
-    if(V_VT(value) != arg_type) {
-        hres = VariantChangeType(&v, value, 0, arg_type);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    /* Check if default value can be stored in encoded_value */
-    switch(arg_type) {
-    case VT_I4:
-    case VT_UI4:
-        mask = 0x3ffffff;
-        if(V_UI4(&v)>0x3ffffff)
-            break;
-    case VT_I1:
-    case VT_UI1:
-    case VT_BOOL:
-         if(!mask)
-             mask = 0xff;
-    case VT_I2:
-    case VT_UI2:
-        if(!mask)
-            mask = 0xffff;
-        *encoded_value = (V_UI4(&v)&mask) | ((0x80+0x4*arg_type)<<24);
-        return S_OK;
-    }
-
-    switch(arg_type) {
-    case VT_I4:
-    case VT_R4:
-    case VT_UI4:
-    case VT_INT:
-    case VT_UINT:
-    case VT_HRESULT:
-    case VT_PTR: {
-        /* Construct the data to be allocated */
-        int data[2];
-        data[0] = arg_type + (V_UI4(&v)<<16);
-        data[1] = (V_UI4(&v)>>16) + 0x57570000;
-
-        /* Check if the data was already allocated */
-        /* Currently the structures doesn't allow to do it in a nice way */
-        for(*encoded_value=0; *encoded_value<=This->typelib_segdir[MSFT_SEG_CUSTDATA].length-8; *encoded_value+=4)
-            if(!memcmp(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, 8))
-                return S_OK;
-
-        /* Allocate the data */
-        *encoded_value = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, 8, 0);
-        if(*encoded_value == -1)
-            return E_OUTOFMEMORY;
-
-        memcpy(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, 8);
-        return S_OK;
-    }
-    case VT_BSTR: {
-        /* Construct the data */
-        int i, len = (6+SysStringLen(V_BSTR(&v))+3) & ~0x3;
-        char *data = HeapAlloc(GetProcessHeap(), 0, len);
-
-        if(!data)
-            return E_OUTOFMEMORY;
-
-        *((unsigned short*)data) = arg_type;
-        *((unsigned*)(data+2)) = SysStringLen(V_BSTR(&v));
-        for(i=0; i<SysStringLen(V_BSTR(&v)); i++) {
-            if(V_BSTR(&v)[i] <= 0x7f)
-                data[i+6] = V_BSTR(&v)[i];
-            else
-                data[i+6] = '?';
-        }
-        WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), SysStringLen(V_BSTR(&v)), &data[6], len-6, NULL, NULL);
-        for(i=6+SysStringLen(V_BSTR(&v)); i<len; i++)
-            data[i] = 0x57;
-
-        /* Check if the data was already allocated */
-        for(*encoded_value=0; *encoded_value<=This->typelib_segdir[MSFT_SEG_CUSTDATA].length-len; *encoded_value+=4)
-            if(!memcmp(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, len)) {
-                HeapFree(GetProcessHeap(), 0, data);
-                return S_OK;
-            }
-
-        /* Allocate the data */
-        *encoded_value = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATA, len, 0);
-        if(*encoded_value == -1) {
-            HeapFree(GetProcessHeap(), 0, data);
-            return E_OUTOFMEMORY;
-        }
-
-        memcpy(&This->typelib_segment_data[MSFT_SEG_CUSTDATA][*encoded_value], data, len);
-        HeapFree(GetProcessHeap(), 0, data);
-        return S_OK;
-    }
-    default:
-        FIXME("Argument type not yet handled\n");
-        return E_NOTIMPL;
-    }
 }
 
 /****************************************************************************
@@ -1855,7 +1804,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     if(num_defaults) {
         for (i = 0; i < pFuncDesc->cParams; i++)
             if(pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
-                hres = ctl2_add_default_value(This->typelib, typedata+6+i,
+                hres = ctl2_encode_variant(This->typelib, typedata+6+i,
                         &pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue,
                         pFuncDesc->lprgelemdescParam[i].tdesc.vt);
 
