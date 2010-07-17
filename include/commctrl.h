@@ -2342,6 +2342,12 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVM_GETUNICODEFORMAT    CCM_GETUNICODEFORMAT
 #define TVM_MAPACCIDTOHTREEITEM (TV_FIRST + 42)
 #define TVM_MAPHTREEITEMTOACCID (TV_FIRST + 43)
+#define TVM_SETEXTENDEDSTYLE    (TV_FIRST + 44)
+#define TVM_GETEXTENDEDSTYLE    (TV_FIRST + 45)
+#define TVM_SETAUTOSCROLLINFO   (TV_FIRST + 59)
+#define TVM_GETSELECTEDCOUNT    (TV_FIRST + 70)
+#define TVM_SHOWINFOTIP         (TV_FIRST + 71)
+#define TVM_GETITEMPARTRECT     (TV_FIRST + 72)
 
 
 #define TVN_FIRST               (0U-400U)
@@ -2411,6 +2417,8 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVIF_SELECTEDIMAGE    0x0020
 #define TVIF_CHILDREN         0x0040
 #define TVIF_INTEGRAL         0x0080
+#define TVIF_STATEEX          0x0100
+#define TVIF_EXPANDEDIMAGE    0x0200
 #define TVIF_DI_SETITEM	      0x1000
 
 #define TVI_ROOT              ((HTREEITEM)-65536)
@@ -2429,6 +2437,11 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVIS_OVERLAYMASK      0x0f00
 #define TVIS_STATEIMAGEMASK   0xf000
 #define TVIS_USERMASK         0xf000
+
+#define TVIS_EX_FLAT          0x0001
+#define TVIS_EX_DISABLED      0x0002
+/* TVIS_EX_HWND is listed on MSDN but apparently not in any header. */
+#define TVIS_EX_ALL           0x0002
 
 #define TVHT_NOWHERE          0x0001
 #define TVHT_ONITEMICON       0x0002
