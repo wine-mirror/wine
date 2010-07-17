@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 
 #define COBJMACROS
 
@@ -36,7 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 typedef struct {
     DispatchEx dispex;
     const IHTMLRectVtbl *lpIHTMLRectVtbl;
+
     LONG ref;
+
+    nsIDOMClientRect *nsrect;
 } HTMLRect;
 
 #define HTMLRECT(x)  ((IHTMLRect*)  &(x)->lpIHTMLRectVtbl)
@@ -82,8 +86,11 @@ static ULONG WINAPI HTMLRect_Release(IHTMLRect *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->nsrect)
+            nsIDOMClientRect_Release(This->nsrect);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -145,8 +152,19 @@ static HRESULT WINAPI HTMLRect_put_top(IHTMLRect *iface, LONG v)
 static HRESULT WINAPI HTMLRect_get_top(IHTMLRect *iface, LONG *p)
 {
     HTMLRect *This = HTMLRECT_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    float top;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMClientRect_GetTop(This->nsrect, &top);
+    if(NS_FAILED(nsres)) {
+        ERR("GetTop failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = floor(top+0.5);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLRect_put_right(IHTMLRect *iface, LONG v)
@@ -208,7 +226,7 @@ static dispex_static_data_t HTMLRect_dispex = {
     HTMLRect_iface_tids
 };
 
-static HRESULT create_html_rect(IHTMLRect **ret)
+static HRESULT create_html_rect(nsIDOMClientRect *nsrect, IHTMLRect **ret)
 {
     HTMLRect *rect;
 
@@ -220,6 +238,9 @@ static HRESULT create_html_rect(IHTMLRect **ret)
     rect->ref = 1;
 
     init_dispex(&rect->dispex, (IUnknown*)HTMLRECT(rect), &HTMLRect_dispex);
+
+    nsIDOMClientRect_AddRef(nsrect);
+    rect->nsrect = nsrect;
 
     *ret = HTMLRECT(rect);
     return S_OK;
@@ -556,10 +577,31 @@ static HRESULT WINAPI HTMLElement2_getClientRects(IHTMLElement2 *iface, IHTMLRec
 static HRESULT WINAPI HTMLElement2_getBoundingClientRect(IHTMLElement2 *iface, IHTMLRect **pRect)
 {
     HTMLElement *This = HTMLELEM2_THIS(iface);
+    nsIDOMNSElement *nselem;
+    nsIDOMClientRect *nsrect;
+    nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pRect);
 
-    return create_html_rect(pRect);
+    nsres = nsIDOMHTMLElement_QueryInterface(This->node.nsnode, &IID_nsIDOMNSElement,
+            (void**)&nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSElement iface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNSElement_GetBoundingClientRect(nselem, &nsrect);
+    nsIDOMNSElement_Release(nselem);
+    if(NS_FAILED(nsres) || !nsrect) {
+        ERR("GetBoindingClientRect failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    hres = create_html_rect(nsrect, pRect);
+
+    nsIDOMClientRect_Release(nsrect);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement2_setExpression(IHTMLElement2 *iface, BSTR propname,

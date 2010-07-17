@@ -2854,17 +2854,26 @@ static void _test_style_set_csstext(unsigned line, IHTMLStyle *style, const char
 
 static void test_elem_bounding_client_rect(IUnknown *unk)
 {
+    IHTMLRect *rect, *rect2;
     IHTMLElement2 *elem2;
-    IHTMLRect *rect;
+    LONG l;
     HRESULT hres;
 
     elem2 = get_elem2_iface(unk);
     hres = IHTMLElement2_getBoundingClientRect(elem2, &rect);
+    hres = IHTMLElement2_getBoundingClientRect(elem2, &rect2);
     IHTMLElement2_Release(elem2);
     ok(hres == S_OK, "getBoundingClientRect failed: %08x\n", hres);
     ok(rect != NULL, "rect == NULL\n");
+    ok(rect != rect2, "rect == rect2\n");
+    IHTMLRect_Release(rect2);
 
     test_disp((IUnknown*)rect, &IID_IHTMLRect, "[object]");
+
+    l = 0xdeadbeef;
+    hres = IHTMLRect_get_top(rect, &l);
+    ok(hres == S_OK, "get_top failed: %08x\n", hres);
+    ok(l != 0xdeadbeef, "l = 0xdeadbeef\n");
 
     IHTMLRect_Release(rect);
 }
