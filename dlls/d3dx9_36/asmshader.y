@@ -549,6 +549,12 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }
+                                if(asm_ctx.shader->version == BWRITERPS_VERSION(2, 0) ||
+                                    asm_ctx.shader->version == BWRITERPS_VERSION(2, 1)) {
+                                    asmparser_message(&asm_ctx, "Line %u: Declaration not supported in PS 2\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = $4.type;
                                 reg.regnum = $4.regnum;
@@ -563,6 +569,12 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("Input reg declaration\n");
                                 if($3.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
+                                if(asm_ctx.shader->version == BWRITERPS_VERSION(2, 0) ||
+                                    asm_ctx.shader->version == BWRITERPS_VERSION(2, 1)) {
+                                    asmparser_message(&asm_ctx, "Line %u: Declaration not supported in PS 2\n",
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }
@@ -583,6 +595,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }
+                                if(asm_ctx.shader->type != ST_PIXEL) {
+                                    asmparser_message(&asm_ctx, "Line %u: Declaration needs a semantic\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
                                 ZeroMemory(&reg, sizeof(reg));
                                 reg.type = $3.type;
                                 reg.regnum = $3.regnum;
@@ -597,6 +614,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("Input reg declaration\n");
                                 if($2.shift != 0) {
                                     asmparser_message(&asm_ctx, "Line %u: Shift modifier not allowed here\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                }
+                                if(asm_ctx.shader->type != ST_PIXEL) {
+                                    asmparser_message(&asm_ctx, "Line %u: Declaration needs a semantic\n",
                                                       asm_ctx.line_no);
                                     set_parse_status(&asm_ctx, PARSE_ERR);
                                 }

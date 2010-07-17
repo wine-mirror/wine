@@ -152,11 +152,6 @@ static void asmparser_dcl_input_ps_2(struct asm_parser *This, DWORD usage, DWORD
     struct instruction instr;
 
     if(!This->shader) return;
-    if(usage != 0) {
-        asmparser_message(This, "Line %u: Unsupported usage in dcl instruction\n", This->line_no);
-        set_parse_status(This, PARSE_ERR);
-        return;
-    }
     instr.dstmod = mod;
     instr.shift = 0;
     This->funcs->dstreg(This, &instr, reg);

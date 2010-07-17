@@ -1377,6 +1377,18 @@ static void failure_test(void) {
         /* shader 47: no samplers in vs_2_0 */
         "vs_2_0\n"
         "dcl_2d s2\n",
+        /* shader 48: semantic required in vs dcl input instruction */
+        "vs_2_0\n"
+        "dcl v0\n",
+        /* shader 49: semantic not allowed in ps dcl input instruction*/
+        "ps_2_0\n"
+        "dcl_position0 v0\n",
+        /* shader 50: dcl instruction not in ps_1_x */
+        "ps_1_4\n"
+        "dcl_position0 v0\n",
+        /* shader 51: no dcl output instruction in < vs 3.0 */
+        "vs_2_0\n"
+        "dcl_positiont0 o0\n",
     };
     HRESULT hr;
     unsigned int i;
