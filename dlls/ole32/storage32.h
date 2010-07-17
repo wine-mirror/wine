@@ -336,12 +336,6 @@ struct StorageImpl
   struct StorageBaseImpl base;
 
   /*
-   * The following data members are specific to the Storage32Impl
-   * class
-   */
-  HANDLE           hFile;      /* Physical support for the Docfile */
-
-  /*
    * File header
    */
   WORD  bigBlockSizeBits;

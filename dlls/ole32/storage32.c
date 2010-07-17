@@ -2673,8 +2673,6 @@ static HRESULT StorageImpl_Construct(
 
   This->base.reverted = 0;
 
-  This->hFile = hFile;
-
   /*
    * Initialize the big block cache.
    */
