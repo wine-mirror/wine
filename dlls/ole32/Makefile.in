@@ -21,6 +21,7 @@ C_SRCS = \
 	dictionary.c \
 	enumx.c \
 	errorinfo.c \
+	filelockbytes.c \
 	filemoniker.c \
 	ftmarshal.c \
 	git.c \
@@ -39,7 +40,6 @@ C_SRCS = \
 	pointermoniker.c \
 	regsvr.c \
 	rpc.c \
-	stg_bigblockfile.c \
 	stg_prop.c \
 	stg_stream.c \
 	storage32.c \

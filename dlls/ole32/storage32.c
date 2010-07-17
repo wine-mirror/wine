@@ -327,7 +327,7 @@ static HRESULT StorageImpl_ReadAt(StorageImpl* This,
   ULONG          size,
   ULONG*         bytesRead)
 {
-    return BIGBLOCKFILE_ReadAt(This->bigBlockFile,offset,buffer,size,bytesRead);
+    return ILockBytes_ReadAt(This->lockBytes,offset,buffer,size,bytesRead);
 }
 
 static HRESULT StorageImpl_WriteAt(StorageImpl* This,
@@ -336,7 +336,7 @@ static HRESULT StorageImpl_WriteAt(StorageImpl* This,
   const ULONG    size,
   ULONG*         bytesWritten)
 {
-    return BIGBLOCKFILE_WriteAt(This->bigBlockFile,offset,buffer,size,bytesWritten);
+    return ILockBytes_WriteAt(This->lockBytes,offset,buffer,size,bytesWritten);
 }
 
 /************************************************************************
@@ -2683,16 +2683,16 @@ static HRESULT StorageImpl_Construct(
    */
   This->bigBlockSize   = sector_size;
   This->smallBlockSize = DEF_SMALL_BLOCK_SIZE;
-  This->bigBlockFile   = BIGBLOCKFILE_Construct(hFile,
-                                                pLkbyt,
-                                                openFlags,
-                                                fileBased);
-
-  if (This->bigBlockFile == 0)
+  if (hFile)
+    hr = FileLockBytesImpl_Construct(hFile, openFlags, &This->lockBytes);
+  else
   {
-    hr = E_FAIL;
-    goto end;
+    This->lockBytes = pLkbyt;
+    ILockBytes_AddRef(pLkbyt);
   }
+
+  if (FAILED(hr))
+    goto end;
 
   if (create)
   {
@@ -2729,7 +2729,7 @@ static HRESULT StorageImpl_Construct(
      */
     size.u.HighPart = 0;
     size.u.LowPart  = This->bigBlockSize * 3;
-    BIGBLOCKFILE_SetSize(This->bigBlockFile, size);
+    ILockBytes_SetSize(This->lockBytes, size);
 
     /*
      * Initialize the big block depot
@@ -2884,8 +2884,8 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   for (i=0; i<BLOCKCHAIN_CACHE_SIZE; i++)
     BlockChainStream_Destroy(This->blockChainCache[i]);
 
-  if (This->bigBlockFile)
-    BIGBLOCKFILE_Destructor(This->bigBlockFile);
+  if (This->lockBytes)
+    ILockBytes_Release(This->lockBytes);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -2908,6 +2908,7 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
   int   depotIndex        = 0;
   ULONG freeBlock         = BLOCK_UNUSED;
   ULARGE_INTEGER neededSize;
+  STATSTG statstg;
 
   depotIndex = This->prevFreeBlock / blocksPerDepot;
   depotBlockOffset = (This->prevFreeBlock % blocksPerDepot) * sizeof(ULONG);
@@ -3022,7 +3023,11 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
    * make sure that the block physically exists before using it
    */
   neededSize.QuadPart = StorageImpl_GetBigBlockOffset(This, freeBlock)+This->bigBlockSize;
-  BIGBLOCKFILE_Expand(This->bigBlockFile, neededSize);
+
+  ILockBytes_Stat(This->lockBytes, &statstg, STATFLAG_NONAME);
+
+  if (neededSize.QuadPart > statstg.cbSize.QuadPart)
+    ILockBytes_SetSize(This->lockBytes, neededSize);
 
   This->prevFreeBlock = freeBlock;
 

@@ -11,6 +11,7 @@
  *
  * Copyright 1998,1999 Francis Beaudet
  * Copyright 1998,1999 Thuy Nguyen
+ * Copyright 2010 Vincent Povirk for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -153,31 +154,7 @@ struct DirEntry
   ULARGE_INTEGER size;
 };
 
-/*************************************************************************
- * Big Block File support
- *
- * The big block file is an abstraction of a flat file separated in
- * same sized blocks. The implementation for the methods described in
- * this section appear in stg_bigblockfile.c
- */
-
-typedef struct BigBlockFile BigBlockFile,*LPBIGBLOCKFILE;
-
-/*
- * Declaration of the functions used to manipulate the BigBlockFile
- * data structure.
- */
-BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE hFile,
-                                      ILockBytes* pLkByt,
-                                      DWORD openFlags,
-                                      BOOL fileBased);
-void           BIGBLOCKFILE_Destructor(LPBIGBLOCKFILE This);
-HRESULT        BIGBLOCKFILE_Expand(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
-HRESULT        BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize);
-HRESULT        BIGBLOCKFILE_ReadAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
-           void* buffer, ULONG size, ULONG* bytesRead);
-HRESULT        BIGBLOCKFILE_WriteAt(LPBIGBLOCKFILE This, ULARGE_INTEGER offset,
-           const void* buffer, ULONG size, ULONG* bytesRead);
+HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, ILockBytes **pLockBytes);
 
 /*************************************************************************
  * Ole Convert support
@@ -395,10 +372,7 @@ struct StorageImpl
   BlockChainStream* blockChainCache[BLOCKCHAIN_CACHE_SIZE];
   UINT blockChainToEvict;
 
-  /*
-   * Pointer to the big block file abstraction
-   */
-  BigBlockFile* bigBlockFile;
+  ILockBytes* lockBytes;
 };
 
 HRESULT StorageImpl_ReadRawDirEntry(
