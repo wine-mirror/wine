@@ -116,6 +116,12 @@ static void asmparser_dcl_output(struct asm_parser *This, DWORD usage, DWORD num
     }
 }
 
+static void asmparser_dcl_output_unsupported(struct asm_parser *This, DWORD usage, DWORD num,
+                                             const struct shader_reg *reg) {
+    asmparser_message(This, "Line %u: Output declaration unsupported in this shader version\n", This->line_no);
+    set_parse_status(This, PARSE_ERR);
+}
+
 static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
                                 DWORD mod, const struct shader_reg *reg) {
     struct instruction instr;
@@ -783,7 +789,7 @@ static const struct asmparser_backend parser_vs_1 = {
     asmparser_predicate_unsupported,
     asmparser_coissue_unsupported,
 
-    asmparser_dcl_output,
+    asmparser_dcl_output_unsupported,
     asmparser_dcl_input,
     asmparser_dcl_sampler_unsupported,
 
@@ -803,7 +809,7 @@ static const struct asmparser_backend parser_vs_2 = {
     asmparser_predicate_supported,
     asmparser_coissue_unsupported,
 
-    asmparser_dcl_output,
+    asmparser_dcl_output_unsupported,
     asmparser_dcl_input,
     asmparser_dcl_sampler_unsupported,
 
@@ -843,7 +849,7 @@ static const struct asmparser_backend parser_ps_2 = {
     asmparser_predicate_unsupported,
     asmparser_coissue_unsupported,
 
-    asmparser_dcl_output,
+    asmparser_dcl_output_unsupported,
     asmparser_dcl_input_ps_2,
     asmparser_dcl_sampler,
 
@@ -863,7 +869,7 @@ static const struct asmparser_backend parser_ps_2_x = {
     asmparser_predicate_supported,
     asmparser_coissue_unsupported,
 
-    asmparser_dcl_output,
+    asmparser_dcl_output_unsupported,
     asmparser_dcl_input_ps_2,
     asmparser_dcl_sampler,
 
@@ -883,7 +889,7 @@ static const struct asmparser_backend parser_ps_3 = {
     asmparser_predicate_supported,
     asmparser_coissue_unsupported,
 
-    asmparser_dcl_output,
+    asmparser_dcl_output_unsupported,
     asmparser_dcl_input,
     asmparser_dcl_sampler,
 
