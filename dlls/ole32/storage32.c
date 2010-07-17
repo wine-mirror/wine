@@ -2583,6 +2583,19 @@ static HRESULT StorageImpl_StreamLink(StorageBaseImpl *base, DirRef dst,
   return hr;
 }
 
+static HRESULT StorageImpl_GetFilename(StorageBaseImpl* iface, LPWSTR *result)
+{
+  StorageImpl *This = (StorageImpl*) iface;
+  STATSTG statstg;
+  HRESULT hr;
+
+  hr = ILockBytes_Stat(This->lockBytes, &statstg, 0);
+
+  *result = statstg.pwcsName;
+
+  return hr;
+}
+
 /*
  * Virtual function table for the IStorage32Impl class.
  */
@@ -2612,6 +2625,7 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
 {
   StorageImpl_Destroy,
   StorageImpl_Invalidate,
+  StorageImpl_GetFilename,
   StorageImpl_CreateDirEntry,
   StorageImpl_BaseWriteDirEntry,
   StorageImpl_BaseReadDirEntry,
@@ -2636,7 +2650,6 @@ static HRESULT StorageImpl_Construct(
   HRESULT     hr = S_OK;
   DirEntry currentEntry;
   DirRef      currentEntryRef;
-  WCHAR fullpath[MAX_PATH];
 
   if ( FAILED( validateSTGM(openFlags) ))
     return STG_E_INVALIDFLAG;
@@ -2662,29 +2675,13 @@ static HRESULT StorageImpl_Construct(
 
   This->hFile = hFile;
 
-  if(pwcsName) {
-      if (!GetFullPathNameW(pwcsName, MAX_PATH, fullpath, NULL))
-      {
-        lstrcpynW(fullpath, pwcsName, MAX_PATH);
-      }
-      This->pwcsName = HeapAlloc(GetProcessHeap(), 0,
-                                (lstrlenW(fullpath)+1)*sizeof(WCHAR));
-      if (!This->pwcsName)
-      {
-         hr = STG_E_INSUFFICIENTMEMORY;
-         goto end;
-      }
-      strcpyW(This->pwcsName, fullpath);
-      This->base.filename = This->pwcsName;
-  }
-
   /*
    * Initialize the big block cache.
    */
   This->bigBlockSize   = sector_size;
   This->smallBlockSize = DEF_SMALL_BLOCK_SIZE;
   if (hFile)
-    hr = FileLockBytesImpl_Construct(hFile, openFlags, &This->lockBytes);
+    hr = FileLockBytesImpl_Construct(hFile, openFlags, pwcsName, &This->lockBytes);
   else
   {
     This->lockBytes = pLkbyt;
@@ -2874,8 +2871,6 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
   TRACE("(%p)\n", This);
 
   StorageImpl_Invalidate(iface);
-
-  HeapFree(GetProcessHeap(), 0, This->pwcsName);
 
   BlockChainStream_Destroy(This->smallBlockRootChain);
   BlockChainStream_Destroy(This->rootBlockChain);
@@ -4649,6 +4644,13 @@ static void TransactedSnapshotImpl_Destroy( StorageBaseImpl *iface)
   HeapFree(GetProcessHeap(), 0, This);
 }
 
+static HRESULT TransactedSnapshotImpl_GetFilename(StorageBaseImpl* iface, LPWSTR *result)
+{
+  TransactedSnapshotImpl* This = (TransactedSnapshotImpl*) iface;
+
+  return StorageBaseImpl_GetFilename(This->transactedParent, result);
+}
+
 static HRESULT TransactedSnapshotImpl_CreateDirEntry(StorageBaseImpl *base,
   const DirEntry *newData, DirRef *index)
 {
@@ -4896,6 +4898,7 @@ static const StorageBaseImplVtbl TransactedSnapshotImpl_BaseVtbl =
 {
   TransactedSnapshotImpl_Destroy,
   TransactedSnapshotImpl_Invalidate,
+  TransactedSnapshotImpl_GetFilename,
   TransactedSnapshotImpl_CreateDirEntry,
   TransactedSnapshotImpl_WriteDirEntry,
   TransactedSnapshotImpl_ReadDirEntry,
@@ -4928,8 +4931,6 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
     (*result)->base.ref = 1;
 
     (*result)->base.openFlags = parentStorage->openFlags;
-
-    (*result)->base.filename = parentStorage->filename;
 
     /* Create a new temporary storage to act as the scratch file. */
     hr = StgCreateDocfile(NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_CREATE,
@@ -5041,6 +5042,13 @@ static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
   StorageInternalImpl_Invalidate(&This->base);
 
   HeapFree(GetProcessHeap(), 0, This);
+}
+
+static HRESULT StorageInternalImpl_GetFilename(StorageBaseImpl* iface, LPWSTR *result)
+{
+  StorageInternalImpl* This = (StorageInternalImpl*) iface;
+
+  return StorageBaseImpl_GetFilename(This->parentStorage, result);
 }
 
 static HRESULT StorageInternalImpl_CreateDirEntry(StorageBaseImpl *base,
@@ -5468,6 +5476,7 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
 {
   StorageInternalImpl_Destroy,
   StorageInternalImpl_Invalidate,
+  StorageInternalImpl_GetFilename,
   StorageInternalImpl_CreateDirEntry,
   StorageInternalImpl_WriteDirEntry,
   StorageInternalImpl_ReadDirEntry,
@@ -5608,33 +5617,26 @@ void StorageUtl_CopyDirEntryToSTATSTG(
   const DirEntry*       source,
   int                   statFlags)
 {
-  LPCWSTR entryName;
-
-  if (source->stgType == STGTY_ROOT)
-  {
-    /* replace the name of root entry (often "Root Entry") by the file name */
-    entryName = storage->filename;
-  }
-  else
-  {
-    entryName = source->name;
-  }
-
   /*
    * The copy of the string occurs only when the flag is not set
    */
-  if( ((statFlags & STATFLAG_NONAME) != 0) || 
-       (entryName == NULL) ||
-       (entryName[0] == 0) )
+  if (!(statFlags & STATFLAG_NONAME) && source->stgType == STGTY_ROOT)
+  {
+    /* Use the filename for the root storage. */
+    destination->pwcsName = 0;
+    StorageBaseImpl_GetFilename(storage, &destination->pwcsName);
+  }
+  else if( ((statFlags & STATFLAG_NONAME) != 0) ||
+       (source->name[0] == 0) )
   {
     destination->pwcsName = 0;
   }
   else
   {
     destination->pwcsName =
-      CoTaskMemAlloc((lstrlenW(entryName)+1)*sizeof(WCHAR));
+      CoTaskMemAlloc((lstrlenW(source->name)+1)*sizeof(WCHAR));
 
-    strcpyW(destination->pwcsName, entryName);
+    strcpyW(destination->pwcsName, source->name);
   }
 
   switch (source->stgType)

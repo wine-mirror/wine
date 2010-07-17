@@ -154,7 +154,7 @@ struct DirEntry
   ULARGE_INTEGER size;
 };
 
-HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, ILockBytes **pLockBytes);
+HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, LPCWSTR pwcsName, ILockBytes **pLockBytes);
 
 /*************************************************************************
  * Ole Convert support
@@ -221,9 +221,6 @@ struct StorageBaseImpl
    */
   DWORD stateBits;
 
-  /* If set, this overrides the root storage name returned by IStorage_Stat */
-  LPCWSTR          filename;
-
   BOOL             create;     /* Was the storage created or opened.
                                   The behaviour of STGM_SIMPLE depends on this */
   /*
@@ -237,6 +234,7 @@ struct StorageBaseImpl
 struct StorageBaseImplVtbl {
   void (*Destroy)(StorageBaseImpl*);
   void (*Invalidate)(StorageBaseImpl*);
+  HRESULT (*GetFilename)(StorageBaseImpl*,LPWSTR*);
   HRESULT (*CreateDirEntry)(StorageBaseImpl*,const DirEntry*,DirRef*);
   HRESULT (*WriteDirEntry)(StorageBaseImpl*,DirRef,const DirEntry*);
   HRESULT (*ReadDirEntry)(StorageBaseImpl*,DirRef,DirEntry*);
@@ -255,6 +253,11 @@ static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
 static inline void StorageBaseImpl_Invalidate(StorageBaseImpl *This)
 {
   This->baseVtbl->Invalidate(This);
+}
+
+static inline HRESULT StorageBaseImpl_GetFilename(StorageBaseImpl *This, LPWSTR *result)
+{
+  return This->baseVtbl->GetFilename(This, result);
 }
 
 static inline HRESULT StorageBaseImpl_CreateDirEntry(StorageBaseImpl *This,
@@ -337,7 +340,6 @@ struct StorageImpl
    * class
    */
   HANDLE           hFile;      /* Physical support for the Docfile */
-  LPOLESTR         pwcsName;   /* Full path of the document file */
 
   /*
    * File header

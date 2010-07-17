@@ -41,6 +41,7 @@
 #include "storage32.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
@@ -51,6 +52,7 @@ typedef struct FileLockBytesImpl
     ULARGE_INTEGER filesize;
     HANDLE hfile;
     DWORD flProtect;
+    LPWSTR pwcsName;
 } FileLockBytesImpl;
 
 static const ILockBytesVtbl FileLockBytesImpl_Vtbl;
@@ -85,9 +87,10 @@ static DWORD GetProtectMode(DWORD openFlags)
  *
  * Initialize a big block object supported by a file.
  */
-HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, ILockBytes **pLockBytes)
+HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, LPCWSTR pwcsName, ILockBytes **pLockBytes)
 {
   FileLockBytesImpl *This;
+  WCHAR fullpath[MAX_PATH];
 
   if (hFile == INVALID_HANDLE_VALUE)
     return E_FAIL;
@@ -103,6 +106,23 @@ HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, ILockBytes **
   This->filesize.u.LowPart = GetFileSize(This->hfile,
 					 &This->filesize.u.HighPart);
   This->flProtect = GetProtectMode(openFlags);
+
+  if(pwcsName) {
+    if (!GetFullPathNameW(pwcsName, MAX_PATH, fullpath, NULL))
+    {
+      lstrcpynW(fullpath, pwcsName, MAX_PATH);
+    }
+    This->pwcsName = HeapAlloc(GetProcessHeap(), 0,
+                              (lstrlenW(fullpath)+1)*sizeof(WCHAR));
+    if (!This->pwcsName)
+    {
+       HeapFree(GetProcessHeap(), 0, This);
+       return E_OUTOFMEMORY;
+    }
+    strcpyW(This->pwcsName, fullpath);
+  }
+  else
+    This->pwcsName = NULL;
 
   TRACE("file len %u\n", This->filesize.u.LowPart);
 
@@ -145,6 +165,7 @@ static ULONG WINAPI FileLockBytesImpl_Release(ILockBytes *iface)
     if (ref == 0)
     {
         CloseHandle(This->hfile);
+        HeapFree(GetProcessHeap(), 0, This->pwcsName);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -324,12 +345,16 @@ static HRESULT WINAPI FileLockBytesImpl_Stat(ILockBytes* iface,
 {
     FileLockBytesImpl* This = (FileLockBytesImpl*)iface;
 
-    if (!(STATFLAG_NONAME & grfStatFlag))
+    if (!(STATFLAG_NONAME & grfStatFlag) && This->pwcsName)
     {
-        FIXME("reading filename not supported\n");
-    }
+        pstatstg->pwcsName =
+          CoTaskMemAlloc((lstrlenW(This->pwcsName)+1)*sizeof(WCHAR));
 
-    pstatstg->pwcsName = NULL;
+        strcpyW(pstatstg->pwcsName, This->pwcsName);
+    }
+    else
+        pstatstg->pwcsName = NULL;
+
     pstatstg->type = STGTY_LOCKBYTES;
     pstatstg->cbSize = This->filesize;
     /* FIXME: If the implementation is exported, we'll need to set other fields. */
