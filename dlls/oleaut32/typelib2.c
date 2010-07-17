@@ -1080,65 +1080,49 @@ static int ctl2_encode_typedesc(
 	break;
 
     case VT_PTR:
-	/* FIXME: Make with the error checking. */
-	FIXME("PTR vartype, may not work correctly.\n");
-
-	ctl2_encode_typedesc(This, tdesc->u.lptdesc, &target_type, NULL, NULL, &child_size);
-
-	for (typeoffset = 0; typeoffset < This->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
-	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-	    if (((typedata[0] & 0xffff) == VT_PTR) && (typedata[1] == target_type)) break;
-	}
-
-	if (typeoffset == This->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
-	    int mix_field;
-	    
-	    if (target_type & 0x80000000) {
-		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
-	    } else {
-		typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
-		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
-	    }
-
-	    typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
-	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-
-	    typedata[0] = (mix_field << 16) | VT_PTR;
-	    typedata[1] = target_type;
-	}
-
-	*encoded_tdesc = typeoffset;
-
-	*width = 4;
-	*alignment = 4;
-	*decoded_size = sizeof(TYPEDESC) + child_size;
-	break;
-
     case VT_SAFEARRAY:
 	/* FIXME: Make with the error checking. */
-	FIXME("SAFEARRAY vartype, may not work correctly.\n");
+	FIXME("PTR or SAFEARRAY vartype, may not work correctly.\n");
 
 	ctl2_encode_typedesc(This, tdesc->u.lptdesc, &target_type, NULL, NULL, &child_size);
 
 	for (typeoffset = 0; typeoffset < This->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
 	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-	    if (((typedata[0] & 0xffff) == VT_SAFEARRAY) && (typedata[1] == target_type)) break;
+	    if (((typedata[0] & 0xffff) == tdesc->vt) && (typedata[1] == target_type)) break;
 	}
 
 	if (typeoffset == This->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
 	    int mix_field;
 	    
 	    if (target_type & 0x80000000) {
-		mix_field = ((target_type >> 16) & VT_TYPEMASK) | VT_ARRAY;
+		mix_field = (target_type >> 16) & VT_TYPEMASK;
 	    } else {
 		typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
-		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
+		switch((typedata[0]>>16) & ~VT_ARRAY)
+		{
+		    case VT_UI1:
+		    case VT_I1:
+		    case VT_UI2:
+		    case VT_I2:
+		    case VT_I4:
+		    case VT_UI4:
+			mix_field = typedata[0]>>16;
+			break;
+		    default:
+			mix_field = 0x7fff;
+			break;
+		}
 	    }
+
+	    if (tdesc->vt == VT_PTR)
+		mix_field |= VT_BYREF;
+	    else if (tdesc->vt == VT_SAFEARRAY)
+		mix_field |= VT_ARRAY;
 
 	    typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
 	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
 
-	    typedata[0] = (mix_field << 16) | VT_SAFEARRAY;
+	    typedata[0] = (mix_field << 16) | tdesc->vt;
 	    typedata[1] = target_type;
 	}
 
@@ -1182,17 +1166,34 @@ static int ctl2_encode_typedesc(
 	break;
       }
     case VT_USERDEFINED:
+      {
+	const MSFT_TypeInfoBase *basetype;
+	INT basevt = 0x7fff;
+
 	TRACE("USERDEFINED.\n");
+	if (tdesc->u.hreftype % sizeof(*basetype) == 0 && tdesc->u.hreftype < This->typelib_segdir[MSFT_SEG_TYPEINFO].length)
+	{
+	    basetype = (MSFT_TypeInfoBase*)&(This->typelib_segment_data[MSFT_SEG_TYPEINFO][tdesc->u.hreftype]);
+	    switch(basetype->typekind & 0xf)
+	    {
+		case TKIND_ENUM:
+		    basevt = VT_I4;
+		    break;
+		default:
+		    FIXME("USERDEFINED basetype %d not handled\n", basetype->typekind & 0xf);
+		    break;
+	    }
+	}
 	for (typeoffset = 0; typeoffset < This->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
 	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
-	    if ((typedata[0] == ((0x7fff << 16) | VT_USERDEFINED)) && (typedata[1] == tdesc->u.hreftype)) break;
+	    if ((typedata[0] == ((basevt << 16) | VT_USERDEFINED)) && (typedata[1] == tdesc->u.hreftype)) break;
 	}
 
 	if (typeoffset == This->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
 	    typeoffset = ctl2_alloc_segment(This, MSFT_SEG_TYPEDESC, 8, 0);
 	    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
 
-	    typedata[0] = (0x7fff << 16) | VT_USERDEFINED;
+	    typedata[0] = (basevt << 16) | VT_USERDEFINED;
 	    typedata[1] = tdesc->u.hreftype;
 	}
 
@@ -1200,6 +1201,7 @@ static int ctl2_encode_typedesc(
 	*width = 0;
 	*alignment = 1;
 	break;
+      }
 
     default:
 	FIXME("Unrecognized type %d.\n", tdesc->vt);
