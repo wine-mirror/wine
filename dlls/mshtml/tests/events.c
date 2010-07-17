@@ -59,6 +59,7 @@
 
 DEFINE_EXPECT(document_onclick);
 DEFINE_EXPECT(body_onclick);
+DEFINE_EXPECT(doc_onclick_attached);
 DEFINE_EXPECT(div_onclick);
 DEFINE_EXPECT(div_onclick_attached);
 DEFINE_EXPECT(timeout);
@@ -662,6 +663,36 @@ static void _elem_detach_event(unsigned line, IUnknown *unk, const char *namea, 
     ok_(__FILE__,line)(hres == S_OK, "detachEvent failed: %08x\n", hres);
 }
 
+#define doc_attach_event(a,b,c) _doc_attach_event(__LINE__,a,b,c)
+static void _doc_attach_event(unsigned line, IHTMLDocument2 *doc, const char *namea, IDispatch *disp)
+{
+    IHTMLDocument3 *doc3 = _get_doc3_iface(line, (IUnknown*)doc);
+    VARIANT_BOOL res;
+    BSTR name;
+    HRESULT hres;
+
+    name = a2bstr(namea);
+    hres = IHTMLDocument3_attachEvent(doc3, name, disp, &res);
+    IHTMLDocument3_Release(doc3);
+    SysFreeString(name);
+    ok_(__FILE__,line)(hres == S_OK, "attachEvent failed: %08x\n", hres);
+    ok_(__FILE__,line)(res == VARIANT_TRUE, "attachEvent returned %x\n", res);
+}
+
+#define doc_detach_event(a,b,c) _doc_detach_event(__LINE__,a,b,c)
+static void _doc_detach_event(unsigned line, IHTMLDocument2 *doc, const char *namea, IDispatch *disp)
+{
+    IHTMLDocument3 *doc3 = _get_doc3_iface(line, (IUnknown*)doc);
+    BSTR name;
+    HRESULT hres;
+
+    name = a2bstr(namea);
+    hres = IHTMLDocument3_detachEvent(doc3, name, disp);
+    IHTMLDocument3_Release(doc3);
+    SysFreeString(name);
+    ok_(__FILE__,line)(hres == S_OK, "detachEvent failed: %08x\n", hres);
+}
+
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -840,6 +871,18 @@ static HRESULT WINAPI div_onclick_attached(IDispatchEx *iface, DISPID id, LCID l
 }
 
 EVENT_HANDLER_FUNC_OBJ(div_onclick_attached);
+
+static HRESULT WINAPI doc_onclick_attached(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(doc_onclick_attached);
+
+    test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
+    test_event_src("DIV");
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(doc_onclick_attached);
 
 static HRESULT WINAPI body_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
@@ -1249,12 +1292,14 @@ static void test_onclick(IHTMLDocument2 *doc)
 
     cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, (IUnknown*)&doccp_obj);
     elem_attach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
+    doc_attach_event(doc, "onclick", (IDispatch*)&doc_onclick_attached_obj);
 
     SET_EXPECT(div_onclick);
     SET_EXPECT(div_onclick_disp);
     SET_EXPECT(div_onclick_attached);
     SET_EXPECT(body_onclick);
     SET_EXPECT(document_onclick);
+    SET_EXPECT(doc_onclick_attached);
     SET_EXPECT(doccp_onclick);
 
     hres = IHTMLElement_click(div);
@@ -1265,6 +1310,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
+    CHECK_CALLED(doc_onclick_attached);
     CHECK_CALLED(doccp_onclick);
 
     unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
@@ -1280,6 +1326,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     elem_detach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
     elem_detach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
     elem_detach_event((IUnknown*)div, "test", (IDispatch*)&div_onclick_disp);
+    doc_detach_event(doc, "onclick", (IDispatch*)&doc_onclick_attached_obj);
 
     SET_EXPECT(div_onclick_attached);
     SET_EXPECT(body_onclick);
