@@ -414,6 +414,35 @@ interface INewWindowManager : IUnknown
 cpp_quote("#define SID_SNewWindowManager IID_INewWindowManager")
 
 /*****************************************************************************
+ * IEnumShellItems interface
+ */
+[
+ object,
+ uuid(70629033-E363-4A28-A567-0DB78006E6D7),
+ pointer_default(unique)
+]
+interface IEnumShellItems : IUnknown
+{
+    [local] HRESULT Next(
+        [in] ULONG celt,
+        [out, size_is(celt), length_is(*pceltFetched)] IShellItem **rgelt,
+        [out] ULONG *pceltFetched);
+
+    [call_as(Next)] HRESULT RemoteNext(
+        [in] ULONG celt,
+        [out, size_is(celt), length_is(*pceltFetched)] IShellItem **rgelt,
+        [out] ULONG *pceltFetched);
+
+    HRESULT Skip(
+        [in] ULONG celt);
+
+    HRESULT Reset();
+
+    HRESULT Clone(
+        [out] IEnumShellItems **ppenum);
+}
+
+/*****************************************************************************
  * FOLDERSETTINGS
  */
 typedef char *LPVIEWSETTINGS;
