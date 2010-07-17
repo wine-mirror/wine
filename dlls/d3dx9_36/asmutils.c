@@ -256,7 +256,7 @@ const char *debug_print_dstmod(DWORD mod) {
     }
 }
 
-static const char *get_regname(const struct shader_reg *reg, shader_type st) {
+static const char *get_regname(const struct shader_reg *reg) {
     switch(reg->type) {
         case BWRITERSPR_TEMP:
             return wine_dbg_sprintf("r%u", reg->regnum);
@@ -337,8 +337,8 @@ const char *debug_print_relarg(const struct shader_reg *reg) {
     }
 }
 
-const char *debug_print_dstreg(const struct shader_reg *reg, shader_type st) {
-    return wine_dbg_sprintf("%s%s%s", get_regname(reg, st),
+const char *debug_print_dstreg(const struct shader_reg *reg) {
+    return wine_dbg_sprintf("%s%s%s", get_regname(reg),
                             debug_print_relarg(reg),
                             debug_print_writemask(reg->writemask));
 }
@@ -379,26 +379,26 @@ const char *debug_print_swizzle(DWORD arg) {
     return wine_dbg_sprintf("%s", ret);
 }
 
-const char *debug_print_srcreg(const struct shader_reg *reg, shader_type st) {
+const char *debug_print_srcreg(const struct shader_reg *reg) {
     switch(reg->srcmod) {
         case BWRITERSPSM_NONE:
-            return wine_dbg_sprintf("%s%s%s", get_regname(reg, st),
+            return wine_dbg_sprintf("%s%s%s", get_regname(reg),
                                     debug_print_relarg(reg),
                                     debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_NEG:
-            return wine_dbg_sprintf("-%s%s%s", get_regname(reg, st),
+            return wine_dbg_sprintf("-%s%s%s", get_regname(reg),
                                     debug_print_relarg(reg),
                                     debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_ABS:
-            return wine_dbg_sprintf("%s%s_abs%s", get_regname(reg, st),
+            return wine_dbg_sprintf("%s%s_abs%s", get_regname(reg),
                                     debug_print_relarg(reg),
                                     debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_ABSNEG:
-            return wine_dbg_sprintf("-%s%s_abs%s", get_regname(reg, st),
+            return wine_dbg_sprintf("-%s%s_abs%s", get_regname(reg),
                                     debug_print_relarg(reg),
                                     debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_NOT:
-            return wine_dbg_sprintf("!%s%s%s", get_regname(reg, st),
+            return wine_dbg_sprintf("!%s%s%s", get_regname(reg),
                                     debug_print_relarg(reg),
                                     debug_print_swizzle(reg->swizzle));
     }

@@ -235,14 +235,13 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode,
                           debug_print_dstmod(mod),
                           debug_print_comp(comp));
     if(dst) {
-        TRACE_(parsed_shader)("%s", debug_print_dstreg(dst, This->shader->type));
+        TRACE_(parsed_shader)("%s", debug_print_dstreg(dst));
         firstreg = FALSE;
     }
     for(i = 0; i < src_count; i++) {
         if(!firstreg) TRACE_(parsed_shader)(", ");
         else firstreg = FALSE;
-        TRACE_(parsed_shader)("%s", debug_print_srcreg(&srcs->reg[i],
-                                                       This->shader->type));
+        TRACE_(parsed_shader)("%s", debug_print_srcreg(&srcs->reg[i]));
     }
     TRACE_(parsed_shader)("\n");
 
@@ -490,7 +489,7 @@ static void asmparser_srcreg_vs_1(struct asm_parser *This,
     if(!check_reg_type(src, vs_1_reg_allowed)) {
         asmparser_message(This, "Line %u: Source register %s not supported in VS 1\n",
                           This->line_no,
-                          debug_print_srcreg(src, ST_VERTEX));
+                          debug_print_srcreg(src));
         set_parse_status(This, PARSE_ERR);
     }
     check_legacy_srcmod(This, src->srcmod);
@@ -523,7 +522,7 @@ static void asmparser_srcreg_vs_2(struct asm_parser *This,
     if(!check_reg_type(src, vs_2_reg_allowed)) {
         asmparser_message(This, "Line %u: Source register %s not supported in VS 2\n",
                           This->line_no,
-                          debug_print_srcreg(src, ST_VERTEX));
+                          debug_print_srcreg(src));
         set_parse_status(This, PARSE_ERR);
     }
     check_loop_swizzle(This, src);
@@ -554,7 +553,7 @@ static void asmparser_srcreg_vs_3(struct asm_parser *This,
     if(!check_reg_type(src, vs_3_reg_allowed)) {
         asmparser_message(This, "Line %u: Source register %s not supported in VS 3.0\n",
                           This->line_no,
-                          debug_print_srcreg(src, ST_VERTEX));
+                          debug_print_srcreg(src));
         set_parse_status(This, PARSE_ERR);
     }
     check_loop_swizzle(This, src);
@@ -583,7 +582,7 @@ static void asmparser_srcreg_ps_2(struct asm_parser *This,
     if(!check_reg_type(src, ps_2_0_reg_allowed)) {
         asmparser_message(This, "Line %u: Source register %s not supported in PS 2.0\n",
                           This->line_no,
-                          debug_print_srcreg(src, ST_PIXEL));
+                          debug_print_srcreg(src));
         set_parse_status(This, PARSE_ERR);
     }
     check_legacy_srcmod(This, src->srcmod);
@@ -615,7 +614,7 @@ static void asmparser_srcreg_ps_2_x(struct asm_parser *This,
     if(!check_reg_type(src, ps_2_x_reg_allowed)) {
         asmparser_message(This, "Line %u: Source register %s not supported in PS 2.x\n",
                           This->line_no,
-                          debug_print_srcreg(src, ST_PIXEL));
+                          debug_print_srcreg(src));
         set_parse_status(This, PARSE_ERR);
     }
     check_legacy_srcmod(This, src->srcmod);
@@ -646,7 +645,7 @@ static void asmparser_srcreg_ps_3(struct asm_parser *This,
     if(!check_reg_type(src, ps_3_reg_allowed)) {
         asmparser_message(This, "Line %u: Source register %s not supported in PS 3.0\n",
                           This->line_no,
-                          debug_print_srcreg(src, ST_PIXEL));
+                          debug_print_srcreg(src));
         set_parse_status(This, PARSE_ERR);
     }
     check_loop_swizzle(This, src);
@@ -662,7 +661,7 @@ static void asmparser_dstreg_vs_1(struct asm_parser *This,
     if(!check_reg_type(dst, vs_1_reg_allowed)) {
         asmparser_message(This, "Line %u: Destination register %s not supported in VS 1\n",
                           This->line_no,
-                          debug_print_dstreg(dst, ST_VERTEX));
+                          debug_print_dstreg(dst));
         set_parse_status(This, PARSE_ERR);
     }
     check_ps_dstmod(This, instr->dstmod);
@@ -680,7 +679,7 @@ static void asmparser_dstreg_vs_2(struct asm_parser *This,
     if(!check_reg_type(dst, vs_2_reg_allowed)) {
         asmparser_message(This, "Line %u: Destination register %s not supported in VS 2.0\n",
                           This->line_no,
-                          debug_print_dstreg(dst, ST_VERTEX));
+                          debug_print_dstreg(dst));
         set_parse_status(This, PARSE_ERR);
     }
     check_ps_dstmod(This, instr->dstmod);
@@ -696,7 +695,7 @@ static void asmparser_dstreg_vs_3(struct asm_parser *This,
     if(!check_reg_type(dst, vs_3_reg_allowed)) {
         asmparser_message(This, "Line %u: Destination register %s not supported in VS 3.0\n",
                           This->line_no,
-                          debug_print_dstreg(dst, ST_VERTEX));
+                          debug_print_dstreg(dst));
         set_parse_status(This, PARSE_ERR);
     }
     check_ps_dstmod(This, instr->dstmod);
@@ -713,7 +712,7 @@ static void asmparser_dstreg_ps_2(struct asm_parser *This,
     if(!check_reg_type(dst, ps_2_0_reg_allowed)) {
         asmparser_message(This, "Line %u: Destination register %s not supported in PS 2.0\n",
                           This->line_no,
-                          debug_print_dstreg(dst, ST_PIXEL));
+                          debug_print_dstreg(dst));
         set_parse_status(This, PARSE_ERR);
     }
     check_shift_dstmod(This, instr->shift);
@@ -730,7 +729,7 @@ static void asmparser_dstreg_ps_2_x(struct asm_parser *This,
     if(!check_reg_type(dst, ps_2_x_reg_allowed)) {
         asmparser_message(This, "Line %u: Destination register %s not supported in PS 2.x\n",
                           This->line_no,
-                          debug_print_dstreg(dst, ST_PIXEL));
+                          debug_print_dstreg(dst));
         set_parse_status(This, PARSE_ERR);
     }
     check_shift_dstmod(This, instr->shift);
@@ -745,7 +744,7 @@ static void asmparser_dstreg_ps_3(struct asm_parser *This,
     if(!check_reg_type(dst, ps_3_reg_allowed)) {
         asmparser_message(This, "Line %u: Destination register %s not supported in PS 3.0\n",
                           This->line_no,
-                          debug_print_dstreg(dst, ST_PIXEL));
+                          debug_print_dstreg(dst));
         set_parse_status(This, PARSE_ERR);
     }
     check_shift_dstmod(This, instr->shift);
