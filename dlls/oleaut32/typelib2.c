@@ -2026,6 +2026,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 {
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
 
+    HRESULT status = S_OK;
     CyclicList *insert;
     INT *typedata;
     int var_datawidth;
@@ -2079,7 +2080,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     /* fill out the basic type information */
     typedata[0] = 0x14 | (index << 16);
     typedata[2] = pVarDesc->wVarFlags;
-    typedata[3] = (sizeof(VARDESC) << 16) | 0;
+    typedata[3] = (sizeof(VARDESC) << 16) | pVarDesc->varkind;
 
     /* update the index data */
     insert->indice = 0x40000000 + index;
@@ -2091,44 +2092,52 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
 			 &typedata[1], &var_datawidth, &var_alignment,
 			 &var_type_size);
 
-    /* pad out starting position to data width */
-    This->datawidth += var_alignment - 1;
-    This->datawidth &= ~(var_alignment - 1);
-    typedata[4] = This->datawidth;
-    
-    /* add the new variable to the total data width */
-    This->datawidth += var_datawidth;
-    if(This->dual)
-        This->dual->datawidth = This->datawidth;
+    if (pVarDesc->varkind != VAR_CONST)
+    {
+	/* pad out starting position to data width */
+	This->datawidth += var_alignment - 1;
+	This->datawidth &= ~(var_alignment - 1);
+	typedata[4] = This->datawidth;
 
-    /* add type description size to total required allocation */
-    typedata[3] += var_type_size << 16;
+	/* add the new variable to the total data width */
+	This->datawidth += var_datawidth;
+	if(This->dual)
+	    This->dual->datawidth = This->datawidth;
 
-    /* fix type alignment */
-    alignment = (This->typeinfo->typekind >> 11) & 0x1f;
-    if (alignment < var_alignment) {
-	alignment = var_alignment;
-	This->typeinfo->typekind &= ~0xf800;
-	This->typeinfo->typekind |= alignment << 11;
+	/* add type description size to total required allocation */
+	typedata[3] += var_type_size << 16;
+
+	/* fix type alignment */
+	alignment = (This->typeinfo->typekind >> 11) & 0x1f;
+	if (alignment < var_alignment) {
+	    alignment = var_alignment;
+	    This->typeinfo->typekind &= ~0xf800;
+	    This->typeinfo->typekind |= alignment << 11;
+	}
+
+	/* ??? */
+	if (!This->typeinfo->res2) This->typeinfo->res2 = 0x1a;
+	if ((index == 0) || (index == 1) || (index == 2) || (index == 4) || (index == 9)) {
+	    This->typeinfo->res2 <<= 1;
+	}
+
+	/* ??? */
+	if (This->typeinfo->res3 == -1) This->typeinfo->res3 = 0;
+	This->typeinfo->res3 += 0x2c;
+
+	/* pad data width to alignment */
+	This->typeinfo->size = (This->datawidth + (alignment - 1)) & ~(alignment - 1);
+    } else {
+	VARIANT *value = pVarDesc->DUMMYUNIONNAME.lpvarValue;
+	status = ctl2_encode_variant(This->typelib, typedata+4, value, V_VT(value));
+        /* ??? native sets size 0x34 */
+	typedata[3] += 0x10 << 16;
     }
-
-    /* ??? */
-    if (!This->typeinfo->res2) This->typeinfo->res2 = 0x1a;
-    if ((index == 0) || (index == 1) || (index == 2) || (index == 4) || (index == 9)) {
-	This->typeinfo->res2 <<= 1;
-    }
-
-    /* ??? */
-    if (This->typeinfo->res3 == -1) This->typeinfo->res3 = 0;
-    This->typeinfo->res3 += 0x2c;
 
     /* increment the number of variable elements */
     This->typeinfo->cElement += 0x10000;
 
-    /* pad data width to alignment */
-    This->typeinfo->size = (This->datawidth + (alignment - 1)) & ~(alignment - 1);
-
-    return S_OK;
+    return status;
 }
 
 /******************************************************************************
