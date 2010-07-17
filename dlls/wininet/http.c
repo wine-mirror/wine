@@ -3685,7 +3685,7 @@ lend:
             HTTP_ReceiveRequestData(lpwhr, TRUE);
         else
         {
-            iar.dwResult = 0;
+            iar.dwResult = (res==ERROR_SUCCESS ? (DWORD_PTR)lpwhr->hdr.hInternet : 0);
             iar.dwError = res;
 
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
@@ -3769,7 +3769,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PT
         }
     }
 
-    iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
+    iar.dwResult = (res==ERROR_SUCCESS ? (DWORD_PTR)lpwhr->hdr.hInternet : 0);
     iar.dwError = res;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
