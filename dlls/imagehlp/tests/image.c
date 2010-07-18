@@ -146,6 +146,7 @@ struct expected_update_accum
 {
     DWORD cUpdates;
     const struct expected_blob *updates;
+    BOOL  todo;
 };
 
 static BOOL WINAPI accumulating_stream_output(DIGEST_HANDLE handle, BYTE *pb,
@@ -180,7 +181,11 @@ static void check_updates(LPCSTR header, const struct expected_update_accum *exp
 {
     DWORD i;
 
-    ok(expected->cUpdates == got->cUpdates, "%s: expected %d updates, got %d\n",
+    if (expected->todo)
+        todo_wine ok(expected->cUpdates == got->cUpdates, "%s: expected %d updates, got %d\n",
+            header, expected->cUpdates, got->cUpdates);
+    else
+        ok(expected->cUpdates == got->cUpdates, "%s: expected %d updates, got %d\n",
             header, expected->cUpdates, got->cUpdates);
     for (i = 0; i < min(expected->cUpdates, got->cUpdates); i++)
     {
@@ -217,7 +222,7 @@ static const struct expected_blob b1[] = {
     {FILE_TOTAL-FILE_IDATA-FIELD_OFFSET(struct Imports, ibn),
         &bin.idata_section.ibn}
 };
-static const struct expected_update_accum a1 = { sizeof(b1) / sizeof(b1[0]), b1 };
+static const struct expected_update_accum a1 = { sizeof(b1) / sizeof(b1[0]), b1, TRUE };
 
 static const struct expected_blob b2[] = {
     {FILE_PE_START,  &bin},
@@ -227,7 +232,7 @@ static const struct expected_blob b2[] = {
     {FILE_IDATA-FILE_TEXT, &bin.text_section},
     {FILE_TOTAL-FILE_IDATA, &bin.idata_section}
 };
-static const struct expected_update_accum a2 = { sizeof(b2) / sizeof(b2[0]), b2 };
+static const struct expected_update_accum a2 = { sizeof(b2) / sizeof(b2[0]), b2, FALSE };
 
 /* Creates a test file and returns a handle to it.  The file's path is returned
  * in temp_file, which must be at least MAX_PATH characters in length.
@@ -278,7 +283,6 @@ static void test_get_digest_stream(void)
 
     SetLastError(0xdeadbeef);
     ret = pImageGetDigestStream(NULL, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     file = create_temp_file(temp_file);
@@ -289,18 +293,15 @@ static void test_get_digest_stream(void)
     }
     SetLastError(0xdeadbeef);
     ret = pImageGetDigestStream(file, 0, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = pImageGetDigestStream(NULL, 0, accumulating_stream_output, &accum);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     /* Even with "valid" parameters, it fails with an empty file */
     SetLastError(0xdeadbeef);
     ret = pImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     /* Finally, with a valid executable in the file, it succeeds.  Note that
@@ -316,16 +317,12 @@ static void test_get_digest_stream(void)
     bin.nt_headers.OptionalHeader.SizeOfImage = 0;
 
     ret = pImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
-    todo_wine
     ok(ret, "ImageGetDigestStream failed: %d\n", GetLastError());
-    todo_wine
     check_updates("flags = 0", &a1, &accum);
     free_updates(&accum);
     ret = pImageGetDigestStream(file, CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO,
      accumulating_stream_output, &accum);
-    todo_wine
     ok(ret, "ImageGetDigestStream failed: %d\n", GetLastError());
-    todo_wine
     check_updates("flags = CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO", &a2, &accum);
     free_updates(&accum);
     CloseHandle(file);
