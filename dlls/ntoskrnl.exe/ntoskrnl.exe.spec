@@ -688,7 +688,7 @@
 @ stub MmLockPagableDataSection
 @ stub MmLockPagableImageSection
 @ stub MmLockPagableSectionByHandle
-@ stub MmMapIoSpace
+@ stdcall MmMapIoSpace(long long long long)
 @ stub MmMapLockedPages
 @ stub MmMapLockedPagesSpecifyCache
 @ stub MmMapLockedPagesWithReservedMapping
@@ -718,7 +718,7 @@
 @ stub MmTrimAllSystemPagableMemory
 @ stub MmUnlockPagableImageSection
 @ stub MmUnlockPages
-@ stub MmUnmapIoSpace
+@ stdcall MmUnmapIoSpace(ptr long)
 @ stub MmUnmapLockedPages
 @ stub MmUnmapReservedMapping
 @ stub MmUnmapVideoDisplay

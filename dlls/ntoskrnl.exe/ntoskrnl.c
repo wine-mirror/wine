@@ -1327,6 +1327,15 @@ BOOLEAN WINAPI MmIsAddressValid(PVOID VirtualAddress)
 }
 
 /***********************************************************************
+ *           MmMapIoSpace   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes, DWORD CacheType )
+{
+    FIXME( "stub: 0x%08x%08x, %d, %d\n", PhysicalAddress.u.HighPart, PhysicalAddress.u.LowPart, NumberOfBytes, CacheType );
+    return NULL;
+}
+
+/***********************************************************************
  *           MmPageEntireDriver   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmPageEntireDriver(PVOID AddrInSection)
@@ -1341,6 +1350,14 @@ PVOID WINAPI MmPageEntireDriver(PVOID AddrInSection)
 void WINAPI MmResetDriverPaging(PVOID AddrInSection)
 {
     TRACE("%p\n", AddrInSection);
+}
+
+/***********************************************************************
+ *           MmUnmapIoSpace   (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI MmUnmapIoSpace( PVOID BaseAddress, SIZE_T NumberOfBytes )
+{
+    FIXME( "stub: %p, %lu\n", BaseAddress, NumberOfBytes );
 }
 
 /***********************************************************************
