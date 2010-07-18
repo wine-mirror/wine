@@ -295,7 +295,7 @@ static inline int sock_error( struct fd *fd )
     return optval;
 }
 
-static void sock_dispatch_asyncs( struct sock *sock, int event )
+static void sock_dispatch_asyncs( struct sock *sock, int event, int error )
 {
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
@@ -311,10 +311,12 @@ static void sock_dispatch_asyncs( struct sock *sock, int event )
         }
         if ( event & (POLLERR|POLLHUP) )
         {
+            int status = sock_get_ntstatus( error );
+
             if ( !(sock->state & FD_READ) )
-                async_wake_up( sock->read_q, STATUS_SUCCESS );
+                async_wake_up( sock->read_q, status );
             if ( !(sock->state & FD_WRITE) )
-                async_wake_up( sock->write_q, STATUS_SUCCESS );
+                async_wake_up( sock->write_q, status );
         }
     }
 }
@@ -449,7 +451,7 @@ static void sock_poll_event( struct fd *fd, int event )
             event |= POLLHUP;
     }
 
-    sock_dispatch_asyncs( sock, event );
+    sock_dispatch_asyncs( sock, event, error );
     sock_dispatch_events( sock, prevstate, event, error );
 
     /* if anyone is stupid enough to wait on the socket object itself,
