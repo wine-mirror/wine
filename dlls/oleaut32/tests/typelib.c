@@ -488,31 +488,69 @@ static void test_TypeInfo(void)
        "ITypeInfo_GetIDsOfNames should have returned DISP_E_UNKNOWNNAME instead of 0x%08x\n",
        hr);
 
-    /* test invalid memberid */
-    dispparams.cNamedArgs = 0;
     dispparams.cArgs = 0;
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = NULL;
+
+            /* test dispparams not NULL */
+
+    /* invalid member id -- wrong flags -- cNamedArgs not bigger than cArgs */
+    dispparams.cNamedArgs = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, 0xdeadbeef, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+    /* invalid member id -- correct flags -- cNamedArgs not bigger than cArgs */
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, 0xdeadbeef, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+
+    /* invalid member id -- wrong flags -- cNamedArgs bigger than cArgs */
+    dispparams.cNamedArgs = 1;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, 0xdeadbeef, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+    /* invalid member id -- correct flags -- cNamedArgs bigger than cArgs */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, 0xdeadbeef, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
 
     hr = ITypeInfo_GetIDsOfNames(pTypeInfo, &pwszClone, 1, &dispidMember);
     ok_ole_success(hr, ITypeInfo_GetIDsOfNames);
 
-    /* test correct memberid, but wrong flags */
+    /* correct member id -- wrong flags -- cNamedArgs not bigger than cArgs */
+    dispparams.cNamedArgs = 0;
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+    /* correct member id -- correct flags -- cNamedArgs not bigger than cArgs
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == 0x8002000e, "ITypeInfo_Invoke should have returned 0x8002000e instead of 0x%08x\n", hr); */
 
-    /* test NULL dispparams */
-    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
-    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
-
-    /* test dispparams->cNamedArgs being bigger than dispparams->cArgs */
+    /* correct member id -- wrong flags -- cNamedArgs bigger than cArgs */
     dispparams.cNamedArgs = 1;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+    /* correct member id -- correct flags -- cNamedArgs bigger than cArgs */
     hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
+            /* test NULL dispparams */
+
+    /* correct member id -- wrong flags -- cNamedArgs not bigger than cArgs */
+    dispparams.cNamedArgs = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+    /* correct member id -- correct flags -- cNamedArgs not bigger than cArgs */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    /* correct member id -- wrong flags -- cNamedArgs bigger than cArgs */
+    dispparams.cNamedArgs = 1;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+    /* correct member id -- correct flags -- cNamedArgs bigger than cArgs */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "ITypeInfo_Invoke should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
     ITypeInfo_Release(pTypeInfo);
+
+
 
     hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IDispatch, &pTypeInfo);
     ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid); 
@@ -539,11 +577,41 @@ static void test_TypeInfo(void)
         VariantClear(&var);
     }
 
-    /* test invoking a method with a [restricted] keyword */
-    hr = ITypeInfo_Invoke(pTypeInfo, NULL, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    todo_wine {
+            /* test invoking a method with a [restricted] keyword  */
+
+    /* correct member id -- wrong flags -- cNamedArgs not bigger than cArgs */
+    dispparams.cNamedArgs = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
-    }
+    /* correct member id -- correct flags -- cNamedArgs not bigger than cArgs */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+
+    /* correct member id -- wrong flags -- cNamedArgs bigger than cArgs */
+    dispparams.cNamedArgs = 1;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+    /* correct member id -- correct flags -- cNamedArgs bigger than cArgs */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+
+            /* test NULL dispparams */
+
+    /* correct member id -- wrong flags -- cNamedArgs not bigger than cArgs */
+    dispparams.cNamedArgs = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+    /* correct member id -- correct flags -- cNamedArgs not bigger than cArgs */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+
+    /* correct member id -- wrong flags -- cNamedArgs bigger than cArgs */
+    dispparams.cNamedArgs = 1;
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_PROPERTYGET, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
+    /* correct member id -- correct flags -- cNamedArgs bigger than cArgs */
+    hr = ITypeInfo_Invoke(pTypeInfo, (void *)0xdeadbeef, dispidMember, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "ITypeInfo_Invoke should have returned DISP_E_MEMBERNOTFOUND instead of 0x%08x\n", hr);
 
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);

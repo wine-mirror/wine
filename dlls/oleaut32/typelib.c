@@ -6017,11 +6017,14 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
     unsigned int var_index;
     TYPEKIND type_kind;
     HRESULT hres;
-    const TLBFuncDesc *pFuncInfo;
+    const TLBFuncDesc *pFuncInfo = This->funclist;
 
     TRACE("(%p)(%p,id=%d,flags=0x%08x,%p,%p,%p,%p)\n",
       This,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
     );
+
+    if( pFuncInfo->funcdesc.wFuncFlags == FUNCFLAG_FRESTRICTED )
+        return DISP_E_MEMBERNOTFOUND;
 
     if (!pDispParams)
     {
@@ -6491,7 +6494,7 @@ func_fail:
             WARN("Could not search inherited interface!\n");
         }
     }
-    ERR("did not find member id %d, flags 0x%x!\n", memid, wFlags);
+    WARN("did not find member id %d, flags 0x%x!\n", memid, wFlags);
     return DISP_E_MEMBERNOTFOUND;
 }
 
