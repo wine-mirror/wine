@@ -263,21 +263,21 @@ static void DPMI_xfree( LPVOID ptr )
  *
  * FIXME: perhaps we could grow this mapped area... 
  */
-static LPVOID DPMI_xrealloc( LPVOID ptr, DWORD newsize ) 
+static LPVOID DPMI_xrealloc( LPVOID ptr, DWORD newsize )
 {
     MEMORY_BASIC_INFORMATION        mbi;
-    LPVOID                          newptr;
 
-    newptr = DPMI_xalloc( newsize );
-    if (ptr) 
+    if (ptr)
     {
-        if (!VirtualQuery(ptr,&mbi,sizeof(mbi))) 
+        LPVOID newptr;
+
+        if (!VirtualQuery(ptr,&mbi,sizeof(mbi)))
         {
             FIXME( "realloc of DPMI_xallocd region %p?\n", ptr );
             return NULL;
         }
 
-        if (mbi.State == MEM_FREE) 
+        if (mbi.State == MEM_FREE)
         {
             FIXME( "realloc of DPMI_xallocd region %p?\n", ptr );
             return NULL;
@@ -289,11 +289,17 @@ static LPVOID DPMI_xrealloc( LPVOID ptr, DWORD newsize )
         if (newsize <= mbi.RegionSize)
             return ptr;
 
+        newptr = DPMI_xalloc( newsize );
+        if (!newptr)
+            return NULL;
+
         memcpy( newptr, ptr, mbi.RegionSize );
         DPMI_xfree( ptr );
+
+        return newptr;
     }
 
-    return newptr;
+    return DPMI_xalloc( newsize );
 }
 
 
