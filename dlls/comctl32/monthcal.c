@@ -86,6 +86,8 @@ typedef struct _CALENDAR_INFO
     RECT wdays;      /* week days at top */
     RECT days;       /* calendar area */
     RECT weeknums;   /* week numbers at left side */
+
+    SYSTEMTIME month;/* contains calendar main month/year */
 } CALENDAR_INFO;
 
 typedef struct
@@ -472,13 +474,14 @@ static inline void MONTHCAL_GetPrevMonth(SYSTEMTIME *date)
 /* Returns full date for a first currently visible day */
 static void MONTHCAL_GetMinDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 {
-  SYSTEMTIME st_first = infoPtr->curSel;
-  int firstDay;
+  /* zero indexed calendar has the earliest date */
+  SYSTEMTIME st_first = infoPtr->calendars[0].month;
+  INT firstDay;
 
   st_first.wDay = 1;
   firstDay = MONTHCAL_CalculateDayOfWeek(&st_first, FALSE);
 
-  *date = infoPtr->curSel;
+  *date = infoPtr->calendars[0].month;
   MONTHCAL_GetPrevMonth(date);
 
   date->wDay = MONTHCAL_MonthLength(date->wMonth, date->wYear) +
@@ -494,15 +497,16 @@ static void MONTHCAL_GetMinDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 /* Returns full date for a last currently visible day */
 static void MONTHCAL_GetMaxDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 {
-  SYSTEMTIME st;
+  /* the latest date is in latest calendar */
+  SYSTEMTIME st, lt_month = infoPtr->calendars[infoPtr->cal_num-1].month;
 
-  *date = infoPtr->curSel;
+  *date = lt_month;
   MONTHCAL_GetNextMonth(date);
 
   MONTHCAL_GetMinDate(infoPtr, &st);
   /* Use month length to get max day. 42 means max day count in calendar area */
   date->wDay = 42 - (MONTHCAL_MonthLength(st.wMonth, st.wYear) - st.wDay + 1) -
-                     MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
+                     MONTHCAL_MonthLength(lt_month.wMonth, lt_month.wYear);
 
   /* fix day of week */
   MONTHCAL_CalculateDayOfWeek(date, TRUE);
@@ -512,7 +516,7 @@ static void MONTHCAL_GetMaxDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
    and day in the calendar. day== 0 mean the last day of tha last month
 */
 static int MONTHCAL_CalcDayFromPos(const MONTHCAL_INFO *infoPtr, int x, int y,
-				   int *daypos,int *weekpos)
+				   int *daypos, int *weekpos)
 {
   int retval, firstDay;
   RECT rcClient;
@@ -524,7 +528,6 @@ static int MONTHCAL_CalcDayFromPos(const MONTHCAL_INFO *infoPtr, int x, int y,
   it at the boundary */
   if (x > rcClient.right)
     x = rcClient.right;
-
 
   *daypos  = (x - infoPtr->calendars[0].days.left ) / infoPtr->width_increment;
   *weekpos = (y - infoPtr->calendars[0].days.top ) / infoPtr->height_increment;
@@ -1439,6 +1442,7 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
   infoPtr->curSel = *curSel;
+  infoPtr->calendars[0].month = *curSel;
 
   return TRUE;
 }
@@ -1519,6 +1523,7 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
       infoPtr->maxSel = range[0];
     }
     infoPtr->curSel = infoPtr->minSel;
+    infoPtr->calendars[0].month = infoPtr->minSel;
 
     /* update day of week */
     MONTHCAL_CalculateDayOfWeek(&infoPtr->minSel, TRUE);
@@ -1590,12 +1595,33 @@ MONTHCAL_SetToday(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *today)
   return TRUE;
 }
 
+/* returns calendar index containing specified point, or -1 if it's background */
+static INT MONTHCAL_GetCalendarFromPoint(const MONTHCAL_INFO *infoPtr, const POINT *pt)
+{
+  RECT r;
+  INT i;
+
+  for (i = 0; i < infoPtr->cal_num; i++)
+  {
+     /* whole bounding rectangle allows some optimization to compute */
+     r.left   = infoPtr->calendars[i].title.left;
+     r.top    = infoPtr->calendars[i].title.top;
+     r.bottom = infoPtr->calendars[i].days.bottom;
+     r.right  = infoPtr->calendars[i].days.right;
+
+     if (PtInRect(&r, *pt)) return i;
+  }
+
+  return -1;
+}
+
 static LRESULT
 MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 {
   UINT x,y;
   DWORD retval;
-  int day,wday,wnum;
+  INT day, wday, wnum, calIdx;
+  SYSTEMTIME ht_month;
 
   if(!lpht || lpht->cbSize < MCHITTESTINFO_V1_SIZE) return -1;
 
@@ -1616,9 +1642,17 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 	infoPtr->weeknums.top, infoPtr->weeknums.bottom);
   */
 
+  /* guess in what calendar we are */
+  calIdx = MONTHCAL_GetCalendarFromPoint(infoPtr, &lpht->pt);
+  if (calIdx == -1) goto nocal;
+
+  ht_month = infoPtr->calendars[calIdx].month;
+
   /* are we in the header? */
 
-  if(PtInRect(&infoPtr->calendars[0].title, lpht->pt)) {
+  if(PtInRect(&infoPtr->calendars[calIdx].title, lpht->pt)) {
+    /* FIXME: buttons hittesting could be optimized cause maximum
+              two calendars have buttons */
     if(PtInRect(&infoPtr->titlebtnprev, lpht->pt)) {
       retval = MCHT_TITLEBTNPREV;
       goto done;
@@ -1627,11 +1661,11 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
       retval = MCHT_TITLEBTNNEXT;
       goto done;
     }
-    if(PtInRect(&infoPtr->calendars[0].titlemonth, lpht->pt)) {
+    if(PtInRect(&infoPtr->calendars[calIdx].titlemonth, lpht->pt)) {
       retval = MCHT_TITLEMONTH;
       goto done;
     }
-    if(PtInRect(&infoPtr->calendars[0].titleyear, lpht->pt)) {
+    if(PtInRect(&infoPtr->calendars[calIdx].titleyear, lpht->pt)) {
       retval = MCHT_TITLEYEAR;
       goto done;
     }
@@ -1640,42 +1674,54 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
     goto done;
   }
 
-  day = MONTHCAL_CalcDayFromPos(infoPtr,x,y,&wday,&wnum);
-  if(PtInRect(&infoPtr->calendars[0].wdays, lpht->pt)) {
+  day = MONTHCAL_CalcDayFromPos(infoPtr, x, y, &wday, &wnum);
+  if(PtInRect(&infoPtr->calendars[calIdx].wdays, lpht->pt)) {
     retval = MCHT_CALENDARDAY;
-    lpht->st.wYear  = infoPtr->curSel.wYear;
-    lpht->st.wMonth = (day < 1)? infoPtr->curSel.wMonth -1 : infoPtr->curSel.wMonth;
+    lpht->st.wYear  = ht_month.wYear;
+    lpht->st.wMonth = (day < 1)? ht_month.wMonth -1 : ht_month.wMonth;
     lpht->st.wDay   = (day < 1)?
-      MONTHCAL_MonthLength(infoPtr->curSel.wMonth-1, infoPtr->curSel.wYear) -day : day;
+      MONTHCAL_MonthLength(ht_month.wMonth-1, ht_month.wYear) - day : day;
     goto done;
   }
-  if(PtInRect(&infoPtr->calendars[0].weeknums, lpht->pt)) {
+  if(PtInRect(&infoPtr->calendars[calIdx].weeknums, lpht->pt)) {
     retval = MCHT_CALENDARWEEKNUM;
-    lpht->st.wYear  = infoPtr->curSel.wYear;
-    lpht->st.wMonth = (day < 1) ? infoPtr->curSel.wMonth -1 :
-      (day > MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear)) ?
-      infoPtr->curSel.wMonth +1 :infoPtr->curSel.wMonth;
-    lpht->st.wDay   = (day < 1 ) ?
-      MONTHCAL_MonthLength(infoPtr->curSel.wMonth-1,infoPtr->curSel.wYear) -day :
-      (day > MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear)) ?
-      day - MONTHCAL_MonthLength(infoPtr->curSel.wMonth,infoPtr->curSel.wYear) : day;
+    lpht->st.wYear  = ht_month.wYear;
+
+    if (day < 1) {
+      lpht->st.wMonth = ht_month.wMonth - 1;
+    }
+    else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear)) {
+      lpht->st.wMonth = ht_month.wMonth + 1;
+    }
+    else
+      lpht->st.wMonth = ht_month.wMonth;
+
+    if (day < 1) {
+      lpht->st.wDay = MONTHCAL_MonthLength(ht_month.wMonth-1, ht_month.wYear) - day;
+    }
+    else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear)) {
+      lpht->st.wDay = day - MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear);
+    }
+    else
+      lpht->st.wDay = day;
+
     goto done;
   }
-  if(PtInRect(&infoPtr->calendars[0].days, lpht->pt))
+  if(PtInRect(&infoPtr->calendars[calIdx].days, lpht->pt))
   {
-      lpht->st.wYear  = infoPtr->curSel.wYear;
-      lpht->st.wMonth = infoPtr->curSel.wMonth;
+      lpht->st.wYear  = ht_month.wYear;
+      lpht->st.wMonth = ht_month.wMonth;
       if (day < 1)
       {
 	  retval = MCHT_CALENDARDATEPREV;
 	  MONTHCAL_GetPrevMonth(&lpht->st);
 	  lpht->st.wDay = MONTHCAL_MonthLength(lpht->st.wMonth, lpht->st.wYear) + day;
       }
-      else if (day > MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear))
+      else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear))
       {
 	  retval = MCHT_CALENDARDATENEXT;
 	  MONTHCAL_GetNextMonth(&lpht->st);
-	  lpht->st.wDay = day - MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear);
+	  lpht->st.wDay = day - MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear);
       }
       else {
 	retval = MCHT_CALENDARDATE;
@@ -1685,16 +1731,17 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
       MONTHCAL_CalculateDayOfWeek(&lpht->st, TRUE);
       goto done;
   }
+
+nocal:
   if(PtInRect(&infoPtr->todayrect, lpht->pt)) {
     retval = MCHT_TODAYLINK;
     goto done;
   }
 
-
   /* Hit nothing special? What's left must be background :-) */
-
   retval = MCHT_CALENDARBK;
- done:
+
+done:
   lpht->uHit = retval;
   return retval;
 }
@@ -1785,6 +1832,7 @@ MONTHCAL_RButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 		     menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL))
   {
       infoPtr->curSel = infoPtr->todaysDate;
+      infoPtr->calendars[0].month = infoPtr->todaysDate;
       infoPtr->minSel = infoPtr->todaysDate;
       infoPtr->maxSel = infoPtr->todaysDate;
       InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
@@ -1946,6 +1994,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   case MCHT_TODAYLINK:
   {
     infoPtr->curSel = infoPtr->todaysDate;
+    infoPtr->calendars[0].month = infoPtr->todaysDate;
     infoPtr->minSel = infoPtr->todaysDate;
     infoPtr->maxSel = infoPtr->todaysDate;
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
@@ -2458,6 +2507,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->minSel = infoPtr->todaysDate;
   infoPtr->maxSel = infoPtr->todaysDate;
   infoPtr->curSel = infoPtr->todaysDate;
+  infoPtr->calendars[0].month = infoPtr->todaysDate;
   infoPtr->isUnicode = TRUE;
 
   /* call MONTHCAL_UpdateSize to set all of the dimensions */
