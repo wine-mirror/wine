@@ -315,6 +315,7 @@ static void check_thread_instance( const char *name, HINSTANCE inst, HINSTANCE i
 static void test_instances(void)
 {
     WNDCLASSA cls, wc;
+    WNDCLASSEXA wcexA;
     HWND hwnd, hwnd2;
     const char *name = "__test__";
     HINSTANCE kernel32 = GetModuleHandleA("kernel32");
@@ -347,6 +348,25 @@ static void test_instances(void)
     check_instance( name, kernel32, kernel32, kernel32 );
     check_thread_instance( name, kernel32, kernel32, kernel32 );
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
+
+    ZeroMemory(&wcexA, sizeof(wcexA));
+    wcexA.lpfnWndProc = DefWindowProcA;
+    wcexA.lpszClassName = "__classex_test__";
+    SetLastError(0xdeadbeef);
+    wcexA.cbSize = sizeof(wcexA) - 1;
+    ok( ((RegisterClassExA( &wcexA ) == 0) && (GetLastError() == ERROR_INVALID_PARAMETER)),
+          "Succeeded with invalid number of cbSize bytes\n");
+    SetLastError(0xdeadbeef);
+    wcexA.cbSize = sizeof(wcexA) + 1;
+    ok( ((RegisterClassExA( &wcexA ) == 0) && (GetLastError() == ERROR_INVALID_PARAMETER)),
+          "Succeeded with invalid number of cbSize bytes\n");
+    SetLastError(0xdeadbeef);
+    wcexA.cbSize = sizeof(wcexA);
+    ok( RegisterClassExA( &wcexA ), "Failed with valid number of cbSize bytes\n");
+    wcexA.cbSize = 0xdeadbeef;
+    ok( GetClassInfoEx(main_module, wcexA.lpszClassName, &wcexA), "GetClassInfoEx failed\n");
+    ok( wcexA.cbSize == 0xdeadbeef, "GetClassInfoEx returned wrong cbSize value %d\n", wcexA.cbSize);
+    UnregisterClassA(wcexA.lpszClassName, main_module);
 
     /* Bug 2631 - Supplying an invalid number of bytes fails */
     cls.cbClsExtra    = 0;
