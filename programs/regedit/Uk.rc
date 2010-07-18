@@ -1,0 +1,337 @@
+/*
+ * Regedit resources
+ *
+ * Copyright 2002 Robert Dickenson
+ * Copyright 2010 Igor Paliychuk
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+/* Ukrainian Resources */
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+
+/*
+ * Menu
+ */
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Реєстр"
+    BEGIN
+        MENUITEM "&Імпортувати файл реєстру...",     ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Експортувати файл реєстру...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Приєднати мережний реєстр...",    ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Від'єднати мережний реєстр...",   ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Друк\tCtrl+P",                    ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "В&ихід",                           ID_REGISTRY_EXIT
+    END
+    POPUP "&Правка"
+    BEGIN
+        MENUITEM "&Змінити",                         ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&Новий"
+        BEGIN
+            MENUITEM "&Ключ",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Рядкове значення",              ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Двійкове значення",             ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&Значення DWORD",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Багаторядкове значення",        ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Видалити\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Перейменувати\tF2",            ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Копіювати ім'я ключа",         ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Знайти\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "З&найти далі\tF3",              ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&Вигляд"
+    BEGIN
+        MENUITEM "Рядок С&тану",                  ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Розд&ілити",                    ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Оновити\tF5",                  ID_VIEW_REFRESH
+    END
+    POPUP "&Обране"
+    BEGIN
+        MENUITEM "&Додати до Обраного...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "&Видалити з Обраного...",         ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "&Довідка"
+    BEGIN
+        MENUITEM "&Зміст довідки\tF1",         ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&Про Редактор реєстру",      ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU DISCARDABLE
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&Змінити",                     ID_EDIT_MODIFY
+	MENUITEM "Змінити двійкові дані",        ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&Видалити\tDel",               ID_EDIT_DELETE
+	MENUITEM "&Перейменувати",               ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&Новий"
+        BEGIN
+            MENUITEM "&Ключ",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&Рядкова значення",              ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Двійкове значення",             ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&Значення DWORD",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "&Багаторядкове значення",        ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Видалити\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Перейменувати\tF2",            ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Експорт...",                   ID_EDIT_EXPORT
+        MENUITEM "&Копіювати ім'я ключа",         ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Знайти\tCtrl+F",               ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Експорт реєстру", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Все", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "О&брану гілку:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+IDD_FIND DIALOG DISCARDABLE  22, 17, 220, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Знайти"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Знайти:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "Знайти в:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "Ключі", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "Імена значень", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Вміст значень", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "Лише рядок повністю", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "Знайти",IDOK,175,5,40,15,WS_GROUP
+    PUSHBUTTON      "Закрити",IDCANCEL,175,24,40,15, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Додати Обране"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Назва:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,36,40,15,WS_GROUP
+    PUSHBUTTON      "Скасувати",IDCANCEL,165,36,40,15,WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Видалити Обране"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Назва:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,72,40,15,WS_GROUP
+    PUSHBUTTON      "Скасувати",IDCANCEL,165,72,40,15,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Редагувати рядкове значення"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ім'я значення:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Дані значення:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,120,56,40,15,WS_GROUP
+    PUSHBUTTON   "Скасувати",IDCANCEL,165,56,40,15,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Редагувати DWORD значення"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ім'я значення:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Дані значення:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "Основа", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "Шістнадцяткова", IDC_DWORD_HEX, 130, 40, 66, 10, WS_TABSTOP
+    AUTORADIOBUTTON "Десяткова", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,120,78,40,15,WS_GROUP
+    PUSHBUTTON   "Скасувати",IDCANCEL,165,78,40,15,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Редагувати Двійкове значення"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ім'я значення:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,160,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Дані значення:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,5,40,160,40
+    DEFPUSHBUTTON   "OK",IDOK,80,83,40,15,WS_GROUP
+    PUSHBUTTON   "Скасувати",IDCANCEL,125,83,40,15,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Редагувати Багаторядкове значення"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Ім'я значення:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "Дані значення:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "OK",IDOK,120,156,40,15,WS_GROUP
+    PUSHBUTTON   "Скасувати",IDCANCEL,165,156,40,15,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "Ім'я"
+    IDS_LIST_COLUMN_TYPE    "Тип"
+    IDS_LIST_COLUMN_DATA    "Дані"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Редактор реєстру"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_MENU        "Містить команди для роботи з реєстром у цілому"
+    ID_EDIT_MENU            "Містить команди для редагування значень або ключів"
+    ID_VIEW_MENU            "Містить команди для налаштування вікна реєстру"
+    ID_FAVORITES_MENU       "Містить команди для доступу до ключів, що часто використовуються"
+    ID_HELP_MENU            "Містить команди для відображення довідки та інформації про редактор реєстру"
+    ID_EDIT_NEW_MENU        "Містить команди для створення нових ключів або значень"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_EDIT_MODIFY          "Змінює дані значення"
+    ID_EDIT_NEW_KEY         "Додає новий ключ"
+    ID_EDIT_NEW_STRINGVALUE "Додає нове рядкове значення"
+    ID_EDIT_NEW_BINARYVALUE "Додає нове двійкове значення"
+    ID_EDIT_NEW_DWORDVALUE  "Додає нове DWORD значення"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Додає нове багаторядкове значення"
+    ID_REGISTRY_IMPORTREGISTRYFILE "Імпортує текстовий файл до реєстру"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "Експортує весь реєстр або його частину в текстовий файл"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "Підключається до реєстру віддаленого комп'ютера"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "Відключається від реєстру віддаленого комп'ютера"
+    ID_REGISTRY_PRINT       "Друкує весь реєстр або його частину"
+/*    ID_HELP_HELPTOPICS      "Відкриває довідку редактора реєстру" */
+    ID_HELP_ABOUT           "Відображає інформацію про програму, номер версії та авторство"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_REGISTRY_EXIT        "Виходить з редактора реєстру"
+    ID_FAVORITES_ADDTOFAVORITES "Додає ключі до Обраного"
+    ID_FAVORITES_REMOVEFAVORITE "Видаляє ключі з Обраного"
+    ID_VIEW_STATUSBAR       "Відображує або ховає рядок стану"
+    ID_VIEW_SPLIT           "Змінити позицію роздільника між двома панелями"
+    ID_VIEW_REFRESH         "Оновлює вікно"
+    ID_EDIT_DELETE          "Видаляє вибір"
+    ID_EDIT_RENAME          "Перейменовує вибір"
+    ID_EDIT_COPYKEYNAME     "Копіює ім'я вибраного ключа до буфера"
+    ID_EDIT_FIND            "Шукає текстовий рядок у ключі, значенні або даних"
+    ID_EDIT_FINDNEXT        "Шукає наступний збіг тексту, заданого в попередньому пошуку"
+    ID_EDIT_EXPORT          "Експортує вибрану гілку реєстру до текстового файлу"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_ERROR		    "Помилка"
+    IDS_BAD_KEY		    "Не можу запросити ключ '%s'"
+    IDS_BAD_VALUE           "Не можу запросити значення '%s'"
+    IDS_UNSUPPORTED_TYPE    "Неможливо редагувати ключі цього типу (%u)"
+    IDS_TOO_BIG_VALUE       "значення задовге (%u)"
+    IDS_DELETE_BOX_TITLE    "Підтвердження видалення значення"
+    IDS_DELETE_BOX_TEXT     "Ви впевнені, що хочете видалити значення '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Ви впевнені, що хочете видалити ці значення?"
+    IDS_NEWKEY              "Новий ключ #%d"
+    IDS_NEWVALUE            "Нове значення #%d"
+    IDS_NOTFOUND            "Шукане значення '%s' не знайдене"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Імпортувати файл реєстру"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Експортувати файл реєстру"
+    IDS_FILEDIALOG_FILTER         "Файли реєстру\0*.reg\0Win9x/NT4 Файли реєстру (REGEDIT4)\0*.reg\0Всі Файли (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Мій Комп'ютер"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Стандартно)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(значення не задане)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(неможливо відобразити значення)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(невідомо %d)"
+END
+
+/*****************************************************************/
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+/*****************************************************************/
