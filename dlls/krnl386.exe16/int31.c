@@ -223,7 +223,7 @@ static LPVOID DPMI_xalloc( DWORD len )
             if (!xflag && (lastvalloced<oldlastv)) 
             { 
                 /* wrapped */
-                FIXME( "failed to allocate linearly growing memory (%d bytes), "
+                FIXME( "failed to allocate linearly growing memory (%u bytes), "
                        "using non-linear growing...\n", len );
                 xflag++;
             }
@@ -235,7 +235,7 @@ static LPVOID DPMI_xalloc( DWORD len )
                 xflag++;
 
             if ((xflag==2) && (lastvalloced < oldlastv)) {
-                FIXME( "failed to allocate any memory of %d bytes!\n", len );
+                FIXME( "failed to allocate any memory of %u bytes!\n", len );
                 return NULL;
             }
         }
@@ -1343,7 +1343,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
             DWORD size = MAKELONG( CX_reg(context), BX_reg(context) );
             BYTE *ptr;
 
-            TRACE( "allocate memory block (%d bytes)\n", size );
+            TRACE( "allocate memory block (%u bytes)\n", size );
 
             ptr = DPMI_xalloc( size );
             if (!ptr)
@@ -1375,7 +1375,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
             DWORD handle = MAKELONG( DI_reg(context), SI_reg(context) );
             BYTE *ptr;
 
-            TRACE( "resize memory block (0x%08x, %d bytes)\n", handle, size );
+            TRACE( "resize memory block (0x%08x, %u bytes)\n", handle, size );
 
             ptr = DPMI_xrealloc( (void *)handle, size );
             if (!ptr)
