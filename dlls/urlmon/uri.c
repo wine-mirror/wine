@@ -113,6 +113,9 @@ typedef struct {
     const WCHAR     *port;
     DWORD           port_len;
     USHORT          port_value;
+
+    const WCHAR     *path;
+    DWORD           path_len;
 } parse_data;
 
 static const CHAR hexDigits[] = "0123456789ABCDEF";
@@ -255,6 +258,10 @@ static inline BOOL is_hexdigit(WCHAR val) {
     return ((val >= 'a' && val <= 'f') ||
             (val >= 'A' && val <= 'F') ||
             (val >= '0' && val <= '9'));
+}
+
+static inline BOOL is_path_delim(WCHAR val) {
+    return (!val || val == '#' || val == '?');
 }
 
 /* Computes the size of the given IPv6 address.
@@ -1482,6 +1489,70 @@ static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
     return TRUE;
 }
 
+/* Attempts to parse the path information of a hierarchical URI. */
+static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const WCHAR *start = *ptr;
+    static const WCHAR slash[] = {'/',0};
+
+    if(is_path_delim(**ptr)) {
+        if(data->scheme_type == URL_SCHEME_WILDCARD) {
+            /* Wildcard schemes don't get a '/' attached if their path is
+             * empty.
+             */
+            data->path = NULL;
+            data->path_len = 0;
+        } else if(!(flags & Uri_CREATE_NO_CANONICALIZE)) {
+            /* If the path component is empty, then a '/' is added. */
+            data->path = slash;
+            data->path_len = 1;
+        }
+    } else {
+        while(!is_path_delim(**ptr)) {
+            if(**ptr == '%' && data->scheme_type != URL_SCHEME_UNKNOWN &&
+               data->scheme_type != URL_SCHEME_FILE) {
+                if(!check_pct_encoded(ptr)) {
+                    *ptr = start;
+                    return FALSE;
+                } else
+                    continue;
+            } else if(**ptr == '\\') {
+                /* Not allowed to have a backslash if NO_CANONICALIZE is set
+                 * and the scheme is known type (but not a file scheme).
+                 */
+                if(flags & Uri_CREATE_NO_CANONICALIZE) {
+                    if(data->scheme_type != URL_SCHEME_FILE &&
+                       data->scheme_type != URL_SCHEME_UNKNOWN) {
+                        *ptr = start;
+                        return FALSE;
+                    }
+                }
+            }
+
+            ++(*ptr);
+        }
+
+        /* The only time a URI doesn't have a path is when
+         * the NO_CANONICALIZE flag is set and the raw URI
+         * didn't contain one.
+         */
+        if(*ptr == start) {
+            data->path = NULL;
+            data->path_len = 0;
+        } else {
+            data->path = start;
+            data->path_len = *ptr - start;
+        }
+    }
+
+    if(data->path)
+        TRACE("(%p %p %x): Parsed path %s len=%d\n", ptr, data, flags,
+            debugstr_wn(data->path, data->path_len), data->path_len);
+    else
+        TRACE("(%p %p %x): The URI contained no path\n", ptr, data, flags);
+
+    return TRUE;
+}
+
 /* Determines how the URI should be parsed after the scheme information.
  *
  * If the scheme is followed, by "//" then, it is treated as an hierarchical URI
@@ -1525,11 +1596,15 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
             TRACE("(%p %p %x): Treating URI as an hierarchical URI.\n", ptr, data, flags);
             data->is_opaque = FALSE;
 
+            if(data->scheme_type == URL_SCHEME_FILE)
+                /* Skip past the "//" after the scheme (if any). */
+                check_hierarchical(ptr);
+
             /* TODO: Handle hierarchical URI's, parse authority then parse the path. */
             if(!parse_authority(ptr, data, flags))
                 return FALSE;
 
-            return TRUE;
+            return parse_path_hierarchical(ptr, data, flags);
         }
     }
 
@@ -1563,6 +1638,8 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
 
     if(!parse_hierpart(pptr, data, flags))
         return FALSE;
+
+    /* TODO: Parse query and fragment (if the URI has one). */
 
     TRACE("(%p %x): FINISHED PARSING URI.\n", data, flags);
     return TRUE;

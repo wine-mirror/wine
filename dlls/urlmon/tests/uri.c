@@ -2217,6 +2217,34 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    {   "zip://www.google.com\\test", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://www.google.com\\test",S_OK,TRUE},
+            {"www.google.com\\test",S_OK,FALSE},
+            {"zip://www.google.com\\test",S_OK,TRUE},
+            {"google.com\\test",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.google.com\\test",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"zip://www.google.com\\test",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -2264,7 +2292,9 @@ static const invalid_uri invalid_uri_tests[] = {
     /* Invalid port with IPv4 address. */
     {"http://www.winehq.org:1abcd",0,FALSE},
     /* Invalid port with IPv6 address. */
-    {"http://[::ffff]:32xy",0,FALSE}
+    {"http://[::ffff]:32xy",0,FALSE},
+    /* Not allowed to have backslashes with NO_CANONICALIZE. */
+    {"gopher://www.google.com\\test",Uri_CREATE_NO_CANONICALIZE,FALSE}
 };
 
 typedef struct _uri_equality {
