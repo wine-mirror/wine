@@ -3410,6 +3410,7 @@ static void FindDevice(void)
 
     D3DFINDDEVICESEARCH search = {0};
     D3DFINDDEVICERESULT result = {0};
+    IDirect3DDevice *d3dhal;
     HRESULT hr;
     int i;
 
@@ -3470,6 +3471,34 @@ static void FindDevice(void)
         hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
         ok(hr == DDERR_NOTFOUND,
            "[%d] Expected IDirect3D1::FindDevice to return DDERR_NOTFOUND, got 0x%08x\n", i, hr);
+    }
+
+    /* The HAL device can only be enumerated if hardware acceleration is present. */
+    search.dwSize = sizeof(search);
+    search.dwFlags = D3DFDS_GUID;
+    search.guid = IID_IDirect3DHALDevice;
+    result.dwSize = sizeof(result);
+
+    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+    trace("IDirect3D::FindDevice returned 0x%08x for the HAL device GUID\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirectDrawSurface_QueryInterface(Surface1, &IID_IDirect3DHALDevice, (void **)&d3dhal);
+        /* Currently Wine only supports the creation of one Direct3D device
+         * for a given DirectDraw instance. */
+        todo_wine
+        ok(SUCCEEDED(hr), "Expected IDirectDrawSurface::QueryInterface to succeed, got 0x%08x\n", hr);
+
+        if (SUCCEEDED(hr))
+            IDirect3DDevice_Release(d3dhal);
+    }
+    else
+    {
+        hr = IDirectDrawSurface_QueryInterface(Surface1, &IID_IDirect3DHALDevice, (void **)&d3dhal);
+        ok(FAILED(hr), "Expected IDirectDrawSurface::QueryInterface to fail, got 0x%08x\n", hr);
+
+        if (SUCCEEDED(hr))
+            IDirect3DDevice_Release(d3dhal);
     }
 
     /* These GUIDs appear to be always present. */
