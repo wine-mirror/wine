@@ -3403,6 +3403,11 @@ static void FindDevice(void)
         {&IID_IDirect3DRGBDevice},
     };
 
+    static const GUID *nonexistent_deviceGUIDs[] = {&IID_IDirect3DMMXDevice,
+                                                    &IID_IDirect3DRefDevice,
+                                                    &IID_IDirect3DTnLHalDevice,
+                                                    &IID_IDirect3DNullDevice};
+
     D3DFINDDEVICESEARCH search = {0};
     D3DFINDDEVICERESULT result = {0};
     HRESULT hr;
@@ -3454,16 +3459,18 @@ static void FindDevice(void)
     ok(hr == DDERR_NOTFOUND,
        "Expected IDirect3D1::FindDevice to return DDERR_NOTFOUND, got 0x%08x\n", hr);
 
-    /* The reference device GUID can't be enumerated. */
-    search.dwSize = sizeof(search);
-    search.dwFlags = D3DFDS_GUID;
-    search.guid = IID_IDirect3DRefDevice;
-    result.dwSize = sizeof(result);
+    /* These GUIDs appear to be never present. */
+    for (i = 0; i < sizeof(nonexistent_deviceGUIDs)/sizeof(nonexistent_deviceGUIDs[0]); i++)
+    {
+        search.dwSize = sizeof(search);
+        search.dwFlags = D3DFDS_GUID;
+        search.guid = *nonexistent_deviceGUIDs[i];
+        result.dwSize = sizeof(result);
 
-    hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
-    todo_wine
-    ok(hr == DDERR_NOTFOUND,
-       "Expected IDirect3D1::FindDevice to return DDERR_NOTFOUND, got 0x%08x\n", hr);
+        hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
+        ok(hr == DDERR_NOTFOUND,
+           "[%d] Expected IDirect3D1::FindDevice to return DDERR_NOTFOUND, got 0x%08x\n", i, hr);
+    }
 
     /* These GUIDs appear to be always present. */
     for (i = 0; i < sizeof(deviceGUIDs)/sizeof(deviceGUIDs[0]); i++)
