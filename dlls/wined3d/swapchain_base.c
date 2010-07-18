@@ -123,15 +123,18 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, WINED3DRASTER_STATUS *pRasterStatus) {
     static BOOL warned;
-    pRasterStatus->InVBlank = TRUE;
-    pRasterStatus->ScanLine = 0;
-    /* No openGL equivalent */
+    /* No OpenGL equivalent */
     if (!warned)
     {
         FIXME("iface %p, raster_status %p stub!\n", iface, pRasterStatus);
         warned = TRUE;
     }
-    return WINED3D_OK;
+    /* Obtaining the raster status is a widely implemented but optional feature.
+     * When this method returns OK then the application Starcraft 2 expects that
+     * the pRasterStatus->InVBlank value differs over time. To prevent Starcraft 2
+     * from running in an infinite loop at startup this method returns INVALIDCALL.
+     */
+    return WINED3DERR_INVALIDCALL;
 }
 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE*pMode) {
