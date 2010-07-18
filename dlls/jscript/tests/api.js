@@ -704,6 +704,27 @@ tmp = arr.sort();
 ok(arr === tmp, "tmp !== arr");
 ok(arr[0]===1 && arr[1]==="aa" && arr[2]===undefined, "arr is sorted incorectly");
 
+tmp = [["bb","aa"],["ab","aa"]].sort().toString();
+ok(tmp === "ab,aa,bb,aa", "sort() = " + tmp);
+
+tmp = [["bb","aa"],"ab"].sort().toString();
+ok(tmp === "ab,bb,aa", "sort() = " + tmp);
+
+tmp = [["bb","aa"],"cc"].sort().toString();
+ok(tmp === "bb,aa,cc", "sort() = " + tmp);
+
+tmp = [2,"1"].sort().toString();
+ok(tmp === "1,2", "sort() = " + tmp);
+
+tmp = ["2",1].sort().toString();
+ok(tmp === "1,2", "sort() = " + tmp);
+
+tmp = [,,0,"z"].sort().toString();
+ok(tmp === "0,z,,", "sort() = " + tmp);
+
+tmp = ["a,b",["a","a"],["a","c"]].sort().toString();
+ok(tmp === "a,a,a,b,a,c", "sort() = " + tmp);
+
 arr = ["1", "2", "3"];
 arr.length = 1;
 ok(arr.length === 1, "arr.length = " + arr.length);
