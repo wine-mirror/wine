@@ -6,7 +6,7 @@
  * Copyright 1999 Chris Morgan <cmorgan@wpi.edu> and
  *		  James Abbatiello <abbeyj@wpi.edu>
  * Copyright 2000 Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
- * Copyright 2009 Nikolay Sivov
+ * Copyright 2009, 2010 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1241,7 +1241,8 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, INT day)
   {
     /* Native behaviour for that case is broken: invalid date number >31
        got displayed at (0,0) position, current month starts always from
-       (1,0) position. Should be implemnted here as well. */
+       (1,0) position. Should be implemented here as well only if there's
+       nothing else to do. */
     if (day < -1)
       FIXME("No bug compatibility for day=%d\n", day);
 
@@ -1261,19 +1262,18 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, INT day)
 static LRESULT
 MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
 {
-  TRACE("\n");
+  TRACE("flag=%d, st=%p\n", flag, st);
 
   if(st)
   {
     switch (flag) {
     case GMR_VISIBLE:
     {
-        /*FIXME: currently multicalendar feature isn't implemented, so entirely
-                 visible month is current */
-        st[0] = st[1] = infoPtr->curSel;
+        st[0] = infoPtr->calendars[0].month;
+        st[1] = infoPtr->calendars[infoPtr->cal_num-1].month;
 
-        if (infoPtr->curSel.wMonth == min_allowed_date.wMonth &&
-            infoPtr->curSel.wYear  == min_allowed_date.wYear)
+        if (st[0].wMonth == min_allowed_date.wMonth &&
+            st[0].wYear  == min_allowed_date.wYear)
         {
             st[0].wDay = min_allowed_date.wDay;
         }
@@ -1283,8 +1283,8 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
 
         st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
         MONTHCAL_CalculateDayOfWeek(&st[1], TRUE);
-        /* a single current month used */
-        return 1;
+
+        return infoPtr->cal_num;
     }
     case GMR_DAYSTATE:
     {
