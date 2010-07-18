@@ -69,6 +69,7 @@ RC_SRCS = \
 	comctl_Ru.rc \
 	comctl_Si.rc \
 	comctl_Sk.rc \
+	comctl_Sr.rc \
 	comctl_Sv.rc \
 	comctl_Th.rc \
 	comctl_Tr.rc \
