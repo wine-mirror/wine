@@ -419,16 +419,17 @@ static void sock_poll_event( struct fd *fd, int event )
                    call and the invocation of this routine */
                 if ( errno != EAGAIN )
                 {
+                    error = errno;
+                    event |= POLLERR;
                     if ( debug_level )
                         fprintf( stderr, "recv error on socket %p: %d\n", sock, errno );
-                    event |= POLLERR;
                 }
             }
         }
 
         if ( (hangup_seen || event & (POLLHUP|POLLERR)) && (sock->state & (FD_READ|FD_WRITE)) )
         {
-            error = sock_error( fd );
+            error = error ? error : sock_error( fd );
             if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
                 sock->state &= ~FD_WRITE;
             sock->state &= ~FD_READ;
