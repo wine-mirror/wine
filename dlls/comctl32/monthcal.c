@@ -743,22 +743,18 @@ static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext)
     }
 }
 /* paint a title with buttons and month/year string */
-static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
   static const WCHAR fmt_monthW[] = { '%','s',' ','%','l','d',0 };
+  RECT *title = &infoPtr->calendars[calIdx].title;
   WCHAR buf_month[80], buf_fmt[80];
   HBRUSH hbr;
-  RECT *title = &infoPtr->calendars[0].title;
   SIZE sz;
 
   /* fill header box */
-  hbr =  CreateSolidBrush(infoPtr->titlebk);
+  hbr = CreateSolidBrush(infoPtr->titlebk);
   FillRect(hdc, title, hbr);
   DeleteObject(hbr);
-
-  /* navigation buttons */
-  MONTHCAL_PaintButton(infoPtr, hdc, FALSE);
-  MONTHCAL_PaintButton(infoPtr, hdc, TRUE);
 
   /* month/year string */
   SetBkColor(hdc, infoPtr->titlebk);
@@ -774,15 +770,15 @@ static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRU
 
   /* update title rectangles with current month - used while testing hits */
   GetTextExtentPoint32W(hdc, buf_fmt, strlenW(buf_fmt), &sz);
-  infoPtr->calendars[0].titlemonth.left = title->right / 2 + title->left / 2 - sz.cx / 2;
-  infoPtr->calendars[0].titleyear.right = title->right / 2 + title->left / 2 + sz.cx / 2;
+  infoPtr->calendars[calIdx].titlemonth.left = title->right / 2 + title->left / 2 - sz.cx / 2;
+  infoPtr->calendars[calIdx].titleyear.right = title->right / 2 + title->left / 2 + sz.cx / 2;
 
   GetTextExtentPoint32W(hdc, buf_month, strlenW(buf_month), &sz);
-  infoPtr->calendars[0].titlemonth.right = infoPtr->calendars[0].titlemonth.left + sz.cx;
-  infoPtr->calendars[0].titleyear.left   = infoPtr->calendars[0].titlemonth.right;
+  infoPtr->calendars[calIdx].titlemonth.right = infoPtr->calendars[calIdx].titlemonth.left + sz.cx;
+  infoPtr->calendars[calIdx].titleyear.left   = infoPtr->calendars[calIdx].titlemonth.right;
 }
 
-static void MONTHCAL_PaintWeeknumbers(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
   static const WCHAR fmt_weekW[] = { '%','d',0 };
   INT mindays, weeknum, weeknum1, startofprescal;
@@ -857,7 +853,7 @@ static void MONTHCAL_PaintWeeknumbers(MONTHCAL_INFO *infoPtr, HDC hdc, const PAI
     if ((infoPtr->firstDay - weeknum1) % 7 > mindays) weeknum++;
   }
 
-  r = infoPtr->calendars[0].weeknums;
+  r = infoPtr->calendars[calIdx].weeknums;
   r.bottom = r.top + infoPtr->height_increment;
 
   for(i = 0; i < 6; i++) {
@@ -878,99 +874,17 @@ static void MONTHCAL_PaintWeeknumbers(MONTHCAL_INFO *infoPtr, HDC hdc, const PAI
   }
 
   /* line separator for week numbers column */
-  MoveToEx(hdc, infoPtr->calendars[0].weeknums.right, infoPtr->calendars[0].weeknums.top + 3 , NULL);
-  LineTo(hdc,   infoPtr->calendars[0].weeknums.right, infoPtr->calendars[0].weeknums.bottom);
+  MoveToEx(hdc, infoPtr->calendars[calIdx].weeknums.right, infoPtr->calendars[calIdx].weeknums.top + 3 , NULL);
+  LineTo(hdc,   infoPtr->calendars[calIdx].weeknums.right, infoPtr->calendars[calIdx].weeknums.bottom);
 }
 
-/* paint a calendar area */
-static void MONTHCAL_PaintCalendar(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+/* bottom today date */
+static void MONTHCAL_PaintTodayTitle(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  INT prev_month, i, j;
-  WCHAR buf[80];
-  HBRUSH hbr;
-  RECT r;
-  int mask;
-  SYSTEMTIME st;
-
-  UnionRect(&r, &infoPtr->calendars[0].wdays, &infoPtr->todayrect);
-
-  hbr =  CreateSolidBrush(infoPtr->monthbk);
-  FillRect(hdc, &r, hbr);
-  DeleteObject(hbr);
-
-  /* draw line under day abbreviations */
-  MoveToEx(hdc, infoPtr->calendars[0].days.left + 3,
-                infoPtr->calendars[0].title.bottom + infoPtr->textHeight + 1, NULL);
-  LineTo(hdc, infoPtr->calendars[0].days.right - 3,
-              infoPtr->calendars[0].title.bottom + infoPtr->textHeight + 1);
-
-  prev_month = infoPtr->curSel.wMonth - 1;
-  if(prev_month == 0) prev_month = 12;
-
-  infoPtr->calendars[0].wdays.left = infoPtr->calendars[0].days.left = infoPtr->calendars[0].weeknums.right;
-
-  /* 1. draw day abbreviations */
-  SelectObject(hdc, infoPtr->hFont);
-  SetBkColor(hdc, infoPtr->monthbk);
-  SetTextColor(hdc, infoPtr->trailingtxt);
-  /* rectangle to draw a single day abbreviation within */
-  r = infoPtr->calendars[0].wdays;
-  r.right = r.left + infoPtr->width_increment;
-
-  i = infoPtr->firstDay;
-  for(j = 0; j < 7; j++) {
-    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1 + (i+j+6)%7, buf, countof(buf));
-    DrawTextW(hdc, buf, strlenW(buf), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-    OffsetRect(&r, infoPtr->width_increment, 0);
-  }
-
-  /* 2. previous and next months */
-  if (!(infoPtr->dwStyle & MCS_NOTRAILINGDATES))
-  {
-    SYSTEMTIME st_max;
-
-    SetTextColor(hdc, infoPtr->trailingtxt);
-
-    MONTHCAL_GetMinDate(infoPtr, &st);
-
-    /* draw prev month */
-    mask = 1 << (st.wDay-1);
-    while(st.wDay <= MONTHCAL_MonthLength(prev_month, infoPtr->curSel.wYear)) {
-      MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[0] & mask, ps);
-      mask <<= 1;
-      st.wDay++;
-    }
-
-    /* draw next month */
-    st = infoPtr->curSel;
-    st.wDay = 1;
-    MONTHCAL_GetNextMonth(&st);
-    MONTHCAL_GetMaxDate(infoPtr, &st_max);
-    mask = 1;
-    while(st.wDay <= st_max.wDay) {
-      MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[2] & mask, ps);
-      mask <<= 1;
-      st.wDay++;
-    }
-  }
-
-  /* 3. current month */
-  SetTextColor(hdc, infoPtr->txt);
-  st = infoPtr->curSel;
-  st.wDay = 1;
-  mask = 1;
-  while(st.wDay <= MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear)) {
-    MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[1] & mask,
-                     ps);
-    mask <<= 1;
-    st.wDay++;
-  }
-
-  /* 4. bottom today date */
   if(!(infoPtr->dwStyle & MCS_NOTODAY))  {
     static const WCHAR todayW[] = { 'T','o','d','a','y',':',0 };
     static const WCHAR fmt_todayW[] = { '%','s',' ','%','s',0 };
-    WCHAR buf_todayW[30], buf_dateW[20];
+    WCHAR buf_todayW[30], buf_dateW[20], buf[80];
     RECT rtoday;
 
     if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE)) {
@@ -997,8 +911,11 @@ static void MONTHCAL_PaintCalendar(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTS
 
     SelectObject(hdc, infoPtr->hFont);
   }
+}
 
-  /* 5. today mark + focus */
+/* today mark + focus */
+static void MONTHCAL_PaintFocusAndCircle(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+{
   if((infoPtr->curSel.wMonth == infoPtr->todaysDate.wMonth) &&
      (infoPtr->curSel.wYear  == infoPtr->todaysDate.wYear) &&
     !(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
@@ -1008,33 +925,146 @@ static void MONTHCAL_PaintCalendar(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTS
 
   if(!MONTHCAL_IsDateEqual(&infoPtr->focusedSel, &st_null))
   {
+    RECT r;
     MONTHCAL_CalcPosFromDay(infoPtr, &infoPtr->focusedSel, &r);
     DrawFocusRect(hdc, &r);
   }
 }
 
+/* paint a calendar area */
+static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
+{
+  INT prev_month, i, j;
+  WCHAR buf[80];
+  HBRUSH hbr;
+  RECT r, fill_bk_rect;
+  int mask;
+  SYSTEMTIME st;
+
+  /* fill whole days area - from week days area to today note rectangle */
+  fill_bk_rect = infoPtr->calendars[calIdx].wdays;
+  fill_bk_rect.bottom = infoPtr->calendars[calIdx].days.bottom +
+                          (infoPtr->todayrect.bottom - infoPtr->todayrect.top);
+
+  hbr = CreateSolidBrush(infoPtr->monthbk);
+  FillRect(hdc, &fill_bk_rect, hbr);
+  DeleteObject(hbr);
+
+  /* draw line under day abbreviations */
+  MoveToEx(hdc, infoPtr->calendars[calIdx].days.left + 3,
+                infoPtr->calendars[calIdx].title.bottom + infoPtr->textHeight + 1, NULL);
+  LineTo(hdc, infoPtr->calendars[calIdx].days.right - 3,
+              infoPtr->calendars[calIdx].title.bottom + infoPtr->textHeight + 1);
+
+  prev_month = infoPtr->curSel.wMonth - 1;
+  if (prev_month == 0) prev_month = 12;
+
+  infoPtr->calendars[calIdx].wdays.left = infoPtr->calendars[calIdx].days.left =
+      infoPtr->calendars[calIdx].weeknums.right;
+
+  /* 1. draw day abbreviations */
+  SelectObject(hdc, infoPtr->hFont);
+  SetBkColor(hdc, infoPtr->monthbk);
+  SetTextColor(hdc, infoPtr->trailingtxt);
+  /* rectangle to draw a single day abbreviation within */
+  r = infoPtr->calendars[calIdx].wdays;
+  r.right = r.left + infoPtr->width_increment;
+
+  i = infoPtr->firstDay;
+  for(j = 0; j < 7; j++) {
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SABBREVDAYNAME1 + (i+j+6)%7, buf, countof(buf));
+    DrawTextW(hdc, buf, strlenW(buf), &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    OffsetRect(&r, infoPtr->width_increment, 0);
+  }
+
+  /* 2. previous and next months */
+  if (!(infoPtr->dwStyle & MCS_NOTRAILINGDATES) && (calIdx == 0 || calIdx == infoPtr->cal_num - 1))
+  {
+    SYSTEMTIME st_max;
+
+    SetTextColor(hdc, infoPtr->trailingtxt);
+
+    /* draw prev month */
+    if (calIdx == 0)
+    {
+      MONTHCAL_GetMinDate(infoPtr, &st);
+      mask = 1 << (st.wDay-1);
+
+      while(st.wDay <= MONTHCAL_MonthLength(prev_month, infoPtr->curSel.wYear))
+      {
+        MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[0] & mask, ps);
+        mask <<= 1;
+        st.wDay++;
+      }
+    }
+
+    /* draw next month */
+    if (calIdx == infoPtr->cal_num - 1)
+    {
+      st = infoPtr->curSel;
+      st.wDay = 1;
+      MONTHCAL_GetNextMonth(&st);
+      MONTHCAL_GetMaxDate(infoPtr, &st_max);
+      mask = 1;
+
+      while(st.wDay <= st_max.wDay)
+      {
+        MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[2] & mask, ps);
+        mask <<= 1;
+        st.wDay++;
+      }
+    }
+  }
+
+  /* 3. current month */
+  SetTextColor(hdc, infoPtr->txt);
+  st = infoPtr->curSel;
+  st.wDay = 1;
+  mask = 1;
+  while(st.wDay <= MONTHCAL_MonthLength(infoPtr->curSel.wMonth, infoPtr->curSel.wYear)) {
+    MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[1] & mask, ps);
+    mask <<= 1;
+    st.wDay++;
+  }
+}
+
 static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  RECT *title = &infoPtr->calendars[0].title;
   COLORREF old_text_clr, old_bk_clr;
   HFONT old_font;
-  RECT r_temp;
+  INT i;
 
   old_text_clr = SetTextColor(hdc, comctl32_color.clrWindowText);
   old_bk_clr   = GetBkColor(hdc);
   old_font     = GetCurrentObject(hdc, OBJ_FONT);
 
-  /* draw title, redraw all its elements */
-  if(IntersectRect(&r_temp, &(ps->rcPaint), title))
-    MONTHCAL_PaintTitle(infoPtr, hdc, ps);
+  for (i = 0; i < infoPtr->cal_num; i++)
+  {
+    RECT *title = &infoPtr->calendars[i].title;
+    RECT r;
 
-  /* draw calendar area */
-  UnionRect(&r_temp, &infoPtr->calendars[0].wdays, &infoPtr->todayrect);
-  if(IntersectRect(&r_temp, &(ps->rcPaint), &r_temp))
-    MONTHCAL_PaintCalendar(infoPtr, hdc, ps);
+    /* draw title, redraw all its elements */
+    if (IntersectRect(&r, &(ps->rcPaint), title))
+        MONTHCAL_PaintTitle(infoPtr, hdc, ps, i);
 
-  /* week numbers */
-  MONTHCAL_PaintWeeknumbers(infoPtr, hdc, ps);
+    /* draw calendar area */
+    UnionRect(&r, &infoPtr->calendars[i].wdays, &infoPtr->todayrect);
+    if (IntersectRect(&r, &(ps->rcPaint), &r))
+        MONTHCAL_PaintCalendar(infoPtr, hdc, ps, i);
+
+    /* week numbers */
+    MONTHCAL_PaintWeeknumbers(infoPtr, hdc, ps, i);
+  }
+
+  /* focus and today rectangle */
+  MONTHCAL_PaintFocusAndCircle(infoPtr, hdc, ps);
+
+  /* today at the bottom left */
+  MONTHCAL_PaintTodayTitle(infoPtr, hdc, ps);
+
+  /* navigation buttons */
+  MONTHCAL_PaintButton(infoPtr, hdc, FALSE);
+  MONTHCAL_PaintButton(infoPtr, hdc, TRUE);
 
   /* restore context */
   SetBkColor(hdc, old_bk_clr);
