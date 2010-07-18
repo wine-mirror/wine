@@ -2014,6 +2014,26 @@ static void test_SHCreateShellItem(void)
         IShellItem_Release(shellitem);
     }
 
+    ret = pSHCreateShellItem(NULL, desktopfolder, pidl_testfile, &shellitem);
+    ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
+    if (SUCCEEDED(ret))
+    {
+        ret = IShellItem_QueryInterface(shellitem, &IID_IPersistIDList, (void**)&persistidl);
+        ok(SUCCEEDED(ret), "QueryInterface returned %x\n", ret);
+        if (SUCCEEDED(ret))
+        {
+            ret = IPersistIDList_GetIDList(persistidl, &pidl_test);
+            ok(SUCCEEDED(ret), "GetIDList returned %x\n", ret);
+            if (SUCCEEDED(ret))
+            {
+                ok(ILIsEqual(pidl_testfile, pidl_test), "id lists are not equal\n");
+                pILFree(pidl_test);
+            }
+            IPersistIDList_Release(persistidl);
+        }
+        IShellItem_Release(shellitem);
+    }
+
     DeleteFileA(".\\testfile");
     pILFree(pidl_abstestfile);
     pILFree(pidl_testfile);
@@ -2084,6 +2104,7 @@ static void test_desktop_IPersist(void)
 {
     IShellFolder *desktop;
     IPersist *persist;
+    IPersistFolder2 *ppf2;
     CLSID clsid;
     HRESULT hr;
 
@@ -2105,6 +2126,31 @@ static void test_desktop_IPersist(void)
         ok(hr == S_OK, "failed %08x\n", hr);
         ok(IsEqualIID(&CLSID_ShellDesktop, &clsid), "Expected CLSID_ShellDesktop\n");
         IPersist_Release(persist);
+    }
+
+    hr = IShellFolder_QueryInterface(desktop, &IID_IPersistFolder2, (void**)&ppf2);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* pre-Vista */, "failed %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        IPersistFolder *ppf;
+        LPITEMIDLIST pidl;
+        hr = IShellFolder_QueryInterface(desktop, &IID_IPersistFolder, (void**)&ppf);
+        ok(hr == S_OK, "IID_IPersistFolder2 without IID_IPersistFolder.\n");
+        if(SUCCEEDED(hr))
+            IPersistFolder_Release(ppf);
+
+        todo_wine {
+            hr = IPersistFolder2_Initialize(ppf2, NULL);
+            ok(hr == S_OK, "got %08x\n", hr);
+        }
+
+        pidl = NULL;
+        hr = IPersistFolder2_GetCurFolder(ppf2, &pidl);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(pidl != NULL, "pidl was NULL.\n");
+        if(SUCCEEDED(hr)) pILFree(pidl);
+
+        IPersistFolder2_Release(ppf2);
     }
 
     IShellFolder_Release(desktop);
