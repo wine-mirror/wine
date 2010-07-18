@@ -1618,17 +1618,16 @@ static INT MONTHCAL_GetCalendarFromPoint(const MONTHCAL_INFO *infoPtr, const POI
 static LRESULT
 MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 {
-  UINT x,y;
-  DWORD retval;
   INT day, wday, wnum, calIdx;
   SYSTEMTIME ht_month;
+  UINT x, y;
 
   if(!lpht || lpht->cbSize < MCHITTESTINFO_V1_SIZE) return -1;
 
   x = lpht->pt.x;
   y = lpht->pt.y;
 
-  ZeroMemory(&lpht->st, sizeof(lpht->st));
+  memset(&lpht->st, 0, sizeof(lpht->st));
 
   /* Comment in for debugging...
   TRACE("%d %d wd[%d %d %d %d] d[%d %d %d %d] t[%d %d %d %d] wn[%d %d %d %d]\n", x, y,
@@ -1644,47 +1643,58 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 
   /* guess in what calendar we are */
   calIdx = MONTHCAL_GetCalendarFromPoint(infoPtr, &lpht->pt);
-  if (calIdx == -1) goto nocal;
+  if (calIdx == -1)
+  {
+    if (PtInRect(&infoPtr->todayrect, lpht->pt))
+      lpht->uHit = MCHT_TODAYLINK;
+    else
+      /* outside of calendar area? What's left must be background :-) */
+      lpht->uHit = MCHT_CALENDARBK;
+
+    return lpht->uHit;
+  }
 
   ht_month = infoPtr->calendars[calIdx].month;
 
   /* are we in the header? */
-
-  if(PtInRect(&infoPtr->calendars[calIdx].title, lpht->pt)) {
+  if (PtInRect(&infoPtr->calendars[calIdx].title, lpht->pt)) {
     /* FIXME: buttons hittesting could be optimized cause maximum
               two calendars have buttons */
-    if(PtInRect(&infoPtr->titlebtnprev, lpht->pt)) {
-      retval = MCHT_TITLEBTNPREV;
-      goto done;
+    if (calIdx == 0 && PtInRect(&infoPtr->titlebtnprev, lpht->pt))
+    {
+      lpht->uHit = MCHT_TITLEBTNPREV;
     }
-    if(PtInRect(&infoPtr->titlebtnnext, lpht->pt)) {
-      retval = MCHT_TITLEBTNNEXT;
-      goto done;
+    else if (PtInRect(&infoPtr->titlebtnnext, lpht->pt))
+    {
+      lpht->uHit = MCHT_TITLEBTNNEXT;
     }
-    if(PtInRect(&infoPtr->calendars[calIdx].titlemonth, lpht->pt)) {
-      retval = MCHT_TITLEMONTH;
-      goto done;
+    else if (PtInRect(&infoPtr->calendars[calIdx].titlemonth, lpht->pt))
+    {
+      lpht->uHit = MCHT_TITLEMONTH;
     }
-    if(PtInRect(&infoPtr->calendars[calIdx].titleyear, lpht->pt)) {
-      retval = MCHT_TITLEYEAR;
-      goto done;
+    else if (PtInRect(&infoPtr->calendars[calIdx].titleyear, lpht->pt))
+    {
+      lpht->uHit = MCHT_TITLEYEAR;
     }
+    else
+      lpht->uHit = MCHT_TITLE;
 
-    retval = MCHT_TITLE;
-    goto done;
+    return lpht->uHit;
   }
 
+  /* days area (including week days and week numbers */
   day = MONTHCAL_CalcDayFromPos(infoPtr, x, y, &wday, &wnum);
-  if(PtInRect(&infoPtr->calendars[calIdx].wdays, lpht->pt)) {
-    retval = MCHT_CALENDARDAY;
+  if (PtInRect(&infoPtr->calendars[calIdx].wdays, lpht->pt))
+  {
+    lpht->uHit = MCHT_CALENDARDAY;
     lpht->st.wYear  = ht_month.wYear;
-    lpht->st.wMonth = (day < 1)? ht_month.wMonth -1 : ht_month.wMonth;
-    lpht->st.wDay   = (day < 1)?
+    lpht->st.wMonth = (day < 1) ? ht_month.wMonth -1 : ht_month.wMonth;
+    lpht->st.wDay   = (day < 1) ?
       MONTHCAL_MonthLength(ht_month.wMonth-1, ht_month.wYear) - day : day;
-    goto done;
   }
-  if(PtInRect(&infoPtr->calendars[calIdx].weeknums, lpht->pt)) {
-    retval = MCHT_CALENDARWEEKNUM;
+  else if(PtInRect(&infoPtr->calendars[calIdx].weeknums, lpht->pt))
+  {
+    lpht->uHit = MCHT_CALENDARWEEKNUM;
     lpht->st.wYear  = ht_month.wYear;
 
     if (day < 1) {
@@ -1704,46 +1714,33 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
     }
     else
       lpht->st.wDay = day;
-
-    goto done;
   }
-  if(PtInRect(&infoPtr->calendars[calIdx].days, lpht->pt))
+  else if(PtInRect(&infoPtr->calendars[calIdx].days, lpht->pt))
   {
       lpht->st.wYear  = ht_month.wYear;
       lpht->st.wMonth = ht_month.wMonth;
       if (day < 1)
       {
-	  retval = MCHT_CALENDARDATEPREV;
+	  lpht->uHit = MCHT_CALENDARDATEPREV;
 	  MONTHCAL_GetPrevMonth(&lpht->st);
 	  lpht->st.wDay = MONTHCAL_MonthLength(lpht->st.wMonth, lpht->st.wYear) + day;
       }
       else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear))
       {
-	  retval = MCHT_CALENDARDATENEXT;
+	  lpht->uHit = MCHT_CALENDARDATENEXT;
 	  MONTHCAL_GetNextMonth(&lpht->st);
 	  lpht->st.wDay = day - MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear);
       }
       else {
-	retval = MCHT_CALENDARDATE;
+	lpht->uHit = MCHT_CALENDARDATE;
 	lpht->st.wDay = day;
       }
+
       /* always update day of week */
       MONTHCAL_CalculateDayOfWeek(&lpht->st, TRUE);
-      goto done;
   }
 
-nocal:
-  if(PtInRect(&infoPtr->todayrect, lpht->pt)) {
-    retval = MCHT_TODAYLINK;
-    goto done;
-  }
-
-  /* Hit nothing special? What's left must be background :-) */
-  retval = MCHT_CALENDARBK;
-
-done:
-  lpht->uHit = retval;
-  return retval;
+  return lpht->uHit;
 }
 
 /* MCN_GETDAYSTATE notification helper */
