@@ -31,11 +31,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(winhelp);
  */
 WORD WINAPI WinMain16( HINSTANCE16 inst, HINSTANCE16 prev, LPSTR cmdline, WORD show )
 {
-    int len = GetSystemDirectoryA( NULL, 0 ) + sizeof("\\winhlp32.exe") + strlen(cmdline);
+    int len = GetSystemDirectoryA( NULL, 0 ) + sizeof("\\winhlp32.exe ") + strlen(cmdline);
     char *buffer = HeapAlloc( GetProcessHeap(), 0, len );
 
     GetSystemDirectoryA( buffer, len );
-    strcat( buffer, "\\winhlp32.exe" );
+    strcat( buffer, "\\winhlp32.exe " );
     strcat( buffer, cmdline );
 
     WINE_TRACE( "starting %s\n", wine_dbgstr_a(buffer) );
