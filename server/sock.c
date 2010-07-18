@@ -299,15 +299,22 @@ static void sock_dispatch_asyncs( struct sock *sock, int event )
 {
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
-        if ( event & (POLLIN|POLLPRI|POLLERR|POLLHUP) && async_waiting( sock->read_q ))
+        if ( event & (POLLIN|POLLPRI) && async_waiting( sock->read_q ) )
         {
             if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
             async_wake_up( sock->read_q, STATUS_ALERTED );
         }
-        if ( event & (POLLOUT|POLLERR|POLLHUP) && async_waiting( sock->write_q ))
+        if ( event & POLLOUT && async_waiting( sock->write_q ) )
         {
             if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
             async_wake_up( sock->write_q, STATUS_ALERTED );
+        }
+        if ( event & (POLLERR|POLLHUP) )
+        {
+            if ( !(sock->state & FD_READ) )
+                async_wake_up( sock->read_q, STATUS_SUCCESS );
+            if ( !(sock->state & FD_WRITE) )
+                async_wake_up( sock->write_q, STATUS_SUCCESS );
         }
     }
 }
