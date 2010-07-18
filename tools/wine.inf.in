@@ -2541,6 +2541,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 
 ; 32bit-only fake dlls
 [FakeDllsWin32]
+10,,rundll.exe,rundll.exe16
 10,,twain.dll,twain.dll16
 10,,twain_32.dll
 10,,winhelp.exe,winhelp.exe16
