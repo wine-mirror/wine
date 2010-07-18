@@ -78,6 +78,16 @@ static HWND subclass_listview(HWND hwnd)
 
     /* listview is a first child */
     listview = FindWindowExA(hwnd, NULL, WC_LISTVIEWA, NULL);
+    if(!listview)
+    {
+        /* .. except for some versions of Windows XP, where things
+           are slightly more complicated. */
+        HWND hwnd_tmp;
+        hwnd_tmp = FindWindowExA(hwnd, NULL, "DUIViewWndClassName", NULL);
+        hwnd_tmp = FindWindowExA(hwnd_tmp, NULL, "DirectUIHWND", NULL);
+        hwnd_tmp = FindWindowExA(hwnd_tmp, NULL, "CtrlNotifySink", NULL);
+        listview = FindWindowExA(hwnd_tmp, NULL, WC_LISTVIEWA, NULL);
+    }
 
     oldproc = (WNDPROC)SetWindowLongPtrA(listview, GWLP_WNDPROC,
                                         (LONG_PTR)listview_subclass_proc);
