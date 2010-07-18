@@ -169,6 +169,24 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+
+/*
+ * The actual definition of WSASendTo/WSARecvFrom, wrapped in a different
+ * function name, so that internal calls from ws2_32 itself will not trigger
+ * programs like Garena, which hooks WSASendTo/WSARecvFrom calls.
+ */
+static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                       LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
+                       const struct WS_sockaddr *to, int tolen,
+                       LPWSAOVERLAPPED lpOverlapped,
+                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine );
+
+static int WS2_recvfrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags,
+                         struct WS_sockaddr *lpFrom,
+                         LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
+                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine );
+
 /* critical section to protect some non-reentrant net function */
 static CRITICAL_SECTION csWSgetXXXbyYYY;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -2922,7 +2940,7 @@ int WINAPI WS_recv(SOCKET s, char *buf, int len, int flags)
     wsabuf.len = len;
     wsabuf.buf = buf;
 
-    if ( WSARecvFrom(s, &wsabuf, 1, &n, &dwFlags, NULL, NULL, NULL, NULL) == SOCKET_ERROR )
+    if ( WS2_recvfrom(s, &wsabuf, 1, &n, &dwFlags, NULL, NULL, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
     else
         return n;
@@ -2940,7 +2958,7 @@ int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
     wsabuf.len = len;
     wsabuf.buf = buf;
 
-    if ( WSARecvFrom(s, &wsabuf, 1, &n, &dwFlags, from, fromlen, NULL, NULL) == SOCKET_ERROR )
+    if ( WS2_recvfrom(s, &wsabuf, 1, &n, &dwFlags, from, fromlen, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
     else
         return n;
@@ -3146,7 +3164,7 @@ int WINAPI WS_send(SOCKET s, const char *buf, int len, int flags)
     wsabuf.len = len;
     wsabuf.buf = (char*) buf;
 
-    if ( WSASendTo( s, &wsabuf, 1, &n, flags, NULL, 0, NULL, NULL) == SOCKET_ERROR )
+    if ( WS2_sendto( s, &wsabuf, 1, &n, flags, NULL, 0, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
     else
         return n;
@@ -3160,7 +3178,7 @@ INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                     LPWSAOVERLAPPED lpOverlapped,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
-    return WSASendTo( s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags,
+    return WS2_sendto( s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags,
                       NULL, 0, lpOverlapped, lpCompletionRoutine );
 }
 
@@ -3173,14 +3191,11 @@ INT WINAPI WSASendDisconnect( SOCKET s, LPWSABUF lpBuffers )
 }
 
 
-/***********************************************************************
- *		WSASendTo		(WS2_32.74)
- */
-INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
-                      LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
-                      const struct WS_sockaddr *to, int tolen,
-                      LPWSAOVERLAPPED lpOverlapped,
-                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                       LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
+                       const struct WS_sockaddr *to, int tolen,
+                       LPWSAOVERLAPPED lpOverlapped,
+                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
     unsigned int i, options;
     int n, fd, err;
@@ -3356,6 +3371,21 @@ error:
 }
 
 /***********************************************************************
+ *		WSASendTo		(WS2_32.74)
+ */
+INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                      LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
+                      const struct WS_sockaddr *to, int tolen,
+                      LPWSAOVERLAPPED lpOverlapped,
+                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+{
+    return WS2_sendto( s, lpBuffers, dwBufferCount,
+                lpNumberOfBytesSent, dwFlags,
+                to, tolen,
+                lpOverlapped, lpCompletionRoutine );
+}
+
+/***********************************************************************
  *		sendto		(WS2_32.20)
  */
 int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
@@ -3367,7 +3397,7 @@ int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
     wsabuf.len = len;
     wsabuf.buf = (char*) buf;
 
-    if ( WSASendTo(s, &wsabuf, 1, &n, flags, to, tolen, NULL, NULL) == SOCKET_ERROR )
+    if ( WS2_sendto(s, &wsabuf, 1, &n, flags, to, tolen, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
     else
         return n;
@@ -4951,17 +4981,14 @@ int WINAPI WSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                    LPWSAOVERLAPPED lpOverlapped,
                    LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
-    return WSARecvFrom(s, lpBuffers, dwBufferCount, NumberOfBytesReceived, lpFlags,
+    return WS2_recvfrom(s, lpBuffers, dwBufferCount, NumberOfBytesReceived, lpFlags,
                        NULL, NULL, lpOverlapped, lpCompletionRoutine);
 }
 
-/***********************************************************************
- *              WSARecvFrom             (WS2_32.69)
- */
-INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
-                        LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct WS_sockaddr *lpFrom,
-                        LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
-                        LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+static int WS2_recvfrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                         LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct WS_sockaddr *lpFrom,
+                         LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
+                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 
 {
     unsigned int i, options;
@@ -5112,6 +5139,21 @@ error:
     WARN(" -> ERROR %d\n", err);
     WSASetLastError( err );
     return SOCKET_ERROR;
+}
+
+/***********************************************************************
+ *              WSARecvFrom             (WS2_32.69)
+ */
+INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                        LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct WS_sockaddr *lpFrom,
+                        LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
+                        LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+
+{
+    return WS2_recvfrom( s, lpBuffers, dwBufferCount,
+                lpNumberOfBytesRecvd, lpFlags,
+                lpFrom, lpFromlen,
+                lpOverlapped, lpCompletionRoutine );
 }
 
 /***********************************************************************
