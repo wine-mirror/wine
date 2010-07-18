@@ -1,0 +1,578 @@
+/*
+ *  Task Manager
+ *
+ *  Copyright 1999-2001 Brian Palmer
+ *  Copyright 2010 Igor Paliychuk
+ *
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+
+/*
+ Menu
+*/
+
+IDR_TASKMANAGER MENU DISCARDABLE
+BEGIN
+    POPUP "&Файл"
+    BEGIN
+        MENUITEM "&Нове завдання (Виконати...)",	ID_FILE_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "За&крити Диспетчер Завдань",          ID_FILE_EXIT
+    END
+    POPUP "&Параметри"
+    BEGIN
+        MENUITEM "&Завжди зверху",			ID_OPTIONS_ALWAYSONTOP
+        , CHECKED
+        MENUITEM "З&горнути після звертання",           ID_OPTIONS_MINIMIZEONUSE
+        , CHECKED
+        MENUITEM "&Приховати якщо згорнутий",      	ID_OPTIONS_HIDEWHENMINIMIZED
+        , CHECKED
+        MENUITEM "П&оказувати 16-бітні завдання",       ID_OPTIONS_SHOW16BITTASKS
+        , CHECKED
+    END
+    POPUP "&Вигляд"
+    BEGIN
+        MENUITEM "&Оновити",				ID_VIEW_REFRESH
+        POPUP "&Швидкість оновлення"
+        BEGIN
+            MENUITEM "&Висока",                       ID_VIEW_UPDATESPEED_HIGH
+            MENUITEM "&Нормальна",                    ID_VIEW_UPDATESPEED_NORMAL
+            , CHECKED
+            MENUITEM "&Низька",                       ID_VIEW_UPDATESPEED_LOW
+            MENUITEM "&Призупинити",                  ID_VIEW_UPDATESPEED_PAUSED
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Ве&ликі значки",              ID_VIEW_LARGE
+        MENUITEM "&Малі значки",                ID_VIEW_SMALL
+        MENUITEM "&Детально",                   ID_VIEW_DETAILS, CHECKED
+        MENUITEM "&Вибрати стовпці...",         ID_VIEW_SELECTCOLUMNS
+        POPUP "&Історія ЦП"
+        BEGIN
+            MENUITEM "&Один графік на всі ЦП",  ID_VIEW_CPUHISTORY_ONEGRAPHALL
+
+            MENUITEM "Графік для &кожного ЦП",   ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
+            , CHECKED
+        END
+        MENUITEM "&Показати час ядра",          ID_VIEW_SHOWKERNELTIMES
+    END
+    POPUP "&Вікна"
+    BEGIN
+        MENUITEM "З&ліва направо",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "З&верху вниз",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "З&горнути",               ID_WINDOWS_MINIMIZE
+        MENUITEM "&Розгорнути",             ID_WINDOWS_MAXIMIZE
+        MENUITEM "&Каскадом",               ID_WINDOWS_CASCADE
+        MENUITEM "&На передній план",       ID_WINDOWS_BRINGTOFRONT
+    END
+    POPUP "&Довідка"
+    BEGIN
+        MENUITEM "&Виклик довідки",         ID_HELP_TOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&Про програму",           ID_HELP_ABOUT
+    END
+END
+
+IDR_WINDOWSMENU MENU DISCARDABLE
+BEGIN
+    MENUITEM "З&ліва направо",          ID_WINDOWS_TILEHORIZONTALLY
+    MENUITEM "З&верху вниз",            ID_WINDOWS_TILEVERTICALLY
+    MENUITEM "З&горнути",               ID_WINDOWS_MINIMIZE
+    MENUITEM "&Розгорнути",             ID_WINDOWS_MAXIMIZE
+    MENUITEM "&Каскадом",               ID_WINDOWS_CASCADE
+    MENUITEM "&На передній план",       ID_WINDOWS_BRINGTOFRONT
+END
+
+IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&Нове завдання (Виконати...)",  ID_FILE_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "Ве&ликі значки",                ID_VIEW_LARGE
+        MENUITEM "&Малі значки",                  ID_VIEW_SMALL
+        MENUITEM "&Детально",                     ID_VIEW_DETAILS, CHECKED
+    END
+END
+
+IDR_APPLICATION_PAGE_CONTEXT2 MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&Переключитись",                ID_APPLICATION_PAGE_SWITCHTO
+        MENUITEM "&На передній план",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM SEPARATOR
+        MENUITEM "З&ліва направо",         	  ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "З&верху вниз",            	  ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "З&горнути",                     ID_WINDOWS_MINIMIZE
+        MENUITEM "&Розгорнути",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "&Каскадом",                     ID_WINDOWS_CASCADE
+        MENUITEM SEPARATOR
+        MENUITEM "&Зняти завдання",               ID_APPLICATION_PAGE_ENDTASK
+        MENUITEM "Йти &до процесу",               ID_APPLICATION_PAGE_GOTOPROCESS
+    END
+END
+
+IDR_TRAY_POPUP MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&Відновити",                    ID_RESTORE
+        MENUITEM "&Закрити",                      ID_FILE_EXIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Завжди зверху",                ID_OPTIONS_ALWAYSONTOP
+    END
+END
+
+IDR_PROCESS_PAGE_CONTEXT MENU DISCARDABLE
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&Завершити процес",                ID_PROCESS_PAGE_ENDPROCESS
+        MENUITEM "Завершити &дерево процесів",       ID_PROCESS_PAGE_ENDPROCESSTREE
+
+        MENUITEM "&Налагодження",                    ID_PROCESS_PAGE_DEBUG
+        MENUITEM SEPARATOR
+        POPUP "&Пріоритет"
+        BEGIN
+            MENUITEM "&Реального часу",              ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+
+            MENUITEM "&Високий",                     ID_PROCESS_PAGE_SETPRIORITY_HIGH
+
+            MENUITEM "&Вище середнього",             ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+
+            MENUITEM "&Середній",                    ID_PROCESS_PAGE_SETPRIORITY_NORMAL
+
+            MENUITEM "&Нижче середнього",            ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+
+            MENUITEM "&Низький",                     ID_PROCESS_PAGE_SETPRIORITY_LOW
+
+        END
+        MENUITEM "Задати &відповідність...",         ID_PROCESS_PAGE_SETAFFINITY
+	MENUITEM "Змінити &канали налагодження...",  ID_PROCESS_PAGE_DEBUGCHANNELS
+    END
+END
+
+/*
+ Dialog
+*/
+
+IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 264, 246
+STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
+    WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
+    WS_THICKFRAME
+CAPTION "Диспетчер завдань"
+MENU IDR_TASKMANAGER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "Tab1",IDC_TAB,"SysTabControl32",WS_TABSTOP,3,3,257,228
+END
+
+IDD_APPLICATION_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
+                    LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
+    PUSHBUTTON      "&Нове завдання...",IDC_NEWTASK,181,189,60,14
+    PUSHBUTTON      "&Переключитись",IDC_SWITCHTO,120,189,55,14,WS_DISABLED
+    PUSHBUTTON      "&Зняти завдання",IDC_ENDTASK,58,189,56,14,WS_DISABLED
+END
+
+IDD_PROCESS_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
+                    WS_BORDER | WS_TABSTOP,7,7,233,177
+    PUSHBUTTON      "&Завершити процес",IDC_ENDPROCESS,171,189,69,14
+    CONTROL         "&Показувати процеси всіх користувачів",IDC_SHOWALLPROCESSES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,147,10
+END
+
+/*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
+IDD_PERFORMANCE_PAGE DIALOGEX DISCARDABLE  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "Викорис. ЦП",IDC_CPU_USAGE_FRAME,5,5,62,54,WS_TABSTOP, WS_EX_TRANSPARENT
+    GROUPBOX        "Викорис. пам'яті",IDC_MEM_USAGE_FRAME,5,63,62,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
+    GROUPBOX        "Всього",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Виділення пам'яті (K)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Фізична пам'ять (K)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Пам'ять ядра (K)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
+    LTEXT           "Дескрипторів",IDS_TOTALS_HANDLE_COUNT,12,131,47,8
+    LTEXT           "Потоків",IDS_TOTALS_THREAD_COUNT,12,140,27,8
+    LTEXT           "Процесів",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
+    EDITTEXT        IDC_TOTALS_HANDLE_COUNT,65,131,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_THREAD_COUNT,65,140,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_PROCESS_COUNT,65,149,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Всього",IDS_COMMIT_CHARGE_TOTAL,12,175,27,8
+    LTEXT           "Межа",IDS_COMMIT_CHARGE_LIMIT,12,184,18,8
+    LTEXT           "Пік",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
+    EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_LIMIT,65,184,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_PEAK,65,193,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Всього",IDS_PHYSICAL_MEMORY_TOTAL,137,131,27,8
+    LTEXT           "Доступно",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,32,8
+    LTEXT           "Системний кеш",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,53,8
+    EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,188,131,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_AVAILABLE,188,140,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,188,149,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "Всього",IDS_KERNEL_MEMORY_TOTAL,137,174,27,8
+    LTEXT           "Вивантажувана",IDS_KERNEL_MEMORY_PAGED,137,184,53,8
+    LTEXT           "Невивантажувана",IDS_KERNEL_MEMORY_NONPAGED,137,193,61,8
+    EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,198,174,35,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_PAGED,198,184,35,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_NONPAGED,198,193,35,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    GROUPBOX        "Історія використання ЦП",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Історія використання пам'яті",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
+    PUSHBUTTON      "Вивід використання ЦП",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
+		    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Вивід використання пам'яті",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
+                    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Історія використання ЦП",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
+                    153,37,0,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Історія використання пам'яті",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+                    153,37,0,WS_EX_CLIENTEDGE
+END
+
+IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Канали налагодження"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP |
+		    LVS_SORTASCENDING,7,7,233,177
+    PUSHBUTTON      "Закрити",IDOK,171,189,69,14
+END
+
+IDD_AFFINITY_DIALOG DIALOG DISCARDABLE  0, 0, 231, 154
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Відповідність процесорів"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,120,133,50,14
+    PUSHBUTTON      "Скасувати",IDCANCEL,174,133,50,14
+    LTEXT           "Відповідність процесорів визначає, на якому ЦП дозволено виконувати процес.",
+                    IDC_STATIC,5,5,220,16
+    CONTROL         "ЦП 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    11,28,37,10
+    CONTROL         "ЦП 1",IDC_CPU1,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,41,37,10
+    CONTROL         "ЦП 2",IDC_CPU2,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,54,37,10
+    CONTROL         "ЦП 3",IDC_CPU3,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,67,37,10
+    CONTROL         "ЦП 4",IDC_CPU4,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,80,37,10
+    CONTROL         "ЦП 5",IDC_CPU5,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,93,37,10
+    CONTROL         "ЦП 6",IDC_CPU6,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,106,37,10
+    CONTROL         "ЦП 7",IDC_CPU7,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,119,37,10
+    CONTROL         "ЦП 8",IDC_CPU8,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,61,28,37,10
+    CONTROL         "ЦП 9",IDC_CPU9,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,61,41,37,10
+    CONTROL         "ЦП 10",IDC_CPU10,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,54,41,10
+    CONTROL         "ЦП 11",IDC_CPU11,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,67,41,10
+    CONTROL         "ЦП 12",IDC_CPU12,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,80,41,10
+    CONTROL         "ЦП 13",IDC_CPU13,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,93,41,10
+    CONTROL         "ЦП 14",IDC_CPU14,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,106,41,10
+    CONTROL         "ЦП 15",IDC_CPU15,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,119,41,10
+    CONTROL         "ЦП 16",IDC_CPU16,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,28,41,10
+    CONTROL         "ЦП 17",IDC_CPU17,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,41,41,10
+    CONTROL         "ЦП 18",IDC_CPU18,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,54,41,10
+    CONTROL         "ЦП 19",IDC_CPU19,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,67,41,10
+    CONTROL         "ЦП 20",IDC_CPU20,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,80,41,10
+    CONTROL         "ЦП 21",IDC_CPU21,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,93,41,10
+    CONTROL         "ЦП 22",IDC_CPU22,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,106,41,10
+    CONTROL         "ЦП 23",IDC_CPU23,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,119,41,10
+    CONTROL         "ЦП 24",IDC_CPU24,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,28,41,10
+    CONTROL         "ЦП 25",IDC_CPU25,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,41,41,10
+    CONTROL         "ЦП 26",IDC_CPU26,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,54,41,10
+    CONTROL         "ЦП 27",IDC_CPU27,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,67,41,10
+    CONTROL         "ЦП 28",IDC_CPU28,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,80,41,10
+    CONTROL         "ЦП 29",IDC_CPU29,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,93,41,10
+    CONTROL         "ЦП 30",IDC_CPU30,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,106,41,10
+    CONTROL         "ЦП 31",IDC_CPU31,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,119,41,10
+END
+
+IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 227, 199
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Вибір стовпців"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,64,178,50,14
+    PUSHBUTTON      "Скасувати",IDCANCEL,118,178,50,14
+    LTEXT           "Виберіть стовпці, які будуть показані на сторінці процесів Диспетчера завдань.",
+                    IDC_STATIC,7,7,181,17
+    CONTROL         "&Ім'я образу",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,7,28,56,10
+    CONTROL         "&PID (Ідентиф. процесу)",IDC_PID,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,39,91,10
+    CONTROL         "&Використання ЦП",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,50,69,10
+    CONTROL         "&Час ЦП",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,61,48,10
+    CONTROL         "&Пам'ять - використання",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,72,92,10
+    CONTROL         "Пам'ять - змі&на",IDC_MEMORYUSAGEDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,82,10
+    CONTROL         "Пам'ять - &максимум",IDC_PEAKMEMORYUSAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,94,82,10
+    CONTROL         "П&омилок сторінки",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,105,73,10
+    CONTROL         "О&б'єкти USER",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,116,62,10
+    CONTROL         "Кількість читань",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,127,68,10
+    CONTROL         "Прочитано байтів",IDC_IOREADBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,138,72,10
+    CONTROL         "Код се&ансу",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,149,50,10
+    CONTROL         "Ім'&я користувача",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,160,70,10
+    CONTROL         "Помилок &сторінки - зміна",IDC_PAGEFAULTSDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
+    CONTROL         "Об'єм віртуальної пам'яті",IDC_VIRTUALMEMORYSIZE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,39,100,10
+    CONTROL         "Виванта&жуваний пул",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,50,88,10
+    CONTROL         "Невив&антажуваний пул",IDC_NONPAGEDPOOL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,61,96,10
+    CONTROL         "Базови&й пріоритет",IDC_BASEPRIORITY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,72,75,10
+    CONTROL         "Лічильник &дескрипторів",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,83,98,10
+    CONTROL         "&Лічильник потоків",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,94,79,10
+    CONTROL         "Об'&єкти GDI",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,105,55,10
+    CONTROL         "Кількість записів",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,116,73,10
+    CONTROL         "Записано байтів",IDC_IOWRITEBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,127,69,10
+    CONTROL         "Інший ввід-вивід",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,138,71,10
+    CONTROL         "Інших байтів при вводі-виводі",IDC_IOOTHERBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,149,114,10
+END
+
+/*
+ String Table
+*/
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APP_TITLE           "Диспетчер завдань"
+    IDC_TASKMGR             "Диспетчер завдань"
+    IDS_RUNDLG_CAPTION      "Створити нове завдання"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_FILE_NEW             "Запускає нову програму"
+    ID_OPTIONS_ALWAYSONTOP  "Вікно диспетчера завдань залишається поверх інших вікон, якщо його не згорнуто"
+    ID_OPTIONS_MINIMIZEONUSE
+                            "Вікно диспетчера завдань згортається при переключенні"
+    ID_OPTIONS_HIDEWHENMINIMIZED "Приховування згорнутого вікна диспетчера завдань"
+    ID_VIEW_REFRESH         "Спричинює негайне оновлення вікна диспетчера завдань"
+    ID_VIEW_LARGE           "Показує завдання великими значками"
+    ID_VIEW_SMALL           "Показує завдання малими значками"
+    ID_VIEW_DETAILS         "Показує додаткові відомості про кожне завдання"
+    ID_VIEW_UPDATESPEED_HIGH "Оновлює зображення двічі на секунду"
+    ID_VIEW_UPDATESPEED_NORMAL "Оновлює зображення раз на дві секунди"
+    ID_VIEW_UPDATESPEED_LOW "Оновлює зображення раз на чотири секунди"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_VIEW_UPDATESPEED_PAUSED "Не оновлювати автоматично"
+    ID_WINDOWS_TILEHORIZONTALLY
+                            "Розташовує вікна горизонтально на робочому столі"
+    ID_WINDOWS_TILEVERTICALLY "Розташовує вікна вертикально на робочому столі"
+    ID_WINDOWS_MINIMIZE     "Згортає вікна"
+    ID_WINDOWS_MAXIMIZE     "Розгортає вікна"
+    ID_WINDOWS_CASCADE      "Розташовує вікна каскадом на робочому столі"
+    ID_WINDOWS_BRINGTOFRONT "Переміщення вікна на передній план без переходу до нього"
+    ID_HELP_TOPICS          "Показує довідку диспетчера завдань"
+    ID_HELP_ABOUT           "Показує відомості про програму, її версію та авторські права"
+    ID_FILE_EXIT            "Закриває диспетчер завдань"
+    ID_OPTIONS_SHOW16BITTASKS
+                            "Показ 16-розрядних завдань, які обробляє ntvdm.exe"
+    ID_VIEW_SELECTCOLUMNS   "Виберіть стовпці, які слід відображати на вкладці Процеси"
+    ID_VIEW_SHOWKERNELTIMES "Показує час ядра на графіках продуктивності"
+    ID_VIEW_CPUHISTORY_ONEGRAPHALL
+                            "Єдиний хронологічний графік загального використання ЦП"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Кожний ЦП має власний хронологічний графік"
+    ID_APPLICATION_PAGE_SWITCHTO
+                            "Переміщення завдання на передній план і передача керування цьому завданню"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_ENDTASK              "Наказує вибраним завданням закритися"
+    ID_GOTOPROCESS          "Передача фокусу до процесу вибраного завдання"
+    ID_RESTORE              "Відновлення прихованого вікна диспетчера завдань"
+    ID_PROCESS_PAGE_ENDPROCESS "Видаляє процес із системи"
+    ID_PROCESS_PAGE_ENDPROCESSTREE
+                            "Видаляє з системи цей процес і всіх його нащадків"
+    ID_PROCESS_PAGE_DEBUG   "Застосовує налагоджувач до цього процесу"
+    ID_PROCESS_PAGE_SETAFFINITY
+                            "Визначає, які процесори може використовувати процес"
+    ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+                            "Встановлює клас пріоритету РЕАЛЬНОГО ЧАСУ для процесу"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Встановлює клас пріоритету ВИСОКИЙ для процесу"
+    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+                            "Встановлює клас пріоритету ВИЩЕ СЕРЕДНЬОГО для процесу"
+    ID_PROCESS_PAGE_SETPRIORITY_NORMAL
+                            "Установлює клас пріоритету СЕРЕДНІЙ для процесу"
+    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+                            "Установлює клас пріоритету НИЖЧЕ СЕРЕДНЬОГО для процесу"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW "Установлює клас пріоритету НИЗЬКИЙ для процесу"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Керує каналами налагодження"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "Ве&ликі значки"
+    IDS_VIEW_SMALL                     "&Малі значки"
+    IDS_VIEW_DETAILS                   "&Детально"
+    IDS_WINDOWS                        "&Вікна"
+    IDS_VIEW_SELECTCOLUMNS             "Вибрати &стовпці..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&Показати 16-бітні завдання"
+    IDS_VIEW_CPUHISTORY                "&Історія ЦП"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&Один графік на всі ЦП"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Графік для &кожного ЦП"
+    IDS_VIEW_SHOWKERNELTIMES           "Показати &час ядра"
+    IDS_APPLICATIONS                   "Додатки"
+    IDS_PROCESSES                      "Процеси"
+    IDS_PERFORMANCE                    "Швидкодія"
+    IDS_STATUS_BAR_CPU_USAGE           "Використ. ЦП: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Процесів: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Використання пам'яті: %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Ім'я образу"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "ЦП"
+    IDS_CPUTIME           "Час ЦП"
+    IDS_MEMORYUSAGE       "Пам'ять"
+    IDS_MEMORYUSAGEDELTA  "Пам'ять (змін)"
+    IDS_PEAKMEMORYUSAGE   "Пікове використання пам'яті"
+    IDS_PAGEFAULTS        "Помил. стор."
+    IDS_USEROBJECTS       "Об'єкти USER"
+    IDS_IOREADS           "Кількість читань"
+    IDS_IOREADBYTES       "Прочитано байтів"
+    IDS_SESSIONID         "Код сеансу"
+    IDS_USERNAME          "Ім'я користувача"
+    IDS_PAGEFAULTSDELTA   "Помил. стор. (змін)"
+    IDS_VIRTUALMEMORYSIZE "Об'єм віртуальної пам'яті"
+    IDS_PAGEDPOOL         "Вивант. пул"
+    IDS_NONPAGEDPOOL      "Невивант. пул"
+    IDS_BASEPRIORITY      "Баз. пріор."
+    IDS_HANDLECOUNT       "Дескрип."
+    IDS_THREADCOUNT       "Потоків"
+    IDS_GDIOBJECTS        "Об'єкти GDI"
+    IDS_IOWRITES          "Кількість записів"
+    IDS_IOWRITEBYTES      "Записано байт"
+    IDS_IOOTHER           "Інший ввід-вивід"
+    IDS_IOOTHERBYTES      "Інших байтів при вводі-виводі"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Попередження Диспетчера завдань"
+    IDS_PRIORITY_CHANGE_MESSAGE     "УВАГА: Зміна класу пріоритету цього процесу\n\
+                                     може призвести до небажаних результатів, в тому числі до\n\
+                                     нестабільності системи. Змінити клас пріоритету?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Неможливо змінити пріоритет"
+    IDS_TERMINATE_MESSAGE           "УВАГА: Завершення цього процесу може призвести до\n\
+                                     небажаних результатів, включаючи втрату даних та\n\
+                                     нестабільність системи. Процес не зможе зберегти\n\
+                                     свою позицію чи дані. Ви справді хочете завершити\n\
+                                     процес?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Неможливо завершити процес"
+    IDS_DEBUG_MESSAGE               "УВАГА: Налагодження цього процесу може спричинити втрату\n\
+                                     даних. Справді використати налагоджувач?"
+    IDS_DEBUG_UNABLE2DEBUG          "Налагодження процесу неможливе"
+    IDS_AFFINITY_ERROR_MESSAGE      "Процесу повинен відповідати хоча б один ЦП"
+    IDS_AFFINITY_ERROR_TITLE        "Невірний параметр"
+    IDS_AFFINITY_UNABLE2ACCESS      "Неможливо отримати доступ чи встановити відповідність процесу"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Бездіяльність системи"
+    IDS_APPLICATION_NOT_RESPONDING     "Не відповідає"
+    IDS_APPLICATION_RUNNING            "Виконується"
+    IDS_APPLICATION_TASK               "Завдання"
+    IDS_APPLICATION_STATUS             "Стан"
+    IDS_DEBUG_CHANNEL                  "Канали налагодження"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
+END
