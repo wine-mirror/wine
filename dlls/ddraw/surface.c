@@ -118,10 +118,15 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
         /* Call into IDirect3D7 for creation */
         IDirect3D7_CreateDevice((IDirect3D7 *)&This->ddraw->IDirect3D7_vtbl, riid, (IDirectDrawSurface7 *)This, &d3d);
 
-        *obj = d3d ? (IDirect3DDevice *)&((IDirect3DDeviceImpl *)d3d)->IDirect3DDevice_vtbl : NULL;
-        TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
+        if (d3d)
+        {
+            *obj = (IDirect3DDevice *)&((IDirect3DDeviceImpl *)d3d)->IDirect3DDevice_vtbl;
+            TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
+            return S_OK;
+        }
 
-        return S_OK;
+        WARN("Unable to create a IDirect3DDevice instance, returning E_NOINTERFACE\n");
+        return E_NOINTERFACE;
     }
     else if (IsEqualGUID( &IID_IDirect3DTexture, riid ) ||
              IsEqualGUID( &IID_IDirect3DTexture2, riid ))
