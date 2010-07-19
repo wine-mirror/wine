@@ -744,6 +744,41 @@ LPWSTR WINAPI StrStrNW(LPCWSTR lpFirst, LPCWSTR lpSrch, UINT cchMax)
 }
 
 /*************************************************************************
+ * StrStrNIW	[SHLWAPI.@]
+ *
+ * Find a substring within a string up to a given number of initial characters,
+ * ignoring case.
+ *
+ * PARAMS
+ *  lpFirst    [I] String to search in
+ *  lpSrch     [I] String to look for
+ *  cchMax     [I] Maximum number of initial search characters
+ *
+ * RETURNS
+ *  The start of lpFirst within lpSrch, or NULL if not found.
+ */
+LPWSTR WINAPI StrStrNIW(LPCWSTR lpFirst, LPCWSTR lpSrch, UINT cchMax)
+{
+    UINT i;
+    int len;
+
+    TRACE("(%s, %s, %u)\n", debugstr_w(lpFirst), debugstr_w(lpSrch), cchMax);
+
+    if (!lpFirst || !lpSrch || !*lpSrch || !cchMax)
+        return NULL;
+
+    len = strlenW(lpSrch);
+
+    for (i = cchMax; *lpFirst && (i > 0); i--, lpFirst++)
+    {
+        if (!strncmpiW(lpFirst, lpSrch, len))
+            return (LPWSTR)lpFirst;
+    }
+
+    return NULL;
+}
+
+/*************************************************************************
  * StrToIntA	[SHLWAPI.@]
  *
  * Read a signed integer from a string.

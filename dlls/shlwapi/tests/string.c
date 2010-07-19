@@ -59,6 +59,7 @@ static HRESULT (WINAPI *pStrRetToBSTR)(STRRET*,void*,BSTR*);
 static HRESULT (WINAPI *pStrRetToBufA)(STRRET*,LPCITEMIDLIST,LPSTR,UINT);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
 static LPWSTR  (WINAPI *pStrStrNW)(LPCWSTR,LPCWSTR,UINT);
+static LPWSTR  (WINAPI *pStrStrNIW)(LPCWSTR,LPCWSTR,UINT);
 static INT     (WINAPIV *pwnsprintfA)(LPSTR,INT,LPCSTR, ...);
 static INT     (WINAPIV *pwnsprintfW)(LPWSTR,INT,LPCWSTR, ...);
 static LPWSTR  (WINAPI *pStrChrNW)(LPWSTR,WCHAR,UINT);
@@ -1248,6 +1249,100 @@ static void test_StrStrNW(void)
     }
 }
 
+static void test_StrStrNIW(void)
+{
+    static const WCHAR emptyW[] = {0};
+    static const WCHAR deadbeefW[] = {'D','e','A','d','B','e','E','f',0};
+    static const WCHAR deadW[] = {'D','e','A','d',0};
+    static const WCHAR dead_lowerW[] = {'d','e','a','d',0};
+    static const WCHAR adbeW[] = {'A','d','B','e',0};
+    static const WCHAR adbe_lowerW[] = {'a','d','b','e',0};
+    static const WCHAR beefW[] = {'B','e','E','f',0};
+    static const WCHAR beef_lowerW[] = {'b','e','e','f',0};
+    static const WCHAR cafeW[] = {'c','a','f','e',0};
+
+    const struct
+    {
+        const WCHAR *search;
+        const UINT count;
+        const WCHAR *expect;
+    } StrStrNIW_cases[] =
+    {
+        {emptyW, sizeof(deadbeefW)/sizeof(WCHAR), NULL},
+        {deadW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW},
+        {dead_lowerW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW},
+        {adbeW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW + 2},
+        {adbe_lowerW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW + 2},
+        {beefW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW + 4},
+        {beef_lowerW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW + 4},
+        {cafeW, sizeof(deadbeefW)/sizeof(WCHAR), NULL},
+        {beefW, 0, NULL},
+        {beefW, 1, NULL},
+        {beefW, 2, NULL},
+        {beefW, 3, NULL},
+        {beefW, 4, NULL},
+        {beefW, 5, deadbeefW + 4},
+        {beefW, 6, deadbeefW + 4},
+        {beefW, 7, deadbeefW + 4},
+        {beefW, 8, deadbeefW + 4},
+        {beefW, 9, deadbeefW + 4},
+        {beef_lowerW, 0, NULL},
+        {beef_lowerW, 1, NULL},
+        {beef_lowerW, 2, NULL},
+        {beef_lowerW, 3, NULL},
+        {beef_lowerW, 4, NULL},
+        {beef_lowerW, 5, deadbeefW + 4},
+        {beef_lowerW, 6, deadbeefW + 4},
+        {beef_lowerW, 7, deadbeefW + 4},
+        {beef_lowerW, 8, deadbeefW + 4},
+        {beef_lowerW, 9, deadbeefW + 4},
+    };
+
+    LPWSTR ret;
+    UINT i;
+
+    if (!pStrStrNIW)
+    {
+        win_skip("StrStrNIW() is not available\n");
+        return;
+    }
+
+    ret = pStrStrNIW(NULL, NULL, 0);
+    ok(!ret, "Expected StrStrNIW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNIW(NULL, NULL, 10);
+    ok(!ret, "Expected StrStrNIW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNIW(NULL, emptyW, 10);
+    ok(!ret, "Expected StrStrNIW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNIW(emptyW, NULL, 10);
+    ok(!ret, "Expected StrStrNIW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNIW(emptyW, emptyW, 10);
+    ok(!ret, "Expected StrStrNIW to return NULL, got %p\n", ret);
+
+    for (i = 0; i < sizeof(StrStrNIW_cases)/sizeof(StrStrNIW_cases[0]); i++)
+    {
+        ret = pStrStrNIW(deadbeefW, StrStrNIW_cases[i].search, StrStrNIW_cases[i].count);
+        ok(ret == StrStrNIW_cases[i].expect,
+           "[%d] Expected StrStrNIW to return %p, got %p\n",
+           i, StrStrNIW_cases[i].expect, ret);
+    }
+
+    /* StrStrNIW accepts counts larger than the search string length but rejects
+     * counts larger than around 2G. The limit seems to change based on the
+     * caller executable itself. */
+    ret = pStrStrNIW(deadbeefW, beefW, 100);
+    ok(ret == deadbeefW + 4, "Expected StrStrNIW to return deadbeefW + 4, got %p\n", ret);
+
+    if (0)
+    {
+        ret = pStrStrNIW(deadbeefW, beefW, ~0U);
+        ok(!ret, "Expected StrStrNIW to return NULL, got %p\n", ret);
+    }
+}
+
 START_TEST(string)
 {
   HMODULE hShlwapi;
@@ -1279,6 +1374,7 @@ START_TEST(string)
   pStrRetToBufA = (void *)GetProcAddress(hShlwapi, "StrRetToBufA");
   pStrRetToBufW = (void *)GetProcAddress(hShlwapi, "StrRetToBufW");
   pStrStrNW = (void *)GetProcAddress(hShlwapi, "StrStrNW");
+  pStrStrNIW = (void *)GetProcAddress(hShlwapi, "StrStrNIW");
   pwnsprintfA = (void *)GetProcAddress(hShlwapi, "wnsprintfA");
   pwnsprintfW = (void *)GetProcAddress(hShlwapi, "wnsprintfW");
 
@@ -1323,6 +1419,7 @@ START_TEST(string)
   test_StrStrIA();
   test_StrStrIW();
   test_StrStrNW();
+  test_StrStrNIW();
 
   CoUninitialize();
 }
