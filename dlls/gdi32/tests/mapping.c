@@ -29,7 +29,7 @@
 #include "winuser.h"
 #include "winerror.h"
 
-#define rough_match(got, expected) (abs((got) - (expected)) <= 5)
+#define rough_match(got, expected) (abs( MulDiv( (got) - (expected), 1000, (expected) )) <= 5)
 
 #define expect_LPtoDP(_hdc, _x, _y) \
 { \
@@ -121,11 +121,11 @@ static void test_world_transform(void)
     {
         expect_viewport_ext(hdc, res_x, -res_y);
         ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
-        ok( size.cx == size_cx * 10 ||
-            size.cx == MulDiv( res_x, 254, dpi_x ),  /* Vista uses a more precise method */
+        ok( rough_match( size.cx, size_cx * 10 ) ||
+            rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
             "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
-        ok( size.cy == size_cy * 10 ||
-            size.cy == MulDiv( res_y, 254, dpi_y ),  /* Vista uses a more precise method */
+        ok( rough_match( size.cy, size_cy * 10 ) ||
+            rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
             "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     }
     expect_world_trasform(hdc, 1.0, 1.0);
@@ -186,11 +186,11 @@ static void test_world_transform(void)
 
     expect_viewport_ext(hdc, res_x, -res_y);
     ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
-    ok( size.cx == size_cx * 10 ||
-        size.cx == MulDiv( res_x, 254, dpi_x ),  /* Vista uses a more precise method */
+    ok( rough_match( size.cx, size_cx * 10 ) ||
+        rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
         "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
-    ok( size.cy == size_cy * 10 ||
-        size.cy == MulDiv( res_y, 254, dpi_y ),  /* Vista uses a more precise method */
+    ok( rough_match( size.cy, size_cy * 10 ) ||
+        rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
         "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     expect_world_trasform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, MulDiv(20000, res_x, size.cx), -MulDiv(20000, res_y, size.cy));
