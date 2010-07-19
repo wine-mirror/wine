@@ -960,6 +960,53 @@ if (0)
         win_skip("wnsprintfW() is not available\n");
 }
 
+static void test_StrStrA(void)
+{
+    static const char *deadbeef = "DeAdBeEf";
+
+    const struct
+    {
+        const char *search;
+        const char *expect;
+    } StrStrA_cases[] =
+    {
+        {"", NULL},
+        {"DeAd", deadbeef},
+        {"dead", NULL},
+        {"AdBe", deadbeef + 2},
+        {"adbe", NULL},
+        {"BeEf", deadbeef + 4},
+        {"beef", NULL},
+    };
+
+    LPSTR ret;
+    int i;
+
+    /* Tests crash on Win9x/Win2k. */
+    if (0)
+    {
+        ret = StrStrA(NULL, NULL);
+        ok(!ret, "Expected StrStrA to return NULL, got %p\n", ret);
+
+        ret = StrStrA(NULL, "");
+        ok(!ret, "Expected StrStrA to return NULL, got %p\n", ret);
+
+        ret = StrStrA("", NULL);
+        ok(!ret, "Expected StrStrA to return NULL, got %p\n", ret);
+    }
+
+    ret = StrStrA("", "");
+    ok(!ret, "Expected StrStrA to return NULL, got %p\n", ret);
+
+    for (i = 0; i < sizeof(StrStrA_cases)/sizeof(StrStrA_cases[0]); i++)
+    {
+        ret = StrStrA(deadbeef, StrStrA_cases[i].search);
+        ok(ret == StrStrA_cases[i].expect,
+           "[%d] Expected StrStrA to return %p, got %p\n",
+           i, StrStrA_cases[i].expect, ret);
+    }
+}
+
 START_TEST(string)
 {
   HMODULE hShlwapi;
@@ -1029,6 +1076,7 @@ START_TEST(string)
   test_SHAnsiToAnsi();
   test_SHUnicodeToUnicode();
   test_StrXXX_overflows();
+  test_StrStrA();
 
   CoUninitialize();
 }
