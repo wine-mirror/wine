@@ -2083,6 +2083,9 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
                 break;
         }
 
+        if(req->dwContentRead == req->dwContentLength)
+            break;
+
         buf_avail = req->dwContentLength == ~0 ? req->read_size : min(req->read_size, req->dwContentLength-req->dwContentRead);
 
         zstream->next_in = req->read_buf+req->read_pos;
