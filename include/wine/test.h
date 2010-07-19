@@ -237,8 +237,7 @@ static tls_data* get_tls_data(void)
     data=TlsGetValue(tls_index);
     if (!data)
     {
-        data=HeapAlloc(GetProcessHeap(), 0, sizeof(tls_data));
-        data->todo_level = 0;
+        data=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(tls_data));
         data->str_pos = data->strings;
         TlsSetValue(tls_index,data);
     }
@@ -577,6 +576,19 @@ static void usage( const char *argv0 )
     exit_process(1);
 }
 
+/* trap unhandled exceptions */
+static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
+{
+    tls_data *data = get_tls_data();
+
+    if (data->current_file)
+        fprintf( stdout, "%s:%d: this is the last test seen before the exception\n",
+                 data->current_file, data->current_line );
+    fprintf( stdout, "%s: unhandled exception %08x at %p\n", current_test->name,
+             ptrs->ExceptionRecord->ExceptionCode, ptrs->ExceptionRecord->ExceptionAddress );
+    fflush( stdout );
+    return EXCEPTION_EXECUTE_HANDLER;
+}
 
 /* main function */
 int main( int argc, char **argv )
@@ -593,6 +605,7 @@ int main( int argc, char **argv )
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) report_success = atoi(p);
 
+    if (!strcmp( winetest_platform, "windows" )) SetUnhandledExceptionFilter( exc_filter );
     if (!winetest_interactive) SetErrorMode( SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX );
 
     if (!argv[1])
