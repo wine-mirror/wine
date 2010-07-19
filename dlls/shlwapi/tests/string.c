@@ -1109,6 +1109,62 @@ static void test_StrStrIA(void)
     }
 }
 
+static void test_StrStrIW(void)
+{
+    static const WCHAR emptyW[] = {0};
+    static const WCHAR deadbeefW[] = {'D','e','A','d','B','e','E','f',0};
+    static const WCHAR deadW[] = {'D','e','A','d',0};
+    static const WCHAR dead_lowerW[] = {'d','e','a','d',0};
+    static const WCHAR adbeW[] = {'A','d','B','e',0};
+    static const WCHAR adbe_lowerW[] = {'a','d','b','e',0};
+    static const WCHAR beefW[] = {'B','e','E','f',0};
+    static const WCHAR beef_lowerW[] = {'b','e','e','f',0};
+    static const WCHAR cafeW[] = {'c','a','f','e',0};
+
+    const struct
+    {
+        const WCHAR *search;
+        const WCHAR *expect;
+    } StrStrIW_cases[] =
+    {
+        {emptyW, NULL},
+        {deadW, deadbeefW},
+        {dead_lowerW, deadbeefW},
+        {adbeW, deadbeefW + 2},
+        {adbe_lowerW, deadbeefW + 2},
+        {beefW, deadbeefW + 4},
+        {beef_lowerW, deadbeefW + 4},
+        {cafeW, NULL},
+    };
+
+    LPWSTR ret;
+    int i;
+
+    /* Tests crash on Win9x/Win2k */
+    if (0)
+    {
+        ret = StrStrIW(NULL, NULL);
+        ok(!ret, "Expected StrStrIW to return NULL, got %p\n", ret);
+
+        ret = StrStrIW(NULL, emptyW);
+        ok(!ret, "Expected StrStrIW to return NULL, got %p\n", ret);
+
+        ret = StrStrIW(emptyW, NULL);
+        ok(!ret, "Expected StrStrIW to return NULL, got %p\n", ret);
+    }
+
+    ret = StrStrIW(emptyW, emptyW);
+    ok(!ret, "Expected StrStrIW to return NULL, got %p\n", ret);
+
+    for (i = 0; i < sizeof(StrStrIW_cases)/sizeof(StrStrIW_cases[0]); i++)
+    {
+        ret = StrStrIW(deadbeefW, StrStrIW_cases[i].search);
+        ok(ret == StrStrIW_cases[i].expect,
+           "[%d] Expected StrStrIW to return %p, got %p\n",
+           i, StrStrIW_cases[i].expect, ret);
+    }
+}
+
 START_TEST(string)
 {
   HMODULE hShlwapi;
@@ -1181,6 +1237,7 @@ START_TEST(string)
   test_StrStrA();
   test_StrStrW();
   test_StrStrIA();
+  test_StrStrIW();
 
   CoUninitialize();
 }
