@@ -713,6 +713,8 @@ static void test_fcvt(void)
     ok( 0 == sign, "sign wrong\n");
 }
 
+/* Don't test nrdigits < 0, msvcrt on Win9x and NT4 will corrupt memory by
+ * writing outside allocated memory */
 static struct {
     double value;
     int nrdigits;
@@ -725,7 +727,6 @@ static struct {
     {          45.0,   2,        "45",           "4500",          2,      2,      0 },
     /* Numbers less than 1.0 with different precisions */
     {        0.0001,   1,         "1",               "",         -3,     -3,     0 },
-    {        0.0001, -10,          "",               "",         -3,     -3,     0 },
     {        0.0001,  10,"1000000000",        "1000000",         -3,     -3,     0 },
     /* Basic sign test */
     {     -111.0001,   5,     "11100",       "11100010",          3,      3,     1 },
