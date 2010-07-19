@@ -593,6 +593,8 @@ int main( int argc, char **argv )
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) report_success = atoi(p);
 
+    if (!winetest_interactive) SetErrorMode( SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX );
+
     if (!argv[1])
     {
         if (winetest_testlist[0].name && !winetest_testlist[1].name)  /* only one test */

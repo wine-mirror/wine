@@ -160,6 +160,10 @@ static void doCrash(int argc,  char** argv)
 {
     char* p;
 
+    /* make sure the exception gets to the debugger */
+    SetErrorMode( 0 );
+    SetUnhandledExceptionFilter( NULL );
+
     if (argc >= 4)
     {
         crash_blackbox_t blackbox;
