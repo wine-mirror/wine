@@ -283,11 +283,11 @@ todo_wine {
                                    &identity, &authzsvc);
 
     ok(status == RPC_S_OK, "RpcBindingInqAuthInfo failed (%u)\n", status);
-    ok(identity == NULL, "expected NULL identity\n");
-    ok(principal != (unsigned char *)0xdeadbeef, "expected valid principal\n");
-    ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "expected RPC_C_AUTHN_LEVEL_PKT_PRIVACY\n");
-    ok(authnsvc == RPC_C_AUTHN_WINNT, "expected RPC_C_AUTHN_WINNT\n");
-    todo_wine ok(authzsvc == RPC_C_AUTHZ_NAME, "expected RPC_C_AUTHZ_NAME\n");
+    ok(identity == NULL, "expected NULL identity, got %p\n", identity);
+    ok(principal != (unsigned char *)0xdeadbeef, "expected valid principal, got %p\n", principal);
+    ok(level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY, "expected RPC_C_AUTHN_LEVEL_PKT_PRIVACY, got %d\n", level);
+    ok(authnsvc == RPC_C_AUTHN_WINNT, "expected RPC_C_AUTHN_WINNT, got %d\n", authnsvc);
+    todo_wine ok(authzsvc == RPC_C_AUTHZ_NAME, "expected RPC_C_AUTHZ_NAME, got %d\n", authzsvc);
 
     RpcStringFree(&principal);
 
