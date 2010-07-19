@@ -141,6 +141,12 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     unsigned int i;
     DWORD tag;
 
+    if (!data)
+    {
+        WARN("No data supplied.\n");
+        return E_FAIL;
+    }
+
     read_dword(&ptr, &tag);
     TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
 
@@ -157,6 +163,12 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
 
     read_dword(&ptr, &total_size);
     TRACE("total size: %#x\n", total_size);
+
+    if (data_size != total_size)
+    {
+        WARN("Wrong size supplied.\n");
+        return E_FAIL;
+    }
 
     read_dword(&ptr, &chunk_count);
     TRACE("chunk count: %#x\n", chunk_count);
