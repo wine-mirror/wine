@@ -2639,7 +2639,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         } else if(prompt_save_changes())
         {
             registry_set_options(hMainWnd);
-            registry_set_formatopts_all(barState);
+            registry_set_formatopts_all(barState, wordWrap);
             PostQuitMessage(0);
         }
         break;

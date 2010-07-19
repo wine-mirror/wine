@@ -262,5 +262,5 @@ void registry_read_formatopts_all(DWORD[], DWORD[]);
 void registry_read_winrect(RECT*);
 void registry_read_maximized(DWORD*);
 void registry_set_filelist(LPCWSTR, HWND);
-void registry_set_formatopts_all(DWORD[]);
+void registry_set_formatopts_all(DWORD[], DWORD[]);
 void registry_set_options(HWND);
