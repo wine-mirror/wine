@@ -439,7 +439,7 @@ static void test_persist(void)
                                0, NULL, &IID_IHlink, (LPVOID*) &lnk);
     ok(hr == S_OK, "IHlinkCreateFromString failed with error 0x%08x\n", hr);
     if (!lnk) {
-        skip("Can't create lnk, skipping test_persist.  Was wineprefixcreate run properly?\n");
+        skip("Can't create lnk, skipping test_persist.\n");
         return;
     }
     test_persist_save_data("url only", lnk,

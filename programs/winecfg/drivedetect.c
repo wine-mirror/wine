@@ -204,7 +204,7 @@ static void report_error(int code)
 
         case NO_DRIVE_C:
             if (gui_mode)
-                MessageBox(NULL, "No virtual drive C mapped\n\nTry running wineprefixcreate", "", MB_OK | MB_ICONEXCLAMATION);
+                MessageBox(NULL, "No virtual drive C mapped!\n", "", MB_OK | MB_ICONEXCLAMATION);
             else
                 fprintf(stderr, "winecfg: no drive_c directory\n");
 
