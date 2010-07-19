@@ -70,10 +70,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  *  E_NOINTERFACE if the requested interface wasn't found
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
-                                      REFIID riid,
-                                      void **obj)
+static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, REFIID riid, void **obj)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
@@ -149,6 +146,13 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
     return E_NOINTERFACE;
 }
 
+static HRESULT WINAPI ddraw_surface3_QueryInterface(IDirectDrawSurface3 *iface, REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_surface3(iface), riid, object);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::AddRef
  *
@@ -158,8 +162,7 @@ IDirectDrawSurfaceImpl_QueryInterface(IDirectDrawSurface7 *iface,
  *  The new refcount
  *
  *****************************************************************************/
-static ULONG WINAPI
-IDirectDrawSurfaceImpl_AddRef(IDirectDrawSurface7 *iface)
+static ULONG WINAPI ddraw_surface7_AddRef(IDirectDrawSurface7 *iface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
@@ -175,8 +178,15 @@ IDirectDrawSurfaceImpl_AddRef(IDirectDrawSurface7 *iface)
     return refCount;
 }
 
+static ULONG WINAPI ddraw_surface3_AddRef(IDirectDrawSurface3 *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_surface3(iface));
+}
+
 /*****************************************************************************
- * IDirectDrawSurfaceImpl_Destroy
+ * ddraw_surface_destroy
  *
  * A helper function for IDirectDrawSurface7::Release
  *
@@ -187,7 +197,7 @@ IDirectDrawSurfaceImpl_AddRef(IDirectDrawSurface7 *iface)
  *  This: Surface to free
  *
  *****************************************************************************/
-void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
+void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
 {
     TRACE("(%p)\n", This);
 
@@ -280,8 +290,7 @@ void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
  *  The new refcount
  *
  *****************************************************************************/
-static ULONG WINAPI
-IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
+static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     ULONG ref;
@@ -390,13 +399,12 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
             {
                 IDirectDrawSurfaceImpl *destroy = surf;
                 surf = surf->complex_array[0];              /* Iterate through the "tree" */
-                IDirectDrawSurfaceImpl_Destroy(destroy);    /* Destroy it */
+                ddraw_surface_destroy(destroy);             /* Destroy it */
             }
         }
 
-        /* Destroy the root surface.
-         */
-        IDirectDrawSurfaceImpl_Destroy(This);
+        /* Destroy the root surface. */
+        ddraw_surface_destroy(This);
 
         /* Reduce the ddraw refcount */
         if(ifaceToRelease) IUnknown_Release(ifaceToRelease);
@@ -404,6 +412,13 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
     }
 
     return ref;
+}
+
+static ULONG WINAPI ddraw_surface3_Release(IDirectDrawSurface3 *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_surface3(iface));
 }
 
 /*****************************************************************************
@@ -433,10 +448,8 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
  *  DDERR_NOTFOUND if no surface was found
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
-                                          DDSCAPS2 *Caps,
-                                          IDirectDrawSurface7 **Surface)
+static HRESULT WINAPI ddraw_surface7_GetAttachedSurface(IDirectDrawSurface7 *iface,
+        DDSCAPS2 *Caps, IDirectDrawSurface7 **Surface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *surf;
@@ -487,7 +500,7 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
             TRACE("(%p): Returning surface %p\n", This, surf);
             TRACE("(%p): mipmapcount=%d\n", This, surf->mipmap_level);
             *Surface = (IDirectDrawSurface7 *)surf;
-            IDirectDrawSurface7_AddRef(*Surface);
+            ddraw_surface7_AddRef(*Surface);
             LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
         }
@@ -512,7 +525,7 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
 
             TRACE("(%p): Returning surface %p\n", This, surf);
             *Surface = (IDirectDrawSurface7 *)surf;
-            IDirectDrawSurface7_AddRef(*Surface);
+            ddraw_surface7_AddRef(*Surface);
             LeaveCriticalSection(&ddraw_cs);
             return DD_OK;
         }
@@ -523,6 +536,29 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
 
     *Surface = NULL;
     return DDERR_NOTFOUND;
+}
+
+static HRESULT WINAPI ddraw_surface3_GetAttachedSurface(IDirectDrawSurface3 *iface,
+        DDSCAPS *caps, IDirectDrawSurface3 **attachment)
+{
+    IDirectDrawSurface7 *attachment7;
+    DDSCAPS2 caps2;
+    HRESULT hr;
+
+    TRACE("iface %p, caps %p, attachment %p.\n", iface, caps, attachment);
+
+    caps2.dwCaps  = caps->dwCaps;
+    caps2.dwCaps2 = 0;
+    caps2.dwCaps3 = 0;
+    caps2.dwCaps4 = 0;
+
+    hr = ddraw_surface7_GetAttachedSurface((IDirectDrawSurface7 *)surface_from_surface3(iface),
+            &caps2, &attachment7);
+    if (FAILED(hr)) *attachment = NULL;
+    else *attachment = attachment7 ?
+            (IDirectDrawSurface3 *)&((IDirectDrawSurfaceImpl *)attachment7)->IDirectDrawSurface3_vtbl : NULL;
+
+    return hr;
 }
 
 /*****************************************************************************
@@ -542,12 +578,8 @@ IDirectDrawSurfaceImpl_GetAttachedSurface(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::LockRect
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
-                            RECT *Rect,
-                            DDSURFACEDESC2 *DDSD,
-                            DWORD Flags,
-                            HANDLE h)
+static HRESULT WINAPI ddraw_surface7_Lock(IDirectDrawSurface7 *iface,
+        RECT *Rect, DDSURFACEDESC2 *DDSD, DWORD Flags, HANDLE h)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     WINED3DLOCKED_RECT LockedRect;
@@ -626,6 +658,16 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI ddraw_surface3_Lock(IDirectDrawSurface3 *iface, RECT *rect,
+        DDSURFACEDESC *surface_desc, DWORD flags, HANDLE h)
+{
+    TRACE("iface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
+            iface, wine_dbgstr_rect(rect), surface_desc, flags, h);
+
+    return ddraw_surface7_Lock((IDirectDrawSurface7 *)surface_from_surface3(iface),
+            rect, (DDSURFACEDESC2 *)surface_desc, flags, h);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::Unlock
  *
@@ -639,9 +681,7 @@ IDirectDrawSurfaceImpl_Lock(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::UnlockRect
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_Unlock(IDirectDrawSurface7 *iface,
-                              RECT *pRect)
+static HRESULT WINAPI ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pRect)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -655,6 +695,14 @@ IDirectDrawSurfaceImpl_Unlock(IDirectDrawSurface7 *iface,
     }
     LeaveCriticalSection(&ddraw_cs);
     return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_Unlock(IDirectDrawSurface3 *iface, void *data)
+{
+    TRACE("iface %p, data %p.\n", iface, data);
+
+    /* data might not be the LPRECT of later versions, so drop it. */
+    return ddraw_surface7_Unlock((IDirectDrawSurface7 *)surface_from_surface3(iface), NULL);
 }
 
 /*****************************************************************************
@@ -676,10 +724,7 @@ IDirectDrawSurfaceImpl_Unlock(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::Flip
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_Flip(IDirectDrawSurface7 *iface,
-                            IDirectDrawSurface7 *DestOverride,
-                            DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDrawSurface7 *DestOverride, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *Override = (IDirectDrawSurfaceImpl *)DestOverride;
@@ -702,7 +747,7 @@ IDirectDrawSurfaceImpl_Flip(IDirectDrawSurface7 *iface,
 
         memset(&Caps, 0, sizeof(Caps));
         Caps.dwCaps |= DDSCAPS_BACKBUFFER;
-        hr = IDirectDrawSurface7_GetAttachedSurface(iface, &Caps, &Override7);
+        hr = ddraw_surface7_GetAttachedSurface(iface, &Caps, &Override7);
         if(hr != DD_OK)
         {
             ERR("Can't find a flip target\n");
@@ -712,7 +757,7 @@ IDirectDrawSurfaceImpl_Flip(IDirectDrawSurface7 *iface,
         Override = (IDirectDrawSurfaceImpl *)Override7;
 
         /* For the GetAttachedSurface */
-        IDirectDrawSurface7_Release(Override7);
+        ddraw_surface7_Release(Override7);
     }
 
     hr = IWineD3DSurface_Flip(This->WineD3DSurface,
@@ -720,6 +765,14 @@ IDirectDrawSurfaceImpl_Flip(IDirectDrawSurface7 *iface,
                               Flags);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_Flip(IDirectDrawSurface3 *iface, IDirectDrawSurface3 *dst, DWORD flags)
+{
+    TRACE("iface %p, dst %p, flags %#x.\n", iface, dst, flags);
+
+    return ddraw_surface7_Flip((IDirectDrawSurface7 *)surface_from_surface3(iface),
+            dst ? (IDirectDrawSurface7 *)surface_from_surface3(dst) : NULL, flags);
 }
 
 /*****************************************************************************
@@ -739,13 +792,8 @@ IDirectDrawSurfaceImpl_Flip(IDirectDrawSurface7 *iface,
  *  See IWineD3DSurface::Blt for more details
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
-                           RECT *DestRect,
-                           IDirectDrawSurface7 *SrcSurface,
-                           RECT *SrcRect,
-                           DWORD Flags,
-                           DDBLTFX *DDBltFx)
+static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestRect,
+        IDirectDrawSurface7 *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *Src = (IDirectDrawSurfaceImpl *)SrcSurface;
@@ -817,6 +865,16 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
     }
 }
 
+static HRESULT WINAPI ddraw_surface3_Blt(IDirectDrawSurface3 *iface, RECT *dst_rect,
+        IDirectDrawSurface3 *src_surface, RECT *src_rect, DWORD flags, DDBLTFX *fx)
+{
+    TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %p, flags %#x, fx %p.\n",
+            iface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect), flags, fx);
+
+    return ddraw_surface7_Blt((IDirectDrawSurface7 *)surface_from_surface3(iface), dst_rect,
+            src_surface ? (IDirectDrawSurface7 *)surface_from_surface3(src_surface) : NULL, src_rect, flags, fx);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::AddAttachedSurface
  *
@@ -848,8 +906,8 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
  * switching between that and double buffering is not yet implemented in
  * WineD3D, so for 3D it might have unexpected results.
  *
- * IDirectDrawSurfaceImpl_AddAttachedSurface is the real thing,
- * IDirectDrawSurface7Impl_AddAttachedSurface is a wrapper around it that
+ * ddraw_surface_attach_surface is the real thing,
+ * ddraw_surface7_AddAttachedSurface is a wrapper around it that
  * performs additional checks. Version 7 of this interface is much more restrictive
  * than its predecessors.
  *
@@ -861,9 +919,7 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
  *  DDERR_CANNOTATTACHSURFACE if the surface can't be attached for some reason
  *
  *****************************************************************************/
-HRESULT WINAPI
-IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This,
-                                          IDirectDrawSurfaceImpl *Surf)
+static HRESULT WINAPI ddraw_surface_attach_surface(IDirectDrawSurfaceImpl *This, IDirectDrawSurfaceImpl *Surf)
 {
     TRACE("(%p)->(%p)\n", This, Surf);
 
@@ -895,14 +951,12 @@ IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This,
         IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
     }
 
-    IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)Surf);
+    ddraw_surface7_AddRef((IDirectDrawSurface7 *)Surf);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface7Impl_AddAttachedSurface(IDirectDrawSurface7 *iface,
-                                           IDirectDrawSurface7 *Attach)
+static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *iface, IDirectDrawSurface7 *Attach)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *Surf = (IDirectDrawSurfaceImpl *)Attach;
@@ -916,9 +970,47 @@ IDirectDrawSurface7Impl_AddAttachedSurface(IDirectDrawSurface7 *iface,
         return DDERR_CANNOTATTACHSURFACE;
     }
 
-    return IDirectDrawSurfaceImpl_AddAttachedSurface(This,
-                                                     Surf);
+    return ddraw_surface_attach_surface(This, Surf);
 }
+
+static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *iface, IDirectDrawSurface3 *attachment)
+{
+    IDirectDrawSurfaceImpl *surface = surface_from_surface3(iface);
+    IDirectDrawSurfaceImpl *attach_impl = surface_from_surface3(attachment);
+
+    TRACE("iface %p, attachment %p.\n", iface, attachment);
+
+    /* Tests suggest that
+     * -> offscreen plain surfaces can be attached to other offscreen plain surfaces
+     * -> offscreen plain surfaces can be attached to primaries
+     * -> primaries can be attached to offscreen plain surfaces
+     * -> z buffers can be attached to primaries */
+    if (surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN)
+            && attach_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN))
+    {
+        /* Sizes have to match */
+        if (attach_impl->surface_desc.dwWidth != surface->surface_desc.dwWidth
+                || attach_impl->surface_desc.dwHeight != surface->surface_desc.dwHeight)
+        {
+            WARN("Surface sizes do not match.\n");
+            return DDERR_CANNOTATTACHSURFACE;
+        }
+        /* OK */
+    }
+    else if (surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE)
+            && attach_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER))
+    {
+        /* OK */
+    }
+    else
+    {
+        WARN("Invalid attachment combination.\n");
+        return DDERR_CANNOTATTACHSURFACE;
+    }
+
+    return ddraw_surface_attach_surface(surface, attach_impl);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::DeleteAttachedSurface
  *
@@ -934,10 +1026,8 @@ IDirectDrawSurface7Impl_AddAttachedSurface(IDirectDrawSurface7 *iface,
  *  DDERR_SURFACENOTATTACHED if the surface isn't attached to
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
-                                             DWORD Flags,
-                                             IDirectDrawSurface7 *Attach)
+static HRESULT WINAPI ddraw_surface7_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
+        DWORD Flags, IDirectDrawSurface7 *Attach)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *Surf = (IDirectDrawSurfaceImpl *)Attach;
@@ -981,9 +1071,18 @@ IDirectDrawSurfaceImpl_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
         IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
     }
 
-    IDirectDrawSurface7_Release(Attach);
+    ddraw_surface7_Release(Attach);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
+}
+
+static HRESULT WINAPI ddraw_surface3_DeleteAttachedSurface(IDirectDrawSurface3 *iface,
+        DWORD flags, IDirectDrawSurface3 *attachment)
+{
+    TRACE("iface %p, flags %#x, attachment %p.\n", iface, flags, attachment);
+
+    return ddraw_surface7_DeleteAttachedSurface((IDirectDrawSurface7 *)surface_from_surface3(iface), flags,
+            attachment ? (IDirectDrawSurface7 *)surface_from_surface3(attachment) : NULL);
 }
 
 /*****************************************************************************
@@ -998,9 +1097,7 @@ IDirectDrawSurfaceImpl_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
  *  DDERR_UNSUPPORTED
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_AddOverlayDirtyRect(IDirectDrawSurface7 *iface,
-                                           LPRECT Rect)
+static HRESULT WINAPI ddraw_surface7_AddOverlayDirtyRect(IDirectDrawSurface7 *iface, RECT *Rect)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%p)\n",This,Rect);
@@ -1013,6 +1110,13 @@ IDirectDrawSurfaceImpl_AddOverlayDirtyRect(IDirectDrawSurface7 *iface,
     return IWineD3DSurface_AddOverlayDirtyRect(This->WineD3DSurface, pRect);
 #endif
     return DDERR_UNSUPPORTED; /* unchecked */
+}
+
+static HRESULT WINAPI ddraw_surface3_AddOverlayDirtyRect(IDirectDrawSurface3 *iface, RECT *rect)
+{
+    TRACE("iface %p, rect %s.\n", iface, wine_dbgstr_rect(rect));
+
+    return ddraw_surface7_AddOverlayDirtyRect((IDirectDrawSurface7 *)surface_from_surface3(iface), rect);
 }
 
 /*****************************************************************************
@@ -1029,9 +1133,7 @@ IDirectDrawSurfaceImpl_AddOverlayDirtyRect(IDirectDrawSurface7 *iface,
  *  For details, see IWineD3DSurface::GetDC
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetDC(IDirectDrawSurface7 *iface,
-                             HDC *hdc)
+static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *hdc)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1057,6 +1159,13 @@ IDirectDrawSurfaceImpl_GetDC(IDirectDrawSurface7 *iface,
     }
 }
 
+static HRESULT WINAPI ddraw_surface3_GetDC(IDirectDrawSurface3 *iface, HDC *dc)
+{
+    TRACE("iface %p, dc %p.\n", iface, dc);
+
+    return ddraw_surface7_GetDC((IDirectDrawSurface7 *)surface_from_surface3(iface), dc);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::ReleaseDC
  *
@@ -1070,9 +1179,7 @@ IDirectDrawSurfaceImpl_GetDC(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::ReleaseDC
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_ReleaseDC(IDirectDrawSurface7 *iface,
-                                 HDC hdc)
+static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC hdc)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1082,6 +1189,13 @@ IDirectDrawSurfaceImpl_ReleaseDC(IDirectDrawSurface7 *iface,
     hr = IWineD3DSurface_ReleaseDC(This->WineD3DSurface, hdc);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_ReleaseDC(IDirectDrawSurface3 *iface, HDC dc)
+{
+    TRACE("iface %p, dc %p.\n", iface, dc);
+
+    return ddraw_surface7_ReleaseDC((IDirectDrawSurface7 *)surface_from_surface3(iface), dc);
 }
 
 /*****************************************************************************
@@ -1097,9 +1211,7 @@ IDirectDrawSurfaceImpl_ReleaseDC(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDPARAMS if Caps is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetCaps(IDirectDrawSurface7 *iface,
-                               DDSCAPS2 *Caps)
+static HRESULT WINAPI ddraw_surface7_GetCaps(IDirectDrawSurface7 *iface, DDSCAPS2 *Caps)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%p)\n",This,Caps);
@@ -1109,6 +1221,20 @@ IDirectDrawSurfaceImpl_GetCaps(IDirectDrawSurface7 *iface,
 
     *Caps = This->surface_desc.ddsCaps;
     return DD_OK;
+}
+
+static HRESULT WINAPI ddraw_surface3_GetCaps(IDirectDrawSurface3 *iface, DDSCAPS *caps)
+{
+    DDSCAPS2 caps2;
+    HRESULT hr;
+
+    TRACE("iface %p, caps %p.\n", iface, caps);
+
+    hr = ddraw_surface7_GetCaps((IDirectDrawSurface7 *)surface_from_surface3(iface), &caps2);
+    if (FAILED(hr)) return hr;
+
+    caps->dwCaps = caps2.dwCaps;
+    return hr;
 }
 
 /*****************************************************************************
@@ -1124,8 +1250,7 @@ IDirectDrawSurfaceImpl_GetCaps(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::SetPriority
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetPriority(IDirectDrawSurface7 *iface, DWORD Priority)
+static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWORD Priority)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1151,9 +1276,7 @@ IDirectDrawSurfaceImpl_SetPriority(IDirectDrawSurface7 *iface, DWORD Priority)
  *  For more details, see IWineD3DSurface::GetPriority
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetPriority(IDirectDrawSurface7 *iface,
-                                   DWORD *Priority)
+static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWORD *Priority)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%p): Relay\n",This,Priority);
@@ -1186,12 +1309,8 @@ IDirectDrawSurfaceImpl_GetPriority(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::SetPrivateData
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetPrivateData(IDirectDrawSurface7 *iface,
-                                      REFGUID tag,
-                                      void *Data,
-                                      DWORD Size,
-                                      DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_SetPrivateData(IDirectDrawSurface7 *iface,
+        REFGUID tag, void *Data, DWORD Size, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1227,11 +1346,7 @@ IDirectDrawSurfaceImpl_SetPrivateData(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::GetPrivateData
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetPrivateData(IDirectDrawSurface7 *iface,
-                                      REFGUID tag,
-                                      void *Data,
-                                      DWORD *Size)
+static HRESULT WINAPI ddraw_surface7_GetPrivateData(IDirectDrawSurface7 *iface, REFGUID tag, void *Data, DWORD *Size)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1262,9 +1377,7 @@ IDirectDrawSurfaceImpl_GetPrivateData(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::FreePrivateData
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_FreePrivateData(IDirectDrawSurface7 *iface,
-                                       REFGUID tag)
+static HRESULT WINAPI ddraw_surface7_FreePrivateData(IDirectDrawSurface7 *iface, REFGUID tag)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1288,14 +1401,19 @@ IDirectDrawSurfaceImpl_FreePrivateData(IDirectDrawSurface7 *iface,
  *  DD_OK, because it's a stub
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_PageLock(IDirectDrawSurface7 *iface,
-                                DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_PageLock(IDirectDrawSurface7 *iface, DWORD Flags)
 {
     TRACE("(%p)->(%x)\n", iface, Flags);
 
     /* This is Windows memory management related - we don't need this */
     return DD_OK;
+}
+
+static HRESULT WINAPI ddraw_surface3_PageLock(IDirectDrawSurface3 *iface, DWORD flags)
+{
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    return ddraw_surface7_PageLock((IDirectDrawSurface7 *)surface_from_surface3(iface), flags);
 }
 
 /*****************************************************************************
@@ -1310,13 +1428,18 @@ IDirectDrawSurfaceImpl_PageLock(IDirectDrawSurface7 *iface,
  *  DD_OK, because it's a stub
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_PageUnlock(IDirectDrawSurface7 *iface,
-                                  DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_PageUnlock(IDirectDrawSurface7 *iface, DWORD Flags)
 {
     TRACE("(%p)->(%x)\n", iface, Flags);
 
     return DD_OK;
+}
+
+static HRESULT WINAPI ddraw_surface3_PageUnlock(IDirectDrawSurface3 *iface, DWORD flags)
+{
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    return ddraw_surface7_PageUnlock((IDirectDrawSurface7 *)surface_from_surface3(iface), flags);
 }
 
 /*****************************************************************************
@@ -1331,12 +1454,19 @@ IDirectDrawSurfaceImpl_PageUnlock(IDirectDrawSurface7 *iface,
  *  DDERR_UNSUPPORTED
  *
  *****************************************************************************/
-static HRESULT WINAPI IDirectDrawSurfaceImpl_BltBatch(IDirectDrawSurface7 *iface, DDBLTBATCH *Batch, DWORD Count, DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_BltBatch(IDirectDrawSurface7 *iface, DDBLTBATCH *Batch, DWORD Count, DWORD Flags)
 {
     TRACE("(%p)->(%p,%d,%08x)\n",iface,Batch,Count,Flags);
 
     /* MSDN: "not currently implemented" */
     return DDERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI ddraw_surface3_BltBatch(IDirectDrawSurface3 *iface, DDBLTBATCH *batch, DWORD count, DWORD flags)
+{
+    TRACE("iface %p, batch %p, count %u, flags %#x.\n", iface, batch, count, flags);
+
+    return ddraw_surface7_BltBatch((IDirectDrawSurface7 *)surface_from_surface3(iface), batch, count, flags);
 }
 
 /*****************************************************************************
@@ -1353,10 +1483,8 @@ static HRESULT WINAPI IDirectDrawSurfaceImpl_BltBatch(IDirectDrawSurface7 *iface
  *  DDERR_INVALIDPARAMS if cb is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
-                                            void *context,
-                                            LPDDENUMSURFACESCALLBACK7 cb)
+static HRESULT WINAPI ddraw_surface7_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
+        void *context, LPDDENUMSURFACESCALLBACK7 cb)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *surf;
@@ -1375,7 +1503,7 @@ IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
         surf = This->complex_array[i];
         if(!surf) break;
 
-        IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)surf);
+        ddraw_surface7_AddRef((IDirectDrawSurface7 *)surf);
         desc = surf->surface_desc;
         /* check: != DDENUMRET_OK or == DDENUMRET_CANCEL? */
         if (cb((IDirectDrawSurface7 *)surf, &desc, context) == DDENUMRET_CANCEL)
@@ -1387,7 +1515,7 @@ IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
 
     for (surf = This->next_attached; surf != NULL; surf = surf->next_attached)
     {
-        IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)surf);
+        ddraw_surface7_AddRef((IDirectDrawSurface7 *)surf);
         desc = surf->surface_desc;
         /* check: != DDENUMRET_OK or == DDENUMRET_CANCEL? */
         if (cb((IDirectDrawSurface7 *)surf, &desc, context) == DDENUMRET_CANCEL)
@@ -1401,6 +1529,34 @@ IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
 
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
+}
+
+struct callback_info
+{
+    LPDDENUMSURFACESCALLBACK callback;
+    void *context;
+};
+
+static HRESULT CALLBACK EnumCallback(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *surface_desc, void *context)
+{
+    const struct callback_info *info = context;
+
+    return info->callback((IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)surface)->IDirectDrawSurface3_vtbl,
+            (DDSURFACEDESC *)surface_desc, info->context);
+}
+
+static HRESULT WINAPI ddraw_surface3_EnumAttachedSurfaces(IDirectDrawSurface3 *iface,
+        void *context, LPDDENUMSURFACESCALLBACK callback)
+{
+    struct callback_info info;
+
+    TRACE("iface %p, context %p, callback %p.\n", iface, context, callback);
+
+    info.callback = callback;
+    info.context  = context;
+
+    return ddraw_surface7_EnumAttachedSurfaces((IDirectDrawSurface7 *)surface_from_surface3(iface),
+            &info, EnumCallback);
 }
 
 /*****************************************************************************
@@ -1417,15 +1573,26 @@ IDirectDrawSurfaceImpl_EnumAttachedSurfaces(IDirectDrawSurface7 *iface,
  *  DD_OK, because it's a stub
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_EnumOverlayZOrders(IDirectDrawSurface7 *iface,
-                                          DWORD Flags,
-                                          void *context,
-                                          LPDDENUMSURFACESCALLBACK7 cb)
+static HRESULT WINAPI ddraw_surface7_EnumOverlayZOrders(IDirectDrawSurface7 *iface,
+        DWORD Flags, void *context, LPDDENUMSURFACESCALLBACK7 cb)
 {
      FIXME("(%p)->(%x,%p,%p): Stub!\n", iface, Flags, context, cb);
 
     return DD_OK;
+}
+
+static HRESULT WINAPI ddraw_surface3_EnumOverlayZOrders(IDirectDrawSurface3 *iface,
+        DWORD flags, void *context, LPDDENUMSURFACESCALLBACK callback)
+{
+    struct callback_info info;
+
+    TRACE("iface %p, flags %#x, context %p, callback %p.\n", iface, flags, context, callback);
+
+    info.callback = callback;
+    info.context  = context;
+
+    return ddraw_surface7_EnumOverlayZOrders((IDirectDrawSurface7 *)surface_from_surface3(iface),
+            flags, &info, EnumCallback);
 }
 
 /*****************************************************************************
@@ -1440,9 +1607,7 @@ IDirectDrawSurfaceImpl_EnumOverlayZOrders(IDirectDrawSurface7 *iface,
  *  See IWineD3DSurface::Blt
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetBltStatus(IDirectDrawSurface7 *iface,
-                                    DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_GetBltStatus(IDirectDrawSurface7 *iface, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1456,6 +1621,13 @@ IDirectDrawSurfaceImpl_GetBltStatus(IDirectDrawSurface7 *iface,
         case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
         default:                            return hr;
     }
+}
+
+static HRESULT WINAPI ddraw_surface3_GetBltStatus(IDirectDrawSurface3 *iface, DWORD flags)
+{
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    return ddraw_surface7_GetBltStatus((IDirectDrawSurface7 *)surface_from_surface3(iface), flags);
 }
 
 /*****************************************************************************
@@ -1472,10 +1644,7 @@ IDirectDrawSurfaceImpl_GetBltStatus(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDPARAMS if CKey is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetColorKey(IDirectDrawSurface7 *iface,
-                                   DWORD Flags,
-                                   DDCOLORKEY *CKey)
+static HRESULT WINAPI ddraw_surface7_GetColorKey(IDirectDrawSurface7 *iface, DWORD Flags, DDCOLORKEY *CKey)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
@@ -1532,6 +1701,13 @@ IDirectDrawSurfaceImpl_GetColorKey(IDirectDrawSurface7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI ddraw_surface3_GetColorKey(IDirectDrawSurface3 *iface, DWORD flags, DDCOLORKEY *color_key)
+{
+    TRACE("iface %p, flags %#x, color_key %p.\n", iface, flags, color_key);
+
+    return ddraw_surface7_GetColorKey((IDirectDrawSurface7 *)surface_from_surface3(iface), flags, color_key);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::GetFlipStatus
  *
@@ -1544,9 +1720,7 @@ IDirectDrawSurfaceImpl_GetColorKey(IDirectDrawSurface7 *iface,
  *  See IWineD3DSurface::GetFlipStatus
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetFlipStatus(IDirectDrawSurface7 *iface,
-                                     DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_GetFlipStatus(IDirectDrawSurface7 *iface, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1562,6 +1736,13 @@ IDirectDrawSurfaceImpl_GetFlipStatus(IDirectDrawSurface7 *iface,
     }
 }
 
+static HRESULT WINAPI ddraw_surface3_GetFlipStatus(IDirectDrawSurface3 *iface, DWORD flags)
+{
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    return ddraw_surface7_GetFlipStatus((IDirectDrawSurface7 *)surface_from_surface3(iface), flags);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::GetOverlayPosition
  *
@@ -1574,10 +1755,8 @@ IDirectDrawSurfaceImpl_GetFlipStatus(IDirectDrawSurface7 *iface,
  * Returns:
  *  DDERR_NOTAOVERLAYSURFACE, because it's a stub
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetOverlayPosition(IDirectDrawSurface7 *iface,
-                                          LONG *X,
-                                          LONG *Y) {
+static HRESULT WINAPI ddraw_surface7_GetOverlayPosition(IDirectDrawSurface7 *iface, LONG *X, LONG *Y)
+{
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
     TRACE("(%p)->(%p,%p): Relay\n", This, X, Y);
@@ -1588,6 +1767,13 @@ IDirectDrawSurfaceImpl_GetOverlayPosition(IDirectDrawSurface7 *iface,
                                             Y);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_GetOverlayPosition(IDirectDrawSurface3 *iface, LONG *x, LONG *y)
+{
+    TRACE("iface %p, x %p, y %p.\n", iface, x, y);
+
+    return ddraw_surface7_GetOverlayPosition((IDirectDrawSurface7 *)surface_from_surface3(iface), x, y);
 }
 
 /*****************************************************************************
@@ -1604,9 +1790,7 @@ IDirectDrawSurfaceImpl_GetOverlayPosition(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDPARAMS if PixelFormat is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetPixelFormat(IDirectDrawSurface7 *iface,
-                                      DDPIXELFORMAT *PixelFormat)
+static HRESULT WINAPI ddraw_surface7_GetPixelFormat(IDirectDrawSurface7 *iface, DDPIXELFORMAT *PixelFormat)
 {
     /* What is DDERR_INVALIDSURFACETYPE for here? */
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
@@ -1622,6 +1806,12 @@ IDirectDrawSurfaceImpl_GetPixelFormat(IDirectDrawSurface7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI ddraw_surface3_GetPixelFormat(IDirectDrawSurface3 *iface, DDPIXELFORMAT *pixel_format)
+{
+    TRACE("iface %p, pixel_format %p.\n", iface, pixel_format);
+
+    return ddraw_surface7_GetPixelFormat((IDirectDrawSurface7 *)surface_from_surface3(iface), pixel_format);
+}
 
 /*****************************************************************************
  * IDirectDrawSurface7::GetSurfaceDesc
@@ -1637,9 +1827,7 @@ IDirectDrawSurfaceImpl_GetPixelFormat(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDPARAMS if DDSD is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetSurfaceDesc(IDirectDrawSurface7 *iface,
-                                      DDSURFACEDESC2 *DDSD)
+static HRESULT WINAPI ddraw_surface7_GetSurfaceDesc(IDirectDrawSurface7 *iface, DDSURFACEDESC2 *DDSD)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
@@ -1663,6 +1851,33 @@ IDirectDrawSurfaceImpl_GetSurfaceDesc(IDirectDrawSurface7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI ddraw_surface3_GetSurfaceDesc(IDirectDrawSurface3 *iface, DDSURFACEDESC *surface_desc)
+{
+    IDirectDrawSurfaceImpl *surface = surface_from_surface3(iface);
+
+    TRACE("iface %p, surface_desc %p.\n", iface, surface_desc);
+
+    if (!surface_desc) return DDERR_INVALIDPARAMS;
+
+    if (surface_desc->dwSize != sizeof(DDSURFACEDESC))
+    {
+        WARN("Incorrect structure size %u, returning DDERR_INVALIDPARAMS.\n", surface_desc->dwSize);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    EnterCriticalSection(&ddraw_cs);
+    DD_STRUCT_COPY_BYSIZE(surface_desc, (DDSURFACEDESC *)&surface->surface_desc);
+    TRACE("Returning surface desc:\n");
+    if (TRACE_ON(ddraw))
+    {
+        /* DDRAW_dump_surface_desc handles the smaller size */
+        DDRAW_dump_surface_desc((DDSURFACEDESC2 *)surface_desc);
+    }
+
+    LeaveCriticalSection(&ddraw_cs);
+    return DD_OK;
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::Initialize
  *
@@ -1676,12 +1891,21 @@ IDirectDrawSurfaceImpl_GetSurfaceDesc(IDirectDrawSurface7 *iface,
  *  DDERR_ALREADYINITIALIZED
  *
  *****************************************************************************/
-static HRESULT WINAPI IDirectDrawSurfaceImpl_Initialize(IDirectDrawSurface7 *iface,
+static HRESULT WINAPI ddraw_surface7_Initialize(IDirectDrawSurface7 *iface,
         IDirectDraw *ddraw, DDSURFACEDESC2 *surface_desc)
 {
     TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
     return DDERR_ALREADYINITIALIZED;
+}
+
+static HRESULT WINAPI ddraw_surface3_Initialize(IDirectDrawSurface3 *iface,
+        IDirectDraw *ddraw, DDSURFACEDESC *surface_desc)
+{
+    TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
+
+    return ddraw_surface7_Initialize((IDirectDrawSurface7 *)surface_from_surface3(iface),
+            ddraw, (DDSURFACEDESC2 *)surface_desc);
 }
 
 /*****************************************************************************
@@ -1695,8 +1919,7 @@ static HRESULT WINAPI IDirectDrawSurfaceImpl_Initialize(IDirectDrawSurface7 *ifa
  *  See IWineD3DSurface::IsLost for more details
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_IsLost(IDirectDrawSurface7 *iface)
+static HRESULT WINAPI ddraw_surface7_IsLost(IDirectDrawSurface7 *iface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1727,6 +1950,13 @@ IDirectDrawSurfaceImpl_IsLost(IDirectDrawSurface7 *iface)
     }
 }
 
+static HRESULT WINAPI ddraw_surface3_IsLost(IDirectDrawSurface3 *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_IsLost((IDirectDrawSurface7 *)surface_from_surface3(iface));
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::Restore
  *
@@ -1738,8 +1968,7 @@ IDirectDrawSurfaceImpl_IsLost(IDirectDrawSurface7 *iface)
  *  See IWineD3DSurface::Restore for more details
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_Restore(IDirectDrawSurface7 *iface)
+static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1757,6 +1986,13 @@ IDirectDrawSurfaceImpl_Restore(IDirectDrawSurface7 *iface)
     return hr;
 }
 
+static HRESULT WINAPI ddraw_surface3_Restore(IDirectDrawSurface3 *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_Restore((IDirectDrawSurface7 *)surface_from_surface3(iface));
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::SetOverlayPosition
  *
@@ -1769,10 +2005,7 @@ IDirectDrawSurfaceImpl_Restore(IDirectDrawSurface7 *iface)
  * Returns:
  *   DDERR_NOTAOVERLAYSURFACE, because we don't support overlays right now
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetOverlayPosition(IDirectDrawSurface7 *iface,
-                                          LONG X,
-                                          LONG Y)
+static HRESULT WINAPI ddraw_surface7_SetOverlayPosition(IDirectDrawSurface7 *iface, LONG X, LONG Y)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -1784,6 +2017,13 @@ IDirectDrawSurfaceImpl_SetOverlayPosition(IDirectDrawSurface7 *iface,
                                             Y);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_SetOverlayPosition(IDirectDrawSurface3 *iface, LONG x, LONG y)
+{
+    TRACE("iface %p, x %d, y %d.\n", iface, x, y);
+
+    return ddraw_surface7_SetOverlayPosition((IDirectDrawSurface7 *)surface_from_surface3(iface), x, y);
 }
 
 /*****************************************************************************
@@ -1801,13 +2041,8 @@ IDirectDrawSurfaceImpl_SetOverlayPosition(IDirectDrawSurface7 *iface,
  *  DDERR_UNSUPPORTED, because we don't support overlays
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_UpdateOverlay(IDirectDrawSurface7 *iface,
-                                     LPRECT SrcRect,
-                                     IDirectDrawSurface7 *DstSurface,
-                                     LPRECT DstRect,
-                                     DWORD Flags,
-                                     LPDDOVERLAYFX FX)
+static HRESULT WINAPI ddraw_surface7_UpdateOverlay(IDirectDrawSurface7 *iface, RECT *SrcRect,
+        IDirectDrawSurface7 *DstSurface, RECT *DstRect, DWORD Flags, DDOVERLAYFX *FX)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *Dst = (IDirectDrawSurfaceImpl *)DstSurface;
@@ -1831,6 +2066,16 @@ IDirectDrawSurfaceImpl_UpdateOverlay(IDirectDrawSurface7 *iface,
     }
 }
 
+static HRESULT WINAPI ddraw_surface3_UpdateOverlay(IDirectDrawSurface3 *iface, RECT *src_rect,
+        IDirectDrawSurface3 *dst_surface, RECT *dst_rect, DWORD flags, DDOVERLAYFX *fx)
+{
+    TRACE("iface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
+            iface, wine_dbgstr_rect(src_rect), dst_surface, wine_dbgstr_rect(dst_rect), flags, fx);
+
+    return ddraw_surface7_UpdateOverlay((IDirectDrawSurface7 *)surface_from_surface3(iface), src_rect,
+            dst_surface ? (IDirectDrawSurface7 *)surface_from_surface3(dst_surface) : NULL, dst_rect, flags, fx);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::UpdateOverlayDisplay
  *
@@ -1842,13 +2087,18 @@ IDirectDrawSurfaceImpl_UpdateOverlay(IDirectDrawSurface7 *iface,
  * Returns: DDERR_UNSUPPORTED, because we don't support overlays
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_UpdateOverlayDisplay(IDirectDrawSurface7 *iface,
-                                            DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_UpdateOverlayDisplay(IDirectDrawSurface7 *iface, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%x)\n", This, Flags);
     return DDERR_UNSUPPORTED;
+}
+
+static HRESULT WINAPI ddraw_surface3_UpdateOverlayDisplay(IDirectDrawSurface3 *iface, DWORD flags)
+{
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    return ddraw_surface7_UpdateOverlayDisplay((IDirectDrawSurface7 *)surface_from_surface3(iface), flags);
 }
 
 /*****************************************************************************
@@ -1864,10 +2114,8 @@ IDirectDrawSurfaceImpl_UpdateOverlayDisplay(IDirectDrawSurface7 *iface,
  *  DDERR_NOTOVERLAYSURFACE, because we don't support overlays
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_UpdateOverlayZOrder(IDirectDrawSurface7 *iface,
-                                           DWORD Flags,
-                                           IDirectDrawSurface7 *DDSRef)
+static HRESULT WINAPI ddraw_surface7_UpdateOverlayZOrder(IDirectDrawSurface7 *iface,
+        DWORD Flags, IDirectDrawSurface7 *DDSRef)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *Ref = (IDirectDrawSurfaceImpl *)DDSRef;
@@ -1880,6 +2128,15 @@ IDirectDrawSurfaceImpl_UpdateOverlayZOrder(IDirectDrawSurface7 *iface,
                                               Ref ? Ref->WineD3DSurface : NULL);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_UpdateOverlayZOrder(IDirectDrawSurface3 *iface,
+        DWORD flags, IDirectDrawSurface3 *reference)
+{
+    TRACE("iface %p, flags %#x, reference %p.\n", iface, flags, reference);
+
+    return ddraw_surface7_UpdateOverlayZOrder((IDirectDrawSurface7 *)surface_from_surface3(iface), flags,
+            reference ? (IDirectDrawSurface7 *)surface_from_surface3(reference) : NULL);
 }
 
 /*****************************************************************************
@@ -1896,9 +2153,7 @@ IDirectDrawSurfaceImpl_UpdateOverlayZOrder(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDPARAMS if DD is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetDDInterface(IDirectDrawSurface7 *iface,
-                                      void **DD)
+static HRESULT WINAPI ddraw_surface7_GetDDInterface(IDirectDrawSurface7 *iface, void **DD)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
@@ -1931,8 +2186,15 @@ IDirectDrawSurfaceImpl_GetDDInterface(IDirectDrawSurface7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI ddraw_surface3_GetDDInterface(IDirectDrawSurface3 *iface, void **ddraw)
+{
+    TRACE("iface %p, ddraw %p.\n", iface, ddraw);
+
+    return ddraw_surface7_GetDDInterface((IDirectDrawSurface7 *)surface_from_surface3(iface), ddraw);
+}
+
 /* This seems also windows implementation specific - I don't think WineD3D needs this */
-static HRESULT WINAPI IDirectDrawSurfaceImpl_ChangeUniquenessValue(IDirectDrawSurface7 *iface)
+static HRESULT WINAPI ddraw_surface7_ChangeUniquenessValue(IDirectDrawSurface7 *iface)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     volatile IDirectDrawSurfaceImpl* vThis = This;
@@ -1961,7 +2223,7 @@ static HRESULT WINAPI IDirectDrawSurfaceImpl_ChangeUniquenessValue(IDirectDrawSu
     return DD_OK;
 }
 
-static HRESULT WINAPI IDirectDrawSurfaceImpl_GetUniquenessValue(IDirectDrawSurface7 *iface, LPDWORD pValue)
+static HRESULT WINAPI ddraw_surface7_GetUniquenessValue(IDirectDrawSurface7 *iface, DWORD *pValue)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
@@ -1985,9 +2247,7 @@ static HRESULT WINAPI IDirectDrawSurfaceImpl_GetUniquenessValue(IDirectDrawSurfa
  *  DDERR_INVALIDOBJECT if the surface is invalid for this method
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetLOD(IDirectDrawSurface7 *iface,
-                              DWORD MaxLOD)
+static HRESULT WINAPI ddraw_surface7_SetLOD(IDirectDrawSurface7 *iface, DWORD MaxLOD)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     HRESULT hr;
@@ -2027,9 +2287,7 @@ IDirectDrawSurfaceImpl_SetLOD(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDOBJECT if the surface is invalid for this method
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetLOD(IDirectDrawSurface7 *iface,
-                              DWORD *MaxLOD)
+static HRESULT WINAPI ddraw_surface7_GetLOD(IDirectDrawSurface7 *iface, DWORD *MaxLOD)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%p)\n", This, MaxLOD);
@@ -2066,13 +2324,8 @@ IDirectDrawSurfaceImpl_GetLOD(IDirectDrawSurface7 *iface,
  *  For more details, see IWineD3DSurface::BltFast
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_BltFast(IDirectDrawSurface7 *iface,
-                               DWORD dstx,
-                               DWORD dsty,
-                               IDirectDrawSurface7 *Source,
-                               RECT *rsrc,
-                               DWORD trans)
+static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD dstx, DWORD dsty,
+        IDirectDrawSurface7 *Source, RECT *rsrc, DWORD trans)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawSurfaceImpl *src = (IDirectDrawSurfaceImpl *)Source;
@@ -2127,6 +2380,16 @@ IDirectDrawSurfaceImpl_BltFast(IDirectDrawSurface7 *iface,
     }
 }
 
+static HRESULT WINAPI ddraw_surface3_BltFast(IDirectDrawSurface3 *iface, DWORD dst_x, DWORD dst_y,
+        IDirectDrawSurface3 *src_surface, RECT *src_rect, DWORD flags)
+{
+    TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
+            iface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect), flags);
+
+    return ddraw_surface7_BltFast((IDirectDrawSurface7 *)surface_from_surface3(iface), dst_x, dst_y,
+            src_surface ? (IDirectDrawSurface7 *)surface_from_surface3(src_surface) : NULL, src_rect, flags);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::GetClipper
  *
@@ -2142,9 +2405,7 @@ IDirectDrawSurfaceImpl_BltFast(IDirectDrawSurface7 *iface,
  *  DDERR_NOCLIPPERATTACHED if there's no clipper attached
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetClipper(IDirectDrawSurface7 *iface,
-                                  IDirectDrawClipper **Clipper)
+static HRESULT WINAPI ddraw_surface7_GetClipper(IDirectDrawSurface7 *iface, IDirectDrawClipper **Clipper)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     TRACE("(%p)->(%p)\n", This, Clipper);
@@ -2168,6 +2429,13 @@ IDirectDrawSurfaceImpl_GetClipper(IDirectDrawSurface7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI ddraw_surface3_GetClipper(IDirectDrawSurface3 *iface, IDirectDrawClipper **clipper)
+{
+    TRACE("iface %p, clipper %p.\n", iface, clipper);
+
+    return ddraw_surface7_GetClipper((IDirectDrawSurface7 *)surface_from_surface3(iface), clipper);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::SetClipper
  *
@@ -2180,9 +2448,7 @@ IDirectDrawSurfaceImpl_GetClipper(IDirectDrawSurface7 *iface,
  *  DD_OK on success
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
-                                  IDirectDrawClipper *Clipper)
+static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface, IDirectDrawClipper *Clipper)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawClipperImpl *oldClipper = This->clipper;
@@ -2225,6 +2491,13 @@ IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
     return hr;
 }
 
+static HRESULT WINAPI ddraw_surface3_SetClipper(IDirectDrawSurface3 *iface, IDirectDrawClipper *clipper)
+{
+    TRACE("iface %p, clipper %p.\n", iface, clipper);
+
+    return ddraw_surface7_SetClipper((IDirectDrawSurface7 *)surface_from_surface3(iface), clipper);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::SetSurfaceDesc
  *
@@ -2241,10 +2514,7 @@ IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDPARAMS if DDSD is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
-                                      DDSURFACEDESC2 *DDSD,
-                                      DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, DDSURFACEDESC2 *DDSD, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     WINED3DFORMAT newFormat = WINED3DFMT_UNKNOWN;
@@ -2323,6 +2593,15 @@ IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
     return DD_OK;
 }
 
+static HRESULT WINAPI ddraw_surface3_SetSurfaceDesc(IDirectDrawSurface3 *iface,
+        DDSURFACEDESC *surface_desc, DWORD flags)
+{
+    TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, surface_desc, flags);
+
+    return ddraw_surface7_SetSurfaceDesc((IDirectDrawSurface7 *)surface_from_surface3(iface),
+            (DDSURFACEDESC2 *)surface_desc, flags);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::GetPalette
  *
@@ -2337,9 +2616,7 @@ IDirectDrawSurfaceImpl_SetSurfaceDesc(IDirectDrawSurface7 *iface,
  *  DDERR_INVALIDPARAMS if Pal is NULL
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_GetPalette(IDirectDrawSurface7 *iface,
-                                  IDirectDrawPalette **Pal)
+static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette **Pal)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IWineD3DPalette *wPal;
@@ -2369,6 +2646,13 @@ IDirectDrawSurfaceImpl_GetPalette(IDirectDrawSurface7 *iface,
 
     LeaveCriticalSection(&ddraw_cs);
     return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_GetPalette(IDirectDrawSurface3 *iface, IDirectDrawPalette **palette)
+{
+    TRACE("iface %p, palette %p.\n", iface, palette);
+
+    return ddraw_surface7_GetPalette((IDirectDrawSurface7 *)surface_from_surface3(iface), palette);
 }
 
 /*****************************************************************************
@@ -2403,10 +2687,9 @@ SetColorKeyEnum(IDirectDrawSurface7 *surface,
         ctx->ret = hr;
     }
 
-    IDirectDrawSurface7_EnumAttachedSurfaces(surface,
-                                             context,
-                                             SetColorKeyEnum);
-    IDirectDrawSurface7_Release(surface);
+    ddraw_surface7_EnumAttachedSurfaces(surface, context, SetColorKeyEnum);
+    ddraw_surface7_Release(surface);
+
     return DDENUMRET_OK;
 }
 
@@ -2426,10 +2709,7 @@ SetColorKeyEnum(IDirectDrawSurface7 *surface,
  *  See IWineD3DSurface::SetColorKey for details
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetColorKey(IDirectDrawSurface7 *iface,
-                                   DWORD Flags,
-                                   DDCOLORKEY *CKey)
+static HRESULT WINAPI ddraw_surface7_SetColorKey(IDirectDrawSurface7 *iface, DWORD Flags, DDCOLORKEY *CKey)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     DDCOLORKEY FixedCKey;
@@ -2496,18 +2776,21 @@ IDirectDrawSurfaceImpl_SetColorKey(IDirectDrawSurface7 *iface,
             return DDERR_INVALIDPARAMS;
         }
     }
-    ctx.ret = IWineD3DSurface_SetColorKey(This->WineD3DSurface,
-                                          Flags,
-                                          ctx.CKey);
-    IDirectDrawSurface7_EnumAttachedSurfaces(iface,
-                                             &ctx,
-                                             SetColorKeyEnum);
+    ctx.ret = IWineD3DSurface_SetColorKey(This->WineD3DSurface, Flags, ctx.CKey);
+    ddraw_surface7_EnumAttachedSurfaces(iface, &ctx, SetColorKeyEnum);
     LeaveCriticalSection(&ddraw_cs);
     switch(ctx.ret)
     {
         case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
         default:                            return ctx.ret;
     }
+}
+
+static HRESULT WINAPI ddraw_surface3_SetColorKey(IDirectDrawSurface3 *iface, DWORD flags, DDCOLORKEY *color_key)
+{
+    TRACE("iface %p, flags %#x, color_key %p.\n", iface, flags, color_key);
+
+    return ddraw_surface7_SetColorKey((IDirectDrawSurface7 *)surface_from_surface3(iface), flags, color_key);
 }
 
 /*****************************************************************************
@@ -2522,9 +2805,7 @@ IDirectDrawSurfaceImpl_SetColorKey(IDirectDrawSurface7 *iface,
  *  DD_OK on success
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_SetPalette(IDirectDrawSurface7 *iface,
-                                  IDirectDrawPalette *Pal)
+static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette *Pal)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     IDirectDrawPalette *oldPal;
@@ -2570,22 +2851,28 @@ IDirectDrawSurfaceImpl_SetPalette(IDirectDrawSurface7 *iface,
         {
             IDirectDrawSurface7 *attach;
             HRESULT hr;
-            hr = IDirectDrawSurface7_GetAttachedSurface((IDirectDrawSurface7 *)surf, &caps2, &attach);
+            hr = ddraw_surface7_GetAttachedSurface((IDirectDrawSurface7 *)surf, &caps2, &attach);
             if(hr != DD_OK)
             {
                 break;
             }
 
             TRACE("Setting palette on %p\n", attach);
-            IDirectDrawSurface7_SetPalette(attach,
-                                           Pal);
+            ddraw_surface7_SetPalette(attach, Pal);
             surf = (IDirectDrawSurfaceImpl *)attach;
-            IDirectDrawSurface7_Release(attach);
+            ddraw_surface7_Release(attach);
         }
     }
 
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
+}
+
+static HRESULT WINAPI ddraw_surface3_SetPalette(IDirectDrawSurface3 *iface, IDirectDrawPalette *palette)
+{
+    TRACE("iface %p, palette %p.\n", iface, palette);
+
+    return ddraw_surface7_SetPalette((IDirectDrawSurface7 *)surface_from_surface3(iface), palette);
 }
 
 /*****************************************************************************
@@ -2594,59 +2881,107 @@ IDirectDrawSurfaceImpl_SetPalette(IDirectDrawSurface7 *iface,
 
 const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl =
 {
-    /*** IUnknown ***/
-    IDirectDrawSurfaceImpl_QueryInterface,
-    IDirectDrawSurfaceImpl_AddRef,
-    IDirectDrawSurfaceImpl_Release,
-    /*** IDirectDrawSurface ***/
-    IDirectDrawSurface7Impl_AddAttachedSurface,
-    IDirectDrawSurfaceImpl_AddOverlayDirtyRect,
-    IDirectDrawSurfaceImpl_Blt,
-    IDirectDrawSurfaceImpl_BltBatch,
-    IDirectDrawSurfaceImpl_BltFast,
-    IDirectDrawSurfaceImpl_DeleteAttachedSurface,
-    IDirectDrawSurfaceImpl_EnumAttachedSurfaces,
-    IDirectDrawSurfaceImpl_EnumOverlayZOrders,
-    IDirectDrawSurfaceImpl_Flip,
-    IDirectDrawSurfaceImpl_GetAttachedSurface,
-    IDirectDrawSurfaceImpl_GetBltStatus,
-    IDirectDrawSurfaceImpl_GetCaps,
-    IDirectDrawSurfaceImpl_GetClipper,
-    IDirectDrawSurfaceImpl_GetColorKey,
-    IDirectDrawSurfaceImpl_GetDC,
-    IDirectDrawSurfaceImpl_GetFlipStatus,
-    IDirectDrawSurfaceImpl_GetOverlayPosition,
-    IDirectDrawSurfaceImpl_GetPalette,
-    IDirectDrawSurfaceImpl_GetPixelFormat,
-    IDirectDrawSurfaceImpl_GetSurfaceDesc,
-    IDirectDrawSurfaceImpl_Initialize,
-    IDirectDrawSurfaceImpl_IsLost,
-    IDirectDrawSurfaceImpl_Lock,
-    IDirectDrawSurfaceImpl_ReleaseDC,
-    IDirectDrawSurfaceImpl_Restore,
-    IDirectDrawSurfaceImpl_SetClipper,
-    IDirectDrawSurfaceImpl_SetColorKey,
-    IDirectDrawSurfaceImpl_SetOverlayPosition,
-    IDirectDrawSurfaceImpl_SetPalette,
-    IDirectDrawSurfaceImpl_Unlock,
-    IDirectDrawSurfaceImpl_UpdateOverlay,
-    IDirectDrawSurfaceImpl_UpdateOverlayDisplay,
-    IDirectDrawSurfaceImpl_UpdateOverlayZOrder,
-    /*** IDirectDrawSurface2 ***/
-    IDirectDrawSurfaceImpl_GetDDInterface,
-    IDirectDrawSurfaceImpl_PageLock,
-    IDirectDrawSurfaceImpl_PageUnlock,
-    /*** IDirectDrawSurface3 ***/
-    IDirectDrawSurfaceImpl_SetSurfaceDesc,
-    /*** IDirectDrawSurface4 ***/
-    IDirectDrawSurfaceImpl_SetPrivateData,
-    IDirectDrawSurfaceImpl_GetPrivateData,
-    IDirectDrawSurfaceImpl_FreePrivateData,
-    IDirectDrawSurfaceImpl_GetUniquenessValue,
-    IDirectDrawSurfaceImpl_ChangeUniquenessValue,
-    /*** IDirectDrawSurface7 ***/
-    IDirectDrawSurfaceImpl_SetPriority,
-    IDirectDrawSurfaceImpl_GetPriority,
-    IDirectDrawSurfaceImpl_SetLOD,
-    IDirectDrawSurfaceImpl_GetLOD
+    /* IUnknown */
+    ddraw_surface7_QueryInterface,
+    ddraw_surface7_AddRef,
+    ddraw_surface7_Release,
+    /* IDirectDrawSurface */
+    ddraw_surface7_AddAttachedSurface,
+    ddraw_surface7_AddOverlayDirtyRect,
+    ddraw_surface7_Blt,
+    ddraw_surface7_BltBatch,
+    ddraw_surface7_BltFast,
+    ddraw_surface7_DeleteAttachedSurface,
+    ddraw_surface7_EnumAttachedSurfaces,
+    ddraw_surface7_EnumOverlayZOrders,
+    ddraw_surface7_Flip,
+    ddraw_surface7_GetAttachedSurface,
+    ddraw_surface7_GetBltStatus,
+    ddraw_surface7_GetCaps,
+    ddraw_surface7_GetClipper,
+    ddraw_surface7_GetColorKey,
+    ddraw_surface7_GetDC,
+    ddraw_surface7_GetFlipStatus,
+    ddraw_surface7_GetOverlayPosition,
+    ddraw_surface7_GetPalette,
+    ddraw_surface7_GetPixelFormat,
+    ddraw_surface7_GetSurfaceDesc,
+    ddraw_surface7_Initialize,
+    ddraw_surface7_IsLost,
+    ddraw_surface7_Lock,
+    ddraw_surface7_ReleaseDC,
+    ddraw_surface7_Restore,
+    ddraw_surface7_SetClipper,
+    ddraw_surface7_SetColorKey,
+    ddraw_surface7_SetOverlayPosition,
+    ddraw_surface7_SetPalette,
+    ddraw_surface7_Unlock,
+    ddraw_surface7_UpdateOverlay,
+    ddraw_surface7_UpdateOverlayDisplay,
+    ddraw_surface7_UpdateOverlayZOrder,
+    /* IDirectDrawSurface2 */
+    ddraw_surface7_GetDDInterface,
+    ddraw_surface7_PageLock,
+    ddraw_surface7_PageUnlock,
+    /* IDirectDrawSurface3 */
+    ddraw_surface7_SetSurfaceDesc,
+    /* IDirectDrawSurface4 */
+    ddraw_surface7_SetPrivateData,
+    ddraw_surface7_GetPrivateData,
+    ddraw_surface7_FreePrivateData,
+    ddraw_surface7_GetUniquenessValue,
+    ddraw_surface7_ChangeUniquenessValue,
+    /* IDirectDrawSurface7 */
+    ddraw_surface7_SetPriority,
+    ddraw_surface7_GetPriority,
+    ddraw_surface7_SetLOD,
+    ddraw_surface7_GetLOD,
+};
+
+const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
+{
+    /* IUnknown */
+    ddraw_surface3_QueryInterface,
+    ddraw_surface3_AddRef,
+    ddraw_surface3_Release,
+    /* IDirectDrawSurface */
+    ddraw_surface3_AddAttachedSurface,
+    ddraw_surface3_AddOverlayDirtyRect,
+    ddraw_surface3_Blt,
+    ddraw_surface3_BltBatch,
+    ddraw_surface3_BltFast,
+    ddraw_surface3_DeleteAttachedSurface,
+    ddraw_surface3_EnumAttachedSurfaces,
+    ddraw_surface3_EnumOverlayZOrders,
+    ddraw_surface3_Flip,
+    ddraw_surface3_GetAttachedSurface,
+    ddraw_surface3_GetBltStatus,
+    ddraw_surface3_GetCaps,
+    ddraw_surface3_GetClipper,
+    ddraw_surface3_GetColorKey,
+    ddraw_surface3_GetDC,
+    ddraw_surface3_GetFlipStatus,
+    ddraw_surface3_GetOverlayPosition,
+    ddraw_surface3_GetPalette,
+    ddraw_surface3_GetPixelFormat,
+    ddraw_surface3_GetSurfaceDesc,
+    ddraw_surface3_Initialize,
+    ddraw_surface3_IsLost,
+    ddraw_surface3_Lock,
+    ddraw_surface3_ReleaseDC,
+    ddraw_surface3_Restore,
+    ddraw_surface3_SetClipper,
+    ddraw_surface3_SetColorKey,
+    ddraw_surface3_SetOverlayPosition,
+    ddraw_surface3_SetPalette,
+    ddraw_surface3_Unlock,
+    ddraw_surface3_UpdateOverlay,
+    ddraw_surface3_UpdateOverlayDisplay,
+    ddraw_surface3_UpdateOverlayZOrder,
+    /* IDirectDrawSurface2 */
+    ddraw_surface3_GetDDInterface,
+    ddraw_surface3_PageLock,
+    ddraw_surface3_PageUnlock,
+    /* IDirectDrawSurface3 */
+    ddraw_surface3_SetSurfaceDesc,
 };

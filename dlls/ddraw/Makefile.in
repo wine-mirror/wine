@@ -20,7 +20,6 @@ C_SRCS = \
 	parent.c \
 	regsvr.c \
 	surface.c \
-	surface_thunks.c \
 	texture.c \
 	utils.c \
 	vertexbuffer.c \

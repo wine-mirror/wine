@@ -282,9 +282,7 @@ extern const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl DECLSPEC_H
 extern const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl DECLSPEC_HIDDEN;
 extern const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl DECLSPEC_HIDDEN;
 
-HRESULT WINAPI IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurfaceImpl *This,
-        IDirectDrawSurfaceImpl *Surf) DECLSPEC_HIDDEN;
-void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This) DECLSPEC_HIDDEN;
+void ddraw_surface_destroy(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
 
 static inline IDirectDrawSurfaceImpl *surface_from_texture1(IDirect3DTexture *iface)
 {

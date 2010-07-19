@@ -3324,7 +3324,7 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
             {
                 release_surf = object;
                 object = object->complex_array[0];
-                IDirectDrawSurfaceImpl_Destroy(release_surf);
+                ddraw_surface_destroy(release_surf);
             }
             LeaveCriticalSection(&ddraw_cs);
             return hr;
