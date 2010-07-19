@@ -1061,6 +1061,54 @@ static void test_StrStrW(void)
     }
 }
 
+static void test_StrStrIA(void)
+{
+    static const char *deadbeef = "DeAdBeEf";
+
+    const struct
+    {
+        const char *search;
+        const char *expect;
+    } StrStrIA_cases[] =
+    {
+        {"", NULL},
+        {"DeAd", deadbeef},
+        {"dead", deadbeef},
+        {"AdBe", deadbeef + 2},
+        {"adbe", deadbeef + 2},
+        {"BeEf", deadbeef + 4},
+        {"beef", deadbeef + 4},
+        {"cafe", NULL},
+    };
+
+    LPSTR ret;
+    int i;
+
+    /* Tests crash on Win9x/Win2k. */
+    if (0)
+    {
+        ret = StrStrIA(NULL, NULL);
+        ok(!ret, "Expected StrStrIA to return NULL, got %p\n", ret);
+
+        ret = StrStrIA(NULL, "");
+        ok(!ret, "Expected StrStrIA to return NULL, got %p\n", ret);
+
+        ret = StrStrIA("", NULL);
+        ok(!ret, "Expected StrStrIA to return NULL, got %p\n", ret);
+    }
+
+    ret = StrStrIA("", "");
+    ok(!ret, "Expected StrStrIA to return NULL, got %p\n", ret);
+
+    for (i = 0; i < sizeof(StrStrIA_cases)/sizeof(StrStrIA_cases[0]); i++)
+    {
+        ret = StrStrIA(deadbeef, StrStrIA_cases[i].search);
+        ok(ret == StrStrIA_cases[i].expect,
+           "[%d] Expected StrStrIA to return %p, got %p\n",
+           i, StrStrIA_cases[i].expect, ret);
+    }
+}
+
 START_TEST(string)
 {
   HMODULE hShlwapi;
@@ -1132,6 +1180,7 @@ START_TEST(string)
   test_StrXXX_overflows();
   test_StrStrA();
   test_StrStrW();
+  test_StrStrIA();
 
   CoUninitialize();
 }
