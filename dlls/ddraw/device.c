@@ -3553,8 +3553,7 @@ IDirect3DDeviceImpl_7_DrawPrimitive(IDirect3DDevice7 *iface,
 
     /* Set the FVF */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
-                                             IDirectDrawImpl_FindDecl(This->ddraw, VertexType));
+    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice, ddraw_find_decl(This->ddraw, VertexType));
     if(hr != D3D_OK)
     {
         LeaveCriticalSection(&ddraw_cs);
@@ -3676,8 +3675,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
 
     /* Set the D3DDevice's FVF */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
-                                             IDirectDrawImpl_FindDecl(This->ddraw, VertexType));
+    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice, ddraw_find_decl(This->ddraw, VertexType));
     if(FAILED(hr))
     {
         ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);

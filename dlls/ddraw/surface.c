@@ -1750,9 +1750,7 @@ IDirectDrawSurfaceImpl_Restore(IDirectDrawSurface7 *iface)
     {
         /* Call the recreation callback. Make sure to AddRef first */
         IDirectDrawSurface_AddRef(iface);
-        IDirectDrawImpl_RecreateSurfacesCallback(iface,
-                                                 &This->surface_desc,
-                                                 NULL /* Not needed */);
+        ddraw_recreate_surfaces_cb(iface, &This->surface_desc, NULL /* Not needed */);
     }
     hr = IWineD3DSurface_Restore(This->WineD3DSurface);
     LeaveCriticalSection(&ddraw_cs);

@@ -9,7 +9,6 @@ IMPORTS   = dxguid uuid ole32 user32 gdi32 advapi32 kernel32 ntdll
 C_SRCS = \
 	clipper.c \
 	ddraw.c \
-	ddraw_thunks.c \
 	device.c \
 	direct3d.c \
 	executebuffer.c \

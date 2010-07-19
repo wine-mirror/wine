@@ -188,10 +188,9 @@ typedef struct EnumSurfacesCBS
 /* Utility functions */
 void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_HIDDEN;
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDDEVICEIDENTIFIER *pOut) DECLSPEC_HIDDEN;
-void IDirectDrawImpl_Destroy(IDirectDrawImpl *This) DECLSPEC_HIDDEN;
-HRESULT WINAPI IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
+HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf,
         DDSURFACEDESC2 *desc, void *Context) DECLSPEC_HIDDEN;
-IWineD3DVertexDeclaration *IDirectDrawImpl_FindDecl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
+IWineD3DVertexDeclaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
 
 static inline IDirectDrawImpl *ddraw_from_d3d1(IDirect3D *iface)
 {
@@ -211,26 +210,6 @@ static inline IDirectDrawImpl *ddraw_from_d3d3(IDirect3D3 *iface)
 static inline IDirectDrawImpl *ddraw_from_d3d7(IDirect3D7 *iface)
 {
     return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirect3D7_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_ddraw1(IDirectDraw *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_ddraw2(IDirectDraw2 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw2_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_ddraw3(IDirectDraw3 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw3_vtbl));
-}
-
-static inline IDirectDrawImpl *ddraw_from_ddraw4(IDirectDraw4 *iface)
-{
-    return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw4_vtbl));
 }
 
 /* The default surface type */
