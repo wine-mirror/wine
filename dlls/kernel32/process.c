@@ -3323,6 +3323,26 @@ HANDLE WINAPI GetCurrentProcess(void)
 }
 
 /***********************************************************************
+ *           GetLogicalProcessorInformation     (KERNEL32.@)
+ */
+BOOL WINAPI GetLogicalProcessorInformation(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer, PDWORD pBufLen)
+{
+    FIXME("(%p,%p): stub\n", buffer, pBufLen);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetLogicalProcessorInformationEx   (KERNEL32.@)
+ */
+BOOL WINAPI GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationship, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD pBufLen)
+{
+    FIXME("(%u,%p,%p): stub\n", relationship, buffer, pBufLen);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           CmdBatNotification   (KERNEL32.@)
  *
  * Notifies the system that a batch file has started or finished.
