@@ -107,6 +107,8 @@ typedef struct tagStrFormatSizeResult
   LONGLONG value;
   const char* byte_size_64;
   const char* kb_size;
+  int kb_size_broken;
+  const char* kb_size2;
 } StrFormatSizeResult;
 
 
@@ -117,15 +119,15 @@ static const StrFormatSizeResult StrFormatSize_results[] = {
   { 10191, "9.95 KB", "10 KB"},
   { 100353, "98.0 KB", "99 KB"},
   { 1022286, "998 KB", "999 KB"},
-  { 1046862, "0.99 MB", "1,023 KB"},
-  { 1048574619, "999 MB", "1,023,999 KB"},
-  { 1073741775, "0.99 GB", "1,048,576 KB"},
-  { ((LONGLONG)0x000000f9 << 32) | 0xfffff94e, "999 GB", "1,048,575,999 KB"},
-  { ((LONGLONG)0x000000ff << 32) | 0xfffffa9b, "0.99 TB", "1,073,741,823 KB"},
-  { ((LONGLONG)0x0003e7ff << 32) | 0xfffffa9b, "999 TB", "1,073,741,823,999 KB"},
-  { ((LONGLONG)0x0003ffff << 32) | 0xfffffbe8, "0.99 PB", "1,099,511,627,775 KB"},
-  { ((LONGLONG)0x0f9fffff << 32) | 0xfffffd35, "999 PB", "1,099,511,627,776,000 KB"},
-  { ((LONGLONG)0x0fffffff << 32) | 0xfffffa9b, "0.99 EB", "1,125,899,906,842,623 KB"},
+  { 1046862, "0.99 MB", "1,023 KB", 1, "1023 KB"},
+  { 1048574619, "999 MB", "1,023,999 KB", 1, "1023999 KB"},
+  { 1073741775, "0.99 GB", "1,048,576 KB", 1, "1048576 KB"},
+  { ((LONGLONG)0x000000f9 << 32) | 0xfffff94e, "999 GB", "1,048,575,999 KB", 1, "1048575999 KB"},
+  { ((LONGLONG)0x000000ff << 32) | 0xfffffa9b, "0.99 TB", "1,073,741,823 KB", 1, "1073741823 KB"},
+  { ((LONGLONG)0x0003e7ff << 32) | 0xfffffa9b, "999 TB", "1,073,741,823,999 KB", 1, "4294967295 KB"},
+  { ((LONGLONG)0x0003ffff << 32) | 0xfffffbe8, "0.99 PB", "1,099,511,627,775 KB", 1, "4294967295 KB"},
+  { ((LONGLONG)0x0f9fffff << 32) | 0xfffffd35, "999 PB", "1,099,511,627,776,000 KB", 1, "0 KB"},
+  { ((LONGLONG)0x0fffffff << 32) | 0xfffffa9b, "0.99 EB", "1,125,899,906,842,623 KB", 1, "4294967295 KB"},
   { 0, NULL, NULL }
 };
 
@@ -560,7 +562,11 @@ static void test_StrFormatKBSizeW(void)
   {
     pStrFormatKBSizeW(result->value, szBuffW, 256);
     WideCharToMultiByte(0,0,szBuffW,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR),0,0);
-    ok(!strcmp(result->kb_size, szBuff),
+
+    /* shlwapi on Win98 SE does not appear to apply delimiters to the output
+     * and does not correctly handle extremely large values. */
+    ok(!strcmp(result->kb_size, szBuff) ||
+      (result->kb_size_broken && !strcmp(result->kb_size2, szBuff)),
         "Formatted %x%08x wrong: got %s, expected %s\n",
        (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
     result++;
@@ -582,7 +588,10 @@ static void test_StrFormatKBSizeA(void)
   {
     pStrFormatKBSizeA(result->value, szBuff, 256);
 
-    ok(!strcmp(result->kb_size, szBuff),
+    /* shlwapi on Win98 SE does not appear to apply delimiters to the output
+     * and does not correctly handle extremely large values. */
+    ok(!strcmp(result->kb_size, szBuff) ||
+      (result->kb_size_broken && !strcmp(result->kb_size2, szBuff)),
         "Formatted %x%08x wrong: got %s, expected %s\n",
        (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
     result++;
