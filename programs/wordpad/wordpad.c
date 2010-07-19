@@ -89,6 +89,12 @@ typedef enum
     UNIT_PT
 } UNIT;
 
+typedef struct
+{
+    int endPos;
+    BOOL wrapped;
+} FINDREPLACE_custom;
+
 /* Load string resources */
 static void DoLoadStrings(void)
 {
@@ -1215,13 +1221,11 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
 
     if(pFr->Flags & FR_FINDNEXT || pFr->Flags & FR_REPLACE || pFr->Flags & FR_REPLACEALL)
     {
-        DWORD flags = FR_DOWN;
-        FINDTEXTW ft;
-        static CHARRANGE cr;
-        LRESULT end, ret;
-        GETTEXTLENGTHEX gt;
-        LRESULT length;
-        int startPos;
+        FINDREPLACE_custom *custom_data = (FINDREPLACE_custom*)pFr->lCustData;
+        DWORD flags;
+        FINDTEXTEXW ft;
+        CHARRANGE sel;
+        LRESULT ret = -1;
         HMENU hMenu = GetMenu(hMainWnd);
         MENUITEMINFOW mi;
 
@@ -1230,69 +1234,59 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
         mi.dwItemData = 1;
         SetMenuItemInfoW(hMenu, ID_FIND_NEXT, FALSE, &mi);
 
-        gt.flags = GTL_NUMCHARS;
-        gt.codepage = 1200;
-
-        length = SendMessageW(hEditorWnd, EM_GETTEXTLENGTHEX, (WPARAM)&gt, 0);
-
-        if(pFr->lCustData == -1)
-        {
-            SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&startPos, (LPARAM)&end);
-            cr.cpMin = startPos;
-            pFr->lCustData = startPos;
-            cr.cpMax = length;
-            if(cr.cpMin == length)
-                cr.cpMin = 0;
-        } else
-        {
-            startPos = pFr->lCustData;
+        SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&sel.cpMin, (LPARAM)&sel.cpMax);
+        if(custom_data->endPos == -1) {
+            custom_data->endPos = sel.cpMin;
+            custom_data->wrapped = FALSE;
         }
 
-        if(cr.cpMax > length)
-        {
-            startPos = 0;
-            cr.cpMin = 0;
-            cr.cpMax = length;
-        }
-
-        ft.chrg = cr;
+        flags = FR_DOWN | (pFr->Flags & (FR_MATCHCASE | FR_WHOLEWORD));
         ft.lpstrText = pFr->lpstrFindWhat;
 
-        if(pFr->Flags & FR_MATCHCASE)
-            flags |= FR_MATCHCASE;
-        if(pFr->Flags & FR_WHOLEWORD)
-            flags |= FR_WHOLEWORD;
-
-        ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, flags, (LPARAM)&ft);
-
-        if(ret == -1)
+        /* Only replace existing selectino if it is an exact match. */
+        if (sel.cpMin != sel.cpMax &&
+            (pFr->Flags & FR_REPLACE || pFr->Flags & FR_REPLACEALL))
         {
-            if(cr.cpMax == length && cr.cpMax != startPos)
-            {
-                ft.chrg.cpMin = cr.cpMin = 0;
-                ft.chrg.cpMax = cr.cpMax = startPos;
-
-                ret = SendMessageW(hEditorWnd, EM_FINDTEXTW, flags, (LPARAM)&ft);
+            ft.chrg = sel;
+            SendMessageW(hEditorWnd, EM_FINDTEXTEXW, flags, (LPARAM)&ft);
+            if (ft.chrgText.cpMin == sel.cpMin && ft.chrgText.cpMax == sel.cpMax) {
+                SendMessageW(hEditorWnd, EM_REPLACESEL, TRUE, (LPARAM)pFr->lpstrReplaceWith);
+                SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&sel.cpMin, (LPARAM)&sel.cpMax);
             }
         }
 
-        if(ret == -1)
-        {
-            pFr->lCustData = -1;
-            MessageBoxWithResStringW(hMainWnd, MAKEINTRESOURCEW(STRING_SEARCH_FINISHED), wszAppTitle,
-                        MB_OK | MB_ICONASTERISK);
-        } else
-        {
-            end = ret + lstrlenW(pFr->lpstrFindWhat);
-            cr.cpMin = end;
-            SendMessageW(hEditorWnd, EM_SETSEL, ret, end);
+        /* Search from the start of the selection, but exclude the first character
+         * from search if there is a selection. */
+        ft.chrg.cpMin = sel.cpMin;
+        if (sel.cpMin != sel.cpMax)
+            ft.chrg.cpMin++;
+
+        /* Search to the end, then wrap around and search from the start. */
+        if (!custom_data->wrapped) {
+            ft.chrg.cpMax = -1;
+            ret = SendMessageW(hEditorWnd, EM_FINDTEXTEXW, flags, (LPARAM)&ft);
+            if (ret == -1) {
+                custom_data->wrapped = TRUE;
+                ft.chrg.cpMin = 0;
+            }
+        }
+
+        if (ret == -1) {
+            ft.chrg.cpMax = custom_data->endPos + lstrlenW(pFr->lpstrFindWhat) - 1;
+            if (ft.chrg.cpMax > ft.chrg.cpMin)
+                ret = SendMessageW(hEditorWnd, EM_FINDTEXTEXW, flags, (LPARAM)&ft);
+        }
+
+        if (ret == -1) {
+            custom_data->endPos = -1;
+            MessageBoxWithResStringW(hMainWnd, MAKEINTRESOURCEW(STRING_SEARCH_FINISHED),
+                                     wszAppTitle, MB_OK | MB_ICONASTERISK);
+        } else {
+            SendMessageW(hEditorWnd, EM_SETSEL, ft.chrgText.cpMin, ft.chrgText.cpMax);
             SendMessageW(hEditorWnd, EM_SCROLLCARET, 0, 0);
 
-            if(pFr->Flags & FR_REPLACE || pFr->Flags & FR_REPLACEALL)
-                SendMessageW(hEditorWnd, EM_REPLACESEL, TRUE, (LPARAM)pFr->lpstrReplaceWith);
-
-            if(pFr->Flags & FR_REPLACEALL)
-                handle_findmsg(pFr);
+            if (pFr->Flags & FR_REPLACEALL)
+                return handle_findmsg(pFr);
         }
     }
 
@@ -1303,6 +1297,7 @@ static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
 {
     static WCHAR findBuffer[MAX_STRING_LEN];
     static WCHAR replaceBuffer[MAX_STRING_LEN];
+    static FINDREPLACE_custom custom_data;
 
     /* Allow only one search/replace dialog to open */
     if(hFindWnd != NULL)
@@ -1317,7 +1312,9 @@ static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
     fr->Flags = FR_HIDEUPDOWN;
     fr->lpstrFindWhat = findBuffer;
     fr->lpstrReplaceWith = replaceBuffer;
-    fr->lCustData = -1;
+    custom_data.endPos = -1;
+    custom_data.wrapped = FALSE;
+    fr->lCustData = (LPARAM)&custom_data;
     fr->wFindWhatLen = sizeof(findBuffer);
     fr->wReplaceWithLen = sizeof(replaceBuffer);
 
