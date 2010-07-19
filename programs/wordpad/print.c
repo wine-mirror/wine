@@ -845,33 +845,46 @@ static void update_preview_buttons(HWND hMainWnd)
 
 static LRESULT print_preview(HWND hwndPreview)
 {
+    HPEN hPen, oldPen;
     HDC hdc;
+    HRGN back_rgn, excl_rgn;
     RECT window, background;
     PAINTSTRUCT ps;
     int x, y;
 
     hdc = BeginPaint(hwndPreview, &ps);
     GetClientRect(hwndPreview, &window);
-
-    FillRect(hdc, &window, GetStockObject(GRAY_BRUSH));
+    back_rgn = CreateRectRgnIndirect(&window);
 
     x = preview.spacing.cx - GetScrollPos(hwndPreview, SB_HORZ);
     y = preview.spacing.cy - GetScrollPos(hwndPreview, SB_VERT);
 
+    /* draw page outlines */
+    hPen = CreatePen(PS_SOLID|PS_INSIDEFRAME, 2, RGB(0,0,0));
+    oldPen = SelectObject(hdc, hPen);
     background.left = x - 2;
-    background.right = background.left + preview.bmScaledSize.cx + 4;
+    background.right = x + preview.bmScaledSize.cx + 2;
     background.top = y - 2;
-    background.bottom = background.top + preview.bmScaledSize.cy + 4;
-
-    FillRect(hdc, &background, GetStockObject(BLACK_BRUSH));
-
+    background.bottom = y + preview.bmScaledSize.cy + 2;
+    Rectangle(hdc, background.left, background.top,
+              background.right, background.bottom);
+    excl_rgn = CreateRectRgnIndirect(&background);
+    CombineRgn(back_rgn, back_rgn, excl_rgn, RGN_DIFF);
     if(preview.pages_shown > 1)
     {
         background.left += preview.bmScaledSize.cx + preview.spacing.cx;
         background.right += preview.bmScaledSize.cx + preview.spacing.cx;
-
-        FillRect(hdc, &background, GetStockObject(BLACK_BRUSH));
+        Rectangle(hdc, background.left, background.top,
+                  background.right, background.bottom);
+        SetRectRgn(excl_rgn, background.left, background.top,
+                   background.right, background.bottom);
+        CombineRgn(back_rgn, back_rgn, excl_rgn, RGN_DIFF);
     }
+    SelectObject(hdc, oldPen);
+    DeleteObject(hPen);
+    FillRgn(hdc, back_rgn, GetStockObject(GRAY_BRUSH));
+    DeleteObject(excl_rgn);
+    DeleteObject(back_rgn);
 
     StretchBlt(hdc, x, y, preview.bmScaledSize.cx, preview.bmScaledSize.cy,
                preview.hdc, 0, 0, preview.bmSize.cx, preview.bmSize.cy, SRCCOPY);
@@ -880,12 +893,21 @@ static LRESULT print_preview(HWND hwndPreview)
 
     if(preview.pages_shown > 1)
     {
-        x += preview.spacing.cx + preview.bmScaledSize.cx;
-        StretchBlt(hdc, x, y, preview.bmScaledSize.cx, preview.bmScaledSize.cy,
-                   preview.hdc2, 0, 0, preview.bmSize.cx, preview.bmSize.cy, SRCCOPY);
+        if (!is_last_preview_page(preview.page)) {
+            x += preview.spacing.cx + preview.bmScaledSize.cx;
+            StretchBlt(hdc, x, y,
+                       preview.bmScaledSize.cx, preview.bmScaledSize.cy,
+                       preview.hdc2, 0, 0,
+                       preview.bmSize.cx, preview.bmSize.cy, SRCCOPY);
 
-        if (!is_last_preview_page(preview.page))
             draw_margin_lines(hdc, x, y, preview.zoomratio);
+        } else {
+            background.left += 2;
+            background.right -= 2;
+            background.top += 2;
+            background.bottom -= 2;
+            FillRect(hdc, &background, GetStockObject(WHITE_BRUSH));
+        }
     }
 
     preview.window = window;
