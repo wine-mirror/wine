@@ -150,16 +150,6 @@ EnumCallback(LPDIRECTDRAWSURFACE7 iface, LPDDSURFACEDESC2 pDDSD,
 {
     const struct callback_info* info = context;
 
-#if 0
-    /* This is an outgoing conversion so we have to do it. */
-    DDSURFACEDESC ddsd;
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    DDRAW_Convert_DDSURFACEDESC_2_To_1(pDDSD, &ddsd);
-#endif
-
-    /* the LPDDSURFACEDESC2 -> LPDDSURFACEDESC coercion is safe, since
-     * the data format is compatible with older enum procs */
     return info->callback(iface ?
             (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)iface)->IDirectDrawSurface3_vtbl : NULL,
             (LPDDSURFACEDESC)pDDSD, info->context);
