@@ -378,6 +378,7 @@ extern "C" {
 #define C1_BLANK		0x0040
 #define C1_XDIGIT		0x0080
 #define C1_ALPHA		0x0100
+#define C1_DEFINED		0x0200
 
 /* Type 2 flags */
 #define	C2_LEFTTORIGHT		0x0001
