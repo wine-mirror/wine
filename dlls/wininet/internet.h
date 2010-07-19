@@ -169,6 +169,8 @@ typedef struct {
     DWORD (*FindNextFileW)(object_header_t*,void*);
 } object_vtbl_t;
 
+#define INTERNET_HANDLE_IN_USE 1
+
 struct _object_header_t
 {
     WH_TYPE htype;
