@@ -584,7 +584,9 @@ LPSTR WINAPI StrStrA(LPCSTR lpszStr, LPCSTR lpszSearch)
  */
 LPWSTR WINAPI StrStrW(LPCWSTR lpszStr, LPCWSTR lpszSearch)
 {
-    if (!lpszStr || !lpszSearch) return NULL;
+    TRACE("(%s, %s)\n", debugstr_w(lpszStr), debugstr_w(lpszSearch));
+
+    if (!lpszStr || !lpszSearch || !*lpszSearch) return NULL;
     return strstrW( lpszStr, lpszSearch );
 }
 
