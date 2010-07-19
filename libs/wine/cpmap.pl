@@ -118,22 +118,22 @@ my %categories =
 (
     "Lu" => $ctype{"alpha"}|$ctype{"upper"}, # Letter, Uppercase
     "Ll" => $ctype{"alpha"}|$ctype{"lower"}, # Letter, Lowercase
-    "Lt" => $ctype{"alpha"},    # Letter, Titlecase
-    "Mn" => $ctype{"punct"},    # Mark, Non-Spacing
-    "Mc" => $ctype{"punct"},    # Mark, Spacing Combining
-    "Me" => $ctype{"punct"},    # Mark, Enclosing
+    "Lt" => $ctype{"alpha"}|$ctype{"upper"}|$ctype{"lower"},    # Letter, Titlecase
+    "Mn" => 0,                  # Mark, Non-Spacing
+    "Mc" => 0,                  # Mark, Spacing Combining
+    "Me" => 0,                  # Mark, Enclosing
     "Nd" => $ctype{"digit"},    # Number, Decimal Digit
-    "Nl" => $ctype{"punct"},    # Number, Letter
-    "No" => $ctype{"punct"},    # Number, Other
+    "Nl" => $ctype{"alpha"},    # Number, Letter
+    "No" => 0,                  # Number, Other
     "Zs" => $ctype{"space"},    # Separator, Space
     "Zl" => $ctype{"space"},    # Separator, Line
     "Zp" => $ctype{"space"},    # Separator, Paragraph
     "Cc" => $ctype{"cntrl"},    # Other, Control
-    "Cf" => 0,                  # Other, Format
+    "Cf" => $ctype{"cntrl"},    # Other, Format
     "Cs" => 0,                  # Other, Surrogate
     "Co" => 0,                  # Other, Private Use
     "Cn" => 0,                  # Other, Not Assigned
-    "Lm" => $ctype{"punct"},    # Letter, Modifier
+    "Lm" => $ctype{"alpha"},    # Letter, Modifier
     "Lo" => $ctype{"alpha"},    # Letter, Other
     "Pc" => $ctype{"punct"},    # Punctuation, Connector
     "Pd" => $ctype{"punct"},    # Punctuation, Dash
@@ -142,10 +142,10 @@ my %categories =
     "Pi" => $ctype{"punct"},    # Punctuation, Initial quote
     "Pf" => $ctype{"punct"},    # Punctuation, Final quote
     "Po" => $ctype{"punct"},    # Punctuation, Other
-    "Sm" => $ctype{"punct"},    # Symbol, Math
-    "Sc" => $ctype{"punct"},    # Symbol, Currency
-    "Sk" => $ctype{"punct"},    # Symbol, Modifier
-    "So" => $ctype{"punct"}     # Symbol, Other
+    "Sm" => 0,                  # Symbol, Math
+    "Sc" => 0,                  # Symbol, Currency
+    "Sk" => 0,                  # Symbol, Modifier
+    "So" => 0                   # Symbol, Other
 );
 
 # a few characters need additional categories that cannot be determined automatically
@@ -290,12 +290,10 @@ sub READ_DEFAULTS($)
         if ($lower ne "")
         {
             $tolower_table[$src] = hex $lower;
-            $category_table[$src] |= $ctype{"upper"}|$ctype{"alpha"};
         }
         if ($upper ne "")
         {
             $toupper_table[$src] = hex $upper;
-            $category_table[$src] |= $ctype{"lower"}|$ctype{"alpha"};
         }
         if ($dec ne "")
         {
