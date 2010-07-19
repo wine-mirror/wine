@@ -218,4 +218,31 @@ HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T d
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
         UINT flags, void *unknown0, ID3D10Device **device);
 
+#define MAKE_TAG(ch0, ch1, ch2, ch3) \
+    ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
+    ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
+#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+#define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
+#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
+#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
+#define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
+
+HRESULT parse_dxbc(const char *data, SIZE_T data_size,
+        HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx) DECLSPEC_HIDDEN;
+
+static inline void read_dword(const char **ptr, DWORD *d)
+{
+    memcpy(d, *ptr, sizeof(*d));
+    *ptr += sizeof(*d);
+}
+
+static inline void write_dword(char **ptr, DWORD d)
+{
+    memcpy(*ptr, &d, sizeof(d));
+    *ptr += sizeof(d);
+}
+
+void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
+void write_dword_unknown(char **ptr, DWORD d) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_D3D10_PRIVATE_H */

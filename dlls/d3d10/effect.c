@@ -25,14 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
-#define MAKE_TAG(ch0, ch1, ch2, ch3) \
-    ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
-    ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
-#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
-#define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
-#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
-#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
-
 #define D3D10_FX10_TYPE_COLUMN_SHIFT    11
 #define D3D10_FX10_TYPE_COLUMN_MASK     (0x7 << D3D10_FX10_TYPE_COLUMN_SHIFT)
 
@@ -117,88 +109,6 @@ static struct d3d10_effect_variable anonymous_gs = {(const ID3D10EffectVariableV
         &null_local_buffer, &anonymous_gs_type, &null_shader_variable, anonymous_name};
 
 static struct d3d10_effect_type *get_fx10_type(struct d3d10_effect *effect, const char *data, DWORD offset);
-
-static inline void read_dword(const char **ptr, DWORD *d)
-{
-    memcpy(d, *ptr, sizeof(*d));
-    *ptr += sizeof(*d);
-}
-
-static inline void skip_dword_unknown(const char **ptr, unsigned int count)
-{
-    unsigned int i;
-    DWORD d;
-
-    FIXME("Skipping %u unknown DWORDs:\n", count);
-    for (i = 0; i < count; ++i)
-    {
-        read_dword(ptr, &d);
-        FIXME("\t0x%08x\n", d);
-    }
-}
-
-static inline void write_dword(char **ptr, DWORD d)
-{
-    memcpy(*ptr, &d, sizeof(d));
-    *ptr += sizeof(d);
-}
-
-static inline void write_dword_unknown(char **ptr, DWORD d)
-{
-    FIXME("Writing unknown DWORD 0x%08x\n", d);
-    write_dword(ptr, d);
-}
-
-static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
-        HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx)
-{
-    const char *ptr = data;
-    HRESULT hr = S_OK;
-    DWORD chunk_count;
-    DWORD total_size;
-    unsigned int i;
-    DWORD tag;
-
-    read_dword(&ptr, &tag);
-    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
-
-    if (tag != TAG_DXBC)
-    {
-        WARN("Wrong tag.\n");
-        return E_FAIL;
-    }
-
-    /* checksum? */
-    skip_dword_unknown(&ptr, 4);
-
-    skip_dword_unknown(&ptr, 1);
-
-    read_dword(&ptr, &total_size);
-    TRACE("total size: %#x\n", total_size);
-
-    read_dword(&ptr, &chunk_count);
-    TRACE("chunk count: %#x\n", chunk_count);
-
-    for (i = 0; i < chunk_count; ++i)
-    {
-        DWORD chunk_tag, chunk_size;
-        const char *chunk_ptr;
-        DWORD chunk_offset;
-
-        read_dword(&ptr, &chunk_offset);
-        TRACE("chunk %u at offset %#x\n", i, chunk_offset);
-
-        chunk_ptr = data + chunk_offset;
-
-        read_dword(&chunk_ptr, &chunk_tag);
-        read_dword(&chunk_ptr, &chunk_size);
-
-        hr = chunk_handler(chunk_ptr, chunk_size, chunk_tag, ctx);
-        if (FAILED(hr)) break;
-    }
-
-    return hr;
-}
 
 static BOOL copy_name(const char *ptr, char **name)
 {

@@ -111,3 +111,73 @@ void d3d10_rb_free(void *ptr)
 {
     HeapFree(GetProcessHeap(), 0, ptr);
 }
+
+void skip_dword_unknown(const char **ptr, unsigned int count)
+{
+    unsigned int i;
+    DWORD d;
+
+    FIXME("Skipping %u unknown DWORDs:\n", count);
+    for (i = 0; i < count; ++i)
+    {
+        read_dword(ptr, &d);
+        FIXME("\t0x%08x\n", d);
+    }
+}
+
+void write_dword_unknown(char **ptr, DWORD d)
+{
+    FIXME("Writing unknown DWORD 0x%08x\n", d);
+    write_dword(ptr, d);
+}
+
+HRESULT parse_dxbc(const char *data, SIZE_T data_size,
+        HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx)
+{
+    const char *ptr = data;
+    HRESULT hr = S_OK;
+    DWORD chunk_count;
+    DWORD total_size;
+    unsigned int i;
+    DWORD tag;
+
+    read_dword(&ptr, &tag);
+    TRACE("tag: %s.\n", debugstr_an((const char *)&tag, 4));
+
+    if (tag != TAG_DXBC)
+    {
+        WARN("Wrong tag.\n");
+        return E_FAIL;
+    }
+
+    /* checksum? */
+    skip_dword_unknown(&ptr, 4);
+
+    skip_dword_unknown(&ptr, 1);
+
+    read_dword(&ptr, &total_size);
+    TRACE("total size: %#x\n", total_size);
+
+    read_dword(&ptr, &chunk_count);
+    TRACE("chunk count: %#x\n", chunk_count);
+
+    for (i = 0; i < chunk_count; ++i)
+    {
+        DWORD chunk_tag, chunk_size;
+        const char *chunk_ptr;
+        DWORD chunk_offset;
+
+        read_dword(&ptr, &chunk_offset);
+        TRACE("chunk %u at offset %#x\n", i, chunk_offset);
+
+        chunk_ptr = data + chunk_offset;
+
+        read_dword(&chunk_ptr, &chunk_tag);
+        read_dword(&chunk_ptr, &chunk_size);
+
+        hr = chunk_handler(chunk_ptr, chunk_size, chunk_tag, ctx);
+        if (FAILED(hr)) break;
+    }
+
+    return hr;
+}
