@@ -36,7 +36,14 @@
 #include <ocidl.h>
 #include <exdisp.h>
 
-HRESULT WINAPI AtlAxAttachControl(IUnknown *, HWND, IUnknown **);
+static HRESULT (WINAPI *pAtlAxAttachControl)(IUnknown *, HWND, IUnknown **);
+
+static void init_function_pointers(void)
+{
+    HMODULE hatl = GetModuleHandleA("atl.dll");
+
+    pAtlAxAttachControl = (void *)GetProcAddress(hatl, "AtlAxAttachControl");
+}
 
 static ATOM register_class(void)
 {
@@ -64,16 +71,16 @@ static void test_AtlAxAttachControl(void)
     HRESULT hr;
     IUnknown *pObj, *pContainer;
 
-    hr = AtlAxAttachControl(NULL, NULL, NULL);
+    hr = pAtlAxAttachControl(NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "Expected AtlAxAttachControl to return E_INVALIDARG, got 0x%08x\n", hr);
 
     pContainer = (IUnknown *)0xdeadbeef;
-    hr = AtlAxAttachControl(NULL, NULL, &pContainer);
+    hr = pAtlAxAttachControl(NULL, NULL, &pContainer);
     ok(hr == E_INVALIDARG, "Expected AtlAxAttachControl to return E_INVALIDARG, got 0x%08x\n", hr);
     ok(pContainer == (IUnknown *)0xdeadbeef,
        "Expected the output container pointer to be untouched, got %p\n", pContainer);
 
-    hr = AtlAxAttachControl(NULL, hwnd, NULL);
+    hr = pAtlAxAttachControl(NULL, hwnd, NULL);
     ok(hr == E_INVALIDARG, "Expected AtlAxAttachControl to return E_INVALIDARG, got 0x%08x\n", hr);
 
     hr = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
@@ -86,12 +93,12 @@ static void test_AtlAxAttachControl(void)
         return;
     }
 
-    hr = AtlAxAttachControl(pObj, NULL, NULL);
+    hr = pAtlAxAttachControl(pObj, NULL, NULL);
     todo_wine
     ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
 
     pContainer = (IUnknown *)0xdeadbeef;
-    hr = AtlAxAttachControl(pObj, NULL, &pContainer);
+    hr = pAtlAxAttachControl(pObj, NULL, &pContainer);
     todo_wine
     ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
     ok(pContainer != (IUnknown *)0xdeadbeef &&
@@ -101,7 +108,7 @@ static void test_AtlAxAttachControl(void)
     if (pContainer != (IUnknown *)0xdeadbeef && pContainer != NULL)
         IUnknown_Release(pContainer);
 
-    hr = AtlAxAttachControl(pObj, hwnd, NULL);
+    hr = pAtlAxAttachControl(pObj, hwnd, NULL);
     ok(hr == S_OK, "Expected AtlAxAttachControl to return S_OK, got 0x%08x\n", hr);
 
     IUnknown_Release(pObj);
@@ -111,12 +118,17 @@ static void test_AtlAxAttachControl(void)
 
 START_TEST(atl_ax)
 {
+    init_function_pointers();
+
     if (!register_class())
         return;
 
     CoInitialize(NULL);
 
-    test_AtlAxAttachControl();
+    if (pAtlAxAttachControl)
+        test_AtlAxAttachControl();
+    else
+        win_skip("AtlAxAttachControl is not available\n");
 
     CoUninitialize();
 }
