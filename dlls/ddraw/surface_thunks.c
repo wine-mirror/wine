@@ -150,9 +150,8 @@ EnumCallback(LPDIRECTDRAWSURFACE7 iface, LPDDSURFACEDESC2 pDDSD,
 {
     const struct callback_info* info = context;
 
-    return info->callback(iface ?
-            (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)iface)->IDirectDrawSurface3_vtbl : NULL,
-            (LPDDSURFACEDESC)pDDSD, info->context);
+    return info->callback((IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)iface)->IDirectDrawSurface3_vtbl,
+            (DDSURFACEDESC *)pDDSD, info->context);
 }
 
 static HRESULT WINAPI

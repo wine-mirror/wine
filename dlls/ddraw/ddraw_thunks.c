@@ -578,9 +578,8 @@ EnumSurfacesCallbackThunk(LPDIRECTDRAWSURFACE7 pSurf, LPDDSURFACEDESC2 pDDSD,
 
     /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
      * IDirectDrawSurface vtable layout at the beginning  */
-    return cbcontext->func(
-            pSurf ? (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)pSurf)->IDirectDrawSurface3_vtbl : NULL,
-            (LPDDSURFACEDESC)pDDSD, cbcontext->context);
+    return cbcontext->func((IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)pSurf)->IDirectDrawSurface3_vtbl,
+            (DDSURFACEDESC *)pDDSD, cbcontext->context);
 }
 
 static HRESULT WINAPI
