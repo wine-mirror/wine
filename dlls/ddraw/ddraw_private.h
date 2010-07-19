@@ -469,7 +469,7 @@ struct IDirectDrawClipperImpl
     LONG ref;
 
     IWineD3DClipper           *wineD3DClipper;
-    IDirectDrawImpl           *ddraw_owner;
+    BOOL initialized;
 };
 
 extern const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl DECLSPEC_HIDDEN;
@@ -489,7 +489,6 @@ struct IDirectDrawPaletteImpl
     IWineD3DPalette           *wineD3DPalette;
 
     /* IDirectDrawPalette fields */
-    IDirectDrawImpl           *ddraw_owner;
     IUnknown                  *ifaceToRelease;
 };
 extern const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl DECLSPEC_HIDDEN;

@@ -1676,14 +1676,10 @@ IDirectDrawSurfaceImpl_GetSurfaceDesc(IDirectDrawSurface7 *iface,
  *  DDERR_ALREADYINITIALIZED
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirectDrawSurfaceImpl_Initialize(IDirectDrawSurface7 *iface,
-                                  IDirectDraw *DD,
-                                  DDSURFACEDESC2 *DDSD)
+static HRESULT WINAPI IDirectDrawSurfaceImpl_Initialize(IDirectDrawSurface7 *iface,
+        IDirectDraw *ddraw, DDSURFACEDESC2 *surface_desc)
 {
-    IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
-    IDirectDrawImpl *ddimpl = DD ? ddraw_from_ddraw1(DD) : NULL;
-    TRACE("(%p)->(%p,%p)\n",This,ddimpl,DDSD);
+    TRACE("iface %p, ddraw %p, surface_desc %p.\n", iface, ddraw, surface_desc);
 
     return DDERR_ALREADYINITIALIZED;
 }

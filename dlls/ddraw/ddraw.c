@@ -3041,7 +3041,6 @@ IDirectDrawImpl_CreatePalette(IDirectDraw7 *iface,
 
     object->lpVtbl = &IDirectDrawPalette_Vtbl;
     object->ref = 1;
-    object->ddraw_owner = This;
 
     hr = IWineD3DDevice_CreatePalette(This->wineD3DDevice, Flags,
             ColorTable, &object->wineD3DPalette, (IUnknown *)object);

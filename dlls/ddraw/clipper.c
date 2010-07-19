@@ -254,19 +254,17 @@ static HRESULT WINAPI IDirectDrawClipperImpl_GetHWnd(
 static HRESULT WINAPI IDirectDrawClipperImpl_Initialize(
      LPDIRECTDRAWCLIPPER iface, LPDIRECTDRAW lpDD, DWORD dwFlags
 ) {
-    IDirectDrawImpl* pOwner;
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
     TRACE("(%p)->(%p,0x%08x)\n", This, lpDD, dwFlags);
 
     EnterCriticalSection(&ddraw_cs);
-    if (This->ddraw_owner != NULL)
+    if (This->initialized)
     {
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_ALREADYINITIALIZED;
     }
 
-    pOwner = lpDD ? ddraw_from_ddraw1(lpDD) : NULL;
-    This->ddraw_owner = pOwner;
+    This->initialized = TRUE;
 
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
