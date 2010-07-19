@@ -781,7 +781,7 @@ static void update_scaled_preview(HWND hMainWnd)
                           !is_last_preview_page(preview.page));
     }
 
-    InvalidateRect(hwndPreview, NULL, TRUE);
+    InvalidateRect(hwndPreview, NULL, FALSE);
     DeleteDC(fr.hdcTarget);
 }
 

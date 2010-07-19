@@ -2701,7 +2701,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     hAccel = LoadAcceleratorsW(hInstance, wszAccelTable);
 
     wc.cbSize = sizeof(wc);
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = WndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 4;
@@ -2715,7 +2715,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.lpszClassName = wszMainWndClass;
     RegisterClassExW(&wc);
 
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = preview_proc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -2723,7 +2723,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     wc.hIcon = NULL;
     wc.hIconSm = NULL;
     wc.hCursor = LoadCursor(NULL, IDC_IBEAM);
-    wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
+    wc.hbrBackground = NULL;
     wc.lpszMenuName = NULL;
     wc.lpszClassName = wszPreviewWndClass;
     RegisterClassExW(&wc);
