@@ -1553,6 +1553,37 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
     return TRUE;
 }
 
+/* Parses the path of a opaque URI (much less strict then the parser
+ * for a hierarchical URI).
+ *
+ * NOTE:
+ *  Windows allows invalid % encoded data to appear in opaque URI paths
+ *  for unknown scheme types.
+ */
+static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+
+    data->path = *ptr;
+
+    while(!is_path_delim(**ptr)) {
+        if(**ptr == '%' && known_scheme) {
+            if(!check_pct_encoded(ptr)) {
+                *ptr = data->path;
+                data->path = NULL;
+                return FALSE;
+            } else
+                continue;
+        }
+
+        ++(*ptr);
+    }
+
+    data->path_len = *ptr - data->path;
+    TRACE("(%p %p %x): Parsed opaque URI path %s len=%d\n", ptr, data, flags,
+        debugstr_wn(data->path, data->path_len), data->path_len);
+    return TRUE;
+}
+
 /* Determines how the URI should be parsed after the scheme information.
  *
  * If the scheme is followed, by "//" then, it is treated as an hierarchical URI
@@ -1615,7 +1646,9 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
     TRACE("(%p %p %x): Treating URI as an opaque URI.\n", ptr, data, flags);
 
     data->is_opaque = TRUE;
-    /* TODO: Handle opaque URI's, parse path. */
+    if(!parse_path_opaque(ptr, data, flags))
+        return FALSE;
+
     return TRUE;
 }
 

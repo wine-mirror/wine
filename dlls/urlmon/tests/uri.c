@@ -2245,6 +2245,34 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    {   "urn:excepts:bad:%XY:encoded", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|
+        Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"urn:excepts:bad:%XY:encoded",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"urn:excepts:bad:%XY:encoded",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"excepts:bad:%XY:encoded",S_OK,TRUE},
+            {"excepts:bad:%XY:encoded",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"urn:excepts:bad:%XY:encoded",S_OK,FALSE},
+            {"urn",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -2294,7 +2322,10 @@ static const invalid_uri invalid_uri_tests[] = {
     /* Invalid port with IPv6 address. */
     {"http://[::ffff]:32xy",0,FALSE},
     /* Not allowed to have backslashes with NO_CANONICALIZE. */
-    {"gopher://www.google.com\\test",Uri_CREATE_NO_CANONICALIZE,FALSE}
+    {"gopher://www.google.com\\test",Uri_CREATE_NO_CANONICALIZE,FALSE},
+    /* Not allowed to have invalid % encoded data in opaque URI path. */
+    {"news:test%XX",0,FALSE},
+    {"mailto:wine@winehq%G8.com",0,FALSE}
 };
 
 typedef struct _uri_equality {
