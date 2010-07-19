@@ -45,11 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static BOOL IDirectDrawImpl_DDSD_Match(const DDSURFACEDESC2* requested, const DDSURFACEDESC2* provided);
-static HRESULT IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This, IDirectDrawSurfaceImpl *primary);
-static HRESULT IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD, IDirectDrawSurfaceImpl **ppSurf, UINT level);
-static HRESULT IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This, IDirectDrawSurfaceImpl *primary);
-
 /* Device identifier. Don't relay it to WineD3D */
 static const DDDEVICEIDENTIFIER2 deviceidentifier =
 {
@@ -2103,6 +2098,134 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
 }
 
 /*****************************************************************************
+ * IDirectDrawImpl_AttachD3DDevice
+ *
+ * Initializes the D3D capabilities of WineD3D
+ *
+ * Params:
+ *  primary: The primary surface for D3D
+ *
+ * Returns
+ *  DD_OK on success,
+ *  DDERR_* otherwise
+ *
+ *****************************************************************************/
+static HRESULT IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary)
+{
+    WINED3DPRESENT_PARAMETERS localParameters;
+    HWND window = ddraw->dest_window;
+    HRESULT hr;
+
+    TRACE("ddraw %p, primary %p.\n", ddraw, primary);
+
+    if (!window || window == GetDesktopWindow())
+    {
+        window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "Hidden D3D Window",
+                WS_DISABLED, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                NULL, NULL, NULL, NULL);
+        if (!window)
+        {
+            ERR("Failed to create window, last error %#x.\n", GetLastError());
+            return E_FAIL;
+        }
+
+        ShowWindow(window, SW_HIDE);   /* Just to be sure */
+        WARN("No window for the Direct3DDevice, created hidden window %p.\n", window);
+    }
+    else
+    {
+        TRACE("Using existing window %p for Direct3D rendering.\n", window);
+    }
+    ddraw->d3d_window = window;
+
+    /* Store the future Render Target surface */
+    ddraw->d3d_target = primary;
+
+    /* Use the surface description for the device parameters, not the device
+     * settings. The application might render to an offscreen surface. */
+    localParameters.BackBufferWidth = primary->surface_desc.dwWidth;
+    localParameters.BackBufferHeight = primary->surface_desc.dwHeight;
+    localParameters.BackBufferFormat = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
+    localParameters.BackBufferCount = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
+            ? primary->surface_desc.dwBackBufferCount : 0;
+    localParameters.MultiSampleType = WINED3DMULTISAMPLE_NONE;
+    localParameters.MultiSampleQuality = 0;
+    localParameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
+    localParameters.hDeviceWindow = window;
+    localParameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
+    localParameters.EnableAutoDepthStencil = TRUE;
+    localParameters.AutoDepthStencilFormat = WINED3DFMT_D16_UNORM;
+    localParameters.Flags = 0;
+    localParameters.FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT;
+    localParameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
+
+    /* Set this NOW, otherwise creating the depth stencil surface will cause a
+     * recursive loop until ram or emulated video memory is full. */
+    ddraw->d3d_initialized = TRUE;
+    hr = IWineD3DDevice_Init3D(ddraw->wineD3DDevice, &localParameters);
+    if (FAILED(hr))
+    {
+        ddraw->d3d_target = NULL;
+        ddraw->d3d_initialized = FALSE;
+        return hr;
+    }
+
+    ddraw->declArraySize = 2;
+    ddraw->decls = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ddraw->decls) * ddraw->declArraySize);
+    if (!ddraw->decls)
+    {
+        ERR("Error allocating an array for the converted vertex decls.\n");
+        ddraw->declArraySize = 0;
+        hr = IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroySwapChain);
+        return E_OUTOFMEMORY;
+    }
+
+    TRACE("Successfully initialized 3D.\n");
+
+    return DD_OK;
+}
+
+static HRESULT IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary)
+{
+    WINED3DPRESENT_PARAMETERS presentation_parameters;
+    HWND window;
+    HRESULT hr;
+
+    window = ddraw->dest_window;
+
+    memset(&presentation_parameters, 0, sizeof(presentation_parameters));
+
+    /* Use the surface description for the device parameters, not the device
+     * settings. The application might render to an offscreen surface. */
+    presentation_parameters.BackBufferWidth = primary->surface_desc.dwWidth;
+    presentation_parameters.BackBufferHeight = primary->surface_desc.dwHeight;
+    presentation_parameters.BackBufferFormat = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
+    presentation_parameters.BackBufferCount = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
+            ? primary->surface_desc.dwBackBufferCount : 0;
+    presentation_parameters.MultiSampleType = WINED3DMULTISAMPLE_NONE;
+    presentation_parameters.MultiSampleQuality = 0;
+    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_FLIP;
+    presentation_parameters.hDeviceWindow = window;
+    presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
+    presentation_parameters.EnableAutoDepthStencil = FALSE; /* Not on GDI swapchains */
+    presentation_parameters.AutoDepthStencilFormat = 0;
+    presentation_parameters.Flags = 0;
+    presentation_parameters.FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT;
+    presentation_parameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
+
+    ddraw->d3d_target = primary;
+    hr = IWineD3DDevice_InitGDI(ddraw->wineD3DDevice, &presentation_parameters);
+    ddraw->d3d_target = NULL;
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize GDI ddraw implementation, hr %#x.\n", hr);
+        primary->wineD3DSwapChain = NULL;
+    }
+
+    return hr;
+}
+
+/*****************************************************************************
  * IDirectDraw7::CreateSurface
  *
  * Creates a new IDirectDrawSurface object and returns its interface.
@@ -2787,166 +2910,6 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
     return DD_OK;
 }
 
-static HRESULT WINAPI
-findRenderTarget(IDirectDrawSurface7 *surface,
-                 DDSURFACEDESC2 *desc,
-                 void *ctx)
-{
-    IDirectDrawSurfaceImpl *surf = (IDirectDrawSurfaceImpl *)surface;
-    IDirectDrawSurfaceImpl **target = ctx;
-
-    if(!surf->isRenderTarget) {
-        *target = surf;
-        IDirectDrawSurface7_Release(surface);
-        return DDENUMRET_CANCEL;
-    }
-
-    /* Recurse into the surface tree */
-    IDirectDrawSurface7_EnumAttachedSurfaces(surface, ctx, findRenderTarget);
-
-    IDirectDrawSurface7_Release(surface);
-    if(*target) return DDENUMRET_CANCEL;
-    else return DDENUMRET_OK; /* Continue with the next neighbor surface */
-}
-
-static HRESULT IDirectDrawImpl_CreateGDISwapChain(IDirectDrawImpl *This,
-                                                         IDirectDrawSurfaceImpl *primary) {
-    HRESULT hr;
-    WINED3DPRESENT_PARAMETERS presentation_parameters;
-    HWND window;
-
-    window = This->dest_window;
-
-    memset(&presentation_parameters, 0, sizeof(presentation_parameters));
-
-    /* Use the surface description for the device parameters, not the
-     * Device settings. The app might render to an offscreen surface
-     */
-    presentation_parameters.BackBufferWidth                 = primary->surface_desc.dwWidth;
-    presentation_parameters.BackBufferHeight                = primary->surface_desc.dwHeight;
-    presentation_parameters.BackBufferFormat                = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
-    presentation_parameters.BackBufferCount                 = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT) ? primary->surface_desc.dwBackBufferCount : 0;
-    presentation_parameters.MultiSampleType                 = WINED3DMULTISAMPLE_NONE;
-    presentation_parameters.MultiSampleQuality              = 0;
-    presentation_parameters.SwapEffect                      = WINED3DSWAPEFFECT_FLIP;
-    presentation_parameters.hDeviceWindow                   = window;
-    presentation_parameters.Windowed                        = !(This->cooperative_level & DDSCL_FULLSCREEN);
-    presentation_parameters.EnableAutoDepthStencil          = FALSE; /* Not on GDI swapchains */
-    presentation_parameters.AutoDepthStencilFormat          = 0;
-    presentation_parameters.Flags                           = 0;
-    presentation_parameters.FullScreen_RefreshRateInHz      = WINED3DPRESENT_RATE_DEFAULT; /* Default rate: It's already set */
-    presentation_parameters.PresentationInterval            = WINED3DPRESENT_INTERVAL_DEFAULT;
-
-    This->d3d_target = primary;
-    hr = IWineD3DDevice_InitGDI(This->wineD3DDevice, &presentation_parameters);
-    This->d3d_target = NULL;
-
-    if (hr != D3D_OK)
-    {
-        FIXME("(%p) call to IWineD3DDevice_InitGDI failed\n", This);
-        primary->wineD3DSwapChain = NULL;
-    }
-    return hr;
-}
-
-/*****************************************************************************
- * IDirectDrawImpl_AttachD3DDevice
- *
- * Initializes the D3D capabilities of WineD3D
- *
- * Params:
- *  primary: The primary surface for D3D
- *
- * Returns
- *  DD_OK on success,
- *  DDERR_* otherwise
- *
- *****************************************************************************/
-static HRESULT
-IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
-                                IDirectDrawSurfaceImpl *primary)
-{
-    HRESULT hr;
-    HWND                  window = This->dest_window;
-
-    WINED3DPRESENT_PARAMETERS localParameters;
-
-    TRACE("(%p)->(%p)\n", This, primary);
-
-    /* If there's no window, create a hidden window. WineD3D needs it */
-    if(window == 0 || window == GetDesktopWindow())
-    {
-        window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "Hidden D3D Window",
-                WS_DISABLED, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
-                NULL, NULL, NULL, NULL);
-        if (!window)
-        {
-            ERR("Failed to create window, last error %#x.\n", GetLastError());
-            return E_FAIL;
-        }
-
-        ShowWindow(window, SW_HIDE);   /* Just to be sure */
-        WARN("(%p) No window for the Direct3DDevice, created a hidden window. HWND=%p\n", This, window);
-    }
-    else
-    {
-        TRACE("(%p) Using existing window %p for Direct3D rendering\n", This, window);
-    }
-    This->d3d_window = window;
-
-    /* Store the future Render Target surface */
-    This->d3d_target = primary;
-
-    /* Use the surface description for the device parameters, not the
-     * Device settings. The app might render to an offscreen surface
-     */
-    localParameters.BackBufferWidth                 = primary->surface_desc.dwWidth;
-    localParameters.BackBufferHeight                = primary->surface_desc.dwHeight;
-    localParameters.BackBufferFormat                = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
-    localParameters.BackBufferCount                 = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT) ? primary->surface_desc.dwBackBufferCount : 0;
-    localParameters.MultiSampleType                 = WINED3DMULTISAMPLE_NONE;
-    localParameters.MultiSampleQuality              = 0;
-    localParameters.SwapEffect                      = WINED3DSWAPEFFECT_COPY;
-    localParameters.hDeviceWindow                   = window;
-    localParameters.Windowed                        = !(This->cooperative_level & DDSCL_FULLSCREEN);
-    localParameters.EnableAutoDepthStencil          = TRUE;
-    localParameters.AutoDepthStencilFormat          = WINED3DFMT_D16_UNORM;
-    localParameters.Flags                           = 0;
-    localParameters.FullScreen_RefreshRateInHz      = WINED3DPRESENT_RATE_DEFAULT; /* Default rate: It's already set */
-    localParameters.PresentationInterval            = WINED3DPRESENT_INTERVAL_DEFAULT;
-
-    TRACE("Passing mode %d\n", localParameters.BackBufferFormat);
-
-    /* Set this NOW, otherwise creating the depth stencil surface will cause a
-     * recursive loop until ram or emulated video memory is full
-     */
-    This->d3d_initialized = TRUE;
-
-    hr = IWineD3DDevice_Init3D(This->wineD3DDevice, &localParameters);
-    if(FAILED(hr))
-    {
-        This->d3d_target = NULL;
-        This->d3d_initialized = FALSE;
-        return hr;
-    }
-
-    This->declArraySize = 2;
-    This->decls = HeapAlloc(GetProcessHeap(),
-                            HEAP_ZERO_MEMORY,
-                            sizeof(*This->decls) * This->declArraySize);
-    if(!This->decls)
-    {
-        ERR("Error allocating an array for the converted vertex decls\n");
-        This->declArraySize = 0;
-        hr = IWineD3DDevice_Uninit3D(This->wineD3DDevice, D3D7CB_DestroySwapChain);
-        return E_OUTOFMEMORY;
-    }
-
-    /* Create an Index Buffer parent */
-    TRACE("(%p) Successfully initialized 3D\n", This);
-    return DD_OK;
-}
-
 /*****************************************************************************
  * DirectDrawCreateClipper (DDRAW.@)
  *
@@ -3346,6 +3309,27 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, surf);
 
     return D3D_OK;
+}
+
+static HRESULT WINAPI findRenderTarget(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *surface_desc, void *ctx)
+{
+    IDirectDrawSurfaceImpl *s = (IDirectDrawSurfaceImpl *)surface;
+    IDirectDrawSurfaceImpl **target = ctx;
+
+    if (!s->isRenderTarget)
+    {
+        *target = s;
+        IDirectDrawSurface7_Release(surface);
+        return DDENUMRET_CANCEL;
+    }
+
+    /* Recurse into the surface tree */
+    IDirectDrawSurface7_EnumAttachedSurfaces(surface, ctx, findRenderTarget);
+
+    IDirectDrawSurface7_Release(surface);
+    if (*target) return DDENUMRET_CANCEL;
+
+    return DDENUMRET_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
