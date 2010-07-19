@@ -3780,12 +3780,23 @@ found:
     if(!face->scalable) {
         /* Windows uses integer scaling factors for bitmap fonts */
         INT scale, scaled_height;
+        GdiFont *cachedfont;
 
         /* FIXME: rotation of bitmap fonts is ignored */
         height = abs(GDI_ROUND( (double)height * ret->font_desc.matrix.eM22 ));
         if (ret->aveWidth)
             ret->aveWidth = (double)ret->aveWidth * ret->font_desc.matrix.eM11;
         ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
+        dcmat.eM11 = dcmat.eM22 = 1.0;
+        /* As we changed the matrix, we need to search the cache for the font again,
+         * otherwise we might explode the cache. */
+        if((cachedfont = find_in_cache(hfont, &lf, &dcmat, can_use_bitmap)) != NULL) {
+            TRACE("Found cached font after non-scalable matrix rescale!\n");
+            free_font( ret );
+            LeaveCriticalSection( &freetype_cs );
+            return cachedfont;
+        }
+        calc_hash(&ret->font_desc);
 
         if (height != 0) height = diff;
         height += face->size.height;
