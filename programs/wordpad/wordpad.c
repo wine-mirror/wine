@@ -93,6 +93,7 @@ typedef struct
 {
     int endPos;
     BOOL wrapped;
+    WCHAR findBuffer[128];
 } FINDREPLACE_custom;
 
 /* Load string resources */
@@ -1234,6 +1235,14 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
         mi.dwItemData = 1;
         SetMenuItemInfoW(hMenu, ID_FIND_NEXT, FALSE, &mi);
 
+        /* Make sure find field is saved. */
+        if (pFr->lpstrFindWhat != custom_data->findBuffer)
+        {
+            lstrcpynW(custom_data->findBuffer, pFr->lpstrFindWhat,
+                      sizeof(custom_data->findBuffer));
+            pFr->lpstrFindWhat = custom_data->findBuffer;
+        }
+
         SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&sel.cpMin, (LPARAM)&sel.cpMax);
         if(custom_data->endPos == -1) {
             custom_data->endPos = sel.cpMin;
@@ -1295,9 +1304,11 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
 
 static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
 {
-    static WCHAR findBuffer[MAX_STRING_LEN];
-    static WCHAR replaceBuffer[MAX_STRING_LEN];
+    static WCHAR selBuffer[128];
+    static WCHAR replaceBuffer[128];
     static FINDREPLACE_custom custom_data;
+    static const WCHAR endl = '\r';
+    FINDTEXTW ft;
 
     /* Allow only one search/replace dialog to open */
     if(hFindWnd != NULL)
@@ -1310,12 +1321,28 @@ static void dialog_find(LPFINDREPLACEW fr, BOOL replace)
     fr->lStructSize = sizeof(FINDREPLACEW);
     fr->hwndOwner = hMainWnd;
     fr->Flags = FR_HIDEUPDOWN;
-    fr->lpstrFindWhat = findBuffer;
+    /* Find field is filled with the selected text if it is non-empty
+     * and stays within the same paragraph, otherwise the previous
+     * find field is used. */
+    SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&ft.chrg.cpMin,
+                 (LPARAM)&ft.chrg.cpMax);
+    ft.lpstrText = &endl;
+    if (ft.chrg.cpMin != ft.chrg.cpMax &&
+        SendMessageW(hEditorWnd, EM_FINDTEXTW, FR_DOWN, (LPARAM)&ft) == -1)
+    {
+        /* Use a temporary buffer for the selected text so that the saved
+         * find field is only overwritten when a find/replace is clicked. */
+        GETTEXTEX gt = {sizeof(selBuffer), GT_SELECTION, 1200, NULL, NULL};
+        SendMessageW(hEditorWnd, EM_GETTEXTEX, (WPARAM)&gt, (LPARAM)selBuffer);
+        fr->lpstrFindWhat = selBuffer;
+    } else {
+        fr->lpstrFindWhat = custom_data.findBuffer;
+    }
     fr->lpstrReplaceWith = replaceBuffer;
     custom_data.endPos = -1;
     custom_data.wrapped = FALSE;
     fr->lCustData = (LPARAM)&custom_data;
-    fr->wFindWhatLen = sizeof(findBuffer);
+    fr->wFindWhatLen = sizeof(custom_data.findBuffer);
     fr->wReplaceWithLen = sizeof(replaceBuffer);
 
     if(replace)
