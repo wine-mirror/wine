@@ -1493,7 +1493,6 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    GLint prevRead;
 
     if (!surface_is_offscreen(This))
     {
@@ -1518,16 +1517,12 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
 
     ENTER_GL();
 
-    glGetIntegerv(GL_READ_BUFFER, &prevRead);
     glReadBuffer(device->offscreenBuffer);
     checkGLcall("glReadBuffer");
 
     glCopyTexSubImage2D(This->texture_target, This->texture_level,
             0, 0, 0, 0, This->currentDesc.Width, This->currentDesc.Height);
     checkGLcall("glCopyTexSubImage2D");
-
-    glReadBuffer(prevRead);
-    checkGLcall("glReadBuffer");
 
     LEAVE_GL();
 
