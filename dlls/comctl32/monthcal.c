@@ -1384,13 +1384,10 @@ MONTHCAL_GetRange(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 static LRESULT
 MONTHCAL_SetDayState(const MONTHCAL_INFO *infoPtr, INT months, MONTHDAYSTATE *states)
 {
-  int i;
-
-  TRACE("%d %p\n", months, states);
+  TRACE("%p %d %p\n", infoPtr, months, states);
   if(months != infoPtr->monthRange) return 0;
 
-  for(i = 0; i < months; i++)
-    infoPtr->monthdayState[i] = states[i];
+  memcpy(infoPtr->monthdayState, states, months*sizeof(MONTHDAYSTATE));
 
   return 1;
 }
@@ -1748,7 +1745,6 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
 {
   if(infoPtr->dwStyle & MCS_DAYSTATE) {
     NMDAYSTATE nmds;
-    INT i;
 
     nmds.nmhdr.hwndFrom = infoPtr->hwndSelf;
     nmds.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
@@ -1762,8 +1758,7 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
     nmds.stStart.wDay = 1;
 
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmds.nmhdr.idFrom, (LPARAM)&nmds);
-    for(i = 0; i < infoPtr->monthRange; i++)
-      infoPtr->monthdayState[i] = nmds.prgDayState[i];
+    memcpy(infoPtr->monthdayState, nmds.prgDayState, infoPtr->monthRange*sizeof(MONTHDAYSTATE));
 
     Free(nmds.prgDayState);
   }
