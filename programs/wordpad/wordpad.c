@@ -1288,8 +1288,10 @@ static LRESULT handle_findmsg(LPFINDREPLACEW pFr)
 
         if (ret == -1) {
             custom_data->endPos = -1;
-            MessageBoxWithResStringW(hMainWnd, MAKEINTRESOURCEW(STRING_SEARCH_FINISHED),
-                                     wszAppTitle, MB_OK | MB_ICONASTERISK);
+            EnableWindow(hMainWnd, FALSE);
+            MessageBoxWithResStringW(hFindWnd, MAKEINTRESOURCEW(STRING_SEARCH_FINISHED),
+                                     wszAppTitle, MB_OK | MB_ICONASTERISK | MB_TASKMODAL);
+            EnableWindow(hMainWnd, TRUE);
         } else {
             SendMessageW(hEditorWnd, EM_SETSEL, ft.chrgText.cpMin, ft.chrgText.cpMax);
             SendMessageW(hEditorWnd, EM_SCROLLCARET, 0, 0);
