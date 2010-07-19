@@ -801,6 +801,7 @@
 @ stdcall StrStrA(str str)
 @ stdcall StrStrIA(str str)
 @ stdcall StrStrIW(wstr wstr)
+@ stdcall StrStrNW(wstr wstr long)
 @ stdcall StrStrW(wstr wstr)
 @ stdcall StrToIntA(str)
 @ stdcall StrToIntExA(str long ptr)

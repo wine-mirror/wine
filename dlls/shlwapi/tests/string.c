@@ -58,6 +58,7 @@ static BOOL    (WINAPI *pStrIsIntlEqualW)(BOOL,LPCWSTR,LPCWSTR,int);
 static HRESULT (WINAPI *pStrRetToBSTR)(STRRET*,void*,BSTR*);
 static HRESULT (WINAPI *pStrRetToBufA)(STRRET*,LPCITEMIDLIST,LPSTR,UINT);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
+static LPWSTR  (WINAPI *pStrStrNW)(LPCWSTR,LPCWSTR,UINT);
 static INT     (WINAPIV *pwnsprintfA)(LPSTR,INT,LPCSTR, ...);
 static INT     (WINAPIV *pwnsprintfW)(LPWSTR,INT,LPCWSTR, ...);
 static LPWSTR  (WINAPI *pStrChrNW)(LPWSTR,WCHAR,UINT);
@@ -1165,6 +1166,88 @@ static void test_StrStrIW(void)
     }
 }
 
+static void test_StrStrNW(void)
+{
+    static const WCHAR emptyW[] = {0};
+    static const WCHAR deadbeefW[] = {'D','e','A','d','B','e','E','f',0};
+    static const WCHAR deadW[] = {'D','e','A','d',0};
+    static const WCHAR dead_lowerW[] = {'d','e','a','d',0};
+    static const WCHAR adbeW[] = {'A','d','B','e',0};
+    static const WCHAR adbe_lowerW[] = {'a','d','b','e',0};
+    static const WCHAR beefW[] = {'B','e','E','f',0};
+    static const WCHAR beef_lowerW[] = {'b','e','e','f',0};
+
+    const struct
+    {
+        const WCHAR *search;
+        const UINT count;
+        const WCHAR *expect;
+    } StrStrNW_cases[] =
+    {
+        {emptyW, sizeof(deadbeefW)/sizeof(WCHAR), NULL},
+        {deadW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW},
+        {dead_lowerW, sizeof(deadbeefW)/sizeof(WCHAR), NULL},
+        {adbeW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW + 2},
+        {adbe_lowerW, sizeof(deadbeefW)/sizeof(WCHAR), NULL},
+        {beefW, sizeof(deadbeefW)/sizeof(WCHAR), deadbeefW + 4},
+        {beef_lowerW, sizeof(deadbeefW)/sizeof(WCHAR), NULL},
+        {beefW, 0, NULL},
+        {beefW, 1, NULL},
+        {beefW, 2, NULL},
+        {beefW, 3, NULL},
+        {beefW, 4, NULL},
+        {beefW, 5, deadbeefW + 4},
+        {beefW, 6, deadbeefW + 4},
+        {beefW, 7, deadbeefW + 4},
+        {beefW, 8, deadbeefW + 4},
+        {beefW, 9, deadbeefW + 4},
+    };
+
+    LPWSTR ret;
+    UINT i;
+
+    if (!pStrStrNW)
+    {
+        win_skip("StrStrNW() is not available\n");
+        return;
+    }
+
+    ret = pStrStrNW(NULL, NULL, 0);
+    ok(!ret, "Expected StrStrNW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNW(NULL, NULL, 10);
+    ok(!ret, "Expected StrStrNW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNW(NULL, emptyW, 10);
+    ok(!ret, "Expected StrStrNW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNW(emptyW, NULL, 10);
+    ok(!ret, "Expected StrStrNW to return NULL, got %p\n", ret);
+
+    ret = pStrStrNW(emptyW, emptyW, 10);
+    ok(!ret, "Expected StrStrNW to return NULL, got %p\n", ret);
+
+    for (i = 0; i < sizeof(StrStrNW_cases)/sizeof(StrStrNW_cases[0]); i++)
+    {
+        ret = pStrStrNW(deadbeefW, StrStrNW_cases[i].search, StrStrNW_cases[i].count);
+        ok(ret == StrStrNW_cases[i].expect,
+           "[%d] Expected StrStrNW to return %p, got %p\n",
+           i, StrStrNW_cases[i].expect, ret);
+    }
+
+    /* StrStrNW accepts counts larger than the search string length but rejects
+     * counts larger than around 2G. The limit seems to change based on the
+     * caller executable itself. */
+    ret = pStrStrNW(deadbeefW, beefW, 100);
+    ok(ret == deadbeefW + 4, "Expected StrStrNW to return deadbeefW + 4, got %p\n", ret);
+
+    if (0)
+    {
+        ret = pStrStrNW(deadbeefW, beefW, ~0U);
+        ok(!ret, "Expected StrStrNW to return NULL, got %p\n", ret);
+    }
+}
+
 START_TEST(string)
 {
   HMODULE hShlwapi;
@@ -1195,6 +1278,7 @@ START_TEST(string)
   pStrRetToBSTR = (void *)GetProcAddress(hShlwapi, "StrRetToBSTR");
   pStrRetToBufA = (void *)GetProcAddress(hShlwapi, "StrRetToBufA");
   pStrRetToBufW = (void *)GetProcAddress(hShlwapi, "StrRetToBufW");
+  pStrStrNW = (void *)GetProcAddress(hShlwapi, "StrStrNW");
   pwnsprintfA = (void *)GetProcAddress(hShlwapi, "wnsprintfA");
   pwnsprintfW = (void *)GetProcAddress(hShlwapi, "wnsprintfW");
 
@@ -1238,6 +1322,7 @@ START_TEST(string)
   test_StrStrW();
   test_StrStrIA();
   test_StrStrIW();
+  test_StrStrNW();
 
   CoUninitialize();
 }
