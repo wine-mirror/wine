@@ -2632,3 +2632,127 @@ interface IFileOpenDialog : IFileDialog
     HRESULT GetSelectedItems(
         [out] IShellItemArray **ppsai);
 }
+
+typedef [v1_enum] enum CDCONTROLSTATEF
+{
+    CDCS_INACTIVE       = 0x0,
+    CDCS_ENABLED        = 0x1,
+    CDCS_VISIBLE        = 0x2,
+    CDCS_ENABLEDVISIBLE = 0x3
+} CDCONTROLSTATEF;
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(CDCONTROLSTATEF)")
+/*****************************************************************************
+ * IFileDialogCustomize interface
+ */
+[
+ object,
+ uuid(E6FDD21A-163F-4975-9C8C-A69F1BA37034),
+ pointer_default(unique)
+]
+interface IFileDialogCustomize : IUnknown
+{
+    HRESULT EnableOpenDropDown(
+        [in] DWORD dwIDCtl);
+
+    HRESULT AddMenu(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszLabel);
+
+    HRESULT AddPushButton(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszLabel);
+
+    HRESULT AddComboBox(
+        [in] DWORD dwIDCtl);
+
+    HRESULT AddRadioButtonList(
+        [in] DWORD dwIDCtl);
+
+    HRESULT AddCheckButton(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszLabel,
+        [in] BOOL bChecked);
+
+    HRESULT AddEditBox(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszText);
+
+    HRESULT AddSeparator(
+        [in] DWORD dwIDCtl);
+
+    HRESULT AddText(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszText);
+
+    HRESULT SetControlLabel(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszLabel);
+
+    HRESULT GetControlState(
+        [in] DWORD dwIDCtl,
+        [out] CDCONTROLSTATEF *pdwState);
+
+    HRESULT SetControlState(
+        [in] DWORD dwIDCtl,
+        [in] CDCONTROLSTATEF dwState);
+
+    HRESULT GetEditBoxText(
+        [in] DWORD dwIDCtl,
+        [out, string] WCHAR **ppszText);
+
+    HRESULT SetEditBoxText(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszText);
+
+    HRESULT GetCheckButtonState(
+        [in] DWORD dwIDCtl,
+        [out] BOOL *pbChecked);
+
+    HRESULT SetCheckButtonState(
+        [in] DWORD dwIDCtl,
+        [in] BOOL bChecked);
+
+    HRESULT AddControlItem(
+        [in] DWORD dwIDCtl,
+        [in] DWORD dwIDItem,
+        [in] LPCWSTR pszLabel);
+
+    HRESULT RemoveControlItem(
+        [in] DWORD dwIDCtl,
+        [in] DWORD dwIDItem);
+
+    HRESULT RemoveAllControlItems(
+        [in] DWORD dwIDCtl);
+
+    HRESULT GetControlItemState(
+        [in] DWORD dwIDCtl,
+        [in] DWORD dwIDItem,
+        [out] CDCONTROLSTATEF *pdwState);
+
+    HRESULT SetControlItemState(
+        [in] DWORD dwIDCtl,
+        [in] DWORD dwIDItem,
+        [in] CDCONTROLSTATEF dwState);
+
+    HRESULT GetSelectedControlItem(
+        [in] DWORD dwIDCtl,
+        [out] DWORD *pdwIDItem);
+
+    HRESULT SetSelectedControlItem(
+        [in] DWORD dwIDCtl,
+        [in] DWORD dwIDItem);
+
+    HRESULT StartVisualGroup(
+        [in] DWORD dwIDCtl,
+        [in, string] LPCWSTR pszLabel);
+
+    HRESULT EndVisualGroup();
+
+    HRESULT MakeProminent(
+        [in] DWORD dwIDCtl);
+
+    HRESULT SetControlItemText(
+        [in] DWORD dwIDCtl,
+        [in] DWORD dwIDItem,
+        [in, string] LPCWSTR pszLabel);
+}
