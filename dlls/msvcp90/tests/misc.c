@@ -28,6 +28,10 @@ static void (__cdecl *p_char_assign)(void*, const void*);
 static void (__cdecl *p_wchar_assign)(void*, const void*);
 static void (__cdecl *p_short_assign)(void*, const void*);
 
+static BYTE (__cdecl *p_char_eq)(const void*, const void*);
+static BYTE (__cdecl *p_wchar_eq)(const void*, const void*);
+static BYTE (__cdecl *p_short_eq)(const void*, const void*);
+
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -62,6 +66,10 @@ static BOOL init(void)
     p_wchar_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
     p_short_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@G@std@@SAXAAGABG@Z");
 
+    p_char_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@D@std@@SA_NABD0@Z");
+    p_wchar_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@_W@std@@SA_NAB_W0@Z");
+    p_short_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@G@std@@SA_NABG0@Z");
+
     return TRUE;
 }
 
@@ -93,12 +101,48 @@ static void test_assign(void)
     ok(out[2] == '#', "out[2] = %c\n", out[2]);
 }
 
+static void test_equal(void)
+{
+    static const char in1[] = "abc";
+    static const char in2[] = "ab";
+    static const char in3[] = "a";
+    static const char in4[] = "b";
+    BYTE ret;
+
+    if(!p_char_eq || !p_wchar_eq || !p_short_eq) {
+        win_skip("equal tests skipped\n");
+        return;
+    }
+
+    ret = p_char_eq(in1, in2);
+    ok(ret == TRUE, "ret = %d\n", (int)ret);
+    ret = p_char_eq(in1, in3);
+    ok(ret == TRUE, "ret = %d\n", (int)ret);
+    ret = p_char_eq(in1, in4);
+    ok(ret == FALSE, "ret = %d\n", (int)ret);
+
+    ret = p_wchar_eq(in1, in2);
+    ok(ret == TRUE, "ret = %d\n", (int)ret);
+    ret = p_wchar_eq(in1, in3);
+    ok(ret == FALSE, "ret = %d\n", (int)ret);
+    ret = p_wchar_eq(in1, in4);
+    ok(ret == FALSE, "ret = %d\n", (int)ret);
+
+    ret = p_short_eq(in1, in2);
+    ok(ret == TRUE, "ret = %d\n", (int)ret);
+    ret = p_short_eq(in1, in3);
+    ok(ret == FALSE, "ret = %d\n", (int)ret);
+    ret = p_short_eq(in1, in4);
+    ok(ret == FALSE, "ret = %d\n", (int)ret);
+}
+
 START_TEST(misc)
 {
     if(!init())
         return;
 
     test_assign();
+    test_equal();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }
