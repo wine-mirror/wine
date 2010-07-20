@@ -31,6 +31,7 @@ RC_SRCS = \
 	wineboot_Si.rc \
 	wineboot_Sr.rc \
 	wineboot_Sv.rc \
+	wineboot_Uk.rc \
 	wineboot_Zh.rc
 
 @MAKE_PROG_RULES@
