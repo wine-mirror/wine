@@ -304,7 +304,7 @@ static BOOL COMDLG32_FR_CheckPartial(
 ) {
 	if(!pfr)
         {
-		COMDLG32_SetCommDlgExtendedError(CDERR_GENERALCODES);
+		COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
                 return FALSE;
 	}
 
@@ -344,15 +344,9 @@ static BOOL COMDLG32_FR_CheckPartial(
                 return FALSE;
         }
 
-        if((pfr->Flags & (FR_ENABLETEMPLATE | FR_ENABLETEMPLATEHANDLE)) && !pfr->hInstance)
+        if((pfr->Flags & FR_ENABLETEMPLATEHANDLE) && !pfr->hInstance)
         {
 		COMDLG32_SetCommDlgExtendedError(CDERR_NOHINSTANCE);
-                return FALSE;
-        }
-
-        if((pfr->Flags & FR_ENABLETEMPLATE) && !pfr->lpTemplateName)
-        {
-		COMDLG32_SetCommDlgExtendedError(CDERR_NOTEMPLATE);
                 return FALSE;
         }
 
