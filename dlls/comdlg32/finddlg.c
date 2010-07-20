@@ -321,7 +321,7 @@ static BOOL COMDLG32_FR_CheckPartial(
         }
 
 	if((pfr->wFindWhatLen < 1 || !pfr->lpstrFindWhat)
-        ||(Replace && (pfr->wReplaceWithLen < 1 || !pfr->lpstrReplaceWith)))
+        ||(Replace && !pfr->lpstrReplaceWith))
         {
 		COMDLG32_SetCommDlgExtendedError(FRERR_BUFFERLENGTHZERO);
                 return FALSE;
