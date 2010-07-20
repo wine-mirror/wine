@@ -49,7 +49,8 @@ RC_SRCS = \
 	rsrc_Ru.rc \
 	rsrc_Si.rc \
 	rsrc_Sr.rc \
-	rsrc_Sv.rc
+	rsrc_Sv.rc \
+	rsrc_Uk.rc
 
 LEX_SRCS   = debug.l
 BISON_SRCS = dbg.y
