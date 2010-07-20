@@ -536,7 +536,7 @@ HWND WINAPI ReplaceTextW(
 
         TRACE("LPFINDREPLACE=%p\n", pfr);
 
-	if(!COMDLG32_FR_CheckPartial((LPFINDREPLACEA)pfr, FALSE))
+	if(!COMDLG32_FR_CheckPartial((LPFINDREPLACEA)pfr, TRUE))
 		return 0;
 
         len1 = WideCharToMultiByte( CP_ACP, 0, pfr->lpstrFindWhat, pfr->wFindWhatLen,
