@@ -63,7 +63,7 @@ POPUP "&Пошук" {
  }
 POPUP "&Довідка" {
   MENUITEM "&Зміст",         CMD_HELP_CONTENTS
-  MENUITEM "&Пошук...",        CMD_HELP_SEARCH
+  MENUITEM "По&шук...",        		CMD_HELP_SEARCH
   MENUITEM "&Використання Довідки",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   MENUITEM "&Про Notepad", CMD_HELP_ABOUT_NOTEPAD
