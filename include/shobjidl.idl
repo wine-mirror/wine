@@ -2756,3 +2756,32 @@ interface IFileDialogCustomize : IUnknown
         [in] DWORD dwIDItem,
         [in, string] LPCWSTR pszLabel);
 }
+
+/*****************************************************************************
+ * IFileDialogControlEvents interface
+ */
+[
+ object,
+ uuid(36116642-D713-4B97-9B83-7484A9D00433),
+ pointer_default(unique)
+]
+interface IFileDialogControlEvents : IUnknown
+{
+    HRESULT OnItemSelected(
+        [in] IFileDialogCustomize *pfdc,
+        [in] DWORD dwIDCtl,
+        [in] DWORD dwIDItem);
+
+    HRESULT OnButtonClicked(
+        [in] IFileDialogCustomize *pfdc,
+        [in] DWORD dwIDCtl);
+
+    HRESULT OnCheckButtonToggled(
+        [in] IFileDialogCustomize *pfdc,
+        [in] BOOL dwIDCtl,
+        [in] BOOL bChecked);
+
+    HRESULT OnControlActivating(
+        [in] IFileDialogCustomize *pfdc,
+        [in] DWORD dwIDCtl);
+}
