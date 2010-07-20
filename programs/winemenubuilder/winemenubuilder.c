@@ -2775,13 +2775,6 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bWait )
         return 1;
     }
 
-    r = CoInitialize( NULL );
-    if( FAILED( r ) )
-    {
-        WINE_ERR("CoInitialize failed\n");
-        return 1;
-    }
-
     r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IShellLinkW, (LPVOID *) &sl );
     if( FAILED( r ) )
@@ -2817,8 +2810,6 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bWait )
     IPersistFile_Release( pf );
     IShellLinkW_Release( sl );
 
-    CoUninitialize();
-
     return !r;
 }
 
@@ -2842,13 +2833,6 @@ static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
     if (len==0 || len>MAX_PATH)
     {
         WINE_ERR("couldn't get full path of URL file\n");
-        return 1;
-    }
-
-    r = CoInitialize( NULL );
-    if( FAILED( r ) )
-    {
-        WINE_ERR("CoInitialize failed\n");
         return 1;
     }
 
@@ -2881,8 +2865,6 @@ static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
 
     IPersistFile_Release( pf );
     url->lpVtbl->Release( url );
-
-    CoUninitialize();
 
     return !r;
 }
@@ -3116,10 +3098,18 @@ int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sh
     LPWSTR token = NULL, p;
     BOOL bWait = FALSE;
     BOOL bURL = FALSE;
+    HRESULT hr;
     int ret = 0;
 
     if (!init_xdg())
         return 1;
+
+    hr = CoInitialize(NULL);
+    if (FAILED(hr))
+    {
+        WINE_ERR("could not initialize COM, error 0x%08X\n", hr);
+        return 1;
+    }
 
     for( p = cmdline; p && *p; )
     {
@@ -3160,5 +3150,6 @@ int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sh
         }
     }
 
+    CoUninitialize();
     return ret;
 }
