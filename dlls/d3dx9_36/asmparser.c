@@ -161,6 +161,12 @@ static void asmparser_dcl_input_ps_2(struct asm_parser *This, DWORD usage, DWORD
     }
 }
 
+static void asmparser_dcl_input_unsupported(struct asm_parser *This, DWORD usage, DWORD num,
+					    DWORD mod, const struct shader_reg *reg) {
+    asmparser_message(This, "Line %u: Input declaration unsupported in this shader version\n", This->line_no);
+    set_parse_status(This, PARSE_ERR);
+}
+
 static void asmparser_dcl_sampler(struct asm_parser *This, DWORD samptype,
                                   DWORD mod, DWORD regnum,
                                   unsigned int line_no) {
@@ -220,6 +226,84 @@ static void asmparser_sincos(struct asm_parser *This, DWORD mod, DWORD shift,
     }
 }
 
+static void asmparser_texcrd(struct asm_parser *This, DWORD mod, DWORD shift,
+                             const struct shader_reg *dst,
+                             const struct src_regs *srcs) {
+    struct instruction *instr;
+
+    if(!srcs || srcs->count != 1) {
+        asmparser_message(This, "Line %u: Wrong number of source registers in texcrd instruction\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+        return;
+    }
+
+    instr = alloc_instr(1);
+    if(!instr) {
+        ERR("Error allocating memory for the instruction\n");
+        set_parse_status(This, PARSE_ERR);
+        return;
+    }
+
+    /* The job of texcrd is done by mov in later shader versions */
+    instr->opcode = BWRITERSIO_MOV;
+    instr->dstmod = mod;
+    instr->shift = shift;
+    instr->comptype = 0;
+
+    This->funcs->dstreg(This, instr, dst);
+    This->funcs->srcreg(This, instr, 0, &srcs->reg[0]);
+
+    if(!add_instruction(This->shader, instr)) {
+        ERR("Out of memory\n");
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
+static void asmparser_texld14(struct asm_parser *This, DWORD mod, DWORD shift,
+                              const struct shader_reg *dst,
+                              const struct src_regs *srcs) {
+    struct instruction *instr;
+
+    if(!srcs || srcs->count != 1) {
+        asmparser_message(This, "Line %u: texld (PS 1.4) has a wrong number of source registers\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+        return;
+    }
+
+    instr = alloc_instr(2);
+    if(!instr) {
+        ERR("Error allocating memory for the instruction\n");
+        set_parse_status(This, PARSE_ERR);
+        return;
+    }
+
+    /* This code is recording a texld instruction, not tex. However,
+     * texld borrows the opcode of tex
+     */
+    instr->opcode = BWRITERSIO_TEX;
+    instr->dstmod = mod;
+    instr->shift = shift;
+    instr->comptype = 0;
+
+    This->funcs->dstreg(This, instr, dst);
+    This->funcs->srcreg(This, instr, 0, &srcs->reg[0]);
+
+    /* The 2nd source register is the sampler register with the
+     * destination's regnum
+     */
+    ZeroMemory(&instr->src[1], sizeof(instr->src[1]));
+    instr->src[1].type = BWRITERSPR_SAMPLER;
+    instr->src[1].regnum = dst->regnum;
+    instr->src[1].swizzle = BWRITERVS_NOSWIZZLE;
+    instr->src[1].srcmod = BWRITERSPSM_NONE;
+    instr->src[1].rel_reg = NULL;
+
+    if(!add_instruction(This->shader, instr)) {
+        ERR("Out of memory\n");
+        set_parse_status(This, PARSE_ERR);
+    }
+}
+
 static void asmparser_instr(struct asm_parser *This, DWORD opcode,
                             DWORD mod, DWORD shift,
                             BWRITER_COMPARISON_TYPE comp,
@@ -258,6 +342,19 @@ ns */
                 return;
             }
             /* Use the default handling */
+	    break;
+        case BWRITERSIO_TEXCOORD:
+            /* texcoord/texcrd are two instructions present only in PS <= 1.3 and PS 1.4 respectively */
+            asmparser_texcrd(This, mod, shift, dst, srcs);
+            return;
+        case BWRITERSIO_TEX:
+            /* this encodes both the tex PS 1.x instruction and the
+               texld 1.4/2.0+ instruction */
+            if(This->shader->version == BWRITERPS_VERSION(1, 4)) {
+                asmparser_texld14(This, mod, shift, dst, srcs);
+                return;
+            }
+            /* else fallback to the standard behavior */
             break;
     }
 
@@ -563,6 +660,30 @@ static void asmparser_srcreg_vs_3(struct asm_parser *This,
     memcpy(&instr->src[num], src, sizeof(*src));
 }
 
+static const struct allowed_reg_type ps_1_4_reg_allowed[] = {
+    { BWRITERSPR_CONST,     8,  FALSE },
+    { BWRITERSPR_TEMP,      6,  FALSE },
+    { BWRITERSPR_TEXTURE,   6,  FALSE },
+    { BWRITERSPR_INPUT,     2,  FALSE },
+    { ~0U, 0 } /* End tag */
+};
+
+static void asmparser_srcreg_ps_1_4(struct asm_parser *This,
+                                    struct instruction *instr, int num,
+                                    const struct shader_reg *src) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(src, ps_1_4_reg_allowed)) {
+        asmparser_message(This, "Line %u: Source register %s not supported in PS 1.4\n",
+                          This->line_no,
+                          debug_print_srcreg(src));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_abs_srcmod(This, src->srcmod);
+    reg = map_oldps_register(src, TRUE);
+    memcpy(&instr->src[num], &reg, sizeof(reg));
+}
+
 static const struct allowed_reg_type ps_2_0_reg_allowed[] = {
     { BWRITERSPR_INPUT,         2,  FALSE },
     { BWRITERSPR_TEMP,         32,  FALSE },
@@ -706,6 +827,22 @@ static void asmparser_dstreg_vs_3(struct asm_parser *This,
     instr->has_dst = TRUE;
 }
 
+static void asmparser_dstreg_ps_1_4(struct asm_parser *This,
+                                    struct instruction *instr,
+                                    const struct shader_reg *dst) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(dst, ps_1_4_reg_allowed)) {
+        asmparser_message(This, "Line %u: Destination register %s not supported in PS 1\n",
+                          This->line_no,
+                          debug_print_dstreg(dst));
+        set_parse_status(This, PARSE_ERR);
+    }
+    reg = map_oldps_register(dst, FALSE);
+    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->has_dst = TRUE;
+}
+
 static void asmparser_dstreg_ps_2(struct asm_parser *This,
                                   struct instruction *instr,
                                   const struct shader_reg *dst) {
@@ -769,6 +906,16 @@ static void asmparser_predicate_unsupported(struct asm_parser *This,
     set_parse_status(This, PARSE_ERR);
 }
 
+static void asmparser_coissue_supported(struct asm_parser *This) {
+    /* this sets the coissue flag of the last instruction added to the shader */
+    if(!This->shader) return;
+    if(This->shader->num_instrs == 0){
+        asmparser_message(This, "Line %u: Coissue flag on the first shader instruction\n", This->line_no);
+        set_parse_status(This, PARSE_ERR);
+    }
+    This->shader->instr[This->shader->num_instrs-1]->coissue = TRUE;
+}
+
 static void asmparser_coissue_unsupported(struct asm_parser *This) {
     asmparser_message(This, "Line %u: Coissue is only supported in pixel shaders versions <= 1.4\n", This->line_no);
     set_parse_status(This, PARSE_ERR);
@@ -828,6 +975,26 @@ static const struct asmparser_backend parser_vs_3 = {
     asmparser_dcl_output,
     asmparser_dcl_input,
     asmparser_dcl_sampler,
+
+    asmparser_end,
+
+    asmparser_instr,
+};
+
+static const struct asmparser_backend parser_ps_1_4 = {
+    asmparser_constF,
+    asmparser_constI,
+    asmparser_constB,
+
+    asmparser_dstreg_ps_1_4,
+    asmparser_srcreg_ps_1_4,
+
+    asmparser_predicate_unsupported,
+    asmparser_coissue_supported,
+
+    asmparser_dcl_output_unsupported,
+    asmparser_dcl_input_unsupported,
+    asmparser_dcl_sampler_unsupported,
 
     asmparser_end,
 
@@ -1002,6 +1169,22 @@ void create_vs30_parser(struct asm_parser *ret) {
     ret->shader->type = ST_VERTEX;
     ret->shader->version = BWRITERVS_VERSION(3, 0);
     ret->funcs = &parser_vs_3;
+}
+
+void create_ps14_parser(struct asm_parser *ret) {
+    TRACE_(parsed_shader)("ps_1_4\n");
+
+    ret->shader = asm_alloc(sizeof(*ret->shader));
+    if(!ret->shader) {
+        ERR("Failed to allocate memory for the shader\n");
+        set_parse_status(ret, PARSE_ERR);
+        return;
+    }
+
+    ret->shader->type = ST_PIXEL;
+    ret->shader->version = BWRITERPS_VERSION(1, 4);
+    ret->funcs = &parser_ps_1_4;
+    gen_oldps_input(ret->shader, 6);
 }
 
 void create_ps20_parser(struct asm_parser *ret) {

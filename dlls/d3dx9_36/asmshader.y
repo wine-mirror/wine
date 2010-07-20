@@ -336,8 +336,7 @@ version_marker:       VER_VS10
                     | VER_PS14
                         {
                             TRACE("Pixel  shader 1.4\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps14_parser(&asm_ctx);
                         }
                     | VER_PS20
                         {
@@ -369,6 +368,11 @@ complexinstr:         instruction
                             {
                                 TRACE("predicate\n");
                                 asm_ctx.funcs->predicate(&asm_ctx, &$1);
+                            }
+                    | '+' instruction
+                            {
+                                TRACE("coissue\n");
+                                asm_ctx.funcs->coissue(&asm_ctx);
                             }
 
 instruction:          INSTR_ADD omods dreg ',' sregs

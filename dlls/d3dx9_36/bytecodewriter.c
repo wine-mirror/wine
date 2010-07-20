@@ -578,6 +578,28 @@ static HRESULT find_ps_builtin_semantics(struct bc_writer *This,
     return S_OK;
 }
 
+static void ps_1_4_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
+    HRESULT hr;
+
+    /* First check the constants and varyings, and complain if unsupported things are used */
+    if(shader->num_ci || shader->num_cb) {
+        WARN("Int and bool constants are not supported in shader model 1 shaders\n");
+        WARN("Got %u int and %u boolean constants\n", shader->num_ci, shader->num_cb);
+        This->state = E_INVALIDARG;
+        return;
+    }
+
+    hr = find_ps_builtin_semantics(This, shader, 6);
+    if(FAILED(hr)) {
+        This->state = hr;
+        return;
+    }
+
+    /* Declare the shader type and version */
+    put_dword(buffer, This->version);
+    write_constF(shader, buffer, TRUE);
+}
+
 static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
     put_dword(buffer, D3DSIO_END);
 }
@@ -886,6 +908,168 @@ static const struct bytecode_backend vs_1_x_backend = {
     vs_12_dstreg,
     sm_1_x_opcode,
     vs_1_x_handlers
+};
+
+static void ps_1_4_srcreg(struct bc_writer *This, const struct shader_reg *reg,
+                          struct bytecode_buffer *buffer) {
+    DWORD token = (1 << 31); /* Bit 31 of registers is 1 */
+    if(reg->rel_reg) {
+        WARN("Relative addressing not supported in <= ps_3_0\n");
+        This->state = E_INVALIDARG;
+        return;
+    }
+
+    switch(reg->type) {
+        case BWRITERSPR_INPUT:
+            token |= map_ps_input(This, reg);
+            break;
+
+        /* Can be mapped 1:1 */
+        case BWRITERSPR_TEMP:
+        case BWRITERSPR_CONST:
+            token |= (reg->type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= reg->regnum & D3DSP_REGNUM_MASK; /* No shift */
+            break;
+
+        default:
+            WARN("Invalid register type for ps_1_4 shader\n");
+            This->state = E_INVALIDARG;
+            return;
+    }
+
+    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+
+    if(reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG ||
+       reg->srcmod == BWRITERSPSM_NOT) {
+        WARN("Invalid source modifier %u for ps_1_4\n", reg->srcmod);
+        This->state = E_INVALIDARG;
+        return;
+    }
+    token |= d3d9_srcmod(reg->srcmod);
+    put_dword(buffer, token);
+}
+
+static void ps_1_4_dstreg(struct bc_writer *This, const struct shader_reg *reg,
+                          struct bytecode_buffer *buffer,
+                          DWORD shift, DWORD mod) {
+    DWORD token = (1 << 31); /* Bit 31 of registers is 1 */
+
+    if(reg->rel_reg) {
+        WARN("Relative addressing not supported for destination registers\n");
+        This->state = E_INVALIDARG;
+        return;
+    }
+
+    switch(reg->type) {
+        case BWRITERSPR_TEMP: /* 1:1 mapping */
+            token |= (reg->type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK;
+            token |= reg->regnum & D3DSP_REGNUM_MASK; /* No shift */
+            break;
+
+	/* For texkill */
+        case BWRITERSPR_INPUT:
+            token |= map_ps_input(This, reg);
+            break;
+
+        default:
+            WARN("Invalid dest register type for 1.x pshader\n");
+            This->state = E_INVALIDARG;
+            return;
+    }
+
+    token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
+    token |= d3d9_dstmod(mod);
+
+    token |= d3d9_writemask(reg->writemask);
+    put_dword(buffer, token);
+}
+
+static void instr_ps_1_4_mov(struct bc_writer *This,
+                             const struct instruction *instr,
+                             struct bytecode_buffer *buffer) {
+    DWORD token = D3DSIO_MOV & D3DSI_OPCODE_MASK;
+
+    if(instr->dst.type == BWRITERSPR_TEMP && instr->src[0].type == BWRITERSPR_INPUT) {
+        if(instr->src[0].regnum == This->t_regnum[0] ||
+           instr->src[0].regnum == This->t_regnum[1] ||
+           instr->src[0].regnum == This->t_regnum[2] ||
+           instr->src[0].regnum == This->t_regnum[3] ||
+           instr->src[0].regnum == This->t_regnum[4] ||
+           instr->src[0].regnum == This->t_regnum[5]) {
+            /* Similar to a regular mov, but a different opcode */
+            token = D3DSIO_TEXCOORD & D3DSI_OPCODE_MASK;
+        } else if(instr->src[0].regnum == This->v_regnum[0] ||
+                  instr->src[0].regnum == This->v_regnum[1]) {
+            /* Handled by the normal mov below. Just drop out of the if condition */
+        } else {
+            WARN("Unsupported varying -> temp mov in ps_1_4\n");
+            This->state = E_INVALIDARG;
+            return;
+        }
+    }
+
+    This->funcs->opcode(This, instr, token, buffer);
+    This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
+    This->funcs->srcreg(This, &instr->src[0], buffer);
+}
+
+static void instr_ps_1_4_texld(struct bc_writer *This,
+                               const struct instruction *instr,
+                               struct bytecode_buffer *buffer) {
+    if(instr->src[1].type != BWRITERSPR_SAMPLER ||
+       instr->src[1].regnum > 5) {
+        WARN("Unsupported sampler type %u regnum %u\n",
+             instr->src[1].type, instr->src[1].regnum);
+        This->state = E_INVALIDARG;
+        return;
+    } else if(instr->dst.type != BWRITERSPR_TEMP) {
+        WARN("Can only sample into a temp register\n");
+        This->state = E_INVALIDARG;
+        return;
+    }
+
+    if(instr->src[1].regnum != instr->dst.regnum) {
+        WARN("Sampling from sampler s%u to register r%u is not possible in ps_1_4\n",
+             instr->src[1].regnum, instr->dst.regnum);
+        This->state = E_INVALIDARG;
+        return;
+    }
+
+    This->funcs->opcode(This, instr, D3DSIO_TEX & D3DSI_OPCODE_MASK, buffer);
+    This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
+    This->funcs->srcreg(This, &instr->src[0], buffer);
+}
+
+static const struct instr_handler_table ps_1_4_handlers[] = {
+    {BWRITERSIO_ADD,            instr_handler},
+    {BWRITERSIO_NOP,            instr_handler},
+    {BWRITERSIO_MOV,            instr_ps_1_4_mov},
+    {BWRITERSIO_SUB,            instr_handler},
+    {BWRITERSIO_MAD,            instr_handler},
+    {BWRITERSIO_MUL,            instr_handler},
+    {BWRITERSIO_DP3,            instr_handler},
+    {BWRITERSIO_DP4,            instr_handler},
+    {BWRITERSIO_LRP,            instr_handler},
+
+    /* pshader instructions */
+    {BWRITERSIO_CND,            instr_handler},
+    {BWRITERSIO_CMP,            instr_handler},
+    {BWRITERSIO_TEXKILL,        instr_handler},
+    {BWRITERSIO_TEX,            instr_ps_1_4_texld},
+    {BWRITERSIO_TEXDEPTH,       instr_handler},
+    {BWRITERSIO_BEM,            instr_handler},
+
+    {BWRITERSIO_PHASE,          instr_handler},
+    {BWRITERSIO_END,            NULL},
+};
+
+static const struct bytecode_backend ps_1_4_backend = {
+    ps_1_4_header,
+    end,
+    ps_1_4_srcreg,
+    ps_1_4_dstreg,
+    sm_1_x_opcode,
+    ps_1_4_handlers
 };
 
 static void write_constB(const struct bwriter_shader *shader, struct bytecode_buffer *buffer, BOOL len) {
@@ -1676,6 +1860,11 @@ static void init_vs30_dx9_writer(struct bc_writer *writer) {
     writer->funcs = &vs_3_backend;
 }
 
+static void init_ps14_dx9_writer(struct bc_writer *writer) {
+    TRACE("Creating DirectX9 pixel shader 1.4 writer\n");
+    writer->funcs = &ps_1_4_backend;
+}
+
 static void init_ps20_dx9_writer(struct bc_writer *writer) {
     TRACE("Creating DirectX9 pixel shader 2.0 writer\n");
     writer->funcs = &ps_2_0_backend;
@@ -1769,7 +1958,7 @@ static struct bc_writer *create_writer(DWORD version, DWORD dxversion) {
                 WARN("Unsupported dxversion for pixel shader 1.4 requested: %u\n", dxversion);
                 goto fail;
             }
-            /* TODO: Set the appropriate writer backend */
+            init_ps14_dx9_writer(ret);
             break;
 
         case BWRITERPS_VERSION(2, 0):

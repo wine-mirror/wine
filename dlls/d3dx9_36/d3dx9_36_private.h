@@ -323,6 +323,7 @@ void create_vs11_parser(struct asm_parser *ret);
 void create_vs20_parser(struct asm_parser *ret);
 void create_vs2x_parser(struct asm_parser *ret);
 void create_vs30_parser(struct asm_parser *ret);
+void create_ps14_parser(struct asm_parser *ret);
 void create_ps20_parser(struct asm_parser *ret);
 void create_ps2x_parser(struct asm_parser *ret);
 void create_ps30_parser(struct asm_parser *ret);

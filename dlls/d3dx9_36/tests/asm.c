@@ -561,6 +561,33 @@ static void ps_1_4_test(void) {
             "texdepth r5\n",
             {0xffff0104, 0x00000057, 0x800f0005, 0x0000ffff}
         },
+        {   /* shader 15 */
+            "ps_1_4\n"
+            "add r0, r1, r2_bx2\n",
+            {0xffff0104, 0x00000002, 0x800f0000, 0x80e40001, 0x84e40002, 0x0000ffff}
+        },
+        {   /* shader 16 */
+            "ps_1_4\n"
+            "add_x4 r0, r1, r2\n",
+            {0xffff0104, 0x00000002, 0x820f0000, 0x80e40001, 0x80e40002, 0x0000ffff}
+        },
+        {   /* shader 17 */
+            "ps_1_4\n"
+            "add r0.rgb, r1, r2\n"
+            "+add r0.a, r1, r2\n",
+            {0xffff0104, 0x00000002, 0x80070000, 0x80e40001, 0x80e40002, 0x40000002,
+             0x80080000, 0x80e40001, 0x80e40002, 0x0000ffff}
+        },
+        {   /* shader 18 */
+            "ps_1_4\n"
+            "texdepth_x2 r5\n",
+            {0xffff0104, 0x00000057, 0x810f0005, 0x0000ffff}
+        },
+        {   /* shader 18 */
+            "ps_1_4\n"
+            "bem_d2 r1, c0, r0\n",
+            {0xffff0104, 0x00000059, 0x8f0f0001, 0xa0e40000, 0x80e40000, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_1_4", tests, sizeof(tests) / sizeof(tests[0]));
@@ -1627,7 +1654,7 @@ START_TEST(asm)
     todo_wine ps_1_1_test();
     vs_1_1_test();
     todo_wine ps_1_3_test();
-    todo_wine ps_1_4_test();
+    ps_1_4_test();
     vs_2_0_test();
     vs_2_x_test();
     ps_2_0_test();
