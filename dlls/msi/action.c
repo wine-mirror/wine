@@ -4752,11 +4752,9 @@ static UINT ACTION_InstallExecute(MSIPACKAGE *package)
     return execute_script(package,INSTALL_SCRIPT);
 }
 
-static UINT msi_unpublish_product(MSIPACKAGE *package)
+static UINT msi_unpublish_product(MSIPACKAGE *package, WCHAR *remove)
 {
-    LPWSTR upgrade;
-    LPWSTR remove = NULL;
-    LPWSTR *features = NULL;
+    WCHAR *upgrade, **features;
     BOOL full_uninstall = TRUE;
     MSIFEATURE *feature;
     MSIPATCHINFO *patch;
@@ -4764,14 +4762,9 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
     static const WCHAR szUpgradeCode[] =
         {'U','p','g','r','a','d','e','C','o','d','e',0};
 
-    remove = msi_dup_property(package->db, szRemove);
-    if (!remove)
-        return ERROR_SUCCESS;
-
     features = msi_split_string(remove, ',');
     if (!features)
     {
-        msi_free(remove);
         ERR("REMOVE feature list is empty!\n");
         return ERROR_FUNCTION_FAILED;
     }
@@ -4786,9 +4779,10 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
                 full_uninstall = FALSE;
         }
     }
+    msi_free(features);
 
     if (!full_uninstall)
-        goto done;
+        return ERROR_SUCCESS;
 
     MSIREG_DeleteProductKey(package->ProductCode);
     MSIREG_DeleteUserDataProductKey(package->ProductCode);
@@ -4817,19 +4811,13 @@ static UINT msi_unpublish_product(MSIPACKAGE *package)
         MSIREG_DeleteUserDataPatchKey(patch->patchcode, package->Context);
     }
 
-done:
-    msi_free(remove);
-    msi_free(features);
     return ERROR_SUCCESS;
 }
 
 static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 {
     UINT rc;
-
-    rc = msi_unpublish_product(package);
-    if (rc != ERROR_SUCCESS)
-        return rc;
+    WCHAR *remove;
 
     /* turn off scheduling */
     package->script->CurrentlyScripting= FALSE;
@@ -4841,7 +4829,14 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 
     /* then handle Commit Actions */
     rc = execute_script(package,COMMIT_SCRIPT);
+    if (rc != ERROR_SUCCESS)
+        return rc;
 
+    remove = msi_dup_property(package->db, szRemove);
+    if (remove)
+        rc = msi_unpublish_product(package, remove);
+
+    msi_free(remove);
     return rc;
 }
 
