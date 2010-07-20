@@ -276,6 +276,11 @@ ps_3_0                  {return VER_PS30;       }
 
     /* Output modifiers */
 \_x2                    {return SHIFT_X2;           }
+\_x4                    {return SHIFT_X4;           }
+\_x8                    {return SHIFT_X8;           }
+\_d2                    {return SHIFT_D2;           }
+\_d4                    {return SHIFT_D4;           }
+\_d8                    {return SHIFT_D8;           }
 \_sat                   {return MOD_SAT;            }
 \_pp                    {return MOD_PP;             }
 \_centroid              {return MOD_CENTROID;       }

@@ -199,6 +199,11 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 
 /* Output modifiers */
 %token SHIFT_X2
+%token SHIFT_X4
+%token SHIFT_X8
+%token SHIFT_D2
+%token SHIFT_D4
+%token SHIFT_D8
 %token MOD_SAT
 %token MOD_PP
 %token MOD_CENTROID
@@ -1045,7 +1050,37 @@ omods:                 /* Empty */
                             }
                         }
 
-omodifier:            MOD_SAT
+omodifier:            SHIFT_X2
+                        {
+                            $$.mod = 0;
+                            $$.shift = 1;
+                        }
+                    | SHIFT_X4
+                        {
+                            $$.mod = 0;
+                            $$.shift = 2;
+                        }
+                    | SHIFT_X8
+                        {
+                            $$.mod = 0;
+                            $$.shift = 3;
+                        }
+                    | SHIFT_D2
+                        {
+                            $$.mod = 0;
+                            $$.shift = 15;
+                        }
+                    | SHIFT_D4
+                        {
+                            $$.mod = 0;
+                            $$.shift = 14;
+                        }
+                    | SHIFT_D8
+                        {
+                            $$.mod = 0;
+                            $$.shift = 13;
+                        }
+                    | MOD_SAT
                         {
                             $$.mod = BWRITERSPDM_SATURATE;
                             $$.shift = 0;

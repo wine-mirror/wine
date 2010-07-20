@@ -400,6 +400,7 @@ struct bc_writer {
 /* Debug utility routines */
 const char *debug_print_srcmod(DWORD mod);
 const char *debug_print_dstmod(DWORD mod);
+const char *debug_print_shift(DWORD shift);
 const char *debug_print_dstreg(const struct shader_reg *reg);
 const char *debug_print_srcreg(const struct shader_reg *reg);
 const char *debug_print_swizzle(DWORD swizzle);

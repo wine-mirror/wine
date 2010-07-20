@@ -274,6 +274,28 @@ const char *debug_print_dstmod(DWORD mod) {
     }
 }
 
+const char *debug_print_shift(DWORD shift) {
+    static const char * const shiftstrings[] = {
+        "",
+        "_x2",
+        "_x4",
+        "_x8",
+        "_x16",
+        "_x32",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "_d16",
+        "_d8",
+        "_d4",
+        "_d2",
+    };
+    return shiftstrings[shift];
+}
+
 static const char *get_regname(const struct shader_reg *reg) {
     switch(reg->type) {
         case BWRITERSPR_TEMP:

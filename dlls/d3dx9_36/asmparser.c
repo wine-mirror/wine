@@ -232,8 +232,9 @@ static void asmparser_instr(struct asm_parser *This, DWORD opcode,
 
     if(!This->shader) return;
 
-    TRACE_(parsed_shader)("%s%s%s ", debug_print_opcode(opcode),
+    TRACE_(parsed_shader)("%s%s%s%s ", debug_print_opcode(opcode),
                           debug_print_dstmod(mod),
+                          debug_print_shift(shift),
                           debug_print_comp(comp));
     if(dst) {
         TRACE_(parsed_shader)("%s", debug_print_dstreg(dst));
