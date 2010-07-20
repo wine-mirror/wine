@@ -9241,6 +9241,9 @@ static void test_featureparents(void)
     r = MsiSetFeatureState(hpkg, "orion", INSTALLSTATE_ABSENT);
     ok( r == ERROR_SUCCESS, "failed to set feature state: %d\n", r);
 
+    r = MsiSetFeatureState(hpkg, "nosuchfeature", INSTALLSTATE_ABSENT);
+    ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
+
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "zodiac", &state, &action);
