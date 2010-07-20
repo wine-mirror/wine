@@ -1,0 +1,87 @@
+/*
+* Add/Remove Programs Serbian resources
+*
+* Copyright 2010 Nenad Vujic
+*                Paul Vriens
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+*
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+*
+*/
+
+#include "res.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+STRINGTABLE
+{
+   IDS_CPL_TITLE, "Dodaj/Ukloni programe"
+   IDS_CPL_DESC, "Instaliranje novog programa ili brisanje istog savašeg računara."
+   IDS_TAB1_TITLE, "Programi"
+
+   IDS_UNINSTALL_FAILED, "Brisanje programa se ne može pokrenuti, '%s'. Da li želite da uklonite opciju Brisanje za ovajprogram iz registra?"
+   IDS_NOT_SPECIFIED, "Nije određeno"
+
+   IDS_COLUMN_NAME, "Ime"
+   IDS_COLUMN_PUBLISHER, "Izdavač"
+   IDS_COLUMN_VERSION, "Verzija"
+   IDS_INSTALL_FILTER, "Instalacioni programi\\0*instal*.exe;*setup*.exe;*.msi\\0Programs (*.exe)\\0*.exe\\0All Files (*.*)\\0*.*\\0\\0"
+
+   IDS_REMOVE, "&Ukloni..."
+   IDS_MODIFY_REMOVE, "&Izmeni/Ukloni..."
+}
+
+IDD_MAIN DIALOG 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Instaliraj/Ukloni"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "Da instalirate novi program sa diskete, diska ili sa vašeg hard diska, kliknite Instaliraj.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "&Instaliraj...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
+ CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
+ CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
+ CONTROL "Program se može aitomatski ukloniti. Da uklonite program ili da izmenite njegove instalirane delove, izaberite sa liste i kliknite Izmeni/Ukloni.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
+ CONTROL "&Info podrške...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 104, 198, 64, 14
+ CONTROL "&Izmeni...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "&Ukloni...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
+ CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
+}
+
+IDD_INFO DIALOG 0, 0, 256, 138
+STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Info podrške"
+FONT 8, "MS Shell Dlg"
+{
+ CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
+ CONTROL "Ova informacija se može koristiti da dobijete Tehničku podršku za %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "Izdavač:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
+ CONTROL "Verzija:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "Kontakt:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
+ CONTROL "Info podrške:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "Telefon podrške:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
+ CONTROL "Procitaj me:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "Nove verzije:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "Komentari:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
+ CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
+ CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
+ CONTROL "", IDC_INFO_SUPPORT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 60, 136, 8
+ CONTROL "", IDC_INFO_PHONE, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 70, 136, 8
+ CONTROL "", IDC_INFO_README, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 80, 136, 8
+ CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
+ CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
+}
