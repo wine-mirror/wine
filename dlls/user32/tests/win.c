@@ -4872,7 +4872,7 @@ static void test_ShowWindow(void)
 {
     HWND hwnd;
     DWORD style;
-    RECT rcMain, rc;
+    RECT rcMain, rc, rcMinimized;
     LPARAM ret;
 
     SetRect(&rcMain, 120, 120, 210, 210);
@@ -4914,8 +4914,16 @@ static void test_ShowWindow(void)
     ok(style & WS_VISIBLE, "window should be visible\n");
     ok(style & WS_MINIMIZE, "window should be minimized\n");
     ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rcMinimized);
+    ok(!EqualRect(&rcMain, &rcMinimized), "rects shouldn't match\n");
+    /* shouldn't be able to resize minized windows */
+    ret = SetWindowPos(hwnd, 0, 0, 0,
+                       (rcMinimized.right - rcMinimized.left) * 2,
+                       (rcMinimized.bottom - rcMinimized.top) * 2,
+                       SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+    ok(ret, "not expected ret: %lu\n", ret);
     GetWindowRect(hwnd, &rc);
-    ok(!EqualRect(&rcMain, &rc), "rects shouldn't match\n");
+    todo_wine ok(EqualRect(&rc, &rcMinimized), "rects should match\n");
 
     ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
