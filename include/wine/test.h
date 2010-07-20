@@ -590,6 +590,8 @@ static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
+void _fpreset(void) {} /* override the mingw fpu init code */
+
 /* main function */
 int main( int argc, char **argv )
 {
