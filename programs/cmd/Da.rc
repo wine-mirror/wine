@@ -247,7 +247,7 @@ Skriv «HELP <kommando>» for mere information om kommandoerne ovenover\n"
   WCMD_DELPROMPT, "%s, Slet"
   WCMD_ECHOPROMPT, "Echo er %s\n"
   WCMD_VERIFYPROMPT, "Verify er %s\n"
-  WCMD_VERIFYERR, "Verify skal være ON eller OFF\n";
+  WCMD_VERIFYERR, "Verify skal være ON eller OFF\n"
   WCMD_ARGERR, "Parameter fejl\n"
   WCMD_VOLUMEDETAIL, "Volumen i drevet %c er %s\nVolume Seriel Nummer is %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Volumen's label (11 karaktere, ENTER for ingen)?"

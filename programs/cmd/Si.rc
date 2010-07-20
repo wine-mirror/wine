@@ -263,7 +263,7 @@ Uporabite HELP <ukaz> za več informacijo o kateremkoli od zgoraj navedenih ukaz
   WCMD_DELPROMPT, "Ali naj izbrišem %s?"
   WCMD_ECHOPROMPT, "Odmev je %s\n"
   WCMD_VERIFYPROMPT, "Zastavica preverjanja je nastavljena na %s\n"
-  WCMD_VERIFYERR, "Vrednost zastavice preverjanja mora biti ON ali OFF\n";
+  WCMD_VERIFYERR, "Vrednost zastavice preverjanja mora biti ON ali OFF\n"
   WCMD_ARGERR, "Napaka parametra\n"
   WCMD_VOLUMEDETAIL, "Podatkovni nosilec v pogonu %c je %s\nSerijska št. nosilca je %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Oznaka podatkovnega nosilca (11 znakov, ENTER za brez)?"

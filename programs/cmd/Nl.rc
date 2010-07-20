@@ -283,7 +283,7 @@ type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
   WCMD_DELPROMPT, "%s, Verwijderen"
   WCMD_ECHOPROMPT, "Echo staat %s\n"
   WCMD_VERIFYPROMPT, "Verify staat %s\n"
-  WCMD_VERIFYERR, "Verify moet ON of OFF zijn\n";
+  WCMD_VERIFYERR, "Verify moet ON of OFF zijn\n"
   WCMD_ARGERR, "Parameter onjuist\n"
   WCMD_VOLUMEDETAIL, "Schijf in drive %c is %s\nHet serienummer van de schijf is %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Schijf naam (11 karakters, ENTER voor geen)?"

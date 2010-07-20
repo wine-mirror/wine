@@ -261,7 +261,7 @@ Wpisz HELP <komenda> dla dok³adniejszych informacji o komendzie\n"
   WCMD_DELPROMPT, "%s, Usun¹æ"
   WCMD_ECHOPROMPT, "Echo jest %s\n"
   WCMD_VERIFYPROMPT, "Verify jest %s\n"
-  WCMD_VERIFYERR, "Verify musi byæ ON lub OFF\n";
+  WCMD_VERIFYERR, "Verify musi byæ ON lub OFF\n"
   WCMD_ARGERR, "B³¹d parametru\n"
   WCMD_VOLUMEDETAIL, "Wolumenem w napêdzie %c jest %s\nNumer seryjny wolumenu: %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Etykieta Wolumenu (11 znaków, ENTER aby pomin¹æ)?"

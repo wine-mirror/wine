@@ -268,7 +268,7 @@ Entre HELP <comando> para maiores informações sobre alguns dos comandos acima\
   WCMD_DELPROMPT, "%s, Excluir"
   WCMD_ECHOPROMPT, "Echo é %s\n"
   WCMD_VERIFYPROMPT, "Verify é %s\n"
-  WCMD_VERIFYERR, "Verify deve ser ON ou OFF\n";
+  WCMD_VERIFYERR, "Verify deve ser ON ou OFF\n"
   WCMD_ARGERR, "Erro de parâmetro\n"
   WCMD_VOLUMEDETAIL, "Volume no drive %c é %s\nO Número de Série do Volume é %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Rótulo do Volume (11 characters, ENTER for none)?"
@@ -523,7 +523,7 @@ Digite HELP <comando> para mais informações sobre alguns dos comandos acima\n"
   WCMD_DELPROMPT, "%s, Delete"
   WCMD_ECHOPROMPT, "Echo is %s\n"
   WCMD_VERIFYPROMPT, "Verify is %s\n"
-  WCMD_VERIFYERR, "Verify must be ON or OFF\n";
+  WCMD_VERIFYERR, "Verify must be ON or OFF\n"
   WCMD_ARGERR, "Parameter error\n"
   WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"

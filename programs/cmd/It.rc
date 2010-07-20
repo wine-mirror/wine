@@ -269,7 +269,7 @@ Inserisci HELP <comando> per maggiori informazioni su ciascuno dei comandi sopra
   WCMD_DELPROMPT, "%s, Cancella"
   WCMD_ECHOPROMPT, "Echo è %s\n"
   WCMD_VERIFYPROMPT, "Verify è %s\n"
-  WCMD_VERIFYERR, "Verify deve essere ON o OFF\n";
+  WCMD_VERIFYERR, "Verify deve essere ON o OFF\n"
   WCMD_ARGERR, "Errore nel parametro\n"
   WCMD_VOLUMEDETAIL, "Il volume nell'unità %c è %s\nIl numero seriale del volume è %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Etichetta del volume (11 caratteri, Invio per nessuno)?"

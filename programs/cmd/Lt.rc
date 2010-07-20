@@ -267,7 +267,7 @@ EXIT\t\tUžveria CMD\n\n\
   WCMD_DELPROMPT,     "%s, šalinti"
   WCMD_ECHOPROMPT,    "ECHO yra %s\n"
   WCMD_VERIFYPROMPT,  "VERIFY yra %s\n"
-  WCMD_VERIFYERR,     "VERIFY turi būti ON arba OFF\n";
+  WCMD_VERIFYERR,     "VERIFY turi būti ON arba OFF\n"
   WCMD_ARGERR,        "Parametro klaida\n"
   WCMD_VOLUMEDETAIL,  "Tomas diske %c yra %s\nTomo serijos numeris yra %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT,  "Tomo vardas (11 simbolių, ENTER - bevardis)?"
