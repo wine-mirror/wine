@@ -964,7 +964,7 @@ if (0)
 
 static void test_StrStrA(void)
 {
-    static const char *deadbeef = "DeAdBeEf";
+    static const char *deadbeefA = "DeAdBeEf";
 
     const struct
     {
@@ -973,11 +973,11 @@ static void test_StrStrA(void)
     } StrStrA_cases[] =
     {
         {"", NULL},
-        {"DeAd", deadbeef},
+        {"DeAd", deadbeefA},
         {"dead", NULL},
-        {"AdBe", deadbeef + 2},
+        {"AdBe", deadbeefA + 2},
         {"adbe", NULL},
-        {"BeEf", deadbeef + 4},
+        {"BeEf", deadbeefA + 4},
         {"beef", NULL},
     };
 
@@ -1002,7 +1002,7 @@ static void test_StrStrA(void)
 
     for (i = 0; i < sizeof(StrStrA_cases)/sizeof(StrStrA_cases[0]); i++)
     {
-        ret = StrStrA(deadbeef, StrStrA_cases[i].search);
+        ret = StrStrA(deadbeefA, StrStrA_cases[i].search);
         ok(ret == StrStrA_cases[i].expect,
            "[%d] Expected StrStrA to return %p, got %p\n",
            i, StrStrA_cases[i].expect, ret);
@@ -1065,7 +1065,7 @@ static void test_StrStrW(void)
 
 static void test_StrStrIA(void)
 {
-    static const char *deadbeef = "DeAdBeEf";
+    static const char *deadbeefA = "DeAdBeEf";
 
     const struct
     {
@@ -1074,12 +1074,12 @@ static void test_StrStrIA(void)
     } StrStrIA_cases[] =
     {
         {"", NULL},
-        {"DeAd", deadbeef},
-        {"dead", deadbeef},
-        {"AdBe", deadbeef + 2},
-        {"adbe", deadbeef + 2},
-        {"BeEf", deadbeef + 4},
-        {"beef", deadbeef + 4},
+        {"DeAd", deadbeefA},
+        {"dead", deadbeefA},
+        {"AdBe", deadbeefA + 2},
+        {"adbe", deadbeefA + 2},
+        {"BeEf", deadbeefA + 4},
+        {"beef", deadbeefA + 4},
         {"cafe", NULL},
     };
 
@@ -1104,7 +1104,7 @@ static void test_StrStrIA(void)
 
     for (i = 0; i < sizeof(StrStrIA_cases)/sizeof(StrStrIA_cases[0]); i++)
     {
-        ret = StrStrIA(deadbeef, StrStrIA_cases[i].search);
+        ret = StrStrIA(deadbeefA, StrStrIA_cases[i].search);
         ok(ret == StrStrIA_cases[i].expect,
            "[%d] Expected StrStrIA to return %p, got %p\n",
            i, StrStrIA_cases[i].expect, ret);
