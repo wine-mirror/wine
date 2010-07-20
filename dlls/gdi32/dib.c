@@ -1261,11 +1261,10 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     case 8:
     case 24:
         if (compression == BI_RGB) break;
+        /* fall through */
+    default:
         WARN( "invalid %u bpp compression %u\n", bpp, compression );
         return 0;
-    default:
-        FIXME( "should fail %u bpp compression %u\n", bpp, compression );
-        break;
     }
 
     if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;

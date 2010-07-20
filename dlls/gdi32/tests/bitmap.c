@@ -554,7 +554,7 @@ static void test_dibsections(void)
         if (i == 1 || i == 4 || i == 8 || i == 16 || i == 24 || i == 32)
             ok(hdib != NULL, "CreateDIBSection bpp %u\n", i);
         else
-            todo_wine ok(hdib == NULL, "CreateDIBSection bpp %u succeeded\n", i);
+            ok(hdib == NULL, "CreateDIBSection bpp %u succeeded\n", i);
         if (hdib) DeleteObject( hdib );
     }
 
