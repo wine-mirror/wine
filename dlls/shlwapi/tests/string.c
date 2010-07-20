@@ -909,10 +909,15 @@ if (0)
     expect_eq(wbuf[0], 0, WCHAR, "%x");
     expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
 
-    memset(wbuf, 0xbf, sizeof(wbuf));
-    expect_eq(StrCpyNW(wbuf, 0, 10), wbuf, PWCHAR, "%p");
-    expect_eq(wbuf[0], 0, WCHAR, "%x");
-    expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
+    if (pStrCpyNXA)
+    {
+        memset(wbuf, 0xbf, sizeof(wbuf));
+        expect_eq(StrCpyNW(wbuf, 0, 10), wbuf, PWCHAR, "%p");
+        expect_eq(wbuf[0], 0, WCHAR, "%x");
+        expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
+    }
+    else
+        win_skip("StrCpyNW test crashes on older Win9x platforms\n");
 
     memset(wbuf, 0xbf, sizeof(wbuf));
     expect_eq(StrCpyNW(wbuf, 0, 0), wbuf, PWCHAR, "%p");
