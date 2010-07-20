@@ -771,6 +771,7 @@ static void test_secure_connection(void)
     BOOL ret;
     CERT_CONTEXT *cert;
     WINHTTP_CERTIFICATE_INFO info;
+    char buffer[32];
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
@@ -846,6 +847,13 @@ static void test_secure_connection(void)
     size = 0;
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, NULL, &size, NULL);
     ok(!ret, "succeeded unexpectedly\n");
+
+    for (;;)
+    {
+        size = 0;
+        ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
+        if (!size) break;
+    }
 
 cleanup:
     WinHttpCloseHandle(req);

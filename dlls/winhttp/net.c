@@ -111,6 +111,7 @@ MAKE_FUNCPTR( SSL_connect );
 MAKE_FUNCPTR( SSL_shutdown );
 MAKE_FUNCPTR( SSL_write );
 MAKE_FUNCPTR( SSL_read );
+MAKE_FUNCPTR( SSL_get_error );
 MAKE_FUNCPTR( SSL_get_ex_new_index );
 MAKE_FUNCPTR( SSL_get_ex_data );
 MAKE_FUNCPTR( SSL_set_ex_data );
@@ -440,6 +441,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_shutdown );
     LOAD_FUNCPTR( SSL_write );
     LOAD_FUNCPTR( SSL_read );
+    LOAD_FUNCPTR( SSL_get_error );
     LOAD_FUNCPTR( SSL_get_ex_new_index );
     LOAD_FUNCPTR( SSL_get_ex_data );
     LOAD_FUNCPTR( SSL_set_ex_data );
@@ -713,6 +715,8 @@ BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int flags, int 
 
 BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd )
 {
+    int ret;
+
     *recvd = 0;
     if (!netconn_connected( conn )) return FALSE;
     if (!len) return TRUE;
@@ -751,19 +755,29 @@ BOOL netconn_recv( netconn_t *conn, void *buf, size_t len, int flags, int *recvd
             /* check if we have enough data from the peek buffer */
             if (!(flags & MSG_WAITALL) || (*recvd == len)) return TRUE;
         }
-        *recvd += pSSL_read( conn->ssl_conn, (char *)buf + *recvd, len - *recvd );
+        ret = pSSL_read( conn->ssl_conn, (char *)buf + *recvd, len - *recvd );
+        if (ret < 0)
+            return FALSE;
+
+        /* check if EOF was received */
+        if (!ret && (pSSL_get_error( conn->ssl_conn, ret ) == SSL_ERROR_ZERO_RETURN ||
+                     pSSL_get_error( conn->ssl_conn, ret ) == SSL_ERROR_SYSCALL ))
+        {
+            netconn_close( conn );
+            return TRUE;
+        }
         if (flags & MSG_PEEK) /* must copy into buffer */
         {
-            conn->peek_len = *recvd;
-            if (!*recvd)
+            conn->peek_len = ret;
+            if (!ret)
             {
                 heap_free( conn->peek_msg_mem );
                 conn->peek_msg_mem = NULL;
                 conn->peek_msg = NULL;
             }
-            else memcpy( conn->peek_msg, buf, *recvd );
+            else memcpy( conn->peek_msg, buf, ret );
         }
-        if (*recvd < 1) return FALSE;
+        *recvd = ret;
         return TRUE;
 #else
         return FALSE;
