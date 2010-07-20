@@ -5418,7 +5418,30 @@ BOOL WINAPI SaferCreateLevel(DWORD ScopeId, DWORD LevelId, DWORD OpenFlags,
                              SAFER_LEVEL_HANDLE* LevelHandle, LPVOID lpReserved)
 {
     FIXME("(%u, %x, %u, %p, %p) stub\n", ScopeId, LevelId, OpenFlags, LevelHandle, lpReserved);
-    return FALSE;
+
+    *LevelHandle = (SAFER_LEVEL_HANDLE)0xdeadbeef;
+    return TRUE;
+}
+
+/******************************************************************************
+ * SaferComputeTokenFromLevel   [ADVAPI32.@]
+ */
+BOOL WINAPI SaferComputeTokenFromLevel(SAFER_LEVEL_HANDLE handle, HANDLE token, PHANDLE access_token,
+                                       DWORD flags, LPVOID reserved)
+{
+    FIXME("(%p, %p, %p, %x, %p) stub\n", handle, token, access_token, flags, reserved);
+
+    *access_token = (HANDLE)0xdeadbeef;
+    return TRUE;
+}
+
+/******************************************************************************
+ * SaferCloseLevel   [ADVAPI32.@]
+ */
+BOOL WINAPI SaferCloseLevel(SAFER_LEVEL_HANDLE handle)
+{
+    FIXME("(%p) stub\n", handle);
+    return TRUE;
 }
 
 DWORD WINAPI TreeResetNamedSecurityInfoW( LPWSTR pObjectName,
