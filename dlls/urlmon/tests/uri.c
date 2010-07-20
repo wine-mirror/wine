@@ -2273,6 +2273,187 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* Since the original URI doesn't contain an extra '/' before the path no % encoded values
+     * are decoded and all '%' are encoded.
+     */
+    {   "file://C:/te%3Es%2Et/tes%t.mp3", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"file:///C:/te%253Es%252Et/tes%25t.mp3",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"file:///C:/te%253Es%252Et/tes%25t.mp3",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {".mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/C:/te%253Es%252Et/tes%25t.mp3",S_OK,TRUE},
+            {"/C:/te%253Es%252Et/tes%25t.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"file://C:/te%3Es%2Et/tes%t.mp3",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Since there's a '/' in front of the drive letter, any percent encoded, non-forbidden character
+     * is decoded and only %'s in front of invalid hex digits are encoded.
+     */
+    {   "file:///C:/te%3Es%2Et/t%23es%t.mp3", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"file:///C:/te%3Es.t/t#es%25t.mp3",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"file:///C:/te%3Es.t/t#es%25t.mp3",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {".mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/C:/te%3Es.t/t#es%25t.mp3",S_OK,TRUE},
+            {"/C:/te%3Es.t/t#es%25t.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"file:///C:/te%3Es%2Et/t%23es%t.mp3",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Only unreserved percent encoded characters are decoded for known schemes that aren't file. */
+    {   "http://[::001.002.003.000]/%3F%23%2E%54/test", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://[::1.2.3.0]/%3F%23.T/test",S_OK,TRUE},
+            {"[::1.2.3.0]",S_OK,FALSE},
+            {"http://[::1.2.3.0]/%3F%23.T/test",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"::1.2.3.0",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/%3F%23.T/test",S_OK,TRUE},
+            {"/%3F%23.T/test",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://[::001.002.003.000]/%3F%23%2E%54/test",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Forbidden characters are always encoded for file URIs. */
+    {   "file:///C:/\"test\"/test.mp3", Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"file:///C:/%22test%22/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"file:///C:/%22test%22/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {".mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/C:/%22test%22/test.mp3",S_OK,TRUE},
+            {"/C:/%22test%22/test.mp3",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"file:///C:/\"test\"/test.mp3",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Forbidden characters are never encoded for unknown scheme types. */
+    {   "1234://4294967295/<|>\" test<|>", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"1234://4294967295/<|>\" test<|>",S_OK,TRUE},
+            {"4294967295",S_OK,FALSE},
+            {"1234://4294967295/<|>\" test<|>",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"4294967295",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/<|>\" test<|>",S_OK,TRUE},
+            {"/<|>\" test<|>",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"1234://4294967295/<|>\" test<|>",S_OK,FALSE},
+            {"1234",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_IPV4,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Make sure forbidden characters are percent encoded. */
+    {   "http://gov.uk/<|> test<|>", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"http://gov.uk/%3C%7C%3E%20test%3C%7C%3E",S_OK,TRUE},
+            {"gov.uk",S_OK,FALSE},
+            {"http://gov.uk/%3C%7C%3E%20test%3C%7C%3E",S_OK,TRUE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"gov.uk",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/%3C%7C%3E%20test%3C%7C%3E",S_OK,TRUE},
+            {"/%3C%7C%3E%20test%3C%7C%3E",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"http://gov.uk/<|> test<|>",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 

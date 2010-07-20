@@ -58,6 +58,9 @@ typedef struct {
     DWORD           authority_len;
 
     INT             domain_offset;
+
+    INT             path_start;
+    DWORD           path_len;
 } Uri;
 
 typedef struct {
@@ -2266,6 +2269,115 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
     return TRUE;
 }
 
+/* Attempts to canonicalize the path of a hierarchical URI.
+ *
+ * Things that happen:
+ *  1). Forbidden characters are percent encoded, unless the NO_ENCODE_FORBIDDEN
+ *      flag is set or it's a file URI. Forbidden characters are always encoded
+ *      for file schemes reguardless and forbidden characters are never encoded
+ *      for unknown scheme types.
+ *
+ *  2). For known scheme types '\\' are changed to '/'.
+ *
+ *  3). Percent encoded, unreserved characters are decoded to their actual values.
+ *      Unless the scheme type is unknown. For file schemes any percent encoded
+ *      character in the unreserved or reserved set is decoded.
+ *
+ *  4). For File schemes if the path is starts with a drive letter and doesn't
+ *      start with a '/' then one is appended.
+ *      Ex: file://c:/test.mp3 -> file:///c:/test.mp3
+ *
+ *  5). Dot segments are removed from the path for all scheme types
+ *      unless NO_CANONICALIZE flag is set. Dot segments aren't removed
+ *      for wildcard scheme types.
+ *
+ * NOTES:
+ *      file://c:/test%20test   -> file:///c:/test%2520test
+ *      file://c:/test%3Etest   -> file:///c:/test%253Etest
+ *      file:///c:/test%20test  -> file:///c:/test%20test
+ *      file:///c:/test%test    -> file:///c:/test%25test
+ */
+static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
+                                           DWORD flags, BOOL computeOnly) {
+    const WCHAR *ptr;
+    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+    const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
+
+    BOOL escape_pct = FALSE;
+
+    if(!data->path) {
+        uri->path_start = -1;
+        uri->path_len = 0;
+        return TRUE;
+    }
+
+    uri->path_start = uri->canon_len;
+
+    /* Check if a '/' needs to be appended for the file scheme. */
+    if(is_file) {
+        if(data->path_len > 1 && is_alpha(*(data->path)) &&
+           *(data->path+1) == ':') {
+            if(!computeOnly)
+                uri->canon_uri[uri->canon_len] = '/';
+            uri->canon_len++;
+            escape_pct = TRUE;
+        }
+    }
+
+    for(ptr = data->path; ptr < data->path+data->path_len; ++ptr) {
+        if(*ptr == '%') {
+            const WCHAR *tmp = ptr;
+            WCHAR val;
+
+            /* Check if the % represents a valid encoded char, or if it needs encoded. */
+            BOOL force_encode = !check_pct_encoded(&tmp) && is_file;
+            val = decode_pct_val(ptr);
+
+            if(force_encode || escape_pct) {
+                /* Escape the percent sign in the file URI. */
+                if(!computeOnly)
+                    pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
+                uri->canon_len += 3;
+            } else if((is_unreserved(val) && known_scheme) ||
+                      (is_file && (is_unreserved(val) || is_reserved(val)))) {
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = val;
+                ++uri->canon_len;
+
+                ptr += 2;
+                continue;
+            } else {
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
+            }
+        } else if(*ptr == '\\' && known_scheme) {
+            if(!computeOnly)
+                uri->canon_uri[uri->canon_len] = '/';
+            ++uri->canon_len;
+        } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
+                  (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
+            /* Escape the forbidden character. */
+            if(!computeOnly)
+                pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
+            uri->canon_len += 3;
+        } else {
+            if(!computeOnly)
+                uri->canon_uri[uri->canon_len] = *ptr;
+            ++uri->canon_len;
+        }
+    }
+
+    uri->path_len = uri->canon_len - uri->path_start;
+
+    if(!computeOnly)
+        TRACE("Canonicalized path %s len=%d\n",
+            debugstr_wn(uri->canon_uri+uri->path_start, uri->path_len),
+            uri->path_len);
+
+    return TRUE;
+}
+
 /* Determines how the URI represented by the parse_data should be canonicalized.
  *
  * Essentially, if the parse_data represents an hierarchical URI then it calls
@@ -2288,7 +2400,9 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         if(!canonicalize_authority(data, uri, flags, computeOnly))
             return FALSE;
 
-       /* TODO: Canonicalize the path of the URI. */
+        /* TODO: Canonicalize the path of the URI. */
+        if(!canonicalize_path_hierarchical(data, uri, flags, computeOnly))
+            return FALSE;
 
     } else {
         /* Opaque URI's don't have an authority. */
