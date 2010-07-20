@@ -56,6 +56,7 @@ static LPWSTR  (WINAPI *pStrFormatKBSizeW)(LONGLONG,LPWSTR,UINT);
 static BOOL    (WINAPI *pStrIsIntlEqualA)(BOOL,LPCSTR,LPCSTR,int);
 static BOOL    (WINAPI *pStrIsIntlEqualW)(BOOL,LPCWSTR,LPCWSTR,int);
 static LPWSTR  (WINAPI *pStrPBrkW)(LPCWSTR,LPCWSTR);
+static LPSTR   (WINAPI *pStrRChrA)(LPCSTR,LPCSTR,WORD);
 static HRESULT (WINAPI *pStrRetToBSTR)(STRRET*,void*,BSTR*);
 static HRESULT (WINAPI *pStrRetToBufA)(STRRET*,LPCITEMIDLIST,LPSTR,UINT);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
@@ -843,6 +844,12 @@ static void test_SHUnicodeToUnicode(void)
     return;
   }
 
+  if (pSHUnicodeToUnicode == (void *)pStrRChrA)
+  {
+    win_skip("Ordinal 346 corresponds to StrRChrA, skipping SHUnicodeToUnicode tests\n");
+    return;
+  }
+
   memcpy(dest, lpInit, sizeof(lpInit));
   dwRet = pSHUnicodeToUnicode(lpSrc, dest, sizeof(dest)/sizeof(dest[0]));
   ok(dwRet == 6 && !memcmp(dest, lpRes, sizeof(dest)),
@@ -1378,6 +1385,7 @@ START_TEST(string)
   pStrIsIntlEqualA = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualA");
   pStrIsIntlEqualW = (void *)GetProcAddress(hShlwapi, "StrIsIntlEqualW");
   pStrPBrkW = (void *)GetProcAddress(hShlwapi, "StrPBrkW");
+  pStrRChrA = (void *)GetProcAddress(hShlwapi, "StrRChrA");
   pStrRetToBSTR = (void *)GetProcAddress(hShlwapi, "StrRetToBSTR");
   pStrRetToBufA = (void *)GetProcAddress(hShlwapi, "StrRetToBufA");
   pStrRetToBufW = (void *)GetProcAddress(hShlwapi, "StrRetToBufW");
