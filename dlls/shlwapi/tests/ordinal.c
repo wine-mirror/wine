@@ -31,6 +31,7 @@
 #include "shlwapi.h"
 #include "docobj.h"
 #include "shobjidl.h"
+#include "shlobj.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi;
@@ -56,6 +57,7 @@ static BOOL   (WINAPI *pGUIDFromStringA)(LPSTR, CLSID *);
 static HRESULT (WINAPI *pIUnknown_QueryServiceExec)(IUnknown*, REFIID, const GUID*, DWORD, DWORD, VARIANT*, VARIANT*);
 static HRESULT (WINAPI *pIUnknown_ProfferService)(IUnknown*, REFGUID, IServiceProvider*, DWORD*);
 static HWND    (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU, LONG_PTR);
+static HRESULT (WINAPI *pSHIShellFolder_EnumObjects)(LPSHELLFOLDER, HWND, SHCONTF, IEnumIDList**);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2370,6 +2372,152 @@ static void test_SHCreateWorkerWindowA(void)
     DestroyWindow(hwnd);
 }
 
+static HRESULT WINAPI SF_QueryInterface(IShellFolder *iface,
+        REFIID riid, void **ppv)
+{
+    /* SHIShellFolder_EnumObjects doesn't QI the object for IShellFolder */
+    ok(!IsEqualGUID(&IID_IShellFolder, riid),
+            "Unexpected QI for IShellFolder\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SF_AddRef(IShellFolder *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI SF_Release(IShellFolder *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI SF_ParseDisplayName(IShellFolder *iface,
+        HWND owner, LPBC reserved, LPOLESTR displayName, ULONG *eaten,
+        LPITEMIDLIST *idl, ULONG *attr)
+{
+    ok(0, "Didn't expect ParseDisplayName\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_EnumObjects(IShellFolder *iface,
+        HWND owner, SHCONTF flags, IEnumIDList **enm)
+{
+    *enm = (IEnumIDList*)0xcafebabe;
+    return S_OK;
+}
+
+static HRESULT WINAPI SF_BindToObject(IShellFolder *iface,
+        LPCITEMIDLIST idl, LPBC reserved, REFIID riid, void **obj)
+{
+    ok(0, "Didn't expect BindToObject\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_BindToStorage(IShellFolder *iface,
+        LPCITEMIDLIST idl, LPBC reserved, REFIID riid, void **obj)
+{
+    ok(0, "Didn't expect BindToStorage\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_CompareIDs(IShellFolder *iface,
+        LPARAM lparam, LPCITEMIDLIST idl1, LPCITEMIDLIST idl2)
+{
+    ok(0, "Didn't expect CompareIDs\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_CreateViewObject(IShellFolder *iface,
+        HWND owner, REFIID riid, void **out)
+{
+    ok(0, "Didn't expect CreateViewObject\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_GetAttributesOf(IShellFolder *iface,
+        UINT cidl, LPCITEMIDLIST *idl, SFGAOF *inOut)
+{
+    ok(0, "Didn't expect GetAttributesOf\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_GetUIObjectOf(IShellFolder *iface,
+        HWND owner, UINT cidl, LPCITEMIDLIST *idls, REFIID riid, UINT *inOut,
+        void **out)
+{
+    ok(0, "Didn't expect GetUIObjectOf\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_GetDisplayNameOf(IShellFolder *iface,
+        LPCITEMIDLIST idl, SHGDNF flags, STRRET *name)
+{
+    ok(0, "Didn't expect GetDisplayNameOf\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SF_SetNameOf(IShellFolder *iface,
+        HWND hwnd, LPCITEMIDLIST idl, LPCOLESTR name, SHGDNF flags,
+        LPITEMIDLIST *idlOut)
+{
+    ok(0, "Didn't expect SetNameOf\n");
+    return E_NOTIMPL;
+}
+
+static IShellFolderVtbl ShellFolderVtbl = {
+    SF_QueryInterface,
+    SF_AddRef,
+    SF_Release,
+    SF_ParseDisplayName,
+    SF_EnumObjects,
+    SF_BindToObject,
+    SF_BindToStorage,
+    SF_CompareIDs,
+    SF_CreateViewObject,
+    SF_GetAttributesOf,
+    SF_GetUIObjectOf,
+    SF_GetDisplayNameOf,
+    SF_SetNameOf
+};
+
+static IShellFolder ShellFolder = { &ShellFolderVtbl };
+
+static void test_SHIShellFolder_EnumObjects(void)
+{
+    IEnumIDList *enm;
+    HRESULT hres;
+    IShellFolder *folder;
+
+    if(!pSHIShellFolder_EnumObjects || is_win2k_and_lower){
+        win_skip("SHIShellFolder_EnumObjects not available\n");
+        return;
+    }
+
+    if(0){
+        /* NULL object crashes on Windows */
+        hres = pSHIShellFolder_EnumObjects(NULL, NULL, 0, NULL);
+    }
+
+    /* SHIShellFolder_EnumObjects doesn't QI the object for IShellFolder */
+    enm = (IEnumIDList*)0xdeadbeef;
+    hres = pSHIShellFolder_EnumObjects(&ShellFolder, NULL, 0, &enm);
+    ok(hres == S_OK, "SHIShellFolder_EnumObjects failed: 0x%08x\n", hres);
+    ok(enm == (IEnumIDList*)0xcafebabe, "Didn't get expected enumerator location, instead: %p\n", enm);
+
+    /* SHIShellFolder_EnumObjects isn't strict about the IShellFolder object */
+    hres = SHGetDesktopFolder(&folder);
+    ok(hres == S_OK, "SHGetDesktopFolder failed: 0x%08x\n", hres);
+
+    enm = NULL;
+    hres = pSHIShellFolder_EnumObjects(folder, NULL, 0, &enm);
+    ok(hres == S_OK, "SHIShellFolder_EnumObjects failed: 0x%08x\n", hres);
+    ok(enm != NULL, "Didn't get an enumerator\n");
+    if(enm)
+        IEnumIDList_Release(enm);
+
+    IShellFolder_Release(folder);
+}
+
 static void init_pointers(void)
 {
 #define MAKEFUNC(f, ord) (p##f = (void*)GetProcAddress(hShlwapi, (LPSTR)(ord)))
@@ -2388,6 +2536,7 @@ static void init_pointers(void)
     MAKEFUNC(IConnectionPoint_SimpleInvoke, 284);
     MAKEFUNC(SHFormatDateTimeA, 353);
     MAKEFUNC(SHFormatDateTimeW, 354);
+    MAKEFUNC(SHIShellFolder_EnumObjects, 404);
     MAKEFUNC(SHGetObjectCompatFlags, 476);
     MAKEFUNC(IUnknown_QueryServiceExec, 484);
     MAKEFUNC(SHPropertyBag_ReadLONG, 496);
@@ -2420,4 +2569,5 @@ START_TEST(ordinal)
     test_IUnknown_QueryServiceExec();
     test_IUnknown_ProfferService();
     test_SHCreateWorkerWindowA();
+    test_SHIShellFolder_EnumObjects();
 }

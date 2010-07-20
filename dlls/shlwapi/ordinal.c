@@ -3694,24 +3694,19 @@ BOOL WINAPI GetOpenFileNameWrapW(LPOPENFILENAMEW ofn)
  */
 HRESULT WINAPI SHIShellFolder_EnumObjects(LPSHELLFOLDER lpFolder, HWND hwnd, SHCONTF flags, IEnumIDList **ppenum)
 {
-    IPersist *persist;
-    HRESULT hr;
+    /* Windows attempts to get an IPersist interface and, if that fails, an
+     * IPersistFolder interface on the folder passed-in here.  If one of those
+     * interfaces is available, it then calls GetClassID on the folder... and
+     * then calls IShellFolder_EnumObjects no matter what, even crashing if
+     * lpFolder isn't actually an IShellFolder object.  The purpose of getting
+     * the ClassID is unknown, so we don't do it here.
+     *
+     * For discussion and detailed tests, see:
+     * "shlwapi: Be less strict on which type of IShellFolder can be enumerated"
+     * wine-devel mailing list, 3 Jun 2010
+     */
 
-    hr = IShellFolder_QueryInterface(lpFolder, &IID_IPersist, (LPVOID)&persist);
-    if(SUCCEEDED(hr))
-    {
-        CLSID clsid;
-        hr = IPersist_GetClassID(persist, &clsid);
-        if(SUCCEEDED(hr))
-        {
-            if(IsEqualCLSID(&clsid, &CLSID_ShellFSFolder))
-                hr = IShellFolder_EnumObjects(lpFolder, hwnd, flags, ppenum);
-            else
-                hr = E_FAIL;
-        }
-        IPersist_Release(persist);
-    }
-    return hr;
+    return IShellFolder_EnumObjects(lpFolder, hwnd, flags, ppenum);
 }
 
 /* INTERNAL: Map from HLS color space to RGB */
