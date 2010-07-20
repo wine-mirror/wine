@@ -220,8 +220,12 @@ static void load_next_resource( DLLSPEC *spec )
     res->data_size = get_dword();
     hdr_size = get_dword();
     if (hdr_size & 3) fatal_error( "%s header size not aligned\n", input_buffer_filename );
+    if (hdr_size < 32) fatal_error( "%s invalid header size %u\n", input_buffer_filename, hdr_size );
 
     res->data = input_buffer + input_buffer_pos - 2*sizeof(unsigned int) + hdr_size;
+    if ((const unsigned char *)res->data < input_buffer ||
+        (const unsigned char *)res->data >= input_buffer + input_buffer_size)
+        fatal_error( "%s invalid header size %u\n", input_buffer_filename, hdr_size );
     get_string( &res->type );
     get_string( &res->name );
     if (input_buffer_pos & 2) get_word();  /* align to dword boundary */
