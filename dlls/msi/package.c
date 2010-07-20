@@ -1210,6 +1210,13 @@ static UINT apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
         return r;
     }
 
+    patch_info->localfile = strdupW( patch_file );
+    if (!patch_info->localfile)
+    {
+        msiobj_release( &patch_db->hdr );
+        return ERROR_OUTOFMEMORY;
+    }
+
     r = msi_apply_patch_db( package, patch_db, patch_info );
     msiobj_release( &patch_db->hdr );
     if (r != ERROR_SUCCESS)
