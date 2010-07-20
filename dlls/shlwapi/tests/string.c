@@ -785,7 +785,16 @@ static void test_StrRStrI(void)
     static const WCHAR wszPattern4[] = {'a','b',0};
     LPWSTR retW;
     LPSTR retA;
-    
+
+    /* StrCpyNXA was chosen simply because it doesn't appear to be available on
+     * Win9x machines where StrRStrI crashes. Despite StrRStrI being exported
+     * by name, all StrRStrI tests appear to crash for unknown reasons. */
+    if (!pStrCpyNXA)
+    {
+        win_skip("StrRStrI crashes on older Win9x platforms\n");
+        return;
+    }
+
     check_strrstri(A, szTest, 4, "A", szTest+1);
     check_strrstri(A, szTest, 4, "aX", szTest+1);
     check_strrstri(A, szTest, 4, "Ay", NULL);
