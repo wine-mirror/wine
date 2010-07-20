@@ -124,23 +124,29 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             {
                 WTPACKET packet;
                 LPOPENCONTEXT handler;
-                pGetCurrentPacket(&packet);
-                handler = AddPacketToContextQueue(&packet,(HWND)lParam);
-                if (handler && handler->context.lcOptions & CXO_MESSAGES)
-                    TABLET_PostTabletMessage(handler, _WT_PACKET(handler->context.lcMsgBase),
-                                (WPARAM)packet.pkSerialNumber,
-                                (LPARAM)handler->handle, FALSE);
+                if (pGetCurrentPacket)
+                {
+                    pGetCurrentPacket(&packet);
+                    handler = AddPacketToContextQueue(&packet,(HWND)lParam);
+                    if (handler && handler->context.lcOptions & CXO_MESSAGES)
+                       TABLET_PostTabletMessage(handler, _WT_PACKET(handler->context.lcMsgBase),
+                                   (WPARAM)packet.pkSerialNumber,
+                                   (LPARAM)handler->handle, FALSE);
+                }
                 break;
             }
         case WT_PROXIMITY:
             {
                 WTPACKET packet;
                 LPOPENCONTEXT handler;
-                pGetCurrentPacket(&packet);
-                handler = AddPacketToContextQueue(&packet,(HWND)wParam);
-                if (handler)
-                    TABLET_PostTabletMessage(handler, WT_PROXIMITY,
-                                            (WPARAM)handler->handle, lParam, TRUE);
+                if (pGetCurrentPacket)
+                {
+                    pGetCurrentPacket(&packet);
+                    handler = AddPacketToContextQueue(&packet,(HWND)wParam);
+                    if (handler)
+                        TABLET_PostTabletMessage(handler, WT_PROXIMITY,
+                                                (WPARAM)handler->handle, lParam, TRUE);
+                }
                 break;
             }
     }

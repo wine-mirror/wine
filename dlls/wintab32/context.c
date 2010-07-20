@@ -155,7 +155,8 @@ static void LoadTablet(void)
 {
     TRACE("Initializing the tablet to hwnd %p\n",hwndDefault);
     gLoaded= TRUE;
-    pLoadTabletInfo(hwndDefault);
+    if (pLoadTabletInfo)
+        pLoadTabletInfo(hwndDefault);
 }
 
 int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
@@ -558,6 +559,11 @@ int WINAPI WTPacketsGet(HCTX hCtx, int cMaxPkts, LPVOID lpPkts)
     EnterCriticalSection(&csTablet);
 
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return 0;
+    }
 
     if (lpPkts != NULL)
         TABLET_BlankPacketData(context,lpPkts,cMaxPkts);
@@ -608,6 +614,11 @@ BOOL WINAPI WTPacket(HCTX hCtx, UINT wSerial, LPVOID lpPkt)
     EnterCriticalSection(&csTablet);
 
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return 0;
+    }
 
     rc = TABLET_FindPacket(context ,wSerial, &wtp);
 
@@ -642,6 +653,12 @@ BOOL WINAPI WTEnable(HCTX hCtx, BOOL fEnable)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return 0;
+    }
+
     /* if we want to enable and it is not enabled then */
     if(fEnable && !context->enabled)
     {
@@ -742,6 +759,12 @@ BOOL WINAPI WTGetA(HCTX hCtx, LPLOGCONTEXTA lpLogCtx)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return 0;
+    }
+
     LOGCONTEXTWtoA(&context->context, lpLogCtx);
     LeaveCriticalSection(&csTablet);
 
@@ -761,6 +784,12 @@ BOOL WINAPI WTGetW(HCTX hCtx, LPLOGCONTEXTW lpLogCtx)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return 0;
+    }
+
     memmove(lpLogCtx,&context->context,sizeof(LOGCONTEXTW));
     LeaveCriticalSection(&csTablet);
 
@@ -888,7 +917,7 @@ int WINAPI WTPacketsPeek(HCTX hCtx, int cMaxPkts, LPVOID lpPkts)
 
     context = TABLET_FindOpenContext(hCtx);
 
-    if (context->PacketsQueued == 0)
+    if (!context || context->PacketsQueued == 0)
     {
         LeaveCriticalSection(&csTablet);
         return 0;
@@ -923,7 +952,7 @@ int WINAPI WTDataGet(HCTX hCtx, UINT wBegin, UINT wEnd,
 
     context = TABLET_FindOpenContext(hCtx);
 
-    if (context->PacketsQueued == 0)
+    if (!context || context->PacketsQueued == 0)
     {
         LeaveCriticalSection(&csTablet);
         return 0;
@@ -981,7 +1010,7 @@ int WINAPI WTDataPeek(HCTX hCtx, UINT wBegin, UINT wEnd,
 
     context = TABLET_FindOpenContext(hCtx);
 
-    if (context->PacketsQueued == 0)
+    if (!context || context->PacketsQueued == 0)
     {
         LeaveCriticalSection(&csTablet);
         return 0;
@@ -1028,7 +1057,7 @@ BOOL WINAPI WTQueuePacketsEx(HCTX hCtx, UINT *lpOld, UINT *lpNew)
 
     context = TABLET_FindOpenContext(hCtx);
 
-    if (context->PacketsQueued)
+    if (context && context->PacketsQueued)
     {
         *lpOld = context->PacketQueue[0].pkSerialNumber;
         *lpNew = context->PacketQueue[context->PacketsQueued-1].pkSerialNumber;
@@ -1050,14 +1079,18 @@ BOOL WINAPI WTQueuePacketsEx(HCTX hCtx, UINT *lpOld, UINT *lpNew)
 int WINAPI WTQueueSizeGet(HCTX hCtx)
 {
     LPOPENCONTEXT context;
+    int queueSize = 0;
+
     TRACE("(%p)\n", hCtx);
 
     if (!hCtx) return 0;
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
+    if (context)
+        queueSize = context->QueueSize;
     LeaveCriticalSection(&csTablet);
-    return context->QueueSize;
+    return queueSize;
 }
 
 /***********************************************************************
@@ -1074,6 +1107,11 @@ BOOL WINAPI WTQueueSizeSet(HCTX hCtx, int nPkts)
     EnterCriticalSection(&csTablet);
 
     context = TABLET_FindOpenContext(hCtx);
+    if (!context)
+    {
+        LeaveCriticalSection(&csTablet);
+        return 0;
+    }
 
     context->PacketQueue = HeapReAlloc(GetProcessHeap(), 0,
                         context->PacketQueue, sizeof(WTPACKET)*nPkts);
