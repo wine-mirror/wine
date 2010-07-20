@@ -143,3 +143,137 @@ int CDECL MSVCP_char_traits_char_not_eof(int *in)
 {
     return (*in==EOF ? !EOF : *in);
 }
+
+
+/* char_traits<wchar_t> */
+/* ?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z */
+void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
+        const wchar_t *assign)
+{
+    *ch = *assign;
+}
+
+/* ?eq@?$char_traits@_W@std@@SA_NAB_W0@Z */
+MSVCP_BOOL CDECL MSVCP_char_traits_wchar_eq(wchar_t *ch1, wchar_t *ch2)
+{
+    return *ch1 == *ch2;
+}
+
+/* ?lt@?$char_traits@_W@std@@SA_NAB_W0@Z */
+MSVCP_BOOL CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
+        const wchar_t *ch2)
+{
+    return *ch1 < *ch2;
+}
+
+/* ?compare@?$char_traits@_W@std@@SAHPB_W0I@Z */
+int CDECL MSVCP_char_traits_wchar_compare(const wchar_t *s1,
+        const wchar_t *s2, unsigned int count)
+{
+    int ret = memcmp(s1, s2, sizeof(wchar_t[count]));
+    return (ret>0 ? 1 : (ret<0 ? -1 : 0));
+}
+
+/* ?length@?$char_traits@_W@std@@SAIPB_W@Z */
+int CDECL MSVCP_char_traits_wchar_length(const wchar_t *str)
+{
+    return wcslen((WCHAR*)str);
+}
+
+/* ?_Copy_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
+wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
+        unsigned int size, const wchar_t *src, unsigned int count)
+{
+    if(!dest || !src || size<count) {
+        if(dest && size)
+            dest[0] = '\0';
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return dest;
+    }
+
+    return memcpy(dest, src, sizeof(wchar_t[count]));
+}
+
+/* ?copy@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
+wchar_t* CDECL MSVCP_char_traits_wchar_copy(wchar_t *dest,
+        const wchar_t *src, unsigned int count)
+{
+    return MSVCP_char_traits_wchar__Copy_s(dest, count, src, count);
+}
+
+/* ?find@?$char_traits@_W@std@@SAPB_WPB_WIAB_W@Z */
+const wchar_t* CDECL MSVCP_char_traits_wchar_find(
+        const wchar_t *str, unsigned int range, const wchar_t *c)
+{
+    unsigned int i=0;
+
+    for(i=0; i<range; i++)
+        if(str[i] == *c)
+            return str+i;
+
+    return NULL;
+}
+
+/* ?_Move_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
+wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
+        unsigned int size, const wchar_t *src, unsigned int count)
+{
+    if(!dest || !src || size<count) {
+        if(dest && size)
+            dest[0] = '\0';
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return dest;
+    }
+
+    return memmove(dest, src, sizeof(WCHAR[count]));
+}
+
+/* ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
+wchar_t* CDECL MSVCP_char_traits_wchar_move(wchar_t *dest,
+        const wchar_t *src, unsigned int count)
+{
+    return MSVCP_char_traits_wchar__Move_s(dest, count, src, count);
+}
+
+/* ?assign@?$char_traits@_W@std@@SAPA_WPA_WI_W@Z */
+wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
+        unsigned int num, wchar_t c)
+{
+    unsigned int i;
+
+    for(i=0; i<num; i++)
+        str[i] = c;
+
+    return str;
+}
+
+/* ?to_char_type@?$char_traits@_W@std@@SA_WABG@Z */
+wchar_t CDECL MSVCP_char_traits_wchar_to_char_type(const unsigned short *i)
+{
+    return *i;
+}
+
+/* ?to_int_type@?$char_traits@_W@std@@SAGAB_W@Z */
+unsigned short CDECL MSVCP_char_traits_wchar_to_int_type(const wchar_t *ch)
+{
+    return *ch;
+}
+
+/* ?eq_int_type@?$char_traits@_W@std@@SA_NABG0@Z */
+MSVCP_BOOL CDECL MSVCP_char_traits_wchar_eq_int_tpe(const unsigned short *i1,
+        const unsigned short *i2)
+{
+    return *i1 == *i2;
+}
+
+/* ?eof@?$char_traits@_W@std@@SAGXZ */
+unsigned short CDECL MSVCP_char_traits_wchar_eof(void)
+{
+    return WEOF;
+}
+
+/* ?not_eof@?$char_traits@_W@std@@SAGABG@Z */
+unsigned short CDECL MSVCP_char_traits_wchar_not_eof(const unsigned short *in)
+{
+    return (*in==WEOF ? !WEOF : *in);
+}
