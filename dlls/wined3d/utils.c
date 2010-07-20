@@ -1696,7 +1696,7 @@ const char* debug_d3ddevicetype(WINED3DDEVTYPE devtype) {
 
 const char *debug_d3dusage(DWORD usage)
 {
-    char buf[284];
+    char buf[333];
 
     buf[0] = '\0';
 #define WINED3DUSAGE_TO_STR(u) if (usage & u) { strcat(buf, " | "#u); usage &= ~u; }
@@ -1711,6 +1711,8 @@ const char *debug_d3dusage(DWORD usage)
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_DYNAMIC);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_AUTOGENMIPMAP);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_DMAP);
+    WINED3DUSAGE_TO_STR(WINED3DUSAGE_STATICDECL);
+    WINED3DUSAGE_TO_STR(WINED3DUSAGE_OVERLAY);
 #undef WINED3DUSAGE_TO_STR
     if (usage) FIXME("Unrecognized usage flag(s) %#x\n", usage);
 
