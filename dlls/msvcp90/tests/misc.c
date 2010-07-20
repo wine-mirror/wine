@@ -32,6 +32,8 @@ static BYTE (__cdecl *p_char_eq)(const void*, const void*);
 static BYTE (__cdecl *p_wchar_eq)(const void*, const void*);
 static BYTE (__cdecl *p_short_eq)(const void*, const void*);
 
+static char* (__cdecl *p_Copy_s)(char*, unsigned int, const char*, unsigned int);
+
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -69,6 +71,8 @@ static BOOL init(void)
     p_char_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@D@std@@SA_NABD0@Z");
     p_wchar_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@_W@std@@SA_NAB_W0@Z");
     p_short_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@G@std@@SA_NABG0@Z");
+
+    p_Copy_s = (void*)GetProcAddress(msvcp, "?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z");
 
     return TRUE;
 }
@@ -136,6 +140,53 @@ static void test_equal(void)
     ok(ret == FALSE, "ret = %d\n", (int)ret);
 }
 
+static void test_Copy_s(void)
+{
+    static const char src[] = "abcd";
+    char dest[32], *ret;
+
+    if(!p_Copy_s) {
+        win_skip("Copy_s tests skipped\n");
+        return;
+    }
+
+    dest[4] = '#';
+    dest[5] = '\0';
+    ret = p_Copy_s(dest, 4, src, 4);
+    ok(ret == dest, "ret != dest\n");
+    ok(dest[4] == '#', "dest[4] != '#'\n");
+    ok(!memcmp(dest, src, sizeof(char[4])), "dest = %s\n", dest);
+
+    ret = p_Copy_s(dest, 32, src, 4);
+    ok(ret == dest, "ret != dest\n");
+    ok(dest[4] == '#', "dest[4] != '#'\n");
+    ok(!memcmp(dest, src, sizeof(char[4])), "dest = %s\n", dest);
+
+    errno = 0xdeadbeef;
+    dest[0] = '#';
+    ret = p_Copy_s(dest, 3, src, 4);
+    ok(ret == dest, "ret != dest\n");
+    ok(dest[0] == '\0', "dest[0] != 0\n");
+    ok(invalid_parameter==1, "invalid_parameter = %d\n",
+            invalid_parameter);
+    invalid_parameter = 0;
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    p_Copy_s(NULL, 32, src, 4);
+    ok(invalid_parameter==1, "invalid_parameter = %d\n",
+            invalid_parameter);
+    invalid_parameter = 0;
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    p_Copy_s(dest, 32, NULL, 4);
+    ok(invalid_parameter==1, "invalid_parameter = %d\n",
+            invalid_parameter);
+    invalid_parameter = 0;
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -143,6 +194,7 @@ START_TEST(misc)
 
     test_assign();
     test_equal();
+    test_Copy_s();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 }
