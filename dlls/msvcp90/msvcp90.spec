@@ -1133,7 +1133,7 @@
 @ stub ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADIII@Z
 @ stub ?_Copy_s@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPAGIII@Z
 @ stub ?_Copy_s@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPA_WIII@Z
-@ stub ?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z
+@ cdecl ?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z(ptr long ptr long) MSVCP_char_traits_char__Copy_s
 @ stub ?_Copy_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z
 @ stub ?_Copy_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z
 @ stub ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z
@@ -1385,7 +1385,7 @@
 @ stub ?_Makpat@?$_Mpunct@D@std@@AAEXAAUpattern@money_base@2@III@Z
 @ stub ?_Makpat@?$_Mpunct@G@std@@AAEXAAUpattern@money_base@2@III@Z
 @ stub ?_Makpat@?$_Mpunct@_W@std@@AAEXAAUpattern@money_base@2@III@Z
-@ stub ?_Move_s@?$char_traits@D@std@@SAPADPADIPBDI@Z
+@ cdecl ?_Move_s@?$char_traits@D@std@@SAPADPADIPBDI@Z(ptr long ptr long) MSVCP_char_traits_char__Move_s
 @ stub ?_Move_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z
 @ stub ?_Move_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z
 @ stub ?_Mutex_Lock@_Mutex@std@@CAXPAV12@@Z
@@ -1579,8 +1579,8 @@
 @ stub ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@PB_W@Z
 @ stub ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@PB_WI@Z
 @ stub ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z
-@ stub ?assign@?$char_traits@D@std@@SAPADPADID@Z
-@ stub ?assign@?$char_traits@D@std@@SAXAADABD@Z
+@ cdecl ?assign@?$char_traits@D@std@@SAPADPADID@Z(ptr long long) MSVCP_char_traits_char_assignn
+@ cdecl ?assign@?$char_traits@D@std@@SAXAADABD@Z(ptr ptr) MSVCP_char_traits_char_assign
 @ stub ?assign@?$char_traits@G@std@@SAPAGPAGIG@Z
 @ stub ?assign@?$char_traits@G@std@@SAXAAGABG@Z
 @ stub ?assign@?$char_traits@_W@std@@SAPA_WPA_WI_W@Z
@@ -1657,7 +1657,7 @@
 @ stub ?compare@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEHIIPB_W@Z
 @ stub ?compare@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEHIIPB_WI@Z
 @ stub ?compare@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEHPB_W@Z
-@ stub ?compare@?$char_traits@D@std@@SAHPBD0I@Z
+@ cdecl ?compare@?$char_traits@D@std@@SAHPBD0I@Z(ptr ptr long) MSVCP_char_traits_char_compare
 @ stub ?compare@?$char_traits@G@std@@SAHPBG0I@Z
 @ stub ?compare@?$char_traits@_W@std@@SAHPB_W0I@Z
 @ stub ?compare@?$collate@D@std@@QBEHPBD000@Z
@@ -1669,7 +1669,7 @@
 @ stub ?copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADII@Z
 @ stub ?copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPAGII@Z
 @ stub ?copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPA_WII@Z
-@ stub ?copy@?$char_traits@D@std@@SAPADPADPBDI@Z
+@ cdecl ?copy@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_copy
 @ stub ?copy@?$char_traits@G@std@@SAPAGPAGPBGI@Z
 @ stub ?copy@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z
 @ stub ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEAAV12@ABV12@@Z
@@ -1975,7 +1975,7 @@
 @ stub ?ends@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@AAV21@@Z
 @ stub ?ends@std@@YAAAV?$basic_ostream@GU?$char_traits@G@std@@@1@AAV21@@Z
 @ stub ?ends@std@@YAAAV?$basic_ostream@_WU?$char_traits@_W@std@@@1@AAV21@@Z
-@ stub ?eof@?$char_traits@D@std@@SAHXZ
+@ cdecl ?eof@?$char_traits@D@std@@SAHXZ() MSVCP_char_traits_char_eof
 @ stub ?eof@?$char_traits@G@std@@SAGXZ
 @ stub ?eof@?$char_traits@_W@std@@SAGXZ
 @ stub ?eof@ios_base@std@@QBE_NXZ
@@ -1998,10 +1998,10 @@
 @ stub ?epsilon@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?epsilon@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?epsilon@?$numeric_limits@_W@std@@SA_WXZ
-@ stub ?eq@?$char_traits@D@std@@SA_NABD0@Z
+@ cdecl ?eq@?$char_traits@D@std@@SA_NABD0@Z(ptr ptr) MSVCP_char_traits_char_eq
 @ stub ?eq@?$char_traits@G@std@@SA_NABG0@Z
 @ stub ?eq@?$char_traits@_W@std@@SA_NAB_W0@Z
-@ stub ?eq_int_type@?$char_traits@D@std@@SA_NABH0@Z
+@ cdecl ?eq_int_type@?$char_traits@D@std@@SA_NABH0@Z(ptr ptr) MSVCP_char_traits_char_eq_int_type
 @ stub ?eq_int_type@?$char_traits@G@std@@SA_NABG0@Z
 @ stub ?eq_int_type@?$char_traits@_W@std@@SA_NABG0@Z
 @ stub ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z
@@ -2041,7 +2041,7 @@
 @ stub ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z
 @ stub ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z
 @ stub ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
-@ stub ?find@?$char_traits@D@std@@SAPBDPBDIABD@Z
+@ cdecl ?find@?$char_traits@D@std@@SAPBDPBDIABD@Z(ptr long ptr) MSVCP_char_traits_char_find
 @ stub ?find@?$char_traits@G@std@@SAPBGPBGIABG@Z
 @ stub ?find@?$char_traits@_W@std@@SAPB_WPB_WIAB_W@Z
 @ stub ?find_first_not_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
@@ -2405,7 +2405,7 @@
 @ stub ?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ
 @ stub ?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ
 @ stub ?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ
-@ stub ?length@?$char_traits@D@std@@SAIPBD@Z
+@ cdecl ?length@?$char_traits@D@std@@SAIPBD@Z(ptr) MSVCP_char_traits_char_length
 @ stub ?length@?$char_traits@G@std@@SAIPBG@Z
 @ stub ?length@?$char_traits@_W@std@@SAIPB_W@Z
 @ stub ?length@?$codecvt@DDH@std@@QBEHABHPBD1I@Z
@@ -2414,7 +2414,7 @@
 @ stub ?log@?$_Ctraits@M@std@@SAMM@Z
 @ stub ?log@?$_Ctraits@N@std@@SANN@Z
 @ stub ?log@?$_Ctraits@O@std@@SAOO@Z
-@ stub ?lt@?$char_traits@D@std@@SA_NABD0@Z
+@ cdecl ?lt@?$char_traits@D@std@@SA_NABD0@Z(ptr ptr) MSVCP_char_traits_lt
 @ stub ?lt@?$char_traits@G@std@@SA_NABG0@Z
 @ stub ?lt@?$char_traits@_W@std@@SA_NAB_W0@Z
 @ stub ?max@?$numeric_limits@C@std@@SACXZ
@@ -2472,7 +2472,7 @@
 @ stub ?min_exponent@?$numeric_limits@N@std@@2HB
 @ stub ?min_exponent@?$numeric_limits@O@std@@2HB
 @ stub ?min_exponent@_Num_base@std@@2HB
-@ stub ?move@?$char_traits@D@std@@SAPADPADPBDI@Z
+@ cdecl ?move@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_move
 @ stub ?move@?$char_traits@G@std@@SAPAGPAGPBGI@Z
 @ stub ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z
 @ stub ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
@@ -2491,7 +2491,7 @@
 @ stub ?negative_sign@?$_Mpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub ?negative_sign@?$_Mpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub ?negative_sign@?$_Mpunct@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ
-@ stub ?not_eof@?$char_traits@D@std@@SAHABH@Z
+@ cdecl ?not_eof@?$char_traits@D@std@@SAHABH@Z(ptr) MSVCP_char_traits_char_not_eof
 @ stub ?not_eof@?$char_traits@G@std@@SAGABG@Z
 @ stub ?not_eof@?$char_traits@_W@std@@SAGABG@Z
 @ stub ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB
@@ -3025,10 +3025,10 @@
 @ stub ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ
 @ stub ?tinyness_before@_Num_base@std@@2_NB
 @ stub ?tinyness_before@_Num_float_base@std@@2_NB
-@ stub ?to_char_type@?$char_traits@D@std@@SADABH@Z
+@ cdecl ?to_char_type@?$char_traits@D@std@@SADABH@Z(ptr) MSVCP_char_traits_char_to_char_type
 @ stub ?to_char_type@?$char_traits@G@std@@SAGABG@Z
 @ stub ?to_char_type@?$char_traits@_W@std@@SA_WABG@Z
-@ stub ?to_int_type@?$char_traits@D@std@@SAHABD@Z
+@ cdecl ?to_int_type@?$char_traits@D@std@@SAHABD@Z(ptr) MSVCP_char_traits_char_to_int_type
 @ stub ?to_int_type@?$char_traits@G@std@@SAGABG@Z
 @ stub ?to_int_type@?$char_traits@_W@std@@SAGAB_W@Z
 @ stub ?tolower@?$ctype@D@std@@QBEDD@Z
