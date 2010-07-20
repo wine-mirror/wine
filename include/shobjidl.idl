@@ -2195,3 +2195,52 @@ interface INameSpaceTreeControlEvents : IUnknown
         [out] int *piDefaultIcon,
         [out] int *piOpenIcon);
 }
+
+cpp_quote("#ifdef MIDL_PASS")
+typedef IUnknown *HIMAGELIST;
+cpp_quote("#endif")
+
+/*****************************************************************************
+ * INameSpaceTreeControlCustomDraw interface
+ */
+[
+ object,
+ uuid(2D3BA758-33EE-42D5-BB7B-5F3431D86C78),
+ local
+]
+
+interface INameSpaceTreeControlCustomDraw : IUnknown
+{
+    typedef struct NSTCCUSTOMDRAW
+    {
+        IShellItem *psi;
+        UINT uItemState;
+        NSTCITEMSTATE nstcis;
+        LPCWSTR pszText;
+        int iImage;
+        HIMAGELIST himl;
+        int iLevel;
+        int iIndent;
+    } NSTCCUSTOMDRAW;
+
+    HRESULT PrePaint(
+        [in] HDC hdc,
+        [in] RECT *prc,
+        [out] LRESULT *plres);
+
+    HRESULT PostPaint(
+        [in] HDC hdc,
+        [in] RECT *prc);
+
+    HRESULT ItemPrePaint(
+        [in] HDC hdc,
+        [in] RECT *prc,
+        [in, out] COLORREF *pclrText,
+        [in, out] COLORREF *pclrTextBk,
+        [out] LRESULT *plres);
+
+    HRESULT ItemPostPaint(
+        [in] HDC hdc,
+        [in] RECT *prc,
+        [in] NSTCCUSTOMDRAW *pnstccdItem);
+}
