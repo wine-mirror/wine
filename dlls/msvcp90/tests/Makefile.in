@@ -1,0 +1,17 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = msvcp90.dll
+APPMODE   = -mno-cygwin
+IMPORTS   = kernel32
+MODCFLAGS = @BUILTINFLAG@
+EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+
+C_SRCS = \
+	misc.c
+
+RC_SRCS = \
+	msvcp90.rc
+
+@MAKE_TEST_RULES@
