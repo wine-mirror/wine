@@ -33,7 +33,7 @@ MAIN_MENU MENU
 {
  POPUP "&Файл" {
    MENUITEM "&Створити...",              	PM_NEW
-   MENUITEM "&Відкрити\tEnter",             	PM_OPEN
+   MENUITEM "Відк&рити\tEnter",             	PM_OPEN
    MENUITEM "&Перемістити...\tF7",             	PM_MOVE,      GRAYED
    MENUITEM "&Копіювати...\tF8",             	PM_COPY,      GRAYED
    MENUITEM "Ви&далити\tEntf",           	PM_DELETE
@@ -56,10 +56,10 @@ MAIN_MENU MENU
 
 POPUP "&Допомога" {
    MENUITEM "&Зміст",         		PM_CONTENTS
-   MENUITEM "&Пошук...",           	PM_SEARCH
+   MENUITEM "По&шук...",           	PM_SEARCH
    MENUITEM SEPARATOR
    MENUITEM "&Використання Довідки",	PM_HELPONHELP
-   MENUITEM "&Посібник",         	PM_TUTORIAL
+   MENUITEM "По&сібник",         	PM_TUTORIAL
    MENUITEM SEPARATOR
    MENUITEM "&Про Wine",     		PM_ABOUT_WINE
  }
