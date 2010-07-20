@@ -567,6 +567,7 @@ UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINF
      */
     append_storage_to_db( package->db, patch_db->storage );
 
+    patch->state = MSIPATCHSTATE_APPLIED;
     list_add_tail( &package->patches, &patch->entry );
     return ERROR_SUCCESS;
 }
@@ -3879,6 +3880,10 @@ static UINT msi_publish_patches( MSIPACKAGE *package, HKEY prodkey )
             goto done;
 
         res = RegCreateKeyExW( product_patches_key, patch_squashed, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patch_key, NULL );
+        if (res != ERROR_SUCCESS)
+            goto done;
+
+        res = RegSetValueExW( patch_key, szState, 0, REG_DWORD, (const BYTE *)&patch->state, sizeof(patch->state) );
         RegCloseKey( patch_key );
         if (res != ERROR_SUCCESS)
             goto done;

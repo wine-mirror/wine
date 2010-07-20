@@ -153,6 +153,7 @@ typedef struct tagMSIPATCHINFO
     LPWSTR patchcode;
     LPWSTR transforms;
     LPWSTR localfile;
+    MSIPATCHSTATE state;
 } MSIPATCHINFO;
 
 typedef struct _column_info
