@@ -6199,7 +6199,7 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
     surface->currentDesc.Width = pPresentationParameters->BackBufferWidth;
     surface->currentDesc.Height = pPresentationParameters->BackBufferHeight;
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[ARB_TEXTURE_RECTANGLE]
-            || gl_info->supported[WINE_NORMALIZED_TEXRECT])
+            || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
     {
         surface->pow2Width = pPresentationParameters->BackBufferWidth;
         surface->pow2Height = pPresentationParameters->BackBufferHeight;

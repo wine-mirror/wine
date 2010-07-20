@@ -541,7 +541,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
      * Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
      * is used in combination with texture uploads (RTL_READTEX). The reason is that EXT_PALETTED_TEXTURE
      * doesn't work in combination with ARB_TEXTURE_RECTANGLE. */
-    if (gl_info->supported[WINE_NORMALIZED_TEXRECT] && (width != pow2_width || height != pow2_height))
+    if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT] && (width != pow2_width || height != pow2_height))
     {
         texture->baseTexture.pow2Matrix[0] = 1.0f;
         texture->baseTexture.pow2Matrix[5] = 1.0f;
