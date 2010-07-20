@@ -2291,3 +2291,344 @@ interface INameSpaceTreeControlDropHandler : IUnknown
         [in, unique] IShellItem *psiOver);
 }
 cpp_quote("#define NSTCDHPOS_ONTOP -1")
+
+interface IFileDialog;
+
+typedef [v1_enum] enum FDE_OVERWRITE_RESPONSE
+{
+    FDEOR_DEFAULT  = 0,
+    FDEOR_ACCCEP   = 1,
+    FDEOR_REFUSE   = 2
+} FDE_OVERWRITE_RESPONSE;
+
+typedef [v1_enum] enum FDE_SHAREVIOLATION_RESPONSE
+{
+    FDESVR_DEFAULT = 0,
+    FDESVR_ACCEPT  = 1,
+    FDESVR_REFUSE  = 2
+} FDE_SHAREVIOLATION_RESPONSE;
+
+/*****************************************************************************
+ * IFileDialogEvents interface
+ */
+[
+ object,
+ uuid(973510DB-7D7F-452B-8975-74A85828D354),
+ pointer_default(unique)
+]
+interface IFileDialogEvents : IUnknown
+{
+    HRESULT OnFileOk(
+        [in] IFileDialog *pfd);
+
+    HRESULT OnFolderChanging(
+        [in] IFileDialog *pfd,
+        [in] IShellItem *psiFolder);
+
+    HRESULT OnFolderChange(
+        [in] IFileDialog *pfd);
+
+    HRESULT OnSelectionChange(
+        [in] IFileDialog *pfd);
+
+    HRESULT OnShareViolation(
+        [in] IFileDialog *pfd,
+        [in] IShellItem *psi,
+        [out] FDE_SHAREVIOLATION_RESPONSE *pResponse);
+
+    HRESULT OnTypeChange(
+        [in] IFileDialog *pfd);
+
+    HRESULT OnOverwrite(
+        [in] IFileDialog *pfd,
+        [in] IShellItem *psi,
+        [out] FDE_OVERWRITE_RESPONSE *pResponse);
+}
+
+/*****************************************************************************
+ * IModalWindow interface
+ */
+[
+ object,
+ uuid(B4DB1657-70D7-485E-8E3E-6FCB5A5C1802),
+ pointer_default(unique)
+]
+interface IModalWindow : IUnknown
+{
+    [local]
+    HRESULT Show(
+        [in, unique, annotation("__in_opt")] HWND hwndOwner);
+
+    [call_as(Show)]
+    HRESULT RemoteShow(
+        [in, unique] HWND hwndOwner);
+}
+
+typedef [v1_enum] enum FDAP
+{
+    FDAP_BOTTOM    = 0,
+    FDAP_TOP       = 1
+} FDAP;
+
+/*****************************************************************************
+ * IFileDialog interface
+ */
+[
+ object,
+ uuid(42F85136-DB7E-439C-85F1-E4075D135FC8),
+ pointer_default(unique)
+]
+interface IFileDialog : IModalWindow
+{
+    [v1_enum] enum _FILEOPENDIALOGOPTIONS
+    {
+        FOS_OVERWRITEPROMPT     = 0x00000002,
+        FOS_STRICTFILETYPES     = 0x00000004,
+        FOS_NOCHANGEDIR         = 0x00000008,
+        FOS_PICKFOLDERS         = 0x00000020,
+        FOS_FORCEFILESYSTEM     = 0x00000040,
+        FOS_ALLNONSTORAGEITEMS  = 0x00000080,
+        FOS_NOVALIDATE          = 0x00000100,
+        FOS_ALLOWMULTISELECT    = 0x00000200,
+        FOS_PATHMUSTEXIST       = 0x00000800,
+        FOS_FILEMUSTEXIST       = 0x00001000,
+        FOS_CREATEPROMPT        = 0x00002000,
+        FOS_SHAREAWARE          = 0x00004000,
+        FOS_NOREADONLYRETURN    = 0x00008000,
+        FOS_NOTESTFILECREATE    = 0x00010000,
+        FOS_HIDEMRUPLACES       = 0x00020000,
+        FOS_HIDEPINNEDPLACES    = 0x00040000,
+        FOS_NODEREFERENCELINKS  = 0x00100000,
+        FOS_DONTADDTORECENT     = 0x02000000,
+        FOS_FORCESHOWHIDDEN     = 0x10000000,
+        FOS_DEFAULTNOMINIMODE   = 0x20000000,
+        FOS_FORCEPREVIEWPANEON  = 0x40000000
+    };
+    typedef DWORD FILEOPENDIALOGOPTIONS;
+
+    HRESULT SetFileTypes(
+        [in] UINT cFileTypes,
+        [in, size_is(cFileTypes)] const COMDLG_FILTERSPEC *rgFilterSpec);
+
+    HRESULT SetFileTypeIndex(
+        [in] UINT iFileType);
+
+    HRESULT GetFileTypeIndex(
+        [out] UINT *piFileType);
+
+    HRESULT Advise(
+        [in] IFileDialogEvents *pfde,
+        [out] DWORD *pdwCookie);
+
+    HRESULT Unadvise(
+        [in] DWORD dwCookie);
+
+    HRESULT SetOptions(
+        [in] FILEOPENDIALOGOPTIONS fos);
+
+    HRESULT GetOptions(
+        [in] FILEOPENDIALOGOPTIONS *pfos);
+
+    HRESULT SetDefaultFolder(
+        [in] IShellItem *psi);
+
+    HRESULT SetFolder(
+        [in] IShellItem *psi);
+
+    HRESULT GetFolder(
+        [out] IShellItem **ppsi);
+
+    HRESULT GetCurrentSelection(
+        [out] IShellItem **ppsi);
+
+    HRESULT SetFileName(
+        [in, string] LPCWSTR pszName);
+
+    HRESULT GetFileName(
+        [out, string] LPWSTR *pszName);
+
+    HRESULT SetTitle(
+        [in, string] LPCWSTR pszTitle);
+
+    HRESULT SetOkButtonLabel(
+        [in, string] LPCWSTR pszText);
+
+    HRESULT SetFileNameLabel(
+        [in, string] LPCWSTR pszLabel);
+
+    HRESULT GetResult(
+        [out] IShellItem **ppsi);
+
+    HRESULT AddPlace(
+        [in] IShellItem *psi,
+        [in] FDAP fdap);
+
+    HRESULT SetDefaultExtension(
+        [in, string] LPCWSTR pszDefaultExtension);
+
+    HRESULT Close(
+        [in] HRESULT hr);
+
+    HRESULT SetClientGuid(
+        [in] REFGUID guid);
+
+    HRESULT ClearClientData();
+
+    HRESULT SetFilter(
+        [in] IShellItemFilter *pFilter);
+}
+
+/*****************************************************************************
+ * IFileDialog2 interface
+ */
+[
+ object,
+ uuid(61744FC7-85B5-4791-A9B0-272276309B13),
+ pointer_default(unique)
+]
+interface IFileDialog2 : IFileDialog
+{
+    HRESULT SetCancelButtonLabel(
+        [in] LPCWSTR pszLabel);
+
+    HRESULT SetNavigationRoot(
+        [in] IShellItem *psi);
+}
+
+/*****************************************************************************
+ * IFileOperationProgressSink interface
+ */
+[
+ object,
+ uuid(04B0F1A7-9490-44BC-96E1-4296A31252E2),
+ pointer_default(unique)
+]
+interface IFileOperationProgressSink : IUnknown
+{
+    HRESULT StartOperations();
+
+    HRESULT FinishOperations(
+        [in] HRESULT hrResult);
+
+    HRESULT PreRenameItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem,
+        [in, unique, string] LPCWSTR pszNewName);
+
+    HRESULT PostRenameItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem,
+        [in, string] LPCWSTR pszNewName,
+        [in] HRESULT hrRename,
+        [in] IShellItem *psiNewlyCreated);
+
+    HRESULT PreMoveItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem,
+        [in] IShellItem *psiDestinationFolder,
+        [in, unique, string] LPCWSTR pszNewName);
+
+    HRESULT PostMoveItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem,
+        [in] IShellItem *psiDestinationFolder,
+        [in, unique, string] LPCWSTR pszNewName,
+        [in] HRESULT hrMove,
+        [in] IShellItem *psiNewlyCreated);
+
+    HRESULT PreCopyItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem,
+        [in] IShellItem *psiDestinationFolder,
+        [in, unique, string] LPCWSTR pszNewName);
+
+    HRESULT PostCopyItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem,
+        [in] IShellItem *psiDestinationFolder,
+        [in, unique, string] LPCWSTR pszNewName,
+        [in] HRESULT hrCopy,
+        [in] IShellItem *psiNewlyCreated);
+
+    HRESULT PreDeleteItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem);
+
+    HRESULT PostDeleteItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiItem,
+        [in] HRESULT hrDelete,
+        [in] IShellItem *psiNewlyCreated);
+
+    HRESULT PreNewItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiDestinationFolder,
+        [in, unique, string] LPCWSTR pszNewName);
+
+    HRESULT PostNewItem(
+        [in] DWORD dwFlags,
+        [in] IShellItem *psiDestinationFolder,
+        [in, unique, string] LPCWSTR pszNewName,
+        [in, unique, string] LPCWSTR pszTemplateName,
+        [in] DWORD dwFileAttributes,
+        [in] HRESULT hrNew,
+        [in] IShellItem *psiNewItem);
+
+    HRESULT UpdateProgress(
+        [in] UINT iWorkTotal,
+        [in] UINT iWorkSoFar);
+
+    HRESULT ResetTimer();
+
+    HRESULT PauseTimer();
+
+    HRESULT ResumeTimer();
+}
+
+/*****************************************************************************
+ * IFileSaveDialog interface
+ */
+[
+ object,
+ uuid(84BCCD23-5FDE-4CDB-AEA4-AF64B83D78AB),
+ pointer_default(unique)
+]
+interface IFileSaveDialog : IFileDialog
+{
+    HRESULT SetSaveAsItem(
+        [in] IShellItem *psi);
+
+    HRESULT SetProperties(
+        [in] IPropertyStore *pStore);
+
+    HRESULT SetCollectedProperties(
+        [in] IPropertyDescriptionList *pList,
+        [in] BOOL fAppendDefault);
+
+    HRESULT GetProperties(
+        [in] IPropertyStore **ppStore);
+
+    HRESULT ApplyProperties(
+        [in] IShellItem *psi,
+        [in] IPropertyStore *pStore,
+        [in, unique] HWND hwnd,
+        [in, unique] IFileOperationProgressSink *pSink);
+}
+
+
+/*****************************************************************************
+ * IFileOpenDialog interface
+ */
+[
+ object,
+ uuid(D57C7288-D4AD-4768-BE02-9D969532D960),
+ pointer_default(unique)
+]
+interface IFileOpenDialog : IFileDialog
+{
+    HRESULT GetResults(
+        [out] IShellItemArray **ppenum);
+
+    HRESULT GetSelectedItems(
+        [out] IShellItemArray **ppsai);
+}

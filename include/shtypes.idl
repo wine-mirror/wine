@@ -80,6 +80,12 @@ typedef struct
 } SHELLDETAILS, *LPSHELLDETAILS;
 cpp_quote("#include <poppack.h>")
 
+typedef struct _COMDLG_FILTERSPEC
+{
+    [string] LPCWSTR pszName;
+    [string] LPCWSTR pszSpec;
+} COMDLG_FILTERSPEC;
+
 typedef [v1_enum] enum tagSHCOLSTATE
 {
     SHCOLSTATE_DEFAULT = 0,
