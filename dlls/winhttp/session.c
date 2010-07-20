@@ -559,6 +559,18 @@ static void str_to_buffer( WCHAR *buffer, const WCHAR *str, LPDWORD buflen )
     *buflen = len * sizeof(WCHAR);
 }
 
+static WCHAR *blob_to_str( DWORD encoding, CERT_NAME_BLOB *blob )
+{
+    WCHAR *ret;
+    DWORD size, format = CERT_SIMPLE_NAME_STR | CERT_NAME_STR_CRLF_FLAG;
+
+    size = CertNameToStrW( encoding, blob, format, NULL, 0 );
+    if ((ret = LocalAlloc( 0, size * sizeof(WCHAR) )))
+        CertNameToStrW( encoding, blob, format, ret, size );
+
+    return ret;
+}
+
 static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buffer, LPDWORD buflen )
 {
     request_t *request = (request_t *)hdr;
@@ -596,6 +608,34 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         if (!(cert = netconn_get_certificate( &request->netconn ))) return FALSE;
         *(CERT_CONTEXT **)buffer = (CERT_CONTEXT *)cert;
         *buflen = sizeof(cert);
+        return TRUE;
+    }
+    case WINHTTP_OPTION_SECURITY_CERTIFICATE_STRUCT:
+    {
+        const CERT_CONTEXT *cert;
+        WINHTTP_CERTIFICATE_INFO *ci = buffer;
+
+        FIXME("partial stub\n");
+
+        if (!buffer || *buflen < sizeof(*ci))
+        {
+            *buflen = sizeof(*ci);
+            set_last_error( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+        if (!(cert = netconn_get_certificate( &request->netconn ))) return FALSE;
+
+        ci->ftExpiry = cert->pCertInfo->NotAfter;
+        ci->ftStart  = cert->pCertInfo->NotBefore;
+        ci->lpszSubjectInfo = blob_to_str( cert->dwCertEncodingType, &cert->pCertInfo->Subject );
+        ci->lpszIssuerInfo  = blob_to_str( cert->dwCertEncodingType, &cert->pCertInfo->Issuer );
+        ci->lpszProtocolName      = NULL;
+        ci->lpszSignatureAlgName  = NULL;
+        ci->lpszEncryptionAlgName = NULL;
+        ci->dwKeySize = 128;
+
+        CertFreeCertificateContext( cert );
+        *buflen = sizeof(*ci);
         return TRUE;
     }
     case WINHTTP_OPTION_SECURITY_KEY_BITNESS:
