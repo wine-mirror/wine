@@ -265,7 +265,7 @@ HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
   WCMD_DELPROMPT, "%s, 삭제"
   WCMD_ECHOPROMPT, "에코(Echo)는 %s\n"
   WCMD_VERIFYPROMPT, "검증(Verify)은 %s\n"
-  WCMD_VERIFYERR, "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다.\n";
+  WCMD_VERIFYERR, "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다.\n"
   WCMD_ARGERR, "매개변수 에러\n"
   WCMD_VOLUMEDETAIL, "%c 드라이브의 볼륨은 %s\n 볼륨 시리얼 번호는 %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "볼륨 라벨 (11 글자, ENTER는 없음과 같음)?"

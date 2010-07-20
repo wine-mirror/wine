@@ -287,7 +287,7 @@ obigen Befehle erhalten.\n"
   WCMD_DELPROMPT, "%s, löschen"
   WCMD_ECHOPROMPT, "Echo ist %s\n"
   WCMD_VERIFYPROMPT, "Verify ist %s\n"
-  WCMD_VERIFYERR, "Verify muß ON oder OFF sein\n";
+  WCMD_VERIFYERR, "Verify muß ON oder OFF sein\n"
   WCMD_ARGERR, "Parameterfehler\n"
   WCMD_VOLUMEDETAIL, "Volume in Laufwerk %c ist %s\nVolumeseriennummer ist %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Volumebezeichnung (11 Zeichen, EINGABETASTE für keine)?"

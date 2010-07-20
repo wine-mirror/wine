@@ -274,7 +274,7 @@ EXIT\t\tВыйти из CMD\n\n\
   WCMD_DELPROMPT, "%s, Удалено"
   WCMD_ECHOPROMPT, "Echo установлено в %s\n"
   WCMD_VERIFYPROMPT, "Verify установлено в %s\n"
-  WCMD_VERIFYERR, "Verify должен быть либо ON, либо OFF\n";
+  WCMD_VERIFYERR, "Verify должен быть либо ON, либо OFF\n"
   WCMD_ARGERR, "Неверный параметр\n"
   WCMD_VOLUMEDETAIL, "Объём диска %c %s\n Серийный номер %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Метка диска (11 символов, ENTER для ввода пустой метки)?"

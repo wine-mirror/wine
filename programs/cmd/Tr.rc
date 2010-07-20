@@ -267,7 +267,7 @@ Yukarýdaki komutlar hakkýnda daha fazla bilgi için HELP <komut> girin\n"
   WCMD_DELPROMPT, "%s, Delete"
   WCMD_ECHOPROMPT, "Echo is %s\n"
   WCMD_VERIFYPROMPT, "Verify is %s\n"
-  WCMD_VERIFYERR, "Verify must be ON or OFF\n";
+  WCMD_VERIFYERR, "Verify must be ON or OFF\n"
   WCMD_ARGERR, "Parameter error\n"
   WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"

@@ -271,7 +271,7 @@ Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
   WCMD_DELPROMPT, "%s, Supprimer"
   WCMD_ECHOPROMPT, "Echo est %s\n"
   WCMD_VERIFYPROMPT, "Verify est %s\n"
-  WCMD_VERIFYERR, "Verify doit être ON ou OFF\n";
+  WCMD_VERIFYERR, "Verify doit être ON ou OFF\n"
   WCMD_ARGERR, "Erreur de paramètre\n"
   WCMD_VOLUMEDETAIL, "Le volume dans le lecteur %c est %s\nLe numéro de série du volume est %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Étiquette du volume (11 caractères, ENTRÉE pour aucun) ?"
