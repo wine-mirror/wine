@@ -38,6 +38,7 @@
 #include "wingdi.h"
 #include "shlobj.h"
 #include "shlwapi.h"
+#include "propsys.h"
 
 #include "undocshell.h"
 #include "pidl.h"
@@ -853,6 +854,15 @@ VOID WINAPI Printers_UnregisterWindow(HANDLE hClassPidl, HWND hwnd)
 {
     FIXME("(%p, %p) stub!\n", hClassPidl, hwnd);
 } 
+
+/*************************************************************************
+ * SHGetPropertyStoreFromParsingName [SHELL32.@]
+ */
+HRESULT SHGetPropertyStoreFromParsingName(PCWSTR pszPath, IBindCtx *pbc, GETPROPERTYSTOREFLAGS flags, REFIID riid, void **ppv)
+{
+    FIXME("(%s %p %u %p %p) stub!\n", debugstr_w(pszPath), pbc, flags, riid, ppv);
+    return E_NOTIMPL;
+}
 
 /*************************************************************************/
 

@@ -364,6 +364,7 @@
 @ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListA
 @ stdcall SHGetPathFromIDListA(ptr ptr)
 @ stdcall SHGetPathFromIDListW(ptr ptr)
+@ stdcall SHGetPropertyStoreFromParsingName(wstr ptr long ptr ptr)
 @ stdcall SHGetSettings(ptr long)
 @ stdcall SHGetSpecialFolderLocation(long long ptr)
 @ stdcall SHGetSpecialFolderPathA(long ptr long long)
