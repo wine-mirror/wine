@@ -1014,6 +1014,7 @@ static const struct driver_version_information driver_version_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          15, 11, 9745   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTX,    "NVIDIA GeForce 8800 GTX",          15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           15, 11, 9745   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           15, 11, 9745   },
@@ -1383,6 +1384,13 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         {
             *vidmem = 256; /* The 9100-9300 cards have 256MB */
             return CARD_NVIDIA_GEFORCE_9200;
+        }
+
+        /* Geforce8 - highend high*/
+        if (strstr(gl_renderer, "8800 GTX"))
+        {
+            *vidmem = 768;
+            return CARD_NVIDIA_GEFORCE_8800GTX;
         }
 
         /* Geforce8 - highend */
