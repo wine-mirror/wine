@@ -66,7 +66,7 @@
   68 stdcall -noname SHGetSetSettings(ptr long long)
   69 stub -noname SHGetNetResource
   70 stdcall -noname SHCreateDefClassObject(long long long long long)
-  71 stdcall -noname Shell_GetImageList(ptr ptr)
+  71 stdcall -ordinal Shell_GetImageLists(ptr ptr)
   72 stdcall -noname Shell_GetCachedImageIndex(ptr ptr long) Shell_GetCachedImageIndexAW
   73 stdcall -noname SHShellFolderView_Message(long long long)
   74 stdcall -noname SHCreateStdEnumFmtEtc(long ptr ptr)

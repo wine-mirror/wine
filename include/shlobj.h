@@ -83,6 +83,7 @@ int          WINAPI RestartDialog(HWND,LPCWSTR,DWORD);
 int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
 BOOL         WINAPI IsUserAnAdmin(void);
 UINT         WINAPI Shell_MergeMenus(HMENU,HMENU,UINT,UINT,UINT,ULONG);
+BOOL         WINAPI Shell_GetImageLists(HIMAGELIST*,HIMAGELIST*);
 
 #define SHFMT_ERROR     0xFFFFFFFFL  /* Error on last format, drive may be formattable */
 #define SHFMT_CANCEL    0xFFFFFFFEL  /* Last format was cancelled */

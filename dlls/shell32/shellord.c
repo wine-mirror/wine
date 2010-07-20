@@ -2203,7 +2203,7 @@ HRESULT WINAPI SHGetImageList(int iImageList, REFIID riid, void **ppv)
         return E_FAIL;
     }
 
-    Shell_GetImageList(&hLarge, &hSmall);
+    Shell_GetImageLists(&hLarge, &hSmall);
     hNew = ImageList_Duplicate(iImageList == SHIL_LARGE ? hLarge : hSmall);
 
     /* Get the interface for the new image list */

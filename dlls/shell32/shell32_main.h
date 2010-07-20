@@ -45,8 +45,6 @@ extern HINSTANCE shell32_hInstance;
 extern HIMAGELIST	ShellSmallIconList;
 extern HIMAGELIST	ShellBigIconList;
 
-BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
-
 /* Iconcache */
 #define INVALID_INDEX -1
 BOOL SIC_Initialize(void);
