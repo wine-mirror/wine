@@ -201,12 +201,16 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         case BWRITERSIO_DEFB:        return D3DSIO_DEFB;
         case BWRITERSIO_DEFI:        return D3DSIO_DEFI;
 
+        case BWRITERSIO_TEXCOORD:    return D3DSIO_TEXCOORD;
         case BWRITERSIO_TEXKILL:     return D3DSIO_TEXKILL;
         case BWRITERSIO_TEX:         return D3DSIO_TEX;
         case BWRITERSIO_EXPP:        return D3DSIO_EXPP;
         case BWRITERSIO_LOGP:        return D3DSIO_LOGP;
+        case BWRITERSIO_CND:         return D3DSIO_CND;
         case BWRITERSIO_DEF:         return D3DSIO_DEF;
+        case BWRITERSIO_TEXDEPTH:    return D3DSIO_TEXDEPTH;
         case BWRITERSIO_CMP:         return D3DSIO_CMP;
+        case BWRITERSIO_BEM:         return D3DSIO_BEM;
         case BWRITERSIO_DP2ADD:      return D3DSIO_DP2ADD;
         case BWRITERSIO_DSX:         return D3DSIO_DSX;
         case BWRITERSIO_DSY:         return D3DSIO_DSY;
@@ -215,6 +219,7 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
         case BWRITERSIO_TEXLDL:      return D3DSIO_TEXLDL;
         case BWRITERSIO_BREAKP:      return D3DSIO_BREAKP;
 
+        case BWRITERSIO_PHASE:       return D3DSIO_PHASE;
         case BWRITERSIO_COMMENT:     return D3DSIO_COMMENT;
         case BWRITERSIO_END:         return D3DSIO_END;
 
@@ -545,12 +550,16 @@ const char *debug_print_opcode(DWORD opcode) {
         case BWRITERSIO_MOVA:         return "mova";
         case BWRITERSIO_DEFB:         return "defb";
         case BWRITERSIO_DEFI:         return "defi";
+        case BWRITERSIO_TEXCOORD:     return "texcoord";
         case BWRITERSIO_TEXKILL:      return "texkill";
         case BWRITERSIO_TEX:          return "tex";
         case BWRITERSIO_EXPP:         return "expp";
         case BWRITERSIO_LOGP:         return "logp";
+        case BWRITERSIO_CND:          return "cnd";
         case BWRITERSIO_DEF:          return "def";
+        case BWRITERSIO_TEXDEPTH:     return "texdepth";
         case BWRITERSIO_CMP:          return "cmp";
+        case BWRITERSIO_BEM:          return "bem";
         case BWRITERSIO_DP2ADD:       return "dp2add";
         case BWRITERSIO_DSX:          return "dsx";
         case BWRITERSIO_DSY:          return "dsy";
@@ -558,6 +567,7 @@ const char *debug_print_opcode(DWORD opcode) {
         case BWRITERSIO_SETP:         return "setp";
         case BWRITERSIO_TEXLDL:       return "texldl";
         case BWRITERSIO_BREAKP:       return "breakp";
+        case BWRITERSIO_PHASE:        return "phase";
 
         case BWRITERSIO_TEXLDP:       return "texldp";
         case BWRITERSIO_TEXLDB:       return "texldb";

@@ -148,15 +148,20 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_MOVA
 
 /* Pixel shader only instructions   */
+%token INSTR_CND
 %token INSTR_CMP
 %token INSTR_DP2ADD
+%token INSTR_TEXCRD
 %token INSTR_TEXKILL
 %token INSTR_TEXLD
+%token INSTR_TEXDEPTH
+%token INSTR_BEM
 %token INSTR_DSX
 %token INSTR_DSY
 %token INSTR_TEXLDP
 %token INSTR_TEXLDB
 %token INSTR_TEXLDD
+%token INSTR_PHASE
 
 /* Registers */
 %token <regnum> REG_TEMP
@@ -786,6 +791,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("MOVA\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_MOVA, $2.mod, $2.shift, 0, &$3, &$5, 1);
                             }
+                    | INSTR_CND omods dreg ',' sregs
+                            {
+                                TRACE("CND\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_CND, $2.mod, $2.shift, 0, &$3, &$5, 3);
+                            }
                     | INSTR_CMP omods dreg ',' sregs
                             {
                                 TRACE("CMP\n");
@@ -796,10 +806,21 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("DP2ADD\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DP2ADD, $2.mod, $2.shift, 0, &$3, &$5, 3);
                             }
+                    | INSTR_TEXCRD omods dreg ',' sregs
+                            {
+                                TRACE("TEXCRD\n");
+                                /* texcoord and texcrd share the same opcode */
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXCOORD, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
                     | INSTR_TEXKILL dreg
                             {
                                 TRACE("TEXKILL\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXKILL, 0, 0, 0, &$2, 0, 0);
+                            }
+                    | INSTR_TEXDEPTH omods dreg
+                            {
+                                TRACE("TEXDEPTH\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXDEPTH, $2.mod, $2.shift, 0, &$3, 0, 0);
                             }
                     | INSTR_TEXLD omods dreg ',' sregs
                             {
@@ -822,6 +843,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("TEXLDB\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXLDB, $2.mod, $2.shift, 0, &$3, &$5, 2);
                             }
+                    | INSTR_BEM omods dreg ',' sregs
+                            {
+                                TRACE("BEM\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_BEM, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
                     | INSTR_DSX omods dreg ',' sregs
                             {
                                 TRACE("DSX\n");
@@ -837,6 +863,12 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("TEXLDD\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXLDD, $2.mod, $2.shift, 0, &$3, &$5, 4);
                             }
+                    | INSTR_PHASE
+                            {
+                                TRACE("PHASE\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_PHASE, 0, 0, 0, 0, 0, 0);
+                            }
+
 
 dreg:                 dreg_name rel_reg
                             {
