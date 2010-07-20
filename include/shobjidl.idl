@@ -1902,3 +1902,296 @@ interface IExplorerBrowser : IUnknown
         [in] REFIID riid,
         [out, iid_is(riid)] void **ppv);
 }
+
+/*****************************************************************************
+ * INameSpaceTreeControl interface
+ */
+[
+ object,
+ uuid(028212A3-B627-47E9-8856-C14265554E4F)
+]
+interface INameSpaceTreeControl : IUnknown
+{
+    [v1_enum] enum _NSTCSTYLE {
+        NSTCS_HASEXPANDOS                 = 0x00000001,
+        NSTCS_HASLINES                    = 0x00000002,
+        NSTCS_SINGLECLICKEXPAND           = 0x00000004,
+        NSTCS_FULLROWSELECT               = 0x00000008,
+        NSTCS_SPRINGEXPAND                = 0x00000010,
+        NSTCS_HORIZONTALSCROLL            = 0x00000020,
+        NSTCS_ROOTHASEXPANDO              = 0x00000040,
+        NSTCS_SHOWSELECTIONALWAYS         = 0x00000080,
+        NSTCS_NOINFOTIP                   = 0x00000200,
+        NSTCS_EVENHEIGHT                  = 0x00000400,
+        NSTCS_NOREPLACEOPEN               = 0x00000800,
+        NSTCS_DISABLEDRAGDROP             = 0x00001000,
+        NSTCS_NOORDERSTREAM               = 0x00002000,
+        NSTCS_RICHTOOLTIP                 = 0x00004000,
+        NSTCS_BORDER                      = 0x00008000,
+        NSTCS_NOEDITLABELS                = 0x00010000,
+        NSTCS_TABSTOP                     = 0x00020000,
+        NSTCS_FAVORITESMODE               = 0x00080000,
+        NSTCS_AUTOHSCROLL                 = 0x00100000,
+        NSTCS_FADEINOUTEXPANDOS           = 0x00200000,
+        NSTCS_EMPTYTEXT                   = 0x00400000,
+        NSTCS_CHECKBOXES                  = 0x00800000,
+        NSTCS_PARTIALCHECKBOXES           = 0x01000000,
+        NSTCS_EXCLUSIONCHECKBOXES         = 0x02000000,
+        NSTCS_DIMMEDCHECKBOXES            = 0x04000000,
+        NSTCS_NOINDENTCHECKS              = 0x08000000,
+        NSTCS_ALLOWJUNCTIONS              = 0x10000000,
+        NSTCS_SHOWTABSBUTTON              = 0x20000000,
+        NSTCS_SHOWDELETEBUTTON            = 0x40000000,
+        NSTCS_SHOWREFRESHBUTTON      = (int)0x80000000
+    };
+    typedef DWORD NSTCSTYLE;
+
+    [v1_enum] enum _NSTCROOTSTYLE {
+        NSTCRS_VISIBLE                    = 0x0000,
+        NSTCRS_HIDDEN                     = 0x0001,
+        NSTCRS_EXPANDED                   = 0x0002
+    };
+    typedef DWORD NSTCROOTSTYLE;
+
+    [v1_enum] enum _NSTCITEMSTATE {
+        NSTCIS_NONE                       = 0x0000,
+        NSTCIS_SELECTED                   = 0x0001,
+        NSTCIS_EXPANDED                   = 0x0002,
+        NSTCIS_BOLD                       = 0x0004,
+        NSTCIS_DISABLED                   = 0x0008,
+        NSTCIS_SELECTEDNOEXPAND           = 0x0010
+    };
+    typedef DWORD NSTCITEMSTATE;
+
+    typedef [v1_enum] enum NSTCGNI {
+        NSTCGNI_NEXT                      = 0,
+        NSTCGNI_NEXTVISIBLE               = 1,
+        NSTCGNI_PREV                      = 2,
+        NSTCGNI_PREVVISIBLE               = 3,
+        NSTCGNI_PARENT                    = 4,
+        NSTCGNI_CHILD                     = 5,
+        NSTCGNI_FIRSTVISIBLE              = 6,
+        NSTCGNI_LASTVISIBLE               = 7
+    } NSTCGNI;
+
+    HRESULT Initialize(
+        [in] HWND hwndParent,
+        [in, unique] RECT *prc,
+        [in] NSTCSTYLE nstcsFlags);
+
+    HRESULT TreeAdvise(
+        [in] IUnknown *punk,
+        [out] DWORD *pdwCookie);
+
+    HRESULT TreeUnadvise(
+        [in] DWORD dwCookie);
+
+    HRESULT AppendRoot(
+        [in] IShellItem *psiRoot,
+        [in] SHCONTF grfEnumFlags,
+        [in] NSTCROOTSTYLE grfRootStyle,
+        [in, unique] IShellItemFilter *pif);
+
+    HRESULT InsertRoot(
+        [in] int iIndex,
+        [in] IShellItem *psiRoot,
+        [in] SHCONTF grfEnumFlags,
+        [in] NSTCROOTSTYLE grfRootStyle,
+        [in, unique] IShellItemFilter *pif);
+
+    HRESULT RemoveRoot(
+        [in] IShellItem *psiRoot);
+
+    HRESULT RemoveAllRoots();
+
+    HRESULT GetRootItems(
+        [out] IShellItemArray **ppsiaRootItems);
+
+    HRESULT SetItemState(
+        [in] IShellItem *psi,
+        [in] NSTCITEMSTATE nstcisMask,
+        [in] NSTCITEMSTATE nstcisFlags);
+
+    HRESULT GetItemState(
+        [in] IShellItem *psi,
+        [in] NSTCITEMSTATE nstcismask,
+        [out] NSTCITEMSTATE *pnstcisFlags);
+
+    HRESULT GetSelectedItems(
+        [out] IShellItemArray **psiaItems);
+
+    HRESULT GetItemCustomState(
+        [in] IShellItem *psi,
+        [out] int *piStateNumber);
+
+    HRESULT SetItemCustomState(
+        [in] IShellItem *psi,
+        [in] int iStateNumber);
+
+    HRESULT EnsureItemVisible(
+        [in] IShellItem *psi);
+
+    HRESULT SetTheme(
+        [in, string] LPCWSTR pszTheme);
+
+    HRESULT GetNextItem(
+        [in, unique] IShellItem *psi,
+        [in] NSTCGNI nstcgi,
+        [out] IShellItem **ppsiNext);
+
+    HRESULT HitTest(
+        [in] POINT *ppt,
+        [out] IShellItem **ppsiOut);
+
+    HRESULT GetItemRect(
+        [in] IShellItem *psi,
+        [out] RECT *prect);
+
+    HRESULT CollapseAll();
+}
+
+/*****************************************************************************
+ * INameSpaceTreeControl2 interface
+ */
+[
+ object,
+ uuid(7CC7AED8-290E-49BC-8945-C1401CC9306C)
+]
+interface INameSpaceTreeControl2 : INameSpaceTreeControl
+{
+    typedef [v1_enum] enum NSTCSTYLE2 {
+        NSTCS2_DEFAULT                     = 0x00,
+        NSTCS2_INTERRUPTNOTIFICATIONS      = 0x01,
+        NSTCS2_SHOWNULLSPACEMENU           = 0x02,
+        NSTCS2_DISPLAYPADDING              = 0x04,
+        NSTCS2_DISPLAYPINNEDONLY           = 0x08,
+        NTSCS2_NOSINGLETONAUTOEXPAND       = 0x10,  /* The apparent typo here is   */
+        NTSCS2_NEVERINSERTNONENUMERATED    = 0x20   /* present also in the Win SDK */
+    } NSTCSTYLE2;
+    cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(NSTCSTYLE2)")
+
+    HRESULT SetControlStyle(
+        [in] NSTCSTYLE nstcsMask,
+        [in] NSTCSTYLE nstcsStyle);
+
+    HRESULT GetControlStyle(
+        [in] NSTCSTYLE nstcsMask,
+        [out] NSTCSTYLE *pnstcsStyle);
+
+    HRESULT SetControlStyle2(
+        [in] NSTCSTYLE2 nstcsMask,
+        [in] NSTCSTYLE2 nstcsStyle);
+
+    HRESULT GetControlStyle2(
+        [in] NSTCSTYLE2 nstcsMask,
+        [out] NSTCSTYLE2 *pnstcsStyle);
+}
+
+/*****************************************************************************
+ * INameSpaceTreeControlEvents interface
+ */
+
+[
+ object,
+ uuid(93D77985-B3D8-4484-8318-672CDDA002CE),
+ local
+]
+interface INameSpaceTreeControlEvents : IUnknown
+{
+    [v1_enum] enum _NSTCEHITTEST {
+        NSTCEHT_NOWHERE                    = 0x0001,
+        NSTCEHT_ONITEMICON                 = 0x0002,
+        NSTCEHT_ONITEMLABEL                = 0x0004,
+        NSTCEHT_ONITEMIDENT                = 0x0008,
+        NSTCEHT_ONITEMBUTTON               = 0x0010,
+        NSTCEHT_ONITEMRIGHT                = 0x0020,
+        NSTCEHT_ONITEMSTATEICON            = 0x0040,
+        NSTCEHT_ONITEM                     = 0x0046,
+        NSTCEHT_ONITEMTABBUTTON            = 0x1000
+    };
+    typedef DWORD NSTCEHITTEST;
+
+    [v1_enum] enum _NSTCECLICKTYPE {
+        NSTCECT_LBUTTON                    = 0x1,
+        NSTCECT_MBUTTON                    = 0x2,
+        NSTCECT_RBUTTON                    = 0x3,
+        NSTCECT_BUTTON                     = 0x3,
+        NSTCECT_DBLCLICK                   = 0x4
+    };
+    typedef DWORD NSTCECLICKTYPE;
+
+    HRESULT OnItemClick(
+        [in] IShellItem *psi,
+        [in] NSTCEHITTEST nstceHitTest,
+        [in] NSTCECLICKTYPE nstceClickType);
+
+    HRESULT OnPropertyItemCommit(
+        [in] IShellItem *psi);
+
+    HRESULT OnItemStateChanging(
+        [in] IShellItem *psi,
+        [in] NSTCITEMSTATE nstcisMask,
+        [in] NSTCITEMSTATE nstcisState);
+
+    HRESULT OnItemStateChanged(
+        [in] IShellItem *psi,
+        [in] NSTCITEMSTATE nstcisMask,
+        [in] NSTCITEMSTATE nstcisState);
+
+    HRESULT OnSelectionChanged(
+        [in] IShellItemArray *psiaSelection);
+
+    HRESULT OnKeyboardInput(
+        [in] UINT uMsg,
+        [in] WPARAM wParam,
+        [in] LPARAM lParam);
+
+    HRESULT OnBeforeExpand(
+        [in] IShellItem *psi);
+
+    HRESULT OnAfterExpand(
+        [in] IShellItem *psi);
+
+    HRESULT OnBeginLabelEdit(
+        [in] IShellItem *psi);
+
+    HRESULT OnEndLabelEdit(
+        [in] IShellItem *psi);
+
+    HRESULT OnGetToolTip(
+        [in] IShellItem *psi,
+        [out, string, size_is(cchTip)] LPWSTR pszTip,
+        [in] int cchTip);
+
+    HRESULT OnBeforeItemDelete(
+        [in] IShellItem *psi);
+
+    HRESULT OnItemAdded(
+        [in] IShellItem *psi,
+        [in] BOOL fIsRoot);
+
+    HRESULT OnItemDeleted(
+        [in] IShellItem *psi,
+        [in] BOOL fIsRoot);
+
+    HRESULT OnBeforeContextMenu(
+        [in, unique] IShellItem *psi,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT OnAfterContextMenu(
+        [in] IShellItem *psi,
+        [in] IContextMenu *pcmIn,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT OnBeforeStateImageChange(
+        [in] IShellItem *psi,
+        [out] int *piDefaultIcon,
+        [out] int *piOpenIcon);
+
+    HRESULT OnGetDefaultIconIndex(
+        [in] IShellItem *psi,
+        [out] int *piDefaultIcon,
+        [out] int *piOpenIcon);
+}
