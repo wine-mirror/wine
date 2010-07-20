@@ -1903,10 +1903,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
     return WINED3D_OK;
 }
 
-void WINAPI IWineD3DBaseSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb) {
-    ERR("Should not be called on base texture\n");
-}
-
 /* TODO: think about moving this down to resource? */
 const void *WINAPI IWineD3DBaseSurfaceImpl_GetData(IWineD3DSurface *iface)
 {
