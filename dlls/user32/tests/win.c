@@ -4923,7 +4923,7 @@ static void test_ShowWindow(void)
                        SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
     ok(ret, "not expected ret: %lu\n", ret);
     GetWindowRect(hwnd, &rc);
-    todo_wine ok(EqualRect(&rc, &rcMinimized), "rects should match\n");
+    ok(EqualRect(&rc, &rcMinimized), "rects should match\n");
 
     ShowWindow(hwnd, SW_RESTORE);
     ok(ret, "not expected ret: %lu\n", ret);
