@@ -661,7 +661,8 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct
                      * COLOROUT 0 is overwritten partially later, the marker is dropped again. */
 
                         ps->color0_mov = FALSE;
-                        if (ins.handler_idx == WINED3DSIH_MOV)
+                        if (ins.handler_idx == WINED3DSIH_MOV
+                                && dst_param.write_mask == WINED3DSP_WRITEMASK_ALL)
                         {
                             /* Used later when the source register is read. */
                             color0_mov = TRUE;
