@@ -191,10 +191,6 @@ int WINAPI Shell_GetCachedImageIndex(
 	UINT nIconIndex,
 	BOOL bSimulateDoc);
 
-BOOL WINAPI Shell_GetImageLists(
-	HIMAGELIST *lphimlLarge,
-	HIMAGELIST *lphimlSmall);
-
 HICON WINAPI SHGetFileIcon(
 	DWORD dwReserved,
 	LPCSTR lpszPath,

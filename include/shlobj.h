@@ -82,6 +82,7 @@ VOID         WINAPI SHUpdateImageW(LPCWSTR,INT,UINT,INT);
 int          WINAPI RestartDialog(HWND,LPCWSTR,DWORD);
 int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
 BOOL         WINAPI IsUserAnAdmin(void);
+UINT         WINAPI Shell_MergeMenus(HMENU,HMENU,UINT,UINT,UINT,ULONG);
 
 #define SHFMT_ERROR     0xFFFFFFFFL  /* Error on last format, drive may be formattable */
 #define SHFMT_CANCEL    0xFFFFFFFEL  /* Last format was cancelled */
@@ -115,6 +116,11 @@ BOOL WINAPI SHObjectProperties(HWND,DWORD,LPCWSTR,LPCWSTR);
 #define PCS_PATHTOOLONG     0x00000008
 
 int WINAPI PathCleanupSpec(LPCWSTR,LPWSTR);
+
+/* Shell_MergeMenus flags */
+#define MM_ADDSEPARATOR     0x00000001
+#define MM_SUBMENUSHAVEIDS  0x00000002
+#define MM_DONTREMOVESEPS   0x00000004
 
 /*****************************************************************************
  * IContextMenu interface

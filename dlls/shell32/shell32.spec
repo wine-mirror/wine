@@ -62,7 +62,7 @@
   64 stdcall -noname DriveType(long)
   65 stdcall -noname InvalidateDriveType(long)
   66 stdcall -noname IsNetDrive(long)
-  67 stdcall -noname Shell_MergeMenus(long long long long long long)
+  67 stdcall -ordinal Shell_MergeMenus(long long long long long long)
   68 stdcall -noname SHGetSetSettings(ptr long long)
   69 stub -noname SHGetNetResource
   70 stdcall -noname SHCreateDefClassObject(long long long long long)
