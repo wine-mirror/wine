@@ -1820,6 +1820,9 @@ BOOL WINAPI CredWriteW(PCREDENTIALW Credential, DWORD Flags)
             SetLastError(ERROR_BAD_USERNAME);
             return FALSE;
         }
+
+        Credential->CredentialBlobSize = 0;
+        Credential->CredentialBlob = NULL;
     }
 
 #ifdef __APPLE__
