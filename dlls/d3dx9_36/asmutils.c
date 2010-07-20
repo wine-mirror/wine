@@ -72,6 +72,15 @@ DWORD d3d9_srcmod(DWORD bwriter_srcmod) {
     switch(bwriter_srcmod) {
         case BWRITERSPSM_NONE:       return D3DSPSM_NONE;
         case BWRITERSPSM_NEG:        return D3DSPSM_NEG;
+        case BWRITERSPSM_BIAS:       return D3DSPSM_BIAS;
+        case BWRITERSPSM_BIASNEG:    return D3DSPSM_BIASNEG;
+        case BWRITERSPSM_SIGN:       return D3DSPSM_SIGN;
+        case BWRITERSPSM_SIGNNEG:    return D3DSPSM_SIGNNEG;
+        case BWRITERSPSM_COMP:       return D3DSPSM_COMP;
+        case BWRITERSPSM_X2:         return D3DSPSM_X2;
+        case BWRITERSPSM_X2NEG:      return D3DSPSM_X2NEG;
+        case BWRITERSPSM_DZ:         return D3DSPSM_DZ;
+        case BWRITERSPSM_DW:         return D3DSPSM_DW;
         case BWRITERSPSM_ABS:        return D3DSPSM_ABS;
         case BWRITERSPSM_ABSNEG:     return D3DSPSM_ABSNEG;
         case BWRITERSPSM_NOT:        return D3DSPSM_NOT;
@@ -222,6 +231,15 @@ DWORD d3d9_opcode(DWORD bwriter_opcode) {
 const char *debug_print_srcmod(DWORD mod) {
     switch(mod) {
         case BWRITERSPSM_NEG:       return "D3DSPSM_NEG";
+        case BWRITERSPSM_BIAS:      return "D3DSPSM_BIAS";
+        case BWRITERSPSM_BIASNEG:   return "D3DSPSM_BIASNEG";
+        case BWRITERSPSM_SIGN:      return "D3DSPSM_SIGN";
+        case BWRITERSPSM_SIGNNEG:   return "D3DSPSM_SIGNNEG";
+        case BWRITERSPSM_COMP:      return "D3DSPSM_COMP";
+        case BWRITERSPSM_X2:        return "D3DSPSM_X2";
+        case BWRITERSPSM_X2NEG:     return "D3DSPSM_X2NEG";
+        case BWRITERSPSM_DZ:        return "D3DSPSM_DZ";
+        case BWRITERSPSM_DW:        return "D3DSPSM_DW";
         case BWRITERSPSM_ABS:       return "D3DSPSM_ABS";
         case BWRITERSPSM_ABSNEG:    return "D3DSPSM_ABSNEG";
         case BWRITERSPSM_NOT:       return "D3DSPSM_NOT";
@@ -387,6 +405,42 @@ const char *debug_print_srcreg(const struct shader_reg *reg) {
                                     debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_NEG:
             return wine_dbg_sprintf("-%s%s%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_BIAS:
+            return wine_dbg_sprintf("%s%s_bias%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_BIASNEG:
+            return wine_dbg_sprintf("-%s%s_bias%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_SIGN:
+            return wine_dbg_sprintf("%s%s_bx2%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_SIGNNEG:
+            return wine_dbg_sprintf("-%s%s_bx2%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_COMP:
+            return wine_dbg_sprintf("1 - %s%s%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_X2:
+            return wine_dbg_sprintf("%s%s_x2%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_X2NEG:
+            return wine_dbg_sprintf("-%s%s_x2%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_DZ:
+            return wine_dbg_sprintf("%s%s_dz%s", get_regname(reg),
+                                    debug_print_relarg(reg),
+                                    debug_print_swizzle(reg->swizzle));
+        case BWRITERSPSM_DW:
+            return wine_dbg_sprintf("%s%s_dw%s", get_regname(reg),
                                     debug_print_relarg(reg),
                                     debug_print_swizzle(reg->swizzle));
         case BWRITERSPSM_ABS:

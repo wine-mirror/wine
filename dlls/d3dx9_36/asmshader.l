@@ -275,6 +275,7 @@ ps_3_0                  {return VER_PS30;       }
                         }
 
     /* Output modifiers */
+\_x2                    {return SHIFT_X2;           }
 \_sat                   {return MOD_SAT;            }
 \_pp                    {return MOD_PP;             }
 \_centroid              {return MOD_CENTROID;       }
@@ -309,6 +310,11 @@ false                   {
     /* for relative addressing */
 \[|\]|\+                {return yytext[0];          }
 
+\_bias                  {return SMOD_BIAS;          }
+    /* No _x2 here; it is identical to MOD_X2 */
+\_bx2                   {return SMOD_SCALEBIAS;     }
+\_dz                    {return SMOD_DZ;            }
+\_dw                    {return SMOD_DW;            }
 \_abs                   {return SMOD_ABS;           }
 
 !                       {return SMOD_NOT;           }

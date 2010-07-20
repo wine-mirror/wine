@@ -198,6 +198,7 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token VER_PS30
 
 /* Output modifiers */
+%token SHIFT_X2
 %token MOD_SAT
 %token MOD_PP
 %token MOD_CENTROID
@@ -211,6 +212,10 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token COMP_NE
 
 /* Source register modifiers */
+%token SMOD_BIAS
+%token SMOD_SCALEBIAS
+%token SMOD_DZ
+%token SMOD_DW
 %token SMOD_ABS
 %token SMOD_NOT
 
@@ -1102,11 +1107,52 @@ sreg:                   sreg_name rel_reg swizzle
                             $$.regnum = $2.regnum;
                             set_rel_reg(&$$, &$3);
                             switch($4) {
+                                case BWRITERSPSM_BIAS: $$.srcmod = BWRITERSPSM_BIASNEG; break;
+                                case BWRITERSPSM_X2:   $$.srcmod = BWRITERSPSM_X2NEG;   break;
+                                case BWRITERSPSM_SIGN: $$.srcmod = BWRITERSPSM_SIGNNEG; break;
                                 case BWRITERSPSM_ABS:  $$.srcmod = BWRITERSPSM_ABSNEG;  break;
+                                case BWRITERSPSM_DZ:
+                                    asmparser_message(&asm_ctx, "Line %u: Incompatible source modifiers: NEG and DZ\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    break;
+                                case BWRITERSPSM_DW:
+                                    asmparser_message(&asm_ctx, "Line %u: Incompatible source modifiers: NEG and DW\n",
+                                                      asm_ctx.line_no);
+                                    set_parse_status(&asm_ctx, PARSE_ERR);
+                                    break;
                                 default:
                                     FIXME("Unhandled combination of NEGATE and %u\n", $4);
                             }
                             $$.swizzle = $5;
+                        }
+                    | IMMVAL '-' sreg_name rel_reg swizzle
+                        {
+                            if($1.val != 1.0 || (!$1.integer)) {
+                                asmparser_message(&asm_ctx, "Line %u: Only \"1 - reg\" is valid for D3DSPSM_COMP, "
+                                                  "%g - reg found\n", asm_ctx.line_no, $1.val);
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                            }
+                            /* Complement - not compatible with other source modifiers */
+                            $$.type = $3.type;
+                            $$.regnum = $3.regnum;
+                            $$.srcmod = BWRITERSPSM_COMP;
+                            set_rel_reg(&$$, &$4);
+                            $$.swizzle = $5;
+                        }
+                    | IMMVAL '-' sreg_name rel_reg smod swizzle
+                        {
+                            /* For nicer error reporting */
+                            if($1.val != 1.0 || (!$1.integer)) {
+                                asmparser_message(&asm_ctx, "Line %u: Only \"1 - reg\" is valid for D3DSPSM_COMP\n",
+                                                  asm_ctx.line_no);
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                            } else {
+                                asmparser_message(&asm_ctx, "Line %u: Incompatible source modifiers: D3DSPSM_COMP and %s\n",
+                                                  asm_ctx.line_no,
+                                                  debug_print_srcmod($5));
+                                set_parse_status(&asm_ctx, PARSE_ERR);
+                            }
                         }
                     | SMOD_NOT sreg_name swizzle
                         {
@@ -1179,7 +1225,27 @@ immsum:               IMMVAL
                             $$.val = $1.val + $3.val;
                         }
 
-smod:                 SMOD_ABS
+smod:                 SMOD_BIAS
+                        {
+                            $$ = BWRITERSPSM_BIAS;
+                        }
+                    | SHIFT_X2
+                        {
+                            $$ = BWRITERSPSM_X2;
+                        }
+                    | SMOD_SCALEBIAS
+                        {
+                            $$ = BWRITERSPSM_SIGN;
+                        }
+                    | SMOD_DZ
+                        {
+                            $$ = BWRITERSPSM_DZ;
+                        }
+                    | SMOD_DW
+                        {
+                            $$ = BWRITERSPSM_DW;
+                        }
+                    | SMOD_ABS
                         {
                             $$ = BWRITERSPSM_ABS;
                         }
