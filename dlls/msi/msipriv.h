@@ -44,6 +44,7 @@
 #define MSITYPE_KEY      0x2000
 #define MSITYPE_TEMPORARY 0x4000
 
+#define MAX_STREAM_NAME_LEN     62
 
 /* Install UI level mask for AND operation to exclude flags */
 #define INSTALLUILEVEL_MASK             0x0007
