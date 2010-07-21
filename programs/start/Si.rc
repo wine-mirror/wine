@@ -25,7 +25,7 @@
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
 STRING_USAGE,                                   "Zažene program oziroma odpre dokument v programu, ki je povezan z datotekami te vrste.\n\
 Uporaba:\n\

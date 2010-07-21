@@ -23,7 +23,7 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
 STRING_USAGE,    "Bir programý veya uzantýsý ile iliþkili olan program içinde bir belgeyi açar.\n\
 Kullaným:\n\
