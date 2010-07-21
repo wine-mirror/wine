@@ -3770,9 +3770,6 @@ static UINT msi_publish_upgrade_code(MSIPACKAGE *package)
     LPWSTR upgrade;
     WCHAR squashed_pc[SQUISH_GUID_SIZE];
 
-    static const WCHAR szUpgradeCode[] =
-        {'U','p','g','r','a','d','e','C','o','d','e',0};
-
     upgrade = msi_dup_property(package->db, szUpgradeCode);
     if (!upgrade)
         return ERROR_SUCCESS;
@@ -3826,20 +3823,27 @@ static BOOL msi_check_unpublish(MSIPACKAGE *package)
     return TRUE;
 }
 
-static UINT msi_publish_patches( MSIPACKAGE *package, HKEY prodkey )
+static UINT msi_publish_patches( MSIPACKAGE *package )
 {
     static const WCHAR szAllPatches[] = {'A','l','l','P','a','t','c','h','e','s',0};
     WCHAR patch_squashed[GUID_SIZE];
-    HKEY patches_key = NULL, product_patches_key;
+    HKEY patches_key = NULL, product_patches_key = NULL, product_key;
     LONG res;
     MSIPATCHINFO *patch;
     UINT r;
     WCHAR *p, *all_patches = NULL;
     DWORD len = 0;
 
-    res = RegCreateKeyExW( prodkey, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patches_key, NULL );
-    if (res != ERROR_SUCCESS)
+    r = MSIREG_OpenProductKey( package->ProductCode, NULL, package->Context, &product_key, FALSE );
+    if (r != ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
+
+    res = RegCreateKeyExW( product_key, szPatches, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &patches_key, NULL );
+    if (res != ERROR_SUCCESS)
+    {
+        r = ERROR_FUNCTION_FAILED;
+        goto done;
+    }
 
     r = MSIREG_OpenUserDataProductPatchesKey( package->ProductCode, package->Context, &product_patches_key, TRUE );
     if (r != ERROR_SUCCESS)
@@ -3903,6 +3907,7 @@ static UINT msi_publish_patches( MSIPACKAGE *package, HKEY prodkey )
 done:
     RegCloseKey( product_patches_key );
     RegCloseKey( patches_key );
+    RegCloseKey( product_key );
     msi_free( all_patches );
     return r;
 }
@@ -3918,6 +3923,13 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     UINT rc;
     HKEY hukey = NULL, hudkey = NULL;
     MSIRECORD *uirow;
+
+    if (!list_empty(&package->patches))
+    {
+        rc = msi_publish_patches(package);
+        if (rc != ERROR_SUCCESS)
+            goto end;
+    }
 
     /* FIXME: also need to publish if the product is in advertise mode */
     if (!msi_check_publish(package))
@@ -3936,13 +3948,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     rc = msi_publish_upgrade_code(package);
     if (rc != ERROR_SUCCESS)
         goto end;
-
-    if (!list_empty(&package->patches))
-    {
-        rc = msi_publish_patches(package, hukey);
-        if (rc != ERROR_SUCCESS)
-            goto end;
-    }
 
     rc = msi_publish_product_properties(package, hukey);
     if (rc != ERROR_SUCCESS)
@@ -4698,9 +4703,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     HKEY hkey, props;
     HKEY upgrade;
     UINT rc;
-
-    static const WCHAR szUpgradeCode[] = {
-        'U','p','g','r','a','d','e','C','o','d','e',0};
 
     /* FIXME: also need to publish if the product is in advertise mode */
     if (!msi_check_publish(package))
