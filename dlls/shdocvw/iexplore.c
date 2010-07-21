@@ -33,6 +33,7 @@
 
 #include "shdocvw.h"
 #include "mshtmcid.h"
+#include "shellapi.h"
 
 #include "wine/debug.h"
 
@@ -41,6 +42,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 #define IDI_APPICON 1
 
 static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
+
+/* Windows uses "Microsoft Internet Explorer" */
+static const WCHAR wszWineInternetExplorer[] =
+        {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
+
+static void ie_dialog_about(HWND hwnd)
+{
+    HICON icon = LoadImageW(GetModuleHandleW(0), MAKEINTRESOURCEW(IDI_APPICON), IMAGE_ICON, 48, 48, LR_SHARED);
+
+    ShellAboutW(hwnd, wszWineInternetExplorer, NULL, icon);
+
+    DestroyIcon(icon);
+}
 
 static LRESULT iewnd_OnCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
 {
@@ -83,6 +97,10 @@ static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT 
 
                 IOleCommandTarget_Release(target);
             }
+            break;
+
+        case ID_BROWSE_ABOUT:
+            ie_dialog_about(hwnd);
             break;
 
         default:
@@ -141,10 +159,6 @@ void unregister_iewindow_class(void)
 
 static void create_frame_hwnd(InternetExplorer *This)
 {
-    /* Windows uses "Microsoft Internet Explorer" */
-    static const WCHAR wszWineInternetExplorer[] =
-        {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
-
     This->frame_hwnd = CreateWindowExW(
             WS_EX_WINDOWEDGE,
             szIEWinFrame, wszWineInternetExplorer,
