@@ -58,6 +58,7 @@ static HRESULT (WINAPI *pIUnknown_QueryServiceExec)(IUnknown*, REFIID, const GUI
 static HRESULT (WINAPI *pIUnknown_ProfferService)(IUnknown*, REFGUID, IServiceProvider*, DWORD*);
 static HWND    (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU, LONG_PTR);
 static HRESULT (WINAPI *pSHIShellFolder_EnumObjects)(LPSHELLFOLDER, HWND, SHCONTF, IEnumIDList**);
+static DWORD   (WINAPI *pSHGetIniStringW)(LPCWSTR, LPCWSTR, LPWSTR, DWORD, LPCWSTR);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -69,6 +70,13 @@ static const CHAR ie_international[] = {
     'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
 static const CHAR acceptlanguage[] = {
     'A','c','c','e','p','t','L','a','n','g','u','a','g','e',0};
+
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
+}
 
 typedef struct {
     int id;
@@ -2518,6 +2526,79 @@ static void test_SHIShellFolder_EnumObjects(void)
     IShellFolder_Release(folder);
 }
 
+static void write_inifile(LPCWSTR filename)
+{
+    DWORD written;
+    HANDLE file;
+
+    static const char data[] =
+        "[TestApp]\r\n"
+        "AKey=1\r\n"
+        "AnotherKey=asdf\r\n";
+
+    file = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if(file == INVALID_HANDLE_VALUE)
+        return;
+
+    WriteFile(file, data, sizeof(data), &written, NULL);
+
+    CloseHandle(file);
+}
+
+static void test_SHGetIniString(void)
+{
+    DWORD ret;
+    WCHAR out[64] = {0};
+
+    static const WCHAR TestAppW[] = {'T','e','s','t','A','p','p',0};
+    static const WCHAR TestIniW[] = {'C',':','\\','t','e','s','t','.','i','n','i',0};
+    static const WCHAR AKeyW[] = {'A','K','e','y',0};
+    static const WCHAR AnotherKeyW[] = {'A','n','o','t','h','e','r','K','e','y',0};
+    static const WCHAR JunkKeyW[] = {'J','u','n','k','K','e','y',0};
+
+    if(!pSHGetIniStringW || is_win2k_and_lower){
+        win_skip("SHGetIniStringW is not available\n");
+        return;
+    }
+
+    write_inifile(TestIniW);
+
+    if(0){
+        /* these crash on Windows */
+        ret = pSHGetIniStringW(NULL, NULL, NULL, 0, NULL);
+        ret = pSHGetIniStringW(NULL, AKeyW, out, sizeof(out), TestIniW);
+        ret = pSHGetIniStringW(TestAppW, AKeyW, NULL, sizeof(out), TestIniW);
+    }
+
+    ret = pSHGetIniStringW(TestAppW, AKeyW, out, 0, TestIniW);
+    ok(ret == 0, "SHGetIniStringW should have given 0, instead: %d\n", ret);
+
+    /* valid arguments */
+    ret = pSHGetIniStringW(TestAppW, NULL, out, sizeof(out), TestIniW);
+    ok(broken(ret == 0) || /* win 98 */
+            ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
+    ok(!lstrcmpW(out, AKeyW), "Expected %s, got: %s\n",
+                wine_dbgstr_w(AKeyW), wine_dbgstr_w(out));
+
+    ret = pSHGetIniStringW(TestAppW, AKeyW, out, sizeof(out), TestIniW);
+    ok(broken(ret == 0) || /* win 98 */
+                ret == 1, "SHGetIniStringW should have given 1, instead: %d\n", ret);
+    ok(broken(*out == 0) || /*win 98 */
+        !strcmp_wa(out, "1"), "Expected L\"1\", got: %s\n", wine_dbgstr_w(out));
+
+    ret = pSHGetIniStringW(TestAppW, AnotherKeyW, out, sizeof(out), TestIniW);
+    ok(broken(ret == 0) || /* win 98 */
+            ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
+    ok(broken(*out == 0) || /* win 98 */
+            !strcmp_wa(out, "asdf"), "Expected L\"asdf\", got: %s\n", wine_dbgstr_w(out));
+
+    ret = pSHGetIniStringW(TestAppW, JunkKeyW, out, sizeof(out), TestIniW);
+    ok(ret == 0, "SHGetIniStringW should have given 0, instead: %d\n", ret);
+    ok(*out == 0, "Expected L\"\", got: %s\n", wine_dbgstr_w(out));
+
+    DeleteFileW(TestIniW);
+}
+
 static void init_pointers(void)
 {
 #define MAKEFUNC(f, ord) (p##f = (void*)GetProcAddress(hShlwapi, (LPSTR)(ord)))
@@ -2534,6 +2615,7 @@ static void init_pointers(void)
     MAKEFUNC(SHPackDispParams, 282);
     MAKEFUNC(IConnectionPoint_InvokeWithCancel, 283);
     MAKEFUNC(IConnectionPoint_SimpleInvoke, 284);
+    MAKEFUNC(SHGetIniStringW, 294);
     MAKEFUNC(SHFormatDateTimeA, 353);
     MAKEFUNC(SHFormatDateTimeW, 354);
     MAKEFUNC(SHIShellFolder_EnumObjects, 404);
@@ -2570,4 +2652,5 @@ START_TEST(ordinal)
     test_IUnknown_ProfferService();
     test_SHCreateWorkerWindowA();
     test_SHIShellFolder_EnumObjects();
+    test_SHGetIniString();
 }

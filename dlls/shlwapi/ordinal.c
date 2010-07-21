@@ -3246,12 +3246,47 @@ BOOL WINAPI PlaySoundWrapW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 
 /*************************************************************************
  *      @	[SHLWAPI.294]
+ *
+ * Retrieve a key value from an INI file.  See GetPrivateProfileString for
+ * more information.
+ *
+ * PARAMS
+ *  appName   [I] The section in the INI file that contains the key
+ *  keyName   [I] The key to be retrieved
+ *  out       [O] The buffer into which the key's value will be copied
+ *  outLen    [I] The length of the `out' buffer
+ *  filename  [I] The location of the INI file
+ *
+ * RETURNS
+ *  Length of string copied into `out'.
  */
-BOOL WINAPI SHGetIniStringW(LPCWSTR str1, LPCWSTR str2, LPWSTR pStr, DWORD some_len, LPCWSTR lpStr2)
+DWORD WINAPI SHGetIniStringW(LPCWSTR appName, LPCWSTR keyName, LPWSTR out,
+        DWORD outLen, LPCWSTR filename)
 {
-    FIXME("(%s,%s,%p,%08x,%s): stub!\n", debugstr_w(str1), debugstr_w(str2),
-        pStr, some_len, debugstr_w(lpStr2));
-    return TRUE;
+    INT ret;
+    WCHAR *buf;
+
+    TRACE("(%s,%s,%p,%08x,%s)\n", debugstr_w(appName), debugstr_w(keyName),
+        out, outLen, debugstr_w(filename));
+
+    if(outLen == 0)
+        return 0;
+
+    buf = HeapAlloc(GetProcessHeap(), 0, outLen * sizeof(WCHAR));
+    if(!buf){
+        *out = 0;
+        return 0;
+    }
+
+    ret = GetPrivateProfileStringW(appName, keyName, NULL, buf, outLen, filename);
+    if(ret)
+        strcpyW(out, buf);
+    else
+        *out = 0;
+
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    return strlenW(out);
 }
 
 /*************************************************************************
