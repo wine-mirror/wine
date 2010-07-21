@@ -295,7 +295,7 @@ BEGIN
     IDS_DEVICES_MIDIIN          "Dispositivo MIDI In"
     IDS_DEVICES_AUX             "Dispositivo Aux"
     IDS_DEVICES_MIXER           "Dispositivo Mixer"
-    IDS_UNAVAILABLE_DRIVER      "Trovato driver nel registro che non è disponibile!\n\nRimuovere '%s' dal registro?"
+    IDS_UNAVAILABLE_DRIVER      "Trovato driver nel registro non disponibile!\n\nRimuovere '%s' dal registro?"
     IDS_WARNING                 "Attenzione"
 END
 
