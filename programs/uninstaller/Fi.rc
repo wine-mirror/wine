@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine Sovelluksen Poistaja"
      IDS_UNINSTALLFAILED, "Poistokomento '%s' epäonnistui, johtuen ehkä puuttuvasta tiedostosta.\r\nHaluatko poistaa ohjelman rekisteristä?"
 }

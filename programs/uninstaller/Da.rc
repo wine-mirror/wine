@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Afinstaller programmer"
      IDS_UNINSTALLFAILED, "Køring af afinstallerings kommandoen '%s' fejlede, måske er det på grund af en manglende programfil.\r\nVil du fjerne afinstallerings opførselen fra registeringsdatabasen?"
 }

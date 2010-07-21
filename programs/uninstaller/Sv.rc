@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Avinstallera Wine-program"
      IDS_UNINSTALLFAILED, "Execution of uninstall command '%s' failed, perhaps due to missing executable.\r\nDo you want to remove the uninstall entry from the registry ?"
 }

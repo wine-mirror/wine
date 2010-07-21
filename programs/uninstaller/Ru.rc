@@ -25,7 +25,7 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Удаление приложений WINE"
      IDS_UNINSTALLFAILED, "Ошибка выполнения команды удаления '%s', возможно из-за потери файлов приложения.\r\nУдалить информацию об установке из реестра?"
 }

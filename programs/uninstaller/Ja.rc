@@ -25,7 +25,7 @@
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine アプリケーション アンインストーラ"
      IDS_UNINSTALLFAILED, "アンインストール コマンド '%s' の実行に失敗しました。コマンドが存在しないためかもしれません。\r\nレジストリからこの登録を削除しますか?"
 }

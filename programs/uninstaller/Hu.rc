@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine Alkalamazás eltávolító"
      IDS_UNINSTALLFAILED, "Az eltávolítási parancs '%s' végrehajtása sikertelen, feltehetõleg a hiányzó futtatható állomány miatt.\r\nEl szeretné távolítani az eltávolítási bejegyzést a regisztrációs adatbázisból ?"
 }

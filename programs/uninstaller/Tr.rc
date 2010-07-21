@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_TURKISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine Uygulama Kaldýrýcý"
      IDS_UNINSTALLFAILED, "'%s' kaldýrma komutu çalýþtýrýlamadý, çalýþtýrýbilir dosya var olmayabilir.\r\nSistem kaydýndan bu kaldýrma giriþini silmek ister misiniz?"
 }

@@ -23,7 +23,7 @@ LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
     IDS_APPNAME, "Deinstalátor"
     IDS_UNINSTALLFAILED, "Spuštění příkazu %s selhalo, možná příčína je chybějící aplikace.\nPřejete si odstranit instalační záznam z registru?"
 }

@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_ESPERANTO, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine Programa Malinstalilo"
      IDS_UNINSTALLFAILED, "Malinstalad-komando '%s' malsukcesis, eble Êar mankas programo.\r\n∆u vi volas forigi la malinstalada 'entry' de la registro ?"
 }

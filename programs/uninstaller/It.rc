@@ -25,7 +25,7 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
 IDS_APPNAME, "Wine Disinstallazione Applicazioni"
 IDS_UNINSTALLFAILED, "L'esecuzione del comando di disinstallazione '%s' è fallita, forse a causa di un eseguibile mancante.\r\nVuoi rimuovere dal registro la voce di disinstallazione?"
 }

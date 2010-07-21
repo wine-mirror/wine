@@ -25,7 +25,7 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine programų šalinimo programa"
      IDS_UNINSTALLFAILED, "Nepavyko įvykdyti programos pašalinimo komandos „%s“, greičiausiai dėl trūkstamo vykdomojo failo.\r\nAr norite pašalinti programos šalinimo įrašą iš registro?"
 }

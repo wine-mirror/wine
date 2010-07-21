@@ -25,14 +25,14 @@
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine 应有程序卸载管理器"
      IDS_UNINSTALLFAILED, "卸载命令运行失败 '%s', 可能是找不到可运行程序.\r\n你想把这项卸载命令从注册表中删除吗?"
 }
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine 應有程式卸載管理器"
      IDS_UNINSTALLFAILED, "卸載指令執行失敗 '%s', 可能是找不到可執行程式.\r\n你想把這項卸載指令從註冊表中刪除嗎?"
 }

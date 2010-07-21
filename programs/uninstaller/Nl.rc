@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Programma verwijderen"
      IDS_UNINSTALLFAILED, "Het uitvoeren van de verwijderopdracht '%s' is mislukt, wellicht vanwege een ontbrekend bestand.\r\nWilt u de verwijdersleutel verwijderen uit het register?"
 }

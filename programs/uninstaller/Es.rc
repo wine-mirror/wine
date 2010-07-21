@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Desinstalador de aplicaciones de Wine"
      IDS_UNINSTALLFAILED, "Ejecución del comando de desinstalación '%s' ha fallado, tal vez se deba a que no exista el ejecutable.\r\n¿Desea eliminar la entrada de desinstalación de esta aplicación del registro?"
 }

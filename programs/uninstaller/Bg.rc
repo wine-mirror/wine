@@ -22,7 +22,7 @@
 
 LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE {
+STRINGTABLE {
      IDS_APPNAME, "Wine Application Uninstaller"
      IDS_UNINSTALLFAILED, "Изпълнението на командата за деинсталиране '%s' неуспешно, може би заради липсващ изпълним файл.\r\nИскате ли да премахнете записа за деинсталиране от системния регистър?"
 }
