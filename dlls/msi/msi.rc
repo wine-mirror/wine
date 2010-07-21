@@ -21,7 +21,7 @@
 #include "windef.h"
 
 /* @makedep: msiserver.tlb */
-1 TYPELIB LOADONCALL DISCARDABLE msiserver.tlb
+1 TYPELIB msiserver.tlb
 
 /* @makedep: instadvert.bmp */
 0x1001 BITMAP instadvert.bmp

@@ -25,7 +25,7 @@
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	4 "Instalacija ne može biti otvorena.  Molimo proverite destinaciju fajla i pokušajte ponovo."
 	5 "putanja %s nije nađena"
@@ -66,7 +66,7 @@ STRINGTABLE DISCARDABLE
 
 LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 	4 "Инсталација не може бити отворена. Молимо проверите дестинацију фајла и покушајте поново."
 	5 "путања %s није нађена"
