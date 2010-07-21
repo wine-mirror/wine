@@ -7,7 +7,7 @@ MODULE    = kernel32.dll
 IMPORTLIB = kernel32
 IMPORTS   = ntdll
 EXTRALIBS = @COREFOUNDATIONLIB@ @LIBPOLL@
-EXTRADLLFLAGS = -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b800000
+EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b800000
 
 C_SRCS = \
 	actctx.c \

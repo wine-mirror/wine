@@ -6,7 +6,7 @@ VPATH     = @srcdir@
 MODULE    = ntdll.dll
 IMPORTLIB = ntdll
 EXTRALIBS = @IOKITLIB@ @LIBPTHREAD@
-EXTRADLLFLAGS = -Wl,--image-base,0x7bc00000
+EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 
 C_SRCS = \
 	actctx.c \

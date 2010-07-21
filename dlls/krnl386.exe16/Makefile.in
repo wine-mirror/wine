@@ -6,8 +6,8 @@ MODULE    = krnl386.exe16
 IMPORTLIB = kernel
 IMPORTS   = kernel32 ntdll
 DELAYIMPORTS = ddraw dsound user32
-EXTRAIMPLIBFLAGS = --subsystem win16
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--dll-name,kernel
+EXTRAIMPLIBFLAGS = -m16
+EXTRADLLFLAGS = -m16 -nodefaultlibs -Wb,--dll-name,kernel
 EXTRARCFLAGS  = -O res16
 
 C_SRCS = \
