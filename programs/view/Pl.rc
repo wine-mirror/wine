@@ -67,7 +67,7 @@ END
  *
  */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_DESCRIPTION         "Podgl¹d plików WMF (Regular Metafile)"
 END

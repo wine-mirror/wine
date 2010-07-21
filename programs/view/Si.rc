@@ -68,7 +68,7 @@ END
  *
  */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_DESCRIPTION         "Program za ogled Metafile slik"
 END

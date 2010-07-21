@@ -68,7 +68,7 @@ END
  *
  */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_DESCRIPTION         "Regulärer Metafile Betrachter"
 END

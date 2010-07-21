@@ -67,7 +67,7 @@ END
  */
 
 /*FIXME: to be completed*/
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_DESCRIPTION         "Regular Metafile Viewer"
 END

@@ -69,7 +69,7 @@ END
  *
  */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_DESCRIPTION         "Įprastinė metafailų žiūryklė"
 END
