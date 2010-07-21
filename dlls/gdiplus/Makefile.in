@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdiplus.dll
 IMPORTLIB = gdiplus
-IMPORTS   = uuid shlwapi oleaut32 ole32 user32 gdi32 kernel32
+IMPORTS   = uuid shlwapi oleaut32 ole32 user32 gdi32
 DELAYIMPORTS = windowscodecs
 
 C_SRCS = \

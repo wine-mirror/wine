@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = activeds.dll
 IMPORTLIB = activeds
-IMPORTS   = kernel32
 
 C_SRCS = activeds_main.c
 

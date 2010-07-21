@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dpwsockx.dll
-IMPORTS   = dxguid kernel32 ws2_32
+IMPORTS   = dxguid ws2_32
 
 C_SRCS = \
 	dpwsockx_main.c

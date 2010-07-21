@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = svrapi.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	svrapi_main.c

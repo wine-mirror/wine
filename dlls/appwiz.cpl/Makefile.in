@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = appwiz.cpl
-IMPORTS   = kernel32 comctl32 advapi32 shell32 user32 comdlg32
+IMPORTS   = comctl32 advapi32 shell32 user32 comdlg32
 
 C_SRCS = \
 	appwiz.c

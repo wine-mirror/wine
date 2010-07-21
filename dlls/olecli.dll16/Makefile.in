@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olecli.dll16
-IMPORTS   = gdi32 kernel32 kernel
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,olecli32.dll
+IMPORTS   = gdi32
+EXTRADLLFLAGS = -m16 -Wb,--main-module,olecli32.dll
 
 C_SRCS = olecli.c
 

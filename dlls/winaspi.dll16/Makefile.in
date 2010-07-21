@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winaspi.dll16
-IMPORTS   = advapi32 kernel32 kernel
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,wnaspi32.dll
+IMPORTS   = advapi32
+EXTRADLLFLAGS = -m16 -Wb,--main-module,wnaspi32.dll
 
 C_SRCS = winaspi.c
 

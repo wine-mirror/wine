@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olecli32.dll
 IMPORTLIB = olecli32
-IMPORTS   = ole32 gdi32 kernel32
+IMPORTS   = ole32 gdi32
 
 C_SRCS = \
 	olecli_main.c

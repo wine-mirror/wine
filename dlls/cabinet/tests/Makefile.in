@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = cabinet.dll
-IMPORTS   = cabinet kernel32
+IMPORTS   = cabinet
 
 C_SRCS = \
 	extract.c \

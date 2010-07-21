@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = midimap.dll
-IMPORTS   = winmm user32 advapi32 kernel32
+IMPORTS   = winmm user32 advapi32
 
 C_SRCS = \
 	midimap.c

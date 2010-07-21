@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = localspl.dll
-IMPORTS   = kernel32 advapi32
+IMPORTS   = advapi32
 
 C_SRCS = \
 	localmon.c

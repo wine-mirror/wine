@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = dbghelp.dll
 IMPORTLIB = dbghelp
 EXTRADEFS = -D_IMAGEHLP_SOURCE_
-IMPORTS   = psapi kernel32 ntdll
+IMPORTS   = psapi
 DELAYIMPORTS = version
 
 C_SRCS = \

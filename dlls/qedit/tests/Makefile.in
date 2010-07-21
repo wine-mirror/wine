@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = qedit.dll
-IMPORTS   = oleaut32 ole32 kernel32
+IMPORTS   = oleaut32 ole32
 
 C_SRCS = \
 	mediadet.c

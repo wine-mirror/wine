@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = avrt.dll
 IMPORTLIB = avrt
-IMPORTS   = user32 kernel32 ntdll
+IMPORTS   = user32
 
 C_SRCS = \
 	main.c

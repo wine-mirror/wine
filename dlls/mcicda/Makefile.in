@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mcicda.dll
-IMPORTS   = winmm user32 kernel32
+IMPORTS   = winmm user32
 
 C_SRCS = \
 	mcicda.c

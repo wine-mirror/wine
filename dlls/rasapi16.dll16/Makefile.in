@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi16.dll16
-IMPORTS   = kernel32
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,rasapi32.dll
+EXTRADLLFLAGS = -m16 -Wb,--main-module,rasapi32.dll
 
 @MAKE_DLL_RULES@

@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = vdhcp.vxd
-IMPORTS   = kernel32
 
 C_SRCS = \
 	vdhcp.c

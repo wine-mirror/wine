@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mscoree.dll
-IMPORTS   = uuid shell32 advapi32 kernel32
+IMPORTS   = uuid shell32 advapi32
 
 C_SRCS = \
 	corruntimehost.c \

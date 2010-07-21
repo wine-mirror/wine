@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = query.dll
-IMPORTS   = uuid kernel32
+IMPORTS   = uuid
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \

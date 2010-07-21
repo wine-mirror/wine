@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = crypt32.dll
-IMPORTS   = crypt32 advapi32 kernel32
+IMPORTS   = crypt32 advapi32
 
 C_SRCS = \
 	base64.c \

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wuapi.dll
-IMPORTS   = uuid ole32 advapi32 kernel32
+IMPORTS   = uuid ole32 advapi32
 
 C_SRCS = \
 	downloader.c \

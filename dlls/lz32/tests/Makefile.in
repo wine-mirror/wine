@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = lz32.dll
-IMPORTS   = lz32 kernel32
+IMPORTS   = lz32
 
 C_SRCS = \
 	lzexpand_main.c

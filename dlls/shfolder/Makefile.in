@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shfolder.dll
 IMPORTLIB = shfolder
-IMPORTS   = shell32 kernel32
+IMPORTS   = shell32
 
 RC_SRCS = version.rc
 

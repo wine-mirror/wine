@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rsabase.dll
-IMPORTS   = rsaenh kernel32
+IMPORTS   = rsaenh
 
 RC_SRCS = version.rc
 

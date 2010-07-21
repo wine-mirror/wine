@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = slc.dll
 IMPORTLIB = slc
-IMPORTS   = kernel32
 
 C_SRCS = \
 	slc.c

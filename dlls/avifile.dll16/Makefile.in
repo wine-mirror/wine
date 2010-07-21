@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = avifile.dll16
-IMPORTS   = avifil32 kernel32
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,avifil32.dll
+IMPORTS   = avifil32
+EXTRADLLFLAGS = -m16 -Wb,--main-module,avifil32.dll
 
 @MAKE_DLL_RULES@

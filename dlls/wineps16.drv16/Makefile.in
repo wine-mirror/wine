@@ -3,9 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineps16.drv16
-IMPORTS   = kernel32
-
-EXTRADLLFLAGS = -Wb,--subsystem,win16
+EXTRADLLFLAGS = -m16
 
 C_SRCS = driver.c
 

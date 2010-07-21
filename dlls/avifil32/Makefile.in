@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = avifil32.dll
 IMPORTLIB = avifil32
-IMPORTS   = uuid msacm32 msvfw32 winmm ole32 user32 advapi32 kernel32
+IMPORTS   = uuid msacm32 msvfw32 winmm ole32 user32 advapi32
 
 C_SRCS = \
 	acmstream.c \

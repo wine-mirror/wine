@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imaadp32.acm
-IMPORTS   = winmm user32 kernel32
+IMPORTS   = winmm user32
 
 C_SRCS = imaadp32.c
 

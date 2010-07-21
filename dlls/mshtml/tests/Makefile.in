@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = mshtml.dll
-IMPORTS   = ole32 oleaut32 wininet user32 urlmon gdi32 advapi32 kernel32
+IMPORTS   = ole32 oleaut32 wininet user32 urlmon gdi32 advapi32
 
 C_SRCS = \
 	dom.c \

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = oledb32.dll
-IMPORTS   = uuid oleaut32 ole32 user32 advapi32 kernel32
+IMPORTS   = uuid oleaut32 ole32 user32 advapi32
 
 C_SRCS = \
 	convert.c \

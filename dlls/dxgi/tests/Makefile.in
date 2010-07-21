@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = dxgi.dll
-IMPORTS   = dxgi kernel32
+IMPORTS   = dxgi
 
 C_SRCS = \
 	device.c

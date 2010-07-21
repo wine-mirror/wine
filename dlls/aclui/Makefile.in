@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = aclui.dll
 IMPORTLIB = aclui
-IMPORTS   = kernel32
 
 C_SRCS = aclui_main.c
 

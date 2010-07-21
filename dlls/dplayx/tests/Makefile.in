@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = dplayx.dll
-IMPORTS   = dplayx ole32 kernel32
+IMPORTS   = dplayx ole32
 
 C_SRCS = \
 	dplayx.c

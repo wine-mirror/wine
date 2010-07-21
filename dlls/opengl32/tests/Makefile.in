@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = opengl32.dll
-IMPORTS   = opengl32 user32 gdi32 kernel32
+IMPORTS   = opengl32 user32 gdi32
 
 C_SRCS = \
 	opengl.c

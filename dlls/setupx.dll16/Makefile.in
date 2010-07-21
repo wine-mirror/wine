@@ -3,9 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = setupx.dll16
-IMPORTS   = setupapi user32 advapi32 kernel32 kernel
+IMPORTS   = setupapi user32 advapi32
 
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,setupapi.dll
+EXTRADLLFLAGS = -m16 -Wb,--main-module,setupapi.dll
 
 C_SRCS = \
 	devinst16.c \

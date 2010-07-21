@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = windowscodecs.dll
-IMPORTS   = kernel32 ole32 windowscodecs
+IMPORTS   = ole32 windowscodecs
 
 C_SRCS = \
 	bmpformat.c \

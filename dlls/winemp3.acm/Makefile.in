@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winemp3.acm
-IMPORTS   = winmm user32 kernel32
+IMPORTS   = winmm user32
 EXTRALIBS = @LIBMPG123@ @COREAUDIO@
 
 C_SRCS = \

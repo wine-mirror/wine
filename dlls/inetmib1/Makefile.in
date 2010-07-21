@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = inetmib1.dll
-IMPORTS   = snmpapi kernel32
+IMPORTS   = snmpapi
 DELAYIMPORTS = iphlpapi
 
 C_SRCS = \

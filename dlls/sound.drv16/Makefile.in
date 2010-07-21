@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sound.drv16
-IMPORTS   = kernel32
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,winmm.dll
+EXTRADLLFLAGS = -m16 -Wb,--main-module,winmm.dll
 
 C_SRCS = sound.c
 

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ws2_32.dll
-IMPORTS   = ws2_32 kernel32 user32
+IMPORTS   = ws2_32 user32
 
 C_SRCS = \
 	protocol.c \

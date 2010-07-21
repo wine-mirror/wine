@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = vnbt.vxd
-IMPORTS   = iphlpapi ws2_32 kernel32
+IMPORTS   = iphlpapi ws2_32
 
 C_SRCS = \
 	vnbt.c

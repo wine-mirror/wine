@@ -3,9 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mmsystem.dll16
-IMPORTS   = winmm user32 kernel32 kernel
+IMPORTS   = winmm user32
 
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,winmm.dll
+EXTRADLLFLAGS = -m16 -Wb,--main-module,winmm.dll
 
 C_SRCS = \
 	driver.c \

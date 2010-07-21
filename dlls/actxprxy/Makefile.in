@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = actxprxy.dll
-IMPORTS   = uuid oleaut32 ole32 rpcrt4 kernel32 ntdll
+IMPORTS   = uuid oleaut32 ole32 rpcrt4
 EXTRADEFS = -DREGISTER_PROXY_DLL -DPROXY_DELEGATION
 
 EXTRA_OBJS = dlldata.o

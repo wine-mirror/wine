@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dpnaddr.dll
-IMPORTS   = dpnet kernel32
+IMPORTS   = dpnet
 
 RC_SRCS = version.rc
 

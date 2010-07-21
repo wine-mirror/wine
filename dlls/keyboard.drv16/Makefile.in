@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = keyboard.drv16
-IMPORTS   = user32 kernel32
-EXTRADLLFLAGS = -Wb,--subsystem,win16
+IMPORTS   = user32
+EXTRADLLFLAGS = -m16
 
 C_SRCS = keyboard.c
 

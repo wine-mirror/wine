@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = inetcomm.dll
 IMPORTLIB = inetcomm
-IMPORTS   = uuid oleaut32 ole32 ws2_32 user32 advapi32 kernel32
+IMPORTS   = uuid oleaut32 ole32 ws2_32 user32 advapi32
 
 C_SRCS = \
 	imaptransport.c \

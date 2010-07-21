@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32.dll
 IMPORTLIB = msacm32
-IMPORTS   = winmm user32 advapi32 kernel32
+IMPORTS   = winmm user32 advapi32
 
 C_SRCS = \
 	driver.c \

@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shlwapi.dll
 IMPORTLIB = shlwapi
-IMPORTS   = uuid user32 gdi32 advapi32 kernel32 ntdll
+IMPORTS   = uuid user32 gdi32 advapi32
 DELAYIMPORTS = userenv oleaut32 ole32 comctl32 comdlg32 mpr mlang urlmon shell32 winmm version
 
 C_SRCS = \

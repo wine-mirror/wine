@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = schannel.dll
-IMPORTS   = secur32 kernel32
+IMPORTS   = secur32
 
 C_SRCS = \
 	lsamode.c \

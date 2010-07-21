@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = pdh.dll
-IMPORTS   = pdh kernel32
+IMPORTS   = pdh
 
 C_SRCS = \
 	pdh.c

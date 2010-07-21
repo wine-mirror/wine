@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdsapi.dll
 IMPORTLIB = ntdsapi
-IMPORTS   = user32 kernel32
+IMPORTS   = user32
 
 C_SRCS = \
 	ntdsapi.c

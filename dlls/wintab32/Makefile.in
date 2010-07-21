@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wintab32.dll
 IMPORTLIB = wintab32
-IMPORTS   = user32 kernel32
+IMPORTS   = user32
 
 C_SRCS = \
 	context.c \

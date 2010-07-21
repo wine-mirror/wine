@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cabinet.dll
 IMPORTLIB = cabinet
-IMPORTS   = kernel32
 
 C_SRCS = \
 	cabinet_main.c \

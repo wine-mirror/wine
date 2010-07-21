@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = loadperf.dll
 IMPORTLIB = loadperf
-IMPORTS   = kernel32
 
 C_SRCS = \
 	loadperf_main.c

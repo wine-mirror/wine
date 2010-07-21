@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = snmpapi.dll
-IMPORTS   = snmpapi kernel32
+IMPORTS   = snmpapi
 
 C_SRCS = \
 	util.c

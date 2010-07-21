@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sensapi.dll
 IMPORTLIB = sensapi
-IMPORTS   = kernel32
 
 C_SRCS = \
 	sensapi.c

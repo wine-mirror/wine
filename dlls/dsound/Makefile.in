@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dsound.dll
 IMPORTLIB = dsound
-IMPORTS   = dxguid uuid winmm ole32 advapi32 kernel32 ntdll
+IMPORTS   = dxguid uuid winmm ole32 advapi32
 
 C_SRCS = \
 	buffer.c \

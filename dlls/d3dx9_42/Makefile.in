@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dx9_42.dll
-IMPORTS   = d3d9 kernel32
+IMPORTS   = d3d9
 
 C_SRCS = \
 	d3dx9_42_main.c

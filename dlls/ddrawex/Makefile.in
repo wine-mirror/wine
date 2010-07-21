@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddrawex.dll
-IMPORTS   = dxguid uuid ddraw ole32 advapi32 kernel32
+IMPORTS   = dxguid uuid ddraw ole32 advapi32
 
 C_SRCS = \
 	ddraw.c \

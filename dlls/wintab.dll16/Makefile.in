@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wintab.dll16
-IMPORTS   = kernel32
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,wintab32.dll
+EXTRADLLFLAGS = -m16 -Wb,--main-module,wintab32.dll
 
 C_SRCS = wintab.c
 

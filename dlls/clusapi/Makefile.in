@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = clusapi.dll
 IMPORTLIB = clusapi
-IMPORTS   = kernel32
 
 C_SRCS = \
 	clusapi.c

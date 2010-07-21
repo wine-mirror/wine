@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = initpki.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	main.c

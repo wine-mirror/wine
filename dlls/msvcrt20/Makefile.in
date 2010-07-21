@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcrt20.dll
 IMPORTLIB = msvcrt20
-IMPORTS   = msvcrt kernel32
+IMPORTS   = msvcrt
 
 C_SRCS = msvcrt20.c
 

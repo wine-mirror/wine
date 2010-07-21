@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msvcrt.dll
 APPMODE   = -mno-cygwin
-IMPORTS   = kernel32
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt -I$(SRCDIR)/..
 

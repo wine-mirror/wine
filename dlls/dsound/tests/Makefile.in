@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = dsound.dll
-IMPORTS   = ole32 version user32 kernel32
+IMPORTS   = ole32 version user32
 
 C_SRCS = \
 	capture.c \

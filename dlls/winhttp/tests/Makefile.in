@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = winhttp.dll
-IMPORTS   = winhttp crypt32 advapi32 ws2_32 kernel32
+IMPORTS   = winhttp crypt32 advapi32 ws2_32
 
 C_SRCS = \
 	notification.c \

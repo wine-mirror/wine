@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sane.ds
-IMPORTS   = comctl32 user32 gdi32 kernel32
+IMPORTS   = comctl32 user32 gdi32
 EXTRAINCL = @SANEINCL@
 
 C_SRCS = \

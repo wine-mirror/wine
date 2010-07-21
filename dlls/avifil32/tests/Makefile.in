@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = avifil32.dll
-IMPORTS   = avifil32 kernel32
+IMPORTS   = avifil32
 
 C_SRCS = \
 	api.c

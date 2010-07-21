@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = qcap.dll
-IMPORTS   = strmiids uuid ole32 gdi32 advapi32 kernel32
+IMPORTS   = strmiids uuid ole32 gdi32 advapi32
 
 C_SRCS = \
 	capturegraph.c \

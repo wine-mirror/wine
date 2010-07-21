@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = system.drv16
-IMPORTS   = kernel32 kernel ntdll
-EXTRADLLFLAGS = -Wb,--subsystem,win16
+EXTRADLLFLAGS = -m16
 
 C_SRCS = system.c
 

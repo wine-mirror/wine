@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = usp10.dll
-IMPORTS   = usp10 user32 gdi32 kernel32
+IMPORTS   = usp10 user32 gdi32
 
 C_SRCS = \
 	usp10.c

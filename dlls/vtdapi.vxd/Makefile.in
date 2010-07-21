@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = vtdapi.vxd
-IMPORTS   = kernel32
 
 C_SRCS = \
 	vtdapi.c

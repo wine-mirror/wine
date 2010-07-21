@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = usbd.sys
 IMPORTLIB = usbd.sys
-IMPORTS   = kernel32 ntoskrnl.exe
+IMPORTS   = ntoskrnl.exe
 EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \

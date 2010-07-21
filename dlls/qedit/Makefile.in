@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = qedit.dll
-IMPORTS   = strmiids uuid oleaut32 ole32 advapi32 kernel32
+IMPORTS   = strmiids uuid oleaut32 ole32 advapi32
 
 C_SRCS = \
 	main.c \

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = quartz.dll
-IMPORTS   = oleaut32 ole32 advapi32 kernel32
+IMPORTS   = oleaut32 ole32 advapi32
 
 C_SRCS = \
 	avisplitter.c \

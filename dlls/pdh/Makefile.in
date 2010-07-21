@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = pdh.dll
 IMPORTLIB = pdh
-IMPORTS   = kernel32
 
 C_SRCS = \
 	pdh_main.c

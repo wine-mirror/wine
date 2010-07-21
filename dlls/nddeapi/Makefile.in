@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = nddeapi.dll
 IMPORTLIB = nddeapi
-IMPORTS   = kernel32
 
 C_SRCS = \
 	nddeapi.c

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mpr.dll
 IMPORTLIB = mpr
-IMPORTS   = user32 advapi32 kernel32
+IMPORTS   = user32 advapi32
 
 C_SRCS = \
 	auth.c \

@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcrt.dll
 IMPORTLIB = msvcrt
-IMPORTS   = kernel32 ntdll
 DELAYIMPORTS = advapi32 user32
 
 C_SRCS = \

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winecoreaudio.drv
-IMPORTS   = uuid winmm user32 kernel32
+IMPORTS   = uuid winmm user32
 EXTRALIBS = @COREAUDIO@
 
 C_SRCS = \

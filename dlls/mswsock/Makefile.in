@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mswsock.dll
 IMPORTLIB = mswsock
-IMPORTS   = ws2_32 kernel32
+IMPORTS   = ws2_32
 
 C_SRCS = \
 	mswsock.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = wininet.dll
-IMPORTS   = wininet ws2_32 advapi32 kernel32
+IMPORTS   = wininet ws2_32 advapi32
 
 C_SRCS = \
 	ftp.c \

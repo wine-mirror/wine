@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = netapi32.dll
 IMPORTLIB = netapi32
-IMPORTS   = iphlpapi ws2_32 advapi32 kernel32 ntdll
+IMPORTS   = iphlpapi ws2_32 advapi32
 
 C_SRCS = \
 	access.c \

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wsock32.dll
 IMPORTLIB = wsock32
-IMPORTS   = mswsock ws2_32 iphlpapi kernel32
+IMPORTS   = mswsock ws2_32 iphlpapi
 
 C_SRCS = \
 	protocol.c \

@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = propsys.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	propsys_main.c \

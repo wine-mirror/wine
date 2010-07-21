@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = comctl32.dll
-IMPORTS   = comctl32 ole32 user32 gdi32 advapi32 kernel32
+IMPORTS   = comctl32 ole32 user32 gdi32 advapi32
 
 C_SRCS = \
 	comboex.c \

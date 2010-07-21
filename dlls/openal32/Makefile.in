@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = openal32.dll
-IMPORTS   = kernel32 ntdll
 EXTRALIBS = @LIBOPENAL@ @FRAMEWORK_OPENAL@
 
 C_SRCS = \

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msisip.dll
-IMPORTS   = crypt32 ole32 kernel32
+IMPORTS   = crypt32 ole32
 
 C_SRCS = \
 	main.c

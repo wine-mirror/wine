@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mciavi32.dll
-IMPORTS   = msvfw32 winmm user32 gdi32 kernel32
+IMPORTS   = msvfw32 winmm user32 gdi32
 
 C_SRCS = \
 	info.c \

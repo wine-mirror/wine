@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmusic.dll
-IMPORTS   = dxguid uuid ole32 advapi32 kernel32
+IMPORTS   = dxguid uuid ole32 advapi32
 
 C_SRCS = \
 	buffer.c \

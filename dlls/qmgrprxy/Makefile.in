@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = qmgrprxy.dll
-IMPORTS   = rpcrt4 kernel32 ntdll
+IMPORTS   = rpcrt4
 EXTRADEFS = -DREGISTER_PROXY_DLL
 
 IDL_I_SRCS = qmgrprxy.idl

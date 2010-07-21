@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dmime.dll
-IMPORTS   = dxguid uuid dsound ole32 user32 advapi32 kernel32
+IMPORTS   = dxguid uuid dsound ole32 user32 advapi32
 
 C_SRCS = \
 	audiopath.c \

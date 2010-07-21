@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winealsa.drv
-IMPORTS   = dxguid uuid winmm user32 advapi32 kernel32
+IMPORTS   = dxguid uuid winmm user32 advapi32
 EXTRALIBS = @ALSALIBS@
 
 C_SRCS = \

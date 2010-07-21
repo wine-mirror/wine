@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = wldap32.dll
-IMPORTS   = wldap32 kernel32
+IMPORTS   = wldap32
 
 C_SRCS = \
 	parse.c

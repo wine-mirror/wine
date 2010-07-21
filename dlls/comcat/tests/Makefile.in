@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = comcat.dll
-IMPORTS   = ole32 advapi32 kernel32
+IMPORTS   = ole32 advapi32
 
 C_SRCS = \
 	comcat.c

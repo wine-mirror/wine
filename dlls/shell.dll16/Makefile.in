@@ -3,9 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shell.dll16
-IMPORTS   = shell32 user32 gdi32 advapi32 kernel32 kernel
+IMPORTS   = shell32 user32 gdi32 advapi32
 
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,shell32.dll
+EXTRADLLFLAGS = -m16 -Wb,--main-module,shell32.dll
 EXTRARCFLAGS  = -O res16
 
 C_SRCS = shell.c

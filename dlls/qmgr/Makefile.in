@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = qmgr.dll
-IMPORTS   = uuid wininet urlmon ole32 advapi32 kernel32
+IMPORTS   = uuid wininet urlmon ole32 advapi32
 
 C_SRCS = \
 	enum_files.c \

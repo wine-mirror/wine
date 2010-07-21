@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = secur32.dll
 IMPORTLIB = secur32
-IMPORTS   = netapi32 advapi32 kernel32 ntdll
+IMPORTS   = netapi32 advapi32
 DELAYIMPORTS = crypt32
 EXTRAINCL = @GNUTLSINCL@
 

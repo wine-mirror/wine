@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dnsapi.dll
 IMPORTLIB = dnsapi
-IMPORTS   = netapi32 kernel32
+IMPORTS   = netapi32
 EXTRALIBS = @RESOLVLIBS@
 
 C_SRCS = \

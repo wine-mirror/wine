@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winemapi.dll
-IMPORTS   = shlwapi shell32 kernel32
+IMPORTS   = shlwapi shell32
 
 C_SRCS = \
 	main.c \

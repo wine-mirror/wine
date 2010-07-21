@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = dinput.dll
-IMPORTS   = dinput ole32 version user32 kernel32
+IMPORTS   = dinput ole32 version user32
 
 C_SRCS = \
 	device.c \

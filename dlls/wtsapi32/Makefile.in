@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wtsapi32.dll
 IMPORTLIB = wtsapi32
-IMPORTS   = kernel32
 
 C_SRCS = \
 	wtsapi32.c

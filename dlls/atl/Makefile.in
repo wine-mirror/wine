@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = atl.dll
 IMPORTLIB = atl
-IMPORTS   = uuid ole32 oleaut32 user32 gdi32 advapi32 kernel32
+IMPORTS   = uuid ole32 oleaut32 user32 gdi32 advapi32
 
 C_SRCS = \
 	atl_ax.c \

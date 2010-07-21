@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = vnetbios.vxd
-IMPORTS   = netapi32 kernel32
+IMPORTS   = netapi32
 
 C_SRCS = \
 	vnetbios.c

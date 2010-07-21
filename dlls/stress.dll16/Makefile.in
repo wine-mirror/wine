@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = stress.dll16
-IMPORTS   = kernel32
-EXTRADLLFLAGS = -Wb,--subsystem,win16
+EXTRADLLFLAGS = -m16
 
 C_SRCS = stress.c
 

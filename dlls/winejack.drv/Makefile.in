@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winejack.drv
-IMPORTS   = dxguid uuid winmm user32 kernel32
+IMPORTS   = dxguid uuid winmm user32
 
 C_SRCS = \
 	audio.c \

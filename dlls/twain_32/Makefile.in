@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = twain_32.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	dsm_ctrl.c \

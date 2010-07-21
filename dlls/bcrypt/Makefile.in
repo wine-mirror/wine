@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = bcrypt.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	bcrypt_main.c

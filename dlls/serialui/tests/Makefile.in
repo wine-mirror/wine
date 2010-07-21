@@ -3,7 +3,6 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = serialui.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	confdlg.c

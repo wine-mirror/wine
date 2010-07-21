@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = crtdll.dll
 IMPORTLIB = crtdll
-IMPORTS   = msvcrt kernel32
+IMPORTS   = msvcrt
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 

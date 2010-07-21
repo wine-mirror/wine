@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = psapi.dll
 IMPORTLIB = psapi
-IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	psapi_main.c

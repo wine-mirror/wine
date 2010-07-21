@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = oledb32.dll
-IMPORTS   = oleaut32 ole32 user32 gdi32 advapi32 kernel32
+IMPORTS   = oleaut32 ole32 user32 gdi32 advapi32
 
 C_SRCS = \
 	convert.c \

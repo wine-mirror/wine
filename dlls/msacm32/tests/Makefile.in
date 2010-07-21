@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msacm32.dll
-IMPORTS   = msacm32 kernel32
+IMPORTS   = msacm32
 
 C_SRCS = \
 	msacm.c

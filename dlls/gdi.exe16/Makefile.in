@@ -3,9 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdi.exe16
-IMPORTS   = user32 advapi32 gdi32 kernel32 kernel
+IMPORTS   = user32 advapi32 gdi32
 
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,gdi32.dll,--heap,65520
+EXTRADLLFLAGS = -m16 -Wb,--main-module,gdi32.dll,--heap,65520
 EXTRARCFLAGS  = -O res16
 
 C_SRCS = \

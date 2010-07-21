@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mstask.dll
-IMPORTS   = uuid ole32 kernel32 ntdll
+IMPORTS   = uuid ole32
 
 C_SRCS = \
 	factory.c \

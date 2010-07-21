@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ntdsapi.dll
-IMPORTS   = ntdsapi kernel32
+IMPORTS   = ntdsapi
 
 C_SRCS = \
 	ntdsapi.c

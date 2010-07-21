@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = wintab32.dll
-IMPORTS   = kernel32 user32
+IMPORTS   = user32
 
 C_SRCS = \
 	context.c

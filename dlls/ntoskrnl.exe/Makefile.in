@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntoskrnl.exe
 IMPORTLIB = ntoskrnl.exe
-IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	instr.c \

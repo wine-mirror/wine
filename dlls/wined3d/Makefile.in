@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wined3d.dll
 IMPORTLIB = wined3d
-IMPORTS   = uuid user32 gdi32 advapi32 kernel32
+IMPORTS   = uuid user32 gdi32 advapi32
 
 C_SRCS = \
 	arb_program_shader.c \

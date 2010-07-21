@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wldap32.dll
 IMPORTLIB = wldap32
-IMPORTS   = user32 kernel32
+IMPORTS   = user32
 EXTRALIBS = @LDAPLIBS@
 
 C_SRCS = \

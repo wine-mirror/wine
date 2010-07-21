@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hlink.dll
 IMPORTLIB = hlink
-IMPORTS   = uuid shell32 ole32 advapi32 kernel32
+IMPORTS   = uuid shell32 ole32 advapi32
 DELAYIMPORTS = urlmon
 
 C_SRCS = \

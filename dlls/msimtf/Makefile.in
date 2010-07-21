@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msimtf.dll
-IMPORTS   = uuid imm32 kernel32
+IMPORTS   = uuid imm32
 
 C_SRCS = \
 	activeimmapp.c \

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = credui.dll
-IMPORTS   = credui kernel32
+IMPORTS   = credui
 
 C_SRCS = \
 	credui.c

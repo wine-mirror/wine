@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = user32.dll
-IMPORTS   = user32 gdi32 advapi32 kernel32
+IMPORTS   = user32 gdi32 advapi32
 
 C_SRCS = \
 	broadcast.c \

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wintrust.dll
 IMPORTLIB = wintrust
-IMPORTS   = crypt32 user32 advapi32 kernel32 ntdll
+IMPORTS   = crypt32 user32 advapi32
 DELAYIMPORTS = cryptui imagehlp
 
 C_SRCS = \

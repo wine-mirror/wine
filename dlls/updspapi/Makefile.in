@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = updspapi.dll
-IMPORTS   = setupapi kernel32
+IMPORTS   = setupapi
 
 C_SRCS = \
 	main.c

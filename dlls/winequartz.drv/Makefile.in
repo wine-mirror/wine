@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winequartz.drv
-IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
+IMPORTS   = user32 gdi32 advapi32
 
 C_SRCS = \
 	quartzdrv_main.c

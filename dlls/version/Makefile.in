@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = version.dll
 IMPORTLIB = version
-IMPORTS   = lz32 kernel32 ntdll
+IMPORTS   = lz32
 
 C_SRCS = \
 	info.c \

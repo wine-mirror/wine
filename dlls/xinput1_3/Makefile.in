@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = xinput1_3.dll
 IMPORTLIB = xinput
-IMPORTS   = kernel32
 
 C_SRCS = \
 	xinput1_3_main.c

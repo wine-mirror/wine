@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
-IMPORTS   = dxguid uuid ole32 user32 advapi32 kernel32
+IMPORTS   = dxguid uuid ole32 user32 advapi32
 EXTRALIBS = @CARBONLIB@ @IOKITLIB@
 
 C_SRCS = \

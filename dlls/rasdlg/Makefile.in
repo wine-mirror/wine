@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasdlg.dll
 IMPORTLIB = rasdlg
-IMPORTS   = kernel32
 
 C_SRCS = \
 	rasdlg_main.c

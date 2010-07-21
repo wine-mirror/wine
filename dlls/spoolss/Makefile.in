@@ -4,7 +4,7 @@ SRCDIR      = @srcdir@
 VPATH       = @srcdir@
 MODULE      = spoolss.dll
 IMPORTLIB   = spoolss
-IMPORTS     = winspool kernel32
+IMPORTS     = winspool
 
 C_SRCS = \
 	router.c \

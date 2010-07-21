@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = xmllite.dll
-IMPORTS   = kernel32 ole32
+IMPORTS   = ole32
 
 C_SRCS = \
 	reader.c

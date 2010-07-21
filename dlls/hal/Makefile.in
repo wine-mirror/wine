@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hal.dll
-IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	hal.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32.drv
-IMPORTS   = msacm32 winmm user32 kernel32
+IMPORTS   = msacm32 winmm user32
 
 C_SRCS = \
 	wavemap.c

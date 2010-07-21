@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = hlink.dll
-IMPORTS   = hlink ole32 kernel32
+IMPORTS   = hlink ole32
 
 C_SRCS = \
 	browse_ctx.c \

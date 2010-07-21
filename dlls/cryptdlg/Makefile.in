@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cryptdlg.dll
-IMPORTS   = cryptui crypt32 wintrust user32 advapi32 kernel32
+IMPORTS   = cryptui crypt32 wintrust user32 advapi32
 
 C_SRCS = \
 	main.c

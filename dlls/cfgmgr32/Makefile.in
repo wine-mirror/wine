@@ -4,6 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cfgmgr32.dll
 IMPORTLIB = cfgmgr32
-IMPORTS   = setupapi kernel32
+IMPORTS   = setupapi
 
 @MAKE_DLL_RULES@

@@ -3,7 +3,6 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = psapi.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	psapi_main.c

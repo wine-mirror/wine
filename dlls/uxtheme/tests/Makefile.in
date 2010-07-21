@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = uxtheme.dll
-IMPORTS   = user32 kernel32
+IMPORTS   = user32
 
 C_SRCS = \
 	system.c

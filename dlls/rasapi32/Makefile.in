@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi32.dll
 IMPORTLIB = rasapi32
-IMPORTS   = kernel32
 
 C_SRCS = rasapi.c
 

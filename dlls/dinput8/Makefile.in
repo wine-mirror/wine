@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dinput8.dll
 IMPORTLIB = dinput8
-IMPORTS   = uuid dxguid dinput ole32 advapi32 kernel32
+IMPORTS   = uuid dxguid dinput ole32 advapi32
 
 C_SRCS = \
 	dinput8_main.c \

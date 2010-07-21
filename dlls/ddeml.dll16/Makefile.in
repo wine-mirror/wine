@@ -3,9 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddeml.dll16
-IMPORTS   = user32 kernel32 kernel
-
-EXTRADLLFLAGS = -Wb,--subsystem,win16
+IMPORTS   = user32
+EXTRADLLFLAGS = -m16
 
 C_SRCS = ddeml.c
 

@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = xinput9_1_0.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	xinput9_1_0_main.c

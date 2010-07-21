@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msisys.ocx
-IMPORTS   = uuid kernel32
+IMPORTS   = uuid
 
 C_SRCS = msisys.c
 

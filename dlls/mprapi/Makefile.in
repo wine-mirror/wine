@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mprapi.dll
 IMPORTLIB = mprapi
-IMPORTS   = kernel32
 
 C_SRCS = \
 	mprapi.c

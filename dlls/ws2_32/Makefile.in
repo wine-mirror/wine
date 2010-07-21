@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ws2_32.dll
 IMPORTLIB = ws2_32
-IMPORTS   = kernel32 ntdll
 DELAYIMPORTS = iphlpapi user32
 EXTRALIBS = @LIBPOLL@
 

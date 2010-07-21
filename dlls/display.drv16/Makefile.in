@@ -3,9 +3,9 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = display.drv16
-IMPORTS   = user32 kernel32
+IMPORTS   = user32
 
-EXTRADLLFLAGS = -Wb,--subsystem,win16
+EXTRADLLFLAGS = -m16
 EXTRARCFLAGS  = -O res16
 
 C_SRCS = display.c

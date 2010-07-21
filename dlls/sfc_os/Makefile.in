@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = sfc_os.dll
 IMPORTLIB = sfc_os
-IMPORTS   = kernel32
 
 C_SRCS = sfc_os.c
 

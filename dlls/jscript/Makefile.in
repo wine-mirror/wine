@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = jscript.dll
-IMPORTS   = oleaut32 ole32 user32 advapi32 kernel32
+IMPORTS   = oleaut32 ole32 user32 advapi32
 
 RC_SRCS = \
 	jscript_Da.rc \

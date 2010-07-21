@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ifsmgr.vxd
-IMPORTS   = kernel32 kernel
+IMPORTS   = kernel
 
 C_SRCS = \
 	ifsmgr.c

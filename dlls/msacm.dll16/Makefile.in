@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm.dll16
-IMPORTS   = msacm32 kernel32
-EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,msacm32.dll
+IMPORTS   = msacm32
+EXTRADLLFLAGS = -m16 -Wb,--main-module,msacm32.dll
 
 C_SRCS = msacm.c
 

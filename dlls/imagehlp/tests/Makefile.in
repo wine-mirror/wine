@@ -3,7 +3,6 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = imagehlp.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	integrity.c

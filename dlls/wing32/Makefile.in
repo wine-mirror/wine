@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wing32.dll
-IMPORTS   = user32 gdi32 kernel32
+IMPORTS   = user32 gdi32
 
 C_SRCS = wing32.c
 

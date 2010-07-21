@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = traffic.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	traffic_main.c

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = d3d10core.dll
-IMPORTS   = d3d10core dxgi kernel32
+IMPORTS   = d3d10core dxgi
 
 C_SRCS = \
 	device.c

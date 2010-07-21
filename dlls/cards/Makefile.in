@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cards.dll
 IMPORTLIB = cards
-IMPORTS   = user32 gdi32 kernel32
+IMPORTS   = user32 gdi32
 
 C_SRCS = \
 	cards.c

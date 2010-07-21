@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = itss.dll
-IMPORTS   = uuid urlmon shlwapi ole32 kernel32
+IMPORTS   = uuid urlmon shlwapi ole32
 EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \

@@ -3,7 +3,6 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ntprint.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	ntprint.c
