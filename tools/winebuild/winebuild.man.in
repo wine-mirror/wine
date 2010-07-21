@@ -157,8 +157,8 @@ Import the specified library, looking for a corresponding
 \fIlibname.def\fR file in the directories specified with the \fB-L\fR
 option.
 .TP
-.B \-m32, -m64
-Generate 32-bit, respectively 64-bit code.
+.B \-m16, -m32, -m64
+Generate 16-bit, 32-bit, respectively 64-bit code.
 .TP
 .BI \-M,\ --main-module= module
 When building a 16-bit dll, set the name of its 32-bit counterpart to
@@ -211,10 +211,7 @@ for a command line executable,
 for a graphical executable,
 .br
 .B native
-for a native-mode dll,
-.br
-.B win16
-for a 16-bit module.
+for a native-mode dll.
 .br
 The entry point of a command line executable is a normal C \fBmain\fR
 function. A \fBwmain\fR function can be used instead if you need the

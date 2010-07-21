@@ -251,7 +251,7 @@ static const char usage_str[] =
 "       --ld-cmd=LD           Command to use for linking (default: ld)\n"
 "   -l, --library=LIB         Import the specified library\n"
 "   -L, --library-path=DIR    Look for imports libraries in DIR\n"
-"   -m32, -m64                Force building 32-bit resp. 64-bit code\n"
+"   -m16, -m32, -m64          Force building 16-bit, 32-bit resp. 64-bit code\n"
 "   -M, --main-module=MODULE  Set the name of the main module for a Win16 dll\n"
 "       --nm-cmd=NM           Command to use to get undefined symbols (default: nm)\n"
 "       --nxcompat=y|n        Set the NX compatibility flag (default: yes)\n"
@@ -382,9 +382,10 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             lib_path[nb_lib_paths++] = xstrdup( optarg );
             break;
         case 'm':
-            if (strcmp( optarg, "32" ) && strcmp( optarg, "64" ))
-                fatal_error( "Invalid -m option '%s', expected -m32 or -m64\n", optarg );
-            if (!strcmp( optarg, "32" )) force_pointer_size = 4;
+            if (strcmp( optarg, "16" ) && strcmp( optarg, "32" ) && strcmp( optarg, "64" ))
+                fatal_error( "Invalid -m option '%s', expected -m16, -m32 or -m64\n", optarg );
+            if (!strcmp( optarg, "16" )) spec->type = SPEC_WIN16;
+            else if (!strcmp( optarg, "32" )) force_pointer_size = 4;
             else force_pointer_size = 8;
             break;
         case 'M':
