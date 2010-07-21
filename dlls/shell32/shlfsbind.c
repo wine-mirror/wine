@@ -62,7 +62,7 @@ static const IFileSystemBindDataVtbl sbvt =
 };
 
 static const WCHAR wFileSystemBindData[] = {
-    'F','i','l','e',' ','S','y','s','t','e','m',' ','B','i','n','d','D','a','t','a',0};
+    'F','i','l','e',' ','S','y','s','t','e','m',' ','B','i','n','d',' ','D','a','t','a',0};
 
 HRESULT WINAPI IFileSystemBindData_Constructor(const WIN32_FIND_DATAW *pfd, LPBC *ppV)
 {

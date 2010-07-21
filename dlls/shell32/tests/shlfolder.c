@@ -55,6 +55,7 @@ static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
+static LPITEMIDLIST (WINAPI *pSHSimpleIDListFromPathAW)(LPCVOID);
 
 static void init_function_pointers(void)
 {
@@ -80,6 +81,7 @@ static void init_function_pointers(void)
     MAKEFUNC_ORD(ILIsEqual, 21);
     MAKEFUNC_ORD(ILCombine, 25);
     MAKEFUNC_ORD(ILFree, 155);
+    MAKEFUNC_ORD(SHSimpleIDListFromPathAW, 162);
 #undef MAKEFUNC_ORD
 
     /* test named exports */
@@ -2264,6 +2266,265 @@ static void test_GetUIObject(void)
     Cleanup();
 }
 
+#define verify_pidl(i,p) r_verify_pidl(__LINE__, i, p)
+static void r_verify_pidl(unsigned l, LPCITEMIDLIST pidl, const WCHAR *path)
+{
+    LPCITEMIDLIST child;
+    IShellFolder *parent;
+    STRRET filename;
+    HRESULT hr;
+
+    if(!pSHBindToParent){
+        win_skip("SHBindToParent is not available, not performing full PIDL verification\n");
+        if(path)
+            ok_(__FILE__,l)(pidl != NULL, "Expected PIDL to be non-NULL\n");
+        else
+            ok_(__FILE__,l)(pidl == NULL, "Expected PIDL to be NULL\n");
+        return;
+    }
+
+    if(path){
+        if(!pidl){
+            ok_(__FILE__,l)(0, "didn't get expected path (%s), instead: NULL\n", wine_dbgstr_w(path));
+            return;
+        }
+
+        hr = pSHBindToParent(pidl, &IID_IShellFolder, (LPVOID*)&parent, &child);
+        ok_(__FILE__,l)(hr == S_OK, "SHBindToParent failed: 0x%08x\n", hr);
+        if(FAILED(hr))
+            return;
+
+        hr = IShellFolder_GetDisplayNameOf(parent, child, SHGDN_FORPARSING, &filename);
+        ok_(__FILE__,l)(hr == S_OK, "GetDisplayNameOf failed: 0x%08x\n", hr);
+        if(FAILED(hr)){
+            IShellFolder_Release(parent);
+            return;
+        }
+
+        ok_(__FILE__,l)(filename.uType == STRRET_WSTR, "Got unexpected string type: %d\n", filename.uType);
+        ok_(__FILE__,l)(lstrcmpW(path, filename.pOleStr) == 0,
+                "didn't get expected path (%s), instead: %s\n",
+                 wine_dbgstr_w(path), wine_dbgstr_w(filename.pOleStr));
+
+        IShellFolder_Release(parent);
+    }else
+        ok_(__FILE__,l)(pidl == NULL, "Expected PIDL to be NULL\n");
+}
+
+static void test_SHSimpleIDListFromPath(void)
+{
+    const WCHAR adirW[] = {'C',':','\\','s','i','d','l','f','p','d','i','r',0};
+    const CHAR adirA[] = "C:\\sidlfpdir";
+    BOOL br, is_unicode = !(GetVersion() & 0x80000000);
+
+    LPITEMIDLIST pidl = NULL;
+
+    if(!pSHSimpleIDListFromPathAW){
+        win_skip("SHSimpleIDListFromPathAW not available\n");
+        return;
+    }
+
+    br = CreateDirectoryA(adirA, NULL);
+    ok(br == TRUE, "CreateDirectory failed: %d\n", GetLastError());
+
+    if(is_unicode)
+        pidl = pSHSimpleIDListFromPathAW(adirW);
+    else
+        pidl = pSHSimpleIDListFromPathAW(adirA);
+    verify_pidl(pidl, adirW);
+    pILFree(pidl);
+
+    br = RemoveDirectoryA(adirA);
+    ok(br == TRUE, "RemoveDirectory failed: %d\n", GetLastError());
+
+    if(is_unicode)
+        pidl = pSHSimpleIDListFromPathAW(adirW);
+    else
+        pidl = pSHSimpleIDListFromPathAW(adirA);
+    verify_pidl(pidl, adirW);
+    pILFree(pidl);
+}
+
+/* IFileSystemBindData impl */
+static HRESULT WINAPI fsbd_QueryInterface(IFileSystemBindData *fsbd,
+        REFIID riid, void **ppv)
+{
+    if(IsEqualIID(riid, &IID_IFileSystemBindData) ||
+            IsEqualIID(riid, &IID_IUnknown)){
+        *ppv = fsbd;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI fsbd_AddRef(IFileSystemBindData *fsbd)
+{
+    return 2;
+}
+
+static ULONG WINAPI fsbd_Release(IFileSystemBindData *fsbd)
+{
+    return 1;
+}
+
+static HRESULT WINAPI fsbd_SetFindData(IFileSystemBindData *fsbd,
+        const WIN32_FIND_DATAW *pfd)
+{
+    ok(0, "SetFindData called\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fsbd_GetFindData_nul(IFileSystemBindData *fsbd,
+        WIN32_FIND_DATAW *pfd)
+{
+    memset(pfd, 0, sizeof(WIN32_FIND_DATAW));
+    return S_OK;
+}
+
+static HRESULT WINAPI fsbd_GetFindData_junk(IFileSystemBindData *fsbd,
+        WIN32_FIND_DATAW *pfd)
+{
+    memset(pfd, 0xdeadbeef, sizeof(WIN32_FIND_DATAW));
+    return S_OK;
+}
+
+static HRESULT WINAPI fsbd_GetFindData_invalid(IFileSystemBindData *fsbd,
+        WIN32_FIND_DATAW *pfd)
+{
+    memset(pfd, 0, sizeof(WIN32_FIND_DATAW));
+    *pfd->cFileName = 'a';
+    *pfd->cAlternateFileName = 'a';
+    return S_OK;
+}
+
+static HRESULT WINAPI fsbd_GetFindData_valid(IFileSystemBindData *fsbd,
+        WIN32_FIND_DATAW *pfd)
+{
+    static const WCHAR adirW[] = {'C',':','\\','f','s','b','d','d','i','r',0};
+    HANDLE handle = FindFirstFileW(adirW, pfd);
+    FindClose(handle);
+    return S_OK;
+}
+
+static HRESULT WINAPI fsbd_GetFindData_fail(IFileSystemBindData *fsbd,
+        WIN32_FIND_DATAW *pfd)
+{
+    return E_FAIL;
+}
+
+static IFileSystemBindDataVtbl fsbdVtbl = {
+    fsbd_QueryInterface,
+    fsbd_AddRef,
+    fsbd_Release,
+    fsbd_SetFindData,
+    NULL
+};
+
+static IFileSystemBindData fsbd = { &fsbdVtbl };
+
+static void test_ParseDisplayNamePBC(void)
+{
+    WCHAR wFileSystemBindData[] =
+        {'F','i','l','e',' ','S','y','s','t','e','m',' ','B','i','n','d',' ','D','a','t','a',0};
+    WCHAR adirW[] = {'C',':','\\','f','s','b','d','d','i','r',0};
+    const HRESULT exp_err = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    IShellFolder *psf;
+    IBindCtx *pbc;
+    HRESULT hres;
+    ITEMIDLIST *pidl;
+
+    /* Check if we support WCHAR functions */
+    SetLastError(0xdeadbeef);
+    lstrcmpiW(adirW, adirW);
+    if(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED){
+        win_skip("Most W-calls are not implemented\n");
+        return;
+    }
+
+    hres = SHGetDesktopFolder(&psf);
+    ok(hres == S_OK, "SHGetDesktopFolder failed: 0x%08x\n", hres);
+    if(FAILED(hres)){
+        win_skip("Failed to get IShellFolder, can't run tests\n");
+        return;
+    }
+
+    /* fails on unknown dir with no IBindCtx */
+    hres = IShellFolder_ParseDisplayName(psf, NULL, NULL, adirW, NULL, &pidl, NULL);
+    ok(hres == exp_err || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed with wrong error: 0x%08x\n", hres);
+
+    /* fails on unknown dir with IBindCtx with no IFileSystemBindData */
+    hres = CreateBindCtx(0, &pbc);
+    ok(hres == S_OK, "CreateBindCtx failed: 0x%08x\n", hres);
+
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, adirW, NULL, &pidl, NULL);
+    ok(hres == exp_err || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed with wrong error: 0x%08x\n", hres);
+
+    /* unknown dir with IBindCtx with IFileSystemBindData */
+    hres = IBindCtx_RegisterObjectParam(pbc, wFileSystemBindData, (IUnknown*)&fsbd);
+    ok(hres == S_OK, "RegisterObjectParam failed: 0x%08x\n", hres);
+
+    /* return E_FAIL from GetFindData */
+    pidl = (ITEMIDLIST*)0xdeadbeef;
+    fsbdVtbl.GetFindData = fsbd_GetFindData_fail;
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, adirW, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, adirW);
+        ILFree(pidl);
+    }
+
+    /* set FIND_DATA struct to NULLs */
+    pidl = (ITEMIDLIST*)0xdeadbeef;
+    fsbdVtbl.GetFindData = fsbd_GetFindData_nul;
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, adirW, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, adirW);
+        ILFree(pidl);
+    }
+
+    /* set FIND_DATA struct to junk */
+    pidl = (ITEMIDLIST*)0xdeadbeef;
+    fsbdVtbl.GetFindData = fsbd_GetFindData_junk;
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, adirW, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, adirW);
+        ILFree(pidl);
+    }
+
+    /* set FIND_DATA struct to invalid data */
+    pidl = (ITEMIDLIST*)0xdeadbeef;
+    fsbdVtbl.GetFindData = fsbd_GetFindData_invalid;
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, adirW, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, adirW);
+        ILFree(pidl);
+    }
+
+    /* set FIND_DATA struct to valid data */
+    pidl = (ITEMIDLIST*)0xdeadbeef;
+    fsbdVtbl.GetFindData = fsbd_GetFindData_valid;
+    hres = IShellFolder_ParseDisplayName(psf, NULL, pbc, adirW, NULL, &pidl, NULL);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* NT4 */,
+            "ParseDisplayName failed: 0x%08x\n", hres);
+    if(SUCCEEDED(hres)){
+        verify_pidl(pidl, adirW);
+        ILFree(pidl);
+    }
+
+    IBindCtx_Release(pbc);
+    IShellFolder_Release(psf);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -2286,6 +2547,8 @@ START_TEST(shlfolder)
     test_SHCreateShellItem();
     test_desktop_IPersist();
     test_GetUIObject();
+    test_SHSimpleIDListFromPath();
+    test_ParseDisplayNamePBC();
 
     OleUninitialize();
 }
