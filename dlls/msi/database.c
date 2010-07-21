@@ -226,7 +226,7 @@ void append_storage_to_db( MSIDATABASE *db, IStorage *stg )
     t = msi_alloc( sizeof *t );
     t->stg = stg;
     IStorage_AddRef( stg );
-    list_add_tail( &db->transforms, &t->entry );
+    list_add_head( &db->transforms, &t->entry );
 
     /* the transform may add or replace streams */
     free_streams( db );
