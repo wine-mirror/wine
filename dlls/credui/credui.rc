@@ -21,4 +21,4 @@
 #include "credui_resources.h"
 
 /* @makedep: banner.bmp */
-IDB_BANNER BITMAP LOADONCALL DISCARDABLE banner.bmp
+IDB_BANNER BITMAP banner.bmp
