@@ -194,6 +194,7 @@ struct options
     int noshortwchar;
     int gui_app;
     int unicode_app;
+    int win16_app;
     int compile_only;
     int force_pointer_size;
     int large_address_aware;
@@ -694,6 +695,9 @@ static void build(struct options* opts)
         strarray *resources = strarray_alloc();
         char *res_o_name = NULL;
 
+        if (opts->win16_app)
+            error( "Building 16-bit code is not supported for Windows\n" );
+
         if (opts->shared)
         {
             /* run winebuild to generate the .def file */
@@ -848,6 +852,7 @@ static void build(struct options* opts)
         strarray_add(spec_args, "-E");
         strarray_add(spec_args, spec_file);
     }
+    if (opts->win16_app) strarray_add(spec_args, "-m16");
 
     if (!opts->shared)
     {
@@ -1270,6 +1275,8 @@ int main(int argc, char **argv)
 			opts.gui_app = 0;
 		    else if (strcmp("-municode", argv[i]) == 0)
 			opts.unicode_app = 1;
+		    else if (strcmp("-m16", argv[i]) == 0)
+			opts.win16_app = 1;
 		    else if (strcmp("-m32", argv[i]) == 0)
                     {
                         if (opts.target_cpu == CPU_x86_64)
