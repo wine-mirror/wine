@@ -24,7 +24,7 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
     IDS_DEVENUM_DSDEFAULT  "DirectSound di Default"
     IDS_DEVENUM_DS         "DirectSound: %s"

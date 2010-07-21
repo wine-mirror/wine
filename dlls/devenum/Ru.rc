@@ -24,7 +24,7 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 #pragma code_page(65001)
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
     IDS_DEVENUM_DSDEFAULT  "Стандартный DirectSound"
     IDS_DEVENUM_DS         "DirectSound: %s"
