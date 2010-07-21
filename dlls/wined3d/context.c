@@ -2016,7 +2016,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
     WARN("Depth stencil format is not supported by WGL, rendering the backbuffer in an FBO\n");
 
     /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
-    IWineD3DSurface_LoadLocation((IWineD3DSurface *)context->current_rt, SFLAG_INTEXTURE, NULL);
+    surface_load_location(context->current_rt, SFLAG_INTEXTURE, NULL);
     swapchain->render_to_fbo = TRUE;
     context_set_render_offscreen(context, device->StateTable, TRUE);
 }

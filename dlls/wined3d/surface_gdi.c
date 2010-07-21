@@ -474,18 +474,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
     return WINED3D_OK;
 }
 
-/***************************
- *
- ***************************/
-static HRESULT WINAPI IWineGDISurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
-    if(flag != SFLAG_INSYSMEM) {
-        ERR("GDI Surface requested to be copied to gl %s\n", flag == SFLAG_INTEXTURE ? "texture" : "drawable");
-    } else {
-        TRACE("Surface requested in surface memory\n");
-    }
-    return WINED3D_OK;
-}
-
 static WINED3DSURFTYPE WINAPI IWineGDISurfaceImpl_GetImplType(IWineD3DSurface *iface) {
     return SURFACE_GDI;
 }
@@ -547,7 +535,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,
-    IWineGDISurfaceImpl_LoadLocation,
     IWineGDISurfaceImpl_GetImplType,
     IWineGDISurfaceImpl_DrawOverlay
 };

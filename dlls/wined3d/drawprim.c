@@ -586,7 +586,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             IWineD3DSurfaceImpl *target = This->render_targets[i];
             if (target)
             {
-                IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
+                surface_load_location(target, SFLAG_INDRAWABLE, NULL);
                 surface_modify_location(target, SFLAG_INDRAWABLE, TRUE);
             }
         }

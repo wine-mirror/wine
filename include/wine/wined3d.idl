@@ -2491,10 +2491,6 @@ interface IWineD3DSurface : IWineD3DResource
     );
     HRESULT PrivateSetup(
     );
-    HRESULT LoadLocation(
-        [in] DWORD location,
-        [in] const RECT *rect
-    );
     WINED3DSURFTYPE GetImplType(
     );
     HRESULT DrawOverlay(

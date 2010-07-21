@@ -325,7 +325,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
      */
     if (!This->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        IWineD3DSurface_LoadLocation((IWineD3DSurface *)This->back_buffers[0], SFLAG_INTEXTURE, NULL);
+        surface_load_location(This->back_buffers[0], SFLAG_INTEXTURE, NULL);
         surface_modify_location(This->back_buffers[0], SFLAG_INDRAWABLE, FALSE);
         This->render_to_fbo = TRUE;
 

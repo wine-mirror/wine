@@ -76,7 +76,7 @@ static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRG
             {
                 TRACE("Reloading surface because the d3d8/9 palette was changed.\n");
                 /* TODO: This is not necessarily needed with hw palettized texture support. */
-                IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INSYSMEM, NULL);
+                surface_load_location(surface, SFLAG_INSYSMEM, NULL);
                 /* Make sure the texture is reloaded because of the palette change, this kills performance though :( */
                 surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
             }

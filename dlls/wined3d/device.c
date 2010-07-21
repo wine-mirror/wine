@@ -4446,7 +4446,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
     if (Flags & WINED3DCLEAR_TARGET && !(target->Flags & SFLAG_INDRAWABLE))
     {
         if (!is_full_clear(target, &draw_rect, clear_rect))
-            IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
+            surface_load_location(target, SFLAG_INDRAWABLE, NULL);
     }
 
     context = context_acquire(This, target);
@@ -5489,7 +5489,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface,
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct wined3d_context *context;
 
-    if (rect) IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INDRAWABLE, NULL);
+    if (rect) surface_load_location(surface, SFLAG_INDRAWABLE, NULL);
     surface_modify_location(surface, SFLAG_INDRAWABLE, TRUE);
 
     context = context_acquire(This, surface);
@@ -5769,8 +5769,8 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
     /* Make sure the drawables are up-to-date. Note that loading the
      * destination surface isn't strictly required if we overwrite the
      * entire surface. */
-    IWineD3DSurface_LoadLocation((IWineD3DSurface *)src_surface, SFLAG_INDRAWABLE, NULL);
-    IWineD3DSurface_LoadLocation((IWineD3DSurface *)dst_surface, SFLAG_INDRAWABLE, NULL);
+    surface_load_location(src_surface, SFLAG_INDRAWABLE, NULL);
+    surface_load_location(dst_surface, SFLAG_INDRAWABLE, NULL);
 
     if (!surface_is_offscreen(src_surface)) context = context_acquire(device, src_surface);
     else if (!surface_is_offscreen(dst_surface)) context = context_acquire(device, dst_surface);
