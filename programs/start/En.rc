@@ -23,7 +23,7 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE, "Start a program, or open a document in the program normally used for files with that suffix.\n\
 Usage:\n\

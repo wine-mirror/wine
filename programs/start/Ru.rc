@@ -25,7 +25,7 @@
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Запускает программы или открывает документы приложением,\n\
 связанным с файлами с данным расширением.\n\n\

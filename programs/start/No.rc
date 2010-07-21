@@ -23,7 +23,7 @@
 
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Starte et program, eller åpne et dokument i programmet som er tilknyttet filer med det etternavnet.\n\
 Bruk:\n\

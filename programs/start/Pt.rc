@@ -26,7 +26,7 @@
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE, "Inicia um programa, ou abre um documento no programa normalmente usado para arquivos com determinado sufixo.\n\
 Uso:\n\
@@ -73,7 +73,7 @@ STRING_UNIXFAIL "Não foi possível traduzir o nome de arquivo Unix para um nome
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE, "Inicia um programa, ou abre um documento no programa normalmente usado para ficheiros com determinado sufixo.\n\
 Uso:\n\

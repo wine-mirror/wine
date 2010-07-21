@@ -26,7 +26,7 @@
 
 LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "プログラムを開始したり、拡張子に基づき通常使われるプログラムで文書を開きます。\n\
 使い方:\n\

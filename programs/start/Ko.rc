@@ -24,7 +24,7 @@
 
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "풀그림을 실행시키거나 보통 파일에 첨가해서 사용되는  풀그림으로 문서 열기\n\
 Usage:\n\

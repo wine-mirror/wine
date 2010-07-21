@@ -27,7 +27,7 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 #pragma code_page(65001) /* UTF-8 */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Lance un programme, ou ouvre un document dans le programme normalement utilisé avec cette extension.\n\
 Usage :\n\

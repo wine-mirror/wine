@@ -23,7 +23,7 @@
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Inicia un programa, o abre un documento con el programa que se suele utilizar para archivos con esa extensión.\n\
 Uso:\n\

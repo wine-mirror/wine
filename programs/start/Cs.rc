@@ -27,7 +27,7 @@ LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
 
 /* Czech strings in CP1250 */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Spustí program nebo otevøe dokument v programu, který je normálnì použit pro soubory s danou pøíponou.\n\
 Použití:\n\

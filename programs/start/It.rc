@@ -28,7 +28,7 @@
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i files con quell'estensione\n\
 Usage:\n\

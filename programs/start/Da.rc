@@ -26,7 +26,7 @@
 
 LANGUAGE LANG_DANISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Start et program, eller åbn et dokument i programmet, der normalt anvendes til filer med den endelse.\n\
 Vejledning:\n\

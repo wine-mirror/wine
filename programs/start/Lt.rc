@@ -26,7 +26,7 @@
 
 LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE, "Paleisti programą ar atverti dokumentą programoje, paprastai naudojamoje failams su tuo prievardžiu.\n\
 Naudojimas:\n\

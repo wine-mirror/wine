@@ -24,7 +24,7 @@
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Uruchamia program lub otwiera dokument w programie który jest zwykle u¿ywany dla tego rozszerzenia.\n\
 U¿ycie:\n\

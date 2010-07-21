@@ -23,7 +23,7 @@
 
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STRING_USAGE,                                   "Start een programma, of open een document met het programma dat normaal voor bestanden met die extensie gebruikt wordt.\n\
 Gebruik:\n\
