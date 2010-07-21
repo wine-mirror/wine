@@ -323,6 +323,10 @@ void create_vs11_parser(struct asm_parser *ret);
 void create_vs20_parser(struct asm_parser *ret);
 void create_vs2x_parser(struct asm_parser *ret);
 void create_vs30_parser(struct asm_parser *ret);
+void create_ps10_parser(struct asm_parser *ret);
+void create_ps11_parser(struct asm_parser *ret);
+void create_ps12_parser(struct asm_parser *ret);
+void create_ps13_parser(struct asm_parser *ret);
 void create_ps14_parser(struct asm_parser *ret);
 void create_ps20_parser(struct asm_parser *ret);
 void create_ps2x_parser(struct asm_parser *ret);
@@ -638,6 +642,12 @@ typedef enum _BWRITERDECLUSAGE {
     BWRITERDECLUSAGE_DEPTH,
     BWRITERDECLUSAGE_SAMPLE
 } BWRITERDECLUSAGE;
+
+/* ps 1.x texture registers mappings */
+#define T0_REG          2
+#define T1_REG          3
+#define T2_REG          4
+#define T3_REG          5
 
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages);
 DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result);

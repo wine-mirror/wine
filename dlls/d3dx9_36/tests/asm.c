@@ -132,6 +132,11 @@ static void ps_1_1_test(void) {
             {0xffff0101, 0x00000042, 0xb00f0000, 0x00000002, 0x80070000, 0x80e40000,
              0x80e40001, 0x40000001, 0x80080000, 0xb0e40000, 0x0000ffff}
         },
+        {   /* shader 1 */
+            "ps.1.1\n"
+            "mov_d4 r0, r1\n",
+            {0xffff0101, 0x00000001, 0x8e0f0000, 0x80e40001, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_1_1", tests, sizeof(tests) / sizeof(tests[0]));
@@ -477,6 +482,43 @@ static void ps_1_3_test(void) {
             "ps_1_3\n"
             "mov_x4_sat r0.a, -r1_bx2.a\n",
             {0xffff0103, 0x00000001, 0x82180000, 0x85ff0001, 0x0000ffff}
+        },
+        {   /* shader 30 */
+            "ps_1_3\n"
+            "texcoord_x2 t0\n",
+            {0xffff0103, 0x00000040, 0xb10f0000, 0x0000ffff}
+        },
+        {   /* shader 31 */
+            "ps_1_3\n"
+            "tex_x2 t0\n",
+            {0xffff0103, 0x00000042, 0xb10f0000, 0x0000ffff}
+        },
+        {   /* shader 32 */
+            "ps_1_3\n"
+            "texreg2ar_x4 t0, t1\n",
+            {0xffff0103, 0x00000045, 0xb20f0000, 0xb0e40001, 0x0000ffff}
+        },
+        {   /* shader 33 */
+            "ps_1_3\n"
+            "texbem_d4 t1, t0\n",
+            {0xffff0103, 0x00000043, 0xbe0f0001, 0xb0e40000, 0x0000ffff}
+        },
+        {   /* shader 34 */
+            "ps_1_3\n"
+            "tex t0\n"
+            "texm3x3pad_x2 t1, t0\n"
+            "texm3x3pad_x2 t2, t0\n"
+            "texm3x3tex_x2 t3, t0\n",
+            {0xffff0103, 0x00000042, 0xb00f0000, 0x00000049, 0xb10f0001, 0xb0e40000,
+	     0x00000049, 0xb10f0002, 0xb0e40000, 0x0000004a, 0xb10f0003, 0xb0e40000,
+	     0x0000ffff}
+        },
+        {   /* shader 35 */
+            "ps_1_3\n"
+            "tex t0\n"
+            "texdp3tex_x8 t1, t0\n",
+            {0xffff0103, 0x00000042, 0xb00f0000, 0x00000053, 0xb30f0001, 0xb0e40000,
+	     0x0000ffff}
         },
     };
 
@@ -1661,9 +1703,9 @@ static void assembleshader_test(void) {
 START_TEST(asm)
 {
     preproc_test();
-    todo_wine ps_1_1_test();
+    ps_1_1_test();
     vs_1_1_test();
-    todo_wine ps_1_3_test();
+    ps_1_3_test();
     ps_1_4_test();
     vs_2_0_test();
     vs_2_x_test();

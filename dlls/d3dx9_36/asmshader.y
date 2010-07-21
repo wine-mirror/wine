@@ -329,26 +329,22 @@ version_marker:       VER_VS10
                     | VER_PS10
                         {
                             TRACE("Pixel  shader 1.0\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps10_parser(&asm_ctx);
                         }
                     | VER_PS11
                         {
                             TRACE("Pixel  shader 1.1\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps11_parser(&asm_ctx);
                         }
                     | VER_PS12
                         {
                             TRACE("Pixel  shader 1.2\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps12_parser(&asm_ctx);
                         }
                     | VER_PS13
                         {
                             TRACE("Pixel  shader 1.3\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_ps13_parser(&asm_ctx);
                         }
                     | VER_PS14
                         {
