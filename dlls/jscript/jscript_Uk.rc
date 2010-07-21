@@ -24,7 +24,7 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
     IDS_TO_PRIMITIVE        "Помилка конвертування об'єкту в примітивний тип"
     IDS_INVALID_CALL_ARG    "Невірний виклик процедури або аргумент"
