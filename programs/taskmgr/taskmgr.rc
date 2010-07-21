@@ -32,13 +32,13 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 /* Icon with lowest ID value placed first to ensure application icon
    remains consistent on all systems. */
 /* @makedep: taskmgr.ico */
-IDI_TASKMANAGER         ICON    DISCARDABLE taskmgr.ico
+IDI_TASKMANAGER         ICON taskmgr.ico
 
 /* @makedep: window.ico */
-IDI_WINDOW              ICON    DISCARDABLE window.ico
+IDI_WINDOW              ICON window.ico
 
 /* @makedep: windowsm.ico */
-IDI_WINDOWSM            ICON    DISCARDABLE windowsm.ico
+IDI_WINDOWSM            ICON windowsm.ico
 
 /*
  Version
@@ -82,10 +82,10 @@ END
 */
 
 /* @makedep: traymask.bmp */
-IDB_TRAYMASK            BITMAP  DISCARDABLE traymask.bmp
-        
+IDB_TRAYMASK            BITMAP traymask.bmp
+
 /* @makedep: trayicon.bmp */
-IDB_TRAYICON            BITMAP  DISCARDABLE trayicon.bmp
+IDB_TRAYICON            BITMAP trayicon.bmp
 
 /* @makedep: font.bmp */
-IDB_FONT                BITMAP  DISCARDABLE font.bmp
+IDB_FONT                BITMAP font.bmp

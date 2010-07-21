@@ -30,7 +30,7 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
  Menu
 */
 
-IDR_TASKMANAGER MENU DISCARDABLE
+IDR_TASKMANAGER MENU
 BEGIN
     POPUP "&Файл"
     BEGIN
@@ -92,7 +92,7 @@ BEGIN
     END
 END
 
-IDR_WINDOWSMENU MENU DISCARDABLE
+IDR_WINDOWSMENU MENU
 BEGIN
     MENUITEM "С&лева направо",                                  ID_WINDOWS_TILEHORIZONTALLY
     MENUITEM "С&верху вниз",                                    ID_WINDOWS_TILEVERTICALLY
@@ -102,7 +102,7 @@ BEGIN
     MENUITEM "&На передний план",                               ID_WINDOWS_BRINGTOFRONT
 END
 
-IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
+IDR_APPLICATION_PAGE_CONTEXT1 MENU
 BEGIN
     POPUP "DUMMY"
     BEGIN
@@ -114,7 +114,7 @@ BEGIN
     END
 END
 
-IDR_APPLICATION_PAGE_CONTEXT2 MENU DISCARDABLE
+IDR_APPLICATION_PAGE_CONTEXT2 MENU
 BEGIN
     POPUP "DUMMY"
     BEGIN
@@ -132,7 +132,7 @@ BEGIN
     END
 END
 
-IDR_TRAY_POPUP MENU DISCARDABLE
+IDR_TRAY_POPUP MENU
 BEGIN
     POPUP "DUMMY"
     BEGIN
@@ -143,7 +143,7 @@ BEGIN
     END
 END
 
-IDR_PROCESS_PAGE_CONTEXT MENU DISCARDABLE
+IDR_PROCESS_PAGE_CONTEXT MENU
 BEGIN
     POPUP "DUMMY"
     BEGIN
@@ -176,7 +176,7 @@ END
  Dialog
 */
 
-IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 270, 246
+IDD_TASKMGR_DIALOG DIALOG  0, 0, 270, 246
 STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
     WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
     WS_THICKFRAME
@@ -187,7 +187,7 @@ BEGIN
     CONTROL         "Tab1",IDC_TAB,"SysTabControl32",WS_TABSTOP,3,3,257,228
 END
 
-IDD_APPLICATION_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
+IDD_APPLICATION_PAGE DIALOG  0, 0, 247, 210
 STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -198,7 +198,7 @@ BEGIN
     PUSHBUTTON      "Снять &задачу",IDC_ENDTASK,45,189,63,14,WS_DISABLED
 END
 
-IDD_PROCESS_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
+IDD_PROCESS_PAGE DIALOG  0, 0, 247, 210
 STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -211,7 +211,7 @@ BEGIN
 END
 
 /*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
-IDD_PERFORMANCE_PAGE DIALOGEX DISCARDABLE  0, 0, 247, 210
+IDD_PERFORMANCE_PAGE DIALOGEX  0, 0, 247, 210
 STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -269,7 +269,7 @@ BEGIN
                     153,37,0,WS_EX_CLIENTEDGE
 END
 
-IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
+IDD_DEBUG_CHANNELS_DIALOG DIALOG  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Каналы отладки"
 FONT 8, "MS Shell Dlg"
@@ -280,7 +280,7 @@ BEGIN
     PUSHBUTTON      "Закрыть",IDOK,171,189,69,14
 END
 
-IDD_AFFINITY_DIALOG DIALOG DISCARDABLE  0, 0, 231, 154
+IDD_AFFINITY_DIALOG DIALOG  0, 0, 231, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Соответствие процессоров"
 FONT 8, "MS Shell Dlg"
@@ -355,7 +355,7 @@ BEGIN
                     WS_DISABLED | WS_TABSTOP,175,119,41,10
 END
 
-IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  20, 20, 244, 199
+IDD_COLUMNS_DIALOG DIALOG  20, 20, 244, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Выбор столбцов"
 FONT 8, "MS Shell Dlg"
@@ -420,14 +420,14 @@ END
  String Table
 */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Диспетчер задач"
     IDC_TASKMGR             "Диспетчер задач"
     IDS_RUNDLG_CAPTION      "Создать новую задачу"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_FILE_NEW             "Запускает новую программу"
     ID_OPTIONS_ALWAYSONTOP  "Окно Диспетчера задач отображается поверх других окон, если не свернуто"
@@ -443,7 +443,7 @@ BEGIN
     ID_VIEW_UPDATESPEED_LOW "Обновляет изображение один раз в четыре секунды"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
 ID_VIEW_UPDATESPEED_PAUSED "Изображение не обновляется автоматически"
     ID_WINDOWS_TILEHORIZONTALLY
@@ -467,7 +467,7 @@ ID_VIEW_UPDATESPEED_PAUSED "Изображение не обновляется �
     "Перемещает задачи на передний план и передает им управление"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_ENDTASK              "Завершает выбранный процесс"
     ID_GOTOPROCESS          "Переключает фокус на процесс выбранной задачи"
@@ -491,7 +491,7 @@ BEGIN
     ID_PROCESS_PAGE_DEBUGCHANNELS "Управляет каналами отладки"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_VIEW_LARGE                     "&Крупные значки"
     IDS_VIEW_SMALL                     "&Мелкие значки"
@@ -511,7 +511,7 @@ BEGIN
     IDS_STATUS_BAR_MEMORY_USAGE        "Выделение памяти: %dK / %dK"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_IMAGENAME         "Имя образа"
     IDS_PID               "PID"
@@ -540,7 +540,7 @@ BEGIN
     IDS_IOOTHERBYTES      "Прочих байт при вводе-выводе"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_WARNING_TITLE               "Предупреждение диспетчера задач"
     IDS_PRIORITY_CHANGE_MESSAGE     "ВНИМАНИЕ! Изменение класса приоритета этого\n\процесса может привести к нежелательным результатам,\n\в том числе к нестабильной работе системы. Вы\n\действительно хотите изменить класс приоритета?"
@@ -554,7 +554,7 @@ BEGIN
     IDS_AFFINITY_UNABLE2ACCESS      "Невозможно получить доступ или установить соответствие процесса"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_SYSTEM_IDLE_PROCESS            "Бездействие системы"
     IDS_APPLICATION_NOT_RESPONDING     "Не отвечает"
