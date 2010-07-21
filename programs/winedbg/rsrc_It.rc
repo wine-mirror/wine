@@ -40,13 +40,13 @@ FONT 8, "Tahoma"
 BEGIN
     LTEXT           "",IDC_STATIC_BG,0,0,273,52,WS_BORDER,0
     LTEXT           "Il programma %s ha incontrato un errore e deve \
-                    chiudersi. Siamo spiacenti per l'inconveniente.",
+                    essere chiuso. Siamo spiacenti per l'inconveniente.",
                     IDC_STATIC_TXT1,27,10,224,30
-    LTEXT           "Questo può essere causato da un problema nel programma o da una mancanza in Wine. \
+    LTEXT           "Ciò può essere causato da un problema nel programma o da una mancanza di Wine. \
                     Potresti voler consultare http://appdb.winehq.org per consigli su \
                     questa applicazione.\n\n\
-                    Se questo problema non è presente sotto Windows e non è stato ancora riportato, \
-                    puoi riportarlo su http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
+                    Se questo problema non è presente sotto Windows e non è stato ancora segnalato, \
+                    puoi segnalarlo su http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
     DEFPUSHBUTTON   "Chiudi", IDOK, 205, 151, 60, 16, WS_TABSTOP
 END
 
