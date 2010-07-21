@@ -42,6 +42,7 @@ RC_SRCS = \
 	cdlg_Ru.rc \
 	cdlg_Si.rc \
 	cdlg_Sk.rc \
+	cdlg_Sr.rc \
 	cdlg_Sv.rc \
 	cdlg_Th.rc \
 	cdlg_Tr.rc \
