@@ -31,7 +31,7 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
  * Menu
  */
 
-IDR_REGEDIT_MENU MENU DISCARDABLE
+IDR_REGEDIT_MENU MENU
 BEGIN
     POPUP "&Registre"
     BEGIN
@@ -88,7 +88,7 @@ BEGIN
     END
 END
 
-IDR_POPUP_MENUS MENU DISCARDABLE
+IDR_POPUP_MENUS MENU
 BEGIN
   POPUP ""
   BEGIN
@@ -125,7 +125,7 @@ END
  * Dialog
  */
 
-IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+IDD_EXPORT_TEMPLATE DIALOG  50, 50, 278, 54
 STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
     WS_BORDER
 FONT 8, "MS Shell Dlg"
@@ -136,7 +136,7 @@ BEGIN
     EDITTEXT IDC_EXPORT_PATH, 100, 30, 166, 12
 END
 
-IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+IDD_FIND DIALOG  22, 17, 210, 85
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Recherche"
 FONT 8, "MS Shell Dlg"
@@ -152,7 +152,7 @@ BEGIN
     PUSHBUTTON      "Fermer",IDCANCEL,170,22,35,15, WS_GROUP
 END
 
-IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 209, 52
+IDD_ADDFAVORITE DIALOG  22, 17, 209, 52
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Ajouter aux signets"
 FONT 8, "MS Shell Dlg"
@@ -163,7 +163,7 @@ BEGIN
     PUSHBUTTON      "Annuler",IDCANCEL,163,33,35,15, WS_GROUP
 END
 
-IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+IDD_DELFAVORITE DIALOG  22, 17, 210, 90
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Supprimer les signets"
 FONT 8, "MS Shell Dlg"
@@ -174,7 +174,7 @@ BEGIN
     PUSHBUTTON      "Annuler",IDCANCEL,170,72,35,15, WS_GROUP
 END
 
-IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+IDD_EDIT_STRING DIALOG  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la chaîne"
 FONT 8, "MS Shell Dlg"
@@ -187,7 +187,7 @@ BEGIN
     PUSHBUTTON      "Annuler",IDCANCEL,170,57,35,15,WS_GROUP
 END
 
-IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 90
+IDD_EDIT_DWORD DIALOG  22, 17, 210, 90
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la valeur DWORD"
 FONT 8, "MS Shell Dlg"
@@ -203,7 +203,7 @@ BEGIN
     PUSHBUTTON      "Annuler",IDCANCEL,170,72,35,15,WS_GROUP
 END
 
-IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+IDD_EDIT_BINARY DIALOG  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la valeur binaire"
 FONT 8, "MS Shell Dlg"
@@ -216,7 +216,7 @@ BEGIN
     PUSHBUTTON   "Annuler",IDCANCEL,170,83,35,15,WS_GROUP
 END
 
-IDD_EDIT_MULTI_STRING DIALOG DISCARDABLE  22, 17, 210, 175
+IDD_EDIT_MULTI_STRING DIALOG  22, 17, 210, 175
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Modification de la chaîne extensible"
 FONT 8, "MS Shell Dlg"
@@ -233,19 +233,19 @@ END
  * String Table
  */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_LIST_COLUMN_NAME    "Nom"
     IDS_LIST_COLUMN_TYPE    "Type"
     IDS_LIST_COLUMN_DATA    "Valeur"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Éditeur du registre"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_REGISTRY_MENU        "Contient des commandes pour travailler sur le registres entier"
     ID_EDIT_MENU            "Contient des commandes pour éditer des valeurs ou des clés"
@@ -255,7 +255,7 @@ BEGIN
     ID_EDIT_NEW_MENU        "Contient des commandes pour créer de nouvelles clés ou valeurs"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_EDIT_MODIFY          "Modifie les données d'une valeur"
     ID_EDIT_NEW_KEY         "Ajoute une nouvelle clé"
@@ -275,7 +275,7 @@ BEGIN
     ID_HELP_ABOUT           "Affiche de l'information sur le programme, le numéro de version et le copyright"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_REGISTRY_EXIT        "Quitte l'éditeur du registre"
     ID_FAVORITES_ADDTOFAVORITES "Ajoute des clés à la liste des signets"
@@ -291,7 +291,7 @@ BEGIN
     ID_EDIT_EXPORT          "Exporte la branche du registre sélectionnée dans un fichier texte"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_ERROR		    "Erreur"
     IDS_BAD_KEY		    "Ne peut pas chercher la clé '%s'"
@@ -306,14 +306,14 @@ BEGIN
     IDS_NOTFOUND            "Occurrence de '%s' non trouvée"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_FILEDIALOG_IMPORT_TITLE   "Importer un fichier de registre"
     IDS_FILEDIALOG_EXPORT_TITLE   "Exporter un fichier de registre"
     IDS_FILEDIALOG_FILTER         "Fichiers de registres\0*.reg\0Fichiers de registres Win9x/NT4 (REGEDIT4)\0*.reg\0Tous les fichiers (*.*)\0*.*\0\0"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_REGISTRY_ROOT_NAME           "Poste de travail"
     IDS_REGISTRY_DEFAULT_VALUE       "(par défaut)"
@@ -328,7 +328,7 @@ END
  * TEXTINCLUDE
  */
 
-1 TEXTINCLUDE DISCARDABLE
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END

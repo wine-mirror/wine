@@ -24,7 +24,7 @@
 
 LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 
-IDR_REGEDIT_MENU MENU DISCARDABLE
+IDR_REGEDIT_MENU MENU
 BEGIN
     POPUP "&Regisztrációs Adatbázis"
     BEGIN
@@ -85,7 +85,7 @@ END
  * Dialog
  */
 
-IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+IDD_FIND DIALOG  22, 17, 210, 85
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Keresés"
 FONT 8, "MS Shell Dlg"
@@ -101,7 +101,7 @@ BEGIN
     PUSHBUTTON      "Bezárás",IDCANCEL,175,22,30,11, WS_GROUP
 END
 
-IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+IDD_ADDFAVORITE DIALOG  22, 17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Kedvenc hozzáadása"
 FONT 8, "MS Shell Dlg"
@@ -112,7 +112,7 @@ BEGIN
     PUSHBUTTON      "Mégse",IDCANCEL,175,40,30,11, WS_GROUP
 END
 
-IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+IDD_DELFAVORITE DIALOG  22, 17, 210, 90
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Kedvenc törlése"
 FONT 8, "MS Shell Dlg"
@@ -123,7 +123,7 @@ BEGIN
     PUSHBUTTON      "Mégse",IDCANCEL,175,73,30,11, WS_GROUP
 END
 
-IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+IDD_EDIT_STRING DIALOG  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Sztring szerkesztése"
 FONT 8, "MS Shell Dlg"
@@ -136,7 +136,7 @@ BEGIN
     PUSHBUTTON   "Mégse",IDCANCEL,175,60,30,11,WS_GROUP
 END
 
-IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
+IDD_EDIT_DWORD DIALOG  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "DWORD szerkesztése"
 FONT 8, "MS Shell Dlg"
@@ -152,7 +152,7 @@ BEGIN
     PUSHBUTTON   "Mégse",IDCANCEL,175,80,30,11,WS_GROUP
 END
 
-IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+IDD_EDIT_BINARY DIALOG  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Bináris szerkesztése"
 FONT 8, "MS Shell Dlg"
@@ -169,19 +169,19 @@ END
  * String Table
  */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_LIST_COLUMN_NAME    "Név"
     IDS_LIST_COLUMN_TYPE    "Típus"
     IDS_LIST_COLUMN_DATA    "Adat"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Regisztrációs adatbázis szerkesztõ"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_REGISTRY_MENU        "Parancsokat tartalmaz az egész regisztrációs adatbázissal történõ munkához"
     ID_EDIT_MENU            "Parancsokat tartalmaz az érték és kulcsszerkesztéshez"
@@ -191,7 +191,7 @@ BEGIN
     ID_EDIT_NEW_MENU        "Parancsokat tartalmaz új kulcsok és értékek létrehozásához"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_EDIT_MODIFY          "Módosítja egy érték adatát"
     ID_EDIT_NEW_KEY         "Hozzáad egy új kulcsot"
@@ -210,7 +210,7 @@ BEGIN
 ID_HELP_ABOUT           "Megjeleníti a program információkat, verziószámot, és a szerzõi jogot"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_REGISTRY_EXIT        "Kilép a Regisztrációs adatbázis szerkesztõbõl"
     ID_FAVORITES_ADDTOFAVORITES "Kulcsokat ad hozzá a kedvencek listához"
@@ -225,7 +225,7 @@ BEGIN
     ID_EDIT_FINDNEXT        "Keresi a következõ elõfordulást az elõzõ kereséstõl kezdve"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_ERROR		    "Hiba"
     IDS_BAD_KEY		    "Nem tudom lekérni a kulcsot: '%s'"
@@ -246,7 +246,7 @@ END
  * TEXTINCLUDE
  */
 
-1 TEXTINCLUDE DISCARDABLE
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END

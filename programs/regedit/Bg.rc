@@ -22,13 +22,13 @@
 
 LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 
-/*STRINGTABLE DISCARDABLE
+/*STRINGTABLE
 BEGIN
     ID_FAVORITES_ADDTOFAVORITES "Добавя ключове към списъка с отметките"
     ID_FAVORITES_REMOVEFAVORITE "Премахва ключове от списъка с отметките"
 END*/
 
-IDR_REGEDIT_MENU MENU DISCARDABLE
+IDR_REGEDIT_MENU MENU
 BEGIN
     POPUP "&Регистър"
     BEGIN
@@ -85,7 +85,7 @@ BEGIN
     END
 END
 
-IDR_POPUP_MENUS MENU DISCARDABLE
+IDR_POPUP_MENUS MENU
 BEGIN
   POPUP ""
   BEGIN
@@ -122,7 +122,7 @@ END
  * Dialog
  */
 
-IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
+IDD_FIND DIALOG  22, 17, 210, 85
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Търсене"
 FONT 8, "MS Shell Dlg"
@@ -138,7 +138,7 @@ BEGIN
     PUSHBUTTON      "Затвори",IDCANCEL,175,22,30,11, WS_GROUP
 END
 
-IDD_ADDFAVORITE DIALOG DISCARDABLE  22, 17, 210, 55
+IDD_ADDFAVORITE DIALOG  22, 17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Добави отметка"
 FONT 8, "MS Shell Dlg"
@@ -149,7 +149,7 @@ BEGIN
     PUSHBUTTON      "Отмени",IDCANCEL,175,40,30,11, WS_GROUP
 END
 
-IDD_DELFAVORITE DIALOG DISCARDABLE  22, 17, 210, 90
+IDD_DELFAVORITE DIALOG  22, 17, 210, 90
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Премахни отметка"
 FONT 8, "MS Shell Dlg"
@@ -160,7 +160,7 @@ BEGIN
     PUSHBUTTON      "Отмени",IDCANCEL,175,73,30,11, WS_GROUP
 END
 
-IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
+IDD_EDIT_STRING DIALOG  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Редактирай символен низ"
 FONT 8, "MS Shell Dlg"
@@ -173,7 +173,7 @@ BEGIN
     PUSHBUTTON   "Отмени",IDCANCEL,175,60,30,11,WS_GROUP
 END
 
-IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 220, 100
+IDD_EDIT_DWORD DIALOG  22, 17, 220, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Редактирай DWORD"
 FONT 8, "MS Shell Dlg"
@@ -189,7 +189,7 @@ BEGIN
     PUSHBUTTON   "Отмени",IDCANCEL,185,80,30,11,WS_GROUP
 END
 
-IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+IDD_EDIT_BINARY DIALOG  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Редактирай двоична стойност"
 FONT 8, "MS Shell Dlg"
@@ -206,19 +206,19 @@ END
  * String Table
  */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_LIST_COLUMN_NAME    "Име"
     IDS_LIST_COLUMN_TYPE    "Тип"
     IDS_LIST_COLUMN_DATA    "Данни"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "Редактор на системния регистър"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_REGISTRY_MENU        "Съдържа команди за управление на целия регистър"
     ID_EDIT_MENU            "Съдържа команди за редактиране на стойности или ключове"
@@ -228,7 +228,7 @@ BEGIN
     ID_EDIT_NEW_MENU        "Съдържа команди за създаване на нови стойности или ключове"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_EDIT_MODIFY          "Променя данните в стойността"
     ID_EDIT_NEW_KEY         "Добавя нов ключ"
@@ -247,7 +247,7 @@ BEGIN
     ID_HELP_ABOUT           "Показва информация за програма, версията и авторските права"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     ID_REGISTRY_EXIT        "Излиза от редактора на системния регистър"
     ID_FAVORITES_ADDTOFAVORITES "Добавя ключове към списъка с отметките..."
@@ -262,7 +262,7 @@ BEGIN
     ID_EDIT_FINDNEXT        "Търси следващото място, на което се среща текста от предишното търсене"
 END
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 BEGIN
     IDS_ERROR		    "Грешка"
     IDS_BAD_KEY		    "Заявката за ключ '%s' неуспешна"
@@ -283,7 +283,7 @@ END
  * TEXTINCLUDE
  */
 
-1 TEXTINCLUDE DISCARDABLE
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END
