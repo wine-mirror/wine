@@ -82,6 +82,14 @@ typedef enum _D3D10_SHADER_VARIABLE_TYPE
     D3D10_SVT_FORCE_DWORD = 0x7fffffff
 } D3D10_SHADER_VARIABLE_TYPE, *LPD3D10_SHADER_VARIABLE_TYPE;
 
+typedef enum _D3D10_SHADER_INPUT_TYPE
+{
+    D3D10_SIT_CBUFFER = 0,
+    D3D10_SIT_TBUFFER = 1,
+    D3D10_SIT_TEXTURE = 2,
+    D3D10_SIT_SAMPLER = 3
+} D3D10_SHADER_INPUT_TYPE, *LPD3D10_SHADER_INPUT_TYPE;
+
 typedef enum D3D10_CBUFFER_TYPE
 {
     D3D10_CT_CBUFFER = 0,
@@ -119,6 +127,28 @@ typedef struct _D3D10_SHADER_MACRO
     LPCSTR Definition;
 } D3D10_SHADER_MACRO, *LPD3D10_SHADER_MACRO;
 
+typedef enum D3D10_RESOURCE_RETURN_TYPE
+{
+    D3D10_RETURN_TYPE_UNORM = 1,
+    D3D10_RETURN_TYPE_SNORM = 2,
+    D3D10_RETURN_TYPE_SINT = 3,
+    D3D10_RETURN_TYPE_UINT = 4,
+    D3D10_RETURN_TYPE_FLOAT = 5,
+    D3D10_RETURN_TYPE_MIXED = 6
+} D3D10_RESOURCE_RETURN_TYPE;
+
+typedef struct _D3D10_SHADER_INPUT_BIND_DESC
+{
+    LPCSTR Name;
+    D3D10_SHADER_INPUT_TYPE Type;
+    UINT BindPoint;
+    UINT BindCount;
+    UINT uFlags;
+    D3D10_RESOURCE_RETURN_TYPE ReturnType;
+    D3D10_SRV_DIMENSION Dimension;
+    UINT NumSamples;
+} D3D10_SHADER_INPUT_BIND_DESC;
+
 typedef struct _D3D10_SIGNATURE_PARAMETER_DESC
 {
     LPCSTR SemanticName;
@@ -129,6 +159,38 @@ typedef struct _D3D10_SIGNATURE_PARAMETER_DESC
     BYTE Mask;
     BYTE ReadWriteMask;
 } D3D10_SIGNATURE_PARAMETER_DESC;
+
+typedef struct _D3D10_SHADER_DESC
+{
+    UINT Version;
+    LPCSTR Creator;
+    UINT Flags;
+    UINT ConstantBuffers;
+    UINT BoundResources;
+    UINT InputParameters;
+    UINT OutputParameters;
+    UINT InstructionCount;
+    UINT TempRegisterCount;
+    UINT TempArrayCount;
+    UINT DefCount;
+    UINT DclCount;
+    UINT TextureNormalInstructions;
+    UINT TextureLoadInstructions;
+    UINT TextureCompInstructions;
+    UINT TextureBiasInstructions;
+    UINT TextureGradientInstructions;
+    UINT FloatInstructionCount;
+    UINT IntInstructionCount;
+    UINT UintInstructionCount;
+    UINT StaticFlowControlCount;
+    UINT DynamicFlowControlCount;
+    UINT MacroInstructionCount;
+    UINT ArrayInstructionCount;
+    UINT CutInstructionCount;
+    UINT EmitInstructionCount;
+    D3D10_PRIMITIVE_TOPOLOGY GSOutputTopology;
+    UINT GSMaxOutputVertexCount;
+} D3D10_SHADER_DESC;
 
 typedef struct _D3D10_SHADER_BUFFER_DESC
 {
@@ -189,6 +251,25 @@ DECLARE_INTERFACE(ID3D10ShaderReflectionConstantBuffer)
     STDMETHOD(GetDesc)(THIS_ D3D10_SHADER_BUFFER_DESC *desc) PURE;
     STDMETHOD_(struct ID3D10ShaderReflectionVariable *, GetVariableByIndex)(THIS_ UINT index) PURE;
     STDMETHOD_(struct ID3D10ShaderReflectionVariable *, GetVariableByName)(THIS_ LPCSTR name) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D10ShaderReflection, 0xd40e20b6, 0xf8f7, 0x42ad, 0xab, 0x20, 0x4b, 0xaf, 0x8f, 0x15, 0xdf, 0xaa);
+
+#define INTERFACE ID3D10ShaderReflection
+DECLARE_INTERFACE_(ID3D10ShaderReflection, IUnknown)
+{
+    /* IUnknown methods */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, LPVOID *object) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* ID3D10ShaderReflection methods */
+    STDMETHOD(GetDesc)(THIS_ D3D10_SHADER_DESC *desc) PURE;
+    STDMETHOD_(struct ID3D10ShaderReflectionConstantBuffer *, GetConstantBufferByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10ShaderReflectionConstantBuffer *, GetConstantBufferByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD(GetResourceBindingDesc)(THIS_ UINT index, D3D10_SHADER_INPUT_BIND_DESC *desc) PURE;
+    STDMETHOD(GetInputParameterDesc)(THIS_ UINT index, D3D10_SIGNATURE_PARAMETER_DESC *desc) PURE;
+    STDMETHOD(GetOutputParameterDesc)(THIS_ UINT index, D3D10_SIGNATURE_PARAMETER_DESC *desc) PURE;
 };
 #undef INTERFACE
 
