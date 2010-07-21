@@ -252,15 +252,12 @@ static void convert_double_fix32(double d, TW_FIX32 *fix32)
 
 BOOL convert_sane_res_to_twain(double sane_res, SANE_Unit unit, TW_FIX32 *twain_res, TW_UINT16 twtype)
 {
-    double d;
-
     if (unit != SANE_UNIT_MM)
         return FALSE;
 
     if (twtype != TWUN_INCHES)
         return FALSE;
 
-    d = (sane_res / 10.0) / 2.54;
     convert_double_fix32((sane_res / 10.0) / 2.54, twain_res);
 
     return TRUE;

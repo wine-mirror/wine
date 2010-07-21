@@ -92,14 +92,13 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
         case DLL_PROCESS_ATTACH: {
 #ifdef SONAME_LIBSANE
-	    SANE_Status status;
 	    SANE_Int version_code;
 
             libsane_handle = open_libsane();
             if (! libsane_handle)
                 return FALSE;
 
-	    status = psane_init (&version_code, NULL);
+	    psane_init (&version_code, NULL);
 #endif
 	    SANE_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
