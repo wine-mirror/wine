@@ -192,13 +192,9 @@ AntiMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 static HRESULT WINAPI
 AntiMonikerImpl_Save(IMoniker* iface,IStream* pStm,BOOL fClearDirty)
 {
-    DWORD constant=1;
-    HRESULT res;
-
+    static const DWORD constant = 1;
     /* data written by this function is only a DWORD constant set to 1 ! */
-    res=IStream_Write(pStm,&constant,sizeof(constant),NULL);
-
-    return res;
+    return IStream_Write(pStm,&constant,sizeof(constant),NULL);
 }
 
 /******************************************************************************
@@ -614,9 +610,8 @@ static HRESULT AntiMonikerImpl_Construct(AntiMonikerImpl* This)
  ******************************************************************************/
 HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk)
 {
-    AntiMonikerImpl* newAntiMoniker = 0;
-    HRESULT        hr = S_OK;
-    IID riid=IID_IMoniker;
+    AntiMonikerImpl* newAntiMoniker;
+    HRESULT hr;
 
     TRACE("(%p)\n",ppmk);
 
@@ -632,9 +627,7 @@ HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk)
         return hr;
     }
 
-    hr = AntiMonikerImpl_QueryInterface((IMoniker*)newAntiMoniker,&riid,(void**)ppmk);
-
-    return hr;
+    return AntiMonikerImpl_QueryInterface((IMoniker*)newAntiMoniker,&IID_IMoniker,(void**)ppmk);
 }
 
 static HRESULT WINAPI AntiMonikerCF_QueryInterface(LPCLASSFACTORY iface,
@@ -677,7 +670,7 @@ static HRESULT WINAPI AntiMonikerCF_CreateInstance(LPCLASSFACTORY iface,
     if (FAILED(hr))
         return hr;
 
-  	hr = IMoniker_QueryInterface(pMoniker, riid, ppv);
+    hr = IMoniker_QueryInterface(pMoniker, riid, ppv);
 
     if (FAILED(hr))
         IMoniker_Release(pMoniker);

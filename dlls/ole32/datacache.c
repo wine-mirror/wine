@@ -655,17 +655,15 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *This)
 static HRESULT DataCacheEntry_CreateStream(DataCacheEntry *This,
                                            IStorage *storage, IStream **stream)
 {
-    HRESULT hr;
     WCHAR wszName[] = {2,'O','l','e','P','r','e','s',
         '0' + (This->stream_number / 100) % 10,
         '0' + (This->stream_number / 10) % 10,
         '0' + This->stream_number % 10, 0};
 
     /* FIXME: cache the created stream in This? */
-    hr = IStorage_CreateStream(storage, wszName,
-                               STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE,
-                               0, 0, stream);
-    return hr;
+    return IStorage_CreateStream(storage, wszName,
+                                 STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE,
+                                 0, 0, stream);
 }
 
 static HRESULT DataCacheEntry_Save(DataCacheEntry *This, IStorage *storage,

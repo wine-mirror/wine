@@ -421,10 +421,7 @@ FileMonikerImpl_Save(IMoniker* iface, IStream* pStm, BOOL fClearDirty)
     }
 
     if (!bWriteWide)
-    {
-        res=IStream_Write(pStm,&ZERO,sizeof(DWORD),NULL);
-        return res;
-    }
+        return IStream_Write(pStm,&ZERO,sizeof(DWORD),NULL);
 
     /* write bytes needed for the filepathW (without 0) + 6 */
     bytesW = len*sizeof(WCHAR) + 6;
@@ -441,9 +438,7 @@ FileMonikerImpl_Save(IMoniker* iface, IStream* pStm, BOOL fClearDirty)
     if (FAILED(res)) return res;
 
     /* write W string (no 0) */
-    res=IStream_Write(pStm,filePathW,bytesW,NULL);
-
-    return res;
+    return IStream_Write(pStm,filePathW,bytesW,NULL);
 }
 
 /******************************************************************************
