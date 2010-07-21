@@ -1794,6 +1794,18 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 msi_feature_set_state(package, fl->feature, INSTALLSTATE_UNKNOWN);
         }
     }
+    else
+    {
+        LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
+        {
+            BOOL selected = feature->Level > 0 && feature->Level <= level;
+
+            if (selected && feature->Action == INSTALLSTATE_UNKNOWN)
+            {
+                 msi_feature_set_state(package, feature, feature->Installed);
+            }
+        }
+    }
 
     /*
      * now we want to enable or disable components base on feature
