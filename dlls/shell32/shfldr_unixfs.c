@@ -847,7 +847,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
             cfShellIDList = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
     } else {
         *ppv = NULL;
-        FIXME("Unimplemented interface %s\n", shdebugstr_guid(riid));
+        TRACE("Unimplemented interface %s\n", shdebugstr_guid(riid));
         return E_NOINTERFACE;
     }
 
