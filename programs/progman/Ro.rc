@@ -188,7 +188,7 @@ PUSHBUTTON    "A&jutor",        PM_HELP, 135, 65, 60, 15, WS_TABSTOP
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 IDS_PROGRAM_MANAGER,            "Administrator programe"
 IDS_ERROR,                      "EROARE"

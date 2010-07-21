@@ -183,7 +183,7 @@ PUSHBUTTON    "&Yardým",               PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 IDS_PROGRAM_MANAGER,		"Program Yöneticisi"
 IDS_ERROR,			"HATA"

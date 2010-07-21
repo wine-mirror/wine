@@ -187,7 +187,7 @@ PUSHBUTTON    "&Hilfe",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 IDS_PROGRAM_MANAGER,		"Programm-Manager"
 IDS_ERROR,			"FEHLER"

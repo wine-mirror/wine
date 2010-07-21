@@ -185,7 +185,7 @@ PUSHBUTTON    "&Help",                          PM_HELP,   135, 65,  60, 15, WS_
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 IDS_PROGRAM_MANAGER,		"Programmabeheer"
 IDS_ERROR,			"FOUT"

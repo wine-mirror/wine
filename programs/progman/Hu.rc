@@ -185,7 +185,7 @@ PUSHBUTTON    "&Súgó",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 IDS_PROGRAM_MANAGER,		"Programkezelõ"
 IDS_ERROR,			"hiba"
