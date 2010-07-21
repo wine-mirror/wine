@@ -277,3 +277,143 @@ unsigned short CDECL MSVCP_char_traits_wchar_not_eof(const unsigned short *in)
 {
     return (*in==WEOF ? !WEOF : *in);
 }
+
+
+/* char_traits<unsigned short> */
+/* ?assign@?$char_traits@G@std@@SAXAAGABG@Z */
+void CDECL MSVCP_char_traits_short_assign(unsigned short *ch,
+        const unsigned short *assign)
+{
+    *ch = *assign;
+}
+
+/* ?eq@?$char_traits@G@std@@SA_NABG0@Z */
+MSVCP_BOOL CDECL MSVCP_char_traits_short_eq(const unsigned short *ch1,
+        const unsigned short *ch2)
+{
+    return *ch1 == *ch2;
+}
+
+/* ?lt@?$char_traits@G@std@@SA_NABG0@Z */
+MSVCP_BOOL CDECL MSVCP_char_traits_short_lt(const unsigned short *ch1,
+        const unsigned short *ch2)
+{
+    return *ch1 < *ch2;
+}
+
+/* ?compare@?$char_traits@G@std@@SAHPBG0I@Z */
+int CDECL MSVCP_char_traits_short_compare(const unsigned short *s1,
+        const unsigned short *s2, unsigned int count)
+{
+    unsigned int i;
+
+    for(i=0; i<count; i++)
+        if(s1[i] != s2[i])
+            return (s1[i] < s2[i] ? -1 : 1);
+
+    return 0;
+}
+
+/* ?length@?$char_traits@G@std@@SAIPBG@Z */
+unsigned int CDECL MSVCP_char_traits_short_length(const unsigned short *str)
+{
+    unsigned int len;
+
+    for(len=0; str[len]; len++);
+
+    return len;
+}
+
+/* ?_Copy_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z */
+unsigned short * CDECL MSVCP_char_traits_short__Copy_s(unsigned short *dest,
+        unsigned int size, const unsigned short *src, unsigned int count)
+{
+    if(size<count) {
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return dest;
+    }
+
+    return memcpy(dest, src, sizeof(unsigned short[count]));
+}
+
+/* ?copy@?$char_traits@G@std@@SAPAGPAGPBGI@Z */
+unsigned short* CDECL MSVCP_char_traits_short_copy(unsigned short *dest,
+        const unsigned short *src, unsigned int count)
+{
+    return MSVCP_char_traits_short__Copy_s(dest, count, src, count);
+}
+
+/* ?find@?$char_traits@G@std@@SAPBGPBGIABG@Z */
+const unsigned short* CDECL MSVCP_char_traits_short_find(
+        const unsigned short *str, unsigned int range, const unsigned short *c)
+{
+    unsigned int i;
+
+    for(i=0; i<range; i++)
+        if(str[i] == *c)
+            return str+i;
+
+    return NULL;
+}
+
+/* ?_Move_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z */
+unsigned short* CDECL MSVCP_char_traits_short__Move_s(unsigned short *dest,
+        unsigned int size, const unsigned short *src, unsigned int count)
+{
+    if(size<count) {
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return dest;
+    }
+
+    return memmove(dest, src, sizeof(unsigned short[count]));
+}
+
+/* ?move@?$char_traits@G@std@@SAPAGPAGPBGI@Z */
+unsigned short* CDECL MSVCP_char_traits_short_move(unsigned short *dest,
+        const unsigned short *src, unsigned int count)
+{
+    return MSVCP_char_traits_short__Move_s(dest, count, src, count);
+}
+
+/* ?assign@?$char_traits@G@std@@SAPAGPAGIG@Z */
+unsigned short* CDECL MSVCP_char_traits_short_assignn(unsigned short *str,
+        unsigned int num, unsigned short c)
+{
+    unsigned int i;
+
+    for(i=0; i<num; i++)
+        str[i] = c;
+
+    return str;
+}
+
+/* ?to_char_type@?$char_traits@G@std@@SAGABG@Z */
+unsigned short CDECL MSVCP_char_traits_short_to_char_type(const unsigned short *i)
+{
+    return *i;
+}
+
+/* ?to_int_type@?$char_traits@G@std@@SAGABG@Z */
+unsigned short CDECL MSVCP_char_traits_short_to_int_type(const unsigned short *ch)
+{
+    return *ch;
+}
+
+/* ?eq_int_type@?$char_traits@G@std@@SA_NABG0@Z */
+MSVCP_BOOL CDECL MSVCP_char_traits_short_eq_int_type(unsigned short *i1,
+        unsigned short *i2)
+{
+    return *i1 == *i2;
+}
+
+/* ?eof@?$char_traits@G@std@@SAGXZ */
+unsigned short CDECL MSVCP_char_traits_short_eof(void)
+{
+    return -1;
+}
+
+/* ?not_eof@?$char_traits@G@std@@SAGABG@Z */
+unsigned short CDECL MSVCP_char_traits_short_not_eof(const unsigned short *in)
+{
+    return (*in==(unsigned short)-1 ? 0 : *in);
+}
