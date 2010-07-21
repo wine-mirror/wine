@@ -3120,15 +3120,13 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
 static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus,
                               ULONG Information )
 {
-    NTSTATUS status;
-
     SERVER_START_REQ( add_fd_completion )
     {
         req->handle      = wine_server_obj_handle( SOCKET2HANDLE(sock) );
         req->cvalue      = CompletionValue;
         req->status      = CompletionStatus;
         req->information = Information;
-        status = wine_server_call( req );
+        wine_server_call( req );
     }
     SERVER_END_REQ;
 }
