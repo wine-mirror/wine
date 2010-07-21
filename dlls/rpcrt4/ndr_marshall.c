@@ -2062,7 +2062,6 @@ static inline ULONG array_read_conformance(
     unsigned char fc, PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
 {
   DWORD def, esize;
-  unsigned char alignment;
 
   switch (fc)
   {
@@ -2087,7 +2086,6 @@ static inline ULONG array_read_conformance(
       ReadConformance(pStubMsg, NULL);
     return safe_multiply(esize, pStubMsg->MaxCount);
   case RPC_FC_BOGUS_ARRAY:
-    alignment = pFormat[1] + 1;
     def = *(const WORD *)(pFormat + 2);
     pFormat += 4;
     if (IsConformanceOrVariancePresent(pFormat)) pFormat = ReadConformance(pStubMsg, pFormat);
@@ -2098,7 +2096,6 @@ static inline ULONG array_read_conformance(
     }
     pFormat = SkipVariance( pStubMsg, pFormat );
 
-    align_pointer(&pStubMsg->Buffer, alignment);
     esize = ComplexStructSize(pStubMsg, pFormat);
     return safe_multiply(pStubMsg->MaxCount, esize);
   default:
