@@ -130,6 +130,15 @@ typedef struct _D3D10_SIGNATURE_PARAMETER_DESC
     BYTE ReadWriteMask;
 } D3D10_SIGNATURE_PARAMETER_DESC;
 
+typedef struct _D3D10_SHADER_VARIABLE_DESC
+{
+    LPCSTR Name;
+    UINT StartOffset;
+    UINT Size;
+    UINT uFlags;
+    LPVOID DefaultValue;
+} D3D10_SHADER_VARIABLE_DESC;
+
 typedef struct _D3D10_SHADER_TYPE_DESC
 {
     D3D10_SHADER_VARIABLE_CLASS Class;
@@ -150,6 +159,16 @@ DECLARE_INTERFACE(ID3D10ShaderReflectionType)
     STDMETHOD_(struct ID3D10ShaderReflectionType *, GetMemberTypeByIndex)(THIS_ UINT index) PURE;
     STDMETHOD_(struct ID3D10ShaderReflectionType *, GetMemberTypeByName)(THIS_ LPCSTR name) PURE;
     STDMETHOD_(LPCSTR, GetMemberTypeName)(THIS_ UINT index) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D10ShaderReflectionVariable, 0x1bf63c95, 0x2650, 0x405d, 0x99, 0xc1, 0x36, 0x36, 0xbd, 0x1d, 0xa0, 0xa1);
+
+#define INTERFACE ID3D10ShaderReflectionVariable
+DECLARE_INTERFACE(ID3D10ShaderReflectionVariable)
+{
+    STDMETHOD(GetDesc)(THIS_ D3D10_SHADER_VARIABLE_DESC *desc) PURE;
+    STDMETHOD_(struct ID3D10ShaderReflectionType *, GetType)(THIS) PURE;
 };
 #undef INTERFACE
 
