@@ -130,6 +130,29 @@ typedef struct _D3D10_SIGNATURE_PARAMETER_DESC
     BYTE ReadWriteMask;
 } D3D10_SIGNATURE_PARAMETER_DESC;
 
+typedef struct _D3D10_SHADER_TYPE_DESC
+{
+    D3D10_SHADER_VARIABLE_CLASS Class;
+    D3D10_SHADER_VARIABLE_TYPE Type;
+    UINT Rows;
+    UINT Columns;
+    UINT Elements;
+    UINT Members;
+    UINT Offset;
+} D3D10_SHADER_TYPE_DESC;
+
+DEFINE_GUID(IID_ID3D10ShaderReflectionType, 0xc530ad7d, 0x9b16, 0x4395, 0xa9, 0x79, 0xba, 0x2e, 0xcf, 0xf8, 0x3a, 0xdd);
+
+#define INTERFACE ID3D10ShaderReflectionType
+DECLARE_INTERFACE(ID3D10ShaderReflectionType)
+{
+    STDMETHOD(GetDesc)(THIS_ D3D10_SHADER_TYPE_DESC *desc) PURE;
+    STDMETHOD_(struct ID3D10ShaderReflectionType *, GetMemberTypeByIndex)(THIS_ UINT index) PURE;
+    STDMETHOD_(struct ID3D10ShaderReflectionType *, GetMemberTypeByName)(THIS_ LPCSTR name) PURE;
+    STDMETHOD_(LPCSTR, GetMemberTypeName)(THIS_ UINT index) PURE;
+};
+#undef INTERFACE
+
 LPCSTR WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device);
 LPCSTR WINAPI D3D10GetGeometryShaderProfile(ID3D10Device *device);
 LPCSTR WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device);
