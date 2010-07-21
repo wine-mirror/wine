@@ -21,10 +21,12 @@
 #include "windef.h"
 #include "mmddk.h"
 
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+
 /* UTF-8 */
 #pragma code_page(65001)
 
-STRINGTABLE LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+STRINGTABLE
 BEGIN
 
 /* MMSYS errors */

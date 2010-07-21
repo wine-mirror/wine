@@ -19,9 +19,11 @@
 #include "windef.h"
 #include "mmddk.h"
 
+LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+
 #pragma code_page(65001)
 
-STRINGTABLE LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+STRINGTABLE
 BEGIN
 
 /* MMSYS errors */

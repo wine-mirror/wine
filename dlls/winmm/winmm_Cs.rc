@@ -22,9 +22,11 @@
 #include "windef.h"
 #include "mmddk.h"
 
+LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
+
 /* Czech strings in CP1250 */
 
-STRINGTABLE LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
+STRINGTABLE
 BEGIN
 
 /* MMSYS errors */

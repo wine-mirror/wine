@@ -19,10 +19,12 @@
 #include "windef.h"
 #include "mmddk.h"
 
+LANGUAGE LANG_JAPANESE, SUBLANG_NEUTRAL
+
 /* UTF-8 */
 #pragma code_page(65001)
 
-STRINGTABLE LANGUAGE LANG_JAPANESE, SUBLANG_NEUTRAL
+STRINGTABLE
 BEGIN
 
 /* MMSYS errors */
