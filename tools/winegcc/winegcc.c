@@ -1006,7 +1006,7 @@ static int is_linker_arg(const char* arg)
 {
     static const char* link_switches[] = 
     {
-	"-nostartfiles", "-nodefaultlibs", "-nostdlib", "-s", 
+	"-nostartfiles", "-nostdlib", "-s",
 	"-static", "-static-libgcc", "-shared", "-shared-libgcc", "-symbolic",
 	"-framework", "--coverage", "-fprofile-generate", "-fprofile-use"
     };
