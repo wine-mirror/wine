@@ -47,6 +47,25 @@ static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
 static const WCHAR wszWineInternetExplorer[] =
         {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
 
+static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch(msg)
+    {
+        case WM_INITDIALOG:
+            return TRUE;
+
+        case WM_COMMAND:
+            switch(LOWORD(wparam))
+            {
+                case IDOK:
+                case IDCANCEL:
+                    EndDialog(hwnd, wparam);
+                    return TRUE;
+            }
+    }
+    return FALSE;
+}
+
 static void ie_dialog_about(HWND hwnd)
 {
     HICON icon = LoadImageW(GetModuleHandleW(0), MAKEINTRESOURCEW(IDI_APPICON), IMAGE_ICON, 48, 48, LR_SHARED);
@@ -85,6 +104,10 @@ static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT 
 {
     switch(LOWORD(wparam))
     {
+        case ID_BROWSE_OPEN:
+            DialogBoxW(shdocvw_hinstance, MAKEINTRESOURCEW(IDD_BROWSE_OPEN), hwnd, ie_dialog_open_proc);
+            break;
+
         case ID_BROWSE_PRINT:
             if(This->doc_host.document)
             {

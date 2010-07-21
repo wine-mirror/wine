@@ -19,8 +19,11 @@
  */
 
 #include <windef.h>
+#include <winuser.h>
 
 #define IDR_BROWSE_MAIN_MENU           1000
+#define IDD_BROWSE_OPEN                1001
+#define IDC_BROWSE_OPEN_URL            1002
 
 #define ID_BROWSE_NEW_WINDOW           275
 #define ID_BROWSE_OPEN                 256
