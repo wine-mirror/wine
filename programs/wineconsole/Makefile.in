@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineconsole.exe
 APPMODE   = -mwindows
-IMPORTS   = advapi32 kernel32 ntdll
+IMPORTS   = advapi32
 DELAYIMPORTS = comctl32 user32 gdi32
 
 C_SRCS = \

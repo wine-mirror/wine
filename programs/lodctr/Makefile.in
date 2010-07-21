@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = lodctr.exe
 APPMODE   = -mconsole
-IMPORTS   = loadperf kernel32
+IMPORTS   = loadperf
 
 C_SRCS = lodctr_main.c
 

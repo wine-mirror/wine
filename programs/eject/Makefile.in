@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = eject.exe
 APPMODE   = -mconsole
-IMPORTS   = kernel32
 
 C_SRCS = eject.c
 

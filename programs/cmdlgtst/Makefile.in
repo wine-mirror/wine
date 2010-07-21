@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cmdlgtst.exe
 APPMODE   = -mwindows
-IMPORTS   = comdlg32 user32 gdi32 kernel32
+IMPORTS   = comdlg32 user32 gdi32
 
 C_SRCS = \
 	cmdlgtst.c

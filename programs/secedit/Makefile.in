@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = secedit.exe
 APPMODE   = -mconsole
-IMPORTS   = kernel32
 
 C_SRCS = \
 	main.c

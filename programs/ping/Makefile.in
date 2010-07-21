@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ping.exe
 APPMODE   = -mconsole
-IMPORTS   = kernel32
 
 C_SRCS = \
 	ping_main.c

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winetest.exe
 APPMODE   = -mconsole
-IMPORTS   = uuid comctl32 version user32 gdi32 advapi32 wsock32 kernel32
+IMPORTS   = uuid comctl32 version user32 gdi32 advapi32 wsock32
 DELAYIMPORTS = ole32
 
 C_SRCS = \

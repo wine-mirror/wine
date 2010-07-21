@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winver.exe
 APPMODE   = -mwindows
-IMPORTS   = shell32 kernel32
+IMPORTS   = shell32
 
 C_SRCS = winver.c
 

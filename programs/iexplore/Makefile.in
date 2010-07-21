@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = iexplore.exe
 APPMODE   = -mwindows
-IMPORTS   = shdocvw user32 gdi32 kernel32
+IMPORTS   = shdocvw user32 gdi32
 
 C_SRCS = \
 	main.c

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = unlodctr.exe
 APPMODE   = -mconsole
-IMPORTS   = loadperf kernel32
+IMPORTS   = loadperf
 
 C_SRCS = unlodctr_main.c
 

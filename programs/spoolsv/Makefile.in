@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = spoolsv.exe
 APPMODE   = -mconsole
-IMPORTS   = advapi32 kernel32
+IMPORTS   = advapi32
 
 C_SRCS = \
 	main.c

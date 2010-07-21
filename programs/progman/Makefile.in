@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = progman.exe
 APPMODE   = -mwindows
-IMPORTS   = shell32 comdlg32 user32 gdi32 kernel32
+IMPORTS   = shell32 comdlg32 user32 gdi32
 
 C_SRCS = \
 	dialog.c \

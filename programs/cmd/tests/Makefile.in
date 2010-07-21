@@ -3,7 +3,6 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = cmd.exe
-IMPORTS   = kernel32
 
 C_SRCS = \
 	batch.c

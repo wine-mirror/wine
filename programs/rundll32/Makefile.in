@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rundll32.exe
 APPMODE   = -mwindows -municode
-IMPORTS   = user32 kernel32
+IMPORTS   = user32
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 
 C_SRCS = \

@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dxdiag.exe
 APPMODE   = -mwindows -municode
-IMPORTS   = kernel32
 
 C_SRCS = \
 	main.c

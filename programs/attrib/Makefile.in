@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = attrib.exe
 APPMODE   = -mconsole -municode
-IMPORTS   = kernel32
 
 C_SRCS = attrib.c
 

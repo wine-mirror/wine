@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cacls.exe
 APPMODE   = -mconsole
-IMPORTS   = kernel32
 
 C_SRCS = \
 	cacls_main.c

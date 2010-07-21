@@ -5,7 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hh.exe
 APPMODE   = -mwindows
-IMPORTS   = kernel32
 
 C_SRCS = \
 	main.c

@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regsvr32.exe
 APPMODE   = -mconsole
-IMPORTS   = ole32 kernel32
+IMPORTS   = ole32
 
 C_SRCS = \
 	regsvr32.c

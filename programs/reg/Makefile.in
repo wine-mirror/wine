@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = reg.exe
 APPMODE   = -mconsole -municode
-IMPORTS   = advapi32 kernel32
+IMPORTS   = advapi32
 DELAYIMPORTS = user32
 
 C_SRCS = reg.c

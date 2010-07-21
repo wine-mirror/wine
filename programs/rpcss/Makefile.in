@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rpcss.exe
 APPMODE   = -mconsole
-IMPORTS   = rpcrt4 kernel32 ntdll
+IMPORTS   = rpcrt4
 
 C_SRCS = \
 	epmp.c \

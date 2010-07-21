@@ -3,8 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winoldap.mod16
-APPMODE   = -mwindows -Wb,--subsystem,win16
-IMPORTS   = kernel32 kernel ntdll
+APPMODE   = -m16
 
 C_SRCS = winoldap.c
 

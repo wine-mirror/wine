@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winevdm.exe
 APPMODE   = -mconsole
-IMPORTS   = user32 kernel32 kernel
+IMPORTS   = user32 kernel
 
 C_SRCS = \
 	winevdm.c

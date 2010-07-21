@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = explorer.exe
 APPMODE   = -mwindows -municode
-IMPORTS   = rpcrt4 user32 gdi32 advapi32 kernel32 ntdll
+IMPORTS   = rpcrt4 user32 gdi32 advapi32
 DELAYIMPORTS = comctl32
 
 C_SRCS = \
