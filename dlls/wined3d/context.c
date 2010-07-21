@@ -2110,6 +2110,14 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
     const struct StateEntry *state_table = device->StateTable;
     unsigned int i;
 
+    /* Preload resources before FBO setup. Texture preload in particular may
+     * result in changes to the current FBO, due to using e.g. FBO blits for
+     * updating a resource location. */
+    IWineD3DDeviceImpl_FindTexUnitMap(device);
+    device_preload_textures(device);
+    if (isStateDirty(context, STATE_VDECL))
+        device_update_stream_info(device, context->gl_info);
+
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         context_validate_onscreen_formats(device, context, device->depth_stencil);
@@ -2138,11 +2146,6 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
     {
         device->frag_pipe->enable_extension((IWineD3DDevice *)device, TRUE);
     }
-
-    IWineD3DDeviceImpl_FindTexUnitMap(device);
-    device_preload_textures(device);
-    if (isStateDirty(context, STATE_VDECL))
-        device_update_stream_info(device, context->gl_info);
 
     ENTER_GL();
     for (i = 0; i < context->numDirtyEntries; ++i)
