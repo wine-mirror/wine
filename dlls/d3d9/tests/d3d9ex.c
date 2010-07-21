@@ -302,7 +302,7 @@ static void test_get_adapter_displaymode_ex(void)
     hr = IDirect3D9_GetAdapterDisplayMode(d3d9, D3DADAPTER_DEFAULT, &mode);
     ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#x.\n", hr);
 
-    ok(mode_ex.Size == sizeof(D3DDISPLAYMODEEX), "size is %d instead of %d\n", mode_ex.Size, sizeof(D3DDISPLAYMODEEX));
+    ok(mode_ex.Size == sizeof(D3DDISPLAYMODEEX), "size is %d\n", mode_ex.Size);
     todo_wine ok(mode_ex.Width == mode.Width, "width is %d instead of %d\n", mode_ex.Width, mode.Width);
     todo_wine ok(mode_ex.Height == mode.Height, "height is %d instead of %d\n", mode_ex.Height, mode.Height);
     todo_wine ok(mode_ex.RefreshRate == mode.RefreshRate, "RefreshRate is %d instead of %d\n", mode_ex.RefreshRate, mode.RefreshRate);
