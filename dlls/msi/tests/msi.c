@@ -8371,9 +8371,10 @@ static void test_MsiEnumPatchesEx_userunmanaged(LPCSTR usersid, LPCSTR expecteds
        "Expected targetsid to be unchanged, got %s\n", targetsid);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    patch_squashed[lstrlenA(patch_squashed) + 1] = 0;
     res = RegSetValueExA(patches, "Patches", 0, REG_MULTI_SZ,
                          (const BYTE *)patch_squashed,
-                         lstrlenA(patch_squashed) + 1);
+                         lstrlenA(patch_squashed) + 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Patches value exists */
