@@ -966,6 +966,12 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
         TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
@@ -1038,6 +1044,12 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
     comp = get_loaded_component(package, component);
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
@@ -1808,15 +1820,15 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
     }
 
     /*
-     * now we want to enable or disable components base on feature
+     * now we want to enable or disable components based on feature
      */
-
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
         ComponentList *cl;
 
-        TRACE("Examining Feature %s (Level %i, Installed %i, Action %i)\n",
-              debugstr_w(feature->Feature), feature->Level, feature->Installed, feature->Action);
+        TRACE("Examining Feature %s (Level %d Installed %d Request %d Action %d)\n",
+              debugstr_w(feature->Feature), feature->Level, feature->Installed,
+              feature->ActionRequest, feature->Action);
 
         if (!feature->Level)
             continue;
@@ -1824,8 +1836,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         /* features with components that have compressed files are made local */
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
-            if (cl->component->Enabled &&
-                cl->component->ForceLocalState &&
+            if (cl->component->ForceLocalState &&
                 feature->Action == INSTALLSTATE_SOURCE)
             {
                 msi_feature_set_state(package, feature, INSTALLSTATE_LOCAL);
@@ -1836,9 +1847,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
             component = cl->component;
-
-            if (!component->Enabled)
-                continue;
 
             switch (feature->Action)
             {
@@ -1870,10 +1878,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
     {
-        /* if the component isn't enabled, leave it alone */
-        if (!component->Enabled)
-            continue;
-
         /* check if it's local or source */
         if (!(component->Attributes & msidbComponentAttributesOptional) &&
              (component->hasLocalFeature || component->hasSourceFeature))
@@ -1912,16 +1916,15 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
     {
-        if (component->Action == INSTALLSTATE_DEFAULT)
+        if (component->ActionRequest == INSTALLSTATE_DEFAULT)
         {
             TRACE("%s was default, setting to local\n", debugstr_w(component->Component));
             msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
         }
 
-        TRACE("Result: Component %s (Installed %i, Action %i)\n",
-            debugstr_w(component->Component), component->Installed, component->Action);
+        TRACE("Result: Component %s (Installed %d Request %d Action %d)\n",
+              debugstr_w(component->Component), component->Installed, component->ActionRequest, component->Action);
     }
-
 
     return ERROR_SUCCESS;
 }
@@ -2383,15 +2386,16 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
 
     ui_progress(package,2,0,0,0);
 
-    value = NULL;
-    key = NULL;
-    uikey = NULL;
-    name = NULL;
-
     component = MSI_RecordGetString(row, 6);
     comp = get_loaded_component(package,component);
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
@@ -2563,6 +2567,12 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
         TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
@@ -2631,6 +2641,12 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
     comp = get_loaded_component( package, component );
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
@@ -2755,9 +2771,9 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        TRACE("Feature: %s; Installed: %i; Action %i; Request %i\n",
-            debugstr_w(feature->Feature), feature->Installed, feature->Action,
-            feature->ActionRequest);
+        TRACE("Feature: %s Installed %d Request %d Action %d\n",
+              debugstr_w(feature->Feature), feature->Installed,
+              feature->ActionRequest, feature->Action);
     }
     
     return ERROR_SUCCESS;
@@ -3022,11 +3038,12 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
         ACTION_RefCountComponent( package, comp );
 
-        TRACE("Component %s (%s), Keypath=%s, RefCount=%i\n",
+        TRACE("Component %s (%s), Keypath=%s, RefCount=%i Request=%u\n",
                             debugstr_w(comp->Component),
                             debugstr_w(squished_cc),
                             debugstr_w(comp->FullKeypath),
-                            comp->RefCount);
+                            comp->RefCount,
+                            comp->ActionRequest);
 
         if (comp->ActionRequest == INSTALLSTATE_LOCAL ||
             comp->ActionRequest == INSTALLSTATE_SOURCE)
@@ -3054,7 +3071,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 msi_reg_set_val_str(hkey, szPermKey, comp->FullKeypath);
             }
 
-            if (comp->Action == INSTALLSTATE_LOCAL)
+            if (comp->ActionRequest == INSTALLSTATE_LOCAL)
                 msi_reg_set_val_str(hkey, squished_pc, comp->FullKeypath);
             else
             {
@@ -3192,6 +3209,12 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
         TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
@@ -3301,6 +3324,12 @@ static UINT ITERATE_UnregisterTypeLibraries( MSIRECORD *row, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
         TRACE("Component not scheduled for removal %s\n", debugstr_w(component));
@@ -3391,6 +3420,12 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     comp = get_loaded_component(package, component);
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
@@ -3527,6 +3562,12 @@ static UINT ITERATE_RemoveShortcuts( MSIRECORD *row, LPVOID param )
     comp = get_loaded_component( package, component );
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
@@ -4032,6 +4073,12 @@ static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
         TRACE("Component not scheduled for installation %s\n", debugstr_w(component));
@@ -4127,6 +4174,12 @@ static UINT ITERATE_RemoveIniValuesOnUninstall( MSIRECORD *row, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
         TRACE("Component not scheduled for removal %s\n", debugstr_w(component));
@@ -4189,6 +4242,12 @@ static UINT ITERATE_RemoveIniValuesOnInstall( MSIRECORD *row, LPVOID param )
     comp = get_loaded_component( package, component );
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
@@ -5351,6 +5410,12 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
         TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
@@ -5543,6 +5608,12 @@ static UINT ITERATE_StopService( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
         TRACE("Component not scheduled for removal: %s\n", debugstr_w(component));
@@ -5619,6 +5690,12 @@ static UINT ITERATE_DeleteService( MSIRECORD *rec, LPVOID param )
     comp = get_loaded_component(package, component);
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
@@ -6227,6 +6304,12 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     if (!comp)
         return ERROR_SUCCESS;
 
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
+
     if (comp->ActionRequest != INSTALLSTATE_LOCAL)
     {
         TRACE("Component not scheduled for installation: %s\n", debugstr_w(component));
@@ -6409,6 +6492,12 @@ static UINT ITERATE_RemoveEnvironmentString( MSIRECORD *rec, LPVOID param )
     comp = get_loaded_component( package, component );
     if (!comp)
         return ERROR_SUCCESS;
+
+    if (!comp->Enabled)
+    {
+        TRACE("component is disabled\n");
+        return ERROR_SUCCESS;
+    }
 
     if (comp->ActionRequest != INSTALLSTATE_ABSENT)
     {
