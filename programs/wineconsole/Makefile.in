@@ -36,6 +36,7 @@ RC_SRCS = \
 	wineconsole_Si.rc \
 	wineconsole_Sv.rc \
 	wineconsole_Tr.rc \
+	wineconsole_Uk.rc \
 	wineconsole_Zh.rc
 
 @MAKE_PROG_RULES@
