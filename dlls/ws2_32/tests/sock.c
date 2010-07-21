@@ -3190,7 +3190,7 @@ static void test_events(int useMessages)
         bret = GetOverlappedResult((HANDLE)src, &ov, &bytesReturned, FALSE);
         ok((bret && bytesReturned == 1) || broken(!bret && GetLastError() == ERROR_IO_INCOMPLETE) /* win9x */,
            "Got %d instead of 1 (%d - %d)\n", bytesReturned, bret, GetLastError());
-        ok(buffer[0] == '2', "Got %c instead of 2\n", buffer[1]);
+        ok(buffer[0] == '2', "Got %c instead of 2\n", buffer[0]);
     }
     else if (dwRet == WAIT_TIMEOUT)
     {
