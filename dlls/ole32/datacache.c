@@ -879,7 +879,7 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
   /*
    * Perform a sanity check on the parameters.
    */
-  if ( (this==0) || (ppvObject==0) )
+  if ( ppvObject==0 )
     return E_INVALIDARG;
 
   /*
@@ -890,30 +890,30 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
   /*
    * Compare the riid with the interface IDs implemented by this object.
    */
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
+  if (IsEqualIID(&IID_IUnknown, riid))
   {
     *ppvObject = iface;
   }
-  else if (memcmp(&IID_IDataObject, riid, sizeof(IID_IDataObject)) == 0)
+  else if (IsEqualIID(&IID_IDataObject, riid))
   {
     *ppvObject = &this->lpVtbl;
   }
-  else if ( (memcmp(&IID_IPersistStorage, riid, sizeof(IID_IPersistStorage)) == 0)  ||
-	    (memcmp(&IID_IPersist, riid, sizeof(IID_IPersist)) == 0) )
+  else if ( IsEqualIID(&IID_IPersistStorage, riid)  ||
+            IsEqualIID(&IID_IPersist, riid) )
   {
     *ppvObject = &this->lpvtblIPersistStorage;
   }
-  else if ( (memcmp(&IID_IViewObject, riid, sizeof(IID_IViewObject)) == 0) ||
-	    (memcmp(&IID_IViewObject2, riid, sizeof(IID_IViewObject2)) == 0) )
+  else if ( IsEqualIID(&IID_IViewObject, riid) ||
+            IsEqualIID(&IID_IViewObject2, riid) )
   {
     *ppvObject = &this->lpvtblIViewObject;
   }
-  else if ( (memcmp(&IID_IOleCache, riid, sizeof(IID_IOleCache)) == 0) ||
-	    (memcmp(&IID_IOleCache2, riid, sizeof(IID_IOleCache2)) == 0) )
+  else if ( IsEqualIID(&IID_IOleCache, riid) ||
+            IsEqualIID(&IID_IOleCache2, riid) )
   {
     *ppvObject = &this->lpvtblIOleCache2;
   }
-  else if (memcmp(&IID_IOleCacheControl, riid, sizeof(IID_IOleCacheControl)) == 0)
+  else if ( IsEqualIID(&IID_IOleCacheControl, riid) )
   {
     *ppvObject = &this->lpvtblIOleCacheControl;
   }
