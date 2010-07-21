@@ -384,7 +384,7 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     pTW_UINT32 pHandle = (pTW_UINT32) pData;
     HBITMAP hDIB;
     BITMAPINFO bmpInfo;
-    LPBYTE bits, oldbits;
+    LPBYTE bits;
     JSAMPROW samprow, oldsamprow;
     HDC dc;
 
@@ -438,7 +438,6 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
 	return TWRC_FAILURE;
     }
     samprow = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,activeDS.jd.output_width*activeDS.jd.output_components);
-    oldbits = bits;
     oldsamprow = samprow;
     while ( activeDS.jd.output_scanline<activeDS.jd.output_height ) {
 	int i, x = pjpeg_read_scanlines(&activeDS.jd,&samprow,1);
@@ -455,7 +454,6 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
 	bits = (LPBYTE)(((UINT_PTR)bits + 3) & ~3);
 	samprow = oldsamprow;
     }
-    bits = oldbits;
     HeapFree (GetProcessHeap(), 0, samprow);
     gp_file_unref (activeDS.file);
     activeDS.file = NULL;
@@ -575,7 +573,7 @@ _get_gphoto2_file_as_DIB(
     struct jpeg_error_mgr		jerr;
     HDC 		dc;
     BITMAPINFO 		bmpInfo;
-    LPBYTE		bits, oldbits;
+    LPBYTE		bits;
     JSAMPROW		samprow, oldsamprow;
 
     if(!libjpeg_handle) {
@@ -648,7 +646,6 @@ _get_gphoto2_file_as_DIB(
 	return TWRC_FAILURE;
     }
     samprow = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,jd.output_width*jd.output_components);
-    oldbits = bits;
     oldsamprow = samprow;
     while ( jd.output_scanline<jd.output_height ) {
 	int i, x = pjpeg_read_scanlines(&jd,&samprow,1);
