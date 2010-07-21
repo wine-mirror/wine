@@ -151,9 +151,26 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
 %token INSTR_CND
 %token INSTR_CMP
 %token INSTR_DP2ADD
+%token INSTR_TEXCOORD
 %token INSTR_TEXCRD
 %token INSTR_TEXKILL
+%token INSTR_TEX
 %token INSTR_TEXLD
+%token INSTR_TEXBEM
+%token INSTR_TEXBEML
+%token INSTR_TEXREG2AR
+%token INSTR_TEXREG2GB
+%token INSTR_TEXREG2RGB
+%token INSTR_TEXM3x2PAD
+%token INSTR_TEXM3x2TEX
+%token INSTR_TEXM3x3PAD
+%token INSTR_TEXM3x3SPEC
+%token INSTR_TEXM3x3VSPEC
+%token INSTR_TEXM3x3TEX
+%token INSTR_TEXDP3TEX
+%token INSTR_TEXM3x2DEPTH
+%token INSTR_TEXDP3
+%token INSTR_TEXM3x3
 %token INSTR_TEXDEPTH
 %token INSTR_BEM
 %token INSTR_DSX
@@ -810,6 +827,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                 TRACE("DP2ADD\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_DP2ADD, $2.mod, $2.shift, 0, &$3, &$5, 3);
                             }
+                    | INSTR_TEXCOORD omods dreg
+                            {
+                                TRACE("TEXCOORD\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXCOORD, $2.mod, $2.shift, 0, &$3, 0, 0);
+                            }
                     | INSTR_TEXCRD omods dreg ',' sregs
                             {
                                 TRACE("TEXCRD\n");
@@ -820,6 +842,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                             {
                                 TRACE("TEXKILL\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXKILL, 0, 0, 0, &$2, 0, 0);
+                            }
+                    | INSTR_TEX omods dreg
+                            {
+                                TRACE("TEX\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEX, $2.mod, $2.shift, 0, &$3, 0, 0);
                             }
                     | INSTR_TEXDEPTH omods dreg
                             {
@@ -846,6 +873,81 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                             {
                                 TRACE("TEXLDB\n");
                                 asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXLDB, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_TEXBEM omods dreg ',' sregs
+                            {
+                                TRACE("TEXBEM\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXBEM, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXBEML omods dreg ',' sregs
+                            {
+                                TRACE("TEXBEML\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXBEML, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXREG2AR omods dreg ',' sregs
+                            {
+                                TRACE("TEXREG2AR\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXREG2AR, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXREG2GB omods dreg ',' sregs
+                            {
+                                TRACE("TEXREG2GB\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXREG2GB, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXREG2RGB omods dreg ',' sregs
+                            {
+                                TRACE("TEXREG2RGB\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXREG2RGB, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXM3x2PAD omods dreg ',' sregs
+                            {
+                                TRACE("TEXM3x2PAD\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x2PAD, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXM3x3PAD omods dreg ',' sregs
+                            {
+                                TRACE("INSTR_TEXM3x3PAD\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x3PAD, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXM3x3SPEC omods dreg ',' sregs
+                            {
+                                TRACE("TEXM3x3SPEC\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x3SPEC, $2.mod, $2.shift, 0, &$3, &$5, 2);
+                            }
+                    | INSTR_TEXM3x3VSPEC omods dreg ',' sregs
+                            {
+                                TRACE("TEXM3x3VSPEC\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x3VSPEC, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXM3x3TEX omods dreg ',' sregs
+                            {
+                                TRACE("TEXM3x3TEX\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x3TEX, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXDP3TEX omods dreg ',' sregs
+                            {
+                                TRACE("TEXDP3TEX\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXDP3TEX, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXM3x2DEPTH omods dreg ',' sregs
+                            {
+                                TRACE("TEXM3x2DEPTH\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x2DEPTH, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXM3x2TEX omods dreg ',' sregs
+                            {
+                                TRACE("TEXM3x2TEX\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x2TEX, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXDP3 omods dreg ',' sregs
+                            {
+                                TRACE("TEXDP3\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXDP3, $2.mod, $2.shift, 0, &$3, &$5, 1);
+                            }
+                    | INSTR_TEXM3x3 omods dreg ',' sregs
+                            {
+                                TRACE("TEXM3x3\n");
+                                asm_ctx.funcs->instr(&asm_ctx, BWRITERSIO_TEXM3x3, $2.mod, $2.shift, 0, &$3, &$5, 1);
                             }
                     | INSTR_BEM omods dreg ',' sregs
                             {
