@@ -1102,23 +1102,23 @@ static void test__strtod(void)
 
     d = strtod(double1, &end);
     ok(almost_equal(d, 12.1), "d = %lf\n", d);
-    ok(end == double1+4, "incorrect end (%d)\n", end-double1);
+    ok(end == double1+4, "incorrect end (%d)\n", (int)(end-double1));
 
     d = strtod(double2, &end);
     ok(almost_equal(d, -13.721), "d = %lf\n", d);
-    ok(end == double2+7, "incorrect end (%d)\n", end-double2);
+    ok(end == double2+7, "incorrect end (%d)\n", (int)(end-double2));
 
     d = strtod(double3, &end);
     ok(almost_equal(d, 0), "d = %lf\n", d);
-    ok(end == double3, "incorrect end (%d)\n", end-double3);
+    ok(end == double3, "incorrect end (%d)\n", (int)(end-double3));
 
     d = strtod(double4, &end);
     ok(almost_equal(d, 210000000000.0), "d = %lf\n", d);
-    ok(end == double4+6, "incorrect end (%d)\n", end-double4);
+    ok(end == double4+6, "incorrect end (%d)\n", (int)(end-double4));
 
     d = strtod(double5, &end);
     ok(almost_equal(d, 214.353), "d = %lf\n", d);
-    ok(end == double5+9, "incorrect end (%d)\n", end-double5);
+    ok(end == double5+9, "incorrect end (%d)\n", (int)(end-double5));
 
     d = strtod("12.1d2", NULL);
     ok(almost_equal(d, 12.1e2), "d = %lf\n", d);
@@ -1156,7 +1156,7 @@ static void test__strtod(void)
     errno = 0xdeadbeef;
     d = strtod(overflow, &end);
     ok(errno == ERANGE, "errno = %x\n", errno);
-    ok(end == overflow+21, "incorrect end (%d)\n", end-overflow);
+    ok(end == overflow+21, "incorrect end (%d)\n", (int)(end-overflow));
 
     errno = 0xdeadbeef;
     strtod("-1d309", NULL);
