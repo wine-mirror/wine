@@ -19,9 +19,11 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -377,6 +379,24 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 
     if (suspend_for_ptrace( thread ))
     {
+        if (len > 3)  /* /proc/pid/mem should be faster for large sizes */
+        {
+            char procmem[24];
+            int fd;
+
+            sprintf( procmem, "/proc/%u/mem", process->unix_pid );
+            if ((fd = open( procmem, O_RDONLY )) != -1)
+            {
+                ssize_t ret = pread( fd, dest, size, ptr );
+                close( fd );
+                if (ret == size)
+                {
+                    len = 0;
+                    goto done;
+                }
+            }
+        }
+
         if (len > 1)
         {
             if (read_thread_long( thread, addr++, &data ) == -1) goto done;
