@@ -68,7 +68,7 @@ MAIN_MENU MENU
 }
 
 /* Strings */
-STRINGTABLE DISCARDABLE
+STRINGTABLE
 {
 STID_WINE_HELP,             "WINE Pomoc"
 STID_WHERROR,               "CHYBA"

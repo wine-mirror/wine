@@ -22,4 +22,4 @@
 #include "winhelp_res.h"
 
 /* @makedep: winhelp.ico */
-IDI_WINHELP ICON DISCARDABLE winhelp.ico
+IDI_WINHELP ICON winhelp.ico
