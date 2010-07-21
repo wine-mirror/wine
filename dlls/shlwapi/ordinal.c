@@ -3292,18 +3292,26 @@ DWORD WINAPI SHGetIniStringW(LPCWSTR appName, LPCWSTR keyName, LPWSTR out,
 /*************************************************************************
  *      @	[SHLWAPI.295]
  *
- * Called by ICQ2000b install via SHDOCVW:
- * str1: "InternetShortcut"
- * x: some unknown pointer
- * str2: "http://free.aol.com/tryaolfree/index.adp?139269"
- * str3: "C:\\WINDOWS\\Desktop.new2\\Free AOL & Unlimited Internet.url"
+ * Set a key value in an INI file.  See WritePrivateProfileString for
+ * more information.
  *
- * In short: this one maybe creates a desktop link :-)
+ * PARAMS
+ *  appName   [I] The section in the INI file that contains the key
+ *  keyName   [I] The key to be set
+ *  str       [O] The value of the key
+ *  filename  [I] The location of the INI file
+ *
+ * RETURNS
+ *   Success: TRUE
+ *   Failure: FALSE
  */
-BOOL WINAPI SHSetIniStringW(LPWSTR str1, LPVOID x, LPWSTR str2, LPWSTR str3)
+BOOL WINAPI SHSetIniStringW(LPCWSTR appName, LPCWSTR keyName, LPCWSTR str,
+        LPCWSTR filename)
 {
-    FIXME("(%s, %p, %s, %s), stub.\n", debugstr_w(str1), x, debugstr_w(str2), debugstr_w(str3));
-    return TRUE;
+    TRACE("(%s, %p, %s, %s)\n", debugstr_w(appName), keyName, debugstr_w(str),
+            debugstr_w(filename));
+
+    return WritePrivateProfileStringW(appName, keyName, str, filename);
 }
 
 /*************************************************************************

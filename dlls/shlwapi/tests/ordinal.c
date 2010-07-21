@@ -59,6 +59,7 @@ static HRESULT (WINAPI *pIUnknown_ProfferService)(IUnknown*, REFGUID, IServicePr
 static HWND    (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU, LONG_PTR);
 static HRESULT (WINAPI *pSHIShellFolder_EnumObjects)(LPSHELLFOLDER, HWND, SHCONTF, IEnumIDList**);
 static DWORD   (WINAPI *pSHGetIniStringW)(LPCWSTR, LPCWSTR, LPWSTR, DWORD, LPCWSTR);
+static BOOL    (WINAPI *pSHSetIniStringW)(LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2545,6 +2546,26 @@ static void write_inifile(LPCWSTR filename)
     CloseHandle(file);
 }
 
+#define verify_inifile(f, e) r_verify_inifile(__LINE__, f, e)
+static void r_verify_inifile(unsigned l, LPCWSTR filename, LPCSTR exp)
+{
+    HANDLE file;
+    CHAR buf[1024];
+    DWORD read;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if(file == INVALID_HANDLE_VALUE)
+        return;
+
+    ReadFile(file, buf, sizeof(buf) * sizeof(CHAR), &read, NULL);
+    buf[read] = '\0';
+
+    CloseHandle(file);
+
+    ok_(__FILE__,l)(!strcmp(buf, exp), "Expected:\n%s\nGot:\n%s\n", exp,
+            buf);
+}
+
 static void test_SHGetIniString(void)
 {
     DWORD ret;
@@ -2599,6 +2620,44 @@ static void test_SHGetIniString(void)
     DeleteFileW(TestIniW);
 }
 
+static void test_SHSetIniString(void)
+{
+    BOOL ret;
+
+    static const WCHAR TestAppW[] = {'T','e','s','t','A','p','p',0};
+    static const WCHAR AnotherAppW[] = {'A','n','o','t','h','e','r','A','p','p',0};
+    static const WCHAR TestIniW[] = {'C',':','\\','t','e','s','t','.','i','n','i',0};
+    static const WCHAR AKeyW[] = {'A','K','e','y',0};
+    static const WCHAR NewKeyW[] = {'N','e','w','K','e','y',0};
+    static const WCHAR AValueW[] = {'A','V','a','l','u','e',0};
+
+    if(!pSHSetIniStringW || is_win2k_and_lower){
+        win_skip("SHSetIniStringW is not available\n");
+        return;
+    }
+
+    write_inifile(TestIniW);
+
+    ret = pSHSetIniStringW(TestAppW, AKeyW, AValueW, TestIniW);
+    ok(ret == TRUE, "SHSetIniStringW should not have failed\n");
+    todo_wine /* wine sticks an extra \r\n at the end of the file */
+        verify_inifile(TestIniW, "[TestApp]\r\nAKey=AValue\r\nAnotherKey=asdf\r\n");
+
+    ret = pSHSetIniStringW(TestAppW, AKeyW, NULL, TestIniW);
+    ok(ret == TRUE, "SHSetIniStringW should not have failed\n");
+    verify_inifile(TestIniW, "[TestApp]\r\nAnotherKey=asdf\r\n");
+
+    ret = pSHSetIniStringW(AnotherAppW, NewKeyW, AValueW, TestIniW);
+    ok(ret == TRUE, "SHSetIniStringW should not have failed\n");
+    verify_inifile(TestIniW, "[TestApp]\r\nAnotherKey=asdf\r\n[AnotherApp]\r\nNewKey=AValue\r\n");
+
+    ret = pSHSetIniStringW(TestAppW, NULL, AValueW, TestIniW);
+    ok(ret == TRUE, "SHSetIniStringW should not have failed\n");
+    verify_inifile(TestIniW, "[AnotherApp]\r\nNewKey=AValue\r\n");
+
+    DeleteFileW(TestIniW);
+}
+
 static void init_pointers(void)
 {
 #define MAKEFUNC(f, ord) (p##f = (void*)GetProcAddress(hShlwapi, (LPSTR)(ord)))
@@ -2616,6 +2675,7 @@ static void init_pointers(void)
     MAKEFUNC(IConnectionPoint_InvokeWithCancel, 283);
     MAKEFUNC(IConnectionPoint_SimpleInvoke, 284);
     MAKEFUNC(SHGetIniStringW, 294);
+    MAKEFUNC(SHSetIniStringW, 295);
     MAKEFUNC(SHFormatDateTimeA, 353);
     MAKEFUNC(SHFormatDateTimeW, 354);
     MAKEFUNC(SHIShellFolder_EnumObjects, 404);
@@ -2653,4 +2713,5 @@ START_TEST(ordinal)
     test_SHCreateWorkerWindowA();
     test_SHIShellFolder_EnumObjects();
     test_SHGetIniString();
+    test_SHSetIniString();
 }
