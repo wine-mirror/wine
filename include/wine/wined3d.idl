@@ -2491,10 +2491,6 @@ interface IWineD3DSurface : IWineD3DResource
     );
     HRESULT PrivateSetup(
     );
-    void ModifyLocation(
-        [in] DWORD location,
-        [in] BOOL persistent
-    );
     HRESULT LoadLocation(
         [in] DWORD location,
         [in] const RECT *rect

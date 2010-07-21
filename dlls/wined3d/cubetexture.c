@@ -84,7 +84,7 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
                 IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INSYSMEM, NULL);
                 /* Make sure the texture is reloaded because of the palette change,
                  * this kills performance though :( */
-                IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INTEXTURE, FALSE);
+                surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
             }
         }
     }

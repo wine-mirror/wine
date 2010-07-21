@@ -326,7 +326,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     if (!This->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         IWineD3DSurface_LoadLocation((IWineD3DSurface *)This->back_buffers[0], SFLAG_INTEXTURE, NULL);
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)This->back_buffers[0], SFLAG_INDRAWABLE, FALSE);
+        surface_modify_location(This->back_buffers[0], SFLAG_INDRAWABLE, FALSE);
         This->render_to_fbo = TRUE;
 
         /* Force the context manager to update the render target configuration next draw. */
@@ -408,16 +408,18 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
              * This serves to update the emulated overlay, if any
              */
             fbflags = front->Flags;
-            IWineD3DSurface_ModifyLocation((IWineD3DSurface *)front, SFLAG_INDRAWABLE, TRUE);
+            surface_modify_location(front, SFLAG_INDRAWABLE, TRUE);
             front->Flags = fbflags;
-        } else {
-            IWineD3DSurface_ModifyLocation((IWineD3DSurface *) front, SFLAG_INDRAWABLE, TRUE);
-            IWineD3DSurface_ModifyLocation((IWineD3DSurface *) back, SFLAG_INDRAWABLE, TRUE);
+        }
+        else
+        {
+            surface_modify_location(front, SFLAG_INDRAWABLE, TRUE);
+            surface_modify_location(back, SFLAG_INDRAWABLE, TRUE);
         }
     }
     else
     {
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)This->front_buffer, SFLAG_INDRAWABLE, TRUE);
+        surface_modify_location(This->front_buffer, SFLAG_INDRAWABLE, TRUE);
         /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
          * and INTEXTURE copies can keep their old content if they have any defined content.
          * If the swapeffect is COPY, the content remains the same. If it is FLIP however,
@@ -425,7 +427,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
          */
         if (This->presentParms.SwapEffect == WINED3DSWAPEFFECT_FLIP)
         {
-            IWineD3DSurface_ModifyLocation((IWineD3DSurface *)This->back_buffers[0], SFLAG_INDRAWABLE, TRUE);
+            surface_modify_location(This->back_buffers[0], SFLAG_INDRAWABLE, TRUE);
         }
     }
 
@@ -730,7 +732,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     swapchain->front_buffer->Flags |= SFLAG_SWAPCHAIN;
     if (surface_type == SURFACE_OPENGL)
     {
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
+        surface_modify_location(swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
     }
 
     /* MSDN says we're only allowed a single fullscreen swapchain per device,

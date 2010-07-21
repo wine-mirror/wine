@@ -2224,7 +2224,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
                 surface_internal_preload(context->current_rt, SRGB_RGB);
             }
 
-            IWineD3DSurface_ModifyLocation((IWineD3DSurface *)context->current_rt, SFLAG_INDRAWABLE, FALSE);
+            surface_modify_location(context->current_rt, SFLAG_INDRAWABLE, FALSE);
 
             device->isInDraw = oldInDraw;
         }

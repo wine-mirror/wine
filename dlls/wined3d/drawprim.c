@@ -583,11 +583,11 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
         {
-            IWineD3DSurface *target = (IWineD3DSurface *)This->render_targets[i];
+            IWineD3DSurfaceImpl *target = This->render_targets[i];
             if (target)
             {
-                IWineD3DSurface_LoadLocation(target, SFLAG_INDRAWABLE, NULL);
-                IWineD3DSurface_ModifyLocation(target, SFLAG_INDRAWABLE, TRUE);
+                IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
+                surface_modify_location(target, SFLAG_INDRAWABLE, TRUE);
             }
         }
     }
@@ -639,7 +639,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
                 surface_modify_ds_location(This->depth_stencil, location,
                         This->depth_stencil->ds_current_size.cx,
                         This->depth_stencil->ds_current_size.cy);
-                IWineD3DSurface_ModifyLocation((IWineD3DSurface *)This->depth_stencil, SFLAG_INDRAWABLE, TRUE);
+                surface_modify_location(This->depth_stencil, SFLAG_INDRAWABLE, TRUE);
             }
         }
     }

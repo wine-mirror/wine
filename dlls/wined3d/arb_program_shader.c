@@ -7166,7 +7166,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
 
     context_release(context);
 
-    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)dst_surface, SFLAG_INDRAWABLE, TRUE);
+    surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
     return WINED3D_OK;
 }
 

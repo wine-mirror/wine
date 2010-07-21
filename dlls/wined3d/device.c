@@ -4485,7 +4485,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
         if (location == SFLAG_DS_ONSCREEN && depth_stencil != This->onscreen_depth_stencil)
             device_switch_onscreen_ds(This, context, depth_stencil);
         prepare_ds_clear(depth_stencil, context, location, &draw_rect, Count, clear_rect);
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)depth_stencil, SFLAG_INDRAWABLE, TRUE);
+        surface_modify_location(depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
         glDepthMask(GL_TRUE);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
@@ -4496,7 +4496,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfac
 
     if (Flags & WINED3DCLEAR_TARGET)
     {
-        IWineD3DSurface_ModifyLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, TRUE);
+        surface_modify_location(target, SFLAG_INDRAWABLE, TRUE);
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
@@ -5353,7 +5353,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     LEAVE_GL();
     context_release(context);
 
-    IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INTEXTURE, TRUE);
+    surface_modify_location(dst_impl, SFLAG_INTEXTURE, TRUE);
     sampler = This->rev_tex_unit_map[0];
     if (sampler != WINED3D_UNMAPPED_STAGE)
     {
@@ -5490,7 +5490,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface,
     struct wined3d_context *context;
 
     if (rect) IWineD3DSurface_LoadLocation((IWineD3DSurface *)surface, SFLAG_INDRAWABLE, NULL);
-    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)surface, SFLAG_INDRAWABLE, TRUE);
+    surface_modify_location(surface, SFLAG_INDRAWABLE, TRUE);
 
     context = context_acquire(This, surface);
     context_apply_clear_state(context, This, surface, NULL);
@@ -5848,7 +5848,7 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
 
     context_release(context);
 
-    IWineD3DSurface_ModifyLocation((IWineD3DSurface *)dst_surface, SFLAG_INDRAWABLE, TRUE);
+    surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget,
