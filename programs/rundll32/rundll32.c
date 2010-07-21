@@ -123,7 +123,7 @@ static void *get_entry_point32( HMODULE module, LPCWSTR entry, BOOL *unicode )
     /* determine if the entry point is an ordinal */
     if (entry[0] == '#')
     {
-        int ordinal = atoiW( entry + 1 );
+        INT_PTR ordinal = atoiW( entry + 1 );
         if (ordinal <= 0)
             return NULL;
 
