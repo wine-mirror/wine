@@ -583,10 +583,20 @@ static void ps_1_4_test(void) {
             "texdepth_x2 r5\n",
             {0xffff0104, 0x00000057, 0x810f0005, 0x0000ffff}
         },
-        {   /* shader 18 */
+        {   /* shader 19 */
             "ps_1_4\n"
             "bem_d2 r1, c0, r0\n",
             {0xffff0104, 0x00000059, 0x8f0f0001, 0xa0e40000, 0x80e40000, 0x0000ffff}
+        },
+        {   /* shader 20 */
+            "ps_1_4\n"
+            "texkill t0\n",
+            {0xffff0104, 0x00000041, 0xb00f0000, 0x0000ffff}
+        },
+        {   /* shader 21 */
+            "ps_1_4\n"
+            "texkill r0\n",
+            {0xffff0104, 0x00000041, 0x800f0000, 0x0000ffff}
         },
     };
 

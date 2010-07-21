@@ -838,7 +838,7 @@ static void asmparser_dstreg_ps_1_4(struct asm_parser *This,
                           debug_print_dstreg(dst));
         set_parse_status(This, PARSE_ERR);
     }
-    reg = map_oldps_register(dst, FALSE);
+    reg = map_oldps_register(dst, TRUE);
     memcpy(&instr->dst, &reg, sizeof(reg));
     instr->has_dst = TRUE;
 }
