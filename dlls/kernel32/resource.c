@@ -1372,10 +1372,7 @@ static IMAGE_SECTION_HEADER *get_resource_section( void *base, DWORD mapping_siz
             break;
 
     if (i == num_sections)
-    {
-        FIXME(".rsrc doesn't exist\n");
         return NULL;
-    }
 
     return &sec[i];
 }
@@ -1400,7 +1397,7 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
 {
     static const WCHAR prefix[] = { 'r','e','s','u',0 };
     WCHAR tempdir[MAX_PATH], tempfile[MAX_PATH];
-    DWORD mapping_size, section_size, old_size;
+    DWORD section_size;
     BOOL ret = FALSE;
     IMAGE_SECTION_HEADER *sec;
     IMAGE_NT_HEADERS *nt;
@@ -1449,20 +1446,34 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
         goto done;
     }
 
-    sec = get_resource_section( write_map->base, write_map->size );
-    if (!sec)
+    if (nt->OptionalHeader.FileAlignment <= 0)
+    {
+        ERR("invalid file alignment %04x\n", nt->OptionalHeader.FileAlignment);
         goto done;
+    }
+
+    sec = get_resource_section( write_map->base, write_map->size );
+    if (!sec) /* no section, add one */
+    {
+        DWORD num_sections;
+
+        sec = get_section_header( write_map->base, write_map->size, &num_sections );
+        if (!sec)
+            goto done;
+
+        sec += num_sections;
+        nt->FileHeader.NumberOfSections++;
+
+        memset( sec, 0, sizeof *sec );
+        memcpy( sec->Name, ".rsrc", 5 );
+        sec->Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ;
+        sec->VirtualAddress = nt->OptionalHeader.SizeOfImage;
+    }
 
     if (!sec->PointerToRawData)  /* empty section */
     {
-        sec->PointerToRawData = write_map->size;
+        sec->PointerToRawData = write_map->size + (-write_map->size) % nt->OptionalHeader.FileAlignment;
         sec->SizeOfRawData = 0;
-    }
-    else if ((sec->SizeOfRawData + sec->PointerToRawData) != write_map->size)
-    {
-        FIXME(".rsrc isn't at the end of the image %08x + %08x != %08x for %s\n",
-              sec->SizeOfRawData, sec->PointerToRawData, write_map->size, debugstr_w(updates->pFileName));
-        goto done;
     }
 
     TRACE("before .rsrc at %08x, size %08x\n", sec->PointerToRawData, sec->SizeOfRawData);
@@ -1471,38 +1482,85 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
 
     /* round up the section size */
     section_size = res_size.total_size;
-    section_size += (-section_size) % nt->OptionalHeader.SectionAlignment;
-
-    mapping_size = sec->PointerToRawData + section_size;
+    section_size += (-section_size) % nt->OptionalHeader.FileAlignment;
 
     TRACE("requires %08x (%08x) bytes\n", res_size.total_size, section_size );
 
     /* check if the file size needs to be changed */
     if (section_size != sec->SizeOfRawData)
     {
-        old_size = write_map->size;
+        DWORD old_size = write_map->size;
+        DWORD virtual_section_size = res_size.total_size + (-res_size.total_size) % nt->OptionalHeader.SectionAlignment;
+        int delta = section_size - (sec->SizeOfRawData + (-sec->SizeOfRawData) % nt->OptionalHeader.FileAlignment);
+        int rva_delta = virtual_section_size -
+            (sec->Misc.VirtualSize + (-sec->Misc.VirtualSize) % nt->OptionalHeader.SectionAlignment);
+        BOOL rsrc_is_last = sec->PointerToRawData + sec->SizeOfRawData == old_size;
+	/* align .rsrc size when possible */
+        DWORD mapping_size = rsrc_is_last ? sec->PointerToRawData + section_size : old_size + delta;
+
+        /* postpone file truncation if there are some data to be moved down from file end */
+        BOOL resize_after = mapping_size < old_size && !rsrc_is_last;
 
         TRACE("file size %08x -> %08x\n", old_size, mapping_size);
 
-        /* unmap the file before changing the file size */
-        ret = resize_mapping( write_map, mapping_size );
-
-        /* get the pointers again - they might be different after remapping */
-        nt = get_nt_header( write_map->base, mapping_size );
-        if (!nt)
+        if (!resize_after)
         {
-            ERR("couldn't get NT header\n");
-            goto done;
+            /* unmap the file before changing the file size */
+            ret = resize_mapping( write_map, mapping_size );
+
+            /* get the pointers again - they might be different after remapping */
+            nt = get_nt_header( write_map->base, mapping_size );
+            if (!nt)
+            {
+                ERR("couldn't get NT header\n");
+                goto done;
+            }
+
+            sec = get_resource_section( write_map->base, mapping_size );
+            if (!sec)
+                 goto done;
         }
 
-        sec = get_resource_section( write_map->base, mapping_size );
-        if (!sec)
-             goto done;
+        if (!rsrc_is_last) /* not last section, relocate trailing sections */
+        {
+            IMAGE_SECTION_HEADER *s;
+            DWORD tail_start = sec->PointerToRawData + sec->SizeOfRawData;
+            DWORD i, num_sections = 0;
+
+            memmove( (char*)write_map->base + tail_start + delta, (char*)write_map->base + tail_start, old_size - tail_start );
+
+            s = get_section_header( write_map->base, mapping_size, &num_sections );
+
+            for (i=0; i<num_sections; i++)
+            {
+                if (s[i].PointerToRawData > sec->PointerToRawData)
+                {
+                    s[i].PointerToRawData += delta;
+                    s[i].VirtualAddress += rva_delta;
+                }
+            }
+        }
+
+        if (resize_after)
+        {
+            ret = resize_mapping( write_map, mapping_size );
+
+            nt = get_nt_header( write_map->base, mapping_size );
+            if (!nt)
+            {
+                ERR("couldn't get NT header\n");
+                goto done;
+            }
+
+            sec = get_resource_section( write_map->base, mapping_size );
+            if (!sec)
+                 goto done;
+        }
 
         /* adjust the PE header information */
-        nt->OptionalHeader.SizeOfImage += (mapping_size - old_size);
         sec->SizeOfRawData = section_size;
-        sec->Misc.VirtualSize = section_size;
+        sec->Misc.VirtualSize = virtual_section_size;
+        nt->OptionalHeader.SizeOfImage += rva_delta;
         nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size = res_size.total_size;
         nt->OptionalHeader.SizeOfInitializedData = get_init_data_size( write_map->base, mapping_size );
     }
