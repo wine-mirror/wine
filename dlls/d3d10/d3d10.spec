@@ -17,7 +17,7 @@
 @ stub D3D10GetVersion
 @ stdcall D3D10GetVertexShaderProfile(ptr)
 @ stub D3D10PreprocessShader
-@ stub D3D10ReflectShader
+@ stdcall D3D10ReflectShader(ptr long ptr)
 @ stub D3D10RegisterLayers
 @ stub D3D10StateBlockMaskDifference
 @ stub D3D10StateBlockMaskDisableAll

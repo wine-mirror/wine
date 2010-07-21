@@ -212,6 +212,14 @@ struct d3d10_effect
     struct d3d10_effect_technique *techniques;
 };
 
+/* ID3D10ShaderReflection */
+extern const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl DECLSPEC_HIDDEN;
+struct d3d10_shader_reflection
+{
+    const struct ID3D10ShaderReflectionVtbl *vtbl;
+    LONG refcount;
+};
+
 HRESULT d3d10_effect_parse(struct d3d10_effect *This, const void *data, SIZE_T data_size) DECLSPEC_HIDDEN;
 
 /* D3D10Core */

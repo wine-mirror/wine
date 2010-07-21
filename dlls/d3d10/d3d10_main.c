@@ -262,3 +262,26 @@ LPCSTR WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device)
 
     return "ps_4_0";
 }
+
+HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector)
+{
+    struct d3d10_shader_reflection *object;
+
+    FIXME("data %p, data_size %lu, reflector %p stub!\n", data, data_size, reflector);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 shader reflection object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    object->vtbl = &d3d10_shader_reflection_vtbl;
+    object->refcount = 1;
+
+    *reflector = (ID3D10ShaderReflection *)object;
+
+    TRACE("Created ID3D10ShaderReflection %p\n", object);
+
+    return S_OK;
+}
