@@ -44,6 +44,72 @@ UINT make_pow2(UINT num)
     return result;
 }
 
+HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
+                                 CONST PALETTEENTRY *palette,
+                                 UINT srclevel,
+                                 DWORD filter)
+{
+    UINT level = srclevel + 1;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %d, %d)\n", texture, palette, srclevel, filter);
+
+    if (!texture)
+        return D3DERR_INVALIDCALL;
+
+    if ((filter & 0xFFFF) > D3DX_FILTER_BOX && filter != D3DX_DEFAULT)
+        return D3DERR_INVALIDCALL;
+
+    if (srclevel >= IDirect3DBaseTexture9_GetLevelCount(texture))
+        return D3DERR_INVALIDCALL;
+
+    switch (IDirect3DBaseTexture9_GetType(texture))
+    {
+        case D3DRTYPE_TEXTURE:
+        {
+            IDirect3DSurface9 *topsurf, *mipsurf;
+            D3DSURFACE_DESC desc;
+
+            if (filter == D3DX_DEFAULT)
+            {
+                IDirect3DTexture9_GetLevelDesc((IDirect3DTexture9*) texture, srclevel, &desc);
+
+                if (is_pow2(desc.Width) && is_pow2(desc.Height))
+                    filter = D3DX_FILTER_BOX;
+                else
+                    filter = D3DX_FILTER_BOX | D3DX_FILTER_DITHER;
+            }
+
+            hr = IDirect3DTexture9_GetSurfaceLevel((IDirect3DTexture9*) texture, srclevel, &topsurf);
+
+            if (FAILED(hr))
+                return D3DERR_INVALIDCALL;
+
+            while (IDirect3DTexture9_GetSurfaceLevel((IDirect3DTexture9*) texture, level, &mipsurf) == D3D_OK)
+            {
+                hr = D3DXLoadSurfaceFromSurface(mipsurf, palette, NULL, topsurf, palette, NULL, filter, 0);
+                IDirect3DSurface9_Release(mipsurf);
+
+                if (FAILED(hr))
+                    break;
+
+                level++;
+            }
+
+            IDirect3DSurface9_Release(topsurf);
+
+            if (level == srclevel + 1)
+                return D3DERR_INVALIDCALL;
+
+            return D3D_OK;
+        }
+
+        default:
+            FIXME("Implement volume and cube texture filtering\n");
+            return E_NOTIMPL;
+    }
+}
+
 HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
                                             UINT* width,
                                             UINT* height,

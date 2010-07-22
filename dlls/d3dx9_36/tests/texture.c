@@ -315,6 +315,60 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
     }
 }
 
+static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
+{
+    IDirect3DTexture9 *tex;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 5, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_BOX + 1); /* Invalid filter */
+        ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 5, D3DX_FILTER_NONE); /* Last miplevel */
+        ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 20, D3DX_FILTER_NONE); /* Invalid miplevel */
+        ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    }
+    else
+        skip("Failed to create texture\n");
+
+    IDirect3DTexture9_Release(tex);
+
+    hr = D3DXFilterTexture(NULL, NULL, 0, D3DX_FILTER_NONE);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    /* Test different pools */
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create texture\n");
+
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &tex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) tex, NULL, 0, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+        IDirect3DTexture9_Release(tex);
+    }
+    else
+        skip("Failed to create texture\n");
+}
+
 START_TEST(texture)
 {
     HWND wnd;
@@ -348,6 +402,7 @@ START_TEST(texture)
 
     test_D3DXCheckTextureRequirements(device);
     test_D3DXCreateTexture(device);
+    test_D3DXFilterTexture(device);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
