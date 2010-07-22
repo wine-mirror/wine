@@ -53,6 +53,7 @@ static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
 static LPITEMIDLIST (WINAPI *pILFindLastID)(LPCITEMIDLIST);
 static void (WINAPI *pILFree)(LPITEMIDLIST);
 static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
+static HRESULT (WINAPI *pSHCreateItemFromIDList)(PCIDLIST_ABSOLUTE pidl, REFIID riid, void **ppv);
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
@@ -70,6 +71,7 @@ static void init_function_pointers(void)
 
 #define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hmod, #f))
     MAKEFUNC(SHBindToParent);
+    MAKEFUNC(SHCreateItemFromIDList);
     MAKEFUNC(SHCreateItemFromParsingName);
     MAKEFUNC(SHCreateShellItem);
     MAKEFUNC(SHGetFolderPathA);
@@ -2078,6 +2080,62 @@ static void test_SHCreateShellItem(void)
     }
     else
         win_skip("No SHCreateItemFromParsingName\n");
+
+
+    /* SHCreateItemFromIDList */
+    if(pSHCreateItemFromIDList)
+    {
+        if(0)
+        {
+            /* Crashes under win7 */
+            ret = pSHCreateItemFromIDList(NULL, &IID_IShellItem, NULL);
+        }
+
+        ret = pSHCreateItemFromIDList(NULL, &IID_IShellItem, (void**)&shellitem);
+        ok(ret == E_INVALIDARG, "SHCreateItemFromIDList returned %x\n", ret);
+
+        ret = pSHCreateItemFromIDList(pidl_cwd, &IID_IShellItem, (void**)&shellitem);
+        ok(ret == S_OK, "SHCreateItemFromIDList returned %x\n", ret);
+        if (SUCCEEDED(ret))
+        {
+            ret = IShellItem_QueryInterface(shellitem, &IID_IPersistIDList, (void**)&persistidl);
+            ok(ret == S_OK, "QueryInterface returned %x\n", ret);
+            if (SUCCEEDED(ret))
+            {
+                ret = IPersistIDList_GetIDList(persistidl, &pidl_test);
+                ok(ret == S_OK, "GetIDList returned %x\n", ret);
+                if (SUCCEEDED(ret))
+                {
+                    ok(ILIsEqual(pidl_cwd, pidl_test), "id lists are not equal\n");
+                    pILFree(pidl_test);
+                }
+                IPersistIDList_Release(persistidl);
+            }
+            IShellItem_Release(shellitem);
+        }
+
+        ret = pSHCreateItemFromIDList(pidl_testfile, &IID_IShellItem, (void**)&shellitem);
+        ok(ret == S_OK, "SHCreateItemFromIDList returned %x\n", ret);
+        if (SUCCEEDED(ret))
+        {
+            ret = IShellItem_QueryInterface(shellitem, &IID_IPersistIDList, (void**)&persistidl);
+            ok(ret == S_OK, "QueryInterface returned %x\n", ret);
+            if (SUCCEEDED(ret))
+            {
+                ret = IPersistIDList_GetIDList(persistidl, &pidl_test);
+                ok(ret == S_OK, "GetIDList returned %x\n", ret);
+                if (SUCCEEDED(ret))
+                {
+                    ok(ILIsEqual(pidl_testfile, pidl_test), "id lists are not equal\n");
+                    pILFree(pidl_test);
+                }
+                IPersistIDList_Release(persistidl);
+            }
+            IShellItem_Release(shellitem);
+        }
+    }
+    else
+        win_skip("No SHCreateItemFromIDList\n");
 
     DeleteFileA(".\\testfile");
     pILFree(pidl_abstestfile);

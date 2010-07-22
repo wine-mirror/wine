@@ -419,3 +419,21 @@ HRESULT WINAPI SHCreateItemFromParsingName(PCWSTR pszPath,
     }
     return ret;
 }
+
+HRESULT WINAPI SHCreateItemFromIDList(PCIDLIST_ABSOLUTE pidl, REFIID riid, void **ppv)
+{
+    ShellItem *psiimpl;
+    HRESULT ret;
+
+    if(!pidl)
+        return E_INVALIDARG;
+
+    ret = IShellItem_Constructor(NULL, riid, ppv);
+    if(SUCCEEDED(ret))
+    {
+        psiimpl = (ShellItem*)*ppv;
+        psiimpl->pidl = ILClone(pidl);
+    }
+
+    return ret;
+}
