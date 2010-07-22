@@ -3499,6 +3499,11 @@ static void test_MsiInstallProduct(void)
 
     /* install, don't publish */
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -3747,7 +3752,9 @@ static void test_MsiInstallProduct(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
+error:
     delete_test_files();
+    DeleteFileA(msifile);
 }
 
 static void test_MsiSetComponentState(void)
@@ -3766,6 +3773,11 @@ static void test_MsiSetComponentState(void)
     lstrcat(path, msifile);
 
     r = MsiOpenPackage(path, &package);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiDoAction(package, "CostInitialize");
@@ -3786,8 +3798,9 @@ static void test_MsiSetComponentState(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     MsiCloseHandle(package);
-    CoUninitialize();
 
+error:
+    CoUninitialize();
     DeleteFileA(msifile);
 }
 
@@ -3933,6 +3946,11 @@ static void test_continuouscabs(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
@@ -3940,6 +3958,7 @@ static void test_continuouscabs(void)
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     delete_cab_files();
     DeleteFile(msifile);
 }
@@ -3962,6 +3981,11 @@ static void test_caborder(void)
     create_cab_file("test3.cab", MEDIA_SIZE, "caesar\0");
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
     ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
     ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
@@ -4016,6 +4040,7 @@ static void test_caborder(void)
         ok(!delete_pf("msitest", FALSE), "File is installed\n");
     }
 
+error:
     delete_cab_files();
     DeleteFile("imperator");
     DeleteFile("maximus");
@@ -4040,12 +4065,18 @@ static void test_mixedmedia(void)
     create_cab_file("test1.cab", MEDIA_SIZE, "caesar\0");
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     /* Delete the files in the temp (current) folder */
     DeleteFile("msitest\\maximus");
     DeleteFile("msitest\\augustus");
@@ -4142,11 +4173,17 @@ static void test_readonlyfile(void)
     CloseHandle(file);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(file_matches(path), "Expected file to be overwritten\n");
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     /* Delete the files in the temp (current) folder */
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
@@ -4182,6 +4219,11 @@ static void test_readonlyfile_cab(void)
     CloseHandle(file);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     memset( buf, 0, sizeof(buf) );
@@ -4195,6 +4237,7 @@ static void test_readonlyfile_cab(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     /* Delete the files in the temp (current) folder */
     delete_cab_files();
     DeleteFile("msitest\\maximus");
@@ -4274,6 +4317,11 @@ static void test_lastusedsource(void)
     ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
     r = MsiInstallProductA("msifile0.msi", "PUBLISH_PRODUCT=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     lstrcpyA(path, CURR_DIR);
@@ -4357,6 +4405,7 @@ static void test_lastusedsource(void)
     ok(r == ERROR_UNKNOWN_PRODUCT, "Expected ERROR_UNKNOWN_PRODUCT, got %u\n", r);
     ok(!lstrcmpA(value, "aaa"), "Expected \"aaa\", got \"%s\"\n", value);
 
+error:
     /* Delete the files in the temp (current) folder */
     delete_cab_files();
     DeleteFile("msitest\\maximus");
@@ -4377,10 +4426,16 @@ static void test_setdirproperty(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_cf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_cf("msitest", FALSE), "File not installed\n");
 
+error:
     /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
@@ -4406,6 +4461,11 @@ static void test_cabisextracted(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
@@ -4413,6 +4473,7 @@ static void test_cabisextracted(void)
     ok(delete_pf("msitest\\gaius", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     /* Delete the files in the temp (current) folder */
     delete_cab_files();
     DeleteFile(msifile);
@@ -4442,6 +4503,12 @@ static void test_concurrentinstall(void)
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(path);
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     if (!delete_pf("msitest\\augustus", TRUE))
         trace("concurrent installs not supported\n");
@@ -4456,6 +4523,7 @@ static void test_concurrentinstall(void)
     ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\msitest\\augustus");
     DeleteFile("msitest\\maximus");
@@ -4480,6 +4548,11 @@ static void test_setpropertyfolder(void)
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     attr = GetFileAttributesA(path);
     if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
@@ -4495,6 +4568,7 @@ static void test_setpropertyfolder(void)
         ok(delete_pf("msitest", FALSE), "File not installed\n");
     }
 
+error:
     /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
@@ -4698,6 +4772,11 @@ static void test_publish_registerproduct(void)
 
     /* RegisterProduct */
     r = MsiInstallProductA(msifile, "REGISTER_PRODUCT=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
@@ -4894,6 +4973,7 @@ static void test_publish_registerproduct(void)
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
@@ -4939,6 +5019,11 @@ static void test_publish_publishproduct(void)
 
     /* PublishProduct, current user */
     r = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
@@ -5115,6 +5200,7 @@ machprod:
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
@@ -5151,6 +5237,11 @@ static void test_publish_publishfeatures(void)
 
     /* PublishFeatures, current user */
     r = MsiInstallProductA(msifile, "PUBLISH_FEATURES=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
@@ -5219,6 +5310,7 @@ static void test_publish_publishfeatures(void)
     RegDeleteKeyA(hkey, "");
     RegCloseKey(hkey);
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
@@ -5311,6 +5403,11 @@ static void test_publish_registeruser(void)
 
     /* RegisterUser, per-user */
     r = MsiInstallProductA(msifile, "REGISTER_USER=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
@@ -5351,6 +5448,7 @@ static void test_publish_registeruser(void)
     RegDeleteKeyA(props, "");
     RegCloseKey(props);
 
+error:
     HeapFree(GetProcessHeap(), 0, company);
     HeapFree(GetProcessHeap(), 0, owner);
 
@@ -5389,6 +5487,11 @@ static void test_publish_processcomponents(void)
 
     /* ProcessComponents, per-user */
     r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
@@ -5479,6 +5582,7 @@ static void test_publish_processcomponents(void)
     RegDeleteKeyA(comp, "");
     RegCloseKey(comp);
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
@@ -5535,6 +5639,11 @@ static void test_publish(void)
 
     /* nothing published */
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(pf_exists("msitest\\maximus"), "File not installed\n");
     ok(pf_exists("msitest"), "File not installed\n");
@@ -5962,6 +6071,7 @@ static void test_publish(void)
     /* make sure 'Program Files\msitest' is removed */
     delete_pfmsitest_files();
 
+error:
     RegCloseKey(uninstall);
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
@@ -5990,6 +6100,11 @@ static void test_publishsourcelist(void)
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(pf_exists("msitest\\maximus"), "File not installed\n");
     ok(pf_exists("msitest"), "File not installed\n");
@@ -6159,6 +6274,7 @@ static void test_publishsourcelist(void)
     /* make sure 'Program Files\msitest' is removed */
     delete_pfmsitest_files();
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
@@ -6335,6 +6451,11 @@ static void test_transformprop(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(!delete_pf("msitest", FALSE), "File installed\n");
@@ -6349,6 +6470,7 @@ static void test_transformprop(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     /* Delete the files in the temp (current) folder */
     DeleteFile(msifile);
     DeleteFile(msifile2);
@@ -6384,6 +6506,11 @@ static void test_currentworkingdir(void)
 
     sprintf(path, "%s\\%s", CURR_DIR, msifile);
     r = MsiInstallProductA(path, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
@@ -6405,8 +6532,8 @@ static void test_currentworkingdir(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     SetCurrentDirectoryA(CURR_DIR);
-
     DeleteFile(msifile);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
@@ -6452,6 +6579,11 @@ static void test_admin(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(!delete_pf("msitest", FALSE), "File installed\n");
@@ -6468,6 +6600,7 @@ static void test_admin(void)
         ok(RemoveDirectory("c:\\msitest"), "File not installed\n");
     }
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
@@ -6518,10 +6651,16 @@ static void test_adminprops(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File installed\n");
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
@@ -6557,6 +6696,11 @@ static void test_removefiles(void)
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
     ok(!pf_exists("msitest\\helium"), "File installed\n");
@@ -6658,6 +6802,7 @@ static void test_removefiles(void)
     ok(!delete_pf("msitest\\cabout", FALSE), "Directory not deleted\n");
     ok(delete_pf("msitest", FALSE), "Directory deleted\n");
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\hydrogen");
     DeleteFile("msitest\\helium");
@@ -6710,6 +6855,11 @@ static void test_movefiles(void)
             CURR_DIR, PROG_FILES_DIR, CURR_DIR, CURR_DIR);
 
     r = MsiInstallProductA(msifile, props);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(!delete_pf("msitest\\dest", TRUE), "File copied\n");
@@ -6771,7 +6921,32 @@ static void test_movefiles(void)
     ok(!DeleteFileA("bur"), "File not moved\n");
     ok(DeleteFileA("bird"), "File moved\n");
 
+error:
+    DeleteFile("cameroon");
+    DeleteFile("djibouti");
+    DeleteFile("egypt");
+    DeleteFile("finland");
+    DeleteFile("gambai");
+    DeleteFile("honduras");
+    DeleteFile("japan");
+    DeleteFile("kenya");
+    DeleteFile("nauru");
+    DeleteFile("peru");
+    DeleteFile("apple");
+    DeleteFile("application");
+    DeleteFile("ape");
+    DeleteFile("foo");
+    DeleteFile("fao");
+    DeleteFile("fbod");
+    DeleteFile("budding");
+    DeleteFile("buddy");
+    DeleteFile("bud");
+    DeleteFile("bar");
+    DeleteFile("bur");
+    DeleteFile("bird");
+    DeleteFile("msitest\\india");
     DeleteFile("msitest\\augustus");
+    RemoveDirectory("latvia");
     RemoveDirectory("msitest");
     DeleteFile(msifile);
 }
@@ -6794,6 +6969,11 @@ static void test_missingcab(void)
     create_pf_data("msitest\\caesar", "abcdefgh", TRUE);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS ||
        broken(r == ERROR_INSTALL_FAILURE), /* win9x */
        "Expected ERROR_SUCCESS, got %u\n", r);
@@ -6821,6 +7001,9 @@ static void test_missingcab(void)
     ok(delete_pf("msitest\\gaius", TRUE), "File removed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
+    delete_pf("msitest\\caesar", TRUE);
+    delete_pf("msitest", FALSE);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
     DeleteFile("maximus");
@@ -6841,6 +7024,11 @@ static void test_duplicatefiles(void)
     /* fails if the destination folder is not a valid property */
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\augustus", TRUE), "File not duplicated\n");
@@ -6850,6 +7038,7 @@ static void test_duplicatefiles(void)
     ok(delete_pf("msitest\\this", FALSE), "File not duplicated\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");
     DeleteFile(msifile);
@@ -6871,6 +7060,11 @@ static void test_writeregistryvalues(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File installed\n");
@@ -6887,12 +7081,13 @@ static void test_writeregistryvalues(void)
     ok(size == 15, "Expected 15, got %d\n", size);
     ok(type == REG_MULTI_SZ, "Expected REG_MULTI_SZ, got %d\n", type);
 
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine");
+
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
-
-    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
-    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine");
 }
 
 static void test_sourcefolder(void)
@@ -6907,6 +7102,11 @@ static void test_sourcefolder(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_INSTALL_FAILURE,
        "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
     ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
@@ -6926,6 +7126,7 @@ static void test_sourcefolder(void)
         ok(!delete_pf("msitest", FALSE), "File installed\n");
     }
 
+error:
     DeleteFile(msifile);
     DeleteFile("augustus");
 }
@@ -6942,10 +7143,16 @@ static void test_customaction51(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File installed\n");
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
@@ -6974,6 +7181,11 @@ static void test_installstate(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\alpha", TRUE), "File not installed\n");
     ok(!delete_pf("msitest\\beta", TRUE), "File installed\n");
@@ -7037,6 +7249,7 @@ static void test_installstate(void)
     ok(!delete_pf("msitest\\mu", TRUE), "File installed\n");
     ok(!delete_pf("msitest", FALSE), "File installed\n");
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\alpha");
     DeleteFile("msitest\\beta");
@@ -7497,6 +7710,11 @@ static void test_MsiConfigureProductEx(void)
 
     /* install the product, per-user unmanaged */
     r = MsiInstallProductA(msifile, "INSTALLLEVEL=10 PROPVAR=42");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
     ok(pf_exists("msitest\\helium"), "File not installed\n");
@@ -7673,13 +7891,15 @@ static void test_MsiConfigureProductEx(void)
     ok(!delete_pf("msitest\\lithium", TRUE), "File not removed\n");
     ok(!delete_pf("msitest", FALSE), "File not removed\n");
 
-    DeleteFileA(msifile);
     RegCloseKey(source);
     RegCloseKey(props);
+
+error:
     DeleteFileA("msitest\\hydrogen");
     DeleteFileA("msitest\\helium");
     DeleteFileA("msitest\\lithium");
     RemoveDirectoryA("msitest");
+    DeleteFileA(msifile);
 }
 
 static void test_missingcomponent(void)
@@ -7697,6 +7917,11 @@ static void test_missingcomponent(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, "INSTALLLEVEL=10 PROPVAR=42");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(pf_exists("msitest\\hydrogen"), "File not installed\n");
     ok(pf_exists("msitest\\helium"), "File not installed\n");
@@ -7712,6 +7937,7 @@ static void test_missingcomponent(void)
     ok(!pf_exists("msitest\\beryllium"), "File installed\n");
     ok(!delete_pf("msitest", FALSE), "Directory not removed\n");
 
+error:
     DeleteFileA(msifile);
     DeleteFileA("msitest\\hydrogen");
     DeleteFileA("msitest\\helium");
@@ -7733,6 +7959,11 @@ static void test_sourcedirprop(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File installed\n");
@@ -7751,10 +7982,14 @@ static void test_sourcedirprop(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File installed\n");
 
-    DeleteFile(msifile);
     DeleteFile("altsource\\msitest\\augustus");
     RemoveDirectory("altsource\\msitest");
     RemoveDirectory("altsource");
+
+error:
+    DeleteFile("msitest\\augustus");
+    RemoveDirectory("msitest");
+    DeleteFile(msifile);
 }
 
 static void test_adminimage(void)
@@ -7779,6 +8014,11 @@ static void test_adminimage(void)
                               msidbSumInfoSourceTypeAdminImage);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -7794,7 +8034,8 @@ static void test_adminimage(void)
     ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    DeleteFileA("msitest.msi");
+error:
+    DeleteFileA("msifile");
     DeleteFileA("msitest\\cabout\\new\\five.txt");
     DeleteFileA("msitest\\cabout\\four.txt");
     DeleteFileA("msitest\\second\\three.txt");
@@ -7821,10 +8062,16 @@ static void test_propcase(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, "MyProp=42");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+error:
     DeleteFile(msifile);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
@@ -7899,6 +8146,11 @@ static void test_shortcut(void)
     create_database(msifile, sc_tables, sizeof(sc_tables) / sizeof(msi_table));
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -7930,7 +8182,10 @@ static void test_shortcut(void)
     delete_pf("msitest\\service.exe", TRUE);
     delete_pf("msitest\\Shortcut.lnk", TRUE);
     delete_pf("msitest", FALSE);
+
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_envvar(void)
@@ -7961,6 +8216,11 @@ static void test_envvar(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     type = REG_NONE;
@@ -8028,8 +8288,6 @@ static void test_envvar(void)
         i++;
     }
 
-
-    RegCloseKey(env);
     delete_pf("msitest\\cabout\\new\\five.txt", TRUE);
     delete_pf("msitest\\cabout\\new", FALSE);
     delete_pf("msitest\\cabout\\four.txt", TRUE);
@@ -8042,7 +8300,14 @@ static void test_envvar(void)
     delete_pf("msitest\\one.txt", TRUE);
     delete_pf("msitest\\service.exe", TRUE);
     delete_pf("msitest", FALSE);
+
+error:
+    RegDeleteValueA(env, "MSITESTVAR1");
+    RegDeleteValueA(env, "MSITESTVAR2");
+    RegCloseKey(env);
+
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_preselected(void)
@@ -8053,6 +8318,11 @@ static void test_preselected(void)
     create_database(msifile, ps_tables, sizeof(ps_tables) / sizeof(msi_table));
 
     r = MsiInstallProductA(msifile, "ADDLOCAL=One");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
@@ -8083,7 +8353,10 @@ static void test_preselected(void)
     ok(!delete_pf("msitest\\one.txt", TRUE), "File installed\n");
     ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_installed_prop(void)
@@ -8097,6 +8370,11 @@ static void test_installed_prop(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, "FULL=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiInstallProductA(msifile, "FULL=1");
@@ -8121,7 +8399,9 @@ static void test_installed_prop(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_allusers_prop(void)
@@ -8135,6 +8415,11 @@ static void test_allusers_prop(void)
 
     /* ALLUSERS property unset */
     r = MsiInstallProductA(msifile, "FULL=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -8241,6 +8526,10 @@ static void test_allusers_prop(void)
     }
     else
         ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+
+error:
+    delete_test_files();
+    DeleteFile(msifile);
 }
 
 static char session_manager[] = "System\\CurrentControlSet\\Control\\Session Manager";
@@ -8361,6 +8650,11 @@ static void test_file_in_use(void)
     file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 
     r = MsiInstallProductA(msifile, "REBOOT=ReallySuppress FULL=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS_REBOOT_REQUIRED, "Expected ERROR_SUCCESS_REBOOT_REQUIRED got %u\n", r);
     ok(!file_matches_data(path, "msitest\\maximus"), "Expected file not to match\n");
     CloseHandle(file);
@@ -8376,8 +8670,14 @@ static void test_file_in_use(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
+error:
+    RegCloseKey(hkey);
+
+    delete_pf("msitest\\maximus", TRUE);
+    delete_pf("msitest", FALSE);
     DeleteFileA("msitest\\maximus");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_file_in_use_cab(void)
@@ -8412,6 +8712,11 @@ static void test_file_in_use_cab(void)
     file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 
     r = MsiInstallProductA(msifile, "REBOOT=ReallySuppress FULL=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS_REBOOT_REQUIRED, "Expected ERROR_SUCCESS_REBOOT_REQUIRED got %u\n", r);
     ok(!file_matches_data(path, "maximus"), "Expected file not to match\n");
     CloseHandle(file);
@@ -8427,8 +8732,15 @@ static void test_file_in_use_cab(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
+error:
+    RegCloseKey(hkey);
+
+    delete_pf("msitest\\maximus", TRUE);
+    delete_pf("msitest", FALSE);
+    DeleteFileA("msitest\\maximus");
     delete_cab_files();
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static INT CALLBACK handler_a(LPVOID context, UINT type, LPCSTR msg)
@@ -8520,6 +8832,11 @@ static void test_feature_override(void)
     create_database(msifile, fo_tables, sizeof(fo_tables) / sizeof(msi_table));
 
     r = MsiInstallProductA(msifile, "ADDLOCAL=override");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(pf_exists("msitest\\override.txt"), "file not installed\n");
@@ -8563,11 +8880,14 @@ static void test_feature_override(void)
     ok(delete_pf("msitest", FALSE), "directory removed\n");
     }
 
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest");
+
+error:
     DeleteFileA("msitest\\override.txt");
     DeleteFileA("msitest\\preselected.txt");
     DeleteFileA("msitest\\notpreselected.txt");
-    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_create_folder(void)
@@ -8580,6 +8900,11 @@ static void test_create_folder(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 
     ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
@@ -8611,7 +8936,9 @@ static void test_create_folder(void)
     ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
     ok(!delete_pf("msitest", FALSE), "Directory created\n");
 
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_remove_folder(void)
@@ -8624,6 +8951,11 @@ static void test_remove_folder(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 
     ok(!delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File installed\n");
@@ -8655,7 +8987,9 @@ static void test_remove_folder(void)
     ok(!delete_pf("msitest\\service.exe", TRUE), "File installed\n");
     ok(!delete_pf("msitest", FALSE), "Directory created\n");
 
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_start_services(void)
@@ -8671,6 +9005,11 @@ static void test_start_services(void)
         return;
     }
     scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!scm && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     ok(scm != NULL, "Failed to open the SC Manager\n");
     if (!scm) return;
 
@@ -8721,6 +9060,7 @@ static void test_start_services(void)
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     delete_test_files();
+    DeleteFile(msifile);
 
     if (error == ERROR_SUCCESS)
     {
@@ -8747,6 +9087,14 @@ static void test_delete_services(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -8762,7 +9110,9 @@ static void test_delete_services(void)
     ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_self_registration(void)
@@ -8775,6 +9125,11 @@ static void test_self_registration(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
@@ -8790,7 +9145,9 @@ static void test_self_registration(void)
     ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_register_font(void)
@@ -8808,6 +9165,11 @@ static void test_register_font(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, regfont1, &key);
@@ -8827,8 +9189,11 @@ static void test_register_font(void)
 
     RegDeleteValueA(key, "msi test font");
     RegCloseKey(key);
+
+error:
     DeleteFileA("msitest\\font.ttf");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_validate_product_id(void)
@@ -8841,6 +9206,11 @@ static void test_validate_product_id(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiInstallProductA(msifile, "SET_PRODUCT_ID=1");
@@ -8865,7 +9235,9 @@ static void test_validate_product_id(void)
     ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
+error:
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_install_remove_odbc(void)
@@ -8883,6 +9255,11 @@ static void test_install_remove_odbc(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(pf_exists("msitest\\ODBCdriver.dll"), "file not created\n");
@@ -8901,12 +9278,14 @@ static void test_install_remove_odbc(void)
     ok(!delete_pf("msitest\\ODBCsetup.dll", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\ODBCdriver.dll");
     DeleteFileA("msitest\\ODBCdriver2.dll");
     DeleteFileA("msitest\\ODBCtranslator.dll");
     DeleteFileA("msitest\\ODBCtranslator2.dll");
     DeleteFileA("msitest\\ODBCsetup.dll");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_register_typelib(void)
@@ -8920,6 +9299,11 @@ static void test_register_typelib(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, "REGISTER_TYPELIB=1");
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 
     r = MsiInstallProductA(msifile, NULL);
@@ -8931,8 +9315,10 @@ static void test_register_typelib(void)
     ok(!delete_pf("msitest\\typelib.dll", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\typelib.dll");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_create_remove_shortcut(void)
@@ -8946,6 +9332,11 @@ static void test_create_remove_shortcut(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(pf_exists("msitest\\target.txt"), "file not created\n");
@@ -8958,8 +9349,10 @@ static void test_create_remove_shortcut(void)
     ok(!delete_pf("msitest\\target.txt", TRUE), "file not removed\n");
     todo_wine ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\target.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_publish_components(void)
@@ -8978,6 +9371,11 @@ static void test_publish_components(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, keypath, &key);
@@ -8996,8 +9394,10 @@ static void test_publish_components(void)
     ok(!delete_pf("msitest\\english.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\english.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_remove_duplicate_files(void)
@@ -9013,6 +9413,11 @@ static void test_remove_duplicate_files(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     ok(pf_exists("msitest\\original.txt"), "file not created\n");
@@ -9031,10 +9436,12 @@ static void test_remove_duplicate_files(void)
     ok(!delete_pf("msitest\\duplicate2.txt", TRUE), "file not removed\n");
     ok(delete_pf("msitest", FALSE), "directory removed\n");
 
+error:
     DeleteFileA("msitest\\original.txt");
     DeleteFileA("msitest\\original2.txt");
     DeleteFileA("msitest\\original3.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_remove_registry_values(void)
@@ -9069,6 +9476,11 @@ static void test_remove_registry_values(void)
     RegCloseKey(key);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key1", &key);
@@ -9106,8 +9518,15 @@ static void test_remove_registry_values(void)
     ok(!delete_pf("msitest\\registry.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key1");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyA");
+    RegDeleteKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyB");
+
     DeleteFileA("msitest\\registry.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_find_related_products(void)
@@ -9121,6 +9540,11 @@ static void test_find_related_products(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     /* install again, so it finds the upgrade code */
@@ -9133,8 +9557,10 @@ static void test_find_related_products(void)
     ok(!delete_pf("msitest\\product.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\product.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_remove_ini_values(void)
@@ -9151,7 +9577,12 @@ static void test_remove_ini_values(void)
 
     lstrcpyA(inifile, PROG_FILES_DIR);
     lstrcatA(inifile, "\\msitest");
-    CreateDirectoryA(inifile, NULL);
+    ret = CreateDirectoryA(inifile, NULL);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     lstrcatA(inifile, "\\test.ini");
     file = CreateFileA(inifile, GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, 0, NULL);
     CloseHandle(file);
@@ -9186,8 +9617,10 @@ static void test_remove_ini_values(void)
     ok(!delete_pf("msitest\\inifile.txt", TRUE), "file not removed\n");
     ok(delete_pf("msitest", FALSE), "directory removed\n");
 
+error:
     DeleteFileA("msitest\\inifile.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_remove_env_strings(void)
@@ -9222,6 +9655,11 @@ static void test_remove_env_strings(void)
     RegCloseKey(key);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, "Environment", &key);
@@ -9302,13 +9740,20 @@ static void test_remove_env_strings(void)
     ok(!lstrcmp(buffer, "1"), "expected \"1\", got \"%s\"\n", buffer);
     RegDeleteValueA(key, "MSITESTVAR5");
 
-    RegCloseKey(key);
-
     ok(!delete_pf("msitest\\envvar.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
+    RegDeleteValueA(key, "MSITESTVAR1");
+    RegDeleteValueA(key, "MSITESTVAR2");
+    RegDeleteValueA(key, "MSITESTVAR3");
+    RegDeleteValueA(key, "MSITESTVAR4");
+    RegDeleteValueA(key, "MSITESTVAR5");
+    RegCloseKey(key);
+
     DeleteFileA("msitest\\envvar.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_register_class_info(void)
@@ -9324,6 +9769,11 @@ static void test_register_class_info(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
@@ -9353,8 +9803,10 @@ static void test_register_class_info(void)
     ok(!delete_pf("msitest\\class.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\class.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_register_extension_info(void)
@@ -9370,6 +9822,11 @@ static void test_register_extension_info(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, ".extension", &hkey);
@@ -9392,8 +9849,10 @@ static void test_register_extension_info(void)
     ok(!delete_pf("msitest\\extension.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\extension.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_register_mime_info(void)
@@ -9409,6 +9868,11 @@ static void test_register_mime_info(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "MIME\\Database\\Content Type\\mime/type", &hkey);
@@ -9424,8 +9888,10 @@ static void test_register_mime_info(void)
     ok(!delete_pf("msitest\\mime.txt", TRUE), "file not removed\n");
     ok(!delete_pf("msitest", FALSE), "directory not removed\n");
 
+error:
     DeleteFileA("msitest\\mime.txt");
     delete_test_files();
+    DeleteFile(msifile);
 }
 
 static void test_icon_table(void)
@@ -9464,6 +9930,12 @@ static void test_icon_table(void)
 
     /* per-user */
     res = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1");
+    if (res == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Failed to do per-user install: %d\n", res);
 
     lstrcpyA(path, APP_DATA_DIR);
@@ -9499,7 +9971,6 @@ static void test_icon_table(void)
     ok(res == ERROR_SUCCESS, "Failed to uninstall system-wide\n");
 
     delete_pfmsitest_files();
-
     DeleteFile(msifile);
 }
 

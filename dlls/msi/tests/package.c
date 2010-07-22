@@ -681,7 +681,7 @@ static MSIHANDLE create_package_db(void)
 
     /* create an empty database */
     res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
-    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
+    ok( res == ERROR_SUCCESS , "Failed to create database %u\n", res );
     if( res != ERROR_SUCCESS )
         return hdb;
 
@@ -710,7 +710,10 @@ static UINT package_from_db(MSIHANDLE hdb, MSIHANDLE *handle)
     sprintf(szPackage, "#%u", hdb);
     res = MsiOpenPackage(szPackage, &hPackage);
     if (res != ERROR_SUCCESS)
+    {
+        MsiCloseHandle(hdb);
         return res;
+    }
 
     res = MsiCloseHandle(hdb);
     if (res != ERROR_SUCCESS)
@@ -825,6 +828,12 @@ static void test_createpackage(void)
     UINT res;
 
     res = package_from_db(create_package_db(), &hPackage);
+    if (res == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( res == ERROR_SUCCESS, " Failed to create package %u\n", res );
 
     res = MsiCloseHandle( hPackage);
@@ -841,6 +850,12 @@ static void test_doaction( void )
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
     r = package_from_db(create_package_db(), &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiDoAction(hpkg, NULL);
@@ -867,6 +882,12 @@ static void test_gettargetpath_bad(void)
     UINT r;
 
     r = package_from_db(create_package_db(), &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiGetTargetPath( 0, NULL, NULL, NULL );
@@ -987,6 +1008,12 @@ static void test_settargetpath(void)
     ok( r == S_OK, "cannot add file to the File table: %d\n", r );
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiDoAction( hpkg, "CostInitialize");
@@ -1079,6 +1106,12 @@ static void test_condition(void)
     MSIHANDLE hpkg;
 
     r = package_from_db(create_package_db(), &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiEvaluateCondition(0, NULL);
@@ -1826,6 +1859,12 @@ static void test_props(void)
     ok( r == ERROR_SUCCESS , "Failed\n" );
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     /* test invalid values */
@@ -2030,6 +2069,12 @@ static void test_property_table(void)
     ok( hdb, "failed to create package\n");
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
@@ -2205,6 +2250,11 @@ static void test_msipackage(void)
 
     /* empty szPackagePath */
     r = MsiOpenPackage("", &hpack);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -2290,6 +2340,12 @@ static void test_formatrecord2(void)
     UINT r;
 
     r = package_from_db(create_package_db(), &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiSetProperty(hpkg, "Manufacturer", " " );
@@ -2712,6 +2768,12 @@ static void test_states(void)
     ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle(hdb);
@@ -7202,6 +7264,12 @@ static void test_getproperty(void)
     UINT r;
 
     r = package_from_db(create_package_db(), &hPackage);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "Failed to create package %u\n", r );
 
     /* set the property */
@@ -7323,6 +7391,12 @@ static void test_removefiles(void)
     ok( r == ERROR_SUCCESS, "cannot create Remove File table: %d\n", r);
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
@@ -7411,6 +7485,12 @@ static void test_appsearch(void)
     ok( r == ERROR_SUCCESS, "cannot create Signature table: %d\n", r );
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
@@ -7603,6 +7683,11 @@ static void test_appsearch_complocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
     r = MsiSetPropertyA(hpkg, "SIGPROP8", "october");
@@ -7701,6 +7786,9 @@ static void test_appsearch_complocator(void)
     delete_component_path("{EC30CE73-4CF9-4908-BABD-1ED82E1515FD}",
                           MSIINSTALLCONTEXT_MACHINE, NULL);
 
+    MsiCloseHandle(hpkg);
+
+error:
     DeleteFileA("FileName1");
     DeleteFileA("FileName2");
     DeleteFileA("FileName3");
@@ -7711,7 +7799,6 @@ static void test_appsearch_complocator(void)
     DeleteFileA("FileName8.dll");
     DeleteFileA("FileName9.dll");
     DeleteFileA("FileName10.dll");
-    MsiCloseHandle(hpkg);
     DeleteFileA(msifile);
     LocalFree(usersid);
 }
@@ -7740,6 +7827,11 @@ static void test_appsearch_reglocator(void)
     DeleteFileA("test.dll");
 
     res = RegCreateKeyA(HKEY_CLASSES_ROOT, "Software\\Wine", &classes);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegSetValueExA(classes, "Value1", 0, REG_SZ,
@@ -8570,6 +8662,11 @@ static void test_appsearch_inilocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
     r = MsiDoAction(hpkg, "AppSearch");
@@ -8647,12 +8744,14 @@ static void test_appsearch_inilocator(void)
         ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
     }
 
+    MsiCloseHandle(hpkg);
+
+error:
     delete_win_ini("IniFile.ini");
     DeleteFileA("FileName1");
     DeleteFileA("FileName2.dll");
     DeleteFileA("FileName3.dll");
     DeleteFileA("FileName4.dll");
-    MsiCloseHandle(hpkg);
     DeleteFileA(msifile);
 }
 
@@ -8866,6 +8965,11 @@ static void test_appsearch_drlocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
     r = MsiDoAction(hpkg, "AppSearch");
@@ -8942,6 +9046,9 @@ static void test_appsearch_drlocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!prop[0], "Expected \"\", got \"%s\"\n", prop);
 
+    MsiCloseHandle(hpkg);
+
+error:
     DeleteFileA("FileName1");
     DeleteFileA("FileName3.dll");
     DeleteFileA("FileName4.dll");
@@ -8951,7 +9058,6 @@ static void test_appsearch_drlocator(void)
     RemoveDirectoryA("one\\two");
     RemoveDirectoryA("one");
     RemoveDirectoryA("another");
-    MsiCloseHandle(hpkg);
     DeleteFileA(msifile);
 }
 
@@ -9128,6 +9234,12 @@ static void test_featureparents(void)
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
@@ -9380,6 +9492,12 @@ static void test_installprops(void)
     ok( hdb, "failed to create database\n");
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle(hdb);
@@ -9501,6 +9619,12 @@ static void test_launchconditions(void)
     ok( r == ERROR_SUCCESS, "cannot add launch condition: %d\n", r );
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
@@ -9560,6 +9684,12 @@ static void test_ccpsearch(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
@@ -9716,6 +9846,12 @@ static void test_complocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
@@ -9947,6 +10083,12 @@ static void test_MsiGetSourcePath(void)
     ok(r == ERROR_SUCCESS , "Failed to commit database\n");
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
@@ -10637,6 +10779,12 @@ static void test_shortlongsource(void)
     MsiDatabaseCommit(hdb);
 
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
@@ -10918,7 +11066,7 @@ static void test_shortlongsource(void)
 static void test_sourcedir(void)
 {
     MSIHANDLE hdb, hpkg;
-    CHAR package[10];
+    CHAR package[12];
     CHAR path[MAX_PATH];
     CHAR cwd[MAX_PATH];
     CHAR subsrc[MAX_PATH];
@@ -10938,8 +11086,13 @@ static void test_sourcedir(void)
     r = add_directory_entry(hdb, "'TARGETDIR', '', 'SourceDir'");
     ok(r == S_OK, "failed\n");
 
-    sprintf(package, "#%i", hdb);
+    sprintf(package, "#%u", hdb);
     r = MsiOpenPackage(package, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* properties only */
@@ -11243,8 +11396,10 @@ static void test_sourcedir(void)
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
-    MsiCloseHandle(hdb);
     MsiCloseHandle(hpkg);
+
+error:
+    MsiCloseHandle(hdb);
     DeleteFileA(msifile);
 }
 
@@ -11410,6 +11565,11 @@ static void test_emptypackage(void)
     UINT r;
 
     r = MsiOpenPackageA("", &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -11632,6 +11792,12 @@ static void test_MsiGetProductProperty(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
@@ -11801,6 +11967,12 @@ static void test_MsiSetProperty(void)
     UINT r;
 
     r = package_from_db(create_package_db(), &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        DeleteFile(msifile);
+        return;
+    }
     ok(r == ERROR_SUCCESS, "Expected a valid package %u\n", r);
 
     /* invalid hInstall */

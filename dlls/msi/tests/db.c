@@ -3122,6 +3122,11 @@ static void test_try_transform(void)
 
     /* check that the property was added */
     r = package_from_db(hdb, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     sz = MAX_PATH;
@@ -3130,8 +3135,9 @@ static void test_try_transform(void)
     ok(!lstrcmp(buffer, "val"), "Expected val, got %s\n", buffer);
 
     MsiCloseHandle(hpkg);
-    MsiCloseHandle(hdb);
 
+error:
+    MsiCloseHandle(hdb);
     DeleteFile(msifile);
     DeleteFile(mstfile);
 }
@@ -7176,8 +7182,7 @@ static void test_storages_table(void)
 static void test_dbtopackage(void)
 {
     MSIHANDLE hdb, hpkg;
-    CHAR package[10];
-    CHAR buf[MAX_PATH];
+    CHAR package[12], buf[MAX_PATH];
     DWORD size;
     UINT r;
 
@@ -7196,8 +7201,13 @@ static void test_dbtopackage(void)
     r = add_custom_action_entry(hdb, "'SetProp', 51, 'MYPROP', 'grape'");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    sprintf(package, "#%i", hdb);
+    sprintf(package, "#%u", hdb);
     r = MsiOpenPackage(package, &hpkg);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* property is not set yet */
@@ -7255,7 +7265,7 @@ static void test_dbtopackage(void)
     r = add_custom_action_entry(hdb, "'SetProp', 51, 'MYPROP', 'grape'");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    sprintf(package, "#%i", hdb);
+    sprintf(package, "#%u", hdb);
     r = MsiOpenPackage(package, &hpkg);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -7296,8 +7306,10 @@ static void test_dbtopackage(void)
         ok(size == 0, "Expected 0, got %d\n", size);
     }
 
-    MsiCloseHandle(hdb);
     MsiCloseHandle(hpkg);
+
+error:
+    MsiCloseHandle(hdb);
     DeleteFileA(msifile);
 }
 

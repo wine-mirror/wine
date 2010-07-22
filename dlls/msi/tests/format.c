@@ -201,15 +201,20 @@ static MSIHANDLE create_package_db(void)
     DeleteFile(msifile);
 
     /* create an empty database */
-    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
-    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
+    res = MsiOpenDatabase(msifile, MSIDBOPEN_CREATEDIRECT, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to create database %u\n", res );
     if( res != ERROR_SUCCESS )
-        return hdb;
+        return 0;
 
     res = MsiDatabaseCommit( hdb );
     ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
+    if( res != ERROR_SUCCESS )
+        return 0;
 
     res = set_summary_info(hdb);
+    ok( res == ERROR_SUCCESS , "Failed to set summary info %u\n", res );
+    if( res != ERROR_SUCCESS )
+        return 0;
 
     res = run_query( hdb,
             "CREATE TABLE `Directory` ( "
@@ -217,7 +222,7 @@ static MSIHANDLE create_package_db(void)
             "`Directory_Parent` CHAR(255), "
             "`DefaultDir` CHAR(255) NOT NULL "
             "PRIMARY KEY `Directory`)" );
-    ok( res == ERROR_SUCCESS , "Failed to create directory table\n" );
+    ok( res == ERROR_SUCCESS , "Failed to create directory table %u\n", res );
 
     return hdb;
 }
@@ -264,11 +269,13 @@ static UINT helper_createpackage( const char *szName, MSIHANDLE *handle )
     DeleteFile(szName);
 
     /* create an empty database */
-    res = MsiOpenDatabase(szName, MSIDBOPEN_CREATE, &hdb );
-    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
+    res = MsiOpenDatabase(szName, MSIDBOPEN_CREATEDIRECT, &hdb );
+    ok( res == ERROR_SUCCESS , "Failed to create database %u\n", res );
+    if (res != ERROR_SUCCESS)
+        return res;
 
     res = MsiDatabaseCommit( hdb );
-    ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
+    ok( res == ERROR_SUCCESS , "Failed to commit database %u\n", res );
 
     /* build summary info */
     res = MsiGetSummaryInformation(hdb, NULL, 7, &suminfo);
@@ -307,9 +314,13 @@ static UINT helper_createpackage( const char *szName, MSIHANDLE *handle )
     ok( res == ERROR_SUCCESS , "Failed to close suminfo\n" );
 
     res = package_from_db( hdb, &hPackage );
-    ok( res == ERROR_SUCCESS, "failed to create package %u\n", res );
+    MsiCloseHandle(hdb);
 
-    *handle = hPackage;
+    if (res != ERROR_SUCCESS)
+        DeleteFileA( szName );
+    else
+        *handle = hPackage;
+
     return res;
 }
 
@@ -319,6 +330,11 @@ static void test_createpackage(void)
     UINT res;
 
     res = helper_createpackage( msifile, &hPackage );
+    if (res == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     ok( res == ERROR_SUCCESS, "Failed to create package %u\n", res );
 
     res = MsiCloseHandle( hPackage );
@@ -1626,6 +1642,11 @@ static void test_formatrecord_package(void)
     DWORD sz=100;
 
     r = helper_createpackage( msifile, &package );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     ok( r == ERROR_SUCCESS, "Unable to create package %u\n", r );
 
     hrec = MsiCreateRecord(12);
@@ -2198,6 +2219,13 @@ static void test_formatrecord_tables(void)
     ok( r == ERROR_SUCCESS, "cannt add custom action: %d\n", r);
 
     r = package_from_db( hdb, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        MsiCloseHandle( hdb );
+        DeleteFile( msifile );
+        return;
+    }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
@@ -2385,6 +2413,11 @@ static void test_processmessage(void)
     UINT r;
 
     r = helper_createpackage( msifile, &package );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        return;
+    }
     ok( r == ERROR_SUCCESS, "Unable to create package %u\n", r );
 
     hrec = MsiCreateRecord(3);

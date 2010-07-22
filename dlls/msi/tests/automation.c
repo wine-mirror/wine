@@ -733,6 +733,12 @@ static void test_dispatch(void)
     V_VT(&vararg[0]) = VT_BSTR;
     V_BSTR(&vararg[0]) = SysAllocString(path);
     hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    if (hr == DISP_E_EXCEPTION)
+    {
+        skip("OpenPackage failed, insufficient rights?\n");
+        DeleteFileW(path);
+        return;
+    }
     ok(hr == S_OK, "IDispatch::Invoke returned 0x%08x\n", hr);
     VariantClear(&vararg[0]);
     VariantClear(&varresult);
@@ -2405,7 +2411,7 @@ static void test_Installer_InstallProduct(void)
     hr = Installer_InstallProduct(szMsifile, NULL);
     if (hr == DISP_E_EXCEPTION)
     {
-        skip("Installer object not supported.\n");
+        skip("InstallProduct failed, insufficient rights?\n");
         delete_test_files();
         return;
     }
@@ -2610,6 +2616,12 @@ static void test_Installer(void)
 
     /* Installer::OpenPackage */
     hr = Installer_OpenPackage(szPath, 0, &pSession);
+    if (hr == DISP_E_EXCEPTION)
+    {
+        skip("OpenPackage failed, insufficient rights?\n");
+        DeleteFileW(szPath);
+        return;
+    }
     ok(hr == S_OK, "Installer_OpenPackage failed, hresult 0x%08x\n", hr);
     if (hr == S_OK)
     {
