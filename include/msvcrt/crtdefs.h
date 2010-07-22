@@ -22,6 +22,10 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#ifdef __WINE_WINE_PORT_H
+# error You cannot use both wine/port.h and msvcrt headers
+#endif
+
 #if defined(__x86_64__) && !defined(_WIN64)
 #define _WIN64
 #endif
