@@ -264,8 +264,8 @@
 @ stub ??0?$_String_val@GV?$allocator@G@std@@@std@@QAE@ABV01@@Z
 @ stub ??0?$_String_val@_WV?$allocator@_W@std@@@std@@IAE@V?$allocator@_W@1@@Z
 @ stub ??0?$_String_val@_WV?$allocator@_W@std@@@std@@QAE@ABV01@@Z
-@ stub ??0?$allocator@D@std@@QAE@ABV01@@Z
-@ stub ??0?$allocator@D@std@@QAE@XZ
+@ cdecl -i386 -norelay ??0?$allocator@D@std@@QAE@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_char_copy_ctor
+@ cdecl -i386 -norelay ??0?$allocator@D@std@@QAE@XZ() __thiscall_MSVCP_allocator_char_ctor
 @ stub ??0?$allocator@G@std@@QAE@ABV01@@Z
 @ stub ??0?$allocator@G@std@@QAE@XZ
 @ stub ??0?$allocator@X@std@@QAE@ABV01@@Z
@@ -685,7 +685,7 @@
 @ stub ??4?$_String_val@DV?$allocator@D@std@@@std@@QAEAAV01@ABV01@@Z
 @ stub ??4?$_String_val@GV?$allocator@G@std@@@std@@QAEAAV01@ABV01@@Z
 @ stub ??4?$_String_val@_WV?$allocator@_W@std@@@std@@QAEAAV01@ABV01@@Z
-@ stub ??4?$allocator@D@std@@QAEAAV01@ABV01@@Z
+@ cdecl -i386 -norelay ??4?$allocator@D@std@@QAEAAV01@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_char_assign
 @ stub ??4?$allocator@G@std@@QAEAAV01@ABV01@@Z
 @ stub ??4?$allocator@X@std@@QAEAAV01@ABV01@@Z
 @ stub ??4?$allocator@_W@std@@QAEAAV01@ABV01@@Z
@@ -1524,14 +1524,14 @@
 @ stub ?_Xsgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHPAGIH@Z
 @ stub ?_Xsgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPA_WIH@Z
 @ stub ?_Xweak@tr1@std@@YAXXZ
-@ stub ?address@?$allocator@D@std@@QBEPADAAD@Z
-@ stub ?address@?$allocator@D@std@@QBEPBDABD@Z
+@ cdecl -i386 -norelay ?address@?$allocator@D@std@@QBEPADAAD@Z(ptr) __thiscall_MSVCP_allocator_char_address
+@ cdecl -i386 -norelay ?address@?$allocator@D@std@@QBEPBDABD@Z(ptr) __thiscall_MSVCP_allocator_char_const_address
 @ stub ?address@?$allocator@G@std@@QBEPAGAAG@Z
 @ stub ?address@?$allocator@G@std@@QBEPBGABG@Z
 @ stub ?address@?$allocator@_W@std@@QBEPA_WAA_W@Z
 @ stub ?address@?$allocator@_W@std@@QBEPB_WAB_W@Z
-@ stub ?allocate@?$allocator@D@std@@QAEPADI@Z
-@ stub ?allocate@?$allocator@D@std@@QAEPADIPBX@Z
+@ cdecl -i386 -norelay ?allocate@?$allocator@D@std@@QAEPADI@Z(long) __thiscall_MSVCP_allocator_char_allocate
+@ cdecl -i386 -norelay ?allocate@?$allocator@D@std@@QAEPADIPBX@Z(long ptr) __thiscall_MSVCP_allocator_char_allocate_hint
 @ stub ?allocate@?$allocator@G@std@@QAEPAGI@Z
 @ stub ?allocate@?$allocator@G@std@@QAEPAGIPBX@Z
 @ stub ?allocate@?$allocator@_W@std@@QAEPA_WI@Z
@@ -1663,7 +1663,7 @@
 @ stub ?compare@?$collate@D@std@@QBEHPBD000@Z
 @ stub ?compare@?$collate@G@std@@QBEHPBG000@Z
 @ stub ?compare@?$collate@_W@std@@QBEHPB_W000@Z
-@ stub ?construct@?$allocator@D@std@@QAEXPADABD@Z
+@ cdecl -i386 -norelay ?construct@?$allocator@D@std@@QAEXPADABD@Z(ptr ptr) __thiscall_MSVCP_allocator_char_construct
 @ stub ?construct@?$allocator@G@std@@QAEXPAGABG@Z
 @ stub ?construct@?$allocator@_W@std@@QAEXPA_WAB_W@Z
 @ stub ?copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADII@Z
@@ -1689,7 +1689,7 @@
 @ stub ?date_order@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ
 @ stub ?date_order@?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ
 @ stub ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ
-@ stub ?deallocate@?$allocator@D@std@@QAEXPADI@Z
+@ cdecl -i386 -norelay ?deallocate@?$allocator@D@std@@QAEXPADI@Z(ptr long) __thiscall_MSVCP_allocator_char_deallocate
 @ stub ?deallocate@?$allocator@G@std@@QAEXPAGI@Z
 @ stub ?deallocate@?$allocator@_W@std@@QAEXPA_WI@Z
 @ stub ?decimal_point@?$_Mpunct@D@std@@QBEDXZ
@@ -1714,7 +1714,7 @@
 @ stub ?denorm_min@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?denorm_min@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?denorm_min@?$numeric_limits@_W@std@@SA_WXZ
-@ stub ?destroy@?$allocator@D@std@@QAEXPAD@Z
+@ cdecl -i386 -norelay ?destroy@?$allocator@D@std@@QAEXPAD@Z(ptr) __thiscall_MSVCP_allocator_char_destroy
 @ stub ?destroy@?$allocator@G@std@@QAEXPAG@Z
 @ stub ?destroy@?$allocator@_W@std@@QAEXPA_W@Z
 @ stub ?digits10@?$numeric_limits@C@std@@2HB
@@ -2442,7 +2442,7 @@
 @ stub ?max_exponent@?$numeric_limits@O@std@@2HB
 @ stub ?max_exponent@_Num_base@std@@2HB
 @ stub ?max_length@codecvt_base@std@@QBEHXZ
-@ stub ?max_size@?$allocator@D@std@@QBEIXZ
+@ cdecl -i386 -norelay ?max_size@?$allocator@D@std@@QBEIXZ() __thiscall_MSVCP_allocator_char_max_size
 @ stub ?max_size@?$allocator@G@std@@QBEIXZ
 @ stub ?max_size@?$allocator@_W@std@@QBEIXZ
 @ stub ?max_size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ
