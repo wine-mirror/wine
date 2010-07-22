@@ -1788,10 +1788,15 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
         SetLastError( RtlNtStatusToDosError( status ) );
         return NULL;
     }
-    /* get rid of the \??\ prefix */
-    /* FIXME: should implement RtlNtPathNameToDosPathName and use that instead */
-    len = nt_name.Length - 4 * sizeof(WCHAR);
-    memmove( nt_name.Buffer, nt_name.Buffer + 4, len );
-    nt_name.Buffer[len / sizeof(WCHAR)] = 0;
+    if (nt_name.Buffer[5] == ':')
+    {
+        /* get rid of the \??\ prefix */
+        /* FIXME: should implement RtlNtPathNameToDosPathName and use that instead */
+        len = nt_name.Length - 4 * sizeof(WCHAR);
+        memmove( nt_name.Buffer, nt_name.Buffer + 4, len );
+        nt_name.Buffer[len / sizeof(WCHAR)] = 0;
+    }
+    else
+        nt_name.Buffer[1] = '\\';
     return nt_name.Buffer;
 }
