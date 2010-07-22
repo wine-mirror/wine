@@ -681,7 +681,7 @@ static void test_simple_patch( void )
 {
     UINT r;
     DWORD size;
-    char path[MAX_PATH], install_source[MAX_PATH];
+    char path[MAX_PATH], install_source[MAX_PATH], buffer[32];
     const char *query;
     MSIHANDLE hpackage, hdb, hview, hrec;
 
@@ -753,6 +753,12 @@ static void test_simple_patch( void )
     MsiViewClose( hview );
     MsiCloseHandle( hview );
 
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    r = MsiGetProperty( hpackage, "PATCHNEWSUMMARYSUBJECT", buffer, &size );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( !strcmp( buffer, "Installer Database" ), "expected \'Installer Database\', got \'%s\'\n", buffer );
+
     MsiCloseHandle( hdb );
     MsiCloseHandle( hpackage );
 
@@ -804,6 +810,12 @@ static void test_simple_patch( void )
     MsiCloseHandle( hrec );
     MsiViewClose( hview );
     MsiCloseHandle( hview );
+
+    buffer[0] = 0;
+    size = sizeof(buffer);
+    r = MsiGetProperty( hpackage, "PATCHNEWSUMMARYSUBJECT", buffer, &size );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    ok( !strcmp( buffer, "Installation Database" ), "expected \'Installation Database\', got \'%s\'\n", buffer );
 
     MsiCloseHandle( hdb );
     MsiCloseHandle( hpackage );
