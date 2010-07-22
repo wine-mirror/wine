@@ -360,6 +360,7 @@
 @ stdcall SHGetInstanceExplorer(long)
 @ stdcall SHGetLocalizedName(wstr ptr long ptr)
 @ stdcall SHGetMalloc(ptr)
+@ stdcall SHGetNameFromIDList(ptr long ptr)
 @ stdcall SHGetNewLinkInfo(str str ptr long long) SHGetNewLinkInfoA
 @ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListA
 @ stdcall SHGetPathFromIDListA(ptr ptr)

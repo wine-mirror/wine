@@ -46,6 +46,7 @@ static HRESULT (WINAPI *pSHBindToParent)(LPCITEMIDLIST, REFIID, LPVOID*, LPCITEM
 static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
 static HRESULT (WINAPI *pSHGetFolderPathAndSubDirA)(HWND, int, HANDLE, DWORD, LPCSTR, LPSTR);
 static BOOL (WINAPI *pSHGetPathFromIDListW)(LPCITEMIDLIST,LPWSTR);
+static HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
 static BOOL (WINAPI *pSHGetSpecialFolderPathA)(HWND, LPSTR, int, BOOL);
 static BOOL (WINAPI *pSHGetSpecialFolderPathW)(HWND, LPWSTR, int, BOOL);
 static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
@@ -56,6 +57,7 @@ static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMI
 static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
 static LPITEMIDLIST (WINAPI *pSHSimpleIDListFromPathAW)(LPCVOID);
+static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 
 static void init_function_pointers(void)
 {
@@ -73,7 +75,9 @@ static void init_function_pointers(void)
     MAKEFUNC(SHGetPathFromIDListW);
     MAKEFUNC(SHGetSpecialFolderPathA);
     MAKEFUNC(SHGetSpecialFolderPathW);
+    MAKEFUNC(SHGetSpecialFolderLocation);
     MAKEFUNC(SHParseDisplayName);
+    MAKEFUNC(SHGetNameFromIDList);
 #undef MAKEFUNC
 
 #define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
@@ -987,9 +991,7 @@ static void test_SHGetPathFromIDList(void)
     STRRET strret;
     static WCHAR wszTestFile[] = {
         'w','i','n','e','t','e','s','t','.','f','o','o',0 };
-	HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
-	HMODULE hShell32;
-	LPITEMIDLIST pidlPrograms;
+    LPITEMIDLIST pidlPrograms;
 
     if(!pSHGetPathFromIDListW || !pSHGetSpecialFolderPathW)
     {
@@ -1101,10 +1103,7 @@ static void test_SHGetPathFromIDList(void)
     ok(0 == lstrcmpW(wszFileName, wszPath), "SHGetPathFromIDListW returned incorrect path for file placed on desktop\n");
 
 
-	/* Test if we can get the path from the start menu "program files" PIDL. */
-    hShell32 = GetModuleHandleA("shell32");
-    pSHGetSpecialFolderLocation = (void *)GetProcAddress(hShell32, "SHGetSpecialFolderLocation");
-
+    /* Test if we can get the path from the start menu "program files" PIDL. */
     hr = pSHGetSpecialFolderLocation(NULL, CSIDL_PROGRAM_FILES, &pidlPrograms);
     ok(hr == S_OK, "SHGetFolderLocation failed: 0x%08x\n", hr);
 
@@ -2044,6 +2043,154 @@ static void test_SHCreateShellItem(void)
     IShellFolder_Release(desktopfolder);
 }
 
+static void test_SHGetNameFromIDList(void)
+{
+    IShellItem *shellitem;
+    LPITEMIDLIST pidl;
+    LPWSTR name_string;
+    HRESULT hres;
+    UINT i;
+    static const DWORD flags[] = {
+        SIGDN_NORMALDISPLAY, SIGDN_PARENTRELATIVEPARSING,
+        SIGDN_DESKTOPABSOLUTEPARSING,SIGDN_PARENTRELATIVEEDITING,
+        SIGDN_DESKTOPABSOLUTEEDITING, /*SIGDN_FILESYSPATH, SIGDN_URL, */
+        SIGDN_PARENTRELATIVEFORADDRESSBAR,SIGDN_PARENTRELATIVE, -1234};
+
+    if(!pSHGetNameFromIDList)
+    {
+        win_skip("SHGetNameFromIDList missing.\n");
+        return;
+    }
+
+    /* These should be available on any platform that passed the above test. */
+    ok(pSHCreateShellItem != NULL, "SHCreateShellItem missing.\n");
+    ok(pSHBindToParent != NULL, "SHBindToParent missing.\n");
+    ok(pSHGetSpecialFolderLocation != NULL, "SHGetSpecialFolderLocation missing.\n");
+    ok(pStrRetToBufW != NULL, "StrRetToBufW missing.\n");
+
+    if(0)
+    {
+        /* Crashes under win7 */
+        hres = pSHGetNameFromIDList(NULL, 0, NULL);
+    }
+
+    hres = pSHGetNameFromIDList(NULL, 0, &name_string);
+    ok(hres == E_INVALIDARG, "Got 0x%08x\n", hres);
+
+    /* Test the desktop */
+    hres = pSHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidl);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    hres = pSHCreateShellItem(NULL, NULL, pidl, &shellitem);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    if(SUCCEEDED(hres))
+    {
+        WCHAR *nameSI, *nameSH;
+        WCHAR buf[MAX_PATH];
+        HRESULT hrSI, hrSH, hrSF;
+        STRRET strret;
+        IShellFolder *psf;
+        BOOL res;
+
+        SHGetDesktopFolder(&psf);
+        for(i = 0; flags[i] != -1234; i++)
+        {
+            hrSI = IShellItem_GetDisplayName(shellitem, flags[i], &nameSI);
+            ok(hrSI == S_OK, "Got 0x%08x\n", hrSI);
+            hrSH = pSHGetNameFromIDList(pidl, flags[i], &nameSH);
+            ok(hrSH == S_OK, "Got 0x%08x\n", hrSH);
+            hrSF = IShellFolder_GetDisplayNameOf(psf, pidl, flags[i] & 0xffff, &strret);
+            ok(hrSF == S_OK, "Got 0x%08x\n", hrSF);
+
+            if(SUCCEEDED(hrSI) && SUCCEEDED(hrSH))
+                ok(!lstrcmpW(nameSI, nameSH), "Strings differ.\n");
+
+            if(SUCCEEDED(hrSF))
+            {
+                pStrRetToBufW(&strret, NULL, buf, MAX_PATH);
+                if(SUCCEEDED(hrSI))
+                    ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+                if(SUCCEEDED(hrSF))
+                    ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+            }
+            if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+            if(SUCCEEDED(hrSH)) CoTaskMemFree(nameSH);
+        }
+        IShellFolder_Release(psf);
+
+        hrSI = pSHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &nameSI);
+        ok(hrSI == S_OK, "Got 0x%08x\n", hrSI);
+        res = SHGetPathFromIDListW(pidl, buf);
+        ok(res == TRUE, "Got %d\n", res);
+        if(SUCCEEDED(hrSI) && res)
+            ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+        if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+
+        hres = pSHGetNameFromIDList(pidl, SIGDN_URL, &name_string);
+        todo_wine ok(hres == S_OK, "Got 0x%08x\n", hres);
+        if(SUCCEEDED(hres)) CoTaskMemFree(name_string);
+
+        IShellItem_Release(shellitem);
+    }
+    pILFree(pidl);
+
+    /* Test the control panel */
+    hres = pSHGetSpecialFolderLocation(NULL, CSIDL_CONTROLS, &pidl);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    hres = pSHCreateShellItem(NULL, NULL, pidl, &shellitem);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    if(SUCCEEDED(hres))
+    {
+        WCHAR *nameSI, *nameSH;
+        WCHAR buf[MAX_PATH];
+        HRESULT hrSI, hrSH, hrSF;
+        STRRET strret;
+        IShellFolder *psf;
+        BOOL res;
+
+        SHGetDesktopFolder(&psf);
+        for(i = 0; flags[i] != -1234; i++)
+        {
+            hrSI = IShellItem_GetDisplayName(shellitem, flags[i], &nameSI);
+            ok(hrSI == S_OK, "Got 0x%08x\n", hrSI);
+            hrSH = pSHGetNameFromIDList(pidl, flags[i], &nameSH);
+            ok(hrSH == S_OK, "Got 0x%08x\n", hrSH);
+            hrSF = IShellFolder_GetDisplayNameOf(psf, pidl, flags[i] & 0xffff, &strret);
+            ok(hrSF == S_OK, "Got 0x%08x\n", hrSF);
+
+            if(SUCCEEDED(hrSI) && SUCCEEDED(hrSH))
+                ok(!lstrcmpW(nameSI, nameSH), "Strings differ.\n");
+
+            if(SUCCEEDED(hrSF))
+            {
+                pStrRetToBufW(&strret, NULL, buf, MAX_PATH);
+                if(SUCCEEDED(hrSI))
+                    ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+                if(SUCCEEDED(hrSF))
+                    ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+            }
+            if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+            if(SUCCEEDED(hrSH)) CoTaskMemFree(nameSH);
+        }
+        IShellFolder_Release(psf);
+
+        hrSI = pSHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &nameSI);
+        ok(hrSI == E_INVALIDARG, "Got 0x%08x\n", hrSI);
+        res = SHGetPathFromIDListW(pidl, buf);
+        ok(res == FALSE, "Got %d\n", res);
+        if(SUCCEEDED(hrSI) && res)
+            ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+        if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+
+        hres = pSHGetNameFromIDList(pidl, SIGDN_URL, &name_string);
+        todo_wine ok(hres == E_NOTIMPL /* Win7 */ || hres == S_OK /* Vista */,
+                     "Got 0x%08x\n", hres);
+        if(SUCCEEDED(hres)) CoTaskMemFree(name_string);
+
+        IShellItem_Release(shellitem);
+    }
+    pILFree(pidl);
+}
+
 static void test_SHParseDisplayName(void)
 {
     LPITEMIDLIST pidl1, pidl2;
@@ -2549,6 +2696,7 @@ START_TEST(shlfolder)
     test_GetUIObject();
     test_SHSimpleIDListFromPath();
     test_ParseDisplayNamePBC();
+    test_SHGetNameFromIDList();
 
     OleUninitialize();
 }

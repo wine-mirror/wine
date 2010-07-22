@@ -1347,6 +1347,68 @@ HRESULT WINAPI SHParseDisplayName(LPCWSTR name, IBindCtx *bindctx, LPITEMIDLIST 
     return hr;
 }
 
+/*************************************************************************
+ * SHGetNameFromIDList             [SHELL32.@]
+ */
+HRESULT WINAPI SHGetNameFromIDList(PCIDLIST_ABSOLUTE pidl, SIGDN sigdnName, PWSTR *ppszName)
+{
+    IShellFolder *psfparent;
+    LPCITEMIDLIST child_pidl;
+    STRRET disp_name;
+    HRESULT ret;
+
+    TRACE("%p %d %p\n", pidl, sigdnName, ppszName);
+
+    *ppszName = NULL;
+    ret = SHBindToParent(pidl, &IID_IShellFolder, (void**)&psfparent, &child_pidl);
+    if(SUCCEEDED(ret))
+    {
+        switch(sigdnName)
+        {
+                                                /* sigdnName & 0xffff */
+        case SIGDN_NORMALDISPLAY:               /* SHGDN_NORMAL */
+        case SIGDN_PARENTRELATIVEPARSING:       /* SHGDN_INFOLDER | SHGDN_FORPARSING */
+        case SIGDN_PARENTRELATIVEEDITING:       /* SHGDN_INFOLDER | SHGDN_FOREDITING */
+        case SIGDN_DESKTOPABSOLUTEPARSING:      /* SHGDN_FORPARSING */
+        case SIGDN_DESKTOPABSOLUTEEDITING:      /* SHGDN_FOREDITING | SHGDN_FORADDRESSBAR*/
+        case SIGDN_PARENTRELATIVEFORADDRESSBAR: /* SIGDN_INFOLDER | SHGDN_FORADDRESSBAR */
+        case SIGDN_PARENTRELATIVE:              /* SIGDN_INFOLDER */
+
+            disp_name.uType = STRRET_WSTR;
+            ret = IShellFolder_GetDisplayNameOf(psfparent, child_pidl,
+                                                sigdnName & 0xffff,
+                                                &disp_name);
+            if(SUCCEEDED(ret))
+                ret = StrRetToStrW(&disp_name, pidl, ppszName);
+
+            break;
+
+        case SIGDN_FILESYSPATH:
+            *ppszName = CoTaskMemAlloc(sizeof(WCHAR)*MAX_PATH);
+            if(SHGetPathFromIDListW(pidl, *ppszName))
+            {
+                TRACE("Got string %s\n", debugstr_w(*ppszName));
+                ret = S_OK;
+            }
+            else
+            {
+                CoTaskMemFree(*ppszName);
+                ret = E_INVALIDARG;
+            }
+            break;
+
+        case SIGDN_URL:
+        default:
+            FIXME("Unsupported SIGDN %x\n", sigdnName);
+            ret = E_FAIL;
+        }
+
+        IShellFolder_Release(psfparent);
+    }
+
+    return ret;
+}
+
 /**************************************************************************
  *
  *        internal functions

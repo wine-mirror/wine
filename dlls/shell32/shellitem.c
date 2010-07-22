@@ -178,11 +178,10 @@ static HRESULT WINAPI ShellItem_GetParent(IShellItem *iface, IShellItem **ppsi)
 static HRESULT WINAPI ShellItem_GetDisplayName(IShellItem *iface, SIGDN sigdnName,
     LPWSTR *ppszName)
 {
-    FIXME("(%p,%x,%p)\n", iface, sigdnName, ppszName);
+    ShellItem *This = (ShellItem*)iface;
+    TRACE("(%p,%x,%p)\n", iface, sigdnName, ppszName);
 
-    *ppszName = NULL;
-
-    return E_NOTIMPL;
+    return SHGetNameFromIDList(This->pidl, sigdnName, ppszName);
 }
 
 static HRESULT WINAPI ShellItem_GetAttributes(IShellItem *iface, SFGAOF sfgaoMask,

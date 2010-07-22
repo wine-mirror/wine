@@ -494,6 +494,8 @@ interface IShellItemArray : IUnknown
 
 }
 
+cpp_quote("HRESULT WINAPI SHGetNameFromIDList(PCIDLIST_ABSOLUTE pidl, SIGDN sigdnName, PWSTR *ppszName);")
+
 /*****************************************************************************
  * IShellItemFilter interface
  */
