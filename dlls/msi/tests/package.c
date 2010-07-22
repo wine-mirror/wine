@@ -36,6 +36,8 @@ char CURR_DIR[MAX_PATH];
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
+static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
@@ -44,6 +46,7 @@ static void init_functionpointers(void)
 {
     HMODULE hmsi = GetModuleHandleA("msi.dll");
     HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
     HMODULE hsrclient;
 
 #define GET_PROC(mod, func) \
@@ -52,6 +55,8 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiApplyMultiplePatchesA);
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
+    GET_PROC(hadvapi32, RegDeleteKeyExA)
+    GET_PROC(hkernel32, IsWow64Process)
 
     hsrclient = LoadLibraryA("srclient.dll");
     GET_PROC(hsrclient, SRRemoveRestorePoint);
@@ -59,6 +64,12 @@ static void init_functionpointers(void)
 #undef GET_PROC
 }
 
+static LONG delete_key( HKEY key, LPCSTR subkey, REGSAM access )
+{
+    if (pRegDeleteKeyExA)
+        return pRegDeleteKeyExA( key, subkey, access, 0 );
+    return RegDeleteKeyA( key, subkey );
+}
 
 static LPSTR get_user_sid(LPSTR *usersid)
 {
@@ -11559,6 +11570,8 @@ static void test_MsiGetProductProperty(void)
     LONG res;
     UINT r;
     SC_HANDLE scm;
+    REGSAM access = KEY_ALL_ACCESS;
+    BOOL wow64;
 
     scm = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
     if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
@@ -11572,6 +11585,9 @@ static void test_MsiGetProductProperty(void)
     lstrcatA(path, "\\");
 
     create_test_guid(prodcode, prod_squashed);
+
+    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+        access |= KEY_WOW64_64KEY;
 
     r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -11611,14 +11627,14 @@ static void test_MsiGetProductProperty(void)
     lstrcpyA(keypath, "Software\\Classes\\Installer\\Products\\");
     lstrcatA(keypath, prod_squashed);
 
-    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &prodkey);
+    res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\");
     lstrcatA(keypath, "Installer\\UserData\\S-1-5-18\\Products\\");
     lstrcatA(keypath, prod_squashed);
 
-    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &userkey);
+    res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &userkey, NULL);
     if (res == ERROR_ACCESS_DENIED)
     {
         skip("Not enough rights to perform tests\n");
@@ -11628,7 +11644,7 @@ static void test_MsiGetProductProperty(void)
     }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    res = RegCreateKeyA(userkey, "InstallProperties", &props);
+    res = RegCreateKeyExA(userkey, "InstallProperties", 0, NULL, 0, access, NULL, &props, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     lstrcpyA(val, path);
@@ -11763,11 +11779,11 @@ static void test_MsiGetProductProperty(void)
     MsiCloseHandle(hprod);
 
     RegDeleteValueA(props, "LocalPackage");
-    RegDeleteKeyA(props, "");
+    delete_key(props, "", access);
     RegCloseKey(props);
-    RegDeleteKeyA(userkey, "");
+    delete_key(userkey, "", access);
     RegCloseKey(userkey);
-    RegDeleteKeyA(prodkey, "");
+    delete_key(prodkey, "", access);
     RegCloseKey(prodkey);
     DeleteFileA(msifile);
 }
