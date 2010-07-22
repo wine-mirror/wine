@@ -14,9 +14,12 @@
 @ cdecl -i386 -norelay ??1bad_typeid@std@@UAE@XZ() msvcrt.??1bad_typeid@@UAE@XZ
 @ cdecl -i386 -norelay ??1exception@std@@UAE@XZ() msvcrt.??1exception@@UAE@XZ
 @ cdecl -i386 -norelay ??1type_info@@UAE@XZ() msvcrt.??1type_info@@UAE@XZ
-@ cdecl ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
-@ cdecl ??2@YAPAXIHPBDH@Z(long long str long) msvcrt.??2@YAPAXIHPBDH@Z
-@ cdecl ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
+@ cdecl -arch=win32 ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
+@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) msvcrt.??2@YAPEAX_K@Z
+@ cdecl -arch=win32 ??2@YAPAXIHPBDH@Z(long long str long) msvcrt.??2@YAPAXIHPBDH@Z
+@ cdecl -arch=win64 ??2@YAPEAX_KHPEBDH@Z(long long str long) msvcrt.??2@YAPEAX_KHPEBDH@Z
+@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) msvcrt.??3@YAXPAX@Z
+@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) msvcrt.??3@YAXPEAX@Z
 @ cdecl -i386 -norelay ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
 @ cdecl -i386 -norelay ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
 @ cdecl -i386 -norelay ??4bad_typeid@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4bad_typeid@@QAEAAV0@ABV0@@Z
@@ -30,9 +33,12 @@
 @ extern -i386 ??_7exception@std@@6B@ msvcrt.??_7exception@@6B@
 @ cdecl -i386 -norelay ??_Fbad_cast@std@@QAEXXZ() msvcrt.??_Fbad_cast@@QAEXXZ
 @ cdecl -i386 -norelay ??_Fbad_typeid@std@@QAEXXZ() msvcrt.??_Fbad_typeid@@QAEXXZ
-@ cdecl ??_U@YAPAXI@Z(long) msvcrt.??_U@YAPAXI@Z
-@ cdecl ??_U@YAPAXIHPBDH@Z(long long str long) msvcrt.??_U@YAPAXIHPBDH@Z
-@ cdecl ??_V@YAXPAX@Z(ptr) msvcrt.??_V@YAXPAX@Z
+@ cdecl -arch=win32 ??_U@YAPAXI@Z(long) msvcrt.??_U@YAPAXI@Z
+@ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) msvcrt.??_U@YAPEAX_K@Z
+@ cdecl -arch=win32 ??_U@YAPAXIHPBDH@Z(long long str long) msvcrt.??_U@YAPAXIHPBDH@Z
+@ cdecl -arch=win64 ??_U@YAPEAX_KHPEBDH@Z(long long str long) msvcrt.??_U@YAPEAX_KHPEBDH@Z
+@ cdecl -arch=win32 ??_V@YAXPAX@Z(ptr) msvcrt.??_V@YAXPAX@Z
+@ cdecl -arch=win64 ??_V@YAXPEAX@Z(ptr) msvcrt.??_V@YAXPEAX@Z
 @ stub ?_Name_base@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z
 @ stub ?_Name_base_internal@type_info@@CAPBDPBV1@PAU__type_info_node@@@Z
 @ stub ?_Type_info_dtor@type_info@@CAXPAV1@@Z

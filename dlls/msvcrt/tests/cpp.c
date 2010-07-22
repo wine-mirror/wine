@@ -180,7 +180,7 @@ static void* do_call_func2(void *func, void *_this, const void* arg)
 
 /* Some exports are only available in later versions */
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
-#define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
+#define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 
 static void InitFunctionPtrs(void)
 {
@@ -190,8 +190,16 @@ static void InitFunctionPtrs(void)
   ok(hMsvcrt != 0, "GetModuleHandleA failed\n");
   if (hMsvcrt)
   {
-    SETNOFAIL(poperator_new, "??_U@YAPAXI@Z");
-    SETNOFAIL(poperator_delete, "??_V@YAXPAX@Z");
+    if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
+    {
+        SETNOFAIL(poperator_new, "??_U@YAPEAX_K@Z");
+        SETNOFAIL(poperator_delete, "??_V@YAXPEAX@Z");
+    }
+    else
+    {
+        SETNOFAIL(poperator_new, "??_U@YAPAXI@Z");
+        SETNOFAIL(poperator_delete, "??_V@YAXPAX@Z");
+    }
     SET(pmalloc, "malloc");
     SET(pfree, "free");
 
