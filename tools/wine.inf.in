@@ -2505,6 +2505,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dsound.dll,1
 11,,dswave.dll,1
 11,,dxdiagn.dll,1
+11,,gameux.dll,1
 11,,hhctrl.ocx,1
 11,,hlink.dll,1
 11,,hnetcfg.dll,1
