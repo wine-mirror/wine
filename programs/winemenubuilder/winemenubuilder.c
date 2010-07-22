@@ -749,6 +749,64 @@ static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName,
     return FALSE;
 }
 
+static BOOL reassemble_and_save_to_png(GRPICONDIRENTRY *grpIconDirEntry, BITMAPINFO *pIcon,
+    const char *pngFileName, LPCWSTR commentW)
+{
+    SIZE_T size;
+    HGLOBAL hGlobal = NULL;
+    IStream *stream = NULL;
+    char *p;
+    ICONDIR *pIconDir;
+    ICONDIRENTRY *pIconDirEntry;
+    HRESULT hr = E_FAIL;
+
+    size = sizeof(ICONDIR) + sizeof(ICONDIRENTRY) + grpIconDirEntry->dwBytesInRes;
+    hGlobal = GlobalAlloc(GMEM_MOVEABLE, size);
+    if (hGlobal == NULL)
+    {
+        WINE_ERR("out of memory allocating icon\n");
+        goto end;
+    }
+
+    p = GlobalLock(hGlobal);
+    pIconDir = (ICONDIR*)p;
+    pIconDir->idReserved = 0;
+    pIconDir->idType = 1;
+    pIconDir->idCount = 1;
+    p += sizeof(ICONDIR);
+    pIconDirEntry = (ICONDIRENTRY*)p;
+    pIconDirEntry->bWidth = grpIconDirEntry->bWidth;
+    pIconDirEntry->bHeight = grpIconDirEntry->bHeight;
+    pIconDirEntry->bColorCount = grpIconDirEntry->bColorCount;
+    pIconDirEntry->bReserved = grpIconDirEntry->bReserved;
+    pIconDirEntry->wPlanes = grpIconDirEntry->wPlanes;
+    pIconDirEntry->wBitCount = grpIconDirEntry->wBitCount;
+    pIconDirEntry->dwBytesInRes = grpIconDirEntry->dwBytesInRes;
+    pIconDirEntry->dwImageOffset = sizeof(ICONDIR) + sizeof(ICONDIRENTRY);
+    p += sizeof(ICONDIRENTRY);
+    memcpy(p, pIcon, grpIconDirEntry->dwBytesInRes);
+    GlobalUnlock(hGlobal);
+
+    hr = CreateStreamOnHGlobal(hGlobal, FALSE, &stream);
+    if (FAILED(hr))
+    {
+        WINE_ERR("could not create stream on icon hglobal, error 0x%08X\n", hr);
+        goto end;
+    }
+
+    if (SaveIconStreamAsPNG(stream, 0, pngFileName, commentW))
+        hr = S_OK;
+    else
+        hr = E_FAIL;
+
+end:
+    if (hGlobal)
+        GlobalFree(hGlobal);
+    if (stream)
+        IStream_Release(stream);
+    return SUCCEEDED(hr);
+}
+
 static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCWSTR lpszType, LPWSTR lpszName, LONG_PTR lParam)
 {
     ENUMRESSTRUCT *sEnumRes = (ENUMRESSTRUCT *) lParam;
@@ -773,6 +831,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
     ENUMRESSTRUCT sEnumRes;
     int nMax = 0;
     int nMaxBits = 0;
+    GRPICONDIRENTRY iconDirEntry = {0};
     int i;
     BOOL ret = FALSE;
 
@@ -823,6 +882,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
 			    lpName = MAKEINTRESOURCEW(pIconDir->idEntries[i].nID);
 			    nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
 			    nMaxBits = pIconDir->idEntries[i].wBitCount;
+			    iconDirEntry = pIconDir->idEntries[i];
 			}
 		    }
                 }
@@ -844,11 +904,9 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
         {
             if ((pIcon = LockResource(hResData)))
             {
-#ifdef SONAME_LIBPNG
-                if (SaveIconResAsPNG(pIcon, szXPMFileName, szFileName))
+                if (reassemble_and_save_to_png(&iconDirEntry, pIcon, szXPMFileName, szFileName))
                     ret = TRUE;
                 else
-#endif
                 {
                     memcpy(szXPMFileName + strlen(szXPMFileName) - 3, "xpm", 3);
                     if (SaveIconResAsXPM(pIcon, szXPMFileName, szFileName))
