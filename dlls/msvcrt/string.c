@@ -169,6 +169,7 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
     int exp=0, sign=1;
     const char *p;
     double ret;
+    BOOL found_digit = FALSE;
 
     if(!str) {
         MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
@@ -191,6 +192,7 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
         p++;
 
     while(isdigit(*p)) {
+        found_digit = TRUE;
         hlp = d*10+*(p++)-'0';
         if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
             exp++;
@@ -207,6 +209,7 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
         p++;
 
     while(isdigit(*p)) {
+        found_digit = TRUE;
         hlp = d*10+*(p++)-'0';
         if(d>MSVCRT_UI64_MAX/10 || hlp<d)
             break;
@@ -217,7 +220,7 @@ double CDECL MSVCRT_strtod_l( const char *str, char **end, MSVCRT__locale_t loca
     while(isdigit(*p))
         p++;
 
-    if(p == str) {
+    if(!found_digit) {
         if(end)
             *end = (char*)str;
         return 0.0;

@@ -1096,6 +1096,7 @@ static void test__strtod(void)
     const char double4[] = ".21e12";
     const char double5[] = "214353e-3";
     const char overflow[] = "1d9999999999999999999";
+    const char white_chars[] = "  d10";
 
     char *end;
     double d;
@@ -1122,6 +1123,10 @@ static void test__strtod(void)
 
     d = strtod("12.1d2", NULL);
     ok(almost_equal(d, 12.1e2), "d = %lf\n", d);
+
+    d = strtod(white_chars, &end);
+    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(end == white_chars, "incorrect end (%d)\n", (int)(end-white_chars));
 
     /* Set locale with non '.' decimal point (',') */
     if(!setlocale(LC_ALL, "Polish")) {
