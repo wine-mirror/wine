@@ -1149,7 +1149,7 @@ UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
 
         res = RegDeleteTreeW( HKEY_CLASSES_ROOT, progid->ProgID );
         if (res != ERROR_SUCCESS)
-            WARN("Failed to delete progid key %d\n", res);
+            TRACE("Failed to delete progid key %d\n", res);
 
         uirow = MSI_CreateRecord( 1 );
         MSI_RecordSetStringW( uirow, 1, progid->ProgID );
