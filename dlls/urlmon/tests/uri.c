@@ -684,6 +684,90 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Valid since the '*' is the only character in the scheme name. */
+    {   "*:www.winehq.org/test", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_HOST|
+        Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|
+        Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"*:www.winehq.org/test",S_OK,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"*:www.winehq.org/test",S_OK,TRUE},
+            {"winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE},
+            {"www.winehq.org",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"/test",S_OK,TRUE},
+            {"/test",S_OK,TRUE},
+            {"",S_FALSE,TRUE},
+            {"*:www.winehq.org/test",S_OK,FALSE},
+            {"*",S_OK,FALSE},
+            {"",S_FALSE,TRUE},
+            {"",S_FALSE,TRUE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,TRUE},
+            {0,S_FALSE,TRUE},
+            {URL_SCHEME_WILDCARD,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not valid since a '*' is only allowed to appear if its the only character in scheme. */
+    {   "*abcd://not.valid.com", 0, E_INVALIDARG, FALSE,
+        0, TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Not valid since a '*' is only allowed to appear if its the only character in scheme. */
+    {   "*a*b*c*d://not.valid.com", 0, E_INVALIDARG, FALSE,
+        0, TRUE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_FALSE,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_INVALID,S_FALSE,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     {   "/../some dir/test.ext", Uri_CREATE_ALLOW_RELATIVE, S_OK, FALSE,
         Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
         Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,

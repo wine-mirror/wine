@@ -116,7 +116,13 @@ static BOOL parse_scheme_name(const WCHAR **ptr, parse_data *data) {
     data->scheme_len = 0;
 
     while(**ptr) {
-        if(!is_num(**ptr) && !is_alpha(**ptr) && **ptr != '+' &&
+        if(**ptr == '*' && *ptr == start) {
+            /* Might have found a wildcard scheme. If it is the next
+             * char has to be a ':' for it to be a valid URI
+             */
+            ++(*ptr);
+            break;
+        } else if(!is_num(**ptr) && !is_alpha(**ptr) && **ptr != '+' &&
            **ptr != '-' && **ptr != '.')
             break;
 
