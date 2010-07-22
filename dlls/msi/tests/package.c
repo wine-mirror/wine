@@ -701,22 +701,26 @@ static MSIHANDLE create_package_db(void)
     return hdb;
 }
 
-static MSIHANDLE package_from_db(MSIHANDLE hdb)
+static UINT package_from_db(MSIHANDLE hdb, MSIHANDLE *handle)
 {
     UINT res;
-    CHAR szPackage[10];
+    CHAR szPackage[12];
     MSIHANDLE hPackage;
 
-    sprintf(szPackage,"#%i",hdb);
-    res = MsiOpenPackage(szPackage,&hPackage);
+    sprintf(szPackage, "#%u", hdb);
+    res = MsiOpenPackage(szPackage, &hPackage);
     if (res != ERROR_SUCCESS)
-        return 0;
+        return res;
 
     res = MsiCloseHandle(hdb);
     if (res != ERROR_SUCCESS)
-        return 0;
+    {
+        MsiCloseHandle(hPackage);
+        return res;
+    }
 
-    return hPackage;
+    *handle = hPackage;
+    return ERROR_SUCCESS;
 }
 
 static void create_test_file(const CHAR *name)
@@ -820,8 +824,8 @@ static void test_createpackage(void)
     MSIHANDLE hPackage = 0;
     UINT res;
 
-    hPackage = package_from_db(create_package_db());
-    ok( hPackage != 0, " Failed to create package\n");
+    res = package_from_db(create_package_db(), &hPackage);
+    ok( res == ERROR_SUCCESS, " Failed to create package %u\n", res );
 
     res = MsiCloseHandle( hPackage);
     ok( res == ERROR_SUCCESS , "Failed to close package\n" );
@@ -836,8 +840,8 @@ static void test_doaction( void )
     r = MsiDoAction( -1, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
 
-    hpkg = package_from_db(create_package_db());
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db(create_package_db(), &hpkg);
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiDoAction(hpkg, NULL);
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
@@ -862,8 +866,8 @@ static void test_gettargetpath_bad(void)
     DWORD sz;
     UINT r;
 
-    hpkg = package_from_db(create_package_db());
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db(create_package_db(), &hpkg);
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiGetTargetPath( 0, NULL, NULL, NULL );
     ok( r == ERROR_INVALID_PARAMETER, "wrong return val\n");
@@ -982,8 +986,8 @@ static void test_settargetpath(void)
     r = add_file_entry( hdb, "'TestFile', 'TestComp', 'testfile.txt', 0, '', '1033', 8192, 1" );
     ok( r == S_OK, "cannot add file to the File table: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
@@ -1074,8 +1078,8 @@ static void test_condition(void)
     MSICONDITION r;
     MSIHANDLE hpkg;
 
-    hpkg = package_from_db(create_package_db());
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db(create_package_db(), &hpkg);
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiEvaluateCondition(0, NULL);
     ok( r == MSICONDITION_ERROR, "wrong return val\n");
@@ -1821,8 +1825,8 @@ static void test_props(void)
             "VALUES( 'MetadataCompName', 'Photoshop.dll' )");
     ok( r == ERROR_SUCCESS , "Failed\n" );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     /* test invalid values */
     r = MsiGetProperty( 0, NULL, NULL, NULL );
@@ -2025,8 +2029,8 @@ static void test_property_table(void)
     hdb = create_package_db();
     ok( hdb, "failed to create package\n");
 
-    hpkg = package_from_db(hdb);
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
 
@@ -2079,8 +2083,8 @@ static void test_property_table(void)
     r = add_property_entry(hdb, "'prop', 'val'");
     ok(r == ERROR_SUCCESS, "cannot add property: %d\n", r);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
 
@@ -2285,8 +2289,8 @@ static void test_formatrecord2(void)
     DWORD sz;
     UINT r;
 
-    hpkg = package_from_db(create_package_db());
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db(create_package_db(), &hpkg);
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     r = MsiSetProperty(hpkg, "Manufacturer", " " );
     ok( r == ERROR_SUCCESS, "set property failed\n");
@@ -2707,8 +2711,8 @@ static void test_states(void)
     r = add_property_entry( hdb, "'REINSTALLMODE', 'omus'");
     ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle(hdb);
 
@@ -3615,8 +3619,8 @@ static void test_states(void)
     r = add_property_entry( hdb, "'REINSTALL', 'eight,nine,ten'");
     ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle(hdb);
 
@@ -4507,8 +4511,8 @@ static void test_states(void)
     r = add_property_entry( hdb, "'ADDLOCAL', 'one,two,three,four,five,six,seven,eight,nine,ten'");
     ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -5404,8 +5408,8 @@ static void test_states(void)
     r = add_property_entry( hdb, "'ADDSOURCE', 'one,two,three,four,five,six,seven,eight,nine,ten'");
     ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -6297,8 +6301,8 @@ static void test_states(void)
     r = add_property_entry( hdb, "'ADDSOURCE', 'one,two,three,four,five,six,seven,eight,nine,ten'");
     ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     state = 0xdeadbee;
     action = 0xdeadbee;
@@ -7197,8 +7201,8 @@ static void test_getproperty(void)
     DWORD size;
     UINT r;
 
-    hPackage = package_from_db(create_package_db());
-    ok( hPackage != 0, " Failed to create package\n");
+    r = package_from_db(create_package_db(), &hPackage);
+    ok( r == ERROR_SUCCESS, "Failed to create package %u\n", r );
 
     /* set the property */
     r = MsiSetProperty(hPackage, "Name", "Value");
@@ -7318,8 +7322,8 @@ static void test_removefiles(void)
     r = create_remove_file_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create Remove File table: %d\n", r);
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
 
@@ -7406,8 +7410,8 @@ static void test_appsearch(void)
     r = add_signature_entry( hdb, "'NewSignature1', 'FileName', '', '', '', '', '', '', ''" );
     ok( r == ERROR_SUCCESS, "cannot create Signature table: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
 
@@ -7598,8 +7602,8 @@ static void test_appsearch_complocator(void)
     r = add_signature_entry(hdb, "'NewSignature12', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "Expected a valid package handle\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
     r = MsiSetPropertyA(hpkg, "SIGPROP8", "october");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8144,8 +8148,8 @@ static void test_appsearch_reglocator(void)
     r = add_signature_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "Expected a valid package handle\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8565,8 +8569,8 @@ static void test_appsearch_inilocator(void)
     r = add_signature_entry(hdb, "'NewSignature12', 'ignored', '1.1.1.1', '2.1.1.1', '', '', '', '', ''");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "Expected a valid package handle\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8861,8 +8865,8 @@ static void test_appsearch_drlocator(void)
     r = add_signature_entry(hdb, str);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "Expected a valid package handle\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -9123,8 +9127,8 @@ static void test_featureparents(void)
     r = add_file_entry( hdb, "'hydrus_file', 'hydrus', 'hydrus.txt', 0, '', '1033', 8192, 1" );
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
 
@@ -9375,8 +9379,8 @@ static void test_installprops(void)
     hdb = create_package_db();
     ok( hdb, "failed to create database\n");
 
-    hpkg = package_from_db(hdb);
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle(hdb);
 
@@ -9496,8 +9500,8 @@ static void test_launchconditions(void)
     r = add_launchcondition_entry( hdb, "'X != \"1\"', 'one'" );
     ok( r == ERROR_SUCCESS, "cannot add launch condition: %d\n", r );
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
 
@@ -9555,8 +9559,8 @@ static void test_ccpsearch(void)
     r = create_signature_table(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
 
@@ -9711,8 +9715,8 @@ static void test_complocator(void)
     r = add_signature_entry(hdb, "'labocania', 'labocania', '', '', '', '', '', '', ''");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
 
@@ -9942,8 +9946,8 @@ static void test_MsiGetSourcePath(void)
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS , "Failed to commit database\n");
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
 
@@ -10298,8 +10302,8 @@ static void test_MsiGetSourcePath(void)
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, msidbSumInfoSourceTypeCompressed);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     /* try TARGETDIR */
     size = MAX_PATH;
@@ -10632,8 +10636,8 @@ static void test_shortlongsource(void)
 
     MsiDatabaseCommit(hdb);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
 
@@ -10772,8 +10776,8 @@ static void test_shortlongsource(void)
 
     set_suminfo_prop(hdb, PID_WORDCOUNT, msidbSumInfoSourceTypeSFN);
 
-    hpkg = package_from_db(hdb);
-    ok(hpkg, "failed to create package\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
 
@@ -11796,8 +11800,8 @@ static void test_MsiSetProperty(void)
     DWORD size;
     UINT r;
 
-    hpkg = package_from_db(create_package_db());
-    ok(hpkg != 0, "Expected a valid package\n");
+    r = package_from_db(create_package_db(), &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected a valid package %u\n", r);
 
     /* invalid hInstall */
     r = MsiSetPropertyA(0, "Prop", "Val");

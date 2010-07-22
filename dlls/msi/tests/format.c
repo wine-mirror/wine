@@ -222,20 +222,26 @@ static MSIHANDLE create_package_db(void)
     return hdb;
 }
 
-static MSIHANDLE package_from_db(MSIHANDLE hdb)
+static UINT package_from_db(MSIHANDLE hdb, MSIHANDLE *handle)
 {
     UINT res;
-    CHAR szPackage[10];
+    CHAR szPackage[12];
     MSIHANDLE hPackage;
 
-    sprintf(szPackage,"#%i",hdb);
-    res = MsiOpenPackage(szPackage,&hPackage);
-    ok( res == ERROR_SUCCESS , "Failed to open package\n" );
+    sprintf(szPackage, "#%u", hdb);
+    res = MsiOpenPackage(szPackage, &hPackage);
+    if (res != ERROR_SUCCESS)
+        return res;
 
     res = MsiCloseHandle(hdb);
-    ok( res == ERROR_SUCCESS , "Failed to close db handle\n" );
+    if (res != ERROR_SUCCESS)
+    {
+        MsiCloseHandle(hPackage);
+        return res;
+    }
 
-    return hPackage;
+    *handle = hPackage;
+    return ERROR_SUCCESS;
 }
 
 static void create_test_file(const CHAR *name)
@@ -250,13 +256,10 @@ static void create_test_file(const CHAR *name)
     CloseHandle(file);
 }
 
-static MSIHANDLE helper_createpackage( const char *szName )
+static UINT helper_createpackage( const char *szName, MSIHANDLE *handle )
 {
-    MSIHANDLE hdb = 0;
+    MSIHANDLE hPackage, suminfo, hdb = 0;
     UINT res;
-    CHAR szPackage[10];
-    MSIHANDLE hPackage;
-    MSIHANDLE suminfo;
 
     DeleteFile(szName);
 
@@ -303,14 +306,11 @@ static MSIHANDLE helper_createpackage( const char *szName )
     res = MsiCloseHandle( suminfo);
     ok( res == ERROR_SUCCESS , "Failed to close suminfo\n" );
 
-    sprintf(szPackage,"#%i",hdb);
-    res = MsiOpenPackage(szPackage,&hPackage);
-    ok( res == ERROR_SUCCESS , "Failed to open package\n" );
+    res = package_from_db( hdb, &hPackage );
+    ok( res == ERROR_SUCCESS, "failed to create package %u\n", res );
 
-    res = MsiCloseHandle( hdb );
-    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
-
-    return hPackage;
+    *handle = hPackage;
+    return res;
 }
 
 static void test_createpackage(void)
@@ -318,11 +318,11 @@ static void test_createpackage(void)
     MSIHANDLE hPackage = 0;
     UINT res;
 
-    hPackage = helper_createpackage( msifile );
-    ok ( hPackage != 0, " Failed to create package\n");
+    res = helper_createpackage( msifile, &hPackage );
+    ok( res == ERROR_SUCCESS, "Failed to create package %u\n", res );
 
-    res = MsiCloseHandle( hPackage);
-    ok( res == ERROR_SUCCESS , "Failed to close package\n" );
+    res = MsiCloseHandle( hPackage );
+    ok( res == ERROR_SUCCESS , "Failed to close package %u\n", res );
 
     DeleteFile( msifile );
 }
@@ -1625,8 +1625,8 @@ static void test_formatrecord_package(void)
     UINT r;
     DWORD sz=100;
 
-    package = helper_createpackage( msifile );
-    ok(package!=0, "Unable to create package\n");
+    r = helper_createpackage( msifile, &package );
+    ok( r == ERROR_SUCCESS, "Unable to create package %u\n", r );
 
     hrec = MsiCreateRecord(12);
     ok( hrec, "failed to create record\n");
@@ -2120,7 +2120,7 @@ static void test_formatrecord_package(void)
 
 static void test_formatrecord_tables(void)
 {
-    MSIHANDLE hdb, hpkg, hrec;
+    MSIHANDLE hdb, hrec, hpkg = 0;
     CHAR buf[MAX_PATH];
     CHAR curr_dir[MAX_PATH];
     CHAR expected[MAX_PATH];
@@ -2197,8 +2197,8 @@ static void test_formatrecord_tables(void)
     r = add_custom_action_entry( hdb, "'EscapeIt3', 51, 'prop', '[abcd\\xefgh]'" );
     ok( r == ERROR_SUCCESS, "cannt add custom action: %d\n", r);
 
-    hpkg = package_from_db( hdb );
-    ok( hpkg, "failed to create package\n");
+    r = package_from_db( hdb, &hpkg );
+    ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
 
@@ -2381,12 +2381,11 @@ static void test_formatrecord_tables(void)
 
 static void test_processmessage(void)
 {
-    MSIHANDLE hrec;
-    MSIHANDLE package;
-    int r;
+    MSIHANDLE hrec, package;
+    UINT r;
 
-    package = helper_createpackage( msifile );
-    ok(package!=0, "Unable to create package\n");
+    r = helper_createpackage( msifile, &package );
+    ok( r == ERROR_SUCCESS, "Unable to create package %u\n", r );
 
     hrec = MsiCreateRecord(3);
     ok( hrec, "failed to create record\n");

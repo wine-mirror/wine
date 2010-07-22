@@ -2923,27 +2923,31 @@ static MSIHANDLE create_package_db(LPCSTR filename)
     return hdb;
 }
 
-static MSIHANDLE package_from_db(MSIHANDLE hdb)
+static UINT package_from_db(MSIHANDLE hdb, MSIHANDLE *handle)
 {
     UINT res;
-    CHAR szPackage[10];
+    CHAR szPackage[12];
     MSIHANDLE hPackage;
 
-    sprintf(szPackage,"#%i",hdb);
-    res = MsiOpenPackage(szPackage,&hPackage);
+    sprintf(szPackage, "#%u", hdb);
+    res = MsiOpenPackage(szPackage, &hPackage);
     if (res != ERROR_SUCCESS)
-        return 0;
+        return res;
 
     res = MsiCloseHandle(hdb);
     if (res != ERROR_SUCCESS)
-        return 0;
+    {
+        MsiCloseHandle(hPackage);
+        return res;
+    }
 
-    return hPackage;
+    *handle = hPackage;
+    return ERROR_SUCCESS;
 }
 
 static void test_try_transform(void)
 {
-    MSIHANDLE hdb, hview, hrec, hpkg;
+    MSIHANDLE hdb, hview, hrec, hpkg = 0;
     LPCSTR query;
     UINT r;
     DWORD sz;
@@ -3117,8 +3121,8 @@ static void test_try_transform(void)
     MsiCloseHandle(hview);
 
     /* check that the property was added */
-    hpkg = package_from_db(hdb);
-    ok(hpkg != 0, "Expected non-NULL hpkg\n");
+    r = package_from_db(hdb, &hpkg);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     sz = MAX_PATH;
     r = MsiGetProperty(hpkg, "prop", buffer, &sz);
