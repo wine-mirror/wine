@@ -64,6 +64,9 @@ static BOOL    (WINAPI *pSHSetIniStringW)(LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR);
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
 
+static HMODULE hshell32;
+static HRESULT (WINAPI *pSHGetDesktopFolder)(IShellFolder**);
+
 static const CHAR ie_international[] = {
     'S','o','f','t','w','a','r','e','\\',
     'M','i','c','r','o','s','o','f','t','\\',
@@ -2514,7 +2517,7 @@ static void test_SHIShellFolder_EnumObjects(void)
     ok(enm == (IEnumIDList*)0xcafebabe, "Didn't get expected enumerator location, instead: %p\n", enm);
 
     /* SHIShellFolder_EnumObjects isn't strict about the IShellFolder object */
-    hres = SHGetDesktopFolder(&folder);
+    hres = pSHGetDesktopFolder(&folder);
     ok(hres == S_OK, "SHGetDesktopFolder failed: 0x%08x\n", hres);
 
     enm = NULL;
@@ -2696,6 +2699,9 @@ START_TEST(ordinal)
     hmlang = LoadLibraryA("mlang.dll");
     pLcidToRfc1766A = (void *)GetProcAddress(hmlang, "LcidToRfc1766A");
 
+    hshell32 = LoadLibraryA("shell32.dll");
+    pSHGetDesktopFolder = (void *)GetProcAddress(hshell32, "SHGetDesktopFolder");
+
     test_GetAcceptLanguagesA();
     test_SHSearchMapInt();
     test_alloc_shared();
@@ -2714,4 +2720,7 @@ START_TEST(ordinal)
     test_SHIShellFolder_EnumObjects();
     test_SHGetIniString();
     test_SHSetIniString();
+
+    FreeLibrary(hshell32);
+    FreeLibrary(hmlang);
 }
