@@ -1020,6 +1020,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRING *nt )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\','A',':','\\'};
+    static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x'};
     unsigned int lenW, lenA = name->Length;
     const char *path = name->Buffer;
     char *cwd;
@@ -1057,7 +1058,29 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const ANSI_STRING *name, UNICODE_STRIN
         lenA -= (path - name->Buffer);
     }
 
-    if (status != STATUS_SUCCESS) goto done;
+    if (status != STATUS_SUCCESS)
+    {
+        if (status == STATUS_OBJECT_PATH_NOT_FOUND)
+        {
+            lenW = ntdll_umbstowcs( 0, path, lenA, NULL, 0 );
+            nt->Buffer = RtlAllocateHeap( GetProcessHeap(), 0,
+                                          (lenW + 1) * sizeof(WCHAR) + sizeof(unix_prefixW) );
+            if (nt->Buffer == NULL)
+            {
+                status = STATUS_NO_MEMORY;
+                goto done;
+            }
+            memcpy( nt->Buffer, unix_prefixW, sizeof(unix_prefixW) );
+            ntdll_umbstowcs( 0, path, lenA, nt->Buffer + sizeof(unix_prefixW)/sizeof(WCHAR), lenW );
+            lenW += sizeof(unix_prefixW)/sizeof(WCHAR);
+            nt->Buffer[lenW] = 0;
+            nt->Length = lenW * sizeof(WCHAR);
+            nt->MaximumLength = nt->Length + sizeof(WCHAR);
+            for (p = nt->Buffer + sizeof(unix_prefixW)/sizeof(WCHAR); *p; p++) if (*p == '/') *p = '\\';
+            status = STATUS_SUCCESS;
+        }
+        goto done;
+    }
     while (lenA && path[0] == '/') { lenA--; path++; }
 
     lenW = ntdll_umbstowcs( 0, path, lenA, NULL, 0 );
