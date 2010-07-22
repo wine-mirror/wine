@@ -39,7 +39,7 @@
     ok(rough_match(_pt.y, _y), "expected y %d, got %d\n", (_y), _pt.y); \
 }
 
-#define expect_world_trasform(_hdc, _em11, _em22) \
+#define expect_world_transform(_hdc, _em11, _em22) \
 { \
     BOOL _ret; \
     XFORM _xform; \
@@ -105,7 +105,7 @@ static void test_world_transform(void)
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
-    expect_world_trasform(hdc, 1.0, 1.0);
+    expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
     SetLastError(0xdeadbeef);
@@ -128,7 +128,7 @@ static void test_world_transform(void)
             rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
             "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     }
-    expect_world_trasform(hdc, 1.0, 1.0);
+    expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, MulDiv(1000 / 10, res_x, size_cx), -MulDiv(1000 / 10, res_y, size_cy));
 
     SetLastError(0xdeadbeef);
@@ -137,7 +137,7 @@ static void test_world_transform(void)
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
-    expect_world_trasform(hdc, 1.0, 1.0);
+    expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
     ret = SetGraphicsMode(hdc, GM_ADVANCED);
@@ -150,7 +150,7 @@ static void test_world_transform(void)
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
-    expect_world_trasform(hdc, 1.0, 1.0);
+    expect_world_transform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
     /* The transform must conform to (eM11 * eM22 != eM12 * eM21) requirement */
@@ -177,7 +177,7 @@ static void test_world_transform(void)
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
-    expect_world_trasform(hdc, 20.0, 20.0);
+    expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
     SetLastError(0xdeadbeef);
@@ -192,7 +192,7 @@ static void test_world_transform(void)
     ok( rough_match( size.cy, size_cy * 10 ) ||
         rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
         "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
-    expect_world_trasform(hdc, 20.0, 20.0);
+    expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, MulDiv(20000, res_x, size.cx), -MulDiv(20000, res_y, size.cy));
 
     SetLastError(0xdeadbeef);
@@ -201,7 +201,7 @@ static void test_world_transform(void)
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
-    expect_world_trasform(hdc, 20.0, 20.0);
+    expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
     ret = SetGraphicsMode(hdc, GM_COMPATIBLE);
@@ -211,7 +211,7 @@ static void test_world_transform(void)
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
-    expect_world_trasform(hdc, 20.0, 20.0);
+    expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
     DeleteDC(hdc);
