@@ -96,6 +96,44 @@ static HWND subclass_listview(HWND hwnd)
     return listview;
 }
 
+static UINT get_msg_count(struct msg_sequence **seq, int sequence_index, UINT message)
+{
+    struct msg_sequence *msg_seq = seq[sequence_index];
+    UINT i, count = 0;
+
+    for(i = 0; i < msg_seq->count ; i++)
+        if(msg_seq->sequence[i].message == message)
+            count++;
+
+    return count;
+}
+
+/* Checks that every message in the sequence seq is also present in
+ * the UINT array msgs */
+static void verify_msgs_in_(struct msg_sequence *seq, const UINT *msgs,
+                           const char *file, int line)
+{
+    UINT i, j, msg, failcount = 0;
+    for(i = 0; i < seq->count; i++)
+    {
+        BOOL found = FALSE;
+        msg = seq->sequence[i].message;
+        for(j = 0; msgs[j] != 0; j++)
+            if(msgs[j] == msg) found = TRUE;
+
+        if(!found)
+        {
+            failcount++;
+            trace("Unexpected message %d\n", msg);
+        }
+    }
+    ok_(file, line) (!failcount, "%d failures.\n", failcount);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+}
+
+#define verify_msgs_in(seq, msgs)               \
+    verify_msgs_in_(seq, msgs, __FILE__, __LINE__)
+
 /* dummy IDataObject implementation */
 typedef struct {
     const IDataObjectVtbl *lpVtbl;
@@ -753,6 +791,308 @@ static void test_IOleWindow(void)
     IShellFolder_Release(desktop);
 }
 
+static const struct message folderview_setcurrentviewmode1_2_prevista[] = {
+    { LVM_SETVIEW, sent|wparam, LV_VIEW_ICON},
+    { LVM_SETIMAGELIST, sent|wparam, 0},
+    { LVM_SETIMAGELIST, sent|wparam, 1},
+    { 0x105a, sent},
+    { LVM_SETBKIMAGEW, sent|optional},    /* w2k3 */
+    { LVM_GETBKCOLOR, sent|optional},     /* w2k3 */
+    { LVM_GETTEXTBKCOLOR, sent|optional}, /* w2k3 */
+    { LVM_GETTEXTCOLOR, sent|optional},   /* w2k3 */
+    { LVM_SETEXTENDEDLISTVIEWSTYLE, sent|optional|wparam, 0xc8}, /* w2k3 */
+    { LVM_ARRANGE, sent },
+    { LVM_ARRANGE, sent|optional },       /* WinXP */
+    { 0 }
+};
+
+static const struct message folderview_setcurrentviewmode3_prevista[] = {
+    { LVM_SETVIEW, sent|wparam, LV_VIEW_LIST},
+    { LVM_SETIMAGELIST, sent|wparam, 0},
+    { LVM_SETIMAGELIST, sent|wparam, 1},
+    { 0x105a, sent},
+    { LVM_SETBKIMAGEW, sent|optional},    /* w2k3 */
+    { LVM_GETBKCOLOR, sent|optional},     /* w2k3 */
+    { LVM_GETTEXTBKCOLOR, sent|optional}, /* w2k3 */
+    { LVM_GETTEXTCOLOR, sent|optional},   /* w2k3 */
+    { LVM_SETEXTENDEDLISTVIEWSTYLE, sent|optional|wparam, 0xc8}, /* w2k3 */
+    { 0 }
+};
+
+static const struct message folderview_setcurrentviewmode4_prevista[] = {
+    { LVM_GETHEADER, sent},
+    { LVM_GETITEMCOUNT, sent},
+    { LVM_SETSELECTEDCOLUMN, sent},
+    { WM_NOTIFY, sent },
+    { WM_NOTIFY, sent },
+    { WM_NOTIFY, sent },
+    { WM_NOTIFY, sent },
+    { LVM_SETVIEW, sent|wparam, LV_VIEW_DETAILS},
+    { LVM_SETIMAGELIST, sent|wparam, 0},
+    { LVM_SETIMAGELIST, sent|wparam, 1},
+    { 0x105a, sent},
+    { LVM_SETBKIMAGEW, sent|optional},    /* w2k3 */
+    { LVM_GETBKCOLOR, sent|optional},     /* w2k3 */
+    { LVM_GETTEXTBKCOLOR, sent|optional}, /* w2k3 */
+    { LVM_GETTEXTCOLOR, sent|optional},   /* w2k3 */
+    { LVM_SETEXTENDEDLISTVIEWSTYLE, sent|optional|wparam, 0xc8}, /* w2k3 */
+    { 0 }
+};
+
+/* XP, SetCurrentViewMode(5)
+   108e - LVM_SETVIEW (LV_VIEW_ICON);
+   1036 - LVM_SETEXTEDEDLISTVIEWSTYLE (0x8000, 0)
+   100c/104c repeated X times
+   1003 - LVM_SETIMAGELIST
+   1035 - LVM_SETICONSPACING
+   1004 - LVM_GETITEMCOUNT
+   105a - ?
+   1016 - LVM_ARRANGE
+   1016 - LVM_ARRANGE
+*/
+
+/* XP, SetCurrentViewMode(6)
+   1036 - LVM_SETEXTENDEDLISTVIEWSTYLE (0x8000, 0)
+   1035 - LVM_SETICONSPACING
+   1003 - LVM_SETIMAGELIST
+   1003 - LVM_SETIMAGELIST
+   100c/104c repeated X times
+   10a2 - LVM_SETTILEVIEWINFO
+   108e - LVM_SETVIEW (LV_VIEW_TILE)
+   1003 - LVM_SETIMAGELIST
+   105a - ?
+   1016 - LVM_ARRANGE
+   1016 - LVM_ARRANGE
+*/
+
+/* XP, SetCurrentViewMode (7)
+   10a2 - LVM_SETTILEVIEWINFO
+   108e - LVM_SETVIEW (LV_VIEW_ICON)
+   1004/10a4 (LVM_GETITEMCOUNT/LVM_SETTILEINFO) X times
+   1016 - LVM_ARRANGE
+   1016 - LVM_ARRANGE
+   ...
+   LVM_SETEXTENDEDLISTVIEWSTYLE (0x40000, 0x40000)
+   ...
+   LVM_SETEXTENDEDLISTVIEWSTYLE (0x8000, 0x8000)
+*/
+
+static void test_GetSetCurrentViewMode(void)
+{
+    IShellFolder *desktop;
+    IShellView *sview;
+    IFolderView *fview;
+    IShellBrowser *browser;
+    FOLDERSETTINGS fs;
+    UINT viewmode;
+    HWND hwnd;
+    RECT rc = {0, 0, 10, 10};
+    HRESULT hr;
+    UINT i;
+    static const int winxp_res[11] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    static const int win2k3_res[11] = {0, 1, 2, 3, 4, 5, 6, 5, 8, 0, 0};
+    static const int vista_res[11] = {0, 1, 5, 3, 4, 5, 6, 7, 7, 0, 0};
+    static const int win7_res[11] = {1, 1, 1, 3, 4, 1, 6, 1, 8, 8, 8};
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&sview);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    fs.ViewMode = 1;
+    fs.fFlags = 0;
+    browser = IShellBrowserImpl_Construct();
+    hr = IShellView_CreateViewWindow(sview, NULL, &fs, browser, &rc, &hwnd);
+    ok(hr == S_OK || broken(hr == S_FALSE /*Win2k*/ ), "got (0x%08x)\n", hr);
+
+    hr = IShellView_QueryInterface(sview, &IID_IFolderView, (void**)&fview);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE), "got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        HWND hwnd_lv;
+        UINT count;
+
+        if(0)
+        {
+            /* Crashes under Win7/WinXP */
+            hr = IFolderView_GetCurrentViewMode(fview, NULL);
+        }
+
+        hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        ok(viewmode == 1, "ViewMode was %d\n", viewmode);
+
+        hr = IFolderView_SetCurrentViewMode(fview, FVM_AUTO);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+        hr = IFolderView_SetCurrentViewMode(fview, 0);
+        ok(hr == E_INVALIDARG || broken(hr == S_OK),
+           "got (0x%08x)\n", hr);
+
+        hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+        for(i = 1; i < 9; i++)
+        {
+            hr = IFolderView_SetCurrentViewMode(fview, i);
+            ok(hr == S_OK || (i == 8 && hr == E_INVALIDARG /*Vista*/),
+               "(%d) got (0x%08x)\n", i, hr);
+
+            hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+            ok(hr == S_OK, "(%d) got (0x%08x)\n", i, hr);
+
+            /* Wine currently behaves like winxp here. */
+            ok((viewmode == win7_res[i]) || (viewmode == vista_res[i]) ||
+               (viewmode == win2k3_res[i]) || (viewmode == winxp_res[i]),
+               "(%d) got %d\n",i , viewmode);
+        }
+
+        hr = IFolderView_SetCurrentViewMode(fview, 9);
+        ok(hr == E_INVALIDARG || broken(hr == S_OK),
+           "got (0x%08x)\n", hr);
+
+        /* Test messages */
+        hwnd_lv = subclass_listview(hwnd);
+        ok(hwnd_lv != NULL, "Failed to subclass listview\n");
+        if(hwnd_lv)
+        {
+            /* Vista seems to set the viewmode by other means than
+               sending messages. At least no related messages are
+               captured by subclassing.
+            */
+            BOOL vista_plus = FALSE;
+            static const UINT vista_plus_msgs[] = {
+                WM_SETREDRAW, WM_NOTIFY, WM_NOTIFYFORMAT, WM_QUERYUISTATE,
+                WM_MENUCHAR, WM_WINDOWPOSCHANGING, WM_NCCALCSIZE, WM_WINDOWPOSCHANGED,
+                WM_PARENTNOTIFY, LVM_GETHEADER, 0 };
+
+            flush_sequences(sequences, NUM_MSG_SEQUENCES);
+            hr = IFolderView_SetCurrentViewMode(fview, 1);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            /* WM_SETREDRAW is not sent in versions before Vista. */
+            vista_plus = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, WM_SETREDRAW);
+            if(vista_plus)
+                verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+            else
+                ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_setcurrentviewmode1_2_prevista,
+                            "IFolderView::SetCurrentViewMode(1)", TRUE);
+
+            hr = IFolderView_SetCurrentViewMode(fview, 2);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            if(vista_plus)
+                verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+            else
+                ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_setcurrentviewmode1_2_prevista,
+                            "IFolderView::SetCurrentViewMode(2)", TRUE);
+
+            hr = IFolderView_SetCurrentViewMode(fview, 3);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            if(vista_plus)
+                verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+            else
+                ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_setcurrentviewmode3_prevista,
+                            "IFolderView::SetCurrentViewMode(3)", TRUE);
+
+            hr = IFolderView_SetCurrentViewMode(fview, 4);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            if(vista_plus)
+                verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+            else
+                ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_setcurrentviewmode4_prevista,
+                            "IFolderView::SetCurrentViewMode(4)", TRUE);
+
+            hr = IFolderView_SetCurrentViewMode(fview, 5);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            todo_wine
+            {
+                if(vista_plus)
+                {
+                    verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+                }
+                else
+                {
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETVIEW);
+                    ok(count == 1, "LVM_SETVIEW sent %d times.\n", count);
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETEXTENDEDLISTVIEWSTYLE);
+                    ok(count == 1 || count == 2, "LVM_SETEXTENDEDLISTVIEWSTYLE sent %d times.\n", count);
+                    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+                }
+            }
+
+            hr = IFolderView_SetCurrentViewMode(fview, 6);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            todo_wine
+            {
+                if(vista_plus)
+                {
+                    verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+                }
+                else
+                {
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETVIEW);
+                    ok(count == 1, "LVM_SETVIEW sent %d times.\n", count);
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETEXTENDEDLISTVIEWSTYLE);
+                    ok(count == 1 || count == 2, "LVM_SETEXTENDEDLISTVIEWSTYLE sent %d times.\n", count);
+                    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+                }
+            }
+
+            hr = IFolderView_SetCurrentViewMode(fview, 7);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            todo_wine
+            {
+                if(vista_plus)
+                {
+                    verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+                }
+                else
+                {
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETVIEW);
+                    ok(count == 1, "LVM_SETVIEW sent %d times.\n", count);
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETEXTENDEDLISTVIEWSTYLE);
+                    ok(count == 2, "LVM_SETEXTENDEDLISTVIEWSTYLE sent %d times.\n", count);
+                    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+                }
+            }
+
+            hr = IFolderView_SetCurrentViewMode(fview, 8);
+            ok(hr == S_OK || broken(hr == E_INVALIDARG /* Vista */), "got 0x%08x\n", hr);
+            todo_wine
+            {
+                if(vista_plus)
+                {
+                    verify_msgs_in(sequences[LISTVIEW_SEQ_INDEX], vista_plus_msgs);
+                }
+                else
+                {
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETVIEW);
+                    ok(count == 1, "LVM_SETVIEW sent %d times.\n", count);
+                    count = get_msg_count(sequences, LISTVIEW_SEQ_INDEX, LVM_SETEXTENDEDLISTVIEWSTYLE);
+                    ok(count == 2, "LVM_SETEXTENDEDLISTVIEWSTYLE sent %d times.\n", count);
+                    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+                }
+            }
+
+            hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
+            ok(hr == S_OK, "Failed to get current viewmode.\n");
+            ok_sequence(sequences, LISTVIEW_SEQ_INDEX, empty_seq,
+                        "IFolderView::GetCurrentViewMode", FALSE);
+        }
+
+        IFolderView_Release(fview);
+    }
+    else
+    {
+        skip("No IFolderView for the desktop folder.\n");
+    }
+
+    IShellView_DestroyViewWindow(sview);
+    IShellView_Release(sview);
+    IShellFolder_Release(desktop);
+}
+
 START_TEST(shlview)
 {
     OleInitialize(NULL);
@@ -764,6 +1104,7 @@ START_TEST(shlview)
     test_GetItemObject();
     test_IShellFolderView();
     test_IOleWindow();
+    test_GetSetCurrentViewMode();
 
     OleUninitialize();
 }
