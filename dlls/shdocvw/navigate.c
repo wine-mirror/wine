@@ -759,19 +759,12 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
                 Flags, Flags ? V_VT(Flags) : -1, TargetFrameName,
                 TargetFrameName ? V_VT(TargetFrameName) : -1);
 
-    if(PostData) {
-        TRACE("PostData vt=%d\n", V_VT(PostData));
-
-        if(V_VT(PostData) == (VT_ARRAY | VT_UI1)) {
-            SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
-            post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
-        }
+    if(PostData && V_VT(PostData) == (VT_ARRAY | VT_UI1)) {
+        SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
+        post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
     }
 
-    if(Headers && V_VT(Headers) != VT_EMPTY && V_VT(Headers) != VT_ERROR) {
-        if(V_VT(Headers) != VT_BSTR)
-            return E_INVALIDARG;
-
+    if(Headers && V_VT(Headers) == VT_BSTR) {
         headers = V_BSTR(Headers);
         TRACE("Headers: %s\n", debugstr_w(headers));
     }
