@@ -382,21 +382,39 @@ static const CHAR sss_service_control_dat[] = "ServiceControl\tName\tEvent\tArgu
 static const CHAR sss_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "s72\tS255\tI2\n"
                                                "InstallExecuteSequence\tAction\n"
-                                               "CostFinalize\t\t1000\n"
+                                               "LaunchConditions\t\t100\n"
                                                "CostInitialize\t\t800\n"
                                                "FileCost\t\t900\n"
                                                "ResolveSource\t\t950\n"
-                                               "MoveFiles\t\t1700\n"
-                                               "InstallFiles\t\t4000\n"
-                                               "DuplicateFiles\t\t4500\n"
-                                               "WriteEnvironmentStrings\t\t4550\n"
-                                               "CreateShortcuts\t\t4600\n"
-                                               "StartServices\t\t5000\n"
-                                               "DeleteServices\t\t5500\n"
-                                               "InstallFinalize\t\t6600\n"
-                                               "InstallInitialize\t\t1500\n"
+                                               "CostFinalize\t\t1000\n"
                                                "InstallValidate\t\t1400\n"
-                                               "LaunchConditions\t\t100\n";
+                                               "InstallInitialize\t\t1500\n"
+                                               "DeleteServices\t\t5000\n"
+                                               "MoveFiles\t\t5100\n"
+                                               "InstallFiles\t\t5200\n"
+                                               "DuplicateFiles\t\t5300\n"
+                                               "StartServices\t\t5400\n"
+                                               "InstallFinalize\t\t6000\n";
+
+static const CHAR sds_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                               "s72\tS255\tI2\n"
+                                               "InstallExecuteSequence\tAction\n"
+                                               "LaunchConditions\t\t100\n"
+                                               "CostInitialize\t\t800\n"
+                                               "FileCost\t\t900\n"
+                                               "ResolveSource\t\t950\n"
+                                               "CostFinalize\t\t1000\n"
+                                               "InstallValidate\t\t1400\n"
+                                               "InstallInitialize\t\t1500\n"
+                                               "DeleteServices\tInstalled\t5000\n"
+                                               "MoveFiles\t\t5100\n"
+                                               "InstallFiles\t\t5200\n"
+                                               "DuplicateFiles\t\t5300\n"
+                                               "InstallServices\tNOT Installed\t5400\n"
+                                               "RegisterProduct\t\t5500\n"
+                                               "PublishFeatures\t\t5600\n"
+                                               "PublishProduct\t\t5700\n"
+                                               "InstallFinalize\t\t6000\n";
 
 /* tables for test_continuouscabs */
 static const CHAR cc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
@@ -2693,8 +2711,9 @@ static const msi_table sds_tables[] =
     ADD_TABLE(feature),
     ADD_TABLE(feature_comp),
     ADD_TABLE(file),
-    ADD_TABLE(sss_install_exec_seq),
+    ADD_TABLE(sds_install_exec_seq),
     ADD_TABLE(service_control),
+    ADD_TABLE(service_install),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -9080,6 +9099,12 @@ static void test_start_services(void)
 static void test_delete_services(void)
 {
     UINT r;
+
+    if (on_win9x)
+    {
+        win_skip("Services are not implemented on Win9x and WinMe\n");
+        return;
+    }
 
     create_test_files();
     create_database(msifile, sds_tables, sizeof(sds_tables) / sizeof(msi_table));
