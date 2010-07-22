@@ -27,8 +27,6 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
 {
     HRESULT hr;
 
-    todo_wine {
-
     /* general tests */
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
@@ -38,8 +36,6 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
 
     hr = D3DXCheckTextureRequirements(NULL, NULL, NULL, NULL, D3DX_DEFAULT, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3DERR_INVALIDCALL, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
-
-    } /* todo_wine */
 }
 
 START_TEST(texture)
