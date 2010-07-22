@@ -113,6 +113,7 @@ struct endtask_dlg_data
 {
     struct window_info *win;
     BOOL cancelled;
+    BOOL terminated;
 };
 
 static INT_PTR CALLBACK endtask_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -138,6 +139,7 @@ static INT_PTR CALLBACK endtask_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
                 WINE_TRACE( "terminating process %04x\n", data->win[0].pid );
                 TerminateProcess( handle, 0 );
                 CloseHandle( handle );
+                data->terminated = TRUE;
             }
             return TRUE;
         case MAKEWPARAM(IDCANCEL, BN_CLICKED):
@@ -175,6 +177,7 @@ static LRESULT send_messages_with_timeout_dialog(
     cb_data->window_count = count;
 
     dlg_data.win = win;
+    dlg_data.terminated = FALSE;
     dlg_data.cancelled = FALSE;
 
     for (i = 0; i < count; i++)
@@ -211,7 +214,7 @@ static LRESULT send_messages_with_timeout_dialog(
             }
             if (!cb_data->window_count)
             {
-                result = cb_data->result;
+                result = dlg_data.terminated || cb_data->result;
                 HeapFree( GetProcessHeap(), 0, cb_data );
                 if (!result)
                     goto cleanup;
