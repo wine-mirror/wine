@@ -62,7 +62,6 @@ LRESULT CALLBACK preview_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 static HWND hMainWnd;
 static HWND hEditorWnd;
 static HWND hFindWnd;
-static HMENU hPopupMenu;
 static HMENU hColorPopupMenu;
 
 static UINT ID_FINDMSGSTRING;
@@ -1795,29 +1794,6 @@ static INT_PTR CALLBACK tabstops_proc(HWND hWnd, UINT message, WPARAM wParam, LP
     return FALSE;
 }
 
-static int context_menu(LPARAM lParam)
-{
-    int x = (int)(short)LOWORD(lParam);
-    int y = (int)(short)HIWORD(lParam);
-    HMENU hPop = GetSubMenu(hPopupMenu, 0);
-
-    if(x == -1)
-    {
-        int from = 0, to = 0;
-        POINTL pt;
-        SendMessageW(hEditorWnd, EM_GETSEL, (WPARAM)&from, (LPARAM)&to);
-        SendMessageW(hEditorWnd, EM_POSFROMCHAR, (WPARAM)&pt, to);
-        ClientToScreen(hEditorWnd, (POINT*)&pt);
-        x = pt.x;
-        y = pt.y;
-    }
-
-    TrackPopupMenu(hPop, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-                   x, y, 0, hMainWnd, 0);
-
-    return 0;
-}
-
 static LRESULT OnCreate( HWND hWnd )
 {
     HWND hToolBarWnd, hFormatBarWnd,  hReBarWnd, hFontListWnd, hSizeListWnd, hRulerWnd;
@@ -1955,6 +1931,7 @@ static LRESULT OnCreate( HWND hWnd )
     }
     assert(hEditorWnd);
 
+    setup_richedit_olecallback(hEditorWnd);
     SetFocus(hEditorWnd);
     SendMessageW(hEditorWnd, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
 
@@ -2656,10 +2633,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
         return OnSize( hWnd, wParam, lParam );
 
     case WM_CONTEXTMENU:
-        if((HWND)wParam == hEditorWnd)
-            return context_menu(lParam);
-        else
-            return DefWindowProcW(hWnd, msg, wParam, lParam);
+        return DefWindowProcW(hWnd, msg, wParam, lParam);
 
     case WM_DROPFILES:
         {
@@ -2740,7 +2714,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     set_caption(NULL);
     set_bar_states();
     set_fileformat(SF_RTF);
-    hPopupMenu = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDM_POPUP));
     hColorPopupMenu = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDM_COLOR_POPUP));
     get_default_printer_opts();
     target_device(hMainWnd, wordWrap[reg_formatindex(fileFormat)]);
