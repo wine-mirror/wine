@@ -90,6 +90,8 @@
 #include <tlhelp32.h>
 #include <intshcut.h>
 #include <shlwapi.h>
+#include <initguid.h>
+#include <wincodec.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -519,6 +521,130 @@ static BOOL SaveIconResAsPNG(const BITMAPINFO *pIcon, const char *png_filename, 
 }
 #endif /* SONAME_LIBPNG */
 
+static BOOL SaveIconStreamAsPNG(IStream *icoFile, int index, const char *pngFileName, LPCWSTR commentW)
+{
+    WCHAR *dosPNGFileName = NULL;
+    IWICImagingFactory *factory = NULL;
+    IWICBitmapDecoder *decoder = NULL;
+    IWICBitmapFrameDecode *sourceFrame = NULL;
+    IWICBitmapSource *sourceBitmap = NULL;
+    IWICBitmapEncoder *encoder = NULL;
+    IStream *outputFile = NULL;
+    IWICBitmapFrameEncode *dstFrame = NULL;
+    IPropertyBag2 *options = NULL;
+    UINT width, height;
+    HRESULT hr = E_FAIL;
+
+    dosPNGFileName = wine_get_dos_file_name(pngFileName);
+    if (dosPNGFileName == NULL)
+    {
+        WINE_ERR("error converting %s to DOS file name\n", pngFileName);
+        goto end;
+    }
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void**)&factory);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X creating IWICImagingFactory\n", hr);
+        goto end;
+    }
+    hr = IWICImagingFactory_CreateDecoderFromStream(factory, icoFile, NULL,
+        WICDecodeMetadataCacheOnDemand, &decoder);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X creating IWICBitmapDecoder\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapDecoder_GetFrame(decoder, index, &sourceFrame);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X getting frame %d\n", hr, index);
+        goto end;
+    }
+    hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)sourceFrame, &sourceBitmap);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X converting bitmap to 32bppBGRA\n", hr);
+        goto end;
+    }
+    hr = CoCreateInstance(&CLSID_WICPngEncoder, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapEncoder, (void**)&encoder);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X creating bitmap encoder\n", hr);
+        goto end;
+    }
+    hr = SHCreateStreamOnFileW(dosPNGFileName, STGM_CREATE | STGM_WRITE, &outputFile);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X creating output file\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapEncoder_Initialize(encoder, outputFile, GENERIC_WRITE);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X initializing encoder\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &dstFrame, &options);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X creating encoder frame\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapFrameEncode_Initialize(dstFrame, options);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X initializing encoder frame\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapSource_GetSize(sourceBitmap, &width, &height);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X getting source bitmap size\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapFrameEncode_SetSize(dstFrame, width, height);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X setting destination bitmap size\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapFrameEncode_SetResolution(dstFrame, 96, 96);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X setting destination bitmap resolution\n", hr);
+        goto end;
+    }
+    hr = IWICBitmapFrameEncode_WriteSource(dstFrame, sourceBitmap, NULL);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error 0x%08X copying bitmaps\n", hr);
+        goto end;
+    }
+    IWICBitmapFrameEncode_Commit(dstFrame);
+    IWICBitmapEncoder_Commit(encoder);
+    hr = S_OK;
+
+end:
+    HeapFree(GetProcessHeap(), 0, dosPNGFileName);
+    if (factory)
+        IWICImagingFactory_Release(factory);
+    if (decoder)
+        IWICBitmapDecoder_Release(decoder);
+    if (sourceFrame)
+        IWICBitmapFrameDecode_Release(sourceFrame);
+    if (sourceBitmap)
+        IWICBitmapSource_Release(sourceBitmap);
+    if (encoder)
+        IWICBitmapEncoder_Release(encoder);
+    if (outputFile)
+        IStream_Release(outputFile);
+    if (dstFrame)
+        IWICBitmapFrameEncode_Release(dstFrame);
+    return SUCCEEDED(hr);
+}
+
 static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName, LPCWSTR commentW)
 {
     FILE *fXPMFile;
@@ -756,6 +882,8 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
     void *pIcon = NULL;
     int i;
     char *filename = NULL;
+    IStream *icoStream = NULL;
+    HRESULT hr;
 
     filename = wine_get_unix_file_name(szFileName);
     if (!(fICOFile = fopen(filename, "r")))
@@ -795,12 +923,13 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
         goto error;
     if (fread(pIcon, pIconDirEntry[nIndex].dwBytesInRes, 1, fICOFile) != 1)
         goto error;
+    fclose(fICOFile);
+    fICOFile = NULL;
 
+    hr = SHCreateStreamOnFileW(szFileName, STGM_READ, &icoStream);
 
     /* Prefer PNG over XPM */
-#ifdef SONAME_LIBPNG
-    if (!SaveIconResAsPNG(pIcon, szXPMFileName, szFileName))
-#endif
+    if (FAILED(hr) || !SaveIconStreamAsPNG(icoStream, nIndex, szXPMFileName, szFileName))
     {
         memcpy(szXPMFileName + strlen(szXPMFileName) - 3, "xpm", 3);
         if (!SaveIconResAsXPM(pIcon, szXPMFileName, szFileName))
@@ -809,8 +938,9 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
 
     HeapFree(GetProcessHeap(), 0, pIcon);
     HeapFree(GetProcessHeap(), 0, pIconDirEntry);
-    fclose(fICOFile);
     HeapFree(GetProcessHeap(), 0, filename);
+    if (icoStream)
+        IStream_Release(icoStream);
     return 1;
 
  error:
@@ -818,6 +948,8 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
     HeapFree(GetProcessHeap(), 0, pIconDirEntry);
     if (fICOFile) fclose(fICOFile);
     HeapFree(GetProcessHeap(), 0, filename);
+    if (icoStream)
+        IStream_Release(icoStream);
     return 0;
 }
 
