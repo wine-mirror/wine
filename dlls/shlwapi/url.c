@@ -444,38 +444,38 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
                     *wk2++ = *wk1;
                 wk1++;
 
-                if (*wk1 == '.') {
+                while (*wk1 == '.') {
                     TRACE("found '/.'\n");
                     if (wk1[1] == '/' || wk1[1] == '\\') {
                         /* case of /./ -> skip the ./ */
                         wk1 += 2;
                     }
-                    else if (wk1[1] == '.') {
-                        /* found /..  look for next / */
-                        TRACE("found '/..'\n");
-                        if (wk1[2] == '/' || wk1[2] == '\\' ||wk1[2] == '?'
-                            || wk1[2] == '#' || !wk1[2]) {
-                            /* case /../ -> need to backup wk2 */
-                            TRACE("found '/../'\n");
-                            *(wk2-1) = '\0';  /* set end of string */
-                            mp = strrchrW(root, '/');
-                            mp2 = strrchrW(root, '\\');
-                            if(mp2 && (!mp || mp2 < mp))
-                                mp = mp2;
-                            if (mp && (mp >= root)) {
-                                /* found valid backup point */
-                                wk2 = mp + 1;
-                                if(wk1[2] != '/' && wk1[2] != '\\')
-                                    wk1 += 2;
-                                else
-                                    wk1 += 3;
-                            }
-                            else {
-                                /* did not find point, restore '/' */
-                                *(wk2-1) = slash;
-                            }
+                    else if (wk1[1] == '.' && (wk1[2] == '/'
+                            || wk1[2] == '\\' || wk1[2] == '?'
+                            || wk1[2] == '#' || !wk1[2])) {
+                        /* case /../ -> need to backup wk2 */
+                        TRACE("found '/../'\n");
+                        *(wk2-1) = '\0';  /* set end of string */
+                        mp = strrchrW(root, '/');
+                        mp2 = strrchrW(root, '\\');
+                        if(mp2 && (!mp || mp2 < mp))
+                            mp = mp2;
+                        if (mp && (mp >= root)) {
+                            /* found valid backup point */
+                            wk2 = mp + 1;
+                            if(wk1[2] != '/' && wk1[2] != '\\')
+                                wk1 += 2;
+                            else
+                                wk1 += 3;
+                        }
+                        else {
+                            /* did not find point, restore '/' */
+                            *(wk2-1) = slash;
+                            break;
                         }
                     }
+                    else
+                        break;
                 }
             }
             *wk2 = '\0';

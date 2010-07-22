@@ -100,6 +100,8 @@ typedef struct _TEST_URL_CANONICALIZE {
 
 static const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"http://www.winehq.org/tests/../tests/../..", 0, S_OK, "http://www.winehq.org/", TRUE},
+    {"http://www.winehq.org/..", 0, S_OK, "http://www.winehq.org/..", FALSE},
+    {"http://www.winehq.org/tests/tests2/../../tests", 0, S_OK, "http://www.winehq.org/tests", FALSE},
     {"http://www.winehq.org/tests/../tests", 0, S_OK, "http://www.winehq.org/tests", FALSE},
     {"http://www.winehq.org/tests\n", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, S_OK, "http://www.winehq.org/tests", FALSE},
     {"http://www.winehq.org/tests\r", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, S_OK, "http://www.winehq.org/tests", FALSE},
@@ -158,6 +160,8 @@ static const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"res://c:\\tests/res\\foo%20bar/strange\\sth", URL_FILE_USE_PATHURL, S_OK, "res://c:\\tests/res\\foo%20bar/strange\\sth", FALSE},
     {"res://c:\\tests/res\\foo%20bar/strange\\sth", URL_UNESCAPE, S_OK, "res://c:\\tests/res\\foo bar/strange\\sth", FALSE},
     {"A", 0, S_OK, "A", FALSE},
+    {"../A", 0, S_OK, "../A", FALSE},
+    {"A/../B", 0, S_OK, "B", TRUE},
     {"/uri-res/N2R?urn:sha1:B3K", URL_DONT_ESCAPE_EXTRA_INFO | URL_WININET_COMPATIBILITY /*0x82000000*/, S_OK, "/uri-res/N2R?urn:sha1:B3K", FALSE} /*LimeWire online installer calls this*/,
     {"http:www.winehq.org/dir/../index.html", 0, S_OK, "http:www.winehq.org/index.html"},
     {"http://localhost/test.html", URL_FILE_USE_PATHURL, S_OK, "http://localhost/test.html"},
