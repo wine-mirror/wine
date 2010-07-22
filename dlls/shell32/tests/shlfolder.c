@@ -53,6 +53,7 @@ static HRESULT (WINAPI *pStrRetToBufW)(STRRET*,LPCITEMIDLIST,LPWSTR,UINT);
 static LPITEMIDLIST (WINAPI *pILFindLastID)(LPCITEMIDLIST);
 static void (WINAPI *pILFree)(LPITEMIDLIST);
 static BOOL (WINAPI *pILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
+static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
@@ -69,6 +70,7 @@ static void init_function_pointers(void)
 
 #define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hmod, #f))
     MAKEFUNC(SHBindToParent);
+    MAKEFUNC(SHCreateItemFromParsingName);
     MAKEFUNC(SHCreateShellItem);
     MAKEFUNC(SHGetFolderPathA);
     MAKEFUNC(SHGetFolderPathAndSubDirA);
@@ -1867,6 +1869,7 @@ static void test_SHCreateShellItem(void)
     HRESULT ret;
     char curdirA[MAX_PATH];
     WCHAR curdirW[MAX_PATH];
+    WCHAR fnbufW[MAX_PATH];
     IShellFolder *desktopfolder=NULL, *currentfolder=NULL;
     static WCHAR testfileW[] = {'t','e','s','t','f','i','l','e',0};
 
@@ -2034,6 +2037,47 @@ static void test_SHCreateShellItem(void)
         }
         IShellItem_Release(shellitem);
     }
+
+    /* SHCreateItemFromParsingName */
+    if(pSHCreateItemFromParsingName)
+    {
+        if(0)
+        {
+            /* Crashes under windows 7 */
+            ret = pSHCreateItemFromParsingName(NULL, NULL, &IID_IShellItem, NULL);
+        }
+
+        shellitem = (void*)0xdeadbeef;
+        ret = pSHCreateItemFromParsingName(NULL, NULL, &IID_IShellItem, (void**)&shellitem);
+        ok(ret == E_INVALIDARG, "SHCreateItemFromParsingName returned %x\n", ret);
+        ok(shellitem == NULL, "shellitem was %p.\n", shellitem);
+
+        ret = pSHCreateItemFromParsingName(testfileW, NULL, &IID_IShellItem, (void**)&shellitem);
+        ok(ret == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
+           "SHCreateItemFromParsingName returned %x\n", ret);
+        if(SUCCEEDED(ret)) IShellItem_Release(shellitem);
+
+        lstrcpyW(fnbufW, curdirW);
+        myPathAddBackslashW(fnbufW);
+        lstrcatW(fnbufW, testfileW);
+
+        ret = pSHCreateItemFromParsingName(fnbufW, NULL, &IID_IShellItem, (void**)&shellitem);
+        ok(ret == S_OK, "SHCreateItemFromParsingName returned %x\n", ret);
+        if(SUCCEEDED(ret))
+        {
+            LPWSTR tmp_fname;
+            ret = IShellItem_GetDisplayName(shellitem, SIGDN_FILESYSPATH, &tmp_fname);
+            ok(ret == S_OK, "GetDisplayName returned %x\n", ret);
+            if(SUCCEEDED(ret))
+            {
+                ok(!lstrcmpW(fnbufW, tmp_fname), "strings not equal\n");
+                CoTaskMemFree(tmp_fname);
+            }
+            IShellItem_Release(shellitem);
+        }
+    }
+    else
+        win_skip("No SHCreateItemFromParsingName\n");
 
     DeleteFileA(".\\testfile");
     pILFree(pidl_abstestfile);

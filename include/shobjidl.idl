@@ -495,6 +495,7 @@ interface IShellItemArray : IUnknown
 }
 
 cpp_quote("HRESULT WINAPI SHGetNameFromIDList(PCIDLIST_ABSOLUTE pidl, SIGDN sigdnName, PWSTR *ppszName);")
+cpp_quote("HRESULT WINAPI SHCreateItemFromParsingName(PCWSTR pszPath, IBindCtx *pbc, REFIID riid, void **ppv);")
 
 /*****************************************************************************
  * IShellItemFilter interface

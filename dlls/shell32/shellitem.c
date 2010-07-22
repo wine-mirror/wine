@@ -392,3 +392,30 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
     }
     return ret;
 }
+
+HRESULT WINAPI SHCreateItemFromParsingName(PCWSTR pszPath,
+    IBindCtx *pbc, REFIID riid, void **ppv)
+{
+    LPITEMIDLIST pidl;
+    HRESULT ret;
+
+    *ppv = NULL;
+
+    ret = SHParseDisplayName(pszPath, pbc, &pidl, 0, NULL);
+    if(SUCCEEDED(ret))
+    {
+        ShellItem *This;
+        ret = IShellItem_Constructor(NULL, riid, (void**)&This);
+
+        if(SUCCEEDED(ret))
+        {
+            This->pidl = pidl;
+            *ppv = (void*)This;
+        }
+        else
+        {
+            ILFree(pidl);
+        }
+    }
+    return ret;
+}

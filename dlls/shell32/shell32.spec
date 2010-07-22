@@ -330,6 +330,7 @@
 @ stub SHChangeNotifySuspendResume
 @ stdcall SHCreateDirectoryExA(long str ptr)
 @ stdcall SHCreateDirectoryExW(long wstr ptr)
+@ stdcall SHCreateItemFromParsingName(wstr ptr ptr ptr)
 @ stub SHCreateProcessAsUserW
 @ stdcall SHCreateShellItem(ptr ptr ptr ptr)
 @ stdcall SHEmptyRecycleBinA(long str long)
