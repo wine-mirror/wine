@@ -1,0 +1,13 @@
+EXTRADEFS = -DCOM_NO_WINDOWS_H
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = gameux.dll
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@

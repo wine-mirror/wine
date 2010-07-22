@@ -14507,6 +14507,7 @@ wine_fn_config_dll fltlib enable_fltlib
 wine_fn_config_dll fusion enable_fusion
 wine_fn_config_test dlls/fusion/tests fusion_test
 wine_fn_config_dll fwpuclnt enable_fwpuclnt
+wine_fn_config_dll gameux enable_gameux
 wine_fn_config_dll gdi.exe16 enable_win16
 wine_fn_config_dll gdi32 enable_gdi32 gdi32
 wine_fn_config_test dlls/gdi32/tests gdi32_test
