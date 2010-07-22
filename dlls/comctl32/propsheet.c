@@ -3411,9 +3411,14 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       psInfo->hwnd = hwnd;
       SetWindowLongPtrW(hwnd, DWLP_USER, (DWORD_PTR)psInfo);
 
-      /* set up the Next and Back buttons by default */
-      PROPSHEET_SetWizButtons(hwnd, PSWIZB_BACK|PSWIZB_NEXT);
-      SetFocus(GetDlgItem(hwnd, IDC_NEXT_BUTTON));
+      if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)
+      {
+        /* set up the Next and Back buttons by default */
+        PROPSHEET_SetWizButtons(hwnd, PSWIZB_BACK|PSWIZB_NEXT);
+        SetFocus(GetDlgItem(hwnd, IDC_NEXT_BUTTON));
+      }
+      else
+        SetFocus(GetDlgItem(hwnd, IDOK));
 
       /* Set up fonts */
       SystemParametersInfoW (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
