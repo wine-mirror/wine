@@ -3587,6 +3587,8 @@ static void INT21_GetExtendedError( CONTEXT86 *context )
         locus  = EL_Disk;
         break;
     case ERROR_FILE_NOT_FOUND:
+    case ERROR_PATH_NOT_FOUND:
+    case ERROR_INVALID_NAME:
         class  = EC_NotFound;
         action = SA_Abort;
         locus  = EL_Disk;
@@ -3625,11 +3627,6 @@ static void INT21_GetExtendedError( CONTEXT86 *context )
         class  = EC_OutOfResource;
         action = SA_Abort;
         locus  = EL_Memory;
-        break;
-    case ERROR_PATH_NOT_FOUND:
-        class  = EC_NotFound;
-        action = SA_Abort;
-        locus  = EL_Disk;
         break;
     case ERROR_SEEK:
         class  = EC_NotFound;
