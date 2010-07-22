@@ -60,6 +60,7 @@ static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
 static LPITEMIDLIST (WINAPI *pSHSimpleIDListFromPathAW)(LPCVOID);
 static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
+static HRESULT (WINAPI *pSHGetItemFromDataObject)(IDataObject*,DATAOBJ_GET_ITEM_FLAGS,REFIID,void**);
 
 static void init_function_pointers(void)
 {
@@ -82,6 +83,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHGetSpecialFolderLocation);
     MAKEFUNC(SHParseDisplayName);
     MAKEFUNC(SHGetNameFromIDList);
+    MAKEFUNC(SHGetItemFromDataObject);
 #undef MAKEFUNC
 
 #define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
@@ -2293,6 +2295,120 @@ static void test_SHGetNameFromIDList(void)
     pILFree(pidl);
 }
 
+static void test_SHGetItemFromDataObject(void)
+{
+    IShellFolder *psfdesktop;
+    IShellItem *psi;
+    IShellView *psv;
+    HRESULT hres;
+
+    if(!pSHGetItemFromDataObject)
+    {
+        win_skip("No SHGetItemFromDataObject.\n");
+        return;
+    }
+
+    if(0)
+    {
+        /* Crashes under win7 */
+        hres = pSHGetItemFromDataObject(NULL, 0, &IID_IShellItem, NULL);
+    }
+
+    hres = pSHGetItemFromDataObject(NULL, 0, &IID_IShellItem, (void**)&psv);
+    ok(hres == E_INVALIDARG, "got 0x%08x\n", hres);
+
+    SHGetDesktopFolder(&psfdesktop);
+
+    hres = IShellFolder_CreateViewObject(psfdesktop, NULL, &IID_IShellView, (void**)&psv);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+    if(SUCCEEDED(hres))
+    {
+        IEnumIDList *peidl;
+        IDataObject *pdo;
+        SHCONTF enum_flags;
+
+        enum_flags = SHCONTF_NONFOLDERS | SHCONTF_FOLDERS | SHCONTF_INCLUDEHIDDEN;
+        hres = IShellFolder_EnumObjects(psfdesktop, NULL, enum_flags, &peidl);
+        ok(hres == S_OK, "got 0x%08x\n", hres);
+        if(SUCCEEDED(hres))
+        {
+            LPITEMIDLIST apidl[5];
+            UINT count = 0, i;
+
+            for(count = 0; count < 5; count++)
+                if(IEnumIDList_Next(peidl, 1, &apidl[count], NULL) != S_OK)
+                    break;
+
+            if(count)
+            {
+                hres = IShellFolder_GetUIObjectOf(psfdesktop, NULL, 1, (LPCITEMIDLIST*)apidl,
+                                                  &IID_IDataObject, NULL, (void**)&pdo);
+                ok(hres == S_OK, "got 0x%08x\n", hres);
+                if(SUCCEEDED(hres))
+                {
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_DEFAULT, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_TRAVERSE_LINK, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_NO_HDROP, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_NO_URL, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_ONLY_IF_ONE, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+
+                    IDataObject_Release(pdo);
+                }
+            }
+            else
+                skip("No file(s) found - skipping single-file test.\n");
+
+            if(count > 1)
+            {
+                hres = IShellFolder_GetUIObjectOf(psfdesktop, NULL, count, (LPCITEMIDLIST*)apidl,
+                                                  &IID_IDataObject, NULL, (void**)&pdo);
+                ok(hres == S_OK, "got 0x%08x\n", hres);
+                if(SUCCEEDED(hres))
+                {
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_DEFAULT, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_TRAVERSE_LINK, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_NO_HDROP, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_NO_URL, &IID_IShellItem, (void**)&psi);
+                    ok(hres == S_OK, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+                    hres = pSHGetItemFromDataObject(pdo, DOGIF_ONLY_IF_ONE, &IID_IShellItem, (void**)&psi);
+                    ok(hres == E_FAIL, "got 0x%08x\n", hres);
+                    if(SUCCEEDED(hres)) IShellItem_Release(psi);
+
+                    IDataObject_Release(pdo);
+                }
+            }
+            else
+                skip("zero or one file found - skipping multi-file test.\n");
+
+            for(i = 0; i < count; i++)
+                pILFree(apidl[i]);
+
+            IEnumIDList_Release(peidl);
+        }
+
+        IShellView_Release(psv);
+    }
+
+    IShellFolder_Release(psfdesktop);
+}
+
 static void test_SHParseDisplayName(void)
 {
     LPITEMIDLIST pidl1, pidl2;
@@ -2799,6 +2915,7 @@ START_TEST(shlfolder)
     test_SHSimpleIDListFromPath();
     test_ParseDisplayNamePBC();
     test_SHGetNameFromIDList();
+    test_SHGetItemFromDataObject();
 
     OleUninitialize();
 }

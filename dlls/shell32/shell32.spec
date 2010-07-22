@@ -360,6 +360,7 @@
 @ stdcall SHGetIconOverlayIndexA(str long)
 @ stdcall SHGetIconOverlayIndexW(wstr long)
 @ stdcall SHGetInstanceExplorer(long)
+@ stdcall SHGetItemFromDataObject(ptr long ptr ptr)
 @ stdcall SHGetLocalizedName(wstr ptr long ptr)
 @ stdcall SHGetMalloc(ptr)
 @ stdcall SHGetNameFromIDList(ptr long ptr)
