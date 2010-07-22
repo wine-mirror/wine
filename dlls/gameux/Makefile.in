@@ -4,8 +4,10 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gameux.dll
+IMPORTS   = uuid
 
 C_SRCS = \
+	gameexplorer.c \
 	main.c
 
 RC_SRCS = version.rc
