@@ -1708,15 +1708,22 @@ loadmemopts
 		}
 	;
 
-lamo	: tPRELOAD	{ $$ = new_int(WRC_MO_PRELOAD); }
-	| tMOVEABLE	{ $$ = new_int(WRC_MO_MOVEABLE); }
-	| tDISCARDABLE	{ $$ = new_int(WRC_MO_DISCARDABLE); }
-	| tPURE		{ $$ = new_int(WRC_MO_PURE); }
+lamo	: tPRELOAD	{ $$ = new_int(WRC_MO_PRELOAD);
+			  if (win32 && pedantic) parser_warning("PRELOAD is ignored in 32-bit mode\n"); }
+	| tMOVEABLE	{ $$ = new_int(WRC_MO_MOVEABLE);
+			  if (win32 && pedantic) parser_warning("MOVEABLE is ignored in 32-bit mode\n"); }
+	| tDISCARDABLE	{ $$ = new_int(WRC_MO_DISCARDABLE);
+			  if (win32 && pedantic) parser_warning("DISCARDABLE is ignored in 32-bit mode\n"); }
+	| tPURE		{ $$ = new_int(WRC_MO_PURE);
+			  if (win32 && pedantic) parser_warning("PURE is ignored in 32-bit mode\n"); }
 	;
 
-lama	: tLOADONCALL	{ $$ = new_int(~WRC_MO_PRELOAD); }
-	| tFIXED	{ $$ = new_int(~WRC_MO_MOVEABLE); }
-	| tIMPURE	{ $$ = new_int(~WRC_MO_PURE); }
+lama	: tLOADONCALL	{ $$ = new_int(~WRC_MO_PRELOAD);
+			  if (win32 && pedantic) parser_warning("LOADONCALL is ignored in 32-bit mode\n"); }
+	| tFIXED	{ $$ = new_int(~WRC_MO_MOVEABLE);
+			  if (win32 && pedantic) parser_warning("FIXED is ignored in 32-bit mode\n"); }
+	| tIMPURE	{ $$ = new_int(~WRC_MO_PURE);
+			  if (win32 && pedantic) parser_warning("IMPURE is ignored in 32-bit mode\n"); }
 	;
 
 /* ------------------------------ Win32 options ------------------------------ */
