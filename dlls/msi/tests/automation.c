@@ -32,6 +32,9 @@
 
 #include "wine/test.h"
 
+static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
+static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static const char *msifile = "winetest-automation.msi";
@@ -198,6 +201,29 @@ static const msi_summary_info summary_info[] =
     ADD_INFO_FILETIME(PID_CREATE_DTM, &systemtime),
     ADD_INFO_FILETIME(PID_LASTPRINTED, &systemtime)
 };
+
+static void init_functionpointers(void)
+{
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+
+#define GET_PROC(dll, func) \
+    p ## func = (void *)GetProcAddress(dll, #func); \
+    if(!p ## func) \
+      trace("GetProcAddress(%s) failed\n", #func);
+
+    GET_PROC(hadvapi32, RegDeleteKeyExA)
+    GET_PROC(hkernel32, IsWow64Process)
+
+#undef GET_PROC
+}
+
+static LONG delete_key_portable( HKEY key, LPCSTR subkey, REGSAM access )
+{
+    if (pRegDeleteKeyExA)
+        return pRegDeleteKeyExA( key, subkey, access, 0 );
+    return RegDeleteKeyA( key, subkey );
+}
 
 /*
  * Database Helpers
@@ -2334,30 +2360,30 @@ static void test_Installer_Products(BOOL bProductInstalled)
 
 /* Delete a registry subkey, including all its subkeys (RegDeleteKey does not work on keys with subkeys without
  * deleting the subkeys first) */
-static UINT delete_registry_key(HKEY hkeyParent, LPCSTR subkey)
+static UINT delete_registry_key(HKEY hkeyParent, LPCSTR subkey, REGSAM access)
 {
     UINT ret;
     CHAR *string = NULL;
     HKEY hkey;
     DWORD dwSize;
 
-    ret = RegOpenKey(hkeyParent, subkey, &hkey);
+    ret = RegOpenKeyEx(hkeyParent, subkey, 0, access, &hkey);
     if (ret != ERROR_SUCCESS) return ret;
     ret = RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
     if (ret != ERROR_SUCCESS) return ret;
     if (!(string = HeapAlloc(GetProcessHeap(), 0, ++dwSize))) return ERROR_NOT_ENOUGH_MEMORY;
 
     while (RegEnumKeyA(hkey, 0, string, dwSize) == ERROR_SUCCESS)
-        delete_registry_key(hkey, string);
+        delete_registry_key(hkey, string, access);
 
     RegCloseKey(hkey);
     HeapFree(GetProcessHeap(), 0, string);
-    RegDeleteKeyA(hkeyParent, subkey);
+    delete_key_portable(hkeyParent, subkey, access);
     return ERROR_SUCCESS;
 }
 
 /* Find a specific registry subkey at any depth within the given key and subkey and return its parent key. */
-static UINT find_registry_key(HKEY hkeyParent, LPCSTR subkey, LPCSTR findkey, HKEY *phkey)
+static UINT find_registry_key(HKEY hkeyParent, LPCSTR subkey, LPCSTR findkey, REGSAM access, HKEY *phkey)
 {
     UINT ret;
     CHAR *string = NULL;
@@ -2368,7 +2394,7 @@ static UINT find_registry_key(HKEY hkeyParent, LPCSTR subkey, LPCSTR findkey, HK
 
     *phkey = 0;
 
-    ret = RegOpenKey(hkeyParent, subkey, &hkey);
+    ret = RegOpenKeyEx(hkeyParent, subkey, 0, access, &hkey);
     if (ret != ERROR_SUCCESS) return ret;
     ret = RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, &dwSize, NULL, NULL, NULL, NULL, NULL, NULL);
     if (ret != ERROR_SUCCESS) return ret;
@@ -2382,7 +2408,7 @@ static UINT find_registry_key(HKEY hkeyParent, LPCSTR subkey, LPCSTR findkey, HK
             *phkey = hkey;
             found = TRUE;
         }
-        else if (find_registry_key(hkey, string, findkey, phkey) == ERROR_SUCCESS) found = TRUE;
+        else if (find_registry_key(hkey, string, findkey, access, phkey) == ERROR_SUCCESS) found = TRUE;
     }
 
     if (*phkey != hkey) RegCloseKey(hkey);
@@ -2400,6 +2426,11 @@ static void test_Installer_InstallProduct(void)
     DWORD num, size, type;
     int iValue, iCount;
     IDispatch *pStringList = NULL;
+    REGSAM access = KEY_ALL_ACCESS;
+    BOOL wow64;
+
+    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+        access |= KEY_WOW64_64KEY;
 
     create_test_files();
 
@@ -2483,7 +2514,7 @@ static void test_Installer_InstallProduct(void)
     ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
+    res = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     size = MAX_PATH;
@@ -2511,40 +2542,45 @@ static void test_Installer_InstallProduct(void)
 
     RegCloseKey(hkey);
 
-    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest");
+    res = delete_key_portable(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", access);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* Remove registry keys written by RegisterProduct standard action */
-    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}");
+    res = delete_key_portable(HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{F1C3AF50-8B56-4A69-A00C-00773FE42F30}", access);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
+    res = delete_key_portable(HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656", access);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    res = find_registry_key(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData", "05FA3C1F65B896A40AC00077F34EF203", &hkey);
+    res = find_registry_key(HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData", "05FA3C1F65B896A40AC00077F34EF203", access, &hkey);
     ok(res == ERROR_SUCCESS ||
        broken(res == ERROR_FILE_NOT_FOUND), /* win9x */
        "Expected ERROR_SUCCESS, got %d\n", res);
     if (res == ERROR_SUCCESS)
     {
-        res = delete_registry_key(hkey, "05FA3C1F65B896A40AC00077F34EF203");
+        res = delete_registry_key(hkey, "05FA3C1F65B896A40AC00077F34EF203", access);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
         RegCloseKey(hkey);
 
-        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203");
+        res = delete_key_portable(HKEY_LOCAL_MACHINE,
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203", access);
         ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
     }
     else
     {
         /* win9x defaults to a per-machine install. */
-        RegDeleteKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203");
+        delete_key_portable(HKEY_LOCAL_MACHINE,
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\05FA3C1F65B896A40AC00077F34EF203", access);
     }
 
     /* Remove registry keys written by PublishProduct standard action */
     res = RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Installer", &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    res = delete_registry_key(hkey, "Products\\05FA3C1F65B896A40AC00077F34EF203");
+    res = delete_registry_key(hkey, "Products\\05FA3C1F65B896A40AC00077F34EF203", KEY_ALL_ACCESS);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegDeleteKeyA(hkey, "UpgradeCodes\\D8E760ECA1E276347B43E42BDBDA5656");
@@ -2693,6 +2729,7 @@ START_TEST(automation)
     CLSID clsid;
     IUnknown *pUnk;
 
+    init_functionpointers();
     GetSystemTimeAsFileTime(&systemtime);
 
     GetCurrentDirectoryA(MAX_PATH, prev_path);

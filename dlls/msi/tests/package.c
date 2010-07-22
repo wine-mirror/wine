@@ -37,6 +37,7 @@ static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
+static LONG (WINAPI *pRegDeleteKeyExW)(HKEY, LPCWSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
@@ -56,6 +57,7 @@ static void init_functionpointers(void)
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
     GET_PROC(hadvapi32, RegDeleteKeyExA)
+    GET_PROC(hadvapi32, RegDeleteKeyExW)
     GET_PROC(hkernel32, IsWow64Process)
 
     hsrclient = LoadLibraryA("srclient.dll");
@@ -96,7 +98,7 @@ static LPSTR get_user_sid(LPSTR *usersid)
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
-static LSTATUS package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
+static LSTATUS package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey, REGSAM access)
 {
     LONG ret;
     DWORD dwMaxSubkeyLen, dwMaxValueLen;
@@ -106,7 +108,7 @@ static LSTATUS package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
 
     if(lpszSubKey)
     {
-        ret = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+        ret = RegOpenKeyExW(hKey, lpszSubKey, 0, access, &hSubKey);
         if (ret) return ret;
     }
 
@@ -134,12 +136,17 @@ static LSTATUS package_RegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
         if (RegEnumKeyExW(hSubKey, 0, lpszName, &dwSize, NULL,
                           NULL, NULL, NULL)) break;
 
-        ret = package_RegDeleteTreeW(hSubKey, lpszName);
+        ret = package_RegDeleteTreeW(hSubKey, lpszName, access);
         if (ret) goto cleanup;
     }
 
     if (lpszSubKey)
-        ret = RegDeleteKeyW(hKey, lpszSubKey);
+    {
+        if (pRegDeleteKeyExW)
+            ret = pRegDeleteKeyExW(hKey, lpszSubKey, access, 0);
+        else
+            ret = RegDeleteKeyW(hKey, lpszSubKey);
+    }
     else
         while (TRUE)
         {
@@ -221,6 +228,11 @@ static void set_component_path(LPCSTR filename, MSIINSTALLCONTEXT context,
     CHAR path[MAX_PATH];
     LPCSTR prod = NULL;
     HKEY hkey;
+    REGSAM access = KEY_ALL_ACCESS;
+    BOOL wow64;
+
+    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+        access |= KEY_WOW64_64KEY;
 
     MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
     squash_guid(guidW, squashedW);
@@ -259,7 +271,7 @@ static void set_component_path(LPCSTR filename, MSIINSTALLCONTEXT context,
                 "7D2F387510109040002000060BECB6AB", usersid);
     }
 
-    RegCreateKeyA(HKEY_LOCAL_MACHINE, comppath, &hkey);
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, comppath, 0, NULL, 0, access, NULL, &hkey, NULL);
 
     lstrcpyA(path, CURR_DIR);
     lstrcatA(path, "\\");
@@ -268,7 +280,7 @@ static void set_component_path(LPCSTR filename, MSIINSTALLCONTEXT context,
     RegSetValueExA(hkey, prod, 0, REG_SZ, (LPBYTE)path, lstrlenA(path));
     RegCloseKey(hkey);
 
-    RegCreateKeyA(HKEY_LOCAL_MACHINE, prodpath, &hkey);
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, prodpath, 0, NULL, 0, access, NULL, &hkey, NULL);
     RegCloseKey(hkey);
 }
 
@@ -280,6 +292,11 @@ static void delete_component_path(LPCSTR guid, MSIINSTALLCONTEXT context, LPSTR 
     CHAR squashed[MAX_PATH];
     CHAR comppath[MAX_PATH];
     CHAR prodpath[MAX_PATH];
+    REGSAM access = KEY_ALL_ACCESS;
+    BOOL wow64;
+
+    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+        access |= KEY_WOW64_64KEY;
 
     MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
     squash_guid(guidW, squashedW);
@@ -316,10 +333,10 @@ static void delete_component_path(LPCSTR guid, MSIINSTALLCONTEXT context, LPSTR 
     }
 
     MultiByteToWideChar(CP_ACP, 0, comppath, -1, substrW, MAX_PATH);
-    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
+    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW, access);
 
     MultiByteToWideChar(CP_ACP, 0, prodpath, -1, substrW, MAX_PATH);
-    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW);
+    package_RegDeleteTreeW(HKEY_LOCAL_MACHINE, substrW, access);
 }
 
 static UINT do_query(MSIHANDLE hdb, const char *query, MSIHANDLE *phrec)
@@ -7806,19 +7823,19 @@ error:
 static void test_appsearch_reglocator(void)
 {
     MSIHANDLE hpkg, hdb;
-    CHAR path[MAX_PATH];
-    CHAR prop[MAX_PATH];
-    DWORD binary[2];
-    DWORD size, val;
+    CHAR path[MAX_PATH], prop[MAX_PATH];
+    DWORD binary[2], size, val;
     BOOL space, version;
-    HKEY hklm, classes;
-    HKEY hkcu, users;
-    LPSTR pathdata;
-    LPSTR pathvar;
+    HKEY hklm, classes, hkcu, users;
+    LPSTR pathdata, pathvar, ptr;
     LPCSTR str;
-    LPSTR ptr;
     LONG res;
     UINT r;
+    REGSAM access = KEY_ALL_ACCESS;
+    BOOL wow64;
+
+    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+        access |= KEY_WOW64_64KEY;
 
     version = TRUE;
     if (!create_file_with_version("test.dll", MAKELONG(2, 1), MAKELONG(4, 3)))
@@ -7858,7 +7875,7 @@ static void test_appsearch_reglocator(void)
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     }
 
-    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine", &hklm);
+    res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0, access, NULL, &hklm, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegSetValueA(hklm, NULL, REG_SZ, "defvalue", 8);
@@ -8464,7 +8481,7 @@ static void test_appsearch_reglocator(void)
     RegDeleteValueA(hklm, "Value15");
     RegDeleteValueA(hklm, "Value16");
     RegDeleteValueA(hklm, "Value17");
-    RegDeleteKeyA(hklm, "");
+    delete_key(hklm, "", access);
     RegCloseKey(hklm);
 
     RegDeleteValueA(classes, "Value1");
@@ -9476,13 +9493,17 @@ static void test_featureparents(void)
 static void test_installprops(void)
 {
     MSIHANDLE hpkg, hdb;
-    CHAR path[MAX_PATH];
-    CHAR buf[MAX_PATH];
+    CHAR path[MAX_PATH], buf[MAX_PATH];
     DWORD size, type;
     LANGID langid;
     HKEY hkey1, hkey2;
     int res;
     UINT r;
+    REGSAM access = KEY_ALL_ACCESS;
+    BOOL wow64;
+
+    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+        access |= KEY_WOW64_64KEY;
 
     GetCurrentDirectory(MAX_PATH, path);
     lstrcat(path, "\\");
@@ -9508,8 +9529,7 @@ static void test_installprops(void)
     ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
 
     RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\MS Setup (ACME)\\User Info", &hkey1);
-
-    RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", &hkey2);
+    RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, access, &hkey2);
 
     size = MAX_PATH;
     type = REG_SZ;
