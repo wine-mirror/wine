@@ -155,6 +155,166 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     ok(format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_A8R8G8B8);
 }
 
+static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
+{
+    IDirect3DTexture9 *texture;
+    D3DSURFACE_DESC desc;
+    D3DCAPS9 caps;
+    UINT mipmaps;
+    HRESULT hr;
+
+    IDirect3DDevice9_GetDeviceCaps(device, &caps);
+
+    hr = D3DXCreateTexture(NULL, 0, 0, 0, 0, D3DX_DEFAULT, 0, D3DPOOL_DEFAULT);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    /* width and height tests */
+
+    hr = D3DXCreateTexture(device, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+
+        ok(desc.Width == 256, "Returned width %d, expected %d\n", desc.Width, 256);
+        ok(desc.Height == 256, "Returned height %d, expected %d\n", desc.Height, 256);
+
+        IDirect3DTexture9_Release(texture);
+    }
+
+
+    hr = D3DXCreateTexture(device, 0, 0, 0, 0, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+
+        ok(desc.Width == 1, "Returned width %d, expected %d\n", desc.Width, 1);
+        ok(desc.Height == 1, "Returned height %d, expected %d\n", desc.Height, 1);
+
+        IDirect3DTexture9_Release(texture);
+    }
+
+
+    if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
+        skip("Hardware only supports pow2 textures\n");
+    else
+    {
+        hr = D3DXCreateTexture(device, D3DX_DEFAULT, 63, 0, 0, 0, D3DPOOL_DEFAULT, &texture);
+        ok((hr == D3D_OK) ||
+           /* may not work with conditional NPOT */
+           ((hr != D3D_OK) && (caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL)),
+           "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        if (texture)
+        {
+            hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+
+            /* Conditional NPOT may create a texture with different dimensions, so allow those
+               situations instead of returning a fail */
+
+            ok(desc.Width == 63 ||
+               (caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL),
+               "Returned width %d, expected %d\n", desc.Width, 63);
+
+            ok(desc.Height == 63 ||
+               (caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL),
+               "Returned height %d, expected %d\n", desc.Height, 63);
+
+            IDirect3DTexture9_Release(texture);
+        }
+    }
+
+    /* mipmaps */
+
+    hr = D3DXCreateTexture(device, 64, 63, 9, 0, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        mipmaps = IDirect3DTexture9_GetLevelCount(texture);
+        ok(mipmaps == 7, "Returned mipmaps %d, expected %d\n", mipmaps, 7);
+
+        IDirect3DTexture9_Release(texture);
+    }
+
+
+    hr = D3DXCreateTexture(device, 284, 137, 9, 0, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        mipmaps = IDirect3DTexture9_GetLevelCount(texture);
+        ok(mipmaps == 9, "Returned mipmaps %d, expected %d\n", mipmaps, 9);
+
+        IDirect3DTexture9_Release(texture);
+    }
+
+
+    hr = D3DXCreateTexture(device, 0, 0, 20, 0, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        mipmaps = IDirect3DTexture9_GetLevelCount(texture);
+        ok(mipmaps == 1, "Returned mipmaps %d, expected %d\n", mipmaps, 1);
+
+        IDirect3DTexture9_Release(texture);
+    }
+
+
+    hr = D3DXCreateTexture(device, 64, 64, 1, 0, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        mipmaps = IDirect3DTexture9_GetLevelCount(texture);
+        ok(mipmaps == 1, "Returned mipmaps %d, expected %d\n", mipmaps, 1);
+
+        IDirect3DTexture9_Release(texture);
+    }
+
+    /* usage */
+
+    hr = D3DXCreateTexture(device, 0, 0, 0, D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTexture succeeded, but should have failed.\n");
+    hr = D3DXCreateTexture(device, 0, 0, 0, D3DUSAGE_DONOTCLIP, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTexture succeeded, but should have failed.\n");
+    hr = D3DXCreateTexture(device, 0, 0, 0, D3DUSAGE_POINTS, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTexture succeeded, but should have failed.\n");
+    hr = D3DXCreateTexture(device, 0, 0, 0, D3DUSAGE_RTPATCHES, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTexture succeeded, but should have failed.\n");
+    hr = D3DXCreateTexture(device, 0, 0, 0, D3DUSAGE_NPATCHES, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTexture succeeded, but should have failed.\n");
+
+    /* format */
+
+    hr = D3DXCreateTexture(device, 0, 0, 0, 0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+        ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
+
+        IDirect3DTexture9_Release(texture);
+    }
+
+
+    hr = D3DXCreateTexture(device, 0, 0, 0, 0, 0, D3DPOOL_DEFAULT, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+    if (texture)
+    {
+        hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+        ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
+
+        IDirect3DTexture9_Release(texture);
+    }
+}
+
 START_TEST(texture)
 {
     HWND wnd;
@@ -187,6 +347,7 @@ START_TEST(texture)
     }
 
     test_D3DXCheckTextureRequirements(device);
+    test_D3DXCreateTexture(device);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);

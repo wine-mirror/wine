@@ -185,8 +185,18 @@ HRESULT WINAPI D3DXCreateTexture(LPDIRECT3DDEVICE9 pDevice,
                                  D3DPOOL pool,
                                  LPDIRECT3DTEXTURE9 *ppTexture)
 {
-    FIXME("(%p, %u, %u, %u, %x, %x, %x, %p): semi-stub\n", pDevice, width, height, miplevels, usage, format,
+    HRESULT hr;
+
+    TRACE("(%p, %u, %u, %u, %x, %x, %x, %p)\n", pDevice, width, height, miplevels, usage, format,
         pool, ppTexture);
+
+    if (!pDevice || !ppTexture)
+        return D3DERR_INVALIDCALL;
+
+    hr = D3DXCheckTextureRequirements(pDevice, &width, &height, &miplevels, usage, &format, pool);
+
+    if (FAILED(hr))
+        return hr;
 
     return IDirect3DDevice9_CreateTexture(pDevice, width, height, miplevels, usage, format, pool, ppTexture, NULL);
 }
