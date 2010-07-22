@@ -105,11 +105,31 @@ static void free_fav_menu_data(HMENU menu)
         heap_free((LPWSTR)url);
 }
 
-static void add_fav_to_menu(HMENU menu, LPWSTR title, LPCWSTR url)
+static int get_menu_item_count(HMENU menu)
+{
+    MENUITEMINFOW item;
+    int count = 0;
+    int i;
+
+    item.cbSize = sizeof(item);
+    item.fMask = MIIM_DATA | MIIM_SUBMENU;
+
+    for(i = 0; GetMenuItemInfoW(menu, i, TRUE, &item); i++)
+    {
+        if(item.hSubMenu)
+            count += get_menu_item_count(item.hSubMenu);
+        else
+            count++;
+    }
+
+    return count;
+}
+
+static void add_fav_to_menu(HMENU favmenu, HMENU menu, LPWSTR title, LPCWSTR url)
 {
     MENUITEMINFOW item;
     /* Subtract the number of standard elements in the Favorites menu */
-    INT favcount = GetMenuItemCount(menu) - 2;
+    int favcount = get_menu_item_count(favmenu) - 2;
     LPWSTR urlbuf;
 
     if(favcount > (ID_BROWSE_GOTOFAV_MAX - ID_BROWSE_GOTOFAV_FIRST))
@@ -131,13 +151,13 @@ static void add_fav_to_menu(HMENU menu, LPWSTR title, LPCWSTR url)
     item.dwTypeData = title;
     item.wID = ID_BROWSE_GOTOFAV_FIRST + favcount;
     item.dwItemData = (ULONG_PTR)urlbuf;
-    InsertMenuItemW(menu, favcount + 2, TRUE, &item);
+    InsertMenuItemW(menu, -1, TRUE, &item);
 }
 
-static void add_favs_to_menu(HMENU menu, LPCWSTR dir)
+static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
 {
     WCHAR path[MAX_PATH*2];
-    const WCHAR urlext[] = {'*','.','u','r','l',0};
+    const WCHAR search[] = {'*',0};
     WCHAR* filename;
     HANDLE findhandle;
     WIN32_FIND_DATAW finddata;
@@ -146,7 +166,7 @@ static void add_favs_to_menu(HMENU menu, LPCWSTR dir)
     HRESULT res;
 
     lstrcpyW(path, dir);
-    PathAppendW(path, urlext);
+    PathAppendW(path, search);
 
     findhandle = FindFirstFileW(path, &finddata);
 
@@ -160,25 +180,48 @@ static void add_favs_to_menu(HMENU menu, LPCWSTR dir)
 
     if(SUCCEEDED(res))
     {
-        filename = path + lstrlenW(path) - lstrlenW(urlext);
+        filename = path + lstrlenW(path) - lstrlenW(search);
 
         do
         {
-            WCHAR* fileext;
-            WCHAR* url = NULL;
             lstrcpyW(filename, finddata.cFileName);
 
-            if(FAILED(IPersistFile_Load(urlfile, path, 0)))
-                continue;
+            if(finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                MENUITEMINFOW item;
+                const WCHAR ignore1[] = {'.','.',0};
+                const WCHAR ignore2[] = {'.',0};
 
-            urlobj->lpVtbl->GetURL(urlobj, &url);
+                if(!lstrcmpW(filename, ignore1) || !lstrcmpW(filename, ignore2))
+                    continue;
 
-            if(!url)
-                continue;
+                item.cbSize = sizeof(item);
+                item.fMask = MIIM_STRING | MIIM_SUBMENU;
+                item.dwTypeData = filename;
+                item.hSubMenu = CreatePopupMenu();
+                InsertMenuItemW(menu, -1, TRUE, &item);
+                add_favs_to_menu(favmenu, item.hSubMenu, path);
+            } else
+            {
+                WCHAR* fileext;
+                WCHAR* url = NULL;
+                const WCHAR urlext[] = {'.','u','r','l',0};
 
-            fileext = filename + lstrlenW(filename) - lstrlenW(urlext) + 1;
-            *fileext = 0;
-            add_fav_to_menu(menu, filename, url);
+                if(lstrcmpiW(PathFindExtensionW(filename), urlext))
+                    continue;
+
+                if(FAILED(IPersistFile_Load(urlfile, path, 0)))
+                    continue;
+
+                urlobj->lpVtbl->GetURL(urlobj, &url);
+
+                if(!url)
+                    continue;
+
+                fileext = filename + lstrlenW(filename) - lstrlenW(urlext);
+                *fileext = 0;
+                add_fav_to_menu(favmenu, menu, filename, url);
+            }
         } while(FindNextFileW(findhandle, &finddata));
     }
 
@@ -194,13 +237,14 @@ static void add_favs_to_menu(HMENU menu, LPCWSTR dir)
 static HMENU create_ie_menu(void)
 {
     HMENU menu = LoadMenuW(shdocvw_hinstance, MAKEINTRESOURCEW(IDR_BROWSE_MAIN_MENU));
+    HMENU favmenu = get_fav_menu(menu);
     WCHAR path[MAX_PATH];
 
     if(SHGetFolderPathW(NULL, CSIDL_COMMON_FAVORITES, NULL, SHGFP_TYPE_CURRENT, path) == S_OK)
-        add_favs_to_menu(get_fav_menu(menu), path);
+        add_favs_to_menu(favmenu, favmenu, path);
 
     if(SHGetFolderPathW(NULL, CSIDL_FAVORITES, NULL, SHGFP_TYPE_CURRENT, path) == S_OK)
-        add_favs_to_menu(get_fav_menu(menu), path);
+        add_favs_to_menu(favmenu, favmenu, path);
 
     return menu;
 }
