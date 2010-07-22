@@ -66,10 +66,7 @@ static void test_dc_attributes(void)
         hdc = hdcs[i] = GetDCEx( hwnd_cache, 0, DCX_USESTYLE | DCX_NORESETATTRS );
         if (!hdc) break;
         rop = GetROP2( hdc );
-        if (hdc == old_hdc)
-            todo_wine ok( rop == def_rop, "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc );
-        else
-            ok( rop == def_rop, "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc );
+        ok( rop == def_rop, "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc );
         if (hdc == old_hdc)
         {
             found_dc = 1;
@@ -104,8 +101,8 @@ static void test_dc_attributes(void)
         rop = GetROP2( hdc );
         if (hdc == old_hdc)
         {
-            todo_wine ok( rop == R2_WHITE || broken( rop == def_rop),
-                          "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc );
+            ok( rop == R2_WHITE || broken( rop == def_rop),
+                "wrong ROP2 %d after release %p/%p\n", rop, old_hdc, hdc );
             SetROP2( old_hdc, def_rop );
         }
         else

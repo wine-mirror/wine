@@ -168,6 +168,16 @@ static void update_visible_region( struct dce *dce )
 
 
 /***********************************************************************
+ *		reset_dce_attrs
+ */
+static void reset_dce_attrs( struct dce *dce )
+{
+    RestoreDC( dce->hdc, 1 );  /* initial save level is always 1 */
+    SaveDC( dce->hdc );  /* save the state again for next time */
+}
+
+
+/***********************************************************************
  *		release_dce
  */
 static void release_dce( struct dce *dce )
@@ -329,6 +339,7 @@ void free_dce( struct dce *dce, HWND hwnd )
         if (!--dce->count)
         {
             /* turn it into a cache entry */
+            reset_dce_attrs( dce );
             release_dce( dce );
             dce->flags |= DCX_CACHE;
         }
@@ -455,6 +466,7 @@ static INT release_dc( HWND hwnd, HDC hdc, BOOL end_paint )
     dce = (struct dce *)GetDCHook( hdc, NULL );
     if (dce && dce->count)
     {
+        if (!(dce->flags & DCX_NORESETATTRS)) reset_dce_attrs( dce );
         if (end_paint || (dce->flags & DCX_CACHE)) delete_clip_rgn( dce );
         if (dce->flags & DCX_CACHE) dce->count = 0;
         ret = TRUE;
@@ -898,6 +910,7 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
     static const DWORD clip_flags = DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW;
+    static const DWORD user_flags = clip_flags | DCX_NORESETATTRS; /* flags that can be set by user */
     struct dce *dce;
     BOOL bUpdateVisRgn = TRUE;
     HWND parent;
@@ -1021,17 +1034,11 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
 
     dce->hwnd = hwnd;
-    dce->flags = (dce->flags & ~clip_flags) | (flags & clip_flags);
+    dce->flags = (dce->flags & ~user_flags) | (flags & user_flags);
 
     if (SetHookFlags( dce->hdc, DCHF_VALIDATEVISRGN )) bUpdateVisRgn = TRUE;  /* DC was dirty */
 
     if (bUpdateVisRgn) update_visible_region( dce );
-
-    if (!(flags & DCX_NORESETATTRS))
-    {
-        RestoreDC( dce->hdc, 1 );  /* initial save level is always 1 */
-        SaveDC( dce->hdc );  /* save the state again for next time */
-    }
 
     TRACE("(%p,%p,0x%x): returning %p\n", hwnd, hrgnClip, flags, dce->hdc);
     return dce->hdc;
