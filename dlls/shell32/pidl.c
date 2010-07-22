@@ -1405,6 +1405,81 @@ HRESULT WINAPI SHGetNameFromIDList(PCIDLIST_ABSOLUTE pidl, SIGDN sigdnName, PWST
 
         IShellFolder_Release(psfparent);
     }
+    return ret;
+}
+
+/*************************************************************************
+ * SHGetIDListFromObject             [SHELL32.@]
+ */
+HRESULT WINAPI SHGetIDListFromObject(IUnknown *punk, PIDLIST_ABSOLUTE *ppidl)
+{
+    IPersistIDList *ppersidl;
+    IPersistFolder2 *ppf2;
+    IDataObject *pdo;
+    IFolderView *pfv;
+    HRESULT ret;
+
+    if(!punk)
+        return E_NOINTERFACE;
+
+    *ppidl = NULL;
+
+    /* Try IPersistIDList */
+    ret = IUnknown_QueryInterface(punk, &IID_IPersistIDList, (void**)&ppersidl);
+    if(SUCCEEDED(ret))
+    {
+        TRACE("IPersistIDList (%p)\n", ppersidl);
+        ret = IPersistIDList_GetIDList(ppersidl, ppidl);
+        IPersistIDList_Release(ppersidl);
+        if(SUCCEEDED(ret))
+            return ret;
+    }
+
+    /* Try IPersistFolder2 */
+    ret = IUnknown_QueryInterface(punk, &IID_IPersistFolder2, (void**)&ppf2);
+    if(SUCCEEDED(ret))
+    {
+        TRACE("IPersistFolder2 (%p)\n", ppf2);
+        ret = IPersistFolder2_GetCurFolder(ppf2, ppidl);
+        IPersistFolder2_Release(ppf2);
+        if(SUCCEEDED(ret))
+            return ret;
+    }
+
+    /* Try IDataObject */
+    ret = IUnknown_QueryInterface(punk, &IID_IDataObject, (void**)&pdo);
+    if(SUCCEEDED(ret))
+    {
+        IShellItem *psi;
+        TRACE("IDataObject (%p)\n", pdo);
+        ret = SHGetItemFromDataObject(pdo, DOGIF_ONLY_IF_ONE,
+                                      &IID_IShellItem, (void**)&psi);
+        if(SUCCEEDED(ret))
+        {
+            ret = SHGetIDListFromObject((IUnknown*)psi, ppidl);
+            IShellItem_Release(psi);
+        }
+        IDataObject_Release(pdo);
+
+        if(SUCCEEDED(ret))
+            return ret;
+    }
+
+    /* Try IFolderView */
+    ret = IUnknown_QueryInterface(punk, &IID_IFolderView, (void**)&pfv);
+    if(SUCCEEDED(ret))
+    {
+        IShellFolder *psf;
+        TRACE("IFolderView (%p)\n", pfv);
+        ret = IFolderView_GetFolder(pfv, &IID_IShellFolder, (void**)&psf);
+        if(SUCCEEDED(ret))
+        {
+            /* We might be able to get IPersistFolder2 from a shellfolder. */
+            ret = SHGetIDListFromObject((IUnknown*)psf, ppidl);
+        }
+        IFolderView_Release(pfv);
+        return ret;
+    }
 
     return ret;
 }
