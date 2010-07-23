@@ -8886,6 +8886,7 @@ static void test_createtable(void)
         size = sizeof(buffer);
         res = MsiRecordGetString(hrec, 1, buffer, &size );
         todo_wine ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        MsiCloseHandle( hrec );
 
         res = MsiViewClose( htab );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -8915,10 +8916,12 @@ static void test_createtable(void)
         res = MsiViewGetColumnInfo( htab, MSICOLINFO_NAMES, &hrec );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+        buffer[0] = 0;
         size = sizeof(buffer);
         res = MsiRecordGetString(hrec, 1, buffer, &size );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
         ok(!strcmp(buffer,"b"), "b != %s\n", buffer);
+        MsiCloseHandle( hrec );
 
         res = MsiViewClose( htab );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -8942,6 +8945,7 @@ static void test_createtable(void)
         res = MsiViewGetColumnInfo( htab, MSICOLINFO_NAMES, &hrec );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+        buffer[0] = 0;
         size = sizeof(buffer);
         res = MsiRecordGetString(hrec, 1, buffer, &size );
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
