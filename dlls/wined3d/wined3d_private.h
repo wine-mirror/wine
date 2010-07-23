@@ -1161,7 +1161,7 @@ void context_alloc_occlusion_query(struct wined3d_context *context,
         struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
 void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device,
-        IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil) DECLSPEC_HIDDEN;
+        UINT rt_count, IWineD3DSurfaceImpl **rts, IWineD3DSurfaceImpl *depth_stencil) DECLSPEC_HIDDEN;
 void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
         IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil) DECLSPEC_HIDDEN;
@@ -1686,6 +1686,9 @@ struct IWineD3DDeviceImpl
     struct WineD3DRectPatch *currentPatch;
 };
 
+HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device,
+        UINT rt_count, IWineD3DSurfaceImpl **rts, UINT rect_count, const WINED3DRECT *rects,
+        DWORD flags, WINED3DCOLOR color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
 BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect) DECLSPEC_HIDDEN;
@@ -1702,8 +1705,6 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
 void device_switch_onscreen_ds(IWineD3DDeviceImpl *device, struct wined3d_context *context,
         IWineD3DSurfaceImpl *depth_stencil) DECLSPEC_HIDDEN;
 void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, DWORD Count,
-        const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) DECLSPEC_HIDDEN;
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) DECLSPEC_HIDDEN;
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) DECLSPEC_HIDDEN;
 

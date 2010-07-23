@@ -473,7 +473,9 @@ void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target
 {
     if (surface_is_offscreen(render_target))
     {
+        UINT clear_size = (context->gl_info->limits.buffers - 1) * sizeof(*context->blit_targets);
         context->blit_targets[0] = render_target;
+        if (clear_size) memset(&context->blit_targets[1], 0, clear_size);
         context_apply_fbo_state(context, target, context->blit_targets, depth_stencil);
     }
     else
@@ -2059,30 +2061,64 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 
 /* Context activation is done by the caller. */
 void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device,
-        IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil)
+        UINT rt_count, IWineD3DSurfaceImpl **rts, IWineD3DSurfaceImpl *depth_stencil)
 {
     const struct StateEntry *state_table = device->StateTable;
-    GLenum buffer;
+    UINT i;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         context_validate_onscreen_formats(device, context, depth_stencil);
 
         ENTER_GL();
-        context_apply_fbo_state_blit(context, GL_FRAMEBUFFER, render_target, depth_stencil);
+
+        if (surface_is_offscreen(rts[0]))
+        {
+            for (i = 0; i < rt_count; ++i)
+            {
+                context->blit_targets[i] = rts[i];
+            }
+            while (i < context->gl_info->limits.buffers)
+            {
+                context->blit_targets[i] = NULL;
+                ++i;
+            }
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, depth_stencil);
+        }
+        else
+        {
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL);
+        }
+
         LEAVE_GL();
     }
 
-    if (!surface_is_offscreen(render_target))
-        buffer = surface_get_gl_buffer(render_target);
-    else if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-        buffer = GL_COLOR_ATTACHMENT0;
+    if (!surface_is_offscreen(rts[0]))
+    {
+        ENTER_GL();
+        context_set_draw_buffer(context, surface_get_gl_buffer(rts[0]));
+        LEAVE_GL();
+    }
     else
-        buffer = device->offscreenBuffer;
+    {
+        const struct wined3d_gl_info *gl_info = context->gl_info;
+        GLenum buffers[gl_info->limits.buffers];
 
-    ENTER_GL();
-    context_set_draw_buffer(context, buffer);
-    LEAVE_GL();
+        for (i = 0; i < gl_info->limits.buffers; ++i)
+        {
+            if (i < rt_count && rts[i])
+                buffers[i] = GL_COLOR_ATTACHMENT0 + i;
+            else
+                buffers[i] = GL_NONE;
+        }
+
+        ENTER_GL();
+        GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, buffers));
+        checkGLcall("glDrawBuffers()");
+        LEAVE_GL();
+
+        context->draw_buffer_dirty = TRUE;
+    }
 
     if (context->last_was_blit)
     {

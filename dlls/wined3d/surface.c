@@ -4726,10 +4726,11 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     return FALSE;
 }
 
-static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color)
+static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color)
 {
-    return IWineD3DDeviceImpl_ClearSurface(device, dst_surface, 1 /* Number of rectangles */,
-                                           (const WINED3DRECT*)dst_rect, WINED3DCLEAR_TARGET, fill_color, 0.0f /* Z */, 0 /* Stencil */);
+    return device_clear_render_targets(device, 1 /* rt_count */, &dst_surface, 1 /* rect_count */,
+            (const WINED3DRECT *)dst_rect, WINED3DCLEAR_TARGET, fill_color, 0.0f /* depth */, 0 /* stencil */);
 }
 
 const struct blit_shader ffp_blit =  {
