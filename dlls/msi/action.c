@@ -4333,22 +4333,37 @@ static UINT ACTION_RemoveIniValues( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
+static void register_dll( const WCHAR *dll, BOOL unregister )
+{
+    HMODULE hmod;
+
+    hmod = LoadLibraryExW( dll, 0, LOAD_WITH_ALTERED_SEARCH_PATH );
+    if (hmod)
+    {
+        HRESULT (WINAPI *func_ptr)( void );
+        const char *func = unregister ? "DllUnregisterServer" : "DllRegisterServer";
+
+        func_ptr = (void *)GetProcAddress( hmod, func );
+        if (func_ptr)
+        {
+            HRESULT hr = func_ptr();
+            if (FAILED( hr ))
+                WARN("failed to register dll 0x%08x\n", hr);
+        }
+        else
+            WARN("entry point %s not found\n", func);
+        FreeLibrary( hmod );
+        return;
+    }
+    WARN("failed to load library %u\n", GetLastError());
+}
+
 static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
     LPCWSTR filename;
-    LPWSTR FullName;
     MSIFILE *file;
-    DWORD len;
-    static const WCHAR ExeStr[] =
-        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','\"',0};
-    static const WCHAR close[] =  {'\"',0};
-    STARTUPINFOW si;
-    PROCESS_INFORMATION info;
-    BOOL brc;
     MSIRECORD *uirow;
-
-    memset(&si,0,sizeof(STARTUPINFOW));
 
     filename = MSI_RecordGetString(row,1);
     file = get_loaded_file( package, filename );
@@ -4359,23 +4374,9 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
         return ERROR_SUCCESS;
     }
 
-    len = strlenW(ExeStr) + strlenW( file->TargetPath ) + 2;
+    TRACE("Registering %s\n", debugstr_w( file->TargetPath ));
 
-    FullName = msi_alloc(len*sizeof(WCHAR));
-    strcpyW(FullName,ExeStr);
-    strcatW( FullName, file->TargetPath );
-    strcatW(FullName,close);
-
-    TRACE("Registering %s\n",debugstr_w(FullName));
-    brc = CreateProcessW(NULL, FullName, NULL, NULL, FALSE, 0, NULL, c_colon,
-                    &si, &info);
-
-    if (brc)
-    {
-        CloseHandle(info.hThread);
-        msi_dialog_check_messages(info.hProcess);
-        CloseHandle(info.hProcess);
-    }
+    register_dll( file->TargetPath, FALSE );
 
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, filename );
@@ -4383,7 +4384,6 @@ static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
     ui_actiondata( package, szSelfRegModules, uirow );
     msiobj_release( &uirow->hdr );
 
-    msi_free( FullName );
     return ERROR_SUCCESS;
 }
 
@@ -4410,20 +4410,10 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
 
 static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
 {
-    static const WCHAR regsvr32[] =
-        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','/','u',' ','\"',0};
-    static const WCHAR close[] =  {'\"',0};
     MSIPACKAGE *package = param;
     LPCWSTR filename;
-    LPWSTR cmdline;
     MSIFILE *file;
-    DWORD len;
-    STARTUPINFOW si;
-    PROCESS_INFORMATION pi;
-    BOOL ret;
     MSIRECORD *uirow;
-
-    memset( &si, 0, sizeof(STARTUPINFOW) );
 
     filename = MSI_RecordGetString( row, 1 );
     file = get_loaded_file( package, filename );
@@ -4434,22 +4424,9 @@ static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
         return ERROR_SUCCESS;
     }
 
-    len = strlenW( regsvr32 ) + strlenW( file->TargetPath ) + 2;
+    TRACE("Unregistering %s\n", debugstr_w( file->TargetPath ));
 
-    cmdline = msi_alloc( len * sizeof(WCHAR) );
-    strcpyW( cmdline, regsvr32 );
-    strcatW( cmdline, file->TargetPath );
-    strcatW( cmdline, close );
-
-    TRACE("Unregistering %s\n", debugstr_w(cmdline));
-
-    ret = CreateProcessW( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, c_colon, &si, &pi );
-    if (ret)
-    {
-        CloseHandle( pi.hThread );
-        msi_dialog_check_messages( pi.hProcess );
-        CloseHandle( pi.hProcess );
-    }
+    register_dll( file->TargetPath, TRUE );
 
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, filename );
@@ -4457,7 +4434,6 @@ static UINT ITERATE_SelfUnregModules( MSIRECORD *row, LPVOID param )
     ui_actiondata( package, szSelfUnregModules, uirow );
     msiobj_release( &uirow->hdr );
 
-    msi_free( cmdline );
     return ERROR_SUCCESS;
 }
 
