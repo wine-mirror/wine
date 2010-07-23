@@ -169,6 +169,13 @@ const char FileOpenDlgInfosStr[] = "FileOpenDlgInfos"; /* windows property descr
 static const char LookInInfosStr[] = "LookInInfos"; /* LOOKIN combo box property */
 static SIZE MemDialogSize = { 0, 0}; /* keep size of the (resizable) dialog */
 
+static const WCHAR LastVisitedMRUW[] =
+    {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'E','x','p','l','o','r','e','r','\\','C','o','m','D','l','g','3','2','\\',
+        'L','a','s','t','V','i','s','i','t','e','d','M','R','U',0};
+static const WCHAR MRUListW[] = {'M','R','U','L','i','s','t',0};
+
 /***********************************************************************
  * Prototypes
  */
@@ -208,6 +215,11 @@ static int     FILEDLG95_LOOKIN_InsertItemAfterParent(HWND hwnd,LPITEMIDLIST pid
 static int     FILEDLG95_LOOKIN_RemoveMostExpandedItem(HWND hwnd);
        int     FILEDLG95_LOOKIN_SelectItem(HWND hwnd,LPITEMIDLIST pidl);
 static void    FILEDLG95_LOOKIN_Clean(HWND hwnd);
+
+/* Functions for dealing with the most-recently-used registry keys */
+static void FILEDLG95_MRU_load_filename(LPWSTR stored_path);
+static WCHAR FILEDLG95_MRU_get_slot(LPCWSTR module_name, LPWSTR stored_path, PHKEY hkey_ret);
+static void FILEDLG95_MRU_save_filename(LPCWSTR filename);
 
 /* Miscellaneous tool functions */
 static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPWSTR lpstrFileName);
@@ -1517,7 +1529,22 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
          SetDlgItemTextW(hwnd, IDC_FILENAME, fodInfos->filename);
       }
 
-      /* 4. win98+ and win2000+ if any files of specified filter types in
+      /* 4. Win2000+: Recently used */
+      if (handledPath == FALSE && win2000plus) {
+          fodInfos->initdir = MemAlloc(MAX_PATH * sizeof(WCHAR));
+          fodInfos->initdir[0] = '\0';
+
+          FILEDLG95_MRU_load_filename(fodInfos->initdir);
+
+          if (fodInfos->initdir[0] && PathFileExistsW(fodInfos->initdir)){
+             handledPath = TRUE;
+          }else{
+             MemFree(fodInfos->initdir);
+             fodInfos->initdir = NULL;
+          }
+      }
+
+      /* 5. win98+ and win2000+ if any files of specified filter types in
             current directory, use it                                      */
       if ( win98plus && handledPath == FALSE &&
            fodInfos->filter && *fodInfos->filter) {
@@ -1557,8 +1584,6 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
            }
          }
       }
-
-      /* 5. Win2000+: FIXME: Next, Recently used? Not sure how windows does this */
 
       /* 6. Win98+ and 2000+: Use personal files dir, others use current dir */
       if (handledPath == FALSE && (win2000plus || win98plus)) {
@@ -1951,6 +1976,199 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
   /* clean and exit */
   FILEDLG95_Clean(hwnd);
   return EndDialog(hwnd,TRUE);
+}
+
+/* Returns the 'slot name' of the given module_name in the registry's
+ * most-recently-used list.  This will be an ASCII value in the
+ * range ['a','z'). Returns zero on error.
+ *
+ * The slot's value in the registry has the form:
+ *   module_name\0mru_path\0
+ *
+ * If stored_path is given, then stored_path will contain the path name
+ * stored in the registry's MRU list for the given module_name.
+ *
+ * If hkey_ret is given, then hkey_ret will be a handle to the registry's
+ * MRU list key for the given module_name.
+ */
+static WCHAR FILEDLG95_MRU_get_slot(LPCWSTR module_name, LPWSTR stored_path, PHKEY hkey_ret)
+{
+    WCHAR mru_list[32], *cur_mru_slot;
+    BOOL taken[25] = {0};
+    DWORD mru_list_size = sizeof(mru_list), key_type = -1, i;
+    HKEY hkey_tmp, *hkey;
+    LONG ret;
+
+    if(hkey_ret)
+        hkey = hkey_ret;
+    else
+        hkey = &hkey_tmp;
+
+    if(stored_path)
+        *stored_path = '\0';
+
+    ret = RegCreateKeyW(HKEY_CURRENT_USER, LastVisitedMRUW, hkey);
+    if(ret){
+        WARN("Unable to create MRU key: %d\n", ret);
+        return 0;
+    }
+
+    ret = RegGetValueW(*hkey, NULL, MRUListW, RRF_RT_REG_SZ, &key_type,
+            (LPBYTE)mru_list, &mru_list_size);
+    if(ret || key_type != REG_SZ){
+        if(ret == ERROR_FILE_NOT_FOUND)
+            return 'a';
+
+        WARN("Error getting MRUList data: type: %d, ret: %d\n", key_type, ret);
+        RegCloseKey(*hkey);
+        return 0;
+    }
+
+    for(cur_mru_slot = mru_list; *cur_mru_slot; ++cur_mru_slot){
+        WCHAR value_data[MAX_PATH], value_name[2] = {0};
+        DWORD value_data_size = sizeof(value_data);
+
+        *value_name = *cur_mru_slot;
+
+        ret = RegGetValueW(*hkey, NULL, value_name, RRF_RT_REG_BINARY,
+                &key_type, (LPBYTE)value_data, &value_data_size);
+        if(ret || key_type != REG_BINARY){
+            WARN("Error getting MRU slot data: type: %d, ret: %d\n", key_type, ret);
+            continue;
+        }
+
+        if(!strcmpiW(module_name, value_data)){
+            if(!hkey_ret)
+                RegCloseKey(*hkey);
+            if(stored_path)
+                lstrcpyW(stored_path, value_data + lstrlenW(value_data) + 1);
+            return *value_name;
+        }
+    }
+
+    if(!hkey_ret)
+        RegCloseKey(*hkey);
+
+    /* the module name isn't in the registry, so find the next open slot */
+    for(cur_mru_slot = mru_list; *cur_mru_slot; ++cur_mru_slot)
+        taken[*cur_mru_slot - 'a'] = TRUE;
+    for(i = 0; i < 25; ++i){
+        if(!taken[i])
+            return i + 'a';
+    }
+
+    /* all slots are taken, so return the last one in MRUList */
+    --cur_mru_slot;
+    return *cur_mru_slot;
+}
+
+/* save the given filename as most-recently-used path for this module */
+static void FILEDLG95_MRU_save_filename(LPCWSTR filename)
+{
+    WCHAR module_path[MAX_PATH], *module_name, slot, slot_name[2] = {0};
+    LONG ret;
+    HKEY hkey;
+
+    /* get the current executable's name */
+    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path))){
+        WARN("GotModuleFileName failed: %d\n", GetLastError());
+        return;
+    }
+    module_name = strrchrW(module_path, '\\');
+    if(!module_name)
+        module_name = module_path;
+    else
+        module_name += 1;
+
+    slot = FILEDLG95_MRU_get_slot(module_name, NULL, &hkey);
+    if(!slot)
+        return;
+    *slot_name = slot;
+
+    { /* update the slot's info */
+        WCHAR *path_ends, *final;
+        DWORD path_len, final_len;
+
+        /* use only the path segment of `filename' */
+        path_ends = strrchrW(filename, '\\');
+        path_len = path_ends - filename;
+
+        final_len = path_len + lstrlenW(module_name) + 2;
+
+        final = MemAlloc(final_len * sizeof(WCHAR));
+        if(!final)
+            return;
+        lstrcpyW(final, module_name);
+        memcpy(final + lstrlenW(final) + 1, filename, path_len * sizeof(WCHAR));
+        final[final_len-1] = '\0';
+
+        ret = RegSetValueExW(hkey, slot_name, 0, REG_BINARY, (LPBYTE)final,
+                final_len * sizeof(WCHAR));
+        if(ret){
+            WARN("Error saving MRU data to slot %s: %d\n", wine_dbgstr_w(slot_name), ret);
+            MemFree(final);
+            RegCloseKey(hkey);
+            return;
+        }
+
+        MemFree(final);
+    }
+
+    { /* update MRUList value */
+        WCHAR old_mru_list[32], new_mru_list[32];
+        WCHAR *old_mru_slot, *new_mru_slot = new_mru_list;
+        DWORD mru_list_size = sizeof(old_mru_list), key_type;
+
+        ret = RegGetValueW(hkey, NULL, MRUListW, RRF_RT_ANY, &key_type,
+                (LPBYTE)old_mru_list, &mru_list_size);
+        if(ret || key_type != REG_SZ){
+            if(ret == ERROR_FILE_NOT_FOUND){
+                new_mru_list[0] = slot;
+                new_mru_list[1] = '\0';
+            }else{
+                WARN("Error getting MRUList data: type: %d, ret: %d\n", key_type, ret);
+                RegCloseKey(hkey);
+                return;
+            }
+        }else{
+            /* copy old list data over so that the new slot is at the start
+             * of the list */
+            *new_mru_slot++ = slot;
+            for(old_mru_slot = old_mru_list; *old_mru_slot; ++old_mru_slot){
+                if(*old_mru_slot != slot)
+                    *new_mru_slot++ = *old_mru_slot;
+            }
+            *new_mru_slot = '\0';
+        }
+
+        ret = RegSetValueExW(hkey, MRUListW, 0, REG_SZ, (LPBYTE)new_mru_list,
+                (lstrlenW(new_mru_list) + 1) * sizeof(WCHAR));
+        if(ret){
+            WARN("Error saving MRUList data: %d\n", ret);
+            RegCloseKey(hkey);
+            return;
+        }
+    }
+}
+
+/* load the most-recently-used path for this module */
+static void FILEDLG95_MRU_load_filename(LPWSTR stored_path)
+{
+    WCHAR module_path[MAX_PATH], *module_name;
+
+    /* get the current executable's name */
+    if(!GetModuleFileNameW(GetModuleHandleW(NULL), module_path, sizeof(module_path))){
+        WARN("GotModuleFileName failed: %d\n", GetLastError());
+        return;
+    }
+    module_name = strrchrW(module_path, '\\');
+    if(!module_name)
+        module_name = module_path;
+    else
+        module_name += 1;
+
+    FILEDLG95_MRU_get_slot(module_name, stored_path, NULL);
+    TRACE("got MRU path: %s\n", wine_dbgstr_w(stored_path));
 }
 
 /***********************************************************************
@@ -2417,6 +2635,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
           if ( !FILEDLG95_SendFileOK(hwnd, fodInfos) )
 	      goto ret;
+
+          FILEDLG95_MRU_save_filename(lpstrPathAndFile);
 
           TRACE("close\n");
 	  FILEDLG95_Clean(hwnd);
