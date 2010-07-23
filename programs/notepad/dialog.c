@@ -597,13 +597,11 @@ VOID DIALOG_FileOpen(VOID)
 {
     OPENFILENAMEW openfilename;
     WCHAR szPath[MAX_PATH];
-    WCHAR szDir[MAX_PATH];
     static const WCHAR szDefaultExt[] = { 't','x','t',0 };
     static const WCHAR txt_files[] = { '*','.','t','x','t',0 };
 
     ZeroMemory(&openfilename, sizeof(openfilename));
 
-    GetCurrentDirectoryW(ARRAY_SIZE(szDir), szDir);
     lstrcpyW(szPath, txt_files);
 
     openfilename.lStructSize       = sizeof(openfilename);
@@ -612,7 +610,6 @@ VOID DIALOG_FileOpen(VOID)
     openfilename.lpstrFilter       = Globals.szFilter;
     openfilename.lpstrFile         = szPath;
     openfilename.nMaxFile          = ARRAY_SIZE(szPath);
-    openfilename.lpstrInitialDir   = szDir;
     openfilename.Flags = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER |
                          OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
                          OFN_HIDEREADONLY | OFN_ENABLESIZING;
@@ -647,13 +644,11 @@ BOOL DIALOG_FileSaveAs(VOID)
 {
     OPENFILENAMEW saveas;
     WCHAR szPath[MAX_PATH];
-    WCHAR szDir[MAX_PATH];
     static const WCHAR szDefaultExt[] = { 't','x','t',0 };
     static const WCHAR txt_files[] = { '*','.','t','x','t',0 };
 
     ZeroMemory(&saveas, sizeof(saveas));
 
-    GetCurrentDirectoryW(ARRAY_SIZE(szDir), szDir);
     lstrcpyW(szPath, txt_files);
 
     saveas.lStructSize       = sizeof(OPENFILENAMEW);
@@ -662,7 +657,6 @@ BOOL DIALOG_FileSaveAs(VOID)
     saveas.lpstrFilter       = Globals.szFilter;
     saveas.lpstrFile         = szPath;
     saveas.nMaxFile          = ARRAY_SIZE(szPath);
-    saveas.lpstrInitialDir   = szDir;
     saveas.Flags          = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER |
                             OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT |
                             OFN_HIDEREADONLY | OFN_ENABLESIZING;
