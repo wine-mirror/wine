@@ -30,6 +30,7 @@ C_SRCS = \
 
 RC_SRCS = \
 	En.rc \
+	Uk.rc \
 	shdocvw.rc
 
 IDL_TLB_SRCS = shdocvw_v1.idl
