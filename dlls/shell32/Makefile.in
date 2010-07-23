@@ -80,6 +80,7 @@ RC_SRCS = \
 	shell32_Ru.rc \
 	shell32_Si.rc \
 	shell32_Sk.rc \
+	shell32_Sr.rc \
 	shell32_Sv.rc \
 	shell32_Tr.rc \
 	shell32_Uk.rc \
