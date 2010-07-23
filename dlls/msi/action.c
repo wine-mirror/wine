@@ -814,7 +814,7 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     if (needs_ui_sequence(package))
         rc = ACTION_PerformUIAction(package, action, -1);
     else
-        rc = ACTION_PerformAction(package, action, -1, FALSE);
+        rc = ACTION_PerformAction(package, action, -1);
 
     msi_dialog_check_messages( NULL );
 
@@ -1618,7 +1618,7 @@ static UINT execute_script(MSIPACKAGE *package, UINT script )
         action = package->script->Actions[script][i];
         ui_actionstart(package, action);
         TRACE("Executing Action (%s)\n",debugstr_w(action));
-        rc = ACTION_PerformAction(package, action, script, TRUE);
+        rc = ACTION_PerformAction(package, action, script);
         if (rc != ERROR_SUCCESS)
             break;
     }
@@ -7319,47 +7319,27 @@ StandardActions[] =
     { NULL, NULL },
 };
 
-static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
-                                        UINT* rc, BOOL force )
+static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UINT *rc )
 {
     BOOL ret = FALSE;
-    BOOL run = force;
-    int i;
-
-    if (!run && !package->script->CurrentlyScripting)
-        run = TRUE;
-
-    if (!run)
-    {
-        if (strcmpW(action,szInstallFinalize) == 0 ||
-            strcmpW(action,szInstallExecute) == 0 ||
-            strcmpW(action,szInstallExecuteAgain) == 0)
-                run = TRUE;
-    }
+    UINT i;
 
     i = 0;
     while (StandardActions[i].action != NULL)
     {
-        if (strcmpW(StandardActions[i].action, action)==0)
+        if (!strcmpW( StandardActions[i].action, action ))
         {
-            if (!run)
+            ui_actionstart( package, action );
+            if (StandardActions[i].handler)
             {
-                ui_actioninfo(package, action, TRUE, 0);
-                *rc = schedule_action(package,INSTALL_SCRIPT,action);
-                ui_actioninfo(package, action, FALSE, *rc);
+                ui_actioninfo( package, action, TRUE, 0 );
+                *rc = StandardActions[i].handler( package );
+                ui_actioninfo( package, action, FALSE, *rc );
             }
             else
             {
-                ui_actionstart(package, action);
-                if (StandardActions[i].handler)
-                {
-                    *rc = StandardActions[i].handler(package);
-                }
-                else
-                {
-                    FIXME("unhandled standard action %s\n",debugstr_w(action));
-                    *rc = ERROR_SUCCESS;
-                }
+                FIXME("unhandled standard action %s\n", debugstr_w(action));
+                *rc = ERROR_SUCCESS;
             }
             ret = TRUE;
             break;
@@ -7369,17 +7349,17 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
     return ret;
 }
 
-UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script, BOOL force)
+UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, UINT script)
 {
     UINT rc = ERROR_SUCCESS;
     BOOL handled;
 
     TRACE("Performing action (%s)\n", debugstr_w(action));
 
-    handled = ACTION_HandleStandardAction(package, action, &rc, force);
+    handled = ACTION_HandleStandardAction(package, action, &rc);
 
     if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc, script, force);
+        handled = ACTION_HandleCustomAction(package, action, &rc, script, TRUE);
 
     if (!handled)
     {
@@ -7397,7 +7377,7 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action, UINT scrip
 
     TRACE("Performing action (%s)\n", debugstr_w(action));
 
-    handled = ACTION_HandleStandardAction(package, action, &rc,TRUE);
+    handled = ACTION_HandleStandardAction(package, action, &rc);
 
     if (!handled)
         handled = ACTION_HandleCustomAction(package, action, &rc, script, FALSE);
@@ -7462,7 +7442,7 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
         if (needs_ui_sequence(package))
             rc = ACTION_PerformUIAction(package, action, -1);
         else
-            rc = ACTION_PerformAction(package, action, -1, FALSE);
+            rc = ACTION_PerformAction(package, action, -1);
 
         msiobj_release(&row->hdr);
     }
