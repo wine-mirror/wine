@@ -289,6 +289,7 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
     scaleX = (double)dc->vportExtX / (double)dc->wndExtX;
     scaleY = (double)dc->vportExtY / (double)dc->wndExtY;
 
+    if (dc->layout & LAYOUT_RTL) scaleX = -scaleX;
     xform->eM11 = scaleX;
     xform->eM12 = 0.0;
     xform->eM21 = 0.0;
@@ -1948,6 +1949,11 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
     {
         oldlayout = dc->layout;
         dc->layout = layout;
+        if (layout != oldlayout)
+        {
+            if (layout & LAYOUT_RTL) dc->MapMode = MM_ANISOTROPIC;
+            DC_UpdateXforms( dc );
+        }
         release_dc_ptr( dc );
     }
 

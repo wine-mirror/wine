@@ -217,6 +217,81 @@ static void test_world_transform(void)
     DeleteDC(hdc);
 }
 
+static void test_dc_layout(void)
+{
+    INT ret, size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
+    SIZE size;
+    DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
+    DWORD (WINAPI *pGetLayout)(HDC hdc);
+    HDC hdc;
+
+    pGetLayout = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GetLayout");
+    pSetLayout = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "SetLayout");
+    if (!pGetLayout || !pSetLayout)
+    {
+        win_skip( "Don't have SetLayout\n" );
+        return;
+    }
+
+    hdc = CreateCompatibleDC(0);
+
+    size_cx = GetDeviceCaps(hdc, HORZSIZE);
+    size_cy = GetDeviceCaps(hdc, VERTSIZE);
+    res_x = GetDeviceCaps(hdc, HORZRES);
+    res_y = GetDeviceCaps(hdc, VERTRES);
+    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+
+    ret = GetMapMode( hdc );
+    ok(ret == MM_TEXT, "expected MM_TEXT, got %d\n", ret);
+    expect_viewport_ext(hdc, 1, 1);
+    expect_window_ext(hdc, 1, 1);
+    expect_world_transform(hdc, 1.0, 1.0);
+    expect_LPtoDP(hdc, 1000, 1000);
+
+    pSetLayout( hdc, LAYOUT_RTL );
+    if (!pGetLayout( hdc ))
+    {
+        win_skip( "SetLayout not supported\n" );
+        DeleteDC(hdc);
+        return;
+    }
+
+    ret = GetMapMode( hdc );
+    ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
+    expect_viewport_ext(hdc, 1, 1);
+    expect_window_ext(hdc, 1, 1);
+    expect_world_transform(hdc, 1.0, 1.0);
+    expect_LPtoDP(hdc, -1000, 1000);
+
+    SetMapMode(hdc, MM_LOMETRIC);
+    ret = GetMapMode( hdc );
+    ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
+
+    expect_viewport_ext(hdc, res_x, -res_y);
+    ok( GetWindowExtEx( hdc, &size ), "GetWindowExtEx failed\n" );
+    ok( rough_match( size.cx, size_cx * 10 ) ||
+        rough_match( size.cx, MulDiv( res_x, 254, dpi_x )),  /* Vista uses a more precise method */
+        "expected cx %d or %d, got %d\n", size_cx * 10, MulDiv( res_x, 254, dpi_x ), size.cx );
+    ok( rough_match( size.cy, size_cy * 10 ) ||
+        rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
+        "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
+    expect_world_transform(hdc, 1.0, 1.0);
+    expect_LPtoDP(hdc, -MulDiv(1000 / 10, res_x, size_cx), -MulDiv(1000 / 10, res_y, size_cy));
+
+    SetMapMode(hdc, MM_TEXT);
+    ret = GetMapMode( hdc );
+    ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
+    pSetLayout( hdc, LAYOUT_LTR );
+    ret = GetMapMode( hdc );
+    ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
+    SetMapMode(hdc, MM_TEXT);
+    ret = GetMapMode( hdc );
+    ok(ret == MM_TEXT, "expected MM_TEXT, got %d\n", ret);
+
+    DeleteDC(hdc);
+}
+
 static void test_modify_world_transform(void)
 {
     HDC hdc = GetDC(0);
@@ -562,6 +637,7 @@ START_TEST(mapping)
 {
     test_modify_world_transform();
     test_world_transform();
+    test_dc_layout();
     test_isotropic_mapping();
     test_setvirtualresolution();
     test_gettransform();
