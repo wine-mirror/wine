@@ -1962,6 +1962,140 @@ static const CHAR rmi_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                                "PublishProduct\t\t5200\n"
                                                "InstallFinalize\t\t6000\n";
 
+static const CHAR sd_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "sourcedir.txt\tsourcedir\tsourcedir.txt\t1000\t\t\t8192\t1\n";
+
+static const CHAR sd_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                     "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                     "Feature\tFeature\n"
+                                     "sourcedir\t\t\tsourcedir feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR sd_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                          "s38\ts72\n"
+                                          "FeatureComponents\tFeature_\tComponent_\n"
+                                          "sourcedir\tsourcedir\n";
+
+static const CHAR sd_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "sourcedir\t{DD422F92-3ED8-49B5-A0B7-F266F98357DF}\tMSITESTDIR\t0\t\tsourcedir.txt\n";
+
+static const CHAR sd_install_ui_seq_dat[] = "Action\tCondition\tSequence\n"
+                                            "s72\tS255\tI2\n"
+                                            "InstallUISequence\tAction\n"
+                                            "TestSourceDirProp1\tnot SourceDir and not SOURCEDIR and not Installed\t99\n"
+                                            "AppSearch\t\t100\n"
+                                            "TestSourceDirProp2\tnot SourceDir and not SOURCEDIR and not Installed\t101\n"
+                                            "LaunchConditions\tnot Installed \t110\n"
+                                            "TestSourceDirProp3\tnot SourceDir and not SOURCEDIR and not Installed\t111\n"
+                                            "FindRelatedProducts\t\t120\n"
+                                            "TestSourceDirProp4\tnot SourceDir and not SOURCEDIR and not Installed\t121\n"
+                                            "CCPSearch\t\t130\n"
+                                            "TestSourceDirProp5\tnot SourceDir and not SOURCEDIR and not Installed\t131\n"
+                                            "RMCCPSearch\t\t140\n"
+                                            "TestSourceDirProp6\tnot SourceDir and not SOURCEDIR and not Installed\t141\n"
+                                            "ValidateProductID\t\t150\n"
+                                            "TestSourceDirProp7\tnot SourceDir and not SOURCEDIR and not Installed\t151\n"
+                                            "CostInitialize\t\t800\n"
+                                            "TestSourceDirProp8\tnot SourceDir and not SOURCEDIR and not Installed\t801\n"
+                                            "FileCost\t\t900\n"
+                                            "TestSourceDirProp9\tnot SourceDir and not SOURCEDIR and not Installed\t901\n"
+                                            "IsolateComponents\t\t1000\n"
+                                            "TestSourceDirProp10\tnot SourceDir and not SOURCEDIR and not Installed\t1001\n"
+                                            "CostFinalize\t\t1100\n"
+                                            "TestSourceDirProp11\tnot SourceDir and not SOURCEDIR and not Installed\t1101\n"
+                                            "MigrateFeatureStates\t\t1200\n"
+                                            "TestSourceDirProp12\tnot SourceDir and not SOURCEDIR and not Installed\t1201\n"
+                                            "ExecuteAction\t\t1300\n"
+                                            "TestSourceDirProp13\tnot SourceDir and not SOURCEDIR and not Installed\t1301\n";
+
+static const CHAR sd_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "TestSourceDirProp14\tSourceDir and SOURCEDIR and not Installed\t99\n"
+                                              "LaunchConditions\t\t100\n"
+                                              "TestSourceDirProp15\tSourceDir and SOURCEDIR and not Installed\t101\n"
+                                              "ValidateProductID\t\t700\n"
+                                              "TestSourceDirProp16\tSourceDir and SOURCEDIR and not Installed\t701\n"
+                                              "CostInitialize\t\t800\n"
+                                              "TestSourceDirProp17\tSourceDir and SOURCEDIR and not Installed\t801\n"
+                                              "ResolveSource\tResolveSource and not Installed\t850\n"
+                                              "TestSourceDirProp18\tResolveSource and not SourceDir and not SOURCEDIR and not Installed\t851\n"
+                                              "TestSourceDirProp19\tnot ResolveSource and SourceDir and SOURCEDIR and not Installed\t852\n"
+                                              "FileCost\t\t900\n"
+                                              "TestSourceDirProp20\tSourceDir and SOURCEDIR and not Installed\t901\n"
+                                              "IsolateComponents\t\t1000\n"
+                                              "TestSourceDirProp21\tSourceDir and SOURCEDIR and not Installed\t1001\n"
+                                              "CostFinalize\t\t1100\n"
+                                              "TestSourceDirProp22\tSourceDir and SOURCEDIR and not Installed\t1101\n"
+                                              "MigrateFeatureStates\t\t1200\n"
+                                              "TestSourceDirProp23\tSourceDir and SOURCEDIR and not Installed\t1201\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "TestSourceDirProp24\tSourceDir and SOURCEDIR and not Installed\t1401\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "TestSourceDirProp25\tSourceDir and SOURCEDIR and not Installed\t1501\n"
+                                              "ProcessComponents\t\t1600\n"
+                                              "TestSourceDirProp26\tnot SourceDir and not SOURCEDIR and not Installed\t1601\n"
+                                              "UnpublishFeatures\t\t1800\n"
+                                              "TestSourceDirProp27\tnot SourceDir and not SOURCEDIR and not Installed\t1801\n"
+                                              "RemoveFiles\t\t3500\n"
+                                              "TestSourceDirProp28\tnot SourceDir and not SOURCEDIR and not Installed\t3501\n"
+                                              "InstallFiles\t\t4000\n"
+                                              "TestSourceDirProp29\tnot SourceDir and not SOURCEDIR and not Installed\t4001\n"
+                                              "RegisterUser\t\t6000\n"
+                                              "TestSourceDirProp30\tnot SourceDir and not SOURCEDIR and not Installed\t6001\n"
+                                              "RegisterProduct\t\t6100\n"
+                                              "TestSourceDirProp31\tnot SourceDir and not SOURCEDIR and not Installed\t6101\n"
+                                              "PublishFeatures\t\t6300\n"
+                                              "TestSourceDirProp32\tnot SourceDir and not SOURCEDIR and not Installed\t6301\n"
+                                              "PublishProduct\t\t6400\n"
+                                              "TestSourceDirProp33\tnot SourceDir and not SOURCEDIR and not Installed\t6401\n"
+                                              "InstallExecute\t\t6500\n"
+                                              "TestSourceDirProp34\tnot SourceDir and not SOURCEDIR and not Installed\t6501\n"
+                                              "InstallFinalize\t\t6600\n"
+                                              "TestSourceDirProp35\tnot SourceDir and not SOURCEDIR and not Installed\t6601\n";
+
+static const CHAR sd_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                           "s72\ti2\tS64\tS0\tS255\n"
+                                           "CustomAction\tAction\n"
+                                           "TestSourceDirProp1\t19\t\tTest 1 failed\t\n"
+                                           "TestSourceDirProp2\t19\t\tTest 2 failed\t\n"
+                                           "TestSourceDirProp3\t19\t\tTest 3 failed\t\n"
+                                           "TestSourceDirProp4\t19\t\tTest 4 failed\t\n"
+                                           "TestSourceDirProp5\t19\t\tTest 5 failed\t\n"
+                                           "TestSourceDirProp6\t19\t\tTest 6 failed\t\n"
+                                           "TestSourceDirProp7\t19\t\tTest 7 failed\t\n"
+                                           "TestSourceDirProp8\t19\t\tTest 8 failed\t\n"
+                                           "TestSourceDirProp9\t19\t\tTest 9 failed\t\n"
+                                           "TestSourceDirProp10\t19\t\tTest 10 failed\t\n"
+                                           "TestSourceDirProp11\t19\t\tTest 11 failed\t\n"
+                                           "TestSourceDirProp12\t19\t\tTest 12 failed\t\n"
+                                           "TestSourceDirProp13\t19\t\tTest 13 failed\t\n"
+                                           "TestSourceDirProp14\t19\t\tTest 14 failed\t\n"
+                                           "TestSourceDirProp15\t19\t\tTest 15 failed\t\n"
+                                           "TestSourceDirProp16\t19\t\tTest 16 failed\t\n"
+                                           "TestSourceDirProp17\t19\t\tTest 17 failed\t\n"
+                                           "TestSourceDirProp18\t19\t\tTest 18 failed\t\n"
+                                           "TestSourceDirProp19\t19\t\tTest 19 failed\t\n"
+                                           "TestSourceDirProp20\t19\t\tTest 20 failed\t\n"
+                                           "TestSourceDirProp21\t19\t\tTest 21 failed\t\n"
+                                           "TestSourceDirProp22\t19\t\tTest 22 failed\t\n"
+                                           "TestSourceDirProp23\t19\t\tTest 23 failed\t\n"
+                                           "TestSourceDirProp24\t19\t\tTest 24 failed\t\n"
+                                           "TestSourceDirProp25\t19\t\tTest 25 failed\t\n"
+                                           "TestSourceDirProp26\t19\t\tTest 26 failed\t\n"
+                                           "TestSourceDirProp27\t19\t\tTest 27 failed\t\n"
+                                           "TestSourceDirProp28\t19\t\tTest 28 failed\t\n"
+                                           "TestSourceDirProp29\t19\t\tTest 29 failed\t\n"
+                                           "TestSourceDirProp30\t19\t\tTest 30 failed\t\n"
+                                           "TestSourceDirProp31\t19\t\tTest 31 failed\t\n"
+                                           "TestSourceDirProp32\t19\t\tTest 32 failed\t\n"
+                                           "TestSourceDirProp33\t19\t\tTest 33 failed\t\n"
+                                           "TestSourceDirProp34\t19\t\tTest 34 failed\t\n"
+                                           "TestSourceDirProp35\t19\t\tTest 35 failed\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -2921,6 +3055,20 @@ static const msi_table rmi_tables[] =
     ADD_TABLE(rmi_verb),
     ADD_TABLE(rmi_mime),
     ADD_TABLE(rmi_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table sd_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(sd_component),
+    ADD_TABLE(sd_feature),
+    ADD_TABLE(sd_feature_comp),
+    ADD_TABLE(sd_file),
+    ADD_TABLE(sd_install_exec_seq),
+    ADD_TABLE(sd_install_ui_seq),
+    ADD_TABLE(sd_custom_action),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -10065,6 +10213,62 @@ static void test_icon_table(void)
     DeleteFile(msifile);
 }
 
+static void test_sourcedir_props(void)
+{
+    UINT r;
+
+    create_test_files();
+    create_file("msitest\\sourcedir.txt", 1000);
+    create_database(msifile, sd_tables, sizeof(sd_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+
+    /* full UI, no ResolveSource action */
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\sourcedir.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    /* full UI, ResolveSource action */
+    r = MsiInstallProductA(msifile, "ResolveSource=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\sourcedir.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    /* no UI, no ResolveSource action */
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\sourcedir.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    /* no UI, ResolveSource action */
+    r = MsiInstallProductA(msifile, "ResolveSource=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\sourcedir.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\sourcedir.txt");
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -10177,6 +10381,7 @@ START_TEST(install)
     test_register_extension_info();
     test_register_mime_info();
     test_icon_table();
+    test_sourcedir_props();
 
     DeleteFileA(log_file);
 

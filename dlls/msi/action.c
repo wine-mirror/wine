@@ -712,7 +712,7 @@ static BOOL ui_sequence_exists( MSIPACKAGE *package )
     return FALSE;
 }
 
-static UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
+UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 {
     LPWSTR source, check;
 
@@ -896,6 +896,8 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     if (rc == ERROR_SUCCESS)
     {
         TRACE("Running the actions\n");
+
+        msi_set_property(package->db, cszSourceDir, NULL);
 
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
@@ -3022,6 +3024,8 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
     squash_guid(package->ProductCode,squished_pc);
     ui_progress(package,1,COMPONENT_PROGRESS_VALUE,1,0);
+
+    msi_set_sourcedir_props(package, FALSE);
 
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
