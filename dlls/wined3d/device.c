@@ -5743,6 +5743,15 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice
     }
 }
 
+static BOOL surface_is_full_rect(IWineD3DSurfaceImpl *surface, const RECT *r)
+{
+    if ((r->left && r->right) || abs(r->right - r->left) != surface->currentDesc.Width)
+        return FALSE;
+    if ((r->top && r->bottom) || abs(r->bottom - r->top) != surface->currentDesc.Height)
+        return FALSE;
+    return TRUE;
+}
+
 void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface, const RECT *src_rect_in,
         IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, const WINED3DTEXTUREFILTERTYPE filter)
 {
@@ -5772,11 +5781,13 @@ void stretch_rect_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surfa
             break;
     }
 
-    /* Make sure the drawables are up-to-date. Note that loading the
-     * destination surface isn't strictly required if we overwrite the
-     * entire surface. */
+    /* Make sure the drawables are up-to-date. Loading the destination
+     * surface isn't required if the entire surface is overwritten. (And is
+     * in fact harmful if we're being called by surface_load_location() with
+     * the purpose of loading the destination surface.) */
     surface_load_location(src_surface, SFLAG_INDRAWABLE, NULL);
-    surface_load_location(dst_surface, SFLAG_INDRAWABLE, NULL);
+    if (!surface_is_full_rect(dst_surface, &dst_rect))
+        surface_load_location(dst_surface, SFLAG_INDRAWABLE, NULL);
 
     if (!surface_is_offscreen(src_surface)) context = context_acquire(device, src_surface);
     else if (!surface_is_offscreen(dst_surface)) context = context_acquire(device, dst_surface);
