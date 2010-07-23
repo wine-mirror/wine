@@ -2284,8 +2284,7 @@ HRESULT WINAPI CreateDataCache(
    * This is necessary because it's the only time the non-delegating
    * IUnknown pointer can be returned to the outside.
    */
-  if ( (pUnkOuter!=NULL) &&
-       (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) != 0) )
+  if ( pUnkOuter && !IsEqualIID(&IID_IUnknown, riid) )
     return CLASS_E_NOAGGREGATION;
 
   /*
