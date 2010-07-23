@@ -10151,6 +10151,20 @@ static void test_MsiGetSourcePath(void)
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
     /* try SourceDir */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
@@ -10170,6 +10184,13 @@ static void test_MsiGetSourcePath(void)
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
     /* source path does not exist, but the property exists */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SourceDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
     r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
@@ -10454,6 +10475,31 @@ static void test_MsiGetSourcePath(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
     ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* remove property */
+    r = MsiSetProperty(hpkg, "SourceDir", NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* try SourceDir again */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* set property to a valid directory */
+    r = MsiSetProperty(hpkg, "SOURCEDIR", cwd);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* try SOURCEDIR again */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
+    ok(!lstrcmpA(path, "kiwi"),
+       "Expected path to be unchanged, got \"%s\"\n", path);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
     MsiCloseHandle(hpkg);
 
