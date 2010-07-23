@@ -9021,20 +9021,31 @@ static void pointsize_test(IDirect3DDevice9 *device)
 
 static void multiple_rendertargets_test(IDirect3DDevice9 *device)
 {
+    static const DWORD vshader_code[] =
+    {
+        0xfffe0300,                                                             /* vs_3_0                     */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0            */
+        0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0            */
+        0x02000001, 0xe00f0000, 0x90e40000,                                     /* mov o0, v0                 */
+        0x0000ffff                                                              /* end                        */
+    };
+    static const DWORD pshader_code[] =
+    {
+        0xffff0300,                                                             /* ps_3_0                     */
+        0x05000051, 0xa00f0000, 0x00000000, 0x3f800000, 0x00000000, 0x00000000, /* def c0, 0.0, 1.0, 0.0, 0.0 */
+        0x05000051, 0xa00f0001, 0x00000000, 0x00000000, 0x3f800000, 0x00000000, /* def c1, 0.0, 0.0, 1.0, 0.0 */
+        0x02000001, 0x800f0800, 0xa0e40000,                                     /* mov oC0, c0                */
+        0x02000001, 0x800f0801, 0xa0e40001,                                     /* mov oC1, c1                */
+        0x0000ffff                                                              /* end                        */
+    };
+
     HRESULT hr;
+    IDirect3DVertexShader9 *vs;
     IDirect3DPixelShader9 *ps;
     IDirect3DTexture9 *tex1, *tex2;
     IDirect3DSurface9 *surf1, *surf2, *backbuf;
     D3DCAPS9 caps;
     DWORD color;
-    DWORD shader_code[] = {
-    0xffff0300,                                                             /* ps_3_0             */
-    0x05000051, 0xa00f0000, 0x00000000, 0x3f800000, 0x00000000, 0x00000000, /* def c0, 0, 1, 0, 0 */
-    0x05000051, 0xa00f0001, 0x00000000, 0x00000000, 0x3f800000, 0x00000000, /* def c1, 0, 0, 1, 0 */
-    0x02000001, 0x800f0800, 0xa0e40000,                                     /* mov oC0, c0        */
-    0x02000001, 0x800f0801, 0xa0e40001,                                     /* mov oC1, c1        */
-    0x0000ffff                                                              /* END                */
-    };
     float quad[] = {
        -1.0,   -1.0,    0.1,
         1.0,   -1.0,    0.1,
@@ -9068,7 +9079,9 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed, hr=%08x\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &tex2, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed, hr=%08x\n", hr);
-    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code, &ps);
+    hr = IDirect3DDevice9_CreateVertexShader(device, vshader_code, &vs);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, pshader_code, &ps);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader failed, hr=%08x\n", hr);
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &backbuf);
@@ -9078,6 +9091,8 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
     hr = IDirect3DTexture9_GetSurfaceLevel(tex2, 0, &surf2);
     ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed, hr=%08x\n", hr);
 
+    hr = IDirect3DDevice9_SetVertexShader(device, vs);
+    ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetPixelShader(device, ps);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed, hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, surf1);
@@ -9093,6 +9108,8 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
+        hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+        ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetPixelShader(device, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuf);
@@ -9126,6 +9143,7 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
     IDirect3DPixelShader9_Release(ps);
+    IDirect3DVertexShader9_Release(vs);
     IDirect3DTexture9_Release(tex1);
     IDirect3DTexture9_Release(tex2);
     IDirect3DSurface9_Release(surf1);
