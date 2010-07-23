@@ -10045,10 +10045,10 @@ static void test_icon_table(void)
 
     /* win9x with MSI 2.0 installs the icon to a different folder, same as above */
     lstrcpyA(win9xpath, APP_DATA_DIR);
-    lstrcatA(path, "\\");
-    lstrcatA(path, "Microsoft\\Installer\\");
-    lstrcatA(path, prodcode);
-    lstrcatA(path, "\\testicon");
+    lstrcatA(win9xpath, "\\");
+    lstrcatA(win9xpath, "Microsoft\\Installer\\");
+    lstrcatA(win9xpath, prodcode);
+    lstrcatA(win9xpath, "\\testicon");
 
     lstrcpyA(path, WINDOWS_DIR);
     lstrcatA(path, "\\");
