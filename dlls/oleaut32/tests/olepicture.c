@@ -939,11 +939,11 @@ static HRESULT WINAPI NoStatStreamImpl_QueryInterface(
   NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
   if (ppvObject==0) return E_INVALIDARG;
   *ppvObject = 0;
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
+  if (IsEqualIID(&IID_IUnknown, riid))
   {
     *ppvObject = This;
   }
-  else if (memcmp(&IID_IStream, riid, sizeof(IID_IStream)) == 0)
+  else if (IsEqualIID(&IID_IStream, riid))
   {
     *ppvObject = This;
   }
