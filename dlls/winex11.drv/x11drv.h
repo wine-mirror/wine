@@ -549,6 +549,7 @@ struct x11drv_thread_data
     Window   grab_window;          /* window that currently grabs the mouse */
     HWND     last_focus;           /* last window that had focus */
     XIM      xim;                  /* input method */
+    HWND     last_xic_hwnd;        /* last xic window */
     XFontSet font_set;             /* international text drawing font set */
     Window   selection_wnd;        /* window used for selection interactions */
     HKL      kbd_layout;           /* active keyboard layout */
