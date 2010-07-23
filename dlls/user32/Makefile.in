@@ -78,6 +78,7 @@ RC_SRCS = \
 	resources/user32_Ru.rc \
 	resources/user32_Si.rc \
 	resources/user32_Sk.rc \
+	resources/user32_Sr.rc \
 	resources/user32_Sv.rc \
 	resources/user32_Tr.rc \
 	resources/user32_Uk.rc \
