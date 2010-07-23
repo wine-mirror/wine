@@ -471,6 +471,70 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
                                         (host+host_len)-(host+*domain_start)));
 }
 
+/* Removes the dot segments from a heirarchical URIs path component. This
+ * function performs the removal in place.
+ *
+ * This is a modified version of Qt's QUrl function "removeDotsFromPath".
+ *
+ * This function returns the new length of the path string.
+ */
+static DWORD remove_dot_segments(WCHAR *path, DWORD path_len) {
+    WCHAR *out = path;
+    const WCHAR *in = out;
+    const WCHAR *end = out + path_len;
+    DWORD len;
+
+    while(in < end) {
+        /* A.  if the input buffer begins with a prefix of "/./" or "/.",
+         *     where "." is a complete path segment, then replace that
+         *     prefix with "/" in the input buffer; otherwise,
+         */
+        if(in <= end - 3 && in[0] == '/' && in[1] == '.' && in[2] == '/') {
+            in += 2;
+            continue;
+        } else if(in == end - 2 && in[0] == '/' && in[1] == '.') {
+            *out++ = '/';
+            in += 2;
+            break;
+        }
+
+        /* B.  if the input buffer begins with a prefix of "/../" or "/..",
+         *     where ".." is a complete path segment, then replace that
+         *     prefix with "/" in the input buffer and remove the last
+         *     segment and its preceding "/" (if any) from the output
+         *     buffer; otherwise,
+         */
+        if(in <= end - 4 && in[0] == '/' && in[1] == '.' && in[2] == '.' && in[3] == '/') {
+            while(out > path && *(--out) != '/');
+
+            in += 3;
+            continue;
+        } else if(in == end - 3 && in[0] == '/' && in[1] == '.' && in[2] == '.') {
+            while(out > path && *(--out) != '/');
+
+            if(*out == '/')
+                ++out;
+
+            in += 3;
+            break;
+        }
+
+        /* C.  move the first path segment in the input buffer to the end of
+         *     the output buffer, including the initial "/" character (if
+         *     any) and any subsequent characters up to, but not including,
+         *     the next "/" character or the end of the input buffer.
+         */
+        *out++ = *in++;
+        while(in < end && *in != '/')
+            *out++ = *in++;
+    }
+
+    len = out - path;
+    TRACE("(%p %d): Path after dot segments removed %s len=%d\n", path, path_len,
+        debugstr_wn(path, len), len);
+    return len;
+}
+
 /* Computes the location where the elision should occur in the IPv6
  * address using the numerical values of each component stored in
  * 'values'. If the address shouldn't contain an elision then 'index'
@@ -2370,6 +2434,20 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
 
     uri->path_len = uri->canon_len - uri->path_start;
 
+    /* Removing the dot segments only happens when it's not in
+     * computeOnly mode and it's not a wildcard scheme.
+     */
+    if(!computeOnly && data->scheme_type != URL_SCHEME_WILDCARD) {
+        if(!(flags & Uri_CREATE_NO_CANONICALIZE)) {
+            /* Remove the dot segments (if any) and reset everything to the new
+             * correct length.
+             */
+            DWORD new_len = remove_dot_segments(uri->canon_uri+uri->path_start, uri->path_len);
+            uri->canon_len -= uri->path_len-new_len;
+            uri->path_len = new_len;
+        }
+    }
+
     if(!computeOnly)
         TRACE("Canonicalized path %s len=%d\n",
             debugstr_wn(uri->canon_uri+uri->path_start, uri->path_len),
@@ -2515,6 +2593,7 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     if(!uri->canon_uri)
         return E_OUTOFMEMORY;
 
+    uri->canon_size = len;
     if(!canonicalize_scheme(data, uri, flags, FALSE)) {
         ERR("(%p %p %x): Unable to canonicalize the scheme of the URI.\n", data, uri, flags);
         heap_free(uri->canon_uri);
@@ -2526,6 +2605,21 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
         ERR("(%p %p %x): Unable to canonicalize the heirpart of the URI\n", data, uri, flags);
         heap_free(uri->canon_uri);
         return E_INVALIDARG;
+    }
+
+    /* There's a possibility we didn't use all the space we allocated
+     * earlier.
+     */
+    if(uri->canon_len < uri->canon_size) {
+        /* This happens if the URI is hierarchical and dot
+         * segments were removed from it's path.
+         */
+        WCHAR *tmp = heap_realloc(uri->canon_uri, (uri->canon_len+1)*sizeof(WCHAR));
+        if(!tmp)
+            return E_OUTOFMEMORY;
+
+        uri->canon_uri = tmp;
+        uri->canon_size = uri->canon_len;
     }
 
     uri->canon_uri[uri->canon_len] = '\0';
