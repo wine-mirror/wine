@@ -1,0 +1,74 @@
+/*
+ * Start
+ * Ukrainian Language Support
+ *
+ * Copyright 2003 Dan Kegel
+ * Copyright 2010 Igor Paliychuk
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resources.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
+
+STRINGTABLE DISCARDABLE
+{
+STRING_USAGE, "Запустити програму чи відкрити документ в програмі, яка\n\
+зазвичай використовується для файлів з цим розширенням.\n\
+Використання:\n\
+start [опції] ім'я_файлу_програми [...]\n\
+start [опції] ім'я_файлу_документу\n\
+\n\
+Опції:\n\
+/M[inimized] Запустити програму згорнутою.\n\
+/MAX[imized] Запустити програму на весь екран.\n\
+/R[estored]  Запустити програму зі звичайним розміром вікна.\n\
+/W[ait]      Очікувати завершення запущеної програми і вийти з кодом її виходу.\n\
+/Unix        Сприймати шлях до документу записаним в Unix-форматі.\n\
+/ProgIDOpen  Відкрити документ, використовуючи зазначений progID.\n\
+/L           Показати ліцензію кінцевого користувача.\n\
+\n\
+start.exe версія 0.2 Copyright (C) 2003, Dan Kegel\n\
+Start надається БЕЗ БУДЬ-ЯКИХ ГАРАНТІЙ; для подробиць запустіть з опцією /L.\n\
+Це є вільне ПЗ, ви можете розповсюджувати його згідно\n\
+певних умов; запустіть 'start /L' для подробиць.\n\
+"
+
+STRING_LICENSE, "start.exe версія 0.2 Copyright (C) 2003, Dan Kegel\n\
+Ця програма є вільним ПЗ; ви можете поширювати її та/або\n\
+змінювати згідно умов GNU Lesser General Public License,\n\
+яка опублікована Free Software Foundation; версії 2.1\n\
+Ліцензії, чи (на ваш розсуд) новішої версії.\n\
+\n\
+Ця програма розповсюджується з надією, що буде корисною,\n\
+але БЕЗ БУДЬ-ЯКИХ ГАРАНТІЙ; навіть без непрямих гарантій щодо\n\
+ПРОДАЖУ чи ПРИДАТНОСТІ ДЛЯ ПЕВНИХ ЦІЛЕЙ.  Дивіться GNU\n\
+Lesser General Public License для детальної інформації.\n\
+\n\
+Ви повинні були отримати копію GNU Lesser General Public License\n\
+разом з програмою; якщо ні, напишіть до Free Software\n\
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
+\n\
+Ліцензійна інформація знаходитьься в файлі COPYING.LIB.\n\
+"
+
+STRING_EXECFAIL, "Програма не може бути запущена або немає асоційованих з типом даного документа додатків.\nВиклик ShellExecuteEx провалився"
+
+STRING_UNIXFAIL "Неможливо перетворити ім'я файлу UNIX в ім'я файлу DOS."
+}
