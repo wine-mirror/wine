@@ -2118,8 +2118,9 @@ static void test_commandline(void)
     static const WCHAR chkfmt3[] = {'\\','\"','%','s','\"',0};
     static const WCHAR chkfmt4[] = {'%','s','=','%','s','\"',' ','%','s','\"',0};
     WCHAR cmdline[255];
-    LPWSTR *args = (LPWSTR*)0xdeadcafe;
+    LPWSTR *args = (LPWSTR*)0xdeadcafe, pbuf;
     INT numargs = -1;
+    size_t buflen;
 
     wsprintfW(cmdline,fmt1,one,two,three,four);
     args=CommandLineToArgvW(cmdline,&numargs);
@@ -2170,6 +2171,15 @@ static void test_commandline(void)
     wsprintfW(cmdline,fmt6);
     args=CommandLineToArgvW(cmdline,&numargs);
     ok(numargs == 1, "expected 1 args, got %i\n",numargs);
+    if (numargs == 1) {
+        buflen = max(lstrlenW(args[0])+1,256);
+        pbuf = HeapAlloc(GetProcessHeap(), 0, buflen*sizeof(pbuf[0]));
+        GetModuleFileNameW(NULL, pbuf, buflen);
+        pbuf[buflen-1] = 0;
+        /* check args[0] is module file name */
+        ok(lstrcmpW(args[0],pbuf)==0, "wrong path to the current executable\n");
+        HeapFree(GetProcessHeap(), 0, pbuf);
+    }
 }
 
 START_TEST(shlexec)
