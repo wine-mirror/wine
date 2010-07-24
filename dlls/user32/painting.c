@@ -909,8 +909,8 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
  */
 HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
-    static const DWORD clip_flags = DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW;
-    static const DWORD user_flags = clip_flags | DCX_NORESETATTRS; /* flags that can be set by user */
+    const DWORD clip_flags = DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW;
+    const DWORD user_flags = clip_flags | DCX_NORESETATTRS; /* flags that can be set by user */
     struct dce *dce;
     BOOL bUpdateVisRgn = TRUE;
     HWND parent;
