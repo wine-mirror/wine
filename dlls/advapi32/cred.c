@@ -925,7 +925,7 @@ static DWORD mac_delete_credential(LPCWSTR TargetName)
  *
  */
 
-static INT convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW, PCREDENTIALA CredentialA, INT len)
+static INT convert_PCREDENTIALW_to_PCREDENTIALA(const CREDENTIALW *CredentialW, PCREDENTIALA CredentialA, DWORD len)
 {
     char *buffer;
     INT string_len;
@@ -1582,7 +1582,8 @@ BOOL WINAPI CredReadDomainCredentialsA(PCREDENTIAL_TARGET_INFORMATIONA TargetInf
                                        DWORD Flags, DWORD *Size, PCREDENTIALA **Credentials)
 {
     PCREDENTIAL_TARGET_INFORMATIONW TargetInformationW;
-    INT len, i;
+    INT len;
+    DWORD i;
     WCHAR *buffer, *end;
     BOOL ret;
     PCREDENTIALW* CredentialsW;
