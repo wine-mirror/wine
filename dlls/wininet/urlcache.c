@@ -2184,14 +2184,17 @@ BOOL WINAPI CreateUrlCacheEntryA(
 )
 {
     WCHAR *url_name;
-    WCHAR *file_extension;
+    WCHAR *file_extension = NULL;
     WCHAR file_name[MAX_PATH];
     BOOL bSuccess = FALSE;
     DWORD dwError = 0;
 
+    TRACE("(%s %d %s %p %d)\n", debugstr_a(lpszUrlName), dwExpectedFileSize,
+            debugstr_a(lpszFileExtension), lpszFileName, dwReserved);
+
     if (lpszUrlName && (url_name = heap_strdupAtoW(lpszUrlName)))
     {
-	if (lpszFileExtension && (file_extension = heap_strdupAtoW(lpszFileExtension)))
+	if (!lpszFileExtension || (file_extension = heap_strdupAtoW(lpszFileExtension)))
 	{
 	    if (CreateUrlCacheEntryW(url_name, dwExpectedFileSize, file_extension, file_name, dwReserved))
 	    {
