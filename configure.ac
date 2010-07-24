@@ -1604,6 +1604,17 @@ then
     EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
   fi
 
+  dnl Fortify enables unused result warnings on a gazillion functions, making it useless
+  saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror"
+  AC_CACHE_CHECK([for broken unused result warnings], ac_cv_c_unused_result_warnings,
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[write(2,"a",1)]])],[ac_cv_c_unused_result_warnings=no],[ac_cv_c_unused_result_warnings=yes]))
+  CFLAGS="$saved_CFLAGS"
+  if test "$ac_cv_c_unused_result_warnings" = "yes"
+  then
+    WINE_TRY_CFLAGS([-Wno-unused-result])
+  fi
+
   dnl Enable -Werror for maintainer mode
   if test "x$enable_maintainer_mode" = "xyes"
   then
