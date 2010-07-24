@@ -1539,6 +1539,20 @@ static DWORD HTTP_ResolveName(http_request_t *lpwhr)
     return ERROR_SUCCESS;
 }
 
+static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
+{
+    LPHTTPHEADERW host_header;
+
+    static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+
+    host_header = HTTP_GetHeader(req, hostW);
+    if(!host_header)
+        return FALSE;
+
+    sprintfW(buf, formatW, host_header->lpszValue, req->lpszPath); /* FIXME */
+    return TRUE;
+}
+
 
 /***********************************************************************
  *           HTTPREQ_Destroy (internal)
@@ -1553,8 +1567,18 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
     TRACE("\n");
 
-    if(lpwhr->hCacheFile)
+    if(lpwhr->hCacheFile) {
+        WCHAR url[INTERNET_MAX_URL_LENGTH];
+        FILETIME ft;
+
         CloseHandle(lpwhr->hCacheFile);
+
+        memset(&ft, 0, sizeof(FILETIME));
+        if(HTTP_GetRequestURL(lpwhr, url)) {
+            CommitUrlCacheEntryW(url, lpwhr->lpszCacheFile, ft, ft,
+                    NORMAL_CACHE_ENTRY, NULL, 0, NULL, 0);
+        }
+    }
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
 
@@ -1604,20 +1628,6 @@ static void HTTPREQ_CloseConnection(object_header_t *hdr)
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
-}
-
-static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
-{
-    LPHTTPHEADERW host_header;
-
-    static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
-
-    host_header = HTTP_GetHeader(req, hostW);
-    if(!host_header)
-        return FALSE;
-
-    sprintfW(buf, formatW, host_header->lpszValue, req->lpszPath); /* FIXME */
-    return TRUE;
 }
 
 static BOOL HTTP_KeepAlive(http_request_t *lpwhr)
