@@ -1,5 +1,5 @@
 @ stub GameUxShimW
 @ stdcall -private DllCanUnloadNow()
-@ stub DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
