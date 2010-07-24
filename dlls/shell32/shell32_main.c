@@ -94,20 +94,22 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     if (*lpCmdline==0)
     {
         /* Return the path to the executable */
-        DWORD len, size=16;
+        DWORD len, deslen=MAX_PATH, size;
 
-        argv=LocalAlloc(LMEM_FIXED, size);
+        size = sizeof(LPWSTR) + deslen*sizeof(WCHAR) + sizeof(LPWSTR);
         for (;;)
         {
-            len = GetModuleFileNameW(0, (LPWSTR)(argv+1), (size-sizeof(LPWSTR))/sizeof(WCHAR));
+            if (!(argv = LocalAlloc(LMEM_FIXED, size))) return NULL;
+            len = GetModuleFileNameW(0, (LPWSTR)(argv+1), deslen);
             if (!len)
             {
                 LocalFree(argv);
                 return NULL;
             }
-            if (len < size) break;
-            size*=2;
-            argv=LocalReAlloc(argv, size, 0);
+            if (len < deslen) break;
+            deslen*=2;
+            size = sizeof(LPWSTR) + deslen*sizeof(WCHAR) + sizeof(LPWSTR);
+            LocalFree( argv );
         }
         argv[0]=(LPWSTR)(argv+1);
         if (numargs)
