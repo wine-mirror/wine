@@ -141,7 +141,7 @@ static char *get_runtime_libdir(void)
 static char *get_runtime_bindir( const char *argv0 )
 {
     char *p, *bindir, *cwd;
-    size_t len, size;
+    int len, size;
 
 #ifdef linux
     for (size = 256; ; size *= 2)
