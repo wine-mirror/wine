@@ -30,6 +30,7 @@ C_SRCS = \
 
 RC_SRCS = \
 	En.rc \
+	Nl.rc \
 	Uk.rc \
 	shdocvw.rc
 
