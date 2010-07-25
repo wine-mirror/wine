@@ -2849,6 +2849,19 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             return E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_PATH:
+        if(This->path_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->path_start, This->path_len);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     case Uri_PROPERTY_RAW_URI:
         *pbstrProperty = SysAllocString(This->raw_uri);
         if(!(*pbstrProperty))
@@ -2955,6 +2968,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     case Uri_PROPERTY_PASSWORD:
         *pcchProperty = (This->userinfo_split > -1) ? This->userinfo_len-This->userinfo_split-1 : 0;
         hres = (This->userinfo_split > -1) ? S_OK : S_FALSE;
+        break;
+    case Uri_PROPERTY_PATH:
+        *pcchProperty = This->path_len;
+        hres = (This->path_start > -1) ? S_OK : S_FALSE;
         break;
     case Uri_PROPERTY_RAW_URI:
         *pcchProperty = SysStringLen(This->raw_uri);
@@ -3113,13 +3130,8 @@ static HRESULT WINAPI Uri_GetPassword(IUri *iface, BSTR *pstrPassword)
 
 static HRESULT WINAPI Uri_GetPath(IUri *iface, BSTR *pstrPath)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrPath);
-
-    if(!pstrPath)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrPath);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_PATH, pstrPath, 0);
 }
 
 static HRESULT WINAPI Uri_GetPathAndQuery(IUri *iface, BSTR *pstrPathAndQuery)
