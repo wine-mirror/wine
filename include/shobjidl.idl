@@ -2801,3 +2801,46 @@ interface IFileDialogControlEvents : IUnknown
         [in] IFileDialogCustomize *pfdc,
         [in] DWORD dwIDCtl);
 }
+
+/*****************************************************************************
+ * ShellObjects typelibrary
+ */
+[
+ uuid(50A7E9B1-70EF-11D1-B75A-00A0C90564FE),
+ lcid(0x0000),
+ version(1.0)
+]
+library ShellObjects
+{
+    [
+        uuid(71F96385-DDD6-48D3-A0C1-AE06E8B055FB)
+    ]
+    coclass ExplorerBrowser
+    {
+        interface IExplorerBrowser;
+    }
+
+    [
+        uuid(DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7)
+    ]
+    coclass FileOpenDialog
+    {
+        interface IFileOpenDialog;
+    }
+
+    [
+        uuid(C0B4E2F3-BA21-4773-8DBA-335EC946EB8B)
+    ]
+    coclass FileSaveDialog
+    {
+        interface IFileSaveDialog;
+    }
+
+    [
+        uuid(AE054212-3535-4430-83ED-D501AA6680E6)
+    ]
+    coclass NamespaceTreeControl
+    {
+        interface INameSpaceTreeControl2;
+    }
+}
