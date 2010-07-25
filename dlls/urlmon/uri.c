@@ -2835,6 +2835,20 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_EXTENSION:
+        if(This->extension_offset > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->path_start+This->extension_offset,
+                                               This->path_len-This->extension_offset);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     case Uri_PROPERTY_HOST:
         if(This->host_start > -1) {
             /* The '[' and ']' aren't included for IPv6 addresses. */
@@ -2974,6 +2988,16 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
             *pcchProperty = 0;
 
         hres = (This->domain_offset > -1) ? S_OK : S_FALSE;
+        break;
+    case Uri_PROPERTY_EXTENSION:
+        if(This->extension_offset > -1) {
+            *pcchProperty = This->path_len - This->extension_offset;
+            hres = S_OK;
+        } else {
+            *pcchProperty = 0;
+            hres = S_FALSE;
+        }
+
         break;
     case Uri_PROPERTY_HOST:
         *pcchProperty = This->host_len;
@@ -3115,13 +3139,8 @@ static HRESULT WINAPI Uri_GetDomain(IUri *iface, BSTR *pstrDomain)
 
 static HRESULT WINAPI Uri_GetExtension(IUri *iface, BSTR *pstrExtension)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrExtension);
-
-    if(!pstrExtension)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrExtension);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_EXTENSION, pstrExtension, 0);
 }
 
 static HRESULT WINAPI Uri_GetFragment(IUri *iface, BSTR *pstrFragment)
