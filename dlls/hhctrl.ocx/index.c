@@ -89,7 +89,7 @@ static void parse_index_obj_node_param(IndexItem *item, const char *text)
     }else if(!item->keyword && !strncasecmp("name", ptr, len)) {
         /* Some HTML Help index files use an additional "name" parameter
          * rather than the "keyword" parameter.  In this case, the first
-         * occurance of the "name" parameter is the keyword.
+         * occurrence of the "name" parameter is the keyword.
          */
         param = &item->keyword;
     }else if(!strncasecmp("name", ptr, len)) {

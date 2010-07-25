@@ -364,7 +364,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *po
     }
 
     /* points [len_pt-2] and [0] are calculated
-       separetely to connect splines properly */
+       separately to connect splines properly */
     pts[0] = points[count-1];
     pts[1] = points[0]; /* equals to start and end of a resulting path */
     pts[2] = points[1];

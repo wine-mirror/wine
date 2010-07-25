@@ -249,7 +249,7 @@ static void test_LsaLookupNames2(void)
 
     if (!pLsaLookupNames2)
     {
-        win_skip("LsaLookupNames2 not avaliable\n");
+        win_skip("LsaLookupNames2 not available\n");
         return;
     }
 

@@ -899,7 +899,7 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 
         nMax = This->oldindex->cb / sizeof(This->oldindex->aIndex[0]);
 
-        /* Ok, maybe this is more of an excercise to see if I interpret everything correctly or not, but that is useful for now. */
+        /* Ok, maybe this is more of an exercise to see if I interpret everything correctly or not, but that is useful for now. */
         for (n = 0; n < nMax; ++n)
         {
             DWORD streamId = StreamFromFOURCC(This->oldindex->aIndex[n].dwChunkId);

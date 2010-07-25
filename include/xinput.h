@@ -105,7 +105,7 @@
 
 /*
  * Defines what type of abilities the type of joystick has
- * DEVTYPE_GAMEPAD is avaliable for all joysticks, however
+ * DEVTYPE_GAMEPAD is available for all joysticks, however
  * there may be more specfic identifiers for other joysticks
  * which are being used.
  */

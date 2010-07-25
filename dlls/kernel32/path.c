@@ -162,7 +162,7 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
 
     if (NtCreateKey( &Reboot, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
     {
-        WARN("Error creating key for reboot managment [%s]\n",
+        WARN("Error creating key for reboot management [%s]\n",
              "SYSTEM\\CurrentControlSet\\Control\\Session Manager");
         RtlFreeUnicodeString( &source_name );
         RtlFreeUnicodeString( &dest_name );
