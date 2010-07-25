@@ -310,3 +310,291 @@ You should have received a copy of the GNU Lesser General Public \
 License along with this library; if not, write to the Free Software \
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 }
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC
+
+MENU_001 MENU
+BEGIN
+    MENUITEM "Велик&е Иконе",    FCIDM_SHVIEW_BIGICON
+    MENUITEM "Мал&е Иконе",      FCIDM_SHVIEW_SMALLICON
+    MENUITEM "&Листа",           FCIDM_SHVIEW_LISTVIEW
+    MENUITEM "&Детаљи",          FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        POPUP "&Преглед"
+        BEGIN
+            MENUITEM "Велик&е Иконе",  FCIDM_SHVIEW_BIGICON
+            MENUITEM "Мал&е Иконе",    FCIDM_SHVIEW_SMALLICON
+            MENUITEM "&Листа",         FCIDM_SHVIEW_LISTVIEW
+            MENUITEM "&Детаљи",        FCIDM_SHVIEW_REPORTVIEW
+        END
+        MENUITEM SEPARATOR
+        POPUP "Среди &Иконе"
+        BEGIN
+            MENUITEM "пo &Имену",      0x30    /* column 0 */
+            MENUITEM "по &Типу",       0x32    /* column 2 */
+            MENUITEM "по &Величини",   0x31    /* ... */
+            MENUITEM "по &Датуму",     0x33
+            MENUITEM SEPARATOR
+            MENUITEM "&Аутоматски",    FCIDM_SHVIEW_AUTOARRANGE
+        END
+        MENUITEM "Сложи по линији",    FCIDM_SHVIEW_SNAPTOGRID
+        MENUITEM SEPARATOR
+        MENUITEM "Освежи",             FCIDM_SHVIEW_REFRESH
+        MENUITEM SEPARATOR
+        MENUITEM "Убаци",              FCIDM_SHVIEW_INSERT
+        MENUITEM "Убаци као везу",     FCIDM_SHVIEW_INSERTLINK
+        MENUITEM SEPARATOR
+        POPUP "Нов"
+        BEGIN
+            MENUITEM "Нов &Фолдер",    FCIDM_SHVIEW_NEWFOLDER
+            MENUITEM "Новa &Веза",     FCIDM_SHVIEW_NEWLINK
+            MENUITEM SEPARATOR
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Детаљи",             FCIDM_SHVIEW_PROPERTIES
+    END
+END
+
+/*
+ shellview item menu
+*/
+MENU_SHV_FILE MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "&Отвори"           FCIDM_SHVIEW_OPEN
+        MENUITEM "И&стражи",         FCIDM_SHVIEW_EXPLORE
+        MENUITEM "&Отвори",          FCIDM_SHVIEW_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "И&сеци",           FCIDM_SHVIEW_CUT
+        MENUITEM "&Копирај",         FCIDM_SHVIEW_COPY
+        MENUITEM SEPARATOR
+        MENUITEM "Направи &везу",    FCIDM_SHVIEW_CREATELINK
+        MENUITEM "&Обриши",          FCIDM_SHVIEW_DELETE
+        MENUITEM "&Промени Име",     FCIDM_SHVIEW_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Детаљи",          FCIDM_SHVIEW_PROPERTIES
+    END
+END
+
+MENU_CPANEL MENU
+BEGIN
+    POPUP "&Фајл"
+    BEGIN
+        MENUITEM SEPARATOR
+        MENUITEM "И&злаз", IDM_CPANEL_EXIT
+    END
+    POPUP "&Преглед"
+    BEGIN
+        MENUITEM "Вели&ke Иконе",    FCIDM_SHVIEW_BIGICON
+        MENUITEM "Ма&le Иконе",      FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&Листинг",         FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&Детаљи",          FCIDM_SHVIEW_REPORTVIEW
+    END
+    POPUP "&Помоћ"
+    BEGIN
+        MENUITEM "&O Контролној табли...", IDM_CPANEL_ABOUT
+    END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Нађи фолдерe"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "ОK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Откажи", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+        TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+        WS_BORDER | WS_TABSTOP,
+        4, 40, 180, 120
+}
+
+SHNEWBRSFORFOLDER_MSGBOX DIALOG 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Нађи фолдерe"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Фолдер:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+        TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+        WS_BORDER | WS_TABSTOP,
+        12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Направи Фолдер", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "ОK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Откажи", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Порука"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Да", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Да за &све", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Не", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Откажи", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
+SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "O %s"
+FONT 10, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "ОK", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Wine &лиценца...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
+ ICON "", stc1, 10, 10, 30, 30
+ LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
+ LTEXT "Покрени као %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine вам је омогућио:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+}
+
+SHELL_RUN_DLG DIALOG 0, 0, 227, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION ""
+FONT 8, "MS Shell Dlg"
+{
+ ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "Укуцај име програма, фолдерa, фајла или интернет стране, и Wine ће отворити за тебе.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "&Отвори:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
+ CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+ DEFPUSHBUTTON "ОK", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Откажи", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Нађи...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
+}
+
+STRINGTABLE
+{
+    /* columns in the shellview */
+    IDS_SHV_COLUMN1               "Фајл"
+    IDS_SHV_COLUMN2               "Величине"
+    IDS_SHV_COLUMN3               "Тип"
+    IDS_SHV_COLUMN4               "Измењено"
+    IDS_SHV_COLUMN5               "Атрибути"
+    IDS_SHV_COLUMN6               "Величина"
+    IDS_SHV_COLUMN7               "Величина доступна"
+    IDS_SHV_COLUMN8               "Име"
+    IDS_SHV_COLUMN9               "Коментар"
+    IDS_SHV_COLUMN10              "Власник"
+    IDS_SHV_COLUMN11              "Група"
+    IDS_SHV_COLUMN_DELFROM        "Оригинал локација"
+    IDS_SHV_COLUMN_DELDATE        "Датум брисања"
+    IDS_SHV_COL_DOCS              "Документи"
+    IDS_SHV_COL_STATUS            "Статус"
+    IDS_SHV_COL_LOCATION          "Локација"
+    IDS_SHV_COL_MODEL             "Модел"
+
+    /* special folders */
+    IDS_DESKTOP                   "Десктоп"
+    IDS_MYCOMPUTER                "Мој компјутер"
+    IDS_RECYCLEBIN_FOLDER_NAME    "Смеће"
+    IDS_CONTROLPANEL              "Контролна табла"
+
+    /* context menus */
+    IDS_VIEW_LARGE                "Вели&ke Иконе"
+    IDS_VIEW_SMALL                "Ma&le Иконе"
+    IDS_VIEW_LIST                 "&Листинг"
+    IDS_VIEW_DETAILS              "&Детаљи"
+    IDS_SELECT                    "Изабери"
+    IDS_OPEN                      "Отвори"
+
+    IDS_CREATEFOLDER_DENIED       "Не могу направити фолдер: Дозвола одбијена."
+    IDS_CREATEFOLDER_CAPTION      "Грешка током прављења фолдера"
+    IDS_DELETEITEM_CAPTION        "Потврди брисање фајла"
+    IDS_DELETEFOLDER_CAPTION      "Потврди брисање Фолдерa"
+    IDS_DELETEITEM_TEXT           "Да ли сте сигурни да желите да обришете '%1'?"
+    IDS_DELETEMULTIPLE_TEXT       "Да ли сте сигурни да желите да обришете ове %1 фајлове?"
+    IDS_DELETESELECTED_TEXT       "Да ли сте сигурни да желите да обришете?"
+    IDS_TRASHITEM_TEXT            "Да ли сте сигурни да желите да пошаљете '%1' u смеће?"
+    IDS_TRASHFOLDER_TEXT          "Да ли сте сигурни да желите да пошаљете '%1' и сав садржај у смеће?"
+    IDS_TRASHMULTIPLE_TEXT        "Да ли сте сигурни да желите да пошаљете ове %1 фајлове у смеће?"
+    IDS_CANTTRASH_TEXT            "'%1' не може бити послат у Смеће. Да ли желите да обришете ?"
+    IDS_OVERWRITEFILE_TEXT        "Овај фолдер садржи фајл са именом '%1'.\n\nДа ли желите да замените?"
+    IDS_OVERWRITEFILE_CAPTION     "Потврдите преснимавање"
+    IDS_OVERWRITEFOLDER_TEXT      "Овај фолдер садржи фолдер са именом '%1'.\n\n" \
+        "ако фолдери имају фајлове са истим именима \n" \
+        "они ће бити преснимљени. Да ли желите да померите/копирате фолдер?"
+
+    /* message box strings */
+    IDS_RESTART_TITLE       "Рестарт"
+    IDS_RESTART_PROMPT      "Да ли желите да симулирате Windows рестарт?"
+    IDS_SHUTDOWN_TITLE      "Угаси"
+    IDS_SHUTDOWN_PROMPT     "Да ли желите да угасите Wine сесију?"
+
+    /* Run File dialog */
+    IDS_RUNDLG_ERROR           "Не могу да прикажем Покрени фајл прозор (интерна грешка)"
+    IDS_RUNDLG_BROWSE_ERROR    "Не могу да прикажем нађи прозор (интерна грешка)"
+    IDS_RUNDLG_BROWSE_CAPTION  "Нађи"
+    IDS_RUNDLG_BROWSE_FILTER   "Извршни фајлови\\0*.exe\\0Сви фајлови\\0*.*\\0\\0"
+
+    /* shell folder path default values */
+    IDS_PROGRAMS                "Старт Мени\\Програми"
+    IDS_PERSONAL                "Моји документи"
+    IDS_FAVORITES               "Фаворити"
+    IDS_STARTUP                 "Старт Мени\\Програми\\Почетни"
+    IDS_RECENT                  "Скорашње"
+    IDS_SENDTO                  "Пошаљи у"
+    IDS_STARTMENU               "Старт мени"
+    IDS_MYMUSIC                 "Моја музика"
+    IDS_MYVIDEO                 "Моји снимци"
+    IDS_DESKTOPDIRECTORY        "Десктоп"
+    IDS_NETHOOD                 "Мрежа"
+    IDS_TEMPLATES               "Темплати"
+    IDS_APPDATA                 "Подаци програма"
+    IDS_PRINTHOOD               "Мрежна штампа"
+    IDS_LOCAL_APPDATA           "Локална подешавања\\Подаци програма"
+    IDS_INTERNET_CACHE          "Локална подешавања\\Привремени интернет фајлови"
+    IDS_COOKIES                 "Колачићи"
+    IDS_HISTORY                 "Локална подешавања\\Историја"
+    IDS_PROGRAM_FILES           "Програми"
+    IDS_MYPICTURES              "Моје слике"
+    IDS_PROGRAM_FILES_COMMON    "Програми\\Заједнички Фајлови Програма"
+    IDS_COMMON_DOCUMENTS        "Документи"
+    IDS_ADMINTOOLS              "Старт Мени\\Програми\\Администратор Алати"
+    IDS_COMMON_MUSIC            "Музика"
+    IDS_COMMON_PICTURES         "Слике"
+    IDS_COMMON_VIDEO            "Снимци"
+    IDS_CDBURN_AREA             "Локална Подешавања\\Подаци програма\\Микрософт\\ЦД резање"
+
+    IDS_NEWFOLDER               "Нови фолдер"
+
+    IDS_CPANEL_TITLE            "Wine Контролна табла"
+    IDS_CPANEL_NAME             "Име"
+    IDS_CPANEL_DESCRIPTION      "Опис"
+
+    IDS_SHLEXEC_NOASSOC         "Нема Windows програма конфигурисаног да отвори овај тип фајла."
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Wine Лиценца"
+IDS_LICENSE,
+"Wine is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\n\
+Wine is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with this library; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+}
