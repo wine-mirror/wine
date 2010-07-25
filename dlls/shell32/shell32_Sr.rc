@@ -38,7 +38,7 @@ MENU_002 MENU
 BEGIN
         POPUP ""
         BEGIN
-          POPUP "Nov"
+          POPUP "&Pregled"
           BEGIN
             MENUITEM "Velik&e Ikone",   FCIDM_SHVIEW_BIGICON
             MENUITEM "M&ale ikone",     FCIDM_SHVIEW_SMALLICON
@@ -46,7 +46,7 @@ BEGIN
             MENUITEM "&Detalji",        FCIDM_SHVIEW_REPORTVIEW
           END
           MENUITEM SEPARATOR
-          POPUP "Nov"
+          POPUP "Sredi &Ikone"
           BEGIN
             MENUITEM "po &Imenu",       0x30  /* column 0 */
             MENUITEM "po &Tipu",        0x32  /* column 2 */
@@ -97,13 +97,13 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&Pomoć"
+    POPUP "&Fajl"
     BEGIN
         MENUITEM SEPARATOR
         MENUITEM "I&zlaz", IDM_CPANEL_EXIT
     END
 
-    POPUP "&Pomoć"
+    POPUP "&Pregled"
     BEGIN
         MENUITEM "Veli&ke Ikone",    FCIDM_SHVIEW_BIGICON
         MENUITEM "Ma&le Ikone",      FCIDM_SHVIEW_SMALLICON
