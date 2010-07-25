@@ -2148,6 +2148,10 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
 
+    case FileAllInformation:
+        io->u.Status = STATUS_INVALID_INFO_CLASS;
+        break;
+
     default:
         FIXME("Unsupported class (%d)\n", class);
         io->u.Status = STATUS_NOT_IMPLEMENTED;
