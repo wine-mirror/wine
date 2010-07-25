@@ -29,6 +29,7 @@ C_SRCS = \
 	webbrowser.c
 
 RC_SRCS = \
+	De.rc \
 	En.rc \
 	Nl.rc \
 	Uk.rc \
