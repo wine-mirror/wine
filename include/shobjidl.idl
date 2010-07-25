@@ -358,6 +358,13 @@ interface IShellItem : IUnknown
         SIGDN_PARENTRELATIVE               = 0x80080001
     } SIGDN; /* & 0xFFFF => SHGDN */
 
+    [v1_enum] enum _SICHINTF
+    {
+        SICHINT_DISPLAY                       = 0x00000000,
+        SICHINT_CANONICAL                     = 0x10000000,
+        SICHINT_TEST_FILESYSPATH_IF_NOT_EQUAL = 0x20000000,
+        SICHINT_ALLFIELDS                     = 0x80000000
+    };
     typedef DWORD SICHINTF;
 
     HRESULT BindToHandler(

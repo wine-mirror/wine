@@ -209,9 +209,51 @@ static HRESULT WINAPI ShellItem_GetAttributes(IShellItem *iface, SFGAOF sfgaoMas
 static HRESULT WINAPI ShellItem_Compare(IShellItem *iface, IShellItem *oth,
     SICHINTF hint, int *piOrder)
 {
-    FIXME("(%p,%p,%x,%p)\n", iface, oth, hint, piOrder);
+    LPWSTR dispname, dispname_oth;
+    HRESULT ret;
+    TRACE("(%p,%p,%x,%p)\n", iface, oth, hint, piOrder);
 
-    return E_NOTIMPL;
+    if(hint & (SICHINT_CANONICAL | SICHINT_ALLFIELDS))
+        FIXME("Unsupported flags 0x%08x\n", hint);
+
+    ret = IShellItem_GetDisplayName(iface, SIGDN_DESKTOPABSOLUTEEDITING, &dispname);
+    if(SUCCEEDED(ret))
+    {
+        ret = IShellItem_GetDisplayName(oth, SIGDN_DESKTOPABSOLUTEEDITING, &dispname_oth);
+        if(SUCCEEDED(ret))
+        {
+            *piOrder = lstrcmpiW(dispname, dispname_oth);
+            CoTaskMemFree(dispname_oth);
+        }
+        CoTaskMemFree(dispname);
+    }
+
+    if(SUCCEEDED(ret) && *piOrder &&
+       (hint & SICHINT_TEST_FILESYSPATH_IF_NOT_EQUAL))
+    {
+        LPWSTR dispname, dispname_oth;
+
+        TRACE("Testing filesystem path.\n");
+        ret = IShellItem_GetDisplayName(iface, SIGDN_FILESYSPATH, &dispname);
+        if(SUCCEEDED(ret))
+        {
+            ret = IShellItem_GetDisplayName(oth, SIGDN_FILESYSPATH, &dispname_oth);
+            if(SUCCEEDED(ret))
+            {
+                *piOrder = lstrcmpiW(dispname, dispname_oth);
+                CoTaskMemFree(dispname_oth);
+            }
+            CoTaskMemFree(dispname);
+        }
+    }
+
+    if(FAILED(ret))
+        return ret;
+
+    if(*piOrder)
+        return S_FALSE;
+    else
+        return S_OK;
 }
 
 static const IShellItemVtbl ShellItem_Vtbl = {

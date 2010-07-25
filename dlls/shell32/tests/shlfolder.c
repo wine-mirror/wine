@@ -2414,6 +2414,232 @@ static void test_SHGetItemFromDataObject(void)
     IShellFolder_Release(psfdesktop);
 }
 
+static void test_ShellItemCompare(void)
+{
+    IShellItem *psi[9]; /* a\a, a\b, a\c, b\a, .. */
+    IShellItem *psi_a, *psi_b, *psi_c;
+    IShellFolder *psf_desktop, *psf_current;
+    LPITEMIDLIST pidl_cwd;
+    WCHAR curdirW[MAX_PATH];
+    BOOL failed;
+    HRESULT hr;
+    static const WCHAR filesW[][9] = {
+        {'a','\\','a',0}, {'a','\\','b',0}, {'a','\\','c',0},
+        {'b','\\','a',0}, {'b','\\','b',0}, {'b','\\','c',0},
+        {'c','\\','a',0}, {'c','\\','b',0}, {'c','\\','c',0} };
+    int order;
+    UINT i;
+
+    if(!pSHCreateShellItem)
+    {
+        win_skip("SHCreateShellItem missing.\n");
+        return;
+    }
+
+    GetCurrentDirectoryW(MAX_PATH, curdirW);
+    if(!lstrlenW(curdirW))
+    {
+        skip("Failed to get current directory, skipping.\n");
+        return;
+    }
+
+    CreateDirectoryA(".\\a", NULL);
+    CreateDirectoryA(".\\b", NULL);
+    CreateDirectoryA(".\\c", NULL);
+    CreateTestFile(".\\a\\a");
+    CreateTestFile(".\\a\\b");
+    CreateTestFile(".\\a\\c");
+    CreateTestFile(".\\b\\a");
+    CreateTestFile(".\\b\\b");
+    CreateTestFile(".\\b\\c");
+    CreateTestFile(".\\c\\a");
+    CreateTestFile(".\\c\\b");
+    CreateTestFile(".\\c\\c");
+
+    SHGetDesktopFolder(&psf_desktop);
+    hr = IShellFolder_ParseDisplayName(psf_desktop, NULL, NULL, curdirW, NULL, &pidl_cwd, NULL);
+    ok(SUCCEEDED(hr), "ParseDisplayName returned %x\n", hr);
+    hr = IShellFolder_BindToObject(psf_desktop, pidl_cwd, NULL, &IID_IShellFolder, (void**)&psf_current);
+    ok(SUCCEEDED(hr), "BindToObject returned %x\n", hr);
+    IShellFolder_Release(psf_desktop);
+
+    /* Generate ShellItems for the files */
+    ZeroMemory(&psi, sizeof(IShellItem*)*9);
+    failed = FALSE;
+    for(i = 0; i < 9; i++)
+    {
+        LPITEMIDLIST pidl_testfile = NULL;
+
+        hr = IShellFolder_ParseDisplayName(psf_current, NULL, NULL, (LPWSTR)filesW[i],
+                                           NULL, &pidl_testfile, NULL);
+        ok(SUCCEEDED(hr), "ParseDisplayName returned %x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = pSHCreateShellItem(NULL, NULL, pidl_testfile, &psi[i]);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            pILFree(pidl_testfile);
+        }
+        if(FAILED(hr)) failed = TRUE;
+    }
+    if(failed)
+    {
+        skip("Failed to create all shellitems. \n");
+        goto cleanup;
+    }
+
+    /* Generate ShellItems for the folders */
+    psi_a = psi_b = psi_c = NULL;
+    hr = IShellItem_GetParent(psi[0], &psi_a);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(FAILED(hr)) failed = TRUE;
+    hr = IShellItem_GetParent(psi[3], &psi_b);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(FAILED(hr)) failed = TRUE;
+    hr = IShellItem_GetParent(psi[6], &psi_c);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(FAILED(hr)) failed = TRUE;
+
+    if(failed)
+    {
+        skip("Failed to create shellitems. \n");
+        goto cleanup;
+    }
+
+    if(0)
+    {
+        /* Crashes on native (win7, winxp) */
+        hr = IShellItem_Compare(psi_a, NULL, 0, NULL);
+        hr = IShellItem_Compare(psi_a, psi_b, 0, NULL);
+        hr = IShellItem_Compare(psi_a, NULL, 0, &order);
+    }
+
+    /* Basics */
+    for(i = 0; i < 9; i++)
+    {
+        hr = IShellItem_Compare(psi[i], psi[i], SICHINT_DISPLAY, &order);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(order == 0, "Got order %d\n", order);
+        hr = IShellItem_Compare(psi[i], psi[i], SICHINT_CANONICAL, &order);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(order == 0, "Got order %d\n", order);
+        hr = IShellItem_Compare(psi[i], psi[i], SICHINT_ALLFIELDS, &order);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(order == 0, "Got order %d\n", order);
+    }
+
+    /* Order */
+    /* a\b:a\a , a\b:a\c, a\b:a\b */
+    hr = IShellItem_Compare(psi[1], psi[0], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[1], psi[2], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[1], psi[1], SICHINT_DISPLAY, &order);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(order == 0, "Got order %d\n", order);
+
+    /* b\b:a\b, b\b:c\b, b\b:c\b */
+    hr = IShellItem_Compare(psi[4], psi[1], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[4], psi[7], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[4], psi[4], SICHINT_DISPLAY, &order);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(order == 0, "Got order %d\n", order);
+
+    /* b:a\a, b:a\c, b:a\b */
+    hr = IShellItem_Compare(psi_b, psi[0], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    todo_wine ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[2], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    todo_wine ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[1], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    todo_wine ok(order == 1, "Got order %d\n", order);
+
+    /* b:c\a, b:c\c, b:c\b */
+    hr = IShellItem_Compare(psi_b, psi[6], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[8], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[7], SICHINT_DISPLAY, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+
+    /* a\b:a\a , a\b:a\c, a\b:a\b */
+    hr = IShellItem_Compare(psi[1], psi[0], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[1], psi[2], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[1], psi[1], SICHINT_CANONICAL, &order);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(order == 0, "Got order %d\n", order);
+
+    /* b\b:a\b, b\b:c\b, b\b:c\b */
+    hr = IShellItem_Compare(psi[4], psi[1], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[4], psi[7], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi[4], psi[4], SICHINT_CANONICAL, &order);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(order == 0, "Got order %d\n", order);
+
+    /* b:a\a, b:a\c, b:a\b */
+    hr = IShellItem_Compare(psi_b, psi[0], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    todo_wine ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[2], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    todo_wine ok(order == 1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[1], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    todo_wine ok(order == 1, "Got order %d\n", order);
+
+    /* b:c\a, b:c\c, b:c\b */
+    hr = IShellItem_Compare(psi_b, psi[6], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[8], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+    hr = IShellItem_Compare(psi_b, psi[7], SICHINT_CANONICAL, &order);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(order == -1, "Got order %d\n", order);
+
+cleanup:
+    IShellFolder_Release(psf_current);
+
+    DeleteFileA(".\\a\\a");
+    DeleteFileA(".\\a\\b");
+    DeleteFileA(".\\a\\c");
+    DeleteFileA(".\\b\\a");
+    DeleteFileA(".\\b\\b");
+    DeleteFileA(".\\b\\c");
+    DeleteFileA(".\\c\\a");
+    DeleteFileA(".\\c\\b");
+    DeleteFileA(".\\c\\c");
+    RemoveDirectoryA(".\\a");
+    RemoveDirectoryA(".\\b");
+    RemoveDirectoryA(".\\c");
+
+    if(psi_a) IShellItem_Release(psi_a);
+    if(psi_b) IShellItem_Release(psi_b);
+    if(psi_c) IShellItem_Release(psi_c);
+
+    for(i = 0; i < 9; i++)
+        if(psi[i]) IShellItem_Release(psi[i]);
+}
+
 /**************************************************************/
 /* IUnknown implementation for counting QueryInterface calls. */
 typedef struct {
@@ -3213,6 +3439,7 @@ START_TEST(shlfolder)
     test_SHGetItemFromDataObject();
     test_SHGetIDListFromObject();
     test_SHGetItemFromObject();
+    test_ShellItemCompare();
 
     OleUninitialize();
 }
