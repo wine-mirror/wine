@@ -28,6 +28,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
+void* (__cdecl *MSVCRT_operator_new)(size_t);
+void (__cdecl *MSVCRT_operator_delete)(void*);
 void init_cxx_funcs(void)
 {
     HMODULE hmod = GetModuleHandleA("msvcrt.dll");

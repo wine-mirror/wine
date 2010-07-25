@@ -23,8 +23,8 @@ typedef unsigned char MSVCP_BOOL;
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
 
-void* (__cdecl *MSVCRT_operator_new)(size_t);
-void (__cdecl *MSVCRT_operator_delete)(void*);
+extern void* (__cdecl *MSVCRT_operator_new)(size_t);
+extern void (__cdecl *MSVCRT_operator_delete)(void*);
 
 /* Copied from dlls/msvcrt/cpp.c */
 #ifdef __i386__  /* thiscall functions are i386-specific */
