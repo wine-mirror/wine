@@ -1,0 +1,335 @@
+/*
+ * WineCfg resources
+ * Serbian Language Support
+ *
+ * Copyright 2010 Nenad Vujic
+ *                Paul Vriens
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+#include "config.h"   /* Needed for the PACKAGE_STRING definition */
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SERBIAN, SUBLANG_SERBIAN_LATIN
+
+IDR_WINECFG MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Podesi", IDC_AUDIO_CONFIGURE
+    END
+END
+
+IDD_ABOUTCFG DIALOGEX 0, 0, 260, 220
+STYLE WS_CHILD
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
+    LTEXT           PACKAGE_NAME,IDC_ABT_TITLE_TEXT,105,30,55,30
+    LTEXT           PACKAGE_VERSION,IDC_ABT_PANEL_TEXT,160,43,140,8
+    CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
+    LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
+                    IDC_ABT_LICENSE_TEXT,105,64,145,60
+    GROUPBOX        " Informacija o registraciji Windowsa ", IDC_STATIC, 15, 155, 230, 55
+    LTEXT           "&Vlasnik:", IDC_STATIC, 22, 171, 40, 20
+    EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Organi&zacija:", IDC_STATIC, 22, 185, 50, 20
+    EDITTEXT        IDC_ABT_ORG, 75, 185, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+END
+
+IDD_APPCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Podešavanje aplikacije ",IDC_STATIC, 8,4,244,210
+    LTEXT           "Wine može da imitira više verzija Windowsa za programe.  Ovaj tab je vezan za Biblioteke i Grafika tabove da dozvoli sistemske promene ili za podešavanje aplikacija u istim tabovima.",
+                    IDC_STATIC,15,20,227,30
+    CONTROL         "Aplikacije",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+                    15,50,230,120
+    PUSHBUTTON      "&Dodaj aplikaciju...",IDC_APP_ADDAPP, 90,174,75,14
+    PUSHBUTTON      "&Ukloni aplikaciju",IDC_APP_REMOVEAPP, 170,174,75,14
+    LTEXT           "&Verzija Windowsa:",IDC_STATIC,17,196,58,8
+    COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_GRAPHCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX    " Podešavanje prozora ",IDC_STATIC,8,4,244,84
+    CONTROL     "Dozvoli DirectX aplikacijama da zaustave  &miša da napuste njihov prozor.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Dozvoli temi da &ukrasi prozor.",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Dozvoli &menadžeru prozora da upravlja prozorom.",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "&Emulacija veštačkog desktopa.",IDC_ENABLE_DESKTOP,"Button",
+                BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
+    LTEXT       "Desktop &veličina:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
+    LTEXT       "&Vertex Shader podrška: ",IDC_STATIC,15,110,80,32
+    COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Dozvoli &Pixel Shadere (ako podržava grafička)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+
+    GROUPBOX    " Rezolucija &Ekrana ",IDC_STATIC,8,151,244,63
+    CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,152,15
+    EDITTEXT    IDC_RES_DPIEDIT,169,161,23,13,ES_NUMBER|WS_TABSTOP
+    LTEXT       "Tacke po inču",IDC_STATIC,200,163,45,8
+    LTEXT       "Ovo je osnovni tekst 10 Tahoma",IDC_RES_FONT_PREVIEW,15,180,230,28
+END
+
+IDD_DLLCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " DLL Podešavanja ",IDC_STATIC,8,4,244,210
+    LTEXT           "Biblioteke mogu biti podešene zasebno da budu ili builtin (omogućene od Wine-a) ili native (uzete od Windowsa ili od aplikacije)."
+                    ,IDC_STATIC,16,16,220,32
+    LTEXT           "&Novo podešavanje biblioteke:",IDC_STATIC,16,58,100,8
+    COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
+    PUSHBUTTON      "&Dodaj",IDC_DLLS_ADDDLL, 164,68,82,13
+    LTEXT           "Postojeća &podešavanja:",IDC_STATIC,16,86,100,8
+    LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
+    PUSHBUTTON      "&Izmeni...",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "&Ukloni",IDC_DLLS_REMOVEDLL,164,114,82,14
+END
+
+IDD_LOADORDER DIALOG 80, 90, 110, 92
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Izmeni podešavanje"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Redosled učitavanja ",IDC_STATIC,8,4,94,66
+    CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "&Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "Bui&ltin pa Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "Nati&ve pa Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "&Isključi",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    PUSHBUTTON      "Otkaži",IDCANCEL,57,74,45,14,WS_GROUP
+END
+
+IDD_DRIVECHOOSE DIALOG  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Izaberi slovo diska"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "Otkaži",IDCANCEL,105,30,45,14,WS_GROUP
+END
+
+IDD_DRIVECFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Disk &podešavanja ",IDC_STATIC,8,4,244,195
+    LTEXT           "Uspelo povezivanje sa mount menadžerom, disk konfiguracija se ne može izmeniti.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
+    CONTROL         "Listing",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                    LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
+    PUSHBUTTON      "&Dodaj...",IDC_BUTTON_ADD,15,98,37,14
+    PUSHBUTTON      "&Ukloni",IDC_BUTTON_REMOVE,56,98,37,14
+    PUSHBUTTON      "Auto&matski...",IDC_BUTTON_AUTODETECT,197,98,49,14
+
+    /* editing drive details */
+    LTEXT           "&Putanja:",IDC_STATIC_PATH,15,123,20,9
+    EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Nađi...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+
+    LTEXT           "&Ukucaj:",IDC_STATIC_TYPE,15,138,21,10
+    COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    PUSHBUTTON      "Prikaži &napredno",IDC_BUTTON_SHOW_HIDE_ADVANCED,186,135,60,13
+    LTEXT           "Na&prava:",IDC_STATIC_DEVICE,15,153,26,9
+    EDITTEXT        IDC_EDIT_DEVICE,41,150,160,13,ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Na&đi...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
+
+    LTEXT           "&Naziv:",IDC_STATIC_LABEL,15,168,26,12
+    EDITTEXT        IDC_EDIT_LABEL,41,165,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "S&erijski:",IDC_STATIC_SERIAL,15,183,26,12
+    EDITTEXT        IDC_EDIT_SERIAL,41,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
+
+    CONTROL         "Prikaži &dot fajlove",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
+END
+
+IDD_AUDIOCFG DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Odabir drivera ",IDC_STATIC,8,4,244,160
+    LTEXT           "Izaberi drajver za zvuk čekiranjem kockice željenog drivera.  Isključi zvuk tako što ne izabereš nijedan drajver. Odavir više drivera se ne preporučuje. Podesi driver sa desnim klikom na njega.",IDC_STATIC,15,20,227,30
+    CONTROL         "Naprave",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,155,105
+    PUSHBUTTON      "&Probaj zvuk",IDC_AUDIO_TEST,180,50,59,14
+    PUSHBUTTON      "&Kontorlni prozor",IDC_AUDIO_CONTROL_PANEL,180,70,59,14
+    GROUPBOX        " DirectSound ",IDC_STATIC,8,170,244,44
+    LTEXT           "&Ubrzanje hardvera: ",IDC_STATIC,15,180,90,10
+    COMBOBOX        IDC_DSOUND_HW_ACCEL,100,178,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Osnovni &zvuk:",IDC_STATIC,15,197,70,8
+    COMBOBOX        IDC_DSOUND_RATES,90,195,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Iskljuci &Bitove po zvuku:",IDC_STATIC,137,197,80,8
+    COMBOBOX        IDC_DSOUND_BITS,220,195,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        " Izgled ",IDC_STATIC,8,4,244,106
+    LTEXT           "&Tema:",IDC_STATIC,15,16,130,8
+    COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Instaliraj teme...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "&Boja:",IDC_THEME_COLORTEXT,15,40,112,8
+    COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Veličina:",IDC_THEME_SIZETEXT,135,40,110,8
+    COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "It&em:",IDC_STATIC,15,64,112,8
+    COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
+    LTEXT           "B&oja:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
+    LTEXT           "Veli&čina:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
+    CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
+    PUSHBUTTON      "&Font...",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " Fol&deri ",IDC_STATIC,8,114,244,100
+    CONTROL         "Listing",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
+    CONTROL         "&Veza do:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    EDITTEXT         IDC_EDIT_SFPATH,65,195,125,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
+    PUSHBUTTON      "N&ađi...",IDC_BROWSE_SFPATH,195,195,50,13,WS_DISABLED
+END
+
+STRINGTABLE
+BEGIN
+    IDS_TAB_APPLICATIONS    "Aplikacija"
+    IDS_TAB_DLLS            "Bibliteka"
+    IDS_TAB_DRIVES          "Drajvovi"
+    IDS_CHOOSE_PATH         "Izaberite unix glavni direktorijum, molim."
+    IDS_HIDE_ADVANCED       "Sakrij &Napredno"
+    IDS_SHOW_ADVANCED       "Pokaži &Napredno"
+    IDS_NOTHEME             "(Bez teme)"
+    IDS_TAB_GRAPHICS        "Grafika"
+    IDS_TAB_DESKTOP_INTEGRATION "Desktop integracija"
+    IDS_TAB_AUDIO           "Zvuk"
+    IDS_TAB_ABOUT           "O Wine"
+    IDS_WINECFG_TITLE       "Wine konfiguracija"
+    IDS_WINECFG_TITLE_APP   "Wine konfiguracija za %s"
+    IDS_THEMEFILE           "Tema fajlovi (*.msstyles; *.theme)"
+    IDS_THEMEFILE_SELECT    "Izaberite temu"
+    IDS_AUDIO_MISSING       "Nema drivera za zvuk u registru.\n\nPreporučen driver za vas.\nMožete koristiti ovaj ili drugi driver koji je dostupan.\n\nMoraš da prihvatiš promene da bi one radile."
+    IDS_SHELL_FOLDER        "Folder"
+    IDS_LINKS_TO            "Linkovi do"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_DLL_WARNING         "Promena redosleda biblioteka nije preporučljiva.\nDa li ste sigurni da želite da uradite ovo?"
+    IDS_DLL_WARNING_CAPTION "Upozorenje: sistemska biblioteka"
+    IDS_DLL_NATIVE          "native"
+    IDS_DLL_BUILTIN         "builtin"
+    IDS_DLL_NATIVE_BUILTIN  "native, builtin"
+    IDS_DLL_BUILTIN_NATIVE  "builtin, native"
+    IDS_DLL_DISABLED        "isključen"
+    IDS_DEFAULT_SETTINGS    "Osnovno podešavanje"
+    IDS_EXECUTABLE_FILTER   "Wine programi (*.exe,*.exe.so)\\0*.exe;*.exe.so\\0"
+    IDS_USE_GLOBAL_SETTINGS "Koristi globalna podešavanja"
+    IDS_SELECT_EXECUTABLE   "Izaberi izvršni fajl"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SHADER_MODE_HARDWARE    "Hardver"
+    IDS_SHADER_MODE_NONE        "Nista"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_DRIVE_UNKNOWN           "Automatski"
+    IDS_DRIVE_FIXED             "Lokalni Hard Disk"
+    IDS_DRIVE_REMOTE            "Mrežno deljenje"
+    IDS_DRIVE_REMOVABLE         "Floppy disketa"
+    IDS_DRIVE_CDROM             "CD-ROM"
+    IDS_DRIVE_LETTERS_EXCEEDED  "Ne možete dodati više hardvera.\n\nSvaki disk mora imati slovo, od A to Z, tako da ne možete imati više od 26"
+    IDS_SYSTEM_DRIVE_LABEL      "Sistemski drajv"
+    IDS_CONFIRM_DELETE_C        "Da li ste sigurni da želite da obrišete disk C?\n\nVećina Windows aplikacija očekuje da postoji disk C, i biće problema ako ne postoji. Ako nastavite setite se da kreirate drajv C!"
+    IDS_COL_DRIVELETTER         "Slovo"
+    IDS_COL_DRIVEMAPPING        "Disk mapa"
+    IDS_NO_DRIVE_C              "Nemate disk C. Ovo nije baš sjajno.\n\nKliknite 'Dodaj' u diskovi tabu da napravite!\n"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_ACCEL_FULL              "Puna"
+    IDS_ACCEL_STANDARD          "Normalna"
+    IDS_ACCEL_BASIC             "Osnovna"
+    IDS_ACCEL_EMULATION         "Emulacija"
+    IDS_DRIVER_ALSA             "ALSA Driver"
+    IDS_DRIVER_ESOUND           "EsounD Driver"
+    IDS_DRIVER_OSS              "OSS Driver"
+    IDS_DRIVER_JACK             "JACK Driver"
+    IDS_DRIVER_NAS              "NAS Driver"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) Driver"
+    IDS_DRIVER_COREAUDIO        "CoreAudio Driver"
+    IDS_OPEN_DRIVER_ERROR       "Ne mogu da otvorim %s!"
+    IDS_SOUNDDRIVERS            "Drajveri za zvuk"
+    IDS_DEVICES_WAVEOUT         "Wave Out Uređaj"
+    IDS_DEVICES_WAVEIN          "Wave In Uređaj"
+    IDS_DEVICES_MIDIOUT         "MIDI Out Uređaj"
+    IDS_DEVICES_MIDIIN          "MIDI In Uređaj"
+    IDS_DEVICES_AUX             "Aux Uređaj"
+    IDS_DEVICES_MIXER           "Mixer Uređaj"
+    IDS_UNAVAILABLE_DRIVER      "Pronađen drajver u registru koji nije dostupan!\n\nUkloni '%s' iz registra?"
+    IDS_WARNING                 "Upozorenje"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Kontrole pozadine"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Kontrole teksta"
+    IDC_SYSPARAMS_DESKTOP           "Desktop"
+    IDC_SYSPARAMS_MENU              "Pozadina menija"
+    IDC_SYSPARAMS_MENU_TEXT         "Tekst menija"
+    IDC_SYSPARAMS_SCROLLBAR         "Scrollbar"
+    IDC_SYSPARAMS_SELECTION         "Odabir pozadine"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Odabir teksta"
+    IDC_SYSPARAMS_TOOLTIP           "ToolTip pozadina"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "ToolTip Text"
+    IDC_SYSPARAMS_WINDOW            "Pozadina prozora"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Text Prozora"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Aktivni nazivni Bar"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Aktivni nazivni Text"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Neaktivni nazivni Bar"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Neaktivni nazivni Text"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Poruka Box Text"
+    IDC_SYSPARAMS_APPWORKSPACE      "Radni prostor aplikacije"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Ram prozora"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Aktivna ivica"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Neaktivna ivica"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Kontrola senke"
+    IDC_SYSPARAMS_GRAY_TEXT         "Sivi Text"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Kontrola odabranog"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Kontrola mracne senke"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Kontrola svetla"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Kontrola alternativne pozadine"
+    IDC_SYSPARAMS_HOT_TRACKING      "Hot Tracked Item"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Aktivni nazivni bar Gradient"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Neaktivni nazivni bar Gradient"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Meni osvetljenog"
+    IDC_SYSPARAMS_MENUBAR           "Meni Bar"
+END
