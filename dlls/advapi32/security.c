@@ -2735,7 +2735,7 @@ static void split_domain_account( const LSA_UNICODE_STRING *str, LSA_UNICODE_STR
     }
 }
 
-static BOOL match_domain( ULONG idx, LSA_UNICODE_STRING *domain )
+static BOOL match_domain( ULONG idx, const LSA_UNICODE_STRING *domain )
 {
     ULONG len = strlenW( ACCOUNT_SIDS[idx].domain );
 
@@ -2745,7 +2745,7 @@ static BOOL match_domain( ULONG idx, LSA_UNICODE_STRING *domain )
     return FALSE;
 }
 
-static BOOL match_account( ULONG idx, LSA_UNICODE_STRING *account )
+static BOOL match_account( ULONG idx, const LSA_UNICODE_STRING *account )
 {
     ULONG len = strlenW( ACCOUNT_SIDS[idx].account );
 

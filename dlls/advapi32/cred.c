@@ -754,7 +754,7 @@ static BOOL credential_matches_filter(HKEY hkeyCred, LPCWSTR filter)
 
 static DWORD registry_enumerate_credentials(HKEY hkeyMgr, LPCWSTR filter,
                                             LPWSTR target_name,
-                                            DWORD target_name_len, BYTE key_data[KEY_SIZE],
+                                            DWORD target_name_len, const BYTE key_data[KEY_SIZE],
                                             PCREDENTIALW *credentials, char **buffer,
                                             DWORD *len, DWORD *count)
 {
