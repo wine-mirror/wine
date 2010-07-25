@@ -61,6 +61,7 @@ typedef struct {
 
     INT             path_start;
     DWORD           path_len;
+    INT             extension_offset;
 } Uri;
 
 typedef struct {
@@ -533,6 +534,18 @@ static DWORD remove_dot_segments(WCHAR *path, DWORD path_len) {
     TRACE("(%p %d): Path after dot segments removed %s len=%d\n", path, path_len,
         debugstr_wn(path, len), len);
     return len;
+}
+
+/* Attempts to find the file extension in a given path. */
+static INT find_file_extension(const WCHAR *path, DWORD path_len) {
+    const WCHAR *end;
+
+    for(end = path+path_len-1; end >= path && *end != '/' && *end != '\\'; --end) {
+        if(*end == '.')
+            return end-path;
+    }
+
+    return -1;
 }
 
 /* Computes the location where the elision should occur in the IPv6
@@ -2575,6 +2588,12 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         if(!canonicalize_path_opaque(data, uri, flags, computeOnly))
             return FALSE;
     }
+
+    if(uri->path_start > -1 && !computeOnly)
+        /* Finding file extensions happens for both types of URIs. */
+        uri->extension_offset = find_file_extension(uri->canon_uri+uri->path_start, uri->path_len);
+    else
+        uri->extension_offset = -1;
 
     return TRUE;
 }
