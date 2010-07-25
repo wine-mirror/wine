@@ -64,6 +64,7 @@ static LPITEMIDLIST (WINAPI *pSHSimpleIDListFromPathAW)(LPCVOID);
 static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 static HRESULT (WINAPI *pSHGetItemFromDataObject)(IDataObject*,DATAOBJ_GET_ITEM_FLAGS,REFIID,void**);
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
+static HRESULT (WINAPI *pSHGetItemFromObject)(IUnknown*,REFIID,void**);
 
 static void init_function_pointers(void)
 {
@@ -88,6 +89,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHGetNameFromIDList);
     MAKEFUNC(SHGetItemFromDataObject);
     MAKEFUNC(SHGetIDListFromObject);
+    MAKEFUNC(SHGetItemFromObject);
 #undef MAKEFUNC
 
 #define MAKEFUNC_ORD(f, ord) (p##f = (void*)GetProcAddress(hmod, (LPSTR)(ord)))
@@ -2627,6 +2629,81 @@ static void test_SHGetIDListFromObject(void)
     pILFree(pidl_desktop);
 }
 
+static void test_SHGetItemFromObject(void)
+{
+    IUnknownImpl *punkimpl;
+    IShellFolder *psfdesktop;
+    LPITEMIDLIST pidl;
+    IShellItem *psi;
+    IUnknown *punk;
+    HRESULT hres;
+    struct if_count ifaces[] =
+        { {&IID_IPersistIDList, 0},
+          {&IID_IPersistFolder2, 0},
+          {&IID_IDataObject, 0},
+          {&IID_IParentAndItem, 0},
+          {&IID_IFolderView, 0},
+          {NULL, 0} };
+
+    if(!pSHGetItemFromObject)
+    {
+        skip("No SHGetItemFromObject.\n");
+        return;
+    }
+
+    SHGetDesktopFolder(&psfdesktop);
+
+    if(0)
+    {
+        /* Crashes with Windows 7 */
+        hres = pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IUnknown, (void**)NULL);
+        hres = pSHGetItemFromObject(NULL, &IID_IUnknown, (void**)NULL);
+        hres = pSHGetItemFromObject((IUnknown*)psfdesktop, NULL, (void**)&punk);
+    }
+
+    hres = pSHGetItemFromObject(NULL, &IID_IUnknown, (void**)&punk);
+    ok(hres == E_NOINTERFACE, "Got 0x%08x\n", hres);
+
+    punkimpl = HeapAlloc(GetProcessHeap(), 0, sizeof(IUnknownImpl));
+    punkimpl->lpVtbl = &vt_IUnknown;
+    punkimpl->ifaces = ifaces;
+    punkimpl->unknown = 0;
+
+    /* The same as SHGetIDListFromObject */
+    hres = pSHGetIDListFromObject((IUnknown*)punkimpl, &pidl);
+    ok(hres == E_NOINTERFACE, "Got %x\n", hres);
+    ok(ifaces[0].count, "interface not requested.\n");
+    ok(ifaces[1].count, "interface not requested.\n");
+    ok(ifaces[2].count, "interface not requested.\n");
+    todo_wine
+        ok(ifaces[3].count || broken(!ifaces[3].count /*vista*/),
+           "interface not requested.\n");
+    ok(ifaces[4].count || broken(!ifaces[4].count /*vista*/),
+       "interface not requested.\n");
+
+    ok(!punkimpl->unknown, "Got %d unknown.\n", punkimpl->unknown);
+    HeapFree(GetProcessHeap(), 0, punkimpl);
+
+    /* Test IShellItem */
+    hres = pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IShellItem, (void**)&psi);
+    ok(hres == S_OK, "Got 0x%08x\n", hres);
+    if(SUCCEEDED(hres))
+    {
+        IShellItem *psi2;
+        hres = pSHGetItemFromObject((IUnknown*)psi, &IID_IShellItem, (void**)&psi2);
+        ok(hres == S_OK, "Got 0x%08x\n", hres);
+        if(SUCCEEDED(hres))
+        {
+            todo_wine
+                ok(psi == psi2, "Different instances (%p != %p).\n", psi, psi2);
+            IShellItem_Release(psi2);
+        }
+        IShellItem_Release(psi);
+    }
+
+    IShellFolder_Release(psfdesktop);
+}
+
 static void test_SHParseDisplayName(void)
 {
     LPITEMIDLIST pidl1, pidl2;
@@ -3135,6 +3212,7 @@ START_TEST(shlfolder)
     test_SHGetNameFromIDList();
     test_SHGetItemFromDataObject();
     test_SHGetIDListFromObject();
+    test_SHGetItemFromObject();
 
     OleUninitialize();
 }

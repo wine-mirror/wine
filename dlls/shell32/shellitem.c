@@ -535,3 +535,18 @@ HRESULT WINAPI SHGetItemFromDataObject(IDataObject *pdtobj,
 
     return ret;
 }
+
+HRESULT WINAPI SHGetItemFromObject(IUnknown *punk, REFIID riid, void **ppv)
+{
+    LPITEMIDLIST pidl;
+    HRESULT ret;
+
+    ret = SHGetIDListFromObject(punk, &pidl);
+    if(SUCCEEDED(ret))
+    {
+        ret = SHCreateItemFromIDList(pidl, riid, ppv);
+        ILFree(pidl);
+    }
+
+    return ret;
+}

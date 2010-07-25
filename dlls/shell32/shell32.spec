@@ -362,6 +362,7 @@
 @ stdcall SHGetIDListFromObject(ptr ptr)
 @ stdcall SHGetInstanceExplorer(long)
 @ stdcall SHGetItemFromDataObject(ptr long ptr ptr)
+@ stdcall SHGetItemFromObject(ptr ptr ptr)
 @ stdcall SHGetLocalizedName(wstr ptr long ptr)
 @ stdcall SHGetMalloc(ptr)
 @ stdcall SHGetNameFromIDList(ptr long ptr)
