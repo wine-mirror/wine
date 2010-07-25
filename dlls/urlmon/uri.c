@@ -1675,6 +1675,8 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
  *  (per MSDN documentation).
  */
 static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const WCHAR *start = *ptr;
+
     /* Checks if the authority information needs to be parsed.
      *
      * Relative URI's aren't hierarchical URI's, but, they could trick
@@ -1703,7 +1705,11 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
                 return FALSE;
 
             return parse_path_hierarchical(ptr, data, flags);
-        }
+        } else
+            /* Reset ptr to it's starting position so opaque path parsing
+             * begins at the correct location.
+             */
+            *ptr = start;
     }
 
     /* If it reaches here, then the URI will be treated as an opaque
@@ -2456,6 +2462,78 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
     return TRUE;
 }
 
+/* Attempts to canonicalize the path for an opaque URI.
+ *
+ * For known scheme types:
+ *  1)  forbidden characters are percent encoded if
+ *      NO_ENCODE_FORBIDDEN_CHARACTERS isn't set.
+ *
+ *  2)  Percent encoded, unreserved characters are decoded
+ *      to their actual values, for known scheme types.
+ *
+ *  3)  '\\' are changed to '/' for known scheme types
+ *      except for mailto schemes.
+ */
+static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    const WCHAR *ptr;
+    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+
+    if(!data->path) {
+        uri->path_start = -1;
+        uri->path_len = 0;
+        return TRUE;
+    }
+
+    uri->path_start = uri->canon_len;
+
+    /* Windows doesn't allow a "//" to appear after the scheme
+     * of a URI, if it's an opaque URI.
+     */
+    if(data->scheme && *(data->path) == '/' && *(data->path+1) == '/') {
+        /* So it inserts a "/." before the "//" if it exists. */
+        if(!computeOnly) {
+            uri->canon_uri[uri->canon_len] = '/';
+            uri->canon_uri[uri->canon_len+1] = '.';
+        }
+
+        uri->canon_len += 2;
+    }
+
+    for(ptr = data->path; ptr < data->path+data->path_len; ++ptr) {
+        if(*ptr == '%' && known_scheme) {
+            WCHAR val = decode_pct_val(ptr);
+
+            if(is_unreserved(val)) {
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = val;
+                ++uri->canon_len;
+
+                ptr += 2;
+                continue;
+            } else {
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
+            }
+        } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
+                  !(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
+            if(!computeOnly)
+                pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
+            uri->canon_len += 3;
+        } else {
+            if(!computeOnly)
+                uri->canon_uri[uri->canon_len] = *ptr;
+            ++uri->canon_len;
+        }
+    }
+
+    uri->path_len = uri->canon_len - uri->path_start;
+
+    TRACE("(%p %p %x %d): Canonicalized opaque URI path %s len=%d\n", data, uri, flags, computeOnly,
+        debugstr_wn(uri->canon_uri+uri->path_start, uri->path_len), uri->path_len);
+    return TRUE;
+}
+
 /* Determines how the URI represented by the parse_data should be canonicalized.
  *
  * Essentially, if the parse_data represents an hierarchical URI then it calls
@@ -2493,6 +2571,9 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         uri->authority_start = -1;
         uri->authority_len = 0;
         uri->domain_offset = -1;
+
+        if(!canonicalize_path_opaque(data, uri, flags, computeOnly))
+            return FALSE;
     }
 
     return TRUE;
