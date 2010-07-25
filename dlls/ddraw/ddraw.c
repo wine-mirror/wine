@@ -4052,11 +4052,11 @@ static HRESULT WINAPI ddraw3_DuplicateSurface(IDirectDraw3 *iface,
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
-
-    src7 = src ? (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)src) : NULL;
+    src7 = (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)src);
     hr = ddraw7_DuplicateSurface((IDirectDraw7 *)ddraw_from_ddraw3(iface), src7, &dst7);
-    *dst = dst7 ? (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_vtbl : NULL;
-
+    if (!SUCCEEDED(hr))
+        return hr;
+    *dst = (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_vtbl;
     return hr;
 }
 
@@ -4067,11 +4067,11 @@ static HRESULT WINAPI ddraw2_DuplicateSurface(IDirectDraw2 *iface,
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
-
-    src7 = src ? (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)src) : NULL;
+    src7 = (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)src);
     hr = ddraw7_DuplicateSurface((IDirectDraw7 *)ddraw_from_ddraw2(iface), src7, &dst7);
-    *dst = dst7 ? (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_vtbl : NULL;
-
+    if (!SUCCEEDED(hr))
+        return hr;
+    *dst = (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_vtbl;
     return hr;
 }
 
@@ -4082,11 +4082,11 @@ static HRESULT WINAPI ddraw1_DuplicateSurface(IDirectDraw *iface,
     HRESULT hr;
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
-
-    src7 = src ? (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)src) : NULL;
+    src7 = (IDirectDrawSurface7 *)surface_from_surface3((IDirectDrawSurface3 *)src);
     hr = ddraw7_DuplicateSurface((IDirectDraw7 *)ddraw_from_ddraw1(iface), src7, &dst7);
-    *dst = dst7 ? (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_vtbl : NULL;
-
+    if (!SUCCEEDED(hr))
+        return hr;
+    *dst = (IDirectDrawSurface *)&((IDirectDrawSurfaceImpl *)dst7)->IDirectDrawSurface3_vtbl;
     return hr;
 }
 
