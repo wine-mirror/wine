@@ -215,8 +215,8 @@
 @ stub GdipEnumerateMetafileSrcRectDestRectI
 @ stdcall GdipFillClosedCurve2(ptr ptr ptr long long long)
 @ stdcall GdipFillClosedCurve2I(ptr ptr ptr long long long)
-@ stub GdipFillClosedCurve
-@ stub GdipFillClosedCurveI
+@ stdcall GdipFillClosedCurve(ptr ptr ptr long)
+@ stdcall GdipFillClosedCurveI(ptr ptr ptr long)
 @ stdcall GdipFillEllipse(ptr ptr long long long long)
 @ stdcall GdipFillEllipseI(ptr ptr long long long long)
 @ stdcall GdipFillPath(ptr ptr ptr)

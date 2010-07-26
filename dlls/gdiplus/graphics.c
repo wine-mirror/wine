@@ -2729,6 +2729,22 @@ GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics *graphics, GpBrush *brush,
     return stat;
 }
 
+GpStatus WINGDIPAPI GdipFillClosedCurve(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPointF *points, INT count)
+{
+    TRACE("(%p, %p, %p, %d)\n", graphics, brush, points, count);
+    return GdipFillClosedCurve2(graphics, brush, points, count,
+               0.5f, FillModeAlternate);
+}
+
+GpStatus WINGDIPAPI GdipFillClosedCurveI(GpGraphics *graphics, GpBrush *brush,
+    GDIPCONST GpPoint *points, INT count)
+{
+    TRACE("(%p, %p, %p, %d)\n", graphics, brush, points, count);
+    return GdipFillClosedCurve2I(graphics, brush, points, count,
+               0.5f, FillModeAlternate);
+}
+
 GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x,
     REAL y, REAL width, REAL height)
 {
