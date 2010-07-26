@@ -156,26 +156,24 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 }
 
 /***********************************************************************
- *           SelectVisRgn   (GDI32.@)
- *
- * Note: not exported on Windows, only the 16-bit version is exported.
+ *           __wine_set_visible_region   (GDI32.@)
  */
-INT WINAPI SelectVisRgn( HDC hdc, HRGN hrgn )
+void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect )
 {
-    int retval;
     DC * dc;
 
-    if (!hrgn) return ERROR;
-    if (!(dc = get_dc_ptr( hdc ))) return ERROR;
+    if (!(dc = get_dc_ptr( hdc ))) return;
 
-    TRACE("%p %p\n", hdc, hrgn );
+    TRACE( "%p %p %s\n", hdc, hrgn, wine_dbgstr_rect(vis_rect) );
 
+    /* map region to DC coordinates */
+    OffsetRgn( hrgn, -vis_rect->left, -vis_rect->top );
+
+    DeleteObject( dc->hVisRgn );
     dc->dirty = 0;
-
-    retval = CombineRgn( dc->hVisRgn, hrgn, 0, RGN_COPY );
+    dc->hVisRgn = hrgn;
     CLIPPING_UpdateGCRegion( dc );
     release_dc_ptr( dc );
-    return retval;
 }
 
 

@@ -160,10 +160,7 @@ static void update_visible_region( struct dce *dce )
     if (dce->clip_rgn) CombineRgn( vis_rgn, vis_rgn, dce->clip_rgn,
                                    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
-    /* map region to DC coordinates */
-    OffsetRgn( vis_rgn, -win_rect.left, -win_rect.top );
-    SelectVisRgn( dce->hdc, vis_rgn );
-    DeleteObject( vis_rgn );
+    __wine_set_visible_region( dce->hdc, vis_rgn, &win_rect );
 }
 
 

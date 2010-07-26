@@ -3790,7 +3790,10 @@ typedef BOOL (CALLBACK *DCHOOKPROC)(HDC,WORD,DWORD_PTR,LPARAM);
 WINGDIAPI DWORD_PTR WINAPI GetDCHook(HDC,DCHOOKPROC*);
 WINGDIAPI BOOL      WINAPI SetDCHook(HDC,DCHOOKPROC,DWORD_PTR);
 WINGDIAPI WORD      WINAPI SetHookFlags(HDC,WORD);
-WINGDIAPI INT       WINAPI SelectVisRgn(HDC,HRGN);
+
+extern void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
+extern void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect );
+
 #endif /* __WINESRC__ */
 
 #ifdef __cplusplus

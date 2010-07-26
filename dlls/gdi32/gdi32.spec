@@ -514,7 +514,6 @@
 # Wine extensions: Win16 functions that are needed by other dlls
 #
 @ stdcall GetDCHook(long ptr)
-@ stdcall SelectVisRgn(long long)
 @ stdcall SetDCHook(long ptr long)
 @ stdcall SetHookFlags(long long)
 
@@ -526,3 +525,4 @@
 
 # GDI objects
 @ cdecl __wine_make_gdi_object_system(long long)
+@ cdecl __wine_set_visible_region(long long ptr)
