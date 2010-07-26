@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = propsys.dll
+IMPORTLIB = propsys
 
 C_SRCS = \
 	propsys_main.c \
