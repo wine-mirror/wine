@@ -153,6 +153,7 @@ include/control.h
 include/ctfutb.h
 include/ctxtcall.h
 include/d3d10.h
+include/d3dcommon.h
 include/ddstream.h
 include/devicetopology.h
 include/dimm.h

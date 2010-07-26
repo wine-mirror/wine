@@ -26,6 +26,7 @@ PUBLIC_IDL_H_SRCS = \
 	ctfutb.idl \
 	ctxtcall.idl \
 	d3d10.idl \
+	d3dcommon.idl \
 	ddstream.idl \
 	devicetopology.idl \
 	dimm.idl \
