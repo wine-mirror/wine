@@ -67,8 +67,8 @@ distclean:: clean
 
 # dependencies needed to build any dll or program
 __tooldeps__: libs/port libs/wine libs/wpp
-__builddeps__ __buildcrossdeps__: __tooldeps__ include
-.PHONY: test crosstest __tooldeps__ __builddeps__ __buildcrossdeps__
+__builddeps__: __tooldeps__ include
+.PHONY: test crosstest __tooldeps__ __builddeps__
 
 loader server: libs/port libs/wine tools
 fonts: tools

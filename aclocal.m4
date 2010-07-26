@@ -246,35 +246,52 @@ uninstall manpages htmlpages sgmlpages xmlpages:: dlls/$ac_dir/Makefile
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
-__buildcrossdeps__: $ac_file.cross.a
 $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
 $ac_file.def: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile
-	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`
-$ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
-	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`
+	@cd dlls/$ac_dir && \$(MAKE) lib$ac_implib.def
+$ac_file.$STATIC_IMPLIBEXT: dlls/$ac_dir/Makefile dummy
+	@cd dlls/$ac_dir && \$(MAKE) lib$ac_implib.$STATIC_IMPLIBEXT
 install-dev:: dlls/$ac_dir/Makefile __builddeps__ 
 	@cd dlls/$ac_dir && \$(MAKE) install-dev"
+        if test "x$CROSSTEST_DISABLE" = x
+        then
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"__builddeps__: $ac_file.cross.a
+$ac_file.cross.a: dlls/$ac_dir/Makefile dummy
+	@cd dlls/$ac_dir && \$(MAKE) lib$ac_implib.cross.a"
+        fi
+
     elif test -n "$ac_implib"
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT
-__buildcrossdeps__: $ac_file.cross.a
-$ac_file.$IMPLIBEXT $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile $ac_deps
-	@cd dlls/$ac_dir && \$(MAKE) \`basename \$[@]\`
+$ac_file.$IMPLIBEXT: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile $ac_deps
+	@cd dlls/$ac_dir && \$(MAKE) lib$ac_implib.$IMPLIBEXT
 install-dev:: dlls/$ac_dir/Makefile __builddeps__ 
 	@cd dlls/$ac_dir && \$(MAKE) install-dev"
+        if test "x$CROSSTEST_DISABLE" = x
+        then
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"__builddeps__: $ac_file.cross.a
+$ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile $ac_deps
+	@cd dlls/$ac_dir && \$(MAKE) lib$ac_implib.cross.a"
+        fi
 
         if test "$ac_dir" != "$ac_implib"
         then
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: dlls/lib$ac_implib.$IMPLIBEXT
-__buildcrossdeps__: dlls/lib$ac_implib.cross.a
 dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
 	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.$IMPLIBEXT \$[@]
-dlls/lib$ac_implib.cross.a: $ac_file.cross.a
-	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.cross.a \$[@]
 clean::
 	\$(RM) dlls/lib$ac_implib.$IMPLIBEXT"
+            if test "x$CROSSTEST_DISABLE" = x
+            then
+                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"__builddeps__: dlls/lib$ac_implib.cross.a
+dlls/lib$ac_implib.cross.a: $ac_file.cross.a
+	\$(RM) \$[@] && \$(LN_S) $ac_dir/lib$ac_implib.cross.a \$[@]"
+            fi
         fi
     fi
 }
@@ -326,16 +343,25 @@ $ac_name.res: $ac_name.rc $ac_name.exe"
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)
-crosstest: $ac_dir/__crosstest__
-.PHONY: $ac_dir/__crosstest__
-$ac_dir/__crosstest__: $ac_dir/Makefile __buildcrossdeps__ dummy
-	@cd $ac_dir && \$(MAKE) crosstest
 test: $ac_dir/__test__
 .PHONY: $ac_dir/__test__
 $ac_dir/__test__: dummy
 	@cd $ac_dir && \$(MAKE) test
 testclean::
-	\$(RM) $ac_dir/*.ok"])
+	\$(RM) $ac_dir/*.ok"
+
+        if test "x$CROSSTEST_DISABLE" = x
+        then
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"crosstest: $ac_dir/__crosstest__
+.PHONY: $ac_dir/__crosstest__
+$ac_dir/__crosstest__: $ac_dir/Makefile __builddeps__ dummy
+	@cd $ac_dir && \$(MAKE) crosstest"
+        else
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"crosstest:
+	@echo \"crosstest is not supported (mingw not installed?)\" && false"
+        fi])
 }
 
 wine_fn_config_tool ()

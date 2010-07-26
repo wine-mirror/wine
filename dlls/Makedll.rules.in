@@ -31,7 +31,7 @@ IMPLIB_CROSSOBJS = $(IMPLIB_OBJS:.o=.cross.o)
 
 .PHONY: $(IMPLIB_SRCS:%=__static_implib__%)
 
-all: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%)
+all: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%) @CROSSTEST_DISABLE@ $(IMPORTLIB:%=lib%.cross.a)
 
 $(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
 
