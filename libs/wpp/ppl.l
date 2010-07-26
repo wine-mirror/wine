@@ -1455,7 +1455,7 @@ static void add_text_to_macro(const char *text, int len)
 	if(mep->curargalloc - mep->curargsize <= len+1)	/* +1 for '\0' */
 	{
 		char *new_curarg;
-		int new_alloc =	mep->curargalloc + (ALLOCBLOCKSIZE > len+1) ? ALLOCBLOCKSIZE : len+1;
+		int new_alloc =	mep->curargalloc + ((ALLOCBLOCKSIZE > len+1) ? ALLOCBLOCKSIZE : len+1);
 		new_curarg = pp_xrealloc(mep->curarg, new_alloc * sizeof(mep->curarg[0]));
 		if(!new_curarg)
 			return;
