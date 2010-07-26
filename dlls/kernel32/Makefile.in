@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32.dll
 IMPORTLIB = kernel32
-IMPORTS   = ntdll
+IMPORTS   = winecrt0 ntdll
 EXTRALIBS = @COREFOUNDATIONLIB@ @LIBPOLL@
 EXTRADLLFLAGS = -nodefaultlibs -Wb,-F,KERNEL32.dll -Wl,--image-base,0x7b800000
 

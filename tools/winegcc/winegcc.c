@@ -745,14 +745,11 @@ static void build(struct options* opts)
         for ( j = 0; j < lib_dirs->size; j++ )
             strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
-        if (!opts->nostartfiles)
+        if (!opts->nodefaultlibs)
         {
             add_library(opts, lib_dirs, files, "winecrt0");
-            if (!opts->nodefaultlibs)
-            {
-                add_library(opts, lib_dirs, files, "kernel32");
-                add_library(opts, lib_dirs, files, "ntdll");
-            }
+            add_library(opts, lib_dirs, files, "kernel32");
+            add_library(opts, lib_dirs, files, "ntdll");
         }
         if (opts->shared && !opts->nostdlib) add_library(opts, lib_dirs, files, "wine");
         if (!opts->shared && opts->use_msvcrt && opts->target_platform == PLATFORM_CYGWIN)
@@ -833,15 +830,12 @@ static void build(struct options* opts)
         add_library(opts, lib_dirs, files, "user32");
     }
 
-    if (!opts->nostartfiles)
+    if (!opts->nodefaultlibs)
     {
         add_library(opts, lib_dirs, files, "winecrt0");
-        if (!opts->nodefaultlibs)
-        {
-            if (opts->win16_app) add_library(opts, lib_dirs, files, "kernel");
-            add_library(opts, lib_dirs, files, "kernel32");
-            add_library(opts, lib_dirs, files, "ntdll");
-        }
+        if (opts->win16_app) add_library(opts, lib_dirs, files, "kernel");
+        add_library(opts, lib_dirs, files, "kernel32");
+        add_library(opts, lib_dirs, files, "ntdll");
     }
     if (!opts->nostdlib) add_library(opts, lib_dirs, files, "wine");
 

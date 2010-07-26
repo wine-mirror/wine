@@ -5,6 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll.dll
 IMPORTLIB = ntdll
+IMPORTS   = winecrt0
 EXTRALIBS = @IOKITLIB@ @LIBPTHREAD@
 EXTRADLLFLAGS = -nodefaultlibs -Wl,--image-base,0x7bc00000
 
