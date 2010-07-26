@@ -192,6 +192,15 @@ static const struct message parent_expand_seq[] = {
     { 0 }
 };
 
+static const struct message parent_singleexpand_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TVN_SELCHANGINGA },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_SELCHANGEDA },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_SINGLEEXPAND },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDINGA },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDEDA },
+    { 0 }
+};
+
 static const struct message empty_seq[] = {
     { 0 }
 };
@@ -1231,6 +1240,25 @@ static void test_expandedimage(void)
     DestroyWindow(hTree);
 }
 
+static void test_TVS_SINGLEEXPAND(void)
+{
+    HWND hTree;
+    BOOL ret;
+
+    hTree = create_treeview_control();
+    SetWindowLongA(hTree, GWL_STYLE, GetWindowLong(hTree, GWL_STYLE) | TVS_SINGLEEXPAND);
+    /* to avoid paiting related notifications */
+    ShowWindow(hTree, SW_HIDE);
+    fill_tree(hTree);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
+    ok(ret, "got %d\n", ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_singleexpand_seq, "singleexpand notifications", FALSE);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1296,6 +1324,7 @@ START_TEST(treeview)
     test_treeview_classinfo();
     test_expandnotify();
     test_rect_retrieval_after_expand_with_select();
+    test_TVS_SINGLEEXPAND();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {

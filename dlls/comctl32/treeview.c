@@ -3305,7 +3305,7 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
 static BOOL
 TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
-		BOOL bExpandPartial, BOOL bUser)
+		BOOL partial, BOOL user)
 {
     LONG scrollDist;
     LONG orgNextTop = 0;
@@ -3313,7 +3313,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     TREEVIEW_ITEM *nextItem, *tmpItem;
     BOOL sendsNotifications;
 
-    TRACE("(%p, %p, partial=%d, %d\n", infoPtr, wineItem, bExpandPartial, bUser);
+    TRACE("(%p, %p, partial=%d, %d\n", infoPtr, wineItem, partial, user);
 
     if (wineItem->state & TVIS_EXPANDED)
        return TRUE;
@@ -3334,7 +3334,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     TRACE("TVE_EXPAND %p %s\n", wineItem, TREEVIEW_ItemName(wineItem));
 
-    sendsNotifications = bUser || ((wineItem->cChildren != 0) &&
+    sendsNotifications = user || ((wineItem->cChildren != 0) &&
                                     !(wineItem->state & TVIS_EXPANDEDONCE));
     if (sendsNotifications)
     {
@@ -3349,7 +3349,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     wineItem->state |= TVIS_EXPANDED;
 
-    if (bExpandPartial)
+    if (partial)
 	FIXME("TVE_EXPANDPARTIAL not implemented\n");
 
     if (ISVISIBLE(wineItem))
@@ -3413,6 +3413,58 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     }
 
     return TRUE;
+}
+
+/* Handler for TVS_SINGLEEXPAND behaviour. Used on response
+   to mouse messages and TVM_SELECTITEM.
+
+   selection - previously selected item, used to collapse a part of a tree
+   item - new selected item
+*/
+static void TREEVIEW_SingleExpand(TREEVIEW_INFO *infoPtr,
+    HTREEITEM selection, HTREEITEM item)
+{
+    TREEVIEW_ITEM *SelItem;
+
+    if ((infoPtr->dwStyle & TVS_SINGLEEXPAND) == 0 || infoPtr->hwndEdit) return;
+
+    TREEVIEW_SendTreeviewNotify(infoPtr, TVN_SINGLEEXPAND, TVC_UNKNOWN, TVIF_HANDLE | TVIF_PARAM, item, 0);
+
+    /*
+     * Close the previous selection all the way to the root
+     * as long as the new selection is not a child
+     */
+    if(selection && (selection != item))
+    {
+        BOOL closeit = TRUE;
+        SelItem = item;
+
+        /* determine if the hitItem is a child of the currently selected item */
+        while(closeit && SelItem && TREEVIEW_ValidItem(infoPtr, SelItem) &&
+              (SelItem->parent != infoPtr->root))
+        {
+            closeit = (SelItem != selection);
+            SelItem = SelItem->parent;
+        }
+
+        if(closeit)
+        {
+            if(TREEVIEW_ValidItem(infoPtr, selection))
+                SelItem = selection;
+
+            while(SelItem && (SelItem != item) && TREEVIEW_ValidItem(infoPtr, SelItem) &&
+                  SelItem->parent != infoPtr->root)
+            {
+                TREEVIEW_Collapse(infoPtr, SelItem, FALSE, FALSE);
+                SelItem = SelItem->parent;
+            }
+        }
+    }
+
+    /*
+     * Expand the current item
+     */
+    TREEVIEW_Expand(infoPtr, item, FALSE, FALSE);
 }
 
 static BOOL
@@ -4132,58 +4184,11 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     }
     else if (ht.flags & (TVHT_ONITEMICON|TVHT_ONITEMLABEL)) /* select the item if the hit was inside of the icon or text */
     {
-        /*
-         * if we are TVS_SINGLEEXPAND then we want this single click to
-         * do a bunch of things.
-         */
-        if((infoPtr->dwStyle & TVS_SINGLEEXPAND) &&
-          (infoPtr->hwndEdit == 0))
-        {
-            TREEVIEW_ITEM *SelItem;
-
-            /*
-             * Send the notification
-             */
-            TREEVIEW_SendTreeviewNotify(infoPtr, TVN_SINGLEEXPAND, TVC_UNKNOWN, TVIF_HANDLE | TVIF_PARAM, ht.hItem, 0);
-
-            /*
-             * Close the previous selection all the way to the root
-             * as long as the new selection is not a child
-             */
-            if((infoPtr->selectedItem)
-                && (infoPtr->selectedItem != ht.hItem))
-            {
-                BOOL closeit = TRUE;
-                SelItem = ht.hItem;
-
-                /* determine if the hitItem is a child of the currently selected item */
-                while(closeit && SelItem && TREEVIEW_ValidItem(infoPtr, SelItem) && (SelItem != infoPtr->root))
-                {
-                    closeit = (SelItem != infoPtr->selectedItem);
-                    SelItem = SelItem->parent;
-                }
-
-                if(closeit)
-                {
-                    if(TREEVIEW_ValidItem(infoPtr, infoPtr->selectedItem))
-                        SelItem = infoPtr->selectedItem;
-
-                    while(SelItem && (SelItem != ht.hItem) && TREEVIEW_ValidItem(infoPtr, SelItem) && (SelItem != infoPtr->root))
-                    {
-                        TREEVIEW_Collapse(infoPtr, SelItem, FALSE, FALSE);
-                        SelItem = SelItem->parent;
-                    }
-                }
-            }
-
-            /*
-             * Expand the current item
-             */
-            TREEVIEW_Expand(infoPtr, ht.hItem, TVE_TOGGLE, FALSE);
-        }
+        TREEVIEW_ITEM *selection = infoPtr->selectedItem;
 
         /* Select the current item */
         TREEVIEW_DoSelectItem(infoPtr, TVGN_CARET, ht.hItem, TVC_BYMOUSE);
+        TREEVIEW_SingleExpand(infoPtr, selection, ht.hItem);
     }
     else if (ht.flags & TVHT_ONITEMSTATEICON)
     {
@@ -4415,13 +4420,17 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 static LRESULT
 TREEVIEW_SelectItem(TREEVIEW_INFO *infoPtr, INT wParam, HTREEITEM item)
 {
-    if (item != NULL && !TREEVIEW_ValidItem(infoPtr, item))
+    TREEVIEW_ITEM *selection = infoPtr->selectedItem;
+
+    if (item && !TREEVIEW_ValidItem(infoPtr, item))
 	return FALSE;
 
     TRACE("%p (%s) %d\n", item, TREEVIEW_ItemName(item), wParam);
 
     if (!TREEVIEW_DoSelectItem(infoPtr, wParam, item, TVC_UNKNOWN))
 	return FALSE;
+
+    TREEVIEW_SingleExpand(infoPtr, selection, item);
 
     return TRUE;
 }
