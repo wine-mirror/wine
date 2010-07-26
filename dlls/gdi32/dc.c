@@ -296,6 +296,7 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
     xform->eM22 = scaleY;
     xform->eDx  = (double)dc->vportOrgX - scaleX * (double)dc->wndOrgX;
     xform->eDy  = (double)dc->vportOrgY - scaleY * (double)dc->wndOrgY;
+    if (dc->layout & LAYOUT_RTL) xform->eDx += dc->vis_rect.right - dc->vis_rect.left - 1;
 }
 
 /***********************************************************************
@@ -550,6 +551,7 @@ BOOL restore_dc_state( HDC hdc, INT level )
         if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
         dc->hMetaRgn = 0;
     }
+    DC_UpdateXforms( dc );
     CLIPPING_UpdateGCRegion( dc );
 
     SelectObject( hdc, dcs->hBitmap );
