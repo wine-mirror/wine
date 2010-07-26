@@ -463,11 +463,8 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
 
     /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
     if (iCode == SYSRGN && !(GetVersion() & 0x80000000))
-    {
-        POINT org;
-        GetDCOrgEx( hDC, &org );
-        OffsetRgn( hRgn, org.x, org.y );
-    }
+        OffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
+
     return (rgn != 0);
 }
 

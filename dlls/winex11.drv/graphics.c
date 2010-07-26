@@ -1466,16 +1466,6 @@ X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color )
     return color;
 }
 
-/***********************************************************************
- *           GetDCOrgEx   (X11DRV.@)
- */
-BOOL CDECL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp )
-{
-    lpp->x = physDev->dc_rect.left + physDev->drawable_rect.left;
-    lpp->y = physDev->dc_rect.top + physDev->drawable_rect.top;
-    return TRUE;
-}
-
 
 static unsigned char *get_icm_profile( unsigned long *size )
 {

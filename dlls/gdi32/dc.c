@@ -1068,9 +1068,8 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 
     if (!lpp) return FALSE;
     if (!(dc = get_dc_ptr( hDC ))) return FALSE;
-
-    lpp->x = lpp->y = 0;
-    if (dc->funcs->pGetDCOrgEx) dc->funcs->pGetDCOrgEx( dc->physDev, lpp );
+    lpp->x = dc->vis_rect.left;
+    lpp->y = dc->vis_rect.top;
     release_dc_ptr( dc );
     return TRUE;
 }
