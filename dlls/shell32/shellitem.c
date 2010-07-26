@@ -827,3 +827,33 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
     *ppsiItemArray = NULL;
     return ret;
 }
+
+HRESULT WINAPI SHCreateShellItemArrayFromShellItem(IShellItem *psi, REFIID riid, void **ppv)
+{
+    IShellItemArrayImpl *This;
+    IShellItem **array;
+    HRESULT ret;
+
+    TRACE("%p, %s, %p\n", psi, shdebugstr_guid(riid), ppv);
+
+    array = HeapAlloc(GetProcessHeap(), 0, sizeof(IShellItem*));
+    if(!array)
+        return E_OUTOFMEMORY;
+
+    ret = IShellItemArray_Constructor(NULL, riid, (void**)&This);
+    if(SUCCEEDED(ret))
+    {
+        array[0] = psi;
+        IShellItem_AddRef(psi);
+        This->array = array;
+        This->item_count = 1;
+        *ppv = This;
+    }
+    else
+    {
+        HeapFree(GetProcessHeap(), 0, array);
+        *ppv = NULL;
+    }
+
+    return ret;
+}

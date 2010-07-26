@@ -335,6 +335,7 @@
 @ stub SHCreateProcessAsUserW
 @ stdcall SHCreateShellItem(ptr ptr ptr ptr)
 @ stdcall SHCreateShellItemArray(ptr ptr long ptr ptr)
+@ stdcall SHCreateShellItemArrayFromShellItem(ptr ptr ptr)
 @ stdcall SHEmptyRecycleBinA(long str long)
 @ stdcall SHEmptyRecycleBinW(long wstr long)
 @ stub SHExtractIconsW

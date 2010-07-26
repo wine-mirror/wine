@@ -59,6 +59,7 @@ static HRESULT (WINAPI *pSHCreateItemFromIDList)(PCIDLIST_ABSOLUTE pidl, REFIID 
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHCreateShellItemArray)(LPCITEMIDLIST,IShellFolder*,UINT,LPCITEMIDLIST*,IShellItemArray**);
+static HRESULT (WINAPI *pSHCreateShellItemArrayFromShellItem)(IShellItem*, REFIID, void **);
 static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
 static LPITEMIDLIST (WINAPI *pSHSimpleIDListFromPathAW)(LPCVOID);
@@ -81,6 +82,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHCreateItemFromParsingName);
     MAKEFUNC(SHCreateShellItem);
     MAKEFUNC(SHCreateShellItemArray);
+    MAKEFUNC(SHCreateShellItemArrayFromShellItem);
     MAKEFUNC(SHGetFolderPathA);
     MAKEFUNC(SHGetFolderPathAndSubDirA);
     MAKEFUNC(SHGetPathFromIDListW);
@@ -3055,6 +3057,61 @@ static void test_SHCreateShellItemArray(void)
             IShellItemArray_Release(psia);
         }
     }
+
+    /* SHCreateShellItemArrayFromShellItem */
+    if(pSHCreateShellItemArrayFromShellItem)
+    {
+        IShellItem *psi;
+
+        if(0)
+        {
+            /* Crashes under Windows 7 */
+            hr = pSHCreateShellItemArrayFromShellItem(NULL, &IID_IShellItemArray, NULL);
+            hr = pSHCreateShellItemArrayFromShellItem(NULL, &IID_IShellItemArray, (void**)&psia);
+            hr = pSHCreateShellItemArrayFromShellItem(psi, &IID_IShellItemArray, NULL);
+        }
+
+        hr = pSHCreateItemFromIDList(pidl_testdir, &IID_IShellItem, (void**)&psi);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = pSHCreateShellItemArrayFromShellItem(psi, &IID_IShellItemArray, (void**)&psia);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                IShellItem *psi2;
+                UINT count;
+                hr = IShellItemArray_GetCount(psia, &count);
+                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                ok(count == 1, "Got count %d\n", count);
+                hr = IShellItemArray_GetItemAt(psia, 0, &psi2);
+                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                todo_wine
+                    ok(psi != psi2, "ShellItems are of the same instance.\n");
+                if(SUCCEEDED(hr))
+                {
+                    LPITEMIDLIST pidl1, pidl2;
+                    hr = pSHGetIDListFromObject((IUnknown*)psi, &pidl1);
+                    ok(hr == S_OK, "Got 0x%08x\n", hr);
+                    ok(pidl1 != NULL, "pidl1 was null.\n");
+                    hr = pSHGetIDListFromObject((IUnknown*)psi2, &pidl2);
+                    ok(hr == S_OK, "Got 0x%08x\n", hr);
+                    ok(pidl2 != NULL, "pidl2 was null.\n");
+                    ok(ILIsEqual(pidl1, pidl2), "pidls not equal.\n");
+                    pILFree(pidl1);
+                    pILFree(pidl2);
+                    IShellItem_Release(psi2);
+                }
+                hr = IShellItemArray_GetItemAt(psia, 1, &psi2);
+                ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+                IShellItemArray_Release(psia);
+            }
+            IShellItem_Release(psi);
+        }
+    }
+    else
+        skip("No SHCreateShellItemArrayFromShellItem.\n");
+
 
     IShellFolder_Release(psf);
     pILFree(pidl_testdir);
