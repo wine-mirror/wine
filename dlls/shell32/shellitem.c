@@ -857,3 +857,55 @@ HRESULT WINAPI SHCreateShellItemArrayFromShellItem(IShellItem *psi, REFIID riid,
 
     return ret;
 }
+
+HRESULT WINAPI SHCreateShellItemArrayFromDataObject(IDataObject *pdo, REFIID riid, void **ppv)
+{
+    IShellItemArray *psia;
+    FORMATETC fmt;
+    STGMEDIUM medium;
+    HRESULT ret;
+
+    TRACE("%p, %s, %p\n", pdo, shdebugstr_guid(riid), ppv);
+
+    if(!pdo)
+        return E_INVALIDARG;
+
+    *ppv = NULL;
+
+    fmt.cfFormat = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_HGLOBAL;
+
+    ret = IDataObject_GetData(pdo, &fmt, &medium);
+    if(SUCCEEDED(ret))
+    {
+        LPIDA pida = GlobalLock(medium.u.hGlobal);
+        LPCITEMIDLIST parent_pidl;
+        LPCITEMIDLIST *children;
+        UINT i;
+        TRACE("Converting %d objects.\n", pida->cidl);
+
+        parent_pidl = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[0]);
+
+        children = HeapAlloc(GetProcessHeap(), 0, sizeof(LPCITEMIDLIST)*pida->cidl);
+        for(i = 0; i < pida->cidl; i++)
+            children[i] = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[i+1]);
+
+        ret = SHCreateShellItemArray(parent_pidl, NULL, pida->cidl, children, (IShellItemArray**)&psia);
+
+        HeapFree(GetProcessHeap(), 0, children);
+
+        GlobalUnlock(medium.u.hGlobal);
+        GlobalFree(medium.u.hGlobal);
+    }
+
+    if(SUCCEEDED(ret))
+    {
+        ret = IShellItemArray_QueryInterface(psia, riid, ppv);
+        IShellItemArray_Release(psia);
+    }
+
+    return ret;
+}

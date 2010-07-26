@@ -59,6 +59,7 @@ static HRESULT (WINAPI *pSHCreateItemFromIDList)(PCIDLIST_ABSOLUTE pidl, REFIID 
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHCreateShellItemArray)(LPCITEMIDLIST,IShellFolder*,UINT,LPCITEMIDLIST*,IShellItemArray**);
+static HRESULT (WINAPI *pSHCreateShellItemArrayFromDataObject)(IDataObject*, REFIID, void **);
 static HRESULT (WINAPI *pSHCreateShellItemArrayFromShellItem)(IShellItem*, REFIID, void **);
 static LPITEMIDLIST (WINAPI *pILCombine)(LPCITEMIDLIST,LPCITEMIDLIST);
 static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
@@ -82,6 +83,7 @@ static void init_function_pointers(void)
     MAKEFUNC(SHCreateItemFromParsingName);
     MAKEFUNC(SHCreateShellItem);
     MAKEFUNC(SHCreateShellItemArray);
+    MAKEFUNC(SHCreateShellItemArrayFromDataObject);
     MAKEFUNC(SHCreateShellItemArrayFromShellItem);
     MAKEFUNC(SHGetFolderPathA);
     MAKEFUNC(SHGetFolderPathAndSubDirA);
@@ -3112,6 +3114,91 @@ static void test_SHCreateShellItemArray(void)
     else
         skip("No SHCreateShellItemArrayFromShellItem.\n");
 
+    if(pSHCreateShellItemArrayFromDataObject)
+    {
+        IShellView *psv;
+
+        if(0)
+        {
+            /* Crashes under Windows 7 */
+            hr = pSHCreateShellItemArrayFromDataObject(NULL, &IID_IShellItemArray, NULL);
+        }
+        hr = pSHCreateShellItemArrayFromDataObject(NULL, &IID_IShellItemArray, (void**)&psia);
+        ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+
+        hr = IShellFolder_CreateViewObject(psf, NULL, &IID_IShellView, (void**)&psv);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            IEnumIDList *peidl;
+            IDataObject *pdo;
+            SHCONTF enum_flags;
+
+            enum_flags = SHCONTF_NONFOLDERS | SHCONTF_FOLDERS | SHCONTF_INCLUDEHIDDEN;
+            hr = IShellFolder_EnumObjects(psf, NULL, enum_flags, &peidl);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                LPITEMIDLIST apidl[5];
+                UINT count, i;
+
+                for(count = 0; count < 5; count++)
+                    if(IEnumIDList_Next(peidl, 1, &apidl[count], NULL) != S_OK)
+                        break;
+                ok(count == 5, "Got %d\n", count);
+
+                if(count)
+                {
+                    hr = IShellFolder_GetUIObjectOf(psf, NULL, count, (LPCITEMIDLIST*)apidl,
+                                                    &IID_IDataObject, NULL, (void**)&pdo);
+                    ok(hr == S_OK, "Got 0x%08x\n", hr);
+                    if(SUCCEEDED(hr))
+                    {
+                        hr = pSHCreateShellItemArrayFromDataObject(pdo, &IID_IShellItemArray,
+                                                                   (void**)&psia);
+                        ok(hr == S_OK, "Got 0x%08x\n", hr);
+                        if(SUCCEEDED(hr))
+                        {
+                            UINT count_sia, i;
+                            hr = IShellItemArray_GetCount(psia, &count_sia);
+                            ok(count_sia == count, "Counts differ (%d, %d)\n", count, count_sia);
+                            for(i = 0; i < count_sia; i++)
+                            {
+                                LPITEMIDLIST pidl_abs = ILCombine(pidl_testdir, apidl[i]);
+                                IShellItem *psi;
+                                hr = IShellItemArray_GetItemAt(psia, i, &psi);
+                                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                                if(SUCCEEDED(hr))
+                                {
+                                    LPITEMIDLIST pidl;
+                                    hr = pSHGetIDListFromObject((IUnknown*)psi, &pidl);
+                                    ok(hr == S_OK, "Got 0x%08x\n", hr);
+                                    ok(pidl != NULL, "pidl as NULL.\n");
+                                    ok(ILIsEqual(pidl, pidl_abs), "pidls differ.\n");
+                                    pILFree(pidl);
+                                    IShellItem_Release(psi);
+                                }
+                                pILFree(pidl_abs);
+                            }
+
+                            IShellItemArray_Release(psia);
+                        }
+
+                        IDataObject_Release(pdo);
+                    }
+                    for(i = 0; i < count; i++)
+                        pILFree(apidl[i]);
+                }
+                else
+                    skip("No files found - skipping test.\n");
+
+                IEnumIDList_Release(peidl);
+            }
+            IShellView_Release(psv);
+        }
+    }
+    else
+        skip("No SHCreateShellItemArrayFromDataObject.\n");
 
     IShellFolder_Release(psf);
     pILFree(pidl_testdir);
