@@ -3,7 +3,7 @@
  * Korean Language Support
  *
  * Copyright 2003 Dan Kegel
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,23 +22,25 @@
 
 #include "resources.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-STRING_USAGE,                                   "Ç®±×¸²À» ½ÇÇà½ÃÅ°°Å³ª º¸Åë ÆÄÀÏ¿¡ Ã·°¡ÇØ¼­ »ç¿ëµÇ´Â  Ç®±×¸²À¸·Î ¹®¼­ ¿­±â\n\
+STRING_USAGE,"í’€ê·¸ë¦¼ì„ ì‹¤í–‰ì‹œí‚¤ê±°ë‚˜ ë³´í†µ íŒŒì¼ì— ì²¨ê°€í•´ì„œ ì‚¬ìš©ë˜ëŠ”  í’€ê·¸ë¦¼ìœ¼ë¡œ ë¬¸ì„œ ì—´ê¸°\n\
 Usage:\n\
-start [¿É¼Ç] Ç®±×¸²ÀÌ³ª ÆÄÀÏ ÀÌ¸§ [...]\n\
-start [¿É¼Ç] ¹®¼­ ÆÄÀÏ ÀÌ¸§\n\
+start [ì˜µì…˜] í’€ê·¸ë¦¼ì´ë‚˜ íŒŒì¼ ì´ë¦„ [...]\n\
+start [ì˜µì…˜] ë¬¸ì„œ íŒŒì¼ ì´ë¦„\n\
 \n\
 Options:\n\
-/M[inimized] Ç®±×¸² ÃÖ¼ÒÈ­ »óÅÂ·Î ½ÇÇà.\n\
-/MAX[imized] Ç®±×¸² ÃÖ´ëÈ­ »óÅÂ·Î ½ÇÇà.\n\
-/R[estored]  Ç®±×¸²À» º¸Åë»óÅÂ·Î ½ÃÀÛ½ÃÅ°±â (ÃÖ¼ÒÈ­µµ ¾Æ´Ï°í ÃÖ´ëÈ­µµ ¾Æ´Ô).\n\
-/W[ait]      ½ÃÀÛµÈ Ç®±×¸²ÀÌ ³¡³¯ ¶§±îÁö ±â´Ù¸², ³¡³¯ ¶§ Á¾·áÄÚµå¸¦ ³²±è.\n\
-/Unix        À©µµ¿ì ÀÍ½ºÇÃ·Î¾î°°ÀÌ À¯´Ð½º ÆÄÀÏÀÌ¸§À» »ç¿ëÇØ¼­ ½ÃÀÛ.\n\
-/ProgIDOpen  ÁöÁ¤ÇÑ progID¸¦ »ç¿ëÇØ¼­ ¹®¼­ ¿­±â.\n\
-/L           »ç¿ëÀÚ ¶óÀÌ¼¾½º º¸¿©ÁÜ\n\
+/M[inimized] í’€ê·¸ë¦¼ ìµœì†Œí™” ìƒíƒœë¡œ ì‹¤í–‰.\n\
+/MAX[imized] í’€ê·¸ë¦¼ ìµœëŒ€í™” ìƒíƒœë¡œ ì‹¤í–‰.\n\
+/R[estored]  í’€ê·¸ë¦¼ì„ ë³´í†µìƒíƒœë¡œ ì‹œìž‘ì‹œí‚¤ê¸° (ìµœì†Œí™”ë„ ì•„ë‹ˆê³  ìµœëŒ€í™”ë„ ì•„ë‹˜).\n\
+/W[ait]      ì‹œìž‘ëœ í’€ê·¸ë¦¼ì´ ëë‚  ë•Œê¹Œì§€ ê¸°ë‹¤ë¦¼, ëë‚  ë•Œ ì¢…ë£Œì½”ë“œë¥¼ ë‚¨ê¹€.\n\
+/Unix        ìœˆë„ìš° ìµìŠ¤í”Œë¡œì–´ê°™ì´ ìœ ë‹‰ìŠ¤ íŒŒì¼ì´ë¦„ì„ ì‚¬ìš©í•´ì„œ ì‹œìž‘.\n\
+/ProgIDOpen  ì§€ì •í•œ progIDë¥¼ ì‚¬ìš©í•´ì„œ ë¬¸ì„œ ì—´ê¸°.\n\
+/L           ì‚¬ìš©ìž ë¼ì´ì„¼ìŠ¤ ë³´ì—¬ì¤Œ\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
 Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n\
@@ -64,7 +66,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
 See the COPYING.LIB file for license information.\n\
 "
 
-STRING_EXECFAIL "ÇÁ·Î±×·¥À» ½ÇÇàÇÒ ¼ö ¾ø°Å³ª, ÁöÁ¤µÈ ÆÄÀÏ¿¡ ¿¬°áµÈ ÇÁ·Î±×·¥ÀÌ ¾ø½À´Ï´Ù.\nShellExecuteEx ½ÇÆÐ"
+STRING_EXECFAIL "í”„ë¡œê·¸ëž¨ì„ ì‹¤í–‰í•  ìˆ˜ ì—†ê±°ë‚˜, ì§€ì •ëœ íŒŒì¼ì— ì—°ê²°ëœ í”„ë¡œê·¸ëž¨ì´ ì—†ìŠµë‹ˆë‹¤.\nShellExecuteEx ì‹¤íŒ¨"
 
-STRING_UNIXFAIL "ÁöÁ¤µÈ Unix ÆÄÀÏ¸íÀ» DOS ÆÄÀÏ¸íÀ¸·Î ¹Ù²Ü ¼ö ¾ø½À´Ï´Ù."
+STRING_UNIXFAIL "ì§€ì •ëœ Unix íŒŒì¼ëª…ì„ DOS íŒŒì¼ëª…ìœ¼ë¡œ ë°”ê¿€ ìˆ˜ ì—†ìŠµë‹ˆë‹¤."
 }
