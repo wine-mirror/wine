@@ -1776,7 +1776,8 @@ BOOL16 WINAPI PtVisible16( HDC16 hdc, INT16 x, INT16 y )
  */
 INT16 WINAPI SelectVisRgn16( HDC16 hdc, HRGN16 hrgn )
 {
-    return SelectVisRgn( HDC_32(hdc), HRGN_32(hrgn) );
+    FIXME( "%04x %04x no longer supported\n", hdc, hrgn );
+    return ERROR;
 }
 
 
@@ -3703,21 +3704,8 @@ INT16 WINAPI IntersectVisRect16( HDC16 hdc16, INT16 left, INT16 top, INT16 right
  */
 HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
 {
-    struct saved_visrgn *saved;
-    HDC hdc = HDC_32( hdc16 );
-
-    TRACE("%p\n", hdc );
-
-    if (!(saved = HeapAlloc( GetProcessHeap(), 0, sizeof(*saved) ))) return 0;
-    if (!(saved->hrgn = CreateRectRgn( 0, 0, 0, 0 )))
-    {
-        HeapFree( GetProcessHeap(), 0, saved );
-        return 0;
-    }
-    saved->hdc = hdc;
-    GetRandomRgn( hdc, saved->hrgn, SYSRGN );
-    list_add_head( &saved_regions, &saved->entry );
-    return HRGN_16(saved->hrgn);
+    FIXME( "%04x no longer supported\n", hdc16 );
+    return 0;
 }
 
 
@@ -3726,22 +3714,8 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc16 )
  */
 INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
 {
-    struct saved_visrgn *saved;
-    HDC hdc = HDC_32( hdc16 );
-    INT16 ret = ERROR;
-
-    TRACE("%p\n", hdc );
-
-    LIST_FOR_EACH_ENTRY( saved, &saved_regions, struct saved_visrgn, entry )
-    {
-        if (saved->hdc != hdc) continue;
-        ret = SelectVisRgn( hdc, saved->hrgn );
-        list_remove( &saved->entry );
-        DeleteObject( saved->hrgn );
-        HeapFree( GetProcessHeap(), 0, saved );
-        break;
-    }
-    return ret;
+    FIXME( "%04x no longer supported\n", hdc16 );
+    return ERROR;
 }
 
 
