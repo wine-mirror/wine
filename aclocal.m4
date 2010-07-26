@@ -224,6 +224,11 @@ wine_fn_config_dll ()
     ac_implibsrc=$[4]
     ac_file="dlls/$ac_dir/lib$ac_implib"
     ac_deps="tools/widl tools/winebuild tools/winegcc include"
+    ac_implibflags=""
+
+    case $ac_dir in
+      *16) ac_implibflags=" -m16" ;;
+    esac
 
     wine_fn_all_dir_rules dlls/$ac_dir "dlls/Makedll.rules \$(MAKEDEP)"
 
@@ -265,16 +270,18 @@ $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT
-$ac_file.$IMPLIBEXT: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile $ac_deps
-	@cd dlls/$ac_dir && \$(MAKE) lib$ac_implib.$IMPLIBEXT
+$ac_file.def: dlls/$ac_dir/$ac_dir.spec \$(WINEBUILD)
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$[@] --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec
+$ac_file.a: dlls/$ac_dir/$ac_dir.spec \$(WINEBUILD)
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$[@] --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec
 install-dev:: dlls/$ac_dir/Makefile __builddeps__ 
 	@cd dlls/$ac_dir && \$(MAKE) install-dev"
         if test "x$CROSSTEST_DISABLE" = x
         then
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.cross.a
-$ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile $ac_deps
-	@cd dlls/$ac_dir && \$(MAKE) lib$ac_implib.cross.a"
+$ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec \$(WINEBUILD)
+	\$(WINEBUILD) \$(CROSSTARGET:%=-b %)$ac_implibflags -w --implib -o \$[@] --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec"
         fi
 
         if test "$ac_dir" != "$ac_implib"
@@ -390,7 +397,10 @@ install-dev:: $ac_dir
 all __tooldeps__: $ac_dir
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile libs/port dummy
-	@cd $ac_dir && \$(MAKE)"])
+	@cd $ac_dir && \$(MAKE)"
+      case $ac_dir in
+        tools/winebuild) wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(WINEBUILD): $ac_dir" ;;
+      esac])
 }
 
 wine_fn_config_makerules ()
