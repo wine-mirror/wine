@@ -60,6 +60,7 @@
 #endif
 #ifdef HAVE_OPENSSL_SSL_H
 # include <openssl/ssl.h>
+# include <openssl/opensslv.h>
 #undef FAR
 #undef DSA
 #endif
@@ -113,7 +114,11 @@ static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
 static void *OpenSSL_ssl_handle;
 static void *OpenSSL_crypto_handle;
 
+#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER> 0x1000000)
+static const SSL_METHOD *meth;
+#else
 static SSL_METHOD *meth;
+#endif
 static SSL_CTX *ctx;
 static int hostname_idx;
 static int error_idx;
