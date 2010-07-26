@@ -4206,6 +4206,43 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     context_release(context);
 }
 
+static void surface_load_srgb_fbo(IWineD3DSurfaceImpl *surface, DWORD location)
+{
+    IWineD3DDeviceImpl *device = surface->resource.device;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
+
+    ENTER_GL();
+
+    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, surface, NULL,
+            location == SFLAG_INSRGBTEX ? SFLAG_INTEXTURE : SFLAG_INSRGBTEX);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    checkGLcall("glReadBuffer()");
+
+    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, surface, NULL, location);
+    context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+
+    glDisable(GL_SCISSOR_TEST);
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+
+    gl_info->fbo_ops.glBlitFramebuffer(0, 0, surface->currentDesc.Width, surface->currentDesc.Height,
+            0, 0, surface->currentDesc.Width, surface->currentDesc.Height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    checkGLcall("glBlitFramebuffer()");
+
+    LEAVE_GL();
+
+    context_release(context);
+}
+
 HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RECT *rect)
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
@@ -4360,9 +4397,19 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
     }
     else /* if(flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) */
     {
+        const DWORD attach_flags = WINED3DFMT_FLAG_FBO_ATTACHABLE | WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
+
         if (drawable_read_ok && (surface->Flags & SFLAG_INDRAWABLE))
         {
             read_from_framebuffer_texture(surface, flag == SFLAG_INSRGBTEX);
+        }
+        else if (surface->Flags & (SFLAG_INSRGBTEX | SFLAG_INTEXTURE)
+                && (surface->resource.format_desc->Flags & attach_flags) == attach_flags
+                && fbo_blit_supported(gl_info, BLIT_OP_BLIT,
+                        NULL, surface->resource.usage, surface->resource.pool, surface->resource.format_desc,
+                        NULL, surface->resource.usage, surface->resource.pool, surface->resource.format_desc))
+        {
+            surface_load_srgb_fbo(surface, flag);
         }
         else
         {

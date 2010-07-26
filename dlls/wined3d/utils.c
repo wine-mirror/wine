@@ -1056,6 +1056,26 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
         }
     }
 
+    if (format_desc->glInternal != format_desc->glGammaInternal)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, format_desc->glGammaInternal, 16, 16, 0,
+                format_desc->glFormat, format_desc->glType, NULL);
+        gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+
+        status = gl_info->fbo_ops.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        checkGLcall("Framebuffer format check");
+
+        if (status == GL_FRAMEBUFFER_COMPLETE)
+        {
+            TRACE("Format %s's sRGB format is FBO attachable.\n", debug_d3dformat(format_desc->format));
+            format_desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
+        }
+        else
+        {
+            WARN("Format %s's sRGB format is not FBO attachable.\n", debug_d3dformat(format_desc->format));
+        }
+    }
+
     glDeleteTextures(1, &tex);
 
     LEAVE_GL();
