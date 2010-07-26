@@ -832,12 +832,13 @@ If you are using Linux, you will need a newer binutils.]
 fi
 
 dnl Check for cross compiler to build test programs
-if test "$cross_compiling" = "no" -a "$LIBEXT" != "dll"
+AC_SUBST([CROSSTEST_DISABLE],[\#])
+if test "$cross_compiling" = "no" -a "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
     WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
     if test "$CROSSCC" != "false"
     then
-        AC_SUBST(CROSSTEST,"\$(CROSSTEST)")
+        CROSSTEST_DISABLE=""
         set x $CROSSCC
         shift
         target=""

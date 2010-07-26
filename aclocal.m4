@@ -208,12 +208,8 @@ wine_fn_config_lib ()
     wine_fn_all_dir_rules $ac_dir "dlls/Makeimplib.rules \$(MAKEDEP)"
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all __builddeps__: $ac_dir
-__buildcrossdeps__: $ac_dir/lib$ac_name.cross.a
-$ac_dir $ac_dir/lib$ac_name.cross.a: $ac_dir/Makefile tools/widl tools/winebuild tools/winegcc include
-$ac_dir: dummy
+$ac_dir: $ac_dir/Makefile tools/widl tools/winebuild tools/winegcc include dummy
 	@cd $ac_dir && \$(MAKE)
-$ac_dir/lib$ac_name.cross.a: dummy
-	@cd $ac_dir && \$(MAKE) lib$ac_name.cross.a
 install install-dev:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
 uninstall:: $ac_dir/Makefile

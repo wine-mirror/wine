@@ -12,7 +12,7 @@ INSTALLDIRS = $(DESTDIR)$(dlldir)
 
 @MAKE_RULES@
 
-all: $(MODULE:%=lib%.a)
+all: $(MODULE:%=lib%.a) @CROSSTEST_DISABLE@ $(MODULE:%=lib%.cross.a)
 
 # Rules for .a library
 

@@ -47,7 +47,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
 
 # Rules for cross-compiling tests
 
-crosstest: @CROSSTEST@
+crosstest: @CROSSTEST_DISABLE@ $(CROSSTEST)
 
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
 	$(CROSSWINEGCC) $(CROSSOBJS) -o $@ $(ALL_LIBS)
