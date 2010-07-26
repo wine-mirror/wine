@@ -1,0 +1,11 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = propsys.dll
+IMPORTS   = propsys
+
+C_SRCS = \
+	propsys.c
+
+@MAKE_TEST_RULES@
