@@ -3018,7 +3018,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
     DWORD oldValue = This->stateBlock->renderState[State];
 
-    TRACE("(%p)->state = %s(%d), value = %d\n", This, debug_d3drenderstate(State), State, Value);
+    TRACE("iface %p, state %s (%#x), value %#x.\n", iface, debug_d3drenderstate(State), State, Value);
 
     This->updateStateBlock->changed.renderState[State >> 5] |= 1 << (State & 0x1f);
     This->updateStateBlock->renderState[State] = Value;
@@ -3041,7 +3041,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, WINED3DRENDERSTATETYPE State, DWORD *pValue) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) for State %d = %d\n", This, State, This->stateBlock->renderState[State]);
+
+    TRACE("iface %p, state %s (%#x), value %p.\n", iface, debug_d3drenderstate(State), State, pValue);
+
     *pValue = This->stateBlock->renderState[State];
     return WINED3D_OK;
 }
