@@ -213,18 +213,17 @@ static int wait4_thread( struct thread *thread, int signal )
 static inline int tkill( int tgid, int pid, int sig )
 {
 #ifdef __linux__
-    int ret = -ENOSYS;
 # ifdef __i386__
-    ret = syscall(270 /*SYS_tgkill*/, tgid, pid, sig);
+    int ret = syscall(270 /*SYS_tgkill*/, tgid, pid, sig);
     if (ret < 0 && errno == -ENOSYS)
         ret = syscall(238 /*SYS_tkill*/, pid, sig);
     return ret;
 # elif defined(__x86_64__)
     return syscall(200 /*SYS_tkill*/, pid, sig);
-# endif
-    if (ret >= 0) return ret;
-    errno = -ret;
+# else
+    errno = ENOSYS;
     return -1;
+# endif
 #elif defined(__FreeBSD__) && defined(HAVE_THR_KILL2)
     return thr_kill2( tgid, pid, sig );
 #else
