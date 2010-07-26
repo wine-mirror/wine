@@ -1569,6 +1569,8 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
         }
 
         IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
+
+        return;
     }
 
     surface_prepare_texture_internal(surface, gl_info, srgb);
