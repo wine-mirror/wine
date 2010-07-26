@@ -3218,6 +3218,147 @@ void surface_translate_frontbuffer_coords(IWineD3DSurfaceImpl *surface, HWND win
     OffsetRect(rect, offset.x, offset.y);
 }
 
+static BOOL surface_is_full_rect(IWineD3DSurfaceImpl *surface, const RECT *r)
+{
+    if ((r->left && r->right) || abs(r->right - r->left) != surface->currentDesc.Width)
+        return FALSE;
+    if ((r->top && r->bottom) || abs(r->bottom - r->top) != surface->currentDesc.Height)
+        return FALSE;
+    return TRUE;
+}
+
+/* blit between surface locations. onscreen on different swapchains is not supported.
+ * depth / stencil is not supported. */
+static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILTERTYPE filter,
+        IWineD3DSurfaceImpl *src_surface, DWORD src_location, const RECT *src_rect_in,
+        IWineD3DSurfaceImpl *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    RECT src_rect, dst_rect;
+    GLenum gl_filter;
+
+    TRACE("device %p, filter %s,\n", device, debug_d3dtexturefiltertype(filter));
+    TRACE("src_surface %p, src_location %s, src_rect %s,\n",
+            src_surface, debug_surflocation(src_location), wine_dbgstr_rect(src_rect_in));
+    TRACE("dst_surface %p, dst_location %s, dst_rect %s.\n",
+            dst_surface, debug_surflocation(dst_location), wine_dbgstr_rect(dst_rect_in));
+
+    src_rect = *src_rect_in;
+    dst_rect = *dst_rect_in;
+
+    switch (filter)
+    {
+        case WINED3DTEXF_LINEAR:
+            gl_filter = GL_LINEAR;
+            break;
+
+        default:
+            FIXME("Unsupported filter mode %s (%#x).\n", debug_d3dtexturefiltertype(filter), filter);
+        case WINED3DTEXF_NONE:
+        case WINED3DTEXF_POINT:
+            gl_filter = GL_NEAREST;
+            break;
+    }
+
+    if (src_location == SFLAG_INDRAWABLE && surface_is_offscreen(src_surface))
+        src_location = SFLAG_INTEXTURE;
+    if (dst_location == SFLAG_INDRAWABLE && surface_is_offscreen(dst_surface))
+        dst_location = SFLAG_INTEXTURE;
+
+    /* Make sure the locations are up-to-date. Loading the destination
+     * surface isn't required if the entire surface is overwritten. (And is
+     * in fact harmful if we're being called by surface_load_location() with
+     * the purpose of loading the destination surface.) */
+    surface_load_location(src_surface, src_location, NULL);
+    if (!surface_is_full_rect(dst_surface, &dst_rect))
+        surface_load_location(dst_surface, dst_location, NULL);
+
+    if (src_location == SFLAG_INDRAWABLE) context = context_acquire(device, src_surface);
+    else if (dst_location == SFLAG_INDRAWABLE) context = context_acquire(device, dst_surface);
+    else context = context_acquire(device, NULL);
+
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping blit.\n");
+        return;
+    }
+
+    gl_info = context->gl_info;
+
+    if (src_location == SFLAG_INDRAWABLE)
+    {
+        GLenum buffer = surface_get_gl_buffer(src_surface);
+
+        TRACE("Source surface %p is onscreen.\n", src_surface);
+
+        if (buffer == GL_FRONT)
+            surface_translate_frontbuffer_coords(src_surface, context->win_handle, &src_rect);
+
+        src_rect.top = src_surface->currentDesc.Height - src_rect.top;
+        src_rect.bottom = src_surface->currentDesc.Height - src_rect.bottom;
+
+        ENTER_GL();
+        context_bind_fbo(context, GL_READ_FRAMEBUFFER, NULL);
+        glReadBuffer(buffer);
+        checkGLcall("glReadBuffer()");
+    }
+    else
+    {
+        TRACE("Source surface %p is offscreen.\n", src_surface);
+        ENTER_GL();
+        context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, src_surface, NULL, src_location);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        checkGLcall("glReadBuffer()");
+    }
+    LEAVE_GL();
+
+    if (dst_location == SFLAG_INDRAWABLE)
+    {
+        GLenum buffer = surface_get_gl_buffer(dst_surface);
+
+        TRACE("Destination surface %p is onscreen.\n", dst_surface);
+
+        if (buffer == GL_FRONT)
+            surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
+
+        dst_rect.top = dst_surface->currentDesc.Height - dst_rect.top;
+        dst_rect.bottom = dst_surface->currentDesc.Height - dst_rect.bottom;
+
+        ENTER_GL();
+        context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
+        context_set_draw_buffer(context, buffer);
+    }
+    else
+    {
+        TRACE("Destination surface %p is offscreen.\n", dst_surface);
+
+        ENTER_GL();
+        context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
+        context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
+    }
+
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+
+    glDisable(GL_SCISSOR_TEST);
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+
+    gl_info->fbo_ops.glBlitFramebuffer(src_rect.left, src_rect.top, src_rect.right, src_rect.bottom,
+            dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom, GL_COLOR_BUFFER_BIT, gl_filter);
+    checkGLcall("glBlitFramebuffer()");
+
+    LEAVE_GL();
+
+    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+
+    context_release(context);
+}
+
 /* Not called from the VTable */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface, const RECT *DestRect,
         IWineD3DSurfaceImpl *src_surface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx,
@@ -3429,7 +3570,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
                 &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format_desc,
                 &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format_desc))
         {
-            stretch_rect_fbo(device, src_surface, &src_rect, dst_surface, &dst_rect, Filter);
+            surface_blt_fbo(device, Filter,
+                    src_surface, SFLAG_INDRAWABLE, &src_rect,
+                    dst_surface, SFLAG_INDRAWABLE, &dst_rect);
+            surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
         }
         else if (!stretchx || dst_rect.right - dst_rect.left > src_surface->currentDesc.Width
                 || dst_rect.bottom - dst_rect.top > src_surface->currentDesc.Height)
@@ -3470,10 +3614,13 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
                         &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
                         dst_surface->resource.format_desc))
         {
-            TRACE("Using stretch_rect_fbo\n");
+            TRACE("Using surface_blt_fbo.\n");
             /* The source is always a texture, but never the currently active render target, and the texture
              * contents are never upside down. */
-            stretch_rect_fbo(device, src_surface, &src_rect, dst_surface, &dst_rect, Filter);
+            surface_blt_fbo(device, Filter,
+                    src_surface, SFLAG_INDRAWABLE, &src_rect,
+                    dst_surface, SFLAG_INDRAWABLE, &dst_rect);
+            surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
             return WINED3D_OK;
         }
 
@@ -4206,43 +4353,6 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     context_release(context);
 }
 
-static void surface_load_srgb_fbo(IWineD3DSurfaceImpl *surface, DWORD location)
-{
-    IWineD3DDeviceImpl *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-
-    context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
-
-    ENTER_GL();
-
-    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, surface, NULL,
-            location == SFLAG_INSRGBTEX ? SFLAG_INTEXTURE : SFLAG_INSRGBTEX);
-    glReadBuffer(GL_COLOR_ATTACHMENT0);
-    checkGLcall("glReadBuffer()");
-
-    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, surface, NULL, location);
-    context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
-
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
-
-    glDisable(GL_SCISSOR_TEST);
-    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
-
-    gl_info->fbo_ops.glBlitFramebuffer(0, 0, surface->currentDesc.Width, surface->currentDesc.Height,
-            0, 0, surface->currentDesc.Width, surface->currentDesc.Height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    checkGLcall("glBlitFramebuffer()");
-
-    LEAVE_GL();
-
-    context_release(context);
-}
-
 HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RECT *rect)
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
@@ -4409,7 +4519,11 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
                         NULL, surface->resource.usage, surface->resource.pool, surface->resource.format_desc,
                         NULL, surface->resource.usage, surface->resource.pool, surface->resource.format_desc))
         {
-            surface_load_srgb_fbo(surface, flag);
+            DWORD src_location = flag == SFLAG_INSRGBTEX ? SFLAG_INTEXTURE : SFLAG_INSRGBTEX;
+            RECT rect = {0, 0, surface->currentDesc.Width, surface->currentDesc.Height};
+
+            surface_blt_fbo(surface->resource.device, WINED3DTEXF_POINT,
+                    surface, src_location, &rect, surface, flag, &rect);
         }
         else
         {
