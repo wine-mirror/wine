@@ -688,23 +688,14 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
     if (dwFlags & MCI_DGV_WHERE_SOURCE) {
         if (dwFlags & MCI_DGV_WHERE_MAX)
             FIXME("MCI_DGV_WHERE_SOURCE_MAX stub %s\n", wine_dbgstr_rect(&rc));
-        IBasicVideo_get_SourceLeft(wma->vidbasic, &rc.left);
-        IBasicVideo_get_SourceTop(wma->vidbasic, &rc.top);
-        IBasicVideo_get_SourceWidth(wma->vidbasic, &rc.right);
-        IBasicVideo_get_SourceHeight(wma->vidbasic, &rc.bottom);
-        /* Undo conversion done below */
-        rc.right += rc.left;
-        rc.bottom += rc.top;
+        IBasicVideo_GetSourcePosition(wma->vidbasic, &rc.left, &rc.top, &rc.right, &rc.bottom);
         TRACE("MCI_DGV_WHERE_SOURCE %s\n", wine_dbgstr_rect(&rc));
     }
     if (dwFlags & MCI_DGV_WHERE_DESTINATION) {
-        if (dwFlags & MCI_DGV_WHERE_MAX) {
-            GetClientRect(hWnd, &rc);
-            TRACE("MCI_DGV_WHERE_DESTINATION_MAX %s\n", wine_dbgstr_rect(&rc));
-        } else {
-            FIXME("MCI_DGV_WHERE_DESTINATION not supported yet\n");
-            goto out;
-        }
+        if (dwFlags & MCI_DGV_WHERE_MAX)
+            FIXME("MCI_DGV_WHERE_DESTINATION_MAX stub %s\n", wine_dbgstr_rect(&rc));
+        IBasicVideo_GetDestinationPosition(wma->vidbasic, &rc.left, &rc.top, &rc.right, &rc.bottom);
+        TRACE("MCI_DGV_WHERE_DESTINATION %s\n", wine_dbgstr_rect(&rc));
     }
     if (dwFlags & MCI_DGV_WHERE_FRAME) {
         if (dwFlags & MCI_DGV_WHERE_MAX)
@@ -723,22 +714,17 @@ static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lp
     if (dwFlags & MCI_DGV_WHERE_WINDOW) {
         if (dwFlags & MCI_DGV_WHERE_MAX) {
             GetWindowRect(GetDesktopWindow(), &rc);
+            rc.right -= rc.left;
+            rc.bottom -= rc.top;
             TRACE("MCI_DGV_WHERE_WINDOW_MAX %s\n", wine_dbgstr_rect(&rc));
         } else {
-            GetWindowRect(hWnd, &rc);
+            IVideoWindow_GetWindowPosition(wma->vidwin, &rc.left, &rc.top, &rc.right, &rc.bottom);
             TRACE("MCI_DGV_WHERE_WINDOW %s\n", wine_dbgstr_rect(&rc));
         }
     }
     ret = 0;
-
 out:
-    /* In MCI, RECT structure is used differently: rc.right = width & rc.bottom = height
-     * So convert the normal RECT into a MCI RECT before returning */
-    lpParms->rc.left = rc.left;
-    lpParms->rc.top = rc.top;
-    lpParms->rc.right = rc.right - rc.left;
-    lpParms->rc.bottom = rc.bottom - rc.top;
-
+    lpParms->rc = rc;
     return ret;
 }
 
