@@ -297,6 +297,13 @@ static void test_null(void)
     }
 
     r = RegSetValueA(hkey, NULL, REG_SZ, "test", strlen("test"));
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        HeapFree(GetProcessHeap(), 0, lpData);
+        RegCloseKey(hkey);
+        return;
+    }
     ok( r == ERROR_SUCCESS, "wrong error %d\n", r);
 
     r = MsiGetProductInfoA("", "", NULL, NULL);
