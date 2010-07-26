@@ -44,6 +44,8 @@ static UINT (WINAPI *pMsiSourceListGetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+static BOOL (WINAPI *pGetTokenInformation)( HANDLE, TOKEN_INFORMATION_CLASS, LPVOID, DWORD, PDWORD );
+static BOOL (WINAPI *pOpenProcessToken)( HANDLE, DWORD, PHANDLE );
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
@@ -3226,6 +3228,8 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiSourceListGetInfoA);
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
+    GET_PROC(hadvapi32, GetTokenInformation);
+    GET_PROC(hadvapi32, OpenProcessToken);
     GET_PROC(hadvapi32, RegDeleteKeyExA)
     GET_PROC(hkernel32, IsWow64Process)
 
@@ -3234,6 +3238,25 @@ static void init_functionpointers(void)
     GET_PROC(hsrclient, SRSetRestorePointA);
 
 #undef GET_PROC
+}
+
+static BOOL is_process_limited(void)
+{
+    HANDLE token;
+
+    if (!pOpenProcessToken || !pGetTokenInformation) return FALSE;
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = pGetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
 }
 
 static BOOL check_win9x(void)
@@ -3657,6 +3680,11 @@ static void test_MsiInstallProduct(void)
     if (on_win9x)
     {
         win_skip("Services are not implemented on Win9x and WinMe\n");
+        return;
+    }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
         return;
     }
 
@@ -4106,6 +4134,12 @@ static void test_continuouscabs(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_cc_test_files();
     create_database(msifile, cc_tables, sizeof(cc_tables) / sizeof(msi_table));
 
@@ -4237,6 +4271,12 @@ static void test_mixedmedia(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
     create_file("msitest\\augustus", 500);
@@ -4339,6 +4379,12 @@ static void test_readonlyfile(void)
     HANDLE file;
     CHAR path[MAX_PATH];
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
     create_database(msifile, rof_tables, sizeof(rof_tables) / sizeof(msi_table));
@@ -4381,6 +4427,12 @@ static void test_readonlyfile_cab(void)
     HANDLE file;
     CHAR path[MAX_PATH];
     CHAR buf[16];
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("maximus", 500);
@@ -4603,6 +4655,12 @@ static void test_setdirproperty(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
     create_database(msifile, sdp_tables, sizeof(sdp_tables) / sizeof(msi_table));
@@ -4629,6 +4687,12 @@ error:
 static void test_cabisextracted(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\gaius", 500);
@@ -4672,6 +4736,12 @@ static void test_concurrentinstall(void)
 {
     UINT r;
     CHAR path[MAX_PATH];
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     CreateDirectoryA("msitest\\msitest", NULL);
@@ -4720,6 +4790,12 @@ static void test_setpropertyfolder(void)
     UINT r;
     CHAR path[MAX_PATH];
     DWORD attr;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     lstrcpyA(path, PROG_FILES_DIR);
     lstrcatA(path, "\\msitest\\added");
@@ -4942,6 +5018,12 @@ static void test_publish_registerproduct(void)
                                 "\\UpgradeCodes\\51AAE0C44620A5E4788506E91F249BD2";
     static const CHAR userugkey[] = "Software\\Microsoft\\Installer\\UpgradeCodes"
                                     "\\51AAE0C44620A5E4788506E91F249BD2";
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     if (!get_user_sid(&usersid))
         return;
@@ -5195,6 +5277,12 @@ static void test_publish_publishproduct(void)
     static const CHAR machprod[] = "Installer\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
     static const CHAR machup[] = "Installer\\UpgradeCodes\\51AAE0C44620A5E4788506E91F249BD2";
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     if (!get_user_sid(&usersid))
         return;
 
@@ -5418,6 +5506,12 @@ static void test_publish_publishfeatures(void)
     static const CHAR classfeat[] = "Software\\Classes\\Installer\\Features"
                                     "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     if (!get_user_sid(&usersid))
         return;
 
@@ -5592,6 +5686,12 @@ static void test_publish_registeruser(void)
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
         "UserData\\%s\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB\\InstallProperties";
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     if (!get_user_sid(&usersid))
         return;
 
@@ -5680,6 +5780,12 @@ static void test_publish_processcomponents(void)
         "UserData\\%s\\Components\\%s";
     static const CHAR compkey[] =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Components";
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     if (!get_user_sid(&usersid))
         return;
@@ -5810,6 +5916,11 @@ static void test_publish(void)
     if (!pMsiQueryComponentStateA)
     {
         win_skip("MsiQueryComponentStateA is not available\n");
+        return;
+    }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
         return;
     }
 
@@ -6300,6 +6411,11 @@ static void test_publishsourcelist(void)
         win_skip("MsiSourceListEnumSourcesA and/or MsiSourceListGetInfoA are not available\n");
         return;
     }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
@@ -6652,6 +6768,12 @@ static void test_transformprop(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
 
@@ -6693,6 +6815,12 @@ static void test_currentworkingdir(void)
     UINT r;
     CHAR drive[MAX_PATH], path[MAX_PATH];
     LPSTR ptr;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
@@ -6850,6 +6978,12 @@ static void test_adminprops(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
 
@@ -6894,6 +7028,12 @@ static void create_pf_data(LPCSTR file, LPCSTR data, BOOL is_file)
 static void test_removefiles(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\hydrogen", 500);
@@ -7023,6 +7163,12 @@ static void test_movefiles(void)
 {
     UINT r;
     char props[MAX_PATH];
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 100);
@@ -7164,6 +7310,12 @@ static void test_missingcab(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
     create_file("maximus", 500);
@@ -7224,6 +7376,12 @@ static void test_duplicatefiles(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
     create_database(msifile, df_tables, sizeof(df_tables) / sizeof(msi_table));
@@ -7262,6 +7420,12 @@ static void test_writeregistryvalues(void)
     CHAR path[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
     BOOL wow64;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
@@ -7308,6 +7472,12 @@ static void test_sourcefolder(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("augustus", 500);
 
@@ -7349,6 +7519,12 @@ static void test_customaction51(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
 
@@ -7375,6 +7551,12 @@ error:
 static void test_installstate(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\alpha", 500);
@@ -7867,6 +8049,11 @@ static void test_MsiConfigureProductEx(void)
         win_skip("Different registry keys on Win9x and WinMe\n");
         return;
     }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\hydrogen", 500);
@@ -8124,6 +8311,12 @@ static void test_missingcomponent(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\hydrogen", 500);
     create_file("msitest\\helium", 500);
@@ -8169,6 +8362,12 @@ static void test_sourcedirprop(void)
     UINT r;
     CHAR props[MAX_PATH];
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
 
@@ -8213,6 +8412,12 @@ error:
 static void test_adminimage(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     CreateDirectoryA("msitest\\first", NULL);
@@ -8271,6 +8476,12 @@ error:
 static void test_propcase(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
@@ -8360,6 +8571,12 @@ static void test_shortcut(void)
     UINT r;
     HRESULT hr;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_database(msifile, sc_tables, sizeof(sc_tables) / sizeof(msi_table));
 
@@ -8418,6 +8635,11 @@ static void test_envvar(void)
     if (on_win9x)
     {
         win_skip("Environment variables are handled differently on Win9x and WinMe\n");
+        return;
+    }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
         return;
     }
 
@@ -8532,6 +8754,12 @@ static void test_preselected(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_database(msifile, ps_tables, sizeof(ps_tables) / sizeof(msi_table));
 
@@ -8582,6 +8810,12 @@ static void test_installed_prop(void)
     static char prodcode[] = "{7df88a48-996f-4ec8-a022-bf956f9b2cbb}";
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_database(msifile, ip_tables, sizeof(ip_tables) / sizeof(msi_table));
 
@@ -8625,6 +8859,12 @@ error:
 static void test_allusers_prop(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_database(msifile, aup_tables, sizeof(aup_tables) / sizeof(msi_table));
@@ -8851,6 +9091,11 @@ static void test_file_in_use(void)
         win_skip("Pending file renaming is implemented differently on Win9x and WinMe\n");
         return;
     }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     RegOpenKeyExA(HKEY_LOCAL_MACHINE, session_manager, 0, KEY_ALL_ACCESS, &hkey);
 
@@ -8908,6 +9153,11 @@ static void test_file_in_use_cab(void)
     if (on_win9x)
     {
         win_skip("Pending file renaming is implemented differently on Win9x and WinMe\n");
+        return;
+    }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
         return;
     }
 
@@ -9044,6 +9294,12 @@ static void test_feature_override(void)
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
     BOOL wow64;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\override.txt", 1000);
@@ -9309,6 +9565,11 @@ static void test_delete_services(void)
         win_skip("Services are not implemented on Win9x and WinMe\n");
         return;
     }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_database(msifile, sds_tables, sizeof(sds_tables) / sizeof(msi_table));
@@ -9347,6 +9608,12 @@ error:
 static void test_self_registration(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_database(msifile, sr_tables, sizeof(sr_tables) / sizeof(msi_table));
@@ -9388,6 +9655,12 @@ static void test_register_font(void)
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
     BOOL wow64;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\font.ttf", 1000);
@@ -9434,6 +9707,12 @@ static void test_validate_product_id(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_database(msifile, vp_tables, sizeof(vp_tables) / sizeof(msi_table));
 
@@ -9477,6 +9756,12 @@ error:
 static void test_install_remove_odbc(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\ODBCdriver.dll", 1000);
@@ -9526,6 +9811,12 @@ static void test_register_typelib(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_file("msitest\\typelib.dll", 1000);
     create_database(msifile, tl_tables, sizeof(tl_tables) / sizeof(msi_table));
@@ -9558,6 +9849,12 @@ error:
 static void test_create_remove_shortcut(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\target.txt", 1000);
@@ -9598,6 +9895,12 @@ static void test_publish_components(void)
     LONG res;
     HKEY key;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_file("msitest\\english.txt", 1000);
     create_database(msifile, pub_tables, sizeof(pub_tables) / sizeof(msi_table));
@@ -9637,6 +9940,12 @@ error:
 static void test_remove_duplicate_files(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\original.txt", 1000);
@@ -9685,6 +9994,12 @@ static void test_remove_registry_values(void)
     HKEY key;
     REGSAM access = KEY_ALL_ACCESS;
     BOOL wow64;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\registry.txt", 1000);
@@ -9772,6 +10087,12 @@ static void test_find_related_products(void)
 {
     UINT r;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_file("msitest\\product.txt", 1000);
     create_database(msifile, frp_tables, sizeof(frp_tables) / sizeof(msi_table));
@@ -9809,6 +10130,12 @@ static void test_remove_ini_values(void)
     char inifile[MAX_PATH], buf[0x10];
     HANDLE file;
     BOOL ret;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\inifile.txt", 1000);
@@ -9873,6 +10200,11 @@ static void test_remove_env_strings(void)
     if (on_win9x)
     {
         win_skip("Environment variables are handled differently on win9x and winme\n");
+        return;
+    }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
         return;
     }
 
@@ -10001,6 +10333,12 @@ static void test_register_class_info(void)
     LONG res;
     HKEY hkey;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_file("msitest\\class.txt", 1000);
     create_database(msifile, rci_tables, sizeof(rci_tables) / sizeof(msi_table));
@@ -10054,6 +10392,12 @@ static void test_register_extension_info(void)
     LONG res;
     HKEY hkey;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_file("msitest\\extension.txt", 1000);
     create_database(msifile, rei_tables, sizeof(rei_tables) / sizeof(msi_table));
@@ -10100,6 +10444,12 @@ static void test_register_mime_info(void)
     LONG res;
     HKEY hkey;
 
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
     create_test_files();
     create_file("msitest\\mime.txt", 1000);
     create_database(msifile, rmi_tables, sizeof(rmi_tables) / sizeof(msi_table));
@@ -10140,6 +10490,12 @@ static void test_icon_table(void)
     UINT res;
     CHAR path[MAX_PATH], win9xpath[MAX_PATH];
     static const char prodcode[] = "{7DF88A49-996F-4EC8-A022-BF956F9B2CBB}";
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_database(msifile, icon_base_tables, sizeof(icon_base_tables) / sizeof(msi_table));
 
@@ -10216,6 +10572,12 @@ static void test_icon_table(void)
 static void test_sourcedir_props(void)
 {
     UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_files();
     create_file("msitest\\sourcedir.txt", 1000);

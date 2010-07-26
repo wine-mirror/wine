@@ -35,6 +35,8 @@ static UINT (WINAPI *pMsiGetPatchInfoExA)( LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCON
                                            LPCSTR, LPSTR, DWORD * );
 static UINT (WINAPI *pMsiEnumPatchesExA)( LPCSTR, LPCSTR, DWORD, DWORD, DWORD, LPSTR,
                                           LPSTR, MSIINSTALLCONTEXT *, LPSTR, LPDWORD );
+static BOOL (WINAPI *pGetTokenInformation)( HANDLE, TOKEN_INFORMATION_CLASS, LPVOID, DWORD, PDWORD );
+static BOOL (WINAPI *pOpenProcessToken)( HANDLE, DWORD, PHANDLE );
 
 static const char *msifile = "winetest-patch.msi";
 static const char *mspfile = "winetest-patch.msp";
@@ -138,6 +140,7 @@ static const struct msi_table tables[] =
 static void init_function_pointers( void )
 {
     HMODULE hmsi = GetModuleHandleA( "msi.dll" );
+    HMODULE hadvapi32 = GetModuleHandleA( "advapi32.dll" );
 
 #define GET_PROC( mod, func ) \
     p ## func = (void *)GetProcAddress( mod, #func ); \
@@ -147,7 +150,29 @@ static void init_function_pointers( void )
     GET_PROC( hmsi, MsiApplyPatchA );
     GET_PROC( hmsi, MsiGetPatchInfoExA );
     GET_PROC( hmsi, MsiEnumPatchesExA );
+
+    GET_PROC( hadvapi32, GetTokenInformation );
+    GET_PROC( hadvapi32, OpenProcessToken );
 #undef GET_PROC
+}
+
+static BOOL is_process_limited(void)
+{
+    HANDLE token;
+
+    if (!pOpenProcessToken || !pGetTokenInformation) return FALSE;
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = pGetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
 }
 
 static BOOL get_program_files_dir( char *buf, char *buf2 )
@@ -690,6 +715,11 @@ static void test_simple_patch( void )
         win_skip("MsiApplyPatchA is not available\n");
         return;
     }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA( "msitest", NULL );
     create_file( "msitest\\patch.txt", 1000 );
@@ -937,6 +967,11 @@ static void test_system_tables( void )
         win_skip("MsiApplyPatchA is not available\n");
         return;
     }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     CreateDirectoryA( "msitest", NULL );
     create_file( "msitest\\patch.txt", 1000 );
@@ -1095,6 +1130,11 @@ static void test_patch_registration( void )
     if (!pMsiApplyPatchA || !pMsiGetPatchInfoExA || !pMsiEnumPatchesExA)
     {
         win_skip("required functions not available\n");
+        return;
+    }
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
         return;
     }
 

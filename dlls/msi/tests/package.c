@@ -36,6 +36,8 @@ char CURR_DIR[MAX_PATH];
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+static BOOL (WINAPI *pGetTokenInformation)( HANDLE, TOKEN_INFORMATION_CLASS, LPVOID, DWORD, PDWORD );
+static BOOL (WINAPI *pOpenProcessToken)( HANDLE, DWORD, PHANDLE );
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static LONG (WINAPI *pRegDeleteKeyExW)(HKEY, LPCWSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -56,6 +58,8 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiApplyMultiplePatchesA);
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
+    GET_PROC(hadvapi32, GetTokenInformation);
+    GET_PROC(hadvapi32, OpenProcessToken);
     GET_PROC(hadvapi32, RegDeleteKeyExA)
     GET_PROC(hadvapi32, RegDeleteKeyExW)
     GET_PROC(hkernel32, IsWow64Process)
@@ -64,6 +68,25 @@ static void init_functionpointers(void)
     GET_PROC(hsrclient, SRRemoveRestorePoint);
     GET_PROC(hsrclient, SRSetRestorePointA);
 #undef GET_PROC
+}
+
+static BOOL is_process_limited(void)
+{
+    HANDLE token;
+
+    if (!pOpenProcessToken || !pGetTokenInformation) return FALSE;
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = pGetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
 }
 
 static LONG delete_key( HKEY key, LPCSTR subkey, REGSAM access )
@@ -2439,6 +2462,12 @@ static void test_states(void)
     static const CHAR msifile2[] = "winetest2-package.msi";
     static const CHAR msifile3[] = "winetest3-package.msi";
     static const CHAR msifile4[] = "winetest4-package.msi";
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
@@ -7537,6 +7566,12 @@ static void test_appsearch_complocator(void)
 
     if (!get_user_sid(&usersid))
         return;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     create_test_file("FileName1");
     create_test_file("FileName4");
