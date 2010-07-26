@@ -2764,7 +2764,7 @@ static BOOL match_account( ULONG idx, const LSA_UNICODE_STRING *account )
 /*
  * Helper function for LookupAccountNameW
  */
-BOOL lookup_local_wellknown_name( LSA_UNICODE_STRING *account_and_domain,
+BOOL lookup_local_wellknown_name( const LSA_UNICODE_STRING *account_and_domain,
                                   PSID Sid, LPDWORD cbSid,
                                   LPWSTR ReferencedDomainName,
                                   LPDWORD cchReferencedDomainName,
@@ -2827,7 +2827,7 @@ BOOL lookup_local_wellknown_name( LSA_UNICODE_STRING *account_and_domain,
     return ret;
 }
 
-BOOL lookup_local_user_name( LSA_UNICODE_STRING *account_and_domain,
+BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
                              PSID Sid, LPDWORD cbSid,
                              LPWSTR ReferencedDomainName,
                              LPDWORD cchReferencedDomainName,
