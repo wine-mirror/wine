@@ -1005,7 +1005,7 @@ TREEVIEW_AllocateItem(const TREEVIEW_INFO *infoPtr)
      * inc/dec to toggle the images. */
     newItem->iImage = 0;
     newItem->iSelectedImage = 0;
-    newItem->iExpandedImage = 0;
+    newItem->iExpandedImage = (WORD)I_IMAGENONE;
 
     if (DPA_InsertPtr(infoPtr->items, INT_MAX, newItem) == -1)
     {
@@ -2575,7 +2575,7 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *wineItem
 	    /* The item is currently selected */
 	    imageIndex = wineItem->iSelectedImage;
 	}
-	else if ((wineItem->state & TVIS_EXPANDED) && (wineItem->iExpandedImage >= 0))
+	else if ((wineItem->state & TVIS_EXPANDED) && (wineItem->iExpandedImage != (WORD)I_IMAGENONE))
 	{
 	    /* The item is currently not selected but expanded */
 	    imageIndex = wineItem->iExpandedImage;

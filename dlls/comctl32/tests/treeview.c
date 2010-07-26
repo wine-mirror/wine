@@ -30,6 +30,7 @@
 #include "commctrl.h" 
 
 #include "wine/test.h"
+#include "v6util.h"
 #include "msg.h"
 
 const char *TEST_CALLBACK_TEXT = "callback_text";
@@ -1191,12 +1192,55 @@ static void test_rect_retrieval_after_expand_with_select(void) {
   ok(ret,"TreeView_Select should return true\n");
 }
 
+static void test_expandedimage(void)
+{
+    TVITEMEX item;
+    HWND hTree;
+    BOOL ret;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    item.mask = TVIF_EXPANDEDIMAGE;
+    item.iExpandedImage = 1;
+    item.hItem = hRoot;
+    ret = SendMessageA(hTree, TVM_SETITEM, 0, (LPARAM)&item);
+    ok(ret, "got %d\n", ret);
+
+    item.mask = TVIF_EXPANDEDIMAGE;
+    item.iExpandedImage = -1;
+    item.hItem = hRoot;
+    ret = SendMessageA(hTree, TVM_GETITEM, 0, (LPARAM)&item);
+    ok(ret, "got %d\n", ret);
+
+    if (item.iExpandedImage != 1)
+    {
+        win_skip("TVIF_EXPANDEDIMAGE not supported\n");
+        DestroyWindow(hTree);
+        return;
+    }
+
+    /* test for default iExpandedImage value */
+    item.mask = TVIF_EXPANDEDIMAGE;
+    item.iExpandedImage = -1;
+    item.hItem = hChild;
+    ret = SendMessageA(hTree, TVM_GETITEM, 0, (LPARAM)&item);
+    ok(ret, "got %d\n", ret);
+    ok(item.iExpandedImage == (WORD)I_IMAGENONE, "got %d\n", item.iExpandedImage);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     WNDCLASSA wc;
     MSG msg;
+
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
+    HWND hwnd;
   
     hComctl32 = GetModuleHandleA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
@@ -1252,6 +1296,32 @@ START_TEST(treeview)
     test_treeview_classinfo();
     test_expandnotify();
     test_rect_retrieval_after_expand_with_select();
+
+    if (!load_v6_module(&ctx_cookie, &hCtx))
+    {
+        DestroyWindow(hMainWnd);
+        return;
+    }
+
+    /* this is a XP SP3 failure workaround */
+    hwnd = CreateWindowExA(0, WC_TREEVIEW, "foo",
+                           WS_CHILD | WS_BORDER | WS_VISIBLE,
+                           0, 0, 100, 100,
+                           hMainWnd, NULL, GetModuleHandleA(NULL), NULL);
+    if (!IsWindow(hwnd))
+    {
+        win_skip("FIXME: failed to create TreeView window.\n");
+        unload_v6_module(ctx_cookie, hCtx);
+        DestroyWindow(hMainWnd);
+        return;
+    }
+    else
+        DestroyWindow(hwnd);
+
+    /* comctl32 version 6 tests start here */
+    test_expandedimage();
+
+    unload_v6_module(ctx_cookie, hCtx);
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
