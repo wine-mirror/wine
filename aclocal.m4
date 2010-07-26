@@ -357,10 +357,6 @@ testclean::
 .PHONY: $ac_dir/__crosstest__
 $ac_dir/__crosstest__: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE) crosstest"
-        else
-            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"crosstest:
-	@echo \"crosstest is not supported (mingw not installed?)\" && false"
         fi])
 }
 
@@ -416,7 +412,14 @@ wine_fn_config_symlink ()
 	@./config.status $ac_link
 distclean::
 	\$(RM) $ac_link"
-}])
+}
+
+if test "x$CROSSTEST_DISABLE" != x
+then
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"crosstest:
+	@echo \"crosstest is not supported (mingw not installed?)\" && false"
+fi])
 
 dnl **** Define helper function to append a file to a makefile file list ****
 dnl

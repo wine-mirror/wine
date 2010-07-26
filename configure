@@ -14234,10 +14234,6 @@ testclean::
 .PHONY: $ac_dir/__crosstest__
 $ac_dir/__crosstest__: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE) crosstest"
-        else
-            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"crosstest:
-	@echo \"crosstest is not supported (mingw not installed?)\" && false"
         fi
 fi
 }
@@ -14297,6 +14293,13 @@ wine_fn_config_symlink ()
 distclean::
 	\$(RM) $ac_link"
 }
+
+if test "x$CROSSTEST_DISABLE" != x
+then
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"crosstest:
+	@echo \"crosstest is not supported (mingw not installed?)\" && false"
+fi
 ac_config_links="$ac_config_links dlls/wineps.drv/generic.ppd:dlls/wineps.drv/generic.ppd"
 test "$srcdir" = "." || wine_fn_config_symlink dlls/wineps.drv/generic.ppd
 if test "x$enable_fonts" != xno; then
