@@ -1,5 +1,5 @@
 /*
- * IShellItem implementation
+ * IShellItem and IShellItemArray implementations
  *
  * Copyright 2008 Vincent Povirk for CodeWeavers
  *
@@ -590,5 +590,240 @@ HRESULT WINAPI SHGetItemFromObject(IUnknown *punk, REFIID riid, void **ppv)
         ILFree(pidl);
     }
 
+    return ret;
+}
+
+/*************************************************************************
+ * IShellItemArray implementation
+ */
+typedef struct {
+    const IShellItemArrayVtbl *lpVtbl;
+    LONG ref;
+
+    IShellItem **array;
+    DWORD item_count;
+} IShellItemArrayImpl;
+
+static HRESULT WINAPI IShellItemArray_fnQueryInterface(IShellItemArray *iface,
+                                                       REFIID riid,
+                                                       void **ppvObject)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    TRACE("%p (%s, %p)\n", This, shdebugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+    if(IsEqualIID(riid, &IID_IShellItemArray) ||
+       IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObject = This;
+    }
+
+    if(*ppvObject)
+    {
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IShellItemArray_fnAddRef(IShellItemArray *iface)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("%p - ref %d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI IShellItemArray_fnRelease(IShellItemArray *iface)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    LONG ref = InterlockedDecrement(&This->ref);
+    TRACE("%p - ref %d\n", This, ref);
+
+    if(!ref)
+    {
+        UINT i;
+        TRACE("Freeing.\n");
+
+        for(i = 0; i < This->item_count; i++)
+            IShellItem_Release(This->array[i]);
+
+        HeapFree(GetProcessHeap(), 0, This->array);
+        HeapFree(GetProcessHeap(), 0, This);
+        return 0;
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI IShellItemArray_fnBindToHandler(IShellItemArray *iface,
+                                                      IBindCtx *pbc,
+                                                      REFGUID bhid,
+                                                      REFIID riid,
+                                                      void **ppvOut)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    FIXME("Stub: %p (%p, %s, %s, %p)\n",
+          This, pbc, shdebugstr_guid(bhid), shdebugstr_guid(riid), ppvOut);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellItemArray_fnGetPropertyStore(IShellItemArray *iface,
+                                                         GETPROPERTYSTOREFLAGS flags,
+                                                         REFIID riid,
+                                                         void **ppv)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    FIXME("Stub: %p (%x, %s, %p)\n", This, flags, shdebugstr_guid(riid), ppv);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellItemArray_fnGetPropertyDescriptionList(IShellItemArray *iface,
+                                                                   REFPROPERTYKEY keyType,
+                                                                   REFIID riid,
+                                                                   void **ppv)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    FIXME("Stub: %p (%p, %s, %p)\n",
+          This, keyType, shdebugstr_guid(riid), ppv);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellItemArray_fnGetAttributes(IShellItemArray *iface,
+                                                      SIATTRIBFLAGS AttribFlags,
+                                                      SFGAOF sfgaoMask,
+                                                      SFGAOF *psfgaoAttribs)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    FIXME("Stub: %p (%x, %x, %p)\n", This, AttribFlags, sfgaoMask, psfgaoAttribs);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellItemArray_fnGetCount(IShellItemArray *iface,
+                                                 DWORD *pdwNumItems)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    TRACE("%p (%p)\n", This, pdwNumItems);
+
+    *pdwNumItems = This->item_count;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IShellItemArray_fnGetItemAt(IShellItemArray *iface,
+                                                  DWORD dwIndex,
+                                                  IShellItem **ppsi)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    TRACE("%p (%x, %p)\n", This, dwIndex, ppsi);
+
+    /* zero indexed */
+    if(dwIndex + 1 > This->item_count)
+        return E_FAIL;
+
+    *ppsi = This->array[dwIndex];
+    IShellItem_AddRef(*ppsi);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IShellItemArray_fnEnumItems(IShellItemArray *iface,
+                                                  IEnumShellItems **ppenumShellItems)
+{
+    IShellItemArrayImpl *This = (IShellItemArrayImpl *)iface;
+    FIXME("Stub: %p (%p)\n", This, ppenumShellItems);
+
+    return E_NOTIMPL;
+}
+
+static const IShellItemArrayVtbl vt_IShellItemArray = {
+    IShellItemArray_fnQueryInterface,
+    IShellItemArray_fnAddRef,
+    IShellItemArray_fnRelease,
+    IShellItemArray_fnBindToHandler,
+    IShellItemArray_fnGetPropertyStore,
+    IShellItemArray_fnGetPropertyDescriptionList,
+    IShellItemArray_fnGetAttributes,
+    IShellItemArray_fnGetCount,
+    IShellItemArray_fnGetItemAt,
+    IShellItemArray_fnEnumItems
+};
+
+static HRESULT WINAPI IShellItemArray_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
+{
+    IShellItemArrayImpl *This;
+    HRESULT ret;
+
+    TRACE("(%p, %s, %p)\n",pUnkOuter, debugstr_guid(riid), ppv);
+
+    if(pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(IShellItemArrayImpl));
+    if(!This)
+        return E_OUTOFMEMORY;
+
+    This->ref = 1;
+    This->lpVtbl = &vt_IShellItemArray;
+
+    ret = IShellItemArray_QueryInterface((IShellItemArray*)This, riid, ppv);
+    IShellItemArray_Release((IShellItemArray*)This);
+
+    return ret;
+}
+
+HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
+                                      IShellFolder *psf,
+                                      UINT cidl,
+                                      PCUITEMID_CHILD_ARRAY ppidl,
+                                      IShellItemArray **ppsiItemArray)
+{
+    IShellItemArrayImpl *This;
+    IShellItem **array;
+    HRESULT ret = E_FAIL;
+    UINT i;
+
+    TRACE("%p, %p, %d, %p, %p\n", pidlParent, psf, cidl, ppidl, ppsiItemArray);
+
+    if(!pidlParent && !psf)
+        return E_POINTER;
+
+    if(!ppidl)
+        return E_INVALIDARG;
+
+    array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cidl*sizeof(IShellItem*));
+    if(!array)
+        return E_OUTOFMEMORY;
+
+    for(i = 0; i < cidl; i++)
+    {
+        ret = SHCreateShellItem(pidlParent, psf, ppidl[i], &array[i]);
+        if(FAILED(ret)) break;
+    }
+
+    if(SUCCEEDED(ret))
+    {
+        ret = IShellItemArray_Constructor(NULL, &IID_IShellItemArray, (void**)&This);
+        if(SUCCEEDED(ret))
+        {
+            This->array = array;
+            This->item_count = cidl;
+            *ppsiItemArray = (IShellItemArray*)This;
+
+            return ret;
+        }
+    }
+
+    /* Something failed, clean up. */
+    for(i = 0; i < cidl; i++)
+        if(array[i]) IShellItem_Release(array[i]);
+    HeapFree(GetProcessHeap(), 0, array);
+    *ppsiItemArray = NULL;
     return ret;
 }
