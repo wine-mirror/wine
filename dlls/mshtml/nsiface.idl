@@ -152,7 +152,6 @@ typedef nsISupports nsIDOMStorage;
     object,
     uuid(8bb35ed9-e332-462d-9155-4a002ab5c958),
     local
-    /* FROZEN */
 ]
 interface nsIServiceManager : nsISupports
 {
@@ -166,7 +165,6 @@ interface nsIServiceManager : nsISupports
     object,
     uuid(00000001-0000-0000-c000-000000000046),
     local
-    /* FROZEN */
 ]
 interface nsIFactory : nsISupports
 {
@@ -178,7 +176,6 @@ interface nsIFactory : nsISupports
     object,
     uuid(db242e01-e4d9-11d2-9dde-000064657374),
     local
-    /* FROZEN */
 ]
 interface nsIObserver : nsISupports
 {
@@ -189,7 +186,6 @@ interface nsIObserver : nsISupports
     object,
     uuid(a88e5a60-205a-4bb1-94e1-2628daf51eae),
     local
-    /* FROZEN */
 ]
 interface nsIComponentManager : nsISupports
 {
@@ -205,7 +201,6 @@ interface nsIComponentManager : nsISupports
     object,
     uuid(59e7e77a-38e4-11d4-8cf5-0060b0fc14a3),
     local
-    /* FROZEN */
 ]
 interface nsIMemory : nsISupports
 {
@@ -220,7 +215,6 @@ interface nsIMemory : nsISupports
     object,
     uuid(9188bc85-f92e-11d2-81ef-0060083a0bcf),
     local
-    /* FROZEN */
 ]
 interface nsIWeakReference : nsISupports
 {
@@ -231,7 +225,6 @@ interface nsIWeakReference : nsISupports
     object,
     uuid(9188bc86-f92e-11d2-81ef-0060083a0bcf),
     local
-    /* FROZEN */
 ]
 interface nsISupportsWeakReference : nsISupports
 {
@@ -242,7 +235,6 @@ interface nsISupportsWeakReference : nsISupports
     object,
     uuid(033a1470-8b2a-11d3-af88-00a024ffc08c),
     local
-    /* FROZEN */
 ]
 interface nsIInterfaceRequestor : nsISupports
 {
@@ -253,7 +245,6 @@ interface nsIInterfaceRequestor : nsISupports
     object,
     uuid(4a2abaf0-6886-11d3-9382-00104ba0fd40),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIRunnable : nsISupports
 {
@@ -264,7 +255,6 @@ interface nsIRunnable : nsISupports
     object,
     uuid(d1899240-f9d2-11d2-bdd6-000064657374),
     local
-    /* FROZEN */
 ]
 interface nsISimpleEnumerator : nsISupports
 {
@@ -276,7 +266,6 @@ interface nsISimpleEnumerator : nsISupports
     object,
     uuid(fa9c7f6c-61b3-11d4-9877-00c04fa0cf4a),
     local
-    /* FROZEN */
 ]
 interface nsIInputStream : nsISupports
 {
@@ -294,7 +283,6 @@ interface nsIInputStream : nsISupports
     object,
     uuid(07a22cc0-0ce5-11d3-9331-00104ba0fd40),
     local
-    /* FROZEN */
 ]
 interface nsIURI : nsISupports
 {
@@ -330,7 +318,6 @@ interface nsIURI : nsISupports
     object,
     uuid(d6116970-8034-11d3-9399-00104ba0fd40),
     local
-    /* FROZEN */
 ]
 interface nsIURL : nsIURI
 {
@@ -358,7 +345,6 @@ interface nsIURL : nsIURI
     object,
     uuid(ef6bfbd2-fd46-48d8-96b7-9f8f0fd387fe),
     local
-    /* FROZEN */
 ]
 interface nsIRequest : nsISupports
 {
@@ -378,7 +364,6 @@ interface nsIRequest : nsISupports
     object,
     uuid(fd91e2e0-1481-11d3-9333-00104ba0fd40),
     local
-    /* FROZEN */
 ]
 interface nsIRequestObserver : nsISupports
 {
@@ -390,7 +375,6 @@ interface nsIRequestObserver : nsISupports
     object,
     uuid(1a637020-1482-11d3-9333-00104ba0fd40),
     local
-    /* FROZEN */
 ] 
 interface nsIStreamListener : nsIRequestObserver
 {
@@ -402,7 +386,6 @@ interface nsIStreamListener : nsIRequestObserver
     object,
     uuid(3de0a31c-feaf-400f-9f1e-4ef71f8b20cc),
     local
-    /* FROZEN */
 ]
 interface nsILoadGroup : nsIRequest
 {
@@ -422,7 +405,6 @@ interface nsILoadGroup : nsIRequest
     object,
     uuid(c63a055a-a676-4e71-bf3c-6cfa11082018),
     local
-    /* FROZEN */
 ]
 interface nsIChannel : nsIRequest
 {
@@ -448,7 +430,6 @@ interface nsIChannel : nsIRequest
     object,
     uuid(9277fe09-f0cc-4cd9-bbce-581dd94b0260),
     local
-    /* FROZEN */
 ]
 interface nsIHttpChannel : nsIChannel
 {
@@ -477,7 +458,6 @@ interface nsIHttpChannel : nsIChannel
     object,
     uuid(0eb66361-faaa-4e52-8c7e-6c25f11f8e3c),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIHttpChannelInternal : nsISupports
 {
@@ -495,7 +475,6 @@ interface nsIHttpChannelInternal : nsISupports
     object,
     uuid(ddf633d8-e9a4-439d-ad88-de636fd9bb75),
     local
-    /* FROZEN */
 ]
 interface nsIUploadChannel : nsISupports
 {
@@ -508,7 +487,6 @@ interface nsIUploadChannel : nsISupports
     object,
     uuid(a6cf90c1-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMCSSRule : nsISupports
 {
@@ -523,7 +501,6 @@ interface nsIDOMCSSRule : nsISupports
     object,
     uuid(a6cf90be-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMCSSStyleDeclaration : nsISupports
 {
@@ -544,7 +521,6 @@ interface nsIDOMCSSStyleDeclaration : nsISupports
     object,
     uuid(a6cf90c0-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMCSSRuleList : nsISupports
 {
@@ -556,7 +532,6 @@ interface nsIDOMCSSRuleList : nsISupports
     object,
     uuid(a6cf9080-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMStyleSheet : nsISupports
 {
@@ -574,7 +549,6 @@ interface nsIDOMStyleSheet : nsISupports
     object,
     uuid(a6cf90c2-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMCSSStyleSheet : nsIDOMStyleSheet
 {
@@ -588,7 +562,6 @@ interface nsIDOMCSSStyleSheet : nsIDOMStyleSheet
     object,
     uuid(a6cf9081-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMStyleSheetList : nsISupports
 {
@@ -600,7 +573,6 @@ interface nsIDOMStyleSheetList : nsISupports
     object,
     uuid(a6cf907d-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMNodeList : nsISupports
 {
@@ -612,7 +584,6 @@ interface nsIDOMNodeList : nsISupports
     object,
     uuid(29fb2a18-1dd2-11b2-8dd9-a6fd5d5ad12f),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOM3Node : nsISupports
 {
@@ -643,7 +614,6 @@ interface nsIDOM3Node : nsISupports
     object,
     uuid(a6cf907c-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMNode : nsISupports
 {
@@ -693,7 +663,6 @@ interface nsIDOMNode : nsISupports
     object,
     uuid(a6cf9078-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMElement : nsIDOMNode
 {
@@ -724,7 +693,6 @@ interface nsIDOMElement : nsIDOMNode
     object,
     uuid(99715845-95fc-4a56-aa53-214b65c26e22),
     local
-    /* FROZEN */
 ]
 interface nsIDOMElementCSSInlineStyle : nsISupports
 {
@@ -735,7 +703,6 @@ interface nsIDOMElementCSSInlineStyle : nsISupports
     object,
     uuid(b2f824c4-d9d3-499b-8d3b-45c8245497c6),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMClientRect : nsISupports
 {
@@ -751,7 +718,6 @@ interface nsIDOMClientRect : nsISupports
     object,
     uuid(f0aef489-18c5-4de6-99d5-58b3758b098c),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMNSElement : nsISupports
 {
@@ -782,7 +748,6 @@ cpp_quote("#undef GetClassName")
     object,
     uuid(a6cf9085-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLElement : nsIDOMElement
 {
@@ -802,7 +767,6 @@ interface nsIDOMHTMLElement : nsIDOMElement
     object,
     uuid(7f142f9a-fba7-4949-93d6-cf08a974ac51),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMNSHTMLElement : nsISupports
 {
@@ -830,7 +794,6 @@ interface nsIDOMNSHTMLElement : nsISupports
     object,
     uuid(a6cf9083-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLCollection : nsISupports
 {
@@ -843,7 +806,6 @@ interface nsIDOMHTMLCollection : nsISupports
     object,
     uuid(a6cf9072-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMCharacterData : nsIDOMNode
 {
@@ -861,7 +823,6 @@ interface nsIDOMCharacterData : nsIDOMNode
     object,
     uuid(a6cf9082-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMText : nsIDOMCharacterData
 {
@@ -872,7 +833,6 @@ interface nsIDOMText : nsIDOMCharacterData
     object,
     uuid(a6cf9073-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMComment : nsIDOMCharacterData
 {
@@ -882,7 +842,6 @@ interface nsIDOMComment : nsIDOMCharacterData
     object,
     uuid(a6cf9076-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMDocumentFragment : nsIDOMNode
 {
@@ -892,7 +851,6 @@ interface nsIDOMDocumentFragment : nsIDOMNode
     object,
     uuid(f51ebade-8b1a-11d3-aae7-0010830123b4),
     local
-    /* FROZEN */
 ]
 interface nsIDOMAbstractView : nsISupports
 {
@@ -903,7 +861,6 @@ interface nsIDOMAbstractView : nsISupports
     object,
     uuid(0b9341f3-95d4-4fa4-adcd-e119e0db2889),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMViewCSS : nsIDOMAbstractView
 {
@@ -914,7 +871,6 @@ interface nsIDOMViewCSS : nsIDOMAbstractView
     object,
     uuid(a6cf9075-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMDocument : nsIDOMNode
 {
@@ -945,7 +901,6 @@ interface nsIDOMDocument : nsIDOMNode
     object,
     uuid(09a439ad-4079-46d5-a050-4d7015d1a108),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMNSDocument : nsISupports
 {
@@ -974,7 +929,6 @@ interface nsIDOMNSDocument : nsISupports
     object,
     uuid(a6cf9084-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLDocument : nsIDOMDocument
 {
@@ -1003,7 +957,6 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
     object,
     uuid(79beb289-3644-4b54-9432-9fb993945629),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMNSHTMLDocument : nsISupports
 {
@@ -1048,7 +1001,6 @@ interface nsIDOMNSHTMLDocument : nsISupports
     object,
     uuid(3d9f4973-dd2e-48f5-b5f7-2634e09eadd9),
     local
-    /* FROZEN */
 ]
 interface nsIDOMDocumentStyle : nsISupports
 {
@@ -1059,7 +1011,6 @@ interface nsIDOMDocumentStyle : nsISupports
     object,
     uuid(1acdb2ba-1dd2-11b2-95bc-9542495d2569),
     local
-    /* FROZEN */
 ]
 interface nsIDOMDocumentView : nsISupports
 {
@@ -1070,7 +1021,6 @@ interface nsIDOMDocumentView : nsISupports
     object,
     uuid(46b91d66-28e2-11d4-ab1e-0010830123b4),
     local
-    /* FROZEN */
 ]
 interface nsIDOMDocumentEvent : nsISupports
 {
@@ -1082,7 +1032,6 @@ cpp_quote("#undef CreateEvent")
     object,
     uuid(a6cf90ce-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMRange : nsISupports
 {
@@ -1123,7 +1072,6 @@ interface nsIDOMRange : nsISupports
     object,
     uuid(59188642-23b4-41d6-bde1-302c3906d1f0),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMNSRange : nsISupports
 {
@@ -1137,7 +1085,6 @@ interface nsIDOMNSRange : nsISupports
     object,
     uuid(7b9badc6-c9bc-447a-8670-dbd195aed24b),
     local
-    /* FROZEN */
 ]
 interface nsIDOMDocumentRange : nsISupports
 {
@@ -1148,7 +1095,6 @@ interface nsIDOMDocumentRange : nsISupports
     object,
     uuid(b2c7ed59-8634-4352-9e37-5484c8b6e4e1),
     local
-    /* FROZEN */
 ]
 interface nsISelection : nsISupports
 {
@@ -1177,7 +1123,6 @@ interface nsISelection : nsISupports
     object,
     uuid(a6cf906f-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMWindowCollection : nsISupports
 {
@@ -1190,7 +1135,6 @@ interface nsIDOMWindowCollection : nsISupports
     object,
     uuid(a6cf906b-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMWindow : nsISupports
 {
@@ -1217,7 +1161,6 @@ interface nsIDOMWindow : nsISupports
     object,
     uuid(a6cf908e-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLBodyElement : nsIDOMHTMLElement
 {
@@ -1239,7 +1182,6 @@ interface nsIDOMHTMLBodyElement : nsIDOMHTMLElement
     object,
     uuid(a6cf908f-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLFormElement : nsIDOMHTMLElement
 {
@@ -1265,7 +1207,6 @@ interface nsIDOMHTMLFormElement : nsIDOMHTMLElement
     object,
     uuid(a6cf9093-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLInputElement : nsIDOMHTMLElement
 {
@@ -1314,7 +1255,6 @@ interface nsIDOMHTMLInputElement : nsIDOMHTMLElement
     object,
     uuid(a6cf9092-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLOptionElement : nsIDOMHTMLElement
 {
@@ -1337,7 +1277,6 @@ interface nsIDOMHTMLOptionElement : nsIDOMHTMLElement
     object,
     uuid(bce0213c-f70f-488f-b93f-688acca55d63),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLOptionsCollection : nsISupports
 {
@@ -1351,7 +1290,6 @@ interface nsIDOMHTMLOptionsCollection : nsISupports
     object,
     uuid(a6cf9090-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLSelectElement : nsIDOMHTMLElement
 {
@@ -1384,7 +1322,6 @@ interface nsIDOMHTMLSelectElement : nsIDOMHTMLElement
     object,
     uuid(a6cf9094-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLTextAreaElement : nsIDOMHTMLElement
 {
@@ -1417,7 +1354,6 @@ interface nsIDOMHTMLTextAreaElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90b1-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLScriptElement : nsIDOMHTMLElement
 {
@@ -1441,7 +1377,6 @@ interface nsIDOMHTMLScriptElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90ab-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLImageElement : nsIDOMHTMLElement
 {
@@ -1475,7 +1410,6 @@ interface nsIDOMHTMLImageElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90aa-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLAnchorElement : nsIDOMHTMLElement
 {
@@ -1511,7 +1445,6 @@ interface nsIDOMHTMLAnchorElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90b2-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLTableElement : nsIDOMHTMLElement
 {
@@ -1555,7 +1488,6 @@ interface nsIDOMHTMLTableElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90b6-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLTableRowElement : nsIDOMHTMLElement
 {
@@ -1580,7 +1512,6 @@ interface nsIDOMHTMLTableRowElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90ba-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLIFrameElement : nsIDOMHTMLElement
 {
@@ -1611,7 +1542,6 @@ interface nsIDOMHTMLIFrameElement : nsIDOMHTMLElement
     object,
     uuid(a6cf90b9-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMHTMLFrameElement : nsIDOMHTMLElement
 {
@@ -1638,7 +1568,6 @@ interface nsIDOMHTMLFrameElement : nsIDOMHTMLElement
     object,
     uuid(94928ab3-8b63-11d3-989d-001083010e9b),
     local
-    /* FROZEN */
 ]
 interface nsIURIContentListener : nsISupports
 {
@@ -1658,7 +1587,6 @@ interface nsIURIContentListener : nsISupports
     object,
     uuid(44b78386-1dd2-11b2-9ad2-e4eee2ca1916),
     local
-    /* FROZEN */
 ]
 interface nsITooltipListener : nsISupports
 {
@@ -1670,7 +1598,6 @@ interface nsITooltipListener : nsISupports
     object,
     uuid(69e5df00-7b8b-11d3-af61-00a024ffc08c),
     local
-    /* FROZEN */
 ]
 interface nsIWebBrowser : nsISupports
 {
@@ -1690,7 +1617,6 @@ cpp_quote("#define SETUP_IS_CHROME_WRAPPER 7")
     object,
     uuid(f15398a0-8018-11d3-af70-00a024ffc08c),
     local
-    /* FROZEN */
 ]
 interface nsIWebBrowserSetup : nsISupports
 {
@@ -1703,7 +1629,6 @@ typedef void* nativeWindow;
     object,
     uuid(046bc8a0-8015-11d3-af70-00a024ffc08c),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIBaseWindow : nsISupports
 {
@@ -1741,7 +1666,6 @@ cpp_quote("#define LOAD_INITIAL_DOCUMENT_URI 0x80000")
     object,
     uuid(f5d9e7b0-d930-11d3-b057-00a024ffc08c),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIWebNavigation : nsISupports
 {
@@ -1765,7 +1689,6 @@ interface nsIWebNavigation : nsISupports
     object,
     uuid(570f39d0-efd0-11d3-b093-00a024ffc08c),
     local
-    /* FROZEN */
 ]
 interface nsIWebProgress : nsISupports
 {
@@ -1779,7 +1702,6 @@ interface nsIWebProgress : nsISupports
     object,
     uuid(343700dd-078b-42b6-a809-b9c1d7e951d0),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIPrintSettings : nsISupports
 {
@@ -1916,7 +1838,6 @@ interface nsIPrintSettings : nsISupports
     object,
     uuid(9a7ca4b0-fbba-11d4-a869-00105a183419),
     local
-    /* FROZEN */
 ]
 interface nsIWebBrowserPrint : nsISupports
 {
@@ -1943,7 +1864,6 @@ interface nsIWebBrowserPrint : nsISupports
     object,
     uuid(919e792a-6490-40b8-bba5-f9e9ad5640c8),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIScrollable : nsISupports
 {
@@ -1974,7 +1894,6 @@ interface nsIScrollable : nsISupports
     object,
     uuid(c8c0a080-0868-11d3-915f-d9d889d48e3c),
     local
-    /* FROZEN */
 ]
 interface nsIFile : nsISupports
 {
@@ -2027,7 +1946,6 @@ interface nsIFile : nsISupports
     object,
     uuid(56c35506-f14b-11d3-99d3-ddbfac2ccf65),
     local
-    /* FROZEN */
 ]
 interface nsIPrefBranch : nsISupports
 {
@@ -2055,7 +1973,6 @@ interface nsIPrefBranch : nsISupports
     object,
     uuid(15fd6940-8ea7-11d3-93ad-00104ba0fd40),
     local
-    /* FROZEN */
 ]
 interface nsIProtocolHandler : nsISupports
 {
@@ -2072,7 +1989,6 @@ interface nsIProtocolHandler : nsISupports
     object,
     uuid(0e61f3b2-34d7-4c79-bfdc-4860bc7341b7),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIExternalProtocolHandler : nsIProtocolHandler
 {
@@ -2083,7 +1999,6 @@ interface nsIExternalProtocolHandler : nsIProtocolHandler
     object,
     uuid(bddeda3f-9020-4d12-8c70-984ee9f7935e),
     local
-    /* FROZEN */
 ]
 interface nsIIOService : nsISupports
 {
@@ -2105,7 +2020,6 @@ interface nsIIOService : nsISupports
     object,
     uuid(a50d5516-5c0a-4f08-b427-703ca0c44ac3),
     local,
-    /* NOT_FROZEN */
 ]
 interface nsINetUtil : nsISupports
 {
@@ -2125,7 +2039,6 @@ interface nsINetUtil : nsISupports
     object,
     uuid(9c5d3c58-1dd1-11b2-a1c9-f3699284657a),
     local
-    /* FROZEN */
 ]
 interface nsIWebBrowserFocus : nsISupports
 {
@@ -2143,7 +2056,6 @@ interface nsIWebBrowserFocus : nsISupports
     object,
     uuid(ba434c60-9d52-11d3-afb0-00a024ffc08c),
     local
-    /* FROZEN */
 ]
 interface nsIWebBrowserChrome : nsISupports
 {
@@ -2163,7 +2075,6 @@ interface nsIWebBrowserChrome : nsISupports
     object,
     uuid(df31c120-ded6-11d1-bd85-00805f8ae3f4),
     local
-    /* FROZEN */
 ]
 interface nsIDOMEventListener : nsISupports
 {
@@ -2174,7 +2085,6 @@ interface nsIDOMEventListener : nsISupports
     object,
     uuid(1c773b30-d1cf-11d2-bd95-00805f8ae3f4),
     local
-    /* FROZEN */
 ]
 interface nsIDOMEventTarget : nsISupports
 {
@@ -2187,7 +2097,6 @@ interface nsIDOMEventTarget : nsISupports
     object,
     uuid(a66b7b80-ff46-bd97-0080-5f8ae38add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMEvent : nsISupports
 {
@@ -2215,7 +2124,6 @@ cpp_quote("#define CONTEXT_BACKGROUND_IMAGE  0x20")
     object,
     uuid(3478b6b0-3875-11d4-94ef-0020183bf181),
     local
-    /* FROZEN */
 ]
 interface nsIContextMenuListener : nsISupports
 {
@@ -2226,7 +2134,6 @@ interface nsIContextMenuListener : nsISupports
     object,
     uuid(a6cf90c3-15b3-11d2-932e-00805f8add32),
     local
-    /* FROZEN */
 ]
 interface nsIDOMUIEvent : nsIDOMEvent
 {
@@ -2240,7 +2147,6 @@ interface nsIDOMUIEvent : nsIDOMEvent
     object,
     uuid(ff751edc-8b02-aae7-0010-8301838a3123),
     local
-    /* FROZEN */
 ]
 interface nsIDOMMouseEvent : nsIDOMUIEvent
 {
@@ -2265,7 +2171,6 @@ interface nsIDOMMouseEvent : nsIDOMUIEvent
     object,
     uuid(028e0e6e-8b01-11d3-aae7-0010838a3123),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDOMKeyEvent : nsIDOMUIEvent
 {
@@ -2285,7 +2190,6 @@ interface nsIDOMKeyEvent : nsIDOMUIEvent
     object,
     uuid(3e5432cd-9568-4bd1-8cbe-d50aba110743),
     local
-    /* FROZEN */
 ]
 interface nsIEmbeddingSiteWindow : nsISupports
 {
@@ -2303,7 +2207,6 @@ interface nsIEmbeddingSiteWindow : nsISupports
     object,
     uuid(2417cbfe-65ad-48a6-b4b6-eb84db174392),
     local
-    /* FROZEN */
 ]
 interface nsIComponentRegistrar : nsISupports
 {
@@ -2328,7 +2231,6 @@ interface nsIComponentRegistrar : nsISupports
     object,
     uuid(1630c61a-325e-49ca-8759-a31b16c47aa5),
     local
-    /* FROZEN */
 ]
 interface nsIPromptService : nsISupports
 {
@@ -2363,7 +2265,6 @@ interface nsIPromptService : nsISupports
     object,
     uuid(b128a1e6-44f3-4331-8fbe-5af360ff21ee),
     local
-    /* FROZEN */
 ]
 interface nsITooltipTextProvider : nsISupports
 {
@@ -2374,7 +2275,6 @@ interface nsITooltipTextProvider : nsISupports
     object,
     uuid(02b0625a-e7f3-11d2-9f5a-006008a6efe9),
     local
-    /* FROZEN */
 ]
 interface nsIProfile : nsISupports
 {
@@ -2396,7 +2296,6 @@ interface nsIProfile : nsISupports
     object,
     uuid(30465632-a777-44cc-90f9-8145475ef999),
     local
-    /* FROZEN */
 ]
 interface nsIWindowCreator : nsISupports
 {
@@ -2408,7 +2307,6 @@ interface nsIWindowCreator : nsISupports
     object,
     uuid(f673ec81-a4b0-11d6-964b-eb5a2bf216fc),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIWindowCreator2 : nsIWindowCreator
 {
@@ -2421,7 +2319,6 @@ interface nsIWindowCreator2 : nsIWindowCreator
     object,
     uuid(002286a8-494b-43b3-8ddd-49e3fc50622b),
     local
-    /* FROZEN */
 ]
 interface nsIWindowWatcher : nsISupports
 {
@@ -2444,7 +2341,6 @@ interface nsIWindowWatcher : nsISupports
     object,
     uuid(274cd32e-3675-47e1-9d8a-fc6504ded9ce),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIEditingSession : nsISupports
 {
@@ -2466,7 +2362,6 @@ interface nsIEditingSession : nsISupports
     object,
     uuid(83f892cf-7ed3-490e-967a-62640f3158e1),
     local
-    /* NOT_FROZEN */
 ]
 interface nsICommandParams : nsISupports
 {
@@ -2493,7 +2388,6 @@ interface nsICommandParams : nsISupports
     object,
     uuid(080d2001-f91e-11d4-a73c-f9242928207c),
     local
-    /* NOT_FROZEN */
 ]
 interface nsICommandManager : nsISupports
 {
@@ -2511,7 +2405,6 @@ interface nsICommandManager : nsISupports
     object,
     uuid(47b82b60-a36f-4167-8072-6f421151ed50),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIControllerContext : nsISupports
 {
@@ -2523,7 +2416,6 @@ interface nsIControllerContext : nsISupports
     object,
     uuid(d5b61b82-1da4-11d3-bf87-00105a1b0627),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIController : nsISupports
 {
@@ -2537,7 +2429,6 @@ interface nsIController : nsISupports
     object,
     uuid(34769de0-30d0-4cef-894a-fcd8bb27c4b4),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIContentSerializer : nsISupports
 {
@@ -2562,7 +2453,6 @@ interface nsIContentSerializer : nsISupports
     object,
     uuid(96b60ba0-634a-41e4-928e-78ab0b3c4b46),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIEditor  : nsISupports
 {
@@ -2650,7 +2540,6 @@ interface nsIEditor  : nsISupports
     object,
     uuid(afc36593-5787-4420-93d9-b2c0ccbf0cad),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIHTMLEditor : nsISupports
 {
@@ -2718,7 +2607,6 @@ interface nsIHTMLEditor : nsISupports
     object,
     uuid(8adfb831-1053-4a19-884d-bcdad7277b4b),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDocShell : nsISupports
 {
@@ -2800,7 +2688,6 @@ interface nsIDocShell : nsISupports
     object,
     uuid(365d600b-868a-452a-8de8-f46fad8fee53),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIMutationObserver : nsISupports
 {
@@ -2825,7 +2712,6 @@ interface nsIMutationObserver : nsISupports
     object,
     uuid(4e14e321-a4bb-49f8-a57a-2363668d14d0),
     local
-    /* NOT_FROZEN */
 ]
 interface nsIDocumentObserver : nsIMutationObserver
 {
