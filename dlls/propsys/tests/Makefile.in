@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = propsys.dll
-IMPORTS   = propsys
+IMPORTS   = propsys ole32
 
 C_SRCS = \
 	propsys.c
