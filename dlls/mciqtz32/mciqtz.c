@@ -293,6 +293,9 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 {
     WINE_MCIQTZ* wma;
     HRESULT hr;
+    REFERENCE_TIME time1 = 0, time2 = 0;
+    GUID format;
+    DWORD pos1;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
@@ -303,6 +306,24 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
+    IMediaSeeking_GetTimeFormat(wma->seek, &format);
+    if (dwFlags & MCI_FROM) {
+        if (IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME))
+            time1 = lpParms->dwFrom * 10000;
+        else
+            time1 = lpParms->dwFrom;
+        pos1 = AM_SEEKING_AbsolutePositioning;
+    } else
+        pos1 = AM_SEEKING_NoPositioning;
+    if (dwFlags & MCI_TO) {
+        if (IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME))
+            time2 = lpParms->dwTo * 10000;
+        else
+            time2 = lpParms->dwTo;
+    } else
+        IMediaSeeking_GetDuration(wma->seek, &time2);
+    IMediaSeeking_SetPositions(wma->seek, &time1, pos1, &time2, AM_SEEKING_AbsolutePositioning);
+
     hr = IMediaControl_Run(wma->pmctrl);
     if (FAILED(hr)) {
         TRACE("Cannot run filtergraph (hr = %x)\n", hr);
@@ -312,6 +333,8 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     if (!wma->parent)
         IVideoWindow_put_Visible(wma->vidwin, OATRUE);
 
+    if (dwFlags & MCI_NOTIFY)
+        mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
     return 0;
 }
 
