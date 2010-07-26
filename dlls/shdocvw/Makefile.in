@@ -34,6 +34,7 @@ RC_SRCS = \
 	Ko.rc \
 	Lt.rc \
 	Nl.rc \
+	Ro.rc \
 	Uk.rc \
 	shdocvw.rc
 
