@@ -2673,6 +2673,9 @@ GpStatus WINGDIPAPI GdipFillClosedCurve2(GpGraphics *graphics, GpBrush *brush,
     if(graphics->busy)
         return ObjectBusy;
 
+    if(count == 1)    /* Do nothing */
+        return Ok;
+
     stat = GdipCreatePath(fill, &path);
     if(stat != Ok)
         return stat;
@@ -2704,8 +2707,11 @@ GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics *graphics, GpBrush *brush,
     TRACE("(%p, %p, %p, %d, %.2f, %d)\n", graphics, brush, points,
             count, tension, fill);
 
-    if(!points || count <= 0)
+    if(!points || count == 0)
         return InvalidParameter;
+
+    if(count == 1)    /* Do nothing */
+        return Ok;
 
     ptf = GdipAlloc(sizeof(GpPointF)*count);
     if(!ptf)
