@@ -261,6 +261,7 @@ typedef struct tagDC
     INT          vportExtY;
     SIZE         virtual_res;      /* Initially HORZRES,VERTRES. Changed by SetVirtualResolution */
     SIZE         virtual_size;     /* Initially HORZSIZE,VERTSIZE. Changed by SetVirtualResolution */
+    RECT         vis_rect;         /* visible rectangle in screen coords */
     FLOAT        miterLimit;
 
     int           flags;

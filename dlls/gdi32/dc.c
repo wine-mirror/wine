@@ -666,8 +666,11 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         goto error;
     }
 
-    SetRectRgn( dc->hVisRgn, 0, 0,
-                GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ) );
+    dc->vis_rect.left   = 0;
+    dc->vis_rect.top    = 0;
+    dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
+    dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
+    SetRectRgn(dc->hVisRgn, dc->vis_rect.left, dc->vis_rect.top, dc->vis_rect.right, dc->vis_rect.bottom);
 
     DC_InitDC( dc );
     release_dc_ptr( dc );
@@ -768,6 +771,10 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
     dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
+    dc->vis_rect.left   = 0;
+    dc->vis_rect.top    = 0;
+    dc->vis_rect.right  = 1;
+    dc->vis_rect.bottom = 1;
     if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;   /* default bitmap is 1x1 */
 
     /* Copy the driver-specific physical device info into
@@ -860,8 +867,12 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
             if (ret)  /* reset the visible region */
             {
                 dc->dirty = 0;
-                SetRectRgn( dc->hVisRgn, 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ),
-                            GetDeviceCaps( hdc, DESKTOPVERTRES ) );
+                dc->vis_rect.left   = 0;
+                dc->vis_rect.top    = 0;
+                dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
+                dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
+                SetRectRgn( dc->hVisRgn, dc->vis_rect.left, dc->vis_rect.top,
+                            dc->vis_rect.right, dc->vis_rect.bottom );
                 CLIPPING_UpdateGCRegion( dc );
             }
         }
