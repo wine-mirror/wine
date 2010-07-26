@@ -225,6 +225,7 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
     }
     else if (style)
         IVideoWindow_put_WindowStyle(wma->vidwin, style);
+    IBasicVideo_GetVideoSize(wma->vidbasic, &rc.right, &rc.bottom);
     wma->opened = TRUE;
 
     if (dwFlags & MCI_NOTIFY)
@@ -251,6 +252,7 @@ err:
 
     if (wma->uninit)
         CoUninitialize();
+    wma->uninit = 0;
 
     return MCIERR_INTERNAL;
 }
