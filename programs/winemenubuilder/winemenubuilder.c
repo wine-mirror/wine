@@ -2742,6 +2742,98 @@ static void cleanup_menus(void)
         WINE_ERR("error opening registry key, menu cleanup failed\n");
 }
 
+static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
+{
+    char *utf8lnkPath = NULL;
+    char *utf8OutputPath = NULL;
+    WCHAR *winLnkPath = NULL;
+    IShellLinkW *shellLink = NULL;
+    IPersistFile *persistFile = NULL;
+    WCHAR szTmp[MAX_PATH];
+    WCHAR szPath[MAX_PATH];
+    WCHAR szArgs[INFOTIPSIZE];
+    WCHAR szIconPath[MAX_PATH];
+    int iconId;
+    HRESULT hr;
+
+    utf8lnkPath = wchars_to_utf8_chars(lnkPath);
+    if (utf8lnkPath == NULL)
+    {
+        WINE_ERR("out of memory converting paths\n");
+        goto end;
+    }
+
+    utf8OutputPath = wchars_to_utf8_chars(outputPath);
+    if (utf8OutputPath == NULL)
+    {
+        WINE_ERR("out of memory converting paths\n");
+        goto end;
+    }
+
+    winLnkPath = wine_get_dos_file_name(utf8lnkPath);
+    if (winLnkPath == NULL)
+    {
+        WINE_ERR("could not convert %s to DOS path\n", utf8lnkPath);
+        goto end;
+    }
+
+    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IShellLinkW, (LPVOID*)&shellLink);
+    if (FAILED(hr))
+    {
+        WINE_ERR("could not create IShellLinkW, error 0x%08X\n", hr);
+        goto end;
+    }
+
+    hr = IShellLinkW_QueryInterface(shellLink, &IID_IPersistFile, (LPVOID)&persistFile);
+    if (FAILED(hr))
+    {
+        WINE_ERR("could not query IPersistFile, error 0x%08X\n", hr);
+        goto end;
+    }
+
+    hr = IPersistFile_Load(persistFile, winLnkPath, STGM_READ);
+    if (FAILED(hr))
+    {
+        WINE_ERR("could not read .lnk, error 0x%08X\n", hr);
+        goto end;
+    }
+
+    get_cmdline(shellLink, szTmp, MAX_PATH, szArgs, INFOTIPSIZE);
+    ExpandEnvironmentStringsW(szTmp, szPath, MAX_PATH);
+    szTmp[0] = 0;
+    IShellLinkW_GetIconLocation(shellLink, szTmp, MAX_PATH, &iconId);
+    ExpandEnvironmentStringsW(szTmp, szIconPath, MAX_PATH);
+
+    if(!szPath[0])
+    {
+        LPITEMIDLIST pidl = NULL;
+        IShellLinkW_GetIDList(shellLink, &pidl);
+        if (pidl && SHGetPathFromIDListW(pidl, szPath))
+            WINE_TRACE("pidl path  : %s\n", wine_dbgstr_w(szPath));
+    }
+
+    if (szIconPath[0])
+    {
+        if (!ExtractFromEXEDLL(szIconPath, iconId, utf8OutputPath))
+            ExtractFromICO(szIconPath, utf8OutputPath);
+    }
+    else
+    {
+        if (!ExtractFromEXEDLL(szPath, iconId, utf8OutputPath))
+            ExtractFromICO(szPath, utf8OutputPath);
+    }
+
+end:
+    HeapFree(GetProcessHeap(), 0, utf8lnkPath);
+    HeapFree(GetProcessHeap(), 0, utf8OutputPath);
+    HeapFree(GetProcessHeap(), 0, winLnkPath);
+    if (shellLink != NULL)
+        IShellLinkW_Release(shellLink);
+    if (persistFile != NULL)
+        IPersistFile_Release(persistFile);
+}
+
 static WCHAR *next_token( LPWSTR *p )
 {
     LPWSTR token = NULL, t = *p;
@@ -2827,6 +2919,7 @@ int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sh
 {
     static const WCHAR dash_aW[] = {'-','a',0};
     static const WCHAR dash_rW[] = {'-','r',0};
+    static const WCHAR dash_tW[] = {'-','t',0};
     static const WCHAR dash_uW[] = {'-','u',0};
     static const WCHAR dash_wW[] = {'-','w',0};
 
@@ -2865,6 +2958,16 @@ int PASCAL wWinMain (HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sh
             bWait = TRUE;
         else if ( !strcmpW( token, dash_uW ) )
             bURL = TRUE;
+        else if ( !strcmpW( token, dash_tW ) )
+        {
+            WCHAR *lnkFile = next_token( &p );
+            if (lnkFile)
+            {
+                 WCHAR *outputFile = next_token( &p );
+                 if (outputFile)
+                     thumbnail_lnk(lnkFile, outputFile);
+            }
+        }
 	else if( token[0] == '-' )
 	{
 	    WINE_ERR( "unknown option %s\n", wine_dbgstr_w(token) );
