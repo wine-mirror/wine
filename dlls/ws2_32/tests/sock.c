@@ -3126,9 +3126,6 @@ static void test_events(int useMessages)
     ok(ret == 2, "Failed to send buffer %d err %d\n", ret, GetLastError());
     broken_seq[0] = read_read_seq; /* win9x */
     broken_seq[1] = NULL;
-    /* we like to erase pmask in server, so we have varying behavior here *
-     * it is only fixed for now because we refuse to send notifications with
-     * any kind of asyncs requests running */
     ok_event_seq(src, hEvent, empty_seq, broken_seq, 0);
 
     dwRet = WaitForSingleObject(ov.hEvent, 100);

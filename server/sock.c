@@ -961,7 +961,9 @@ DECL_HANDLER(enable_socket_event)
                                                FILE_WRITE_ATTRIBUTES, &sock_ops)))
         return;
 
-    sock->pmask &= ~req->mask; /* is this safe? */
+    /* for event-based notification, windows erases stale events */
+    sock->pmask &= ~req->mask;
+
     sock->hmask &= ~req->mask;
     sock->state |= req->sstate;
     sock->state &= ~req->cstate;
