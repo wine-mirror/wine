@@ -378,6 +378,9 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
 
         exec_queued_code(This);
         break;
+    case SCRIPTSTATE_INITIALIZED:
+        FIXME("unimplemented SCRIPTSTATE_INITIALIZED\n");
+        return S_OK;
     default:
         FIXME("unimplemented state %d\n", ss);
         return E_NOTIMPL;
