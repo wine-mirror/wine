@@ -14913,6 +14913,7 @@ wine_fn_config_program winoldap.mod16 enable_win16 install
 wine_fn_config_program winver enable_winver install
 wine_fn_config_program wordpad enable_wordpad install
 wine_fn_config_program write enable_write install
+wine_fn_config_program wscript enable_wscript install
 wine_fn_config_program xcopy enable_xcopy install
 wine_fn_config_makefile server enable_server
 wine_fn_config_tool tools

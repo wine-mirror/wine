@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wscript.exe
+APPMODE   = -mwindows -municode
+IMPORTS   =
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+
+C_SRCS = \
+	main.c
+
+@MAKE_PROG_RULES@
