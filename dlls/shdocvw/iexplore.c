@@ -47,6 +47,15 @@ static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
 static const WCHAR wszWineInternetExplorer[] =
         {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
 
+void adjust_ie_docobj_rect(HWND frame, RECT* rc)
+{
+    HWND hwndRebar = GetDlgItem(frame, IDC_BROWSE_REBAR);
+    INT barHeight = SendMessageW(hwndRebar, RB_GETBARHEIGHT, 0, 0);
+
+    rc->top += barHeight;
+    rc->bottom -= barHeight;
+}
+
 static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static InternetExplorer* This;
@@ -105,17 +114,56 @@ static void ie_dialog_about(HWND hwnd)
     DestroyIcon(icon);
 }
 
+static void create_rebar(HWND hwnd)
+{
+    HWND hwndRebar;
+    HWND hwndAddress;
+    REBARINFO rebarinf;
+    REBARBANDINFOW bandinf;
+    WCHAR addr[] = {'A','d','d','r','e','s','s',0};
+
+    hwndRebar = CreateWindowExW(WS_EX_TOOLWINDOW, REBARCLASSNAMEW, NULL, WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|RBS_VARHEIGHT|CCS_TOP|CCS_NODIVIDER, 0, 0, 0, 0, hwnd, (HMENU)IDC_BROWSE_REBAR, shdocvw_hinstance, NULL);
+
+    rebarinf.cbSize = sizeof(rebarinf);
+    rebarinf.fMask = 0;
+    rebarinf.himl = NULL;
+    rebarinf.cbSize = sizeof(rebarinf);
+
+    SendMessageW(hwndRebar, RB_SETBARINFO, 0, (LPARAM)&rebarinf);
+
+    hwndAddress = CreateWindowExW(0, WC_COMBOBOXEXW, NULL, WS_BORDER|WS_CHILD|WS_VISIBLE|CBS_DROPDOWN, 0, 0, 100,20,hwndRebar, (HMENU)IDC_BROWSE_ADDRESSBAR, shdocvw_hinstance, NULL);
+
+    bandinf.fMask = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_TEXT;
+    bandinf.fStyle = RBBS_CHILDEDGE | RBBS_GRIPPERALWAYS;
+    bandinf.lpText = addr;
+    bandinf.cx = 100;
+    bandinf.cyMinChild = 20;
+    bandinf.hwndChild = hwndAddress;
+
+    SendMessageW(hwndRebar, RB_INSERTBANDW, 0, (LPARAM)&bandinf);
+}
+
 static LRESULT iewnd_OnCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
 {
     SetWindowLongPtrW(hwnd, 0, (LONG_PTR) lpcs->lpCreateParams);
+    create_rebar(hwnd);
+
     return 0;
 }
 
 static LRESULT iewnd_OnSize(InternetExplorer *This, INT width, INT height)
 {
+    HWND hwndRebar = GetDlgItem(This->frame_hwnd, IDC_BROWSE_REBAR);
+    INT barHeight = SendMessageW(hwndRebar, RB_GETBARHEIGHT, 0, 0);
+    RECT docarea = {0, 0, width, height};
+
+    adjust_ie_docobj_rect(This->frame_hwnd, &docarea);
+
     if(This->doc_host.hwnd)
-        SetWindowPos(This->doc_host.hwnd, NULL, 0, 0, width, height,
+        SetWindowPos(This->doc_host.hwnd, NULL, docarea.left, docarea.top, docarea.right, docarea.bottom,
                      SWP_NOZORDER | SWP_NOACTIVATE);
+
+    SetWindowPos(hwndRebar, NULL, 0, 0, width, barHeight, SWP_NOZORDER | SWP_NOACTIVATE);
 
     return 0;
 }

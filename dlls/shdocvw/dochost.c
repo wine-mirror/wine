@@ -311,7 +311,8 @@ void create_doc_view_hwnd(DocHost *This)
         doc_view_atom = RegisterClassExW(&wndclass);
     }
 
-    GetClientRect(This->frame_hwnd, &rect); /* FIXME */
+    GetClientRect(This->frame_hwnd, &rect);
+    adjust_ie_docobj_rect(This->frame_hwnd, &rect);
     This->hwnd = CreateWindowExW(0, wszShell_DocObject_View,
          wszShell_DocObject_View,
          WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
