@@ -57,81 +57,6 @@ static const WCHAR sinW[] = {'s','i','n',0};
 static const WCHAR sqrtW[] = {'s','q','r','t',0};
 static const WCHAR tanW[] = {'t','a','n',0};
 
-static HRESULT math_constant(DOUBLE val, WORD flags, VARIANT *retv)
-{
-    switch(flags) {
-    case DISPATCH_PROPERTYGET:
-        V_VT(retv) = VT_R8;
-        V_R8(retv) = val;
-        return S_OK;
-    case DISPATCH_PROPERTYPUT:
-        return S_OK;
-    }
-
-    FIXME("unhandled flags %x\n", flags);
-    return E_NOTIMPL;
-}
-
-/* ECMA-262 3rd Edition    15.8.1.1 */
-static HRESULT Math_E(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_E, flags, retv);
-}
-
-/* ECMA-262 3rd Edition    15.8.1.4 */
-static HRESULT Math_LOG2E(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_LOG2E, flags, retv);
-}
-
-/* ECMA-262 3rd Edition    15.8.1.4 */
-static HRESULT Math_LOG10E(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_LOG10E, flags, retv);
-}
-
-static HRESULT Math_LN2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_LN2, flags, retv);
-}
-
-static HRESULT Math_LN10(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_LN10, flags, retv);
-}
-
-/* ECMA-262 3rd Edition    15.8.1.6 */
-static HRESULT Math_PI(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_PI, flags, retv);
-}
-
-static HRESULT Math_SQRT2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_SQRT2, flags, retv);
-}
-
-static HRESULT Math_SQRT1_2(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    TRACE("\n");
-    return math_constant(M_SQRT1_2, flags, retv);
-}
-
 /* ECMA-262 3rd Edition    15.8.2.12 */
 static HRESULT Math_abs(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
@@ -563,14 +488,6 @@ static HRESULT Math_tan(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARA
 }
 
 static const builtin_prop_t Math_props[] = {
-    {EW,        Math_E,        0},
-    {LN10W,     Math_LN10,     0},
-    {LN2W,      Math_LN2,      0},
-    {LOG10EW,   Math_LOG10E,   0},
-    {LOG2EW,    Math_LOG2E,    0},
-    {PIW,       Math_PI,       0},
-    {SQRT1_2W,  Math_SQRT1_2,  0},
-    {SQRT2W,    Math_SQRT2,    0},
     {absW,      Math_abs,      PROPF_METHOD|1},
     {acosW,     Math_acos,     PROPF_METHOD|1},
     {asinW,     Math_asin,     PROPF_METHOD|1},
@@ -603,7 +520,23 @@ static const builtin_info_t Math_info = {
 HRESULT create_math(script_ctx_t *ctx, DispatchEx **ret)
 {
     DispatchEx *math;
+    unsigned i;
+    VARIANT v;
     HRESULT hres;
+
+    struct {
+        const WCHAR *name;
+        DOUBLE val;
+    }constants[] = {
+        {EW,        M_E},        /* ECMA-262 3rd Edition    15.8.1.1 */
+        {LN10W,     M_LN10},     /* ECMA-262 3rd Edition    15.8.1.2 */
+        {LN2W,      M_LN2},      /* ECMA-262 3rd Edition    15.8.1.3 */
+        {LOG2EW,    M_LOG2E},    /* ECMA-262 3rd Edition    15.8.1.4 */
+        {LOG10EW,   M_LOG10E},   /* ECMA-262 3rd Edition    15.8.1.5 */
+        {PIW,       M_PI},       /* ECMA-262 3rd Edition    15.8.1.6 */
+        {SQRT1_2W,  M_SQRT1_2},  /* ECMA-262 3rd Edition    15.8.1.7 */
+        {SQRT2W,    M_SQRT2},    /* ECMA-262 3rd Edition    15.8.1.8 */
+    };
 
     math = heap_alloc_zero(sizeof(DispatchEx));
     if(!math)
@@ -613,6 +546,16 @@ HRESULT create_math(script_ctx_t *ctx, DispatchEx **ret)
     if(FAILED(hres)) {
         heap_free(math);
         return hres;
+    }
+
+    V_VT(&v) = VT_R8;
+    for(i=0; i < sizeof(constants)/sizeof(*constants); i++) {
+        V_R8(&v) = constants[i].val;
+        hres = jsdisp_propput_const(math, constants[i].name, &v);
+        if(FAILED(hres)) {
+            jsdisp_release(math);
+            return hres;
+        }
     }
 
     *ret = math;
