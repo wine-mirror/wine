@@ -3757,13 +3757,11 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer, const struct 
         if (!(input_map & 1)) continue;
 
         in_idx = map[i];
-        if (in_idx >= (in_count + 2)) {
-            FIXME("More input varyings declared than supported, expect issues\n");
-            continue;
-        }
-        else if (map[i] == ~0U)
+        /* Declared, but not read register */
+        if (in_idx == ~0U) continue;
+        if (in_idx >= (in_count + 2))
         {
-            /* Declared, but not read register */
+            FIXME("More input varyings declared than supported, expect issues.\n");
             continue;
         }
 
