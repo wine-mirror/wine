@@ -920,6 +920,102 @@ static void test_query_process_image_file_name(void)
     HeapFree(GetProcessHeap(), 0, file_nameA);
 }
 
+static void test_query_process_debug_object_handle(int argc, char **argv)
+{
+    char cmdline[MAX_PATH];
+    STARTUPINFO si = {0};
+    PROCESS_INFORMATION pi;
+    BOOL ret;
+    HANDLE debug_object;
+    NTSTATUS status;
+
+    sprintf(cmdline, "%s %s %s", argv[0], argv[1], "debuggee");
+
+    si.cb = sizeof(si);
+    ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL,
+                        NULL, &si, &pi);
+    ok(ret, "CreateProcess failed with last error %u\n", GetLastError());
+    if (!ret) return;
+
+    status = pNtQueryInformationProcess(NULL, ProcessDebugObjectHandle, NULL,
+            0, NULL);
+    if (status == STATUS_INVALID_INFO_CLASS || status == STATUS_NOT_IMPLEMENTED)
+    {
+        win_skip("ProcessDebugObjectHandle is not supported\n");
+        return;
+    }
+    ok(status == STATUS_INFO_LENGTH_MISMATCH,
+       "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08x\n",
+       status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessDebugObjectHandle, NULL,
+            sizeof(debug_object), NULL);
+    ok(status == STATUS_INVALID_HANDLE ||
+       status == STATUS_ACCESS_VIOLATION, /* XP */
+       "Expected NtQueryInformationProcess to return STATUS_INVALID_HANDLE, got 0x%08x\n", status);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(),
+            ProcessDebugObjectHandle, NULL, sizeof(debug_object), NULL);
+    ok(status == STATUS_ACCESS_VIOLATION,
+       "Expected NtQueryInformationProcess to return STATUS_ACCESS_VIOLATION, got 0x%08x\n", status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessDebugObjectHandle,
+            &debug_object, sizeof(debug_object), NULL);
+    ok(status == STATUS_INVALID_HANDLE,
+       "Expected NtQueryInformationProcess to return STATUS_ACCESS_VIOLATION, got 0x%08x\n", status);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(),
+            ProcessDebugObjectHandle, &debug_object,
+            sizeof(debug_object) - 1, NULL);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH,
+       "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08x\n", status);
+
+    status = pNtQueryInformationProcess(GetCurrentProcess(),
+            ProcessDebugObjectHandle, &debug_object,
+            sizeof(debug_object) + 1, NULL);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH,
+       "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08x\n", status);
+
+    debug_object = (HANDLE)0xdeadbeef;
+    status = pNtQueryInformationProcess(GetCurrentProcess(),
+            ProcessDebugObjectHandle, &debug_object,
+            sizeof(debug_object), NULL);
+    ok(status == STATUS_PORT_NOT_SET,
+       "Expected NtQueryInformationProcess to return STATUS_PORT_NOT_SET, got 0x%08x\n", status);
+    ok(debug_object == NULL ||
+       broken(debug_object == (HANDLE)0xdeadbeef), /* Wow64 */
+       "Expected debug object handle to be NULL, got %p\n", debug_object);
+
+    debug_object = (HANDLE)0xdeadbeef;
+    status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugObjectHandle,
+            &debug_object, sizeof(debug_object), NULL);
+    todo_wine
+    ok(status == STATUS_SUCCESS,
+       "Expected NtQueryInformationProcess to return STATUS_SUCCESS, got 0x%08x\n", status);
+    todo_wine
+    ok(debug_object != NULL,
+       "Expected debug object handle to be non-NULL, got %p\n", debug_object);
+
+    for (;;)
+    {
+        DEBUG_EVENT ev;
+
+        ret = WaitForDebugEvent(&ev, INFINITE);
+        ok(ret, "WaitForDebugEvent failed with last error %u\n", GetLastError());
+        if (!ret) break;
+
+        if (ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+
+        ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
+        ok(ret, "ContinueDebugEvent failed with last error %u\n", GetLastError());
+        if (!ret) break;
+    }
+
+    ret = CloseHandle(pi.hThread);
+    ok(ret, "CloseHandle failed with last error %u\n", GetLastError());
+    ret = CloseHandle(pi.hProcess);
+    ok(ret, "CloseHandle failed with last error %u\n", GetLastError());
+}
 
 static void test_readvirtualmemory(void)
 {
@@ -1202,9 +1298,13 @@ START_TEST(info)
     trace("Starting test_query_process_handlecount()\n");
     test_query_process_handlecount();
 
-    /* 27 ProcessImageFileName */
+    /* 0x1B ProcessImageFileName */
     trace("Starting test_query_process_image_file_name()\n");
     test_query_process_image_file_name();
+
+    /* 0x1E ProcessDebugObjectHandle */
+    trace("Starting test_query_process_debug_object_handle()\n");
+    test_query_process_debug_object_handle(argc, argv);
 
     /* belongs into it's own file */
     trace("Starting test_readvirtualmemory()\n");

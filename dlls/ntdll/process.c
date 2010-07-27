@@ -291,8 +291,6 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         }
         break;
     case ProcessDebugPort:
-        /* "These are not the debuggers you are looking for." *
-         * set it to 0 aka "no debugger" to satisfy copy protections */
         len = sizeof(DWORD_PTR);
         if (ProcessInformationLength == len)
         {
@@ -327,7 +325,10 @@ NTSTATUS WINAPI NtQueryInformationProcess(
             else if (!ProcessHandle)
                 ret = STATUS_INVALID_HANDLE;
             else
+            {
                 memset(ProcessInformation, 0, ProcessInformationLength);
+                ret = STATUS_PORT_NOT_SET;
+            }
         }
         else
             ret = STATUS_INFO_LENGTH_MISMATCH;
