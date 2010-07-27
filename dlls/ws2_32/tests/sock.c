@@ -3205,16 +3205,6 @@ static void test_events(int useMessages)
     ok_event_seq(src, hEvent, empty_seq, NULL, 0);
     }
 
-    /* wine gets a stale notifications because of the async ops, clear them.
-     * remove when sending messages during pending asyncs is fixed */
-    ret = send(dst, "2", 1, 0);
-    ok(ret == 1, "Failed to send buffer %d err %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, read_seq, NULL, 0);
-
-    ret = recv(src, buffer, 1, 0);
-    ok(ret == 1, "Failed to empty buffer: %d - %d\n", ret, GetLastError());
-    ok_event_seq(src, hEvent, empty_seq, NULL, 0);
-
     /* Flood the send queue */
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
     if (hThread == NULL)

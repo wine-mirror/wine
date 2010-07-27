@@ -295,7 +295,7 @@ static inline int sock_error( struct fd *fd )
     return optval;
 }
 
-static void sock_dispatch_asyncs( struct sock *sock, int event, int error )
+static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
 {
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
@@ -303,11 +303,13 @@ static void sock_dispatch_asyncs( struct sock *sock, int event, int error )
         {
             if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
             async_wake_up( sock->read_q, STATUS_ALERTED );
+            event &= ~(POLLIN|POLLPRI);
         }
         if ( event & POLLOUT && async_waiting( sock->write_q ) )
         {
             if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
             async_wake_up( sock->write_q, STATUS_ALERTED );
+            event &= ~POLLOUT;
         }
         if ( event & (POLLERR|POLLHUP) )
         {
@@ -319,6 +321,7 @@ static void sock_dispatch_asyncs( struct sock *sock, int event, int error )
                 async_wake_up( sock->write_q, status );
         }
     }
+    return event;
 }
 
 static void sock_dispatch_events( struct sock *sock, int prevstate, int event, int error )
@@ -451,7 +454,7 @@ static void sock_poll_event( struct fd *fd, int event )
             event |= POLLHUP;
     }
 
-    sock_dispatch_asyncs( sock, event, error );
+    event = sock_dispatch_asyncs( sock, event, error );
     sock_dispatch_events( sock, prevstate, event, error );
 
     /* if anyone is stupid enough to wait on the socket object itself,
