@@ -382,6 +382,11 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicPortImpl (LPCGUID lpcGUID, LPVOID *ppobj,
 	obj->pDirectSound = NULL;
 	obj->pLatencyClock = NULL;
 	hr = DMUSIC_CreateReferenceClockImpl(&IID_IReferenceClock, (LPVOID*)&obj->pLatencyClock, NULL);
+	if(hr != S_OK)
+	{
+		HeapFree(GetProcessHeap(), 0, obj);
+		return hr;
+	}
 
 if(0)
 {
