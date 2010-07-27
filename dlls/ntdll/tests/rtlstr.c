@@ -1841,7 +1841,7 @@ static void test_RtlGUIDFromString(void)
 
   ret = pRtlGUIDFromString(&str, &guid);
   ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
-  ok(memcmp(&guid, &IID_Endianess, sizeof(guid)) == 0, "Endianess broken\n");
+  ok(IsEqualGUID(&guid, &IID_Endianess), "Endianess broken\n");
 
   str.Length = str.MaximumLength = sizeof(szGuid2) - sizeof(WCHAR);
   str.Buffer = (LPWSTR)szGuid2;
