@@ -3733,12 +3733,12 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer, const struct 
         const struct wined3d_shader_signature_element *output_signature, const struct shader_reg_maps *reg_maps_out)
 {
     unsigned int i, j;
-    const char *semantic_name_in, *semantic_name_out;
-    UINT semantic_idx_in, semantic_idx_out;
+    const char *semantic_name_in;
+    UINT semantic_idx_in;
     DWORD *set;
     DWORD in_idx;
     unsigned int in_count = vec4_varyings(3, gl_info);
-    char reg_mask[6], reg_mask_out[6];
+    char reg_mask[6];
     char destination[50];
     WORD input_map, output_map;
 
@@ -3775,11 +3775,13 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer, const struct 
 
         semantic_name_in = input_signature[i].semantic_name;
         semantic_idx_in = input_signature[i].semantic_idx;
-        set[map[i]] = input_signature[i].mask;
-        shader_glsl_write_mask_to_str(input_signature[i].mask, reg_mask);
+        set[in_idx] = ~0U;
 
         if (!output_signature)
         {
+            shader_glsl_write_mask_to_str(input_signature[i].mask, reg_mask);
+            set[in_idx] = input_signature[i].mask;
+
             if (shader_match_semantic(semantic_name_in, WINED3DDECLUSAGE_COLOR))
             {
                 if (semantic_idx_in == 0)
@@ -3815,73 +3817,51 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer, const struct 
                 shader_addline(buffer, "%s%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
                         destination, reg_mask, reg_mask);
             }
-        } else {
-            BOOL found = FALSE;
-
+        }
+        else
+        {
             output_map = reg_maps_out->output_registers;
             for (j = 0; output_map; output_map >>= 1, ++j)
             {
-                if (!(output_map & 1)) continue;
+                DWORD mask;
 
-                semantic_name_out = output_signature[j].semantic_name;
-                semantic_idx_out = output_signature[j].semantic_idx;
-                shader_glsl_write_mask_to_str(output_signature[j].mask, reg_mask_out);
+                if (!(output_map & 1)
+                        || semantic_idx_in != output_signature[j].semantic_idx
+                        || strcmp(semantic_name_in, output_signature[j].semantic_name)
+                        || !(mask = input_signature[i].mask & output_signature[j].mask))
+                    continue;
 
-                if (semantic_idx_in == semantic_idx_out
-                        && !strcmp(semantic_name_in, semantic_name_out))
-                {
-                    shader_addline(buffer, "%s%s = OUT[%u]%s;\n",
-                            destination, reg_mask, j, reg_mask);
-                    found = TRUE;
-                }
-            }
-            if(!found) {
-                shader_addline(buffer, "%s%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                               destination, reg_mask, reg_mask);
+                set[in_idx] = mask;
+                shader_glsl_write_mask_to_str(mask, reg_mask);
+
+                shader_addline(buffer, "%s%s = OUT[%u]%s;\n",
+                        destination, reg_mask, j, reg_mask);
             }
         }
     }
 
-    /* This is solely to make the compiler / linker happy and avoid warning about undefined
-     * varyings. It shouldn't result in any real code executed on the GPU, since all read
-     * input varyings are assigned above, if the optimizer works properly.
-     */
-    for(i = 0; i < in_count + 2; i++) {
-        if (set[i] && set[i] != WINED3DSP_WRITEMASK_ALL)
-        {
-            unsigned int size = 0;
-            memset(reg_mask, 0, sizeof(reg_mask));
-            if(!(set[i] & WINED3DSP_WRITEMASK_0)) {
-                reg_mask[size] = 'x';
-                size++;
-            }
-            if(!(set[i] & WINED3DSP_WRITEMASK_1)) {
-                reg_mask[size] = 'y';
-                size++;
-            }
-            if(!(set[i] & WINED3DSP_WRITEMASK_2)) {
-                reg_mask[size] = 'z';
-                size++;
-            }
-            if(!(set[i] & WINED3DSP_WRITEMASK_3)) {
-                reg_mask[size] = 'w';
-                size++;
-            }
+    for (i = 0; i < in_count + 2; ++i)
+    {
+        unsigned int size;
 
-            if (i == in_count) {
-                sprintf(destination, "gl_FrontColor");
-            } else if (i == in_count + 1) {
-                sprintf(destination, "gl_FrontSecondaryColor");
-            } else {
-                sprintf(destination, "IN[%u]", i);
-            }
+        if (!set[i] || set[i] == WINED3DSP_WRITEMASK_ALL)
+            continue;
 
-            if (size == 1) {
-                shader_addline(buffer, "%s.%s = 0.0;\n", destination, reg_mask);
-            } else {
-                shader_addline(buffer, "%s.%s = vec%u(0.0);\n", destination, reg_mask, size);
-            }
-        }
+        if (set[i] == ~0U) set[i] = 0;
+
+        size = 0;
+        if (!(set[i] & WINED3DSP_WRITEMASK_0)) reg_mask[size++] = 'x';
+        if (!(set[i] & WINED3DSP_WRITEMASK_1)) reg_mask[size++] = 'y';
+        if (!(set[i] & WINED3DSP_WRITEMASK_2)) reg_mask[size++] = 'z';
+        if (!(set[i] & WINED3DSP_WRITEMASK_3)) reg_mask[size++] = 'w';
+        reg_mask[size] = '\0';
+
+        if (i == in_count) sprintf(destination, "gl_FrontColor");
+        else if (i == in_count + 1) sprintf(destination, "gl_FrontSecondaryColor");
+        else sprintf(destination, "IN[%u]", i);
+
+        if (size == 1) shader_addline(buffer, "%s.%s = 0.0;\n", destination, reg_mask);
+        else shader_addline(buffer, "%s.%s = vec%u(0.0);\n", destination, reg_mask, size);
     }
 
     HeapFree(GetProcessHeap(), 0, set);
