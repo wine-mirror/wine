@@ -83,7 +83,7 @@ static void test_assign(void)
     char out[4];
 
     if(!p_char_assign || !p_wchar_assign || !p_short_assign) {
-        win_skip("assign tests skipped\n");
+        skip("assign tests skipped\n");
         return;
     }
 
@@ -114,7 +114,7 @@ static void test_equal(void)
     BYTE ret;
 
     if(!p_char_eq || !p_wchar_eq || !p_short_eq) {
-        win_skip("equal tests skipped\n");
+        skip("equal tests skipped\n");
         return;
     }
 
@@ -146,7 +146,7 @@ static void test_Copy_s(void)
     char dest[32], *ret;
 
     if(!p_Copy_s) {
-        win_skip("Copy_s tests skipped\n");
+        skip("Copy_s tests skipped\n");
         return;
     }
 
