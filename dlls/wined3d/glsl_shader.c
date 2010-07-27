@@ -698,8 +698,9 @@ static void shader_glsl_load_np2fixup_constants(
             const IWineD3DBaseTextureImpl* const tex = (const IWineD3DBaseTextureImpl*) stateBlock->textures[i];
             GLfloat* tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
-            if (!tex) {
-                FIXME("Nonexistent texture is flagged for NP2 texcoord fixup\n");
+            if (!tex)
+            {
+                ERR("Nonexistent texture is flagged for NP2 texcoord fixup.\n");
                 continue;
             }
 
