@@ -100,9 +100,6 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
         *ppv = OLECMD(This);
-    }else if(IsEqualGUID(&IID_IHlinkFrame, riid)) {
-        TRACE("(%p)->(IID_IHlinkFrame %p)\n", This, ppv);
-        *ppv = HLINKFRAME(This);
     }else if(IsEqualGUID(&IID_ITargetFrame2, riid)) {
         TRACE("(%p)->(IID_ITargetFrame2 %p)\n", This, ppv);
         *ppv = TARGETFRAME2(This);
@@ -133,6 +130,8 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IViewObjectEx, riid)) {
         TRACE("(%p)->(IID_IViewObjectEx %p) returning NULL\n", This, ppv);
         return E_NOINTERFACE;
+    }else if(HlinkFrame_QI(&This->hlink_frame, riid, ppv)) {
+        return S_OK;
     }
 
     if(*ppv) {
@@ -1158,6 +1157,8 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
     WebBrowser_HlinkFrame_Init(ret);
+
+    HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)WEBBROWSER2(ret), &ret->doc_host);
 
     SHDOCVW_LockModule();
 

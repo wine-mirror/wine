@@ -66,6 +66,13 @@ typedef struct {
     IUnknown *impl;
 } ConnectionPointContainer;
 
+typedef struct {
+    const IHlinkFrameVtbl  *lpIHlinkFrameVtbl;
+
+    IUnknown *outer;
+    DocHost *doc_host;
+} HlinkFrame;
+
 struct _task_header_t;
 
 typedef void (*task_proc_t)(DocHost*, struct _task_header_t*);
@@ -128,10 +135,10 @@ struct WebBrowser {
     const IViewObject2Vtbl              *lpViewObjectVtbl;
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpOleCommandTargetVtbl;
-    const IHlinkFrameVtbl               *lpHlinkFrameVtbl;
     const ITargetFrame2Vtbl             *lpITargetFrame2Vtbl;
     const IServiceProviderVtbl          *lpServiceProviderVtbl;
     const IDataObjectVtbl               *lpDataObjectVtbl;
+    HlinkFrame hlink_frame;
 
     LONG ref;
 
@@ -188,7 +195,6 @@ struct InternetExplorer {
 #define VIEWOBJ2(x)     ((IViewObject2*)                &(x)->lpViewObjectVtbl);
 #define ACTIVEOBJ(x)    ((IOleInPlaceActiveObject*)     &(x)->lpOleInPlaceActiveObjectVtbl)
 #define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
-#define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpHlinkFrameVtbl)
 #define DATAOBJECT(x)   ((IDataObject*)                 &(x)->lpDataObjectVtbl)
 #define TARGETFRAME2(x) ((ITargetFrame2*)               &(x)->lpITargetFrame2Vtbl)
 
@@ -202,6 +208,8 @@ struct InternetExplorer {
 #define SERVPROV(x)     ((IServiceProvider*)            &(x)->lpServiceProviderVtbl)
 
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
+
+#define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpIHlinkFrameVtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
@@ -222,6 +230,9 @@ void DocHost_ClientSite_Release(DocHost*);
 
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
+
+void HlinkFrame_Init(HlinkFrame*,IUnknown*,DocHost*);
+BOOL HlinkFrame_QI(HlinkFrame*,REFIID,void**);
 
 HRESULT WebBrowserV1_Create(IUnknown*,REFIID,void**);
 HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**);
