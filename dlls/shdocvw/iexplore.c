@@ -279,6 +279,8 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 
     InternetExplorer_WebBrowser_Init(ret);
 
+    HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)WEBBROWSER2(ret), &ret->doc_host);
+
     create_frame_hwnd(ret);
     ret->doc_host.frame_hwnd = ret->frame_hwnd;
 

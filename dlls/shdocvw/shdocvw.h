@@ -173,6 +173,7 @@ struct WebBrowser {
 
 struct InternetExplorer {
     const IWebBrowser2Vtbl *lpWebBrowser2Vtbl;
+    HlinkFrame hlink_frame;
 
     LONG ref;
 
