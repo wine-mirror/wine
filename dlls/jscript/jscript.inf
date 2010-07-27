@@ -3,11 +3,11 @@ Signature="$CHICAGO$"
 
 
 [RegisterDll]
-AddReg=Classes.Reg
+AddReg=Classes.Reg, FileType.Reg
 
 
 [UnregisterDll]
-DelReg=Classes.Reg
+DelReg=Classes.Reg, FileType.Reg
 
 
 [Classes.Reg]
@@ -91,6 +91,13 @@ HKCR,"LiveScript\OLEScript",,16
 HKCR,"LiveScript Author",,,"JScript Language Authoring"
 HKCR,"LiveScript Author\CLSID",,,"%CLSID_JScriptAuthor%"
 HKCR,"LiveScript Author\OLEScript",,16
+
+
+;; FIXME: This probably should go to wshext.dll
+[FileType.Reg]
+HKCR,".js",,,"JSFile"
+HKCR,"JSFile",,,"JSCript Script File"
+HKCR,"JSFile\ScriptEngine",,,"JSCript"
 
 
 [Strings]
