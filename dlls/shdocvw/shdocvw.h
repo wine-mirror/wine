@@ -67,7 +67,8 @@ typedef struct {
 } ConnectionPointContainer;
 
 typedef struct {
-    const IHlinkFrameVtbl  *lpIHlinkFrameVtbl;
+    const IHlinkFrameVtbl    *lpIHlinkFrameVtbl;
+    const ITargetFrame2Vtbl  *lpITargetFrame2Vtbl;
 
     IUnknown *outer;
     DocHost *doc_host;
@@ -135,7 +136,6 @@ struct WebBrowser {
     const IViewObject2Vtbl              *lpViewObjectVtbl;
     const IOleInPlaceActiveObjectVtbl   *lpOleInPlaceActiveObjectVtbl;
     const IOleCommandTargetVtbl         *lpOleCommandTargetVtbl;
-    const ITargetFrame2Vtbl             *lpITargetFrame2Vtbl;
     const IServiceProviderVtbl          *lpServiceProviderVtbl;
     const IDataObjectVtbl               *lpDataObjectVtbl;
     HlinkFrame hlink_frame;
@@ -196,7 +196,6 @@ struct InternetExplorer {
 #define ACTIVEOBJ(x)    ((IOleInPlaceActiveObject*)     &(x)->lpOleInPlaceActiveObjectVtbl)
 #define OLECMD(x)       ((IOleCommandTarget*)           &(x)->lpOleCommandTargetVtbl)
 #define DATAOBJECT(x)   ((IDataObject*)                 &(x)->lpDataObjectVtbl)
-#define TARGETFRAME2(x) ((ITargetFrame2*)               &(x)->lpITargetFrame2Vtbl)
 
 #define CLIENTSITE(x)   ((IOleClientSite*)              &(x)->lpOleClientSiteVtbl)
 #define INPLACESITE(x)  ((IOleInPlaceSite*)             &(x)->lpOleInPlaceSiteVtbl)
@@ -210,13 +209,13 @@ struct InternetExplorer {
 #define INPLACEFRAME(x) ((IOleInPlaceFrame*)            &(x)->lpOleInPlaceFrameVtbl)
 
 #define HLINKFRAME(x)   ((IHlinkFrame*)                 &(x)->lpIHlinkFrameVtbl)
+#define TARGETFRAME2(x) ((ITargetFrame2*)               &(x)->lpITargetFrame2Vtbl)
 
 void WebBrowser_OleObject_Init(WebBrowser*);
 void WebBrowser_ViewObject_Init(WebBrowser*);
 void WebBrowser_DataObject_Init(WebBrowser*);
 void WebBrowser_Persist_Init(WebBrowser*);
 void WebBrowser_ClassInfo_Init(WebBrowser*);
-void WebBrowser_HlinkFrame_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 

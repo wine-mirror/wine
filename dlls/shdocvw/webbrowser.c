@@ -100,9 +100,6 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
         TRACE("(%p)->(IID_IOleCommandTarget %p)\n", This, ppv);
         *ppv = OLECMD(This);
-    }else if(IsEqualGUID(&IID_ITargetFrame2, riid)) {
-        TRACE("(%p)->(IID_ITargetFrame2 %p)\n", This, ppv);
-        *ppv = TARGETFRAME2(This);
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         *ppv = SERVPROV(This);
         TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
@@ -1156,7 +1153,6 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     WebBrowser_DataObject_Init(ret);
     WebBrowser_Persist_Init(ret);
     WebBrowser_ClassInfo_Init(ret);
-    WebBrowser_HlinkFrame_Init(ret);
 
     HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)WEBBROWSER2(ret), &ret->doc_host);
 
