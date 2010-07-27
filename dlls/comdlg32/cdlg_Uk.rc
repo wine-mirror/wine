@@ -80,7 +80,7 @@ FONT 8, "MS Shell Dlg"
  LTEXT "", 1089, 60, 6, 150, 9
  GROUPBOX "Друкувати", 1072, 6, 30, 160, 65, BS_GROUPBOX
  RADIOBUTTON "&Все", 1056, 16, 45, 60, 12
- RADIOBUTTON "В&иділенний фрагмент", 1057, 16, 60, 60, 12
+ RADIOBUTTON "В&иділення", 1057, 16, 60, 60, 12
  RADIOBUTTON "&Сторінки", 1058, 16, 75, 60, 12
  DEFPUSHBUTTON "Друк", IDOK, 206, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Скасувати", IDCANCEL, 206, 24, 56, 14, WS_GROUP | WS_TABSTOP
@@ -96,11 +96,11 @@ FONT 8, "MS Shell Dlg"
 
 PRINT_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 264, 134
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Настройка принтера"
+CAPTION "Параметри друку"
 FONT 8, "MS Shell Dlg"
 {
  GROUPBOX "Принтер", 1072, 6, 10, 180, 65, BS_GROUPBOX
- RADIOBUTTON "Принтер за &обумовленням", 1056, 16, 20, 80, 12
+ RADIOBUTTON "Принтер за &обумовленням", 1056, 16, 20, 100, 12
  LTEXT "[Нема]", 1088, 35, 35, 120, 9
  RADIOBUTTON "&Інший принтер", 1057, 16, 50, 80, 12
  COMBOBOX 1136, 35, 65, 149, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
@@ -108,13 +108,13 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Скасувати", IDCANCEL, 206, 24, 56, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Настройка", 1024, 206, 46, 56, 14, WS_GROUP | WS_TABSTOP
  GROUPBOX "Орієнтація", 1073, 6, 85, 100, 50, BS_GROUPBOX
- RADIOBUTTON "&Книжна", 1058, 50, 100, 40, 12
- RADIOBUTTON "&Альбомна", 1059, 50, 115, 40, 12
+ RADIOBUTTON "&Книжкова", 1058, 50, 100, 50, 12
+ RADIOBUTTON "&Альбомна", 1059, 50, 115, 50, 12
  ICON "LANDSCAP", 1097, 10, 95, 32, 32
  ICON "PORTRAIT", 1098, 10, 95, 32, 32
  GROUPBOX "Папір", 1074, 120, 85, 180, 50, BS_GROUPBOX
  LTEXT "Ро&змір", 1089, 130, 95, 30, 9
- LTEXT "&Джерело", 1090, 130, 110, 30, 9
+ LTEXT "&Джерело", 1090, 124, 110, 30, 9
  COMBOBOX 1137, 155, 95, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  COMBOBOX 1138, 155, 110, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
 }
@@ -136,7 +136,7 @@ FONT 8, "MS Shell Dlg"
                     WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE | CBS_SORT
     DEFPUSHBUTTON   "OK",IDOK,218,6,40,14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
     PUSHBUTTON      "Скасувати",IDCANCEL,218,23,40,14,WS_GROUP | WS_TABSTOP
-    PUSHBUTTON      "&Застосувати", 1026,218,40,40,14,WS_GROUP | WS_TABSTOP
+    PUSHBUTTON      "При&йняти", 1026,218,40,40,14,WS_GROUP | WS_TABSTOP
     PUSHBUTTON      "&Довідка" , 1038,218,57,40,14,WS_GROUP | WS_TABSTOP
     GROUPBOX        "Атрибути",1072,6,72,84,34,WS_GROUP
     CHECKBOX	    "&Закреслений", 1040, 10,82,75,10, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -146,7 +146,7 @@ FONT 8, "MS Shell Dlg"
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "&Зразок",grp2,98,72,120,36,WS_GROUP
     CTEXT           "АаБбAaBb",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Скрипт:",stc7 ,98,114,80,9
+    LTEXT           "Група символ&ів:",stc7 ,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -154,23 +154,23 @@ FONT 8, "MS Shell Dlg"
 
 CHOOSE_COLOR DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 310, 185
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Зміна палітри"
+CAPTION "Зміна кольору"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "&Базова палітра:",   1088, 4,    4,  140, 10
  LTEXT "Д&одаткові кольори:",  1089, 4,   106, 140, 10
- LTEXT "Колір|За&ливка",  1090, 150, 151,  48, 10
- LTEXT   "&Червоний:", 726 /*1094*/,254,126,32,10
- EDITTEXT 706, 288,124,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT   "&Зелений:",727/*1095*/,254,140,32,10
- EDITTEXT 707, 288,138,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT   "С&иній:",728 /*1096*/,264,154,24,10
- EDITTEXT 708, 288,152,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT  "Від&тінок:" ,723 /*1091*/,202,126,30,10
+ LTEXT "Колір|За&ливка",  1090, 148, 151,  48, 10
+ LTEXT   "&Черв:", 726 /*1094*/,258,126,24,10
+ EDITTEXT 706, 281,124,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
+ LTEXT   "&Зелен:",727/*1095*/,258,140,24,10
+ EDITTEXT 707, 281,138,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
+ LTEXT   "С&иній:",728 /*1096*/,258,154,24,10
+ EDITTEXT 708, 281,152,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
+ LTEXT  "Від&тінок:" ,723 /*1091*/,205,126,30,10
  EDITTEXT 703, 234,124,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT  "&Контраст:" ,724 /*1092*/,199,140,34,10
+ LTEXT  "&Контраст:" ,724 /*1092*/,202,140,34,10
  EDITTEXT 704, 234,138,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT  "&Яскравість:" ,725 /*1093*/,202,154,30,10
+ LTEXT  "&Яскравість:" ,725 /*1093*/,196,154,37,10
  EDITTEXT 705, 234,152,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
  CONTROL "" ,720,"STATIC",SS_SIMPLE|WS_TABSTOP|WS_GROUP,4,14,140,86
  CONTROL "" ,721,"STATIC",SS_SIMPLE|WS_TABSTOP|WS_GROUP,4,116,140,28
@@ -194,7 +194,7 @@ FONT 8, "MS Shell Dlg"
  LTEXT "&Зразок:", -1, 4, 8, 42, 8
  EDITTEXT 1152, 47, 7, 138, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  CHECKBOX "&Лише слово цілком", 1040, 4, 26, 100, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "Залік &реґістру", 1041, 4, 42, 100, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+ CHECKBOX "Враховувати &реґістр", 1041, 4, 42, 100, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  GROUPBOX "Напрям", 1072, 107, 26, 78, 28
  CONTROL "&Вгору", 1056, "BUTTON", BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 111, 38, 40, 12
  CONTROL "В&низ", 1057, "BUTTON", BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 152, 38, 30, 12
@@ -215,7 +215,7 @@ FONT 8, "MS Shell Dlg"
  LTEXT "З&амінити на:", -1, 4, 26, 48, 8
  EDITTEXT 1153, 54, 24, 114, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  CHECKBOX "&Лише слово цілком", 1040, 5, 46, 104, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "Залік &реґістру", 1041, 5, 62, 104, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+ CHECKBOX "Враховувати &реґістр", 1041, 5, 62, 104, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 
  DEFPUSHBUTTON "З&найти далі", IDOK, 174,  4, 50, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "&Замінити", psh1	 , 174, 21, 50, 14, WS_GROUP | WS_TABSTOP
@@ -249,25 +249,25 @@ FONT 8, "MS Shell Dlg"
     LTEXT           "Емульовано",   stc13, 64, 72, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Копії",         grp2, 160, 92, 120,64, WS_GROUP
-    LTEXT           "Число &копій:",stc5,168,108,68,8
+    LTEXT           "Кількість &копій:",stc5,168,108,68,8
     ICON            "",               ico3, 162,124,  60,24, WS_GROUP | SS_CENTERIMAGE
     CONTROL         "&Розбити",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,230,130,42,12
     EDITTEXT                          edt3, 230,106,  42,12, WS_GROUP | ES_NUMBER
 
     GROUPBOX        "Друкувати",    grp1,   8,92,  144,64, WS_GROUP
     CONTROL         "&Все",           rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
-    CONTROL         "&Сторінки",         rad3,"Button",BS_AUTORADIOBUTTON,16,122,50,12
+    CONTROL         "&Сторінки",      rad3,"Button",BS_AUTORADIOBUTTON,16,122,42,12
     CONTROL         "&Виділення",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
-    EDITTEXT                          edt1,  85,122,  20,12, WS_GROUP | ES_NUMBER
-    EDITTEXT                          edt2, 120,122,  20,12, WS_GROUP | ES_NUMBER
-    RTEXT           "&від:",         stc2,  70,124,  12,8
-    RTEXT           "&до:",           stc3, 106,124,  10,8
+    EDITTEXT                          edt1,  79,122,  26,12, WS_GROUP | ES_NUMBER
+    EDITTEXT                          edt2, 122,122,  26,12, WS_GROUP | ES_NUMBER
+    RTEXT           "&від:",          stc2,  57,124,  20,8
+    RTEXT           "&до:",           stc3, 104,124,  16,8
 }
 
 PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
-CAPTION "Установки принтера"
+CAPTION "Параметри друку"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,180,156,48,14,WS_GROUP
@@ -295,8 +295,8 @@ BEGIN
 
     GROUPBOX        "Орієнтація",    grp1, 180, 92, 100,56, WS_GROUP
     ICON            "",               ico1, 195,112,  18,20, WS_GROUP
-    CONTROL         "&Портрет",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
-    CONTROL         "Л&андшафт",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
+    CONTROL         "&Книжкова",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
+    CONTROL         "&Альбомна",      rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
 END
 
 PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
@@ -310,19 +310,19 @@ BEGIN
   GROUPBOX "Папір", grp2, 8, 96, 224, 56, BS_GROUPBOX
   LTEXT "&Розмір:", stc2, 16, 112, 36, 8
   COMBOBOX cmb2, 64, 110, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
-  LTEXT "Пода&ча:", stc3, 16, 132, 36, 8
+  LTEXT "Ло&ток:", stc3, 16, 132, 36, 8
   COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   GROUPBOX "Орієнтація", grp1, 8, 156, 64, 56, BS_GROUPBOX
-  AUTORADIOBUTTON "К&нижкова", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "&Книжкова", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
   AUTORADIOBUTTON "Аль&бомна", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
   GROUPBOX "Поля", grp4, 80, 156, 152, 56, BS_GROUPBOX
-  LTEXT "З&ліва:", stc15, 88, 172, 21, 8
+  LTEXT "&Ліве:", stc15, 88, 172, 21, 8
   EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "С&права:", stc16, 159, 172, 27, 8
+  LTEXT "&Праве:", stc16, 159, 172, 27, 8
   EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "З&верху:", stc17, 88, 192, 21, 8
+  LTEXT "&Верхнє:", stc17, 84, 192, 25, 8
   EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "З&низу:", stc18, 159, 192, 23, 8
+  LTEXT "&Нижнє:", stc18, 159, 192, 23, 8
   EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
   PUSHBUTTON "Скасувати", IDCANCEL, 126, 220, 50, 14
@@ -360,7 +360,7 @@ STRINGTABLE DISCARDABLE
     IDS_PERSONAL            "Мої документи"
     IDS_FAVORITES           "Закладки"
     IDS_PATH                "Системний шлях"
-    IDS_DESKTOP             "Стільниця"
+    IDS_DESKTOP             "Робочий стіл"
     IDS_FONTS               "Шрифти"
     IDS_MYCOMPUTER          "Мій комп'ютер"
 }
@@ -385,7 +385,7 @@ STRINGTABLE DISCARDABLE
     IDS_NEWFOLDER        "Створити нову теку"
     IDS_LISTVIEW         "Список"
     IDS_REPORTVIEW       "Подробиці"
-    IDS_TODESKTOP        "Перехід на стільницю"
+    IDS_TODESKTOP        "Перехід на Робочий стіл"
 }
 
 STRINGTABLE DISCARDABLE
@@ -432,7 +432,7 @@ STRINGTABLE DISCARDABLE
     PD32_PRINTER_STATUS_PRINTING          "Йде друк; "
     PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Лоток переповнений папером; "
     PD32_PRINTER_STATUS_NOT_AVAILABLE     "Не доступний; "
-    PD32_PRINTER_STATUS_WAITING           "Чекання; "
+    PD32_PRINTER_STATUS_WAITING           "Очікування; "
     PD32_PRINTER_STATUS_PROCESSING        "Обробка; "
     PD32_PRINTER_STATUS_INITIALIZING      "Готування; "
     PD32_PRINTER_STATUS_WARMING_UP        "Прогрів; "
