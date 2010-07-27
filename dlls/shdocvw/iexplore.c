@@ -179,7 +179,6 @@ static LRESULT iewnd_OnNotify(InternetExplorer *This, WPARAM wparam, LPARAM lpar
         if(info->fChanged && info->iWhy == CBENF_RETURN && info->szText)
         {
             VARIANT vt;
-            HWND hwndEdit = (HWND)SendMessageW(hdr->hwndFrom, CBEM_GETEDITCONTROL, 0, 0);
 
             V_VT(&vt) = VT_BSTR;
             V_BSTR(&vt) = SysAllocString(info->szText);
@@ -188,9 +187,6 @@ static LRESULT iewnd_OnNotify(InternetExplorer *This, WPARAM wparam, LPARAM lpar
 
             SysFreeString(V_BSTR(&vt));
 
-            /* Clear the address bar, as we don't change it when
-               the user navigates to a new page */
-            SendMessageW(hwndEdit, WM_SETTEXT, 0, 0);
             return 0;
         }
     }
@@ -240,6 +236,18 @@ static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT 
     return 0;
 }
 
+static LRESULT CALLBACK update_addrbar(InternetExplorer *This, LPARAM lparam)
+{
+    HWND hwndRebar = GetDlgItem(This->frame_hwnd, IDC_BROWSE_REBAR);
+    HWND hwndAddress = GetDlgItem(hwndRebar, IDC_BROWSE_ADDRESSBAR);
+    HWND hwndEdit = (HWND)SendMessageW(hwndAddress, CBEM_GETEDITCONTROL, 0, 0);
+    LPCWSTR url = (LPCWSTR)lparam;
+
+    SendMessageW(hwndEdit, WM_SETTEXT, 0, (LPARAM)url);
+
+    return 0;
+}
+
 static LRESULT CALLBACK
 ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -259,6 +267,8 @@ ie_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         return iewnd_OnNotify(This, wparam, lparam);
     case WM_DOCHOSTTASK:
         return process_dochost_task(&This->doc_host, lparam);
+    case WM_UPDATEADDRBAR:
+        return update_addrbar(This, lparam);
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
@@ -359,7 +369,7 @@ static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text
 
 static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
 {
-
+    SendMessageW(This->frame_hwnd, WM_UPDATEADDRBAR, 0, (LPARAM)url);
 }
 
 static const IDocHostContainerVtbl DocHostContainerVtbl = {

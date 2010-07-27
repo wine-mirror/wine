@@ -43,6 +43,8 @@
 #include "resource.h"
 
 
+#define WM_UPDATEADDRBAR    (WM_APP+1)
+
 /**********************************************************************
  * Shell Instance Objects
  */
