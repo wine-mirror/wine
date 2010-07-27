@@ -1,0 +1,131 @@
+/*
+ *  Notepad (Persian resources)
+ *
+ *  Copyright 2010 Bersam Karbasion <bersam.k@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "notepad_res.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_PERSIAN, SUBLANG_PERSIAN_IRAN
+
+MAIN_MENU MENU
+{
+ POPUP "&پرونده" {
+  MENUITEM "&ایجاد‌کردن\tCtrl+N",      CMD_NEW
+  MENUITEM "&باز‌کردن...\tCtrl+O",  CMD_OPEN
+  MENUITEM "&ذخیره\tCtrl+S",     CMD_SAVE
+  MENUITEM "ذخیره &به نام...",       CMD_SAVE_AS
+  MENUITEM SEPARATOR
+  MENUITEM "&چاپ‌کردن...\tCtrl+P",            CMD_PRINT
+  MENUITEM "تنظیمات &صفحه...",    CMD_PAGE_SETUP
+  MENUITEM "&تنظیمات چاپ‌گر...", CMD_PRINTER_SETUP
+  MENUITEM SEPARATOR
+  MENUITEM "&خروج",             CMD_EXIT
+ }
+POPUP "&ویرایش" {
+  MENUITEM "&واگردانی\tCtrl+Z",     CMD_UNDO
+  MENUITEM SEPARATOR
+  MENUITEM "&برش\tCtrl+X",      CMD_CUT
+  MENUITEM "&نسخه‌برداری\tCtrl+C",     CMD_COPY
+  MENUITEM "&چسباندن\tCtrl+V",    CMD_PASTE
+  MENUITEM "&حذف\tDel",      CMD_DELETE
+  MENUITEM SEPARATOR
+  MENUITEM "انتخاب &همه\tCtrl+A",       CMD_SELECT_ALL
+  MENUITEM "&زمان/تاریخ\tF5",    CMD_TIME_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&پیچش سطر‌های بلند",  CMD_WRAP
+  MENUITEM "&قلم‌ها...",          CMD_FONT
+ }
+POPUP "&جست‌و‌جو" {
+  MENUITEM "&جست‌و‌جو...\tCtrl+F",   CMD_SEARCH
+  MENUITEM "جست‌و‌جوی &بعدی\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "جای&‌گزین کردن...\tCtrl+H", CMD_REPLACE
+ }
+POPUP "&کمک" {
+  MENUITEM "&محتویات",         CMD_HELP_CONTENTS
+  MENUITEM "&جست‌و‌جو...",        CMD_HELP_SEARCH
+  MENUITEM "&کمک برای کمک",     CMD_HELP_ON_HELP
+  MENUITEM SEPARATOR
+  MENUITEM "&درباره نت‌پد", CMD_HELP_ABOUT_NOTEPAD
+ }
+}
+
+/* Dialog `Page setup' */
+
+DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "تنظیمات صفحه"
+{
+LTEXT    "&سرصفحه:",  0x140,  10, 07, 40, 15
+EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
+LTEXT    "&پاصفحه:",  0x142,   10, 24, 40, 15
+EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
+
+GROUPBOX "&حاشیه‌ها (میلی‌متر):",      0x144,     10, 43,160, 45
+LTEXT    "&چپ:",        0x145,   20, 55, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&بالا:",         0x148,    20, 73, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&راست:",       0x14B, 100, 55, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_RIGHTVALUE,   130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+LTEXT    "&پایین:",      0x14E,100, 73, 30, 10, WS_CHILD
+EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
+
+DEFPUSHBUTTON "قبول",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
+PUSHBUTTON    "انصراف",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&کمک",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
+}
+
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "کدگذاری:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
+
+STRINGTABLE DISCARDABLE
+{
+STRING_PAGESETUP_HEADERVALUE,   "&f"
+STRING_PAGESETUP_FOOTERVALUE,   "صفحه &p"
+
+STRING_NOTEPAD,                                 "نت‌پد"
+STRING_ERROR,                                   "خطا"
+STRING_WARNING,                                 "اخطار"
+STRING_INFO,                                    "اطلاعات"
+
+STRING_UNTITLED,                                "نام‌گذاری نشده"
+
+STRING_ALL_FILES,                               "همه‌ی پرونده‌ها (*.*)"
+STRING_TEXT_FILES_TXT,                  "پرونده‌های متنی (*.txt)"
+
+STRING_TOOLARGE,                                "پرونده '%s' برای نت‌پد خیلی بزرگ است.\n\لطفا از یک ویرایش‌گر دیگر استفاده کنید."
+STRING_NOTEXT,                                  "شما هیچ متنی را وارد نکرده‌اید.\\nلطفا یک متن را وارد کرده و دوباره امتحان کنید."
+STRING_DOESNOTEXIST,                            "پرونده‌ای با نام '%s' وجود ندارد.\n\n\آیا می‌خواهید یک پرونده‌ی جدید ایجاد کنید؟"
+STRING_NOTSAVED,                                "پرونده '%s' تغییر يافته‌است.\n\n\آیا می‌خواهید که تغییرات را ذخیره کنید ؟"
+STRING_NOTFOUND,                                        "'%s' پیدا نشد."
+STRING_OUT_OF_MEMORY,                   "حافظه‌ی موقت برای انجام این کار وجود ندارد. \
+\nیک یا چند ابزار و برنامه‌ی دیگر را ببندید تا مقدار آزاد حافظه‌ی موقت را افزایش دهید."
+
+STRING_UNICODE_LE,     "یونی‌کد (UTF-16)"
+STRING_UNICODE_BE,     "یونی‌کد (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\این پرونده دارای کاراکتر‌های یونی‌کد است که اگر آن ها را\n\در کد‌گذاری %s ذخیره کنید ، از دست می روند.\n\برای نگه‌داری این کاراکتر ها ،  بر روی انصراف کلیک کنید و سپس\n\یکی از گزینه‌های یونی‌کد زیر را انتخاب کنید.\n\ادامه می‌دهید؟"
+}
