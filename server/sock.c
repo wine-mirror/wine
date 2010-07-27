@@ -260,9 +260,7 @@ static void sock_wake_up( struct sock *sock )
     unsigned int events = sock->pmask & sock->mask;
     int i;
 
-    /* Do not signal events if there are still pending asynchronous IO requests */
-    /* We need this to delay FD_CLOSE events until all pending overlapped requests are processed */
-    if ( !events || async_queued( sock->read_q ) || async_queued( sock->write_q ) ) return;
+    if ( !events ) return;
 
     if (sock->event)
     {
