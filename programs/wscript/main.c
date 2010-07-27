@@ -225,6 +225,60 @@ static HRESULT init_engine(IActiveScript *script, IActiveScriptParse *parser)
     return SUCCEEDED(hres);
 }
 
+static BSTR get_script_str(const WCHAR *filename)
+{
+    const char *file_map;
+    HANDLE file, map;
+    DWORD size, len;
+    BSTR ret;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    if(file == INVALID_HANDLE_VALUE)
+        return NULL;
+
+    size = GetFileSize(file, NULL);
+    map = CreateFileMappingW(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    CloseHandle(file);
+    if(map == INVALID_HANDLE_VALUE)
+        return NULL;
+
+    file_map = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
+    CloseHandle(map);
+    if(!file_map)
+        return NULL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, file_map, size, NULL, 0);
+    ret = SysAllocStringLen(NULL, len);
+    MultiByteToWideChar(CP_ACP, 0, file_map, size, ret, len);
+
+    UnmapViewOfFile(file_map);
+    return ret;
+}
+
+static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScriptParse *parser)
+{
+    BSTR text;
+    HRESULT hres;
+
+    text = get_script_str(filename);
+    if(!text) {
+        WINE_FIXME("Could not get script text\n");
+        return;
+    }
+
+    hres = IActiveScriptParse64_ParseScriptText(parser, text, NULL, NULL, NULL, 1, 1,
+            SCRIPTTEXT_HOSTMANAGESSOURCE|SCRIPTITEM_ISVISIBLE, NULL, NULL);
+    SysFreeString(text);
+    if(FAILED(hres)) {
+        WINE_FIXME("ParseScriptText failed: %08x\n", hres);
+        return;
+    }
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
+    if(FAILED(hres))
+        WINE_FIXME("SetScriptState failed: %08x\n", hres);
+}
+
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
     IActiveScriptParse *parser;
@@ -232,7 +286,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     const WCHAR *ext;
     CLSID clsid;
 
-    WINE_FIXME("(%p %p %s %x)\n", hInst, hPrevInst, wine_dbgstr_w(cmdline), cmdshow);
+    WINE_TRACE("(%p %p %s %x)\n", hInst, hPrevInst, wine_dbgstr_w(cmdline), cmdshow);
 
     if(!*cmdline)
         return 1;
@@ -254,6 +308,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     }
 
     if(init_engine(script, parser)) {
+        run_script(cmdline, script, parser);
         IActiveScript_Close(script);
     }else {
         WINE_FIXME("Script initialization failed\n");
