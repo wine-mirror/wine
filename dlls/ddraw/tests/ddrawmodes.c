@@ -645,9 +645,15 @@ static void testcooperativelevels_normal(void)
 
 static void testcooperativelevels_exclusive(void)
 {
+    BOOL success;
     HRESULT rc;
+    RECT window_rect;
 
     /* Do some tests with DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN mode */
+
+    /* First, resize the window so it is not the same size as any screen */
+    success = SetWindowPos(hwnd, 0, 0, 0, 281, 92, 0);
+    ok(success, "SetWindowPos failed\n");
 
     /* Try to set exclusive mode only */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
@@ -663,6 +669,10 @@ static void testcooperativelevels_exclusive(void)
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
     ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN) returned: %x\n",rc);
+    GetClientRect(hwnd, &window_rect);
+    /* rect_before_create is assumed to hold the screen rect */
+    rc = EqualRect(&rect_before_create, &window_rect);
+    todo_wine ok(rc!=0, "Fullscreen window has wrong size\n");
 
     /* Set the focus window. Should fail */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
