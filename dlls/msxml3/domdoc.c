@@ -59,6 +59,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #define XML_SAVE_AS_HTML   64
 
 static const WCHAR SZ_PROPERTY_SELECTION_LANGUAGE[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
+static const WCHAR SZ_PROPERTY_PROHIBIT_DTD[] = {'P','r','o','h','i','b','i','t','D','T','D',0};
 static const WCHAR SZ_VALUE_XPATH[] = {'X','P','a','t','h',0};
 static const WCHAR SZ_VALUE_XSLPATTERN[] = {'X','S','L','P','a','t','t','e','r','n',0};
 
@@ -2074,6 +2075,12 @@ static HRESULT WINAPI domdoc_setProperty(
 
         VariantClear(&varStr);
         return hr;
+    }
+    else if (lstrcmpiW(p, SZ_PROPERTY_PROHIBIT_DTD) == 0)
+    {
+        /* Ignore */
+        FIXME("Ignoring property ProhibitDTD, value %d\n", V_BOOL(&var));
+        return S_OK;
     }
 
     FIXME("Unknown property %s\n", wine_dbgstr_w(p));
