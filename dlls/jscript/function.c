@@ -35,6 +35,7 @@ typedef struct {
     const WCHAR *src_str;
     DWORD src_len;
     DWORD length;
+    DispatchEx *arguments;
 } FunctionInstance;
 
 static inline FunctionInstance *function_from_vdisp(vdisp_t *vdisp)
@@ -53,6 +54,7 @@ static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR applyW[] = {'a','p','p','l','y',0};
 static const WCHAR callW[] = {'c','a','l','l',0};
+static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
 static IDispatch *get_this(DISPPARAMS *dp)
 {
@@ -157,29 +159,20 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, DISPPARAMS 
     return S_OK;
 }
 
-static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, DISPPARAMS *dp, jsexcept_t *ei,
-                               IServiceProvider *caller, DispatchEx **ret)
+static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, DispatchEx *arg_disp,
+        DISPPARAMS *dp, jsexcept_t *ei, IServiceProvider *caller, DispatchEx **ret)
 {
-    DispatchEx *var_disp, *arg_disp;
+    DispatchEx *var_disp;
+    VARIANT var;
     HRESULT hres;
-
-    static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
     hres = create_dispex(ctx, NULL, NULL, &var_disp);
     if(FAILED(hres))
         return hres;
 
-    hres = create_arguments(ctx, (IDispatch*)_IDispatchEx_(&function->dispex),
-            dp, ei, caller, &arg_disp);
-    if(SUCCEEDED(hres)) {
-        VARIANT var;
-
-        V_VT(&var) = VT_DISPATCH;
-        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(arg_disp);
-        hres = jsdisp_propput_name(var_disp, argumentsW, &var, ei, caller);
-        jsdisp_release(arg_disp);
-    }
-
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(arg_disp);
+    hres = jsdisp_propput_name(var_disp, argumentsW, &var, ei, caller);
     if(SUCCEEDED(hres))
         hres = init_parameters(var_disp, function, dp, ei, caller);
     if(FAILED(hres)) {
@@ -194,7 +187,7 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, DI
 static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_obj, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DispatchEx *var_disp;
+    DispatchEx *var_disp, *arg_disp;
     exec_ctx_t *exec_ctx;
     scope_chain_t *scope;
     HRESULT hres;
@@ -204,9 +197,16 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return E_FAIL;
     }
 
-    hres = create_var_disp(ctx, function, dp, ei, caller, &var_disp);
+    hres = create_arguments(ctx, (IDispatch*)_IDispatchEx_(&function->dispex),
+            dp, ei, caller, &arg_disp);
     if(FAILED(hres))
         return hres;
+
+    hres = create_var_disp(ctx, function, arg_disp, dp, ei, caller, &var_disp);
+    if(FAILED(hres)) {
+        jsdisp_release(arg_disp);
+        return hres;
+    }
 
     hres = scope_push(function->scope_chain, var_disp, &scope);
     if(SUCCEEDED(hres)) {
@@ -214,11 +214,17 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         scope_release(scope);
     }
     jsdisp_release(var_disp);
-    if(FAILED(hres))
-        return hres;
+    if(SUCCEEDED(hres)) {
+        DispatchEx *prev_args;
 
-    hres = exec_source(exec_ctx, function->parser, function->source, EXECT_FUNCTION, ei, retv);
-    exec_release(exec_ctx);
+        prev_args = function->arguments;
+        function->arguments = arg_disp;
+        hres = exec_source(exec_ctx, function->parser, function->source, EXECT_FUNCTION, ei, retv);
+        function->arguments = prev_args;
+
+        jsdisp_release(arg_disp);
+        exec_release(exec_ctx);
+    }
 
     return hres;
 }
@@ -531,6 +537,35 @@ HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAM
     return S_OK;
 }
 
+static HRESULT Function_arguments(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FunctionInstance *function = (FunctionInstance*)jsthis->u.jsdisp;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        if(function->arguments) {
+            IDispatchEx_AddRef(_IDispatchEx_(function->arguments));
+            V_VT(retv) = VT_DISPATCH;
+            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(function->arguments);
+        }else {
+            V_VT(retv) = VT_NULL;
+        }
+        break;
+    }
+    case DISPATCH_PROPERTYPUT:
+        break;
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        hres = E_NOTIMPL;
+    }
+
+    return hres;
+}
+
 static void Function_destructor(DispatchEx *dispex)
 {
     FunctionInstance *This = (FunctionInstance*)dispex;
@@ -544,6 +579,7 @@ static void Function_destructor(DispatchEx *dispex)
 
 static const builtin_prop_t Function_props[] = {
     {applyW,                 Function_apply,                 PROPF_METHOD|2},
+    {argumentsW,             Function_arguments,             0},
     {callW,                  Function_call,                  PROPF_METHOD|1},
     {lengthW,                Function_length,                0},
     {toStringW,              Function_toString,              PROPF_METHOD}

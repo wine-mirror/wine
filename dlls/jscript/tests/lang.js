@@ -69,11 +69,13 @@ function testFunc1(x, y) {
     ok(arguments["0"] === true, "arguments[0] is not true");
     ok(arguments["1"] === "test", "arguments[1] is not \"test\"");
     ok(arguments.callee === testFunc1, "arguments.calee !== testFunc1");
+    ok(testFunc1.arguments === arguments, "testFunc1.arguments = " + testFunc1.arguments);
 
     return true;
 }
 
 ok(testFunc1.length === 2, "testFunc1.length is not 2");
+ok(testFunc1.arguments === null, "testFunc1.arguments = " + testFunc1.arguments);
 
 ok(Object.prototype !== undefined, "Object.prototype is undefined");
 ok(Object.prototype.prototype === undefined, "Object.prototype is not undefined");
@@ -108,6 +110,22 @@ ok(typeof(ScriptEngine) === "function", "typeof(ScriptEngine) is not function");
 ok(typeof(this) === "object", "typeof(this) is not object");
 
 ok(testFunc1(true, "test") === true, "testFunc1 not returned true");
+
+ok(testFunc1.arguments === null, "testFunc1.arguments = " + testFunc1.arguments);
+
+function testRecFunc(x) {
+    ok(testRecFunc.arguments === arguments, "testRecFunc.arguments = " + testRecFunc.arguments);
+    if(x) {
+        testRecFunc(false);
+        ok(testRecFunc.arguments === arguments, "testRecFunc.arguments = " + testRecFunc.arguments);
+        ok(testRecFunc.arguments[0] === true, "testRecFunc.arguments.x = " + testRecFunc.arguments[0]);
+    }
+}
+
+testRecFunc.arguments = 5;
+ok(testRecFunc.arguments === null, "testRecFunc.arguments = " + testRecFunc.arguments);
+testRecFunc(true);
+ok(testRecFunc.arguments === null, "testRecFunc.arguments = " + testRecFunc.arguments);
 
 tmp = (function() {1;})();
 ok(tmp === undefined, "tmp = " + tmp);
