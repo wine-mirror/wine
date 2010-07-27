@@ -370,7 +370,7 @@ BEGIN
     CONTROL         "&PID (Ідентиф. процесу)",IDC_PID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,91,10
     CONTROL         "&Використання ЦП",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,50,69,10
+                    WS_TABSTOP,7,50,71,10
     CONTROL         "&Час ЦП",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,61,48,10
     CONTROL         "&Пам'ять - використання",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
