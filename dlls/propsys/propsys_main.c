@@ -216,7 +216,7 @@ static BOOL string_to_guid(LPCWSTR s, LPGUID id)
 
 HRESULT WINAPI PSPropertyKeyFromString(LPCWSTR pszString, PROPERTYKEY *pkey)
 {
-    int has_minus = 0;
+    int has_minus = 0, has_comma = 0;
 
     TRACE("(%s, %p)\n", debugstr_w(pszString), pkey);
 
@@ -233,31 +233,54 @@ HRESULT WINAPI PSPropertyKeyFromString(LPCWSTR pszString, PROPERTYKEY *pkey)
     if (!*pszString)
         return E_INVALIDARG;
 
-    /* Only the space seems to be recognized as whitespace. */
-    while (*pszString == ' ')
+    /* Only the space seems to be recognized as whitespace. The comma is only
+     * recognized once and processing terminates if another comma is found. */
+    while (*pszString == ' ' || *pszString == ',')
+    {
+        if (*pszString == ',')
+        {
+            if (has_comma)
+                return S_OK;
+            else
+                has_comma = 1;
+        }
         pszString++;
+    }
 
     if (!*pszString)
         return E_INVALIDARG;
 
-    /* Only two minus signs are recognized. The first is ignored, and the
-     * second is interpreted. */
-    if (*pszString == '-')
-        pszString++;
-
-    /* Skip any intermediate spaces after the first minus sign. */
-    while (*pszString == ' ')
-        pszString++;
-
-    if (*pszString == '-')
+    /* Only two minus signs are recognized if no comma is detected. The first
+     * sign is ignored, and the second is interpreted. If a comma is detected
+     * before the minus sign, then only one minus sign counts, and property ID
+     * interpretation begins with the next character. */
+    if (has_comma)
     {
-        has_minus = 1;
-        pszString++;
+        if (*pszString == '-')
+        {
+            has_minus = 1;
+            pszString++;
+        }
     }
+    else
+    {
+        if (*pszString == '-')
+            pszString++;
 
-    /* Skip any remaining spaces after minus sign. */
-    while (*pszString == ' ')
-        pszString++;
+        /* Skip any intermediate spaces after the first minus sign. */
+        while (*pszString == ' ')
+            pszString++;
+
+        if (*pszString == '-')
+        {
+            has_minus = 1;
+            pszString++;
+        }
+
+        /* Skip any remaining spaces after minus sign. */
+        while (*pszString == ' ')
+            pszString++;
+    }
 
     /* Overflow is not checked. */
     while (isdigitW(*pszString))
