@@ -29,6 +29,11 @@
 #include "winuser.h"
 #include "winerror.h"
 
+static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
+static DWORD (WINAPI *pGetLayout)(HDC hdc);
+static BOOL (WINAPI *pGetTransform)(HDC, DWORD, XFORM *);
+static DWORD (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
+
 #define rough_match(got, expected) (abs( MulDiv( (got) - (expected), 1000, (expected) )) <= 5)
 
 #define expect_LPtoDP(_hdc, _x, _y) \
@@ -221,12 +226,8 @@ static void test_dc_layout(void)
 {
     INT ret, size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
     SIZE size;
-    DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
-    DWORD (WINAPI *pGetLayout)(HDC hdc);
     HDC hdc;
 
-    pGetLayout = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GetLayout");
-    pSetLayout = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "SetLayout");
     if (!pGetLayout || !pSetLayout)
     {
         win_skip( "Don't have SetLayout\n" );
@@ -421,13 +422,10 @@ static void test_setvirtualresolution(void)
 {
     HDC hdc = CreateICA("DISPLAY", NULL, NULL, NULL);
     DWORD r;
-    DWORD (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
     INT horz_res = GetDeviceCaps(hdc, HORZRES);
     INT horz_size = GetDeviceCaps(hdc, HORZSIZE);
     INT log_pixels_x = GetDeviceCaps(hdc, LOGPIXELSX);
     SIZE orig_lometric_vp, orig_lometric_wnd;
-
-    pSetVirtualResolution = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "SetVirtualResolution");
 
     if(!pSetVirtualResolution)
     {
@@ -533,12 +531,9 @@ static inline void xform_near_match(int line, XFORM *got, XFORM *expect)
 static void test_gettransform(void)
 {
     HDC hdc = CreateICA("DISPLAY", NULL, NULL, NULL);
-    BOOL (WINAPI *pGetTransform)(HDC, DWORD, XFORM *);
     XFORM xform, expect;
     BOOL r;
     SIZE lometric_vp, lometric_wnd;
-
-    pGetTransform = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GetTransform");
 
     if(!pGetTransform)
     {
@@ -635,6 +630,12 @@ static void test_gettransform(void)
 
 START_TEST(mapping)
 {
+    HMODULE mod = GetModuleHandleA("gdi32.dll");
+    pGetLayout = (void *)GetProcAddress( mod, "GetLayout" );
+    pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
+    pGetTransform = (void *)GetProcAddress( mod, "GetTransform" );
+    pSetVirtualResolution = (void *)GetProcAddress( mod, "SetVirtualResolution" );
+
     test_modify_world_transform();
     test_world_transform();
     test_dc_layout();
