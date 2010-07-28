@@ -1,5 +1,6 @@
 /*
  * shdocvw French resources
+ *
  * Copyright 2010 Frédéric Delanoy
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +41,10 @@ IDR_BROWSE_MAIN_MENU MENU
 {
     POPUP "&Fichier"
     {
-        MENUITEM "&Nouvelle fenêtre"                  ID_BROWSE_NEW_WINDOW
+        POPUP "&Nouvelle"
+        {
+            MENUITEM "&Fenêtre"                  ID_BROWSE_NEW_WINDOW
+        }
         MENUITEM "&Ouvrir...",                    ID_BROWSE_OPEN
         MENUITEM "&Enregistrer",                       ID_BROWSE_SAVE
         MENUITEM "Enregistrer &sous...",                 ID_BROWSE_SAVE_AS
