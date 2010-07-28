@@ -562,6 +562,48 @@ static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, C
 }
 
 /************************************************************
+ * point_filter_simple_data
+ *
+ * Copies the source buffer to the destination buffer, performing
+ * any necessary format conversion, color keying and stretching
+ * using a point filter.
+ * Works only for ARGB formats with 1 - 4 bytes per pixel.
+ */
+static void point_filter_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, CONST PixelFormatDesc  *srcformat,
+                                     CONST BYTE *dest, UINT destpitch, POINT destsize, CONST PixelFormatDesc *destformat)
+{
+    struct argb_conversion_info conv_info;
+    DWORD channels[4];
+
+    UINT minwidth, minheight;
+    BYTE *srcptr, *destptr, *bufptr;
+    UINT x, y;
+
+    ZeroMemory(channels, sizeof(channels));
+    init_argb_conversion_info(srcformat, destformat, &conv_info);
+
+    minwidth  = (srcsize.x < destsize.x) ? srcsize.x : destsize.x;
+    minheight = (srcsize.y < destsize.y) ? srcsize.y : destsize.y;
+
+    for(y = 0;y < destsize.y;y++) {
+        destptr = (BYTE*)dest + y * destpitch;
+        bufptr = (BYTE*)src + srcpitch * (y * srcsize.y / destsize.y);
+        srcptr = bufptr;
+
+        for(x = 0;x < destsize.x;x++) {
+            /* extract source color components */
+            if(srcformat->type == FORMAT_ARGB) get_relevant_argb_components(&conv_info, *(DWORD*)srcptr, channels);
+
+            /* recombine the components */
+            if(destformat->type == FORMAT_ARGB) make_argb_color(&conv_info, channels, (DWORD*)destptr);
+
+            srcptr = bufptr + (x * srcsize.x / destsize.x) * srcformat->bytes_per_pixel;
+            destptr += destformat->bytes_per_pixel;
+        }
+    }
+}
+
+/************************************************************
  * D3DXLoadSurfaceFromMemory
  *
  * Loads data from a given memory chunk into a surface,
@@ -616,7 +658,6 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
     if( !pDestSurface || !pSrcMemory || !pSrcRect ) return D3DERR_INVALIDCALL;
     if(SrcFormat == D3DFMT_UNKNOWN || pSrcRect->left >= pSrcRect->right || pSrcRect->top >= pSrcRect->bottom) return E_FAIL;
 
-    if((dwFilter & 0xF) != D3DX_FILTER_NONE) return E_NOTIMPL;
     if(dwFilter == D3DX_DEFAULT) dwFilter = D3DX_FILTER_TRIANGLE | D3DX_FILTER_DITHER;
 
     IDirect3DSurface9_GetDesc(pDestSurface, &surfdesc);
@@ -643,8 +684,14 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
     hr = IDirect3DSurface9_LockRect(pDestSurface, &lockrect, pDestRect, 0);
     if(FAILED(hr)) return D3DXERR_INVALIDDATA;
 
-    copy_simple_data((CONST BYTE*)pSrcMemory, SrcPitch, srcsize, srcformatdesc,
-                     (CONST BYTE*)lockrect.pBits, lockrect.Pitch, destsize, destformatdesc);
+    if((dwFilter & 0xF) == D3DX_FILTER_NONE) {
+        copy_simple_data((CONST BYTE*)pSrcMemory, SrcPitch, srcsize, srcformatdesc,
+                         (CONST BYTE*)lockrect.pBits, lockrect.Pitch, destsize, destformatdesc);
+    } else /*if((dwFilter & 0xF) == D3DX_FILTER_POINT) */ {
+        /* always apply a point filter until D3DX_FILTER_LINEAR, D3DX_FILTER_TRIANGLE and D3DX_FILTER_BOX are implemented */
+        point_filter_simple_data((CONST BYTE*)pSrcMemory, SrcPitch, srcsize, srcformatdesc,
+                                 (CONST BYTE*)lockrect.pBits, lockrect.Pitch, destsize, destformatdesc);
+    }
 
     IDirect3DSurface9_UnlockRect(pDestSurface);
     return D3D_OK;
