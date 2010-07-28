@@ -3014,6 +3014,22 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_PATH_AND_QUERY:
+        if(This->path_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->path_start, This->path_len+This->query_len);
+            hres = S_OK;
+        } else if(This->query_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->query_start, This->query_len);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     case Uri_PROPERTY_QUERY:
         if(This->query_start > -1) {
             *pbstrProperty = SysAllocStringLen(This->canon_uri+This->query_start, This->query_len);
@@ -3147,6 +3163,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     case Uri_PROPERTY_PATH:
         *pcchProperty = This->path_len;
         hres = (This->path_start > -1) ? S_OK : S_FALSE;
+        break;
+    case Uri_PROPERTY_PATH_AND_QUERY:
+        *pcchProperty = This->path_len+This->query_len;
+        hres = (This->path_start > -1 || This->query_start > -1) ? S_OK : S_FALSE;
         break;
     case Uri_PROPERTY_QUERY:
         *pcchProperty = This->query_len;
@@ -3310,13 +3330,8 @@ static HRESULT WINAPI Uri_GetPath(IUri *iface, BSTR *pstrPath)
 
 static HRESULT WINAPI Uri_GetPathAndQuery(IUri *iface, BSTR *pstrPathAndQuery)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrPathAndQuery);
-
-    if(!pstrPathAndQuery)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrPathAndQuery);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_PATH_AND_QUERY, pstrPathAndQuery, 0);
 }
 
 static HRESULT WINAPI Uri_GetQuery(IUri *iface, BSTR *pstrQuery)
