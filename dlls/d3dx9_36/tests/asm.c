@@ -1561,6 +1561,19 @@ static void assembleshader_test(void) {
         "#include \"incl2.vsh\"\n"
         "mov REGISTER, v0\n"
     };
+    const char testshader3[] = {
+        "#include \"include/incl3.vsh\"\n"
+        "mov REGISTER, v0\n"
+    };
+    const char testincl3[] = {
+        "#include \"incl4.vsh\"\n"
+    };
+    const char testincl4_ok[] = {
+        "vs.1.1\n"
+    };
+    const char testincl4_wrong[] = {
+        "#error \"wrong include\"\n"
+    };
     HRESULT hr;
     LPD3DXBUFFER shader, messages;
     D3DXMACRO defines[] = {
@@ -1575,7 +1588,7 @@ static void assembleshader_test(void) {
         }
     };
     struct D3DXIncludeImpl include;
-    HRESULT shader_vsh_res, incl_vsh_res;
+    HRESULT shader_vsh_res;
 
     /* pDefines test */
     shader = NULL;
@@ -1649,25 +1662,22 @@ static void assembleshader_test(void) {
     }
     if(shader) ID3DXBuffer_Release(shader);
 
-    todo_wine {
-
     shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader));
     if(SUCCEEDED(shader_vsh_res)) {
-        incl_vsh_res = create_file("incl.vsh", testincl, sizeof(testincl));
-        if(SUCCEEDED(incl_vsh_res)) {
-            /* D3DXAssembleShaderFromFile + #include test */
-            shader = NULL;
-            messages = NULL;
-            hr = D3DXAssembleShaderFromFileA("shader.vsh",
-                                             NULL, NULL, D3DXSHADER_SKIPVALIDATION,
-                                             &shader, &messages);
-            ok(hr == D3D_OK, "D3DXAssembleShaderFromFile test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
-            if(messages) {
-                trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
-                ID3DXBuffer_Release(messages);
-            }
-            if(shader) ID3DXBuffer_Release(shader);
-        } else skip("Couldn't create \"incl.vsh\"\n");
+        create_file("incl.vsh", testincl, sizeof(testincl));
+
+        /* D3DXAssembleShaderFromFile + #include test */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXAssembleShaderFromFileA("shader.vsh",
+                                         NULL, NULL, D3DXSHADER_SKIPVALIDATION,
+                                         &shader, &messages);
+        ok(hr == D3D_OK, "D3DXAssembleShaderFromFile test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+        if(messages) {
+            trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if(shader) ID3DXBuffer_Release(shader);
 
         /* D3DXAssembleShaderFromFile + pInclude test */
         shader = NULL;
@@ -1681,9 +1691,27 @@ static void assembleshader_test(void) {
             ID3DXBuffer_Release(messages);
         }
         if(shader) ID3DXBuffer_Release(shader);
-    } else skip("Couldn't create \"shader.vsh\"\n");
 
-    } /* todo_wine */
+        create_file("shader3.vsh", testshader3, sizeof(testshader3));
+        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong));
+        if(CreateDirectoryA("include", NULL)) {
+            create_file("include/incl3.vsh", testincl3, sizeof(testincl3));
+            create_file("include/incl4.vsh", testincl4_ok, sizeof(testincl4_ok));
+
+            /* path search #include test */
+            shader = NULL;
+            messages = NULL;
+            hr = D3DXAssembleShaderFromFileA("shader3.vsh", NULL, NULL,
+                                             D3DXSHADER_SKIPVALIDATION,
+                                             &shader, &messages);
+            ok(hr == D3D_OK, "D3DXAssembleShaderFromFile path search test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+            if(messages) {
+                trace("D3DXAssembleShaderFromFile path search messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+                ID3DXBuffer_Release(messages);
+            }
+            if(shader) ID3DXBuffer_Release(shader);
+        } else skip("Couldn't create \"include\" directory\n");
+    } else skip("Couldn't create \"shader.vsh\"\n");
 
     /* NULL shader tests */
     shader = NULL;
@@ -1698,8 +1726,6 @@ static void assembleshader_test(void) {
     }
     if(shader) ID3DXBuffer_Release(shader);
 
-    todo_wine {
-
     shader = NULL;
     messages = NULL;
     hr = D3DXAssembleShaderFromFileA("nonexistent.vsh",
@@ -1713,8 +1739,6 @@ static void assembleshader_test(void) {
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);
-
-    } /* end of todo_wine */
 
     /* D3DXAssembleShaderFromResource test */
     shader = NULL;
@@ -1745,7 +1769,12 @@ static void assembleshader_test(void) {
     /* cleanup */
     if(SUCCEEDED(shader_vsh_res)) {
         DeleteFileA("shader.vsh");
-        if(SUCCEEDED(incl_vsh_res)) DeleteFileA("incl.vsh");
+        DeleteFileA("incl.vsh");
+        DeleteFileA("shader3.vsh");
+        DeleteFileA("incl4.vsh");
+        DeleteFileA("include/incl3.vsh");
+        DeleteFileA("include/incl4.vsh");
+        RemoveDirectoryA("include");
     }
 }
 

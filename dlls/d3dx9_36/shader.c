@@ -309,8 +309,8 @@ static char *wpp_lookup_mem(const char *filename, const char *parent_name,
     }
 
     path = malloc(strlen(filename) + 1);
-    if(!path) return NULL;
-    memcpy(path, filename, strlen(filename) + 1);
+    if(path)
+        memcpy(path, filename, strlen(filename) + 1);
     return path;
 }
 
@@ -636,6 +636,79 @@ cleanup:
     return hr;
 }
 
+/* D3DXInclude private implementation, used to implement
+   D3DXAssembleShaderFromFile from D3DXAssembleShader */
+/* To be able to correctly resolve include search paths we have to store
+   the pathname of each include file. We store the pathname pointer right
+   before the file data. */
+static HRESULT WINAPI d3dincludefromfile_open(ID3DXInclude *iface,
+                                              D3DXINCLUDE_TYPE include_type,
+                                              LPCSTR filename, LPCVOID parent_data,
+                                              LPCVOID *data, UINT *bytes) {
+    const char *p, *parent_name = "";
+    char *pathname = NULL;
+    char **buffer = NULL;
+    HANDLE file;
+    UINT size;
+
+    if(parent_data != NULL)
+        parent_name = *((const char **)parent_data - 1);
+
+    TRACE("Looking up for include file %s, parent %s\n", debugstr_a(filename), debugstr_a(parent_name));
+
+    if ((p = strrchr(parent_name, '\\')) || (p = strrchr(parent_name, '/'))) p++;
+    else p = parent_name;
+    pathname = HeapAlloc(GetProcessHeap(), 0, (p - parent_name) + strlen(filename) + 1);
+    if(!pathname)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    memcpy(pathname, parent_name, p - parent_name);
+    strcpy(pathname + (p - parent_name), filename);
+
+    file = CreateFileA(pathname, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    if(file == INVALID_HANDLE_VALUE)
+        goto error;
+
+    TRACE("Include file found at pathname = %s\n", debugstr_a(pathname));
+
+    size = GetFileSize(file, NULL);
+    if(size == INVALID_FILE_SIZE)
+        goto error;
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size + sizeof(char *));
+    if(!buffer)
+        goto error;
+    *buffer = pathname;
+    if(!ReadFile(file, buffer + 1, size, bytes, NULL))
+        goto error;
+
+    *data = buffer + 1;
+
+    CloseHandle(file);
+    return S_OK;
+
+error:
+    CloseHandle(file);
+    HeapFree(GetProcessHeap(), 0, pathname);
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return HRESULT_FROM_WIN32(GetLastError());
+}
+
+static HRESULT WINAPI d3dincludefromfile_close(ID3DXInclude *iface, LPCVOID data) {
+    HeapFree(GetProcessHeap(), 0, *((char **)data - 1));
+    HeapFree(GetProcessHeap(), 0, (char **)data - 1);
+    return S_OK;
+}
+
+static const struct ID3DXIncludeVtbl D3DXInclude_Vtbl = {
+    d3dincludefromfile_open,
+    d3dincludefromfile_close
+};
+
+struct D3DXIncludeImpl {
+    const ID3DXIncludeVtbl *lpVtbl;
+};
+
 HRESULT WINAPI D3DXAssembleShaderFromFileA(LPCSTR filename,
                                            CONST D3DXMACRO* defines,
                                            LPD3DXINCLUDE include,
@@ -667,8 +740,25 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
                                            LPD3DXBUFFER* shader,
                                            LPD3DXBUFFER* error_messages)
 {
-    FIXME("(%s, %p, %p, %x, %p, %p): stub\n", debugstr_w(filename), defines, include, flags, shader, error_messages);
-    return D3DERR_INVALIDCALL;
+    void *buffer;
+    DWORD len;
+    HRESULT hr;
+    struct D3DXIncludeImpl includefromfile;
+
+    if(FAILED(map_view_of_file(filename, &buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+
+    if(!include)
+    {
+        includefromfile.lpVtbl = &D3DXInclude_Vtbl;
+        include = (LPD3DXINCLUDE)&includefromfile;
+    }
+
+    hr = D3DXAssembleShader(buffer, len, defines, include, flags,
+                            shader, error_messages);
+
+    UnmapViewOfFile(buffer);
+    return hr;
 }
 
 HRESULT WINAPI D3DXAssembleShaderFromResourceA(HMODULE module,
