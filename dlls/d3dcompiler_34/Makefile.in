@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = d3dcompiler_34.dll
+
+C_SRCS = \
+	d3dcompiler_34_main.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
