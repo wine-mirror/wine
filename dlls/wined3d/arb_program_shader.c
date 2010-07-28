@@ -5244,7 +5244,8 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
 
             if(control_frame->outer_loop)
             {
-                int iteration, aL = 0;
+                unsigned int iteration;
+                int aL = 0;
                 struct list copy;
 
                 /* Turn off recording before playback */
@@ -5276,11 +5277,11 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
                     if(ins->handler_idx == WINED3DSIH_ENDLOOP)
                     {
                         priv->aL = aL;
-                        shader_addline(buffer, "#Iteration %d, aL=%d\n", iteration, aL);
+                        shader_addline(buffer, "#Iteration %u, aL=%d\n", iteration, aL);
                     }
                     else
                     {
-                        shader_addline(buffer, "#Iteration %d\n", iteration);
+                        shader_addline(buffer, "#Iteration %u\n", iteration);
                     }
 
                     LIST_FOR_EACH_ENTRY(rec_ins, &copy, struct recorded_instruction, entry)
