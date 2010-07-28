@@ -205,7 +205,7 @@ static inline float float_24_to_32(DWORD in)
 {
     const float sgn = in & 0x800000 ? -1.0f : 1.0f;
     const unsigned short e = (in & 0x780000) >> 19;
-    const unsigned short m = in & 0x7ffff;
+    const unsigned int m = in & 0x7ffff;
 
     if (e == 0)
     {
