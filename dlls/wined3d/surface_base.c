@@ -46,18 +46,18 @@ static inline unsigned short float_32_to_16(const float *in)
     if(isnan(*in)) return 0x7C01;
     if (isinf(*in)) return (*in < 0.0f ? 0xFC00 : 0x7c00);
 
-    if(tmp < pow(2, 10)) {
+    if(tmp < powf(2, 10)) {
         do
         {
             tmp = tmp * 2.0f;
             exp--;
-        }while(tmp < pow(2, 10));
-    } else if(tmp >= pow(2, 11)) {
+        }while(tmp < powf(2, 10));
+    } else if(tmp >= powf(2, 11)) {
         do
         {
             tmp /= 2.0f;
             exp++;
-        }while(tmp >= pow(2, 11));
+        }while(tmp >= powf(2, 11));
     }
 
     mantissa = (unsigned int) tmp;
