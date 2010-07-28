@@ -1790,6 +1790,7 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
                 uri->host_len = data->host_len;
             }
 
+            uri->host_type = Uri_HOST_UNKNOWN;
             break;
         default:
             WARN("(%p %p %x %d): Canonicalization not supported yet\n", data,
