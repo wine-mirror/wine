@@ -192,9 +192,9 @@ static inline float float_16_to_32(const unsigned short *in) {
 
     if(e == 0) {
         if(m == 0) return sgn * 0.0f; /* +0.0 or -0.0 */
-        else return sgn * pow(2, -14.0f) * ((float)m / 1024.0f);
+        else return sgn * powf(2, -14.0f) * ((float)m / 1024.0f);
     } else if(e < 31) {
-        return sgn * pow(2, (float)e - 15.0f) * (1.0f + ((float)m / 1024.0f));
+        return sgn * powf(2, (float)e - 15.0f) * (1.0f + ((float)m / 1024.0f));
     } else {
         if(m == 0) return sgn / 0.0f; /* +INF / -INF */
         else return 0.0f / 0.0f; /* NAN */
@@ -210,11 +210,11 @@ static inline float float_24_to_32(DWORD in)
     if (e == 0)
     {
         if (m == 0) return sgn * 0.0f; /* +0.0 or -0.0 */
-        else return sgn * pow(2, -6.0f) * ((float)m / 524288.0f);
+        else return sgn * powf(2, -6.0f) * ((float)m / 524288.0f);
     }
     else if (e < 15)
     {
-        return sgn * pow(2, (float)e - 7.0f) * (1.0f + ((float)m / 524288.0f));
+        return sgn * powf(2, (float)e - 7.0f) * (1.0f + ((float)m / 524288.0f));
     }
     else
     {
