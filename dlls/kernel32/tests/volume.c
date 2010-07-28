@@ -293,9 +293,9 @@ static void test_GetVolumeInformationA(void)
 {
     BOOL ret;
     UINT result;
-    char Root_Dir0[]="C:";
-    char Root_Dir1[]="C:\\";
-    char Root_Dir2[]="\\\\?\\C:\\";
+    char Root_Colon[]="C:";
+    char Root_Slash[]="C:\\";
+    char Root_UNC[]="\\\\?\\C:\\";
     char volume[MAX_PATH+1];
     DWORD vol_name_size=MAX_PATH+1, vol_serial_num=-1, max_comp_len=0, fs_flags=0, fs_name_len=MAX_PATH+1;
     char vol_name_buf[MAX_PATH+1], fs_name_buf[MAX_PATH+1];
@@ -311,40 +311,27 @@ static void test_GetVolumeInformationA(void)
     result = GetWindowsDirectory(windowsdir, sizeof(windowsdir));
     ok(result < sizeof(windowsdir), "windowsdir is abnormally long!\n");
     ok(result != 0, "GetWindowsDirectory: error %d\n", GetLastError());
-    Root_Dir0[0] = windowsdir[0];
-    Root_Dir1[0] = windowsdir[0];
-    Root_Dir2[4] = windowsdir[0];
+    Root_Colon[0] = windowsdir[0];
+    Root_Slash[0] = windowsdir[0];
+    Root_UNC[4] = windowsdir[0];
 
     result = GetCurrentDirectory(MAX_PATH, currentdir);
     ok(result, "GetCurrentDirectory: error %d\n", GetLastError());
-
-    /*  ****  now start the tests       ****  */
-    /* check for error on no trailing \   */
-    if (result > 3)
-    {
-        SetLastError(0xdeadbeef);
-        ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
-                NULL, NULL, fs_name_buf, fs_name_len);
-        ok(!ret && (GetLastError() == ERROR_INVALID_NAME ||
-             broken(GetLastError() == ERROR_BAD_PATHNAME/* win9x */)),
-            "GetVolumeInformationA w/o '\\' did%s fail, last error %u\n", ret ? " not":"", GetLastError());
-    }
-    else
-        skip("Running on a root directory\n");
+    /* Note that GetCurrentDir yields no trailing slash for subdirs */
 
     /* check for NO error on no trailing \ when current dir is root dir */
-    ret = SetCurrentDirectory(Root_Dir1);
+    ret = SetCurrentDirectory(Root_Slash);
     ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
-    ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
+    ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
             NULL, NULL, fs_name_buf, fs_name_len);
     todo_wine
-    ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
+    ok(ret, "GetVolumeInformationA root failed, last error %u\n", GetLastError());
 
-    /* check for error on no trailing \ when current dir is windows dir */
+    /* check for error on no trailing \ when current dir is subdir (windows) of queried drive */
     ret = SetCurrentDirectory(windowsdir);
     ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
     SetLastError(0xdeadbeef);
-    ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
+    ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
             NULL, NULL, fs_name_buf, fs_name_len);
     ok(!ret && (GetLastError() == ERROR_INVALID_NAME ||
          broken(GetLastError() == ERROR_BAD_PATHNAME/* win9x */)),
@@ -354,30 +341,95 @@ static void test_GetVolumeInformationA(void)
     ret = SetCurrentDirectory(currentdir);
     ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
 
+    if (toupper(currentdir[0]) == toupper(windowsdir[0])) {
+        skip("Please re-run from another device than %c:\n", windowsdir[0]);
+        /* FIXME: Use GetLogicalDrives to find another device to avoid this skip. */
+    } else {
+        char Root_Env[]="=C:"; /* where MS maintains the per volume directory */
+        Root_Env[1] = windowsdir[0];
+
+        /* C:\windows becomes the current directory on drive C: */
+        /* Note that paths to subdirs are stored without trailing slash, like what GetCurrentDir yields. */
+        ret = SetEnvironmentVariable(Root_Env, windowsdir);
+        ok(ret, "SetEnvironmentVariable %s failed\n", Root_Env);
+
+        ret = SetCurrentDirectory(windowsdir);
+        ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+        ret = SetCurrentDirectory(currentdir);
+        ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+
+        /* windows dir is current on the root drive, call fails */
+        SetLastError(0xdeadbeef);
+        ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
+                NULL, NULL, fs_name_buf, fs_name_len);
+        ok(!ret && (GetLastError() == ERROR_INVALID_NAME ||
+             broken(GetLastError() == ERROR_BAD_PATHNAME/* Win9x */)),
+           "GetVolumeInformationA did%s fail, last error %u\n", ret ? " not":"", GetLastError());
+
+        /* Try normal drive letter with trailing \ */
+        ret = pGetVolumeInformationA(Root_Slash, vol_name_buf, vol_name_size, NULL,
+                NULL, NULL, fs_name_buf, fs_name_len);
+        ok(ret, "GetVolumeInformationA with \\ failed, last error %u\n", GetLastError());
+
+        ret = SetCurrentDirectory(Root_Slash);
+        ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+        ret = SetCurrentDirectory(currentdir);
+        ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+
+        /* windows dir is STILL CURRENT on root drive; the call fails as before,   */
+        /* proving that SetCurrentDir did not remember the other drive's directory */
+        SetLastError(0xdeadbeef);
+        ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
+                NULL, NULL, fs_name_buf, fs_name_len);
+        ok(!ret && (GetLastError() == ERROR_INVALID_NAME ||
+             broken(GetLastError() == ERROR_BAD_PATHNAME/* Win9x */)),
+           "GetVolumeInformationA did%s fail, last error %u\n", ret ? " not":"", GetLastError());
+
+        /* Now C:\ becomes the current directory on drive C: */
+        ret = SetEnvironmentVariable(Root_Env, Root_Slash); /* set =C:=C:\ */
+        ok(ret, "SetEnvironmentVariable %s failed\n", Root_Env);
+
+        /* \ is current on root drive, call succeeds */
+        ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
+                NULL, NULL, fs_name_buf, fs_name_len);
+        todo_wine ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
+
+        /* again, SetCurrentDirectory on another drive does not matter */
+        ret = SetCurrentDirectory(Root_Slash);
+        ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+        ret = SetCurrentDirectory(currentdir);
+        ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+
+        /* \ is current on root drive, call succeeds */
+        ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
+                NULL, NULL, fs_name_buf, fs_name_len);
+        todo_wine ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
+    }
+
     /* try null root directory to return "root of the current directory"  */
     ret = pGetVolumeInformationA(NULL, vol_name_buf, vol_name_size, NULL,
             NULL, NULL, fs_name_buf, fs_name_len);
     ok(ret, "GetVolumeInformationA failed on null root dir, last error %u\n", GetLastError());
 
     /* Try normal drive letter with trailing \  */
-    ret = pGetVolumeInformationA(Root_Dir1, vol_name_buf, vol_name_size,
+    ret = pGetVolumeInformationA(Root_Slash, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", Root_Dir1, GetLastError());
+    ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", Root_Slash, GetLastError());
 
     /* try again with drive letter and the "disable parsing" prefix */
     SetLastError(0xdeadbeef);
-    ret = pGetVolumeInformationA(Root_Dir2, vol_name_buf, vol_name_size,
+    ret = pGetVolumeInformationA(Root_UNC, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     todo_wine ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
-        "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_Dir2, GetLastError());
+        "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
 
     /* try again with device name space  */
-    Root_Dir2[2] = '.';
+    Root_UNC[2] = '.';
     SetLastError(0xdeadbeef);
-    ret = pGetVolumeInformationA(Root_Dir2, vol_name_buf, vol_name_size,
+    ret = pGetVolumeInformationA(Root_UNC, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     todo_wine ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
-        "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_Dir2, GetLastError());
+        "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
 
     /* try again with a directory off the root - should generate error  */
     if (windowsdir[strlen(windowsdir)-1] != '\\') strcat(windowsdir, "\\");
@@ -385,7 +437,15 @@ static void test_GetVolumeInformationA(void)
     ret = pGetVolumeInformationA(windowsdir, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     todo_wine ok(!ret && (GetLastError()==ERROR_DIR_NOT_ROOT ||
-       /* win9x */ broken(GetLastError()==ERROR_BAD_PATHNAME)),
+         broken(GetLastError()==ERROR_BAD_PATHNAME/* win9x */)),
+          "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", windowsdir, GetLastError());
+    /* A subdir with trailing \ yields DIR_NOT_ROOT instead of INVALID_NAME */
+    if (windowsdir[strlen(windowsdir)-1] == '\\') windowsdir[strlen(windowsdir)-1] = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetVolumeInformationA(windowsdir, vol_name_buf, vol_name_size,
+            &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
+    ok(!ret && (GetLastError()==ERROR_INVALID_NAME ||
+         broken(GetLastError()==ERROR_BAD_PATHNAME/* win9x */)),
           "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", windowsdir, GetLastError());
 
     if (!pGetVolumeNameForVolumeMountPointA) {
@@ -393,7 +453,7 @@ static void test_GetVolumeInformationA(void)
         return;
     }
     /* get the unique volume name for the windows drive  */
-    ret = pGetVolumeNameForVolumeMountPointA(Root_Dir1, volume, MAX_PATH);
+    ret = pGetVolumeNameForVolumeMountPointA(Root_Slash, volume, MAX_PATH);
     ok(ret == TRUE, "GetVolumeNameForVolumeMountPointA failed\n");
 
     /* try again with unique volume name */
