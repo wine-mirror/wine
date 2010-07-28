@@ -1459,7 +1459,7 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
 
     if(stateblock->renderState[WINED3DRS_POINTSCALEENABLE]) {
         GLfloat scaleFactor;
-        float h = stateblock->viewport.Height;
+        DWORD h = stateblock->viewport.Height;
 
         if (pointSize.f < gl_info->limits.pointsize_min)
         {
@@ -1487,7 +1487,7 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
         } else {
             scaleFactor = 1.0f;
         }
-        scaleFactor = pow(h * scaleFactor, 2);
+        scaleFactor = powf(h * scaleFactor, 2);
 
         att[0] = A.f / scaleFactor;
         att[1] = B.f / scaleFactor;
@@ -3600,7 +3600,7 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct w
     IWineD3DDeviceImpl *device = stateblock->device;
     BOOL use_pshader = use_ps(stateblock);
     BOOL use_vshader = use_vs(stateblock);
-    int i;
+    unsigned int i;
 
     if (use_pshader) {
         if(!context->last_was_pshader) {
