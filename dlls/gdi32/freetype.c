@@ -4704,14 +4704,11 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         return GDI_ERROR;
     }
 
-    left = (INT)(ft_face->glyph->metrics.horiBearingX) & -64;
-    right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) + 63) & -64;
-
-    adv = (INT)((ft_face->glyph->metrics.horiAdvance) + 63) >> 6;
-    lsb = left >> 6;
-    bbx = (right - left) >> 6;
-
     if(!needsTransform) {
+        left = (INT)(ft_face->glyph->metrics.horiBearingX) & -64;
+        right = (INT)((ft_face->glyph->metrics.horiBearingX + ft_face->glyph->metrics.width) + 63) & -64;
+        adv = (INT)(ft_face->glyph->metrics.horiAdvance + 63) >> 6;
+
 	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;
 	bottom = (ft_face->glyph->metrics.horiBearingY -
 		  ft_face->glyph->metrics.height) & -64;
@@ -4720,6 +4717,9 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
     } else {
         INT xc, yc;
 	FT_Vector vec;
+
+        left = right = 0;
+
 	for(xc = 0; xc < 2; xc++) {
 	    for(yc = 0; yc < 2; yc++) {
 	        vec.x = (ft_face->glyph->metrics.horiBearingX +
@@ -4756,6 +4756,9 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
         pFT_Vector_Transform(&vec, &transMatUnrotated);
         adv = (vec.x+63) >> 6;
     }
+
+    lsb = left >> 6;
+    bbx = (right - left) >> 6;
     lpgm->gmBlackBoxX = (right - left) >> 6;
     lpgm->gmBlackBoxY = (top - bottom) >> 6;
     lpgm->gmptGlyphOrigin.x = left >> 6;
