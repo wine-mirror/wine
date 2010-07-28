@@ -1769,6 +1769,7 @@ UINT WINAPI ImmGetVirtualKey(HWND hWnd)
   if ( data )
       return data->lastVK;
 
+  version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
   GetVersionExA( &version );
   switch(version.dwPlatformId)
   {
