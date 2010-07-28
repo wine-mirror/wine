@@ -226,6 +226,8 @@ static void test_dc_layout(void)
 {
     INT ret, size_cx, size_cy, res_x, res_y, dpi_x, dpi_y;
     SIZE size;
+    POINT pt;
+    HBITMAP bitmap;
     HDC hdc;
 
     if (!pGetLayout || !pSetLayout)
@@ -235,6 +237,8 @@ static void test_dc_layout(void)
     }
 
     hdc = CreateCompatibleDC(0);
+    bitmap = CreateCompatibleBitmap( hdc, 100, 100 );
+    SelectObject( hdc, bitmap );
 
     size_cx = GetDeviceCaps(hdc, HORZSIZE);
     size_cy = GetDeviceCaps(hdc, VERTSIZE);
@@ -263,7 +267,25 @@ static void test_dc_layout(void)
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
     expect_world_transform(hdc, 1.0, 1.0);
-    expect_LPtoDP(hdc, -1000, 1000);
+    expect_LPtoDP(hdc, -1000 + 99, 1000);
+    GetViewportOrgEx( hdc, &pt );
+    ok( pt.x == 0 && pt.y == 0, "wrong origin %d,%d\n", pt.x, pt.y );
+    GetWindowOrgEx( hdc, &pt );
+    ok( pt.x == 0 && pt.y == 0, "wrong origin %d,%d\n", pt.x, pt.y );
+    GetDCOrgEx( hdc, &pt );
+    ok( pt.x == 0 && pt.y == 0, "wrong origin %d,%d\n", pt.x, pt.y );
+    if (pGetTransform)
+    {
+        XFORM xform;
+        BOOL ret = pGetTransform( hdc, 0x204, &xform ); /* World -> Device */
+        ok( ret, "got %d\n", ret );
+        ok( xform.eM11 == -1.0, "got %f\n", xform.eM11 );
+        ok( xform.eM12 == 0.0, "got %f\n", xform.eM12 );
+        ok( xform.eM21 == 0.0, "got %f\n", xform.eM21 );
+        ok( xform.eM22 == 1.0, "got %f\n", xform.eM22 );
+        ok( xform.eDx == 99.0, "got %f\n", xform.eDx );
+        ok( xform.eDy == 0.0, "got %f\n", xform.eDy );
+    }
 
     SetMapMode(hdc, MM_LOMETRIC);
     ret = GetMapMode( hdc );
@@ -278,7 +300,7 @@ static void test_dc_layout(void)
         rough_match( size.cy, MulDiv( res_y, 254, dpi_y )),  /* Vista uses a more precise method */
         "expected cy %d or %d, got %d\n", size_cy * 10, MulDiv( res_y, 254, dpi_y ), size.cy );
     expect_world_transform(hdc, 1.0, 1.0);
-    expect_LPtoDP(hdc, -MulDiv(1000 / 10, res_x, size_cx), -MulDiv(1000 / 10, res_y, size_cy));
+    expect_LPtoDP(hdc, -MulDiv(1000 / 10, res_x, size_cx) + 99, -MulDiv(1000 / 10, res_y, size_cy));
 
     SetMapMode(hdc, MM_TEXT);
     ret = GetMapMode( hdc );
@@ -291,6 +313,7 @@ static void test_dc_layout(void)
     ok(ret == MM_TEXT, "expected MM_TEXT, got %d\n", ret);
 
     DeleteDC(hdc);
+    DeleteObject( bitmap );
 }
 
 static void test_modify_world_transform(void)
