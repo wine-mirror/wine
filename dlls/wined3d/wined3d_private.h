@@ -728,8 +728,8 @@ extern const shader_backend_t none_shader_backend DECLSPEC_HIDDEN;
 
 /* X11 locking */
 
-extern void (* CDECL wine_tsx11_lock_ptr)(void) DECLSPEC_HIDDEN;
-extern void (* CDECL wine_tsx11_unlock_ptr)(void) DECLSPEC_HIDDEN;
+extern void (CDECL *wine_tsx11_lock_ptr)(void) DECLSPEC_HIDDEN;
+extern void (CDECL *wine_tsx11_unlock_ptr)(void) DECLSPEC_HIDDEN;
 
 /* As GLX relies on X, this is needed */
 extern int num_lock DECLSPEC_HIDDEN;

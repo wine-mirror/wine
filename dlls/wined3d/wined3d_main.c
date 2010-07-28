@@ -46,8 +46,8 @@ struct wined3d_wndproc_table
 static struct wined3d_wndproc_table wndproc_table;
 
 int num_lock = 0;
-void (*CDECL wine_tsx11_lock_ptr)(void) = NULL;
-void (*CDECL wine_tsx11_unlock_ptr)(void) = NULL;
+void (CDECL *wine_tsx11_lock_ptr)(void) = NULL;
+void (CDECL *wine_tsx11_unlock_ptr)(void) = NULL;
 
 static CRITICAL_SECTION wined3d_cs;
 static CRITICAL_SECTION_DEBUG wined3d_cs_debug =
