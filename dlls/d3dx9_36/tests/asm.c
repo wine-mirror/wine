@@ -1500,14 +1500,33 @@ static HRESULT WINAPI testD3DXInclude_open(ID3DXInclude *iface,
                                            LPCSTR filename, LPCVOID parent_data,
                                            LPCVOID *data, UINT *bytes) {
     char *buffer;
-    char include[] = "#define REGISTER r0\nvs.1.1\n";
+    const char include[] = "#define REGISTER r0\nvs.1.1\n";
+    const char include2[] = "#include \"incl3.vsh\"\n";
+    const char include3[] = "vs.1.1\n";
 
-    trace("filename = %s\n",filename);
+    trace("filename = %s\n", filename);
+    trace("parent_data = (%p) -> %s\n", parent_data, (char *)parent_data);
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
-    CopyMemory(buffer, include, sizeof(include));
+    if(!strcmp(filename,"incl.vsh")) {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
+        CopyMemory(buffer, include, sizeof(include));
+        *bytes = sizeof(include);
+        /* Also check for the correct parent_data content */
+        ok(parent_data == NULL, "wrong parent_data value\n");
+    }
+    else if(!strcmp(filename,"incl3.vsh")) {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include3));
+        CopyMemory(buffer, include3, sizeof(include3));
+        *bytes = sizeof(include3);
+        /* Also check for the correct parent_data content */
+        ok(parent_data != NULL && !strncmp(include2, parent_data, strlen(include2)), "wrong parent_data value\n");
+    }
+    else {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include2));
+        CopyMemory(buffer, include2, sizeof(include2));
+        *bytes = sizeof(include2);
+    }
     *data = buffer;
-    *bytes = sizeof(include);
     return S_OK;
 }
 
@@ -1536,6 +1555,10 @@ static void assembleshader_test(void) {
     };
     const char testshader[] = {
         "#include \"incl.vsh\"\n"
+        "mov REGISTER, v0\n"
+    };
+    const char testshader2[] = {
+        "#include \"incl2.vsh\"\n"
         "mov REGISTER, v0\n"
     };
     HRESULT hr;
@@ -1596,6 +1619,32 @@ static void assembleshader_test(void) {
     ok(hr == D3D_OK, "pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
     if(messages) {
         trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if(shader) ID3DXBuffer_Release(shader);
+
+    /* "unexpected #include file from memory" test */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DXAssembleShader(testshader, strlen(testshader),
+                            NULL, NULL, D3DXSHADER_SKIPVALIDATION,
+                            &shader, &messages);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if(messages) {
+        trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if(shader) ID3DXBuffer_Release(shader);
+
+    /* recursive #include test */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DXAssembleShader(testshader2, strlen(testshader2),
+                            NULL, (LPD3DXINCLUDE)&include, D3DXSHADER_SKIPVALIDATION,
+                            &shader, &messages);
+    ok(hr == D3D_OK, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if(messages) {
+        trace("recursive D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);

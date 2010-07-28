@@ -181,6 +181,19 @@ struct mem_file_desc
 
 struct mem_file_desc current_shader;
 LPD3DXINCLUDE current_include;
+
+#define INCLUDES_INITIAL_CAPACITY 4
+
+struct loaded_include
+{
+    const char *name;
+    const char *data;
+};
+
+struct loaded_include *includes;
+int includes_capacity, includes_size;
+const char *parent_include;
+
 char *wpp_output;
 int wpp_output_capacity, wpp_output_size;
 
@@ -275,6 +288,25 @@ static char *wpp_lookup_mem(const char *filename, const char *parent_name,
 {
     /* Here we return always ok. We will maybe fail on the next wpp_open_mem */
     char *path;
+    int i;
+
+    parent_include = NULL;
+    if(parent_name[0] != '\0')
+    {
+        for(i = 0; i < includes_size; i++)
+        {
+            if(!strcmp(parent_name, includes[i].name))
+            {
+                parent_include = includes[i].data;
+                break;
+            }
+        }
+        if(parent_include == NULL)
+        {
+            ERR("Parent include file missing\n");
+            return NULL;
+        }
+    }
 
     path = malloc(strlen(filename) + 1);
     if(!path) return NULL;
@@ -302,15 +334,50 @@ static void *wpp_open_mem(const char *filename, int type)
     }
     hr = ID3DXInclude_Open(current_include,
                            type ? D3DXINC_SYSTEM : D3DXINC_LOCAL,
-                           filename, NULL, (LPCVOID *)&desc->buffer,
+                           filename, parent_include, (LPCVOID *)&desc->buffer,
                            &desc->size);
     if(FAILED(hr))
     {
         HeapFree(GetProcessHeap(), 0, desc);
         return NULL;
     }
+
+    if(includes_capacity == includes_size)
+    {
+        if(includes_capacity == 0)
+        {
+            includes = HeapAlloc(GetProcessHeap(), 0, INCLUDES_INITIAL_CAPACITY);
+            if(includes == NULL)
+            {
+                ERR("Error allocating memory for the loaded includes structure\n");
+                goto error;
+            }
+            includes_capacity = INCLUDES_INITIAL_CAPACITY;
+        }
+        else
+        {
+            int newcapacity = includes_capacity * 2;
+            struct loaded_include *newincludes =
+                HeapReAlloc(GetProcessHeap(), 0, includes, newcapacity);
+            if(newincludes == NULL)
+            {
+                ERR("Error reallocating memory for the loaded includes structure\n");
+                goto error;
+            }
+            includes = newincludes;
+            includes_capacity = newcapacity;
+        }
+    }
+    includes[includes_size].name = filename;
+    includes[includes_size++].data = desc->buffer;
+
     desc->pos = 0;
     return desc;
+
+error:
+    ID3DXInclude_Close(current_include, desc->buffer);
+    HeapFree(GetProcessHeap(), 0, desc);
+    return NULL;
 }
 
 static void wpp_close_mem(void *file)
@@ -505,6 +572,7 @@ HRESULT WINAPI D3DXAssembleShader(LPCSTR data,
         }
     }
     current_include = include;
+    includes_size = 0;
 
     if(shader) *shader = NULL;
     if(error_messages) *error_messages = NULL;
