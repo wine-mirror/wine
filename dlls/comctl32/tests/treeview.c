@@ -1255,6 +1255,13 @@ static void test_TVS_SINGLEEXPAND(void)
     ok(ret, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_singleexpand_seq, "singleexpand notifications", FALSE);
 
+    /* a workaround for NT4 that sends expanding notification when nothing is about to expand */
+    ret = SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)hRoot);
+    ok(ret, "got %d\n", ret);
+    fill_tree(hTree);
+    ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, 0);
+    ok(ret, "got %d\n", ret);
+
     DestroyWindow(hTree);
 }
 

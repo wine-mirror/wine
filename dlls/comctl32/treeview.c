@@ -3426,7 +3426,7 @@ static void TREEVIEW_SingleExpand(TREEVIEW_INFO *infoPtr,
 {
     TREEVIEW_ITEM *SelItem;
 
-    if ((infoPtr->dwStyle & TVS_SINGLEEXPAND) == 0 || infoPtr->hwndEdit) return;
+    if ((infoPtr->dwStyle & TVS_SINGLEEXPAND) == 0 || infoPtr->hwndEdit || !item) return;
 
     TREEVIEW_SendTreeviewNotify(infoPtr, TVN_SINGLEEXPAND, TVC_UNKNOWN, TVIF_HANDLE | TVIF_PARAM, item, 0);
 
