@@ -988,59 +988,49 @@ static void test_resizable2(void)
 static void test_mru(void)
 {
     ok_wndproc_testcase testcase = {0};
-    OPENFILENAMEW ofn = {sizeof(OPENFILENAMEW)};
-    const char *test_dir_nameA = "C:\\mru_test";
-    const WCHAR test_file_name[] =
-        {'t','e','s','t','.','t','x','t',0};
-    const WCHAR test_full_path[] =
-        {'C',':','\\','m','r','u','_','t','e','s','t','\\','t','e','s','t','.','t','x','t',0};
-    const WCHAR template1W[] =
-        {'t','e','m','p','l','a','t','e','1',0};
-    WCHAR filename_buf[MAX_PATH];
+    OPENFILENAME ofn = {sizeof(OPENFILENAME)};
+    const char *test_dir_name = "C:\\mru_test";
+    const char *test_file_name = "test.txt";
+    const char *test_full_path = "C:\\mru_test\\test.txt";
+    char filename_buf[MAX_PATH];
     DWORD ret;
 
     ofn.lpstrFile = filename_buf;
     ofn.nMaxFile = sizeof(filename_buf);
-    ofn.lpTemplateName = template1W;
+    ofn.lpTemplateName = "template1";
     ofn.hInstance = GetModuleHandle(NULL);
     ofn.Flags =  OFN_ENABLEHOOK | OFN_EXPLORER | OFN_ENABLETEMPLATE | OFN_NOCHANGEDIR;
     ofn.lCustData = (LPARAM)&testcase;
     ofn.lpfnHook = (LPOFNHOOKPROC)test_ok_wndproc;
 
     SetLastError(0xdeadbeef);
-    ret = CreateDirectoryA(test_dir_nameA, NULL);
+    ret = CreateDirectoryA(test_dir_name, NULL);
     ok(ret == TRUE, "CreateDirectoryA should have succeeded: %d\n", GetLastError());
 
     /* "teach" comdlg32 about this directory */
-    lstrcpyW(filename_buf, test_full_path);
+    strcpy(filename_buf, test_full_path);
     SetLastError(0xdeadbeef);
-    ret = GetOpenFileNameW(&ofn);
-    if(!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED){
-        win_skip("Platform doesn't implement GetOpenFileNameW\n");
-        RemoveDirectoryA(test_dir_nameA);
-        return;
-    }
-    ok(ret, "GetOpenFileNameW should have succeeded: %d\n", GetLastError());
-    ok(testcase.actclose, "Open File dialog should have closed.\n");
+    ret = GetOpenFileNameA(&ofn);
+    ok(ret, "GetOpenFileNameA should have succeeded: %d\n", GetLastError());
     ret = CommDlgExtendedError();
     ok(!ret, "CommDlgExtendedError returned %x\n", ret);
-    ok(!lstrcmpW(ofn.lpstrFile, test_full_path), "Expected to get %s, got %s\n",
-            wine_dbgstr_w(test_full_path), wine_dbgstr_w(ofn.lpstrFile));
+    ok(testcase.actclose, "Open File dialog should have closed.\n");
+    ok(!strcmp(ofn.lpstrFile, test_full_path), "Expected to get %s, got %s\n", test_full_path, ofn.lpstrFile);
 
     /* get a filename without a full path. it should return the file in
      * test_dir_name, not in the CWD */
-    lstrcpyW(filename_buf, test_file_name);
+    strcpy(filename_buf, test_file_name);
     SetLastError(0xdeadbeef);
-    ret = GetOpenFileNameW(&ofn);
-    ok(ret, "GetOpenFileNameW should have succeeded: %d\n", GetLastError());
-    ok(testcase.actclose, "Open File dialog should have closed.\n");
+    ret = GetOpenFileNameA(&ofn);
+    ok(ret, "GetOpenFileNameA should have succeeded: %d\n", GetLastError());
     ret = CommDlgExtendedError();
     ok(!ret, "CommDlgExtendedError returned %x\n", ret);
-    if(lstrcmpW(ofn.lpstrFile, test_full_path) != 0)
+    ok(testcase.actclose, "Open File dialog should have closed.\n");
+    if(strcmp(ofn.lpstrFile, test_full_path) != 0)
         win_skip("Platform doesn't save MRU data\n");
 
     SetLastError(0xdeadbeef);
-    ret = RemoveDirectoryA(test_dir_nameA);
+    ret = RemoveDirectoryA(test_dir_name);
     ok(ret == TRUE, "RemoveDirectoryA should have succeeded: %d\n", GetLastError());
 }
 
