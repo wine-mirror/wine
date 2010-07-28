@@ -14453,6 +14453,7 @@ wine_fn_config_dll d3d8 enable_d3d8 d3d8
 wine_fn_config_test dlls/d3d8/tests d3d8_test
 wine_fn_config_dll d3d9 enable_d3d9 d3d9
 wine_fn_config_test dlls/d3d9/tests d3d9_test
+wine_fn_config_dll d3dcompiler_36 enable_d3dcompiler_36
 wine_fn_config_dll d3dcompiler_37 enable_d3dcompiler_37
 wine_fn_config_dll d3dcompiler_38 enable_d3dcompiler_38
 wine_fn_config_dll d3dcompiler_39 enable_d3dcompiler_39
