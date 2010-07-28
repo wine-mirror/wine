@@ -582,9 +582,9 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = stateBlock->pixelShaderConstantI[4 * i];
-            val[1] = stateBlock->pixelShaderConstantI[4 * i + 1];
-            val[2] = stateBlock->pixelShaderConstantI[4 * i + 2];
+            val[0] = (float) stateBlock->pixelShaderConstantI[4 * i];
+            val[1] = (float) stateBlock->pixelShaderConstantI[4 * i + 1];
+            val[2] = (float) stateBlock->pixelShaderConstantI[4 * i + 2];
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -614,9 +614,9 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = stateBlock->vertexShaderConstantI[4 * i];
-            val[1] = stateBlock->vertexShaderConstantI[4 * i + 1];
-            val[2] = stateBlock->vertexShaderConstantI[4 * i + 2];
+            val[0] = (float) stateBlock->vertexShaderConstantI[4 * i];
+            val[1] = (float) stateBlock->vertexShaderConstantI[4 * i + 1];
+            val[2] = (float) stateBlock->vertexShaderConstantI[4 * i + 2];
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -1058,7 +1058,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
                 else if (reg->idx >= rel_offset)
                     sprintf(register_name, "C[%s + %u]", rel_reg, reg->idx - rel_offset);
                 else
-                    sprintf(register_name, "C[%s - %u]", rel_reg, -reg->idx + rel_offset);
+                    sprintf(register_name, "C[%s - %u]", rel_reg, rel_offset - reg->idx);
             }
             else
             {
@@ -6981,7 +6981,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surfac
     GLenum shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    float size[4] = {surface->pow2Width, surface->pow2Height, 1, 1};
+    float size[4] = {(float) surface->pow2Width, (float) surface->pow2Height, 1.0f, 1.0f};
     struct arbfp_blit_priv *priv = device->blit_priv;
     enum complex_fixup fixup;
     GLenum textype = surface->texture_target;
