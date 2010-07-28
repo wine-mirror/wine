@@ -248,8 +248,8 @@ struct arb_vs_compile_args
         struct
         {
             WORD                    bools;
-            char                    clip_texcoord;
-            char                    clipplane_mask;
+            unsigned char           clip_texcoord;
+            unsigned char           clipplane_mask;
         }                           boolclip;
         DWORD                       boolclip_compare;
     } clip;
@@ -4482,7 +4482,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     {
         if(stateblock->renderState[WINED3DRS_CLIPPING])
         {
-            args->clip.boolclip.clipplane_mask = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
+            args->clip.boolclip.clipplane_mask = (unsigned char) stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
         }
         /* clipplane_mask was set to 0 by setting boolclip_compare to 0 */
     }
