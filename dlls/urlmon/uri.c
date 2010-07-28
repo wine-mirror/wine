@@ -62,6 +62,9 @@ typedef struct {
     INT             path_start;
     DWORD           path_len;
     INT             extension_offset;
+
+    INT             query_start;
+    DWORD           query_len;
 } Uri;
 
 typedef struct {
@@ -2643,6 +2646,66 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
     return TRUE;
 }
 
+/* Attempts to canonicalize the query string of the URI.
+ *
+ * Things that happen:
+ *  1)  For known scheme types forbidden characters
+ *      are percent encoded, unless the NO_DECODE_EXTRA_INFO flag is set
+ *      or NO_ENCODE_FORBIDDEN_CHARACTERS is set.
+ *
+ *  2)  For known scheme types, percent encoded, unreserved characters
+ *      are decoded as long as the NO_DECODE_EXTRA_INFO flag isn't set.
+ */
+static BOOL canonicalize_query(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    const WCHAR *ptr, *end;
+    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+
+    if(!data->query) {
+        uri->query_start = -1;
+        uri->query_len = 0;
+        return TRUE;
+    }
+
+    uri->query_start = uri->canon_len;
+
+    end = data->query+data->query_len;
+    for(ptr = data->query; ptr < end; ++ptr) {
+        if(*ptr == '%') {
+            if(known_scheme && !(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO)) {
+                WCHAR val = decode_pct_val(ptr);
+                if(is_unreserved(val)) {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = val;
+                    ++uri->canon_len;
+
+                    ptr += 2;
+                    continue;
+                }
+            }
+        } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr)) {
+            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) &&
+               !(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO)) {
+                if(!computeOnly)
+                    pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
+                uri->canon_len += 3;
+                continue;
+            }
+        }
+
+        if(!computeOnly)
+            uri->canon_uri[uri->canon_len] = *ptr;
+        ++uri->canon_len;
+    }
+
+    uri->query_len = uri->canon_len - uri->query_start;
+
+    if(!computeOnly)
+        TRACE("(%p %p %x %d): Canonicalized query string %s len=%d\n", data, uri, flags,
+            computeOnly, debugstr_wn(uri->canon_uri+uri->query_start, uri->query_len),
+            uri->query_len);
+    return TRUE;
+}
+
 /* Canonicalizes the scheme information specified in the parse_data using the specified flags. */
 static BOOL canonicalize_scheme(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     uri->scheme_start = -1;
@@ -2705,6 +2768,11 @@ static int compute_canonicalized_length(const parse_data *data, DWORD flags) {
         return -1;
     }
 
+    if(!canonicalize_query(data, &uri, flags, TRUE)) {
+        ERR("(%p %x): Failed to compute query string length.\n", data, flags);
+        return -1;
+    }
+
     TRACE("(%p %x): Finished computing canonicalized URI length. length=%d\n", data, flags, uri.canon_len);
 
     return uri.canon_len;
@@ -2749,6 +2817,12 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     if(!canonicalize_hierpart(data, uri, flags, FALSE)) {
         ERR("(%p %p %x): Unable to canonicalize the heirpart of the URI\n", data, uri, flags);
         heap_free(uri->canon_uri);
+        return E_INVALIDARG;
+    }
+
+    if(!canonicalize_query(data, uri, flags, FALSE)) {
+        ERR("(%p %p %x): Unable to canonicalize query string of the URI.\n",
+            data, uri, flags);
         return E_INVALIDARG;
     }
 
