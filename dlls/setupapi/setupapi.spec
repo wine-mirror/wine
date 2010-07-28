@@ -363,7 +363,7 @@
 @ stdcall SetupDiInstallClassW(long wstr long ptr)
 @ stub SetupDiInstallDevice
 @ stub SetupDiInstallDriverFiles
-@ stub SetupDiLoadClassIcon
+@ stdcall SetupDiLoadClassIcon(ptr ptr ptr)
 @ stub SetupDiMoveDuplicateDevice
 @ stdcall SetupDiOpenClassRegKey(ptr long)
 @ stdcall SetupDiOpenClassRegKeyExA(ptr long long str ptr)

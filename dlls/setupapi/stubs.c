@@ -417,3 +417,14 @@ BOOL WINAPI SetupDiDeleteDeviceInfo(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA Dev
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
  }
+
+/***********************************************************************
+ *              SetupDiLoadClassIcon  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiLoadClassIcon(const GUID *ClassGuid, HICON *LargeIcon, PINT MiniIconIndex)
+{
+    FIXME(": stub %s, %p, %p\n", debugstr_guid(ClassGuid), LargeIcon, MiniIconIndex);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
