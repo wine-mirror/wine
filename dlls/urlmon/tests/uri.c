@@ -2334,6 +2334,12 @@ static void test_IUri_GetPropertyBSTR(void) {
                         ok(!strcmp_aw(prop.value, received), "Expected %s but got %s on uri_tests[%d].str_props[%d].\n",
                                 prop.value, wine_dbgstr_w(received), i, j);
                     }
+                    if (hr == E_NOTIMPL)  /* no point in continuing */
+                    {
+                        if(uri) IUri_Release(uri);
+                        heap_free(uriW);
+                        return;
+                    }
                 } else {
                     ok(hr == prop.expected, "GetPropertyBSTR returned 0x%08x, expected 0x%08x. On uri_tests[%d].str_props[%d].\n",
                             hr, prop.expected, i, j);
@@ -2404,6 +2410,12 @@ static void test_IUri_GetPropertyDWORD(void) {
                     todo_wine {
                         ok(prop.value == received, "Expected %d but got %d on uri_tests[%d].dword_props[%d].\n",
                                 prop.value, received, i, j);
+                    }
+                    if (hr == E_NOTIMPL)  /* no point in continuing */
+                    {
+                        if(uri) IUri_Release(uri);
+                        heap_free(uriW);
+                        return;
                     }
                 } else {
                     ok(hr == prop.expected, "GetPropertyDWORD returned 0x%08x, expected 0x%08x. On uri_tests[%d].dword_props[%d].\n",
@@ -2501,6 +2513,7 @@ static void test_IUri_GetStrProperties(void) {
             /* GetAbsoluteUri() tests. */
             prop = test.str_props[Uri_PROPERTY_ABSOLUTE_URI];
             hr = IUri_GetAbsoluteUri(uri, &received);
+            if (hr == E_NOTIMPL) goto skip_unimplemented;
             if(prop.todo) {
                 todo_wine {
                     ok(hr == prop.expected, "Error: GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
@@ -2624,27 +2637,6 @@ static void test_IUri_GetStrProperties(void) {
             SysFreeString(received);
             received = NULL;
 
-            /* GetHost() tests. */
-            prop = test.str_props[Uri_PROPERTY_HOST];
-            hr = IUri_GetHost(uri, &received);
-            if(prop.todo) {
-                todo_wine {
-                    ok(hr == prop.expected, "Error: GetHost returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
-                            hr, prop.expected, i);
-                }
-                todo_wine {
-                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
-                            prop.value, wine_dbgstr_w(received), i);
-                }
-            } else {
-                ok(hr == prop.expected, "Error: GetHost returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
-                        hr, prop.expected, i);
-                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
-                        prop.value, wine_dbgstr_w(received), i);
-            }
-            SysFreeString(received);
-            received = NULL;
-
             /* GetPassword() tests. */
             prop = test.str_props[Uri_PROPERTY_PASSWORD];
             hr = IUri_GetPassword(uri, &received);
@@ -2659,6 +2651,28 @@ static void test_IUri_GetStrProperties(void) {
                 }
             } else {
                 ok(hr == prop.expected, "Error: GetPassword returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                        hr, prop.expected, i);
+                ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                        prop.value, wine_dbgstr_w(received), i);
+            }
+            SysFreeString(received);
+            received = NULL;
+
+        skip_unimplemented:
+            /* GetHost() tests. */
+            prop = test.str_props[Uri_PROPERTY_HOST];
+            hr = IUri_GetHost(uri, &received);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.expected, "Error: GetHost returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
+                            hr, prop.expected, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
+                            prop.value, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == prop.expected, "Error: GetHost returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
                         hr, prop.expected, i);
                 ok(!strcmp_aw(prop.value, received), "Error: Expected %s but got %s on uri_tests[%d].\n",
                         prop.value, wine_dbgstr_w(received), i);
@@ -2871,6 +2885,7 @@ static void test_IUri_GetDwordProperties(void) {
             /* GetHostType() tests. */
             prop = test.dword_props[Uri_PROPERTY_HOST_TYPE-Uri_PROPERTY_DWORD_START];
             hr = IUri_GetHostType(uri, &received);
+            if (hr == E_NOTIMPL) goto skip_unimplemented;
             if(prop.todo) {
                 todo_wine {
                     ok(hr == prop.expected, "Error: GetHostType returned 0x%08x, expected 0x%08x on uri_tests[%d].\n",
@@ -2904,6 +2919,7 @@ static void test_IUri_GetDwordProperties(void) {
             }
             received = -9999999;
 
+        skip_unimplemented:
             /* GetScheme() tests. */
             prop = test.dword_props[Uri_PROPERTY_SCHEME-Uri_PROPERTY_DWORD_START];
             hr = IUri_GetScheme(uri, &received);
@@ -3005,6 +3021,12 @@ static void test_IUri_GetPropertyLength(void) {
                         ok(receivedLen == expectedLen, "Error: Expected a length of %d but got %d on uri_tests[%d].str_props[%d].\n",
                                 expectedLen, receivedLen, i, j);
                     }
+                    if (hr == E_NOTIMPL)  /* no point in continuing */
+                    {
+                        if(uri) IUri_Release(uri);
+                        heap_free(uriW);
+                        return;
+                    }
                 } else {
                     ok(hr == prop.expected, "Error: GetPropertyLength returned 0x%08x, expected 0x%08x on uri_tests[%d].str_props[%d].\n",
                             hr, prop.expected, i, j);
@@ -3056,6 +3078,12 @@ static void test_IUri_GetProperties(void) {
             if(test.props_todo) {
                 todo_wine {
                     ok(hr == S_OK, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+                }
+                if (hr == E_NOTIMPL)  /* no point in continuing */
+                {
+                    if(uri) IUri_Release(uri);
+                    heap_free(uriW);
+                    return;
                 }
             } else {
                 ok(hr == S_OK, "Error: GetProperties returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
@@ -3127,6 +3155,12 @@ static void test_IUri_HasProperty(void) {
                     todo_wine {
                         ok(hr == S_OK, "Error: HasProperty returned 0x%08x, expected 0x%08x for property %d on uri_tests[%d].\n",
                                 hr, S_OK, j, i);
+                    }
+                    if (hr == E_NOTIMPL)  /* no point in continuing */
+                    {
+                        if(uri) IUri_Release(uri);
+                        heap_free(uriW);
+                        return;
                     }
 
                     /* Check if the property should be true. */
