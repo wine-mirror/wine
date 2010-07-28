@@ -243,7 +243,7 @@ cat >conftest.l <<EOF
 }
 %%
 EOF
-if $FLEX -t conftest.l >/dev/null 2>&1
+if $FLEX -t conftest.l >/dev/null 2>&AS_MESSAGE_LOG_FD
 then
   AC_MSG_RESULT([yes])
 else

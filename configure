@@ -4214,7 +4214,7 @@ cat >conftest.l <<EOF
 }
 %%
 EOF
-if $FLEX -t conftest.l >/dev/null 2>&1
+if $FLEX -t conftest.l >/dev/null 2>&5
 then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
