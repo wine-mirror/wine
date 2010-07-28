@@ -1887,7 +1887,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     char reg_dest[40];
     char reg_coord[40];
     DWORD reg_sampler_code;
-    DWORD myflags = 0;
+    WORD myflags = 0;
 
     /* All versions have a destination register */
     shader_arb_get_dst_param(ins, dst, reg_dest);
@@ -3052,7 +3052,7 @@ static void shader_hw_texldd(const struct wined3d_shader_instruction *ins)
     DWORD sampler_idx = ins->src[1].reg.idx;
     char reg_dest[40];
     char reg_src[3][40];
-    DWORD flags = TEX_DERIV;
+    WORD flags = TEX_DERIV;
 
     shader_arb_get_dst_param(ins, &ins->dst[0], reg_dest);
     shader_arb_get_src_param(ins, &ins->src[0], 0, reg_src[0]);
@@ -3070,7 +3070,7 @@ static void shader_hw_texldl(const struct wined3d_shader_instruction *ins)
     DWORD sampler_idx = ins->src[1].reg.idx;
     char reg_dest[40];
     char reg_coord[40];
-    DWORD flags = TEX_LOD;
+    WORD flags = TEX_LOD;
 
     shader_arb_get_dst_param(ins, &ins->dst[0], reg_dest);
     shader_arb_get_src_param(ins, &ins->src[0], 0, reg_coord);
