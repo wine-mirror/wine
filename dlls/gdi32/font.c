@@ -1777,12 +1777,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     else if(flags & ETO_GLYPH_INDEX)
         glyphs = reordered_str;
 
-    TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
-          lprect, debugstr_wn(str, count), count, lpDx);
-
-    if(lprect)
-        TRACE("rect: %d,%d - %d,%d\n", lprect->left, lprect->top, lprect->right,
-              lprect->bottom);
+    TRACE("%p, %d, %d, %08x, %s, %s, %d, %p)\n", hdc, x, y, flags,
+          wine_dbgstr_rect(lprect), debugstr_wn(str, count), count, lpDx);
     TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), GetMapMode(hdc));
 
     if(align & TA_UPDATECP)
@@ -1923,7 +1919,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 GetTextExtentPointW(hdc, reordered_str, count, &sz);
             done_extents = TRUE;
         }
-        width.x = INTERNAL_XWSTODS(dc, sz.cx);
+        width.x = abs(INTERNAL_XWSTODS(dc, sz.cx));
         width.y = 0;
     }
 
@@ -2018,7 +2014,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                         for(j = 1; j < count; j++)
                         {
                             GetTextExtentPointW(hdc, reordered_str + j - 1, 1, &tmpsz);
-                            offsets[j].x = offsets[j - 1].x + INTERNAL_XWSTODS(dc, tmpsz.cx);
+                            offsets[j].x = offsets[j - 1].x + abs(INTERNAL_XWSTODS(dc, tmpsz.cx));
                             offsets[j].y = 0;
                         }
                     }
