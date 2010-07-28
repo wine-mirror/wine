@@ -219,7 +219,7 @@ static inline int tkill( int tgid, int pid, int sig )
         ret = syscall(238 /*SYS_tkill*/, pid, sig);
     return ret;
 # elif defined(__x86_64__)
-    return syscall(200 /*SYS_tkill*/, pid, sig);
+    return syscall(234 /*SYS_tgkill*/, tgid, pid, sig);
 # else
     errno = ENOSYS;
     return -1;
