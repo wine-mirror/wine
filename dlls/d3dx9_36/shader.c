@@ -661,6 +661,8 @@ HRESULT WINAPI D3DXCompileShader(LPCSTR pSrcData,
     TRACE("Shader source:\n");
     TRACE("%s\n", debugstr_an(pSrcData, srcDataLen));
 
+    if (ppErrorMsgs)
+        D3DXCreateBuffer(1, ppErrorMsgs); /* zero fill used as string end */
     return D3DERR_INVALIDCALL;
 }
 
