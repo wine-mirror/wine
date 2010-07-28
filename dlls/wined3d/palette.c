@@ -74,7 +74,7 @@ static ULONG  WINAPI IWineD3DPaletteImpl_Release(IWineD3DPalette *iface) {
 }
 
 /* Not called from the vtable */
-static DWORD IWineD3DPaletteImpl_Size(DWORD dwFlags)
+static WORD IWineD3DPaletteImpl_Size(DWORD dwFlags)
 {
     switch (dwFlags & SIZE_BITS) {
         case WINEDDPCAPS_1BIT: return 2;
