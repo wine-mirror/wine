@@ -583,7 +583,8 @@ static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, C
  *   Success: D3D_OK, if we successfully load the pixel data into our surface or
  *                    if pSrcMemory is NULL but the other parameters are valid
  *   Failure: D3DERR_INVALIDCALL, if pDestSurface, SrcPitch or pSrcRect are NULL or
- *                                if SrcFormat is an invalid format (other than D3DFMT_UNKNOWN)
+ *                                if SrcFormat is an invalid format (other than D3DFMT_UNKNOWN) or
+ *                                if DestRect is invalid
  *            D3DXERR_INVALIDDATA, if we fail to lock pDestSurface
  *            E_FAIL, if SrcFormat is D3DFMT_UNKNOWN or the dimensions of pSrcRect are invalid
  *
@@ -631,8 +632,12 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
         destsize.x = surfdesc.Width;
         destsize.y = surfdesc.Height;
     } else {
+        if(pDestRect->left > pDestRect->right || pDestRect->right > surfdesc.Width) return D3DERR_INVALIDCALL;
+        if(pDestRect->top > pDestRect->bottom || pDestRect->bottom > surfdesc.Height) return D3DERR_INVALIDCALL;
+        if(pDestRect->left < 0 || pDestRect->top < 0) return D3DERR_INVALIDCALL;
         destsize.x = pDestRect->right - pDestRect->left;
         destsize.y = pDestRect->bottom - pDestRect->top;
+        if(destsize.x == 0 || destsize.y == 0) return D3D_OK;
     }
 
     hr = IDirect3DSurface9_LockRect(pDestSurface, &lockrect, pDestRect, 0);
