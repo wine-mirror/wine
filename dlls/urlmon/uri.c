@@ -126,6 +126,9 @@ typedef struct {
 
     const WCHAR     *query;
     DWORD           query_len;
+
+    const WCHAR     *fragment;
+    DWORD           fragment_len;
 } parse_data;
 
 static const CHAR hexDigits[] = "0123456789ABCDEF";
@@ -1783,6 +1786,45 @@ static BOOL parse_query(const WCHAR **ptr, parse_data *data, DWORD flags) {
     return TRUE;
 }
 
+/* Attempts to parse the fragment from the URI.
+ *
+ * NOTES:
+ *  If NO_DECODE_EXTRA_INFO flag is set, then invalid percent encoded
+ *  data is allowed appear in the query string. For unknown scheme types
+ *  invalid percent encoded data is allowed to appear reguardless.
+ */
+static BOOL parse_fragment(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+
+    if(**ptr != '#') {
+        TRACE("(%p %p %x): URI didn't contain a fragment.\n", ptr, data, flags);
+        return TRUE;
+    }
+
+    data->fragment = *ptr;
+
+    ++(*ptr);
+    while(**ptr) {
+        if(**ptr == '%' && known_scheme &&
+           !(flags & Uri_CREATE_NO_DECODE_EXTRA_INFO)) {
+            if(!check_pct_encoded(ptr)) {
+                *ptr = data->fragment;
+                data->fragment = NULL;
+                return FALSE;
+            } else
+                continue;
+        }
+
+        ++(*ptr);
+    }
+
+    data->fragment_len = *ptr - data->fragment;
+
+    TRACE("(%p %p %x): Parsed fragment %s len=%d\n", ptr, data, flags,
+        debugstr_wn(data->fragment, data->fragment_len), data->fragment_len);
+    return TRUE;
+}
+
 /* Parses and validates the components of the specified by data->uri
  * and stores the information it parses into 'data'.
  *
@@ -1806,7 +1848,8 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
     if(!parse_query(pptr, data, flags))
         return FALSE;
 
-    /* TODO: Parse fragment (if the URI has one). */
+    if(!parse_fragment(pptr, data, flags))
+        return FALSE;
 
     TRACE("(%p %x): FINISHED PARSING URI.\n", data, flags);
     return TRUE;

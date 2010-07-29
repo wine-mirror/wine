@@ -3160,6 +3160,36 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE},
         }
+    },
+    /* Unknown scheme types can have invalid % encoded data in fragments. */
+    {   "zip://www.winehq.org/tests/#Te%xx", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|Uri_HAS_FRAGMENT|
+        Uri_HAS_HOST|Uri_HAS_DOMAIN|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        TRUE,
+        {
+            {"zip://www.winehq.org/tests/#Te%xx",S_OK,TRUE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"zip://www.winehq.org/tests/#Te%xx",S_OK,TRUE},
+            {"winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"#Te%xx",S_OK,TRUE},
+            {"www.winehq.org",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/tests/",S_OK,FALSE},
+            {"/tests/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"zip://www.winehq.org/tests/#Te%xx",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE},
+        }
     }
 };
 
@@ -3214,7 +3244,9 @@ static const invalid_uri invalid_uri_tests[] = {
     {"news:test%XX",0,FALSE},
     {"mailto:wine@winehq%G8.com",0,FALSE},
     /* Known scheme types can't have invalid % encoded data in query string. */
-    {"http://google.com/?query=te%xx",0,FALSE}
+    {"http://google.com/?query=te%xx",0,FALSE},
+    /* Invalid % encoded data in fragment of know scheme type. */
+    {"ftp://google.com/#Test%xx",0,FALSE}
 };
 
 typedef struct _uri_equality {
