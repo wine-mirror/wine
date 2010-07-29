@@ -271,7 +271,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
   {
     if (wc->pLastSplittableRun->member.run.nFlags & (MERF_GRAPHICS|MERF_TAB))
     {
-      wc->pt = wc->ptLastSplittableRun;
+      wc->pt = wc->pLastSplittableRun->member.run.pt;
       return wc->pLastSplittableRun;
     }
     else if (wc->pLastSplittableRun->member.run.nFlags & MERF_SPLITTABLE)
@@ -299,7 +299,7 @@ static ME_DisplayItem *ME_SplitByBacktracking(ME_WrapContext *wc, ME_DisplayItem
     else
     {
       /* restart from the first run beginning with spaces */
-      wc->pt = wc->ptLastSplittableRun;
+      wc->pt = wc->pLastSplittableRun->member.run.pt;
       return wc->pLastSplittableRun;
     }
   }
@@ -451,7 +451,6 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
     || ((run->nFlags & (MERF_GRAPHICS|MERF_TAB)) && (p != wc->pRowStart)))
   {
     wc->pLastSplittableRun = p;
-    wc->ptLastSplittableRun = wc->pt;
   }
   wc->pt.x += run->nWidth;
   return p->next;

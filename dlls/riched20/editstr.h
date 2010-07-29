@@ -414,7 +414,6 @@ typedef struct tagME_WrapContext
   ME_DisplayItem *pRowStart;
 
   ME_DisplayItem *pLastSplittableRun;
-  POINT ptLastSplittableRun;
 } ME_WrapContext;
 
 #endif
