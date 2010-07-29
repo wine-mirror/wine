@@ -3075,6 +3075,19 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_FRAGMENT:
+        if(This->fragment_start > -1) {
+            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->fragment_start, This->fragment_len);
+            hres = S_OK;
+        } else {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        }
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+
+        break;
     case Uri_PROPERTY_HOST:
         if(This->host_start > -1) {
             /* The '[' and ']' aren't included for IPv6 addresses. */
@@ -3254,6 +3267,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         }
 
         break;
+    case Uri_PROPERTY_FRAGMENT:
+        *pcchProperty = This->fragment_len;
+        hres = (This->fragment_start > -1) ? S_OK : S_FALSE;
+        break;
     case Uri_PROPERTY_HOST:
         *pcchProperty = This->host_len;
 
@@ -3408,13 +3425,8 @@ static HRESULT WINAPI Uri_GetExtension(IUri *iface, BSTR *pstrExtension)
 
 static HRESULT WINAPI Uri_GetFragment(IUri *iface, BSTR *pstrFragment)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrFragment);
-
-    if(!pstrFragment)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrFragment);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_FRAGMENT, pstrFragment, 0);
 }
 
 static HRESULT WINAPI Uri_GetHost(IUri *iface, BSTR *pstrHost)
