@@ -296,7 +296,7 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
     xform->eM22 = scaleY;
     xform->eDx  = (double)dc->vportOrgX - scaleX * (double)dc->wndOrgX;
     xform->eDy  = (double)dc->vportOrgY - scaleY * (double)dc->wndOrgY;
-    if (dc->layout & LAYOUT_RTL) xform->eDx += dc->vis_rect.right - dc->vis_rect.left - 1;
+    if (dc->layout & LAYOUT_RTL) xform->eDx = dc->vis_rect.right - dc->vis_rect.left - 1 - xform->eDx;
 }
 
 /***********************************************************************
