@@ -50,10 +50,19 @@ static const WCHAR wszWineInternetExplorer[] =
 void adjust_ie_docobj_rect(HWND frame, RECT* rc)
 {
     HWND hwndRebar = GetDlgItem(frame, IDC_BROWSE_REBAR);
+    HWND hwndStatus = GetDlgItem(frame, IDC_BROWSE_STATUSBAR);
     INT barHeight = SendMessageW(hwndRebar, RB_GETBARHEIGHT, 0, 0);
 
     rc->top += barHeight;
     rc->bottom -= barHeight;
+
+    if(IsWindowVisible(hwndStatus))
+    {
+        RECT statusrc;
+
+        GetClientRect(hwndStatus, &statusrc);
+        rc->bottom -= statusrc.bottom - statusrc.top;
+    }
 }
 
 static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -145,7 +154,12 @@ static void create_rebar(HWND hwnd)
 
 static LRESULT iewnd_OnCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
 {
+    InternetExplorer* This = (InternetExplorer*)lpcs->lpCreateParams;
     SetWindowLongPtrW(hwnd, 0, (LONG_PTR) lpcs->lpCreateParams);
+
+    This->status_hwnd = CreateStatusWindowW(CCS_NODIVIDER|WS_CHILD|WS_VISIBLE, NULL, hwnd, IDC_BROWSE_STATUSBAR);
+    SendMessageW(This->status_hwnd, SB_SIMPLE, TRUE, 0);
+
     create_rebar(hwnd);
 
     return 0;
@@ -156,6 +170,8 @@ static LRESULT iewnd_OnSize(InternetExplorer *This, INT width, INT height)
     HWND hwndRebar = GetDlgItem(This->frame_hwnd, IDC_BROWSE_REBAR);
     INT barHeight = SendMessageW(hwndRebar, RB_GETBARHEIGHT, 0, 0);
     RECT docarea = {0, 0, width, height};
+
+    SendMessageW(This->status_hwnd, WM_SIZE, 0, 0);
 
     adjust_ie_docobj_rect(This->frame_hwnd, &docarea);
 

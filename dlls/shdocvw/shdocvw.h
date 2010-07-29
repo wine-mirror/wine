@@ -189,6 +189,7 @@ struct InternetExplorer {
     LONG ref;
 
     HWND frame_hwnd;
+    HWND status_hwnd;
 
     DocHost doc_host;
 };

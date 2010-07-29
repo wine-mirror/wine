@@ -26,6 +26,7 @@
 #define IDC_BROWSE_OPEN_URL            1002
 #define IDC_BROWSE_REBAR               1003
 #define IDC_BROWSE_ADDRESSBAR          1004
+#define IDC_BROWSE_STATUSBAR           1005
 
 #define ID_BROWSE_NEW_WINDOW           275
 #define ID_BROWSE_OPEN                 256
