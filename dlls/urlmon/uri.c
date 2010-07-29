@@ -3056,6 +3056,30 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             hres = E_OUTOFMEMORY;
 
         break;
+    case Uri_PROPERTY_DISPLAY_URI:
+        /* The Display URI contains everything except for the userinfo for known
+         * scheme types.
+         */
+        if(This->scheme_type != URL_SCHEME_UNKNOWN && This->userinfo_start > -1) {
+            *pbstrProperty = SysAllocStringLen(NULL, This->canon_len-This->userinfo_len);
+
+            if(*pbstrProperty) {
+                /* Copy everything before the userinfo over. */
+                memcpy(*pbstrProperty, This->canon_uri, This->userinfo_start*sizeof(WCHAR));
+                /* Copy everything after the userinfo over. */
+                memcpy(*pbstrProperty+This->userinfo_start,
+                   This->canon_uri+This->userinfo_start+This->userinfo_len+1,
+                   (This->canon_len-(This->userinfo_start+This->userinfo_len+1))*sizeof(WCHAR));
+            }
+        } else
+            *pbstrProperty = SysAllocString(This->canon_uri);
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+        else
+            hres = S_OK;
+
+        break;
     case Uri_PROPERTY_DOMAIN:
         if(This->domain_offset > -1) {
             *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start+This->domain_offset,
@@ -3262,6 +3286,14 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         *pcchProperty = This->authority_len;
         hres = (This->authority_start > -1) ? S_OK : S_FALSE;
         break;
+    case Uri_PROPERTY_DISPLAY_URI:
+        if(This->scheme_type != URL_SCHEME_UNKNOWN && This->userinfo_start > -1)
+            *pcchProperty = This->canon_len-This->userinfo_len-1;
+        else
+            *pcchProperty = This->canon_len;
+
+        hres = S_OK;
+        break;
     case Uri_PROPERTY_DOMAIN:
         if(This->domain_offset > -1)
             *pcchProperty = This->host_len - This->domain_offset;
@@ -3410,13 +3442,8 @@ static HRESULT WINAPI Uri_GetAuthority(IUri *iface, BSTR *pstrAuthority)
 
 static HRESULT WINAPI Uri_GetDisplayUri(IUri *iface, BSTR *pstrDisplayUri)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrDisplayUri);
-
-    if(!pstrDisplayUri)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrDisplayUri);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_DISPLAY_URI, pstrDisplayUri, 0);
 }
 
 static HRESULT WINAPI Uri_GetDomain(IUri *iface, BSTR *pstrDomain)
