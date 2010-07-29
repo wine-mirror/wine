@@ -3098,7 +3098,8 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4])
     {
         FIXME("texldd used, but not supported by hardware. Falling back to regular tex\n");
-        return shader_glsl_tex(ins);
+        shader_glsl_tex(ins);
+        return;
     }
 
     sampler_idx = ins->src[1].reg.idx;
