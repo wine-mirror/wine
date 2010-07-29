@@ -96,8 +96,8 @@ HKCR,"LiveScript Author\OLEScript",,16
 ;; FIXME: This probably should go to wshext.dll
 [FileType.Reg]
 HKCR,".js",,,"JSFile"
-HKCR,"JSFile",,,"JSCript Script File"
-HKCR,"JSFile\ScriptEngine",,,"JSCript"
+HKCR,"JSFile",,,"JScript Script File"
+HKCR,"JSFile\ScriptEngine",,,"JScript"
 
 
 [Strings]
