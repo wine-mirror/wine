@@ -273,7 +273,6 @@ ME_DisplayItem *ME_SplitRun(ME_WrapContext *wc, ME_DisplayItem *item, int nVChar
   run2 = &cursor.pRun->member.run;
 
   ME_CalcRunExtent(wc->context, para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run);
-  ME_CalcRunExtent(wc->context, para, wc->nRow ? wc->nLeftMargin : wc->nFirstMargin, run2);
 
   run2->pt.x = run->pt.x+run->nWidth;
   run2->pt.y = run->pt.y;

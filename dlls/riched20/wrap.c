@@ -361,6 +361,9 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
       if (black) {
         wc->bOverflown = FALSE;
         pp = ME_SplitRun(wc, p, black);
+        ME_CalcRunExtent(wc->context, &wc->pPara->member.para,
+                         wc->nRow ? wc->nLeftMargin : wc->nFirstMargin,
+                         &pp->member.run);
         ME_InsertRowStart(wc, pp);
         return pp;
       }
