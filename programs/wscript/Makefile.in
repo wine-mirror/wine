@@ -7,7 +7,12 @@ APPMODE   = -mwindows -municode
 IMPORTS   = uuid oleaut32 ole32 advapi32
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 
+RC_SRCS = \
+	rsrc.rc
+
 C_SRCS = \
 	main.c
+
+IDL_TLB_SRCS = ihost.idl
 
 @MAKE_PROG_RULES@
