@@ -1715,6 +1715,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     LPWSTR reordered_str = (LPWSTR)str;
     WORD *glyphs = NULL;
     UINT align = GetTextAlign( hdc );
+    DWORD layout = GetLayout( hdc );
     POINT pt;
     TEXTMETRICW tm;
     LOGFONTW lf;
@@ -1755,17 +1756,23 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     if (!lprect)
         flags &= ~ETO_CLIPPED;
-        
+
+    if (flags & ETO_RTLREADING) align |= TA_RTLREADING;
+    if (layout & LAYOUT_RTL)
+    {
+        if ((align & TA_CENTER) != TA_CENTER) align ^= TA_RIGHT;
+        align ^= TA_RTLREADING;
+    }
+
     if( !(flags & (ETO_GLYPH_INDEX | ETO_IGNORELANGUAGE)) && count > 0 )
     {
         INT cGlyphs;
         reordered_str = HeapAlloc(GetProcessHeap(), 0, count*sizeof(WCHAR));
 
         BIDI_Reorder( hdc, str, count, GCP_REORDER,
-                      ((flags&ETO_RTLREADING)!=0 || (GetTextAlign(hdc)&TA_RTLREADING)!=0)?
-                      WINE_GCPW_FORCE_RTL:WINE_GCPW_FORCE_LTR,
+                      (align & TA_RTLREADING) ? WINE_GCPW_FORCE_RTL : WINE_GCPW_FORCE_LTR,
                       reordered_str, count, NULL, &glyphs, &cGlyphs);
-    
+
         flags |= ETO_IGNORELANGUAGE;
         if (glyphs)
         {
@@ -1901,6 +1908,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             LPtoDP(hdc, desired, 2);
             desired[1].x -= desired[0].x;
             desired[1].y -= desired[0].y;
+            if (layout & LAYOUT_RTL) desired[1].x = -desired[1].x;
 
             deltas[i].x = desired[1].x - width.x;
             deltas[i].y = desired[1].y - width.y;
