@@ -579,10 +579,8 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         }
 
         p = &editor->pCursors[nCursor];
-        if (p->nOffset) {
-          ME_SplitRunSimple(editor, p->pRun, p->nOffset);
-          p = &editor->pCursors[nCursor];
-        }
+        if (p->nOffset)
+          ME_SplitRunSimple(editor, p);
         tmp_style = ME_GetInsertStyle(editor, nCursor);
         /* ME_SplitParagraph increases style refcount */
         tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, eol_str, 0);

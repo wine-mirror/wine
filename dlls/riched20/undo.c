@@ -336,7 +336,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
     int paraFlags = pItem->member.para.nFlags & (MEPF_ROWSTART|MEPF_CELL|MEPF_ROWEND);
     ME_CursorFromCharOfs(editor, pUItem->nStart, &tmp);
     if (tmp.nOffset)
-      tmp.pRun = ME_SplitRunSimple(editor, tmp.pRun, tmp.nOffset);
+      ME_SplitRunSimple(editor, &tmp);
     assert(pUItem->eol_str);
     this_para = tmp.pPara;
     bFixRowStart = this_para->member.para.nFlags & MEPF_ROWSTART;
