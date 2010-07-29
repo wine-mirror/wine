@@ -3359,26 +3359,27 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     BOOL bRepaint = TRUE;
     p = ME_ToCF2W(&buf, (CHARFORMAT2W *)lParam);
     if (p == NULL) return 0;
-    if (!wParam)
-      ME_SetDefaultCharFormat(editor, p);
-    else if (wParam == (SCF_WORD | SCF_SELECTION)) {
-      FIXME("EM_SETCHARFORMAT: word selection not supported\n");
-      return 0;
-    } else if (wParam == SCF_ALL) {
-      if (editor->mode & TM_PLAINTEXT)
+    if (wParam & SCF_ALL) {
+      if (editor->mode & TM_PLAINTEXT) {
         ME_SetDefaultCharFormat(editor, p);
-      else {
+      } else {
         ME_Cursor start;
         ME_SetCursorToStart(editor, &start);
         ME_SetCharFormat(editor, &start, NULL, p);
         editor->nModifyStep = 1;
       }
-    } else if (editor->mode & TM_PLAINTEXT) {
-      return 0;
-    } else {
+    } else if (wParam & SCF_SELECTION) {
+      if (editor->mode & TM_PLAINTEXT)
+        return 0;
+      if (wParam & SCF_WORD) {
+        FIXME("EM_SETCHARFORMAT: word selection not supported\n");
+        return 0;
+      }
       bRepaint = ME_IsSelection(editor);
       ME_SetSelectionCharFormat(editor, p);
       if (bRepaint) editor->nModifyStep = 1;
+    } else { /* SCF_DEFAULT */
+      ME_SetDefaultCharFormat(editor, p);
     }
     ME_CommitUndo(editor);
     if (bRepaint)
