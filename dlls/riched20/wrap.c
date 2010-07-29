@@ -349,7 +349,6 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
       return p->next;
 
     if (run->nFlags & MERF_WHITESPACE) {
-      p->member.run.nFlags |= MERF_SKIPPED;
       wc->pt.x += run->nWidth;
       /* skip runs consisting of only whitespaces */
       return p->next;
@@ -362,7 +361,6 @@ static ME_DisplayItem *ME_WrapHandleRun(ME_WrapContext *wc, ME_DisplayItem *p)
       if (black) {
         wc->bOverflown = FALSE;
         pp = ME_SplitRun(wc, p, black);
-        p->member.run.nFlags |= MERF_SKIPPED;
         ME_InsertRowStart(wc, pp);
         return pp;
       }
@@ -588,7 +586,6 @@ static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
           else
             break;
         }
-        p->member.run.nFlags &= ~MERF_CALCBYWRAP;
         break;
       default:
         break;

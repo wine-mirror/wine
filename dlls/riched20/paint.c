@@ -959,10 +959,7 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
           rc.top = c->pt.y + para->pt.y + run->pt.y;
           rc.bottom = rc.bottom + height;
           TRACE("rc = (%d, %d, %d, %d)\n", rc.left, rc.top, rc.right, rc.bottom);
-          if (run->nFlags & MERF_SKIPPED)
-            DrawFocusRect(c->hDC, &rc);
-          else
-            FrameRect(c->hDC, &rc, GetSysColorBrush(COLOR_GRAYTEXT));
+          FrameRect(c->hDC, &rc, GetSysColorBrush(COLOR_GRAYTEXT));
         }
         if (visible)
           ME_DrawRun(c, c->pt.x + run->pt.x,
