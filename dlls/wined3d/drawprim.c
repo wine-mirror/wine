@@ -743,7 +743,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 static void normalize_normal(float *n) {
     float length = n[0] * n[0] + n[1] * n[1] + n[2] * n[2];
     if (length == 0.0f) return;
-    length = sqrt(length);
+    length = sqrtf(length);
     n[0] = n[0] / length;
     n[1] = n[1] / length;
     n[2] = n[2] / length;
@@ -828,9 +828,9 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     for(j = 0; j < info->Height; j++) {
         for(i = 0; i < info->Width; i++) {
             const float *v = (const float *)(data + vtxStride * i + vtxStride * info->Stride * j);
-            if(fabs(v[0]) > max_x) max_x = fabs(v[0]);
-            if(fabs(v[1]) > max_y) max_y = fabs(v[1]);
-            if(fabs(v[2]) > max_z) max_z = fabs(v[2]);
+            if(fabs(v[0]) > max_x) max_x = fabsf(v[0]);
+            if(fabs(v[1]) > max_y) max_y = fabsf(v[1]);
+            if(fabs(v[2]) > max_z) max_z = fabsf(v[2]);
             if(v[2] < neg_z) neg_z = v[2];
         }
     }
