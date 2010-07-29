@@ -25,11 +25,17 @@
 #include <winreg.h>
 #include <ole2.h>
 #include <activscp.h>
+#include <initguid.h>
+
+#include "wscript.h"
 
 #include <wine/debug.h>
 #include <wine/unicode.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
+
+static const WCHAR wscriptW[] = {'W','S','c','r','i','p','t',0};
+static const WCHAR wshW[] = {'W','S','H',0};
 
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface,
                                                       REFIID riid, void **ppv)
@@ -71,8 +77,22 @@ static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *p
 static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface,
         LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown **ppunkItem, ITypeInfo **ppti)
 {
-    WINE_FIXME("(%s %x %p %p)\n", wine_dbgstr_w(pstrName), dwReturnMask, ppunkItem, ppti);
-    return E_NOTIMPL;
+    WINE_TRACE("(%s %x %p %p)\n", wine_dbgstr_w(pstrName), dwReturnMask, ppunkItem, ppti);
+
+    if(strcmpW(pstrName, wshW) && strcmpW(pstrName, wscriptW))
+        return E_FAIL;
+
+    if(dwReturnMask & SCRIPTINFO_ITYPEINFO) {
+        WINE_FIXME("SCRIPTINFO_ITYPEINFO not supported\n");
+        return E_NOTIMPL;
+    }
+
+    if(dwReturnMask & SCRIPTINFO_IUNKNOWN) {
+        IHost_AddRef(&host_obj);
+        *ppunkItem = (IUnknown*)&host_obj;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ActiveScriptSite_GetDocVersionString(IActiveScriptSite *iface,
@@ -201,9 +221,6 @@ static HRESULT create_engine(CLSID *clsid, IActiveScript **script_ret,
 static HRESULT init_engine(IActiveScript *script, IActiveScriptParse *parser)
 {
     HRESULT hres;
-
-    static const WCHAR wscriptW[] = {'W','S','c','r','i','p','t',0};
-    static const WCHAR wshW[] = {'W','S','H',0};
 
     hres = IActiveScript_SetScriptSite(script, &script_site);
     if(FAILED(hres))

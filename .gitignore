@@ -259,6 +259,7 @@ programs/winetest/*_test.exe
 programs/winetest/*_test.rc
 programs/winetest/build.rc
 programs/winhlp32/macro.lex.yy.c
+programs/wscript/ihost.h
 programs/wscript/ihost.tlb
 server/wineserver
 server/wineserver-installed
