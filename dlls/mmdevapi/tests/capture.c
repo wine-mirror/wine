@@ -193,26 +193,27 @@ static void test_audioclient(IAudioClient *ac)
     hr = IAudioClient_GetMixFormat(ac, &pwfx);
     ok(hr == S_OK, "Valid GetMixFormat returns %08x\n", hr);
 
-    trace("Tag: %04x\n", pwfx->wFormatTag);
-    trace("bits: %u\n", pwfx->wBitsPerSample);
-    trace("chan: %u\n", pwfx->nChannels);
-    trace("rate: %u\n", pwfx->nSamplesPerSec);
-    trace("align: %u\n", pwfx->nBlockAlign);
-    trace("extra: %u\n", pwfx->cbSize);
-    ok(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE, "wFormatTag is %x\n", pwfx->wFormatTag);
-    if (pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-    {
-        WAVEFORMATEXTENSIBLE *pwfxe = (void*)pwfx;
-        trace("Res: %u\n", pwfxe->Samples.wReserved);
-        trace("Mask: %x\n", pwfxe->dwChannelMask);
-        trace("Alg: %s\n",
-              IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)?"PCM":
-              (IsEqualGUID(&pwfxe->SubFormat,
-                           &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)?"FLOAT":"Other"));
-    }
-
     if (hr == S_OK)
     {
+        trace("pwfx: %p\n", pwfx);
+        trace("Tag: %04x\n", pwfx->wFormatTag);
+        trace("bits: %u\n", pwfx->wBitsPerSample);
+        trace("chan: %u\n", pwfx->nChannels);
+        trace("rate: %u\n", pwfx->nSamplesPerSec);
+        trace("align: %u\n", pwfx->nBlockAlign);
+        trace("extra: %u\n", pwfx->cbSize);
+        ok(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE, "wFormatTag is %x\n", pwfx->wFormatTag);
+        if (pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        {
+            WAVEFORMATEXTENSIBLE *pwfxe = (void*)pwfx;
+            trace("Res: %u\n", pwfxe->Samples.wReserved);
+            trace("Mask: %x\n", pwfxe->dwChannelMask);
+            trace("Alg: %s\n",
+                  IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)?"PCM":
+                  (IsEqualGUID(&pwfxe->SubFormat,
+                               &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)?"FLOAT":"Other"));
+        }
+
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, &pwfx2);
         ok(hr == S_OK, "Valid IsFormatSupported(Shared) call returns %08x\n", hr);
         ok(pwfx2 == NULL, "pwfx2 is non-null\n");
