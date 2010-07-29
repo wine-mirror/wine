@@ -4319,7 +4319,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     int mask = 0;
     int changes = 0;
 
-    if (ME_GetTextLength(editor))
+    if (ME_GetTextLength(editor) || editor->pUndoStack || editor->pRedoStack)
       return E_UNEXPECTED;
 
     /* Check for mutually exclusive flags in adjacent bits of wParam */
