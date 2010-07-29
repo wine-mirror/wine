@@ -8598,7 +8598,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     color = getPixelColor(device, 64+4, 64-4);
     ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00), 0),
-            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+            "Expected color 0x00ffff00, got 0x%08x.\n", color);
     color = getPixelColor(device, 64-4, 64+4);
     ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00), 0),
             "Expected color 0x00000000, got 0x%08x.\n", color);
