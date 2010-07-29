@@ -270,7 +270,8 @@ HRESULT InternetShortcut_Create(IUnknown*,REFIID,void**);
 
 HRESULT TaskbarList_Create(IUnknown*,REFIID,void**);
 
-#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
+#define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
+#define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
 
 /**********************************************************************
  * Dll lifetime tracking declaration for shdocvw.dll
@@ -283,6 +284,7 @@ extern HINSTANCE shdocvw_hinstance;
 extern void register_iewindow_class(void);
 extern void unregister_iewindow_class(void);
 extern void adjust_ie_docobj_rect(HWND, RECT*);
+extern HRESULT update_ie_statustext(InternetExplorer*, LPCWSTR);
 
 HRESULT register_class_object(BOOL);
 HRESULT get_typeinfo(ITypeInfo**);

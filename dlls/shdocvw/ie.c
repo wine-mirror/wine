@@ -396,8 +396,10 @@ static HRESULT WINAPI InternetExplorer_get_StatusText(IWebBrowser2 *iface, BSTR 
 static HRESULT WINAPI InternetExplorer_put_StatusText(IWebBrowser2 *iface, BSTR StatusText)
 {
     InternetExplorer *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(StatusText));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(StatusText));
+
+    return update_ie_statustext(This, StatusText);
 }
 
 static HRESULT WINAPI InternetExplorer_get_ToolBar(IWebBrowser2 *iface, int *Value)

@@ -41,11 +41,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 #define IDI_APPICON 1
 
+#define DOCHOST_THIS(iface) DEFINE_THIS2(InternetExplorer,doc_host,iface)
+
 static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
 
 /* Windows uses "Microsoft Internet Explorer" */
 static const WCHAR wszWineInternetExplorer[] =
         {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
+
+HRESULT update_ie_statustext(InternetExplorer* This, LPCWSTR text)
+{
+    if(!SendMessageW(This->status_hwnd, SB_SETTEXTW, MAKEWORD(SB_SIMPLEID, 0), (LPARAM)text))
+        return E_FAIL;
+
+    return S_OK;
+}
 
 void adjust_ie_docobj_rect(HWND frame, RECT* rc)
 {
@@ -378,9 +388,8 @@ static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
 
 static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text)
 {
-    FIXME("(%p)->(%s)\n", This, debugstr_w(text));
-
-    return E_NOTIMPL;
+    InternetExplorer* ie = DOCHOST_THIS(This);
+    return update_ie_statustext(ie, text);
 }
 
 static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
