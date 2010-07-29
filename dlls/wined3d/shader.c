@@ -182,6 +182,17 @@ static void shader_signature_from_semantic(struct wined3d_shader_signature_eleme
     e->mask = s->reg.write_mask;
 }
 
+static void shader_signature_from_usage(struct wined3d_shader_signature_element *e,
+        WINED3DDECLUSAGE usage, UINT usage_idx, UINT reg_idx, DWORD write_mask)
+{
+    e->semantic_name = shader_semantic_name_from_usage(usage);
+    e->semantic_idx = usage_idx;
+    e->sysval_semantic = 0;
+    e->component_type = 0;
+    e->register_idx = reg_idx;
+    e->mask = write_mask;
+}
+
 static const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token)
 {
     switch (version_token >> 16)
@@ -640,10 +651,70 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
                  * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
-                if (shader_version.type == WINED3D_SHADER_TYPE_VERTEX && shader_version.major < 3
-                        && dst_param.reg.type == WINED3DSPR_TEXCRDOUT)
+                if (shader_version.type == WINED3D_SHADER_TYPE_VERTEX && shader_version.major < 3)
                 {
-                    reg_maps->texcoord_mask[dst_param.reg.idx] |= dst_param.write_mask;
+                    UINT idx = dst_param.reg.idx;
+
+                    switch (dst_param.reg.type)
+                    {
+                        case WINED3DSPR_RASTOUT:
+                            switch (idx)
+                            {
+                                case 0: /* oPos */
+                                    reg_maps->output_registers |= 1 << 10;
+                                    shader_signature_from_usage(&output_signature[10],
+                                            WINED3DDECLUSAGE_POSITION, 0, 10, WINED3DSP_WRITEMASK_ALL);
+                                    break;
+
+                                case 1: /* oFog */
+                                    reg_maps->output_registers |= 1 << 11;
+                                    shader_signature_from_usage(&output_signature[11],
+                                            WINED3DDECLUSAGE_FOG, 0, 11, WINED3DSP_WRITEMASK_0);
+                                    break;
+
+                                case 2: /* oPts */
+                                    reg_maps->output_registers |= 1 << 11;
+                                    shader_signature_from_usage(&output_signature[11],
+                                            WINED3DDECLUSAGE_PSIZE, 0, 11, WINED3DSP_WRITEMASK_1);
+                                    break;
+                            }
+                            break;
+
+                        case WINED3DSPR_ATTROUT:
+                            if (idx < 2)
+                            {
+                                idx += 8;
+                                if (reg_maps->output_registers & (1 << idx))
+                                {
+                                    output_signature[idx].mask |= dst_param.write_mask;
+                                }
+                                else
+                                {
+                                    reg_maps->output_registers |= 1 << idx;
+                                    shader_signature_from_usage(&output_signature[idx],
+                                            WINED3DDECLUSAGE_COLOR, idx - 8, idx, dst_param.write_mask);
+                                }
+                            }
+                            break;
+
+                        case WINED3DSPR_TEXCRDOUT:
+
+                            reg_maps->texcoord_mask[idx] |= dst_param.write_mask;
+                            if (reg_maps->output_registers & (1 << idx))
+                            {
+                                output_signature[idx].mask |= dst_param.write_mask;
+                            }
+                            else
+                            {
+                                reg_maps->output_registers |= 1 << idx;
+                                shader_signature_from_usage(&output_signature[idx],
+                                        WINED3DDECLUSAGE_TEXCOORD, idx, idx, dst_param.write_mask);
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
 
                 if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
@@ -1700,7 +1771,7 @@ static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
             shader->baseShader.limits.constant_bool = 0;
             shader->baseShader.limits.constant_int = 0;
             shader->baseShader.limits.address = 1;
-            shader->baseShader.limits.packed_output = 0;
+            shader->baseShader.limits.packed_output = 12;
             shader->baseShader.limits.sampler = 0;
             shader->baseShader.limits.label = 0;
             /* TODO: vs_1_1 has a minimum of 96 constants. What happens when
@@ -1715,7 +1786,7 @@ static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
             shader->baseShader.limits.constant_bool = 16;
             shader->baseShader.limits.constant_int = 16;
             shader->baseShader.limits.address = 1;
-            shader->baseShader.limits.packed_output = 0;
+            shader->baseShader.limits.packed_output = 12;
             shader->baseShader.limits.sampler = 0;
             shader->baseShader.limits.label = 16;
             shader->baseShader.limits.constant_float = min(256, device->d3d_vshader_constantF);
@@ -1746,7 +1817,7 @@ static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
             shader->baseShader.limits.constant_bool = 16;
             shader->baseShader.limits.constant_int = 16;
             shader->baseShader.limits.address = 1;
-            shader->baseShader.limits.packed_output = 0;
+            shader->baseShader.limits.packed_output = 12;
             shader->baseShader.limits.sampler = 0;
             shader->baseShader.limits.label = 16;
             shader->baseShader.limits.constant_float = min(256, device->d3d_vshader_constantF);
