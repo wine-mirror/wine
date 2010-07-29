@@ -190,6 +190,7 @@ struct InternetExplorer {
 
     HWND frame_hwnd;
     HWND status_hwnd;
+    HMENU menu;
 
     DocHost doc_host;
 };

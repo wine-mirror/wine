@@ -430,19 +430,11 @@ static HRESULT WINAPI InternetExplorer_put_MenuBar(IWebBrowser2 *iface, VARIANT_
 
     TRACE("(%p)->(%x)\n", This, Value);
 
-    if((menu = GetMenu(This->frame_hwnd)))
-        DestroyMenu(menu);
-
-    menu = NULL;
-
     if(Value)
-        menu = LoadMenuW(shdocvw_hinstance, MAKEINTRESOURCEW(IDR_BROWSE_MAIN_MENU));
+        menu = This->menu;
 
     if(!SetMenu(This->frame_hwnd, menu))
-    {
-        DestroyMenu(menu);
         return HRESULT_FROM_WIN32(GetLastError());
-    }
 
     return S_OK;
 }

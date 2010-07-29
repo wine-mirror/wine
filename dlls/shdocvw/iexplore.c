@@ -34,6 +34,9 @@
 #include "shdocvw.h"
 #include "mshtmcid.h"
 #include "shellapi.h"
+#include "winreg.h"
+#include "shlwapi.h"
+#include "intshcut.h"
 
 #include "wine/debug.h"
 
@@ -73,6 +76,87 @@ void adjust_ie_docobj_rect(HWND frame, RECT* rc)
         GetClientRect(hwndStatus, &statusrc);
         rc->bottom -= statusrc.bottom - statusrc.top;
     }
+}
+
+static HMENU get_fav_menu(HMENU menu)
+{
+    return GetSubMenu(menu, 1);
+}
+
+static void add_fav_to_menu(HMENU menu, LPWSTR title)
+{
+    MENUITEMINFOW item;
+
+    item.cbSize = sizeof(item);
+    item.fMask = MIIM_FTYPE | MIIM_STRING;
+    item.fType = MFT_STRING;
+    item.dwTypeData = title;
+    InsertMenuItemW(menu, GetMenuItemCount(menu), TRUE, &item);
+}
+
+static void add_favs_to_menu(HMENU menu, LPCWSTR dir)
+{
+    WCHAR path[MAX_PATH*2];
+    const WCHAR urlext[] = {'*','.','u','r','l',0};
+    WCHAR* filename;
+    HANDLE findhandle;
+    WIN32_FIND_DATAW finddata;
+    IUniformResourceLocatorW* urlobj;
+    IPersistFile* urlfile;
+    HRESULT res;
+
+    lstrcpyW(path, dir);
+    PathAppendW(path, urlext);
+
+    findhandle = FindFirstFileW(path, &finddata);
+
+    if(findhandle == INVALID_HANDLE_VALUE)
+        return;
+
+    res = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_INPROC_SERVER, &IID_IUniformResourceLocatorW, (PVOID*)&urlobj);
+
+    if(SUCCEEDED(res))
+        res = IUnknown_QueryInterface(urlobj, &IID_IPersistFile, (PVOID*)&urlfile);
+
+    if(SUCCEEDED(res))
+    {
+        filename = path + lstrlenW(path) - lstrlenW(urlext);
+
+        do
+        {
+            WCHAR* fileext;
+            lstrcpyW(filename, finddata.cFileName);
+
+            if(FAILED(IPersistFile_Load(urlfile, path, 0)))
+                continue;
+
+            fileext = filename + lstrlenW(filename) - lstrlenW(urlext) + 1;
+            *fileext = 0;
+            add_fav_to_menu(menu, filename);
+        } while(FindNextFileW(findhandle, &finddata));
+    }
+
+    if(urlfile)
+        IPersistFile_Release(urlfile);
+
+    if(urlobj)
+        IUnknown_Release(urlobj);
+
+    FindClose(findhandle);
+}
+
+static HMENU create_ie_menu(void)
+{
+    HMENU menu = LoadMenuW(shdocvw_hinstance, MAKEINTRESOURCEW(IDR_BROWSE_MAIN_MENU));
+    WCHAR path[MAX_PATH];
+
+    if(SHGetFolderPathW(NULL, CSIDL_COMMON_FAVORITES, NULL, SHGFP_TYPE_CURRENT, path) == S_OK)
+        add_favs_to_menu(get_fav_menu(menu), path);
+
+    if(SHGetFolderPathW(NULL, CSIDL_FAVORITES, NULL, SHGFP_TYPE_CURRENT, path) == S_OK)
+        add_favs_to_menu(get_fav_menu(menu), path);
+
+    return menu;
 }
 
 static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -166,6 +250,8 @@ static LRESULT iewnd_OnCreate(HWND hwnd, LPCREATESTRUCTW lpcs)
 {
     InternetExplorer* This = (InternetExplorer*)lpcs->lpCreateParams;
     SetWindowLongPtrW(hwnd, 0, (LONG_PTR) lpcs->lpCreateParams);
+
+    This->menu = create_ie_menu();
 
     This->status_hwnd = CreateStatusWindowW(CCS_NODIVIDER|WS_CHILD|WS_VISIBLE, NULL, hwnd, IDC_BROWSE_STATUSBAR);
     SendMessageW(This->status_hwnd, SB_SIMPLE, TRUE, 0);
