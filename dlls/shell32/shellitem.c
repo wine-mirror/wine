@@ -755,7 +755,7 @@ static const IShellItemArrayVtbl vt_IShellItemArray = {
     IShellItemArray_fnEnumItems
 };
 
-static HRESULT WINAPI IShellItemArray_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
+static HRESULT IShellItemArray_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     IShellItemArrayImpl *This;
     HRESULT ret;
@@ -771,6 +771,8 @@ static HRESULT WINAPI IShellItemArray_Constructor(IUnknown *pUnkOuter, REFIID ri
 
     This->ref = 1;
     This->lpVtbl = &vt_IShellItemArray;
+    This->array = NULL;
+    This->item_count = 0;
 
     ret = IShellItemArray_QueryInterface((IShellItemArray*)This, riid, ppv);
     IShellItemArray_Release((IShellItemArray*)This);
