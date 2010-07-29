@@ -529,36 +529,32 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
                                     D3DMATERIALHANDLE hMat)
 {
     IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DMaterialImpl *m;
+
     TRACE("(%p)->(%d)\n", This, hMat);
 
     EnterCriticalSection(&ddraw_cs);
-    if(hMat && hMat > This->ddraw->d3ddevice->numHandles)
+
+    if (!hMat)
     {
-        WARN("Specified Handle %d out of range\n", hMat);
+        This->background = NULL;
+        TRACE("Setting background to NULL\n");
         LeaveCriticalSection(&ddraw_cs);
-        return DDERR_INVALIDPARAMS;
+        return D3D_OK;
     }
-    else if(hMat && This->ddraw->d3ddevice->Handles[hMat - 1].type != DDrawHandle_Material)
+
+    m = ddraw_get_object(&This->ddraw->d3ddevice->handle_table, hMat - 1, DDRAW_HANDLE_MATERIAL);
+    if (!m)
     {
-        WARN("Handle %d is not a material handle\n", hMat);
+        WARN("Invalid material handle.\n");
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
 
-    if(hMat)
-    {
-        This->background = This->ddraw->d3ddevice->Handles[hMat - 1].ptr;
-        TRACE(" setting background color : %f %f %f %f\n",
-              This->background->mat.u.diffuse.u1.r,
-              This->background->mat.u.diffuse.u2.g,
-              This->background->mat.u.diffuse.u3.b,
-              This->background->mat.u.diffuse.u4.a);
-    }
-    else
-    {
-        This->background = NULL;
-        TRACE("Setting background to NULL\n");
-    }
+    TRACE("Setting background color : %.8e %.8e %.8e %.8e.\n",
+            m->mat.u.diffuse.u1.r, m->mat.u.diffuse.u2.g,
+            m->mat.u.diffuse.u3.b, m->mat.u.diffuse.u4.a);
+    This->background = m;
 
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;

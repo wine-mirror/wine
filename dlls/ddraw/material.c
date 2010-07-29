@@ -160,8 +160,7 @@ IDirect3DMaterialImpl_Release(IDirect3DMaterial3 *iface)
         if(This->Handle)
         {
             EnterCriticalSection(&ddraw_cs);
-            This->ddraw->d3ddevice->Handles[This->Handle - 1].ptr = NULL;
-            This->ddraw->d3ddevice->Handles[This->Handle - 1].type = DDrawHandle_Unknown;
+            ddraw_free_handle(&This->ddraw->d3ddevice->handle_table, This->Handle - 1, DDRAW_HANDLE_MATERIAL);
             LeaveCriticalSection(&ddraw_cs);
         }
 
@@ -328,15 +327,15 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
     This->active_device = device;
     if(!This->Handle)
     {
-        This->Handle = IDirect3DDeviceImpl_CreateHandle(device);
-        if(!This->Handle)
+        DWORD h = ddraw_allocate_handle(&device->handle_table, This, DDRAW_HANDLE_MATERIAL);
+        if (h == DDRAW_INVALID_HANDLE)
         {
-            ERR("Error creating a handle\n");
+            ERR("Failed to allocate a material handle.\n");
             LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;   /* Unchecked */
         }
-        device->Handles[This->Handle - 1].ptr = This;
-        device->Handles[This->Handle - 1].type = DDrawHandle_Material;
+
+        This->Handle = h + 1;
     }
     *lpHandle = This->Handle;
     TRACE(" returning handle %08x.\n", *lpHandle);

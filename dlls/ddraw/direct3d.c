@@ -808,6 +808,14 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     object->Handles = NULL;
     object->numHandles = 0;
 
+    if (!ddraw_handle_table_init(&object->handle_table, 64))
+    {
+        ERR("Failed to initialize handle table.\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_OUTOFMEMORY;
+    }
+
     object->legacyTextureBlending = FALSE;
 
     /* This is for convenience */
@@ -818,6 +826,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     if(!IndexBufferParent)
     {
         ERR("Allocating memory for an index buffer parent failed\n");
+        ddraw_handle_table_destroy(&object->handle_table);
         HeapFree(GetProcessHeap(), 0, object);
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
@@ -837,6 +846,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     if(FAILED(hr))
     {
         ERR("Failed to create an index buffer\n");
+        ddraw_handle_table_destroy(&object->handle_table);
         HeapFree(GetProcessHeap(), 0, object);
         LeaveCriticalSection(&ddraw_cs);
         return hr;

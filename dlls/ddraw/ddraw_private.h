@@ -326,7 +326,6 @@ typedef enum
 {
     DDrawHandle_Unknown       = 0,
     DDrawHandle_Texture       = 1,
-    DDrawHandle_Material      = 2,
     DDrawHandle_Matrix        = 3,
     DDrawHandle_StateBlock    = 4
 } DDrawHandleTypes;
@@ -336,6 +335,34 @@ struct HandleEntry
     void    *ptr;
     DDrawHandleTypes      type;
 };
+
+#define DDRAW_INVALID_HANDLE ~0U
+
+enum ddraw_handle_type
+{
+    DDRAW_HANDLE_FREE,
+    DDRAW_HANDLE_MATERIAL,
+};
+
+struct ddraw_handle_entry
+{
+    void *object;
+    enum ddraw_handle_type type;
+};
+
+struct ddraw_handle_table
+{
+    struct ddraw_handle_entry *entries;
+    struct ddraw_handle_entry *free_entries;
+    UINT table_size;
+    UINT entry_count;
+};
+
+BOOL ddraw_handle_table_init(struct ddraw_handle_table *t, UINT initial_size) DECLSPEC_HIDDEN;
+void ddraw_handle_table_destroy(struct ddraw_handle_table *t) DECLSPEC_HIDDEN;
+DWORD ddraw_allocate_handle(struct ddraw_handle_table *t, void *object, enum ddraw_handle_type type) DECLSPEC_HIDDEN;
+void *ddraw_free_handle(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type) DECLSPEC_HIDDEN;
+void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type) DECLSPEC_HIDDEN;
 
 struct IDirect3DDeviceImpl
 {
@@ -376,6 +403,7 @@ struct IDirect3DDeviceImpl
     /* Handle management */
     struct HandleEntry      *Handles;
     DWORD                    numHandles;
+    struct ddraw_handle_table handle_table;
     D3DMATRIXHANDLE          world, proj, view;
 };
 

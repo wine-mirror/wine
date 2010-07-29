@@ -382,14 +382,6 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                     }
                     break;
 
-                    case DDrawHandle_Material:
-                    {
-                        IDirect3DMaterialImpl *mat = This->Handles[i].ptr;
-                        FIXME("Material handle %d not unset properly\n", i + 1);
-                        mat->Handle = 0;
-                    }
-                    break;
-
                     case DDrawHandle_Matrix:
                     {
                         /* No fixme here because this might happen because of sloppy apps */
@@ -413,6 +405,31 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         }
 
         HeapFree(GetProcessHeap(), 0, This->Handles);
+
+        for (i = 0; i < This->handle_table.entry_count; ++i)
+        {
+            struct ddraw_handle_entry *entry = &This->handle_table.entries[i];
+
+            switch (entry->type)
+            {
+                case DDRAW_HANDLE_FREE:
+                    break;
+
+                case DDRAW_HANDLE_MATERIAL:
+                {
+                    IDirect3DMaterialImpl *m = entry->object;
+                    FIXME("Material handle %#x (%p) not unset properly.\n", i + 1, m);
+                    m->Handle = 0;
+                    break;
+                }
+
+                default:
+                    FIXME("Handle %#x (%p) has unknown type %#x.\n", i + 1, entry->object, entry->type);
+                    break;
+            }
+        }
+
+        ddraw_handle_table_destroy(&This->handle_table);
 
         TRACE("Releasing target %p %p\n", This->target, This->ddraw->d3d_target);
         /* Release the render target and the WineD3D render target
@@ -3048,35 +3065,17 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
     EnterCriticalSection(&ddraw_cs);
     if (LightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */)
     {
-        IDirect3DMaterialImpl *mat;
-
-        if(Value == 0) mat = NULL;
-        else if(Value > This->numHandles)
+        IDirect3DMaterialImpl *m = ddraw_get_object(&This->handle_table, Value - 1, DDRAW_HANDLE_MATERIAL);
+        if (!m)
         {
-            ERR("Material handle out of range(%d)\n", Value);
+            WARN("Invalid material handle.\n");
             LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
         }
-        else if(This->Handles[Value - 1].type != DDrawHandle_Material)
-        {
-            ERR("Invalid handle %d\n", Value);
-            LeaveCriticalSection(&ddraw_cs);
-            return DDERR_INVALIDPARAMS;
-        }
-        else
-        {
-            mat = This->Handles[Value - 1].ptr;
-        }
 
-        if (mat != NULL)
-        {
-            TRACE(" activating material %p.\n", mat);
-            mat->activate(mat);
-        }
-        else
-        {
-            FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
-        }
+        TRACE(" activating material %p.\n", m);
+        m->activate(m);
+
         This->material = Value;
     }
     else if (LightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */)

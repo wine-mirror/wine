@@ -70,6 +70,117 @@ CRITICAL_SECTION ddraw_cs = { &ddraw_cs_debug, -1, 0, 0, 0, 0 };
 /* value of ForceRefreshRate */
 DWORD force_refresh_rate = 0;
 
+/* Handle table functions */
+BOOL ddraw_handle_table_init(struct ddraw_handle_table *t, UINT initial_size)
+{
+    t->entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, initial_size * sizeof(*t->entries));
+    if (!t->entries)
+    {
+        ERR("Failed to allocate handle table memory.\n");
+        return FALSE;
+    }
+    t->free_entries = NULL;
+    t->table_size = initial_size;
+    t->entry_count = 0;
+
+    return TRUE;
+}
+
+void ddraw_handle_table_destroy(struct ddraw_handle_table *t)
+{
+    HeapFree(GetProcessHeap(), 0, t->entries);
+    memset(t, 0, sizeof(*t));
+}
+
+DWORD ddraw_allocate_handle(struct ddraw_handle_table *t, void *object, enum ddraw_handle_type type)
+{
+    struct ddraw_handle_entry *entry;
+
+    if (t->free_entries)
+    {
+        DWORD idx = t->free_entries - t->entries;
+        /* Use a free handle */
+        entry = t->free_entries;
+        if (entry->type != DDRAW_HANDLE_FREE)
+        {
+            ERR("Handle %#x (%p) is in the free list, but has type %#x.\n", idx, entry->object, entry->type);
+            return DDRAW_INVALID_HANDLE;
+        }
+        t->free_entries = entry->object;
+        entry->object = object;
+        entry->type = type;
+
+        return idx;
+    }
+
+    if (!(t->entry_count < t->table_size))
+    {
+        /* Grow the table */
+        UINT new_size = t->table_size + (t->table_size >> 1);
+        struct ddraw_handle_entry *new_entries = HeapReAlloc(GetProcessHeap(),
+                0, t->entries, new_size * sizeof(*t->entries));
+        if (!new_entries)
+        {
+            ERR("Failed to grow the handle table.\n");
+            return DDRAW_INVALID_HANDLE;
+        }
+        t->entries = new_entries;
+        t->table_size = new_size;
+    }
+
+    entry = &t->entries[t->entry_count];
+    entry->object = object;
+    entry->type = type;
+
+    return t->entry_count++;
+}
+
+void *ddraw_free_handle(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type)
+{
+    struct ddraw_handle_entry *entry;
+    void *object;
+
+    if (handle == DDRAW_INVALID_HANDLE || handle >= t->entry_count)
+    {
+        WARN("Invalid handle %#x passed.\n", handle);
+        return NULL;
+    }
+
+    entry = &t->entries[handle];
+    if (entry->type != type)
+    {
+        WARN("Handle %#x (%p) is not of type %#x.\n", handle, entry->object, type);
+        return NULL;
+    }
+
+    object = entry->object;
+    entry->object = t->free_entries;
+    entry->type = DDRAW_HANDLE_FREE;
+    t->free_entries = entry;
+
+    return object;
+}
+
+void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type)
+{
+    struct ddraw_handle_entry *entry;
+
+    if (handle == DDRAW_INVALID_HANDLE || handle >= t->entry_count)
+    {
+        WARN("Invalid handle %#x passed.\n", handle);
+        return NULL;
+    }
+
+    entry = &t->entries[handle];
+    if (entry->type != type)
+    {
+        WARN("Handle %#x (%p) is not of type %#x.\n", handle, entry->object, type);
+        return NULL;
+    }
+
+    return entry->object;
+}
+
 /*
  * Helper Function for DDRAW_Create and DirectDrawCreateClipper for
  * lazy loading of the Wine D3D driver.

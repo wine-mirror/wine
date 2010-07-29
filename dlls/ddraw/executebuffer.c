@@ -251,22 +251,18 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 
 		    if (!ci->u1.dlstLightStateType || (ci->u1.dlstLightStateType > D3DLIGHTSTATE_COLORVERTEX))
 			ERR("Unexpected Light State Type %d\n", ci->u1.dlstLightStateType);
-		    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */) {
-			DWORD matHandle = ci->u2.dwArg[0];
+                    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */)
+                    {
+                        IDirect3DMaterialImpl *m;
 
-			if (!matHandle) {
-			    FIXME(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
-			} else if (matHandle >= lpDevice->numHandles) {
-			    WARN("Material handle %d is invalid\n", matHandle);
-			} else if (lpDevice->Handles[matHandle - 1].type != DDrawHandle_Material) {
-			    WARN("Handle %d is not a material handle\n", matHandle);
-			} else {
-			    IDirect3DMaterialImpl *mat =
-                                lpDevice->Handles[matHandle - 1].ptr;
-
-			    mat->activate(mat);
-			}
-		    } else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
+                        m = ddraw_get_object(&lpDevice->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATERIAL);
+                        if (!m)
+                            ERR("Invalid material handle %#x.\n", ci->u2.dwArg[0]);
+                        else
+                            m->activate(m);
+                    }
+                    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */)
+                    {
 			switch (ci->u2.dwArg[0]) {
 			    case D3DCOLOR_MONO:
 				ERR("DDCOLOR_MONO should not happen!\n");
