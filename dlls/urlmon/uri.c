@@ -2597,17 +2597,8 @@ static HRESULT WINAPI Uri_GetScheme(IUri *iface, DWORD *pdwScheme)
 
 static HRESULT WINAPI Uri_GetZone(IUri *iface, DWORD *pdwZone)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pdwZone);
-
-    if(!pdwZone)
-        return E_INVALIDARG;
-
-    /* Microsoft doesn't seem to have this implemented yet... See
-     * the comment in Uri_GetPropertyDWORD for more about this.
-     */
-    *pdwZone = URLZONE_INVALID;
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pdwZone);
+    return Uri_GetPropertyDWORD(iface, Uri_PROPERTY_ZONE,pdwZone, 0);
 }
 
 static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
