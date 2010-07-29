@@ -3034,6 +3034,15 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
     }
 
     switch(uriProp) {
+    case Uri_PROPERTY_ABSOLUTE_URI:
+        *pbstrProperty = SysAllocString(This->canon_uri);
+
+        if(!(*pbstrProperty))
+            hres = E_OUTOFMEMORY;
+        else
+            hres = S_OK;
+
+        break;
     case Uri_PROPERTY_AUTHORITY:
         if(This->authority_start > -1) {
             *pbstrProperty = SysAllocStringLen(This->canon_uri+This->authority_start, This->authority_len);
@@ -3245,6 +3254,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     }
 
     switch(uriProp) {
+    case Uri_PROPERTY_ABSOLUTE_URI:
+        *pcchProperty = This->canon_len;
+        hres = S_OK;
+        break;
     case Uri_PROPERTY_AUTHORITY:
         *pcchProperty = This->authority_len;
         hres = (This->authority_start > -1) ? S_OK : S_FALSE;
@@ -3385,13 +3398,8 @@ static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *p
 
 static HRESULT WINAPI Uri_GetAbsoluteUri(IUri *iface, BSTR *pstrAbsoluteUri)
 {
-    Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pstrAbsoluteUri);
-
-    if(!pstrAbsoluteUri)
-        return E_POINTER;
-
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", iface, pstrAbsoluteUri);
+    return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_ABSOLUTE_URI, pstrAbsoluteUri, 0);
 }
 
 static HRESULT WINAPI Uri_GetAuthority(IUri *iface, BSTR *pstrAuthority)
