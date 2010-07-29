@@ -1119,7 +1119,10 @@ static UINT copy_package_to_temp( LPCWSTR szPackage, LPWSTR filename )
     if( !CopyFileW( szPackage, filename, FALSE ) )
     {
         UINT error = GetLastError();
-        ERR("failed to copy package %s to %s (%u)\n", debugstr_w(szPackage), debugstr_w(filename), error);
+        if ( error == ERROR_FILE_NOT_FOUND )
+            ERR("can't find %s\n", debugstr_w(szPackage));
+        else
+            ERR("failed to copy package %s to %s (%u)\n", debugstr_w(szPackage), debugstr_w(filename), error);
         DeleteFileW( filename );
         return error;
     }
