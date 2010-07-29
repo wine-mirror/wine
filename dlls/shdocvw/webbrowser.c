@@ -1126,6 +1126,27 @@ static const IServiceProviderVtbl ServiceProviderVtbl =
     WebBrowser_IServiceProvider_QueryService
 };
 
+static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
+{
+    GetClientRect(This->frame_hwnd, rc);
+}
+
+static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text)
+{
+    return E_NOTIMPL;
+}
+
+static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
+{
+
+}
+
+static const IDocHostContainerVtbl DocHostContainerVtbl = {
+    DocHostContainer_GetDocObjRect,
+    DocHostContainer_SetStatusText,
+    DocHostContainer_SetURL
+};
+
 static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, void **ppv)
 {
     WebBrowser *ret;
@@ -1140,7 +1161,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     ret->ref = 1;
     ret->version = version;
 
-    DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret));
+    DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret), &DocHostContainerVtbl);
 
     ret->visible = VARIANT_TRUE;
     ret->menu_bar = VARIANT_TRUE;

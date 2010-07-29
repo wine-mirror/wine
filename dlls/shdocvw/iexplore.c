@@ -344,6 +344,30 @@ static IWebBrowser2 *create_ie_window(LPCSTR cmdline)
     return wb;
 }
 
+static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
+{
+    GetClientRect(This->frame_hwnd, rc);
+    adjust_ie_docobj_rect(This->frame_hwnd, rc);
+}
+
+static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text)
+{
+    FIXME("(%p)->(%s)\n", This, debugstr_w(text));
+
+    return E_NOTIMPL;
+}
+
+static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
+{
+
+}
+
+static const IDocHostContainerVtbl DocHostContainerVtbl = {
+    DocHostContainer_GetDocObjRect,
+    DocHostContainer_SetStatusText,
+    DocHostContainer_SetURL
+};
+
 HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
 {
     InternetExplorer *ret;
@@ -355,7 +379,7 @@ HRESULT InternetExplorer_Create(IUnknown *pOuter, REFIID riid, void **ppv)
     ret->ref = 0;
 
     ret->doc_host.disp = (IDispatch*)WEBBROWSER2(ret);
-    DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret));
+    DocHost_Init(&ret->doc_host, (IDispatch*)WEBBROWSER2(ret), &DocHostContainerVtbl);
 
     InternetExplorer_WebBrowser_Init(ret);
 

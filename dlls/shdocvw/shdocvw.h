@@ -82,6 +82,13 @@ typedef struct _task_header_t {
     task_proc_t proc;
 } task_header_t;
 
+typedef struct _IDocHostContainerVtbl
+{
+    void (WINAPI* GetDocObjRect)(DocHost*,RECT*);
+    HRESULT (WINAPI* SetStatusText)(DocHost*,LPCWSTR);
+    void (WINAPI* SetURL)(DocHost*,LPCWSTR);
+} IDocHostContainerVtbl;
+
 struct DocHost {
     const IOleClientSiteVtbl      *lpOleClientSiteVtbl;
     const IOleInPlaceSiteVtbl     *lpOleInPlaceSiteVtbl;
@@ -104,6 +111,8 @@ struct DocHost {
     IUnknown *document;
     IOleDocumentView *view;
     IUnknown *doc_navigate;
+
+    const IDocHostContainerVtbl *container_vtbl;
 
     HWND hwnd;
     HWND frame_hwnd;
@@ -220,7 +229,7 @@ void WebBrowser_ClassInfo_Init(WebBrowser*);
 
 void WebBrowser_OleObject_Destroy(WebBrowser*);
 
-void DocHost_Init(DocHost*,IDispatch*);
+void DocHost_Init(DocHost*,IDispatch*,const IDocHostContainerVtbl*);
 void DocHost_ClientSite_Init(DocHost*);
 void DocHost_Frame_Init(DocHost*);
 void release_dochost_client(DocHost*);

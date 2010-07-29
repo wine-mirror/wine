@@ -125,6 +125,8 @@ static HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
 
     heap_free(This->url);
     This->url = new_url;
+
+    This->container_vtbl->SetURL(This, This->url);
     return S_OK;
 }
 
