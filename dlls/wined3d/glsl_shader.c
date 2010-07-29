@@ -1180,8 +1180,6 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         }
     }
 
-    shader_addline(buffer, "const float FLT_MAX = 1e38;\n");
-
     /* Start the main program */
     shader_addline(buffer, "void main() {\n");
     if(pshader && reg_maps->vpos) {
@@ -2206,13 +2204,13 @@ static void shader_glsl_pow(const struct wined3d_shader_instruction *ins)
 
     if (dst_size > 1)
     {
-        shader_addline(buffer, "vec%d(%s == 0.0 ? 0.0 : pow(abs(%s), %s)));\n",
-                dst_size, src0_param.param_str, src0_param.param_str, src1_param.param_str);
+        shader_addline(buffer, "vec%u(pow(abs(%s), %s)));\n",
+                dst_size, src0_param.param_str, src1_param.param_str);
     }
     else
     {
-        shader_addline(buffer, "%s == 0.0 ? 0.0 : pow(abs(%s), %s));\n",
-                src0_param.param_str, src0_param.param_str, src1_param.param_str);
+        shader_addline(buffer, "pow(abs(%s), %s));\n",
+                src0_param.param_str, src1_param.param_str);
     }
 }
 
@@ -2233,13 +2231,13 @@ static void shader_glsl_log(const struct wined3d_shader_instruction *ins)
 
     if (dst_size > 1)
     {
-        shader_addline(buffer, "vec%d(%s == 0.0 ? -FLT_MAX : log2(abs(%s))));\n",
-                dst_size, src0_param.param_str, src0_param.param_str);
+        shader_addline(buffer, "vec%u(log2(abs(%s))));\n",
+                dst_size, src0_param.param_str);
     }
     else
     {
-        shader_addline(buffer, "%s == 0.0 ? -FLT_MAX : log2(abs(%s)));\n",
-                src0_param.param_str, src0_param.param_str);
+        shader_addline(buffer, "log2(abs(%s)));\n",
+                src0_param.param_str);
     }
 }
 
@@ -2367,13 +2365,13 @@ static void shader_glsl_rcp(const struct wined3d_shader_instruction *ins)
 
     if (mask_size > 1)
     {
-        shader_addline(ins->ctx->buffer, "vec%d(%s == 0.0 ? FLT_MAX : 1.0 / %s));\n",
-                mask_size, src_param.param_str, src_param.param_str);
+        shader_addline(ins->ctx->buffer, "vec%u(1.0 / %s));\n",
+                mask_size, src_param.param_str);
     }
     else
     {
-        shader_addline(ins->ctx->buffer, "%s == 0.0 ? FLT_MAX : 1.0 / %s);\n",
-                src_param.param_str, src_param.param_str);
+        shader_addline(ins->ctx->buffer, "1.0 / %s);\n",
+                src_param.param_str);
     }
 }
 
@@ -2391,13 +2389,13 @@ static void shader_glsl_rsq(const struct wined3d_shader_instruction *ins)
 
     if (mask_size > 1)
     {
-        shader_addline(buffer, "vec%d(%s == 0.0 ? FLT_MAX : inversesqrt(abs(%s))));\n",
-                mask_size, src_param.param_str, src_param.param_str);
+        shader_addline(buffer, "vec%u(inversesqrt(abs(%s))));\n",
+                mask_size, src_param.param_str);
     }
     else
     {
-        shader_addline(buffer, "%s == 0.0 ? FLT_MAX : inversesqrt(abs(%s)));\n",
-                src_param.param_str, src_param.param_str);
+        shader_addline(buffer, "inversesqrt(abs(%s)));\n",
+                src_param.param_str);
     }
 }
 
@@ -3772,7 +3770,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer, const struct 
             set[in_idx] = mask;
             shader_glsl_write_mask_to_str(mask, reg_mask);
 
-            shader_addline(buffer, "%s%s = OUT[%u]%s;\n",
+            shader_addline(buffer, "%s%s = clamp(OUT[%u]%s, -FLT_MAX, FLT_MAX);\n",
                     destination, reg_mask, j, reg_mask);
         }
     }
@@ -3822,6 +3820,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     shader_buffer_clear(buffer);
 
     shader_addline(buffer, "#version 120\n");
+    shader_addline(buffer, "const float FLT_MAX = 1e38;\n");
 
     if (ps_major < 3)
     {
@@ -3841,13 +3840,16 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
             {
                 if (semantic_idx == 0)
-                    shader_addline(buffer, "gl_FrontColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                    shader_addline(buffer, "gl_FrontColor%s = clamp(OUT[%u]%s, -FLT_MAX, FLT_MAX);\n",
+                            reg_mask, i, reg_mask);
                 else if (semantic_idx == 1)
-                    shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                    shader_addline(buffer, "gl_FrontSecondaryColor%s = clamp(OUT[%u]%s, -FLT_MAX, FLT_MAX);\n",
+                            reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
             {
-                shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                shader_addline(buffer, "gl_Position%s = clamp(OUT[%u]%s, -FLT_MAX, FLT_MAX);\n",
+                        reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
             {
@@ -3856,7 +3858,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
                     if (!(gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) || ps_major > 0)
                         write_mask |= WINED3DSP_WRITEMASK_3;
 
-                    shader_addline(buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
+                    shader_addline(buffer, "gl_TexCoord[%u]%s = clamp(OUT[%u]%s, -FLT_MAX, FLT_MAX);\n",
                             semantic_idx, reg_mask, i, reg_mask);
                     if (!(write_mask & WINED3DSP_WRITEMASK_3))
                         shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
@@ -3864,11 +3866,11 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
             {
-                shader_addline(buffer, "gl_PointSize = OUT[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = clamp(OUT[%u].%c, -FLT_MAX, FLT_MAX);\n", i, reg_mask[1]);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
             {
-                shader_addline(buffer, "gl_FogFragCoord = OUT[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_FogFragCoord = clamp(OUT[%u].%c, -FLT_MAX, FLT_MAX);\n", i, reg_mask[1]);
             }
         }
         shader_addline(buffer, "}\n");
@@ -3890,11 +3892,12 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 
             if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
             {
-                shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                shader_addline(buffer, "gl_Position%s = clamp(OUT[%u]%s, -FLT_MAX, FLT_MAX);\n",
+                        reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
             {
-                shader_addline(buffer, "gl_PointSize = OUT[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_PointSize = clamp(OUT[%u].%c, -FLT_MAX, FLT_MAX);\n", i, reg_mask[1]);
             }
         }
 
