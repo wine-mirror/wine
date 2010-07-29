@@ -132,7 +132,7 @@ void ME_Repaint(ME_TextEditor *editor)
   ITextHost_TxViewChange(editor->texthost, TRUE);
 }
 
-void ME_UpdateRepaint(ME_TextEditor *editor)
+void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now)
 {
   /* Should be called whenever the contents of the control have changed */
   BOOL wrappedParagraphs;
@@ -144,6 +144,8 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
   /* Ensure that the cursor is visible */
   ME_EnsureVisible(editor, &editor->pCursors[0]);
 
+  ITextHost_TxViewChange(editor->texthost, update_now);
+
   ME_SendSelChange(editor);
 
   /* send EN_CHANGE if the event mask asks for it */
@@ -153,7 +155,6 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
     ME_SendOldNotify(editor, EN_CHANGE);
     editor->nEventMask |= ENM_CHANGE;
   }
-  ME_Repaint(editor);
 }
 
 void

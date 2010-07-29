@@ -391,7 +391,7 @@ IRichEditOle_fnInsertObject(IRichEditOle *me, REOBJECT *reo)
 
     ME_InsertOLEFromCursor(This->editor, reo, 0);
     ME_CommitUndo(This->editor);
-    ME_UpdateRepaint(This->editor);
+    ME_UpdateRepaint(This->editor, FALSE);
     return S_OK;
 }
 

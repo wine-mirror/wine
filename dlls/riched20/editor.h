@@ -210,7 +210,7 @@ void ME_SetDefaultParaFormat(PARAFORMAT2 *pFmt);
 void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, const RECT *rcUpdate);
 void ME_Repaint(ME_TextEditor *editor);
 void ME_RewrapRepaint(ME_TextEditor *editor);
-void ME_UpdateRepaint(ME_TextEditor *editor);
+void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor);
 void ME_InvalidateSelection(ME_TextEditor *editor);
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);

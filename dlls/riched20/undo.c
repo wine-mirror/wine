@@ -402,7 +402,7 @@ BOOL ME_Undo(ME_TextEditor *editor) {
   ME_CheckTablesForCorruption(editor);
   editor->nUndoStackSize--;
   editor->nUndoMode = nMode;
-  ME_UpdateRepaint(editor);
+  ME_UpdateRepaint(editor, FALSE);
   return TRUE;
 }
 
@@ -438,6 +438,6 @@ BOOL ME_Redo(ME_TextEditor *editor) {
   ME_AddUndoItem(editor, diUndoEndTransaction, NULL);
   ME_CheckTablesForCorruption(editor);
   editor->nUndoMode = nMode;
-  ME_UpdateRepaint(editor);
+  ME_UpdateRepaint(editor, FALSE);
   return TRUE;
 }

@@ -325,7 +325,7 @@ HRESULT WINAPI fnTextSrv_TxSetText(ITextServices *iface,
    This->editor->nModifyStep = 0;
    OleFlushClipboard();
    ME_EmptyUndoStack(This->editor);
-   ME_UpdateRepaint(This->editor);
+   ME_UpdateRepaint(This->editor, FALSE);
 
    return S_OK;
 }
