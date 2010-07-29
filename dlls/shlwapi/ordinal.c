@@ -4505,12 +4505,22 @@ HRESULT WINAPI IUnknown_OnFocusChangeIS(LPUNKNOWN lpUnknown, LPUNKNOWN pFocusObj
 }
 
 /***********************************************************************
- *		SHGetValueW (SHLWAPI.@)
+ *		SKGetValueW (SHLWAPI.516)
  */
-HRESULT WINAPI SKGetValueW(DWORD a, LPWSTR b, LPWSTR c, DWORD d, DWORD e, DWORD f)
+HRESULT WINAPI SKGetValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value, DWORD *type,
+    void *data, DWORD *count)
 {
-    FIXME("(%x, %s, %s, %x, %x, %x): stub\n", a, debugstr_w(b), debugstr_w(c), d, e, f);
-    return E_FAIL;
+    DWORD ret;
+    HKEY hkey;
+
+    TRACE("(0x%x, %s, %s, %p, %p, %p)\n", flags, debugstr_w(subkey),
+        debugstr_w(value), type, data, count);
+
+    hkey = SHGetShellKey(flags, subkey, FALSE);
+    ret = SHQueryValueExW(hkey, value, NULL, type, data, count);
+    RegCloseKey(hkey);
+
+    return HRESULT_FROM_WIN32(ret);
 }
 
 typedef HRESULT (WINAPI *DllGetVersion_func)(DLLVERSIONINFO *);
