@@ -4401,12 +4401,42 @@ BOOL WINAPI SHSkipJunction(IBindCtx *pbc, const CLSID *pclsid)
 }
 
 /***********************************************************************
- *		SHGetShellKey (SHLWAPI.@)
+ *		SHGetShellKey (SHLWAPI.491)
  */
 HKEY WINAPI SHGetShellKey(DWORD flags, LPCWSTR sub_key, BOOL create)
 {
-    FIXME("(0x%08x, %s, %d): stub\n", flags, debugstr_w(sub_key), create);
-    return (HKEY)0x50;
+    enum _shellkey_flags {
+        SHKEY_Explorer  = 0x00,
+        SHKEY_Root_HKCU = 0x01
+    };
+
+    static const WCHAR explorerW[] = {'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'E','x','p','l','o','r','e','r',0};
+    HKEY hroot, hkey = NULL;
+
+    TRACE("(0x%08x, %s, %d)\n", flags, debugstr_w(sub_key), create);
+
+    switch (flags)
+    {
+    case SHKEY_Explorer | SHKEY_Root_HKCU:
+        RegOpenKeyExW(HKEY_CURRENT_USER, explorerW, 0, MAXIMUM_ALLOWED, &hroot);
+        break;
+    case 0:
+        return NULL;
+    default:
+        FIXME("unsupported flags (0x%08x)\n", flags);
+        return (HKEY)0xdeadbeef;
+    }
+
+    if (create)
+        RegCreateKeyExW(hroot, sub_key, 0, NULL, 0, MAXIMUM_ALLOWED, NULL, &hkey, NULL);
+    else
+        RegOpenKeyExW(hroot, sub_key, 0, MAXIMUM_ALLOWED, &hkey);
+
+    RegCloseKey(hroot);
+    return hkey;
 }
 
 /***********************************************************************

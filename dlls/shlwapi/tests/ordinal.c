@@ -36,6 +36,7 @@
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi;
 static BOOL is_win2k_and_lower;
+static BOOL is_win9x;
 
 static int (WINAPI *pSHSearchMapInt)(const int*,const int*,int,int);
 static HRESULT (WINAPI *pGetAcceptLanguagesA)(LPSTR,LPDWORD);
@@ -60,6 +61,7 @@ static HWND    (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU,
 static HRESULT (WINAPI *pSHIShellFolder_EnumObjects)(LPSHELLFOLDER, HWND, SHCONTF, IEnumIDList**);
 static DWORD   (WINAPI *pSHGetIniStringW)(LPCWSTR, LPCWSTR, LPWSTR, DWORD, LPCWSTR);
 static BOOL    (WINAPI *pSHSetIniStringW)(LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR);
+static HKEY    (WINAPI *pSHGetShellKey)(DWORD, LPWSTR, BOOL);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2675,6 +2677,62 @@ static void test_SHSetIniString(void)
     DeleteFileW(TestIniW);
 }
 
+enum _shellkey_flags {
+    SHKEY_Explorer  = 0x00,
+    SHKEY_Root_HKCU = 0x01
+};
+
+static void test_SHGetShellKey(void)
+{
+    void *pPathBuildRootW = GetProcAddress(hShlwapi, "PathBuildRootW");
+    HKEY hkey, hkey2;
+    DWORD ret;
+
+    if (!pSHGetShellKey)
+    {
+        win_skip("SHGetShellKey(ordinal 491) isn't available\n");
+        return;
+    }
+
+    /* some win2k */
+    if (pPathBuildRootW && pPathBuildRootW == pSHGetShellKey)
+    {
+        win_skip("SHGetShellKey(ordinal 491) used for PathBuildRootW\n");
+        return;
+    }
+
+    if (is_win9x || is_win2k_and_lower)
+    {
+        win_skip("Ordinal 491 used for another call, skipping SHGetShellKey tests\n");
+        return;
+    }
+
+    /* marking broken cause latest Vista+ versions fail here */
+    SetLastError(0xdeadbeef);
+    hkey = pSHGetShellKey(SHKEY_Explorer, NULL, FALSE);
+    ok(hkey == NULL || broken(hkey != NULL), "got %p\n", hkey);
+    if (hkey)
+    {
+        hkey2 = 0;
+        ret = RegOpenKeyExA(hkey, "Shell Folders", 0, KEY_READ, &hkey2);
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+        ok(hkey2 != NULL, "got %p\n", hkey2);
+        RegCloseKey( hkey2 );
+        RegCloseKey( hkey );
+    }
+
+    hkey = pSHGetShellKey(SHKEY_Explorer | SHKEY_Root_HKCU, NULL, FALSE);
+    ok(hkey != NULL, "got %p\n", hkey);
+
+    hkey2 = 0;
+    ret = RegOpenKeyExA(hkey, "Shell Folders", 0, KEY_READ, &hkey2);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+    ok(hkey2 != NULL, "got %p\n", hkey2);
+    RegCloseKey( hkey2 );
+
+    RegCloseKey( hkey );
+}
+
 static void init_pointers(void)
 {
 #define MAKEFUNC(f, ord) (p##f = (void*)GetProcAddress(hShlwapi, (LPSTR)(ord)))
@@ -2698,6 +2756,7 @@ static void init_pointers(void)
     MAKEFUNC(SHIShellFolder_EnumObjects, 404);
     MAKEFUNC(SHGetObjectCompatFlags, 476);
     MAKEFUNC(IUnknown_QueryServiceExec, 484);
+    MAKEFUNC(SHGetShellKey, 491);
     MAKEFUNC(SHPropertyBag_ReadLONG, 496);
     MAKEFUNC(IUnknown_ProfferService, 514);
 #undef MAKEFUNC
@@ -2707,6 +2766,7 @@ START_TEST(ordinal)
 {
     hShlwapi = GetModuleHandleA("shlwapi.dll");
     is_win2k_and_lower = GetProcAddress(hShlwapi, "StrChrNW") == 0;
+    is_win9x = GetProcAddress(hShlwapi, (LPSTR)99) == 0; /* StrCpyNXA */
 
     init_pointers();
 
@@ -2734,6 +2794,7 @@ START_TEST(ordinal)
     test_SHIShellFolder_EnumObjects();
     test_SHGetIniString();
     test_SHSetIniString();
+    test_SHGetShellKey();
 
     FreeLibrary(hshell32);
     FreeLibrary(hmlang);
