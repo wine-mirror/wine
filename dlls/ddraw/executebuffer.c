@@ -188,25 +188,24 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 	        int i;
 		TRACE("MATRIXMULTIPLY   (%d)\n", count);
 		
-		for (i = 0; i < count; i++) {
-		    LPD3DMATRIXMULTIPLY ci = (LPD3DMATRIXMULTIPLY) instr;
-                    LPD3DMATRIX a, b, c;
+                for (i = 0; i < count; ++i)
+                {
+                    D3DMATRIXMULTIPLY *ci = (D3DMATRIXMULTIPLY *)instr;
+                    D3DMATRIX *a, *b, *c;
 
-                    if(!ci->hDestMatrix || ci->hDestMatrix > lpDevice->numHandles ||
-                       !ci->hSrcMatrix1 || ci->hSrcMatrix1 > lpDevice->numHandles ||
-                       !ci->hSrcMatrix2 || ci->hSrcMatrix2 > lpDevice->numHandles) {
-                        ERR("Handles out of bounds\n");
-                    } else if (lpDevice->Handles[ci->hDestMatrix - 1].type != DDrawHandle_Matrix ||
-                               lpDevice->Handles[ci->hSrcMatrix1 - 1].type != DDrawHandle_Matrix ||
-                               lpDevice->Handles[ci->hSrcMatrix2 - 1].type != DDrawHandle_Matrix) {
-                        ERR("Handle types invalid\n");
-                    } else {
-                        a = (LPD3DMATRIX) lpDevice->Handles[ci->hDestMatrix - 1].ptr;
-                        b = (LPD3DMATRIX) lpDevice->Handles[ci->hSrcMatrix1 - 1].ptr;
-                        c = (LPD3DMATRIX) lpDevice->Handles[ci->hSrcMatrix2 - 1].ptr;
-                        TRACE("  Dest : %p  Src1 : %p  Src2 : %p\n",
-                            a, b, c);
-                        multiply_matrix(a,c,b);
+                    a = ddraw_get_object(&lpDevice->handle_table, ci->hDestMatrix - 1, DDRAW_HANDLE_MATRIX);
+                    b = ddraw_get_object(&lpDevice->handle_table, ci->hSrcMatrix1 - 1, DDRAW_HANDLE_MATRIX);
+                    c = ddraw_get_object(&lpDevice->handle_table, ci->hSrcMatrix2 - 1, DDRAW_HANDLE_MATRIX);
+
+                    if (!a || !b || !c)
+                    {
+                        ERR("Invalid matrix handle (a %#x -> %p, b %#x -> %p, c %#x -> %p).\n",
+                                ci->hDestMatrix, a, ci->hSrcMatrix1, b, ci->hSrcMatrix2, c);
+                    }
+                    else
+                    {
+                        TRACE("dst %p, src1 %p, src2 %p.\n", a, b, c);
+                        multiply_matrix(a, c, b);
                     }
 
                     instr += size;
@@ -217,27 +216,30 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 	        int i;
 		TRACE("STATETRANSFORM   (%d)\n", count);
 		
-		for (i = 0; i < count; i++) {
-		    LPD3DSTATE ci = (LPD3DSTATE) instr;
+                for (i = 0; i < count; ++i)
+                {
+                    D3DSTATE *ci = (D3DSTATE *)instr;
+                    D3DMATRIX *m;
 
-                    if(!ci->u2.dwArg[0]) {
-                        ERR("Setting a NULL matrix handle, what should I do?\n");
-                    } else if(ci->u2.dwArg[0] > lpDevice->numHandles) {
-                        ERR("Handle %d is out of bounds\n", ci->u2.dwArg[0]);
-                    } else if(lpDevice->Handles[ci->u2.dwArg[0] - 1].type != DDrawHandle_Matrix) {
-                        ERR("Handle %d is not a matrix handle\n", ci->u2.dwArg[0]);
-                    } else {
-                        if(ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_WORLD)
+                    m = ddraw_get_object(&lpDevice->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATRIX);
+                    if (!m)
+                    {
+                        ERR("Invalid matrix handle %#x.\n", ci->u2.dwArg[0]);
+                    }
+                    else
+                    {
+                        if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_WORLD)
                             lpDevice->world = ci->u2.dwArg[0];
-                        if(ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_VIEW)
+                        if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_VIEW)
                             lpDevice->view = ci->u2.dwArg[0];
-                        if(ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_PROJECTION)
+                        if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_PROJECTION)
                             lpDevice->proj = ci->u2.dwArg[0];
                         IDirect3DDevice7_SetTransform((IDirect3DDevice7 *)lpDevice,
-                                ci->u1.dtstTransformStateType, (LPD3DMATRIX)lpDevice->Handles[ci->u2.dwArg[0] - 1].ptr);
+                                ci->u1.dtstTransformStateType, m);
                     }
-		    instr += size;
-		}
+
+                    instr += size;
+                }
 	    } break;
 
 	    case D3DOP_STATELIGHT: {

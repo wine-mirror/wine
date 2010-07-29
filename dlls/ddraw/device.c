@@ -382,14 +382,6 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                     }
                     break;
 
-                    case DDrawHandle_Matrix:
-                    {
-                        /* No fixme here because this might happen because of sloppy apps */
-                        WARN("Leftover matrix handle %d, deleting\n", i + 1);
-                        IDirect3DDevice_DeleteMatrix((IDirect3DDevice *)&This->IDirect3DDevice_vtbl, i + 1);
-                    }
-                    break;
-
                     case DDrawHandle_StateBlock:
                     {
                         /* No fixme here because this might happen because of sloppy apps */
@@ -420,6 +412,14 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                     IDirect3DMaterialImpl *m = entry->object;
                     FIXME("Material handle %#x (%p) not unset properly.\n", i + 1, m);
                     m->Handle = 0;
+                    break;
+                }
+
+                case DDRAW_HANDLE_MATRIX:
+                {
+                    /* No FIXME here because this might happen because of sloppy applications. */
+                    WARN("Leftover matrix handle %#x (%p), deleting.\n", i + 1, entry->object);
+                    IDirect3DDevice_DeleteMatrix((IDirect3DDevice *)&This->IDirect3DDevice_vtbl, i + 1);
                     break;
                 }
 
@@ -1426,6 +1426,8 @@ IDirect3DDeviceImpl_1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DM
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     D3DMATRIX *Matrix;
+    DWORD h;
+
     TRACE("(%p)->(%p)\n", This, D3DMatHandle);
 
     if(!D3DMatHandle)
@@ -1439,16 +1441,18 @@ IDirect3DDeviceImpl_1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIXHANDLE *D3DM
     }
 
     EnterCriticalSection(&ddraw_cs);
-    *D3DMatHandle = IDirect3DDeviceImpl_CreateHandle(This);
-    if(!(*D3DMatHandle))
+
+    h = ddraw_allocate_handle(&This->handle_table, Matrix, DDRAW_HANDLE_MATRIX);
+    if (h == DDRAW_INVALID_HANDLE)
     {
-        ERR("Failed to create a matrix handle\n");
+        ERR("Failed to allocate a matrix handle.\n");
         HeapFree(GetProcessHeap(), 0, Matrix);
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }
-    This->Handles[*D3DMatHandle - 1].ptr = Matrix;
-    This->Handles[*D3DMatHandle - 1].type = DDrawHandle_Matrix;
+
+    *D3DMatHandle = h + 1;
+
     TRACE(" returning matrix handle %d\n", *D3DMatHandle);
 
     LeaveCriticalSection(&ddraw_cs);
@@ -1479,21 +1483,18 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
                                 D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
+    D3DMATRIX *m;
+
     TRACE("(%p)->(%08x,%p)\n", This, D3DMatHandle, D3DMatrix);
 
-    if( (!D3DMatHandle) || (!D3DMatrix) )
-        return DDERR_INVALIDPARAMS;
+    if (!D3DMatrix) return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    if(D3DMatHandle > This->numHandles)
+
+    m = ddraw_get_object(&This->handle_table, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
+    if (!m)
     {
-        ERR("Handle %d out of range\n", D3DMatHandle);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_INVALIDPARAMS;
-    }
-    else if(This->Handles[D3DMatHandle - 1].type != DDrawHandle_Matrix)
-    {
-        ERR("Handle %d is not a matrix handle\n", D3DMatHandle);
+        WARN("Invalid matrix handle.\n");
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
@@ -1501,7 +1502,7 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
     if (TRACE_ON(d3d7))
         dump_D3DMATRIX(D3DMatrix);
 
-    *((D3DMATRIX *) This->Handles[D3DMatHandle - 1].ptr) = *D3DMatrix;
+    *m = *D3DMatrix;
 
     if(This->world == D3DMatHandle)
     {
@@ -1548,29 +1549,23 @@ IDirect3DDeviceImpl_1_GetMatrix(IDirect3DDevice *iface,
                                 D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
+    D3DMATRIX *m;
+
     TRACE("(%p)->(%08x,%p)\n", This, D3DMatHandle, D3DMatrix);
 
-    if(!D3DMatrix)
-        return DDERR_INVALIDPARAMS;
-    if(!D3DMatHandle)
-        return DDERR_INVALIDPARAMS;
+    if (!D3DMatrix) return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    if(D3DMatHandle > This->numHandles)
+
+    m = ddraw_get_object(&This->handle_table, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
+    if (!m)
     {
-        ERR("Handle %d out of range\n", D3DMatHandle);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_INVALIDPARAMS;
-    }
-    else if(This->Handles[D3DMatHandle - 1].type != DDrawHandle_Matrix)
-    {
-        ERR("Handle %d is not a matrix handle\n", D3DMatHandle);
+        WARN("Invalid matrix handle.\n");
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
     }
 
-    /* The handle is simply a pointer to a D3DMATRIX structure */
-    *D3DMatrix = *((D3DMATRIX *) This->Handles[D3DMatHandle - 1].ptr);
+    *D3DMatrix = *m;
 
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
@@ -1596,30 +1591,24 @@ IDirect3DDeviceImpl_1_DeleteMatrix(IDirect3DDevice *iface,
                                    D3DMATRIXHANDLE D3DMatHandle)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
+    D3DMATRIX *m;
+
     TRACE("(%p)->(%08x)\n", This, D3DMatHandle);
 
-    if(!D3DMatHandle)
-        return DDERR_INVALIDPARAMS;
-
     EnterCriticalSection(&ddraw_cs);
-    if(D3DMatHandle > This->numHandles)
-    {
-        ERR("Handle %d out of range\n", D3DMatHandle);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_INVALIDPARAMS;
-    }
-    else if(This->Handles[D3DMatHandle - 1].type != DDrawHandle_Matrix)
-    {
-        ERR("Handle %d is not a matrix handle\n", D3DMatHandle);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_INVALIDPARAMS;
-    }
 
-    HeapFree(GetProcessHeap(), 0, This->Handles[D3DMatHandle - 1].ptr);
-    This->Handles[D3DMatHandle - 1].ptr = NULL;
-    This->Handles[D3DMatHandle - 1].type = DDrawHandle_Unknown;
+    m = ddraw_free_handle(&This->handle_table, D3DMatHandle - 1, DDRAW_HANDLE_MATRIX);
+    if (!m)
+    {
+        WARN("Invalid matrix handle.\n");
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
 
     LeaveCriticalSection(&ddraw_cs);
+
+    HeapFree(GetProcessHeap(), 0, m);
+
     return D3D_OK;
 }
 
