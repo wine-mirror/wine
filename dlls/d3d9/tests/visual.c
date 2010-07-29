@@ -10880,6 +10880,207 @@ static void shadow_test(IDirect3DDevice9 *device)
     IDirect3D9_Release(d3d9);
 }
 
+static void fp_special_test(IDirect3DDevice9 *device)
+{
+    static const DWORD vs_header[] =
+    {
+        0xfffe0200,                                                             /* vs_2_0                       */
+        0x05000051, 0xa00f0000, 0x00000000, 0x3f000000, 0x3f800000, 0x40000000, /* def c0, 0.0, 0.5, 1.0, 2.0   */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
+        0x0200001f, 0x80000005, 0x900f0001,                                     /* dcl_texcoord0 v1             */
+    };
+
+    static const DWORD vs_log[] = {0x0200000f, 0x80010000, 0x90000001};         /* log r0.x, v1.x               */
+    static const DWORD vs_pow[] =
+            {0x03000020, 0x80010000, 0x90000001, 0x90000001};                   /* pow r0.x, v1.x, v1.x         */
+    static const DWORD vs_nrm[] = {0x02000024, 0x80070000, 0x90000001};         /* nrm r0.xyz, v1.x             */
+    static const DWORD vs_rcp1[] = {0x02000006, 0x80010000, 0x90000001};        /* rcp r0.x, v1.x               */
+    static const DWORD vs_rcp2[] = {0x02000006, 0x80010000, 0x91000001};        /* rcp r0.x, -v1.x              */
+    static const DWORD vs_rsq1[] = {0x02000007, 0x80010000, 0x90000001};        /* rsq r0.x, v1.x               */
+    static const DWORD vs_rsq2[] = {0x02000007, 0x80010000, 0x91000001};        /* rsq r0.x, -v1.x              */
+
+    static const DWORD vs_footer[] =
+    {
+        0x03000005, 0x80020000, 0x80000000, 0xa0ff0000,                         /* mul r0.y, r0.x, c0.w         */
+        0x0300000d, 0x80040000, 0x80000000, 0x80550000,                         /* sge r0.z, r0.x, r0.y         */
+        0x0300000d, 0x80020000, 0x80e40000, 0x80000000,                         /* sge r0.y, r0, r0.x           */
+        0x03000005, 0x80040000, 0x80550000, 0x80e40000,                         /* mul r0.z, r0.y, r0           */
+        0x0300000b, 0x80080000, 0x81aa0000, 0x80aa0000,                         /* max r0.w, -r0.z, r0.z        */
+        0x0300000c, 0x80020000, 0x80000000, 0x80000000,                         /* slt r0.y, r0.x, r0.x         */
+        0x03000002, 0x80040000, 0x80550000, 0x80550000,                         /* add r0.z, r0.y, r0.y         */
+        0x0300000c, 0x80020000, 0xa0000000, 0x80ff0000,                         /* slt r0.y, c0.x, r0.w         */
+        0x0300000b, 0x80080000, 0x81aa0000, 0x80aa0000,                         /* max r0.w, -r0.z, r0.z        */
+        0x03000002, 0x80040000, 0x81550000, 0xa0e40000,                         /* add r0.z, -r0.y, c0          */
+        0x0300000c, 0x80080000, 0xa0000000, 0x80e40000,                         /* slt r0.w, c0.x, r0           */
+        0x03000005, 0x80040000, 0x80ff0000, 0x80e40000,                         /* mul r0.z, r0.w, r0           */
+        0x04000004, 0x80020000, 0x80aa0000, 0xa0e40000, 0x80e40000,             /* mad r0.y, r0.z, c0, r0       */
+        0x02000001, 0xe0030000, 0x80e40000,                                     /* mov oT0.xy, r0               */
+        0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
+        0x0000ffff,                                                             /* end                          */
+    };
+
+    static const struct
+    {
+        const char *name;
+        const DWORD *ops;
+        DWORD size;
+        D3DCOLOR color1;
+        D3DCOLOR color2;
+    }
+    vs_body[] =
+    {
+        /* The basic ideas here are:
+         *     2.0 * +/-INF == +/-INF
+         *     NAN != NAN
+         *
+         * The vertex shader value is written to the red component, with 0.0
+         * and +/-INF mapping to 0xff, and NAN to 0x7f. Anything else should
+         * result in 0x00. The pixel shader value is written to the green
+         * component, but here 0.0 also results in 0x00. The actual value is
+         * written to the blue component.
+         *
+         * There are at least two different ways for D3D implementations to
+         * handle this. AMD seems to stick mostly to the D3D documentation,
+         * and doesn't generate floating point specials in the first place.
+         * Note that that doesn't just apply to functions like rcp and rsq,
+         * but also basic mul, add, etc. nVidia seems to generate infinities,
+         * but then clamp them before sending them to the interpolators. In
+         * OpenGL these aren't clamped, and interpolating them generates NANs
+         * in the fragment shader, unless flat shading is used (essentially
+         * replicating the values instead of interpolating them).
+         *
+         * I can't currently explain the nVidia results for pow and nrm.
+         * They're not specials in the vertex shader, but look like -INF in
+         * the pixel shader. */
+        {"log",     vs_log,     sizeof(vs_log),     0x00000000 /* -FLT_MAX */,  0x00ff0000 /* clamp(-INF) */},
+        {"pow",     vs_pow,     sizeof(vs_pow),     0x000000ff /* +FLT_MAX */,  0x0000ff00 /* ???         */},
+        {"nrm",     vs_nrm,     sizeof(vs_nrm),     0x00ff0000 /*  0.0     */,  0x0000ff00 /* ???         */},
+        {"rcp1",    vs_rcp1,    sizeof(vs_rcp1),    0x000000ff /* +FLT_MAX */,  0x00ff00ff /* clamp(+INF) */},
+        {"rcp2",    vs_rcp2,    sizeof(vs_rcp2),    0x00000000 /* -FLT_MAX */,  0x00ff0000 /* clamp(-INF) */},
+        {"rsq1",    vs_rsq1,    sizeof(vs_rsq1),    0x000000ff /* +FLT_MAX */,  0x00ff00ff /* clamp(+INF) */},
+        {"rsq2",    vs_rsq2,    sizeof(vs_rsq2),    0x000000ff /* +FLT_MAX */,  0x00ff00ff /* clamp(+INF) */},
+    };
+
+    static const DWORD ps_code[] =
+    {
+        0xffff0200,                                                             /* ps_2_0                       */
+        0x05000051, 0xa00f0000, 0x00000000, 0x3f000000, 0x3f800000, 0x40000000, /* def c0, 0.0, 0.5, 1.0, 2.0   */
+        0x0200001f, 0x80000000, 0xb0030000,                                     /* dcl t0.xy                    */
+        0x0300000b, 0x80010001, 0xb0e40000, 0xa0e40000,                         /* max r1.x, t0, c0             */
+        0x0300000a, 0x80010000, 0xb0e40000, 0xa0e40000,                         /* min r0.x, t0, c0             */
+        0x03000002, 0x80010000, 0x80e40000, 0x81e40001,                         /* add r0.x, r0, -r1            */
+        0x04000004, 0x80010001, 0xb0e40000, 0xa0ff0000, 0xb1e40000,             /* mad r1.x, t0, c0.w. -t0      */
+        0x02000023, 0x80010002, 0x80e40001,                                     /* abs r2.x, r1                 */
+        0x02000023, 0x80010000, 0x80e40000,                                     /* abs r0.x, r0                 */
+        0x02000023, 0x80010001, 0xb0e40000,                                     /* abs r1.x, t0                 */
+        0x04000058, 0x80010002, 0x81e40002, 0xa0aa0000, 0xa0e40000,             /* cmp r2.x, -r2, c0.z, c0      */
+        0x02000023, 0x80010002, 0x80e40002,                                     /* abs r2.x, r2                 */
+        0x04000058, 0x80010001, 0x81e40001, 0xa0aa0000, 0xa0e40000,             /* cmp r1.x, -r1, c0.z, c0      */
+        0x02000023, 0x80010001, 0x80e40001,                                     /* abs r1.x, r1                 */
+        0x04000058, 0x80010003, 0x81e40002, 0xa0aa0000, 0xa0e40000,             /* cmp r3.x, -r2, c0.z, c0      */
+        0x04000058, 0x80010002, 0x81e40001, 0xa0aa0000, 0xa0e40000,             /* cmp r2.x, -r1, c0.z, c0      */
+        0x04000058, 0x80010000, 0x81e40000, 0xa0550000, 0xa0e40000,             /* cmp r0.x, -r0, c0.y, c0      */
+        0x03000005, 0x80010002, 0x80e40002, 0x80e40003,                         /* mul r2.x, r2, r3             */
+        0x04000058, 0x80010000, 0x81e40002, 0xa0aa0000, 0x80e40000,             /* cmp r0.x, -r2, c0.z, r0      */
+        0x04000058, 0x80020000, 0x81000001, 0x80000000, 0xa0000000,             /* cmp r0.y, -r1.x, r0.x, c0.x  */
+        0x02000001, 0x80050000, 0xb0c90000,                                     /* mov r0.xz, t0.yzxw           */
+        0x02000001, 0x80080000, 0xa0aa0000,                                     /* mov r0.w, c0.z               */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                  */
+        0x0000ffff,                                                             /* end                          */
+    };
+
+    struct
+    {
+        float x, y, z;
+        float s;
+    }
+    quad[] =
+    {
+        { -1.0f,  1.0f, 0.0f, 0.0f},
+        {  1.0f,  1.0f, 1.0f, 0.0f},
+        { -1.0f, -1.0f, 0.0f, 0.0f},
+        {  1.0f, -1.0f, 1.0f, 0.0f},
+    };
+
+    IDirect3DPixelShader9 *ps;
+    UINT body_size = 0;
+    DWORD *vs_code;
+    D3DCAPS9 caps;
+    HRESULT hr;
+    UINT i;
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(2, 0) || caps.VertexShaderVersion < D3DVS_VERSION(2, 0))
+    {
+        skip("No shader model 2.0 support, skipping floating point specials test.\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE1(0));
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreatePixelShader(device, ps_code, &ps);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed, hr %#x.\n", hr);
+    IDirect3DDevice9_SetPixelShader(device, ps);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(vs_body) / sizeof(*vs_body); ++i)
+    {
+        if (vs_body[i].size > body_size) body_size = vs_body[i].size;
+    }
+
+    vs_code = HeapAlloc(GetProcessHeap(), 0, sizeof(vs_header) + body_size + sizeof(vs_footer));
+    memcpy(vs_code, vs_header, sizeof(vs_header));
+
+    for (i = 0; i < sizeof(vs_body) / sizeof(*vs_body); ++i)
+    {
+        DWORD offset = sizeof(vs_header) / sizeof(*vs_header);
+        IDirect3DVertexShader9 *vs;
+        D3DCOLOR color;
+
+        memcpy(vs_code + offset, vs_body[i].ops, vs_body[i].size);
+        offset += vs_body[i].size / sizeof(*vs_body[i].ops);
+        memcpy(vs_code + offset, vs_footer, sizeof(vs_footer));
+
+        hr = IDirect3DDevice9_CreateVertexShader(device, vs_code, &vs);
+        ok(SUCCEEDED(hr), "CreateVertexShader failed, hr %#x.\n", hr);
+        IDirect3DDevice9_SetVertexShader(device, vs);
+        ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+        color = getPixelColor(device, 320, 240);
+        ok(color_match(color, vs_body[i].color1, 1) || color_match(color, vs_body[i].color2, 1),
+                "Expected color 0x%08x or 0x%08x for instruction \"%s\", got 0x%08x.\n",
+                vs_body[i].color1, vs_body[i].color2, vs_body[i].name, color);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+        ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
+        IDirect3DVertexShader9_Release(vs);
+    }
+
+    HeapFree(GetProcessHeap(), 0, vs_code);
+
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
+    IDirect3DPixelShader9_Release(ps);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -11044,6 +11245,7 @@ START_TEST(visual)
     dp3_alpha_test(device_ptr);
     depth_buffer_test(device_ptr);
     shadow_test(device_ptr);
+    fp_special_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
