@@ -4421,6 +4421,8 @@ static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
       PAINTSTRUCT ps;
 
       hDC = BeginPaint(editor->hWnd, &ps);
+      if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
+        ME_SendOldNotify(editor, EN_UPDATE);
       /* Erase area outside of the formatting rectangle */
       if (ps.rcPaint.top < editor->rcFormat.top)
       {

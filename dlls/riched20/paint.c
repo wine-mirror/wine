@@ -129,8 +129,6 @@ void ME_Repaint(ME_TextEditor *editor)
     ME_UpdateScrollBar(editor);
     FIXME("ME_Repaint had to call ME_WrapMarkedParagraphs\n");
   }
-  if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
-    ME_SendOldNotify(editor, EN_UPDATE);
   ITextHost_TxViewChange(editor->texthost, TRUE);
 }
 
