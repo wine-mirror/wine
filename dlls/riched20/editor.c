@@ -4316,35 +4316,25 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return editor->mode;
   case EM_SETTEXTMODE:
   {
-    LRESULT ret;
     int mask = 0;
     int changes = 0;
-    GETTEXTLENGTHEX how;
 
-    /* CR/LF conversion required in 2.0 mode, verbatim in 1.0 mode */
-    how.flags = GTL_CLOSE | (editor->bEmulateVersion10 ? 0 : GTL_USECRLF) | GTL_NUMCHARS;
-    how.codepage = unicode ? 1200 : CP_ACP;
-    ret = ME_GetTextLengthEx(editor, &how);
-    if (!ret)
+    if (ME_GetTextLength(editor))
+      return E_UNEXPECTED;
+
+    /* Check for mutually exclusive flags in adjacent bits of wParam */
+    if ((wParam & (TM_RICHTEXT | TM_MULTILEVELUNDO | TM_MULTICODEPAGE)) &
+        (wParam & (TM_PLAINTEXT | TM_SINGLELEVELUNDO | TM_SINGLECODEPAGE)) << 1)
+      return E_INVALIDARG;
+
+    if (wParam & (TM_RICHTEXT | TM_PLAINTEXT))
     {
-      /*Check for valid wParam*/
-      if ((((wParam & TM_RICHTEXT) && ((wParam & TM_PLAINTEXT) << 1))) ||
-	  (((wParam & TM_MULTILEVELUNDO) && ((wParam & TM_SINGLELEVELUNDO) << 1))) ||
-	  (((wParam & TM_MULTICODEPAGE) && ((wParam & TM_SINGLECODEPAGE) << 1))))
-	return 1;
-      else
-      {
-	if (wParam & (TM_RICHTEXT | TM_PLAINTEXT))
-	{
-	  mask |= (TM_RICHTEXT | TM_PLAINTEXT);
-	  changes |= (wParam & (TM_RICHTEXT | TM_PLAINTEXT));
-	}
-	/*FIXME: Currently no support for undo level and code page options*/ 
-	editor->mode = (editor->mode & (~mask)) | changes;
-	return 0;
-      }
+      mask |= TM_RICHTEXT | TM_PLAINTEXT;
+      changes |= wParam & (TM_RICHTEXT | TM_PLAINTEXT);
     }
-    return ret;
+    /* FIXME: Currently no support for undo level and code page options */
+    editor->mode = (editor->mode & ~mask) | changes;
+    return 0;
   }
   case EM_SETPASSWORDCHAR:
   {
