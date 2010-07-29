@@ -590,6 +590,7 @@ static void test_GetShellSecurityDescriptor(void)
     };
     SECURITY_DESCRIPTOR* psd;
     SECURITY_DESCRIPTOR* (WINAPI*pGetShellSecurityDescriptor)(PSHELL_USER_PERMISSION*,int);
+    void *pChrCmpIW = GetProcAddress(hShlwapi, "ChrCmpIW");
 
     pGetShellSecurityDescriptor=(void*)GetProcAddress(hShlwapi,(char*)475);
 
@@ -599,12 +600,18 @@ static void test_GetShellSecurityDescriptor(void)
         return;
     }
 
+    if(pChrCmpIW && pChrCmpIW == pGetShellSecurityDescriptor) /* win2k */
+    {
+        win_skip("Skipping for GetShellSecurityDescriptor, same ordinal used for ChrCmpIW\n");
+        return;
+    }
+
     psd = pGetShellSecurityDescriptor(NULL, 2);
     ok(psd==NULL ||
        broken(psd==INVALID_HANDLE_VALUE), /* IE5 */
        "GetShellSecurityDescriptor should fail\n");
     psd = pGetShellSecurityDescriptor(rgsup, 0);
-    ok(psd==NULL, "GetShellSecurityDescriptor should fail\n");
+    ok(psd==NULL, "GetShellSecurityDescriptor should fail, got %p\n", psd);
 
     SetLastError(0xdeadbeef);
     psd = pGetShellSecurityDescriptor(rgsup, 2);
@@ -614,7 +621,7 @@ static void test_GetShellSecurityDescriptor(void)
         win_skip("GetShellSecurityDescriptor is not implemented\n");
         return;
     }
-    if (psd==INVALID_HANDLE_VALUE)
+    if (psd == INVALID_HANDLE_VALUE)
     {
         win_skip("GetShellSecurityDescriptor is broken on IE5\n");
         return;
@@ -1910,6 +1917,7 @@ static void test_SHGetObjectCompatFlags(void)
     };
 
     static const char compat_path[] = "Software\\Microsoft\\Windows\\CurrentVersion\\ShellCompatibility\\Objects";
+    void *pColorAdjustLuma = GetProcAddress(hShlwapi, "ColorAdjustLuma");
     CHAR keyA[39]; /* {CLSID} */
     HKEY root;
     DWORD ret;
@@ -1918,6 +1926,12 @@ static void test_SHGetObjectCompatFlags(void)
     if (!pSHGetObjectCompatFlags)
     {
         win_skip("SHGetObjectCompatFlags isn't available\n");
+        return;
+    }
+
+    if (pColorAdjustLuma && pColorAdjustLuma == pSHGetObjectCompatFlags) /* win2k */
+    {
+        win_skip("Skipping SHGetObjectCompatFlags, same ordinal used for ColorAdjustLuma\n");
         return;
     }
 
