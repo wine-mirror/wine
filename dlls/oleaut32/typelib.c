@@ -6017,13 +6017,13 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
     unsigned int var_index;
     TYPEKIND type_kind;
     HRESULT hres;
-    const TLBFuncDesc *pFuncInfo = This->funclist;
+    const TLBFuncDesc *pFuncInfo;
 
     TRACE("(%p)(%p,id=%d,flags=0x%08x,%p,%p,%p,%p)\n",
       This,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr
     );
 
-    if( pFuncInfo->funcdesc.wFuncFlags == FUNCFLAG_FRESTRICTED )
+    if( This->TypeAttr.wTypeFlags & TYPEFLAG_FRESTRICTED )
         return DISP_E_MEMBERNOTFOUND;
 
     if (!pDispParams)
@@ -6045,7 +6045,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
      * FUNCDESC for dispinterfaces and we want the real function description */
     for (pFuncInfo = This->funclist; pFuncInfo; pFuncInfo=pFuncInfo->next)
         if ((memid == pFuncInfo->funcdesc.memid) &&
-            (wFlags & pFuncInfo->funcdesc.invkind))
+            (wFlags & pFuncInfo->funcdesc.invkind) &&
+            (pFuncInfo->funcdesc.wFuncFlags & FUNCFLAG_FRESTRICTED) == 0)
             break;
 
     if (pFuncInfo) {
