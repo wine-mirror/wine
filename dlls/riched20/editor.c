@@ -317,8 +317,6 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
       break;
     stream->dwSize = 0;
   } while(1);
-  ME_CommitUndo(editor);
-  ME_UpdateRepaint(editor);
   return 0;
 }
 
