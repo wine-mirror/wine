@@ -39,3 +39,6 @@
 #define ID_BROWSE_ABOUT                336
 
 #define ID_BROWSE_ADDFAV               1200
+
+#define ID_BROWSE_GOTOFAV_FIRST        2000
+#define ID_BROWSE_GOTOFAV_MAX          65000

@@ -83,15 +83,55 @@ static HMENU get_fav_menu(HMENU menu)
     return GetSubMenu(menu, 1);
 }
 
-static void add_fav_to_menu(HMENU menu, LPWSTR title)
+static LPCWSTR get_fav_url_from_id(HMENU menu, UINT id)
 {
     MENUITEMINFOW item;
 
     item.cbSize = sizeof(item);
-    item.fMask = MIIM_FTYPE | MIIM_STRING;
+    item.fMask = MIIM_DATA;
+
+    if(!GetMenuItemInfoW(menu, id, FALSE, &item))
+        return NULL;
+
+    return (LPWSTR)item.dwItemData;
+}
+
+static void free_fav_menu_data(HMENU menu)
+{
+    LPCWSTR url;
+    int i;
+
+    for(i = 0; (url = get_fav_url_from_id(menu, ID_BROWSE_GOTOFAV_FIRST + i)); i++)
+        heap_free((LPWSTR)url);
+}
+
+static void add_fav_to_menu(HMENU menu, LPWSTR title, LPCWSTR url)
+{
+    MENUITEMINFOW item;
+    /* Subtract the number of standard elements in the Favorites menu */
+    INT favcount = GetMenuItemCount(menu) - 2;
+    LPWSTR urlbuf;
+
+    if(favcount > (ID_BROWSE_GOTOFAV_MAX - ID_BROWSE_GOTOFAV_FIRST))
+    {
+        FIXME("Add support for more than %d Favorites\n", favcount);
+        return;
+    }
+
+    urlbuf = heap_alloc((lstrlenW(url) + 1) * sizeof(WCHAR));
+
+    if(!urlbuf)
+        return;
+
+    lstrcpyW(urlbuf, url);
+
+    item.cbSize = sizeof(item);
+    item.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_DATA | MIIM_ID;
     item.fType = MFT_STRING;
     item.dwTypeData = title;
-    InsertMenuItemW(menu, GetMenuItemCount(menu), TRUE, &item);
+    item.wID = ID_BROWSE_GOTOFAV_FIRST + favcount;
+    item.dwItemData = (ULONG_PTR)urlbuf;
+    InsertMenuItemW(menu, favcount + 2, TRUE, &item);
 }
 
 static void add_favs_to_menu(HMENU menu, LPCWSTR dir)
@@ -125,14 +165,20 @@ static void add_favs_to_menu(HMENU menu, LPCWSTR dir)
         do
         {
             WCHAR* fileext;
+            WCHAR* url = NULL;
             lstrcpyW(filename, finddata.cFileName);
 
             if(FAILED(IPersistFile_Load(urlfile, path, 0)))
                 continue;
 
+            urlobj->lpVtbl->GetURL(urlobj, &url);
+
+            if(!url)
+                continue;
+
             fileext = filename + lstrlenW(filename) - lstrlenW(urlext) + 1;
             *fileext = 0;
-            add_fav_to_menu(menu, filename);
+            add_fav_to_menu(menu, filename, url);
         } while(FindNextFileW(findhandle, &finddata));
     }
 
@@ -157,6 +203,18 @@ static HMENU create_ie_menu(void)
         add_favs_to_menu(get_fav_menu(menu), path);
 
     return menu;
+}
+
+static void ie_navigate(InternetExplorer* This, LPCWSTR url)
+{
+    VARIANT variant;
+
+    V_VT(&variant) = VT_BSTR;
+    V_BSTR(&variant) = SysAllocString(url);
+
+    IWebBrowser2_Navigate2(WEBBROWSER2(This), &variant, NULL, NULL, NULL, NULL);
+
+    SysFreeString(V_BSTR(&variant));
 }
 
 static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -310,6 +368,7 @@ static LRESULT iewnd_OnDestroy(InternetExplorer *This)
 {
     TRACE("%p\n", This);
 
+    free_fav_menu_data(get_fav_menu(This->menu));
     This->frame_hwnd = NULL;
     PostQuitMessage(0); /* FIXME */
 
@@ -343,6 +402,13 @@ static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT 
             break;
 
         default:
+            if(LOWORD(wparam) >= ID_BROWSE_GOTOFAV_FIRST && LOWORD(wparam) <= ID_BROWSE_GOTOFAV_MAX)
+            {
+                LPCWSTR url = get_fav_url_from_id(get_fav_menu(This->menu), LOWORD(wparam));
+
+                if(url)
+                    ie_navigate(This, url);
+            }
             return DefWindowProcW(hwnd, msg, wparam, lparam);
     }
     return 0;
