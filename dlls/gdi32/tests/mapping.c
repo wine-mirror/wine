@@ -31,6 +31,7 @@
 
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 static DWORD (WINAPI *pGetLayout)(HDC hdc);
+static INT (WINAPI *pGetRandomRgn)(HDC hDC, HRGN hRgn, INT iCode);
 static BOOL (WINAPI *pGetTransform)(HDC, DWORD, XFORM *);
 static DWORD (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
 
@@ -228,7 +229,9 @@ static void test_dc_layout(void)
     SIZE size;
     POINT pt;
     HBITMAP bitmap;
+    RECT rc, ret_rc;
     HDC hdc;
+    HRGN hrgn;
 
     if (!pGetLayout || !pSetLayout)
     {
@@ -285,6 +288,57 @@ static void test_dc_layout(void)
         ok( xform.eM22 == 1.0, "got %f\n", xform.eM22 );
         ok( xform.eDx == 99.0, "got %f\n", xform.eDx );
         ok( xform.eDy == 0.0, "got %f\n", xform.eDy );
+    }
+
+    SetRect( &rc, 10, 10, 20, 20 );
+    IntersectClipRect( hdc, 10, 10, 20, 20 );
+    hrgn = CreateRectRgn( 0, 0, 0, 0 );
+    GetClipRgn( hdc, hrgn );
+    GetRgnBox( hrgn, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+    pSetLayout( hdc, LAYOUT_LTR );
+    SetRect( &rc, 80, 10, 90, 20 );
+    GetClipRgn( hdc, hrgn );
+    GetRgnBox( hrgn, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+    GetClipBox( hdc, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+    IntersectClipRect( hdc, 80, 10, 85, 20 );
+    pSetLayout( hdc, LAYOUT_RTL );
+    SetRect( &rc, 15, 10, 20, 20 );
+    GetClipRgn( hdc, hrgn );
+    GetRgnBox( hrgn, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+    SetRectRgn( hrgn, 60, 10, 80, 20 );
+    pSetLayout( hdc, LAYOUT_LTR );
+    ExtSelectClipRgn( hdc, hrgn, RGN_OR );
+    pSetLayout( hdc, LAYOUT_RTL );
+    SetRect( &rc, 15, 10, 40, 20 );
+    GetClipRgn( hdc, hrgn );
+    GetRgnBox( hrgn, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+
+    /* OffsetClipRgn mirrors too */
+    OffsetClipRgn( hdc, 5, 5 );
+    OffsetRect( &rc, 5, 5 );
+    GetClipRgn( hdc, hrgn );
+    GetRgnBox( hrgn, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+
+    /* GetRandomRgn returns the raw region */
+    if (pGetRandomRgn)
+    {
+        SetRect( &rc, 55, 15, 80, 25 );
+        pGetRandomRgn( hdc, hrgn, 1 );
+        GetRgnBox( hrgn, &ret_rc );
+        ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+            ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
     }
 
     SetMapMode(hdc, MM_LOMETRIC);
@@ -656,6 +710,7 @@ START_TEST(mapping)
     HMODULE mod = GetModuleHandleA("gdi32.dll");
     pGetLayout = (void *)GetProcAddress( mod, "GetLayout" );
     pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
+    pGetRandomRgn = (void *)GetProcAddress( mod, "GetRandomRgn" );
     pGetTransform = (void *)GetProcAddress( mod, "GetTransform" );
     pSetVirtualResolution = (void *)GetProcAddress( mod, "SetVirtualResolution" );
 
