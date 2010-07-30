@@ -3486,8 +3486,8 @@ static void device_map_psamplers(IWineD3DDeviceImpl *This, const struct wined3d_
     }
 }
 
-static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const DWORD *pshader_sampler_tokens,
-        const DWORD *vshader_sampler_tokens, DWORD unit)
+static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_tokens,
+        const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_tokens, DWORD unit)
 {
     DWORD current_mapping = This->rev_tex_unit_map[unit];
 
