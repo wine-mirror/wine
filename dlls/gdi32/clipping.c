@@ -211,6 +211,7 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect )
     dc->dirty = 0;
     dc->vis_rect = *vis_rect;
     dc->hVisRgn = hrgn;
+    DC_UpdateXforms( dc );
     CLIPPING_UpdateGCRegion( dc );
     release_dc_ptr( dc );
 }
