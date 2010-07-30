@@ -711,7 +711,7 @@ static BOOL match_fbo_tex_update(const struct wined3d_gl_info *gl_info, const ch
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
     checkGLcall("glTexSubImage2D");
 
-    glClearColor(0.996, 0.729, 0.745, 0.792);
+    glClearColor(0.996f, 0.729f, 0.745f, 0.792f);
     glClear(GL_COLOR_BUFFER_BIT);
     checkGLcall("glClear");
 
