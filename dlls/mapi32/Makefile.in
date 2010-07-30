@@ -33,6 +33,7 @@ RC_SRCS = \
 	Ro.rc \
 	Ru.rc \
 	Si.rc \
+	Sv.rc \
 	Uk.rc \
 	version.rc
 
