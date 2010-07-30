@@ -1802,12 +1802,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*This->render_targets) * gl_info->limits.buffers);
-    This->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            sizeof(GLenum) * gl_info->limits.buffers);
 
     This->NumberOfPalettes = 1;
     This->palettes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PALETTEENTRY*));
-    if(!This->palettes || !This->render_targets || !This->draw_buffers) {
+    if (!This->palettes || !This->render_targets)
+    {
         ERR("Out of memory!\n");
         hr = E_OUTOFMEMORY;
         goto err_out;
@@ -1946,7 +1945,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
 err_out:
     HeapFree(GetProcessHeap(), 0, This->render_targets);
-    HeapFree(GetProcessHeap(), 0, This->draw_buffers);
     HeapFree(GetProcessHeap(), 0, This->swapchains);
     This->NumberOfSwapChains = 0;
     if(This->palettes) {
@@ -2150,9 +2148,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     This->NumberOfPalettes = 0;
 
     HeapFree(GetProcessHeap(), 0, This->render_targets);
-    HeapFree(GetProcessHeap(), 0, This->draw_buffers);
     This->render_targets = NULL;
-    This->draw_buffers = NULL;
 
     This->d3d_initialized = FALSE;
 

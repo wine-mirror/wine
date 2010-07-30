@@ -1408,6 +1408,10 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
             gl_info->limits.buffers * sizeof(*ret->blit_targets));
     if (!ret->blit_targets) goto out;
 
+    ret->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            gl_info->limits.buffers * sizeof(*ret->draw_buffers));
+    if (!ret->draw_buffers) goto out;
+
     ret->free_occlusion_query_size = 4;
     ret->free_occlusion_queries = HeapAlloc(GetProcessHeap(), 0,
             ret->free_occlusion_query_size * sizeof(*ret->free_occlusion_queries));
@@ -1558,6 +1562,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
 out:
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
+    HeapFree(GetProcessHeap(), 0, ret->draw_buffers);
     HeapFree(GetProcessHeap(), 0, ret->blit_targets);
     HeapFree(GetProcessHeap(), 0, ret->pshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, ret->vshader_const_dirty);
@@ -1593,6 +1598,7 @@ void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context)
         destroy = FALSE;
     }
 
+    HeapFree(GetProcessHeap(), 0, context->draw_buffers);
     HeapFree(GetProcessHeap(), 0, context->blit_targets);
     HeapFree(GetProcessHeap(), 0, context->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, context->pshader_const_dirty);
@@ -1953,19 +1959,19 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
                 for (i = 0; i < gl_info->limits.buffers; ++i)
                 {
                     if (device->render_targets[i])
-                        device->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
+                        context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
                     else
-                        device->draw_buffers[i] = GL_NONE;
+                        context->draw_buffers[i] = GL_NONE;
                 }
 
                 if (gl_info->supported[ARB_DRAW_BUFFERS])
                 {
-                    GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, device->draw_buffers));
+                    GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, context->draw_buffers));
                     checkGLcall("glDrawBuffers()");
                 }
                 else
                 {
-                    glDrawBuffer(device->draw_buffers[0]);
+                    glDrawBuffer(context->draw_buffers[0]);
                     checkGLcall("glDrawBuffer()");
                 }
             } else {
@@ -2139,18 +2145,17 @@ void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
     else
     {
         const struct wined3d_gl_info *gl_info = context->gl_info;
-        GLenum buffers[gl_info->limits.buffers];
 
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
             if (i < rt_count && rts[i])
-                buffers[i] = GL_COLOR_ATTACHMENT0 + i;
+                context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
             else
-                buffers[i] = GL_NONE;
+                context->draw_buffers[i] = GL_NONE;
         }
 
         ENTER_GL();
-        GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, buffers));
+        GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, context->draw_buffers));
         checkGLcall("glDrawBuffers()");
         LEAVE_GL();
 

@@ -1060,6 +1060,7 @@ struct wined3d_context
     GLuint                  fbo_draw_binding;
     BOOL rebind_fbo;
     IWineD3DSurfaceImpl **blit_targets;
+    GLenum *draw_buffers;
 
     /* Queries */
     GLuint *free_occlusion_queries;
@@ -1637,7 +1638,6 @@ struct IWineD3DDeviceImpl
     UINT                    currentPalette;
 
     /* For rendering to a texture using glCopyTexImage */
-    GLenum                  *draw_buffers;
     GLuint                  depth_blt_texture;
     GLuint                  depth_blt_rb;
     UINT                    depth_blt_rb_w;
