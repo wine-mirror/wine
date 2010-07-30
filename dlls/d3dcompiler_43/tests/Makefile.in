@@ -6,6 +6,7 @@ TESTDLL   = d3dcompiler_43.dll
 IMPORTS   = d3dcompiler
 
 C_SRCS = \
+	asm.c \
 	blob.c
 
 @MAKE_TEST_RULES@
