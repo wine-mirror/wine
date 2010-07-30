@@ -153,7 +153,7 @@ library IHost
                 [in, optional, defaultvalue("")] BSTR Prefix,
                 [out, retval] IDispatch **out_Dispatch);
 
-        [id(IHOST_ECHO_DISPID)]
+        [id(IHOST_ECHO_DISPID), vararg]
         HRESULT Echo([in] SAFEARRAY(VARIANT) pArgs);
 
         [id(IHOST_GETOBJECT_DISPID)]
