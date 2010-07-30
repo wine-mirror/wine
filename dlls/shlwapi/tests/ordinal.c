@@ -2390,13 +2390,15 @@ static void test_SHCreateWorkerWindowA(void)
 
     /* test exstyle */
     ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
-    ok(ret == WS_EX_WINDOWEDGE, "0x%08lx\n", ret);
+    ok(ret == WS_EX_WINDOWEDGE ||
+       ret == (WS_EX_WINDOWEDGE|WS_EX_LAYOUTRTL) /* systems with RTL locale */, "0x%08lx\n", ret);
 
     DestroyWindow(hwnd);
 
     hwnd = pSHCreateWorkerWindowA(0, NULL, WS_EX_TOOLWINDOW, 0, 0, 0);
     ret = GetWindowLongA(hwnd, GWL_EXSTYLE);
-    ok(ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW), "0x%08lx\n", ret);
+    ok(ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW) ||
+       ret == (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW|WS_EX_LAYOUTRTL) /* systems with RTL locale */, "0x%08lx\n", ret);
     DestroyWindow(hwnd);
 }
 
