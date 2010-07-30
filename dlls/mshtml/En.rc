@@ -20,6 +20,12 @@
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
+ STRINGTABLE
+ {
+    IDS_STATUS_DONE            "Done"
+    IDS_STATUS_DOWNLOADINGFROM "Downloading from %s..."
+}
+
 STRINGTABLE
 {
     IDS_HTMLDISABLED    "HTML rendering is currently disabled."

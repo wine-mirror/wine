@@ -37,6 +37,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -44,6 +45,7 @@ typedef struct {
     task_t header;
     HTMLDocumentObj *doc;
     BOOL set_download;
+    LPOLESTR url;
 } download_proc_task_t;
 
 static BOOL use_gecko_script(LPCWSTR url)
@@ -134,8 +136,8 @@ static void set_downloading_proc(task_t *_task)
 
     TRACE("(%p)\n", doc);
 
-    if(doc->frame)
-        IOleInPlaceFrame_SetStatusText(doc->frame, NULL /* FIXME */);
+    set_statustext(doc, IDS_STATUS_DOWNLOADINGFROM, task->url);
+    CoTaskMemFree(task->url);
 
     if(!doc->client)
         return;
@@ -243,26 +245,31 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
     }
 
     hres = create_doc_uri(This->window, url, &nsuri);
-    CoTaskMemFree(url);
-    if(FAILED(hres))
-        return hres;
 
-    if(async_bsc) {
-        bscallback = async_bsc;
-    }else {
-        hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
-        if(FAILED(hres))
-            return hres;
+    if(SUCCEEDED(hres))
+    {
+        if(async_bsc) {
+            bscallback = async_bsc;
+        }else {
+            hres = create_channelbsc(mon, NULL, NULL, 0, &bscallback);
+        }
     }
 
-    hres = load_nsuri(This->window, nsuri, bscallback, LOAD_INITIAL_DOCUMENT_URI);
-    nsISupports_Release((nsISupports*)nsuri); /* FIXME */
     if(SUCCEEDED(hres))
-        set_window_bscallback(This->window, bscallback);
-    if(bscallback != async_bsc)
-        IUnknown_Release((IUnknown*)bscallback);
+    {
+        hres = load_nsuri(This->window, nsuri, bscallback, LOAD_INITIAL_DOCUMENT_URI);
+        nsISupports_Release((nsISupports*)nsuri); /* FIXME */
+        if(SUCCEEDED(hres))
+            set_window_bscallback(This->window, bscallback);
+        if(bscallback != async_bsc)
+            IUnknown_Release((IUnknown*)bscallback);
+    }
+
     if(FAILED(hres))
+    {
+        CoTaskMemFree(url);
         return hres;
+    }
 
     HTMLDocument_LockContainer(This->doc_obj, TRUE);
 
@@ -275,6 +282,7 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
     download_task = heap_alloc(sizeof(download_proc_task_t));
     download_task->doc = This->doc_obj;
     download_task->set_download = set_download;
+    download_task->url = url;
     push_task(&download_task->header, set_downloading_proc, This->doc_obj->basedoc.task_magic);
 
     return S_OK;

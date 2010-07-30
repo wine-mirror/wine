@@ -1024,5 +1024,6 @@ static inline void windowref_release(windowref_t *ref)
 
 HDC get_display_dc(void);
 HINSTANCE get_shdoclc(void);
+void set_statustext(HTMLDocumentObj*,INT,LPCWSTR);
 
 extern HINSTANCE hInst;

@@ -40,6 +40,7 @@
 
 #define INIT_GUID
 #include "mshtml_private.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -48,6 +49,7 @@ DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 
 static HINSTANCE shdoclc = NULL;
 static HDC display_dc;
+static LPWSTR status_strings[NUM_STATUS_STRINGS];
 
 static void thread_detach(void)
 {
@@ -63,6 +65,13 @@ static void thread_detach(void)
     heap_free(thread_data);
 }
 
+void free_strings(void)
+{
+    int i;
+    for(i = 0; i < NUM_STATUS_STRINGS; i++)
+        heap_free(status_strings[i]);
+}
+
 static void process_detach(void)
 {
     close_gecko();
@@ -74,6 +83,46 @@ static void process_detach(void)
         TlsFree(mshtml_tls);
     if(display_dc)
         DeleteObject(display_dc);
+
+    free_strings();
+}
+
+void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
+{
+    int index = id - IDS_STATUS_DONE;
+    LPWSTR p = status_strings[index];
+
+    if(!doc->frame)
+        return;
+
+    if(!p)
+    {
+        DWORD len = 255;
+        p = heap_alloc(len * sizeof(WCHAR));
+        len = LoadStringW(hInst, id, p, len);
+        len++;
+        p = heap_realloc(p, len * sizeof(WCHAR));
+        if(InterlockedCompareExchangePointer((void**)&status_strings[index], p, NULL))
+        {
+            heap_free(p);
+            p = status_strings[index];
+        }
+    }
+
+    if(arg)
+    {
+        DWORD len = lstrlenW(p) + lstrlenW(arg) - 1;
+        LPWSTR buf = heap_alloc(len * sizeof(WCHAR));
+
+        snprintfW(buf, len - 1, p, arg);
+
+        p = buf;
+    }
+
+    IOleInPlaceFrame_SetStatusText(doc->frame, p);
+
+    if(arg)
+        heap_free(p);
 }
 
 HINSTANCE get_shdoclc(void)

@@ -25,6 +25,10 @@
 #define IDS_DOWNLOADING     7502
 #define IDS_INSTALLING      7503
 
+#define NUM_STATUS_STRINGS         2
+#define IDS_STATUS_DOWNLOADINGFROM 7550
+#define IDS_STATUS_DONE            7551
+
 #define ID_DWL_DIALOG       7600
 #define ID_DWL_PROGRESS     7601
 #define ID_DWL_INSTALL      7602

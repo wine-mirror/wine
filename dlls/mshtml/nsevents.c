@@ -34,6 +34,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -239,10 +240,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         if(doc_obj->view_sink)
             IAdviseSink_OnViewChange(doc_obj->view_sink, DVASPECT_CONTENT, -1);
 
-        if(doc_obj->frame) {
-            static const WCHAR wszDone[] = {'D','o','n','e',0};
-            IOleInPlaceFrame_SetStatusText(doc_obj->frame, wszDone);
-        }
+        set_statustext(doc_obj, IDS_STATUS_DONE, NULL);
 
         update_title(doc_obj);
     }
