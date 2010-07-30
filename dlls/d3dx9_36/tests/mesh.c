@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include "wine/test.h"
 #include "d3dx9.h"
 
@@ -35,6 +36,206 @@ static BOOL compare(FLOAT u, FLOAT v)
 static BOOL compare_vec3(D3DXVECTOR3 u, D3DXVECTOR3 v)
 {
     return ( compare(u.x, v.x) && compare(u.y, v.y) && compare(u.z, v.z) );
+}
+
+struct vertex
+{
+    D3DXVECTOR3 position;
+    D3DXVECTOR3 normal;
+};
+
+typedef WORD face[3];
+
+static BOOL compare_face(face a, face b)
+{
+    return (a[0]==b[0] && a[1] == b[1] && a[2] == b[2]);
+}
+
+struct mesh
+{
+    DWORD number_of_vertices;
+    struct vertex *vertices;
+
+    DWORD number_of_faces;
+    face *faces;
+};
+
+static void free_mesh(struct mesh *mesh)
+{
+    HeapFree(GetProcessHeap(), 0, mesh->faces);
+    HeapFree(GetProcessHeap(), 0, mesh->vertices);
+}
+
+static BOOL new_mesh(struct mesh *mesh, DWORD number_of_vertices, DWORD number_of_faces)
+{
+    int i;
+
+    mesh->vertices = HeapAlloc(GetProcessHeap(), 0, number_of_vertices * sizeof(*mesh->vertices));
+    if (!mesh->vertices)
+    {
+        return FALSE;
+    }
+    mesh->number_of_vertices = number_of_vertices;
+
+    mesh->faces = HeapAlloc(GetProcessHeap(), 0, number_of_faces * sizeof(*mesh->faces));
+    if (!mesh->faces)
+    {
+        HeapFree(GetProcessHeap(), 0, mesh->vertices);
+        return FALSE;
+    }
+    mesh->number_of_faces = number_of_faces;
+
+    /* fill with nonsense data to make sure no comparison succeed by chance */
+    for (i = 0; i < number_of_vertices; i++)
+    {
+        mesh->vertices[i].position.x = NAN; mesh->vertices[i].position.y = NAN; mesh->vertices[i].position.z = NAN;
+        mesh->vertices[i].normal.x = NAN; mesh->vertices[i].normal.y = NAN; mesh->vertices[i].normal.z = NAN;
+    }
+    for (i = 0; i < number_of_faces; i++)
+    {
+        mesh->faces[i][0] = -1; mesh->faces[i][1] = -1; mesh->faces[i][2] = -1;
+    }
+
+    return TRUE;
+}
+
+static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mesh)
+{
+    HRESULT hr;
+    DWORD number_of_vertices, number_of_faces;
+    IDirect3DVertexBuffer9 *vertex_buffer;
+    IDirect3DIndexBuffer9 *index_buffer;
+    D3DVERTEXBUFFER_DESC vertex_buffer_description;
+    D3DINDEXBUFFER_DESC index_buffer_description;
+    struct vertex *vertices;
+    face *faces;
+    int expected, i;
+
+    number_of_vertices = d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh);
+    ok(number_of_vertices == mesh->number_of_vertices, "Test %s, result %u, expected %d\n",
+       name, number_of_vertices, mesh->number_of_vertices);
+
+    number_of_faces = d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh);
+    ok(number_of_faces == mesh->number_of_faces, "Test %s, result %u, expected %d\n",
+       name, number_of_faces, mesh->number_of_faces);
+
+    /* vertex buffer */
+    hr = d3dxmesh->lpVtbl->GetVertexBuffer(d3dxmesh, &vertex_buffer);
+    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+
+    if (hr != D3D_OK)
+    {
+        skip("Couldn't get vertex buffer\n");
+    }
+    else
+    {
+        hr = IDirect3DVertexBuffer9_GetDesc(vertex_buffer, &vertex_buffer_description);
+        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+
+        if (hr != D3D_OK)
+        {
+            skip("Couldn't get vertex buffer description\n");
+        }
+        else
+        {
+            ok(vertex_buffer_description.Format == D3DFMT_VERTEXDATA, "Test %s, result %x, expected %x (D3DFMT_VERTEXDATA)\n",
+               name, vertex_buffer_description.Format, D3DFMT_VERTEXDATA);
+            ok(vertex_buffer_description.Type == D3DRTYPE_VERTEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_VERTEXBUFFER)\n",
+               name, vertex_buffer_description.Type, D3DRTYPE_VERTEXBUFFER);
+            ok(vertex_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, vertex_buffer_description.Usage, 0);
+            ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
+               name, vertex_buffer_description.Pool, D3DPOOL_DEFAULT);
+            expected = number_of_vertices * sizeof(D3DXVECTOR3) * 2;
+            ok(vertex_buffer_description.Size == expected, "Test %s, result %x, expected %x\n",
+               name, vertex_buffer_description.Size, expected);
+            ok(vertex_buffer_description.FVF == (D3DFVF_XYZ | D3DFVF_NORMAL), "Test %s, result %x, expected %x (D3DFVF_XYZ | D3DFVF_NORMAL)\n",
+               name, vertex_buffer_description.FVF, D3DFVF_XYZ | D3DFVF_NORMAL);
+        }
+
+        /* specify offset and size to avoid potential overruns */
+        hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, number_of_vertices * sizeof(D3DXVECTOR3) * 2,
+                                         (LPVOID *)&vertices, D3DLOCK_DISCARD);
+        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+
+        if (hr != D3D_OK)
+        {
+            skip("Couldn't lock vertex buffer\n");
+        }
+        else
+        {
+            for (i = 0; i < number_of_vertices; i++)
+            {
+                ok(compare_vec3(vertices[i].position, mesh->vertices[i].position),
+                   "Test %s, vertex position %d, result (%g, %g, %g), expected (%g, %g, %g)\n", name, i,
+                   vertices[i].position.x, vertices[i].position.y, vertices[i].position.z,
+                   mesh->vertices[i].position.x, mesh->vertices[i].position.y, mesh->vertices[i].position.z);
+                ok(compare_vec3(vertices[i].normal, mesh->vertices[i].normal),
+                   "Test %s, vertex normal %d, result (%g, %g, %g), expected (%g, %g, %g)\n", name, i,
+                   vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z,
+                   mesh->vertices[i].normal.x, mesh->vertices[i].normal.y, mesh->vertices[i].normal.z);
+            }
+
+            IDirect3DVertexBuffer9_Unlock(vertex_buffer);
+        }
+
+        IDirect3DVertexBuffer9_Release(vertex_buffer);
+    }
+
+    /* index buffer */
+    hr = d3dxmesh->lpVtbl->GetIndexBuffer(d3dxmesh, &index_buffer);
+    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+
+    if (!index_buffer)
+    {
+        skip("Couldn't get index buffer\n");
+    }
+    else
+    {
+        hr = IDirect3DIndexBuffer9_GetDesc(index_buffer, &index_buffer_description);
+        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+
+        if (hr != D3D_OK)
+        {
+            skip("Couldn't get index buffer description\n");
+        }
+        else
+        {
+            ok(index_buffer_description.Format == D3DFMT_INDEX16, "Test %s, result %x, expected %x (D3DFMT_INDEX16)\n",
+               name, index_buffer_description.Format, D3DFMT_INDEX16);
+            ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
+               name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
+            ok(index_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, index_buffer_description.Usage, 0);
+            ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
+               name, index_buffer_description.Pool, D3DPOOL_DEFAULT);
+            expected = number_of_faces * sizeof(WORD) * 3;
+            ok(index_buffer_description.Size == expected, "Test %s, result %x, expected %x\n",
+               name, index_buffer_description.Size, expected);
+        }
+
+        /* specify offset and size to avoid potential overruns */
+        hr = IDirect3DIndexBuffer9_Lock(index_buffer, 0, number_of_faces * sizeof(WORD) * 3,
+                                        (LPVOID *)&faces, D3DLOCK_DISCARD);
+        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+
+        if (hr != D3D_OK)
+        {
+            skip("Couldn't lock index buffer\n");
+        }
+        else
+        {
+            for (i = 0; i < number_of_faces; i++)
+            {
+                ok(compare_face(faces[i], mesh->faces[i]),
+                   "Test %s, face %d, result (%u, %u, %u), expected (%u, %u, %u)\n", name, i,
+                   faces[i][0], faces[i][1], faces[i][2],
+                   mesh->faces[i][0], mesh->faces[i][1], mesh->faces[i][2]);
+            }
+
+            IDirect3DIndexBuffer9_Unlock(index_buffer);
+        }
+
+        IDirect3DIndexBuffer9_Release(index_buffer);
+    }
 }
 
 static void D3DXBoundProbeTest(void)
@@ -479,6 +680,218 @@ static void D3DXIntersectTriTest(void)
     ok( got_res == exp_res, "Expected result = %d, got %d\n",exp_res,got_res);
 }
 
+struct sincos_table
+{
+    float *sin;
+    float *cos;
+};
+
+static void free_sincos_table(struct sincos_table *sincos_table)
+{
+    HeapFree(GetProcessHeap(), 0, sincos_table->cos);
+    HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+}
+
+/* pre compute sine and cosine tables; caller must free */
+static BOOL compute_sincos_table(struct sincos_table *sincos_table, float angle_start, float angle_step, int n)
+{
+    float angle;
+    int i;
+
+    sincos_table->sin = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->sin));
+    if (!sincos_table->sin)
+    {
+        return FALSE;
+    }
+    sincos_table->cos = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->cos));
+    if (!sincos_table->cos)
+    {
+        HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+        return FALSE;
+    }
+
+    angle = angle_start;
+    for (i = 0; i < n; i++)
+    {
+        sincos_table->sin[i] = sin(angle);
+        sincos_table->cos[i] = cos(angle);
+        angle += angle_step;
+    }
+
+    return TRUE;
+}
+
+static WORD sphere_vertex(UINT slices, int slice, int stack)
+{
+    return stack*slices+slice+1;
+}
+
+/* slices = subdivisions along xy plane, stacks = subdivisions along z axis */
+static BOOL compute_sphere(struct mesh *mesh, FLOAT radius, UINT slices, UINT stacks)
+{
+    float theta_step, theta_start;
+    struct sincos_table theta;
+    float phi_step, phi_start;
+    struct sincos_table phi;
+    DWORD number_of_vertices, number_of_faces;
+    DWORD vertex, face;
+    int slice, stack;
+
+    /* theta = angle on xy plane wrt x axis */
+    theta_step = M_PI / stacks;
+    theta_start = theta_step;
+
+    /* phi = angle on xz plane wrt z axis */
+    phi_step = -2 * M_PI / slices;
+    phi_start = M_PI / 2;
+
+    if (!compute_sincos_table(&theta, theta_start, theta_step, stacks))
+    {
+        return FALSE;
+    }
+    if (!compute_sincos_table(&phi, phi_start, phi_step, slices))
+    {
+        free_sincos_table(&theta);
+        return FALSE;
+    }
+
+    number_of_vertices = 2 + slices * (stacks-1);
+    number_of_faces = 2 * slices + (stacks - 2) * (2 * slices);
+
+    if (!new_mesh(mesh, number_of_vertices, number_of_faces))
+    {
+        free_sincos_table(&phi);
+        free_sincos_table(&theta);
+        return FALSE;
+    }
+
+    vertex = 0;
+    face = 0;
+    stack = 0;
+
+    mesh->vertices[vertex].normal.x = 0.0f;
+    mesh->vertices[vertex].normal.y = 0.0f;
+    mesh->vertices[vertex].normal.z = 1.0f;
+    mesh->vertices[vertex].position.x = 0.0f;
+    mesh->vertices[vertex].position.y = 0.0f;
+    mesh->vertices[vertex].position.z = radius;
+    vertex++;
+
+    for (stack = 0; stack < stacks - 1; stack++)
+    {
+        for (slice = 0; slice < slices; slice++)
+        {
+            mesh->vertices[vertex].normal.x = theta.sin[stack] * phi.cos[slice];
+            mesh->vertices[vertex].normal.y = theta.sin[stack] * phi.sin[slice];
+            mesh->vertices[vertex].normal.z = theta.cos[stack];
+            mesh->vertices[vertex].position.x = radius * theta.sin[stack] * phi.cos[slice];
+            mesh->vertices[vertex].position.y = radius * theta.sin[stack] * phi.sin[slice];
+            mesh->vertices[vertex].position.z = radius * theta.cos[stack];
+            vertex++;
+
+            if (slice > 0)
+            {
+                if (stack == 0)
+                {
+                    /* top stack is triangle fan */
+                    mesh->faces[face][0] = 0;
+                    mesh->faces[face][1] = slice + 1;
+                    mesh->faces[face][2] = slice;
+                    face++;
+                }
+                else
+                {
+                    /* stacks in between top and bottom are quad strips */
+                    mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+                    mesh->faces[face][1] = sphere_vertex(slices, slice, stack-1);
+                    mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    face++;
+
+                    mesh->faces[face][0] = sphere_vertex(slices, slice, stack-1);
+                    mesh->faces[face][1] = sphere_vertex(slices, slice, stack);
+                    mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    face++;
+                }
+            }
+        }
+
+        if (stack == 0)
+        {
+            mesh->faces[face][0] = 0;
+            mesh->faces[face][1] = 1;
+            mesh->faces[face][2] = slice;
+            face++;
+        }
+        else
+        {
+            mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+            mesh->faces[face][1] = sphere_vertex(slices, 0, stack-1);
+            mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            face++;
+
+            mesh->faces[face][0] = sphere_vertex(slices, 0, stack-1);
+            mesh->faces[face][1] = sphere_vertex(slices, 0, stack);
+            mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            face++;
+        }
+    }
+
+    mesh->vertices[vertex].position.x = 0.0f;
+    mesh->vertices[vertex].position.y = 0.0f;
+    mesh->vertices[vertex].position.z = -radius;
+    mesh->vertices[vertex].normal.x = 0.0f;
+    mesh->vertices[vertex].normal.y = 0.0f;
+    mesh->vertices[vertex].normal.z = -1.0f;
+
+    /* bottom stack is triangle fan */
+    for (slice = 1; slice < slices; slice++)
+    {
+        mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+        mesh->faces[face][1] = sphere_vertex(slices, slice, stack-1);
+        mesh->faces[face][2] = vertex;
+        face++;
+    }
+
+    mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+    mesh->faces[face][1] = sphere_vertex(slices, 0, stack-1);
+    mesh->faces[face][2] = vertex;
+
+    free_sincos_table(&phi);
+    free_sincos_table(&theta);
+
+    return TRUE;
+}
+
+static void test_sphere(IDirect3DDevice9 *device, FLOAT radius, UINT slices, UINT stacks)
+{
+    HRESULT hr;
+    ID3DXMesh *sphere;
+    struct mesh mesh;
+    char name[256];
+
+    hr = D3DXCreateSphere(device, radius, slices, stacks, &sphere, NULL);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    if (hr != D3D_OK)
+    {
+        skip("Couldn't create sphere\n");
+        return;
+    }
+
+    if (!compute_sphere(&mesh, radius, slices, stacks))
+    {
+        skip("Couldn't create mesh\n");
+        sphere->lpVtbl->Release(sphere);
+        return;
+    }
+
+    sprintf(name, "sphere (%g, %u, %u)", radius, slices, stacks);
+    compare_mesh(name, sphere, &mesh);
+
+    free_mesh(&mesh);
+
+    sphere->lpVtbl->Release(sphere);
+}
+
 static void D3DXCreateSphereTest(void)
 {
     HRESULT hr;
@@ -529,11 +942,22 @@ static void D3DXCreateSphereTest(void)
     hr = D3DXCreateSphere(device, 1.0f, 1, 1, &sphere, NULL);
     todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateSphere(device, 1.0f, 2, 2, &sphere, NULL);
-    todo_wine ok( hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+    hr = D3DXCreateSphere(device, 1.0f, 2, 1, &sphere, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    if (sphere)
-        sphere->lpVtbl->Release(sphere);
+    hr = D3DXCreateSphere(device, 1.0f, 1, 2, &sphere, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateSphere(device, -0.1f, 1, 2, &sphere, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    test_sphere(device, 0.0f, 2, 2);
+    test_sphere(device, 1.0f, 2, 2);
+    test_sphere(device, 1.0f, 3, 2);
+    test_sphere(device, 1.0f, 4, 4);
+    test_sphere(device, 1.0f, 3, 4);
+    test_sphere(device, 5.0f, 6, 7);
+    test_sphere(device, 10.0f, 11, 12);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
