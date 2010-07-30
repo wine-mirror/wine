@@ -630,7 +630,8 @@ static LRESULT FD31_FileTypeChange( const FD31_DATA *lfs )
     if (lRet == LB_ERR)
         return TRUE;
     lfs->ofnW->nFilterIndex = lRet + 1;
-    lfs->ofnA->nFilterIndex = lRet + 1;
+    if (lfs->ofnA)
+        lfs->ofnA->nFilterIndex = lRet + 1;
     pstr = (LPWSTR)SendDlgItemMessageW(lfs->hwnd, cmb1, CB_GETITEMDATA, lRet, 0);
     TRACE("Selected filter : %s\n", debugstr_w(pstr));
 
