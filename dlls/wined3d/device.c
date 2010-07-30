@@ -1012,7 +1012,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
-        WINED3DSTATEBLOCKTYPE type, IWineD3DStateBlock **stateblock, IUnknown *parent)
+        WINED3DSTATEBLOCKTYPE type, IWineD3DStateBlock **stateblock)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
@@ -1790,12 +1790,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     if(!This->adapter->opengl) return WINED3DERR_INVALIDCALL;
 
     TRACE("(%p) : Creating stateblock\n", This);
-    /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
-    hr = IWineD3DDevice_CreateStateBlock(iface,
-                                         WINED3DSBT_INIT,
-                                         (IWineD3DStateBlock **)&This->stateBlock,
-                                         NULL);
-    if (WINED3D_OK != hr) {   /* Note: No parent needed for initial internal stateblock */
+    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, (IWineD3DStateBlock **)&This->stateBlock);
+    if (FAILED(hr))
+    {
         WARN("Failed to create stateblock\n");
         goto err_out;
     }
@@ -4488,7 +4485,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
 
     if (This->isRecordingState) return WINED3DERR_INVALIDCALL;
 
-    hr = IWineD3DDeviceImpl_CreateStateBlock(iface, WINED3DSBT_RECORDED, &stateblock, NULL);
+    hr = IWineD3DDeviceImpl_CreateStateBlock(iface, WINED3DSBT_RECORDED, &stateblock);
     if (FAILED(hr)) return hr;
 
     IWineD3DStateBlock_Release((IWineD3DStateBlock*)This->updateStateBlock);
@@ -6469,7 +6466,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     }
 
     /* Note: No parent needed for initial internal stateblock */
-    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, (IWineD3DStateBlock **)&This->stateBlock, NULL);
+    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, (IWineD3DStateBlock **)&This->stateBlock);
     if (FAILED(hr)) ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
     else TRACE("Created stateblock %p\n", This->stateBlock);
     This->updateStateBlock = This->stateBlock;

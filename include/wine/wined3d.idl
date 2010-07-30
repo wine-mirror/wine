@@ -2843,8 +2843,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT CreateStateBlock(
         [in] WINED3DSTATEBLOCKTYPE type,
-        [out] IWineD3DStateBlock **stateblock,
-        [in] IUnknown *parent
+        [out] IWineD3DStateBlock **stateblock
     );
     HRESULT CreateSurface(
         [in] UINT width,

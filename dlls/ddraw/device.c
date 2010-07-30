@@ -5927,7 +5927,7 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
     EnterCriticalSection(&ddraw_cs);
 
     /* The D3DSTATEBLOCKTYPE enum is fine here. */
-    hr = IWineD3DDevice_CreateStateBlock(This->wineD3DDevice, Type, &wined3d_sb, NULL);
+    hr = IWineD3DDevice_CreateStateBlock(This->wineD3DDevice, Type, &wined3d_sb);
     if (FAILED(hr))
     {
         WARN("Failed to create stateblock, hr %#x.\n", hr);
