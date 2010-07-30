@@ -1,0 +1,11 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = regedit.exe
+IMPORTS   = advapi32
+
+C_SRCS = \
+	regedit.c
+
+@MAKE_TEST_RULES@
