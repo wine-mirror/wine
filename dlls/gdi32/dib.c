@@ -227,6 +227,14 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
             return 0;
         }
 
+        if (xSrc == 0 && ySrc == 0 && widthDst == widthSrc && heightDst == heightSrc &&
+            info->bmiHeader.biCompression == BI_RGB)
+        {
+            /* Windows appears to have a fast case optimization
+             * that uses the wrong origin for top-down DIBs */
+            if (height < 0 && heightSrc < abs(height)) ySrc = abs(height) - heightSrc;
+        }
+
         hBitmap = GetCurrentObject(hdc, OBJ_BITMAP);
 
         if (xDst == 0 && yDst == 0 && xSrc == 0 && ySrc == 0 &&
