@@ -926,6 +926,26 @@ HRESULT WINAPI RegisterTypeLibForUser(
     return RegisterTypeLib(ptlib, szFullPath, szHelpDir);
 }
 
+/******************************************************************************
+ *	UnRegisterTypeLibForUser	[OLEAUT32.443]
+ * Removes information about a type library from the user registry
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: Status
+ */
+HRESULT WINAPI UnRegisterTypeLibForUser(
+    REFGUID libid,	/* [in] GUID of the library */
+    WORD wVerMajor,	/* [in] major version */
+    WORD wVerMinor,	/* [in] minor version */
+    LCID lcid,	/* [in] locale id */
+    SYSKIND syskind)
+{
+    FIXME("(%s, %u, %u, %u, %u) unregistering the typelib system-wide\n",
+          debugstr_guid(libid), wVerMajor, wVerMinor, lcid, syskind);
+    return UnRegisterTypeLib(libid, wVerMajor, wVerMinor, lcid, syskind);
+}
+
 /*======================= ITypeLib implementation =======================*/
 
 typedef struct tagTLBCustData
