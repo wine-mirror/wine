@@ -2611,7 +2611,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         {
             object->exponent = 128.0f;
         }
-        object->cutoff = pLight->Phi*90/M_PI;
+        object->cutoff = (float) (pLight->Phi*90/M_PI);
 
         /* FIXME: Range */
         break;
@@ -2814,10 +2814,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetClipPlane(IWineD3DDevice *iface, DWO
         return WINED3DERR_INVALIDCALL;
     }
 
-    pPlane[0] = This->stateBlock->clipplane[Index][0];
-    pPlane[1] = This->stateBlock->clipplane[Index][1];
-    pPlane[2] = This->stateBlock->clipplane[Index][2];
-    pPlane[3] = This->stateBlock->clipplane[Index][3];
+    pPlane[0] = (float) This->stateBlock->clipplane[Index][0];
+    pPlane[1] = (float) This->stateBlock->clipplane[Index][1];
+    pPlane[2] = (float) This->stateBlock->clipplane[Index][2];
+    pPlane[3] = (float) This->stateBlock->clipplane[Index][3];
     return WINED3D_OK;
 }
 
