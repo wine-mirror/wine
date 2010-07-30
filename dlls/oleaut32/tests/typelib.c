@@ -55,7 +55,18 @@
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
+static HRESULT WINAPI (*pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
+static HRESULT WINAPI (*pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
+
 static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
+
+static void init_function_pointers(void)
+{
+    HMODULE hmod = GetModuleHandleA("oleaut32.dll");
+
+    pRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "RegisterTypeLibForUser");
+    pUnRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "UnRegisterTypeLibForUser");
+}
 
 static void ref_count_test(LPCWSTR type_lib)
 {
@@ -2173,7 +2184,7 @@ static void test_create_typelibs(void)
 }
 
 
-static void test_register_typelib(void)
+static void test_register_typelib(BOOL system_registration)
 {
     HRESULT hr;
     WCHAR filename[MAX_PATH];
@@ -2203,13 +2214,32 @@ static void test_register_typelib(void)
         { TKIND_DISPATCH,  TYPEFLAG_FDISPATCHABLE }
     };
 
+    trace("Starting %s typelib registration tests\n",
+          system_registration ? "system" : "user");
+
+    if (!system_registration && (!pRegisterTypeLibForUser || !pUnRegisterTypeLibForUser))
+    {
+        win_skip("User typelib registration functions are not available\n");
+        return;
+    }
+
     filenameA = create_test_typelib(3);
     MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filename, MAX_PATH);
 
     hr = LoadTypeLibEx(filename, REGKIND_NONE, &typelib);
     ok(SUCCEEDED(hr), "got %08x\n", hr);
 
-    hr = RegisterTypeLib(typelib, filename, NULL);
+    if (system_registration)
+        hr = RegisterTypeLib(typelib, filename, NULL);
+    else
+        hr = pRegisterTypeLibForUser(typelib, filename, NULL);
+    if (hr == TYPE_E_REGISTRYACCESS)
+    {
+        win_skip("Insufficient privileges to register typelib in the registry\n");
+        ITypeLib_Release(typelib);
+        DeleteFileA(filenameA);
+        return;
+    }
     ok(SUCCEEDED(hr), "got %08x\n", hr);
 
     count = ITypeLib_GetTypeInfoCount(typelib);
@@ -2272,7 +2302,10 @@ static void test_register_typelib(void)
         ITypeInfo_Release(typeinfo);
     }
 
-    hr = UnRegisterTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
+    if (system_registration)
+        hr = UnRegisterTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
+    else
+        hr = pUnRegisterTypeLibForUser(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
     ok(SUCCEEDED(hr), "got %08x\n", hr);
 
     ITypeLib_Release(typelib);
@@ -2282,6 +2315,8 @@ static void test_register_typelib(void)
 START_TEST(typelib)
 {
     const char *filename;
+
+    init_function_pointers();
 
     ref_count_test(wszStdOle2);
     test_TypeComp();
@@ -2297,7 +2332,8 @@ START_TEST(typelib)
         DeleteFile( filename );
     }
 
-    test_register_typelib();
+    test_register_typelib(TRUE);
+    test_register_typelib(FALSE);
     test_create_typelibs();
 
 }
