@@ -4806,12 +4806,12 @@ static void test_constant_clamp_vs(IDirect3DDevice9 *device)
     ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
        "quad 2 has color %08x, expected 0x00bfbf80\n", color);
     if(shader_20) {
-        color = getPixelColor(device, 160, 120);
+        color = getPixelColor(device, 480, 120);
         ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
            "quad 3 has color %08x, expected 0x00bfbf80\n", color);
     }
     if(shader_20_2) {
-        color = getPixelColor(device, 480, 120);
+        color = getPixelColor(device, 160, 120);
         ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
            "quad 4 has color %08x, expected 0x00bfbf80\n", color);
     }
