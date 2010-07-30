@@ -250,8 +250,7 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
     /* Having a texture handle set implies that the device still exists */
     if(This->Handle)
     {
-        This->ddraw->d3ddevice->Handles[This->Handle - 1].ptr = NULL;
-        This->ddraw->d3ddevice->Handles[This->Handle - 1].type = DDrawHandle_Unknown;
+        ddraw_free_handle(&This->ddraw->d3ddevice->handle_table, This->Handle - 1, DDRAW_HANDLE_SURFACE);
     }
 
     /* Reduce the ddraw surface count */

@@ -805,9 +805,6 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     object->material = 0;
     object->target = target;
 
-    object->Handles = NULL;
-    object->numHandles = 0;
-
     if (!ddraw_handle_table_init(&object->handle_table, 64))
     {
         ERR("Failed to initialize handle table.\n");

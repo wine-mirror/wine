@@ -366,30 +366,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         }
 
         /* The texture handles should be unset by now, but there might be some bits
-         * missing in our reference counting(needs test). Do a sanity check
-         */
-        for(i = 0; i < This->numHandles; i++)
-        {
-            if(This->Handles[i].ptr)
-            {
-                switch(This->Handles[i].type)
-                {
-                    case DDrawHandle_Texture:
-                    {
-                        IDirectDrawSurfaceImpl *surf = This->Handles[i].ptr;
-                        FIXME("Texture Handle %d not unset properly\n", i + 1);
-                        surf->Handle = 0;
-                    }
-                    break;
-
-                    default:
-                        FIXME("Unknown handle %d not unset properly\n", i + 1);
-                }
-            }
-        }
-
-        HeapFree(GetProcessHeap(), 0, This->Handles);
-
+         * missing in our reference counting(needs test). Do a sanity check. */
         for (i = 0; i < This->handle_table.entry_count; ++i)
         {
             struct ddraw_handle_entry *entry = &This->handle_table.entries[i];
@@ -420,6 +397,14 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                     /* No FIXME here because this might happen because of sloppy applications. */
                     WARN("Leftover stateblock handle %#x (%p), deleting.\n", i + 1, entry->object);
                     IDirect3DDevice7_DeleteStateBlock(iface, i + 1);
+                    break;
+                }
+
+                case DDRAW_HANDLE_SURFACE:
+                {
+                    IDirectDrawSurfaceImpl *surf = entry->object;
+                    FIXME("Texture handle %#x (%p) not unset properly.\n", i + 1, surf);
+                    surf->Handle = 0;
                     break;
                 }
 
@@ -627,18 +612,21 @@ IDirect3DDeviceImpl_2_SwapTextureHandles(IDirect3DDevice2 *iface,
                                          IDirect3DTexture2 *Tex2)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
-    DWORD swap;
     IDirectDrawSurfaceImpl *surf1 = surface_from_texture2(Tex1);
     IDirectDrawSurfaceImpl *surf2 = surface_from_texture2(Tex2);
+    DWORD h1, h2;
+
     TRACE("(%p)->(%p,%p)\n", This, surf1, surf2);
 
     EnterCriticalSection(&ddraw_cs);
-    This->Handles[surf1->Handle - 1].ptr = surf2;
-    This->Handles[surf2->Handle - 1].ptr = surf1;
 
-    swap = surf2->Handle;
-    surf2->Handle = surf1->Handle;
-    surf1->Handle = swap;
+    h1 = surf1->Handle - 1;
+    h2 = surf2->Handle - 1;
+    This->handle_table.entries[h1].object = surf2;
+    This->handle_table.entries[h2].object = surf1;
+    surf2->Handle = h1 + 1;
+    surf1->Handle = h2 + 1;
+
     LeaveCriticalSection(&ddraw_cs);
 
     return D3D_OK;
@@ -2883,6 +2871,8 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
     {
         case D3DRENDERSTATE_TEXTUREHANDLE:
         {
+            IDirectDrawSurfaceImpl *surf;
+
             if(Value == 0)
             {
                 hr = IWineD3DDevice_SetTexture(This->wineD3DDevice,
@@ -2891,25 +2881,16 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                 break;
             }
 
-            if(Value > This->numHandles)
+            surf = ddraw_get_object(&This->handle_table, Value - 1, DDRAW_HANDLE_SURFACE);
+            if (!surf)
             {
-                FIXME("Specified handle %d out of range\n", Value);
+                WARN("Invalid texture handle.\n");
                 hr = DDERR_INVALIDPARAMS;
                 break;
             }
-            if(This->Handles[Value - 1].type != DDrawHandle_Texture)
-            {
-                FIXME("Handle %d isn't a texture handle\n", Value);
-                hr = DDERR_INVALIDPARAMS;
-                break;
-            }
-            else
-            {
-                IDirectDrawSurfaceImpl *surf = This->Handles[Value - 1].ptr;
-                IDirect3DTexture2 *tex = surf ? (IDirect3DTexture2 *)&surf->IDirect3DTexture2_vtbl : NULL;
-                hr = IDirect3DDevice3_SetTexture(iface, 0, tex);
-                break;
-            }
+
+            hr = IDirect3DDevice3_SetTexture(iface, 0, (IDirect3DTexture2 *)&surf->IDirect3DTexture2_vtbl);
+            break;
         }
 
         case D3DRENDERSTATE_TEXTUREMAPBLEND:
@@ -6872,71 +6853,6 @@ const IDirect3DDeviceVtbl IDirect3DDevice1_Vtbl =
     Thunk_IDirect3DDeviceImpl_1_EndScene,
     Thunk_IDirect3DDeviceImpl_1_GetDirect3D
 };
-
-/*****************************************************************************
- * IDirect3DDeviceImpl_CreateHandle
- *
- * Not called from the VTable
- *
- * Some older interface versions operate with handles, which are basically
- * DWORDs which identify an interface, for example
- * IDirect3DDevice::SetRenderState with DIRECT3DRENDERSTATE_TEXTUREHANDLE
- *
- * Those handle could be just casts to the interface pointers or vice versa,
- * but that is not 64 bit safe and would mean blindly derefering a DWORD
- * passed by the app. Instead there is a dynamic array in the device which
- * keeps a DWORD to pointer information and a type for the handle.
- *
- * Basically this array only grows, when a handle is freed its pointer is
- * just set to NULL. There will be much more reads from the array than
- * insertion operations, so a dynamic array is fine.
- *
- * Params:
- *  This: D3DDevice implementation for which this handle should be created
- *
- * Returns:
- *  A free handle on success
- *  0 on failure
- *
- *****************************************************************************/
-DWORD
-IDirect3DDeviceImpl_CreateHandle(IDirect3DDeviceImpl *This)
-{
-    DWORD i;
-    struct HandleEntry *oldHandles = This->Handles;
-
-    TRACE("(%p)\n", This);
-
-    for(i = 0; i < This->numHandles; i++)
-    {
-        if(This->Handles[i].ptr == NULL &&
-           This->Handles[i].type == DDrawHandle_Unknown)
-        {
-            TRACE("Reusing freed handle %d\n", i + 1);
-            return i + 1;
-        }
-    }
-
-    TRACE("Growing the handle array\n");
-
-    This->numHandles++;
-    This->Handles = HeapAlloc(GetProcessHeap(), 0, sizeof(struct HandleEntry) * This->numHandles);
-    if(!This->Handles)
-    {
-        ERR("Out of memory\n");
-        This->Handles = oldHandles;
-        This->numHandles--;
-        return 0;
-    }
-    if(oldHandles)
-    {
-        memcpy(This->Handles, oldHandles, (This->numHandles - 1) * sizeof(struct HandleEntry));
-        HeapFree(GetProcessHeap(), 0, oldHandles);
-    }
-
-    TRACE("Returning %d\n", This->numHandles);
-    return This->numHandles;
-}
 
 /*****************************************************************************
  * IDirect3DDeviceImpl_UpdateDepthStencil

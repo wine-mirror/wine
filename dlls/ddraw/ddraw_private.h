@@ -322,17 +322,6 @@ extern const IParentVtbl IParent_Vtbl DECLSPEC_HIDDEN;
 /*****************************************************************************
  * IDirect3DDevice implementation
  *****************************************************************************/
-typedef enum
-{
-    DDrawHandle_Unknown       = 0,
-    DDrawHandle_Texture       = 1,
-} DDrawHandleTypes;
-
-struct HandleEntry
-{
-    void    *ptr;
-    DDrawHandleTypes      type;
-};
 
 #define DDRAW_INVALID_HANDLE ~0U
 
@@ -342,6 +331,7 @@ enum ddraw_handle_type
     DDRAW_HANDLE_MATERIAL,
     DDRAW_HANDLE_MATRIX,
     DDRAW_HANDLE_STATEBLOCK,
+    DDRAW_HANDLE_SURFACE,
 };
 
 struct ddraw_handle_entry
@@ -401,8 +391,6 @@ struct IDirect3DDeviceImpl
     DWORD buffer_size;
 
     /* Handle management */
-    struct HandleEntry      *Handles;
-    DWORD                    numHandles;
     struct ddraw_handle_table handle_table;
     D3DMATRIXHANDLE          world, proj, view;
 };
@@ -419,7 +407,6 @@ extern const GUID IID_D3DDEVICE_WineD3D DECLSPEC_HIDDEN;
 
 /* Helper functions */
 HRESULT IDirect3DImpl_GetCaps(IWineD3D *WineD3D, D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7) DECLSPEC_HIDDEN;
-DWORD IDirect3DDeviceImpl_CreateHandle(IDirect3DDeviceImpl *This) DECLSPEC_HIDDEN;
 WINED3DZBUFFERTYPE IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This) DECLSPEC_HIDDEN;
 
 static inline IDirect3DDeviceImpl *device_from_device1(IDirect3DDevice *iface)

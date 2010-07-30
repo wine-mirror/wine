@@ -211,12 +211,15 @@ IDirect3DTextureImpl_GetHandle(IDirect3DTexture2 *iface,
     EnterCriticalSection(&ddraw_cs);
     if(!This->Handle)
     {
-        This->Handle = IDirect3DDeviceImpl_CreateHandle(d3d);
-        if(This->Handle)
+        DWORD h = ddraw_allocate_handle(&d3d->handle_table, This, DDRAW_HANDLE_SURFACE);
+        if (h == DDRAW_INVALID_HANDLE)
         {
-            d3d->Handles[This->Handle - 1].ptr = This;
-            d3d->Handles[This->Handle - 1].type = DDrawHandle_Texture;
+            ERR("Failed to allocate a texture handle.\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_OUTOFMEMORY;
         }
+
+        This->Handle = h + 1;
     }
     *lpHandle = This->Handle;
 
