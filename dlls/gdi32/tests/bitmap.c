@@ -2813,7 +2813,7 @@ static void test_StretchDIBits(void)
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     legacy_expected[0] = 0xFEDCBA98, legacy_expected[1] = 0x00000000;
     legacy_expected[2] = 0x00000000, legacy_expected[3] = 0x00000000;
-    todo_wine check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                 0, 0, 1, 1, 0, 0, 1, 1, expected, legacy_expected, __LINE__);
 
     expected[0] = 0xFEDCBA98, expected[1] = 0xFEDCBA98;
