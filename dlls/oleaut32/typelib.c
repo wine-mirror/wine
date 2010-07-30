@@ -903,6 +903,29 @@ end:
     return result;
 }
 
+/******************************************************************************
+ *		RegisterTypeLibForUser	[OLEAUT32.442]
+ * Adds information about a type library to the user registry
+ * NOTES
+ *    Docs: ITypeLib FAR * ptlib
+ *    Docs: OLECHAR FAR* szFullPath
+ *    Docs: OLECHAR FAR* szHelpDir
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: Status
+ */
+HRESULT WINAPI RegisterTypeLibForUser(
+     ITypeLib * ptlib,     /* [in] Pointer to the library*/
+     OLECHAR * szFullPath, /* [in] full Path of the library*/
+     OLECHAR * szHelpDir)  /* [in] dir to the helpfile for the library,
+							 may be NULL*/
+{
+    FIXME("(%p, %s, %s) registering the typelib system-wide\n", ptlib,
+          debugstr_w(szFullPath), debugstr_w(szHelpDir));
+    return RegisterTypeLib(ptlib, szFullPath, szHelpDir);
+}
+
 /*======================= ITypeLib implementation =======================*/
 
 typedef struct tagTLBCustData
