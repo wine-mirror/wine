@@ -623,7 +623,6 @@ static void processRegLinesA(FILE *in, char* first_chars)
 
     while (!feof(in)) {
         LPSTR s; /* The pointer into line for where the current fgets should read */
-        LPSTR check;
         WCHAR* lineW;
         s = line;
 
@@ -635,7 +634,7 @@ static void processRegLinesA(FILE *in, char* first_chars)
 
         for (;;) {
             size_t size_remaining;
-            int size_to_get;
+            int size_to_get, i;
             char *s_eol; /* various local uses */
 
             /* Do we need to expand the buffer ? */
@@ -661,27 +660,46 @@ static void processRegLinesA(FILE *in, char* first_chars)
              */
             size_to_get = (size_remaining > INT_MAX ? INT_MAX : size_remaining);
 
-            check = fgets (s, size_to_get, in);
-
-            if (check == NULL) {
-                if (ferror(in)) {
-                    perror ("While reading input");
-                    exit (IO_ERROR);
-                } else {
-                    assert (feof(in));
-                    *s = '\0';
-                    /* It is not clear to me from the definition that the
-                     * contents of the buffer are well defined on detecting
-                     * an eof without managing to read anything.
-                     */
+            /* get a single line. note that `i' must be one past the last
+             * meaningful character in `s' when this loop exits */
+            for(i = 0; i < size_to_get-1; ++i){
+                s[i] = fgetc(in);
+                if(s[i] == EOF){
+                    if(ferror(in)){
+                        perror("While reading input");
+                        exit(IO_ERROR);
+                    }else
+                        assert(feof(in));
+                    break;
+                }
+                if(s[i] == '\r'){
+                    /* read the next character iff it's \n */
+                    s[i+1] = fgetc(in);
+                    if(s[i+1] != '\n'){
+                        ungetc(s[i+1], in);
+                        i = i+1;
+                    }else{
+                        if(i+2 >= size_to_get){
+                            /* buffer too short, so put back the EOL chars to
+                             * read next cycle */
+                            ungetc('\n', in);
+                            ungetc('\r', in);
+                        }else
+                            i = i+2;
+                    }
+                    break;
+                }
+                if(s[i] == '\n'){
+                    i = i+1;
+                    break;
                 }
             }
+            s[i] = '\0';
 
             /* If we didn't read the eol nor the eof go around for the rest */
-            s_eol = strchr (s, '\n');
+            s_eol = strpbrk (s, "\r\n");
             if (!feof (in) && !s_eol) {
                 s = strchr (s, '\0');
-                /* It should be s + size_to_get - 1 but this is safer */
                 continue;
             }
 
@@ -691,11 +709,11 @@ static void processRegLinesA(FILE *in, char* first_chars)
                 continue;
             }
 
-            /* Remove any line feed.  Leave s_eol on the \0 */
+            /* Remove any line feed.  Leave s_eol on the first \0 */
             if (s_eol) {
-                *s_eol = '\0';
-                if (s_eol > line && *(s_eol-1) == '\r')
-                    *--s_eol = '\0';
+               if (*s_eol == '\r' && *(s_eol+1) == '\n')
+                   *(s_eol+1) = '\0';
+               *s_eol = '\0';
             } else
                 s_eol = strchr (s, '\0');
 
@@ -799,7 +817,8 @@ static void processRegLinesW(FILE *in)
         /* If we didn't read the eol nor the eof go around for the rest */
         while(1)
         {
-            s_eol = strchrW(line, '\n');
+            const WCHAR line_endings[] = {'\r','\n',0};
+            s_eol = strpbrkW(line, line_endings);
 
             if(!s_eol) {
                 /* Move the stub of the line to the start of the buffer so
@@ -813,22 +832,22 @@ static void processRegLinesW(FILE *in)
 
             /* If it is a comment line then discard it and go around again */
             if (*line == '#') {
-                line = s_eol + 1;
+                if (*s_eol == '\r' && *(s_eol+1) == '\n')
+                    line = s_eol + 2;
+                else
+                    line = s_eol + 1;
                 continue;
             }
 
             /* If there is a concatenating \\ then go around again */
-            if ((*(s_eol-1) == '\\') ||
-                (*(s_eol-1) == '\r' && *(s_eol-2) == '\\')) {
-                WCHAR* NextLine = s_eol;
+            if (*(s_eol-1) == '\\') {
+                WCHAR* NextLine = s_eol + 1;
+
+                if(*s_eol == '\r' && *(s_eol+1) == '\n')
+                    NextLine++;
 
                 while(*(NextLine+1) == ' ' || *(NextLine+1) == '\t')
                     NextLine++;
-
-                NextLine++;
-
-                if(*(s_eol-1) == '\r')
-                    s_eol--;
 
                 MoveMemory(s_eol - 1, NextLine, (CharsInBuf - (NextLine - s) + 1)*sizeof(WCHAR));
                 CharsInBuf -= NextLine - s_eol + 1;
@@ -836,15 +855,10 @@ static void processRegLinesW(FILE *in)
                 continue;
             }
 
-            /* Remove any line feed.  Leave s_eol on the \0 */
-            if (s_eol) {
-                *s_eol = '\0';
-                if (s_eol > buf && *(s_eol-1) == '\r')
-                    *(s_eol-1) = '\0';
-            }
-
-            if(!s_eol)
-                break;
+            /* Remove any line feed.  Leave s_eol on the last \0 */
+            if (*s_eol == '\r' && *(s_eol + 1) == '\n')
+                *s_eol++ = '\0';
+            *s_eol = '\0';
 
             processRegEntry(line, TRUE);
             line = s_eol + 1;

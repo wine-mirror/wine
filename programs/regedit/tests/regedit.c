@@ -230,6 +230,14 @@ static void test_basic_import(void)
         'r','e','g','e','d','i','t','_','t','e','s','t',']','\n',
         '"','T','e','s','t','V','a','l','u','e','3','"','=','"',0x3041,'V','a',
         'l','u','e','"','\n',0};
+    WCHAR wide_test_r[] = {0xFEFF,'W','i','n','d','o','w','s',' ','R','e','g',
+        'i','s','t','r','y',' ','E','d','i','t','o','r',' ','V','e','r','s',
+        'i','o','n',' ','5','.','0','0','\r','\r',
+        '[','H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E',
+        'R','\\','S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+        'r','e','g','e','d','i','t','_','t','e','s','t',']','\r',
+        '"','T','e','s','t','V','a','l','u','e','5','"','=','"',0x3041,'V','a',
+        'l','u','e','"','\r',0};
     WCHAR wide_exp[] = {0x3041,'V','a','l','u','e',0};
     LONG lr;
 
@@ -253,8 +261,18 @@ static void test_basic_import(void)
         exec_import_wstr(wide_test);
         verify_reg_wsz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
                 "TestValue3", wide_exp);
+
+        exec_import_wstr(wide_test_r);
+        verify_reg_wsz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+                "TestValue5", wide_exp);
     }else
         win_skip("Some WCHAR tests skipped\n");
+
+    exec_import_str("REGEDIT4\r\r"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\r"
+                "\"TestValue4\"=\"DValue\"\r");
+    verify_reg_sz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "TestValue4", "DValue");
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
