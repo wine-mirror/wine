@@ -326,7 +326,6 @@ typedef enum
 {
     DDrawHandle_Unknown       = 0,
     DDrawHandle_Texture       = 1,
-    DDrawHandle_StateBlock    = 4
 } DDrawHandleTypes;
 
 struct HandleEntry
@@ -342,6 +341,7 @@ enum ddraw_handle_type
     DDRAW_HANDLE_FREE,
     DDRAW_HANDLE_MATERIAL,
     DDRAW_HANDLE_MATRIX,
+    DDRAW_HANDLE_STATEBLOCK,
 };
 
 struct ddraw_handle_entry
