@@ -3420,12 +3420,73 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
 static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *pfHasProperty)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%d %p)\n", This, uriProp, pfHasProperty);
+    TRACE("(%p)->(%d %p)\n", This, uriProp, pfHasProperty);
 
     if(!pfHasProperty)
         return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    switch(uriProp) {
+    case Uri_PROPERTY_ABSOLUTE_URI:
+        *pfHasProperty = TRUE;
+        break;
+    case Uri_PROPERTY_AUTHORITY:
+        *pfHasProperty = This->authority_start > -1;
+        break;
+    case Uri_PROPERTY_DISPLAY_URI:
+        *pfHasProperty = TRUE;
+        break;
+    case Uri_PROPERTY_DOMAIN:
+        *pfHasProperty = This->domain_offset > -1;
+        break;
+    case Uri_PROPERTY_EXTENSION:
+        *pfHasProperty = This->extension_offset > -1;
+        break;
+    case Uri_PROPERTY_FRAGMENT:
+        *pfHasProperty = This->fragment_start > -1;
+        break;
+    case Uri_PROPERTY_HOST:
+        *pfHasProperty = This->host_start > -1;
+        break;
+    case Uri_PROPERTY_PASSWORD:
+        *pfHasProperty = This->userinfo_split > -1;
+        break;
+    case Uri_PROPERTY_PATH:
+        *pfHasProperty = This->path_start > -1;
+        break;
+    case Uri_PROPERTY_PATH_AND_QUERY:
+        *pfHasProperty = (This->path_start > -1 || This->query_start > -1);
+        break;
+    case Uri_PROPERTY_QUERY:
+        *pfHasProperty = This->query_start > -1;
+        break;
+    case Uri_PROPERTY_RAW_URI:
+        *pfHasProperty = TRUE;
+        break;
+    case Uri_PROPERTY_SCHEME_NAME:
+        *pfHasProperty = This->scheme_start > -1;
+        break;
+    case Uri_PROPERTY_USER_INFO:
+    case Uri_PROPERTY_USER_NAME:
+        *pfHasProperty = This->userinfo_start > -1;
+        break;
+    case Uri_PROPERTY_HOST_TYPE:
+        *pfHasProperty = TRUE;
+        break;
+    case Uri_PROPERTY_PORT:
+        *pfHasProperty = This->has_port;
+        break;
+    case Uri_PROPERTY_SCHEME:
+        *pfHasProperty = TRUE;
+        break;
+    case Uri_PROPERTY_ZONE:
+        *pfHasProperty = FALSE;
+        break;
+    default:
+        FIXME("(%p)->(%d %p): Unsupported property type.\n", This, uriProp, pfHasProperty);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Uri_GetAbsoluteUri(IUri *iface, BSTR *pstrAbsoluteUri)
@@ -3550,12 +3611,44 @@ static HRESULT WINAPI Uri_GetZone(IUri *iface, DWORD *pdwZone)
 static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
 {
     Uri *This = URI_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pdwProperties);
+    TRACE("(%p)->(%p)\n", This, pdwProperties);
 
     if(!pdwProperties)
         return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    /* All URIs have these. */
+    *pdwProperties = Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_RAW_URI|
+                     Uri_HAS_SCHEME|Uri_HAS_HOST_TYPE;
+
+    if(This->scheme_start > -1)
+        *pdwProperties |= Uri_HAS_SCHEME_NAME;
+
+    if(This->authority_start > -1) {
+        *pdwProperties |= Uri_HAS_AUTHORITY;
+        if(This->userinfo_start > -1)
+            *pdwProperties |= Uri_HAS_USER_INFO|Uri_HAS_USER_NAME;
+        if(This->userinfo_split > -1)
+            *pdwProperties |= Uri_HAS_PASSWORD;
+        if(This->host_start > -1)
+            *pdwProperties |= Uri_HAS_HOST;
+        if(This->domain_offset > -1)
+            *pdwProperties |= Uri_HAS_DOMAIN;
+        if(This->has_port)
+            *pdwProperties |= Uri_HAS_PORT;
+    }
+
+    if(This->path_start > -1)
+        *pdwProperties |= Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY;
+    if(This->query_start > -1)
+        *pdwProperties |= Uri_HAS_QUERY|Uri_HAS_PATH_AND_QUERY;
+
+    if(This->extension_offset > -1)
+        *pdwProperties |= Uri_HAS_EXTENSION;
+
+    if(This->fragment_start > -1)
+        *pdwProperties |= Uri_HAS_FRAGMENT;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
