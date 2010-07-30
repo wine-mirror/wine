@@ -66,24 +66,30 @@ static HRESULT WINAPI Host_GetTypeInfoCount(IHost *iface, UINT *pctinfo)
 static HRESULT WINAPI Host_GetTypeInfo(IHost *iface, UINT iTInfo, LCID lcid,
         ITypeInfo **ppTInfo)
 {
-    WINE_FIXME("(%x %x %p\n", iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    WINE_TRACE("(%x %x %p\n", iTInfo, lcid, ppTInfo);
+
+    ITypeInfo_AddRef(host_ti);
+    *ppTInfo = host_ti;
+    return S_OK;
 }
 
 static HRESULT WINAPI Host_GetIDsOfNames(IHost *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    WINE_FIXME("(%s %p %d %x %p)\n", wine_dbgstr_guid(riid), rgszNames,
+    WINE_TRACE("(%s %p %d %x %p)\n", wine_dbgstr_guid(riid), rgszNames,
         cNames, lcid, rgDispId);
-    return E_NOTIMPL;
+
+    return ITypeInfo_GetIDsOfNames(host_ti, rgszNames, cNames, rgDispId);
 }
 
 static HRESULT WINAPI Host_Invoke(IHost *iface, DISPID dispIdMember, REFIID riid,
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    WINE_FIXME("(%d %p %p)\n", dispIdMember, pDispParams, pVarResult);
-    return E_NOTIMPL;
+    WINE_TRACE("(%d %p %p)\n", dispIdMember, pDispParams, pVarResult);
+
+    return ITypeInfo_Invoke(host_ti, iface, dispIdMember, wFlags, pDispParams,
+            pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI Host_get_Name(IHost *iface, BSTR *out_Name)
