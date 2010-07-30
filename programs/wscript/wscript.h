@@ -19,3 +19,5 @@
 #include "ihost.h"
 
 extern IHost host_obj;
+
+extern ITypeInfo *host_ti;

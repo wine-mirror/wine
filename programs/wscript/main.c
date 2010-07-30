@@ -37,6 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 static const WCHAR wscriptW[] = {'W','S','c','r','i','p','t',0};
 static const WCHAR wshW[] = {'W','S','H',0};
 
+ITypeInfo *host_ti;
+
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface,
                                                       REFIID riid, void **ppv)
 {
@@ -83,8 +85,8 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface,
         return E_FAIL;
 
     if(dwReturnMask & SCRIPTINFO_ITYPEINFO) {
-        WINE_FIXME("SCRIPTINFO_ITYPEINFO not supported\n");
-        return E_NOTIMPL;
+        ITypeInfo_AddRef(host_ti);
+        *ppti = host_ti;
     }
 
     if(dwReturnMask & SCRIPTINFO_IUNKNOWN) {
@@ -150,6 +152,23 @@ static IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
 };
 
 IActiveScriptSite script_site = { &ActiveScriptSiteVtbl };
+
+static BOOL load_typelib(void)
+{
+    ITypeLib *typelib;
+    HRESULT hres;
+
+    static const WCHAR wscript_exeW[] = {'w','s','c','r','i','p','t','.','e','x','e',0};
+
+    hres = LoadTypeLib(wscript_exeW, &typelib);
+    if(FAILED(hres))
+        return FALSE;
+
+    hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IHost, &host_ti);
+
+    ITypeLib_Release(typelib);
+    return SUCCEEDED(hres);
+}
 
 static BOOL get_engine_clsid(const WCHAR *ext, CLSID *clsid)
 {
@@ -221,6 +240,9 @@ static HRESULT create_engine(CLSID *clsid, IActiveScript **script_ret,
 static HRESULT init_engine(IActiveScript *script, IActiveScriptParse *parser)
 {
     HRESULT hres;
+
+    if(!load_typelib())
+        return FALSE;
 
     hres = IActiveScript_SetScriptSite(script, &script_site);
     if(FAILED(hres))
@@ -327,6 +349,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     if(init_engine(script, parser)) {
         run_script(cmdline, script, parser);
         IActiveScript_Close(script);
+        ITypeInfo_Release(host_ti);
     }else {
         WINE_FIXME("Script initialization failed\n");
     }
