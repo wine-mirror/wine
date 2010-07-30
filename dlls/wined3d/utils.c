@@ -847,10 +847,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
             0,
             ATI_TEXTURE_COMPRESSION_3DC, NULL},
-    {WINED3DFMT_ATI2N,                  GL_COMPRESSED_RED_GREEN_RGTC2_EXT, GL_COMPRESSED_RED_GREEN_RGTC2_EXT,     0,
+    {WINED3DFMT_ATI2N,                  GL_COMPRESSED_RED_GREEN_RGTC2,    GL_COMPRESSED_RED_GREEN_RGTC2,         0,
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
             0,
-            EXT_TEXTURE_COMPRESSION_RGTC, NULL},
+            ARB_TEXTURE_COMPRESSION_RGTC, NULL},
 };
 
 static inline int getFmtIdx(WINED3DFORMAT fmt) {

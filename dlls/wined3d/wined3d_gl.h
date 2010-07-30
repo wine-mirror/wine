@@ -1760,6 +1760,7 @@ typedef enum wined3d_gl_extension
     ARB_SYNC,
     ARB_TEXTURE_BORDER_CLAMP,
     ARB_TEXTURE_COMPRESSION,
+    ARB_TEXTURE_COMPRESSION_RGTC,
     ARB_TEXTURE_CUBE_MAP,
     ARB_TEXTURE_ENV_ADD,
     ARB_TEXTURE_ENV_COMBINE,
@@ -2449,6 +2450,15 @@ typedef GLvoid (WINE_GLAPI *PGLFNGETSYNCIVPROC)(GLsync sync, GLenum pname, GLsiz
 #ifndef GL_ARB_texture_border_clamp
 #define GL_ARB_texture_border_clamp 1
 #define GL_CLAMP_TO_BORDER_ARB                              0x812d
+#endif
+
+/* GL_ARB_texture_compression_rgtc */
+#ifndef GL_ARB_texture_compression_rgtc
+#define GL_ARB_texture_compression_rgtc 1
+#define GL_COMPRESSED_RED_RGTC1                             0x8dbb
+#define GL_COMPRESSED_SIGNED_RED_RGTC1                      0x8dbc
+#define GL_COMPRESSED_RED_GREEN_RGTC2                       0x8dbd
+#define GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2                0x8dbe
 #endif
 
 /* GL_ARB_texture_cube_map */

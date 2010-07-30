@@ -77,6 +77,7 @@ static const struct {
     {"GL_ARB_sync",                         ARB_SYNC,                       0                           },
     {"GL_ARB_texture_border_clamp",         ARB_TEXTURE_BORDER_CLAMP,       0                           },
     {"GL_ARB_texture_compression",          ARB_TEXTURE_COMPRESSION,        0                           },
+    {"GL_ARB_texture_compression_rgtc",     ARB_TEXTURE_COMPRESSION_RGTC,   0                           },
     {"GL_ARB_texture_cube_map",             ARB_TEXTURE_CUBE_MAP,           0                           },
     {"GL_ARB_texture_env_add",              ARB_TEXTURE_ENV_ADD,            0                           },
     {"GL_ARB_texture_env_combine",          ARB_TEXTURE_ENV_COMBINE,        0                           },
@@ -2358,6 +2359,11 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         TRACE_(d3d_caps)(" IMPLIED: ARB_vertex_array_bgra support (by EXT_vertex_array_bgra).\n");
         gl_info->supported[ARB_VERTEX_ARRAY_BGRA] = TRUE;
     }
+    if (!gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC && gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC]])
+    {
+        TRACE_(d3d_caps)(" IMPLIED: ARB_texture_compression_rgtc support (by EXT_texture_compression_rgtc).\n");
+        gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] = TRUE;
+    }
     if (gl_info->supported[NV_TEXTURE_SHADER2])
     {
         if (gl_info->supported[NV_REGISTER_COMBINERS])
@@ -3619,7 +3625,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter, const struct
         /* Vendor specific formats */
         case WINED3DFMT_ATI2N:
             if (gl_info->supported[ATI_TEXTURE_COMPRESSION_3DC]
-                    || gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
+                    || gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC])
             {
                 if (adapter->shader_backend->shader_color_fixup_supported(format_desc->color_fixup)
                         && adapter->fragment_pipe->color_fixup_supported(format_desc->color_fixup))
