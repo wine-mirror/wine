@@ -147,7 +147,6 @@ static DWORD CALLBACK MCICDA_playLoop(void *ptr)
      * signaled by the next command that has MCI_NOTIFY set (or
      * MCI_NOTIFY_ABORTED for MCI_PLAY). */
 
-    ExitThread(0);
     return 0;
 }
 
@@ -279,6 +278,7 @@ static	int	MCICDA_GetError(WINE_MCICDAUDIO* wmcda)
     switch (GetLastError())
     {
     case ERROR_NOT_READY:     return MCIERR_DEVICE_NOT_READY;
+    case ERROR_NOT_SUPPORTED:
     case ERROR_IO_DEVICE:     return MCIERR_HARDWARE;
     default:
 	FIXME("Unknown mode %u\n", GetLastError());
@@ -564,12 +564,12 @@ static DWORD MCICDA_GetDevCaps(UINT wDevID, DWORD dwFlags,
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	default:
-            ERR("Unsupported %x devCaps item\n", lpParms->dwItem);
-	    return MCIERR_UNRECOGNIZED_COMMAND;
+            WARN("Unsupported %x devCaps item\n", lpParms->dwItem);
+	    return MCIERR_UNSUPPORTED_FUNCTION;
 	}
     } else {
 	TRACE("No GetDevCaps-Item !\n");
-	return MCIERR_UNRECOGNIZED_COMMAND;
+	return MCIERR_MISSING_PARAMETER;
     }
     TRACE("lpParms->dwReturn=%08X;\n", lpParms->dwReturn);
     if (dwFlags & MCI_NOTIFY) {
@@ -647,7 +647,7 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 	str = buffer;
     } else {
 	WARN("Don't know this info command (%u)\n", dwFlags);
-	ret = MCIERR_UNRECOGNIZED_COMMAND;
+	ret = MCIERR_MISSING_PARAMETER;
     }
     if (str) {
 	if (lpParms->dwRetSize <= strlenW(str)) {
@@ -692,6 +692,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
                                  &data, sizeof(data), &br, NULL))
             {
 		return MCICDA_GetError(wmcda);
+		/* alt. data.CurrentPosition.TrackNumber = 1; -- what native yields */
 	    }
 	    lpParms->dwReturn = data.CurrentPosition.TrackNumber;
             TRACE("CURRENT_TRACK=%lu\n", lpParms->dwReturn);
@@ -750,7 +751,8 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		return MCICDA_GetError(wmcda);
 	    break;
 	case MCI_STATUS_POSITION:
-	    if (dwFlags & MCI_STATUS_START) {
+            switch (dwFlags & (MCI_STATUS_START | MCI_TRACK)) {
+            case MCI_STATUS_START:
                 if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
                                      &toc, sizeof(toc), &br, NULL)) {
                     WARN("error reading TOC !\n");
@@ -758,7 +760,8 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
                 }
 		lpParms->dwReturn = FRAME_OF_TOC(toc, toc.FirstTrack);
 		TRACE("get MCI_STATUS_START !\n");
-	    } else if (dwFlags & MCI_TRACK) {
+                break;
+            case MCI_TRACK:
                 if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
                                      &toc, sizeof(toc), &br, NULL)) {
                     WARN("error reading TOC !\n");
@@ -768,13 +771,17 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		    return MCIERR_OUTOFRANGE;
 		lpParms->dwReturn = FRAME_OF_TOC(toc, lpParms->dwTrack);
 		TRACE("get MCI_TRACK #%u !\n", lpParms->dwTrack);
-            } else {
+                break;
+            case 0:
                 fmt.Format = IOCTL_CDROM_CURRENT_POSITION;
                 if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_Q_CHANNEL, &fmt, sizeof(fmt),
                                      &data, sizeof(data), &br, NULL)) {
                     return MCICDA_GetError(wmcda);
                 }
                 lpParms->dwReturn = FRAME_OF_ADDR(data.CurrentPosition.AbsoluteAddress);
+                break;
+            default:
+                return MCIERR_FLAGS_NOT_COMPATIBLE;
             }
 	    lpParms->dwReturn = MCICDA_CalcTime(wmcda, wmcda->dwTimeFormat, lpParms->dwReturn, &ret);
             TRACE("MCI_STATUS_POSITION=%08lX\n", lpParms->dwReturn);
@@ -814,16 +821,15 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 		else
 		    lpParms->dwReturn = (toc.TrackData[lpParms->dwTrack - toc.FirstTrack].Control & 0x04) ?
                                          MCI_CDA_TRACK_OTHER : MCI_CDA_TRACK_AUDIO;
+		    /* FIXME: MAKEMCIRESOURCE "audio" | "other", localised */
 	    }
             TRACE("MCI_CDA_STATUS_TYPE_TRACK[%d]=%ld\n", lpParms->dwTrack, lpParms->dwReturn);
 	    break;
 	default:
             FIXME("unknown command %08X !\n", lpParms->dwItem);
-	    return MCIERR_UNRECOGNIZED_COMMAND;
+	    return MCIERR_UNSUPPORTED_FUNCTION;
 	}
-    } else {
-	WARN("not MCI_STATUS_ITEM !\n");
-    }
+    } else return MCIERR_MISSING_PARAMETER;
     if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
 	MCICDA_Notify(lpParms->dwCallback, wmcda, MCI_NOTIFY_SUCCESSFUL);
     return ret;
@@ -908,10 +914,13 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
     if (dwFlags & MCI_TO) {
 	end = MCICDA_CalcFrame(wmcda, lpParms->dwTo);
+	if ( (ret=MCICDA_SkipDataTracks(wmcda, &end)) )
+	  return ret;
 	TRACE("MCI_TO=%08X -> %u\n", lpParms->dwTo, end);
     } else {
 	end = FRAME_OF_TOC(toc, toc.LastTrack + 1) - 1;
     }
+    if (end < start) return MCIERR_OUTOFRANGE;
     TRACE("Playing from %u to %u\n", start, end);
 
     oldcb = InterlockedExchangePointer(&wmcda->hCallback,
@@ -1141,7 +1150,7 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
     DWORD		        at;
     WINE_MCICDAUDIO*	        wmcda = MCICDA_GetOpenDrv(wDevID);
     CDROM_SEEK_AUDIO_MSF        seek;
-    DWORD                       br, ret;
+    DWORD                       br, position, ret;
     CDROM_TOC			toc;
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpParms);
@@ -1149,12 +1158,16 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
 
+    position = dwFlags & (MCI_SEEK_TO_START|MCI_SEEK_TO_END|MCI_TO);
+    if (!position)		return MCIERR_MISSING_PARAMETER;
+    if (position&(position-1))	return MCIERR_FLAGS_NOT_COMPATIBLE;
+
     if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
                          &toc, sizeof(toc), &br, NULL)) {
         WARN("error reading TOC !\n");
         return MCICDA_GetError(wmcda);
     }
-    switch (dwFlags & ~(MCI_NOTIFY|MCI_WAIT)) {
+    switch (position) {
     case MCI_SEEK_TO_START:
 	TRACE("Seeking to start\n");
 	at = FRAME_OF_TOC(toc,toc.FirstTrack);
@@ -1174,9 +1187,7 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	  return ret;
 	break;
     default:
-	TRACE("Unknown seek action %08lX\n",
-	      (dwFlags & ~(MCI_NOTIFY|MCI_WAIT)));
-	return MCIERR_UNSUPPORTED_FUNCTION;
+	return MCIERR_FLAGS_NOT_COMPATIBLE;
     }
 
     if (wmcda->hThread != 0) {
@@ -1241,7 +1252,6 @@ static DWORD MCICDA_Set(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
     /*
       TRACE("dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
-      TRACE("dwAudio=%08lX\n", lpParms->dwAudio);
     */
     if (dwFlags & MCI_SET_TIME_FORMAT) {
 	switch (lpParms->dwTimeFormat) {
@@ -1255,14 +1265,12 @@ static DWORD MCICDA_Set(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	    TRACE("MCI_FORMAT_TMSF !\n");
 	    break;
 	default:
-	    WARN("bad time format !\n");
 	    return MCIERR_BAD_TIME_FORMAT;
 	}
 	wmcda->dwTimeFormat = lpParms->dwTimeFormat;
     }
-    if (dwFlags & MCI_SET_VIDEO) return MCIERR_UNSUPPORTED_FUNCTION;
-    if (dwFlags & MCI_SET_ON) return MCIERR_UNSUPPORTED_FUNCTION;
-    if (dwFlags & MCI_SET_OFF) return MCIERR_UNSUPPORTED_FUNCTION;
+    if (dwFlags & MCI_SET_AUDIO) /* one xp machine ignored it */
+	TRACE("SET_AUDIO %X %x\n", dwFlags, lpParms->dwAudio);
 
     if (dwFlags & MCI_NOTIFY)
 	MCICDA_Notify(lpParms->dwCallback, wmcda, MCI_NOTIFY_SUCCESSFUL);
@@ -1304,10 +1312,11 @@ LRESULT CALLBACK MCICDA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_SEEK:		return MCICDA_Seek(dwDevID, dwParam1, (LPMCI_SEEK_PARMS)dwParam2);
     /* commands that should report an error as they are not supported in
      * the native version */
-    case MCI_SET_DOOR_CLOSED:
-    case MCI_SET_DOOR_OPEN:
+    case MCI_RECORD:
     case MCI_LOAD:
     case MCI_SAVE:
+	return MCIERR_UNSUPPORTED_FUNCTION;
+    case MCI_BREAK:
     case MCI_FREEZE:
     case MCI_PUT:
     case MCI_REALIZE:
