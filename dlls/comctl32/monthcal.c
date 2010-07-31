@@ -150,6 +150,12 @@ static const SYSTEMTIME st_null;
 static const SYSTEMTIME max_allowed_date = { .wYear = 9999, .wMonth = 12, .wDay = 31 };
 static const SYSTEMTIME min_allowed_date = { .wYear = 1752, .wMonth = 9,  .wDay = 14 };
 
+/* Prev/Next buttons */
+enum nav_direction
+{
+    DIRECTION_BACKWARD,
+    DIRECTION_FORWARD
+};
 
 #define MONTHCAL_GetInfoPtr(hwnd) ((MONTHCAL_INFO *)GetWindowLongPtrW(hwnd, 0))
 
@@ -1764,13 +1770,13 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
   }
 }
 
-static void MONTHCAL_GoToPrevNextMonth(MONTHCAL_INFO *infoPtr, BOOL prev)
+static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direction)
 {
   SYSTEMTIME st = infoPtr->curSel;
 
-  TRACE("%s\n", prev ? "prev" : "next");
+  TRACE("%s\n", direction == DIRECTION_BACKWARD ? "back" : "fwd");
 
-  if(prev) MONTHCAL_GetPrevMonth(&st); else MONTHCAL_GetNextMonth(&st);
+  if(direction == DIRECTION_BACKWARD) MONTHCAL_GetPrevMonth(&st); else MONTHCAL_GetNextMonth(&st);
 
   if(!MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE)) return;
 
@@ -1781,7 +1787,7 @@ static void MONTHCAL_GoToPrevNextMonth(MONTHCAL_INFO *infoPtr, BOOL prev)
     range[0] = infoPtr->minSel;
     range[1] = infoPtr->maxSel;
 
-    if(prev)
+    if(direction == DIRECTION_BACKWARD)
     {
       MONTHCAL_GetPrevMonth(&range[0]);
       MONTHCAL_GetPrevMonth(&range[1]);
@@ -1939,14 +1945,14 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   switch(hit)
   {
   case MCHT_TITLEBTNNEXT:
-    MONTHCAL_GoToPrevNextMonth(infoPtr, FALSE);
+    MONTHCAL_GoToMonth(infoPtr, DIRECTION_FORWARD);
     infoPtr->status = MC_NEXTPRESSED;
     SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_PREVNEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return 0;
 
   case MCHT_TITLEBTNPREV:
-    MONTHCAL_GoToPrevNextMonth(infoPtr, TRUE);
+    MONTHCAL_GoToMonth(infoPtr, DIRECTION_BACKWARD);
     infoPtr->status = MC_PREVPRESSED;
     SetTimer(infoPtr->hwndSelf, MC_PREVNEXTMONTHTIMER, MC_PREVNEXTMONTHDELAY, 0);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
@@ -2081,8 +2087,8 @@ MONTHCAL_Timer(MONTHCAL_INFO *infoPtr, WPARAM id)
 
   switch(id) {
   case MC_PREVNEXTMONTHTIMER:
-    if(infoPtr->status & MC_NEXTPRESSED) MONTHCAL_GoToPrevNextMonth(infoPtr, FALSE);
-    if(infoPtr->status & MC_PREVPRESSED) MONTHCAL_GoToPrevNextMonth(infoPtr, TRUE);
+    if(infoPtr->status & MC_NEXTPRESSED) MONTHCAL_GoToMonth(infoPtr, DIRECTION_FORWARD);
+    if(infoPtr->status & MC_PREVPRESSED) MONTHCAL_GoToMonth(infoPtr, DIRECTION_BACKWARD);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     break;
   case MC_TODAYUPDATETIMER:
