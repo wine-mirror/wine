@@ -4,9 +4,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = explorerframe.dll
+IMPORTS   = uuid
 
 C_SRCS = \
-	explorerframe_main.c
+	explorerframe_main.c \
+	nstc.c
 
 RC_SRCS = \
 	version.rc

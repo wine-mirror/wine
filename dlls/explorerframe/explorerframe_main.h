@@ -21,10 +21,14 @@
 #ifndef __WINE_EXPLORERFRAME_H
 #define __WINE_EXPLORERFRAME_H
 
+#include "shlobj.h"
+
 extern HINSTANCE explorerframe_hinstance;
 
 extern LONG EFRAME_refCount;
 static inline void EFRAME_LockModule(void) { InterlockedIncrement( &EFRAME_refCount ); }
 static inline void EFRAME_UnlockModule(void) { InterlockedDecrement( &EFRAME_refCount ); }
+
+HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
 
 #endif /* __WINE_EXPLORERFRAME_H */
