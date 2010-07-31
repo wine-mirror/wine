@@ -458,22 +458,32 @@ int MONTHCAL_CalculateDayOfWeek(SYSTEMTIME *date, BOOL inplace)
 /* properly updates date to point on next month */
 static inline void MONTHCAL_GetNextMonth(SYSTEMTIME *date)
 {
+  INT length;
+
   if(++date->wMonth > 12)
   {
     date->wMonth = 1;
     date->wYear++;
   }
+  /* fix moving from last day in a month */
+  length = MONTHCAL_MonthLength(date->wMonth, date->wYear);
+  if(date->wDay > length) date->wDay = length;
   MONTHCAL_CalculateDayOfWeek(date, TRUE);
 }
 
 /* properly updates date to point on prev month */
 static inline void MONTHCAL_GetPrevMonth(SYSTEMTIME *date)
 {
+  INT length;
+
   if(--date->wMonth < 1)
   {
     date->wMonth = 12;
     date->wYear--;
   }
+  /* fix moving from last day in a month */
+  length = MONTHCAL_MonthLength(date->wMonth, date->wYear);
+  if(date->wDay > length) date->wDay = length;
   MONTHCAL_CalculateDayOfWeek(date, TRUE);
 }
 
