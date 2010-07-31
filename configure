@@ -14139,9 +14139,9 @@ $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
     then
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT
-$ac_file.def: dlls/$ac_dir/$ac_dir.spec \$(WINEBUILD)
+$ac_file.def: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$@ --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec
-$ac_file.a: dlls/$ac_dir/$ac_dir.spec \$(WINEBUILD)
+$ac_file.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$@ --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec
 install-dev:: dlls/$ac_dir/Makefile __builddeps__
 	@cd dlls/$ac_dir && \$(MAKE) install-dev"
@@ -14149,7 +14149,7 @@ install-dev:: dlls/$ac_dir/Makefile __builddeps__
         then
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.cross.a
-$ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec \$(WINEBUILD)
+$ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile \$(WINEBUILD)
 	\$(WINEBUILD) \$(CROSSTARGET:%=-b %)$ac_implibflags -w --implib -o \$@ --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec"
         fi
 
