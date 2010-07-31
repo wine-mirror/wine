@@ -4,4 +4,4 @@
 
 @ stdcall -private DllCanUnloadNow()
 @ stub DllGetClassObject
-@ stub DllGetVersion
+@ stdcall -private DllGetVersion(ptr)

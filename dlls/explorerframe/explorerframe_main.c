@@ -64,3 +64,33 @@ HRESULT WINAPI DllCanUnloadNow(void)
     TRACE("refCount is %d\n", EFRAME_refCount);
     return EFRAME_refCount ? S_FALSE : S_OK;
 }
+
+/*************************************************************************
+ *              DllGetVersion (ExplorerFrame.@)
+ */
+HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
+{
+    TRACE("%p\n", info);
+    if(info->cbSize == sizeof(DLLVERSIONINFO) ||
+       info->cbSize == sizeof(DLLVERSIONINFO2))
+    {
+        /* Windows 7 */
+        info->dwMajorVersion = 6;
+        info->dwMinorVersion = 1;
+        info->dwBuildNumber = 7600;
+        info->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
+        if(info->cbSize == sizeof(DLLVERSIONINFO2))
+        {
+            DLLVERSIONINFO2 *info2 = (DLLVERSIONINFO2*)info;
+            info2->dwFlags = 0;
+            info2->ullVersion = MAKEDLLVERULL(info->dwMajorVersion,
+                                              info->dwMinorVersion,
+                                              info->dwBuildNumber,
+                                              16385); /* "hotfix number" */
+        }
+        return S_OK;
+    }
+
+    WARN("wrong DLLVERSIONINFO size from app.\n");
+    return E_INVALIDARG;
+}
