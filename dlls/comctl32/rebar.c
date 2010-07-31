@@ -2397,7 +2397,7 @@ REBAR_IdToIndex (const REBAR_INFO *infoPtr, UINT uId)
 
 
 static LRESULT
-REBAR_InsertBandT(REBAR_INFO *infoPtr, INT iIndex, LPREBARBANDINFOW lprbbi, BOOL bUnicode)
+REBAR_InsertBandT(REBAR_INFO *infoPtr, INT iIndex, const REBARBANDINFOW *lprbbi, BOOL bUnicode)
 {
     REBAR_BAND *lpBand;
 
@@ -2613,7 +2613,7 @@ REBAR_strdifW( LPCWSTR a, LPCWSTR b )
 }
 
 static LRESULT
-REBAR_SetBandInfoT(REBAR_INFO *infoPtr, INT iBand, LPREBARBANDINFOW lprbbi, BOOL bUnicode)
+REBAR_SetBandInfoT(REBAR_INFO *infoPtr, INT iBand, const REBARBANDINFOW *lprbbi, BOOL bUnicode)
 {
     REBAR_BAND *lpBand;
     UINT uChanged;
@@ -3126,7 +3126,7 @@ REBAR_NCCalcSize (const REBAR_INFO *infoPtr, RECT *rect)
 
 
 static LRESULT
-REBAR_NCCreate (HWND hwnd, LPCREATESTRUCTW cs)
+REBAR_NCCreate (HWND hwnd, const CREATESTRUCTW *cs)
 {
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
     RECT wnrc1, clrc1;

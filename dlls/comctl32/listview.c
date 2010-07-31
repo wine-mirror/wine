@@ -3704,7 +3704,9 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, INT x, INT y)
  * RETURN:
  *   None.
  */
-static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, LPPOINT coords_orig, LPPOINT coords_offs, LPPOINT offset, INT scroll)
+static void LISTVIEW_MarqueeHighlight(LISTVIEW_INFO *infoPtr, const POINT *coords_orig,
+                                      const POINT *coords_offs, const POINT *offset,
+                                      INT scroll)
 {
     BOOL controlDown = FALSE;
     LVITEMW item;
@@ -8677,7 +8679,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT *pt)
+static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, const POINT *pt)
 {
     POINT Origin, Pt;
 
