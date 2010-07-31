@@ -11,6 +11,7 @@ C_SRCS = \
 	nstc.c
 
 RC_SRCS = \
+	eframe.rc \
 	version.rc
 
 @MAKE_DLL_RULES@

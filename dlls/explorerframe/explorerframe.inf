@@ -1,0 +1,17 @@
+[version]
+Signature="$CHICAGO$"
+
+[RegisterDll]
+AddReg=Classes.Reg
+
+[UnregisterDll]
+DelReg=Classes.Reg
+
+[Classes.Reg]
+; For some reason called "ListView" in the registry.
+HKCR,"CLSID\%CLSID_NamespaceTreeControl%",,,"Shell Name Space ListView"
+HKCR,"CLSID\%CLSID_NamespaceTreeControl%\InProcServer32",,,"%MODULE%"
+HKCR,"CLSID\%CLSID_NamespaceTreeControl%\InProcServer32","ThreadingModel",,"Apartment"
+
+[Strings]
+MODULE="explorerframe.dll"
