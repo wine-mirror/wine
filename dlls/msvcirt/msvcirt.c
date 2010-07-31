@@ -29,7 +29,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcirt);
 
 typedef struct {
     LPVOID VTable;
+} class_ios;
+
+typedef struct {
+    LPVOID VTable;
 } class_ostream;
+
+typedef struct {
+    LPVOID VTable;
+} class_strstreambuf;
 
 #ifdef __i386__  /* thiscall functions are i386-specific */
 
@@ -49,6 +57,39 @@ typedef struct {
 #define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
 
 #endif /* __i386__ */
+
+/******************************************************************
+ *		 ??1ios@@UAE@XZ (MSVCRTI.@)
+ *        class ios & __thiscall ios::-ios<<(void)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCIRT_ios_sl_void,4)
+void * __stdcall MSVCIRT_ios_sl_void(class_ios * _this)
+{
+   FIXME("(%p) stub\n", _this);
+   return _this;
+}
+
+/******************************************************************
+ *		 ??0ostrstream@@QAE@XZ (MSVCRTI.@)
+ *        class ostream & __thiscall ostrstream::ostrstream<<(void)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCIRT_ostrstream_sl_void,4)
+void * __stdcall MSVCIRT_ostrstream_sl_void(class_ostream * _this)
+{
+   FIXME("(%p) stub\n", _this);
+   return _this;
+}
+
+/******************************************************************
+ *		??6ostream@@QAEAAV0@E@Z (MSVCRTI.@)
+ *    class ostream & __thiscall ostream::operator<<(unsigned char)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCIRT_operator_sl_uchar,8)
+void * __stdcall MSVCIRT_operator_sl_uchar(class_ostream * _this, unsigned char ch)
+{
+   FIXME("(%p)->(%c) stub\n", _this, ch);
+   return _this;
+}
 
 /******************************************************************
  *		 ??6ostream@@QAEAAV0@H@Z (MSVCRTI.@)
@@ -91,6 +132,27 @@ void * CDECL MSVCIRT_endl(class_ostream * _this)
 {
    FIXME("(%p)->() stub\n", _this);
    return _this;
+}
+
+/******************************************************************
+ *		?ends@@YAAAVostream@@AAV1@@Z (MSVCRTI.@)
+ *           class ostream & __cdecl ends(class ostream &)
+ */
+void * CDECL MSVCIRT_ends(class_ostream * _this)
+{
+   FIXME("(%p)->() stub\n", _this);
+   return _this;
+}
+
+/******************************************************************
+ *		?str@strstreambuf@@QAEPADXZ (MSVCRTI.@)
+ *           class strstreambuf & __thiscall strstreambuf::str(class strstreambuf &)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCIRT_str_sl_void,4)
+char * __stdcall MSVCIRT_str_sl_void(class_strstreambuf * _this)
+{
+   FIXME("(%p)->() stub\n", _this);
+   return 0;
 }
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )

@@ -47,7 +47,7 @@
 @ stub ??0ostream_withassign@@QAE@XZ  # __thiscall ostream_withassign::ostream_withassign(void)
 @ stub ??0ostrstream@@QAE@ABV0@@Z  # __thiscall ostrstream::ostrstream(class ostrstream const &)
 @ stub ??0ostrstream@@QAE@PADHH@Z  # __thiscall ostrstream::ostrstream(char *,int,int)
-@ stub ??0ostrstream@@QAE@XZ  # __thiscall ostrstream::ostrstream(void)
+@ cdecl -i386 -norelay ??0ostrstream@@QAE@XZ(ptr) __thiscall_MSVCIRT_ostrstream_sl_void  # __thiscall ostrstream::ostrstream(void)
 @ stub ??0stdiobuf@@QAE@ABV0@@Z  # __thiscall stdiobuf::stdiobuf(class stdiobuf const &)
 @ stub ??0stdiobuf@@QAE@PAU_iobuf@@@Z  # __thiscall stdiobuf::stdiobuf(struct _iobuf *)
 @ stub ??0stdiostream@@QAE@ABV0@@Z  # __thiscall stdiostream::stdiostream(class stdiostream const &)
@@ -69,7 +69,7 @@
 @ stub ??1filebuf@@UAE@XZ  # virtual __thiscall filebuf::~filebuf(void)
 @ stub ??1fstream@@UAE@XZ  # virtual __thiscall fstream::~fstream(void)
 @ stub ??1ifstream@@UAE@XZ  # virtual __thiscall ifstream::~ifstream(void)
-@ stub ??1ios@@UAE@XZ  # virtual __thiscall ios::~ios(void)
+@ cdecl -i386 -norelay ??1ios@@UAE@XZ(ptr) __thiscall_MSVCIRT_ios_sl_void # virtual __thiscall ios::~ios(void)
 @ stub ??1iostream@@UAE@XZ  # virtual __thiscall iostream::~iostream(void)
 @ stub ??1istream@@UAE@XZ  # virtual __thiscall istream::~istream(void)
 @ stub ??1istream_withassign@@UAE@XZ  # virtual __thiscall istream_withassign::~istream_withassign(void)
@@ -78,7 +78,7 @@
 @ stub ??1ofstream@@UAE@XZ  # virtual __thiscall ofstream::~ofstream(void)
 @ stub ??1ostream@@UAE@XZ  # virtual __thiscall ostream::~ostream(void)
 @ stub ??1ostream_withassign@@UAE@XZ  # virtual __thiscall ostream_withassign::~ostream_withassign(void)
-@ stub ??1ostrstream@@UAE@XZ  # virtual __thiscall ostrstream::~ostrstream(void)
+@ cdecl -i386 -norelay ??1ostrstream@@UAE@XZ(ptr)  __thiscall_MSVCIRT_ostrstream_sl_void # virtual __thiscall ostrstream::~ostrstream(void)
 @ stub ??1stdiobuf@@UAE@XZ  # virtual __thiscall stdiobuf::~stdiobuf(void)
 @ stub ??1stdiostream@@UAE@XZ  # virtual __thiscall stdiostream::~stdiostream(void)
 @ stub ??1streambuf@@UAE@XZ  # virtual __thiscall streambuf::~streambuf(void)
@@ -131,7 +131,7 @@
 @ stub ??5istream@@QAEAAV0@PAVstreambuf@@@Z  # class istream & __thiscall istream::operator>>(class streambuf *)
 @ stub ??6ostream@@QAEAAV0@C@Z  # class ostream & __thiscall ostream::operator<<(signed char)
 @ stub ??6ostream@@QAEAAV0@D@Z  # class ostream & __thiscall ostream::operator<<(char)
-@ stub ??6ostream@@QAEAAV0@E@Z  # class ostream & __thiscall ostream::operator<<(unsigned char)
+@ cdecl -i386 -norelay ??6ostream@@QAEAAV0@E@Z(ptr long) __thiscall_MSVCIRT_operator_sl_uchar # class ostream & __thiscall ostream::operator<<(unsigned char)
 @ stub ??6ostream@@QAEAAV0@F@Z  # class ostream & __thiscall ostream::operator<<(short)
 @ stub ??6ostream@@QAEAAV0@G@Z  # class ostream & __thiscall ostream::operator<<(unsigned short)
 @ cdecl -i386 -norelay ??6ostream@@QAEAAV0@H@Z(ptr long) __thiscall_MSVCIRT_operator_sl_int  # class ostream & __thiscall ostream::operator<<(int)
@@ -269,7 +269,7 @@
 @ stub ?ebuf@streambuf@@IBEPADXZ  # char * __thiscall streambuf::ebuf(void)const 
 @ stub ?egptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::egptr(void)const 
 @ cdecl ?endl@@YAAAVostream@@AAV1@@Z(ptr) MSVCIRT_endl  # class ostream & __cdecl endl(class ostream &)
-@ stub ?ends@@YAAAVostream@@AAV1@@Z  # class ostream & __cdecl ends(class ostream &)
+@ cdecl ?ends@@YAAAVostream@@AAV1@@Z(ptr) MSVCIRT_ends  # class ostream & __cdecl ends(class ostream &)
 @ stub ?eof@ios@@QBEHXZ  # int __thiscall ios::eof(void)const 
 @ stub ?epptr@streambuf@@IBEPADXZ  # char * __thiscall streambuf::epptr(void)const 
 # @ extern ?fLockcInit@ios@@0HA  # static int ios::fLockcInit
@@ -402,7 +402,7 @@
 @ stub ?str@istrstream@@QAEPADXZ  # char * __thiscall istrstream::str(void)
 @ stub ?str@ostrstream@@QAEPADXZ  # char * __thiscall ostrstream::str(void)
 @ stub ?str@strstream@@QAEPADXZ  # char * __thiscall strstream::str(void)
-@ stub ?str@strstreambuf@@QAEPADXZ  # char * __thiscall strstreambuf::str(void)
+@ cdecl -i386 -norelay ?str@strstreambuf@@QAEPADXZ(ptr) __thiscall_MSVCIRT_str_sl_void  # char * __thiscall strstreambuf::str(void)
 # @ extern ?sunk_with_stdio@ios@@0HA  # static int ios::sunk_with_stdio
 @ stub ?sync@filebuf@@UAEHXZ  # virtual int __thiscall filebuf::sync(void)
 @ stub ?sync@istream@@QAEHXZ  # int __thiscall istream::sync(void)
