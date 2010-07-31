@@ -393,7 +393,6 @@ static DWORD MCICDA_CalcTime(WINE_MCICDAUDIO* wmcda, DWORD tf, DWORD dwFrame, LP
     return dwTime;
 }
 
-static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms);
 static DWORD MCICDA_Stop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
 
 /**************************************************************************
@@ -848,24 +847,23 @@ static DWORD MCICDA_SkipDataTracks(WINE_MCICDAUDIO* wmcda,DWORD *frame)
     WARN("error reading TOC !\n");
     return MCICDA_GetError(wmcda);
   }
-  /* Locate first track whose starting frame is bigger than frame */
-  for(i=toc.FirstTrack;i<=toc.LastTrack+1;i++) 
-    if ( FRAME_OF_TOC(toc, i) > *frame ) break;
-  if (i <= toc.FirstTrack && i>toc.LastTrack+1) {
-    i = 0; /* requested address is out of range: go back to start */
-    *frame = FRAME_OF_TOC(toc,toc.FirstTrack);
-  }
-  else
-    i--;
+  if (*frame < FRAME_OF_TOC(toc,toc.FirstTrack) ||
+      *frame >= FRAME_OF_TOC(toc,toc.LastTrack+1)) /* lead-out */
+    return MCIERR_OUTOFRANGE;
+  for(i=toc.LastTrack+1;i>toc.FirstTrack;i--)
+    if ( FRAME_OF_TOC(toc, i) <= *frame ) break;
   /* i points to last track whose start address is not greater than frame.
    * Now skip non-audio tracks */
-  for(;i<=toc.LastTrack+1;i++)
+  for(;i<=toc.LastTrack;i++)
     if ( ! (toc.TrackData[i-toc.FirstTrack].Control & 4) )
       break;
   /* The frame will be an address in the next audio track or
    * address of lead-out. */
   if ( FRAME_OF_TOC(toc, i) > *frame )
     *frame = FRAME_OF_TOC(toc, i);
+  /* Lead-out is an invalid seek position (on Linux as well). */
+  if (*frame == FRAME_OF_TOC(toc,toc.LastTrack+1))
+     (*frame)--;
   return 0;
 }
 
@@ -926,6 +924,14 @@ static DWORD MCICDA_Play(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     oldcb = InterlockedExchangePointer(&wmcda->hCallback,
 	(dwFlags & MCI_NOTIFY) ? HWND_32(LOWORD(lpParms->dwCallback)) : NULL);
     if (oldcb) mciDriverNotify(oldcb, wmcda->wNotifyDeviceID, MCI_NOTIFY_ABORTED);
+
+    if (start == end || start == FRAME_OF_TOC(toc,toc.LastTrack+1)-1) {
+        if (dwFlags & MCI_NOTIFY) {
+            oldcb = InterlockedExchangePointer(&wmcda->hCallback, NULL);
+            if (oldcb) mciDriverNotify(oldcb, wDevID, MCI_NOTIFY_SUCCESSFUL);
+        }
+        return MMSYSERR_NOERROR;
+    }
 
     if (wmcda->hThread != 0) {
         SetEvent(wmcda->stopEvent);
@@ -1162,6 +1168,11 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
     if (!position)		return MCIERR_MISSING_PARAMETER;
     if (position&(position-1))	return MCIERR_FLAGS_NOT_COMPATIBLE;
 
+    /* Stop sends MCI_NOTIFY_ABORTED when needed.
+     * Tests show that native first sends ABORTED and reads the TOC,
+     * then only checks the position flags, then stops and seeks. */
+    MCICDA_Stop(wDevID, MCI_WAIT, 0);
+
     if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
                          &toc, sizeof(toc), &br, NULL)) {
         WARN("error reading TOC !\n");
@@ -1176,6 +1187,8 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	break;
     case MCI_SEEK_TO_END:
 	TRACE("Seeking to end\n");
+	/* End is prior to lead-out
+	 * yet Win9X seeks to even one frame less than that. */
 	at = FRAME_OF_TOC(toc, toc.LastTrack + 1) - 1;
 	if ( (ret=MCICDA_SkipDataTracks(wmcda, &at)) )
 	  return ret;
@@ -1190,13 +1203,7 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	return MCIERR_FLAGS_NOT_COMPATIBLE;
     }
 
-    if (wmcda->hThread != 0) {
-        EnterCriticalSection(&wmcda->cs);
-        wmcda->start = at - FRAME_OF_TOC(toc, toc.FirstTrack);
-        /* Flush remaining data, or just let it play into the new data? */
-        LeaveCriticalSection(&wmcda->cs);
-    }
-    else {
+    {
         seek.M = at / CDFRAMES_PERMIN;
         seek.S = (at / CDFRAMES_PERSEC) % 60;
         seek.F = at % CDFRAMES_PERSEC;
