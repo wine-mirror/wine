@@ -14504,6 +14504,7 @@ wine_fn_config_dll dxgi enable_dxgi dxgi
 wine_fn_config_test dlls/dxgi/tests dxgi_test
 wine_fn_config_lib dxguid
 wine_fn_config_dll explorerframe enable_explorerframe
+wine_fn_config_test dlls/explorerframe/tests explorerframe_test
 wine_fn_config_dll faultrep enable_faultrep
 wine_fn_config_dll fltlib enable_fltlib
 wine_fn_config_dll fusion enable_fusion
