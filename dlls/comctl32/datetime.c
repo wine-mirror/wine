@@ -1368,7 +1368,7 @@ DATETIME_Destroy (DATETIME_INFO *infoPtr)
 
 
 static INT
-DATETIME_GetText (DATETIME_INFO *infoPtr, INT count, LPWSTR dst)
+DATETIME_GetText (const DATETIME_INFO *infoPtr, INT count, LPWSTR dst)
 {
     WCHAR buf[80];
     int i;
