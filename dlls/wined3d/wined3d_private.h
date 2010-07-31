@@ -1234,6 +1234,27 @@ typedef struct WineD3D_PixelFormat
     int numSamples;
 } WineD3D_PixelFormat;
 
+/* The driver names reflect the lowest GPU supported
+ * by a certain driver, so DRIVER_ATI_R300 supports
+ * R3xx, R4xx and R5xx GPUs. */
+enum wined3d_display_driver
+{
+    DRIVER_ATI_R300,
+    DRIVER_ATI_R600,
+    DRIVER_NVIDIA_TNT,
+    DRIVER_NVIDIA_GEFORCE2MX,
+    DRIVER_NVIDIA_GEFORCEFX,
+    DRIVER_NVIDIA_GEFORCE6
+};
+
+enum wined3d_driver_model
+{
+    DRIVER_MODEL_WIN9X,
+    DRIVER_MODEL_NT40,
+    DRIVER_MODEL_NT5X,
+    DRIVER_MODEL_NT6X
+};
+
 enum wined3d_gl_vendor
 {
     GL_VENDOR_UNKNOWN,
