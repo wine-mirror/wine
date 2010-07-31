@@ -3,5 +3,5 @@
 # 134 stub EXPLORERFRAME_134
 
 @ stdcall -private DllCanUnloadNow()
-@ stub DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllGetVersion(ptr)

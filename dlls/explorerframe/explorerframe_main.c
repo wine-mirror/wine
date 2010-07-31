@@ -94,3 +94,112 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
     WARN("wrong DLLVERSIONINFO size from app.\n");
     return E_INVALIDARG;
 }
+
+/*************************************************************************
+ * Implement the ExplorerFrame class factory
+ *
+ * (Taken from shdocvw/factory.c; based on implementation in
+ *  ddraw/main.c)
+ */
+
+#define FACTORY(x) ((IClassFactory*) &(x)->lpClassFactoryVtbl)
+
+typedef struct
+{
+    const IClassFactoryVtbl *lpClassFactoryVtbl;
+    HRESULT (*cf)(IUnknown*, REFIID, void**);
+    LONG ref;
+} IClassFactoryImpl;
+
+/*************************************************************************
+ * EFCF_QueryInterface (IUnknown)
+ */
+static HRESULT WINAPI EFCF_QueryInterface(IClassFactory* iface,
+                                          REFIID riid, void **ppobj)
+{
+    TRACE("%p (%s %p)\n", iface, debugstr_guid(riid), ppobj);
+
+    if(!ppobj)
+        return E_POINTER;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid))
+    {
+        *ppobj = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Interface not supported.\n");
+
+    *ppobj = NULL;
+    return E_NOINTERFACE;
+}
+
+/*************************************************************************
+ * EFCF_AddRef (IUnknown)
+ */
+static ULONG WINAPI EFCF_AddRef(IClassFactory *iface)
+{
+    EFRAME_LockModule();
+
+    return 2; /* non-heap based object */
+}
+
+/*************************************************************************
+ * EFCF_Release (IUnknown)
+ */
+static ULONG WINAPI EFCF_Release(IClassFactory *iface)
+{
+    EFRAME_UnlockModule();
+
+    return 1; /* non-heap based object */
+}
+
+/*************************************************************************
+ * EFCF_CreateInstance (IClassFactory)
+ */
+static HRESULT WINAPI EFCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                          REFIID riid, void **ppobj)
+{
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    return This->cf(pOuter, riid, ppobj);
+}
+
+/*************************************************************************
+ * EFCF_LockServer (IClassFactory)
+ */
+static HRESULT WINAPI EFCF_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    TRACE("%p (%d)\n", iface, dolock);
+
+    if (dolock)
+        EFRAME_LockModule();
+    else
+        EFRAME_UnlockModule();
+
+    return S_OK;
+}
+
+static const IClassFactoryVtbl EFCF_Vtbl =
+{
+    EFCF_QueryInterface,
+    EFCF_AddRef,
+    EFCF_Release,
+    EFCF_CreateInstance,
+    EFCF_LockServer
+};
+
+/*************************************************************************
+ *              DllGetClassObject (ExplorerFrame.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    static IClassFactoryImpl NSTCClassFactory = {&EFCF_Vtbl, NamespaceTreeControl_Constructor};
+
+    TRACE("%s, %s, %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    if(IsEqualGUID(&CLSID_NamespaceTreeControl, rclsid))
+        return IClassFactory_QueryInterface(FACTORY(&NSTCClassFactory), riid, ppv);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
