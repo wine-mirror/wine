@@ -1776,11 +1776,22 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
 
 static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direction)
 {
-  SYSTEMTIME st = infoPtr->curSel;
+  INT delta = infoPtr->delta ? infoPtr->delta : infoPtr->cal_num;
+  SYSTEMTIME st;
 
   TRACE("%s\n", direction == DIRECTION_BACKWARD ? "back" : "fwd");
 
-  if(direction == DIRECTION_BACKWARD) MONTHCAL_GetPrevMonth(&st); else MONTHCAL_GetNextMonth(&st);
+  /* check if change allowed by range set */
+  if(direction == DIRECTION_BACKWARD)
+  {
+    st = infoPtr->calendars[0].month;
+    MONTHCAL_GetMonth(&st, -delta);
+  }
+  else
+  {
+    st = infoPtr->calendars[infoPtr->cal_num-1].month;
+    MONTHCAL_GetMonth(&st, delta);
+  }
 
   if(!MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE)) return;
 
@@ -1793,13 +1804,13 @@ static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direct
 
     if(direction == DIRECTION_BACKWARD)
     {
-      MONTHCAL_GetPrevMonth(&range[0]);
-      MONTHCAL_GetPrevMonth(&range[1]);
+      MONTHCAL_GetMonth(&range[0], -delta);
+      MONTHCAL_GetMonth(&range[1], -delta);
     }
     else
     {
-      MONTHCAL_GetNextMonth(&range[0]);
-      MONTHCAL_GetNextMonth(&range[1]);
+      MONTHCAL_GetMonth(&range[0], delta);
+      MONTHCAL_GetMonth(&range[1], delta);
     }
 
     MONTHCAL_SetSelRange(infoPtr, range);
@@ -1808,7 +1819,6 @@ static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direct
     MONTHCAL_SetCurSel(infoPtr, &st);
 
   MONTHCAL_NotifyDayState(infoPtr);
-
   MONTHCAL_NotifySelectionChange(infoPtr);
 }
 
