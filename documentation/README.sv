@@ -1,13 +1,13 @@
 1. INLEDNING
 
 Wine är ett program som gör det möjligt att köra Windows-program
-(inkluderat DOS, Windows 3.x och Win32) i Unix. Det består av en
+(inkluderat DOS, Windows 3.x, Win32 och Win64) i Unix. Det består av en
 programstartare som startar och kör Windows-programfiler, samt ett
 bibliotek (kallat Winelib) som implementerar Windows API-anrop med hjälp
 av deras Unix- eller X11-motsvarigheter. Biblioteket kan också användas
-till att porta Win32-kod till vanliga Unix-program.
+till att porta Windows-kod till vanliga Unix-program.
 
-Wine är fri programvara, utgett under villkåren i GNU LGPL; se
+Wine är fri programvara, utgett under villkoren i GNU LGPL; se
 filen LICENSE för detaljer.
 
 2. KOM IGÅNG
@@ -39,12 +39,12 @@ stöder kerneltrådar kommer eventuellt att stödjas i framtiden.
 Information för Linux
   Även om Linux 2.2.x antagligen fortfarande fungerar, och Linux 2.0.x kanske
   fungerar (tidiga 2.0.x-versioner uppvisade trådrelaterade problem), så är
-  det bäst att ha en nuvarande kernel som 2.4.x eller 2.6.x.
+  det bäst att ha en aktuell kernel som 2.4.x eller 2.6.x.
 
 Information för FreeBSD
   Wine kommer i regel inte fungera på FreeBSD-versioner äldre än 6.3 eller 7.0.
   FreeBSD 6.3 kan uppdateras for att stödja Wine. Se
-  <http://wiki.freebsd.org/Wine> för mer information.
+  http://wiki.freebsd.org/Wine för mer information.
 
 Information för Solaris
   Wine måste antagligen byggas med GNU toolchain (gcc, gas etc.).
@@ -72,7 +72,7 @@ Grundläggande krav:
 
   Du måste givetvis också ha "make" (mest troligt "GNU make").
 
-  Det är också nödvändigt att ha flex 2.5 eller senare samt bison.
+  Det är också nödvändigt att ha flex 2.5.33 eller senare samt bison.
 
 Valfria stödbibliotek:
   configure-skriptet visar varningar när valfria bibliotek inte hittats.
@@ -80,15 +80,16 @@ Valfria stödbibliotek:
   vilka paket du bör installera.
 
   På 64 bit-system måste du säkerställa att 32 bit-versionerna av
-  ovannämnda bibliotek installerats; se
-  http://wiki.winehq.org/WineOn64bit för närmare detaljer.
+  ovannämnda bibliotek installerats; se http://wiki.winehq.org/WineOn64bit
+  för närmare detaljer. Om du vill ha ett sant 64-bit Wine (eller en mixad
+  32- och 64-bit Wine-installation), se http://wiki.winehq.org/Wine64 för
+  detaljer.
 
 4. KOMPILERING
 
 Kör följande kommandon för att bygga Wine om du inte använder wineinstall:
 
 ./configure
-make depend
 make
 
 Detta bygger programmet "wine" och diverse stödbibliotek/programfiler.
@@ -97,18 +98,6 @@ Biblioteket "libwine" ("Winelib") kan användas till att bygga och länka
 Windows-källkod i Unix.
 
 Kör './configure --help' för att se inställningar och val vid kompilering.
-
-Gör följande för att uppgradera till en ny utgåva med hjälp av en
-uppdateringsfil:
-Gå in i utgåvans rotkatalog och kör kommandot "make clean".
-Därefter uppdaterar du utgåvan med
-
-    bunzip -c uppdateringsfil | patch -p1
-
-där "uppdateringsfil" är namnet på uppdateringsfilen (något i stil med
-wine-1.0.x.diff.bz2). Därefter kan du köra "./configure" och
-"make depend && make".
-
 
 5. INSTALLATION
 
@@ -136,13 +125,11 @@ Exempel: för att köra Notepad:
 
         wine ~/.wine/drive_c/windows/notepad.exe  (användning av Unix-filvägar)
 
-        wine notepad.exe /parameter1 -parameter2 parameter3
-                                   (köra program med parametrar)
+        wine notepad.exe readme.txt  (köra program med parametrar)
 
-Wine är inte ännu färdigutvecklat, så det är möjligt att åtskilliga program
-kraschar. I så fall öppnas Wines felsökare, där du kan undersöka och fixa
-problemet. Läs delen "debugging" i Wines utvecklarmanual för mer information
-om hur detta kan göras.
+Wine är inte perfekt, så det är möjligt att vissa program kraschar.
+I så fall får du en kraschlogg som du bör bifoga till din rapport då du
+rapporterar ett fel.
 
 
 7. MER INFORMATION
@@ -153,29 +140,25 @@ Internet:  Mycket information om Wine finns samlat på WineHQ på
 
 Frågor:    Frågor och svar om Wine finns samlade på http://www.winehq.org/FAQ
 
-Usenet:    Du kan diskutera problem med Wine och få hjälp på
-           comp.emulators.ms-windows.wine.
-
 Fel:       Rapportera fel till Wines Bugzilla på http://bugs.winehq.org
            Sök i Bugzilla-databasen för att se om problemet redan finns
-           rapporterat innan du sänder en felrapport. Du kan också rapportera
-           fel till comp.emulators.ms-windows.wine.
+           rapporterat innan du sänder en felrapport.
 
 IRC:       Hjälp finns tillgänglig online på kanalen #WineHQ på
            irc.freenode.net.
 
-GIT:       Wines nuvarande utvecklingsversion finns tillgänglig genom GIT.
+Git:       Wines nuvarande utvecklingsversion finns tillgänglig genom Git.
            Gå till http://www.winehq.org/git för mer information.
 
 E-postlistor:
-        Det finns flera e-postlistor för Wine-utvecklare; se
-        http://www.winehq.org/forums för mer information.
+           Det finns flera e-postlistor för Wine-användare och -utvecklare; se
+           http://www.winehq.org/forums för mer information.
 
-Wiki:   Wines Wiki finns på http://wiki.winehq.org
+Wiki:      Wines Wiki finns på http://wiki.winehq.org
 
 Om du lägger till något eller fixar ett fel, är det bra om du sänder
-en patch (i 'diff -u'-format) till listan wine-patches@winehq.org för
-inkludering i nästa utgåva av Wine.
+en patch (förslagsvis med git-format-patch) till listan wine-patches@winehq.org
+för inkludering i nästa utgåva av Wine.
 
 --
 Originalet till denna fil skrevs av
