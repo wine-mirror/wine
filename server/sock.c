@@ -524,6 +524,7 @@ static enum server_fd_type sock_get_fd_type( struct fd *fd )
 static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count )
 {
     struct sock *sock = get_fd_user( fd );
+    struct async *async;
     struct async_queue *queue;
 
     assert( sock->obj.ops == &sock_ops );
@@ -543,20 +544,19 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
         return;
     }
 
-    if ( ( !( sock->state & FD_READ ) && type == ASYNC_TYPE_READ  ) ||
-         ( !( sock->state & FD_WRITE ) && type == ASYNC_TYPE_WRITE ) )
+    if ( ( !( sock->state & (FD_READ|FD_CONNECT) ) && type == ASYNC_TYPE_READ  ) ||
+         ( !( sock->state & (FD_WRITE|FD_CONNECT) ) && type == ASYNC_TYPE_WRITE ) )
     {
         set_error( STATUS_PIPE_DISCONNECTED );
-    }
-    else
-    {
-        struct async *async;
-        if (!(async = create_async( current, queue, data ))) return;
-        release_object( async );
-        set_error( STATUS_PENDING );
+        return;
     }
 
+    if (!(async = create_async( current, queue, data ))) return;
+    release_object( async );
+
     sock_reselect( sock );
+
+    set_error( STATUS_PENDING );
 }
 
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue )

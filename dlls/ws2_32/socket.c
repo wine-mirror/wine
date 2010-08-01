@@ -1844,7 +1844,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
         {
             /* tell wineserver that a connection is in progress */
             _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
-                          FD_CONNECT|FD_READ|FD_WRITE,
+                          FD_CONNECT,
                           FD_WINE_CONNECTED|FD_WINE_LISTENING);
             if (_is_blocking(s))
             {
