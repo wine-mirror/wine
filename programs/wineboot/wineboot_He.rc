@@ -1,0 +1,52 @@
+/*
+ * WineBoot resources
+ *
+ * Copyright (C) 2007 Robert Shearman for CodeWeavers
+ * Hebrew translation by Yaron Shahrabani <sh.yaron@gmail.com>, 2010
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+IDD_ENDTASK DIALOG  0, 0, 186, 71
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "בהמתנה לתכנה"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "ביטול",IDCANCEL,129,49,50,15
+    PUSHBUTTON      "חיסול התהליך",IDOK,51,49,71,15
+    LTEXT           "מתבצעת הדמייה של ניתוק או כיבוי, אך תכנית זו אינה מגיבה.",
+                    IDC_STATIC,7,7,172,19
+    LTEXT           "אם התהליך יחוסל יתכן שכל הנתונים שלא נשמרו ילכו לאיבוד.",
+                    IDC_STATIC,7,28,172,15
+END
+
+IDD_WAITDLG DIALOG 0, 0, 200, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_CENTER | WS_POPUP | WS_DISABLED
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "Wine"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON "", IDC_WAITICON, 3, 3, 10, 10
+    LTEXT "התצורה של wine שב־%s מתעדכנת, נא להמתין...",
+          IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
+END
