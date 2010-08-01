@@ -1803,6 +1803,33 @@ int WINAPI WS_closesocket(SOCKET s)
     return SOCKET_ERROR;
 }
 
+static int do_connect(int fd, const struct WS_sockaddr* name, int namelen)
+{
+    union generic_unix_sockaddr uaddr;
+    unsigned int uaddrlen = ws_sockaddr_ws2u(name, namelen, &uaddr);
+
+    if (!uaddrlen)
+        return WSAEFAULT;
+
+    if (name->sa_family == WS_AF_INET)
+    {
+        struct sockaddr_in *in4 = (struct sockaddr_in*) &uaddr;
+        if (memcmp(&in4->sin_addr, magic_loopback_addr, 4) == 0)
+        {
+            /* Trying to connect to magic replace-loopback address,
+                * assuming we really want to connect to localhost */
+            TRACE("Trying to connect to magic IP address, using "
+                    "INADDR_LOOPBACK instead.\n");
+            in4->sin_addr.s_addr = htonl(WS_INADDR_LOOPBACK);
+        }
+    }
+
+    if (connect(fd, &uaddr.addr, uaddrlen) == 0)
+        return 0;
+
+    return wsaErrno();
+}
+
 /***********************************************************************
  *		connect		(WS2_32.4)
  */
@@ -1814,33 +1841,11 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 
     if (fd != -1)
     {
-        union generic_unix_sockaddr uaddr;
-        unsigned int uaddrlen = ws_sockaddr_ws2u(name, namelen, &uaddr);
+        int ret = do_connect(fd, name, namelen);
+        if (ret == 0)
+            goto connect_success;
 
-        if (!uaddrlen)
-        {
-            SetLastError(WSAEFAULT);
-        }
-        else
-        {
-            if (name->sa_family == WS_AF_INET)
-            {
-                struct sockaddr_in *in4 = (struct sockaddr_in*) &uaddr;
-                if (memcmp(&in4->sin_addr, magic_loopback_addr, 4) == 0)
-                {
-                    /* Trying to connect to magic replace-loopback address,
-                     * assuming we really want to connect to localhost */
-                    TRACE("Trying to connect to magic IP address, using "
-                         "INADDR_LOOPBACK instead.\n");
-                    in4->sin_addr.s_addr = htonl(WS_INADDR_LOOPBACK);
-                }
-            }
-
-            if (connect(fd, &uaddr.addr, uaddrlen) == 0)
-                goto connect_success;
-        }
-
-        if (errno == EINPROGRESS)
+        if (ret == WSAEINPROGRESS)
         {
             /* tell wineserver that a connection is in progress */
             _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
@@ -1868,7 +1873,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
         }
         else
         {
-            SetLastError(wsaErrno());
+            SetLastError(ret);
         }
         release_sock_fd( s, fd );
     }
