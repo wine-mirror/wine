@@ -3558,7 +3558,7 @@ static void test_ConnectEx(void)
     iret = WSAIoctl(connector, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectExGuid, sizeof(connectExGuid),
         &pConnectEx, sizeof(pConnectEx), &bytesReturned, NULL, NULL);
     if (iret) {
-        skip("WSAIoctl failed to get ConnectEx with ret %d + errno %d\n", iret, WSAGetLastError());
+        win_skip("WSAIoctl failed to get ConnectEx with ret %d + errno %d\n", iret, WSAGetLastError());
         goto end;
     }
 
@@ -3567,7 +3567,7 @@ static void test_ConnectEx(void)
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "ConnectEx on a unbound socket "
+    todo_wine ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "ConnectEx on a unbound socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
     if (bret == TRUE || WSAGetLastError() != WSAEINVAL)
     {

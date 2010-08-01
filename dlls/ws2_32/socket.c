@@ -1899,6 +1899,109 @@ int WINAPI WSAConnect( SOCKET s, const struct WS_sockaddr* name, int namelen,
     return WS_connect( s, name, namelen );
 }
 
+/***********************************************************************
+ *             ConnectEx
+ */
+BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int namelen,
+                          PVOID sendBuf, DWORD sendBufLen, LPDWORD sent, LPOVERLAPPED ov)
+{
+    int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
+    int ret, status;
+    if (fd == -1)
+    {
+        SetLastError( WSAENOTSOCK );
+        return FALSE;
+    }
+    if (!ov)
+    {
+        release_sock_fd(s, fd);
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    TRACE("socket %04lx, ptr %p %s, length %d, sendptr %p, len %d, ov %p\n",
+          s, name, debugstr_sockaddr(name), namelen, sendBuf, sendBufLen, ov);
+
+    /* FIXME: technically the socket has to be bound */
+    ret = do_connect(fd, name, namelen);
+    if (ret == 0)
+    {
+        WSABUF wsabuf;
+
+        _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
+                            FD_WINE_CONNECTED|FD_READ|FD_WRITE,
+                            FD_CONNECT|FD_WINE_LISTENING);
+
+        wsabuf.len = sendBufLen;
+        wsabuf.buf = (char*) sendBuf;
+
+        /* WSASend takes care of completion if need be */
+        if (WSASend(s, &wsabuf, sendBuf ? 1 : 0, sent, 0, ov, NULL) != SOCKET_ERROR)
+            goto connection_success;
+    }
+    else if (ret == WSAEINPROGRESS)
+    {
+        struct ws2_async *wsa;
+        ULONG_PTR cvalue = (((ULONG_PTR)ov->hEvent & 1) == 0) ? (ULONG_PTR)ov : 0;
+
+        _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
+                      FD_CONNECT,
+                      FD_WINE_CONNECTED|FD_WINE_LISTENING);
+
+        /* Indirectly call WSASend */
+        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, sizeof(*wsa) )))
+        {
+            SetLastError(WSAEFAULT);
+        }
+        else
+        {
+            IO_STATUS_BLOCK *iosb = (IO_STATUS_BLOCK *)ov;
+            iosb->u.Status = STATUS_PENDING;
+            iosb->Information = 0;
+
+            wsa->hSocket     = SOCKET2HANDLE(s);
+            wsa->addr        = NULL;
+            wsa->addrlen.val = 0;
+            wsa->flags       = 0;
+            wsa->n_iovecs    = sendBuf ? 1 : 0;
+            wsa->first_iovec = 0;
+            wsa->iovec[0].iov_base = sendBuf;
+            wsa->iovec[0].iov_len  = sendBufLen;
+
+            SERVER_START_REQ( register_async )
+            {
+                req->type           = ASYNC_TYPE_WRITE;
+                req->async.handle   = wine_server_obj_handle( wsa->hSocket );
+                req->async.callback = wine_server_client_ptr( WS2_async_send );
+                req->async.iosb     = wine_server_client_ptr( iosb );
+                req->async.arg      = wine_server_client_ptr( wsa );
+                req->async.event    = wine_server_obj_handle( ov->hEvent );
+                req->async.cvalue   = cvalue;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+
+            if (status != STATUS_PENDING) HeapFree(GetProcessHeap(), 0, wsa);
+
+            /* If the connect already failed */
+            if (status == STATUS_PIPE_DISCONNECTED)
+                status = _get_sock_error(s, FD_CONNECT_BIT);
+            SetLastError( NtStatusToWSAError(status) );
+        }
+    }
+    else
+    {
+        SetLastError(ret);
+    }
+
+    release_sock_fd( s, fd );
+    return FALSE;
+
+connection_success:
+    release_sock_fd( s, fd );
+    return TRUE;
+}
+
 
 /***********************************************************************
  *		getpeername		(WS2_32.5)
@@ -2742,7 +2845,8 @@ INT WINAPI WSAIoctl(SOCKET s,
 
         if ( IsEqualGUID(&connectex_guid, lpvInBuffer) )
         {
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented ConnectEx\n");
+            *(LPFN_CONNECTEX *)lpbOutBuffer = WS2_ConnectEx;
+            return 0;
         }
         else if ( IsEqualGUID(&disconnectex_guid, lpvInBuffer) )
         {
