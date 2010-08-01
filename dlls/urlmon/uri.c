@@ -3761,6 +3761,16 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
         return E_INVALIDARG;
     }
 
+    /* Check for invalid flags. */
+    if((dwFlags & Uri_CREATE_DECODE_EXTRA_INFO && dwFlags & Uri_CREATE_NO_DECODE_EXTRA_INFO) ||
+       (dwFlags & Uri_CREATE_CANONICALIZE && dwFlags & Uri_CREATE_NO_CANONICALIZE) ||
+       (dwFlags & Uri_CREATE_CRACK_UNKNOWN_SCHEMES && dwFlags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES) ||
+       (dwFlags & Uri_CREATE_PRE_PROCESS_HTML_URI && dwFlags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI) ||
+       (dwFlags & Uri_CREATE_IE_SETTINGS && dwFlags & Uri_CREATE_NO_IE_SETTINGS)) {
+        *ppURI = NULL;
+        return E_INVALIDARG;
+    }
+
     ret = heap_alloc(sizeof(Uri));
     if(!ret)
         return E_OUTOFMEMORY;

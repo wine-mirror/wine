@@ -3683,11 +3683,9 @@ static void test_CreateUri_InvalidFlags(void) {
         IUri *uri = (void*) 0xdeadbeef;
 
         hr = pCreateUri(http_urlW, invalid_flag_tests[i].flags, 0, &uri);
-        todo_wine {
-            ok(hr == invalid_flag_tests[i].expected, "Error: CreateUri returned 0x%08x, expected 0x%08x, flags=0x%08x\n",
-                    hr, invalid_flag_tests[i].expected, invalid_flag_tests[i].flags);
-        }
-        todo_wine { ok(uri == NULL, "Error: expected the IUri to be NULL, but it was %p instead\n", uri); }
+        ok(hr == invalid_flag_tests[i].expected, "Error: CreateUri returned 0x%08x, expected 0x%08x, flags=0x%08x\n",
+                hr, invalid_flag_tests[i].expected, invalid_flag_tests[i].flags);
+        ok(uri == NULL, "Error: expected the IUri to be NULL, but it was %p instead\n", uri);
     }
 }
 
