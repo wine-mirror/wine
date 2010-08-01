@@ -717,7 +717,6 @@ static BOOL IMAGEHLP_ReportImportSection( IMAGE_SECTION_HEADER *hdr,
 {
     BOOL ret = FALSE;
     DWORD offset, size, base;
-    PBYTE import;
 
     /* Get import data */
     offset = IMAGEHLP_GetSectionOffset( hdr, num_sections, ".idata", &size,
@@ -740,7 +739,7 @@ static BOOL IMAGEHLP_ReportImportSection( IMAGE_SECTION_HEADER *hdr,
         SetLastError(ERROR_INVALID_PARAMETER);
         ret = FALSE;
     }
-    HeapFree( GetProcessHeap(), 0, import );
+
     return ret;
 }
 
