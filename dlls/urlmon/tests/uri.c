@@ -3430,6 +3430,123 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_HTTP,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE},
         }
+    },
+    /* Leading/Trailing whitespace is removed. */
+    {   "    http://google.com/     ", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        FALSE,
+        {
+            {"http://google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"http://google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://google.com/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "\t\t\r\nhttp\n://g\noogle.co\rm/\n\n\n", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        FALSE,
+        {
+            {"http://google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"http://google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://google.com/",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "http://g\noogle.co\rm/\n\n\n", Uri_CREATE_NO_PRE_PROCESS_HTML_URI, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        FALSE,
+        {
+            {"http://g%0aoogle.co%0dm/%0A%0A%0A",S_OK,FALSE},
+            {"g%0aoogle.co%0dm",S_OK,FALSE},
+            {"http://g%0aoogle.co%0dm/%0A%0A%0A",S_OK,FALSE},
+            {"g%0aoogle.co%0dm",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"g%0aoogle.co%0dm",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/%0A%0A%0A",S_OK,FALSE},
+            {"/%0A%0A%0A",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://g\noogle.co\rm/\n\n\n",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "zip://g\noogle.co\rm/\n\n\n", Uri_CREATE_NO_PRE_PROCESS_HTML_URI, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
+        Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME,
+        FALSE,
+        {
+            {"zip://g\noogle.co\rm/\n\n\n",S_OK,FALSE},
+            {"g\noogle.co\rm",S_OK,FALSE},
+            {"zip://g\noogle.co\rm/\n\n\n",S_OK,FALSE},
+            {"g\noogle.co\rm",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"g\noogle.co\rm",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/\n\n\n",S_OK,FALSE},
+            {"/\n\n\n",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"zip://g\noogle.co\rm/\n\n\n",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -3486,7 +3603,9 @@ static const invalid_uri invalid_uri_tests[] = {
     /* Known scheme types can't have invalid % encoded data in query string. */
     {"http://google.com/?query=te%xx",0,FALSE},
     /* Invalid % encoded data in fragment of know scheme type. */
-    {"ftp://google.com/#Test%xx",0,FALSE}
+    {"ftp://google.com/#Test%xx",0,FALSE},
+    {"  http://google.com/",Uri_CREATE_NO_PRE_PROCESS_HTML_URI,FALSE},
+    {"\n\nhttp://google.com/",Uri_CREATE_NO_PRE_PROCESS_HTML_URI,FALSE}
 };
 
 typedef struct _uri_equality {

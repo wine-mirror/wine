@@ -626,6 +626,45 @@ static void compute_elision_location(const ipv6_address *address, const USHORT v
     *count = max_len;
 }
 
+/* Removes all the leading and trailing white spaces or
+ * control characters from the URI and removes all control
+ * characters inside of the URI string.
+ */
+static BSTR pre_process_uri(LPCWSTR uri) {
+    BSTR ret;
+    DWORD len;
+    const WCHAR *start, *end;
+    WCHAR *buf, *ptr;
+
+    len = lstrlenW(uri);
+
+    start = uri;
+    /* Skip leading controls and whitespace. */
+    while(iscntrlW(*start) || isspaceW(*start)) ++start;
+
+    end = uri+len-1;
+    if(start == end)
+        /* URI consisted only of control/whitespace. */
+        ret = SysAllocStringLen(NULL, 0);
+    else {
+        while(iscntrlW(*end) || isspaceW(*end)) --end;
+
+        buf = heap_alloc(((end+1)-start)*sizeof(WCHAR));
+        if(!buf)
+            return NULL;
+
+        for(ptr = buf; start < end+1; ++start) {
+            if(!iscntrlW(*start))
+                *ptr++ = *start;
+        }
+
+        ret = SysAllocStringLen(buf, ptr-buf);
+        heap_free(buf);
+    }
+
+    return ret;
+}
+
 /* Converts the specified IPv4 address into an uint value.
  *
  * This function assumes that the IPv4 address has already been validated.
@@ -3729,8 +3768,12 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     ret->lpIUriVtbl = &UriVtbl;
     ret->ref = 1;
 
-    /* Create a copy of pwzURI and store it as the raw_uri. */
-    ret->raw_uri = SysAllocString(pwzURI);
+    /* Pre process the URI, unless told otherwise. */
+    if(!(dwFlags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI))
+        ret->raw_uri = pre_process_uri(pwzURI);
+    else
+        ret->raw_uri = SysAllocString(pwzURI);
+
     if(!ret->raw_uri) {
         heap_free(ret);
         return E_OUTOFMEMORY;
