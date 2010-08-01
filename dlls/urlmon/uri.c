@@ -3747,6 +3747,11 @@ static const IUriVtbl UriVtbl = {
  */
 HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IUri **ppURI)
 {
+    const DWORD supported_flags = Uri_CREATE_ALLOW_RELATIVE|Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME|
+        Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME|Uri_CREATE_NO_CANONICALIZE|Uri_CREATE_CANONICALIZE|
+        Uri_CREATE_DECODE_EXTRA_INFO|Uri_CREATE_NO_DECODE_EXTRA_INFO|Uri_CREATE_CRACK_UNKNOWN_SCHEMES|
+        Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES|Uri_CREATE_PRE_PROCESS_HTML_URI|Uri_CREATE_NO_PRE_PROCESS_HTML_URI|
+        Uri_CREATE_NO_IE_SETTINGS|Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS;
     Uri *ret;
     HRESULT hr;
     parse_data data;
@@ -3770,6 +3775,10 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
         *ppURI = NULL;
         return E_INVALIDARG;
     }
+
+    /* Currently unsupported. */
+    if(dwFlags & ~supported_flags)
+        FIXME("Ignoring unsupported flags %x\n", dwFlags & ~supported_flags);
 
     ret = heap_alloc(sizeof(Uri));
     if(!ret)
