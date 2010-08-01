@@ -3504,6 +3504,223 @@ static void test_GetAddrInfoW(void)
     pFreeAddrInfoW(result);
 }
 
+static void test_ConnectEx(void)
+{
+    SOCKET listener = INVALID_SOCKET;
+    SOCKET acceptor = INVALID_SOCKET;
+    SOCKET connector = INVALID_SOCKET;
+    struct sockaddr_in address, conaddress;
+    int addrlen;
+    OVERLAPPED overlapped;
+    LPFN_CONNECTEX pConnectEx;
+    GUID connectExGuid = WSAID_CONNECTEX;
+    DWORD bytesReturned;
+    char buffer[1024];
+    BOOL bret;
+    DWORD dwret;
+    int iret;
+
+    memset(&overlapped, 0, sizeof(overlapped));
+
+    listener = socket(AF_INET, SOCK_STREAM, 0);
+    if (listener == INVALID_SOCKET) {
+        skip("could not create listener socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    connector = socket(AF_INET, SOCK_STREAM, 0);
+    if (connector == INVALID_SOCKET) {
+        skip("could not create connector socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(listener, (struct sockaddr*)&address, sizeof(address));
+    if (iret != 0) {
+        skip("failed to bind, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    addrlen = sizeof(address);
+    iret = getsockname(listener, (struct sockaddr*)&address, &addrlen);
+    if (iret != 0) {
+        skip("failed to lookup bind address, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    if (set_blocking(listener, TRUE)) {
+        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    iret = WSAIoctl(connector, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectExGuid, sizeof(connectExGuid),
+        &pConnectEx, sizeof(pConnectEx), &bytesReturned, NULL, NULL);
+    if (iret) {
+        skip("WSAIoctl failed to get ConnectEx with ret %d + errno %d\n", iret, WSAGetLastError());
+        goto end;
+    }
+
+    bret = pConnectEx(INVALID_SOCKET, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "ConnectEx on invalid socket "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+
+    bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "ConnectEx on a unbound socket "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+    if (bret == TRUE || WSAGetLastError() != WSAEINVAL)
+    {
+        acceptor = accept(listener, NULL, NULL);
+        if (acceptor != INVALID_SOCKET) {
+            closesocket(acceptor);
+            acceptor = INVALID_SOCKET;
+        }
+
+        closesocket(connector);
+        connector = socket(AF_INET, SOCK_STREAM, 0);
+        if (connector == INVALID_SOCKET) {
+            skip("could not create connector socket, error %d\n", WSAGetLastError());
+            goto end;
+        }
+    }
+
+    /* ConnectEx needs a bound socket */
+    memset(&conaddress, 0, sizeof(conaddress));
+    conaddress.sin_family = AF_INET;
+    conaddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(connector, (struct sockaddr*)&conaddress, sizeof(conaddress));
+    if (iret != 0) {
+        skip("failed to bind, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, NULL);
+    ok(bret == FALSE && WSAGetLastError() == ERROR_INVALID_PARAMETER, "ConnectEx on a NULL overlapped "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+
+    overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (overlapped.hEvent == NULL) {
+        skip("could not create event object, errno = %d\n", GetLastError());
+        goto end;
+    }
+
+    iret = listen(listener, 1);
+    if (iret != 0) {
+        skip("listening failed, errno = %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "ConnectEx failed: "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+    dwret = WaitForSingleObject(overlapped.hEvent, 15000);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
+
+    bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
+    ok(bret, "Connecting failed, error %d\n", GetLastError());
+    ok(bytesReturned == 0, "Bytes sent is %d\n", bytesReturned);
+
+    closesocket(connector);
+    connector = socket(AF_INET, SOCK_STREAM, 0);
+    if (connector == INVALID_SOCKET) {
+        skip("could not create connector socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+    /* ConnectEx needs a bound socket */
+    memset(&conaddress, 0, sizeof(conaddress));
+    conaddress.sin_family = AF_INET;
+    conaddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(connector, (struct sockaddr*)&conaddress, sizeof(conaddress));
+    if (iret != 0) {
+        skip("failed to bind, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    acceptor = accept(listener, NULL, NULL);
+    if (acceptor != INVALID_SOCKET) {
+        closesocket(acceptor);
+        acceptor = INVALID_SOCKET;
+    }
+
+    buffer[0] = '1';
+    buffer[1] = '2';
+    buffer[2] = '3';
+    bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, buffer, 3, &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "ConnectEx failed: "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+    dwret = WaitForSingleObject(overlapped.hEvent, 15000);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
+
+    bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
+    ok(bret, "Connecting failed, error %d\n", GetLastError());
+    ok(bytesReturned == 3, "Bytes sent is %d\n", bytesReturned);
+
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != INVALID_SOCKET, "could not accept socket error %d\n", WSAGetLastError());
+
+    bytesReturned = recv(acceptor, buffer, 3, 0);
+    buffer[4] = 0;
+    ok(bytesReturned == 3, "Didn't get all sent data, got only %d\n", bytesReturned);
+    ok(buffer[0] == '1' && buffer[1] == '2' && buffer[2] == '3',
+       "Failed to get the right data, expected '123', got '%s'", buffer);
+
+    closesocket(connector);
+    connector = socket(AF_INET, SOCK_STREAM, 0);
+    if (connector == INVALID_SOCKET) {
+        skip("could not create connector socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+    /* ConnectEx needs a bound socket */
+    memset(&conaddress, 0, sizeof(conaddress));
+    conaddress.sin_family = AF_INET;
+    conaddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(connector, (struct sockaddr*)&conaddress, sizeof(conaddress));
+    if (iret != 0) {
+        skip("failed to bind, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    if (acceptor != INVALID_SOCKET) {
+        closesocket(acceptor);
+        acceptor = INVALID_SOCKET;
+    }
+
+    /* Connect with error */
+    closesocket(listener);
+    listener = INVALID_SOCKET;
+
+    address.sin_port = 1;
+
+    bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
+    ok(bret == FALSE && GetLastError(), "ConnectEx to bad destination failed: "
+        "returned %d + errno %d\n", bret, GetLastError());
+
+    if (GetLastError() == ERROR_IO_PENDING)
+    {
+        dwret = WaitForSingleObject(overlapped.hEvent, 15000);
+        ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
+
+        bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
+        ok(bret == FALSE && GetLastError() == ERROR_CONNECTION_REFUSED,
+           "Connecting to a disconnected host returned error %d - %d\n", bret, WSAGetLastError());
+    }
+    else {
+        ok(GetLastError() == WSAECONNREFUSED,
+           "Connecting to a disconnected host returned error %d - %d\n", bret, WSAGetLastError());
+    }
+
+end:
+    if (overlapped.hEvent)
+        WSACloseEvent(overlapped.hEvent);
+    if (listener != INVALID_SOCKET)
+        closesocket(listener);
+    if (acceptor != INVALID_SOCKET)
+        closesocket(acceptor);
+    if (connector != INVALID_SOCKET)
+        closesocket(connector);
+}
+
 static void test_AcceptEx(void)
 {
     SOCKET listener = INVALID_SOCKET;
@@ -4082,6 +4299,7 @@ START_TEST( sock )
     test_GetAddrInfoW();
 
     test_AcceptEx();
+    test_ConnectEx();
 
     /* this is a io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
