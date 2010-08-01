@@ -177,6 +177,10 @@ sub _find_align_kind_size($) {
 	$align = $pointer_size;
 	$kind = "pointer";
 	$size = $pointer_size;
+    } elsif(/^char$/) {
+	$align = 1;
+	$kind = "char";
+	$size = 1;
     } elsif(/^(?:(signed|unsigned)\s+)?(?:__int8|char|byte)$/) {
 	$align = 1;
 	$kind = defined($1) ? $1 : "signed";

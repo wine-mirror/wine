@@ -375,7 +375,6 @@ static void test_pack_CCHAR(void)
     /* CCHAR */
     TEST_TYPE_SIZE   (CCHAR, 1)
     TEST_TYPE_ALIGN  (CCHAR, 1)
-    TEST_TYPE_SIGNED(CCHAR)
 }
 
 static void test_pack_CHAR(void)
@@ -383,7 +382,6 @@ static void test_pack_CHAR(void)
     /* CHAR */
     TEST_TYPE_SIZE   (CHAR, 1)
     TEST_TYPE_ALIGN  (CHAR, 1)
-    TEST_TYPE_SIGNED(CHAR)
 }
 
 static void test_pack_DWORDLONG(void)
@@ -3786,7 +3784,6 @@ static void test_pack_CCHAR(void)
     /* CCHAR */
     TEST_TYPE_SIZE   (CCHAR, 1)
     TEST_TYPE_ALIGN  (CCHAR, 1)
-    TEST_TYPE_SIGNED(CCHAR)
 }
 
 static void test_pack_CHAR(void)
@@ -3794,7 +3791,6 @@ static void test_pack_CHAR(void)
     /* CHAR */
     TEST_TYPE_SIZE   (CHAR, 1)
     TEST_TYPE_ALIGN  (CHAR, 1)
-    TEST_TYPE_SIGNED(CHAR)
 }
 
 static void test_pack_DWORDLONG(void)
