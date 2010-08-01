@@ -1,0 +1,466 @@
+/*
+ * cryptui dll Swedish resources
+ *
+ * Copyright 2010 Anders Jonsson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "cryptuires.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+    IDS_CERTIFICATE "Certifikat"
+    IDS_CERTIFICATEINFORMATION "Certifikatsinformation"
+    IDS_CERT_INFO_BAD_SIG "Detta certifikat har en ogiltig signatur.  Certifikatet kan ha ändrats eller skadats."
+    IDS_CERT_INFO_UNTRUSTED_CA "Detta rot-certifikat är inte betrott.  För att lita på det, lägg till det till ditt systems betrodda rot-certifikatlager."
+    IDS_CERT_INFO_UNTRUSTED_ROOT "Detta certifikat kunde inte valideras till ett betrott rot-certifikat."
+    IDS_CERT_INFO_PARTIAL_CHAIN "Detta certifikats utfärdare kunde inte hittas."
+    IDS_CERT_INFO_BAD_PURPOSES "Alla avsedda syften för detta certifikat kunde inte valideras."
+    IDS_CERT_INFO_PURPOSES "Detta certifikat är avsett för följande syften:"
+    IDS_SUBJECT_HEADING "Utfärdat till: "
+    IDS_ISSUER_HEADING "Utfärdat av: "
+    IDS_VALID_FROM "Giltigt från "
+    IDS_VALID_TO " till "
+    IDS_CERTIFICATE_BAD_SIGNATURE "Detta certifikat har en ogiltig signatur."
+    IDS_CERTIFICATE_BAD_TIME "Detta certifikat har gått ut eller är ännu inte giltigt."
+    IDS_CERTIFICATE_BAD_TIMENEST "Detta certifikats giltighetsperiod är längre än utfärdarens."
+    IDS_CERTIFICATE_REVOKED "Detta certifikat återkallades av sin utfärdare."
+    IDS_CERTIFICATE_VALID "Detta certifikat är OK."
+    IDS_FIELD "Fält"
+    IDS_VALUE "Värde"
+    IDS_FIELDS_ALL "<Alla>"
+    IDS_FIELDS_V1 "Enbart Version 1-fält"
+    IDS_FIELDS_EXTENSIONS "Enbart tillägg"
+    IDS_FIELDS_CRITICAL_EXTENSIONS "Enbart kritiska tillägg"
+    IDS_FIELDS_PROPERTIES "Enbart egenskaper"
+    IDS_FIELD_VERSION "Version"
+    IDS_FIELD_SERIAL_NUMBER "Serienummer"
+    IDS_FIELD_ISSUER "Utfärdare"
+    IDS_FIELD_VALID_FROM "Giltigt från"
+    IDS_FIELD_VALID_TO "Giltigt till"
+    IDS_FIELD_SUBJECT "Ämne"
+    IDS_FIELD_PUBLIC_KEY "Offentlig nyckel"
+    IDS_FIELD_PUBLIC_KEY_FORMAT "%s (%d bitar)"
+    IDS_PROP_HASH "SHA1 hash"
+    IDS_PROP_ENHKEY_USAGE "Utökad nyckelanvändning (egenskap)"
+    IDS_PROP_FRIENDLY_NAME "Vänligt namn"
+    IDS_PROP_DESCRIPTION "Beskrivning"
+    IDS_CERTIFICATE_PROPERTIES "Certifikats-egenskaper"
+    IDS_CERTIFICATE_PURPOSE_ERROR "Var god fyll i en OID på formen 1.2.3.4"
+    IDS_CERTIFICATE_PURPOSE_EXISTS "Den OID du angav existerar redan."
+    IDS_SELECT_STORE_TITLE "Välj certifikatlager"
+    IDS_SELECT_STORE "Var god välj ett certifikatlager."
+    IDS_IMPORT_WIZARD "Guiden för import av certifikat"
+    IDS_IMPORT_TYPE_MISMATCH "Filen innehåller objekt som inte uppfyller de givna kriterierna.  Var god välj en annan fil."
+    IDS_IMPORT_FILE_TITLE "Fil att importera"
+    IDS_IMPORT_FILE_SUBTITLE "Ange filen du vill importera."
+    IDS_IMPORT_STORE_TITLE "Certifikatlager"
+    IDS_IMPORT_STORE_SUBTITLE "Certifikatlager är samlingar av certifikat, listor över återkallade certifikat, samt listor över betrodda certifikat."
+    IDS_IMPORT_FILTER_CERT "X.509-certifikat (*.cer; *.crt)"
+    IDS_IMPORT_FILTER_PFX "Personal Information Exchange (*.pfx; *.p12)"
+    IDS_IMPORT_FILTER_CRL "Lista över återkallade certifikat (*.crl)"
+    IDS_IMPORT_FILTER_CTL "Lista över betrodda certifikat (*.stl)"
+    IDS_IMPORT_FILTER_SERIALIZED_STORE "Microsoft Serialized Certificate Store (*.sst)"
+    IDS_IMPORT_FILTER_CMS "CMS/PKCS #7-meddelanden (*.spc; *.p7b)"
+    IDS_IMPORT_FILTER_ALL "Alla filer (*.*)"
+    IDS_IMPORT_EMPTY_FILE "Var god välj en fil."
+    IDS_IMPORT_BAD_FORMAT "Filformatet kändes inte igen.  Var god välj en annan fil."
+    IDS_IMPORT_OPEN_FAILED "Kunde inte öppna "
+    IDS_IMPORT_DEST_DETERMINED "Bestämd av programmet"
+    IDS_IMPORT_SELECT_STORE "Var god välj ett lager"
+    IDS_IMPORT_STORE_SELECTION "Certifikatlager valt"
+    IDS_IMPORT_DEST_AUTOMATIC "Automatiskt bestämt av programmet"
+    IDS_IMPORT_FILE "Fil"
+    IDS_IMPORT_CONTENT "Innehåll"
+    IDS_IMPORT_CONTENT_CERT "Certifikat"
+    IDS_IMPORT_CONTENT_CRL "Lista över återkallade certifikat"
+    IDS_IMPORT_CONTENT_CTL "Lista över betrodda certifikat"
+    IDS_IMPORT_CONTENT_CMS "CMS/PKCS #7-meddelande"
+    IDS_IMPORT_CONTENT_PFX "Personal Information Exchange"
+    IDS_IMPORT_CONTENT_STORE "Certifikatlager"
+    IDS_IMPORT_SUCCEEDED "Importen lyckades."
+    IDS_IMPORT_FAILED "Importen misslyckades."
+    IDS_WIZARD_TITLE_FONT "Arial"
+    IDS_PURPOSE_ALL "<Alla>"
+    IDS_PURPOSE_ADVANCED "<Avancerade syften>"
+    IDS_SUBJECT_COLUMN "Utfärdat till"
+    IDS_ISSUER_COLUMN "Utfärdat av"
+    IDS_EXPIRATION_COLUMN "Utgångsdatum"
+    IDS_FRIENDLY_NAME_COLUMN "Vänligt namn"
+    IDS_ALLOWED_PURPOSE_ALL "<Alla>"
+    IDS_ALLOWED_PURPOSE_NONE "<Inget>"
+    IDS_WARN_REMOVE_MY "Du kommer inte längre kunna dekryptera eller signera meddelanden med detta certifikat.\nÄr du säker du vill ta bort detta certifikat?"
+    IDS_WARN_REMOVE_PLURAL_MY "Du kommer inte längre kunna dekryptera eller signera meddelanden med dessa certifikat.\nÄr du säker du vill ta bort dessa certifikat?"
+    IDS_WARN_REMOVE_ADDRESSBOOK "Du kommer inte längre kunna kryptera meddelanden med detta certifikat, eller verifiera meddelanden som är signerade med det.\nÄr du säker du vill ta bort detta certifikat?"
+    IDS_WARN_REMOVE_PLURAL_ADDRESSBOOK "Du kommer inte längre kunna kryptera meddelanden med dessa certifikat, eller verifiera meddelanden som är signerade med dem.\nÄr du säker du vill ta bort dessa certifikat?"
+    IDS_WARN_REMOVE_CA "Certifikat utfärdade av denna certifieringsauktoritet kommer inte längre vara betrodda.\nÄr du säker du vill ta bort detta certifikat?"
+    IDS_WARN_REMOVE_PLURAL_CA "Certifikat utfärdade av dessa certifieringsauktoriteter kommer inte längre vara betrodda.\nÄr du säker du vill ta bort dessa certifikat?"
+    IDS_WARN_REMOVE_ROOT "Certifikat utfärdade av denna rot-certifieringsauktoritet, eller av någon av dess utfärdade certifieringsauktoriteter kommer inte längre vara betrodda.\nÄr du säker du vill ta bort detta betrodda rot-certifikat?"
+    IDS_WARN_REMOVE_PLURAL_ROOT "Certifikat utfärdade av dessa rot-certifieringsauktoriteter, eller av någon av deras utfärdade certifieringsauktoriteter kommer inte längre vara betrodda.\nÄr du säker du vill ta bort dessa betrodda rot-certifikat?"
+    IDS_WARN_REMOVE_TRUSTEDPUBLISHER "Mjukvara signerad av denna utgivare kommer inte längre vara betrodd.\nÄr du säker du vill ta bort detta certifikat?"
+    IDS_WARN_REMOVE_PLURAL_TRUSTEDPUBLISHER "Mjukvara signerad av dessa utgivare kommer inte längre vara betrodd.\nÄr du säker du vill ta bort dessa certifikat?"
+    IDS_WARN_REMOVE_DEFAULT "Är du säker du vill ta bort detta certifikat?"
+    IDS_WARN_REMOVE_PLURAL_DEFAULT "Är du säker du vill ta bort dessa certifikat?"
+    IDS_CERT_MGR "Certifikat"
+    IDS_FRIENDLY_NAME_NONE "<Ingen>"
+    IDS_PURPOSE_SERVER_AUTH "Säkerställer identiteten av en fjärrdator"
+    IDS_PURPOSE_CLIENT_AUTH "Bevisar din identitet för en fjärrdator"
+    IDS_PURPOSE_CODE_SIGNING "Säkerställer att mjukvara kommer från ursprunglig utgivare\nSkyddar mjukvara från ändring efter utgivning"
+    IDS_PURPOSE_EMAIL_PROTECTION "Skyddar e-postmeddelanden"
+    IDS_PURPOSE_IPSEC "Möjliggör säker kommunikation över internet"
+    IDS_PURPOSE_TIMESTAMP_SIGNING "Möjliggör att signera data med aktuell tid"
+    IDS_PURPOSE_CTL_USAGE_SIGNING "Tillåter dig att digitalt signera en lista över betrodda certifikat"
+    IDS_PURPOSE_EFS "Möjliggör för data på disk att krypteras"
+    IDS_PURPOSE_EFS_RECOVERY "Filåterskapande"
+    IDS_PURPOSE_WHQL "Verifiering av Windows-hårdvarudrivrutin"
+    IDS_PURPOSE_NT5 "Verifiering av Windows-systemkomponent"
+    IDS_PURPOSE_OEM_WHQL "Verifiering av OEM Windows-systemkomponent"
+    IDS_PURPOSE_EMBEDDED_NT "Verifiering av inbäddad Windows-systemkomponent"
+    IDS_PURPOSE_ROOT_LIST_SIGNER "Signerare av rotlista"
+    IDS_PURPOSE_QUALIFIED_SUBORDINATION "Kvalifierad underordning"
+    IDS_PURPOSE_KEY_RECOVERY "Nyckelåterställning"
+    IDS_PURPOSE_DOCUMENT_SIGNING "Dokumentsignering"
+    IDS_PURPOSE_LIFETIME_SIGNING "Livstidssignering"
+    IDS_PURPOSE_DRM "Digitala rättigheter"
+    IDS_PURPOSE_LICENSES "Licenser för nyckelpaket"
+    IDS_PURPOSE_LICENSE_SERVER "Verifiering av licensserver"
+    IDS_PURPOSE_ENROLLMENT_AGENT "Agent för certifikatförfrågningar"
+    IDS_PURPOSE_SMARTCARD_LOGON "Smart Card-inloggning"
+    IDS_PURPOSE_CA_EXCHANGE "Arkivering av privat nyckel"
+    IDS_PURPOSE_KEY_RECOVERY_AGENT "Agent för nyckelåterställande"
+    IDS_PURPOSE_DS_EMAIL_REPLICATION "Kopiering av e-post från katalogtjänster"
+    IDS_EXPORT_WIZARD "Guiden för export av certifikat"
+    IDS_EXPORT_FORMAT_TITLE "Exportera format"
+    IDS_EXPORT_FORMAT_SUBTITLE "Välj format i vilket innehållet kommer sparas."
+    IDS_EXPORT_FILE_TITLE "Exportera filnamn"
+    IDS_EXPORT_FILE_SUBTITLE "Ange namnet på filen i vilken innehållet kommer sparas."
+    IDS_EXPORT_FILE_EXISTS "Den angivna filen existerar redan.  Vill du ersätta den?"
+    IDS_EXPORT_FILTER_CERT "DER-kodad binär X.509 (*.cer)"
+    IDS_EXPORT_FILTER_BASE64_CERT "Base64-kodad X.509 (*.cer)"
+    IDS_EXPORT_FILTER_CRL "Lista över återkallade certifikat (*.crl)"
+    IDS_EXPORT_FILTER_CTL "Lista över betrodda certifikat (*.stl)"
+    IDS_EXPORT_FILTER_CMS "CMS/PKCS #7-meddelanden (*.p7b)"
+    IDS_EXPORT_FILTER_PFX "Personal Information Exchange (*.pfx)"
+    IDS_EXPORT_FILTER_SERIALIZED_CERT_STORE "Serialiserat certifikatlager (*.sst)"
+    IDS_EXPORT_FORMAT "Filformat"
+    IDS_EXPORT_INCLUDE_CHAIN "Inkludera alla certifikat i certifikatsökvägen"
+    IDS_EXPORT_KEYS "Exportera nycklar"
+    IDS_YES "Ja"
+    IDS_NO "Nej"
+    IDS_EXPORT_SUCCEEDED "Exporten lyckades."
+    IDS_EXPORT_FAILED "Exporten misslyckades."
+    IDS_EXPORT_PRIVATE_KEY_TITLE "Exportera privat nyckel"
+    IDS_EXPORT_PRIVATE_KEY_SUBTITLE "Certifikatet innehåller en privat nyckel som kan exporteras tillsammans med certifikatet."
+    IDS_EXPORT_PASSWORD_TITLE "Ange lösenord"
+    IDS_EXPORT_PASSWORD_SUBTITLE "Du kan lösenordsskydda en privat nyckel."
+    IDS_EXPORT_PASSWORD_MISMATCH "Lösenorden matchar inte."
+    IDS_EXPORT_PRIVATE_KEY_UNAVAILABLE "Obs: Den privata nyckeln för detta certifikat kunde inte öppnas."
+    IDS_EXPORT_PRIVATE_KEY_NON_EXPORTABLE "Obs: Den privata nyckeln för detta certifikat kan inte exporteras."
+}
+
+IDD_GENERAL DIALOG 0, 0, 255, 236
+CAPTION "Allmänt"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", -1, "Static", WS_BORDER|SS_WHITERECT, 6,10,241,200
+  CONTROL "", IDC_CERTIFICATE_ICON,"RichEdit20W",
+    ES_READONLY|WS_DISABLED,8,11,26,26
+  CONTROL "", IDC_CERTIFICATE_INFO,"RichEdit20W",
+    ES_READONLY|WS_DISABLED,34,11,212,26
+  CONTROL "", -1, "Static", SS_BLACKFRAME, 16,37,222,1
+  CONTROL "", IDC_CERTIFICATE_STATUS,"RichEdit20W",
+    ES_READONLY|ES_MULTILINE,8,38,238,78
+  CONTROL "", -1, "Static", SS_BLACKFRAME, 16,116,222,1
+  CONTROL "", IDC_CERTIFICATE_NAMES,"RichEdit20W",
+    ES_READONLY|ES_MULTILINE|WS_DISABLED,8,118,238,90
+  PUSHBUTTON "&Installera certifikat...", IDC_ADDTOSTORE,103,216,70,14
+  PUSHBUTTON "Utfärdarens &utlåtande", IDC_ISSUERSTATEMENT,177,216,70,14
+END
+
+IDD_DETAIL DIALOG 0, 0, 255, 236
+CAPTION "Detaljer"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&Visa:", -1, 6,12,40,14
+  COMBOBOX IDC_DETAIL_SELECT, 28,10,100,14,
+    CBS_DROPDOWNLIST|WS_BORDER|WS_VSCROLL|WS_TABSTOP
+  CONTROL "", IDC_DETAIL_LIST, "SysListView32",
+    LVS_REPORT|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    6,28,241,100
+  CONTROL "", IDC_DETAIL_VALUE, "RichEdit20W",
+    ES_READONLY|ES_MULTILINE|WS_TABSTOP, 6,136,241,70
+  PUSHBUTTON "&Ändra egenskaper...", IDC_EDITPROPERTIES,103,216,70,14
+  PUSHBUTTON "&Spara till fil...", IDC_EXPORT,177,216,70,14
+END
+
+IDD_HIERARCHY DIALOG 0, 0, 255, 236
+CAPTION "Certifieringssökväg"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  GROUPBOX "Certifierings&sökväg", -1,6,10,245,165, BS_GROUPBOX
+  CONTROL "",IDC_CERTPATH, "SysTreeView32", TVS_HASLINES|WS_BORDER,
+    13,22,231,130
+  PUSHBUTTON "&Visa certifikat", IDC_VIEWCERTIFICATE,175,156,70,14
+  LTEXT "&Certifikatsstatus:", IDC_CERTIFICATESTATUS,6,183,70,14
+  CONTROL "", IDC_CERTIFICATESTATUSTEXT,"RichEdit20W",
+    WS_BORDER|ES_READONLY|ES_MULTILINE|WS_DISABLED,6,195,245,36
+END
+
+IDD_USERNOTICE DIALOG 0, 0, 255, 256
+CAPTION "Ansvarsfriskrivning"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", IDC_USERNOTICE,"RichEdit20W",
+    WS_BORDER|ES_READONLY|ES_MULTILINE|WS_DISABLED,6,10,241,200
+  PUSHBUTTON "Stäng", IDOK,103,216,70,14
+  PUSHBUTTON "Mer &Info", IDC_CPS,177,216,70,14
+END
+
+IDD_CERT_PROPERTIES_GENERAL DIALOG 0, 0, 255, 236
+CAPTION "Allmänt"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Vänligt &namn:", -1, 6,14,60,14
+  EDITTEXT IDC_FRIENDLY_NAME, 60,12,191,14, ES_AUTOHSCROLL|WS_TABSTOP
+  LTEXT "&Beskrivning:", -1, 6,32,60,14
+  EDITTEXT IDC_DESCRIPTION, 60,30,191,14, ES_AUTOVSCROLL|ES_MULTILINE|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "Certifikatssyften", -1,6,48,245,165, BS_GROUPBOX
+  AUTORADIOBUTTON "&Aktivera alla syften för detta certifikat",
+    IDC_ENABLE_ALL_PURPOSES, 12,58,180,14, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "A&vaktivera alla syften för detta certifikat",
+    IDC_DISABLE_ALL_PURPOSES, 12,70,180,14, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "Aktivera &enbart följande syften för detta certifikat:",
+    IDC_ENABLE_SELECTED_PURPOSES, 12,82,180,14, BS_AUTORADIOBUTTON
+  CONTROL "", IDC_CERTIFICATE_USAGES,"SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    24,100,220,90
+  PUSHBUTTON "Lägg till &syfte...", IDC_ADD_PURPOSE,184,194,60,14
+END
+
+IDD_ADD_CERT_PURPOSE DIALOG 0,0,200,68
+CAPTION "Lägg till syfte"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Lägg till objektidentifieraren (OID) för certifikatssyftet du vill lägga till:",
+    -1, 6,6,190,28
+  EDITTEXT IDC_NEW_PURPOSE, 6,28,190,14, ES_AUTOVSCROLL|ES_MULTILINE|WS_TABSTOP|WS_VSCROLL
+  PUSHBUTTON "OK", IDOK, 33,48,60,14
+  PUSHBUTTON "Avbryt", IDCANCEL, 100,48,60,14
+END
+
+IDD_SELECT_STORE DIALOG 0,0,200,136
+CAPTION "Välj certifikatlager"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Välj certifikatlagret du vill använda:", IDC_STORE_TEXT, 6,6,190,28
+  CONTROL "",IDC_STORE_LIST, "SysTreeView32", TVS_HASLINES|WS_BORDER|WS_TABSTOP,
+    6,28,188,70
+  CHECKBOX "&Visa fysiska lager", IDC_SHOW_PHYSICAL_STORES, 6,102,90,14,
+    BS_AUTOCHECKBOX|WS_TABSTOP
+  PUSHBUTTON "OK", IDOK, 90,118,50,14, BS_DEFPUSHBUTTON
+  PUSHBUTTON "Avbryt", IDCANCEL, 144,118,50,14
+END
+
+IDD_IMPORT_WELCOME DIALOG 0,0,317,143
+CAPTION "Guiden för import av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Välkommen till guiden för import av certifikat", IDC_IMPORT_TITLE,
+    115,7,195,12
+  LTEXT "Denna guide hjälper dig att importera certifikat, listor över återkallade certifikat, och listor över betrodda certifikat från en fil till ett certifikatlager.",
+    -1, 115,26,195,25
+  LTEXT "Ett certifikat kan användas för att identifiera dig eller datorn som du kommunicerar med.  Det kan även användas för autentisering samt för att signera meddelanden.  Certifikatlager är samlingar av certifikat, listor över återkallade certifikat, och listor över betrodda certifikat.",
+    -1, 115,56,195,40
+  LTEXT "För att fortsätta, klicka Nästa.",
+    -1, 115,103,195,8
+END
+
+IDD_IMPORT_FILE DIALOG 0,0,317,178
+CAPTION "Guiden för import av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&Filnamn:", -1, 21,1,195,10
+  EDITTEXT IDC_IMPORT_FILENAME, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+  PUSHBUTTON "&Bläddra...", IDC_IMPORT_BROWSE_FILE, 236,11,60,14
+  LTEXT "Obs:  Följande filformat kan innehålla mer än ett certifikat och listor över återkallade eller betrodda certifikat:",
+    -1, 21,26,265,16
+  LTEXT "Standard för kryptografisk meddelandesyntax/PKCS #7-meddelande (.p7b)",
+    -1, 31,49,265,10
+  LTEXT "Personal Information Exchange/PKCS #12 (.pfx, .p12)",
+    -1, 31,64,265,10
+  LTEXT "Microsoft Serialized Certificate Store (.sst)",
+    -1, 31,79,265,10
+END
+
+IDD_IMPORT_STORE DIALOG 0,0,317,143
+CAPTION "Guiden för import av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Wine kan välja certifikatlagret automatiskt, eller så kan du ange en sökväg för certifikaten.",
+    -1, 21,1,195,20
+  AUTORADIOBUTTON "Välj certifikatlager &automatiskt",
+    IDC_IMPORT_AUTO_STORE, 31,18,180,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "&Placera alla certifikat i följande lager:",
+    IDC_IMPORT_SPECIFY_STORE, 31,30,180,12, BS_AUTORADIOBUTTON
+  EDITTEXT IDC_IMPORT_STORE, 44,49,185,14, ES_READONLY
+  PUSHBUTTON "&Bläddra...", IDC_IMPORT_BROWSE_STORE, 236,49,60,14
+END
+
+IDD_IMPORT_FINISH DIALOG 0,0,317,178
+CAPTION "Guiden för import av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Avslutar guiden för import av certifikat", IDC_IMPORT_TITLE,
+    115,1,195,40
+  LTEXT "Du har slutfört guiden för import av certifikat.",
+    -1, 115,33,195,24
+  LTEXT "Du har angett följande inställningar:",
+    -1, 115,57,195,12
+  CONTROL "", IDC_IMPORT_SETTINGS, "SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    115,67,174,100
+END
+
+IDD_CERT_MGR DIALOG 0,0,335,270
+CAPTION "Certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Avsett s&yfte:", -1, 7,9,100,12
+  COMBOBOX IDC_MGR_PURPOSE_SELECTION, 83,7,245,14,
+    CBS_DROPDOWNLIST|WS_BORDER|WS_VSCROLL|WS_TABSTOP
+  CONTROL "", IDC_MGR_STORES, "SysTabControl32",
+    WS_CLIPSIBLINGS|WS_TABSTOP, 7,25,321,140
+  CONTROL "", IDC_MGR_CERTS, "SysListView32",
+    LVS_REPORT|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER, 15,46,305,111
+  PUSHBUTTON "&Importera...", IDC_MGR_IMPORT, 7,172,51,14
+  PUSHBUTTON "&Exportera...", IDC_MGR_EXPORT, 62,172,51,14, WS_DISABLED
+  PUSHBUTTON "&Ta bort", IDC_MGR_REMOVE, 117,172,51,14, WS_DISABLED
+  PUSHBUTTON "&Avancerat...", IDC_MGR_ADVANCED, 277,172,51,14
+  GROUPBOX "Avsedda syften för certifikat", -1,7,194,321,47, BS_GROUPBOX
+  LTEXT "", IDC_MGR_PURPOSES, 13,208,252,30
+  PUSHBUTTON "&Visa...", IDC_MGR_VIEW, 269,218,51,14, WS_DISABLED
+  PUSHBUTTON "&Stäng", IDCANCEL, 277,249,51,14, BS_DEFPUSHBUTTON
+END
+
+IDD_CERT_MGR_ADVANCED DIALOG 0,0,248,176
+CAPTION "Avancerade val"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  GROUPBOX "Syfte för certifikat", -1, 7,7,234,141, BS_GROUPBOX
+  LTEXT "Välj ett eller flera syften att listas när Avancerade Syften är valt.",
+    -1, 14,18,220,16
+  LTEXT "&Syften för certifikat:", -1, 14,41,90,12, WS_TABSTOP
+  CONTROL "", IDC_CERTIFICATE_USAGES,"SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    14,51,220,90
+  PUSHBUTTON "OK", IDOK, 132,155,51,14, BS_DEFPUSHBUTTON
+  PUSHBUTTON "Avbryt", IDCANCEL, 190,155,51,14
+END
+
+IDD_EXPORT_WELCOME DIALOG 0,0,317,143
+CAPTION "Guiden för export av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Välkommen till guiden för export av certifikat", IDC_EXPORT_TITLE,
+    115,7,195,12
+  LTEXT "Denna guide hjälper dig att exportera certifikat, listor över återkallade certifikat och listor över betrodda certifikat från ett certifikatlager till en fil.",
+    -1, 115,26,195,25
+  LTEXT "Ett certifikat kan användas för att identifiera dig eller datorn som du kommunicerar med.  Det kan också användas till autentisering, samt signering av meddelanden.  Certifikatlager är samlingar av certifikat, listor över återkallade certifikat och listor över betrodda certifikat.",
+    -1, 115,56,195,40
+  LTEXT "För att fortsätta, klicka Nästa.",
+    -1, 115,103,195,8
+END
+
+IDD_EXPORT_PRIVATE_KEY DIALOG 0,0,317,143
+CAPTION "Guiden för export av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Om du väljer att exportera den privata nyckeln så kommer du på en senare sida tillbes ange ett lösenord för att skydda den privata nyckeln.", -1, 21,1,195,25
+  LTEXT "Vill du exportera den privata nyckeln?", -1, 21,27,195,10
+  AUTORADIOBUTTON "&Ja, exportera den privata nyckeln",
+    IDC_EXPORT_PRIVATE_KEY_YES, 31,36,200,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "&Nej, exportera inte den privata nyckeln",
+    IDC_EXPORT_PRIVATE_KEY_NO, 31,48,200,12, BS_AUTORADIOBUTTON
+  LTEXT "", IDC_EXPORT_PRIVATE_KEY_UNAVAILABLE, 21,60,200,24
+END
+
+IDD_EXPORT_PASSWORD DIALOG 0,0,317,143
+CAPTION "Guiden för export av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&Lösenord:", -1, 21,1,195,10
+  EDITTEXT IDC_EXPORT_PASSWORD, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+  LTEXT "&Bekräfta lösenord:", -1, 21,35,195,10
+  EDITTEXT IDC_EXPORT_PASSWORD_CONFIRM, 21,45,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+END
+
+IDD_EXPORT_FORMAT DIALOG 0,0,317,143
+CAPTION "Guiden för export av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Välj formatet du vill använda:", -1, 21,1,195,10
+  AUTORADIOBUTTON "&DER-kodad X.509 (.cer)",
+    IDC_EXPORT_FORMAT_DER, 31,18,240,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "Ba&se64-kodad X.509 (.cer):",
+    IDC_EXPORT_FORMAT_BASE64, 31,30,240,12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "Standard för &kryptografisk meddelandesyntax/PKCS #7 (.p7b)",
+    IDC_EXPORT_FORMAT_CMS, 31,42,240,12, BS_AUTORADIOBUTTON
+  CHECKBOX "&Inkludera alla certifikat i certifieringssökvägen om möjligt",
+    IDC_EXPORT_CMS_INCLUDE_CHAIN, 44,57,240,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+  AUTORADIOBUTTON "&Personal Information Exchange/PKCS #12 (.pfx)",
+    IDC_EXPORT_FORMAT_PFX, 31,72,240,12, BS_AUTORADIOBUTTON|WS_DISABLED
+  CHECKBOX "Inkl&udera alla certifikat i certifieringssökvägen om möjligt",
+    IDC_EXPORT_PFX_INCLUDE_CHAIN, 44,87,240,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+  CHECKBOX "&Använd stark kryptering",
+    IDC_EXPORT_PFX_STRONG_ENCRYPTION, 44,102,240,8,
+    BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+  CHECKBOX "Ta bort den privata &nyckeln om exporten lyckas",
+    IDC_EXPORT_PFX_DELETE_PRIVATE_KEY, 44,117,240,8,
+    BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+END
+
+IDD_EXPORT_FILE DIALOG 0,0,317,143
+CAPTION "Guiden för export av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&Filnamn:", -1, 21,1,195,10
+  EDITTEXT IDC_EXPORT_FILENAME, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+  PUSHBUTTON "&Bläddra...", IDC_EXPORT_BROWSE_FILE, 236,11,60,14
+END
+
+IDD_EXPORT_FINISH DIALOG 0,0,317,178
+CAPTION "Guiden för export av certifikat"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Avslutar guiden för export av certifikat", IDC_EXPORT_TITLE,
+    115,1,195,40
+  LTEXT "Du har nu fullföljt guiden för export av certifikat.",
+    -1, 115,33,195,24
+  LTEXT "Du har angett följande inställningar:",
+    -1, 115,57,195,12
+  CONTROL "", IDC_EXPORT_SETTINGS, "SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    115,67,174,100
+END
