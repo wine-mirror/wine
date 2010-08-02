@@ -1044,4 +1044,13 @@ obj = {undefined: 3};
 undefined = 6;
 ok(undefined === 6, "undefined = " + undefined);
 
+NaN = 6;
+ok(NaN === 6, "NaN !== 6");
+
+Infinity = 6;
+ok(Infinity === 6, "Infinity !== 6");
+
+Math = 6;
+ok(Math === 6, "NaN !== 6");
+
 reportSuccess();
