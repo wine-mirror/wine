@@ -250,6 +250,8 @@ static void fillcontrols(mixer *mmixer)
         long min, max;
 
         TRACE("Filling control %d\n", id);
+        if (!mline->elem)
+            break;
         if (id == 1 && !mline->elem)
             continue;
 
@@ -332,16 +334,20 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
     snd_mixer_elem_t *elem;
     line *mline = mmixer->lines;
 
-    /* Master control */
-    MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(mastelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
-    mline->component = getcomponenttype(snd_mixer_selem_get_name(mastelem));
-    mline->dst = 0;
-    mline->capt = 0;
-    mline->elem = mastelem;
-    mline->chans = chans(mmixer, mastelem, 0);
+    if (mastelem) {
+        /* Master control */
+        MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(mastelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
+        mline->component = getcomponenttype(snd_mixer_selem_get_name(mastelem));
+        mline->dst = 0;
+        mline->capt = 0;
+        mline->elem = mastelem;
+        mline->chans = chans(mmixer, mastelem, 0);
 
-    snd_mixer_elem_set_callback(mastelem, &elem_callback);
-    snd_mixer_elem_set_callback_private(mastelem, mmixer);
+        snd_mixer_elem_set_callback(mastelem, &elem_callback);
+        snd_mixer_elem_set_callback_private(mastelem, mmixer);
+    } else {
+        MultiByteToWideChar(CP_UNIXCP, 0, "Empty Master Element", -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
+    }
 
     /* Capture control
      * Note: since mmixer->dests = 1, it means only playback control is visible
@@ -395,6 +401,21 @@ static void filllines(mixer *mmixer, snd_mixer_elem_t *mastelem, snd_mixer_elem_
         }
 }
 
+static void filllines_no_master(mixer *mmixer, snd_mixer_elem_t *captelem, int capt)
+{
+    line *mline = mmixer->lines;
+
+    MultiByteToWideChar(CP_UNIXCP, 0, snd_mixer_selem_get_name(captelem), -1, mline->name, sizeof(mline->name)/sizeof(WCHAR));
+    mline->component = getcomponenttype(snd_mixer_selem_get_name(captelem));
+    mline->dst = 0;
+    mline->capt = 1;
+    mline->elem = captelem;
+    mline->chans = chans(mmixer, captelem, 1);
+
+    snd_mixer_elem_set_callback(captelem, &elem_callback);
+    snd_mixer_elem_set_callback_private(captelem, mmixer);
+}
+
 /* Windows api wants to have a 'master' device to which all slaves are attached
  * There are 2 ones in this code:
  * - 'Master', fall back to 'Headphone' if unavailable, and if that's not available 'PCM'
@@ -414,7 +435,7 @@ static void ALSA_MixerInit(void)
         char cardind[6], cardname[10];
 
         snd_ctl_t *ctl;
-        snd_mixer_elem_t *elem, *mastelem = NULL, *headelem = NULL, *captelem = NULL, *pcmelem = NULL;
+        snd_mixer_elem_t *elem, *mastelem = NULL, *headelem = NULL, *captelem = NULL, *pcmelem = NULL, *micelem = NULL;
 
         memset(info, 0, snd_ctl_card_info_sizeof());
         memset(&mixdev[mixnum], 0, sizeof(*mixdev));
@@ -470,6 +491,9 @@ static void ALSA_MixerInit(void)
                 mastelem = elem;
             else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Capture") && !captelem)
                 captelem = elem;
+            else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Mic") && !micelem && !mastelem)
+                /* this is what snd-usb-audio mics look like; just a Mic control and that's it.*/
+                micelem = elem;
             else if (!blacklisted(elem))
             {
                 DWORD comp = getcomponenttype(snd_mixer_selem_get_name(elem));
@@ -519,7 +543,7 @@ static void ALSA_MixerInit(void)
             mastelem = pcmelem;
             capcontrols -= !!snd_mixer_selem_has_capture_switch(mastelem);
         }
-        else if (!mastelem)
+        else if (!mastelem && !captelem && !micelem)
         {
             /* If there is nothing sensible that can act as 'Master' control, something is wrong */
             FIXME("No master control found on %s, disabling mixer\n", snd_ctl_card_info_get_name(info));
@@ -549,7 +573,10 @@ static void ALSA_MixerInit(void)
         if (!mixdev[mixnum].lines || !mixdev[mixnum].controls)
             goto close;
 
-        filllines(&mixdev[mixnum], mastelem, captelem, capcontrols);
+        if (mastelem)
+            filllines(&mixdev[mixnum], mastelem, captelem, capcontrols);
+        else
+            filllines_no_master(&mixdev[mixnum], micelem, 1);
         fillcontrols(&mixdev[mixnum]);
 
         TRACE("%s: Amount of controls: %i/%i, name: %s\n", cardname, mixdev[mixnum].dests, mixdev[mixnum].chans, debugstr_w(mixdev[mixnum].mixername));
