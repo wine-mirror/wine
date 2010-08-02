@@ -372,7 +372,7 @@ static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCWSTR lpszType, LPWSTR l
         return TRUE;
 }
 
-static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
+static BOOL extract_icon_from_module(LPCWSTR szFileName, int nIndex, const char *icon_name)
 {
     HMODULE hModule;
     HRSRC hResInfo;
@@ -452,7 +452,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
         {
             if ((pIcon = LockResource(hResData)))
             {
-                if (reassemble_and_save_to_png(&iconDirEntry, pIcon, szXPMFileName, szFileName))
+                if (reassemble_and_save_to_png(&iconDirEntry, pIcon, icon_name, szFileName))
                     ret = TRUE;
                 else
                     ret = FALSE;
@@ -466,24 +466,16 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
     return ret;
 }
 
-static BOOL ExtractFromEXEDLL(LPCWSTR szFileName, int nIndex, char *szXPMFileName)
+static int ExtractFromICO(LPCWSTR szFileName, const char *icon_name)
 {
-    if (!extract_icon32(szFileName, nIndex, szXPMFileName) /*&&
-        !extract_icon16(szFileName, szXPMFileName)*/)
-        return FALSE;
-    return TRUE;
-}
-
-static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
-{
-    FILE *fICOFile = NULL;
+    FILE *fICOFile;
     ICONDIR iconDir;
     ICONDIRENTRY *pIconDirEntry = NULL;
     int nMax = 0, nMaxBits = 0;
     int nIndex = 0;
     void *pIcon = NULL;
     int i;
-    char *filename = NULL;
+    char *filename;
     IStream *icoStream = NULL;
     HRESULT hr;
 
@@ -536,7 +528,7 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
         goto error;
     }
 
-    if (!SaveIconStreamAsPNG(icoStream, nIndex, szXPMFileName, szFileName))
+    if (!SaveIconStreamAsPNG(icoStream, nIndex, icon_name, szFileName))
         goto error;
 
     HeapFree(GetProcessHeap(), 0, pIcon);
@@ -556,7 +548,7 @@ static int ExtractFromICO(LPCWSTR szFileName, char *szXPMFileName)
     return 0;
 }
 
-static int ExtractFromFileType(LPCWSTR szFileName, char *szXPMFileName)
+static int ExtractFromFileType(LPCWSTR szFileName, const char *icon_name)
 {
     int ret = 0;
     WCHAR *extension;
@@ -590,7 +582,7 @@ static int ExtractFromFileType(LPCWSTR szFileName, char *szXPMFileName)
         WINE_TRACE("executable %s -> icon %s\n", wine_dbgstr_w(executable), wine_dbgstr_a(output_path));
     }
     if (output_path)
-        ret = (rename(output_path, szXPMFileName) == 0);
+        ret = (rename(output_path, icon_name) == 0);
 
 end:
     HeapFree(GetProcessHeap(), 0, icon);
@@ -599,11 +591,11 @@ end:
     return ret;
 }
 
-static BOOL create_default_icon( char *filename )
+static BOOL create_default_icon( const char *filename )
 {
     static const WCHAR user32W[] = {'u','s','e','r','3','2',0};
 
-    return extract_icon32( user32W, -(INT_PTR)IDI_WINLOGO, filename );
+    return extract_icon_from_module( user32W, -(INT_PTR)IDI_WINLOGO, filename );
 }
 
 static unsigned short crc16(const char* string)
@@ -737,7 +729,7 @@ static WCHAR* utf8_chars_to_wchars(LPCSTR string)
 static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BOOL bWait )
 {
     unsigned short crc;
-    char *iconsdir = NULL, *ico_path = NULL, *ico_name, *xpm_path = NULL;
+    char *iconsdir = NULL, *ico_path = NULL, *ico_name, *png_path = NULL;
     char* s;
     int n;
 
@@ -781,37 +773,37 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
 
     /* Try to treat the source file as an exe */
     if (destFilename)
-        xpm_path=heap_printf("%s/%s.png",iconsdir,destFilename);
+        png_path=heap_printf("%s/%s.png",iconsdir,destFilename);
     else
-        xpm_path=heap_printf("%s/%04x_%s.%d.png",iconsdir,crc,ico_name,index);
-    if (xpm_path == NULL)
+        png_path=heap_printf("%s/%04x_%s.%d.png",iconsdir,crc,ico_name,index);
+    if (png_path == NULL)
     {
         WINE_ERR("could not extract icon %s, out of memory\n", wine_dbgstr_a(ico_name));
         return NULL;
     }
 
-    if (ExtractFromEXEDLL( path, index, xpm_path ))
+    if (extract_icon_from_module( path, index, png_path ))
         goto end;
 
     /* Must be something else, ignore the index in that case */
     if (destFilename)
-        sprintf(xpm_path,"%s/%s.png",iconsdir,destFilename);
+        sprintf(png_path,"%s/%s.png",iconsdir,destFilename);
     else
-        sprintf(xpm_path,"%s/%04x_%s.png",iconsdir,crc,ico_name);
-    if (ExtractFromICO( path, xpm_path))
+        sprintf(png_path,"%s/%04x_%s.png",iconsdir,crc,ico_name);
+    if (ExtractFromICO( path, png_path))
         goto end;
-    if (ExtractFromFileType( path, xpm_path ))
+    if (ExtractFromFileType( path, png_path ))
         goto end;
-    if (!bWait && create_default_icon( xpm_path ))
+    if (!bWait && create_default_icon( png_path ))
         goto end;
 
-    HeapFree( GetProcessHeap(), 0, xpm_path );
-    xpm_path=NULL;
+    HeapFree( GetProcessHeap(), 0, png_path );
+    png_path=NULL;
 
  end:
     HeapFree(GetProcessHeap(), 0, iconsdir);
     HeapFree(GetProcessHeap(), 0, ico_path);
-    return xpm_path;
+    return png_path;
 }
 
 static HKEY open_menus_reg_key(void)
@@ -2815,12 +2807,12 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
 
     if (szIconPath[0])
     {
-        if (!ExtractFromEXEDLL(szIconPath, iconId, utf8OutputPath))
+        if (!extract_icon_from_module(szIconPath, iconId, utf8OutputPath))
             ExtractFromICO(szIconPath, utf8OutputPath);
     }
     else
     {
-        if (!ExtractFromEXEDLL(szPath, iconId, utf8OutputPath))
+        if (!extract_icon_from_module(szPath, iconId, utf8OutputPath))
             ExtractFromICO(szPath, utf8OutputPath);
     }
 
