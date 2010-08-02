@@ -39,9 +39,9 @@
 
 #include "build.h"
 
-#define MAX_TMP_FILES 8
-static const char *tmp_files[MAX_TMP_FILES];
+static const char **tmp_files;
 static unsigned int nb_tmp_files;
+static unsigned int max_tmp_files;
 
 static const struct
 {
@@ -66,7 +66,7 @@ static const struct
 static void cleanup_tmp_files(void)
 {
     unsigned int i;
-    for (i = 0; i < MAX_TMP_FILES; i++) if (tmp_files[i]) unlink( tmp_files[i] );
+    for (i = 0; i < nb_tmp_files; i++) if (tmp_files[i]) unlink( tmp_files[i] );
 }
 
 
@@ -348,7 +348,6 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
     const char *ext;
     int fd;
 
-    assert( nb_tmp_files < MAX_TMP_FILES );
     if (!nb_tmp_files && !save_temps) atexit( cleanup_tmp_files );
 
     if (!prefix || !prefix[0]) prefix = "winebuild";
@@ -367,6 +366,11 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
         fatal_error( "could not generate a temp file\n" );
 
     close( fd );
+    if (nb_tmp_files >= max_tmp_files)
+    {
+        max_tmp_files = max( 2 * max_tmp_files, 8 );
+        tmp_files = xrealloc( tmp_files, max_tmp_files * sizeof(tmp_files[0]) );
+    }
     tmp_files[nb_tmp_files++] = name;
     return name;
 }
