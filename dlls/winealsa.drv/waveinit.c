@@ -106,6 +106,10 @@ static int ALSA_TestDeviceForWine(int card, int device,  snd_pcm_stream_t stream
     retcode = snd_pcm_hw_params_set_channels(pcm, hwparams, 2);
     if (retcode < 0)
     {
+        retcode = snd_pcm_hw_params_set_channels(pcm, hwparams, 1); /* If we can't open stereo, try mono; this is vital for snd_usb_audio microphones */
+    }
+    if (retcode < 0)
+    {
         reason = "Could not set channels";
         goto exit;
     }
