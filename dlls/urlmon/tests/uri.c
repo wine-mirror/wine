@@ -3623,28 +3623,79 @@ static const uri_equality equality_tests[] = {
     {
         "HTTP://www.winehq.org/test dir/./",0,FALSE,
         "http://www.winehq.org/test dir/../test dir/",0,FALSE,
-        TRUE, TRUE
+        TRUE, FALSE
     },
     {
         /* http://www.winehq.org/test%20dir */
         "http://%77%77%77%2E%77%69%6E%65%68%71%2E%6F%72%67/%74%65%73%74%20%64%69%72",0,FALSE,
         "http://www.winehq.org/test dir",0,FALSE,
-        TRUE, TRUE,
+        TRUE, FALSE
     },
     {
         "c:\\test.mp3",Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME,FALSE,
         "file:///c:/test.mp3",0,FALSE,
-        TRUE,TRUE
+        TRUE, FALSE
     },
     {
         "ftp://ftp.winehq.org/",0,FALSE,
         "ftp://ftp.winehq.org",0,FALSE,
-        TRUE, TRUE
+        TRUE, FALSE
     },
     {
         "ftp://ftp.winehq.org/test/test2/../../testB/",0,FALSE,
         "ftp://ftp.winehq.org/t%45stB/",0,FALSE,
-        FALSE, TRUE
+        FALSE, FALSE
+    },
+    {
+        "http://google.com/TEST",0,FALSE,
+        "http://google.com/test",0,FALSE,
+        FALSE, FALSE
+    },
+    {
+        "http://GOOGLE.com/",0,FALSE,
+        "http://google.com/",0,FALSE,
+        TRUE, FALSE
+    },
+    /* Performs case insensitive compare of host names (for known scheme types). */
+    {
+        "ftp://GOOGLE.com/",Uri_CREATE_NO_CANONICALIZE,FALSE,
+        "ftp://google.com/",0,FALSE,
+        TRUE, FALSE
+    },
+    {
+        "zip://GOOGLE.com/",0,FALSE,
+        "zip://google.com/",0,FALSE,
+        FALSE, FALSE
+    },
+    {
+        "file:///c:/TEST/TeST/",0,FALSE,
+        "file:///c:/test/test/",0,FALSE,
+        TRUE, FALSE
+    },
+    {
+        "file:///server/TEST",0,FALSE,
+        "file:///SERVER/TEST",0,FALSE,
+        TRUE, FALSE
+    },
+    {
+        "http://google.com",Uri_CREATE_NO_CANONICALIZE,FALSE,
+        "http://google.com/",0,FALSE,
+        TRUE, FALSE
+    },
+    {
+        "ftp://google.com:21/",0,FALSE,
+        "ftp://google.com/",0,FALSE,
+        TRUE, FALSE
+    },
+    {
+        "http://google.com:80/",Uri_CREATE_NO_CANONICALIZE,FALSE,
+        "http://google.com/",0,FALSE,
+        TRUE, FALSE
+    },
+    {
+        "http://google.com:70/",0,FALSE,
+        "http://google.com:71/",0,FALSE,
+        FALSE, FALSE
     }
 };
 
