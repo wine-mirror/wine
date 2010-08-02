@@ -243,7 +243,6 @@ static const char usage_str[] =
 "       --fake-module         Create a fake binary module\n"
 "   -h, --help                Display this help message\n"
 "   -H, --heap=SIZE           Set the heap size for a Win16 dll\n"
-"   -i, --ignore=SYM[,SYM]    Ignore specified symbols when resolving imports\n"
 "   -I DIR                    Ignored for C flags compatibility\n"
 "   -k, --kill-at             Kill stdcall decorations in generated .def files\n"
 "   -K, FLAGS                 Compiler flags (only -KPIC is supported)\n"
@@ -291,7 +290,7 @@ enum long_options_values
     LONG_OPT_VERSION
 };
 
-static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:b:d:e:f:hi:kl:m:o:r:u:vw";
+static const char short_options[] = "C:D:E:F:H:I:K:L:M:N:b:d:e:f:hkl:m:o:r:u:vw";
 
 static const struct option long_options[] =
 {
@@ -318,7 +317,6 @@ static const struct option long_options[] =
     { "filename",      1, 0, 'F' },
     { "help",          0, 0, 'h' },
     { "heap",          1, 0, 'H' },
-    { "ignore",        1, 0, 'i' },
     { "kill-at",       0, 0, 'k' },
     { "library",       1, 0, 'l' },
     { "library-path",  1, 0, 'L' },
@@ -412,18 +410,6 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case 'h':
             usage(0);
-            break;
-        case 'i':
-            {
-                char *str = xstrdup( optarg );
-                char *token = strtok( str, "," );
-                while (token)
-                {
-                    add_ignore_symbol( token );
-                    token = strtok( NULL, "," );
-                }
-                free( str );
-            }
             break;
         case 'k':
             kill_at = 1;

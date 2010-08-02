@@ -122,14 +122,6 @@ Display a usage message and exit.
 Specify the size of the module local heap in bytes (only valid for
 Win16 modules); default is no local heap.
 .TP
-.BI \-i,\ --ignore= [-]symbol[,[-]symbol]
-Specify a list of symbols that should be ignored when resolving
-undefined symbols against the imported libraries. This forces these
-symbols to be resolved from the Unix C library (or from another Unix
-library linked with the application). If a symbol is prefixed by '-'
-it is removed from the list instead of being added; a stand-alone '-'
-clears the whole list.
-.TP
 .BI \-I\  directory
 Ignored for compatibility with the C compiler.
 .TP

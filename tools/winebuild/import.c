@@ -57,7 +57,6 @@ struct name_table
 };
 
 static struct name_table undef_symbols;    /* list of undefined symbols */
-static struct name_table ignore_symbols;   /* list of symbols to ignore */
 static struct name_table extra_ld_symbols; /* list of extra symbols that ld should resolve */
 static struct name_table delayed_imports;  /* list of delayed import dlls */
 static struct name_table ext_link_imports; /* list of external symbols to link to */
@@ -339,23 +338,6 @@ static void remove_import_dll( int index )
     free_imports( imp );
 }
 
-/* add a symbol to the ignored symbol list */
-/* if the name starts with '-' the symbol is removed instead */
-void add_ignore_symbol( const char *name )
-{
-    unsigned int i;
-
-    if (name[0] == '-')  /* remove it */
-    {
-        if (!name[1]) empty_name_table( &ignore_symbols );  /* remove everything */
-        else for (i = 0; i < ignore_symbols.count; i++)
-        {
-            if (!strcmp( ignore_symbols.names[i], name+1 )) remove_name( &ignore_symbols, i-- );
-        }
-    }
-    else add_name( &ignore_symbols, name );
-}
-
 /* add a symbol to the list of extra symbols that ld must resolve */
 void add_extra_ld_symbol( const char *name )
 {
@@ -582,7 +564,6 @@ void resolve_imports( DLLSPEC *spec )
     unsigned int j, removed;
     ORDDEF *odp;
 
-    sort_names( &ignore_symbols );
     check_undefined_forwards( spec );
 
     for (i = 0; i < nb_imports; i++)
@@ -591,7 +572,6 @@ void resolve_imports( DLLSPEC *spec )
 
         for (j = removed = 0; j < undef_symbols.count; j++)
         {
-            if (find_name( undef_symbols.names[j], &ignore_symbols )) continue;
             odp = find_export( undef_symbols.names[j], imp->exports, imp->nb_exports );
             if (odp)
             {
