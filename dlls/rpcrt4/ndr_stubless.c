@@ -1258,6 +1258,8 @@ static LONG_PTR *stub_do_old_args(MIDL_STUB_MESSAGE *pStubMsg,
                     if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
                         call_freer(pStubMsg, pArg, pTypeFormat);
                     break;
+                case STUBLESS_INITOUT:
+                    break;
                 case STUBLESS_UNMARSHAL:
                     if (pParam->param_direction == RPC_FC_IN_PARAM_BASETYPE)
                         call_unmarshaller(pStubMsg, &pArg, pTypeFormat, 0);
@@ -1512,13 +1514,6 @@ LONG WINAPI NdrStubCall2(
     if (pThis)
         *(void **)args = ((CStdStubBuffer *)pThis)->pvServerObject;
 
-    /* order of phases:
-     * 1. STUBLESS_UNMARHSAL - unmarshal [in] params from buffer
-     * 2. STUBLESS_CALLSERVER - send/receive buffer
-     * 3. STUBLESS_CALCSIZE - get [out] buffer size
-     * 4. STUBLESS_GETBUFFER - allocate [out] buffer
-     * 5. STUBLESS_MARHSAL - marshal [out] params to buffer
-     */
     for (phase = STUBLESS_UNMARSHAL; phase <= STUBLESS_FREE; phase++)
     {
         TRACE("phase = %d\n", phase);
