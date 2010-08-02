@@ -50,6 +50,11 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "&Eigenschappen...",           ID_BROWSE_PROPERTIES
     }
+    POPUP "&Favorieten"
+    {
+        MENUITEM "&Toevoegen aan Favorieten..." ID_BROWSE_ADDFAV
+        MENUITEM SEPARATOR
+    }
     POPUP "&Help"
     {
         MENUITEM "&Over Internet Explorer...",  ID_BROWSE_ABOUT
