@@ -239,7 +239,7 @@ static void InitializeTreeView( browse_info *info )
         return;
     }
 
-    if (pidlChild && pidlChild->mkid.cb) {
+    if (!_ILIsEmpty(pidlChild)) {
         hr = IShellFolder_BindToObject(lpsfParent, pidlChild, 0, &IID_IShellFolder, (LPVOID*)&lpsfRoot);
     } else {
         lpsfRoot = lpsfParent;
@@ -519,7 +519,7 @@ static LRESULT BrsFolder_Treeview_Expand( browse_info *info, NMTREEVIEWW *pnmtv 
     if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
         return 0;
 
-    if (lptvid->lpi && lptvid->lpi->mkid.cb) {
+    if (!_ILIsEmpty(lptvid->lpi)) {
         r = IShellFolder_BindToObject( lptvid->lpsfParent, lptvid->lpi, 0,
                                        &IID_IShellFolder, (LPVOID *)&lpsf2 );
     } else {

@@ -271,7 +271,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
 
     TRACE("(%p %s %p %s %p)\n", pidlRoot, debugstr_w(pathRoot), pidlComplete, debugstr_guid(riid), ppvOut);
 
-    if (!pidlRoot || !ppvOut || !pidlComplete || !pidlComplete->mkid.cb)
+    if (!pidlRoot || !ppvOut || _ILIsEmpty(pidlComplete))
         return E_INVALIDARG;
 
     *ppvOut = NULL;

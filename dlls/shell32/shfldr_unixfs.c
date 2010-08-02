@@ -716,7 +716,7 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
     WCHAR *dos_name;
 
     /* Determine the path's length bytes */
-    while (current && current->mkid.cb) {
+    while (!_ILIsEmpty(current)) {
         dwPathLen += UNIXFS_filename_from_shitemid(current, NULL) + 1; /* For the '/' */
         current = ILGetNext(current);
     };
@@ -734,7 +734,7 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
     pNextDir += strlen(szBasePath);
     if (This->m_dwPathMode == PATHMODE_UNIX || IsEqualCLSID(&CLSID_MyDocuments, This->m_pCLSID))
         This->m_dwAttributes |= SFGAO_FILESYSTEM;
-    while (current && current->mkid.cb) {
+    while (!_ILIsEmpty(current)) {
         pNextDir += UNIXFS_filename_from_shitemid(current, pNextDir);
         *pNextDir++ = '/';
         current = ILGetNext(current);
@@ -948,7 +948,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     TRACE("(iface=%p, pidl=%p, pbcReserver=%p, riid=%p, ppvOut=%p)\n", 
             iface, pidl, pbcReserved, riid, ppvOut);
 
-    if (!pidl || !pidl->mkid.cb)
+    if (_ILIsEmpty(pidl))
         return E_INVALIDARG;
    
     if (IsEqualCLSID(This->m_pCLSID, &CLSID_FolderShortcut)) {
@@ -993,8 +993,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, 
 
     TRACE("(iface=%p, lParam=%ld, pidl1=%p, pidl2=%p)\n", iface, lParam, pidl1, pidl2);
     
-    isEmpty1 = !pidl1 || !pidl1->mkid.cb;
-    isEmpty2 = !pidl2 || !pidl2->mkid.cb;
+    isEmpty1 = _ILIsEmpty(pidl1);
+    isEmpty2 = _ILIsEmpty(pidl2);
 
     if (isEmpty1 && isEmpty2) 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
@@ -1160,7 +1160,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     if ((GET_SHGDN_FOR(uFlags) & SHGDN_FORPARSING) &&
         (GET_SHGDN_RELATION(uFlags) != SHGDN_INFOLDER))
     {
-        if (!pidl || !pidl->mkid.cb) {
+        if (_ILIsEmpty(pidl)) {
             lpName->uType = STRRET_WSTR;
             if (This->m_dwPathMode == PATHMODE_UNIX) {
                 UINT len = MultiByteToWideChar(CP_UNIXCP, 0, This->m_pszPath, -1, NULL, 0);
