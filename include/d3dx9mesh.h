@@ -30,6 +30,32 @@ enum _MAX_FVF_DECL_SIZE
     MAX_FVF_DECL_SIZE = MAXD3DDECLLENGTH + 1
 };
 
+enum _D3DXMESH
+{
+    D3DXMESH_32BIT                 = 0x001,
+    D3DXMESH_DONOTCLIP             = 0x002,
+    D3DXMESH_POINTS                = 0x004,
+    D3DXMESH_RTPATCHES             = 0x008,
+    D3DXMESH_NPATCHES              = 0x4000,
+    D3DXMESH_VB_SYSTEMMEM          = 0x010,
+    D3DXMESH_VB_MANAGED            = 0x020,
+    D3DXMESH_VB_WRITEONLY          = 0x040,
+    D3DXMESH_VB_DYNAMIC            = 0x080,
+    D3DXMESH_VB_SOFTWAREPROCESSING = 0x8000,
+    D3DXMESH_IB_SYSTEMMEM          = 0x100,
+    D3DXMESH_IB_MANAGED            = 0x200,
+    D3DXMESH_IB_WRITEONLY          = 0x400,
+    D3DXMESH_IB_DYNAMIC            = 0x800,
+    D3DXMESH_IB_SOFTWAREPROCESSING = 0x10000,
+    D3DXMESH_VB_SHARE              = 0x1000,
+    D3DXMESH_USEHWONLY             = 0x2000,
+    D3DXMESH_SYSTEMMEM             = 0x110,
+    D3DXMESH_MANAGED               = 0x220,
+    D3DXMESH_WRITEONLY             = 0x440,
+    D3DXMESH_DYNAMIC               = 0x880,
+    D3DXMESH_SOFTWAREPROCESSING    = 0x18000
+};
+
 typedef struct ID3DXBaseMesh* LPD3DXBASEMESH;
 typedef struct ID3DXMesh* LPD3DXMESH;
 
