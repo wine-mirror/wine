@@ -3630,6 +3630,7 @@ WINGDIAPI UINT        WINAPI RealizePalette(HDC);
 WINGDIAPI BOOL        WINAPI Rectangle(HDC,INT,INT,INT,INT);
 WINGDIAPI BOOL        WINAPI RectInRegion(HRGN,const RECT *);
 WINGDIAPI BOOL        WINAPI RectVisible(HDC,const RECT*);
+WINGDIAPI BOOL        WINAPI RemoveFontMemResourceEx(HANDLE);
 WINGDIAPI BOOL        WINAPI RemoveFontResourceA(LPCSTR);
 WINGDIAPI BOOL        WINAPI RemoveFontResourceW(LPCWSTR);
 #define                      RemoveFontResource WINELIB_NAME_AW(RemoveFontResource)

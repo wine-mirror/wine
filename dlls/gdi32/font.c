@@ -33,6 +33,7 @@
 #include "winnls.h"
 #include "wownt32.h"
 #include "gdi_private.h"
+#include "wine/exception.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -3184,7 +3185,25 @@ BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
  */
 HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
 {
-    return WineEngAddFontMemResourceEx(pbFont, cbFont, pdv, pcFonts);
+    HANDLE ret;
+    DWORD num_fonts;
+
+    ret = WineEngAddFontMemResourceEx(pbFont, cbFont, pdv, &num_fonts);
+    if (ret)
+    {
+        __TRY
+        {
+            *pcFonts = num_fonts;
+        }
+        __EXCEPT_PAGE_FAULT
+        {
+            WARN("page fault while writing to *pcFonts (%p)\n", pcFonts);
+            RemoveFontMemResourceEx(ret);
+            ret = 0;
+        }
+        __ENDTRY
+    }
+    return ret;
 }
 
 /***********************************************************************
