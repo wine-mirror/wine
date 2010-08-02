@@ -135,6 +135,13 @@ extern char *target_alias;
 extern enum target_cpu target_cpu;
 extern enum target_platform target_platform;
 
+struct strarray
+{
+    const char **str;
+    unsigned int count;
+    unsigned int max;
+};
+
 /* entry point flags */
 #define FLAG_NORELAY   0x01  /* don't use relay debugging for this function */
 #define FLAG_NONAME    0x02  /* don't export function by name */
@@ -200,6 +207,10 @@ extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
 extern int strendswith(const char* str, const char* end);
 extern char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
+extern struct strarray *strarray_init(void);
+extern void strarray_add( struct strarray *array, ... );
+extern void strarray_addv( struct strarray *array, char * const *argv );
+extern void strarray_free( struct strarray *array );
 extern DECLSPEC_NORETURN void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern DECLSPEC_NORETURN void fatal_perror( const char *msg, ... )
@@ -212,9 +223,10 @@ extern int output( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void output_cfi( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void spawn( struct strarray *array );
 extern char *find_tool( const char *name, const char * const *names );
-extern const char *get_as_command(void);
-extern const char *get_ld_command(void);
+extern struct strarray *get_as_command(void);
+extern struct strarray *get_ld_command(void);
 extern const char *get_nm_command(void);
 extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header(void);

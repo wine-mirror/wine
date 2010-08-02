@@ -524,23 +524,16 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
 /* returns the name of the combined file */
 static const char *ldcombine_files( DLLSPEC *spec, char **argv )
 {
-    unsigned int i, len = 0;
-    const char *prog = get_ld_command();
-    char *cmd, *p, *ld_tmp_file, *undef_file;
-    int err;
+    char *ld_tmp_file, *undef_file;
+    struct strarray *args = get_ld_command();
 
     undef_file = create_undef_symbols_file( spec );
-    len += strlen(undef_file) + 1;
     ld_tmp_file = get_temp_file_name( output_file_name, ".o" );
-    for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
-    cmd = p = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(prog)  );
-    p += sprintf( cmd, "%s -r -o %s %s", prog, ld_tmp_file, undef_file );
-    for (i = 0; argv[i]; i++)
-        p += sprintf( p, " %s", argv[i] );
-    if (verbose) fprintf( stderr, "%s\n", cmd );
-    err = system( cmd );
-    if (err) fatal_error( "%s -r failed with status %d\n", prog, err );
-    free( cmd );
+
+    strarray_add( args, "-r", "-o", ld_tmp_file, undef_file, NULL );
+    strarray_addv( args, argv );
+    spawn( args );
+    strarray_free( args );
     return ld_tmp_file;
 }
 
@@ -1318,9 +1311,8 @@ void output_imports( DLLSPEC *spec )
 /* output an import library for a Win32 module and additional object files */
 void output_import_lib( DLLSPEC *spec, char **argv )
 {
-    char *dlltool, *def_file;
-    char *cmd;
-    int err;
+    struct strarray *args = strarray_init();
+    char *def_file;
 
     if (target_platform != PLATFORM_WINDOWS)
         fatal_error( "Unix-style import libraries not supported yet\n" );
@@ -1333,33 +1325,17 @@ void output_import_lib( DLLSPEC *spec, char **argv )
     fclose( output_file );
     output_file = NULL;
 
-    dlltool = find_tool( "dlltool", NULL );
-    cmd = xmalloc( strlen(dlltool) + strlen(output_file_name) + strlen(def_file) + 12 );
-    sprintf( cmd, "%s -k -l %s -d %s", dlltool, output_file_name, def_file );
-    if (verbose) fprintf( stderr, "%s\n", cmd );
-    err = system( cmd );
-    if (err) fatal_error( "%s failed with status %d\n", dlltool, err );
-    free( cmd );
-    free( dlltool );
+    strarray_add( args, find_tool( "dlltool", NULL ), "-k", "-l", output_file_name, "-d", def_file, NULL );
+    spawn( args );
+    strarray_free( args );
 
     if (argv[0])
     {
-        char *ar = find_tool( "ar", NULL );
-        int i, len;
-
-        for (i = len = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
-        cmd = xmalloc( strlen(ar) + strlen(output_file_name) + len + 5 );
-        sprintf( cmd, "%s rs %s", ar, output_file_name );
-        for (i = 0; argv[i]; i++)
-        {
-            strcat( cmd, " " );
-            strcat( cmd, argv[i] );
-        }
-        if (verbose) fprintf( stderr, "%s\n", cmd );
-        err = system( cmd );
-        if (err) fatal_error( "%s failed with status %d\n", dlltool, err );
-        free( cmd );
-        free( ar );
+        args = strarray_init();
+        strarray_add( args, find_tool( "ar", NULL ), "rs", output_file_name, NULL );
+        strarray_addv( args, argv );
+        spawn( args );
+        strarray_free( args );
     }
     output_file_name = NULL;
 }

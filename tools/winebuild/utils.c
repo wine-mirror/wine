@@ -138,6 +138,46 @@ char *strmake( const char* fmt, ... )
     }
 }
 
+struct strarray *strarray_init(void)
+{
+    struct strarray *array = xmalloc( sizeof(*array) );
+    array->count = 0;
+    array->max = 16;
+    array->str = xmalloc( array->max * sizeof(*array->str) );
+    return array;
+}
+
+static void strarray_add_one( struct strarray *array, const char *str )
+{
+    if (array->count == array->max)
+    {
+        array->max *= 2;
+        array->str = xrealloc( array->str, array->max * sizeof(*array->str) );
+    }
+    array->str[array->count++] = str;
+}
+
+void strarray_add( struct strarray *array, ... )
+{
+    va_list valist;
+    const char *str;
+
+    va_start( valist, array );
+    while ((str = va_arg( valist, const char *))) strarray_add_one( array, str );
+    va_end( valist );
+}
+
+void strarray_addv( struct strarray *array, char * const *argv )
+{
+    while (*argv) strarray_add_one( array, *argv++ );
+}
+
+void strarray_free( struct strarray *array )
+{
+    free( array->str );
+    free( array );
+}
+
 void fatal_error( const char *msg, ... )
 {
     va_list valist;
@@ -218,6 +258,24 @@ int output( const char *format, ... )
     return ret;
 }
 
+void spawn( struct strarray *args )
+{
+    unsigned int i;
+    int status;
+
+    strarray_add_one( args, NULL );
+    if (verbose)
+        for (i = 0; args->str[i]; i++)
+            fprintf( stderr, "%s%c", args->str[i], args->str[i+1] ? ' ' : '\n' );
+
+    if ((status = spawnvp( _P_WAIT, args->str[0], args->str )))
+    {
+	if (status > 0) fatal_error( "%s failed with status %u\n", args->str[0], status );
+	else fatal_perror( "winebuild" );
+	exit( 1 );
+    }
+}
+
 /* find a build tool in the path, trying the various names */
 char *find_tool( const char *name, const char * const *names )
 {
@@ -282,53 +340,59 @@ char *find_tool( const char *name, const char * const *names )
     return xstrdup( name );
 }
 
-const char *get_as_command(void)
+struct strarray *get_as_command(void)
 {
+    struct strarray *args = strarray_init();
+
     if (!as_command)
     {
         static const char * const commands[] = { "gas", "as", NULL };
         as_command = find_tool( "as", commands );
+    }
+    strarray_add_one( args, as_command );
 
-        if (force_pointer_size)
+    if (force_pointer_size)
+    {
+        switch (target_platform)
         {
-            const char *args = (target_platform == PLATFORM_APPLE) ?
-                ((force_pointer_size == 8) ? " -arch x86_64" : " -arch i386") :
-                ((force_pointer_size == 8) ? " --64" : " --32");
-            as_command = xrealloc( as_command, strlen(as_command) + strlen(args) + 1 );
-            strcat( as_command, args );
+        case PLATFORM_APPLE:
+            strarray_add( args, "-arch", (force_pointer_size == 8) ? "x86_64" : "i386", NULL );
+            break;
+        default:
+            strarray_add_one( args, (force_pointer_size == 8) ? "--64" : "--32" );
+            break;
         }
     }
-    return as_command;
+    return args;
 }
 
-const char *get_ld_command(void)
+struct strarray *get_ld_command(void)
 {
+    struct strarray *args = strarray_init();
+
     if (!ld_command)
     {
         static const char * const commands[] = { "ld", "gld", NULL };
         ld_command = find_tool( "ld", commands );
+    }
+    strarray_add_one( args, ld_command );
 
-        if (force_pointer_size)
+    if (force_pointer_size)
+    {
+        switch (target_platform)
         {
-            const char *args;
-
-            switch (target_platform)
-            {
-            case PLATFORM_APPLE:
-                args = (force_pointer_size == 8) ? " -arch x86_64" : " -arch i386";
-                break;
-            case PLATFORM_FREEBSD:
-                args = (force_pointer_size == 8) ? " -m elf_x86_64_fbsd" : " -m elf_i386_fbsd";
-                break;
-            default:
-                args = (force_pointer_size == 8) ? " -m elf_x86_64" : " -m elf_i386";
-                break;
-            }
-            ld_command = xrealloc( ld_command, strlen(ld_command) + strlen(args) + 1 );
-            strcat( ld_command, args );
+        case PLATFORM_APPLE:
+            strarray_add( args, "-arch", (force_pointer_size == 8) ? "x86_64" : "i386", NULL );
+            break;
+        case PLATFORM_FREEBSD:
+            strarray_add( args, "-m", (force_pointer_size == 8) ? "elf_x86_64_fbsd" : "elf_i386_fbsd", NULL );
+            break;
+        default:
+            strarray_add( args, "-m", (force_pointer_size == 8) ? "elf_x86_64" : "elf_i386", NULL );
+            break;
         }
     }
-    return ld_command;
+    return args;
 }
 
 const char *get_nm_command(void)
@@ -614,16 +678,10 @@ int remove_stdcall_decoration( char *name )
  */
 void assemble_file( const char *src_file, const char *obj_file )
 {
-    const char *prog = get_as_command();
-    char *cmd;
-    int err;
-
-    cmd = xmalloc( strlen(prog) + strlen(obj_file) + strlen(src_file) + 6 );
-    sprintf( cmd, "%s -o %s %s", prog, obj_file, src_file );
-    if (verbose) fprintf( stderr, "%s\n", cmd );
-    err = system( cmd );
-    if (err) fatal_error( "%s failed with status %d\n", prog, err );
-    free( cmd );
+    struct strarray *args = get_as_command();
+    strarray_add( args, "-o", obj_file, src_file, NULL );
+    spawn( args );
+    strarray_free( args );
 }
 
 
