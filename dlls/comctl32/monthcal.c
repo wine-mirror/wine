@@ -799,6 +799,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   INT i, prev_month;
   SYSTEMTIME st;
   WCHAR buf[80];
+  HBRUSH hbr;
   RECT r;
 
   if (!(infoPtr->dwStyle & MCS_WEEKNUMBERS)) return;
@@ -868,6 +869,13 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   }
 
   r = infoPtr->calendars[calIdx].weeknums;
+
+  /* erase whole week numbers area */
+  hbr = CreateSolidBrush(infoPtr->monthbk);
+  FillRect(hdc, &r, hbr);
+  DeleteObject(hbr);
+
+  /* reduce rectangle to one week number */
   r.bottom = r.top + infoPtr->height_increment;
 
   for(i = 0; i < 6; i++) {
