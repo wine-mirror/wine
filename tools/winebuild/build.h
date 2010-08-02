@@ -199,6 +199,7 @@ extern void *xrealloc (void *ptr, size_t size);
 extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
 extern int strendswith(const char* str, const char* end);
+extern char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 extern DECLSPEC_NORETURN void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern DECLSPEC_NORETURN void fatal_perror( const char *msg, ... )

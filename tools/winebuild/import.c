@@ -193,8 +193,7 @@ static char *try_library_path( const char *path, const char *name )
     char *buffer;
     int fd;
 
-    buffer = xmalloc( strlen(path) + strlen(name) + 9 );
-    sprintf( buffer, "%s/lib%s.def", path, name );
+    buffer = strmake( "%s/lib%s.def", path, name );
 
     /* check if the file exists */
     if ((fd = open( buffer, O_RDONLY )) != -1)
@@ -564,8 +563,7 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
 
     name = ldcombine_files( spec, argv );
 
-    cmd = xmalloc( strlen(prog) + strlen(name) + 5 );
-    sprintf( cmd, "%s -u %s", prog, name );
+    cmd = strmake( "%s -u %s", prog, name );
     if (!(f = popen( cmd, "r" )))
         fatal_error( "Cannot execute '%s'\n", cmd );
 
@@ -1188,9 +1186,9 @@ static void output_external_link_imports( DLLSPEC *spec )
 
     for (i = pos = 0; i < ext_link_imports.count; i++)
     {
-        char buffer[256];
-        sprintf( buffer, "__wine_spec_ext_link_%s", ext_link_imports.names[i] );
+        char *buffer = strmake( "__wine_spec_ext_link_%s", ext_link_imports.names[i] );
         output_import_thunk( buffer, ".L__wine_spec_external_links", pos );
+        free( buffer );
         pos += get_ptr_size();
     }
     output_function_size( "__wine_spec_external_link_thunks" );

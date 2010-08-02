@@ -195,14 +195,15 @@ static void output_resident_name( const char *string, int ordinal )
  */
 static const char *get_callfrom16_name( const ORDDEF *odp )
 {
-    static char buffer[80];
+    static char *buffer;
 
-    sprintf( buffer, "%s_%s_%s",
-             (odp->type == TYPE_PASCAL) ? "p" :
-             (odp->type == TYPE_VARARGS) ? "v" : "c",
-             (odp->flags & FLAG_REGISTER) ? "regs" :
-             (odp->flags & FLAG_RET16) ? "word" : "long",
-             odp->u.func.arg_types );
+    free( buffer );
+    buffer = strmake( "%s_%s_%s",
+                      (odp->type == TYPE_PASCAL) ? "p" :
+                      (odp->type == TYPE_VARARGS) ? "v" : "c",
+                      (odp->flags & FLAG_REGISTER) ? "regs" :
+                      (odp->flags & FLAG_RET16) ? "word" : "long",
+                      odp->u.func.arg_types );
     return buffer;
 }
 
@@ -301,13 +302,13 @@ static int get_function_argsize( const ORDDEF *odp )
  */
 static void output_call16_function( ORDDEF *odp )
 {
-    char name[256];
+    char *name;
     int i, pos, stack_words;
     const char *args = odp->u.func.arg_types;
     int argsize = get_function_argsize( odp );
     int needs_ldt = strchr( args, 'p' ) || strchr( args, 't' );
 
-    sprintf( name, ".L__wine_spec_call16_%s", get_relay_name(odp) );
+    name = strmake( ".L__wine_spec_call16_%s", get_relay_name(odp) );
 
     output( "\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration(name) );
@@ -406,6 +407,7 @@ static void output_call16_function( ORDDEF *odp )
     output( "\tret\n" );
     output_cfi( ".cfi_endproc" );
     output_function_size( name );
+    free( name );
 }
 
 

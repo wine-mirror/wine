@@ -119,6 +119,25 @@ int strendswith(const char* str, const char* end)
     return l >= m && strcmp(str + l - m, end) == 0;
 }
 
+char *strmake( const char* fmt, ... )
+{
+    int n;
+    size_t size = 100;
+    va_list ap;
+
+    for (;;)
+    {
+        char *p = xmalloc( size );
+        va_start( ap, fmt );
+	n = vsnprintf( p, size, fmt, ap );
+	va_end( ap );
+        if (n == -1) size *= 2;
+        else if ((size_t)n >= size) size = n + 1;
+        else return p;
+        free( p );
+    }
+}
+
 void fatal_error( const char *msg, ... )
 {
     va_list valist;
@@ -210,14 +229,7 @@ char *find_tool( const char *name, const char * const *names )
     unsigned int i, len;
     struct stat st;
 
-    if (target_alias)
-    {
-        file = xmalloc( strlen(target_alias) + strlen(name) + 2 );
-        strcpy( file, target_alias );
-        strcat( file, "-" );
-        strcat( file, name );
-        return file;
-    }
+    if (target_alias) return strmake( "%s-%s", target_alias, name );
 
     if (!dirs)
     {
@@ -548,10 +560,7 @@ FILE *open_input_file( const char *srcdir, const char *name )
 
     if (!file && srcdir)
     {
-        fullname = xmalloc( strlen(srcdir) + strlen(name) + 2 );
-        strcpy( fullname, srcdir );
-        strcat( fullname, "/" );
-        strcat( fullname, name );
+        fullname = strmake( "%s/%s", srcdir, name );
         file = fopen( fullname, "r" );
     }
     else fullname = xstrdup( name );
@@ -708,16 +717,19 @@ const char *make_c_identifier( const char *str )
  */
 const char *get_stub_name( const ORDDEF *odp, const DLLSPEC *spec )
 {
-    static char buffer[256];
+    static char *buffer;
+
+    free( buffer );
     if (odp->name || odp->export_name)
     {
         char *p;
-        sprintf( buffer, "__wine_stub_%s", odp->name ? odp->name : odp->export_name );
+        buffer = strmake( "__wine_stub_%s", odp->name ? odp->name : odp->export_name );
         /* make sure name is a legal C identifier */
         for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) return buffer;
+        free( buffer );
     }
-    sprintf( buffer, "__wine_stub_%s_%d", make_c_identifier(spec->file_name), odp->ordinal );
+    buffer = strmake( "__wine_stub_%s_%d", make_c_identifier(spec->file_name), odp->ordinal );
     return buffer;
 }
 
@@ -819,15 +831,15 @@ unsigned int get_ptr_size(void)
 /* return the assembly name for a C symbol */
 const char *asm_name( const char *sym )
 {
-    static char buffer[256];
+    static char *buffer;
 
     switch (target_platform)
     {
     case PLATFORM_APPLE:
     case PLATFORM_WINDOWS:
         if (sym[0] == '.' && sym[1] == 'L') return sym;
-        buffer[0] = '_';
-        strcpy( buffer + 1, sym );
+        free( buffer );
+        buffer = strmake( "_%s", sym );
         return buffer;
     default:
         return sym;
@@ -837,23 +849,25 @@ const char *asm_name( const char *sym )
 /* return an assembly function declaration for a C function name */
 const char *func_declaration( const char *func )
 {
-    static char buffer[256];
+    static char *buffer;
 
     switch (target_platform)
     {
     case PLATFORM_APPLE:
         return "";
     case PLATFORM_WINDOWS:
-        sprintf( buffer, ".def _%s; .scl 2; .type 32; .endef", func );
+        free( buffer );
+        buffer = strmake( ".def _%s; .scl 2; .type 32; .endef", func );
         break;
     default:
+        free( buffer );
         switch(target_cpu)
         {
         case CPU_ARM:
-            sprintf( buffer, ".type %s,%%function", func );
+            buffer = strmake( ".type %s,%%function", func );
             break;
         default:
-            sprintf( buffer, ".type %s,@function", func );
+            buffer = strmake( ".type %s,@function", func );
             break;
         }
         break;
@@ -913,20 +927,22 @@ void output_gnu_stack_note(void)
 /* return a global symbol declaration for an assembly symbol */
 const char *asm_globl( const char *func )
 {
-    static char buffer[256];
+    static char *buffer;
 
+    free( buffer );
     switch (target_platform)
     {
     case PLATFORM_APPLE:
-        sprintf( buffer, "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
-        return buffer;
+        buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
+        break;
     case PLATFORM_WINDOWS:
-        sprintf( buffer, "\t.globl _%s\n_%s:", func, func );
-        return buffer;
+        buffer = strmake( "\t.globl _%s\n_%s:", func, func );
+        break;
     default:
-        sprintf( buffer, "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
-        return buffer;
+        buffer = strmake( "\t.globl %s\n\t.hidden %s\n%s:", func, func, func );
+        break;
     }
+    return buffer;
 }
 
 const char *get_asm_ptr_keyword(void)
