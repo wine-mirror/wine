@@ -795,7 +795,7 @@ void close_gecko(void)
 #define NSWBCHROME_THIS(iface) DEFINE_THIS(NSContainer, WebBrowserChrome, iface)
 
 static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSWBCHROME_THIS(iface);
 
@@ -979,7 +979,7 @@ static const nsIWebBrowserChromeVtbl nsWebBrowserChromeVtbl = {
 #define NSCML_THIS(iface) DEFINE_THIS(NSContainer, ContextMenuListener, iface)
 
 static nsresult NSAPI nsContextMenuListener_QueryInterface(nsIContextMenuListener *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSCML_THIS(iface);
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
@@ -1061,7 +1061,7 @@ static const nsIContextMenuListenerVtbl nsContextMenuListenerVtbl = {
 #define NSURICL_THIS(iface) DEFINE_THIS(NSContainer, URIContentListener, iface)
 
 static nsresult NSAPI nsURIContentListener_QueryInterface(nsIURIContentListener *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSURICL_THIS(iface);
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
@@ -1231,7 +1231,7 @@ static const nsIURIContentListenerVtbl nsURIContentListenerVtbl = {
 #define NSEMBWNDS_THIS(iface) DEFINE_THIS(NSContainer, EmbeddingSiteWindow, iface)
 
 static nsresult NSAPI nsEmbeddingSiteWindow_QueryInterface(nsIEmbeddingSiteWindow *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSEMBWNDS_THIS(iface);
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
@@ -1339,7 +1339,7 @@ static const nsIEmbeddingSiteWindowVtbl nsEmbeddingSiteWindowVtbl = {
 #define NSTOOLTIP_THIS(iface) DEFINE_THIS(NSContainer, TooltipListener, iface)
 
 static nsresult NSAPI nsTooltipListener_QueryInterface(nsITooltipListener *iface, nsIIDRef riid,
-                                                       nsQIResult result)
+        void **result)
 {
     NSContainer *This = NSTOOLTIP_THIS(iface);
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
@@ -1391,7 +1391,7 @@ static const nsITooltipListenerVtbl nsTooltipListenerVtbl = {
 #define NSIFACEREQ_THIS(iface) DEFINE_THIS(NSContainer, InterfaceRequestor, iface)
 
 static nsresult NSAPI nsInterfaceRequestor_QueryInterface(nsIInterfaceRequestor *iface,
-                                                          nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSIFACEREQ_THIS(iface);
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
@@ -1410,7 +1410,7 @@ static nsrefcnt NSAPI nsInterfaceRequestor_Release(nsIInterfaceRequestor *iface)
 }
 
 static nsresult NSAPI nsInterfaceRequestor_GetInterface(nsIInterfaceRequestor *iface,
-                                                        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSIFACEREQ_THIS(iface);
 
@@ -1434,7 +1434,7 @@ static const nsIInterfaceRequestorVtbl nsInterfaceRequestorVtbl = {
 #define NSWEAKREF_THIS(iface) DEFINE_THIS(NSContainer, WeakReference, iface)
 
 static nsresult NSAPI nsWeakReference_QueryInterface(nsIWeakReference *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSWEAKREF_THIS(iface);
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);
@@ -1471,7 +1471,7 @@ static const nsIWeakReferenceVtbl nsWeakReferenceVtbl = {
 #define NSSUPWEAKREF_THIS(iface) DEFINE_THIS(NSContainer, SupportsWeakReference, iface)
 
 static nsresult NSAPI nsSupportsWeakReference_QueryInterface(nsISupportsWeakReference *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     NSContainer *This = NSSUPWEAKREF_THIS(iface);
     return nsIWebBrowserChrome_QueryInterface(NSWBCHROME(This), riid, result);

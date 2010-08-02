@@ -69,7 +69,7 @@ static LONG release_listener(nsDocumentEventListener *This)
 #define NSEVENTLIST_THIS(iface) DEFINE_THIS(nsEventListener, DOMEventListener, iface)
 
 static nsresult NSAPI nsDOMEventListener_QueryInterface(nsIDOMEventListener *iface,
-                                                        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     nsEventListener *This = NSEVENTLIST_THIS(iface);
 

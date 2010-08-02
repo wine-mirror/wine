@@ -47,7 +47,7 @@ static const nsIID NS_TOOLTIPTEXTPROVIDER_CID =
     {0x0b666e3e,0x569a,0x462c,{0xa7,0xf0,0xb1,0x6b,0xb1,0x5d,0x42,0xff}};
 
 static nsresult NSAPI nsWindowCreator_QueryInterface(nsIWindowCreator2 *iface, nsIIDRef riid,
-                                               nsQIResult result)
+        void **result)
 {
     *result = NULL;
 
@@ -114,7 +114,7 @@ static const nsIWindowCreator2Vtbl nsWindowCreatorVtbl = {
 static nsIWindowCreator2 nsWindowCreator = { &nsWindowCreatorVtbl };
 
 static nsresult NSAPI nsPromptService_QueryInterface(nsIPromptService *iface,
-                                                     nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     *result = NULL;
 
@@ -280,7 +280,7 @@ static const nsIPromptServiceVtbl PromptServiceVtbl = {
 static nsIPromptService nsPromptService = { &PromptServiceVtbl };
 
 static nsresult NSAPI nsTooltipTextProvider_QueryInterface(nsITooltipTextProvider *iface,
-                                                          nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     *result = NULL;
 
@@ -387,7 +387,7 @@ typedef struct {
 #define NSFACTORY_THIS(iface) DEFINE_THIS(nsServiceFactory, Factory, iface)
 
 static nsresult NSAPI nsServiceFactory_QueryInterface(nsIFactory *iface, nsIIDRef riid,
-                                                    nsQIResult result)
+        void **result)
 {
     nsServiceFactory *This = NSFACTORY_THIS(iface);
 

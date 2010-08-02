@@ -200,7 +200,7 @@ static void add_script_runner(HTMLDocumentNode *This)
 #define NSRUNNABLE_THIS(iface) DEFINE_THIS(HTMLDocumentNode, IRunnable, iface)
 
 static nsresult NSAPI nsRunnable_QueryInterface(nsIRunnable *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     HTMLDocumentNode *This = NSRUNNABLE_THIS(iface);
 
@@ -460,7 +460,7 @@ static const nsIRunnableVtbl nsRunnableVtbl = {
 #define NSDOCOBS_THIS(iface) DEFINE_THIS(HTMLDocumentNode, IDocumentObserver, iface)
 
 static nsresult NSAPI nsDocumentObserver_QueryInterface(nsIDocumentObserver *iface,
-        nsIIDRef riid, nsQIResult result)
+        nsIIDRef riid, void **result)
 {
     HTMLDocumentNode *This = NSDOCOBS_THIS(iface);
 

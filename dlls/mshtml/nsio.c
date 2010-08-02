@@ -313,7 +313,7 @@ static inline BOOL is_http_channel(nsChannel *This)
 
 #define NSCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, HttpChannel, iface)
 
-static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef riid, nsQIResult result)
+static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef riid, void **result)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
@@ -1201,7 +1201,7 @@ static const nsIHttpChannelVtbl nsChannelVtbl = {
 #define NSUPCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, UploadChannel, iface)
 
 static nsresult NSAPI nsUploadChannel_QueryInterface(nsIUploadChannel *iface, nsIIDRef riid,
-                                                     nsQIResult result)
+        void **result)
 {
     nsChannel *This = NSUPCHANNEL_THIS(iface);
     return nsIChannel_QueryInterface(NSCHANNEL(This), riid, result);
@@ -1275,7 +1275,7 @@ static const nsIUploadChannelVtbl nsUploadChannelVtbl = {
 #define NSHTTPINTERNAL_THIS(iface) DEFINE_THIS(nsChannel, IHttpChannelInternal, iface)
 
 static nsresult NSAPI nsHttpChannelInternal_QueryInterface(nsIHttpChannelInternal *iface, nsIIDRef riid,
-        nsQIResult result)
+        void **result)
 {
     nsChannel *This = NSHTTPINTERNAL_THIS(iface);
     return nsIChannel_QueryInterface(NSCHANNEL(This), riid, result);
@@ -1383,7 +1383,7 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
 
 #define NSURI_THIS(iface) DEFINE_THIS(nsWineURI, IURL, iface)
 
-static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, nsQIResult result)
+static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **result)
 {
     nsWineURI *This = NSURI_THIS(iface);
 
@@ -2238,7 +2238,7 @@ typedef struct {
 #define NSPROTHANDLER_THIS(iface) DEFINE_THIS(nsProtocolHandler, ProtocolHandler, iface)
 
 static nsresult NSAPI nsProtocolHandler_QueryInterface(nsIProtocolHandler *iface, nsIIDRef riid,
-        nsQIResult result)
+        void **result)
 {
     nsProtocolHandler *This = NSPROTHANDLER_THIS(iface);
 
@@ -2386,7 +2386,7 @@ static nsIProtocolHandler *create_protocol_handler(nsIProtocolHandler *nshandler
     return NSPROTHANDLER(ret);
 }
 
-static nsresult NSAPI nsIOService_QueryInterface(nsIIOService*,nsIIDRef,nsQIResult);
+static nsresult NSAPI nsIOService_QueryInterface(nsIIOService*,nsIIDRef,void**);
 
 static nsrefcnt NSAPI nsIOService_AddRef(nsIIOService *iface)
 {
@@ -2619,7 +2619,7 @@ static const nsIIOServiceVtbl nsIOServiceVtbl = {
 static nsIIOService nsIOService = { &nsIOServiceVtbl };
 
 static nsresult NSAPI nsNetUtil_QueryInterface(nsINetUtil *iface, nsIIDRef riid,
-                                               nsQIResult result)
+        void **result)
 {
     return nsIIOService_QueryInterface(&nsIOService, riid, result);
 }
@@ -2717,7 +2717,7 @@ static const nsINetUtilVtbl nsNetUtilVtbl = {
 static nsINetUtil nsNetUtil = { &nsNetUtilVtbl };
 
 static nsresult NSAPI nsIOService_QueryInterface(nsIIOService *iface, nsIIDRef riid,
-                                                 nsQIResult result)
+        void **result)
 {
     *result = NULL;
 
@@ -2738,7 +2738,7 @@ static nsresult NSAPI nsIOService_QueryInterface(nsIIOService *iface, nsIIDRef r
 }
 
 static nsresult NSAPI nsIOServiceFactory_QueryInterface(nsIFactory *iface, nsIIDRef riid,
-                                                        nsQIResult result)
+        void **result)
 {
     *result = NULL;
 

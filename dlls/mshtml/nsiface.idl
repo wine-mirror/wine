@@ -42,7 +42,6 @@ typedef nsIID nsCID;
 typedef REFIID nsIIDRef;
 typedef nsIIDRef nsCIDRef;
 
-typedef void** nsQIResult;
 typedef WCHAR PRUnichar;
 typedef ULONG PRUint32;
 typedef LONG PRInt32;
@@ -100,7 +99,7 @@ interface IMoniker;
 ]
 interface nsISupports
 {
-    nsresult QueryInterface(nsIIDRef riid, nsQIResult result);
+    nsresult QueryInterface(nsIIDRef riid, void **result);
     nsrefcnt AddRef();
     nsrefcnt Release();
 }
@@ -189,12 +188,12 @@ interface nsIObserver : nsISupports
 ]
 interface nsIComponentManager : nsISupports
 {
-    nsresult GetClassObject(nsCIDRef aClass, nsIIDRef aIID, nsQIResult result);
-    nsresult GetClassObjectByContractID(const char *aContractID, nsIIDRef aIID, nsQIResult result);
+    nsresult GetClassObject(nsCIDRef aClass, nsIIDRef aIID, void **result);
+    nsresult GetClassObjectByContractID(const char *aContractID, nsIIDRef aIID, void **result);
     nsresult CreateInstance(nsCIDRef aClass, nsISupports *aDelegate, nsIIDRef aIID,
-            nsQIResult result);
+            void **result);
     nsresult CreateInstanceByContractID(const char *aContractID, nsISupports *aDelegate,
-            nsIIDRef aIID, nsQIResult result);
+            nsIIDRef aIID, void **result);
 }
 
 [

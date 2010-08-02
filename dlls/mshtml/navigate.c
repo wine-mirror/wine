@@ -93,7 +93,7 @@ struct BSCallback {
 #define NSINSTREAM_THIS(iface) DEFINE_THIS(nsProtocolStream, InputStream, iface)
 
 static nsresult NSAPI nsInputStream_QueryInterface(nsIInputStream *iface, nsIIDRef riid,
-                                                   nsQIResult result)
+        void **result)
 {
     nsProtocolStream *This = NSINSTREAM_THIS(iface);
 
