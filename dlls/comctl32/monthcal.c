@@ -949,7 +949,7 @@ static void MONTHCAL_PaintFocusAndCircle(const MONTHCAL_INFO *infoPtr, HDC hdc, 
 static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
   const SYSTEMTIME *date = &infoPtr->calendars[calIdx].month;
-  INT prev_month, i, j;
+  INT prev_month, i, j, length;
   RECT r, fill_bk_rect;
   SYSTEMTIME st;
   WCHAR buf[80];
@@ -1004,8 +1004,9 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
     {
       MONTHCAL_GetMinDate(infoPtr, &st);
       mask = 1 << (st.wDay-1);
+      length = MONTHCAL_MonthLength(prev_month, date->wYear);
 
-      while(st.wDay <= MONTHCAL_MonthLength(prev_month, date->wYear))
+      while(st.wDay <= length)
       {
         MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[0] & mask, ps);
         mask <<= 1;
@@ -1036,7 +1037,8 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   st = *date;
   st.wDay = 1;
   mask = 1;
-  while(st.wDay <= MONTHCAL_MonthLength(date->wMonth, date->wYear))
+  length = MONTHCAL_MonthLength(date->wMonth, date->wYear);
+  while(st.wDay <= length)
   {
     MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[1] & mask, ps);
     mask <<= 1;
