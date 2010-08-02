@@ -335,7 +335,10 @@ static HRESULT set_script_prop(IActiveScript *engine, DWORD property, VARIANT *v
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptProperty,
             (void**)&script_prop);
-    ok(hres == S_OK, "Could not get IActiveScriptProperty iface: %08x\n", hres);
+    if(FAILED(hres)) {
+        win_skip("IActiveScriptProperty not supported\n");
+        return E_NOTIMPL;
+    }
 
     hres = IActiveScriptProperty_SetProperty(script_prop, property, NULL, val);
     IActiveScriptProperty_Release(script_prop);
