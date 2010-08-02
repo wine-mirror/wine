@@ -21,6 +21,10 @@
  */
 
 
+#ifndef __GNUC__
+#define __attribute__(X)
+#endif
+
 #ifndef DECLSPEC_NORETURN
 # if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
 #  define DECLSPEC_NORETURN __declspec(noreturn)
@@ -46,7 +50,7 @@ void error(const char* s, ...) DECLSPEC_NORETURN;
 void* xmalloc(size_t size);
 void* xrealloc(void* p, size_t size);
 char *xstrdup( const char *str );
-char* strmake(const char* fmt, ...);
+char* strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 int strendswith(const char* str, const char* end);
 
 typedef struct {
