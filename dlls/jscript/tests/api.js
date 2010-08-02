@@ -1772,10 +1772,16 @@ ok(err.message === "message", "err.message !== 'message'");
 ok(err.toString() === (invokeVersion < 2 ? "[object Error]" : "Error: message"), "err.toString() = " + err.toString());
 err = new Error(123);
 ok(err.number === 123, "err.number = " + err.number);
+err.number = 254;
+ok(err.number === 254, "err.number = " + err.number);
 err = new Error(0, "message");
 ok(err.number === 0, "err.number = " + err.number);
 ok(err.message === "message", "err.message = " + err.message);
 ok(err.description === "message", "err.description = " + err.description);
+err = new Error();
+ok(err.number === 0, "err.number = " + err.number);
+
+ok(!("number" in Error), "number is in Error");
 
 tmp = new Object();
 tmp.toString = function() { return "test"; };

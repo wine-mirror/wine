@@ -29,7 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     DispatchEx dispex;
 
-    VARIANT number;
     VARIANT description;
     VARIANT message;
 } ErrorInstance;
@@ -48,24 +47,6 @@ static inline ErrorInstance *error_from_vdisp(vdisp_t *vdisp)
 static inline ErrorInstance *error_this(vdisp_t *jsthis)
 {
     return is_vclass(jsthis, JSCLASS_ERROR) ? error_from_vdisp(jsthis) : NULL;
-}
-
-static HRESULT Error_number(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
-        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    ErrorInstance *This = error_from_vdisp(jsthis);
-
-    TRACE("\n");
-
-    switch(flags) {
-    case DISPATCH_PROPERTYGET:
-        return VariantCopy(retv, &This->number);
-    case DISPATCH_PROPERTYPUT:
-        return VariantCopy(&This->number, get_arg(dp, 0));
-    default:
-        FIXME("unimplemented flags %x\n", flags);
-        return E_NOTIMPL;
-    }
 }
 
 static HRESULT Error_description(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
@@ -203,7 +184,6 @@ static void Error_destructor(DispatchEx *dispex)
 {
     ErrorInstance *This = (ErrorInstance*)dispex;
 
-    VariantClear(&This->number);
     VariantClear(&This->description);
     VariantClear(&This->message);
     heap_free(This);
@@ -212,7 +192,6 @@ static void Error_destructor(DispatchEx *dispex)
 static const builtin_prop_t Error_props[] = {
     {descriptionW,              Error_description,                  0},
     {messageW,                  Error_message,                      0},
-    {numberW,                   Error_number,                       0},
     {toStringW,                 Error_toString,                     PROPF_METHOD}
 };
 
@@ -228,7 +207,6 @@ static const builtin_info_t Error_info = {
 static const builtin_prop_t ErrorInst_props[] = {
     {descriptionW,              Error_description,                  0},
     {messageW,                  Error_message,                      0},
-    {numberW,                   Error_number,                       0},
 };
 
 static const builtin_info_t ErrorInst_info = {
@@ -265,18 +243,22 @@ static HRESULT alloc_error(script_ctx_t *ctx, DispatchEx *prototype,
 }
 
 static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
-        const UINT *number, const WCHAR *msg, DispatchEx **ret)
+        UINT number, const WCHAR *msg, DispatchEx **ret)
 {
     ErrorInstance *err;
+    VARIANT v;
     HRESULT hres;
 
     hres = alloc_error(ctx, NULL, constr, &err);
     if(FAILED(hres))
         return hres;
 
-    if(number) {
-        V_VT(&err->number) = VT_I4;
-        V_I4(&err->number) = *number;
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = number;
+    hres = jsdisp_propput_name(&err->dispex, numberW, &v, NULL/*FIXME*/, NULL/*FIXME*/);
+    if(FAILED(hres)) {
+        jsdisp_release(&err->dispex);
+        return hres;
     }
 
     V_VT(&err->message) = VT_BSTR;
@@ -297,14 +279,13 @@ static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
 static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, DispatchEx *constr) {
     DispatchEx *err;
-    VARIANT numv;
-    UINT num;
+    UINT num = 0;
     BSTR msg = NULL;
     HRESULT hres;
 
-    V_VT(&numv) = VT_NULL;
-
     if(arg_cnt(dp)) {
+        VARIANT numv;
+
         hres = to_number(ctx, get_arg(dp, 0), ei, &numv);
         if(FAILED(hres) || (V_VT(&numv)==VT_R8 && isnan(V_R8(&numv))))
             hres = to_string(ctx, get_arg(dp, 0), ei, &msg);
@@ -326,10 +307,7 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
     switch(flags) {
     case INVOKE_FUNC:
     case DISPATCH_CONSTRUCT:
-        if(V_VT(&numv) == VT_NULL)
-            hres = create_error(ctx, constr, NULL, msg, &err);
-        else
-            hres = create_error(ctx, constr, &num, msg, &err);
+        hres = create_error(ctx, constr, num, msg, &err);
         SysFreeString(msg);
 
         if(FAILED(hres))
@@ -477,7 +455,7 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
     WARN("%s\n", debugstr_w(buf));
 
     id |= JSCRIPT_ERROR;
-    hres = create_error(ctx, constr, &id, buf, &err);
+    hres = create_error(ctx, constr, id, buf, &err);
     if(FAILED(hres))
         return hres;
 
