@@ -328,6 +328,14 @@ BOOL WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *pcenter, FLOAT radius, CONST
     return TRUE;
 }
 
+HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, CONST LPD3DVERTEXELEMENT9 *declaration,
+                              LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh)
+{
+    FIXME("(%d, %d, %d, %p, %p, %p): stub\n", numfaces, numvertices, options, declaration, device, mesh);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height,
                              FLOAT depth, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
 {
