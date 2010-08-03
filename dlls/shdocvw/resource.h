@@ -43,6 +43,9 @@
 #define ID_BROWSE_ADDFAV               1200
 #define ID_BROWSE_HOME                 1201
 
+#define ID_BROWSE_BAR_STD              1300
+#define ID_BROWSE_BAR_ADDR             1301
+
 #define ID_BROWSE_GOTOFAV_FIRST        2000
 #define ID_BROWSE_GOTOFAV_MAX          65000
 

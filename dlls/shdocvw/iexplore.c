@@ -78,9 +78,16 @@ void adjust_ie_docobj_rect(HWND frame, RECT* rc)
     }
 }
 
+static HMENU get_tb_menu(HMENU menu)
+{
+    HMENU menu_view = GetSubMenu(menu, 1);
+
+    return GetSubMenu(menu_view, 0);
+}
+
 static HMENU get_fav_menu(HMENU menu)
 {
-    return GetSubMenu(menu, 1);
+    return GetSubMenu(menu, 2);
 }
 
 static LPWSTR get_fav_url_from_id(HMENU menu, UINT id)
@@ -234,11 +241,80 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
     FindClose(findhandle);
 }
 
+static void add_tbs_to_menu(HMENU menu)
+{
+    HUSKEY toolbar_handle;
+    WCHAR toolbar_key[] = {'S','o','f','t','w','a','r','e','\\',
+                           'M','i','c','r','o','s','o','f','t','\\',
+                           'I','n','t','e','r','n','e','t',' ',
+                           'E','x','p','l','o','r','e','r','\\',
+                           'T','o','o','l','b','a','r',0};
+
+    if(SHRegOpenUSKeyW(toolbar_key, KEY_READ, NULL, &toolbar_handle, TRUE) == ERROR_SUCCESS)
+    {
+        HUSKEY classes_handle;
+        WCHAR classes_key[] = {'S','o','f','t','w','a','r','e','\\',
+                               'C','l','a','s','s','e','s','\\','C','L','S','I','D',0};
+        WCHAR guid[39];
+        DWORD value_len = sizeof(guid)/sizeof(guid[0]);
+        int i;
+
+        if(SHRegOpenUSKeyW(classes_key, KEY_READ, NULL, &classes_handle, TRUE) != ERROR_SUCCESS)
+        {
+            SHRegCloseUSKey(toolbar_handle);
+            ERR("Failed to open key %s\n", debugstr_w(classes_key));
+            return;
+        }
+
+        for(i = 0; SHRegEnumUSValueW(toolbar_handle, i, guid, &value_len, NULL, NULL, NULL, SHREGENUM_HKLM) == ERROR_SUCCESS; i++)
+        {
+            WCHAR tb_name[100];
+            DWORD tb_name_len = sizeof(tb_name)/sizeof(tb_name[0]);
+            HUSKEY tb_class_handle;
+            MENUITEMINFOW item;
+            LSTATUS ret;
+            value_len = sizeof(guid)/sizeof(guid[0]);
+
+            if(lstrlenW(guid) != 38)
+            {
+                TRACE("Found invalid IE toolbar entry: %s\n", debugstr_w(guid));
+                continue;
+            }
+
+            if(SHRegOpenUSKeyW(guid, KEY_READ, classes_handle, &tb_class_handle, TRUE) != ERROR_SUCCESS)
+            {
+                ERR("Failed to get class info for %s\n", debugstr_w(guid));
+                continue;
+            }
+
+            ret = SHRegQueryUSValueW(tb_class_handle, NULL, NULL, tb_name, &tb_name_len, TRUE, NULL, 0);
+
+            SHRegCloseUSKey(tb_class_handle);
+
+            if(ret != ERROR_SUCCESS)
+            {
+                ERR("Failed to get toolbar name for %s\n", debugstr_w(guid));
+                continue;
+            }
+
+            item.cbSize = sizeof(item);
+            item.fMask = MIIM_STRING;
+            item.dwTypeData = tb_name;
+            InsertMenuItemW(menu, GetMenuItemCount(menu), TRUE, &item);
+        }
+
+        SHRegCloseUSKey(classes_handle);
+        SHRegCloseUSKey(toolbar_handle);
+    }
+}
+
 static HMENU create_ie_menu(void)
 {
     HMENU menu = LoadMenuW(shdocvw_hinstance, MAKEINTRESOURCEW(IDR_BROWSE_MAIN_MENU));
     HMENU favmenu = get_fav_menu(menu);
     WCHAR path[MAX_PATH];
+
+    add_tbs_to_menu(get_tb_menu(menu));
 
     if(SHGetFolderPathW(NULL, CSIDL_COMMON_FAVORITES, NULL, SHGFP_TYPE_CURRENT, path) == S_OK)
         add_favs_to_menu(favmenu, favmenu, path);
