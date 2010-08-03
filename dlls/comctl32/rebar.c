@@ -2661,7 +2661,7 @@ REBAR_SetBandInfoT(REBAR_INFO *infoPtr, INT iBand, const REBARBANDINFOW *lprbbi,
 
 
 static LRESULT
-REBAR_SetBarInfo (REBAR_INFO *infoPtr, LPREBARINFO lpInfo)
+REBAR_SetBarInfo (REBAR_INFO *infoPtr, const REBARINFO *lpInfo)
 {
     REBAR_BAND *lpBand;
     UINT i;

@@ -2620,7 +2620,7 @@ static inline LRESULT TAB_Paint (TAB_INFO *infoPtr, HDC hdcPaint)
 }
 
 static LRESULT
-TAB_InsertItemT (TAB_INFO *infoPtr, INT iItem, TCITEMW *pti, BOOL bUnicode)
+TAB_InsertItemT (TAB_INFO *infoPtr, INT iItem, const TCITEMW *pti, BOOL bUnicode)
 {
   TAB_ITEM *item;
   RECT rect;

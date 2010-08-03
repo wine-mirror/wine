@@ -5829,10 +5829,10 @@ TREEVIEW_Unregister(void)
 /* Tree Verification ****************************************************/
 
 static inline void
-TREEVIEW_VerifyChildren(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item);
+TREEVIEW_VerifyChildren(TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item);
 
 static inline void TREEVIEW_VerifyItemCommon(TREEVIEW_INFO *infoPtr,
-					     TREEVIEW_ITEM *item)
+					     const TREEVIEW_ITEM *item)
 {
     assert(infoPtr != NULL);
     assert(item != NULL);
@@ -5871,7 +5871,7 @@ static inline void TREEVIEW_VerifyItemCommon(TREEVIEW_INFO *infoPtr,
 }
 
 static inline void
-TREEVIEW_VerifyItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
+TREEVIEW_VerifyItem(TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
 {
     assert(item != NULL);
 
@@ -5887,9 +5887,9 @@ TREEVIEW_VerifyItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 }
 
 static inline void
-TREEVIEW_VerifyChildren(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
+TREEVIEW_VerifyChildren(TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *item)
 {
-    TREEVIEW_ITEM *child;
+    const TREEVIEW_ITEM *child;
     assert(item != NULL);
 
     for (child = item->firstChild; child != NULL; child = child->nextSibling)
