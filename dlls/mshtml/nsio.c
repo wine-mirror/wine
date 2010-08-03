@@ -1323,16 +1323,30 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
     nsChannel *This = NSUPCHANNEL_THIS(iface);
     const char *content_type;
 
+    static const WCHAR content_typeW[] =
+        {'C','o','n','t','e','n','t','-','T','y','p','e',0};
+
     TRACE("(%p)->(%p %s %d)\n", This, aStream, debugstr_nsacstr(aContentType), aContentLength);
+
+    This->parse_stream = TRUE;
+    if(aContentType) {
+        nsACString_GetData(aContentType, &content_type);
+        if(*content_type) {
+            WCHAR *ct;
+
+            ct = heap_strdupAtoW(content_type);
+            if(!ct)
+                return NS_ERROR_UNEXPECTED;
+
+            set_http_header(&This->request_headers, content_typeW,
+                    sizeof(content_typeW)/sizeof(WCHAR), ct, strlenW(ct));
+            heap_free(ct);
+            This->parse_stream = FALSE;
+        }
+    }
 
     if(This->post_data_stream)
         nsIInputStream_Release(This->post_data_stream);
-
-    if(aContentType) {
-        nsACString_GetData(aContentType, &content_type);
-        if(*content_type)
-            FIXME("Unsupported aContentType argument: %s\n", debugstr_a(content_type));
-    }
 
     if(aContentLength != -1)
         FIXME("Unsupported acontentLength = %d\n", aContentLength);

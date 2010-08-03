@@ -462,6 +462,7 @@ typedef struct {
 
     nsWineURI *uri;
     nsIInputStream *post_data_stream;
+    BOOL parse_stream;
     nsILoadGroup *load_group;
     nsIInterfaceRequestor *notif_callback;
     nsISupports *owner;

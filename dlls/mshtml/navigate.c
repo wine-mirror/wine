@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Jacek Caban for CodeWeavers
+ * Copyright 2006-2010 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -679,20 +679,48 @@ static HRESULT parse_headers(const WCHAR *headers, struct list *headers_list)
     return S_OK;
 }
 
+static HRESULT read_post_data_stream(nsIInputStream *stream, HGLOBAL *post_data,
+        ULONG *post_data_len)
+{
+    PRUint32 data_len = 0, available = 0;
+    char *data;
+    nsresult nsres;
+
+    nsres =  nsIInputStream_Available(stream, &available);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    data = GlobalAlloc(0, available+1);
+    if(!data)
+        return E_OUTOFMEMORY;
+
+    nsres = nsIInputStream_Read(stream, data, available, &data_len);
+    if(NS_FAILED(nsres)) {
+        GlobalFree(data);
+        return E_FAIL;
+    }
+
+    data[data_len] = 0;
+    *post_data = data;
+    *post_data_len = data_len;
+    return S_OK;
+}
+
 static void parse_post_data(nsIInputStream *post_data_stream, LPWSTR *headers_ret,
                             HGLOBAL *post_data_ret, ULONG *post_data_len_ret)
 {
-    PRUint32 post_data_len = 0, available = 0;
+    ULONG post_data_len;
     HGLOBAL post_data = NULL;
     LPWSTR headers = NULL;
     DWORD headers_len = 0, len;
     const char *ptr, *ptr2, *post_data_end;
-
-    nsIInputStream_Available(post_data_stream, &available);
-    post_data = GlobalAlloc(0, available+1);
-    nsIInputStream_Read(post_data_stream, post_data, available, &post_data_len);
+    HRESULT hres;
     
-    TRACE("post_data = %s\n", debugstr_an(post_data, post_data_len));
+    hres = read_post_data_stream(post_data_stream, &post_data, &post_data_len);
+    if(FAILED(hres)) {
+        FIXME("read_post_data_stream failed: %08x\n", hres);
+        return;
+    }
 
     ptr = ptr2 = post_data;
     post_data_end = (const char*)post_data+post_data_len;
@@ -1088,20 +1116,27 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
 {
     nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    HRESULT hres;
 
     if(This->nschannel && This->nschannel->post_data_stream) {
-        WCHAR *headers;
-        HRESULT hres;
+        if(This->nschannel->parse_stream) {
+            WCHAR *headers;
 
-        parse_post_data(This->nschannel->post_data_stream, &headers, &This->bsc.post_data, &This->bsc.post_data_len);
+            parse_post_data(This->nschannel->post_data_stream, &headers,
+                    &This->bsc.post_data, &This->bsc.post_data_len);
 
-        TRACE("headers = %s post_data = %s\n", debugstr_w(headers),
-              debugstr_an(This->bsc.post_data, This->bsc.post_data_len));
+            hres = parse_headers(headers, &This->nschannel->request_headers);
+            heap_free(headers);
+            if(FAILED(hres))
+                return hres;
+        }else {
+            hres = read_post_data_stream(This->nschannel->post_data_stream,
+                    &This->bsc.post_data, &This->bsc.post_data_len);
+            if(FAILED(hres))
+                return hres;
+        }
 
-        hres = parse_headers(headers, &This->nschannel->request_headers);
-        heap_free(headers);
-        if(FAILED(hres))
-            return hres;
+        TRACE("post_data = %s\n", debugstr_an(This->bsc.post_data, This->bsc.post_data_len));
     }
 
     return S_OK;
