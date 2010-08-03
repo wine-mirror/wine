@@ -550,7 +550,7 @@ typedef int (WINAPI *LPFN_GETSOCKOPT)(SOCKET,int,int,char*,int*);
 typedef ULONG (WINAPI *LPFN_HTONL)(ULONG);
 typedef WS(u_short) (WINAPI *LPFN_HTONS)(WS(u_short));
 typedef ULONG (WINAPI *LPFN_INET_ADDR)(const char*);
-typedef char* (WINAPI *LPFN_INET_NTOA)(struct WS(in_addr);
+typedef char* (WINAPI *LPFN_INET_NTOA)(struct WS(in_addr));
 typedef int (WINAPI *LPFN_IOCTLSOCKET)(SOCKET,LONG,ULONG*);
 typedef int (WINAPI *LPFN_LISTEN)(SOCKET,int);
 typedef ULONG (WINAPI *LPFN_NTOHL)(ULONG);
