@@ -900,10 +900,71 @@ static void test_extra_values(void)
     }
 }
 
+static void test_GetClassInfo(void)
+{
+    static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
+    WNDCLASSA wc;
+    WNDCLASSEXA wcx;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoA(0, "static", &wc);
+    ok(ret, "GetClassInfoA() error %d\n", GetLastError());
+
+if (0) { /* crashes under XP */
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoA(0, "static", NULL);
+    ok(ret, "GetClassInfoA() error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoW(0, staticW, NULL);
+    ok(ret, "GetClassInfoW() error %d\n", GetLastError());
+}
+
+    wcx.cbSize = sizeof(wcx);
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoExA(0, "static", &wcx);
+    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoExA(0, "static", NULL);
+    ok(!ret, "GetClassInfoExA() should fail\n");
+    ok(GetLastError() == ERROR_NOACCESS ||
+       broken(GetLastError() == 0xdeadbeef), /* win9x */
+       "expected ERROR_NOACCESS, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoExW(0, staticW, NULL);
+    ok(!ret, "GetClassInfoExW() should fail\n");
+    ok(GetLastError() == ERROR_NOACCESS ||
+       broken(GetLastError() == 0xdeadbeef) /* NT4 */ ||
+       broken(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), /* win9x */
+       "expected ERROR_NOACCESS, got %d\n", GetLastError());
+
+    wcx.cbSize = 0;
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoExA(0, "static", &wcx);
+    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+    ok(wcx.cbSize == 0, "expected 0, got %u\n", wcx.cbSize);
+
+    wcx.cbSize = sizeof(wcx) - 1;
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoExA(0, "static", &wcx);
+    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+    ok(wcx.cbSize == sizeof(wcx) - 1, "expected sizeof(wcx)-1, got %u\n", wcx.cbSize);
+
+    wcx.cbSize = sizeof(wcx) + 1;
+    SetLastError(0xdeadbeef);
+    ret = GetClassInfoExA(0, "static", &wcx);
+    ok(ret, "GetClassInfoExA() error %d\n", GetLastError());
+    ok(wcx.cbSize == sizeof(wcx) + 1, "expected sizeof(wcx)+1, got %u\n", wcx.cbSize);
+}
+
 START_TEST(class)
 {
     HANDLE hInstance = GetModuleHandleA( NULL );
 
+    test_GetClassInfo();
     test_extra_values();
 
     if (!GetModuleHandleW(0))
