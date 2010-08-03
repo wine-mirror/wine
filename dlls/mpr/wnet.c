@@ -638,7 +638,7 @@ DWORD WINAPI WNetOpenEnumA( DWORD dwScope, DWORD dwType, DWORD dwUsage,
         ret = WN_BAD_POINTER;
     else if (!providerTable || providerTable->numProviders == 0)
     {
-        lphEnum = NULL;
+        *lphEnum = NULL;
         ret = WN_NO_NETWORK;
     }
     else
@@ -730,7 +730,7 @@ DWORD WINAPI WNetOpenEnumW( DWORD dwScope, DWORD dwType, DWORD dwUsage,
         ret = WN_BAD_POINTER;
     else if (!providerTable || providerTable->numProviders == 0)
     {
-        lphEnum = NULL;
+        *lphEnum = NULL;
         ret = WN_NO_NETWORK;
     }
     else
