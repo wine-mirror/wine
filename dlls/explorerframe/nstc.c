@@ -37,7 +37,50 @@ WINE_DEFAULT_DEBUG_CHANNEL(nstc);
 typedef struct {
     const INameSpaceTreeControl2Vtbl *lpVtbl;
     LONG ref;
+
+    HWND hwnd_main;
+
+    NSTCSTYLE style;
 } NSTC2Impl;
+
+/*************************************************************************
+ * NamespaceTree window functions
+ */
+static LRESULT create_namespacetree(HWND hWnd, CREATESTRUCTW *crs)
+{
+    NSTC2Impl *This = crs->lpCreateParams;
+
+    TRACE("%p (%p)\n", This, crs);
+    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LPARAM)This);
+    This->hwnd_main = hWnd;
+
+    INameSpaceTreeControl_AddRef((INameSpaceTreeControl*)This);
+
+    return TRUE;
+}
+
+static LRESULT destroy_namespacetree(NSTC2Impl *This)
+{
+    TRACE("%p\n", This);
+
+    /* This reference was added in create_namespacetree */
+    INameSpaceTreeControl_Release((INameSpaceTreeControl*)This);
+    return TRUE;
+}
+
+static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
+                                      WPARAM wParam, LPARAM lParam)
+{
+    NSTC2Impl *This = (NSTC2Impl*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+
+    switch(uMessage)
+    {
+    case WM_NCCREATE:         return create_namespacetree(hWnd, (CREATESTRUCTW*)lParam);
+    case WM_DESTROY:          return destroy_namespacetree(This);
+    default:                  return DefWindowProcW(hWnd, uMessage, wParam, lParam);
+    }
+    return 0;
+}
 
 /**************************************************************************
  * INameSpaceTreeControl2 Implementation
@@ -100,8 +143,54 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
                                          NSTCSTYLE nstcsFlags)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p, %p, %x)\n", This, hwndParent, prc, nstcsFlags);
-    return E_NOTIMPL;
+    WNDCLASSW wc;
+    DWORD window_style, window_ex_style;
+    RECT rc;
+    static const WCHAR NSTC2_CLASS_NAME[] =
+        {'N','a','m','e','s','p','a','c','e','T','r','e','e',
+         'C','o','n','t','r','o','l',0};
+
+    TRACE("%p (%p, %p, %x)\n", This, hwndParent, prc, nstcsFlags);
+
+    This->style = nstcsFlags;
+
+    if(!GetClassInfoW(explorerframe_hinstance, NSTC2_CLASS_NAME, &wc))
+    {
+        wc.style            = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc      = NSTC2_WndProc;
+        wc.cbClsExtra       = 0;
+        wc.cbWndExtra       = 0;
+        wc.hInstance        = explorerframe_hinstance;
+        wc.hIcon            = 0;
+        wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+        wc.hbrBackground    = (HBRUSH)(COLOR_WINDOW + 1);
+        wc.lpszMenuName     = NULL;
+        wc.lpszClassName    = NSTC2_CLASS_NAME;
+
+        if (!RegisterClassW(&wc)) return E_FAIL;
+    }
+
+    /* NSTCS_TABSTOP and NSTCS_BORDER affects the host window */
+    window_style = WS_VISIBLE | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS |
+        (nstcsFlags & NSTCS_BORDER ? WS_BORDER : 0);
+    window_ex_style = nstcsFlags & NSTCS_TABSTOP ? WS_EX_CONTROLPARENT : 0;
+
+    if(prc)
+        CopyRect(&rc, prc);
+    else
+        rc.left = rc.right = rc.top = rc.bottom = 0;
+
+    This->hwnd_main = CreateWindowExW(window_ex_style, NSTC2_CLASS_NAME, NULL, window_style,
+                                      rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+                                      hwndParent, 0, explorerframe_hinstance, This);
+
+    if(!This->hwnd_main)
+    {
+        ERR("Failed to create the window.\n");
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnTreeAdvise(INameSpaceTreeControl2* iface,

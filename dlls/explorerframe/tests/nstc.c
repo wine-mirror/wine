@@ -34,7 +34,10 @@ static HWND hwnd;
 static BOOL test_initialization(void)
 {
     INameSpaceTreeControl *pnstc;
+    IUnknown *punk;
+    LONG lres;
     HRESULT hr;
+    RECT rc;
 
     hr = CoCreateInstance(&CLSID_NamespaceTreeControl, NULL, CLSCTX_INPROC_SERVER,
                           &IID_INameSpaceTreeControl, (void**)&pnstc);
@@ -44,7 +47,48 @@ static BOOL test_initialization(void)
         return FALSE;
     }
 
-    INameSpaceTreeControl_Release(pnstc);
+    hr = INameSpaceTreeControl_Initialize(pnstc, NULL, NULL, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_TLW_WITH_WSCHILD), "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_Initialize(pnstc, (HWND)0xDEADBEEF, NULL, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Got (0x%08x)\n", hr);
+
+    ZeroMemory(&rc, sizeof(RECT));
+    hr = INameSpaceTreeControl_Initialize(pnstc, NULL, &rc, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_TLW_WITH_WSCHILD), "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_Initialize(pnstc, (HWND)0xDEADBEEF, &rc, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_WINDOW_HANDLE), "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_Initialize(pnstc, hwnd, NULL, 0);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
+    /* Some "random" interfaces */
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceObject, (void**)&punk);
+    ok(hr == E_NOINTERFACE || hr == S_OK /* vista, w2k8 */, "Got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceActiveObject, (void**)&punk);
+    ok(hr == E_NOINTERFACE || hr == S_OK /* vista, w2k8 */, "Got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceObjectWindowless, (void**)&punk);
+    ok(hr == E_NOINTERFACE || hr == S_OK /* vista, w2k8 */, "Got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceUIWindow, (void**)&punk);
+    ok(hr == E_NOINTERFACE, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceFrame, (void**)&punk);
+    ok(hr == E_NOINTERFACE, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceSite, (void**)&punk);
+    ok(hr == E_NOINTERFACE, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceSiteEx, (void**)&punk);
+    ok(hr == E_NOINTERFACE, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceSiteWindowless, (void**)&punk);
+    ok(hr == E_NOINTERFACE, "Got (0x%08x)\n", hr);
+
+    /* On windows, the reference count won't go to zero until the
+     * window is destroyed. */
+    lres = INameSpaceTreeControl_Release(pnstc);
+    ok(lres, "lres was %d\n", lres);
 
     return TRUE;
 }
