@@ -655,7 +655,7 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
 }
 
 HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, IWineD3DSurfaceImpl **rts,
-        UINT rect_count, const WINED3DRECT *rects, DWORD flags, WINED3DCOLOR color, float depth, DWORD stencil)
+        UINT rect_count, const WINED3DRECT *rects, DWORD flags, const float color[4], float depth, DWORD stencil)
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
     IWineD3DSurfaceImpl *depth_stencil = device->depth_stencil;
@@ -741,7 +741,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
-        glClearColor(D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color));
+        glClearColor(color[0], color[1], color[2], color[3]);
         checkGLcall("glClearColor");
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
     }
@@ -4576,12 +4576,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count,
-        const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil)
+        const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR color, float Z, DWORD Stencil)
 {
+    const float c[] = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    TRACE("(%p) Count (%d), pRects (%p), Flags (%x), Color (0x%08x), Z (%f), Stencil (%d)\n", This,
-          Count, pRects, Flags, Color, Z, Stencil);
+    TRACE("(%p) Count (%d), pRects (%p), Flags (%x), color (0x%08x), Z (%f), Stencil (%d)\n", This,
+          Count, pRects, Flags, color, Z, Stencil);
 
     if (Flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL) && !This->depth_stencil)
     {
@@ -4591,7 +4592,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     }
 
     return device_clear_render_targets(This, This->adapter->gl_info.limits.buffers,
-            This->render_targets, Count, pRects, Flags, Color, Z, Stencil);
+            This->render_targets, Count, pRects, Flags, c, Z, Stencil);
 }
 
 /*****
