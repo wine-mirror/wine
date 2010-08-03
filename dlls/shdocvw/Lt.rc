@@ -28,7 +28,7 @@ STYLE DS_MODALFRAME | WS_CAPTION
 CAPTION "Atverti URL"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT "Nurodykite URL, kurį norite atverti su interneto naršykle",-1,30, 5, 150,15
+    LTEXT "Nurodykite URL, kurį norite atverti su interneto naršykle",-1 ,30, 5, 150, 16
     LTEXT "Atverti:", -1, 2, 32, 25, 15
     EDITTEXT IDC_BROWSE_OPEN_URL, 30, 30, 160, 13
     DEFPUSHBUTTON "&Gerai", IDOK, 30, 50, 50, 15
@@ -52,6 +52,14 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Spaudinio pe&ržiūra...",      ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&Savybės...",                 ID_BROWSE_PROPERTIES
+    }
+    POPUP "&Rodymas"
+    {
+        POPUP "&Įrankių juosta"
+        {
+            MENUITEM "Į&prastinė juosta"        ID_BROWSE_BAR_STD
+            MENUITEM "&Adreso juosta"           ID_BROWSE_BAR_ADDR
+        }
     }
     POPUP "&Adresynas"
     {
