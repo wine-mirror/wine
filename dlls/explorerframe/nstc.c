@@ -39,9 +39,65 @@ typedef struct {
     LONG ref;
 
     HWND hwnd_main;
+    HWND hwnd_tv;
 
     NSTCSTYLE style;
 } NSTC2Impl;
+
+static const DWORD unsupported_styles =
+    NSTCS_SINGLECLICKEXPAND | NSTCS_NOREPLACEOPEN | NSTCS_NOORDERSTREAM | NSTCS_FAVORITESMODE |
+    NSTCS_EMPTYTEXT | NSTCS_ALLOWJUNCTIONS | NSTCS_SHOWTABSBUTTON | NSTCS_SHOWDELETEBUTTON |
+    NSTCS_SHOWREFRESHBUTTON | NSTCS_SPRINGEXPAND | NSTCS_RICHTOOLTIP | NSTCS_NOINDENTCHECKS;
+
+/*************************************************************************
+ * NamespaceTree helper functions
+ */
+static DWORD treeview_style_from_nstcs(NSTC2Impl *This, NSTCSTYLE nstcs,
+                                       NSTCSTYLE nstcs_mask, DWORD *new_style)
+{
+    DWORD old_style, tv_mask = 0;
+    TRACE("%p, %x, %x, %p\n", This, nstcs, nstcs_mask, new_style);
+
+    if(This->hwnd_tv)
+        old_style = GetWindowLongPtrW(This->hwnd_tv, GWL_STYLE);
+    else
+        old_style = /* The default */
+            WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
+            WS_TABSTOP | TVS_NOHSCROLL | TVS_NONEVENHEIGHT | TVS_INFOTIP |
+            TVS_EDITLABELS | TVS_TRACKSELECT;
+
+    if(nstcs_mask & NSTCS_HASEXPANDOS)         tv_mask |= TVS_HASBUTTONS;
+    if(nstcs_mask & NSTCS_HASLINES)            tv_mask |= TVS_HASLINES;
+    if(nstcs_mask & NSTCS_FULLROWSELECT)       tv_mask |= TVS_FULLROWSELECT;
+    if(nstcs_mask & NSTCS_HORIZONTALSCROLL)    tv_mask |= TVS_NOHSCROLL;
+    if(nstcs_mask & NSTCS_ROOTHASEXPANDO)      tv_mask |= TVS_LINESATROOT;
+    if(nstcs_mask & NSTCS_SHOWSELECTIONALWAYS) tv_mask |= TVS_SHOWSELALWAYS;
+    if(nstcs_mask & NSTCS_NOINFOTIP)           tv_mask |= TVS_INFOTIP;
+    if(nstcs_mask & NSTCS_EVENHEIGHT)          tv_mask |= TVS_NONEVENHEIGHT;
+    if(nstcs_mask & NSTCS_DISABLEDRAGDROP)     tv_mask |= TVS_DISABLEDRAGDROP;
+    if(nstcs_mask & NSTCS_NOEDITLABELS)        tv_mask |= TVS_EDITLABELS;
+    if(nstcs_mask & NSTCS_CHECKBOXES)          tv_mask |= TVS_CHECKBOXES;
+
+    *new_style = 0;
+
+    if(nstcs & NSTCS_HASEXPANDOS)         *new_style |= TVS_HASBUTTONS;
+    if(nstcs & NSTCS_HASLINES)            *new_style |= TVS_HASLINES;
+    if(nstcs & NSTCS_FULLROWSELECT)       *new_style |= TVS_FULLROWSELECT;
+    if(!(nstcs & NSTCS_HORIZONTALSCROLL)) *new_style |= TVS_NOHSCROLL;
+    if(nstcs & NSTCS_ROOTHASEXPANDO)      *new_style |= TVS_LINESATROOT;
+    if(nstcs & NSTCS_SHOWSELECTIONALWAYS) *new_style |= TVS_SHOWSELALWAYS;
+    if(!(nstcs & NSTCS_NOINFOTIP))        *new_style |= TVS_INFOTIP;
+    if(!(nstcs & NSTCS_EVENHEIGHT))       *new_style |= TVS_NONEVENHEIGHT;
+    if(nstcs & NSTCS_DISABLEDRAGDROP)     *new_style |= TVS_DISABLEDRAGDROP;
+    if(!(nstcs & NSTCS_NOEDITLABELS))     *new_style |= TVS_EDITLABELS;
+    if(nstcs & NSTCS_CHECKBOXES)          *new_style |= TVS_CHECKBOXES;
+
+    *new_style = (old_style & ~tv_mask) | (*new_style & tv_mask);
+
+    TRACE("old: %08x, new: %08x\n", old_style, *new_style);
+
+    return old_style^*new_style;
+}
 
 /*************************************************************************
  * NamespaceTree window functions
@@ -49,12 +105,63 @@ typedef struct {
 static LRESULT create_namespacetree(HWND hWnd, CREATESTRUCTW *crs)
 {
     NSTC2Impl *This = crs->lpCreateParams;
+    HIMAGELIST ShellSmallIconList;
+    DWORD treeview_style, treeview_ex_style;
 
     TRACE("%p (%p)\n", This, crs);
     SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LPARAM)This);
     This->hwnd_main = hWnd;
 
+    treeview_style_from_nstcs(This, This->style, 0xFFFFFFFF, &treeview_style);
+
+    This->hwnd_tv = CreateWindowExW(0, WC_TREEVIEWW, NULL, treeview_style,
+                                    0, 0, crs->cx, crs->cy,
+                                    hWnd, NULL, explorerframe_hinstance, NULL);
+
+    if(!This->hwnd_tv)
+    {
+        ERR("Failed to create treeview!\n");
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    treeview_ex_style = TVS_EX_DRAWIMAGEASYNC | TVS_EX_RICHTOOLTIP |
+        TVS_EX_DOUBLEBUFFER | TVS_EX_NOSINGLECOLLAPSE;
+
+    if(This->style & NSTCS_AUTOHSCROLL)
+        treeview_ex_style |= TVS_EX_AUTOHSCROLL;
+    if(This->style & NSTCS_FADEINOUTEXPANDOS)
+        treeview_ex_style |= TVS_EX_FADEINOUTEXPANDOS;
+    if(This->style & NSTCS_PARTIALCHECKBOXES)
+        treeview_ex_style |= TVS_EX_PARTIALCHECKBOXES;
+    if(This->style & NSTCS_EXCLUSIONCHECKBOXES)
+        treeview_ex_style |= TVS_EX_EXCLUSIONCHECKBOXES;
+    if(This->style & NSTCS_DIMMEDCHECKBOXES)
+        treeview_ex_style |= TVS_EX_DIMMEDCHECKBOXES;
+
+    SendMessageW(This->hwnd_tv, TVM_SETEXTENDEDSTYLE, treeview_ex_style, 0xffff);
+
+    if(Shell_GetImageLists(NULL, &ShellSmallIconList))
+    {
+        SendMessageW(This->hwnd_tv, TVM_SETIMAGELIST,
+                     (WPARAM)TVSIL_NORMAL, (LPARAM)ShellSmallIconList);
+    }
+    else
+    {
+        ERR("Failed to get the System Image List.\n");
+    }
+
     INameSpaceTreeControl_AddRef((INameSpaceTreeControl*)This);
+
+    return TRUE;
+}
+
+static LRESULT resize_namespacetree(NSTC2Impl *This)
+{
+    RECT rc;
+    TRACE("%p\n", This);
+
+    GetClientRect(This->hwnd_main, &rc);
+    MoveWindow(This->hwnd_tv, 0, 0, rc.right-rc.left, rc.bottom-rc.top, TRUE);
 
     return TRUE;
 }
@@ -76,6 +183,7 @@ static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
     switch(uMessage)
     {
     case WM_NCCREATE:         return create_namespacetree(hWnd, (CREATESTRUCTW*)lParam);
+    case WM_SIZE:             return resize_namespacetree(This);
     case WM_DESTROY:          return destroy_namespacetree(This);
     default:                  return DefWindowProcW(hWnd, uMessage, wParam, lParam);
     }
@@ -151,6 +259,10 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
          'C','o','n','t','r','o','l',0};
 
     TRACE("%p (%p, %p, %x)\n", This, hwndParent, prc, nstcsFlags);
+
+    if(nstcsFlags & unsupported_styles)
+        FIXME("0x%08x contains the unsupported style(s) 0x%08x\n",
+              nstcsFlags, nstcsFlags & unsupported_styles);
 
     This->style = nstcsFlags;
 
