@@ -9,6 +9,7 @@
 DLLFLAGS = @DLLFLAGS@
 DEFS     = -D__WINESRC__ $(EXTRADEFS)
 INSTALLDIRS = $(DESTDIR)$(dlldir)
+MAKEDEPFLAGS = -xo -xcross.o
 
 @MAKE_RULES@
 
