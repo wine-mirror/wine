@@ -464,6 +464,7 @@ typedef struct {
     char *charset;
     PRUint32 response_status;
     struct list response_headers;
+    struct list request_headers;
     UINT url_scheme;
 } nsChannel;
 

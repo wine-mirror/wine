@@ -465,6 +465,7 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIURI_Release(This->original_uri);
 
         free_http_headers(&This->response_headers);
+        free_http_headers(&This->request_headers);
 
         heap_free(This->content_type);
         heap_free(This->charset);
@@ -2611,6 +2612,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret->ref = 1;
     ret->uri = wine_uri;
     list_init(&ret->response_headers);
+    list_init(&ret->request_headers);
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;

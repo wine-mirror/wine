@@ -1090,9 +1090,18 @@ static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
     nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
 
     if(This->nschannel && This->nschannel->post_data_stream) {
-        parse_post_data(This->nschannel->post_data_stream, &This->bsc.headers, &This->bsc.post_data, &This->bsc.post_data_len);
-        TRACE("headers = %s post_data = %s\n", debugstr_w(This->bsc.headers),
+        WCHAR *headers;
+        HRESULT hres;
+
+        parse_post_data(This->nschannel->post_data_stream, &headers, &This->bsc.post_data, &This->bsc.post_data_len);
+
+        TRACE("headers = %s post_data = %s\n", debugstr_w(headers),
               debugstr_an(This->bsc.post_data, This->bsc.post_data_len));
+
+        hres = parse_headers(headers, &This->nschannel->request_headers);
+        heap_free(headers);
+        if(FAILED(hres))
+            return hres;
     }
 
     return S_OK;
@@ -1174,7 +1183,51 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
 
 static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **additional_headers)
 {
-    return S_FALSE;
+    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    http_header_t *iter;
+    DWORD len = 0;
+    WCHAR *ptr;
+
+    static const WCHAR content_lengthW[] =
+        {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0};
+
+    if(!This->nschannel)
+        return S_FALSE;
+
+    LIST_FOR_EACH_ENTRY(iter, &This->nschannel->request_headers, http_header_t, entry) {
+        if(strcmpW(iter->header, content_lengthW))
+            len += strlenW(iter->header) + 2 /* ": " */ + strlenW(iter->data) + 2 /* "\r\n" */;
+    }
+
+    if(!len)
+        return S_OK;
+
+    *additional_headers = ptr = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+    if(!ptr)
+        return E_OUTOFMEMORY;
+
+    LIST_FOR_EACH_ENTRY(iter, &This->nschannel->request_headers, http_header_t, entry) {
+        if(!strcmpW(iter->header, content_lengthW))
+            continue;
+
+        len = strlenW(iter->header);
+        memcpy(ptr, iter->header, len*sizeof(WCHAR));
+        ptr += len;
+
+        *ptr++ = ':';
+        *ptr++ = ' ';
+
+        len = strlenW(iter->data);
+        memcpy(ptr, iter->data, len*sizeof(WCHAR));
+        ptr += len;
+
+        *ptr++ = '\r';
+        *ptr++ = '\n';
+    }
+
+    *ptr = 0;
+
+    return S_OK;
 }
 
 #undef NSCHANNELBSC_THIS
@@ -1324,6 +1377,16 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
     if(context) {
         nsISupports_AddRef(context);
         This->nscontext = context;
+    }
+
+    if(This->bsc.headers) {
+        HRESULT hres;
+
+        hres = parse_headers(This->bsc.headers, &channel->request_headers);
+        heap_free(This->bsc.headers);
+        This->bsc.headers = NULL;
+        if(FAILED(hres))
+            WARN("parse_headers failed: %08x\n", hres);
     }
 }
 
