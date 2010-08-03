@@ -4028,11 +4028,19 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         }
     }
 
-    if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
-        switch(wined3d_settings.offscreen_rendering_mode) {
-            case ORM_FBO:        This->get_drawable_size = get_drawable_size_fbo;        break;
-            case ORM_BACKBUFFER: This->get_drawable_size = get_drawable_size_backbuffer; break;
-        }
+    switch (wined3d_settings.offscreen_rendering_mode)
+    {
+        case ORM_FBO:
+            This->get_drawable_size = get_drawable_size_fbo;
+            break;
+
+        case ORM_BACKBUFFER:
+            This->get_drawable_size = get_drawable_size_backbuffer;
+            break;
+
+        default:
+            ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
+            return WINED3DERR_INVALIDCALL;
     }
 
     This->Flags |= SFLAG_INSYSMEM;
@@ -4669,10 +4677,22 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, I
     if(swapchain) {
         This->get_drawable_size = get_drawable_size_swapchain;
         IWineD3DSwapChain_Release(swapchain);
-    } else if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
-        switch(wined3d_settings.offscreen_rendering_mode) {
-            case ORM_FBO:        This->get_drawable_size = get_drawable_size_fbo;        break;
-            case ORM_BACKBUFFER: This->get_drawable_size = get_drawable_size_backbuffer; break;
+    }
+    else
+    {
+        switch (wined3d_settings.offscreen_rendering_mode)
+        {
+            case ORM_FBO:
+                This->get_drawable_size = get_drawable_size_fbo;
+                break;
+
+            case ORM_BACKBUFFER:
+                This->get_drawable_size = get_drawable_size_backbuffer;
+                break;
+
+            default:
+                ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
+                return WINED3DERR_INVALIDCALL;
         }
     }
 
