@@ -3185,6 +3185,8 @@ static void test_AddFontMemResource(void)
     void *font;
     DWORD font_size, num_fonts;
     HANDLE ret;
+    DEVMODEA dmA;
+    BOOL is_winxp;
 
     if (!pAddFontMemResourceEx || !pRemoveFontMemResourceEx)
     {
@@ -3198,6 +3200,74 @@ static void test_AddFontMemResource(void)
         skip("Unable to locate and load font sserife.fon\n");
         return;
     }
+
+    is_winxp = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dmA) &&
+               (dmA.dmFields & DM_DISPLAYORIENTATION);
+
+    if (is_winxp)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(NULL, 0, NULL, NULL);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+           GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(NULL, 10, NULL, NULL);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+           GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(NULL, 0, NULL, &num_fonts);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+           GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(NULL, 10, NULL, &num_fonts);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+           GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(font, 0, NULL, NULL);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+           GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(font, 10, NULL, NULL);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+           GetLastError());
+
+        num_fonts = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(font, 0, NULL, &num_fonts);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+           GetLastError());
+        ok(num_fonts == 0xdeadbeef, "number of loaded fonts should be 0xdeadbeef\n");
+
+        num_fonts = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = pAddFontMemResourceEx(font, 10, NULL, &num_fonts);
+        ok(!ret, "AddFontMemResourceEx should fail\n");
+        ok(GetLastError() == 0xdeadbeef,
+           "Expected GetLastError() to return 0xdeadbeef, got %u\n",
+           GetLastError());
+        ok(num_fonts == 0xdeadbeef, "number of loaded fonts should be 0xdeadbeef\n");
+    }
+    else
+        win_skip("AddFontMemResourceEx invalid parameter tests are problematic on Win2k\n");
 
     num_fonts = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -3215,11 +3285,19 @@ static void test_AddFontMemResource(void)
     font = load_font("sserife.fon", &font_size);
     ok(font != NULL, "Unable to locate and load font sserife.fon\n");
 
+    SetLastError(0xdeadbeef);
     ret = pAddFontMemResourceEx(font, font_size, NULL, (void *)0xdeadbeef);
     ok(!ret, "AddFontMemResourceEx should fail\n");
+    ok(GetLastError() == 0xdeadbeef,
+       "Expected GetLastError() to return 0xdeadbeef, got %u\n",
+       GetLastError());
 
+    SetLastError(0xdeadbeef);
     ret = pAddFontMemResourceEx(font, font_size, NULL, NULL);
     ok(!ret, "AddFontMemResourceEx should fail\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %u\n",
+       GetLastError());
 
     free_font(font);
 }

@@ -3188,6 +3188,12 @@ HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD
     HANDLE ret;
     DWORD num_fonts;
 
+    if (!pbFont || !cbFont || !pcFonts)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     ret = WineEngAddFontMemResourceEx(pbFont, cbFont, pdv, &num_fonts);
     if (ret)
     {
