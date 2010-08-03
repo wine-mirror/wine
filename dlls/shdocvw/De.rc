@@ -40,20 +40,40 @@ IDR_BROWSE_MAIN_MENU MENU
     {
         POPUP "&Neu"
         {
-            MENUITEM "&Fenster"                  ID_BROWSE_NEW_WINDOW
+            MENUITEM "&Fenster"                       ID_BROWSE_NEW_WINDOW
         }
-        MENUITEM "&Öffnen...",                    ID_BROWSE_OPEN
-        MENUITEM "&Speichern",                       ID_BROWSE_SAVE
+        MENUITEM "Ö&ffnen...",                        ID_BROWSE_OPEN
+        MENUITEM "&Speichern",                        ID_BROWSE_SAVE
         MENUITEM "Speichern &als...",                 ID_BROWSE_SAVE_AS
         MENUITEM SEPARATOR
-        MENUITEM "Seite &einrichten...",            ID_BROWSE_PRINT_FORMAT
-        MENUITEM "Dr&ucken...",                   ID_BROWSE_PRINT
-        MENUITEM "Seiten&vorschau...",           ID_BROWSE_PRINT_PREVIEW
+        MENUITEM "Seite &einrichten...",              ID_BROWSE_PRINT_FORMAT
+        MENUITEM "Dr&ucken...",                       ID_BROWSE_PRINT
+        MENUITEM "Seiten&vorschau...",                ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
-        MENUITEM "&Eigenschaften...",              ID_BROWSE_PROPERTIES
+        MENUITEM "Ei&genschaften...",                 ID_BROWSE_PROPERTIES
+    }
+    POPUP "&Favoriten"
+    {
+        MENUITEM "&Zu den Favoriten hinzufügen..."    ID_BROWSE_ADDFAV
+        MENUITEM SEPARATOR
     }
     POPUP "&Hilfe"
     {
-        MENUITEM "&Über Internet Explorer...", ID_BROWSE_ABOUT
+        MENUITEM "Über &Internet Explorer...",        ID_BROWSE_ABOUT
     }
+}
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Zurück"
+    IDS_TB_FORWARD          "Vorwärts"
+    IDS_TB_STOP             "Stopp"
+    IDS_TB_REFRESH          "Neu laden"
+    IDS_TB_HOME             "Start"
+    IDS_TB_PRINT            "Drucken"
+}
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Adresse"
 }
