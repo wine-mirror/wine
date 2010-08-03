@@ -54,6 +54,11 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "&Proprietà...",              ID_BROWSE_PROPERTIES
     }
+    POPUP "&Preferiti"
+    {
+        MENUITEM "&Aggiungi ai Preferiti..."         ID_BROWSE_ADDFAV
+        MENUITEM SEPARATOR
+    }
     POPUP "&Aiuto"
     {
         MENUITEM "&Informazioni su Internet Explorer...", ID_BROWSE_ABOUT
