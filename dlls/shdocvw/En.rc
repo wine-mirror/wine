@@ -60,3 +60,13 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "&About Internet Explorer...", ID_BROWSE_ABOUT
     }
 }
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Back"
+    IDS_TB_FORWARD          "Forward"
+    IDS_TB_STOP             "Stop"
+    IDS_TB_REFRESH          "Refresh"
+    IDS_TB_HOME             "Home"
+    IDS_TB_PRINT            "Print"
+}

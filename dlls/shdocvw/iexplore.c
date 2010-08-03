@@ -319,10 +319,39 @@ static void ie_dialog_about(HWND hwnd)
     DestroyIcon(icon);
 }
 
+static void add_tb_separator(HWND hwnd)
+{
+    TBBUTTON btn;
+
+    ZeroMemory(&btn, sizeof(btn));
+
+    btn.iBitmap = 3;
+    btn.fsStyle = BTNS_SEP;
+    SendMessageW(hwnd, TB_ADDBUTTONSW, 1, (LPARAM)&btn);
+}
+
+static void add_tb_button(HWND hwnd, int bmp, int cmd, int strId)
+{
+    TBBUTTON btn;
+    WCHAR buf[30];
+
+    LoadStringW(shdocvw_hinstance, strId, buf, sizeof(buf)/sizeof(buf[0]));
+
+    btn.iBitmap = bmp;
+    btn.idCommand = cmd;
+    btn.fsState = TBSTATE_ENABLED;
+    btn.fsStyle = BTNS_SHOWTEXT;
+    btn.dwData = 0;
+    btn.iString = (INT_PTR)buf;
+
+    SendMessageW(hwnd, TB_ADDBUTTONSW, 1, (LPARAM)&btn);
+}
+
 static void create_rebar(HWND hwnd)
 {
     HWND hwndRebar;
     HWND hwndAddress;
+    HWND hwndToolbar;
     REBARINFO rebarinf;
     REBARBANDINFOW bandinf;
     WCHAR addr[] = {'A','d','d','r','e','s','s',0};
@@ -336,16 +365,37 @@ static void create_rebar(HWND hwnd)
 
     SendMessageW(hwndRebar, RB_SETBARINFO, 0, (LPARAM)&rebarinf);
 
+    hwndToolbar = CreateWindowExW(TBSTYLE_EX_MIXEDBUTTONS, TOOLBARCLASSNAMEW, NULL, TBSTYLE_FLAT | WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, hwndRebar, (HMENU)IDC_BROWSE_TOOLBAR, shdocvw_hinstance, NULL);
+
+    SendMessageW(hwndToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_BACK);
+    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_FORWARD);
+    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_STOP);
+    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_REFRESH);
+    add_tb_button(hwndToolbar, I_IMAGENONE, 0, IDS_TB_HOME);
+    add_tb_separator(hwndToolbar);
+    add_tb_button(hwndToolbar, I_IMAGENONE, ID_BROWSE_PRINT, IDS_TB_PRINT);
+    SendMessageW(hwndToolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(50,40));
+    SendMessageW(hwndToolbar, TB_AUTOSIZE, 0, 0);
+
+    bandinf.cbSize = sizeof(bandinf);
+    bandinf.fMask = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE;
+    bandinf.fStyle = RBBS_CHILDEDGE;
+    bandinf.cx = 100;
+    bandinf.cyMinChild = 42;
+    bandinf.hwndChild = hwndToolbar;
+
+    SendMessageW(hwndRebar, RB_INSERTBANDW, -1, (LPARAM)&bandinf);
+
     hwndAddress = CreateWindowExW(0, WC_COMBOBOXEXW, NULL, WS_BORDER|WS_CHILD|WS_VISIBLE|CBS_DROPDOWN, 0, 0, 100,20,hwndRebar, (HMENU)IDC_BROWSE_ADDRESSBAR, shdocvw_hinstance, NULL);
 
-    bandinf.fMask = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_TEXT;
-    bandinf.fStyle = RBBS_CHILDEDGE | RBBS_GRIPPERALWAYS;
+    bandinf.fMask |= RBBIM_TEXT;
+    bandinf.fStyle = RBBS_CHILDEDGE | RBBS_BREAK;
     bandinf.lpText = addr;
-    bandinf.cx = 100;
     bandinf.cyMinChild = 20;
     bandinf.hwndChild = hwndAddress;
 
-    SendMessageW(hwndRebar, RB_INSERTBANDW, 0, (LPARAM)&bandinf);
+    SendMessageW(hwndRebar, RB_INSERTBANDW, -1, (LPARAM)&bandinf);
 }
 
 static LRESULT iewnd_OnCreate(HWND hwnd, LPCREATESTRUCTW lpcs)

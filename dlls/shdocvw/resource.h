@@ -27,6 +27,7 @@
 #define IDC_BROWSE_REBAR               1003
 #define IDC_BROWSE_ADDRESSBAR          1004
 #define IDC_BROWSE_STATUSBAR           1005
+#define IDC_BROWSE_TOOLBAR             1006
 
 #define ID_BROWSE_NEW_WINDOW           275
 #define ID_BROWSE_OPEN                 256
@@ -42,3 +43,10 @@
 
 #define ID_BROWSE_GOTOFAV_FIRST        2000
 #define ID_BROWSE_GOTOFAV_MAX          65000
+
+#define IDS_TB_BACK                    1100
+#define IDS_TB_FORWARD                 1101
+#define IDS_TB_STOP                    1102
+#define IDS_TB_REFRESH                 1103
+#define IDS_TB_HOME                    1104
+#define IDS_TB_PRINT                   1105
