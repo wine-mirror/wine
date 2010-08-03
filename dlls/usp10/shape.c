@@ -219,6 +219,18 @@ typedef struct{
     GSUB_SubstLookupRecord SubstLookupRecord[1];
 }GSUB_ChainContextSubstFormat3_4;
 
+typedef struct {
+    WORD SubstFormat; /* = 1 */
+    WORD Coverage;
+    WORD AlternateSetCount;
+    WORD AlternateSet[1];
+} GSUB_AlternateSubstFormat1;
+
+typedef struct{
+    WORD GlyphCount;
+    WORD Alternate[1];
+} GSUB_AlternateSet;
+
 static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count);
 
 /* the orders of joined_forms and contextual_features need to line up */
@@ -400,6 +412,38 @@ static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, IN
     return GSUB_E_NOGLYPH;
 }
 
+static INT GSUB_apply_AlternateSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+{
+    int j;
+    TRACE("Alternate Substitution Subtable\n");
+
+    for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
+    {
+        int offset;
+        const GSUB_AlternateSubstFormat1 *asf1;
+        INT index;
+
+        offset = GET_BE_WORD(look->SubTable[j]);
+        asf1 = (const GSUB_AlternateSubstFormat1*)((const BYTE*)look+offset);
+        offset = GET_BE_WORD(asf1->Coverage);
+
+        index = GSUB_is_glyph_covered((const BYTE*)asf1+offset, glyphs[glyph_index]);
+        if (index != -1)
+        {
+            const GSUB_AlternateSet *as;
+            offset =  GET_BE_WORD(asf1->AlternateSet[index]);
+            as = (const GSUB_AlternateSet*)((const BYTE*)asf1+offset);
+            FIXME("%i alternates, picking index 0\n",GET_BE_WORD(as->GlyphCount));
+
+            TRACE("  Glyph 0x%x ->",glyphs[glyph_index]);
+            glyphs[glyph_index] = GET_BE_WORD(as->Alternate[0]);
+            TRACE(" 0x%x\n",glyphs[glyph_index]);
+            return glyph_index + 1;
+        }
+    }
+    return GSUB_E_NOGLYPH;
+}
+
 static INT GSUB_apply_LigatureSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
@@ -572,6 +616,8 @@ static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WO
     {
         case 1:
             return GSUB_apply_SingleSubst(look, glyphs, glyph_index, write_dir, glyph_count);
+        case 3:
+            return GSUB_apply_AlternateSubst(look, glyphs, glyph_index, write_dir, glyph_count);
         case 4:
             return GSUB_apply_LigatureSubst(look, glyphs, glyph_index, write_dir, glyph_count);
         case 6:
