@@ -3706,6 +3706,171 @@ static void test_ParseDisplayNamePBC(void)
     IShellFolder_Release(psf);
 }
 
+static const CHAR testwindow_class[] = "testwindow";
+#define WM_USER_NOTIFY (WM_APP+1)
+
+static struct {
+    const char *id;
+    BOOL exp_notify;
+    UINT signal;
+    const WCHAR *path_1;
+    const WCHAR *path_2;
+} exp_data;
+
+static LRESULT CALLBACK testwindow_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    UINT signal = (UINT)lparam;
+
+    switch(msg){
+    case WM_USER_NOTIFY:
+        if(exp_data.exp_notify){
+            LPCITEMIDLIST *pidls = (LPCITEMIDLIST*)wparam;
+
+            ok(exp_data.signal == signal,
+                    "%s: expected notification type %x, got: %x\n",
+                    exp_data.id, exp_data.signal, signal);
+
+            trace("verifying pidls for: %s\n", exp_data.id);
+            verify_pidl(pidls[0], exp_data.path_1);
+            verify_pidl(pidls[1], exp_data.path_2);
+
+            exp_data.exp_notify = FALSE;
+        }else
+            ok(exp_data.exp_notify, "Didn't expect a WM_USER_NOTIFY message (event: %x)\n", signal);
+        return 0;
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+static void register_testwindow_class(void)
+{
+    WNDCLASSEXA cls;
+    ATOM ret;
+
+    ZeroMemory(&cls, sizeof(cls));
+    cls.cbSize = sizeof(cls);
+    cls.style = 0;
+    cls.lpfnWndProc = testwindow_wndproc;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.lpszClassName = testwindow_class;
+
+    SetLastError(0);
+    ret = RegisterClassExA(&cls);
+    ok(ret != 0, "RegisterClassExA failed: %d\n", GetLastError());
+}
+
+/* SHCNF_FLUSH doesn't seem to work as advertised for SHCNF_PATHA, so we
+ * have to poll repeatedly for the message to appear */
+static void do_events(void)
+{
+    int c = 0;
+    while (exp_data.exp_notify && (c++ < 10)){
+        MSG msg;
+        while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)){
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+        if(exp_data.exp_notify)
+            Sleep(500);
+    }
+    trace("%s: took %d tries\n", exp_data.id, c);
+}
+
+static void test_SHChangeNotify(void)
+{
+    HWND wnd;
+    ULONG notifyID;
+    HRESULT hr;
+    BOOL br, has_unicode;
+    SHChangeNotifyEntry entries[1];
+    const CHAR root_dirA[] = "C:\\shell32_cn_test";
+    const WCHAR root_dirW[] = {'C',':','\\','s','h','e','l','l','3','2','_','c','n','_','t','e','s','t',0};
+    const CHAR test_dirA[] = "C:\\shell32_cn_test\\test";
+    const WCHAR test_dirW[] = {'C',':','\\','s','h','e','l','l','3','2','_','c','n','_','t','e','s','t','\\','t','e','s','t',0};
+
+    CreateDirectoryW(NULL, NULL);
+    has_unicode = !(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED);
+
+    /* set up the root directory & window */
+    br = CreateDirectoryA(root_dirA, NULL);
+    ok(br == TRUE, "CreateDirectory failed: %d\n", GetLastError());
+
+    register_testwindow_class();
+
+    wnd = CreateWindowExA(0, testwindow_class, testwindow_class, 0,
+            CW_USEDEFAULT, CW_USEDEFAULT, 130, 105,
+            NULL, NULL, GetModuleHandleA(NULL), 0);
+    ok(wnd != NULL, "Failed to make a window\n");
+
+    entries[0].pidl = NULL;
+    if(has_unicode)
+        hr = SHILCreateFromPath(root_dirW, (LPITEMIDLIST*)&entries[0].pidl, 0);
+    else
+        hr = SHILCreateFromPath((LPCVOID)root_dirA, (LPITEMIDLIST*)&entries[0].pidl, 0);
+    ok(hr == S_OK, "SHILCreateFromPath failed: 0x%08x\n", hr);
+    entries[0].fRecursive = TRUE;
+
+    notifyID = SHChangeNotifyRegister(wnd, SHCNRF_ShellLevel,
+            SHCNE_ALLEVENTS, WM_USER_NOTIFY, 1, entries);
+    ok(notifyID != 0, "Failed to register a window for change notifications\n");
+
+    /* MKDIR */
+    br = CreateDirectoryA(test_dirA, NULL);
+    ok(br == TRUE, "CreateDirectory failed: %d\n", GetLastError());
+
+    if(has_unicode){
+        exp_data.id = "MKDIR PATHW";
+        exp_data.signal = SHCNE_MKDIR;
+        exp_data.exp_notify = TRUE;
+        exp_data.path_1 = test_dirW;
+        exp_data.path_2 = NULL;
+        SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHW | SHCNF_FLUSH, test_dirW, NULL);
+        do_events();
+        ok(exp_data.exp_notify == FALSE, "Expected wndproc to be called\n");
+    }else
+        win_skip("skipping WCHAR tests\n");
+
+    exp_data.id = "MKDIR PATHA";
+    exp_data.signal = SHCNE_MKDIR;
+    exp_data.exp_notify = TRUE;
+    exp_data.path_1 = test_dirW;
+    exp_data.path_2 = NULL;
+    SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHA | SHCNF_FLUSH, test_dirA, NULL);
+    do_events();
+    ok(exp_data.exp_notify == FALSE, "Expected wndproc to be called\n");
+
+    /* RMDIR */
+    br = RemoveDirectoryA(test_dirA);
+    ok(br == TRUE, "RemoveDirectory failed: %d\n", GetLastError());
+
+    if(has_unicode){
+        exp_data.id = "RMDIR PATHW";
+        exp_data.signal = SHCNE_RMDIR;
+        exp_data.exp_notify = TRUE;
+        exp_data.path_1 = test_dirW;
+        exp_data.path_2 = NULL;
+        SHChangeNotify(SHCNE_RMDIR, SHCNF_PATHW | SHCNF_FLUSH, test_dirW, NULL);
+        do_events();
+        ok(exp_data.exp_notify == FALSE, "Expected wndproc to be called\n");
+    }else
+        win_skip("skipping WCHAR tests\n");
+
+    exp_data.id = "RMDIR PATHA";
+    exp_data.signal = SHCNE_RMDIR;
+    exp_data.exp_notify = TRUE;
+    exp_data.path_1 = test_dirW;
+    exp_data.path_2 = NULL;
+    SHChangeNotify(SHCNE_RMDIR, SHCNF_PATHA | SHCNF_FLUSH, test_dirA, NULL);
+    do_events();
+    ok(exp_data.exp_notify == FALSE, "Expected wndproc to be called\n");
+
+    SHChangeNotifyDeregister(notifyID);
+    DestroyWindow(wnd);
+
+    br = RemoveDirectoryA(root_dirA);
+    ok(br == TRUE, "RemoveDirectory failed: %d\n", GetLastError());
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -3736,6 +3901,7 @@ START_TEST(shlfolder)
     test_SHGetIDListFromObject();
     test_SHGetItemFromObject();
     test_ShellItemCompare();
+    test_SHChangeNotify();
 
     OleUninitialize();
 }
