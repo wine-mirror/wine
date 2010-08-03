@@ -251,7 +251,7 @@ static INT_PTR CALLBACK ie_dialog_open_proc(HWND hwnd, UINT msg, WPARAM wparam, 
                         V_VT(&url) = VT_BSTR;
                         V_BSTR(&url) = SysAllocStringLen(NULL, len);
 
-                        GetWindowTextW(hwndurl, V_BSTR(&url), len);
+                        GetWindowTextW(hwndurl, V_BSTR(&url), len + 1);
                         IWebBrowser2_Navigate2(WEBBROWSER2(This), &url, NULL, NULL, NULL, NULL);
 
                         SysFreeString(V_BSTR(&url));
