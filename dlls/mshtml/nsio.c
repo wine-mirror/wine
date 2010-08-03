@@ -311,6 +311,18 @@ static inline BOOL is_http_channel(nsChannel *This)
     return This->url_scheme == URL_SCHEME_HTTP || This->url_scheme == URL_SCHEME_HTTPS;
 }
 
+static void free_http_headers(struct list *list)
+{
+    http_header_t *iter, *iter_next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(iter, iter_next, list, http_header_t, entry) {
+        list_remove(&iter->entry);
+        heap_free(iter->header);
+        heap_free(iter->data);
+        heap_free(iter);
+    }
+}
+
 #define NSCHANNEL_THIS(iface) DEFINE_THIS(nsChannel, HttpChannel, iface)
 
 static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef riid, void **result)
@@ -364,8 +376,6 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
     LONG ref = InterlockedDecrement(&This->ref);
 
     if(!ref) {
-        struct ResponseHeader *header, *next_hdr;
-
         nsIURI_Release(NSURI(This->uri));
         if(This->owner)
             nsISupports_Release(This->owner);
@@ -377,16 +387,11 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIInterfaceRequestor_Release(This->notif_callback);
         if(This->original_uri)
             nsIURI_Release(This->original_uri);
+
+        free_http_headers(&This->response_headers);
+
         heap_free(This->content_type);
         heap_free(This->charset);
-
-        LIST_FOR_EACH_ENTRY_SAFE(header, next_hdr, &This->response_headers, struct ResponseHeader, entry) {
-            list_remove(&header->entry);
-            heap_free(header->header);
-            heap_free(header->data);
-            heap_free(header);
-        }
-
         heap_free(This);
     }
 
