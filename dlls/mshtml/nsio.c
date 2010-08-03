@@ -387,6 +387,32 @@ HRESULT set_http_header(struct list *headers, const WCHAR *name, int name_len,
     return S_OK;
 }
 
+static nsresult set_channel_http_header(struct list *headers, const nsACString *name_str,
+        const nsACString *value_str)
+{
+    const char *namea, *valuea;
+    WCHAR *name, *value;
+    HRESULT hres;
+
+    nsACString_GetData(name_str, &namea);
+    name = heap_strdupAtoW(namea);
+    if(!name)
+        return NS_ERROR_UNEXPECTED;
+
+    nsACString_GetData(value_str, &valuea);
+    value = heap_strdupAtoW(valuea);
+    if(!value) {
+        heap_free(name);
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    hres = set_http_header(headers, name, strlenW(name), value, strlenW(value));
+
+    heap_free(name);
+    heap_free(value);
+    return SUCCEEDED(hres) ? NS_OK : NS_ERROR_UNEXPECTED;
+}
+
 static void free_http_headers(struct list *list)
 {
     http_header_t *iter, *iter_next;
@@ -1061,9 +1087,12 @@ static nsresult NSAPI nsChannel_SetRequestHeader(nsIHttpChannel *iface,
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%s %s %x)\n", This, debugstr_nsacstr(aHeader), debugstr_nsacstr(aValue), aMerge);
+    TRACE("(%p)->(%s %s %x)\n", This, debugstr_nsacstr(aHeader), debugstr_nsacstr(aValue), aMerge);
 
-    return NS_OK;
+    if(aMerge)
+        FIXME("aMerge not supported\n");
+
+    return set_channel_http_header(&This->request_headers, aHeader, aValue);
 }
 
 static nsresult NSAPI nsChannel_VisitRequestHeaders(nsIHttpChannel *iface,
