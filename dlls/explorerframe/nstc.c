@@ -43,12 +43,16 @@ typedef struct {
     HWND hwnd_tv;
 
     NSTCSTYLE style;
+    NSTCSTYLE2 style2;
 } NSTC2Impl;
 
 static const DWORD unsupported_styles =
     NSTCS_SINGLECLICKEXPAND | NSTCS_NOREPLACEOPEN | NSTCS_NOORDERSTREAM | NSTCS_FAVORITESMODE |
     NSTCS_EMPTYTEXT | NSTCS_ALLOWJUNCTIONS | NSTCS_SHOWTABSBUTTON | NSTCS_SHOWDELETEBUTTON |
     NSTCS_SHOWREFRESHBUTTON | NSTCS_SPRINGEXPAND | NSTCS_RICHTOOLTIP | NSTCS_NOINDENTCHECKS;
+static const DWORD unsupported_styles2 =
+    NSTCS2_INTERRUPTNOTIFICATIONS | NSTCS2_SHOWNULLSPACEMENU | NSTCS2_DISPLAYPADDING |
+    NSTCS2_DISPLAYPINNEDONLY | NTSCS2_NOSINGLETONAUTOEXPAND | NTSCS2_NEVERINSERTNONENUMERATED;
 
 /*************************************************************************
  * NamespaceTree helper functions
@@ -476,8 +480,54 @@ static HRESULT WINAPI NSTC2_fnSetControlStyle(INameSpaceTreeControl2* iface,
                                               NSTCSTYLE nstcsStyle)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%x, %x)\n", This, nstcsMask, nstcsStyle);
-    return E_NOTIMPL;
+    static const DWORD tv_style_flags =
+        NSTCS_HASEXPANDOS | NSTCS_HASLINES | NSTCS_FULLROWSELECT |
+        NSTCS_HORIZONTALSCROLL | NSTCS_ROOTHASEXPANDO |
+        NSTCS_SHOWSELECTIONALWAYS | NSTCS_NOINFOTIP | NSTCS_EVENHEIGHT |
+        NSTCS_DISABLEDRAGDROP | NSTCS_NOEDITLABELS | NSTCS_CHECKBOXES;
+    static const DWORD host_style_flags = NSTCS_TABSTOP | NSTCS_BORDER;
+    static const DWORD nstc_flags =
+        NSTCS_SINGLECLICKEXPAND | NSTCS_NOREPLACEOPEN | NSTCS_NOORDERSTREAM |
+        NSTCS_FAVORITESMODE | NSTCS_EMPTYTEXT | NSTCS_ALLOWJUNCTIONS |
+        NSTCS_SHOWTABSBUTTON | NSTCS_SHOWDELETEBUTTON | NSTCS_SHOWREFRESHBUTTON;
+    TRACE("%p (%x, %x)\n", This, nstcsMask, nstcsStyle);
+
+    /* Fail if there is an attempt to set an unknown style. */
+    if(nstcsMask & ~(tv_style_flags | host_style_flags | nstc_flags))
+        return E_FAIL;
+
+    if(nstcsMask & tv_style_flags)
+    {
+        DWORD new_style;
+        treeview_style_from_nstcs(This, nstcsStyle, nstcsMask, &new_style);
+        SetWindowLongPtrW(This->hwnd_tv, GWL_STYLE, new_style);
+    }
+
+    /* Flags affecting the host window */
+    if(nstcsMask & NSTCS_BORDER)
+    {
+        DWORD new_style = GetWindowLongPtrW(This->hwnd_main, GWL_STYLE);
+        new_style &= ~WS_BORDER;
+        new_style |= nstcsStyle & NSTCS_BORDER ? WS_BORDER : 0;
+        SetWindowLongPtrW(This->hwnd_main, GWL_STYLE, new_style);
+    }
+    if(nstcsMask & NSTCS_TABSTOP)
+    {
+        DWORD new_style = GetWindowLongPtrW(This->hwnd_main, GWL_EXSTYLE);
+        new_style &= ~WS_EX_CONTROLPARENT;
+        new_style |= nstcsStyle & NSTCS_TABSTOP ? WS_EX_CONTROLPARENT : 0;
+        SetWindowLongPtrW(This->hwnd_main, GWL_EXSTYLE, new_style);
+    }
+
+    if((nstcsStyle & nstcsMask) & unsupported_styles)
+        FIXME("mask & style (0x%08x) contains unsupported style(s): 0x%08x\n",
+              (nstcsStyle & nstcsMask),
+              (nstcsStyle & nstcsMask) & unsupported_styles);
+
+    This->style &= ~nstcsMask;
+    This->style |= (nstcsStyle & nstcsMask);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnGetControlStyle(INameSpaceTreeControl2* iface,
@@ -485,8 +535,11 @@ static HRESULT WINAPI NSTC2_fnGetControlStyle(INameSpaceTreeControl2* iface,
                                               NSTCSTYLE *pnstcsStyle)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%x, %p)\n", This, nstcsMask, pnstcsStyle);
-    return E_NOTIMPL;
+    TRACE("%p (%x, %p)\n", This, nstcsMask, pnstcsStyle);
+
+    *pnstcsStyle = (This->style & nstcsMask);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnSetControlStyle2(INameSpaceTreeControl2* iface,
@@ -494,8 +547,17 @@ static HRESULT WINAPI NSTC2_fnSetControlStyle2(INameSpaceTreeControl2* iface,
                                                NSTCSTYLE2 nstcsStyle)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%x, %x)\n", This, nstcsMask, nstcsStyle);
-    return E_NOTIMPL;
+    TRACE("%p (%x, %x)\n", This, nstcsMask, nstcsStyle);
+
+    if((nstcsStyle & nstcsMask) & unsupported_styles2)
+        FIXME("mask & style (0x%08x) contains unsupported style(s): 0x%08x\n",
+              (nstcsStyle & nstcsMask),
+              (nstcsStyle & nstcsMask) & unsupported_styles2);
+
+    This->style2 &= ~nstcsMask;
+    This->style2 |= (nstcsStyle & nstcsMask);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnGetControlStyle2(INameSpaceTreeControl2* iface,
@@ -503,8 +565,11 @@ static HRESULT WINAPI NSTC2_fnGetControlStyle2(INameSpaceTreeControl2* iface,
                                                NSTCSTYLE2 *pnstcsStyle)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%x, %p)\n", This, nstcsMask, pnstcsStyle);
-    return E_NOTIMPL;
+    TRACE("%p (%x, %p)\n", This, nstcsMask, pnstcsStyle);
+
+    *pnstcsStyle = (This->style2 & nstcsMask);
+
+    return S_OK;
 }
 
 static const INameSpaceTreeControl2Vtbl vt_INameSpaceTreeControl2 = {
