@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = explorerframe.dll
-IMPORTS   = uuid user32 ole32
+IMPORTS   = uuid shell32 ole32 user32
 
 C_SRCS = \
 	nstc.c

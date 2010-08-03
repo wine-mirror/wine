@@ -44,6 +44,8 @@ typedef struct {
 
     NSTCSTYLE style;
     NSTCSTYLE2 style2;
+
+    INameSpaceTreeControlEvents *pnstce;
 } NSTC2Impl;
 
 static const DWORD unsupported_styles =
@@ -319,16 +321,40 @@ static HRESULT WINAPI NSTC2_fnTreeAdvise(INameSpaceTreeControl2* iface,
                                          DWORD *pdwCookie)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p, %p)\n", This, punk, pdwCookie);
-    return E_NOTIMPL;
+    HRESULT hr;
+    TRACE("%p (%p, %p)\n", This, punk, pdwCookie);
+
+    *pdwCookie = 0;
+
+    /* Only one client supported */
+    if(This->pnstce)
+        return E_FAIL;
+
+    hr = IUnknown_QueryInterface(punk, &IID_INameSpaceTreeControlEvents,(void**)&This->pnstce);
+    if(SUCCEEDED(hr))
+    {
+        *pdwCookie = 1;
+        return hr;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI NSTC2_fnTreeUnadvise(INameSpaceTreeControl2* iface,
                                            DWORD dwCookie)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%x)\n", This, dwCookie);
-    return E_NOTIMPL;
+    TRACE("%p (%x)\n", This, dwCookie);
+
+    /* The cookie is ignored. */
+
+    if(This->pnstce)
+    {
+        INameSpaceTreeControlEvents_Release(This->pnstce);
+        This->pnstce = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,

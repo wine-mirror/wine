@@ -30,6 +30,291 @@ static HWND hwnd;
 /* "Intended for internal use" */
 #define TVS_EX_NOSINGLECOLLAPSE 0x1
 
+static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
+static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
+
+static void init_function_pointers(void)
+{
+    HMODULE hmod;
+
+    hmod = GetModuleHandleA("shell32.dll");
+    pSHCreateShellItem = (void*)GetProcAddress(hmod, "SHCreateShellItem");
+    pSHGetIDListFromObject = (void*)GetProcAddress(hmod, "SHGetIDListFromObject");
+}
+
+/*******************************************************
+ * INameSpaceTreeControlEvents implementation.
+ */
+enum { OnItemClick = 0, OnPropertyItemCommit, OnItemStateChanging, OnItemStateChanged,
+       OnSelectionChanged, OnKeyboardInput, OnBeforeExpand, OnAfterExpand, OnBeginLabelEdit,
+       OnEndLabelEdit, OnGetToolTip, OnBeforeItemDelete, OnItemAdded, OnItemDeleted,
+       OnBeforeContextMenu, OnAfterContextMenu, OnBeforeStateImageChange, OnGetDefaultIconIndex,
+       LastEvent };
+
+typedef struct {
+    const INameSpaceTreeControlEventsVtbl *lpVtbl;
+    UINT qi_called_count;     /* Keep track of calls to QueryInterface */
+    BOOL qi_enable_events;    /* If FALSE, QueryInterface returns only E_NOINTERFACE */
+    UINT count[LastEvent];    /* Keep track of calls to all On* functions. */
+    LONG ref;
+} INameSpaceTreeControlEventsImpl;
+
+#define NSTCE_IMPL(iface)                       \
+    ((INameSpaceTreeControlEventsImpl*)iface)
+
+static HRESULT WINAPI NSTCEvents_fnQueryInterface(
+    INameSpaceTreeControlEvents* iface,
+    REFIID riid,
+    void **ppvObject)
+{
+    NSTCE_IMPL(iface)->qi_called_count++;
+
+    if(NSTCE_IMPL(iface)->qi_enable_events &&
+       IsEqualIID(riid, &IID_INameSpaceTreeControlEvents))
+    {
+        IUnknown_AddRef(iface);
+        *ppvObject = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI NSTCEvents_fnAddRef(
+    INameSpaceTreeControlEvents* iface)
+{
+    return InterlockedIncrement(&NSTCE_IMPL(iface)->ref);
+}
+
+static ULONG WINAPI NSTCEvents_fnRelease(
+    INameSpaceTreeControlEvents* iface)
+{
+    return InterlockedDecrement(&NSTCE_IMPL(iface)->ref);
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemClick(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    NSTCEHITTEST nstceHitTest,
+    NSTCECLICKTYPE nstceClickType)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnItemClick]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnPropertyItemCommit(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnPropertyItemCommit]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemStateChanging(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    NSTCITEMSTATE nstcisMask,
+    NSTCITEMSTATE nstcisState)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnItemStateChanging]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemStateChanged(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    NSTCITEMSTATE nstcisMask,
+    NSTCITEMSTATE nstcisState)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnItemStateChanged]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnSelectionChanged(
+    INameSpaceTreeControlEvents* iface,
+    IShellItemArray *psiaSelection)
+{
+    ok(psiaSelection != NULL, "IShellItemArray was NULL.\n");
+    if(psiaSelection)
+    {
+        HRESULT hr;
+        DWORD count = 0xdeadbeef;
+        hr = IShellItemArray_GetCount(psiaSelection, &count);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(count == 1, "Got count 0x%x\n", count);
+    }
+    NSTCE_IMPL(iface)->count[OnSelectionChanged]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnKeyboardInput(
+    INameSpaceTreeControlEvents* iface,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam)
+{
+    NSTCE_IMPL(iface)->count[OnKeyboardInput]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeExpand(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnBeforeExpand]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnAfterExpand(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnAfterExpand]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeginLabelEdit(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnBeginLabelEdit]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnEndLabelEdit(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnEndLabelEdit]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnGetToolTip(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    LPWSTR pszTip,
+    int cchTip)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnGetToolTip]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeItemDelete(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnBeforeItemDelete]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemAdded(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    BOOL fIsRoot)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnItemAdded]++;
+    return S_OK;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemDeleted(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    BOOL fIsRoot)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnItemDeleted]++;
+    return S_OK;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeContextMenu(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    REFIID riid,
+    void **ppv)
+{
+    NSTCE_IMPL(iface)->count[OnBeforeContextMenu]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnAfterContextMenu(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    IContextMenu *pcmIn,
+    REFIID riid,
+    void **ppv)
+{
+    NSTCE_IMPL(iface)->count[OnAfterContextMenu]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeStateImageChange(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    int *piDefaultIcon,
+    int *piOpenIcon)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnBeforeStateImageChange]++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnGetDefaultIconIndex(
+    INameSpaceTreeControlEvents* iface,
+    IShellItem *psi,
+    int *piDefaultIcon,
+    int *piOpenIcon)
+{
+    ok(psi != NULL, "NULL IShellItem\n");
+    NSTCE_IMPL(iface)->count[OnGetDefaultIconIndex]++;
+    return E_NOTIMPL;
+}
+
+const INameSpaceTreeControlEventsVtbl vt_NSTCEvents = {
+    NSTCEvents_fnQueryInterface,
+    NSTCEvents_fnAddRef,
+    NSTCEvents_fnRelease,
+    NSTCEvents_fnOnItemClick,
+    NSTCEvents_fnOnPropertyItemCommit,
+    NSTCEvents_fnOnItemStateChanging,
+    NSTCEvents_fnOnItemStateChanged,
+    NSTCEvents_fnOnSelectionChanged,
+    NSTCEvents_fnOnKeyboardInput,
+    NSTCEvents_fnOnBeforeExpand,
+    NSTCEvents_fnOnAfterExpand,
+    NSTCEvents_fnOnBeginLabelEdit,
+    NSTCEvents_fnOnEndLabelEdit,
+    NSTCEvents_fnOnGetToolTip,
+    NSTCEvents_fnOnBeforeItemDelete,
+    NSTCEvents_fnOnItemAdded,
+    NSTCEvents_fnOnItemDeleted,
+    NSTCEvents_fnOnBeforeContextMenu,
+    NSTCEvents_fnOnAfterContextMenu,
+    NSTCEvents_fnOnBeforeStateImageChange,
+    NSTCEvents_fnOnGetDefaultIconIndex
+};
+#undef NSTCE_IMPL
+
+static INameSpaceTreeControlEventsImpl *create_nstc_events(void)
+{
+    INameSpaceTreeControlEventsImpl *This;
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(INameSpaceTreeControlEventsImpl));
+    This->lpVtbl = &vt_NSTCEvents;
+    This->ref = 1;
+
+    return This;
+}
+
 /* Returns FALSE if the NamespaceTreeControl failed to be instantiated. */
 static BOOL test_initialization(void)
 {
@@ -427,6 +712,145 @@ static void test_basics(void)
     ok(!res, "res was %d!\n", res);
 }
 
+static void test_events(void)
+{
+    INameSpaceTreeControl *pnstc;
+    INameSpaceTreeControlEventsImpl *pnstceimpl, *pnstceimpl2;
+    INameSpaceTreeControlEvents *pnstce, *pnstce2;
+    IShellFolder *psfdesktop;
+    IShellItem *psidesktop;
+    IOleWindow *pow;
+    LPITEMIDLIST pidl_desktop;
+    DWORD cookie1, cookie2;
+    HRESULT hr;
+    UINT res;
+
+    hr = CoCreateInstance(&CLSID_NamespaceTreeControl, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_INameSpaceTreeControl, (void**)&pnstc);
+    ok(hr == S_OK, "Failed to initialize control (0x%08x)\n", hr);
+
+    ok(pSHCreateShellItem != NULL, "No SHCreateShellItem.\n");
+    ok(pSHGetIDListFromObject != NULL, "No SHCreateShellItem.\n");
+
+    SHGetDesktopFolder(&psfdesktop);
+    hr = pSHGetIDListFromObject((IUnknown*)psfdesktop, &pidl_desktop);
+    IShellFolder_Release(psfdesktop);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = pSHCreateShellItem(NULL, NULL, pidl_desktop, &psidesktop);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ILFree(pidl_desktop);
+
+    /* Create two instances of INameSpaceTreeControlEvents */
+    pnstceimpl = create_nstc_events();
+    pnstce = (INameSpaceTreeControlEvents*)pnstceimpl;
+    pnstceimpl2 = create_nstc_events();
+    pnstce2 = (INameSpaceTreeControlEvents*)pnstceimpl2;
+
+    if(0)
+    {
+        /* Crashes native */
+        hr = INameSpaceTreeControl_TreeAdvise(pnstc, NULL, NULL);
+        hr = INameSpaceTreeControl_TreeAdvise(pnstc, NULL, &cookie1);
+        hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, NULL);
+    }
+
+    /* TreeAdvise in NameSpaceTreeController seems to support only one
+     * client at the time.
+     */
+
+    /* First, respond with E_NOINTERFACE to all QI's */
+    pnstceimpl->qi_enable_events = FALSE;
+    pnstceimpl->qi_called_count = 0;
+    cookie1 = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, &cookie1);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    ok(cookie1 == 0, "cookie now (0x%08x)\n", cookie1);
+    todo_wine
+    {
+        ok(pnstceimpl->qi_called_count == 7 || pnstceimpl->qi_called_count == 4 /* Vista */,
+           "QueryInterface called %d times.\n",
+           pnstceimpl->qi_called_count);
+    }
+    ok(pnstceimpl->ref == 1, "refcount was %d\n", pnstceimpl->ref);
+
+    /* Accept query for IID_INameSpaceTreeControlEvents */
+    pnstceimpl->qi_enable_events = TRUE;
+    pnstceimpl->qi_called_count = 0;
+    cookie1 = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, &cookie1);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(cookie1 == 1, "cookie now (0x%08x)\n", cookie1);
+    todo_wine
+    {
+        ok(pnstceimpl->qi_called_count == 7 || pnstceimpl->qi_called_count == 4 /* Vista */,
+           "QueryInterface called %d times.\n",
+           pnstceimpl->qi_called_count);
+    }
+    ok(pnstceimpl->ref == 2, "refcount was %d\n", pnstceimpl->ref);
+
+    /* A second time, query interface will not be called at all. */
+    pnstceimpl->qi_enable_events = TRUE;
+    pnstceimpl->qi_called_count = 0;
+    cookie2 = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, &cookie2);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    ok(cookie2 == 0, "cookie now (0x%08x)\n", cookie2);
+    ok(!pnstceimpl->qi_called_count, "QueryInterface called %d times.\n",
+       pnstceimpl->qi_called_count);
+    ok(pnstceimpl->ref == 2, "refcount was %d\n", pnstceimpl->ref);
+
+    /* Using another "instance" does not help. */
+    pnstceimpl2->qi_enable_events = TRUE;
+    pnstceimpl2->qi_called_count = 0;
+    cookie2 = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce2, &cookie2);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    ok(cookie2 == 0, "cookie now (0x%08x)\n", cookie2);
+    ok(!pnstceimpl2->qi_called_count, "QueryInterface called %d times.\n",
+       pnstceimpl2->qi_called_count);
+    ok(pnstceimpl2->ref == 1, "refcount was %d\n", pnstceimpl->ref);
+
+    /* Unadvise with bogus cookie (will actually unadvise properly) */
+    pnstceimpl->qi_enable_events = TRUE;
+    pnstceimpl->qi_called_count = 0;
+    hr = INameSpaceTreeControl_TreeUnadvise(pnstc, 1234);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(!pnstceimpl->qi_called_count, "QueryInterface called %d times.\n",
+       pnstceimpl->qi_called_count);
+    ok(pnstceimpl->ref == 1, "refcount was %d\n", pnstceimpl->ref);
+
+    /* Unadvise "properly" (will have no additional effect) */
+    pnstceimpl->qi_enable_events = TRUE;
+    pnstceimpl->qi_called_count = 0;
+    hr = INameSpaceTreeControl_TreeUnadvise(pnstc, cookie1);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(!pnstceimpl->qi_called_count, "QueryInterface called %d times.\n",
+       pnstceimpl->qi_called_count);
+    ok(pnstceimpl->ref == 1, "refcount was %d\n", pnstceimpl->ref);
+
+
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        HWND hwnd_nstc;
+        hr = IOleWindow_GetWindow(pow, &hwnd_nstc);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        DestroyWindow(hwnd_nstc);
+        IOleWindow_Release(pow);
+    }
+
+    res = INameSpaceTreeControl_Release(pnstc);
+    ok(!res, "res was %d!\n", res);
+
+    if(!res)
+    {
+        /* Freeing these prematurely causes a crash. */
+        HeapFree(GetProcessHeap(), 0, pnstceimpl);
+        HeapFree(GetProcessHeap(), 0, pnstceimpl2);
+    }
+}
+
 static void setup_window(void)
 {
     WNDCLASSA wc;
@@ -451,10 +875,12 @@ START_TEST(nstc)
 {
     OleInitialize(NULL);
     setup_window();
+    init_function_pointers();
 
     if(test_initialization())
     {
         test_basics();
+        test_events();
     }
     else
     {
