@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = d3dcompiler_41.dll
+IMPORTS   = kernel32
+
+C_SRCS = \
+	d3dcompiler_41_main.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
