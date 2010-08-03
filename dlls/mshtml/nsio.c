@@ -1041,9 +1041,10 @@ static nsresult NSAPI nsChannel_GetRequestMethod(nsIHttpChannel *iface, nsACStri
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, aRequestMethod);
+    TRACE("(%p)->(%p)\n", This, aRequestMethod);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_SetData(aRequestMethod, request_method_strings[This->request_method]);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetRequestMethod(nsIHttpChannel *iface,
