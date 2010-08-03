@@ -83,7 +83,7 @@ static HMENU get_fav_menu(HMENU menu)
     return GetSubMenu(menu, 1);
 }
 
-static LPCWSTR get_fav_url_from_id(HMENU menu, UINT id)
+static LPWSTR get_fav_url_from_id(HMENU menu, UINT id)
 {
     MENUITEMINFOW item;
 
@@ -98,11 +98,11 @@ static LPCWSTR get_fav_url_from_id(HMENU menu, UINT id)
 
 static void free_fav_menu_data(HMENU menu)
 {
-    LPCWSTR url;
+    LPWSTR url;
     int i;
 
     for(i = 0; (url = get_fav_url_from_id(menu, ID_BROWSE_GOTOFAV_FIRST + i)); i++)
-        heap_free((LPWSTR)url);
+        heap_free( url );
 }
 
 static int get_menu_item_count(HMENU menu)
