@@ -1104,6 +1104,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
         LPCWSTR response_headers)
 {
     nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+    HRESULT hres;
 
     This->nschannel->response_status = response_code;
 
@@ -1112,9 +1113,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
 
         hdr_start = strchrW(response_headers, '\r');
         while(hdr_start) {
-            const WCHAR *colon;
-            struct ResponseHeader *new_header;
-            int len;
+            const WCHAR *colon, *value;
 
             hdr_start += 2;
             hdr_end = strchrW(hdr_start, '\r');
@@ -1132,35 +1131,14 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
                 continue;
             }
 
-            new_header = heap_alloc(sizeof(struct ResponseHeader));
-            if(!new_header)
-                return E_OUTOFMEMORY;
+            value = colon+1;
+            while(*value == ' ')
+                value++;
 
-            len = colon - hdr_start;
-            new_header->header = heap_alloc((len + 1) * sizeof(WCHAR));
-            if(!new_header->header) {
-                heap_free(new_header);
-                return E_OUTOFMEMORY;
-            }
-            memcpy(new_header->header, hdr_start, len * sizeof(WCHAR));
-            new_header->header[len] = 0;
-
-            colon++;
-            while(*colon == ' ')
-                colon++;
-
-            len = hdr_end - colon;
-            new_header->data = heap_alloc((len + 1) * sizeof(WCHAR));
-            if(!new_header->data) {
-                heap_free(new_header->header);
-                heap_free(new_header);
-                return E_OUTOFMEMORY;
-            }
-            memcpy(new_header->data, colon, len * sizeof(WCHAR));
-            new_header->data[len] = 0;
-
-            list_add_head(&This->nschannel->response_headers, &new_header->entry);
-            TRACE("Adding header to list: (%s):(%s)\n", wine_dbgstr_w(new_header->header), wine_dbgstr_w(new_header->data));
+            hres = set_http_header(&This->nschannel->response_headers, hdr_start, colon-hdr_start,
+                    value, hdr_end-value);
+            if(FAILED(hres))
+                return hres;
 
             hdr_start = strchrW(hdr_start, '\r');
         }

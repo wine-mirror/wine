@@ -467,11 +467,13 @@ typedef struct {
     UINT url_scheme;
 } nsChannel;
 
-typedef struct ResponseHeader {
+typedef struct {
     struct list entry;
     WCHAR *header;
     WCHAR *data;
 } http_header_t;
+
+HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int);
 
 typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
