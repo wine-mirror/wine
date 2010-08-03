@@ -943,6 +943,19 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
     return ret;
 }
 
+static inline LPWSTR heap_strndupW(LPCWSTR str, unsigned len)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        ret = heap_alloc((len+1)*sizeof(WCHAR));
+        memcpy(ret, str, len*sizeof(WCHAR));
+        ret[len] = 0;
+    }
+
+    return ret;
+}
+
 static inline char *heap_strdupA(const char *str)
 {
     char *ret = NULL;

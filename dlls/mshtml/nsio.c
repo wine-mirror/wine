@@ -311,6 +311,45 @@ static inline BOOL is_http_channel(nsChannel *This)
     return This->url_scheme == URL_SCHEME_HTTP || This->url_scheme == URL_SCHEME_HTTPS;
 }
 
+static http_header_t *find_http_header(struct list *headers, const WCHAR *name, int len)
+{
+    http_header_t *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, headers, http_header_t, entry) {
+        if(!strcmpiW(iter->header, name))
+            return iter;
+    }
+
+    return NULL;
+}
+
+static nsresult get_channel_http_header(struct list *headers, const nsACString *header_name_str,
+        nsACString *_retval)
+{
+    const char *header_namea;
+    http_header_t *header;
+    WCHAR *header_name;
+    char *data;
+
+    nsACString_GetData(header_name_str, &header_namea);
+    header_name = heap_strdupAtoW(header_namea);
+    if(!header_name)
+        return NS_ERROR_UNEXPECTED;
+
+    header = find_http_header(headers, header_name, strlenW(header_name));
+    heap_free(header_name);
+    if(!header)
+        return NS_ERROR_NOT_AVAILABLE;
+
+    data = heap_strdupWtoA(header->data);
+    if(!data)
+        return NS_ERROR_UNEXPECTED;
+
+    nsACString_SetData(_retval, data);
+    heap_free(data);
+    return NS_OK;
+}
+
 static void free_http_headers(struct list *list)
 {
     http_header_t *iter, *iter_next;
@@ -1079,34 +1118,10 @@ static nsresult NSAPI nsChannel_GetResponseHeader(nsIHttpChannel *iface,
          const nsACString *header, nsACString *_retval)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
-    const char *header_str;
-    WCHAR *header_wstr;
-    struct ResponseHeader *this_header;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_nsacstr(header), _retval);
 
-    nsACString_GetData(header, &header_str);
-    header_wstr = heap_strdupAtoW(header_str);
-    if(!header_wstr)
-        return NS_ERROR_UNEXPECTED;
-
-    LIST_FOR_EACH_ENTRY(this_header, &This->response_headers, struct ResponseHeader, entry) {
-        if(!strcmpW(this_header->header, header_wstr)) {
-            char *data = heap_strdupWtoA(this_header->data);
-            if(!data) {
-                heap_free(header_wstr);
-                return NS_ERROR_UNEXPECTED;
-            }
-            nsACString_SetData(_retval, data);
-            heap_free(data);
-            heap_free(header_wstr);
-            return NS_OK;
-        }
-    }
-
-    heap_free(header_wstr);
-
-    return NS_ERROR_NOT_AVAILABLE;
+    return get_channel_http_header(&This->response_headers, header, _retval);
 }
 
 static nsresult NSAPI nsChannel_SetResponseHeader(nsIHttpChannel *iface,
