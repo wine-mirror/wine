@@ -446,6 +446,13 @@ typedef struct nsWineURI nsWineURI;
 HRESULT set_wine_url(nsWineURI*,LPCWSTR);
 nsresult on_start_uri_open(NSContainer*,nsIURI*,PRBool*);
 
+/* Keep sync with request_method_strings in nsio.c */
+typedef enum {
+    METHOD_GET,
+    METHOD_PUT,
+    METHOD_POST
+} REQUEST_METHOD;
+
 typedef struct {
     const nsIHttpChannelVtbl *lpHttpChannelVtbl;
     const nsIUploadChannelVtbl *lpUploadChannelVtbl;
@@ -463,6 +470,7 @@ typedef struct {
     char *content_type;
     char *charset;
     PRUint32 response_status;
+    REQUEST_METHOD request_method;
     struct list response_headers;
     struct list request_headers;
     UINT url_scheme;

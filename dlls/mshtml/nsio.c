@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Jacek Caban for CodeWeavers
+ * Copyright 2006-2010 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,6 +50,8 @@ static nsIIOService *nsio = NULL;
 static nsINetUtil *net_util;
 
 static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
+
+static const char *request_method_strings[] = {"GET", "PUT", "POST"};
 
 struct  nsWineURI {
     const nsIURLVtbl *lpIURLVtbl;
@@ -1048,10 +1050,21 @@ static nsresult NSAPI nsChannel_SetRequestMethod(nsIHttpChannel *iface,
                                                  const nsACString *aRequestMethod)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+    const char *method;
+    unsigned i;
 
-    TRACE("(%p)->(%s): Returning NS_OK\n", This, debugstr_nsacstr(aRequestMethod));
+    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aRequestMethod));
 
-    return NS_OK;
+    nsACString_GetData(aRequestMethod, &method);
+    for(i=0; i < sizeof(request_method_strings)/sizeof(*request_method_strings); i++) {
+        if(!strcasecmp(method, request_method_strings[i])) {
+            This->request_method = i;
+            return NS_OK;
+        }
+    }
+
+    ERR("Invalid method %s\n", debugstr_a(method));
+    return NS_ERROR_UNEXPECTED;
 }
 
 static nsresult NSAPI nsChannel_GetReferrer(nsIHttpChannel *iface, nsIURI **aReferrer)
@@ -1329,6 +1342,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
     if(aStream)
         nsIInputStream_AddRef(aStream);
 
+    This->request_method = METHOD_POST;
     return NS_OK;
 }
 
@@ -2640,6 +2654,7 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     ret->lpIHttpChannelInternalVtbl = &nsHttpChannelInternalVtbl;
     ret->ref = 1;
     ret->uri = wine_uri;
+    ret->request_method = METHOD_GET;
     list_init(&ret->response_headers);
     list_init(&ret->request_headers);
 
