@@ -354,9 +354,11 @@ static void create_rebar(HWND hwnd)
     HWND hwndToolbar;
     REBARINFO rebarinf;
     REBARBANDINFOW bandinf;
-    WCHAR addr[] = {'A','d','d','r','e','s','s',0};
+    WCHAR addr[40];
     HIMAGELIST imagelist;
     WCHAR idb_ietoolbar[] = {'I','D','B','_','I','E','T','O','O','L','B','A','R',0};
+
+    LoadStringW(shdocvw_hinstance, IDS_ADDRESS, addr, sizeof(addr)/sizeof(addr[0]));
 
     hwndRebar = CreateWindowExW(WS_EX_TOOLWINDOW, REBARCLASSNAMEW, NULL, WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|RBS_VARHEIGHT|CCS_TOP|CCS_NODIVIDER, 0, 0, 0, 0, hwnd, (HMENU)IDC_BROWSE_REBAR, shdocvw_hinstance, NULL);
 

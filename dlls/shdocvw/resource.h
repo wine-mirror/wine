@@ -52,3 +52,5 @@
 #define IDS_TB_REFRESH                 1103
 #define IDS_TB_HOME                    1104
 #define IDS_TB_PRINT                   1105
+
+#define IDS_ADDRESS                    1106

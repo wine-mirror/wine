@@ -70,3 +70,8 @@ STRINGTABLE
     IDS_TB_HOME             "Home"
     IDS_TB_PRINT            "Print"
 }
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Address"
+}
