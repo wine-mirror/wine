@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nstc);
 
 typedef struct {
     const INameSpaceTreeControl2Vtbl *lpVtbl;
+    const IOleWindowVtbl *lpowVtbl;
     LONG ref;
 
     HWND hwnd_main;
@@ -206,6 +207,10 @@ static HRESULT WINAPI NSTC2_fnQueryInterface(INameSpaceTreeControl2* iface,
        IsEqualIID(riid, &IID_IUnknown))
     {
         *ppvObject = This;
+    }
+    else if(IsEqualIID(riid, &IID_IOleWindow))
+    {
+        *ppvObject = &This->lpowVtbl;
     }
 
     if(*ppvObject)
@@ -531,6 +536,62 @@ static const INameSpaceTreeControl2Vtbl vt_INameSpaceTreeControl2 = {
     NSTC2_fnGetControlStyle2
 };
 
+/**************************************************************************
+ * IOleWindow Implementation
+ */
+
+static inline NSTC2Impl *impl_from_IOleWindow(IOleWindow *iface)
+{
+    return (NSTC2Impl *)((char*)iface - FIELD_OFFSET(NSTC2Impl, lpowVtbl));
+}
+
+static HRESULT WINAPI IOW_fnQueryInterface(IOleWindow *iface, REFIID riid, void **ppvObject)
+{
+    NSTC2Impl *This = impl_from_IOleWindow(iface);
+    TRACE("%p\n", This);
+    return NSTC2_fnQueryInterface((INameSpaceTreeControl2*)This, riid, ppvObject);
+}
+
+static ULONG WINAPI IOW_fnAddRef(IOleWindow *iface)
+{
+    NSTC2Impl *This = impl_from_IOleWindow(iface);
+    TRACE("%p\n", This);
+    return NSTC2_fnAddRef((INameSpaceTreeControl2*)This);
+}
+
+static ULONG WINAPI IOW_fnRelease(IOleWindow *iface)
+{
+    NSTC2Impl *This = impl_from_IOleWindow(iface);
+    TRACE("%p\n", This);
+    return NSTC2_fnRelease((INameSpaceTreeControl2*)This);
+}
+
+static HRESULT WINAPI IOW_fnGetWindow(IOleWindow *iface, HWND *phwnd)
+{
+    NSTC2Impl *This = impl_from_IOleWindow(iface);
+    TRACE("%p (%p)\n", This, phwnd);
+
+    *phwnd = This->hwnd_main;
+    return S_OK;
+}
+
+static HRESULT WINAPI IOW_fnContextSensitiveHelp(IOleWindow *iface, BOOL fEnterMode)
+{
+    NSTC2Impl *This = impl_from_IOleWindow(iface);
+    TRACE("%p (%d)\n", This, fEnterMode);
+
+    /* Not implemented */
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl vt_IOleWindow = {
+    IOW_fnQueryInterface,
+    IOW_fnAddRef,
+    IOW_fnRelease,
+    IOW_fnGetWindow,
+    IOW_fnContextSensitiveHelp
+};
+
 HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     NSTC2Impl *nstc;
@@ -548,6 +609,7 @@ HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void 
     nstc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(NSTC2Impl));
     nstc->ref = 1;
     nstc->lpVtbl = &vt_INameSpaceTreeControl2;
+    nstc->lpowVtbl = &vt_IOleWindow;
 
     ret = INameSpaceTreeControl_QueryInterface((INameSpaceTreeControl*)nstc, riid, ppv);
     INameSpaceTreeControl_Release((INameSpaceTreeControl*)nstc);
