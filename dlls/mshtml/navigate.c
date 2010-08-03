@@ -63,6 +63,7 @@ typedef struct {
     HRESULT (*read_data)(BSCallback*,IStream*);
     HRESULT (*on_progress)(BSCallback*,ULONG,LPCWSTR);
     HRESULT (*on_response)(BSCallback*,DWORD,LPCWSTR);
+    HRESULT (*beginning_transaction)(BSCallback*,WCHAR**);
 } BSCallbackVtbl;
 
 struct BSCallback {
@@ -468,19 +469,26 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
         LPCWSTR szURL, LPCWSTR szHeaders, DWORD dwReserved, LPWSTR *pszAdditionalHeaders)
 {
     BSCallback *This = HTTPNEG_THIS(iface);
-    DWORD size;
+    HRESULT hres;
 
     TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders),
           dwReserved, pszAdditionalHeaders);
 
-    if(!This->headers) {
-        *pszAdditionalHeaders = NULL;
-        return S_OK;
-    }
+    *pszAdditionalHeaders = NULL;
 
-    size = (strlenW(This->headers)+1)*sizeof(WCHAR);
-    *pszAdditionalHeaders = CoTaskMemAlloc(size);
-    memcpy(*pszAdditionalHeaders, This->headers, size);
+    hres = This->vtbl->beginning_transaction(This, pszAdditionalHeaders);
+    if(hres != S_FALSE)
+        return hres;
+
+    if(This->headers) {
+        DWORD size;
+
+        size = (strlenW(This->headers)+1)*sizeof(WCHAR);
+        *pszAdditionalHeaders = CoTaskMemAlloc(size);
+        if(!*pszAdditionalHeaders)
+            return E_OUTOFMEMORY;
+        memcpy(*pszAdditionalHeaders, This->headers, size);
+    }
 
     return S_OK;
 }
@@ -864,6 +872,11 @@ static HRESULT BufferBSC_on_response(BSCallback *bsc, DWORD response_code,
     return S_OK;
 }
 
+static HRESULT BufferBSC_beginning_transaction(BSCallback *bsc, WCHAR **additional_headers)
+{
+    return S_FALSE;
+}
+
 #undef BUFFERBSC_THIS
 
 static const BSCallbackVtbl BufferBSCVtbl = {
@@ -873,7 +886,8 @@ static const BSCallbackVtbl BufferBSCVtbl = {
     BufferBSC_stop_binding,
     BufferBSC_read_data,
     BufferBSC_on_progress,
-    BufferBSC_on_response
+    BufferBSC_on_response,
+    BufferBSC_beginning_transaction
 };
 
 
@@ -1158,6 +1172,11 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
     return S_OK;
 }
 
+static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **additional_headers)
+{
+    return S_FALSE;
+}
+
 #undef NSCHANNELBSC_THIS
 
 static const BSCallbackVtbl nsChannelBSCVtbl = {
@@ -1167,7 +1186,8 @@ static const BSCallbackVtbl nsChannelBSCVtbl = {
     nsChannelBSC_stop_binding,
     nsChannelBSC_read_data,
     nsChannelBSC_on_progress,
-    nsChannelBSC_on_response
+    nsChannelBSC_on_response,
+    nsChannelBSC_beginning_transaction
 };
 
 HRESULT create_channelbsc(IMoniker *mon, WCHAR *headers, BYTE *post_data, DWORD post_data_size, nsChannelBSC **retval)
