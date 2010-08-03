@@ -19,6 +19,14 @@
 import "oaidl.idl";
 import "ocidl.idl";
 
+typedef struct _D3D_SHADER_MACRO
+{
+    LPCSTR Name;
+    LPCSTR Definition;
+} D3D_SHADER_MACRO;
+
+typedef struct _D3D_SHADER_MACRO* LPD3D_SHADER_MACRO;
+
 [
     object,
     local,
@@ -33,3 +41,28 @@ interface ID3D10Blob : IUnknown
 typedef ID3D10Blob* LPD3D10BLOB;
 typedef ID3D10Blob ID3DBlob;
 typedef ID3DBlob* LPD3DBLOB;
+
+typedef enum _D3D_INCLUDE_TYPE
+{
+    D3D_INCLUDE_LOCAL = 0,
+    D3D_INCLUDE_SYSTEM,
+    D3D10_INCLUDE_LOCAL = D3D_INCLUDE_LOCAL,
+    D3D10_INCLUDE_SYSTEM = D3D_INCLUDE_SYSTEM,
+    D3D_INCLUDE_FORCE_DWORD = 0x7fffffff
+} D3D_INCLUDE_TYPE;
+
+[
+    object,
+    local,
+]
+interface ID3DInclude
+{
+    HRESULT Open(D3D_INCLUDE_TYPE include_type,
+                 const char *filename,
+                 const void *parent_data,
+                 const void **data,
+                 UINT *bytes);
+    HRESULT Close(const void *data);
+}
+
+typedef ID3DInclude* LPD3DINCLUDE;
