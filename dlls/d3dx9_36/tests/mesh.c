@@ -68,33 +68,20 @@ static void free_mesh(struct mesh *mesh)
 
 static BOOL new_mesh(struct mesh *mesh, DWORD number_of_vertices, DWORD number_of_faces)
 {
-    int i;
-
-    mesh->vertices = HeapAlloc(GetProcessHeap(), 0, number_of_vertices * sizeof(*mesh->vertices));
+    mesh->vertices = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, number_of_vertices * sizeof(*mesh->vertices));
     if (!mesh->vertices)
     {
         return FALSE;
     }
     mesh->number_of_vertices = number_of_vertices;
 
-    mesh->faces = HeapAlloc(GetProcessHeap(), 0, number_of_faces * sizeof(*mesh->faces));
+    mesh->faces = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, number_of_faces * sizeof(*mesh->faces));
     if (!mesh->faces)
     {
         HeapFree(GetProcessHeap(), 0, mesh->vertices);
         return FALSE;
     }
     mesh->number_of_faces = number_of_faces;
-
-    /* fill with nonsense data to make sure no comparison succeed by chance */
-    for (i = 0; i < number_of_vertices; i++)
-    {
-        mesh->vertices[i].position.x = NAN; mesh->vertices[i].position.y = NAN; mesh->vertices[i].position.z = NAN;
-        mesh->vertices[i].normal.x = NAN; mesh->vertices[i].normal.y = NAN; mesh->vertices[i].normal.z = NAN;
-    }
-    for (i = 0; i < number_of_faces; i++)
-    {
-        mesh->faces[i][0] = -1; mesh->faces[i][1] = -1; mesh->faces[i][2] = -1;
-    }
 
     return TRUE;
 }
