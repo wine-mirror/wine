@@ -1051,9 +1051,9 @@ static nsresult NSAPI nsChannel_GetRequestHeader(nsIHttpChannel *iface,
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%s %p)\n", This, debugstr_nsacstr(aHeader), _retval);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_nsacstr(aHeader), _retval);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return get_channel_http_header(&This->request_headers, aHeader, _retval);
 }
 
 static nsresult NSAPI nsChannel_SetRequestHeader(nsIHttpChannel *iface,
