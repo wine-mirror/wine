@@ -60,3 +60,18 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "&Over Internet Explorer...",  ID_BROWSE_ABOUT
     }
 }
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Terug"
+    IDS_TB_FORWARD          "Vooruit"
+    IDS_TB_STOP             "Stoppen"
+    IDS_TB_REFRESH          "Vernieuwen"
+    IDS_TB_HOME             "Startpagina"
+    IDS_TB_PRINT            "Printen"
+}
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Adres"
+}
