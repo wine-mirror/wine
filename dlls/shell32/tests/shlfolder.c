@@ -69,6 +69,13 @@ static HRESULT (WINAPI *pSHGetItemFromDataObject)(IDataObject*,DATAOBJ_GET_ITEM_
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHGetItemFromObject)(IUnknown*,REFIID,void**);
 
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
+}
+
 static void init_function_pointers(void)
 {
     HMODULE hmod;
@@ -2233,13 +2240,16 @@ static void test_SHGetNameFromIDList(void)
         }
         IShellFolder_Release(psf);
 
-        hrSI = pSHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &nameSI);
-        ok(hrSI == S_OK, "Got 0x%08x\n", hrSI);
-        res = SHGetPathFromIDListW(pidl, buf);
-        ok(res == TRUE, "Got %d\n", res);
-        if(SUCCEEDED(hrSI) && res)
-            ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
-        if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+        if(pSHGetPathFromIDListW){
+            hrSI = pSHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &nameSI);
+            ok(hrSI == S_OK, "Got 0x%08x\n", hrSI);
+            res = pSHGetPathFromIDListW(pidl, buf);
+            ok(res == TRUE, "Got %d\n", res);
+            if(SUCCEEDED(hrSI) && res)
+                ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+            if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+        }else
+            win_skip("pSHGetPathFromIDListW not available\n");
 
         hres = pSHGetNameFromIDList(pidl, SIGDN_URL, &name_string);
         todo_wine ok(hres == S_OK, "Got 0x%08x\n", hres);
@@ -2289,13 +2299,16 @@ static void test_SHGetNameFromIDList(void)
         }
         IShellFolder_Release(psf);
 
-        hrSI = pSHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &nameSI);
-        ok(hrSI == E_INVALIDARG, "Got 0x%08x\n", hrSI);
-        res = SHGetPathFromIDListW(pidl, buf);
-        ok(res == FALSE, "Got %d\n", res);
-        if(SUCCEEDED(hrSI) && res)
-            ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
-        if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+        if(pSHGetPathFromIDListW){
+            hrSI = pSHGetNameFromIDList(pidl, SIGDN_FILESYSPATH, &nameSI);
+            ok(hrSI == E_INVALIDARG, "Got 0x%08x\n", hrSI);
+            res = pSHGetPathFromIDListW(pidl, buf);
+            ok(res == FALSE, "Got %d\n", res);
+            if(SUCCEEDED(hrSI) && res)
+                ok(!lstrcmpW(nameSI, buf), "Strings differ.\n");
+            if(SUCCEEDED(hrSI)) CoTaskMemFree(nameSI);
+        }else
+            win_skip("pSHGetPathFromIDListW not available\n");
 
         hres = pSHGetNameFromIDList(pidl, SIGDN_URL, &name_string);
         todo_wine ok(hres == E_NOTIMPL /* Win7 */ || hres == S_OK /* Vista */,
@@ -3347,7 +3360,7 @@ static void test_GetUIObject(void)
     CreateFilesFolders();
 
     hr = IShellFolder_ParseDisplayName(psf_desktop, NULL, NULL, path, NULL, &pidl, 0);
-    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(hr == S_OK || broken(hr == E_FAIL) /* WinME */, "Got 0x%08x\n", hr);
     if(SUCCEEDED(hr))
     {
         IShellFolder *psf;
@@ -3462,10 +3475,17 @@ static void r_verify_pidl(unsigned l, LPCITEMIDLIST pidl, const WCHAR *path)
             return;
         }
 
-        ok_(__FILE__,l)(filename.uType == STRRET_WSTR, "Got unexpected string type: %d\n", filename.uType);
-        ok_(__FILE__,l)(lstrcmpW(path, filename.pOleStr) == 0,
-                "didn't get expected path (%s), instead: %s\n",
-                 wine_dbgstr_w(path), wine_dbgstr_w(filename.pOleStr));
+        ok_(__FILE__,l)(filename.uType == STRRET_WSTR || filename.uType == STRRET_CSTR,
+                "Got unexpected string type: %d\n", filename.uType);
+        if(filename.uType == STRRET_WSTR){
+            ok_(__FILE__,l)(lstrcmpW(path, filename.pOleStr) == 0,
+                    "didn't get expected path (%s), instead: %s\n",
+                     wine_dbgstr_w(path), wine_dbgstr_w(filename.pOleStr));
+        }else if(filename.uType == STRRET_CSTR){
+            ok_(__FILE__,l)(strcmp_wa(path, filename.cStr) == 0,
+                    "didn't get expected path (%s), instead: %s\n",
+                     wine_dbgstr_w(path), filename.cStr);
+        }
 
         IShellFolder_Release(parent);
     }else
