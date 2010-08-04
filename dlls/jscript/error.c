@@ -29,7 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     DispatchEx dispex;
 
-    VARIANT description;
     VARIANT message;
 } ErrorInstance;
 
@@ -47,24 +46,6 @@ static inline ErrorInstance *error_from_vdisp(vdisp_t *vdisp)
 static inline ErrorInstance *error_this(vdisp_t *jsthis)
 {
     return is_vclass(jsthis, JSCLASS_ERROR) ? error_from_vdisp(jsthis) : NULL;
-}
-
-static HRESULT Error_description(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
-        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    ErrorInstance *This = error_from_vdisp(jsthis);
-
-    TRACE("\n");
-
-    switch(flags) {
-    case DISPATCH_PROPERTYGET:
-        return VariantCopy(retv, &This->description);
-    case DISPATCH_PROPERTYPUT:
-        return VariantCopy(&This->description, get_arg(dp, 0));
-    default:
-        FIXME("unimplemented flags %x\n", flags);
-        return E_NOTIMPL;
-    }
 }
 
 /* ECMA-262 3rd Edition    15.11.4.3 */
@@ -184,13 +165,11 @@ static void Error_destructor(DispatchEx *dispex)
 {
     ErrorInstance *This = (ErrorInstance*)dispex;
 
-    VariantClear(&This->description);
     VariantClear(&This->message);
     heap_free(This);
 }
 
 static const builtin_prop_t Error_props[] = {
-    {descriptionW,              Error_description,                  0},
     {messageW,                  Error_message,                      0},
     {toStringW,                 Error_toString,                     PROPF_METHOD}
 };
@@ -205,7 +184,6 @@ static const builtin_info_t Error_info = {
 };
 
 static const builtin_prop_t ErrorInst_props[] = {
-    {descriptionW,              Error_description,                  0},
     {messageW,                  Error_message,                      0},
 };
 
@@ -264,12 +242,15 @@ static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
     V_VT(&err->message) = VT_BSTR;
     if(msg) V_BSTR(&err->message) = SysAllocString(msg);
     else V_BSTR(&err->message) = SysAllocStringLen(NULL, 0);
-
-    VariantCopy(&err->description, &err->message);
-
     if(!V_BSTR(&err->message)) {
         heap_free(err);
         return E_OUTOFMEMORY;
+    }
+
+    hres = jsdisp_propput_name(&err->dispex, descriptionW, &err->message, NULL/*FIXME*/, NULL/*FIXME*/);
+    if(FAILED(hres)) {
+        jsdisp_release(&err->dispex);
+        return hres;
     }
 
     *ret = &err->dispex;
