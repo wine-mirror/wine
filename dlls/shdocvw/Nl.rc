@@ -50,6 +50,14 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "&Eigenschappen...",           ID_BROWSE_PROPERTIES
     }
+    POPUP "Bee&ld"
+    {
+        POPUP "&Werkbalken"
+        {
+            MENUITEM "&Standaardbalk"           ID_BROWSE_BAR_STD
+            MENUITEM "&Adresbalk"               ID_BROWSE_BAR_ADDR
+        }
+    }
     POPUP "&Favorieten"
     {
         MENUITEM "&Toevoegen aan Favorieten..." ID_BROWSE_ADDFAV
