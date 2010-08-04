@@ -5688,18 +5688,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice* iface, IWineD3DSurface **ppZStencilSurface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    *ppZStencilSurface = (IWineD3DSurface *)This->depth_stencil;
-    TRACE("(%p) : zStencilSurface  returning %p\n", This,  *ppZStencilSurface);
+static HRESULT WINAPI IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface **depth_stencil)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
-    if(*ppZStencilSurface != NULL) {
-        /* Note inc ref on returned surface */
-        IWineD3DSurface_AddRef(*ppZStencilSurface);
-        return WINED3D_OK;
-    } else {
-        return WINED3DERR_NOTFOUND;
-    }
+    TRACE("iface %p, depth_stencil %p.\n", iface, depth_stencil);
+
+    *depth_stencil = (IWineD3DSurface *)device->depth_stencil;
+    TRACE("Returning depth/stencil surface %p.\n", *depth_stencil);
+    if (!*depth_stencil) return WINED3DERR_NOTFOUND;
+    IWineD3DSurface_AddRef(*depth_stencil);
+
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
@@ -5765,13 +5765,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface *pNewZStencil) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *tmp;
 
-    TRACE("device %p, depth_stencil %p, old depth_stencil %p.\n", This, pNewZStencil, This->depth_stencil);
+    TRACE("device %p, depth_stencil %p, old depth_stencil %p.\n", This, depth_stencil, This->depth_stencil);
 
-    if (This->depth_stencil == (IWineD3DSurfaceImpl *)pNewZStencil)
+    if (This->depth_stencil == (IWineD3DSurfaceImpl *)depth_stencil)
     {
         TRACE("Trying to do a NOP SetRenderTarget operation.\n");
         return WINED3D_OK;
@@ -5794,11 +5795,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     }
 
     tmp = This->depth_stencil;
-    This->depth_stencil = (IWineD3DSurfaceImpl *)pNewZStencil;
+    This->depth_stencil = (IWineD3DSurfaceImpl *)depth_stencil;
     if (This->depth_stencil) IWineD3DSurface_AddRef((IWineD3DSurface *)This->depth_stencil);
     if (tmp) IWineD3DSurface_Release((IWineD3DSurface *)tmp);
 
-    if ((!tmp && pNewZStencil) || (!pNewZStencil && tmp))
+    if ((!tmp && depth_stencil) || (!depth_stencil && tmp))
     {
         /* Swapping NULL / non NULL depth stencil affects the depth and tests */
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZENABLE));
