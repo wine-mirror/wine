@@ -541,6 +541,12 @@ static void test_basics(void)
     ok(hr == S_OK, "Failed to initialize control (0x%08x)\n", hr);
 
     /* Some tests on an uninitialized control */
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == E_INVALIDARG, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_RemoveRoot(pnstc, psidesktop);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_RemoveRoot(pnstc, NULL);
+    ok(hr == E_NOINTERFACE, "Got (0x%08x)\n", hr);
     hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, SHCONTF_NONFOLDERS, 0, NULL);
     ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
     process_msgs();
@@ -763,6 +769,9 @@ static void test_basics(void)
         skip("INameSpaceTreeControl2 missing.\n");
     }
 
+    hr = INameSpaceTreeControl_RemoveRoot(pnstc, NULL);
+    ok(hr == E_NOINTERFACE, "Got (0x%08x)\n", hr);
+
     /* Append / Insert root */
     if(0)
     {
@@ -780,6 +789,23 @@ static void test_basics(void)
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
     process_msgs();
 
+    hr = INameSpaceTreeControl_RemoveRoot(pnstc, psidesktop);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_RemoveRoot(pnstc, psidesktop);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_RemoveRoot(pnstc, psidesktop);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_RemoveRoot(pnstc, psidesktop);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == E_INVALIDARG, "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
     hr = INameSpaceTreeControl_InsertRoot(pnstc, 0, psidesktop, SHCONTF_FOLDERS, 0, NULL);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
     hr = INameSpaceTreeControl_InsertRoot(pnstc, -1, psidesktop, SHCONTF_FOLDERS, 0, NULL);
@@ -789,6 +815,9 @@ static void test_basics(void)
     hr = INameSpaceTreeControl_InsertRoot(pnstc, 50, psidesktop, SHCONTF_FOLDERS, 0, NULL);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
     hr = INameSpaceTreeControl_InsertRoot(pnstc, 1, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
 
     IShellItem_Release(psidesktop);

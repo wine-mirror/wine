@@ -99,6 +99,19 @@ static HRESULT events_OnItemAdded(NSTC2Impl *This, IShellItem *psi, BOOL fIsRoot
     return ret;
 }
 
+static HRESULT events_OnItemDeleted(NSTC2Impl *This, IShellItem *psi, BOOL fIsRoot)
+{
+    HRESULT ret;
+    LONG refcount;
+    if(!This->pnstce) return S_OK;
+
+    refcount = IShellItem_AddRef(psi);
+    ret = INameSpaceTreeControlEvents_OnItemDeleted(This->pnstce, psi, fIsRoot);
+    if(IShellItem_Release(psi) < refcount - 1)
+        ERR("ShellItem was released by client - please file a bug.\n");
+    return ret;
+}
+
 /*************************************************************************
  * NamespaceTree helper functions
  */
@@ -270,8 +283,19 @@ static LRESULT destroy_namespacetree(NSTC2Impl *This)
 {
     TRACE("%p\n", This);
 
+    INameSpaceTreeControl_RemoveAllRoots((INameSpaceTreeControl*)This);
+
     /* This reference was added in create_namespacetree */
     INameSpaceTreeControl_Release((INameSpaceTreeControl*)This);
+    return TRUE;
+}
+
+static LRESULT on_tvn_deleteitemw(NSTC2Impl *This, LPARAM lParam)
+{
+    NMTREEVIEWW *nmtv = (NMTREEVIEWW*)lParam;
+    TRACE("%p\n", This);
+
+    IShellItem_Release((IShellItem*)nmtv->itemOld.lParam);
     return TRUE;
 }
 
@@ -349,6 +373,7 @@ static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
         nmhdr = (NMHDR*)lParam;
         switch(nmhdr->code)
         {
+        case TVN_DELETEITEMW:     return on_tvn_deleteitemw(This, lParam);
         case TVN_GETDISPINFOW:    return on_tvn_getdispinfow(This, lParam);
         default:                  break;
         }
@@ -601,15 +626,57 @@ static HRESULT WINAPI NSTC2_fnRemoveRoot(INameSpaceTreeControl2* iface,
                                          IShellItem *psiRoot)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p)\n", This, psiRoot);
-    return E_NOTIMPL;
+    nstc_root *cursor, *root = NULL;
+    TRACE("%p (%p)\n", This, psiRoot);
+
+    if(!psiRoot)
+        return E_NOINTERFACE;
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->roots, nstc_root, entry)
+    {
+        HRESULT hr;
+        int order;
+        hr = IShellItem_Compare(psiRoot, cursor->psi, SICHINT_DISPLAY, &order);
+        if(hr == S_OK)
+        {
+            root = cursor;
+            break;
+        }
+    }
+
+    TRACE("root %p\n", root);
+    if(root)
+    {
+        SendMessageW(This->hwnd_tv, TVM_DELETEITEM, 0, (LPARAM)root->htreeitem);
+        events_OnItemDeleted(This, root->psi, TRUE);
+        list_remove(&root->entry);
+        HeapFree(GetProcessHeap(), 0, root);
+        return S_OK;
+    }
+    else
+    {
+        WARN("No matching root found.\n");
+        return E_FAIL;
+    }
 }
 
 static HRESULT WINAPI NSTC2_fnRemoveAllRoots(INameSpaceTreeControl2* iface)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p\n", This);
-    return E_NOTIMPL;
+    nstc_root *cur1, *cur2;
+    UINT removed = 0;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur1, cur2, &This->roots, nstc_root, entry)
+    {
+        NSTC2_fnRemoveRoot(iface, cur1->psi);
+        removed++;
+    }
+
+    if(removed)
+        return S_OK;
+    else
+        return E_INVALIDARG;
 }
 
 static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
