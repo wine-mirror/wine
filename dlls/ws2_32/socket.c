@@ -1902,20 +1902,21 @@ int WINAPI WSAConnect( SOCKET s, const struct WS_sockaddr* name, int namelen,
 /***********************************************************************
  *             ConnectEx
  */
-BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int namelen,
+static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int namelen,
                           PVOID sendBuf, DWORD sendBufLen, LPDWORD sent, LPOVERLAPPED ov)
 {
-    int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
-    int ret, status;
+    int fd, ret, status;
+
+    if (!ov)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    fd = get_sock_fd( s, FILE_READ_DATA, NULL );
     if (fd == -1)
     {
         SetLastError( WSAENOTSOCK );
-        return FALSE;
-    }
-    if (!ov)
-    {
-        release_sock_fd(s, fd);
-        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
