@@ -7054,22 +7054,46 @@ test -n "$CROSSCC" || CROSSCC="false"
 
     if test "$CROSSCC" != "false"
     then
-        CROSSTEST_DISABLE=""
-        set x $CROSSCC
-        shift
-        target=""
-        while test $# -ge 1
-        do
-            case "$1" in
-              *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
-            esac
-            shift
-        done
-        if test -n "$target"
-        then
-            CROSSTARGET="$target"
+        ac_save_CC="$CC"
+        CC="$CROSSCC"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CROSSCC works" >&5
+$as_echo_n "checking whether $CROSSCC works... " >&6; }
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
 
-        fi
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                           set x $CROSSCC
+                           shift
+                           target=""
+                           while test $# -ge 1
+                           do
+                               case "$1" in
+                                 *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+                               esac
+                               shift
+                           done
+                           if test -n "$target"
+                           then
+                               CROSSTEST_DISABLE=""
+                               CROSSTARGET="$target"
+
+                           fi
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+        CC="$ac_save_CC"
     fi
 fi
 

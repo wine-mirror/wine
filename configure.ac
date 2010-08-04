@@ -838,21 +838,28 @@ then
     WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
     if test "$CROSSCC" != "false"
     then
-        CROSSTEST_DISABLE=""
-        set x $CROSSCC
-        shift
-        target=""
-        while test $# -ge 1
-        do
-            case "$1" in
-              *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
-            esac
-            shift
-        done
-        if test -n "$target"
-        then
-            AC_SUBST(CROSSTARGET,"$target")
-        fi
+        ac_save_CC="$CC"
+        CC="$CROSSCC"
+        AC_MSG_CHECKING([whether $CROSSCC works])
+        AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),
+                          [AC_MSG_RESULT([yes])
+                           set x $CROSSCC
+                           shift
+                           target=""
+                           while test $# -ge 1
+                           do
+                               case "$1" in
+                                 *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+                               esac
+                               shift
+                           done
+                           if test -n "$target"
+                           then
+                               CROSSTEST_DISABLE=""
+                               AC_SUBST(CROSSTARGET,"$target")
+                           fi],
+                          [AC_MSG_RESULT([no])])
+        CC="$ac_save_CC"
     fi
 fi
 
