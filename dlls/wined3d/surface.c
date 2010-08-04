@@ -36,44 +36,42 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 static void surface_cleanup(IWineD3DSurfaceImpl *This)
 {
-    IWineD3DDeviceImpl *device = This->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    struct wined3d_context *context = NULL;
-    renderbuffer_entry_t *entry, *entry2;
-
     TRACE("(%p) : Cleaning up.\n", This);
 
-    /* Need a context to destroy the texture. Use the currently active render
-     * target, but only if the primary render target exists. Otherwise
-     * lastActiveRenderTarget is garbage. When destroying the primary render
-     * target, Uninit3D() will activate a context before doing anything. */
-    if (device->render_targets && device->render_targets[0])
+    if (This->texture_name || (This->Flags & SFLAG_PBO) || !list_empty(&This->renderbuffers))
     {
-        context = context_acquire(device, NULL);
+        const struct wined3d_gl_info *gl_info;
+        renderbuffer_entry_t *entry, *entry2;
+        struct wined3d_context *context;
+
+        context = context_acquire(This->resource.device, NULL);
+        gl_info = context->gl_info;
+
+        ENTER_GL();
+
+        if (This->texture_name)
+        {
+            TRACE("Deleting texture %u.\n", This->texture_name);
+            glDeleteTextures(1, &This->texture_name);
+        }
+
+        if (This->Flags & SFLAG_PBO)
+        {
+            TRACE("Deleting PBO %u.\n", This->pbo);
+            GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry)
+        {
+            TRACE("Deleting renderbuffer %u.\n", entry->id);
+            gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
+            HeapFree(GetProcessHeap(), 0, entry);
+        }
+
+        LEAVE_GL();
+
+        context_release(context);
     }
-
-    ENTER_GL();
-
-    if (This->texture_name)
-    {
-        /* Release the OpenGL texture. */
-        TRACE("Deleting texture %u.\n", This->texture_name);
-        glDeleteTextures(1, &This->texture_name);
-    }
-
-    if (This->Flags & SFLAG_PBO)
-    {
-        /* Delete the PBO. */
-        GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
-    }
-
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry)
-    {
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
-        HeapFree(GetProcessHeap(), 0, entry);
-    }
-
-    LEAVE_GL();
 
     if (This->Flags & SFLAG_DIBSECTION)
     {
@@ -92,8 +90,6 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     HeapFree(GetProcessHeap(), 0, This->palette9);
 
     resource_cleanup((IWineD3DResource *)This);
-
-    if (context) context_release(context);
 }
 
 UINT surface_calculate_size(const struct wined3d_format_desc *format_desc, UINT alignment, UINT width, UINT height)
