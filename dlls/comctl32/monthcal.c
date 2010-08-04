@@ -1715,23 +1715,21 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
     lpht->uHit = MCHT_CALENDARWEEKNUM;
     lpht->st.wYear  = ht_month.wYear;
 
-    if (day < 1) {
+    if (day < 1)
+    {
       lpht->st.wMonth = ht_month.wMonth - 1;
-    }
-    else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear)) {
-      lpht->st.wMonth = ht_month.wMonth + 1;
-    }
-    else
-      lpht->st.wMonth = ht_month.wMonth;
-
-    if (day < 1) {
       lpht->st.wDay = MONTHCAL_MonthLength(ht_month.wMonth-1, ht_month.wYear) - day;
     }
-    else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear)) {
+    else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear))
+    {
+      lpht->st.wMonth = ht_month.wMonth + 1;
       lpht->st.wDay = day - MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear);
     }
     else
+    {
+      lpht->st.wMonth = ht_month.wMonth;
       lpht->st.wDay = day;
+    }
   }
   else if(PtInRect(&infoPtr->calendars[calIdx].days, lpht->pt))
   {

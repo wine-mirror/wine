@@ -28,12 +28,14 @@
 #include "commctrl.h"
 
 #include "wine/test.h"
+#include "v6util.h"
 #include <assert.h>
 #include <windows.h>
 #include "msg.h"
 
 #define expect(expected, got) ok(expected == got, "Expected %d, got %d\n", expected, got);
 #define expect_hex(expected, got) ok(expected == got, "Expected %x, got %x\n", expected, got);
+#define expect_d(expected, got) ok(abs((expected) - (got)) <= 2, "Expected %d, got %d\n", expected, got);
 
 #define NUM_MSG_SEQUENCES   2
 #define PARENT_SEQ_INDEX    0
@@ -287,26 +289,6 @@ static const struct message destroy_monthcal_multi_sel_style_seq[] = {
     { WM_SHOWWINDOW, sent|wparam|lparam, 0, 0},
     { WM_WINDOWPOSCHANGING, sent|wparam, 0},
     { WM_WINDOWPOSCHANGED, sent|wparam, 0},
-    { WM_DESTROY, sent|wparam|lparam, 0, 0},
-    { WM_NCDESTROY, sent|wparam|lparam, 0, 0},
-    { 0 }
-};
-
-/* expected message sequence for parent window*/
-static const struct message destroy_parent_seq[] = {
-    { 0x0090, sent|optional }, /* Vista */
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0},
-    { WM_WINDOWPOSCHANGED, sent|wparam, 0},
-    { WM_IME_SETCONTEXT, sent|wparam|optional, 0},
-    { WM_IME_NOTIFY, sent|wparam|lparam|defwinproc|optional, 1, 0},
-    { WM_NCACTIVATE, sent|wparam|optional, 0},
-    { WM_ACTIVATE, sent|wparam|optional, 0},
-    { WM_NCACTIVATE, sent|wparam|lparam|optional, 0, 0},
-    { WM_ACTIVATE, sent|wparam|lparam|optional, 0, 0},
-    { WM_ACTIVATEAPP, sent|wparam|optional, 0},
-    { WM_KILLFOCUS, sent|wparam|lparam|optional, 0, 0},
-    { WM_IME_SETCONTEXT, sent|wparam|optional, 0},
-    { WM_IME_NOTIFY, sent|wparam|lparam|defwinproc|optional, 1, 0},
     { WM_DESTROY, sent|wparam|lparam, 0, 0},
     { WM_NCDESTROY, sent|wparam|lparam, 0, 0},
     { 0 }
@@ -1680,11 +1662,135 @@ static void test_killfocus(void)
     DestroyWindow(hwnd);
 }
 
+static void test_hittest_v6(void)
+{
+    MCHITTESTINFO mchit;
+    DWORD ret;
+    HWND hwnd;
+    RECT r;
+
+    hwnd = create_monthcal_control(0);
+    SendMessage(hwnd, MCM_SETCALENDARBORDER, TRUE, 0);
+
+    SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
+    /* reserving some area around calendar */
+    MoveWindow(hwnd, 0, 0, r.right * 3 / 2, r.bottom * 3 / 2, FALSE);
+    mchit.cbSize = sizeof(MCHITTESTINFO);
+    mchit.pt.x = mchit.pt.y = 0;
+    mchit.iOffset = -1;
+    mchit.iRow = -1;
+    mchit.iCol = -1;
+    ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+    if (ret == -1)
+    {
+        win_skip("Only MCHITTESTINFO_V1 supported\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+    todo_wine expect_hex(MCHT_NOWHERE, ret);
+    expect(-1, mchit.iOffset);
+    expect(-1, mchit.iRow);
+    expect(-1, mchit.iCol);
+
+    MoveWindow(hwnd, 0, 0, r.right, r.bottom, FALSE);
+    mchit.pt.x = r.right / 2;
+    mchit.pt.y = r.bottom / 2;
+    mchit.iOffset = -1;
+    ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+    expect_hex(MCHT_CALENDARDATE, ret);
+    todo_wine expect(0, mchit.iOffset);
+
+    /* over day area */
+    mchit.pt.x = r.right / (7*2);
+    mchit.pt.y = r.bottom / 2;
+    mchit.iOffset = -1;
+    mchit.iCol = mchit.iRow = -1;
+    mchit.uHit = 0;
+    mchit.rc.left = mchit.rc.right = mchit.rc.top = mchit.rc.bottom = -1;
+    ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+    expect_hex(MCHT_CALENDARDATE, ret);
+    expect_hex(MCHT_CALENDARDATE, mchit.uHit);
+    todo_wine expect(0, mchit.iOffset);
+    todo_wine expect(2, mchit.iRow);
+    todo_wine expect(0, mchit.iCol);
+    /* returned a one day rectangle */
+    todo_wine expect_d(r.right / 7, mchit.rc.right - mchit.rc.left);
+    todo_wine expect_d(r.bottom / 10, mchit.rc.bottom - mchit.rc.top);
+
+    /* title */
+    mchit.pt.x = 1;
+    mchit.pt.y = 1;
+    mchit.iOffset = -1;
+    mchit.iCol = mchit.iRow = -1;
+    mchit.uHit = 0;
+    mchit.rc.left = mchit.rc.right = mchit.rc.top = mchit.rc.bottom = -1;
+    ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+    expect_hex(MCHT_TITLE, ret);
+    expect_hex(MCHT_TITLE, mchit.uHit);
+    todo_wine expect(0, mchit.iOffset);
+    expect(-1, mchit.iRow);
+    expect(-1, mchit.iCol);
+    todo_wine expect(0, mchit.rc.left);
+    todo_wine expect(0, mchit.rc.top);
+    todo_wine expect_d(r.right, mchit.rc.right);
+    todo_wine ok(mchit.rc.bottom > 0, "got %d\n", mchit.rc.bottom);
+
+    /* between two calendars */
+    MoveWindow(hwnd, 0, 0, r.right * 5/2, r.bottom, FALSE);
+    mchit.pt.x = r.right / (5*4);
+    mchit.pt.y = r.bottom / 2;
+    mchit.iOffset = -2;
+    mchit.iCol = mchit.iRow = -2;
+    mchit.uHit = 0;
+    mchit.rc.left = mchit.rc.right = mchit.rc.top = mchit.rc.bottom = -1;
+    ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+    todo_wine expect_hex(MCHT_NOWHERE, ret);
+    todo_wine expect_hex(MCHT_NOWHERE, mchit.uHit);
+    expect(-2, mchit.iOffset);
+    expect(-2, mchit.iRow);
+    expect(-2, mchit.iCol);
+    todo_wine expect(0, mchit.rc.left);
+    todo_wine expect(0, mchit.rc.top);
+    todo_wine expect_d(r.right * 5/2, mchit.rc.right);
+    todo_wine expect_d(r.bottom, mchit.rc.bottom);
+
+    DestroyWindow(hwnd);
+}
+
+static void test_get_set_border(void)
+{
+    HWND hwnd;
+    DWORD ret;
+
+    hwnd = create_monthcal_control(0);
+
+    /* a non-default value */
+    ret = SendMessage(hwnd, MCM_SETCALENDARBORDER, TRUE, 10);
+    expect(0, ret);
+
+    ret = SendMessage(hwnd, MCM_GETCALENDARBORDER, 0, 0);
+
+    if (ret != 10)
+    {
+        skip("MCM_GET/SETCALENDARBORDER not supported\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    expect(10, ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(monthcal)
 {
-    HMODULE hComctl32;
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     INITCOMMONCONTROLSEX iccex;
+    HMODULE hComctl32;
+    HWND hwnd;
+
+    ULONG_PTR ctx_cookie;
+    HANDLE hCtx;
 
     hComctl32 = GetModuleHandleA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
@@ -1719,7 +1825,31 @@ START_TEST(monthcal)
     test_monthcal_selrange();
     test_killfocus();
 
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    if (!load_v6_module(&ctx_cookie, &hCtx))
+    {
+        DestroyWindow(parent_wnd);
+        return;
+    }
+
+    /* this is a XP SP3 failure workaround */
+    hwnd = CreateWindowExA(0, MONTHCAL_CLASSA, "foo",
+                           WS_CHILD | WS_BORDER | WS_VISIBLE,
+                           0, 0, 100, 100,
+                           parent_wnd, NULL, GetModuleHandleA(NULL), NULL);
+    if (!IsWindow(hwnd))
+    {
+        win_skip("FIXME: failed to create Monthcal window.\n");
+        unload_v6_module(ctx_cookie, hCtx);
+        DestroyWindow(parent_wnd);
+        return;
+    }
+    else
+        DestroyWindow(hwnd);
+
+    test_hittest_v6();
+    test_get_set_border();
+
+    unload_v6_module(ctx_cookie, hCtx);
+
     DestroyWindow(parent_wnd);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, destroy_parent_seq, "Destroy parent window", FALSE);
 }
