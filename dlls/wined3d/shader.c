@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
-static const char *shader_opcode_names[] =
+static const char * const shader_opcode_names[] =
 {
     /* WINED3DSIH_ABS           */ "abs",
     /* WINED3DSIH_ADD           */ "add",
@@ -125,7 +125,7 @@ static const char *shader_opcode_names[] =
     /* WINED3DSIH_TEXREG2RGB    */ "texreg2rgb",
 };
 
-static const char *semantic_names[] =
+static const char * const semantic_names[] =
 {
     /* WINED3DDECLUSAGE_POSITION        */ "SV_POSITION",
     /* WINED3DDECLUSAGE_BLENDWEIGHT     */ "BLENDWEIGHT",

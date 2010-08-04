@@ -3412,7 +3412,7 @@ static const DWORD *find_loop_control_values(IWineD3DBaseShaderImpl *This, DWORD
 static void init_ps_input(const IWineD3DPixelShaderImpl *This, const struct arb_ps_compile_args *args,
                           struct shader_arb_ctx_priv *priv)
 {
-    const char *texcoords[8] =
+    static const char * const texcoords[8] =
     {
         "fragment.texcoord[0]", "fragment.texcoord[1]", "fragment.texcoord[2]", "fragment.texcoord[3]",
         "fragment.texcoord[4]", "fragment.texcoord[5]", "fragment.texcoord[6]", "fragment.texcoord[7]"
@@ -3894,7 +3894,7 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
                                   struct arb_vs_compiled_shader *compiled)
 {
     unsigned int i, j;
-    static const char *texcoords[8] =
+    static const char * const texcoords[8] =
     {
         "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
         "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]"
@@ -3908,10 +3908,10 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
     /* Write generic input varyings 0 to 7 to result.texcoord[], varying 8 to result.color.primary
      * and varying 9 to result.color.secondary
      */
-    const char *decl_idx_to_string[MAX_REG_INPUT] =
+    static const char * const decl_idx_to_string[MAX_REG_INPUT] =
     {
-        texcoords[0], texcoords[1], texcoords[2], texcoords[3],
-        texcoords[4], texcoords[5], texcoords[6], texcoords[7],
+        "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
+        "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]",
         "result.color.primary", "result.color.secondary"
     };
 

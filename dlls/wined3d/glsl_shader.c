@@ -4462,18 +4462,16 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     GLhandleARB vshader_id, pshader_id;
     const char *blt_pshader;
 
-    static const char *blt_vshader[] =
-    {
+    static const char *blt_vshader =
         "#version 120\n"
         "void main(void)\n"
         "{\n"
         "    gl_Position = gl_Vertex;\n"
         "    gl_FrontColor = vec4(1.0);\n"
         "    gl_TexCoord[0] = gl_MultiTexCoord0;\n"
-        "}\n"
-    };
+        "}\n";
 
-    static const char *blt_pshaders_full[tex_type_count] =
+    static const char * const blt_pshaders_full[tex_type_count] =
     {
         /* tex_1d */
         NULL,
@@ -4503,7 +4501,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
         "}\n",
     };
 
-    static const char *blt_pshaders_masked[tex_type_count] =
+    static const char * const blt_pshaders_masked[tex_type_count] =
     {
         /* tex_1d */
         NULL,
@@ -4547,7 +4545,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     }
 
     vshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
-    GL_EXTCALL(glShaderSourceARB(vshader_id, 1, blt_vshader, NULL));
+    GL_EXTCALL(glShaderSourceARB(vshader_id, 1, &blt_vshader, NULL));
     GL_EXTCALL(glCompileShaderARB(vshader_id));
 
     pshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
