@@ -5485,51 +5485,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
     return WINED3DERR_INVALIDCALL;
 }
 
-static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface,
-        const WINED3DRECT *rect, const float color[4])
-{
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    struct wined3d_context *context;
-
-    if (rect) surface_load_location(surface, SFLAG_INDRAWABLE, NULL);
-    surface_modify_location(surface, SFLAG_INDRAWABLE, TRUE);
-
-    context = context_acquire(This, surface);
-    context_apply_clear_state(context, This, 1, &surface, NULL);
-
-    ENTER_GL();
-
-    if (rect)
-    {
-        if (surface_is_offscreen(surface))
-            glScissor(rect->x1, rect->y1, rect->x2 - rect->x1, rect->y2 - rect->y1);
-        else
-            glScissor(rect->x1, surface->currentDesc.Height - rect->y2,
-                    rect->x2 - rect->x1, rect->y2 - rect->y1);
-        checkGLcall("glScissor");
-    }
-    else
-    {
-        glDisable(GL_SCISSOR_TEST);
-    }
-
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
-
-    glClearColor(color[0], color[1], color[2], color[3]);
-    glClear(GL_COLOR_BUFFER_BIT);
-    checkGLcall("glClear");
-
-    LEAVE_GL();
-
-    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
-
-    context_release(context);
-}
-
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         IWineD3DSurface *pSurface, const WINED3DRECT *pRect, WINED3DCOLOR color)
 {
@@ -5545,9 +5500,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         const float c[4] = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
-        color_fill_fbo(iface, surface, pRect, c);
-        return WINED3D_OK;
-    } else {
+
+        return device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &surface,
+                !!pRect, pRect, WINED3DCLEAR_TARGET, c, 0.0f, 0);
+    }
+    else
+    {
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
@@ -5582,7 +5540,8 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        color_fill_fbo(iface, surface, NULL, color);
+        device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &surface,
+                0, NULL, WINED3DCLEAR_TARGET, color, 0.0f, 0);
     }
     else
     {
