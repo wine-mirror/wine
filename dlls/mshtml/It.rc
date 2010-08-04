@@ -25,7 +25,13 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-    IDS_HTMLDISABLED    "Il rendering HTML è correntemente disattivato."
+    IDS_STATUS_DONE            "Fatto"
+    IDS_STATUS_DOWNLOADINGFROM "Scaricando da %s..."
+}
+
+STRINGTABLE
+{
+    IDS_HTMLDISABLED    "Il rendering HTML è attualmente disattivato."
     IDS_HTMLDOCUMENT    "Documento HTML"
     IDS_DOWNLOADING     "Scaricando..."
     IDS_INSTALLING      "Installando..."
