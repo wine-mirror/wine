@@ -47,39 +47,45 @@ static inline ErrorInstance *error_this(vdisp_t *jsthis)
 }
 
 /* ECMA-262 3rd Edition    15.11.4.4 */
-static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    ErrorInstance *error;
-    BSTR name, msg = NULL, ret = NULL;
+    DispatchEx *jsthis;
+    BSTR name = NULL, msg = NULL, ret = NULL;
     VARIANT v;
     HRESULT hres;
 
-    static const WCHAR str[] = {'[','o','b','j','e','c','t',' ','E','r','r','o','r',']',0};
+    static const WCHAR object_errorW[] = {'[','o','b','j','e','c','t',' ','E','r','r','o','r',']',0};
 
     TRACE("\n");
 
-    error = error_this(jsthis);
-    if(ctx->version < 2 || !error) {
+    jsthis = get_jsdisp(vthis);
+    if(!jsthis || ctx->version < 2) {
         if(retv) {
             V_VT(retv) = VT_BSTR;
-            V_BSTR(retv) = SysAllocString(str);
+            V_BSTR(retv) = SysAllocString(object_errorW);
             if(!V_BSTR(retv))
                 return E_OUTOFMEMORY;
         }
         return S_OK;
     }
 
-    hres = jsdisp_propget_name(&error->dispex, nameW, &v, ei, caller);
+    hres = jsdisp_propget_name(jsthis, nameW, &v, ei, caller);
     if(FAILED(hres))
         return hres;
 
-    hres = to_string(ctx, &v, ei, &name);
-    VariantClear(&v);
-    if(FAILED(hres))
-        return hres;
+    if(V_VT(&v) != VT_EMPTY) {
+        hres = to_string(ctx, &v, ei, &name);
+        VariantClear(&v);
+        if(FAILED(hres))
+            return hres;
+        if(!*name) {
+            SysFreeString(name);
+            name = NULL;
+        }
+    }
 
-    hres = jsdisp_propget_name(&error->dispex, messageW, &v, ei, caller);
+    hres = jsdisp_propget_name(jsthis, messageW, &v, ei, caller);
     if(SUCCEEDED(hres)) {
         if(V_VT(&v) != VT_EMPTY) {
             hres = to_string(ctx, &v, ei, &msg);
@@ -92,7 +98,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     }
 
     if(SUCCEEDED(hres)) {
-        if(msg) {
+        if(name && msg) {
             DWORD name_len, msg_len;
 
             name_len = SysStringLen(name);
@@ -105,9 +111,16 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
                 ret[name_len+1] = ' ';
                 memcpy(ret+name_len+2, msg, msg_len*sizeof(WCHAR));
             }
-        }else {
+        }else if(name) {
             ret = name;
             name = NULL;
+        }else if(msg) {
+            ret = msg;
+            msg = NULL;
+        }else {
+            ret = SysAllocString(object_errorW);
+            if(!V_BSTR(retv))
+                hres = E_OUTOFMEMORY;
         }
     }
 

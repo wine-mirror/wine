@@ -1780,6 +1780,12 @@ ok(err.message === "message", "err.message = " + err.message);
 ok(err.description === "message", "err.description = " + err.description);
 err = new Error();
 ok(err.number === 0, "err.number = " + err.number);
+ok(err.description === "", "err.description = " + err.description);
+err.description = 5;
+ok(err.description === 5, "err.description = " + err.description);
+ok(err.message === "", "err.message = " + err.message);
+err.message = 4;
+ok(err.message === 4, "err.message = " + err.message);
 
 ok(!("number" in Error), "number is in Error");
 
@@ -1788,6 +1794,33 @@ tmp.toString = function() { return "test"; };
 
 tmp = Error.prototype.toString.call(tmp);
 ok(tmp === "[object Error]", "Error.prototype.toString.call(tmp) = " + tmp);
+
+if(invokeVersion >= 2) {
+    obj = new Object();
+    obj.name = "test";
+    tmp = Error.prototype.toString.call(obj);
+    ok(tmp === "test", "Error.prototype.toString.call(obj) = " + tmp);
+
+    obj = new Object();
+    obj.name = 6;
+    obj.message = false;
+    tmp = Error.prototype.toString.call(obj);
+    ok(tmp === "6: false", "Error.prototype.toString.call(obj) = " + tmp);
+
+    obj = new Object();
+    obj.message = "test";
+    tmp = Error.prototype.toString.call(obj);
+    ok(tmp === "test", "Error.prototype.toString.call(obj) = " + tmp);
+
+    obj = new Object();
+    obj.name = "";
+    obj.message = "test";
+    tmp = Error.prototype.toString.call(obj);
+    ok(tmp === "test", "Error.prototype.toString.call(obj) = " + tmp);
+}
+
+tmp = Error.prototype.toString.call(testObj);
+ok(tmp === "[object Error]", "Error.prototype.toString.call(testObj) = " + tmp);
 
 err = new Error();
 err.name = null;
