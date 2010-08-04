@@ -5571,21 +5571,25 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
 }
 
 /* rendertarget and depth stencil functions */
-static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD RenderTargetIndex, IWineD3DSurface **ppRenderTarget) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice *iface,
+        DWORD render_target_idx, IWineD3DSurface **render_target)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
-    if (RenderTargetIndex >= This->adapter->gl_info.limits.buffers)
+    TRACE("iface %p, render_target_idx %u, render_target %p.\n",
+            iface, render_target_idx, render_target);
+
+    if (render_target_idx >= device->adapter->gl_info.limits.buffers)
     {
-        ERR("(%p) : Only %d render targets are supported.\n",
-                This, This->adapter->gl_info.limits.buffers);
+        WARN("Only %u render targets are supported.\n", device->adapter->gl_info.limits.buffers);
         return WINED3DERR_INVALIDCALL;
     }
 
-    *ppRenderTarget = (IWineD3DSurface *)This->render_targets[RenderTargetIndex];
-    TRACE("(%p) : RenderTarget %d Index returning %p\n", This, RenderTargetIndex, *ppRenderTarget);
-    /* Note inc ref on returned surface */
-    if(*ppRenderTarget != NULL)
-        IWineD3DSurface_AddRef(*ppRenderTarget);
+    *render_target = (IWineD3DSurface *)device->render_targets[render_target_idx];
+    if (*render_target) IWineD3DSurface_AddRef(*render_target);
+
+    TRACE("Returning render target %p.\n", *render_target);
+
     return WINED3D_OK;
 }
 
@@ -5698,63 +5702,66 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice
     }
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget,
-                                                         BOOL set_viewport) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
+        DWORD render_target_idx, IWineD3DSurface *render_target, BOOL set_viewport)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
-    TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
+    TRACE("iface %p, render_target_idx %u, render_target %p, set_viewport %#x.\n",
+            iface, render_target_idx, render_target, set_viewport);
 
-    if (RenderTargetIndex >= This->adapter->gl_info.limits.buffers)
+    if (render_target_idx >= device->adapter->gl_info.limits.buffers)
     {
-        WARN("(%p) : Unsupported target %u set, returning WINED3DERR_INVALIDCALL(only %u supported)\n",
-                This, RenderTargetIndex, This->adapter->gl_info.limits.buffers);
+        WARN("Only %u render targets are supported.\n", device->adapter->gl_info.limits.buffers);
         return WINED3DERR_INVALIDCALL;
     }
 
+    if (render_target == (IWineD3DSurface *)device->render_targets[render_target_idx])
+    {
+        TRACE("Trying to do a NOP SetRenderTarget operation.\n");
+        return WINED3D_OK;
+    }
+
     /* Render target 0 can't be set to NULL. */
-    if (!pRenderTarget && !RenderTargetIndex)
+    if (!render_target && !render_target_idx)
     {
         WARN("Trying to set render target 0 to NULL.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (pRenderTarget && !(((IWineD3DSurfaceImpl *)pRenderTarget)->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
-        FIXME("(%p)Trying to set the render target to a surface(%p) that wasn't created with a usage of WINED3DUSAGE_RENDERTARGET\n",This ,pRenderTarget);
+    if (render_target && !(((IWineD3DSurfaceImpl *)render_target)->resource.usage & WINED3DUSAGE_RENDERTARGET))
+    {
+        FIXME("Surface %p doesn't have render target usage.\n", render_target);
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* If we are trying to set what we already have, don't bother */
-    if (pRenderTarget == (IWineD3DSurface *)This->render_targets[RenderTargetIndex])
+    if (render_target)
+        IWineD3DSurface_AddRef(render_target);
+    if (device->render_targets[render_target_idx])
+        IWineD3DSurface_Release((IWineD3DSurface *)device->render_targets[render_target_idx]);
+    device->render_targets[render_target_idx] = (IWineD3DSurfaceImpl *)render_target;
+
+    /* Render target 0 is special. */
+    if (!render_target_idx && set_viewport)
     {
-        TRACE("Trying to do a NOP SetRenderTarget operation\n");
-        return WINED3D_OK;
-    }
-    if (pRenderTarget)
-        IWineD3DSurface_AddRef(pRenderTarget);
-    if (This->render_targets[RenderTargetIndex])
-        IWineD3DSurface_Release((IWineD3DSurface *)This->render_targets[RenderTargetIndex]);
-    This->render_targets[RenderTargetIndex] = (IWineD3DSurfaceImpl *)pRenderTarget;
+        /* Set the viewport and scissor rectangles, if requested. Tests show
+         * that stateblock recording is ignored, the change goes directly
+         * into the primary stateblock. */
+        device->stateBlock->viewport.Height = device->render_targets[0]->currentDesc.Height;
+        device->stateBlock->viewport.Width  = device->render_targets[0]->currentDesc.Width;
+        device->stateBlock->viewport.X      = 0;
+        device->stateBlock->viewport.Y      = 0;
+        device->stateBlock->viewport.MaxZ   = 1.0f;
+        device->stateBlock->viewport.MinZ   = 0.0f;
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VIEWPORT);
 
-    /* Render target 0 is special */
-    if(RenderTargetIndex == 0 && set_viewport) {
-        /* Finally, reset the viewport and scissor rect as the MSDN states.
-         * Tests show that stateblock recording is ignored, the change goes
-         * directly into the primary stateblock.
-         */
-        This->stateBlock->viewport.Height = This->render_targets[0]->currentDesc.Height;
-        This->stateBlock->viewport.Width  = This->render_targets[0]->currentDesc.Width;
-        This->stateBlock->viewport.X      = 0;
-        This->stateBlock->viewport.Y      = 0;
-        This->stateBlock->viewport.MaxZ   = 1.0f;
-        This->stateBlock->viewport.MinZ   = 0.0f;
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VIEWPORT);
-
-        This->stateBlock->scissorRect.top = 0;
-        This->stateBlock->scissorRect.left = 0;
-        This->stateBlock->scissorRect.right = This->stateBlock->viewport.Width;
-        This->stateBlock->scissorRect.bottom = This->stateBlock->viewport.Height;
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
+        device->stateBlock->scissorRect.top = 0;
+        device->stateBlock->scissorRect.left = 0;
+        device->stateBlock->scissorRect.right = device->stateBlock->viewport.Width;
+        device->stateBlock->scissorRect.bottom = device->stateBlock->viewport.Height;
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SCISSORRECT);
     }
+
     return WINED3D_OK;
 }
 
