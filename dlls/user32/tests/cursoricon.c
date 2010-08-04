@@ -1005,6 +1005,11 @@ static void test_CreateIconFromResource(void)
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 
+    /* Rejection of NULL pointer crashes at least on WNT4WSSP6, W2KPROSP4, WXPPROSP3
+     *
+     * handle = CreateIconFromResource(NULL, ICON_RES_SIZE, TRUE, 0x00030000);
+     * ok(handle == NULL, "Invalid pointer accepted (%p)\n", handle);
+     */
     HeapFree(GetProcessHeap(), 0, hotspot);
 }
 
