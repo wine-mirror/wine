@@ -32,6 +32,7 @@ static HWND hwnd;
 
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
+static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
 
 static void init_function_pointers(void)
 {
@@ -40,6 +41,7 @@ static void init_function_pointers(void)
     hmod = GetModuleHandleA("shell32.dll");
     pSHCreateShellItem = (void*)GetProcAddress(hmod, "SHCreateShellItem");
     pSHGetIDListFromObject = (void*)GetProcAddress(hmod, "SHGetIDListFromObject");
+    pSHCreateItemFromParsingName = (void*)GetProcAddress(hmod, "SHCreateItemFromParsingName");
 }
 
 /*******************************************************
@@ -344,6 +346,63 @@ static void process_msgs(void)
     }
 }
 
+/** Some functions from shell32/tests/shlfolder.c */
+/* creates a file with the specified name for tests */
+static void CreateTestFile(const CHAR *name)
+{
+    HANDLE file;
+    DWORD written;
+
+    file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+       WriteFile(file, name, strlen(name), &written, NULL);
+       WriteFile(file, "\n", strlen("\n"), &written, NULL);
+       CloseHandle(file);
+    }
+}
+/* initializes the tests */
+static void CreateFilesFolders(void)
+{
+    CreateDirectoryA(".\\testdir", NULL);
+    CreateTestFile  (".\\testdir\\test1.txt ");
+    CreateTestFile  (".\\testdir\\test2.txt ");
+    CreateTestFile  (".\\testdir\\test3.txt ");
+    CreateDirectoryA(".\\testdir\\testdir2 ", NULL);
+    CreateDirectoryA(".\\testdir\\testdir2\\subdir", NULL);
+}
+
+/* cleans after tests */
+static void Cleanup(void)
+{
+    DeleteFileA(".\\testdir\\test1.txt");
+    DeleteFileA(".\\testdir\\test2.txt");
+    DeleteFileA(".\\testdir\\test3.txt");
+    RemoveDirectoryA(".\\testdir\\testdir2\\subdir");
+    RemoveDirectoryA(".\\testdir\\testdir2");
+    RemoveDirectoryA(".\\testdir");
+}
+
+/* Based on PathAddBackslashW from dlls/shlwapi/path.c */
+static LPWSTR myPathAddBackslashW( LPWSTR lpszPath )
+{
+  size_t iLen;
+
+  if (!lpszPath || (iLen = lstrlenW(lpszPath)) >= MAX_PATH)
+    return NULL;
+
+  if (iLen)
+  {
+    lpszPath += iLen;
+    if (lpszPath[-1] != '\\')
+    {
+      *lpszPath++ = '\\';
+      *lpszPath = '\0';
+    }
+  }
+  return lpszPath;
+}
+
 /* Returns FALSE if the NamespaceTreeControl failed to be instantiated. */
 static BOOL test_initialization(void)
 {
@@ -495,21 +554,66 @@ static BOOL test_initialization(void)
     return TRUE;
 }
 
+static void verify_root_order_(INameSpaceTreeControl *pnstc, IShellItem **roots,
+                               const char *file, int line)
+{
+    HRESULT hr;
+    IShellItemArray *psia;
+
+    hr = INameSpaceTreeControl_GetRootItems(pnstc, &psia);
+    ok_(file,line) (hr == S_OK, "GetRootItems: got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        DWORD i, expected, count = -1;
+        hr = IShellItemArray_GetCount(psia, &count);
+        ok_(file,line) (hr == S_OK, "Got (0x%08x)\n", hr);
+
+        for(expected = 0; roots[expected] != NULL; expected++);
+        ok_(file,line) (count == expected, "Got %d roots, expected %d\n", count, expected);
+
+        for(i = 0; i < count && roots[i] != NULL; i++)
+        {
+            IShellItem *psi;
+            hr = IShellItemArray_GetItemAt(psia, i, &psi);
+            ok_(file,line) (hr == S_OK, "GetItemAt %i: got 0x%08x\n", i, hr);
+            if(SUCCEEDED(hr))
+            {
+                int cmp;
+                hr = IShellItem_Compare(psi, roots[i], SICHINT_DISPLAY, &cmp);
+                ok_(file,line) (hr == S_OK, "Compare %i: got 0x%08x\n", i, hr);
+                IShellItem_Release(psi);
+            }
+        }
+        IShellItem_Release(psia);
+    }
+}
+#define verify_root_order(pnstc, psi_a)         \
+    verify_root_order_(pnstc, psi_a, __FILE__, __LINE__)
+
 static void test_basics(void)
 {
     INameSpaceTreeControl *pnstc;
     INameSpaceTreeControl2 *pnstc2;
+    IShellItemArray *psia;
     IShellFolder *psfdesktop;
     IShellItem *psidesktop, *psidesktop2;
+    IShellItem *psitestdir, *psitestdir2;
     IOleWindow *pow;
     LPITEMIDLIST pidl_desktop;
     HRESULT hr;
     UINT i, res;
     RECT rc;
+    IShellItem *roots[10];
+    WCHAR curdirW[MAX_PATH];
+    WCHAR buf[MAX_PATH];
+    static const WCHAR testdirW[] = {'t','e','s','t','d','i','r',0};
+    static const WCHAR testdir2W[] =
+        {'t','e','s','t','d','i','r','\\','t','e','s','t','d','i','r','2',0};
 
     /* These should exist on platforms supporting the NSTC */
     ok(pSHCreateShellItem != NULL, "No SHCreateShellItem.\n");
     ok(pSHGetIDListFromObject != NULL, "No SHCreateShellItem.\n");
+    ok(pSHCreateItemFromParsingName != NULL, "No SHCreateItemFromParsingName\n");
 
     /* Create ShellItems for testing. */
     SHGetDesktopFolder(&psfdesktop);
@@ -535,6 +639,23 @@ static void test_basics(void)
         win_skip("Test setup failed.\n");
         return;
     }
+
+    CreateFilesFolders();
+    GetCurrentDirectoryW(MAX_PATH, curdirW);
+    ok(lstrlenW(curdirW), "Got 0 length string.\n");
+
+    lstrcpyW(buf, curdirW);
+    myPathAddBackslashW(buf);
+    lstrcatW(buf, testdirW);
+    hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psitestdir);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(FAILED(hr)) goto cleanup;
+    lstrcpyW(buf, curdirW);
+    myPathAddBackslashW(buf);
+    lstrcatW(buf, testdir2W);
+    hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psitestdir2);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(FAILED(hr)) goto cleanup;
 
     hr = CoCreateInstance(&CLSID_NamespaceTreeControl, NULL, CLSCTX_INPROC_SERVER,
                           &IID_INameSpaceTreeControl, (void**)&pnstc);
@@ -820,8 +941,89 @@ static void test_basics(void)
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
 
+    /* GetRootItems */
+    if(0)
+    {
+        /* Crashes on native. */
+        hr = INameSpaceTreeControl_GetRootItems(pnstc, NULL);
+    }
+
+    hr = INameSpaceTreeControl_GetRootItems(pnstc, &psia);
+    ok(hr == E_INVALIDARG, "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop2, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir2, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    roots[0] = psidesktop;
+    roots[1] = psidesktop2;
+    roots[2] = psitestdir;
+    roots[3] = psitestdir2;
+    roots[4] = NULL;
+    verify_root_order(pnstc, roots);
+
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, 0, psitestdir2, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    roots[0] = psitestdir2;
+    roots[1] = psidesktop;
+    roots[2] = psidesktop2;
+    roots[3] = psitestdir;
+    roots[4] = psitestdir2;
+    roots[5] = NULL;
+    verify_root_order(pnstc, roots);
+
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, 5, psidesktop, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    roots[5] = psidesktop;
+    roots[6] = NULL;
+    verify_root_order(pnstc, roots);
+
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, 3, psitestdir2, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    roots[3] = psitestdir2;
+    roots[4] = psitestdir;
+    roots[5] = psitestdir2;
+    roots[6] = psidesktop;
+    roots[7] = NULL;
+    verify_root_order(pnstc, roots);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir2, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    roots[7] = psitestdir2;
+    roots[8] = NULL;
+    verify_root_order(pnstc, roots);
+
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, -1, psidesktop, 0, 0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    roots[0] = psidesktop;
+    roots[1] = psitestdir2;
+    roots[2] = psidesktop;
+    roots[3] = psidesktop2;
+    roots[4] = psitestdir2;
+    roots[5] = psitestdir;
+    roots[6] = psitestdir2;
+    roots[7] = psidesktop;
+    roots[8] = psitestdir2;
+    roots[9] = NULL;
+    verify_root_order(pnstc, roots);
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
     IShellItem_Release(psidesktop);
     IShellItem_Release(psidesktop2);
+    IShellItem_Release(psitestdir);
+    IShellItem_Release(psitestdir2);
 
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -836,6 +1038,9 @@ static void test_basics(void)
 
     res = INameSpaceTreeControl_Release(pnstc);
     ok(!res, "res was %d!\n", res);
+
+cleanup:
+    Cleanup();
 }
 
 static void test_events(void)

@@ -683,8 +683,35 @@ static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
                                            IShellItemArray **ppsiaRootItems)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p)\n", This, ppsiaRootItems);
-    return E_NOTIMPL;
+    IShellFolder *psf;
+    LPITEMIDLIST *array;
+    nstc_root *root;
+    UINT count, i;
+    HRESULT hr;
+    TRACE("%p (%p)\n", This, ppsiaRootItems);
+
+    count = list_count(&This->roots);
+
+    if(!count)
+        return E_INVALIDARG;
+
+    array = HeapAlloc(GetProcessHeap(), 0, sizeof(LPITEMIDLIST*)*count);
+
+    i = 0;
+    LIST_FOR_EACH_ENTRY(root, &This->roots, nstc_root, entry)
+        SHGetIDListFromObject((IUnknown*)root->psi, &array[i++]);
+
+    SHGetDesktopFolder(&psf);
+    hr = SHCreateShellItemArray(NULL, psf, count, (PCUITEMID_CHILD_ARRAY)array,
+                                ppsiaRootItems);
+    IShellFolder_Release(psf);
+
+    for(i = 0; i < count; i++)
+        ILFree(array[i]);
+
+    HeapFree(GetProcessHeap(), 0, array);
+
+    return hr;
 }
 
 static HRESULT WINAPI NSTC2_fnSetItemState(INameSpaceTreeControl2* iface,
