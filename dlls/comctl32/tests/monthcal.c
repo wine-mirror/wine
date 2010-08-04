@@ -611,7 +611,7 @@ static HWND create_monthcal_control(DWORD style)
 
 /* Setter and Getters Tests */
 
-static void test_monthcal_color(void)
+static void test_color(void)
 {
     int res, temp;
     HWND hwnd;
@@ -686,7 +686,7 @@ static void test_monthcal_color(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_currdate(void)
+static void test_currdate(void)
 {
     SYSTEMTIME st_original, st_new, st_test;
     int res;
@@ -816,7 +816,7 @@ static void test_monthcal_currdate(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_firstDay(void)
+static void test_firstDay(void)
 {
     int res, fday, i, prev;
     CHAR b[128];
@@ -863,7 +863,7 @@ static void test_monthcal_firstDay(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_unicode(void)
+static void test_unicode(void)
 {
     int res, temp;
     HWND hwnd;
@@ -906,7 +906,7 @@ static void test_monthcal_unicode(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_hittest(void)
+static void test_hittest(void)
 {
     typedef struct hittest_test
     {
@@ -1157,7 +1157,7 @@ static void test_monthcal_hittest(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_todaylink(void)
+static void test_todaylink(void)
 {
     MCHITTESTINFO mchit;
     SYSTEMTIME st_test, st_new;
@@ -1212,7 +1212,7 @@ static void test_monthcal_todaylink(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_today(void)
+static void test_today(void)
 {
     SYSTEMTIME st_test, st_new;
     int res;
@@ -1267,7 +1267,7 @@ static void test_monthcal_today(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_scroll(void)
+static void test_scroll(void)
 {
     int res;
     HWND hwnd;
@@ -1305,7 +1305,7 @@ static void test_monthcal_scroll(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_monthrange(void)
+static void test_monthrange(void)
 {
     int res;
     SYSTEMTIME st_visible[2], st_daystate[2], st;
@@ -1398,7 +1398,7 @@ static void test_monthcal_monthrange(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_maxselday(void)
+static void test_maxselday(void)
 {
     int res;
     HWND hwnd;
@@ -1464,7 +1464,7 @@ static void test_monthcal_maxselday(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_size(void)
+static void test_size(void)
 {
     int res;
     RECT r1, r2;
@@ -1500,7 +1500,7 @@ static void test_monthcal_size(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_create(void)
+static void test_create(void)
 {
     HWND hwnd;
 
@@ -1517,7 +1517,7 @@ static void test_monthcal_create(void)
     DestroyWindow(hwnd);
 }
 
-static void test_monthcal_destroy(void)
+static void test_destroy(void)
 {
     HWND hwnd;
 
@@ -1534,7 +1534,7 @@ static void test_monthcal_destroy(void)
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, destroy_monthcal_multi_sel_style_seq, "Destroy monthcal (multi sel style)", FALSE);
 }
 
-static void test_monthcal_selrange(void)
+static void test_selrange(void)
 {
     HWND hwnd;
     SYSTEMTIME st, range[2], range2[2];
@@ -1809,20 +1809,20 @@ START_TEST(monthcal)
 
     parent_wnd = create_parent_window();
 
-    test_monthcal_create();
-    test_monthcal_destroy();
-    test_monthcal_color();
-    test_monthcal_currdate();
-    test_monthcal_firstDay();
-    test_monthcal_unicode();
-    test_monthcal_today();
-    test_monthcal_scroll();
-    test_monthcal_monthrange();
-    test_monthcal_hittest();
-    test_monthcal_todaylink();
-    test_monthcal_size();
-    test_monthcal_maxselday();
-    test_monthcal_selrange();
+    test_create();
+    test_destroy();
+    test_color();
+    test_currdate();
+    test_firstDay();
+    test_unicode();
+    test_today();
+    test_scroll();
+    test_monthrange();
+    test_hittest();
+    test_todaylink();
+    test_size();
+    test_maxselday();
+    test_selrange();
     test_killfocus();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
