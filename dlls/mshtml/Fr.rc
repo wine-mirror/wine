@@ -29,6 +29,12 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
+    IDS_STATUS_DONE            "Terminé"
+    IDS_STATUS_DOWNLOADINGFROM "Téléchargement depuis %s..."
+}
+
+STRINGTABLE
+{
     IDS_HTMLDISABLED    "Le rendu HTML est actuellement désactivé."
     IDS_HTMLDOCUMENT    "Document HTML"
     IDS_DOWNLOADING     "Téléchargement..."
