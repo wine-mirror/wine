@@ -72,6 +72,20 @@ static const DWORD unsupported_styles2 =
 /*************************************************************************
 * NamespaceTree event wrappers
 */
+static HRESULT events_OnGetDefaultIconIndex(NSTC2Impl *This, IShellItem *psi,
+                                            int *piDefaultIcon, int *piOpenIcon)
+{
+    HRESULT ret;
+    LONG refcount;
+    if(!This->pnstce) return E_NOTIMPL;
+
+    refcount = IShellItem_AddRef(psi);
+    ret = INameSpaceTreeControlEvents_OnGetDefaultIconIndex(This->pnstce, psi, piDefaultIcon, piOpenIcon);
+    if(IShellItem_Release(psi) < refcount - 1)
+        ERR("ShellItem was released by client - please file a bug.\n");
+    return ret;
+}
+
 static HRESULT events_OnItemAdded(NSTC2Impl *This, IShellItem *psi, BOOL fIsRoot)
 {
     HRESULT ret;
@@ -133,6 +147,28 @@ static DWORD treeview_style_from_nstcs(NSTC2Impl *This, NSTCSTYLE nstcs,
     TRACE("old: %08x, new: %08x\n", old_style, *new_style);
 
     return old_style^*new_style;
+}
+
+static IShellItem *shellitem_from_treeitem(NSTC2Impl *This, HTREEITEM hitem)
+{
+    TVITEMEXW tvi;
+
+    tvi.mask = TVIF_PARAM;
+    tvi.lParam = (LPARAM)NULL;
+    tvi.hItem = hitem;
+
+    SendMessageW(This->hwnd_tv, TVM_GETITEMW, 0, (LPARAM)&tvi);
+
+    TRACE("ShellItem: %p\n", (void*)tvi.lParam);
+    return (IShellItem*)tvi.lParam;
+}
+
+static int get_icon(LPCITEMIDLIST lpi, UINT extra_flags)
+{
+    SHFILEINFOW sfi;
+    UINT flags = SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON;
+    SHGetFileInfoW((LPCWSTR)lpi, 0 ,&sfi, sizeof(SHFILEINFOW), flags | extra_flags);
+    return sfi.iIcon;
 }
 
 /* Insert a shellitem into the given place in the tree and return the
@@ -239,16 +275,84 @@ static LRESULT destroy_namespacetree(NSTC2Impl *This)
     return TRUE;
 }
 
+static LRESULT on_tvn_getdispinfow(NSTC2Impl *This, LPARAM lParam)
+{
+    NMTVDISPINFOW *dispinfo = (NMTVDISPINFOW*)lParam;
+    TVITEMEXW *item = (TVITEMEXW*)&dispinfo->item;
+    IShellItem *psi = shellitem_from_treeitem(This, item->hItem);
+    HRESULT hr;
+
+    TRACE("%p, %p (mask: %x)\n", This, dispinfo, item->mask);
+
+    if(item->mask & TVIF_CHILDREN)
+    {
+        SFGAOF sfgao;
+
+        hr = IShellItem_GetAttributes(psi, SFGAO_HASSUBFOLDER, &sfgao);
+        if(SUCCEEDED(hr))
+            item->cChildren = (sfgao & SFGAO_HASSUBFOLDER)?1:0;
+        else
+            item->cChildren = 1;
+
+        item->mask |= TVIF_DI_SETITEM;
+    }
+
+    if(item->mask & (TVIF_IMAGE|TVIF_SELECTEDIMAGE))
+    {
+        LPITEMIDLIST pidl;
+
+        hr = events_OnGetDefaultIconIndex(This, psi, &item->iImage, &item->iSelectedImage);
+        if(FAILED(hr))
+        {
+            hr = SHGetIDListFromObject((IUnknown*)psi, &pidl);
+            if(SUCCEEDED(hr))
+            {
+                item->iImage = item->iSelectedImage = get_icon(pidl, 0);
+                item->mask |= TVIF_DI_SETITEM;
+                ILFree(pidl);
+            }
+            else
+                ERR("Failed to get IDList (%08x).\n", hr);
+        }
+    }
+
+    if(item->mask & TVIF_TEXT)
+    {
+        LPWSTR display_name;
+
+        hr = IShellItem_GetDisplayName(psi, SIGDN_NORMALDISPLAY, &display_name);
+        if(SUCCEEDED(hr))
+        {
+            lstrcpynW(item->pszText, display_name, MAX_PATH);
+            item->mask |= TVIF_DI_SETITEM;
+            CoTaskMemFree(display_name);
+        }
+        else
+            ERR("Failed to get display name (%08x).\n", hr);
+    }
+
+    return TRUE;
+}
+
 static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
                                       WPARAM wParam, LPARAM lParam)
 {
     NSTC2Impl *This = (NSTC2Impl*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    NMHDR *nmhdr;
 
     switch(uMessage)
     {
     case WM_NCCREATE:         return create_namespacetree(hWnd, (CREATESTRUCTW*)lParam);
     case WM_SIZE:             return resize_namespacetree(This);
     case WM_DESTROY:          return destroy_namespacetree(This);
+    case WM_NOTIFY:
+        nmhdr = (NMHDR*)lParam;
+        switch(nmhdr->code)
+        {
+        case TVN_GETDISPINFOW:    return on_tvn_getdispinfow(This, lParam);
+        default:                  break;
+        }
+        break;
     default:                  return DefWindowProcW(hWnd, uMessage, wParam, lParam);
     }
     return 0;
