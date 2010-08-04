@@ -24,6 +24,12 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
+    IDS_STATUS_DONE            "Klaar"
+    IDS_STATUS_DOWNLOADINGFROM "Downloaden van %s..."
+}
+
+STRINGTABLE
+{
     IDS_HTMLDISABLED  "De HTML weergave is op dit moment uitgeschakeld."
     IDS_HTMLDOCUMENT  "HTML document"
     IDS_DOWNLOADING   "Bezig met downloaden..."
