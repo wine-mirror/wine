@@ -55,13 +55,36 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "&Propriétés...",              ID_BROWSE_PROPERTIES
     }
+    POPUP "&Afficher"
+    {
+        POPUP "&Barres d'outils"
+        {
+            MENUITEM "Barre &standard"            ID_BROWSE_BAR_STD
+            MENUITEM "Barre d'&adresse"             ID_BROWSE_BAR_ADDR
+        }
+    }
     POPUP "&Favoris"
     {
         MENUITEM "&Ajouter aux favoris..."         ID_BROWSE_ADDFAV
         MENUITEM SEPARATOR
     }
-    POPUP "&Aide"
+    POPUP "A&ide"
     {
         MENUITEM "À &propos d'Internet Explorer...", ID_BROWSE_ABOUT
     }
+}
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Précédent"
+    IDS_TB_FORWARD          "Suivant"
+    IDS_TB_STOP             "Arrêter"
+    IDS_TB_REFRESH          "Recharger"
+    IDS_TB_HOME             "Accueil"
+    IDS_TB_PRINT            "Imprimer"
+}
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Adresse"
 }
