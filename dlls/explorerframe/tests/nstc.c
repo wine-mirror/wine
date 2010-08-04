@@ -315,6 +315,35 @@ static INameSpaceTreeControlEventsImpl *create_nstc_events(void)
     return This;
 }
 
+/* Process some messages */
+static void process_msgs(void)
+{
+    MSG msg;
+    BOOL got_msg;
+    do {
+        got_msg = FALSE;
+        Sleep(100);
+        while(PeekMessage( &msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+            got_msg = TRUE;
+        }
+    } while(got_msg);
+
+    /* There seem to be a timer that sometimes fires after about
+       500ms, we need to wait for it. Failing to wait can result in
+       seemingly sporadic selection change events. (Timer ID is 87,
+       sending WM_TIMER manually does not seem to help us.) */
+    Sleep(500);
+
+    while(PeekMessage( &msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
 /* Returns FALSE if the NamespaceTreeControl failed to be instantiated. */
 static BOOL test_initialization(void)
 {
@@ -470,14 +499,51 @@ static void test_basics(void)
 {
     INameSpaceTreeControl *pnstc;
     INameSpaceTreeControl2 *pnstc2;
+    IShellFolder *psfdesktop;
+    IShellItem *psidesktop, *psidesktop2;
     IOleWindow *pow;
+    LPITEMIDLIST pidl_desktop;
     HRESULT hr;
     UINT i, res;
     RECT rc;
 
+    /* These should exist on platforms supporting the NSTC */
+    ok(pSHCreateShellItem != NULL, "No SHCreateShellItem.\n");
+    ok(pSHGetIDListFromObject != NULL, "No SHCreateShellItem.\n");
+
+    /* Create ShellItems for testing. */
+    SHGetDesktopFolder(&psfdesktop);
+    hr = pSHGetIDListFromObject((IUnknown*)psfdesktop, &pidl_desktop);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = pSHCreateShellItem(NULL, NULL, pidl_desktop, &psidesktop);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = pSHCreateShellItem(NULL, NULL, pidl_desktop, &psidesktop2);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(FAILED(hr)) IShellItem_Release(psidesktop);
+        }
+        ILFree(pidl_desktop);
+    }
+    ok(psidesktop != psidesktop2, "psidesktop == psidesktop2\n");
+    IShellFolder_Release(psfdesktop);
+
+    if(FAILED(hr))
+    {
+        win_skip("Test setup failed.\n");
+        return;
+    }
+
     hr = CoCreateInstance(&CLSID_NamespaceTreeControl, NULL, CLSCTX_INPROC_SERVER,
                           &IID_INameSpaceTreeControl, (void**)&pnstc);
     ok(hr == S_OK, "Failed to initialize control (0x%08x)\n", hr);
+
+    /* Some tests on an uninitialized control */
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, SHCONTF_NONFOLDERS, 0, NULL);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    process_msgs();
 
     /* Initialize the control */
     rc.top = rc.left = 0; rc.right = rc.bottom = 200;
@@ -696,6 +762,37 @@ static void test_basics(void)
     {
         skip("INameSpaceTreeControl2 missing.\n");
     }
+
+    /* Append / Insert root */
+    if(0)
+    {
+        /* Crashes under Windows 7 */
+        hr = INameSpaceTreeControl_AppendRoot(pnstc, NULL, SHCONTF_FOLDERS, 0, NULL);
+        hr = INameSpaceTreeControl_InsertRoot(pnstc, 0, NULL, SHCONTF_FOLDERS, 0, NULL);
+    }
+
+    /* Note the usage of psidesktop and psidesktop2 */
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop2, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, 0, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, -1, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, -1, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, 50, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_InsertRoot(pnstc, 1, psidesktop, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
+    IShellItem_Release(psidesktop);
+    IShellItem_Release(psidesktop2);
 
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "Got 0x%08x\n", hr);

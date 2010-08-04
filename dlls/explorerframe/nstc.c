@@ -27,12 +27,24 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "shellapi.h"
 
+#include "wine/list.h"
 #include "wine/debug.h"
 
 #include "explorerframe_main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nstc);
+
+typedef struct nstc_root {
+    IShellItem *psi;
+    HTREEITEM htreeitem;
+    SHCONTF enum_flags;
+    NSTCROOTSTYLE root_style;
+    IShellItemFilter *pif;
+    struct list entry;
+} nstc_root;
 
 typedef struct {
     const INameSpaceTreeControl2Vtbl *lpVtbl;
@@ -44,6 +56,7 @@ typedef struct {
 
     NSTCSTYLE style;
     NSTCSTYLE2 style2;
+    struct list roots;
 
     INameSpaceTreeControlEvents *pnstce;
 } NSTC2Impl;
@@ -55,6 +68,22 @@ static const DWORD unsupported_styles =
 static const DWORD unsupported_styles2 =
     NSTCS2_INTERRUPTNOTIFICATIONS | NSTCS2_SHOWNULLSPACEMENU | NSTCS2_DISPLAYPADDING |
     NSTCS2_DISPLAYPINNEDONLY | NTSCS2_NOSINGLETONAUTOEXPAND | NTSCS2_NEVERINSERTNONENUMERATED;
+
+/*************************************************************************
+* NamespaceTree event wrappers
+*/
+static HRESULT events_OnItemAdded(NSTC2Impl *This, IShellItem *psi, BOOL fIsRoot)
+{
+    HRESULT ret;
+    LONG refcount;
+    if(!This->pnstce) return S_OK;
+
+    refcount = IShellItem_AddRef(psi);
+    ret = INameSpaceTreeControlEvents_OnItemAdded(This->pnstce, psi, fIsRoot);
+    if(IShellItem_Release(psi) < refcount - 1)
+        ERR("ShellItem was released by client - please file a bug.\n");
+    return ret;
+}
 
 /*************************************************************************
  * NamespaceTree helper functions
@@ -104,6 +133,34 @@ static DWORD treeview_style_from_nstcs(NSTC2Impl *This, NSTCSTYLE nstcs,
     TRACE("old: %08x, new: %08x\n", old_style, *new_style);
 
     return old_style^*new_style;
+}
+
+/* Insert a shellitem into the given place in the tree and return the
+   resulting treeitem. */
+static HTREEITEM insert_shellitem(NSTC2Impl *This, IShellItem *psi,
+                                  HTREEITEM hParent, HTREEITEM hInsertAfter)
+{
+    TVINSERTSTRUCTW tvins;
+    TVITEMEXW *tvi = &tvins.u.itemex;
+    HTREEITEM hinserted;
+    TRACE("%p (%p, %p)\n", psi, hParent, hInsertAfter);
+
+    tvi->mask = TVIF_PARAM | TVIF_CHILDREN | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_TEXT;
+    tvi->cChildren = I_CHILDRENCALLBACK;
+    tvi->iImage = tvi->iSelectedImage = I_IMAGECALLBACK;
+    tvi->pszText = LPSTR_TEXTCALLBACKW;
+
+    /* Every treeitem contains a pointer to the corresponding ShellItem. */
+    tvi->lParam = (LPARAM)psi;
+    tvins.hParent = hParent;
+    tvins.hInsertAfter = hInsertAfter;
+
+    hinserted = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_INSERTITEMW, 0,
+                                        (LPARAM)(LPTVINSERTSTRUCTW)&tvins);
+    if(hinserted)
+        IShellItem_AddRef(psi);
+
+    return hinserted;
 }
 
 /*************************************************************************
@@ -365,8 +422,59 @@ static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,
                                          IShellItemFilter *pif)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p, %p, %x, %x, %p\n", This, psiRoot, grfEnumFlags, grfRootStyle, pif);
-    return E_NOTIMPL;
+    nstc_root *new_root;
+    struct list *add_after_entry;
+    HTREEITEM add_after_hitem;
+    UINT i;
+
+    TRACE("%p, %d, %p, %x, %x, %p\n", This, iIndex, psiRoot, grfEnumFlags, grfRootStyle, pif);
+
+    new_root = HeapAlloc(GetProcessHeap(), 0, sizeof(nstc_root));
+    if(!new_root)
+        return E_OUTOFMEMORY;
+
+    new_root->psi = psiRoot;
+    new_root->enum_flags = grfEnumFlags;
+    new_root->root_style = grfRootStyle;
+    new_root->pif = pif;
+
+    /* We want to keep the roots in the internal list and in the
+     * treeview in the same order. */
+    add_after_entry = &This->roots;
+    for(i = 0; i < max(0, iIndex) && list_next(&This->roots, add_after_entry); i++)
+        add_after_entry = list_next(&This->roots, add_after_entry);
+
+    if(add_after_entry == &This->roots)
+        add_after_hitem = TVI_FIRST;
+    else
+        add_after_hitem = LIST_ENTRY(add_after_entry, nstc_root, entry)->htreeitem;
+
+    new_root->htreeitem = insert_shellitem(This, psiRoot, TVI_ROOT, add_after_hitem);
+    if(!new_root->htreeitem)
+    {
+        WARN("Failed to add the root.\n");
+        HeapFree(GetProcessHeap(), 0, new_root);
+        return E_FAIL;
+    }
+
+    list_add_after(add_after_entry, &new_root->entry);
+    events_OnItemAdded(This, psiRoot, TRUE);
+
+    if(grfRootStyle & NSTCRS_HIDDEN)
+    {
+        TVITEMEXW tvi;
+        tvi.mask = TVIF_STATEEX;
+        tvi.uStateEx = TVIS_EX_FLAT;
+        tvi.hItem = new_root->htreeitem;
+
+        SendMessageW(This->hwnd_tv, TVM_SETITEMW, 0, (LPARAM)&tvi);
+    }
+
+    if(grfRootStyle & NSTCRS_EXPANDED)
+        SendMessageW(This->hwnd_tv, TVM_EXPAND, TVE_EXPAND,
+                     (LPARAM)new_root->htreeitem);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnAppendRoot(INameSpaceTreeControl2* iface,
@@ -376,9 +484,13 @@ static HRESULT WINAPI NSTC2_fnAppendRoot(INameSpaceTreeControl2* iface,
                                          IShellItemFilter *pif)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p, %p, %x, %x, %p\n",
+    UINT root_count;
+    TRACE("%p, %p, %x, %x, %p\n",
           This, psiRoot, grfEnumFlags, grfRootStyle, pif);
-    return E_NOTIMPL;
+
+    root_count = list_count(&This->roots);
+
+    return NSTC2_fnInsertRoot(iface, root_count, psiRoot, grfEnumFlags, grfRootStyle, pif);
 }
 
 static HRESULT WINAPI NSTC2_fnRemoveRoot(INameSpaceTreeControl2* iface,
@@ -701,6 +813,8 @@ HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void 
     nstc->ref = 1;
     nstc->lpVtbl = &vt_INameSpaceTreeControl2;
     nstc->lpowVtbl = &vt_IOleWindow;
+
+    list_init(&nstc->roots);
 
     ret = INameSpaceTreeControl_QueryInterface((INameSpaceTreeControl*)nstc, riid, ppv);
     INameSpaceTreeControl_Release((INameSpaceTreeControl*)nstc);
