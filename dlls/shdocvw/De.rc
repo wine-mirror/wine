@@ -52,6 +52,14 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Ei&genschaften...",                 ID_BROWSE_PROPERTIES
     }
+    POPUP "&Ansicht"
+    {
+        POPUP "&Symbolleisten"
+        {
+            MENUITEM "&Standard"                      ID_BROWSE_BAR_STD
+            MENUITEM "&Adressleiste"                  ID_BROWSE_BAR_ADDR
+        }
+    }
     POPUP "&Favoriten"
     {
         MENUITEM "&Zu den Favoriten hinzufügen..."    ID_BROWSE_ADDFAV
