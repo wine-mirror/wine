@@ -380,6 +380,15 @@ static void test_parent_owner(void)
     check_parents( test, desktop, 0, desktop, 0, test, desktop );
 
     /* window is now child of desktop so GWLP_HWNDPARENT changes owner from now on */
+    if (!is_win9x)
+    {
+        ret = (HWND)SetWindowLongPtrA( test, GWLP_HWNDPARENT, (LONG_PTR)test );
+        ok( ret == 0, "GWL_HWNDPARENT return value %p expected 0\n", ret );
+        check_parents( test, desktop, 0, desktop, 0, test, desktop );
+    }
+    else
+        win_skip("Test creates circular window tree under Win9x/WinMe\n" );
+
     ret = (HWND)SetWindowLongPtrA( test, GWLP_HWNDPARENT, (LONG_PTR)child );
     ok( ret == 0, "GWL_HWNDPARENT return value %p expected 0\n", ret );
     check_parents( test, desktop, child, desktop, child, test, desktop );
