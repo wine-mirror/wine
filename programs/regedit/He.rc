@@ -1,0 +1,343 @@
+/*
+ * Regedit resources
+ *
+ * Copyright 2002 Robert Dickenson
+ * Copyright 2010 Yaron Shahrabani <sh.yaron2Gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+/* Hebrew Resources */
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+/*
+ * Menu
+ */
+
+IDR_REGEDIT_MENU MENU
+BEGIN
+    POPUP "&רישום המערכת"
+    BEGIN
+        MENUITEM "יי&בוא קובץ לרישום המערכת...",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "יי&צוא קובץ מרישום המערכת...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "התחברות לרישום מערכת ב&רשת...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&ניתוק מרישום מערכת ברשת...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "ה&דפסה\tCtrlP",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "י&ציאה",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&עריכה"
+    BEGIN
+        MENUITEM "&שינוי",                     ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "ח&דש"
+        BEGIN
+            MENUITEM "&מפתח",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "ערך &מחרוזת",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "ערך &בינרי",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "ערך &DWORD",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "ערך מ&רובה מחרוזות",         ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&מחיקה\tDel",                ID_EDIT_DELETE
+        MENUITEM "שי&נוי שם\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "ה&עתקת שם המפתח",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&חיפוש\tCtrlF",               ID_EDIT_FIND, GRAYED
+        MENUITEM "חיפוש ה&בא\tF3",              ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&תצוגה"
+    BEGIN
+        MENUITEM "שורת ה&מצב",                 ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "&פיצול",                      ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&רענון\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "&מועדפים"
+    BEGIN
+        MENUITEM "הוס&פה למועדפים...",          ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "ה&סרת מועדף...",           ID_FAVORITES_REMOVEFAVORITE
+    END
+    POPUP "ע&זרה"
+    BEGIN
+        MENUITEM "נושאי הע&עזרה\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "על &אודות עורך רישום המערכת",      ID_HELP_ABOUT
+    END
+END
+
+IDR_POPUP_MENUS MENU
+BEGIN
+  POPUP ""
+  BEGIN
+	MENUITEM "&שינוי",                     ID_EDIT_MODIFY
+	MENUITEM "שינוי נתונים בינריים",          ID_EDIT_MODIFY_BIN
+	MENUITEM SEPARATOR
+	MENUITEM "&מחיקה\tDel",                ID_EDIT_DELETE
+	MENUITEM "שי&נוי שם",                     ID_EDIT_RENAME
+  END
+  POPUP ""
+  BEGIN
+        POPUP "&חדש"
+        BEGIN
+            MENUITEM "מ&פתח",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "ערך &מחרוזת",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "ערך &בינרי",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "ערך &DWORD",                ID_EDIT_NEW_DWORDVALUE
+            MENUITEM "ערך מ&רובה מחרוזות",         ID_EDIT_NEW_MULTI_STRINGVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&מחיקה\tDel",                ID_EDIT_DELETE
+        MENUITEM "&שינוי שם\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "יי&צוא...",                  ID_EDIT_EXPORT
+        MENUITEM "ה&עתקת שם המפתח",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&חיפוש\tCtrlF",               ID_EDIT_FIND, GRAYED
+  END
+END
+
+
+/*
+ * Dialog
+ */
+
+IDD_EXPORT_TEMPLATE DIALOG  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+EXSTYLE WS_EX_LAYOUTRTL
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "ייצוא רישום המערכת", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "ה&כול", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "ה&ענפים הנבחרים:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
+    EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
+END
+
+IDD_FIND DIALOG  22, 17, 220, 85
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "חיפוש"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "חיפוש:",IDC_STATIC,5,7,119,8
+    EDITTEXT        IDC_VALUE_NAME,40,5,125,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    LTEXT           "חיפוש תחת:",IDC_STATIC,5, 22, 119, 8
+    CHECKBOX        "מפתחות", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "שמות ערכים", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "תוכן הערכים", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    CHECKBOX        "מחרוזות שלמות בלבד", IDC_FIND_WHOLE, 5, 70, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
+    DEFPUSHBUTTON   "חיפוש",IDOK,175,5,40,15,WS_GROUP
+    PUSHBUTTON      "סגירה",IDCANCEL,175,24,40,15, WS_GROUP
+END
+
+IDD_ADDFAVORITE DIALOG  22, 17, 210, 55
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "הוספה כמועדף"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "שם:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "אישור",IDOK,120,36,40,15,WS_GROUP
+    PUSHBUTTON      "ביטול",IDCANCEL,165,36,40,15,WS_GROUP
+END
+
+IDD_DELFAVORITE DIALOG  22, 17, 210, 90
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "הסרת מועדף"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "שם:",IDC_STATIC,5,5,119,8
+    LISTBOX         IDC_NAME_LIST,5,15,200,52, WS_BORDER | WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    DEFPUSHBUTTON   "אישור",IDOK,120,72,40,15,WS_GROUP
+    PUSHBUTTON      "ביטול",IDCANCEL,165,72,40,15,WS_GROUP
+END
+
+IDD_EDIT_STRING DIALOG  22, 17, 210, 75
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "עריכת מחרוזת"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "שם הערך:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "נתוני הערך:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "אישור",IDOK,120,56,40,15,WS_GROUP
+    PUSHBUTTON   "ביטול",IDCANCEL,165,56,40,15,WS_GROUP
+END
+
+IDD_EDIT_DWORD DIALOG  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "עריכת DWORD"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "שם הערך:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "נתוני הערך:",IDC_STATIC,5,30,90,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,90,12, WS_BORDER | WS_TABSTOP
+    GROUPBOX        "בסיס", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
+    AUTORADIOBUTTON "הקסדצימלי", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
+    AUTORADIOBUTTON "עשרוני", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "אישור",IDOK,120,78,40,15,WS_GROUP
+    PUSHBUTTON   "ביטול",IDCANCEL,165,78,40,15,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG  22, 17, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "עריכת נתון בינרי"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "שם הערך:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,160,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "נתוני הערך:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,5,40,160,40
+    DEFPUSHBUTTON   "אישור",IDOK,80,83,40,15,WS_GROUP
+    PUSHBUTTON   "ביטול",IDCANCEL,125,83,40,15,WS_GROUP
+END
+
+IDD_EDIT_MULTI_STRING DIALOG  22, 17, 210, 175
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "עריכת מרובה מחרוזות"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "שם הערך:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL| WS_DISABLED
+    LTEXT           "נתוני הערך:",IDC_STATIC,5,30,119,8
+    EDITTEXT        IDC_VALUE_DATA,5,40,200,112, WS_BORDER | WS_TABSTOP | WS_HSCROLL | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN
+    DEFPUSHBUTTON   "אישור",IDOK,120,156,40,15,WS_GROUP
+    PUSHBUTTON   "ביטול",IDCANCEL,165,156,40,15,WS_GROUP
+END
+
+/*
+ * String Table
+ */
+
+STRINGTABLE
+BEGIN
+    IDS_LIST_COLUMN_NAME    "שם"
+    IDS_LIST_COLUMN_TYPE    "סוג"
+    IDS_LIST_COLUMN_DATA    "נתון"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "עורך רישום המערכת"
+END
+
+STRINGTABLE
+BEGIN
+    ID_REGISTRY_MENU        "מכיל פקודות לעבודה עם כל רישום המערכת"
+    ID_EDIT_MENU            "מכיל פקודות לעריכת ערכים או מפתחות"
+    ID_VIEW_MENU            "מכיל פקודות להתאמת חלון רישום המערכת"
+    ID_FAVORITES_MENU       "מכיל פקודות לגישה למפתחות הנמצאים בשימוש תדיר"
+    ID_HELP_MENU            "מכיל פקודות להצגת עזרה ומידע על אודות עורך רישום המערכת"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_MODIFY          "שינוי נתוני הערך"
+    ID_EDIT_NEW_KEY         "הוספת מפתח חדש"
+    ID_EDIT_NEW_STRINGVALUE "הוספת ערך מחרוזת חדש"
+    ID_EDIT_NEW_BINARYVALUE "הוספת ערך בינרי חדש"
+    ID_EDIT_NEW_DWORDVALUE  "הוספת ערך חדש בגודל שני word"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "הוספת ערך מרובה מחרוזות חדש"
+    ID_REGISTRY_IMPORTREGISTRYFILE "ייבוא קובץ טקסט לתוך רישום המערכת"
+    ID_REGISTRY_EXPORTREGISTRYFILE
+                            "ייצוא כל רישום המערכת או רק חלק ממנו לקובץ טקסט"
+    ID_REGISTRY_CONNECTNETWORKREGISTRY
+                            "התחברות לרישום מערכת של מחשב מרוחק"
+    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
+                            "ניתוק מרישום מערכת של מחשב מרוחק"
+    ID_REGISTRY_PRINT       "הדפסת כל רישום המערכת או רק חלק ממנו"
+/*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
+    ID_HELP_ABOUT           "הצגת פרטים על אודות התכנה, מספר הגרסה וזכויות יוצרים"
+END
+
+STRINGTABLE
+BEGIN
+    ID_REGISTRY_EXIT        "יציאה מעורך רישום המערכת"
+    ID_FAVORITES_ADDTOFAVORITES "הוספת מפתחות לרשימת המועדפים"
+    ID_FAVORITES_REMOVEFAVORITE "הסרת מפתחות מרשימת המועדפים"
+    ID_VIEW_STATUSBAR       "הצגה או הסתרה של שורת המצב"
+    ID_VIEW_SPLIT           "שינוי מיקום הפיצול בין שתי החלוניות"
+    ID_VIEW_REFRESH         "רענון החלון"
+    ID_EDIT_DELETE          "מחיקת הבחירה"
+    ID_EDIT_RENAME          "שינוי שם הבחירה"
+    ID_EDIT_COPYKEYNAME     "העתקת שם המפתח הנבחר ללוח הגזירים"
+    ID_EDIT_FIND            "חיפוש מחרוזת טקסט בין מפתחות, ערכים ונתונים"
+    ID_EDIT_FINDNEXT        "חיפוש המופע הבא של טקסט שצוין בחיפוש הקודם"
+    ID_EDIT_EXPORT          "ייצוא הענף הנבחר מרישום המערכת לקובץ טקסט"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_ERROR		    "שגיאה"
+    IDS_BAD_KEY		    "לא ניתן לתשאל את המפתח ׳%s׳"
+    IDS_BAD_VALUE           "לא ניתן לתשאל את הערך ׳%s׳"
+    IDS_UNSUPPORTED_TYPE    "לא ניתן לערוך מפתחות מסוג זה (%u)"
+    IDS_TOO_BIG_VALUE       "הערך גדול מדי (%u)"
+    IDS_DELETE_BOX_TITLE    "אישור מחיקת הערך"
+    IDS_DELETE_BOX_TEXT     "האם ברצונך למחוק את הערך '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "האם ברצונך למחוק ערכים אלו?"
+    IDS_NEWKEY              "מפתח חדש מס׳%d"
+    IDS_NEWVALUE            "ערך חדש מס׳ %d"
+    IDS_NOTFOUND            "מחרוזת החיפוש ׳%s׳ לא נמצאה"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "ייבוא קובץ רישום מערכת"
+    IDS_FILEDIALOG_EXPORT_TITLE   "ייצוא קובץ רישום מערכת"
+    IDS_FILEDIALOG_FILTER         "קובצי רישום מערכת\0*.reg\0קובצי רישום מערכת שלWin9x/NT4 (REGEDIT4)\0*.reg\0כל הקבצים (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "המחשב שלי"
+    IDS_REGISTRY_DEFAULT_VALUE       "(ברירת המחדל)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(לא הוגדר ערך)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(לא ניתן להציג את הערך)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(%d לא ידוע)"
+END
+
+/*****************************************************************/
+
+/*
+ * TEXTINCLUDE
+ */
+
+1 TEXTINCLUDE
+BEGIN
+    "resource.h\0"
+END
+
+/*****************************************************************/
