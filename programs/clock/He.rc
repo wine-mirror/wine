@@ -1,5 +1,5 @@
 /*
- * Clock (English resources)
+ * Clock (Hebrew resources)
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
@@ -48,5 +48,5 @@ MAIN_MENU MENU
 
 STRINGTABLE
 {
-IDS_CLOCK, "Clock"
+IDS_CLOCK, "שעון"
 }
