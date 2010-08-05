@@ -372,6 +372,8 @@ static LONG setValue(WCHAR* val_name, WCHAR* val_data, BOOL is_unicode)
          * the extra garbage in the registry.
          */
         dwLen = lstrlenW(val_data);
+        if(val_data[dwLen-1] != '"')
+            return ERROR_INVALID_DATA;
         if (dwLen>0 && val_data[dwLen-1]=='"')
         {
             dwLen--;
@@ -497,7 +499,7 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
     } else if (line[line_idx] == '\"') {
         line_idx++;
         val_name = line + line_idx;
-        while (TRUE) {
+        while (line[line_idx]) {
             if (line[line_idx] == '\\')   /* skip escaped character */
             {
                 line_idx += 2;
@@ -512,18 +514,22 @@ static void processSetValue(WCHAR* line, BOOL is_unicode)
             }
         }
         while ( isspaceW(line[line_idx]) ) line_idx++;
+        if (!line[line_idx]) {
+            fprintf(stderr, "%s: warning: unexpected EOL\n", getAppName());
+            return;
+        }
         if (line[line_idx] != '=') {
             char* lineA;
             line[line_idx] = '\"';
             lineA = GetMultiByteString(line);
-            fprintf(stderr,"Warning! unrecognized line:\n%s\n", lineA);
+            fprintf(stderr,"%s: warning: unrecognized line: '%s'\n", getAppName(), lineA);
             HeapFree(GetProcessHeap(), 0, lineA);
             return;
         }
 
     } else {
         char* lineA = GetMultiByteString(line);
-        fprintf(stderr,"Warning! unrecognized line:\n%s\n", lineA);
+        fprintf(stderr,"%s: warning: unrecognized line: '%s'\n", getAppName(), lineA);
         HeapFree(GetProcessHeap(), 0, lineA);
         return;
     }

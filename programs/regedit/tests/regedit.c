@@ -219,6 +219,28 @@ static void r_verify_reg_binary(unsigned line, HKEY key, const char *subkey,
             "Data differs\n");
 }
 
+#define verify_reg_nonexist(k,s,n) r_verify_reg_nonexist(__LINE__,k,s,n)
+static void r_verify_reg_nonexist(unsigned line, HKEY key, const char *subkey,
+        const char *value_name)
+{
+    LONG lr;
+    DWORD fnd_type, fnd_len;
+    char fnd_value[32];
+    HKEY fnd_key;
+
+    lr = RegOpenKeyExA(key, subkey, 0, KEY_READ, &fnd_key);
+    lok(lr == ERROR_SUCCESS, "RegOpenKeyExA failed: %d\n", lr);
+    if(lr != ERROR_SUCCESS)
+        return;
+
+    fnd_len = sizeof(fnd_value);
+    lr = RegQueryValueExA(fnd_key, value_name, NULL, &fnd_type,
+            (BYTE*)fnd_value, &fnd_len);
+    RegCloseKey(fnd_key);
+    lok(lr == ERROR_FILE_NOT_FOUND, "Reg value shouldn't exist: %s\n",
+            value_name);
+}
+
 static void test_basic_import(void)
 {
     char exp_binary[] = {0xAA,0xBB,0xCC,0x11};
@@ -286,6 +308,68 @@ static void test_basic_import(void)
     verify_reg_binary(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
             "TestBinary", exp_binary, sizeof(exp_binary));
 
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "\"With=Equals\"=\"asdf\"\n");
+    verify_reg_sz(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "With=Equals", "asdf");
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test");
+    ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
+}
+
+static void test_invalid_import(void)
+{
+    LONG lr;
+
+    lr = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test");
+    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
+            "RegDeleteKeyA failed: %d\n", lr);
+
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "\"TestNoEndQuote\"=\"Asdffdsa\n");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "TestNoEndQuote");
+
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "\"TestNoBeginQuote\"=Asdffdsa\"\n");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "TestNoBeginQuote");
+
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "\"TestNoQuotes\"=Asdffdsa\n");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "TestNoQuotes");
+
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "\"NameNoEndQuote=\"Asdffdsa\"\n");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "NameNoEndQuote");
+
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "NameNoBeginQuote\"=\"Asdffdsa\"\n");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "NameNoBeginQuote");
+
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "NameNoQuotes=\"Asdffdsa\"\n");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "NameNoQuotes");
+
+    exec_import_str("REGEDIT4\n\n"
+                "[HKEY_CURRENT_USER\\Software\\Wine\\regedit_test]\n"
+                "\"MixedQuotes=Asdffdsa\"\n");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "MixedQuotes");
+    verify_reg_nonexist(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test",
+            "MixedQuotes=Asdffdsa");
+
     lr = RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Wine\\regedit_test");
     ok(lr == ERROR_SUCCESS, "RegDeleteKeyA failed: %d\n", lr);
 }
@@ -304,4 +388,5 @@ START_TEST(regedit)
     supports_wchar = exec_import_wstr(wchar_test);
 
     test_basic_import();
+    test_invalid_import();
 }
