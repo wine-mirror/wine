@@ -1,0 +1,11 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = dmime.dll
+IMPORTS   = user32 ole32
+
+C_SRCS = \
+	performance.c
+
+@MAKE_TEST_RULES@

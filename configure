@@ -14499,6 +14499,7 @@ wine_fn_config_dll display.drv16 enable_win16
 wine_fn_config_dll dmband enable_dmband
 wine_fn_config_dll dmcompos enable_dmcompos
 wine_fn_config_dll dmime enable_dmime
+wine_fn_config_test dlls/dmime/tests dmime_test
 wine_fn_config_dll dmloader enable_dmloader
 wine_fn_config_test dlls/dmloader/tests dmloader_test
 wine_fn_config_dll dmscript enable_dmscript
