@@ -24,6 +24,12 @@
 
 LANGUAGE LANG_UKRAINIAN, SUBLANG_DEFAULT
 
+ STRINGTABLE
+ {
+    IDS_STATUS_DONE            "Готово"
+    IDS_STATUS_DOWNLOADINGFROM "Завантаження з %s..."
+}
+
 STRINGTABLE
 {
     IDS_HTMLDISABLED    "В даний момент відображення HTML вимкнено."
