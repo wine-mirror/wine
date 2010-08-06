@@ -3946,6 +3946,16 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     return S_OK;
 }
 
+/***********************************************************************
+ *           CreateUriWithFragment (urlmon.@)
+ */
+HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD dwFlags,
+                                     DWORD_PTR dwReserved, IUri **ppURI)
+{
+    FIXME("(%s %s %x %x %p)\n", debugstr_w(pwzURI), debugstr_w(pwzFragment), dwFlags, (DWORD)dwReserved, ppURI);
+    return E_NOTIMPL;
+}
+
 #define URIBUILDER_THIS(iface) DEFINE_THIS(UriBuilder, IUriBuilder, iface)
 
 static HRESULT WINAPI UriBuilder_QueryInterface(IUriBuilder *iface, REFIID riid, void **ppv)
