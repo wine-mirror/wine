@@ -1,0 +1,281 @@
+/*
+ * Wine command prompt
+ * Swedish Language Support
+ *
+ * Copyright 2010 Rikard Johansson
+ *                Paul Vriens
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "wcmd.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "ATTRIB visar eller ändrar DOS-filers attribut.\n"
+  WCMD_CALL,
+"CALL <batchfilename> används inom en batchfil för att exekvera kommandon\n\
+från en annan batchfil. När den anropade batchfilen stängs ner, så återfår den\n\
+anropande batchfilen återigen kontrollen. Med CALL går det även att skicka med\n\
+parametrar till den anropade metoden.\n\
+\n\
+Ändringar av standardsökväg, miljövariabler o.s.v. som görs inom en anropad\n\
+process ärvs av den som anropar processen.\n"
+
+  WCMD_CD,     "CD <dir> är en synonym för CHDIR. Den används för att\nändra standardsökväg.\n"
+  WCMD_CHDIR,  "CHDIR <dir> ändrar standardsökväg.\n"
+
+  WCMD_CLS,    "CLS rensar konsollen från text.\n"
+
+  WCMD_COPY,   "COPY <filename> kopierar en fil.\n"
+  WCMD_CTTY,   "CTTY ändrar input/output-enheter.\n"
+  WCMD_DATE,   "DATE visar eller ändrar systemets datum.\n"
+  WCMD_DEL,    "DEL <filename> tar bort en eller flera filer.\n"
+  WCMD_DIR,    "DIR visar mappens innehåll.\n"
+
+  WCMD_ECHO,
+"ECHO <sträng> skriver ut <sträng> i den aktuella terminalen.\n\
+\n\
+ECHO ON gör att alla följdkommandon från en batchfil skrivs ut i terminalen\n\
+innan dessa exekveras.\n\
+\n\
+ECHO OFF tar bort effekten av ett föregående ECHO ON. (ECHO är\n\
+OFF (avstängd) som standard.) Du kan förhindra ECHO OFF från att visas genom\n\
+att lägga till ett @-tecken innan kommandot.\n"
+
+  WCMD_ERASE,  "ERASE <filename> tar bort en eller flera filer.\n"
+
+  WCMD_FOR,
+"FOR används för att exekvera ett kommando var för ett flertal filer.\n\
+\n\
+Syntax: FOR %variabel IN (set) DO kommando\n\
+\n\
+Kravet att dubbla %-tecknet när FOR används i en batchfil\n\
+finns inte i Wines cmd.\n"
+
+  WCMD_GOTO,
+"Kommandot GOTO överlåter exekvering till ett annat påstående \n\
+inom en batch fil.\n\
+\n\
+En etikett, som är GOTO-kommandots mål, kan innehålla upp till 255\n\
+tecken, men blanksteg tillåts ej (till skillnad från andra operativsystem).\n\
+Om två eller flera identiska etiketter existerar i en batchfil, så kommer \n\
+alltid den första exekveras. Vid försök att använda GOTO till en icke\n\
+existerande etikett så avbryts batchfilens exekvering.\n\
+\n\
+GOTO har ingen effekt när det används interaktivt.\n"
+
+  WCMD_HELP,   "HELP <command> skriver ut mer detaljerad information ang. ämnet.\nHELP utan ett argument visar alla inbyggda CMD-kommandon.\n"
+
+  WCMD_IF,
+"IF används för att villkorligt exekvera ett kommando.\n\
+\n\
+Syntax:	IF [NOT] EXIST filnamn kommando\n\
+	IF [NOT] sträng1==sträng2 kommando\n\
+	IF [NOT] ERRORLEVEL nummer kommando\n\
+\n\
+I den andra IF-satsen måste sträng1 och sträng2 vara inom citattecken.\n\
+IF bryr sej inte om stora eller små bokstäver. D.v.s. gemener och versaler.\n"
+
+  WCMD_LABEL,  "LABEL används för att ge en hårddisk/enhet ett namn.\n\
+\n\
+Syntax: LABEL [diskvolym:]\n\
+Kommandot kommer fråga dig efter enhetens nya namn.\n\
+Du kan visa enhetens namn genom att använda kommandot VOL.\n"
+
+  WCMD_MD,
+"MD <name> är en synonym för MKDIR. \nDen skapar en ny mapp i mappen du befinner dig i\n"
+  WCMD_MKDIR,  "MKDIR <name> skapar en ny mapp i mappen du befinner dig i.\n"
+  WCMD_MOVE,
+"MOVE flyttar en fil eller mapp till ett nytt ställe inom filsystemet.\n\
+\n\
+Om du flyttar på en mapp, så flyttas allting under mappen med.\n\
+\n\
+MOVE misslyckas om den gamla och det den nya stället är på olika\n\
+DOS-enhetsbokstäver. Till exempel från C: till D:.\n"
+
+  WCMD_PATH,
+"PATH visar eller ändrar cmd:s sökväg.\n\
+\n\
+Om du skriver enbart PATH så visas den aktuella sökvägen \n\
+(som står i windowsregistret). För att ändra på denna inställning,\n\
+skriv PATH och sedan den nya sökvägen.\n\
+\n\
+Det går också att ändra PATH genom att använda PATH:s miljövariabler.\n\
+Till exempel:\n\
+		PATH %PATH%;c:\\temp\n"
+
+  WCMD_PAUSE,
+"PAUSE visar meddelandet 'Tryck enterknappen för att fortsätta'\n\
+och väntar på att användaren skall trycka ner enterknappen.\n\
+PAUSE används mestadels i batchfiler så att användare hinner läsa\n\
+till exempel resultatet av ett kört kommando m.m. innan det rullar av skärmen.\n"
+
+  WCMD_PROMPT,
+"PROMPT aktiverar kommando-prompten.\n\
+\n\
+Inmatad sträng efter PROMPT-kommandot (och följande blanksteg)\n\
+visas i början av nästa rad, när cmd väntar på inmatning.\n\
+\n\
+Följande tecken betyder:\n\
+\n\
+$$   Dollartecknet      $_   Fyll rad          $b   \"skicka vidare\"-tecknet (|)\n\
+$d   Nuvarande datum    $e   Escape            $g   \">\"-tecknet\n\
+$l   \"<\"-tecknet        $n   Befintlig enhet   $p   Nuvarande sökväg\n\
+$q   \"=\"-tecknet        $t   Nuvarande tid     $v   cmd-version\n\
+\n\
+Notera att om PROMPT används utan en inmatning, så återställs\n\
+prompten till tidigare läge, d.v.s tidigare sökväg\n\
+(enhetstecken inkluderat) och ett större än-tecken (>).\n\
+(Som kommandot PROMPT $p$g).\n\
+\n\
+Prompteen går att ändra genom att modifiera miljövariabeln PROMPT,\n\
+så kommandot 'SET PROMPT=text' har samma effekt som 'PROMPT text'\n"
+
+  WCMD_REM,
+"En kommandorad som börjar på REM (med ett blanksteg efter) ignoreras.\n\
+Därav kan REM användas för att kommentera rader i en batchfil.\n"
+
+  WCMD_REN,
+"REN <filnamn> är en synonym för kommandot RENAME.\nREN döper om en fil.\n"
+  WCMD_RENAME, "RENAME <filnamn> döper om en fil.\n"
+  WCMD_RD,
+"RD <plats> är en synonym för RMDIR. RD tar bort vald plats.\n"
+  WCMD_RMDIR,  "RMDIR <plats> tar bort vald plats.\n"
+
+  WCMD_SET,
+"SET visar eller ändrar cmd:s miljövariabler.\n\
+\n\
+SET utan någon parameter visar alla befintliga miljövariabler.\n\
+\n\
+Syntaxen för att skapa eller ändra en miljövariabler är:\n\
+\n\
+      SET <variabel>=<värde>\n\
+\n\
+där <variabel> och <värde> är teckensträngar. Inga blanksteg är\n\
+tillåtna varken innan lika med tecknet eller inom variabel namnet.\n\
+\n\
+I Wine inkluderas miljövariabler från det underliggande operativsystemet\n\
+i Win32 vilket resulterar i att det finns många fler värden\n\
+än i en riktig Win32-implementation. Notera att det inte går att påverka\n\
+operativsystemets miljövariabler via cmd.\n"
+
+  WCMD_SHIFT,
+"SHIFT används i batchfiler för att ta bort en parameter högst upp på listan.\nParametrar i turordning flyttas ner ett steg, parameter 2 blir parameter 1 o.s.v.\nSHIFT har ingen effekt om det anropas ifrån kommandoraden.\n"
+
+  WCMD_TIME,   "TIME ställer in eller skriver ut ditt systems tid.\n"
+
+  WCMD_TITLE,  "Ändrar fönsternamn för cmd-fönstret. Syntax: TITLE [namn]\n"
+
+  WCMD_TYPE,
+"TYPE <filnamn> kopierar <filnamn> till konsollen (eller annanstans om\n\
+angivet). TYPE kollar inte vad filen i fråga är för typ av fil.\n"
+
+  WCMD_VERIFY,
+"VERIFY används för att ställa in, rensa eller testa verifieraflaggan.\n\
+Godkänd användning är:\n\
+\n\
+VERIFY ON\tTillämpa flaggan\n\
+VERIFY OFF\tRensa flaggan\n\
+VERIFY\t\tVisar tillstånd på VERIFY. ON eller OFF.\n\
+\n\
+Det finns dock ingen användning för verifieraflaggor i Wine.\n"
+
+  WCMD_VER,
+"VER visar cmd:s version.\n"
+
+  WCMD_VOL,    "VOL visar namnet på en diskvolym.\n"
+
+  WCMD_PUSHD,  "PUSHD <mappnamn> sparar nuvarande sökväg i en stack,\n\
+och ändrar sedan sökvägen till den angivna mappen.\n"
+
+  WCMD_POPD,   "POPD ändrar nuvarande sökväg till den senast angivna i PUSHD.\n"
+
+  WCMD_MORE,   "MORE skriver ut filers utskrift eller vidarebefodrade förfrågningar på sidor.\n"
+
+  WCMD_EXIT,
+"EXIT avslutar cmd och skickar tillbaks användaren till\n\
+operativsystemet eller skalet som cmd startades ifrån.\n"
+
+  WCMD_ALLHELP, "CMD:s inbyggda kommandon är:\n\
+ATTRIB\t\tVisa eller ändra DOS-filers attribut\n\
+CALL\t\tAnropar en batchfil inifrån en annan \n\
+CD (CHDIR)\tÄndrar nuvarande standardsökväg\n\
+CLS\t\tRensar konsollen\n\
+COPY\t\tKopierar en fil\n\
+CTTY\t\tÄndrar input/output-enhet\n\
+DATE\t\tVisar eller ändrar systemets tid\n\
+DEL (ERASE)\tTar bort en eller flera filer\n\
+DIR\t\tVisar innehållet av en mapp\n\
+ECHO\t\tKopierar och skriver ut inmatad text\n\
+HELP\t\tVisar hjälpavsnitt om specificerat område\n\
+MD (MKDIR)\tSkapar en mapp i sökvägen\n\
+MORE\t\tVisar resultatet i sidor\n\
+MOVE\t\tFlyttar en fil eller en mapp med alla dess filer/mappar under\n\
+PATH\t\tVisar eller ställer in sökvägen\n\
+POPD\t\tÅterställer mappen till sökvägen sist sparad med PUSHD.\n\
+PROMPT\t\tÄndrar kommandoprompten\n\
+PUSHD\t\tSparar den nuvarande sökvägen i en stack\n\
+REN (RENAME)\tDöper om en fil\n\
+RD (RMDIR)\tTar bort en mapp\n\
+SET\t\tVisar eller ställer in miljövariabler\n\
+TIME\t\tVisar eller ställer in systemets tid\n\
+TITLE\t\tStäller in titeln för CMD:s session\n\
+TYPE\t\tSkriver ut innehållet av en fil\n\
+VER\t\tVisar CMD:s version\n\
+VOL\t\tVisar namnet på specificerad enhet\n\
+EXIT\t\tStänger CMD\n\n\
+Skriv HELP <command> för mer information om något av kommandona ovanför\n"
+
+  WCMD_CONFIRM, "Är du säker?"
+  WCMD_YES, "J"
+  WCMD_NO, "N"
+  WCMD_NOASSOC, "Det finns ingen filassociation för detta filformat %s\n"
+  WCMD_NOFTYPE, "Ingen kommando förknippat med filtyp '%s'\n"
+  WCMD_OVERWRITE, "Skriva över %s"
+  WCMD_MORESTR, "Mer..."
+  WCMD_TRUNCATEDLINE, "En rad i batch möjligtvis trunkerad. Använder:\n"
+  WCMD_NYI, "Ännu ej implementerat\n\n"
+  WCMD_NOARG, "Argument saknas\n"
+  WCMD_SYNTAXERR, "Syntaxfel\n"
+  WCMD_FILENOTFOUND, "%s : kunde inte hitta filen\n"
+  WCMD_NOCMDHELP, "Ingen hjälp tillgänglig för %s\n"
+  WCMD_NOTARGET, "Mål för GOTO ej funnet\n"
+  WCMD_CURRENTDATE, "Dagens datum är %s\n"
+  WCMD_CURRENTTIME, "Tiden är %s\n"
+  WCMD_NEWDATE, "Skriv nytt datum: "
+  WCMD_NEWTIME, "Skriv in den nya tiden: "
+  WCMD_MISSINGENV, "Miljövariabeln %s ej definierad\n"
+  WCMD_READFAIL, "Misslyckades med att öppna '%s'\n"
+  WCMD_CALLINSCRIPT, "Går ej att anropa en batchetikett utanför ett batchskript\n"
+  WCMD_ALL, "A"
+  WCMD_DELPROMPT, "%s, ta bort"
+  WCMD_ECHOPROMPT, "Ekot är %s\n"
+  WCMD_VERIFYPROMPT, "Verifiera blev %s\n"
+  WCMD_VERIFYERR, "Verifiera måste vara ON (på) eller OFF (av)\n"
+  WCMD_ARGERR, "Parameterfel\n"
+  WCMD_VOLUMEDETAIL, "Diskvolymen på hårddisk %c är %s\nDiskvolymens serienummer är %04x-%04x\n"
+  WCMD_VOLUMEPROMPT, "Diskvolymens namn (11 karaktärer, tryck enter för inget)?"
+  WCMD_NOPATH, "Sökväg ej funnen\n"
+  WCMD_ANYKEY,"Tryck enter för att fortsätta: "
+  WCMD_CONSTITLE,"Wine kommandoprompt"
+  WCMD_VERSION,"CMD Version %s\n"
+  WCMD_MOREPROMPT, "Mer? "
+  WCMD_LINETOOLONG, "Inmatningen är för lång.\n"
+}
