@@ -54,8 +54,36 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "В&ластивості...",             ID_BROWSE_PROPERTIES
     }
+    POPUP "&Вигляд"
+    {
+        POPUP "&Панелі інструментів"
+        {
+            MENUITEM "&Стандартна панель"       ID_BROWSE_BAR_STD
+            MENUITEM "Рядок &адреси"            ID_BROWSE_BAR_ADDR
+        }
+    }
+    POPUP "&Обране"
+    {
+        MENUITEM "&Додати до Обраного..."       ID_BROWSE_ADDFAV
+        MENUITEM SEPARATOR
+    }
     POPUP "&Довідка"
     {
         MENUITEM "&Про Internet Explorer...", ID_BROWSE_ABOUT
     }
+}
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Назад"
+    IDS_TB_FORWARD          "Вперед"
+    IDS_TB_STOP             "Зупинити"
+    IDS_TB_REFRESH          "Оновити"
+    IDS_TB_HOME             "Додому"
+    IDS_TB_PRINT            "Друк"
+}
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Адреса"
 }
