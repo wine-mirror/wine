@@ -1698,7 +1698,7 @@ static void test_hittest_v6(void)
     mchit.iOffset = -1;
     ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     expect_hex(MCHT_CALENDARDATE, ret);
-    todo_wine expect(0, mchit.iOffset);
+    expect(0, mchit.iOffset);
 
     /* over day area */
     mchit.pt.x = r.right / (7*2);
@@ -1710,12 +1710,12 @@ static void test_hittest_v6(void)
     ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     expect_hex(MCHT_CALENDARDATE, ret);
     expect_hex(MCHT_CALENDARDATE, mchit.uHit);
-    todo_wine expect(0, mchit.iOffset);
-    todo_wine expect(2, mchit.iRow);
-    todo_wine expect(0, mchit.iCol);
+    expect(0, mchit.iOffset);
+    expect(2, mchit.iRow);
+    expect(0, mchit.iCol);
     /* returned a one day rectangle */
-    todo_wine expect_d(r.right / 7, mchit.rc.right - mchit.rc.left);
-    todo_wine expect_d(r.bottom / 10, mchit.rc.bottom - mchit.rc.top);
+    expect_d(r.right / 7, mchit.rc.right - mchit.rc.left);
+    expect_d(r.bottom / 10, mchit.rc.bottom - mchit.rc.top);
 
     /* title */
     mchit.pt.x = 1;
@@ -1727,13 +1727,13 @@ static void test_hittest_v6(void)
     ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     expect_hex(MCHT_TITLE, ret);
     expect_hex(MCHT_TITLE, mchit.uHit);
-    todo_wine expect(0, mchit.iOffset);
+    expect(0, mchit.iOffset);
     expect(-1, mchit.iRow);
     expect(-1, mchit.iCol);
-    todo_wine expect(0, mchit.rc.left);
-    todo_wine expect(0, mchit.rc.top);
-    todo_wine expect_d(r.right, mchit.rc.right);
-    todo_wine ok(mchit.rc.bottom > 0, "got %d\n", mchit.rc.bottom);
+    expect(0, mchit.rc.left);
+    expect(0, mchit.rc.top);
+    expect_d(r.right, mchit.rc.right);
+    ok(mchit.rc.bottom > 0, "got %d\n", mchit.rc.bottom);
 
     /* between two calendars */
     MoveWindow(hwnd, 0, 0, r.right * 5/2, r.bottom, FALSE);
@@ -1741,7 +1741,7 @@ static void test_hittest_v6(void)
     mchit.pt.y = r.bottom / 2;
     mchit.iOffset = -2;
     mchit.iCol = mchit.iRow = -2;
-    mchit.uHit = 0;
+    mchit.uHit = ~0;
     mchit.rc.left = mchit.rc.right = mchit.rc.top = mchit.rc.bottom = -1;
     ret = SendMessage(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
     todo_wine expect_hex(MCHT_NOWHERE, ret);
