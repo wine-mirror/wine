@@ -3715,21 +3715,21 @@ typedef struct _uri_with_fragment {
 
 static const uri_with_fragment uri_fragment_tests[] = {
     {
-        "http://google.com/","#fragment",0,S_OK,TRUE,
-        "http://google.com/#fragment",TRUE
+        "http://google.com/","#fragment",0,S_OK,FALSE,
+        "http://google.com/#fragment",FALSE
     },
     {
-        "http://google.com/","fragment",0,S_OK,TRUE,
-        "http://google.com/#fragment",TRUE
+        "http://google.com/","fragment",0,S_OK,FALSE,
+        "http://google.com/#fragment",FALSE
     },
     {
-        "zip://test.com/","?test",0,S_OK,TRUE,
-        "zip://test.com/#?test",TRUE
+        "zip://test.com/","?test",0,S_OK,FALSE,
+        "zip://test.com/#?test",FALSE
     },
     /* The fragment can be empty. */
     {
-        "ftp://ftp.google.com/","",0,S_OK,TRUE,
-        "ftp://ftp.google.com/#",TRUE
+        "ftp://ftp.google.com/","",0,S_OK,FALSE,
+        "ftp://ftp.google.com/#",FALSE
     }
 };
 
@@ -4802,23 +4802,17 @@ static void test_CreateUriWithFragment_InvalidArgs(void) {
     const WCHAR fragmentW[] = {'#','f','r','a','g','m','e','n','t',0};
 
     hr = pCreateUriWithFragment(NULL, fragmentW, 0, 0, &uri);
-    todo_wine {
-        ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
-    }
-    todo_wine { ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri); }
+    ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
 
     hr = pCreateUriWithFragment(http_urlW, fragmentW, 0, 0, NULL);
-    todo_wine {
-        ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
-    }
+    ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
 
     /* Original URI can't already contain a fragment component. */
     uri = (void*) 0xdeadbeef;
     hr = pCreateUriWithFragment(http_url_fragW, fragmentW, 0, 0, &uri);
-    todo_wine {
-        ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
-    }
-    todo_wine { ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri); }
+    ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
 }
 
 /* CreateUriWithFragment has the same invalid flag combinations as CreateUri. */
@@ -4830,11 +4824,9 @@ static void test_CreateUriWithFragment_InvalidFlags(void) {
         IUri *uri = (void*) 0xdeadbeef;
 
         hr = pCreateUriWithFragment(http_urlW, NULL, invalid_flag_tests[i].flags, 0, &uri);
-        todo_wine {
-            ok(hr == invalid_flag_tests[i].expected, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x. flags=0x%08x.\n",
-                hr, invalid_flag_tests[i].expected, invalid_flag_tests[i].flags);
-        }
-        todo_wine { ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri); }
+        ok(hr == invalid_flag_tests[i].expected, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x. flags=0x%08x.\n",
+            hr, invalid_flag_tests[i].expected, invalid_flag_tests[i].flags);
+        ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
     }
 }
 

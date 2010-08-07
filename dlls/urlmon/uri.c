@@ -3952,8 +3952,56 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
 HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD dwFlags,
                                      DWORD_PTR dwReserved, IUri **ppURI)
 {
-    FIXME("(%s %s %x %x %p)\n", debugstr_w(pwzURI), debugstr_w(pwzFragment), dwFlags, (DWORD)dwReserved, ppURI);
-    return E_NOTIMPL;
+    HRESULT hres;
+    TRACE("(%s %s %x %x %p)\n", debugstr_w(pwzURI), debugstr_w(pwzFragment), dwFlags, (DWORD)dwReserved, ppURI);
+
+    if(!ppURI)
+        return E_INVALIDARG;
+
+    if(!pwzURI) {
+        *ppURI = NULL;
+        return E_INVALIDARG;
+    }
+
+    /* Check if a fragment should be appended to the URI string. */
+    if(pwzFragment) {
+        WCHAR *uriW;
+        DWORD uri_len, frag_len;
+        BOOL add_pound;
+
+        /* Check if the original URI already has a fragment component. */
+        if(StrChrW(pwzURI, '#')) {
+            *ppURI = NULL;
+            return E_INVALIDARG;
+        }
+
+        uri_len = lstrlenW(pwzURI);
+        frag_len = lstrlenW(pwzFragment);
+
+        /* If the fragment doesn't start with a '#', one will be added. */
+        add_pound = *pwzFragment != '#';
+
+        if(add_pound)
+            uriW = heap_alloc((uri_len+frag_len+2)*sizeof(WCHAR));
+        else
+            uriW = heap_alloc((uri_len+frag_len+1)*sizeof(WCHAR));
+
+        if(!uriW)
+            return E_OUTOFMEMORY;
+
+        memcpy(uriW, pwzURI, uri_len*sizeof(WCHAR));
+        if(add_pound)
+            uriW[uri_len++] = '#';
+        memcpy(uriW+uri_len, pwzFragment, (frag_len+1)*sizeof(WCHAR));
+
+        hres = CreateUri(uriW, dwFlags, 0, ppURI);
+
+        heap_free(uriW);
+    } else
+        /* A fragment string wasn't specified, so just forward the call. */
+        hres = CreateUri(pwzURI, dwFlags, 0, ppURI);
+
+    return hres;
 }
 
 #define URIBUILDER_THIS(iface) DEFINE_THIS(UriBuilder, IUriBuilder, iface)
