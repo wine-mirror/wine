@@ -2278,8 +2278,6 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
     render_offscreen = surface_is_offscreen(target);
     if (context->current_rt == target && render_offscreen == old_render_offscreen) return;
 
-    context_set_render_offscreen(context, StateTable, render_offscreen);
-
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
      * the alpha blend state changes with different render target formats. */
     if (!context->current_rt)
@@ -2347,6 +2345,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
 
     context->draw_buffer_dirty = TRUE;
     context->current_rt = target;
+    context_set_render_offscreen(context, StateTable, render_offscreen);
 }
 
 /*****************************************************************************
