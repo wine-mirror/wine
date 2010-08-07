@@ -45,7 +45,7 @@ static void test_PChannelInfo(void)
     pDirectMusicPort = NULL;
     hr = IDirectMusicPerformance8_PChannelInfo(idmusicperformance, 0, &pDirectMusicPort, NULL, NULL);
     ok(hr == S_OK, "Failed to call PChannelInfo (%x)\n", hr);
-    todo_wine ok(pDirectMusicPort != NULL, "IDirectMusicPort not set\n");
+    ok(pDirectMusicPort != NULL, "IDirectMusicPort not set\n");
     if (hr == S_OK && pDirectMusicPort != NULL)
         IDirectMusicPort_Release(pDirectMusicPort);
 }

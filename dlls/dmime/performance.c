@@ -588,7 +588,16 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_AssignPChannel (LPDIRECTMUSIC
 
 static HRESULT WINAPI IDirectMusicPerformance8Impl_PChannelInfo (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwPChannel, IDirectMusicPort** ppPort, DWORD* pdwGroup, DWORD* pdwMChannel) {
 	IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
+	DMUS_PORTPARAMS8 dmusportparams;
+	GUID def;
+
 	FIXME("(%p, %d, %p, %p, %p): stub\n", This, dwPChannel, ppPort, pdwGroup, pdwMChannel);
+
+	dmusportparams.dwSize = sizeof(DMUS_PORTPARAMS8);
+	dmusportparams.dwValidParams = 0;
+	IDirectMusic8_GetDefaultPort(This->pDirectMusic, &def);
+	IDirectMusic8_CreatePort(This->pDirectMusic, &def, &dmusportparams, ppPort, NULL);
+
 	return S_OK;
 }
 
