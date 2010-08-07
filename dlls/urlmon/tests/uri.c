@@ -43,9 +43,12 @@
 #define URI_DWORD_PROPERTY_COUNT (Uri_PROPERTY_DWORD_LAST - Uri_PROPERTY_DWORD_START)+1
 
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
+static HRESULT (WINAPI *pCreateUriWithFragment)(LPCWSTR, LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
 static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g','/',0};
+static const WCHAR http_url_fragW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
+        '.','o','r','g','/','#','F','r','a','g',0};
 
 typedef struct _uri_create_flag_test {
     DWORD   flags;
@@ -3699,6 +3702,37 @@ static const uri_equality equality_tests[] = {
     }
 };
 
+typedef struct _uri_with_fragment {
+    const char* uri;
+    const char* fragment;
+    DWORD       create_flags;
+    HRESULT     create_expected;
+    BOOL        create_todo;
+
+    const char* expected_uri;
+    BOOL        expected_todo;
+} uri_with_fragment;
+
+static const uri_with_fragment uri_fragment_tests[] = {
+    {
+        "http://google.com/","#fragment",0,S_OK,TRUE,
+        "http://google.com/#fragment",TRUE
+    },
+    {
+        "http://google.com/","fragment",0,S_OK,TRUE,
+        "http://google.com/#fragment",TRUE
+    },
+    {
+        "zip://test.com/","?test",0,S_OK,TRUE,
+        "zip://test.com/#?test",TRUE
+    },
+    /* The fragment can be empty. */
+    {
+        "ftp://ftp.google.com/","",0,S_OK,TRUE,
+        "ftp://ftp.google.com/#",TRUE
+    }
+};
+
 static inline LPWSTR a2w(LPCSTR str) {
     LPWSTR ret = NULL;
 
@@ -4762,11 +4796,108 @@ static void test_IUri_IsEqual(void) {
     }
 }
 
+static void test_CreateUriWithFragment_InvalidArgs(void) {
+    HRESULT hr;
+    IUri *uri = (void*) 0xdeadbeef;
+    const WCHAR fragmentW[] = {'#','f','r','a','g','m','e','n','t',0};
+
+    hr = pCreateUriWithFragment(NULL, fragmentW, 0, 0, &uri);
+    todo_wine {
+        ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    }
+    todo_wine { ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri); }
+
+    hr = pCreateUriWithFragment(http_urlW, fragmentW, 0, 0, NULL);
+    todo_wine {
+        ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    }
+
+    /* Original URI can't already contain a fragment component. */
+    uri = (void*) 0xdeadbeef;
+    hr = pCreateUriWithFragment(http_url_fragW, fragmentW, 0, 0, &uri);
+    todo_wine {
+        ok(hr == E_INVALIDARG, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+    }
+    todo_wine { ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri); }
+}
+
+/* CreateUriWithFragment has the same invalid flag combinations as CreateUri. */
+static void test_CreateUriWithFragment_InvalidFlags(void) {
+    DWORD i;
+
+    for(i = 0; i < sizeof(invalid_flag_tests)/sizeof(invalid_flag_tests[0]); ++i) {
+        HRESULT hr;
+        IUri *uri = (void*) 0xdeadbeef;
+
+        hr = pCreateUriWithFragment(http_urlW, NULL, invalid_flag_tests[i].flags, 0, &uri);
+        todo_wine {
+            ok(hr == invalid_flag_tests[i].expected, "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x. flags=0x%08x.\n",
+                hr, invalid_flag_tests[i].expected, invalid_flag_tests[i].flags);
+        }
+        todo_wine { ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri); }
+    }
+}
+
+static void test_CreateUriWithFragment(void) {
+    DWORD i;
+
+    for(i = 0; i < sizeof(uri_fragment_tests)/sizeof(uri_fragment_tests[0]); ++i) {
+        HRESULT hr;
+        IUri *uri = NULL;
+        LPWSTR uriW, fragW;
+        uri_with_fragment test = uri_fragment_tests[i];
+
+        uriW = a2w(test.uri);
+        fragW = a2w(test.fragment);
+
+        hr = pCreateUriWithFragment(uriW, fragW, test.create_flags, 0, &uri);
+        if(test.expected_todo) {
+            todo_wine {
+                ok(hr == test.create_expected,
+                    "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x on uri_fragment_tests[%d].\n",
+                    hr, test.create_expected, i);
+            }
+        } else
+            ok(hr == test.create_expected,
+                "Error: CreateUriWithFragment returned 0x%08x, expected 0x%08x on uri_fragment_tests[%d].\n",
+                hr, test.create_expected, i);
+
+        if(SUCCEEDED(hr)) {
+            BSTR received = NULL;
+
+            hr = IUri_GetAbsoluteUri(uri, &received);
+            if(test.expected_todo) {
+                todo_wine {
+                    ok(hr == S_OK,
+                        "Error: GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_fragment_tests[%d].\n",
+                        hr, S_OK, i);
+                }
+                todo_wine {
+                    ok(!strcmp_aw(test.expected_uri, received),
+                        "Error: Expected %s but got %s on uri_fragment_tests[%d].\n",
+                        test.expected_uri, wine_dbgstr_w(received), i);
+                }
+            } else {
+                ok(hr == S_OK, "Error: GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_fragment_tests[%d].\n",
+                    hr, S_OK, i);
+                ok(!strcmp_aw(test.expected_uri, received), "Error: Expected %s but got %s on uri_fragment_tests[%d].\n",
+                    test.expected_uri, wine_dbgstr_w(received), i);
+            }
+
+            SysFreeString(received);
+        }
+
+        if(uri) IUri_Release(uri);
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
     hurlmon = GetModuleHandle("urlmon.dll");
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
+    pCreateUriWithFragment = (void*) GetProcAddress(hurlmon, "CreateUriWithFragment");
 
     if(!pCreateUri) {
         win_skip("CreateUri is not present, skipping tests.\n");
@@ -4805,4 +4936,13 @@ START_TEST(uri) {
 
     trace("test IUri_IsEqual...\n");
     test_IUri_IsEqual();
+
+    trace("test CreateUriWithFragment invalid args...\n");
+    test_CreateUriWithFragment_InvalidArgs();
+
+    trace("test CreateUriWithFragment invalid flags...\n");
+    test_CreateUriWithFragment_InvalidFlags();
+
+    trace("test CreateUriWithFragment...\n");
+    test_CreateUriWithFragment();
 }
