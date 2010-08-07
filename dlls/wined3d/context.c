@@ -2321,19 +2321,6 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
         if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
                 && old_render_offscreen && context->current_rt != target)
         {
-            BOOL oldInDraw = device->isInDraw;
-
-            /* surface_internal_preload() requires a context to load the
-             * texture, so it will call context_acquire(). Set isInDraw to true
-             * to signal surface_internal_preload() that it has a context. */
-
-            /* FIXME: This is just broken. There's no guarantee whatsoever
-             * that the currently active context, if any, is appropriate for
-             * reading back the render target. We should probably call
-             * context_set_current(context) here and then rely on
-             * context_acquire() doing the right thing. */
-            device->isInDraw = TRUE;
-
             /* Read the back buffer of the old drawable into the destination texture. */
             if (context->current_rt->texture_name_srgb)
             {
@@ -2345,8 +2332,6 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
             }
 
             surface_modify_location(context->current_rt, SFLAG_INDRAWABLE, FALSE);
-
-            device->isInDraw = oldInDraw;
         }
     }
 
