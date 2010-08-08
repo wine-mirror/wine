@@ -2046,11 +2046,23 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     i = TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RIGHTBUTTON | TPM_RETURNCMD,
 		       menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL);
 
-    if ((i > 0) && (i < 13) && infoPtr->minSel.wMonth != i)
+    if ((i > 0) && (i < 13) && infoPtr->calendars[ht.iOffset].month.wMonth != i)
     {
-	infoPtr->minSel.wMonth = i;
-	MONTHCAL_IsDateInValidRange(infoPtr, &infoPtr->minSel, TRUE);
-	InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+        INT delta = i - infoPtr->calendars[ht.iOffset].month.wMonth;
+        SYSTEMTIME st;
+
+        /* check if change allowed by range set */
+        st = delta < 0 ? infoPtr->calendars[0].month :
+                         infoPtr->calendars[infoPtr->cal_num-1].month;
+        MONTHCAL_GetMonth(&st, delta);
+
+        if (MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE))
+        {
+            MONTHCAL_Scroll(infoPtr, delta);
+            MONTHCAL_NotifyDayState(infoPtr);
+            MONTHCAL_NotifySelectionChange(infoPtr);
+            InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+        }
     }
     return 0;
   }
