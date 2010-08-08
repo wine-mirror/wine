@@ -712,12 +712,12 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
 }
 
 
-static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext)
+static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, enum nav_direction button)
 {
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
-    RECT *r = btnNext ? &infoPtr->titlebtnnext : &infoPtr->titlebtnprev;
-    BOOL pressed = btnNext ? (infoPtr->status & MC_NEXTPRESSED) :
-                             (infoPtr->status & MC_PREVPRESSED);
+    RECT *r = button == DIRECTION_FORWARD ? &infoPtr->titlebtnnext : &infoPtr->titlebtnprev;
+    BOOL pressed = button == DIRECTION_FORWARD ? infoPtr->status & MC_NEXTPRESSED :
+                                                 infoPtr->status & MC_PREVPRESSED;
     if (theme)
     {
         static const int states[] = {
@@ -726,7 +726,7 @@ static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext)
             /* Next button */
             ABS_RIGHTNORMAL, ABS_RIGHTPRESSED, ABS_RIGHTDISABLED
         };
-        int stateNum = btnNext ? 3 : 0;
+        int stateNum = button == DIRECTION_FORWARD ? 3 : 0;
         if (pressed)
             stateNum += 1;
         else
@@ -737,7 +737,7 @@ static void MONTHCAL_PaintButton(MONTHCAL_INFO *infoPtr, HDC hdc, BOOL btnNext)
     }
     else
     {
-        int style = btnNext ? DFCS_SCROLLRIGHT : DFCS_SCROLLLEFT;
+        int style = button == DIRECTION_FORWARD ? DFCS_SCROLLRIGHT : DFCS_SCROLLLEFT;
         if (pressed)
             style |= DFCS_PUSHED;
         else
@@ -1083,8 +1083,8 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
   MONTHCAL_PaintTodayTitle(infoPtr, hdc, ps);
 
   /* navigation buttons */
-  MONTHCAL_PaintButton(infoPtr, hdc, FALSE);
-  MONTHCAL_PaintButton(infoPtr, hdc, TRUE);
+  MONTHCAL_PaintButton(infoPtr, hdc, DIRECTION_BACKWARD);
+  MONTHCAL_PaintButton(infoPtr, hdc, DIRECTION_FORWARD);
 
   /* restore context */
   SetBkColor(hdc, old_bk_clr);
@@ -2418,8 +2418,6 @@ static LRESULT MONTHCAL_Size(MONTHCAL_INFO *infoPtr, int Width, int Height)
   TRACE("(width=%d, height=%d)\n", Width, Height);
 
   MONTHCAL_UpdateSize(infoPtr);
-
-  /* invalidate client area and erase background */
   InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
 
   return 0;
