@@ -1137,6 +1137,8 @@ static GpStatus restore_container(GpGraphics* graphics,
 static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
 {
     RECT wnd_rect;
+    GpStatus stat=Ok;
+    GpUnit unit;
 
     if(graphics->hwnd) {
         if(!GetClientRect(graphics->hwnd, &wnd_rect))
@@ -1146,6 +1148,10 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
         rect->Y = wnd_rect.top;
         rect->Width = wnd_rect.right - wnd_rect.left;
         rect->Height = wnd_rect.bottom - wnd_rect.top;
+    }else if (graphics->image){
+        stat = GdipGetImageBounds(graphics->image, rect, &unit);
+        if (stat == Ok && unit != UnitPixel)
+            FIXME("need to convert from unit %i\n", unit);
     }else{
         rect->X = 0;
         rect->Y = 0;
@@ -1153,7 +1159,7 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
         rect->Height = GetDeviceCaps(graphics->hdc, VERTRES);
     }
 
-    return Ok;
+    return stat;
 }
 
 /* on success, rgn will contain the region of the graphics object which
