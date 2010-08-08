@@ -94,12 +94,9 @@ typedef struct
 {
     HWND	hwndSelf;
     DWORD	dwStyle; /* cached GWL_STYLE */
-    COLORREF	bk;
-    COLORREF	txt;
-    COLORREF	titlebk;
-    COLORREF	titletxt;
-    COLORREF	monthbk;
-    COLORREF	trailingtxt;
+
+    COLORREF    colors[MCSC_TRAILINGTEXT+1];
+
     HFONT	hFont;
     HFONT	hBoldFont;
     int		textHeight;
@@ -687,8 +684,8 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
 
     TRACE("%d %d %d\n", st->wDay, infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     TRACE("%s\n", wine_dbgstr_rect(&r));
-    oldCol = SetTextColor(hdc, infoPtr->monthbk);
-    oldBk = SetBkColor(hdc, infoPtr->trailingtxt);
+    oldCol = SetTextColor(hdc, infoPtr->colors[MCSC_MONTHBK]);
+    oldBk = SetBkColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
     hbr = GetSysColorBrush(COLOR_HIGHLIGHT);
     FillRect(hdc, &r, hbr);
 
@@ -762,13 +759,13 @@ static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRU
   SIZE sz;
 
   /* fill header box */
-  hbr = CreateSolidBrush(infoPtr->titlebk);
+  hbr = CreateSolidBrush(infoPtr->colors[MCSC_TITLEBK]);
   FillRect(hdc, title, hbr);
   DeleteObject(hbr);
 
   /* month/year string */
-  SetBkColor(hdc, infoPtr->titlebk);
-  SetTextColor(hdc, infoPtr->titletxt);
+  SetBkColor(hdc, infoPtr->colors[MCSC_TITLEBK]);
+  SetTextColor(hdc, infoPtr->colors[MCSC_TITLETEXT]);
   SelectObject(hdc, infoPtr->hBoldFont);
 
   GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1 + st->wMonth - 1,
@@ -868,7 +865,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   r = infoPtr->calendars[calIdx].weeknums;
 
   /* erase whole week numbers area */
-  hbr = CreateSolidBrush(infoPtr->monthbk);
+  hbr = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
   FillRect(hdc, &r, hbr);
   DeleteObject(hbr);
 
@@ -966,7 +963,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   fill_bk_rect.bottom = infoPtr->calendars[calIdx].days.bottom +
                           (infoPtr->todayrect.bottom - infoPtr->todayrect.top);
 
-  hbr = CreateSolidBrush(infoPtr->monthbk);
+  hbr = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
   FillRect(hdc, &fill_bk_rect, hbr);
   DeleteObject(hbr);
 
@@ -984,8 +981,8 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
 
   /* 1. draw day abbreviations */
   SelectObject(hdc, infoPtr->hFont);
-  SetBkColor(hdc, infoPtr->monthbk);
-  SetTextColor(hdc, infoPtr->trailingtxt);
+  SetBkColor(hdc, infoPtr->colors[MCSC_MONTHBK]);
+  SetTextColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
   /* rectangle to draw a single day abbreviation within */
   r = infoPtr->calendars[calIdx].wdays;
   r.right = r.left + infoPtr->width_increment;
@@ -1002,7 +999,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   {
     SYSTEMTIME st_max;
 
-    SetTextColor(hdc, infoPtr->trailingtxt);
+    SetTextColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
 
     /* draw prev month */
     if (calIdx == 0)
@@ -1038,7 +1035,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   }
 
   /* 3. current month */
-  SetTextColor(hdc, infoPtr->txt);
+  SetTextColor(hdc, infoPtr->colors[MCSC_TEXT]);
   st = *date;
   st.wDay = 1;
   mask = 1;
@@ -1116,68 +1113,30 @@ MONTHCAL_GetMinReqRect(const MONTHCAL_INFO *infoPtr, RECT *rect)
   return TRUE;
 }
 
-static LRESULT
-MONTHCAL_GetColor(const MONTHCAL_INFO *infoPtr, INT index)
+static COLORREF
+MONTHCAL_GetColor(const MONTHCAL_INFO *infoPtr, UINT index)
 {
-  TRACE("\n");
+  TRACE("%p, %d\n", infoPtr, index);
 
-  switch(index) {
-    case MCSC_BACKGROUND:
-      return infoPtr->bk;
-    case MCSC_TEXT:
-      return infoPtr->txt;
-    case MCSC_TITLEBK:
-      return infoPtr->titlebk;
-    case MCSC_TITLETEXT:
-      return infoPtr->titletxt;
-    case MCSC_MONTHBK:
-      return infoPtr->monthbk;
-    case MCSC_TRAILINGTEXT:
-      return infoPtr->trailingtxt;
-  }
-
-  return -1;
+  if (index > MCSC_TRAILINGTEXT) return -1;
+  return infoPtr->colors[index];
 }
 
-
 static LRESULT
-MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, INT index, COLORREF color)
+MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, UINT index, COLORREF color)
 {
-  COLORREF prev = -1;
+  COLORREF prev;
 
-  TRACE("%d: color %08x\n", index, color);
+  TRACE("%p, %d: color %08x\n", infoPtr, index, color);
 
-  switch(index) {
-    case MCSC_BACKGROUND:
-      prev = infoPtr->bk;
-      infoPtr->bk = color;
-      break;
-    case MCSC_TEXT:
-      prev = infoPtr->txt;
-      infoPtr->txt = color;
-      break;
-    case MCSC_TITLEBK:
-      prev = infoPtr->titlebk;
-      infoPtr->titlebk = color;
-      break;
-    case MCSC_TITLETEXT:
-      prev=infoPtr->titletxt;
-      infoPtr->titletxt = color;
-      break;
-    case MCSC_MONTHBK:
-      prev = infoPtr->monthbk;
-      infoPtr->monthbk = color;
-      break;
-    case MCSC_TRAILINGTEXT:
-      prev = infoPtr->trailingtxt;
-      infoPtr->trailingtxt = color;
-      break;
-  }
+  if (index > MCSC_TRAILINGTEXT) return -1;
+
+  prev = infoPtr->colors[index];
+  infoPtr->colors[index] = color;
 
   InvalidateRect(infoPtr->hwndSelf, NULL, index == MCSC_BACKGROUND ? TRUE : FALSE);
   return prev;
 }
-
 
 static LRESULT
 MONTHCAL_GetMonthDelta(const MONTHCAL_INFO *infoPtr)
@@ -2284,7 +2243,7 @@ MONTHCAL_EraseBkgnd(const MONTHCAL_INFO *infoPtr, HDC hdc)
   if (!GetClipBox(hdc, &rc)) return FALSE;
 
   /* fill background */
-  hbr = CreateSolidBrush (infoPtr->bk);
+  hbr = CreateSolidBrush (infoPtr->colors[MCSC_BACKGROUND]);
   FillRect(hdc, &rc, hbr);
   DeleteObject(hbr);
 
@@ -2574,12 +2533,12 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->monthdayState = Alloc(infoPtr->monthRange * sizeof(MONTHDAYSTATE));
   if (!infoPtr->monthdayState) goto fail;
 
-  infoPtr->titlebk       = comctl32_color.clrActiveCaption;
-  infoPtr->titletxt      = comctl32_color.clrWindow;
-  infoPtr->monthbk       = comctl32_color.clrWindow;
-  infoPtr->trailingtxt   = comctl32_color.clrGrayText;
-  infoPtr->bk            = comctl32_color.clrWindow;
-  infoPtr->txt	         = comctl32_color.clrWindowText;
+  infoPtr->colors[MCSC_BACKGROUND]   = comctl32_color.clrWindow;
+  infoPtr->colors[MCSC_TEXT]         = comctl32_color.clrWindowText;
+  infoPtr->colors[MCSC_TITLEBK]      = comctl32_color.clrActiveCaption;
+  infoPtr->colors[MCSC_TITLETEXT]    = comctl32_color.clrWindow;
+  infoPtr->colors[MCSC_MONTHBK]      = comctl32_color.clrWindow;
+  infoPtr->colors[MCSC_TRAILINGTEXT] = comctl32_color.clrGrayText;
 
   infoPtr->minSel = infoPtr->todaysDate;
   infoPtr->maxSel = infoPtr->todaysDate;

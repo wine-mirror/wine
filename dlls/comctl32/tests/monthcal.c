@@ -85,45 +85,6 @@ static const struct message create_monthcal_multi_sel_style_seq[] = {
     { 0 }
 };
 
-static const struct message monthcal_color_seq[] = {
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_BACKGROUND, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_BACKGROUND, RGB(0,0,0)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_BACKGROUND, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_BACKGROUND, RGB(255,255,255)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_BACKGROUND, 0},
-
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_MONTHBK, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_MONTHBK, RGB(0,0,0)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_MONTHBK, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_MONTHBK, RGB(255,255,255)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_MONTHBK, 0},
-
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TEXT, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TEXT, RGB(0,0,0)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TEXT, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TEXT, RGB(255,255,255)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TEXT, 0},
-
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TITLEBK, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TITLEBK, RGB(0,0,0)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TITLEBK, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TITLEBK, RGB(255,255,255)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TITLEBK, 0},
-
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TITLETEXT, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TITLETEXT, RGB(0,0,0)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TITLETEXT, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TITLETEXT, RGB(255,255,255)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TITLETEXT, 0},
-
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TRAILINGTEXT, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TRAILINGTEXT, RGB(0,0,0)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TRAILINGTEXT, 0},
-    { MCM_SETCOLOR, sent|wparam|lparam, MCSC_TRAILINGTEXT, RGB(255,255,255)},
-    { MCM_GETCOLOR, sent|wparam|lparam, MCSC_TRAILINGTEXT, 0},
-    { 0 }
-};
-
 static const struct message monthcal_curr_date_seq[] = {
     { MCM_SETCURSEL, sent|wparam, 0},
     { WM_PAINT, sent|wparam|lparam|defwinproc, 0, 0},
@@ -613,75 +574,76 @@ static HWND create_monthcal_control(DWORD style)
 
 static void test_color(void)
 {
-    int res, temp;
+    COLORREF color, prev;
     HWND hwnd;
 
     hwnd = create_monthcal_control(0);
 
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    /* invalid color index */
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT + 1, 0);
+    expect(-1, color);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TRAILINGTEXT + 1, RGB(255,255,255));
+    expect(-1, prev);
 
-    /* Setter and Getters for color*/
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_BACKGROUND, 0);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_BACKGROUND, RGB(0,0,0));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_BACKGROUND, 0);
-    expect(RGB(0,0,0), temp);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_BACKGROUND, RGB(255,255,255));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_BACKGROUND, 0);
-    expect(RGB(255,255,255), temp);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_BACKGROUND, 0);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_BACKGROUND, RGB(0,0,0));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_BACKGROUND, 0);
+    expect(RGB(0,0,0), color);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_BACKGROUND, RGB(255,255,255));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_BACKGROUND, 0);
+    expect(RGB(255,255,255), color);
 
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_MONTHBK, 0);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_MONTHBK, RGB(0,0,0));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_MONTHBK, 0);
-    expect(RGB(0,0,0), temp);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_MONTHBK, RGB(255,255,255));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_MONTHBK, 0);
-    expect(RGB(255,255,255), temp);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_MONTHBK, 0);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_MONTHBK, RGB(0,0,0));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_MONTHBK, 0);
+    expect(RGB(0,0,0), color);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_MONTHBK, RGB(255,255,255));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_MONTHBK, 0);
+    expect(RGB(255,255,255), color);
 
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TEXT, 0);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TEXT, RGB(0,0,0));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TEXT, 0);
-    expect(RGB(0,0,0), temp);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TEXT, RGB(255,255,255));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TEXT, 0);
-    expect(RGB(255,255,255), temp);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TEXT, 0);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TEXT, RGB(0,0,0));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TEXT, 0);
+    expect(RGB(0,0,0), color);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TEXT, RGB(255,255,255));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TEXT, 0);
+    expect(RGB(255,255,255), color);
 
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLEBK, 0);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLEBK, RGB(0,0,0));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLEBK, 0);
-    expect(RGB(0,0,0), temp);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLEBK, RGB(255,255,255));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLEBK, 0);
-    expect(RGB(255,255,255), temp);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLEBK, 0);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLEBK, RGB(0,0,0));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLEBK, 0);
+    expect(RGB(0,0,0), color);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLEBK, RGB(255,255,255));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLEBK, 0);
+    expect(RGB(255,255,255), color);
 
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLETEXT, 0);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLETEXT, RGB(0,0,0));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLETEXT, 0);
-    expect(RGB(0,0,0), temp);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLETEXT, RGB(255,255,255));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLETEXT, 0);
-    expect(RGB(255,255,255), temp);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLETEXT, 0);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLETEXT, RGB(0,0,0));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLETEXT, 0);
+    expect(RGB(0,0,0), color);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TITLETEXT, RGB(255,255,255));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TITLETEXT, 0);
+    expect(RGB(255,255,255), color);
 
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT, 0);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TRAILINGTEXT, RGB(0,0,0));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT, 0);
-    expect(RGB(0,0,0), temp);
-    res = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TRAILINGTEXT, RGB(255,255,255));
-    expect(temp, res);
-    temp = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT, 0);
-    expect(RGB(255,255,255), temp);
-
-    ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_color_seq, "monthcal color", FALSE);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT, 0);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TRAILINGTEXT, RGB(0,0,0));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT, 0);
+    expect(RGB(0,0,0), color);
+    prev = SendMessage(hwnd, MCM_SETCOLOR, MCSC_TRAILINGTEXT, RGB(255,255,255));
+    expect(color, prev);
+    color = SendMessage(hwnd, MCM_GETCOLOR, MCSC_TRAILINGTEXT, 0);
+    expect(RGB(255,255,255), color);
 
     DestroyWindow(hwnd);
 }
