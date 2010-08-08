@@ -3867,6 +3867,27 @@ static const IUriVtbl UriVtbl = {
 
 /***********************************************************************
  *           CreateUri (urlmon.@)
+ *
+ * Creates a new IUri object using the URI represented by pwzURI. This function
+ * parses and validates the components of pwzURI and then canonicalizes the
+ * parsed components.
+ *
+ * PARAMS
+ *  pwzURI      [I] The URI to parse, validate, and canonicalize.
+ *  dwFlags     [I] Flags which can affect how the parsing/canonicalization is performed.
+ *  dwReserved  [I] Reserved (not used).
+ *  ppURI       [O] The resulting IUri after parsing/canonicalization occurs.
+ *
+ * RETURNS
+ *  Success: Returns S_OK. ppURI contains the pointer to the newly allocated IUri.
+ *  Failure: E_INVALIDARG if there's invalid flag combinations in dwFlags, or an
+ *           invalid parameters, or pwzURI doesn't represnt a valid URI.
+ *           E_OUTOFMEMORY if any memory allocation fails.
+ *
+ * NOTES
+ *  Default flags:
+ *      Uri_CREATE_CANONICALIZE, Uri_CREATE_DECODE_EXTRA_INFO, Uri_CREATE_CRACK_UNKNOWN_SCHEMES,
+ *      Uri_CREATE_PRE_PROCESS_HTML_URI, Uri_CREATE_NO_IE_SETTINGS.
  */
 HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IUri **ppURI)
 {
@@ -3948,6 +3969,22 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
 
 /***********************************************************************
  *           CreateUriWithFragment (urlmon.@)
+ *
+ * Creates a new IUri object. This is almost the same as CreateUri, expect that
+ * it allows you to explicitly specify a fragment (pwzFragment) for pwzURI.
+ *
+ * PARAMS
+ *  pwzURI      [I] The URI to parse and perform canonicalization on.
+ *  pwzFragment [I] The explict fragment string which should be added to pwzURI.
+ *  dwFlags     [I] The flags which will be passed to CreateUri.
+ *  dwReserved  [I] Reserved (not used).
+ *  ppURI       [O] The resulting IUri after parsing/canonicalization.
+ *
+ * RETURNS
+ *  Success: S_OK. ppURI contains the pointer to the newly allocated IUri.
+ *  Failure: E_INVALIDARG if pwzURI already contains a fragment and pwzFragment
+ *           isn't NULL. Will also return E_INVALIDARG for the same reasons as
+ *           CreateUri will. E_OUTOFMEMORY if any allocations fail.
  */
 HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD dwFlags,
                                      DWORD_PTR dwReserved, IUri **ppURI)
