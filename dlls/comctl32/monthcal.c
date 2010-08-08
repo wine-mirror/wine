@@ -156,8 +156,6 @@ enum nav_direction
     DIRECTION_FORWARD
 };
 
-#define MONTHCAL_GetInfoPtr(hwnd) ((MONTHCAL_INFO *)GetWindowLongPtrW(hwnd, 0))
-
 /* helper functions  */
 
 /* send a single MCN_SELCHANGE notification */
@@ -2661,11 +2659,10 @@ MONTHCAL_GetUnicodeFormat(const MONTHCAL_INFO *infoPtr)
 static LRESULT WINAPI
 MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  MONTHCAL_INFO *infoPtr;
+  MONTHCAL_INFO *infoPtr = (MONTHCAL_INFO *)GetWindowLongPtrW(hwnd, 0);
 
   TRACE("hwnd=%p msg=%x wparam=%lx lparam=%lx\n", hwnd, uMsg, wParam, lParam);
 
-  infoPtr = MONTHCAL_GetInfoPtr(hwnd);
   if (!infoPtr && (uMsg != WM_CREATE))
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
   switch(uMsg)
