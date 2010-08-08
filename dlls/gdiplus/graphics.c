@@ -1254,6 +1254,45 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     return Ok;
 }
 
+GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics)
+{
+    GpStatus retval;
+
+    *graphics = GdipAlloc(sizeof(GpGraphics));
+    if(!*graphics)  return OutOfMemory;
+
+    if((retval = GdipCreateMatrix(&(*graphics)->worldtrans)) != Ok){
+        GdipFree(*graphics);
+        return retval;
+    }
+
+    if((retval = GdipCreateRegion(&(*graphics)->clip)) != Ok){
+        GdipFree((*graphics)->worldtrans);
+        GdipFree(*graphics);
+        return retval;
+    }
+
+    (*graphics)->hdc = NULL;
+    (*graphics)->hwnd = NULL;
+    (*graphics)->owndc = FALSE;
+    (*graphics)->image = image;
+    (*graphics)->smoothing = SmoothingModeDefault;
+    (*graphics)->compqual = CompositingQualityDefault;
+    (*graphics)->interpolation = InterpolationModeDefault;
+    (*graphics)->pixeloffset = PixelOffsetModeDefault;
+    (*graphics)->compmode = CompositingModeSourceOver;
+    (*graphics)->unit = UnitDisplay;
+    (*graphics)->scale = 1.0;
+    (*graphics)->busy = FALSE;
+    (*graphics)->textcontrast = 4;
+    list_init(&(*graphics)->containers);
+    (*graphics)->contid = 0;
+
+    TRACE("<-- %p\n", *graphics);
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHWND(HWND hwnd, GpGraphics **graphics)
 {
     GpStatus ret;

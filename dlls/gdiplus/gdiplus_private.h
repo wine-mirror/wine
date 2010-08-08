@@ -49,6 +49,8 @@ extern REAL gdiplus_atan2(REAL dy, REAL dx);
 extern GpStatus hresult_to_status(HRESULT res);
 extern REAL convert_unit(REAL logpixels, GpUnit unit);
 
+extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics);
+
 extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2);
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
@@ -269,6 +271,7 @@ struct GpBitmap{
     HDC hdc;
     BYTE *bits; /* actual image bits if this is a DIB */
     INT stride; /* stride of bits if this is a DIB */
+    BYTE *own_bits; /* image bits that need to be freed with this object */
 };
 
 struct GpCachedBitmap{

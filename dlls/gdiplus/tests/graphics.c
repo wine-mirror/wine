@@ -2616,7 +2616,7 @@ static void test_GdipGetNearestColor(void)
     GdipDisposeImage((GpImage*)bitmap);
 
     status = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat48bppRGB, NULL, &bitmap);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     if (status == Ok)
     {
         status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
@@ -2629,7 +2629,7 @@ static void test_GdipGetNearestColor(void)
     }
 
     status = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat64bppARGB, NULL, &bitmap);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     if (status == Ok)
     {
         status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
@@ -2642,7 +2642,7 @@ static void test_GdipGetNearestColor(void)
     }
 
     status = GdipCreateBitmapFromScan0(10, 10, 10, PixelFormat64bppPARGB, NULL, &bitmap);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     if (status == Ok)
     {
         status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
