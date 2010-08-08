@@ -1820,6 +1820,39 @@ static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
   }
 }
 
+/* no valid range check performed */
+static void MONTHCAL_Scroll(MONTHCAL_INFO *infoPtr, INT delta)
+{
+  INT i, selIdx = -1;
+
+  for(i = 0; i < infoPtr->cal_num; i++)
+  {
+    /* save selection position to shift it later */
+    if (selIdx == -1 && MONTHCAL_CompareMonths(&infoPtr->minSel, &infoPtr->calendars[i].month) == 0)
+      selIdx = i;
+
+    MONTHCAL_GetMonth(&infoPtr->calendars[i].month, delta);
+  }
+
+  /* selection is always shifted to first calendar */
+  if(infoPtr->dwStyle & MCS_MULTISELECT)
+  {
+    SYSTEMTIME range[2];
+
+    MONTHCAL_GetSelRange(infoPtr, range);
+    MONTHCAL_GetMonth(&range[0], delta - selIdx);
+    MONTHCAL_GetMonth(&range[1], delta - selIdx);
+    MONTHCAL_SetSelRange(infoPtr, range);
+  }
+  else
+  {
+    SYSTEMTIME st = infoPtr->minSel;
+
+    MONTHCAL_GetMonth(&st, delta - selIdx);
+    MONTHCAL_SetCurSel(infoPtr, &st);
+  }
+}
+
 static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direction)
 {
   INT delta = infoPtr->delta ? infoPtr->delta : infoPtr->cal_num;
@@ -1841,29 +1874,7 @@ static void MONTHCAL_GoToMonth(MONTHCAL_INFO *infoPtr, enum nav_direction direct
 
   if(!MONTHCAL_IsDateInValidRange(infoPtr, &st, FALSE)) return;
 
-  if(infoPtr->dwStyle & MCS_MULTISELECT)
-  {
-    SYSTEMTIME range[2];
-
-    range[0] = infoPtr->minSel;
-    range[1] = infoPtr->maxSel;
-
-    if(direction == DIRECTION_BACKWARD)
-    {
-      MONTHCAL_GetMonth(&range[0], -delta);
-      MONTHCAL_GetMonth(&range[1], -delta);
-    }
-    else
-    {
-      MONTHCAL_GetMonth(&range[0], delta);
-      MONTHCAL_GetMonth(&range[1], delta);
-    }
-
-    MONTHCAL_SetSelRange(infoPtr, range);
-  }
-  else
-    MONTHCAL_SetCurSel(infoPtr, &st);
-
+  MONTHCAL_Scroll(infoPtr, direction == DIRECTION_BACKWARD ? -delta : delta);
   MONTHCAL_NotifyDayState(infoPtr);
   MONTHCAL_NotifySelectionChange(infoPtr);
 }
