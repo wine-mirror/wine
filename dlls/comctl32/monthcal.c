@@ -457,11 +457,10 @@ int MONTHCAL_CalculateDayOfWeek(SYSTEMTIME *date, BOOL inplace)
 /* add/substract 'months' from date */
 static inline void MONTHCAL_GetMonth(SYSTEMTIME *date, INT months)
 {
-  INT length;
+  INT length, m = date->wMonth + months;
 
-  date->wMonth += months;
-  date->wYear  += date->wMonth > 0 ? (date->wMonth - 1) / 12 : date->wMonth / 12 - 1;
-  date->wMonth  = date->wMonth > 0 ? (date->wMonth - 1) % 12 + 1 : 12 + date->wMonth % 12;
+  date->wYear += m > 0 ? (m - 1) / 12 : m / 12 - 1;
+  date->wMonth = m > 0 ? (m - 1) % 12 + 1 : 12 + m % 12;
   /* fix moving from last day in a month */
   length = MONTHCAL_MonthLength(date->wMonth, date->wYear);
   if(date->wDay > length) date->wDay = length;
@@ -1957,12 +1956,15 @@ static LRESULT CALLBACK EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 }
 
 /* creates updown control and edit box */
-static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
+static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr, INT calIdx)
 {
+    RECT *rc = &infoPtr->calendars[calIdx].titleyear;
+    RECT *title = &infoPtr->calendars[calIdx].title;
+
     infoPtr->hWndYearEdit =
 	CreateWindowExW(0, WC_EDITW, 0, WS_VISIBLE | WS_CHILD | ES_READONLY,
-			infoPtr->calendars[0].titleyear.left + 3, infoPtr->titlebtnnext.top,
-			infoPtr->calendars[0].titleyear.right - infoPtr->calendars[0].titleyear.left + 4,
+			rc->left + 3, (title->bottom + title->top - infoPtr->textHeight) / 2,
+			rc->right - rc->left + 4,
 			infoPtr->textHeight, infoPtr->hwndSelf,
 			NULL, NULL, NULL);
 
@@ -1971,7 +1973,7 @@ static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
     infoPtr->hWndYearUpDown =
 	CreateWindowExW(0, UPDOWN_CLASSW, 0,
 			WS_VISIBLE | WS_CHILD | UDS_SETBUDDYINT | UDS_NOTHOUSANDS | UDS_ARROWKEYS,
-			infoPtr->calendars[0].titleyear.right + 7, infoPtr->titlebtnnext.top,
+			rc->right + 7, (title->bottom + title->top - infoPtr->textHeight) / 2,
 			18, infoPtr->textHeight, infoPtr->hwndSelf,
 			NULL, NULL, NULL);
 
@@ -1979,7 +1981,7 @@ static void MONTHCAL_EditYear(MONTHCAL_INFO *infoPtr)
     SendMessageW(infoPtr->hWndYearUpDown, UDM_SETRANGE, 0,
                  MAKELONG(max_allowed_date.wYear, min_allowed_date.wYear));
     SendMessageW(infoPtr->hWndYearUpDown, UDM_SETBUDDY, (WPARAM)infoPtr->hWndYearEdit, 0);
-    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, infoPtr->minSel.wYear);
+    SendMessageW(infoPtr->hWndYearUpDown, UDM_SETPOS, 0, infoPtr->calendars[calIdx].month.wYear);
 
     /* subclass edit box */
     infoPtr->EditWndProc = (WNDPROC)SetWindowLongPtrW(infoPtr->hWndYearEdit,
@@ -2068,7 +2070,7 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
   case MCHT_TITLEYEAR:
   {
-    MONTHCAL_EditYear(infoPtr);
+    MONTHCAL_EditYear(infoPtr, ht.iOffset);
     return 0;
   }
   case MCHT_TODAYLINK:
@@ -2631,16 +2633,12 @@ MONTHCAL_Notify(MONTHCAL_INFO *infoPtr, NMHDR *hdr)
   {
     NMUPDOWN *nmud = (NMUPDOWN*)hdr;
 
-    if (hdr->hwndFrom == infoPtr->hWndYearUpDown)
+    if (hdr->hwndFrom == infoPtr->hWndYearUpDown && nmud->iDelta)
     {
       /* year value limits are set up explicitly after updown creation */
-      if ((nmud->iDelta + nmud->iPos) != infoPtr->minSel.wYear)
-      {
-        SYSTEMTIME new_date = infoPtr->minSel;
-
-        new_date.wYear = nmud->iDelta + nmud->iPos;
-        MONTHCAL_SetCurSel(infoPtr, &new_date);
-      }
+      MONTHCAL_Scroll(infoPtr, 12 * nmud->iDelta);
+      MONTHCAL_NotifyDayState(infoPtr);
+      MONTHCAL_NotifySelectionChange(infoPtr);
     }
   }
   return 0;
