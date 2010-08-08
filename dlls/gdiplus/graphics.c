@@ -4574,7 +4574,10 @@ GpStatus WINGDIPAPI GdipGetDpiX(GpGraphics *graphics, REAL* dpi)
     if(graphics->busy)
         return ObjectBusy;
 
-    *dpi = (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX);
+    if (graphics->image)
+        *dpi = graphics->image->xres;
+    else
+        *dpi = (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX);
 
     return Ok;
 }
@@ -4589,7 +4592,10 @@ GpStatus WINGDIPAPI GdipGetDpiY(GpGraphics *graphics, REAL* dpi)
     if(graphics->busy)
         return ObjectBusy;
 
-    *dpi = (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSY);
+    if (graphics->image)
+        *dpi = graphics->image->yres;
+    else
+        *dpi = (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSY);
 
     return Ok;
 }
