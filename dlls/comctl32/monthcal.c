@@ -1096,27 +1096,25 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
 }
 
 static LRESULT
-MONTHCAL_GetMinReqRect(const MONTHCAL_INFO *infoPtr, LPRECT lpRect)
+MONTHCAL_GetMinReqRect(const MONTHCAL_INFO *infoPtr, RECT *rect)
 {
-  TRACE("rect %p\n", lpRect);
+  TRACE("rect %p\n", rect);
 
-  if(!lpRect) return FALSE;
+  if(!rect) return FALSE;
 
-  lpRect->left   = infoPtr->calendars[0].title.left;
-  lpRect->top    = infoPtr->calendars[0].title.top;
-  lpRect->right  = infoPtr->calendars[0].title.right;
-  lpRect->bottom = infoPtr->todayrect.bottom;
+  *rect = infoPtr->calendars[0].title;
+  rect->bottom = infoPtr->calendars[0].days.bottom + infoPtr->todayrect.bottom -
+                 infoPtr->todayrect.top;
 
-  AdjustWindowRect(lpRect, infoPtr->dwStyle, FALSE);
+  AdjustWindowRect(rect, infoPtr->dwStyle, FALSE);
 
   /* minimal rectangle is zero based */
-  OffsetRect(lpRect, -lpRect->left, -lpRect->top);
+  OffsetRect(rect, -rect->left, -rect->top);
 
-  TRACE("%s\n", wine_dbgstr_rect(lpRect));
+  TRACE("%s\n", wine_dbgstr_rect(rect));
 
   return TRUE;
 }
-
 
 static LRESULT
 MONTHCAL_GetColor(const MONTHCAL_INFO *infoPtr, INT index)
