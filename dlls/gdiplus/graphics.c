@@ -84,6 +84,12 @@ static BYTE convert_path_point_type(BYTE type)
     return ret;
 }
 
+static REAL graphics_res(GpGraphics *graphics)
+{
+    if (graphics->image) return graphics->image->xres;
+    else return (REAL)GetDeviceCaps(graphics->hdc, LOGPIXELSX);
+}
+
 static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
 {
     HPEN gdipen;
@@ -108,7 +114,7 @@ static INT prepare_dc(GpGraphics *graphics, GpPen *pen)
         width = sqrt((pt[1].X - pt[0].X) * (pt[1].X - pt[0].X) +
                      (pt[1].Y - pt[0].Y) * (pt[1].Y - pt[0].Y)) / sqrt(2.0);
 
-        width *= pen->width * convert_unit(graphics->hdc,
+        width *= pen->width * convert_unit(graphics_res(graphics),
                               pen->unit == UnitWorld ? graphics->unit : pen->unit);
     }
 
@@ -156,7 +162,7 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     GpMatrix *matrix;
     int i;
 
-    unitscale = convert_unit(graphics->hdc, graphics->unit);
+    unitscale = convert_unit(graphics_res(graphics), graphics->unit);
 
     /* apply page scale */
     if(graphics->unit != UnitDisplay)
@@ -4602,7 +4608,7 @@ GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace 
     stat = GdipCreateMatrix(&matrix);
     if (stat == Ok)
     {
-        unitscale = convert_unit(graphics->hdc, graphics->unit);
+        unitscale = convert_unit(graphics_res(graphics), graphics->unit);
 
         if(graphics->unit != UnitDisplay)
             unitscale *= graphics->scale;

@@ -2008,14 +2008,15 @@ GpStatus WINGDIPAPI GdipGetImageDimension(GpImage *image, REAL *width,
 
     if(image->type == ImageTypeMetafile){
         HDC hdc = GetDC(0);
-
-        *height = convert_unit(hdc, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Height;
-
-        *width = convert_unit(hdc, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Width;
+        REAL res = (REAL)GetDeviceCaps(hdc, LOGPIXELSX);
 
         ReleaseDC(0, hdc);
+
+        *height = convert_unit(res, ((GpMetafile*)image)->unit) *
+                        ((GpMetafile*)image)->bounds.Height;
+
+        *width = convert_unit(res, ((GpMetafile*)image)->unit) *
+                        ((GpMetafile*)image)->bounds.Width;
     }
 
     else if(image->type == ImageTypeBitmap){
@@ -2072,11 +2073,12 @@ GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
 
     if(image->type == ImageTypeMetafile){
         HDC hdc = GetDC(0);
-
-        *height = roundr(convert_unit(hdc, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Height);
+        REAL res = (REAL)GetDeviceCaps(hdc, LOGPIXELSX);
 
         ReleaseDC(0, hdc);
+
+        *height = roundr(convert_unit(res, ((GpMetafile*)image)->unit) *
+                        ((GpMetafile*)image)->bounds.Height);
     }
     else if(image->type == ImageTypeBitmap)
         *height = ((GpBitmap*)image)->height;
@@ -2178,11 +2180,12 @@ GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
 
     if(image->type == ImageTypeMetafile){
         HDC hdc = GetDC(0);
-
-        *width = roundr(convert_unit(hdc, ((GpMetafile*)image)->unit) *
-                        ((GpMetafile*)image)->bounds.Width);
+        REAL res = (REAL)GetDeviceCaps(hdc, LOGPIXELSX);
 
         ReleaseDC(0, hdc);
+
+        *width = roundr(convert_unit(res, ((GpMetafile*)image)->unit) *
+                        ((GpMetafile*)image)->bounds.Width);
     }
     else if(image->type == ImageTypeBitmap)
         *width = ((GpBitmap*)image)->width;
