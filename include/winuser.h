@@ -711,6 +711,7 @@ typedef struct tagWINDOWPLACEMENT
 #define BS_USERBUTTON          0x00000008L
 #define BS_AUTORADIOBUTTON     0x00000009L
 #define BS_OWNERDRAW           0x0000000BL
+#define BS_TYPEMASK            0x0000000FL
 #define BS_LEFTTEXT            0x00000020L
 #define BS_RIGHTBUTTON         BS_LEFTTEXT
 
