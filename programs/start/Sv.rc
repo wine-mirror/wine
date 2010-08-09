@@ -1,0 +1,73 @@
+/*
+ * Start
+ * Swedish Language Support
+ *
+ * Copyright 2010 Anders Jonsson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resources.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+{
+STRING_USAGE, "Starta ett program, eller öppna ett dokument i programmet som normalt används\n\
+för filer med den filändelsen.\n\
+Användning:\n\
+start [val] programmets_filnamn [...]\n\
+start [val] dokumentets_filnamn\n\
+\n\
+Val:\n\
+/M[inimized] Starta programmet minimerat.\n\
+/MAX[imized] Starta programmet maximerat.\n\
+/R[estored]  Starta programmet normalt (varken minimerat eller maximerat).\n\
+/W[ait]      Vänta på att startat program avslutar, avsluta sedan med dess\n\             avslutsskod.\n\
+/Unix        Använd ett Unix-filnamn och starta filen som windows explorer.\n\
+/ProgIDOpen  Öppna ett dokument med hjälp av följande progID.\n\
+/L           Visa slutanvändarlicens.\n\
+\n\
+start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
+Start kommer UTAN NÅGON SOM HELST GARANTI; kör med valet /L för detaljer.\n\
+Detta program är fri programvara, du är välkommen att distribuera det\n\
+vidare under vissa villkor; kör 'start /L' för detaljer.\n\
+"
+
+STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
+Detta program är fri programvara. Du kan distribuera det och/eller\n\
+modifiera det under villkoren i GNU Lesser Public License, publicerad\n\
+av Free Software Foundation, antingen version 2.1 eller (om du så vill)\n\
+någon senare version.\n\
+\n\
+Detta program distribueras i hopp om att det ska vara\n\
+användbart,men UTAN NÅGON SOM HELST GARANTI, även utan\n\
+underförstådd garanti om SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT\n\
+SPECIELLT ÄNDAMÅL. Se GNU Lesser Public License för ytterligare\n\
+information.\n\
+\n\
+Du bör ha fått en kopia av GNU Lesser Public License tillsammans\n\
+med detta program. Om inte, skriv till the Free Software Foundation,\n\
+Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
+\n\
+Se filen COPYING.LIB för licensinformation.\n\
+"
+
+STRING_EXECFAIL, "Programmet kunde inte startas, eller så var inget program associerat med den angivna filen.\n'ShellExecuteEx' misslyckades"
+
+STRING_UNIXFAIL "Kunde inte konvertera Unix-filnamnet till ett DOS-filnamn."
+}
