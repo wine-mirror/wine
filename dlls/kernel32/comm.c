@@ -1138,7 +1138,7 @@ BOOL WINAPI GetCommProperties(
     HANDLE hFile,          /* [in] handle of the comm port */
     LPCOMMPROP lpCommProp) /* [out] pointer to struct to be filled */
 {
-    FIXME("(%p %p )\n",hFile,lpCommProp);
+    TRACE("(%p %p)\n",hFile,lpCommProp);
     if(!lpCommProp)
         return FALSE;
 
@@ -1150,7 +1150,6 @@ BOOL WINAPI GetCommProperties(
     lpCommProp->wPacketLength       = 1;
     lpCommProp->wPacketVersion      = 1;
     lpCommProp->dwServiceMask       = SP_SERIALCOMM;
-    lpCommProp->dwReserved1         = 0;
     lpCommProp->dwMaxTxQueue        = 4096;
     lpCommProp->dwMaxRxQueue        = 4096;
     lpCommProp->dwMaxBaud           = BAUD_115200;
