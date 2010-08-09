@@ -176,3 +176,15 @@ HRESULT WINAPI DwmEnableBlurBehindWindow(HWND hWnd, const DWM_BLURBEHIND *pBlurB
 
     return E_NOTIMPL;
 }
+
+/**********************************************************************
+ *           DwmDefWindowProc         (DWMAPI.@)
+ */
+BOOL WINAPI DwmDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult)
+{
+    static int i;
+
+    if (!i++) FIXME("stub\n");
+
+    return FALSE;
+}

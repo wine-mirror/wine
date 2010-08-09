@@ -53,6 +53,7 @@ typedef struct _DWM_BLURBEHIND
     BOOL fTransitionOnMaximized;
 } DWM_BLURBEHIND, *PDWM_BLURBEHIND;
 
+DWMAPI DwmDefWindowProc(HWND, UINT, WPARAM, LPARAM, LRESULT*);
 DWMAPI DwmEnableBlurBehindWindow(HWND, const DWM_BLURBEHIND *);
 DWMAPI DwmEnableComposition(UINT);
 DWMAPI DwmEnableMMCSS(BOOL);
