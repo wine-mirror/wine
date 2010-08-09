@@ -19,42 +19,50 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+
+ STRINGTABLE
+ {
+    IDS_STATUS_DONE            "ÎÅùÎÇ®"
+    IDS_STATUS_DOWNLOADINGFROM "%sÎ°úÎ∂ÄÌÑ∞ Îã§Ïö¥Î°úÎìúÏ§ë..."
+}
 
 STRINGTABLE
 {
-    IDS_HTMLDISABLED    "HTML ∑ª¥ı∏µ¿∫ «ˆ¿Á ∞°¥…«œ¡ˆ æ ¿Ω."
-    IDS_HTMLDOCUMENT    "HTML πÆº≠"
-   IDS_DOWNLOADING     "¥ŸøÓ∑ŒµÂ ¡ﬂ..."
-   IDS_INSTALLING      "º≥ƒ° ¡ﬂ..."
+    IDS_HTMLDISABLED    "HTML Î†åÎçîÎßÅÏùÄ ÌòÑÏû¨ Í∞ÄÎä•ÌïòÏßÄ ÏïäÏùå."
+    IDS_HTMLDOCUMENT    "HTML Î¨∏ÏÑú"
+   IDS_DOWNLOADING     "Îã§Ïö¥Î°úÎìú Ï§ë..."
+   IDS_INSTALLING      "ÏÑ§Ïπò Ï§ë..."
 }
 
 ID_DWL_DIALOG DIALOG  0, 0, 260, 95
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Wine Gecko º≥ƒ° «Æ±◊∏≤"
+CAPTION "Wine Gecko ÏÑ§Ïπò ÌíÄÍ∑∏Î¶º"
 FONT 9, "MS Shell Dlg"
 {
     LTEXT "Wine could not find a Gecko package which is needed for applications embedding HTML " \
           "to work correctly. Wine can automatically download and install it for you.\n\n" \
           "Note: it's recommended to use distro packages instead. See http://wiki.winehq.org/Gecko for details.",
           ID_DWL_STATUS, 10, 10, 240, 50, SS_LEFT
-   CONTROL "¡¯«‡¡ﬂ", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
-   DEFPUSHBUTTON "º≥ƒ°(&I)", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
-   PUSHBUTTON "√Îº“(&C)", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
+   CONTROL "ÏßÑÌñâÏ§ë", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 40, 240, 12
+   DEFPUSHBUTTON "ÏÑ§Ïπò(&I)", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
+   PUSHBUTTON "Ï∑®ÏÜå(&C)", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
 }
 
 IDD_HYPERLINK DIALOG 0, 0, 250, 65
 STYLE DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "«œ¿Ã∆€∏µ≈©"
+CAPTION "ÌïòÏù¥ÌçºÎßÅÌÅ¨"
 FONT 9, "MS Shell Dlg"
 {
-	GROUPBOX "«œ¿Ã∆€∏µ≈© ¡§∫∏", -1, 5, 5, 190, 55
-	LTEXT "«¸Ωƒ(&T):", -1, 10, 22, 24, 10
+	GROUPBOX "ÌïòÏù¥ÌçºÎßÅÌÅ¨ Ï†ïÎ≥¥", -1, 5, 5, 190, 55
+	LTEXT "ÌòïÏãù(&T):", -1, 10, 22, 24, 10
 	COMBOBOX IDC_TYPE, 35, 20, 45, 100, WS_TABSTOP | WS_GROUP | WS_VSCROLL | CBS_DROPDOWNLIST | 	CBS_HASSTRINGS
-	LTEXT "¡÷º“(&U):", -1, 10, 42, 24, 10
+	LTEXT "Ï£ºÏÜå(&U):", -1, 10, 42, 24, 10
 	EDITTEXT IDC_URL, 35, 40, 150, 14, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
-	PUSHBUTTON "»Æ¿Œ", IDOK, 200, 10, 45, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
-	PUSHBUTTON "√Îº“", IDCANCEL, 200, 28, 45, 14, WS_GROUP | WS_TABSTOP
+	PUSHBUTTON "ÌôïÏù∏", IDOK, 200, 10, 45, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+	PUSHBUTTON "Ï∑®ÏÜå", IDCANCEL, 200, 28, 45, 14, WS_GROUP | WS_TABSTOP
 }
 
 ID_PROMPT_DIALOG DIALOG 0, 0, 200, 90
@@ -64,6 +72,6 @@ FONT 8, "MS Shell Dlg"
 {
 	LTEXT "", ID_PROMPT_PROMPT, 10, 10, 180, 30
 	EDITTEXT ID_PROMPT_EDIT, 10, 45, 180, 14, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
-	PUSHBUTTON "»Æ¿Œ", IDOK, 40, 65, 45, 15, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
-	PUSHBUTTON "√Îº“", IDCANCEL, 115, 65, 45, 15, WS_GROUP | WS_TABSTOP
+	PUSHBUTTON "ÌôïÏù∏", IDOK, 40, 65, 45, 15, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+	PUSHBUTTON "Ï∑®ÏÜå", IDCANCEL, 115, 65, 45, 15, WS_GROUP | WS_TABSTOP
 }
