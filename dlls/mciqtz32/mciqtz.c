@@ -330,8 +330,7 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
         return MCIERR_INTERNAL;
     }
 
-    if (!wma->parent)
-        IVideoWindow_put_Visible(wma->vidwin, OATRUE);
+    IVideoWindow_put_Visible(wma->vidwin, OATRUE);
 
     if (dwFlags & MCI_NOTIFY)
         mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
@@ -770,8 +769,10 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
         return 0;
 
     if (dwFlags & MCI_DGV_WINDOW_HWND && (IsWindow(lpParms->hWnd) || !lpParms->hWnd)) {
+        LONG visible = OATRUE;
         LONG style = 0;
         TRACE("Setting hWnd to %p\n", lpParms->hWnd);
+        IVideoWindow_get_Visible(wma->vidwin, &visible);
         IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
         IVideoWindow_get_WindowStyle(wma->vidwin, &style);
         style &= ~WS_CHILD;
@@ -781,7 +782,7 @@ static DWORD MCIQTZ_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMS
             IVideoWindow_put_WindowStyle(wma->vidwin, style);
         IVideoWindow_put_Owner(wma->vidwin, (OAHWND)lpParms->hWnd);
         IVideoWindow_put_MessageDrain(wma->vidwin, (OAHWND)lpParms->hWnd);
-        IVideoWindow_put_Visible(wma->vidwin, OATRUE);
+        IVideoWindow_put_Visible(wma->vidwin, visible);
         wma->parent = lpParms->hWnd;
     }
     if (dwFlags & MCI_DGV_WINDOW_STATE) {
@@ -818,12 +819,15 @@ static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
         BITMAPINFO *info;
         HRESULT hr;
         RECT src, dest;
+        LONG visible = OATRUE;
 
         res = MCIERR_INTERNAL;
         /* If in stopped state, nothing has been drawn to screen
          * moving to pause, which is needed for the old dib renderer, will result
          * in a single frame drawn, so hide the window here */
-        IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
+        IVideoWindow_get_Visible(wma->vidwin, &visible);
+        if (wma->parent)
+            IVideoWindow_put_Visible(wma->vidwin, OAFALSE);
         /* FIXME: Should we check the original state and restore it? */
         IMediaControl_Pause(wma->pmctrl);
         IMediaControl_GetState(wma->pmctrl, -1, &state);
@@ -846,7 +850,7 @@ static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
         res = 0;
 out:
         if (wma->parent)
-            IVideoWindow_put_Visible(wma->vidwin, OATRUE);
+            IVideoWindow_put_Visible(wma->vidwin, visible);
     }
     else if (dwFlags)
         FIXME("Unhandled flags %x\n", dwFlags);
