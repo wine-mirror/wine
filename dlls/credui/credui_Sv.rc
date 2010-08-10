@@ -35,8 +35,18 @@ BEGIN
                     CBS_NOINTEGRALHEIGHT | WS_TABSTOP,80,62,126,87
     LTEXT           "&Lösenord:",-1,8,80,72,12,SS_CENTERIMAGE
     EDITTEXT        IDC_PASSWORD,80,80,126,12,ES_PASSWORD | ES_AUTOHSCROLL
-    CONTROL         "&Remember my password",IDC_SAVE,"Button",
+    CONTROL         "&Kom ihåg lösenord",IDC_SAVE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,80,98,126,12
     DEFPUSHBUTTON   "OK",IDOK,97,128,50,14
     PUSHBUTTON      "Avbryt",IDCANCEL,156,128,50,14
 END
+
+STRINGTABLE
+{
+    IDS_TITLEFORMAT     "Anslut till %s"
+    IDS_MESSAGEFORMAT   "Ansluter till %s"
+    IDS_INCORRECTPASSWORDTITLE  "Inloggningen misslyckades"
+    IDS_INCORRECTPASSWORD       "Kontrollera att användarnamn\noch lösenord stämmer."
+    IDS_CAPSLOCKONTITLE "Caps Lock är på"
+    IDS_CAPSLOCKON      "Om Caps Lock är på kan det leda till att lösenordet skrivs in felaktigt.\n\nTryck Caps Lock på tangentbordet för att slå av Caps Lock innan\ndu skriver in ditt lösenord."
+}
