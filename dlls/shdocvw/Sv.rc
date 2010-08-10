@@ -52,8 +52,36 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "&Egenskaper...",              ID_BROWSE_PROPERTIES
     }
+    POPUP "&Visa"
+    {
+        POPUP "Verktygs&fält"
+        {
+            MENUITEM "&Standardfält"            ID_BROWSE_BAR_STD
+            MENUITEM "&Adressfält"             ID_BROWSE_BAR_ADDR
+        }
+    }
+    POPUP "&Favoriter"
+    {
+        MENUITEM "&Lägg till favoriter..."         ID_BROWSE_ADDFAV
+        MENUITEM SEPARATOR
+    }
     POPUP "&Hjälp"
     {
         MENUITEM "&Om Internet Explorer...", ID_BROWSE_ABOUT
     }
+}
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Bakåt"
+    IDS_TB_FORWARD          "Framåt"
+    IDS_TB_STOP             "Stopp"
+    IDS_TB_REFRESH          "Uppdatera"
+    IDS_TB_HOME             "Hem"
+    IDS_TB_PRINT            "Skriv ut"
+}
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Adress"
 }
