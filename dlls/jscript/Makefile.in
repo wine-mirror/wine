@@ -23,6 +23,7 @@ RC_SRCS = \
 	jscript_Ro.rc \
 	jscript_Ru.rc \
 	jscript_Si.rc \
+	jscript_Sv.rc \
 	jscript_Uk.rc \
 	rsrc.rc
 

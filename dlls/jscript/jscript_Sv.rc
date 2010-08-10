@@ -1,0 +1,49 @@
+/*
+ * Copyright 2010 Anders Jonsson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+    IDS_TO_PRIMITIVE        "Kunde inte konvertera objekt till primitiv typ"
+    IDS_INVALID_CALL_ARG    "Ogiltigt funktionsanrop eller argument"
+    IDS_CREATE_OBJ_ERROR    "Automationsservern kunde inte skapa objekt"
+    IDS_NO_PROPERTY         "Objektet stöder inte denna egenskap eller metod"
+    IDS_ARG_NOT_OPT         "Argumentet är inte valfritt"
+    IDS_SYNTAX_ERROR        "Syntaxfel"
+    IDS_SEMICOLON           "';' förväntades"
+    IDS_LBRACKET            "'(' förväntades"
+    IDS_RBRACKET            "')' förväntades"
+    IDS_UNTERMINATED_STR    "Oterminerad strängkonstant"
+    IDS_NOT_FUNC            "Funktion förväntades"
+    IDS_NOT_DATE            "'[object]' är inte ett datumobjekt"
+    IDS_NOT_NUM             "Nummer förväntades"
+    IDS_OBJECT_EXPECTED     "Objekt förväntades"
+    IDS_ILLEGAL_ASSIGN      "Ogiltig tilldelning"
+    IDS_UNDEFINED           "'|' är odefinierat"
+    IDS_NOT_BOOL            "Boolskt objekt förväntades"
+    IDS_JSCRIPT_EXPECTED    "JScript-objekt förväntades"
+    IDS_REGEXP_SYNTAX_ERROR "Syntaxfel i reguljärt uttryck"
+    IDS_URI_INVALID_CHAR    "Den URI som ska kodas innehåller ogiltiga tecken"
+    IDS_INVALID_LENGTH      "Array-längd måste vara ett positivt ändligt heltal"
+    IDS_ARRAY_EXPECTED      "Array-objekt förväntades"
+}
