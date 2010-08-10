@@ -22,6 +22,12 @@ LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
+    IDS_STATUS_DONE            "Klar"
+    IDS_STATUS_DOWNLOADINGFROM "Hämtar från %s..."
+}
+
+STRINGTABLE
+{
     IDS_HTMLDISABLED    "HTML-visning är inte aktiverad."
     IDS_HTMLDOCUMENT    "HTML-dokument"
     IDS_DOWNLOADING     "Hämtar..."
