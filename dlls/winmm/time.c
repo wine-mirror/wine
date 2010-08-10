@@ -243,16 +243,19 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 static void TIME_MMTimeStart(void)
 {
     TIME_TimeToDie = 0;
-    if (!TIME_hMMTimer) {
-        HMODULE mod;
-        if (pipe(TIME_fdWake) < 0)
-        {
+
+    if (TIME_fdWake[0] < 0) {
+        if (pipe(TIME_fdWake) < 0) {
             TIME_fdWake[0] = TIME_fdWake[1] = -1;
             ERR("Cannot create pipe: %s\n", strerror(errno));
         } else {
             fcntl(TIME_fdWake[0], F_SETFL, O_NONBLOCK);
             fcntl(TIME_fdWake[1], F_SETFL, O_NONBLOCK);
         }
+    }
+
+    if (!TIME_hMMTimer) {
+        HMODULE mod;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)TIME_MMSysTimeThread, &mod);
         TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, mod, 0, NULL);
         SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
