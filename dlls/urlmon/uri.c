@@ -75,6 +75,8 @@ typedef struct {
 typedef struct {
     const IUriBuilderVtbl  *lpIUriBuilderVtbl;
     LONG ref;
+
+    IUri *uri;
 } UriBuilder;
 
 typedef struct {
@@ -4080,8 +4082,10 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->uri) IUri_Release(This->uri);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -4300,12 +4304,19 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
 
     TRACE("(%p %x %x %p)\n", pIUri, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
 
+    if(!ppIUriBuilder)
+        return E_POINTER;
+
     ret = heap_alloc(sizeof(UriBuilder));
     if(!ret)
         return E_OUTOFMEMORY;
 
     ret->lpIUriBuilderVtbl = &UriBuilderVtbl;
     ret->ref = 1;
+
+    ret->uri = pIUri;
+    if(pIUri)
+        IUri_AddRef(pIUri);
 
     *ppIUriBuilder = URIBUILDER(ret);
     return S_OK;

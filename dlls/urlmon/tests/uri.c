@@ -18,16 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/*
- * IUri testing framework goals:
- *  - Test invalid args
- *      - invalid flags
- *      - invalid args (IUri, uri string)
- *  - Test parsing for components when no canonicalization occurs
- *  - Test parsing for components when canonicalization occurs.
- *  - More tests...
- */
-
 #include <wine/test.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -44,6 +34,7 @@
 
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCreateUriWithFragment)(LPCWSTR, LPCWSTR, DWORD, DWORD_PTR, IUri**);
+static HRESULT (WINAPI *pCreateIUriBuilder)(IUri*, DWORD, DWORD_PTR, IUriBuilder**);
 
 static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g','/',0};
@@ -3756,6 +3747,11 @@ static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {
     return ret;
 }
 
+static inline ULONG get_refcnt(IUri *uri) {
+    IUri_AddRef(uri);
+    return IUri_Release(uri);
+}
+
 /*
  * Simple tests to make sure the CreateUri function handles invalid flag combinations
  * correctly.
@@ -4884,12 +4880,43 @@ static void test_CreateUriWithFragment(void) {
     }
 }
 
+static void test_CreateIUriBuilder(void) {
+    HRESULT hr;
+    IUriBuilder *builder = NULL;
+    IUri *uri;
+
+    hr = pCreateIUriBuilder(NULL, 0, 0, NULL);
+    ok(hr == E_POINTER, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x\n",
+        hr, E_POINTER);
+
+    /* CreateIUriBuilder increases the ref count of the IUri it receives. */
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        ULONG cur_count, orig_count;
+
+        orig_count = get_refcnt(uri);
+        hr = pCreateIUriBuilder(uri, 0, 0, &builder);
+        ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+        ok(builder != NULL, "Error: Expecting builder not to be NULL\n");
+
+        cur_count = get_refcnt(uri);
+        ok(cur_count == orig_count+1, "Error: Expected the ref count to be %u, but was %u instead.\n", orig_count+1, cur_count);
+
+        if(builder) IUriBuilder_Release(builder);
+        cur_count = get_refcnt(uri);
+        ok(cur_count == orig_count, "Error: Expected the ref count to be %u, but was %u instead.\n", orig_count, cur_count);
+    }
+    if(uri) IUri_Release(uri);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
     hurlmon = GetModuleHandle("urlmon.dll");
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
     pCreateUriWithFragment = (void*) GetProcAddress(hurlmon, "CreateUriWithFragment");
+    pCreateIUriBuilder = (void*) GetProcAddress(hurlmon, "CreateIUriBuilder");
 
     if(!pCreateUri) {
         win_skip("CreateUri is not present, skipping tests.\n");
@@ -4937,4 +4964,7 @@ START_TEST(uri) {
 
     trace("test CreateUriWithFragment...\n");
     test_CreateUriWithFragment();
+
+    trace("test CreateIUriBuilder...\n");
+    test_CreateIUriBuilder();
 }
