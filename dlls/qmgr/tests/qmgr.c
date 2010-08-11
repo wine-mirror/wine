@@ -38,6 +38,11 @@ test_CreateInstance(void)
     /* Creating BITS instance */
     hres = CoCreateInstance(&CLSID_BackgroundCopyManager, NULL, CLSCTX_LOCAL_SERVER,
                             &IID_IBackgroundCopyManager, (void **) &manager);
+
+    if(hres == __HRESULT_FROM_WIN32(ERROR_SERVICE_DISABLED)) {
+        skip("Needed Service is disabled\n");
+        return;
+    }
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
     if(hres != S_OK) {
         skip("Unable to create bits instance.\n");
