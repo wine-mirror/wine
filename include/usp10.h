@@ -202,6 +202,20 @@ typedef struct tagGOFFSET {
 } GOFFSET;
 #endif
 
+typedef ULONG OPENTYPE_TAG;
+
+typedef struct tagOPENTYPE_FEATURE_RECORD
+{
+    OPENTYPE_TAG tagFeature;
+    LONG         lParameter;
+} OPENTYPE_FEATURE_RECORD;
+
+typedef struct tagTEXTRANGE_PROPERTIES
+{
+    OPENTYPE_FEATURE_RECORD *potfRecords;
+    INT                     cotfRecords;
+} TEXTRANGE_PROPERTIES;
+
 /* Function Declarations */
 
 HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE* psds, 

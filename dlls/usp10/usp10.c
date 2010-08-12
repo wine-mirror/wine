@@ -334,6 +334,7 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
             heap_free(((ScriptCache *)*psc)->widths[i]);
         }
         heap_free(((ScriptCache *)*psc)->GSUB_Table);
+        heap_free(((ScriptCache *)*psc)->features);
         heap_free(*psc);
         *psc = NULL;
     }
@@ -1198,6 +1199,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
             rChars[i] = chInput;
         }
         SHAPE_ShapeArabicGlyphs(hdc, (ScriptCache *)*psc, psa, rChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs);
+        SHAPE_ApplyDefaultOpentypeFeatures(hdc, (ScriptCache *)*psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs);
         heap_free(rChars);
     }
     else

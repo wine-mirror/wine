@@ -36,11 +36,18 @@
 #define GLYPH_MAX         65536
 
 typedef struct {
+    char    tag[4];
+    LPCVOID  feature;
+} LoadedFeature;
+
+typedef struct {
     LOGFONTW lf;
     TEXTMETRICW tm;
     WORD *glyphs[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
-    LPVOID *GSUB_Table;
+    LPVOID GSUB_Table;
+    INT feature_count;
+    LoadedFeature *features;
 } ScriptCache;
 
 #define odd(x) ((x) & 1)
@@ -51,3 +58,4 @@ BOOL BIDI_DetermineLevels( LPCWSTR lpString, INT uCount, const SCRIPT_STATE *s,
 INT BIDI_ReorderV2lLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse);
 INT BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, BOOL fReverse);
 void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs);
+void SHAPE_ApplyDefaultOpentypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs);
