@@ -407,7 +407,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     trace("number of script properties %d\n", iMaxProps);
     ok (iMaxProps > 0, "Number of scripts returned should not be 0\n");
     if  (iMaxProps > 0)
-         ok( ppSp[5]->langid == 9, "Langid[5] not = to 9\n"); /* Check a known value to ensure   */
+         ok( ppSp[0]->langid == 0, "Langid[0] not = to 0\n"); /* Check a known value to ensure   */
                                                               /* ptrs work                       */
 
     /* This is a valid test that will cause parsing to take place                             */
