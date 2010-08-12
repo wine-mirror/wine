@@ -23,6 +23,7 @@
 #define CERT_CHAIN_PARA_HAS_EXTRA_FIELDS
 #define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 #include "wincrypt.h"
+#include "wininet.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "crypt32_private.h"
@@ -3331,7 +3332,8 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
         if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
         {
             if (sslPara->dwAuthType == AUTHTYPE_SERVER &&
-             sslPara->pwszServerName)
+             sslPara->pwszServerName &&
+             !(sslPara->fdwChecks & SECURITY_FLAG_IGNORE_CERT_CN_INVALID))
             {
                 PCCERT_CONTEXT cert;
                 PCERT_EXTENSION altNameExt;

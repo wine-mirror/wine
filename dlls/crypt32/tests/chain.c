@@ -3822,11 +3822,6 @@ static const ChainPolicyCheck winehqPolicyCheckWithMatchingName = {
  { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
-static const ChainPolicyCheck winehqPolicyCheckWithIgnoredNonMatchingName = {
- { sizeof(chain29) / sizeof(chain29[0]), chain29 },
- { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
-};
-
 static const ChainPolicyCheck winehqPolicyCheckWithoutMatchingName = {
  { sizeof(chain29) / sizeof(chain29[0]), chain29 },
  { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
@@ -4207,7 +4202,7 @@ static void check_ssl_policy(void)
     /* When specifying to ignore name mismatch: match */
     sslPolicyPara.fdwChecks |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, engine,
-     &winehqPolicyCheckWithIgnoredNonMatchingName, 0, &oct2007, &policyPara);
+     &winehqPolicyCheckWithMatchingName, 0, &oct2007, &policyPara);
     CertFreeCertificateChainEngine(engine);
     CertCloseStore(testRoot, 0);
 }
