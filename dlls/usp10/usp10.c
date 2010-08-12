@@ -1176,6 +1176,22 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
     if (!pwLogClust) return E_FAIL;
 
+    /* Initialize a SCRIPT_VISATTR and LogClust for each char in this run */
+    for (i = 0; i < cChars; i++)
+    {
+        int idx = i;
+        if (rtl) idx = cChars - 1 - i;
+        /* FIXME: set to better values */
+        psva[i].uJustification = (pwcChars[idx] == ' ') ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
+        psva[i].fClusterStart  = 1;
+        psva[i].fDiacritic     = 0;
+        psva[i].fZeroWidth     = 0;
+        psva[i].fReserved      = 0;
+        psva[i].fShapeReserved = 0;
+
+        pwLogClust[i] = idx;
+    }
+
     if ((get_cache_pitch_family(psc) & TMPF_TRUETYPE) && !psa->fNoGlyphIndex)
     {
         WCHAR *rChars = heap_alloc(sizeof(WCHAR) * cChars);
@@ -1198,8 +1214,8 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
             }
             rChars[i] = chInput;
         }
-        SHAPE_ContextualShaping(hdc, (ScriptCache *)*psc, psa, rChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs);
-        SHAPE_ApplyDefaultOpentypeFeatures(hdc, (ScriptCache *)*psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs);
+        SHAPE_ContextualShaping(hdc, (ScriptCache *)*psc, psa, rChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
+        SHAPE_ApplyDefaultOpentypeFeatures(hdc, (ScriptCache *)*psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, cChars, pwLogClust);
         heap_free(rChars);
     }
     else
@@ -1214,21 +1230,6 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
         }
     }
 
-    /* set up a valid SCRIPT_VISATTR and LogClust for each char in this run */
-    for (i = 0; i < cChars; i++)
-    {
-        int idx = i;
-        if (rtl) idx = cChars - 1 - i;
-        /* FIXME: set to better values */
-        psva[i].uJustification = (pwcChars[idx] == ' ') ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
-        psva[i].fClusterStart  = 1;
-        psva[i].fDiacritic     = 0;
-        psva[i].fZeroWidth     = 0;
-        psva[i].fReserved      = 0;
-        psva[i].fShapeReserved = 0;
-
-        pwLogClust[i] = idx;
-    }
     return S_OK;
 }
 

@@ -38,10 +38,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 #define LAST_ARABIC_CHAR  0x06ff
 
 typedef VOID (*ContextualShapingProc)(HDC, ScriptCache*, SCRIPT_ANALYSIS*,
-                                      WCHAR*, INT, WORD*, INT*, INT);
+                                      WCHAR*, INT, WORD*, INT*, INT, WORD*);
 
-static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs);
-static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs);
+static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -810,7 +810,75 @@ static VOID *load_gsub_table(HDC hdc)
     return GSUB_Table;
 }
 
-static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, WORD *pwOutGlyphs, int write_dir, INT* pcGlyphs, const char* feat)
+static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int chars, WORD* pwLogClust )
+{
+    if (changeCount == 0)
+        return;
+    else
+    {
+        int i;
+        int target_glyph = nextIndex - 1;
+        int target_index = -1;
+        int replacing_glyph = -1;
+        int changed = 0;
+
+        if (write_dir > 0)
+            for (i = 0; i < chars; i++)
+            {
+                if (pwLogClust[i] == target_glyph)
+                {
+                    target_index = i;
+                    break;
+                }
+            }
+        else
+            for (i = chars - 1; i >= 0; i--)
+            {
+                if (pwLogClust[i] == target_glyph)
+                {
+                    target_index = i;
+                    break;
+                }
+            }
+        if (target_index == -1)
+        {
+            ERR("Unable to find target glyph\n");
+            return;
+        }
+
+        if (changeCount < 0)
+        {
+            /* merge glyphs */
+            for(i = target_index; i < chars && i >= 0; i+=write_dir)
+            {
+                if (pwLogClust[i] == target_glyph)
+                    continue;
+                if(pwLogClust[i] == replacing_glyph)
+                    pwLogClust[i] = target_glyph;
+                else
+                {
+                    changed--;
+                    if (changed >= changeCount)
+                    {
+                        replacing_glyph = pwLogClust[i];
+                        pwLogClust[i] = target_glyph;
+                    }
+                    else
+                        break;
+                }
+            }
+        }
+
+        /* renumber trailing indexes*/
+        for(i = target_index; i < chars && i >= 0; i+=write_dir)
+        {
+            if (pwLogClust[i] != target_glyph)
+                pwLogClust[i] += changeCount;
+        }
+    }
+}
+
+static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, WORD *pwOutGlyphs, int write_dir, INT* pcGlyphs, INT cChars, const char* feat, WORD *pwLogClust )
 {
     int i;
 
@@ -827,9 +895,13 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
         while(i < *pcGlyphs)
         {
                 INT nextIndex;
+                INT prevCount = *pcGlyphs;
                 nextIndex = GSUB_apply_feature(psc->GSUB_Table, feature, pwOutGlyphs, i, write_dir, pcGlyphs);
                 if (nextIndex > GSUB_E_NOGLYPH)
+                {
+                    UpdateClusters(nextIndex, *pcGlyphs - prevCount, write_dir, cChars, pwLogClust);
                     i = nextIndex;
+                }
                 else
                     i++;
         }
@@ -896,7 +968,7 @@ static inline BOOL word_break_causing(WCHAR chr)
 /*
  * ContextualShape_Arabic
  */
-static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
+static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     CHAR *context_type;
     INT *context_shape;
@@ -954,9 +1026,13 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
         if (psc->GSUB_Table)
         {
             INT nextIndex;
+            INT prevCount = *pcGlyphs;
             nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, i, dirL, pcGlyphs, contextual_features[context_shape[i]]);
             if (nextIndex > GSUB_E_NOGLYPH)
+            {
                 i = nextIndex;
+                UpdateClusters(nextIndex, *pcGlyphs - prevCount, dirL, cChars, pwLogClust);
+            }
             shaped = (nextIndex > GSUB_E_NOGLYPH);
         }
 
@@ -986,7 +1062,7 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 #define DALATH 0x715
 #define RISH 0x72A
 
-static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
+static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     CHAR *context_type;
     INT *context_shape;
@@ -1057,22 +1133,26 @@ right_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)))
     while(i < *pcGlyphs)
     {
         INT nextIndex;
-        nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs, i, dirL, pcGlyphs, contextual_features[context_shape[i]]);
+        INT prevCount = *pcGlyphs;
+        nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, i, dirL, pcGlyphs, contextual_features[context_shape[i]]);
         if (nextIndex > GSUB_E_NOGLYPH)
+        {
+            UpdateClusters(nextIndex, *pcGlyphs - prevCount, dirL, cChars, pwLogClust);
             i = nextIndex;
+        }
     }
 
     HeapFree(GetProcessHeap(),0,context_shape);
     HeapFree(GetProcessHeap(),0,context_type);
 }
 
-void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
+void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
 {
     if (ShapingData[psa->eScript].contextProc)
-        ShapingData[psa->eScript].contextProc(hdc, psc, psa, pwcChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs);
+        ShapingData[psa->eScript].contextProc(hdc, psc, psa, pwcChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
 }
 
-void SHAPE_ApplyOpenTypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, const TEXTRANGE_PROPERTIES *rpRangeProperties)
+void SHAPE_ApplyOpenTypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, INT cChars, const TEXTRANGE_PROPERTIES *rpRangeProperties, WORD *pwLogClust)
 {
     int i;
     INT dirL;
@@ -1094,14 +1174,14 @@ void SHAPE_ApplyOpenTypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa
     for (i = 0; i < rpRangeProperties->cotfRecords; i++)
     {
         if (rpRangeProperties->potfRecords[i].lParameter > 0)
-            apply_GSUB_feature(hdc, psa, psc, pwOutGlyphs, dirL, pcGlyphs, (const char*)&rpRangeProperties->potfRecords[i].tagFeature);
+        apply_GSUB_feature(hdc, psa, psc, pwOutGlyphs, dirL, pcGlyphs, cChars, (const char*)&rpRangeProperties->potfRecords[i].tagFeature, pwLogClust);
     }
 }
 
-void SHAPE_ApplyDefaultOpentypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
+void SHAPE_ApplyDefaultOpentypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, INT cChars, WORD *pwLogClust)
 {
-    const TEXTRANGE_PROPERTIES *rpRangeProperties;
-    rpRangeProperties = &ShapingData[psa->eScript].defaultTextRange;
+const TEXTRANGE_PROPERTIES *rpRangeProperties;
+rpRangeProperties = &ShapingData[psa->eScript].defaultTextRange;
 
-    SHAPE_ApplyOpenTypeFeatures(hdc, psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, rpRangeProperties);
+    SHAPE_ApplyOpenTypeFeatures(hdc, psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, cChars, rpRangeProperties, pwLogClust);
 }
