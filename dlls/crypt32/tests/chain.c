@@ -24,6 +24,7 @@
 #include <winbase.h>
 #include <winerror.h>
 #include <wincrypt.h>
+#include <wininet.h>
 
 #include "wine/test.h"
 
@@ -3821,6 +3822,11 @@ static const ChainPolicyCheck winehqPolicyCheckWithMatchingName = {
  { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
+static const ChainPolicyCheck winehqPolicyCheckWithIgnoredNonMatchingName = {
+ { sizeof(chain29) / sizeof(chain29[0]), chain29 },
+ { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
+};
+
 static const ChainPolicyCheck winehqPolicyCheckWithoutMatchingName = {
  { sizeof(chain29) / sizeof(chain29[0]), chain29 },
  { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
@@ -4198,6 +4204,10 @@ static void check_ssl_policy(void)
     sslPolicyPara.pwszServerName = a_dot_b_dot_winehq_dot_org;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, engine,
      &winehqPolicyCheckWithoutMatchingName, 0, &oct2007, &policyPara);
+    /* When specifying to ignore name mismatch: match */
+    sslPolicyPara.fdwChecks |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, engine,
+     &winehqPolicyCheckWithIgnoredNonMatchingName, 0, &oct2007, &policyPara);
     CertFreeCertificateChainEngine(engine);
     CertCloseStore(testRoot, 0);
 }
