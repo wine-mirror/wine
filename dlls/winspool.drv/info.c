@@ -6,7 +6,7 @@
  * Copyright 1999 Klaas van Gend
  * Copyright 1999, 2000 Huw D M Davies
  * Copyright 2001 Marcus Meissner
- * Copyright 2005-2009 Detlef Riekenberg
+ * Copyright 2005-2010 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -97,6 +97,7 @@ typedef struct {
     struct list entry;
     DWORD job_id;
     WCHAR *filename;
+    WCHAR *portname;
     WCHAR *document_title;
 } job_t;
 
@@ -322,6 +323,15 @@ static LPSTR strdupWtoA( LPCWSTR str )
     ret = HeapAlloc( GetProcessHeap(), 0, len );
     if(ret) WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     return ret;
+}
+
+/******************************************************************
+ * verify, that the filename is a local file
+ *
+ */
+static inline BOOL is_local_file(LPWSTR name)
+{
+    return (name[0] && (name[1] == ':') && (name[2] == '\\'));
 }
 
 /******************************************************************
@@ -2975,6 +2985,7 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
     DWORD needed, ret = 0;
     HANDLE hf;
     WCHAR *filename;
+    job_t *job;
 
     TRACE("(hPrinter = %p, Level = %d, pDocInfo = %p {pDocName = %s, pOutputFile = %s, pDatatype = %s}):\n",
           hPrinter, Level, doc, debugstr_w(doc->pDocName), debugstr_w(doc->pOutputFile),
@@ -3009,7 +3020,8 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
         goto end;
     }
 
-    if(doc->pOutputFile)
+    /* use pOutputFile only, when it is a real filename */
+    if ((doc->pOutputFile) && is_local_file(doc->pOutputFile))
         filename = doc->pOutputFile;
     else
         filename = addjob->Path;
@@ -3025,6 +3037,9 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
     printer->doc = HeapAlloc(GetProcessHeap(), 0, sizeof(*printer->doc));
     printer->doc->hf = hf;
     ret = printer->doc->job_id = addjob->JobId;
+    job = get_job(hPrinter, ret);
+    job->portname = strdupW(doc->pOutputFile);
+
 end:
     LeaveCriticalSection(&printer_handles_cs);
 
@@ -7465,18 +7480,23 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         hf = CreateFileW(job->filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
         if(hf != INVALID_HANDLE_VALUE)
         {
-            PRINTER_INFO_5W *pi5;
+            PRINTER_INFO_5W *pi5 = NULL;
+            LPWSTR portname = job->portname;
             DWORD needed;
             HKEY hkey;
             WCHAR output[1024];
             static const WCHAR spooler_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                                 'P','r','i','n','t','i','n','g','\\','S','p','o','o','l','e','r',0};
 
-            GetPrinterW(hPrinter, 5, NULL, 0, &needed);
-            pi5 = HeapAlloc(GetProcessHeap(), 0, needed);
-            GetPrinterW(hPrinter, 5, (LPBYTE)pi5, needed, &needed);
+            if (!portname)
+            {
+                GetPrinterW(hPrinter, 5, NULL, 0, &needed);
+                pi5 = HeapAlloc(GetProcessHeap(), 0, needed);
+                GetPrinterW(hPrinter, 5, (LPBYTE)pi5, needed, &needed);
+                portname = pi5->pPortName;
+            }
             TRACE("need to schedule job %d filename %s to port %s\n", job->job_id, debugstr_w(job->filename),
-                  debugstr_w(pi5->pPortName));
+                  debugstr_w(portname));
             
             output[0] = 0;
 
@@ -7484,7 +7504,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             if(RegOpenKeyW(HKEY_CURRENT_USER, spooler_key, &hkey) == ERROR_SUCCESS)
             {
                 DWORD type, count = sizeof(output);
-                RegQueryValueExW(hkey, pi5->pPortName, NULL, &type, (LPBYTE)output, &count);
+                RegQueryValueExW(hkey, portname, NULL, &type, (LPBYTE)output, &count);
                 RegCloseKey(hkey);
             }
             if(output[0] == '|')
@@ -7495,21 +7515,21 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             {
                 ret = schedule_unixfile(output, job->filename);
             }
-            else if(!strncmpW(pi5->pPortName, LPR_Port, strlenW(LPR_Port)))
+            else if(!strncmpW(portname, LPR_Port, strlenW(LPR_Port)))
             {
-                ret = schedule_lpr(pi5->pPortName + strlenW(LPR_Port), job->filename);
+                ret = schedule_lpr(portname + strlenW(LPR_Port), job->filename);
             }
-            else if(!strncmpW(pi5->pPortName, CUPS_Port, strlenW(CUPS_Port)))
+            else if(!strncmpW(portname, CUPS_Port, strlenW(CUPS_Port)))
             {
-                ret = schedule_cups(pi5->pPortName + strlenW(CUPS_Port), job->filename, job->document_title);
+                ret = schedule_cups(portname + strlenW(CUPS_Port), job->filename, job->document_title);
             }
-            else if(!strncmpW(pi5->pPortName, FILE_Port, strlenW(FILE_Port)))
+            else if(!strncmpW(portname, FILE_Port, strlenW(FILE_Port)))
             {
                 ret = schedule_file(job->filename);
             }
             else
             {
-                FIXME("can't schedule to port %s\n", debugstr_w(pi5->pPortName));
+                FIXME("can't schedule to port %s\n", debugstr_w(portname));
             }
             HeapFree(GetProcessHeap(), 0, pi5);
             CloseHandle(hf);
@@ -7517,6 +7537,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         }
         list_remove(cursor);
         HeapFree(GetProcessHeap(), 0, job->document_title);
+        HeapFree(GetProcessHeap(), 0, job->portname);
         HeapFree(GetProcessHeap(), 0, job->filename);
         HeapFree(GetProcessHeap(), 0, job);
         break;

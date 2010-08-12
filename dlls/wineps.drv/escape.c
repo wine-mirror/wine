@@ -46,108 +46,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 static const char psbegindocument[] =
 "%%BeginDocument: Wine passthrough\n";
 
-/* FIXME: should use winspool functions instead */
-static DWORD create_job(LPCSTR pszOutput)
-{
-    int fd = -1;
-    char psCmd[1024];
-    const char *psCmdP = psCmd;
-    HKEY hkey;
-
-    /* TTD convert the 'output device' into a spool file name */
-
-    if (pszOutput == NULL || *pszOutput == '\0') return 0;
-
-    psCmd[0] = 0;
-    /* @@ Wine registry key: HKCU\Software\Wine\Printing\Spooler */
-    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\Spooler", &hkey))
-    {
-        DWORD type, count = sizeof(psCmd);
-        RegQueryValueExA(hkey, pszOutput, 0, &type, (LPBYTE)psCmd, &count);
-        RegCloseKey(hkey);
-    }
-    if (!psCmd[0] && !strncmp("LPR:",pszOutput,4))
-        sprintf(psCmd,"|lpr -P'%s'",pszOutput+4);
-
-    TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
-	  psCmd, pszOutput);
-    if (!*psCmd)
-        psCmdP = pszOutput;
-    else
-    {
-        while (*psCmdP && isspace(*psCmdP))
-        {
-            psCmdP++;
-        }
-        if (!*psCmdP) return 0;
-    }
-    TRACE("command: '%s'\n", psCmdP);
-#ifdef HAVE_FORK
-    if (*psCmdP == '|')
-    {
-        int fds[2];
-        if (pipe(fds)) {
-	    ERR("pipe() failed!\n");
-            return 0;
-	}
-        if (fork() == 0)
-        {
-            psCmdP++;
-
-            TRACE("In child need to exec %s\n",psCmdP);
-            close(0);
-            dup2(fds[0],0);
-            close (fds[1]);
-
-            /* reset signals that we previously set to SIG_IGN */
-            signal( SIGPIPE, SIG_DFL );
-            signal( SIGCHLD, SIG_DFL );
-
-            execl("/bin/sh", "/bin/sh", "-c", psCmdP, NULL);
-            _exit(1);
-
-        }
-        close (fds[0]);
-        fd = fds[1];
-        TRACE("Need to execute a cmnd and pipe the output to it\n");
-    }
-    else
-#endif
-    {
-        char *buffer;
-        WCHAR psCmdPW[MAX_PATH];
-
-        TRACE("Just assume it's a file\n");
-
-        /**
-         * The file name can be dos based, we have to find its
-         * corresponding Unix file name.
-         */
-        MultiByteToWideChar(CP_ACP, 0, psCmdP, -1, psCmdPW, MAX_PATH);
-        if ((buffer = wine_get_unix_file_name(psCmdPW)))
-        {
-            if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY, 0666)) < 0)
-            {
-                ERR("Failed to create spool file '%s' ('%s'). (error %s)\n",
-                    buffer, psCmdP, strerror(errno));
-            }
-            HeapFree(GetProcessHeap(), 0, buffer);
-        }
-    }
-    return fd + 1;
-}
-
-static int close_job( DWORD id )
-{
-    int fd = id - 1;
-    close( fd );
-    return TRUE;
-}
 
 DWORD write_spool( PSDRV_PDEVICE *physDev, const void *data, DWORD num )
 {
-    int fd = physDev->job.id - 1;
-    if (write( fd, data, num) != num) return SP_OUTOFDISK;
+    DWORD written;
+    if (!WritePrinter(physDev->job.hprinter, (LPBYTE) data, num, &written) || (written != num))
+        return SP_OUTOFDISK;
+
     return num;
 }
 
@@ -500,33 +405,41 @@ INT CDECL PSDRV_EndPage( PSDRV_PDEVICE *physDev )
  */
 static INT PSDRV_StartDocA( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
 {
-    LPCSTR output = "LPT1:";
-    BYTE buf[300];
-    HANDLE hprn = INVALID_HANDLE_VALUE;
-    PRINTER_INFO_5A *pi5 = (PRINTER_INFO_5A*)buf;
-    DWORD needed;
+    DOC_INFO_1A di;
+
+    TRACE("(%p, %p) => %s, %s, %s\n", physDev, doc, debugstr_a(doc->lpszDocName),
+        debugstr_a(doc->lpszOutput), debugstr_a(doc->lpszDatatype));
 
     if(physDev->job.id) {
         FIXME("hJob != 0. Now what?\n");
 	return 0;
     }
 
-    if(doc->lpszOutput)
-        output = doc->lpszOutput;
-    else if(physDev->job.output)
-        output = physDev->job.output;
-    else {
-        if(OpenPrinterA(physDev->pi->FriendlyName, &hprn, NULL) &&
-           GetPrinterA(hprn, 5, buf, sizeof(buf), &needed)) {
-            output = pi5->pPortName;
-        }
-        if(hprn != INVALID_HANDLE_VALUE)
-            ClosePrinter(hprn);
+    /* FIXME: use PRINTER_DEFAULTS here */
+    if(!OpenPrinterA(physDev->pi->FriendlyName, &physDev->job.hprinter, NULL)) {
+        WARN("OpenPrinter(%s, ...) failed: %d\n",
+            debugstr_a(physDev->pi->FriendlyName), GetLastError());
+        return 0;
     }
 
-    physDev->job.id = create_job( output );
+    di.pDocName = (LPSTR) doc->lpszDocName;
+    di.pDatatype = NULL;
+
+    if(doc->lpszOutput)
+        di.pOutputFile = (LPSTR) doc->lpszOutput;
+    else if(physDev->job.output)
+        di.pOutputFile = physDev->job.output;
+    else
+        di.pOutputFile = NULL;
+
+    TRACE("using output: %s\n", debugstr_a(di.pOutputFile));
+
+    /* redirection located in HKCU\Software\Wine\Printing\Spooler
+       is done during winspool.drv,ScheduleJob */
+    physDev->job.id = StartDocPrinterA(physDev->job.hprinter, 1, (LPBYTE) &di);
     if(!physDev->job.id) {
-        WARN("OpenJob failed\n");
+        WARN("StartDocPrinter() failed: %d\n", GetLastError());
+        ClosePrinter(physDev->job.hprinter);
 	return 0;
     }
     physDev->job.banding = FALSE;
@@ -552,6 +465,9 @@ INT CDECL PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOW *doc )
     DOCINFOA docA;
     INT ret, len;
     LPSTR docname = NULL, output = NULL, datatype = NULL;
+
+    TRACE("(%p, %p) => %d,%s,%s,%s\n", physDev, doc, doc->cbSize, debugstr_w(doc->lpszDocName),
+        debugstr_w(doc->lpszOutput), debugstr_w(doc->lpszDatatype));
 
     docA.cbSize = doc->cbSize;
     if (doc->lpszDocName)
@@ -603,7 +519,9 @@ INT CDECL PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
     }
     PSDRV_WriteFooter( physDev );
 
-    ret = close_job( physDev->job.id );
+    ret = EndDocPrinter(physDev->job.hprinter);
+    ClosePrinter(physDev->job.hprinter);
+    physDev->job.hprinter = NULL;
     physDev->job.id = 0;
     HeapFree(GetProcessHeap(), 0, physDev->job.DocName);
     physDev->job.DocName = NULL;
