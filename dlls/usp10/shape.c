@@ -37,6 +37,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 #define FIRST_ARABIC_CHAR 0x0600
 #define LAST_ARABIC_CHAR  0x06ff
 
+typedef VOID (*ContextualShapingProc)(HDC, ScriptCache*, SCRIPT_ANALYSIS*,
+                                      WCHAR*, INT, WORD*, INT*, INT);
+
+static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs);
+
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
 
@@ -274,22 +279,23 @@ static OPENTYPE_FEATURE_RECORD syriac_features[] =
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES  defaultTextRange;
     CHAR                  otTag[5];
+    ContextualShapingProc contextProc;
 } ScriptShapeData;
 
 /* in order of scripts */
 static const ScriptShapeData ShapingData[] =
 {
-    {{ standard_features, 2}, ""},
-    {{ standard_features, 2}, "latn"},
-    {{ standard_features, 2}, "latn"},
-    {{ standard_features, 2}, "latn"},
-    {{ standard_features, 2}, ""},
-    {{ standard_features, 2}, "latn"},
-    {{ arabic_features, 6}, "arab"},
-    {{ arabic_features, 6}, "arab"},
-    {{ hebrew_features, 1}, "hebr"},
-    {{ syriac_features, 4}, "syrc"},
-    {{ arabic_features, 6}, "arab"},
+    {{ standard_features, 2}, "", NULL},
+    {{ standard_features, 2}, "latn", NULL},
+    {{ standard_features, 2}, "latn", NULL},
+    {{ standard_features, 2}, "latn", NULL},
+    {{ standard_features, 2}, "" , NULL},
+    {{ standard_features, 2}, "latn", NULL},
+    {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
+    {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
+    {{ hebrew_features, 1}, "hebr", NULL},
+    {{ syriac_features, 4}, "syrc", NULL},
+    {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -858,26 +864,21 @@ static inline BOOL left_join_causing(CHAR joining_type)
     return (joining_type == jtR || joining_type == jtD || joining_type == jtC);
 }
 
-/* SHAPE_ShapeArabicGlyphs
+/*
+ * ContextualShape_Arabic
  */
-void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
+static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
 {
     CHAR *context_type;
     INT *context_shape;
     INT dirR, dirL;
     int i;
 
-    if (psa->eScript != Script_Arabic &&
-        psa->eScript != Script_Persian &&
-        psa->eScript != Script_Arabic_Numeric)
-        return;
-
     if (*pcGlyphs != cChars)
     {
         ERR("Number of Glyphs and Chars need to match at the beginning\n");
         return;
     }
-
 
     if (!psa->fLogicalOrder && psa->fRTL)
     {
@@ -946,6 +947,12 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
 
     HeapFree(GetProcessHeap(),0,context_shape);
     HeapFree(GetProcessHeap(),0,context_type);
+}
+
+void SHAPE_ContextualShaping(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
+{
+    if (ShapingData[psa->eScript].contextProc)
+        ShapingData[psa->eScript].contextProc(hdc, psc, psa, pwcChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs);
 }
 
 void SHAPE_ApplyOpenTypeFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, const TEXTRANGE_PROPERTIES *rpRangeProperties)
