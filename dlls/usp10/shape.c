@@ -655,6 +655,8 @@ static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa)
     switch (psa->eScript)
     {
         case Script_Arabic:
+        case Script_Persian:
+        case Script_Arabic_Numeric:
             return "arab";
         case Script_Syriac:
             return "syrc";
@@ -663,7 +665,6 @@ static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa)
         case Script_Latin:
         case Script_Numeric:
         case Script_CR:
-        case Script_LF:
             return "latn";
     }
 
@@ -834,7 +835,9 @@ void SHAPE_ShapeArabicGlyphs(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WC
     INT dirR, dirL;
     int i;
 
-    if (psa->eScript != Script_Arabic)
+    if (psa->eScript != Script_Arabic &&
+        psa->eScript != Script_Persian &&
+        psa->eScript != Script_Arabic_Numeric)
         return;
 
     if (*pcGlyphs != cChars)

@@ -19,13 +19,16 @@
  *
  */
 
-#define Script_Syriac  8
-#define Script_Hebrew  7
-#define Script_Arabic  6
 #define Script_Latin   1
-#define Script_Numeric 5
-#define Script_CR      22
-#define Script_LF      23
+#define Script_CR      2
+#define Script_Numeric 3
+#define Script_Control 4
+#define Script_Punctuation 5
+#define Script_Arabic  6
+#define Script_Arabic_Numeric  7
+#define Script_Hebrew  8
+#define Script_Syriac  9
+#define Script_Persian 10
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

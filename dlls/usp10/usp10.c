@@ -40,6 +40,88 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
+typedef struct _scriptRange
+{
+    WORD script;
+    WORD rangeFirst;
+    WORD rangeLast;
+    WORD numericScript;
+    WORD punctScript;
+} scriptRange;
+
+static const scriptRange scriptRanges[] = {
+
+    /* Basic Latin: U+0000–U+007A */
+    /* Latin-1 Supplement: U+0080–U+00FF */
+    /* Latin Extended-A: U+0100–U+017F */
+    /* Latin Extended-B: U+0180–U+024F */
+    /* IPA Extensions: U+0250–U+02AF */
+    { Script_Latin,      0x00,   0x2af ,  Script_Numeric, Script_Punctuation},
+    /* Hebrew: U+0590–U+05FF */
+    { Script_Hebrew,     0x590,  0x5ff,  0, 0},
+    /* Arabic: U+0600–U+06FF */
+    { Script_Arabic,     0x600,  0x6ef,  Script_Arabic_Numeric, 0},
+    /* Defined by Windows */
+    { Script_Persian,    0x6f0,  0x6f9,  0, 0},
+    /* Continue Arabic: U+0600–U+06FF */
+    { Script_Arabic,     0x6fa,  0x6ff,  0, 0},
+    /* Syriac: U+0700–U+074F*/
+    { Script_Syriac,     0x700,  0x74f,  0, 0},
+    /* Arabic Supplement: U+0750–U+077F */
+    { Script_Arabic,     0x750,  0x77f,  0, 0},
+    /* Phonetic Extensions: U+1D00–U+1DBF */
+    { Script_Latin,      0x1d00, 0x1dbf, 0, 0},
+    /* Latin Extended Additional: U+1E00–U+1EFF */
+    { Script_Latin,      0x1e00, 0x1eff, 0, 0},
+    /* Latin Extended-C: U+2C60–U+2C7F */
+    { Script_Latin,      0x2c60, 0x2c7f, 0, 0},
+    /* Modifier Tone Letters: U+A700–U+A71F */
+    /* Latin Extended-D: U+A720–U+A7FF */
+    { Script_Latin,      0xa700, 0xa7ff, 0, 0},
+    /* Latin Ligatures: U+FB00–U+FB06 */
+    { Script_Latin,      0xfb00, 0xfb06, 0, 0},
+    /* Alphabetic Presentation Forms: U+FB1D–U+FB4F */
+    { Script_Hebrew,     0xfb1d, 0xfb4f, 0, 0},
+    /* Arabic Presentation Forms-A: U+FB50–U+FDFF*/
+    { Script_Arabic,     0xfb50, 0xfdff, 0, 0},
+    /* Arabic Presentation Forms-B: U+FE70–U+FEFF*/
+    { Script_Arabic,     0xfe70, 0xfeff, 0, 0},
+    /* END */
+    { SCRIPT_UNDEFINED,  0, 0, 0}
+};
+
+typedef struct _scriptData
+{
+    SCRIPT_ANALYSIS a;
+    SCRIPT_PROPERTIES props;
+} scriptData;
+
+/* the must be in order so that the index matches the Script value */
+static const scriptData scriptInformation[] = {
+    {{SCRIPT_UNDEFINED, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Latin, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
+    {{Script_CR, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 1, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Control, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 1, 0, 0, ANSI_CHARSET, 1, 0, 0, 0, 0, 0, 1, 0, 0}},
+    {{Script_Punctuation, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Arabic, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ARABIC, 0, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 1, 0}},
+    {{Script_Arabic_Numeric, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ARABIC, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
+    {{Script_Hebrew, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_HEBREW, 0, 1, 0, 1, HEBREW_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Syriac, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_SYRIAC, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 1, 0}},
+    {{Script_Persian, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_PERSIAN, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+};
+
 static const SCRIPT_PROPERTIES props[] =
 {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -263,6 +345,42 @@ static WCHAR mirror_char( WCHAR ch )
 {
     extern const WCHAR wine_mirror_map[];
     return ch + wine_mirror_map[wine_mirror_map[ch >> 8] + (ch & 0xff)];
+}
+
+static WORD get_char_script( WCHAR ch)
+{
+    WORD type = 0;
+    int i;
+
+    if (ch == 0xc || ch == 0x20 || ch == 0x202f)
+        return Script_CR;
+
+    GetStringTypeW(CT_CTYPE1, &ch, 1, &type);
+
+    if (type == 0)
+        return SCRIPT_UNDEFINED;
+
+    if (type & C1_CNTRL)
+        return Script_Control;
+
+    i = 0;
+    do
+    {
+        if (ch < scriptRanges[i].rangeFirst || scriptRanges[i].script == SCRIPT_UNDEFINED)
+            break;
+
+        if (ch >= scriptRanges[i].rangeFirst && ch <= scriptRanges[i].rangeLast)
+        {
+            if (scriptRanges[i].numericScript && type & C1_DIGIT)
+                return scriptRanges[i].numericScript;
+            if (scriptRanges[i].punctScript && type & C1_PUNCT)
+                return scriptRanges[i].punctScript;
+            return scriptRanges[i].script;
+        }
+        i++;
+    } while (1);
+
+    return SCRIPT_UNDEFINED;
 }
 
 /***********************************************************************
@@ -507,17 +625,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
                              SCRIPT_ITEM *pItems, int *pcItems)
 {
 
-#define Numeric_start 0x0030
-#define Numeric_stop  0x0039
 #define Numeric_space 0x0020
-#define Arabic_start  0x0600
-#define Arabic_stop   0x06ff
-#define Hebrew_start  0x0590
-#define Hebrew_stop   0x05ff
-#define Syriac_start  0x0700
-#define Syriac_stop   0x074f
-#define Latin_start   0x0001
-#define Latin_stop    0x024f
 
     int   cnt = 0, index = 0;
     int   New_Script = SCRIPT_UNDEFINED;
@@ -550,28 +658,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     }
 
     pItems[index].iCharPos = 0;
-    memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
-
-    if  (pwcInChars[cnt] == '\r')
-        pItems[index].a.eScript = Script_CR;
-    else
-    if  (pwcInChars[cnt] == '\n')
-        pItems[index].a.eScript = Script_LF;
-    else
-    if  (pwcInChars[cnt] >= Numeric_start && pwcInChars[cnt] <= Numeric_stop)
-        pItems[index].a.eScript = Script_Numeric;
-    else
-    if  (pwcInChars[cnt] >= Arabic_start && pwcInChars[cnt] <= Arabic_stop)
-        pItems[index].a.eScript = Script_Arabic;
-    else
-    if  (pwcInChars[cnt] >= Hebrew_start && pwcInChars[cnt] <= Hebrew_stop)
-        pItems[index].a.eScript = Script_Hebrew;
-    else
-    if  (pwcInChars[cnt] >= Syriac_start && pwcInChars[cnt] <= Syriac_stop)
-        pItems[index].a.eScript = Script_Syriac;
-    else
-    if  (pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
-        pItems[index].a.eScript = Script_Latin;
+    pItems[index].a = scriptInformation[get_char_script(pwcInChars[cnt])].a;
 
     if (levels)
     {
@@ -579,15 +666,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         pItems[index].a.fLayoutRTL = odd(levels[cnt]);
         pItems[index].a.s.uBidiLevel = levels[cnt];
     }
-    else if ((pItems[index].a.eScript  == Script_Arabic) ||
-             (pItems[index].a.eScript  == Script_Hebrew) ||
-             (pItems[index].a.eScript  == Script_Syriac))
-    {
-        pItems[index].a.s.uBidiLevel = 1;
-        pItems[index].a.fRTL = 1;
-        pItems[index].a.fLayoutRTL = 1;
-    }
-    else
+    else if (!pItems[index].a.s.uBidiLevel)
     {
         pItems[index].a.s.uBidiLevel = baselevel;
         pItems[index].a.fLayoutRTL = odd(baselevel);
@@ -603,35 +682,10 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         if (levels && (levels[cnt] == pItems[index].a.s.uBidiLevel))
             continue;
 
-        if  (pwcInChars[cnt] == '\r')
-            New_Script = Script_CR;
-        else
-        if  (pwcInChars[cnt] == '\n')
-            New_Script = Script_LF;
-        else
-        if  ((pwcInChars[cnt] >= Numeric_start && pwcInChars[cnt] <= Numeric_stop)
-             || (New_Script == Script_Numeric && pwcInChars[cnt] == Numeric_space))
-            New_Script = Script_Numeric;
-        else
-        if  ((pwcInChars[cnt] >= Arabic_start && pwcInChars[cnt] <= Arabic_stop)
-             || (New_Script == Script_Arabic && pwcInChars[cnt] == Numeric_space))
-            New_Script = Script_Arabic;
-        else
-        if  ((pwcInChars[cnt] >= Hebrew_start && pwcInChars[cnt] <= Hebrew_stop)
-             || (New_Script == Script_Hebrew && pwcInChars[cnt] == Numeric_space))
-            New_Script = Script_Hebrew;
-        else
-        if  ((pwcInChars[cnt] >= Syriac_start && pwcInChars[cnt] <= Syriac_stop)
-             || (New_Script == Script_Syriac && pwcInChars[cnt] == Numeric_space))
-            New_Script = Script_Syriac;
-        else
-        if  ((pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
-             || (New_Script == Script_Latin && pwcInChars[cnt] == Numeric_space))
-            New_Script = Script_Latin;
-        else
-            New_Script = SCRIPT_UNDEFINED;
+        if(pwcInChars[cnt] != Numeric_space)
+            New_Script = get_char_script(pwcInChars[cnt]);
 
-        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel)) || New_Script != pItems[index].a.eScript)
+        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel)) || New_Script != pItems[index].a.eScript || New_Script == Script_Control)
         {
             TRACE("New_Level = %i, New_Script=%d, eScript=%d ", levels?levels[cnt]:-1, New_Script, pItems[index].a.eScript);
             index++;
@@ -641,28 +695,19 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
             pItems[index].iCharPos = cnt;
             memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
 
+            pItems[index].a = scriptInformation[New_Script].a;
             if (levels)
             {
                 pItems[index].a.fRTL = odd(levels[cnt]);
                 pItems[index].a.fLayoutRTL = odd(levels[cnt]);
                 pItems[index].a.s.uBidiLevel = levels[cnt];
             }
-            else if  ((New_Script == Script_Arabic) ||
-                      (New_Script == Script_Hebrew) ||
-                      (New_Script == Script_Syriac))
-            {
-                pItems[index].a.s.uBidiLevel = 1;
-                pItems[index].a.fRTL = 1;
-                pItems[index].a.fLayoutRTL = 1;
-            }
-            else
+            else if (!pItems[index].a.s.uBidiLevel)
             {
                 pItems[index].a.s.uBidiLevel = baselevel;
                 pItems[index].a.fLayoutRTL = odd(baselevel);
                 pItems[index].a.fRTL = odd(baselevel);
             }
-
-            pItems[index].a.eScript = New_Script;
 
             TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);
         }
