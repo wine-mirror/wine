@@ -41,6 +41,7 @@ typedef VOID (*ContextualShapingProc)(HDC, ScriptCache*, SCRIPT_ANALYSIS*,
                                       WCHAR*, INT, WORD*, INT*, INT);
 
 static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs);
+static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs);
 
 extern const unsigned short wine_shaping_table[];
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4];
@@ -58,7 +59,11 @@ enum joined_forms {
     Xn=0,
     Xr,
     Xl,
-    Xm
+    Xm,
+    /* Syriac Alaph */
+    Afj,
+    Afn,
+    Afx
 };
 
 #ifdef WORDS_BIGENDIAN
@@ -244,7 +249,11 @@ static const char* contextual_features[] =
     "isol",
     "fina",
     "init",
-    "medi"
+    "medi",
+    /* Syriac Alaph */
+    "med2",
+    "fin2",
+    "fin3"
 };
 
 static OPENTYPE_FEATURE_RECORD standard_features[] =
@@ -294,7 +303,7 @@ static const ScriptShapeData ShapingData[] =
     {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
     {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
     {{ hebrew_features, 1}, "hebr", NULL},
-    {{ syriac_features, 4}, "syrc", NULL},
+    {{ syriac_features, 4}, "syrc", ContextualShape_Syriac},
     {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
 };
 
@@ -829,6 +838,18 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
     return GSUB_E_NOFEATURE;
 }
 
+static WCHAR neighbour_char(int i, int delta, const WCHAR* chars, INT cchLen)
+{
+    if (i + delta < 0)
+        return 0;
+    if ( i+ delta >= cchLen)
+        return 0;
+
+    i += delta;
+
+    return chars[i];
+}
+
 static CHAR neighbour_joining_type(int i, int delta, const CHAR* context_type, INT cchLen, SCRIPT_ANALYSIS *psa)
 {
     if (i + delta < 0)
@@ -862,6 +883,14 @@ static inline BOOL right_join_causing(CHAR joining_type)
 static inline BOOL left_join_causing(CHAR joining_type)
 {
     return (joining_type == jtR || joining_type == jtD || joining_type == jtC);
+}
+
+static inline BOOL word_break_causing(WCHAR chr)
+{
+    /* we are working within a string of characters already guareented to
+       be within one script, Syriac, so we do not worry about any characers
+       other than the space character outside of that range */
+    return (chr == 0 || chr == 0x20 );
 }
 
 /*
@@ -943,6 +972,94 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
             }
             i++;
         }
+    }
+
+    HeapFree(GetProcessHeap(),0,context_shape);
+    HeapFree(GetProcessHeap(),0,context_type);
+}
+
+/*
+ * ContextualShape_Syriac
+ */
+
+#define ALAPH 0x710
+#define DALATH 0x715
+#define RISH 0x72A
+
+static void ContextualShape_Syriac(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs)
+{
+    CHAR *context_type;
+    INT *context_shape;
+    INT dirR, dirL;
+    int i;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+    {
+        dirR = 1;
+        dirL = -1;
+    }
+    else
+    {
+        dirR = -1;
+        dirL = 1;
+    }
+
+    if (!psc->GSUB_Table)
+        psc->GSUB_Table = load_gsub_table(hdc);
+
+    if (!psc->GSUB_Table)
+        return;
+
+    context_type = HeapAlloc(GetProcessHeap(),0,cChars);
+    context_shape = HeapAlloc(GetProcessHeap(),0,sizeof(INT) * cChars);
+
+    for (i = 0; i < cChars; i++)
+        context_type[i] = wine_shaping_table[wine_shaping_table[pwcChars[i] >> 8] + (pwcChars[i] & 0xff)];
+
+    for (i = 0; i < cChars; i++)
+    {
+        if (pwcChars[i] == ALAPH)
+        {
+            WCHAR rchar = neighbour_char(i,dirR,pwcChars,cChars);
+
+            if (left_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)) && word_break_causing(neighbour_char(i,dirL,pwcChars,cChars)))
+            context_shape[i] = Afj;
+            else if ( rchar != DALATH && rchar != RISH &&
+!left_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)) &&
+word_break_causing(neighbour_char(i,dirL,pwcChars,cChars)))
+            context_shape[i] = Afn;
+            else if ( (rchar == DALATH || rchar == RISH) && word_break_causing(neighbour_char(i,dirL,pwcChars,cChars)))
+            context_shape[i] = Afx;
+        }
+        else if (context_type[i] == jtR &&
+right_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)))
+            context_shape[i] = Xr;
+        else if (context_type[i] == jtL && left_join_causing(neighbour_joining_type(i,dirL,context_type,cChars,psa)))
+            context_shape[i] = Xl;
+        else if (context_type[i] == jtD && left_join_causing(neighbour_joining_type(i,dirL,context_type,cChars,psa)) && right_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)))
+            context_shape[i] = Xm;
+        else if (context_type[i] == jtD && right_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)))
+            context_shape[i] = Xr;
+        else if (context_type[i] == jtD && left_join_causing(neighbour_joining_type(i,dirL,context_type,cChars,psa)))
+            context_shape[i] = Xl;
+        else
+            context_shape[i] = Xn;
+    }
+
+    /* Contextual Shaping */
+    i = 0;
+    while(i < *pcGlyphs)
+    {
+        INT nextIndex;
+        nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc->GSUB_Table, pwOutGlyphs, i, dirL, pcGlyphs, contextual_features[context_shape[i]]);
+        if (nextIndex > GSUB_E_NOGLYPH)
+            i = nextIndex;
     }
 
     HeapFree(GetProcessHeap(),0,context_shape);
