@@ -428,23 +428,23 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenPar
     if (dwFlags & MCI_OPEN_ELEMENT) {
         if (dwFlags & MCI_OPEN_ELEMENT_ID) {
             WARN("MCI_OPEN_ELEMENT_ID %p! Abort\n", lpOpenParms->lpstrElementName);
-            ret = MCIERR_NO_ELEMENT_ALLOWED;
+            ret = MCIERR_FLAGS_NOT_COMPATIBLE;
             goto the_error;
         }
         TRACE("MCI_OPEN_ELEMENT element name: %s\n", debugstr_w(lpOpenParms->lpstrElementName));
-        if (!isalpha(lpOpenParms->lpstrElementName[0]) || lpOpenParms->lpstrElementName[1] != ':' ||
-            (lpOpenParms->lpstrElementName[2] && lpOpenParms->lpstrElementName[2] != '\\'))
+        /* Only the first letter counts since w2k
+         * Win9x-NT accept only d: and w98SE accepts d:\foobar as well.
+         * Play d:\Track03.cda plays from the first track, not #3. */
+        if (!isalpha(lpOpenParms->lpstrElementName[0]))
         {
-            WARN("MCI_OPEN_ELEMENT unsupported format: %s\n", 
-                 debugstr_w(lpOpenParms->lpstrElementName));
-            ret = MCIERR_NO_ELEMENT_ALLOWED;
+            ret = MCIERR_INVALID_FILE;
             goto the_error;
         }
         drive = toupper(lpOpenParms->lpstrElementName[0]);
         root[0] = drive; root[1] = ':'; root[2] = '\\'; root[3] = '\0';
         if (GetDriveTypeW(root) != DRIVE_CDROM)
         {
-            ret = MCIERR_INVALID_DEVICE_NAME;
+            ret = MCIERR_INVALID_FILE;
             goto the_error;
         }
     }

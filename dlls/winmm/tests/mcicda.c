@@ -26,6 +26,7 @@
 typedef union {
       MCI_STATUS_PARMS     status;
       MCI_GETDEVCAPS_PARMS caps;
+      MCI_OPEN_PARMS       open;
       MCI_PLAY_PARMS       play;
       MCI_SEEK_PARMS       seek;
       MCI_SAVE_PARMS       save;
@@ -151,8 +152,6 @@ static DWORD MSF_Add(DWORD d1, DWORD d2)
     return MCI_MAKE_MSF(m,s,f);
 }
 
-/* TODO test_open "open X: type cdaudio" etc. */
-/* TODO demonstrate open X:\ fails on win95 while open X: works. */
 /* TODO show that shareable flag is not what Wine implements. */
 
 static void test_play(HWND hwnd)
@@ -607,6 +606,46 @@ static void test_play(HWND hwnd)
     test_notification(hwnd, "STOP final", 0);
 }
 
+static void test_openclose(HWND hwnd)
+{
+    MCIDEVICEID wDeviceID;
+    MCI_PARMS_UNION parm;
+    MCIERROR err;
+    char drive[] = {'a',':','\\','X','\0'};
+
+    /* Bug in native since NT: After OPEN "c" without MCI_OPEN_ALIAS fails with
+     * MCIERR_DEVICE_OPEN, any subsequent OPEN fails with EXTENSION_NOT_FOUND! */
+    parm.open.lpstrAlias = "x"; /* with alias, OPEN "c" behaves normally */
+    parm.open.lpstrDeviceType = (LPCSTR)MCI_DEVTYPE_CD_AUDIO;
+    parm.open.lpstrElementName = drive;
+    for ( ; strlen(drive); drive[strlen(drive)-1] = 0)
+    for (drive[0] = 'a'; drive[0] <= 'z'; drive[0]++) {
+        err = mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID
+                              | MCI_OPEN_SHAREABLE | MCI_OPEN_ALIAS, (DWORD_PTR)&parm);
+        ok(!err || err == MCIERR_INVALID_FILE, "OPEN %s type: %s\n", drive, dbg_mcierr(err));
+        /* open X:\ fails in Win9x/NT. Only open X: works everywhere. */
+        if(!err) {
+            wDeviceID = parm.open.wDeviceID;
+            trace("ok with %s\n", drive);
+            err = mciSendCommand(wDeviceID, MCI_CLOSE, 0, 0);
+            ok(!err,"mciCommand close returned %s\n", dbg_mcierr(err));
+        }
+    }
+    drive[0] = '\\';
+    err = mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID
+                          | MCI_OPEN_SHAREABLE, (DWORD_PTR)&parm);
+    ok(err == MCIERR_INVALID_FILE, "OPEN %s type: %s\n", drive, dbg_mcierr(err));
+    if(!err) mciSendCommand(parm.open.wDeviceID, MCI_CLOSE, 0, 0);
+
+    if (0) {
+        parm.open.lpstrElementName = (LPCSTR)0xDEADBEEF;
+        err = mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT|MCI_OPEN_ELEMENT_ID
+                              | MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID | MCI_OPEN_SHAREABLE, (DWORD_PTR)&parm);
+        todo_wine ok(err == MCIERR_FLAGS_NOT_COMPATIBLE, "OPEN elt_ID: %s\n", dbg_mcierr(err));
+        if(!err) mciSendCommand(parm.open.wDeviceID, MCI_CLOSE, 0, 0);
+    }
+}
+
 START_TEST(mcicda)
 {
     MCIERROR err;
@@ -615,6 +654,7 @@ START_TEST(mcicda)
                            0, 0, 0, NULL);
     test_notification(hwnd, "-prior to tests-", 0);
     test_play(hwnd);
+    test_openclose(hwnd);
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_STOP, 0, 0);
     todo_wine ok(!err || broken(err == MCIERR_HARDWARE /* blank CD or testbot without CD-ROM */),
        "STOP all returned %s\n", dbg_mcierr(err));
