@@ -1421,19 +1421,17 @@ START_TEST(string)
   test_StrToIntExA();
   test_StrToIntExW();
   test_StrDupA();
-  if (lstrcmp(thousandDelim, ",")==0 && lstrcmp(decimalDelim, ".")==0)
-  {
-    /* these tests are locale-dependent */
-    test_StrFormatByteSize64A();
-    test_StrFormatKBSizeA();
-    test_StrFormatKBSizeW();
-  }
 
   /* language-dependent test */
   if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_ENGLISH)
-    trace("Skipping StrFromTimeInterval test for non English language\n");
+    skip("English is required for StrFromTimeInterval and StrFormat*Size tests\n");
   else
+  {
+    test_StrFormatByteSize64A();
+    test_StrFormatKBSizeA();
+    test_StrFormatKBSizeW();
     test_StrFromTimeIntervalA();
+  }
 
   test_StrCmpA();
   test_StrCmpW();
