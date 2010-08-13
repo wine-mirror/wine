@@ -31,6 +31,7 @@
 
 #define URI_STR_PROPERTY_COUNT Uri_PROPERTY_STRING_LAST+1
 #define URI_DWORD_PROPERTY_COUNT (Uri_PROPERTY_DWORD_LAST - Uri_PROPERTY_DWORD_START)+1
+#define URI_BUILDER_STR_PROPERTY_COUNT 7
 
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCreateUriWithFragment)(LPCWSTR, LPCWSTR, DWORD, DWORD_PTR, IUri**);
@@ -3724,6 +3725,86 @@ static const uri_with_fragment uri_fragment_tests[] = {
     }
 };
 
+typedef struct _uri_builder_property {
+    BOOL            change;
+    const char      *value;
+    const char      *expected_value;
+    Uri_PROPERTY    property;
+    HRESULT         expected;
+    BOOL            todo;
+} uri_builder_property;
+
+typedef struct _uri_builder_port {
+    BOOL    change;
+    BOOL    set;
+    DWORD   value;
+    HRESULT expected;
+    BOOL    todo;
+} uri_builder_port;
+
+typedef struct _uri_builder_test {
+    const char              *uri;
+    DWORD                   create_flags;
+    HRESULT                 create_builder_expected;
+    BOOL                    create_builder_todo;
+
+    uri_builder_property    properties[URI_BUILDER_STR_PROPERTY_COUNT];
+
+    uri_builder_port        port_prop;
+
+    const char              *uri_expected;
+    DWORD                   uri_flags;
+    HRESULT                 uri_hres;
+    BOOL                    uri_todo;
+
+    const char              *uri_simple_expected;
+    DWORD                   uri_simple_encode_flags;
+    HRESULT                 uri_simple_hres;
+    BOOL                    uri_simple_todo;
+
+    const char              *uri_with_expected;
+    DWORD                   uri_with_flags;
+    DWORD                   uri_with_builder_flags;
+    DWORD                   uri_with_encode_flags;
+    HRESULT                 uri_with_hres;
+    BOOL                    uri_with_todo;
+} uri_builder_test;
+
+static const uri_builder_test uri_builder_tests[] = {
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"#fragment",NULL,Uri_PROPERTY_FRAGMENT,S_OK,TRUE},
+            {TRUE,"password",NULL,Uri_PROPERTY_PASSWORD,S_OK,TRUE},
+            {TRUE,"?query=x",NULL,Uri_PROPERTY_QUERY,S_OK,TRUE},
+            {TRUE,"username",NULL,Uri_PROPERTY_USER_NAME,S_OK,TRUE}
+        },
+        {FALSE},
+        "http://username:password@google.com/?query=x#fragment",0,S_OK,TRUE,
+        "http://username:password@google.com/?query=x#fragment",0,S_OK,TRUE,
+        "http://username:password@google.com/?query=x#fragment",0,0,0,S_OK,TRUE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"test",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE}
+        },
+        {TRUE,TRUE,120,S_OK,TRUE},
+        "test://google.com:120/",0,S_OK,TRUE,
+        "test://google.com:120/",0,S_OK,TRUE,
+        "test://google.com:120/",0,0,0,S_OK,TRUE
+    },
+    {   "/Test/test dir",Uri_CREATE_ALLOW_RELATIVE,S_OK,FALSE,
+        {
+            {TRUE,"http",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE},
+            {TRUE,"::192.2.3.4",NULL,Uri_PROPERTY_HOST,S_OK,TRUE},
+            {TRUE,NULL,NULL,Uri_PROPERTY_PATH,S_OK,TRUE}
+        },
+        {FALSE},
+        "http://[::192.2.3.4]/",0,S_OK,TRUE,
+        "http://[::192.2.3.4]/",0,S_OK,TRUE,
+        "http://[::192.2.3.4]/",0,0,0,S_OK,TRUE
+    }
+};
+
 static inline LPWSTR a2w(LPCSTR str) {
     LPWSTR ret = NULL;
 
@@ -3750,6 +3831,118 @@ static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {
 static inline ULONG get_refcnt(IUri *uri) {
     IUri_AddRef(uri);
     return IUri_Release(uri);
+}
+
+static void change_property(IUriBuilder *builder, const uri_builder_property *prop,
+                            DWORD test_index) {
+    HRESULT hr;
+    LPWSTR valueW;
+
+    valueW = a2w(prop->value);
+    switch(prop->property) {
+    case Uri_PROPERTY_FRAGMENT:
+        hr = IUriBuilder_SetFragment(builder, valueW);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == prop->expected,
+                    "Error: IUriBuilder_SetFragment returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, prop->expected, test_index);
+            }
+        } else {
+            ok(hr == prop->expected,
+                "Error: IUriBuilder_SetFragment returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, prop->expected, test_index);
+        }
+        break;
+    case Uri_PROPERTY_HOST:
+        hr = IUriBuilder_SetHost(builder, valueW);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == prop->expected,
+                    "Error: IUriBuilder_SetHost returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, prop->expected, test_index);
+            }
+        } else {
+            ok(hr == prop->expected,
+                "Error: IUriBuilder_SetHost returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, prop->expected, test_index);
+        }
+        break;
+    case Uri_PROPERTY_PASSWORD:
+        hr = IUriBuilder_SetPassword(builder, valueW);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == prop->expected,
+                    "Error: IUriBuilder_SetPassword returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, prop->expected, test_index);
+            }
+        } else {
+            ok(hr == prop->expected,
+                "Error: IUriBuilder_SetPassword returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, prop->expected, test_index);
+        }
+        break;
+    case Uri_PROPERTY_PATH:
+        hr = IUriBuilder_SetPath(builder, valueW);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == prop->expected,
+                    "Error: IUriBuilder_SetPath returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, prop->expected, test_index);
+            }
+        } else {
+            ok(hr == prop->expected,
+                "Error: IUriBuilder_SetPath returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, prop->expected, test_index);
+        }
+        break;
+    case Uri_PROPERTY_QUERY:
+        hr = IUriBuilder_SetQuery(builder, valueW);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == prop->expected,
+                    "Error: IUriBuilder_SetQuery returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, prop->expected, test_index);
+            }
+        } else {
+            ok(hr == prop->expected,
+                "Error: IUriBuilder_SetQuery returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, prop->expected, test_index);
+        }
+        break;
+    case Uri_PROPERTY_SCHEME_NAME:
+        hr = IUriBuilder_SetSchemeName(builder, valueW);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == prop->expected,
+                    "Error: IUriBuilder_SetSchemeName returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, prop->expected, test_index);
+            }
+        } else {
+            ok(hr == prop->expected,
+                "Error: IUriBuilder_SetSchemeName returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, prop->expected, test_index);
+        }
+        break;
+    case Uri_PROPERTY_USER_NAME:
+        hr = IUriBuilder_SetUserName(builder, valueW);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == prop->expected,
+                    "Error: IUriBuilder_SetUserName returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, prop->expected, test_index);
+            }
+        } else {
+            ok(hr == prop->expected,
+                "Error: IUriBuilder_SetUserName returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, prop->expected, test_index);
+        }
+        break;
+    default:
+        trace("Unsupported operation for %d on uri_builder_tests[%d].\n", prop->property, test_index);
+    }
+
+    heap_free(valueW);
 }
 
 /*
@@ -4910,6 +5103,150 @@ static void test_CreateIUriBuilder(void) {
     if(uri) IUri_Release(uri);
 }
 
+static void test_IUriBuilder_CreateUri(IUriBuilder *builder, const uri_builder_test *test,
+                                       DWORD test_index) {
+    HRESULT hr;
+    IUri *uri = NULL;
+
+    hr = IUriBuilder_CreateUri(builder, test->uri_flags, 0, 0, &uri);
+    if(test->uri_todo) {
+        todo_wine {
+            ok(hr == test->uri_hres,
+                "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, test->uri_hres, test_index);
+        }
+    } else {
+        ok(hr == test->uri_hres,
+            "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, test->uri_hres, test_index);
+    }
+
+    if(SUCCEEDED(hr)) {
+        BSTR received = NULL;
+
+        hr = IUri_GetAbsoluteUri(uri, &received);
+        ok(hr == S_OK, "Error: IUri_GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
+        ok(!strcmp_aw(test->uri_expected, received),
+            "Error: Expected the URI to be %s but was %s instead on uri_builder_tests[%d].\n",
+            test->uri_expected, wine_dbgstr_w(received), test_index);
+        SysFreeString(received);
+    }
+    if(uri) IUri_Release(uri);
+}
+
+static void test_IUriBuilder_CreateInvalidArgs(void) {
+    IUriBuilder *builder;
+    HRESULT hr;
+
+    hr = pCreateIUriBuilder(NULL, 0, 0, &builder);
+    ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        IUri *test = NULL, *uri = (void*) 0xdeadbeef;
+
+        /* Test what happens if the IUriBuilder doesn't have a IUri set. */
+        hr = IUriBuilder_CreateUri(builder, 0, 0, 0, &uri);
+        ok(hr == INET_E_INVALID_URL, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, INET_E_INVALID_URL);
+        ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
+
+        hr = IUriBuilder_CreateUri(builder, 0, 0, 0, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
+
+        uri = (void*) 0xdeadbeef;
+        hr = IUriBuilder_CreateUri(builder, 0, Uri_HAS_USER_NAME, 0, &uri);
+        ok(hr == E_NOTIMPL, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, E_NOTIMPL);
+        ok(uri == NULL, "Error: expected uri to be NULL, but was %p instead.\n", uri);
+
+        hr = pCreateUri(http_urlW, 0, 0, &test);
+        ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+        if(SUCCEEDED(hr)) {
+            hr = IUriBuilder_SetIUri(builder, test);
+            todo_wine { ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK); }
+
+            /* No longer returns E_NOTIMPL, since a IUri has been set and hasn't been modified. */
+            uri = NULL;
+            hr = IUriBuilder_CreateUri(builder, 0, Uri_HAS_USER_NAME, 0, &uri);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            todo_wine { ok(uri != NULL, "Error: The uri was NULL.\n"); }
+            if(uri) IUri_Release(uri);
+
+            hr = IUriBuilder_SetFragment(builder, NULL);
+            todo_wine { ok(hr == S_OK, "Error: IUriBuilder_SetFragment returned 0x%08x, expected 0x%08x.\n", hr, S_OK); }
+
+            /* The IUriBuilder is changed, so it returns E_NOTIMPL again. */
+            uri = (void*) 0xdeadbeef;
+            hr = IUriBuilder_CreateUri(builder, 0, Uri_HAS_USER_NAME, 0, &uri);
+            ok(hr == E_NOTIMPL, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            ok(!uri, "Error: Expected uri to be NULL but was %p instead.\n", uri);
+        }
+        if(test) IUri_Release(test);
+    }
+    if(builder) IUriBuilder_Release(builder);
+}
+
+/* Tests IUriBuilder functions. */
+static void test_IUriBuilder(void) {
+    HRESULT hr;
+    IUriBuilder *builder;
+    DWORD i;
+
+    for(i = 0; i < sizeof(uri_builder_tests)/sizeof(uri_builder_tests[0]); ++i) {
+        IUri *uri;
+        uri_builder_test test = uri_builder_tests[i];
+        LPWSTR uriW;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, i);
+        if(SUCCEEDED(hr)) {
+            hr = pCreateIUriBuilder(uri, 0, 0, &builder);
+            if(test.create_builder_todo) {
+                todo_wine {
+                    ok(hr == test.create_builder_expected,
+                        "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                        hr, test.create_builder_expected, i);
+                }
+            } else {
+                ok(hr == test.create_builder_expected,
+                    "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, test.create_builder_expected, i);
+            }
+            if(SUCCEEDED(hr)) {
+                DWORD j;
+
+                /* Perform all the string property changes. */
+                for(j = 0; j < URI_BUILDER_STR_PROPERTY_COUNT; ++j) {
+                    uri_builder_property prop = test.properties[j];
+                    if(prop.change)
+                        change_property(builder, &prop, i);
+                }
+
+                if(test.port_prop.change) {
+                    hr = IUriBuilder_SetPort(builder, test.port_prop.set, test.port_prop.value);
+                    if(test.port_prop.todo) {
+                        todo_wine {
+                            ok(hr == test.port_prop.expected,
+                                "Error: IUriBuilder_SetPort returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                                hr, test.port_prop.expected, i);
+                        }
+                    } else {
+                        ok(hr == test.port_prop.expected,
+                            "Error: IUriBuilder_SetPort returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                            hr, test.port_prop.expected, i);
+                    }
+                }
+
+                test_IUriBuilder_CreateUri(builder, &test, i);
+            }
+            if(builder) IUriBuilder_Release(builder);
+        }
+        if(uri) IUri_Release(uri);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -4967,4 +5304,10 @@ START_TEST(uri) {
 
     trace("test CreateIUriBuilder...\n");
     test_CreateIUriBuilder();
+
+    trace("test IUriBuilder_CreateInvalidArgs...\n");
+    test_IUriBuilder_CreateInvalidArgs();
+
+    trace("test IUriBuilder...\n");
+    test_IUriBuilder();
 }

@@ -4107,6 +4107,27 @@ static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
                                            IUri       **ppIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(0x%08x %d %d %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+
+    if(!ppIUri)
+        return E_POINTER;
+
+    /* The only time it doesn't return E_NOTIMPL when the dwAllow parameter
+     * has flags set, is when the IUriBuilder has a IUri set and it hasn't
+     * been modified (a call to a "Set*" hasn't been performed).
+     *
+     * TODO: Check if the IUriBuilder's properties have been modified.
+     */
+    if(dwAllowEncodingPropertyMask && !This->uri) {
+        *ppIUri = NULL;
+        return E_NOTIMPL;
+    }
+
+    if(!This->uri) {
+        *ppIUri = NULL;
+        return INET_E_INVALID_URL;
+    }
+
     FIXME("(%p)->(0x%08x %d %d %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
     return E_NOTIMPL;
 }
