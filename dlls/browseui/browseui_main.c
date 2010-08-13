@@ -183,15 +183,28 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
 {
-    if (info->cbSize != sizeof(DLLVERSIONINFO)) FIXME("support DLLVERSIONINFO2\n");
+    if(info->cbSize == sizeof(DLLVERSIONINFO) ||
+       info->cbSize == sizeof(DLLVERSIONINFO2))
+    {
+        /* this is what IE6 on Windows 98 reports */
+        info->dwMajorVersion = 6;
+        info->dwMinorVersion = 0;
+        info->dwBuildNumber = 2600;
+        info->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
+        if(info->cbSize == sizeof(DLLVERSIONINFO2))
+        {
+            DLLVERSIONINFO2 *info2 = (DLLVERSIONINFO2*) info;
+            info2->dwFlags = 0;
+            info2->ullVersion = MAKEDLLVERULL(info->dwMajorVersion,
+                                              info->dwMinorVersion,
+                                              info->dwBuildNumber,
+                                              0); /* FIXME: correct hotfix number */
+        }
+        return S_OK;
+    }
 
-    /* this is what IE6 on Windows 98 reports */
-    info->dwMajorVersion = 6;
-    info->dwMinorVersion = 0;
-    info->dwBuildNumber = 2600;
-    info->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
-
-    return NOERROR;
+    WARN("wrong DLLVERSIONINFO size from app.\n");
+    return E_INVALIDARG;
 }
 
 /***********************************************************************
