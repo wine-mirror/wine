@@ -938,9 +938,11 @@ static void do_test( test_setup *test )
     {
         for (i = 0; i <= n; i++)
         {
-            trace ("terminating thread %08x\n", thread_id[i]);
             if ( WaitForSingleObject ( thread[i], 0 ) != WAIT_OBJECT_0 )
+            {
+                trace ("terminating thread %08x\n", thread_id[i]);
                 TerminateThread ( thread [i], 0 );
+            }
         }
     }
     CloseHandle ( server_ready );
