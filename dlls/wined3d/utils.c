@@ -139,6 +139,9 @@ struct wined3d_format_base_flags
     DWORD flags;
 };
 
+/* The ATI2N format behaves like an uncompressed format in LockRect(), but
+ * still needs to use the correct block based calculation for e.g. the
+ * resource size. */
 static const struct wined3d_format_base_flags format_base_flags[] =
 {
     {WINED3DFMT_UYVY,               WINED3DFMT_FLAG_FOURCC},
@@ -163,7 +166,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_B4G4R4X4_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_R8G8B8A8_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_R8G8B8X8_UNORM,     WINED3DFMT_FLAG_GETDC},
-    {WINED3DFMT_ATI2N,              WINED3DFMT_FLAG_FOURCC},
+    {WINED3DFMT_ATI2N,              WINED3DFMT_FLAG_FOURCC | WINED3DFMT_FLAG_BROKEN_PITCH},
     {WINED3DFMT_NVHU,               WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_NVHS,               WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_R32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
@@ -192,7 +195,7 @@ static const struct wined3d_format_compression_info format_compression_info[] =
     {WINED3DFMT_DXT3,   4,  4,  16},
     {WINED3DFMT_DXT4,   4,  4,  16},
     {WINED3DFMT_DXT5,   4,  4,  16},
-    {WINED3DFMT_ATI2N,  1,  1,  1},
+    {WINED3DFMT_ATI2N,  4,  4,  16},
 };
 
 struct wined3d_format_vertex_info

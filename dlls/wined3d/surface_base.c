@@ -327,7 +327,8 @@ DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
     DWORD ret;
     TRACE("(%p)\n", This);
 
-    if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    if ((format_desc->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH))
+            == WINED3DFMT_FLAG_COMPRESSED)
     {
         /* Since compressed formats are block based, pitch means the amount of
          * bytes to the next row of block rather than the next row of pixels. */
@@ -1860,7 +1861,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
         TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n",
               pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
-        if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+        if ((format_desc->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH))
+                == WINED3DFMT_FLAG_COMPRESSED)
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
