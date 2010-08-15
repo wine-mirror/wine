@@ -90,36 +90,34 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *i
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UINT iBackBuffer, WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) {
+HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
+        UINT back_buffer_idx, WINED3DBACKBUFFER_TYPE type, IWineD3DSurface **back_buffer)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
 
-    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
+    TRACE("iface %p, back_buffer_idx %u, type %#x, back_buffer %p.\n",
+            iface, back_buffer_idx, type, back_buffer);
 
-    if (iBackBuffer > This->presentParms.BackBufferCount - 1) {
-        TRACE("Back buffer count out of range\n");
-        /* Native d3d9 doesn't set NULL here, just as wine's d3d9. But set it
-         * here in wined3d to avoid problems in other libs
-         */
-        *ppBackBuffer = NULL;
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Return invalid if there is no backbuffer array, otherwise it will crash when ddraw is
-     * used (there This->backBuffer is always NULL). We need this because this function has
-     * to be called from IWineD3DStateBlockImpl_InitStartupStateBlock to get the default
+    /* Return invalid if there is no backbuffer array, otherwise it will
+     * crash when ddraw is used (there swapchain->back_buffers is always NULL).
+     * We need this because this function is called from
+     * IWineD3DStateBlockImpl_InitStartupStateBlock() to get the default
      * scissorrect dimensions. */
-    if (!This->back_buffers)
+    if (!swapchain->back_buffers || back_buffer_idx >= swapchain->presentParms.BackBufferCount)
     {
-        *ppBackBuffer = NULL;
+        WARN("Invalid back buffer index.\n");
+        /* Native d3d9 doesn't set NULL here, just as wine's d3d9. But set it
+         * here in wined3d to avoid problems in other libs. */
+        *back_buffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }
 
-    *ppBackBuffer = (IWineD3DSurface *)This->back_buffers[iBackBuffer];
-    TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
+    *back_buffer = (IWineD3DSurface *)swapchain->back_buffers[back_buffer_idx];
+    if (*back_buffer) IWineD3DSurface_AddRef(*back_buffer);
 
-    /* Note inc ref on returned surface */
-    if(*ppBackBuffer) IWineD3DSurface_AddRef(*ppBackBuffer);
+    TRACE("Returning back buffer %p.\n", *back_buffer);
+
     return WINED3D_OK;
-
 }
 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface, WINED3DRASTER_STATUS *pRasterStatus) {
