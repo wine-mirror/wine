@@ -35,12 +35,13 @@ typedef struct _D3D_SHADER_MACRO* LPD3D_SHADER_MACRO;
 interface ID3D10Blob : IUnknown
 {
     void *GetBufferPointer();
-    DWORD GetBufferSize();
+    SIZE_T GetBufferSize();
 }
 
 typedef ID3D10Blob* LPD3D10BLOB;
 typedef ID3D10Blob ID3DBlob;
 typedef ID3DBlob* LPD3DBLOB;
+cpp_quote("#define IID_ID3DBlob IID_ID3D10Blob")
 
 typedef enum _D3D_INCLUDE_TYPE
 {

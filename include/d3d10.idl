@@ -19,6 +19,7 @@
 import "oaidl.idl";
 import "ocidl.idl";
 import "dxgi.idl";
+import "d3dcommon.idl";
 
 cpp_quote("#ifndef _D3D10_CONSTANTS")
 cpp_quote("#define _D3D10_CONSTANTS")
