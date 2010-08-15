@@ -94,12 +94,10 @@ static void test_AtlAxAttachControl(void)
     }
 
     hr = pAtlAxAttachControl(pObj, NULL, NULL);
-    todo_wine
     ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
 
     pContainer = (IUnknown *)0xdeadbeef;
     hr = pAtlAxAttachControl(pObj, NULL, &pContainer);
-    todo_wine
     ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
     ok(pContainer != (IUnknown *)0xdeadbeef &&
        pContainer != NULL,
