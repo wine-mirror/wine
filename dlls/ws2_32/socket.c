@@ -1966,6 +1966,7 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
             wsa->flags       = 0;
             wsa->n_iovecs    = sendBuf ? 1 : 0;
             wsa->first_iovec = 0;
+            wsa->completion_func = NULL;
             wsa->iovec[0].iov_base = sendBuf;
             wsa->iovec[0].iov_len  = sendBufLen;
 
