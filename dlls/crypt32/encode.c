@@ -100,7 +100,7 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSAttributes(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded);
 
-BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
+BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara,
  BYTE *pbEncoded, DWORD *pcbEncoded, DWORD bytesNeeded)
 {
     BOOL ret = TRUE;
@@ -910,7 +910,7 @@ BOOL WINAPI CRYPT_AsnEncodeOid(DWORD dwCertEncodingType,
 }
 
 static BOOL CRYPT_AsnEncodeStringCoerce(const CERT_NAME_VALUE *value,
- BYTE tag, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ BYTE tag, DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;
@@ -939,7 +939,7 @@ static BOOL CRYPT_AsnEncodeStringCoerce(const CERT_NAME_VALUE *value,
 }
 
 static BOOL CRYPT_AsnEncodeBMPString(const CERT_NAME_VALUE *value,
- DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;
@@ -979,7 +979,7 @@ static BOOL CRYPT_AsnEncodeBMPString(const CERT_NAME_VALUE *value,
 }
 
 static BOOL CRYPT_AsnEncodeUTF8String(const CERT_NAME_VALUE *value,
- DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;
@@ -1940,7 +1940,7 @@ static BOOL WINAPI CRYPT_AsnEncodePKCSContentInfo(DWORD dwCertEncodingType,
 }
 
 static BOOL CRYPT_AsnEncodeUnicodeStringCoerce(const CERT_NAME_VALUE *value,
- BYTE tag, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ BYTE tag, DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;
@@ -1972,7 +1972,7 @@ static BOOL CRYPT_AsnEncodeUnicodeStringCoerce(const CERT_NAME_VALUE *value,
     return ret;
 }
 
-static void CRYPT_FreeSpace(PCRYPT_ENCODE_PARA pEncodePara, LPVOID pv)
+static void CRYPT_FreeSpace(const CRYPT_ENCODE_PARA *pEncodePara, LPVOID pv)
 {
     if (pEncodePara && pEncodePara->pfnFree)
         pEncodePara->pfnFree(pv);
@@ -1981,7 +1981,7 @@ static void CRYPT_FreeSpace(PCRYPT_ENCODE_PARA pEncodePara, LPVOID pv)
 }
 
 static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
- DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;
@@ -2035,7 +2035,7 @@ static inline int isprintableW(WCHAR wc)
 }
 
 static BOOL CRYPT_AsnEncodePrintableString(const CERT_NAME_VALUE *value,
- DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;
@@ -2082,7 +2082,7 @@ static BOOL CRYPT_AsnEncodePrintableString(const CERT_NAME_VALUE *value,
 }
 
 static BOOL CRYPT_AsnEncodeIA5String(const CERT_NAME_VALUE *value,
- DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;
@@ -2129,7 +2129,7 @@ static BOOL CRYPT_AsnEncodeIA5String(const CERT_NAME_VALUE *value,
 }
 
 static BOOL CRYPT_AsnEncodeUniversalString(const CERT_NAME_VALUE *value,
- DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara, BYTE *pbEncoded,
  DWORD *pcbEncoded)
 {
     BOOL ret = TRUE;

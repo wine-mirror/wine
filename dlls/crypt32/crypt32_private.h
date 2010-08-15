@@ -106,7 +106,7 @@ BOOL CRYPT_AsnDecodeCMSSignedInfo(const BYTE *pbEncoded, DWORD cbEncoded,
  * If CRYPT_ENCODE_ALLOC_FLAG is set in dwFlags, *pbEncoded will be set to a
  * pointer to the newly allocated memory.
  */
-BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
+BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags, const CRYPT_ENCODE_PARA *pEncodePara,
  BYTE *pbEncoded, DWORD *pcbEncoded, DWORD bytesNeeded);
 
 BOOL CRYPT_AsnDecodePKCSDigestedData(const BYTE *pbEncoded, DWORD cbEncoded,

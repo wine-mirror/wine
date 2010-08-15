@@ -205,7 +205,7 @@ static BOOL CRYPT_GetLen(const BYTE *pbEncoded, DWORD cbEncoded, DWORD *len)
  * pointer to the newly allocated memory.
  */
 static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
- PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo,
+ const CRYPT_DECODE_PARA *pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD bytesNeeded)
 {
     BOOL ret = TRUE;
@@ -232,7 +232,7 @@ static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
     return ret;
 }
 
-static void CRYPT_FreeSpace(PCRYPT_DECODE_PARA pDecodePara, LPVOID pv)
+static void CRYPT_FreeSpace(const CRYPT_DECODE_PARA *pDecodePara, LPVOID pv)
 {
     if (pDecodePara && pDecodePara->pfnFree)
         pDecodePara->pfnFree(pv);
@@ -611,7 +611,7 @@ struct AsnArrayItemSize
  */
 static BOOL CRYPT_AsnDecodeArray(const struct AsnArrayDescriptor *arrayDesc,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
- PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo,
+ const CRYPT_DECODE_PARA *pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD *pcbDecoded)
 {
     BOOL ret = TRUE;
