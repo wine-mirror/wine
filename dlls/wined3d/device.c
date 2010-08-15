@@ -1040,7 +1040,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height,
-        WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,
+        WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **surface,
         DWORD Usage, WINED3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,
         WINED3DSURFTYPE Impl, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1051,7 +1051,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
     TRACE("iface %p, width %u, height %u, format %s (%#x), lockable %#x, discard %#x, level %u\n",
             iface, Width, Height, debug_d3dformat(Format), Format, Lockable, Discard, Level);
     TRACE("surface %p, usage %s (%#x), pool %s (%#x), multisample_type %#x, multisample_quality %u\n",
-            ppSurface, debug_d3dusage(Usage), Usage, debug_d3dpool(Pool), Pool, MultiSample, MultisampleQuality);
+            surface, debug_d3dusage(Usage), Usage, debug_d3dpool(Pool), Pool, MultiSample, MultisampleQuality);
     TRACE("surface_type %#x, parent %p, parent_ops %p.\n", Impl, parent, parent_ops);
 
     if (Impl == SURFACE_OPENGL && !This->adapter)
@@ -1078,7 +1078,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
 
     TRACE("(%p) : Created surface %p\n", This, object);
 
-    *ppSurface = (IWineD3DSurface *)object;
+    *surface = (IWineD3DSurface *)object;
 
     return hr;
 }
@@ -4984,14 +4984,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *iface,UINT iSwapChain, IWineD3DSurface *pDestSurface) {
-    IWineD3DSwapChain *swapChain;
+static HRESULT WINAPI IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *iface,
+        UINT swapchain_idx, IWineD3DSurface *dst_surface)
+{
+    IWineD3DSwapChain *swapchain;
     HRESULT hr;
-    hr = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapChain);
-    if(hr == WINED3D_OK) {
-        hr = IWineD3DSwapChain_GetFrontBufferData(swapChain, pDestSurface);
-                IWineD3DSwapChain_Release(swapChain);
-    }
+
+    TRACE("iface %p, swapchain_idx %u, dst_surface %p.\n", iface, swapchain_idx, dst_surface);
+
+    hr = IWineD3DDeviceImpl_GetSwapChain(iface, swapchain_idx, &swapchain);
+    if (FAILED(hr)) return hr;
+
+    hr = IWineD3DSwapChain_GetFrontBufferData(swapchain, dst_surface);
+    IWineD3DSwapChain_Release(swapchain);
+
     return hr;
 }
 
@@ -5486,14 +5492,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
-        IWineD3DSurface *pSurface, const WINED3DRECT *pRect, WINED3DCOLOR color)
+        IWineD3DSurface *surface, const WINED3DRECT *pRect, WINED3DCOLOR color)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) pSurface;
+    IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)surface;
     WINEDDBLTFX BltFx;
 
-    TRACE("iface %p, surface %p, rect %p, color 0x%08x.\n", iface, pSurface, pRect, color);
+    TRACE("iface %p, surface %p, rect %s, color 0x%08x.\n",
+            iface, surface, wine_dbgstr_rect((const RECT *)pRect), color);
 
-    if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM) {
+    if (s->resource.pool != WINED3DPOOL_DEFAULT && s->resource.pool != WINED3DPOOL_SYSTEMMEM)
+    {
         FIXME("call to colorfill with non WINED3DPOOL_DEFAULT or WINED3DPOOL_SYSTEMMEM surface\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -5501,7 +5509,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         const float c[4] = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
 
-        return device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &surface,
+        return device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &s,
                 !!pRect, pRect, WINED3DCLEAR_TARGET, c, 0.0f, 0);
     }
     else
@@ -5509,8 +5517,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(color, surface->resource.format_desc->format);
-        return IWineD3DSurface_Blt(pSurface, (const RECT *)pRect, NULL, NULL,
+        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(color, s->resource.format_desc->format);
+        return IWineD3DSurface_Blt(surface, (const RECT *)pRect, NULL, NULL,
                 WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
     }
 }
@@ -5810,14 +5818,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, UINT XHotSpot,
-                                                        UINT YHotSpot, IWineD3DSurface *pCursorBitmap) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    /* TODO: the use of Impl is deprecated. */
-    IWineD3DSurfaceImpl * pSur = (IWineD3DSurfaceImpl *) pCursorBitmap;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *iface,
+        UINT XHotSpot, UINT YHotSpot, IWineD3DSurface *cursor_image)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)cursor_image;
     WINED3DLOCKED_RECT lockedRect;
 
-    TRACE("(%p) : Spot Pos(%u,%u)\n", This, XHotSpot, YHotSpot);
+    TRACE("iface %p, hotspot_x %u, hotspot_y %u, cursor_image %p.\n",
+            iface, XHotSpot, YHotSpot, cursor_image);
 
     /* some basic validation checks */
     if (This->cursorTexture)
@@ -5830,25 +5839,28 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
         This->cursorTexture = 0;
     }
 
-    if ( (pSur->currentDesc.Width == 32) && (pSur->currentDesc.Height == 32) )
+    if ((s->currentDesc.Width == 32) && (s->currentDesc.Height == 32))
         This->haveHardwareCursor = TRUE;
     else
         This->haveHardwareCursor = FALSE;
 
-    if(pCursorBitmap) {
+    if (cursor_image)
+    {
         WINED3DLOCKED_RECT rect;
 
         /* MSDN: Cursor must be A8R8G8B8 */
-        if (pSur->resource.format_desc->format != WINED3DFMT_B8G8R8A8_UNORM)
+        if (s->resource.format_desc->format != WINED3DFMT_B8G8R8A8_UNORM)
         {
-            ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
+            WARN("surface %p has an invalid format.\n", cursor_image);
             return WINED3DERR_INVALIDCALL;
         }
 
         /* MSDN: Cursor must be smaller than the display mode */
-        if(pSur->currentDesc.Width > This->ddraw_width ||
-           pSur->currentDesc.Height > This->ddraw_height) {
-            ERR("(%p) : Surface(%p) is %dx%d pixels, but screen res is %dx%d\n", This, pSur, pSur->currentDesc.Width, pSur->currentDesc.Height, This->ddraw_width, This->ddraw_height);
+        if (s->currentDesc.Width > This->ddraw_width
+                || s->currentDesc.Height > This->ddraw_height)
+        {
+            WARN("Surface %p dimensions are %ux%u, but screen dimensions are %ux%u.\n",
+                    s, s->currentDesc.Width, s->currentDesc.Height, This->ddraw_width, This->ddraw_height);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -5861,9 +5873,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
              * creating circular refcount dependencies. Copy out the gl texture
              * instead.
              */
-            This->cursorWidth = pSur->currentDesc.Width;
-            This->cursorHeight = pSur->currentDesc.Height;
-            if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
+            This->cursorWidth = s->currentDesc.Width;
+            This->cursorHeight = s->currentDesc.Height;
+            if (SUCCEEDED(IWineD3DSurface_LockRect(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
             {
                 const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
                 const struct wined3d_format_desc *format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
@@ -5883,7 +5895,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                 mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
                 for(i = 0; i < height; i++)
                     memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
-                IWineD3DSurface_UnlockRect(pCursorBitmap);
+                IWineD3DSurface_UnlockRect(cursor_image);
 
                 context = context_acquire(This, NULL);
 
@@ -5938,22 +5950,17 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
              * 32-bit cursors.  32x32 bits split into 32-bit chunks == 32
              * chunks. */
             DWORD *maskBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                (pSur->currentDesc.Width * pSur->currentDesc.Height / 8));
-            IWineD3DSurface_LockRect(pCursorBitmap, &lockedRect, NULL,
-                                         WINED3DLOCK_NO_DIRTY_UPDATE |
-                                         WINED3DLOCK_READONLY
-            );
-            TRACE("width: %i height: %i\n", pSur->currentDesc.Width,
-                  pSur->currentDesc.Height);
+                    (s->currentDesc.Width * s->currentDesc.Height / 8));
+            IWineD3DSurface_LockRect(cursor_image, &lockedRect, NULL,
+                    WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY);
+            TRACE("width: %u height: %u.\n", s->currentDesc.Width, s->currentDesc.Height);
 
             cursorInfo.fIcon = FALSE;
             cursorInfo.xHotspot = XHotSpot;
             cursorInfo.yHotspot = YHotSpot;
-            cursorInfo.hbmMask = CreateBitmap(pSur->currentDesc.Width, pSur->currentDesc.Height,
-                    1, 1, maskBits);
-            cursorInfo.hbmColor = CreateBitmap(pSur->currentDesc.Width, pSur->currentDesc.Height,
-                    1, 32, lockedRect.pBits);
-            IWineD3DSurface_UnlockRect(pCursorBitmap);
+            cursorInfo.hbmMask = CreateBitmap(s->currentDesc.Width, s->currentDesc.Height, 1, 1, maskBits);
+            cursorInfo.hbmColor = CreateBitmap(s->currentDesc.Width, s->currentDesc.Height, 1, 32, lockedRect.pBits);
+            IWineD3DSurface_UnlockRect(cursor_image);
             /* Create our cursor and clean up. */
             cursor = CreateIconIndirect(&cursorInfo);
             SetCursor(cursor);

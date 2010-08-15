@@ -3764,7 +3764,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
 }
 
 static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *DestRect,
-        IWineD3DSurface *SrcSurface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx)
+        IWineD3DSurface *src_surface, const RECT *src_rect, DWORD Flags, const WINEDDBLTFX *DDBltFx)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
     float depth;
@@ -3798,16 +3798,20 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *DestRect, IWineD3DSurface *SrcSurface,
-        const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter) {
+static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *DestRect,
+        IWineD3DSurface *src_surface, const RECT *SrcRect, DWORD Flags,
+        const WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
+    IWineD3DSurfaceImpl *src = (IWineD3DSurfaceImpl *)src_surface;
     IWineD3DDeviceImpl *device = This->resource.device;
 
-    TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
-    TRACE("(%p): Usage is %s\n", This, debug_d3dusage(This->resource.usage));
+    TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
+            iface, wine_dbgstr_rect(DestRect), src_surface, wine_dbgstr_rect(SrcRect),
+            Flags, DDBltFx, debug_d3dtexturefiltertype(Filter));
+    TRACE("Usage is %s.\n", debug_d3dusage(This->resource.usage));
 
-    if ( (This->Flags & SFLAG_LOCKED) || ((Src != NULL) && (Src->Flags & SFLAG_LOCKED)))
+    if ((This->Flags & SFLAG_LOCKED) || (src && (src->Flags & SFLAG_LOCKED)))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
         return WINEDDERR_SURFACEBUSY;
@@ -3816,13 +3820,15 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
     /* Accessing the depth stencil is supposed to fail between a BeginScene and EndScene pair,
      * except depth blits, which seem to work
      */
-    if (This == device->depth_stencil || (Src && Src == device->depth_stencil))
+    if (This == device->depth_stencil || (src && src == device->depth_stencil))
     {
         if (device->inScene && !(Flags & WINEDDBLT_DEPTHFILL))
         {
             TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
             return WINED3DERR_INVALIDCALL;
-        } else if(IWineD3DSurfaceImpl_BltZ(This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx) == WINED3D_OK) {
+        }
+        else if (SUCCEEDED(IWineD3DSurfaceImpl_BltZ(This, DestRect, src_surface, SrcRect, Flags, DDBltFx)))
+        {
             TRACE("Z Blit override handled the blit\n");
             return WINED3D_OK;
         }
@@ -3830,48 +3836,49 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
 
     /* Special cases for RenderTargets */
     if ((This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            || (Src && (Src->resource.usage & WINED3DUSAGE_RENDERTARGET)))
+            || (src && (src->resource.usage & WINED3DUSAGE_RENDERTARGET)))
     {
-        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(This, DestRect, Src, SrcRect, Flags, DDBltFx, Filter)))
+        if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(This, DestRect, src, SrcRect, Flags, DDBltFx, Filter)))
             return WINED3D_OK;
     }
 
     /* For the rest call the X11 surface implementation.
      * For RenderTargets this should be implemented OpenGL accelerated in BltOverride,
-     * other Blts are rather rare
-     */
-    return IWineD3DBaseSurfaceImpl_Blt(iface, DestRect, SrcSurface, SrcRect, Flags, DDBltFx, Filter);
+     * other Blts are rather rare. */
+    return IWineD3DBaseSurfaceImpl_Blt(iface, DestRect, src_surface, SrcRect, Flags, DDBltFx, Filter);
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dstx, DWORD dsty,
-        IWineD3DSurface *Source, const RECT *rsrc, DWORD trans)
+        IWineD3DSurface *src_surface, const RECT *rsrc, DWORD trans)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    IWineD3DSurfaceImpl *srcImpl = (IWineD3DSurfaceImpl *) Source;
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DSurfaceImpl *src = (IWineD3DSurfaceImpl *)src_surface;
     IWineD3DDeviceImpl *device = This->resource.device;
 
-    TRACE("(%p)->(%d, %d, %p, %p, %08x\n", iface, dstx, dsty, Source, rsrc, trans);
+    TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
+            iface, dstx, dsty, src_surface, wine_dbgstr_rect(rsrc), trans);
 
-    if ( (This->Flags & SFLAG_LOCKED) || (srcImpl->Flags & SFLAG_LOCKED))
+    if ((This->Flags & SFLAG_LOCKED) || (src->Flags & SFLAG_LOCKED))
     {
         WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if (device->inScene && (This == device->depth_stencil || srcImpl == device->depth_stencil))
+    if (device->inScene && (This == device->depth_stencil || src == device->depth_stencil))
     {
         TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     /* Special cases for RenderTargets */
-    if( (This->resource.usage & WINED3DUSAGE_RENDERTARGET) ||
-        (srcImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) ) {
+    if ((This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+            || (src->resource.usage & WINED3DUSAGE_RENDERTARGET))
+    {
 
         RECT SrcRect, DstRect;
         DWORD Flags=0;
 
-        surface_get_rect(srcImpl, rsrc, &SrcRect);
+        surface_get_rect(src, rsrc, &SrcRect);
 
         DstRect.left = dstx;
         DstRect.top=dsty;
@@ -3889,12 +3896,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
             Flags |= WINEDDBLT_DONOTWAIT;
 
         if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(This,
-                &DstRect, srcImpl, &SrcRect, Flags, NULL, WINED3DTEXF_POINT)))
+                &DstRect, src, &SrcRect, Flags, NULL, WINED3DTEXF_POINT)))
             return WINED3D_OK;
     }
 
-
-    return IWineD3DBaseSurfaceImpl_BltFast(iface, dstx, dsty, Source, rsrc, trans);
+    return IWineD3DBaseSurfaceImpl_BltFast(iface, dstx, dsty, src_surface, rsrc, trans);
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)

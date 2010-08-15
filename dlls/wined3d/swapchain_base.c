@@ -72,11 +72,12 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetParent(IWineD3DSwapChain *iface, IUn
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *pDestSurface) {
+HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *dst_surface)
+{
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     POINT start;
 
-    TRACE("(%p) : iface(%p) pDestSurface(%p)\n", This, iface, pDestSurface);
+    TRACE("iface %p, dst_surface %p.\n", iface, dst_surface);
 
     start.x = 0;
     start.y = 0;
@@ -85,7 +86,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *i
         MapWindowPoints(This->win_handle, NULL, &start, 1);
     }
 
-    IWineD3DSurface_BltFast(pDestSurface, start.x, start.y, (IWineD3DSurface *)This->front_buffer, NULL, 0);
+    IWineD3DSurface_BltFast(dst_surface, start.x, start.y, (IWineD3DSurface *)This->front_buffer, NULL, 0);
     return WINED3D_OK;
 }
 
