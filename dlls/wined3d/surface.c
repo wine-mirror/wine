@@ -485,7 +485,7 @@ void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint new_name, BOO
         /* FIXME: We shouldn't need to remove SFLAG_INTEXTURE if the
          * surface has no texture name yet. See if we can get rid of this. */
         if (surface->Flags & flag)
-            ERR("Surface has SFLAG_INTEXTURE set, but no texture name\n");
+            ERR("Surface has %s set, but no texture name.\n", debug_surflocation(flag));
         surface_modify_location(surface, flag, FALSE);
     }
 
