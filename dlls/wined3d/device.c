@@ -5304,9 +5304,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
 
     if (dst_format->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        UINT row_length = (update_w / src_format->block_width) * src_format->block_byte_count;
-        UINT row_count = update_h / src_format->block_height;
-        UINT src_pitch = IWineD3DSurface_GetPitch(src_surface);
+        UINT row_length = wined3d_format_calculate_size(src_format, 1, update_w, 1);
+        UINT row_count = (update_h + src_format->block_height - 1) / src_format->block_height;
+        UINT src_pitch = wined3d_format_calculate_size(src_format, 1, src_w, 1);
 
         if (src_rect)
         {
