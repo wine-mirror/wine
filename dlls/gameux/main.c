@@ -37,7 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gameux);
 
 HRESULT WINAPI DllCanUnloadNow(void)
 {
-    FIXME("stub\n");
     return S_FALSE;
 }
 
