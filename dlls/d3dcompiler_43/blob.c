@@ -86,9 +86,11 @@ static void * STDMETHODCALLTYPE d3dcompiler_blob_GetBufferPointer(ID3DBlob *ifac
 
 static SIZE_T STDMETHODCALLTYPE d3dcompiler_blob_GetBufferSize(ID3DBlob *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dcompiler_blob *blob = (struct d3dcompiler_blob *)iface;
 
-    return 0;
+    TRACE("iface %p\n", iface);
+
+    return blob->size;
 }
 
 const struct ID3D10BlobVtbl d3dcompiler_blob_vtbl =
