@@ -720,6 +720,8 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
         This->conversion_stride = 0;
         This->flags &= ~WINED3D_BUFFER_HASDESC;
     }
+
+    resource_unload((IWineD3DResourceImpl *)This);
 }
 
 static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)

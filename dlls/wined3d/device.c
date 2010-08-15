@@ -6546,7 +6546,7 @@ void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resour
 
     TRACE("(%p) : resource %p\n", This, resource);
 
-    context_resource_released((IWineD3DDevice *)This, resource, type);
+    context_resource_released(This, resource, type);
 
     switch (type) {
         /* TODO: check front and back buffers, rendertargets etc..  possibly swapchains? */

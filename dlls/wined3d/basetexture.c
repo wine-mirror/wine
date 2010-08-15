@@ -129,6 +129,8 @@ void basetexture_unload(IWineD3DBaseTexture *iface)
 
     This->baseTexture.texture_rgb.dirty = TRUE;
     This->baseTexture.texture_srgb.dirty = TRUE;
+
+    resource_unload((IWineD3DResourceImpl *)This);
 }
 
 DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD LODNew)

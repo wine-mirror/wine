@@ -166,11 +166,14 @@ static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
     FIXME("iface %p stub!\n", iface);
 }
 
-static void WINAPI IWineD3DVolumeImpl_UnLoad(IWineD3DVolume *iface) {
-    /* The whole content is shadowed on This->resource.allocatedMemory, and the
-     * texture name is managed by the VolumeTexture container
-     */
-    TRACE("(%p): Nothing to do\n", iface);
+static void WINAPI IWineD3DVolumeImpl_UnLoad(IWineD3DVolume *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    /* The whole content is shadowed on This->resource.allocatedMemory, and
+     * the texture name is managed by the VolumeTexture container. */
+
+    resource_unload((IWineD3DResourceImpl *)iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface) {

@@ -650,50 +650,78 @@ void context_free_event_query(struct wined3d_event_query *query)
     context->free_event_queries[context->free_event_query_count++] = query->object;
 }
 
-void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
+typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
+
+static void context_enum_surface_fbo_entries(IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *surface, context_fbo_entry_func_t *callback)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT i;
 
-    if (!This->d3d_initialized) return;
-
-    switch(type)
+    for (i = 0; i < device->numContexts; ++i)
     {
-        case WINED3DRTYPE_SURFACE:
+        struct wined3d_context *context = device->contexts[i];
+        const struct wined3d_gl_info *gl_info = context->gl_info;
+        struct fbo_entry *entry, *entry2;
+
+        if (context->current_rt == surface) context->current_rt = NULL;
+
+        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
         {
-            for (i = 0; i < This->numContexts; ++i)
+            UINT j;
+
+            if (entry->depth_stencil == surface)
             {
-                struct wined3d_context *context = This->contexts[i];
-                const struct wined3d_gl_info *gl_info = context->gl_info;
-                struct fbo_entry *entry, *entry2;
-
-                if (context->current_rt == (IWineD3DSurfaceImpl *)resource) context->current_rt = NULL;
-
-                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
-                {
-                    UINT j;
-
-                    if (entry->depth_stencil == (IWineD3DSurfaceImpl *)resource)
-                    {
-                        list_remove(&entry->entry);
-                        list_add_head(&context->fbo_destroy_list, &entry->entry);
-                        continue;
-                    }
-
-                    for (j = 0; j < gl_info->limits.buffers; ++j)
-                    {
-                        if (entry->render_targets[j] == (IWineD3DSurfaceImpl *)resource)
-                        {
-                            list_remove(&entry->entry);
-                            list_add_head(&context->fbo_destroy_list, &entry->entry);
-                            break;
-                        }
-                    }
-                }
+                callback(context, entry);
+                continue;
             }
 
-            break;
+            for (j = 0; j < gl_info->limits.buffers; ++j)
+            {
+                if (entry->render_targets[j] == surface)
+                {
+                    callback(context, entry);
+                    break;
+                }
+            }
         }
+    }
+}
+
+static void context_queue_fbo_entry_destruction(struct wined3d_context *context, struct fbo_entry *entry)
+{
+    list_remove(&entry->entry);
+    list_add_head(&context->fbo_destroy_list, &entry->entry);
+}
+
+void context_resource_released(IWineD3DDeviceImpl *device, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
+{
+    if (!device->d3d_initialized) return;
+
+    switch (type)
+    {
+        case WINED3DRTYPE_SURFACE:
+            context_enum_surface_fbo_entries(device, (IWineD3DSurfaceImpl *)resource,
+                    context_queue_fbo_entry_destruction);
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void context_detach_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
+{
+    entry->attached = FALSE;
+}
+
+void context_resource_unloaded(IWineD3DDeviceImpl *device, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
+{
+    switch (type)
+    {
+        case WINED3DRTYPE_SURFACE:
+            context_enum_surface_fbo_entries(device, (IWineD3DSurfaceImpl *)resource,
+                    context_detach_fbo_entry);
+            break;
 
         default:
             break;

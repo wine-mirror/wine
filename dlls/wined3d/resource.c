@@ -105,6 +105,12 @@ void resource_cleanup(IWineD3DResource *iface)
     if (This->resource.device) device_resource_released(This->resource.device, iface);
 }
 
+void resource_unload(IWineD3DResourceImpl *resource)
+{
+    context_resource_unloaded(resource->resource.device, (IWineD3DResource *)resource,
+            resource->resource.resourceType);
+}
+
 static PrivateData* resource_find_private_data(IWineD3DResourceImpl *This, REFGUID tag)
 {
     PrivateData *data;

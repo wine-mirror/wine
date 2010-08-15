@@ -1230,6 +1230,8 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     }
 
     context_release(context);
+
+    resource_unload((IWineD3DResourceImpl *)This);
 }
 
 /* ******************************************************
