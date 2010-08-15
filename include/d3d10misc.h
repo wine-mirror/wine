@@ -39,6 +39,8 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
         HMODULE swrast, UINT flags, UINT sdk_version, DXGI_SWAP_CHAIN_DESC *swapchain_desc,
         IDXGISwapChain **swapchain, ID3D10Device **device);
 
+HRESULT WINAPI D3D10CreateBlob(SIZE_T data_size, ID3D10Blob **blob);
+
 #ifdef __cplusplus
 }
 #endif

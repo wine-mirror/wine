@@ -1,6 +1,6 @@
 @ stub D3D10CompileEffectFromMemory
 @ stub D3D10CompileShader
-@ stub D3D10CreateBlob
+@ stdcall D3D10CreateBlob(long ptr) d3dcompiler_43.D3DCreateBlob
 @ stdcall D3D10CreateDevice(ptr long ptr long long ptr)
 @ stdcall D3D10CreateDeviceAndSwapChain(ptr long ptr long long ptr ptr ptr)
 @ stdcall D3D10CreateEffectFromMemory(ptr long long ptr ptr ptr)
