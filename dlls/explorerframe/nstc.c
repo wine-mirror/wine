@@ -167,7 +167,7 @@ static IShellItem *shellitem_from_treeitem(NSTC2Impl *This, HTREEITEM hitem)
     TVITEMEXW tvi;
 
     tvi.mask = TVIF_PARAM;
-    tvi.lParam = (LPARAM)NULL;
+    tvi.lParam = 0;
     tvi.hItem = hitem;
 
     SendMessageW(This->hwnd_tv, TVM_GETITEMW, 0, (LPARAM)&tvi);
