@@ -261,6 +261,8 @@ static void create_environment_registry_keys( void )
     static const WCHAR NumProcW[]  = {'N','U','M','B','E','R','_','O','F','_','P','R','O','C','E','S','S','O','R','S',0};
     static const WCHAR ProcArchW[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
     static const WCHAR x86W[]      = {'x','8','6',0};
+    static const WCHAR IA64W[]     = {'I','A','6','4',0};
+    static const WCHAR AMD64W[]    = {'A','M','D','6','4',0};
     static const WCHAR ProcIdW[]   = {'P','R','O','C','E','S','S','O','R','_','I','D','E','N','T','I','F','I','E','R',0};
     static const WCHAR ProcLvlW[]  = {'P','R','O','C','E','S','S','O','R','_','L','E','V','E','L',0};
     static const WCHAR ProcRevW[]  = {'P','R','O','C','E','S','S','O','R','_','R','E','V','I','S','I','O','N',0};
@@ -280,8 +282,19 @@ static void create_environment_registry_keys( void )
     sprintfW( buffer, PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
     set_reg_value( env_key, NumProcW, buffer );
 
-    /* TODO: currently hardcoded x86, add different processors */
-    set_reg_value( env_key, ProcArchW, x86W );
+    switch(sci.Architecture)
+    {
+	case PROCESSOR_ARCHITECTURE_AMD64:
+	    set_reg_value( env_key, ProcArchW, AMD64W );
+	    break;
+	case PROCESSOR_ARCHITECTURE_IA64:
+	    set_reg_value( env_key, ProcArchW, IA64W );
+	    break;
+	case PROCESSOR_ARCHITECTURE_INTEL:
+	default:
+	    set_reg_value( env_key, ProcArchW, x86W );
+	    break;
+    }
 
     /* TODO: currently hardcoded Intel, add different processors */
     sprintfW( buffer, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
