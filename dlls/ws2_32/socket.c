@@ -3496,7 +3496,7 @@ int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
  *		setsockopt		(WS2_32.21)
  */
 int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
-                                  const char *optval, int optlen)
+                         const char *optval, int optlen)
 {
     int fd;
     int woptval;
@@ -3507,7 +3507,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
           s, level, optname, optval, optlen);
 
     /* some broken apps pass the value directly instead of a pointer to it */
-    if(IS_INTRESOURCE(optval))
+    if(optlen && IS_INTRESOURCE(optval))
     {
         SetLastError(WSAEFAULT);
         return SOCKET_ERROR;
@@ -3583,6 +3583,12 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
          * on unix systems, so just drop it. */
         case WS_SO_EXCLUSIVEADDRUSE:
             TRACE("Ignoring SO_EXCLUSIVEADDRUSE, is always set.\n");
+            return 0;
+
+        /* After a ConnectEx call succeeds, the socket can't be used with half of the
+         * normal winsock functions on windows. We don't have that problem. */
+        case WS_SO_UPDATE_CONNECT_CONTEXT:
+            TRACE("Ignoring SO_UPDATE_CONNECT_CONTEXT, since our sockets are normal");
             return 0;
 
         /* SO_OPENTYPE does not require a valid socket handle. */
