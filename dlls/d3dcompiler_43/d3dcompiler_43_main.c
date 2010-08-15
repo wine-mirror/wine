@@ -27,6 +27,8 @@
 #include "winbase.h"
 #include "wine/debug.h"
 
+#include "d3dcompiler_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
@@ -42,4 +44,39 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
             break;
     }
     return TRUE;
+}
+
+HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob)
+{
+    struct d3dcompiler_blob *object;
+    HRESULT hr;
+
+    TRACE("data_size %lu, blob %p\n", data_size, blob);
+
+    if (!blob)
+    {
+        WARN("Invalid blob specified.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D blob object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = d3dcompiler_blob_init(object, data_size);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize blob, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    *blob = (ID3DBlob *)object;
+
+    TRACE("Created ID3DBlob %p\n", object);
+
+    return S_OK;
 }

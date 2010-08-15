@@ -2,7 +2,7 @@
 @ stub DebugSetMute
 @ stub D3DCompile
 @ stub D3DCompressShaders
-@ stub D3DCreateBlob
+@ stdcall D3DCreateBlob(long ptr)
 @ stub D3DDecompressShaders
 @ stub D3DDisassemble10Effect
 @ stub D3DDisassemble

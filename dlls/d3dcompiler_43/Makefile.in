@@ -4,8 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dcompiler_43.dll
 IMPORTLIB = d3dcompiler
+IMPORTS   = dxguid uuid
 
 C_SRCS = \
+	blob.c \
 	d3dcompiler_43_main.c
 
 RC_SRCS = version.rc
