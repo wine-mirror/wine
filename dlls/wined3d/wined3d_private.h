@@ -2068,8 +2068,6 @@ extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl DECLSPEC_HIDDEN;
 extern const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl DECLSPEC_HIDDEN;
 
 void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect) DECLSPEC_HIDDEN;
-UINT surface_calculate_size(const struct wined3d_format_desc *format_desc,
-        UINT alignment, UINT width, UINT height) DECLSPEC_HIDDEN;
 void surface_gdi_cleanup(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;
 GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface) DECLSPEC_HIDDEN;
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
@@ -2980,6 +2978,8 @@ struct wined3d_format_desc
 
 const struct wined3d_format_desc *getFormatDescEntry(WINED3DFORMAT fmt,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+UINT wined3d_format_calculate_size(const struct wined3d_format_desc *format,
+        UINT alignment, UINT width, UINT height) DECLSPEC_HIDDEN;
 
 static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
 {

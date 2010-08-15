@@ -1550,6 +1550,30 @@ const struct wined3d_format_desc *getFormatDescEntry(WINED3DFORMAT fmt, const st
     return &gl_info->gl_formats[idx];
 }
 
+UINT wined3d_format_calculate_size(const struct wined3d_format_desc *format, UINT alignment, UINT width, UINT height)
+{
+    UINT size;
+
+    if (format->format == WINED3DFMT_UNKNOWN)
+    {
+        size = 0;
+    }
+    else if (format->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        UINT row_block_count = (width + format->block_width - 1) / format->block_width;
+        UINT row_count = (height + format->block_height - 1) / format->block_height;
+        size = row_count * (((row_block_count * format->block_byte_count) + alignment - 1) & ~(alignment - 1));
+    }
+    else
+    {
+        size = height * (((width * format->byte_count) + alignment - 1) & ~(alignment - 1));
+    }
+
+    if (format->heightscale != 0.0f) size *= format->heightscale;
+
+    return size;
+}
+
 /*****************************************************************************
  * Trace formatting of useful values
  */

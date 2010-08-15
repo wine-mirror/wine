@@ -511,7 +511,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
 
     TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format, debug_d3dformat(format));
 
-    This->resource.size = surface_calculate_size(format_desc, This->resource.device->surface_alignment,
+    This->resource.size = wined3d_format_calculate_size(format_desc, This->resource.device->surface_alignment,
             This->pow2Width, This->pow2Height);
 
     This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;

@@ -92,31 +92,6 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     resource_cleanup((IWineD3DResource *)This);
 }
 
-UINT surface_calculate_size(const struct wined3d_format_desc *format_desc, UINT alignment, UINT width, UINT height)
-{
-    UINT size;
-
-    if (format_desc->format == WINED3DFMT_UNKNOWN)
-    {
-        size = 0;
-    }
-    else if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
-    {
-        UINT row_block_count = (width + format_desc->block_width - 1) / format_desc->block_width;
-        UINT row_count = (height + format_desc->block_height - 1) / format_desc->block_height;
-        size = row_count * row_block_count * format_desc->block_byte_count;
-    }
-    else
-    {
-        /* The pitch is a multiple of 4 bytes. */
-        size = height * (((width * format_desc->byte_count) + alignment - 1) & ~(alignment - 1));
-    }
-
-    if (format_desc->heightscale != 0.0f) size *= format_desc->heightscale;
-
-    return size;
-}
-
 struct blt_info
 {
     GLenum binding;
@@ -356,7 +331,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
 
     /* FIXME: Check that the format is supported by the device. */
 
-    resource_size = surface_calculate_size(format_desc, alignment, width, height);
+    resource_size = wined3d_format_calculate_size(format_desc, alignment, width, height);
 
     /* Look at the implementation and set the correct Vtable. */
     switch (surface_type)
