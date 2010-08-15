@@ -573,14 +573,10 @@ static void point_filter_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  sr
     struct argb_conversion_info conv_info;
     DWORD channels[4];
 
-    UINT minwidth, minheight;
     UINT x, y;
 
     ZeroMemory(channels, sizeof(channels));
     init_argb_conversion_info(srcformat, destformat, &conv_info);
-
-    minwidth  = (srcsize.x < destsize.x) ? srcsize.x : destsize.x;
-    minheight = (srcsize.y < destsize.y) ? srcsize.y : destsize.y;
 
     for(y = 0;y < destsize.y;y++) {
         BYTE *destptr = dest + y * destpitch;
