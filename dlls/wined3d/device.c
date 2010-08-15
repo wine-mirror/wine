@@ -4567,7 +4567,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     for(i = 0 ; i < swapchains ; i ++) {
 
         IWineD3DDeviceImpl_GetSwapChain(iface, i, &swapChain);
-        TRACE("presentinng chain %d, %p\n", i, swapChain);
+        TRACE("Presenting chain %d, %p.\n", i, swapChain);
         IWineD3DSwapChain_Present(swapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
         IWineD3DSwapChain_Release(swapChain);
     }

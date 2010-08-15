@@ -4238,7 +4238,7 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
     IWineD3DBaseTexture *texture;
     IWineD3DSurfaceImpl *overlay;
 
-    TRACE("surface %p, location %s, persitent %#x.\n",
+    TRACE("surface %p, location %s, persistent %#x.\n",
             surface, debug_surflocation(flag), persistent);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
