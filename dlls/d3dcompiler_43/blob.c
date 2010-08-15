@@ -77,9 +77,11 @@ static ULONG STDMETHODCALLTYPE d3dcompiler_blob_Release(ID3DBlob *iface)
 
 static void * STDMETHODCALLTYPE d3dcompiler_blob_GetBufferPointer(ID3DBlob *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dcompiler_blob *blob = (struct d3dcompiler_blob *)iface;
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    return blob->data;
 }
 
 static SIZE_T STDMETHODCALLTYPE d3dcompiler_blob_GetBufferSize(ID3DBlob *iface)
