@@ -3584,7 +3584,7 @@ static WCHAR *get_default_printer(void)
     return name;
 }
 
-static void pagesetup_dump_dlg_struct(pagesetup_data *data)
+static void pagesetup_dump_dlg_struct(const pagesetup_data *data)
 {
     if(TRACE_ON(commdlg))
     {
