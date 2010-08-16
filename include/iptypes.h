@@ -189,6 +189,17 @@ typedef struct _IP_ADAPTER_PREFIX {
     ULONG                      PrefixLength;
 } IP_ADAPTER_PREFIX, *PIP_ADAPTER_PREFIX;
 
+#define IP_ADAPTER_DDNS_ENABLED               0x1
+#define IP_ADAPTER_REGISTER_ADAPTER_SUFFIX    0x2
+#define IP_ADAPTER_DHCP_ENABLED               0x4
+#define IP_ADAPTER_RECEIVE_ONLY               0x8
+#define IP_ADAPTER_NO_MULTICAST               0x10
+#define IP_ADAPTER_IPV6_OTHER_STATEFUL_CONFIG 0x20
+#define IP_ADAPTER_NETBIOS_OVER_TCPIP_ENABLED 0x40
+#define IP_ADAPTER_IPV4_ENABLED               0x80
+#define IP_ADAPTER_IPV6_ENABLED               0x100
+#define IP_ADAPTER_IPV6_MANAGE_ADDRESS_CONFIG 0x200
+
 typedef struct _IP_ADAPTER_ADDRESSES {
     union {
         ULONGLONG Alignment;
