@@ -2148,7 +2148,7 @@
 @ cdecl -arch=win32 ?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z(ptr long ptr long) MSVCP_char_traits_char__Copy_s
 @ cdecl -arch=win64 ?_Copy_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z(ptr long ptr long) MSVCP_char_traits_char__Copy_s
 @ cdecl -arch=win32 ?_Copy_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z(ptr long ptr long) MSVCP_char_traits_short__Copy_s
-@ stub -arch=win64 ?_Copy_s@?$char_traits@G@std@@SAPEAGPEAG_KPEBG1@Z
+@ cdecl -arch=win64 ?_Copy_s@?$char_traits@G@std@@SAPEAGPEAG_KPEBG1@Z(ptr long ptr long) MSVCP_char_traits_short__Copy_s
 @ cdecl -arch=win32 ?_Copy_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z(ptr long ptr long) MSVCP_char_traits_wchar__Copy_s
 @ cdecl -arch=win64 ?_Copy_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z(ptr long ptr long) MSVCP_char_traits_wchar__Copy_s
 @ stub ?_Cosh@?$_Ctraits@M@std@@SAMMM@Z
@@ -2632,7 +2632,7 @@
 @ cdecl -arch=win32 ?_Move_s@?$char_traits@D@std@@SAPADPADIPBDI@Z(ptr long ptr long) MSVCP_char_traits_char__Move_s
 @ cdecl -arch=win64 ?_Move_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z(ptr long ptr long) MSVCP_char_traits_char__Move_s
 @ cdecl -arch=win32 ?_Move_s@?$char_traits@G@std@@SAPAGPAGIPBGI@Z(ptr long ptr long) MSVCP_char_traits_short__Move_s
-@ stub -arch=win64 ?_Move_s@?$char_traits@G@std@@SAPEAGPEAG_KPEBG1@Z
+@ cdecl -arch=win64 ?_Move_s@?$char_traits@G@std@@SAPEAGPEAG_KPEBG1@Z(ptr long ptr long) MSVCP_char_traits_short__Move_s
 @ cdecl -arch=win32 ?_Move_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z(ptr long ptr long) MSVCP_char_traits_wchar__Move_s
 @ cdecl -arch=win64 ?_Move_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z(ptr long ptr long) MSVCP_char_traits_wchar__Move_s
 @ stub -arch=win32 ?_Mutex_Lock@_Mutex@std@@CAXPAV12@@Z
@@ -3005,9 +3005,9 @@
 @ cdecl -arch=win32 ?assign@?$char_traits@D@std@@SAXAADABD@Z(ptr ptr) MSVCP_char_traits_char_assign
 @ cdecl -arch=win64 ?assign@?$char_traits@D@std@@SAXAEADAEBD@Z(ptr ptr) MSVCP_char_traits_char_assign
 @ cdecl -arch=win32 ?assign@?$char_traits@G@std@@SAPAGPAGIG@Z(ptr long long) MSVCP_char_traits_short_assignn
-@ stub -arch=win64 ?assign@?$char_traits@G@std@@SAPEAGPEAG_KG@Z
+@ cdecl -arch=win64 ?assign@?$char_traits@G@std@@SAPEAGPEAG_KG@Z(ptr long long) MSVCP_char_traits_short_assignn
 @ cdecl -arch=win32 ?assign@?$char_traits@G@std@@SAXAAGABG@Z(ptr ptr) MSVCP_char_traits_short_assign
-@ stub -arch=win64 ?assign@?$char_traits@G@std@@SAXAEAGAEBG@Z
+@ cdecl -arch=win64 ?assign@?$char_traits@G@std@@SAXAEAGAEBG@Z(ptr ptr) MSVCP_char_traits_short_assign
 @ cdecl -arch=win32 ?assign@?$char_traits@_W@std@@SAPA_WPA_WI_W@Z(ptr long long) MSVCP_char_traits_wchar_assignn
 @ cdecl -arch=win64 ?assign@?$char_traits@_W@std@@SAPEA_WPEA_W_K_W@Z(ptr long long) MSVCP_char_traits_wchar_assignn
 @ cdecl -arch=win32 ?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z(ptr ptr) MSVCP_char_traits_wchar_assign
@@ -3153,7 +3153,7 @@
 @ cdecl -arch=win32 ?compare@?$char_traits@D@std@@SAHPBD0I@Z(ptr ptr long) MSVCP_char_traits_char_compare
 @ cdecl -arch=win64 ?compare@?$char_traits@D@std@@SAHPEBD0_K@Z(ptr ptr long) MSVCP_char_traits_char_compare
 @ cdecl -arch=win32 ?compare@?$char_traits@G@std@@SAHPBG0I@Z(ptr ptr long) MSVCP_char_traits_short_compare
-@ stub -arch=win64 ?compare@?$char_traits@G@std@@SAHPEBG0_K@Z
+@ cdecl -arch=win64 ?compare@?$char_traits@G@std@@SAHPEBG0_K@Z(ptr ptr long) MSVCP_char_traits_short_compare
 @ cdecl -arch=win32 ?compare@?$char_traits@_W@std@@SAHPB_W0I@Z(ptr ptr long) MSVCP_char_traits_wchar_compare
 @ cdecl -arch=win64 ?compare@?$char_traits@_W@std@@SAHPEB_W0_K@Z(ptr ptr long) MSVCP_char_traits_wchar_compare
 @ stub -arch=win32 ?compare@?$collate@D@std@@QBEHPBD000@Z
@@ -3177,7 +3177,7 @@
 @ cdecl -arch=win32 ?copy@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_copy
 @ cdecl -arch=win64 ?copy@?$char_traits@D@std@@SAPEADPEADPEBD_K@Z(ptr ptr long) MSVCP_char_traits_char_copy
 @ cdecl -arch=win32 ?copy@?$char_traits@G@std@@SAPAGPAGPBGI@Z(ptr ptr long) MSVCP_char_traits_short_copy
-@ stub -arch=win64 ?copy@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z
+@ cdecl -arch=win64 ?copy@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z(ptr ptr long) MSVCP_char_traits_short_copy
 @ cdecl -arch=win32 ?copy@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z(ptr ptr long) MSVCP_char_traits_wchar_copy
 @ cdecl -arch=win64 ?copy@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z(ptr ptr long) MSVCP_char_traits_wchar_copy
 @ stub -arch=win32 ?copyfmt@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEAAV12@ABV12@@Z
@@ -3761,13 +3761,13 @@
 @ cdecl -arch=win32 ?eq@?$char_traits@D@std@@SA_NABD0@Z(ptr ptr) MSVCP_char_traits_char_eq
 @ cdecl -arch=win64 ?eq@?$char_traits@D@std@@SA_NAEBD0@Z(ptr ptr) MSVCP_char_traits_char_eq
 @ cdecl -arch=win32 ?eq@?$char_traits@G@std@@SA_NABG0@Z(ptr ptr) MSVCP_char_traits_short_eq
-@ stub -arch=win64 ?eq@?$char_traits@G@std@@SA_NAEBG0@Z
+@ cdecl -arch=win64 ?eq@?$char_traits@G@std@@SA_NAEBG0@Z(ptr ptr) MSVCP_char_traits_short_eq
 @ cdecl -arch=win32 ?eq@?$char_traits@_W@std@@SA_NAB_W0@Z(ptr ptr) MSVCP_char_traits_wchar_eq
 @ cdecl -arch=win64 ?eq@?$char_traits@_W@std@@SA_NAEB_W0@Z(ptr ptr) MSVCP_char_traits_wchar_eq
 @ cdecl -arch=win32 ?eq_int_type@?$char_traits@D@std@@SA_NABH0@Z(ptr ptr) MSVCP_char_traits_char_eq_int_type
 @ cdecl -arch=win64 ?eq_int_type@?$char_traits@D@std@@SA_NAEBH0@Z(ptr ptr) MSVCP_char_traits_char_eq_int_type
 @ cdecl -arch=win32 ?eq_int_type@?$char_traits@G@std@@SA_NABG0@Z(ptr ptr) MSVCP_char_traits_short_eq_int_type
-@ stub -arch=win64 ?eq_int_type@?$char_traits@G@std@@SA_NAEBG0@Z
+@ cdecl -arch=win64 ?eq_int_type@?$char_traits@G@std@@SA_NAEBG0@Z(ptr ptr) MSVCP_char_traits_short_eq_int_type
 @ cdecl -arch=win32 ?eq_int_type@?$char_traits@_W@std@@SA_NABG0@Z(ptr ptr) MSVCP_char_traits_wchar_eq_int_tpe
 @ cdecl -arch=win64 ?eq_int_type@?$char_traits@_W@std@@SA_NAEBG0@Z(ptr ptr) MSVCP_char_traits_wchar_eq_int_tpe
 @ stub -arch=win32 ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z
@@ -3844,7 +3844,7 @@
 @ cdecl -arch=win32 ?find@?$char_traits@D@std@@SAPBDPBDIABD@Z(ptr long ptr) MSVCP_char_traits_char_find
 @ cdecl -arch=win64 ?find@?$char_traits@D@std@@SAPEBDPEBD_KAEBD@Z(ptr long ptr) MSVCP_char_traits_char_find
 @ cdecl -arch=win32 ?find@?$char_traits@G@std@@SAPBGPBGIABG@Z(ptr long ptr) MSVCP_char_traits_short_find
-@ stub -arch=win64 ?find@?$char_traits@G@std@@SAPEBGPEBG_KAEBG@Z
+@ cdecl -arch=win64 ?find@?$char_traits@G@std@@SAPEBGPEBG_KAEBG@Z(ptr long ptr) MSVCP_char_traits_short_find
 @ cdecl -arch=win32 ?find@?$char_traits@_W@std@@SAPB_WPB_WIAB_W@Z(ptr long ptr) MSVCP_char_traits_wchar_find
 @ cdecl -arch=win64 ?find@?$char_traits@_W@std@@SAPEB_WPEB_W_KAEB_W@Z(ptr long ptr) MSVCP_char_traits_wchar_find
 @ stub -arch=win32 ?find_first_not_of@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
@@ -4465,7 +4465,7 @@
 @ cdecl -arch=win32 ?length@?$char_traits@D@std@@SAIPBD@Z(ptr) MSVCP_char_traits_char_length
 @ cdecl -arch=win64 ?length@?$char_traits@D@std@@SA_KPEBD@Z(ptr) MSVCP_char_traits_char_length
 @ cdecl -arch=win32 ?length@?$char_traits@G@std@@SAIPBG@Z(ptr) MSVCP_char_traits_short_length
-@ stub -arch=win64 ?length@?$char_traits@G@std@@SA_KPEBG@Z
+@ cdecl -arch=win64 ?length@?$char_traits@G@std@@SA_KPEBG@Z(ptr) MSVCP_char_traits_short_length
 @ cdecl -arch=win32 ?length@?$char_traits@_W@std@@SAIPB_W@Z(ptr) MSVCP_char_traits_wchar_length
 @ cdecl -arch=win64 ?length@?$char_traits@_W@std@@SA_KPEB_W@Z(ptr) MSVCP_char_traits_wchar_length
 @ stub -arch=win32 ?length@?$codecvt@DDH@std@@QBEHABHPBD1I@Z
@@ -4480,7 +4480,7 @@
 @ cdecl -arch=win32 ?lt@?$char_traits@D@std@@SA_NABD0@Z(ptr ptr) MSVCP_char_traits_lt
 @ cdecl -arch=win64 ?lt@?$char_traits@D@std@@SA_NAEBD0@Z(ptr ptr) MSVCP_char_traits_lt
 @ cdecl -arch=win32 ?lt@?$char_traits@G@std@@SA_NABG0@Z(ptr ptr) MSVCP_char_traits_short_lt
-@ stub -arch=win64 ?lt@?$char_traits@G@std@@SA_NAEBG0@Z
+@ cdecl -arch=win64 ?lt@?$char_traits@G@std@@SA_NAEBG0@Z(ptr ptr) MSVCP_char_traits_short_lt
 @ cdecl -arch=win32 ?lt@?$char_traits@_W@std@@SA_NAB_W0@Z(ptr ptr) MSVCP_char_traits_wchar_lt
 @ cdecl -arch=win64 ?lt@?$char_traits@_W@std@@SA_NAEB_W0@Z(ptr ptr) MSVCP_char_traits_wchar_lt
 @ stub ?max@?$numeric_limits@C@std@@SACXZ
@@ -4548,7 +4548,7 @@
 @ cdecl -arch=win32  ?move@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_move
 @ cdecl -arch=win64 ?move@?$char_traits@D@std@@SAPEADPEADPEBD_K@Z(ptr ptr long) MSVCP_char_traits_char_move
 @ cdecl -arch=win32 ?move@?$char_traits@G@std@@SAPAGPAGPBGI@Z(ptr ptr long) MSVCP_char_traits_short_move
-@ stub -arch=win64 ?move@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z
+@ cdecl -arch=win64 ?move@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z(ptr ptr long) MSVCP_char_traits_short_move
 @ cdecl -arch=win32 ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z(ptr ptr long) MSVCP_char_traits_wchar_move
 @ cdecl -arch=win64 ?move@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z(ptr ptr long) MSVCP_char_traits_wchar_move
 @ stub -arch=win32 ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
@@ -4586,7 +4586,7 @@
 @ cdecl -arch=win32 ?not_eof@?$char_traits@D@std@@SAHABH@Z(ptr) MSVCP_char_traits_char_not_eof
 @ cdecl -arch=win64 ?not_eof@?$char_traits@D@std@@SAHAEBH@Z(ptr) MSVCP_char_traits_char_not_eof
 @ cdecl -arch=win32 ?not_eof@?$char_traits@G@std@@SAGABG@Z(ptr) MSVCP_char_traits_short_not_eof
-@ stub -arch=win64 ?not_eof@?$char_traits@G@std@@SAGAEBG@Z
+@ cdecl -arch=win64 ?not_eof@?$char_traits@G@std@@SAGAEBG@Z(ptr) MSVCP_char_traits_short_not_eof
 @ cdecl -arch=win32 ?not_eof@?$char_traits@_W@std@@SAGABG@Z(ptr) MSVCP_char_traits_wchar_not_eof
 @ cdecl -arch=win64 ?not_eof@?$char_traits@_W@std@@SAGAEBG@Z(ptr) MSVCP_char_traits_wchar_not_eof
 @ stub -arch=win32 ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB
@@ -5581,13 +5581,13 @@
 @ cdecl -arch=win32 ?to_char_type@?$char_traits@D@std@@SADABH@Z(ptr) MSVCP_char_traits_char_to_char_type
 @ cdecl -arch=win64 ?to_char_type@?$char_traits@D@std@@SADAEBH@Z(ptr) MSVCP_char_traits_char_to_char_type
 @ cdecl -arch=win32 ?to_char_type@?$char_traits@G@std@@SAGABG@Z(ptr) MSVCP_char_traits_short_to_char_type
-@ stub -arch=win64 ?to_char_type@?$char_traits@G@std@@SAGAEBG@Z
+@ cdecl -arch=win64 ?to_char_type@?$char_traits@G@std@@SAGAEBG@Z(ptr) MSVCP_char_traits_short_to_char_type
 @ cdecl -arch=win32 ?to_char_type@?$char_traits@_W@std@@SA_WABG@Z(ptr) MSVCP_char_traits_wchar_to_char_type
 @ cdecl -arch=win64 ?to_char_type@?$char_traits@_W@std@@SA_WAEBG@Z(ptr) MSVCP_char_traits_wchar_to_char_type
 @ cdecl -arch=win32 ?to_int_type@?$char_traits@D@std@@SAHABD@Z(ptr) MSVCP_char_traits_char_to_int_type
 @ cdecl -arch=win64 ?to_int_type@?$char_traits@D@std@@SAHAEBD@Z(ptr) MSVCP_char_traits_char_to_int_type
 @ cdecl -arch=win32 ?to_int_type@?$char_traits@G@std@@SAGABG@Z(ptr) MSVCP_char_traits_short_to_int_type
-@ stub -arch=win64 ?to_int_type@?$char_traits@G@std@@SAGAEBG@Z
+@ cdecl -arch=win64 ?to_int_type@?$char_traits@G@std@@SAGAEBG@Z(ptr) MSVCP_char_traits_short_to_int_type
 @ cdecl -arch=win32 ?to_int_type@?$char_traits@_W@std@@SAGAB_W@Z(ptr) MSVCP_char_traits_wchar_to_int_type
 @ cdecl -arch=win64 ?to_int_type@?$char_traits@_W@std@@SAGAEB_W@Z(ptr) MSVCP_char_traits_wchar_to_int_type
 @ stub -arch=win32 ?tolower@?$ctype@D@std@@QBEDD@Z
