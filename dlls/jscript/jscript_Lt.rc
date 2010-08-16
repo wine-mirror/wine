@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ * Copyright 2009-2010 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@ STRINGTABLE
     IDS_INVALID_CALL_ARG    "Netinkamas kreipinys į procedūrą ar argumentas"
     IDS_CREATE_OBJ_ERROR    "Automatizacijos serveriui nepavyko sukurti objekto"
     IDS_NO_PROPERTY         "Objektas nepalaiko šios savybės ar metodo"
+    IDS_UNSUPPORTED_ACTION  "Objektas nepalaiko šio veiksmo"
     IDS_ARG_NOT_OPT         "Argumentas nėra neprivalomas"
     IDS_SYNTAX_ERROR        "Sintaksės klaida"
     IDS_SEMICOLON           "Tikėtasi „;“"
