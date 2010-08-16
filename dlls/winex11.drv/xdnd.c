@@ -39,6 +39,7 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xdnd);
 
@@ -52,10 +53,10 @@ typedef struct tagXDNDDATA
     Atom cf_xdnd;
     void *data;
     unsigned int size;
-    struct tagXDNDDATA *next;
+    struct list entry;
 } XDNDDATA, *LPXDNDDATA;
 
-static LPXDNDDATA XDNDData = NULL;
+static struct list xdndData = LIST_INIT(xdndData);
 static POINT XDNDxy = { 0, 0 };
 
 static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len);
@@ -316,12 +317,11 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, uns
     if (current)
     {
         EnterCriticalSection(&xdnd_cs);
-        current->next = XDNDData;
         current->cf_xdnd = property;
         current->cf_win = format;
         current->data = data;
         current->size = len;
-        XDNDData = current;
+        list_add_tail(&xdndData, &current->entry);
         LeaveCriticalSection(&xdnd_cs);
     }
 }
@@ -484,21 +484,22 @@ static int X11DRV_XDND_DeconstructTextHTML(int property, void* data, int len)
  */
 static void X11DRV_XDND_SendDropFiles(HWND hwnd)
 {
-    LPXDNDDATA current;
+    LPXDNDDATA current = NULL;
+    BOOL found = FALSE;
 
     EnterCriticalSection(&xdnd_cs);
 
-    current = XDNDData;
-
     /* Find CF_HDROP type if any */
-    while (current != NULL)
+    LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
     {
         if (current->cf_win == CF_HDROP)
+        {
+            found = TRUE;
             break;
-        current = current->next;
+        }
     }
 
-    if (current != NULL)
+    if (found)
     {
         DROPFILES *lpDrop = current->data;
 
@@ -530,17 +531,13 @@ static void X11DRV_XDND_FreeDragDropOp(void)
 
     EnterCriticalSection(&xdnd_cs);
 
-    current = XDNDData;
-
     /** Free data cache */
-    while (current != NULL)
+    LIST_FOR_EACH_ENTRY_SAFE(current, next, &xdndData, XDNDDATA, entry)
     {
-        next = current->next;
+        list_remove(&current->entry);
         HeapFree(GetProcessHeap(), 0, current);
-        current = next;
     }
 
-    XDNDData = NULL;
     XDNDxy.x = XDNDxy.y = 0;
 
     LeaveCriticalSection(&xdnd_cs);
