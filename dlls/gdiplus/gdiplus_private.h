@@ -152,6 +152,12 @@ struct GpGraphics{
     UINT textcontrast; /* not used yet. get/set only */
     struct list containers;
     GraphicsContainer contid; /* last-issued container ID */
+    /* For giving the caller an HDC when we technically can't: */
+    HBITMAP temp_hbitmap;
+    int temp_hbitmap_width;
+    int temp_hbitmap_height;
+    BYTE *temp_bits;
+    HDC temp_hdc;
 };
 
 struct GpBrush{

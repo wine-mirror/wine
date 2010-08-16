@@ -4663,6 +4663,9 @@ GpStatus WINGDIPAPI GdipMultiplyWorldTransform(GpGraphics *graphics, GDIPCONST G
     return ret;
 }
 
+/* Color used to fill bitmaps so we can tell which parts have been drawn over by gdi32. */
+static const COLORREF DC_BACKGROUND_KEY = 0x0c0b0d;
+
 GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
 {
     TRACE("(%p, %p)\n", graphics, hdc);
@@ -4673,14 +4676,61 @@ GpStatus WINGDIPAPI GdipGetDC(GpGraphics *graphics, HDC *hdc)
     if(graphics->busy)
         return ObjectBusy;
 
-    if (!graphics->hdc)
+    if (!graphics->hdc ||
+        (graphics->image && graphics->image->type == ImageTypeBitmap && ((GpBitmap*)graphics->image)->format & PixelFormatAlpha))
     {
-        WARN("no HDC for this graphics\n");
-        *hdc = NULL;
-        return GenericError;
+        /* Create a fake HDC and fill it with a constant color. */
+        HDC temp_hdc;
+        HBITMAP hbitmap;
+        GpStatus stat;
+        GpRectF bounds;
+        BITMAPINFOHEADER bmih;
+        int i;
+
+        stat = get_graphics_bounds(graphics, &bounds);
+        if (stat != Ok)
+            return stat;
+
+        graphics->temp_hbitmap_width = bounds.Width;
+        graphics->temp_hbitmap_height = bounds.Height;
+
+        bmih.biSize = sizeof(bmih);
+        bmih.biWidth = graphics->temp_hbitmap_width;
+        bmih.biHeight = -graphics->temp_hbitmap_height;
+        bmih.biPlanes = 1;
+        bmih.biBitCount = 32;
+        bmih.biCompression = BI_RGB;
+        bmih.biSizeImage = 0;
+        bmih.biXPelsPerMeter = 0;
+        bmih.biYPelsPerMeter = 0;
+        bmih.biClrUsed = 0;
+        bmih.biClrImportant = 0;
+
+        hbitmap = CreateDIBSection(NULL, (BITMAPINFO*)&bmih, DIB_RGB_COLORS,
+            (void**)&graphics->temp_bits, NULL, 0);
+        if (!hbitmap)
+            return GenericError;
+
+        temp_hdc = CreateCompatibleDC(0);
+        if (!temp_hdc)
+        {
+            DeleteObject(hbitmap);
+            return GenericError;
+        }
+
+        for (i=0; i<(graphics->temp_hbitmap_width * graphics->temp_hbitmap_height); i++)
+            ((DWORD*)graphics->temp_bits)[i] = DC_BACKGROUND_KEY;
+
+        SelectObject(temp_hdc, hbitmap);
+
+        graphics->temp_hbitmap = hbitmap;
+        *hdc = graphics->temp_hdc = temp_hdc;
+    }
+    else
+    {
+        *hdc = graphics->hdc;
     }
 
-    *hdc = graphics->hdc;
     graphics->busy = TRUE;
 
     return Ok;
@@ -4690,11 +4740,39 @@ GpStatus WINGDIPAPI GdipReleaseDC(GpGraphics *graphics, HDC hdc)
 {
     TRACE("(%p, %p)\n", graphics, hdc);
 
-    if(!graphics)
+    if(!graphics || !hdc)
         return InvalidParameter;
 
-    if(graphics->hdc != hdc || !(graphics->busy))
+    if((graphics->hdc != hdc && graphics->temp_hdc != hdc) || !(graphics->busy))
         return InvalidParameter;
+
+    if (graphics->temp_hdc == hdc)
+    {
+        DWORD* pos;
+        int i;
+
+        /* Find the pixels that have changed, and mark them as opaque. */
+        pos = (DWORD*)graphics->temp_bits;
+        for (i=0; i<(graphics->temp_hbitmap_width * graphics->temp_hbitmap_height); i++)
+        {
+            if (*pos != DC_BACKGROUND_KEY)
+            {
+                *pos |= 0xff000000;
+            }
+            pos++;
+        }
+
+        /* Write the changed pixels to the real target. */
+        alpha_blend_pixels(graphics, 0, 0, graphics->temp_bits,
+            graphics->temp_hbitmap_width, graphics->temp_hbitmap_height,
+            graphics->temp_hbitmap_width * 4);
+
+        /* Clean up. */
+        DeleteDC(graphics->temp_hdc);
+        DeleteObject(graphics->temp_hbitmap);
+        graphics->temp_hdc = NULL;
+        graphics->temp_hbitmap = NULL;
+    }
 
     graphics->busy = FALSE;
 
