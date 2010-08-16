@@ -1,5 +1,5 @@
 /*
- * IGameExplorer tests
+ * IGameExplorer and IGameExplorer2 tests
  *
  * Copyright (C) 2010 Mariusz Pluciński
  *
@@ -36,6 +36,7 @@ static void test_create( void )
     HRESULT hr;
 
     IGameExplorer* ge = NULL;
+    IGameExplorer2* ge2 = NULL;
 
     /* interface available up from Vista */
     hr = CoCreateInstance( &CLSID_GameExplorer, NULL, CLSCTX_INPROC_SERVER, &IID_IGameExplorer, (LPVOID*)&ge);
@@ -46,6 +47,16 @@ static void test_create( void )
     }
     else
         win_skip("IGameExplorer cannot be created\n");
+
+    /* interface available up from Win7 */
+    hr = CoCreateInstance( &CLSID_GameExplorer, NULL, CLSCTX_INPROC_SERVER, &IID_IGameExplorer2, (LPVOID*)&ge2);
+    if(ge2)
+    {
+        ok( hr == S_OK, "IGameExplorer2 creating failed (result false)\n");
+        IGameExplorer2_Release(ge2);
+    }
+    else
+        win_skip("IGameExplorer2 cannot be created\n");
 }
 
 START_TEST(gameexplorer)
