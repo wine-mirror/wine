@@ -257,6 +257,8 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     unsigned long bytesret, icount;
     int entries = 0;
     unsigned char* data = NULL;
+    XDNDDATA *current, *next;
+    BOOL haveHDROP = FALSE;
 
     TRACE("count(%ld)\n", *count);
 
@@ -299,6 +301,31 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
         wine_tsx11_lock();
         XFree(data);
         wine_tsx11_unlock();
+    }
+
+    /* On Windows when there is a CF_HDROP, there are no other CF_ formats.
+     * foobar2000 relies on this (spaces -> %20's without it).
+     */
+    LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
+    {
+        if (current->cf_win == CF_HDROP)
+        {
+            haveHDROP = TRUE;
+            break;
+        }
+    }
+    if (haveHDROP)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE(current, next, &xdndData, XDNDDATA, entry)
+        {
+            if (current->cf_win != CF_HDROP && current->cf_win < CF_MAX)
+            {
+                list_remove(&current->entry);
+                HeapFree(GetProcessHeap(), 0, current->data);
+                HeapFree(GetProcessHeap(), 0, current);
+                --entries;
+            }
+        }
     }
 
     *count = entries;
