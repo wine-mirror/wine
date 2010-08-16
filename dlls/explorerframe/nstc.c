@@ -143,6 +143,20 @@ static HRESULT events_OnAfterExpand(NSTC2Impl *This, IShellItem *psi)
     return ret;
 }
 
+static HRESULT events_OnItemClick(NSTC2Impl *This, IShellItem *psi,
+                                  NSTCEHITTEST nstceHitTest, NSTCECLICKTYPE nstceClickType)
+{
+    HRESULT ret;
+    LONG refcount;
+    if(!This->pnstce) return S_OK;
+
+    refcount = IShellItem_AddRef(psi);
+    ret = INameSpaceTreeControlEvents_OnItemClick(This->pnstce, psi, nstceHitTest, nstceClickType);
+    if(IShellItem_Release(psi) < refcount - 1)
+        ERR("ShellItem was released by client - please file a bug.\n");
+    return ret;
+}
+
 static HRESULT events_OnSelectionChanged(NSTC2Impl *This, IShellItemArray *psia)
 {
     if(!This->pnstce) return S_OK;
@@ -570,6 +584,60 @@ static LRESULT on_tvn_selchangedw(NSTC2Impl *This, LPARAM lParam)
     return TRUE;
 }
 
+static LRESULT on_nm_click(NSTC2Impl *This, NMHDR *nmhdr)
+{
+    TVHITTESTINFO tvhit;
+    IShellItem *psi;
+    HRESULT hr;
+    TRACE("%p (%p)\n", This, nmhdr);
+
+    GetCursorPos(&tvhit.pt);
+    ScreenToClient(This->hwnd_tv, &tvhit.pt);
+    SendMessageW(This->hwnd_tv, TVM_HITTEST, 0, (LPARAM)&tvhit);
+
+    if(tvhit.flags & (TVHT_NOWHERE|TVHT_ABOVE|TVHT_BELOW))
+        return TRUE;
+
+    /* TVHT_ maps onto the corresponding NSTCEHT_ */
+    psi = shellitem_from_treeitem(This, tvhit.hItem);
+    hr = events_OnItemClick(This, psi, tvhit.flags, NSTCECT_LBUTTON);
+
+    /* The expando should not be expanded unless
+     * double-clicked. */
+    if(tvhit.flags == TVHT_ONITEMBUTTON)
+        return TRUE;
+
+    if(SUCCEEDED(hr))
+        return FALSE;
+    else
+        return TRUE;
+}
+
+static LRESULT on_wm_mbuttonup(NSTC2Impl *This, WPARAM wParam, LPARAM lParam)
+{
+    TVHITTESTINFO tvhit;
+    IShellItem *psi;
+    HRESULT hr;
+    TRACE("%p (%lx, %lx)\n", This, wParam, lParam);
+
+    tvhit.pt.x = (int)(short)LOWORD(lParam);
+    tvhit.pt.y = (int)(short)HIWORD(lParam);
+
+    SendMessageW(This->hwnd_tv, TVM_HITTEST, 0, (LPARAM)&tvhit);
+
+    /* Seems to generate only ONITEM and ONITEMICON */
+    if( !(tvhit.flags & (TVHT_ONITEM|TVHT_ONITEMICON)) )
+        return FALSE;
+
+    psi = shellitem_from_treeitem(This, tvhit.hItem);
+    hr = events_OnItemClick(This, psi, tvhit.flags, NSTCECT_MBUTTON);
+
+    if(SUCCEEDED(hr))
+        return FALSE;
+    else
+        return TRUE;
+}
+
 static LRESULT on_kbd_event(NSTC2Impl *This, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     IShellItem *psi;
@@ -614,6 +682,8 @@ static LRESULT CALLBACK tv_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPAR
         if(on_kbd_event(This, uMessage, wParam, lParam))
             return TRUE;
         break;
+
+    case WM_MBUTTONUP:        return on_wm_mbuttonup(This, wParam, lParam);
     }
 
     /* Pass the message on to the treeview */
@@ -635,6 +705,7 @@ static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
         nmhdr = (NMHDR*)lParam;
         switch(nmhdr->code)
         {
+        case NM_CLICK:            return on_nm_click(This, nmhdr);
         case TVN_DELETEITEMW:     return on_tvn_deleteitemw(This, lParam);
         case TVN_GETDISPINFOW:    return on_tvn_getdispinfow(This, lParam);
         case TVN_ITEMEXPANDINGW:  return on_tvn_itemexpandingw(This, lParam);
