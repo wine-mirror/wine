@@ -23,7 +23,6 @@
 
 #include "wine/test.h"
 
-#define CINTERFACE
 #define COBJMACROS
 
 #ifdef STANDALONE

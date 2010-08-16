@@ -29,7 +29,6 @@
 #include <OpenAL/alc.h>
 #endif
 
-#define CINTERFACE
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"

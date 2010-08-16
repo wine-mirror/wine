@@ -29,7 +29,6 @@
 #endif
 
 #define NONAMELESSUNION
-#define CINTERFACE
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"

@@ -17,7 +17,6 @@
  */
 
 #define NONAMELESSUNION
-#define CINTERFACE
 #define COBJMACROS
 #include "config.h"
 
