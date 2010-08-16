@@ -32,7 +32,7 @@ static BYTE (__cdecl *p_char_eq)(const void*, const void*);
 static BYTE (__cdecl *p_wchar_eq)(const void*, const void*);
 static BYTE (__cdecl *p_short_eq)(const void*, const void*);
 
-static char* (__cdecl *p_Copy_s)(char*, unsigned int, const char*, unsigned int);
+static char* (__cdecl *p_Copy_s)(char*, size_t, const char*, size_t);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -64,15 +64,27 @@ static BOOL init(void)
 
     p_set_invalid_parameter_handler(test_invalid_parameter_handler);
 
-    p_char_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
-    p_wchar_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
-    p_short_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@G@std@@SAXAAGABG@Z");
+    if(sizeof(void*) == 8) { /* 64-bit initialization */
+        p_char_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
+        p_wchar_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
+        p_short_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@G@std@@SAXAEAGAEBG@Z");
 
-    p_char_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@D@std@@SA_NABD0@Z");
-    p_wchar_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@_W@std@@SA_NAB_W0@Z");
-    p_short_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@G@std@@SA_NABG0@Z");
+        p_char_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@D@std@@SA_NAEBD0@Z");
+        p_wchar_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@_W@std@@SA_NAEB_W0@Z");
+        p_short_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@G@std@@SA_NAEBG0@Z");
 
-    p_Copy_s = (void*)GetProcAddress(msvcp, "?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z");
+        p_Copy_s = (void*)GetProcAddress(msvcp, "?_Copy_s@?$char_traits@D@std@@SAPEADPEAD_KPEBD1@Z");
+    } else {
+        p_char_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
+        p_wchar_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
+        p_short_assign = (void*)GetProcAddress(msvcp, "?assign@?$char_traits@G@std@@SAXAAGABG@Z");
+
+        p_char_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@D@std@@SA_NABD0@Z");
+        p_wchar_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@_W@std@@SA_NAB_W0@Z");
+        p_short_eq = (void*)GetProcAddress(msvcp, "?eq@?$char_traits@G@std@@SA_NABG0@Z");
+
+        p_Copy_s = (void*)GetProcAddress(msvcp, "?_Copy_s@?$char_traits@D@std@@SAPADPADIPBDI@Z");
+    }
 
     return TRUE;
 }
@@ -83,7 +95,7 @@ static void test_assign(void)
     char out[4];
 
     if(!p_char_assign || !p_wchar_assign || !p_short_assign) {
-        skip("assign tests skipped\n");
+        win_skip("assign tests skipped\n");
         return;
     }
 
@@ -114,7 +126,7 @@ static void test_equal(void)
     BYTE ret;
 
     if(!p_char_eq || !p_wchar_eq || !p_short_eq) {
-        skip("equal tests skipped\n");
+        win_skip("equal tests skipped\n");
         return;
     }
 
@@ -146,7 +158,7 @@ static void test_Copy_s(void)
     char dest[32], *ret;
 
     if(!p_Copy_s) {
-        skip("Copy_s tests skipped\n");
+        win_skip("Copy_s tests skipped\n");
         return;
     }
 
