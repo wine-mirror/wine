@@ -6,7 +6,8 @@ TESTDLL   = gameux.dll
 IMPORTS   = ole32
 
 C_SRCS = \
-	gameexplorer.c
+	gameexplorer.c \
+	gamestatistics.c
 
 
 @MAKE_TEST_RULES@
