@@ -647,8 +647,8 @@ static HRESULT WINAPI NSTC2_fnRemoveRoot(INameSpaceTreeControl2* iface,
     TRACE("root %p\n", root);
     if(root)
     {
-        SendMessageW(This->hwnd_tv, TVM_DELETEITEM, 0, (LPARAM)root->htreeitem);
         events_OnItemDeleted(This, root->psi, TRUE);
+        SendMessageW(This->hwnd_tv, TVM_DELETEITEM, 0, (LPARAM)root->htreeitem);
         list_remove(&root->entry);
         HeapFree(GetProcessHeap(), 0, root);
         return S_OK;
