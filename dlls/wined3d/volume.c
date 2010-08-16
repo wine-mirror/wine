@@ -30,7 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
-    IWineD3DVolumeTexture *texture;
     DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
@@ -60,12 +59,7 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
         IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(active_sampler));
     }
 
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DVolumeTexture, (void **)&texture))) {
-        IWineD3DVolumeTexture_BindTexture(texture, FALSE);
-        IWineD3DVolumeTexture_Release(texture);
-    } else {
-        ERR("Volume should be part of a volume texture\n");
-    }
+    IWineD3DVolumeTexture_BindTexture((IWineD3DVolumeTexture *)This->container, FALSE);
 }
 
 void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box)
@@ -93,7 +87,7 @@ void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box)
     }
 }
 
-void volume_set_container(IWineD3DVolumeImpl *volume, IWineD3DBase *container)
+void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DVolumeTextureImpl *container)
 {
     TRACE("volume %p, container %p.\n", volume, container);
 
@@ -207,7 +201,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REF
     }
 
     TRACE("Relaying to QueryInterface\n");
-    return IUnknown_QueryInterface(This->container, riid, ppContainer);
+    return IUnknown_QueryInterface((IWineD3DVolumeTexture *)This->container, riid, ppContainer);
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC* pDesc) {
@@ -265,27 +259,12 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
 
     if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
       /* Don't dirtify */
-    } else {
-      /**
-       * Dirtify on lock
-       * as seen in msdn docs
-       */
-      volume_add_dirty_box(iface, &This->lockedBox);
-
-      /**  Dirtify Container if needed */
-      if (NULL != This->container) {
-
-        IWineD3DVolumeTexture *cont = (IWineD3DVolumeTexture*) This->container;
-        WINED3DRESOURCETYPE containerType = IWineD3DBaseTexture_GetType((IWineD3DBaseTexture *) cont);
-
-        if (containerType == WINED3DRTYPE_VOLUMETEXTURE) {
-          IWineD3DBaseTextureImpl* pTexture = (IWineD3DBaseTextureImpl*) cont;
-          pTexture->baseTexture.texture_rgb.dirty = TRUE;
-          pTexture->baseTexture.texture_srgb.dirty = TRUE;
-        } else {
-          FIXME("Set dirty on container type %d\n", containerType);
-        }
-      }
+    }
+    else
+    {
+        volume_add_dirty_box(iface, &This->lockedBox);
+        This->container->baseTexture.texture_rgb.dirty = TRUE;
+        This->container->baseTexture.texture_srgb.dirty = TRUE;
     }
 
     This->locked = TRUE;

@@ -466,7 +466,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
         }
 
         /* Set its container to this texture. */
-        volume_set_container((IWineD3DVolumeImpl *)volume, (IWineD3DBase *)texture);
+        volume_set_container((IWineD3DVolumeImpl *)volume, texture);
         texture->baseTexture.sub_resources[i] = (IWineD3DResourceImpl *)volume;
 
         /* Calculate the next mipmap level. */
