@@ -141,6 +141,11 @@ DWORD WINAPI EnableRouter(HANDLE* pHandle, OVERLAPPED* pOverlapped);
 
 DWORD WINAPI UnenableRouter(OVERLAPPED* pOverlapped, LPDWORD lpdwEnableCount);
 
+#ifdef _WINSOCK2API_
+ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
+                                  PIP_ADAPTER_ADDRESSES aa, PULONG buflen);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
