@@ -1999,10 +1999,8 @@ static HRESULT instanceof_eval(exec_ctx_t *ctx, VARIANT *inst, VARIANT *objv, js
 
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
 
-    if(V_VT(objv) != VT_DISPATCH) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(V_VT(objv) != VT_DISPATCH || !V_DISPATCH(objv))
+        return throw_type_error(ctx->parser->script, ei, IDS_NOT_FUNC, NULL);
 
     obj = iface_to_jsdisp((IUnknown*)V_DISPATCH(objv));
     if(!obj) {
