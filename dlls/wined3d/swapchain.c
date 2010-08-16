@@ -732,7 +732,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     }
 
     surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
-    swapchain->front_buffer->Flags |= SFLAG_SWAPCHAIN;
     if (surface_type == SURFACE_OPENGL)
     {
         surface_modify_location(swapchain->front_buffer, SFLAG_INDRAWABLE, TRUE);
@@ -848,7 +847,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
             }
 
             surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
-            swapchain->back_buffers[i]->Flags |= SFLAG_SWAPCHAIN;
         }
     }
 

@@ -1700,7 +1700,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     }
 
     if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
-            && ((This->Flags & SFLAG_SWAPCHAIN) || This == device->render_targets[0])))
+            && ((This->container.type == WINED3D_CONTAINER_SWAPCHAIN) || This == device->render_targets[0])))
     {
         surface_load_location(This, SFLAG_INSYSMEM, pass_rect);
     }
@@ -1892,7 +1892,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         goto unlock_end;
     }
 
-    if ((This->Flags & SFLAG_SWAPCHAIN) || (device->render_targets && This == device->render_targets[0]))
+    if (This->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            || (device->render_targets && This == device->render_targets[0]))
     {
         if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
             static BOOL warned = FALSE;

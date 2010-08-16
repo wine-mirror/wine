@@ -5650,17 +5650,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         TRACE("Changing the front buffer from %p to %p.\n", swapchain->front_buffer, front_impl);
 
         if (swapchain->front_buffer)
-        {
             surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
-            swapchain->front_buffer->Flags &= ~SFLAG_SWAPCHAIN;
-        }
         swapchain->front_buffer = front_impl;
 
         if (front_impl)
-        {
             surface_set_container(front_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
-            front_impl->Flags |= SFLAG_SWAPCHAIN;
-        }
     }
 
     if (swapchain->back_buffers[0] != back_impl)
@@ -5668,10 +5662,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         TRACE("Changing the back buffer from %p to %p.\n", swapchain->back_buffers[0], back_impl);
 
         if (swapchain->back_buffers[0])
-        {
             surface_set_container(swapchain->back_buffers[0], WINED3D_CONTAINER_TEXTURE, NULL);
-            swapchain->back_buffers[0]->Flags &= ~SFLAG_SWAPCHAIN;
-        }
         swapchain->back_buffers[0] = back_impl;
 
         if (back_impl)
@@ -5682,7 +5673,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
             swapchain->presentParms.BackBufferCount = 1;
 
             surface_set_container(back_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
-            back_impl->Flags |= SFLAG_SWAPCHAIN;
         }
         else
         {

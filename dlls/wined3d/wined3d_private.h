@@ -2185,7 +2185,6 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) DECLSPE
 #define SFLAG_DS_ONSCREEN   0x00200000 /* Is a depth stencil, last modified onscreen */
 #define SFLAG_DS_OFFSCREEN  0x00400000 /* Is a depth stencil, last modified offscreen */
 #define SFLAG_INOVERLAYDRAW 0x00800000 /* Overlay drawing is in progress. Recursion prevention */
-#define SFLAG_SWAPCHAIN     0x01000000 /* The surface is part of a swapchain */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_CONVERTED: Converting the data back would take too long
