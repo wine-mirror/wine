@@ -531,7 +531,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     /* Internal use: */
     IWineGDISurfaceImpl_LoadTexture,
     IWineGDISurfaceImpl_BindTexture,
-    IWineD3DBaseSurfaceImpl_SetContainer,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,

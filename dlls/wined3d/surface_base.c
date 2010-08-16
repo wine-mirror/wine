@@ -485,19 +485,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("This %p, container %p\n", This, container);
-
-    /* We can't keep a reference to the container, since the container already keeps a reference to us. */
-
-    TRACE("Setting container to %p from %p\n", container, This->container);
-    This->container = container;
-
-    return WINED3D_OK;
-}
-
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     const struct wined3d_format_desc *format_desc = getFormatDescEntry(format,

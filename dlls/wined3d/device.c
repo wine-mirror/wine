@@ -5651,14 +5651,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
 
         if (swapchain->front_buffer)
         {
-            IWineD3DSurface_SetContainer((IWineD3DSurface *)swapchain->front_buffer, NULL);
+            surface_set_container(swapchain->front_buffer, NULL);
             swapchain->front_buffer->Flags &= ~SFLAG_SWAPCHAIN;
         }
         swapchain->front_buffer = front_impl;
 
-        if (front)
+        if (front_impl)
         {
-            IWineD3DSurface_SetContainer(front, (IWineD3DBase *)swapchain);
+            surface_set_container(front_impl, (IWineD3DBase *)swapchain);
             front_impl->Flags |= SFLAG_SWAPCHAIN;
         }
     }
@@ -5669,19 +5669,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
 
         if (swapchain->back_buffers[0])
         {
-            IWineD3DSurface_SetContainer((IWineD3DSurface *)swapchain->back_buffers[0], NULL);
+            surface_set_container(swapchain->back_buffers[0], NULL);
             swapchain->back_buffers[0]->Flags &= ~SFLAG_SWAPCHAIN;
         }
         swapchain->back_buffers[0] = back_impl;
 
-        if (back)
+        if (back_impl)
         {
             swapchain->presentParms.BackBufferWidth = back_impl->currentDesc.Width;
             swapchain->presentParms.BackBufferHeight = back_impl->currentDesc.Height;
             swapchain->presentParms.BackBufferFormat = back_impl->resource.format_desc->format;
             swapchain->presentParms.BackBufferCount = 1;
 
-            IWineD3DSurface_SetContainer(back, (IWineD3DBase *)swapchain);
+            surface_set_container(back_impl, (IWineD3DBase *)swapchain);
             back_impl->Flags |= SFLAG_SWAPCHAIN;
         }
         else

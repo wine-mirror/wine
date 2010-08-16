@@ -92,6 +92,42 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     resource_cleanup((IWineD3DResource *)This);
 }
 
+void surface_set_container(IWineD3DSurfaceImpl *surface, IWineD3DBase *container)
+{
+    IWineD3DSwapChain *swapchain = NULL;
+
+    TRACE("surface %p, container %p.\n", surface, container);
+
+    if (container)
+    {
+        IWineD3DBase_QueryInterface(container, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    }
+    if (swapchain)
+    {
+        surface->get_drawable_size = get_drawable_size_swapchain;
+        IWineD3DSwapChain_Release(swapchain);
+    }
+    else
+    {
+        switch (wined3d_settings.offscreen_rendering_mode)
+        {
+            case ORM_FBO:
+                surface->get_drawable_size = get_drawable_size_fbo;
+                break;
+
+            case ORM_BACKBUFFER:
+                surface->get_drawable_size = get_drawable_size_backbuffer;
+                break;
+
+            default:
+                ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
+                return;
+        }
+    }
+
+    surface->container = container;
+}
+
 struct blt_info
 {
     GLenum binding;
@@ -360,7 +396,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     }
 
     /* "Standalone" surface. */
-    IWineD3DSurface_SetContainer((IWineD3DSurface *)surface, NULL);
+    surface_set_container(surface, NULL);
 
     surface->currentDesc.Width = width;
     surface->currentDesc.Height = height;
@@ -4644,40 +4680,6 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    IWineD3DSwapChain *swapchain = NULL;
-
-    /* Update the drawable size method */
-    if(container) {
-        IWineD3DBase_QueryInterface(container, &IID_IWineD3DSwapChain, (void **) &swapchain);
-    }
-    if(swapchain) {
-        This->get_drawable_size = get_drawable_size_swapchain;
-        IWineD3DSwapChain_Release(swapchain);
-    }
-    else
-    {
-        switch (wined3d_settings.offscreen_rendering_mode)
-        {
-            case ORM_FBO:
-                This->get_drawable_size = get_drawable_size_fbo;
-                break;
-
-            case ORM_BACKBUFFER:
-                This->get_drawable_size = get_drawable_size_backbuffer;
-                break;
-
-            default:
-                ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
-                return WINED3DERR_INVALIDCALL;
-        }
-    }
-
-    return IWineD3DBaseSurfaceImpl_SetContainer(iface, container);
-}
-
 static WINED3DSURFTYPE WINAPI IWineD3DSurfaceImpl_GetImplType(IWineD3DSurface *iface) {
     return SURFACE_OPENGL;
 }
@@ -4764,7 +4766,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     /* Internal use: */
     IWineD3DSurfaceImpl_LoadTexture,
     IWineD3DSurfaceImpl_BindTexture,
-    IWineD3DSurfaceImpl_SetContainer,
     IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,

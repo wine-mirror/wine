@@ -127,7 +127,7 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
             surface_set_texture_name(surface, 0, TRUE);
             surface_set_texture_name(surface, 0, FALSE);
             surface_set_texture_target(surface, 0);
-            IWineD3DSurface_SetContainer((IWineD3DSurface *)surface, NULL);
+            surface_set_container(surface, NULL);
             IWineD3DSurface_Release((IWineD3DSurface *)surface);
         }
     }
@@ -558,7 +558,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
                 return hr;
             }
 
-            IWineD3DSurface_SetContainer(surface, (IWineD3DBase *)texture);
+            surface_set_container((IWineD3DSurfaceImpl *)surface, (IWineD3DBase *)texture);
             surface_set_texture_target((IWineD3DSurfaceImpl *)surface, cube_targets[j]);
             texture->baseTexture.sub_resources[idx] = (IWineD3DResourceImpl *)surface;
             TRACE("Created surface level %u @ %p.\n", i, surface);

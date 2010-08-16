@@ -2087,6 +2087,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface,
         const struct wined3d_gl_info *gl_info, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface,
         unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
+void surface_set_container(IWineD3DSurfaceImpl *surface, IWineD3DBase *container) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(IWineD3DSurfaceImpl *surface, GLenum target) DECLSPEC_HIDDEN;
 void surface_translate_frontbuffer_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
@@ -2115,7 +2116,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface,
         DWORD Flags, const WINEDDCOLORKEY *CKey) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWineD3DBase *container) DECLSPEC_HIDDEN;
 DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LONG X, LONG Y) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LONG *X, LONG *Y) DECLSPEC_HIDDEN;
