@@ -2046,7 +2046,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             return GenericError;
         }
     }
-    else if (image->type == ImageTypeBitmap && ((GpBitmap*)image)->hbitmap)
+    else if (image->type == ImageTypeBitmap)
     {
         GpBitmap* bitmap = (GpBitmap*)image;
         int use_software=0;
@@ -2060,6 +2060,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
         if (imageAttributes ||
             (graphics->image && graphics->image->type == ImageTypeBitmap) ||
+            !((GpBitmap*)image)->hbitmap ||
             ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X)
             use_software = 1;
 
