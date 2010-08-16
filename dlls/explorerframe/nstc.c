@@ -138,6 +138,13 @@ static HRESULT events_OnAfterExpand(NSTC2Impl *This, IShellItem *psi)
     return ret;
 }
 
+static HRESULT events_OnSelectionChanged(NSTC2Impl *This, IShellItemArray *psia)
+{
+    if(!This->pnstce) return S_OK;
+
+    return INameSpaceTreeControlEvents_OnSelectionChanged(This->pnstce, psia);
+}
+
 /*************************************************************************
  * NamespaceTree helper functions
  */
@@ -508,6 +515,26 @@ static LRESULT on_tvn_itemexpandedw(NSTC2Impl *This, LPARAM lParam)
     return TRUE;
 }
 
+static LRESULT on_tvn_selchangedw(NSTC2Impl *This, LPARAM lParam)
+{
+    NMTREEVIEWW *nmtv = (NMTREEVIEWW*)lParam;
+    IShellItemArray *psia;
+    IShellItem *psi;
+    HRESULT hr;
+    TRACE("%p\n", This);
+
+    /* Note: Only supports one selected item. */
+    psi = shellitem_from_treeitem(This, nmtv->itemNew.hItem);
+    hr = SHCreateShellItemArrayFromShellItem(psi, &IID_IShellItemArray, (void**)&psia);
+    if(SUCCEEDED(hr))
+    {
+        events_OnSelectionChanged(This, psia);
+        IShellItemArray_Release(psia);
+    }
+
+    return TRUE;
+}
+
 static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
                                       WPARAM wParam, LPARAM lParam)
 {
@@ -527,6 +554,7 @@ static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
         case TVN_GETDISPINFOW:    return on_tvn_getdispinfow(This, lParam);
         case TVN_ITEMEXPANDINGW:  return on_tvn_itemexpandingw(This, lParam);
         case TVN_ITEMEXPANDEDW:   return on_tvn_itemexpandedw(This, lParam);
+        case TVN_SELCHANGEDW:     return on_tvn_selchangedw(This, lParam);
         default:                  break;
         }
         break;

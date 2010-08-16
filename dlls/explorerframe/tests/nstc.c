@@ -1251,7 +1251,7 @@ static void test_events(void)
     ok(hwnd_tv != NULL, "Failed to get hwnd_tv HWND.\n");
     if(hwnd_tv)
     {
-        HTREEITEM hroot;
+        HTREEITEM hroot, hitem;
 
         /* Test On*Expand */
         hroot = (HTREEITEM)SendMessageW(hwnd_tv, TVM_GETNEXTITEM, TVGN_ROOT, 0);
@@ -1267,6 +1267,13 @@ static void test_events(void)
         ok_no_events(pnstceimpl);
         SendMessage(hwnd_tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)hroot);
         process_msgs();
+        ok_no_events(pnstceimpl);
+
+        /* Test OnSelectionChanged */
+        hitem = (HTREEITEM)SendMessageW(hwnd_tv, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hroot);
+        SendMessageW(hwnd_tv, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hitem);
+        process_msgs();
+        ok_event_count(pnstceimpl, OnSelectionChanged, 1);
         ok_no_events(pnstceimpl);
     }
     else
