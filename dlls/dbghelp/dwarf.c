@@ -1300,6 +1300,8 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
                 /* FIXME: we need to handle nested udt definitions */
             case DW_TAG_inheritance:
             case DW_TAG_subprogram:
+            case DW_TAG_template_type_param:
+            case DW_TAG_template_value_param:
             case DW_TAG_variable:
                 /* FIXME: some C++ related stuff */
                 break;
@@ -1771,6 +1773,8 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
                 /* the type referred to will be loaded when we need it, so skip it */
                 break;
             case DW_TAG_unspecified_parameters:
+            case DW_TAG_template_type_param:
+            case DW_TAG_template_value_param:
                 /* FIXME: no support in dbghelp's internals so far */
                 break;
             default:
