@@ -34,8 +34,11 @@
 #include "wingdi.h"
 #include "winuser.h"
 
+#define COBJMACROS
 #include "x11drv.h"
 #include "shlobj.h"  /* DROPFILES */
+#include "oleidl.h"
+#include "objidl.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -58,6 +61,13 @@ typedef struct tagXDNDDATA
 
 static struct list xdndData = LIST_INIT(xdndData);
 static POINT XDNDxy = { 0, 0 };
+static IDataObject XDNDDataObject;
+static BOOL XDNDAccepted = FALSE;
+static DWORD XDNDDropEffect = DROPEFFECT_NONE;
+/* the last window the mouse was over */
+static HWND XDNDLastTargetWnd;
+/* might be a ancestor of XDNDLastTargetWnd */
+static HWND XDNDLastDropTargetWnd;
 
 static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len);
 static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len);
@@ -81,6 +91,109 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION xdnd_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
+/* Based on functions in dlls/ole32/ole2.c */
+static HANDLE get_droptarget_local_handle(HWND hwnd)
+{
+    static const WCHAR prop_marshalleddroptarget[] =
+        {'W','i','n','e','M','a','r','s','h','a','l','l','e','d','D','r','o','p','T','a','r','g','e','t',0};
+    HANDLE handle;
+    HANDLE local_handle = 0;
+
+    handle = GetPropW(hwnd, prop_marshalleddroptarget);
+    if (handle)
+    {
+        DWORD pid;
+        HANDLE process;
+
+        GetWindowThreadProcessId(hwnd, &pid);
+        process = OpenProcess(PROCESS_DUP_HANDLE, FALSE, pid);
+        if (process)
+        {
+            DuplicateHandle(process, handle, GetCurrentProcess(), &local_handle, 0, FALSE, DUPLICATE_SAME_ACCESS);
+            CloseHandle(process);
+        }
+    }
+    return local_handle;
+}
+
+static HRESULT create_stream_from_map(HANDLE map, IStream **stream)
+{
+    HRESULT hr = E_OUTOFMEMORY;
+    HGLOBAL hmem;
+    void *data;
+    MEMORY_BASIC_INFORMATION info;
+
+    data = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 0);
+    if(!data) return hr;
+
+    VirtualQuery(data, &info, sizeof(info));
+    TRACE("size %d\n", (int)info.RegionSize);
+
+    hmem = GlobalAlloc(GMEM_MOVEABLE, info.RegionSize);
+    if(hmem)
+    {
+        memcpy(GlobalLock(hmem), data, info.RegionSize);
+        GlobalUnlock(hmem);
+        hr = CreateStreamOnHGlobal(hmem, TRUE, stream);
+    }
+    UnmapViewOfFile(data);
+    return hr;
+}
+
+static IDropTarget* get_droptarget_pointer(HWND hwnd)
+{
+    IDropTarget *droptarget = NULL;
+    HANDLE map;
+    IStream *stream;
+
+    map = get_droptarget_local_handle(hwnd);
+    if(!map) return NULL;
+
+    if(SUCCEEDED(create_stream_from_map(map, &stream)))
+    {
+        CoUnmarshalInterface(stream, &IID_IDropTarget, (void**)&droptarget);
+        IStream_Release(stream);
+    }
+    CloseHandle(map);
+    return droptarget;
+}
+
+/**************************************************************************
+ * X11DRV_XDND_XdndActionToDROPEFFECT
+ */
+static DWORD X11DRV_XDND_XdndActionToDROPEFFECT(long action)
+{
+    /* In Windows, nothing but the given effects is allowed.
+     * In X the given action is just a hint, and you can always
+     * XdndActionCopy and XdndActionPrivate, so be more permissive. */
+    if (action == x11drv_atom(XdndActionCopy))
+        return DROPEFFECT_COPY;
+    else if (action == x11drv_atom(XdndActionMove))
+        return DROPEFFECT_MOVE | DROPEFFECT_COPY;
+    else if (action == x11drv_atom(XdndActionLink))
+        return DROPEFFECT_LINK | DROPEFFECT_COPY;
+    else if (action == x11drv_atom(XdndActionAsk))
+        /* FIXME: should we somehow ask the user what to do here? */
+        return DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
+    FIXME("unknown action %ld, assuming DROPEFFECT_COPY\n", action);
+    return DROPEFFECT_COPY;
+}
+
+/**************************************************************************
+ * X11DRV_XDND_DROPEFFECTToXdndAction
+ */
+static long X11DRV_XDND_DROPEFFECTToXdndAction(DWORD effect)
+{
+    if (effect == DROPEFFECT_COPY)
+        return x11drv_atom(XdndActionCopy);
+    else if (effect == DROPEFFECT_MOVE)
+        return x11drv_atom(XdndActionMove);
+    else if (effect == DROPEFFECT_LINK)
+        return x11drv_atom(XdndActionLink);
+    FIXME("unknown drop effect %u, assuming XdndActionCopy\n", effect);
+    return x11drv_atom(XdndActionCopy);
+}
+
 /**************************************************************************
  * X11DRV_XDND_EnterEvent
  *
@@ -103,6 +216,8 @@ void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event )
         TRACE("Ignores unsupported version\n");
         return;
     }
+
+    XDNDAccepted = FALSE;
 
     /* If the source supports more than 3 data types we retrieve
      * the entire list. */
@@ -159,12 +274,79 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
 {
     XClientMessageEvent e;
     int accept = 0; /* Assume we're not accepting */
+    IDropTarget *dropTarget = NULL;
+    DWORD effect;
+    POINTL pointl;
+    HWND targetWindow;
+    HRESULT hr;
 
     XDNDxy.x = event->data.l[2] >> 16;
     XDNDxy.y = event->data.l[2] & 0xFFFF;
+    targetWindow = WindowFromPoint(XDNDxy);
 
-    /* FIXME: Notify OLE of DragEnter. Result determines if we accept */
+    pointl.x = XDNDxy.x;
+    pointl.y = XDNDxy.y;
+    effect = X11DRV_XDND_XdndActionToDROPEFFECT(event->data.l[4]);
 
+    if (!XDNDAccepted || XDNDLastTargetWnd != targetWindow)
+    {
+        /* Notify OLE of DragEnter. Result determines if we accept */
+        HWND dropTargetWindow;
+
+        if (XDNDLastDropTargetWnd)
+        {
+            dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
+            if (dropTarget)
+            {
+                hr = IDropTarget_DragLeave(dropTarget);
+                if (FAILED(hr))
+                    WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
+                IDropTarget_Release(dropTarget);
+            }
+        }
+        dropTargetWindow = targetWindow;
+        do
+        {
+            dropTarget = get_droptarget_pointer(dropTargetWindow);
+        } while (dropTarget == NULL && (dropTargetWindow = GetParent(dropTargetWindow)) != NULL);
+        XDNDLastTargetWnd = targetWindow;
+        XDNDLastDropTargetWnd = dropTargetWindow;
+        if (dropTarget)
+        {
+            hr = IDropTarget_DragEnter(dropTarget, &XDNDDataObject,
+                                       MK_LBUTTON, pointl, &effect);
+            if (SUCCEEDED(hr))
+            {
+                if (effect != DROPEFFECT_NONE)
+                {
+                    XDNDAccepted = TRUE;
+                    TRACE("the application accepted the drop\n");
+                }
+                else
+                    TRACE("the application refused the drop\n");
+            }
+            else
+                WARN("IDropTarget_DragEnter failed, error 0x%08X\n", hr);
+            IDropTarget_Release(dropTarget);
+        }
+    }
+    if (XDNDAccepted && XDNDLastTargetWnd == targetWindow)
+    {
+        /* If drag accepted notify OLE of DragOver */
+        dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
+        if (dropTarget)
+        {
+            hr = IDropTarget_DragOver(dropTarget, MK_LBUTTON, pointl, &effect);
+            if (SUCCEEDED(hr))
+                XDNDDropEffect = effect;
+            else
+                WARN("IDropTarget_DragOver failed, error 0x%08X\n", hr);
+            IDropTarget_Release(dropTarget);
+        }
+    }
+
+    if (XDNDAccepted)
+        accept = 1;
     if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
         accept = 1;
 
@@ -185,14 +367,12 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
     e.data.l[2] = 0; /* Empty Rect */
     e.data.l[3] = 0; /* Empty Rect */
     if (accept)
-        e.data.l[4] = event->data.l[4];
+        e.data.l[4] = X11DRV_XDND_DROPEFFECTToXdndAction(effect);
     else
         e.data.l[4] = None;
     wine_tsx11_lock();
     XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
     wine_tsx11_unlock();
-
-    /* FIXME: if drag accepted notify OLE of DragOver */
 }
 
 /**************************************************************************
@@ -203,6 +383,7 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
 void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
 {
     XClientMessageEvent e;
+    IDropTarget *dropTarget;
 
     TRACE("\n");
 
@@ -210,7 +391,30 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
         X11DRV_XDND_SendDropFiles( hWnd );
 
-    /* FIXME: Notify OLE of Drop */
+    /* Notify OLE of Drop */
+    dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
+    if (dropTarget)
+    {
+        HRESULT hr;
+        POINTL pointl;
+        DWORD effect = XDNDDropEffect;
+
+        pointl.x = XDNDxy.x;
+        pointl.y = XDNDxy.y;
+        hr = IDropTarget_Drop(dropTarget, &XDNDDataObject, MK_LBUTTON,
+                              pointl, &effect);
+        if (SUCCEEDED(hr))
+        {
+            if (effect != DROPEFFECT_NONE)
+                TRACE("drop succeeded\n");
+            else
+                TRACE("the application refused the drop\n");
+        }
+        else
+            WARN("drop failed, error 0x%08X\n", hr);
+        IDropTarget_Release(dropTarget);
+    }
+
     X11DRV_XDND_FreeDragDropOp();
 
     /* Tell the target we are finished. */
@@ -233,11 +437,21 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
  */
 void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
 {
+    IDropTarget *dropTarget;
+
     TRACE("DND Operation canceled\n");
 
-    X11DRV_XDND_FreeDragDropOp();
+    /* Notify OLE of DragLeave */
+    dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
+    if (dropTarget)
+    {
+        HRESULT hr = IDropTarget_DragLeave(dropTarget);
+        if (FAILED(hr))
+            WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
+        IDropTarget_Release(dropTarget);
+    }
 
-    /* FIXME: Notify OLE of DragLeave */
+    X11DRV_XDND_FreeDragDropOp();
 }
 
 
@@ -566,6 +780,9 @@ static void X11DRV_XDND_FreeDragDropOp(void)
     }
 
     XDNDxy.x = XDNDxy.y = 0;
+    XDNDLastTargetWnd = NULL;
+    XDNDLastDropTargetWnd = NULL;
+    XDNDAccepted = FALSE;
 
     LeaveCriticalSection(&xdnd_cs);
 }
@@ -685,3 +902,122 @@ static WCHAR* X11DRV_XDND_URIToDOS(char *encodedURI)
     HeapFree(GetProcessHeap(), 0, uri);
     return ret;
 }
+
+/* The IDataObject singleton we feed to OLE follows */
+
+static HRESULT WINAPI XDNDDATAOBJECT_QueryInterface(IDataObject *dataObject,
+                                                    REFIID riid, void **ppvObject)
+{
+    TRACE("(%p, %s, %p)\n", dataObject, debugstr_guid(riid), ppvObject);
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDataObject))
+    {
+        *ppvObject = dataObject;
+        IDataObject_AddRef(dataObject);
+        return S_OK;
+    }
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI XDNDDATAOBJECT_AddRef(IDataObject *dataObject)
+{
+    TRACE("(%p)\n", dataObject);
+    return 2;
+}
+
+static ULONG WINAPI XDNDDATAOBJECT_Release(IDataObject *dataObject)
+{
+    TRACE("(%p)\n", dataObject);
+    return 1;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_GetData(IDataObject *dataObject,
+                                             FORMATETC *formatEtc,
+                                             STGMEDIUM *pMedium)
+{
+    FIXME("(%p, %p, %p): stub\n", dataObject, formatEtc, pMedium);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_GetDataHere(IDataObject *dataObject,
+                                                 FORMATETC *formatEtc,
+                                                 STGMEDIUM *pMedium)
+{
+    FIXME("(%p, %p, %p): stub\n", dataObject, formatEtc, pMedium);
+    return DATA_E_FORMATETC;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_QueryGetData(IDataObject *dataObject,
+                                                  FORMATETC *formatEtc)
+{
+    FIXME("(%p, %p): stub\n", dataObject, formatEtc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_GetCanonicalFormatEtc(IDataObject *dataObject,
+                                                           FORMATETC *formatEtc,
+                                                           FORMATETC *formatEtcOut)
+{
+    FIXME("(%p, %p, %p): stub\n", dataObject, formatEtc, formatEtcOut);
+    formatEtcOut->ptd = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_SetData(IDataObject *dataObject,
+                                             FORMATETC *formatEtc,
+                                             STGMEDIUM *pMedium, BOOL fRelease)
+{
+    FIXME("(%p, %p, %p, %s): stub\n", dataObject, formatEtc,
+        pMedium, fRelease?"TRUE":"FALSE");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_EnumFormatEtc(IDataObject *dataObject,
+                                                   DWORD dwDirection,
+                                                   IEnumFORMATETC **ppEnumFormatEtc)
+{
+    FIXME("(%p, %u, %p): stub\n", dataObject, dwDirection, ppEnumFormatEtc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_DAdvise(IDataObject *dataObject,
+                                             FORMATETC *formatEtc, DWORD advf,
+                                             IAdviseSink *adviseSink,
+                                             DWORD *pdwConnection)
+{
+    FIXME("(%p, %p, %u, %p, %p): stub\n", dataObject, formatEtc, advf,
+        adviseSink, pdwConnection);
+    return OLE_E_ADVISENOTSUPPORTED;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_DUnadvise(IDataObject *dataObject,
+                                               DWORD dwConnection)
+{
+    FIXME("(%p, %u): stub\n", dataObject, dwConnection);
+    return OLE_E_ADVISENOTSUPPORTED;
+}
+
+static HRESULT WINAPI XDNDDATAOBJECT_EnumDAdvise(IDataObject *dataObject,
+                                                 IEnumSTATDATA **pEnumAdvise)
+{
+    FIXME("(%p, %p): stub\n", dataObject, pEnumAdvise);
+    return OLE_E_ADVISENOTSUPPORTED;
+}
+
+static IDataObjectVtbl xdndDataObjectVtbl =
+{
+    XDNDDATAOBJECT_QueryInterface,
+    XDNDDATAOBJECT_AddRef,
+    XDNDDATAOBJECT_Release,
+    XDNDDATAOBJECT_GetData,
+    XDNDDATAOBJECT_GetDataHere,
+    XDNDDATAOBJECT_QueryGetData,
+    XDNDDATAOBJECT_GetCanonicalFormatEtc,
+    XDNDDATAOBJECT_SetData,
+    XDNDDATAOBJECT_EnumFormatEtc,
+    XDNDDATAOBJECT_DAdvise,
+    XDNDDATAOBJECT_DUnadvise,
+    XDNDDATAOBJECT_EnumDAdvise
+};
+
+static IDataObject XDNDDataObject = { &xdndDataObjectVtbl };
