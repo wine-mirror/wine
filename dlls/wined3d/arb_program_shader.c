@@ -7144,7 +7144,8 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
      * Also beware of the origin difference(top left vs bottom left).
      * Also beware that the front buffer's surface size is screen width x screen height,
      * whereas the real gl drawable size is the size of the window. */
-    dst_swapchain = (dst_surface->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)dst_surface->container : NULL;
+    dst_swapchain = dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            ? dst_surface->container.u.swapchain : NULL;
     if (dst_swapchain && dst_surface == dst_swapchain->front_buffer)
         surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
 

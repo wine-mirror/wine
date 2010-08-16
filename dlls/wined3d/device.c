@@ -804,8 +804,8 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
 
     LEAVE_GL();
 
-    if (wined3d_settings.strict_draw_ordering || ((target->Flags & SFLAG_SWAPCHAIN)
-            && ((IWineD3DSwapChainImpl *)target->container)->front_buffer == target))
+    if (wined3d_settings.strict_draw_ordering || (target->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            && target->container.u.swapchain->front_buffer == target))
         wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
@@ -5651,14 +5651,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
 
         if (swapchain->front_buffer)
         {
-            surface_set_container(swapchain->front_buffer, NULL);
+            surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
             swapchain->front_buffer->Flags &= ~SFLAG_SWAPCHAIN;
         }
         swapchain->front_buffer = front_impl;
 
         if (front_impl)
         {
-            surface_set_container(front_impl, (IWineD3DBase *)swapchain);
+            surface_set_container(front_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
             front_impl->Flags |= SFLAG_SWAPCHAIN;
         }
     }
@@ -5669,7 +5669,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
 
         if (swapchain->back_buffers[0])
         {
-            surface_set_container(swapchain->back_buffers[0], NULL);
+            surface_set_container(swapchain->back_buffers[0], WINED3D_CONTAINER_TEXTURE, NULL);
             swapchain->back_buffers[0]->Flags &= ~SFLAG_SWAPCHAIN;
         }
         swapchain->back_buffers[0] = back_impl;
@@ -5681,7 +5681,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
             swapchain->presentParms.BackBufferFormat = back_impl->resource.format_desc->format;
             swapchain->presentParms.BackBufferCount = 1;
 
-            surface_set_container(back_impl, (IWineD3DBase *)swapchain);
+            surface_set_container(back_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
             back_impl->Flags |= SFLAG_SWAPCHAIN;
         }
         else

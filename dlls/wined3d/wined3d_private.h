@@ -2000,6 +2000,23 @@ typedef struct IWineD3DClipperImpl
     HWND hWnd;
 } IWineD3DClipperImpl;
 
+enum wined3d_container_type
+{
+    WINED3D_CONTAINER_NONE = 0,
+    WINED3D_CONTAINER_SWAPCHAIN,
+    WINED3D_CONTAINER_TEXTURE,
+};
+
+struct wined3d_subresource_container
+{
+    enum wined3d_container_type type;
+    union
+    {
+        struct IWineD3DBase *base;
+        struct IWineD3DSwapChainImpl *swapchain;
+        struct IWineD3DBaseTextureImpl *texture;
+    } u;
+};
 
 /*****************************************************************************
  * IWineD3DSurface implementation structure
@@ -2011,7 +2028,7 @@ struct IWineD3DSurfaceImpl
     IWineD3DResourceClass     resource;
 
     /* IWineD3DSurface fields */
-    IWineD3DBase              *container;
+    struct wined3d_subresource_container container;
     WINED3DSURFACET_DESC      currentDesc;
     IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */
     PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
@@ -2087,7 +2104,8 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface,
         const struct wined3d_gl_info *gl_info, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface,
         unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
-void surface_set_container(IWineD3DSurfaceImpl *surface, IWineD3DBase *container) DECLSPEC_HIDDEN;
+void surface_set_container(IWineD3DSurfaceImpl *surface,
+        enum wined3d_container_type type, IWineD3DBase *container) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(IWineD3DSurfaceImpl *surface, GLenum target) DECLSPEC_HIDDEN;
 void surface_translate_frontbuffer_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;

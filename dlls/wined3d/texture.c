@@ -119,7 +119,7 @@ static void texture_cleanup(IWineD3DTextureImpl *This)
             surface_set_texture_name(surface, 0, TRUE);
             surface_set_texture_name(surface, 0, FALSE);
             surface_set_texture_target(surface, 0);
-            surface_set_container(surface, NULL);
+            surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
             IWineD3DSurface_Release((IWineD3DSurface *)surface);
         }
     }
@@ -611,7 +611,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
             return hr;
         }
 
-        surface_set_container((IWineD3DSurfaceImpl *)surface, (IWineD3DBase *)texture);
+        surface_set_container((IWineD3DSurfaceImpl *)surface, WINED3D_CONTAINER_TEXTURE, (IWineD3DBase *)texture);
         surface_set_texture_target((IWineD3DSurfaceImpl *)surface, texture->target);
         texture->baseTexture.sub_resources[i] = (IWineD3DResourceImpl *)surface;
         TRACE("Created surface level %u @ %p.\n", i, surface);

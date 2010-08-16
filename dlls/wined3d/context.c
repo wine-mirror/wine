@@ -1898,7 +1898,6 @@ static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *
  *****************************************************************************/
 static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target)
 {
-    IWineD3DSwapChain *swapchain = NULL;
     struct wined3d_context *current_context = context_get_current();
     DWORD tid = GetCurrentThreadId();
     struct wined3d_context *context;
@@ -1927,11 +1926,13 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
         return current_context;
     }
 
-    if (target->Flags & SFLAG_SWAPCHAIN)
+    if (target->container.type == WINED3D_CONTAINER_SWAPCHAIN)
     {
+        IWineD3DSwapChain *swapchain;
+
         TRACE("Rendering onscreen\n");
 
-        swapchain = (IWineD3DSwapChain *)target->container;
+        swapchain = (IWineD3DSwapChain *)target->container.u.swapchain;
         context = findThreadContextForSwapChain(swapchain, tid);
     }
     else
@@ -2078,7 +2079,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
         struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)context->current_rt->container;
+    IWineD3DSwapChainImpl *swapchain = context->current_rt->container.u.swapchain;
 
     if (context->render_offscreen || !depth_stencil) return;
     if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format_desc)) return;

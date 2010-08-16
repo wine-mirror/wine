@@ -48,7 +48,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
      * the last buffer to be destroyed, FindContext() depends on that. */
     if (This->front_buffer)
     {
-        surface_set_container(This->front_buffer, NULL);
+        surface_set_container(This->front_buffer, WINED3D_CONTAINER_NONE, NULL);
         if (IWineD3DSurface_Release((IWineD3DSurface *)This->front_buffer))
         {
             WARN("(%p) Something's still holding the front buffer (%p).\n",
@@ -63,7 +63,7 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 
         while (i--)
         {
-            surface_set_container(This->back_buffers[i], NULL);
+            surface_set_container(This->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
             if (IWineD3DSurface_Release((IWineD3DSurface *)This->back_buffers[i]))
                 WARN("(%p) Something's still holding back buffer %u (%p).\n",
                         This, i, This->back_buffers[i]);
@@ -731,7 +731,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
         goto err;
     }
 
-    surface_set_container(swapchain->front_buffer, (IWineD3DBase *)swapchain);
+    surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
     swapchain->front_buffer->Flags |= SFLAG_SWAPCHAIN;
     if (surface_type == SURFACE_OPENGL)
     {
@@ -847,7 +847,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
                 goto err;
             }
 
-            surface_set_container(swapchain->back_buffers[i], (IWineD3DBase *)swapchain);
+            surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
             swapchain->back_buffers[i]->Flags |= SFLAG_SWAPCHAIN;
         }
     }
@@ -869,7 +869,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
                 goto err;
             }
 
-            surface_set_container(device->auto_depth_stencil, NULL);
+            surface_set_container(device->auto_depth_stencil, WINED3D_CONTAINER_NONE, NULL);
         }
     }
 

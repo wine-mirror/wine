@@ -92,20 +92,13 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     resource_cleanup((IWineD3DResource *)This);
 }
 
-void surface_set_container(IWineD3DSurfaceImpl *surface, IWineD3DBase *container)
+void surface_set_container(IWineD3DSurfaceImpl *surface, enum wined3d_container_type type, IWineD3DBase *container)
 {
-    IWineD3DSwapChain *swapchain = NULL;
-
     TRACE("surface %p, container %p.\n", surface, container);
 
-    if (container)
-    {
-        IWineD3DBase_QueryInterface(container, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    }
-    if (swapchain)
+    if (type == WINED3D_CONTAINER_SWAPCHAIN)
     {
         surface->get_drawable_size = get_drawable_size_swapchain;
-        IWineD3DSwapChain_Release(swapchain);
     }
     else
     {
@@ -125,7 +118,8 @@ void surface_set_container(IWineD3DSurfaceImpl *surface, IWineD3DBase *container
         }
     }
 
-    surface->container = container;
+    surface->container.type = type;
+    surface->container.u.base = container;
 }
 
 struct blt_info
@@ -396,7 +390,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     }
 
     /* "Standalone" surface. */
-    surface_set_container(surface, NULL);
+    surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
 
     surface->currentDesc.Width = width;
     surface->currentDesc.Height = height;
@@ -928,11 +922,11 @@ void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, unsigned 
 
 GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)surface->container;
+    IWineD3DSwapChainImpl *swapchain = surface->container.u.swapchain;
 
     TRACE("surface %p.\n", surface);
 
-    if (!(surface->Flags & SFLAG_SWAPCHAIN))
+    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
     {
         ERR("Surface %p is not on a swapchain.\n", surface);
         return GL_NONE;
@@ -4359,7 +4353,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         dst_rect = src_rect;
     }
 
-    if ((This->Flags & SFLAG_SWAPCHAIN) && This == ((IWineD3DSwapChainImpl *)This->container)->front_buffer)
+    swapchain = This->container.type == WINED3D_CONTAINER_SWAPCHAIN ? This->container.u.swapchain : NULL;
+    if (swapchain && This == swapchain->front_buffer)
         surface_translate_frontbuffer_coords(This, context->win_handle, &dst_rect);
 
     device->blitter->set_shader((IWineD3DDevice *) device, This);
@@ -4370,7 +4365,6 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     device->blitter->unset_shader((IWineD3DDevice *) device);
 
-    swapchain = (This->Flags & SFLAG_SWAPCHAIN) ? (IWineD3DSwapChainImpl *)This->container : NULL;
     if (wined3d_settings.strict_draw_ordering || (swapchain
             && (This == swapchain->front_buffer || swapchain->num_contexts > 1)))
         wglFlush(); /* Flush to ensure ordering across contexts. */
@@ -4708,10 +4702,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
 
 BOOL surface_is_offscreen(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)surface->container;
+    IWineD3DSwapChainImpl *swapchain = surface->container.u.swapchain;
 
     /* Not on a swapchain - must be offscreen */
-    if (!(surface->Flags & SFLAG_SWAPCHAIN)) return TRUE;
+    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN) return TRUE;
 
     /* The front buffer is always onscreen */
     if (surface == swapchain->front_buffer) return FALSE;
