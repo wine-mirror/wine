@@ -2065,10 +2065,8 @@ static HRESULT in_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *obj, jsexcept_t 
     BSTR str;
     HRESULT hres;
 
-    if(V_VT(obj) != VT_DISPATCH) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(V_VT(obj) != VT_DISPATCH || !V_DISPATCH(obj))
+        return throw_type_error(ctx->parser->script, ei, IDS_OBJECT_EXPECTED, NULL);
 
     hres = to_string(ctx->parser->script, lval, ei, &str);
     if(FAILED(hres))
