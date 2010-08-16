@@ -761,7 +761,7 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
                 Flags, Flags ? V_VT(Flags) : -1, TargetFrameName,
                 TargetFrameName ? V_VT(TargetFrameName) : -1);
 
-    if(PostData && V_VT(PostData) == (VT_ARRAY | VT_UI1)) {
+    if(PostData && V_VT(PostData) == (VT_ARRAY | VT_UI1) && V_ARRAY(PostData)) {
         SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
         post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
     }
