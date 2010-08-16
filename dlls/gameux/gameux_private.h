@@ -19,3 +19,4 @@
  */
 
 extern HRESULT GameExplorer_create(IUnknown* pUnkOuter, IUnknown **ppObj);
+extern HRESULT GameStatistics_create(IUnknown* pUnkOuter, IUnknown **ppObj);

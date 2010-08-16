@@ -464,6 +464,15 @@ static struct regsvr_coclass const coclass_list[] = {
         "gameux.GameExplorer.1",
         "1.0",
     },
+    {
+        &CLSID_GameStatistics,
+        "GameStatistics Class",
+        NULL,
+        "gameux.dll",
+        "Apartment",
+        "gameux.GameStatistics.1",
+        "1,0",
+    },
     { NULL }            /* list terminator */
 };
 

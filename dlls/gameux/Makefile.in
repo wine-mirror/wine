@@ -9,6 +9,7 @@ IMPORTS   = uuid ole32 user32 advapi32
 C_SRCS = \
 	factory.c \
 	gameexplorer.c \
+	gamestatistics.c \
 	main.c \
 	regsvr.c
 

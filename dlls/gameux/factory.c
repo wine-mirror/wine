@@ -131,6 +131,7 @@ static const struct IClassFactoryVtbl gameuxcf_vtbl =
 };
 
 static gameuxcf gameexplorercf = { &gameuxcf_vtbl, GameExplorer_create };
+static gameuxcf gamestatisticscf  = { &gameuxcf_vtbl, GameStatistics_create };
 
 /***************************************************************
  * gameux ClassFactory
@@ -147,6 +148,10 @@ HRESULT WINAPI DllGetClassObject(
     if(IsEqualCLSID(rclsid, &CLSID_GameExplorer))
     {
         cf = (IClassFactory*)&gameexplorercf.lpVtbl;
+    }
+    else if( IsEqualCLSID( rclsid, &CLSID_GameStatistics ))
+    {
+        cf = (IClassFactory*) &gamestatisticscf.lpVtbl;
     }
 
     if(!cf)
