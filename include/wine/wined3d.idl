@@ -2522,9 +2522,6 @@ interface IWineD3DVolume : IWineD3DResource
         [in] int gl_level,
         [in] BOOL srgb_mode
     );
-    HRESULT SetContainer(
-        [in] IWineD3DBase *container
-    );
 }
 
 [

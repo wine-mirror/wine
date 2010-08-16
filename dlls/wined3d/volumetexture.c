@@ -85,13 +85,13 @@ static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
 
     for (i = 0; i < This->baseTexture.level_count; ++i)
     {
-        IWineD3DVolume *volume = (IWineD3DVolume *)This->baseTexture.sub_resources[i];
+        IWineD3DVolumeImpl *volume = (IWineD3DVolumeImpl *)This->baseTexture.sub_resources[i];
 
         if (volume)
         {
             /* Cleanup the container. */
-            IWineD3DVolume_SetContainer(volume, NULL);
-            IWineD3DVolume_Release(volume);
+            volume_set_container(volume, NULL);
+            IWineD3DVolume_Release((IWineD3DVolume *)volume);
         }
     }
     basetexture_cleanup((IWineD3DBaseTexture *)This);
@@ -466,7 +466,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
         }
 
         /* Set its container to this texture. */
-        IWineD3DVolume_SetContainer(volume, (IWineD3DBase *)texture);
+        volume_set_container((IWineD3DVolumeImpl *)volume, (IWineD3DBase *)texture);
         texture->baseTexture.sub_resources[i] = (IWineD3DResourceImpl *)volume;
 
         /* Calculate the next mipmap level. */

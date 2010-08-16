@@ -93,6 +93,13 @@ void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box)
     }
 }
 
+void volume_set_container(IWineD3DVolumeImpl *volume, IWineD3DBase *container)
+{
+    TRACE("volume %p, container %p.\n", volume, container);
+
+    volume->container = container;
+}
+
 /* *******************************************
    IWineD3DVolume IUnknown parts follow
    ******************************************* */
@@ -301,19 +308,6 @@ static HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
 
 /* Internal use functions follow : */
 
-static HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IWineD3DBase* container) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-
-    TRACE("This %p, container %p\n", This, container);
-
-    /* We can't keep a reference to the container, since the container already keeps a reference to us. */
-
-    TRACE("Setting container to %p from %p\n", container, This->container);
-    This->container = container;
-
-    return WINED3D_OK;
-}
-
 /* Context activation is done by the caller. */
 static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int gl_level, BOOL srgb_mode)
 {
@@ -382,7 +376,6 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_UnlockBox,
     /* Internal interface */
     IWineD3DVolumeImpl_LoadTexture,
-    IWineD3DVolumeImpl_SetContainer
 };
 
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,

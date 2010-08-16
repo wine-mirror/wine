@@ -1935,6 +1935,7 @@ void volume_add_dirty_box(IWineD3DVolume *iface, const WINED3DBOX *dirty_box) DE
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
         UINT height, UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
         IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void volume_set_container(IWineD3DVolumeImpl *volume, IWineD3DBase *container) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IWineD3DVolumeTexture implementation structure (extends IWineD3DBaseTextureImpl)
