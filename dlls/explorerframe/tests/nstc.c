@@ -160,6 +160,8 @@ static HRESULT WINAPI NSTCEvents_fnOnKeyboardInput(
     LPARAM lParam)
 {
     NSTCE_IMPL(iface)->count[OnKeyboardInput]++;
+    ok(wParam == 0x1234, "Got unexpected wParam %lx\n", wParam);
+    ok(lParam == 0x1234, "Got unexpected lParam %lx\n", lParam);
     return E_NOTIMPL;
 }
 
@@ -1252,6 +1254,12 @@ static void test_events(void)
     if(hwnd_tv)
     {
         HTREEITEM hroot, hitem;
+        UINT i;
+        static const UINT kbd_msgs_event[] = {
+            WM_KEYDOWN, WM_KEYUP, WM_CHAR, WM_SYSKEYDOWN, WM_SYSKEYUP,
+            WM_SYSCHAR, 0 };
+        static const UINT kbd_msgs_noevent[] ={
+            WM_DEADCHAR, WM_SYSDEADCHAR, WM_UNICHAR, 0 };
 
         /* Test On*Expand */
         hroot = (HTREEITEM)SendMessageW(hwnd_tv, TVM_GETNEXTITEM, TVGN_ROOT, 0);
@@ -1274,6 +1282,26 @@ static void test_events(void)
         SendMessageW(hwnd_tv, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hitem);
         process_msgs();
         ok_event_count(pnstceimpl, OnSelectionChanged, 1);
+        ok_no_events(pnstceimpl);
+
+        /* Test OnKeyboardInput */
+        for(i = 0; kbd_msgs_event[i] != 0; i++)
+        {
+            SendMessageW(hwnd_tv, kbd_msgs_event[i], 0x1234, 0x1234);
+            ok(pnstceimpl->count[OnKeyboardInput] == 1,
+               "%d (%x): Got count %d\n",
+               kbd_msgs_event[i], kbd_msgs_event[i], pnstceimpl->count[OnKeyboardInput]);
+            pnstceimpl->count[OnKeyboardInput] = 0;
+        }
+
+        for(i = 0; kbd_msgs_noevent[i] != 0; i++)
+        {
+            SendMessageW(hwnd_tv, kbd_msgs_noevent[i], 0x1234, 0x1234);
+            ok(pnstceimpl->count[OnKeyboardInput] == 0,
+               "%d (%x): Got count %d\n",
+               kbd_msgs_noevent[i], kbd_msgs_noevent[i], pnstceimpl->count[OnKeyboardInput]);
+            pnstceimpl->count[OnKeyboardInput] = 0;
+        }
         ok_no_events(pnstceimpl);
     }
     else

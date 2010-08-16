@@ -54,6 +54,8 @@ typedef struct {
     HWND hwnd_main;
     HWND hwnd_tv;
 
+    WNDPROC tv_oldwndproc;
+
     NSTCSTYLE style;
     NSTCSTYLE2 style2;
     struct list roots;
@@ -68,6 +70,9 @@ static const DWORD unsupported_styles =
 static const DWORD unsupported_styles2 =
     NSTCS2_INTERRUPTNOTIFICATIONS | NSTCS2_SHOWNULLSPACEMENU | NSTCS2_DISPLAYPADDING |
     NSTCS2_DISPLAYPINNEDONLY | NTSCS2_NOSINGLETONAUTOEXPAND | NTSCS2_NEVERINSERTNONENUMERATED;
+
+/* Forward declarations */
+static LRESULT CALLBACK tv_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
 /*************************************************************************
 * NamespaceTree event wrappers
@@ -143,6 +148,13 @@ static HRESULT events_OnSelectionChanged(NSTC2Impl *This, IShellItemArray *psia)
     if(!This->pnstce) return S_OK;
 
     return INameSpaceTreeControlEvents_OnSelectionChanged(This->pnstce, psia);
+}
+
+static HRESULT events_OnKeyboardInput(NSTC2Impl *This, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if(!This->pnstce) return S_OK;
+
+    return INameSpaceTreeControlEvents_OnKeyboardInput(This->pnstce, uMsg, wParam, lParam);
 }
 
 /*************************************************************************
@@ -325,6 +337,16 @@ static UINT fill_sublevel(NSTC2Impl *This, HTREEITEM hitem)
     return added;
 }
 
+static HTREEITEM get_selected_treeitem(NSTC2Impl *This)
+{
+    return (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM, TVGN_CARET, 0);
+}
+
+static IShellItem *get_selected_shellitem(NSTC2Impl *This)
+{
+    return shellitem_from_treeitem(This, get_selected_treeitem(This));
+}
+
 /*************************************************************************
  * NamespaceTree window functions
  */
@@ -378,6 +400,12 @@ static LRESULT create_namespacetree(HWND hWnd, CREATESTRUCTW *crs)
 
     INameSpaceTreeControl_AddRef((INameSpaceTreeControl*)This);
 
+    /* Subclass the treeview to get the keybord events. */
+    This->tv_oldwndproc = (WNDPROC)SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC,
+                                                     (ULONG_PTR)tv_wndproc);
+    if(This->tv_oldwndproc)
+        SetPropA(This->hwnd_tv, "PROP_THIS", This);
+
     return TRUE;
 }
 
@@ -395,6 +423,13 @@ static LRESULT resize_namespacetree(NSTC2Impl *This)
 static LRESULT destroy_namespacetree(NSTC2Impl *This)
 {
     TRACE("%p\n", This);
+
+    /* Undo the subclassing */
+    if(This->tv_oldwndproc)
+    {
+        SetWindowLongPtrW(This->hwnd_tv, GWLP_WNDPROC, (ULONG_PTR)This->tv_oldwndproc);
+        RemovePropA(This->hwnd_tv, "PROP_THIS");
+    }
 
     INameSpaceTreeControl_RemoveAllRoots((INameSpaceTreeControl*)This);
 
@@ -533,6 +568,56 @@ static LRESULT on_tvn_selchangedw(NSTC2Impl *This, LPARAM lParam)
     }
 
     return TRUE;
+}
+
+static LRESULT on_kbd_event(NSTC2Impl *This, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    IShellItem *psi;
+    HTREEITEM hitem;
+    TRACE("%p : %d, %lx, %lx\n", This, uMsg, wParam, lParam);
+
+    /* Handled by the client? */
+    if(FAILED(events_OnKeyboardInput(This, uMsg, wParam, lParam)))
+        return TRUE;
+
+    if(uMsg == WM_KEYDOWN)
+    {
+        switch(wParam)
+        {
+        case VK_DELETE:
+            psi = get_selected_shellitem(This);
+            FIXME("Deletion of file requested (shellitem: %p).\n", psi);
+            return TRUE;
+
+        case VK_F2:
+            hitem = get_selected_treeitem(This);
+            SendMessageW(This->hwnd_tv, TVM_EDITLABELW, 0, (LPARAM)hitem);
+            return TRUE;
+        }
+    }
+
+    /* Let the TreeView handle the key */
+    return FALSE;
+}
+
+static LRESULT CALLBACK tv_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+    NSTC2Impl *This = (NSTC2Impl*)GetPropA(hWnd, "PROP_THIS");
+
+    switch(uMessage) {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_CHAR:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+    case WM_SYSCHAR:
+        if(on_kbd_event(This, uMessage, wParam, lParam))
+            return TRUE;
+        break;
+    }
+
+    /* Pass the message on to the treeview */
+    return CallWindowProcW(This->tv_oldwndproc, hWnd, uMessage, wParam, lParam);
 }
 
 static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
