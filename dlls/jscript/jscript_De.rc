@@ -28,6 +28,7 @@ STRINGTABLE
     IDS_INVALID_CALL_ARG    "Ungültiger Funktionsaufruf oder Argument"
     IDS_CREATE_OBJ_ERROR    "Automatisierungsserver konnte das Objekt nicht erstellen"
     IDS_NO_PROPERTY         "Das Objekt unterstützt diese Eigenschaft oder Methode nicht"
+    IDS_UNSUPPORTED_ACTION  "Das Objekt unterstützt diese Aktion nicht"
     IDS_ARG_NOT_OPT         "Argument nicht optional"
     IDS_SYNTAX_ERROR        "Syntax Fehler"
     IDS_SEMICOLON           "';' erwartet"
