@@ -112,6 +112,32 @@ static HRESULT events_OnItemDeleted(NSTC2Impl *This, IShellItem *psi, BOOL fIsRo
     return ret;
 }
 
+static HRESULT events_OnBeforeExpand(NSTC2Impl *This, IShellItem *psi)
+{
+    HRESULT ret;
+    LONG refcount;
+    if(!This->pnstce) return S_OK;
+
+    refcount = IShellItem_AddRef(psi);
+    ret = INameSpaceTreeControlEvents_OnBeforeExpand(This->pnstce, psi);
+    if(IShellItem_Release(psi) < refcount - 1)
+        ERR("ShellItem was released by client - please file a bug.\n");
+    return ret;
+}
+
+static HRESULT events_OnAfterExpand(NSTC2Impl *This, IShellItem *psi)
+{
+    HRESULT ret;
+    LONG refcount;
+    if(!This->pnstce) return S_OK;
+
+    refcount = IShellItem_AddRef(psi);
+    ret = INameSpaceTreeControlEvents_OnAfterExpand(This->pnstce, psi);
+    if(IShellItem_Release(psi) < refcount - 1)
+        ERR("ShellItem was released by client - please file a bug.\n");
+    return ret;
+}
+
 /*************************************************************************
  * NamespaceTree helper functions
  */
@@ -176,6 +202,25 @@ static IShellItem *shellitem_from_treeitem(NSTC2Impl *This, HTREEITEM hitem)
     return (IShellItem*)tvi.lParam;
 }
 
+/* Returns the root that the given treeitem belongs to. */
+static nstc_root *root_for_treeitem(NSTC2Impl *This, HTREEITEM hitem)
+{
+    HTREEITEM tmp, hroot = hitem;
+    nstc_root *root;
+
+    /* Work our way up the hierarchy */
+    for(tmp = hitem; tmp != NULL; hroot = tmp?tmp:hroot)
+        tmp = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)hroot);
+
+    /* Search through the list of roots for a match */
+    LIST_FOR_EACH_ENTRY(root, &This->roots, nstc_root, entry)
+        if(root->htreeitem == hroot)
+            break;
+
+    TRACE("root is %p\n", root);
+    return root;
+}
+
 static int get_icon(LPCITEMIDLIST lpi, UINT extra_flags)
 {
     SHFILEINFOW sfi;
@@ -210,6 +255,67 @@ static HTREEITEM insert_shellitem(NSTC2Impl *This, IShellItem *psi,
         IShellItem_AddRef(psi);
 
     return hinserted;
+}
+
+/* Enumerates the children of the folder represented by hitem
+ * according to the settings for the root, and adds them to the
+ * treeview. Returns the number of children added. */
+static UINT fill_sublevel(NSTC2Impl *This, HTREEITEM hitem)
+{
+    IShellItem *psiParent = shellitem_from_treeitem(This, hitem);
+    nstc_root *root = root_for_treeitem(This, hitem);
+    LPITEMIDLIST pidl_parent;
+    IShellFolder *psf;
+    IEnumIDList *peidl;
+    UINT added = 0;
+    HRESULT hr;
+
+    hr = SHGetIDListFromObject((IUnknown*)psiParent, &pidl_parent);
+    if(SUCCEEDED(hr))
+    {
+        hr = IShellItem_BindToHandler(psiParent, NULL, &BHID_SFObject, &IID_IShellFolder, (void**)&psf);
+        if(SUCCEEDED(hr))
+        {
+            hr = IShellFolder_EnumObjects(psf, NULL, root->enum_flags, &peidl);
+            if(SUCCEEDED(hr))
+            {
+                LPITEMIDLIST pidl;
+                IShellItem *psi;
+                ULONG fetched;
+
+                while( S_OK == IEnumIDList_Next(peidl, 1, &pidl, &fetched) )
+                {
+                    hr = SHCreateShellItem(NULL, psf , pidl, &psi);
+                    ILFree(pidl);
+                    if(SUCCEEDED(hr))
+                    {
+                        if(insert_shellitem(This, psi, hitem, NULL))
+                        {
+                            events_OnItemAdded(This, psi, FALSE);
+                            added++;
+                        }
+
+                        IShellItem_Release(psi);
+                    }
+                    else
+                        ERR("SHCreateShellItem failed with 0x%08x\n", hr);
+                }
+                IEnumIDList_Release(peidl);
+            }
+            else
+                ERR("EnumObjects failed with 0x%08x\n", hr);
+
+            IShellFolder_Release(psf);
+        }
+        else
+            ERR("BindToHandler failed with 0x%08x\n", hr);
+
+        ILFree(pidl_parent);
+    }
+    else
+        ERR("SHGetIDListFromObject failed with 0x%08x\n", hr);
+
+    return added;
 }
 
 /*************************************************************************
@@ -358,6 +464,50 @@ static LRESULT on_tvn_getdispinfow(NSTC2Impl *This, LPARAM lParam)
     return TRUE;
 }
 
+static BOOL treenode_has_subfolders(NSTC2Impl *This, HTREEITEM node)
+{
+    return SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)node);
+}
+
+static LRESULT on_tvn_itemexpandingw(NSTC2Impl *This, LPARAM lParam)
+{
+    NMTREEVIEWW *nmtv = (NMTREEVIEWW*)lParam;
+    IShellItem *psi;
+    TRACE("%p\n", This);
+
+    psi = shellitem_from_treeitem(This, nmtv->itemNew.hItem);
+    events_OnBeforeExpand(This, psi);
+
+    if(!treenode_has_subfolders(This, nmtv->itemNew.hItem))
+    {
+        /* The node has no children, try to find some */
+        if(!fill_sublevel(This, nmtv->itemNew.hItem))
+        {
+            TVITEMEXW tvi;
+            /* Failed to enumerate any children, remove the expando
+             * (if any). */
+            tvi.hItem = nmtv->itemNew.hItem;
+            tvi.mask = TVIF_CHILDREN;
+            tvi.cChildren = 0;
+            SendMessageW(This->hwnd_tv, TVM_SETITEMW, 0, (LPARAM)&tvi);
+
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static LRESULT on_tvn_itemexpandedw(NSTC2Impl *This, LPARAM lParam)
+{
+    NMTREEVIEWW *nmtv = (NMTREEVIEWW*)lParam;
+    IShellItem *psi;
+    TRACE("%p\n", This);
+
+    psi = shellitem_from_treeitem(This, nmtv->itemNew.hItem);
+    events_OnAfterExpand(This, psi);
+    return TRUE;
+}
+
 static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
                                       WPARAM wParam, LPARAM lParam)
 {
@@ -375,6 +525,8 @@ static LRESULT CALLBACK NSTC2_WndProc(HWND hWnd, UINT uMessage,
         {
         case TVN_DELETEITEMW:     return on_tvn_deleteitemw(This, lParam);
         case TVN_GETDISPINFOW:    return on_tvn_getdispinfow(This, lParam);
+        case TVN_ITEMEXPANDINGW:  return on_tvn_itemexpandingw(This, lParam);
+        case TVN_ITEMEXPANDEDW:   return on_tvn_itemexpandedw(This, lParam);
         default:                  break;
         }
         break;

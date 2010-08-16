@@ -317,6 +317,43 @@ static INameSpaceTreeControlEventsImpl *create_nstc_events(void)
     return This;
 }
 
+/*********************************************************************
+ * Event count checking
+ */
+static void ok_no_events_(INameSpaceTreeControlEventsImpl *impl,
+                          const char *file, int line)
+{
+    UINT i;
+    for(i = 0; i < LastEvent; i++)
+    {
+        ok_(file, line)
+            (!impl->count[i], "Got event %d, count %d\n", i, impl->count[i]);
+        impl->count[i] = 0;
+    }
+}
+#define ok_no_events(impl)                      \
+    ok_no_events_(impl, __FILE__, __LINE__)
+
+#define ok_event_count_broken(impl, event, c, b)                        \
+    do { ok(impl->count[event] == c || broken(impl->count[event] == b), \
+            "Got event %d, count %d\n", event, impl->count[event]);     \
+        impl->count[event] = 0;                                         \
+    } while(0)
+
+#define ok_event_count(impl, event, c)          \
+    ok_event_count_broken(impl, event, c, -1)
+
+#define ok_event_broken(impl, event)                                    \
+    do { ok(impl->count[event] || broken(!impl->count[event]),          \
+            "No event.\n");                                             \
+        impl->count[event] = 0;                                         \
+    } while(0)
+
+#define ok_event(impl, event)                                           \
+    do { ok(impl->count[event], "No event %d.\n", event);               \
+        impl->count[event] = 0;                                         \
+    } while(0)
+
 /* Process some messages */
 static void process_msgs(void)
 {
@@ -401,6 +438,27 @@ static LPWSTR myPathAddBackslashW( LPWSTR lpszPath )
     }
   }
   return lpszPath;
+}
+
+static HWND get_treeview_hwnd(INameSpaceTreeControl *pnstc)
+{
+    IOleWindow *pow;
+    HRESULT hr;
+    HWND treeview = NULL;
+
+    hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        HWND host;
+        hr = IOleWindow_GetWindow(pow, &host);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+            treeview = FindWindowExW(host, NULL, WC_TREEVIEWW, NULL);
+        IOleWindow_Release(pow);
+    }
+
+    return treeview;
 }
 
 /* Returns FALSE if the NamespaceTreeControl failed to be instantiated. */
@@ -1053,6 +1111,7 @@ static void test_events(void)
     IOleWindow *pow;
     LPITEMIDLIST pidl_desktop;
     DWORD cookie1, cookie2;
+    HWND hwnd_tv;
     HRESULT hr;
     UINT res;
 
@@ -1074,6 +1133,7 @@ static void test_events(void)
     /* Create two instances of INameSpaceTreeControlEvents */
     pnstceimpl = create_nstc_events();
     pnstce = (INameSpaceTreeControlEvents*)pnstceimpl;
+    ZeroMemory(&pnstceimpl->count, sizeof(UINT)*LastEvent);
     pnstceimpl2 = create_nstc_events();
     pnstce2 = (INameSpaceTreeControlEvents*)pnstceimpl2;
 
@@ -1159,6 +1219,62 @@ static void test_events(void)
        pnstceimpl->qi_called_count);
     ok(pnstceimpl->ref == 1, "refcount was %d\n", pnstceimpl->ref);
 
+    /* Advise again.. */
+    pnstceimpl->qi_enable_events = 1;
+    pnstceimpl->qi_called_count = 0;
+    hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, &cookie2);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(cookie2 == 1, "Cookie is %d\n", cookie2);
+    ok(cookie1 == cookie2, "Old cookie differs from old cookie.\n");
+    todo_wine
+    {
+        ok(pnstceimpl->qi_called_count == 7 || pnstceimpl->qi_called_count == 4 /* Vista */,
+           "QueryInterface called %d times.\n",
+           pnstceimpl->qi_called_count);
+    }
+    ok(pnstceimpl->ref == 2, "refcount was %d\n", pnstceimpl->ref);
+
+    /* Initialize the control */
+    hr = INameSpaceTreeControl_Initialize(pnstc, hwnd, NULL, 0);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_event_count_broken(pnstceimpl, OnItemAdded, 1, 0 /* Vista */);
+    ok_event_count(pnstceimpl, OnGetDefaultIconIndex, 0);
+    ok_no_events(pnstceimpl);
+
+    hwnd_tv = get_treeview_hwnd(pnstc);
+    ok(hwnd_tv != NULL, "Failed to get hwnd_tv HWND.\n");
+    if(hwnd_tv)
+    {
+        HTREEITEM hroot;
+
+        /* Test On*Expand */
+        hroot = (HTREEITEM)SendMessageW(hwnd_tv, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+        SendMessage(hwnd_tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)hroot);
+        process_msgs();
+        ok_event_count(pnstceimpl, OnBeforeExpand, 1);
+        ok_event_count(pnstceimpl, OnAfterExpand, 1);
+        ok_event_broken(pnstceimpl, OnItemAdded); /* No event on Vista */
+        todo_wine ok_event_count(pnstceimpl, OnSelectionChanged, 1);
+        ok_no_events(pnstceimpl);
+        SendMessage(hwnd_tv, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)hroot);
+        process_msgs();
+        ok_no_events(pnstceimpl);
+        SendMessage(hwnd_tv, TVM_EXPAND, TVE_EXPAND, (LPARAM)hroot);
+        process_msgs();
+        ok_no_events(pnstceimpl);
+    }
+    else
+        skip("Skipping some tests.\n");
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    process_msgs();
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
 
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -1170,6 +1286,9 @@ static void test_events(void)
         DestroyWindow(hwnd_nstc);
         IOleWindow_Release(pow);
     }
+
+    hr = INameSpaceTreeControl_TreeUnadvise(pnstc, cookie2);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
 
     res = INameSpaceTreeControl_Release(pnstc);
     ok(!res, "res was %d!\n", res);
