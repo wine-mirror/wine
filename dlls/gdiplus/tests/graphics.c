@@ -2157,6 +2157,8 @@ static void test_fromMemoryBitmap(void)
     GpGraphics *graphics = NULL;
     GpBitmap *bitmap = NULL;
     BYTE bits[48] = {0};
+    HDC hdc=NULL;
+    COLORREF color;
 
     status = GdipCreateBitmapFromScan0(4, 4, 12, PixelFormat24bppRGB, bits, &bitmap);
     expect(Ok, status);
@@ -2171,6 +2173,50 @@ static void test_fromMemoryBitmap(void)
 
     /* drawing writes to the memory provided */
     todo_wine expect(0x68, bits[10]);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipGetDC(graphics, &hdc);
+    expect(Ok, status);
+    ok(hdc != NULL, "got NULL hdc\n");
+
+    color = GetPixel(hdc, 0, 0);
+    /* The HDC is write-only, and native fills with a solid color to figure out
+     * which pixels have changed. */
+    todo_wine expect(0x0c0b0d, color);
+
+    SetPixel(hdc, 0, 0, 0x797979);
+    SetPixel(hdc, 1, 0, 0x0c0b0d);
+
+    status = GdipReleaseDC(graphics, hdc);
+    expect(Ok, status);
+
+    GdipDeleteGraphics(graphics);
+
+    todo_wine expect(0x79, bits[0]);
+    todo_wine expect(0x68, bits[3]);
+
+    GdipDisposeImage((GpImage*)bitmap);
+
+    /* We get the same kind of write-only HDC for a "normal" bitmap */
+    status = GdipCreateBitmapFromScan0(4, 4, 12, PixelFormat24bppRGB, NULL, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipGetDC(graphics, &hdc);
+    expect(Ok, status);
+    ok(hdc != NULL, "got NULL hdc\n");
+
+    color = GetPixel(hdc, 0, 0);
+    todo_wine expect(0x0c0b0d, color);
+
+    status = GdipReleaseDC(graphics, hdc);
+    expect(Ok, status);
+
+    GdipDeleteGraphics(graphics);
 
     GdipDisposeImage((GpImage*)bitmap);
 }
