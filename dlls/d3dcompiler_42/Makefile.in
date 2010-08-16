@@ -3,7 +3,6 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dcompiler_42.dll
-IMPORTS   = kernel32
 
 C_SRCS = \
 	d3dcompiler_42_main.c
