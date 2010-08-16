@@ -167,7 +167,6 @@ static HRESULT WINAPI
 IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DSwapChainImpl *swapchain = NULL;
     TRACE("(%p)\n", This);
 
     if (!(This->Flags & SFLAG_LOCKED))
@@ -177,13 +176,13 @@ IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
     }
 
     /* Tell the swapchain to update the screen */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    if (This->container.type == WINED3D_CONTAINER_SWAPCHAIN)
     {
+        IWineD3DSwapChainImpl *swapchain = This->container.u.swapchain;
         if (This == swapchain->front_buffer)
         {
             x11_copy_to_screen(swapchain, &This->lockedRect);
         }
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     }
 
     This->Flags &= ~SFLAG_LOCKED;
@@ -210,18 +209,20 @@ IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface,
                          IWineD3DSurface *override,
                          DWORD Flags)
 {
-    IWineD3DSwapChainImpl *swapchain = NULL;
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DSwapChainImpl *swapchain;
     HRESULT hr;
 
-    if(FAILED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
     {
         ERR("Flipped surface is not on a swapchain\n");
         return WINEDDERR_NOTFLIPPABLE;
     }
 
+    swapchain = surface->container.u.swapchain;
     hr = IWineD3DSwapChain_Present((IWineD3DSwapChain *)swapchain,
             NULL, NULL, swapchain->win_handle, NULL, 0);
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+
     return hr;
 }
 
@@ -349,7 +350,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface)
     RGBQUAD col[256];
     IWineD3DPaletteImpl *pal = This->palette;
     unsigned int n;
-    IWineD3DSwapChainImpl *swapchain;
     TRACE("(%p)\n", This);
 
     if (!pal) return WINED3D_OK;
@@ -368,13 +368,13 @@ static HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface)
     /* Update the image because of the palette change. Some games like e.g Red Alert
        call SetEntries a lot to implement fading. */
     /* Tell the swapchain to update the screen */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    if (This->container.type == WINED3D_CONTAINER_SWAPCHAIN)
     {
+        IWineD3DSwapChainImpl *swapchain = This->container.u.swapchain;
         if (This == swapchain->front_buffer)
         {
             x11_copy_to_screen(swapchain, NULL);
         }
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     }
 
     return WINED3D_OK;

@@ -288,7 +288,6 @@ static inline void surface_get_rect(IWineD3DSurfaceImpl *This, const RECT *rect_
 /* GL locking and context activation is done by the caller */
 void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, const RECT *dst_rect, WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DBaseTextureImpl *texture;
     struct blt_info info;
 
     surface_get_blt_info(src_surface->texture_target, src_rect, src_surface->pow2Width, src_surface->pow2Height, &info);
@@ -333,12 +332,12 @@ void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, 
 
     /* We changed the filtering settings on the texture. Inform the
      * container about this to get the filters reset properly next draw. */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)src_surface, &IID_IWineD3DBaseTexture, (void **)&texture)))
+    if (src_surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
+        IWineD3DBaseTextureImpl *texture = src_surface->container.u.texture;
         texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
         texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
         texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
-        IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
     }
 }
 
@@ -955,8 +954,6 @@ GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
 /* Slightly inefficient way to handle multiple dirty rects but it works :) */
 void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect)
 {
-    IWineD3DBaseTexture *baseTexture = NULL;
-
     TRACE("surface %p, dirty_rect %s.\n", surface, wine_dbgstr_rect(dirty_rect));
 
     if (!(surface->Flags & SFLAG_INSYSMEM) && (surface->Flags & SFLAG_INTEXTURE))
@@ -980,12 +977,10 @@ void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect
     }
 
     /* if the container is a basetexture then mark it dirty. */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
-            &IID_IWineD3DBaseTexture, (void **)&baseTexture)))
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        TRACE("Passing to container\n");
-        IWineD3DBaseTexture_SetDirty(baseTexture, TRUE);
-        IWineD3DBaseTexture_Release(baseTexture);
+        TRACE("Passing to container.\n");
+        IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)surface->container.u.texture, TRUE);
     }
 }
 
@@ -1068,19 +1063,19 @@ static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
 
 void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srgb)
 {
-    /* TODO: check for locks */
     IWineD3DDeviceImpl *device = surface->resource.device;
-    IWineD3DBaseTexture *baseTexture = NULL;
 
-    TRACE("(%p)Checking to see if the container is a base texture\n", surface);
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
-            &IID_IWineD3DBaseTexture, (void **)&baseTexture)))
+    TRACE("iface %p, srgb %#x.\n", surface, srgb);
+
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *)baseTexture;
-        TRACE("Passing to container\n");
-        tex_impl->baseTexture.internal_preload(baseTexture, srgb);
-        IWineD3DBaseTexture_Release(baseTexture);
-    } else {
+        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
+
+        TRACE("Passing to container.\n");
+        texture->baseTexture.internal_preload((IWineD3DBaseTexture *)texture, srgb);
+    }
+    else
+    {
         struct wined3d_context *context = NULL;
 
         TRACE("(%p) : About to load surface\n", surface);
@@ -1165,8 +1160,8 @@ BOOL surface_init_sysmem(IWineD3DSurfaceImpl *surface)
     return TRUE;
 }
 
-static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
-    IWineD3DBaseTexture *texture = NULL;
+static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info;
@@ -1219,19 +1214,16 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     list_init(&This->renderbuffers);
     This->current_renderbuffer = NULL;
 
-    /* If we're in a texture, the texture name belongs to the texture. Otherwise,
-     * destroy it
-     */
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **) &texture);
-    if(!texture) {
+    /* If we're in a texture, the texture name belongs to the texture.
+     * Otherwise, destroy it. */
+    if (This->container.type != WINED3D_CONTAINER_TEXTURE)
+    {
         ENTER_GL();
         glDeleteTextures(1, &This->texture_name);
         This->texture_name = 0;
         glDeleteTextures(1, &This->texture_name_srgb);
         This->texture_name_srgb = 0;
         LEAVE_GL();
-    } else {
-        IWineD3DBaseTexture_Release(texture);
     }
 
     context_release(context);
@@ -1555,11 +1547,9 @@ static void surface_prepare_texture_internal(IWineD3DSurfaceImpl *surface,
 /* Context activation is done by the caller. */
 void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
-    IWineD3DBaseTextureImpl *texture;
-
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
-            &IID_IWineD3DBaseTexture, (void **)&texture)))
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
+        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
         UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
         UINT i;
 
@@ -1570,8 +1560,6 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
             IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
             surface_prepare_texture_internal(s, gl_info, srgb);
         }
-
-        IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
 
         return;
     }
@@ -1736,20 +1724,18 @@ lock_end:
 
     if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
         /* Don't dirtify */
-    } else {
-        IWineD3DBaseTexture *pBaseTexture;
-        /**
-         * Dirtify on lock
-         * as seen in msdn docs
-         */
+    }
+    else
+    {
         surface_add_dirty_rect(This, pRect);
 
-        /** Dirtify Container if needed */
-        if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture))) {
-            TRACE("Making container dirty\n");
-            IWineD3DBaseTexture_SetDirty(pBaseTexture, TRUE);
-            IWineD3DBaseTexture_Release(pBaseTexture);
-        } else {
+        if (This->container.type == WINED3D_CONTAINER_TEXTURE)
+        {
+            TRACE("Making container dirty.\n");
+            IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)This->container.u.texture, TRUE);
+        }
+        else
+        {
             TRACE("Surface is standalone, no need to dirty the container\n");
         }
     }
@@ -1946,15 +1932,15 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         FIXME("Depth Stencil buffer locking is not implemented\n");
     } else {
         /* The rest should be a normal texture */
-        IWineD3DBaseTextureImpl *impl;
         /* Check if the texture is bound, if yes dirtify the sampler to force a re-upload of the texture
          * Can't load the texture here because PreLoad may destroy and recreate the gl texture, so sampler
          * states need resetting
          */
-        if(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&impl) == WINED3D_OK) {
-            if (impl->baseTexture.bindCount)
-                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(impl->baseTexture.sampler));
-            IWineD3DBaseTexture_Release((IWineD3DBaseTexture *) impl);
+        if (This->container.type == WINED3D_CONTAINER_TEXTURE)
+        {
+            IWineD3DBaseTextureImpl *texture = This->container.u.texture;
+            if (texture->baseTexture.bindCount)
+                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture->baseTexture.sampler));
         }
     }
 
@@ -2549,16 +2535,16 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
 }
 
 /* Context activation is done by the caller. */
-static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb) {
-    /* TODO: check for locks */
+static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DBaseTexture *baseTexture = NULL;
 
-    TRACE("(%p)Checking to see if the container is a base texture\n", This);
-    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == WINED3D_OK) {
-        TRACE("Passing to container\n");
-        IWineD3DBaseTexture_BindTexture(baseTexture, srgb);
-        IWineD3DBaseTexture_Release(baseTexture);
+    TRACE("iface %p, srgb %#x.\n", iface, srgb);
+
+    if (This->container.type == WINED3D_CONTAINER_TEXTURE)
+    {
+        TRACE("Passing to container.\n");
+        IWineD3DBaseTexture_BindTexture((IWineD3DBaseTexture *)This->container.u.texture, srgb);
     }
     else
     {
@@ -2779,11 +2765,12 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
          */
     }
 
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **) &swapchain);
-    if(!swapchain) {
+    if (This->container.type != WINED3D_CONTAINER_SWAPCHAIN)
+    {
         ERR("Flipped surface is not on a swapchain\n");
         return WINEDDERR_NOTFLIPPABLE;
     }
+    swapchain = This->container.u.swapchain;
 
     /* Just overwrite the swapchain presentation interval. This is ok because only ddraw apps can call Flip,
      * and only d3d8 and d3d9 apps specify the presentation interval
@@ -3025,8 +3012,8 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
             wined3d_gl_min_mip_filter(minMipLookup, Filter, WINED3DTEXF_NONE));
     checkGLcall("glTexParameteri");
 
-    IWineD3DSurface_GetContainer((IWineD3DSurface *)src_surface, &IID_IWineD3DSwapChain, (void **)&src_swapchain);
-    if (src_swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)src_swapchain);
+    if (src_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+        src_swapchain = src_surface->container.u.swapchain;
     if (!src_swapchain || src_surface == src_swapchain->back_buffers[0])
     {
         src = backup ? backup : src_surface->texture_name;
@@ -3384,8 +3371,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         WARN("Destination is in sysmem, rejecting gl blt\n");
         return WINED3DERR_INVALIDCALL;
     }
-    IWineD3DSurface_GetContainer((IWineD3DSurface *)dst_surface, &IID_IWineD3DSwapChain, (void **)&dstSwapchain);
-    if (dstSwapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)dstSwapchain);
+
+    if (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+        dstSwapchain = dst_surface->container.u.swapchain;
+
     if (src_surface)
     {
         if (src_surface->resource.pool == WINED3DPOOL_SYSTEMMEM)
@@ -3393,8 +3382,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             WARN("Src is in sysmem, rejecting gl blt\n");
             return WINED3DERR_INVALIDCALL;
         }
-        IWineD3DSurface_GetContainer((IWineD3DSurface *)src_surface, &IID_IWineD3DSwapChain, (void **)&srcSwapchain);
-        if (srcSwapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *)srcSwapchain);
+
+        if (src_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+            srcSwapchain = src_surface->container.u.swapchain;
     }
 
     /* Early sort out of cases where no render target is used */
@@ -4266,7 +4256,6 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
 
 void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL persistent)
 {
-    IWineD3DBaseTexture *texture;
     IWineD3DSurfaceImpl *overlay;
 
     TRACE("surface %p, location %s, persistent %#x.\n",
@@ -4290,12 +4279,10 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
         if (((surface->Flags & SFLAG_INTEXTURE) && !(flag & SFLAG_INTEXTURE))
                 || ((surface->Flags & SFLAG_INSRGBTEX) && !(flag & SFLAG_INSRGBTEX)))
         {
-            if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
-                    &IID_IWineD3DBaseTexture, (void **)&texture)))
+            if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
             {
                 TRACE("Passing to container.\n");
-                IWineD3DBaseTexture_SetDirty(texture, TRUE);
-                IWineD3DBaseTexture_Release(texture);
+                IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)surface->container.u.texture, TRUE);
             }
         }
         surface->Flags &= ~SFLAG_LOCATIONS;
@@ -4314,12 +4301,10 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
     {
         if ((surface->Flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) && (flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)))
         {
-            if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
-                    &IID_IWineD3DBaseTexture, (void **)&texture)))
+            if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
             {
                 TRACE("Passing to container\n");
-                IWineD3DBaseTexture_SetDirty(texture, TRUE);
-                IWineD3DBaseTexture_Release(texture);
+                IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)surface->container.u.texture, TRUE);
             }
         }
         surface->Flags &= ~flag;

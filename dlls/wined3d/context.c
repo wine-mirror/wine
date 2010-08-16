@@ -114,12 +114,10 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 /* GL locking is done by the caller */
 static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface, DWORD location)
 {
-    IWineD3DBaseTextureImpl *texture_impl;
-
     /* Update base texture states array */
-    if (SUCCEEDED(IWineD3DSurface_GetContainer((IWineD3DSurface *)surface,
-            &IID_IWineD3DBaseTexture, (void **)&texture_impl)))
+    if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
+        IWineD3DBaseTextureImpl *texture_impl = surface->container.u.texture;
         IWineD3DDeviceImpl *device = surface->resource.device;
         BOOL update_minfilter = FALSE;
         BOOL update_magfilter = FALSE;
@@ -160,8 +158,6 @@ static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface,
             WARN("Render targets should not be bound to a sampler\n");
             IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture_impl->baseTexture.sampler));
         }
-
-        IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
 
         if (update_minfilter || update_magfilter)
         {
