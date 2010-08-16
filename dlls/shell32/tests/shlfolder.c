@@ -3218,6 +3218,157 @@ static void test_SHCreateShellItemArray(void)
     Cleanup();
 }
 
+static void test_ShellItemBindToHandler(void)
+{
+    IShellItem *psi;
+    LPITEMIDLIST pidl_desktop;
+    HRESULT hr;
+
+    if(!pSHCreateShellItem)
+    {
+        skip("SHCreateShellItem missing.\n");
+        return;
+    }
+
+    hr = pSHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidl_desktop);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = pSHCreateShellItem(NULL, NULL, pidl_desktop, &psi);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+    }
+    if(SUCCEEDED(hr))
+    {
+        IPersistFolder2 *ppf2;
+        IUnknown *punk;
+
+        if(0)
+        {
+            /* Crashes under Windows 7 */
+            hr = IShellItem_BindToHandler(psi, NULL, NULL, NULL, NULL);
+            hr = IShellItem_BindToHandler(psi, NULL, &IID_IUnknown, &IID_IUnknown, NULL);
+        }
+        hr = IShellItem_BindToHandler(psi, NULL, &IID_IUnknown, &IID_IUnknown, (void**)&punk);
+        ok(hr == MK_E_NOOBJECT, "Got 0x%08x\n", hr);
+
+        /* BHID_SFObject */
+        hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFObject, &IID_IShellFolder, (void**)&punk);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);
+        hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFObject, &IID_IPersistFolder2, (void**)&ppf2);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            LPITEMIDLIST pidl_tmp;
+            hr = IPersistFolder2_GetCurFolder(ppf2, &pidl_tmp);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                ok(ILIsEqual(pidl_desktop, pidl_tmp), "Pidl not equal (%p, %p)\n", pidl_desktop, pidl_tmp);
+                pILFree(pidl_tmp);
+            }
+            IPersistFolder2_Release(ppf2);
+        }
+
+        todo_wine
+        {
+            /* BHID_SFUIObject */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFUIObject, &IID_IDataObject, (void**)&punk);
+            ok(hr == S_OK || broken(hr == E_NOINTERFACE /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFUIObject, &IID_IContextMenu, (void**)&punk);
+            ok(hr == S_OK || broken(hr == E_NOINTERFACE /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_SFViewObject */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFViewObject, &IID_IShellView, (void**)&punk);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFViewObject, &IID_IShellFolderView, (void**)&punk);
+            ok(hr == E_NOINTERFACE, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_Storage */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Storage, &IID_IStream, (void**)&punk);
+            ok(hr == E_NOINTERFACE, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Storage, &IID_IUnknown, (void**)&punk);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_Stream */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Stream, &IID_IStream, (void**)&punk);
+            ok(hr == E_NOINTERFACE, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Stream, &IID_IUnknown, (void**)&punk);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_StorageEnum */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_StorageEnum, &IID_IEnumShellItems, (void**)&punk);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_Transfer */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Transfer, &IID_IUnknown, (void**)&punk);
+            ok(hr == E_NOINTERFACE || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_EnumItems */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_EnumItems, &IID_IEnumShellItems, (void**)&punk);
+            ok(hr == S_OK || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_DataObject */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_DataObject, &IID_IDataObject, (void**)&punk);
+            ok(hr == S_OK || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_Filter */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Filter, &IID_IUnknown, (void**)&punk);
+            ok(hr == S_OK || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_LinkTargetItem */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_LinkTargetItem, &IID_IShellItem, (void**)&punk);
+            ok(hr == E_NOINTERFACE || broken(hr == E_INVALIDARG /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_LinkTargetItem, &IID_IUnknown, (void**)&punk);
+            ok(hr == E_NOINTERFACE || broken(hr == E_INVALIDARG /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_PropertyStore */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_PropertyStore, &IID_IPropertyStore, (void**)&punk);
+            ok(hr == E_NOINTERFACE || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_PropertyStore, &IID_IPropertyStoreFactory, (void**)&punk);
+            ok(hr == E_NOINTERFACE || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_ThumbnailHandler */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_ThumbnailHandler, &IID_IUnknown, (void**)&punk);
+            ok(hr == E_INVALIDARG || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_AssociationArray */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_AssociationArray, &IID_IQueryAssociations, (void**)&punk);
+            ok(hr == S_OK || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+            /* BHID_EnumAssocHandlers */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_EnumAssocHandlers, &IID_IUnknown, (void**)&punk);
+            ok(hr == E_NOINTERFACE || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+        }
+
+        IShellItem_Release(psi);
+    }
+    else
+        skip("Failed to create ShellItem.\n");
+
+    pILFree(pidl_desktop);
+}
+
 static void test_SHParseDisplayName(void)
 {
     LPITEMIDLIST pidl1, pidl2;
@@ -3902,6 +4053,7 @@ START_TEST(shlfolder)
     test_SHGetItemFromObject();
     test_ShellItemCompare();
     test_SHChangeNotify();
+    test_ShellItemBindToHandler();
 
     OleUninitialize();
 }

@@ -147,14 +147,53 @@ static HRESULT ShellItem_get_parent_shellfolder(ShellItem *This, IShellFolder **
     return ret;
 }
 
+static HRESULT ShellItem_get_shellfolder(ShellItem *This, IBindCtx *pbc, IShellFolder **ppsf)
+{
+    IShellFolder *desktop;
+    HRESULT ret;
+
+    ret = SHGetDesktopFolder(&desktop);
+    if (SUCCEEDED(ret))
+    {
+        if (_ILIsDesktop(This->pidl))
+        {
+            *ppsf = desktop;
+            IShellFolder_AddRef(*ppsf);
+        }
+        else
+        {
+            ret = IShellFolder_BindToObject(desktop, This->pidl, pbc, &IID_IShellFolder, (void**)ppsf);
+        }
+
+        IShellFolder_Release(desktop);
+    }
+
+    return ret;
+}
+
 static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
     REFGUID rbhid, REFIID riid, void **ppvOut)
 {
-    FIXME("(%p,%p,%s,%p,%p)\n", iface, pbc, shdebugstr_guid(rbhid), riid, ppvOut);
+    ShellItem *This = (ShellItem*)iface;
+    HRESULT ret;
+    TRACE("(%p,%p,%s,%p,%p)\n", iface, pbc, shdebugstr_guid(rbhid), riid, ppvOut);
 
     *ppvOut = NULL;
+    if (IsEqualGUID(rbhid, &BHID_SFObject))
+    {
+        IShellFolder *psf;
+        ret = ShellItem_get_shellfolder(This, pbc, &psf);
+        if (SUCCEEDED(ret))
+        {
+            ret = IShellFolder_QueryInterface(psf, riid, ppvOut);
+            IShellFolder_Release(psf);
+        }
+        return ret;
+    }
 
-    return E_NOTIMPL;
+    FIXME("Unsupported BHID %s.\n", debugstr_guid(rbhid));
+
+    return MK_E_NOOBJECT;
 }
 
 static HRESULT WINAPI ShellItem_GetParent(IShellItem *iface, IShellItem **ppsi)
