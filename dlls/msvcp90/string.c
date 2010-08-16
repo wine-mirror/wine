@@ -162,6 +162,7 @@ int CDECL MSVCP_char_traits_char_not_eof(int *in)
 
 /* char_traits<wchar_t> */
 /* ?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z */
+/* ?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z */
 void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
         const wchar_t *assign)
 {
@@ -169,12 +170,14 @@ void CDECL MSVCP_char_traits_wchar_assign(wchar_t *ch,
 }
 
 /* ?eq@?$char_traits@_W@std@@SA_NAB_W0@Z */
+/* ?eq@?$char_traits@_W@std@@SA_NAEB_W0@Z */
 MSVCP_BOOL CDECL MSVCP_char_traits_wchar_eq(wchar_t *ch1, wchar_t *ch2)
 {
     return *ch1 == *ch2;
 }
 
 /* ?lt@?$char_traits@_W@std@@SA_NAB_W0@Z */
+/* ?lt@?$char_traits@_W@std@@SA_NAEB_W0@Z */
 MSVCP_BOOL CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
         const wchar_t *ch2)
 {
@@ -182,22 +185,25 @@ MSVCP_BOOL CDECL MSVCP_char_traits_wchar_lt(const wchar_t *ch1,
 }
 
 /* ?compare@?$char_traits@_W@std@@SAHPB_W0I@Z */
+/* ?compare@?$char_traits@_W@std@@SAHPEB_W0_K@Z */
 int CDECL MSVCP_char_traits_wchar_compare(const wchar_t *s1,
-        const wchar_t *s2, unsigned int count)
+        const wchar_t *s2, size_t count)
 {
     int ret = memcmp(s1, s2, sizeof(wchar_t[count]));
     return (ret>0 ? 1 : (ret<0 ? -1 : 0));
 }
 
 /* ?length@?$char_traits@_W@std@@SAIPB_W@Z */
-int CDECL MSVCP_char_traits_wchar_length(const wchar_t *str)
+/* ?length@?$char_traits@_W@std@@SA_KPEB_W@Z */
+size_t CDECL MSVCP_char_traits_wchar_length(const wchar_t *str)
 {
     return wcslen((WCHAR*)str);
 }
 
 /* ?_Copy_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
+/* ?_Copy_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z */
 wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
-        unsigned int size, const wchar_t *src, unsigned int count)
+        size_t size, const wchar_t *src, size_t count)
 {
     if(!dest || !src || size<count) {
         if(dest && size)
@@ -210,17 +216,19 @@ wchar_t* CDECL MSVCP_char_traits_wchar__Copy_s(wchar_t *dest,
 }
 
 /* ?copy@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
+/* ?copy@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z */
 wchar_t* CDECL MSVCP_char_traits_wchar_copy(wchar_t *dest,
-        const wchar_t *src, unsigned int count)
+        const wchar_t *src, size_t count)
 {
     return MSVCP_char_traits_wchar__Copy_s(dest, count, src, count);
 }
 
 /* ?find@?$char_traits@_W@std@@SAPB_WPB_WIAB_W@Z */
+/* ?find@?$char_traits@_W@std@@SAPEB_WPEB_W_KAEB_W@Z */
 const wchar_t* CDECL MSVCP_char_traits_wchar_find(
-        const wchar_t *str, unsigned int range, const wchar_t *c)
+        const wchar_t *str, size_t range, const wchar_t *c)
 {
-    unsigned int i=0;
+    size_t i=0;
 
     for(i=0; i<range; i++)
         if(str[i] == *c)
@@ -230,8 +238,9 @@ const wchar_t* CDECL MSVCP_char_traits_wchar_find(
 }
 
 /* ?_Move_s@?$char_traits@_W@std@@SAPA_WPA_WIPB_WI@Z */
+/* ?_Move_s@?$char_traits@_W@std@@SAPEA_WPEA_W_KPEB_W1@Z */
 wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
-        unsigned int size, const wchar_t *src, unsigned int count)
+        size_t size, const wchar_t *src, size_t count)
 {
     if(!dest || !src || size<count) {
         if(dest && size)
@@ -244,17 +253,19 @@ wchar_t* CDECL MSVCP_char_traits_wchar__Move_s(wchar_t *dest,
 }
 
 /* ?move@?$char_traits@_W@std@@SAPA_WPA_WPB_WI@Z */
+/* ?move@?$char_traits@_W@std@@SAPEA_WPEA_WPEB_W_K@Z */
 wchar_t* CDECL MSVCP_char_traits_wchar_move(wchar_t *dest,
-        const wchar_t *src, unsigned int count)
+        const wchar_t *src, size_t count)
 {
     return MSVCP_char_traits_wchar__Move_s(dest, count, src, count);
 }
 
 /* ?assign@?$char_traits@_W@std@@SAPA_WPA_WI_W@Z */
+/* ?assign@?$char_traits@_W@std@@SAPEA_WPEA_W_K_W@Z */
 wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
-        unsigned int num, wchar_t c)
+        size_t num, wchar_t c)
 {
-    unsigned int i;
+    size_t i;
 
     for(i=0; i<num; i++)
         str[i] = c;
@@ -263,18 +274,21 @@ wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
 }
 
 /* ?to_char_type@?$char_traits@_W@std@@SA_WABG@Z */
+/* ?to_char_type@?$char_traits@_W@std@@SA_WAEBG@Z */
 wchar_t CDECL MSVCP_char_traits_wchar_to_char_type(const unsigned short *i)
 {
     return *i;
 }
 
 /* ?to_int_type@?$char_traits@_W@std@@SAGAB_W@Z */
+/* ?to_int_type@?$char_traits@_W@std@@SAGAEB_W@Z */
 unsigned short CDECL MSVCP_char_traits_wchar_to_int_type(const wchar_t *ch)
 {
     return *ch;
 }
 
 /* ?eq_int_type@?$char_traits@_W@std@@SA_NABG0@Z */
+/* ?eq_int_type@?$char_traits@_W@std@@SA_NAEBG0@Z */
 MSVCP_BOOL CDECL MSVCP_char_traits_wchar_eq_int_tpe(const unsigned short *i1,
         const unsigned short *i2)
 {
@@ -288,6 +302,7 @@ unsigned short CDECL MSVCP_char_traits_wchar_eof(void)
 }
 
 /* ?not_eof@?$char_traits@_W@std@@SAGABG@Z */
+/* ?not_eof@?$char_traits@_W@std@@SAGAEBG@Z */
 unsigned short CDECL MSVCP_char_traits_wchar_not_eof(const unsigned short *in)
 {
     return (*in==WEOF ? !WEOF : *in);
