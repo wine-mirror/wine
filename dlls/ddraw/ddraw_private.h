@@ -525,20 +525,14 @@ struct IDirect3DLightImpl
 
     /* Chained list used for adding / removing from viewports */
     IDirect3DLightImpl        *next;
-
-    /* Activation function */
-    void                      (*activate)(IDirect3DLightImpl*);
-    void                      (*desactivate)(IDirect3DLightImpl*);
-    void                      (*update)(IDirect3DLightImpl*);
 };
 
 /* Vtable */
 extern const IDirect3DLightVtbl IDirect3DLight_Vtbl DECLSPEC_HIDDEN;
 
 /* Helper functions */
-void light_update(IDirect3DLightImpl *This) DECLSPEC_HIDDEN;
-void light_activate(IDirect3DLightImpl *This) DECLSPEC_HIDDEN;
-void light_desactivate(IDirect3DLightImpl *This) DECLSPEC_HIDDEN;
+void light_activate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
+void light_deactivate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
 
 /******************************************************************************
  * IDirect3DMaterial implementation structure - Wraps to D3D7

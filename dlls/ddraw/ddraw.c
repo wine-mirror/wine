@@ -4397,11 +4397,6 @@ static HRESULT WINAPI d3d3_CreateLight(IDirect3D3 *iface, IDirect3DLight **light
     object->ref = 1;
     object->ddraw = ddraw_from_d3d3(iface);
 
-    /* Update functions */
-    object->activate = light_update;
-    object->desactivate = light_activate;
-    object->update = light_desactivate;
-
     TRACE("Created light %p.\n", object);
     *light = (IDirect3DLight *)object;
 

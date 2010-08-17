@@ -62,8 +62,9 @@ void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights) {
         /* Activate all the lights associated with this context */
         light = This->lights;
 
-        while (light != NULL) {
-            light->activate(light);
+        while (light)
+        {
+            light_activate(light);
             light = light->next;
         }
     }
@@ -762,9 +763,8 @@ IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
     lpDirect3DLightImpl->active_viewport = This;
 
     /* If active, activate the light */
-    if (This->active_device != NULL) {
-        lpDirect3DLightImpl->activate(lpDirect3DLightImpl);
-    }
+    if (This->active_device)
+        light_activate(lpDirect3DLightImpl);
 
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
@@ -796,8 +796,9 @@ IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *iface,
     EnterCriticalSection(&ddraw_cs);
     cur_light = This->lights;
     while (cur_light != NULL) {
-        if (cur_light == lpDirect3DLightImpl) {
-	    lpDirect3DLightImpl->desactivate(lpDirect3DLightImpl);
+        if (cur_light == lpDirect3DLightImpl)
+        {
+            light_deactivate(lpDirect3DLightImpl);
 	    if (prev_light == NULL) This->lights = cur_light->next;
 	    else prev_light->next = cur_light->next;
 	    /* Detach the light to the viewport */

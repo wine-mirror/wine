@@ -44,6 +44,71 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
 
 /*****************************************************************************
+ * light_update
+ *
+ * Updates the Direct3DDevice7 lighting parameters
+ *
+ *****************************************************************************/
+static void light_update(IDirect3DLightImpl *light)
+{
+    IDirect3DDeviceImpl *device;
+
+    TRACE("light %p.\n", light);
+
+    if (!light->active_viewport || !light->active_viewport->active_device) return;
+    device = light->active_viewport->active_device;
+
+    IDirect3DDevice7_SetLight((IDirect3DDevice7 *)device, light->dwLightIndex, &light->light7);
+}
+
+/*****************************************************************************
+ * light_activate
+ *
+ * Uses the Direct3DDevice7::LightEnable method to active the light
+ *
+ *****************************************************************************/
+void light_activate(IDirect3DLightImpl *light)
+{
+    IDirect3DDeviceImpl *device;
+
+    TRACE("light %p.\n", light);
+
+    if (!light->active_viewport || !light->active_viewport->active_device) return;
+    device = light->active_viewport->active_device;
+
+    light_update(light);
+    if (!(light->light.dwFlags & D3DLIGHT_ACTIVE))
+    {
+        IDirect3DDevice7_LightEnable((IDirect3DDevice7 *)device, light->dwLightIndex, TRUE);
+        light->light.dwFlags |= D3DLIGHT_ACTIVE;
+    }
+}
+
+/*****************************************************************************
+ *
+ * light_deactivate
+ *
+ * Uses the Direct3DDevice7::LightEnable method to deactivate the light
+ *
+ *****************************************************************************/
+void light_deactivate(IDirect3DLightImpl *light)
+{
+    IDirect3DDeviceImpl *device;
+
+    TRACE("light %p.\n", light);
+
+    if (!light->active_viewport || !light->active_viewport->active_device) return;
+    device = light->active_viewport->active_device;
+
+    /* If was not active, activate it */
+    if (light->light.dwFlags & D3DLIGHT_ACTIVE)
+    {
+        IDirect3DDevice7_LightEnable((IDirect3DDevice7 *)device, light->dwLightIndex, FALSE);
+        light->light.dwFlags &= ~D3DLIGHT_ACTIVE;
+    }
+}
+
+/*****************************************************************************
  * IUnknown Methods.
  *****************************************************************************/
 
@@ -203,9 +268,8 @@ IDirect3DLightImpl_SetLight(IDirect3DLight *iface,
 
     EnterCriticalSection(&ddraw_cs);
     memcpy(&This->light, lpLight, lpLight->dwSize);
-    if ((This->light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
-        This->update(This);
-    }
+    if (This->light.dwFlags & D3DLIGHT_ACTIVE)
+        light_update(This);
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
@@ -238,73 +302,6 @@ IDirect3DLightImpl_GetLight(IDirect3DLight *iface,
     LeaveCriticalSection(&ddraw_cs);
 
     return DD_OK;
-}
-
-/*****************************************************************************
- * light_update
- *
- * Updates the Direct3DDevice7 lighting parameters
- *
- *****************************************************************************/
-void light_update(IDirect3DLightImpl* This)
-{
-    IDirect3DDeviceImpl* device;
-
-    TRACE("(%p)\n", This);
-
-    if (!This->active_viewport || !This->active_viewport->active_device)
-        return;
-    device =  This->active_viewport->active_device;
-
-    IDirect3DDevice7_SetLight((IDirect3DDevice7 *)device, This->dwLightIndex, &(This->light7));
-}
-
-/*****************************************************************************
- * light_activate
- *
- * Uses the Direct3DDevice7::LightEnable method to active the light
- *
- *****************************************************************************/
-void light_activate(IDirect3DLightImpl* This)
-{
-    IDirect3DDeviceImpl* device;
-
-    TRACE("(%p)\n", This);
-
-    if (!This->active_viewport || !This->active_viewport->active_device)
-        return;
-    device =  This->active_viewport->active_device;
-
-    light_update(This);
-    /* If was not active, activate it */
-    if ((This->light.dwFlags & D3DLIGHT_ACTIVE) == 0) {
-        IDirect3DDevice7_LightEnable((IDirect3DDevice7 *)device, This->dwLightIndex, TRUE);
-	This->light.dwFlags |= D3DLIGHT_ACTIVE;
-    }
-}
-
-/*****************************************************************************
- *
- * light_desactivate
- *
- * Uses the Direct3DDevice7::LightEnable method to deactivate the light
- *
- *****************************************************************************/
-void light_desactivate(IDirect3DLightImpl* This)
-{
-    IDirect3DDeviceImpl* device;
-
-    TRACE("(%p)\n", This);
-
-    if (!This->active_viewport || !This->active_viewport->active_device)
-        return;
-    device =  This->active_viewport->active_device;
-
-    /* If was not active, activate it */
-    if ((This->light.dwFlags & D3DLIGHT_ACTIVE) != 0) {
-        IDirect3DDevice7_LightEnable((IDirect3DDevice7 *)device, This->dwLightIndex, FALSE);
-	This->light.dwFlags &= ~D3DLIGHT_ACTIVE;
-    }
 }
 
 const IDirect3DLightVtbl IDirect3DLight_Vtbl =
