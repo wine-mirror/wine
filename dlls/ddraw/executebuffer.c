@@ -103,7 +103,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 
     /* Activate the viewport */
     lpViewport->active_device = lpDevice;
-    lpViewport->activate(lpViewport, FALSE);
+    viewport_activate(lpViewport, FALSE);
 
     TRACE("ExecuteData :\n");
     if (TRACE_ON(d3d7))

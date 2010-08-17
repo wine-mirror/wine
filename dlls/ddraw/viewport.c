@@ -325,8 +325,9 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
     if (This->active_device) {
         IDirect3DDevice3 *d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
-        if (current_viewport) {
-            if ((IDirect3DViewportImpl *)current_viewport == This) This->activate(This, FALSE);
+        if (current_viewport)
+        {
+            if ((IDirect3DViewportImpl *)current_viewport == This) viewport_activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
         }
     }
@@ -697,7 +698,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
 
     /* Need to temporarily activate viewport to clear it. Previously active one will be restored
         afterwards. */
-    This->activate(This, TRUE);
+    viewport_activate(This, TRUE);
 
     hr = IDirect3DDevice7_Clear((IDirect3DDevice7 *)This->active_device, dwCount, lpRects,
             dwFlags & (D3DCLEAR_ZBUFFER | D3DCLEAR_TARGET), color, 1.0, 0x00000000);
@@ -705,7 +706,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
     if(current_viewport) {
         IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)current_viewport;
-        vp->activate(vp, TRUE);
+        viewport_activate(vp, TRUE);
         IDirect3DViewport3_Release(current_viewport);
     }
 
@@ -978,8 +979,9 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
     if (This->active_device) {
         IDirect3DDevice3 *d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
-        if (current_viewport) {
-            if ((IDirect3DViewportImpl *)current_viewport == This) This->activate(This, FALSE);
+        if (current_viewport)
+        {
+            if ((IDirect3DViewportImpl *)current_viewport == This) viewport_activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
         }
     }
@@ -1074,16 +1076,16 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
         return D3DERR_VIEWPORTHASNODEVICE;
     }
     d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
-    /* Need to temporarily activate viewport to clear it. Previously active one will be restored
-        afterwards. */
-    This->activate(This, TRUE);
+    /* Need to temporarily activate viewport to clear it. Previously active
+     * one will be restored afterwards. */
+    viewport_activate(This, TRUE);
 
     hr = IDirect3DDevice7_Clear((IDirect3DDevice7 *)This->active_device,
             dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
     if(current_viewport) {
         IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)current_viewport;
-        vp->activate(vp, TRUE);
+        viewport_activate(vp, TRUE);
         IDirect3DViewport3_Release(current_viewport);
     }
     LeaveCriticalSection(&ddraw_cs);

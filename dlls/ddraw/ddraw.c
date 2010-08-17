@@ -4533,7 +4533,6 @@ static HRESULT WINAPI d3d3_CreateViewport(IDirect3D3 *iface, IDirect3DViewport3 
     object->ref = 1;
     object->ddraw = ddraw_from_d3d3(iface);
     object->use_vp2 = 0xff;
-    object->activate = viewport_activate;
 
     TRACE("Created viewport %p.\n", object);
     *viewport = (IDirect3DViewport3 *)object;

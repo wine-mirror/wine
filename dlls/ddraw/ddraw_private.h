@@ -585,9 +585,6 @@ struct IDirect3DViewportImpl
         D3DVIEWPORT2 vp2;
     } viewports;
 
-    /* Activation function */
-    void                      (*activate)(IDirect3DViewportImpl*, BOOL);
-
     /* Field used to chain viewports together */
     IDirect3DViewportImpl     *next;
 
