@@ -8,6 +8,7 @@ IMPORTS   = dxguid uuid
 
 C_SRCS = \
 	blob.c \
+	compiler.c \
 	d3dcompiler_43_main.c
 
 RC_SRCS = version.rc
