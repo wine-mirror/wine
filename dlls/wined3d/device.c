@@ -5704,6 +5704,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
         DWORD render_target_idx, IWineD3DSurface *render_target, BOOL set_viewport)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl *prev;
 
     TRACE("iface %p, render_target_idx %u, render_target %p, set_viewport %#x.\n",
             iface, render_target_idx, render_target, set_viewport);
@@ -5714,7 +5715,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (render_target == (IWineD3DSurface *)device->render_targets[render_target_idx])
+    prev = device->render_targets[render_target_idx];
+    if (render_target == (IWineD3DSurface *)prev)
     {
         TRACE("Trying to do a NOP SetRenderTarget operation.\n");
         return WINED3D_OK;
@@ -5733,11 +5735,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (render_target)
-        IWineD3DSurface_AddRef(render_target);
-    if (device->render_targets[render_target_idx])
-        IWineD3DSurface_Release((IWineD3DSurface *)device->render_targets[render_target_idx]);
+    if (render_target) IWineD3DSurface_AddRef(render_target);
     device->render_targets[render_target_idx] = (IWineD3DSurfaceImpl *)render_target;
+    /* Release after the assignment, to prevent device_resource_released()
+     * from seeing the surface as still in use. */
+    if (prev) IWineD3DSurface_Release((IWineD3DSurface *)prev);
 
     /* Render target 0 is special. */
     if (!render_target_idx && set_viewport)
