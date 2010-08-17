@@ -1542,7 +1542,7 @@ const struct wined3d_format_desc *getFormatDescEntry(WINED3DFORMAT fmt, const st
     int idx = getFmtIdx(fmt);
 
     if(idx == -1) {
-        FIXME("Can't find format %s(%d) in the format lookup table\n", debug_d3dformat(fmt), fmt);
+        FIXME("Can't find format %s (%#x) in the format lookup table\n", debug_d3dformat(fmt), fmt);
         /* Get the caller a valid pointer */
         idx = getFmtIdx(WINED3DFMT_UNKNOWN);
     }
@@ -1719,10 +1719,10 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
       fourcc[2] = (char)(fmt >> 16);
       fourcc[3] = (char)(fmt >> 24);
       fourcc[4] = 0;
-      if( isprint(fourcc[0]) && isprint(fourcc[1]) && isprint(fourcc[2]) && isprint(fourcc[3]) )
-        FIXME("Unrecognized %u (as fourcc: %s) WINED3DFORMAT!\n", fmt, fourcc);
+      if (isprint(fourcc[0]) && isprint(fourcc[1]) && isprint(fourcc[2]) && isprint(fourcc[3]))
+        FIXME("Unrecognized %#x (as fourcc: %s) WINED3DFORMAT!\n", fmt, fourcc);
       else
-        FIXME("Unrecognized %u WINED3DFORMAT!\n", fmt);
+        FIXME("Unrecognized %#x WINED3DFORMAT!\n", fmt);
     }
     return "unrecognized";
   }
