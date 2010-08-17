@@ -28,3 +28,13 @@
 #define STRING_UNKNOWN          105
 #define STRING_CONN_DNS_SUFFIX  106
 #define STRING_IP_ADDRESS       107
+#define STRING_HOSTNAME         108
+#define STRING_NODE_TYPE        109
+#define STRING_BROADCAST        110
+#define STRING_PEER_TO_PEER     111
+#define STRING_MIXED            112
+#define STRING_HYBRID           113
+#define STRING_IP_ROUTING       114
+#define STRING_DESCRIPTION      115
+#define STRING_PHYS_ADDR        116
+#define STRING_DHCP_ENABLED     117

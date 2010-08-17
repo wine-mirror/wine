@@ -179,6 +179,141 @@ static void print_basic_information(void)
     }
 }
 
+static const WCHAR *nodetype_to_string(DWORD type)
+{
+    static WCHAR msg_buffer[50];
+
+    int msg;
+
+    switch (type)
+    {
+    case BROADCAST_NODETYPE:
+        msg = STRING_BROADCAST;
+        break;
+    case PEER_TO_PEER_NODETYPE:
+        msg = STRING_PEER_TO_PEER;
+        break;
+    case MIXED_NODETYPE:
+        msg = STRING_MIXED;
+        break;
+    case HYBRID_NODETYPE:
+        msg = STRING_HYBRID;
+        break;
+    default:
+        msg = STRING_UNKNOWN;
+    }
+
+    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
+        sizeof(msg_buffer)/sizeof(WCHAR));
+
+    return msg_buffer;
+}
+
+static WCHAR *physaddr_to_string(WCHAR *buf, BYTE *addr, DWORD len)
+{
+    static const WCHAR fmtW[] = {'%','0','2','X','-',0};
+    static const WCHAR fmt2W[] = {'%','0','2','X',0};
+
+    if (!len)
+        *buf = '\0';
+    else
+    {
+        WCHAR *p = buf;
+        DWORD i;
+
+        for (i = 0; i < len - 1; i++)
+        {
+            sprintfW(p, fmtW, addr[i]);
+            p += 3;
+        }
+        sprintfW(p, fmt2W, addr[i]);
+    }
+
+    return buf;
+}
+
+static void print_full_information(void)
+{
+    static const WCHAR yesW[] = {'Y','e','s',0};
+    static const WCHAR noW[] = {'N','o',0};
+    static const WCHAR newlineW[] = {'\n',0};
+
+    FIXED_INFO *info;
+    IP_ADAPTER_ADDRESSES *adapters;
+    ULONG out = 0;
+
+    if (GetNetworkParams(NULL, &out) == ERROR_BUFFER_OVERFLOW)
+    {
+        info = HeapAlloc(GetProcessHeap(), 0, out);
+        if (!info)
+            exit(1);
+
+        if (GetNetworkParams(info, &out) == ERROR_SUCCESS)
+        {
+            WCHAR hostnameW[MAX_HOSTNAME_LEN + 4];
+
+            MultiByteToWideChar(CP_ACP, 0, info->HostName, -1, hostnameW, sizeof(hostnameW));
+            print_field(STRING_HOSTNAME, hostnameW);
+
+            /* FIXME: Output primary DNS suffix. */
+
+            print_field(STRING_NODE_TYPE, nodetype_to_string(info->NodeType));
+            print_field(STRING_IP_ROUTING, info->EnableRouting ? yesW : noW);
+
+            /* FIXME: Output WINS proxy status and DNS suffix search list. */
+
+            ipconfig_printfW(newlineW);
+        }
+
+        HeapFree(GetProcessHeap(), 0, info);
+    }
+
+    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &out) == ERROR_BUFFER_OVERFLOW)
+    {
+        adapters = HeapAlloc(GetProcessHeap(), 0, out);
+        if (!adapters)
+            exit(1);
+
+        if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, adapters, &out) == ERROR_SUCCESS)
+        {
+            IP_ADAPTER_ADDRESSES *p;
+
+            for (p = adapters; p; p = p->Next)
+            {
+                IP_ADAPTER_UNICAST_ADDRESS *addr;
+                WCHAR physaddr_buf[3 * MAX_ADAPTER_ADDRESS_LENGTH];
+
+                ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
+                ipconfig_printfW(newlineW);
+                print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
+                print_field(STRING_DESCRIPTION, p->Description);
+                print_field(STRING_PHYS_ADDR, physaddr_to_string(physaddr_buf, p->PhysicalAddress, p->PhysicalAddressLength));
+                print_field(STRING_DHCP_ENABLED, (p->Flags & IP_ADAPTER_DHCP_ENABLED) ? yesW : noW);
+
+                /* FIXME: Output autoconfiguration status. */
+
+                for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
+                {
+                    WCHAR addr_buf[54];
+                    DWORD len = sizeof(addr_buf)/sizeof(WCHAR);
+
+                    if (WSAAddressToStringW(addr->Address.lpSockaddr,
+                                            addr->Address.iSockaddrLength, NULL,
+                                            addr_buf, &len) == 0)
+                        print_field(STRING_IP_ADDRESS, addr_buf);
+                    /* FIXME: Output corresponding subnet mask. */
+                }
+
+                /* FIXME: Output default gateway address. */
+
+                ipconfig_printfW(newlineW);
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, adapters);
+    }
+}
+
 int wmain(int argc, WCHAR *argv[])
 {
     static const WCHAR slashHelp[] = {'/','?',0};
@@ -207,7 +342,7 @@ int wmain(int argc, WCHAR *argv[])
                 return 1;
             }
 
-            WINE_FIXME("/all option is not currently handled\n");
+            print_full_information();
         }
         else
         {
