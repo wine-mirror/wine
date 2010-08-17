@@ -6538,100 +6538,102 @@ static void device_resource_remove(IWineD3DDeviceImpl *This, IWineD3DResource *r
     list_remove(&((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 
-void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resource)
+void device_resource_released(IWineD3DDeviceImpl *device, IWineD3DResource *resource)
 {
     WINED3DRESOURCETYPE type = IWineD3DResource_GetType(resource);
-    int counter;
+    unsigned int i;
 
-    TRACE("(%p) : resource %p\n", This, resource);
+    TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
 
-    context_resource_released(This, resource, type);
+    context_resource_released(device, resource, type);
 
-    switch (type) {
-        /* TODO: check front and back buffers, rendertargets etc..  possibly swapchains? */
-        case WINED3DRTYPE_SURFACE: {
-            unsigned int i;
+    switch (type)
+    {
+        case WINED3DRTYPE_SURFACE:
+            if (!device->d3d_initialized) break;
 
-            if (This->d3d_initialized)
+            for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
             {
-                for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
+                if (device->render_targets[i] == (IWineD3DSurfaceImpl *)resource)
                 {
-                    if (This->render_targets[i] == (IWineD3DSurfaceImpl *)resource)
-                        This->render_targets[i] = NULL;
+                    ERR("Surface %p is still in use as render target %u.\n", resource, i);
+                    device->render_targets[i] = NULL;
                 }
-                if (This->depth_stencil == (IWineD3DSurfaceImpl *)resource)
-                    This->depth_stencil = NULL;
             }
 
+            if (device->depth_stencil == (IWineD3DSurfaceImpl *)resource)
+            {
+                ERR("Surface %p is still in use as depth/stencil buffer.\n", resource);
+                device->depth_stencil = NULL;
+            }
             break;
-        }
+
         case WINED3DRTYPE_TEXTURE:
         case WINED3DRTYPE_CUBETEXTURE:
         case WINED3DRTYPE_VOLUMETEXTURE:
-                for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++) {
-                    if (This->stateBlock != NULL && This->stateBlock->textures[counter] == (IWineD3DBaseTexture *)resource) {
-                        WARN("Texture being released is still by a stateblock, Stage = %u Texture = %p\n", counter, resource);
-                        This->stateBlock->textures[counter] = NULL;
-                    }
-                    if (This->updateStateBlock != This->stateBlock ){
-                        if (This->updateStateBlock->textures[counter] == (IWineD3DBaseTexture *)resource) {
-                            WARN("Texture being released is still by a stateblock, Stage = %u Texture = %p\n", counter, resource);
-                            This->updateStateBlock->textures[counter] = NULL;
-                        }
-                    }
+            for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+            {
+                if (device->stateBlock && device->stateBlock->textures[i] == (IWineD3DBaseTexture *)resource)
+                {
+                    ERR("Texture %p is still in use by stateblock %p, stage %u.\n",
+                            resource, device->stateBlock, i);
+                    device->stateBlock->textures[i] = NULL;
                 }
-        break;
-        case WINED3DRTYPE_VOLUME:
-        /* TODO: nothing really? */
-        break;
+
+                if (device->updateStateBlock != device->stateBlock
+                        && device->updateStateBlock->textures[i] == (IWineD3DBaseTexture *)resource)
+                {
+                    ERR("Texture %p is still in use by stateblock %p, stage %u.\n",
+                            resource, device->updateStateBlock, i);
+                    device->updateStateBlock->textures[i] = NULL;
+                }
+            }
+            break;
+
         case WINED3DRTYPE_BUFFER:
-        {
-            int streamNumber;
-            TRACE("Cleaning up stream pointers\n");
+            for (i = 0; i < MAX_STREAMS; ++i)
+            {
+                if (device->stateBlock && device->stateBlock->streamSource[i] == (IWineD3DBuffer *)resource)
+                {
+                    ERR("Buffer %p is still in use by stateblock %p, stream %u.\n",
+                            resource, device->stateBlock, i);
+                    device->stateBlock->streamSource[i] = NULL;
+                }
 
-            for(streamNumber = 0; streamNumber < MAX_STREAMS; streamNumber ++){
-                /* FINDOUT: should a warn be generated if were recording and updateStateBlock->streamSource is lost?
-                FINDOUT: should changes.streamSource[StreamNumber] be set ?
-                */
-                if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
-                    if ((IWineD3DResource *)This->updateStateBlock->streamSource[streamNumber] == resource) {
-                        FIXME("Vertex buffer released while bound to a state block, stream %d\n", streamNumber);
-                        This->updateStateBlock->streamSource[streamNumber] = 0;
-                        /* Set changed flag? */
-                    }
+                if (device->updateStateBlock != device->stateBlock
+                        && device->updateStateBlock->streamSource[i] == (IWineD3DBuffer *)resource)
+                {
+                    ERR("Buffer %p is still in use by stateblock %p, stream %u.\n",
+                            resource, device->updateStateBlock, i);
+                    device->updateStateBlock->streamSource[i] = NULL;
                 }
-                if (This->stateBlock != NULL ) { /* only happens if there is an error in the application, or on reset/release (because we don't manage internal tracking properly) */
-                    if ((IWineD3DResource *)This->stateBlock->streamSource[streamNumber] == resource) {
-                        TRACE("Vertex buffer released while bound to a state block, stream %d\n", streamNumber);
-                        This->stateBlock->streamSource[streamNumber] = 0;
-                    }
-                }
+
             }
 
-            if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
-                if (This->updateStateBlock->pIndexData == (IWineD3DBuffer *)resource) {
-                    This->updateStateBlock->pIndexData =  NULL;
-                }
+            if (device->stateBlock && device->stateBlock->pIndexData == (IWineD3DBuffer *)resource)
+            {
+                ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
+                        resource, device->stateBlock);
+                device->stateBlock->pIndexData =  NULL;
             }
-            if (This->stateBlock != NULL ) { /* ==NULL when device is being destroyed */
-                if (This->stateBlock->pIndexData == (IWineD3DBuffer *)resource) {
-                    This->stateBlock->pIndexData =  NULL;
-                }
+
+            if (device->updateStateBlock != device->stateBlock
+                    && device->updateStateBlock->pIndexData == (IWineD3DBuffer *)resource)
+            {
+                ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
+                        resource, device->updateStateBlock);
+                device->updateStateBlock->pIndexData =  NULL;
             }
-        }
-        break;
+            break;
 
         default:
-        FIXME("(%p) unknown resource type %p %u\n", This, resource, IWineD3DResource_GetType(resource));
-        break;
+            break;
     }
 
-
     /* Remove the resource from the resourceStore */
-    device_resource_remove(This, resource);
+    device_resource_remove(device, resource);
 
-    TRACE("Resource released\n");
-
+    TRACE("Resource released.\n");
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_EnumResources(IWineD3DDevice *iface, D3DCB_ENUMRESOURCES pCallback, void *pData) {
