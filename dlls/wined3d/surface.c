@@ -2487,6 +2487,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     DWORD flag = srgb_mode ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;
 
+    TRACE("iface %p, srgb %#x.\n", iface, srgb_mode);
+
     if (!(This->Flags & flag)) {
         TRACE("Reloading because surface is dirty\n");
     } else if(/* Reload: gl texture has ck, now no ckey is set OR */
