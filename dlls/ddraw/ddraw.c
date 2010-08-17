@@ -4457,7 +4457,6 @@ static HRESULT WINAPI d3d3_CreateMaterial(IDirect3D3 *iface, IDirect3DMaterial3 
     object->IDirect3DMaterial_vtbl = &IDirect3DMaterial_Vtbl;
     object->ref = 1;
     object->ddraw = ddraw_from_d3d3(iface);
-    object->activate = material_activate;
 
     TRACE("Created material %p.\n", object);
     *material = (IDirect3DMaterial3 *)object;

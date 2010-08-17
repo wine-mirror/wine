@@ -550,8 +550,6 @@ struct IDirect3DMaterialImpl
 
     D3DMATERIAL mat;
     DWORD Handle;
-
-    void (*activate)(IDirect3DMaterialImpl* this);
 };
 
 /* VTables in various versions */

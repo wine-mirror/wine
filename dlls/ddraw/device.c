@@ -3044,7 +3044,7 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
         }
 
         TRACE(" activating material %p.\n", m);
-        m->activate(m);
+        material_activate(m);
 
         This->material = Value;
     }

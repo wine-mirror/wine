@@ -261,7 +261,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
                         if (!m)
                             ERR("Invalid material handle %#x.\n", ci->u2.dwArg[0]);
                         else
-                            m->activate(m);
+                            material_activate(m);
                     }
                     else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */)
                     {
