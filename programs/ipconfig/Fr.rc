@@ -1,0 +1,47 @@
+/*
+ * IP configuration utility (French resources)
+ *
+ * Copyright 2010 Frédéric Delanoy
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "ipconfig.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+    STRING_USAGE, "Usage : ipconfig [ /? | /all ]\n"
+    STRING_INVALID_CMDLINE, "Erreur : les paramètres de ligne de commande spécifiés sont inconnus ou invalides\n"
+    STRING_ADAPTER_FRIENDLY, "Adaptateur %s %s\n"
+    STRING_ETHERNET, "Ethernet"
+    STRING_UNKNOWN, "Inconnu"
+    STRING_CONN_DNS_SUFFIX, "Suffixe DNS propre à la connexion"
+    STRING_IP_ADDRESS, "Adresse IP"
+    STRING_HOSTNAME, "Nom d'hôte"
+    STRING_NODE_TYPE, "Type de nœud"
+    STRING_BROADCAST, "Diffusion"
+    STRING_PEER_TO_PEER, "Pair à pair"
+    STRING_MIXED, "Mixte"
+    STRING_HYBRID, "Hybride"
+    STRING_IP_ROUTING, "Routage IP activé"
+    STRING_DESCRIPTION, "Description"
+    STRING_PHYS_ADDR, "Adresse physique"
+    STRING_DHCP_ENABLED, "DHCP activé"
+}
