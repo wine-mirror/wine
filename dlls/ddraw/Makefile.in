@@ -10,7 +10,6 @@ C_SRCS = \
 	clipper.c \
 	ddraw.c \
 	device.c \
-	direct3d.c \
 	executebuffer.c \
 	gamma.c \
 	light.c \
