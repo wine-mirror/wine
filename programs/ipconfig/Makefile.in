@@ -11,6 +11,7 @@ C_SRCS = ipconfig.c
 
 RC_SRCS = \
 	En.rc \
-	Fr.rc
+	Fr.rc \
+	Lt.rc
 
 @MAKE_PROG_RULES@
