@@ -145,7 +145,7 @@ static BOOL WINAPI CRYPT_EncodeContentLength(DWORD dwCertEncodingType,
     return ret;
 }
 
-static BOOL CRYPT_EncodeDataContentInfoHeader(CDataEncodeMsg *msg,
+static BOOL CRYPT_EncodeDataContentInfoHeader(const CDataEncodeMsg *msg,
  CRYPT_DATA_BLOB *header)
 {
     BOOL ret;
@@ -623,7 +623,7 @@ typedef struct _CMSG_SIGNED_ENCODE_INFO_WITH_CMS
     PCERT_BLOB                        rgAttrCertEncoded;
 } CMSG_SIGNED_ENCODE_INFO_WITH_CMS, *PCMSG_SIGNED_ENCODE_INFO_WITH_CMS;
 
-static BOOL CRYPT_IsValidSigner(CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
+static BOOL CRYPT_IsValidSigner(const CMSG_SIGNER_ENCODE_INFO_WITH_CMS *signer)
 {
     if (signer->cbSize != sizeof(CMSG_SIGNER_ENCODE_INFO) &&
      signer->cbSize != sizeof(CMSG_SIGNER_ENCODE_INFO_WITH_CMS))
@@ -720,7 +720,7 @@ static BOOL CRYPT_ConstructBlob(CRYPT_DATA_BLOB *out, const CRYPT_DATA_BLOB *in)
 }
 
 static BOOL CRYPT_ConstructBlobArray(DWORD *outCBlobs,
- PCRYPT_DATA_BLOB *outPBlobs, DWORD cBlobs, const PCRYPT_DATA_BLOB pBlobs)
+ PCRYPT_DATA_BLOB *outPBlobs, DWORD cBlobs, const CRYPT_DATA_BLOB *pBlobs)
 {
     BOOL ret = TRUE;
 
@@ -1647,7 +1647,7 @@ static BOOL CDecodeMsg_DecodeHashedContent(CDecodeMsg *msg,
 }
 
 static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
- CRYPT_DER_BLOB *blob)
+ const CRYPT_DER_BLOB *blob)
 {
     BOOL ret;
     CRYPT_SIGNED_INFO *signedInfo;
@@ -1666,7 +1666,7 @@ static BOOL CDecodeMsg_DecodeSignedContent(CDecodeMsg *msg,
  * It doesn't just use msg's type, to allow a recursive call from an implicitly
  * typed message once the outer content info has been decoded.
  */
-static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, CRYPT_DER_BLOB *blob,
+static BOOL CDecodeMsg_DecodeContent(CDecodeMsg *msg, const CRYPT_DER_BLOB *blob,
  DWORD type)
 {
     BOOL ret;
