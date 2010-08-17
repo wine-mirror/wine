@@ -721,6 +721,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
                 for (ua = aa->FirstUnicastAddress; ua->Next; ua = ua->Next)
                     ;
                 ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+                ua = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
             }
             else
                 ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
