@@ -633,7 +633,7 @@ static BOOL create_new_eventlog(void)
     HKEY key, eventkey;
     BOOL bret = FALSE;
     LONG lret;
-    int i;
+    DWORD i;
 
     /* First create our eventlog */
     lret = RegOpenKeyA(HKEY_LOCAL_MACHINE, eventlogsvc, &key);
@@ -711,7 +711,7 @@ static void test_readwrite(void)
     DWORD sidsize, count;
     BOOL ret, sidavailable;
     BOOL on_vista = FALSE; /* Used to indicate Vista, W2K8 or Win7 */
-    int i;
+    DWORD i;
     char *localcomputer = NULL;
     DWORD size;
 
@@ -1095,7 +1095,7 @@ static void cleanup_eventlog(void)
     BOOL bret;
     LONG lret;
     HKEY key;
-    int i;
+    DWORD i;
     char winesvc[MAX_PATH];
 
     /* Delete the registry tree */
