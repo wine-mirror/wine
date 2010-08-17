@@ -30,6 +30,7 @@ STRINGTABLE
     IDS_INVALID_CALL_ARG    "Chiamata o argomento di procedura non valido"
     IDS_CREATE_OBJ_ERROR    "Il server di automazione non può creare l'oggetto"
     IDS_NO_PROPERTY         "L'oggetto non supporta questa proprietà o metodo"
+    IDS_UNSUPPORTED_ACTION  "L'oggetto non supporta questa azione"
     IDS_ARG_NOT_OPT         "Argomento non opzionale"
     IDS_SYNTAX_ERROR        "Errore di sintassi"
     IDS_SEMICOLON           "Richiesto ';'"
