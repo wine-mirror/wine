@@ -23,3 +23,8 @@
 /* Translation IDs. */
 #define STRING_USAGE            101
 #define STRING_INVALID_CMDLINE  102
+#define STRING_ADAPTER_FRIENDLY 103
+#define STRING_ETHERNET         104
+#define STRING_UNKNOWN          105
+#define STRING_CONN_DNS_SUFFIX  106
+#define STRING_IP_ADDRESS       107

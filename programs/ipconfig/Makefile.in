@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ipconfig.exe
 APPMODE   = -mconsole -municode
-IMPORTS   = user32
+IMPORTS   = iphlpapi ws2_32 user32
 
 C_SRCS = ipconfig.c
 
