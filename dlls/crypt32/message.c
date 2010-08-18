@@ -194,13 +194,13 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
 
     if (ppSignerCert)
         *ppSignerCert = NULL;
-    if (pcbDecoded)
-        *pcbDecoded = 0;
     if (!pVerifyPara ||
      pVerifyPara->cbSize != sizeof(CRYPT_VERIFY_MESSAGE_PARA) ||
      GET_CMSG_ENCODING_TYPE(pVerifyPara->dwMsgAndCertEncodingType) !=
      PKCS_7_ASN_ENCODING)
     {
+        if(pcbDecoded)
+            *pcbDecoded = 0;
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
@@ -246,6 +246,8 @@ BOOL WINAPI CryptVerifyMessageSignature(PCRYPT_VERIFY_MESSAGE_PARA pVerifyPara,
         }
         CryptMsgClose(msg);
     }
+    if(!ret && pcbDecoded)
+        *pcbDecoded = 0;
     TRACE("returning %d\n", ret);
     return ret;
 }
