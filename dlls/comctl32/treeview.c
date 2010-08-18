@@ -4351,6 +4351,9 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 
     switch (action)
     {
+    case TVGN_CARET|TVSI_NOSINGLEEXPAND:
+        FIXME("TVSI_NOSINGLEEXPAND specified.\n");
+        /* Fall through */
     case TVGN_CARET:
 	prevSelect = infoPtr->selectedItem;
 
