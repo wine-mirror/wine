@@ -17,6 +17,7 @@
  */
 
 #include "stdlib.h"
+#include "windef.h"
 
 typedef unsigned char MSVCP_BOOL;
 
@@ -43,3 +44,19 @@ extern void (__cdecl *MSVCRT_operator_delete)(void*);
 #define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
 
 #endif /* __i386__ */
+
+/* exception object */
+typedef void (*vtable_ptr)(void);
+typedef struct __exception
+{
+    const vtable_ptr *vtable;
+    char             *name;    /* Name of this exception, always a new copy for each object */
+    int               do_free; /* Whether to free 'name' in our dtor */
+} exception;
+
+/* Internal: throws selected exception */
+typedef enum __exception_type {
+    EXCEPTION
+} exception_type;
+void throw_exception(exception_type, const char *);
+void set_exception_vtable(void);
