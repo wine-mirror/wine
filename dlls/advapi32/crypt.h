@@ -57,6 +57,8 @@ typedef struct tagPROVFUNCS
 } PROVFUNCS, *PPROVFUNCS;
 
 #define MAGIC_CRYPTPROV 0xA39E741F
+#define MAGIC_CRYPTKEY  0xA39E741E
+#define MAGIC_CRYPTHASH 0xA39E741D
 
 typedef struct tagCRYPTPROV
 {
@@ -70,12 +72,14 @@ typedef struct tagCRYPTPROV
 
 typedef struct tagCRYPTKEY
 {
+	DWORD dwMagic;
 	PCRYPTPROV pProvider;
         HCRYPTKEY hPrivate;    /*CSP's handle - Should not be given to application under any circumstances!*/
 } CRYPTKEY, *PCRYPTKEY;
 
 typedef struct tagCRYPTHASH
 {
+	DWORD dwMagic;
 	PCRYPTPROV pProvider;
         HCRYPTHASH hPrivate;    /*CSP's handle - Should not be given to application under any circumstances!*/
 } CRYPTHASH, *PCRYPTHASH;
