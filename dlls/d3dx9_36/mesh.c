@@ -1,6 +1,8 @@
  /*
  * Mesh operations specific to D3DX9.
  *
+ * Copyright (C) 2005 Henri Verbeet
+ * Copyright (C) 2006 Ivan Gyurdiev
  * Copyright (C) 2009 David Adam
  * Copyright (C) 2010 Tony Wasserka
  *
@@ -173,6 +175,16 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWOR
 HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD fvf, D3DVERTEXELEMENT9 Declaration[MAX_FVF_DECL_SIZE])
 {
     FIXME("(%d, %p): stub\n", fvf, Declaration);
+
+    return E_NOTIMPL;
+}
+
+/*************************************************************************
+ * D3DXFVFFromDeclarator
+ */
+HRESULT WINAPI D3DXFVFFromDeclarator(const LPD3DVERTEXELEMENT9 *declaration, DWORD *fvf)
+{
+    FIXME("(%p, %p): stub\n", declaration, fvf);
 
     return E_NOTIMPL;
 }

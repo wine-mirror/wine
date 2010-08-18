@@ -139,7 +139,7 @@
 @ stub D3DXFrameNumNamedMatrices
 @ stub D3DXFrameRegisterNamedMatrices
 @ stdcall D3DXFresnelTerm(long long)
-@ stub D3DXFVFFromDeclarator
+@ stdcall D3DXFVFFromDeclarator(ptr ptr)
 @ stub D3DXGatherFragments
 @ stub D3DXGatherFragmentsFromFileA
 @ stub D3DXGatherFragmentsFromFileW
