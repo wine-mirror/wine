@@ -1078,7 +1078,7 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
  * The VTable
  *****************************************************************************/
 
-const IDirect3DViewport3Vtbl IDirect3DViewport3_Vtbl =
+static const struct IDirect3DViewport3Vtbl d3d_viewport_vtbl =
 {
     /*** IUnknown Methods ***/
     IDirect3DViewportImpl_QueryInterface,
@@ -1106,3 +1106,11 @@ const IDirect3DViewport3Vtbl IDirect3DViewport3_Vtbl =
     IDirect3DViewportImpl_GetBackgroundDepth2,
     IDirect3DViewportImpl_Clear2,
 };
+
+void d3d_viewport_init(IDirect3DViewportImpl *viewport, IDirectDrawImpl *ddraw)
+{
+    viewport->lpVtbl = &d3d_viewport_vtbl;
+    viewport->ref = 1;
+    viewport->ddraw = ddraw;
+    viewport->use_vp2 = 0xff;
+}

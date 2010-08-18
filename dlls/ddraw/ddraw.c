@@ -4505,10 +4505,7 @@ static HRESULT WINAPI d3d3_CreateViewport(IDirect3D3 *iface, IDirect3DViewport3 
         return DDERR_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IDirect3DViewport3_Vtbl;
-    object->ref = 1;
-    object->ddraw = ddraw_from_d3d3(iface);
-    object->use_vp2 = 0xff;
+    d3d_viewport_init(object, ddraw_from_d3d3(iface));
 
     TRACE("Created viewport %p.\n", object);
     *viewport = (IDirect3DViewport3 *)object;

@@ -587,11 +587,9 @@ struct IDirect3DViewportImpl
     IDirect3DMaterialImpl     *background;
 };
 
-/* Vtable */
-extern const IDirect3DViewport3Vtbl IDirect3DViewport3_Vtbl DECLSPEC_HIDDEN;
-
 /* Helper functions */
 void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights) DECLSPEC_HIDDEN;
+void d3d_viewport_init(IDirect3DViewportImpl *viewport, IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DExecuteBuffer - Wraps to D3D7
