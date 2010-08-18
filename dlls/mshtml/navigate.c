@@ -1142,23 +1142,46 @@ static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
     return S_OK;
 }
 
+typedef struct {
+    task_t header;
+    nsChannelBSC *bsc;
+} stop_request_task_t;
+
+static void stop_request_proc(task_t *_task)
+{
+    stop_request_task_t *task = (stop_request_task_t*)_task;
+
+    TRACE("(%p)\n", task->bsc);
+
+    on_stop_nsrequest(task->bsc, S_OK);
+    IBindStatusCallback_Release(STATUSCLB(&task->bsc->bsc));
+}
+
+static HRESULT async_stop_request(nsChannelBSC *This)
+{
+    stop_request_task_t *task;
+
+    task = heap_alloc(sizeof(*task));
+    if(!task)
+        return E_OUTOFMEMORY;
+
+    IBindStatusCallback_AddRef(STATUSCLB(&This->bsc));
+    task->bsc = This;
+    push_task(&task->header, stop_request_proc, This->bsc.doc->basedoc.doc_obj->basedoc.task_magic);
+    return S_OK;
+}
+
 static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
 {
     nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
 
-    on_stop_nsrequest(This, result);
-
-    if(This->nslistener) {
-        if(This->nschannel->load_group) {
-            nsresult nsres;
-
-            nsres = nsILoadGroup_RemoveRequest(This->nschannel->load_group,
-                    (nsIRequest*)NSCHANNEL(This->nschannel), NULL, NS_OK);
-            if(NS_FAILED(nsres))
-                ERR("RemoveRequest failed: %08x\n", nsres);
-        }
+    if(This->window && SUCCEEDED(result)) {
+        result = async_stop_request(This);
+        if(SUCCEEDED(result))
+           return S_OK;
     }
 
+    on_stop_nsrequest(This, result);
     return S_OK;
 }
 
@@ -1382,7 +1405,7 @@ void abort_document_bindings(HTMLDocumentNode *doc)
 
 HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
 {
-    HRESULT hres;
+    HRESULT hres = S_OK;
 
     if(!bscallback->nschannel) {
         ERR("NULL nschannel\n");
@@ -1393,8 +1416,12 @@ HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
 
-    hres = read_stream_data(bscallback, stream);
-    IBindStatusCallback_OnStopBinding(STATUSCLB(&bscallback->bsc), hres, ERROR_SUCCESS);
+    if(stream)
+        hres = read_stream_data(bscallback, stream);
+    if(SUCCEEDED(hres))
+        hres = async_stop_request(bscallback);
+    if(FAILED(hres))
+        IBindStatusCallback_OnStopBinding(STATUSCLB(&bscallback->bsc), hres, ERROR_SUCCESS);
 
     return hres;
 }
