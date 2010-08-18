@@ -14467,6 +14467,7 @@ wine_fn_config_dll d3dcompiler_43 enable_d3dcompiler_43 d3dcompiler
 wine_fn_config_dll d3dim enable_d3dim d3dim
 wine_fn_config_dll d3drm enable_d3drm d3drm
 wine_fn_config_test dlls/d3drm/tests d3drm_test
+wine_fn_config_dll d3dx10_34 enable_d3dx10_34
 wine_fn_config_dll d3dx10_35 enable_d3dx10_35
 wine_fn_config_dll d3dx10_36 enable_d3dx10_36
 wine_fn_config_dll d3dx10_37 enable_d3dx10_37
