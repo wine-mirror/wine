@@ -1001,6 +1001,16 @@ error:
 }
 
 /***********************************************************************
+ *           SetFileValidData   (KERNEL32.@)
+ */
+BOOL WINAPI SetFileValidData( HANDLE hFile, LONGLONG ValidDataLength )
+{
+    FIXME("stub: %p, %s\n", hFile, wine_dbgstr_longlong(ValidDataLength));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           GetFileTime   (KERNEL32.@)
  */
 BOOL WINAPI GetFileTime( HANDLE hFile, FILETIME *lpCreationTime,
