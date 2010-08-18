@@ -159,6 +159,7 @@ HRESULT load_nsuri(HTMLWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc,
 {
     nsIWebNavigation *web_navigation;
     nsIDocShell *doc_shell;
+    HTMLDocumentNode *doc;
     nsresult nsres;
 
     nsres = get_nsinterface((nsISupports*)window->nswindow, &IID_nsIWebNavigation, (void**)&web_navigation);
@@ -174,9 +175,12 @@ HRESULT load_nsuri(HTMLWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc,
         return E_FAIL;
     }
 
-
     uri->channel_bsc = channelbsc;
+    doc = window->doc;
+    doc->skip_mutation_notif = TRUE;
     nsres = nsIDocShell_LoadURI(doc_shell, NSURI(uri), NULL, flags, FALSE);
+    if(doc == window->doc)
+        doc->skip_mutation_notif = FALSE;
     uri->channel_bsc = NULL;
     nsIDocShell_Release(doc_shell);
     if(NS_FAILED(nsres)) {

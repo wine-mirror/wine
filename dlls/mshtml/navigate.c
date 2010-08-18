@@ -1105,6 +1105,11 @@ static void nsChannelBSC_destroy(BSCallback *bsc)
 
 static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 {
+    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+
+    if(This->window)
+        This->window->doc->skip_mutation_notif = FALSE;
+
     return S_OK;
 }
 

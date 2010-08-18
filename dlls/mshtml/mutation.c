@@ -558,6 +558,9 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
 
     TRACE("\n");
 
+    if(This->skip_mutation_notif)
+        return;
+
     This->content_ready = TRUE;
     push_mutation_queue(This, MUTATION_ENDLOAD, NULL);
 }

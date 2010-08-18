@@ -586,6 +586,7 @@ struct HTMLDocumentNode {
     nsDocumentEventListener *nsevent_listener;
     BOOL *event_vector;
 
+    BOOL skip_mutation_notif;
     mutation_queue_t *mutation_queue;
     mutation_queue_t *mutation_queue_tail;
 
