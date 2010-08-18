@@ -315,7 +315,7 @@ struct IParentImpl
 
 };
 
-extern const IParentVtbl IParent_Vtbl DECLSPEC_HIDDEN;
+void ddraw_parent_init(IParentImpl *parent) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DDevice implementation

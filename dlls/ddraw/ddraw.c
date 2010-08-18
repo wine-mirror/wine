@@ -4701,8 +4701,8 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }
-    index_buffer_parent->lpVtbl = &IParent_Vtbl;
-    index_buffer_parent->ref = 1;
+
+    ddraw_parent_init(index_buffer_parent);
 
     /* Create an Index Buffer. WineD3D needs one for Drawing indexed primitives
      * Create a (hopefully) long enough buffer, and copy the indices into it
@@ -5928,8 +5928,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IParent_Vtbl;
-    object->ref = 1;
+    ddraw_parent_init(object);
 
     hr = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice, present_parameters,
             swapchain, (IUnknown *)object, This->ImplType);

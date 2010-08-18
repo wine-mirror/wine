@@ -121,9 +121,15 @@ static ULONG WINAPI IParentImpl_Release(IParent *iface)
 /*****************************************************************************
  * The VTable
  *****************************************************************************/
-const IParentVtbl IParent_Vtbl =
+static const struct IParentVtbl ddraw_parent_vtbl =
 {
      IParentImpl_QueryInterface,
      IParentImpl_AddRef,
      IParentImpl_Release,
 };
+
+void ddraw_parent_init(IParentImpl *parent)
+{
+    parent->lpVtbl = &ddraw_parent_vtbl;
+    parent->ref = 1;
+}
