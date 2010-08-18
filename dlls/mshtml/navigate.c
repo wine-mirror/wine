@@ -964,7 +964,7 @@ struct nsChannelBSC {
     nsProtocolStream *nsstream;
 };
 
-static void on_start_nsrequest(nsChannelBSC *This)
+static HRESULT on_start_nsrequest(nsChannelBSC *This)
 {
     nsresult nsres;
 
@@ -974,8 +974,20 @@ static void on_start_nsrequest(nsChannelBSC *This)
 
     nsres = nsIStreamListener_OnStartRequest(This->nslistener,
             (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
-    if(NS_FAILED(nsres))
+    if(NS_FAILED(nsres)) {
         FIXME("OnStartRequest failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(This->window) {
+        update_window_doc(This->window);
+        if(This->window->doc != This->bsc.doc)
+            This->bsc.doc = This->window->doc;
+        if(This->window->readystate != READYSTATE_LOADING)
+            set_ready_state(This->window, READYSTATE_LOADING);
+    }
+
+    return S_OK;
 }
 
 static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
@@ -1054,12 +1066,6 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
             }
 
             on_start_nsrequest(This);
-
-            if(This->window) {
-                update_window_doc(This->window);
-                if(This->window->readystate != READYSTATE_LOADING)
-                    set_ready_state(This->window, READYSTATE_LOADING);
-            }
         }
 
         This->bsc.readed += This->nsstream->buf_size;
