@@ -340,6 +340,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
     icon->owner  = nid->hWnd;
     icon->display = -1;
 
+    if (list_empty( &icon_list )) SetTimer( tray_window, 1, 2000, NULL );
     list_add_tail(&icon_list, &icon->entry);
 
     modify_icon( icon, nid );
@@ -355,6 +356,7 @@ static BOOL delete_icon(struct icon *icon)
     list_remove(&icon->entry);
     DestroyIcon(icon->image);
     HeapFree(GetProcessHeap(), 0, icon);
+    if (list_empty( &icon_list )) KillTimer( tray_window, 1 );
     return TRUE;
 }
 
@@ -596,6 +598,4 @@ void initialize_systray(void)
     }
 
     if (hide_systray) do_hide_systray();
-
-    SetTimer( tray_window, 1, 2000, NULL );
 }
