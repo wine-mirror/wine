@@ -1925,18 +1925,44 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *arelativePath,
+static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePath,
         nsACString *_retval)
 {
     nsWineURI *This = NSURI_THIS(iface);
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    const char *patha;
+    WCHAR *path;
+    char *urla;
+    DWORD len;
+    HRESULT hres;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_nsacstr(arelativePath), _retval);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_nsacstr(aRelativePath), _retval);
 
     if(This->uri)
-        return nsIURI_Resolve(This->uri, arelativePath, _retval);
+        return nsIURI_Resolve(This->uri, aRelativePath, _retval);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_GetData(aRelativePath, &patha);
+    path = heap_strdupAtoW(patha);
+    if(!path)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    hres = CoInternetCombineUrl(This->wine_url, path,
+                                URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
+                                url, sizeof(url)/sizeof(WCHAR), &len, 0);
+    heap_free(path);
+    if(FAILED(hres)) {
+        ERR("CoIntenetCombineUrl failed: %08x\n", hres);
+        return NS_ERROR_FAILURE;
+    }
+
+    urla = heap_strdupWtoA(url);
+    if(!urla)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    TRACE("returning %s\n", debugstr_a(urla));
+    nsACString_SetData(_retval, urla);
+    heap_free(urla);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_GetAsciiSpec(nsIURL *iface, nsACString *aAsciiSpec)

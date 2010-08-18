@@ -36,6 +36,7 @@
 
 #define NS_OK                     ((nsresult)0x00000000L)
 #define NS_ERROR_FAILURE          ((nsresult)0x80004005L)
+#define NS_ERROR_OUT_OF_MEMORY    ((nsresult)0x8007000EL)
 #define NS_NOINTERFACE            ((nsresult)0x80004002L)
 #define NS_ERROR_NOT_IMPLEMENTED  ((nsresult)0x80004001L)
 #define NS_ERROR_NOT_AVAILABLE    ((nsresult)0x80040111L)
