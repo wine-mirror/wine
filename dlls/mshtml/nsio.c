@@ -2566,6 +2566,13 @@ static BOOL is_gecko_special_uri(const char *spec)
             return TRUE;
     }
 
+    if(!strncasecmp(spec, "file:", 5)) {
+        const char *ptr = spec+5;
+        while(*ptr == '/')
+            ptr++;
+        return is_gecko_path(ptr);
+    }
+
     return FALSE;
 }
 

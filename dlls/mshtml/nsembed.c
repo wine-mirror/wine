@@ -74,6 +74,8 @@ static nsIMemory *nsmem = NULL;
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
 
 static ATOM nscontainer_class;
+static WCHAR gecko_path[MAX_PATH];
+static unsigned gecko_path_len;
 
 static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -411,6 +413,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     nsIComponentRegistrar *registrar = NULL;
     nsAString path;
     nsIFile *gre_dir;
+    WCHAR *ptr;
 
     nsAString_InitDepend(&path, gre_path);
     nsres = NS_NewLocalFile(&path, FALSE, &gre_dir);
@@ -427,6 +430,13 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         FreeLibrary(hXPCOM);
         return FALSE;
     }
+
+    strcpyW(gecko_path, gre_path);
+    for(ptr = gecko_path; *ptr; ptr++) {
+        if(*ptr == '\\')
+            *ptr = '/';
+    }
+    gecko_path_len = ptr-gecko_path;
 
     nsres = nsIServiceManager_QueryInterface(pServMgr, &IID_nsIComponentManager, (void**)&pCompMgr);
     if(NS_FAILED(nsres))
@@ -786,6 +796,26 @@ void close_gecko(void)
 
     /* Gecko doesn't really support being unloaded */
     /* if (hXPCOM) FreeLibrary(hXPCOM); */
+}
+
+BOOL is_gecko_path(const char *path)
+{
+    WCHAR *buf, *ptr;
+    BOOL ret;
+
+    buf = heap_strdupAtoW(path);
+    if(strlenW(buf) < gecko_path_len)
+        return FALSE;
+
+    buf[gecko_path_len] = 0;
+    for(ptr = buf; *ptr; ptr++) {
+        if(*ptr == '\\')
+            *ptr = '/';
+    }
+
+    ret = !strcmpiW(buf, gecko_path);
+    heap_free(buf);
+    return ret;
 }
 
 /**********************************************************

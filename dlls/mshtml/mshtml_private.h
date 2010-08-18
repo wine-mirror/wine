@@ -726,6 +726,7 @@ void register_nsservice(nsIComponentRegistrar*,nsIServiceManager*);
 void init_nsio(nsIComponentManager*,nsIComponentRegistrar*);
 void release_nsio(void);
 BOOL install_wine_gecko(BOOL);
+BOOL is_gecko_path(const char*);
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
 HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsWineURI**);
