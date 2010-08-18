@@ -361,6 +361,20 @@ static IShellItem *get_selected_shellitem(NSTC2Impl *This)
     return shellitem_from_treeitem(This, get_selected_treeitem(This));
 }
 
+static void collapse_all(NSTC2Impl *This, HTREEITEM node)
+{
+    HTREEITEM next;
+
+    /* Collapse this node first, and then first child/next sibling. */
+    SendMessageW(This->hwnd_tv, TVM_EXPAND, TVE_COLLAPSE, (LPARAM)node);
+
+    next = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)node);
+    if(next) collapse_all(This, next);
+
+    next = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)node);
+    if(next) collapse_all(This, next);
+}
+
 /*************************************************************************
  * NamespaceTree window functions
  */
@@ -1143,8 +1157,13 @@ static HRESULT WINAPI NSTC2_fnGetItemRect(INameSpaceTreeControl2* iface,
 static HRESULT WINAPI NSTC2_fnCollapseAll(INameSpaceTreeControl2* iface)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p\n", This);
-    return E_NOTIMPL;
+    nstc_root *root;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(root, &This->roots, nstc_root, entry)
+        collapse_all(This, root->htreeitem);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnSetControlStyle(INameSpaceTreeControl2* iface,

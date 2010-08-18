@@ -1077,8 +1077,15 @@ static void test_basics(void)
     roots[9] = NULL;
     verify_root_order(pnstc, roots);
 
+    /* CollapseAll */
+    hr = INameSpaceTreeControl_CollapseAll(pnstc);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
+    hr = INameSpaceTreeControl_CollapseAll(pnstc);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
 
     IShellItem_Release(psidesktop);
     IShellItem_Release(psidesktop2);
