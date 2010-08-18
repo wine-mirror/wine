@@ -723,10 +723,12 @@ static void test_basics(void)
     INameSpaceTreeControl2 *pnstc2;
     IShellItemArray *psia;
     IShellFolder *psfdesktop;
+    IShellItem *psi;
     IShellItem *psidesktop, *psidesktop2;
-    IShellItem *psitestdir, *psitestdir2;
+    IShellItem *psitestdir, *psitestdir2, *psitest1;
     IOleWindow *pow;
     LPITEMIDLIST pidl_desktop;
+    NSTCITEMSTATE istate;
     HRESULT hr;
     UINT i, res;
     RECT rc;
@@ -736,9 +738,12 @@ static void test_basics(void)
     static const WCHAR testdirW[] = {'t','e','s','t','d','i','r',0};
     static const WCHAR testdir2W[] =
         {'t','e','s','t','d','i','r','\\','t','e','s','t','d','i','r','2',0};
+    static const WCHAR test1W[] =
+        {'t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
 
     /* These should exist on platforms supporting the NSTC */
     ok(pSHCreateShellItem != NULL, "No SHCreateShellItem.\n");
+    ok(pSHCreateItemFromParsingName != NULL, "No SHCreateItemFromParsingName\n");
     ok(pSHGetIDListFromObject != NULL, "No SHCreateShellItem.\n");
     ok(pSHCreateItemFromParsingName != NULL, "No SHCreateItemFromParsingName\n");
 
@@ -781,6 +786,12 @@ static void test_basics(void)
     myPathAddBackslashW(buf);
     lstrcatW(buf, testdir2W);
     hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psitestdir2);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(FAILED(hr)) goto cleanup;
+    lstrcpyW(buf, curdirW);
+    myPathAddBackslashW(buf);
+    lstrcatW(buf, test1W);
+    hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psitest1);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(FAILED(hr)) goto cleanup;
 
@@ -1296,10 +1307,200 @@ static void test_basics(void)
         ok(hr == S_OK, "Got (0x%08x)\n", hr);
     }
 
+    /* GetSelectedItems */
+    if(0)
+    {
+        /* Crashes under Windows 7 */
+        hr = INameSpaceTreeControl_GetSelectedItems(pnstc, NULL);
+    }
+
+    psia = (void*)0xdeadbeef;
+    hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
+    ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    ok(psia == (void*)0xdeadbeef, "Got %p", psia);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir2, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir, SHCONTF_FOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psitestdir,
+                                            NSTCIS_SELECTED, NSTCIS_SELECTED);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        UINT count;
+        hr = IShellItemArray_GetCount(psia, &count);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(count == 1, "Got %d selected items.\n", count);
+        if(count)
+        {
+            hr = IShellItemArray_GetItemAt(psia, 0, &psi);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                int cmp;
+                hr = IShellItem_Compare(psi, psitestdir, SICHINT_DISPLAY, &cmp);
+                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                IShellItem_Release(psi);
+            }
+        }
+        IShellItemArray_Release(psia);
+    }
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psitestdir2,
+                                            NSTCIS_SELECTED, NSTCIS_SELECTED);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        UINT count;
+        hr = IShellItemArray_GetCount(psia, &count);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(count == 1, "Got %d selected items.\n", count);
+        if(count)
+        {
+            hr = IShellItemArray_GetItemAt(psia, 0, &psi);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                int cmp;
+                hr = IShellItem_Compare(psi, psitestdir2, SICHINT_DISPLAY, &cmp);
+                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                IShellItem_Release(psi);
+            }
+        }
+        IShellItemArray_Release(psia);
+    }
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psitest1,
+                                            NSTCIS_SELECTED, NSTCIS_SELECTED);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        UINT count;
+        hr = IShellItemArray_GetCount(psia, &count);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(count == 1, "Got %d selected items.\n", count);
+        if(count)
+        {
+            hr = IShellItemArray_GetItemAt(psia, 0, &psi);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                int cmp;
+                hr = IShellItem_Compare(psi, psitest1, SICHINT_DISPLAY, &cmp);
+                todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+                IShellItem_Release(psi);
+            }
+        }
+        IShellItemArray_Release(psia);
+    }
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK || broken(hr == E_FAIL), "Got 0x%08x\n", hr);
+    if(hr == E_FAIL)
+    {
+        /* For some reason, Vista fails to properly remove both the
+         * roots here on the first try. */
+        hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+    }
+
+    /* Adding without NSTCRS_EXPANDED does not set the selection */
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+                                          0, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psitestdir, 0xFF, &istate);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(!(istate & NSTCIS_SELECTED), "Got 0x%08x\n", istate);
+    hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
+    ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr)) IShellItemArray_Release(psia);
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    /* Adding with NSTCRS_EXPANDED sets the selection */
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+                                          NSTCRS_EXPANDED, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psitestdir, 0xFF, &istate);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(istate & NSTCIS_SELECTED, "Got 0x%08x\n", istate);
+    hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        IShellItem *psi;
+
+        hr = IShellItemArray_GetItemAt(psia, 0, &psi);
+        if(SUCCEEDED(hr))
+        {
+            INT cmp;
+            hr = IShellItem_Compare(psi, psitestdir, SICHINT_DISPLAY, &cmp);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+            IShellItem_Release(psi);
+        }
+
+        IShellItemArray_Release(psia);
+    }
+
+    /* Adding a second root with NSTCRS_EXPANDED does not change the selection */
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir2,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+                                          NSTCRS_EXPANDED, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psitestdir2, 0xFF, &istate);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(!(istate & NSTCIS_SELECTED), "Got 0x%08x\n", istate);
+    hr = INameSpaceTreeControl_GetSelectedItems(pnstc, &psia);
+    todo_wine ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        IShellItem *psi;
+
+        hr = IShellItemArray_GetItemAt(psia, 0, &psi);
+        if(SUCCEEDED(hr))
+        {
+            INT cmp;
+            hr = IShellItem_Compare(psi, psitestdir, SICHINT_DISPLAY, &cmp);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+            IShellItem_Release(psi);
+        }
+
+        IShellItemArray_Release(psia);
+    }
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
     IShellItem_Release(psidesktop);
     IShellItem_Release(psidesktop2);
     IShellItem_Release(psitestdir);
     IShellItem_Release(psitestdir2);
+    IShellItem_Release(psitest1);
 
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "Got 0x%08x\n", hr);

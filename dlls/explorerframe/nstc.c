@@ -1212,8 +1212,17 @@ static HRESULT WINAPI NSTC2_fnGetSelectedItems(INameSpaceTreeControl2* iface,
                                                IShellItemArray **psiaItems)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p)\n", This, psiaItems);
-    return E_NOTIMPL;
+    IShellItem *psiselected;
+    HRESULT hr;
+    TRACE("%p (%p)\n", This, psiaItems);
+
+    psiselected = get_selected_shellitem(This);
+    if(!psiselected)
+        return E_FAIL;
+
+    hr = SHCreateShellItemArrayFromShellItem(psiselected, &IID_IShellItemArray,
+                                             (void**)psiaItems);
+    return hr;
 }
 
 static HRESULT WINAPI NSTC2_fnGetItemCustomState(INameSpaceTreeControl2* iface,
