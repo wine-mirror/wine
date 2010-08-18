@@ -7507,7 +7507,7 @@ static void test_appsearch(void)
     UINT r;
     MSIHANDLE hdb;
     CHAR prop[MAX_PATH];
-    DWORD size = MAX_PATH;
+    DWORD size;
 
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
@@ -7518,17 +7518,29 @@ static void test_appsearch(void)
     r = add_appsearch_entry( hdb, "'WEBBROWSERPROG', 'NewSignature1'" );
     ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
 
+    r = add_appsearch_entry( hdb, "'NOTEPAD', 'NewSignature2'" );
+    ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
+
     r = create_reglocator_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
 
     r = add_reglocator_entry( hdb, "'NewSignature1', 0, 'htmlfile\\shell\\open\\command', '', 1" );
     ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
 
+    r = create_drlocator_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create DrLocator table: %d\n", r );
+
+    r = add_drlocator_entry( hdb, "'NewSignature2', 0, 'c:\\windows\\system32', 0" );
+    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
+
     r = create_signature_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create Signature table: %d\n", r );
 
     r = add_signature_entry( hdb, "'NewSignature1', 'FileName', '', '', '', '', '', '', ''" );
-    ok( r == ERROR_SUCCESS, "cannot create Signature table: %d\n", r );
+    ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
+
+    r = add_signature_entry( hdb, "'NewSignature2', 'NOTEPAD.EXE|notepad.exe', '', '', '', '', '', '', ''" );
+    ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
 
     r = package_from_db( hdb, &hpkg );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -7538,12 +7550,14 @@ static void test_appsearch(void)
         return;
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
-
     MsiCloseHandle( hdb );
+    if (r != ERROR_SUCCESS)
+        goto done;
 
     r = MsiDoAction( hpkg, "AppSearch" );
     ok( r == ERROR_SUCCESS, "AppSearch failed: %d\n", r);
 
+    size = sizeof(prop);
     r = MsiGetPropertyA( hpkg, "WEBBROWSERPROG", prop, &size );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
     todo_wine
@@ -7551,6 +7565,11 @@ static void test_appsearch(void)
         ok( lstrlenA(prop) != 0, "Expected non-zero length\n");
     }
 
+    size = sizeof(prop);
+    r = MsiGetPropertyA( hpkg, "NOTEPAD", prop, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+
+done:
     MsiCloseHandle( hpkg );
     DeleteFileA(msifile);
 }
