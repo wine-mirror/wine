@@ -14,6 +14,7 @@ RC_SRCS = \
 	En.rc \
 	Fr.rc \
 	It.rc \
-	Lt.rc
+	Lt.rc \
+	Uk.rc
 
 @MAKE_PROG_RULES@
