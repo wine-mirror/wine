@@ -166,6 +166,20 @@ static HRESULT WINAPI ddraw_gamma_control_QueryInterface(IDirectDrawGammaControl
     return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_gamma_control(iface), riid, object);
 }
 
+static HRESULT WINAPI d3d_texture2_QueryInterface(IDirect3DTexture2 *iface, REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_texture2(iface), riid, object);
+}
+
+static HRESULT WINAPI d3d_texture1_QueryInterface(IDirect3DTexture *iface, REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_texture1(iface), riid, object);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::AddRef
  *
@@ -203,6 +217,20 @@ static ULONG WINAPI ddraw_gamma_control_AddRef(IDirectDrawGammaControl *iface)
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_gamma_control(iface));
+}
+
+static ULONG WINAPI d3d_texture2_AddRef(IDirect3DTexture2 *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_texture2(iface));
+}
+
+static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_texture1(iface));
 }
 
 /*****************************************************************************
@@ -445,6 +473,20 @@ static ULONG WINAPI ddraw_gamma_control_Release(IDirectDrawGammaControl *iface)
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_gamma_control(iface));
+}
+
+static ULONG WINAPI d3d_texture2_Release(IDirect3DTexture2 *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_texture2(iface));
+}
+
+static ULONG WINAPI d3d_texture1_Release(IDirect3DTexture *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_texture1(iface));
 }
 
 /*****************************************************************************
@@ -1935,6 +1977,26 @@ static HRESULT WINAPI ddraw_surface3_Initialize(IDirectDrawSurface3 *iface,
 }
 
 /*****************************************************************************
+ * IDirect3DTexture1::Initialize
+ *
+ * The sdk says it's not implemented
+ *
+ * Params:
+ *  ?
+ *
+ * Returns
+ *  DDERR_UNSUPPORTED
+ *
+ *****************************************************************************/
+static HRESULT WINAPI d3d_texture1_Initialize(IDirect3DTexture *iface,
+        IDirect3DDevice *device, IDirectDrawSurface *surface)
+{
+    TRACE("iface %p, device %p, surface %p.\n", iface, device, surface);
+
+    return DDERR_UNSUPPORTED; /* Unchecked */
+}
+
+/*****************************************************************************
  * IDirectDrawSurface7::IsLost
  *
  * Checks if the surface is lost
@@ -2986,6 +3048,320 @@ static HRESULT WINAPI ddraw_gamma_control_SetGammaRamp(IDirectDrawGammaControl *
 }
 
 /*****************************************************************************
+ * IDirect3DTexture2::PaletteChanged
+ *
+ * Informs the texture about a palette change
+ *
+ * Params:
+ *  start: Start index of the change
+ *  count: The number of changed entries
+ *
+ * Returns
+ *  D3D_OK, because it's a stub
+ *
+ *****************************************************************************/
+static HRESULT WINAPI d3d_texture2_PaletteChanged(IDirect3DTexture2 *iface, DWORD start, DWORD count)
+{
+    FIXME("iface %p, start %u, count %u stub!\n", iface, start, count);
+
+    return D3D_OK;
+}
+
+static HRESULT WINAPI d3d_texture1_PaletteChanged(IDirect3DTexture *iface, DWORD start, DWORD count)
+{
+    IDirectDrawSurfaceImpl *surface = surface_from_texture1(iface);
+
+    TRACE("iface %p, start %u, count %u.\n", iface, start, count);
+
+    return d3d_texture2_PaletteChanged((IDirect3DTexture2 *)&surface->IDirect3DTexture2_vtbl, start, count);
+}
+
+/*****************************************************************************
+ * IDirect3DTexture::Unload
+ *
+ * DX5 SDK: "The IDirect3DTexture2::Unload method is not implemented
+ *
+ *
+ * Returns:
+ *  DDERR_UNSUPPORTED
+ *
+ *****************************************************************************/
+static HRESULT WINAPI d3d_texture1_Unload(IDirect3DTexture *iface)
+{
+    WARN("iface %p. Not implemented.\n", iface);
+
+    return DDERR_UNSUPPORTED;
+}
+
+/*****************************************************************************
+ * IDirect3DTexture2::GetHandle
+ *
+ * Returns handle for the texture. At the moment, the interface
+ * to the IWineD3DTexture is used.
+ *
+ * Params:
+ *  device: Device this handle is assigned to
+ *  handle: Address to store the handle at.
+ *
+ * Returns:
+ *  D3D_OK
+ *
+ *****************************************************************************/
+static HRESULT WINAPI d3d_texture2_GetHandle(IDirect3DTexture2 *iface,
+        IDirect3DDevice2 *device, D3DTEXTUREHANDLE *handle)
+{
+    IDirectDrawSurfaceImpl *surface = surface_from_texture2(iface);
+
+    TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
+
+    EnterCriticalSection(&ddraw_cs);
+
+    if (!surface->Handle)
+    {
+        DWORD h = ddraw_allocate_handle(&device_from_device2(device)->handle_table, surface, DDRAW_HANDLE_SURFACE);
+        if (h == DDRAW_INVALID_HANDLE)
+        {
+            ERR("Failed to allocate a texture handle.\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return DDERR_OUTOFMEMORY;
+        }
+
+        surface->Handle = h + 1;
+    }
+
+    TRACE("Returning handle %08x.\n", surface->Handle);
+    *handle = surface->Handle;
+
+    LeaveCriticalSection(&ddraw_cs);
+
+    return D3D_OK;
+}
+
+static HRESULT WINAPI d3d_texture1_GetHandle(IDirect3DTexture *iface,
+        IDirect3DDevice *device, D3DTEXTUREHANDLE *handle)
+{
+    IDirect3DTexture2 *texture2 = (IDirect3DTexture2 *)&surface_from_texture1(iface)->IDirect3DTexture2_vtbl;
+    IDirect3DDevice2 *device2 = (IDirect3DDevice2 *)&device_from_device1(device)->IDirect3DDevice2_vtbl;
+
+    TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
+
+    return d3d_texture2_GetHandle(texture2, device2, handle);
+}
+
+/*****************************************************************************
+ * get_sub_mimaplevel
+ *
+ * Helper function that returns the next mipmap level
+ *
+ * tex_ptr: Surface of which to return the next level
+ *
+ *****************************************************************************/
+static IDirectDrawSurfaceImpl *get_sub_mimaplevel(IDirectDrawSurfaceImpl *surface)
+{
+    /* Now go down the mipmap chain to the next surface */
+    static DDSCAPS2 mipmap_caps = { DDSCAPS_MIPMAP | DDSCAPS_TEXTURE, 0, 0, 0 };
+    IDirectDrawSurface7 *next_level;
+    HRESULT hr;
+
+    hr = ddraw_surface7_GetAttachedSurface((IDirectDrawSurface7 *)surface, &mipmap_caps, &next_level);
+    if (FAILED(hr)) return NULL;
+
+    ddraw_surface7_Release(next_level);
+
+    return (IDirectDrawSurfaceImpl *)next_level;
+}
+
+/*****************************************************************************
+ * IDirect3DTexture2::Load
+ *
+ * Loads a texture created with the DDSCAPS_ALLOCONLOAD
+ *
+ * This function isn't relayed to WineD3D because the whole interface is
+ * implemented in DDraw only. For speed improvements a implementation which
+ * takes OpenGL more into account could be placed into WineD3D.
+ *
+ * Params:
+ *  src_texture: Address of the texture to load
+ *
+ * Returns:
+ *  D3D_OK on success
+ *  D3DERR_TEXTURE_LOAD_FAILED.
+ *
+ *****************************************************************************/
+static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTexture2 *src_texture)
+{
+    IDirectDrawSurfaceImpl *dst_surface = surface_from_texture2(iface);
+    IDirectDrawSurfaceImpl *src_surface = surface_from_texture2(src_texture);
+    HRESULT hr;
+
+    TRACE("iface %p, src_texture %p.\n", iface, src_texture);
+
+    if (src_surface == dst_surface)
+    {
+        TRACE("copying surface %p to surface %p, why?\n", src_surface, dst_surface);
+        return D3D_OK;
+    }
+
+    EnterCriticalSection(&ddraw_cs);
+
+    if (((src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+            != (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP))
+            || (src_surface->surface_desc.u2.dwMipMapCount != dst_surface->surface_desc.u2.dwMipMapCount))
+    {
+        ERR("Trying to load surfaces with different mip-map counts.\n");
+    }
+
+    for (;;)
+    {
+        IWineD3DPalette *wined3d_dst_pal, *wined3d_src_pal;
+        IDirectDrawPalette *dst_pal = NULL, *src_pal = NULL;
+        DDSURFACEDESC *src_desc, *dst_desc;
+
+        TRACE("Copying surface %p to surface %p (mipmap level %d).\n",
+                src_surface, dst_surface, src_surface->mipmap_level);
+
+        /* Suppress the ALLOCONLOAD flag */
+        dst_surface->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
+
+        /* Get the palettes */
+        hr = IWineD3DSurface_GetPalette(dst_surface->WineD3DSurface, &wined3d_dst_pal);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get destination palette, hr %#x.\n", hr);
+            LeaveCriticalSection(&ddraw_cs);
+            return D3DERR_TEXTURE_LOAD_FAILED;
+        }
+        if (wined3d_dst_pal)
+        {
+            hr = IWineD3DPalette_GetParent(wined3d_dst_pal, (IUnknown **)&dst_pal);
+            if (FAILED(hr))
+            {
+                ERR("Failed to get destination palette parent, hr %#x.\n", hr);
+                LeaveCriticalSection(&ddraw_cs);
+                return D3DERR_TEXTURE_LOAD_FAILED;
+            }
+        }
+
+        hr = IWineD3DSurface_GetPalette(src_surface->WineD3DSurface, &wined3d_src_pal);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get source palette, hr %#x.\n", hr);
+            LeaveCriticalSection(&ddraw_cs);
+            return D3DERR_TEXTURE_LOAD_FAILED;
+        }
+        if (wined3d_src_pal)
+        {
+            hr = IWineD3DPalette_GetParent(wined3d_src_pal, (IUnknown **)&src_pal);
+            if (FAILED(hr))
+            {
+                ERR("Failed to get source palette parent, hr %#x.\n", hr);
+                if (dst_pal) IDirectDrawPalette_Release(dst_pal);
+                LeaveCriticalSection(&ddraw_cs);
+                return D3DERR_TEXTURE_LOAD_FAILED;
+            }
+        }
+
+        if (src_pal)
+        {
+            PALETTEENTRY palent[256];
+
+            if (!dst_pal)
+            {
+                IDirectDrawPalette_Release(src_pal);
+                LeaveCriticalSection(&ddraw_cs);
+                return DDERR_NOPALETTEATTACHED;
+            }
+            IDirectDrawPalette_GetEntries(src_pal, 0, 0, 256, palent);
+            IDirectDrawPalette_SetEntries(dst_pal, 0, 0, 256, palent);
+        }
+
+        if (dst_pal) IDirectDrawPalette_Release(dst_pal);
+        if (src_pal) IDirectDrawPalette_Release(src_pal);
+
+        /* Copy one surface on the other */
+        dst_desc = (DDSURFACEDESC *)&(dst_surface->surface_desc);
+        src_desc = (DDSURFACEDESC *)&(src_surface->surface_desc);
+
+        if ((src_desc->dwWidth != dst_desc->dwWidth) || (src_desc->dwHeight != dst_desc->dwHeight))
+        {
+            /* Should also check for same pixel format, u1.lPitch, ... */
+            ERR("Error in surface sizes.\n");
+            LeaveCriticalSection(&ddraw_cs);
+            return D3DERR_TEXTURE_LOAD_FAILED;
+        }
+        else
+        {
+            WINED3DLOCKED_RECT src_rect, dst_rect;
+
+            /* Copy also the ColorKeying stuff */
+            if (src_desc->dwFlags & DDSD_CKSRCBLT)
+            {
+                dst_desc->dwFlags |= DDSD_CKSRCBLT;
+                dst_desc->ddckCKSrcBlt.dwColorSpaceLowValue = src_desc->ddckCKSrcBlt.dwColorSpaceLowValue;
+                dst_desc->ddckCKSrcBlt.dwColorSpaceHighValue = src_desc->ddckCKSrcBlt.dwColorSpaceHighValue;
+            }
+
+            /* Copy the main memory texture into the surface that corresponds
+             * to the OpenGL texture object. */
+
+            hr = IWineD3DSurface_LockRect(src_surface->WineD3DSurface, &src_rect, NULL, 0);
+            if (FAILED(hr))
+            {
+                ERR("Failed to lock source surface, hr %#x.\n", hr);
+                LeaveCriticalSection(&ddraw_cs);
+                return D3DERR_TEXTURE_LOAD_FAILED;
+            }
+
+            hr = IWineD3DSurface_LockRect(dst_surface->WineD3DSurface, &dst_rect, NULL, 0);
+            if (FAILED(hr))
+            {
+                ERR("Failed to lock destination surface, hr %#x.\n", hr);
+                IWineD3DSurface_UnlockRect(src_surface->WineD3DSurface);
+                LeaveCriticalSection(&ddraw_cs);
+                return D3DERR_TEXTURE_LOAD_FAILED;
+            }
+
+            if (dst_surface->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
+                memcpy(dst_rect.pBits, src_rect.pBits, src_surface->surface_desc.u1.dwLinearSize);
+            else
+                memcpy(dst_rect.pBits, src_rect.pBits, src_rect.Pitch * src_desc->dwHeight);
+
+            IWineD3DSurface_UnlockRect(src_surface->WineD3DSurface);
+            IWineD3DSurface_UnlockRect(dst_surface->WineD3DSurface);
+        }
+
+        if (src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+            src_surface = get_sub_mimaplevel(src_surface);
+        else
+            src_surface = NULL;
+
+        if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+            dst_surface = get_sub_mimaplevel(dst_surface);
+        else
+            dst_surface = NULL;
+
+        if (!src_surface || !dst_surface)
+        {
+            if (src_surface != dst_surface)
+                ERR("Loading surface with different mipmap structure.\n");
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&ddraw_cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI d3d_texture1_Load(IDirect3DTexture *iface, IDirect3DTexture *src_texture)
+{
+    TRACE("iface %p, src_texture %p.\n", iface, src_texture);
+
+    return d3d_texture2_Load((IDirect3DTexture2 *)&surface_from_texture1(iface)->IDirect3DTexture2_vtbl,
+            src_texture ? (IDirect3DTexture2 *)&surface_from_texture1(src_texture)->IDirect3DTexture2_vtbl : NULL);
+}
+
+/*****************************************************************************
  * The VTable
  *****************************************************************************/
 
@@ -3103,4 +3479,26 @@ const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl =
     ddraw_gamma_control_Release,
     ddraw_gamma_control_GetGammaRamp,
     ddraw_gamma_control_SetGammaRamp,
+};
+
+const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl =
+{
+    d3d_texture2_QueryInterface,
+    d3d_texture2_AddRef,
+    d3d_texture2_Release,
+    d3d_texture2_GetHandle,
+    d3d_texture2_PaletteChanged,
+    d3d_texture2_Load,
+};
+
+const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl =
+{
+    d3d_texture1_QueryInterface,
+    d3d_texture1_AddRef,
+    d3d_texture1_Release,
+    d3d_texture1_Initialize,
+    d3d_texture1_GetHandle,
+    d3d_texture1_PaletteChanged,
+    d3d_texture1_Load,
+    d3d_texture1_Unload,
 };
