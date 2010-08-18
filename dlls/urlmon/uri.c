@@ -4096,6 +4096,22 @@ static HRESULT WINAPI UriBuilder_CreateUriSimple(IUriBuilder *iface,
                                                  IUri       **ppIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%d %d %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+
+    if(!ppIUri)
+        return E_POINTER;
+
+    /* Acts the same way as CreateUri. */
+    if(dwAllowEncodingPropertyMask && !This->uri) {
+        *ppIUri = NULL;
+        return E_NOTIMPL;
+    }
+
+    if(!This->uri) {
+        *ppIUri = NULL;
+        return INET_E_INVALID_URL;
+    }
+
     FIXME("(%p)->(%d %d %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
     return E_NOTIMPL;
 }
