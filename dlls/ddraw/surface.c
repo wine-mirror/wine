@@ -48,6 +48,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
+static inline IDirectDrawSurfaceImpl *surface_from_gamma_control(IDirectDrawGammaControl *iface)
+{
+    return (IDirectDrawSurfaceImpl *)((char*)iface
+            - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawGammaControl_vtbl));
+}
+
 /*****************************************************************************
  * IUnknown parts follow
  *****************************************************************************/
@@ -153,6 +159,13 @@ static HRESULT WINAPI ddraw_surface3_QueryInterface(IDirectDrawSurface3 *iface, 
     return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_surface3(iface), riid, object);
 }
 
+static HRESULT WINAPI ddraw_gamma_control_QueryInterface(IDirectDrawGammaControl *iface, REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    return ddraw_surface7_QueryInterface((IDirectDrawSurface7 *)surface_from_gamma_control(iface), riid, object);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::AddRef
  *
@@ -183,6 +196,13 @@ static ULONG WINAPI ddraw_surface3_AddRef(IDirectDrawSurface3 *iface)
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_surface3(iface));
+}
+
+static ULONG WINAPI ddraw_gamma_control_AddRef(IDirectDrawGammaControl *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_AddRef((IDirectDrawSurface7 *)surface_from_gamma_control(iface));
 }
 
 /*****************************************************************************
@@ -418,6 +438,13 @@ static ULONG WINAPI ddraw_surface3_Release(IDirectDrawSurface3 *iface)
     TRACE("iface %p.\n", iface);
 
     return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_surface3(iface));
+}
+
+static ULONG WINAPI ddraw_gamma_control_Release(IDirectDrawGammaControl *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ddraw_surface7_Release((IDirectDrawSurface7 *)surface_from_gamma_control(iface));
 }
 
 /*****************************************************************************
@@ -2874,6 +2901,90 @@ static HRESULT WINAPI ddraw_surface3_SetPalette(IDirectDrawSurface3 *iface, IDir
     return ddraw_surface7_SetPalette((IDirectDrawSurface7 *)surface_from_surface3(iface), palette);
 }
 
+/**********************************************************
+ * IDirectDrawGammaControl::GetGammaRamp
+ *
+ * Returns the current gamma ramp for a surface
+ *
+ * Params:
+ *  flags: Ignored
+ *  gamma_ramp: Address to write the ramp to
+ *
+ * Returns:
+ *  DD_OK on success
+ *  DDERR_INVALIDPARAMS if gamma_ramp is NULL
+ *
+ **********************************************************/
+static HRESULT WINAPI ddraw_gamma_control_GetGammaRamp(IDirectDrawGammaControl *iface,
+        DWORD flags, DDGAMMARAMP *gamma_ramp)
+{
+    IDirectDrawSurfaceImpl *surface = surface_from_gamma_control(iface);
+
+    TRACE("iface %p, flags %#x, gamma_ramp %p.\n", iface, flags, gamma_ramp);
+
+    if (!gamma_ramp)
+    {
+        WARN("Invalid gamma_ramp passed.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
+    EnterCriticalSection(&ddraw_cs);
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+        /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP. */
+        IWineD3DDevice_GetGammaRamp(surface->ddraw->wineD3DDevice, 0, (WINED3DGAMMARAMP *)gamma_ramp);
+    }
+    else
+    {
+        ERR("Not implemented for non-primary surfaces.\n");
+    }
+    LeaveCriticalSection(&ddraw_cs);
+
+    return DD_OK;
+}
+
+/**********************************************************
+ * IDirectDrawGammaControl::SetGammaRamp
+ *
+ * Sets the red, green and blue gamma ramps for
+ *
+ * Params:
+ *  flags: Can be DDSGR_CALIBRATE to request calibration
+ *  gamma_ramp: Structure containing the new gamma ramp
+ *
+ * Returns:
+ *  DD_OK on success
+ *  DDERR_INVALIDPARAMS if gamma_ramp is NULL
+ *
+ **********************************************************/
+static HRESULT WINAPI ddraw_gamma_control_SetGammaRamp(IDirectDrawGammaControl *iface,
+        DWORD flags, DDGAMMARAMP *gamma_ramp)
+{
+    IDirectDrawSurfaceImpl *surface = surface_from_gamma_control(iface);
+
+    TRACE("iface %p, flags %#x, gamma_ramp %p.\n", iface, flags, gamma_ramp);
+
+    if (!gamma_ramp)
+    {
+        WARN("Invalid gamma_ramp passed.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
+    EnterCriticalSection(&ddraw_cs);
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+        /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP */
+        IWineD3DDevice_SetGammaRamp(surface->ddraw->wineD3DDevice, 0, flags, (WINED3DGAMMARAMP *)gamma_ramp);
+    }
+    else
+    {
+        ERR("Not implemented for non-primary surfaces.\n");
+    }
+    LeaveCriticalSection(&ddraw_cs);
+
+    return DD_OK;
+}
+
 /*****************************************************************************
  * The VTable
  *****************************************************************************/
@@ -2983,4 +3094,13 @@ const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
     ddraw_surface3_PageUnlock,
     /* IDirectDrawSurface3 */
     ddraw_surface3_SetSurfaceDesc,
+};
+
+const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl =
+{
+    ddraw_gamma_control_QueryInterface,
+    ddraw_gamma_control_AddRef,
+    ddraw_gamma_control_Release,
+    ddraw_gamma_control_GetGammaRamp,
+    ddraw_gamma_control_SetGammaRamp,
 };
