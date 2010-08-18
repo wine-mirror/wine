@@ -1623,11 +1623,20 @@ static nsresult NSAPI nsURI_GetScheme(nsIURL *iface, nsACString *aScheme)
     TRACE("(%p)->(%p)\n", This, aScheme);
 
     if(This->use_wine_url) {
-        /*
-         * For Gecko we set scheme to unknown so it won't be handled
-         * as any special case.
-         */
-        nsACString_SetData(aScheme, "wine");
+        char scheme[INTERNET_MAX_SCHEME_LENGTH+1];
+        WCHAR *ptr;
+        int len;
+
+        ptr = strchrW(This->wine_url, ':');
+        if(!ptr) {
+            nsACString_SetData(aScheme, "wine");
+            return NS_OK;
+        }
+
+        len = WideCharToMultiByte(CP_ACP, 0, This->wine_url, ptr-This->wine_url, scheme,
+                sizeof(scheme), NULL, NULL);
+        scheme[min(len,sizeof(scheme)-1)] = 0;
+        nsACString_SetData(aScheme, strcmp(scheme, "about") ? scheme : "wine");
         return NS_OK;
     }
 
