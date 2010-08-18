@@ -33,7 +33,8 @@
  *
  *   missing styles: TVS_FULLROWSELECT, TVS_INFOTIP, TVS_RTLREADING,
  *
- *   missing item styles: TVIS_CUT, TVIS_EXPANDPARTIAL
+ *   missing item styles: TVIS_CUT, TVIS_EXPANDPARTIAL, TVIS_EX_FLAT,
+ *      TVIS_EX_DISABLED
  *
  *   Make the insertion mark look right.
  *   Scroll (instead of repaint) as much as possible.
@@ -2142,6 +2143,13 @@ TREEVIEW_GetItemT(const TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
             }
         }
     }
+
+    if (tvItem->mask & TVIF_STATEEX)
+    {
+        FIXME("Extended item state not supported, returning 0.\n");
+        tvItem->uStateEx = 0;
+    }
+
     TRACE("item <%p>, txt %p, img %p, mask %x\n",
 	  wineItem, tvItem->pszText, &tvItem->iImage, tvItem->mask);
 
