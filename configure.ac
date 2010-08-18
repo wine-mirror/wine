@@ -4,8 +4,8 @@ dnl See ChangeLog file for detailed change history.
 
 m4_define(WINE_VERSION,regexp(m4_include(VERSION),[version \([-.0-9A-Za-z]+\)],[\1]))
 
-dnl autoconf versions before 2.59d don't handle multi-line subst variables correctly
-AC_PREREQ(2.59d)
+dnl autoconf versions before 2.62 don't handle source dir symlinks correctly
+AC_PREREQ(2.62)
 AC_INIT([Wine],[WINE_VERSION],[wine-devel@winehq.org],[wine],[http://www.winehq.org])
 AC_CONFIG_SRCDIR(server/atom.c)
 AC_CONFIG_HEADERS(include/config.h)
