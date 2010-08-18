@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = d3dx10_33.dll
+
+C_SRCS = \
+	d3dx10_33_main.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
