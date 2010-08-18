@@ -462,7 +462,7 @@ struct IDirectDrawClipperImpl
     BOOL initialized;
 };
 
-extern const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl DECLSPEC_HIDDEN;
+HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper) DECLSPEC_HIDDEN;
 
 typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper DECLSPEC_HIDDEN;
 

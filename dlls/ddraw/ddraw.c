@@ -3840,6 +3840,8 @@ DirectDrawCreateClipper(DWORD Flags,
                         IUnknown *UnkOuter)
 {
     IDirectDrawClipperImpl* object;
+    HRESULT hr;
+
     TRACE("(%08x,%p,%p)\n", Flags, Clipper, UnkOuter);
 
     EnterCriticalSection(&ddraw_cs);
@@ -3863,16 +3865,16 @@ DirectDrawCreateClipper(DWORD Flags,
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IDirectDrawClipper_Vtbl;
-    object->ref = 1;
-    object->wineD3DClipper = pWineDirect3DCreateClipper((IUnknown *) object);
-    if(!object->wineD3DClipper)
+    hr = ddraw_clipper_init(object);
+    if (FAILED(hr))
     {
+        WARN("Failed to initialize clipper, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         LeaveCriticalSection(&ddraw_cs);
-        return E_OUTOFMEMORY;
+        return hr;
     }
 
+    TRACE("Created clipper %p.\n", object);
     *Clipper = (IDirectDrawClipper *) object;
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;

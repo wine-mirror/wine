@@ -283,7 +283,7 @@ static HRESULT WINAPI IDirectDrawClipperImpl_IsClipListChanged(
 /*****************************************************************************
  * The VTable
  *****************************************************************************/
-const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl =
+static const struct IDirectDrawClipperVtbl ddraw_clipper_vtbl =
 {
     IDirectDrawClipperImpl_QueryInterface,
     IDirectDrawClipperImpl_AddRef,
@@ -295,3 +295,17 @@ const IDirectDrawClipperVtbl IDirectDrawClipper_Vtbl =
     IDirectDrawClipperImpl_SetClipList,
     IDirectDrawClipperImpl_SetHwnd
 };
+
+HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper)
+{
+    clipper->lpVtbl = &ddraw_clipper_vtbl;
+    clipper->ref = 1;
+    clipper->wineD3DClipper = pWineDirect3DCreateClipper((IUnknown *)clipper);
+    if (!clipper->wineD3DClipper)
+    {
+        WARN("Failed to create wined3d clipper.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    return DD_OK;
+}
