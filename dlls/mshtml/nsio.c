@@ -491,6 +491,8 @@ static nsrefcnt NSAPI nsChannel_Release(nsIHttpChannel *iface)
             nsIInterfaceRequestor_Release(This->notif_callback);
         if(This->original_uri)
             nsIURI_Release(This->original_uri);
+        if(This->referrer)
+            nsIURI_Release(This->referrer);
 
         free_http_headers(&This->response_headers);
         free_http_headers(&This->request_headers);
@@ -1072,17 +1074,25 @@ static nsresult NSAPI nsChannel_GetReferrer(nsIHttpChannel *iface, nsIURI **aRef
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, aReferrer);
+    TRACE("(%p)->(%p)\n", This, aReferrer);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(This->referrer)
+        nsIURI_AddRef(This->referrer);
+    *aReferrer = This->referrer;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_SetReferrer(nsIHttpChannel *iface, nsIURI *aReferrer)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, aReferrer);
+    TRACE("(%p)->(%p)\n", This, aReferrer);
 
+    if(aReferrer)
+        nsIURI_AddRef(aReferrer);
+    if(This->referrer)
+        nsIURI_Release(This->referrer);
+    This->referrer = aReferrer;
     return NS_OK;
 }
 

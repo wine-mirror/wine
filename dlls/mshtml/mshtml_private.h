@@ -468,6 +468,7 @@ typedef struct {
     nsISupports *owner;
     nsLoadFlags load_flags;
     nsIURI *original_uri;
+    nsIURI *referrer;
     char *content_type;
     char *charset;
     PRUint32 response_status;
