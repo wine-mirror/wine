@@ -28,6 +28,7 @@ STRINGTABLE
     IDS_INVALID_CALL_ARG    "Ogiltigt funktionsanrop eller argument"
     IDS_CREATE_OBJ_ERROR    "Automationsservern kunde inte skapa objekt"
     IDS_NO_PROPERTY         "Objektet stöder inte denna egenskap eller metod"
+    IDS_UNSUPPORTED_ACTION  "Objektet stöder inte denna handling"
     IDS_ARG_NOT_OPT         "Argumentet är inte valfritt"
     IDS_SYNTAX_ERROR        "Syntaxfel"
     IDS_SEMICOLON           "';' förväntades"
