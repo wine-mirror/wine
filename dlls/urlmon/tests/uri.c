@@ -5167,6 +5167,39 @@ static void test_IUriBuilder_CreateUriSimple(IUriBuilder *builder, const uri_bui
     if(uri) IUri_Release(uri);
 }
 
+static void test_IUriBuilder_CreateUriWithFlags(IUriBuilder *builder, const uri_builder_test *test,
+                                                DWORD test_index) {
+    HRESULT hr;
+    IUri *uri = NULL;
+
+    hr = IUriBuilder_CreateUriWithFlags(builder, test->uri_with_flags, test->uri_with_builder_flags,
+                                        test->uri_with_encode_flags, 0, &uri);
+    if(test->uri_todo) {
+        todo_wine {
+            ok(hr == test->uri_with_hres,
+                "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, test->uri_with_hres, test_index);
+        }
+    } else {
+        ok(hr == test->uri_with_hres,
+            "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, test->uri_with_hres, test_index);
+    }
+
+    if(SUCCEEDED(hr)) {
+        BSTR received = NULL;
+
+        hr = IUri_GetAbsoluteUri(uri, &received);
+        ok(hr == S_OK, "Error: IUri_GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
+        ok(!strcmp_aw(test->uri_with_expected, received),
+            "Error: Expected the URI to be %s but was %s instead on uri_builder_tests[%d].\n",
+            test->uri_with_expected, wine_dbgstr_w(received), test_index);
+        SysFreeString(received);
+    }
+    if(uri) IUri_Release(uri);
+}
+
 static void test_IUriBuilder_CreateInvalidArgs(void) {
     IUriBuilder *builder;
     HRESULT hr;
@@ -5205,6 +5238,23 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
             hr, E_NOTIMPL);
         ok(!uri, "Error: Expected uri to NULL, but was %p instead.\n", uri);
 
+        uri = (void*) 0xdeadbeef;
+        hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, &uri);
+        ok(hr == INET_E_INVALID_URL,
+            "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+            hr, INET_E_INVALID_URL);
+        ok(!uri, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
+
+        hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+
+        uri = (void*) 0xdeadbeef;
+        hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, Uri_HAS_USER_NAME, 0, &uri);
+        ok(hr == E_NOTIMPL, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+            hr, E_NOTIMPL);
+        ok(!uri, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
+
         hr = pCreateUri(http_urlW, 0, 0, &test);
         ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
         if(SUCCEEDED(hr)) {
@@ -5229,6 +5279,15 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
             todo_wine { ok(uri != NULL, "Error: uri was NULL.\n"); }
             if(uri) IUri_Release(uri);
 
+            uri = NULL;
+            hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, &uri);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+            }
+            todo_wine { ok(uri != NULL, "Error: uri was NULL.\n"); }
+            if(uri) IUri_Release(uri);
+
             hr = IUriBuilder_SetFragment(builder, NULL);
             todo_wine { ok(hr == S_OK, "Error: IUriBuilder_SetFragment returned 0x%08x, expected 0x%08x.\n", hr, S_OK); }
 
@@ -5242,6 +5301,12 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
             hr = IUriBuilder_CreateUriSimple(builder, Uri_HAS_USER_NAME, 0, &uri);
             ok(hr == E_NOTIMPL, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n",
                 hr, S_OK);
+            ok(!uri, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
+
+            uri = (void*) 0xdeadbeef;
+            hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, Uri_HAS_USER_NAME, 0, &uri);
+            ok(hr == E_NOTIMPL, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+                hr, E_NOTIMPL);
             ok(!uri, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
         }
         if(test) IUri_Release(test);
@@ -5304,6 +5369,7 @@ static void test_IUriBuilder(void) {
 
                 test_IUriBuilder_CreateUri(builder, &test, i);
                 test_IUriBuilder_CreateUriSimple(builder, &test, i);
+                test_IUriBuilder_CreateUriWithFlags(builder, &test, i);
             }
             if(builder) IUriBuilder_Release(builder);
         }

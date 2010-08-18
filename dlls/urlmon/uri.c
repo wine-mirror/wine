@@ -4156,6 +4156,23 @@ static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
                                          IUri       **ppIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(0x%08x 0x%08x %d %d %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
+        dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+
+    if(!ppIUri)
+        return E_POINTER;
+
+    /* Same as CreateUri. */
+    if(dwAllowEncodingPropertyMask && !This->uri) {
+        *ppIUri = NULL;
+        return E_NOTIMPL;
+    }
+
+    if(!This->uri) {
+        *ppIUri = NULL;
+        return INET_E_INVALID_URL;
+    }
+
     FIXME("(%p)->(0x%08x 0x%08x %d %d %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
         dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
     return E_NOTIMPL;
