@@ -509,9 +509,9 @@ static nsresult NSAPI nsChannel_GetName(nsIHttpChannel *iface, nsACString *aName
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, aName);
+    TRACE("(%p)->(%p)\n", This, aName);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return nsIURI_GetSpec(NSURI(This->uri), aName);
 }
 
 static nsresult NSAPI nsChannel_IsPending(nsIHttpChannel *iface, PRBool *_retval)
