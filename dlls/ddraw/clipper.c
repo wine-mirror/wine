@@ -20,22 +20,9 @@
  */
 
 #include "config.h"
-
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "ddraw.h"
-#include "winerror.h"
+#include "wine/port.h"
 
 #include "ddraw_private.h"
-
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

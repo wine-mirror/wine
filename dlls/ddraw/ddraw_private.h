@@ -19,24 +19,22 @@
 #ifndef __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H
 #define __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H
 
-/* MAY NOT CONTAIN X11 or DGA specific includes/defines/structs! */
+#include <assert.h>
+#define COBJMACROS
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
+#include "wine/debug.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-
-#include "windef.h"
 #include "winbase.h"
-#include "wtypes.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ddraw.h"
-#include "ddrawi.h"
-#include "d3d.h"
 
-#include "wine/list.h"
+#include "d3d.h"
+#include "ddraw.h"
 #ifdef DDRAW_INIT_GUID
 #include "initguid.h"
 #endif
+#include "wine/list.h"
 #include "wine/wined3d.h"
 
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;

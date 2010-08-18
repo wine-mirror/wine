@@ -22,11 +22,9 @@
  */
 
 #include "config.h"
-
-#define NONAMELESSUNION
+#include "wine/port.h"
 
 #include "ddraw_private.h"
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

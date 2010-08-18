@@ -23,25 +23,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <assert.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-
-#define COBJMACROS
-#define NONAMELESSUNION
-
-#include "windef.h"
-#include "winbase.h"
-#include "winerror.h"
-#include "wingdi.h"
-#include "wine/exception.h"
-
-#include "ddraw.h"
-#include "d3d.h"
-
 #include "ddraw_private.h"
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

@@ -26,27 +26,12 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include "wine/debug.h"
-
-#include <assert.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-
-#define COBJMACROS
-
-#include "windef.h"
-#include "winbase.h"
-#include "winerror.h"
-#include "wingdi.h"
-#include "wine/exception.h"
-#include "winreg.h"
-
-#include "ddraw.h"
-#include "d3d.h"
 
 #define DDRAW_INIT_GUID
 #include "ddraw_private.h"
+
+#include "wine/exception.h"
+#include "winreg.h"
 
 static typeof(WineDirect3DCreate) *pWineDirect3DCreate;
 

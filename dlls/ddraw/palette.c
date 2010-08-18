@@ -18,13 +18,7 @@
  */
 
 #include "config.h"
-#include "winerror.h"
-#include "wine/debug.h"
-
-#define COBJMACROS
-
-#include <assert.h>
-#include <string.h>
+#include "wine/port.h"
 
 #include "ddraw_private.h"
 
