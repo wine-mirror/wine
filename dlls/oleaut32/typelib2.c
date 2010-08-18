@@ -921,6 +921,26 @@ static HRESULT ctl2_encode_variant(
     }
 }
 
+static int ctl2_find_custdata(
+    ICreateTypeLib2Impl *This,
+    REFGUID guid,
+    int offset)
+{
+    while (offset != -1) {
+        MSFT_CDGuid *cdentry =
+            (MSFT_CDGuid *)&This->typelib_segment_data[MSFT_SEG_CUSTDATAGUID][offset];
+        MSFT_GuidEntry *guidentry =
+            (MSFT_GuidEntry *)&This->typelib_segment_data[MSFT_SEG_GUID][cdentry->GuidOffset];
+
+        if (IsEqualGUID(guidentry, guid))
+            return offset;
+
+        offset = cdentry->next;
+    }
+
+    return -1;
+}
+
 /****************************************************************************
  *	ctl2_set_custdata
  *
@@ -943,6 +963,7 @@ static HRESULT ctl2_set_custdata(
     int guidoffset;
     int custoffset;
     int *custdata;
+    BOOL new_segment = FALSE;
 
     switch(V_VT(pVarVal))
     {
@@ -971,14 +992,21 @@ static HRESULT ctl2_set_custdata(
     if (status)
 	return status;
 
-    custoffset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATAGUID, 12, 0);
-    if (custoffset == -1) return E_OUTOFMEMORY;
+    custoffset = ctl2_find_custdata(This, guid, *offset);
+    if (custoffset == -1) {
+        custoffset = ctl2_alloc_segment(This, MSFT_SEG_CUSTDATAGUID, 12, 0);
+        if (custoffset == -1)
+            return E_OUTOFMEMORY;
+        new_segment = TRUE;
+    }
 
     custdata = (int *)&This->typelib_segment_data[MSFT_SEG_CUSTDATAGUID][custoffset];
     custdata[0] = guidoffset;
     custdata[1] = dataoffset;
-    custdata[2] = *offset;
-    *offset = custoffset;
+    if (new_segment) {
+        custdata[2] = *offset;
+        *offset = custoffset;
+    }
 
     return S_OK;
 }
