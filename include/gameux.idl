@@ -32,6 +32,18 @@ library gameuxLib
 {
     importlib("stdole2.tlb");
 
+    cpp_quote("#define ID_GDF_XML __GDF_XML")
+    cpp_quote("#define ID_GDF_THUMBNAIL __GDF_THUMBNAIL")
+    cpp_quote("#define ID_ICON_ICO __ICON_ICO")
+
+    cpp_quote("#if defined(__GNUC__)")
+    cpp_quote("#define ID_GDF_XML_STR (const WCHAR[]){'_','_','G','D','F','_','X','M','L',0}")
+    cpp_quote("#define ID_GDF_THUMBNAIL_STR (const WCHAR[]){'_','_','G','D','F','_','T','H','U','M','B','N','A','I','L',0}")
+    cpp_quote("#elif defined(_MSC_VER)")
+    cpp_quote("#define ID_GDF_XML_STR L\"__GDF_XML\"")
+    cpp_quote("#define ID_GDF_THUMBNAIL_STR L\"__GDF_THUMBNAIL\"")
+    cpp_quote("#endif")
+
     typedef enum
     {
         GIS_NOT_INSTALLED  = 1,
