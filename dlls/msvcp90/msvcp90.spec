@@ -531,9 +531,9 @@
 @ stub -arch=win32 ??0?$_String_val@_WV?$allocator@_W@std@@@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0?$_String_val@_WV?$allocator@_W@std@@@std@@QEAA@AEBV01@@Z
 @ cdecl -arch=win32 -i386 -norelay ??0?$allocator@D@std@@QAE@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_char_copy_ctor
-@ stub -arch=win64 ??0?$allocator@D@std@@QEAA@AEBV01@@Z
+@ cdecl -arch=win64 ??0?$allocator@D@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_allocator_char_copy_ctor
 @ cdecl -arch=win32 -i386 -norelay ??0?$allocator@D@std@@QAE@XZ() __thiscall_MSVCP_allocator_char_ctor
-@ stub -arch=win64 ??0?$allocator@D@std@@QEAA@XZ
+@ cdecl -arch=win64 ??0?$allocator@D@std@@QEAA@XZ(ptr) MSVCP_allocator_char_ctor
 @ stub -arch=win32 ??0?$allocator@G@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0?$allocator@G@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0?$allocator@G@std@@QAE@XZ
@@ -1373,7 +1373,7 @@
 @ stub -arch=win32 ??4?$_String_val@_WV?$allocator@_W@std@@@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4?$_String_val@_WV?$allocator@_W@std@@@std@@QEAAAEAV01@AEBV01@@Z
 @ cdecl -arch=win32 -i386 -norelay ??4?$allocator@D@std@@QAEAAV01@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_char_assign
-@ stub -arch=win64 ??4?$allocator@D@std@@QEAAAEAV01@AEBV01@@Z
+@ cdecl -arch=win64 ??4?$allocator@D@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_allocator_char_assign
 @ stub -arch=win32 ??4?$allocator@G@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4?$allocator@G@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4?$allocator@X@std@@QAEAAV01@ABV01@@Z
@@ -2891,9 +2891,9 @@
 @ stub -arch=win64 ?_Xsgetn_s@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEA_W_K_J@Z
 @ stub ?_Xweak@tr1@std@@YAXXZ
 @ cdecl -arch=win32 -i386 -norelay ?address@?$allocator@D@std@@QBEPADAAD@Z(ptr) __thiscall_MSVCP_allocator_char_address
-@ stub -arch=win64 ?address@?$allocator@D@std@@QEBAPEADAEAD@Z
+@ cdecl -arch=win64 ?address@?$allocator@D@std@@QEBAPEADAEAD@Z(ptr ptr) MSVCP_allocator_char_address
 @ cdecl -arch=win32 -i386 -norelay ?address@?$allocator@D@std@@QBEPBDABD@Z(ptr) __thiscall_MSVCP_allocator_char_const_address
-@ stub -arch=win64 ?address@?$allocator@D@std@@QEBAPEBDAEBD@Z
+@ cdecl -arch=win64 ?address@?$allocator@D@std@@QEBAPEBDAEBD@Z(ptr ptr) MSVCP_allocator_char_const_address
 @ stub -arch=win32 ?address@?$allocator@G@std@@QBEPAGAAG@Z
 @ stub -arch=win64 ?address@?$allocator@G@std@@QEBAPEAGAEAG@Z
 @ stub -arch=win32 ?address@?$allocator@G@std@@QBEPBGABG@Z
@@ -2903,9 +2903,9 @@
 @ stub -arch=win32 ?address@?$allocator@_W@std@@QBEPB_WAB_W@Z
 @ stub -arch=win64 ?address@?$allocator@_W@std@@QEBAPEB_WAEB_W@Z
 @ cdecl -arch=win32 -i386 -norelay ?allocate@?$allocator@D@std@@QAEPADI@Z(long) __thiscall_MSVCP_allocator_char_allocate
-@ stub -arch=win64 ?allocate@?$allocator@D@std@@QEAAPEAD_K@Z
+@ cdecl -arch=win64 ?allocate@?$allocator@D@std@@QEAAPEAD_K@Z(ptr long) MSVCP_allocator_char_allocate
 @ cdecl -arch=win32 -i386 -norelay ?allocate@?$allocator@D@std@@QAEPADIPBX@Z(long ptr) __thiscall_MSVCP_allocator_char_allocate_hint
-@ stub -arch=win64 ?allocate@?$allocator@D@std@@QEAAPEAD_KPEBX@Z
+@ cdecl -arch=win64 ?allocate@?$allocator@D@std@@QEAAPEAD_KPEBX@Z(ptr long ptr) MSVCP_allocator_char_allocate_hint
 @ stub -arch=win32 ?allocate@?$allocator@G@std@@QAEPAGI@Z
 @ stub -arch=win64 ?allocate@?$allocator@G@std@@QEAAPEAG_K@Z
 @ stub -arch=win32 ?allocate@?$allocator@G@std@@QAEPAGIPBX@Z
@@ -3163,7 +3163,7 @@
 @ stub -arch=win32 ?compare@?$collate@_W@std@@QBEHPB_W000@Z
 @ stub -arch=win64 ?compare@?$collate@_W@std@@QEBAHPEB_W000@Z
 @ cdecl -arch=win32 -i386 -norelay ?construct@?$allocator@D@std@@QAEXPADABD@Z(ptr ptr) __thiscall_MSVCP_allocator_char_construct
-@ stub -arch=win64 ?construct@?$allocator@D@std@@QEAAXPEADAEBD@Z
+@ cdecl -arch=win64 ?construct@?$allocator@D@std@@QEAAXPEADAEBD@Z(ptr ptr ptr) MSVCP_allocator_char_construct
 @ stub -arch=win32 ?construct@?$allocator@G@std@@QAEXPAGABG@Z
 @ stub -arch=win64 ?construct@?$allocator@G@std@@QEAAXPEAGAEBG@Z
 @ stub -arch=win32 ?construct@?$allocator@_W@std@@QAEXPA_WAB_W@Z
@@ -3211,7 +3211,7 @@
 @ stub -arch=win32 ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QBE?AW4dateorder@time_base@2@XZ
 @ stub -arch=win64 ?date_order@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEBA?AW4dateorder@time_base@2@XZ
 @ cdecl -arch=win32 -i386 -norelay ?deallocate@?$allocator@D@std@@QAEXPADI@Z(ptr long) __thiscall_MSVCP_allocator_char_deallocate
-@ stub -arch=win64 ?deallocate@?$allocator@D@std@@QEAAXPEAD_K@Z
+@ cdecl -arch=win64 ?deallocate@?$allocator@D@std@@QEAAXPEAD_K@Z(ptr ptr long) MSVCP_allocator_char_deallocate
 @ stub -arch=win32 ?deallocate@?$allocator@G@std@@QAEXPAGI@Z
 @ stub -arch=win64 ?deallocate@?$allocator@G@std@@QEAAXPEAG_K@Z
 @ stub -arch=win32 ?deallocate@?$allocator@_W@std@@QAEXPA_WI@Z
@@ -3245,7 +3245,7 @@
 @ stub ?denorm_min@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?denorm_min@?$numeric_limits@_W@std@@SA_WXZ
 @ cdecl -arch=win32 -i386 -norelay ?destroy@?$allocator@D@std@@QAEXPAD@Z(ptr) __thiscall_MSVCP_allocator_char_destroy
-@ stub -arch=win64 ?destroy@?$allocator@D@std@@QEAAXPEAD@Z
+@ cdecl -arch=win64 ?destroy@?$allocator@D@std@@QEAAXPEAD@Z(ptr ptr) MSVCP_allocator_char_destroy
 @ stub -arch=win32 ?destroy@?$allocator@G@std@@QAEXPAG@Z
 @ stub -arch=win64 ?destroy@?$allocator@G@std@@QEAAXPEAG@Z
 @ stub -arch=win32 ?destroy@?$allocator@_W@std@@QAEXPA_W@Z
@@ -4510,7 +4510,7 @@
 @ stub -arch=win32 ?max_length@codecvt_base@std@@QBEHXZ
 @ stub -arch=win64 ?max_length@codecvt_base@std@@QEBAHXZ
 @ cdecl -arch=win32 -i386 -norelay ?max_size@?$allocator@D@std@@QBEIXZ() __thiscall_MSVCP_allocator_char_max_size
-@ stub -arch=win64 ?max_size@?$allocator@D@std@@QEBA_KXZ
+@ cdecl -arch=win64 ?max_size@?$allocator@D@std@@QEBA_KXZ(ptr) MSVCP_allocator_char_max_size
 @ stub -arch=win32 ?max_size@?$allocator@G@std@@QBEIXZ
 @ stub -arch=win64 ?max_size@?$allocator@G@std@@QEBA_KXZ
 @ stub -arch=win32 ?max_size@?$allocator@_W@std@@QBEIXZ
