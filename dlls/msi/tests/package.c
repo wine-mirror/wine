@@ -7866,11 +7866,6 @@ static void test_appsearch_reglocator(void)
     LPCSTR str;
     LONG res;
     UINT r;
-    REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
-
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
-        access |= KEY_WOW64_64KEY;
 
     version = TRUE;
     if (!create_file_with_version("test.dll", MAKELONG(2, 1), MAKELONG(4, 3)))
@@ -7910,7 +7905,7 @@ static void test_appsearch_reglocator(void)
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     }
 
-    res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0, access, NULL, &hklm, NULL);
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine", &hklm);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegSetValueA(hklm, NULL, REG_SZ, "defvalue", 8);
@@ -8516,7 +8511,7 @@ static void test_appsearch_reglocator(void)
     RegDeleteValueA(hklm, "Value15");
     RegDeleteValueA(hklm, "Value16");
     RegDeleteValueA(hklm, "Value17");
-    delete_key(hklm, "", access);
+    RegDeleteKey(hklm, "");
     RegCloseKey(hklm);
 
     RegDeleteValueA(classes, "Value1");

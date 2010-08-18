@@ -4800,7 +4800,7 @@ static void test_MsiGetProductInfoEx(void)
     lstrcpyA(keypath, "Software\\Microsoft\\Installer\\Products\\");
     lstrcatA(keypath, prod_squashed);
 
-    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &prodkey);
+    res = RegCreateKeyExA(HKEY_CURRENT_USER, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     sz = MAX_PATH;
@@ -5191,7 +5191,7 @@ static void test_MsiGetProductInfoEx(void)
     RegDeleteValueA(prodkey, "HelpTelephone");
     RegDeleteValueA(prodkey, "HelpLink");
     RegDeleteValueA(prodkey, "LocalPackage");
-    RegDeleteKeyA(prodkey, "");
+    delete_key(prodkey, "", access & KEY_WOW64_64KEY);
     RegCloseKey(prodkey);
 
     /* MSIINSTALLCONTEXT_USERMANAGED */
@@ -5604,9 +5604,9 @@ static void test_MsiGetProductInfoEx(void)
     RegDeleteValueA(propkey, "HelpTelephone");
     RegDeleteValueA(propkey, "HelpLink");
     RegDeleteValueA(propkey, "ManagedLocalPackage");
-    RegDeleteKeyA(propkey, "");
+    delete_key(propkey, "", access & KEY_WOW64_64KEY);
     RegCloseKey(propkey);
-    RegDeleteKeyA(localkey, "");
+    delete_key(localkey, "", access & KEY_WOW64_64KEY);
     RegCloseKey(localkey);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
