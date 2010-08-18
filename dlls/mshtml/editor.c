@@ -180,25 +180,33 @@ static void set_ns_align(HTMLDocument *This, const char *align_str)
     nsICommandParams_Release(nsparam);
 }
 
-static DWORD query_align_status(HTMLDocument *This, const char *align_str)
+static DWORD query_align_status(HTMLDocument *This, const WCHAR *align)
 {
-    nsICommandParams *nsparam;
-    char *align = NULL;
+    DWORD ret = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+    nsIDOMNSHTMLDocument *nsdoc;
+    nsAString justify_str;
+    PRBool b;
+    nsresult nsres;
 
     if(This->doc_obj->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
-    if(This->doc_obj->nscontainer) {
-        nsparam = create_nscommand_params();
-        get_ns_command_state(This->doc_obj->nscontainer, NSCMD_ALIGN, nsparam);
 
-        nsICommandParams_GetCStringValue(nsparam, NSSTATE_ATTRIBUTE, &align);
-
-        nsICommandParams_Release(nsparam);
+    nsres = nsIDOMHTMLDocument_QueryInterface(This->doc_node->nsdoc, &IID_nsIDOMNSHTMLDocument,
+            (void**)&nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSHTMLDocument iface: %08x\n", nsres);
+        return 0;
     }
 
-    return OLECMDF_SUPPORTED | OLECMDF_ENABLED
-        | (align && !strcmp(align_str, align) ? OLECMDF_LATCHED : 0);
+    nsAString_Init(&justify_str, align);
+    nsres = nsIDOMNSHTMLDocument_QueryCommandState(nsdoc, &justify_str, &b);
+    nsAString_Finish(&justify_str);
+    if(NS_SUCCEEDED(nsres) && b)
+        ret |= OLECMDF_LATCHED;
+
+    nsIDOMNSHTMLDocument_Release(nsdoc);
+    return ret;
 }
 
 
@@ -704,10 +712,13 @@ static HRESULT exec_italic(HTMLDocument *This, DWORD cmdexecopt, VARIANT *in, VA
 
 static HRESULT query_justify(HTMLDocument *This, OLECMD *cmd)
 {
+    static const PRUnichar justifycenterW[] = {'j','u','s','t','i','f','y','c','e','n','t','e','r',0};
+    static const PRUnichar justifyrightW[] = {'j','u','s','t','i','f','y','r','i','g','h','t',0};
+
     switch(cmd->cmdID) {
     case IDM_JUSTIFYCENTER:
         TRACE("(%p) IDM_JUSTIFYCENTER\n", This);
-        cmd->cmdf = query_align_status(This, NSALIGN_CENTER);
+        cmd->cmdf = query_align_status(This, justifycenterW);
         break;
     case IDM_JUSTIFYLEFT:
         TRACE("(%p) IDM_JUSTIFYLEFT\n", This);
@@ -719,7 +730,7 @@ static HRESULT query_justify(HTMLDocument *This, OLECMD *cmd)
         break;
     case IDM_JUSTIFYRIGHT:
         TRACE("(%p) IDM_JUSTIFYRIGHT\n", This);
-        cmd->cmdf = query_align_status(This, NSALIGN_RIGHT);
+        cmd->cmdf = query_align_status(This, justifyrightW);
         break;
     }
 
