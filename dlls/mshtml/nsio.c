@@ -1035,6 +1035,12 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     if(open)
         nsres = async_open(This, window, This->uri->is_doc_uri, aListener, aContext);
 
+    if(NS_SUCCEEDED(nsres) && This->load_group) {
+        nsres = nsILoadGroup_AddRequest(This->load_group, (nsIRequest*)NSCHANNEL(This), aContext);
+        if(NS_FAILED(nsres))
+            ERR("AddRequest failed: %08x\n", nsres);
+    }
+
     IHTMLWindow2_Release(HTMLWINDOW2(window));
     return nsres;
 }

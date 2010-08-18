@@ -982,18 +982,25 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
 {
     nsresult nsres;
 
-    if(!This->nslistener)
-        return;
-
     if(!This->bsc.readed && SUCCEEDED(result)) {
         TRACE("No data read! Calling OnStartRequest\n");
         on_start_nsrequest(This);
     }
 
-    nsres = nsIStreamListener_OnStopRequest(This->nslistener, (nsIRequest*)NSCHANNEL(This->nschannel),
-             This->nscontext, SUCCEEDED(result) ? NS_OK : NS_ERROR_FAILURE);
-    if(NS_FAILED(nsres))
-        WARN("OnStopRequest failed: %08x\n", nsres);
+    if(This->nslistener) {
+        nsres = nsIStreamListener_OnStopRequest(This->nslistener,
+                 (nsIRequest*)NSCHANNEL(This->nschannel),
+                 This->nscontext, SUCCEEDED(result) ? NS_OK : NS_ERROR_FAILURE);
+        if(NS_FAILED(nsres))
+            WARN("OnStopRequet failed: %08x\n", nsres);
+    }
+
+    if(This->nschannel->load_group) {
+        nsres = nsILoadGroup_RemoveRequest(This->nschannel->load_group,
+                (nsIRequest*)NSCHANNEL(This->nschannel), NULL, NS_OK);
+        if(NS_FAILED(nsres))
+            ERR("RemoveRequest failed: %08x\n", nsres);
+    }
 }
 
 static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
@@ -1073,20 +1080,6 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
     return S_OK;
 }
 
-static void add_nsrequest(nsChannelBSC *This)
-{
-    nsresult nsres;
-
-    if(!This->nschannel || !This->nschannel->load_group)
-        return;
-
-    nsres = nsILoadGroup_AddRequest(This->nschannel->load_group,
-            (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
-
-    if(NS_FAILED(nsres))
-        ERR("AddRequest failed:%08x\n", nsres);
-}
-
 #define NSCHANNELBSC_THIS(bsc) ((nsChannelBSC*) bsc)
 
 static void nsChannelBSC_destroy(BSCallback *bsc)
@@ -1106,10 +1099,6 @@ static void nsChannelBSC_destroy(BSCallback *bsc)
 
 static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 {
-    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
-
-    add_nsrequest(This);
-
     return S_OK;
 }
 
@@ -1392,8 +1381,6 @@ HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
     bscallback->nschannel->content_type = heap_strdupA("text/html");
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
-
-    add_nsrequest(bscallback);
 
     hres = read_stream_data(bscallback, stream);
     IBindStatusCallback_OnStopBinding(STATUSCLB(&bscallback->bsc), hres, ERROR_SUCCESS);
