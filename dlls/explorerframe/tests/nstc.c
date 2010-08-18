@@ -1329,6 +1329,7 @@ static void test_events(void)
     IOleWindow *pow;
     LPITEMIDLIST pidl_desktop;
     NSTCITEMSTATE itemstate;
+    IShellItem *psi;
     DWORD cookie1, cookie2;
     HWND hwnd_tv;
     HRESULT hr;
@@ -1791,6 +1792,59 @@ static void test_events(void)
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
     ok(itemstate == (NSTCIS_BOLD), "itemstate is 0x%08x\n", itemstate);
     ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok_event_count(pnstceimpl, OnItemDeleted, 1);
+    ok_no_events(pnstceimpl);
+
+    /* GetNextItem */
+    hr = INameSpaceTreeControl_GetNextItem(pnstc, NULL, 0, NULL);
+    ok(hr == E_POINTER, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_GetNextItem(pnstc, psidesktop, 0, NULL);
+    ok(hr == E_POINTER, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_GetNextItem(pnstc, NULL, 0, &psi);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_GetNextItem(pnstc, psidesktop, 0, &psi);
+    ok(hr == E_INVALIDARG, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_event_count_broken(pnstceimpl, OnItemAdded, 1, 0 /* Vista */);
+    ok_no_events(pnstceimpl);
+
+    /* Get child from unexpanded and unfilled parent */
+    psi = (void*)0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetNextItem(pnstc, psidesktop, NSTCGNI_CHILD, &psi);
+    ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
+    ok(psi == NULL, "psi is %p\n", psi);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    /* Expand and try again */
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, NSTCIS_EXPANDED, 0xffff);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_event_count(pnstceimpl, OnBeforeExpand, 1);
+    ok_event_broken(pnstceimpl, OnItemAdded); /* Does not fire on Vista */
+    ok_event_count(pnstceimpl, OnAfterExpand, 1);
+    todo_wine ok_event_count_broken(pnstceimpl, OnSelectionChanged, 1, 0 /*Vista */);
+    ok_no_events(pnstceimpl);
+    psi = (void*)0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetNextItem(pnstc, psidesktop, NSTCGNI_CHILD, &psi);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok((psi != NULL) && (psi != (void*)0xDEADBEEF), "psi is %p\n", psi);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+    if(SUCCEEDED(hr)) IShellItem_Release(psi);
 
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);

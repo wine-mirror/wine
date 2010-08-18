@@ -1256,8 +1256,43 @@ static HRESULT WINAPI NSTC2_fnGetNextItem(INameSpaceTreeControl2* iface,
                                           IShellItem **ppsiNext)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p, %x, %p)\n", This, psi, nstcgi, ppsiNext);
-    return E_NOTIMPL;
+    HTREEITEM hitem, hnext;
+    UINT tvgn;
+    TRACE("%p (%p, %x, %p)\n", This, psi, nstcgi, ppsiNext);
+
+    if(!ppsiNext) return E_POINTER;
+    if(!psi)      return E_FAIL;
+
+    *ppsiNext = NULL;
+
+    hitem = treeitem_from_shellitem(This, psi);
+    if(!hitem)
+        return E_INVALIDARG;
+
+    switch(nstcgi)
+    {
+    case NSTCGNI_NEXT:         tvgn = TVGN_NEXT; break;
+    case NSTCGNI_NEXTVISIBLE:  tvgn = TVGN_NEXTVISIBLE; break;
+    case NSTCGNI_PREV:         tvgn = TVGN_PREVIOUS; break;
+    case NSTCGNI_PREVVISIBLE:  tvgn = TVGN_PREVIOUSVISIBLE; break;
+    case NSTCGNI_PARENT:       tvgn = TVGN_PARENT; break;
+    case NSTCGNI_CHILD:        tvgn = TVGN_CHILD; break;
+    case NSTCGNI_FIRSTVISIBLE: tvgn = TVGN_FIRSTVISIBLE; break;
+    case NSTCGNI_LASTVISIBLE:  tvgn = TVGN_LASTVISIBLE; break;
+    default:
+        FIXME("Unknown nstcgi value %d\n", nstcgi);
+        return E_FAIL;
+    }
+
+    hnext = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM, tvgn, (WPARAM)hitem);
+    if(hnext)
+    {
+        *ppsiNext = shellitem_from_treeitem(This, hnext);
+        IShellItem_AddRef(*ppsiNext);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI NSTC2_fnHitTest(INameSpaceTreeControl2* iface,
