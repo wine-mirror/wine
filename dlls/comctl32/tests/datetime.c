@@ -673,10 +673,15 @@ static void test_wm_set_get_text(void)
 
     buff[0] = 0;
     ret = SendMessage(hWnd, WM_GETTEXT, sizeof(buff), (LPARAM)buff);
-    ok(strcmp(buff, a_str) != 0, "Expected text not to change, got %s\n", buff);
+    ok(strcmp(buff, a_str) != 0, "Expected text to change, got %s\n", buff);
+    ok(ret != 0, "Expected non-zero return value\n");
 
-    GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, NULL, time, sizeof(time));
-    ok(!strcmp(buff, time), "Expected %s, got %s\n", time, buff);
+    SetLastError(0xdeadbeef);
+    ret = GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, NULL, time, sizeof(time));
+    if (ret == 0)
+        skip("GetDateFormat failed, returned %ld, error %d\n", ret, GetLastError());
+    else
+        ok(!strcmp(buff, time), "Expected %s, got %s\n", time, buff);
 
     DestroyWindow(hWnd);
 }
