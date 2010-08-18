@@ -1028,7 +1028,7 @@
 # @ stub SetFileShortNameA
 # @ stub SetFileShortNameW
 @ stdcall SetFileTime(long ptr ptr ptr)
-# @ stub SetFileValidData
+@ stdcall SetFileValidData(ptr double)
 # @ stub SetFirmwareEnvironmentVariableA
 # @ stub SetFirmwareEnvironmentVariableW
 @ stdcall SetHandleContext(long long)
