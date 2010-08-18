@@ -951,6 +951,64 @@ static int ctl2_find_custdata(
 }
 
 /****************************************************************************
+ *      ctl2_decode_variant
+ *
+ *  Decodes a variant
+ *
+ * RETURNS
+ *
+ *  Success: S_OK
+ *  Failure: Error code from winerror.h
+ */
+static HRESULT ctl2_decode_variant(
+        ICreateTypeLib2Impl *This, /* [I] The typelib that contains the variant */
+        int data_offs,             /* [I] Offset within the data array, or the encoded value itself */
+        VARIANT *value)            /* [O] Decoded value */
+{
+    char *encoded_data;
+    VARTYPE type;
+
+    if (data_offs & 0x80000000) {
+        /* data_offs contains the encoded value */
+        V_VT(value) = (data_offs & ~0x80000000) >> 26;
+        V_UI4(value) = data_offs & ~0xFF000000;
+        return S_OK;
+    }
+
+    encoded_data = &This->typelib_segment_data[MSFT_SEG_CUSTDATA][data_offs];
+    type = *encoded_data;
+
+    switch(type) {
+    case VT_I4:
+    case VT_R4:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_HRESULT:
+    case VT_PTR: {
+        V_VT(value) = type;
+        V_UI4(value) = *(unsigned*)(encoded_data + 2);
+        return S_OK;
+    }
+    case VT_BSTR: {
+        unsigned len, i;
+
+        len = *(unsigned*)(encoded_data + 2);
+
+        V_VT(value) = type;
+        V_BSTR(value) = SysAllocStringByteLen(NULL, len * sizeof(OLECHAR));
+        for (i = 0; i < len; ++i)
+            V_BSTR(value)[i] = *(encoded_data + 6 + i);
+
+        return S_OK;
+    }
+    default:
+        FIXME("Don't yet have decoder for this VARTYPE: %u\n", type);
+        return E_NOTIMPL;
+    }
+}
+
+/****************************************************************************
  *	ctl2_set_custdata
  *
  *  Adds a custom data element to an object in a type library.
@@ -3610,8 +3668,23 @@ static HRESULT WINAPI ITypeInfo2_fnGetCustData(
         REFGUID guid,      /* [I] The GUID under which the custom data is stored. */
         VARIANT* pVarVal)  /* [O] The custom data. */
 {
-    FIXME("(%p,%s,%p), stub!\n", iface, debugstr_guid(guid), pVarVal);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
+    MSFT_CDGuid *cdentry;
+    int offset;
+
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(guid), pVarVal);
+
+    if (!guid || !pVarVal)
+        return E_INVALIDARG;
+
+    VariantClear(pVarVal);
+
+    offset = ctl2_find_custdata(This->typelib, guid, This->typeinfo->oCustData);
+    if (offset == -1)
+        return S_OK;
+
+    cdentry = (MSFT_CDGuid *)&This->typelib->typelib_segment_data[MSFT_SEG_CUSTDATAGUID][offset];
+    return ctl2_decode_variant(This->typelib, cdentry->DataOffset, pVarVal);
 }
 
 /******************************************************************************

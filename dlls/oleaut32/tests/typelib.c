@@ -1076,10 +1076,12 @@ static void test_CreateTypeLib(void) {
     static OLECHAR prop1W[] = {'P','r','o','p','1',0};
     static OLECHAR param1W[] = {'p','a','r','a','m','1',0};
     static OLECHAR param2W[] = {'p','a','r','a','m','2',0};
+    static OLECHAR asdfW[] = {'A','s','d','f',0};
     static OLECHAR *names1[] = {func1W, param1W, param2W};
     static OLECHAR *names2[] = {func2W, param1W, param2W};
     static OLECHAR *propname[] = {prop1W, param1W};
     static const GUID custguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x70}};
+    static const GUID bogusguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x71}};
 
     char filename[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
@@ -1444,15 +1446,12 @@ static void test_CreateTypeLib(void) {
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ITypeInfo2_GetCustData(ti2, NULL, NULL);
-    todo_wine
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
     hres = ITypeInfo2_GetCustData(ti2, &custguid, NULL);
-    todo_wine
     ok(hres == E_INVALIDARG, "got %08x\n", hres);
 
     hres = ITypeInfo2_GetCustData(ti2, &custguid, &cust_data);
-    todo_wine
     ok(hres == S_OK, "got %08x\n", hres);
 
     hres = ICreateTypeInfo2_SetCustData(createti2, NULL, NULL);
@@ -1474,12 +1473,9 @@ static void test_CreateTypeLib(void) {
     V_VT(&cust_data) = VT_EMPTY;
 
     hres = ITypeInfo2_GetCustData(ti2, &custguid, &cust_data);
-    todo_wine
     ok(hres == S_OK, "got %08x\n", hres);
 
-    todo_wine
     ok(V_VT(&cust_data) == VT_UI4, "got %d\n", V_VT(&cust_data));
-    todo_wine
     ok(V_I4(&cust_data) == 0xdeadbeef, "got 0x%08x\n", V_I4(&cust_data));
 
     V_VT(&cust_data) = VT_UI4;
@@ -1492,13 +1488,35 @@ static void test_CreateTypeLib(void) {
     V_VT(&cust_data) = VT_EMPTY;
 
     hres = ITypeInfo2_GetCustData(ti2, &custguid, &cust_data);
-    todo_wine
     ok(hres == S_OK, "got %08x\n", hres);
 
-    todo_wine
     ok(V_VT(&cust_data) == VT_UI4, "got %d\n", V_VT(&cust_data));
-    todo_wine
     ok(V_I4(&cust_data) == 12345678, "got 0x%08x\n", V_I4(&cust_data));
+
+    V_VT(&cust_data) = VT_BSTR;
+    V_BSTR(&cust_data) = SysAllocString(asdfW);
+
+    hres = ICreateTypeInfo2_SetCustData(createti2, &custguid, &cust_data);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    SysFreeString(V_BSTR(&cust_data));
+    V_I4(&cust_data) = 0;
+    V_VT(&cust_data) = VT_EMPTY;
+
+    hres = ITypeInfo2_GetCustData(ti2, &custguid, &cust_data);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    ok(V_VT(&cust_data) == VT_BSTR, "got %d\n", V_VT(&cust_data));
+    ok(!lstrcmpW(V_BSTR(&cust_data), asdfW), "got %s\n", wine_dbgstr_w(V_BSTR(&cust_data)));
+    SysFreeString(V_BSTR(&cust_data));
+
+    V_VT(&cust_data) = VT_UI4;
+    V_UI4(&cust_data) = 17;
+
+    hres = ITypeInfo2_GetCustData(ti2, &bogusguid, &cust_data);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    ok(V_VT(&cust_data) == VT_EMPTY, "got: %d\n", V_VT(&cust_data));
 
     ITypeInfo2_Release(ti2);
     ICreateTypeInfo2_Release(createti2);
