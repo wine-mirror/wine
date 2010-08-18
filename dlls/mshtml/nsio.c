@@ -1575,8 +1575,8 @@ static nsresult NSAPI nsURI_GetSpec(nsIURL *iface, nsACString *aSpec)
     TRACE("(%p)->(%p)\n", This, aSpec);
 
     if(This->use_wine_url) {
-        char speca[INTERNET_MAX_URL_LENGTH] = "wine:";
-        WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca+5, sizeof(speca)-5, NULL, NULL);
+        char speca[INTERNET_MAX_URL_LENGTH];
+        WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca, sizeof(speca), NULL, NULL);
         nsACString_SetData(aSpec, speca);
 
         return NS_OK;
