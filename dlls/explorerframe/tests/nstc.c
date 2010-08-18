@@ -25,6 +25,8 @@
 #include "shlobj.h"
 #include "wine/test.h"
 
+#include "msg.h"
+
 static HWND hwnd;
 
 /* "Intended for internal use" */
@@ -33,6 +35,15 @@ static HWND hwnd;
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
+
+#define NUM_MSG_SEQUENCES 1
+#define TREEVIEW_SEQ_INDEX 0
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+/* Keep a copy of the last structure passed by TVM_SETITEMW */
+static TVITEMEXW last_tvi;
+static int tvi_count;
 
 static void init_function_pointers(void)
 {
@@ -461,6 +472,62 @@ static HWND get_treeview_hwnd(INameSpaceTreeControl *pnstc)
     }
 
     return treeview;
+}
+
+static LRESULT WINAPI treeview_subclass_proc(HWND hwnd_tv, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrW(hwnd_tv, GWLP_USERDATA);
+    static LONG defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    msg.id = 0;
+    add_message(sequences, TREEVIEW_SEQ_INDEX, &msg);
+
+    if(message == TVM_SETITEMW)
+    {
+        memcpy(&last_tvi, (void*)lParam, sizeof(TVITEMEXW));
+        tvi_count++;
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcW(oldproc, hwnd_tv, message, wParam, lParam);
+    defwndproc_counter--;
+    return ret;
+}
+
+static BOOL subclass_treeview(INameSpaceTreeControl *pnstc)
+{
+    HWND hwnd_tv;
+    WNDPROC oldproc = NULL;
+
+    hwnd_tv = get_treeview_hwnd(pnstc);
+    if(hwnd_tv)
+    {
+        oldproc = (WNDPROC)SetWindowLongPtrW(hwnd_tv, GWLP_WNDPROC,
+                                             (LONG_PTR)treeview_subclass_proc);
+        SetWindowLongPtrW(hwnd_tv, GWLP_USERDATA, (LONG_PTR)oldproc);
+        ok(oldproc != NULL, "Failed to subclass.\n");
+    }
+
+    return oldproc?TRUE:FALSE;
+}
+
+static UINT get_msg_count(struct msg_sequence **seq, int sequence_index, UINT message)
+{
+    struct msg_sequence *msg_seq = seq[sequence_index];
+    UINT i, count = 0;
+
+    for(i = 0; i < msg_seq->count ; i++)
+        if(msg_seq->sequence[i].message == message)
+            count++;
+
+    return count;
 }
 
 /* Returns FALSE if the NamespaceTreeControl failed to be instantiated. */
@@ -1087,6 +1154,148 @@ static void test_basics(void)
     hr = INameSpaceTreeControl_CollapseAll(pnstc);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
 
+    /* SetItemState message checks */
+    res = subclass_treeview(pnstc);
+    ok(res, "Failed to subclass treeview.\n");
+    if(res)
+    {
+        UINT isMask, isFlags;
+
+        hr = INameSpaceTreeControl_AppendRoot(
+            pnstc, psidesktop, SHCONTF_NONFOLDERS | SHCONTF_FOLDERS, 0, NULL);
+        ok(hr == S_OK, "Got (0x%08x)\n", hr);
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+        /* A special case -
+         *  The first expansion results in an "unrelated" TVM_SETITEMW being sent
+         *  (mask == 0x50 (TVIF_CHILDREN|TVIF_HANDLE) )
+         */
+        tvi_count = 0;
+        hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop,
+                                                NSTCIS_EXPANDED, NSTCIS_EXPANDED);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        todo_wine
+        {
+            ok(tvi_count == 1, "Got %d\n", tvi_count);
+            ok(last_tvi.mask == 0x50, "Got mask %x, expected 0x50\n", last_tvi.mask);
+        }
+
+        tvi_count = 0;
+        hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop,
+                                                NSTCIS_EXPANDED, NSTCIS_EXPANDED);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(tvi_count == 0, "Got %d\n", tvi_count);
+
+        /* Test all the combinations of NSTCIS_SELECTED to NSTCIS_SELECTEDNOEXPAND */
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        for(isMask = 0; isMask <= 0x1f; isMask++)
+        {
+            for(isFlags = 0; isFlags <= 0x1f; isFlags++)
+            {
+                UINT select_sent, select_sent_vista, ensurev_sent, expand_sent;
+                TVITEMEXW tviexp;
+                UINT msg_count;
+
+                flush_sequences(sequences, NUM_MSG_SEQUENCES);
+                tvi_count = 0;
+
+                hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, isMask, isFlags);
+                ok(hr == S_OK, "(%x|%x)Got 0x%08x\n", isMask, isFlags, hr);
+
+                /*****************************/
+                /* Calculate expected values */
+                /*****************************/
+
+                /* Number of TVM_SELECTITEM/TVM_ENSUREVISIBLE and TVM_EXPAND sent */
+                select_sent = ((isMask&isFlags) & NSTCIS_SELECTED)?1:0;
+                select_sent_vista = ensurev_sent = select_sent;
+
+                select_sent +=       ((isMask&isFlags) & NSTCIS_SELECTEDNOEXPAND)?1:0;
+                select_sent_vista += ((isMask&isFlags) & NSTCIS_EXPANDED)?1:0;
+                expand_sent =        ((isMask|isFlags) & NSTCIS_EXPANDED)?1:0;
+
+                /* Possible TWM_SETITEMW message and its contents */
+                if(isMask & NSTCIS_DISABLED)
+                    tviexp.mask = TVIF_STATE | TVIF_STATEEX;
+                else if( ((isMask^isFlags) & (NSTCIS_SELECTED|NSTCIS_EXPANDED|NSTCIS_SELECTEDNOEXPAND)) ||
+                         ((isMask|isFlags) & NSTCIS_BOLD) || (isFlags & NSTCIS_DISABLED) )
+                    tviexp.mask = TVIF_STATE;
+                else
+                    tviexp.mask = 0;
+
+                if(tviexp.mask)
+                {
+                    tviexp.stateMask = tviexp.state = 0;
+                    tviexp.stateMask |= ((isMask^isFlags)&NSTCIS_SELECTED) ? TVIS_SELECTED : 0;
+                    tviexp.stateMask |= (isMask|isFlags)&NSTCIS_BOLD ? TVIS_BOLD:0;
+                    tviexp.state     |= (isMask&isFlags)&NSTCIS_BOLD ? TVIS_BOLD:0;
+
+                    if((isMask&NSTCIS_EXPANDED)^(isFlags&NSTCIS_EXPANDED))
+                    {
+                        tviexp.stateMask = 0;
+                    }
+
+                    tviexp.uStateEx = (isFlags&isMask)&NSTCIS_DISABLED?TVIS_EX_DISABLED:0;
+                }
+                else
+                {
+                    /* Make sure that no tests accidentally succeeded
+                     * (and avoid a gcc warning) */
+                    tviexp.stateMask = tviexp.state = tviexp.uStateEx = -1;
+                }
+
+                /*****************************/
+                /*      Check the values.    */
+                /*****************************/
+
+                msg_count = get_msg_count(sequences, TREEVIEW_SEQ_INDEX, TVM_SELECTITEM);
+                ok(msg_count == select_sent || broken(msg_count == select_sent_vista),
+                   "(%x|%x) Got msg_count %d, expected %d (%d)\n",
+                   isMask, isFlags, msg_count, select_sent, select_sent_vista);
+                msg_count = get_msg_count(sequences, TREEVIEW_SEQ_INDEX, TVM_ENSUREVISIBLE);
+                ok(msg_count == ensurev_sent || broken(msg_count == 0 /* Vista */),
+                   "(%x|%x) Got msg_count %d, expected %d\n",
+                   isMask, isFlags, msg_count, ensurev_sent);
+                msg_count = get_msg_count(sequences, TREEVIEW_SEQ_INDEX, TVM_EXPAND);
+                ok(msg_count == expand_sent, "(%x|%x) Got msg_count %d, expected %d\n",
+                   isMask, isFlags, msg_count, expand_sent);
+
+                msg_count = get_msg_count(sequences, TREEVIEW_SEQ_INDEX, TVM_SETITEMW);
+                if(!tviexp.mask)
+                {
+                    /* Four special cases for vista */
+                    BOOL vista_check = ( (isMask == 0x10 && isFlags == 0x10) ||
+                                         (isMask == 0x11 && isFlags == 0x11) ||
+                                         (isMask == 0x12 && isFlags == 0x12) ||
+                                         (isMask == 0x13 && isFlags == 0x13) );
+
+                    ok(msg_count == 0 || broken(msg_count == 1 && vista_check),
+                       "(%x|%x) Got msg_count %d (tviexp.mask %x)\n",
+                       isMask, isFlags, msg_count, tviexp.mask);
+                }
+                else
+                {
+                    ok(msg_count == 1, "(%x|%x) Got msg_count %d, expected 1\n",
+                       isMask, isFlags, msg_count);
+                    ok(last_tvi.mask == tviexp.mask,
+                       "(%x|%x) Got mask %x, expected %x\n",
+                       isMask, isFlags, last_tvi.mask, tviexp.mask);
+                    ok(last_tvi.stateMask == tviexp.stateMask,
+                       "(%x|%x) Got stateMask %x, expected %x\n",
+                       isMask, isFlags, last_tvi.stateMask, tviexp.stateMask);
+                    ok(last_tvi.state == tviexp.state,
+                       "(%x|%x) Got state %x, expected %x\n",
+                       isMask, isFlags,     last_tvi.state, tviexp.state);
+                    ok(last_tvi.uStateEx == tviexp.uStateEx,
+                       "(%x|%x) Got uStateEx %x, expected %x\n",
+                       isMask, isFlags,   last_tvi.uStateEx, tviexp.uStateEx);
+                }
+            }
+        }
+        hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+        ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    }
+
     IShellItem_Release(psidesktop);
     IShellItem_Release(psidesktop2);
     IShellItem_Release(psitestdir);
@@ -1119,6 +1328,7 @@ static void test_events(void)
     IShellItem *psidesktop;
     IOleWindow *pow;
     LPITEMIDLIST pidl_desktop;
+    NSTCITEMSTATE itemstate;
     DWORD cookie1, cookie2;
     HWND hwnd_tv;
     HRESULT hr;
@@ -1317,6 +1527,275 @@ static void test_events(void)
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     process_msgs();
     ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok_event(pnstceimpl, OnItemDeleted);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_event_count_broken(pnstceimpl, OnItemAdded, 1, 0 /* Vista */);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_NONE, "itemstate is 0x%08x\n", itemstate);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    /* Expand the root */
+    itemstate |= NSTCIS_EXPANDED;
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_event_count(pnstceimpl, OnBeforeExpand, 1);
+    ok_event_broken(pnstceimpl, OnItemAdded); /* Does not fire on Vista */
+    ok_event_count(pnstceimpl, OnAfterExpand, 1);
+    todo_wine
+    {
+        ok_event_count_broken(pnstceimpl, OnSelectionChanged, 1, 0 /* Vista*/);
+    }
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate & NSTCIS_EXPANDED, "Item not expanded.\n");
+    todo_wine
+    {
+        ok(itemstate == (NSTCIS_SELECTED | NSTCIS_EXPANDED)||
+           broken(itemstate == NSTCIS_EXPANDED) /* Vista */,
+           "itemstate is 0x%08x\n", itemstate);
+        process_msgs();
+        ok_event_count_broken(pnstceimpl, OnSelectionChanged, 1, 0 /* Vista*/);
+    }
+    ok_no_events(pnstceimpl);
+
+    /* Deselect the root */
+    itemstate &= ~NSTCIS_SELECTED;
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == (NSTCIS_EXPANDED), "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_CollapseAll(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    /* Delete all roots */
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok_event_count(pnstceimpl, OnItemDeleted, 1);
+    ok_no_events(pnstceimpl);
+
+    /* Get/SetItemState */
+    if(0)
+    {
+        /* Crashes on Windows 7 */
+        hr = INameSpaceTreeControl_SetItemState(pnstc, NULL, 0, 0);
+        hr = INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, NULL);
+        hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0, NULL);
+        hr = INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, &itemstate);
+        hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0, NULL);
+        hr = INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, &itemstate);
+    }
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == E_INVALIDARG, "Got (0x%08x)\n", hr);
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, 0);
+    ok(hr == E_INVALIDARG, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, 0, NULL);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_event_count_broken(pnstceimpl, OnItemAdded, 1, 0 /* Vista */);
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_NONE, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0, 0xffff);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    todo_wine
+    {
+        ok_event_count(pnstceimpl, OnBeforeExpand, 0);
+        ok_event_count(pnstceimpl, OnAfterExpand, 0);
+        ok_event_count(pnstceimpl, OnItemAdded, 0);
+    }
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    todo_wine
+        ok(itemstate == NSTCIS_NONE, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, 0);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_NONE, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, NSTCIS_SELECTED);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_event_count(pnstceimpl, OnSelectionChanged, 1);
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_SELECTED, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, NSTCIS_EXPANDED, NSTCIS_SELECTED);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_SELECTED, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, 0);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_SELECTED, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, NSTCIS_SELECTEDNOEXPAND);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_SELECTED, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, NSTCIS_EXPANDED);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    todo_wine
+    {
+        ok_event_count(pnstceimpl, OnBeforeExpand, 1);
+        ok_event_broken(pnstceimpl, OnItemAdded); /* Does not fire on Vista */
+        ok_event_count(pnstceimpl, OnAfterExpand, 1);
+    }
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_EXPANDED, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, 0);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == NSTCIS_NONE, "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff, 0xffff);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    todo_wine
+    {
+        ok(itemstate == (NSTCIS_EXPANDED | NSTCIS_BOLD | NSTCIS_DISABLED),
+           "itemstate is 0x%08x\n", itemstate);
+    }
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, NSTCIS_SELECTED, NSTCIS_SELECTED);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    todo_wine
+    {
+        ok(itemstate == (NSTCIS_EXPANDED | NSTCIS_BOLD | NSTCIS_DISABLED),
+           "itemstate is 0x%08x\n", itemstate);
+    }
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop,
+                                            NSTCIS_SELECTED | NSTCIS_DISABLED, NSTCIS_SELECTED);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == (NSTCIS_BOLD | NSTCIS_EXPANDED),
+       "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, NSTCIS_SELECTED, NSTCIS_SELECTED);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == (NSTCIS_BOLD | NSTCIS_EXPANDED),
+       "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_SetItemState(pnstc, psidesktop, 0xffff & ~NSTCIS_DISABLED, 0);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    process_msgs();
+    ok_no_events(pnstceimpl);
+
+    itemstate = 0xDEADBEEF;
+    hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok(itemstate == (NSTCIS_BOLD), "itemstate is 0x%08x\n", itemstate);
+    ok_no_events(pnstceimpl);
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok_event_count(pnstceimpl, OnItemDeleted, 1);
+    ok_no_events(pnstceimpl);
 
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -1368,6 +1847,7 @@ START_TEST(nstc)
     OleInitialize(NULL);
     setup_window();
     init_function_pointers();
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     if(test_initialization())
     {

@@ -254,6 +254,53 @@ static nstc_root *root_for_treeitem(NSTC2Impl *This, HTREEITEM hitem)
     return root;
 }
 
+/* Find a shellitem in the tree, starting from the given node. */
+static HTREEITEM search_for_shellitem(NSTC2Impl *This, HTREEITEM node,
+                                      IShellItem *psi)
+{
+    IShellItem *psi_node;
+    HTREEITEM next, result = NULL;
+    HRESULT hr;
+    int cmpo;
+    TRACE("%p, %p, %p\n", This, node, psi);
+
+    /* Check this node */
+    psi_node = shellitem_from_treeitem(This, node);
+    hr = IShellItem_Compare(psi, psi_node, SICHINT_DISPLAY, &cmpo);
+    if(hr == S_OK)
+        return node;
+
+    /* Any children? */
+    next = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM,
+                                   TVGN_CHILD, (LPARAM)node);
+    if(next)
+    {
+        result = search_for_shellitem(This, next, psi);
+        if(result) return result;
+    }
+
+    /* Try our next sibling. */
+    next = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM,
+                                   TVGN_NEXT, (LPARAM)node);
+    if(next)
+        result = search_for_shellitem(This, next, psi);
+
+    return result;
+}
+
+static HTREEITEM treeitem_from_shellitem(NSTC2Impl *This, IShellItem *psi)
+{
+    HTREEITEM root;
+    TRACE("%p, %p\n", This, psi);
+
+    root = (HTREEITEM)SendMessageW(This->hwnd_tv, TVM_GETNEXTITEM,
+                                   TVGN_ROOT, 0);
+    if(!root)
+        return NULL;
+
+    return search_for_shellitem(This, root, psi);
+}
+
 static int get_icon(LPCITEMIDLIST lpi, UINT extra_flags)
 {
     SHFILEINFOW sfi;
@@ -1070,8 +1117,61 @@ static HRESULT WINAPI NSTC2_fnSetItemState(INameSpaceTreeControl2* iface,
                                            NSTCITEMSTATE nstcisFlags)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p, %x, %x)\n", This, psi, nstcisMask, nstcisFlags);
-    return E_NOTIMPL;
+    TVITEMEXW tvi;
+    HTREEITEM hitem;
+
+    TRACE("%p (%p, %x, %x)\n", This, psi, nstcisMask, nstcisFlags);
+
+    hitem = treeitem_from_shellitem(This, psi);
+    if(!hitem) return E_INVALIDARG;
+
+    /* Passing both NSTCIS_SELECTED and NSTCIS_SELECTEDNOEXPAND results
+       in two TVM_SETITEMW's */
+    if((nstcisMask&nstcisFlags) & NSTCIS_SELECTED)
+    {
+        SendMessageW(This->hwnd_tv, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hitem);
+        SendMessageW(This->hwnd_tv, TVM_ENSUREVISIBLE, 0, (LPARAM)hitem);
+    }
+    if((nstcisMask&nstcisFlags) & NSTCIS_SELECTEDNOEXPAND)
+    {
+        SendMessageW(This->hwnd_tv, TVM_SELECTITEM, TVGN_CARET|TVSI_NOSINGLEEXPAND, (LPARAM)hitem);
+    }
+
+    /* If NSTCIS_EXPANDED is among the flags, the mask is ignored. */
+    if((nstcisMask|nstcisFlags) & NSTCIS_EXPANDED)
+    {
+        WPARAM arg = nstcisFlags&NSTCIS_EXPANDED ? TVE_EXPAND:TVE_COLLAPSE;
+        SendMessageW(This->hwnd_tv, TVM_EXPAND, arg, (LPARAM)hitem);
+    }
+
+    if(nstcisMask & NSTCIS_DISABLED)
+        tvi.mask = TVIF_STATE | TVIF_STATEEX;
+    else if( ((nstcisMask^nstcisFlags) & (NSTCIS_SELECTED|NSTCIS_EXPANDED|NSTCIS_SELECTEDNOEXPAND)) ||
+             ((nstcisMask|nstcisFlags) & NSTCIS_BOLD) ||
+             (nstcisFlags & NSTCIS_DISABLED) )
+        tvi.mask = TVIF_STATE;
+    else
+        tvi.mask = 0;
+
+    if(tvi.mask)
+    {
+        tvi.stateMask = tvi.state = 0;
+        tvi.stateMask |= ((nstcisFlags^nstcisMask)&NSTCIS_SELECTED) ? TVIS_SELECTED : 0;
+        tvi.stateMask |= (nstcisMask|nstcisFlags)&NSTCIS_BOLD ? TVIS_BOLD:0;
+        tvi.state     |= (nstcisMask&nstcisFlags)&NSTCIS_BOLD ? TVIS_BOLD:0;
+
+        if((nstcisMask&NSTCIS_EXPANDED)^(nstcisFlags&NSTCIS_EXPANDED))
+        {
+            tvi.stateMask = 0;
+        }
+
+        tvi.uStateEx = (nstcisFlags&nstcisMask)&NSTCIS_DISABLED?TVIS_EX_DISABLED:0;
+        tvi.hItem = hitem;
+
+        SendMessageW(This->hwnd_tv, TVM_SETITEMW, 0, (LPARAM)&tvi);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnGetItemState(INameSpaceTreeControl2* iface,
@@ -1080,8 +1180,32 @@ static HRESULT WINAPI NSTC2_fnGetItemState(INameSpaceTreeControl2* iface,
                                            NSTCITEMSTATE *pnstcisFlags)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p, %x, %p)\n", This, psi, nstcisMask, pnstcisFlags);
-    return E_NOTIMPL;
+    HTREEITEM hitem;
+    TVITEMEXW tvi;
+    TRACE("%p (%p, %x, %p)\n", This, psi, nstcisMask, pnstcisFlags);
+
+    hitem = treeitem_from_shellitem(This, psi);
+    if(!hitem)
+        return E_INVALIDARG;
+
+    *pnstcisFlags = 0;
+
+    tvi.hItem = hitem;
+    tvi.mask = TVIF_STATE;
+    tvi.stateMask = TVIS_SELECTED|TVIS_EXPANDED|TVIS_BOLD;
+
+    if(nstcisMask & NSTCIS_DISABLED)
+        tvi.mask |= TVIF_STATEEX;
+
+    SendMessageW(This->hwnd_tv, TVM_GETITEMW, 0, (LPARAM)&tvi);
+    *pnstcisFlags |= (tvi.state & TVIS_SELECTED)?NSTCIS_SELECTED:0;
+    *pnstcisFlags |= (tvi.state & TVIS_EXPANDED)?NSTCIS_EXPANDED:0;
+    *pnstcisFlags |= (tvi.state & TVIS_BOLD)?NSTCIS_BOLD:0;
+    *pnstcisFlags |= (tvi.uStateEx & TVIS_EX_DISABLED)?NSTCIS_DISABLED:0;
+
+    *pnstcisFlags &= nstcisMask;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI NSTC2_fnGetSelectedItems(INameSpaceTreeControl2* iface,
