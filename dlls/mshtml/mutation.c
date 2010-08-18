@@ -312,10 +312,8 @@ static void call_explorer_69(HTMLDocumentObj *doc)
         FIXME("handle result\n");
 }
 
-static void parse_complete_proc(task_t *task)
+static void parse_complete(HTMLDocumentObj *doc)
 {
-    HTMLDocumentObj *doc = ((docobj_task_t*)task)->doc;
-
     TRACE("(%p)\n", doc);
 
     if(doc->usermode == EDITMODE)
@@ -328,35 +326,24 @@ static void parse_complete_proc(task_t *task)
     call_explorer_69(doc);
 
     /* FIXME: IE7 calls EnableModelless(TRUE), EnableModelless(FALSE) and sets interactive state here */
-
-    set_ready_state(doc->basedoc.window, READYSTATE_INTERACTIVE);
 }
 
 static void handle_end_load(HTMLDocumentNode *This)
 {
-    docobj_task_t *task;
-
     TRACE("\n");
 
     if(!This->basedoc.doc_obj)
         return;
 
-    if(This != This->basedoc.doc_obj->basedoc.doc_node) {
-        set_ready_state(This->basedoc.window, READYSTATE_INTERACTIVE);
-        return;
+    if(This == This->basedoc.doc_obj->basedoc.doc_node) {
+        /*
+         * This should be done in the worker thread that parses HTML,
+         * but we don't have such thread (Gecko parses HTML for us).
+         */
+        parse_complete(This->basedoc.doc_obj);
     }
 
-    task = heap_alloc(sizeof(docobj_task_t));
-    if(!task)
-        return;
-
-    task->doc = This->basedoc.doc_obj;
-
-    /*
-     * This should be done in the worker thread that parses HTML,
-     * but we don't have such thread (Gecko parses HTML for us).
-     */
-    push_task(&task->header, &parse_complete_proc, This->basedoc.doc_obj->basedoc.task_magic);
+    set_ready_state(This->basedoc.window, READYSTATE_INTERACTIVE);
 }
 
 static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
