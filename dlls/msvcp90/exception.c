@@ -28,22 +28,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
 /* dlls/msvcrt/cppexcept.h */
-typedef struct __type_info
-{
-    const vtable_ptr *vtable;
-    char              *name;        /* Unmangled name, allocated lazily */
-    char               mangled[32]; /* Variable length, but we declare it large enough for static RTTI */
-} type_info;
-
 typedef void (*cxx_copy_ctor)(void);
-
-/* offsets for computing the this pointer */
-typedef struct
-{
-    int         this_offset;   /* offset of base class this pointer from start of object */
-    int         vbase_descr;   /* offset of virtual base class descriptor */
-    int         vbase_offset;  /* offset of this pointer offset in virtual base class descriptor */
-} this_ptr_offsets;
 
 /* complete information about a C++ type */
 typedef struct __cxx_type_info
@@ -74,6 +59,40 @@ typedef struct __cxx_exception_type
 } cxx_exception_type;
 
 void CDECL _CxxThrowException(exception*,const cxx_exception_type*);
+
+/* vtables */
+
+#ifdef _WIN64
+
+#define __ASM_VTABLE(name,funcs) \
+    __asm__(".data\n" \
+            "\t.align 8\n" \
+            "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
+            "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
+            __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
+            "\t.quad " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
+            funcs "\n\t.text");
+
+#define __ASM_EXCEPTION_VTABLE(name) \
+    __ASM_VTABLE(name, "\t.quad " THISCALL_NAME(MSVCP_what_exception) )
+
+#else
+
+#define __ASM_VTABLE(name,funcs) \
+    __asm__(".data\n" \
+            "\t.align 4\n" \
+            "\t.long " __ASM_NAME(#name "_rtti") "\n" \
+            "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
+            __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
+            "\t.long " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
+            funcs "\n\t.text");
+
+#define __ASM_EXCEPTION_VTABLE(name) \
+    __ASM_VTABLE(name, "\t.long " THISCALL_NAME(MSVCP_what_exception) )
+
+#endif /* _WIN64 */
+
+extern const vtable_ptr MSVCP_bad_alloc_vtable;
 
 /* exception class data */
 static type_info exception_type_info = {
@@ -124,6 +143,13 @@ void __stdcall MSVCP_exception_dtor(exception *this)
         free(this->name);
 }
 
+static const rtti_base_descriptor exception_rtti_base_descriptor = {
+    &exception_type_info,
+    0,
+    { 0, -1, 0 },
+    0
+};
+
 static const cxx_type_info exception_cxx_type_info = {
     0,
     &exception_type_info,
@@ -154,6 +180,129 @@ void set_exception_vtable(void)
     exception_type_info.vtable = (void*)GetProcAddress(hmod, "??_7exception@@6B@");
 }
 
+/* bad_alloc class data */
+typedef exception bad_alloc;
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_ctor, 8)
+bad_alloc* __stdcall MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
+{
+    TRACE("%p %s\n", this, *name);
+    MSVCP_exception_ctor(this, name);
+    this->vtable = &MSVCP_bad_alloc_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_copy_ctor, 8)
+bad_alloc* __stdcall MSVCP_bad_alloc_copy_ctor(bad_alloc *this, const bad_alloc *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    MSVCP_exception_copy_ctor(this, rhs);
+    this->vtable = &MSVCP_bad_alloc_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_dtor, 4)
+void __stdcall MSVCP_bad_alloc_dtor(bad_alloc *this)
+{
+    TRACE("%p\n", this);
+    MSVCP_exception_dtor(this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_vector_dtor, 8)
+void * __stdcall MSVCP_bad_alloc_vector_dtor(bad_alloc *this, unsigned int flags)
+{
+    TRACE("%p %x\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            MSVCP_bad_alloc_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        MSVCP_bad_alloc_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_what_exception,4)
+const char* __stdcall MSVCP_what_exception(exception * this)
+{
+    TRACE("(%p) returning %s\n", this, this->name);
+    return this->name ? this->name : "Unknown exception";
+}
+
+static const type_info bad_alloc_type_info = {
+    &MSVCP_bad_alloc_vtable,
+    NULL,
+    ".?AVbad_alloc@std@@"
+};
+
+static const rtti_base_descriptor bad_alloc_rtti_base_descriptor = {
+    &bad_alloc_type_info,
+    1,
+    { 0, -1, 0 },
+    64
+};
+
+static const rtti_base_array bad_alloc_rtti_base_array = {
+    {
+        &bad_alloc_rtti_base_descriptor,
+        &exception_rtti_base_descriptor,
+        NULL
+    }
+};
+
+static const rtti_object_hierarchy bad_alloc_type_hierarchy = {
+    0,
+    0,
+    2,
+    &bad_alloc_rtti_base_array
+};
+
+const rtti_object_locator bad_alloc_rtti = {
+    0,
+    0,
+    0,
+    &bad_alloc_type_info,
+    &bad_alloc_type_hierarchy
+};
+
+static const cxx_type_info bad_alloc_cxx_type_info = {
+    0,
+    &bad_alloc_type_info,
+    { 0, -1, 0 },
+    sizeof(bad_alloc),
+    (cxx_copy_ctor)THISCALL(MSVCP_bad_alloc_copy_ctor)
+};
+
+static const cxx_type_info_table bad_alloc_cxx_type_table = {
+    2,
+    {
+        &bad_alloc_cxx_type_info,
+        &exception_cxx_type_info,
+        NULL
+    }
+};
+
+static const cxx_exception_type bad_alloc_cxx_type = {
+    0,
+    (cxx_copy_ctor)THISCALL(MSVCP_bad_alloc_dtor),
+    NULL,
+    &bad_alloc_cxx_type_table
+};
+
+#ifndef __GNUC__
+void __asm_dummy_vtables(void) {
+#endif
+    __ASM_EXCEPTION_VTABLE(bad_alloc)
+#ifndef __GNUC__
+}
+#endif
+
 /* Internal: throws selected exception */
 void throw_exception(exception_type et, const char *str)
 {
@@ -165,6 +314,11 @@ void throw_exception(exception_type et, const char *str)
         MSVCP_exception_ctor(&e, &addr);
         _CxxThrowException(&e, &exception_cxx_type);
         return;
+    }
+    case EXCEPTION_BAD_ALLOC: {
+        bad_alloc e;
+        MSVCP_bad_alloc_ctor(&e, &addr);
+        _CxxThrowException(&e, &bad_alloc_cxx_type);
     }
     }
 }
