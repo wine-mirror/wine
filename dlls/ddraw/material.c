@@ -448,7 +448,7 @@ void material_activate(IDirect3DMaterialImpl* This)
     IDirect3DDevice7_SetMaterial((IDirect3DDevice7 *)This->active_device, &d3d7mat);
 }
 
-const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl =
+static const struct IDirect3DMaterial3Vtbl d3d_material3_vtbl =
 {
     /*** IUnknown Methods ***/
     IDirect3DMaterialImpl_QueryInterface,
@@ -460,7 +460,7 @@ const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl =
     IDirect3DMaterialImpl_GetHandle,
 };
 
-const IDirect3DMaterial2Vtbl IDirect3DMaterial2_Vtbl =
+static const struct IDirect3DMaterial2Vtbl d3d_material2_vtbl =
 {
     /*** IUnknown Methods ***/
     Thunk_IDirect3DMaterialImpl_2_QueryInterface,
@@ -472,7 +472,7 @@ const IDirect3DMaterial2Vtbl IDirect3DMaterial2_Vtbl =
     Thunk_IDirect3DMaterialImpl_2_GetHandle,
 };
 
-const IDirect3DMaterialVtbl IDirect3DMaterial_Vtbl =
+static const struct IDirect3DMaterialVtbl d3d_material1_vtbl =
 {
     /*** IUnknown Methods ***/
     Thunk_IDirect3DMaterialImpl_1_QueryInterface,
@@ -486,3 +486,12 @@ const IDirect3DMaterialVtbl IDirect3DMaterial_Vtbl =
     IDirect3DMaterialImpl_Reserve,
     IDirect3DMaterialImpl_Unreserve
 };
+
+void d3d_material_init(IDirect3DMaterialImpl *material, IDirectDrawImpl *ddraw)
+{
+    material->lpVtbl = &d3d_material3_vtbl;
+    material->IDirect3DMaterial2_vtbl = &d3d_material2_vtbl;
+    material->IDirect3DMaterial_vtbl = &d3d_material1_vtbl;
+    material->ref = 1;
+    material->ddraw = ddraw;
+}

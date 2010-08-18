@@ -548,13 +548,9 @@ struct IDirect3DMaterialImpl
     DWORD Handle;
 };
 
-/* VTables in various versions */
-extern const IDirect3DMaterialVtbl IDirect3DMaterial_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DMaterial2Vtbl IDirect3DMaterial2_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DMaterial3Vtbl IDirect3DMaterial3_Vtbl DECLSPEC_HIDDEN;
-
 /* Helper functions */
 void material_activate(IDirect3DMaterialImpl* This) DECLSPEC_HIDDEN;
+void d3d_material_init(IDirect3DMaterialImpl *material, IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DViewport - Wraps to D3D7

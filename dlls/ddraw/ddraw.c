@@ -4432,11 +4432,7 @@ static HRESULT WINAPI d3d3_CreateMaterial(IDirect3D3 *iface, IDirect3DMaterial3 
         return DDERR_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IDirect3DMaterial3_Vtbl;
-    object->IDirect3DMaterial2_vtbl = &IDirect3DMaterial2_Vtbl;
-    object->IDirect3DMaterial_vtbl = &IDirect3DMaterial_Vtbl;
-    object->ref = 1;
-    object->ddraw = ddraw_from_d3d3(iface);
+    d3d_material_init(object, ddraw_from_d3d3(iface));
 
     TRACE("Created material %p.\n", object);
     *material = (IDirect3DMaterial3 *)object;
