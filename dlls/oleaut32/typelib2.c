@@ -118,15 +118,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(typelib2);
 /*================== Implementation Structures ===================================*/
 
 /* Used for storing cyclic list. Tail address is kept */
-enum tagCyclicListElementType {
+typedef enum tagCyclicListElementType {
+    CyclicListSentinel,
     CyclicListFunc,
     CyclicListVar
-};
+} CyclicListElementType;
 typedef struct tagCyclicList {
     struct tagCyclicList *next;
     int indice;
     int name;
-    enum tagCyclicListElementType type;
+    CyclicListElementType type;
 
     union {
         int val;
@@ -218,6 +219,14 @@ static inline ICreateTypeInfo2Impl *impl_from_ITypeInfo2( ITypeInfo2 *iface )
 
 static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface);
 
+static CyclicList *alloc_cyclic_list_item(CyclicListElementType type)
+{
+    CyclicList *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CyclicList));
+    if (!ret)
+        return NULL;
+    ret->type = type;
+    return ret;
+}
 
 /*================== Internal functions ===================================*/
 
@@ -1793,19 +1802,18 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     }
 
     if (!This->typedata) {
-        This->typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+        This->typedata = alloc_cyclic_list_item(CyclicListSentinel);
         if(!This->typedata)
             return E_OUTOFMEMORY;
 
         This->typedata->next = This->typedata;
-        This->typedata->u.val = 0;
 
         if(This->dual)
             This->dual->typedata = This->typedata;
     }
 
     /* allocate type data space for us */
-    insert = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+    insert = alloc_cyclic_list_item(CyclicListFunc);
     if(!insert)
         return E_OUTOFMEMORY;
     insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[6])+sizeof(int[(num_defaults?4:3)])*pFuncDesc->cParams);
@@ -1861,7 +1869,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
     /* update the index data */
     insert->indice = pFuncDesc->memid;
     insert->name = -1;
-    insert->type = CyclicListFunc;
 
     /* insert type data to list */
     if(index == This->typeinfo->cElement) {
@@ -2076,19 +2083,18 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     }
 
     if (!This->typedata) {
-        This->typedata = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+        This->typedata = alloc_cyclic_list_item(CyclicListSentinel);
         if(!This->typedata)
             return E_OUTOFMEMORY;
 
         This->typedata->next = This->typedata;
-        This->typedata->u.val = 0;
 
         if(This->dual)
             This->dual->typedata = This->typedata;
     }
 
     /* allocate type data space for us */
-    insert = HeapAlloc(GetProcessHeap(), 0, sizeof(CyclicList));
+    insert = alloc_cyclic_list_item(CyclicListVar);
     if(!insert)
         return E_OUTOFMEMORY;
     insert->u.data = HeapAlloc(GetProcessHeap(), 0, sizeof(int[5]));
@@ -2115,7 +2121,6 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddVarDesc(
     /* update the index data */
     insert->indice = 0x40000000 + index;
     insert->name = -1;
-    insert->type = CyclicListVar;
 
     /* figure out type widths and whatnot */
     ctl2_encode_typedesc(This->typelib, &pVarDesc->elemdescVar.tdesc,
