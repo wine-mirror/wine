@@ -287,7 +287,7 @@ IDirect3DLightImpl_GetLight(IDirect3DLight *iface,
     return DD_OK;
 }
 
-const IDirect3DLightVtbl IDirect3DLight_Vtbl =
+static const struct IDirect3DLightVtbl d3d_light_vtbl =
 {
     /*** IUnknown Methods ***/
     IDirect3DLightImpl_QueryInterface,
@@ -298,3 +298,10 @@ const IDirect3DLightVtbl IDirect3DLight_Vtbl =
     IDirect3DLightImpl_SetLight,
     IDirect3DLightImpl_GetLight
 };
+
+void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw)
+{
+    light->lpVtbl = &d3d_light_vtbl;
+    light->ref = 1;
+    light->ddraw = ddraw;
+}

@@ -4375,9 +4375,7 @@ static HRESULT WINAPI d3d3_CreateLight(IDirect3D3 *iface, IDirect3DLight **light
         return DDERR_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IDirect3DLight_Vtbl;
-    object->ref = 1;
-    object->ddraw = ddraw_from_d3d3(iface);
+    d3d_light_init(object, ddraw_from_d3d3(iface));
 
     TRACE("Created light %p.\n", object);
     *light = (IDirect3DLight *)object;

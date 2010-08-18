@@ -525,12 +525,10 @@ struct IDirect3DLightImpl
     IDirect3DLightImpl        *next;
 };
 
-/* Vtable */
-extern const IDirect3DLightVtbl IDirect3DLight_Vtbl DECLSPEC_HIDDEN;
-
 /* Helper functions */
 void light_activate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
 void light_deactivate(IDirect3DLightImpl *light) DECLSPEC_HIDDEN;
+void d3d_light_init(IDirect3DLightImpl *light, IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
 
 /******************************************************************************
  * IDirect3DMaterial implementation structure - Wraps to D3D7
