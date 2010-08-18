@@ -1109,7 +1109,7 @@ static int ctl2_encode_typedesc(
 			mix_field = typedata[0]>>16;
 			break;
 		    default:
-			mix_field = 0x7fff;
+			mix_field = ((typedata[0] >> 16) == 0x7fff) ? 0x7fff : 0x7ffe;
 			break;
 		}
 	    }
