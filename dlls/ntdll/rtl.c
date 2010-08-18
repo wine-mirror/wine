@@ -30,14 +30,20 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #include "ntstatus.h"
 #define NONAMELESSSTRUCT
 #define WIN32_NO_STATUS
+#define USE_WS_PREFIX
 #include "windef.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
+#include "wine/unicode.h"
 #include "ntdll_misc.h"
+#include "inaddr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -904,14 +910,122 @@ NTSTATUS WINAPI RtlIpv4StringToAddressExW(PULONG IP, PULONG Port,
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI RtlIpv4AddressToStringExW (PULONG IP, PULONG Port,
-                                           LPWSTR Buffer, PULONG MaxSize)
+/***********************************************************************
+ * RtlIpv4AddressToStringExW [NTDLL.@]
+ *
+ * Convert the given ipv4 address and optional the port to a string
+ *
+ * PARAMS
+ *  pin     [I]  PTR to the ip address to convert (network byte order)
+ *  port    [I]  optional port to convert (network byte order)
+ *  buffer  [O]  destination buffer for the result
+ *  psize   [IO] PTR to available/used size of the destination buffer
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS
+ *  Failure: STATUS_INVALID_PARAMETER
+ *
+ */
+NTSTATUS WINAPI RtlIpv4AddressToStringExW(const IN_ADDR *pin, USHORT port, LPWSTR buffer, PULONG psize)
 {
-    FIXME("(%p,%p,%p,%p): stub\n", IP, Port, Buffer, MaxSize);
+    WCHAR tmp_ip[32];
+    static const WCHAR fmt_ip[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
+    static const WCHAR fmt_port[] = {':','%','u',0};
+    ULONG needed;
 
-    return STATUS_SUCCESS;
+    if (!pin || !buffer || !psize)
+        return STATUS_INVALID_PARAMETER;
+
+    TRACE("(%p:0x%x, %d, %p, %p:%d)\n", pin, pin->S_un.S_addr, port, buffer, psize, *psize);
+
+    needed = sprintfW(tmp_ip, fmt_ip,
+                      pin->S_un.S_un_b.s_b1, pin->S_un.S_un_b.s_b2,
+                      pin->S_un.S_un_b.s_b3, pin->S_un.S_un_b.s_b4);
+
+    if (port) needed += sprintfW(tmp_ip + needed, fmt_port, ntohs(port));
+
+    if (*psize > needed) {
+        *psize = needed + 1;
+        strcpyW(buffer, tmp_ip);
+        return STATUS_SUCCESS;
+    }
+
+    *psize = needed + 1;
+    return STATUS_INVALID_PARAMETER;
 }
 
+/***********************************************************************
+ * RtlIpv4AddressToStringExA [NTDLL.@]
+ *
+ * Convert the given ipv4 address and optional the port to a string
+ *
+ * See RtlIpv4AddressToStringExW
+ */
+NTSTATUS WINAPI RtlIpv4AddressToStringExA(const IN_ADDR *pin, USHORT port, LPSTR buffer, PULONG psize)
+{
+    CHAR tmp_ip[32];
+    ULONG needed;
+
+    if (!pin || !buffer || !psize)
+        return STATUS_INVALID_PARAMETER;
+
+    TRACE("(%p:0x%x, %d, %p, %p:%d)\n", pin, pin->S_un.S_addr, port, buffer, psize, *psize);
+
+    needed = sprintf(tmp_ip, "%u.%u.%u.%u",
+                     pin->S_un.S_un_b.s_b1, pin->S_un.S_un_b.s_b2,
+                     pin->S_un.S_un_b.s_b3, pin->S_un.S_un_b.s_b4);
+
+    if (port) needed += sprintf(tmp_ip + needed, ":%u", ntohs(port));
+
+    if (*psize > needed) {
+        *psize = needed + 1;
+        strcpy(buffer, tmp_ip);
+        return STATUS_SUCCESS;
+    }
+
+    *psize = needed + 1;
+    return STATUS_INVALID_PARAMETER;
+}
+
+/***********************************************************************
+ * RtlIpv4AddressToStringW [NTDLL.@]
+ *
+ * Convert the given ipv4 address to a string
+ *
+ * PARAMS
+ *  pin     [I]  PTR to the ip address to convert (network byte order)
+ *  buffer  [O]  destination buffer for the result (at least 16 character)
+ *
+ * RETURNS
+ *  PTR to the 0 character at the end of the converted string
+ *
+ */
+WCHAR * WINAPI RtlIpv4AddressToStringW(const IN_ADDR *pin, LPWSTR buffer)
+{
+    ULONG size = 16;
+
+    if (RtlIpv4AddressToStringExW(pin, 0, buffer, &size)) size = 0;
+    return buffer + size - 1;
+}
+
+/***********************************************************************
+ * RtlIpv4AddressToStringA [NTDLL.@]
+ *
+ * Convert the given ipv4 address to a string
+ *
+ * See RtlIpv4AddressToStringW
+ */
+CHAR * WINAPI RtlIpv4AddressToStringA(const IN_ADDR *pin, LPSTR buffer)
+{
+    ULONG size = 16;
+
+    if (RtlIpv4AddressToStringExA(pin, 0, buffer, &size)) size = 0;
+    return buffer + size - 1;
+}
+
+/***********************************************************************
+ * get_pointer_obfuscator (internal)
+ */
 static DWORD_PTR get_pointer_obfuscator( void )
 {
     static DWORD_PTR pointer_obfuscator;

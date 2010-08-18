@@ -690,10 +690,10 @@
 @ stdcall RtlInterlockedPushEntrySList(ptr ptr)
 @ stdcall RtlInterlockedPushListSList(ptr ptr ptr long)
 # @ stub RtlInvertRangeList
-# @ stub RtlIpv4AddressToStringA
-# @ stub RtlIpv4AddressToStringExA
-@ stdcall RtlIpv4AddressToStringExW(ptr ptr ptr ptr)
-# @ stub RtlIpv4AddressToStringW
+@ stdcall RtlIpv4AddressToStringA(ptr ptr)
+@ stdcall RtlIpv4AddressToStringExA(ptr long ptr ptr)
+@ stdcall RtlIpv4AddressToStringExW(ptr long ptr ptr)
+@ stdcall RtlIpv4AddressToStringW(ptr ptr)
 # @ stub RtlIpv4StringToAddressA
 # @ stub RtlIpv4StringToAddressExA
 @ stdcall RtlIpv4StringToAddressExW(ptr ptr wstr ptr)
