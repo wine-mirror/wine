@@ -10572,6 +10572,11 @@ static void test_sourcedir_props(void)
 {
     UINT r;
 
+    if (on_win9x)
+    {
+        win_skip("skipping sourcedir tests on win9x\n");
+        return;
+    }
     if (is_process_limited())
     {
         skip("process is limited\n");
