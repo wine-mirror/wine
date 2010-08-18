@@ -826,21 +826,24 @@ static void test_readwrite(void)
         ret = ReportEvent(handle, read_write[i].evt_type, read_write[i].evt_cat,
                           read_write[i].evt_id, run_sidtests ? user : NULL,
                           read_write[i].evt_numstrings, 0, read_write[i].evt_strings, NULL);
+        ok(ret, "Expected ReportEvent success : %d\n", GetLastError());
 
         count = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
         ret = GetNumberOfEventLogRecords(handle, &count);
-        ok(ret, "Expected success\n");
+        ok(ret, "Expected GetNumberOfEventLogRecords success : %d\n", GetLastError());
         ok(count == (i + 1), "Expected %d records, got %d\n", i + 1, count);
 
         oldest = 0xdeadbeef;
         ret = GetOldestEventLogRecord(handle, &oldest);
-        ok(ret, "Expected success\n");
+        ok(ret, "Expected GetOldestEventLogRecord success : %d\n", GetLastError());
         ok(oldest == 1 ||
            (oldest > 1 && oldest != 0xdeadbeef), /* Vista SP1+, W2K8 and Win7 */
            "Expected oldest to be 1 or higher, got %d\n", oldest);
         if (oldest > 1 && oldest != 0xdeadbeef)
             on_vista = TRUE;
 
+        SetLastError(0xdeadbeef);
         if (i % 2)
             ret = CloseEventLog(handle);
         else
