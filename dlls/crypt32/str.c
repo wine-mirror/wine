@@ -970,7 +970,7 @@ static PCERT_ALT_NAME_ENTRY cert_find_alt_name_entry(PCCERT_CONTEXT cert,
 }
 
 static DWORD cert_get_name_from_rdn_attr(DWORD encodingType,
- PCERT_NAME_BLOB name, LPCSTR oid, LPWSTR pszNameString, DWORD cchNameString)
+ const CERT_NAME_BLOB *name, LPCSTR oid, LPWSTR pszNameString, DWORD cchNameString)
 {
     CERT_NAME_INFO *nameInfo;
     DWORD bytes = 0, ret = 0;
