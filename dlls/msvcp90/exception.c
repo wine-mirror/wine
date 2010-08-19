@@ -100,6 +100,7 @@ void CDECL _CxxThrowException(exception*,const cxx_exception_type*);
 
 extern const vtable_ptr MSVCP_bad_alloc_vtable;
 extern const vtable_ptr MSVCP_logic_error_vtable;
+extern const vtable_ptr MSVCP_length_error_vtable;
 
 /* exception class data */
 static type_info exception_type_info = {
@@ -427,11 +428,103 @@ static const cxx_exception_type logic_error_cxx_type = {
     &logic_error_cxx_type_table
 };
 
+/* length_error class data */
+typedef logic_error length_error;
+
+DEFINE_THISCALL_WRAPPER(MSVCP_length_error_ctor, 8)
+length_error* __stdcall MSVCP_length_error_ctor(
+        length_error *this, const char **name)
+{
+    TRACE("%p %s\n", this, *name);
+    MSVCP_logic_error_ctor(this, name);
+    this->e.vtable = &MSVCP_length_error_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_length_error_copy_ctor, 8)
+length_error* __stdcall MSVCP_length_error_copy_ctor(
+        length_error *this, length_error *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    MSVCP_logic_error_copy_ctor(this, rhs);
+    this->e.vtable = &MSVCP_length_error_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_length_error_vector_dtor, 8)
+void* __stdcall MSVCP_length_error_vector_dtor(
+        length_error *this, unsigned int flags)
+{
+    TRACE("%p %x\n", this, flags);
+    return MSVCP_logic_error_vector_dtor(this, flags);
+}
+
+static const type_info length_error_type_info = {
+    &MSVCP_length_error_vtable,
+    NULL,
+    ".?AVlength_error@std@@"
+};
+
+static const rtti_base_descriptor length_error_rtti_base_descriptor = {
+    &length_error_type_info,
+    2,
+    { 0, -1, 0 },
+    64
+};
+
+static const rtti_base_array length_error_rtti_base_array = {
+    {
+        &length_error_rtti_base_descriptor,
+        &logic_error_rtti_base_descriptor,
+        &exception_rtti_base_descriptor
+    }
+};
+
+static const rtti_object_hierarchy length_error_type_hierarchy = {
+    0,
+    0,
+    3,
+    &length_error_rtti_base_array
+};
+
+const rtti_object_locator length_error_rtti = {
+    0,
+    0,
+    0,
+    &length_error_type_info,
+    &length_error_type_hierarchy
+};
+
+static const cxx_type_info length_error_cxx_type_info = {
+    0,
+    &length_error_type_info,
+    { 0, -1, 0 },
+    sizeof(length_error),
+    (cxx_copy_ctor)THISCALL(MSVCP_length_error_copy_ctor)
+};
+
+static const cxx_type_info_table length_error_cxx_type_table = {
+    3,
+    {
+        &length_error_cxx_type_info,
+        &logic_error_cxx_type_info,
+        &exception_cxx_type_info
+    }
+};
+
+static const cxx_exception_type length_error_cxx_type = {
+    0,
+    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_dtor),
+    NULL,
+    &length_error_cxx_type_table
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
     __ASM_EXCEPTION_VTABLE(bad_alloc)
     __ASM_EXCEPTION_STRING_VTABLE(logic_error)
+    __ASM_EXCEPTION_STRING_VTABLE(length_error)
 #ifndef __GNUC__
 }
 #endif
@@ -458,6 +551,12 @@ void throw_exception(exception_type et, const char *str)
         logic_error e;
         MSVCP_logic_error_ctor(&e, &addr);
         _CxxThrowException((exception*)&e, &logic_error_cxx_type);
+        return;
+    }
+    case EXCEPTION_LENGTH_ERROR: {
+        length_error e;
+        MSVCP_length_error_ctor(&e, &addr);
+        _CxxThrowException((exception*)&e, &length_error_cxx_type);
         return;
     }
     }
