@@ -538,10 +538,10 @@
 @ cdecl -arch=win64 ??0?$allocator@G@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_allocator_short_copy_ctor
 @ cdecl -arch=win32 -i386 -norelay ??0?$allocator@G@std@@QAE@XZ() __thiscall_MSVCP_allocator_short_ctor
 @ cdecl -arch=win64 ??0?$allocator@G@std@@QEAA@XZ(ptr) MSVCP_allocator_short_ctor
-@ stub -arch=win32 ??0?$allocator@X@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0?$allocator@X@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0?$allocator@X@std@@QAE@XZ
-@ stub -arch=win64 ??0?$allocator@X@std@@QEAA@XZ
+@ cdecl -arch=win32 -i386 -norelay ??0?$allocator@X@std@@QAE@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_void_copy_ctor
+@ cdecl -arch=win64 ??0?$allocator@X@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_allocator_void_copy_ctor
+@ cdecl -arch=win32 -i386 -norelay ??0?$allocator@X@std@@QAE@XZ() __thiscall_MSVCP_allocator_void_ctor
+@ cdecl -arch=win64 ??0?$allocator@X@std@@QEAA@XZ(ptr) MSVCP_allocator_void_ctor
 @ cdecl -arch=win32 -i386 -norelay ??0?$allocator@_W@std@@QAE@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_wchar_copy_ctor
 @ cdecl -arch=win64 ??0?$allocator@_W@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_allocator_wchar_copy_ctor
 @ cdecl -arch=win32 -i386 -norelay ??0?$allocator@_W@std@@QAE@XZ() __thiscall_MSVCP_allocator_wchar_ctor
@@ -1376,8 +1376,8 @@
 @ cdecl -arch=win64 ??4?$allocator@D@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_allocator_char_assign
 @ cdecl -arch=win32 -i386 -norelay ??4?$allocator@G@std@@QAEAAV01@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_short_assign
 @ cdecl -arch=win64 ??4?$allocator@G@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_allocator_short_assign
-@ stub -arch=win32 ??4?$allocator@X@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$allocator@X@std@@QEAAAEAV01@AEBV01@@Z
+@ cdecl -arch=win32 -i386 -norelay ??4?$allocator@X@std@@QAEAAV01@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_void_assign
+@ cdecl -arch=win64 ??4?$allocator@X@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_allocator_void_assign
 @ cdecl -arch=win32 -i386 -norelay ??4?$allocator@_W@std@@QAEAAV01@ABV01@@Z(ptr) __thiscall_MSVCP_allocator_wchar_assign
 @ cdecl -arch=win64 ??4?$allocator@_W@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_allocator_wchar_assign
 @ stub -arch=win32 ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@ABV01@@Z

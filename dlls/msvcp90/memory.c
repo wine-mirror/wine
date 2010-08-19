@@ -312,3 +312,28 @@ size_t __stdcall MSVCP_allocator_short_max_size(void *this)
 {
     return UINT_MAX/sizeof(unsigned short);
 }
+
+/* allocator<void> */
+/* ??0?$allocator@X@std@@QAE@XZ */
+/* ??0?$allocator@X@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_ctor, 4);
+void* __stdcall MSVCP_allocator_void_ctor(void *this)
+{
+    return this;
+}
+
+/* ??0?$allocator@X@std@@QAE@ABV01@@Z */
+/* ??0?$allocator@X@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_copy_ctor, 8);
+void* __stdcall MSVCP_allocator_void_copy_ctor(void *this, void *copy)
+{
+    return this;
+}
+
+/* ??4?$allocator@X@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$allocator@X@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_assign, 8);
+void* __stdcall MSVCP_allocator_void_assign(void *this, void *assign)
+{
+    return this;
+}
