@@ -464,7 +464,7 @@ static NTSTATUS CDROM_SyncCache(int dev, int fd)
    cdrom_cache[dev].toc_good = 1;
    return STATUS_SUCCESS;
 
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 
    int i, tsz;
    struct ioc_toc_header hdr;
@@ -545,6 +545,7 @@ static NTSTATUS CDROM_SyncCache(int dev, int fd)
     cdrom_cache[dev].toc_good = 1;
     return STATUS_SUCCESS;
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -629,11 +630,8 @@ static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* devi
         }
     }
     return 0;
-#elif defined(__FreeBSD__)
-    FIXME("not implemented for BSD\n");
-    return 0;
 #else
-    FIXME("not implemented for nonlinux\n");
+    FIXME("not implemented on this O/S\n");
     return 0;
 #endif
 }
@@ -766,9 +764,10 @@ static NTSTATUS CDROM_ResetAudio(int fd)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(fd, CDROMRESET));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     return CDROM_GetStatusCode(ioctl(fd, CDIOCRESET, NULL));
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -782,7 +781,7 @@ static NTSTATUS CDROM_SetTray(int fd, BOOL doEject)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(fd, doEject ? CDROMEJECT : CDROMCLOSETRAY));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     return CDROM_GetStatusCode((ioctl(fd, CDIOCALLOW, NULL)) ||
                                (ioctl(fd, doEject ? CDIOCEJECT : CDIOCCLOSE, NULL)) ||
                                (ioctl(fd, CDIOCPREVENT, NULL)));
@@ -790,6 +789,7 @@ static NTSTATUS CDROM_SetTray(int fd, BOOL doEject)
     if (doEject) return CDROM_GetStatusCode( ioctl( fd, DKIOCEJECT, NULL ) );
     else return STATUS_NOT_SUPPORTED;
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -803,9 +803,10 @@ static NTSTATUS CDROM_ControlEjection(int fd, const PREVENT_MEDIA_REMOVAL* rmv)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(fd, CDROM_LOCKDOOR, rmv->PreventMediaRemoval));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     return CDROM_GetStatusCode(ioctl(fd, (rmv->PreventMediaRemoval) ? CDIOCPREVENT : CDIOCALLOW, NULL));
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -957,7 +958,7 @@ static NTSTATUS CDROM_ReadQChannel(int dev, int fd, const CDROM_SUB_Q_DATA_FORMA
 
  end:
     ret = CDROM_GetStatusCode(io);
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     SUB_Q_HEADER*       hdr = (SUB_Q_HEADER*)data;
     int                 io;
     struct ioc_read_subchannel	read_sc;
@@ -1113,7 +1114,7 @@ static NTSTATUS CDROM_Verify(int dev, int fd)
         return STATUS_SUCCESS;
     else
         return STATUS_NO_MEDIA_IN_DEVICE;
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     int ret;
     ret = ioctl(fd, CDIOCSTART, NULL);
     if(ret == 0)
@@ -1121,7 +1122,7 @@ static NTSTATUS CDROM_Verify(int dev, int fd)
     else
         return STATUS_NO_MEDIA_IN_DEVICE;
 #else
-    FIXME("not implemented for non-linux\n");
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -1162,7 +1163,7 @@ static NTSTATUS CDROM_PlayAudioMSF(int fd, const CDROM_PLAY_AUDIO_MSF* audio_msf
 	  msf.cdmsf_min1, msf.cdmsf_sec1, msf.cdmsf_frame1);
  end:
     ret = CDROM_GetStatusCode(io);
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     struct	ioc_play_msf	msf;
     int         io;
 
@@ -1207,7 +1208,7 @@ static NTSTATUS CDROM_SeekAudioMSF(int dev, int fd, const CDROM_SEEK_AUDIO_MSF* 
 #if defined(linux)
     struct cdrom_msf0	msf;
     struct cdrom_subchnl sc;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     struct ioc_play_msf	msf;
     struct ioc_read_subchannel	read_sc;
     struct cd_sub_channel_info	sc;
@@ -1260,7 +1261,7 @@ static NTSTATUS CDROM_SeekAudioMSF(int dev, int fd, const CDROM_SEEK_AUDIO_MSF* 
       return CDROM_GetStatusCode(ioctl(fd, CDROMSEEK, &msf));
     }
     return STATUS_SUCCESS;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     read_sc.address_format = CD_MSF_FORMAT;
     read_sc.track          = 0;
     read_sc.data_len       = sizeof(sc);
@@ -1287,6 +1288,7 @@ static NTSTATUS CDROM_SeekAudioMSF(int dev, int fd, const CDROM_SEEK_AUDIO_MSF* 
     }
     return STATUS_SUCCESS;
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -1300,9 +1302,10 @@ static NTSTATUS CDROM_PauseAudio(int fd)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(fd, CDROMPAUSE));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     return CDROM_GetStatusCode(ioctl(fd, CDIOCPAUSE, NULL));
 #else
+    FIXME(": not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -1316,9 +1319,10 @@ static NTSTATUS CDROM_ResumeAudio(int fd)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(fd, CDROMRESUME));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     return CDROM_GetStatusCode(ioctl(fd, CDIOCRESUME, NULL));
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -1332,9 +1336,10 @@ static NTSTATUS CDROM_StopAudio(int fd)
 {
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(fd, CDROMSTOP));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     return CDROM_GetStatusCode(ioctl(fd, CDIOCSTOP, NULL));
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -1359,7 +1364,7 @@ static NTSTATUS CDROM_GetVolume(int fd, VOLUME_CONTROL* vc)
         vc->PortVolume[3] = volc.channel3;
     }
     return CDROM_GetStatusCode(io);
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     struct  ioc_vol     volc;
     int io;
 
@@ -1373,6 +1378,7 @@ static NTSTATUS CDROM_GetVolume(int fd, VOLUME_CONTROL* vc)
     }
     return CDROM_GetStatusCode(io);
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -1393,7 +1399,7 @@ static NTSTATUS CDROM_SetVolume(int fd, const VOLUME_CONTROL* vc)
     volc.channel3 = vc->PortVolume[3];
 
     return CDROM_GetStatusCode(ioctl(fd, CDROMVOLCTRL, &volc));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     struct  ioc_vol     volc;
 
     volc.vol[0] = vc->PortVolume[0];
@@ -1403,6 +1409,7 @@ static NTSTATUS CDROM_SetVolume(int fd, const VOLUME_CONTROL* vc)
 
     return CDROM_GetStatusCode(ioctl(fd, CDIOCSETVOL, &volc));
 #else
+    FIXME(": not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -2128,8 +2135,6 @@ static NTSTATUS DVD_StartSession(int fd, const DVD_SESSION_ID *sid_in, PDVD_SESS
     ret =CDROM_GetStatusCode(ioctl(fd, DVD_AUTH, &auth_info));
     *sid_out = auth_info.lsa.agid;
     return ret;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return STATUS_NOT_SUPPORTED;
 #elif defined(__APPLE__)
     NTSTATUS ret = STATUS_NOT_SUPPORTED;
     dk_dvd_report_key_t dvdrk;
@@ -2145,6 +2150,7 @@ static NTSTATUS DVD_StartSession(int fd, const DVD_SESSION_ID *sid_in, PDVD_SESS
     *sid_out = agid_info.grantID;
     return ret;
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -2165,8 +2171,6 @@ static NTSTATUS DVD_EndSession(int fd, const DVD_SESSION_ID *sid)
 
     TRACE("\n");
     return CDROM_GetStatusCode(ioctl(fd, DVD_AUTH, &auth_info));
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return STATUS_NOT_SUPPORTED;
 #elif defined(__APPLE__)
     dk_dvd_send_key_t dvdsk;
 
@@ -2176,6 +2180,7 @@ static NTSTATUS DVD_EndSession(int fd, const DVD_SESSION_ID *sid)
 
     return CDROM_GetStatusCode(ioctl(fd, DKIOCDVDSENDKEY, &dvdsk));
 #else
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -2261,7 +2266,7 @@ static NTSTATUS DVD_SendKey(int fd, const DVD_COPY_PROTECT_KEY *key)
 
     return CDROM_GetStatusCode(ioctl(fd, DKIOCDVDSENDKEY, &dvdsk));
 #else
-    FIXME("unsupported on this platform\n");
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif    
 }
@@ -2350,9 +2355,6 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
 	FIXME("Unknown keytype 0x%x\n",key->KeyType);
     }
     return ret;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-    TRACE("bsd\n");
-    return STATUS_NOT_SUPPORTED;
 #elif defined(__APPLE__)
     union
     {
@@ -2502,7 +2504,7 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
     }
     return ret;
 #else
-    TRACE("outside\n");
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -2540,9 +2542,6 @@ static NTSTATUS DVD_GetRegion(int fd, PDVD_REGION region)
         }
     }
     return ret;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-    TRACE("bsd\n");
-    return STATUS_NOT_SUPPORTED;
 #elif defined(__APPLE__)
     dk_dvd_report_key_t key;
     dk_dvd_read_structure_t dvd;
@@ -2574,7 +2573,7 @@ static NTSTATUS DVD_GetRegion(int fd, PDVD_REGION region)
     }
     return ret;
 #else
-    FIXME("\n");
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
@@ -2878,7 +2877,7 @@ static NTSTATUS GetInquiryData(int fd, PSCSI_ADAPTER_BUS_INFO BufferOut, DWORD O
     pInquiryData->NextInquiryDataOffset = 0;
     return STATUS_SUCCESS;
 #else
-    FIXME("not implemented for nonlinux\n");
+    FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
 #endif
 }
