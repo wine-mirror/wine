@@ -679,6 +679,19 @@ basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(
     return this;
 }
 
+/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z */
+/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor_cstr, 8)
+basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(
+        basic_string_char *this, const char *str)
+{
+    TRACE("%p %s\n", this, debugstr_a(str));
+
+    basic_string_char_tidy(this, FALSE, 0);
+    MSVCP_basic_string_char_assign_cstr(this, str);
+    return this;
+}
+
 /* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
 /* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_dtor, 4)
