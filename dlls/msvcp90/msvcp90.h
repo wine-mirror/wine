@@ -61,7 +61,8 @@ typedef enum __exception_type {
     EXCEPTION,
     EXCEPTION_BAD_ALLOC,
     EXCEPTION_LOGIC_ERROR,
-    EXCEPTION_LENGTH_ERROR
+    EXCEPTION_LENGTH_ERROR,
+    EXCEPTION_OUT_OF_RANGE
 } exception_type;
 void throw_exception(exception_type, const char *);
 void set_exception_vtable(void);

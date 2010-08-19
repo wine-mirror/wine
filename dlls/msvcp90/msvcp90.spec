@@ -2881,7 +2881,7 @@
 @ cdecl ?_Xlen@_String_base@std@@SAXXZ() MSVCP__String_base_Xlen
 @ stub ?_Xmem@tr1@std@@YAXXZ
 @ stub ?_Xoutrange@tr1@std@@YAXXZ
-@ stub ?_Xran@_String_base@std@@SAXXZ
+@ cdecl ?_Xran@_String_base@std@@SAXXZ() MSVCP__String_base_Xran
 @ stub ?_Xran@ctype_base@std@@KAXXZ
 @ stub -arch=win32 ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPADIH@Z
 @ stub -arch=win64 ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JPEAD_K_J@Z

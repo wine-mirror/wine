@@ -101,6 +101,7 @@ void CDECL _CxxThrowException(exception*,const cxx_exception_type*);
 extern const vtable_ptr MSVCP_bad_alloc_vtable;
 extern const vtable_ptr MSVCP_logic_error_vtable;
 extern const vtable_ptr MSVCP_length_error_vtable;
+extern const vtable_ptr MSVCP_out_of_range_vtable;
 
 /* exception class data */
 static type_info exception_type_info = {
@@ -519,12 +520,104 @@ static const cxx_exception_type length_error_cxx_type = {
     &length_error_cxx_type_table
 };
 
+/* out_of_range class data */
+typedef logic_error out_of_range;
+
+DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_ctor, 8)
+out_of_range* __stdcall MSVCP_out_of_range_ctor(
+        out_of_range *this, const char **name)
+{
+    TRACE("%p %s\n", this, *name);
+    MSVCP_logic_error_ctor(this, name);
+    this->e.vtable = &MSVCP_out_of_range_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_copy_ctor, 8)
+out_of_range* __stdcall MSVCP_out_of_range_copy_ctor(
+        out_of_range *this, out_of_range *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    MSVCP_logic_error_copy_ctor(this, rhs);
+    this->e.vtable = &MSVCP_out_of_range_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_vector_dtor, 8)
+void* __stdcall MSVCP_out_of_range_vector_dtor(
+        out_of_range *this, unsigned int flags)
+{
+    TRACE("%p %x\n", this, flags);
+    return MSVCP_logic_error_vector_dtor(this, flags);
+}
+
+static const type_info out_of_range_type_info = {
+    &MSVCP_out_of_range_vtable,
+    NULL,
+    ".?AVout_of_range@std@@"
+};
+
+static const rtti_base_descriptor out_of_range_rtti_base_descriptor = {
+    &out_of_range_type_info,
+    2,
+    { 0, -1, 0 },
+    64
+};
+
+static const rtti_base_array out_of_range_rtti_base_array = {
+    {
+        &out_of_range_rtti_base_descriptor,
+        &logic_error_rtti_base_descriptor,
+        &exception_rtti_base_descriptor
+    }
+};
+
+static const rtti_object_hierarchy out_of_range_type_hierarchy = {
+    0,
+    0,
+    3,
+    &out_of_range_rtti_base_array
+};
+
+const rtti_object_locator out_of_range_rtti = {
+    0,
+    0,
+    0,
+    &out_of_range_type_info,
+    &out_of_range_type_hierarchy
+};
+
+static const cxx_type_info out_of_range_cxx_type_info = {
+    0,
+    &out_of_range_type_info,
+    { 0, -1, 0 },
+    sizeof(out_of_range),
+    (cxx_copy_ctor)THISCALL(MSVCP_out_of_range_copy_ctor)
+};
+
+static const cxx_type_info_table out_of_range_cxx_type_table = {
+    3,
+    {
+        &out_of_range_cxx_type_info,
+        &logic_error_cxx_type_info,
+        &exception_cxx_type_info
+    }
+};
+
+static const cxx_exception_type out_of_range_cxx_type = {
+    0,
+    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_dtor),
+    NULL,
+    &out_of_range_cxx_type_table
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
     __ASM_EXCEPTION_VTABLE(bad_alloc)
     __ASM_EXCEPTION_STRING_VTABLE(logic_error)
     __ASM_EXCEPTION_STRING_VTABLE(length_error)
+    __ASM_EXCEPTION_STRING_VTABLE(out_of_range)
 #ifndef __GNUC__
 }
 #endif
@@ -558,6 +651,11 @@ void throw_exception(exception_type et, const char *str)
         MSVCP_length_error_ctor(&e, &addr);
         _CxxThrowException((exception*)&e, &length_error_cxx_type);
         return;
+    }
+    case EXCEPTION_OUT_OF_RANGE: {
+        out_of_range e;
+        MSVCP_out_of_range_ctor(&e, &addr);
+        _CxxThrowException((exception*)&e, &out_of_range_cxx_type);
     }
     }
 }

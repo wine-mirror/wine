@@ -476,6 +476,15 @@ void  CDECL MSVCP__String_base_Xlen(void)
     throw_exception(EXCEPTION_LENGTH_ERROR, msg);
 }
 
+/* ?_Xran@_String_base@std@@SAXXZ */
+void CDECL MSVCP__String_base_Xran(void)
+{
+    static const char msg[] = "invalid string position";
+
+    TRACE("\n");
+    throw_exception(EXCEPTION_OUT_OF_RANGE, msg);
+}
+
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
 /* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB */
@@ -580,7 +589,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_erase(
     TRACE("%p %d %d\n", this, pos, len);
 
     if(pos > this->size) {
-        FIXME("Throw exception (_Xran)\n");
+        MSVCP__String_base_Xran();
         return NULL;
     }
 
@@ -607,7 +616,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_assign_substr(
     TRACE("%p %p %d %d\n", this, assign, pos, len);
 
     if(assign->size < pos) {
-        FIXME("Throw exception (_Xran)\n");
+        MSVCP__String_base_Xran();
         return NULL;
     }
 
