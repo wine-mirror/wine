@@ -504,6 +504,32 @@ static void basic_string_char_tidy(basic_string_char *this,
     basic_string_char_eos(this, new_size);
 }
 
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z */
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_erase, 12)
+basic_string_char* __stdcall MSVCP_basic_string_char_erase(
+        basic_string_char *this, size_t pos, size_t len)
+{
+    TRACE("%p %d %d\n", this, pos, len);
+
+    if(pos > this->size) {
+        FIXME("Throw exception (_Xran)\n");
+        return NULL;
+    }
+
+    if(len > this->size-pos)
+        len = this->size-pos;
+
+    if(len) {
+        MSVCP_char_traits_char__Move_s(basic_string_char_ptr(this)+pos,
+                this->res-pos, basic_string_char_ptr(this)+pos+len,
+                this->size-pos-len);
+        basic_string_char_eos(this, this->size-len);
+    }
+
+    return this;
+}
+
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor, 4)
