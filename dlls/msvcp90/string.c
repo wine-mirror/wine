@@ -467,6 +467,9 @@ unsigned short CDECL MSVCP_char_traits_short_not_eof(const unsigned short *in)
 
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
+/* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB */
+const size_t MSVCP_basic_string_char_npos = -1;
+
 /* Internal: basic_string_char_ptr - return pointer to stored string */
 static char* basic_string_char_ptr(basic_string_char *this)
 {

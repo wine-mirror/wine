@@ -4589,7 +4589,7 @@
 @ cdecl -arch=win64 ?not_eof@?$char_traits@G@std@@SAGAEBG@Z(ptr) MSVCP_char_traits_short_not_eof
 @ cdecl -arch=win32 ?not_eof@?$char_traits@_W@std@@SAGABG@Z(ptr) MSVCP_char_traits_wchar_not_eof
 @ cdecl -arch=win64 ?not_eof@?$char_traits@_W@std@@SAGAEBG@Z(ptr) MSVCP_char_traits_wchar_not_eof
-@ stub -arch=win32 ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB
+@ extern -arch=win32 ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB MSVCP_basic_string_char_npos
 @ stub -arch=win64 ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB
 @ stub -arch=win32 ?npos@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@2IB
 @ stub -arch=win64 ?npos@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@2_KB
