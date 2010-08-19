@@ -93,7 +93,7 @@ BEGIN
     END
     POPUP "&Aiuto"
     BEGIN
-        MENUITEM "&Riguardo A Wine Wordpad"       ID_ABOUT
+        MENUITEM "&Riguardo a Wine Wordpad"       ID_ABOUT
     END
 END
 
@@ -130,7 +130,7 @@ BEGIN
         MENUITEM "Fucsia"            ID_COLOR_FUCHSIA
         MENUITEM "Aqua"              ID_COLOR_AQUA
         MENUITEM "Bianco"            ID_COLOR_WHITE
-        MENUITEM "Automatic"         ID_COLOR_AUTOMATIC
+        MENUITEM "Automatico"         ID_COLOR_AUTOMATIC
     END
 END
 
@@ -161,7 +161,7 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 Caption "Formato del paragrafo"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX "Indentazione", -1, 10, 10, 120, 68
+    GROUPBOX "Rientro", -1, 10, 10, 120, 68
     LTEXT "Sinistra", -1, 15, 22, 40, 13
     EDITTEXT IDC_PARA_LEFT, 55, 20, 60, 13
     LTEXT "Destra", -1, 15, 40, 40, 13
@@ -211,7 +211,7 @@ BEGIN
     STRING_TEXT_FILES_TXT,         "File di testo (*.txt)"
     STRING_TEXT_FILES_UNICODE_TXT, "File di testo Unicode (*.txt)"
     STRING_RICHTEXT_FILES_RTF,     "Formato rich text (*.rtf)"
-    STRING_NEWFILE_RICHTEXT,       "Documento Rich text"
+    STRING_NEWFILE_RICHTEXT,       "Documento rich text"
     STRING_NEWFILE_TXT,            "Documento di testo"
     STRING_NEWFILE_TXT_UNICODE,    "Documento di testo Unicode"
     STRING_PRINTER_FILES_PRN,      "File di stampa (*.PRN)"
@@ -264,6 +264,6 @@ BEGIN
     STRING_WRITE_ACCESS_DENIED,       "Non hai i diritti di accesso per salvare il file."
     STRING_OPEN_FAILED,               "Impossibile aprire il file."
     STRING_OPEN_ACCESS_DENIED,        "Non hai i diritti di accesso per aprire il file."
-    STRING_PRINTING_NOT_IMPLEMENTED,  "Stampa non  implementata"
+    STRING_PRINTING_NOT_IMPLEMENTED,  "Stampa non implementata"
     STRING_MAX_TAB_STOPS,             "Non si possono aggiungere più di 32 punti di fermata delle tabulazioni."
 END
