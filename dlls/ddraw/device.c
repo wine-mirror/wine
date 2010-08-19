@@ -6611,7 +6611,7 @@ IDirect3DDeviceImpl_7_GetInfo(IDirect3DDevice7 *iface,
  * Device created with DDSCL_FPUPRESERVE - resets and restores FPU mode when necessary in
  * d3d calls (FPU may be in a mode non-suitable for d3d when the app calls d3d). Required
  * by Sacrifice (game). */
-const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUSetup_Vtbl =
+static const struct IDirect3DDevice7Vtbl d3d_device7_fpu_setup_vtbl =
 {
     /*** IUnknown Methods ***/
     IDirect3DDeviceImpl_7_QueryInterface,
@@ -6666,7 +6666,7 @@ const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUSetup_Vtbl =
     IDirect3DDeviceImpl_7_GetInfo
 };
 
-const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUPreserve_Vtbl =
+static const struct IDirect3DDevice7Vtbl d3d_device7_fpu_preserve_vtbl =
 {
     /*** IUnknown Methods ***/
     IDirect3DDeviceImpl_7_QueryInterface,
@@ -6721,7 +6721,7 @@ const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUPreserve_Vtbl =
     IDirect3DDeviceImpl_7_GetInfo
 };
 
-const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl =
+static const struct IDirect3DDevice3Vtbl d3d_device3_vtbl =
 {
     /*** IUnknown Methods ***/
     Thunk_IDirect3DDeviceImpl_3_QueryInterface,
@@ -6769,7 +6769,7 @@ const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl =
     Thunk_IDirect3DDeviceImpl_3_ValidateDevice
 };
 
-const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl =
+static const struct IDirect3DDevice2Vtbl d3d_device2_vtbl =
 {
     /*** IUnknown Methods ***/
     Thunk_IDirect3DDeviceImpl_2_QueryInterface,
@@ -6808,7 +6808,7 @@ const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl =
     Thunk_IDirect3DDeviceImpl_2_GetClipStatus
 };
 
-const IDirect3DDeviceVtbl IDirect3DDevice1_Vtbl =
+static const struct IDirect3DDeviceVtbl d3d_device1_vtbl =
 {
     /*** IUnknown Methods ***/
     Thunk_IDirect3DDeviceImpl_1_QueryInterface,
@@ -6869,4 +6869,118 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
 
     IDirectDrawSurface7_Release(depthStencil);
     return WINED3DZB_TRUE;
+}
+
+HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *target)
+{
+    IParentImpl *index_buffer_parent;
+    HRESULT hr;
+
+    if (ddraw->cooperative_level & DDSCL_FPUPRESERVE)
+        device->lpVtbl = &d3d_device7_fpu_preserve_vtbl;
+    else
+        device->lpVtbl = &d3d_device7_fpu_setup_vtbl;
+
+    device->IDirect3DDevice3_vtbl = &d3d_device3_vtbl;
+    device->IDirect3DDevice2_vtbl = &d3d_device2_vtbl;
+    device->IDirect3DDevice_vtbl = &d3d_device1_vtbl;
+    device->ref = 1;
+    device->ddraw = ddraw;
+    device->target = target;
+
+    if (!ddraw_handle_table_init(&device->handle_table, 64))
+    {
+        ERR("Failed to initialize handle table.\n");
+        return DDERR_OUTOFMEMORY;
+    }
+
+    device->legacyTextureBlending = FALSE;
+
+    /* Create an index buffer, it's needed for indexed drawing */
+    index_buffer_parent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*index_buffer_parent));
+    if (!index_buffer_parent)
+    {
+        ERR("Failed to allocate index buffer parent memory.\n");
+        ddraw_handle_table_destroy(&device->handle_table);
+        return DDERR_OUTOFMEMORY;
+    }
+
+    ddraw_parent_init(index_buffer_parent);
+
+    hr = IWineD3DDevice_CreateIndexBuffer(ddraw->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
+            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, &device->indexbuffer,
+            (IUnknown *)index_buffer_parent, &ddraw_null_wined3d_parent_ops);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create an index buffer, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, index_buffer_parent);
+        ddraw_handle_table_destroy(&device->handle_table);
+        return hr;
+    }
+    index_buffer_parent->child = (IUnknown *)device->indexbuffer;
+
+    /* This is for convenience. */
+    device->wineD3DDevice = ddraw->wineD3DDevice;
+    IWineD3DDevice_AddRef(ddraw->wineD3DDevice);
+
+    /* This is for apps which create a non-flip, non-d3d primary surface
+     * and an offscreen D3DDEVICE surface, then render to the offscreen surface
+     * and do a Blt from the offscreen to the primary surface.
+     *
+     * Set the offscreen D3DDDEVICE surface(=target) as the back buffer,
+     * and the primary surface(=This->d3d_target) as the front buffer.
+     *
+     * This way the app will render to the D3DDEVICE surface and WineD3D
+     * will catch the Blt was Back Buffer -> Front buffer blt and perform
+     * a flip instead. This way we don't have to deal with a mixed GL / GDI
+     * environment.
+     *
+     * This should be checked against windowed apps. The only app tested with
+     * this is moto racer 2 during the loading screen.
+     */
+    TRACE("Is rendertarget: %s, d3d_target %p.\n",
+            target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE ? "true" : "false", ddraw->d3d_target);
+
+    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            && ddraw->d3d_target != target)
+    {
+        TRACE("Using %p as front buffer, %p as back buffer.\n", ddraw->d3d_target, target);
+
+        hr = IWineD3DDevice_SetFrontBackBuffers(ddraw->wineD3DDevice,
+                ddraw->d3d_target->WineD3DSurface, target->WineD3DSurface);
+        if (FAILED(hr))
+        {
+            ERR("Failed to set front and back buffer, hr %#x.\n", hr);
+            IParent_Release((IParent *)index_buffer_parent);
+            ddraw_handle_table_destroy(&device->handle_table);
+            return hr;
+        }
+
+        /* Render to the back buffer */
+        IWineD3DDevice_SetRenderTarget(ddraw->wineD3DDevice, 0, target->WineD3DSurface, TRUE);
+        device->OffScreenTarget = TRUE;
+    }
+    else
+    {
+        device->OffScreenTarget = FALSE;
+    }
+
+    /* FIXME: This is broken. The target AddRef() makes some sense, because
+     * we store a pointer during initialization, but then that's also where
+     * the AddRef() should be. We don't store ddraw->d3d_target anywhere. */
+    /* AddRef the render target. Also AddRef the render target from ddraw,
+     * because if it is released before the app releases the D3D device, the
+     * D3D capabilities of wined3d will be uninitialized, which has bad effects.
+     *
+     * In most cases, those surfaces are the same anyway, but this will simply
+     * add another ref which is released when the device is destroyed. */
+    IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)target);
+    IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)ddraw->d3d_target);
+
+    ddraw->d3ddevice = device;
+
+    IWineD3DDevice_SetRenderState(ddraw->wineD3DDevice, WINED3DRS_ZENABLE,
+            IDirect3DDeviceImpl_UpdateDepthStencil(device));
+
+    return D3D_OK;
 }

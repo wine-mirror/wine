@@ -393,12 +393,8 @@ struct IDirect3DDeviceImpl
     D3DMATRIXHANDLE          world, proj, view;
 };
 
-/* Vtables in various versions */
-extern const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUSetup_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DDevice7Vtbl IDirect3DDevice7_FPUPreserve_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DDevice3Vtbl IDirect3DDevice3_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DDevice2Vtbl IDirect3DDevice2_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DDeviceVtbl  IDirect3DDevice1_Vtbl DECLSPEC_HIDDEN;
+HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw,
+        IDirectDrawSurfaceImpl *target) DECLSPEC_HIDDEN;
 
 /* The IID */
 extern const GUID IID_D3DDEVICE_WineD3D DECLSPEC_HIDDEN;

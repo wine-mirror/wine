@@ -4635,7 +4635,6 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
 {
     IDirectDrawSurfaceImpl *target = (IDirectDrawSurfaceImpl *)surface;
     IDirectDrawImpl *ddraw = ddraw_from_d3d7(iface);
-    IParentImpl *index_buffer_parent;
     IDirect3DDeviceImpl *object;
     HRESULT hr;
 
@@ -4671,121 +4670,17 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
         return DDERR_OUTOFMEMORY;
     }
 
-    if (ddraw->cooperative_level & DDSCL_FPUPRESERVE)
-        object->lpVtbl = &IDirect3DDevice7_FPUPreserve_Vtbl;
-    else
-        object->lpVtbl = &IDirect3DDevice7_FPUSetup_Vtbl;
-
-    object->IDirect3DDevice3_vtbl = &IDirect3DDevice3_Vtbl;
-    object->IDirect3DDevice2_vtbl = &IDirect3DDevice2_Vtbl;
-    object->IDirect3DDevice_vtbl = &IDirect3DDevice1_Vtbl;
-    object->ref = 1;
-    object->ddraw = ddraw;
-    object->target = target;
-
-    if (!ddraw_handle_table_init(&object->handle_table, 64))
-    {
-        ERR("Failed to initialize handle table.\n");
-        HeapFree(GetProcessHeap(), 0, object);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_OUTOFMEMORY;
-    }
-
-    object->legacyTextureBlending = FALSE;
-
-    /* Create an index buffer, it's needed for indexed drawing */
-    index_buffer_parent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*index_buffer_parent));
-    if (!index_buffer_parent)
-    {
-        ERR("Failed to allocate index buffer parent memory.\n");
-        ddraw_handle_table_destroy(&object->handle_table);
-        HeapFree(GetProcessHeap(), 0, object);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_OUTOFMEMORY;
-    }
-
-    ddraw_parent_init(index_buffer_parent);
-
-    /* Create an Index Buffer. WineD3D needs one for Drawing indexed primitives
-     * Create a (hopefully) long enough buffer, and copy the indices into it
-     * Ideally, a IWineD3DBuffer::SetData method could be created, which
-     * takes the pointer and avoids the memcpy. */
-    hr = IWineD3DDevice_CreateIndexBuffer(ddraw->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
-            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, &object->indexbuffer,
-            (IUnknown *)index_buffer_parent, &ddraw_null_wined3d_parent_ops);
+    hr = d3d_device_init(object, ddraw, target);
     if (FAILED(hr))
     {
-        ERR("Failed to create an index buffer.\n");
-        HeapFree(GetProcessHeap(), 0, index_buffer_parent);
-        ddraw_handle_table_destroy(&object->handle_table);
+        WARN("Failed to initialize device, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
-    index_buffer_parent->child = (IUnknown *)object->indexbuffer;
-
-    /* This is for convenience */
-    object->wineD3DDevice = ddraw->wineD3DDevice;
-    IWineD3DDevice_AddRef(ddraw->wineD3DDevice);
 
     TRACE("Created device %p.\n", object);
     *device = (IDirect3DDevice7 *)object;
-
-    /* This is for apps which create a non-flip, non-d3d primary surface
-     * and an offscreen D3DDEVICE surface, then render to the offscreen surface
-     * and do a Blt from the offscreen to the primary surface.
-     *
-     * Set the offscreen D3DDDEVICE surface(=target) as the back buffer,
-     * and the primary surface(=This->d3d_target) as the front buffer.
-     *
-     * This way the app will render to the D3DDEVICE surface and WineD3D
-     * will catch the Blt was Back Buffer -> Front buffer blt and perform
-     * a flip instead. This way we don't have to deal with a mixed GL / GDI
-     * environment.
-     *
-     * This should be checked against windowed apps. The only app tested with
-     * this is moto racer 2 during the loading screen.
-     */
-    TRACE("Is rendertarget: %s, d3d_target %p.\n",
-            target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE ? "true" : "false", ddraw->d3d_target);
-
-    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-            && ddraw->d3d_target != target)
-    {
-        TRACE("Using %p as front buffer, %p as back buffer.\n", ddraw->d3d_target, target);
-
-        hr = IWineD3DDevice_SetFrontBackBuffers(ddraw->wineD3DDevice,
-                ddraw->d3d_target->WineD3DSurface, target->WineD3DSurface);
-        if (FAILED(hr))
-        {
-            ERR("Failed to set front and back buffer, hr %#x.\n", hr);
-        }
-
-        /* Render to the back buffer */
-        IWineD3DDevice_SetRenderTarget(ddraw->wineD3DDevice, 0, target->WineD3DSurface, TRUE);
-        object->OffScreenTarget = TRUE;
-    }
-    else
-    {
-        object->OffScreenTarget = FALSE;
-    }
-
-    /* FIXME: This is broken. The surface AddRef() makes some sense, because
-     * we store a pointer during initialization, but then that's also where
-     * the AddRef() should be. We don't store ddraw->d3d_target anywhere. */
-    /* AddRef the render target. Also AddRef the render target from ddraw,
-     * because if it is released before the app releases the D3D device, the
-     * D3D capabilities of wined3d will be uninitialized, which has bad effects.
-     *
-     * In most cases, those surfaces are the same anyway, but this will simply
-     * add another ref which is released when the device is destroyed. */
-    IDirectDrawSurface7_AddRef(surface);
-    IDirectDrawSurface7_AddRef((IDirectDrawSurface7 *)ddraw->d3d_target);
-
-    ddraw->d3ddevice = object;
-
-    IWineD3DDevice_SetRenderState(ddraw->wineD3DDevice, WINED3DRS_ZENABLE,
-            IDirect3DDeviceImpl_UpdateDepthStencil(object));
 
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
