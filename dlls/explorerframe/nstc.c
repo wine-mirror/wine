@@ -422,6 +422,18 @@ static void collapse_all(NSTC2Impl *This, HTREEITEM node)
     if(next) collapse_all(This, next);
 }
 
+static HTREEITEM treeitem_from_point(NSTC2Impl *This, POINT *pt, UINT *hitflag)
+{
+    TVHITTESTINFO tviht;
+    tviht.pt.x = pt->x;
+    tviht.pt.y = pt->y;
+    tviht.hItem = NULL;
+
+    SendMessageW(This->hwnd_tv, TVM_HITTEST, 0, (LPARAM)&tviht);
+    if(hitflag) *hitflag = tviht.flags;
+    return tviht.hItem;
+}
+
 /*************************************************************************
  * NamespaceTree window functions
  */
@@ -1309,8 +1321,25 @@ static HRESULT WINAPI NSTC2_fnHitTest(INameSpaceTreeControl2* iface,
                                       IShellItem **ppsiOut)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p, %p)\n", This, ppsiOut, ppt);
-    return E_NOTIMPL;
+    HTREEITEM hitem;
+    TRACE("%p (%p, %p)\n", This, ppsiOut, ppt);
+
+    if(!ppt || !ppsiOut)
+        return E_POINTER;
+
+    *ppsiOut = NULL;
+
+    hitem = treeitem_from_point(This, ppt, NULL);
+    if(hitem)
+        *ppsiOut = shellitem_from_treeitem(This, hitem);
+
+    if(*ppsiOut)
+    {
+        IShellItem_AddRef(*ppsiOut);
+        return S_OK;
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI NSTC2_fnGetItemRect(INameSpaceTreeControl2* iface,

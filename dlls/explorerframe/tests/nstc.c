@@ -734,6 +734,7 @@ static void test_basics(void)
     HWND hwnd_tv;
     RECT rc;
     IShellItem *roots[10];
+    POINT pt;
     WCHAR curdirW[MAX_PATH];
     WCHAR buf[MAX_PATH];
     static const WCHAR testdirW[] = {'t','e','s','t','d','i','r',0};
@@ -1554,6 +1555,89 @@ static void test_basics(void)
 
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
+    /*  HitTest */
+    hr = INameSpaceTreeControl_HitTest(pnstc, NULL, NULL);
+    ok(hr == E_POINTER, "Got 0x%08x\n", hr);
+    hr = INameSpaceTreeControl_HitTest(pnstc, &pt, NULL);
+    ok(hr == E_POINTER, "Got 0x%08x\n", hr);
+    hr = INameSpaceTreeControl_HitTest(pnstc, NULL, &psi);
+    ok(hr == E_POINTER, "Got 0x%08x\n", hr);
+
+    psi = (void*)0xdeadbeef;
+    hr = INameSpaceTreeControl_HitTest(pnstc, &pt, &psi);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(psi == NULL, "Got psi %p\n", psi);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+                                          NSTCRS_EXPANDED, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    process_msgs();
+
+    pt.x = pt.y = 0;
+    hr = INameSpaceTreeControl_HitTest(pnstc, &pt, &psi);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        int cmp;
+        hr = IShellItem_Compare(psi, psitestdir, SICHINT_DISPLAY, &cmp);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(!cmp, "Got cmp %d\n", cmp);
+        IShellItem_Release(psi);
+    }
+
+    pt.y += height - 1;
+    hr = INameSpaceTreeControl_HitTest(pnstc, &pt, &psi);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        int cmp;
+        hr = IShellItem_Compare(psi, psitestdir, SICHINT_DISPLAY, &cmp);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(!cmp, "Got cmp %d\n", cmp);
+        IShellItem_Release(psi);
+    }
+
+    pt.y += 1;
+    hr = INameSpaceTreeControl_HitTest(pnstc, &pt, &psi);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        int cmp;
+        todo_wine
+        {
+            hr = IShellItem_Compare(psi, psitestdir, SICHINT_DISPLAY, &cmp);
+            ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+            ok(cmp, "no cmp value.\n");
+            hr = IShellItem_Compare(psi, psitestdir2, SICHINT_DISPLAY, &cmp);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            ok(!cmp, "Got cmp %d\n", cmp);
+        }
+        IShellItem_Release(psi);
+    }
+
+    hr = INameSpaceTreeControl_GetItemRect(pnstc, psitestdir2, &rc);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        MapWindowPoints(NULL, hwnd, (POINT*)&rc, 2);
+        pt.x = rc.left; pt.y = rc.top;
+
+        hr = INameSpaceTreeControl_HitTest(pnstc, &pt, &psi);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            int cmp;
+            hr = IShellItem_Compare(psi, psitestdir2, SICHINT_DISPLAY, &cmp);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            ok(!cmp, "Got cmp %d\n", cmp);
+            IShellItem_Release(psi);
+        }
+    }
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
 
     IShellItem_Release(psidesktop);
     IShellItem_Release(psidesktop2);
