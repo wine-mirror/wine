@@ -655,6 +655,15 @@ basic_string_char* __stdcall MSVCP_basic_string_char_assign_cstr(
             MSVCP_char_traits_char_length(str));
 }
 
+/* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
+/* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_c_str, 4)
+const char* __stdcall MSVCP_basic_string_char_c_str(basic_string_char *this)
+{
+    TRACE("%p\n", this);
+    return basic_string_char_const_ptr(this);
+}
+
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor, 4)
