@@ -4195,6 +4195,19 @@ static HRESULT WINAPI UriBuilder_SetIUri(IUriBuilder *iface, IUri *pIUri)
 static HRESULT WINAPI UriBuilder_GetFragment(IUriBuilder *iface, DWORD *pcchFragment, LPCWSTR *ppwzFragment)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchFragment, ppwzFragment);
+
+    if(!pcchFragment) {
+        if(ppwzFragment)
+            *ppwzFragment = NULL;
+        return E_POINTER;
+    }
+
+    if(!ppwzFragment) {
+        *pcchFragment = 0;
+        return E_POINTER;
+    }
+
     FIXME("(%p)->(%p %p)\n", This, pcchFragment, ppwzFragment);
     return E_NOTIMPL;
 }
