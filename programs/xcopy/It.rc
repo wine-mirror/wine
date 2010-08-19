@@ -48,7 +48,7 @@ STRINGTABLE
     STRING_DIR_CHAR, "C"
 
     STRING_HELP,
-"XCOPY - Copia file(s) e alberi di cartelle sorgenti in una destinazione\n\
+"XCOPY - Copia file e alberi di cartelle sorgenti in una destinazione\n\
 \n\
 Sintassi:\n\
 XCOPY sorgente [destinazione] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n\
