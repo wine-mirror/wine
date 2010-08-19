@@ -367,6 +367,11 @@ static HRESULT query_typelib_path( REFGUID guid, WORD wMaj, WORD wMin,
  */
 HRESULT WINAPI QueryPathOfRegTypeLib( REFGUID guid, WORD wMaj, WORD wMin, LCID lcid, LPBSTR path )
 {
+#ifdef _WIN64
+    HRESULT hres = query_typelib_path( guid, wMaj, wMin, SYS_WIN64, lcid, path );
+    if(SUCCEEDED(hres))
+        return hres;
+#endif
     return query_typelib_path( guid, wMaj, wMin, SYS_WIN32, lcid, path );
 }
 

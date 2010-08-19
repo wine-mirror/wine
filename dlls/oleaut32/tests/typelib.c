@@ -692,10 +692,10 @@ cleanup:
     return ret;
 }
 
-static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL remove)
+static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, DWORD arch, LPCWSTR base, BOOL remove)
 {
     static const WCHAR typelibW[] = {'T','y','p','e','l','i','b','\\',0};
-    static const WCHAR formatW[] = {'\\','%','u','.','%','u','\\','0','\\','w','i','n','3','2',0};
+    static const WCHAR formatW[] = {'\\','%','u','.','%','u','\\','0','\\','w','i','n','%','u',0};
     static const WCHAR format2W[] = {'%','s','_','%','u','_','%','u','.','d','l','l',0};
     WCHAR buf[128];
     HKEY hkey;
@@ -711,7 +711,7 @@ static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL
         return TRUE;
     }
 
-    wsprintfW(buf + lstrlenW(buf), formatW, maj, min );
+    wsprintfW(buf + lstrlenW(buf), formatW, maj, min, arch);
 
     SetLastError(0xdeadbeef);
     res = RegCreateKeyExW(HKEY_CLASSES_ROOT, buf, 0, NULL, 0,
@@ -724,7 +724,7 @@ static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL
 
     if (res != ERROR_SUCCESS)
     {
-        trace("RegCreateKeyExW failed\n");
+        trace("RegCreateKeyExW failed: %u\n", res);
         return FALSE;
     }
 
@@ -739,7 +739,7 @@ static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL
     return ret;
 }
 
-static void test_QueryPathOfRegTypeLib(void)
+static void test_QueryPathOfRegTypeLib(DWORD arch)
 {
     static const struct test_data
     {
@@ -760,6 +760,7 @@ static void test_QueryPathOfRegTypeLib(void)
         { 4, 0, TYPE_E_LIBNOTREGISTERED, { 0 } }
     };
     static const WCHAR base[] = {'f','a','k','e',0};
+    static const WCHAR wrongW[] = {'w','r','o','n','g',0};
     UINT i;
     RPC_STATUS status;
     GUID uid;
@@ -773,10 +774,11 @@ static void test_QueryPathOfRegTypeLib(void)
     StringFromGUID2(&uid, uid_str, 40);
     /*trace("GUID: %s\n", wine_dbgstr_w(uid_str));*/
 
-    if (!do_typelib_reg_key(&uid, 3, 0, base, 0)) return;
-    if (!do_typelib_reg_key(&uid, 3, 1, base, 0)) return;
-    if (!do_typelib_reg_key(&uid, 3, 37, base, 0)) return;
-    if (!do_typelib_reg_key(&uid, 5, 37, base, 0)) return;
+    if (!do_typelib_reg_key(&uid, 3, 0, arch, base, 0)) return;
+    if (!do_typelib_reg_key(&uid, 3, 1, arch, base, 0)) return;
+    if (!do_typelib_reg_key(&uid, 3, 37, arch, base, 0)) return;
+    if (!do_typelib_reg_key(&uid, 5, 37, arch, base, 0)) return;
+    if (arch == 64 && !do_typelib_reg_key(&uid, 5, 37, 32, wrongW, 0)) return;
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
@@ -789,7 +791,7 @@ static void test_QueryPathOfRegTypeLib(void)
         }
     }
 
-    do_typelib_reg_key(&uid, 0, 0, NULL, 1);
+    do_typelib_reg_key(&uid, 0, 0, arch, NULL, 1);
 }
 
 static void test_inheritance(void)
@@ -2340,7 +2342,9 @@ START_TEST(typelib)
     test_TypeComp();
     test_CreateDispTypeInfo();
     test_TypeInfo();
-    test_QueryPathOfRegTypeLib();
+    test_QueryPathOfRegTypeLib(32);
+    if(sizeof(void*) == 8)
+        test_QueryPathOfRegTypeLib(64);
     test_inheritance();
     test_CreateTypeLib();
 
