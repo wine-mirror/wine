@@ -240,7 +240,7 @@ IDirectDrawPaletteImpl_GetEntries(IDirectDrawPalette *iface,
     return hr;
 }
 
-const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl =
+static const struct IDirectDrawPaletteVtbl ddraw_palette_vtbl =
 {
     /*** IUnknown ***/
     IDirectDrawPaletteImpl_QueryInterface,
@@ -252,3 +252,25 @@ const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl =
     IDirectDrawPaletteImpl_Initialize,
     IDirectDrawPaletteImpl_SetEntries
 };
+
+HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
+        IDirectDrawImpl *ddraw, DWORD flags, PALETTEENTRY *entries)
+{
+    HRESULT hr;
+
+    palette->lpVtbl = &ddraw_palette_vtbl;
+    palette->ref = 1;
+
+    hr = IWineD3DDevice_CreatePalette(ddraw->wineD3DDevice, flags,
+            entries, &palette->wineD3DPalette, (IUnknown *)palette);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d palette, hr %#x.\n", hr);
+        return hr;
+    }
+
+    palette->ifaceToRelease = (IUnknown *)ddraw;
+    IUnknown_AddRef(palette->ifaceToRelease);
+
+    return DD_OK;
+}

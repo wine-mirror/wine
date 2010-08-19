@@ -477,7 +477,9 @@ struct IDirectDrawPaletteImpl
     /* IDirectDrawPalette fields */
     IUnknown                  *ifaceToRelease;
 };
-extern const IDirectDrawPaletteVtbl IDirectDrawPalette_Vtbl DECLSPEC_HIDDEN;
+
+HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
+        IDirectDrawImpl *ddraw, DWORD flags, PALETTEENTRY *entries) DECLSPEC_HIDDEN;
 
 /******************************************************************************
  * DirectDraw ClassFactory implementation - incomplete

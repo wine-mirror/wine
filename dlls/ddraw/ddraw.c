@@ -3952,7 +3952,8 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     IDirectDrawPaletteImpl *object;
-    HRESULT hr = DDERR_GENERIC;
+    HRESULT hr;
+
     TRACE("(%p)->(%x,%p,%p,%p)\n", This, Flags, ColorTable, Palette, pUnkOuter);
 
     EnterCriticalSection(&ddraw_cs);
@@ -3979,20 +3980,16 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IDirectDrawPalette_Vtbl;
-    object->ref = 1;
-
-    hr = IWineD3DDevice_CreatePalette(This->wineD3DDevice, Flags,
-            ColorTable, &object->wineD3DPalette, (IUnknown *)object);
-    if(hr != DD_OK)
+    hr = ddraw_palette_init(object, This, Flags, ColorTable);
+    if (FAILED(hr))
     {
+        WARN("Failed to initialize palette, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
 
-    IDirectDraw7_AddRef(iface);
-    object->ifaceToRelease = (IUnknown *) iface;
+    TRACE("Created palette %p.\n", object);
     *Palette = (IDirectDrawPalette *)object;
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
