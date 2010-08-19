@@ -665,3 +665,12 @@ basic_string_char* __stdcall MSVCP_basic_string_char_ctor(basic_string_char *thi
     basic_string_char_tidy(this, FALSE, 0);
     return this;
 }
+
+/* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
+/* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_dtor, 4)
+void __stdcall MSVCP_basic_string_char_dtor(basic_string_char *this)
+{
+    TRACE("%p\n", this);
+    basic_string_char_tidy(this, TRUE, 0);
+}

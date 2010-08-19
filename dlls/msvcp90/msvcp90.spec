@@ -1212,8 +1212,8 @@
 @ stub -arch=win64 ??1?$basic_streambuf@GU?$char_traits@G@std@@@std@@UEAA@XZ
 @ stub -arch=win32 ??1?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UAE@XZ
 @ stub -arch=win64 ??1?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@UEAA@XZ
-@ stub -arch=win32 ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ
-@ stub -arch=win64 ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ
+@ cdecl -arch=win32 -i386 -norelay ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ() __thiscall_MSVCP_basic_string_char_dtor
+@ cdecl -arch=win64 ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ(ptr) MSVCP_basic_string_char_dtor
 @ stub -arch=win32 ??1?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@XZ
 @ stub -arch=win64 ??1?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@XZ
 @ stub -arch=win32 ??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ
