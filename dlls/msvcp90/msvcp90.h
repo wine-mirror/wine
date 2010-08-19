@@ -59,7 +59,8 @@ typedef struct __exception
 /* Internal: throws selected exception */
 typedef enum __exception_type {
     EXCEPTION,
-    EXCEPTION_BAD_ALLOC
+    EXCEPTION_BAD_ALLOC,
+    EXCEPTION_LOGIC_ERROR
 } exception_type;
 void throw_exception(exception_type, const char *);
 void set_exception_vtable(void);
@@ -122,6 +123,11 @@ typedef struct _basic_string_char
     size_t size;
     size_t res;
 } basic_string_char;
+
+basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
+basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
+void __stdcall MSVCP_basic_string_char_dtor(basic_string_char*);
+const char* __stdcall MSVCP_basic_string_char_c_str(basic_string_char*);
 
 char* __stdcall MSVCP_allocator_char_allocate(void*, size_t);
 void __stdcall MSVCP_allocator_char_deallocate(void*, char*, size_t);
