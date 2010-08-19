@@ -225,7 +225,8 @@ DDRAW_Create(const GUID *guid,
     IDirectDrawImpl *This;
     HRESULT hr;
 
-    TRACE("(%s,%p,%p)\n", debugstr_guid(guid), DD, UnkOuter);
+    TRACE("driver_guid %s, ddraw %p, outer_unknown %p, interface_iid %s.\n",
+            debugstr_guid(guid), DD, UnkOuter, debugstr_guid(iid));
 
     *DD = NULL;
 
@@ -292,7 +293,9 @@ DirectDrawCreate(GUID *GUID,
                  IUnknown *UnkOuter)
 {
     HRESULT hr;
-    TRACE("(%s,%p,%p)\n", debugstr_guid(GUID), DD, UnkOuter);
+
+    TRACE("driver_guid %s, ddraw %p, outer_unknown %p.\n",
+            debugstr_guid(GUID), DD, UnkOuter);
 
     EnterCriticalSection(&ddraw_cs);
     hr = DDRAW_Create(GUID, (void **) DD, UnkOuter, &IID_IDirectDraw);
@@ -316,7 +319,9 @@ DirectDrawCreateEx(GUID *GUID,
                    IUnknown *UnkOuter)
 {
     HRESULT hr;
-    TRACE("(%s,%p,%s,%p)\n", debugstr_guid(GUID), DD, debugstr_guid(iid), UnkOuter);
+
+    TRACE("driver_guid %s, ddraw %p, interface_iid %s, outer_unknown %p.\n",
+            debugstr_guid(GUID), DD, debugstr_guid(iid), UnkOuter);
 
     if (!IsEqualGUID(iid, &IID_IDirectDraw7))
         return DDERR_INVALIDPARAMS;
@@ -347,11 +352,9 @@ DirectDrawCreateEx(GUID *GUID,
  *
  *
  ***********************************************************************/
-HRESULT WINAPI
-DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback,
-                     LPVOID Context)
+HRESULT WINAPI DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback, void *Context)
 {
-    TRACE("(%p, %p)\n", Callback, Context);
+    TRACE("callback %p, context %p.\n", Callback, Context);
 
     TRACE(" Enumerating default DirectDraw HAL interface\n");
     /* We only have one driver */
@@ -381,12 +384,9 @@ DirectDrawEnumerateA(LPDDENUMCALLBACKA Callback,
  * The Flag member is not supported right now.
  *
  ***********************************************************************/
-HRESULT WINAPI
-DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback,
-                       LPVOID Context,
-                       DWORD Flags)
+HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback, void *Context, DWORD Flags)
 {
-    TRACE("(%p, %p, 0x%08x)\n", Callback, Context, Flags);
+    TRACE("callback %p, context %p, flags %#x.\n", Callback, Context, Flags);
 
     if (Flags & ~(DDENUM_ATTACHEDSECONDARYDEVICES |
                   DDENUM_DETACHEDSECONDARYDEVICES |
@@ -424,13 +424,11 @@ DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA Callback,
  * This function is not implemented on Windows.
  *
  ***********************************************************************/
-HRESULT WINAPI
-DirectDrawEnumerateW(LPDDENUMCALLBACKW Callback,
-                     LPVOID Context)
+HRESULT WINAPI DirectDrawEnumerateW(LPDDENUMCALLBACKW callback, void *context)
 {
-    TRACE("(%p, %p)\n", Callback, Context);
+    TRACE("callback %p, context %p.\n", callback, context);
 
-    if (!Callback)
+    if (!callback)
         return DDERR_INVALIDPARAMS;
     else
         return DDERR_UNSUPPORTED;
@@ -443,12 +441,9 @@ DirectDrawEnumerateW(LPDDENUMCALLBACKW Callback,
  * This function is not implemented on Windows.
  *
  ***********************************************************************/
-HRESULT WINAPI
-DirectDrawEnumerateExW(LPDDENUMCALLBACKEXW Callback,
-                       LPVOID Context,
-                       DWORD Flags)
+HRESULT WINAPI DirectDrawEnumerateExW(LPDDENUMCALLBACKEXW callback, void *context, DWORD flags)
 {
-    TRACE("(%p, %p, 0x%x)\n", Callback, Context, Flags);
+    TRACE("callback %p, context %p, flags %#x.\n", callback, context, flags);
 
     return DDERR_UNSUPPORTED;
 }
@@ -477,7 +472,7 @@ CF_CreateDirectDraw(IUnknown* UnkOuter, REFIID iid,
 {
     HRESULT hr;
 
-    TRACE("(%p,%s,%p)\n", UnkOuter, debugstr_guid(iid), obj);
+    TRACE("outer_unknown %p, riid %s, object %p.\n", UnkOuter, debugstr_guid(iid), obj);
 
     EnterCriticalSection(&ddraw_cs);
     hr = DDRAW_Create(NULL, obj, UnkOuter, iid);
@@ -505,6 +500,8 @@ CF_CreateDirectDrawClipper(IUnknown* UnkOuter, REFIID riid,
 {
     HRESULT hr;
     IDirectDrawClipper *Clip;
+
+    TRACE("outer_unknown %p, riid %s, object %p.\n", UnkOuter, debugstr_guid(riid), obj);
 
     EnterCriticalSection(&ddraw_cs);
     hr = DirectDrawCreateClipper(0, &Clip, UnkOuter);
@@ -549,7 +546,7 @@ IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface,
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obj);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IClassFactory))
@@ -578,7 +575,7 @@ IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %d.\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u.\n", This, ref);
 
     return ref;
 }
@@ -598,7 +595,8 @@ IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p)->() decrementing from %d.\n", This, ref+1);
+
+    TRACE("%p decreasing refcount to %u.\n", This, ref);
 
     if (ref == 0)
         HeapFree(GetProcessHeap(), 0, This);
@@ -627,7 +625,8 @@ IDirectDrawClassFactoryImpl_CreateInstance(IClassFactory *iface,
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
-    TRACE("(%p)->(%p,%s,%p)\n",This,UnkOuter,debugstr_guid(riid),obj);
+    TRACE("iface %p, outer_unknown %p, riid %s, object %p.\n",
+            iface, UnkOuter, debugstr_guid(riid), obj);
 
     return This->pfnCreateInstance(UnkOuter, riid, obj);
 }
@@ -644,11 +643,10 @@ IDirectDrawClassFactoryImpl_CreateInstance(IClassFactory *iface,
  *  S_OK, because it's a stub
  *
  *******************************************************************************/
-static HRESULT WINAPI
-IDirectDrawClassFactoryImpl_LockServer(IClassFactory *iface,BOOL dolock)
+static HRESULT WINAPI IDirectDrawClassFactoryImpl_LockServer(IClassFactory *iface, BOOL dolock)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    FIXME("(%p)->(%d),stub!\n",This,dolock);
+    FIXME("iface %p, dolock %#x stub!\n", iface, dolock);
+
     return S_OK;
 }
 
@@ -686,7 +684,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     unsigned int i;
     IClassFactoryImpl *factory;
 
-    TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    TRACE("rclsid %s, riid %s, object %p.\n",
+            debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if ( !IsEqualGUID( &IID_IClassFactory, riid )
 	 && ! IsEqualGUID( &IID_IUnknown, riid) )
@@ -726,6 +725,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
+    TRACE("\n");
+
     return S_FALSE;
 }
 

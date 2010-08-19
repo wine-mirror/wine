@@ -51,7 +51,7 @@ IParentImpl_QueryInterface(IParent *iface,
                            REFIID riid,
                            void **obj)
 {
-    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), obj);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
 
     *obj = NULL;
     if ( IsEqualGUID( &IID_IUnknown, riid ) ||
@@ -81,7 +81,7 @@ IParentImpl_AddRef(IParent *iface)
     IParentImpl *This = (IParentImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u.\n", This, ref);
 
     return ref;
 }
@@ -105,7 +105,7 @@ static ULONG WINAPI IParentImpl_Release(IParent *iface)
     IParentImpl *This = (IParentImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
+    TRACE("%p decreasing refcount to %u.\n", This, ref);
 
     if (ref == 0)
     {

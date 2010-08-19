@@ -94,7 +94,7 @@ static HRESULT WINAPI ddraw7_QueryInterface(IDirectDraw7 *iface, REFIID refiid, 
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
 
-    TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(refiid), obj);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(refiid), obj);
 
     /* Can change surface impl type */
     EnterCriticalSection(&ddraw_cs);
@@ -293,7 +293,7 @@ static ULONG WINAPI ddraw7_AddRef(IDirectDraw7 *iface)
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref7);
 
-    TRACE("(%p) : incrementing IDirectDraw7 refcount from %u.\n", This, ref -1);
+    TRACE("%p increasing refcount to %u.\n", This, ref);
 
     if(ref == 1) InterlockedIncrement(&This->numIfaces);
 
@@ -423,7 +423,7 @@ static ULONG WINAPI ddraw7_Release(IDirectDraw7 *iface)
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref7);
 
-    TRACE("(%p)->() decrementing IDirectDraw7 refcount from %u.\n", This, ref +1);
+    TRACE("%p decreasing refcount to %u.\n", This, ref);
 
     if (!ref && !InterlockedDecrement(&This->numIfaces))
         ddraw_destroy(This);
@@ -564,7 +564,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     HWND window;
 
-    TRACE("(%p)->(%p,%08x)\n",This,hwnd,cooplevel);
+    TRACE("iface %p, window %p, flags %#x.\n", iface, hwnd, cooplevel);
     DDRAW_dump_cooperativelevel(cooplevel);
 
     EnterCriticalSection(&ddraw_cs);
@@ -783,12 +783,14 @@ static HRESULT ddraw_set_display_mode(IDirectDraw7 *iface, DWORD Width, DWORD He
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     WINED3DDISPLAYMODE Mode;
     HRESULT hr;
-    TRACE("(%p)->(%d,%d,%d,%d,%x): Relay!\n", This, Width, Height, BPP, RefreshRate, Flags);
+
+    TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
+            iface, Width, Height, BPP, RefreshRate, Flags);
 
     EnterCriticalSection(&ddraw_cs);
     if( !Width || !Height )
     {
-        ERR("Width=%d, Height=%d, what to do?\n", Width, Height);
+        ERR("Width %u, Height %u, what to do?\n", Width, Height);
         /* It looks like Need for Speed Porsche Unleashed expects DD_OK here */
         LeaveCriticalSection(&ddraw_cs);
         return DD_OK;
@@ -857,9 +859,13 @@ static HRESULT ddraw_set_display_mode(IDirectDraw7 *iface, DWORD Width, DWORD He
 static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD Width, DWORD Height,
         DWORD BPP, DWORD RefreshRate, DWORD Flags)
 {
+    TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
+            iface, Width, Height, BPP, RefreshRate, Flags);
+
     if (force_refresh_rate != 0)
     {
-        TRACE("ForceRefreshRate overriding passed-in refresh rate (%d Hz) to %d Hz\n", RefreshRate, force_refresh_rate);
+        TRACE("ForceRefreshRate overriding passed-in refresh rate (%u Hz) to %u Hz\n",
+                RefreshRate, force_refresh_rate);
         RefreshRate = force_refresh_rate;
     }
 
@@ -927,7 +933,8 @@ static HRESULT WINAPI ddraw1_SetDisplayMode(IDirectDraw *iface, DWORD width, DWO
 static HRESULT WINAPI ddraw7_RestoreDisplayMode(IDirectDraw7 *iface)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)\n", This);
+
+    TRACE("iface %p.\n", iface);
 
     return ddraw_set_display_mode(iface, This->orig_width, This->orig_height, This->orig_bpp, 0, 0);
 }
@@ -982,7 +989,8 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     WINED3DCAPS winecaps;
     HRESULT hr;
     DDSCAPS2 ddscaps = {0, 0, 0, 0};
-    TRACE("(%p)->(%p,%p)\n", This, DriverCaps, HELCaps);
+
+    TRACE("iface %p, driver_caps %p, hel_caps %p.\n", iface, DriverCaps, HELCaps);
 
     /* One structure must be != NULL */
     if( (!DriverCaps) && (!HELCaps) )
@@ -1099,8 +1107,7 @@ static HRESULT WINAPI ddraw1_GetCaps(IDirectDraw *iface, DDCAPS *driver_caps, DD
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_Compact(IDirectDraw7 *iface)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)\n", This);
+    TRACE("iface %p.\n", iface);
 
     return DD_OK;
 }
@@ -1153,7 +1160,8 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
     HRESULT hr;
     WINED3DDISPLAYMODE Mode;
     DWORD Size;
-    TRACE("(%p)->(%p): Relay\n", This, DDSD);
+
+    TRACE("iface %p, surface_desc %p.\n", iface, DDSD);
 
     EnterCriticalSection(&ddraw_cs);
     /* This seems sane */
@@ -1256,7 +1264,8 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
     HRESULT hr;
     WINED3DDISPLAYMODE d3ddm;
     WINED3DSURFTYPE type = This->ImplType;
-    TRACE("(%p)->(%p, %p)\n", This, NumCodes, Codes);
+
+    TRACE("iface %p, codes_count %p, codes %p.\n", iface, NumCodes, Codes);
 
     IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
                                   0 /* swapchain 0 */,
@@ -1334,8 +1343,7 @@ static HRESULT WINAPI ddraw1_GetFourCCCodes(IDirectDraw *iface, DWORD *codes_cou
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_GetMonitorFrequency(IDirectDraw7 *iface, DWORD *Freq)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->(%p)\n", This, Freq);
+    FIXME("iface %p, frequency %p stub!\n", iface, Freq);
 
     /* Ideally this should be in WineD3D, as it concerns the screen setup,
      * but for now this should make the games happy
@@ -1389,7 +1397,8 @@ static HRESULT WINAPI ddraw1_GetMonitorFrequency(IDirectDraw *iface, DWORD *freq
 static HRESULT WINAPI ddraw7_GetVerticalBlankStatus(IDirectDraw7 *iface, BOOL *status)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->(%p)\n", This, status);
+
+    TRACE("iface %p, status %p.\n", iface, status);
 
     /* This looks sane, the MSDN suggests it too */
     EnterCriticalSection(&ddraw_cs);
@@ -1451,7 +1460,8 @@ static HRESULT WINAPI ddraw1_GetVerticalBlankStatus(IDirectDraw *iface, BOOL *st
 static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *Caps, DWORD *total, DWORD *free)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->(%p, %p, %p)\n", This, Caps, total, free);
+
+    TRACE("iface %p, caps %p, total %p, free %p.\n", iface, Caps, total, free);
 
     if(TRACE_ON(ddraw))
     {
@@ -1525,7 +1535,8 @@ static HRESULT WINAPI ddraw2_GetAvailableVidMem(IDirectDraw2 *iface,
 static HRESULT WINAPI ddraw7_Initialize(IDirectDraw7 *iface, GUID *Guid)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->(%s): No-op\n", This, debugstr_guid(Guid));
+
+    TRACE("iface %p, guid %s.\n", iface, debugstr_guid(Guid));
 
     if(This->initialized)
     {
@@ -1587,8 +1598,7 @@ static HRESULT WINAPI d3d1_Initialize(IDirect3D *iface, REFIID riid)
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_FlipToGDISurface(IDirectDraw7 *iface)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)\n", This);
+    FIXME("iface %p stub!\n", iface);
 
     return DD_OK;
 }
@@ -1638,15 +1648,16 @@ static HRESULT WINAPI ddraw1_FlipToGDISurface(IDirectDraw *iface)
  *  Always returns DD_OK
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw7_WaitForVerticalBlank(IDirectDraw7 *iface, DWORD Flags, HANDLE h)
+static HRESULT WINAPI ddraw7_WaitForVerticalBlank(IDirectDraw7 *iface, DWORD Flags, HANDLE event)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    static BOOL hide = FALSE;
+    static BOOL hide;
+
+    TRACE("iface %p, flags %#x, event %p.\n", iface, Flags, event);
 
     /* This function is called often, so print the fixme only once */
     if(!hide)
     {
-        FIXME("(%p)->(%x,%p): Stub\n", This, Flags, h);
+        FIXME("iface %p, flags %#x, event %p stub!\n", iface, Flags, event);
         hide = TRUE;
     }
 
@@ -1703,11 +1714,13 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
     static BOOL hide = FALSE;
     WINED3DDISPLAYMODE Mode;
 
+    TRACE("iface %p, line %p.\n", iface, Scanline);
+
     /* This function is called often, so print the fixme only once */
     EnterCriticalSection(&ddraw_cs);
     if(!hide)
     {
-        FIXME("(%p)->(%p): Semi-Stub\n", This, Scanline);
+        FIXME("iface %p, line %p partial stub!\n", iface, Scanline);
         hide = TRUE;
     }
 
@@ -1801,7 +1814,8 @@ static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurfa
     IDirectDrawSurface7 *ddsurf;
     HRESULT hr;
     DDSCAPS2 ddsCaps;
-    TRACE("(%p)->(%p)\n", This, GDISurface);
+
+    TRACE("iface %p, surface %p.\n", iface, GDISurface);
 
     /* Get the back buffer from the wineD3DDevice and search its
      * attached surfaces for the front buffer
@@ -1941,7 +1955,8 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
         WINED3DFMT_P8_UINT,
     };
 
-    TRACE("(%p)->(%p,%p,%p): Relay\n", This, DDSD, Context, cb);
+    TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
+            iface, Flags, DDSD, Context, cb);
 
     EnterCriticalSection(&ddraw_cs);
     /* This looks sane */
@@ -2146,8 +2161,7 @@ static HRESULT WINAPI ddraw1_EnumDisplayModes(IDirectDraw *iface, DWORD flags,
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_EvaluateMode(IDirectDraw7 *iface, DWORD Flags, DWORD *Timeout)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    FIXME("(%p)->(%d,%p): Stub!\n", This, Flags, Timeout);
+    FIXME("iface %p, flags %#x, timeout %p stub!\n", iface, Flags, Timeout);
 
     /* When implementing this, implement it in WineD3D */
 
@@ -2172,8 +2186,7 @@ static HRESULT WINAPI ddraw7_EvaluateMode(IDirectDraw7 *iface, DWORD Flags, DWOR
 static HRESULT WINAPI ddraw7_GetDeviceIdentifier(IDirectDraw7 *iface,
         DDDEVICEIDENTIFIER2 *DDDI, DWORD Flags)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->(%p,%08x)\n", This, DDDI, Flags);
+    TRACE("iface %p, device_identifier %p, flags %#x.\n", iface, DDDI, Flags);
 
     if(!DDDI)
         return DDERR_INVALIDPARAMS;
@@ -2276,8 +2289,7 @@ static HRESULT WINAPI ddraw3_GetSurfaceFromDC(IDirectDraw3 *iface, HDC dc, IDire
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_RestoreAllSurfaces(IDirectDraw7 *iface)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    FIXME("(%p): Stub\n", This);
+    FIXME("iface %p stub!\n", iface);
 
     /* This isn't hard to implement: Enumerate all WineD3D surfaces,
      * get their parent and call their restore method. Do not implement
@@ -2318,8 +2330,8 @@ static HRESULT WINAPI ddraw4_RestoreAllSurfaces(IDirectDraw4 *iface)
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWORD NumModes, DWORD Flags)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    WARN("(%p)->(%p, %d, %x): Semi-Stub, most likely harmless\n", This, Modes, NumModes, Flags);
+    FIXME("iface %p, modes %p, mode_count %u, flags %#x partial stub!\n",
+            iface, Modes, NumModes, Flags);
 
     /* This looks sane */
     if( (!Modes) || (NumModes == 0) ) return DDERR_INVALIDPARAMS;
@@ -2362,7 +2374,8 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     UINT                    Width;
     UINT                    Height;
 
-    TRACE("(%p): Enumerated Surface %p\n", This, surfImpl);
+    TRACE("surface %p, surface_desc %p, context %p.\n",
+            surf, desc, Context);
 
     /* For the enumeration */
     IDirectDrawSurface7_Release(surf);
@@ -2463,7 +2476,8 @@ static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
 
 ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
     IUnknown* swapChainParent;
-    TRACE("(%p) call back\n", pSwapChain);
+
+    TRACE("swapchain %p.\n", pSwapChain);
 
     IWineD3DSwapChain_GetParent(pSwapChain, &swapChainParent);
     IUnknown_Release(swapChainParent);
@@ -2489,6 +2503,9 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
 {
     WINED3DSURFTYPE ImplType = This->ImplType;
     HRESULT hr;
+
+    TRACE("ddraw %p, surface_desc %p, surface %p, level %u.\n",
+            This, pDDSD, ppSurf, level);
 
     if (TRACE_ON(ddraw))
     {
@@ -2880,7 +2897,8 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
     WINED3DDISPLAYMODE Mode;
     const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
 
-    TRACE("(%p)->(%p,%p,%p)\n", This, DDSD, Surf, UnkOuter);
+    TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
+            iface, DDSD, Surf, UnkOuter);
 
     /* Some checks before we start */
     if (TRACE_ON(ddraw))
@@ -3562,10 +3580,12 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD Flags,
     DDSURFACEDESC2 desc;
     struct list *entry, *entry2;
 
+    TRACE("iface %p, flags %#x, surface_desc %p, context %p, callback %p.\n",
+            iface, Flags, DDSD, Context, Callback);
+
     all = Flags & DDENUMSURFACES_ALL;
     nomatch = Flags & DDENUMSURFACES_NOMATCH;
 
-    TRACE("(%p)->(%x,%p,%p,%p)\n", This, Flags, DDSD, Context, Callback);
     EnterCriticalSection(&ddraw_cs);
 
     if(!Callback)
@@ -3671,7 +3691,8 @@ DirectDrawCreateClipper(DWORD Flags,
     IDirectDrawClipperImpl* object;
     HRESULT hr;
 
-    TRACE("(%08x,%p,%p)\n", Flags, Clipper, UnkOuter);
+    TRACE("flags %#x, clipper %p, outer_unknown %p.\n",
+            Flags, Clipper, UnkOuter);
 
     EnterCriticalSection(&ddraw_cs);
     if (UnkOuter != NULL)
@@ -3718,8 +3739,9 @@ DirectDrawCreateClipper(DWORD Flags,
 static HRESULT WINAPI ddraw7_CreateClipper(IDirectDraw7 *iface, DWORD Flags,
         IDirectDrawClipper **Clipper, IUnknown *UnkOuter)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    TRACE("(%p)->(%x,%p,%p)\n", This, Flags, Clipper, UnkOuter);
+    TRACE("iface %p, flags %#x, clipper %p, outer_unknown %p.\n",
+            iface, Flags, Clipper, UnkOuter);
+
     return DirectDrawCreateClipper(Flags, Clipper, UnkOuter);
 }
 
@@ -3783,7 +3805,8 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
     IDirectDrawPaletteImpl *object;
     HRESULT hr;
 
-    TRACE("(%p)->(%x,%p,%p,%p)\n", This, Flags, ColorTable, Palette, pUnkOuter);
+    TRACE("iface %p, flags %#x, color_table %p, palette %p, outer_unknown %p.\n",
+            iface, Flags, ColorTable, Palette, pUnkOuter);
 
     EnterCriticalSection(&ddraw_cs);
     if(pUnkOuter != NULL)
@@ -3925,10 +3948,9 @@ static HRESULT WINAPI ddraw1_CreatePalette(IDirectDraw *iface, DWORD flags,
 static HRESULT WINAPI ddraw7_DuplicateSurface(IDirectDraw7 *iface,
         IDirectDrawSurface7 *Src, IDirectDrawSurface7 **Dest)
 {
-    IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     IDirectDrawSurfaceImpl *Surf = (IDirectDrawSurfaceImpl *)Src;
 
-    FIXME("(%p)->(%p,%p)\n", This, Surf, Dest);
+    FIXME("iface %p, src %p, dst %p partial stub!\n", iface, Src, Dest);
 
     /* For now, simply create a new, independent surface */
     return IDirectDraw7_CreateSurface(iface,

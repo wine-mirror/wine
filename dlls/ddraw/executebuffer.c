@@ -25,7 +25,7 @@
 
 #include "ddraw_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
+WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /*****************************************************************************
  * _dump_executedata
@@ -88,7 +88,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
     viewport_activate(lpViewport, FALSE);
 
     TRACE("ExecuteData :\n");
-    if (TRACE_ON(d3d7))
+    if (TRACE_ON(ddraw))
       _dump_executedata(&(This->data));
 
     while (1) {
@@ -124,27 +124,28 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			
 		for (i = 0; i < count; i++) {
                     LPD3DTRIANGLE ci = (LPD3DTRIANGLE) instr;
-		    TRACE_(d3d7)("  v1: %d  v2: %d  v3: %d\n",ci->u1.v1, ci->u2.v2, ci->u3.v3);
-		    TRACE_(d3d7)("  Flags : ");
-		    if (TRACE_ON(d3d7)) {
-			/* Wireframe */
-			if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
-	        	    TRACE_(d3d7)("EDGEENABLE1 ");
-	    		if (ci->wFlags & D3DTRIFLAG_EDGEENABLE2)
-	        	    TRACE_(d3d7)("EDGEENABLE2 ");
-	    		if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
-	        	    TRACE_(d3d7)("EDGEENABLE3 ");
-	    		/* Strips / Fans */
-	    		if (ci->wFlags == D3DTRIFLAG_EVEN)
-	        	    TRACE_(d3d7)("EVEN ");
-	    		if (ci->wFlags == D3DTRIFLAG_ODD)
-	        	    TRACE_(d3d7)("ODD ");
-	    		if (ci->wFlags == D3DTRIFLAG_START)
-	        	    TRACE_(d3d7)("START ");
-	    		if ((ci->wFlags > 0) && (ci->wFlags < 30))
-	       		    TRACE_(d3d7)("STARTFLAT(%d) ", ci->wFlags);
-	    		TRACE_(d3d7)("\n");
-        	    }
+		    TRACE("  v1: %d  v2: %d  v3: %d\n",ci->u1.v1, ci->u2.v2, ci->u3.v3);
+		    TRACE("  Flags : ");
+                    if (TRACE_ON(ddraw))
+                    {
+                        /* Wireframe */
+                        if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
+                            TRACE("EDGEENABLE1 ");
+                        if (ci->wFlags & D3DTRIFLAG_EDGEENABLE2)
+                            TRACE("EDGEENABLE2 ");
+                        if (ci->wFlags & D3DTRIFLAG_EDGEENABLE1)
+                            TRACE("EDGEENABLE3 ");
+                        /* Strips / Fans */
+                        if (ci->wFlags == D3DTRIFLAG_EVEN)
+                            TRACE("EVEN ");
+                        if (ci->wFlags == D3DTRIFLAG_ODD)
+                            TRACE("ODD ");
+                        if (ci->wFlags == D3DTRIFLAG_START)
+                            TRACE("START ");
+                        if ((ci->wFlags > 0) && (ci->wFlags < 30))
+                            TRACE("STARTFLAT(%u) ", ci->wFlags);
+                        TRACE("\n");
+                    }
 		    This->indices[(i * 3)    ] = ci->u1.v1;
 		    This->indices[(i * 3) + 1] = ci->u2.v2;
 		    This->indices[(i * 3) + 2] = ci->u3.v3;
@@ -334,7 +335,8 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
                     TRACE("  Start : %d Dest : %d Count : %d\n",
 			  ci->wStart, ci->wDest, ci->dwCount);
 		    TRACE("  Flags : ");
-		    if (TRACE_ON(d3d7)) {
+                    if (TRACE_ON(ddraw))
+                    {
 		        if (ci->dwFlags & D3DPROCESSVERTICES_COPY)
 			    TRACE("COPY ");
 			if (ci->dwFlags & D3DPROCESSVERTICES_NOCOLOR)
@@ -384,7 +386,8 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			D3DMATRIX mat;
 			D3DVIEWPORT* Viewport = &lpViewport->viewports.vp1;
 			
-			if (TRACE_ON(d3d7)) {
+                        if (TRACE_ON(ddraw))
+                        {
 			    TRACE("  Projection Matrix : (%p)\n", &proj_mat);
 			    dump_D3DMATRIX(&proj_mat);
 			    TRACE("  View       Matrix : (%p)\n", &view_mat);
@@ -428,7 +431,8 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 			D3DMATRIX mat;
 			D3DVIEWPORT* Viewport = &lpViewport->viewports.vp1;
 			
-			if (TRACE_ON(d3d7)) {
+                        if (TRACE_ON(ddraw))
+                        {
 			    TRACE("  Projection Matrix : (%p)\n", &proj_mat);
 			    dump_D3DMATRIX(&proj_mat);
 			    TRACE("  View       Matrix : (%p)\n",&view_mat);
@@ -571,7 +575,7 @@ IDirect3DExecuteBufferImpl_QueryInterface(IDirect3DExecuteBuffer *iface,
                                           REFIID riid,
                                           void **obj)
 {
-    TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), obj);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
 
     *obj = NULL;
 
@@ -607,7 +611,7 @@ IDirect3DExecuteBufferImpl_AddRef(IDirect3DExecuteBuffer *iface)
     IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    FIXME("(%p)->()incrementing from %u.\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u.\n", This, ref);
 
     return ref;
 }
@@ -627,7 +631,7 @@ IDirect3DExecuteBufferImpl_Release(IDirect3DExecuteBuffer *iface)
     IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->()decrementing from %u.\n", This, ref + 1);
+    TRACE("%p decreasing refcount to %u.\n", This, ref);
 
     if (!ref) {
         if (This->need_free)
@@ -651,13 +655,11 @@ IDirect3DExecuteBufferImpl_Release(IDirect3DExecuteBuffer *iface)
  *  D3D_OK
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DExecuteBufferImpl_Initialize(IDirect3DExecuteBuffer *iface,
-                                        IDirect3DDevice *lpDirect3DDevice,
-                                        D3DEXECUTEBUFFERDESC *lpDesc)
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Initialize(IDirect3DExecuteBuffer *iface,
+        IDirect3DDevice *device, D3DEXECUTEBUFFERDESC *desc)
 {
-    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
-    TRACE("(%p)->(%p,%p) no-op....\n", This, lpDirect3DDevice, lpDesc);
+    TRACE("iface %p, device %p, desc %p.\n", iface, device, desc);
+
     return D3D_OK;
 }
 
@@ -680,12 +682,14 @@ IDirect3DExecuteBufferImpl_Lock(IDirect3DExecuteBuffer *iface,
 {
     IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     DWORD dwSize;
-    TRACE("(%p)->(%p)\n", This, lpDesc);
+
+    TRACE("iface %p, desc %p.\n", iface, lpDesc);
 
     dwSize = lpDesc->dwSize;
     memcpy(lpDesc, &This->desc, dwSize);
 
-    if (TRACE_ON(d3d7)) {
+    if (TRACE_ON(ddraw))
+    {
         TRACE("  Returning description :\n");
 	_dump_D3DEXECUTEBUFFERDESC(lpDesc);
     }
@@ -701,11 +705,10 @@ IDirect3DExecuteBufferImpl_Lock(IDirect3DExecuteBuffer *iface,
  *  This implementation always returns D3D_OK
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DExecuteBufferImpl_Unlock(IDirect3DExecuteBuffer *iface)
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Unlock(IDirect3DExecuteBuffer *iface)
 {
-    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
-    TRACE("(%p)->() no-op...\n", This);
+    TRACE("iface %p.\n", iface);
+
     return D3D_OK;
 }
 
@@ -729,7 +732,8 @@ IDirect3DExecuteBufferImpl_SetExecuteData(IDirect3DExecuteBuffer *iface,
 {
     IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     DWORD nbvert;
-    TRACE("(%p)->(%p)\n", This, lpData);
+
+    TRACE("iface %p, data %p.\n", iface, lpData);
 
     memcpy(&This->data, lpData, lpData->dwSize);
 
@@ -740,9 +744,8 @@ IDirect3DExecuteBufferImpl_SetExecuteData(IDirect3DExecuteBuffer *iface,
     HeapFree(GetProcessHeap(), 0, This->vertex_data);
     This->vertex_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbvert * sizeof(D3DTLVERTEX));
 
-    if (TRACE_ON(d3d7)) {
+    if (TRACE_ON(ddraw))
         _dump_executedata(lpData);
-    }
 
     return D3D_OK;
 }
@@ -765,12 +768,14 @@ IDirect3DExecuteBufferImpl_GetExecuteData(IDirect3DExecuteBuffer *iface,
 {
     IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
     DWORD dwSize;
-    TRACE("(%p)->(%p): stub!\n", This, lpData);
+
+    TRACE("iface %p, data %p.\n", iface, lpData);
 
     dwSize = lpData->dwSize;
     memcpy(lpData, &This->data, dwSize);
 
-    if (TRACE_ON(d3d7)) {
+    if (TRACE_ON(ddraw))
+    {
         TRACE("Returning data :\n");
 	_dump_executedata(lpData);
     }
@@ -791,15 +796,14 @@ IDirect3DExecuteBufferImpl_GetExecuteData(IDirect3DExecuteBuffer *iface,
  *  DDERR_UNSUPPORTED, because it's not implemented in Windows.
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DExecuteBufferImpl_Validate(IDirect3DExecuteBuffer *iface,
-                                    DWORD *Offset,
-                                    LPD3DVALIDATECALLBACK Func,
-                                    void *UserArg,
-                                    DWORD Reserved)
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Validate(IDirect3DExecuteBuffer *iface,
+        DWORD *offset, LPD3DVALIDATECALLBACK callback, void *context, DWORD reserved)
 {
-    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
-    TRACE("(%p)->(%p,%p,%p,%08x): Unimplemented!\n", This, Offset, Func, UserArg, Reserved);
+    TRACE("iface %p, offset %p, callback %p, context %p, reserved %#x.\n",
+            iface, offset, callback, context, reserved);
+
+    WARN("Not implemented.\n");
+
     return DDERR_UNSUPPORTED; /* Unchecked */
 }
 
@@ -816,12 +820,12 @@ IDirect3DExecuteBufferImpl_Validate(IDirect3DExecuteBuffer *iface,
  *  DDERR_UNSUPPORTED, because it's not implemented in Windows.
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DExecuteBufferImpl_Optimize(IDirect3DExecuteBuffer *iface,
-                                    DWORD Dummy)
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Optimize(IDirect3DExecuteBuffer *iface, DWORD reserved)
 {
-    IDirect3DExecuteBufferImpl *This = (IDirect3DExecuteBufferImpl *)iface;
-    TRACE("(%p)->(%08x): Unimplemented\n", This, Dummy);
+    TRACE("iface %p, reserved %#x.\n", iface, reserved);
+
+    WARN("Not implemented.\n");
+
     return DDERR_UNSUPPORTED; /* Unchecked */
 }
 

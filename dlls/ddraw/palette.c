@@ -43,8 +43,7 @@ IDirectDrawPaletteImpl_QueryInterface(IDirectDrawPalette *iface,
                                       REFIID refiid,
                                       void **obj)
 {
-    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
-    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(refiid), obj);
 
     if (IsEqualGUID(refiid, &IID_IUnknown)
         || IsEqualGUID(refiid, &IID_IDirectDrawPalette))
@@ -75,7 +74,7 @@ IDirectDrawPaletteImpl_AddRef(IDirectDrawPalette *iface)
     IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u.\n", This, ref);
 
     return ref;
 }
@@ -95,7 +94,7 @@ IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
     IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
+    TRACE("%p decreasing refcount to %u.\n", This, ref);
 
     if (ref == 0)
     {
@@ -133,7 +132,9 @@ IDirectDrawPaletteImpl_Initialize(IDirectDrawPalette *iface,
                                   DWORD Flags,
                                   PALETTEENTRY *ColorTable)
 {
-    TRACE("(%p)->(%p,%x,%p)\n", iface, DD, Flags, ColorTable);
+    TRACE("iface %p, ddraw %p, flags %#x, entries %p.\n",
+            iface, DD, Flags, ColorTable);
+
     return DDERR_ALREADYINITIALIZED;
 }
 
@@ -157,7 +158,8 @@ IDirectDrawPaletteImpl_GetCaps(IDirectDrawPalette *iface,
 {
     IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     HRESULT hr;
-    TRACE("(%p)->(%p): Relay\n", This, Caps);
+
+    TRACE("iface %p, caps %p.\n", iface, Caps);
 
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DPalette_GetCaps(This->wineD3DPalette, Caps);
@@ -192,7 +194,9 @@ IDirectDrawPaletteImpl_SetEntries(IDirectDrawPalette *iface,
 {
     IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     HRESULT hr;
-    TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
+
+    TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
+            iface, Flags, Start, Count, PalEnt);
 
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;
@@ -229,7 +233,9 @@ IDirectDrawPaletteImpl_GetEntries(IDirectDrawPalette *iface,
 {
     IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
     HRESULT hr;
-    TRACE("(%p)->(%x,%d,%d,%p): Relay\n", This, Flags, Start, Count, PalEnt);
+
+    TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
+            iface, Flags, Start, Count, PalEnt);
 
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;

@@ -24,7 +24,7 @@
 
 #include "ddraw_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d7);
+WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /*****************************************************************************
  * light_update
@@ -108,14 +108,11 @@ void light_deactivate(IDirect3DLightImpl *light)
  * Returns:
  *  E_NOINTERFACE, because it's a stub
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DLightImpl_QueryInterface(IDirect3DLight *iface,
-                                  REFIID riid,
-                                  void **obp)
+static HRESULT WINAPI IDirect3DLightImpl_QueryInterface(IDirect3DLight *iface, REFIID riid, void **object)
 {
-    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
-    FIXME("(%p)->(%s,%p): stub!\n", This, debugstr_guid(riid), obp);
-    *obp = NULL;
+    FIXME("iface %p, riid %s, object %p stub!\n", iface, debugstr_guid(riid), object);
+
+    *object = NULL;
     return E_NOINTERFACE;
 }
 
@@ -134,7 +131,7 @@ IDirect3DLightImpl_AddRef(IDirect3DLight *iface)
     IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->() incrementing from %u.\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u.\n", This, ref);
 
     return ref;
 }
@@ -155,7 +152,7 @@ IDirect3DLightImpl_Release(IDirect3DLight *iface)
     IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
+    TRACE("%p decreasing refcount to %u.\n", This, ref);
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
@@ -181,13 +178,10 @@ IDirect3DLightImpl_Release(IDirect3DLight *iface)
  *  D3D_OK
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DLightImpl_Initialize(IDirect3DLight *iface,
-                              IDirect3D *lpDirect3D)
+static HRESULT WINAPI IDirect3DLightImpl_Initialize(IDirect3DLight *iface, IDirect3D *d3d)
 {
-    IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
-    IDirectDrawImpl *d3d = lpDirect3D ? ddraw_from_d3d1(lpDirect3D) : NULL;
-    TRACE("(%p)->(%p) no-op...\n", This, d3d);
+    TRACE("iface %p, d3d %p.\n", iface, d3d);
+
     return D3D_OK;
 }
 
@@ -219,8 +213,11 @@ IDirect3DLightImpl_SetLight(IDirect3DLight *iface,
 {
     IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
     LPD3DLIGHT7 light7 = &(This->light7);
-    TRACE("(%p)->(%p)\n", This, lpLight);
-    if (TRACE_ON(d3d7)) {
+
+    TRACE("iface %p, light %p.\n", iface, lpLight);
+
+    if (TRACE_ON(ddraw))
+    {
         TRACE("  Light definition :\n");
 	dump_light((LPD3DLIGHT2) lpLight);
     }
@@ -274,8 +271,11 @@ IDirect3DLightImpl_GetLight(IDirect3DLight *iface,
                             D3DLIGHT *lpLight)
 {
     IDirect3DLightImpl *This = (IDirect3DLightImpl *)iface;
-    TRACE("(%p/%p)->(%p)\n", This, iface, lpLight);
-    if (TRACE_ON(d3d7)) {
+
+    TRACE("iface %p, light %p.\n", iface, lpLight);
+
+    if (TRACE_ON(ddraw))
+    {
         TRACE("  Returning light definition :\n");
 	dump_light(&This->light);
     }
