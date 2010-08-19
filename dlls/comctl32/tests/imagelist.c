@@ -1475,7 +1475,7 @@ static void test_IImageList_Add_Remove(void)
     HICON hicon2;
     HICON hicon3;
 
-    int ret = 0;
+    int ret;
 
     /* create an imagelist to play with */
     himl = ImageList_Create(84, 84, ILC_COLOR16, 0, 3);
@@ -1500,8 +1500,11 @@ static void test_IImageList_Add_Remove(void)
     ok(hr == S_OK, "removed nonexistent icon\n");
 
     /* add three */
+    ret = -1;
     ok( IImageList_ReplaceIcon(imgl, -1, hicon1, &ret) == S_OK && (ret == 0),"failed to add icon1\n");
+    ret = -1;
     ok( IImageList_ReplaceIcon(imgl, -1, hicon2, &ret) == S_OK && (ret == 1),"failed to add icon2\n");
+    ret = -1;
     ok( IImageList_ReplaceIcon(imgl, -1, hicon3, &ret) == S_OK && (ret == 2),"failed to add icon3\n");
 
     /* remove an index out of range */
@@ -1722,6 +1725,57 @@ static void test_IImageList_Merge(void)
     DestroyWindow(hwnd);
 }
 
+static void test_iconsize(void)
+{
+    HIMAGELIST himl;
+    INT cx, cy;
+    BOOL ret;
+
+    himl = ImageList_Create(16, 16, ILC_COLOR16, 0, 3);
+    /* null pointers, not zero imagelist dimensions */
+    ret = ImageList_GetIconSize(himl, NULL, NULL);
+    todo_wine ok(!ret, "got %d\n", ret);
+
+    /* doesn't touch return pointers */
+    cx = 0xdeadbeef;
+    ret = ImageList_GetIconSize(himl, &cx, NULL);
+todo_wine {
+    ok(!ret, "got %d\n", ret);
+    ok(cx == 0xdeadbeef, "got %d\n", cx);
+}
+    cy = 0xdeadbeef;
+    ret = ImageList_GetIconSize(himl, NULL, &cy);
+todo_wine {
+    ok(!ret, "got %d\n", ret);
+    ok(cy == 0xdeadbeef, "got %d\n", cy);
+}
+    ImageList_Destroy(himl);
+}
+
+static void test_create(void)
+{
+    HIMAGELIST himl;
+
+todo_wine {
+    /* list with zero or negative image dimensions */
+    himl = ImageList_Create(0, 0, ILC_COLOR16, 0, 3);
+    ok(himl == NULL, "got %p\n", himl);
+
+    himl = ImageList_Create(0, 16, ILC_COLOR16, 0, 3);
+    ok(himl == NULL, "got %p\n", himl);
+
+    himl = ImageList_Create(16, 0, ILC_COLOR16, 0, 3);
+    ok(himl == NULL, "got %p\n", himl);
+
+    himl = ImageList_Create(16, -1, ILC_COLOR16, 0, 3);
+    ok(himl == NULL, "got %p\n", himl);
+
+    himl = ImageList_Create(-1, 16, ILC_COLOR16, 0, 3);
+    ok(himl == NULL, "got %p\n", himl);
+}
+
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1737,12 +1791,14 @@ START_TEST(imagelist)
 
     InitCommonControls();
 
+    test_create();
     test_hotspot();
     test_add_remove();
     test_imagecount();
     test_DrawIndirect();
     test_merge();
     test_imagelist_storage();
+    test_iconsize();
 
     FreeLibrary(hComCtl32);
 
