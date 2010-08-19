@@ -52,18 +52,18 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_STRING_CONTAINER_INIT_DEPEND  0x0002
 #define NS_CSTRING_CONTAINER_INIT_DEPEND 0x0002
 
-static nsresult (*NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
-static nsresult (*NS_ShutdownXPCOM)(nsIServiceManager*);
-static nsresult (*NS_GetComponentRegistrar)(nsIComponentRegistrar**);
-static nsresult (*NS_StringContainerInit2)(nsStringContainer*,const PRUnichar*,PRUint32,PRUint32);
-static nsresult (*NS_CStringContainerInit2)(nsCStringContainer*,const char*,PRUint32,PRUint32);
-static nsresult (*NS_StringContainerFinish)(nsStringContainer*);
-static nsresult (*NS_CStringContainerFinish)(nsCStringContainer*);
-static nsresult (*NS_StringSetData)(nsAString*,const PRUnichar*,PRUint32);
-static nsresult (*NS_CStringSetData)(nsACString*,const char*,PRUint32);
-static nsresult (*NS_NewLocalFile)(const nsAString*,PRBool,nsIFile**);
-static PRUint32 (*NS_StringGetData)(const nsAString*,const PRUnichar **,PRBool*);
-static PRUint32 (*NS_CStringGetData)(const nsACString*,const char**,PRBool*);
+static nsresult (CDECL *NS_InitXPCOM2)(nsIServiceManager**,void*,void*);
+static nsresult (CDECL *NS_ShutdownXPCOM)(nsIServiceManager*);
+static nsresult (CDECL *NS_GetComponentRegistrar)(nsIComponentRegistrar**);
+static nsresult (CDECL *NS_StringContainerInit2)(nsStringContainer*,const PRUnichar*,PRUint32,PRUint32);
+static nsresult (CDECL *NS_CStringContainerInit2)(nsCStringContainer*,const char*,PRUint32,PRUint32);
+static nsresult (CDECL *NS_StringContainerFinish)(nsStringContainer*);
+static nsresult (CDECL *NS_CStringContainerFinish)(nsCStringContainer*);
+static nsresult (CDECL *NS_StringSetData)(nsAString*,const PRUnichar*,PRUint32);
+static nsresult (CDECL *NS_CStringSetData)(nsACString*,const char*,PRUint32);
+static nsresult (CDECL *NS_NewLocalFile)(const nsAString*,PRBool,nsIFile**);
+static PRUint32 (CDECL *NS_StringGetData)(const nsAString*,const PRUnichar **,PRBool*);
+static PRUint32 (CDECL *NS_CStringGetData)(const nsACString*,const char**,PRBool*);
 
 static HINSTANCE hXPCOM = NULL;
 
