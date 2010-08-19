@@ -1190,7 +1190,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
         uin->sir_family = AF_IRDA;
         if (!strncmp( win->irdaServiceName, "LSAP-SEL", strlen( "LSAP-SEL" ) ))
         {
-            unsigned int lsap_sel;
+            unsigned int lsap_sel = 0;
 
             sscanf( win->irdaServiceName, "LSAP-SEL%u", &lsap_sel );
             uin->sir_lsap_sel = lsap_sel;
