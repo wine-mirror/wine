@@ -213,3 +213,102 @@ size_t __stdcall MSVCP_allocator_wchar_max_size(void *this)
 {
     return UINT_MAX/sizeof(wchar_t);
 }
+
+/* allocator<unsigned short> */
+/* ?address@?$allocator@G@std@@QBEPAGAAG@Z */
+/* ?address@?$allocator@G@std@@QEBAPEAGAEAG@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_address, 8)
+unsigned short* __stdcall MSVCP_allocator_short_address(
+        void *this, unsigned short *ptr)
+{
+    return ptr;
+}
+
+/* ?address@?$allocator@G@std@@QBEPBGABG@Z */
+/* ?address@?$allocator@G@std@@QEBAPEBGAEBG@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_const_address, 8)
+const unsigned short* __stdcall MSVCP_allocator_short_const_address(
+        void *this, const unsigned short *ptr)
+{
+    return ptr;
+}
+
+/* ??0?$allocator@G@std@@QAE@XZ */
+/* ??0?$allocator@G@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_ctor, 4)
+void* __stdcall MSVCP_allocator_short_ctor(void *this)
+{
+    return this;
+}
+
+/* ??0?$allocator@G@std@@QAE@ABV01@@Z */
+/* ??0?$allocator@G@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_copy_ctor, 8)
+void* __stdcall MSVCP_allocator_short_copy_ctor(void *this, void *copy)
+{
+    return this;
+}
+
+/* ??4?$allocator@G@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$allocator@G@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_assign, 8)
+void* __stdcall MSVCP_allocator_short_assign(void *this, void *assign)
+{
+    return this;
+}
+
+/* ?deallocate@?$allocator@G@std@@QAEXPAGI@Z */
+/* ?deallocate@?$allocator@G@std@@QEAAXPEAG_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_deallocate, 12)
+void __stdcall MSVCP_allocator_short_deallocate(void *this,
+        unsigned short *ptr, size_t size)
+{
+    MSVCRT_operator_delete(ptr);
+}
+
+/* ?allocate@?$allocator@G@std@@QAEPAGI@Z */
+/* ?allocate@?$allocator@G@std@@QEAAPEAG_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_allocate, 8)
+unsigned short* __stdcall MSVCP_allocator_short_allocate(
+        void *this, size_t count)
+{
+    if(UINT_MAX/count < sizeof(unsigned short)) {
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        return NULL;
+    }
+
+    return MSVCRT_operator_new(sizeof(unsigned short[count]));
+}
+
+/* ?allocate@?$allocator@G@std@@QAEPAGIPBX@Z */
+/* ?allocate@?$allocator@G@std@@QEAAPEAG_KPEBX@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_allocate_hint, 12)
+unsigned short* __stdcall MSVCP_allocator_short_allocate_hint(
+        void *this, size_t count, const void *hint)
+{
+    return MSVCP_allocator_short_allocate(this, count);
+}
+
+/* ?construct@?$allocator@G@std@@QAEXPAGABG@Z */
+/* ?construct@?$allocator@G@std@@QEAAXPEAGAEBG@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_construct, 12)
+void __stdcall MSVCP_allocator_short_construct(void *this,
+        unsigned short *ptr, unsigned short *val)
+{
+    *ptr = *val;
+}
+
+/* ?destroy@?$allocator@G@std@@QAEXPAG@Z */
+/* ?destroy@?$allocator@G@std@@QEAAXPEAG@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_destroy, 8)
+void __stdcall MSVCP_allocator_short_destroy(void *this, size_t *ptr)
+{
+}
+
+/* ?max_size@?$allocator@G@std@@QBEIXZ */
+/* ?max_size@?$allocator@G@std@@QEBA_KXZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_short_max_size, 4)
+size_t __stdcall MSVCP_allocator_short_max_size(void *this)
+{
+    return UINT_MAX/sizeof(unsigned short);
+}
