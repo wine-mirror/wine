@@ -271,14 +271,9 @@ struct IDirectDrawSurfaceImpl
     DWORD                   Handle;
 };
 
-/* VTable declaration. It's located in surface.c / surface_thunks.c */
-extern const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl DECLSPEC_HIDDEN;
-extern const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl DECLSPEC_HIDDEN;
-extern const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl DECLSPEC_HIDDEN;
-
 void ddraw_surface_destroy(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
+HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
+        DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type) DECLSPEC_HIDDEN;
 
 static inline IDirectDrawSurfaceImpl *surface_from_texture1(IDirect3DTexture *iface)
 {

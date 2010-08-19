@@ -2487,13 +2487,8 @@ ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
 static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD,
         IDirectDrawSurfaceImpl **ppSurf, UINT level)
 {
-    HRESULT hr;
-    UINT Width, Height;
-    WINED3DFORMAT Format = WINED3DFMT_UNKNOWN;
-    DWORD Usage = 0;
     WINED3DSURFTYPE ImplType = This->ImplType;
-    WINED3DSURFACE_DESC Desc;
-    WINED3DPOOL Pool = WINED3DPOOL_DEFAULT;
+    HRESULT hr;
 
     if (TRACE_ON(ddraw))
     {
@@ -2556,57 +2551,6 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         }
     }
 
-    if (!(pDDSD->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY)) &&
-        !((pDDSD->ddsCaps.dwCaps & DDSCAPS_TEXTURE) && (pDDSD->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)) )
-    {
-        /* Tests show surfaces without memory flags get these flags added right after creation. */
-        pDDSD->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
-    }
-    /* Get the correct wined3d usage */
-    if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE |
-                                 DDSCAPS_3DDEVICE       ) )
-    {
-        Usage |= WINED3DUSAGE_RENDERTARGET;
-
-        pDDSD->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
-    }
-    if (pDDSD->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
-    {
-        Usage |= WINED3DUSAGE_OVERLAY;
-    }
-    if(This->depthstencil || (pDDSD->ddsCaps.dwCaps & DDSCAPS_ZBUFFER) )
-    {
-        /* The depth stencil creation callback sets this flag.
-         * Set the WineD3D usage to let it know that it's a depth
-         * Stencil surface.
-         */
-        Usage |= WINED3DUSAGE_DEPTHSTENCIL;
-    }
-    if(pDDSD->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
-    {
-        Pool = WINED3DPOOL_SYSTEMMEM;
-    }
-    else if(pDDSD->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)
-    {
-        Pool = WINED3DPOOL_MANAGED;
-        /* Managed textures have the system memory flag set */
-        pDDSD->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
-    }
-    else if(pDDSD->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY)
-    {
-        /* Videomemory adds localvidmem, this is mutually exclusive with systemmemory
-         * and texturemanage
-         */
-        pDDSD->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
-    }
-
-    Format = PixelFormat_DD2WineD3D(&pDDSD->u4.ddpfPixelFormat);
-    if(Format == WINED3DFMT_UNKNOWN)
-    {
-        ERR("Unsupported / Unknown pixelformat\n");
-        return DDERR_INVALIDPIXELFORMAT;
-    }
-
     /* Create the Surface object */
     *ppSurf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectDrawSurfaceImpl));
     if(!*ppSurf)
@@ -2614,41 +2558,12 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
         ERR("(%p) Error allocating memory for a surface\n", This);
         return DDERR_OUTOFVIDEOMEMORY;
     }
-    (*ppSurf)->lpVtbl = &IDirectDrawSurface7_Vtbl;
-    (*ppSurf)->IDirectDrawSurface3_vtbl = &IDirectDrawSurface3_Vtbl;
-    (*ppSurf)->IDirectDrawGammaControl_vtbl = &IDirectDrawGammaControl_Vtbl;
-    (*ppSurf)->IDirect3DTexture2_vtbl = &IDirect3DTexture2_Vtbl;
-    (*ppSurf)->IDirect3DTexture_vtbl = &IDirect3DTexture1_Vtbl;
-    (*ppSurf)->ref = 1;
-    (*ppSurf)->version = 7;
-    TRACE("%p->version = %d\n", (*ppSurf), (*ppSurf)->version);
-    (*ppSurf)->ddraw = This;
-    (*ppSurf)->surface_desc.dwSize = sizeof(DDSURFACEDESC2);
-    (*ppSurf)->surface_desc.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-    DD_STRUCT_COPY_BYSIZE(&(*ppSurf)->surface_desc, pDDSD);
 
-    /* Surface attachments */
-    (*ppSurf)->next_attached = NULL;
-    (*ppSurf)->first_attached = *ppSurf;
-
-    /* Needed to re-create the surface on an implementation change */
-    (*ppSurf)->ImplType = ImplType;
-
-    /* For D3DDevice creation */
-    (*ppSurf)->isRenderTarget = FALSE;
-
-    /* A trace message for debugging */
-    TRACE("(%p) Created IDirectDrawSurface implementation structure at %p\n", This, *ppSurf);
-
-    /* Now create the WineD3D Surface */
-    hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, pDDSD->dwWidth, pDDSD->dwHeight, Format,
-            TRUE /* Lockable */, FALSE /* Discard */, level, &(*ppSurf)->WineD3DSurface,
-            Usage, Pool, WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, ImplType,
-            (IUnknown *)*ppSurf, &ddraw_null_wined3d_parent_ops);
-
-    if(hr != D3D_OK)
+    hr = ddraw_surface_init(*ppSurf, This, pDDSD, level, ImplType);
+    if (FAILED(hr))
     {
-        ERR("IWineD3DDevice::CreateSurface failed. hr = %08x\n", hr);
+        WARN("Failed to initialize surface, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, *ppSurf);
         return hr;
     }
 
@@ -2656,93 +2571,7 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
     InterlockedIncrement(&This->surfaces);
     list_add_head(&This->surface_list, &(*ppSurf)->surface_list_entry);
 
-    /* Here we could store all created surfaces in the DirectDrawImpl structure,
-     * But this could also be delegated to WineDDraw, as it keeps track of all its
-     * resources. Not implemented for now, as there are more important things ;)
-     */
-
-    /* Get the pixel format of the WineD3DSurface and store it.
-     * Don't use the Format choosen above, WineD3D might have
-     * changed it
-     */
-    (*ppSurf)->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-    hr = IWineD3DSurface_GetDesc((*ppSurf)->WineD3DSurface, &Desc);
-    if(hr != D3D_OK)
-    {
-        ERR("IWineD3DSurface::GetDesc failed\n");
-        IDirectDrawSurface7_Release( (IDirectDrawSurface7 *) *ppSurf);
-        return hr;
-    }
-
-    Format = Desc.format;
-    Width = Desc.width;
-    Height = Desc.height;
-
-    if(Format == WINED3DFMT_UNKNOWN)
-    {
-        FIXME("IWineD3DSurface::GetDesc returned WINED3DFMT_UNKNOWN\n");
-    }
-    PixelFormat_WineD3DtoDD( &(*ppSurf)->surface_desc.u4.ddpfPixelFormat, Format);
-
-    /* Anno 1602 stores the pitch right after surface creation, so make sure it's there.
-     * I can't LockRect() the surface here because if OpenGL surfaces are in use, the
-     * WineD3DDevice might not be usable for 3D yet, so an extra method was created.
-     * TODO: Test other fourcc formats
-     */
-    if(Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
-       Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5)
-    {
-        (*ppSurf)->surface_desc.dwFlags |= DDSD_LINEARSIZE;
-        if(Format == WINED3DFMT_DXT1)
-        {
-            (*ppSurf)->surface_desc.u1.dwLinearSize = max(4, Width) * max(4, Height) / 2;
-        }
-        else
-        {
-            (*ppSurf)->surface_desc.u1.dwLinearSize = max(4, Width) * max(4, Height);
-        }
-    }
-    else
-    {
-        (*ppSurf)->surface_desc.dwFlags |= DDSD_PITCH;
-        (*ppSurf)->surface_desc.u1.lPitch = IWineD3DSurface_GetPitch((*ppSurf)->WineD3DSurface);
-    }
-
-    /* Application passed a color key? Set it! */
-    if(pDDSD->dwFlags & DDSD_CKDESTOVERLAY)
-    {
-        IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
-                                    DDCKEY_DESTOVERLAY,
-                                    (WINEDDCOLORKEY *) &pDDSD->u3.ddckCKDestOverlay);
-    }
-    if(pDDSD->dwFlags & DDSD_CKDESTBLT)
-    {
-        IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
-                                    DDCKEY_DESTBLT,
-                                    (WINEDDCOLORKEY *) &pDDSD->ddckCKDestBlt);
-    }
-    if(pDDSD->dwFlags & DDSD_CKSRCOVERLAY)
-    {
-        IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
-                                    DDCKEY_SRCOVERLAY,
-                                    (WINEDDCOLORKEY *) &pDDSD->ddckCKSrcOverlay);
-    }
-    if(pDDSD->dwFlags & DDSD_CKSRCBLT)
-    {
-        IWineD3DSurface_SetColorKey((*ppSurf)->WineD3DSurface,
-                                    DDCKEY_SRCBLT,
-                                    (WINEDDCOLORKEY *) &pDDSD->ddckCKSrcBlt);
-    }
-    if ( pDDSD->dwFlags & DDSD_LPSURFACE)
-    {
-        hr = IWineD3DSurface_SetMem((*ppSurf)->WineD3DSurface, pDDSD->lpSurface);
-        if(hr != WINED3D_OK)
-        {
-            /* No need for a trace here, wined3d does that for us */
-            IDirectDrawSurface7_Release((IDirectDrawSurface7 *)*ppSurf);
-            return hr;
-        }
-    }
+    TRACE("Created surface %p.\n", *ppSurf);
 
     return DD_OK;
 }

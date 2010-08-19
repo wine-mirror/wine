@@ -3347,7 +3347,7 @@ static HRESULT WINAPI d3d_texture1_Load(IDirect3DTexture *iface, IDirect3DTextur
  * The VTable
  *****************************************************************************/
 
-const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl =
+static const struct IDirectDrawSurface7Vtbl ddraw_surface7_vtbl =
 {
     /* IUnknown */
     ddraw_surface7_QueryInterface,
@@ -3406,7 +3406,7 @@ const IDirectDrawSurface7Vtbl IDirectDrawSurface7_Vtbl =
     ddraw_surface7_GetLOD,
 };
 
-const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
+static const struct IDirectDrawSurface3Vtbl ddraw_surface3_vtbl =
 {
     /* IUnknown */
     ddraw_surface3_QueryInterface,
@@ -3454,7 +3454,7 @@ const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
     ddraw_surface3_SetSurfaceDesc,
 };
 
-const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl =
+static const struct IDirectDrawGammaControlVtbl ddraw_gamma_control_vtbl =
 {
     ddraw_gamma_control_QueryInterface,
     ddraw_gamma_control_AddRef,
@@ -3463,7 +3463,7 @@ const IDirectDrawGammaControlVtbl IDirectDrawGammaControl_Vtbl =
     ddraw_gamma_control_SetGammaRamp,
 };
 
-const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl =
+static const struct IDirect3DTexture2Vtbl d3d_texture2_vtbl =
 {
     d3d_texture2_QueryInterface,
     d3d_texture2_AddRef,
@@ -3473,7 +3473,7 @@ const IDirect3DTexture2Vtbl IDirect3DTexture2_Vtbl =
     d3d_texture2_Load,
 };
 
-const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl =
+static const struct IDirect3DTextureVtbl d3d_texture1_vtbl =
 {
     d3d_texture1_QueryInterface,
     d3d_texture1_AddRef,
@@ -3484,3 +3484,160 @@ const IDirect3DTextureVtbl IDirect3DTexture1_Vtbl =
     d3d_texture1_Load,
     d3d_texture1_Unload,
 };
+
+HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
+        DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type)
+{
+    WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
+    WINED3DSURFACE_DESC wined3d_desc;
+    WINED3DFORMAT format;
+    DWORD usage = 0;
+    HRESULT hr;
+
+    if (!(desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
+            && !((desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+            && (desc->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)))
+    {
+        /* Tests show surfaces without memory flags get these flags added
+         * right after creation. */
+        desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+    }
+
+    if (desc->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
+    {
+        usage |= WINED3DUSAGE_RENDERTARGET;
+        desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+    }
+
+    if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
+    {
+        usage |= WINED3DUSAGE_OVERLAY;
+    }
+
+    if (ddraw->depthstencil || (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    {
+        /* The depth stencil creation callback sets this flag. Set the
+         * wined3d usage to let it know it's a depth/stencil surface. */
+        usage |= WINED3DUSAGE_DEPTHSTENCIL;
+    }
+
+    if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
+    {
+        pool = WINED3DPOOL_SYSTEMMEM;
+    }
+    else if (desc->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)
+    {
+        pool = WINED3DPOOL_MANAGED;
+        /* Managed textures have the system memory flag set. */
+        desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+    }
+    else if (desc->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY)
+    {
+        /* Videomemory adds localvidmem. This is mutually exclusive with
+         * systemmemory and texturemanage. */
+        desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
+    }
+
+    format = PixelFormat_DD2WineD3D(&desc->u4.ddpfPixelFormat);
+    if (format == WINED3DFMT_UNKNOWN)
+    {
+        WARN("Unsupported / unknown pixelformat.\n");
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
+    surface->lpVtbl = &ddraw_surface7_vtbl;
+    surface->IDirectDrawSurface3_vtbl = &ddraw_surface3_vtbl;
+    surface->IDirectDrawGammaControl_vtbl = &ddraw_gamma_control_vtbl;
+    surface->IDirect3DTexture2_vtbl = &d3d_texture2_vtbl;
+    surface->IDirect3DTexture_vtbl = &d3d_texture1_vtbl;
+    surface->ref = 1;
+    surface->version = 7;
+    surface->ddraw = ddraw;
+
+    surface->surface_desc.dwSize = sizeof(DDSURFACEDESC2);
+    surface->surface_desc.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+    DD_STRUCT_COPY_BYSIZE(&surface->surface_desc, desc);
+
+    surface->first_attached = surface;
+    surface->ImplType = surface_type;
+
+    hr = IWineD3DDevice_CreateSurface(ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight, format,
+            TRUE /* Lockable */, FALSE /* Discard */, mip_level, &surface->WineD3DSurface,
+            usage, pool, WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type,
+            (IUnknown *)surface, &ddraw_null_wined3d_parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d surface, hr %#x.\n", hr);
+        return hr;
+    }
+
+    surface->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
+    hr = IWineD3DSurface_GetDesc(surface->WineD3DSurface, &wined3d_desc);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get wined3d surface desc, hr %#x.\n", hr);
+        IWineD3DSurface_Release(surface->WineD3DSurface);
+        return hr;
+    }
+
+    format = wined3d_desc.format;
+    if (format == WINED3DFMT_UNKNOWN)
+    {
+        FIXME("IWineD3DSurface::GetDesc returned WINED3DFMT_UNKNOWN.\n");
+    }
+    PixelFormat_WineD3DtoDD(&surface->surface_desc.u4.ddpfPixelFormat, format);
+
+    /* Anno 1602 stores the pitch right after surface creation, so make sure
+     * it's there. TODO: Test other fourcc formats. */
+    if (format == WINED3DFMT_DXT1 || format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3
+            || format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5)
+    {
+        surface->surface_desc.dwFlags |= DDSD_LINEARSIZE;
+        if (format == WINED3DFMT_DXT1)
+        {
+            surface->surface_desc.u1.dwLinearSize = max(4, wined3d_desc.width) * max(4, wined3d_desc.height) / 2;
+        }
+        else
+        {
+            surface->surface_desc.u1.dwLinearSize = max(4, wined3d_desc.width) * max(4, wined3d_desc.height);
+        }
+    }
+    else
+    {
+        surface->surface_desc.dwFlags |= DDSD_PITCH;
+        surface->surface_desc.u1.lPitch = IWineD3DSurface_GetPitch(surface->WineD3DSurface);
+    }
+
+    if (desc->dwFlags & DDSD_CKDESTOVERLAY)
+    {
+        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
+                DDCKEY_DESTOVERLAY, (WINEDDCOLORKEY *)&desc->u3.ddckCKDestOverlay);
+    }
+    if (desc->dwFlags & DDSD_CKDESTBLT)
+    {
+        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
+                DDCKEY_DESTBLT, (WINEDDCOLORKEY *)&desc->ddckCKDestBlt);
+    }
+    if (desc->dwFlags & DDSD_CKSRCOVERLAY)
+    {
+        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
+                DDCKEY_SRCOVERLAY, (WINEDDCOLORKEY *)&desc->ddckCKSrcOverlay);
+    }
+    if (desc->dwFlags & DDSD_CKSRCBLT)
+    {
+        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
+                DDCKEY_SRCBLT, (WINEDDCOLORKEY *)&desc->ddckCKSrcBlt);
+    }
+    if (desc->dwFlags & DDSD_LPSURFACE)
+    {
+        hr = IWineD3DSurface_SetMem(surface->WineD3DSurface, desc->lpSurface);
+        if (FAILED(hr))
+        {
+            ERR("Failed to set surface memory, hr %#x.\n", hr);
+            IWineD3DSurface_Release(surface->WineD3DSurface);
+            return hr;
+        }
+    }
+
+    return DD_OK;
+}
