@@ -160,13 +160,7 @@ struct IDirectDrawImpl
 
 #define DDRAW_WINDOW_CLASS_NAME "ddraw_wc"
 
-/* Declare the VTables. They can be found ddraw.c */
-extern const IDirectDraw7Vtbl IDirectDraw7_Vtbl DECLSPEC_HIDDEN;
-extern const IDirectDraw4Vtbl IDirectDraw4_Vtbl DECLSPEC_HIDDEN;
-extern const IDirectDraw3Vtbl IDirectDraw3_Vtbl DECLSPEC_HIDDEN;
-extern const IDirectDraw2Vtbl IDirectDraw2_Vtbl DECLSPEC_HIDDEN;
-extern const IDirectDrawVtbl IDirectDraw1_Vtbl DECLSPEC_HIDDEN;
-extern const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl DECLSPEC_HIDDEN;
+HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
 
 /* Helper structures */
 typedef struct EnumDisplayModesCBS
@@ -212,6 +206,10 @@ static inline IDirectDrawImpl *ddraw_from_d3d7(IDirect3D7 *iface)
 
 /* The default surface type */
 extern WINED3DSURFTYPE DefaultSurfaceType DECLSPEC_HIDDEN;
+
+extern typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper DECLSPEC_HIDDEN;
+extern typeof(WineDirect3DCreate) *pWineDirect3DCreate DECLSPEC_HIDDEN;
+
 
 /*****************************************************************************
  * IDirectDrawSurface implementation structure
@@ -426,18 +424,6 @@ struct EnumTextureFormatsCBS
     void *Context;
 };
 
-/*****************************************************************************
- * IDirect3D implementation
- *****************************************************************************/
-
-/* No implementation structure as this is only another interface to DirectDraw */
-
-/* the Vtables */
-extern const IDirect3DVtbl IDirect3D1_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3D2Vtbl IDirect3D2_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3D3Vtbl IDirect3D3_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3D7Vtbl IDirect3D7_Vtbl DECLSPEC_HIDDEN;
-
 /* Structure for EnumZBufferFormats */
 struct EnumZBufferFormatsData
 {
@@ -459,8 +445,6 @@ struct IDirectDrawClipperImpl
 };
 
 HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper) DECLSPEC_HIDDEN;
-
-typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectDrawPalette implementation structure

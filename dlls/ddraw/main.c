@@ -33,12 +33,13 @@
 #include "wine/exception.h"
 #include "winreg.h"
 
-static typeof(WineDirect3DCreate) *pWineDirect3DCreate;
-
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* The configured default surface */
 WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
+
+typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper DECLSPEC_HIDDEN;
+typeof(WineDirect3DCreate) *pWineDirect3DCreate DECLSPEC_HIDDEN;
 
 /* DDraw list and critical section */
 static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
@@ -220,12 +221,9 @@ DDRAW_Create(const GUID *guid,
              IUnknown *UnkOuter,
              REFIID iid)
 {
-    IDirectDrawImpl *This = NULL;
-    HRESULT hr;
-    IWineD3D *wineD3D = NULL;
-    IWineD3DDevice *wineD3DDevice = NULL;
-    HDC hDC;
     WINED3DDEVTYPE devicetype;
+    IDirectDrawImpl *This;
+    HRESULT hr;
 
     TRACE("(%s,%p,%p)\n", debugstr_guid(guid), DD, UnkOuter);
 
@@ -263,99 +261,19 @@ DDRAW_Create(const GUID *guid,
         return E_OUTOFMEMORY;
     }
 
-    /* The interfaces:
-     * IDirectDraw and IDirect3D are the same object,
-     * QueryInterface is used to get other interfaces.
-     */
-    This->lpVtbl = &IDirectDraw7_Vtbl;
-    This->IDirectDraw_vtbl = &IDirectDraw1_Vtbl;
-    This->IDirectDraw2_vtbl = &IDirectDraw2_Vtbl;
-    This->IDirectDraw3_vtbl = &IDirectDraw3_Vtbl;
-    This->IDirectDraw4_vtbl = &IDirectDraw4_Vtbl;
-    This->IDirect3D_vtbl = &IDirect3D1_Vtbl;
-    This->IDirect3D2_vtbl = &IDirect3D2_Vtbl;
-    This->IDirect3D3_vtbl = &IDirect3D3_Vtbl;
-    This->IDirect3D7_vtbl = &IDirect3D7_Vtbl;
-    This->device_parent_vtbl = &ddraw_wined3d_device_parent_vtbl;
-
-    /* See comments in IDirectDrawImpl_CreateNewSurface for a description
-     * of this member.
-     * Read from a registry key, should add a winecfg option later
-     */
-    This->ImplType = DefaultSurfaceType;
-
-    /* Get the current screen settings */
-    hDC = GetDC(0);
-    This->orig_bpp = GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES);
-    ReleaseDC(0, hDC);
-    This->orig_width = GetSystemMetrics(SM_CXSCREEN);
-    This->orig_height = GetSystemMetrics(SM_CYSCREEN);
-
-    if (!LoadWineD3D())
+    hr = ddraw_init(This, devicetype);
+    if (FAILED(hr))
     {
-        ERR("Couldn't load WineD3D - OpenGL libs not present?\n");
-        hr = DDERR_NODIRECTDRAWSUPPORT;
-        goto err_out;
+        WARN("Failed to initialize ddraw object, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, This);
+        return hr;
     }
 
-    /* Initialize WineD3D
-     *
-     * All Rendering (2D and 3D) is relayed to WineD3D,
-     * but DirectDraw specific management, like DDSURFACEDESC and DDPIXELFORMAT
-     * structure handling is handled in this lib.
-     */
-    wineD3D = pWineDirect3DCreate(7 /* DXVersion */, (IUnknown *) This /* Parent */);
-    if(!wineD3D)
-    {
-        ERR("Failed to initialise WineD3D\n");
-        hr = E_OUTOFMEMORY;
-        goto err_out;
-    }
-    This->wineD3D = wineD3D;
-    TRACE("WineD3D created at %p\n", wineD3D);
-
-    /* Initialized member...
-     *
-     * It is set to false at creation time, and set to true in
-     * IDirectDraw7::Initialize. Its sole purpose is to return DD_OK on
-     * initialize only once
-     */
-    This->initialized = FALSE;
-
-    /* Initialize WineD3DDevice
-     *
-     * It is used for screen setup, surface and palette creation
-     * When a Direct3DDevice7 is created, the D3D capabilities of WineD3D are
-     * initialized
-     */
-    hr = IWineD3D_CreateDevice(wineD3D, 0 /* D3D_ADAPTER_DEFAULT */, devicetype, NULL /* FocusWindow, don't know yet */,
-            0 /* BehaviorFlags */, (IUnknown *)This, (IWineD3DDeviceParent *)&This->device_parent_vtbl, &wineD3DDevice);
-    if(FAILED(hr))
-    {
-        ERR("Failed to create a wineD3DDevice, result = %x\n", hr);
-        goto err_out;
-    }
-    This->wineD3DDevice = wineD3DDevice;
-    TRACE("wineD3DDevice created at %p\n", This->wineD3DDevice);
-
-    /* Get the amount of video memory */
-    This->total_vidmem = IWineD3DDevice_GetAvailableTextureMem(This->wineD3DDevice);
-
-    list_init(&This->surface_list);
-    list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
-
-    /* Call QueryInterface to get the pointer to the requested interface. This also initializes
-     * The required refcount
-     */
     hr = IDirectDraw7_QueryInterface((IDirectDraw7 *)This, iid, DD);
-    if(SUCCEEDED(hr)) return DD_OK;
+    IDirectDraw7_Release((IDirectDraw7 *)This);
+    if (SUCCEEDED(hr)) list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
+    else WARN("Failed to query interface %s from ddraw object %p.\n", debugstr_guid(iid), This);
 
-err_out:
-    /* Let's hope we never need this ;) */
-    if(wineD3DDevice) IWineD3DDevice_Release(wineD3DDevice);
-    if(wineD3D) IWineD3D_Release(wineD3D);
-    HeapFree(GetProcessHeap(), 0, This->decls);
-    HeapFree(GetProcessHeap(), 0, This);
     return hr;
 }
 

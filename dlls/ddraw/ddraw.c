@@ -5246,7 +5246,7 @@ HRESULT IDirect3DImpl_GetCaps(IWineD3D *wined3d, D3DDEVICEDESC *desc1, D3DDEVICE
 /*****************************************************************************
  * IDirectDraw7 VTable
  *****************************************************************************/
-const IDirectDraw7Vtbl IDirectDraw7_Vtbl =
+static const struct IDirectDraw7Vtbl ddraw7_vtbl =
 {
     /* IUnknown */
     ddraw7_QueryInterface,
@@ -5286,7 +5286,7 @@ const IDirectDraw7Vtbl IDirectDraw7_Vtbl =
     ddraw7_EvaluateMode
 };
 
-const struct IDirectDraw4Vtbl IDirectDraw4_Vtbl =
+static const struct IDirectDraw4Vtbl ddraw4_vtbl =
 {
     /* IUnknown */
     ddraw4_QueryInterface,
@@ -5323,7 +5323,7 @@ const struct IDirectDraw4Vtbl IDirectDraw4_Vtbl =
     ddraw4_GetDeviceIdentifier,
 };
 
-const struct IDirectDraw3Vtbl IDirectDraw3_Vtbl =
+static const struct IDirectDraw3Vtbl ddraw3_vtbl =
 {
     /* IUnknown */
     ddraw3_QueryInterface,
@@ -5356,7 +5356,7 @@ const struct IDirectDraw3Vtbl IDirectDraw3_Vtbl =
     ddraw3_GetSurfaceFromDC,
 };
 
-const struct IDirectDraw2Vtbl IDirectDraw2_Vtbl =
+static const struct IDirectDraw2Vtbl ddraw2_vtbl =
 {
     /* IUnknown */
     ddraw2_QueryInterface,
@@ -5387,7 +5387,7 @@ const struct IDirectDraw2Vtbl IDirectDraw2_Vtbl =
     ddraw2_GetAvailableVidMem,
 };
 
-const struct IDirectDrawVtbl IDirectDraw1_Vtbl =
+static const struct IDirectDrawVtbl ddraw1_vtbl =
 {
     /* IUnknown */
     ddraw1_QueryInterface,
@@ -5416,7 +5416,7 @@ const struct IDirectDrawVtbl IDirectDraw1_Vtbl =
     ddraw1_WaitForVerticalBlank,
 };
 
-const IDirect3D7Vtbl IDirect3D7_Vtbl =
+static const struct IDirect3D7Vtbl d3d7_vtbl =
 {
     /* IUnknown methods */
     d3d7_QueryInterface,
@@ -5430,7 +5430,7 @@ const IDirect3D7Vtbl IDirect3D7_Vtbl =
     d3d7_EvictManagedTextures
 };
 
-const IDirect3D3Vtbl IDirect3D3_Vtbl =
+static const struct IDirect3D3Vtbl d3d3_vtbl =
 {
     /* IUnknown methods */
     d3d3_QueryInterface,
@@ -5448,7 +5448,7 @@ const IDirect3D3Vtbl IDirect3D3_Vtbl =
     d3d3_EvictManagedTextures
 };
 
-const IDirect3D2Vtbl IDirect3D2_Vtbl =
+static const struct IDirect3D2Vtbl d3d2_vtbl =
 {
     /* IUnknown methods */
     d3d2_QueryInterface,
@@ -5463,7 +5463,7 @@ const IDirect3D2Vtbl IDirect3D2_Vtbl =
     d3d2_CreateDevice
 };
 
-const IDirect3DVtbl IDirect3D1_Vtbl =
+static const struct IDirect3DVtbl d3d1_vtbl =
 {
     /* IUnknown methods */
     d3d1_QueryInterface,
@@ -5812,7 +5812,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     return hr;
 }
 
-const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl =
+static const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl =
 {
     /* IUnknown methods */
     device_parent_QueryInterface,
@@ -5826,3 +5826,62 @@ const IWineD3DDeviceParentVtbl ddraw_wined3d_device_parent_vtbl =
     device_parent_CreateVolume,
     device_parent_CreateSwapChain,
 };
+
+HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
+{
+    HRESULT hr;
+    HDC hDC;
+
+    ddraw->lpVtbl = &ddraw7_vtbl;
+    ddraw->IDirectDraw_vtbl = &ddraw1_vtbl;
+    ddraw->IDirectDraw2_vtbl = &ddraw2_vtbl;
+    ddraw->IDirectDraw3_vtbl = &ddraw3_vtbl;
+    ddraw->IDirectDraw4_vtbl = &ddraw4_vtbl;
+    ddraw->IDirect3D_vtbl = &d3d1_vtbl;
+    ddraw->IDirect3D2_vtbl = &d3d2_vtbl;
+    ddraw->IDirect3D3_vtbl = &d3d3_vtbl;
+    ddraw->IDirect3D7_vtbl = &d3d7_vtbl;
+    ddraw->device_parent_vtbl = &ddraw_wined3d_device_parent_vtbl;
+    ddraw->numIfaces = 1;
+    ddraw->ref7 = 1;
+
+    /* See comments in IDirectDrawImpl_CreateNewSurface for a description of
+     * this field. */
+    ddraw->ImplType = DefaultSurfaceType;
+
+    /* Get the current screen settings. */
+    hDC = GetDC(0);
+    ddraw->orig_bpp = GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES);
+    ReleaseDC(0, hDC);
+    ddraw->orig_width = GetSystemMetrics(SM_CXSCREEN);
+    ddraw->orig_height = GetSystemMetrics(SM_CYSCREEN);
+
+    if (!LoadWineD3D())
+    {
+        ERR("Failed to load wined3d - broken OpenGL setup?\n");
+        return DDERR_NODIRECTDRAWSUPPORT;
+    }
+
+    ddraw->wineD3D = pWineDirect3DCreate(7, (IUnknown *)ddraw);
+    if (!ddraw->wineD3D)
+    {
+        WARN("Failed to create a wined3d object.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = IWineD3D_CreateDevice(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type, NULL, 0, (IUnknown *)ddraw,
+            (IWineD3DDeviceParent *)&ddraw->device_parent_vtbl, &ddraw->wineD3DDevice);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create a wined3d device, hr %#x.\n", hr);
+        IWineD3D_Release(ddraw->wineD3D);
+        return hr;
+    }
+
+    /* Get the amount of video memory */
+    ddraw->total_vidmem = IWineD3DDevice_GetAvailableTextureMem(ddraw->wineD3DDevice);
+
+    list_init(&ddraw->surface_list);
+
+    return DD_OK;
+}
