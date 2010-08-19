@@ -732,8 +732,8 @@
 @ stub -arch=win64 ??0?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAA@W4_Uninitialized@1@@Z
 @ stub -arch=win32 ??0?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAE@XZ
 @ stub -arch=win64 ??0?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAA@XZ
-@ stub -arch=win32 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV01@@Z
+@ cdecl -arch=win32 -i386 -norelay ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@@Z(ptr) __thiscall_MSVCP_basic_string_char_copy_ctor
+@ cdecl -arch=win64 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_basic_string_char_copy_ctor
 @ stub -arch=win32 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@II@Z
 @ stub -arch=win64 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV01@_K1@Z
 @ stub -arch=win32 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@IIABV?$allocator@D@1@@Z
