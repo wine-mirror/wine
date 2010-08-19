@@ -614,8 +614,8 @@ struct IDirect3DExecuteBufferImpl
     BOOL                 need_free;
 };
 
-/* The VTable */
-extern const IDirect3DExecuteBufferVtbl IDirect3DExecuteBuffer_Vtbl DECLSPEC_HIDDEN;
+HRESULT d3d_execute_buffer_init(IDirect3DExecuteBufferImpl *execute_buffer,
+        IDirect3DDeviceImpl *device, D3DEXECUTEBUFFERDESC *desc) DECLSPEC_HIDDEN;
 
 /* The execute function */
 void IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,

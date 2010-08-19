@@ -712,6 +712,8 @@ IDirect3DDeviceImpl_1_CreateExecuteBuffer(IDirect3DDevice *iface,
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     IDirect3DExecuteBufferImpl* object;
+    HRESULT hr;
+
     TRACE("(%p)->(%p,%p,%p)!\n", This, Desc, ExecuteBuffer, UnkOuter);
 
     if(UnkOuter)
@@ -725,45 +727,13 @@ IDirect3DDeviceImpl_1_CreateExecuteBuffer(IDirect3DDevice *iface,
         return DDERR_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &IDirect3DExecuteBuffer_Vtbl;
-    object->ref = 1;
-    object->d3ddev = This;
-
-    /* Initializes memory */
-    memcpy(&object->desc, Desc, Desc->dwSize);
-
-    /* No buffer given */
-    if ((object->desc.dwFlags & D3DDEB_LPDATA) == 0)
-        object->desc.lpData = NULL;
-
-    /* No buffer size given */
-    if ((object->desc.dwFlags & D3DDEB_BUFSIZE) == 0)
-        object->desc.dwBufferSize = 0;
-
-    /* Create buffer if asked */
-    if ((object->desc.lpData == NULL) && (object->desc.dwBufferSize > 0))
+    hr = d3d_execute_buffer_init(object, This, Desc);
+    if (FAILED(hr))
     {
-        object->need_free = TRUE;
-        object->desc.lpData = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,object->desc.dwBufferSize);
-        if(!object->desc.lpData)
-        {
-            ERR("Out of memory when allocating the execute buffer data\n");
-            HeapFree(GetProcessHeap(), 0, object);
-            return DDERR_OUTOFMEMORY;
-        }
+        WARN("Failed to initialize execute buffer, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
     }
-    else
-    {
-        object->need_free = FALSE;
-    }
-
-    /* No vertices for the moment */
-    object->vertex_data = NULL;
-
-    object->desc.dwFlags |= D3DDEB_LPDATA;
-
-    object->indices = NULL;
-    object->nb_indices = 0;
 
     *ExecuteBuffer = (IDirect3DExecuteBuffer *)object;
 

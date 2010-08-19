@@ -825,7 +825,7 @@ IDirect3DExecuteBufferImpl_Optimize(IDirect3DExecuteBuffer *iface,
     return DDERR_UNSUPPORTED; /* Unchecked */
 }
 
-const IDirect3DExecuteBufferVtbl IDirect3DExecuteBuffer_Vtbl =
+static const struct IDirect3DExecuteBufferVtbl d3d_execute_buffer_vtbl =
 {
     IDirect3DExecuteBufferImpl_QueryInterface,
     IDirect3DExecuteBufferImpl_AddRef,
@@ -838,3 +838,38 @@ const IDirect3DExecuteBufferVtbl IDirect3DExecuteBuffer_Vtbl =
     IDirect3DExecuteBufferImpl_Validate,
     IDirect3DExecuteBufferImpl_Optimize,
 };
+
+HRESULT d3d_execute_buffer_init(IDirect3DExecuteBufferImpl *execute_buffer,
+        IDirect3DDeviceImpl *device, D3DEXECUTEBUFFERDESC *desc)
+{
+    execute_buffer->lpVtbl = &d3d_execute_buffer_vtbl;
+    execute_buffer->ref = 1;
+    execute_buffer->d3ddev = device;
+
+    /* Initializes memory */
+    memcpy(&execute_buffer->desc, desc, desc->dwSize);
+
+    /* No buffer given */
+    if (!(execute_buffer->desc.dwFlags & D3DDEB_LPDATA))
+        execute_buffer->desc.lpData = NULL;
+
+    /* No buffer size given */
+    if (!(execute_buffer->desc.dwFlags & D3DDEB_BUFSIZE))
+        execute_buffer->desc.dwBufferSize = 0;
+
+    /* Create buffer if asked */
+    if (!execute_buffer->desc.lpData && execute_buffer->desc.dwBufferSize)
+    {
+        execute_buffer->need_free = TRUE;
+        execute_buffer->desc.lpData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, execute_buffer->desc.dwBufferSize);
+        if (!execute_buffer->desc.lpData)
+        {
+            ERR("Failed to allocate execute buffer data.\n");
+            return DDERR_OUTOFMEMORY;
+        }
+    }
+
+    execute_buffer->desc.dwFlags |= D3DDEB_LPDATA;
+
+    return D3D_OK;
+}
