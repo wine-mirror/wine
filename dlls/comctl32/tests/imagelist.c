@@ -254,7 +254,7 @@ static void check_bits(HWND hwnd, HIMAGELIST himl, int idx, int size,
 #endif /* VISIBLE */
 }
 
-static void testHotspot (void)
+static void test_hotspot(void)
 {
     struct hotspot {
         int dx;
@@ -328,7 +328,7 @@ static void testHotspot (void)
     DestroyWindow(hwnd);
 }
 
-static BOOL DoTest1(void)
+static void test_add_remove(void)
 {
     HIMAGELIST himl ;
 
@@ -369,67 +369,38 @@ static BOOL DoTest1(void)
     /* remove one extra */
     ok(!ImageList_Remove(himl,0),"removed nonexistent icon\n");
 
-    /* check SetImageCount/GetImageCount */
-    if (pImageList_SetImageCount)
-    {
-        ok(pImageList_SetImageCount(himl, 3), "couldn't increase image count\n");
-        ok(ImageList_GetImageCount(himl) == 3, "invalid image count after increase\n");
-        ok(pImageList_SetImageCount(himl, 1), "couldn't decrease image count\n");
-        ok(ImageList_GetImageCount(himl) == 1, "invalid image count after decrease to 1\n");
-        ok(pImageList_SetImageCount(himl, 0), "couldn't decrease image count\n");
-        ok(ImageList_GetImageCount(himl) == 0, "invalid image count after decrease to 0\n");
-    }
-    else
-    {
-        skip("skipped ImageList_SetImageCount tests\n");
-    }
-
     /* destroy it */
     ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
     ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
     ok(DestroyIcon(hicon2),"icon 2 wasn't deleted\n");
     ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
-
-    return TRUE;
 }
 
-static BOOL DoTest2(void)
+static void test_imagecount(void)
 {
-    HIMAGELIST himl ;
+    HIMAGELIST himl;
 
-    HICON hicon1 ;
-    HICON hicon2 ;
-    HICON hicon3 ;
+    if (!pImageList_SetImageCount)
+    {
+        win_skip("ImageList_SetImageCount not available\n");
+        return;
+    }
 
-    /* create an imagelist to play with */
     himl = ImageList_Create(84, 84, ILC_COLOR16, 0, 3);
     ok(himl!=0,"failed to create imagelist\n");
 
-    /* load the icons to add to the image list */
-    hicon1 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon1 != 0, "no hicon1\n");
-    hicon2 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon2 != 0, "no hicon2\n");
-    hicon3 = CreateIcon(hinst, 32, 32, 1, 1, icon_bits, icon_bits);
-    ok(hicon3 != 0, "no hicon3\n");
+    ok(pImageList_SetImageCount(himl, 3), "couldn't increase image count\n");
+    ok(ImageList_GetImageCount(himl) == 3, "invalid image count after increase\n");
+    ok(pImageList_SetImageCount(himl, 1), "couldn't decrease image count\n");
+    ok(ImageList_GetImageCount(himl) == 1, "invalid image count after decrease to 1\n");
+    ok(pImageList_SetImageCount(himl, 0), "couldn't decrease image count\n");
+    ok(ImageList_GetImageCount(himl) == 0, "invalid image count after decrease to 0\n");
 
-    /* add three */
-    ok(0==ImageList_AddIcon(himl, hicon1),"failed to add icon1\n");
-    ok(1==ImageList_AddIcon(himl, hicon2),"failed to add icon2\n");
-    ok(2==ImageList_AddIcon(himl, hicon3),"failed to add icon3\n");
-
-    /* destroy it */
-    ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
-
-    ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
-    ok(DestroyIcon(hicon2),"icon 2 wasn't deleted\n");
-    ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
-
-    return TRUE;
+    ok(ImageList_Destroy(himl), "destroy imagelist failed\n");
 }
 
-static BOOL DoTest3(void)
+static void test_DrawIndirect(void)
 {
     HIMAGELIST himl;
 
@@ -444,7 +415,7 @@ static BOOL DoTest3(void)
     if (!pImageList_DrawIndirect)
     {
         win_skip("ImageList_DrawIndirect not available, skipping test\n");
-        return TRUE;
+        return;
     }
 
     hwndfortest = create_a_window();
@@ -518,11 +489,9 @@ static BOOL DoTest3(void)
 
     ReleaseDC(hwndfortest, hdc);
     DestroyWindow(hwndfortest);
-
-    return TRUE;
 }
 
-static void testMerge(void)
+static void test_merge(void)
 {
     HIMAGELIST himl1, himl2, hmerge;
     HICON hicon1;
@@ -1426,7 +1395,7 @@ static void test_iimagelist(void)
     ImageList_Destroy(himl);
 }
 
-static void testHotspot_v6(void)
+static void test_hotspot_v6(void)
 {
     struct hotspot {
         int dx;
@@ -1501,7 +1470,7 @@ static void testHotspot_v6(void)
     IImageList_Release(imgl1);
 }
 
-static void DoTest1_v6(void)
+static void test_IImageList_Add_Remove(void)
 {
     IImageList *imgl;
     HIMAGELIST himl;
@@ -1529,45 +1498,68 @@ static void DoTest1_v6(void)
 
     /* remove when nothing exists */
     hr = IImageList_Remove(imgl, 0);
-    ok(!(SUCCEEDED(hr)), "removed nonexistent icon\n");
+    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* removing everything from an empty imagelist should succeed */
     hr = IImageList_Remove(imgl, -1);
-    ok(SUCCEEDED(hr), "removed nonexistent icon\n");
+    ok(hr == S_OK, "removed nonexistent icon\n");
 
     /* add three */
-    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl, -1, hicon1, &ret)) && (ret == 0),"failed to add icon1\n");
-    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl, -1, hicon2, &ret)) && (ret == 1),"failed to add icon2\n");
-    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl, -1, hicon3, &ret)) && (ret == 2),"failed to add icon3\n");
+    ok( IImageList_ReplaceIcon(imgl, -1, hicon1, &ret) == S_OK && (ret == 0),"failed to add icon1\n");
+    ok( IImageList_ReplaceIcon(imgl, -1, hicon2, &ret) == S_OK && (ret == 1),"failed to add icon2\n");
+    ok( IImageList_ReplaceIcon(imgl, -1, hicon3, &ret) == S_OK && (ret == 2),"failed to add icon3\n");
 
     /* remove an index out of range */
-    ok(FAILED(IImageList_Remove(imgl, 4711)),"removed nonexistent icon\n");
+    todo_wine ok( IImageList_Remove(imgl, 4711) == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* remove three */
-    ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
-    ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
-    ok(SUCCEEDED(IImageList_Remove(imgl,0)),"can't remove 0\n");
+    ok( IImageList_Remove(imgl,0) == S_OK, "can't remove 0\n");
+    ok( IImageList_Remove(imgl,0) == S_OK, "can't remove 0\n");
+    ok( IImageList_Remove(imgl,0) == S_OK, "can't remove 0\n");
 
     /* remove one extra */
-    ok(FAILED(IImageList_Remove(imgl, 0)),"removed nonexistent icon\n");
+    todo_wine ok( IImageList_Remove(imgl, 0) == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    /* check SetImageCount/GetImageCount */
-    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 3)), "couldn't increase image count\n");
-    ok(SUCCEEDED(IImageList_GetImageCount(imgl, &ret)) && (ret == 3), "invalid image count after increase\n");
-    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 1)), "couldn't decrease image count\n");
-    ok(SUCCEEDED(IImageList_GetImageCount(imgl, &ret)) && (ret == 1), "invalid image count after decrease to 1\n");
-    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 0)), "couldn't decrease image count\n");
-    ok(SUCCEEDED(IImageList_GetImageCount(imgl, &ret)) && (ret == 0), "invalid image count after decrease to 0\n");
-
-    /* destroy it */
-    ok(SUCCEEDED(IImageList_Release(imgl)),"release imagelist failed\n");
-
+    IImageList_Release(imgl);
     ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
     ok(DestroyIcon(hicon2),"icon 2 wasn't deleted\n");
     ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
 }
 
-static void DoTest3_v6(void)
+static void test_IImageList_Get_SetImageCount(void)
+{
+    IImageList *imgl;
+    HIMAGELIST himl;
+    HRESULT hr;
+    INT ret;
+
+    /* create an imagelist to play with */
+    himl = ImageList_Create(84, 84, ILC_COLOR16, 0, 3);
+    ok(himl != 0,"failed to create imagelist\n");
+
+    imgl = (IImageList *) himl;
+
+    /* check SetImageCount/GetImageCount */
+    hr = IImageList_SetImageCount(imgl, 3);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = 0;
+    hr = IImageList_GetImageCount(imgl, &ret);
+    ok(hr == S_OK && ret == 3, "invalid image count after increase\n");
+    hr = IImageList_SetImageCount(imgl, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = 0;
+    hr = IImageList_GetImageCount(imgl, &ret);
+    ok(hr == S_OK && ret == 1, "invalid image count after decrease to 1\n");
+    hr = IImageList_SetImageCount(imgl, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = -1;
+    hr = IImageList_GetImageCount(imgl, &ret);
+    ok(hr == S_OK && ret == 0, "invalid image count after decrease to 0\n");
+
+    IImageList_Release(imgl);
+}
+
+static void test_IImageList_Draw(void)
 {
     IImageList *imgl;
     HIMAGELIST himl;
@@ -1578,6 +1570,7 @@ static void DoTest3_v6(void)
 
     IMAGELISTDRAWPARAMS imldp;
     HWND hwndfortest;
+    HRESULT hr;
     HDC hdc;
     int ret;
 
@@ -1600,14 +1593,17 @@ static void DoTest3_v6(void)
     ok(hbm3 != 0, "no bitmap 3\n");
 
     /* add three */
-    ok(SUCCEEDED(IImageList_Add(imgl, hbm1, 0, &ret)) && (ret == 0), "failed to add bitmap 1\n");
-    ok(SUCCEEDED(IImageList_Add(imgl, hbm2, 0, &ret)) && (ret == 1), "failed to add bitmap 2\n");
+    ret = -1;
+    ok( IImageList_Add(imgl, hbm1, 0, &ret) == S_OK && (ret == 0), "failed to add bitmap 1\n");
+    ret = -1;
+    ok( IImageList_Add(imgl, hbm2, 0, &ret) == S_OK && (ret == 1), "failed to add bitmap 2\n");
 
-    ok(SUCCEEDED(IImageList_SetImageCount(imgl, 3)), "Setimage count failed\n");
-    ok(SUCCEEDED(IImageList_Replace(imgl, 2, hbm3, 0)), "failed to replace bitmap 3\n");
+    ok( IImageList_SetImageCount(imgl, 3) == S_OK, "Setimage count failed\n");
+    ok( IImageList_Replace(imgl, 2, hbm3, 0) == S_OK, "failed to replace bitmap 3\n");
 
     memset(&imldp, 0, sizeof (imldp));
-    ok(FAILED(IImageList_Draw(imgl, &imldp)), "zero data succeeded!\n");
+    hr = IImageList_Draw(imgl, &imldp);
+    todo_wine ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     imldp.cbSize = sizeof (imldp);
     imldp.hdcDst = hdc;
@@ -1628,21 +1624,21 @@ static void DoTest3_v6(void)
     imldp.rgbFg = CLR_DEFAULT;
     imldp.y = 100;
     imldp.x = 100;
-    ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
+    ok( IImageList_Draw(imgl, &imldp) == S_OK, "should succeed\n");
     imldp.i ++;
-    ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
+    ok( IImageList_Draw(imgl, &imldp) == S_OK, "should succeed\n");
     imldp.i ++;
-    ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
+    ok( IImageList_Draw(imgl, &imldp) == S_OK, "should succeed\n");
     imldp.i ++;
-    ok(FAILED(IImageList_Draw(imgl, &imldp)), "should fail\n");
+    todo_wine ok( IImageList_Draw(imgl, &imldp) == E_INVALIDARG, "should fail\n");
 
     /* remove three */
-    ok(SUCCEEDED(IImageList_Remove(imgl, 0)), "removing 1st bitmap\n");
-    ok(SUCCEEDED(IImageList_Remove(imgl, 0)), "removing 2nd bitmap\n");
-    ok(SUCCEEDED(IImageList_Remove(imgl, 0)), "removing 3rd bitmap\n");
+    ok( IImageList_Remove(imgl, 0) == S_OK, "removing 1st bitmap\n");
+    ok( IImageList_Remove(imgl, 0) == S_OK, "removing 2nd bitmap\n");
+    ok( IImageList_Remove(imgl, 0) == S_OK, "removing 3rd bitmap\n");
 
     /* destroy it */
-    ok(SUCCEEDED(IImageList_Release(imgl)), "release imagelist failed\n");
+    IImageList_Release(imgl);
 
     /* bitmaps should not be deleted by the imagelist */
     ok(DeleteObject(hbm1),"bitmap 1 can't be deleted\n");
@@ -1653,7 +1649,7 @@ static void DoTest3_v6(void)
     DestroyWindow(hwndfortest);
 }
 
-static void testMerge_v6(void)
+static void test_IImageList_Merge(void)
 {
     HIMAGELIST himl1, himl2;
     IImageList *imgl1, *imgl2, *merge;
@@ -1678,16 +1674,17 @@ static void testMerge_v6(void)
     imgl1 = (IImageList *) himl1;
     imgl2 = (IImageList *) himl2;
 
-    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl2, -1, hicon1, &ret)) && (ret == 0),"add icon1 to himl2 failed\n");
+    ret = -1;
+    ok( IImageList_ReplaceIcon(imgl2, -1, hicon1, &ret) == S_OK && (ret == 0),"add icon1 to himl2 failed\n");
 
     /* If himl1 has no images, merge still succeeds */
     hr = IImageList_Merge(imgl1, -1, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
-    ok(SUCCEEDED(hr), "merge himl1,-1 failed\n");
-    if (SUCCEEDED(hr)) IImageList_Release(merge);
+    ok(hr == S_OK, "merge himl1,-1 failed\n");
+    if (hr == S_OK) IImageList_Release(merge);
 
     hr = IImageList_Merge(imgl1, 0, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
-    ok(SUCCEEDED(hr), "merge himl1,0 failed\n");
-    if (SUCCEEDED(hr)) IImageList_Release(merge);
+    ok(hr == S_OK, "merge himl1,0 failed\n");
+    if (hr == S_OK) IImageList_Release(merge);
 
     /* Same happens if himl2 is empty */
     IImageList_Release(imgl2);
@@ -1697,30 +1694,32 @@ static void testMerge_v6(void)
     imgl2 = (IImageList *) himl2;
 
     hr = IImageList_Merge(imgl1, -1, (IUnknown *) imgl2, -1, 0, 0, &IID_IImageList, (void **) &merge);
-    ok(SUCCEEDED(hr), "merge himl2,-1 failed\n");
-    if (SUCCEEDED(hr)) IImageList_Release(merge);
+    ok(hr == S_OK, "merge himl2,-1 failed\n");
+    if (hr == S_OK) IImageList_Release(merge);
 
     hr = IImageList_Merge(imgl1, -1, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
-    ok(SUCCEEDED(hr), "merge himl2,0 failed\n");
-    if (SUCCEEDED(hr)) IImageList_Release(merge);
+    ok(hr == S_OK, "merge himl2,0 failed\n");
+    if (hr == S_OK) IImageList_Release(merge);
 
     /* Now try merging an image with itself */
-    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl2, -1, hicon1, &ret)) && (ret == 0),"re-add icon1 to himl2 failed\n");
+    ret = -1;
+    ok( IImageList_ReplaceIcon(imgl2, -1, hicon1, &ret) == S_OK && (ret == 0),"re-add icon1 to himl2 failed\n");
 
     hr = IImageList_Merge(imgl2, 0, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
-    ok(SUCCEEDED(hr), "merge himl2 with itself failed\n");
-    if (SUCCEEDED(hr)) IImageList_Release(merge);
+    ok(hr == S_OK, "merge himl2 with itself failed\n");
+    if (hr == S_OK) IImageList_Release(merge);
 
     /* Try merging 2 different image lists */
-    ok(SUCCEEDED(IImageList_ReplaceIcon(imgl1, -1, hicon1, &ret)) && (ret == 0),"add icon1 to himl1 failed\n");
+    ret = -1;
+    ok( IImageList_ReplaceIcon(imgl1, -1, hicon1, &ret) == S_OK && (ret == 0),"add icon1 to himl1 failed\n");
 
     hr = IImageList_Merge(imgl1, 0, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
-    ok(SUCCEEDED(hr), "merge himl1 with himl2 failed\n");
-    if (SUCCEEDED(hr)) IImageList_Release(merge);
+    ok(hr == S_OK, "merge himl1 with himl2 failed\n");
+    if (hr == S_OK) IImageList_Release(merge);
 
     hr = IImageList_Merge(imgl1, 0, (IUnknown *) imgl2, 0, 8, 16, &IID_IImageList, (void **) &merge);
-    ok(SUCCEEDED(hr), "merge himl1 with himl2 8,16 failed\n");
-    if (SUCCEEDED(hr)) IImageList_Release(merge);
+    ok(hr == S_OK, "merge himl1 with himl2 8,16 failed\n");
+    if (hr == S_OK) IImageList_Release(merge);
 
     IImageList_Release(imgl1);
     IImageList_Release(imgl2);
@@ -1744,11 +1743,11 @@ START_TEST(imagelist)
 
     InitCommonControls();
 
-    testHotspot();
-    DoTest1();
-    DoTest2();
-    DoTest3();
-    testMerge();
+    test_hotspot();
+    test_add_remove();
+    test_imagecount();
+    test_DrawIndirect();
+    test_merge();
     test_imagelist_storage();
 
     FreeLibrary(hComCtl32);
@@ -1774,10 +1773,11 @@ START_TEST(imagelist)
     test_shell_imagelist();
     test_iimagelist();
 
-    testHotspot_v6();
-    DoTest1_v6();
-    DoTest3_v6();
-    testMerge_v6();
+    test_hotspot_v6();
+    test_IImageList_Add_Remove();
+    test_IImageList_Get_SetImageCount();
+    test_IImageList_Draw();
+    test_IImageList_Merge();
 
     CoUninitialize();
 
