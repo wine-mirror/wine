@@ -783,7 +783,8 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
             DWORD size;
 
             size = sizeof(new_url)/sizeof(WCHAR);
-            hres = UrlApplySchemeW(url, new_url, &size, URL_APPLY_GUESSSCHEME);
+            hres = UrlApplySchemeW(url, new_url, &size,
+                    URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT);
             if(FAILED(hres)) {
                 WARN("UrlApplyScheme failed: %08x\n", hres);
                 new_url[0] = 0;
