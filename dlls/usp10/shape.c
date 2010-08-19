@@ -780,7 +780,7 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
     else
         psc->features = HeapAlloc(GetProcessHeap(), 0, psc->feature_count * sizeof(LoadedFeature));
 
-    lstrcpynA(psc->features[psc->feature_count - 1].tag,feat,4);
+    lstrcpynA(psc->features[psc->feature_count - 1].tag, feat, 5);
     psc->features[psc->feature_count - 1].feature = feature;
     return feature;
 }
