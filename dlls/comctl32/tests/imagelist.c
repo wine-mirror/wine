@@ -1596,9 +1596,15 @@ static void test_IImageList_Draw(void)
     ok( IImageList_SetImageCount(imgl, 3) == S_OK, "Setimage count failed\n");
     ok( IImageList_Replace(imgl, 2, hbm3, 0) == S_OK, "failed to replace bitmap 3\n");
 
+if (0)
+{
+    /* crashes on native */
+    hr = IImageList_Draw(imgl, NULL);
+}
+
     memset(&imldp, 0, sizeof (imldp));
     hr = IImageList_Draw(imgl, &imldp);
-    todo_wine ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     imldp.cbSize = IMAGELISTDRAWPARAMS_V3_SIZE;
     imldp.hdcDst = hdc;
@@ -1618,7 +1624,7 @@ static void test_IImageList_Draw(void)
     imldp.i ++;
     ok( IImageList_Draw(imgl, &imldp) == S_OK, "should succeed\n");
     imldp.i ++;
-    todo_wine ok( IImageList_Draw(imgl, &imldp) == E_INVALIDARG, "should fail\n");
+    ok( IImageList_Draw(imgl, &imldp) == E_INVALIDARG, "should fail\n");
 
     /* remove three */
     ok( IImageList_Remove(imgl, 0) == S_OK, "removing 1st bitmap\n");

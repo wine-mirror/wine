@@ -3298,11 +3298,8 @@ static HRESULT WINAPI ImageListImpl_Draw(IImageList *iface,
     IMAGELISTDRAWPARAMS *pimldp)
 {
     HIMAGELIST This = (HIMAGELIST) iface;
-    HIMAGELIST old_himl = 0;
-    int ret = 0;
-
-    if (!pimldp)
-        return E_FAIL;
+    HIMAGELIST old_himl;
+    int ret;
 
     /* As far as I can tell, Windows simply ignores the contents of pimldp->himl
        so we shall simulate the same */
@@ -3312,7 +3309,7 @@ static HRESULT WINAPI ImageListImpl_Draw(IImageList *iface,
     ret = ImageList_DrawIndirect(pimldp);
 
     pimldp->himl = old_himl;
-    return ret ? S_OK : E_FAIL;
+    return ret ? S_OK : E_INVALIDARG;
 }
 
 static HRESULT WINAPI ImageListImpl_Remove(IImageList *iface, int i)
