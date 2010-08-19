@@ -781,9 +781,20 @@ static void test_currdate(void)
 static void test_firstDay(void)
 {
     int res, fday, i, prev;
-    CHAR b[128];
+    CHAR b[128], caltype[3];
     LCID lcid = LOCALE_USER_DEFAULT;
     HWND hwnd;
+    LRESULT ret;
+
+    SetLastError(0xdeadbeef);
+    ret = GetLocaleInfoA(lcid, LOCALE_ICALENDARTYPE, caltype, 3);
+    if (ret == 0) {
+        skip("Must know local calendar type (%x)\n", GetLastError());
+        return;
+    } else if (atoi(caltype) != CAL_GREGORIAN) {
+        skip("MonthCalendar Control only supports Gregorian calendar (type: %s)\n", caltype);
+        return;
+    }
 
     hwnd = create_monthcal_control(0);
 

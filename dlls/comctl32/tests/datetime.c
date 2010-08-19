@@ -659,7 +659,7 @@ static void test_dtm_set_and_get_system_time(void)
 static void test_wm_set_get_text(void)
 {
     static const CHAR a_str[] = "a";
-    char buff[16], time[16];
+    CHAR buff[16], time[16], caltype[3];
     HWND hWnd;
     LRESULT ret;
 
@@ -677,11 +677,19 @@ static void test_wm_set_get_text(void)
     ok(ret != 0, "Expected non-zero return value\n");
 
     SetLastError(0xdeadbeef);
-    ret = GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, NULL, time, sizeof(time));
+    ret = GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_ICALENDARTYPE, caltype, 3);
     if (ret == 0)
-        skip("GetDateFormat failed, returned %ld, error %d\n", ret, GetLastError());
-    else
-        ok(!strcmp(buff, time), "Expected %s, got %s\n", time, buff);
+        skip("Must know local calendar type (%x)\n", GetLastError());
+    else if (atoi(caltype) != CAL_GREGORIAN)
+        skip("DateTimePicker Control only supports Gregorian calendar (type: %s)\n", caltype);
+    else {
+        SetLastError(0xdeadbeef);
+        ret = GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, NULL, time, sizeof(time));
+        if (ret == 0)
+            skip("GetDateFormat failed, returned %ld, error %d\n", ret, GetLastError());
+        else
+            ok(!strcmp(buff, time), "Expected %s, got %s\n", time, buff);
+    }
 
     DestroyWindow(hWnd);
 }
