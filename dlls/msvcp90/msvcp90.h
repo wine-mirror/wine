@@ -109,3 +109,18 @@ typedef struct _rtti_object_locator
     const type_info *type_descriptor;
     const rtti_object_hierarchy *type_hierarchy;
 } rtti_object_locator;
+
+/* basic_string<char, char_traits<char>, allocator<char>> */
+#define BUF_SIZE_CHAR 16
+typedef struct _basic_string_char
+{
+    void *allocator;
+    union _data {
+        char buf[BUF_SIZE_CHAR];
+        char *ptr;
+    } data;
+    size_t size;
+    size_t res;
+} basic_string_char;
+
+void __stdcall MSVCP_allocator_char_deallocate(void*, char*, size_t);

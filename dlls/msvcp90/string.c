@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 
 #include "msvcp90.h"
@@ -461,4 +463,51 @@ unsigned short CDECL MSVCP_char_traits_short_eof(void)
 unsigned short CDECL MSVCP_char_traits_short_not_eof(const unsigned short *in)
 {
     return (*in==(unsigned short)-1 ? 0 : *in);
+}
+
+
+/* basic_string<char, char_traits<char>, allocator<char>> */
+/* Internal: basic_string_char_ptr - return pointer to stored string */
+static char* basic_string_char_ptr(basic_string_char *this)
+{
+    if(this->res == BUF_SIZE_CHAR-1)
+        return this->data.buf;
+    return this->data.ptr;
+}
+
+/* Internal: basic_string_char_eos - sets string length, puts '\0' on the end */
+static void basic_string_char_eos(basic_string_char *this, size_t len)
+{
+    static const char nullbyte = '\0';
+
+    this->size = len;
+    MSVCP_char_traits_char_assign(basic_string_char_ptr(this)+len, &nullbyte);
+}
+
+/* Internal: basic_string_char_tidy - initialize basic_string buffer, deallocates data */
+/* Caution: new_size have to be smaller than BUF_SIZE_CHAR */
+static void basic_string_char_tidy(basic_string_char *this,
+        MSVCP_BOOL built, int new_size)
+{
+    if(built && BUF_SIZE_CHAR<=this->res) {
+        char *ptr = this->data.ptr;
+
+        if(new_size > 0)
+            MSVCP_char_traits_char__Copy_s(this->data.buf, BUF_SIZE_CHAR, ptr, new_size);
+        MSVCP_allocator_char_deallocate(this->allocator, ptr, this->res+1);
+    }
+
+    this->res = BUF_SIZE_CHAR-1;
+    basic_string_char_eos(this, new_size);
+}
+
+/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
+/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor, 4)
+basic_string_char* __stdcall MSVCP_basic_string_char_ctor(basic_string_char *this)
+{
+    TRACE("%p\n", this);
+
+    basic_string_char_tidy(this, FALSE, 0);
+    return this;
 }
