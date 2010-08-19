@@ -1493,7 +1493,7 @@ static void test_IImageList_Add_Remove(void)
 
     /* remove when nothing exists */
     hr = IImageList_Remove(imgl, 0);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* removing everything from an empty imagelist should succeed */
     hr = IImageList_Remove(imgl, -1);
@@ -1505,7 +1505,7 @@ static void test_IImageList_Add_Remove(void)
     ok( IImageList_ReplaceIcon(imgl, -1, hicon3, &ret) == S_OK && (ret == 2),"failed to add icon3\n");
 
     /* remove an index out of range */
-    todo_wine ok( IImageList_Remove(imgl, 4711) == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok( IImageList_Remove(imgl, 4711) == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* remove three */
     ok( IImageList_Remove(imgl,0) == S_OK, "can't remove 0\n");
@@ -1513,7 +1513,7 @@ static void test_IImageList_Add_Remove(void)
     ok( IImageList_Remove(imgl,0) == S_OK, "can't remove 0\n");
 
     /* remove one extra */
-    todo_wine ok( IImageList_Remove(imgl, 0) == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok( IImageList_Remove(imgl, 0) == E_INVALIDARG, "got 0x%08x\n", hr);
 
     IImageList_Release(imgl);
     ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");

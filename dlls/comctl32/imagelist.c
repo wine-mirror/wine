@@ -3314,7 +3314,7 @@ static HRESULT WINAPI ImageListImpl_Draw(IImageList *iface,
 
 static HRESULT WINAPI ImageListImpl_Remove(IImageList *iface, int i)
 {
-    return (ImageList_Remove((HIMAGELIST) iface, i) == 0) ? E_FAIL : S_OK;
+    return (ImageList_Remove((HIMAGELIST) iface, i) == 0) ? E_INVALIDARG : S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_GetIcon(IImageList *iface, int i, UINT flags,
