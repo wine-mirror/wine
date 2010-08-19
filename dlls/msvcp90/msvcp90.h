@@ -123,4 +123,5 @@ typedef struct _basic_string_char
     size_t res;
 } basic_string_char;
 
+char* __stdcall MSVCP_allocator_char_allocate(void*, size_t);
 void __stdcall MSVCP_allocator_char_deallocate(void*, char*, size_t);
