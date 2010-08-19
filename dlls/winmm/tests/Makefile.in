@@ -9,6 +9,7 @@ C_SRCS = \
 	capture.c \
 	generated.c \
 	mci.c \
+	mcicda.c \
 	midi.c \
 	mixer.c \
 	mmio.c \
