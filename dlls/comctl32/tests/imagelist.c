@@ -1754,7 +1754,6 @@ static void test_create(void)
 {
     HIMAGELIST himl;
 
-todo_wine {
     /* list with zero or negative image dimensions */
     himl = ImageList_Create(0, 0, ILC_COLOR16, 0, 3);
     ok(himl == NULL, "got %p\n", himl);
@@ -1770,8 +1769,6 @@ todo_wine {
 
     himl = ImageList_Create(-1, 16, ILC_COLOR16, 0, 3);
     ok(himl == NULL, "got %p\n", himl);
-}
-
 }
 
 START_TEST(imagelist)

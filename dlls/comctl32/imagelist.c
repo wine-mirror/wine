@@ -694,6 +694,8 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     TRACE("(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
+    if (cx <= 0 || cy <= 0) return NULL;
+
     /* Create the IImageList interface for the image list */
     if (FAILED(ImageListImpl_CreateInstance(NULL, &IID_IImageList, (void **)&himl)))
         return NULL;
