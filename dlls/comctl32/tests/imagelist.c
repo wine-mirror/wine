@@ -447,17 +447,12 @@ static void test_DrawIndirect(void)
 
     memset(&imldp, 0, sizeof (imldp));
     ok(!pImageList_DrawIndirect(&imldp), "zero data succeeded!\n");
-    imldp.cbSize = sizeof (imldp);
+    imldp.cbSize = IMAGELISTDRAWPARAMS_V3_SIZE;
     ok(!pImageList_DrawIndirect(&imldp), "zero hdc succeeded!\n");
     imldp.hdcDst = hdc;
     ok(!pImageList_DrawIndirect(&imldp),"zero himl succeeded!\n");
     imldp.himl = himl;
-    if (!pImageList_DrawIndirect(&imldp))
-    {
-      /* Earlier versions of native comctl32 use a smaller structure */
-      imldp.cbSize -= 3 * sizeof(DWORD);
-      ok(pImageList_DrawIndirect(&imldp),"DrawIndirect should succeed\n");
-    }
+
     REDRAW(hwndfortest);
     WAIT;
 
@@ -1605,16 +1600,9 @@ static void test_IImageList_Draw(void)
     hr = IImageList_Draw(imgl, &imldp);
     todo_wine ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    imldp.cbSize = sizeof (imldp);
+    imldp.cbSize = IMAGELISTDRAWPARAMS_V3_SIZE;
     imldp.hdcDst = hdc;
     imldp.himl = himl;
-
-    if (FAILED(IImageList_Draw(imgl, &imldp)))
-    {
-       /* Earlier versions of native comctl32 use a smaller structure */
-       imldp.cbSize -= 3 * sizeof(DWORD);
-       ok(SUCCEEDED(IImageList_Draw(imgl, &imldp)), "should succeed\n");
-    }
 
     REDRAW(hwndfortest);
     WAIT;
