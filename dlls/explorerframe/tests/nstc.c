@@ -737,6 +737,7 @@ static void test_basics(void)
     RECT rc;
     IShellItem *roots[10];
     POINT pt;
+    int cbstate;
     WCHAR curdirW[MAX_PATH];
     WCHAR buf[MAX_PATH];
     static const WCHAR testdirW[] = {'t','e','s','t','d','i','r',0};
@@ -744,6 +745,8 @@ static void test_basics(void)
         {'t','e','s','t','d','i','r','\\','t','e','s','t','d','i','r','2',0};
     static const WCHAR test1W[] =
         {'t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
+    static const WCHAR explorerW[] = {'E','x','p','l','o','r','e','r',0};
+    static const WCHAR randomW[] = {'_','_','h','e','l','l','o',0};
 
     /* These should exist on platforms supporting the NSTC */
     ok(pSHCreateShellItem != NULL, "No SHCreateShellItem.\n");
@@ -1640,6 +1643,58 @@ static void test_basics(void)
 
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    /* GetItemCustomState / SetItemCustomState */
+    if(0)
+    {
+        /* Crashes under Windows 7 */
+        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, NULL, NULL);
+        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, NULL, &cbstate);
+        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, NULL);
+        hr = INameSpaceTreeControl_SetItemCustomState(pnstc, NULL, 0);
+    }
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+                                          0, NULL);
+    process_msgs();
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    todo_wine
+    {
+        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, &cbstate);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(cbstate == BST_UNCHECKED || broken(cbstate == BST_CHECKED /* Vista x64 */),
+           "Got %d\n", cbstate);
+
+        hr = INameSpaceTreeControl_SetItemCustomState(pnstc, psitestdir, BST_CHECKED);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, &cbstate);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(cbstate == BST_CHECKED, "Got %d\n", cbstate);
+
+        hr = INameSpaceTreeControl_SetItemCustomState(pnstc, psitestdir, 0xFFF);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, &cbstate);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        ok(cbstate == 0xF, "Got %d\n", cbstate);
+    }
+
+    /* SetTheme */
+    todo_wine
+    {
+        hr = INameSpaceTreeControl_SetTheme(pnstc, NULL);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        hr = INameSpaceTreeControl_SetTheme(pnstc, explorerW);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        hr = INameSpaceTreeControl_SetTheme(pnstc, randomW);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+    }
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
 
     IShellItem_Release(psidesktop);
     IShellItem_Release(psidesktop2);
