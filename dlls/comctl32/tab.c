@@ -1163,14 +1163,14 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
   if (!(infoPtr->fHeightSet))
   {
     int item_height;
-    int icon_height = 0;
+    INT icon_height = 0, cx;
 
     /* Use the current font to determine the height of a tab. */
     GetTextMetricsW(hdc, &fontMetrics);
 
     /* Get the icon height */
     if (infoPtr->himl)
-      ImageList_GetIconSize(infoPtr->himl, 0, &icon_height);
+      ImageList_GetIconSize(infoPtr->himl, &cx, &icon_height);
 
     /* Take the highest between font or icon */
     if (fontMetrics.tmHeight > icon_height)
@@ -1195,7 +1195,9 @@ static void TAB_SetItemBounds (TAB_INFO *infoPtr)
   /* Get the icon width */
   if (infoPtr->himl)
   {
-    ImageList_GetIconSize(infoPtr->himl, &icon_width, 0);
+    INT cy;
+
+    ImageList_GetIconSize(infoPtr->himl, &icon_width, &cy);
 
     if (infoPtr->dwStyle & TCS_FIXEDWIDTH)
       icon_width += 4;

@@ -1726,15 +1726,13 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 BOOL WINAPI
 ImageList_GetIconSize (HIMAGELIST himl, INT *cx, INT *cy)
 {
-    if (!is_valid(himl))
+    if (!is_valid(himl) || !cx || !cy)
 	return FALSE;
     if ((himl->cx <= 0) || (himl->cy <= 0))
 	return FALSE;
 
-    if (cx)
-	*cx = himl->cx;
-    if (cy)
-	*cy = himl->cy;
+    *cx = himl->cx;
+    *cy = himl->cy;
 
     return TRUE;
 }

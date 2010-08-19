@@ -1734,21 +1734,19 @@ static void test_iconsize(void)
     himl = ImageList_Create(16, 16, ILC_COLOR16, 0, 3);
     /* null pointers, not zero imagelist dimensions */
     ret = ImageList_GetIconSize(himl, NULL, NULL);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
 
     /* doesn't touch return pointers */
     cx = 0xdeadbeef;
     ret = ImageList_GetIconSize(himl, &cx, NULL);
-todo_wine {
     ok(!ret, "got %d\n", ret);
     ok(cx == 0xdeadbeef, "got %d\n", cx);
-}
+
     cy = 0xdeadbeef;
     ret = ImageList_GetIconSize(himl, NULL, &cy);
-todo_wine {
     ok(!ret, "got %d\n", ret);
     ok(cy == 0xdeadbeef, "got %d\n", cy);
-}
+
     ImageList_Destroy(himl);
 }
 
