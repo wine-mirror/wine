@@ -736,7 +736,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
     if(FAILED(hres))
         return hres;
 
-    return start_binding(This->window, NULL, (BSCallback*)This->window->bscallback, NULL);
+    return channelbsc_load_stream(This->window->bscallback, NULL);
 }
 
 #undef PERSTRINIT_THIS
