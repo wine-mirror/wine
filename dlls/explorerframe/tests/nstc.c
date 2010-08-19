@@ -730,7 +730,8 @@ static void test_basics(void)
     LPITEMIDLIST pidl_desktop;
     NSTCITEMSTATE istate;
     HRESULT hr;
-    UINT i, res;
+    UINT i, res, height;
+    HWND hwnd_tv;
     RECT rc;
     IShellItem *roots[10];
     WCHAR curdirW[MAX_PATH];
@@ -1492,6 +1493,64 @@ static void test_basics(void)
 
         IShellItemArray_Release(psia);
     }
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+
+    /* GetItemRect */
+    rc.top = rc.left = rc.bottom = rc.right = 0;
+    if(0)
+    {
+        /* Crashes under win 7 */
+        hr = INameSpaceTreeControl_GetItemRect(pnstc, NULL, NULL);
+        hr = INameSpaceTreeControl_GetItemRect(pnstc, psitestdir, NULL);
+        hr = INameSpaceTreeControl_GetItemRect(pnstc, NULL, &rc);
+    }
+
+    hr = INameSpaceTreeControl_GetItemRect(pnstc, psitestdir, &rc);
+    ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
+
+    hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir,
+                                          SHCONTF_FOLDERS | SHCONTF_NONFOLDERS,
+                                          NSTCRS_EXPANDED, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    process_msgs();
+
+    hr = INameSpaceTreeControl_GetItemRect(pnstc, psitestdir, &rc);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(rc.top != rc.bottom, "Got 0 height.\n");
+    ok(rc.left != rc.bottom, "Got 0 width.\n");
+
+    height = 0;
+    hwnd_tv = get_treeview_hwnd(pnstc);
+    if(hwnd_tv)
+    {
+        HTREEITEM hroot = (HTREEITEM)SendMessageW(hwnd_tv, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+        ok(hroot != NULL, "Failed to get root.\n");
+        if(hroot)
+        {
+            RECT tv_rc;
+            BOOL bret;
+
+            *(HTREEITEM*)&tv_rc = hroot;
+            bret = SendMessageW(hwnd_tv, TVM_GETITEMRECT, FALSE, (LPARAM)&tv_rc);
+            ok(bret, "TVM_GETITEMRECT failed.\n");
+
+            /* The NamespaceTreeControl returns screen coordinates. */
+            MapWindowPoints(NULL, hwnd, (POINT*)&rc, 2);
+            ok(rc.left == tv_rc.left, "Differed, got %d and %d\n", rc.left, tv_rc.left);
+            ok(rc.top == tv_rc.top, "Differed, got %d and %d\n", rc.top, tv_rc.top);
+            ok(rc.right == tv_rc.right, "Differed, got %d and %d\n", rc.right, tv_rc.right);
+            ok(rc.bottom == tv_rc.bottom, "Differed, got %d and %d\n", rc.bottom, tv_rc.bottom);
+
+            /* Save the height and compare to that of other items.
+               Observed values: 18, 19, 21 */
+            height = rc.bottom - rc.top;
+            trace("height: %d\n", height);
+        }
+    }
+    else
+        win_skip("Skipping some GetItemRect tests.\n");
 
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);

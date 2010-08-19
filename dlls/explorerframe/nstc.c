@@ -1318,8 +1318,24 @@ static HRESULT WINAPI NSTC2_fnGetItemRect(INameSpaceTreeControl2* iface,
                                           RECT *prect)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p, %p)\n", This, psi, prect);
-    return E_NOTIMPL;
+    HTREEITEM hitem;
+    TRACE("%p (%p, %p)\n", This, psi, prect);
+
+    if(!psi || !prect)
+        return E_POINTER;
+
+    hitem = treeitem_from_shellitem(This, psi);
+    if(hitem)
+    {
+        *(HTREEITEM*)prect = hitem;
+        if(SendMessageW(This->hwnd_tv, TVM_GETITEMRECT, FALSE, (LPARAM)prect))
+        {
+            MapWindowPoints(This->hwnd_tv, HWND_DESKTOP, (POINT*)prect, 2);
+            return S_OK;
+        }
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI NSTC2_fnCollapseAll(INameSpaceTreeControl2* iface)
