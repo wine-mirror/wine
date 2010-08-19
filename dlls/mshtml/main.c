@@ -114,7 +114,7 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
         DWORD len = lstrlenW(p) + lstrlenW(arg) - 1;
         LPWSTR buf = heap_alloc(len * sizeof(WCHAR));
 
-        snprintfW(buf, len - 1, p, arg);
+        snprintfW(buf, len, p, arg);
 
         p = buf;
     }
