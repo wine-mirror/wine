@@ -81,6 +81,14 @@ static void test_gdi_objects(void)
         "GetObject(NULL obj), expected 0, NO_ERROR, got %d, %u\n",
 	i, GetLastError());
 
+    /* GetObject expects ERROR_NOACCESS when passed an invalid buffer */
+    hp = SelectObject(hdc, GetStockObject(BLACK_PEN));
+    SetLastError(0);
+    i = GetObjectA(hp, (INT_PTR)buff, (LPVOID)sizeof(buff));
+    ok (!i && GetLastError() == ERROR_NOACCESS,
+        "GetObject(invalid buff), expected 0, ERROR_NOACCESS, got %d, %u\n",
+    i, GetLastError());
+
     /* GetObjectType does SetLastError() on a null object */
     SetLastError(0);
     i = GetObjectType(NULL);
