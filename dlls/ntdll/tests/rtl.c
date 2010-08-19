@@ -72,6 +72,9 @@ static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
 static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static IMAGE_BASE_RELOCATION *(WINAPI *pLdrProcessRelocationBlock)(void*,UINT,USHORT*,INT_PTR);
+
+
 #define LEN 16
 static const char* src_src = "This is a test!"; /* 16 bytes long, incl NUL */
 static ULONG src_aligned_block[4];
@@ -107,6 +110,7 @@ static void InitFunctionPtrs(void)
         pNtCurrentTeb = (void *)GetProcAddress(hntdll, "NtCurrentTeb");
         pRtlGetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlGetThreadErrorMode");
         pRtlSetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlSetThreadErrorMode");
+        pLdrProcessRelocationBlock  = (void *)GetProcAddress(hntdll, "LdrProcessRelocationBlock");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -1094,6 +1098,37 @@ static void test_RtlThreadErrorMode(void)
     pRtlSetThreadErrorMode(oldmode, NULL);
 }
 
+static void test_LdrProcessRelocationBlock(void)
+{
+    IMAGE_BASE_RELOCATION *ret;
+    USHORT reloc;
+    DWORD addr32;
+    SHORT addr16;
+
+    if(!pLdrProcessRelocationBlock) {
+        win_skip("LdrProcessRelocationBlock not available\n");
+        return;
+    }
+
+    addr32 = 0x50005;
+    reloc = IMAGE_REL_BASED_HIGHLOW<<12;
+    ret = pLdrProcessRelocationBlock(&addr32, 1, &reloc, 0x500050);
+    ok((USHORT*)ret == &reloc+1, "ret = %p, expected %p\n", ret, &reloc+1);
+    ok(addr32 == 0x550055, "addr32 = %x, expected 0x550055\n", addr32);
+
+    addr16 = 0x505;
+    reloc = IMAGE_REL_BASED_HIGH<<12;
+    ret = pLdrProcessRelocationBlock(&addr16, 1, &reloc, 0x500060);
+    ok((USHORT*)ret == &reloc+1, "ret = %p, expected %p\n", ret, &reloc+1);
+    ok(addr16 == 0x555, "addr16 = %x, expected 0x555\n", addr16);
+
+    addr16 = 0x505;
+    reloc = IMAGE_REL_BASED_LOW<<12;
+    ret = pLdrProcessRelocationBlock(&addr16, 1, &reloc, 0x500060);
+    ok((USHORT*)ret == &reloc+1, "ret = %p, expected %p\n", ret, &reloc+1);
+    ok(addr16 == 0x565, "addr16 = %x, expected 0x565\n", addr16);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -1114,4 +1149,5 @@ START_TEST(rtl)
     test_RtlAllocateAndInitializeSid();
     test_RtlDeleteTimer();
     test_RtlThreadErrorMode();
+    test_LdrProcessRelocationBlock();
 }
