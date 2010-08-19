@@ -643,9 +643,8 @@ struct IDirect3DVertexBufferImpl
     DWORD                fvf;
 };
 
-/* The Vtables */
-extern const IDirect3DVertexBuffer7Vtbl IDirect3DVertexBuffer7_Vtbl DECLSPEC_HIDDEN;
-extern const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl DECLSPEC_HIDDEN;
+HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
+        IDirectDrawImpl *ddraw, D3DVERTEXBUFFERDESC *desc) DECLSPEC_HIDDEN;
 
 static inline IDirect3DVertexBufferImpl *vb_from_vb1(IDirect3DVertexBuffer *iface)
 {

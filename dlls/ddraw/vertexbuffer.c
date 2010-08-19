@@ -553,7 +553,7 @@ IDirect3DVertexBufferImpl_ProcessVerticesStrided(IDirect3DVertexBuffer7 *iface,
  * The VTables
  *****************************************************************************/
 
-const IDirect3DVertexBuffer7Vtbl IDirect3DVertexBuffer7_Vtbl =
+static const struct IDirect3DVertexBuffer7Vtbl d3d_vertex_buffer7_vtbl =
 {
     /*** IUnknown Methods ***/
     IDirect3DVertexBufferImpl_QueryInterface,
@@ -569,7 +569,7 @@ const IDirect3DVertexBuffer7Vtbl IDirect3DVertexBuffer7_Vtbl =
     IDirect3DVertexBufferImpl_ProcessVerticesStrided
 };
 
-const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl =
+static const struct IDirect3DVertexBufferVtbl d3d_vertex_buffer1_vtbl =
 {
     /*** IUnknown Methods ***/
     Thunk_IDirect3DVertexBufferImpl_1_QueryInterface,
@@ -582,3 +582,53 @@ const IDirect3DVertexBufferVtbl IDirect3DVertexBuffer1_Vtbl =
     Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
     Thunk_IDirect3DVertexBufferImpl_1_Optimize
 };
+
+HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
+        IDirectDrawImpl *ddraw, D3DVERTEXBUFFERDESC *desc)
+{
+    DWORD usage;
+    HRESULT hr;
+
+    buffer->lpVtbl = &d3d_vertex_buffer7_vtbl;
+    buffer->IDirect3DVertexBuffer_vtbl = &d3d_vertex_buffer1_vtbl;
+    buffer->ref = 1;
+
+    buffer->ddraw = ddraw;
+    buffer->Caps = desc->dwCaps;
+    buffer->fvf = desc->dwFVF;
+
+    usage = desc->dwCaps & D3DVBCAPS_WRITEONLY ? WINED3DUSAGE_WRITEONLY : 0;
+    usage |= WINED3DUSAGE_STATICDECL;
+
+    EnterCriticalSection(&ddraw_cs);
+
+    hr = IWineD3DDevice_CreateVertexBuffer(ddraw->wineD3DDevice,
+            get_flexible_vertex_size(desc->dwFVF) * desc->dwNumVertices,
+            usage, desc->dwCaps & D3DVBCAPS_SYSTEMMEMORY ? WINED3DPOOL_SYSTEMMEM : WINED3DPOOL_DEFAULT,
+            &buffer->wineD3DVertexBuffer, (IUnknown *)buffer, &ddraw_null_wined3d_parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d vertex buffer, hr %#x.\n", hr);
+        LeaveCriticalSection(&ddraw_cs);
+
+        if (hr == WINED3DERR_INVALIDCALL)
+            return DDERR_INVALIDPARAMS;
+        else
+            return hr;
+    }
+
+    buffer->wineD3DVertexDeclaration = ddraw_find_decl(ddraw, desc->dwFVF);
+    if (!buffer->wineD3DVertexDeclaration)
+    {
+        ERR("Failed to find vertex declaration for fvf %#x.\n", desc->dwFVF);
+        IWineD3DBuffer_Release(buffer->wineD3DVertexBuffer);
+        LeaveCriticalSection(&ddraw_cs);
+
+        return DDERR_INVALIDPARAMS;
+    }
+    IWineD3DVertexDeclaration_AddRef(buffer->wineD3DVertexDeclaration);
+
+    LeaveCriticalSection(&ddraw_cs);
+
+    return D3D_OK;
+}

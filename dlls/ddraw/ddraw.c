@@ -4739,9 +4739,7 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
 static HRESULT WINAPI d3d7_CreateVertexBuffer(IDirect3D7 *iface, D3DVERTEXBUFFERDESC *desc,
         IDirect3DVertexBuffer7 **vertex_buffer, DWORD flags)
 {
-    IDirectDrawImpl *ddraw = ddraw_from_d3d7(iface);
     IDirect3DVertexBufferImpl *object;
-    DWORD usage;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, vertex_buffer %p, flags %#x.\n",
@@ -4763,49 +4761,17 @@ static HRESULT WINAPI d3d7_CreateVertexBuffer(IDirect3D7 *iface, D3DVERTEXBUFFER
         return DDERR_OUTOFMEMORY;
     }
 
-    object->ref = 1;
-    object->lpVtbl = &IDirect3DVertexBuffer7_Vtbl;
-    object->IDirect3DVertexBuffer_vtbl = &IDirect3DVertexBuffer1_Vtbl;
-
-    object->ddraw = ddraw;
-    object->Caps = desc->dwCaps;
-    object->fvf = desc->dwFVF;
-
-    usage = desc->dwCaps & D3DVBCAPS_WRITEONLY ? WINED3DUSAGE_WRITEONLY : 0;
-    usage |= WINED3DUSAGE_STATICDECL;
-
-    EnterCriticalSection(&ddraw_cs);
-
-    hr = IWineD3DDevice_CreateVertexBuffer(ddraw->wineD3DDevice,
-            get_flexible_vertex_size(desc->dwFVF) * desc->dwNumVertices,
-            usage, desc->dwCaps & D3DVBCAPS_SYSTEMMEMORY ? WINED3DPOOL_SYSTEMMEM : WINED3DPOOL_DEFAULT,
-            &object->wineD3DVertexBuffer, (IUnknown *)object, &ddraw_null_wined3d_parent_ops);
+    hr = d3d_vertex_buffer_init(object, ddraw_from_d3d7(iface), desc);
     if (FAILED(hr))
     {
-        WARN("Failed to create wined3d vertex buffer, hr %#x.\n", hr);
+        WARN("Failed to initialize vertex buffer, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        LeaveCriticalSection(&ddraw_cs);
-        if (hr == WINED3DERR_INVALIDCALL)
-            return DDERR_INVALIDPARAMS;
-        else
-            return hr;
+        return hr;
     }
-
-    object->wineD3DVertexDeclaration = ddraw_find_decl(ddraw, desc->dwFVF);
-    if (!object->wineD3DVertexDeclaration)
-    {
-        ERR("Failed to find vertex declaration for fvf %#x.\n", desc->dwFVF);
-        IWineD3DBuffer_Release(object->wineD3DVertexBuffer);
-        HeapFree(GetProcessHeap(), 0, object);
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_INVALIDPARAMS;
-    }
-    IWineD3DVertexDeclaration_AddRef(object->wineD3DVertexDeclaration);
 
     TRACE("Created vertex buffer %p.\n", object);
     *vertex_buffer = (IDirect3DVertexBuffer7 *)object;
 
-    LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
 
