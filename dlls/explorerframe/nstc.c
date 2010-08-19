@@ -1259,8 +1259,18 @@ static HRESULT WINAPI NSTC2_fnEnsureItemVisible(INameSpaceTreeControl2* iface,
                                                 IShellItem *psi)
 {
     NSTC2Impl *This = (NSTC2Impl*)iface;
-    FIXME("stub, %p (%p)\n", This, psi);
-    return E_NOTIMPL;
+    HTREEITEM hitem;
+
+    TRACE("%p (%p)\n", This, psi);
+
+    hitem = treeitem_from_shellitem(This, psi);
+    if(hitem)
+    {
+        SendMessageW(This->hwnd_tv, TVM_ENSUREVISIBLE, 0, (WPARAM)hitem);
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI NSTC2_fnSetTheme(INameSpaceTreeControl2* iface,

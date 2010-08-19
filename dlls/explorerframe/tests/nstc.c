@@ -35,6 +35,7 @@ static HWND hwnd;
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void**);
+static HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
 
 #define NUM_MSG_SEQUENCES 1
 #define TREEVIEW_SEQ_INDEX 0
@@ -53,6 +54,7 @@ static void init_function_pointers(void)
     pSHCreateShellItem = (void*)GetProcAddress(hmod, "SHCreateShellItem");
     pSHGetIDListFromObject = (void*)GetProcAddress(hmod, "SHGetIDListFromObject");
     pSHCreateItemFromParsingName = (void*)GetProcAddress(hmod, "SHCreateItemFromParsingName");
+    pSHGetSpecialFolderLocation = (void*)GetProcAddress(hmod, "SHGetSpecialFolderLocation");
 }
 
 /*******************************************************
@@ -1672,6 +1674,7 @@ static void test_events(void)
     IShellItem *psidesktop;
     IOleWindow *pow;
     LPITEMIDLIST pidl_desktop;
+    LPITEMIDLIST pidl_drives;
     NSTCITEMSTATE itemstate;
     IShellItem *psi;
     DWORD cookie1, cookie2;
@@ -2193,6 +2196,67 @@ static void test_events(void)
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
     ok_event_count(pnstceimpl, OnItemDeleted, 1);
+    ok_no_events(pnstceimpl);
+
+    /* EnsureItemVisible */
+    if(0)
+    {
+        /* Crashes on Windows 7 */
+        hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, NULL);
+    }
+
+    hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, psidesktop);
+    ok(hr == E_INVALIDARG || hr == E_FAIL, "Got (0x%08x)\n", hr);
+    ok_no_events(pnstceimpl);
+
+    hr = pSHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl_drives);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = pSHCreateShellItem(NULL, NULL, pidl_drives, &psi);
+        ok(hr == S_OK, "Got (0x%08x)\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = INameSpaceTreeControl_AppendRoot(pnstc, psi, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, 0, NULL);
+            ok(hr == S_OK, "Got (0x%08x)\n", hr);
+            process_msgs();
+            ok_event_count_broken(pnstceimpl, OnItemAdded, 1, 0 /* Vista */);
+            ok_no_events(pnstceimpl);
+
+            hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, psidesktop);
+            ok(hr == E_INVALIDARG, "Got (0x%08x)\n", hr);
+            ok_no_events(pnstceimpl);
+
+            hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, psi);
+            ok(hr == S_OK, "Got (0x%08x)\n", hr);
+            ok_no_events(pnstceimpl);
+
+            hr = INameSpaceTreeControl_AppendRoot(pnstc, psidesktop, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, 0, NULL);
+            ok(hr == S_OK, "Got (0x%08x)\n", hr);
+            process_msgs();
+            ok_event_count_broken(pnstceimpl, OnItemAdded, 1, 0 /* Vista */);
+            ok_no_events(pnstceimpl);
+
+            hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, psidesktop);
+            ok(hr == S_OK, "Got (0x%08x)\n", hr);
+            ok_no_events(pnstceimpl);
+
+            hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, psi);
+            ok(hr == S_OK, "Got (0x%08x)\n", hr);
+            ok_no_events(pnstceimpl);
+
+        }
+        else
+            skip("Failed to create shellitem.\n");
+
+        ILFree(pidl_drives);
+    }
+    else
+        skip("Failed to get pidl for CSIDL_DRIVES.\n");
+
+    hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
+    ok(hr == S_OK, "Got (0x%08x)\n", hr);
+    ok_event_count(pnstceimpl, OnItemDeleted, 2);
     ok_no_events(pnstceimpl);
 
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleWindow, (void**)&pow);
