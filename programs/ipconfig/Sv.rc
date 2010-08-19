@@ -1,0 +1,47 @@
+/*
+ * IP configuration utility
+ * Swedish language support
+ *
+ * Copyright 2010 Anders Jonsson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "ipconfig.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+    STRING_USAGE, "Användning: ipconfig [ /? | /all ]\n"
+    STRING_INVALID_CMDLINE, "Fel: Okända eller ogiltiga kommandoradsparametrar angavs\n"
+    STRING_ADAPTER_FRIENDLY, "%s-adapter %s\n"
+    STRING_ETHERNET, "Ethernet"
+    STRING_UNKNOWN, "Okänd"
+    STRING_CONN_DNS_SUFFIX, "Anslutningsspecifikt DNS-suffix"
+    STRING_IP_ADDRESS, "IP-adress"
+    STRING_HOSTNAME, "Värdnamn"
+    STRING_NODE_TYPE, "Nodtyp"
+    STRING_BROADCAST, "Broadcast"
+    STRING_PEER_TO_PEER, "Peer-to-peer"
+    STRING_MIXED, "Mixad"
+    STRING_HYBRID, "Hybrid"
+    STRING_IP_ROUTING, "IP-routning aktiverad"
+    STRING_DESCRIPTION, "Beskrivning"
+    STRING_PHYS_ADDR, "Fysisk adress"
+    STRING_DHCP_ENABLED, "DHCP aktiverat"
+}
