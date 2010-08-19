@@ -973,7 +973,12 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
     GDI_ReleaseObj( handle );
 
     if (funcs && funcs->pGetObjectA)
-        result = funcs->pGetObjectA( handle, count, buffer );
+    {
+        if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
+            SetLastError( ERROR_NOACCESS );
+        else
+            result = funcs->pGetObjectA( handle, count, buffer );
+    }
     else
         SetLastError( ERROR_INVALID_HANDLE );
 
@@ -995,7 +1000,12 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
     GDI_ReleaseObj( handle );
 
     if (funcs && funcs->pGetObjectW)
-        result = funcs->pGetObjectW( handle, count, buffer );
+    {
+        if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
+            SetLastError( ERROR_NOACCESS );
+        else
+            result = funcs->pGetObjectW( handle, count, buffer );
+    }
     else
         SetLastError( ERROR_INVALID_HANDLE );
 
