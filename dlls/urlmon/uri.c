@@ -4215,6 +4215,19 @@ static HRESULT WINAPI UriBuilder_GetFragment(IUriBuilder *iface, DWORD *pcchFrag
 static HRESULT WINAPI UriBuilder_GetHost(IUriBuilder *iface, DWORD *pcchHost, LPCWSTR *ppwzHost)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchHost, ppwzHost);
+
+    if(!pcchHost) {
+        if(ppwzHost)
+            *ppwzHost = NULL;
+        return E_POINTER;
+    }
+
+    if(!ppwzHost) {
+        *pcchHost = 0;
+        return E_POINTER;
+    }
+
     FIXME("(%p)->(%p %p)\n", This, pcchHost, ppwzHost);
     return E_NOTIMPL;
 }
