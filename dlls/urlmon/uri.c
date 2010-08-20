@@ -4315,6 +4315,19 @@ static HRESULT WINAPI UriBuilder_GetQuery(IUriBuilder *iface, DWORD *pcchQuery, 
 static HRESULT WINAPI UriBuilder_GetSchemeName(IUriBuilder *iface, DWORD *pcchSchemeName, LPCWSTR *ppwzSchemeName)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchSchemeName, ppwzSchemeName);
+
+    if(!pcchSchemeName) {
+        if(ppwzSchemeName)
+            *ppwzSchemeName = NULL;
+        return E_POINTER;
+    }
+
+    if(!ppwzSchemeName) {
+        *pcchSchemeName = 0;
+        return E_POINTER;
+    }
+
     FIXME("(%p)->(%p %p)\n", This, pcchSchemeName, ppwzSchemeName);
     return E_NOTIMPL;
 }
