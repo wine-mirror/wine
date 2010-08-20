@@ -9,6 +9,7 @@ C_SRCS = \
 	appbar.c \
 	autocomplete.c \
 	brsfolder.c \
+	ebrowser.c \
 	generated.c \
 	progman_dde.c \
 	shelllink.c \
