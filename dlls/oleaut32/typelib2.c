@@ -3564,6 +3564,9 @@ static void WINAPI ITypeInfo2_fnReleaseTypeAttr(
 {
     TRACE("(%p,%p)\n", iface, pTypeAttr);
 
+    if (pTypeAttr->tdescAlias.vt != VT_USERDEFINED)
+        release_typedesc(pTypeAttr->tdescAlias.u.lptdesc);
+
     HeapFree(GetProcessHeap(), 0, pTypeAttr);
 }
 
