@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct _ExplorerBrowserImpl {
     const IExplorerBrowserVtbl *lpVtbl;
+    const IShellBrowserVtbl *lpsbVtbl;
     LONG ref;
     BOOL destroyed;
 } ExplorerBrowserImpl;
@@ -53,6 +54,10 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
        IsEqualIID(riid, &IID_IUnknown))
     {
         *ppvObject = This;
+    }
+    else if(IsEqualIID(riid, &IID_IShellBrowser))
+    {
+        *ppvObject = &This->lpsbVtbl;
     }
 
     if(*ppvObject)
@@ -255,6 +260,204 @@ static const IExplorerBrowserVtbl vt_IExplorerBrowser =
     IExplorerBrowser_fnGetCurrentView
 };
 
+/**************************************************************************
+ * IShellBrowser Implementation
+ */
+
+static inline ExplorerBrowserImpl *impl_from_IShellBrowser(IShellBrowser *iface)
+{
+    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpsbVtbl));
+}
+
+static HRESULT WINAPI IShellBrowser_fnQueryInterface(IShellBrowser *iface,
+                                                     REFIID riid, void **ppvObject)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    TRACE("%p\n", This);
+    return IUnknown_QueryInterface((IUnknown*) This, riid, ppvObject);
+}
+
+static ULONG WINAPI IShellBrowser_fnAddRef(IShellBrowser *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    TRACE("%p\n", This);
+    return IUnknown_AddRef((IUnknown*) This);
+}
+
+static ULONG WINAPI IShellBrowser_fnRelease(IShellBrowser *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    TRACE("%p\n", This);
+    return IUnknown_Release((IUnknown*) This);
+}
+
+static HRESULT WINAPI IShellBrowser_fnGetWindow(IShellBrowser *iface, HWND *phwnd)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%p)\n", This, phwnd);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnContextSensitiveHelp(IShellBrowser *iface,
+                                                           BOOL fEnterMode)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%d)\n", This, fEnterMode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnInsertMenusSB(IShellBrowser *iface,
+                                                    HMENU hmenuShared,
+                                                    LPOLEMENUGROUPWIDTHS lpMenuWidths)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    TRACE("%p (%p, %p)\n", This, hmenuShared, lpMenuWidths);
+
+    /* Not implemented. */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnSetMenuSB(IShellBrowser *iface,
+                                                HMENU hmenuShared,
+                                                HOLEMENU holemenuReserved,
+                                                HWND hwndActiveObject)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    TRACE("%p (%p, %p, %p)\n", This, hmenuShared, holemenuReserved, hwndActiveObject);
+
+    /* Not implemented. */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnRemoveMenusSB(IShellBrowser *iface,
+                                                    HMENU hmenuShared)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    TRACE("%p (%p)\n", This, hmenuShared);
+
+    /* Not implemented. */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnSetStatusTextSB(IShellBrowser *iface,
+                                                      LPCOLESTR pszStatusText)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%s)\n", This, debugstr_w(pszStatusText));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnEnableModelessSB(IShellBrowser *iface,
+                                                       BOOL fEnable)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%d)\n", This, fEnable);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnTranslateAcceleratorSB(IShellBrowser *iface,
+                                                             MSG *pmsg, WORD wID)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%p, 0x%x)\n", This, pmsg, wID);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnBrowseObject(IShellBrowser *iface,
+                                                   LPCITEMIDLIST pidl, UINT wFlags)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnGetViewStateStream(IShellBrowser *iface,
+                                                         DWORD grfMode,
+                                                         IStream **ppStrm)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (0x%x, %p)\n", This, grfMode, ppStrm);
+
+    *ppStrm = NULL;
+    return E_FAIL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnGetControlWindow(IShellBrowser *iface,
+                                                       UINT id, HWND *phwnd)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    TRACE("%p (%d, %p)\n", This, id, phwnd);
+
+    /* Not implemented. */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnSendControlMsg(IShellBrowser *iface,
+                                                     UINT id, UINT uMsg,
+                                                     WPARAM wParam, LPARAM lParam,
+                                                     LRESULT *pret)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%d, %d, %lx, %lx, %p)\n", This, id, uMsg, wParam, lParam, pret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnQueryActiveShellView(IShellBrowser *iface,
+                                                           IShellView **ppshv)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%p)\n", This, ppshv);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnOnViewWindowActive(IShellBrowser *iface,
+                                                         IShellView *pshv)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%p)\n", This, pshv);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IShellBrowser_fnSetToolbarItems(IShellBrowser *iface,
+                                                      LPTBBUTTONSB lpButtons,
+                                                      UINT nButtons, UINT uFlags)
+{
+    ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
+    FIXME("stub, %p (%p, %d, 0x%x)\n", This, lpButtons, nButtons, uFlags);
+
+    return E_NOTIMPL;
+}
+
+static const IShellBrowserVtbl vt_IShellBrowser = {
+    IShellBrowser_fnQueryInterface,
+    IShellBrowser_fnAddRef,
+    IShellBrowser_fnRelease,
+    IShellBrowser_fnGetWindow,
+    IShellBrowser_fnContextSensitiveHelp,
+    IShellBrowser_fnInsertMenusSB,
+    IShellBrowser_fnSetMenuSB,
+    IShellBrowser_fnRemoveMenusSB,
+    IShellBrowser_fnSetStatusTextSB,
+    IShellBrowser_fnEnableModelessSB,
+    IShellBrowser_fnTranslateAcceleratorSB,
+    IShellBrowser_fnBrowseObject,
+    IShellBrowser_fnGetViewStateStream,
+    IShellBrowser_fnGetControlWindow,
+    IShellBrowser_fnSendControlMsg,
+    IShellBrowser_fnQueryActiveShellView,
+    IShellBrowser_fnOnViewWindowActive,
+    IShellBrowser_fnSetToolbarItems
+};
+
 HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     ExplorerBrowserImpl *eb;
@@ -270,6 +473,7 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ExplorerBrowserImpl));
     eb->ref = 1;
     eb->lpVtbl = &vt_IExplorerBrowser;
+    eb->lpsbVtbl = &vt_IShellBrowser;
 
     ret = IExplorerBrowser_QueryInterface((IExplorerBrowser*)eb, riid, ppv);
     IExplorerBrowser_Release((IExplorerBrowser*)eb);
