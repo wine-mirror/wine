@@ -3540,6 +3540,19 @@ static HRESULT WINAPI ITypeInfo2_fnGetContainingTypeLib(
     return S_OK;
 }
 
+static void release_typedesc(TYPEDESC *tdesc)
+{
+    while (tdesc) {
+        TYPEDESC *next;
+        if (tdesc->vt == VT_USERDEFINED)
+            next = NULL;
+        else
+            next = tdesc->u.lptdesc;
+        HeapFree(GetProcessHeap(), 0, tdesc);
+        tdesc = next;
+    }
+}
+
 /******************************************************************************
  * ITypeInfo2_ReleaseTypeAttr {OLEAUT32}
  *
@@ -3563,7 +3576,28 @@ static void WINAPI ITypeInfo2_fnReleaseFuncDesc(
         ITypeInfo2* iface,
         FUNCDESC* pFuncDesc)
 {
-    FIXME("(%p,%p), stub!\n", iface, pFuncDesc);
+    int i;
+
+    TRACE("(%p,%p)\n", iface, pFuncDesc);
+
+    HeapFree(GetProcessHeap(), 0, pFuncDesc->lprgscode);
+
+    if (pFuncDesc->lprgelemdescParam) {
+        for (i = 0; i < pFuncDesc->cParams; ++i) {
+            if (pFuncDesc->lprgelemdescParam[i].tdesc.vt != VT_USERDEFINED)
+                release_typedesc(pFuncDesc->lprgelemdescParam[i].tdesc.u.lptdesc);
+
+            HeapFree(GetProcessHeap(), 0, pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex);
+        }
+        HeapFree(GetProcessHeap(), 0, pFuncDesc->lprgelemdescParam);
+    }
+
+    HeapFree(GetProcessHeap(), 0, pFuncDesc->elemdescFunc.u.paramdesc.pparamdescex);
+
+    if (pFuncDesc->elemdescFunc.tdesc.vt != VT_USERDEFINED)
+        release_typedesc(pFuncDesc->elemdescFunc.tdesc.u.lptdesc);
+
+    HeapFree(GetProcessHeap(), 0, pFuncDesc);
 }
 
 /******************************************************************************
