@@ -4418,6 +4418,11 @@ static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPr
 static HRESULT WINAPI UriBuilder_HasBeenModified(IUriBuilder *iface, BOOL *pfModified)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, pfModified);
+
+    if(!pfModified)
+        return E_POINTER;
+
     FIXME("(%p)->(%p)\n", This, pfModified);
     return E_NOTIMPL;
 }

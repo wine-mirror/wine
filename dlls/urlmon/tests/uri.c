@@ -6297,16 +6297,20 @@ static void test_IUriBuilder(void) {
             }
             if(SUCCEEDED(hr)) {
                 DWORD j;
+                BOOL modified = FALSE, received = FALSE;
 
                 /* Perform all the string property changes. */
                 for(j = 0; j < URI_BUILDER_STR_PROPERTY_COUNT; ++j) {
                     uri_builder_property prop = test.properties[j];
-                    if(prop.change)
+                    if(prop.change) {
+                        modified = TRUE;
                         change_property(builder, &prop, i);
+                    }
                 }
 
                 if(test.port_prop.change) {
                     hr = IUriBuilder_SetPort(builder, test.port_prop.set, test.port_prop.value);
+                    modified = TRUE;
                     if(test.port_prop.todo) {
                         todo_wine {
                             ok(hr == test.port_prop.expected,
@@ -6317,6 +6321,20 @@ static void test_IUriBuilder(void) {
                         ok(hr == test.port_prop.expected,
                             "Error: IUriBuilder_SetPort returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
                             hr, test.port_prop.expected, i);
+                    }
+                }
+
+                hr = IUriBuilder_HasBeenModified(builder, &received);
+                todo_wine {
+                    ok(hr == S_OK,
+                        "Error IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                        hr, S_OK, i);
+                }
+                if(SUCCEEDED(hr)) {
+                    todo_wine {
+                        ok(received == modified,
+                            "Error: Expected received to be %d but was %d instead on uri_builder_tests[%d].\n",
+                            modified, received, i);
                     }
                 }
 
@@ -6338,6 +6356,57 @@ static void test_IUriBuilder(void) {
         }
         if(uri) IUri_Release(uri);
     }
+}
+
+static void test_IUriBuilder_HasBeenModified(void) {
+    HRESULT hr;
+    IUriBuilder *builder = NULL;
+
+    hr = pCreateIUriBuilder(NULL, 0, 0, &builder);
+    ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        static const WCHAR hostW[] = {'w','i','n','e','h','q','.','c','o','m',0};
+        IUri *uri = NULL;
+        BOOL received;
+
+        hr = IUriBuilder_HasBeenModified(builder, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+
+        hr = IUriBuilder_SetHost(builder, hostW);
+        todo_wine {
+            ok(hr == S_OK, "Error: IUriBuilder_SetHost returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
+        }
+
+        hr = IUriBuilder_HasBeenModified(builder, &received);
+        todo_wine {
+            ok(hr == S_OK, "Error: IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
+        }
+        if(SUCCEEDED(hr))
+            todo_wine { ok(received == TRUE, "Error: Expected received to be TRUE.\n"); }
+
+        hr = pCreateUri(http_urlW, 0, 0, &uri);
+        ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+        if(SUCCEEDED(hr)) {
+            hr = IUriBuilder_SetIUri(builder, uri);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+            }
+
+            hr = IUriBuilder_HasBeenModified(builder, &received);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+            }
+            if(SUCCEEDED(hr))
+                todo_wine { ok(received == FALSE, "Error: Expected received to be FALSE.\n"); }
+        }
+        if(uri) IUri_Release(uri);
+    }
+    if(builder) IUriBuilder_Release(builder);
 }
 
 START_TEST(uri) {
@@ -6406,4 +6475,7 @@ START_TEST(uri) {
 
     trace("test IUriBuilder_GetInvalidArgs...\n");
     test_IUriBuilder_GetInvalidArgs();
+
+    trace("test IUriBuilder_HasBeenModified...\n");
+    test_IUriBuilder_HasBeenModified();
 }
