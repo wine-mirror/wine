@@ -2739,7 +2739,7 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
 static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSwapChainImpl *swapchain = NULL;
-    HRESULT hr;
+
     TRACE("(%p)->(%p,%x)\n", This, override, Flags);
 
     /* Flipping is only supported on RenderTargets and overlays*/
@@ -2791,10 +2791,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     }
 
     /* Flipping a OpenGL surface -> Use WineD3DDevice::Present */
-    hr = IWineD3DSwapChain_Present((IWineD3DSwapChain *)swapchain,
+    return IWineD3DSwapChain_Present((IWineD3DSwapChain *)swapchain,
             NULL, NULL, swapchain->win_handle, NULL, 0);
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-    return hr;
 }
 
 /* Does a direct frame buffer -> texture copy. Stretching is done
