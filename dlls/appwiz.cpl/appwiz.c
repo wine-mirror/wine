@@ -406,7 +406,7 @@ static void UpdateButtons(HWND hWnd)
 {
     APPINFO *iter;
     LVITEMW lvItem;
-    DWORD selitem = SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_GETNEXTITEM, -1,
+    LRESULT selitem = SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_GETNEXTITEM, -1,
        LVNI_FOCUSED | LVNI_SELECTED);
     BOOL enable_modify = FALSE;
 
