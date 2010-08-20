@@ -5323,7 +5323,8 @@ static void test_IUriBuilder_GetInvalidArgs(void) {
     ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
     if(SUCCEEDED(hr)) {
         LPCWSTR received = (void*) 0xdeadbeef;
-        DWORD len = -1;
+        DWORD len = -1, port = -1;
+        BOOL set = -1;
 
         hr = IUriBuilder_GetFragment(builder, NULL, NULL);
         ok(hr == E_POINTER, "Error: IUriBuilder_GetFragment returned 0x%08x, expected 0x%08x.\n",
@@ -5378,6 +5379,18 @@ static void test_IUriBuilder_GetInvalidArgs(void) {
         ok(hr == E_POINTER, "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x.\n",
             hr, E_POINTER);
         ok(!len, "Error: Expected len to be 0, but was %d instead.\n", len);
+
+        hr = IUriBuilder_GetPort(builder, NULL, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_GetPort returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+        hr = IUriBuilder_GetPort(builder, NULL, &port);
+        ok(hr == E_POINTER, "Error: IUriBuilder_GetPort returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+        ok(!port, "Error: Expected port to be 0, but was %d instead.\n", port);
+        hr = IUriBuilder_GetPort(builder, &set, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_GetPort returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+        ok(!set, "Error: Expected set to be FALSE, but was %d instead.\n", set);
     }
     if(builder) IUriBuilder_Release(builder);
 }
@@ -5810,6 +5823,87 @@ static void test_IUriBuilder_GetPath(IUriBuilder *builder, const uri_builder_tes
     }
 }
 
+static void test_IUriBuilder_GetPort(IUriBuilder *builder, const uri_builder_test *test,
+                                     DWORD test_index) {
+    HRESULT hr;
+    BOOL has_port = FALSE;
+    DWORD received = -1;
+
+    if(test->port_prop.change) {
+        DWORD expected = test->port_prop.value;
+
+        hr = IUriBuilder_GetPort(builder, &has_port, &received);
+        if(test->port_prop.todo) {
+            todo_wine {
+                ok(hr == S_OK,
+                    "Error: IUriBuilder_GetPort returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, S_OK, test_index);
+            }
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(has_port == test->port_prop.set,
+                        "Error: Expected has_port to be %d but was %d instead on uri_builder_tests[%d].\n",
+                        test->port_prop.set, has_port, test_index);
+                }
+                todo_wine {
+                    ok(received == expected,
+                        "Error: Expected received to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                        expected, received, test_index);
+                }
+            }
+        } else {
+            ok(hr == S_OK,
+                "Error: IUriBuilder_GetPort returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, S_OK, test_index);
+            ok(has_port == test->port_prop.set,
+                "Error: Expected has_port to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                test->port_prop.set, has_port, test_index);
+            ok(received == test->port_prop.value,
+                "Error: Expected port to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                test->port_prop.value, received, test_index);
+        }
+    } else {
+        IUri *uri = NULL;
+
+        hr = IUriBuilder_GetIUri(builder, &uri);
+        todo_wine {
+            ok(hr == S_OK,
+                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, S_OK, test_index);
+        }
+        if(SUCCEEDED(hr)) {
+            DWORD expected;
+            BOOL got_port = FALSE;
+
+            hr = IUri_GetPort(uri, &expected);
+            ok(SUCCEEDED(hr),
+                "Error: Expected IUri_Port to succeed, but got 0x%08x instead on uri_builder_tests[%d].\n",
+                hr, test_index);
+            got_port = hr == S_OK;
+
+            hr = IUriBuilder_GetPort(builder, &has_port, &received);
+            todo_wine {
+                ok(hr == S_OK,
+                    "Error: IUriBuilder_GetPort returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, S_OK, test_index);
+            }
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(!has_port,
+                        "Error: Expected has_port to be FALSE but was TRUE instead on uri_builder_tests[%d].\n",
+                        test_index);
+                }
+                todo_wine {
+                    ok(received == expected,
+                        "Error: Expected received to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                        expected, received, test_index);
+                }
+            }
+        }
+        if(uri) IUri_Release(uri);
+    }
+}
+
 /* Tests IUriBuilder functions. */
 static void test_IUriBuilder(void) {
     HRESULT hr;
@@ -5868,6 +5962,7 @@ static void test_IUriBuilder(void) {
                 test_IUriBuilder_GetHost(builder, &test, i);
                 test_IUriBuilder_GetPassword(builder, &test, i);
                 test_IUriBuilder_GetPath(builder, &test, i);
+                test_IUriBuilder_GetPort(builder, &test, i);
 
                 test_IUriBuilder_CreateUri(builder, &test, i);
                 test_IUriBuilder_CreateUriSimple(builder, &test, i);

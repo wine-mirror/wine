@@ -4275,6 +4275,19 @@ static HRESULT WINAPI UriBuilder_GetPath(IUriBuilder *iface, DWORD *pcchPath, LP
 static HRESULT WINAPI UriBuilder_GetPort(IUriBuilder *iface, BOOL *pfHasPort, DWORD *pdwPort)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, pfHasPort, pdwPort);
+
+    if(!pfHasPort) {
+        if(pdwPort)
+            *pdwPort = 0;
+        return E_POINTER;
+    }
+
+    if(!pdwPort) {
+        *pfHasPort = FALSE;
+        return E_POINTER;
+    }
+
     FIXME("(%p)->(%p %p)\n", This, pfHasPort, pdwPort);
     return E_NOTIMPL;
 }
