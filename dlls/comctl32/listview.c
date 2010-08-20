@@ -1849,8 +1849,9 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
                 }
             }
 
-            /* found something or second search completed with any result */
-            if (nItem != -1 || endidx != infoPtr->nItemCount)
+            if ( nItem != -1 || /* found something */
+                 endidx != infoPtr->nItemCount || /* second search done */
+                (startidx == 0 && endidx == infoPtr->nItemCount) /* full range for first search */ )
                 break;
         };
     }
