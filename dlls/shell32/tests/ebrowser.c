@@ -37,6 +37,13 @@ static HRESULT ebrowser_instantiate(IExplorerBrowser **peb)
                             &IID_IExplorerBrowser, (void**)peb);
 }
 
+static HRESULT ebrowser_initialize(IExplorerBrowser *peb)
+{
+    RECT rc;
+    rc.top = rc.left = 0; rc.bottom = rc.right = 500;
+    return IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+}
+
 static void test_QueryInterface(void)
 {
     IExplorerBrowser *peb;
@@ -265,6 +272,70 @@ static void test_initialization(void)
     ok(lres == 0, "Got refcount %d\n", lres);
 }
 
+static void test_basics(void)
+{
+    IExplorerBrowser *peb;
+    IShellBrowser *psb;
+    ULONG lres;
+    HDWP hdwp;
+    RECT rc;
+    HRESULT hr;
+
+    ebrowser_instantiate(&peb);
+    ebrowser_initialize(peb);
+
+    /* SetRect */
+    rc.left = 0; rc.top = 0; rc.right = 0; rc.bottom = 0;
+    hr = IExplorerBrowser_SetRect(peb, NULL, rc);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    rc.left = 100; rc.top = 100; rc.right = 10; rc.bottom = 10;
+    hr = IExplorerBrowser_SetRect(peb, NULL, rc);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    /* SetRect with DeferWindowPos */
+    rc.left = rc.top = 0; rc.right = rc.bottom = 10;
+    hdwp = BeginDeferWindowPos(1);
+    hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    lres = EndDeferWindowPos(hdwp);
+    ok(lres, "EndDeferWindowPos failed.\n");
+
+    hdwp = NULL;
+    hr = IExplorerBrowser_SetRect(peb, &hdwp, rc);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(hdwp == NULL, "got %p\n", hdwp);
+    lres = EndDeferWindowPos(hdwp);
+    ok(!lres, "EndDeferWindowPos succeeded unexpectedly.\n");
+
+    /* Test positioning */
+    rc.left = 10; rc.top = 20; rc.right = 50; rc.bottom = 50;
+    hr = IExplorerBrowser_SetRect(peb, NULL, rc);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        HWND eb_hwnd;
+        RECT eb_rc;
+        static const RECT exp_rc = {11, 21, 49, 49};
+
+        hr = IShellBrowser_GetWindow(psb, &eb_hwnd);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        GetClientRect(eb_hwnd, &eb_rc);
+        MapWindowPoints(eb_hwnd, hwnd, (POINT*)&eb_rc, 2);
+        ok(EqualRect(&eb_rc, &exp_rc), "Got rect (%d, %d) - (%d, %d)\n",
+           eb_rc.left, eb_rc.top, eb_rc.right, eb_rc.bottom);
+
+        IShellBrowser_Release(psb);
+    }
+
+    IExplorerBrowser_Destroy(peb);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got %d\n", lres);
+}
+
 static BOOL test_instantiate_control(void)
 {
     IExplorerBrowser *peb;
@@ -310,6 +381,7 @@ START_TEST(ebrowser)
     test_QueryInterface();
     test_SB_misc();
     test_initialization();
+    test_basics();
 
     DestroyWindow(hwnd);
     OleUninitialize();

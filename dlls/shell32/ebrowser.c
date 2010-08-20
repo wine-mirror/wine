@@ -191,9 +191,21 @@ static HRESULT WINAPI IExplorerBrowser_fnSetRect(IExplorerBrowser *iface,
                                                  HDWP *phdwp, RECT rcBrowser)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (%p, %s)\n", This, phdwp, wine_dbgstr_rect(&rcBrowser));
+    TRACE("%p (%p, %s)\n", This, phdwp, wine_dbgstr_rect(&rcBrowser));
 
-    return E_NOTIMPL;
+    if(phdwp)
+    {
+        *phdwp = DeferWindowPos(*phdwp, This->hwnd_main, NULL, rcBrowser.left, rcBrowser.top,
+                                rcBrowser.right - rcBrowser.left, rcBrowser.bottom - rcBrowser.top,
+                                SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+    else
+    {
+        MoveWindow(This->hwnd_main, rcBrowser.left, rcBrowser.top,
+                   rcBrowser.right - rcBrowser.left, rcBrowser.bottom - rcBrowser.top, TRUE);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnSetPropertyBag(IExplorerBrowser *iface,
