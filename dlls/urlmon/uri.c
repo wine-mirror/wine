@@ -4295,6 +4295,19 @@ static HRESULT WINAPI UriBuilder_GetPort(IUriBuilder *iface, BOOL *pfHasPort, DW
 static HRESULT WINAPI UriBuilder_GetQuery(IUriBuilder *iface, DWORD *pcchQuery, LPCWSTR *ppwzQuery)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchQuery, ppwzQuery);
+
+    if(!pcchQuery) {
+        if(ppwzQuery)
+            *ppwzQuery = NULL;
+        return E_POINTER;
+    }
+
+    if(!ppwzQuery) {
+        *pcchQuery = 0;
+        return E_POINTER;
+    }
+
     FIXME("(%p)->(%p %p)\n", This, pcchQuery, ppwzQuery);
     return E_NOTIMPL;
 }
