@@ -320,21 +320,38 @@ static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScri
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cmdshow)
 {
+    const WCHAR *ext, *filename = NULL;
     IActiveScriptParse *parser;
     IActiveScript *script;
-    const WCHAR *ext;
+    WCHAR **argv;
     CLSID clsid;
+    int argc, i;
 
     WINE_TRACE("(%p %p %s %x)\n", hInst, hPrevInst, wine_dbgstr_w(cmdline), cmdshow);
 
-    if(!*cmdline)
+    argv = CommandLineToArgvW(cmdline, &argc);
+    if(!argv)
         return 1;
 
-    ext = strchrW(cmdline, '.');
+    for(i=0; i<argc; i++) {
+        if(*argv[i] == '/' || *argv[i] == '-') {
+            WINE_FIXME("Unsupported argument %s\n", wine_dbgstr_w(argv[i]));
+        }else {
+            filename = argv[i];
+            break;
+        }
+    }
+
+    if(!filename) {
+        WINE_FIXME("No file name specified\n");
+        return 1;
+    }
+
+    ext = strchrW(filename, '.');
     if(!ext)
-        ext = cmdline;
+        ext = filename;
     if(!get_engine_clsid(ext, &clsid)) {
-        WINE_FIXME("Could not fine engine for %s\n", wine_dbgstr_w(ext));
+        WINE_FIXME("Could not find engine for %s\n", wine_dbgstr_w(ext));
         return 1;
     }
 
@@ -347,7 +364,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
     }
 
     if(init_engine(script, parser)) {
-        run_script(cmdline, script, parser);
+        run_script(filename, script, parser);
         IActiveScript_Close(script);
         ITypeInfo_Release(host_ti);
     }else {
