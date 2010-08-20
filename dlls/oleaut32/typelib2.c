@@ -2293,7 +2293,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     if (*((INT*)namedata) == -1)
 	    *((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
 
-    len = iter->u.data[0]/4 - iter->u.data[5]*3;
+    len = (iter->u.data[0]&0xFFFF)/4 - iter->u.data[5]*3;
 
     for (i = 1; i < cNames; i++) {
 	offset = ctl2_alloc_name(This->typelib, rgszNames[i]);
@@ -3327,7 +3327,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
                 if (iter->indice == memid) {
                     if (iter->type == CyclicListFunc) {
                         const int *typedata = iter->u.data;
-                        int   size = typedata[0] - typedata[5]*(typedata[4]&0x1000?16:12);
+                        int   size = (typedata[0]&0xFFFF) - typedata[5]*(typedata[4]&0x1000?16:12);
 
                         nameoffset = iter->name;
                         /* FIXME implement this once SetFuncDocString is implemented */
