@@ -38,6 +38,7 @@
 #define ID_BROWSE_PRINT                260
 #define ID_BROWSE_PRINT_PREVIEW        277
 #define ID_BROWSE_PROPERTIES           262
+#define ID_BROWSE_QUIT                 278
 #define ID_BROWSE_ABOUT                336
 
 #define ID_BROWSE_ADDFAV               1200

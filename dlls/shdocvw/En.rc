@@ -49,6 +49,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Print previe&w...",           ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&Properties...",              ID_BROWSE_PROPERTIES
+        MENUITEM "&Close",                      ID_BROWSE_QUIT
     }
     POPUP "&View"
     {

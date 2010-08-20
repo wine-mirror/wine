@@ -587,6 +587,10 @@ static LRESULT iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPAR
             ie_dialog_about(hwnd);
             break;
 
+        case ID_BROWSE_QUIT:
+            iewnd_OnDestroy(This);
+            break;
+
         default:
             if(LOWORD(wparam) >= ID_BROWSE_GOTOFAV_FIRST && LOWORD(wparam) <= ID_BROWSE_GOTOFAV_MAX)
             {
