@@ -2638,13 +2638,13 @@ static HRESULT WINAPI ICreateTypeInfo2_fnLayOut(
             for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
                 if(iter == iter2) continue;
                 if(iter2->indice == iter->indice) {
-                    iter->indice = 0x5fffffff + This->typeinfo->cElement + i + (This->typeinfo->datatype2<<16);
+                    iter->indice = 0x60000000 + This->typeinfo->cElement + (This->typeinfo->datatype2<<16);
 
                     for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
                         if(iter == iter2) continue;
                         if(iter2->indice == iter->indice) {
-                            HeapFree(GetProcessHeap(), 0, typedata);
-                            return E_ACCESSDENIED;
+                            ++iter->indice;
+                            iter2 = This->typedata->next;
                         }
                     }
 
