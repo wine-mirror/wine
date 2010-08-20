@@ -77,6 +77,7 @@ static const struct {
 	{&CLSID_ShellLink,	IShellLink_Constructor},
 	{&CLSID_UnixDosFolder,  UnixDosFolder_Constructor},
 	{&CLSID_UnixFolder,     UnixFolder_Constructor},
+	{&CLSID_ExplorerBrowser,ExplorerBrowser_Constructor},
 	{NULL, NULL}
 };
 

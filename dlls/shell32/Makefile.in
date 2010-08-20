@@ -23,6 +23,7 @@ C_SRCS = \
 	debughlp.c \
 	dialogs.c \
 	dragdrophelper.c \
+	ebrowser.c \
 	enumidlist.c \
 	folders.c \
 	iconcache.c \
