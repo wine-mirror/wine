@@ -602,12 +602,12 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         if (!(p = headers)) return FALSE;
         for (len = 0; *p; p++) if (*p != '\r') len++;
 
-        if ((len + 1) * sizeof(WCHAR) > *buflen || !buffer)
+        if (!buffer || (len + 1) * sizeof(WCHAR) > *buflen)
         {
             len++;
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
         }
-        else if (buffer)
+        else
         {
             for (p = headers, q = buffer; *p; p++, q++)
             {
@@ -637,12 +637,12 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
 
         if (!headers) return FALSE;
         len = strlenW( headers ) * sizeof(WCHAR);
-        if (len + sizeof(WCHAR) > *buflen || !buffer)
+        if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
             len += sizeof(WCHAR);
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
         }
-        else if (buffer)
+        else
         {
             memcpy( buffer, headers, len + sizeof(WCHAR) );
             TRACE("returning data: %s\n", debugstr_wn(buffer, len / sizeof(WCHAR)));
@@ -653,43 +653,38 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         return ret;
     }
     case WINHTTP_QUERY_VERSION:
-    {
-        DWORD len = (strlenW( request->version ) + 1) * sizeof(WCHAR);
-        if (len > *buflen)
+        len = strlenW( request->version ) * sizeof(WCHAR);
+        if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
+            len += sizeof(WCHAR);
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
-            *buflen = len;
-            return FALSE;
         }
-        else if (buffer)
+        else
         {
             strcpyW( buffer, request->version );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
-        *buflen = len - sizeof(WCHAR);
+        *buflen = len;
         return ret;
-    }
+
     case WINHTTP_QUERY_STATUS_TEXT:
-    {
-        DWORD len = (strlenW( request->status_text ) + 1) * sizeof(WCHAR);
-        if (len > *buflen)
+        len = strlenW( request->status_text ) * sizeof(WCHAR);
+        if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
+            len += sizeof(WCHAR);
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
-            *buflen = len;
-            return FALSE;
         }
-        else if (buffer)
+        else
         {
             strcpyW( buffer, request->status_text );
             TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
-        *buflen = len - sizeof(WCHAR);
+        *buflen = len;
         return ret;
-    }
+
     default:
-    {
         if (attr >= sizeof(attribute_table)/sizeof(attribute_table[0]) || !attribute_table[attr])
         {
             FIXME("attribute %u not implemented\n", attr);
@@ -697,7 +692,7 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
         }
         TRACE("attribute %s\n", debugstr_w(attribute_table[attr]));
         header_index = get_header_index( request, attribute_table[attr], requested_index, request_only );
-    }
+        break;
     }
 
     if (header_index >= 0)
@@ -712,13 +707,13 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
     if (index) *index += 1;
     if (level & WINHTTP_QUERY_FLAG_NUMBER)
     {
-        int *number = buffer;
-        if (sizeof(int) > *buflen)
+        if (!buffer || sizeof(int) > *buflen)
         {
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
         }
-        else if (number)
+        else
         {
+            int *number = buffer;
             *number = atoiW( header->value );
             TRACE("returning number: %d\n", *number);
             ret = TRUE;
@@ -728,11 +723,11 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
     else if (level & WINHTTP_QUERY_FLAG_SYSTEMTIME)
     {
         SYSTEMTIME *st = buffer;
-        if (sizeof(SYSTEMTIME) > *buflen)
+        if (!buffer || sizeof(SYSTEMTIME) > *buflen)
         {
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
         }
-        else if (st && (ret = WinHttpTimeToSystemTime( header->value, st )))
+        else if ((ret = WinHttpTimeToSystemTime( header->value, st )))
         {
             TRACE("returning time: %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n",
                   st->wYear, st->wMonth, st->wDay, st->wDayOfWeek,
@@ -742,21 +737,19 @@ static BOOL query_headers( request_t *request, DWORD level, LPCWSTR name, LPVOID
     }
     else if (header->value)
     {
-        WCHAR *string = buffer;
-        DWORD len = (strlenW( header->value ) + 1) * sizeof(WCHAR);
-        if (len > *buflen)
+        len = strlenW( header->value ) * sizeof(WCHAR);
+        if (!buffer || len + sizeof(WCHAR) > *buflen)
         {
+            len += sizeof(WCHAR);
             set_last_error( ERROR_INSUFFICIENT_BUFFER );
-            *buflen = len;
-            return FALSE;
         }
-        else if (string)
+        else
         {
-            strcpyW( string, header->value );
-            TRACE("returning string: %s\n", debugstr_w(string));
+            strcpyW( buffer, header->value );
+            TRACE("returning string: %s\n", debugstr_w(buffer));
             ret = TRUE;
         }
-        *buflen = len - sizeof(WCHAR);
+        *buflen = len;
     }
     return ret;
 }
