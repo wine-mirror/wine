@@ -580,7 +580,6 @@ static void test_verify_message_signature(void)
     ret = CryptVerifyMessageSignature(&para, 0,
      signedWithCertWithValidPubKeyContent,
      sizeof(signedWithCertWithValidPubKeyContent), NULL, 0, NULL);
-    todo_wine
     ok(!ret, "Expected failure\n");
     /* Finally, a message signed with a valid public key verifies successfully
      */
