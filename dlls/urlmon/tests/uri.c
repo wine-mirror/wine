@@ -5364,14 +5364,16 @@ static void test_IUriBuilder_GetFragment(IUriBuilder *builder, const uri_builder
                     "Error: IUriBuilder_GetFragment returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
                     hr, (expected ? S_OK : S_FALSE), test_index);
             }
-            todo_wine {
-                ok(!strcmp_aw(expected, received), "Error: Expected %s but got %s on uri_builder_tests[%d].\n",
-                    expected, wine_dbgstr_w(received), test_index);
-            }
-            todo_wine {
-                ok(lstrlen(expected) == len,
-                    "Error: Expected the length to be %d, but was %d instead on uri_builder_tests[%d].\n",
-                    lstrlen(expected), len, test_index);
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(!strcmp_aw(expected, received), "Error: Expected %s but got %s on uri_builder_tests[%d].\n",
+                        expected, wine_dbgstr_w(received), test_index);
+                }
+                todo_wine {
+                    ok(lstrlen(expected) == len,
+                        "Error: Expected the length to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                        lstrlen(expected), len, test_index);
+                }
             }
         } else {
             ok(hr == (expected ? S_OK : S_FALSE),
@@ -5429,12 +5431,14 @@ static void test_IUriBuilder_GetFragment(IUriBuilder *builder, const uri_builder
                         "Error: IUriBuilder_GetFragment returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
                         hr, S_FALSE, test_index);
                 }
-                todo_wine {
-                    ok(!received, "Error: Expected received to be NULL on uri_builder_tests[%d].\n", test_index);
-                }
-                todo_wine {
-                    ok(!len, "Error: Expected the length to be 0, but was %d instead on uri_builder_tests[%d].\n",
-                        len, test_index);
+                if(SUCCEEDED(hr)) {
+                    todo_wine {
+                        ok(!received, "Error: Expected received to be NULL on uri_builder_tests[%d].\n", test_index);
+                    }
+                    todo_wine {
+                        ok(!len, "Error: Expected the length to be 0, but was %d instead on uri_builder_tests[%d].\n",
+                            len, test_index);
+                    }
                 }
             }
             SysFreeString(expected);
