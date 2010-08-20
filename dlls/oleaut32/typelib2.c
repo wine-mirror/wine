@@ -1310,6 +1310,31 @@ static int ctl2_encode_typedesc(
 }
 
 /****************************************************************************
+ *	ctl2_decode_typedesc
+ *
+ *  Decodes a type description from an ICreateTypeLib2Impl.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: HRESULT error code.
+ */
+static HRESULT ctl2_decode_typedesc(
+	ICreateTypeLib2Impl *This, /* [I] The type library from which to decode the TYPEDESC. */
+	int encoded_tdesc,         /* [I] The encoded type description. */
+	TYPEDESC *tdesc)           /* [O] The decoded type description. */
+{
+    if (encoded_tdesc & 0x80000000) {
+        tdesc->vt = encoded_tdesc & VT_TYPEMASK;
+        tdesc->u.lptdesc = NULL;
+        return S_OK;
+    }
+
+    FIXME("unable to decode typedesc: %08x\n", encoded_tdesc);
+    return E_NOTIMPL;
+}
+
+/****************************************************************************
  *	ctl2_find_nth_reference
  *
  *  Finds a reference by index into the linked list of reference records.
@@ -3144,8 +3169,101 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
         UINT index,
         FUNCDESC** ppFuncDesc)
 {
-    FIXME("(%p,%d,%p), stub!\n", iface, index, ppFuncDesc);
-    return E_OUTOFMEMORY;
+    ICreateTypeInfo2Impl *This = impl_from_ITypeInfo2(iface);
+    int i, *typedata, num_defaults = 0, hdr_len, tail, has_defaults;
+    CyclicList *desc;
+    HRESULT hres;
+
+    TRACE("(%p,%d,%p), semi-stub\n", iface, index, ppFuncDesc);
+
+    if (!ppFuncDesc)
+        return E_INVALIDARG;
+
+    if (index >= This->typeinfo->cElement)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    hres = ICreateTypeInfo2_LayOut((ICreateTypeInfo2*)This);
+    if (FAILED(hres))
+        return hres;
+
+    desc = This->typedata->next;
+    for (i = index; i >= 0; ) {
+        desc = desc->next;
+        if (desc->type == CyclicListFunc)
+            --i;
+    }
+
+    typedata = desc->u.data;
+
+    *ppFuncDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FUNCDESC));
+    if (!*ppFuncDesc)
+        return E_OUTOFMEMORY;
+
+    (*ppFuncDesc)->memid = desc->indice;
+    (*ppFuncDesc)->lprgscode = NULL; /* FIXME: Unimplemented */
+    (*ppFuncDesc)->funckind = typedata[4] & 0x7;
+    (*ppFuncDesc)->invkind = (typedata[4] >> 3) & 0xF;
+    (*ppFuncDesc)->callconv = (typedata[4] >> 8) & 0xF;
+    (*ppFuncDesc)->cParams = typedata[5];
+    (*ppFuncDesc)->cParamsOpt = 0; /* FIXME: Unimplemented*/
+    (*ppFuncDesc)->oVft = typedata[3] & 0xFFFF;
+    if ((*ppFuncDesc)->oVft)
+        --(*ppFuncDesc)->oVft;
+    (*ppFuncDesc)->cScodes = 0; /* FIXME: Unimplemented*/
+    hres = ctl2_decode_typedesc(This->typelib, typedata[1],
+            &(*ppFuncDesc)->elemdescFunc.tdesc);
+    if (FAILED(hres)) {
+        HeapFree(GetProcessHeap(), 0, *ppFuncDesc);
+        return hres;
+    }
+    (*ppFuncDesc)->wFuncFlags = typedata[2];
+
+    has_defaults = typedata[4] & 0x1000;
+    tail = typedata[5] * (has_defaults ? 16 : 12);
+    hdr_len = ((typedata[0] & 0xFFFF) - tail) / sizeof(int);
+
+    if ((*ppFuncDesc)->cParams > 0) {
+        (*ppFuncDesc)->lprgelemdescParam = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (*ppFuncDesc)->cParams * sizeof(ELEMDESC));
+        if (!(*ppFuncDesc)->lprgelemdescParam) {
+            HeapFree(GetProcessHeap(), 0, *ppFuncDesc);
+            return E_OUTOFMEMORY;
+        }
+        if (has_defaults) {
+            num_defaults = (*ppFuncDesc)->cParams;
+
+            for (i = 0; i < num_defaults; ++i) {
+                if (typedata[hdr_len + i] != 0xFFFFFFFF) {
+                    (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.wParamFlags |= PARAMFLAG_FHASDEFAULT;
+
+                    (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex = HeapAlloc(GetProcessHeap(), 0, sizeof(PARAMDESCEX));
+                    if (!(*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex) {
+                        ITypeInfo2_ReleaseFuncDesc(iface, *ppFuncDesc);
+                        return E_OUTOFMEMORY;
+                    }
+
+                    (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->cBytes = sizeof(PARAMDESCEX);
+                    hres = ctl2_decode_variant(This->typelib, typedata[hdr_len + i],
+                            &(*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+                    if (FAILED(hres)) {
+                        ITypeInfo2_ReleaseFuncDesc(iface, *ppFuncDesc);
+                        return hres;
+                    }
+                }
+            }
+        }
+
+        for (i = 0; i < (*ppFuncDesc)->cParams; ++i) {
+            hres = ctl2_decode_typedesc(This->typelib, typedata[hdr_len + num_defaults + (i * 3)],
+                    &((*ppFuncDesc)->lprgelemdescParam + i)->tdesc);
+            if (FAILED(hres)) {
+                ITypeInfo2_ReleaseFuncDesc(iface, *ppFuncDesc);
+                return hres;
+            }
+            (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.wParamFlags = typedata[hdr_len + num_defaults + (i * 3) + 2];
+        }
+    }
+
+    return S_OK;
 }
 
 /******************************************************************************
