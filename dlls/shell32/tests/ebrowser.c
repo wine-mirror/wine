@@ -26,6 +26,8 @@
 
 #include "wine/test.h"
 
+static HWND hwnd;
+
 /*********************************************************************
  * Some simple helpers
  */
@@ -129,6 +131,140 @@ static void test_SB_misc(void)
     ok(lres == 0, "Got %d\n", lres);
 }
 
+static void test_initialization(void)
+{
+    IExplorerBrowser *peb;
+    IShellBrowser *psb;
+    HRESULT hr;
+    ULONG lres;
+    RECT rc;
+
+    ebrowser_instantiate(&peb);
+
+    if(0)
+    {
+        /* Crashes on Windows 7 */
+        hr = IExplorerBrowser_Initialize(peb, NULL, NULL, NULL);
+        hr = IExplorerBrowser_Initialize(peb, hwnd, NULL, NULL);
+    }
+
+    ZeroMemory(&rc, sizeof(RECT));
+
+    hr = IExplorerBrowser_Initialize(peb, NULL, &rc, NULL);
+    ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    /* Initialize twice */
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
+
+    hr = IExplorerBrowser_Destroy(peb);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    /* Initialize again */
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
+
+    /* Destroy again */
+    hr = IExplorerBrowser_Destroy(peb);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got %d\n", lres);
+
+    /* Initialize with a few different rectangles */
+    peb = NULL;
+    ebrowser_instantiate(&peb);
+    rc.left = 50; rc.top = 20; rc.right = 100; rc.bottom = 80;
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        HWND eb_hwnd;
+        RECT eb_rc;
+        char buf[1024];
+        LONG style, expected_style;
+        static const RECT exp_rc = {0, 0, 48, 58};
+
+        hr = IShellBrowser_GetWindow(psb, &eb_hwnd);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        GetClientRect(eb_hwnd, &eb_rc);
+        ok(EqualRect(&eb_rc, &exp_rc), "Got client rect (%d, %d)-(%d, %d)\n",
+           eb_rc.left, eb_rc.top, eb_rc.right, eb_rc.bottom);
+
+        GetWindowRect(eb_hwnd, &eb_rc);
+        ok(eb_rc.right - eb_rc.left == 50, "Got window width %d\n", eb_rc.right - eb_rc.left);
+        ok(eb_rc.bottom - eb_rc.top == 60, "Got window height %d\n", eb_rc.bottom - eb_rc.top);
+
+        buf[0] = '\0';
+        GetClassNameA(eb_hwnd, buf, 1024);
+        ok(!lstrcmpA(buf, "ExplorerBrowserControl"), "Unexpected classname %s\n", buf);
+
+        expected_style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_BORDER;
+        style = GetWindowLongPtrW(eb_hwnd, GWL_STYLE);
+        todo_wine ok(style == expected_style, "Got style 0x%08x, expected 0x%08x\n", style, expected_style);
+
+        expected_style = WS_EX_CONTROLPARENT;
+        style = GetWindowLongPtrW(eb_hwnd, GWL_EXSTYLE);
+        ok(style == expected_style, "Got exstyle 0x%08x, expected 0x%08x\n", style, expected_style);
+
+        ok(GetParent(eb_hwnd) == hwnd, "GetParent returns %p\n", GetParent(eb_hwnd));
+
+        /* ::Destroy() destroys the window. */
+        ok(IsWindow(eb_hwnd), "eb_hwnd invalid.\n");
+        IExplorerBrowser_Destroy(peb);
+        ok(!IsWindow(eb_hwnd), "eb_hwnd valid.\n");
+
+        IShellBrowser_Release(psb);
+        lres = IExplorerBrowser_Release(peb);
+        ok(lres == 0, "Got refcount %d\n", lres);
+    }
+    else
+    {
+        skip("Skipping some tests.\n");
+
+        IExplorerBrowser_Destroy(peb);
+        lres = IExplorerBrowser_Release(peb);
+        ok(lres == 0, "Got refcount %d\n", lres);
+    }
+
+    ebrowser_instantiate(&peb);
+    rc.left = 0; rc.top = 0; rc.right = 0; rc.bottom = 0;
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    IExplorerBrowser_Destroy(peb);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got refcount %d\n", lres);
+
+    ebrowser_instantiate(&peb);
+    rc.left = -1; rc.top = -1; rc.right = 1; rc.bottom = 1;
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    IExplorerBrowser_Destroy(peb);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got refcount %d\n", lres);
+
+    ebrowser_instantiate(&peb);
+    rc.left = 10; rc.top = 10; rc.right = 5; rc.bottom = 5;
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    IExplorerBrowser_Destroy(peb);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got refcount %d\n", lres);
+
+    ebrowser_instantiate(&peb);
+    rc.left = 10; rc.top = 10; rc.right = 5; rc.bottom = 5;
+    hr = IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    IExplorerBrowser_Destroy(peb);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got refcount %d\n", lres);
+}
+
 static BOOL test_instantiate_control(void)
 {
     IExplorerBrowser *peb;
@@ -143,6 +279,21 @@ static BOOL test_instantiate_control(void)
     return TRUE;
 }
 
+static void setup_window(void)
+{
+    WNDCLASSW wc;
+    static const WCHAR ebtestW[] = {'e','b','t','e','s','t',0};
+
+    ZeroMemory(&wc, sizeof(WNDCLASSW));
+    wc.lpfnWndProc      = DefWindowProcW;
+    wc.lpszClassName    = ebtestW;
+    RegisterClassW(&wc);
+    hwnd = CreateWindowExW(0, ebtestW, NULL, 0,
+                           0, 0, 500, 500,
+                           NULL, 0, 0, NULL);
+    ok(hwnd != NULL, "Failed to create window for tests.\n");
+}
+
 START_TEST(ebrowser)
 {
     OleInitialize(NULL);
@@ -154,8 +305,12 @@ START_TEST(ebrowser)
         return;
     }
 
+    setup_window();
+
     test_QueryInterface();
     test_SB_misc();
+    test_initialization();
 
+    DestroyWindow(hwnd);
     OleUninitialize();
 }

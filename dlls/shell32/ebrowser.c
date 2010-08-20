@@ -31,6 +31,8 @@
 #include "wine/debug.h"
 #include "debughlp.h"
 
+#include "shell32_main.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct _ExplorerBrowserImpl {
@@ -38,7 +40,34 @@ typedef struct _ExplorerBrowserImpl {
     const IShellBrowserVtbl *lpsbVtbl;
     LONG ref;
     BOOL destroyed;
+
+    HWND hwnd_main;
 } ExplorerBrowserImpl;
+
+/**************************************************************************
+ * Main window related functions.
+ */
+static LRESULT main_on_wm_create(HWND hWnd, CREATESTRUCTW *crs)
+{
+    ExplorerBrowserImpl *This = crs->lpCreateParams;
+    TRACE("%p\n", This);
+
+    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LPARAM)This);
+    This->hwnd_main = hWnd;
+
+    return TRUE;
+}
+
+static LRESULT CALLBACK main_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+    switch(uMessage)
+    {
+    case WM_CREATE:           return main_on_wm_create(hWnd, (CREATESTRUCTW*)lParam);
+    default:                  return DefWindowProcW(hWnd, uMessage, wParam, lParam);
+    }
+
+    return 0;
+}
 
 /**************************************************************************
  * IExplorerBrowser Implementation
@@ -103,7 +132,46 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
                                                     const FOLDERSETTINGS *pfs)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
+    WNDCLASSW wc;
+    LONG style;
+    static const WCHAR EB_CLASS_NAME[] =
+        {'E','x','p','l','o','r','e','r','B','r','o','w','s','e','r','C','o','n','t','r','o','l',0};
+
     TRACE("%p (%p, %p, %p)\n", This, hwndParent, prc, pfs);
+
+    if(This->hwnd_main)
+        return E_UNEXPECTED;
+
+    if(!hwndParent)
+        return E_INVALIDARG;
+
+    if( !GetClassInfoW(shell32_hInstance, EB_CLASS_NAME, &wc) )
+    {
+        wc.style            = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc      = main_wndproc;
+        wc.cbClsExtra       = 0;
+        wc.cbWndExtra       = 0;
+        wc.hInstance        = shell32_hInstance;
+        wc.hIcon            = 0;
+        wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+        wc.hbrBackground    = (HBRUSH)(COLOR_WINDOW + 1);
+        wc.lpszMenuName     = NULL;
+        wc.lpszClassName    = EB_CLASS_NAME;
+
+        if (!RegisterClassW(&wc)) return E_FAIL;
+    }
+
+    style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER;
+    This->hwnd_main = CreateWindowExW(WS_EX_CONTROLPARENT, EB_CLASS_NAME, NULL, style,
+                                      prc->left, prc->top,
+                                      prc->right - prc->left, prc->bottom - prc->top,
+                                      hwndParent, 0, shell32_hInstance, This);
+
+    if(!This->hwnd_main)
+    {
+        ERR("Failed to create the window.\n");
+        return E_FAIL;
+    }
 
     return S_OK;
 }
@@ -113,6 +181,7 @@ static HRESULT WINAPI IExplorerBrowser_fnDestroy(IExplorerBrowser *iface)
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
     TRACE("%p\n", This);
 
+    DestroyWindow(This->hwnd_main);
     This->destroyed = TRUE;
 
     return S_OK;
@@ -294,9 +363,13 @@ static ULONG WINAPI IShellBrowser_fnRelease(IShellBrowser *iface)
 static HRESULT WINAPI IShellBrowser_fnGetWindow(IShellBrowser *iface, HWND *phwnd)
 {
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
-    FIXME("stub, %p (%p)\n", This, phwnd);
+    TRACE("%p (%p)\n", This, phwnd);
 
-    return E_NOTIMPL;
+    if(!This->hwnd_main)
+        return E_FAIL;
+
+    *phwnd = This->hwnd_main;
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellBrowser_fnContextSensitiveHelp(IShellBrowser *iface,
