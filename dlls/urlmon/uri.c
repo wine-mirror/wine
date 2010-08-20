@@ -4255,6 +4255,19 @@ static HRESULT WINAPI UriBuilder_GetPassword(IUriBuilder *iface, DWORD *pcchPass
 static HRESULT WINAPI UriBuilder_GetPath(IUriBuilder *iface, DWORD *pcchPath, LPCWSTR *ppwzPath)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p %p)\n", This, pcchPath, ppwzPath);
+
+    if(!pcchPath) {
+        if(ppwzPath)
+            *ppwzPath = NULL;
+        return E_POINTER;
+    }
+
+    if(!ppwzPath) {
+        *pcchPath = 0;
+        return E_POINTER;
+    }
+
     FIXME("(%p)->(%p %p)\n", This, pcchPath, ppwzPath);
     return E_NOTIMPL;
 }

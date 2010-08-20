@@ -5364,6 +5364,20 @@ static void test_IUriBuilder_GetInvalidArgs(void) {
         ok(hr == E_POINTER, "Error: IUriBuilder_GetPassword returned 0x%08x, expected 0x%08x.\n",
             hr, E_POINTER);
         ok(!len, "Error: Expected len to be 0, but was %d instead.\n", len);
+
+        hr = IUriBuilder_GetPath(builder, NULL, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+        received = (void*) 0xdeadbeef;
+        hr = IUriBuilder_GetPath(builder, NULL, &received);
+        ok(hr == E_POINTER, "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+        ok(!received, "Error: Expected received to be NULL, but was %p instead.\n", received);
+        len = -1;
+        hr = IUriBuilder_GetPath(builder, &len, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+        ok(!len, "Error: Expected len to be 0, but was %d instead.\n", len);
     }
     if(builder) IUriBuilder_Release(builder);
 }
@@ -5689,6 +5703,113 @@ static void test_IUriBuilder_GetPassword(IUriBuilder *builder, const uri_builder
     }
 }
 
+static void test_IUriBuilder_GetPath(IUriBuilder *builder, const uri_builder_test *test,
+                                     DWORD test_index) {
+    HRESULT hr;
+    DWORD i;
+    LPCWSTR received = NULL;
+    DWORD len = -1;
+    const uri_builder_property *prop = NULL;
+
+    /* Check if the property was set earlier. */
+    for(i = 0; i < sizeof(test->properties)/sizeof(test->properties[0]); ++i) {
+        if(test->properties[i].change && test->properties[i].property == Uri_PROPERTY_PATH)
+            prop = &(test->properties[i]);
+    }
+
+    if(prop) {
+        /* Use expected_value unless it's NULL, then use value. */
+        LPCSTR expected = prop->expected_value ? prop->expected_value : prop->value;
+        hr = IUriBuilder_GetPath(builder, &len, &received);
+        if(prop->todo) {
+            todo_wine {
+                ok(hr == (expected ? S_OK : S_FALSE),
+                    "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                    hr, (expected ? S_OK : S_FALSE), test_index);
+            }
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(!strcmp_aw(expected, received), "Error: Expected %s but got %s on uri_builder_tests[%d].\n",
+                        expected, wine_dbgstr_w(received), test_index);
+                }
+                todo_wine {
+                    ok(lstrlen(expected) == len,
+                        "Error: Expected the length to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                        lstrlen(expected), len, test_index);
+                }
+            }
+        } else {
+            ok(hr == (expected ? S_OK : S_FALSE),
+                "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, (expected ? S_OK : S_FALSE), test_index);
+            ok(!strcmp_aw(expected, received), "Error: Expected %s but got %s on uri_builder_tests[%d].\n",
+                expected, wine_dbgstr_w(received), test_index);
+            ok(lstrlen(expected) == len,
+                "Error: Expected the length to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                lstrlen(expected), len, test_index);
+        }
+    } else {
+        /* The property wasn't set earlier, so it should return whatever
+         * the base IUri contains (if anything).
+         */
+        IUri *uri = NULL;
+        hr = IUriBuilder_GetIUri(builder, &uri);
+        todo_wine {
+            ok(hr == S_OK,
+                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                hr, S_OK, test_index);
+        }
+        if(SUCCEEDED(hr)) {
+            BOOL has_prop = FALSE;
+            BSTR expected = NULL;
+
+            hr = IUri_GetPath(uri, &expected);
+            ok(SUCCEEDED(hr),
+                "Error: Expected IUri_GetPath to succeed, but got 0x%08x instead on uri_builder_tests[%d].\n",
+                hr, test_index);
+            has_prop = hr == S_OK;
+
+            hr = IUriBuilder_GetPath(builder, &len, &received);
+            if(has_prop) {
+                todo_wine {
+                    ok(hr == S_OK,
+                        "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                        hr, S_OK, test_index);
+                }
+                if(SUCCEEDED(hr)) {
+                    todo_wine {
+                        ok(!lstrcmpW(expected, received),
+                            "Error: Expected %s but got %s instead on uri_builder_tests[%d].\n",
+                            wine_dbgstr_w(expected), wine_dbgstr_w(received), test_index);
+                    }
+                    todo_wine {
+                        ok(lstrlenW(expected) == len,
+                            "Error: Expected the length to be %d, but was %d instead on uri_builder_tests[%d].\n",
+                            lstrlenW(expected), len, test_index);
+                    }
+                }
+            } else {
+                todo_wine {
+                    ok(hr == S_FALSE,
+                        "Error: IUriBuilder_GetPath returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+                        hr, S_FALSE, test_index);
+                }
+                if(SUCCEEDED(hr)) {
+                    todo_wine {
+                        ok(!received, "Error: Expected received to be NULL on uri_builder_tests[%d].\n", test_index);
+                    }
+                    todo_wine {
+                        ok(!len, "Error: Expected the length to be 0, but was %d instead on uri_builder_tests[%d].\n",
+                            len, test_index);
+                    }
+                }
+            }
+            SysFreeString(expected);
+        }
+        if(uri) IUri_Release(uri);
+    }
+}
+
 /* Tests IUriBuilder functions. */
 static void test_IUriBuilder(void) {
     HRESULT hr;
@@ -5746,6 +5867,7 @@ static void test_IUriBuilder(void) {
                 test_IUriBuilder_GetFragment(builder, &test, i);
                 test_IUriBuilder_GetHost(builder, &test, i);
                 test_IUriBuilder_GetPassword(builder, &test, i);
+                test_IUriBuilder_GetPath(builder, &test, i);
 
                 test_IUriBuilder_CreateUri(builder, &test, i);
                 test_IUriBuilder_CreateUriSimple(builder, &test, i);
