@@ -1324,14 +1324,66 @@ static HRESULT ctl2_decode_typedesc(
 	int encoded_tdesc,         /* [I] The encoded type description. */
 	TYPEDESC *tdesc)           /* [O] The decoded type description. */
 {
+    int *typedata, i;
+    HRESULT hres;
+
     if (encoded_tdesc & 0x80000000) {
         tdesc->vt = encoded_tdesc & VT_TYPEMASK;
         tdesc->u.lptdesc = NULL;
         return S_OK;
     }
 
-    FIXME("unable to decode typedesc: %08x\n", encoded_tdesc);
-    return E_NOTIMPL;
+    typedata = (void *)&This->typelib_segment_data[MSFT_SEG_TYPEDESC][encoded_tdesc];
+
+    tdesc->vt = typedata[0] & 0xFFFF;
+
+    switch(tdesc->vt) {
+    case VT_PTR:
+    case VT_SAFEARRAY:
+        tdesc->u.lptdesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TYPEDESC));
+        if (!tdesc->u.lptdesc)
+            return E_OUTOFMEMORY;
+
+        hres = ctl2_decode_typedesc(This, typedata[1], tdesc->u.lptdesc);
+        if (FAILED(hres)) {
+            HeapFree(GetProcessHeap(), 0, tdesc->u.lptdesc);
+            return hres;
+        }
+
+        return S_OK;
+
+    case VT_CARRAY: {
+        int arrayoffset, *arraydata, num_dims;
+
+        arrayoffset = typedata[1];
+        arraydata = (void *)&This->typelib_segment_data[MSFT_SEG_ARRAYDESC][arrayoffset];
+        num_dims = arraydata[1] & 0xFFFF;
+
+        tdesc->u.lpadesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                sizeof(ARRAYDESC) + sizeof(SAFEARRAYBOUND) * (num_dims - 1));
+        if (!tdesc->u.lpadesc)
+            return E_OUTOFMEMORY;
+
+        hres = ctl2_decode_typedesc(This, arraydata[0], &tdesc->u.lpadesc->tdescElem);
+        if (FAILED(hres)) {
+            HeapFree(GetProcessHeap(), 0, tdesc->u.lpadesc);
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < num_dims; ++i) {
+            tdesc->u.lpadesc->rgbounds[i].cElements = arraydata[2 + i * 2];
+            tdesc->u.lpadesc->rgbounds[i].lLbound = arraydata[3 + i * 2];
+        }
+
+        return S_OK;
+    }
+    case VT_USERDEFINED:
+        tdesc->u.hreftype = typedata[1];
+        return S_OK;
+    default:
+        FIXME("unable to decode typedesc (%08x): unknown VT: %d\n", encoded_tdesc, tdesc->vt);
+        return E_NOTIMPL;
+    }
 }
 
 /****************************************************************************
