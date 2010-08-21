@@ -1,6 +1,6 @@
 @ stdcall D3DAssemble(ptr long str ptr ptr long ptr ptr)
 @ stub DebugSetMute
-@ stub D3DCompile
+@ stdcall D3DCompile(ptr long str ptr ptr str str long long ptr ptr)
 @ stub D3DCompressShaders
 @ stdcall D3DCreateBlob(long ptr)
 @ stub D3DDecompressShaders

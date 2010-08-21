@@ -41,6 +41,10 @@
 #define D3DCOMPILE_OPTIMIZATION_LEVEL3            0x8000
 #define D3DCOMPILE_WARNINGS_ARE_ERRORS           0x40000
 
+HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filename,
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
+        const char *target, UINT sflags, UINT eflags, ID3DBlob **shader, ID3DBlob **error_messages);
+
 HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob);
 
 #endif

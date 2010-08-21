@@ -491,3 +491,20 @@ cleanup:
     LeaveCriticalSection(&wpp_mutex);
     return hr;
 }
+
+HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filename,
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
+        const char *target, UINT sflags, UINT eflags, ID3DBlob **shader, ID3DBlob **error_messages)
+{
+    FIXME("data %p, data_size %lu, filename %s, defines %p, include %p, entrypoint %s,\n"
+            "target %s, sflags %#x, eflags %#x, shader %p, error_messages %p stub!\n",
+            data, data_size, debugstr_a(filename), defines, include, debugstr_a(entrypoint),
+            debugstr_a(target), sflags, eflags, shader, error_messages);
+
+    TRACE("Shader source:\n%s\n", debugstr_an(data, data_size));
+
+    if (error_messages)
+        D3DCreateBlob(1, error_messages); /* zero fill used as string end */
+
+    return D3DERR_INVALIDCALL;
+}
