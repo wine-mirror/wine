@@ -1035,7 +1035,7 @@ static const struct bytecode_backend vs_1_x_backend = {
 static void instr_ps_1_0123_texld(struct bc_writer *This,
                                   const struct instruction *instr,
                                   struct bytecode_buffer *buffer) {
-    DWORD idx, srcidx;
+    DWORD idx;
     struct shader_reg reg;
     DWORD swizzlemask;
 
@@ -1074,17 +1074,6 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
         /* map the temp dstreg to the ps_1_3 texture temporary register */
         This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
     } else if(instr->src[0].type == BWRITERSPR_TEMP) {
-        if(instr->src[0].regnum == T0_REG) {
-            srcidx = 0;
-        } else if(instr->src[0].regnum == T1_REG) {
-            srcidx = 1;
-        } else if(instr->src[0].regnum == T2_REG) {
-            srcidx = 2;
-        } else if(instr->src[0].regnum == T3_REG) {
-            srcidx = 3;
-        } else {
-            WARN("Invalid address data source register r%u\n", instr->src[0].regnum);
-        }
 
         swizzlemask = (3 << BWRITERVS_SWIZZLE_SHIFT) |
             (3 << (BWRITERVS_SWIZZLE_SHIFT + 2)) |
