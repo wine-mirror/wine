@@ -1863,6 +1863,52 @@ if (0)
     IImageList_Release(imgl);
 }
 
+static void test_IImageList_GetImageCount(void)
+{
+    IImageList *imgl;
+    HIMAGELIST himl;
+    int count;
+    HRESULT hr;
+
+    himl = ImageList_Create(16, 16, ILC_COLOR16, 0, 3);
+    imgl = (IImageList*)himl;
+
+if (0)
+{
+    /* crashes on native */
+    hr = IImageList_GetImageCount(imgl, NULL);
+}
+
+    count = -1;
+    hr = IImageList_GetImageCount(imgl, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 0, "got %d\n", count);
+
+    IImageList_Release(imgl);
+}
+
+static void test_IImageList_GetIconSize(void)
+{
+    IImageList *imgl;
+    HIMAGELIST himl;
+    int cx, cy;
+    HRESULT hr;
+
+    himl = ImageList_Create(16, 16, ILC_COLOR16, 0, 3);
+    imgl = (IImageList*)himl;
+
+    hr = IImageList_GetIconSize(imgl, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IImageList_GetIconSize(imgl, &cx, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IImageList_GetIconSize(imgl, NULL, &cy);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    IImageList_Release(imgl);
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1918,6 +1964,8 @@ START_TEST(imagelist)
     test_IImageList_Clone();
     test_IImageList_GetBkColor();
     test_IImageList_SetBkColor();
+    test_IImageList_GetImageCount();
+    test_IImageList_GetIconSize();
 
     CoUninitialize();
 

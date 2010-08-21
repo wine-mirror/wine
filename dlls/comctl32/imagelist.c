@@ -3431,7 +3431,7 @@ static HRESULT WINAPI ImageListImpl_GetIconSize(IImageList *iface, int *cx,
 {
     HIMAGELIST This = (HIMAGELIST) iface;
 
-    return ImageList_GetIconSize(This, cx, cy) ? S_OK : E_FAIL;
+    return ImageList_GetIconSize(This, cx, cy) ? S_OK : E_INVALIDARG;
 }
 
 static HRESULT WINAPI ImageListImpl_SetIconSize(IImageList *iface, int cx,
@@ -3442,9 +3442,6 @@ static HRESULT WINAPI ImageListImpl_SetIconSize(IImageList *iface, int cx,
 
 static HRESULT WINAPI ImageListImpl_GetImageCount(IImageList *iface, int *pi)
 {
-    if (!pi)
-        return E_FAIL;
-
     *pi = ImageList_GetImageCount((HIMAGELIST) iface);
     return S_OK;
 }
