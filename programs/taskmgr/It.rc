@@ -35,9 +35,9 @@ IDR_TASKMANAGER MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Nuovo Processo (Esegui...)",          ID_FILE_NEW
+        MENUITEM "&Nuovo processo (Esegui...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Esci dal Gestore dei Processi",          ID_FILE_EXIT
+        MENUITEM "&Esci dal gestore dei processi",          ID_FILE_EXIT
     END
     POPUP "&Opzioni"
     BEGIN
@@ -63,11 +63,11 @@ BEGIN
 
         END
         MENUITEM SEPARATOR
-        MENUITEM "Icone &Larghe",                ID_VIEW_LARGE
-        MENUITEM "Icone &Piccole",                ID_VIEW_SMALL
+        MENUITEM "Icone &grandi",                ID_VIEW_LARGE
+        MENUITEM "Icone &piccole",                ID_VIEW_SMALL
         MENUITEM "&Dettagli",                    ID_VIEW_DETAILS, CHECKED
         MENUITEM "&Seleziona le colonne...",          ID_VIEW_SELECTCOLUMNS
-        POPUP "&Grafico della CPU"
+        POPUP "Grafico della &CPU"
         BEGIN
             MENUITEM "&Un grafico per tutte le CPU",        ID_VIEW_CPUHISTORY_ONEGRAPHALL
 
@@ -107,10 +107,10 @@ IDR_APPLICATION_PAGE_CONTEXT1 MENU
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Nuovo Processo (Esegui...)",          ID_FILE_NEW
+        MENUITEM "&Nuovo processo (Esegui...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "Icone &Larghe",                ID_VIEW_LARGE
-        MENUITEM "Icone &Piccole",                ID_VIEW_SMALL
+        MENUITEM "Icone &grandi",                ID_VIEW_LARGE
+        MENUITEM "Icone &piccole",                ID_VIEW_SMALL
         MENUITEM "&Dettagli",                    ID_VIEW_DETAILS, CHECKED
     END
 END
@@ -153,9 +153,9 @@ BEGIN
 
         MENUITEM "&Debug",                      ID_PROCESS_PAGE_DEBUG
         MENUITEM SEPARATOR
-        POPUP "Setta la &Priorità"
+        POPUP "Setta la &priorità"
         BEGIN
-            MENUITEM "Tempo &Reale",                   ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+            MENUITEM "Tempo &reale",                   ID_PROCESS_PAGE_SETPRIORITY_REALTIME
 
             MENUITEM "&Alta",                       ID_PROCESS_PAGE_SETPRIORITY_HIGH
 
@@ -168,7 +168,7 @@ BEGIN
             MENUITEM "&Bassa",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
 
         END
-        MENUITEM "Setta &Affinità...",            ID_PROCESS_PAGE_SETAFFINITY
+        MENUITEM "Imposta &affinità...",            ID_PROCESS_PAGE_SETAFFINITY
 	MENUITEM "Modifica i &canali di debug...",	ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
@@ -181,7 +181,7 @@ IDD_TASKMGR_DIALOG DIALOG  0, 0, 264, 246
 STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
     WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
     WS_THICKFRAME
-CAPTION "Gestore dei Processi"
+CAPTION "Gestore dei processi"
 MENU IDR_TASKMANAGER
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -194,9 +194,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
                     LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Nuovo Processo...",IDC_NEWTASK,187,189,53,14
-    PUSHBUTTON      "&Cambia a",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
-    PUSHBUTTON      "&Termina Processo",IDC_ENDTASK,75,189,53,14,WS_DISABLED
+    PUSHBUTTON      "&Nuovo processo...",IDC_NEWTASK,187,189,53,14
+    PUSHBUTTON      "&Passa a",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
+    PUSHBUTTON      "&Termina processo",IDC_ENDTASK,75,189,53,14,WS_DISABLED
 END
 
 IDD_PROCESS_PAGE DIALOG  0, 0, 247, 210
@@ -206,8 +206,8 @@ BEGIN
     CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
                     WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Termina Processo",IDC_ENDPROCESS,171,189,69,14
-    CONTROL         "&Mostra i Processi di tutti gli utenti",IDC_SHOWALLPROCESSES,
+    PUSHBUTTON      "&Termina processo",IDC_ENDPROCESS,171,189,69,14
+    CONTROL         "&Mostra i processi di tutti gli utenti",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,111,10
 END
 
@@ -272,7 +272,7 @@ END
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Canali di Debug"
+CAPTION "Canali di debug"
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
@@ -283,12 +283,12 @@ END
 
 IDD_AFFINITY_DIALOG DIALOG  0, 0, 231, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Affinità del Processore"
+CAPTION "Affinità del processore"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,120,133,50,14
     PUSHBUTTON      "Annulla",IDCANCEL,174,133,50,14
-    LTEXT           "The Processor Affinity setting controls which CPUs the process will be allowed to execute on.",
+    LTEXT           "L'impostazione dell'affinità del processore controlla su quali CPU il processo potrà essere eseguito.",
                     IDC_STATIC,5,5,220,16
     CONTROL         "CPU 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     11,28,37,10
@@ -358,62 +358,62 @@ END
 
 IDD_COLUMNS_DIALOG DIALOG  0, 0, 195, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Seleziona le Colonne"
+CAPTION "Seleziona le colonne"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
     PUSHBUTTON      "Annulla",IDCANCEL,138,178,50,14
-    LTEXT           "Seleziona le colonne che appariranno sulla pagina Processi del Gestore dei Processi.",
+    LTEXT           "Seleziona le colonne che appariranno sulla pagina 'Processi' del gestore dei processi.",
                     IDC_STATIC,7,7,181,17
     CONTROL         "Nome dell'&immagine",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
-    CONTROL         "&PID (Identificatore Processo)",IDC_PID,"Button",
+    CONTROL         "&PID (Identificatore processo)",IDC_PID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
     CONTROL         "Uso della &CPU",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,50,53,10
     CONTROL         "T&empo della CPU",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,61,48,10
-    CONTROL         "Uso della &Memoria",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Uso della &memoria",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,72,63,10
-    CONTROL         "&Delta di uso della Memoria",IDC_MEMORYUSAGEDELTA,"Button",
+    CONTROL         "&Delta di uso della memoria",IDC_MEMORYUSAGEDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,83,82,10
-    CONTROL         "Massimo &Uso della Memoria",IDC_PEAKMEMORYUSAGE,"Button",
+    CONTROL         "Massimo &uso della memoria",IDC_PEAKMEMORYUSAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,94,82,10
-    CONTROL         "E&rrore di Paginazione",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "E&rrore di paginazione",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,105,53,10
     CONTROL         "Oggetti &USER",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,116,62,10
     CONTROL         "Letture I/O",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,127,49,10
-    CONTROL         "Bytes di Letture I/O",IDC_IOREADBYTES,"Button",
+    CONTROL         "Byte di letture I/O",IDC_IOREADBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,65,10
-    CONTROL         "ID &Sessione",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "ID &sessione",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,50,10
-    CONTROL         "&Nome Utente",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "&Nome utente",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,51,10
-    CONTROL         "Delt&a di Errori di Pagina",IDC_PAGEFAULTSDELTA,"Button",
+    CONTROL         "Delt&a di errori di pagina",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
-    CONTROL         "Dimensione della Memoria &Virtuale",IDC_VIRTUALMEMORYSIZE,"Button",
+    CONTROL         "Dimensione della memoria &virtuale",IDC_VIRTUALMEMORYSIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,39,77,10
-    CONTROL         "Riserva di Pa&ging",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Riserva di pa&ging",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,50,53,10
-    CONTROL         "Riserva n&on di Paging",IDC_NONPAGEDPOOL,"Button",
+    CONTROL         "Riserva n&on di paging",IDC_NONPAGEDPOOL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,61,67,10
-    CONTROL         "P&riorità Base",IDC_BASEPRIORITY,"Button",
+    CONTROL         "P&riorità base",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,72,55,10
-    CONTROL         "Conto degli &Handle",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Conto degli &handle",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,83,59,10
-    CONTROL         "Conto dei &Thread",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Conto dei &thread",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,94,59,10
     CONTROL         "Oggetti GDI",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,105,55,10
     CONTROL         "Scritture I/O",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,116,49,10
-    CONTROL         "Bytes di Scritture I/O",IDC_IOWRITEBYTES,"Button",
+    CONTROL         "Byte di scritture I/O",IDC_IOWRITEBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,127,65,10
     CONTROL         "Altri I/O",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,138,46,10
-    CONTROL         "Bytes di altri I/O",IDC_IOOTHERBYTES,"Button",
+    CONTROL         "Byte di altri I/O",IDC_IOOTHERBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,107,149,65,10
 END
 
@@ -423,19 +423,19 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_APP_TITLE           "Gestore dei Processi"
-    IDC_TASKMGR             "Gestore dei Processi"
-    IDS_RUNDLG_CAPTION      "Crea un nuovo Processo"
+    IDS_APP_TITLE           "Gestore dei processi"
+    IDC_TASKMGR             "Gestore dei processi"
+    IDS_RUNDLG_CAPTION      "Crea un nuovo processo"
 END
 
 STRINGTABLE
 BEGIN
     ID_FILE_NEW             "Esegue un nuovo programma"
-    ID_OPTIONS_ALWAYSONTOP  "Il Gestore dei Processi rimane davanti a tutte le altre finestre se non minimizzato"
+    ID_OPTIONS_ALWAYSONTOP  "Il gestore dei processi rimane davanti a tutte le altre finestre se non minimizzato"
     ID_OPTIONS_MINIMIZEONUSE
-                            "Il Gestore dei Processi viene minimizzato quando è eseguita un'operazione CambiaA"
-    ID_OPTIONS_HIDEWHENMINIMIZED "Nascondi il Gestore dei Processi quando è minimizzato"
-    ID_VIEW_REFRESH         "Forza il Gestore dei Processi ad aggiornare ora, nonostante la regolazione Velocità di Aggiornamento"
+                            "Il gestore dei processi viene minimizzato quando è eseguita un'operazione 'Passa a'"
+    ID_OPTIONS_HIDEWHENMINIMIZED "Nascondi il gestore dei processi quando è minimizzato"
+    ID_VIEW_REFRESH         "Forza il gestore dei processi ad aggiornare ora, nonostante la regolazione 'Velocità di aggiornamento'"
     ID_VIEW_LARGE           "Mostra i processi usando icone grandi"
     ID_VIEW_SMALL           "Mostra i processi usando icone piccole"
     ID_VIEW_DETAILS         "Mostra informazioni su ogni processo"
@@ -453,10 +453,10 @@ BEGIN
     ID_WINDOWS_MINIMIZE     "Minimizza le finestre"
     ID_WINDOWS_MAXIMIZE     "Massimizza le finestre"
     ID_WINDOWS_CASCADE      "Impila le finestre diagonalmente sul desktop"
-    ID_WINDOWS_BRINGTOFRONT "Porta la finestra davanti, ma non cambia a quella"
-    ID_HELP_TOPICS          "Mostra l'aiuto del Gestore di Processi"
+    ID_WINDOWS_BRINGTOFRONT "Porta la finestra davanti, ma non passare a quella"
+    ID_HELP_TOPICS          "Mostra l'aiuto del gestore di processi"
     ID_HELP_ABOUT           "Mostra informazioni, numero di versione e copyright del programma"
-    ID_FILE_EXIT            "Esce dal Gestore di Processi"
+    ID_FILE_EXIT            "Esce dal gestore di processi"
     ID_OPTIONS_SHOW16BITTASKS
                             "Mostra i processi a 16 bit sotto il ntvdm.exe associato"
     ID_VIEW_SELECTCOLUMNS   "Seleziona quali colonne saranno visibili nella pagina Processi"
@@ -472,7 +472,7 @@ STRINGTABLE
 BEGIN
     ID_ENDTASK              "Chiede ai processi selezionati di chiudersi"
     ID_GOTOPROCESS          "Mette il focus sul processo selezionato"
-    ID_RESTORE              "Ripristina il Gestore dei Processi dal suo stato nascosto"
+    ID_RESTORE              "Ripristina il gestore dei processi dal suo stato nascosto"
     ID_PROCESS_PAGE_ENDPROCESS "Rimuove questo processo dal sistema"
     ID_PROCESS_PAGE_ENDPROCESSTREE
                             "Rimuove questo processo e tutti i discendenti dal sistema"
@@ -480,23 +480,23 @@ BEGIN
     ID_PROCESS_PAGE_SETAFFINITY
                             "Controlla su quali processori il processo potrà essere eseguito"
     ID_PROCESS_PAGE_SETPRIORITY_REALTIME
-                            "Mette il processo nella classe di priorità TEMPOREALE"
-    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Mette il processo nella classe di priorità ALTA"
+                            "Mette il processo nella classe di priorità 'Tempo reale'"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Mette il processo nella classe di priorità 'Alta"
     ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
-                            "Mette il processo nella classe di priorità SOPRA NORMALE"
+                            "Mette il processo nella classe di priorità 'Sopra normale'"
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
-                            "Mette il processo nella classe di priorità NORMALE"
+                            "Mette il processo nella classe di priorità 'Normale'"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
-                            "Mette il processo nella classe di priorità SOTTO NORMALE"
-    ID_PROCESS_PAGE_SETPRIORITY_LOW "Mette il processo nella classe di priorità BASSA"
+                            "Mette il processo nella classe di priorità 'Sotto normale'"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW "Mette il processo nella classe di priorità 'Bassa'"
     ID_PROCESS_PAGE_DEBUGCHANNELS
                             "Controlla i canali di debug"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_VIEW_LARGE                     "Icone &Grandi"
-    IDS_VIEW_SMALL                     "Icone &Piccole"
+    IDS_VIEW_LARGE                     "Icone &grandi"
+    IDS_VIEW_SMALL                     "Icone &piccole"
     IDS_VIEW_DETAILS                   "&Dettagli"
     IDS_WINDOWS                        "&Finestre"
     IDS_VIEW_SELECTCOLUMNS             "&Seleziona colonne..."
@@ -519,32 +519,32 @@ BEGIN
     IDS_PID               "PID"
     IDS_CPUUSAGE          "CPU"
     IDS_CPUTIME           "Tempo CPU"
-    IDS_MEMORYUSAGE       "Uso di Memoria"
-    IDS_MEMORYUSAGEDELTA  "Delta di Memoria"
-    IDS_PEAKMEMORYUSAGE   "Massimo uso di Memoria"
+    IDS_MEMORYUSAGE       "Uso della memoria"
+    IDS_MEMORYUSAGEDELTA  "Delta della memoria"
+    IDS_PEAKMEMORYUSAGE   "Massimo uso della memoria"
     IDS_PAGEFAULTS        "Errori di paginazione"
     IDS_USEROBJECTS       "Oggetti USER"
     IDS_IOREADS           "Letture I/O"
-    IDS_IOREADBYTES       "Bytes di Letture I/O"
-    IDS_SESSIONID         "ID Sessione"
-    IDS_USERNAME          "Nome Utente"
+    IDS_IOREADBYTES       "Bytes di letture I/O"
+    IDS_SESSIONID         "ID sessione"
+    IDS_USERNAME          "Nome utente"
     IDS_PAGEFAULTSDELTA   "Delta PF"
     IDS_VIRTUALMEMORYSIZE "Dimensione VM"
     IDS_PAGEDPOOL         "Riserva paging"
     IDS_NONPAGEDPOOL      "Riserva NP"
-    IDS_BASEPRIORITY      "Priorità Base"
+    IDS_BASEPRIORITY      "Priorità base"
     IDS_HANDLECOUNT       "Handles"
     IDS_THREADCOUNT       "Threads"
     IDS_GDIOBJECTS        "Oggetti GDI"
     IDS_IOWRITES          "Scritture I/O"
-    IDS_IOWRITEBYTES      "Bytes Scritture I/O"
+    IDS_IOWRITEBYTES      "Bytes scritture I/O"
     IDS_IOOTHER           "Altri I/O"
-    IDS_IOOTHERBYTES      "Bytes Altri I/O"
+    IDS_IOOTHERBYTES      "Bytes altri I/O"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_WARNING_TITLE               "Avviso del Gestore di Processi"
+    IDS_WARNING_TITLE               "Avviso del gestore di processi"
     IDS_PRIORITY_CHANGE_MESSAGE     "ATTENZIONE: Cambiare la classe di priorità di questo processo potrebbe\n\
                                      causare effetti collaterali inclusa instabilità di sistema. Sei sicuro\n\
                                      di voler cambiare la classe di priorità?"
@@ -565,12 +565,12 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_SYSTEM_IDLE_PROCESS            "Processo di SIstema inattivo"
+    IDS_SYSTEM_IDLE_PROCESS            "Processo di sistema inattivo"
     IDS_APPLICATION_NOT_RESPONDING     "Non risponde"
     IDS_APPLICATION_RUNNING            "In esecuzione"
     IDS_APPLICATION_TASK               "Processo"
     IDS_APPLICATION_STATUS             "Status"
-    IDS_DEBUG_CHANNEL                  "Canali Debug"
+    IDS_DEBUG_CHANNEL                  "Canali debug"
     IDS_DEBUG_CHANNEL_FIXME            "Fixme"
     IDS_DEBUG_CHANNEL_ERR              "Err"
     IDS_DEBUG_CHANNEL_WARN             "Warn"
