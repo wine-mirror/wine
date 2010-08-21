@@ -1811,6 +1811,28 @@ if (0)
     IImageList_Release(imgl);
 }
 
+static void test_IImageList_GetBkColor(void)
+{
+    IImageList *imgl;
+    HIMAGELIST himl;
+    COLORREF color;
+    HRESULT hr;
+
+    himl = ImageList_Create(16, 16, ILC_COLOR16, 0, 3);
+    imgl = (IImageList*)himl;
+
+if (0)
+{
+    /* crashes on native */
+    hr = IImageList_GetBkColor(imgl, NULL);
+}
+
+    hr = IImageList_GetBkColor(imgl, &color);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IImageList_Release(imgl);
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1864,6 +1886,7 @@ START_TEST(imagelist)
     test_IImageList_Draw();
     test_IImageList_Merge();
     test_IImageList_Clone();
+    test_IImageList_GetBkColor();
 
     CoUninitialize();
 

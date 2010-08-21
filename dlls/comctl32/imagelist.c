@@ -3467,9 +3467,6 @@ static HRESULT WINAPI ImageListImpl_SetBkColor(IImageList *iface, COLORREF clrBk
 
 static HRESULT WINAPI ImageListImpl_GetBkColor(IImageList *iface, COLORREF *pclr)
 {
-    if (!pclr)
-        return E_FAIL;
-
     *pclr = ImageList_GetBkColor((HIMAGELIST) iface);
     return S_OK;
 }
@@ -3649,10 +3646,8 @@ static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID ii
 
     if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(struct _IMAGELIST));
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct _IMAGELIST));
     if (!This) return E_OUTOFMEMORY;
-
-    ZeroMemory(This, sizeof(struct _IMAGELIST));
 
     This->lpVtbl = &ImageListImpl_Vtbl;
     This->ref = 1;
