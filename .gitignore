@@ -258,6 +258,7 @@ programs/winedbg/debug.yy.c
 programs/winedbg/winedbg.man
 programs/winetest/*_test.exe
 programs/winetest/*_test.rc
+programs/winetest/build.nfo
 programs/winetest/build.rc
 programs/winhlp32/macro.lex.yy.c
 programs/wscript/ihost.h

@@ -24,13 +24,16 @@ EXTRA_OBJS = $(TESTRCS:.rc=.res)
 
 @MAKE_PROG_RULES@
 
-@ALL_WINETEST_DEPENDS@
-
 clean::
-	$(RM) winetest-dist.exe $(TESTBINS) $(TESTRCS)
+	$(RM) build.nfo winetest-dist.exe $(TESTBINS) $(TESTRCS)
 
 build.rc: dummy
-	build="STRINGTABLE { 1 \"`GIT_DIR=$(TOPSRCDIR)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || ($(RM) $@ && exit 1)
+	build="BUILD_INFO STRINGRES build.nfo STRINGTABLE { 1 \"`GIT_DIR=$(TOPSRCDIR)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || ($(RM) $@ && exit 1)
+
+build.nfo:
+	-$(CC) -v 2>$@
+
+build.res: build.nfo
 
 # Rules for building distributable executable
 
@@ -38,8 +41,8 @@ build.rc: dummy
 
 dist: winetest-dist.exe$(DLLEXT)
 
-winetest-dist.exe winetest-dist.exe.so: $(OBJS) dist.res Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) dist.res -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+winetest-dist.exe$(DLLEXT): winetest.exe$(DLLEXT)
+	cp winetest.exe$(DLLEXT) $@
 	-upx -9 -qqq $@
 
-dist.res: build.nfo
+@ALL_WINETEST_DEPENDS@
