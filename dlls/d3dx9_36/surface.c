@@ -586,16 +586,16 @@ static void point_filter_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  sr
     for(y = 0;y < destsize.y;y++) {
         BYTE *destptr = dest + y * destpitch;
         const BYTE *bufptr = src + srcpitch * (y * srcsize.y / destsize.y);
-        const BYTE *srcptr = bufptr;
 
         for(x = 0;x < destsize.x;x++) {
+            const BYTE *srcptr = bufptr + (x * srcsize.x / destsize.x) * srcformat->bytes_per_pixel;
+
             /* extract source color components */
             if(srcformat->type == FORMAT_ARGB) get_relevant_argb_components(&conv_info, *(const DWORD*)srcptr, channels);
 
             /* recombine the components */
             if(destformat->type == FORMAT_ARGB) make_argb_color(&conv_info, channels, (DWORD*)destptr);
 
-            srcptr = bufptr + (x * srcsize.x / destsize.x) * srcformat->bytes_per_pixel;
             destptr += destformat->bytes_per_pixel;
         }
     }
