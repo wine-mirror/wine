@@ -3458,11 +3458,8 @@ static HRESULT WINAPI ImageListImpl_SetImageCount(IImageList *iface,
 static HRESULT WINAPI ImageListImpl_SetBkColor(IImageList *iface, COLORREF clrBk,
     COLORREF *pclr)
 {
-    if (!pclr)
-        return E_FAIL;
-
     *pclr = ImageList_SetBkColor((HIMAGELIST) iface, clrBk);
-    return *pclr == CLR_NONE ? E_FAIL : S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI ImageListImpl_GetBkColor(IImageList *iface, COLORREF *pclr)
