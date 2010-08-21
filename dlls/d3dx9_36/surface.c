@@ -526,6 +526,7 @@ static void make_argb_color(CONST struct argb_conversion_info *info, CONST DWORD
  *
  * Copies the source buffer to the destination buffer, performing
  * any necessary format conversion and color keying.
+ * Pixels outsize the source rect are blacked out.
  * Works only for ARGB formats with 1 - 4 bytes per pixel.
  */
 static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, CONST PixelFormatDesc  *srcformat,
@@ -555,8 +556,12 @@ static void copy_simple_data(CONST BYTE *src,  UINT  srcpitch, POINT  srcsize, C
             srcptr  +=  srcformat->bytes_per_pixel;
             destptr += destformat->bytes_per_pixel;
         }
+
+        if(srcsize.x < destsize.x) /* black out remaining pixels */
+            ZeroMemory(destptr, destformat->bytes_per_pixel * (destsize.x - srcsize.x));
     }
-    /* TODO: Black out unused pixels */
+    if(srcsize.y < destsize.y) /* black out remaining pixels */
+        ZeroMemory(dest + srcsize.y * destpitch, destpitch * (destsize.y - srcsize.y));
 }
 
 /************************************************************
