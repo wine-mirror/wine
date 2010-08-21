@@ -76,7 +76,7 @@ BEGIN
     GROUPBOX    " Impostazioni delle finestre ",IDC_STATIC,8,4,244,84
     CONTROL     "Le applicazioni Direct&X impediscono al mouse di lasciare la finestra",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Permetti al gestore delle finestre di &decorare le finestre",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Permetti al &gestore di finestre di controllare le finestre",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Permetti al &gestore delle finestre di controllare le finestre",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "&Emula una scrivania virtuale",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "Dimensione della Scrivania:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
@@ -93,7 +93,7 @@ BEGIN
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "Questo è un testo di esempio che usa Tahoma a 10 punti",IDC_RES_FONT_PREVIEW,15,181,230,28
+    LTEXT       "Questo è un testo di esempio che usa il carattere Tahoma a 10 punti",IDC_RES_FONT_PREVIEW,15,181,230,28
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
