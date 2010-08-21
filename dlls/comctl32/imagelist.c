@@ -3392,16 +3392,21 @@ static HRESULT WINAPI ImageListImpl_Merge(IImageList *iface, int i1,
 static HRESULT WINAPI ImageListImpl_Clone(IImageList *iface, REFIID riid, void **ppv)
 {
     HIMAGELIST This = (HIMAGELIST) iface;
-    HIMAGELIST hNew;
+    HIMAGELIST clone;
     HRESULT ret = E_FAIL;
 
     TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
 
-    hNew = ImageList_Duplicate(This);
+    clone = ImageList_Duplicate(This);
 
     /* Get the interface for the new image list */
-    if (hNew)
-        ret = HIMAGELIST_QueryInterface(hNew, riid, ppv);
+    if (clone)
+    {
+        IImageList *iclone = (IImageList*)clone;
+
+        ret = HIMAGELIST_QueryInterface(clone, riid, ppv);
+        IImageList_Release(iclone);
+    }
 
     return ret;
 }

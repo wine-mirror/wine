@@ -1332,7 +1332,7 @@ cleanup:
 
 static void test_iimagelist(void)
 {
-    IImageList *imgl;
+    IImageList *imgl, *imgl2;
     HIMAGELIST himl;
     HRESULT hr;
     ULONG ret;
@@ -1363,6 +1363,15 @@ static void test_iimagelist(void)
     ok(ret == 0, "Expected 0, got %d\n", ret);
     ret = ImageList_Destroy((HIMAGELIST)imgl);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+
+    /* ref counting, HIMAGELIST_QueryInterface adds a reference */
+    imgl = (IImageList*)createImageList(32, 32);
+    hr = pHIMAGELIST_QueryInterface((HIMAGELIST)imgl, &IID_IImageList, (void**)&imgl2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(imgl2 == imgl, "got different pointer\n");
+    ret = IImageList_Release(imgl);
+    ok(ret == 1, "got %u\n", ret);
+    IImageList_Release(imgl);
 
     if (!pImageList_CoCreateInstance)
     {
@@ -1783,6 +1792,7 @@ static void test_IImageList_Clone(void)
     IImageList *imgl, *imgl2;
     HIMAGELIST himl;
     HRESULT hr;
+    ULONG ref;
 
     himl = ImageList_Create(16, 16, ILC_COLOR16, 0, 3);
     imgl = (IImageList*)himl;
@@ -1795,7 +1805,8 @@ if (0)
 
     hr = IImageList_Clone(imgl, &IID_IImageList, (void**)&imgl2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    IImageList_Release(imgl2);
+    ref = IImageList_Release(imgl2);
+    ok(ref == 0, "got %u\n", ref);
 
     IImageList_Release(imgl);
 }
