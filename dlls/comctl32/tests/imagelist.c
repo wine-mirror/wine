@@ -1674,6 +1674,13 @@ static void test_IImageList_Merge(void)
     ret = -1;
     ok( IImageList_ReplaceIcon(imgl2, -1, hicon1, &ret) == S_OK && (ret == 0),"add icon1 to himl2 failed\n");
 
+if (0)
+{
+    /* null cases that crash on native */
+    hr = IImageList_Merge(imgl1, -1, NULL, 0, 0, 0, &IID_IImageList, (void**)&merge);
+    hr = IImageList_Merge(imgl1, -1, (IUnknown*) imgl2, 0, 0, 0, &IID_IImageList, NULL);
+}
+
     /* If himl1 has no images, merge still succeeds */
     hr = IImageList_Merge(imgl1, -1, (IUnknown *) imgl2, 0, 0, 0, &IID_IImageList, (void **) &merge);
     ok(hr == S_OK, "merge himl1,-1 failed\n");

@@ -3365,15 +3365,14 @@ static HRESULT WINAPI ImageListImpl_Copy(IImageList *iface, int iDst,
 }
 
 static HRESULT WINAPI ImageListImpl_Merge(IImageList *iface, int i1,
-    IUnknown *punk2, int i2, int dx, int dy, REFIID riid, PVOID *ppv)
+    IUnknown *punk2, int i2, int dx, int dy, REFIID riid, void **ppv)
 {
     HIMAGELIST This = (HIMAGELIST) iface;
     IImageList *iml2 = NULL;
     HIMAGELIST hNew;
     HRESULT ret = E_FAIL;
 
-    if (!punk2 || !ppv)
-        return E_FAIL;
+    TRACE("(%p)->(%d %p %d %d %d %s %p)\n", iface, i1, punk2, i2, dx, dy, debugstr_guid(riid), ppv);
 
     /* TODO: Add test for IID_ImageList2 too */
     if (FAILED(IImageList_QueryInterface(punk2, &IID_IImageList,
