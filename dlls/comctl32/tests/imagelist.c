@@ -1778,6 +1778,28 @@ static void test_create(void)
     ok(himl == NULL, "got %p\n", himl);
 }
 
+static void test_IImageList_Clone(void)
+{
+    IImageList *imgl, *imgl2;
+    HIMAGELIST himl;
+    HRESULT hr;
+
+    himl = ImageList_Create(16, 16, ILC_COLOR16, 0, 3);
+    imgl = (IImageList*)himl;
+
+if (0)
+{
+    /* crashes on native */
+    hr = IImageList_Clone(imgl, &IID_IImageList, NULL);
+}
+
+    hr = IImageList_Clone(imgl, &IID_IImageList, (void**)&imgl2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IImageList_Release(imgl2);
+
+    IImageList_Release(imgl);
+}
+
 START_TEST(imagelist)
 {
     ULONG_PTR ctx_cookie;
@@ -1830,6 +1852,7 @@ START_TEST(imagelist)
     test_IImageList_Get_SetImageCount();
     test_IImageList_Draw();
     test_IImageList_Merge();
+    test_IImageList_Clone();
 
     CoUninitialize();
 

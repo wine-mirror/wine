@@ -3389,15 +3389,13 @@ static HRESULT WINAPI ImageListImpl_Merge(IImageList *iface, int i1,
     return ret;
 }
 
-static HRESULT WINAPI ImageListImpl_Clone(IImageList *iface, REFIID riid,
-    PVOID *ppv)
+static HRESULT WINAPI ImageListImpl_Clone(IImageList *iface, REFIID riid, void **ppv)
 {
     HIMAGELIST This = (HIMAGELIST) iface;
     HIMAGELIST hNew;
     HRESULT ret = E_FAIL;
 
-    if (!ppv)
-        return E_FAIL;
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
 
     hNew = ImageList_Duplicate(This);
 
