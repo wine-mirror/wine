@@ -169,7 +169,7 @@ static char *xdg_data_dir;
 static char *xdg_desktop_dir;
 
 static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra);
-static char *extract_icon(LPCWSTR path, int index, const char *destFilename, BOOL bWait);
+static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppStream);
 
 /* Icon extraction routines
  *
@@ -301,8 +301,7 @@ end:
     return SUCCEEDED(hr);
 }
 
-static BOOL reassemble_and_save_to_png(GRPICONDIRENTRY *grpIconDirEntry, BITMAPINFO *pIcon,
-    const char *pngFileName, LPCWSTR commentW)
+static IStream* module_icon_to_stream(GRPICONDIRENTRY *grpIconDirEntry, BITMAPINFO *pIcon)
 {
     SIZE_T size;
     HGLOBAL hGlobal = NULL;
@@ -339,24 +338,23 @@ static BOOL reassemble_and_save_to_png(GRPICONDIRENTRY *grpIconDirEntry, BITMAPI
     memcpy(p, pIcon, grpIconDirEntry->dwBytesInRes);
     GlobalUnlock(hGlobal);
 
-    hr = CreateStreamOnHGlobal(hGlobal, FALSE, &stream);
+    hr = CreateStreamOnHGlobal(hGlobal, TRUE, &stream);
     if (FAILED(hr))
     {
         WINE_ERR("could not create stream on icon hglobal, error 0x%08X\n", hr);
         goto end;
     }
-
-    if (SaveIconStreamAsPNG(stream, 0, pngFileName, commentW))
-        hr = S_OK;
-    else
-        hr = E_FAIL;
+    hr = S_OK;
 
 end:
-    if (hGlobal)
+    if (hGlobal && stream == NULL)
         GlobalFree(hGlobal);
-    if (stream)
+    if (FAILED(hr) && stream != NULL)
+    {
         IStream_Release(stream);
-    return SUCCEEDED(hr);
+        stream = NULL;
+    }
+    return stream;
 }
 
 static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCWSTR lpszType, LPWSTR lpszName, LONG_PTR lParam)
@@ -372,7 +370,7 @@ static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCWSTR lpszType, LPWSTR l
         return TRUE;
 }
 
-static BOOL extract_icon_from_module(LPCWSTR szFileName, int nIndex, const char *icon_name)
+static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStream)
 {
     HMODULE hModule;
     HRSRC hResInfo;
@@ -385,14 +383,14 @@ static BOOL extract_icon_from_module(LPCWSTR szFileName, int nIndex, const char 
     int nMaxBits = 0;
     GRPICONDIRENTRY iconDirEntry = {0};
     int i;
-    BOOL ret = FALSE;
+    HRESULT hr = E_FAIL;
 
     hModule = LoadLibraryExW(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE);
     if (!hModule)
     {
         WINE_WARN("LoadLibraryExW (%s) failed, error %d\n",
                  wine_dbgstr_w(szFileName), GetLastError());
-        return FALSE;
+        return HRESULT_FROM_WIN32(GetLastError());
     }
 
     if (nIndex < 0)
@@ -443,7 +441,7 @@ static BOOL extract_icon_from_module(LPCWSTR szFileName, int nIndex, const char 
     {
         WINE_WARN("found no icon\n");
         FreeLibrary(hModule);
-        return FALSE;
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
     }
  
     if ((hResInfo = FindResourceW(hModule, lpName, (LPCWSTR)RT_ICON)))
@@ -452,10 +450,11 @@ static BOOL extract_icon_from_module(LPCWSTR szFileName, int nIndex, const char 
         {
             if ((pIcon = LockResource(hResData)))
             {
-                if (reassemble_and_save_to_png(&iconDirEntry, pIcon, icon_name, szFileName))
-                    ret = TRUE;
+                *ppStream = module_icon_to_stream(&iconDirEntry, pIcon);
+                if (*ppStream)
+                    hr = S_OK;
                 else
-                    ret = FALSE;
+                    hr = E_FAIL;
             }
 
             FreeResource(hResData);
@@ -463,40 +462,41 @@ static BOOL extract_icon_from_module(LPCWSTR szFileName, int nIndex, const char 
     }
 
     FreeLibrary(hModule);
-    return ret;
+    return hr;
 }
 
-static int ExtractFromICO(LPCWSTR szFileName, const char *icon_name)
+static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPCWSTR szFileName)
 {
-    FILE *fICOFile;
     ICONDIR iconDir;
     ICONDIRENTRY *pIconDirEntry = NULL;
     int nMax = 0, nMaxBits = 0;
     int nIndex = 0;
     void *pIcon = NULL;
     int i;
-    char *filename;
-    IStream *icoStream = NULL;
+    ULONG bytesRead;
+    LARGE_INTEGER position;
     HRESULT hr;
 
-    filename = wine_get_unix_file_name(szFileName);
-    if (!(fICOFile = fopen(filename, "r")))
-    {
-        WINE_TRACE("unable to open '%s' for reading: %s\n", filename, strerror(errno));
-        goto error;
-    }
-
-    if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1 ||
+    hr = IStream_Read(iconStream, &iconDir, sizeof(ICONDIR), &bytesRead);
+    if (FAILED(hr) || bytesRead != sizeof(ICONDIR) ||
         (iconDir.idReserved != 0) || (iconDir.idType != 1))
     {
-        WINE_WARN("Invalid ico file format\n");
-        goto error;
+        WINE_WARN("Invalid ico file format (hr=0x%08X, bytesRead=%d)\n", hr, bytesRead);
+        hr = E_FAIL;
+        goto end;
     }
 
     if ((pIconDirEntry = HeapAlloc(GetProcessHeap(), 0, iconDir.idCount * sizeof (ICONDIRENTRY))) == NULL)
-        goto error;
-    if (fread(pIconDirEntry, sizeof (ICONDIRENTRY), iconDir.idCount, fICOFile) != iconDir.idCount)
-        goto error;
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+    hr = IStream_Read(iconStream, pIconDirEntry, sizeof(ICONDIRENTRY)*iconDir.idCount, &bytesRead);
+    if (FAILED(hr) || bytesRead != sizeof(ICONDIRENTRY)*iconDir.idCount)
+    {
+        if (SUCCEEDED(hr)) hr = E_FAIL;
+        goto end;
+    }
 
     for (i = 0; i < iconDir.idCount; i++)
     {
@@ -512,51 +512,47 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *icon_name)
     WINE_TRACE("Selected: %d\n", nIndex);
 
     if ((pIcon = HeapAlloc(GetProcessHeap(), 0, pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
-        goto error;
-    if (fseek(fICOFile, pIconDirEntry[nIndex].dwImageOffset, SEEK_SET))
-        goto error;
-    if (fread(pIcon, pIconDirEntry[nIndex].dwBytesInRes, 1, fICOFile) != 1)
-        goto error;
-    fclose(fICOFile);
-    fICOFile = NULL;
-
-    hr = SHCreateStreamOnFileW(szFileName, STGM_READ, &icoStream);
-
-    if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating icon stream\n", hr);
-        goto error;
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+    position.QuadPart = pIconDirEntry[nIndex].dwImageOffset;
+    hr = IStream_Seek(iconStream, position, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr))
+        goto end;
+    hr = IStream_Read(iconStream, pIcon, pIconDirEntry[nIndex].dwBytesInRes, &bytesRead);
+    if (FAILED(hr) || bytesRead != pIconDirEntry[nIndex].dwBytesInRes)
+    {
+        if (SUCCEEDED(hr)) hr = E_FAIL;
+        goto end;
     }
 
-    if (!SaveIconStreamAsPNG(icoStream, nIndex, icon_name, szFileName))
-        goto error;
+    position.QuadPart = 0;
+    hr = IStream_Seek(iconStream, position, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr))
+        goto end;
+    if (!SaveIconStreamAsPNG(iconStream, nIndex, icon_name, szFileName))
+    {
+        hr = E_FAIL;
+        goto end;
+    }
+    hr = S_OK;
 
+end:
     HeapFree(GetProcessHeap(), 0, pIcon);
     HeapFree(GetProcessHeap(), 0, pIconDirEntry);
-    HeapFree(GetProcessHeap(), 0, filename);
-    if (icoStream)
-        IStream_Release(icoStream);
-    return 1;
-
- error:
-    HeapFree(GetProcessHeap(), 0, pIcon);
-    HeapFree(GetProcessHeap(), 0, pIconDirEntry);
-    if (fICOFile) fclose(fICOFile);
-    HeapFree(GetProcessHeap(), 0, filename);
-    if (icoStream)
-        IStream_Release(icoStream);
-    return 0;
+    return hr;
 }
 
-static int ExtractFromFileType(LPCWSTR szFileName, const char *icon_name)
+static HRESULT open_file_type_icon(LPCWSTR szFileName, IStream **ppStream)
 {
-    int ret = 0;
     WCHAR *extension;
     WCHAR *icon = NULL;
     WCHAR *comma;
     WCHAR *executable = NULL;
     int index = 0;
     char *output_path = NULL;
+    HRESULT hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
     extension = strrchrW(szFileName, '.');
     if (extension == NULL)
@@ -571,31 +567,46 @@ static int ExtractFromFileType(LPCWSTR szFileName, const char *icon_name)
             *comma = 0;
             index = atoiW(comma + 1);
         }
-        output_path = extract_icon(icon, index, NULL, FALSE);
-        WINE_TRACE("defaulticon %s -> icon %s\n", wine_dbgstr_w(icon), wine_dbgstr_a(output_path));
+        hr = open_icon(icon, index, FALSE, ppStream);
     }
     else
     {
         executable = assoc_query(ASSOCSTR_EXECUTABLE, extension, NULL);
         if (executable)
-            output_path = extract_icon(executable, 0, NULL, FALSE);
-        WINE_TRACE("executable %s -> icon %s\n", wine_dbgstr_w(executable), wine_dbgstr_a(output_path));
+            hr = open_icon(executable, 0, FALSE, ppStream);
     }
-    if (output_path)
-        ret = (rename(output_path, icon_name) == 0);
 
 end:
     HeapFree(GetProcessHeap(), 0, icon);
     HeapFree(GetProcessHeap(), 0, executable);
     HeapFree(GetProcessHeap(), 0, output_path);
-    return ret;
+    return hr;
 }
 
-static BOOL create_default_icon( const char *filename )
+static HRESULT open_default_icon(IStream **ppStream)
 {
     static const WCHAR user32W[] = {'u','s','e','r','3','2',0};
 
-    return extract_icon_from_module( user32W, -(INT_PTR)IDI_WINLOGO, filename );
+    return open_module_icon(user32W, -(INT_PTR)IDI_WINLOGO, ppStream);
+}
+
+static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppStream)
+{
+    HRESULT hr;
+
+    hr = open_module_icon(filename, index, ppStream);
+    if (FAILED(hr))
+    {
+        static const WCHAR dot_icoW[] = {'.','i','c','o',0};
+        int len = strlenW(filename);
+        if (len >= 4 && strcmpiW(&filename[len - 4], dot_icoW) == 0)
+            hr = SHCreateStreamOnFileW(filename, STGM_READ, ppStream);
+    }
+    if (FAILED(hr))
+        hr = open_file_type_icon(filename, ppStream);
+    if (FAILED(hr) && !bWait)
+        hr = open_default_icon(ppStream);
+    return hr;
 }
 
 static unsigned short crc16(const char* string)
@@ -732,6 +743,8 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
     char *iconsdir = NULL, *ico_path = NULL, *ico_name, *png_path = NULL;
     char* s;
     int n;
+    IStream *stream = NULL;
+    HRESULT hr;
 
     /* Where should we save the icon? */
     WINE_TRACE("path=[%s] index=%d\n", wine_dbgstr_w(path), index);
@@ -771,7 +784,6 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
     /* Compute the source-path hash */
     crc=crc16(ico_path);
 
-    /* Try to treat the source file as an exe */
     if (destFilename)
         png_path=heap_printf("%s/%s.png",iconsdir,destFilename);
     else
@@ -782,20 +794,17 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
         return NULL;
     }
 
-    if (extract_icon_from_module( path, index, png_path ))
-        goto end;
-
-    /* Must be something else, ignore the index in that case */
-    if (destFilename)
-        sprintf(png_path,"%s/%s.png",iconsdir,destFilename);
+    hr = open_icon( path, index, bWait, &stream );
+    if (SUCCEEDED(hr))
+    {
+        hr = write_native_icon( stream, png_path, path );
+        if (SUCCEEDED(hr))
+            goto end;
+        else
+            WINE_ERR("writing native icon for %s index %d failed, hr=0x%08X\n", wine_dbgstr_w(path), index, hr);
+    }
     else
-        sprintf(png_path,"%s/%04x_%s.png",iconsdir,crc,ico_name);
-    if (ExtractFromICO( path, png_path))
-        goto end;
-    if (ExtractFromFileType( path, png_path ))
-        goto end;
-    if (!bWait && create_default_icon( png_path ))
-        goto end;
+        WINE_WARN("extracting icon %s index %d failed, hr=0x%08X\n", wine_dbgstr_w(path), index, hr);
 
     HeapFree( GetProcessHeap(), 0, png_path );
     png_path=NULL;
@@ -803,6 +812,8 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
  end:
     HeapFree(GetProcessHeap(), 0, iconsdir);
     HeapFree(GetProcessHeap(), 0, ico_path);
+    if (stream)
+        IStream_Release(stream);
     return png_path;
 }
 
@@ -2746,6 +2757,7 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
     WCHAR szArgs[INFOTIPSIZE];
     WCHAR szIconPath[MAX_PATH];
     int iconId;
+    IStream *stream = NULL;
     HRESULT hr;
 
     utf8lnkPath = wchars_to_utf8_chars(lnkPath);
@@ -2807,13 +2819,15 @@ static void thumbnail_lnk(LPCWSTR lnkPath, LPCWSTR outputPath)
 
     if (szIconPath[0])
     {
-        if (!extract_icon_from_module(szIconPath, iconId, utf8OutputPath))
-            ExtractFromICO(szIconPath, utf8OutputPath);
+        hr = open_icon(szIconPath, iconId, FALSE, &stream);
+        if (SUCCEEDED(hr))
+            hr = write_native_icon(stream, utf8OutputPath, NULL);
     }
     else
     {
-        if (!extract_icon_from_module(szPath, iconId, utf8OutputPath))
-            ExtractFromICO(szPath, utf8OutputPath);
+        hr = open_icon(szPath, iconId, FALSE, &stream);
+        if (SUCCEEDED(hr))
+            hr = write_native_icon(stream, utf8OutputPath, NULL);
     }
 
 end:
@@ -2824,6 +2838,8 @@ end:
         IShellLinkW_Release(shellLink);
     if (persistFile != NULL)
         IPersistFile_Release(persistFile);
+    if (stream != NULL)
+        IStream_Release(stream);
 }
 
 static WCHAR *next_token( LPWSTR *p )
