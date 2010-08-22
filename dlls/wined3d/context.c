@@ -1114,11 +1114,14 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     short redBits, greenBits, blueBits, alphaBits, colorBits;
     short depthBits=0, stencilBits=0;
 
-    struct match_type {
+    static const struct
+    {
         BOOL require_aux;
         BOOL exact_alpha;
         BOOL exact_color;
-    } matches[] = {
+    }
+    matches[] =
+    {
         /* First, try without alpha match buffers. MacOS supports aux buffers only
          * on A8R8G8B8, and we prefer better offscreen rendering over an alpha match.
          * Then try without aux buffers - this is the most common cause for not

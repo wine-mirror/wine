@@ -771,7 +771,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
 
     if (surface_type == SURFACE_OPENGL)
     {
-        WINED3DFORMAT formats[] =
+        static const WINED3DFORMAT formats[] =
         {
             WINED3DFMT_D24_UNORM_S8_UINT,
             WINED3DFMT_D32_UNORM,

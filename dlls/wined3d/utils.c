@@ -1192,8 +1192,8 @@ static BOOL color_match(DWORD c1, DWORD c2, BYTE max_diff)
 /* A context is provided by the caller */
 static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
 {
+    static const DWORD data[] = {0x00000000, 0xffffffff};
     GLuint tex, fbo, buffer;
-    const DWORD data[] = {0x00000000, 0xffffffff};
     DWORD readback[16 * 1];
     BOOL ret = FALSE;
 
@@ -1291,7 +1291,8 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
 {
     struct wined3d_format_desc *desc;
     unsigned int fmt_idx, i;
-    WINED3DFORMAT fmts16[] = {
+    static const WINED3DFORMAT fmts16[] =
+    {
         WINED3DFMT_R16_FLOAT,
         WINED3DFMT_R16G16_FLOAT,
         WINED3DFMT_R16G16B16A16_FLOAT,
