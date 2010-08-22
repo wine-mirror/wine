@@ -1122,7 +1122,8 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
     WINED3DDISPLAYMODE mode;
     unsigned int i;
 
-    WINED3DFORMAT FormatList[] = {
+    static const WINED3DFORMAT FormatList[] =
+    {
         /* 32 bit */
         WINED3DFMT_B8G8R8A8_UNORM,
         WINED3DFMT_B8G8R8X8_UNORM,
@@ -1142,7 +1143,8 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
         WINED3DFMT_DXT5,
     };
 
-    WINED3DFORMAT BumpFormatList[] = {
+    static const WINED3DFORMAT BumpFormatList[] =
+    {
         WINED3DFMT_R8G8_SNORM,
         WINED3DFMT_R5G5_SNORM_L6_UNORM,
         WINED3DFMT_R8G8_SNORM_L8X8_UNORM,
@@ -1286,7 +1288,8 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
     unsigned int i;
     WINED3DDISPLAYMODE mode;
 
-    WINED3DFORMAT FormatList[] = {
+    static const WINED3DFORMAT FormatList[] =
+    {
         /* 32 bit */
         WINED3DFMT_B8G8R8A8_UNORM,
         WINED3DFMT_B8G8R8X8_UNORM,

@@ -1255,7 +1255,8 @@ static HRESULT WINAPI ddraw1_GetDisplayMode(IDirectDraw *iface, DDSURFACEDESC *s
 static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes, DWORD *Codes)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    WINED3DFORMAT formats[] = {
+    static const WINED3DFORMAT formats[] =
+    {
         WINED3DFMT_YUY2, WINED3DFMT_UYVY, WINED3DFMT_YV12,
         WINED3DFMT_DXT1, WINED3DFMT_DXT2, WINED3DFMT_DXT3, WINED3DFMT_DXT4, WINED3DFMT_DXT5,
         WINED3DFMT_ATI2N, WINED3DFMT_NVHU, WINED3DFMT_NVHS
@@ -1948,7 +1949,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     WINED3DDISPLAYMODE *enum_modes = NULL;
     unsigned enum_mode_count = 0, enum_mode_array_size = 0;
 
-    WINED3DFORMAT checkFormatList[] =
+    static const WINED3DFORMAT checkFormatList[] =
     {
         WINED3DFMT_B8G8R8X8_UNORM,
         WINED3DFMT_B5G6R5_UNORM,
