@@ -988,13 +988,14 @@ static HRESULT WINAPI ddraw_surface_attach_surface(IDirectDrawSurfaceImpl *This,
     EnterCriticalSection(&ddraw_cs);
 
     /* Check if the surface is already attached somewhere */
-    if( (Surf->next_attached != NULL) ||
-        (Surf->first_attached != Surf) )
+    if (Surf->next_attached || Surf->first_attached != Surf)
     {
-        /* TODO: Test for the structure of the manual attachment. Is it a chain or a list?
-         * What happens if one surface is attached to 2 different surfaces?
-         */
-        FIXME("(%p) The Surface %p is already attached somewhere else: next_attached = %p, first_attached = %p, can't handle by now\n", This, Surf, Surf->next_attached, Surf->first_attached);
+        /* TODO: Test for the structure of the manual attachment. Is it a
+         * chain or a list? What happens if one surface is attached to 2
+         * different surfaces? */
+        WARN("Surface %p is already attached somewhere. next_attached %p, first_attached %p.\n",
+                Surf, Surf->next_attached, Surf->first_attached);
+
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_SURFACEALREADYATTACHED;
     }
