@@ -373,11 +373,12 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device *i
 {
     struct d3d10_device *This = (struct d3d10_device *)iface;
     IWineD3DRendertargetView *wined3d_view = ((struct d3d10_rendertarget_view *)render_target_view)->wined3d_view;
+    const WINED3DCOLORVALUE color = {color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]};
 
     TRACE("iface %p, render_target_view %p, color_rgba [%f %f %f %f]\n",
             iface, render_target_view, color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]);
 
-    IWineD3DDevice_ClearRendertargetView(This->wined3d_device, wined3d_view, color_rgba);
+    IWineD3DDevice_ClearRendertargetView(This->wined3d_device, wined3d_view, &color);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device *iface,

@@ -3321,7 +3321,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
     void ClearRendertargetView(
         [in] IWineD3DRendertargetView *rendertarget_view,
-        [in] const float color[4]
+        [in] const WINED3DCOLORVALUE *color
     );
     void SetPrimitiveType(
         [in] WINED3DPRIMITIVETYPE primitive_topology

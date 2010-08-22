@@ -1690,7 +1690,7 @@ struct IWineD3DDeviceImpl
 
 HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device,
         UINT rt_count, IWineD3DSurfaceImpl **rts, UINT rect_count, const WINED3DRECT *rects,
-        DWORD flags, const float color[4], float depth, DWORD stencil) DECLSPEC_HIDDEN;
+        DWORD flags, const WINED3DCOLORVALUE *color, float depth, DWORD stencil) DECLSPEC_HIDDEN;
 BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect) DECLSPEC_HIDDEN;

@@ -655,7 +655,8 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
 }
 
 HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, IWineD3DSurfaceImpl **rts,
-        UINT rect_count, const WINED3DRECT *rects, DWORD flags, const float color[4], float depth, DWORD stencil)
+        UINT rect_count, const WINED3DRECT *rects, DWORD flags, const WINED3DCOLORVALUE *color,
+        float depth, DWORD stencil)
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
     IWineD3DSurfaceImpl *depth_stencil = device->depth_stencil;
@@ -741,7 +742,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
-        glClearColor(color[0], color[1], color[2], color[3]);
+        glClearColor(color->r, color->g, color->b, color->a);
         checkGLcall("glClearColor");
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
     }
@@ -4578,7 +4579,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
 static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count,
         const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR color, float Z, DWORD Stencil)
 {
-    const float c[] = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
+    const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) Count (%d), pRects (%p), Flags (%x), color (0x%08x), Z (%f), Stencil (%d)\n", This,
@@ -4592,7 +4593,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     }
 
     return device_clear_render_targets(This, This->adapter->gl_info.limits.buffers,
-            This->render_targets, Count, pRects, Flags, c, Z, Stencil);
+            This->render_targets, Count, pRects, Flags, &c, Z, Stencil);
 }
 
 /*****
@@ -5506,11 +5507,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        const float c[4] = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
 
         return device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &s,
-                !!pRect, pRect, WINED3DCLEAR_TARGET, c, 0.0f, 0);
+                !!pRect, pRect, WINED3DCLEAR_TARGET, &c, 0.0f, 0);
     }
     else
     {
@@ -5524,7 +5526,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
 }
 
 static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *iface,
-        IWineD3DRendertargetView *rendertarget_view, const float color[4])
+        IWineD3DRendertargetView *rendertarget_view, const WINED3DCOLORVALUE *color)
 {
     IWineD3DResource *resource;
     IWineD3DSurfaceImpl *surface;
@@ -5558,10 +5560,10 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
 
         WARN("Converting to WINED3DCOLOR, this might give incorrect results\n");
 
-        c = ((DWORD)(color[2] * 255.0f));
-        c |= ((DWORD)(color[1] * 255.0f)) << 8;
-        c |= ((DWORD)(color[0] * 255.0f)) << 16;
-        c |= ((DWORD)(color[3] * 255.0f)) << 24;
+        c = ((DWORD)(color->b * 255.0f));
+        c |= ((DWORD)(color->g * 255.0f)) << 8;
+        c |= ((DWORD)(color->r * 255.0f)) << 16;
+        c |= ((DWORD)(color->a * 255.0f)) << 24;
 
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
