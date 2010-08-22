@@ -4370,7 +4370,7 @@ typedef struct _TOKEN_DEFAULT_DACL {
 } TOKEN_DEFAULT_DACL, *PTOKEN_DEFAULT_DACL;
 
 /*
- * TOKEN_SOURCEL
+ * TOKEN_SOURCE
  */
 
 #define TOKEN_SOURCE_LENGTH 8
@@ -4434,6 +4434,32 @@ typedef struct _TOKEN_STATISTICS {
   LUID  ModifiedId;
 } TOKEN_STATISTICS;
 #include <poppack.h>
+
+typedef struct _TOKEN_GROUPS_AND_PRIVILEGES {
+  DWORD                 SidCount;
+  DWORD                 SidLength;
+  PSID_AND_ATTRIBUTES   Sids;
+  DWORD                 RestrictedSidCount;
+  DWORD                 RestrictedSidLength;
+  PSID_AND_ATTRIBUTES   RestrictedSids;
+  DWORD                 PrivilegeCount;
+  DWORD                 PrivilegeLength;
+  PLUID_AND_ATTRIBUTES  Privileges;
+  LUID                  AuthenticationId;
+} TOKEN_GROUPS_AND_PRIVILEGES, * PTOKEN_GROUPS_AND_PRIVILEGES;
+
+typedef struct _TOKEN_ORIGIN {
+  LUID  OriginatingLogonSession;
+} TOKEN_ORIGIN, * PTOKEN_ORIGIN;
+
+typedef struct _TOKEN_LINKED_TOKEN {
+  HANDLE LinkedToken;
+} TOKEN_LINKED_TOKEN, * PTOKEN_LINKED_TOKEN;
+
+typedef struct _TOKEN_ELEVATION {
+  DWORD TokenIsElevated;
+} TOKEN_ELEVATION, * PTOKEN_ELEVATION;
+
 
 /*
  *	ACLs of NT
