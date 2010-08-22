@@ -4181,6 +4181,11 @@ static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
 static HRESULT WINAPI  UriBuilder_GetIUri(IUriBuilder *iface, IUri **ppIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    TRACE("(%p)->(%p)\n", This, ppIUri);
+
+    if(!ppIUri)
+        return E_POINTER;
+
     FIXME("(%p)->(%p)\n", This, ppIUri);
     return E_NOTIMPL;
 }

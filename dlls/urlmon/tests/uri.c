@@ -6409,6 +6409,49 @@ static void test_IUriBuilder_HasBeenModified(void) {
     if(builder) IUriBuilder_Release(builder);
 }
 
+/* Test IUriBuilder {Get,Set}IUri functions. */
+static void test_IUriBuilder_IUriProperty(void) {
+    IUriBuilder *builder = NULL;
+    HRESULT hr;
+
+    hr = pCreateIUriBuilder(NULL, 0, 0, &builder);
+    ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        IUri *uri = NULL;
+
+        hr = IUriBuilder_GetIUri(builder, NULL);
+        ok(hr == E_POINTER, "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x.\n",
+            hr, E_POINTER);
+
+        hr = pCreateUri(http_urlW, 0, 0, &uri);
+        if(SUCCEEDED(hr)) {
+            ULONG cur_count, orig_count;
+
+            /* IUriBuilder doesn't clone the IUri, it use the same IUri. */
+            orig_count = get_refcnt(uri);
+            hr = IUriBuilder_SetIUri(builder, uri);
+            cur_count = get_refcnt(uri);
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                        orig_count+1, cur_count);
+                }
+            }
+
+            hr = IUriBuilder_SetIUri(builder, NULL);
+            cur_count = get_refcnt(uri);
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(cur_count == orig_count, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                        orig_count, cur_count);
+                }
+            }
+        }
+        if(uri) IUri_Release(uri);
+    }
+    if(builder) IUriBuilder_Release(builder);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -6478,4 +6521,7 @@ START_TEST(uri) {
 
     trace("test IUriBuilder_HasBeenModified...\n");
     test_IUriBuilder_HasBeenModified();
+
+    trace("test IUriBuilder_IUriProperty...\n");
+    test_IUriBuilder_IUriProperty();
 }
