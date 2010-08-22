@@ -301,54 +301,108 @@ end:
     return SUCCEEDED(hr);
 }
 
-static IStream* module_icon_to_stream(GRPICONDIRENTRY *grpIconDirEntry, BITMAPINFO *pIcon)
+static IStream *add_module_icons_to_stream(HMODULE hModule, GRPICONDIR *grpIconDir)
 {
-    SIZE_T size;
-    HGLOBAL hGlobal = NULL;
+    int i;
+    SIZE_T iconsSize = 0;
+    BYTE *icons = NULL;
+    ICONDIRENTRY *iconDirEntries = NULL;
     IStream *stream = NULL;
-    char *p;
-    ICONDIR *pIconDir;
-    ICONDIRENTRY *pIconDirEntry;
     HRESULT hr = E_FAIL;
+    ULONG bytesWritten;
+    ICONDIR iconDir;
+    SIZE_T iconOffset;
+    int validEntries = 0;
+    LARGE_INTEGER zero;
 
-    size = sizeof(ICONDIR) + sizeof(ICONDIRENTRY) + grpIconDirEntry->dwBytesInRes;
-    hGlobal = GlobalAlloc(GMEM_MOVEABLE, size);
-    if (hGlobal == NULL)
+    for (i = 0; i < grpIconDir->idCount; i++)
+        iconsSize += grpIconDir->idEntries[i].dwBytesInRes;
+    icons = HeapAlloc(GetProcessHeap(), 0, iconsSize);
+    if (icons == NULL)
     {
         WINE_ERR("out of memory allocating icon\n");
         goto end;
     }
 
-    p = GlobalLock(hGlobal);
-    pIconDir = (ICONDIR*)p;
-    pIconDir->idReserved = 0;
-    pIconDir->idType = 1;
-    pIconDir->idCount = 1;
-    p += sizeof(ICONDIR);
-    pIconDirEntry = (ICONDIRENTRY*)p;
-    pIconDirEntry->bWidth = grpIconDirEntry->bWidth;
-    pIconDirEntry->bHeight = grpIconDirEntry->bHeight;
-    pIconDirEntry->bColorCount = grpIconDirEntry->bColorCount;
-    pIconDirEntry->bReserved = grpIconDirEntry->bReserved;
-    pIconDirEntry->wPlanes = grpIconDirEntry->wPlanes;
-    pIconDirEntry->wBitCount = grpIconDirEntry->wBitCount;
-    pIconDirEntry->dwBytesInRes = grpIconDirEntry->dwBytesInRes;
-    pIconDirEntry->dwImageOffset = sizeof(ICONDIR) + sizeof(ICONDIRENTRY);
-    p += sizeof(ICONDIRENTRY);
-    memcpy(p, pIcon, grpIconDirEntry->dwBytesInRes);
-    GlobalUnlock(hGlobal);
-
-    hr = CreateStreamOnHGlobal(hGlobal, TRUE, &stream);
-    if (FAILED(hr))
+    iconDirEntries = HeapAlloc(GetProcessHeap(), 0, grpIconDir->idCount*sizeof(ICONDIRENTRY));
+    if (iconDirEntries == NULL)
     {
-        WINE_ERR("could not create stream on icon hglobal, error 0x%08X\n", hr);
+        WINE_ERR("out of memory allocating icon dir entries\n");
         goto end;
     }
-    hr = S_OK;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if (FAILED(hr))
+    {
+        WINE_ERR("error creating icon stream\n");
+        goto end;
+    }
+
+    iconOffset = 0;
+    for (i = 0; i < grpIconDir->idCount; i++)
+    {
+        HRSRC hResInfo;
+        LPCWSTR lpName = MAKEINTRESOURCEW(grpIconDir->idEntries[i].nID);
+        if ((hResInfo = FindResourceW(hModule, lpName, (LPCWSTR)RT_ICON)))
+        {
+            HGLOBAL hResData;
+            if ((hResData = LoadResource(hModule, hResInfo)))
+            {
+                BITMAPINFO *pIcon;
+                if ((pIcon = LockResource(hResData)))
+                {
+                    iconDirEntries[validEntries].bWidth = grpIconDir->idEntries[i].bWidth;
+                    iconDirEntries[validEntries].bHeight = grpIconDir->idEntries[i].bHeight;
+                    iconDirEntries[validEntries].bColorCount = grpIconDir->idEntries[i].bColorCount;
+                    iconDirEntries[validEntries].bReserved = grpIconDir->idEntries[i].bReserved;
+                    iconDirEntries[validEntries].wPlanes = grpIconDir->idEntries[i].wPlanes;
+                    iconDirEntries[validEntries].wBitCount = grpIconDir->idEntries[i].wBitCount;
+                    iconDirEntries[validEntries].dwBytesInRes = grpIconDir->idEntries[i].dwBytesInRes;
+                    iconDirEntries[validEntries].dwImageOffset = iconOffset;
+                    validEntries++;
+                    memcpy(&icons[iconOffset], pIcon, grpIconDir->idEntries[i].dwBytesInRes);
+                    iconOffset += grpIconDir->idEntries[i].dwBytesInRes;
+                }
+                FreeResource(hResData);
+            }
+        }
+    }
+
+    if (validEntries == 0)
+    {
+        WINE_ERR("no valid icon entries\n");
+        goto end;
+    }
+
+    iconDir.idReserved = 0;
+    iconDir.idType = 1;
+    iconDir.idCount = validEntries;
+    hr = IStream_Write(stream, &iconDir, sizeof(iconDir), &bytesWritten);
+    if (FAILED(hr) || bytesWritten != sizeof(iconDir))
+    {
+        WINE_ERR("error 0x%08X writing icon stream\n", hr);
+        goto end;
+    }
+    for (i = 0; i < validEntries; i++)
+        iconDirEntries[i].dwImageOffset += sizeof(ICONDIR) + validEntries*sizeof(ICONDIRENTRY);
+    hr = IStream_Write(stream, iconDirEntries, validEntries*sizeof(ICONDIRENTRY), &bytesWritten);
+    if (FAILED(hr) || bytesWritten != validEntries*sizeof(ICONDIRENTRY))
+    {
+        WINE_ERR("error 0x%08X writing icon dir entries to stream\n", hr);
+        goto end;
+    }
+    hr = IStream_Write(stream, icons, iconOffset, &bytesWritten);
+    if (FAILED(hr) || bytesWritten != iconOffset)
+    {
+        WINE_ERR("error 0x%08X writing icon images to stream\n", hr);
+        goto end;
+    }
+    zero.QuadPart = 0;
+    hr = IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
 
 end:
-    if (hGlobal && stream == NULL)
-        GlobalFree(hGlobal);
+    HeapFree(GetProcessHeap(), 0, icons);
+    HeapFree(GetProcessHeap(), 0, iconDirEntries);
     if (FAILED(hr) && stream != NULL)
     {
         IStream_Release(stream);
@@ -374,15 +428,9 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
 {
     HMODULE hModule;
     HRSRC hResInfo;
-    LPCWSTR lpName = NULL;
     HGLOBAL hResData;
     GRPICONDIR *pIconDir;
-    BITMAPINFO *pIcon;
     ENUMRESSTRUCT sEnumRes;
-    int nMax = 0;
-    int nMaxBits = 0;
-    GRPICONDIRENTRY iconDirEntry = {0};
-    int i;
     HRESULT hr = E_FAIL;
 
     hModule = LoadLibraryExW(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE);
@@ -418,20 +466,9 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
         {
             if ((pIconDir = LockResource(hResData)))
             {
-                lpName = MAKEINTRESOURCEW(pIconDir->idEntries[0].nID);  /* default to first entry */
-                for (i = 0; i < pIconDir->idCount; i++)
-                {
-		    if (pIconDir->idEntries[i].wBitCount >= nMaxBits)
-		    {
-			if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) >= nMax)
-			{
-			    lpName = MAKEINTRESOURCEW(pIconDir->idEntries[i].nID);
-			    nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
-			    nMaxBits = pIconDir->idEntries[i].wBitCount;
-			    iconDirEntry = pIconDir->idEntries[i];
-			}
-		    }
-                }
+                *ppStream = add_module_icons_to_stream(hModule, pIconDir);
+                if (*ppStream)
+                    hr = S_OK;
             }
 
             FreeResource(hResData);
@@ -442,23 +479,6 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
         WINE_WARN("found no icon\n");
         FreeLibrary(hModule);
         return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
-    }
- 
-    if ((hResInfo = FindResourceW(hModule, lpName, (LPCWSTR)RT_ICON)))
-    {
-        if ((hResData = LoadResource(hModule, hResInfo)))
-        {
-            if ((pIcon = LockResource(hResData)))
-            {
-                *ppStream = module_icon_to_stream(&iconDirEntry, pIcon);
-                if (*ppStream)
-                    hr = S_OK;
-                else
-                    hr = E_FAIL;
-            }
-
-            FreeResource(hResData);
-        }
     }
 
     FreeLibrary(hModule);
