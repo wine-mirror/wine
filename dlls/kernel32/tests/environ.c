@@ -330,7 +330,6 @@ static void test_GetComputerName(void)
     size = 0;
     ret = GetComputerNameA((LPSTR)0xdeadbeef, &size);
     error = GetLastError();
-    todo_wine
     ok(!ret && error == ERROR_BUFFER_OVERFLOW, "GetComputerNameA should have failed with ERROR_BUFFER_OVERFLOW instead of %d\n", error);
 
     /* Only Vista returns the computer name length as documented in the MSDN */
@@ -362,7 +361,6 @@ static void test_GetComputerName(void)
         win_skip("GetComputerNameW is not implemented\n");
     else
     {
-        todo_wine
         ok(!ret && error == ERROR_BUFFER_OVERFLOW, "GetComputerNameW should have failed with ERROR_BUFFER_OVERFLOW instead of %d\n", error);
         size++; /* nul terminating character */
         nameW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(nameW[0]));

@@ -316,23 +316,33 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
     DWORD len = sizeof( buf );
     LPWSTR theName = (LPWSTR) (buf + offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ));
     NTSTATUS st = STATUS_INVALID_PARAMETER;
+    DWORD err = ERROR_SUCCESS;
     
     TRACE ("%p %p\n", name, size);
 
     _init_attr ( &attr, &nameW );
     RtlInitUnicodeString( &nameW, ComputerW );
     if ( ( st = NtOpenKey( &hkey, KEY_READ, &attr ) ) != STATUS_SUCCESS )
+    {
+        err = RtlNtStatusToDosError ( st );
         goto out;
+    }
          
     attr.RootDirectory = hkey;
     RtlInitUnicodeString( &nameW, ActiveComputerNameW );
     if ( ( st = NtOpenKey( &hsubkey, KEY_READ, &attr ) ) != STATUS_SUCCESS )
+    {
+        err = RtlNtStatusToDosError ( st );
         goto out;
+    }
     
     RtlInitUnicodeString( &nameW, ComputerNameW );
     if ( ( st = NtQueryValueKey( hsubkey, &nameW, KeyValuePartialInformation, buf, len, &len ) )
          != STATUS_SUCCESS )
+    {
+        err = RtlNtStatusToDosError ( st );
         goto out;
+    }
 
     len = (len -offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data )) / sizeof (WCHAR) - 1;
     TRACE ("ComputerName is %s (length %u)\n", debugstr_w ( theName ), len);
@@ -340,25 +350,24 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
     if ( *size < len + 1 )
     {
         *size = len + 1;
-        st = STATUS_MORE_ENTRIES;
+        err = ERROR_BUFFER_OVERFLOW;
     }
     else
     {
         memcpy ( name, theName, len * sizeof (WCHAR) );
         name[len] = 0;
         *size = len;
-        st = STATUS_SUCCESS;
     }
 
 out:
     NtClose ( hsubkey );
     NtClose ( hkey );
 
-    if ( st == STATUS_SUCCESS )
+    if ( err == ERROR_SUCCESS )
         return TRUE;
     else
     {
-        SetLastError ( RtlNtStatusToDosError ( st ) );
+        SetLastError ( err );
         WARN ( "Status %u reading computer name from registry\n", st );
         return FALSE;
     }
@@ -383,7 +392,7 @@ BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
         if ( *size < len )
         {
             *size = len;
-            SetLastError( ERROR_MORE_DATA );
+            SetLastError( ERROR_BUFFER_OVERFLOW );
             ret = FALSE;
         }
         else
@@ -415,7 +424,11 @@ BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD si
     {
     case ComputerNameNetBIOS:
     case ComputerNamePhysicalNetBIOS:
-        return GetComputerNameA (name, size);
+        ret = GetComputerNameA (name, size);
+        if (!ret && GetLastError() == ERROR_BUFFER_OVERFLOW)
+            SetLastError( ERROR_MORE_DATA );
+        return ret;
+
     case ComputerNameDnsHostname:
     case ComputerNamePhysicalDnsHostname:
         ret = dns_hostname (buf, &len);
@@ -468,7 +481,10 @@ BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD 
     {
     case ComputerNameNetBIOS:
     case ComputerNamePhysicalNetBIOS:
-        return GetComputerNameW (name, size);
+        ret = GetComputerNameW (name, size);
+        if (!ret && GetLastError() == ERROR_BUFFER_OVERFLOW)
+            SetLastError( ERROR_MORE_DATA );
+        return ret;
     case ComputerNameDnsHostname:
     case ComputerNamePhysicalDnsHostname:
         ret = dns_hostname (buf, &len);
