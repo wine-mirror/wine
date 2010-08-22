@@ -3144,9 +3144,9 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
 
     /* Create the first surface */
     hr = ddraw_create_surface(This, &desc2, &object, 0);
-    if( hr != DD_OK)
+    if (FAILED(hr))
     {
-        ERR("ddraw_create_surface failed, hr %#x.\n", hr);
+        WARN("ddraw_create_surface failed, hr %#x.\n", hr);
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
