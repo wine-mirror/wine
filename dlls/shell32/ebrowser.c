@@ -42,9 +42,33 @@ typedef struct _ExplorerBrowserImpl {
     BOOL destroyed;
 
     HWND hwnd_main;
+    HWND hwnd_sv;
 
     EXPLORER_BROWSER_OPTIONS eb_options;
+
+    IShellView *psv;
+    RECT sv_rc;
 } ExplorerBrowserImpl;
+
+/**************************************************************************
+ * Helper functions
+ */
+static void update_layout(ExplorerBrowserImpl *This)
+{
+    RECT rc;
+    TRACE("%p\n", This);
+
+    GetClientRect(This->hwnd_main, &rc);
+    CopyRect(&This->sv_rc, &rc);
+}
+
+static void size_panes(ExplorerBrowserImpl *This)
+{
+    MoveWindow(This->hwnd_sv,
+               This->sv_rc.left, This->sv_rc.top,
+               This->sv_rc.right - This->sv_rc.left, This->sv_rc.bottom - This->sv_rc.top,
+               TRUE);
+}
 
 /**************************************************************************
  * Main window related functions.
@@ -60,11 +84,22 @@ static LRESULT main_on_wm_create(HWND hWnd, CREATESTRUCTW *crs)
     return TRUE;
 }
 
+static LRESULT main_on_wm_size(ExplorerBrowserImpl *This)
+{
+    update_layout(This);
+    size_panes(This);
+
+    return TRUE;
+}
+
 static LRESULT CALLBACK main_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
+    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+
     switch(uMessage)
     {
     case WM_CREATE:           return main_on_wm_create(hWnd, (CREATESTRUCTW*)lParam);
+    case WM_SIZE:             return main_on_wm_size(This);
     default:                  return DefWindowProcW(hWnd, uMessage, wParam, lParam);
     }
 
@@ -182,6 +217,14 @@ static HRESULT WINAPI IExplorerBrowser_fnDestroy(IExplorerBrowser *iface)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
     TRACE("%p\n", This);
+
+    if(This->psv)
+    {
+        IShellView_DestroyViewWindow(This->psv);
+        IShellView_Release(This->psv);
+        This->psv = NULL;
+        This->hwnd_sv = NULL;
+    }
 
     DestroyWindow(This->hwnd_main);
     This->destroyed = TRUE;
@@ -325,10 +368,12 @@ static HRESULT WINAPI IExplorerBrowser_fnGetCurrentView(IExplorerBrowser *iface,
                                                         REFIID riid, void **ppv)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (%s, %p)\n", This, shdebugstr_guid(riid), ppv);
+    TRACE("%p (%s, %p)\n", This, shdebugstr_guid(riid), ppv);
 
-    *ppv = NULL;
-    return E_FAIL;
+    if(!This->psv)
+        return E_FAIL;
+
+    return IShellView_QueryInterface(This->psv, riid, ppv);
 }
 
 static const IExplorerBrowserVtbl vt_IExplorerBrowser =
@@ -510,9 +555,15 @@ static HRESULT WINAPI IShellBrowser_fnQueryActiveShellView(IShellBrowser *iface,
                                                            IShellView **ppshv)
 {
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
-    FIXME("stub, %p (%p)\n", This, ppshv);
+    TRACE("%p (%p)\n", This, ppshv);
 
-    return E_NOTIMPL;
+    if(!This->psv)
+        return E_FAIL;
+
+    *ppshv = This->psv;
+    IShellView_AddRef(This->psv);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellBrowser_fnOnViewWindowActive(IShellBrowser *iface,
