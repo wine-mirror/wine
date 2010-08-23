@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = gameux.dll
-IMPORTS   = uuid shlwapi oleaut32 ole32
+IMPORTS   = uuid shlwapi oleaut32 ole32 advapi32
 
 C_SRCS = \
 	gameexplorer.c \
