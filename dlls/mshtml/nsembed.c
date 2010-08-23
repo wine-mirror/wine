@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "shlobj.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -70,12 +71,114 @@ static HINSTANCE hXPCOM = NULL;
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
 static nsIMemory *nsmem = NULL;
+static nsIFile *profile_directory;
 
 static const WCHAR wszNsContainer[] = {'N','s','C','o','n','t','a','i','n','e','r',0};
 
 static ATOM nscontainer_class;
 static WCHAR gecko_path[MAX_PATH];
 static unsigned gecko_path_len;
+
+static nsresult NSAPI nsDirectoryServiceProvider_QueryInterface(nsIDirectoryServiceProvider *iface,
+        nsIIDRef riid, void **result)
+{
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(IID_nsISupports %p)\n", result);
+        *result = iface;
+    }else if(IsEqualGUID(&IID_nsIDirectoryServiceProvider, riid)) {
+        TRACE("(IID_nsIDirectoryServiceProvider %p)\n", result);
+        *result = iface;
+    }else {
+        WARN("(%s %p)\n", debugstr_guid(riid), result);
+        *result = NULL;
+        return NS_NOINTERFACE;
+    }
+
+    nsISupports_AddRef((nsISupports*)*result);
+    return NS_OK;
+}
+
+static nsrefcnt NSAPI nsDirectoryServiceProvider_AddRef(nsIDirectoryServiceProvider *iface)
+{
+    return 2;
+}
+
+static nsrefcnt NSAPI nsDirectoryServiceProvider_Release(nsIDirectoryServiceProvider *iface)
+{
+    return 1;
+}
+
+static nsresult create_profile_directory(void)
+{
+    static const WCHAR wine_geckoW[] = {'\\','w','i','n','e','_','g','e','c','k','o',0};
+
+    WCHAR path[MAX_PATH + sizeof(wine_geckoW)/sizeof(WCHAR)];
+    nsAString str;
+    PRBool exists;
+    nsresult nsres;
+    HRESULT hres;
+
+    hres = SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_DEFAULT, path);
+    if(FAILED(hres)) {
+        ERR("SHGetFolderPath failed: %08x\n", hres);
+        return NS_ERROR_FAILURE;
+    }
+
+    strcatW(path, wine_geckoW);
+    nsAString_InitDepend(&str, path);
+    nsres = NS_NewLocalFile(&str, FALSE, &profile_directory);
+    nsAString_Finish(&str);
+    if(NS_FAILED(nsres)) {
+        ERR("NS_NewLocalFile failed: %08x\n", nsres);
+        return nsres;
+    }
+
+    nsres = nsIFile_Exists(profile_directory, &exists);
+    if(NS_FAILED(nsres)) {
+        ERR("Exists failed: %08x\n", nsres);
+        return nsres;
+    }
+
+    if(!exists) {
+        nsres = nsIFile_Create(profile_directory, 1, 0700);
+        if(NS_FAILED(nsres))
+            ERR("Create failed: %08x\n", nsres);
+    }
+
+    return nsres;
+}
+
+static nsresult NSAPI nsDirectoryServiceProvider_GetFile(nsIDirectoryServiceProvider *iface,
+        const char *prop, PRBool *persistent, nsIFile **_retval)
+{
+    TRACE("(%s %p %p)\n", debugstr_a(prop), persistent, _retval);
+
+    if(!strcmp(prop, "ProfD")) {
+        if(!profile_directory) {
+            nsresult nsres;
+
+            nsres = create_profile_directory();
+            if(NS_FAILED(nsres))
+                return nsres;
+        }
+
+        return nsIFile_Clone(profile_directory, _retval);
+    }
+
+    return NS_ERROR_FAILURE;
+}
+
+#undef NSWEAKREF_THIS
+
+static const nsIDirectoryServiceProviderVtbl nsDirectoryServiceProviderVtbl = {
+    nsDirectoryServiceProvider_QueryInterface,
+    nsDirectoryServiceProvider_AddRef,
+    nsDirectoryServiceProvider_Release,
+    nsDirectoryServiceProvider_GetFile
+};
+
+static nsIDirectoryServiceProvider nsDirectoryServiceProvider =
+    { &nsDirectoryServiceProviderVtbl };
 
 static LRESULT WINAPI nsembed_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -424,7 +527,7 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         return FALSE;
     }
 
-    nsres = NS_InitXPCOM2(&pServMgr, gre_dir, NULL);
+    nsres = NS_InitXPCOM2(&pServMgr, gre_dir, &nsDirectoryServiceProvider);
     if(NS_FAILED(nsres)) {
         ERR("NS_InitXPCOM2 failed: %08x\n", nsres);
         FreeLibrary(hXPCOM);
@@ -784,6 +887,11 @@ void close_gecko(void)
     TRACE("()\n");
 
     release_nsio();
+
+    if(profile_directory) {
+        nsIFile_Release(profile_directory);
+        profile_directory = NULL;
+    }
 
     if(pCompMgr)
         nsIComponentManager_Release(pCompMgr);

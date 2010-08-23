@@ -1917,6 +1917,8 @@ interface nsIFile : nsISupports
     nsresult SetPermissionsOfLink(PRUint32 pPermissions);
     nsresult GetLastModifiedTime(PRInt64 *aLastModifiedTime);
     nsresult SetLastModifiedTime(PRInt64 aLastModifiedTime);
+    nsresult GetLastModifiedTimeOfLink(PRInt64 *aLastModifiedTimeOfLink);
+    nsresult SetLastModifiedTimeOfLink(PRInt64 aLastModifiedTimeOfLink);
     nsresult GetFileSize(PRInt64 *aFileSize);
     nsresult SetFileSize(PRInt64 aFileSize);
     nsresult GetFileSizeOfLink(PRInt64 *aFileSizeOfLink);
@@ -1966,6 +1968,16 @@ interface nsIPrefBranch : nsISupports
     nsresult DeleteBranch(const char *aStartingAt);
     nsresult GetChildList(const char *aStartingAt, PRUint32 *aCount, char ***aChildArray);
     nsresult ResetBranch(const char *aStartingAt);
+}
+
+[
+    object,
+    uuid(bbf8cab0-d43a-11d3-8cc2-00609792278c),
+    local
+]
+interface nsIDirectoryServiceProvider : nsISupports
+{
+    nsresult GetFile(const char *prop, PRBool *persistent, nsIFile **_retval);
 }
 
 [
