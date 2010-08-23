@@ -1,0 +1,48 @@
+/*
+ * IP configuration utility
+ * Korean language support
+ *
+ * Copyright 2010 Andrew Nguyen
+ * Copyright 2010 YunSOng Hwang
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "ipconfig.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "사용법: ipconfig [ /? | /all ]\n"
+    STRING_INVALID_CMDLINE, "에러: 알수 없거나 올바르지 않은 명령어 라인 매개변수가 지정됨\n"
+    STRING_ADAPTER_FRIENDLY, "%s 어댑터 %s\n"
+    STRING_ETHERNET, "이더넷"
+    STRING_UNKNOWN, "알 수 없음"
+    STRING_CONN_DNS_SUFFIX, "Connection-specific DNS suffix"
+    STRING_IP_ADDRESS, "IP 주소"
+    STRING_HOSTNAME, "호스트이름"
+    STRING_NODE_TYPE, "노드 형식"
+    STRING_BROADCAST, "브로드캐스트"
+    STRING_PEER_TO_PEER, "피어 투 피어"
+    STRING_MIXED, "Mixed"
+    STRING_HYBRID, "Hybrid"
+    STRING_IP_ROUTING, "IP 라우팅 가능"
+    STRING_DESCRIPTION, "설명"
+    STRING_PHYS_ADDR, "물리 주소"
+    STRING_DHCP_ENABLED, "DHCP 가능"
+}
