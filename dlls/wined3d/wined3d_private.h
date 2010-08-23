@@ -1143,7 +1143,8 @@ struct blit_shader
     BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
                            const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format_desc *src_format_desc,
                            const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format_desc *dst_format_desc);
-    HRESULT (*color_fill)(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color);
+    HRESULT (*color_fill)(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
+            const RECT *dst_rect, const WINED3DCOLORVALUE *color);
 };
 
 extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;

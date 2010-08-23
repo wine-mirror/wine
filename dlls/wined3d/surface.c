@@ -984,58 +984,56 @@ void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect
     }
 }
 
-static BOOL surface_convert_color_to_argb(IWineD3DSurfaceImpl *This, DWORD color, DWORD *argb_color)
+static BOOL surface_convert_color_to_float(IWineD3DSurfaceImpl *surface, DWORD color, WINED3DCOLORVALUE *float_color)
 {
-    IWineD3DDeviceImpl *device = This->resource.device;
+    const struct wined3d_format_desc *format = surface->resource.format_desc;
+    IWineD3DDeviceImpl *device = surface->resource.device;
 
-    switch(This->resource.format_desc->format)
+    switch (format->format)
     {
         case WINED3DFMT_P8_UINT:
+            if (surface->palette)
             {
-                DWORD alpha;
-
-                if (primary_render_target_is_p8(device))
-                    alpha = color << 24;
-                else
-                    alpha = 0xFF000000;
-
-                if (This->palette) {
-                    *argb_color = (alpha |
-                            (This->palette->palents[color].peRed << 16) |
-                            (This->palette->palents[color].peGreen << 8) |
-                            (This->palette->palents[color].peBlue));
-                } else {
-                    *argb_color = alpha;
-                }
+                float_color->r = surface->palette->palents[color].peRed / 255.0f;
+                float_color->g = surface->palette->palents[color].peGreen / 255.0f;
+                float_color->b = surface->palette->palents[color].peBlue / 255.0f;
             }
+            else
+            {
+                float_color->r = 0.0f;
+                float_color->g = 0.0f;
+                float_color->b = 0.0f;
+            }
+            float_color->a = primary_render_target_is_p8(device) ? color / 255.0f : 1.0f;
             break;
 
         case WINED3DFMT_B5G6R5_UNORM:
-            {
-                if (color == 0xFFFF) {
-                    *argb_color = 0xFFFFFFFF;
-                } else {
-                    *argb_color = ((0xFF000000) |
-                            ((color & 0xF800) << 8) |
-                            ((color & 0x07E0) << 5) |
-                            ((color & 0x001F) << 3));
-                }
-            }
+            float_color->r = ((color >> 11) & 0x1f) / 31.0f;
+            float_color->g = ((color >> 5) & 0x3f) / 63.0f;
+            float_color->b = (color & 0x1f) / 31.0f;
+            float_color->a = 1.0f;
             break;
 
         case WINED3DFMT_B8G8R8_UNORM:
         case WINED3DFMT_B8G8R8X8_UNORM:
-            *argb_color = 0xFF000000 | color;
+            float_color->r = D3DCOLOR_R(color);
+            float_color->g = D3DCOLOR_G(color);
+            float_color->b = D3DCOLOR_B(color);
+            float_color->a = 1.0f;
             break;
 
         case WINED3DFMT_B8G8R8A8_UNORM:
-            *argb_color = color;
+            float_color->r = D3DCOLOR_R(color);
+            float_color->g = D3DCOLOR_G(color);
+            float_color->b = D3DCOLOR_B(color);
+            float_color->a = D3DCOLOR_A(color);
             break;
 
         default:
-            ERR("Unhandled conversion from %s to ARGB!\n", debug_d3dformat(This->resource.format_desc->format));
+            ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->format));
             return FALSE;
     }
+
     return TRUE;
 }
 
@@ -3720,35 +3718,33 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
 
         return WINED3D_OK;
-    } else {
+    }
+    else
+    {
         /* Source-Less Blit to render target */
-        if (Flags & WINEDDBLT_COLORFILL) {
-            DWORD color;
+        if (Flags & WINEDDBLT_COLORFILL)
+        {
+            WINED3DCOLORVALUE color;
 
             TRACE("Colorfill\n");
 
-            /* The color as given in the Blt function is in the format of the frame-buffer...
-             * 'clear' expect it in ARGB format => we need to do some conversion :-)
-             */
-            if (!surface_convert_color_to_argb(dst_surface, DDBltFx->u5.dwFillColor, &color))
-            {
-                /* The color conversion function already prints an error, so need to do it here */
+            /* The color as given in the Blt function is in the surface format. */
+            if (!surface_convert_color_to_float(dst_surface, DDBltFx->u5.dwFillColor, &color))
                 return WINED3DERR_INVALIDCALL;
-            }
 
             if (ffp_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
                     NULL, 0, 0, NULL,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
                     dst_surface->resource.format_desc))
             {
-                return ffp_blit.color_fill(device, dst_surface, &dst_rect, color);
+                return ffp_blit.color_fill(device, dst_surface, &dst_rect, &color);
             }
             else if (cpu_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
                     NULL, 0, 0, NULL,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
                     dst_surface->resource.format_desc))
             {
-                return cpu_blit.color_fill(device, dst_surface, &dst_rect, color);
+                return cpu_blit.color_fill(device, dst_surface, &dst_rect, &color);
             }
             return WINED3DERR_INVALIDCALL;
         }
@@ -4869,14 +4865,13 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     return FALSE;
 }
 
-static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device,
-        IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD color)
+static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
+        const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
-    const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     const RECT draw_rect = {0, 0, dst_surface->currentDesc.Width, dst_surface->currentDesc.Height};
 
     return device_clear_render_targets(device, 1 /* rt_count */, &dst_surface, 1 /* rect_count */,
-            dst_rect, &draw_rect, WINED3DCLEAR_TARGET, &c, 0.0f /* depth */, 0 /* stencil */);
+            dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f /* depth */, 0 /* stencil */);
 }
 
 const struct blit_shader ffp_blit =  {
@@ -4923,15 +4918,14 @@ static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     return FALSE;
 }
 
-static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device,
-        IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD color)
+static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
+        const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
-    const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     WINEDDBLTFX BltFx;
 
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
-    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface->resource.format_desc, &c);
+    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface->resource.format_desc, color);
     return IWineD3DBaseSurfaceImpl_Blt((IWineD3DSurface*)dst_surface, dst_rect,
             NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
 }
