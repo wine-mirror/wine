@@ -8,7 +8,8 @@ MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 
 C_SRCS = \
-	misc.c
+	misc.c \
+	string.c
 
 RC_SRCS = \
 	msvcp90.rc
