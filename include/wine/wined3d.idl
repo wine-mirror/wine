@@ -3376,7 +3376,7 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT ColorFill(
         [in] IWineD3DSurface *surface,
         [in] const WINED3DRECT *rect,
-        [in] WINED3DCOLOR color
+        [in] const WINED3DCOLORVALUE *color
     );
     HRESULT UpdateTexture(
         [in] IWineD3DBaseTexture *src_texture,
