@@ -2767,9 +2767,8 @@ static const IWineD3DDeviceParentVtbl d3d8_wined3d_device_parent_vtbl =
 
 static void setup_fpu(void)
 {
-    WORD cw;
-
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    WORD cw;
     __asm__ volatile ("fnstcw %0" : "=m" (cw));
     cw = (cw & ~0xf3f) | 0x3f;
     __asm__ volatile ("fldcw %0" : : "m" (cw));
