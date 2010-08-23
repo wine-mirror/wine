@@ -276,6 +276,7 @@ static void test_basics(void)
 {
     IExplorerBrowser *peb;
     IShellBrowser *psb;
+    FOLDERSETTINGS fs;
     ULONG lres;
     DWORD flags;
     HDWP hdwp;
@@ -356,6 +357,21 @@ static void test_basics(void)
     hr = IExplorerBrowser_GetOptions(peb, &flags);
     ok(flags == 0xDEADBEEF, "got (0x%08x)\n", flags);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    IExplorerBrowser_Destroy(peb);
+    IExplorerBrowser_Release(peb);
+
+    ebrowser_instantiate(&peb);
+    ebrowser_initialize(peb);
+
+    /* SetFolderSettings */
+    hr = IExplorerBrowser_SetFolderSettings(peb, NULL);
+    ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+    fs.ViewMode = 0; fs.fFlags = 0;
+    hr = IExplorerBrowser_SetFolderSettings(peb, &fs);
+    todo_wine ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+
+    /* TODO: Test after browsing somewhere. */
 
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);

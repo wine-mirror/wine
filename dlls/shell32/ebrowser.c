@@ -45,6 +45,7 @@ typedef struct _ExplorerBrowserImpl {
     HWND hwnd_sv;
 
     EXPLORER_BROWSER_OPTIONS eb_options;
+    FOLDERSETTINGS fs;
 
     IShellView *psv;
     RECT sv_rc;
@@ -68,6 +69,24 @@ static void size_panes(ExplorerBrowserImpl *This)
                This->sv_rc.left, This->sv_rc.top,
                This->sv_rc.right - This->sv_rc.left, This->sv_rc.bottom - This->sv_rc.top,
                TRUE);
+}
+
+static HRESULT change_viewmode(ExplorerBrowserImpl *This, UINT viewmode)
+{
+    IFolderView *pfv;
+    HRESULT hr;
+
+    if(!This->psv)
+        return E_FAIL;
+
+    hr = IShellView_QueryInterface(This->psv, &IID_IFolderView, (void*)&pfv);
+    if(SUCCEEDED(hr))
+    {
+        hr = IFolderView_SetCurrentViewMode(pfv, This->fs.ViewMode);
+        IFolderView_Release(pfv);
+    }
+
+    return hr;
 }
 
 /**************************************************************************
@@ -210,6 +229,9 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
         return E_FAIL;
     }
 
+    This->fs.ViewMode = pfs ? pfs->ViewMode : FVM_DETAILS;
+    This->fs.fFlags = pfs ? (pfs->fFlags | FWF_NOCLIENTEDGE) : FWF_NOCLIENTEDGE;
+
     return S_OK;
 }
 
@@ -275,9 +297,16 @@ static HRESULT WINAPI IExplorerBrowser_fnSetFolderSettings(IExplorerBrowser *ifa
                                                            const FOLDERSETTINGS *pfs)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (%p)\n", This, pfs);
+    TRACE("%p (%p)\n", This, pfs);
 
-    return E_NOTIMPL;
+    if(!pfs)
+        return E_INVALIDARG;
+
+    This->fs.ViewMode = pfs->ViewMode;
+    This->fs.fFlags = pfs->fFlags | FWF_NOCLIENTEDGE;
+
+    /* Change the settings of the current view, if any. */
+    return change_viewmode(This, This->fs.ViewMode);
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnAdvise(IExplorerBrowser *iface,
