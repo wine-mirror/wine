@@ -189,6 +189,8 @@ static void set_from_desktop_edits(HWND dialog)
     static const WCHAR x[] = {'x',0};
     static const WCHAR def_width[]  = {'8','0','0',0};
     static const WCHAR def_height[] = {'6','0','0',0};
+    static const WCHAR min_width[]  = {'6','4','0',0};
+    static const WCHAR min_height[] = {'4','8','0',0};
     WCHAR *width, *height, *new;
     const WCHAR *desktop_name = current_app ? current_app : defaultW;
 
@@ -203,9 +205,19 @@ static void set_from_desktop_edits(HWND dialog)
         HeapFree(GetProcessHeap(), 0, width);
         width = strdupW(def_width);
     }
+    else if (atoiW(width) < atoiW(min_width))
+    {
+        HeapFree(GetProcessHeap(), 0, width);
+        width = strdupW(min_width);
+    }
     if (!height || !height[0]) {
         HeapFree(GetProcessHeap(), 0, height);
         height = strdupW(def_height);
+    }
+    else if (atoiW(height) < atoiW(min_height))
+    {
+        HeapFree(GetProcessHeap(), 0, height);
+        height = strdupW(min_height);
     }
 
     new = HeapAlloc(GetProcessHeap(), 0, (strlenW(width) + strlenW(height) + 2) * sizeof(WCHAR));
