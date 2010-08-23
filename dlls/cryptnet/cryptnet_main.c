@@ -1582,7 +1582,7 @@ static DWORD verify_cert_revocation_with_crl(PCCERT_CONTEXT cert,
 
 static DWORD verify_cert_revocation_from_dist_points_ext(
  const CRYPT_DATA_BLOB *value, PCCERT_CONTEXT cert, DWORD index,
- FILETIME *pTime, DWORD dwFlags, PCERT_REVOCATION_PARA pRevPara,
+ FILETIME *pTime, DWORD dwFlags, const CERT_REVOCATION_PARA *pRevPara,
  PCERT_REVOCATION_STATUS pRevStatus)
 {
     DWORD error = ERROR_SUCCESS, cbUrlArray;
