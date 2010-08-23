@@ -4873,9 +4873,10 @@ static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device,
         IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD color)
 {
     const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
+    const RECT draw_rect = {0, 0, dst_surface->currentDesc.Width, dst_surface->currentDesc.Height};
 
     return device_clear_render_targets(device, 1 /* rt_count */, &dst_surface, 1 /* rect_count */,
-            (const WINED3DRECT *)dst_rect, WINED3DCLEAR_TARGET, &c, 0.0f /* depth */, 0 /* stencil */);
+            dst_rect, &draw_rect, WINED3DCLEAR_TARGET, &c, 0.0f /* depth */, 0 /* stencil */);
 }
 
 const struct blit_shader ffp_blit =  {

@@ -655,8 +655,8 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
 }
 
 HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, IWineD3DSurfaceImpl **rts,
-        UINT rect_count, const WINED3DRECT *rects, DWORD flags, const WINED3DCOLORVALUE *color,
-        float depth, DWORD stencil)
+        UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags,
+        const WINED3DCOLORVALUE *color, float depth, DWORD stencil)
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
     IWineD3DSurfaceImpl *depth_stencil = device->depth_stencil;
@@ -665,9 +665,6 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
     struct wined3d_context *context;
     GLbitfield clear_mask = 0;
     unsigned int i;
-    RECT draw_rect;
-
-    device_get_draw_rect(device, &draw_rect);
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
@@ -677,7 +674,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
      * anyway. If we're not clearing the color buffer we don't have to copy either since we're not going to set
      * the drawable up to date. We have to check all settings that limit the clear area though. Do not bother
      * checking all this if the dest surface is in the drawable anyway. */
-    if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, &draw_rect, clear_rect))
+    if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, clear_rect))
     {
         for (i = 0; i < rt_count; ++i)
         {
@@ -720,7 +717,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
 
         if (location == SFLAG_DS_ONSCREEN && depth_stencil != device->onscreen_depth_stencil)
             device_switch_onscreen_ds(device, context, depth_stencil);
-        prepare_ds_clear(depth_stencil, context, location, &draw_rect, rect_count, clear_rect);
+        prepare_ds_clear(depth_stencil, context, location, draw_rect, rect_count, clear_rect);
         surface_modify_location(depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
         glDepthMask(GL_TRUE);
@@ -751,13 +748,13 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
     {
         if (context->render_offscreen)
         {
-            glScissor(draw_rect.left, draw_rect.top,
-                    draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top);
+            glScissor(draw_rect->left, draw_rect->top,
+                    draw_rect->right - draw_rect->left, draw_rect->bottom - draw_rect->top);
         }
         else
         {
-            glScissor(draw_rect.left, drawable_height - draw_rect.bottom,
-                        draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top);
+            glScissor(draw_rect->left, drawable_height - draw_rect->bottom,
+                        draw_rect->right - draw_rect->left, draw_rect->bottom - draw_rect->top);
         }
         checkGLcall("glScissor");
         glClear(clear_mask);
@@ -771,7 +768,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
         for (i = 0; i < rect_count; ++i)
         {
             /* Note that GL uses lower left, width/height. */
-            IntersectRect(&current_rect, &draw_rect, &clear_rect[i]);
+            IntersectRect(&current_rect, draw_rect, &clear_rect[i]);
 
             TRACE("clear_rect[%u] %s, current_rect %s.\n", i,
                     wine_dbgstr_rect(&clear_rect[i]),
@@ -4581,6 +4578,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 {
     const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    RECT draw_rect;
 
     TRACE("(%p) Count (%d), pRects (%p), Flags (%x), color (0x%08x), Z (%f), Stencil (%d)\n", This,
           Count, pRects, Flags, color, Z, Stencil);
@@ -4592,8 +4590,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         return WINED3DERR_INVALIDCALL;
     }
 
+    device_get_draw_rect(This, &draw_rect);
+
     return device_clear_render_targets(This, This->adapter->gl_info.limits.buffers,
-            This->render_targets, Count, pRects, Flags, &c, Z, Stencil);
+            This->render_targets, Count, (const RECT *)pRects, &draw_rect, Flags,
+            &c, Z, Stencil);
 }
 
 /*****
@@ -5510,9 +5511,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
+        const RECT draw_rect = {0, 0, s->currentDesc.Width, s->currentDesc.Height};
 
         return device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &s,
-                !!pRect, pRect, WINED3DCLEAR_TARGET, &c, 0.0f, 0);
+                !!pRect, (const RECT *)pRect, &draw_rect, WINED3DCLEAR_TARGET, &c, 0.0f, 0);
     }
     else
     {
@@ -5550,8 +5552,10 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
+        const RECT draw_rect = {0, 0, surface->currentDesc.Width, surface->currentDesc.Height};
+
         device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &surface,
-                0, NULL, WINED3DCLEAR_TARGET, color, 0.0f, 0);
+                0, NULL, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
     }
     else
     {
