@@ -197,6 +197,7 @@ struct fd
     char                *unix_name;   /* unix file name */
     int                  unix_fd;     /* unix file descriptor */
     unsigned int         no_fd_status;/* status to return when unix_fd is -1 */
+    unsigned int         cacheable :1;/* can the fd be cached on the client side? */
     unsigned int         signaled :1; /* is the fd signaled? */
     unsigned int         fs_locks :1; /* can we use filesystem locks for this fd? */
     int                  poll_index;  /* index of fd in poll array */
@@ -1546,6 +1547,7 @@ static struct fd *alloc_fd_object(void)
     fd->sharing    = 0;
     fd->unix_fd    = -1;
     fd->unix_name  = NULL;
+    fd->cacheable  = 0;
     fd->signaled   = 1;
     fd->fs_locks   = 1;
     fd->poll_index = -1;
@@ -1580,6 +1582,7 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
     fd->sharing    = 0;
     fd->unix_name  = NULL;
     fd->unix_fd    = -1;
+    fd->cacheable  = 0;
     fd->signaled   = 0;
     fd->fs_locks   = 0;
     fd->poll_index = -1;
@@ -1608,6 +1611,7 @@ struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sha
     fd->options    = options;
     fd->sharing    = sharing;
     fd->unix_fd    = -1;
+    fd->cacheable  = orig->cacheable;
     fd->signaled   = 0;
     fd->fs_locks   = 0;
     fd->poll_index = -1;
@@ -1823,6 +1827,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
         }
         fd->inode = inode;
         fd->closed = closed_fd;
+        fd->cacheable = !inode->device->removable;
         list_add_head( &inode->open, &fd->inode_entry );
 
         /* check directory options */
@@ -1869,6 +1874,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
             goto error;
         }
         free( closed_fd );
+        fd->cacheable = 1;
     }
     return fd;
 
@@ -1920,6 +1926,12 @@ int get_unix_fd( struct fd *fd )
 int is_same_file_fd( struct fd *fd1, struct fd *fd2 )
 {
     return fd1->inode == fd2->inode;
+}
+
+/* allow the fd to be cached (can't be reset once set) */
+void allow_fd_caching( struct fd *fd )
+{
+    fd->cacheable = 1;
 }
 
 /* check if fd is on a removable device */
@@ -2269,7 +2281,7 @@ DECL_HANDLER(get_handle_fd)
         if (unix_fd != -1)
         {
             reply->type = fd->fd_ops->get_fd_type( fd );
-            reply->removable = is_fd_removable(fd);
+            reply->cacheable = fd->cacheable;
             reply->options = fd->options;
             reply->access = get_handle_access( current->process, req->handle );
             send_client_fd( current->process, unix_fd, req->handle );

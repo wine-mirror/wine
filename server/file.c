@@ -136,6 +136,7 @@ struct file *create_file_for_fd( int fd, unsigned int access, unsigned int shari
             release_object( file );
             return NULL;
         }
+        allow_fd_caching( file->fd );
     }
     return file;
 }

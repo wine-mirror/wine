@@ -888,7 +888,7 @@ C_ASSERT( sizeof(struct get_handle_unix_name_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_handle_fd_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, type) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, removable) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, cacheable) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, access) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_handle_fd_reply, options) == 20 );
 C_ASSERT( sizeof(struct get_handle_fd_reply) == 24 );

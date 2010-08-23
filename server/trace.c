@@ -1475,7 +1475,7 @@ static void dump_get_handle_fd_request( const struct get_handle_fd_request *req 
 static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
 {
     fprintf( stderr, " type=%d", req->type );
-    fprintf( stderr, ", removable=%d", req->removable );
+    fprintf( stderr, ", cacheable=%d", req->cacheable );
     fprintf( stderr, ", access=%08x", req->access );
     fprintf( stderr, ", options=%08x", req->options );
 }

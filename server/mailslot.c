@@ -297,6 +297,7 @@ static struct object *mailslot_open_file( struct object *obj, unsigned int acces
         release_object( writer );
         return NULL;
     }
+    allow_fd_caching( writer->fd );
     return &writer->obj;
 }
 
@@ -442,9 +443,12 @@ static struct mailslot *create_mailslot( struct directory *root,
         fcntl( fds[1], F_SETFL, O_NONBLOCK );
         shutdown( fds[0], SHUT_RD );
         mailslot->write_fd = fds[0];
-        mailslot->fd = create_anonymous_fd( &mailslot_fd_ops, fds[1], &mailslot->obj,
-                                            FILE_SYNCHRONOUS_IO_NONALERT );
-        if (mailslot->fd) return mailslot;
+        if ((mailslot->fd = create_anonymous_fd( &mailslot_fd_ops, fds[1], &mailslot->obj,
+                                                 FILE_SYNCHRONOUS_IO_NONALERT )))
+        {
+            allow_fd_caching( mailslot->fd );
+            return mailslot;
+        }
     }
     else file_set_error();
 

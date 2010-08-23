@@ -646,6 +646,7 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
         release_object( sock );
         return NULL;
     }
+    allow_fd_caching( sock->fd );
     sock_reselect( sock );
     clear_error();
     return &sock->obj;
@@ -718,6 +719,7 @@ static struct sock *accept_socket( obj_handle_t handle )
             release_object( sock );
             return NULL;
         }
+        allow_fd_caching( acceptsock->fd );
     }
     clear_error();
     sock->pmask &= ~FD_ACCEPT;

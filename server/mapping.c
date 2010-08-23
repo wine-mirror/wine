@@ -515,6 +515,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
         if ((unix_fd = create_temp_file( size )) == -1) goto error;
         if (!(mapping->fd = create_anonymous_fd( &mapping_fd_ops, unix_fd, &mapping->obj,
                                                  FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
+        allow_fd_caching( mapping->fd );
     }
     mapping->size    = (size + page_mask) & ~((mem_size_t)page_mask);
     mapping->protect = protect;

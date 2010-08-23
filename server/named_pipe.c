@@ -838,6 +838,8 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
             server->fd = create_anonymous_fd( &pipe_server_fd_ops, fds[0], &server->obj, server->options );
             if (client->fd && server->fd)
             {
+                allow_fd_caching( client->fd );
+                allow_fd_caching( server->fd );
                 fd_copy_completion( server->ioctl_fd, server->fd );
                 if (server->state == ps_wait_open)
                     fd_async_wake_up( server->ioctl_fd, ASYNC_TYPE_WAIT, STATUS_SUCCESS );

@@ -1242,7 +1242,7 @@ struct get_handle_fd_reply
 {
     struct reply_header __header;
     int          type;
-    int          removable;
+    int          cacheable;
     unsigned int access;
     unsigned int options;
 };
@@ -5487,6 +5487,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 402
+#define SERVER_PROTOCOL_VERSION 403
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

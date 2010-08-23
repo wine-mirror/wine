@@ -1018,7 +1018,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     obj_handle_t handle;        /* handle to the file */
 @REPLY
     int          type;          /* file type (see below) */
-    int          removable;     /* is file removable? */
+    int          cacheable;     /* can fd be cached in the client? */
     unsigned int access;        /* file access rights */
     unsigned int options;       /* file open options */
 @END
