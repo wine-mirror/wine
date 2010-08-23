@@ -1,0 +1,10 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msvcp80.dll
+
+C_SRCS = \
+	msvcp80.c
+
+@MAKE_DLL_RULES@
