@@ -1396,18 +1396,39 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 /***********************************************************************
  *           virtual_create_system_view
  */
-NTSTATUS virtual_create_system_view( void *base, SIZE_T size, DWORD vprot )
+NTSTATUS virtual_create_builtin_view( void *module )
 {
-    FILE_VIEW *view;
     NTSTATUS status;
     sigset_t sigset;
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
+    SIZE_T size = nt->OptionalHeader.SizeOfImage;
+    IMAGE_SECTION_HEADER *sec;
+    FILE_VIEW *view;
+    void *base;
+    int i;
 
-    size = ROUND_SIZE( base, size );
-    base = ROUND_ADDR( base, page_mask );
+    size = ROUND_SIZE( module, size );
+    base = ROUND_ADDR( module, page_mask );
     server_enter_uninterrupted_section( &csVirtual, &sigset );
-    status = create_view( &view, base, size, vprot );
+    status = create_view( &view, base, size, VPROT_SYSTEM | VPROT_IMAGE |
+                          VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
     if (!status) TRACE( "created %p-%p\n", base, (char *)base + size );
     server_leave_uninterrupted_section( &csVirtual, &sigset );
+
+    if (status) return status;
+
+    sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        DWORD flags = VPROT_SYSTEM | VPROT_IMAGE | VPROT_COMMITTED;
+
+        if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) flags |= VPROT_EXEC;
+        if (sec[i].Characteristics & IMAGE_SCN_MEM_READ) flags |= VPROT_READ;
+        if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE) flags |= VPROT_WRITE;
+        memset (view->prot + (sec[i].VirtualAddress >> page_shift), flags,
+                ROUND_SIZE( sec[i].VirtualAddress, sec[i].Misc.VirtualSize ) >> page_shift );
+    }
+
     return status;
 }
 

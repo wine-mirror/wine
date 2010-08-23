@@ -1404,9 +1404,8 @@ static void load_builtin_callback( void *module, const char *filename )
         builtin_load_info->status = STATUS_INVALID_IMAGE_FORMAT;
         return;
     }
-    virtual_create_system_view( module, nt->OptionalHeader.SizeOfImage,
-                                VPROT_SYSTEM | VPROT_IMAGE | VPROT_COMMITTED |
-                                VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
+
+    virtual_create_builtin_view( module );
 
     /* create the MODREF */
 
