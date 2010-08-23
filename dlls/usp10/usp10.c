@@ -50,7 +50,6 @@ typedef struct _scriptRange
 } scriptRange;
 
 static const scriptRange scriptRanges[] = {
-
     /* Basic Latin: U+0000–U+007A */
     /* Latin-1 Supplement: U+0080–U+00FF */
     /* Latin Extended-A: U+0100–U+017F */
@@ -69,6 +68,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Syriac,     0x700,  0x74f,  0, 0},
     /* Arabic Supplement: U+0750–U+077F */
     { Script_Arabic,     0x750,  0x77f,  0, 0},
+    /* Thaana: U+0780–U+07BF */
+    { Script_Thaana,     0x780,  0x7bf,  0, 0},
     /* Phonetic Extensions: U+1D00–U+1DBF */
     { Script_Latin,      0x1d00, 0x1dbf, 0, 0},
     /* Latin Extended Additional: U+1E00–U+1EFF */
@@ -120,6 +121,8 @@ static const scriptData scriptInformation[] = {
      {LANG_SYRIAC, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 1, 0}},
     {{Script_Persian, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_PERSIAN, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Thaana, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_DIVEHI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -129,7 +132,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[4].props, &scriptInformation[5].props,
     &scriptInformation[6].props, &scriptInformation[7].props,
     &scriptInformation[8].props, &scriptInformation[9].props,
-    &scriptInformation[10].props
+    &scriptInformation[10].props, &scriptInformation[11].props
 };
 
 typedef struct {

@@ -29,6 +29,7 @@
 #define Script_Hebrew  8
 #define Script_Syriac  9
 #define Script_Persian 10
+#define Script_Thaana  11
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
