@@ -5496,6 +5496,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         IWineD3DSurface *surface, const WINED3DRECT *pRect, WINED3DCOLOR color)
 {
+    const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)surface;
     WINEDDBLTFX BltFx;
 
@@ -5510,7 +5511,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
         const RECT draw_rect = {0, 0, s->currentDesc.Width, s->currentDesc.Height};
 
         return device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &s,
@@ -5521,7 +5521,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(color, s->resource.format_desc->format);
+        BltFx.u5.dwFillColor = wined3d_format_convert_from_float(s->resource.format_desc, &c);
         return IWineD3DSurface_Blt(surface, (const RECT *)pRect, NULL, NULL,
                 WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
     }
@@ -5560,19 +5560,11 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
     else
     {
         WINEDDBLTFX BltFx;
-        WINED3DCOLOR c;
-
-        WARN("Converting to WINED3DCOLOR, this might give incorrect results\n");
-
-        c = ((DWORD)(color->b * 255.0f));
-        c |= ((DWORD)(color->g * 255.0f)) << 8;
-        c |= ((DWORD)(color->r * 255.0f)) << 16;
-        c |= ((DWORD)(color->a * 255.0f)) << 24;
 
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = color_convert_argb_to_fmt(c, surface->resource.format_desc->format);
+        BltFx.u5.dwFillColor = wined3d_format_convert_from_float(surface->resource.format_desc, color);
         hr = IWineD3DSurface_Blt((IWineD3DSurface *)surface, NULL, NULL, NULL,
                 WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
         if (FAILED(hr))

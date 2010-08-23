@@ -4923,13 +4923,17 @@ static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     return FALSE;
 }
 
-static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD fill_color)
+static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect, DWORD color)
 {
+    const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     WINEDDBLTFX BltFx;
+
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
-    BltFx.u5.dwFillColor = color_convert_argb_to_fmt(fill_color, dst_surface->resource.format_desc->format);
-    return IWineD3DBaseSurfaceImpl_Blt((IWineD3DSurface*)dst_surface, dst_rect, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
+    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface->resource.format_desc, &c);
+    return IWineD3DBaseSurfaceImpl_Blt((IWineD3DSurface*)dst_surface, dst_rect,
+            NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
 }
 
 const struct blit_shader cpu_blit =  {

@@ -2532,25 +2532,33 @@ BOOL getDepthStencilBits(const struct wined3d_format_desc *format_desc, short *d
     return TRUE;
 }
 
-DWORD color_convert_argb_to_fmt(DWORD color, WINED3DFORMAT destfmt)
+DWORD wined3d_format_convert_from_float(const struct wined3d_format_desc *format, const WINED3DCOLORVALUE *color)
 {
+    WINED3DFORMAT destfmt = format->format;
     unsigned int r, g, b, a;
     DWORD ret;
 
-    if (destfmt == WINED3DFMT_B8G8R8A8_UNORM
-            || destfmt == WINED3DFMT_B8G8R8X8_UNORM
-            || destfmt == WINED3DFMT_B8G8R8_UNORM)
-        return color;
+    TRACE("Converting color {%.8e %.8e %.8e %.8e} to format %s.\n",
+            color->r, color->g, color->b, color->a, debug_d3dformat(destfmt));
 
-    TRACE("Converting color %08x to format %s\n", color, debug_d3dformat(destfmt));
-
-    a = (color & 0xff000000) >> 24;
-    r = (color & 0x00ff0000) >> 16;
-    g = (color & 0x0000ff00) >>  8;
-    b = (color & 0x000000ff) >>  0;
+    r = (DWORD)((color->r * 255.0f) + 0.5f);
+    g = (DWORD)((color->g * 255.0f) + 0.5f);
+    b = (DWORD)((color->b * 255.0f) + 0.5f);
+    a = (DWORD)((color->a * 255.0f) + 0.5f);
 
     switch(destfmt)
     {
+        case WINED3DFMT_B8G8R8A8_UNORM:
+        case WINED3DFMT_B8G8R8X8_UNORM:
+        case WINED3DFMT_B8G8R8_UNORM:
+            ret = b;
+            ret |= g << 8;
+            ret |= r << 16;
+            ret |= a << 24;
+            TRACE("Returning 0x%08x.\n", ret);
+            return ret;
+
+
         case WINED3DFMT_B5G6R5_UNORM:
             if(r == 0xff && g == 0xff && b == 0xff) return 0xffff;
             r = (r * 32) / 256;

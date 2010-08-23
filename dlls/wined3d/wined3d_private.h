@@ -2620,9 +2620,6 @@ const char *debug_d3dtop(WINED3DTEXTUREOP d3dtop) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *debug_surflocation(DWORD flag) DECLSPEC_HIDDEN;
 
-/* Color conversion routines */
-DWORD color_convert_argb_to_fmt(DWORD color, WINED3DFORMAT destfmt) DECLSPEC_HIDDEN;
-
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op) DECLSPEC_HIDDEN;
 GLenum CompareFunc(DWORD func) DECLSPEC_HIDDEN;
@@ -2998,6 +2995,8 @@ const struct wined3d_format_desc *getFormatDescEntry(WINED3DFORMAT fmt,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 UINT wined3d_format_calculate_size(const struct wined3d_format_desc *format,
         UINT alignment, UINT width, UINT height) DECLSPEC_HIDDEN;
+DWORD wined3d_format_convert_from_float(const struct wined3d_format_desc *format,
+        const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
 
 static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
 {
