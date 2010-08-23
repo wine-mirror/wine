@@ -494,7 +494,7 @@ static void OLEPicture_SendNotify(OLEPictureImpl* this, DISPID dispID)
   IEnumConnections *pEnum;
   CONNECTDATA CD;
 
-  if (IConnectionPoint_EnumConnections(this->pCP, &pEnum))
+  if (IConnectionPoint_EnumConnections(this->pCP, &pEnum) != S_OK)
       return;
   while(IEnumConnections_Next(pEnum, 1, &CD, NULL) == S_OK) {
     IPropertyNotifySink *sink;
@@ -1336,7 +1336,7 @@ static HRESULT OLEPictureImpl_LoadAPM(OLEPictureImpl *This,
  * Currently implemented: BITMAP, ICON, JPEG, GIF, WMF, EMF
  */
 static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
-  HRESULT	hr = E_FAIL;
+  HRESULT	hr;
   BOOL		headerisdata = FALSE;
   BOOL		statfailed = FALSE;
   ULONG		xread, toread;
@@ -1365,8 +1365,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
    * Also handle streams where we do not have a working "Stat" method by
    * reading all data until the end of the stream.
    */
-  hr=IStream_Stat(pStm,&statstg,STATFLAG_NONAME);
-  if (hr) {
+  hr = IStream_Stat(pStm,&statstg,STATFLAG_NONAME);
+  if (hr != S_OK) {
       TRACE("stat failed with hres %x, proceeding to read all data.\n",hr);
       statfailed = TRUE;
       /* we will read at least 8 byte ... just right below */
@@ -1377,8 +1377,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   headerread = 0;
   headerisdata = FALSE;
   do {
-      hr=IStream_Read(pStm,header,8,&xread);
-      if (hr || xread!=8) {
+      hr = IStream_Read(pStm, header, 8, &xread);
+      if (hr != S_OK || xread!=8) {
           ERR("Failure while reading picture header (hr is %x, nread is %d).\n",hr,xread);
           return (hr?hr:E_FAIL);
       }
@@ -1423,11 +1423,11 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       while (1) {
           while (xread < origsize) {
               hr = IStream_Read(pStm,xbuf+xread,origsize-xread,&nread);
-              xread+=nread;
-              if (hr || !nread)
+              xread += nread;
+              if (hr != S_OK || !nread)
                   break;
           }
-          if (!nread || hr) /* done, or error */
+          if (!nread || hr != S_OK) /* done, or error */
               break;
           if (xread == origsize) {
               origsize += sizeinc;
@@ -1435,7 +1435,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
               xbuf = HeapReAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, xbuf, origsize);
           }
       }
-      if (hr)
+      if (hr != S_OK)
           TRACE("hr in no-stat loader case is %08x\n", hr);
       TRACE("loaded %d bytes.\n", xread);
       This->datalen = xread;
@@ -1452,8 +1452,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       while (xread < This->datalen) {
           ULONG nread;
           hr = IStream_Read(pStm,xbuf+xread,This->datalen-xread,&nread);
-          xread+=nread;
-          if (hr || !nread)
+          xread += nread;
+          if (hr != S_OK || !nread)
               break;
       }
       if (xread != This->datalen)
@@ -2159,8 +2159,8 @@ static const IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContai
 HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
 		            BOOL fOwn, LPVOID *ppvObj )
 {
-  OLEPictureImpl* newPict = NULL;
-  HRESULT      hr         = S_OK;
+  OLEPictureImpl* newPict;
+  HRESULT hr;
 
   TRACE("(%p,%s,%d,%p)\n", lpPictDesc, debugstr_guid(riid), fOwn, ppvObj);
 
@@ -2209,10 +2209,10 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 	lpstream, lSize, fRunmode, debugstr_guid(riid), ppvObj);
 
   hr = OleCreatePictureIndirect(NULL,riid,!fRunmode,(LPVOID*)&newpic);
-  if (hr)
+  if (hr != S_OK)
     return hr;
   hr = IPicture_QueryInterface(newpic,&IID_IPersistStream, (LPVOID*)&ps);
-  if (hr) {
+  if (hr != S_OK) {
       ERR("Could not get IPersistStream iface from Ole Picture?\n");
       IPicture_Release(newpic);
       *ppvObj = NULL;
@@ -2228,7 +2228,7 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
       return hr;
   }
   hr = IPicture_QueryInterface(newpic,riid,ppvObj);
-  if (hr)
+  if (hr != S_OK)
       ERR("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
   IPicture_Release(newpic);
   return hr;
@@ -2248,10 +2248,10 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 	lpstream, lSize, fRunmode, debugstr_guid(riid), xsiz, ysiz, flags, ppvObj);
 
   hr = OleCreatePictureIndirect(NULL,riid,!fRunmode,(LPVOID*)&newpic);
-  if (hr)
+  if (hr != S_OK)
     return hr;
   hr = IPicture_QueryInterface(newpic,&IID_IPersistStream, (LPVOID*)&ps);
-  if (hr) {
+  if (hr != S_OK) {
       ERR("Could not get IPersistStream iface from Ole Picture?\n");
       IPicture_Release(newpic);
       *ppvObj = NULL;
@@ -2267,7 +2267,7 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
       return hr;
   }
   hr = IPicture_QueryInterface(newpic,riid,ppvObj);
-  if (hr)
+  if (hr != S_OK)
       ERR("Failed to get interface %s from IPicture.\n",debugstr_guid(riid));
   IPicture_Release(newpic);
   return hr;
