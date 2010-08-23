@@ -3,11 +3,12 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = gameux.dll
-IMPORTS   = ole32
+IMPORTS   = uuid shlwapi oleaut32 ole32
 
 C_SRCS = \
 	gameexplorer.c \
 	gamestatistics.c
 
+RC_SRCS = rsrc.rc
 
 @MAKE_TEST_RULES@
