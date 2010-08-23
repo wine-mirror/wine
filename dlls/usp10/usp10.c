@@ -58,6 +58,9 @@ static const scriptRange scriptRanges[] = {
     { Script_Latin,      0x00,   0x2af ,  Script_Numeric, Script_Punctuation},
     /* Greek: U+0370–U+03FF */
     { Script_Greek,      0x370,  0x3ff,  0, 0},
+    /* Cyrillic: U+0400–U+04FF */
+    /* Cyrillic Supplement: U+0500–U+052F */
+    { Script_Cyrillic,   0x400,  0x52f,  0, 0},
     /* Hebrew: U+0590–U+05FF */
     { Script_Hebrew,     0x590,  0x5ff,  0, 0},
     /* Arabic: U+0600–U+06FF */
@@ -80,6 +83,10 @@ static const scriptRange scriptRanges[] = {
     { Script_Greek,      0x1f00, 0x1fff, 0, 0},
     /* Latin Extended-C: U+2C60–U+2C7F */
     { Script_Latin,      0x2c60, 0x2c7f, 0, 0},
+    /* Cyrillic Extended-A: U+2DE0–U+2DFF */
+    { Script_Cyrillic,   0x2de0, 0x2dff,  0, 0},
+    /* Cyrillic Extended-B: U+A640–U+A69F */
+    { Script_Cyrillic,   0xa640, 0xa69f,  0, 0},
     /* Modifier Tone Letters: U+A700–U+A71F */
     /* Latin Extended-D: U+A720–U+A7FF */
     { Script_Latin,      0xa700, 0xa7ff, 0, 0},
@@ -129,6 +136,8 @@ static const scriptData scriptInformation[] = {
      {LANG_DIVEHI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
     {{Script_Greek, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_GREEK, 0, 0, 0, 0, GREEK_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Cyrillic, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_RUSSIAN, 0, 0, 0, 0, RUSSIAN_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -139,7 +148,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[6].props, &scriptInformation[7].props,
     &scriptInformation[8].props, &scriptInformation[9].props,
     &scriptInformation[10].props, &scriptInformation[11].props,
-    &scriptInformation[12].props
+    &scriptInformation[12].props, &scriptInformation[13].props
 };
 
 typedef struct {
