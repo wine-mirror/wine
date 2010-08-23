@@ -880,6 +880,84 @@ static void test_OleLoadPicturePath(void)
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
 }
 
+static void test_himetric(void)
+{
+    static const BYTE bmp_bits[1024];
+    OLE_XSIZE_HIMETRIC cx;
+    OLE_YSIZE_HIMETRIC cy;
+    IPicture *pic;
+    PICTDESC desc;
+    HBITMAP bmp;
+    HRESULT hr;
+    HICON icon;
+    HDC hdc;
+    INT d;
+
+    if (!pOleCreatePictureIndirect)
+    {
+        win_skip("OleCreatePictureIndirect not available\n");
+        return;
+    }
+
+    desc.cbSizeofstruct = sizeof(desc);
+    desc.picType = PICTYPE_BITMAP;
+    desc.u.bmp.hpal = NULL;
+
+    hdc = CreateCompatibleDC(0);
+
+    bmp = CreateBitmap(1.9 * GetDeviceCaps(hdc, LOGPIXELSX),
+                       1.9 * GetDeviceCaps(hdc, LOGPIXELSY), 1, 1, NULL);
+
+    desc.u.bmp.hbitmap = bmp;
+
+    /* size in himetric units reported rounded up to next integer value */
+    hr = pOleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    cx = 0;
+    d = MulDiv((INT)(1.9 * GetDeviceCaps(hdc, LOGPIXELSX)), 2540, GetDeviceCaps(hdc, LOGPIXELSX));
+    hr = IPicture_get_Width(pic, &cx);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cx == d, "got %d, expected %d\n", cx, d);
+
+    cy = 0;
+    d = MulDiv((INT)(1.9 * GetDeviceCaps(hdc, LOGPIXELSY)), 2540, GetDeviceCaps(hdc, LOGPIXELSY));
+    hr = IPicture_get_Height(pic, &cy);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cy == d, "got %d, expected %d\n", cy, d);
+
+    DeleteObject(bmp);
+    IPicture_Release(pic);
+
+    /* same thing with icon */
+    icon = CreateIcon(NULL, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
+                      1, 1, bmp_bits, bmp_bits);
+    ok(icon != NULL, "failed to create icon\n");
+
+    desc.picType = PICTYPE_ICON;
+    desc.u.icon.hicon = icon;
+
+    hr = pOleCreatePictureIndirect(&desc, &IID_IPicture, FALSE, (void**)&pic);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    cx = 0;
+    d = MulDiv(GetSystemMetrics(SM_CXICON), 2540, GetDeviceCaps(hdc, LOGPIXELSX));
+    hr = IPicture_get_Width(pic, &cx);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cx == d, "got %d, expected %d\n", cx, d);
+
+    cy = 0;
+    d = MulDiv(GetSystemMetrics(SM_CYICON), 2540, GetDeviceCaps(hdc, LOGPIXELSY));
+    hr = IPicture_get_Height(pic, &cy);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cy == d, "got %d, expected %d\n", cy, d);
+
+    IPicture_Release(pic);
+    DestroyIcon(icon);
+
+    DeleteDC(hdc);
+}
+
 START_TEST(olepicture)
 {
 	hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -911,6 +989,7 @@ START_TEST(olepicture)
     test_get_Handle();
     test_get_Type();
     test_OleLoadPicturePath();
+    test_himetric();
 }
 
 
