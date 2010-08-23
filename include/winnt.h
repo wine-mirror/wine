@@ -526,6 +526,9 @@ typedef DWORD FLONG;
 #define PROCESSOR_ARCHITECTURE_AMD64    9
 #define PROCESSOR_ARCHITECTURE_UNKNOWN	0xFFFF
 
+/* Wine extension */
+#define PROCESSOR_ARCHITECTURE_SPARC    20
+
 /* dwProcessorType */
 #define PROCESSOR_INTEL_386      386
 #define PROCESSOR_INTEL_486      486
