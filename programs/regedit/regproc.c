@@ -680,19 +680,18 @@ static void processRegLinesA(FILE *in, char* first_chars)
                 }
                 if(s[i] == '\r'){
                     /* read the next character iff it's \n */
+                    if(i+2 >= size_to_get){
+                        /* buffer too short, so put back the EOL char to
+                         * read next cycle */
+                        ungetc('\r', in);
+                        break;
+                    }
                     s[i+1] = fgetc(in);
                     if(s[i+1] != '\n'){
                         ungetc(s[i+1], in);
                         i = i+1;
-                    }else{
-                        if(i+2 >= size_to_get){
-                            /* buffer too short, so put back the EOL chars to
-                             * read next cycle */
-                            ungetc('\n', in);
-                            ungetc('\r', in);
-                        }else
-                            i = i+2;
-                    }
+                    }else
+                        i = i+2;
                     break;
                 }
                 if(s[i] == '\n'){
