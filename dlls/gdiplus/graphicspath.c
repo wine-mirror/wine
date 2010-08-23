@@ -1653,3 +1653,9 @@ GpStatus WINGDIPAPI GdipClearPathMarkers(GpPath* path)
 
     return Ok;
 }
+
+GpStatus WINGDIPAPI GdipWindingModeOutline(GpPath *path, GpMatrix *matrix, REAL flatness)
+{
+   FIXME("stub: %p, %p, %.2f\n", path, matrix, flatness);
+   return NotImplemented;
+}

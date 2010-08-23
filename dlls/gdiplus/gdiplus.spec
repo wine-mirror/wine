@@ -623,7 +623,7 @@
 @ stdcall GdipVectorTransformMatrixPointsI(ptr ptr long)
 @ stdcall GdipWarpPath(ptr ptr ptr long long long long long long long)
 @ stdcall GdipWidenPath(ptr ptr ptr long)
-@ stub GdipWindingModeOutline
+@ stdcall GdipWindingModeOutline(ptr ptr long)
 @ stdcall GdiplusNotificationHook(ptr)
 @ stdcall GdiplusNotificationUnhook(ptr)
 @ stdcall GdiplusShutdown(ptr)
