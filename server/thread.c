@@ -1102,8 +1102,18 @@ DECL_HANDLER(init_thread)
 {
     unsigned int prefix_cpu_mask = get_prefix_cpu_mask();
     struct process *process = current->process;
-    int reply_fd = thread_get_inflight_fd( current, req->reply_fd );
-    int wait_fd = thread_get_inflight_fd( current, req->wait_fd );
+    int wait_fd, reply_fd;
+
+    if ((reply_fd = thread_get_inflight_fd( current, req->reply_fd )) == -1)
+    {
+        set_error( STATUS_TOO_MANY_OPENED_FILES );
+        return;
+    }
+    if ((wait_fd = thread_get_inflight_fd( current, req->wait_fd )) == -1)
+    {
+        set_error( STATUS_TOO_MANY_OPENED_FILES );
+        goto error;
+    }
 
     if (current->reply_fd)  /* already initialised */
     {
@@ -1111,19 +1121,11 @@ DECL_HANDLER(init_thread)
         goto error;
     }
 
-    if (reply_fd == -1 || fcntl( reply_fd, F_SETFL, O_NONBLOCK ) == -1) goto error;
+    if (fcntl( reply_fd, F_SETFL, O_NONBLOCK ) == -1) goto error;
 
     current->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &current->obj, 0 );
-    reply_fd = -1;
-    if (!current->reply_fd) goto error;
-
-    if (wait_fd == -1)
-    {
-        set_error( STATUS_TOO_MANY_OPENED_FILES );  /* most likely reason */
-        return;
-    }
-    if (!(current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj, 0 )))
-        return;
+    current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj, 0 );
+    if (!current->reply_fd || !current->wait_fd) return;
 
     if (!is_valid_address(req->teb))
     {
