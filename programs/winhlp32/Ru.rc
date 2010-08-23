@@ -91,7 +91,7 @@ CAPTION "Поиск"
 /* Strings */
 STRINGTABLE
 {
-STID_WINE_HELP, 	"Справка WINE"
+STID_WINE_HELP, 	"Справка Wine"
 STID_WHERROR, 		"ОШИБКА"
 STID_WARNING,  		"ВНИМАНИЕ"
 STID_INFO,  		"Информация"
