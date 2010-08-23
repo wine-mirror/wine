@@ -358,11 +358,11 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
 };
 
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
-        UINT height, UINT depth, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool,
+        UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format, gl_info);
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, gl_info);
     HRESULT hr;
 
     if (!gl_info->supported[EXT_TEXTURE3D])

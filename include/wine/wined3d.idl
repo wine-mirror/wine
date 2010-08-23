@@ -139,7 +139,7 @@ typedef enum _WINED3DDEGREETYPE
         ((unsigned long)(unsigned char)(ch0) | ((unsigned long)(unsigned char)(ch1) << 8) | \
         ((unsigned long)(unsigned char)(ch2) << 16) | ((unsigned long)(unsigned char)(ch3) << 24))
 
-typedef enum _WINED3DFORMAT
+enum wined3d_format_id
 {
     WINED3DFMT_UNKNOWN,
     WINED3DFMT_B8G8R8_UNORM,
@@ -275,7 +275,7 @@ typedef enum _WINED3DFORMAT
     WINED3DFMT_NVHS                         = WINEMAKEFOURCC('N','V','H','S'),
 
     WINED3DFMT_FORCE_DWORD = 0xffffffff
-} WINED3DFORMAT;
+};
 
 typedef enum _WINED3DRENDERSTATETYPE
 {
@@ -1540,7 +1540,7 @@ typedef struct _WINED3DDISPLAYMODE
     UINT Width;
     UINT Height;
     UINT RefreshRate;
-    WINED3DFORMAT Format;
+    enum wined3d_format_id Format;
 } WINED3DDISPLAYMODE;
 
 typedef struct _WINED3DCOLORVALUE
@@ -1672,7 +1672,7 @@ typedef struct _WINED3DPRESENT_PARAMETERS
 {
     UINT BackBufferWidth;
     UINT BackBufferHeight;
-    WINED3DFORMAT BackBufferFormat;
+    enum wined3d_format_id BackBufferFormat;
     UINT BackBufferCount;
     WINED3DMULTISAMPLE_TYPE MultiSampleType;
     DWORD MultiSampleQuality;
@@ -1680,7 +1680,7 @@ typedef struct _WINED3DPRESENT_PARAMETERS
     HWND hDeviceWindow;
     BOOL Windowed;
     BOOL EnableAutoDepthStencil;
-    WINED3DFORMAT AutoDepthStencilFormat;
+    enum wined3d_format_id AutoDepthStencilFormat;
     DWORD Flags;
     UINT FullScreen_RefreshRateInHz;
     UINT PresentationInterval;
@@ -1689,7 +1689,7 @@ typedef struct _WINED3DPRESENT_PARAMETERS
 
 typedef struct _WINED3DSURFACE_DESC
 {
-    WINED3DFORMAT format;
+    enum wined3d_format_id format;
     WINED3DRESOURCETYPE resource_type;
     DWORD usage;
     WINED3DPOOL pool;
@@ -1702,7 +1702,7 @@ typedef struct _WINED3DSURFACE_DESC
 
 typedef struct _WINED3DVOLUME_DESC
 {
-    WINED3DFORMAT Format;
+    enum wined3d_format_id Format;
     WINED3DRESOURCETYPE Type;
     DWORD Usage;
     WINED3DPOOL Pool;
@@ -1720,7 +1720,7 @@ typedef struct _WINED3DCLIPSTATUS
 
 typedef struct _WINED3DVERTEXELEMENT
 {
-    WINED3DFORMAT format;
+    enum wined3d_format_id format;
     WORD input_slot;
     WORD offset;
     UINT output_slot; /* D3D 8 & 10 */
@@ -1850,7 +1850,7 @@ typedef struct _WINED3DBUFFER_DESC
 
 typedef struct WineDirect3DStridedData
 {
-    WINED3DFORMAT format;   /* Format of the data */
+    enum wined3d_format_id format;   /* Format of the data */
     const BYTE *lpData;     /* Pointer to start of data */
     DWORD dwStride;         /* Stride between occurrences of this data */
 } WineDirect3DStridedData;
@@ -2131,7 +2131,7 @@ interface IWineD3DDeviceParent : IUnknown
         [in] IUnknown *superior,
         [in] UINT width,
         [in] UINT height,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] DWORD usage,
         [in] WINED3DPOOL pool,
         [in] UINT level,
@@ -2143,7 +2143,7 @@ interface IWineD3DDeviceParent : IUnknown
         [in] IUnknown *superior,
         [in] UINT width,
         [in] UINT height,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] WINED3DMULTISAMPLE_TYPE multisample_type,
         [in] DWORD multisample_quality,
         [in] BOOL lockable,
@@ -2154,7 +2154,7 @@ interface IWineD3DDeviceParent : IUnknown
         [in] IUnknown *superior,
         [in] UINT width,
         [in] UINT height,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] WINED3DMULTISAMPLE_TYPE multisample_type,
         [in] DWORD multisample_quality,
         [in] BOOL discard,
@@ -2166,7 +2166,7 @@ interface IWineD3DDeviceParent : IUnknown
         [in] UINT width,
         [in] UINT height,
         [in] UINT depth,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] WINED3DPOOL pool,
         [in] DWORD usage,
         [out] IWineD3DVolume **volume
@@ -2209,11 +2209,11 @@ interface IWineD3D : IWineD3DBase
     );
     UINT GetAdapterModeCount(
         [in] UINT adapter_idx,
-        [in] WINED3DFORMAT format
+        [in] enum wined3d_format_id format_id
     );
     HRESULT EnumAdapterModes(
         [in] UINT adapter_idx,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] UINT mode_idx,
         [out] WINED3DDISPLAYMODE *mode
     );
@@ -2229,7 +2229,7 @@ interface IWineD3D : IWineD3DBase
     HRESULT CheckDeviceMultiSampleType(
         [in] UINT adapter_idx,
         [in] WINED3DDEVTYPE device_type,
-        [in] WINED3DFORMAT surface_format,
+        [in] enum wined3d_format_id surface_format_id,
         [in] BOOL windowed,
         [in] WINED3DMULTISAMPLE_TYPE multisample_type,
         [out] DWORD *quality_levels
@@ -2237,31 +2237,31 @@ interface IWineD3D : IWineD3DBase
     HRESULT CheckDepthStencilMatch(
         [in] UINT adapter_idx,
         [in] WINED3DDEVTYPE device_type,
-        [in] WINED3DFORMAT adapter_format,
-        [in] WINED3DFORMAT render_target_format,
-        [in] WINED3DFORMAT depth_stencil_format
+        [in] enum wined3d_format_id adapter_format_id,
+        [in] enum wined3d_format_id render_target_format_id,
+        [in] enum wined3d_format_id depth_stencil_format_id
     );
     HRESULT CheckDeviceType(
         [in] UINT adapter_idx,
         [in] WINED3DDEVTYPE device_type,
-        [in] WINED3DFORMAT display_format,
-        [in] WINED3DFORMAT backbuffer_format,
+        [in] enum wined3d_format_id display_format_id,
+        [in] enum wined3d_format_id backbuffer_format_id,
         [in] BOOL windowed
     );
     HRESULT CheckDeviceFormat(
         [in] UINT adaper_idx,
         [in] WINED3DDEVTYPE device_type,
-        [in] WINED3DFORMAT adapter_format,
+        [in] enum wined3d_format_id adapter_format_id,
         [in] DWORD usage,
         [in] WINED3DRESOURCETYPE resource_type,
-        [in] WINED3DFORMAT check_format,
+        [in] enum wined3d_format_id check_format,
         [in] WINED3DSURFTYPE surface_type
     );
     HRESULT CheckDeviceFormatConversion(
         [in] UINT adapter_idx,
         [in] WINED3DDEVTYPE device_type,
-        [in] WINED3DFORMAT source_format,
-        [in] WINED3DFORMAT target_format
+        [in] enum wined3d_format_id source_format_id,
+        [in] enum wined3d_format_id target_format_id
     );
     HRESULT GetDeviceCaps(
         [in] UINT adapter_idx,
@@ -2484,7 +2484,7 @@ interface IWineD3DSurface : IWineD3DResource
     const void *GetData(
     );
     HRESULT SetFormat(
-        [in] WINED3DFORMAT format
+        [in] enum wined3d_format_id format_id
     );
     HRESULT PrivateSetup(
     );
@@ -2842,7 +2842,7 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT CreateSurface(
         [in] UINT width,
         [in] UINT height,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] BOOL lockable,
         [in] BOOL discard,
         [in] UINT level,
@@ -2865,7 +2865,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT height,
         [in] UINT levels,
         [in] DWORD usage,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] WINED3DPOOL pool,
         [out] IWineD3DTexture **texture,
         [in] IUnknown *parent,
@@ -2877,7 +2877,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT depth,
         [in] UINT levels,
         [in] DWORD usage,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] WINED3DPOOL pool,
         [out] IWineD3DVolumeTexture **texture,
         [in] IUnknown *parent,
@@ -2888,7 +2888,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT height,
         [in] UINT depth,
         [in] DWORD usage,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] WINED3DPOOL pool,
         [out] IWineD3DVolume **volume,
         [in] IUnknown *parent,
@@ -2898,7 +2898,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT edge_length,
         [in] UINT levels,
         [in] DWORD usage,
-        [in] WINED3DFORMAT format,
+        [in] enum wined3d_format_id format_id,
         [in] WINED3DPOOL pool,
         [out] IWineD3DCubeTexture **texture,
         [in] IUnknown *parent,
@@ -3062,7 +3062,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT SetIndexBuffer(
         [in] IWineD3DBuffer *index_buffer,
-        [in] WINED3DFORMAT format
+        [in] enum wined3d_format_id format_id
     );
     HRESULT GetIndexBuffer(
         [out] IWineD3DBuffer **index_buffer
@@ -3345,7 +3345,7 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT DrawIndexedPrimitiveUP(
         [in] UINT index_count,
         [in] const void *index_data,
-        [in] WINED3DFORMAT index_data_format,
+        [in] enum wined3d_format_id index_data_format_id,
         [in] const void *stream_data,
         [in] UINT stream_stride
     );
@@ -3358,7 +3358,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] const WineDirect3DVertexStridedData *strided_data,
         [in] UINT vertex_count,
         [in] const void *index_data,
-        [in] WINED3DFORMAT index_data_format
+        [in] enum wined3d_format_id index_data_format_id
     );
     HRESULT DrawRectPatch(
         [in] UINT handle,

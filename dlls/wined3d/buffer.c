@@ -292,8 +292,8 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
     const struct wined3d_stream_info_element *attrib = &si->elements[attrib_idx];
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    enum wined3d_format_id format;
     BOOL ret = FALSE;
-    WINED3DFORMAT format;
 
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
      * there, on nonexistent attribs the vbo is 0.
@@ -346,7 +346,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * stride);
     for (i = 0; i < MAX_ATTRIBS; ++i)
     {
-        WINED3DFORMAT format;
+        enum wined3d_format_id format;
 
         if (!(strided->use_map & (1 << i)) || strided->elements[i].buffer_object != This->buffer_object) continue;
 
@@ -1447,10 +1447,10 @@ static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
 };
 
 HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
-        UINT size, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, GLenum bind_hint,
+        UINT size, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, GLenum bind_hint,
         const char *data, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format, &device->adapter->gl_info);
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, &device->adapter->gl_info);
     HRESULT hr;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL dynamic_buffer_ok;

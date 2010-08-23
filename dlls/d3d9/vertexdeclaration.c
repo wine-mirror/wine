@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 typedef struct _D3DDECLTYPE_INFO {
     D3DDECLTYPE d3dType;
-    WINED3DFORMAT format;
+    enum wined3d_format_id format;
     int         size;
     int         typesize;
 } D3DDECLTYPE_INFO;

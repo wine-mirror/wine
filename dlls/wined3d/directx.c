@@ -160,7 +160,9 @@ static const struct {
  * Utility functions follow
  **********************************************************/
 
-static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat, WINED3DSURFTYPE SurfaceType);
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter,
+        WINED3DDEVTYPE DeviceType, enum wined3d_format_id AdapterFormat, DWORD Usage,
+        WINED3DRESOURCETYPE RType, enum wined3d_format_id CheckFormat, WINED3DSURFTYPE SurfaceType);
 
 const struct min_lookup minMipLookup[] =
 {
@@ -2754,9 +2756,11 @@ static HMONITOR WINAPI IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adap
      of the same bpp but different resolutions                                  */
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format) {
+static UINT WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter, enum wined3d_format_id format_id)
+{
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p}->(Adapter: %d, Format: %s)\n", This, Adapter, debug_d3dformat(Format));
+
+    TRACE_(d3d_caps)("iface %p, adapter %u, format_id: %s.\n", iface, Adapter, debug_d3dformat(format_id));
 
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
         return 0;
@@ -2764,7 +2768,7 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
 
     /* TODO: Store modes per adapter and read it from the adapter structure */
     if (Adapter == 0) { /* Display */
-        const struct wined3d_format_desc *format_desc = getFormatDescEntry(Format, &This->adapters[Adapter].gl_info);
+        const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, &This->adapters[Adapter].gl_info);
         UINT format_bits = format_desc->byte_count * CHAR_BIT;
         unsigned int i = 0;
         unsigned int j = 0;
@@ -2777,7 +2781,7 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
         {
             ++j;
 
-            if (Format == WINED3DFMT_UNKNOWN)
+            if (format_id == WINED3DFMT_UNKNOWN)
             {
                 /* This is for D3D8, do not enumerate P8 here */
                 if (mode.dmBitsPerPel == 32 || mode.dmBitsPerPel == 16) ++i;
@@ -2797,21 +2801,25 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
 }
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
-static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINED3DFORMAT Format, UINT Mode, WINED3DDISPLAYMODE* pMode) {
+static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter,
+        enum wined3d_format_id format_id, UINT Mode, WINED3DDISPLAYMODE *pMode)
+{
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p, format:%s)\n", This, Adapter, Mode, pMode, debug_d3dformat(Format));
+
+    TRACE_(d3d_caps)("iface %p, adapter_idx %u, format %s, mode_idx %u, mode %p.\n",
+            iface, Adapter, debug_d3dformat(format_id), Mode, pMode);
 
     /* Validate the parameters as much as possible */
-    if (NULL == pMode ||
-        Adapter >= IWineD3DImpl_GetAdapterCount(iface) ||
-        Mode    >= IWineD3DImpl_GetAdapterModeCount(iface, Adapter, Format)) {
+    if (!pMode || Adapter >= IWineD3DImpl_GetAdapterCount(iface)
+            || Mode >= IWineD3DImpl_GetAdapterModeCount(iface, Adapter, format_id))
+    {
         return WINED3DERR_INVALIDCALL;
     }
 
     /* TODO: Store modes per adapter and read it from the adapter structure */
     if (Adapter == 0)
     {
-        const struct wined3d_format_desc *format_desc = getFormatDescEntry(Format, &This->adapters[Adapter].gl_info);
+        const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, &This->adapters[Adapter].gl_info);
         UINT format_bits = format_desc->byte_count * CHAR_BIT;
         DEVMODEW DevModeW;
         int ModeIdx = 0;
@@ -2826,7 +2834,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
            just count through the ones with valid bit depths */
         while ((i<=Mode) && EnumDisplaySettingsExW(NULL, j++, &DevModeW, 0))
         {
-            if (Format == WINED3DFMT_UNKNOWN)
+            if (format_id == WINED3DFMT_UNKNOWN)
             {
                 /* This is for D3D8, do not enumerate P8 here */
                 if (DevModeW.dmBitsPerPel == 32 || DevModeW.dmBitsPerPel == 16) ++i;
@@ -2837,8 +2845,9 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
             }
         }
 
-        if (i == 0) {
-            TRACE_(d3d_caps)("No modes found for format (%x - %s)\n", Format, debug_d3dformat(Format));
+        if (i == 0)
+        {
+            TRACE_(d3d_caps)("No modes found for format (%x - %s)\n", format_id, debug_d3dformat(format_id));
             return WINED3DERR_INVALIDCALL;
         }
         ModeIdx = j - 1;
@@ -2851,12 +2860,13 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
             if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
                 pMode->RefreshRate = DevModeW.dmDisplayFrequency;
 
-            if (Format == WINED3DFMT_UNKNOWN) {
+            if (format_id == WINED3DFMT_UNKNOWN)
                 pMode->Format = pixelformat_for_depth(DevModeW.dmBitsPerPel);
-            } else {
-                pMode->Format = Format;
-            }
-        } else {
+            else
+                pMode->Format = format_id;
+        }
+        else
+        {
             TRACE_(d3d_caps)("Requested mode out of range %d\n", Mode);
             return WINED3DERR_INVALIDCALL;
         }
@@ -3047,10 +3057,10 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3
     return TRUE;
 }
 
-static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
-                                                   WINED3DFORMAT AdapterFormat,
-                                                   WINED3DFORMAT RenderTargetFormat,
-                                                   WINED3DFORMAT DepthStencilFormat) {
+static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface,
+        UINT Adapter, WINED3DDEVTYPE DeviceType, enum wined3d_format_id AdapterFormat,
+        enum wined3d_format_id RenderTargetFormat, enum wined3d_format_id DepthStencilFormat)
+{
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     int nCfgs;
     const WineD3D_PixelFormat *cfgs;
@@ -3102,8 +3112,9 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     return WINED3DERR_NOTAVAILABLE;
 }
 
-static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
-        WINED3DFORMAT SurfaceFormat, BOOL Windowed, WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD *pQualityLevels)
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter,
+        WINED3DDEVTYPE DeviceType, enum wined3d_format_id SurfaceFormat, BOOL Windowed,
+        WINED3DMULTISAMPLE_TYPE MultiSampleType, DWORD *pQualityLevels)
 {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     const struct wined3d_format_desc *glDesc;
@@ -3198,7 +3209,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
-        WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed)
+        enum wined3d_format_id DisplayFormat, enum wined3d_format_id BackBufferFormat, BOOL Windowed)
 {
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
     UINT nmodes;
@@ -3722,8 +3733,8 @@ static BOOL CheckVertexTextureCapability(struct wined3d_adapter *adapter,
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
-        WINED3DFORMAT AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat,
-        WINED3DSURFTYPE SurfaceType)
+        enum wined3d_format_id AdapterFormat, DWORD Usage, WINED3DRESOURCETYPE RType,
+        enum wined3d_format_id CheckFormat, WINED3DSURFTYPE SurfaceType)
 {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     struct wined3d_adapter *adapter = &This->adapters[Adapter];
@@ -4218,7 +4229,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, WINED3DFORMAT src_format, WINED3DFORMAT dst_format)
+        WINED3DDEVTYPE device_type, enum wined3d_format_id src_format, enum wined3d_format_id dst_format)
 {
     FIXME("iface %p, adapter_idx %u, device_type %s, src_format %s, dst_format %s stub!\n",
             iface, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(src_format),

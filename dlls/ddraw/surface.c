@@ -2621,7 +2621,7 @@ static HRESULT WINAPI ddraw_surface3_SetClipper(IDirectDrawSurface3 *iface, IDir
 static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, DDSURFACEDESC2 *DDSD, DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
-    WINED3DFORMAT newFormat = WINED3DFMT_UNKNOWN;
+    enum wined3d_format_id newFormat = WINED3DFMT_UNKNOWN;
     HRESULT hr;
 
     TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, DDSD, Flags);
@@ -3528,7 +3528,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
 {
     WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
     WINED3DSURFACE_DESC wined3d_desc;
-    WINED3DFORMAT format;
+    enum wined3d_format_id format;
     DWORD usage = 0;
     HRESULT hr;
 

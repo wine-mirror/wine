@@ -147,7 +147,7 @@ const char *debug_dxgi_format(DXGI_FORMAT format)
 
 #undef WINE_D3D10_TO_STR
 
-DXGI_FORMAT dxgi_format_from_wined3dformat(WINED3DFORMAT format)
+DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format)
 {
     switch(format)
     {
@@ -241,12 +241,12 @@ DXGI_FORMAT dxgi_format_from_wined3dformat(WINED3DFORMAT format)
         case WINED3DFMT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
         case WINED3DFMT_B8G8R8X8_UNORM: return DXGI_FORMAT_B8G8R8X8_UNORM;
         default:
-            FIXME("Unhandled WINED3DFORMAT %#x\n", format);
+            FIXME("Unhandled wined3d format %#x.\n", format);
             return WINED3DFMT_UNKNOWN;
     }
 }
 
-WINED3DFORMAT wined3dformat_from_dxgi_format(DXGI_FORMAT format)
+enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
 {
     switch(format)
     {

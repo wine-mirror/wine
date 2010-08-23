@@ -254,7 +254,7 @@ static const size_t wined3d_type_sizes[] =
     /*WINED3DDECLTYPE_FLOAT16_4*/ 4 * sizeof(short int)
 };
 
-static const WINED3DFORMAT wined3d_format_lookup[] =
+static const enum wined3d_format_id wined3d_format_lookup[] =
 {
     /*WINED3DDECLTYPE_FLOAT1*/    WINED3DFMT_R32_FLOAT,
     /*WINED3DDECLTYPE_FLOAT2*/    WINED3DFMT_R32G32_FLOAT,

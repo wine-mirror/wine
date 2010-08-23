@@ -485,9 +485,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wined3d_format_id format_id)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format,
+    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id,
             &This->resource.device->adapter->gl_info);
 
     if (This->resource.format_desc->format != WINED3DFMT_UNKNOWN)
@@ -496,12 +497,12 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
         return WINED3DERR_INVALIDCALL;
     }
 
-    TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format, debug_d3dformat(format));
+    TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format_id, debug_d3dformat(format_id));
 
     This->resource.size = wined3d_format_calculate_size(format_desc, This->resource.device->surface_alignment,
             This->pow2Width, This->pow2Height);
 
-    This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
+    This->Flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
 
     This->resource.format_desc = format_desc;
 
@@ -776,8 +777,9 @@ static void convert_yuy2_x8r8g8b8(const BYTE *src, BYTE *dst,
     }
 }
 
-struct d3dfmt_convertor_desc {
-    WINED3DFORMAT from, to;
+struct d3dfmt_convertor_desc
+{
+    enum wined3d_format_id from, to;
     void (*convert)(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
 };
 
@@ -789,7 +791,7 @@ static const struct d3dfmt_convertor_desc convertors[] =
     {WINED3DFMT_YUY2,           WINED3DFMT_B8G8R8X8_UNORM,  convert_yuy2_x8r8g8b8},
 };
 
-static inline const struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT from, WINED3DFORMAT to)
+static inline const struct d3dfmt_convertor_desc *find_convertor(enum wined3d_format_id from, enum wined3d_format_id to)
 {
     unsigned int i;
     for(i = 0; i < (sizeof(convertors) / sizeof(convertors[0])); i++) {
@@ -811,7 +813,8 @@ static inline const struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT f
  *  fmt: Requested destination format
  *
  *****************************************************************************/
-static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, WINED3DFORMAT to_fmt) {
+static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, enum wined3d_format_id to_fmt)
+{
     IWineD3DSurface *ret = NULL;
     const struct d3dfmt_convertor_desc *conv;
     WINED3DLOCKED_RECT lock_src, lock_dst;

@@ -1255,7 +1255,7 @@ static HRESULT WINAPI ddraw1_GetDisplayMode(IDirectDraw *iface, DDSURFACEDESC *s
 static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes, DWORD *Codes)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
-    static const WINED3DFORMAT formats[] =
+    static const enum wined3d_format_id formats[] =
     {
         WINED3DFMT_YUY2, WINED3DFMT_UYVY, WINED3DFMT_YV12,
         WINED3DFMT_DXT1, WINED3DFMT_DXT2, WINED3DFMT_DXT3, WINED3DFMT_DXT4, WINED3DFMT_DXT5,
@@ -1943,13 +1943,13 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
     unsigned int modenum, fmt;
-    WINED3DFORMAT pixelformat = WINED3DFMT_UNKNOWN;
+    enum wined3d_format_id pixelformat = WINED3DFMT_UNKNOWN;
     WINED3DDISPLAYMODE mode;
     DDSURFACEDESC2 callback_sd;
     WINED3DDISPLAYMODE *enum_modes = NULL;
     unsigned enum_mode_count = 0, enum_mode_array_size = 0;
 
-    static const WINED3DFORMAT checkFormatList[] =
+    static const enum wined3d_format_id checkFormatList[] =
     {
         WINED3DFMT_B8G8R8X8_UNORM,
         WINED3DFMT_B5G6R5_UNORM,
@@ -2366,7 +2366,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     IWineD3DClipper *clipper = NULL;
 
     WINED3DSURFACE_DESC     Desc;
-    WINED3DFORMAT           Format;
+    enum wined3d_format_id Format;
     DWORD                   Usage;
     WINED3DPOOL             Pool;
 
@@ -3263,8 +3263,8 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
     /* Create a WineD3DTexture if a texture was requested */
     if(desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
     {
+        enum wined3d_format_id Format;
         UINT levels;
-        WINED3DFORMAT Format;
         WINED3DPOOL Pool = WINED3DPOOL_DEFAULT;
 
         This->tex_root = object;
@@ -4675,7 +4675,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
 
     /* Order matters. Specifically, BattleZone II (full version) expects the
      * 16-bit depth formats to be listed before the 24 and 32 ones. */
-    static const WINED3DFORMAT formats[] =
+    static const enum wined3d_format_id formats[] =
     {
         WINED3DFMT_S1_UINT_D15_UNORM,
         WINED3DFMT_D16_UNORM,
@@ -5434,7 +5434,7 @@ static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceP
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, DWORD usage,
+        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
@@ -5525,8 +5525,9 @@ static HRESULT WINAPI findRenderTarget(IDirectDrawSurface7 *surface, DDSURFACEDE
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality, BOOL lockable, IWineD3DSurface **surface)
+        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format,
+        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
+        IWineD3DSurface **surface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     IDirectDrawSurfaceImpl *d3d_surface = This->d3d_target;
@@ -5563,8 +5564,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
+        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format,
+        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL discard,
+        IWineD3DSurface **surface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     IDirectDrawSurfaceImpl *ddraw_surface;
@@ -5611,7 +5613,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, UINT depth, WINED3DFORMAT format,
+        IUnknown *superior, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
         WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
 {
     TRACE("iface %p, superior %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p\n",

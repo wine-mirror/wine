@@ -118,7 +118,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         DXGI_FORMAT format, UINT flags, UINT *mode_count, DXGI_MODE_DESC *desc)
 {
     struct dxgi_output *This = (struct dxgi_output *)iface;
-    WINED3DFORMAT wined3d_format;
+    enum wined3d_format_id wined3d_format;
     IWineD3D *wined3d;
     UINT i;
 

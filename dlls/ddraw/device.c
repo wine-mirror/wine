@@ -1122,7 +1122,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
     WINED3DDISPLAYMODE mode;
     unsigned int i;
 
-    static const WINED3DFORMAT FormatList[] =
+    static const enum wined3d_format_id FormatList[] =
     {
         /* 32 bit */
         WINED3DFMT_B8G8R8A8_UNORM,
@@ -1143,7 +1143,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
         WINED3DFMT_DXT5,
     };
 
-    static const WINED3DFORMAT BumpFormatList[] =
+    static const enum wined3d_format_id BumpFormatList[] =
     {
         WINED3DFMT_R8G8_SNORM,
         WINED3DFMT_R5G5_SNORM_L6_UNORM,
@@ -1171,7 +1171,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
         return hr;
     }
 
-    for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
+    for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
         hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
                                         WINED3DADAPTER_DEFAULT,
@@ -1200,7 +1200,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
         }
     }
 
-    for(i = 0; i < sizeof(BumpFormatList) / sizeof(WINED3DFORMAT); i++)
+    for (i = 0; i < sizeof(BumpFormatList) / sizeof(*BumpFormatList); ++i)
     {
         hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
                                         WINED3DADAPTER_DEFAULT,
@@ -1288,7 +1288,7 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
     unsigned int i;
     WINED3DDISPLAYMODE mode;
 
-    static const WINED3DFORMAT FormatList[] =
+    static const enum wined3d_format_id FormatList[] =
     {
         /* 32 bit */
         WINED3DFMT_B8G8R8A8_UNORM,
@@ -1323,7 +1323,7 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
         return hr;
     }
 
-    for(i = 0; i < sizeof(FormatList) / sizeof(WINED3DFORMAT); i++)
+    for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
         hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
                                         0 /* Adapter */,

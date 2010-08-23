@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
-D3DFORMAT d3dformat_from_wined3dformat(WINED3DFORMAT format)
+D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format)
 {
     BYTE *c = (BYTE *)&format;
 
@@ -82,12 +82,12 @@ D3DFORMAT d3dformat_from_wined3dformat(WINED3DFORMAT format)
         case WINED3DFMT_R16_UINT: return D3DFMT_INDEX16;
         case WINED3DFMT_R32_UINT: return D3DFMT_INDEX32;
         default:
-            FIXME("Unhandled WINED3DFORMAT %#x\n", format);
+            FIXME("Unhandled wined3d format %#x.\n", format);
             return D3DFMT_UNKNOWN;
     }
 }
 
-WINED3DFORMAT wined3dformat_from_d3dformat(D3DFORMAT format)
+enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format)
 {
     BYTE *c = (BYTE *)&format;
 
@@ -879,7 +879,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
     IDirect3DSurface8Impl *Dest = (IDirect3DSurface8Impl *) pDestinationSurface;
 
     HRESULT              hr = WINED3D_OK;
-    WINED3DFORMAT        srcFormat, destFormat;
+    enum wined3d_format_id srcFormat, destFormat;
     WINED3DSURFACE_DESC  winedesc;
 
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
@@ -2555,7 +2555,7 @@ static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceP
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, DWORD usage,
+        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
 {
     struct IDirect3DDevice8Impl *This = device_from_device_parent(iface);
@@ -2593,8 +2593,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality, BOOL lockable, IWineD3DSurface **surface)
+        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format,
+        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
+        IWineD3DSurface **surface)
 {
     struct IDirect3DDevice8Impl *This = device_from_device_parent(iface);
     IDirect3DSurface8Impl *d3d_surface;
@@ -2623,8 +2624,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, WINED3DFORMAT format, WINED3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
+        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format,
+        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL discard,
+        IWineD3DSurface **surface)
 {
     struct IDirect3DDevice8Impl *This = device_from_device_parent(iface);
     IDirect3DSurface8Impl *d3d_surface;
@@ -2653,7 +2655,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, UINT depth, WINED3DFORMAT format,
+        IUnknown *superior, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
         WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
 {
     struct IDirect3DDevice8Impl *This = device_from_device_parent(iface);

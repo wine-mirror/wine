@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 struct StaticPixelFormatDesc
 {
-    WINED3DFORMAT format;
+    enum wined3d_format_id id;
     DWORD alphaMask, redMask, greenMask, blueMask;
     UINT bpp;
     short depthSize, stencilSize;
@@ -49,7 +49,7 @@ struct StaticPixelFormatDesc
  */
 static const struct StaticPixelFormatDesc formats[] =
 {
-  /* WINED3DFORMAT                       alphamask    redmask    greenmask    bluemask     bpp    depth  stencil */
+  /* format id                           alphamask    redmask    greenmask    bluemask     bpp    depth  stencil */
     {WINED3DFMT_UNKNOWN,                    0x0,        0x0,        0x0,        0x0,        0,      0,      0},
     /* FourCC formats */
     {WINED3DFMT_UYVY,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
@@ -135,7 +135,7 @@ static const struct StaticPixelFormatDesc formats[] =
 
 struct wined3d_format_base_flags
 {
-    WINED3DFORMAT format;
+    enum wined3d_format_id id;
     DWORD flags;
 };
 
@@ -182,7 +182,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
 
 struct wined3d_format_compression_info
 {
-    WINED3DFORMAT format;
+    enum wined3d_format_id id;
     UINT block_width;
     UINT block_height;
     UINT block_byte_count;
@@ -200,7 +200,7 @@ static const struct wined3d_format_compression_info format_compression_info[] =
 
 struct wined3d_format_vertex_info
 {
-    WINED3DFORMAT format;
+    enum wined3d_format_id id;
     enum wined3d_ffp_emit_idx emit_idx;
     GLint component_count;
     GLenum gl_vtx_type;
@@ -232,7 +232,7 @@ static const struct wined3d_format_vertex_info format_vertex_info[] =
 
 struct wined3d_format_texture_info
 {
-    WINED3DFORMAT format;
+    enum wined3d_format_id id;
     GLint gl_internal;
     GLint gl_srgb_internal;
     GLint gl_rt_internal;
@@ -552,7 +552,7 @@ static void convert_s8_uint_d24_float(const BYTE *src, BYTE *dst, UINT pitch, UI
 
 static const struct wined3d_format_texture_info format_texture_info[] =
 {
-    /* WINED3DFORMAT                    internal                          srgbInternal                       rtInternal
+    /* format id                        internal                          srgbInternal                       rtInternal
             format                      type
             flags
             extension */
@@ -856,18 +856,22 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             ARB_TEXTURE_COMPRESSION_RGTC, NULL},
 };
 
-static inline int getFmtIdx(WINED3DFORMAT fmt) {
+static inline int getFmtIdx(enum wined3d_format_id format_id)
+{
     /* First check if the format is at the position of its value.
-     * This will catch the argb formats before the loop is entered
-     */
-    if(fmt < (sizeof(formats) / sizeof(formats[0])) && formats[fmt].format == fmt) {
-        return fmt;
-    } else {
+     * This will catch the argb formats before the loop is entered. */
+    if (format_id < (sizeof(formats) / sizeof(*formats))
+            && formats[format_id].id == format_id)
+    {
+        return format_id;
+    }
+    else
+    {
         unsigned int i;
-        for(i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
-            if(formats[i].format == fmt) {
-                return i;
-            }
+
+        for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
+        {
+            if (formats[i].id == format_id) return i;
         }
     }
     return -1;
@@ -888,7 +892,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < format_count; ++i)
     {
         struct wined3d_format_desc *desc = &gl_info->gl_formats[i];
-        desc->format = formats[i].format;
+        desc->format = formats[i].id;
         desc->red_mask = formats[i].redMask;
         desc->green_mask = formats[i].greenMask;
         desc->blue_mask = formats[i].blueMask;
@@ -900,12 +904,12 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < (sizeof(format_base_flags) / sizeof(*format_base_flags)); ++i)
     {
-        int fmt_idx = getFmtIdx(format_base_flags[i].format);
+        int fmt_idx = getFmtIdx(format_base_flags[i].id);
 
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_base_flags[i].format), format_base_flags[i].format);
+                    debug_d3dformat(format_base_flags[i].id), format_base_flags[i].id);
             HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
             return FALSE;
         }
@@ -923,12 +927,12 @@ static BOOL init_format_compression_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < (sizeof(format_compression_info) / sizeof(*format_compression_info)); ++i)
     {
         struct wined3d_format_desc *format_desc;
-        int fmt_idx = getFmtIdx(format_compression_info[i].format);
+        int fmt_idx = getFmtIdx(format_compression_info[i].id);
 
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_compression_info[i].format), format_compression_info[i].format);
+                    debug_d3dformat(format_compression_info[i].id), format_compression_info[i].id);
             return FALSE;
         }
 
@@ -1147,13 +1151,13 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < sizeof(format_texture_info) / sizeof(*format_texture_info); ++i)
     {
-        int fmt_idx = getFmtIdx(format_texture_info[i].format);
+        int fmt_idx = getFmtIdx(format_texture_info[i].id);
         struct wined3d_format_desc *desc;
 
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_texture_info[i].format), format_texture_info[i].format);
+                    debug_d3dformat(format_texture_info[i].id), format_texture_info[i].id);
             return FALSE;
         }
 
@@ -1291,7 +1295,7 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
 {
     struct wined3d_format_desc *desc;
     unsigned int fmt_idx, i;
-    static const WINED3DFORMAT fmts16[] =
+    static const enum wined3d_format_id fmts16[] =
     {
         WINED3DFMT_R16_FLOAT,
         WINED3DFMT_R16G16_FLOAT,
@@ -1482,12 +1486,12 @@ static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < (sizeof(format_vertex_info) / sizeof(*format_vertex_info)); ++i)
     {
         struct wined3d_format_desc *format_desc;
-        int fmt_idx = getFmtIdx(format_vertex_info[i].format);
+        int fmt_idx = getFmtIdx(format_vertex_info[i].id);
 
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_vertex_info[i].format), format_vertex_info[i].format);
+                    debug_d3dformat(format_vertex_info[i].id), format_vertex_info[i].id);
             return FALSE;
         }
 
@@ -1538,12 +1542,15 @@ fail:
     return FALSE;
 }
 
-const struct wined3d_format_desc *getFormatDescEntry(WINED3DFORMAT fmt, const struct wined3d_gl_info *gl_info)
+const struct wined3d_format_desc *getFormatDescEntry(enum wined3d_format_id format_id,
+        const struct wined3d_gl_info *gl_info)
 {
-    int idx = getFmtIdx(fmt);
+    int idx = getFmtIdx(format_id);
 
-    if(idx == -1) {
-        FIXME("Can't find format %s (%#x) in the format lookup table\n", debug_d3dformat(fmt), fmt);
+    if (idx == -1)
+    {
+        FIXME("Can't find format %s (%#x) in the format lookup table\n",
+                debug_d3dformat(format_id), format_id);
         /* Get the caller a valid pointer */
         idx = getFmtIdx(WINED3DFMT_UNKNOWN);
     }
@@ -1578,9 +1585,11 @@ UINT wined3d_format_calculate_size(const struct wined3d_format_desc *format, UIN
 /*****************************************************************************
  * Trace formatting of useful values
  */
-const char* debug_d3dformat(WINED3DFORMAT fmt) {
-  switch (fmt) {
-#define FMT_TO_STR(fmt) case fmt: return #fmt
+const char *debug_d3dformat(enum wined3d_format_id format_id)
+{
+  switch (format_id)
+  {
+#define FMT_TO_STR(format_id) case format_id: return #format_id
     FMT_TO_STR(WINED3DFMT_UNKNOWN);
     FMT_TO_STR(WINED3DFMT_B8G8R8_UNORM);
     FMT_TO_STR(WINED3DFMT_B5G5R5X1_UNORM);
@@ -1715,15 +1724,15 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
   default:
     {
       char fourcc[5];
-      fourcc[0] = (char)(fmt);
-      fourcc[1] = (char)(fmt >> 8);
-      fourcc[2] = (char)(fmt >> 16);
-      fourcc[3] = (char)(fmt >> 24);
+      fourcc[0] = (char)(format_id);
+      fourcc[1] = (char)(format_id >> 8);
+      fourcc[2] = (char)(format_id >> 16);
+      fourcc[3] = (char)(format_id >> 24);
       fourcc[4] = 0;
       if (isprint(fourcc[0]) && isprint(fourcc[1]) && isprint(fourcc[2]) && isprint(fourcc[3]))
-        FIXME("Unrecognized %#x (as fourcc: %s) WINED3DFORMAT!\n", fmt, fourcc);
+        FIXME("Unrecognized %#x (as fourcc: %s) WINED3DFORMAT!\n", format_id, fourcc);
       else
-        FIXME("Unrecognized %#x WINED3DFORMAT!\n", fmt);
+        FIXME("Unrecognized %#x WINED3DFORMAT!\n", format_id);
     }
     return "unrecognized";
   }
@@ -2360,7 +2369,7 @@ BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWO
 /* Setup this textures matrix according to the texture flags*/
 /* GL locking is done by the caller (state handler) */
 void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed,
-        WINED3DFORMAT vtx_fmt, BOOL ffp_proj_control)
+        enum wined3d_format_id vtx_fmt, BOOL ffp_proj_control)
 {
     float mat[16];
 
@@ -2534,7 +2543,7 @@ BOOL getDepthStencilBits(const struct wined3d_format_desc *format_desc, short *d
 
 DWORD wined3d_format_convert_from_float(const struct wined3d_format_desc *format, const WINED3DCOLORVALUE *color)
 {
-    WINED3DFORMAT destfmt = format->format;
+    enum wined3d_format_id destfmt = format->format;
     unsigned int r, g, b, a;
     DWORD ret;
 
@@ -2650,8 +2659,10 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format_desc *format
 }
 
 /* DirectDraw stuff */
-WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
-    switch(depth) {
+enum wined3d_format_id pixelformat_for_depth(DWORD depth)
+{
+    switch (depth)
+    {
         case 8:  return WINED3DFMT_P8_UINT;
         case 15: return WINED3DFMT_B5G5R5X1_UNORM;
         case 16: return WINED3DFMT_B5G6R5_UNORM;

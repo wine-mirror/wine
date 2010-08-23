@@ -306,7 +306,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
 }
 
 /* GL locking is done by the caller */
-static inline void send_attribute(IWineD3DDeviceImpl *This, WINED3DFORMAT format, const UINT index, const void *ptr)
+static inline void send_attribute(IWineD3DDeviceImpl *This,
+        enum wined3d_format_id format, const UINT index, const void *ptr)
 {
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
 

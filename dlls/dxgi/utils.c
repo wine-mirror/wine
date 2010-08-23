@@ -127,7 +127,7 @@ const char *debug_dxgi_format(DXGI_FORMAT format)
 
 #undef WINE_DXGI_TO_STR
 
-WINED3DFORMAT wined3dformat_from_dxgi_format(DXGI_FORMAT format)
+enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
 {
     switch(format)
     {
