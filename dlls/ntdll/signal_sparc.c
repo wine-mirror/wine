@@ -797,8 +797,10 @@ void signal_init_process(void)
 
     sig_act.sa_sigaction = segv_handler;
     if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = ill_handler;
     if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
 #ifdef SIGBUS
+    sig_act.sa_sigaction = bus_handler;
     if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
 #endif
 
