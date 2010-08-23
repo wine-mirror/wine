@@ -3805,6 +3805,37 @@ static const uri_builder_test uri_builder_tests[] = {
     }
 };
 
+typedef struct _uri_builder_remove_test {
+    const char  *uri;
+    DWORD       create_flags;
+    HRESULT     create_builder_expected;
+    BOOL        create_builder_todo;
+
+    DWORD       remove_properties;
+    HRESULT     remove_expected;
+    BOOL        remove_todo;
+
+    const char  *expected_uri;
+    DWORD       expected_flags;
+    HRESULT     expected_hres;
+    BOOL        expected_todo;
+} uri_builder_remove_test;
+
+static const uri_builder_remove_test uri_builder_remove_tests[] = {
+    {   "http://google.com/test?test=y#Frag",0,S_OK,FALSE,
+        Uri_HAS_FRAGMENT|Uri_HAS_PATH|Uri_HAS_QUERY,S_OK,TRUE,
+        "http://google.com/",0,S_OK,TRUE
+    },
+    {   "http://user:pass@winehq.org/",0,S_OK,FALSE,
+        Uri_HAS_USER_NAME|Uri_HAS_PASSWORD,S_OK,TRUE,
+        "http://winehq.org/",0,S_OK,TRUE
+    },
+    {   "zip://google.com?Test=x",0,S_OK,FALSE,
+        Uri_HAS_HOST,S_OK,TRUE,
+        "zip:/?Test=x",0,S_OK,TRUE
+    }
+};
+
 static inline LPWSTR a2w(LPCSTR str) {
     LPWSTR ret = NULL;
 
@@ -6452,6 +6483,106 @@ static void test_IUriBuilder_IUriProperty(void) {
     if(builder) IUriBuilder_Release(builder);
 }
 
+static void test_IUriBuilder_RemoveProperties(void) {
+    IUriBuilder *builder = NULL;
+    HRESULT hr;
+    DWORD i;
+
+    hr = pCreateIUriBuilder(NULL, 0, 0, &builder);
+    ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+    if(SUCCEEDED(hr)) {
+        /* Properties that can't be removed. */
+        const DWORD invalid = Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_RAW_URI|Uri_HAS_HOST_TYPE|
+                              Uri_HAS_SCHEME|Uri_HAS_ZONE;
+
+        for(i = Uri_PROPERTY_STRING_START; i <= Uri_PROPERTY_DWORD_LAST; ++i) {
+            hr = IUriBuilder_RemoveProperties(builder, i << 1);
+            if((i << 1) & invalid) {
+                todo_wine {
+                    ok(hr == E_INVALIDARG,
+                        "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x with prop=%d.\n",
+                        hr, E_INVALIDARG, i);
+                }
+            } else {
+                todo_wine {
+                    ok(hr == S_OK,
+                        "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x with prop=%d.\n",
+                        hr, S_OK, i);
+                }
+            }
+        }
+    }
+    if(builder) IUriBuilder_Release(builder);
+
+    for(i = 0; i < sizeof(uri_builder_remove_tests)/sizeof(uri_builder_remove_tests[0]); ++i) {
+        uri_builder_remove_test test = uri_builder_remove_tests[i];
+        IUri *uri = NULL;
+        LPWSTR uriW;
+
+        uriW = a2w(test.uri);
+        hr = pCreateUri(uriW, test.create_flags, 0, &uri);
+        if(SUCCEEDED(hr)) {
+            builder = NULL;
+
+            hr = pCreateIUriBuilder(uri, 0, 0, &builder);
+            if(test.create_builder_todo) {
+                todo_wine {
+                    ok(hr == test.create_builder_expected,
+                        "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x on test %d.\n",
+                        hr, test.create_builder_expected, i);
+                }
+            } else {
+                ok(hr == test.create_builder_expected,
+                    "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x on test %d.\n",
+                    hr, test.create_builder_expected, i);
+            }
+            if(SUCCEEDED(hr)) {
+                hr = IUriBuilder_RemoveProperties(builder, test.remove_properties);
+                if(test.remove_todo) {
+                    todo_wine {
+                        ok(hr == test.remove_expected,
+                            "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x on test %d.\n",
+                            hr, test.remove_expected, i);
+                    }
+                } else {
+                    ok(hr == test.remove_expected,
+                        "Error: IUriBuilder returned 0x%08x, expected 0x%08x on test %d.\n",
+                        hr, test.remove_expected, i);
+                }
+                if(SUCCEEDED(hr)) {
+                    IUri *result = NULL;
+
+                    hr = IUriBuilder_CreateUri(builder, test.expected_flags, 0, 0, &result);
+                    if(test.expected_todo) {
+                        todo_wine {
+                            ok(hr == test.expected_hres,
+                                "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x on test %d.\n",
+                                hr, test.expected_hres, i);
+                        }
+                    } else {
+                        ok(hr == test.expected_hres,
+                            "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x on test %d.\n",
+                            hr, test.expected_hres, i);
+                    }
+                    if(SUCCEEDED(hr)) {
+                        BSTR received = NULL;
+
+                        hr = IUri_GetAbsoluteUri(result, &received);
+                        ok(!strcmp_aw(test.expected_uri, received),
+                            "Error: Expected %s but got %s instead on test %d.\n",
+                            test.expected_uri, wine_dbgstr_w(received), i);
+                        SysFreeString(received);
+                    }
+                    if(result) IUri_Release(result);
+                }
+            }
+            if(builder) IUriBuilder_Release(builder);
+        }
+        if(uri) IUri_Release(uri);
+        heap_free(uriW);
+    }
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -6524,4 +6655,7 @@ START_TEST(uri) {
 
     trace("test IUriBuilder_IUriProperty...\n");
     test_IUriBuilder_IUriProperty();
+
+    trace("test IUriBuilder_RemoveProperties...\n");
+    test_IUriBuilder_RemoveProperties();
 }
