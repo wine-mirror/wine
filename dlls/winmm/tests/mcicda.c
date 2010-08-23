@@ -166,13 +166,12 @@ static void test_play(HWND hwnd)
     parm.gen.dwCallback = (DWORD_PTR)hwnd; /* once to rule them all */
 
     err = mciSendString("open cdaudio alias c notify shareable", buf, sizeof(buf), hwnd);
-    if (err == MCIERR_INVALID_DEVICE_ID) /* Wine special */ todo_wine
-    ok(!err, "open cdaudio must succeed even without CD-ROM drive\n"); else
-    ok(!err || broken(err == MCIERR_MUST_USE_SHAREABLE),
+    ok(!err || err == MCIERR_CANNOT_LOAD_DRIVER || err == MCIERR_MUST_USE_SHAREABLE,
        "mci open cdaudio notify returned %s\n", dbg_mcierr(err));
     test_notification(hwnd, "open alias notify", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
-    /* Some machines return MUST_USE_SHAREABLE when there's trouble with the hardware
-     * (e.g. unreadable disk), yet adding that flag does not help get past this error. */
+    /* Native returns MUST_USE_SHAREABLE when there's trouble with the hardware
+     * (e.g. unreadable disk) or when Media Player already has the device open,
+     * yet adding that flag does not help get past this error. */
 
     if(err) {
         skip("Cannot open any cdaudio device, %s.\n", dbg_mcierr(err));

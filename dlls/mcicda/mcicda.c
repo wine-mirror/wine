@@ -161,6 +161,7 @@ static	DWORD	MCICDA_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     WINE_MCICDAUDIO*	wmcda;
 
     if (!modp) return 0xFFFFFFFF;
+    /* FIXME: MCIERR_CANNOT_LOAD_DRIVER if there's no drive of type CD-ROM */
 
     wmcda = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCICDAUDIO));
 
@@ -400,11 +401,10 @@ static DWORD MCICDA_Stop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms
  */
 static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenParms)
 {
-    DWORD		dwDeviceID;
-    DWORD               ret = MCIERR_HARDWARE;
+    MCIDEVICEID		dwDeviceID;
+    DWORD               ret;
     WINE_MCICDAUDIO* 	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
     WCHAR               root[7], drive = 0;
-    unsigned int        count;
 
     TRACE("(%04X, %08X, %p);\n", wDevID, dwFlags, lpOpenParms);
 
@@ -450,11 +450,10 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenPar
     }
     else
     {
-        /* drive letter isn't passed... get the dwDeviceID'th cdrom in the system */
         root[0] = 'A'; root[1] = ':'; root[2] = '\\'; root[3] = '\0';
-        for (count = 0; root[0] <= 'Z'; root[0]++)
+        for ( ; root[0] <= 'Z'; root[0]++)
         {
-            if (GetDriveTypeW(root) == DRIVE_CDROM && ++count >= dwDeviceID)
+            if (GetDriveTypeW(root) == DRIVE_CDROM)
             {
                 drive = root[0];
                 break;
@@ -462,7 +461,7 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenPar
         }
         if (!drive)
         {
-            ret = MCIERR_INVALID_DEVICE_ID;
+            ret = MCIERR_CANNOT_LOAD_DRIVER; /* drvOpen should return this */
             goto the_error;
         }
     }
@@ -474,7 +473,10 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenPar
     root[0] = root[1] = '\\'; root[2] = '.'; root[3] = '\\'; root[4] = drive; root[5] = ':'; root[6] = '\0';
     wmcda->handle = CreateFileW(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     if (wmcda->handle == INVALID_HANDLE_VALUE)
+    {
+        ret = MCIERR_MUST_USE_SHAREABLE;
         goto the_error;
+    }
 
     if (dwFlags & MCI_NOTIFY) {
 	mciDriverNotify(HWND_32(LOWORD(lpOpenParms->dwCallback)),
