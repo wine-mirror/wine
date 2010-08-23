@@ -62,7 +62,7 @@ MAIN_MENU MENU
    MENUITEM SEPARATOR
    MENUITEM "&Info...", MNID_HELP_ABOUT
 #ifdef WINELIB
-   MENUITEM "O& WINE", MNID_HELP_WINE
+   MENUITEM "O& Wine", MNID_HELP_WINE
 #endif
  }
 }
@@ -70,7 +70,7 @@ MAIN_MENU MENU
 /* Strings */
 STRINGTABLE DISCARDABLE
 {
-STID_WINE_HELP,             "WINE Pomoc"
+STID_WINE_HELP,             "Wine Pomoc"
 STID_WHERROR,               "CHYBA"
 STID_WARNING,               "VAROVANIE"
 STID_INFO,                  "Informácie"
