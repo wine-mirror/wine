@@ -33,6 +33,7 @@
 #define Script_Greek   12
 #define Script_Cyrillic   13
 #define Script_Armenian 14
+#define Script_Georgian 15
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

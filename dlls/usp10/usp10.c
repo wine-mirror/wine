@@ -77,6 +77,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Arabic,     0x750,  0x77f,  0, 0},
     /* Thaana: U+0780–U+07BF */
     { Script_Thaana,     0x780,  0x7bf,  0, 0},
+    /* Georgian: U+10A0–U+10FF */
+    { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
     /* Phonetic Extensions: U+1D00–U+1DBF */
     { Script_Latin,      0x1d00, 0x1dbf, 0, 0},
     /* Latin Extended Additional: U+1E00–U+1EFF */
@@ -85,6 +87,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Greek,      0x1f00, 0x1fff, 0, 0},
     /* Latin Extended-C: U+2C60–U+2C7F */
     { Script_Latin,      0x2c60, 0x2c7f, 0, 0},
+    /* Georgian: U+2D00–U+2D2F */
+    { Script_Georgian,   0x2d00,  0x2d2f,  0, 0},
     /* Cyrillic Extended-A: U+2DE0–U+2DFF */
     { Script_Cyrillic,   0x2de0, 0x2dff,  0, 0},
     /* Cyrillic Extended-B: U+A640–U+A69F */
@@ -144,6 +148,8 @@ static const scriptData scriptInformation[] = {
      {LANG_RUSSIAN, 0, 0, 0, 0, RUSSIAN_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
     {{Script_Armenian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ARMENIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
+    {{Script_Georgian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_GEORGIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -155,7 +161,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[8].props, &scriptInformation[9].props,
     &scriptInformation[10].props, &scriptInformation[11].props,
     &scriptInformation[12].props, &scriptInformation[13].props,
-    &scriptInformation[14].props
+    &scriptInformation[14].props, &scriptInformation[15].props
 };
 
 typedef struct {
