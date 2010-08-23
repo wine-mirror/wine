@@ -438,22 +438,14 @@ static HRESULT WINAPI OLEPictureImpl_QueryInterface(
   void**  ppvObject)
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
+
   TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
-  if ( (This==0) || (ppvObject==0) )
+  if (!ppvObject)
     return E_INVALIDARG;
 
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
   if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IPicture, riid))
     *ppvObject = This;
   else if (IsEqualIID(&IID_IDispatch, riid))
@@ -465,20 +457,13 @@ static HRESULT WINAPI OLEPictureImpl_QueryInterface(
   else if (IsEqualIID(&IID_IConnectionPointContainer, riid))
     *ppvObject = &This->lpvtblIConnectionPointContainer;
 
-  /*
-   * Check that we obtained an interface.
-   */
-  if ((*ppvObject)==0)
+  if (!*ppvObject)
   {
     FIXME("() : asking for un supported interface %s\n",debugstr_guid(riid));
     return E_NOINTERFACE;
   }
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful
-   */
-  OLEPictureImpl_AddRef((IPicture*)This);
+  IPicture_AddRef(iface);
 
   return S_OK;
 }
@@ -1335,9 +1320,9 @@ static HRESULT OLEPictureImpl_LoadAPM(OLEPictureImpl *This,
  *
  * Currently implemented: BITMAP, ICON, JPEG, GIF, WMF, EMF
  */
-static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
+static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) {
   HRESULT	hr;
-  BOOL		headerisdata = FALSE;
+  BOOL		headerisdata;
   BOOL		statfailed = FALSE;
   ULONG		xread, toread;
   ULONG 	headerread;
