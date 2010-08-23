@@ -34,7 +34,8 @@ enum {
     SHORTFORMAT   = 1,
     LONGFORMAT    = 2,
     UNIXFORMAT    = 4,
-    WINDOWSFORMAT = 8
+    WINDOWSFORMAT = 8,
+    PRINT0        = 16,
 };
 
 static const char progname[] = "winepath";
@@ -53,6 +54,7 @@ static int option(int shortopt, const WCHAR *longopt)
     "                directory to the long format\n"
     "  -s, --short   converts the long Windows path of an existing file or\n"
     "                directory to the short format\n"
+    "  -0            separate output with \\0 character, instead of a newline\n"
     "  -h, --help    output this help message and exit\n"
     "  -v, --version output version information and exit\n"
     "\n"
@@ -76,6 +78,8 @@ static int option(int shortopt, const WCHAR *longopt)
             return UNIXFORMAT;
         case 'w':
             return WINDOWSFORMAT;
+        case '0':
+            return PRINT0;
     }
 
     fprintf(stderr, "%s: invalid option ", progname);
@@ -148,8 +152,18 @@ int wmain(int argc, WCHAR *argv[])
     char path[MAX_PATH];
     int outputformats;
     int i;
+    int separator;
 
     outputformats = parse_options(argv);
+
+    if (outputformats & PRINT0)
+    {
+        separator = '\0';
+        outputformats ^= PRINT0;
+    }
+    else
+        separator = '\n';
+
     if (outputformats == 0)
         outputformats = UNIXFORMAT;
 
@@ -181,12 +195,12 @@ int wmain(int argc, WCHAR *argv[])
         if (outputformats & LONGFORMAT) {
             if (GetLongPathNameW(argv[i], dos_pathW, MAX_PATH))
                 WideCharToMultiByte(CP_UNIXCP, 0, dos_pathW, -1, path, MAX_PATH, NULL, NULL);
-            printf("%s\n", path);
+            printf("%s%c", path, separator);
         }
         if (outputformats & SHORTFORMAT) {
             if (GetShortPathNameW(argv[i], dos_pathW, MAX_PATH))
                 WideCharToMultiByte(CP_UNIXCP, 0, dos_pathW, -1, path, MAX_PATH, NULL, NULL);
-            printf("%s\n", path);
+            printf("%s%c", path, separator);
         }
         if (outputformats & UNIXFORMAT) {
             WCHAR *ntpath, *tail;
@@ -205,11 +219,11 @@ int wmain(int argc, WCHAR *argv[])
                     if (tail)
                     {
                         WideCharToMultiByte(CP_UNIXCP, 0, tail+1, -1, path, MAX_PATH, NULL, NULL);
-                        printf("%s/%s\n", unix_name, path);
+                        printf("%s/%s%c", unix_name, path, separator);
                     }
                     else
                     {
-                        printf("%s\n", unix_name);
+                        printf("%s%c", unix_name, separator);
                     }
                     HeapFree( GetProcessHeap(), 0, unix_name );
                     break;
@@ -257,7 +271,7 @@ int wmain(int argc, WCHAR *argv[])
             if ((windows_name = wine_get_dos_file_name_ptr(unix_name)))
             {
                 WideCharToMultiByte(CP_UNIXCP, 0, windows_name, -1, path, MAX_PATH, NULL, NULL);
-                printf("%s\n", path);
+                printf("%s%c", path, separator);
                 HeapFree( GetProcessHeap(), 0, windows_name );
             }
             else printf( "\n" );
