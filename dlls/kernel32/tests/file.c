@@ -1727,6 +1727,8 @@ static BOOL create_fake_dll( LPCSTR filename )
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64;
 #elif defined __powerpc__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_POWERPC;
+#elif defined __sparc__
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_SPARC;
 #else
 # error You must specify the machine type
 #endif
