@@ -42,6 +42,8 @@ typedef struct _ExplorerBrowserImpl {
     BOOL destroyed;
 
     HWND hwnd_main;
+
+    EXPLORER_BROWSER_OPTIONS eb_options;
 } ExplorerBrowserImpl;
 
 /**************************************************************************
@@ -258,18 +260,28 @@ static HRESULT WINAPI IExplorerBrowser_fnSetOptions(IExplorerBrowser *iface,
                                                     EXPLORER_BROWSER_OPTIONS dwFlag)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (0x%x)\n", This, dwFlag);
+    static const EXPLORER_BROWSER_OPTIONS unsupported_options =
+        EBO_SHOWFRAMES | EBO_ALWAYSNAVIGATE | EBO_NOWRAPPERWINDOW | EBO_HTMLSHAREPOINTVIEW;
 
-    return E_NOTIMPL;
+    TRACE("%p (0x%x)\n", This, dwFlag);
+
+    if(dwFlag & unsupported_options)
+        FIXME("Flags 0x%08x contains unsupported options.\n", dwFlag);
+
+    This->eb_options = dwFlag;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnGetOptions(IExplorerBrowser *iface,
                                                     EXPLORER_BROWSER_OPTIONS *pdwFlag)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (%p)\n", This, pdwFlag);
+    TRACE("%p (%p)\n", This, pdwFlag);
 
-    return E_NOTIMPL;
+    *pdwFlag = This->eb_options;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,

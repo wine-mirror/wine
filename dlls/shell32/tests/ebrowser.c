@@ -277,6 +277,7 @@ static void test_basics(void)
     IExplorerBrowser *peb;
     IShellBrowser *psb;
     ULONG lres;
+    DWORD flags;
     HDWP hdwp;
     RECT rc;
     HRESULT hr;
@@ -330,6 +331,31 @@ static void test_basics(void)
 
         IShellBrowser_Release(psb);
     }
+
+    IExplorerBrowser_Destroy(peb);
+    IExplorerBrowser_Release(peb);
+
+    /* GetOptions/SetOptions*/
+    ebrowser_instantiate(&peb);
+
+    if(0) {
+        /* Crashes on Windows 7 */
+        IExplorerBrowser_GetOptions(peb, NULL);
+    }
+
+    hr = IExplorerBrowser_GetOptions(peb, &flags);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(flags == 0, "got (0x%08x)\n", flags);
+
+    /* Settings preserved through Initialize. */
+    hr = IExplorerBrowser_SetOptions(peb, 0xDEADBEEF);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    ebrowser_initialize(peb);
+
+    hr = IExplorerBrowser_GetOptions(peb, &flags);
+    ok(flags == 0xDEADBEEF, "got (0x%08x)\n", flags);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
 
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
