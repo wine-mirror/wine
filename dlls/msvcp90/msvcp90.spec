@@ -2877,7 +2877,7 @@
 @ stub ?_Xfunc@tr1@std@@YAXXZ
 @ stub -arch=win32 ?_Xinvalid@tr1@std@@YAXPBD@Z
 @ stub -arch=win64 ?_Xinvalid@tr1@std@@YAXPEBD@Z
-@ stub ?_Xinvarg@_String_base@std@@SAXXZ
+@ cdecl ?_Xinvarg@_String_base@std@@SAXXZ() MSVCP__String_base_Xinvarg
 @ cdecl ?_Xlen@_String_base@std@@SAXXZ() MSVCP__String_base_Xlen
 @ stub ?_Xmem@tr1@std@@YAXXZ
 @ stub ?_Xoutrange@tr1@std@@YAXXZ

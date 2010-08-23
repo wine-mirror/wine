@@ -102,6 +102,7 @@ extern const vtable_ptr MSVCP_bad_alloc_vtable;
 extern const vtable_ptr MSVCP_logic_error_vtable;
 extern const vtable_ptr MSVCP_length_error_vtable;
 extern const vtable_ptr MSVCP_out_of_range_vtable;
+extern const vtable_ptr MSVCP_invalid_argument_vtable;
 
 /* exception class data */
 static type_info exception_type_info = {
@@ -611,6 +612,97 @@ static const cxx_exception_type out_of_range_cxx_type = {
     &out_of_range_cxx_type_table
 };
 
+/* invalid_argument class data */
+typedef logic_error invalid_argument;
+
+DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_ctor, 8)
+invalid_argument* __stdcall MSVCP_invalid_argument_ctor(
+        invalid_argument *this, const char **name)
+{
+    TRACE("%p %s\n", this, *name);
+    MSVCP_logic_error_ctor(this, name);
+    this->e.vtable = &MSVCP_invalid_argument_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_copy_ctor, 8)
+invalid_argument* __stdcall MSVCP_invalid_argument_copy_ctor(
+        invalid_argument *this, invalid_argument *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    MSVCP_logic_error_copy_ctor(this, rhs);
+    this->e.vtable = &MSVCP_invalid_argument_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_vector_dtor, 8)
+void* __stdcall MSVCP_invalid_argument_vector_dtor(
+        invalid_argument *this, unsigned int flags)
+{
+    TRACE("%p %x\n", this, flags);
+    return MSVCP_logic_error_vector_dtor(this, flags);
+}
+
+static const type_info invalid_argument_type_info = {
+    &MSVCP_invalid_argument_vtable,
+    NULL,
+    ".?AVinvalid_argument@std@@"
+};
+
+static const rtti_base_descriptor invalid_argument_rtti_base_descriptor = {
+    &invalid_argument_type_info,
+    2,
+    { 0, -1, 0 },
+    64
+};
+
+static const rtti_base_array invalid_argument_rtti_base_array = {
+    {
+        &invalid_argument_rtti_base_descriptor,
+        &logic_error_rtti_base_descriptor,
+        &exception_rtti_base_descriptor
+    }
+};
+
+static const rtti_object_hierarchy invalid_argument_type_hierarchy = {
+    0,
+    0,
+    3,
+    &invalid_argument_rtti_base_array
+};
+
+const rtti_object_locator invalid_argument_rtti = {
+    0,
+    0,
+    0,
+    &invalid_argument_type_info,
+    &invalid_argument_type_hierarchy
+};
+
+static const cxx_type_info invalid_argument_cxx_type_info = {
+    0,
+    &invalid_argument_type_info,
+    { 0, -1, 0 },
+    sizeof(invalid_argument),
+    (cxx_copy_ctor)THISCALL(MSVCP_invalid_argument_copy_ctor)
+};
+
+static const cxx_type_info_table invalid_argument_cxx_type_table = {
+    3,
+    {
+        &invalid_argument_cxx_type_info,
+        &logic_error_cxx_type_info,
+        &exception_cxx_type_info
+    }
+};
+
+static const cxx_exception_type invalid_argument_cxx_type = {
+    0,
+    (cxx_copy_ctor)THISCALL(MSVCP_logic_error_dtor),
+    NULL,
+    &invalid_argument_cxx_type_table
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -618,6 +710,7 @@ void __asm_dummy_vtables(void) {
     __ASM_EXCEPTION_STRING_VTABLE(logic_error)
     __ASM_EXCEPTION_STRING_VTABLE(length_error)
     __ASM_EXCEPTION_STRING_VTABLE(out_of_range)
+    __ASM_EXCEPTION_STRING_VTABLE(invalid_argument)
 #ifndef __GNUC__
 }
 #endif
@@ -656,6 +749,11 @@ void throw_exception(exception_type et, const char *str)
         out_of_range e;
         MSVCP_out_of_range_ctor(&e, &addr);
         _CxxThrowException((exception*)&e, &out_of_range_cxx_type);
+    }
+    case EXCEPTION_INVALID_ARGUMENT: {
+        invalid_argument e;
+        MSVCP_invalid_argument_ctor(&e, &addr);
+        _CxxThrowException((exception*)&e, &invalid_argument_cxx_type);
     }
     }
 }

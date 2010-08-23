@@ -485,6 +485,15 @@ void CDECL MSVCP__String_base_Xran(void)
     throw_exception(EXCEPTION_OUT_OF_RANGE, msg);
 }
 
+/* ?_Xinvarg@_String_base@std@@SAXXZ */
+void CDECL MSVCP__String_base_Xinvarg(void)
+{
+    static const char msg[] = "invalid string argument";
+
+    TRACE("\n");
+    throw_exception(EXCEPTION_INVALID_ARGUMENT, msg);
+}
+
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
 /* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB */
