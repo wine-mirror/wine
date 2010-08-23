@@ -56,6 +56,8 @@ static const scriptRange scriptRanges[] = {
     /* Latin Extended-B: U+0180–U+024F */
     /* IPA Extensions: U+0250–U+02AF */
     { Script_Latin,      0x00,   0x2af ,  Script_Numeric, Script_Punctuation},
+    /* Greek: U+0370–U+03FF */
+    { Script_Greek,      0x370,  0x3ff,  0, 0},
     /* Hebrew: U+0590–U+05FF */
     { Script_Hebrew,     0x590,  0x5ff,  0, 0},
     /* Arabic: U+0600–U+06FF */
@@ -74,6 +76,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Latin,      0x1d00, 0x1dbf, 0, 0},
     /* Latin Extended Additional: U+1E00–U+1EFF */
     { Script_Latin,      0x1e00, 0x1eff, 0, 0},
+    /* Greek Extended: U+1F00–U+1FFF */
+    { Script_Greek,      0x1f00, 0x1fff, 0, 0},
     /* Latin Extended-C: U+2C60–U+2C7F */
     { Script_Latin,      0x2c60, 0x2c7f, 0, 0},
     /* Modifier Tone Letters: U+A700–U+A71F */
@@ -123,6 +127,8 @@ static const scriptData scriptInformation[] = {
      {LANG_PERSIAN, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
     {{Script_Thaana, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_DIVEHI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Greek, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_GREEK, 0, 0, 0, 0, GREEK_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -132,7 +138,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[4].props, &scriptInformation[5].props,
     &scriptInformation[6].props, &scriptInformation[7].props,
     &scriptInformation[8].props, &scriptInformation[9].props,
-    &scriptInformation[10].props, &scriptInformation[11].props
+    &scriptInformation[10].props, &scriptInformation[11].props,
+    &scriptInformation[12].props
 };
 
 typedef struct {

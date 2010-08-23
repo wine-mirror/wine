@@ -306,6 +306,7 @@ static const ScriptShapeData ShapingData[] =
     {{ syriac_features, 4}, "syrc", ContextualShape_Syriac},
     {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
     {{ NULL, 0}, "thaa", NULL},
+    {{ standard_features, 2}, "grek", NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
