@@ -67,7 +67,7 @@
 @ stdcall GdipCombineRegionRegion(ptr ptr long)
 @ stdcall GdipComment(ptr long ptr)
 @ stdcall GdipConvertToEmfPlus(ptr ptr ptr long ptr ptr)
-@ stub GdipConvertToEmfPlusToFile
+@ stdcall GdipConvertToEmfPlusToFile(ptr ptr ptr ptr long ptr ptr)
 @ stub GdipConvertToEmfPlusToStream
 @ stdcall GdipCreateAdjustableArrowCap(long long long ptr)
 @ stub GdipCreateBitmapFromDirectDrawSurface

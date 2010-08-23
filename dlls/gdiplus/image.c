@@ -3796,3 +3796,16 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
 
     return stat;
 }
+
+/*****************************************************************************
+ * GdipConvertToEmfPlusToFile [GDIPLUS.@]
+ */
+
+GpStatus WINGDIPAPI GdipConvertToEmfPlusToFile(const GpGraphics* refGraphics,
+                                               GpMetafile* metafile, BOOL* conversionSuccess,
+                                               const WCHAR* filename, EmfType emfType,
+                                               const WCHAR* description, GpMetafile** out_metafile)
+{
+    FIXME("stub: %p, %p, %p, %p, %u, %p, %p\n", refGraphics, metafile, conversionSuccess, filename, emfType, description, out_metafile);
+    return NotImplemented;
+}
