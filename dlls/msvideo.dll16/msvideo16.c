@@ -30,6 +30,7 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
+#include "wownt32.h"
 #include "vfw16.h"
 #include "wine/debug.h"
 
@@ -972,4 +973,13 @@ BOOL WINAPI VIDEO_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
         break;
     }
     return TRUE;
+}
+
+/***********************************************************************
+ *                      MCIWndCreate(MSVIDEO.250)
+ */
+HWND16 CDECL MCIWndCreate16(HWND16 hwnd, HINSTANCE16 hinst16,
+                              DWORD style, LPSTR file)
+{
+    return HWND_16(MCIWndCreateA(HWND_32(hwnd), 0, style, file));
 }
