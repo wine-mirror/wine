@@ -25,8 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/debug.h"
-WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
+
 
 /* ?address@?$allocator@D@std@@QBEPADAAD@Z */
 /* ?address@?$allocator@D@std@@QEBAPEADAEAD@Z */
