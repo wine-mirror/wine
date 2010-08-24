@@ -171,6 +171,134 @@ static char *xdg_desktop_dir;
 static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra);
 static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppStream);
 
+/* Utility routines */
+static unsigned short crc16(const char* string)
+{
+    unsigned short crc = 0;
+    int i, j, xor_poly;
+
+    for (i = 0; string[i] != 0; i++)
+    {
+        char c = string[i];
+        for (j = 0; j < 8; c >>= 1, j++)
+        {
+            xor_poly = (c ^ crc) & 1;
+            crc >>= 1;
+            if (xor_poly)
+                crc ^= 0xa001;
+        }
+    }
+    return crc;
+}
+
+static char *strdupA( const char *str )
+{
+    char *ret;
+
+    if (!str) return NULL;
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
+    return ret;
+}
+
+static char* heap_printf(const char *format, ...)
+{
+    va_list args;
+    int size = 4096;
+    char *buffer, *ret;
+    int n;
+
+    va_start(args, format);
+    while (1)
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        if (buffer == NULL)
+            break;
+        n = vsnprintf(buffer, size, format, args);
+        if (n == -1)
+            size *= 2;
+        else if (n >= size)
+            size = n + 1;
+        else
+            break;
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
+    va_end(args);
+    if (!buffer) return NULL;
+    ret = HeapReAlloc(GetProcessHeap(), 0, buffer, strlen(buffer) + 1 );
+    if (!ret) ret = buffer;
+    return ret;
+}
+
+static void write_xml_text(FILE *file, const char *text)
+{
+    int i;
+    for (i = 0; text[i]; i++)
+    {
+        if (text[i] == '&')
+            fputs("&amp;", file);
+        else if (text[i] == '<')
+            fputs("&lt;", file);
+        else if (text[i] == '>')
+            fputs("&gt;", file);
+        else if (text[i] == '\'')
+            fputs("&apos;", file);
+        else if (text[i] == '"')
+            fputs("&quot;", file);
+        else
+            fputc(text[i], file);
+    }
+}
+
+static BOOL create_directories(char *directory)
+{
+    BOOL ret = TRUE;
+    int i;
+
+    for (i = 0; directory[i]; i++)
+    {
+        if (i > 0 && directory[i] == '/')
+        {
+            directory[i] = 0;
+            mkdir(directory, 0777);
+            directory[i] = '/';
+        }
+    }
+    if (mkdir(directory, 0777) && errno != EEXIST)
+       ret = FALSE;
+
+    return ret;
+}
+
+static char* wchars_to_utf8_chars(LPCWSTR string)
+{
+    char *ret;
+    INT size = WideCharToMultiByte(CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if (ret)
+        WideCharToMultiByte(CP_UTF8, 0, string, -1, ret, size, NULL, NULL);
+    return ret;
+}
+
+static char* wchars_to_unix_chars(LPCWSTR string)
+{
+    char *ret;
+    INT size = WideCharToMultiByte(CP_UNIXCP, 0, string, -1, NULL, 0, NULL, NULL);
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if (ret)
+        WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
+    return ret;
+}
+
+static WCHAR* utf8_chars_to_wchars(LPCSTR string)
+{
+    WCHAR *ret;
+    INT size = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
+    ret = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    if (ret)
+        MultiByteToWideChar(CP_UTF8, 0, string, -1, ret, size);
+    return ret;
+}
+
 /* Icon extraction routines
  *
  * FIXME: should use PrivateExtractIcons and friends
@@ -627,133 +755,6 @@ static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppSt
     if (FAILED(hr) && !bWait)
         hr = open_default_icon(ppStream);
     return hr;
-}
-
-static unsigned short crc16(const char* string)
-{
-    unsigned short crc = 0;
-    int i, j, xor_poly;
-
-    for (i = 0; string[i] != 0; i++)
-    {
-        char c = string[i];
-        for (j = 0; j < 8; c >>= 1, j++)
-        {
-            xor_poly = (c ^ crc) & 1;
-            crc >>= 1;
-            if (xor_poly)
-                crc ^= 0xa001;
-        }
-    }
-    return crc;
-}
-
-static char *strdupA( const char *str )
-{
-    char *ret;
-
-    if (!str) return NULL;
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
-    return ret;
-}
-
-static char* heap_printf(const char *format, ...)
-{
-    va_list args;
-    int size = 4096;
-    char *buffer, *ret;
-    int n;
-
-    va_start(args, format);
-    while (1)
-    {
-        buffer = HeapAlloc(GetProcessHeap(), 0, size);
-        if (buffer == NULL)
-            break;
-        n = vsnprintf(buffer, size, format, args);
-        if (n == -1)
-            size *= 2;
-        else if (n >= size)
-            size = n + 1;
-        else
-            break;
-        HeapFree(GetProcessHeap(), 0, buffer);
-    }
-    va_end(args);
-    if (!buffer) return NULL;
-    ret = HeapReAlloc(GetProcessHeap(), 0, buffer, strlen(buffer) + 1 );
-    if (!ret) ret = buffer;
-    return ret;
-}
-
-static void write_xml_text(FILE *file, const char *text)
-{
-    int i;
-    for (i = 0; text[i]; i++)
-    {
-        if (text[i] == '&')
-            fputs("&amp;", file);
-        else if (text[i] == '<')
-            fputs("&lt;", file);
-        else if (text[i] == '>')
-            fputs("&gt;", file);
-        else if (text[i] == '\'')
-            fputs("&apos;", file);
-        else if (text[i] == '"')
-            fputs("&quot;", file);
-        else
-            fputc(text[i], file);
-    }
-}
-
-static BOOL create_directories(char *directory)
-{
-    BOOL ret = TRUE;
-    int i;
-
-    for (i = 0; directory[i]; i++)
-    {
-        if (i > 0 && directory[i] == '/')
-        {
-            directory[i] = 0;
-            mkdir(directory, 0777);
-            directory[i] = '/';
-        }
-    }
-    if (mkdir(directory, 0777) && errno != EEXIST)
-       ret = FALSE;
-
-    return ret;
-}
-
-static char* wchars_to_utf8_chars(LPCWSTR string)
-{
-    char *ret;
-    INT size = WideCharToMultiByte(CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
-    if (ret)
-        WideCharToMultiByte(CP_UTF8, 0, string, -1, ret, size, NULL, NULL);
-    return ret;
-}
-
-static char* wchars_to_unix_chars(LPCWSTR string)
-{
-    char *ret;
-    INT size = WideCharToMultiByte(CP_UNIXCP, 0, string, -1, NULL, 0, NULL, NULL);
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
-    if (ret)
-        WideCharToMultiByte(CP_UNIXCP, 0, string, -1, ret, size, NULL, NULL);
-    return ret;
-}
-
-static WCHAR* utf8_chars_to_wchars(LPCSTR string)
-{
-    WCHAR *ret;
-    INT size = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-    if (ret)
-        MultiByteToWideChar(CP_UTF8, 0, string, -1, ret, size);
-    return ret;
 }
 
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
