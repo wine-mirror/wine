@@ -21,12 +21,9 @@
 
 #include <windows.h>
 #include <iphlpapi.h>
-#include <wine/debug.h>
 #include <wine/unicode.h>
 
 #include "ipconfig.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(ipconfig);
 
 static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
 {
