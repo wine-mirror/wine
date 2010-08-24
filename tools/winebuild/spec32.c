@@ -52,7 +52,7 @@ static inline int needs_relay( const ORDDEF *odp )
     /* skip nonexistent entry points */
     if (!odp) return 0;
     /* skip non-functions */
-    if ((odp->type != TYPE_STDCALL) && (odp->type != TYPE_CDECL)) return 0;
+    if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL && odp->type != TYPE_THISCALL) return 0;
     /* skip norelay and forward entry points */
     if (odp->flags & (FLAG_NORELAY|FLAG_FORWARD)) return 0;
     return 1;
@@ -141,6 +141,13 @@ static void output_relay_debug( DLLSPEC *spec )
         switch (target_cpu)
         {
         case CPU_x86:
+            if (odp->type == TYPE_THISCALL)  /* add the this pointer */
+            {
+                output( "\tpopl %%eax\n" );
+                output( "\tpushl %%ecx\n" );
+                output( "\tpushl %%eax\n" );
+                flags |= 2;
+            }
             if (odp->flags & FLAG_REGISTER)
                 output( "\tpushl %%eax\n" );
             else
@@ -164,7 +171,7 @@ static void output_relay_debug( DLLSPEC *spec )
             else
             {
                 output( "\tcall *4(%%eax)\n" );
-                if (odp->type == TYPE_STDCALL)
+                if (odp->type == TYPE_STDCALL || odp->type == TYPE_THISCALL)
                     output( "\tret $%u\n", args * get_ptr_size() );
                 else
                     output( "\tret\n" );
