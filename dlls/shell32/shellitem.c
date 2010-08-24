@@ -190,6 +190,26 @@ static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
         }
         return ret;
     }
+    else if (IsEqualGUID(rbhid, &BHID_SFUIObject))
+    {
+        IShellFolder *psf_parent;
+        if (_ILIsDesktop(This->pidl))
+            ret = SHGetDesktopFolder(&psf_parent);
+        else
+            ret = ShellItem_get_parent_shellfolder(This, &psf_parent);
+
+        if (SUCCEEDED(ret))
+        {
+            LPCITEMIDLIST pidl = ILFindLastID(This->pidl);
+            ret = IShellFolder_GetUIObjectOf(psf_parent, NULL, 1, &pidl, riid, NULL, ppvOut);
+            IShellFolder_Release(psf_parent);
+        }
+        return ret;
+    }
+    else if (IsEqualGUID(rbhid, &BHID_DataObject))
+    {
+        return ShellItem_BindToHandler((IShellItem*)This, pbc, &BHID_SFUIObject, &IID_IDataObject, ppvOut);
+    }
 
     FIXME("Unsupported BHID %s.\n", debugstr_guid(rbhid));
 

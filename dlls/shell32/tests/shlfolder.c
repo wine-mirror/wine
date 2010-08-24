@@ -1888,7 +1888,7 @@ static void test_SHCreateShellItem(void)
 {
     IShellItem *shellitem, *shellitem2;
     IPersistIDList *persistidl;
-    LPITEMIDLIST pidl_cwd=NULL, pidl_testfile, pidl_abstestfile, pidl_test;
+    LPITEMIDLIST pidl_cwd=NULL, pidl_testfile, pidl_abstestfile, pidl_test, pidl_desktop;
     HRESULT ret;
     char curdirA[MAX_PATH];
     WCHAR curdirW[MAX_PATH];
@@ -1908,6 +1908,17 @@ static void test_SHCreateShellItem(void)
     {
         win_skip("GetCurrentDirectoryA returned empty string, skipping test_SHCreateShellItem\n");
         return;
+    }
+
+    if(pSHGetSpecialFolderLocation)
+    {
+        ret = pSHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidl_desktop);
+        ok(ret == S_OK, "Got 0x%08x\n", ret);
+    }
+    else
+    {
+        win_skip("pSHGetSpecialFolderLocation missing.\n");
+        pidl_desktop = NULL;
     }
 
     MultiByteToWideChar(CP_ACP, 0, curdirA, -1, curdirW, MAX_PATH);
@@ -2058,6 +2069,17 @@ static void test_SHCreateShellItem(void)
             }
             IPersistIDList_Release(persistidl);
         }
+
+        IShellItem_Release(shellitem);
+    }
+
+    ret = pSHCreateShellItem(NULL, NULL, pidl_desktop, &shellitem);
+    ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
+    if (SUCCEEDED(ret))
+    {
+        ret = IShellItem_GetParent(shellitem, &shellitem2);
+        ok(FAILED(ret), "Got 0x%08x\n", ret);
+        if(SUCCEEDED(ret)) IShellItem_Release(shellitem2);
         IShellItem_Release(shellitem);
     }
 
@@ -2161,6 +2183,7 @@ static void test_SHCreateShellItem(void)
     DeleteFileA(".\\testfile");
     pILFree(pidl_abstestfile);
     pILFree(pidl_testfile);
+    pILFree(pidl_desktop);
     pILFree(pidl_cwd);
     IShellFolder_Release(currentfolder);
     IShellFolder_Release(desktopfolder);
@@ -3270,16 +3293,21 @@ static void test_ShellItemBindToHandler(void)
             IPersistFolder2_Release(ppf2);
         }
 
+        /* BHID_SFUIObject */
+        hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFUIObject, &IID_IDataObject, (void**)&punk);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE /* XP */), "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);
+        hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFUIObject, &IID_IContextMenu, (void**)&punk);
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE /* XP */), "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+        /* BHID_DataObject */
+        hr = IShellItem_BindToHandler(psi, NULL, &BHID_DataObject, &IID_IDataObject, (void**)&punk);
+        ok(hr == S_OK || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
         todo_wine
         {
-            /* BHID_SFUIObject */
-            hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFUIObject, &IID_IDataObject, (void**)&punk);
-            ok(hr == S_OK || broken(hr == E_NOINTERFACE /* XP */), "Got 0x%08x\n", hr);
-            if(SUCCEEDED(hr)) IUnknown_Release(punk);
-            hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFUIObject, &IID_IContextMenu, (void**)&punk);
-            ok(hr == S_OK || broken(hr == E_NOINTERFACE /* XP */), "Got 0x%08x\n", hr);
-            if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
             /* BHID_SFViewObject */
             hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFViewObject, &IID_IShellView, (void**)&punk);
             ok(hr == S_OK, "Got 0x%08x\n", hr);
@@ -3316,11 +3344,6 @@ static void test_ShellItemBindToHandler(void)
 
             /* BHID_EnumItems */
             hr = IShellItem_BindToHandler(psi, NULL, &BHID_EnumItems, &IID_IEnumShellItems, (void**)&punk);
-            ok(hr == S_OK || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
-            if(SUCCEEDED(hr)) IUnknown_Release(punk);
-
-            /* BHID_DataObject */
-            hr = IShellItem_BindToHandler(psi, NULL, &BHID_DataObject, &IID_IDataObject, (void**)&punk);
             ok(hr == S_OK || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
