@@ -1320,7 +1320,7 @@ static const IAccessorVtbl accessor_vtbl =
     accessor_ReleaseAccessor
 };
 
-HRESULT create_rowset_proxy(IWineRowServer *server, IUnknown **obj)
+static HRESULT create_rowset_proxy(IWineRowServer *server, IUnknown **obj)
 {
     rowset_proxy *proxy;
 
