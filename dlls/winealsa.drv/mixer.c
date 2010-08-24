@@ -575,7 +575,7 @@ static void ALSA_MixerInit(void)
 
         if (mastelem)
             filllines(&mixdev[mixnum], mastelem, captelem, capcontrols);
-        else
+        else if (micelem)
             filllines_no_master(&mixdev[mixnum], micelem, 1);
         fillcontrols(&mixdev[mixnum]);
 
