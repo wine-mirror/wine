@@ -36,6 +36,8 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
+#include "wincodecs_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 /***********************************************************************
@@ -776,6 +778,13 @@ static struct regsvr_coclass const coclass_list[] = {
 	NULL,
 	"windowscodecs.dll",
 	"Both"
+    },
+    {
+        &CLSID_WICIcnsEncoder,
+        "WIC ICNS Encoder",
+        NULL,
+        "windowscodecs.dll",
+        "Both"
     },
     {   &CLSID_WICDefaultFormatConverter,
 	"WIC Default Format Converter",

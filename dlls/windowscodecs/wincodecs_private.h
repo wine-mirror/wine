@@ -19,6 +19,8 @@
 #ifndef WINCODECS_PRIVATE_H
 #define WINCODECS_PRIVATE_H
 
+DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0x54,0xd4,0xf0,0x5c);
+
 extern HRESULT FormatConverter_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
 extern HRESULT ImagingFactory_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
 extern HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
@@ -29,6 +31,7 @@ extern HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void*
 extern HRESULT IcoDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
+extern HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
 extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator);
 extern HRESULT PaletteImpl_Create(IWICPalette **palette);
