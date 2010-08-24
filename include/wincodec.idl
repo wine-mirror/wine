@@ -198,7 +198,6 @@ cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
 cpp_quote("#define WINCODEC_ERR_INSUFFICIENTBUFFER 0x88982f8c")
 
 interface IWICPalette;
-interface IWICColorTransform;
 interface IWICFastMetadataEncoder;
 interface IWICMetadataQueryReader;
 interface IWICMetadataQueryWriter;
@@ -710,6 +709,19 @@ interface IWICBitmapClipper : IWICBitmapSource
     HRESULT Initialize(
         [in] IWICBitmapSource *pISource,
         [in] const WICRect *prc);
+}
+
+[
+    object,
+    uuid(b66f034f-d0e2-40ab-b436-6de39e321a94)
+]
+interface IWICColorTransform : IWICBitmapSource
+{
+    HRESULT Initialize(
+        [in] IWICBitmapSource *pIBitmapSource,
+        [in] IWICColorContext *pIContextSource,
+        [in] IWICColorContext *pIContextDest,
+        [in] REFWICPixelFormatGUID pixelFmtDest);
 }
 
 cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory, 0xcacaf262,0x9370,0x4615,0xa1,0x3b,0x9f,0x55,0x39,0xda,0x4c,0x0a);")
