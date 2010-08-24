@@ -79,8 +79,163 @@ typedef struct IcnsEncoder {
     const IWICBitmapEncoderVtbl *lpVtbl;
     LONG ref;
     IStream *stream;
+    icns_family_t *icns_family;
+    BOOL any_frame_committed;
+    int outstanding_commits;
     CRITICAL_SECTION lock;
 } IcnsEncoder;
+
+typedef struct IcnsFrameEncode {
+    const IWICBitmapFrameEncodeVtbl *lpVtbl;
+    IcnsEncoder *encoder;
+    LONG ref;
+} IcnsFrameEncode;
+
+static HRESULT WINAPI IcnsFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
+    void **ppv)
+{
+    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
+    {
+        *ppv = &This->lpVtbl;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI IcnsFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
+{
+    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI IcnsFrameEncode_Release(IWICBitmapFrameEncode *iface)
+{
+    IcnsFrameEncode *This = (IcnsFrameEncode*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        EnterCriticalSection(&This->encoder->lock);
+        This->encoder->outstanding_commits--;
+        LeaveCriticalSection(&This->encoder->lock);
+
+        IUnknown_Release((IUnknown*)This->encoder);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
+    IPropertyBag2 *pIEncoderOptions)
+{
+    FIXME("(%p,%p): stub\n", iface, pIEncoderOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
+    UINT uiWidth, UINT uiHeight)
+{
+    FIXME("(%p,%u,%u): stub\n", iface, uiWidth, uiHeight);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
+    double dpiX, double dpiY)
+{
+    FIXME("(%p,%0.2f,%0.2f): stub\n", iface, dpiX, dpiY);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
+    WICPixelFormatGUID *pPixelFormat)
+{
+    TRACE("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,
+    UINT cCount, IWICColorContext **ppIColorContext)
+{
+    FIXME("(%p,%u,%p): stub\n", iface, cCount, ppIColorContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_SetPalette(IWICBitmapFrameEncode *iface,
+    IWICPalette *pIPalette)
+{
+    FIXME("(%p,%p): stub\n", iface, pIPalette);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIThumbnail)
+{
+    FIXME("(%p,%p): stub\n", iface, pIThumbnail);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
+    UINT lineCount, UINT cbStride, UINT cbBufferSize, BYTE *pbPixels)
+{
+    FIXME("(%p,%u,%u,%u,%p): stub\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIBitmapSource, WICRect *prc)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, pIBitmapSource, prc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_Commit(IWICBitmapFrameEncode *iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IcnsFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    FIXME("(%p, %p): stub\n", iface, ppIMetadataQueryWriter);
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapFrameEncodeVtbl IcnsEncoder_FrameVtbl = {
+    IcnsFrameEncode_QueryInterface,
+    IcnsFrameEncode_AddRef,
+    IcnsFrameEncode_Release,
+    IcnsFrameEncode_Initialize,
+    IcnsFrameEncode_SetSize,
+    IcnsFrameEncode_SetResolution,
+    IcnsFrameEncode_SetPixelFormat,
+    IcnsFrameEncode_SetColorContexts,
+    IcnsFrameEncode_SetPalette,
+    IcnsFrameEncode_SetThumbnail,
+    IcnsFrameEncode_WritePixels,
+    IcnsFrameEncode_WriteSource,
+    IcnsFrameEncode_Commit,
+    IcnsFrameEncode_GetMetadataQueryWriter
+};
 
 static HRESULT WINAPI IcnsEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
     void **ppv)
@@ -126,6 +281,8 @@ static ULONG WINAPI IcnsEncoder_Release(IWICBitmapEncoder *iface)
     {
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
+        if (This->icns_family)
+            free(This->icns_family);
         if (This->stream)
             IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
@@ -138,17 +295,32 @@ static HRESULT WINAPI IcnsEncoder_Initialize(IWICBitmapEncoder *iface,
     IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
 {
     IcnsEncoder *This = (IcnsEncoder*)iface;
+    int ret;
+    HRESULT hr = S_OK;
 
     TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOption);
 
     EnterCriticalSection(&This->lock);
 
+    if (This->icns_family)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+    ret = picns_create_family(&This->icns_family);
+    if (ret != ICNS_STATUS_OK)
+    {
+        WARN("error %d creating icns family\n", ret);
+        hr = E_FAIL;
+        goto end;
+    }
     IStream_AddRef(pIStream);
     This->stream = pIStream;
 
+end:
     LeaveCriticalSection(&This->lock);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI IcnsEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
@@ -193,9 +365,41 @@ static HRESULT WINAPI IcnsEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitma
 static HRESULT WINAPI IcnsEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, ppIFrameEncode, ppIEncoderOptions);
+    IcnsEncoder *This = (IcnsEncoder*)iface;
+    HRESULT hr = S_OK;
+    IcnsFrameEncode *frameEncode = NULL;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->icns_family)
+    {
+        hr = WINCODEC_ERR_NOTINITIALIZED;
+        goto end;
+    }
+
+    hr = CreatePropertyBag2(ppIEncoderOptions);
+    if (FAILED(hr))
+        goto end;
+
+    frameEncode = HeapAlloc(GetProcessHeap(), 0, sizeof(IcnsFrameEncode));
+    if (frameEncode == NULL)
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+    frameEncode->lpVtbl = &IcnsEncoder_FrameVtbl;
+    frameEncode->encoder = This;
+    frameEncode->ref = 1;
+    *ppIFrameEncode = (IWICBitmapFrameEncode*)frameEncode;
+    This->outstanding_commits++;
+    IUnknown_AddRef((IUnknown*)This);
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI IcnsEncoder_Commit(IWICBitmapEncoder *iface)
@@ -251,6 +455,9 @@ HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->lpVtbl = &IcnsEncoder_Vtbl;
     This->ref = 1;
     This->stream = NULL;
+    This->icns_family = NULL;
+    This->any_frame_committed = FALSE;
+    This->outstanding_commits = 0;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IcnsEncoder.lock");
 
@@ -260,7 +467,7 @@ HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
-#else /* !HAVE_ICNS_H */
+#else /* !defined(SONAME_LIBICNS) */
 
 HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
