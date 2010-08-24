@@ -33,6 +33,7 @@
 #include "debughlp.h"
 
 #include "shell32_main.h"
+#include "pidl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -59,6 +60,7 @@ typedef struct _ExplorerBrowserImpl {
 
     IShellView *psv;
     RECT sv_rc;
+    LPITEMIDLIST current_pidl;
 } ExplorerBrowserImpl;
 
 /**************************************************************************
@@ -75,6 +77,65 @@ static void events_unadvise_all(ExplorerBrowserImpl *This)
         list_remove(&client->entry);
         IExplorerBrowserEvents_Release(client->pebe);
         HeapFree(GetProcessHeap(), 0, client);
+    }
+}
+
+static HRESULT events_NavigationPending(ExplorerBrowserImpl *This, PCIDLIST_ABSOLUTE pidl)
+{
+    event_client *cursor;
+    HRESULT hres = S_OK;
+
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->event_clients, event_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        hres = IExplorerBrowserEvents_OnNavigationPending(cursor->pebe, pidl);
+
+        /* If this failed for any reason, the browsing is supposed to be aborted. */
+        if(FAILED(hres))
+            break;
+    }
+
+    return hres;
+}
+
+static void events_NavigationComplete(ExplorerBrowserImpl *This, PCIDLIST_ABSOLUTE pidl)
+{
+    event_client *cursor;
+
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->event_clients, event_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        IExplorerBrowserEvents_OnNavigationComplete(cursor->pebe, pidl);
+    }
+}
+
+static void events_NavigationFailed(ExplorerBrowserImpl *This, PCIDLIST_ABSOLUTE pidl)
+{
+    event_client *cursor;
+
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->event_clients, event_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        IExplorerBrowserEvents_OnNavigationFailed(cursor->pebe, pidl);
+    }
+}
+
+static void events_ViewCreated(ExplorerBrowserImpl *This, IShellView *psv)
+{
+    event_client *cursor;
+
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->event_clients, event_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        IExplorerBrowserEvents_OnViewCreated(cursor->pebe, psv);
     }
 }
 
@@ -112,6 +173,55 @@ static HRESULT change_viewmode(ExplorerBrowserImpl *This, UINT viewmode)
         hr = IFolderView_SetCurrentViewMode(pfv, This->fs.ViewMode);
         IFolderView_Release(pfv);
     }
+
+    return hr;
+}
+
+static HRESULT create_new_shellview(ExplorerBrowserImpl *This, IShellItem *psi)
+{
+    IShellBrowser *psb = (IShellBrowser*)&This->lpsbVtbl;
+    IShellFolder *psf;
+    IShellView *psv;
+    HWND hwnd_new;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", This, psi);
+
+    hr = IShellItem_BindToHandler(psi, NULL, &BHID_SFObject, &IID_IShellFolder, (void**)&psf);
+    if(SUCCEEDED(hr))
+    {
+        hr = IShellFolder_CreateViewObject(psf, This->hwnd_main, &IID_IShellView, (void**)&psv);
+        if(SUCCEEDED(hr))
+        {
+            if(This->hwnd_sv)
+            {
+                IShellView_DestroyViewWindow(This->psv);
+                This->hwnd_sv = NULL;
+            }
+
+            hr = IShellView_CreateViewWindow(psv, This->psv, &This->fs, psb, &This->sv_rc, &hwnd_new);
+            if(SUCCEEDED(hr))
+            {
+                /* Replace the old shellview */
+                if(This->psv) IShellView_Release(This->psv);
+
+                This->psv = psv;
+                This->hwnd_sv = hwnd_new;
+                events_ViewCreated(This, psv);
+            }
+            else
+            {
+                ERR("CreateViewWindow failed (0x%x)\n", hr);
+                IShellView_Release(psv);
+            }
+        }
+        else
+            ERR("CreateViewObject failed (0x%x)\n", hr);
+
+        IShellFolder_Release(psf);
+    }
+    else
+        ERR("SI::BindToHandler failed (0x%x)\n", hr);
 
     return hr;
 }
@@ -277,6 +387,9 @@ static HRESULT WINAPI IExplorerBrowser_fnDestroy(IExplorerBrowser *iface)
 
     events_unadvise_all(This);
 
+    ILFree(This->current_pidl);
+    This->current_pidl = NULL;
+
     DestroyWindow(This->hwnd_main);
     This->destroyed = TRUE;
 
@@ -407,14 +520,113 @@ static HRESULT WINAPI IExplorerBrowser_fnGetOptions(IExplorerBrowser *iface,
     return S_OK;
 }
 
+static const UINT unsupported_browse_flags =
+    SBSP_NAVIGATEBACK | SBSP_NAVIGATEFORWARD | SBSP_NEWBROWSER |
+    EBF_SELECTFROMDATAOBJECT | EBF_NODROPTARGET;
 static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
                                                         PCUIDLIST_RELATIVE pidl,
                                                         UINT uFlags)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (%p, 0x%x)\n", This, pidl, uFlags);
+    LPITEMIDLIST absolute_pidl = NULL;
+    HRESULT hr;
+    TRACE("%p (%p, 0x%x)\n", This, pidl, uFlags);
 
-    return E_NOTIMPL;
+    if(!This->hwnd_main)
+        return E_FAIL;
+
+    if(This->destroyed)
+        return HRESULT_FROM_WIN32(ERROR_BUSY);
+
+    if(This->current_pidl && (This->eb_options & EBO_NAVIGATEONCE))
+        return E_FAIL;
+
+    if(uFlags & SBSP_EXPLOREMODE)
+        return E_INVALIDARG;
+
+    if(uFlags & unsupported_browse_flags)
+        FIXME("Argument 0x%x contains unsupported flags.\n", uFlags);
+
+    if(uFlags & SBSP_PARENT)
+    {
+        if(This->current_pidl)
+        {
+            if(_ILIsPidlSimple(This->current_pidl))
+            {
+                absolute_pidl = _ILCreateDesktop();
+            }
+            else
+            {
+                absolute_pidl = ILClone(This->current_pidl);
+                ILRemoveLastID(absolute_pidl);
+            }
+        }
+        if(!absolute_pidl)
+        {
+            ERR("Failed to get parent pidl.\n");
+            return E_FAIL;
+        }
+
+    }
+    else if(uFlags & SBSP_RELATIVE)
+    {
+        /* SBSP_RELATIVE has precedence over SBSP_ABSOLUTE */
+        TRACE("SBSP_RELATIVE\n");
+        if(This->current_pidl)
+        {
+            absolute_pidl = ILCombine(This->current_pidl, pidl);
+        }
+        if(!absolute_pidl)
+        {
+            ERR("Failed to get absolute pidl.\n");
+            return E_FAIL;
+        }
+    }
+    else
+    {
+        TRACE("SBSP_ABSOLUTE\n");
+        absolute_pidl = ILClone(pidl);
+        if(!absolute_pidl && !This->current_pidl)
+            return E_INVALIDARG;
+        else if(!absolute_pidl)
+            return S_OK;
+    }
+
+    /* TODO: Asynchronous browsing. Return S_OK here and finish in
+     * another thread. */
+
+    hr = events_NavigationPending(This, absolute_pidl);
+    if(FAILED(hr))
+    {
+        TRACE("Browsing aborted.\n");
+        ILFree(absolute_pidl);
+        return E_FAIL;
+    }
+
+    /* Only browse if the new pidl differs from the old */
+    if(!ILIsEqual(This->current_pidl, absolute_pidl))
+    {
+        IShellItem *psi;
+        hr = SHCreateItemFromIDList(absolute_pidl, &IID_IShellItem, (void**)&psi);
+        if(SUCCEEDED(hr))
+        {
+            hr = create_new_shellview(This, psi);
+            if(FAILED(hr))
+            {
+                events_NavigationFailed(This, absolute_pidl);
+                ILFree(absolute_pidl);
+                IShellItem_Release(psi);
+                return E_FAIL;
+            }
+            IShellItem_Release(psi);
+        }
+    }
+
+    events_NavigationComplete(This, absolute_pidl);
+    ILFree(This->current_pidl);
+    This->current_pidl = absolute_pidl;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnBrowseToObject(IExplorerBrowser *iface,
@@ -594,9 +806,9 @@ static HRESULT WINAPI IShellBrowser_fnBrowseObject(IShellBrowser *iface,
                                                    LPCITEMIDLIST pidl, UINT wFlags)
 {
     ExplorerBrowserImpl *This = impl_from_IShellBrowser(iface);
-    FIXME("stub, %p\n", This);
+    TRACE("%p (%p, %x)\n", This, pidl, wFlags);
 
-    return E_NOTIMPL;
+    return IExplorerBrowser_fnBrowseToIDList((IExplorerBrowser*)This, pidl, wFlags);
 }
 
 static HRESULT WINAPI IShellBrowser_fnGetViewStateStream(IShellBrowser *iface,

@@ -28,6 +28,18 @@
 
 static HWND hwnd;
 
+static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
+static HRESULT (WINAPI *pSHParseDisplayName)(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
+
+static void init_function_pointers(void)
+{
+    HMODULE hmod;
+
+    hmod = GetModuleHandleA("shell32.dll");
+    pSHCreateShellItem = (void*)GetProcAddress(hmod, "SHCreateShellItem");
+    pSHParseDisplayName = (void*)GetProcAddress(hmod, "SHParseDisplayName");
+}
+
 /*********************************************************************
  * Some simple helpers
  */
@@ -42,6 +54,17 @@ static HRESULT ebrowser_initialize(IExplorerBrowser *peb)
     RECT rc;
     rc.top = rc.left = 0; rc.bottom = rc.right = 500;
     return IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
+}
+
+/* Process some messages */
+static void process_msgs(void)
+{
+    MSG msg;
+    while(PeekMessage( &msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
 }
 
 /*********************************************************************
@@ -532,6 +555,247 @@ static void test_Advise(void)
     ok(!ref, "Got %d", ref);
 }
 
+/* Based on PathAddBackslashW from dlls/shlwapi/path.c */
+static LPWSTR myPathAddBackslashW( LPWSTR lpszPath )
+{
+  size_t iLen;
+
+  if (!lpszPath || (iLen = lstrlenW(lpszPath)) >= MAX_PATH)
+    return NULL;
+
+  if (iLen)
+  {
+    lpszPath += iLen;
+    if (lpszPath[-1] != '\\')
+    {
+      *lpszPath++ = '\\';
+      *lpszPath = '\0';
+    }
+  }
+  return lpszPath;
+}
+
+static void test_browse_pidl_(IExplorerBrowser *peb, IExplorerBrowserEventsImpl *ebev,
+                              LPITEMIDLIST pidl, UINT uFlags,
+                              HRESULT hr_exp, UINT pending, UINT created, UINT failed, UINT completed,
+                              const char *file, int line)
+{
+    HRESULT hr;
+    ebev->completed = ebev->created = ebev->pending = ebev->failed = 0;
+
+    hr = IExplorerBrowser_BrowseToIDList(peb, pidl, uFlags);
+    ok_(file, line) (hr == hr_exp, "BrowseToIDList returned 0x%08x\n", hr);
+    process_msgs();
+
+    ok_(file, line)
+        (ebev->pending == pending && ebev->created == created &&
+         ebev->failed == failed && ebev->completed == completed,
+         "Events occurred: %d, %d, %d, %d\n",
+         ebev->pending, ebev->created, ebev->failed, ebev->completed);
+}
+#define test_browse_pidl(peb, ebev, pidl, uFlags, hr, p, cr, f, co)     \
+    test_browse_pidl_(peb, ebev, pidl, uFlags, hr, p, cr, f, co, __FILE__, __LINE__)
+
+static void test_browse_pidl_sb_(IExplorerBrowser *peb, IExplorerBrowserEventsImpl *ebev,
+                                 LPITEMIDLIST pidl, UINT uFlags,
+                                 HRESULT hr_exp, UINT pending, UINT created, UINT failed, UINT completed,
+                                 const char *file, int line)
+{
+    IShellBrowser *psb;
+    HRESULT hr;
+
+    hr = IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
+    ok_(file, line) (hr == S_OK, "QueryInterface returned 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        ebev->completed = ebev->created = ebev->pending = ebev->failed = 0;
+
+        hr = IShellBrowser_BrowseObject(psb, pidl, uFlags);
+        ok_(file, line) (hr == hr_exp, "BrowseObject returned 0x%08x\n", hr);
+        process_msgs();
+
+        ok_(file, line)
+            (ebev->pending == pending && ebev->created == created &&
+             ebev->failed == failed && ebev->completed == completed,
+             "Events occurred: %d, %d, %d, %d\n",
+             ebev->pending, ebev->created, ebev->failed, ebev->completed);
+
+        IShellBrowser_Release(psb);
+    }
+}
+#define test_browse_pidl_sb(peb, ebev, pidl, uFlags, hr, p, cr, f, co)  \
+    test_browse_pidl_sb_(peb, ebev, pidl, uFlags, hr, p, cr, f, co, __FILE__, __LINE__)
+
+static void test_navigation(void)
+{
+    IExplorerBrowser *peb, *peb2;
+    IFolderView *pfv;
+    IShellFolder *psf;
+    LPITEMIDLIST pidl_current, pidl_child;
+    DWORD cookie, cookie2;
+    HRESULT hr;
+    LONG lres;
+    WCHAR current_path[MAX_PATH];
+    WCHAR child_path[MAX_PATH];
+    static const WCHAR testfolderW[] =
+        {'w','i','n','e','t','e','s','t','f','o','l','d','e','r','\0'};
+
+    ok(pSHParseDisplayName != NULL, "pSHParseDisplayName unexpectedly missing.\n");
+    ok(pSHCreateShellItem != NULL, "pSHCreateShellItem unexpectedly missing.\n");
+
+    GetCurrentDirectoryW(MAX_PATH, current_path);
+    if(!lstrlenW(current_path))
+    {
+        skip("Failed to create test-directory.\n");
+        return;
+    }
+
+    lstrcpyW(child_path, current_path);
+    myPathAddBackslashW(child_path);
+    lstrcatW(child_path, testfolderW);
+
+    CreateDirectoryW(child_path, NULL);
+
+    pSHParseDisplayName(current_path, NULL, &pidl_current, 0, NULL);
+    pSHParseDisplayName(child_path, NULL, &pidl_child, 0, NULL);
+
+    ebrowser_instantiate(&peb);
+    ebrowser_initialize(peb);
+
+    ebrowser_instantiate(&peb2);
+    ebrowser_initialize(peb2);
+
+    /* Set up our IExplorerBrowserEvents implementation */
+    ebev.lpVtbl = &ebevents;
+
+    IExplorerBrowser_Advise(peb, (IExplorerBrowserEvents*)&ebev, &cookie);
+    IExplorerBrowser_Advise(peb2, (IExplorerBrowserEvents*)&ebev, &cookie2);
+
+    /* These should all fail */
+    test_browse_pidl(peb, &ebev, 0, SBSP_ABSOLUTE | SBSP_RELATIVE, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_ABSOLUTE | SBSP_RELATIVE, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, 0, SBSP_ABSOLUTE, E_INVALIDARG, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_ABSOLUTE, E_INVALIDARG, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, 0, SBSP_RELATIVE, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_RELATIVE, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, 0, SBSP_PARENT, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_PARENT, E_FAIL, 0, 0, 0, 0);
+
+    /* "The first browse is synchronous" */
+    test_browse_pidl(peb, &ebev, pidl_child, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, pidl_child, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
+
+    /* Relative navigation */
+    test_browse_pidl(peb, &ebev, pidl_current, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
+
+    hr = IExplorerBrowser_GetCurrentView(peb, &IID_IFolderView, (void**)&pfv);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        LPITEMIDLIST pidl_relative;
+
+        hr = IFolderView_GetFolder(pfv, &IID_IShellFolder, (void**)&psf);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        hr = IShellFolder_ParseDisplayName(psf, NULL, NULL, (LPWSTR)testfolderW,
+                                           NULL, &pidl_relative, NULL);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        /* Browsing to another location here before using the
+         * pidl_relative would make ExplorerBrowser in Windows 7 show a
+         * not-available dialog. Also, passing a relative pidl without
+         * specifying SBSP_RELATIVE makes it look for the pidl on the
+         * desktop
+         */
+
+        test_browse_pidl(peb, &ebev, pidl_relative, SBSP_RELATIVE, S_OK, 1, 1, 0, 1);
+        test_browse_pidl_sb(peb2, &ebev, pidl_relative, SBSP_RELATIVE, S_OK, 1, 1, 0, 1);
+
+        ILFree(pidl_relative);
+        /* IShellFolder_Release(psf); */
+        IFolderView_Release(pfv);
+    }
+
+    /* misc **/
+    test_browse_pidl(peb, &ebev, NULL, SBSP_ABSOLUTE, S_OK, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, NULL, SBSP_ABSOLUTE, S_OK, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, NULL, SBSP_DEFBROWSER, S_OK, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, NULL, SBSP_DEFBROWSER, S_OK, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, pidl_current, SBSP_SAMEBROWSER, S_OK, 1, 1, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_SAMEBROWSER, S_OK, 1, 1, 0, 1);
+    test_browse_pidl(peb, &ebev, pidl_current, SBSP_SAMEBROWSER, S_OK, 1, 0, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_SAMEBROWSER, S_OK, 1, 0, 0, 1);
+
+    test_browse_pidl(peb, &ebev, pidl_current, SBSP_EXPLOREMODE, E_INVALIDARG, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_EXPLOREMODE, E_INVALIDARG, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, pidl_current, SBSP_OPENMODE, S_OK, 1, 0, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_OPENMODE, S_OK, 1, 0, 0, 1);
+
+    /* SBSP_NEWBROWSER will return E_INVALIDARG, claims MSDN, but in
+     * reality it works as one would expect (Windows 7 only?).
+     */
+    if(0)
+    {
+        IExplorerBrowser_BrowseToIDList(peb, NULL, SBSP_NEWBROWSER);
+    }
+
+    hr = IExplorerBrowser_Unadvise(peb, cookie);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    IExplorerBrowser_Destroy(peb);
+    process_msgs();
+    hr = IExplorerBrowser_Unadvise(peb2, cookie2);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    IExplorerBrowser_Destroy(peb2);
+    process_msgs();
+
+    /* Attempt browsing after destroyed */
+    test_browse_pidl(peb, &ebev, pidl_child, SBSP_ABSOLUTE, HRESULT_FROM_WIN32(ERROR_BUSY), 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, pidl_child, SBSP_ABSOLUTE, HRESULT_FROM_WIN32(ERROR_BUSY), 0, 0, 0, 0);
+
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got lres %d\n", lres);
+    lres = IExplorerBrowser_Release(peb2);
+    ok(lres == 0, "Got lres %d\n", lres);
+
+    /******************************************/
+    /* Test some options that affect browsing */
+
+    ebrowser_instantiate(&peb);
+    hr = IExplorerBrowser_Advise(peb, (IExplorerBrowserEvents*)&ebev, &cookie);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    hr = IExplorerBrowser_SetOptions(peb, EBO_NAVIGATEONCE);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ebrowser_initialize(peb);
+
+    test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 1, 0, 1);
+    test_browse_pidl(peb, &ebev, pidl_current, 0, E_FAIL, 0, 0, 0, 0);
+
+    hr = IExplorerBrowser_SetOptions(peb, 0);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
+    test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
+
+    /* Difference in behavior lies where? */
+    hr = IExplorerBrowser_SetOptions(peb, EBO_ALWAYSNAVIGATE);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+
+    test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
+    test_browse_pidl(peb, &ebev, pidl_current, 0, S_OK, 1, 0, 0, 1);
+
+    hr = IExplorerBrowser_Unadvise(peb, cookie);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    IExplorerBrowser_Destroy(peb);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got lres %d\n", lres);
+
+    /* Cleanup */
+    RemoveDirectoryW(child_path);
+    ILFree(pidl_current);
+    ILFree(pidl_child);
+}
+
 static BOOL test_instantiate_control(void)
 {
     IExplorerBrowser *peb;
@@ -573,12 +837,14 @@ START_TEST(ebrowser)
     }
 
     setup_window();
+    init_function_pointers();
 
     test_QueryInterface();
     test_SB_misc();
     test_initialization();
     test_basics();
     test_Advise();
+    test_navigation();
 
     DestroyWindow(hwnd);
     OleUninitialize();
