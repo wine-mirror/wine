@@ -198,7 +198,6 @@ cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
 cpp_quote("#define WINCODEC_ERR_INSUFFICIENTBUFFER 0x88982f8c")
 
 interface IWICPalette;
-interface IWICMetadataQueryReader;
 interface IWICMetadataQueryWriter;
 
 [
@@ -387,6 +386,28 @@ interface IWICComponentInfo : IUnknown
         [in] UINT cchFriendlyName,
         [in, out, unique, size_is(cchFriendlyName)] WCHAR *wzFriendlyName,
         [out] UINT *pcchActual);
+}
+
+[
+    object,
+    uuid(30989668-e1c9-4597-b395-458eedb808df)
+]
+interface IWICMetadataQueryReader : IUnknown
+{
+    HRESULT GetContainerFormat(
+        [out] GUID *pguidContainerFormat);
+
+    HRESULT GetLocation(
+        [in] UINT cchMaxLength,
+        [in, out, unique, size_is(cchMaxLength)] WCHAR *wzNamespace,
+        [out] UINT *pcchActualLength);
+
+    HRESULT GetMetadataByName(
+        [in] LPCWSTR wzName,
+        [in, out, unique] PROPVARIANT *pvarValue);
+
+    HRESULT GetEnumerator(
+        [out] IEnumString **ppIEnumString);
 }
 
 [
