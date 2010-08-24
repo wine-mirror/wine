@@ -592,7 +592,7 @@ static MSVCP_BOOL basic_string_char_grow(
 /* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z */
 /* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_erase, 12)
-basic_string_char* __stdcall MSVCP_basic_string_char_erase(
+basic_string_char* __thiscall MSVCP_basic_string_char_erase(
         basic_string_char *this, size_t pos, size_t len)
 {
     TRACE("%p %d %d\n", this, pos, len);
@@ -618,7 +618,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_erase(
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z */
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@_K1@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign_substr, 16)
-basic_string_char* __stdcall MSVCP_basic_string_char_assign_substr(
+basic_string_char* __thiscall MSVCP_basic_string_char_assign_substr(
         basic_string_char *this, const basic_string_char *assign,
         size_t pos, size_t len)
 {
@@ -647,7 +647,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_assign_substr(
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@@Z */
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign, 8)
-basic_string_char* __stdcall MSVCP_basic_string_char_assign(
+basic_string_char* __thiscall MSVCP_basic_string_char_assign(
         basic_string_char *this, const basic_string_char *assign)
 {
     return MSVCP_basic_string_char_assign_substr(this, assign,
@@ -657,7 +657,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_assign(
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z */
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign_cstr_len, 12)
-basic_string_char* __stdcall MSVCP_basic_string_char_assign_cstr_len(
+basic_string_char* __thiscall MSVCP_basic_string_char_assign_cstr_len(
         basic_string_char *this, const char *str, size_t len)
 {
     TRACE("%p %s %d\n", this, debugstr_a(str), len);
@@ -677,7 +677,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_assign_cstr_len(
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBD@Z */
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign_cstr, 8)
-basic_string_char* __stdcall MSVCP_basic_string_char_assign_cstr(
+basic_string_char* __thiscall MSVCP_basic_string_char_assign_cstr(
         basic_string_char *this, const char *str)
 {
     return MSVCP_basic_string_char_assign_cstr_len(this, str,
@@ -687,7 +687,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_assign_cstr(
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_c_str, 4)
-const char* __stdcall MSVCP_basic_string_char_c_str(basic_string_char *this)
+const char* __thiscall MSVCP_basic_string_char_c_str(basic_string_char *this)
 {
     TRACE("%p\n", this);
     return basic_string_char_const_ptr(this);
@@ -696,7 +696,7 @@ const char* __stdcall MSVCP_basic_string_char_c_str(basic_string_char *this)
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor, 4)
-basic_string_char* __stdcall MSVCP_basic_string_char_ctor(basic_string_char *this)
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char *this)
 {
     TRACE("%p\n", this);
 
@@ -707,7 +707,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_ctor(basic_string_char *thi
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@@Z */
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@AEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_copy_ctor, 8)
-basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(
+basic_string_char* __thiscall MSVCP_basic_string_char_copy_ctor(
     basic_string_char *this, const basic_string_char *copy)
 {
     TRACE("%p %p\n", this, copy);
@@ -720,7 +720,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z */
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBD@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor_cstr, 8)
-basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr(
         basic_string_char *this, const char *str)
 {
     TRACE("%p %s\n", this, debugstr_a(str));
@@ -733,7 +733,7 @@ basic_string_char* __stdcall MSVCP_basic_string_char_ctor_cstr(
 /* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
 /* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_dtor, 4)
-void __stdcall MSVCP_basic_string_char_dtor(basic_string_char *this)
+void __thiscall MSVCP_basic_string_char_dtor(basic_string_char *this)
 {
     TRACE("%p\n", this);
     basic_string_char_tidy(this, TRUE, 0);

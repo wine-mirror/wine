@@ -32,6 +32,7 @@ extern void (__cdecl *MSVCRT_operator_delete)(void*);
 
 #define THISCALL(func) __thiscall_ ## func
 #define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
+#define __thiscall __stdcall
 #define DEFINE_THISCALL_WRAPPER(func,args) \
     extern void THISCALL(func)(void); \
     __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
@@ -43,6 +44,7 @@ extern void (__cdecl *MSVCRT_operator_delete)(void*);
 
 #define THISCALL(func) func
 #define THISCALL_NAME(func) __ASM_NAME(#func)
+#define __thiscall __cdecl
 #define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
 
 #endif /* __i386__ */

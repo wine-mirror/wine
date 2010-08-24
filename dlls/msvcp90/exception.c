@@ -112,7 +112,7 @@ static type_info exception_type_info = {
 };
 
 DEFINE_THISCALL_WRAPPER(MSVCP_exception_ctor, 8)
-exception* __stdcall MSVCP_exception_ctor(exception *this, const char **name)
+exception* __thiscall MSVCP_exception_ctor(exception *this, const char **name)
 {
     TRACE("(%p %s)\n", this, *name);
 
@@ -130,7 +130,7 @@ exception* __stdcall MSVCP_exception_ctor(exception *this, const char **name)
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_exception_copy_ctor,8)
-exception* __stdcall MSVCP_exception_copy_ctor(exception *this, const exception *rhs)
+exception* __thiscall MSVCP_exception_copy_ctor(exception *this, const exception *rhs)
 {
     TRACE("(%p,%p)\n", this, rhs);
 
@@ -145,7 +145,7 @@ exception* __stdcall MSVCP_exception_copy_ctor(exception *this, const exception 
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_exception_dtor,4)
-void __stdcall MSVCP_exception_dtor(exception *this)
+void __thiscall MSVCP_exception_dtor(exception *this)
 {
     TRACE("(%p)\n", this);
     this->vtable = exception_type_info.vtable;
@@ -194,7 +194,7 @@ void set_exception_vtable(void)
 typedef exception bad_alloc;
 
 DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_ctor, 8)
-bad_alloc* __stdcall MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
+bad_alloc* __thiscall MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
     MSVCP_exception_ctor(this, name);
@@ -203,7 +203,7 @@ bad_alloc* __stdcall MSVCP_bad_alloc_ctor(bad_alloc *this, const char **name)
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_copy_ctor, 8)
-bad_alloc* __stdcall MSVCP_bad_alloc_copy_ctor(bad_alloc *this, const bad_alloc *rhs)
+bad_alloc* __thiscall MSVCP_bad_alloc_copy_ctor(bad_alloc *this, const bad_alloc *rhs)
 {
     TRACE("%p %p\n", this, rhs);
     MSVCP_exception_copy_ctor(this, rhs);
@@ -212,14 +212,14 @@ bad_alloc* __stdcall MSVCP_bad_alloc_copy_ctor(bad_alloc *this, const bad_alloc 
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_dtor, 4)
-void __stdcall MSVCP_bad_alloc_dtor(bad_alloc *this)
+void __thiscall MSVCP_bad_alloc_dtor(bad_alloc *this)
 {
     TRACE("%p\n", this);
     MSVCP_exception_dtor(this);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_bad_alloc_vector_dtor, 8)
-void * __stdcall MSVCP_bad_alloc_vector_dtor(bad_alloc *this, unsigned int flags)
+void * __thiscall MSVCP_bad_alloc_vector_dtor(bad_alloc *this, unsigned int flags)
 {
     TRACE("%p %x\n", this, flags);
     if(flags & 2) {
@@ -239,7 +239,7 @@ void * __stdcall MSVCP_bad_alloc_vector_dtor(bad_alloc *this, unsigned int flags
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_what_exception,4)
-const char* __stdcall MSVCP_what_exception(exception * this)
+const char* __thiscall MSVCP_what_exception(exception * this)
 {
     TRACE("(%p) returning %s\n", this, this->name);
     return this->name ? this->name : "Unknown exception";
@@ -312,7 +312,7 @@ typedef struct _logic_error {
 } logic_error;
 
 DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_ctor, 8)
-logic_error* __stdcall MSVCP_logic_error_ctor(
+logic_error* __thiscall MSVCP_logic_error_ctor(
         logic_error *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -324,7 +324,7 @@ logic_error* __stdcall MSVCP_logic_error_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_copy_ctor, 8)
-logic_error* __stdcall MSVCP_logic_error_copy_ctor(
+logic_error* __thiscall MSVCP_logic_error_copy_ctor(
         logic_error *this, logic_error *rhs)
 {
     TRACE("%p %p\n", this, rhs);
@@ -335,7 +335,7 @@ logic_error* __stdcall MSVCP_logic_error_copy_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_dtor, 4)
-void __stdcall MSVCP_logic_error_dtor(logic_error *this)
+void __thiscall MSVCP_logic_error_dtor(logic_error *this)
 {
     TRACE("%p\n", this);
     MSVCP_exception_dtor(&this->e);
@@ -343,7 +343,7 @@ void __stdcall MSVCP_logic_error_dtor(logic_error *this)
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_vector_dtor, 8)
-void* __stdcall MSVCP_logic_error_vector_dtor(
+void* __thiscall MSVCP_logic_error_vector_dtor(
         logic_error *this, unsigned int flags)
 {
     TRACE("%p %x\n", this, flags);
@@ -364,7 +364,7 @@ void* __stdcall MSVCP_logic_error_vector_dtor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_logic_error_what, 4)
-const char* __stdcall MSVCP_logic_error_what(logic_error *this)
+const char* __thiscall MSVCP_logic_error_what(logic_error *this)
 {
     TRACE("%p\n", this);
     return MSVCP_basic_string_char_c_str(&this->str);
@@ -434,7 +434,7 @@ static const cxx_exception_type logic_error_cxx_type = {
 typedef logic_error length_error;
 
 DEFINE_THISCALL_WRAPPER(MSVCP_length_error_ctor, 8)
-length_error* __stdcall MSVCP_length_error_ctor(
+length_error* __thiscall MSVCP_length_error_ctor(
         length_error *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -444,7 +444,7 @@ length_error* __stdcall MSVCP_length_error_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_length_error_copy_ctor, 8)
-length_error* __stdcall MSVCP_length_error_copy_ctor(
+length_error* __thiscall MSVCP_length_error_copy_ctor(
         length_error *this, length_error *rhs)
 {
     TRACE("%p %p\n", this, rhs);
@@ -454,7 +454,7 @@ length_error* __stdcall MSVCP_length_error_copy_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_length_error_vector_dtor, 8)
-void* __stdcall MSVCP_length_error_vector_dtor(
+void* __thiscall MSVCP_length_error_vector_dtor(
         length_error *this, unsigned int flags)
 {
     TRACE("%p %x\n", this, flags);
@@ -525,7 +525,7 @@ static const cxx_exception_type length_error_cxx_type = {
 typedef logic_error out_of_range;
 
 DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_ctor, 8)
-out_of_range* __stdcall MSVCP_out_of_range_ctor(
+out_of_range* __thiscall MSVCP_out_of_range_ctor(
         out_of_range *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -535,7 +535,7 @@ out_of_range* __stdcall MSVCP_out_of_range_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_copy_ctor, 8)
-out_of_range* __stdcall MSVCP_out_of_range_copy_ctor(
+out_of_range* __thiscall MSVCP_out_of_range_copy_ctor(
         out_of_range *this, out_of_range *rhs)
 {
     TRACE("%p %p\n", this, rhs);
@@ -545,7 +545,7 @@ out_of_range* __stdcall MSVCP_out_of_range_copy_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_out_of_range_vector_dtor, 8)
-void* __stdcall MSVCP_out_of_range_vector_dtor(
+void* __thiscall MSVCP_out_of_range_vector_dtor(
         out_of_range *this, unsigned int flags)
 {
     TRACE("%p %x\n", this, flags);
@@ -616,7 +616,7 @@ static const cxx_exception_type out_of_range_cxx_type = {
 typedef logic_error invalid_argument;
 
 DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_ctor, 8)
-invalid_argument* __stdcall MSVCP_invalid_argument_ctor(
+invalid_argument* __thiscall MSVCP_invalid_argument_ctor(
         invalid_argument *this, const char **name)
 {
     TRACE("%p %s\n", this, *name);
@@ -626,7 +626,7 @@ invalid_argument* __stdcall MSVCP_invalid_argument_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_copy_ctor, 8)
-invalid_argument* __stdcall MSVCP_invalid_argument_copy_ctor(
+invalid_argument* __thiscall MSVCP_invalid_argument_copy_ctor(
         invalid_argument *this, invalid_argument *rhs)
 {
     TRACE("%p %p\n", this, rhs);
@@ -636,7 +636,7 @@ invalid_argument* __stdcall MSVCP_invalid_argument_copy_ctor(
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_invalid_argument_vector_dtor, 8)
-void* __stdcall MSVCP_invalid_argument_vector_dtor(
+void* __thiscall MSVCP_invalid_argument_vector_dtor(
         invalid_argument *this, unsigned int flags)
 {
     TRACE("%p %x\n", this, flags);
