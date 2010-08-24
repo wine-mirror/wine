@@ -2502,7 +2502,7 @@ static void test_ShellItemCompare(void)
     }
     if(failed)
     {
-        skip("Failed to create all shellitems. \n");
+        skip("Failed to create all shellitems.\n");
         goto cleanup;
     }
 
@@ -2520,7 +2520,7 @@ static void test_ShellItemCompare(void)
 
     if(failed)
     {
-        skip("Failed to create shellitems. \n");
+        skip("Failed to create shellitems.\n");
         goto cleanup;
     }
 
@@ -3550,7 +3550,7 @@ static void test_GetUIObject(void)
                     ok(res, "Failed (last error: %d).\n", GetLastError());
 
                     ok( (mii.wID <= id_upper_limit) || (mii.fType & MFT_SEPARATOR),
-                        "Got non-separator ID out of range: %d (type: %x) \n", mii.wID, mii.fType);
+                        "Got non-separator ID out of range: %d (type: %x)\n", mii.wID, mii.fType);
                     if(!(mii.fType & MFT_SEPARATOR))
                         max_id_check = (mii.wID>max_id_check)?mii.wID:max_id_check;
                 }
