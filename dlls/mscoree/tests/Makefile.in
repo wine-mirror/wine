@@ -1,0 +1,10 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = mscoree.dll
+
+C_SRCS = \
+	mscoree.c
+
+@MAKE_TEST_RULES@

@@ -14713,6 +14713,7 @@ wine_fn_config_dll mscat32 enable_mscat32
 wine_fn_config_dll mscms enable_mscms mscms
 wine_fn_config_test dlls/mscms/tests mscms_test
 wine_fn_config_dll mscoree enable_mscoree
+wine_fn_config_test dlls/mscoree/tests mscoree_test
 wine_fn_config_dll msctf enable_msctf
 wine_fn_config_test dlls/msctf/tests msctf_test
 wine_fn_config_dll msdaps enable_msdaps
