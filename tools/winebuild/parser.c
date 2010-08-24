@@ -308,6 +308,11 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
     odp->u.func.arg_types[i] = '\0';
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
+    if (odp->type == TYPE_THISCALL && odp->u.func.arg_types[0] != 'p')
+    {
+        error( "First argument of a thiscall function must be a pointer\n" );
+        return 0;
+    }
 
     if (!(token = GetToken(1)))
     {
