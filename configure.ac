@@ -350,12 +350,6 @@ else
 
 fi
 
-case $host_cpu in
-  *i[[3456789]]86*)
-    AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
-    ;;
-esac
-
 dnl **** Check for some libraries ****
 
 dnl Check for -li386 for NetBSD and OpenBSD
@@ -796,6 +790,11 @@ case $host_os in
         *i[[3456789]]86* | x86_64)
           WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
                           [LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"])
+          AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
+          if test "x$PRELINK" = xfalse
+          then
+              WINE_WARNING([prelink not found, base address of core dlls won't be set correctly.])
+          fi
           ;;
       esac
 

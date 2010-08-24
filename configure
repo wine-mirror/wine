@@ -648,6 +648,7 @@ LIBPTHREAD
 CROSSTARGET
 CROSSCC
 CROSSTEST_DISABLE
+PRELINK
 CARBONLIB
 FRAMEWORK_OPENAL
 COREAUDIO
@@ -670,7 +671,6 @@ DLLEXT
 CPP
 OPENGL_LIBS
 XLIB
-PRELINK
 MAINTAINER_MODE
 ICOTOOL
 CONVERT
@@ -5175,52 +5175,6 @@ $as_echo "yes ($icotool_version_major.$icotool_version_minor)" >&6; }
 
 fi
 
-case $host_cpu in
-  *i[3456789]86*)
-    # Extract the first word of "prelink", so it can be a program name with args.
-set dummy prelink; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_PRELINK+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PRELINK in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PRELINK="$PRELINK" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in /sbin /usr/sbin $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_PRELINK="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PRELINK" && ac_cv_path_PRELINK="false"
-  ;;
-esac
-fi
-PRELINK=$ac_cv_path_PRELINK
-if test -n "$PRELINK"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PRELINK" >&5
-$as_echo "$PRELINK" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-    ;;
-esac
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for i386_set_ldt in -li386" >&5
 $as_echo_n "checking for i386_set_ldt in -li386... " >&6; }
@@ -6930,6 +6884,51 @@ $as_echo "$ac_cv_cflags__Wl___section_start__interp_0x7bf00400" >&6; }
 if test $ac_cv_cflags__Wl___section_start__interp_0x7bf00400 = yes; then :
   LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
 fi
+          # Extract the first word of "prelink", so it can be a program name with args.
+set dummy prelink; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_PRELINK+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PRELINK in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PRELINK="$PRELINK" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in /sbin /usr/sbin $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PRELINK="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_PRELINK" && ac_cv_path_PRELINK="false"
+  ;;
+esac
+fi
+PRELINK=$ac_cv_path_PRELINK
+if test -n "$PRELINK"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PRELINK" >&5
+$as_echo "$PRELINK" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+          if test "x$PRELINK" = xfalse
+          then
+              as_fn_append wine_warnings "|prelink not found, base address of core dlls won't be set correctly."
+          fi
           ;;
       esac
 
