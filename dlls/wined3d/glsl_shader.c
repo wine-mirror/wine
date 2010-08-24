@@ -255,6 +255,17 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
 }
 
 /* GL locking is done by the caller. */
+static void shader_glsl_compile(const struct wined3d_gl_info *gl_info, GLhandleARB shader, const char *src)
+{
+    TRACE("Compiling shader object %u.\n", shader);
+    GL_EXTCALL(glShaderSourceARB(shader, 1, &src, NULL));
+    checkGLcall("glShaderSourceARB");
+    GL_EXTCALL(glCompileShaderARB(shader));
+    checkGLcall("glCompileShaderARB");
+    print_glsl_info_log(gl_info, shader);
+}
+
+/* GL locking is done by the caller. */
 static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_info, GLhandleARB program)
 {
     GLint i, object_count, source_size = -1;
@@ -3911,10 +3922,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 
     ret = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
     checkGLcall("glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB)");
-    GL_EXTCALL(glShaderSourceARB(ret, 1, (const char**)&buffer->buffer, NULL));
-    checkGLcall("glShaderSourceARB(ret, 1, &buffer->buffer, NULL)");
-    GL_EXTCALL(glCompileShaderARB(ret));
-    checkGLcall("glCompileShaderARB(ret)");
+    shader_glsl_compile(gl_info, ret, buffer->buffer);
 
     return ret;
 }
@@ -4035,9 +4043,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     shader_addline(buffer, "}\n");
 
     TRACE("Compiling shader object %u\n", shader_obj);
-    GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer->buffer, NULL));
-    GL_EXTCALL(glCompileShaderARB(shader_obj));
-    print_glsl_info_log(gl_info, shader_obj);
+    shader_glsl_compile(gl_info, shader_obj, buffer->buffer);
 
     /* Store the shader object */
     return shader_obj;
@@ -4110,9 +4116,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     shader_addline(buffer, "}\n");
 
     TRACE("Compiling shader object %u\n", shader_obj);
-    GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer->buffer, NULL));
-    GL_EXTCALL(glCompileShaderARB(shader_obj));
-    print_glsl_info_log(gl_info, shader_obj);
+    shader_glsl_compile(gl_info, shader_obj, buffer->buffer);
 
     return shader_obj;
 }
@@ -4546,12 +4550,10 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     }
 
     vshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
-    GL_EXTCALL(glShaderSourceARB(vshader_id, 1, &blt_vshader, NULL));
-    GL_EXTCALL(glCompileShaderARB(vshader_id));
+    shader_glsl_compile(gl_info, vshader_id, blt_vshader);
 
     pshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
-    GL_EXTCALL(glShaderSourceARB(pshader_id, 1, &blt_pshader, NULL));
-    GL_EXTCALL(glCompileShaderARB(pshader_id));
+    shader_glsl_compile(gl_info, pshader_id, blt_pshader);
 
     program_id = GL_EXTCALL(glCreateProgramObjectARB());
     GL_EXTCALL(glAttachObjectARB(program_id, vshader_id));
