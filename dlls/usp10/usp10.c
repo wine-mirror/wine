@@ -79,6 +79,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Thaana,     0x780,  0x7bf,  0, 0},
     /* Sinhala: U+0D80–U+0DFF */
     { Script_Sinhala,   0xd80,  0xdff,  0, 0},
+    /* Thai: U+0E00–U+0E7F */
+    { Script_Thai,      0xe00,  0xe7f,  Script_Thai_Numeric, 0},
     /* Tibetan: U+0F00–U+0FFF */
     { Script_Tibetan,   0xf00,  0xfff,  Script_Tibetan_Numeric, 0},
     /* Georgian: U+10A0–U+10FF */
@@ -164,6 +166,10 @@ static const scriptData scriptInformation[] = {
      {LANG_TIBETAN, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
     {{Script_Phags_pa, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_MONGOLIAN, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Thai, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_THAI, 0, 1, 1, 1, THAI_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 1}},
+    {{Script_Thai_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_THAI, 1, 1, 0, 0, THAI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -177,7 +183,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[12].props, &scriptInformation[13].props,
     &scriptInformation[14].props, &scriptInformation[15].props,
     &scriptInformation[16].props, &scriptInformation[17].props,
-    &scriptInformation[18].props, &scriptInformation[19].props
+    &scriptInformation[18].props, &scriptInformation[19].props,
+    &scriptInformation[20].props, &scriptInformation[21].props
 };
 
 typedef struct {

@@ -305,6 +305,11 @@ static OPENTYPE_FEATURE_RECORD tibetan_features[] =
     { 0x73776c62 /*blws*/, 1},
 };
 
+static OPENTYPE_FEATURE_RECORD thai_features[] =
+{
+    { 0x706d6363 /*ccmp*/, 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES  defaultTextRange;
     CHAR                  otTag[5];
@@ -334,6 +339,8 @@ static const ScriptShapeData ShapingData[] =
     {{ tibetan_features, 2}, "tibt", NULL},
     {{ tibetan_features, 2}, "tibt", NULL},
     {{ tibetan_features, 2}, "phag", ContextualShape_Phags_pa},
+    {{ thai_features, 1}, "thai", NULL},
+    {{ thai_features, 1}, "thai", NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)

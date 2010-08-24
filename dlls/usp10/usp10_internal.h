@@ -39,6 +39,9 @@
 #define Script_Tibetan 17
 #define Script_Tibetan_Numeric 18
 #define Script_Phags_pa 19
+/* Unicode Chapter 11 */
+#define Script_Thai 20
+#define Script_Thai_Numeric 21
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
