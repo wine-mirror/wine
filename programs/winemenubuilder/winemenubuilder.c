@@ -631,19 +631,15 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
     return hr;
 }
 
-static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPCWSTR szFileName)
+static HRESULT read_ico_direntries(IStream *icoStream, ICONDIRENTRY **ppIconDirEntries, int *numEntries)
 {
     ICONDIR iconDir;
-    ICONDIRENTRY *pIconDirEntry = NULL;
-    int nMax = 0, nMaxBits = 0;
-    int nIndex = 0;
-    void *pIcon = NULL;
-    int i;
     ULONG bytesRead;
-    LARGE_INTEGER position;
     HRESULT hr;
 
-    hr = IStream_Read(iconStream, &iconDir, sizeof(ICONDIR), &bytesRead);
+    *ppIconDirEntries = NULL;
+
+    hr = IStream_Read(icoStream, &iconDir, sizeof(ICONDIR), &bytesRead);
     if (FAILED(hr) || bytesRead != sizeof(ICONDIR) ||
         (iconDir.idReserved != 0) || (iconDir.idType != 1))
     {
@@ -651,20 +647,41 @@ static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPC
         hr = E_FAIL;
         goto end;
     }
+    *numEntries = iconDir.idCount;
 
-    if ((pIconDirEntry = HeapAlloc(GetProcessHeap(), 0, iconDir.idCount * sizeof (ICONDIRENTRY))) == NULL)
+    if ((*ppIconDirEntries = HeapAlloc(GetProcessHeap(), 0, sizeof(ICONDIRENTRY)*iconDir.idCount)) == NULL)
     {
         hr = E_OUTOFMEMORY;
         goto end;
     }
-    hr = IStream_Read(iconStream, pIconDirEntry, sizeof(ICONDIRENTRY)*iconDir.idCount, &bytesRead);
+    hr = IStream_Read(icoStream, *ppIconDirEntries, sizeof(ICONDIRENTRY)*iconDir.idCount, &bytesRead);
     if (FAILED(hr) || bytesRead != sizeof(ICONDIRENTRY)*iconDir.idCount)
     {
         if (SUCCEEDED(hr)) hr = E_FAIL;
         goto end;
     }
 
-    for (i = 0; i < iconDir.idCount; i++)
+end:
+    if (FAILED(hr))
+        HeapFree(GetProcessHeap(), 0, *ppIconDirEntries);
+    return hr;
+}
+
+static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPCWSTR szFileName)
+{
+    ICONDIRENTRY *pIconDirEntry = NULL;
+    int numEntries;
+    int nMax = 0, nMaxBits = 0;
+    int nIndex = 0;
+    int i;
+    LARGE_INTEGER position;
+    HRESULT hr;
+
+    hr = read_ico_direntries(iconStream, &pIconDirEntry, &numEntries);
+    if (FAILED(hr))
+        goto end;
+
+    for (i = 0; i < numEntries; i++)
     {
         WINE_TRACE("[%d]: %d x %d @ %d\n", i, pIconDirEntry[i].bWidth, pIconDirEntry[i].bHeight, pIconDirEntry[i].wBitCount);
         if (pIconDirEntry[i].wBitCount >= nMaxBits &&
@@ -677,22 +694,6 @@ static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPC
     }
     WINE_TRACE("Selected: %d\n", nIndex);
 
-    if ((pIcon = HeapAlloc(GetProcessHeap(), 0, pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
-    position.QuadPart = pIconDirEntry[nIndex].dwImageOffset;
-    hr = IStream_Seek(iconStream, position, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr))
-        goto end;
-    hr = IStream_Read(iconStream, pIcon, pIconDirEntry[nIndex].dwBytesInRes, &bytesRead);
-    if (FAILED(hr) || bytesRead != pIconDirEntry[nIndex].dwBytesInRes)
-    {
-        if (SUCCEEDED(hr)) hr = E_FAIL;
-        goto end;
-    }
-
     position.QuadPart = 0;
     hr = IStream_Seek(iconStream, position, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
@@ -700,7 +701,6 @@ static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPC
     hr = convert_to_native_icon(iconStream, &nIndex, 1, &CLSID_WICPngEncoder, icon_name, szFileName);
 
 end:
-    HeapFree(GetProcessHeap(), 0, pIcon);
     HeapFree(GetProcessHeap(), 0, pIconDirEntry);
     return hr;
 }
