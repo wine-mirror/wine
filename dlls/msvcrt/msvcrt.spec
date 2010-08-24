@@ -1,49 +1,49 @@
 # msvcrt.dll - MS VC++ Run Time Library
 
 @ cdecl -norelay $I10_OUTPUT(double long long long ptr) MSVCRT_I10_OUTPUT
-@ thiscall -arch=win32 ??0__non_rtti_object@@QAE@ABV0@@Z(ptr) MSVCRT___non_rtti_object_copy_ctor
-@ thiscall -arch=win32 ??0__non_rtti_object@@QAE@PBD@Z(ptr) MSVCRT___non_rtti_object_ctor
-@ thiscall -arch=win32 ??0bad_cast@@AAE@PBQBD@Z(ptr) MSVCRT_bad_cast_ctor
-@ thiscall -arch=win32 ??0bad_cast@@QAE@ABQBD@Z(ptr) MSVCRT_bad_cast_ctor
-@ thiscall -arch=win32 ??0bad_cast@@QAE@ABV0@@Z(ptr) MSVCRT_bad_cast_copy_ctor
-@ thiscall -arch=win32 ??0bad_cast@@QAE@PBD@Z(ptr) MSVCRT_bad_cast_ctor_charptr
-@ thiscall -arch=win32 ??0bad_typeid@@QAE@ABV0@@Z(ptr) MSVCRT_bad_typeid_copy_ctor
-@ thiscall -arch=win32 ??0bad_typeid@@QAE@PBD@Z(ptr) MSVCRT_bad_typeid_ctor
-@ thiscall -arch=win32 ??0exception@@QAE@ABQBD@Z(ptr) MSVCRT_exception_ctor
-@ thiscall -arch=win32 ??0exception@@QAE@ABQBDH@Z(ptr long) MSVCRT_exception_ctor_noalloc
-@ thiscall -arch=win32 ??0exception@@QAE@ABV0@@Z(ptr) MSVCRT_exception_copy_ctor
-@ thiscall -arch=win32 ??0exception@@QAE@XZ() MSVCRT_exception_default_ctor
-@ thiscall -arch=win32 ??1__non_rtti_object@@UAE@XZ() MSVCRT___non_rtti_object_dtor
-@ thiscall -arch=win32 ??1bad_cast@@UAE@XZ() MSVCRT_bad_cast_dtor
-@ thiscall -arch=win32 ??1bad_typeid@@UAE@XZ() MSVCRT_bad_typeid_dtor
-@ thiscall -arch=win32 ??1exception@@UAE@XZ() MSVCRT_exception_dtor
-@ thiscall -arch=win32 ??1type_info@@UAE@XZ() MSVCRT_type_info_dtor
+@ thiscall -arch=win32 ??0__non_rtti_object@@QAE@ABV0@@Z(ptr ptr) MSVCRT___non_rtti_object_copy_ctor
+@ thiscall -arch=win32 ??0__non_rtti_object@@QAE@PBD@Z(ptr ptr) MSVCRT___non_rtti_object_ctor
+@ thiscall -arch=win32 ??0bad_cast@@AAE@PBQBD@Z(ptr ptr) MSVCRT_bad_cast_ctor
+@ thiscall -arch=win32 ??0bad_cast@@QAE@ABQBD@Z(ptr ptr) MSVCRT_bad_cast_ctor
+@ thiscall -arch=win32 ??0bad_cast@@QAE@ABV0@@Z(ptr ptr) MSVCRT_bad_cast_copy_ctor
+@ thiscall -arch=win32 ??0bad_cast@@QAE@PBD@Z(ptr ptr) MSVCRT_bad_cast_ctor_charptr
+@ thiscall -arch=win32 ??0bad_typeid@@QAE@ABV0@@Z(ptr ptr) MSVCRT_bad_typeid_copy_ctor
+@ thiscall -arch=win32 ??0bad_typeid@@QAE@PBD@Z(ptr ptr) MSVCRT_bad_typeid_ctor
+@ thiscall -arch=win32 ??0exception@@QAE@ABQBD@Z(ptr ptr) MSVCRT_exception_ctor
+@ thiscall -arch=win32 ??0exception@@QAE@ABQBDH@Z(ptr ptr long) MSVCRT_exception_ctor_noalloc
+@ thiscall -arch=win32 ??0exception@@QAE@ABV0@@Z(ptr ptr) MSVCRT_exception_copy_ctor
+@ thiscall -arch=win32 ??0exception@@QAE@XZ(ptr) MSVCRT_exception_default_ctor
+@ thiscall -arch=win32 ??1__non_rtti_object@@UAE@XZ(ptr) MSVCRT___non_rtti_object_dtor
+@ thiscall -arch=win32 ??1bad_cast@@UAE@XZ(ptr) MSVCRT_bad_cast_dtor
+@ thiscall -arch=win32 ??1bad_typeid@@UAE@XZ(ptr) MSVCRT_bad_typeid_dtor
+@ thiscall -arch=win32 ??1exception@@UAE@XZ(ptr) MSVCRT_exception_dtor
+@ thiscall -arch=win32 ??1type_info@@UAE@XZ(ptr) MSVCRT_type_info_dtor
 @ cdecl -arch=win32 ??2@YAPAXI@Z(long) MSVCRT_operator_new
 @ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) MSVCRT_operator_new
 @ cdecl -arch=win32 ??2@YAPAXIHPBDH@Z(long long str long) MSVCRT_operator_new_dbg
 @ cdecl -arch=win64 ??2@YAPEAX_KHPEBDH@Z(long long str long) MSVCRT_operator_new_dbg
 @ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) MSVCRT_operator_delete
 @ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) MSVCRT_operator_delete
-@ thiscall -arch=win32 ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr) MSVCRT___non_rtti_object_opequals
-@ thiscall -arch=win32 ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr) MSVCRT_bad_cast_opequals
-@ thiscall -arch=win32 ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr) MSVCRT_bad_typeid_opequals
-@ thiscall -arch=win32 ??4exception@@QAEAAV0@ABV0@@Z(ptr) MSVCRT_exception_opequals
-@ thiscall -arch=win32 ??8type_info@@QBEHABV0@@Z(ptr) MSVCRT_type_info_opequals_equals
-@ thiscall -arch=win32 ??9type_info@@QBEHABV0@@Z(ptr) MSVCRT_type_info_opnot_equals
+@ thiscall -arch=win32 ??4__non_rtti_object@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT___non_rtti_object_opequals
+@ thiscall -arch=win32 ??4bad_cast@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT_bad_cast_opequals
+@ thiscall -arch=win32 ??4bad_typeid@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT_bad_typeid_opequals
+@ thiscall -arch=win32 ??4exception@@QAEAAV0@ABV0@@Z(ptr ptr) MSVCRT_exception_opequals
+@ thiscall -arch=win32 ??8type_info@@QBEHABV0@@Z(ptr ptr) MSVCRT_type_info_opequals_equals
+@ thiscall -arch=win32 ??9type_info@@QBEHABV0@@Z(ptr ptr) MSVCRT_type_info_opnot_equals
 @ extern -arch=win32 ??_7__non_rtti_object@@6B@ MSVCRT___non_rtti_object_vtable
 @ extern -arch=win32 ??_7bad_cast@@6B@ MSVCRT_bad_cast_vtable
 @ extern -arch=win32 ??_7bad_typeid@@6B@ MSVCRT_bad_typeid_vtable
 @ extern -arch=win32 ??_7exception@@6B@ MSVCRT_exception_vtable
-@ thiscall -arch=win32 ??_E__non_rtti_object@@UAEPAXI@Z(long) MSVCRT___non_rtti_object_vector_dtor
-@ thiscall -arch=win32 ??_Ebad_cast@@UAEPAXI@Z(long) MSVCRT_bad_cast_vector_dtor
-@ thiscall -arch=win32 ??_Ebad_typeid@@UAEPAXI@Z(long) MSVCRT_bad_typeid_vector_dtor
-@ thiscall -arch=win32 ??_Eexception@@UAEPAXI@Z(long) MSVCRT_exception_vector_dtor
-@ thiscall -arch=win32 ??_Fbad_cast@@QAEXXZ() MSVCRT_bad_cast_default_ctor
-@ thiscall -arch=win32 ??_Fbad_typeid@@QAEXXZ() MSVCRT_bad_typeid_default_ctor
-@ thiscall -arch=win32 ??_G__non_rtti_object@@UAEPAXI@Z(long) MSVCRT___non_rtti_object_scalar_dtor
-@ thiscall -arch=win32 ??_Gbad_cast@@UAEPAXI@Z(long) MSVCRT_bad_cast_scalar_dtor
-@ thiscall -arch=win32 ??_Gbad_typeid@@UAEPAXI@Z(long) MSVCRT_bad_typeid_scalar_dtor
-@ thiscall -arch=win32 ??_Gexception@@UAEPAXI@Z(long) MSVCRT_exception_scalar_dtor
+@ thiscall -arch=win32 ??_E__non_rtti_object@@UAEPAXI@Z(ptr long) MSVCRT___non_rtti_object_vector_dtor
+@ thiscall -arch=win32 ??_Ebad_cast@@UAEPAXI@Z(ptr long) MSVCRT_bad_cast_vector_dtor
+@ thiscall -arch=win32 ??_Ebad_typeid@@UAEPAXI@Z(ptr long) MSVCRT_bad_typeid_vector_dtor
+@ thiscall -arch=win32 ??_Eexception@@UAEPAXI@Z(ptr long) MSVCRT_exception_vector_dtor
+@ thiscall -arch=win32 ??_Fbad_cast@@QAEXXZ(ptr) MSVCRT_bad_cast_default_ctor
+@ thiscall -arch=win32 ??_Fbad_typeid@@QAEXXZ(ptr) MSVCRT_bad_typeid_default_ctor
+@ thiscall -arch=win32 ??_G__non_rtti_object@@UAEPAXI@Z(ptr long) MSVCRT___non_rtti_object_scalar_dtor
+@ thiscall -arch=win32 ??_Gbad_cast@@UAEPAXI@Z(ptr long) MSVCRT_bad_cast_scalar_dtor
+@ thiscall -arch=win32 ??_Gbad_typeid@@UAEPAXI@Z(ptr long) MSVCRT_bad_typeid_scalar_dtor
+@ thiscall -arch=win32 ??_Gexception@@UAEPAXI@Z(ptr long) MSVCRT_exception_scalar_dtor
 @ cdecl -arch=win32 ??_U@YAPAXI@Z(long) MSVCRT_operator_new
 @ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) MSVCRT_operator_new
 @ cdecl -arch=win32 ??_U@YAPAXIHPBDH@Z(long long str long) MSVCRT_operator_new_dbg
@@ -55,15 +55,15 @@
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) MSVCRT__set_new_handler
 @ cdecl ?_set_new_mode@@YAHH@Z(long) MSVCRT__set_new_mode
 @ cdecl ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) MSVCRT__set_se_translator
-@ thiscall -arch=win32 ?before@type_info@@QBEHABV1@@Z(ptr) MSVCRT_type_info_before
-@ thiscall -arch=win32 ?name@type_info@@QBEPBDXZ() MSVCRT_type_info_name
-@ thiscall -arch=win32 ?raw_name@type_info@@QBEPBDXZ() MSVCRT_type_info_raw_name
+@ thiscall -arch=win32 ?before@type_info@@QBEHABV1@@Z(ptr ptr) MSVCRT_type_info_before
+@ thiscall -arch=win32 ?name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_name
+@ thiscall -arch=win32 ?raw_name@type_info@@QBEPBDXZ(ptr) MSVCRT_type_info_raw_name
 @ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_new_handler
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_terminate
 @ cdecl ?set_unexpected@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_unexpected
 @ cdecl ?terminate@@YAXXZ() MSVCRT_terminate
 @ cdecl ?unexpected@@YAXXZ() MSVCRT_unexpected
-@ thiscall -arch=win32 ?what@exception@@UBEPBDXZ() MSVCRT_what_exception
+@ thiscall -arch=win32 ?what@exception@@UBEPBDXZ(ptr) MSVCRT_what_exception
 @ cdecl -arch=i386 _CIacos()
 @ cdecl -arch=i386 _CIasin()
 @ cdecl -arch=i386 _CIatan()

@@ -16,15 +16,15 @@
 @ stub ??0_SpinLock@details@Concurrency@@QAE@ACJ@Z
 @ stub ??0_TaskCollection@details@Concurrency@@QAE@XZ
 @ stub ??0_Timer@details@Concurrency@@IAE@I_N@Z
-@ thiscall -arch=win32 ??0__non_rtti_object@std@@QAE@ABV01@@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
-@ thiscall -arch=win32 ??0__non_rtti_object@std@@QAE@PBD@Z(ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z
-@ thiscall -arch=win32 ??0bad_cast@std@@AAE@PBQBD@Z(ptr) msvcrt.??0bad_cast@@AAE@PBQBD@Z
-@ thiscall -arch=win32 ??0bad_cast@std@@QAE@ABV01@@Z(ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
-@ thiscall -arch=win32 ??0bad_cast@std@@QAE@PBD@Z(ptr) msvcrt.??0bad_cast@@QAE@PBD@Z
+@ thiscall -arch=win32 ??0__non_rtti_object@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
+@ thiscall -arch=win32 ??0__non_rtti_object@std@@QAE@PBD@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z
+@ thiscall -arch=win32 ??0bad_cast@std@@AAE@PBQBD@Z(ptr ptr) msvcrt.??0bad_cast@@AAE@PBQBD@Z
+@ thiscall -arch=win32 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
+@ thiscall -arch=win32 ??0bad_cast@std@@QAE@PBD@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@PBD@Z
 @ stub ??0bad_target@Concurrency@@QAE@PBD@Z
 @ stub ??0bad_target@Concurrency@@QAE@XZ
-@ thiscall -arch=win32 ??0bad_typeid@std@@QAE@ABV01@@Z(ptr) msvcrt.??0bad_typeid@@QAE@ABV0@@Z
-@ thiscall -arch=win32 ??0bad_typeid@std@@QAE@PBD@Z(ptr) msvcrt.??0bad_typeid@@QAE@PBD@Z
+@ thiscall -arch=win32 ??0bad_typeid@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0bad_typeid@@QAE@ABV0@@Z
+@ thiscall -arch=win32 ??0bad_typeid@std@@QAE@PBD@Z(ptr ptr) msvcrt.??0bad_typeid@@QAE@PBD@Z
 @ stub ??0context_self_unblock@Concurrency@@QAE@PBD@Z
 @ stub ??0context_self_unblock@Concurrency@@QAE@XZ
 @ stub ??0context_unblock_unbalanced@Concurrency@@QAE@PBD@Z
@@ -33,10 +33,10 @@
 @ stub ??0default_scheduler_exists@Concurrency@@QAE@PBD@Z
 @ stub ??0default_scheduler_exists@Concurrency@@QAE@XZ
 @ stub ??0event@Concurrency@@QAE@XZ
-@ thiscall -arch=win32 ??0exception@std@@QAE@ABQBD@Z(ptr) msvcrt.??0exception@@QAE@ABQBD@Z
-@ thiscall -arch=win32 ??0exception@std@@QAE@ABQBDH@Z(ptr long) msvcrt.??0exception@@QAE@ABQBDH@Z
-@ thiscall -arch=win32 ??0exception@std@@QAE@ABV01@@Z(ptr) msvcrt.??0exception@@QAE@ABV0@@Z
-@ thiscall -arch=win32 ??0exception@std@@QAE@XZ() msvcrt.??0exception@@QAE@XZ
+@ thiscall -arch=win32 ??0exception@std@@QAE@ABQBD@Z(ptr ptr) msvcrt.??0exception@@QAE@ABQBD@Z
+@ thiscall -arch=win32 ??0exception@std@@QAE@ABQBDH@Z(ptr ptr long) msvcrt.??0exception@@QAE@ABQBDH@Z
+@ thiscall -arch=win32 ??0exception@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0exception@@QAE@ABV0@@Z
+@ thiscall -arch=win32 ??0exception@std@@QAE@XZ(ptr) msvcrt.??0exception@@QAE@XZ
 @ stub ??0improper_lock@Concurrency@@QAE@PBD@Z
 @ stub ??0improper_lock@Concurrency@@QAE@XZ
 @ stub ??0improper_scheduler_attach@Concurrency@@QAE@PBD@Z
@@ -87,17 +87,17 @@
 @ stub ??1_SpinLock@details@Concurrency@@QAE@XZ
 @ stub ??1_TaskCollection@details@Concurrency@@QAE@XZ
 @ stub ??1_Timer@details@Concurrency@@IAE@XZ
-@ thiscall -arch=win32 ??1__non_rtti_object@std@@UAE@XZ() msvcrt.??1__non_rtti_object@@UAE@XZ
-@ thiscall -arch=win32 ??1bad_cast@std@@UAE@XZ() msvcrt.??1bad_cast@@UAE@XZ
-@ thiscall -arch=win32 ??1bad_typeid@std@@UAE@XZ() msvcrt.??1bad_typeid@@UAE@XZ
+@ thiscall -arch=win32 ??1__non_rtti_object@std@@UAE@XZ(ptr) msvcrt.??1__non_rtti_object@@UAE@XZ
+@ thiscall -arch=win32 ??1bad_cast@std@@UAE@XZ(ptr) msvcrt.??1bad_cast@@UAE@XZ
+@ thiscall -arch=win32 ??1bad_typeid@std@@UAE@XZ(ptr) msvcrt.??1bad_typeid@@UAE@XZ
 @ stub ??1critical_section@Concurrency@@QAE@XZ
 @ stub ??1event@Concurrency@@QAE@XZ
-@ thiscall -arch=win32 ??1exception@std@@UAE@XZ() msvcrt.??1exception@@UAE@XZ
+@ thiscall -arch=win32 ??1exception@std@@UAE@XZ(ptr) msvcrt.??1exception@@UAE@XZ
 @ stub ??1reader_writer_lock@Concurrency@@QAE@XZ
 @ stub ??1scoped_lock@critical_section@Concurrency@@QAE@XZ
 @ stub ??1scoped_lock@reader_writer_lock@Concurrency@@QAE@XZ
 @ stub ??1scoped_lock_read@reader_writer_lock@Concurrency@@QAE@XZ
-@ thiscall -arch=win32 ??1type_info@@UAE@XZ() msvcrt.??1type_info@@UAE@XZ
+@ thiscall -arch=win32 ??1type_info@@UAE@XZ(ptr) msvcrt.??1type_info@@UAE@XZ
 @ cdecl -arch=win32 ??2@YAPAXI@Z(long) msvcrt.??2@YAPAXI@Z
 @ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) msvcrt.??2@YAPEAX_K@Z
 @ cdecl -arch=win32 ??2@YAPAXIHPBDH@Z(long long str long) msvcrt.??2@YAPAXIHPBDH@Z
@@ -107,12 +107,12 @@
 @ stub ??4?$_SpinWait@$00@details@Concurrency@@QAEAAV012@ABV012@@Z
 @ stub ??4?$_SpinWait@$0A@@details@Concurrency@@QAEAAV012@ABV012@@Z
 @ stub ??4SchedulerPolicy@Concurrency@@QAEAAV01@ABV01@@Z
-@ thiscall -arch=win32 ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
-@ thiscall -arch=win32 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
-@ thiscall -arch=win32 ??4bad_typeid@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4bad_typeid@@QAEAAV0@ABV0@@Z
-@ thiscall -arch=win32 ??4exception@std@@QAEAAV01@ABV01@@Z(ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z
-@ thiscall -arch=win32 ??8type_info@@QBE_NABV0@@Z(ptr) msvcrt.??8type_info@@QBEHABV0@@Z
-@ thiscall -arch=win32 ??9type_info@@QBE_NABV0@@Z(ptr) msvcrt.??9type_info@@QBEHABV0@@Z
+@ thiscall -arch=win32 ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4__non_rtti_object@@QAEAAV0@ABV0@@Z
+@ thiscall -arch=win32 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
+@ thiscall -arch=win32 ??4bad_typeid@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_typeid@@QAEAAV0@ABV0@@Z
+@ thiscall -arch=win32 ??4exception@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z
+@ thiscall -arch=win32 ??8type_info@@QBE_NABV0@@Z(ptr ptr) msvcrt.??8type_info@@QBEHABV0@@Z
+@ thiscall -arch=win32 ??9type_info@@QBE_NABV0@@Z(ptr ptr) msvcrt.??9type_info@@QBEHABV0@@Z
 @ extern -arch=win32 ??_7__non_rtti_object@std@@6B@ msvcrt.??_7__non_rtti_object@@6B@
 @ extern -arch=win32 ??_7bad_cast@std@@6B@ msvcrt.??_7bad_cast@@6B@
 @ extern -arch=win32 ??_7bad_typeid@std@@6B@ msvcrt.??_7bad_typeid@@6B@
@@ -120,8 +120,8 @@
 @ extern -arch=win32 ??_7exception@std@@6B@ msvcrt.??_7exception@@6B@
 @ stub ??_F?$_SpinWait@$00@details@Concurrency@@QAEXXZ
 @ stub ??_F?$_SpinWait@$0A@@details@Concurrency@@QAEXXZ
-@ thiscall -arch=win32 ??_Fbad_cast@std@@QAEXXZ() msvcrt.??_Fbad_cast@@QAEXXZ
-@ thiscall -arch=win32 ??_Fbad_typeid@std@@QAEXXZ() msvcrt.??_Fbad_typeid@@QAEXXZ
+@ thiscall -arch=win32 ??_Fbad_cast@std@@QAEXXZ(ptr) msvcrt.??_Fbad_cast@@QAEXXZ
+@ thiscall -arch=win32 ??_Fbad_typeid@std@@QAEXXZ(ptr) msvcrt.??_Fbad_typeid@@QAEXXZ
 @ cdecl -arch=win32 ??_U@YAPAXI@Z(long) msvcrt.??_U@YAPAXI@Z
 @ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) msvcrt.??_U@YAPEAX_K@Z
 @ cdecl -arch=win32 ??_U@YAPAXIHPBDH@Z(long long str long) msvcrt.??_U@YAPAXIHPBDH@Z
@@ -247,14 +247,14 @@
 @ stub ?_type_info_dtor_internal_method@type_info@@QAEXXZ
 @ cdecl ?_wopen@@YAHPB_WHH@Z(wstr long long) msvcrt._wopen
 @ cdecl ?_wsopen@@YAHPB_WHHH@Z(wstr long long long) msvcrt._wsopen
-@ thiscall -arch=win32 ?before@type_info@@QBEHABV1@@Z(ptr) msvcrt.?before@type_info@@QBEHABV1@@Z
+@ thiscall -arch=win32 ?before@type_info@@QBEHABV1@@Z(ptr ptr) msvcrt.?before@type_info@@QBEHABV1@@Z
 @ stub ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
 @ stub ?lock@critical_section@Concurrency@@QAEXXZ
 @ stub ?lock@reader_writer_lock@Concurrency@@QAEXXZ
 @ stub ?lock_read@reader_writer_lock@Concurrency@@QAEXXZ
 @ stub ?name@type_info@@QBEPBDPAU__type_info_node@@@Z
 @ stub ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ
-@ thiscall -arch=win32 ?raw_name@type_info@@QBEPBDXZ() msvcrt.?raw_name@type_info@@QBEPBDXZ
+@ thiscall -arch=win32 ?raw_name@type_info@@QBEPBDXZ(ptr) msvcrt.?raw_name@type_info@@QBEPBDXZ
 @ stub ?reset@event@Concurrency@@QAEXXZ
 @ stub ?set@event@Concurrency@@QAEXXZ
 @ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) msvcrt.?set_new_handler@@YAP6AXXZP6AXXZ@Z
@@ -275,7 +275,7 @@
 @ stub ?wait@Concurrency@@YAXI@Z
 @ stub ?wait@event@Concurrency@@QAEII@Z
 @ stub ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z
-@ thiscall -arch=win32 ?what@exception@std@@UBEPBDXZ() msvcrt.?what@exception@@UBEPBDXZ
+@ thiscall -arch=win32 ?what@exception@std@@UBEPBDXZ(ptr) msvcrt.?what@exception@@UBEPBDXZ
 @ cdecl $I10_OUTPUT() msvcrt.$I10_OUTPUT
 @ cdecl -arch=i386 _CIacos() msvcrt._CIacos
 @ cdecl -arch=i386 _CIasin() msvcrt._CIasin
