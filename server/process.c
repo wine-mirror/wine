@@ -416,6 +416,7 @@ static void process_destroy( struct object *obj )
 
     assert( !process->sigkill_timeout );  /* timeout should hold a reference to the process */
 
+    close_process_handles( process );
     set_process_startup_state( process, STARTUP_ABORTED );
     if (process->console) release_object( process->console );
     if (process->parent) release_object( process->parent );
@@ -615,15 +616,12 @@ void kill_console_processes( struct thread *renderer, int exit_code )
 /* a process has been killed (i.e. its last thread died) */
 static void process_killed( struct process *process )
 {
-    struct handle_table *handles;
     struct list *ptr;
 
     assert( list_empty( &process->thread_list ));
     process->end_time = current_time;
     if (!process->is_system) close_process_desktop( process );
-    handles = process->handles;
-    process->handles = NULL;
-    if (handles) release_object( handles );
+    close_process_handles( process );
     process->winstation = 0;
     process->desktop = 0;
     if (process->idle_event)
