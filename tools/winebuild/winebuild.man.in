@@ -325,6 +325,11 @@ for a Win16 or Win32 function using the C calling convention
 .B varargs
 for a Win16 or Win32 function using the C calling convention with a
 variable number of arguments
+.TP
+.B thiscall
+for a Win32 function using the
+.I thiscall
+calling convention (first parameter in %ecx register on i386)
 .RE
 .PP
 .I args

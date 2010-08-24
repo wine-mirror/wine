@@ -457,6 +457,7 @@ static void check_undefined_exports( DLLSPEC *spec )
             case TYPE_STDCALL:
             case TYPE_CDECL:
             case TYPE_VARARGS:
+            case TYPE_THISCALL:
                 if (link_ext_symbols)
                 {
                     odp->flags |= FLAG_EXT_LINK;

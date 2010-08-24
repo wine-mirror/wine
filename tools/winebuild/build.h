@@ -47,6 +47,7 @@ typedef enum
     TYPE_STDCALL,      /* stdcall function (Win32) */
     TYPE_CDECL,        /* cdecl function (Win32) */
     TYPE_VARARGS,      /* varargs function (Win32) */
+    TYPE_THISCALL,     /* thiscall function (Win32 on i386) */
     TYPE_EXTERN,       /* external symbol (Win32) */
     TYPE_NBTYPES
 } ORD_TYPE;

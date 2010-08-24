@@ -246,6 +246,7 @@ void output_exports( DLLSPEC *spec )
         case TYPE_STDCALL:
         case TYPE_VARARGS:
         case TYPE_CDECL:
+        case TYPE_THISCALL:
             if (odp->flags & FLAG_FORWARD)
             {
                 output( "\t%s .L__wine_spec_forwards+%u\n", get_asm_ptr_keyword(), fwd_size );
@@ -816,6 +817,7 @@ void output_def_file( DLLSPEC *spec, int include_private )
             /* fall through */
         case TYPE_VARARGS:
         case TYPE_CDECL:
+        case TYPE_THISCALL:
             /* try to reduce output */
             if(strcmp(name, odp->link_name) || (odp->flags & FLAG_FORWARD))
                 output( "=%s", odp->link_name );

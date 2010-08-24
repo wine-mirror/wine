@@ -56,6 +56,7 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "stdcall",      /* TYPE_STDCALL */
     "cdecl",        /* TYPE_CDECL */
     "varargs",      /* TYPE_VARARGS */
+    "thiscall",     /* TYPE_THISCALL */
     "extern"        /* TYPE_EXTERN */
 };
 
@@ -235,6 +236,11 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         error( "'stdcall' not supported for Win16\n" );
         return 0;
     }
+    if (!is_win32 && odp->type == TYPE_THISCALL)
+    {
+        error( "'thiscall' not supported for Win16\n" );
+        return 0;
+    }
     if (is_win32 && odp->type == TYPE_PASCAL)
     {
         error( "'pascal' not supported for Win32\n" );
@@ -324,6 +330,12 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
             }
             odp->flags |= FLAG_FORWARD;
         }
+    }
+    if (target_cpu == CPU_x86 && odp->type == TYPE_THISCALL && !(odp->flags & FLAG_FORWARD))
+    {
+        char *link_name = strmake( "__thiscall_%s", odp->link_name );
+        free( odp->link_name );
+        odp->link_name = link_name;
     }
     return 1;
 }
@@ -524,6 +536,7 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     case TYPE_STDCALL:
     case TYPE_VARARGS:
     case TYPE_CDECL:
+    case TYPE_THISCALL:
         if (!parse_spec_export( odp, spec )) goto error;
         break;
     case TYPE_ABS:
