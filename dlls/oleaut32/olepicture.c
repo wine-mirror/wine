@@ -215,8 +215,8 @@ static void OLEPictureImpl_SetBitmap(OLEPictureImpl *This)
   /* Should we use GetBitmapDimension if available? */
   hdcRef = CreateCompatibleDC(0);
 
-  This->himetricWidth = xpixels_to_himetric(bm.bmWidth, hdcRef);
-  This->himetricHeight = xpixels_to_himetric(bm.bmHeight, hdcRef);
+  This->himetricWidth  = xpixels_to_himetric(bm.bmWidth, hdcRef);
+  This->himetricHeight = ypixels_to_himetric(bm.bmHeight, hdcRef);
 
   DeleteDC(hdcRef);
 }
