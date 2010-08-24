@@ -38,6 +38,7 @@
 #define Script_Sinhala 16
 #define Script_Tibetan 17
 #define Script_Tibetan_Numeric 18
+#define Script_Phags_pa 19
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

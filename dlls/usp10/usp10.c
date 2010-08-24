@@ -100,6 +100,8 @@ static const scriptRange scriptRanges[] = {
     /* Modifier Tone Letters: U+A700–U+A71F */
     /* Latin Extended-D: U+A720–U+A7FF */
     { Script_Latin,      0xa700, 0xa7ff, 0, 0},
+    /* Phags-pa: U+A840–U+A87F */
+    { Script_Phags_pa,   0xa840, 0xa87f, 0, 0},
     /* Latin Ligatures: U+FB00–U+FB06 */
     { Script_Latin,      0xfb00, 0xfb06, 0, 0},
     /* Armenian ligatures U+FB13..U+FB17 */
@@ -160,6 +162,8 @@ static const scriptData scriptInformation[] = {
      {LANG_TIBETAN, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 0}},
     {{Script_Tibetan_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TIBETAN, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+    {{Script_Phags_pa, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_MONGOLIAN, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -173,7 +177,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[12].props, &scriptInformation[13].props,
     &scriptInformation[14].props, &scriptInformation[15].props,
     &scriptInformation[16].props, &scriptInformation[17].props,
-    &scriptInformation[18].props
+    &scriptInformation[18].props, &scriptInformation[19].props
 };
 
 typedef struct {
