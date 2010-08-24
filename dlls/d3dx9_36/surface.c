@@ -27,6 +27,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 
+/* Wine-specific WIC GUIDs */
+
+DEFINE_GUID(GUID_WineContainerFormatTga, 0x0c44fda1,0xa5c5,0x4298,0x96,0x85,0x47,0x3f,0xc1,0x7c,0xd3,0x22);
+
 /************************************************************
  * D3DXGetImageInfoFromFileInMemory
  *
@@ -93,6 +97,9 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(LPCVOID data, UINT datasize, D3D
             } else if(IsEqualGUID(&container_format, &GUID_ContainerFormatJpeg)) {
                 TRACE("File type is JPG\n");
                 info->ImageFileFormat = D3DXIFF_JPG;
+            } else if(IsEqualGUID(&container_format, &GUID_WineContainerFormatTga)) {
+                TRACE("File type is TGA\n");
+                info->ImageFileFormat = D3DXIFF_TGA;
             } else {
                 WARN("Unsupported image file format %s\n", debugstr_guid(&container_format));
                 hr = D3DXERR_INVALIDDATA;
