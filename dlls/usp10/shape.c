@@ -285,6 +285,19 @@ static OPENTYPE_FEATURE_RECORD syriac_features[] =
     { 0x67696c64 /*dlig*/, 1},
 };
 
+static OPENTYPE_FEATURE_RECORD sinhala_features[] =
+{
+    /* Base forms */
+    { 0x6e686b61 /*akhn*/, 1},
+    { 0x66687072 /*rphf*/, 1},
+    { 0x75746176 /*vatu*/, 1},
+    { 0x66747370 /*pstf*/, 1},
+    /* Presentation forms */
+    { 0x73776c62 /*blws*/, 1},
+    { 0x73766261 /*abvs*/, 1},
+    { 0x73747370 /*psts*/, 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES  defaultTextRange;
     CHAR                  otTag[5];
@@ -310,6 +323,7 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, "cyrl", NULL},
     {{ standard_features, 2}, "armn", NULL},
     {{ standard_features, 2}, "geor", NULL},
+    {{ sinhala_features, 7}, "sinh", NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)

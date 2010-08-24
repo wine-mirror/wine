@@ -34,6 +34,8 @@
 #define Script_Cyrillic   13
 #define Script_Armenian 14
 #define Script_Georgian 15
+/* Unicode Chapter 10 */
+#define Script_Sinhala 16
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
