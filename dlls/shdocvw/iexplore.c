@@ -557,7 +557,7 @@ static LRESULT iewnd_OnDestroy(InternetExplorer *This)
     return 0;
 }
 
-static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static LRESULT iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch(LOWORD(wparam))
     {
@@ -600,7 +600,7 @@ static LRESULT CALLBACK iewnd_OnCommand(InternetExplorer *This, HWND hwnd, UINT 
     return 0;
 }
 
-static LRESULT CALLBACK update_addrbar(InternetExplorer *This, LPARAM lparam)
+static LRESULT update_addrbar(InternetExplorer *This, LPARAM lparam)
 {
     HWND hwndRebar = GetDlgItem(This->frame_hwnd, IDC_BROWSE_REBAR);
     HWND hwndAddress = GetDlgItem(hwndRebar, IDC_BROWSE_ADDRESSBAR);
