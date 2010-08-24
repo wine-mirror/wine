@@ -3665,7 +3665,7 @@ static void test_ConnectEx(void)
     buffer[4] = 0;
     ok(bytesReturned == 3, "Didn't get all sent data, got only %d\n", bytesReturned);
     ok(buffer[0] == '1' && buffer[1] == '2' && buffer[2] == '3',
-       "Failed to get the right data, expected '123', got '%s'", buffer);
+       "Failed to get the right data, expected '123', got '%s'\n", buffer);
 
     closesocket(connector);
     connector = socket(AF_INET, SOCK_STREAM, 0);
