@@ -24,7 +24,7 @@
 #include "wine/port.h"
 #include "wine/debug.h"
 
-#include "d3dx9_36_private.h"
+#include "d3dcompiler_private.h"
 
 #include <stdio.h>
 

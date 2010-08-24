@@ -4,13 +4,9 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3dx9_36.dll
 IMPORTLIB = d3dx9
-IMPORTS   = d3d9 ole32 gdi32 user32
-EXTRALIBS = $(LIBWPP)
+IMPORTS   = d3d9 d3dcompiler ole32 gdi32 user32
 
 C_SRCS = \
-	asmparser.c \
-	asmutils.c \
-	bytecodewriter.c \
 	core.c \
 	d3dx9_36_main.c \
 	effect.c \
@@ -24,9 +20,6 @@ C_SRCS = \
 	texture.c \
 	util.c \
 	volume.c
-
-LEX_SRCS = asmshader.l
-BISON_SRCS = asmshader.y
 
 RC_SRCS = version.rc
 
