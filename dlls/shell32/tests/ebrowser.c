@@ -631,12 +631,22 @@ static void test_Advise(void)
 
     ok(ebev.ref == 10, "Got %d\n", ebev.ref);
 
+    ebev.completed = 0;
+    ebrowser_browse_to_desktop(peb);
+    process_msgs();
+    ok(ebev.completed == 10, "Got %d\n", ebev.completed);
+
     /* Remove a bunch somewhere in the middle */
     for(i = 4; i < 8; i++)
     {
         hr = IExplorerBrowser_Unadvise(peb, cookies[i]);
         ok(hr == S_OK, "got (0x%08x)\n", hr);
     }
+
+    ebev.completed = 0;
+    ebrowser_browse_to_desktop(peb);
+    process_msgs();
+    ok(ebev.completed == 6, "Got %d\n", ebev.completed);
 
     if(0)
     {
@@ -656,6 +666,11 @@ static void test_Advise(void)
     }
 
     ok(ebev.ref == 0, "Got %d\n", ebev.ref);
+
+    ebev.completed = 0;
+    ebrowser_browse_to_desktop(peb);
+    process_msgs();
+    ok(ebev.completed == 0, "Got %d\n", ebev.completed);
 
     /* ::Destroy implies ::Unadvise. */
     hr = IExplorerBrowser_Advise(peb, pebe, &cookies[0]);
