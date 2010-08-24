@@ -305,24 +305,21 @@ static WCHAR* utf8_chars_to_wchars(LPCSTR string)
  * FIXME: should not use stdio
  */
 
-static BOOL SaveIconStreamAsPNG(IStream *icoFile, int index, const char *pngFileName, LPCWSTR commentW)
+static HRESULT convert_to_native_icon(IStream *icoFile, int *indeces, int numIndeces,
+                                      const CLSID *outputFormat, const char *outputFileName, LPCWSTR commentW)
 {
-    WCHAR *dosPNGFileName = NULL;
+    WCHAR *dosOutputFileName = NULL;
     IWICImagingFactory *factory = NULL;
     IWICBitmapDecoder *decoder = NULL;
-    IWICBitmapFrameDecode *sourceFrame = NULL;
-    IWICBitmapSource *sourceBitmap = NULL;
     IWICBitmapEncoder *encoder = NULL;
     IStream *outputFile = NULL;
-    IWICBitmapFrameEncode *dstFrame = NULL;
-    IPropertyBag2 *options = NULL;
-    UINT width, height;
+    int i;
     HRESULT hr = E_FAIL;
 
-    dosPNGFileName = wine_get_dos_file_name(pngFileName);
-    if (dosPNGFileName == NULL)
+    dosOutputFileName = wine_get_dos_file_name(outputFileName);
+    if (dosOutputFileName == NULL)
     {
-        WINE_ERR("error converting %s to DOS file name\n", pngFileName);
+        WINE_ERR("error converting %s to DOS file name\n", outputFileName);
         goto end;
     }
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
@@ -339,26 +336,14 @@ static BOOL SaveIconStreamAsPNG(IStream *icoFile, int index, const char *pngFile
         WINE_ERR("error 0x%08X creating IWICBitmapDecoder\n", hr);
         goto end;
     }
-    hr = IWICBitmapDecoder_GetFrame(decoder, index, &sourceFrame);
-    if (FAILED(hr))
-    {
-        WINE_ERR("error 0x%08X getting frame %d\n", hr, index);
-        goto end;
-    }
-    hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)sourceFrame, &sourceBitmap);
-    if (FAILED(hr))
-    {
-        WINE_ERR("error 0x%08X converting bitmap to 32bppBGRA\n", hr);
-        goto end;
-    }
-    hr = CoCreateInstance(&CLSID_WICPngEncoder, NULL, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(outputFormat, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
     if (FAILED(hr))
     {
         WINE_ERR("error 0x%08X creating bitmap encoder\n", hr);
         goto end;
     }
-    hr = SHCreateStreamOnFileW(dosPNGFileName, STGM_CREATE | STGM_WRITE, &outputFile);
+    hr = SHCreateStreamOnFileW(dosOutputFileName, STGM_CREATE | STGM_WRITE, &outputFile);
     if (FAILED(hr))
     {
         WINE_ERR("error 0x%08X creating output file\n", hr);
@@ -370,63 +355,96 @@ static BOOL SaveIconStreamAsPNG(IStream *icoFile, int index, const char *pngFile
         WINE_ERR("error 0x%08X initializing encoder\n", hr);
         goto end;
     }
-    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &dstFrame, &options);
+
+    for (i = 0; i < numIndeces; i++)
+    {
+        IWICBitmapFrameDecode *sourceFrame = NULL;
+        IWICBitmapSource *sourceBitmap = NULL;
+        IWICBitmapFrameEncode *dstFrame = NULL;
+        IPropertyBag2 *options = NULL;
+        UINT width, height;
+
+        hr = IWICBitmapDecoder_GetFrame(decoder, indeces[i], &sourceFrame);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X getting frame %d\n", hr, indeces[i]);
+            goto endloop;
+        }
+        hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)sourceFrame, &sourceBitmap);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X converting bitmap to 32bppBGRA\n", hr);
+            goto endloop;
+        }
+        hr = IWICBitmapEncoder_CreateNewFrame(encoder, &dstFrame, &options);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X creating encoder frame\n", hr);
+            goto endloop;
+        }
+        hr = IWICBitmapFrameEncode_Initialize(dstFrame, options);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X initializing encoder frame\n", hr);
+            goto endloop;
+        }
+        hr = IWICBitmapSource_GetSize(sourceBitmap, &width, &height);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X getting source bitmap size\n", hr);
+            goto endloop;
+        }
+        hr = IWICBitmapFrameEncode_SetSize(dstFrame, width, height);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X setting destination bitmap size\n", hr);
+            goto endloop;
+        }
+        hr = IWICBitmapFrameEncode_SetResolution(dstFrame, 96, 96);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X setting destination bitmap resolution\n", hr);
+            goto endloop;
+        }
+        hr = IWICBitmapFrameEncode_WriteSource(dstFrame, sourceBitmap, NULL);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X copying bitmaps\n", hr);
+            goto endloop;
+        }
+        hr = IWICBitmapFrameEncode_Commit(dstFrame);
+        if (FAILED(hr))
+        {
+            WINE_ERR("error 0x%08X committing frame\n", hr);
+            goto endloop;
+        }
+    endloop:
+        if (sourceFrame)
+            IWICBitmapFrameDecode_Release(sourceFrame);
+        if (sourceBitmap)
+            IWICBitmapSource_Release(sourceBitmap);
+        if (dstFrame)
+            IWICBitmapFrameEncode_Release(dstFrame);
+    }
+
+    hr = IWICBitmapEncoder_Commit(encoder);
     if (FAILED(hr))
     {
-        WINE_ERR("error 0x%08X creating encoder frame\n", hr);
+        WINE_ERR("error 0x%08X committing encoder\n", hr);
         goto end;
     }
-    hr = IWICBitmapFrameEncode_Initialize(dstFrame, options);
-    if (FAILED(hr))
-    {
-        WINE_ERR("error 0x%08X initializing encoder frame\n", hr);
-        goto end;
-    }
-    hr = IWICBitmapSource_GetSize(sourceBitmap, &width, &height);
-    if (FAILED(hr))
-    {
-        WINE_ERR("error 0x%08X getting source bitmap size\n", hr);
-        goto end;
-    }
-    hr = IWICBitmapFrameEncode_SetSize(dstFrame, width, height);
-    if (FAILED(hr))
-    {
-        WINE_ERR("error 0x%08X setting destination bitmap size\n", hr);
-        goto end;
-    }
-    hr = IWICBitmapFrameEncode_SetResolution(dstFrame, 96, 96);
-    if (FAILED(hr))
-    {
-        WINE_ERR("error 0x%08X setting destination bitmap resolution\n", hr);
-        goto end;
-    }
-    hr = IWICBitmapFrameEncode_WriteSource(dstFrame, sourceBitmap, NULL);
-    if (FAILED(hr))
-    {
-        WINE_ERR("error 0x%08X copying bitmaps\n", hr);
-        goto end;
-    }
-    IWICBitmapFrameEncode_Commit(dstFrame);
-    IWICBitmapEncoder_Commit(encoder);
-    hr = S_OK;
 
 end:
-    HeapFree(GetProcessHeap(), 0, dosPNGFileName);
+    HeapFree(GetProcessHeap(), 0, dosOutputFileName);
     if (factory)
         IWICImagingFactory_Release(factory);
     if (decoder)
         IWICBitmapDecoder_Release(decoder);
-    if (sourceFrame)
-        IWICBitmapFrameDecode_Release(sourceFrame);
-    if (sourceBitmap)
-        IWICBitmapSource_Release(sourceBitmap);
     if (encoder)
         IWICBitmapEncoder_Release(encoder);
     if (outputFile)
         IStream_Release(outputFile);
-    if (dstFrame)
-        IWICBitmapFrameEncode_Release(dstFrame);
-    return SUCCEEDED(hr);
+    return hr;
 }
 
 static IStream *add_module_icons_to_stream(HMODULE hModule, GRPICONDIR *grpIconDir)
@@ -679,12 +697,7 @@ static HRESULT write_native_icon(IStream *iconStream, const char *icon_name, LPC
     hr = IStream_Seek(iconStream, position, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
         goto end;
-    if (!SaveIconStreamAsPNG(iconStream, nIndex, icon_name, szFileName))
-    {
-        hr = E_FAIL;
-        goto end;
-    }
-    hr = S_OK;
+    hr = convert_to_native_icon(iconStream, &nIndex, 1, &CLSID_WICPngEncoder, icon_name, szFileName);
 
 end:
     HeapFree(GetProcessHeap(), 0, pIcon);
