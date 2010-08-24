@@ -1,8 +1,11 @@
 @ stub ??0Iostream_init@@QAE@AAVios@@H@Z  # __thiscall Iostream_init::Iostream_init(class ios &,int)
 @ stub ??0Iostream_init@@QAE@XZ  # __thiscall Iostream_init::Iostream_init(void)
-@ thiscall -arch=win32 ??0exception@@QAE@ABQBD@Z(ptr ptr) msvcrt.??0exception@@QAE@ABQBD@Z  # __thiscall exception::exception(char const * const &)
-@ thiscall -arch=win32 ??0exception@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0exception@@QAE@ABV0@@Z  # __thiscall exception::exception(class exception const &)
-@ thiscall -arch=win32 ??0exception@@QAE@XZ(ptr) msvcrt.??0exception@@QAE@XZ  # __thiscall exception::exception(void)
+@ thiscall -arch=win32 ??0exception@@QAE@ABQBD@Z(ptr ptr) msvcrt.??0exception@@QAE@ABQBD@Z
+@ cdecl -arch=win64 ??0exception@@QEAA@AEBQEBD@Z(ptr ptr) msvcrt.??0exception@@QEAA@AEBQEBD@Z
+@ thiscall -arch=win32 ??0exception@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0exception@@QAE@ABV0@@Z
+@ cdecl -arch=win64 ??0exception@@QEAA@AEBV0@@Z(ptr ptr) msvcrt.??0exception@@QEAA@AEBV0@@Z
+@ thiscall -arch=win32 ??0exception@@QAE@XZ(ptr) msvcrt.??0exception@@QAE@XZ
+@ cdecl -arch=win64 ??0exception@@QEAA@XZ(ptr) msvcrt.??0exception@@QEAA@XZ
 @ stub ??0filebuf@@QAE@ABV0@@Z  # __thiscall filebuf::filebuf(class filebuf const &)
 @ stub ??0filebuf@@QAE@H@Z  # __thiscall filebuf::filebuf(int)
 @ stub ??0filebuf@@QAE@HPADH@Z  # __thiscall filebuf::filebuf(int,char *,int)
@@ -65,7 +68,8 @@
 @ stub ??0strstreambuf@@QAE@PAEH0@Z  # __thiscall strstreambuf::strstreambuf(unsigned char *,int,unsigned char *)
 @ stub ??0strstreambuf@@QAE@XZ  # __thiscall strstreambuf::strstreambuf(void)
 @ stub ??1Iostream_init@@QAE@XZ  # __thiscall Iostream_init::~Iostream_init(void)
-@ thiscall -arch=win32 ??1exception@@UAE@XZ(ptr) msvcrt.??1exception@@UAE@XZ  # virtual __thiscall exception::~exception(void)
+@ thiscall -arch=win32 ??1exception@@UAE@XZ(ptr) msvcrt.??1exception@@UAE@XZ
+@ cdecl -arch=win64 ??1exception@@UEAA@XZ(ptr) msvcrt.??1exception@@UEAA@XZ
 @ stub ??1filebuf@@UAE@XZ  # virtual __thiscall filebuf::~filebuf(void)
 @ stub ??1fstream@@UAE@XZ  # virtual __thiscall fstream::~fstream(void)
 @ stub ??1ifstream@@UAE@XZ  # virtual __thiscall ifstream::~ifstream(void)
@@ -85,7 +89,8 @@
 @ stub ??1strstream@@UAE@XZ  # virtual __thiscall strstream::~strstream(void)
 @ stub ??1strstreambuf@@UAE@XZ  # virtual __thiscall strstreambuf::~strstreambuf(void)
 @ stub ??4Iostream_init@@QAEAAV0@ABV0@@Z  # class Iostream_init & __thiscall Iostream_init::operator=(class Iostream_init const &)
-@ thiscall -arch=win32 ??4exception@@QAEAAV0@ABV0@@Z(ptr ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z  # class exception & __thiscall exception::operator=(class exception const &)
+@ thiscall -arch=win32 ??4exception@@QAEAAV0@ABV0@@Z(ptr ptr) msvcrt.??4exception@@QAEAAV0@ABV0@@Z
+@ cdecl -arch=win64 ??4exception@@QEAAAEAV0@AEBV0@@Z(ptr ptr) msvcrt.??4exception@@QEAAAEAV0@AEBV0@@Z
 @ stub ??4filebuf@@QAEAAV0@ABV0@@Z  # class filebuf & __thiscall filebuf::operator=(class filebuf const &)
 @ stub ??4fstream@@QAEAAV0@AAV0@@Z  # class fstream & __thiscall fstream::operator=(class fstream &)
 @ stub ??4ifstream@@QAEAAV0@ABV0@@Z  # class ifstream & __thiscall ifstream::operator=(class ifstream const &)
@@ -150,7 +155,7 @@
 @ stub ??6ostream@@QAEAAV0@PBX@Z  # class ostream & __thiscall ostream::operator<<(void const *)
 @ stub ??7ios@@QBEHXZ  # int __thiscall ios::operator!(void)const 
 @ stub ??Bios@@QBEPAXXZ  # __thiscall ios::operator void *(void)const 
-@ extern -arch=win32 ??_7exception@@6B@ msvcrt.??_7exception@@6B@  # const exception::`vftable'
+@ extern ??_7exception@@6B@ msvcrt.??_7exception@@6B@
 # @ extern ??_7filebuf@@6B@  # const filebuf::`vftable'
 # @ extern ??_7fstream@@6B@  # const fstream::`vftable'
 # @ extern ??_7ifstream@@6B@  # const ifstream::`vftable'
@@ -425,7 +430,8 @@
 @ stub ?unlockbuf@ios@@QAAXXZ  # void __cdecl ios::unlockbuf(void)
 @ stub ?unlockc@ios@@KAXXZ  # static void __cdecl ios::unlockc(void)
 @ stub ?unsetf@ios@@QAEJJ@Z  # long __thiscall ios::unsetf(long)
-@ thiscall -arch=win32 ?what@exception@@UBEPBDXZ(ptr) msvcrt.?what@exception@@UBEPBDXZ  # virtual char const * __thiscall exception::what(void)const
+@ thiscall -arch=win32 ?what@exception@@UBEPBDXZ(ptr) msvcrt.?what@exception@@UBEPBDXZ
+@ cdecl -arch=win64 ?what@exception@@UEBAPEBDXZ(ptr) msvcrt.?what@exception@@UEBAPEBDXZ
 @ stub ?width@ios@@QAEHH@Z  # int __thiscall ios::width(int)
 @ stub ?width@ios@@QBEHXZ  # int __thiscall ios::width(void)const 
 @ stub ?write@ostream@@QAEAAV1@PBCH@Z  # class ostream & __thiscall ostream::write(signed char const *,int)
