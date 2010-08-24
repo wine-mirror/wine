@@ -2142,25 +2142,16 @@ static const IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContai
  * OleCreatePictureIndirect (OLEAUT32.419)
  */
 HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
-		            BOOL fOwn, LPVOID *ppvObj )
+		            BOOL Own, void **ppvObj )
 {
   OLEPictureImpl* newPict;
   HRESULT hr;
 
-  TRACE("(%p,%s,%d,%p)\n", lpPictDesc, debugstr_guid(riid), fOwn, ppvObj);
-
-  /*
-   * Sanity check
-   */
-  if (ppvObj==0)
-    return E_POINTER;
+  TRACE("(%p,%s,%d,%p)\n", lpPictDesc, debugstr_guid(riid), Own, ppvObj);
 
   *ppvObj = NULL;
 
-  /*
-   * Try to construct a new instance of the class.
-   */
-  newPict = OLEPictureImpl_Construct(lpPictDesc, fOwn);
+  newPict = OLEPictureImpl_Construct(lpPictDesc, Own);
 
   if (newPict == NULL)
     return E_OUTOFMEMORY;

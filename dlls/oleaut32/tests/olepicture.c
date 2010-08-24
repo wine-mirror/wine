@@ -481,10 +481,10 @@ static void test_Invoke(void)
 
 static void test_OleCreatePictureIndirect(void)
 {
+    OLE_HANDLE handle;
     IPicture *pict;
     HRESULT hr;
     short type;
-    OLE_HANDLE handle;
 
     if(!pOleCreatePictureIndirect)
     {
@@ -492,13 +492,21 @@ static void test_OleCreatePictureIndirect(void)
         return;
     }
 
+if (0)
+{
+    /* crashes on native */
+    hr = pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, NULL);
+}
+
     hr = pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void**)&pict);
     ok(hr == S_OK, "hr %08x\n", hr);
 
+    type = PICTYPE_NONE;
     hr = IPicture_get_Type(pict, &type);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(type == PICTYPE_UNINITIALIZED, "type %d\n", type);
 
+    handle = 0xdeadbeef;
     hr = IPicture_get_Handle(pict, &handle);
     ok(hr == S_OK, "hr %08x\n", hr);
     ok(handle == 0, "handle %08x\n", handle);
