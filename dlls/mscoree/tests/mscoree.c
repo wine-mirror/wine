@@ -51,10 +51,10 @@ static void test_versioninfo(void)
     HRESULT hr;
 
     hr =  pGetCORVersion(NULL, MAX_PATH, &size);
-    todo_wine ok(hr == E_POINTER,"GetCORVersion returned %08x\n", hr);
+    ok(hr == E_POINTER,"GetCORVersion returned %08x\n", hr);
 
     hr =  pGetCORVersion(version, 1, &size);
-    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),"GetCORVersion returned %08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),"GetCORVersion returned %08x\n", hr);
 
     hr =  pGetCORVersion(version, MAX_PATH, &size);
     ok(hr == S_OK,"GetCORVersion returned %08x\n", hr);

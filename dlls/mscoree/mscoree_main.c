@@ -348,20 +348,19 @@ HRESULT WINAPI GetCORSystemDirectory(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwL
 
 HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
 {
-    static const WCHAR version[] = {'v','1','.','1','.','4','3','2','2',0};
+    static const WCHAR version[] = {'v','2','.','0','.','5','0','7','2','7',0};
 
     FIXME("(%p, %d, %p): semi-stub!\n", pbuffer, cchBuffer, dwLength);
 
-    if (!dwLength)
+    if (!dwLength || !pbuffer)
         return E_POINTER;
 
     *dwLength = lstrlenW(version);
 
     if (cchBuffer < *dwLength)
-        return ERROR_INSUFFICIENT_BUFFER;
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
-    if (pbuffer)
-        lstrcpyW(pbuffer, version);
+    lstrcpyW(pbuffer, version);
 
     return S_OK;
 }
