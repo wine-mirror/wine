@@ -3589,7 +3589,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         /* After a ConnectEx call succeeds, the socket can't be used with half of the
          * normal winsock functions on windows. We don't have that problem. */
         case WS_SO_UPDATE_CONNECT_CONTEXT:
-            TRACE("Ignoring SO_UPDATE_CONNECT_CONTEXT, since our sockets are normal");
+            TRACE("Ignoring SO_UPDATE_CONNECT_CONTEXT, since our sockets are normal\n");
             return 0;
 
         /* SO_OPENTYPE does not require a valid socket handle. */
