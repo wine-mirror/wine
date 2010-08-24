@@ -56,6 +56,13 @@ static HRESULT ebrowser_initialize(IExplorerBrowser *peb)
     return IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
 }
 
+static HRESULT ebrowser_browse_to_desktop(IExplorerBrowser *peb)
+{
+    LPITEMIDLIST pidl_desktop;
+    SHGetSpecialFolderLocation (hwnd, CSIDL_DESKTOP, &pidl_desktop);
+    return IExplorerBrowser_BrowseToIDList(peb, pidl_desktop, 0);
+}
+
 /* Process some messages */
 static void process_msgs(void)
 {
@@ -313,6 +320,26 @@ static void test_SB_misc(void)
 
     hr = IShellBrowser_QueryActiveShellView(psb, (IShellView**)&punk);
     ok(hr == E_FAIL, "got (0x%08x)\n", hr);
+
+    IShellBrowser_Release(psb);
+    IExplorerBrowser_Destroy(peb);
+    IExplorerBrowser_Release(peb);
+
+    /* Browse to the desktop. */
+    ebrowser_instantiate(&peb);
+    ebrowser_initialize(peb);
+    IExplorerBrowser_QueryInterface(peb, &IID_IShellBrowser, (void**)&psb);
+
+    process_msgs();
+    hr = ebrowser_browse_to_desktop(peb);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    process_msgs();
+
+    /****** After Browsing *****/
+
+    hr = IShellBrowser_QueryActiveShellView(psb, (IShellView**)&punk);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     IShellBrowser_Release(psb);
     IExplorerBrowser_Destroy(peb);
@@ -884,6 +911,62 @@ static void test_navigation(void)
     ILFree(pidl_child);
 }
 
+static void test_GetCurrentView(void)
+{
+    IExplorerBrowser *peb;
+    IUnknown *punk;
+    HRESULT hr;
+
+    /* GetCurrentView */
+    ebrowser_instantiate(&peb);
+
+    if(0)
+    {
+        /* Crashes under Windows 7 */
+        hr = IExplorerBrowser_GetCurrentView(peb, NULL, NULL);
+    }
+    hr = IExplorerBrowser_GetCurrentView(peb, NULL, (void**)&punk);
+    ok(hr == E_FAIL, "Got 0x%08x\n", hr);
+
+#define test_gcv(iid, exp)                                              \
+    do {                                                                \
+        hr = IExplorerBrowser_GetCurrentView(peb, &iid, (void**)&punk); \
+        ok(hr == exp, "(%s:)Expected (0x%08x), got: (0x%08x)\n",        \
+           #iid ,exp, hr);                                              \
+        if(SUCCEEDED(hr)) IUnknown_Release(punk);                       \
+    } while(0)
+
+    test_gcv(IID_IUnknown, E_FAIL);
+    test_gcv(IID_IUnknown, E_FAIL);
+    test_gcv(IID_IShellView, E_FAIL);
+    test_gcv(IID_IShellView2, E_FAIL);
+    test_gcv(IID_IFolderView, E_FAIL);
+    test_gcv(IID_IPersistFolder, E_FAIL);
+    test_gcv(IID_IPersistFolder2, E_FAIL);
+    test_gcv(IID_ICommDlgBrowser, E_FAIL);
+    test_gcv(IID_ICommDlgBrowser2, E_FAIL);
+    test_gcv(IID_ICommDlgBrowser3, E_FAIL);
+
+    ebrowser_initialize(peb);
+    ebrowser_browse_to_desktop(peb);
+
+    test_gcv(IID_IUnknown, S_OK);
+    test_gcv(IID_IUnknown, S_OK);
+    test_gcv(IID_IShellView, S_OK);
+    test_gcv(IID_IShellView2, S_OK);
+    test_gcv(IID_IFolderView, S_OK);
+    todo_wine test_gcv(IID_IPersistFolder, S_OK);
+    test_gcv(IID_IPersistFolder2, E_NOINTERFACE);
+    test_gcv(IID_ICommDlgBrowser, E_NOINTERFACE);
+    test_gcv(IID_ICommDlgBrowser2, E_NOINTERFACE);
+    test_gcv(IID_ICommDlgBrowser3, E_NOINTERFACE);
+
+#undef test_gcv
+
+    IExplorerBrowser_Destroy(peb);
+    IExplorerBrowser_Release(peb);
+}
+
 static BOOL test_instantiate_control(void)
 {
     IExplorerBrowser *peb;
@@ -933,6 +1016,7 @@ START_TEST(ebrowser)
     test_basics();
     test_Advise();
     test_navigation();
+    test_GetCurrentView();
 
     DestroyWindow(hwnd);
     OleUninitialize();
