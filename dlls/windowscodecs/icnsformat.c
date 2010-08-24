@@ -82,6 +82,7 @@ typedef struct IcnsEncoder {
     icns_family_t *icns_family;
     BOOL any_frame_committed;
     int outstanding_commits;
+    BOOL committed;
     CRITICAL_SECTION lock;
 } IcnsEncoder;
 
@@ -688,9 +689,44 @@ end:
 
 static HRESULT WINAPI IcnsEncoder_Commit(IWICBitmapEncoder *iface)
 {
-    FIXME("(%p): stub\n", iface);
+    IcnsEncoder *This = (IcnsEncoder*)iface;
+    icns_byte_t *buffer = NULL;
+    icns_size_t buffer_size;
+    int ret;
+    HRESULT hr = S_OK;
+    ULONG byteswritten;
 
-    return E_NOTIMPL;
+    TRACE("(%p)\n", iface);
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->any_frame_committed || This->outstanding_commits > 0 || This->committed)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    ret = picns_export_family_data(This->icns_family, &buffer_size, &buffer);
+    if (ret != ICNS_STATUS_OK)
+    {
+        WARN("icns_export_family_data failed with error %d\n", ret);
+        hr = E_FAIL;
+        goto end;
+    }
+    hr = IStream_Write(This->stream, buffer, buffer_size, &byteswritten);
+    if (FAILED(hr) || byteswritten != buffer_size)
+    {
+        WARN("writing file failed, hr = 0x%08X\n", hr);
+        hr = E_FAIL;
+        goto end;
+    }
+
+    This->committed = TRUE;
+
+end:
+    LeaveCriticalSection(&This->lock);
+    free(buffer);
+    return hr;
 }
 
 static HRESULT WINAPI IcnsEncoder_GetMetadataQueryWriter(IWICBitmapEncoder *iface,
@@ -742,6 +778,7 @@ HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->icns_family = NULL;
     This->any_frame_committed = FALSE;
     This->outstanding_commits = 0;
+    This->committed = FALSE;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IcnsEncoder.lock");
 
