@@ -2901,8 +2901,8 @@ static void test_SHGetItemFromObject(void)
     if(0)
     {
         /* Crashes with Windows 7 */
-        hres = pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IUnknown, (void**)NULL);
-        hres = pSHGetItemFromObject(NULL, &IID_IUnknown, (void**)NULL);
+        hres = pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IUnknown, NULL);
+        hres = pSHGetItemFromObject(NULL, &IID_IUnknown, NULL);
         hres = pSHGetItemFromObject((IUnknown*)psfdesktop, NULL, (void**)&punk);
     }
 
