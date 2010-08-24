@@ -169,6 +169,27 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWOR
     return D3D_OK;
 }
 
+static const UINT d3dx_decltype_size[D3DDECLTYPE_UNUSED] =
+{
+   /* D3DDECLTYPE_FLOAT1    */ 1 * 4,
+   /* D3DDECLTYPE_FLOAT2    */ 2 * 4,
+   /* D3DDECLTYPE_FLOAT3    */ 3 * 4,
+   /* D3DDECLTYPE_FLOAT4    */ 4 * 4,
+   /* D3DDECLTYPE_D3DCOLOR  */ 4 * 1,
+   /* D3DDECLTYPE_UBYTE4    */ 4 * 1,
+   /* D3DDECLTYPE_SHORT2    */ 2 * 2,
+   /* D3DDECLTYPE_SHORT4    */ 4 * 2,
+   /* D3DDECLTYPE_UBYTE4N   */ 4 * 1,
+   /* D3DDECLTYPE_SHORT2N   */ 2 * 2,
+   /* D3DDECLTYPE_SHORT4N   */ 4 * 2,
+   /* D3DDECLTYPE_USHORT2N  */ 2 * 2,
+   /* D3DDECLTYPE_USHORT4N  */ 4 * 2,
+   /* D3DDECLTYPE_UDEC3     */ 4, /* 3 * 10 bits + 2 padding */
+   /* D3DDECLTYPE_DEC3N     */ 4,
+   /* D3DDECLTYPE_FLOAT16_2 */ 2 * 2,
+   /* D3DDECLTYPE_FLOAT16_4 */ 4 * 2,
+};
+
 /*************************************************************************
  * D3DXDeclaratorFromFVF
  */
@@ -246,31 +267,13 @@ UINT WINAPI D3DXGetDeclVertexSize(const D3DVERTEXELEMENT9 *decl, DWORD stream_id
 
         if (element->Stream != stream_idx) continue;
 
-        switch (element->Type)
+        if (element->Type >= sizeof(d3dx_decltype_size) / sizeof(*d3dx_decltype_size))
         {
-            case D3DDECLTYPE_FLOAT1: type_size = 1 * 4; break;
-            case D3DDECLTYPE_FLOAT2: type_size = 2 * 4; break;
-            case D3DDECLTYPE_FLOAT3: type_size = 3 * 4; break;
-            case D3DDECLTYPE_FLOAT4: type_size = 4 * 4; break;
-            case D3DDECLTYPE_D3DCOLOR: type_size = 4 * 1; break;
-            case D3DDECLTYPE_UBYTE4: type_size = 4 * 1; break;
-            case D3DDECLTYPE_SHORT2: type_size = 2 * 2; break;
-            case D3DDECLTYPE_SHORT4: type_size = 4 * 2; break;
-            case D3DDECLTYPE_UBYTE4N: type_size = 4 * 1; break;
-            case D3DDECLTYPE_SHORT2N: type_size = 2 * 2; break;
-            case D3DDECLTYPE_SHORT4N: type_size = 4 * 2; break;
-            case D3DDECLTYPE_USHORT2N: type_size = 2 * 2; break;
-            case D3DDECLTYPE_USHORT4N: type_size = 4 * 2; break;
-            case D3DDECLTYPE_UDEC3: type_size = 4; break; /* 3 * 10 bits + 2 padding */
-            case D3DDECLTYPE_DEC3N: type_size = 4; break;
-            case D3DDECLTYPE_FLOAT16_2: type_size = 2 * 2; break;
-            case D3DDECLTYPE_FLOAT16_4: type_size = 4 * 2; break;
-            default:
-                FIXME("Unhandled element type %#x, size will be incorrect.\n", element->Type);
-                type_size = 0;
-                break;
+            FIXME("Unhandled element type %#x, size will be incorrect.\n", element->Type);
+            continue;
         }
 
+        type_size = d3dx_decltype_size[element->Type];
         if (element->Offset + type_size > size) size = element->Offset + type_size;
     }
 
