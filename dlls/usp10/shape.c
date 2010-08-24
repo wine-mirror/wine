@@ -298,6 +298,12 @@ static OPENTYPE_FEATURE_RECORD sinhala_features[] =
     { 0x73747370 /*psts*/, 1},
 };
 
+static OPENTYPE_FEATURE_RECORD tibetan_features[] =
+{
+    { 0x73766261 /*abvs*/, 1},
+    { 0x73776c62 /*blws*/, 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES  defaultTextRange;
     CHAR                  otTag[5];
@@ -324,6 +330,8 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, "armn", NULL},
     {{ standard_features, 2}, "geor", NULL},
     {{ sinhala_features, 7}, "sinh", NULL},
+    {{ tibetan_features, 2}, "tibt", NULL},
+    {{ tibetan_features, 2}, "tibt", NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)

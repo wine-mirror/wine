@@ -36,6 +36,8 @@
 #define Script_Georgian 15
 /* Unicode Chapter 10 */
 #define Script_Sinhala 16
+#define Script_Tibetan 17
+#define Script_Tibetan_Numeric 18
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
