@@ -294,7 +294,7 @@ static void test_TypeComp(void)
     ITypeInfo_ReleaseFuncDesc(pTypeInfo, bindptr.lpfuncdesc);
     ITypeInfo_Release(pTypeInfo);
 
-    /* tests non-existent members */
+    /* tests nonexistent members */
     desckind = 0xdeadbeef;
     bindptr.lptcomp = (ITypeComp*)0xdeadbeef;
     pTypeInfo = (ITypeInfo*)0xdeadbeef;

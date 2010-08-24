@@ -662,7 +662,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Windows uses the first occurence of ':' to delimit the userinfo. */
+    /* Windows uses the first occurrence of ':' to delimit the userinfo. */
     {   "ftp://user:pass:word@winehq.org/", 0, S_OK, FALSE,
         Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
         Uri_HAS_HOST|Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|
@@ -1414,7 +1414,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Valid URI since the '[' and ']' don't appear at the begining and end
+    /* Valid URI since the '[' and ']' don't appear at the beginning and end
      * of the host name (respectively).
      */
     {   "ftp://www.[works].com/", 0, S_OK, FALSE,

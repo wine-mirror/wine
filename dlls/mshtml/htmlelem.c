@@ -1718,7 +1718,7 @@ HTMLElement *HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL 
     return ret;
 }
 
-/* interaface IHTMLFiltersCollection */
+/* interface IHTMLFiltersCollection */
 static HRESULT WINAPI HTMLFiltersCollection_QueryInterface(IHTMLFiltersCollection *iface, REFIID riid, void **ppv)
 {
     HTMLFiltersCollection *This = HTMLFILTERSCOLLECTION_THIS(iface);

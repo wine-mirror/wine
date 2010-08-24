@@ -3566,7 +3566,7 @@ static void test_GetUIObject(void)
                     ZeroMemory(&cmi, sizeof(CMINVOKECOMMANDINFO));
                     cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
 
-                    /* Attempt to execute non-existing command */
+                    /* Attempt to execute a nonexistent command */
                     cmi.lpVerb = MAKEINTRESOURCEA(9999);
                     hr = IContextMenu_InvokeCommand(pcm, &cmi);
                     ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);

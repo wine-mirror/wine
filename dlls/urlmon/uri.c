@@ -463,7 +463,7 @@ static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
     dest[2] = hexDigits[val & 0xf];
 }
 
-/* Scans the range of characters [str, end] and returns the last occurence
+/* Scans the range of characters [str, end] and returns the last occurrence
  * of 'ch' or returns NULL.
  */
 static const WCHAR *str_last_of(const WCHAR *str, const WCHAR *end, WCHAR ch) {
@@ -533,7 +533,7 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
                     return;
             }
         } else if(last_tld-host < 3)
-            /* Anything less then 3 characters is considered part
+            /* Anything less than 3 characters is considered part
              * of the TLD name.
              *  Ex: ak.uk -> Has no domain name.
              */
@@ -542,7 +542,7 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
         /* Otherwise the domain name is the whole host name. */
         *domain_start = 0;
     } else if(end+1-last_tld > 3) {
-        /* If the last_tld has more then 3 characters then it's automatically
+        /* If the last_tld has more than 3 characters, then it's automatically
          * considered the TLD of the domain name.
          *  Ex: www.winehq.org.uk.test -> uk.test as the domain name.
          */
@@ -572,7 +572,7 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
 
             *domain_start = (sec_last_tld+1)-host;
         } else {
-            /* Since the sec_last_tld is less then 3 characters it's considered
+            /* Since the sec_last_tld is less than 3 characters it's considered
              * part of the TLD.
              *  Ex: www.google.fo.uk -> google.fo.uk as the domain name.
              */
@@ -584,7 +584,7 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
                 *domain_start = (domain+1) - host;
         }
     } else {
-        /* The second to last TLD has more then 3 characters making it
+        /* The second to last TLD has more than 3 characters making it
          * the domain name.
          *  Ex: www.google.test.us -> test.us as the domain name.
          */
@@ -595,7 +595,7 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
                                         (host+host_len)-(host+*domain_start)));
 }
 
-/* Removes the dot segments from a heirarchical URIs path component. This
+/* Removes the dot segments from a hierarchical URIs path component. This
  * function performs the removal in place.
  *
  * This is a modified version of Qt's QUrl function "removeDotsFromPath".
@@ -719,7 +719,7 @@ static void compute_elision_location(const ipv6_address *address, const USHORT v
 
         if(is_end || values[i] != 0) {
             /* We only consider it for an elision if it's
-             * more then 1 component long.
+             * more than 1 component long.
              */
             if(cur_len > 1 && cur_len > max_len) {
                 /* Found the new elision location. */
@@ -1190,7 +1190,7 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
  *
  * NOTES:
  *  1)  If there is more than one ':' in the userinfo part of the URI Windows
- *      uses the first occurence of ':' to delimit the username and password
+ *      uses the first occurrence of ':' to delimit the username and password
  *      components.
  *
  *      ex:
@@ -1484,7 +1484,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
         BOOL is_split = (**ptr == ':');
         BOOL is_elision = (is_split && !is_end && *(*ptr+1) == ':');
 
-        /* Check if we're at the end of of the a component, or
+        /* Check if we're at the end of a component, or
          * if we're at the end of the IPv6 address.
          */
         if(is_split || is_end) {
@@ -1509,7 +1509,7 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data, DWORD flags) 
                 if(!((*ptr == start && is_elision) ||
                     (is_end && (*ptr-2) == ip.elision))) {
                     *ptr = start;
-                    TRACE("(%p %p %x): IPv6 component can not have a length of 0.\n",
+                    TRACE("(%p %p %x): IPv6 component cannot have a length of 0.\n",
                         ptr, data, flags);
                     return FALSE;
                 }
@@ -1621,7 +1621,7 @@ static BOOL parse_ipvfuture(const WCHAR **ptr, parse_data *data, DWORD flags) {
     if(**ptr != 'v' && **ptr != 'V')
         return FALSE;
 
-    /* Following the v their must be atleast 1 hexdigit. */
+    /* Following the v there must be at least 1 hex digit. */
     ++(*ptr);
     if(!is_hexdigit(**ptr)) {
         *ptr = start;
