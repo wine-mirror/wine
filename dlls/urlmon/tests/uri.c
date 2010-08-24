@@ -3572,6 +3572,61 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* Doesn't have an absolute since it's opaque, but gets it port set. */
+    {   "http:test.com/index.html", 0, S_OK, FALSE,
+        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
+        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http:test.com/index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"test.com/index.html",S_OK,FALSE},
+            {"test.com/index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http:test.com/index.html",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "ftp:test.com/index.html", 0, S_OK, FALSE,
+        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
+        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp:test.com/index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"test.com/index.html",S_OK,FALSE},
+            {"test.com/index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp:test.com/index.html",S_OK,FALSE},
+            {"ftp",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {21,S_OK,FALSE},
+            {URL_SCHEME_FTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 

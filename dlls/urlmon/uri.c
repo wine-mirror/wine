@@ -2841,11 +2841,23 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         uri->authority_len = 0;
         uri->domain_offset = -1;
 
-        if(is_hierarchical_scheme(data->scheme_type))
+        if(is_hierarchical_scheme(data->scheme_type)) {
+            DWORD i;
+
             /* Absolute URIs aren't displayed for known scheme types
              * which should be hierarchical URIs.
              */
             uri->display_absolute = FALSE;
+
+            /* Windows also sets the port for these (if they have one). */
+            for(i = 0; i < sizeof(default_ports)/sizeof(default_ports[0]); ++i) {
+                if(data->scheme_type == default_ports[i].scheme) {
+                    uri->has_port = TRUE;
+                    uri->port = default_ports[i].port;
+                    break;
+                }
+            }
+        }
 
         if(!canonicalize_path_opaque(data, uri, flags, computeOnly))
             return FALSE;
@@ -3817,10 +3829,10 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
             *pdwProperties |= Uri_HAS_HOST;
         if(This->domain_offset > -1)
             *pdwProperties |= Uri_HAS_DOMAIN;
-        if(This->has_port)
-            *pdwProperties |= Uri_HAS_PORT;
     }
 
+    if(This->has_port)
+        *pdwProperties |= Uri_HAS_PORT;
     if(This->path_start > -1)
         *pdwProperties |= Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY;
     if(This->query_start > -1)
