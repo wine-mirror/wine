@@ -3357,6 +3357,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *device = dst_surface->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
     RECT dst_rect, src_rect;
 
@@ -3561,7 +3562,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
          * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
          * backends.
          */
-        if (fbo_blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+        if (fbo_blit_supported(gl_info, BLIT_OP_BLIT,
                 &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format_desc,
                 &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format_desc))
         {
@@ -3603,7 +3604,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
 
         if (!(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-                && fbo_blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+                && fbo_blit_supported(gl_info, BLIT_OP_BLIT,
                         &src_rect, src_surface->resource.usage, src_surface->resource.pool,
                         src_surface->resource.format_desc,
                         &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
@@ -3620,7 +3621,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         }
 
         if (!(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-                && arbfp_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+                && arbfp_blit.blit_supported(gl_info, BLIT_OP_BLIT,
                         &src_rect, src_surface->resource.usage, src_surface->resource.pool,
                         src_surface->resource.format_desc,
                         &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
@@ -3657,7 +3658,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         if (dstSwapchain && dst_surface == dstSwapchain->front_buffer)
             surface_translate_frontbuffer_coords(dst_surface, context->win_handle, &dst_rect);
 
-        if (!device->blitter->blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+        if (!device->blitter->blit_supported(gl_info, BLIT_OP_BLIT,
                 &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format_desc,
                 &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format_desc))
         {
@@ -3733,14 +3734,14 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             if (!surface_convert_color_to_float(dst_surface, DDBltFx->u5.dwFillColor, &color))
                 return WINED3DERR_INVALIDCALL;
 
-            if (ffp_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
+            if (ffp_blit.blit_supported(gl_info, BLIT_OP_COLOR_FILL,
                     NULL, 0, 0, NULL,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
                     dst_surface->resource.format_desc))
             {
                 return ffp_blit.color_fill(device, dst_surface, &dst_rect, &color);
             }
-            else if (cpu_blit.blit_supported(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
+            else if (cpu_blit.blit_supported(gl_info, BLIT_OP_COLOR_FILL,
                     NULL, 0, 0, NULL,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
                     dst_surface->resource.format_desc))
