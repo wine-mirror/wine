@@ -40,6 +40,7 @@ typedef struct {
     WCHAR           *canon_uri;
     DWORD           canon_size;
     DWORD           canon_len;
+    BOOL            display_absolute;
 
     INT             scheme_start;
     DWORD           scheme_len;
@@ -291,6 +292,15 @@ static inline BOOL is_hexdigit(WCHAR val) {
 
 static inline BOOL is_path_delim(WCHAR val) {
     return (!val || val == '#' || val == '?');
+}
+
+/* List of schemes types Windows seems to expect to be hierarchical. */
+static inline BOOL is_hierarchical_scheme(URL_SCHEME type) {
+    return(type == URL_SCHEME_HTTP || type == URL_SCHEME_FTP ||
+           type == URL_SCHEME_GOPHER || type == URL_SCHEME_NNTP ||
+           type == URL_SCHEME_TELNET || type == URL_SCHEME_WAIS ||
+           type == URL_SCHEME_FILE || type == URL_SCHEME_HTTPS ||
+           type == URL_SCHEME_RES);
 }
 
 /* Checks if the two Uri's are logically equivalent. It's a simple
@@ -1861,7 +1871,7 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
      * anyways. Wildcard Schemes are always considered hierarchical
      */
     if(data->scheme_type == URL_SCHEME_WILDCARD ||
-       data->scheme_type == URL_SCHEME_FILE ||
+       (data->scheme_type == URL_SCHEME_FILE && is_implicit_file_path(*ptr)) ||
        (!data->is_relative && check_hierarchical(ptr))) {
         /* Only treat it as a hierarchical URI if the scheme_type is known or
          * the Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES flag is not set.
@@ -2798,6 +2808,8 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
  * URI is opaque it canonicalizes the path of the URI.
  */
 static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    uri->display_absolute = TRUE;
+
     if(!data->is_opaque) {
         /* "//" is only added for non-wildcard scheme types. */
         if(data->scheme_type != URL_SCHEME_WILDCARD) {
@@ -2828,6 +2840,12 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         uri->authority_start = -1;
         uri->authority_len = 0;
         uri->domain_offset = -1;
+
+        if(is_hierarchical_scheme(data->scheme_type))
+            /* Absolute URIs aren't displayed for known scheme types
+             * which should be hierarchical URIs.
+             */
+            uri->display_absolute = FALSE;
 
         if(!canonicalize_path_opaque(data, uri, flags, computeOnly))
             return FALSE;
@@ -3189,12 +3207,16 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
-        *pbstrProperty = SysAllocString(This->canon_uri);
+        if(!This->display_absolute) {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            hres = S_FALSE;
+        } else {
+            *pbstrProperty = SysAllocString(This->canon_uri);
+            hres = S_OK;
+        }
 
         if(!(*pbstrProperty))
             hres = E_OUTOFMEMORY;
-        else
-            hres = S_OK;
 
         break;
     case Uri_PROPERTY_AUTHORITY:
@@ -3433,8 +3455,14 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
-        *pcchProperty = This->canon_len;
-        hres = S_OK;
+        if(!This->display_absolute) {
+            *pcchProperty = 0;
+            hres = S_FALSE;
+        } else {
+            *pcchProperty = This->canon_len;
+            hres = S_OK;
+        }
+
         break;
     case Uri_PROPERTY_AUTHORITY:
         *pcchProperty = This->authority_len;
@@ -3581,7 +3609,7 @@ static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *p
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
-        *pfHasProperty = TRUE;
+        *pfHasProperty = This->display_absolute;
         break;
     case Uri_PROPERTY_AUTHORITY:
         *pfHasProperty = This->authority_start > -1;
@@ -3771,8 +3799,10 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
         return E_INVALIDARG;
 
     /* All URIs have these. */
-    *pdwProperties = Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_RAW_URI|
-                     Uri_HAS_SCHEME|Uri_HAS_HOST_TYPE;
+    *pdwProperties = Uri_HAS_DISPLAY_URI|Uri_HAS_RAW_URI|Uri_HAS_SCHEME|Uri_HAS_HOST_TYPE;
+
+    if(This->display_absolute)
+        *pdwProperties |= Uri_HAS_ABSOLUTE_URI;
 
     if(This->scheme_start > -1)
         *pdwProperties |= Uri_HAS_SCHEME_NAME;
