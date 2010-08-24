@@ -503,8 +503,6 @@ static void test_decl_to_fvf(const D3DVERTEXELEMENT9 test_decl[], DWORD expected
     }
 }
 
-#define D3DFVF_RESERVED1 0x020 /* in d3dtypes.h */
-
 static void test_fvf_decl_conversion(void)
 {
     int i;
@@ -538,7 +536,7 @@ static void test_fvf_decl_conversion(void)
     {
         CONST D3DVERTEXELEMENT9 test_buffer[] =
             { { 0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_RESERVED1, D3D_OK, TRUE, __LINE__);
+        test_decl_to_fvf(test_buffer, D3DFVF_PSIZE, D3D_OK, TRUE, __LINE__);
     }
     {
         CONST D3DVERTEXELEMENT9 test_buffer[] =
