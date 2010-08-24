@@ -28,12 +28,19 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "debughlp.h"
 
 #include "shell32_main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
+
+typedef struct _event_client {
+    struct list entry;
+    IExplorerBrowserEvents *pebe;
+    DWORD cookie;
+} event_client;
 
 typedef struct _ExplorerBrowserImpl {
     const IExplorerBrowserVtbl *lpVtbl;
@@ -47,9 +54,29 @@ typedef struct _ExplorerBrowserImpl {
     EXPLORER_BROWSER_OPTIONS eb_options;
     FOLDERSETTINGS fs;
 
+    struct list event_clients;
+    DWORD events_next_cookie;
+
     IShellView *psv;
     RECT sv_rc;
 } ExplorerBrowserImpl;
+
+/**************************************************************************
+ * Event functions.
+ */
+static void events_unadvise_all(ExplorerBrowserImpl *This)
+{
+    event_client *client, *curs;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY_SAFE(client, curs, &This->event_clients, event_client, entry)
+    {
+        TRACE("Removing %p\n", client);
+        list_remove(&client->entry);
+        IExplorerBrowserEvents_Release(client->pebe);
+        HeapFree(GetProcessHeap(), 0, client);
+    }
+}
 
 /**************************************************************************
  * Helper functions
@@ -248,6 +275,8 @@ static HRESULT WINAPI IExplorerBrowser_fnDestroy(IExplorerBrowser *iface)
         This->hwnd_sv = NULL;
     }
 
+    events_unadvise_all(This);
+
     DestroyWindow(This->hwnd_main);
     This->destroyed = TRUE;
 
@@ -314,18 +343,40 @@ static HRESULT WINAPI IExplorerBrowser_fnAdvise(IExplorerBrowser *iface,
                                                 DWORD *pdwCookie)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (%p, %p)\n", This, psbe, pdwCookie);
+    event_client *client;
+    TRACE("%p (%p, %p)\n", This, psbe, pdwCookie);
 
-    return E_NOTIMPL;
+    client = HeapAlloc(GetProcessHeap(), 0, sizeof(event_client));
+    client->pebe = psbe;
+    client->cookie = ++This->events_next_cookie;
+
+    IExplorerBrowserEvents_AddRef(psbe);
+    *pdwCookie = client->cookie;
+
+    list_add_tail(&This->event_clients, &client->entry);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnUnadvise(IExplorerBrowser *iface,
                                                   DWORD dwCookie)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (0x%x)\n", This, dwCookie);
+    event_client *client;
+    TRACE("%p (0x%x)\n", This, dwCookie);
 
-    return E_NOTIMPL;
+    LIST_FOR_EACH_ENTRY(client, &This->event_clients, event_client, entry)
+    {
+        if(client->cookie == dwCookie)
+        {
+            list_remove(&client->entry);
+            IExplorerBrowserEvents_Release(client->pebe);
+            HeapFree(GetProcessHeap(), 0, client);
+            return S_OK;
+        }
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnSetOptions(IExplorerBrowser *iface,
@@ -651,6 +702,8 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb->ref = 1;
     eb->lpVtbl = &vt_IExplorerBrowser;
     eb->lpsbVtbl = &vt_IShellBrowser;
+
+    list_init(&eb->event_clients);
 
     ret = IExplorerBrowser_QueryInterface((IExplorerBrowser*)eb, riid, ppv);
     IExplorerBrowser_Release((IExplorerBrowser*)eb);

@@ -44,6 +44,77 @@ static HRESULT ebrowser_initialize(IExplorerBrowser *peb)
     return IExplorerBrowser_Initialize(peb, hwnd, &rc, NULL);
 }
 
+/*********************************************************************
+ * IExplorerBrowserEvents implementation
+ */
+typedef struct {
+    const IExplorerBrowserEventsVtbl *lpVtbl;
+    LONG ref;
+    UINT pending, created, completed, failed;
+} IExplorerBrowserEventsImpl;
+
+static IExplorerBrowserEventsImpl ebev;
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnQueryInterface(IExplorerBrowserEvents *iface,
+                                                              REFIID riid, void **ppvObj)
+{
+    ok(0, "Never called.\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IExplorerBrowserEvents_fnAddRef(IExplorerBrowserEvents *iface)
+{
+    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IExplorerBrowserEvents_fnRelease(IExplorerBrowserEvents *iface)
+{
+    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    return InterlockedDecrement(&This->ref);
+}
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationPending(IExplorerBrowserEvents *iface,
+                                                                   PCIDLIST_ABSOLUTE pidlFolder)
+{
+    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    This->pending++;
+    return S_OK;
+}
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationComplete(IExplorerBrowserEvents *iface,
+                                                                    PCIDLIST_ABSOLUTE pidlFolder)
+{
+    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    This->completed++;
+    return S_OK;
+}
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationFailed(IExplorerBrowserEvents *iface,
+                                                                  PCIDLIST_ABSOLUTE pidlFolder)
+{
+    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    This->failed++;
+    return S_OK;
+}
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnViewCreated(IExplorerBrowserEvents *iface,
+                                                             IShellView *psv)
+{
+    IExplorerBrowserEventsImpl *This = (IExplorerBrowserEventsImpl*)iface;
+    This->created++;
+    return S_OK;
+}
+
+static const IExplorerBrowserEventsVtbl ebevents =
+{
+    IExplorerBrowserEvents_fnQueryInterface,
+    IExplorerBrowserEvents_fnAddRef,
+    IExplorerBrowserEvents_fnRelease,
+    IExplorerBrowserEvents_fnOnNavigationPending,
+    IExplorerBrowserEvents_fnOnViewCreated,
+    IExplorerBrowserEvents_fnOnNavigationComplete,
+    IExplorerBrowserEvents_fnOnNavigationFailed
+};
+
 static void test_QueryInterface(void)
 {
     IExplorerBrowser *peb;
@@ -378,6 +449,89 @@ static void test_basics(void)
     ok(lres == 0, "Got %d\n", lres);
 }
 
+static void test_Advise(void)
+{
+    IExplorerBrowser *peb;
+    IExplorerBrowserEvents *pebe;
+    DWORD cookies[10];
+    HRESULT hr;
+    UINT i, ref;
+
+    /* Set up our IExplorerBrowserEvents implementation */
+    ebev.lpVtbl = &ebevents;
+    pebe = (IExplorerBrowserEvents*) &ebev;
+
+    ebrowser_instantiate(&peb);
+
+    if(0)
+    {
+        /* Crashes on Windows 7 */
+        IExplorerBrowser_Advise(peb, pebe, NULL);
+        IExplorerBrowser_Advise(peb, NULL, &cookies[0]);
+    }
+
+    /* Using Unadvise with a cookie that has yet to be given out
+     * results in E_INVALIDARG */
+    hr = IExplorerBrowser_Unadvise(peb, 11);
+    ok(hr == E_INVALIDARG, "got (0x%08x)\n", hr);
+
+    /* Add some before initialization */
+    for(i = 0; i < 5; i++)
+    {
+        hr = IExplorerBrowser_Advise(peb, pebe, &cookies[i]);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+    }
+
+    ebrowser_initialize(peb);
+
+    /* Add some after initialization */
+    for(i = 5; i < 10; i++)
+    {
+        hr = IExplorerBrowser_Advise(peb, pebe, &cookies[i]);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+    }
+
+    ok(ebev.ref == 10, "Got %d\n", ebev.ref);
+
+    /* Remove a bunch somewhere in the middle */
+    for(i = 4; i < 8; i++)
+    {
+        hr = IExplorerBrowser_Unadvise(peb, cookies[i]);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+    }
+
+    if(0)
+    {
+        /* Using unadvise with a previously unadvised cookie results
+         * in a crash. */
+        hr = IExplorerBrowser_Unadvise(peb, cookies[5]);
+    }
+
+    /* Remove the rest. */
+    for(i = 0; i < 10; i++)
+    {
+        if(i<4||i>7)
+        {
+            hr = IExplorerBrowser_Unadvise(peb, cookies[i]);
+            ok(hr == S_OK, "%d: got (0x%08x)\n", i, hr);
+        }
+    }
+
+    ok(ebev.ref == 0, "Got %d\n", ebev.ref);
+
+    /* ::Destroy implies ::Unadvise. */
+    hr = IExplorerBrowser_Advise(peb, pebe, &cookies[0]);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(ebev.ref == 1, "Got %d\n", ebev.ref);
+
+    hr = IExplorerBrowser_Destroy(peb);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(ebev.ref == 0, "Got %d\n", ebev.ref);
+
+    ref = IExplorerBrowser_Release(peb);
+    ok(!ref, "Got %d", ref);
+}
+
 static BOOL test_instantiate_control(void)
 {
     IExplorerBrowser *peb;
@@ -424,6 +578,7 @@ START_TEST(ebrowser)
     test_SB_misc();
     test_initialization();
     test_basics();
+    test_Advise();
 
     DestroyWindow(hwnd);
     OleUninitialize();
