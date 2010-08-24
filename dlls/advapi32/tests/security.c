@@ -2628,10 +2628,11 @@ static void test_GetNamedSecurityInfoA(void)
     SECURITY_DESCRIPTOR_CONTROL control;
     PSID owner;
     PSID group;
+    PACL dacl;
     BOOL owner_defaulted;
     BOOL group_defaulted;
     DWORD error;
-    BOOL ret;
+    BOOL ret, isNT4;
     CHAR windows_dir[MAX_PATH];
 
     if (!pGetNamedSecurityInfoA)
@@ -2660,13 +2661,38 @@ static void test_GetNamedSecurityInfoA(void)
         broken((control & (SE_SELF_RELATIVE|SE_DACL_PRESENT)) == SE_DACL_PRESENT), /* NT4 */
         "control (0x%x) doesn't have (SE_SELF_RELATIVE|SE_DACL_PRESENT) flags set\n", control);
     ok(revision == SECURITY_DESCRIPTOR_REVISION1, "revision was %d instead of 1\n", revision);
+
+    isNT4 = (control & (SE_SELF_RELATIVE|SE_DACL_PRESENT)) == SE_DACL_PRESENT;
+
     ret = GetSecurityDescriptorOwner(pSecDesc, &owner, &owner_defaulted);
     ok(ret, "GetSecurityDescriptorOwner failed with error %d\n", GetLastError());
     ok(owner != NULL, "owner should not be NULL\n");
+
     ret = GetSecurityDescriptorGroup(pSecDesc, &group, &group_defaulted);
     ok(ret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
     ok(group != NULL, "group should not be NULL\n");
     LocalFree(pSecDesc);
+
+
+    /* NULL descriptor tests */
+    if(isNT4)
+    {
+        win_skip("NT4 does not support GetNamedSecutityInfo with a NULL descriptor\n");
+        return;
+    }
+
+    error = pGetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,
+        NULL, NULL, NULL, NULL, NULL);
+    ok(error==ERROR_INVALID_PARAMETER, "GetNamedSecurityInfo failed with error %d\n", error);
+
+    error = pGetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,
+        NULL, NULL, &dacl, NULL, NULL);
+    ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
+    ok(dacl != NULL, "dacl should not be NULL\n");
+
+    error = pGetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,OWNER_SECURITY_INFORMATION,
+        NULL, NULL, &dacl, NULL, NULL);
+    ok(error==ERROR_INVALID_PARAMETER, "GetNamedSecurityInfo failed with error %d\n", error);
 }
 
 static void test_ConvertStringSecurityDescriptor(void)
