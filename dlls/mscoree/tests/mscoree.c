@@ -16,12 +16,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "corerror.h"
+#include "mscoree.h"
 #include "wine/test.h"
 
 static HMODULE hmscoree;
 
 static HRESULT (WINAPI *pGetCORVersion)(LPWSTR, DWORD, DWORD*);
 static HRESULT (WINAPI *pGetCORSystemDirectory)(LPWSTR, DWORD, DWORD*);
+static HRESULT (WINAPI *pGetRequestedRuntimeInfo)(LPCWSTR, LPCWSTR, LPCWSTR, DWORD, DWORD, LPWSTR, DWORD, DWORD*, LPWSTR, DWORD, DWORD*);
 
 static BOOL init_functionpointers(void)
 {
@@ -35,7 +38,9 @@ static BOOL init_functionpointers(void)
 
     pGetCORVersion = (void *)GetProcAddress(hmscoree, "GetCORVersion");
     pGetCORSystemDirectory = (void *)GetProcAddress(hmscoree, "GetCORSystemDirectory");
-    if (!pGetCORVersion || !pGetCORSystemDirectory)
+    pGetRequestedRuntimeInfo = (void *)GetProcAddress(hmscoree, "GetRequestedRuntimeInfo");
+
+    if (!pGetCORVersion || !pGetCORSystemDirectory || !pGetRequestedRuntimeInfo)
     {
         win_skip("functions not available\n");
         FreeLibrary(hmscoree);
@@ -47,6 +52,9 @@ static BOOL init_functionpointers(void)
 
 static void test_versioninfo(void)
 {
+    const WCHAR v2_0[] = {'v','2','.','0','.','5','0','7','2','7',0};
+    const WCHAR v1_1[] = {'v','1','.','1','.','4','3','2','2',0};
+
     WCHAR version[MAX_PATH];
     WCHAR path[MAX_PATH];
     DWORD size, path_len;
@@ -80,6 +88,39 @@ static void test_versioninfo(void)
     ok(hr == E_POINTER,"GetCORSystemDirectory returned %08x\n", hr);
 
     trace("latest installed .net installed in directory: %s\n", wine_dbgstr_w(path));
+
+    /* test GetRequestedRuntimeInfo, first get info about different versions of runtime */
+    hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
+
+    if(hr == CLR_E_SHIM_RUNTIME) return; /* skipping rest of tests on win2k as .net 2.0 not installed */
+
+    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    trace(" installed in directory %s is .net version %s \n", wine_dbgstr_w(path), wine_dbgstr_w(version));
+
+    hr = pGetRequestedRuntimeInfo( NULL, v1_1, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
+    ok(hr == S_OK || CLR_E_SHIM_RUNTIME /*v1_1 not installed*/, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    if(hr == S_OK)
+        trace(" installed in directory %s is .net version %s \n", wine_dbgstr_w(path), wine_dbgstr_w(version));
+    /* version number NULL not allowed without RUNTIME_INFO_UPGRADE_VERSION flag */
+    hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
+    todo_wine ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    /* with RUNTIME_INFO_UPGRADE_VERSION flag and version number NULL, latest installed version is returned */
+    hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
+    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+
+    hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, 1, &path_len, version, MAX_PATH, &size);
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetRequestedRuntimeInfo returned %08x\n", hr);
+
+    /* if one of the buffers is NULL, the other one is still happily filled */
+    memset(version, 0, sizeof(version));
+    hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, NULL, MAX_PATH, &path_len, version, MAX_PATH, &size);
+    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(!lstrcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
+    /* With NULL-pointer for bufferlength, the buffer itsself still gets filled with correct string */
+    memset(version, 0, sizeof(version));
+    hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
+    todo_wine ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    todo_wine ok(!lstrcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 }
 
 START_TEST(mscoree)
