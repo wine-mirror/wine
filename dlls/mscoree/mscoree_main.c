@@ -32,6 +32,7 @@
 
 #include "initguid.h"
 #include "cor.h"
+#include "corerror.h"
 #include "mscoree.h"
 #include "mscoree_private.h"
 
@@ -414,10 +415,37 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
     DWORD startupFlags, DWORD runtimeInfoFlags, LPWSTR pDirectory, DWORD dwDirectory, DWORD *dwDirectoryLength,
     LPWSTR pVersion, DWORD cchBuffer, DWORD *dwlength)
 {
-    FIXME("(%s, %s, %s, 0x%08x, 0x%08x, %p, 0x%08x, %p, %p, 0x%08x, %p) stub\n", debugstr_w(pExe),
+    HRESULT ret;
+    DWORD ver_len, dir_len;
+    WCHAR dirW[MAX_PATH], verW[MAX_PATH];
+
+    FIXME("(%s, %s, %s, 0x%08x, 0x%08x, %p, 0x%08x, %p, %p, 0x%08x, %p) semi-stub\n", debugstr_w(pExe),
           debugstr_w(pwszVersion), debugstr_w(pConfigurationFile), startupFlags, runtimeInfoFlags, pDirectory,
           dwDirectory, dwDirectoryLength, pVersion, cchBuffer, dwlength);
-    return GetCORVersion(pVersion, cchBuffer, dwlength);
+
+    if (!pwszVersion && !(runtimeInfoFlags & RUNTIME_INFO_UPGRADE_VERSION))
+        return CLR_E_SHIM_RUNTIME;
+
+    ret = GetCORSystemDirectory(dirW, dwDirectory, &dir_len);
+
+    if (ret == S_OK)
+    {
+        if (dwDirectoryLength)
+            *dwDirectoryLength = dir_len;
+        if (pDirectory)
+            lstrcpyW(pDirectory, dirW);
+
+        ret = GetCORVersion(verW, cchBuffer, &ver_len);
+
+        if (ret == S_OK)
+        {
+            if (dwlength)
+                *dwlength = ver_len;
+            if (pVersion)
+                lstrcpyW(pVersion, verW);
+        }
+    }
+    return ret;
 }
 
 HRESULT WINAPI LoadLibraryShim( LPCWSTR szDllName, LPCWSTR szVersion, LPVOID pvReserved, HMODULE * phModDll)

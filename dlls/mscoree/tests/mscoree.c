@@ -103,13 +103,13 @@ static void test_versioninfo(void)
         trace(" installed in directory %s is .net version %s \n", wine_dbgstr_w(path), wine_dbgstr_w(version));
     /* version number NULL not allowed without RUNTIME_INFO_UPGRADE_VERSION flag */
     hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
-    todo_wine ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
     /* with RUNTIME_INFO_UPGRADE_VERSION flag and version number NULL, latest installed version is returned */
     hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
     ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
 
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, 1, &path_len, version, MAX_PATH, &size);
-    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetRequestedRuntimeInfo returned %08x\n", hr);
 
     /* if one of the buffers is NULL, the other one is still happily filled */
     memset(version, 0, sizeof(version));
@@ -119,8 +119,8 @@ static void test_versioninfo(void)
     /* With NULL-pointer for bufferlength, the buffer itsself still gets filled with correct string */
     memset(version, 0, sizeof(version));
     hr = pGetRequestedRuntimeInfo( NULL, v2_0, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, NULL);
-    todo_wine ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
-    todo_wine ok(!lstrcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
+    ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
+    ok(!lstrcmpW(version, v2_0), "version is %s , expected %s\n", wine_dbgstr_w(version), wine_dbgstr_w(v2_0));
 }
 
 START_TEST(mscoree)
