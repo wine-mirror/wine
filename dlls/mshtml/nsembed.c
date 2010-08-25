@@ -728,6 +728,7 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
 {
     nsIDOMNodeList *node_list = NULL;
     PRBool has_children = FALSE;
+    nsIContent *nscontent;
     PRUint16 type;
     nsresult nsres;
 
@@ -739,32 +740,27 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
         return E_FAIL;
     }
 
+    nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIContent, (void**)&nscontent);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDontent interface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
     switch(type) {
-    case ELEMENT_NODE: {
-        nsIDOMElement *nselem;
-        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
-        nsIContentSerializer_AppendElementStart(serializer, nselem, nselem, str);
-        nsIDOMElement_Release(nselem);
+    case ELEMENT_NODE:
+        nsIContentSerializer_AppendElementStart(serializer, nscontent, nscontent, str);
         break;
-    }
-    case TEXT_NODE: {
-        nsIDOMText *nstext;
-        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMText, (void**)&nstext);
-        nsIContentSerializer_AppendText(serializer, nstext, 0, -1, str);
-        nsIDOMText_Release(nstext);
+    case TEXT_NODE:
+        nsIContentSerializer_AppendText(serializer, nscontent, 0, -1, str);
         break;
-    }
-    case COMMENT_NODE: {
-        nsIDOMComment *nscomment;
-        nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMComment, (void**)&nscomment);
-        nsres = nsIContentSerializer_AppendComment(serializer, nscomment, 0, -1, str);
+    case COMMENT_NODE:
+        nsres = nsIContentSerializer_AppendComment(serializer, nscontent, 0, -1, str);
         break;
-    }
     case DOCUMENT_NODE: {
-        nsIDOMDocument *nsdoc;
-        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMDocument, (void**)&nsdoc);
+        nsIDocument *nsdoc;
+        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDocument, (void**)&nsdoc);
         nsIContentSerializer_AppendDocumentStart(serializer, nsdoc, str);
-        nsIDOMDocument_Release(nsdoc);
+        nsIDocument_Release(nsdoc);
         break;
     }
     case DOCUMENT_TYPE_NODE:
@@ -796,13 +792,10 @@ static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNo
         nsIDOMNodeList_Release(node_list);
     }
 
-    if(type == ELEMENT_NODE) {
-        nsIDOMElement *nselem;
-        nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMElement, (void**)&nselem);
-        nsIContentSerializer_AppendElementEnd(serializer, nselem, str);
-        nsIDOMElement_Release(nselem);
-    }
+    if(type == ELEMENT_NODE)
+        nsIContentSerializer_AppendElementEnd(serializer, nscontent, str);
 
+    nsIContent_Release(nscontent);
     return S_OK;
 }
 

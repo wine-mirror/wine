@@ -1498,6 +1498,15 @@ static nsresult NSAPI nsHttpChannelInternal_SetForceAllowThirdPartyCookie(nsIHtt
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsHttpChannelInternal_GetCanceled(nsIHttpChannelInternal *iface, PRBool *aCanceled)
+{
+    nsChannel *This = NSHTTPINTERNAL_THIS(iface);
+
+    FIXME("(%p)->(%p)\n", This, aCanceled);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 #undef NSHTTPINTERNAL_THIS
 
 static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
@@ -1511,7 +1520,8 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_SetCookie,
     nsHttpChannelInternal_SetupFallbackChannel,
     nsHttpChannelInternal_GetForceAllowThirdPartyCookie,
-    nsHttpChannelInternal_SetForceAllowThirdPartyCookie
+    nsHttpChannelInternal_SetForceAllowThirdPartyCookie,
+    nsHttpChannelInternal_GetCanceled
 };
 
 #define NSURI_THIS(iface) DEFINE_THIS(nsWineURI, IURL, iface)
@@ -2845,6 +2855,13 @@ static nsresult NSAPI nsNetUtil_ToImmutableURI(nsINetUtil *iface, nsIURI *aURI, 
     return nsINetUtil_ToImmutableURI(net_util, aURI, _retval);
 }
 
+static nsresult NSAPI nsNetUtil_NewSimpleNestedURI(nsINetUtil *iface, nsIURI *aURI, nsIURI **_retval)
+{
+    TRACE("(%p %p)\n", aURI, _retval);
+
+    return nsINetUtil_NewSimpleNestedURI(net_util, aURI, _retval);
+}
+
 static nsresult NSAPI nsNetUtil_EscapeString(nsINetUtil *iface, const nsACString *aString,
                                              PRUint32 aEscapeType, nsACString *_retval)
 {
@@ -2886,6 +2903,7 @@ static const nsINetUtilVtbl nsNetUtilVtbl = {
     nsNetUtil_ProtocolHasFlags,
     nsNetUtil_URIChainHasFlags,
     nsNetUtil_ToImmutableURI,
+    nsNetUtil_NewSimpleNestedURI,
     nsNetUtil_EscapeString,
     nsNetUtil_EscapeURL,
     nsNetUtil_UnescapeString,

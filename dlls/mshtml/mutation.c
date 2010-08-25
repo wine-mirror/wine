@@ -498,12 +498,12 @@ static void NSAPI nsDocumentObserver_AttributeWillChange(nsIDocumentObserver *if
 }
 
 static void NSAPI nsDocumentObserver_AttributeChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        nsIContent *aContent, PRInt32 aNameSpaceID, nsIAtom *aAttribute, PRInt32 aModType, PRUint32 aStateMask)
+        nsIContent *aContent, PRInt32 aNameSpaceID, nsIAtom *aAttribute, PRInt32 aModType)
 {
 }
 
 static void NSAPI nsDocumentObserver_ContentAppended(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        nsIContent *aContainer, PRInt32 aNewIndexInContainer)
+        nsIContent *aContainer, nsIContent *aFirstNewContent, PRInt32 aNewIndexInContainer)
 {
 }
 
@@ -513,7 +513,8 @@ static void NSAPI nsDocumentObserver_ContentInserted(nsIDocumentObserver *iface,
 }
 
 static void NSAPI nsDocumentObserver_ContentRemoved(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        nsIContent *aContainer, nsIContent *aChild, PRInt32 aIndexInContainer)
+        nsIContent *aContainer, nsIContent *aChild, PRInt32 aIndexInContainer,
+        nsIContent *aProviousSibling)
 {
 }
 
@@ -554,6 +555,11 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
 
 static void NSAPI nsDocumentObserver_ContentStatesChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
         nsIContent *aContent1, nsIContent *aContent2, PRInt32 aStateMask)
+{
+}
+
+static void NSAPI nsDocumentObserver_DocumentStatesChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
+        PRInt32 aStateMask)
 {
 }
 
@@ -668,6 +674,7 @@ static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
     nsDocumentObserver_BeginLoad,
     nsDocumentObserver_EndLoad,
     nsDocumentObserver_ContentStatesChanged,
+    nsDocumentObserver_DocumentStatesChanged,
     nsDocumentObserver_StyleSheetAdded,
     nsDocumentObserver_StyleSheetRemoved,
     nsDocumentObserver_StyleSheetApplicableStateChanged,
