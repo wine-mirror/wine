@@ -1082,8 +1082,46 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3 *ifac
                                                           IShellView *shv)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p)\n", This, shv);
-    return E_NOTIMPL;
+    IDataObject *pdo;
+    HRESULT hr;
+    HRESULT ret = S_FALSE;
+
+    TRACE("%p (%p)\n", This, shv);
+
+    hr = IShellView_GetItemObject(shv, SVGIO_SELECTION, &IID_IDataObject, (void**)&pdo);
+    if(SUCCEEDED(hr))
+    {
+        FORMATETC fmt;
+        STGMEDIUM medium;
+
+        fmt.cfFormat = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
+        fmt.ptd = NULL;
+        fmt.dwAspect = DVASPECT_CONTENT;
+        fmt.lindex = -1;
+        fmt.tymed = TYMED_HGLOBAL;
+
+        hr = IDataObject_GetData(pdo, &fmt ,&medium);
+        IDataObject_Release(pdo);
+        if(SUCCEEDED(hr))
+        {
+            LPIDA pida = GlobalLock(medium.u.hGlobal);
+            LPCITEMIDLIST pidl_child = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[1]);
+
+            /* Handle folders by browsing to them. */
+            if(_ILIsFolder(pidl_child) || _ILIsDrive(pidl_child) || _ILIsSpecialFolder(pidl_child))
+            {
+                IExplorerBrowser_BrowseToIDList((IExplorerBrowser*)This, pidl_child, SBSP_RELATIVE);
+                ret = S_OK;
+            }
+            GlobalUnlock(medium.u.hGlobal);
+            GlobalFree(medium.u.hGlobal);
+        }
+        else
+            ERR("Failed to get data from IDataObject.\n");
+    } else
+        ERR("Failed to get IDataObject.\n");
+
+    return ret;
 }
 static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(ICommDlgBrowser3 *iface,
                                                        IShellView *shv, ULONG uChange)
