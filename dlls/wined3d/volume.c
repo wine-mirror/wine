@@ -184,27 +184,8 @@ static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *ifa
 /* *******************************************
    IWineD3DVolume parts follow
    ******************************************* */
-static HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID riid, void** ppContainer) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-
-    TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
-
-    if (!ppContainer) {
-        ERR("Called without a valid ppContainer.\n");
-        return E_FAIL;
-    }
-
-    /* Although surfaces can be standalone, volumes can't */
-    if (!This->container) {
-        ERR("Volume without an container. Should not happen.\n");
-        return E_FAIL;
-    }
-
-    TRACE("Relaying to QueryInterface\n");
-    return IUnknown_QueryInterface((IWineD3DVolumeTexture *)This->container, riid, ppContainer);
-}
-
-static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC* pDesc) {
+static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *pDesc)
+{
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
 
@@ -349,7 +330,6 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_UnLoad,
     IWineD3DVolumeImpl_GetType,
     /* IWineD3DVolume */
-    IWineD3DVolumeImpl_GetContainer,
     IWineD3DVolumeImpl_GetDesc,
     IWineD3DVolumeImpl_LockBox,
     IWineD3DVolumeImpl_UnlockBox,

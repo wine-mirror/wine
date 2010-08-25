@@ -148,24 +148,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknow
    IWineD3DSurface IWineD3DSurface parts follow
    ****************************************************** */
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID riid, void** ppContainer) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DBase *container = 0;
-
-    TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
-
-    if (!ppContainer) {
-        ERR("Called without a valid ppContainer.\n");
-    }
-
-    /* Standalone surfaces return the device as container. */
-    if (This->container.u.base) container = This->container.u.base;
-    else container = (IWineD3DBase *)This->resource.device;
-
-    TRACE("Relaying to QueryInterface\n");
-    return IUnknown_QueryInterface(container, riid, ppContainer);
-}
-
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *pDesc) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 

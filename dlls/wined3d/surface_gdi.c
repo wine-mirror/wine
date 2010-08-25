@@ -503,7 +503,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_UnLoad,
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
-    IWineD3DBaseSurfaceImpl_GetContainer,
     IWineD3DBaseSurfaceImpl_GetDesc,
     IWineGDISurfaceImpl_LockRect,
     IWineGDISurfaceImpl_UnlockRect,
