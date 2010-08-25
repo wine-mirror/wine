@@ -7205,7 +7205,7 @@ BOOL WINAPI GetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
 static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
 {
     char *unixname, *queue, *cmd;
-    char fmt[] = "lpr -P%s %s";
+    char fmt[] = "lpr -P'%s' '%s'";
     DWORD len;
     int r;
 
