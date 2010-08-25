@@ -676,7 +676,7 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
     const struct dbg_internal_var*  div;
 
     /* negative register values are wine's dbghelp hacks
-     * see dlls/dbghelp/dbghelp_internal.h for the details      
+     * see dlls/dbghelp/dbghelp_private.h for the details
      */
     switch (regno)
     {
@@ -691,6 +691,9 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
         return FALSE;
     case -4:
         if (buffer) snprintf(buffer, len, "<couldn't read memory>");
+        return FALSE;
+    case -5:
+        if (buffer) snprintf(buffer, len, "<has been optimized away by compiler>");
         return FALSE;
     }
 

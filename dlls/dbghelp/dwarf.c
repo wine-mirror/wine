@@ -1511,6 +1511,22 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
         di->symt = &symt_new_constant(subpgm->ctx->module, subpgm->compiland,
                                       name.u.string, param_type, &v)->symt;
     }
+    else
+    {
+        /* variable has been optimiezd away... report anyway */
+        loc.kind = loc_error;
+        loc.reg = loc_err_no_location;
+        if (subpgm->func)
+        {
+            symt_add_func_local(subpgm->ctx->module, subpgm->func,
+                                is_pmt ? DataIsParam : DataIsLocal,
+                                &loc, block, param_type, name.u.string);
+        }
+        else
+        {
+            WARN("dropping global variable %s which has been optimized away\n", name.u.string);
+        }
+    }
     if (is_pmt && subpgm->func && subpgm->func->type)
         symt_add_function_signature_parameter(subpgm->ctx->module,
                                               (struct symt_function_signature*)subpgm->func->type,

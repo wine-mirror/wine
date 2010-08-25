@@ -132,6 +132,7 @@ enum location_error {loc_err_internal = -1,     /* internal while computing */
                      loc_err_too_complex = -2,  /* couldn't compute location (even at runtime) */
                      loc_err_out_of_scope = -3, /* variable isn't available at current address */
                      loc_err_cant_read = -4,    /* couldn't read memory at given address */
+                     loc_err_no_location = -5,  /* likely optimized away (by compiler) */
 };
 
 struct location
