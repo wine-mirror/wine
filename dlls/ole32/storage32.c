@@ -856,7 +856,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
     return STG_E_FILENOTFOUND;
   }
 
-  return S_OK;
+  return StorageBaseImpl_Flush(This);
 }
 
 /************************************************************************
@@ -1011,7 +1011,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
     return STG_E_INSUFFICIENTMEMORY;
   }
 
-  return S_OK;
+  return StorageBaseImpl_Flush(This);
 }
 
 /************************************************************************
@@ -1046,6 +1046,9 @@ static HRESULT WINAPI StorageBaseImpl_SetClass(
                                          This->storageDirEntry,
                                          &currentEntry);
   }
+
+  if (SUCCEEDED(hRes))
+    hRes = StorageBaseImpl_Flush(This);
 
   return hRes;
 }
@@ -1203,6 +1206,8 @@ static HRESULT WINAPI StorageBaseImpl_CreateStorage(
     return hr;
   }
 
+  if (SUCCEEDED(hr))
+    hr = StorageBaseImpl_Flush(This);
 
   return S_OK;
 }
@@ -1915,6 +1920,9 @@ static HRESULT WINAPI StorageBaseImpl_DestroyElement(
    */
   if (SUCCEEDED(hr))
     StorageBaseImpl_DestroyDirEntry(This, entryToDeleteRef);
+
+  if (SUCCEEDED(hr))
+    hr = StorageBaseImpl_Flush(This);
 
   return hr;
 }
