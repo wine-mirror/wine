@@ -52,6 +52,7 @@ typedef struct _ExplorerBrowserImpl {
     const IExplorerBrowserVtbl *lpVtbl;
     const IShellBrowserVtbl *lpsbVtbl;
     const ICommDlgBrowser3Vtbl *lpcdb3Vtbl;
+    const IObjectWithSiteVtbl *lpowsVtbl;
     LONG ref;
     BOOL destroyed;
 
@@ -70,6 +71,8 @@ typedef struct _ExplorerBrowserImpl {
     IShellView *psv;
     RECT sv_rc;
     LPITEMIDLIST current_pidl;
+
+    IUnknown *punk_site;
 } ExplorerBrowserImpl;
 
 /**************************************************************************
@@ -328,6 +331,28 @@ static HRESULT create_new_shellview(ExplorerBrowserImpl *This, IShellItem *psi)
     return hr;
 }
 
+static void get_interfaces_from_site(ExplorerBrowserImpl *This)
+{
+    IServiceProvider *psp;
+    HRESULT hr;
+
+    /* Calling this with This->punk_site set to NULL should properly
+     * release any previously fetched interfaces.
+     */
+
+    if(This->punk_site)
+    {
+        hr = IUnknown_QueryInterface(This->punk_site, &IID_IServiceProvider, (void**)&psp);
+        if(SUCCEEDED(hr))
+        {
+            FIXME("Not requesting any interfaces.\n");
+            IServiceProvider_Release(psp);
+        }
+        else
+            ERR("Failed to get IServiceProvider from site.\n");
+    }
+}
+
 /**************************************************************************
  * Main window related functions.
  */
@@ -389,6 +414,10 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
     {
         *ppvObject = &This->lpcdb3Vtbl;
     }
+    else if(IsEqualIID(riid, &IID_IObjectWithSite))
+    {
+        *ppvObject = &This->lpowsVtbl;
+    }
 
     if(*ppvObject)
     {
@@ -420,6 +449,8 @@ static ULONG WINAPI IExplorerBrowser_fnRelease(IExplorerBrowser *iface)
 
         if(!This->destroyed)
             IExplorerBrowser_Destroy(iface);
+
+        IObjectWithSite_SetSite((IObjectWithSite*)&This->lpowsVtbl, NULL);
 
         HeapFree(GetProcessHeap(), 0, This);
         return 0;
@@ -730,6 +761,8 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
         ILFree(absolute_pidl);
         return E_FAIL;
     }
+
+    get_interfaces_from_site(This);
 
     /* Only browse if the new pidl differs from the old */
     if(!ILIsEqual(This->current_pidl, absolute_pidl))
@@ -1204,6 +1237,76 @@ static const ICommDlgBrowser3Vtbl vt_ICommDlgBrowser3 = {
     ICommDlgBrowser3_fnOnPreviewCreated
 };
 
+/**************************************************************************
+ * IObjectWithSite Implementation
+ */
+
+static inline ExplorerBrowserImpl *impl_from_IObjectWithSite(IObjectWithSite *iface)
+{
+    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpowsVtbl));
+}
+
+static HRESULT WINAPI IObjectWithSite_fnQueryInterface(IObjectWithSite *iface,
+                                                       REFIID riid, void **ppvObject)
+{
+    ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
+    TRACE("%p\n", This);
+    return IUnknown_QueryInterface((IUnknown*)This, riid, ppvObject);
+}
+
+static ULONG WINAPI IObjectWithSite_fnAddRef(IObjectWithSite *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
+    TRACE("%p\n", This);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI IObjectWithSite_fnRelease(IObjectWithSite *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
+    TRACE("%p\n", This);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI IObjectWithSite_fnSetSite(IObjectWithSite *iface, IUnknown *punk_site)
+{
+    ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
+    TRACE("%p (%p)\n", This, punk_site);
+
+    if(This->punk_site)
+    {
+        IUnknown_Release(This->punk_site);
+        This->punk_site = NULL;
+        get_interfaces_from_site(This);
+    }
+
+    This->punk_site = punk_site;
+
+    if(This->punk_site)
+        IUnknown_AddRef(This->punk_site);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI IObjectWithSite_fnGetSite(IObjectWithSite *iface, REFIID riid, void **ppvSite)
+{
+    ExplorerBrowserImpl *This = impl_from_IObjectWithSite(iface);
+    TRACE("%p (%s, %p)\n", This, shdebugstr_guid(riid), ppvSite);
+
+    if(!This->punk_site)
+        return E_FAIL;
+
+    return IUnknown_QueryInterface(This->punk_site, riid, ppvSite);
+}
+
+static const IObjectWithSiteVtbl vt_IObjectWithSite = {
+    IObjectWithSite_fnQueryInterface,
+    IObjectWithSite_fnAddRef,
+    IObjectWithSite_fnRelease,
+    IObjectWithSite_fnSetSite,
+    IObjectWithSite_fnGetSite
+};
+
 HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     ExplorerBrowserImpl *eb;
@@ -1221,6 +1324,7 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb->lpVtbl = &vt_IExplorerBrowser;
     eb->lpsbVtbl = &vt_IShellBrowser;
     eb->lpcdb3Vtbl = &vt_ICommDlgBrowser3;
+    eb->lpowsVtbl = &vt_IObjectWithSite;
 
     list_init(&eb->event_clients);
     list_init(&eb->travellog);

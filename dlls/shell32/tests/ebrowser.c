@@ -23,8 +23,43 @@
 #define COBJMACROS
 
 #include "shlobj.h"
+#include "shlwapi.h"
 
 #include "wine/test.h"
+
+#include "initguid.h"
+#include "mshtml.h"
+
+/**********************************************************************
+ * Some IID's for test_SetSite.
+ */
+DEFINE_GUID(IID_IBrowserSettings,     0xDD1E21CC, 0xE2C7, 0x402C, 0xBF,0x05, 0x10,0x32,0x8D,0x3F,0x6B,0xAD);
+DEFINE_GUID(IID_IShellBrowserService, 0xDFBC7E30, 0xF9E5, 0x455F, 0x88,0xF8, 0xFA,0x98,0xC1,0xE4,0x94,0xCA);
+DEFINE_GUID(IID_IShellTaskScheduler,  0x6CCB7BE0, 0x6807, 0x11D0, 0xB8,0x10, 0x00,0xC0,0x4F,0xD7,0x06,0xEC);
+DEFINE_GUID(IID_IBrowserWithActivationNotification,
+                                      0x6DB89131, 0x7B4C, 0x4E1C, 0x8B,0x01, 0x5D,0x31,0x2C,0x9C,0x73,0x88);
+DEFINE_GUID(IID_ILayoutModifier,      0x90B4135A, 0x95BA, 0x46EA, 0x8C,0xAA, 0xE0,0x5B,0x45,0xCD,0x80,0x1E);
+DEFINE_GUID(CLSID_Desktop,            0x00021400, 0x0000, 0x0000, 0xC0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
+DEFINE_GUID(IID_IFileDialogPrivate,   0xAC92FFC5, 0xF0E9, 0x455A, 0x90,0x6B, 0x4A,0x83,0xE7,0x4A,0x80,0x3B);
+DEFINE_GUID(IID_IWebbrowserApp,       0x0002df05, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
+DEFINE_GUID(IID_IBrowserSettings_Vista, 0xF81B80BC, 0x29D1, 0x4734, 0xB5,0x15, 0x77,0x24,0xBF,0xF1,0x60,0x01);
+DEFINE_GUID(IID_IFolderTypeModifier,    0x04BA120E, 0xAD52, 0x4A2D, 0x98,0x07, 0x2D,0xA1,0x78,0xD0,0xC3,0xE1);
+DEFINE_GUID(IID_IShellBrowserService_Vista, 0xF5A24314, 0x5B8B, 0x44FA, 0xBC,0x2E, 0x31,0x28,0x55,0x44,0xB5,0x20);
+DEFINE_GUID(IID_IFileDialogPrivate_Vista, 0x2539E31C, 0x857F, 0x43C4, 0x88,0x72, 0x45,0xBD,0x6A,0x02,0x48,0x92);
+DEFINE_GUID(SID_SMenuBandParent,      0x8C278EEC, 0x3EAB, 0x11D1, 0x8C,0xB0 ,0x00,0xC0,0x4F,0xD9,0x18,0xD0);
+DEFINE_GUID(SID_SMenuPopup,           0xD1E7AFEB, 0x6A2E, 0x11D0, 0x8C,0x78, 0x00,0xC0,0x4F,0xD9,0x18,0xB4);
+DEFINE_GUID(IID_IShellMenu,           0xEE1F7637, 0xE138, 0x11D1, 0x83,0x79, 0x00,0xC0,0x4F,0xD9,0x18,0xD0);
+
+DEFINE_GUID(IID_UnknownInterface1,    0x3934E4C2, 0x8143, 0x4E4C, 0xA1,0xDC, 0x71,0x8F,0x85,0x63,0xF3,0x37);
+DEFINE_GUID(IID_UnknownInterface2,    0x3E24A11C, 0x15B2, 0x4F71, 0xB8,0x1E, 0x00,0x8F,0x77,0x99,0x8E,0x9F);
+DEFINE_GUID(IID_UnknownInterface3,    0xE38FE0F3, 0x3DB0, 0x47EE, 0xA3,0x14, 0x25,0xCF,0x7F,0x4B,0xF5,0x21);
+DEFINE_GUID(IID_UnknownInterface4,    0xFAD451C2, 0xAF58, 0x4161, 0xB9,0xFF, 0x57,0xAF,0xBB,0xED,0x0A,0xD2);
+DEFINE_GUID(IID_UnknownInterface5,    0xF80C2137, 0x5829, 0x4CE9, 0x9F,0x81, 0xA9,0x5E,0x15,0x9D,0xD8,0xD5);
+DEFINE_GUID(IID_UnknownInterface6,    0xD7F81F62, 0x491F, 0x49BC, 0x89,0x1D, 0x56,0x65,0x08,0x5D,0xF9,0x69);
+DEFINE_GUID(IID_UnknownInterface7,    0x68A4FDBA, 0xA48A, 0x4A86, 0xA3,0x29, 0x1B,0x69,0xB9,0xB1,0x9E,0x89);
+DEFINE_GUID(IID_UnknownInterface8,    0xD3B1CAF5, 0xEC4F, 0x4B2E, 0xBC,0xB0, 0x60,0xD7,0x15,0xC9,0x3C,0xB2);
+DEFINE_GUID(IID_UnknownInterface9,    0x9536CA39, 0x1ACB, 0x4AE6, 0xAD,0x27, 0x24,0x03,0xD0,0x4C,0xA2,0x8F);
+DEFINE_GUID(IID_UnknownInterface10,   0xB722BE00, 0x4E68, 0x101B, 0xA2,0xBC, 0x00,0xAA,0x00,0x40,0x47,0x70);
 
 static HWND hwnd;
 
@@ -72,6 +107,13 @@ static void process_msgs(void)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+}
+
+static void dbg_print_guid(const GUID *guid) {
+    WCHAR buf[MAX_PATH];
+
+    StringFromGUID2(guid, buf, MAX_PATH);
+    printf("guid:[%s]\n", wine_dbgstr_wn(buf, lstrlenW(buf)));
 }
 
 /*********************************************************************
@@ -145,6 +187,115 @@ static const IExplorerBrowserEventsVtbl ebevents =
     IExplorerBrowserEvents_fnOnNavigationFailed
 };
 
+/*********************************************************************
+ * IServiceProvider Implementation
+ */
+typedef struct {
+    const IServiceProviderVtbl *lpVtbl;
+    LONG ref;
+    struct services {
+        REFGUID service;
+        REFIID id;
+        int count;
+        void *punk;
+    } *interfaces;
+} IServiceProviderImpl;
+
+static HRESULT WINAPI IServiceProvider_fnQueryInterface(IServiceProvider *iface, REFIID riid, LPVOID *ppvObj)
+{
+    *ppvObj = NULL;
+    if(IsEqualIID(riid, &IID_IServiceProvider))
+    {
+        *ppvObj = iface;
+        IServiceProvider_AddRef((IServiceProvider*)iface);
+        return S_OK;
+    }
+
+    if(IsEqualIID(riid, &IID_IOleCommandTarget))
+    {
+        /* Windows Vista. */
+        return E_NOINTERFACE;
+    }
+
+    ok(0, "Unexpected interface requested.\n");
+    trace("riid: "); dbg_print_guid(riid);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IServiceProvider_fnAddRef(IServiceProvider *iface)
+{
+    IServiceProviderImpl *This = (IServiceProviderImpl*)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IServiceProvider_fnRelease(IServiceProvider *iface)
+{
+    IServiceProviderImpl *This = (IServiceProviderImpl*)iface;
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
+                                                      REFGUID guidService,
+                                                      REFIID riid,
+                                                      void **ppv)
+{
+    IServiceProviderImpl *This = (IServiceProviderImpl*)iface;
+    BOOL was_in_list = FALSE;
+    IUnknown *punk = NULL;
+    UINT i;
+
+    *ppv = NULL;
+    for(i = 0; This->interfaces[i].service != NULL; i++)
+    {
+        if(IsEqualGUID(This->interfaces[i].service, guidService) &&
+           IsEqualIID(This->interfaces[i].id, riid))
+        {
+            was_in_list = TRUE;
+            This->interfaces[i].count++;
+            punk = This->interfaces[i].punk;
+            break;
+        }
+    }
+
+    ok(was_in_list, "-- Unknown service requested --\n");
+    if(!was_in_list)
+    {
+        trace("guidService: "); dbg_print_guid(guidService);
+        trace("riid: "); dbg_print_guid(riid);
+    }
+
+    /* Give back an interface, if any. */
+    if(punk)
+    {
+        *ppv = punk;
+        IUnknown_AddRef((IUnknown*)punk);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl spvtbl =
+{
+    IServiceProvider_fnQueryInterface,
+    IServiceProvider_fnAddRef,
+    IServiceProvider_fnRelease,
+    IServiceProvider_fnQueryService
+};
+
+static IServiceProviderImpl *create_serviceprovider(void)
+{
+    IServiceProviderImpl *sp = HeapAlloc(GetProcessHeap(), 0, sizeof(IServiceProviderImpl));
+    sp->lpVtbl = &spvtbl;
+    sp->ref = 1;
+    return sp;
+}
+
 static void test_QueryInterface(void)
 {
     IExplorerBrowser *peb;
@@ -171,7 +322,7 @@ static void test_QueryInterface(void)
     test_qinterface(IID_ICommDlgBrowser2, S_OK);
     test_qinterface(IID_ICommDlgBrowser3, S_OK);
     todo_wine test_qinterface(IID_IServiceProvider, S_OK);
-    todo_wine test_qinterface(IID_IObjectWithSite, S_OK);
+    test_qinterface(IID_IObjectWithSite, S_OK);
     todo_wine test_qinterface(IID_IConnectionPointContainer, S_OK);
     test_qinterface(IID_IOleObject, E_NOINTERFACE);
     test_qinterface(IID_IViewObject, E_NOINTERFACE);
@@ -479,6 +630,135 @@ static void test_initialization(void)
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
     ok(lres == 0, "Got refcount %d\n", lres);
+}
+
+static void test_SetSite(void)
+{
+    IExplorerBrowser *peb;
+    IServiceProviderImpl *spimpl = create_serviceprovider();
+    IObjectWithSite *pow;
+    HRESULT hr;
+    LONG ref;
+    UINT i;
+    struct services expected[] = {
+        /* Win 7 */
+        { &SID_STopLevelBrowser,        &IID_ICommDlgBrowser2, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_IShellBrowserService, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_IShellBrowser, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_UnknownInterface8, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_IConnectionPointContainer, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_IProfferService, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_UnknownInterface9, 0, NULL },
+        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser2, 0, NULL },
+        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser3, 0, NULL },
+        { &SID_ExplorerPaneVisibility,  &IID_IExplorerPaneVisibility, 0, NULL },
+        { &IID_IFileDialogPrivate,      &IID_IFileDialogPrivate, 0, NULL },
+        { &IID_IFileDialogPrivate,      &IID_IFileDialog, 0, NULL },
+        { &IID_IShellTaskScheduler,     &IID_IShellTaskScheduler, 0, NULL },
+        { &IID_IShellTaskScheduler,     &IID_UnknownInterface2, 0, NULL },
+        { &IID_IWebbrowserApp,          &IID_IConnectionPointContainer, 0, NULL },
+        { &IID_IFolderView,             &IID_IFolderView, 0, NULL },
+        { &IID_ILayoutModifier,         &IID_ILayoutModifier, 0, NULL },
+        { &IID_IBrowserSettings,        &IID_IBrowserSettings, 0, NULL },
+        { &CLSID_Desktop,               &IID_IUnknown, 0, NULL },
+        { &IID_UnknownInterface1,       &IID_UnknownInterface1, 0, NULL },
+        { &IID_UnknownInterface3,       &IID_UnknownInterface3, 0, NULL },
+        { &IID_UnknownInterface4,       &IID_IUnknown, 0, NULL },
+        { &IID_UnknownInterface6,       &IID_UnknownInterface7, 0, NULL },
+        { &IID_IBrowserWithActivationNotification, &IID_IBrowserWithActivationNotification, 0, NULL },
+
+        /* Other services requested in Vista, Windows 2008 but not in Windows 7 */
+        { &IID_IBrowserSettings_Vista,  &IID_IBrowserSettings_Vista, 0, NULL },
+        { &IID_IFolderTypeModifier,     &IID_IFolderTypeModifier, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_IShellBrowserService_Vista, 0, NULL },
+        { &IID_UnknownInterface5,       &IID_UnknownInterface5, 0, NULL },
+        { &IID_ICommDlgBrowser,         &IID_ICommDlgBrowser, 0, NULL },
+        { &IID_IFileDialogPrivate_Vista,&IID_IFileDialogPrivate_Vista, 0, NULL},
+        { &IID_IFileDialogPrivate_Vista,&IID_IFileDialog, 0, NULL},
+        { &IID_UnknownInterface10,      &IID_IHTMLDocument2, 0, NULL},
+        { &SID_SMenuBandParent,         &IID_IOleCommandTarget, 0, NULL},
+        { &SID_SMenuBandParent,         &IID_IShellMenu, 0, NULL},
+        { &SID_STopLevelBrowser,        &IID_IOleWindow, 0, NULL},
+        { &SID_SMenuPopup,              &IID_IOleCommandTarget, 0, NULL},
+        { NULL }
+    };
+
+    ebrowser_instantiate(&peb);
+    IExplorerBrowser_SetOptions(peb, EBO_SHOWFRAMES);
+
+    hr = IExplorerBrowser_QueryInterface(peb, &IID_IObjectWithSite, (void**)&pow);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        spimpl->interfaces = expected;
+
+        hr = IObjectWithSite_SetSite(pow, (IUnknown*)spimpl);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+        if(FAILED(hr))
+            IObjectWithSite_Release(pow);
+    }
+
+    if(FAILED(hr))
+    {
+        skip("Failed to set site.\n");
+
+        IServiceProvider_Release((IServiceProvider*)spimpl);
+        IExplorerBrowser_Destroy(peb);
+        ref = IExplorerBrowser_Release(peb);
+        ok(ref == 0, "Got ref %d\n", ref);
+
+        return;
+    }
+
+    ShowWindow(hwnd, TRUE);
+    ebrowser_initialize(peb);
+    ebrowser_browse_to_desktop(peb);
+
+    for(i = 0; i < 10; i++)
+    {
+        Sleep(100);
+        process_msgs();
+    }
+    ShowWindow(hwnd, FALSE);
+
+    if(0)
+    {
+        for(i = 0; expected[i].service != NULL; i++)
+            if(!expected[i].count) trace("count %d was 0.\n", i);
+    }
+
+    /* Test when IServiceProvider is released. */
+    IServiceProvider_AddRef((IServiceProvider*)spimpl);
+    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    ok(ref == 2, "Got ref %d\n", ref);
+
+    hr = IObjectWithSite_SetSite(pow, NULL);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    IServiceProvider_AddRef((IServiceProvider*)spimpl);
+    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    ok(ref == 1, "Got ref %d\n", ref);
+
+    hr = IObjectWithSite_SetSite(pow, (IUnknown*)spimpl);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    IServiceProvider_AddRef((IServiceProvider*)spimpl);
+    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    ok(ref == 2, "Got ref %d\n", ref);
+
+    IExplorerBrowser_Destroy(peb);
+
+    IServiceProvider_AddRef((IServiceProvider*)spimpl);
+    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    ok(ref == 2, "Got ref %d\n", ref);
+
+    IObjectWithSite_Release(pow);
+    ref = IExplorerBrowser_Release(peb);
+    ok(ref == 0, "Got ref %d\n", ref);
+
+    ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    ok(ref == 0, "Got ref %d\n", ref);
 }
 
 static void test_basics(void)
@@ -1085,6 +1365,7 @@ START_TEST(ebrowser)
     test_Advise();
     test_navigation();
     test_GetCurrentView();
+    test_SetSite();
 
     DestroyWindow(hwnd);
     OleUninitialize();
