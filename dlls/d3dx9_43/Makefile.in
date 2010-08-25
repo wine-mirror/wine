@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = d3dx9_43.dll
+IMPORTS   = d3d9
+
+C_SRCS = \
+	d3dx9_43_main.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
