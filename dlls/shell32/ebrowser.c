@@ -51,6 +51,7 @@ typedef struct _travellog_entry {
 typedef struct _ExplorerBrowserImpl {
     const IExplorerBrowserVtbl *lpVtbl;
     const IShellBrowserVtbl *lpsbVtbl;
+    const ICommDlgBrowser3Vtbl *lpcdb3Vtbl;
     LONG ref;
     BOOL destroyed;
 
@@ -381,6 +382,12 @@ static HRESULT WINAPI IExplorerBrowser_fnQueryInterface(IExplorerBrowser *iface,
     else if(IsEqualIID(riid, &IID_IShellBrowser))
     {
         *ppvObject = &This->lpsbVtbl;
+    }
+    else if(IsEqualIID(riid, &IID_ICommDlgBrowser) ||
+            IsEqualIID(riid, &IID_ICommDlgBrowser2) ||
+            IsEqualIID(riid, &IID_ICommDlgBrowser3))
+    {
+        *ppvObject = &This->lpcdb3Vtbl;
     }
 
     if(*ppvObject)
@@ -1039,6 +1046,126 @@ static const IShellBrowserVtbl vt_IShellBrowser = {
     IShellBrowser_fnSetToolbarItems
 };
 
+/**************************************************************************
+ * ICommDlgBrowser3 Implementation
+ */
+
+static inline ExplorerBrowserImpl *impl_from_ICommDlgBrowser3(ICommDlgBrowser3 *iface)
+{
+    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpcdb3Vtbl));
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface,
+                                                        REFIID riid,
+                                                        void **ppvObject)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    TRACE("%p\n", This);
+    return IUnknown_QueryInterface((IUnknown*) This, riid, ppvObject);
+}
+
+static ULONG WINAPI ICommDlgBrowser3_fnAddRef(ICommDlgBrowser3 *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    TRACE("%p\n", This);
+    return IUnknown_AddRef((IUnknown*) This);
+}
+
+static ULONG WINAPI ICommDlgBrowser3_fnRelease(ICommDlgBrowser3 *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    TRACE("%p\n", This);
+    return IUnknown_Release((IUnknown*) This);
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3 *iface,
+                                                          IShellView *shv)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p)\n", This, shv);
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(ICommDlgBrowser3 *iface,
+                                                       IShellView *shv, ULONG uChange)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p, %d)\n", This, shv, uChange);
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(ICommDlgBrowser3 *iface,
+                                                       IShellView *pshv, LPCITEMIDLIST pidl)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p, %p)\n", This, pshv, pidl);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnNotify(ICommDlgBrowser3 *iface,
+                                                IShellView *pshv,
+                                                DWORD dwNotifyType)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p, 0x%x)\n", This, pshv, dwNotifyType);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetDefaultMenuText(ICommDlgBrowser3 *iface,
+                                                            IShellView *pshv,
+                                                            LPWSTR pszText, int cchMax)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p, %s, %d)\n", This, pshv, debugstr_w(pszText), cchMax);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetViewFlags(ICommDlgBrowser3 *iface,
+                                                      DWORD *pdwFlags)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p)\n", This, pdwFlags);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnColumnClicked(ICommDlgBrowser3 *iface,
+                                                         IShellView *pshv, int iColumn)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p, %d)\n", This, pshv, iColumn);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetCurrentFilter(ICommDlgBrowser3 *iface,
+                                                          LPWSTR pszFileSpec,
+                                                          int cchFileSpec)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%s, %d)\n", This, debugstr_w(pszFileSpec), cchFileSpec);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnPreviewCreated(ICommDlgBrowser3 *iface,
+                                                          IShellView *pshv)
+{
+    ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("stub, %p (%p)\n", This, pshv);
+    return S_OK;
+}
+
+static const ICommDlgBrowser3Vtbl vt_ICommDlgBrowser3 = {
+    ICommDlgBrowser3_fnQueryInterface,
+    ICommDlgBrowser3_fnAddRef,
+    ICommDlgBrowser3_fnRelease,
+    ICommDlgBrowser3_fnOnDefaultCommand,
+    ICommDlgBrowser3_fnOnStateChange,
+    ICommDlgBrowser3_fnIncludeObject,
+    ICommDlgBrowser3_fnNotify,
+    ICommDlgBrowser3_fnGetDefaultMenuText,
+    ICommDlgBrowser3_fnGetViewFlags,
+    ICommDlgBrowser3_fnOnColumnClicked,
+    ICommDlgBrowser3_fnGetCurrentFilter,
+    ICommDlgBrowser3_fnOnPreviewCreated
+};
+
 HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     ExplorerBrowserImpl *eb;
@@ -1055,6 +1182,7 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb->ref = 1;
     eb->lpVtbl = &vt_IExplorerBrowser;
     eb->lpsbVtbl = &vt_IShellBrowser;
+    eb->lpcdb3Vtbl = &vt_ICommDlgBrowser3;
 
     list_init(&eb->event_clients);
     list_init(&eb->travellog);
