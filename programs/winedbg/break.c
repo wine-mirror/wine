@@ -510,11 +510,13 @@ void break_delete_xpoints_from_module(DWORD64 base)
 
     for (i = 0; i < dbg_curr_process->next_bp; i++)
     {
-        linear = (DWORD_PTR)memory_to_linear_addr(&bp[i].addr);
-        if (bp[i].refcount && bp[i].enabled &&
-            im.BaseOfImage <= linear && linear < im.BaseOfImage + im.ImageSize)
+        if (bp[i].refcount && bp[i].enabled)
         {
-            break_delete_xpoint(i);
+            linear = (DWORD_PTR)memory_to_linear_addr(&bp[i].addr);
+            if (im.BaseOfImage <= linear && linear < im.BaseOfImage + im.ImageSize)
+            {
+                break_delete_xpoint(i);
+            }
         }
     }
 }
