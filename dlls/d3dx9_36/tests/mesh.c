@@ -429,20 +429,6 @@ static inline void print_elements(const D3DVERTEXELEMENT9 *elements)
     }
 }
 
-static inline void copy_elements(D3DVERTEXELEMENT9 *decl, const D3DVERTEXELEMENT9 *elements)
-{
-    unsigned int i;
-    D3DVERTEXELEMENT9 last = D3DDECL_END();
-    int end1;
-
-    for (i = 0; i < MAX_FVF_DECL_SIZE; i++)
-    {
-        memcpy(&decl[i], &elements[i], sizeof(D3DVERTEXELEMENT9));
-        end1 = memcmp(&elements[i], &last, sizeof(D3DVERTEXELEMENT9));
-        if (!end1) break;
-    }
-}
-
 static void compare_elements(const D3DVERTEXELEMENT9 *elements, const D3DVERTEXELEMENT9 *expected_elements,
                              unsigned int line)
 {
@@ -482,14 +468,11 @@ static void test_fvf_to_decl(DWORD test_fvf, const D3DVERTEXELEMENT9 expected_el
     if (SUCCEEDED(hr)) { compare_elements(decl, expected_elements, line); }
 }
 
-static void test_decl_to_fvf(const D3DVERTEXELEMENT9 test_decl[], DWORD expected_fvf, HRESULT expected_hr,
+static void test_decl_to_fvf(const D3DVERTEXELEMENT9 *decl, DWORD expected_fvf, HRESULT expected_hr,
                              BOOL todo, unsigned int line)
 {
     HRESULT hr;
     DWORD result_fvf = 0xdeadbeef;
-    D3DVERTEXELEMENT9 decl[MAX_FVF_DECL_SIZE];
-
-    copy_elements(decl, test_decl);
 
     hr = D3DXFVFFromDeclarator(decl, &result_fvf);
     if (todo) todo_wine ok(hr == expected_hr, "D3DXFVFFromDeclarator returned %#x, expected %#x, line #%u\n",
