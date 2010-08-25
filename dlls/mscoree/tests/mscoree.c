@@ -21,6 +21,7 @@
 static HMODULE hmscoree;
 
 static HRESULT (WINAPI *pGetCORVersion)(LPWSTR, DWORD, DWORD*);
+static HRESULT (WINAPI *pGetCORSystemDirectory)(LPWSTR, DWORD, DWORD*);
 
 static BOOL init_functionpointers(void)
 {
@@ -33,8 +34,8 @@ static BOOL init_functionpointers(void)
     }
 
     pGetCORVersion = (void *)GetProcAddress(hmscoree, "GetCORVersion");
-
-    if (!pGetCORVersion)
+    pGetCORSystemDirectory = (void *)GetProcAddress(hmscoree, "GetCORSystemDirectory");
+    if (!pGetCORVersion || !pGetCORSystemDirectory)
     {
         win_skip("functions not available\n");
         FreeLibrary(hmscoree);
@@ -47,7 +48,8 @@ static BOOL init_functionpointers(void)
 static void test_versioninfo(void)
 {
     WCHAR version[MAX_PATH];
-    DWORD size;
+    WCHAR path[MAX_PATH];
+    DWORD size, path_len;
     HRESULT hr;
 
     hr =  pGetCORVersion(NULL, MAX_PATH, &size);
@@ -60,6 +62,24 @@ static void test_versioninfo(void)
     ok(hr == S_OK,"GetCORVersion returned %08x\n", hr);
 
     trace("latest installed .net runtime: %s\n", wine_dbgstr_w(version));
+
+    hr = pGetCORSystemDirectory(path, MAX_PATH , &size);
+    ok(hr == S_OK, "GetCORSystemDirectory returned %08x\n", hr);
+    /* size includes terminating null-character */
+    ok(size == (lstrlenW(path) + 1),"size is %d instead of %d\n", size, (lstrlenW(path) + 1));
+
+    path_len = size;
+
+    hr = pGetCORSystemDirectory(path, path_len-1 , &size);
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+
+    hr = pGetCORSystemDirectory(NULL, MAX_PATH , &size);
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+
+    hr = pGetCORSystemDirectory(path, MAX_PATH , NULL);
+    ok(hr == E_POINTER,"GetCORSystemDirectory returned %08x\n", hr);
+
+    trace("latest installed .net installed in directory: %s\n", wine_dbgstr_w(path));
 }
 
 START_TEST(mscoree)
