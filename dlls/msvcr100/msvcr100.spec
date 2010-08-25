@@ -1078,7 +1078,7 @@
 @ stub _set_malloc_crt_max_wait
 @ stub _set_output_format
 @ stub _set_printf_count_output
-@ stub _set_purecall_handler
+@ cdecl _set_purecall_handler(ptr) msvcrt._set_purecall_handler
 @ cdecl _seterrormode(long) msvcrt._seterrormode
 @ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) msvcrt._setjmp
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3

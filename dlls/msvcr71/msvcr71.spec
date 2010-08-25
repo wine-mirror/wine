@@ -510,7 +510,7 @@
 @ stdcall -i386 _seh_longjmp_unwind(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _set_SSE2_enable(long) msvcrt._set_SSE2_enable
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
-@ stub _set_purecall_handler
+@ cdecl _set_purecall_handler(ptr) msvcrt._set_purecall_handler
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold
 @ stub _set_security_error_handler
 @ cdecl _seterrormode(long) msvcrt._seterrormode

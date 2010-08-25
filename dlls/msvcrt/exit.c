@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 static MSVCRT__onexit_t *MSVCRT_atexit_table = NULL;
 static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
+static MSVCRT_purecall_handler purecall_handler = NULL;
 
 static const char szMsgBoxTitle[] = "Wine C++ Runtime Library";
 
@@ -251,6 +252,15 @@ int CDECL MSVCRT_atexit(void (*func)(void))
   return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
 }
 
+/* _set_purecall_handler - not exported in native msvcrt */
+MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler function)
+{
+    MSVCRT_purecall_handler ret = purecall_handler;
+
+    TRACE("(%p)\n", function);
+    purecall_handler = function;
+    return ret;
+}
 
 /*********************************************************************
  *		_purecall (MSVCRT.@)
@@ -258,5 +268,8 @@ int CDECL MSVCRT_atexit(void (*func)(void))
 void CDECL _purecall(void)
 {
   TRACE("(void)\n");
+
+  if(purecall_handler)
+      purecall_handler();
   _amsg_exit( 25 );
 }

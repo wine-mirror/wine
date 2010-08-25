@@ -79,6 +79,7 @@ typedef void (*__cdecl MSVCRT__beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *MSVCRT__beginthreadex_start_routine_t)(void *);
 typedef int (*__cdecl MSVCRT__onexit_t)(void);
 typedef void (__cdecl *MSVCRT_invalid_parameter_handler)(const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, const MSVCRT_wchar_t*, unsigned, MSVCRT_uintptr_t);
+typedef void (__cdecl *MSVCRT_purecall_handler)(void);
 
 typedef struct {long double x;} MSVCRT__LDOUBLE;
 
