@@ -546,15 +546,10 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         ERR("Could not get nsIComponentManager: %08x\n", nsres);
 
     nsres = NS_GetComponentRegistrar(&registrar);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIComponentRegistrar_AutoRegister(registrar, NULL);
-        if(NS_FAILED(nsres))
-            ERR("AutoRegister(NULL) failed: %08x\n", nsres);
-
+    if(NS_SUCCEEDED(nsres))
         init_nsio(pCompMgr, registrar);
-    }else {
+    else
         ERR("NS_GetComponentRegistrar failed: %08x\n", nsres);
-    }
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_APPSTARTUPNOTIFIER_CONTRACTID,
             NULL, &IID_nsIObserver, (void**)&pStartNotif);
