@@ -633,9 +633,21 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToObject(IExplorerBrowser *iface,
                                                         IUnknown *punk, UINT uFlags)
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
-    FIXME("stub, %p (%p, 0x%x)\n", This, punk, uFlags);
+    LPITEMIDLIST pidl;
+    HRESULT hr;
+    TRACE("%p (%p, 0x%x)\n", This, punk, uFlags);
 
-    return E_NOTIMPL;
+    if(!punk)
+        return IExplorerBrowser_fnBrowseToIDList(iface, NULL, uFlags);
+
+    hr = SHGetIDListFromObject(punk, &pidl);
+    if(SUCCEEDED(hr))
+    {
+        hr = IExplorerBrowser_BrowseToIDList(iface, pidl, uFlags);
+        ILFree(pidl);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IExplorerBrowser_fnFillFromObject(IExplorerBrowser *iface,

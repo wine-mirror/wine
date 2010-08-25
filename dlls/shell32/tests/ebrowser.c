@@ -760,6 +760,7 @@ static void test_navigation(void)
 {
     IExplorerBrowser *peb, *peb2;
     IFolderView *pfv;
+    IShellItem *psi;
     IShellFolder *psf;
     LPITEMIDLIST pidl_current, pidl_child;
     DWORD cookie, cookie2;
@@ -915,6 +916,38 @@ static void test_navigation(void)
 
     hr = IExplorerBrowser_Unadvise(peb, cookie);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    IExplorerBrowser_Destroy(peb);
+    lres = IExplorerBrowser_Release(peb);
+    ok(lres == 0, "Got lres %d\n", lres);
+
+    /* BrowseToObject tests */
+    ebrowser_instantiate(&peb);
+    ebrowser_initialize(peb);
+
+    /* Browse to the desktop by passing an IShellFolder */
+    hr = SHGetDesktopFolder(&psf);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IExplorerBrowser_BrowseToObject(peb, (IUnknown*)psf, SBSP_DEFBROWSER);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        if(hr == S_OK) process_msgs();
+
+        IShellFolder_Release(psf);
+    }
+
+    /* Browse to the current directory by passing a ShellItem */
+    hr = pSHCreateShellItem(NULL, NULL, pidl_current, &psi);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IExplorerBrowser_BrowseToObject(peb, (IUnknown*)psi, SBSP_DEFBROWSER);
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+        process_msgs();
+
+        IShellItem_Release(psi);
+    }
 
     IExplorerBrowser_Destroy(peb);
     lres = IExplorerBrowser_Release(peb);
