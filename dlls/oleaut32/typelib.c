@@ -5768,7 +5768,47 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
     TRACE("returns %08x\n",res);
     return res;
 }
-#endif /* __i386__ */
+
+#elif defined(__x86_64__)
+
+extern DWORD_PTR CDECL call_method( void *func, int nb_args, const DWORD_PTR *args );
+__ASM_GLOBAL_FUNC( call_method,
+                   "pushq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "movq %rsp,%rbp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
+                   "pushq %rsi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rsi,-8\n\t")
+                   "pushq %rdi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rdi,-16\n\t")
+                   "movq %rcx,%rax\n\t"
+                   "movq $4,%rcx\n\t"
+                   "cmp %rcx,%rdx\n\t"
+                   "cmovgq %rdx,%rcx\n\t"
+                   "leaq 0(,%rcx,8),%rdx\n\t"
+                   "subq %rdx,%rsp\n\t"
+                   "andq $~15,%rsp\n\t"
+                   "movq %rsp,%rdi\n\t"
+                   "movq %r8,%rsi\n\t"
+                   "rep; movsq\n\t"
+                   "movq 0(%rsp),%rcx\n\t"
+                   "movq 8(%rsp),%rdx\n\t"
+                   "movq 16(%rsp),%r8\n\t"
+                   "movq 24(%rsp),%r9\n\t"
+                   "callq *%rax\n\t"
+                   "leaq -16(%rbp),%rsp\n\t"
+                   "popq %rdi\n\t"
+                   __ASM_CFI(".cfi_same_value %rdi\n\t")
+                   "popq %rsi\n\t"
+                   __ASM_CFI(".cfi_same_value %rsi\n\t")
+                   __ASM_CFI(".cfi_def_cfa_register %rsp\n\t")
+                   "popq %rbp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI(".cfi_same_value %rbp\n\t")
+                   "ret")
+
+#endif  /* __x86_64__ */
 
 static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, VARTYPE *vt)
 {
@@ -6025,6 +6065,83 @@ DispCallFunc(
     }
     HeapFree(GetProcessHeap(),0,args);
     return S_OK;
+
+#elif defined(__x86_64__)
+    int argspos;
+    UINT i;
+    DWORD_PTR *args, ret;
+
+    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+          pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
+          pvargResult, V_VT(pvargResult));
+
+    if (cc != CC_STDCALL && cc != CC_CDECL)
+    {
+	FIXME("unsupported calling convention %d\n",cc);
+        return E_INVALIDARG;
+    }
+
+    /* maximum size for an argument is sizeof(VARIANT) */
+    args = HeapAlloc( GetProcessHeap(), 0, sizeof(VARIANT) * cActuals + sizeof(DWORD_PTR) );
+
+    argspos = 0;
+    if (pvInstance)
+    {
+        args[0] = (DWORD_PTR)pvInstance; /* the This pointer is always the first parameter */
+        argspos++;
+    }
+
+    for (i = 0; i < cActuals; i++)
+    {
+        VARIANT *arg = prgpvarg[i];
+
+        switch (prgvt[i])
+        {
+        case VT_R4:
+        case VT_R8:
+        case VT_DATE:
+            FIXME(" floating point not supported properly\n" );
+            memcpy( &args[argspos], &V_R8(arg), sizeof(V_R8(arg)) );
+            argspos++;
+            break;
+        case VT_DECIMAL:
+            memcpy( &args[argspos], &V_DECIMAL(arg), sizeof(V_DECIMAL(arg)) );
+            argspos += sizeof(V_DECIMAL(arg)) / sizeof(DWORD_PTR);
+            break;
+        case VT_VARIANT:
+            memcpy( &args[argspos], arg, sizeof(*arg) );
+            argspos += sizeof(*arg) / sizeof(DWORD_PTR);
+            break;
+        case VT_RECORD:
+            FIXME("VT_RECORD not implemented\n");
+            /* fall through */
+        default:
+            args[argspos++] = V_UI8(arg);
+            break;
+        }
+        TRACE("arg %u: type %d\n",i,prgvt[i]);
+        dump_Variant(arg);
+    }
+
+    if (pvInstance)
+    {
+        FARPROC *vtable = *(FARPROC**)pvInstance;
+        ret = call_method(vtable[oVft/sizeof(void *)], argspos, args);
+    }
+    else
+        /* if we aren't invoking an object then the function pointer is stored
+         * in oVft */
+        ret = call_method((FARPROC)oVft, argspos, args);
+
+    if (pvargResult && (vtReturn != VT_EMPTY))
+    {
+        TRACE("Method returned 0x%lx\n",ret);
+        V_VT(pvargResult) = vtReturn;
+        V_UI8(pvargResult) = ret;
+    }
+    HeapFree(GetProcessHeap(),0,args);
+    return S_OK;
+
 #else
     FIXME( "(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d)): not implemented for this CPU\n",
            pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
