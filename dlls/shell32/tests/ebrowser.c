@@ -811,14 +811,34 @@ static void test_navigation(void)
     test_browse_pidl_sb(peb2, &ebev, 0, SBSP_RELATIVE, E_FAIL, 0, 0, 0, 0);
     test_browse_pidl(peb, &ebev, 0, SBSP_PARENT, E_FAIL, 0, 0, 0, 0);
     test_browse_pidl_sb(peb2, &ebev, 0, SBSP_PARENT, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, 0, SBSP_NAVIGATEFORWARD, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_NAVIGATEFORWARD, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, 0, SBSP_NAVIGATEBACK, E_FAIL, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_NAVIGATEBACK, E_FAIL, 0, 0, 0, 0);
 
     /* "The first browse is synchronous" */
     test_browse_pidl(peb, &ebev, pidl_child, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
     test_browse_pidl_sb(peb2, &ebev, pidl_child, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
 
+    /* Navigate empty history */
+    test_browse_pidl(peb, &ebev, 0, SBSP_NAVIGATEFORWARD, S_OK, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_NAVIGATEFORWARD, S_OK, 0, 0, 0, 0);
+    test_browse_pidl(peb, &ebev, 0, SBSP_NAVIGATEBACK, S_OK, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_NAVIGATEBACK, S_OK, 0, 0, 0, 0);
+
+    /* Navigate history */
+    test_browse_pidl(peb, &ebev, 0, SBSP_PARENT, S_OK, 1, 1, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_PARENT, S_OK, 1, 1, 0, 1);
+    test_browse_pidl(peb, &ebev, 0, SBSP_NAVIGATEBACK, S_OK, 1, 1, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_NAVIGATEBACK, S_OK, 1, 1, 0, 1);
+    test_browse_pidl(peb, &ebev, 0, SBSP_NAVIGATEFORWARD, S_OK, 1, 1, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_NAVIGATEFORWARD, S_OK, 1, 1, 0, 1);
+    test_browse_pidl(peb, &ebev, 0, SBSP_ABSOLUTE, S_OK, 0, 0, 0, 0);
+    test_browse_pidl_sb(peb2, &ebev, 0, SBSP_ABSOLUTE, S_OK, 0, 0, 0, 0);
+
     /* Relative navigation */
-    test_browse_pidl(peb, &ebev, pidl_current, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
-    test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_ABSOLUTE, S_OK, 1, 1, 0, 1);
+    test_browse_pidl(peb, &ebev, pidl_current, SBSP_ABSOLUTE, S_OK, 1, 0, 0, 1);
+    test_browse_pidl_sb(peb2, &ebev, pidl_current, SBSP_ABSOLUTE, S_OK, 1, 0, 0, 1);
 
     hr = IExplorerBrowser_GetCurrentView(peb, &IID_IFolderView, (void**)&pfv);
     ok(hr == S_OK, "Got 0x%08x\n", hr);

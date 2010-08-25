@@ -43,6 +43,11 @@ typedef struct _event_client {
     DWORD cookie;
 } event_client;
 
+typedef struct _travellog_entry {
+    struct list entry;
+    LPITEMIDLIST pidl;
+} travellog_entry;
+
 typedef struct _ExplorerBrowserImpl {
     const IExplorerBrowserVtbl *lpVtbl;
     const IShellBrowserVtbl *lpsbVtbl;
@@ -57,6 +62,9 @@ typedef struct _ExplorerBrowserImpl {
 
     struct list event_clients;
     DWORD events_next_cookie;
+    struct list travellog;
+    travellog_entry *travellog_cursor;
+    int travellog_count;
 
     IShellView *psv;
     RECT sv_rc;
@@ -137,6 +145,99 @@ static void events_ViewCreated(ExplorerBrowserImpl *This, IShellView *psv)
         TRACE("Notifying %p\n", cursor);
         IExplorerBrowserEvents_OnViewCreated(cursor->pebe, psv);
     }
+}
+
+/**************************************************************************
+ * Travellog functions.
+ */
+static void travellog_remove_entry(ExplorerBrowserImpl *This, travellog_entry *entry)
+{
+    TRACE("Removing %p\n", entry);
+
+    list_remove(&entry->entry);
+    HeapFree(GetProcessHeap(), 0, entry);
+    This->travellog_count--;
+}
+
+static void travellog_remove_all_entries(ExplorerBrowserImpl *This)
+{
+    travellog_entry *cursor, *cursor2;
+    TRACE("%p\n", This);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->travellog, travellog_entry, entry)
+        travellog_remove_entry(This, cursor);
+
+    This->travellog_cursor = NULL;
+}
+
+static void travellog_add_entry(ExplorerBrowserImpl *This, LPITEMIDLIST pidl)
+{
+    travellog_entry *new, *cursor, *cursor2;
+    TRACE("%p (old count %d)\n", pidl, This->travellog_count);
+
+    /* Replace the old tail, if any, with the new entry */
+    if(This->travellog_cursor)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE_REV(cursor, cursor2, &This->travellog, travellog_entry, entry)
+        {
+            if(cursor == This->travellog_cursor)
+                break;
+            travellog_remove_entry(This, cursor);
+        }
+    }
+
+    /* Create and add the new entry */
+    new = HeapAlloc(GetProcessHeap(), 0, sizeof(travellog_entry));
+    new->pidl = ILClone(pidl);
+    list_add_tail(&This->travellog, &new->entry);
+    This->travellog_cursor = new;
+    This->travellog_count++;
+
+    /* Remove the first few entries if the size limit is reached. */
+    if(This->travellog_count > 200)
+    {
+        UINT i = 0;
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->travellog, travellog_entry, entry)
+        {
+            if(i++ > 10)
+                break;
+            travellog_remove_entry(This, cursor);
+        }
+    }
+}
+
+static LPCITEMIDLIST travellog_go_back(ExplorerBrowserImpl *This)
+{
+    travellog_entry *prev;
+    TRACE("%p, %p\n", This, This->travellog_cursor);
+
+    if(!This->travellog_cursor)
+        return NULL;
+
+    prev = LIST_ENTRY(list_prev(&This->travellog, &This->travellog_cursor->entry),
+                      travellog_entry, entry);
+    if(!prev)
+        return NULL;
+
+    This->travellog_cursor = prev;
+    return prev->pidl;
+}
+
+static LPCITEMIDLIST travellog_go_forward(ExplorerBrowserImpl *This)
+{
+    travellog_entry *next;
+    TRACE("%p, %p\n", This, This->travellog_cursor);
+
+    if(!This->travellog_cursor)
+        return NULL;
+
+    next = LIST_ENTRY(list_next(&This->travellog, &This->travellog_cursor->entry),
+                      travellog_entry, entry);
+    if(!next)
+        return NULL;
+
+    This->travellog_cursor = next;
+    return next->pidl;
 }
 
 /**************************************************************************
@@ -386,6 +487,7 @@ static HRESULT WINAPI IExplorerBrowser_fnDestroy(IExplorerBrowser *iface)
     }
 
     events_unadvise_all(This);
+    travellog_remove_all_entries(This);
 
     ILFree(This->current_pidl);
     This->current_pidl = NULL;
@@ -520,9 +622,6 @@ static HRESULT WINAPI IExplorerBrowser_fnGetOptions(IExplorerBrowser *iface,
     return S_OK;
 }
 
-static const UINT unsupported_browse_flags =
-    SBSP_NAVIGATEBACK | SBSP_NAVIGATEFORWARD | SBSP_NEWBROWSER |
-    EBF_SELECTFROMDATAOBJECT | EBF_NODROPTARGET;
 static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
                                                         PCUIDLIST_RELATIVE pidl,
                                                         UINT uFlags)
@@ -530,6 +629,8 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
     LPITEMIDLIST absolute_pidl = NULL;
     HRESULT hr;
+    static const UINT unsupported_browse_flags =
+        SBSP_NEWBROWSER | EBF_SELECTFROMDATAOBJECT | EBF_NODROPTARGET;
     TRACE("%p (%p, 0x%x)\n", This, pidl, uFlags);
 
     if(!This->hwnd_main)
@@ -547,7 +648,27 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
     if(uFlags & unsupported_browse_flags)
         FIXME("Argument 0x%x contains unsupported flags.\n", uFlags);
 
-    if(uFlags & SBSP_PARENT)
+    if(uFlags & SBSP_NAVIGATEBACK)
+    {
+        TRACE("SBSP_NAVIGATEBACK\n");
+        absolute_pidl = ILClone(travellog_go_back(This));
+        if(!absolute_pidl && !This->current_pidl)
+            return E_FAIL;
+        else if(!absolute_pidl)
+            return S_OK;
+
+    }
+    else if(uFlags & SBSP_NAVIGATEFORWARD)
+    {
+        TRACE("SBSP_NAVIGATEFORWARD\n");
+        absolute_pidl = ILClone(travellog_go_forward(This));
+        if(!absolute_pidl && !This->current_pidl)
+            return E_FAIL;
+        else if(!absolute_pidl)
+            return S_OK;
+
+    }
+    else if(uFlags & SBSP_PARENT)
     {
         if(This->current_pidl)
         {
@@ -618,6 +739,14 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
                 IShellItem_Release(psi);
                 return E_FAIL;
             }
+
+            /* Add to travellog */
+            if( !(This->eb_options & EBO_NOTRAVELLOG) &&
+                !(uFlags & (SBSP_NAVIGATEFORWARD|SBSP_NAVIGATEBACK)) )
+            {
+                travellog_add_entry(This, absolute_pidl);
+            }
+
             IShellItem_Release(psi);
         }
     }
@@ -928,6 +1057,7 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb->lpsbVtbl = &vt_IShellBrowser;
 
     list_init(&eb->event_clients);
+    list_init(&eb->travellog);
 
     ret = IExplorerBrowser_QueryInterface((IExplorerBrowser*)eb, riid, ppv);
     IExplorerBrowser_Release((IExplorerBrowser*)eb);
