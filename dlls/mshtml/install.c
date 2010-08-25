@@ -49,6 +49,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #ifdef __i386__
 #define GECKO_ARCH "x86"
+#elif defined(__x86_64__)
+#define GECKO_ARCH "x86_64"
 #else
 #define GECKO_ARCH ""
 #endif
