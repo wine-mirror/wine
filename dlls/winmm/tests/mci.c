@@ -851,16 +851,13 @@ static void test_AutoOpenWAVE(HWND hwnd)
     test_notification(hwnd, "sysinfo name outofrange\n", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("play no-such-file-exists.wav notify", buf, sizeof(buf), NULL);
-    if(err==MCIERR_FILE_NOT_FOUND) { /* a Wine detector */
-        /* Unsupported auto-open leaves the file open, preventing clean-up */
-        skip("Skipping auto-open tests in Wine\n");
-        return;
-    }
+    todo_wine ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open notify returned %s\n", dbg_mcierr(err));
+    /* FILE_NOT_FOUND in Wine because auto-open fails before testing the notify flag */
 
     test_notification(hwnd, "-prior to auto-open-", 0);
 
     err = mciSendString("play tempfile.wav notify", buf, sizeof(buf), hwnd);
-    todo_wine ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
 
     if(err) /* FIXME: don't open twice yet, it confuses Wine. */
     err = mciSendString("play tempfile.wav", buf, sizeof(buf), hwnd);
@@ -874,7 +871,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
     buf[0]=0;
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
     ok(!err,"mci sysinfo waveaudio quantity after auto-open returned %s\n", dbg_mcierr(err));
-    if(!err) todo_wine ok(!strcmp(buf,"1"), "sysinfo quantity open expected 1, got: %s\n", buf);
+    if(!err) ok(!strcmp(buf,"1"), "sysinfo quantity open expected 1, got: %s\n", buf);
 
     parm.sys.lpstrReturn = (LPSTR)&intbuf[1];
     parm.sys.dwRetSize = 2*sizeof(DWORD); /* only one DWORD is used */
@@ -907,9 +904,10 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(!err,"mci status tempfile.wav mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"playing"), "mci auto-open status mode, got: %s\n", buf);
 
+    if (0) { /* FIXME: wait until this no more confuses Wine */
     err = mciSendString("open tempfile.wav", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_DEVICE_OPEN, "mci open from auto-open returned %s\n", dbg_mcierr(err));
-
+    }
     /* w2k/xp and Wine differ. While the device is busy playing, it is
      * regularly open and accessible via the filename: subsequent
      * commands must not cause auto-open each.  In Wine, a subsequent
@@ -927,11 +925,15 @@ static void test_AutoOpenWAVE(HWND hwnd)
         trace("Wine style MCI auto-close upon notification\n");
 
         /* "playing" because auto-close comes after the status call. */
-        todo_wine ok(!strcmp(buf,"playing"), "mci auto-open status mode notify, got: %s\n", buf);
+        ok(!strcmp(buf,"playing"), "mci auto-open status mode notify, got: %s\n", buf);
         /* fixme:winmm:MMDRV_Exit Closing while ll-driver open
          *  is explained by failure to auto-close a device. */
         test_notification(hwnd,"status notify",MCI_NOTIFY_SUCCESSFUL);
         /* MCI received NOTIFY_SUPERSEDED and auto-closed the device. */
+
+        /* Until this is implemented, force closing the device */
+        err = mciSendString("close tempfile.wav", NULL, 0, hwnd);
+        ok(!err,"mci auto-still-open stop returned %s\n", dbg_mcierr(err));
         Sleep(16);
         test_notification(hwnd,"auto-open",0);
     } else if(err==MCIERR_NOTIFY_ON_AUTO_OPEN) { /* MS style */
@@ -945,14 +947,14 @@ static void test_AutoOpenWAVE(HWND hwnd)
         if(!err) ok(!strcmp(buf,"paused"), "mci auto-open status mode, got: %s\n", buf);
 
         /* Auto-close */
-        err = mciSendString("stop tempfile.wav", NULL, 0, hwnd);
+        err = mciSendString("stop tempfile.wav wait", NULL, 0, hwnd);
         ok(!err,"mci auto-still-open stop returned %s\n", dbg_mcierr(err));
         Sleep(16); /* makes sysinfo quantity open below succeed */
     }
 
     err = mciSendString("sysinfo waveaudio quantity open", buf, sizeof(buf), NULL);
     ok(!err,"mci sysinfo waveaudio quantity open after close returned %s\n", dbg_mcierr(err));
-    if(!err) todo_wine ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0 after auto-close, got: %s\n", buf);
+    if(!err) ok(!strcmp(buf,"0"), "sysinfo quantity open expected 0 after auto-close, got: %s\n", buf);
 
     /* w95-WinME (not w2k/XP) switch to C:\ after auto-playing once.  Prevent
      * MCIERR_FILE_NOT_FOUND by using the full path name from the Info file command.

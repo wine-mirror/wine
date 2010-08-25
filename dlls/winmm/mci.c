@@ -1214,12 +1214,13 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 {
     LPWSTR		verb, dev, args;
     LPWINE_MCIDRIVER	wmd = 0;
-    MCIDEVICEID		uDevID;
+    MCIDEVICEID		uDevID, auto_open = 0;
     DWORD		dwFlags = 0, dwRet = 0;
     int			offset = 0;
     DWORD_PTR		data[MCI_DATA_SIZE];
     DWORD		retType;
     LPCWSTR		lpCmd = 0;
+    WORD		wMsg = 0;
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
     static const WCHAR  wszTypeS[]   = {'t','y','p','e',' ',0};
@@ -1229,6 +1230,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 
     TRACE("(%s, %p, %d, %p)\n", 
           debugstr_w(lpstrCommand), lpstrRet, uRetLen, hwndCallback);
+    if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
     /* format is <command> <device> <optargs> */
     if (!(verb = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpstrCommand)+1) * sizeof(WCHAR))))
@@ -1338,15 +1340,19 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
 	/* auto open */
         static const WCHAR wszOpenWait[] = {'o','p','e','n',' ','%','s',' ','w','a','i','t',0};
-	WCHAR   buf[128];
-	sprintfW(buf, wszOpenWait, dev);
-
-	if ((dwRet = mciSendStringW(buf, NULL, 0, 0)) != 0)
+	WCHAR   buf[138], retbuf[6];
+	snprintfW(buf, sizeof(buf)/sizeof(WCHAR), wszOpenWait, dev);
+	/* open via mciSendString handles quoting, dev!file syntax and alias creation */
+	if ((dwRet = mciSendStringW(buf, retbuf, sizeof(retbuf)/sizeof(WCHAR), 0)) != 0)
 	    goto errCleanUp;
+	auto_open = strtoulW(retbuf, NULL, 10);
+	TRACE("auto-opened %u\n", auto_open);
 
-	wmd = MCI_GetDriver(mciGetDeviceIDW(dev));
+	/* FIXME: test for notify flag (how to preparse?) before opening */
+	/* FIXME: Accept only core commands yet parse them with the specific table */
+	wmd = MCI_GetDriver(auto_open);
 	if (!wmd) {
-	    /* FIXME: memory leak, MCI driver is not closed */
+	    ERR("No auto-open device %d for %s\n", auto_open, debugstr_w(dev));
 	    dwRet = MCIERR_INVALID_DEVICE_ID;
 	    goto errCleanUp;
 	}
@@ -1372,6 +1378,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	dwRet = MCIERR_UNRECOGNIZED_COMMAND;
 	goto errCleanUp;
     }
+    wMsg = MCI_GetMessage(lpCmd);
 
     /* set return information */
     switch (retType = MCI_GetReturnType(lpCmd)) {
@@ -1389,17 +1396,23 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	goto errCleanUp;
 
     /* set up call back */
+    if (auto_open) {
+	if (dwFlags & MCI_NOTIFY) {
+	    dwRet = MCIERR_NOTIFY_ON_AUTO_OPEN;
+	    goto errCleanUp;
+	}
+	/* FIXME: the command should get its own notification window set up and
+	 * ask for device closing while processing the notification mechanism.
+	 * hwndCallback = ...
+	 * dwFlags |= MCI_NOTIFY;
+	 * In the meantime special-case all commands but PLAY and RECORD below. */
+    }
     if (dwFlags & MCI_NOTIFY) {
 	data[0] = (DWORD_PTR)hwndCallback;
     }
 
-    /* FIXME: the command should get it's own notification window set up and
-     * ask for device closing while processing the notification mechanism
-     */
-    if (lpstrRet && uRetLen) *lpstrRet = '\0';
-
     TRACE("[%d, %s, %08x, %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx]\n",
-	  wmd ? wmd->wDeviceID : uDevID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
+	  wmd ? wmd->wDeviceID : uDevID, MCI_MessageToString(wMsg), dwFlags,
 	  data[0], data[1], data[2], data[3], data[4],
 	  data[5], data[6], data[7], data[8], data[9]);
 
@@ -1408,13 +1421,20 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    MCI_UnLoadMciDriver(wmd);
 	/* FIXME: notification is not properly shared across two opens */
     } else {
-	dwRet = MCI_SendCommand(wmd ? wmd->wDeviceID : uDevID, MCI_GetMessage(lpCmd), dwFlags, (DWORD_PTR)data);
+	dwRet = MCI_SendCommand(wmd ? wmd->wDeviceID : uDevID, wMsg, dwFlags, (DWORD_PTR)data);
     }
     TRACE("=> 1/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
     dwRet = MCI_HandleReturnValues(dwRet, wmd, retType, data, lpstrRet, uRetLen);
     TRACE("=> 2/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
 
 errCleanUp:
+    if (auto_open) {
+	/* PLAY and RECORD are the only known non-immediate commands */
+	if (LOWORD(dwRet) || !(wMsg == MCI_PLAY || wMsg == MCI_RECORD))
+	    MCI_SendCommand(auto_open, MCI_CLOSE, 0, 0);
+	else
+	    FIXME("leaking auto-open device %u\n", auto_open);
+    }
     HeapFree(GetProcessHeap(), 0, verb);
     return dwRet;
 }
