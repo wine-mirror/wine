@@ -1662,6 +1662,7 @@ static void test_basics(void)
 
     todo_wine
     {
+        cbstate = -1;
         hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, &cbstate);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
         ok(cbstate == BST_UNCHECKED || broken(cbstate == BST_CHECKED /* Vista x64 */),
@@ -1670,6 +1671,7 @@ static void test_basics(void)
         hr = INameSpaceTreeControl_SetItemCustomState(pnstc, psitestdir, BST_CHECKED);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
 
+        cbstate = -1;
         hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, &cbstate);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
         ok(cbstate == BST_CHECKED, "Got %d\n", cbstate);
@@ -1677,6 +1679,7 @@ static void test_basics(void)
         hr = INameSpaceTreeControl_SetItemCustomState(pnstc, psitestdir, 0xFFF);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
 
+        cbstate = -1;
         hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, &cbstate);
         ok(hr == S_OK, "Got 0x%08x\n", hr);
         ok(cbstate == 0xF, "Got %d\n", cbstate);
