@@ -5706,7 +5706,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
 
 #ifdef __i386__
 
-extern DWORD CDECL call_method( void *func, int nb_args, const DWORD *args );
+extern LONGLONG CDECL call_method( void *func, int nb_args, const DWORD *args );
 __ASM_GLOBAL_FUNC( call_method,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -5767,33 +5767,6 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
     }
     TRACE("returns %08x\n",res);
     return res;
-}
-
-/* The size of the argument on the stack in DWORD units (in all x86 call
- * convetions the arguments on the stack are DWORD-aligned)
- */
-static int _dispargsize(VARTYPE vt)
-{
-    switch (vt) {
-    case VT_I8:
-    case VT_UI8:
-	return 8/sizeof(DWORD);
-    case VT_R8:
-        return sizeof(double)/sizeof(DWORD);
-    case VT_DECIMAL:
-        return (sizeof(DECIMAL)+3)/sizeof(DWORD);
-    case VT_CY:
-        return sizeof(CY)/sizeof(DWORD);
-    case VT_DATE:
-	return sizeof(DATE)/sizeof(DWORD);
-    case VT_VARIANT:
-	return (sizeof(VARIANT)+3)/sizeof(DWORD);
-    case VT_RECORD:
-        FIXME("VT_RECORD not implemented\n");
-        return 1;
-    default:
-	return 1;
-    }
 }
 #endif /* __i386__ */
 
@@ -5976,26 +5949,23 @@ DispCallFunc(
     VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult)
 {
 #ifdef __i386__
-    int argsize, argspos;
+    int argspos;
     UINT i;
     DWORD *args;
-    HRESULT hres;
+    LONGLONG ret;
 
     TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
         pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
         pvargResult, V_VT(pvargResult));
 
-    argsize = 0;
-    if (pvInstance)
-        argsize++; /* for This pointer */
-
-    for (i=0;i<cActuals;i++)
+    if (cc != CC_STDCALL && cc != CC_CDECL)
     {
-        TRACE("arg %u: type %d, size %d\n",i,prgvt[i],_dispargsize(prgvt[i]));
-        dump_Variant(prgpvarg[i]);
-        argsize += _dispargsize(prgvt[i]);
+        FIXME("unsupported calling convention %d\n",cc);
+        return E_INVALIDARG;
     }
-    args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*argsize);
+
+    /* maximum size for an argument is sizeof(VARIANT) */
+    args = HeapAlloc( GetProcessHeap(), 0, sizeof(VARIANT) * cActuals + sizeof(DWORD) );
 
     argspos = 0;
     if (pvInstance)
@@ -6007,29 +5977,51 @@ DispCallFunc(
     for (i=0;i<cActuals;i++)
     {
         VARIANT *arg = prgpvarg[i];
-        TRACE("Storing arg %u (%d as %d)\n",i,V_VT(arg),prgvt[i]);
-        if (prgvt[i] == VT_VARIANT)
-            memcpy(&args[argspos], arg, _dispargsize(prgvt[i]) * sizeof(DWORD));
-        else
-            memcpy(&args[argspos], &V_NONE(arg), _dispargsize(prgvt[i]) * sizeof(DWORD));
-        argspos += _dispargsize(prgvt[i]);
+
+        switch (prgvt[i])
+        {
+        case VT_I8:
+        case VT_UI8:
+        case VT_R8:
+        case VT_DATE:
+        case VT_CY:
+            memcpy( &args[argspos], &V_I8(arg), sizeof(V_I8(arg)) );
+            argspos += sizeof(V_I8(arg)) / sizeof(DWORD);
+            break;
+        case VT_DECIMAL:
+            memcpy( &args[argspos], &V_DECIMAL(arg), sizeof(V_DECIMAL(arg)) );
+            argspos += sizeof(V_DECIMAL(arg)) / sizeof(DWORD);
+            break;
+        case VT_VARIANT:
+            memcpy( &args[argspos], arg, sizeof(*arg) );
+            argspos += sizeof(*arg) / sizeof(DWORD);
+            break;
+        case VT_RECORD:
+            FIXME("VT_RECORD not implemented\n");
+            /* fall through */
+        default:
+            args[argspos++] = V_UI4(arg);
+            break;
+        }
+        TRACE("arg %u: type %d\n",i,prgvt[i]);
+        dump_Variant(arg);
     }
 
     if (pvInstance)
     {
         FARPROC *vtable = *(FARPROC**)pvInstance;
-        hres = _invoke(vtable[oVft/sizeof(void *)], cc, argsize, args);
+        ret = call_method(vtable[oVft/sizeof(void *)], argspos, args);
     }
     else
         /* if we aren't invoking an object then the function pointer is stored
          * in oVft */
-        hres = _invoke((FARPROC)oVft, cc, argsize, args);
+        ret = call_method((FARPROC)oVft, argspos, args);
 
     if (pvargResult && (vtReturn != VT_EMPTY))
     {
-        TRACE("Method returned 0x%08x\n",hres);
+        TRACE("Method returned %s\n",wine_dbgstr_longlong(ret));
         V_VT(pvargResult) = vtReturn;
-        V_UI4(pvargResult) = hres;
+        V_UI8(pvargResult) = ret;
     }
     HeapFree(GetProcessHeap(),0,args);
     return S_OK;
