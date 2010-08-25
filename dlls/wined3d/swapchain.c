@@ -810,7 +810,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
         }
 
         if (!present_parameters->EnableAutoDepthStencil
-                || swapchain->presentParms.AutoDepthStencilFormat != swapchain->ds_format->format)
+                || swapchain->presentParms.AutoDepthStencilFormat != swapchain->ds_format->id)
         {
             FIXME("Add OpenGL context recreation support to context_validate_onscreen_formats\n");
         }

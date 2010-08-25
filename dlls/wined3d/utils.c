@@ -892,7 +892,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < format_count; ++i)
     {
         struct wined3d_format_desc *desc = &gl_info->gl_formats[i];
-        desc->format = formats[i].id;
+        desc->id = formats[i].id;
         desc->red_mask = formats[i].redMask;
         desc->green_mask = formats[i].greenMask;
         desc->blue_mask = formats[i].blueMask;
@@ -976,7 +976,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
     if (status == GL_FRAMEBUFFER_COMPLETE)
     {
-        TRACE("Format %s is supported as FBO color attachment\n", debug_d3dformat(format_desc->format));
+        TRACE("Format %s is supported as FBO color attachment.\n", debug_d3dformat(format_desc->id));
         format_desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE;
         format_desc->rtInternal = format_desc->glInternal;
     }
@@ -987,19 +987,19 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             if (format_desc->Flags & WINED3DFMT_FLAG_RENDERTARGET)
             {
                 FIXME("Format %s with rendertarget flag is not supported as FBO color attachment,"
-                        " and no fallback specified.\n", debug_d3dformat(format_desc->format));
+                        " and no fallback specified.\n", debug_d3dformat(format_desc->id));
                 format_desc->Flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
             }
             else
             {
-                TRACE("Format %s is not supported as FBO color attachment.\n", debug_d3dformat(format_desc->format));
+                TRACE("Format %s is not supported as FBO color attachment.\n", debug_d3dformat(format_desc->id));
             }
             format_desc->rtInternal = format_desc->glInternal;
         }
         else
         {
             TRACE("Format %s is not supported as FBO color attachment, trying rtInternal format as fallback.\n",
-                    debug_d3dformat(format_desc->format));
+                    debug_d3dformat(format_desc->id));
 
             while(glGetError());
 
@@ -1017,13 +1017,13 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
             if (status == GL_FRAMEBUFFER_COMPLETE)
             {
-                TRACE("Format %s rtInternal format is supported as FBO color attachment\n",
-                        debug_d3dformat(format_desc->format));
+                TRACE("Format %s rtInternal format is supported as FBO color attachment.\n",
+                        debug_d3dformat(format_desc->id));
             }
             else
             {
                 FIXME("Format %s rtInternal format is not supported as FBO color attachment.\n",
-                        debug_d3dformat(format_desc->format));
+                        debug_d3dformat(format_desc->id));
                 format_desc->Flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
             }
         }
@@ -1074,12 +1074,12 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
 
         if (status == GL_FRAMEBUFFER_COMPLETE)
         {
-            TRACE("Format %s's sRGB format is FBO attachable.\n", debug_d3dformat(format_desc->format));
+            TRACE("Format %s's sRGB format is FBO attachable.\n", debug_d3dformat(format_desc->id));
             format_desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
         }
         else
         {
-            WARN("Format %s's sRGB format is not FBO attachable.\n", debug_d3dformat(format_desc->format));
+            WARN("Format %s's sRGB format is not FBO attachable.\n", debug_d3dformat(format_desc->id));
         }
     }
 
@@ -1113,20 +1113,20 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
         if (desc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
         {
             TRACE("Skipping format %s because it's a depth/stencil format.\n",
-                    debug_d3dformat(desc->format));
+                    debug_d3dformat(desc->id));
             continue;
         }
 
         if (desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
         {
             TRACE("Skipping format %s because it's a compressed format.\n",
-                    debug_d3dformat(desc->format));
+                    debug_d3dformat(desc->id));
             continue;
         }
 
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
-            TRACE("Checking if format %s is supported as FBO color attachment...\n", debug_d3dformat(desc->format));
+            TRACE("Checking if format %s is supported as FBO color attachment...\n", debug_d3dformat(desc->id));
             check_fbo_compat(gl_info, desc);
         }
         else
@@ -1562,7 +1562,7 @@ UINT wined3d_format_calculate_size(const struct wined3d_format_desc *format, UIN
 {
     UINT size;
 
-    if (format->format == WINED3DFMT_UNKNOWN)
+    if (format->id == WINED3DFMT_UNKNOWN)
     {
         size = 0;
     }
@@ -2479,8 +2479,9 @@ unsigned int count_bits(unsigned int mask)
 BOOL getColorBits(const struct wined3d_format_desc *format_desc,
         short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize)
 {
-    TRACE("fmt: %s\n", debug_d3dformat(format_desc->format));
-    switch(format_desc->format)
+    TRACE("format %s.\n", debug_d3dformat(format_desc->id));
+
+    switch (format_desc->id)
     {
         case WINED3DFMT_B8G8R8X8_UNORM:
         case WINED3DFMT_B8G8R8_UNORM:
@@ -2497,7 +2498,7 @@ BOOL getColorBits(const struct wined3d_format_desc *format_desc,
         case WINED3DFMT_P8_UINT:
             break;
         default:
-            ERR("Unsupported format: %s\n", debug_d3dformat(format_desc->format));
+            FIXME("Unsupported format %s.\n", debug_d3dformat(format_desc->id));
             return FALSE;
     }
 
@@ -2507,16 +2508,17 @@ BOOL getColorBits(const struct wined3d_format_desc *format_desc,
     *alphaSize = count_bits(format_desc->alpha_mask);
     *totalSize = *redSize + *greenSize + *blueSize + *alphaSize;
 
-    TRACE("Returning red:  %d, green: %d, blue: %d, alpha: %d, total: %d for fmt=%s\n",
-            *redSize, *greenSize, *blueSize, *alphaSize, *totalSize, debug_d3dformat(format_desc->format));
+    TRACE("Returning red: %d, green: %d, blue: %d, alpha: %d, total: %d for format %s.\n",
+            *redSize, *greenSize, *blueSize, *alphaSize, *totalSize, debug_d3dformat(format_desc->id));
     return TRUE;
 }
 
 /* Helper function for retrieving depth/stencil info for ChoosePixelFormat and wglChoosePixelFormatARB */
 BOOL getDepthStencilBits(const struct wined3d_format_desc *format_desc, short *depthSize, short *stencilSize)
 {
-    TRACE("fmt: %s\n", debug_d3dformat(format_desc->format));
-    switch(format_desc->format)
+    TRACE("format %s.\n", debug_d3dformat(format_desc->id));
+
+    switch (format_desc->id)
     {
         case WINED3DFMT_D16_LOCKABLE:
         case WINED3DFMT_D16_UNORM:
@@ -2529,21 +2531,21 @@ BOOL getDepthStencilBits(const struct wined3d_format_desc *format_desc, short *d
         case WINED3DFMT_D32_FLOAT:
             break;
         default:
-            FIXME("Unsupported stencil format: %s\n", debug_d3dformat(format_desc->format));
+            FIXME("Unsupported depth/stencil format %s.\n", debug_d3dformat(format_desc->id));
             return FALSE;
     }
 
     *depthSize = format_desc->depth_size;
     *stencilSize = format_desc->stencil_size;
 
-    TRACE("Returning depthSize: %d and stencilSize: %d for fmt=%s\n",
-            *depthSize, *stencilSize, debug_d3dformat(format_desc->format));
+    TRACE("Returning depthSize: %d and stencilSize: %d for format %s.\n",
+            *depthSize, *stencilSize, debug_d3dformat(format_desc->id));
     return TRUE;
 }
 
 DWORD wined3d_format_convert_from_float(const struct wined3d_format_desc *format, const WINED3DCOLORVALUE *color)
 {
-    enum wined3d_format_id destfmt = format->format;
+    enum wined3d_format_id destfmt = format->id;
     unsigned int r, g, b, a;
     DWORD ret;
 

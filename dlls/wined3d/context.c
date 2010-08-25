@@ -333,7 +333,7 @@ static void context_check_fbo_status(struct wined3d_context *context, GLenum tar
             if (attachment)
             {
                 FIXME("\tColor attachment %d: (%p) %s %ux%u\n",
-                        i, attachment, debug_d3dformat(attachment->resource.format_desc->format),
+                        i, attachment, debug_d3dformat(attachment->resource.format_desc->id),
                         attachment->pow2Width, attachment->pow2Height);
             }
         }
@@ -341,7 +341,7 @@ static void context_check_fbo_status(struct wined3d_context *context, GLenum tar
         if (attachment)
         {
             FIXME("\tDepth attachment: (%p) %s %ux%u\n",
-                    attachment, debug_d3dformat(attachment->resource.format_desc->format),
+                    attachment, debug_d3dformat(attachment->resource.format_desc->id),
                     attachment->pow2Width, attachment->pow2Height);
         }
     }
@@ -1141,13 +1141,13 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     int nCfgs = This->adapter->nCfgs;
 
     TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, findCompatible=%d\n",
-          debug_d3dformat(color_format_desc->format), debug_d3dformat(ds_format_desc->format),
+          debug_d3dformat(color_format_desc->id), debug_d3dformat(ds_format_desc->id),
           auxBuffers, numSamples, findCompatible);
 
     if (!getColorBits(color_format_desc, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits))
     {
         ERR("Unable to get color bits for format %s (%#x)!\n",
-                debug_d3dformat(color_format_desc->format), color_format_desc->format);
+                debug_d3dformat(color_format_desc->id), color_format_desc->id);
         return 0;
     }
 
@@ -1260,7 +1260,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     }
 
     TRACE("Found iPixelFormat=%d for ColorFormat=%s, DepthStencilFormat=%s\n",
-            iPixelFormat, debug_d3dformat(color_format_desc->format), debug_d3dformat(ds_format_desc->format));
+            iPixelFormat, debug_d3dformat(color_format_desc->id), debug_d3dformat(ds_format_desc->id));
     return iPixelFormat;
 }
 
@@ -1315,9 +1315,9 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
     {
         auxBuffers = TRUE;
 
-        if (color_format_desc->format == WINED3DFMT_B4G4R4X4_UNORM)
+        if (color_format_desc->id == WINED3DFMT_B4G4R4X4_UNORM)
             color_format_desc = getFormatDescEntry(WINED3DFMT_B4G4R4A4_UNORM, gl_info);
-        else if (color_format_desc->format == WINED3DFMT_B8G8R8X8_UNORM)
+        else if (color_format_desc->id == WINED3DFMT_B8G8R8X8_UNORM)
             color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
     }
 
@@ -1327,7 +1327,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
      * conversion (ab)uses the alpha component for storing the palette index.
      * For this reason we require a format with 8bit alpha, so request
      * A8R8G8B8. */
-    if (color_format_desc->format == WINED3DFMT_P8_UINT)
+    if (color_format_desc->id == WINED3DFMT_P8_UINT)
         color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
 
     /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD. */
@@ -2296,7 +2296,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
         const struct wined3d_format_desc *old = context->current_rt->resource.format_desc;
         const struct wined3d_format_desc *new = target->resource.format_desc;
 
-        if (old->format != new->format)
+        if (old->id != new->id)
         {
             /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
             if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)

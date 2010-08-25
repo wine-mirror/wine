@@ -189,7 +189,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DV
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
 
-    pDesc->Format = This->resource.format_desc->format;
+    pDesc->Format = This->resource.format_desc->id;
     pDesc->Type = This->resource.resourceType;
     pDesc->Usage = This->resource.usage;
     pDesc->Pool = This->resource.pool;
@@ -275,7 +275,8 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int 
     const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
     const struct wined3d_format_desc *glDesc = This->resource.format_desc;
 
-    TRACE("(%p) : level %u, format %s (0x%08x)\n", This, gl_level, debug_d3dformat(glDesc->format), glDesc->format);
+    TRACE("iface %p, level %u, srgb %#x, format %s (%#x).\n",
+            iface, gl_level, srgb_mode, debug_d3dformat(glDesc->id), glDesc->id);
 
     volume_bind_and_dirtify(iface);
 

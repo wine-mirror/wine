@@ -806,7 +806,7 @@ do {                                                                            
 /* Trace vector and strided data information */
 #define TRACE_STRIDED(si, name) do { if (si->use_map & (1 << name)) \
         TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
-        si->elements[name].data, si->elements[name].stride, si->elements[name].format_desc->format, \
+        si->elements[name].data, si->elements[name].stride, si->elements[name].format_desc->id, \
         si->elements[name].buffer_object, si->elements[name].stream_idx); } while(0)
 
 /* Advance declaration of structures to satisfy compiler */
@@ -2959,7 +2959,8 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 
 struct wined3d_format_desc
 {
-    enum wined3d_format_id format;
+    enum wined3d_format_id id;
+
     DWORD red_mask;
     DWORD green_mask;
     DWORD blue_mask;

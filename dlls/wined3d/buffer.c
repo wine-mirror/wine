@@ -245,7 +245,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     if (!attrib->stride)
     {
         FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else\n",
-                debug_d3dformat(attrib->format_desc->format));
+                debug_d3dformat(attrib->format_desc->id));
     }
     else if(attrib->stride != *stride_this_run && *stride_this_run)
     {
@@ -302,7 +302,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
             || attrib->buffer_object != This->buffer_object)
         return FALSE;
 
-    format = attrib->format_desc->format;
+    format = attrib->format_desc->id;
     /* Look for newly appeared conversion */
     if (!gl_info->supported[ARB_HALF_FLOAT_VERTEX]
             && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
@@ -350,7 +350,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 
         if (!(strided->use_map & (1 << i)) || strided->elements[i].buffer_object != This->buffer_object) continue;
 
-        format = strided->elements[i].format_desc->format;
+        format = strided->elements[i].format_desc->id;
         if (format == WINED3DFMT_R16G16_FLOAT)
         {
             shift = 4;
@@ -1473,7 +1473,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     buffer->buffer_type_hint = bind_hint;
 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
-            debug_d3dformat(buffer->resource.format_desc->format), buffer->resource.allocatedMemory, buffer);
+            debug_d3dformat(buffer->resource.format_desc->id), buffer->resource.allocatedMemory, buffer);
 
     /* GL_ARB_map_buffer_range is disabled for now due to numerous bugs and no gains */
     dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE];

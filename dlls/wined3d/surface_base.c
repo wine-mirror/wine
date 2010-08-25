@@ -153,7 +153,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSU
 
     TRACE("(%p) : copying into %p\n", This, pDesc);
 
-    pDesc->format = This->resource.format_desc->format;
+    pDesc->format = This->resource.format_desc->id;
     pDesc->resource_type = This->resource.resourceType;
     pDesc->usage = This->resource.usage;
     pDesc->pool = This->resource.pool;
@@ -473,7 +473,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wi
     const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id,
             &This->resource.device->adapter->gl_info);
 
-    if (This->resource.format_desc->format != WINED3DFMT_UNKNOWN)
+    if (This->resource.format_desc->id != WINED3DFMT_UNKNOWN)
     {
         FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
         return WINED3DERR_INVALIDCALL;
@@ -505,7 +505,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
 
     if(!(format_desc->Flags & WINED3DFMT_FLAG_GETDC))
     {
-        WARN("Cannot use GetDC on a %s surface\n", debug_d3dformat(format_desc->format));
+        WARN("Cannot use GetDC on a %s surface\n", debug_d3dformat(format_desc->id));
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -557,7 +557,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
 
     /* Get the bit masks */
     masks = (DWORD *)b_info->bmiColors;
-    switch (This->resource.format_desc->format)
+    switch (This->resource.format_desc->id)
     {
         case WINED3DFMT_B8G8R8_UNORM:
             usage = DIB_RGB_COLORS;
@@ -802,10 +802,11 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     WINED3DLOCKED_RECT lock_src, lock_dst;
     HRESULT hr;
 
-    conv = find_convertor(source->resource.format_desc->format, to_fmt);
-    if(!conv) {
-        FIXME("Cannot find a conversion function from format %s to %s\n",
-              debug_d3dformat(source->resource.format_desc->format), debug_d3dformat(to_fmt));
+    conv = find_convertor(source->resource.format_desc->id, to_fmt);
+    if (!conv)
+    {
+        FIXME("Cannot find a conversion function from format %s to %s.\n",
+                debug_d3dformat(source->resource.format_desc->id), debug_d3dformat(to_fmt));
         return NULL;
     }
 
@@ -1102,9 +1103,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         dEntry = This->resource.format_desc;
         if (src)
         {
-            if (This->resource.format_desc->format != src->resource.format_desc->format)
+            if (This->resource.format_desc->id != src->resource.format_desc->id)
             {
-                src = surface_convert_format(src, dEntry->format);
+                src = surface_convert_format(src, dEntry->id);
                 if (!src)
                 {
                     /* The conv function writes a FIXME */
@@ -1660,7 +1661,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
             FIXME("trans arg not supported when a compressed surface is involved\n");
         if (dstx || dsty)
             FIXME("offset for destination surface is not supported\n");
-        if (src->resource.format_desc->format != This->resource.format_desc->format)
+        if (src->resource.format_desc->id != This->resource.format_desc->id)
         {
             FIXME("compressed -> compressed copy only supported for the same type of surface\n");
             ret = WINED3DERR_WRONGTEXTUREFORMAT;

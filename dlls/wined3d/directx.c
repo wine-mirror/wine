@@ -2999,7 +2999,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
     if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
         if (!getColorBits(format_desc, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
         {
-            ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(format_desc->format));
+            ERR("Unable to check compatibility for format %s.\n", debug_d3dformat(format_desc->id));
             return FALSE;
         }
 
@@ -3033,14 +3033,14 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3
 
     if (!getDepthStencilBits(format_desc, &depthSize, &stencilSize))
     {
-        ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(format_desc->format));
+        ERR("Unable to check compatibility for format %s.\n", debug_d3dformat(format_desc->id));
         return FALSE;
     }
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
     if (format_desc->Flags & WINED3DFMT_FLAG_FLOAT) return FALSE;
 
-    if ((format_desc->format == WINED3DFMT_D16_LOCKABLE) || (format_desc->format == WINED3DFMT_D32_FLOAT))
+    if ((format_desc->id == WINED3DFMT_D16_LOCKABLE) || (format_desc->id == WINED3DFMT_D32_FLOAT))
         lockable = TRUE;
 
     /* On some modern cards like the Geforce8/9 GLX doesn't offer some dephthstencil formats which D3D9 reports.
@@ -3375,8 +3375,8 @@ static BOOL CheckRenderTargetCapability(struct wined3d_adapter *adapter,
             if (cfgs[it].windowDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info,
                     &cfgs[it], check_format_desc))
             {
-                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n",
-                        cfgs[it].iPixelFormat, debug_d3dformat(check_format_desc->format));
+                TRACE_(d3d_caps)("Pixel format %d is compatible with format %s.\n",
+                        cfgs[it].iPixelFormat, debug_d3dformat(check_format_desc->id));
                 return TRUE;
             }
         }
@@ -3413,7 +3413,7 @@ static BOOL CheckSrgbWriteCapability(struct wined3d_adapter *adapter, const stru
         }
     }
 
-    TRACE_(d3d_caps)("[FAILED] - no SRGB writing support on format=%s\n", debug_d3dformat(format_desc->format));
+    TRACE_(d3d_caps)("[FAILED] - sRGB writes not supported by format %s.\n", debug_d3dformat(format_desc->id));
     return FALSE;
 }
 
@@ -3446,7 +3446,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter, const struct
 {
     const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
-    switch (format_desc->format)
+    switch (format_desc->id)
     {
         /*****
          *  supported: RGB(A) formats
@@ -3666,7 +3666,7 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter, const struct
             return FALSE;
 
         default:
-            ERR("Unhandled format=%s\n", debug_d3dformat(format_desc->format));
+            ERR("Unhandled format %s.\n", debug_d3dformat(format_desc->id));
             break;
     }
     return FALSE;
@@ -3677,8 +3677,9 @@ static BOOL CheckSurfaceCapability(struct wined3d_adapter *adapter,
         const struct wined3d_format_desc *check_format_desc,
         WINED3DSURFTYPE SurfaceType)
 {
-    if(SurfaceType == SURFACE_GDI) {
-        switch(check_format_desc->format)
+    if (SurfaceType == SURFACE_GDI)
+    {
+        switch (check_format_desc->id)
         {
             case WINED3DFMT_B8G8R8_UNORM:
             case WINED3DFMT_B8G8R8A8_UNORM:

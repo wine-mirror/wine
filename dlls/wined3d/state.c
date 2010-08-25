@@ -3200,7 +3200,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, s
     set_texture_matrix(&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
             stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS], generated, context->last_was_rhw,
             stateblock->device->strided_streams.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
-            ? stateblock->device->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format_desc->format
+            ? stateblock->device->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format_desc->id
             : WINED3DFMT_UNKNOWN,
             stateblock->device->frag_pipe->ffp_proj_control);
 
@@ -4115,7 +4115,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
 
             if (context->numbered_array_mask & (1 << i)) unload_numbered_array(context, i);
 
-            switch (stream_info->elements[i].format_desc->format)
+            switch (stream_info->elements[i].format_desc->id)
             {
                 case WINED3DFMT_R32_FLOAT:
                     GL_EXTCALL(glVertexAttrib1fvARB(i, (const GLfloat *)ptr));

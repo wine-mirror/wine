@@ -274,7 +274,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             if (!element->ffp_valid)
             {
                 WARN("Skipping unsupported fixed function element of format %s and usage %s\n",
-                        debug_d3dformat(element->format_desc->format), debug_d3ddeclusage(element->usage));
+                        debug_d3dformat(element->format_desc->id), debug_d3ddeclusage(element->usage));
                 stride_used = FALSE;
             }
             else
@@ -289,7 +289,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
                     "input_slot %u, offset %u, stride %u, format %s, buffer_object %u]\n",
                     use_vshader ? "shader": "fixed function", idx,
                     debug_d3ddeclusage(element->usage), element->usage_idx, element->input_slot,
-                    element->offset, stride, debug_d3dformat(element->format_desc->format), buffer_object);
+                    element->offset, stride, debug_d3dformat(element->format_desc->id), buffer_object);
 
             stream_info->elements[idx].format_desc = element->format_desc;
             stream_info->elements[idx].stride = stride;
@@ -298,7 +298,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             stream_info->elements[idx].buffer_object = buffer_object;
 
             if (!This->adapter->gl_info.supported[ARB_VERTEX_ARRAY_BGRA]
-                    && element->format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
+                    && element->format_desc->id == WINED3DFMT_B8G8R8A8_UNORM)
             {
                 stream_info->swizzle_map |= 1 << idx;
             }
@@ -381,7 +381,7 @@ static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_inf
         if (!stream_info->elements[i].format_desc) continue;
 
         if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
-                && stream_info->elements[i].format_desc->format == WINED3DFMT_B8G8R8A8_UNORM)
+                && stream_info->elements[i].format_desc->id == WINED3DFMT_B8G8R8A8_UNORM)
         {
             stream_info->swizzle_map |= 1 << i;
         }
@@ -5055,8 +5055,8 @@ static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
         IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl*)device->stateBlock->textures[i];
-        if (texture && (texture->resource.format_desc->format == WINED3DFMT_P8_UINT
-                || texture->resource.format_desc->format == WINED3DFMT_P8_UINT_A8_UNORM))
+        if (texture && (texture->resource.format_desc->id == WINED3DFMT_P8_UINT
+                || texture->resource.format_desc->id == WINED3DFMT_P8_UINT_A8_UNORM))
         {
             IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
         }
@@ -5268,7 +5268,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     src_format = src_impl->resource.format_desc;
     dst_format = dst_impl->resource.format_desc;
 
-    if (src_format->format != dst_format->format)
+    if (src_format->id != dst_format->id)
     {
         WARN("Source and destination surfaces should have the same format.\n");
         return WINED3DERR_INVALIDCALL;
@@ -5670,7 +5670,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         {
             swapchain->presentParms.BackBufferWidth = back_impl->currentDesc.Width;
             swapchain->presentParms.BackBufferHeight = back_impl->currentDesc.Height;
-            swapchain->presentParms.BackBufferFormat = back_impl->resource.format_desc->format;
+            swapchain->presentParms.BackBufferFormat = back_impl->resource.format_desc->id;
             swapchain->presentParms.BackBufferCount = 1;
 
             surface_set_container(back_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
@@ -5842,7 +5842,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
         WINED3DLOCKED_RECT rect;
 
         /* MSDN: Cursor must be A8R8G8B8 */
-        if (s->resource.format_desc->format != WINED3DFMT_B8G8R8A8_UNORM)
+        if (s->resource.format_desc->id != WINED3DFMT_B8G8R8A8_UNORM)
         {
             WARN("surface %p has an invalid format.\n", cursor_image);
             return WINED3DERR_INVALIDCALL;

@@ -125,8 +125,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         element = &si->elements[WINED3D_FFP_DIFFUSE];
         diffuse = element->data + streamOffset[element->stream_idx];
 
-        if (num_untracked_materials && element->format_desc->format != WINED3DFMT_B8G8R8A8_UNORM)
-            FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->format));
+        if (num_untracked_materials && element->format_desc->id != WINED3DFMT_B8G8R8A8_UNORM)
+            FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->id));
     }
     else
     {
@@ -141,13 +141,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         /* special case where the fog density is stored in the specular alpha channel */
         if (This->stateBlock->renderState[WINED3DRS_FOGENABLE]
                 && (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
-                    || si->elements[WINED3D_FFP_POSITION].format_desc->format == WINED3DFMT_R32G32B32A32_FLOAT)
+                    || si->elements[WINED3D_FFP_POSITION].format_desc->id == WINED3DFMT_R32G32B32A32_FLOAT)
                 && This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
         {
             if (gl_info->supported[EXT_FOG_COORD])
             {
-                if (element->format_desc->format == WINED3DFMT_B8G8R8A8_UNORM) specular_fog = TRUE;
-                else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->format_desc->format));
+                if (element->format_desc->id == WINED3DFMT_B8G8R8A8_UNORM) specular_fog = TRUE;
+                else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->format_desc->id));
             }
             else
             {
@@ -468,7 +468,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
                   si->elements[i].stride * SkipnStrides +
                   stateblock->streamOffset[si->elements[i].stream_idx];
 
-            send_attribute(This, si->elements[i].format_desc->format, i, ptr);
+            send_attribute(This, si->elements[i].format_desc->id, i, ptr);
         }
         SkipnStrides++;
     }
@@ -539,7 +539,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
                 ptr += (ULONG_PTR)buffer_get_sysmem(vb, &This->adapter->gl_info);
             }
 
-            send_attribute(This, si->elements[instancedData[j]].format_desc->format, instancedData[j], ptr);
+            send_attribute(This, si->elements[instancedData[j]].format_desc->id, instancedData[j], ptr);
         }
 
         glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
