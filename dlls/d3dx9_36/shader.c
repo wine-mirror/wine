@@ -25,6 +25,7 @@
 #include "wingdi.h"
 #include "objbase.h"
 #include "d3dcommon.h"
+#include "d3dcompiler.h"
 #include "d3dx9_36_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
@@ -371,16 +372,15 @@ HRESULT WINAPI D3DXCompileShader(LPCSTR pSrcData,
                                  LPD3DXBUFFER* ppErrorMsgs,
                                  LPD3DXCONSTANTTABLE * ppConstantTable)
 {
-    FIXME("(%p, %d, %p, %p, %s, %s, %x, %p, %p, %p): stub\n",
-          pSrcData, srcDataLen, pDefines, pInclude, debugstr_a(pFunctionName),
-          debugstr_a(pProfile), Flags, ppShader, ppErrorMsgs, ppConstantTable);
+    HRESULT hr = D3DCompile(pSrcData, srcDataLen, NULL,
+                            (D3D_SHADER_MACRO *)pDefines, (ID3DInclude *)pInclude,
+                            pFunctionName, pProfile, Flags, 0,
+                            (ID3DBlob **)ppShader, (ID3DBlob **)ppErrorMsgs);
 
-    TRACE("Shader source:\n");
-    TRACE("%s\n", debugstr_an(pSrcData, srcDataLen));
-
-    if (ppErrorMsgs)
-        D3DXCreateBuffer(1, ppErrorMsgs); /* zero fill used as string end */
-    return D3DERR_INVALIDCALL;
+    if(SUCCEEDED(hr) && ppConstantTable)
+        return D3DXGetShaderConstantTable(ID3DXBuffer_GetBufferPointer(*ppShader),
+                                          ppConstantTable);
+    return hr;
 }
 
 static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;
