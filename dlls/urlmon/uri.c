@@ -216,16 +216,19 @@ static inline BOOL is_num(WCHAR val) {
 	return (val >= '0' && val <= '9');
 }
 
+static inline BOOL is_drive_path(const WCHAR *str) {
+    return (is_alpha(str[0]) && (str[1] == ':' || str[1] == '|'));
+}
+
+static inline BOOL is_unc_path(const WCHAR *str) {
+    return (str[0] == '\\' && str[0] == '\\');
+}
+
 /* A URI is implicitly a file path if it begins with
  * a drive letter (eg X:) or starts with "\\" (UNC path).
  */
 static inline BOOL is_implicit_file_path(const WCHAR *str) {
-    if(is_alpha(str[0]) && str[1] == ':')
-        return TRUE;
-    else if(str[0] == '\\' && str[1] == '\\')
-        return TRUE;
-
-    return FALSE;
+    return (is_unc_path(str) || (is_alpha(str[0]) && str[1] == ':'));
 }
 
 /* Checks if the URI is a hierarchical URI. A hierarchical
@@ -1378,15 +1381,16 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
     if(data->scheme_type == URL_SCHEME_FILE) {
         /* This is because an implicit file scheme could be "C:\\test" and it
          * would trick this function into thinking the host is "C", when after
-         * canonicalization the host would end up being an empty string.
+         * canonicalization the host would end up being an empty string. A drive
+         * path can also have a '|' instead of a ':' after the drive letter.
          */
-        if(is_alpha(**ptr) && *(*ptr+1) == ':') {
+        if(is_drive_path(*ptr)) {
             /* Regular old drive paths don't have a host type (or host name). */
             data->host_type = Uri_HOST_UNKNOWN;
             data->host = *ptr;
             data->host_len = 0;
             return TRUE;
-        } else if(**ptr == '\\' && *(*ptr+1) == '\\')
+        } else if(is_unc_path(*ptr))
             /* Skip past the "\\" of a UNC path. */
             *ptr += 2;
     }
@@ -2649,19 +2653,37 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
     }
 
     uri->path_start = uri->canon_len;
+    ptr = data->path;
 
-    /* Check if a '/' needs to be appended for the file scheme. */
-    if(is_file) {
-        if(data->path_len > 1 && is_alpha(*(data->path)) &&
-           *(data->path+1) == ':') {
+    if(is_file && uri->host_start == -1) {
+        /* Check if a '/' needs to be appended for the file scheme. */
+        if(data->path_len > 1 && is_drive_path(ptr) && !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = '/';
             uri->canon_len++;
             escape_pct = TRUE;
+        } else if(*ptr == '/') {
+            if(!(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+                /* Copy the extra '/' over. */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = '/';
+                ++uri->canon_len;
+            }
+            ++ptr;
+        }
+
+        if(is_drive_path(ptr)) {
+            if(!computeOnly) {
+                uri->canon_uri[uri->canon_len] = *ptr;
+                /* If theres a '|' after the drive letter, convert it to a ':'. */
+                uri->canon_uri[uri->canon_len+1] = ':';
+            }
+            ptr += 2;
+            uri->canon_len += 2;
         }
     }
 
-    for(ptr = data->path; ptr < data->path+data->path_len; ++ptr) {
+    for(; ptr < data->path+data->path_len; ++ptr) {
         if(*ptr == '%') {
             const WCHAR *tmp = ptr;
             WCHAR val;
@@ -2688,10 +2710,22 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
                     uri->canon_uri[uri->canon_len] = *ptr;
                 ++uri->canon_len;
             }
-        } else if(*ptr == '\\' && known_scheme) {
+        } else if(*ptr == '/' && is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+            /* Convert the '/' back to a '\\'. */
             if(!computeOnly)
-                uri->canon_uri[uri->canon_len] = '/';
+                uri->canon_uri[uri->canon_len] = '\\';
             ++uri->canon_len;
+        } else if(*ptr == '\\' && known_scheme) {
+            if(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+                /* Don't convert the '\\' to a '/'. */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
+            } else {
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = '/';
+                ++uri->canon_len;
+            }
         } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
             /* Escape the forbidden character. */
@@ -3939,7 +3973,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
         Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME|Uri_CREATE_NO_CANONICALIZE|Uri_CREATE_CANONICALIZE|
         Uri_CREATE_DECODE_EXTRA_INFO|Uri_CREATE_NO_DECODE_EXTRA_INFO|Uri_CREATE_CRACK_UNKNOWN_SCHEMES|
         Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES|Uri_CREATE_PRE_PROCESS_HTML_URI|Uri_CREATE_NO_PRE_PROCESS_HTML_URI|
-        Uri_CREATE_NO_IE_SETTINGS|Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS;
+        Uri_CREATE_NO_IE_SETTINGS|Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS|Uri_CREATE_FILE_USE_DOS_PATH;
     Uri *ret;
     HRESULT hr;
     parse_data data;
@@ -3966,7 +4000,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
 
     /* Currently unsupported. */
     if(dwFlags & ~supported_flags)
-        FIXME("Ignoring unsupported flags %x\n", dwFlags & ~supported_flags);
+        FIXME("Ignoring unsupported flag(s) %x\n", dwFlags & ~supported_flags);
 
     ret = heap_alloc(sizeof(Uri));
     if(!ret)
