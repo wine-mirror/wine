@@ -96,6 +96,9 @@ void surface_set_container(IWineD3DSurfaceImpl *surface, enum wined3d_container_
 {
     TRACE("surface %p, container %p.\n", surface, container);
 
+    if (!container && type != WINED3D_CONTAINER_NONE)
+        ERR("Setting NULL container of type %#x.\n", type);
+
     if (type == WINED3D_CONTAINER_SWAPCHAIN)
     {
         surface->get_drawable_size = get_drawable_size_swapchain;

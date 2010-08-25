@@ -5663,7 +5663,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         TRACE("Changing the back buffer from %p to %p.\n", swapchain->back_buffers[0], back_impl);
 
         if (swapchain->back_buffers[0])
-            surface_set_container(swapchain->back_buffers[0], WINED3D_CONTAINER_TEXTURE, NULL);
+            surface_set_container(swapchain->back_buffers[0], WINED3D_CONTAINER_NONE, NULL);
         swapchain->back_buffers[0] = back_impl;
 
         if (back_impl)
