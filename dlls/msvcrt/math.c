@@ -51,6 +51,15 @@ typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
+/*********************************************************************
+ *      _set_SSE2_enable (MSVCRT.@)
+ */
+int CDECL MSVCRT__set_SSE2_enable(int flag)
+{
+    FIXME("(%x) stub\n", flag);
+    return flag;
+}
+
 #ifdef __x86_64__
 
 /*********************************************************************

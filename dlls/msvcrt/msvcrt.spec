@@ -846,7 +846,7 @@
 # stub _searchenv_s
 # stub _seh_longjmp_unwind4
 @ stdcall -i386 _seh_longjmp_unwind(ptr)
-# stub _set_SSE2_enable
+@ cdecl _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 # stub _set_controlfp
 # stub _set_doserrno
 # stub _set_errno
