@@ -612,6 +612,8 @@ extern struct backend_cpu be_ppc;
 extern struct backend_cpu be_alpha;
 #elif defined(__x86_64__)
 extern struct backend_cpu be_x86_64;
+#elif defined(__sparc__)
+extern struct backend_cpu be_sparc;
 #else
 # error CPU unknown
 #endif
@@ -630,6 +632,8 @@ int main(int argc, char** argv)
     be_cpu = &be_alpha;
 #elif defined(__x86_64__)
     be_cpu = &be_x86_64;
+#elif defined(__sparc__)
+    be_cpu = &be_sparc;
 #else
 # error CPU unknown
 #endif
