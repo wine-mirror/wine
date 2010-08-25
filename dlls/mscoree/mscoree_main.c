@@ -79,6 +79,28 @@ static BOOL get_mono_path(LPWSTR path)
     return TRUE;
 }
 
+static BOOL get_install_root(LPWSTR install_dir)
+{
+    const WCHAR dotnet_key[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','.','N','E','T','F','r','a','m','e','w','o','r','k','\\',0};
+    const WCHAR install_root[] = {'I','n','s','t','a','l','l','R','o','o','t',0};
+
+    DWORD len;
+    HKEY key;
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, dotnet_key, 0, KEY_READ, &key))
+        return FALSE;
+
+    len = MAX_PATH;
+    if (RegQueryValueExW(key, install_root, 0, NULL, (LPBYTE)install_dir, &len))
+    {
+        RegCloseKey(key);
+        return FALSE;
+    }
+    RegCloseKey(key);
+
+    return TRUE;
+}
+
 static CRITICAL_SECTION mono_lib_cs;
 static CRITICAL_SECTION_DEBUG mono_lib_cs_debug =
 {
@@ -336,12 +358,35 @@ HRESULT WINAPI _CorValidateImage(PVOID* imageBase, LPCWSTR imageName)
 
 HRESULT WINAPI GetCORSystemDirectory(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
 {
-    FIXME("(%p, %d, %p): stub!\n", pbuffer, cchBuffer, dwLength);
+    static const WCHAR slash[] = {'\\',0};
+    WCHAR system_dir[MAX_PATH];
+    WCHAR version[MAX_PATH];
+
+    FIXME("(%p, %d, %p): semi-stub!\n", pbuffer, cchBuffer, dwLength);
 
     if (!dwLength)
         return E_POINTER;
 
-    *dwLength = 0;
+    if (!pbuffer)
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+    if (!get_install_root(system_dir))
+    {
+        ERR("error reading registry key for installroot, returning empty path\n");
+        *dwLength = 0;
+    }
+    else
+    {
+        GetCORVersion(version, MAX_PATH, dwLength);
+        lstrcatW(system_dir, version);
+        lstrcatW(system_dir, slash);
+        *dwLength = lstrlenW(system_dir) + 1;
+
+        if (cchBuffer < *dwLength)
+            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+        lstrcpyW(pbuffer, system_dir);
+    }
 
     return S_OK;
 }
@@ -355,7 +400,7 @@ HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
     if (!dwLength || !pbuffer)
         return E_POINTER;
 
-    *dwLength = lstrlenW(version);
+    *dwLength = lstrlenW(version) + 1;
 
     if (cchBuffer < *dwLength)
         return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);

@@ -71,10 +71,10 @@ static void test_versioninfo(void)
     path_len = size;
 
     hr = pGetCORSystemDirectory(path, path_len-1 , &size);
-    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
 
     hr = pGetCORSystemDirectory(NULL, MAX_PATH , &size);
-    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
 
     hr = pGetCORSystemDirectory(path, MAX_PATH , NULL);
     ok(hr == E_POINTER,"GetCORSystemDirectory returned %08x\n", hr);
