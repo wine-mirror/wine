@@ -203,7 +203,7 @@ HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD fvf, D3DVERTEXELEMENT9 Declaration[MA
 /*************************************************************************
  * D3DXFVFFromDeclarator
  */
-HRESULT WINAPI D3DXFVFFromDeclarator(const LPD3DVERTEXELEMENT9 *declaration, DWORD *fvf)
+HRESULT WINAPI D3DXFVFFromDeclarator(const D3DVERTEXELEMENT9 *declaration, DWORD *fvf)
 {
     FIXME("(%p, %p): stub\n", declaration, fvf);
 

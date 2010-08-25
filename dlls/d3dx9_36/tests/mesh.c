@@ -491,7 +491,7 @@ static void test_decl_to_fvf(const D3DVERTEXELEMENT9 test_decl[], DWORD expected
 
     copy_elements(decl, test_decl);
 
-    hr = D3DXFVFFromDeclarator((D3DVERTEXELEMENT9 **)&decl, &result_fvf);
+    hr = D3DXFVFFromDeclarator(decl, &result_fvf);
     if (todo) todo_wine ok(hr == expected_hr, "D3DXFVFFromDeclarator returned %#x, expected %#x, line #%u\n",
                            hr, expected_hr, line);
     else ok(hr == expected_hr, "D3DXFVFFromDeclarator returned %#x, expected %#x, line #%u\n",
