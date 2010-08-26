@@ -566,9 +566,9 @@
 @ stub _getws_s
 @ cdecl -i386 _global_unwind2(ptr) msvcrt._global_unwind2
 @ cdecl _gmtime32(ptr) msvcrt._gmtime32
-@ stub _gmtime32_s
+@ cdecl _gmtime32_s(ptr ptr) msvcrt._gmtime32_s
 @ cdecl _gmtime64(ptr) msvcrt._gmtime64
-@ stub _gmtime64_s
+@ cdecl _gmtime64_s(ptr ptr) msvcrt._gmtime64_s
 @ cdecl _heapadd(ptr long) msvcrt._heapadd
 @ cdecl _heapchk() msvcrt._heapchk
 @ cdecl _heapmin() msvcrt._heapmin

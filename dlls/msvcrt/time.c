@@ -232,37 +232,78 @@ struct MSVCRT_tm* CDECL MSVCRT_localtime(const MSVCRT___time32_t* secs)
 /*********************************************************************
  *      _gmtime64 (MSVCRT.@)
  */
-struct MSVCRT_tm* CDECL MSVCRT__gmtime64(const MSVCRT___time64_t* secs)
+int CDECL MSVCRT__gmtime64_s(struct MSVCRT_tm *res, const MSVCRT___time64_t *secs)
 {
-  thread_data_t * const data = msvcrt_get_thread_data();
-  int i;
-  FILETIME ft;
-  SYSTEMTIME st;
+    int i;
+    FILETIME ft;
+    SYSTEMTIME st;
+    ULONGLONG time;
 
-  ULONGLONG time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    if(!res || !secs || *secs<0) {
+        if(res) {
+            res->tm_sec = -1;
+            res->tm_min = -1;
+            res->tm_hour = -1;
+            res->tm_mday = -1;
+            res->tm_year = -1;
+            res->tm_mon = -1;
+            res->tm_wday = -1;
+            res->tm_yday = -1;
+            res->tm_isdst = -1;
+        }
 
-  ft.dwHighDateTime = (UINT)(time >> 32);
-  ft.dwLowDateTime  = (UINT)time;
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
 
-  FileTimeToSystemTime(&ft, &st);
+    time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
 
-  if (st.wYear < 1970) return NULL;
+    ft.dwHighDateTime = (UINT)(time >> 32);
+    ft.dwLowDateTime  = (UINT)time;
 
-  data->time_buffer.tm_sec  = st.wSecond;
-  data->time_buffer.tm_min  = st.wMinute;
-  data->time_buffer.tm_hour = st.wHour;
-  data->time_buffer.tm_mday = st.wDay;
-  data->time_buffer.tm_year = st.wYear - 1900;
-  data->time_buffer.tm_mon  = st.wMonth - 1;
-  data->time_buffer.tm_wday = st.wDayOfWeek;
-  for (i = data->time_buffer.tm_yday = 0; i < st.wMonth - 1; i++) {
-    data->time_buffer.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
-  }
+    FileTimeToSystemTime(&ft, &st);
 
-  data->time_buffer.tm_yday += st.wDay - 1;
-  data->time_buffer.tm_isdst = 0;
+    res->tm_sec  = st.wSecond;
+    res->tm_min  = st.wMinute;
+    res->tm_hour = st.wHour;
+    res->tm_mday = st.wDay;
+    res->tm_year = st.wYear - 1900;
+    res->tm_mon  = st.wMonth - 1;
+    res->tm_wday = st.wDayOfWeek;
+    for (i = res->tm_yday = 0; i < st.wMonth - 1; i++) {
+        res->tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
+    }
 
-  return &data->time_buffer;
+    res->tm_yday += st.wDay - 1;
+    res->tm_isdst = 0;
+
+    return 0;
+}
+
+/*********************************************************************
+ *      _gmtime64 (MSVCRT.@)
+ */
+struct MSVCRT_tm* CDECL MSVCRT__gmtime64(const MSVCRT___time64_t *secs)
+{
+    thread_data_t * const data = msvcrt_get_thread_data();
+
+    if(MSVCRT__gmtime64_s(&data->time_buffer, secs))
+        return NULL;
+    return &data->time_buffer;
+}
+
+/*********************************************************************
+ *      _gmtime32_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__gmtime32_s(struct MSVCRT_tm *res, const MSVCRT___time32_t *secs)
+{
+    MSVCRT___time64_t secs64;
+
+    if(secs) {
+        secs64 = *secs;
+        return MSVCRT__gmtime64_s(res, &secs64);
+    }
+    return MSVCRT__gmtime64_s(res, NULL);
 }
 
 /*********************************************************************
@@ -270,7 +311,12 @@ struct MSVCRT_tm* CDECL MSVCRT__gmtime64(const MSVCRT___time64_t* secs)
  */
 struct MSVCRT_tm* CDECL MSVCRT__gmtime32(const MSVCRT___time32_t* secs)
 {
-    MSVCRT___time64_t secs64 = *secs;
+    MSVCRT___time64_t secs64;
+
+    if(!secs)
+        return NULL;
+
+    secs64 = *secs;
     return MSVCRT__gmtime64( &secs64 );
 }
 

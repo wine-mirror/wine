@@ -35,6 +35,7 @@
 
 static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
 static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
+static errno_t    (__cdecl *p_gmtime32_s)(struct tm*, __time32_t*);
 static errno_t    (__cdecl *p_strtime_s)(char*,size_t);
 static errno_t    (__cdecl *p_strdate_s)(char*,size_t);
 
@@ -43,6 +44,7 @@ static void init(void)
     HMODULE hmod = GetModuleHandleA("msvcrt.dll");
 
     p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
+    p_gmtime32_s = (void*)GetProcAddress(hmod, "_gmtime32_s");
     p_mkgmtime32 = (void*)GetProcAddress(hmod, "_mkgmtime32");
     p_strtime_s = (void*)GetProcAddress(hmod, "_strtime_s");
     p_strdate_s = (void*)GetProcAddress(hmod, "_strdate_s");
@@ -71,12 +73,20 @@ static void test_ctime(void)
 static void test_gmtime(void)
 {
     __time32_t valid, gmt;
-    struct tm* gmt_tm;
+    struct tm* gmt_tm, gmt_tm_s;
+    errno_t err;
 
     if(!p_gmtime32) {
         win_skip("Skipping _gmtime32 tests\n");
         return;
     }
+
+    gmt_tm = p_gmtime32(NULL);
+    ok(gmt_tm == NULL, "gmt_tm != NULL\n");
+
+    gmt = -1;
+    gmt_tm = p_gmtime32(&gmt);
+    ok(gmt_tm == NULL, "gmt_tm != NULL\n");
 
     gmt = valid = 0;
     gmt_tm = p_gmtime32(&gmt);
@@ -133,6 +143,24 @@ static void test_gmtime(void)
     gmt_tm->tm_isdst = 1;
     gmt = p_mkgmtime32(gmt_tm);
     ok(gmt == valid, "gmt = %u\n", gmt);
+
+    if(!p_gmtime32_s) {
+        win_skip("Skipping _gmtime32_s tests\n");
+        return;
+    }
+
+    errno = 0;
+    gmt = 0;
+    err = p_gmtime32_s(NULL, &gmt);
+    ok(err == EINVAL, "err = %d\n", err);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    errno = 0;
+    gmt = -1;
+    err = p_gmtime32_s(&gmt_tm_s, &gmt);
+    ok(err == EINVAL, "err = %d\n", err);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+    ok(gmt_tm_s.tm_year == -1, "tm_year = %d\n", gmt_tm_s.tm_year);
 }
 
 static void test_mktime(void)
