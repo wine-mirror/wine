@@ -36,6 +36,7 @@
 static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
 static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
 static errno_t    (__cdecl *p_strtime_s)(char*,size_t);
+static errno_t    (__cdecl *p_strdate_s)(char*,size_t);
 
 static void init(void)
 {
@@ -44,6 +45,7 @@ static void init(void)
     p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
     p_mkgmtime32 = (void*)GetProcAddress(hmod, "_mkgmtime32");
     p_strtime_s = (void*)GetProcAddress(hmod, "_strtime_s");
+    p_strdate_s = (void*)GetProcAddress(hmod, "_strdate_s");
 }
 
 static int get_test_year(time_t *start)
@@ -295,6 +297,7 @@ static void test_strdate(void)
 {
     char date[16], * result;
     int month, day, year, count, len;
+    errno_t err;
 
     result = _strdate(date);
     ok(result == date, "Wrong return value\n");
@@ -302,6 +305,27 @@ static void test_strdate(void)
     ok(len == 8, "Wrong length: returned %d, should be 8\n", len);
     count = sscanf(date, "%02d/%02d/%02d", &month, &day, &year);
     ok(count == 3, "Wrong format: count = %d, should be 3\n", count);
+
+    if(!p_strdate_s) {
+        win_skip("Skipping _strdate_s tests\n");
+        return;
+    }
+
+    errno = 0;
+    err = p_strdate_s(NULL, 1);
+    ok(err == EINVAL, "err = %d\n", err);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    date[0] = 'x';
+    date[1] = 'x';
+    err = p_strdate_s(date, 8);
+    ok(err == ERANGE, "err = %d\n", err);
+    ok(errno == ERANGE, "errno = %d\n", errno);
+    ok(date[0] == '\0', "date[0] != '\\0'\n");
+    ok(date[1] == 'x', "date[1] != 'x'\n");
+
+    err = p_strdate_s(date, 9);
+    ok(err == 0, "err = %x\n", err);
 }
 
 static void test_strtime(void)

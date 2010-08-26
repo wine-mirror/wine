@@ -985,7 +985,7 @@
 @ stub _statusfp2
 @ stub _strcoll_l
 @ cdecl _strdate(ptr) msvcrt._strdate
-@ stub _strdate_s
+@ cdecl _strdate_s(ptr long) msvcrt._strdate_s
 @ cdecl _strdup(str) msvcrt._strdup
 @ cdecl _strerror(long) msvcrt._strerror
 @ stub _strerror_s
@@ -1254,7 +1254,7 @@
 @ cdecl _wstat64(wstr ptr) msvcrt._wstat64
 @ stub _wstat64i32
 @ cdecl _wstrdate(ptr) msvcrt._wstrdate
-@ stub _wstrdate_s
+@ cdecl _wstrdate_s(ptr long) msvcrt._wstrdate_s
 @ cdecl _wstrtime(ptr) msvcrt._wstrtime
 @ cdecl _wstrtime_s(ptr long) msvcrt._wstrtime_s
 @ cdecl _wsystem(wstr) msvcrt._wsystem

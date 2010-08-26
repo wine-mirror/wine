@@ -302,6 +302,28 @@ char* CDECL _strdate(char* date)
 }
 
 /**********************************************************************
+ *              _strdate_s (MSVCRT.@)
+ */
+int CDECL _strdate_s(char* date, MSVCRT_size_t size)
+{
+    if(date && size)
+        date[0] = '\0';
+
+    if(!date) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(size < 9) {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    _strdate(date);
+    return 0;
+}
+
+/**********************************************************************
  *		_wstrdate (MSVCRT.@)
  */
 MSVCRT_wchar_t* CDECL _wstrdate(MSVCRT_wchar_t* date)
@@ -311,6 +333,28 @@ MSVCRT_wchar_t* CDECL _wstrdate(MSVCRT_wchar_t* date)
   GetDateFormatW(LOCALE_NEUTRAL, 0, NULL, format, date, 9);
 
   return date;
+}
+
+/**********************************************************************
+ *              _wstrdate_s (MSVCRT.@)
+ */
+int CDECL _wstrdate_s(MSVCRT_wchar_t* date, MSVCRT_size_t size)
+{
+    if(date && size)
+        date[0] = '\0';
+
+    if(!date) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(size < 9) {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    _wstrdate(date);
+    return 0;
 }
 
 /*********************************************************************

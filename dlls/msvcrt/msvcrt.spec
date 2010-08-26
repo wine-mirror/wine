@@ -906,7 +906,7 @@
 @ cdecl _strcmpi(str str) ntdll._strcmpi
 # stub _strcoll_l
 @ cdecl _strdate(ptr)
-# stub _strdate_s
+@ cdecl _strdate_s(ptr long)
 @ cdecl _strdup(str)
 # stub _strdup_dbg
 @ cdecl _strerror(long)
@@ -1168,7 +1168,7 @@
 @ cdecl _wstati64(wstr ptr) MSVCRT__wstati64
 @ cdecl _wstat64(wstr ptr) MSVCRT__wstat64
 @ cdecl _wstrdate(ptr)
-# stub _wstrdate_s
+@ cdecl _wstrdate_s(ptr long)
 @ cdecl _wstrtime(ptr)
 @ cdecl _wstrtime_s(ptr long)
 @ cdecl _wsystem(wstr)

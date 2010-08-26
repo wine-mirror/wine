@@ -396,6 +396,7 @@ size_t   __cdecl wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
 wchar_t* __cdecl _wctime32(const __time32_t*);
 wchar_t* __cdecl _wctime64(const __time64_t*);
 wchar_t* __cdecl _wstrdate(wchar_t*);
+errno_t  __cdecl _wstrdate_s(wchar_t*,size_t);
 wchar_t* __cdecl _wstrtime(wchar_t*);
 errno_t  __cdecl _wstrtime_s(wchar_t*,size_t);
 
