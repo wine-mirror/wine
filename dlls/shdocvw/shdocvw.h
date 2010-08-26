@@ -284,7 +284,6 @@ static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_r
 extern HINSTANCE shdocvw_hinstance;
 extern void register_iewindow_class(void);
 extern void unregister_iewindow_class(void);
-extern void adjust_ie_docobj_rect(HWND, RECT*);
 extern HRESULT update_ie_statustext(InternetExplorer*, LPCWSTR);
 
 HRESULT register_class_object(BOOL);

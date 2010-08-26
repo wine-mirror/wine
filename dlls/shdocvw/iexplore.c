@@ -60,7 +60,7 @@ HRESULT update_ie_statustext(InternetExplorer* This, LPCWSTR text)
     return S_OK;
 }
 
-void adjust_ie_docobj_rect(HWND frame, RECT* rc)
+static void adjust_ie_docobj_rect(HWND frame, RECT* rc)
 {
     HWND hwndRebar = GetDlgItem(frame, IDC_BROWSE_REBAR);
     HWND hwndStatus = GetDlgItem(frame, IDC_BROWSE_STATUSBAR);
