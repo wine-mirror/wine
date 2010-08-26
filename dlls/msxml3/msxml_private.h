@@ -139,7 +139,6 @@ extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc);
 
 extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, BOOL own );
 
-extern xmlDocPtr parse_xml(char *ptr, int len);
 
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode
