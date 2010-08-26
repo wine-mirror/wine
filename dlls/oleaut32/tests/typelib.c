@@ -60,6 +60,8 @@ static HRESULT WINAPI (*pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIN
 
 static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
 
+static const int is_win64 = sizeof(void *) > sizeof(int);
+
 static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("oleaut32.dll");
@@ -626,6 +628,191 @@ static void test_TypeInfo(void)
 
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);
+}
+
+static int WINAPI int_func( int a0, int a1, int a2, int a3, int a4 )
+{
+    ok( a0 == 1, "wrong arg0 %x\n", a0 );
+    ok( a1 == -1, "wrong arg1 %x\n", a1 );
+    ok( a2 == (0x55550000 | 1234), "wrong arg2 %x\n", a2 );
+    ok( a3 == 0xdeadbeef, "wrong arg3 %x\n", a3 );
+    ok( a4 == 0x555555fd, "wrong arg4 %x\n", a4 );
+    return 4321;
+}
+
+static double WINAPI double_func( double a0, float a1, double a2, int a3 )
+{
+    ok( a0 == 1.2, "wrong arg0 %f\n", (double)a0 );
+    ok( a1 == 3.25, "wrong arg1 %f\n", (double)a1 );
+    ok( a2 == 1.2e12, "wrong arg2 %f\n", (double)a2);
+    ok( a3 == -4433.0, "wrong arg3 %f\n", (double)a3 );
+    return 4321;
+}
+
+static LONGLONG WINAPI longlong_func( LONGLONG a0, CY a1 )
+{
+    ok( a0 == (((ULONGLONG)0xdead << 32) | 0xbeef), "wrong arg0 %08x%08x\n", (DWORD)(a0 >> 32), (DWORD)a0);
+    ok( a1.int64 == ((ULONGLONG)10000 * 12345678), "wrong arg1 %08x%08x\n",
+        (DWORD)(a1.int64 >> 32), (DWORD)a1.int64 );
+    return ((ULONGLONG)4321 << 32) | 8765;
+}
+
+static VARIANT WINAPI variant_func( int a0, BOOL a1, DECIMAL a2, VARIANT a3 )
+{
+    VARIANT var;
+    ok( a0 == 2233, "wrong arg0 %x\n", a0 );
+    ok( a1 == 1 || broken(a1 == 0x55550001), "wrong arg1 %x\n", a1 );
+    V_VT(&var) = VT_LPWSTR;
+    V_UI4(&var) = 0xbabe;
+    ok( a2.Hi32 == 1122, "wrong arg2.Hi32 %x\n", a2.Hi32 );
+    ok( a2.Lo64 == 3344, "wrong arg2.Lo64 %08x%08x\n", (DWORD)(a2.Lo64 >> 32), (DWORD)a2.Lo64 );
+    ok( V_VT(&a3) == VT_EMPTY, "wrong arg3 type %x\n", V_VT(&a3) );
+    ok( V_UI4(&a3) == 0xdeadbeef, "wrong arg3 value %x\n", V_UI4(&a3) );
+    return var;
+}
+
+static int CDECL void_func( int a0, int a1 )
+{
+    if (is_win64)  /* VT_EMPTY is passed as real arg on win64 */
+    {
+        ok( a0 == 0x55555555, "wrong arg0 %x\n", a0 );
+        ok( a1 == 1111, "wrong arg1 %x\n", a1 );
+    }
+    else
+    {
+        ok( a0 == 1111, "wrong arg0 %x\n", a0 );
+        ok( a1 == 0, "wrong arg1 %x\n", a1 );
+    }
+    return 12;
+}
+
+static int WINAPI stdcall_func( int a )
+{
+    return 0;
+}
+
+static int WINAPI inst_func( void *inst, int a )
+{
+    ok( (*(void ***)inst)[3] == inst_func, "wrong ptr %p\n", inst );
+    ok( a == 3, "wrong arg %x\n", a );
+    return a * 2;
+}
+
+static const void *vtable[] = { NULL, NULL, NULL, inst_func };
+
+static void test_DispCallFunc(void)
+{
+    const void **inst = vtable;
+    HRESULT res;
+    VARIANT result, args[5];
+    VARIANTARG *pargs[5];
+    VARTYPE types[5];
+    int i;
+
+    for (i = 0; i < 5; i++) pargs[i] = &args[i];
+
+    memset( args, 0x55, sizeof(args) );
+    types[0] = VT_UI4;
+    V_UI4(&args[0]) = 1;
+    types[1] = VT_I4;
+    V_I4(&args[1]) = -1;
+    types[2] = VT_I2;
+    V_I2(&args[2]) = 1234;
+    types[3] = VT_UI4;
+    V_UI4(&args[3]) = 0xdeadbeef;
+    types[4] = VT_UI4;
+    V_I1(&args[4]) = -3;
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc( NULL, (ULONG_PTR)int_func, CC_STDCALL, VT_UI4, 5, types, pargs, &result );
+    ok( res == S_OK, "DispCallFunc failed %x\n", res );
+    ok( V_VT(&result) == VT_UI4, "wrong result type %d\n", V_VT(&result) );
+    ok( V_UI4(&result) == 4321, "wrong result %u\n", V_UI4(&result) );
+
+    /* the function checks the argument sizes for stdcall */
+    if (!is_win64)  /* no stdcall on 64-bit */
+    {
+        res = DispCallFunc( NULL, (ULONG_PTR)stdcall_func, CC_STDCALL, VT_UI4, 0, types, pargs, &result );
+        ok( res == DISP_E_BADCALLEE, "DispCallFunc wrong error %x\n", res );
+        res = DispCallFunc( NULL, (ULONG_PTR)stdcall_func, CC_STDCALL, VT_UI4, 1, types, pargs, &result );
+        ok( res == S_OK, "DispCallFunc failed %x\n", res );
+        res = DispCallFunc( NULL, (ULONG_PTR)stdcall_func, CC_STDCALL, VT_UI4, 2, types, pargs, &result );
+        ok( res == DISP_E_BADCALLEE, "DispCallFunc wrong error %x\n", res );
+    }
+
+    memset( args, 0x55, sizeof(args) );
+    types[0] = VT_R8;
+    V_R8(&args[0]) = 1.2;
+    types[1] = VT_R4;
+    V_R4(&args[1]) = 3.25;
+    types[2] = VT_R8;
+    V_R8(&args[2]) = 1.2e12;
+    types[3] = VT_I4;
+    V_I4(&args[3]) = -4433;
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc( NULL, (ULONG_PTR)double_func, CC_STDCALL, VT_R8, 4, types, pargs, &result );
+    ok( res == S_OK, "DispCallFunc failed %x\n", res );
+    ok( V_VT(&result) == VT_R8, "wrong result type %d\n", V_VT(&result) );
+    ok( V_R8(&result) == 4321, "wrong result %f\n", V_R8(&result) );
+
+    memset( args, 0x55, sizeof(args) );
+    types[0] = VT_I8;
+    V_I8(&args[0]) = ((ULONGLONG)0xdead << 32) | 0xbeef;
+    types[1] = VT_CY;
+    V_CY(&args[1]).int64 = (ULONGLONG)10000 * 12345678;
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc( NULL, (ULONG_PTR)longlong_func, CC_STDCALL, VT_I8, 2, types, pargs, &result );
+    ok( res == S_OK || broken(res == E_INVALIDARG),  /* longlong not supported on <= win2k */
+        "DispCallFunc failed %x\n", res );
+    if (res == S_OK)
+    {
+        ok( V_VT(&result) == VT_I8, "wrong result type %d\n", V_VT(&result) );
+        ok( V_I8(&result) == (((ULONGLONG)4321 << 32) | 8765), "wrong result %08x%08x\n",
+            (DWORD)(V_I8(&result) >> 32), (DWORD)V_I8(&result) );
+    }
+
+    memset( args, 0x55, sizeof(args) );
+    types[0] = VT_I4;
+    V_I4(&args[0]) = 2233;
+    types[1] = VT_BOOL;
+    V_BOOL(&args[1]) = 1;
+    types[2] = VT_DECIMAL;
+    V_DECIMAL(&args[2]).Hi32 = 1122;
+    V_DECIMAL(&args[2]).Lo64 = 3344;
+    types[3] = VT_VARIANT;
+    V_VT(&args[3]) = VT_EMPTY;
+    V_UI4(&args[3]) = 0xdeadbeef;
+    types[4] = VT_EMPTY;
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc( NULL, (ULONG_PTR)variant_func, CC_STDCALL, VT_VARIANT, 5, types, pargs, &result );
+    ok( res == S_OK, "DispCallFunc failed %x\n", res );
+    ok( V_VT(&result) == VT_LPWSTR, "wrong result type %d\n", V_VT(&result) );
+    ok( V_UI4(&result) == 0xbabe, "wrong result %08x\n", V_UI4(&result) );
+
+    memset( args, 0x55, sizeof(args) );
+    types[0] = VT_EMPTY;
+    types[1] = VT_I4;
+    V_I4(&args[1]) = 1111;
+    types[2] = VT_EMPTY;
+    types[3] = VT_I4;
+    V_I4(&args[3]) = 0;
+    types[4] = VT_EMPTY;
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc( NULL, (ULONG_PTR)void_func, CC_CDECL, VT_EMPTY, 5, types, pargs, &result );
+    ok( res == S_OK, "DispCallFunc failed %x\n", res );
+    ok( V_VT(&result) == VT_EMPTY, "wrong result type %d\n", V_VT(&result) );
+    if (is_win64)
+        ok( V_UI4(&result) == 12, "wrong result %08x\n", V_UI4(&result) );
+    else
+        ok( V_UI4(&result) == 0xcccccccc, "wrong result %08x\n", V_UI4(&result) );
+
+    memset( args, 0x55, sizeof(args) );
+    types[0] = VT_I4;
+    V_I4(&args[0]) = 3;
+    memset( &result, 0xcc, sizeof(result) );
+    res = DispCallFunc( &inst, 3 * sizeof(void*), CC_STDCALL, VT_I4, 1, types, pargs, &result );
+    ok( res == S_OK, "DispCallFunc failed %x\n", res );
+    ok( V_VT(&result) == VT_I4, "wrong result type %d\n", V_VT(&result) );
+    ok( V_I4(&result) == 6, "wrong result %08x\n", V_I4(&result) );
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
@@ -2603,9 +2790,9 @@ static void test_register_typelib(BOOL system_registration)
     }
 
     if (system_registration)
-        hr = UnRegisterTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
+        hr = UnRegisterTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, is_win64 ? SYS_WIN64 : SYS_WIN32);
     else
-        hr = pUnRegisterTypeLibForUser(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
+        hr = pUnRegisterTypeLibForUser(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, is_win64 ? SYS_WIN64 : SYS_WIN32);
     ok(SUCCEEDED(hr), "got %08x\n", hr);
 
     ITypeLib_Release(typelib);
@@ -2622,6 +2809,7 @@ START_TEST(typelib)
     test_TypeComp();
     test_CreateDispTypeInfo();
     test_TypeInfo();
+    test_DispCallFunc();
     test_QueryPathOfRegTypeLib(32);
     if(sizeof(void*) == 8)
         test_QueryPathOfRegTypeLib(64);

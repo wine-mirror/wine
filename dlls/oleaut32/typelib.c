@@ -5706,7 +5706,7 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
 
 #ifdef __i386__
 
-extern LONGLONG CDECL call_method( void *func, int nb_args, const DWORD *args );
+extern LONGLONG call_method( void *func, int nb_args, const DWORD *args, int *stack_offset );
 __ASM_GLOBAL_FUNC( call_method,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -5718,16 +5718,20 @@ __ASM_GLOBAL_FUNC( call_method,
                    "pushl %edi\n\t"
                   __ASM_CFI(".cfi_rel_offset %edi,-8\n\t")
                    "movl 12(%ebp),%edx\n\t"
+                   "movl %esp,%edi\n\t"
                    "shll $2,%edx\n\t"
                    "jz 1f\n\t"
-                   "subl %edx,%esp\n\t"
-                   "andl $~15,%esp\n\t"
+                   "subl %edx,%edi\n\t"
+                   "andl $~15,%edi\n\t"
+                   "movl %edi,%esp\n\t"
                    "movl 12(%ebp),%ecx\n\t"
                    "movl 16(%ebp),%esi\n\t"
-                   "movl %esp,%edi\n\t"
                    "cld\n\t"
                    "rep; movsl\n"
                    "1:\tcall *8(%ebp)\n\t"
+                   "subl %esp,%edi\n\t"
+                   "movl 20(%ebp),%ecx\n\t"
+                   "movl %edi,(%ecx)\n\t"
                    "leal -8(%ebp),%esp\n\t"
                    "popl %edi\n\t"
                    __ASM_CFI(".cfi_same_value %edi\n\t")
@@ -5738,6 +5742,9 @@ __ASM_GLOBAL_FUNC( call_method,
                    __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
 
+/* same function but returning floating point */
+static const double (*call_double_method)(void*,int,const DWORD*,int*) = (void *)call_method;
+
 /* ITypeInfo::Invoke
  *
  * Invokes a method, or accesses a property of an object, that implements the
@@ -5746,6 +5753,7 @@ __ASM_GLOBAL_FUNC( call_method,
 DWORD
 _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
     DWORD res;
+    int stack_offset;
 
     if (TRACE_ON(ole)) {
 	int i;
@@ -5758,7 +5766,7 @@ _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args) {
     switch (callconv) {
     case CC_STDCALL:
     case CC_CDECL:
-        res = call_method( func, nrargs, args );
+        res = call_method( func, nrargs, args, &stack_offset );
 	break;
     default:
 	FIXME("unsupported calling convention %d\n",callconv);
@@ -5796,6 +5804,10 @@ __ASM_GLOBAL_FUNC( call_method,
                    "movq 8(%rsp),%rdx\n\t"
                    "movq 16(%rsp),%r8\n\t"
                    "movq 24(%rsp),%r9\n\t"
+                   "movq %rcx,%xmm0\n\t"
+                   "movq %rdx,%xmm1\n\t"
+                   "movq %r8,%xmm2\n\t"
+                   "movq %r9,%xmm3\n\t"
                    "callq *%rax\n\t"
                    "leaq -16(%rbp),%rsp\n\t"
                    "popq %rdi\n\t"
@@ -5807,6 +5819,9 @@ __ASM_GLOBAL_FUNC( call_method,
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
+
+/* same function but returning floating point */
+static const double (CDECL *call_double_method)(void*,int,const DWORD_PTR*) = (void *)call_method;
 
 #endif  /* __x86_64__ */
 
@@ -5989,10 +6004,10 @@ DispCallFunc(
     VARTYPE* prgvt, VARIANTARG** prgpvarg, VARIANT* pvargResult)
 {
 #ifdef __i386__
-    int argspos;
+    int argspos, stack_offset;
+    void *func;
     UINT i;
     DWORD *args;
-    LONGLONG ret;
 
     TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
         pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
@@ -6005,21 +6020,26 @@ DispCallFunc(
     }
 
     /* maximum size for an argument is sizeof(VARIANT) */
-    args = HeapAlloc( GetProcessHeap(), 0, sizeof(VARIANT) * cActuals + sizeof(DWORD) );
+    args = HeapAlloc( GetProcessHeap(), 0, sizeof(VARIANT) * cActuals + sizeof(DWORD) * 2 );
 
-    argspos = 0;
+    /* start at 1 in case we need to pass a pointer to the return value as arg 0 */
+    argspos = 1;
     if (pvInstance)
     {
-        args[0] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
-        argspos++;
+        const FARPROC *vtable = *(FARPROC **)pvInstance;
+        func = vtable[oVft/sizeof(void *)];
+        args[argspos++] = (DWORD)pvInstance; /* the This pointer is always the first parameter */
     }
+    else func = (void *)oVft;
 
-    for (i=0;i<cActuals;i++)
+    for (i = 0; i < cActuals; i++)
     {
         VARIANT *arg = prgpvarg[i];
 
         switch (prgvt[i])
         {
+        case VT_EMPTY:
+            break;
         case VT_I8:
         case VT_UI8:
         case VT_R8:
@@ -6029,16 +6049,13 @@ DispCallFunc(
             argspos += sizeof(V_I8(arg)) / sizeof(DWORD);
             break;
         case VT_DECIMAL:
-            memcpy( &args[argspos], &V_DECIMAL(arg), sizeof(V_DECIMAL(arg)) );
-            argspos += sizeof(V_DECIMAL(arg)) / sizeof(DWORD);
-            break;
         case VT_VARIANT:
             memcpy( &args[argspos], arg, sizeof(*arg) );
             argspos += sizeof(*arg) / sizeof(DWORD);
             break;
-        case VT_RECORD:
-            FIXME("VT_RECORD not implemented\n");
-            /* fall through */
+        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
+            args[argspos++] = V_BOOL(arg);
+            break;
         default:
             args[argspos++] = V_UI4(arg);
             break;
@@ -6047,29 +6064,47 @@ DispCallFunc(
         dump_Variant(arg);
     }
 
-    if (pvInstance)
+    switch (vtReturn)
     {
-        FARPROC *vtable = *(FARPROC**)pvInstance;
-        ret = call_method(vtable[oVft/sizeof(void *)], argspos, args);
+    case VT_EMPTY:
+        call_method( func, argspos - 1, args + 1, &stack_offset );
+        break;
+    case VT_R4:
+        V_R4(pvargResult) = call_double_method( func, argspos - 1, args + 1, &stack_offset );
+        break;
+    case VT_R8:
+    case VT_DATE:
+        V_R8(pvargResult) = call_double_method( func, argspos - 1, args + 1, &stack_offset );
+        break;
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        args[0] = (DWORD)pvargResult;  /* arg 0 is a pointer to the result */
+        call_method( func, argspos, args, &stack_offset );
+        break;
+    case VT_I8:
+    case VT_UI8:
+    case VT_CY:
+        V_UI8(pvargResult) = call_method( func, argspos - 1, args + 1, &stack_offset );
+        break;
+    default:
+        V_UI4(pvargResult) = call_method( func, argspos - 1, args + 1, &stack_offset );
+        break;
     }
-    else
-        /* if we aren't invoking an object then the function pointer is stored
-         * in oVft */
-        ret = call_method((FARPROC)oVft, argspos, args);
-
-    if (pvargResult && (vtReturn != VT_EMPTY))
+    HeapFree( GetProcessHeap(), 0, args );
+    if (stack_offset && cc == CC_STDCALL)
     {
-        TRACE("Method returned %s\n",wine_dbgstr_longlong(ret));
-        V_VT(pvargResult) = vtReturn;
-        V_UI8(pvargResult) = ret;
+        WARN( "stack pointer off by %d\n", stack_offset );
+        return DISP_E_BADCALLEE;
     }
-    HeapFree(GetProcessHeap(),0,args);
+    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
+    TRACE("retval: "); dump_Variant(pvargResult);
     return S_OK;
 
 #elif defined(__x86_64__)
     int argspos;
     UINT i;
-    DWORD_PTR *args, ret;
+    DWORD_PTR *args;
+    void *func;
 
     TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
           pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
@@ -6081,15 +6116,18 @@ DispCallFunc(
         return E_INVALIDARG;
     }
 
-    /* maximum size for an argument is sizeof(VARIANT) */
-    args = HeapAlloc( GetProcessHeap(), 0, sizeof(VARIANT) * cActuals + sizeof(DWORD_PTR) );
+    /* maximum size for an argument is sizeof(DWORD_PTR) */
+    args = HeapAlloc( GetProcessHeap(), 0, sizeof(DWORD_PTR) * (cActuals + 2) );
 
-    argspos = 0;
+    /* start at 1 in case we need to pass a pointer to the return value as arg 0 */
+    argspos = 1;
     if (pvInstance)
     {
-        args[0] = (DWORD_PTR)pvInstance; /* the This pointer is always the first parameter */
-        argspos++;
+        const FARPROC *vtable = *(FARPROC **)pvInstance;
+        func = vtable[oVft/sizeof(void *)];
+        args[argspos++] = (DWORD_PTR)pvInstance; /* the This pointer is always the first parameter */
     }
+    else func = (void *)oVft;
 
     for (i = 0; i < cActuals; i++)
     {
@@ -6097,24 +6135,13 @@ DispCallFunc(
 
         switch (prgvt[i])
         {
-        case VT_R4:
-        case VT_R8:
-        case VT_DATE:
-            FIXME(" floating point not supported properly\n" );
-            memcpy( &args[argspos], &V_R8(arg), sizeof(V_R8(arg)) );
-            argspos++;
-            break;
         case VT_DECIMAL:
-            memcpy( &args[argspos], &V_DECIMAL(arg), sizeof(V_DECIMAL(arg)) );
-            argspos += sizeof(V_DECIMAL(arg)) / sizeof(DWORD_PTR);
-            break;
         case VT_VARIANT:
-            memcpy( &args[argspos], arg, sizeof(*arg) );
-            argspos += sizeof(*arg) / sizeof(DWORD_PTR);
+            args[argspos++] = (ULONG_PTR)arg;
             break;
-        case VT_RECORD:
-            FIXME("VT_RECORD not implemented\n");
-            /* fall through */
+        case VT_BOOL:  /* VT_BOOL is 16-bit but BOOL is 32-bit, needs to be extended */
+            args[argspos++] = V_BOOL(arg);
+            break;
         default:
             args[argspos++] = V_UI8(arg);
             break;
@@ -6123,23 +6150,27 @@ DispCallFunc(
         dump_Variant(arg);
     }
 
-    if (pvInstance)
+    switch (vtReturn)
     {
-        FARPROC *vtable = *(FARPROC**)pvInstance;
-        ret = call_method(vtable[oVft/sizeof(void *)], argspos, args);
+    case VT_R4:
+        V_R4(pvargResult) = call_double_method( func, argspos - 1, args + 1 );
+        break;
+    case VT_R8:
+    case VT_DATE:
+        V_R8(pvargResult) = call_double_method( func, argspos - 1, args + 1 );
+        break;
+    case VT_DECIMAL:
+    case VT_VARIANT:
+        args[0] = (DWORD_PTR)pvargResult;  /* arg 0 is a pointer to the result */
+        call_method( func, argspos, args );
+        break;
+    default:
+        V_UI8(pvargResult) = call_method( func, argspos - 1, args + 1 );
+        break;
     }
-    else
-        /* if we aren't invoking an object then the function pointer is stored
-         * in oVft */
-        ret = call_method((FARPROC)oVft, argspos, args);
-
-    if (pvargResult && (vtReturn != VT_EMPTY))
-    {
-        TRACE("Method returned 0x%lx\n",ret);
-        V_VT(pvargResult) = vtReturn;
-        V_UI8(pvargResult) = ret;
-    }
-    HeapFree(GetProcessHeap(),0,args);
+    HeapFree( GetProcessHeap(), 0, args );
+    if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
+    TRACE("retval: "); dump_Variant(pvargResult);
     return S_OK;
 
 #else
