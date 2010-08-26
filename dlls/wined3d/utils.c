@@ -2557,121 +2557,64 @@ BOOL getDepthStencilBits(const struct wined3d_format_desc *format_desc, short *d
     return TRUE;
 }
 
+/* Note: It's the caller's responsibility to ensure values can be expressed
+ * in the requested format. UNORM formats for example can only express values
+ * in the range 0.0f -> 1.0f. */
 DWORD wined3d_format_convert_from_float(const struct wined3d_format_desc *format, const WINED3DCOLORVALUE *color)
 {
-    enum wined3d_format_id destfmt = format->id;
-    unsigned int r, g, b, a;
-    DWORD ret;
+    static const struct
+    {
+        enum wined3d_format_id format_id;
+        float r_mul;
+        float g_mul;
+        float b_mul;
+        float a_mul;
+        BYTE r_shift;
+        BYTE g_shift;
+        BYTE b_shift;
+        BYTE a_shift;
+    }
+    conv[] =
+    {
+        {WINED3DFMT_B8G8R8A8_UNORM,     255.0f,  255.0f,  255.0f,  255.0f, 16,  8,  0, 24},
+        {WINED3DFMT_B8G8R8X8_UNORM,     255.0f,  255.0f,  255.0f,  255.0f, 16,  8,  0, 24},
+        {WINED3DFMT_B8G8R8_UNORM,       255.0f,  255.0f,  255.0f,  255.0f, 16,  8,  0, 24},
+        {WINED3DFMT_B5G6R5_UNORM,        31.0f,   63.0f,   31.0f,    0.0f, 11,  5,  0,  0},
+        {WINED3DFMT_B5G5R5A1_UNORM,      31.0f,   31.0f,   31.0f,    1.0f, 10,  5,  0, 15},
+        {WINED3DFMT_B5G5R5X1_UNORM,      31.0f,   31.0f,   31.0f,    1.0f, 10,  5,  0, 15},
+        {WINED3DFMT_A8_UNORM,             0.0f,    0.0f,    0.0f,  255.0f,  0,  0,  0,  0},
+        {WINED3DFMT_B4G4R4A4_UNORM,      15.0f,   15.0f,   15.0f,   15.0f,  8,  4,  0, 12},
+        {WINED3DFMT_B4G4R4X4_UNORM,      15.0f,   15.0f,   15.0f,   15.0f,  8,  4,  0, 12},
+        {WINED3DFMT_B2G3R3_UNORM,         7.0f,    7.0f,    3.0f,    0.0f,  5,  2,  0,  0},
+        {WINED3DFMT_R8G8B8A8_UNORM,     255.0f,  255.0f,  255.0f,  255.0f,  0,  8, 16, 24},
+        {WINED3DFMT_R8G8B8X8_UNORM,     255.0f,  255.0f,  255.0f,  255.0f,  0,  8, 16, 24},
+        {WINED3DFMT_B10G10R10A2_UNORM, 1023.0f, 1023.0f, 1023.0f,    3.0f, 20, 10,  0, 30},
+        {WINED3DFMT_R10G10B10A2_UNORM, 1023.0f, 1023.0f, 1023.0f,    3.0f,  0, 10, 20, 30},
+    };
+    unsigned int i;
 
     TRACE("Converting color {%.8e %.8e %.8e %.8e} to format %s.\n",
-            color->r, color->g, color->b, color->a, debug_d3dformat(destfmt));
+            color->r, color->g, color->b, color->a, debug_d3dformat(format->id));
 
-    r = (DWORD)((color->r * 255.0f) + 0.5f);
-    g = (DWORD)((color->g * 255.0f) + 0.5f);
-    b = (DWORD)((color->b * 255.0f) + 0.5f);
-    a = (DWORD)((color->a * 255.0f) + 0.5f);
-
-    switch(destfmt)
+    for (i = 0; i < sizeof(conv) / sizeof(*conv); ++i)
     {
-        case WINED3DFMT_B8G8R8A8_UNORM:
-        case WINED3DFMT_B8G8R8X8_UNORM:
-        case WINED3DFMT_B8G8R8_UNORM:
-            ret = b;
-            ret |= g << 8;
-            ret |= r << 16;
-            ret |= a << 24;
-            TRACE("Returning 0x%08x.\n", ret);
-            return ret;
+        DWORD ret;
 
+        if (format->id != conv[i].format_id) continue;
 
-        case WINED3DFMT_B5G6R5_UNORM:
-            if(r == 0xff && g == 0xff && b == 0xff) return 0xffff;
-            r = (r * 32) / 256;
-            g = (g * 64) / 256;
-            b = (b * 32) / 256;
-            ret  = r << 11;
-            ret |= g << 5;
-            ret |= b;
-            TRACE("Returning %08x\n", ret);
-            return ret;
+        ret = ((DWORD)((color->r * conv[i].r_mul) + 0.5f)) << conv[i].r_shift;
+        ret |= ((DWORD)((color->g * conv[i].g_mul) + 0.5f)) << conv[i].g_shift;
+        ret |= ((DWORD)((color->b * conv[i].b_mul) + 0.5f)) << conv[i].b_shift;
+        ret |= ((DWORD)((color->a * conv[i].a_mul) + 0.5f)) << conv[i].a_shift;
 
-        case WINED3DFMT_B5G5R5X1_UNORM:
-        case WINED3DFMT_B5G5R5A1_UNORM:
-            a = (a *  2) / 256;
-            r = (r * 32) / 256;
-            g = (g * 32) / 256;
-            b = (b * 32) / 256;
-            ret  = a << 15;
-            ret |= r << 10;
-            ret |= g <<  5;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
+        TRACE("Returning 0x%08x.\n", ret);
 
-        case WINED3DFMT_A8_UNORM:
-            TRACE("Returning %08x\n", a);
-            return a;
-
-        case WINED3DFMT_B4G4R4X4_UNORM:
-        case WINED3DFMT_B4G4R4A4_UNORM:
-            a = (a * 16) / 256;
-            r = (r * 16) / 256;
-            g = (g * 16) / 256;
-            b = (b * 16) / 256;
-            ret  = a << 12;
-            ret |= r <<  8;
-            ret |= g <<  4;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_B2G3R3_UNORM:
-            r = (r * 8) / 256;
-            g = (g * 8) / 256;
-            b = (b * 4) / 256;
-            ret  = r <<  5;
-            ret |= g <<  2;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_R8G8B8X8_UNORM:
-        case WINED3DFMT_R8G8B8A8_UNORM:
-            ret  = a << 24;
-            ret |= b << 16;
-            ret |= g <<  8;
-            ret |= r <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_B10G10R10A2_UNORM:
-            a = (a *    4) / 256;
-            r = (r * 1024) / 256;
-            g = (g * 1024) / 256;
-            b = (b * 1024) / 256;
-            ret  = a << 30;
-            ret |= r << 20;
-            ret |= g << 10;
-            ret |= b <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        case WINED3DFMT_R10G10B10A2_UNORM:
-            a = (a *    4) / 256;
-            r = (r * 1024) / 256;
-            g = (g * 1024) / 256;
-            b = (b * 1024) / 256;
-            ret  = a << 30;
-            ret |= b << 20;
-            ret |= g << 10;
-            ret |= r <<  0;
-            TRACE("Returning %08x\n", ret);
-            return ret;
-
-        default:
-            FIXME("Add a COLORFILL conversion for format %s\n", debug_d3dformat(destfmt));
-            return 0;
+        return ret;
     }
+
+    FIXME("Conversion for format %s not implemented.\n", debug_d3dformat(format->id));
+
+    return 0;
 }
 
 /* DirectDraw stuff */
