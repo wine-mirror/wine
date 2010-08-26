@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = d3d10.dll
 IMPORTLIB = d3d10
-IMPORTS   = dxguid uuid d3d10core dxgi
+IMPORTS   = dxguid uuid d3d10core d3dcompiler dxgi
 
 C_SRCS = \
 	d3d10_main.c \

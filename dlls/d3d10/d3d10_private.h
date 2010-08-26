@@ -28,6 +28,7 @@
 #include "objbase.h"
 
 #include "d3d10.h"
+#include "d3dcompiler.h"
 
 /*
  * This doesn't belong here, but for some functions it is possible to return that value,

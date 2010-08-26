@@ -133,3 +133,12 @@ const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl =
     d3d10_shader_reflection_GetInputParameterDesc,
     d3d10_shader_reflection_GetOutputParameterDesc,
 };
+
+HRESULT WINAPI D3D10CompileShader(const char *data, SIZE_T data_size, const char *filename,
+        const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *entrypoint,
+        const char *profile, UINT flags, ID3D10Blob **shader, ID3D10Blob **error_messages)
+{
+    /* Forward to d3dcompiler */
+    return D3DCompile(data, data_size, filename, defines, include,
+            entrypoint, profile, flags, 0, shader, error_messages);
+}
