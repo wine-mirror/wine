@@ -3945,6 +3945,90 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* The '\' are still converted to '/' even though it's an opaque file URI. */
+    {   "file:c:\\dir\\../..\\index.html", 0, S_OK, FALSE,
+        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
+        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:c:/dir/../../index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:/dir/../../index.html",S_OK,FALSE},
+            {"c:/dir/../../index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:c:\\dir\\../..\\index.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* '/' are still converted to '\' even though it's an opaque URI. */
+    {   "file:c:/dir\\../..\\index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
+        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
+        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:c:\\dir\\..\\..\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\dir\\..\\..\\index.html",S_OK,FALSE},
+            {"c:\\dir\\..\\..\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:c:/dir\\../..\\index.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Forbidden characters aren't percent encoded. */
+    {   "file:c:\\in^|dex.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
+        Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY
+        |Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE|Uri_HAS_SCHEME, FALSE,
+        {
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:c:\\in^|dex.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\in^|dex.html",S_OK,FALSE},
+            {"c:\\in^|dex.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:c:\\in^|dex.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -4006,7 +4090,10 @@ static const invalid_uri invalid_uri_tests[] = {
     {"\n\nhttp://google.com/",Uri_CREATE_NO_PRE_PROCESS_HTML_URI,FALSE},
     {"file://c:\\test<test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
     {"file://c:\\test>test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
-    {"file://c:\\test\"test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE}
+    {"file://c:\\test\"test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
+    {"file:c:\\test<test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
+    {"file:c:\\test>test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
+    {"file:c:\\test\"test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE}
 };
 
 typedef struct _uri_equality {

@@ -224,6 +224,10 @@ static inline BOOL is_unc_path(const WCHAR *str) {
     return (str[0] == '\\' && str[0] == '\\');
 }
 
+static inline BOOL is_forbidden_dos_path_char(WCHAR val) {
+    return (val == '>' || val == '<' || val == '\"');
+}
+
 /* A URI is implicitly a file path if it begins with
  * a drive letter (eg X:) or starts with "\\" (UNC path).
  */
@@ -1798,7 +1802,7 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
                     return FALSE;
                 } else
                     continue;
-            } else if((**ptr == '>' || **ptr == '<' || **ptr == '\"') && is_file &&
+            } else if(is_forbidden_dos_path_char(**ptr) && is_file &&
                       (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
                 /* File schemes with USE_DOS_PATH set aren't allowed to have
                  * a '<' or '>' or '\"' appear in them.
@@ -1849,9 +1853,13 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
  * NOTE:
  *  Windows allows invalid % encoded data to appear in opaque URI paths
  *  for unknown scheme types.
+ *
+ *  File schemes with USE_DOS_PATH set aren't allowed to have '<', '>', or '\"'
+ *  appear in them.
  */
 static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+    const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
 
     data->path = *ptr;
 
@@ -1863,6 +1871,11 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
                 return FALSE;
             } else
                 continue;
+        } else if(is_forbidden_dos_path_char(**ptr) && is_file &&
+                  (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+            *ptr = data->path;
+            data->path = NULL;
+            return FALSE;
         }
 
         ++(*ptr);
@@ -2804,10 +2817,17 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
  *
  *  3)  '\\' are changed to '/' for known scheme types
  *      except for mailto schemes.
+ *
+ *  4)  For file schemes, if USE_DOS_PATH is set all '/'
+ *      are converted to backslashes.
+ *
+ *  5)  For file schemes, if USE_DOS_PATH isn't set all '\'
+ *      are converted to forward slashes.
  */
 static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     const WCHAR *ptr;
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
+    const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
 
     if(!data->path) {
         uri->path_start = -1;
@@ -2846,11 +2866,36 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
                     uri->canon_uri[uri->canon_len] = *ptr;
                 ++uri->canon_len;
             }
+        } else if(*ptr == '/' && is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+            if(!computeOnly)
+                uri->canon_uri[uri->canon_len] = '\\';
+            ++uri->canon_len;
+        } else if(*ptr == '\\' && is_file) {
+            if(!(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+                /* Convert to a '/'. */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = '/';
+                ++uri->canon_len;
+            } else {
+                /* Just copy it over. */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
+            }
         } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   !(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
-            if(!computeOnly)
-                pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
-            uri->canon_len += 3;
+            if(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+                /* Forbidden characters aren't percent encoded for file schemes
+                 * with USE_DOS_PATH set.
+                 */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
+            } else {
+                if(!computeOnly)
+                    pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
+                uri->canon_len += 3;
+            }
         } else {
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = *ptr;
