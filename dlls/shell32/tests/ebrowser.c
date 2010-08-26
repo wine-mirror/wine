@@ -188,6 +188,91 @@ static const IExplorerBrowserEventsVtbl ebevents =
 };
 
 /*********************************************************************
+ * IExplorerPaneVisibility implementation
+ */
+typedef struct
+{
+    const IExplorerPaneVisibilityVtbl *lpVtbl;
+    LONG ref;
+    LONG count;
+    LONG np, cp, cp_o, cp_v, dp, pp, qp, aqp, unk; /* The panes */
+} IExplorerPaneVisibilityImpl;
+
+static HRESULT WINAPI IExplorerPaneVisibility_fnQueryInterface(IExplorerPaneVisibility *iface,
+                                                               REFIID riid, LPVOID *ppvObj)
+{
+    ok(0, "Not called.\n");
+    trace("REFIID:"); dbg_print_guid(riid);
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IExplorerPaneVisibility_fnAddRef(IExplorerPaneVisibility *iface)
+{
+    IExplorerPaneVisibilityImpl *This = (IExplorerPaneVisibilityImpl *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IExplorerPaneVisibility_fnRelease(IExplorerPaneVisibility *iface)
+{
+    IExplorerPaneVisibilityImpl *This = (IExplorerPaneVisibilityImpl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI IExplorerPaneVisibility_fnGetPaneState(IExplorerPaneVisibility *iface,
+                                                             REFEXPLORERPANE ep,
+                                                             EXPLORERPANESTATE *peps)
+{
+    IExplorerPaneVisibilityImpl *This = (IExplorerPaneVisibilityImpl *)iface;
+    This->count++;
+
+    ok(ep != NULL, "ep is NULL.\n");
+    ok(peps != NULL, "peps is NULL.\n");
+    ok(*peps == 0, "got %d\n", *peps);
+
+    *peps = EPS_FORCE;
+    if(IsEqualGUID(&EP_NavPane, ep))                 This->np++;
+    else if(IsEqualGUID(&EP_Commands, ep))           This->cp++;
+    else if(IsEqualGUID(&EP_Commands_Organize, ep))  This->cp_o++;
+    else if(IsEqualGUID(&EP_Commands_View, ep))      This->cp_v++;
+    else if(IsEqualGUID(&EP_DetailsPane, ep))        This->dp++;
+    else if(IsEqualGUID(&EP_PreviewPane, ep))        This->pp++;
+    else if(IsEqualGUID(&EP_QueryPane, ep))          This->qp++;
+    else if(IsEqualGUID(&EP_AdvQueryPane, ep))       This->aqp++;
+    else
+    {
+        trace("Unknown explorer pane: "); dbg_print_guid(ep);
+        This->unk++;
+    }
+
+    return S_OK;
+}
+
+static const IExplorerPaneVisibilityVtbl epvvt =
+{
+    IExplorerPaneVisibility_fnQueryInterface,
+    IExplorerPaneVisibility_fnAddRef,
+    IExplorerPaneVisibility_fnRelease,
+    IExplorerPaneVisibility_fnGetPaneState
+};
+
+static IExplorerPaneVisibilityImpl *create_explorerpanevisibility(void)
+{
+    IExplorerPaneVisibilityImpl *epv;
+
+    epv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IExplorerPaneVisibilityImpl));
+    epv->lpVtbl = &epvvt;
+    epv->ref = 1;
+
+    return epv;
+}
+
+/*********************************************************************
  * ICommDlgBrowser3 implementation
  */
 typedef struct
@@ -787,6 +872,7 @@ static void test_SetSite(void)
     IExplorerBrowser *peb;
     IServiceProviderImpl *spimpl = create_serviceprovider();
     ICommDlgBrowser3Impl *cdbimpl = create_commdlgbrowser3();
+    IExplorerPaneVisibilityImpl *epvimpl = create_explorerpanevisibility();
     IObjectWithSite *pow;
     HRESULT hr;
     LONG ref;
@@ -800,7 +886,7 @@ static void test_SetSite(void)
         { &SID_STopLevelBrowser,        &IID_IConnectionPointContainer, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_IProfferService, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_UnknownInterface9, 0, NULL },
-        { &SID_ExplorerPaneVisibility,  &IID_IExplorerPaneVisibility, 0, NULL },
+        { &SID_ExplorerPaneVisibility,  &IID_IExplorerPaneVisibility, 0, epvimpl },
         { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser2, 0, cdbimpl },
         { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser3, 0, cdbimpl },
         { &IID_IFileDialogPrivate,      &IID_IFileDialogPrivate, 0, NULL },
@@ -856,6 +942,7 @@ static void test_SetSite(void)
 
         IServiceProvider_Release((IServiceProvider*)spimpl);
         ICommDlgBrowser3_Release((ICommDlgBrowser3*)cdbimpl);
+        IExplorerPaneVisibility_Release((IExplorerPaneVisibility*)epvimpl);
         IExplorerBrowser_Destroy(peb);
         ref = IExplorerBrowser_Release(peb);
         ok(ref == 0, "Got ref %d\n", ref);
@@ -884,6 +971,17 @@ static void test_SetSite(void)
     ok(!cdbimpl->OnColumnClicked, "Got %d\n", cdbimpl->OnColumnClicked);
     ok(!cdbimpl->GetCurrentFilter, "Got %d\n", cdbimpl->GetCurrentFilter);
     todo_wine ok(cdbimpl->OnPreviewCreated, "Got %d\n", cdbimpl->OnPreviewCreated);
+
+    /* IExplorerPaneVisibility */
+    todo_wine ok(epvimpl->np, "Got %d\n", epvimpl->np);
+    todo_wine ok(epvimpl->cp, "Got %d\n", epvimpl->cp);
+    todo_wine ok(epvimpl->cp_o, "Got %d\n", epvimpl->cp_o);
+    todo_wine ok(epvimpl->cp_v, "Got %d\n", epvimpl->cp_v);
+    todo_wine ok(epvimpl->dp, "Got %d\n", epvimpl->dp);
+    todo_wine ok(epvimpl->pp, "Got %d\n", epvimpl->pp);
+    ok(!epvimpl->qp, "Got %d\n", epvimpl->qp);
+    ok(!epvimpl->aqp, "Got %d\n", epvimpl->aqp);
+    ok(!epvimpl->unk, "Got %d\n", epvimpl->unk);
 
     if(0)
     {
@@ -924,6 +1022,8 @@ static void test_SetSite(void)
     ok(ref == 0, "Got ref %d\n", ref);
 
     ref = ICommDlgBrowser3_Release((ICommDlgBrowser3*)cdbimpl);
+    ok(ref == 0, "Got ref %d\n", ref);
+    ref = IExplorerPaneVisibility_Release((IExplorerPaneVisibility*)epvimpl);
     ok(ref == 0, "Got ref %d\n", ref);
 }
 

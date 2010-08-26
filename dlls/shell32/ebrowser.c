@@ -76,6 +76,7 @@ typedef struct _ExplorerBrowserImpl {
     ICommDlgBrowser *pcdb_site;
     ICommDlgBrowser2 *pcdb2_site;
     ICommDlgBrowser3 *pcdb3_site;
+    IExplorerPaneVisibility *pepv_site;
 } ExplorerBrowserImpl;
 
 /**************************************************************************
@@ -354,6 +355,12 @@ static void get_interfaces_from_site(ExplorerBrowserImpl *This)
         This->pcdb3_site = NULL;
     }
 
+    if(This->pepv_site)
+    {
+        IExplorerPaneVisibility_Release(This->pepv_site);
+        This->pepv_site = NULL;
+    }
+
     if(!This->punk_site)
         return;
 
@@ -371,6 +378,10 @@ static void get_interfaces_from_site(ExplorerBrowserImpl *This)
                                   (void**)&This->pcdb2_site);
     IServiceProvider_QueryService(psp, &SID_SExplorerBrowserFrame, &IID_ICommDlgBrowser3,
                                   (void**)&This->pcdb3_site);
+
+    /* IExplorerPaneVisibility */
+    IServiceProvider_QueryService(psp, &SID_ExplorerPaneVisibility, &IID_IExplorerPaneVisibility,
+                                  (void**)&This->pepv_site);
 
     IServiceProvider_Release(psp);
 }
