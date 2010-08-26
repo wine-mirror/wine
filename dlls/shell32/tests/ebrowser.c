@@ -188,6 +188,156 @@ static const IExplorerBrowserEventsVtbl ebevents =
 };
 
 /*********************************************************************
+ * ICommDlgBrowser3 implementation
+ */
+typedef struct
+{
+    const ICommDlgBrowser3Vtbl *lpVtbl;
+    LONG ref;
+    UINT OnDefaultCommand, OnStateChange, IncludeObject;
+    UINT Notify, GetDefaultMenuText, GetViewFlags;
+    UINT OnColumnClicked, GetCurrentFilter, OnPreviewCreated;
+} ICommDlgBrowser3Impl;
+
+static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface, REFIID riid, LPVOID *ppvObj)
+{
+    ok(0, "Not called.\n");
+    trace("riid:");    dbg_print_guid(riid);
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ICommDlgBrowser3_fnAddRef(ICommDlgBrowser3 *iface)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI ICommDlgBrowser3_fnRelease(ICommDlgBrowser3 *iface)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3* iface, IShellView *shv)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->OnDefaultCommand++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(
+    ICommDlgBrowser3* iface,
+    IShellView *shv,
+    ULONG uChange)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->OnStateChange++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(
+    ICommDlgBrowser3* iface,
+    IShellView *shv,
+    LPCITEMIDLIST pidl)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->IncludeObject++;
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnNotify(
+    ICommDlgBrowser3* iface,
+    IShellView *ppshv,
+    DWORD dwNotifyType)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->Notify++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetDefaultMenuText(
+    ICommDlgBrowser3* iface,
+    IShellView *ppshv,
+    LPWSTR pszText,
+    int cchMax)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->GetDefaultMenuText++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetViewFlags(
+    ICommDlgBrowser3* iface,
+    DWORD *pdwFlags)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->GetViewFlags++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnColumnClicked(
+    ICommDlgBrowser3* iface,
+    IShellView *ppshv,
+    int iColumn)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->OnColumnClicked++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetCurrentFilter(
+    ICommDlgBrowser3* iface,
+    LPWSTR pszFileSpec,
+    int cchFileSpec)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->GetCurrentFilter++;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnPreviewCreated(
+    ICommDlgBrowser3* iface,
+    IShellView *ppshv)
+{
+    ICommDlgBrowser3Impl *This = (ICommDlgBrowser3Impl *)iface;
+    This->OnPreviewCreated++;
+    return E_NOTIMPL;
+}
+
+static const ICommDlgBrowser3Vtbl cdbvtbl =
+{
+    ICommDlgBrowser3_fnQueryInterface,
+    ICommDlgBrowser3_fnAddRef,
+    ICommDlgBrowser3_fnRelease,
+    ICommDlgBrowser3_fnOnDefaultCommand,
+    ICommDlgBrowser3_fnOnStateChange,
+    ICommDlgBrowser3_fnIncludeObject,
+    ICommDlgBrowser3_fnNotify,
+    ICommDlgBrowser3_fnGetDefaultMenuText,
+    ICommDlgBrowser3_fnGetViewFlags,
+    ICommDlgBrowser3_fnOnColumnClicked,
+    ICommDlgBrowser3_fnGetCurrentFilter,
+    ICommDlgBrowser3_fnOnPreviewCreated
+};
+
+ICommDlgBrowser3Impl *create_commdlgbrowser3(void)
+{
+    ICommDlgBrowser3Impl *cdb;
+
+    cdb = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ICommDlgBrowser3Impl));
+    cdb->lpVtbl = &cdbvtbl;
+    cdb->ref = 1;
+
+    return cdb;
+}
+
+/*********************************************************************
  * IServiceProvider Implementation
  */
 typedef struct {
@@ -636,22 +786,23 @@ static void test_SetSite(void)
 {
     IExplorerBrowser *peb;
     IServiceProviderImpl *spimpl = create_serviceprovider();
+    ICommDlgBrowser3Impl *cdbimpl = create_commdlgbrowser3();
     IObjectWithSite *pow;
     HRESULT hr;
     LONG ref;
     UINT i;
     struct services expected[] = {
         /* Win 7 */
-        { &SID_STopLevelBrowser,        &IID_ICommDlgBrowser2, 0, NULL },
+        { &SID_STopLevelBrowser,        &IID_ICommDlgBrowser2, 0, cdbimpl },
         { &SID_STopLevelBrowser,        &IID_IShellBrowserService, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_IShellBrowser, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_UnknownInterface8, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_IConnectionPointContainer, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_IProfferService, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_UnknownInterface9, 0, NULL },
-        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser2, 0, NULL },
-        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser3, 0, NULL },
         { &SID_ExplorerPaneVisibility,  &IID_IExplorerPaneVisibility, 0, NULL },
+        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser2, 0, cdbimpl },
+        { &SID_SExplorerBrowserFrame,   &IID_ICommDlgBrowser3, 0, cdbimpl },
         { &IID_IFileDialogPrivate,      &IID_IFileDialogPrivate, 0, NULL },
         { &IID_IFileDialogPrivate,      &IID_IFileDialog, 0, NULL },
         { &IID_IShellTaskScheduler,     &IID_IShellTaskScheduler, 0, NULL },
@@ -672,7 +823,7 @@ static void test_SetSite(void)
         { &IID_IFolderTypeModifier,     &IID_IFolderTypeModifier, 0, NULL },
         { &SID_STopLevelBrowser,        &IID_IShellBrowserService_Vista, 0, NULL },
         { &IID_UnknownInterface5,       &IID_UnknownInterface5, 0, NULL },
-        { &IID_ICommDlgBrowser,         &IID_ICommDlgBrowser, 0, NULL },
+        { &IID_ICommDlgBrowser,         &IID_ICommDlgBrowser, 0, cdbimpl },
         { &IID_IFileDialogPrivate_Vista,&IID_IFileDialogPrivate_Vista, 0, NULL},
         { &IID_IFileDialogPrivate_Vista,&IID_IFileDialog, 0, NULL},
         { &IID_UnknownInterface10,      &IID_IHTMLDocument2, 0, NULL},
@@ -704,6 +855,7 @@ static void test_SetSite(void)
         skip("Failed to set site.\n");
 
         IServiceProvider_Release((IServiceProvider*)spimpl);
+        ICommDlgBrowser3_Release((ICommDlgBrowser3*)cdbimpl);
         IExplorerBrowser_Destroy(peb);
         ref = IExplorerBrowser_Release(peb);
         ok(ref == 0, "Got ref %d\n", ref);
@@ -721,6 +873,17 @@ static void test_SetSite(void)
         process_msgs();
     }
     ShowWindow(hwnd, FALSE);
+
+    /* ICommDlgBrowser3 */
+    ok(!cdbimpl->OnDefaultCommand, "Got %d\n", cdbimpl->OnDefaultCommand);
+    todo_wine ok(cdbimpl->OnStateChange, "Got %d\n", cdbimpl->OnStateChange);
+    ok(cdbimpl->IncludeObject, "Got %d\n", cdbimpl->IncludeObject);
+    ok(!cdbimpl->Notify, "Got %d\n", cdbimpl->Notify);
+    ok(!cdbimpl->GetDefaultMenuText, "Got %d\n", cdbimpl->GetDefaultMenuText);
+    todo_wine ok(cdbimpl->GetViewFlags, "Got %d\n", cdbimpl->GetViewFlags);
+    ok(!cdbimpl->OnColumnClicked, "Got %d\n", cdbimpl->OnColumnClicked);
+    ok(!cdbimpl->GetCurrentFilter, "Got %d\n", cdbimpl->GetCurrentFilter);
+    todo_wine ok(cdbimpl->OnPreviewCreated, "Got %d\n", cdbimpl->OnPreviewCreated);
 
     if(0)
     {
@@ -758,6 +921,9 @@ static void test_SetSite(void)
     ok(ref == 0, "Got ref %d\n", ref);
 
     ref = IServiceProvider_Release((IServiceProvider*)spimpl);
+    ok(ref == 0, "Got ref %d\n", ref);
+
+    ref = ICommDlgBrowser3_Release((ICommDlgBrowser3*)cdbimpl);
     ok(ref == 0, "Got ref %d\n", ref);
 }
 

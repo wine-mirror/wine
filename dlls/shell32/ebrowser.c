@@ -73,6 +73,9 @@ typedef struct _ExplorerBrowserImpl {
     LPITEMIDLIST current_pidl;
 
     IUnknown *punk_site;
+    ICommDlgBrowser *pcdb_site;
+    ICommDlgBrowser2 *pcdb2_site;
+    ICommDlgBrowser3 *pcdb3_site;
 } ExplorerBrowserImpl;
 
 /**************************************************************************
@@ -340,18 +343,38 @@ static void get_interfaces_from_site(ExplorerBrowserImpl *This)
      * release any previously fetched interfaces.
      */
 
-    if(This->punk_site)
+    if(This->pcdb_site)
     {
-        hr = IUnknown_QueryInterface(This->punk_site, &IID_IServiceProvider, (void**)&psp);
-        if(SUCCEEDED(hr))
-        {
-            FIXME("Not requesting any interfaces.\n");
-            IServiceProvider_Release(psp);
-        }
-        else
-            ERR("Failed to get IServiceProvider from site.\n");
+        IUnknown_Release(This->pcdb_site);
+        if(This->pcdb2_site) IUnknown_Release(This->pcdb2_site);
+        if(This->pcdb3_site) IUnknown_Release(This->pcdb3_site);
+
+        This->pcdb_site = NULL;
+        This->pcdb2_site = NULL;
+        This->pcdb3_site = NULL;
     }
+
+    if(!This->punk_site)
+        return;
+
+    hr = IUnknown_QueryInterface(This->punk_site, &IID_IServiceProvider, (void**)&psp);
+    if(FAILED(hr))
+    {
+        ERR("Failed to get IServiceProvider from site.\n");
+        return;
+    }
+
+    /* ICommDlgBrowser */
+    IServiceProvider_QueryService(psp, &SID_SExplorerBrowserFrame, &IID_ICommDlgBrowser,
+                                  (void**)&This->pcdb_site);
+    IServiceProvider_QueryService(psp, &SID_SExplorerBrowserFrame, &IID_ICommDlgBrowser2,
+                                  (void**)&This->pcdb2_site);
+    IServiceProvider_QueryService(psp, &SID_SExplorerBrowserFrame, &IID_ICommDlgBrowser3,
+                                  (void**)&This->pcdb3_site);
+
+    IServiceProvider_Release(psp);
 }
+
 
 /**************************************************************************
  * Main window related functions.
@@ -1154,20 +1177,33 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3 *ifac
     } else
         ERR("Failed to get IDataObject.\n");
 
+    /* If we didn't handle the default command, check if we have a
+     * client that does */
+    if(ret == S_FALSE && This->pcdb_site)
+        return ICommDlgBrowser_OnDefaultCommand(This->pcdb_site, shv);
+
     return ret;
 }
 static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(ICommDlgBrowser3 *iface,
                                                        IShellView *shv, ULONG uChange)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p, %d)\n", This, shv, uChange);
+    TRACE("%p (%p, %d)\n", This, shv, uChange);
+
+    if(This->pcdb_site)
+        return ICommDlgBrowser_OnStateChange(This->pcdb_site, shv, uChange);
+
     return E_NOTIMPL;
 }
 static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(ICommDlgBrowser3 *iface,
                                                        IShellView *pshv, LPCITEMIDLIST pidl)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p, %p)\n", This, pshv, pidl);
+    TRACE("%p (%p, %p)\n", This, pshv, pidl);
+
+    if(This->pcdb_site)
+        return ICommDlgBrowser_IncludeObject(This->pcdb_site, pshv, pidl);
+
     return S_OK;
 }
 
@@ -1176,7 +1212,11 @@ static HRESULT WINAPI ICommDlgBrowser3_fnNotify(ICommDlgBrowser3 *iface,
                                                 DWORD dwNotifyType)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p, 0x%x)\n", This, pshv, dwNotifyType);
+    TRACE("%p (%p, 0x%x)\n", This, pshv, dwNotifyType);
+
+    if(This->pcdb2_site)
+        return ICommDlgBrowser2_Notify(This->pcdb2_site, pshv, dwNotifyType);
+
     return S_OK;
 }
 
@@ -1185,7 +1225,11 @@ static HRESULT WINAPI ICommDlgBrowser3_fnGetDefaultMenuText(ICommDlgBrowser3 *if
                                                             LPWSTR pszText, int cchMax)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p, %s, %d)\n", This, pshv, debugstr_w(pszText), cchMax);
+    TRACE("%p (%p, %s, %d)\n", This, pshv, debugstr_w(pszText), cchMax);
+
+    if(This->pcdb2_site)
+        return ICommDlgBrowser2_GetDefaultMenuText(This->pcdb2_site, pshv, pszText, cchMax);
+
     return S_OK;
 }
 
@@ -1193,7 +1237,11 @@ static HRESULT WINAPI ICommDlgBrowser3_fnGetViewFlags(ICommDlgBrowser3 *iface,
                                                       DWORD *pdwFlags)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p)\n", This, pdwFlags);
+    TRACE("%p (%p)\n", This, pdwFlags);
+
+    if(This->pcdb2_site)
+        return ICommDlgBrowser2_GetViewFlags(This->pcdb2_site, pdwFlags);
+
     return S_OK;
 }
 
@@ -1201,7 +1249,11 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnColumnClicked(ICommDlgBrowser3 *iface
                                                          IShellView *pshv, int iColumn)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p, %d)\n", This, pshv, iColumn);
+    TRACE("%p (%p, %d)\n", This, pshv, iColumn);
+
+    if(This->pcdb3_site)
+        return ICommDlgBrowser3_OnColumnClicked(This->pcdb3_site, pshv, iColumn);
+
     return S_OK;
 }
 
@@ -1210,7 +1262,11 @@ static HRESULT WINAPI ICommDlgBrowser3_fnGetCurrentFilter(ICommDlgBrowser3 *ifac
                                                           int cchFileSpec)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%s, %d)\n", This, debugstr_w(pszFileSpec), cchFileSpec);
+    TRACE("%p (%s, %d)\n", This, debugstr_w(pszFileSpec), cchFileSpec);
+
+    if(This->pcdb3_site)
+        return ICommDlgBrowser3_GetCurrentFilter(This->pcdb3_site, pszFileSpec, cchFileSpec);
+
     return S_OK;
 }
 
@@ -1218,7 +1274,11 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnPreviewCreated(ICommDlgBrowser3 *ifac
                                                           IShellView *pshv)
 {
     ExplorerBrowserImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("stub, %p (%p)\n", This, pshv);
+    TRACE("%p (%p)\n", This, pshv);
+
+    if(This->pcdb3_site)
+        return ICommDlgBrowser3_OnPreviewCreated(This->pcdb3_site, pshv);
+
     return S_OK;
 }
 
