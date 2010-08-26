@@ -22,5 +22,5 @@
 #include "winuser.h"
 #include <gameux.h>
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 ID_GDF_XML          DATA          "test.gdf.xml"
