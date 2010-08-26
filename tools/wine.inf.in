@@ -448,7 +448,7 @@ HKLM,%CurrentVersion%\Explorer\AutoplayHandlers,,16
 HKLM,%CurrentVersion%\Explorer\DriveIcons,,16
 HKLM,%CurrentVersion%\Explorer\KindMap,,16
 HKLM,%CurrentVersion%\Group Policy,,16
-HKLM,%CurrentVersion%\Policies,,16
+HKLM,%CurrentVersion%\Policies\System,"EnableLUA",0x10003,0
 HKLM,%CurrentVersion%\PreviewHandlers,,16
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"
 HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
