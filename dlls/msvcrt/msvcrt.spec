@@ -836,7 +836,7 @@
 @ cdecl -arch=x86_64 _scalbf(double long) MSVCRT__scalbf
 @ varargs _scanf_l(str ptr) MSVCRT__scanf_l
 @ varargs _scanf_s_l(str ptr) MSVCRT__scanf_s_l
-# stub _scprintf
+@ varargs _scprintf(str) MSVCRT__scprintf
 # stub _scprintf_l
 # stub _scprintf_p_l
 @ varargs _scwprintf(wstr) MSVCRT__scwprintf

@@ -893,7 +893,7 @@
 @ cdecl _scalb( double long) msvcrt._scalb
 @ varargs _scanf_l(str ptr) msvcrt._scanf_l
 @ varargs _scanf_s_l(str ptr) msvcrt._scanf_s_l
-@ stub _scprintf
+@ varargs _scprintf(str) msvcrt._scprintf
 @ stub _scprintf_l
 @ stub _scprintf_p
 @ stub _scprintf_p_l

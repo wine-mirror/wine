@@ -504,7 +504,7 @@
 @ cdecl _safe_fprem() msvcrt._safe_fprem
 @ cdecl _safe_fprem1() msvcrt._safe_fprem1
 @ cdecl _scalb( double long) msvcrt._scalb
-@ stub _scprintf
+@ varargs _scprintf(str) msvcrt._scprintf
 @ varargs _scwprintf(wstr) msvcrt._scwprintf
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
 @ stdcall -i386 _seh_longjmp_unwind(ptr) msvcrt._seh_longjmp_unwind
