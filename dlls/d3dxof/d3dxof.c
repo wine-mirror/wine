@@ -58,7 +58,7 @@ static HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** pp
 static HRESULT IDirectXFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
 
 /* FOURCC to string conversion for debug messages */
-const char *debugstr_fourcc(DWORD fourcc)
+static const char *debugstr_fourcc(DWORD fourcc)
 {
     if (!fourcc) return "'null'";
     return wine_dbg_sprintf ("\'%c%c%c%c\'",
