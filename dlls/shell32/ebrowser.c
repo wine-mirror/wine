@@ -53,6 +53,7 @@ typedef struct _ExplorerBrowserImpl {
     const IShellBrowserVtbl *lpsbVtbl;
     const ICommDlgBrowser3Vtbl *lpcdb3Vtbl;
     const IObjectWithSiteVtbl *lpowsVtbl;
+    const INameSpaceTreeControlEventsVtbl *lpnstceVtbl;
     LONG ref;
     BOOL destroyed;
 
@@ -1378,6 +1379,227 @@ static const IObjectWithSiteVtbl vt_IObjectWithSite = {
     IObjectWithSite_fnGetSite
 };
 
+/**************************************************************************
+ * INameSpaceTreeControlEvents Implementation
+ */
+static inline ExplorerBrowserImpl *impl_from_INameSpaceTreeControlEvents(INameSpaceTreeControlEvents *iface)
+{
+    return (ExplorerBrowserImpl *)((char*)iface - FIELD_OFFSET(ExplorerBrowserImpl, lpnstceVtbl));
+}
+
+static HRESULT WINAPI NSTCEvents_fnQueryInterface(INameSpaceTreeControlEvents *iface,
+                                                  REFIID riid, void **ppvObject)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%s, %p)\n", This, shdebugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+    if(IsEqualIID(riid, &IID_INameSpaceTreeControlEvents) ||
+       IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObject = iface;
+    }
+
+    if(*ppvObject)
+    {
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI NSTCEvents_fnAddRef(INameSpaceTreeControlEvents *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p\n", This);
+    return IUnknown_AddRef((IUnknown*)This);
+}
+
+static ULONG WINAPI NSTCEvents_fnRelease(INameSpaceTreeControlEvents *iface)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p\n", This);
+    return IUnknown_Release((IUnknown*)This);
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemClick(INameSpaceTreeControlEvents *iface,
+                                               IShellItem *psi,
+                                               NSTCEHITTEST nstceHitTest,
+                                               NSTCECLICKTYPE nstceClickType)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, 0x%x, 0x%x)\n", This, psi, nstceHitTest, nstceClickType);
+    return S_OK;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnPropertyItemCommit(INameSpaceTreeControlEvents *iface,
+                                                        IShellItem *psi)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemStateChanging(INameSpaceTreeControlEvents *iface,
+                                                       IShellItem *psi,
+                                                       NSTCITEMSTATE nstcisMask,
+                                                       NSTCITEMSTATE nstcisState)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, 0x%x, 0x%x)\n", This, psi, nstcisMask, nstcisState);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemStateChanged(INameSpaceTreeControlEvents *iface,
+                                                      IShellItem *psi,
+                                                      NSTCITEMSTATE nstcisMask,
+                                                      NSTCITEMSTATE nstcisState)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, 0x%x, 0x%x)\n", This, psi, nstcisMask, nstcisState);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnSelectionChanged(INameSpaceTreeControlEvents *iface,
+                                                      IShellItemArray *psiaSelection)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psiaSelection);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnKeyboardInput(INameSpaceTreeControlEvents *iface,
+                                                   UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%d, 0x%lx, 0x%lx)\n", This, uMsg, wParam, lParam);
+    return S_OK;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeExpand(INameSpaceTreeControlEvents *iface,
+                                                  IShellItem *psi)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnAfterExpand(INameSpaceTreeControlEvents *iface,
+                                                 IShellItem *psi)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeginLabelEdit(INameSpaceTreeControlEvents *iface,
+                                                    IShellItem *psi)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnEndLabelEdit(INameSpaceTreeControlEvents *iface,
+                                                  IShellItem *psi)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnGetToolTip(INameSpaceTreeControlEvents *iface,
+                                                IShellItem *psi, LPWSTR pszTip, int cchTip)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, %p, %d)\n", This, psi, pszTip, cchTip);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeItemDelete(INameSpaceTreeControlEvents *iface,
+                                                      IShellItem *psi)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemAdded(INameSpaceTreeControlEvents *iface,
+                                               IShellItem *psi, BOOL fIsRoot)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, %d)\n", This, psi, fIsRoot);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnItemDeleted(INameSpaceTreeControlEvents *iface,
+                                                 IShellItem *psi, BOOL fIsRoot)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, %d)\n", This, psi, fIsRoot);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeContextMenu(INameSpaceTreeControlEvents *iface,
+                                                       IShellItem *psi, REFIID riid, void **ppv)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, %s, %p)\n", This, psi, shdebugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnAfterContextMenu(INameSpaceTreeControlEvents *iface,
+                                                      IShellItem *psi, IContextMenu *pcmIn,
+                                                      REFIID riid, void **ppv)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, %p, %s, %p)\n", This, psi, pcmIn, shdebugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnBeforeStateImageChange(INameSpaceTreeControlEvents *iface,
+                                                            IShellItem *psi)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p)\n", This, psi);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI NSTCEvents_fnOnGetDefaultIconIndex(INameSpaceTreeControlEvents* iface,
+                                                         IShellItem *psi,
+                                                         int *piDefaultIcon, int *piOpenIcon)
+{
+    ExplorerBrowserImpl *This = impl_from_INameSpaceTreeControlEvents(iface);
+    TRACE("%p (%p, %p, %p)\n", This, psi, piDefaultIcon, piOpenIcon);
+    return E_NOTIMPL;
+}
+
+
+const INameSpaceTreeControlEventsVtbl vt_INameSpaceTreeControlEvents =  {
+    NSTCEvents_fnQueryInterface,
+    NSTCEvents_fnAddRef,
+    NSTCEvents_fnRelease,
+    NSTCEvents_fnOnItemClick,
+    NSTCEvents_fnOnPropertyItemCommit,
+    NSTCEvents_fnOnItemStateChanging,
+    NSTCEvents_fnOnItemStateChanged,
+    NSTCEvents_fnOnSelectionChanged,
+    NSTCEvents_fnOnKeyboardInput,
+    NSTCEvents_fnOnBeforeExpand,
+    NSTCEvents_fnOnAfterExpand,
+    NSTCEvents_fnOnBeginLabelEdit,
+    NSTCEvents_fnOnEndLabelEdit,
+    NSTCEvents_fnOnGetToolTip,
+    NSTCEvents_fnOnBeforeItemDelete,
+    NSTCEvents_fnOnItemAdded,
+    NSTCEvents_fnOnItemDeleted,
+    NSTCEvents_fnOnBeforeContextMenu,
+    NSTCEvents_fnOnAfterContextMenu,
+    NSTCEvents_fnOnBeforeStateImageChange,
+    NSTCEvents_fnOnGetDefaultIconIndex
+};
+
 HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     ExplorerBrowserImpl *eb;
@@ -1396,6 +1618,7 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb->lpsbVtbl = &vt_IShellBrowser;
     eb->lpcdb3Vtbl = &vt_ICommDlgBrowser3;
     eb->lpowsVtbl = &vt_IObjectWithSite;
+    eb->lpnstceVtbl = &vt_INameSpaceTreeControlEvents;
 
     list_init(&eb->event_clients);
     list_init(&eb->travellog);
