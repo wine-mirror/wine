@@ -306,6 +306,33 @@ static inline BOOL is_hierarchical_scheme(URL_SCHEME type) {
            type == URL_SCHEME_RES);
 }
 
+/* Determines if the URI is hierarchical using the information already parsed into
+ * data and using the current location of parsing in the URI string.
+ *
+ * Windows considers a URI hierarchical if on of the following is true:
+ *  A.) It's a wildcard scheme.
+ *  B.) It's an implicit file scheme.
+ *  C.) It's a known hierarchical scheme and it has two '\\' after the scheme name.
+ *      (the '\\' will be converted into "//" during canonicalization).
+ *  D.) It's not a relative URI and "//" appears after the scheme name.
+ */
+static inline BOOL is_hierarchical_uri(const WCHAR **ptr, const parse_data *data) {
+    const WCHAR *start = *ptr;
+
+    if(data->scheme_type == URL_SCHEME_WILDCARD)
+        return TRUE;
+    else if(data->scheme_type == URL_SCHEME_FILE && data->has_implicit_scheme)
+        return TRUE;
+    else if(is_hierarchical_scheme(data->scheme_type) && (*ptr)[0] == '\\' && (*ptr)[1] == '\\') {
+        *ptr += 2;
+        return TRUE;
+    } else if(!data->is_relative && check_hierarchical(ptr))
+        return TRUE;
+
+    *ptr = start;
+    return FALSE;
+}
+
 /* Checks if the two Uri's are logically equivalent. It's a simple
  * comparison, since they are both of type Uri, and it can access
  * the properties of each Uri directly without the need to go
@@ -1866,17 +1893,8 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
 static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const WCHAR *start = *ptr;
 
-    /* Checks if the authority information needs to be parsed.
-     *
-     * Relative URI's aren't hierarchical URI's, but, they could trick
-     * "check_hierarchical" into thinking it is, so we need to explicitly
-     * make sure it's not relative. Also, if the URI is an implicit file
-     * scheme it might not contain a "//", but, it's considered hierarchical
-     * anyways. Wildcard Schemes are always considered hierarchical
-     */
-    if(data->scheme_type == URL_SCHEME_WILDCARD ||
-       (data->scheme_type == URL_SCHEME_FILE && is_implicit_file_path(*ptr)) ||
-       (!data->is_relative && check_hierarchical(ptr))) {
+    /* Checks if the authority information needs to be parsed. */
+    if(is_hierarchical_uri(ptr, data)) {
         /* Only treat it as a hierarchical URI if the scheme_type is known or
          * the Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES flag is not set.
          */
@@ -1884,10 +1902,6 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
            !(flags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES)) {
             TRACE("(%p %p %x): Treating URI as an hierarchical URI.\n", ptr, data, flags);
             data->is_opaque = FALSE;
-
-            if(data->scheme_type == URL_SCHEME_FILE)
-                /* Skip past the "//" after the scheme (if any). */
-                check_hierarchical(ptr);
 
             /* TODO: Handle hierarchical URI's, parse authority then parse the path. */
             if(!parse_authority(ptr, data, flags))

@@ -3771,6 +3771,122 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_FILE,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* The backslashes after the scheme name are converted to forward slashes. */
+    {   "file:\\\\c:\\dir\\index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
+        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
+        |Uri_HAS_SCHEME, FALSE,
+        {
+            {"file://c:\\dir\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\dir\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\dir\\index.html",S_OK,FALSE},
+            {"c:\\dir\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:\\\\c:\\dir\\index.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "file:\\\\c:/dir/index.html", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
+        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
+        |Uri_HAS_SCHEME, FALSE,
+        {
+            {"file:///c:/dir/index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:///c:/dir/index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/c:/dir/index.html",S_OK,FALSE},
+            {"/c:/dir/index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:\\\\c:/dir/index.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "http:\\\\google.com", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_AUTHORITY|Uri_HAS_DISPLAY_URI|Uri_HAS_DOMAIN|
+        Uri_HAS_HOST|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|
+        Uri_HAS_HOST_TYPE|Uri_HAS_PORT|Uri_HAS_SCHEME,
+        FALSE,
+        {
+            {"http://google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"http://google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http:\\\\google.com",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* the "\\\\" aren't converted to "//" for unknown scheme types and it's considered opaque. */
+    {   "zip:\\\\google.com", 0, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH|
+        Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_SCHEME|
+        Uri_HAS_HOST_TYPE,
+        FALSE,
+        {
+            {"zip:\\\\google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"zip:\\\\google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"\\\\google.com",S_OK,FALSE},
+            {"\\\\google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"zip:\\\\google.com",S_OK,FALSE},
+            {"zip",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
