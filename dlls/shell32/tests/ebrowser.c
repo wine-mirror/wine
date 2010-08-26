@@ -962,7 +962,7 @@ static void test_Advise(void)
     ok(ebev.ref == 0, "Got %d\n", ebev.ref);
 
     ref = IExplorerBrowser_Release(peb);
-    ok(!ref, "Got %d", ref);
+    ok(!ref, "Got %d\n", ref);
 }
 
 /* Based on PathAddBackslashW from dlls/shlwapi/path.c */
