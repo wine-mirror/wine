@@ -3887,6 +3887,64 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_UNKNOWN,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
+    },
+    /* Dot segements aren't removed. */
+    {   "file://c:\\dir\\../..\\./index.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
+        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
+        |Uri_HAS_SCHEME, FALSE,
+        {
+            {"file://c:\\dir\\..\\..\\.\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\dir\\..\\..\\.\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\dir\\..\\..\\.\\index.html",S_OK,FALSE},
+            {"c:\\dir\\..\\..\\.\\index.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\dir\\../..\\./index.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    /* Forbidden characters aren't percent encoded. */
+    {   "file://c:\\dir\\i^|ndex.html", Uri_CREATE_FILE_USE_DOS_PATH, S_OK, FALSE,
+        Uri_HAS_ABSOLUTE_URI|Uri_HAS_DISPLAY_URI|Uri_HAS_EXTENSION|Uri_HAS_PATH
+        |Uri_HAS_PATH_AND_QUERY|Uri_HAS_RAW_URI|Uri_HAS_SCHEME_NAME|Uri_HAS_HOST_TYPE
+        |Uri_HAS_SCHEME, FALSE,
+        {
+            {"file://c:\\dir\\i^|ndex.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\dir\\i^|ndex.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\dir\\i^|ndex.html",S_OK,FALSE},
+            {"c:\\dir\\i^|ndex.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\dir\\i^|ndex.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {0,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 
@@ -3945,7 +4003,10 @@ static const invalid_uri invalid_uri_tests[] = {
     /* Invalid % encoded data in fragment of know scheme type. */
     {"ftp://google.com/#Test%xx",0,FALSE},
     {"  http://google.com/",Uri_CREATE_NO_PRE_PROCESS_HTML_URI,FALSE},
-    {"\n\nhttp://google.com/",Uri_CREATE_NO_PRE_PROCESS_HTML_URI,FALSE}
+    {"\n\nhttp://google.com/",Uri_CREATE_NO_PRE_PROCESS_HTML_URI,FALSE},
+    {"file://c:\\test<test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
+    {"file://c:\\test>test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE},
+    {"file://c:\\test\"test",Uri_CREATE_FILE_USE_DOS_PATH,FALSE}
 };
 
 typedef struct _uri_equality {

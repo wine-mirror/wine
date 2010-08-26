@@ -1776,6 +1776,7 @@ static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
 static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const WCHAR *start = *ptr;
     static const WCHAR slash[] = {'/',0};
+    const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
 
     if(is_path_delim(**ptr)) {
         if(data->scheme_type == URL_SCHEME_WILDCARD) {
@@ -1791,13 +1792,19 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
         }
     } else {
         while(!is_path_delim(**ptr)) {
-            if(**ptr == '%' && data->scheme_type != URL_SCHEME_UNKNOWN &&
-               data->scheme_type != URL_SCHEME_FILE) {
+            if(**ptr == '%' && data->scheme_type != URL_SCHEME_UNKNOWN && !is_file) {
                 if(!check_pct_encoded(ptr)) {
                     *ptr = start;
                     return FALSE;
                 } else
                     continue;
+            } else if((**ptr == '>' || **ptr == '<' || **ptr == '\"') && is_file &&
+                      (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+                /* File schemes with USE_DOS_PATH set aren't allowed to have
+                 * a '<' or '>' or '\"' appear in them.
+                 */
+                *ptr = start;
+                return FALSE;
             } else if(**ptr == '\\') {
                 /* Not allowed to have a backslash if NO_CANONICALIZE is set
                  * and the scheme is known type (but not a file scheme).
@@ -2742,10 +2749,17 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
             }
         } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
-            /* Escape the forbidden character. */
-            if(!computeOnly)
-                pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
-            uri->canon_len += 3;
+            if(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+                /* Don't escape the character. */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
+            } else {
+                /* Escape the forbidden character. */
+                if(!computeOnly)
+                    pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
+                uri->canon_len += 3;
+            }
         } else {
             if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = *ptr;
@@ -2756,10 +2770,12 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
     uri->path_len = uri->canon_len - uri->path_start;
 
     /* Removing the dot segments only happens when it's not in
-     * computeOnly mode and it's not a wildcard scheme.
+     * computeOnly mode and it's not a wildcard scheme. File schemes
+     * with USE_DOS_PATH set don't get dot segments removed.
      */
-    if(!computeOnly && data->scheme_type != URL_SCHEME_WILDCARD) {
-        if(!(flags & Uri_CREATE_NO_CANONICALIZE)) {
+    if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) &&
+       data->scheme_type != URL_SCHEME_WILDCARD) {
+        if(!(flags & Uri_CREATE_NO_CANONICALIZE) && !computeOnly) {
             /* Remove the dot segments (if any) and reset everything to the new
              * correct length.
              */
