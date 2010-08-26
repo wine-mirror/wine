@@ -580,6 +580,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     PFORMAT_STRING pHandleFormat;
     /* correlation cache */
     ULONG_PTR NdrCorrCache[256];
+    __ms_va_list args;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -618,11 +619,9 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     TRACE("MIDL stub version = 0x%x\n", pStubDesc->MIDLVersion);
 
     /* needed for conformance of top-level objects */
-#ifdef __i386__
-    stubMsg.StackTop = *(unsigned char **)(&pFormat+1);
-#else
-# warning Stack not retrieved for your CPU architecture
-#endif
+    __ms_va_start( args, pFormat );
+    stubMsg.StackTop = va_arg( args, unsigned char * );
+    __ms_va_end( args );
 
     pHandleFormat = pFormat;
 
@@ -1654,6 +1653,7 @@ LONG_PTR WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
     const NDR_PROC_HEADER * pProcHeader = (const NDR_PROC_HEADER *)&pFormat[0];
     /* -Oif or -Oicf generated format */
     BOOL bV2Format = FALSE;
+    __ms_va_list args;
 
     TRACE("pStubDesc %p, pFormat %p, ...\n", pStubDesc, pFormat);
 
@@ -1705,13 +1705,10 @@ LONG_PTR WINAPIV NdrAsyncClientCall(PMIDL_STUB_DESC pStubDesc,
     TRACE("MIDL stub version = 0x%x\n", pStubDesc->MIDLVersion);
 
     /* needed for conformance of top-level objects */
-#ifdef __i386__
     pStubMsg->StackTop = I_RpcAllocate(async_call_data->stack_size);
-    /* FIXME: this may read one more DWORD than is necessary, but it shouldn't hurt */
-    memcpy(pStubMsg->StackTop, *(unsigned char **)(&pFormat+1), async_call_data->stack_size);
-#else
-# warning Stack not retrieved for your CPU architecture
-#endif
+    __ms_va_start( args, pFormat );
+    memcpy(pStubMsg->StackTop, va_arg( args, unsigned char * ), async_call_data->stack_size);
+    __ms_va_end( args );
 
     pAsync = *(RPC_ASYNC_STATE **)pStubMsg->StackTop;
     pAsync->StubInfo = async_call_data;
