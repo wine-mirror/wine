@@ -327,8 +327,6 @@ const char *debug_print_dstmod(DWORD mod);
 const char *debug_print_shift(DWORD shift);
 const char *debug_print_dstreg(const struct shader_reg *reg);
 const char *debug_print_srcreg(const struct shader_reg *reg);
-const char *debug_print_swizzle(DWORD swizzle);
-const char *debug_print_writemask(DWORD mask);
 const char *debug_print_comp(DWORD comp);
 const char *debug_print_opcode(DWORD opcode);
 

@@ -369,7 +369,7 @@ static const char *get_regname(const struct shader_reg *reg) {
     }
 }
 
-const char *debug_print_writemask(DWORD mask) {
+static const char *debug_print_writemask(DWORD mask) {
     char ret[6];
     unsigned char pos = 1;
 
@@ -383,28 +383,7 @@ const char *debug_print_writemask(DWORD mask) {
     return wine_dbg_sprintf("%s", ret);
 }
 
-const char *debug_print_relarg(const struct shader_reg *reg) {
-    const char *short_swizzle;
-    if(!reg->rel_reg) return "";
-
-    short_swizzle = debug_print_swizzle(reg->rel_reg->swizzle);
-
-    if(reg->rel_reg->type == BWRITERSPR_ADDR) {
-        return wine_dbg_sprintf("[a%u%s]", reg->rel_reg->regnum, short_swizzle);
-    } else if(reg->rel_reg->type == BWRITERSPR_LOOP && reg->rel_reg->regnum == 0) {
-        return wine_dbg_sprintf("[aL%s]", short_swizzle);
-    } else {
-        return "Unexpected relative addressing argument";
-    }
-}
-
-const char *debug_print_dstreg(const struct shader_reg *reg) {
-    return wine_dbg_sprintf("%s%s%s", get_regname(reg),
-                            debug_print_relarg(reg),
-                            debug_print_writemask(reg->writemask));
-}
-
-const char *debug_print_swizzle(DWORD arg) {
+static const char *debug_print_swizzle(DWORD arg) {
     char ret[6];
     unsigned int i;
     DWORD swizzle[4];
@@ -438,6 +417,27 @@ const char *debug_print_swizzle(DWORD arg) {
     }
     ret[5] = '\0';
     return wine_dbg_sprintf("%s", ret);
+}
+
+static const char *debug_print_relarg(const struct shader_reg *reg) {
+    const char *short_swizzle;
+    if(!reg->rel_reg) return "";
+
+    short_swizzle = debug_print_swizzle(reg->rel_reg->swizzle);
+
+    if(reg->rel_reg->type == BWRITERSPR_ADDR) {
+        return wine_dbg_sprintf("[a%u%s]", reg->rel_reg->regnum, short_swizzle);
+    } else if(reg->rel_reg->type == BWRITERSPR_LOOP && reg->rel_reg->regnum == 0) {
+        return wine_dbg_sprintf("[aL%s]", short_swizzle);
+    } else {
+        return "Unexpected relative addressing argument";
+    }
+}
+
+const char *debug_print_dstreg(const struct shader_reg *reg) {
+    return wine_dbg_sprintf("%s%s%s", get_regname(reg),
+                            debug_print_relarg(reg),
+                            debug_print_writemask(reg->writemask));
 }
 
 const char *debug_print_srcreg(const struct shader_reg *reg) {
