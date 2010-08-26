@@ -24,13 +24,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 /* Returns TRUE if num is a power of 2, FALSE if not, or if 0 */
-BOOL is_pow2(UINT num)
+static BOOL is_pow2(UINT num)
 {
     return !(num & (num - 1));
 }
 
 /* Returns the smallest power of 2 which is greater than or equal to num */
-UINT make_pow2(UINT num)
+static UINT make_pow2(UINT num)
 {
     UINT result = 1;
 
