@@ -1236,7 +1236,7 @@
 @ stub _wstat32
 @ stub _wstat32i64
 @ cdecl _wstat64(wstr ptr) msvcrt._wstat64
-@ stub _wstat64i32
+@ cdecl _wstat64i32(wstr ptr)
 @ cdecl _wstrdate(ptr) msvcrt._wstrdate
 @ cdecl _wstrdate_s(ptr long) msvcrt._wstrdate_s
 @ cdecl _wstrtime(ptr) msvcrt._wstrtime
