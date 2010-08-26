@@ -1156,7 +1156,7 @@
 @ cdecl _strset(str long) msvcrt._strset
 @ stub _strset_s
 @ cdecl _strtime(ptr) msvcrt._strtime
-@ stub _strtime_s
+@ cdecl _strtime_s(ptr long) msvcrt._strtime_s
 @ cdecl _strtod_l(str ptr ptr) msvcrt._strtod_l
 @ cdecl _strtoi64(str ptr long) msvcrt._strtoi64
 @ cdecl _strtoi64_l(str ptr long ptr) msvcrt._strtoi64_l
@@ -1400,7 +1400,7 @@
 @ cdecl _wstrdate(ptr) msvcrt._wstrdate
 @ stub _wstrdate_s
 @ cdecl _wstrtime(ptr) msvcrt._wstrtime
-@ stub _wstrtime_s
+@ cdecl _wstrtime_s(ptr long) msvcrt._wstrtime_s
 @ cdecl _wsystem(wstr) msvcrt._wsystem
 @ cdecl _wtempnam(wstr wstr) msvcrt._wtempnam
 @ stub _wtmpnam

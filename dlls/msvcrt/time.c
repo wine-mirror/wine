@@ -326,6 +326,28 @@ char* CDECL _strtime(char* time)
 }
 
 /*********************************************************************
+ *              _strtime_s (MSVCRT.@)
+ */
+int CDECL _strtime_s(char* time, MSVCRT_size_t size)
+{
+    if(time && size)
+        time[0] = '\0';
+
+    if(!time) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(size < 9) {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    _strtime(time);
+    return 0;
+}
+
+/*********************************************************************
  *		_wstrtime (MSVCRT.@)
  */
 MSVCRT_wchar_t* CDECL _wstrtime(MSVCRT_wchar_t* time)
@@ -335,6 +357,28 @@ MSVCRT_wchar_t* CDECL _wstrtime(MSVCRT_wchar_t* time)
   GetTimeFormatW(LOCALE_NEUTRAL, 0, NULL, format, time, 9);
 
   return time;
+}
+
+/*********************************************************************
+ *              _wstrtime_s (MSVCRT.@)
+ */
+int CDECL _wstrtime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size)
+{
+    if(time && size)
+        time[0] = '\0';
+
+    if(!time) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if(size < 9) {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    _wstrtime(time);
+    return 0;
 }
 
 /*********************************************************************

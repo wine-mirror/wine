@@ -397,6 +397,7 @@ wchar_t* __cdecl _wctime32(const __time32_t*);
 wchar_t* __cdecl _wctime64(const __time64_t*);
 wchar_t* __cdecl _wstrdate(wchar_t*);
 wchar_t* __cdecl _wstrtime(wchar_t*);
+errno_t  __cdecl _wstrtime_s(wchar_t*,size_t);
 
 #ifndef _USE_32BIT_TIME_T
 static inline wchar_t* _wctime(const time_t *t) { return _wctime64(t); }

@@ -25,12 +25,26 @@
 
 #include <stdlib.h> /*setenv*/
 #include <stdio.h> /*printf*/
+#include <errno.h>
 
 #define SECSPERDAY         86400
 #define SECSPERHOUR        3600
 #define SECSPERMIN         60
 #define MINSPERHOUR        60
 #define HOURSPERDAY        24
+
+static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
+static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
+static errno_t    (__cdecl *p_strtime_s)(char*,size_t);
+
+static void init(void)
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
+    p_mkgmtime32 = (void*)GetProcAddress(hmod, "_mkgmtime32");
+    p_strtime_s = (void*)GetProcAddress(hmod, "_strtime_s");
+}
 
 static int get_test_year(time_t *start)
 {
@@ -54,14 +68,9 @@ static void test_ctime(void)
 }
 static void test_gmtime(void)
 {
-    static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
-    static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
-
-    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
     __time32_t valid, gmt;
     struct tm* gmt_tm;
 
-    p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
     if(!p_gmtime32) {
         win_skip("Skipping _gmtime32 tests\n");
         return;
@@ -81,7 +90,6 @@ static void test_gmtime(void)
             gmt_tm->tm_year, gmt_tm->tm_mon, gmt_tm->tm_yday, gmt_tm->tm_mday, gmt_tm->tm_wday,
             gmt_tm->tm_hour, gmt_tm->tm_min, gmt_tm->tm_sec, gmt_tm->tm_isdst);
 
-    p_mkgmtime32 = (void*)GetProcAddress(hmod, "_mkgmtime32");
     if(!p_mkgmtime32) {
         win_skip("Skipping _mkgmtime32 tests\n");
         return;
@@ -300,6 +308,7 @@ static void test_strtime(void)
 {
     char time[16], * result;
     int hour, minute, second, count, len;
+    errno_t err;
 
     result = _strtime(time);
     ok(result == time, "Wrong return value\n");
@@ -307,6 +316,29 @@ static void test_strtime(void)
     ok(len == 8, "Wrong length: returned %d, should be 8\n", len);
     count = sscanf(time, "%02d:%02d:%02d", &hour, &minute, &second);
     ok(count == 3, "Wrong format: count = %d, should be 3\n", count);
+
+    if(!p_strtime_s) {
+        win_skip("Skipping _strtime_s tests\n");
+        return;
+    }
+
+    errno = 0;
+    err = p_strtime_s(NULL, 0);
+    ok(err == EINVAL, "err = %d\n", err);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    err = p_strtime_s(NULL, 1);
+    ok(err == EINVAL, "err = %d\n", err);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    time[0] = 'x';
+    err = p_strtime_s(time, 8);
+    ok(err == ERANGE, "err = %d\n", err);
+    ok(errno == ERANGE, "errno = %d\n", errno);
+    ok(time[0] == '\0', "time[0] != '\\0'\n");
+
+    err = p_strtime_s(time, 9);
+    ok(err == 0, "err = %x\n", err);
 }
 
 static void test_wstrdate(void)
@@ -339,6 +371,8 @@ static void test_wstrtime(void)
 
 START_TEST(time)
 {
+    init();
+
     test_ctime();
     test_gmtime();
     test_mktime();
