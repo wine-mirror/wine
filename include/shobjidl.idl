@@ -2213,9 +2213,7 @@ interface INameSpaceTreeControlEvents : IUnknown
         [out, iid_is(riid)] void **ppv);
 
     HRESULT OnBeforeStateImageChange(
-        [in] IShellItem *psi,
-        [out] int *piDefaultIcon,
-        [out] int *piOpenIcon);
+        [in] IShellItem *psi);
 
     HRESULT OnGetDefaultIconIndex(
         [in] IShellItem *psi,

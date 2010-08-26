@@ -277,9 +277,7 @@ static HRESULT WINAPI NSTCEvents_fnOnAfterContextMenu(
 
 static HRESULT WINAPI NSTCEvents_fnOnBeforeStateImageChange(
     INameSpaceTreeControlEvents* iface,
-    IShellItem *psi,
-    int *piDefaultIcon,
-    int *piOpenIcon)
+    IShellItem *psi)
 {
     ok(psi != NULL, "NULL IShellItem\n");
     NSTCE_IMPL(iface)->count[OnBeforeStateImageChange]++;
