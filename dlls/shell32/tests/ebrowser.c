@@ -973,7 +973,7 @@ static void test_SetSite(void)
     todo_wine ok(cdbimpl->OnPreviewCreated, "Got %d\n", cdbimpl->OnPreviewCreated);
 
     /* IExplorerPaneVisibility */
-    todo_wine ok(epvimpl->np, "Got %d\n", epvimpl->np);
+    ok(epvimpl->np, "Got %d\n", epvimpl->np);
     todo_wine ok(epvimpl->cp, "Got %d\n", epvimpl->cp);
     todo_wine ok(epvimpl->cp_o, "Got %d\n", epvimpl->cp_o);
     todo_wine ok(epvimpl->cp_v, "Got %d\n", epvimpl->cp_v);

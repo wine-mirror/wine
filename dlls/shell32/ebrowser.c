@@ -37,6 +37,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+#define SPLITTER_WIDTH 2
+#define NP_MIN_WIDTH 60
+#define SV_MIN_WIDTH 150
+
 typedef struct _event_client {
     struct list entry;
     IExplorerBrowserEvents *pebe;
@@ -60,6 +64,16 @@ typedef struct _ExplorerBrowserImpl {
     HWND hwnd_main;
     HWND hwnd_sv;
 
+    RECT splitter_rc;
+    struct {
+        INameSpaceTreeControl2 *pnstc2;
+        HWND hwnd_splitter, hwnd_nstc;
+        DWORD nstc_cookie;
+        UINT width;
+        BOOL show;
+        RECT rc;
+    } navpane;
+
     EXPLORER_BROWSER_OPTIONS eb_options;
     FOLDERSETTINGS fs;
 
@@ -79,6 +93,8 @@ typedef struct _ExplorerBrowserImpl {
     ICommDlgBrowser3 *pcdb3_site;
     IExplorerPaneVisibility *pepv_site;
 } ExplorerBrowserImpl;
+
+static void initialize_navpane(ExplorerBrowserImpl *This, HWND hwnd_parent, RECT *rc);
 
 /**************************************************************************
  * Event functions.
@@ -255,14 +271,66 @@ static LPCITEMIDLIST travellog_go_forward(ExplorerBrowserImpl *This)
 static void update_layout(ExplorerBrowserImpl *This)
 {
     RECT rc;
-    TRACE("%p\n", This);
+    INT navpane_width_actual;
+    INT shellview_width_actual;
+    TRACE("%p (navpane: %d, EBO_SHOWFRAMES: %d)\n",
+          This, This->navpane.show, This->eb_options & EBO_SHOWFRAMES);
 
     GetClientRect(This->hwnd_main, &rc);
-    CopyRect(&This->sv_rc, &rc);
+
+    if((This->eb_options & EBO_SHOWFRAMES) && This->navpane.show)
+        navpane_width_actual = This->navpane.width;
+    else
+        navpane_width_actual = 0;
+
+    shellview_width_actual = rc.right - navpane_width_actual;
+    if(shellview_width_actual < SV_MIN_WIDTH && navpane_width_actual)
+    {
+        INT missing_width = SV_MIN_WIDTH - shellview_width_actual;
+        if(missing_width < (navpane_width_actual - NP_MIN_WIDTH))
+        {
+            /* Shrink the navpane */
+            navpane_width_actual -= missing_width;
+            shellview_width_actual += missing_width;
+        }
+        else
+        {
+            /* Hide the navpane */
+            shellview_width_actual += navpane_width_actual;
+            navpane_width_actual = 0;
+        }
+    }
+
+    /**************************************************************
+     *  Calculate rectangles for the panes. All rectangles contain
+     *  the position of the panes relative to hwnd_main.
+     */
+
+    if(navpane_width_actual)
+    {
+        This->navpane.rc.left = This->navpane.rc.top = 0;
+        This->navpane.rc.right = navpane_width_actual;
+        This->navpane.rc.bottom = rc.bottom;
+
+        if(!This->navpane.hwnd_splitter)
+            initialize_navpane(This, This->hwnd_main, &This->navpane.rc);
+    }
+    else
+        ZeroMemory(&This->navpane.rc, sizeof(RECT));
+
+    This->sv_rc.left   = navpane_width_actual;
+    This->sv_rc.top    = 0;
+    This->sv_rc.right  = This->sv_rc.left + shellview_width_actual;
+    This->sv_rc.bottom = rc.bottom;
 }
 
 static void size_panes(ExplorerBrowserImpl *This)
 {
+    MoveWindow(This->navpane.hwnd_splitter,
+               This->navpane.rc.right - SPLITTER_WIDTH, This->navpane.rc.top,
+               SPLITTER_WIDTH, This->navpane.rc.bottom - This->navpane.rc.top,
+               TRUE);
+
     MoveWindow(This->hwnd_sv,
                This->sv_rc.left, This->sv_rc.top,
                This->sv_rc.right - This->sv_rc.left, This->sv_rc.bottom - This->sv_rc.top,
@@ -387,6 +455,269 @@ static void get_interfaces_from_site(ExplorerBrowserImpl *This)
     IServiceProvider_Release(psp);
 }
 
+/**************************************************************************
+ * General pane functionality.
+ */
+static void update_panestate(ExplorerBrowserImpl *This)
+{
+    EXPLORERPANESTATE eps = EPS_DONTCARE;
+    BOOL show_navpane;
+    TRACE("%p\n", This);
+
+    if(!This->pepv_site) return;
+
+    IExplorerPaneVisibility_GetPaneState(This->pepv_site, (REFEXPLORERPANE) &EP_NavPane, &eps);
+    if( !(eps & EPS_DEFAULT_OFF) )
+        show_navpane = TRUE;
+    else
+        show_navpane = FALSE;
+
+    if(This->navpane.show ^ show_navpane)
+    {
+        update_layout(This);
+        size_panes(This);
+    }
+
+    This->navpane.show = show_navpane;
+}
+
+static void splitter_draw(HWND hwnd, RECT *rc)
+{
+    HDC hdc = GetDC(hwnd);
+    InvertRect(hdc, rc);
+    ReleaseDC(hwnd, hdc);
+}
+
+/**************************************************************************
+ * The Navigation Pane.
+ */
+static LRESULT navpane_splitter_beginresize(ExplorerBrowserImpl *This, HWND hwnd, LPARAM lParam)
+{
+    TRACE("\n");
+
+    SetCapture(hwnd);
+
+    CopyRect(&This->splitter_rc, &This->navpane.rc);
+    This->splitter_rc.left = This->splitter_rc.right - SPLITTER_WIDTH;
+
+    splitter_draw(GetParent(hwnd), &This->splitter_rc);
+
+    return TRUE;
+}
+
+static LRESULT navpane_splitter_resizing(ExplorerBrowserImpl *This, HWND hwnd, LPARAM lParam)
+{
+    int new_width, dx;
+    RECT rc;
+
+    if(GetCapture() != hwnd) return FALSE;
+
+    dx = (SHORT)LOWORD(lParam);
+    TRACE("%d.\n", dx);
+
+    CopyRect(&rc, &This->navpane.rc);
+
+    new_width = This->navpane.width + dx;
+    if(new_width > NP_MIN_WIDTH && This->sv_rc.right - new_width > SV_MIN_WIDTH)
+    {
+        rc.right = new_width;
+        rc.left = rc.right - SPLITTER_WIDTH;
+        splitter_draw(GetParent(hwnd), &This->splitter_rc);
+        splitter_draw(GetParent(hwnd), &rc);
+        CopyRect(&This->splitter_rc, &rc);
+    }
+
+    return TRUE;
+}
+
+static LRESULT navpane_splitter_endresize(ExplorerBrowserImpl *This, HWND hwnd, LPARAM lParam)
+{
+    int new_width, dx;
+
+    if(GetCapture() != hwnd) return FALSE;
+
+    dx = (SHORT)LOWORD(lParam);
+    TRACE("%d.\n", dx);
+
+    splitter_draw(GetParent(hwnd), &This->splitter_rc);
+
+    new_width = This->navpane.width + dx;
+    if(new_width < NP_MIN_WIDTH)
+        new_width = NP_MIN_WIDTH;
+    else if(This->sv_rc.right - new_width < SV_MIN_WIDTH)
+        new_width = This->sv_rc.right - SV_MIN_WIDTH;
+
+    This->navpane.width = new_width;
+
+    update_layout(This);
+    size_panes(This);
+
+    ReleaseCapture();
+
+    return TRUE;
+}
+
+static LRESULT navpane_on_wm_create(HWND hwnd, CREATESTRUCTW *crs)
+{
+    ExplorerBrowserImpl *This = crs->lpCreateParams;
+    INameSpaceTreeControl2 *pnstc2;
+    DWORD style;
+    HRESULT hr;
+
+    TRACE("%p\n", This);
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LPARAM)This);
+    This->navpane.hwnd_splitter = hwnd;
+
+    hr = CoCreateInstance(&CLSID_NamespaceTreeControl, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_INameSpaceTreeControl2, (void**)&pnstc2);
+
+    if(SUCCEEDED(hr))
+    {
+        style = NSTCS_HASEXPANDOS | NSTCS_ROOTHASEXPANDO | NSTCS_SHOWSELECTIONALWAYS;
+        hr = INameSpaceTreeControl2_Initialize(pnstc2, GetParent(hwnd), NULL, style);
+        if(SUCCEEDED(hr))
+        {
+            INameSpaceTreeControlEvents *pnstce;
+            IShellFolder *psfdesktop;
+            IShellItem *psi;
+            IOleWindow *pow;
+            LPITEMIDLIST pidl;
+            DWORD cookie, style2 = NSTCS2_DISPLAYPADDING;
+
+            hr = INameSpaceTreeControl2_SetControlStyle2(pnstc2, 0xFF, style2);
+            if(FAILED(hr))
+                ERR("SetControlStyle2 failed (0x%08x)\n", hr);
+
+            hr = INameSpaceTreeControl2_QueryInterface(pnstc2, &IID_IOleWindow, (void**)&pow);
+            if(SUCCEEDED(hr))
+            {
+                IOleWindow_GetWindow(pow, &This->navpane.hwnd_nstc);
+                IOleWindow_Release(pow);
+            }
+            else
+                ERR("QueryInterface(IOleWindow) failed (0x%08x)\n", hr);
+
+            pnstce = (INameSpaceTreeControlEvents *)&This->lpnstceVtbl;
+            hr = INameSpaceTreeControl2_TreeAdvise(pnstc2, (IUnknown*)pnstce, &cookie);
+            if(FAILED(hr))
+                ERR("TreeAdvise failed. (0x%08x).\n", hr);
+
+            /*
+             * Add the default roots
+             */
+
+            /* TODO: This should be FOLDERID_Links */
+            hr = SHGetSpecialFolderLocation(NULL, CSIDL_FAVORITES, &pidl);
+            if(SUCCEEDED(hr))
+            {
+                hr = SHCreateShellItem(NULL, NULL, pidl, &psi);
+                if(SUCCEEDED(hr))
+                {
+                    hr = INameSpaceTreeControl2_AppendRoot(pnstc2, psi, SHCONTF_NONFOLDERS, NSTCRS_VISIBLE, NULL);
+                    IShellItem_Release(psi);
+                }
+                ILFree(pidl);
+            }
+
+            SHGetDesktopFolder(&psfdesktop);
+            hr = SHGetItemFromObject((IUnknown*)psfdesktop, &IID_IShellItem, (void**)&psi);
+            IShellFolder_Release(psfdesktop);
+            if(SUCCEEDED(hr))
+            {
+                hr = INameSpaceTreeControl2_AppendRoot(pnstc2, psi, SHCONTF_FOLDERS, NSTCRS_EXPANDED, NULL);
+                IShellItem_Release(psi);
+            }
+
+            /* TODO:
+             * We should advertise IID_INameSpaceTreeControl to the site of the
+             * host through its IProfferService interface, if any.
+             */
+
+            This->navpane.pnstc2 = pnstc2;
+            This->navpane.nstc_cookie = cookie;
+
+            return TRUE;
+        }
+    }
+
+    This->navpane.pnstc2 = NULL;
+    ERR("Failed (0x%08x)\n", hr);
+
+    return FALSE;
+}
+
+static LRESULT navpane_on_wm_size_move(ExplorerBrowserImpl *This)
+{
+    UINT height, width;
+    TRACE("%p\n", This);
+
+    width = This->navpane.rc.right - This->navpane.rc.left - SPLITTER_WIDTH;
+    height = This->navpane.rc.bottom - This->navpane.rc.top;
+
+    MoveWindow(This->navpane.hwnd_nstc,
+               This->navpane.rc.left, This->navpane.rc.top,
+               width, height,
+               TRUE);
+
+    return FALSE;
+}
+
+static LRESULT navpane_on_wm_destroy(ExplorerBrowserImpl *This)
+{
+    INameSpaceTreeControl_TreeUnadvise(This->navpane.pnstc2, This->navpane.nstc_cookie);
+    INameSpaceTreeControl_Release(This->navpane.pnstc2);
+    This->navpane.pnstc2 = NULL;
+    return TRUE;
+}
+
+static LRESULT CALLBACK navpane_wndproc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
+{
+    ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+
+    switch(uMessage) {
+    case WM_CREATE:           return navpane_on_wm_create(hWnd, (CREATESTRUCTW*)lParam);
+    case WM_MOVE:             /* Fall through */
+    case WM_SIZE:             return navpane_on_wm_size_move(This);
+    case WM_DESTROY:          return navpane_on_wm_destroy(This);
+    case WM_LBUTTONDOWN:      return navpane_splitter_beginresize(This, hWnd, lParam);
+    case WM_MOUSEMOVE:        return navpane_splitter_resizing(This, hWnd, lParam);
+    case WM_LBUTTONUP:        return navpane_splitter_endresize(This, hWnd, lParam);
+    default:
+        return DefWindowProcW(hWnd, uMessage, wParam, lParam);
+    }
+    return 0;
+}
+
+static void initialize_navpane(ExplorerBrowserImpl *This, HWND hwnd_parent, RECT *rc)
+{
+    WNDCLASSW wc;
+    HWND splitter;
+    static const WCHAR navpane_classname[] = {'e','b','_','n','a','v','p','a','n','e',0};
+
+    if( !GetClassInfoW(shell32_hInstance, navpane_classname, &wc) )
+    {
+        wc.style            = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc      = navpane_wndproc;
+        wc.cbClsExtra       = 0;
+        wc.cbWndExtra       = 0;
+        wc.hInstance        = shell32_hInstance;
+        wc.hIcon            = 0;
+        wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_SIZEWE);
+        wc.hbrBackground    = (HBRUSH)(COLOR_HIGHLIGHT + 1);
+        wc.lpszMenuName     = NULL;
+        wc.lpszClassName    = navpane_classname;
+
+        if (!RegisterClassW(&wc)) return;
+    }
+
+    splitter = CreateWindowExW(0, navpane_classname, NULL,
+                               WS_CHILD | WS_TABSTOP | WS_VISIBLE,
+                               rc->right - SPLITTER_WIDTH, rc->top,
+                               SPLITTER_WIDTH, rc->bottom - rc->top,
+                               hwnd_parent, 0, shell32_hInstance, This);
+    if(!splitter)
+        ERR("Failed to create navpane : %d.\n", GetLastError());
+}
 
 /**************************************************************************
  * Main window related functions.
@@ -672,7 +1003,7 @@ static HRESULT WINAPI IExplorerBrowser_fnSetOptions(IExplorerBrowser *iface,
 {
     ExplorerBrowserImpl *This = (ExplorerBrowserImpl*)iface;
     static const EXPLORER_BROWSER_OPTIONS unsupported_options =
-        EBO_SHOWFRAMES | EBO_ALWAYSNAVIGATE | EBO_NOWRAPPERWINDOW | EBO_HTMLSHAREPOINTVIEW;
+        EBO_ALWAYSNAVIGATE | EBO_NOWRAPPERWINDOW | EBO_HTMLSHAREPOINTVIEW;
 
     TRACE("%p (0x%x)\n", This, dwFlag);
 
@@ -798,6 +1129,7 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
     }
 
     get_interfaces_from_site(This);
+    update_panestate(This);
 
     /* Only browse if the new pidl differs from the old */
     if(!ILIsEqual(This->current_pidl, absolute_pidl))
@@ -829,6 +1161,18 @@ static HRESULT WINAPI IExplorerBrowser_fnBrowseToIDList(IExplorerBrowser *iface,
     events_NavigationComplete(This, absolute_pidl);
     ILFree(This->current_pidl);
     This->current_pidl = absolute_pidl;
+
+    /* Expand the NameSpaceTree to the current location. */
+    if(This->navpane.show && This->navpane.pnstc2)
+    {
+        IShellItem *psi;
+        hr = SHCreateItemFromIDList(This->current_pidl, &IID_IShellItem, (void**)&psi);
+        if(SUCCEEDED(hr))
+        {
+            INameSpaceTreeControl_EnsureItemVisible(This->navpane.pnstc2, psi);
+            IShellItem_Release(psi);
+        }
+    }
 
     return S_OK;
 }
@@ -1619,6 +1963,10 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, voi
     eb->lpcdb3Vtbl = &vt_ICommDlgBrowser3;
     eb->lpowsVtbl = &vt_IObjectWithSite;
     eb->lpnstceVtbl = &vt_INameSpaceTreeControlEvents;
+
+    /* Default settings */
+    eb->navpane.width = 150;
+    eb->navpane.show = TRUE;
 
     list_init(&eb->event_clients);
     list_init(&eb->travellog);
