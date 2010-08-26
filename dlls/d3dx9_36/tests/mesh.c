@@ -469,7 +469,7 @@ static void test_fvf_to_decl(DWORD test_fvf, const D3DVERTEXELEMENT9 expected_el
     D3DVERTEXELEMENT9 decl[MAX_FVF_DECL_SIZE];
 
     hr = D3DXDeclaratorFromFVF(test_fvf, decl);
-    todo_wine ok(hr == expected_hr,
+    ok(hr == expected_hr,
             "Line %u, test %u: D3DXDeclaratorFromFVF returned %#x, expected %#x.\n",
             line, test_id, hr, expected_hr);
     if (SUCCEEDED(hr)) compare_elements(decl, expected_elements, line, test_id);

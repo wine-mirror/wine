@@ -190,14 +190,114 @@ static const UINT d3dx_decltype_size[D3DDECLTYPE_UNUSED] =
    /* D3DDECLTYPE_FLOAT16_4 */ 4 * 2,
 };
 
+static void append_decl_element(D3DVERTEXELEMENT9 *declaration, UINT *idx, UINT *offset,
+        D3DDECLTYPE type, D3DDECLUSAGE usage, UINT usage_idx)
+{
+    declaration[*idx].Stream = 0;
+    declaration[*idx].Offset = *offset;
+    declaration[*idx].Type = type;
+    declaration[*idx].Method = D3DDECLMETHOD_DEFAULT;
+    declaration[*idx].Usage = usage;
+    declaration[*idx].UsageIndex = usage_idx;
+
+    *offset += d3dx_decltype_size[type];
+    ++(*idx);
+}
+
 /*************************************************************************
  * D3DXDeclaratorFromFVF
  */
-HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD fvf, D3DVERTEXELEMENT9 Declaration[MAX_FVF_DECL_SIZE])
+HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD fvf, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
 {
-    FIXME("(%d, %p): stub\n", fvf, Declaration);
+    static const D3DVERTEXELEMENT9 end_element = D3DDECL_END();
+    DWORD tex_count = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+    unsigned int offset = 0;
+    unsigned int idx = 0;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("fvf %#x, declaration %p.\n", fvf, declaration);
+
+    if (fvf & D3DFVF_POSITION_MASK)
+    {
+        BOOL has_blend = (fvf & D3DFVF_XYZB5) >= D3DFVF_XYZB1;
+        DWORD blend_count = 1 + (((fvf & D3DFVF_XYZB5) - D3DFVF_XYZB1) >> 1);
+        BOOL has_blend_idx = (fvf & D3DFVF_LASTBETA_D3DCOLOR) || (fvf & D3DFVF_LASTBETA_UBYTE4);
+
+        if (has_blend_idx) --blend_count;
+
+        if ((fvf & D3DFVF_POSITION_MASK) == D3DFVF_XYZW
+                || (has_blend && blend_count > 4))
+            return D3DERR_INVALIDCALL;
+
+        if ((fvf & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW)
+            append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT4, D3DDECLUSAGE_POSITIONT, 0);
+        else
+            append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT3, D3DDECLUSAGE_POSITION, 0);
+
+        if (has_blend)
+        {
+            switch (blend_count)
+            {
+                 case 0:
+                    break;
+                 case 1:
+                    append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT1, D3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                 case 2:
+                    append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT2, D3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                 case 3:
+                    append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT3, D3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                 case 4:
+                    append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT4, D3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                 default:
+                     ERR("Invalid blend count %u.\n", blend_count);
+                     break;
+            }
+
+            if (has_blend_idx)
+            {
+                if (fvf & D3DFVF_LASTBETA_UBYTE4)
+                    append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_UBYTE4, D3DDECLUSAGE_BLENDINDICES, 0);
+                else if (fvf & D3DFVF_LASTBETA_D3DCOLOR)
+                    append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_D3DCOLOR, D3DDECLUSAGE_BLENDINDICES, 0);
+            }
+        }
+    }
+
+    if (fvf & D3DFVF_NORMAL)
+        append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT3, D3DDECLUSAGE_NORMAL, 0);
+    if (fvf & D3DFVF_PSIZE)
+        append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT1, D3DDECLUSAGE_PSIZE, 0);
+    if (fvf & D3DFVF_DIFFUSE)
+        append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_D3DCOLOR, D3DDECLUSAGE_COLOR, 0);
+    if (fvf & D3DFVF_SPECULAR)
+        append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_D3DCOLOR, D3DDECLUSAGE_COLOR, 1);
+
+    for (i = 0; i < tex_count; ++i)
+    {
+        switch ((fvf >> (16 + 2 * i)) & 0x03)
+        {
+            case D3DFVF_TEXTUREFORMAT1:
+                append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT1, D3DDECLUSAGE_TEXCOORD, i);
+                break;
+            case D3DFVF_TEXTUREFORMAT2:
+                append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT2, D3DDECLUSAGE_TEXCOORD, i);
+                break;
+            case D3DFVF_TEXTUREFORMAT3:
+                append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT3, D3DDECLUSAGE_TEXCOORD, i);
+                break;
+            case D3DFVF_TEXTUREFORMAT4:
+                append_decl_element(declaration, &idx, &offset, D3DDECLTYPE_FLOAT4, D3DDECLUSAGE_TEXCOORD, i);
+                break;
+        }
+    }
+
+    declaration[idx] = end_element;
+
+    return D3D_OK;
 }
 
 /*************************************************************************
