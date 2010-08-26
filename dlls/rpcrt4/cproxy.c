@@ -65,7 +65,7 @@ static const IRpcProxyBufferVtbl StdProxy_Vtbl;
 #include "pshpack1.h"
 
 struct thunk {
-  BYTE push;
+  BYTE mov_eax;
   DWORD index;
   BYTE jmp;
   LONG handler;
@@ -75,9 +75,12 @@ struct thunk {
 
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC(call_stubless_func,
+                  "pushl %eax\n\t"  /* method index */
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   "pushl %esp\n\t"  /* pointer to index */
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   "call " __ASM_NAME("ObjectStubless") __ASM_STDCALL(4) "\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                   "popl %edx\n\t"  /* args size */
                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                   "movl (%esp),%ecx\n\t"  /* return address */
@@ -115,7 +118,7 @@ static const struct thunk *allocate_block( unsigned int num )
 
     for (i = 0; i < BLOCK_SIZE; i++)
     {
-        block[i].push    = 0x68; /* pushl */
+        block[i].mov_eax = 0xb8; /* movl $n,%eax */
         block[i].index   = BLOCK_SIZE * num + i + 3;
         block[i].jmp     = 0xe9; /* jmp */
         block[i].handler = (char *)call_stubless_func - (char *)(&block[i].handler + 1);
