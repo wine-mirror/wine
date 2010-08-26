@@ -36,8 +36,8 @@ static WCHAR const vendor_name[] = { 'W', 'i', 'n', 'e', 0 };
 static WCHAR const pin_in_name[] = { 'I', 'n', 0 };
 static WCHAR const pin_out_name[] = { 'O', 'u', 't', 0 };
 
-IEnumPins *pinsenum_create(IBaseFilter *filter, IPin **pins, ULONG pinCount);
-IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype);
+static IEnumPins *pinsenum_create(IBaseFilter *filter, IPin **pins, ULONG pinCount);
+static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype);
 
 /* Fixed pins enumerator, holds filter referenced */
 typedef struct _PE_Impl {
@@ -171,7 +171,7 @@ static const IEnumPinsVtbl IEnumPins_VTable =
     Fixed_IEnumPins_Clone,
 };
 
-IEnumPins *pinsenum_create(IBaseFilter *filter, IPin **pins, ULONG pinCount)
+static IEnumPins *pinsenum_create(IBaseFilter *filter, IPin **pins, ULONG pinCount)
 {
     ULONG len = sizeof(PE_Impl) + (pinCount * sizeof(IPin *));
     PE_Impl *obj = CoTaskMemAlloc(len);
@@ -324,7 +324,7 @@ static const IEnumMediaTypesVtbl IEnumMediaTypes_VTable =
     Single_IEnumMediaTypes_Clone,
 };
 
-IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype)
+static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype)
 {
     ME_Impl *obj = CoTaskMemAlloc(sizeof(ME_Impl));
     if (obj) {
