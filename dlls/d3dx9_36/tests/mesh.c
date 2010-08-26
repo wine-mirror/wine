@@ -413,7 +413,7 @@ static void D3DXComputeBoundingSphereTest(void)
     ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
 }
 
-static inline void print_elements(const D3DVERTEXELEMENT9 *elements)
+static void print_elements(const D3DVERTEXELEMENT9 *elements)
 {
     D3DVERTEXELEMENT9 last = D3DDECL_END();
     const D3DVERTEXELEMENT9 *ptr = elements;
@@ -430,366 +430,290 @@ static inline void print_elements(const D3DVERTEXELEMENT9 *elements)
 }
 
 static void compare_elements(const D3DVERTEXELEMENT9 *elements, const D3DVERTEXELEMENT9 *expected_elements,
-                             unsigned int line)
+        unsigned int line, unsigned int test_id)
 {
-    unsigned int i;
     D3DVERTEXELEMENT9 last = D3DDECL_END();
-    int status, end1, end2;
+    unsigned int i;
 
     for (i = 0; i < MAX_FVF_DECL_SIZE; i++)
     {
-        end1 = memcmp(&elements[i], &last, sizeof(D3DVERTEXELEMENT9));
-        end2 = memcmp(&expected_elements[i], &last, sizeof(D3DVERTEXELEMENT9));
+        int end1 = memcmp(&elements[i], &last, sizeof(last));
+        int end2 = memcmp(&expected_elements[i], &last, sizeof(last));
+        int status;
 
         if (!end1 && !end2) break;
 
-        status = ((end1 && !end2) || (!end1 && end2));
-        ok (!status, "Mismatch in size, test declaration is %s than expected, line #%u\n",
-            (end1 && !end2) ? "shorter" : "longer", line);
-        if (status) { print_elements(elements); break; }
+        status = !end1 ^ !end2;
+        ok(!status, "Line %u, test %u: Mismatch in size, test declaration is %s than expected.\n",
+                line, test_id, end1 ? "shorter" : "longer");
+        if (status)
+        {
+            print_elements(elements);
+            break;
+        }
 
         status = memcmp(&elements[i], &expected_elements[i], sizeof(D3DVERTEXELEMENT9));
-        ok (!status, "Mismatch in element %d, line #%u\n", i, line);
-        if (status) { print_elements(elements); break; }
+        ok(!status, "Line %u, test %u: Mismatch in element %u.\n", line, test_id, i);
+        if (status)
+        {
+            print_elements(elements);
+            break;
+        }
     }
 }
 
-static void test_fvf_to_decl(DWORD test_fvf, const D3DVERTEXELEMENT9 expected_elements[], HRESULT expected_hr,
-                             BOOL todo, unsigned int line)
+static void test_fvf_to_decl(DWORD test_fvf, const D3DVERTEXELEMENT9 expected_elements[],
+        HRESULT expected_hr, unsigned int line, unsigned int test_id)
 {
     HRESULT hr;
     D3DVERTEXELEMENT9 decl[MAX_FVF_DECL_SIZE];
 
     hr = D3DXDeclaratorFromFVF(test_fvf, decl);
-    if (todo) todo_wine ok(hr == expected_hr, "D3DXDeclaratorFromFVF returned %#x, expected %#x, line #%u\n",
-                           hr, expected_hr, line);
-    else ok(hr == expected_hr, "D3DXDeclaratorFromFVF returned %#x, expected %#x, line #%u\n",
-            hr, expected_hr, line);
-    if (SUCCEEDED(hr)) { compare_elements(decl, expected_elements, line); }
+    todo_wine ok(hr == expected_hr,
+            "Line %u, test %u: D3DXDeclaratorFromFVF returned %#x, expected %#x.\n",
+            line, test_id, hr, expected_hr);
+    if (SUCCEEDED(hr)) compare_elements(decl, expected_elements, line, test_id);
 }
 
-static void test_decl_to_fvf(const D3DVERTEXELEMENT9 *decl, DWORD expected_fvf, HRESULT expected_hr,
-                             BOOL todo, unsigned int line)
+static void test_decl_to_fvf(const D3DVERTEXELEMENT9 *decl, DWORD expected_fvf,
+        HRESULT expected_hr, unsigned int line, unsigned int test_id)
 {
     HRESULT hr;
     DWORD result_fvf = 0xdeadbeef;
 
     hr = D3DXFVFFromDeclarator(decl, &result_fvf);
-    if (todo) todo_wine ok(hr == expected_hr, "D3DXFVFFromDeclarator returned %#x, expected %#x, line #%u\n",
-                           hr, expected_hr, line);
-    else ok(hr == expected_hr, "D3DXFVFFromDeclarator returned %#x, expected %#x, line #%u\n",
-            hr, expected_hr, line);
+    todo_wine ok(hr == expected_hr,
+            "Line %u, test %u: D3DXFVFFromDeclarator returned %#x, expected %#x.\n",
+            line, test_id, hr, expected_hr);
     if (SUCCEEDED(hr))
     {
-        ok(expected_fvf == result_fvf, "result FVF was %#x, expected %#x, line #%u\n",
-           result_fvf, expected_fvf, line);
+        ok(expected_fvf == result_fvf, "Line %u, test %u: Got FVF %#x, expected %#x.\n",
+                line, test_id, result_fvf, expected_fvf);
     }
 }
 
 static void test_fvf_decl_conversion(void)
 {
-    int i;
+    static const struct
+    {
+        D3DVERTEXELEMENT9 decl[MAXD3DDECLLENGTH + 1];
+        DWORD fvf;
+    }
+    test_data[] =
+    {
+        {{
+            D3DDECL_END(),
+        }, 0},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZ},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZRHW},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB1},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB1 | D3DFVF_LASTBETA_UBYTE4},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB1 | D3DFVF_LASTBETA_D3DCOLOR},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB2},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 16, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB2 | D3DFVF_LASTBETA_UBYTE4},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB2 | D3DFVF_LASTBETA_D3DCOLOR},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB3},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 20, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB3 | D3DFVF_LASTBETA_UBYTE4},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 20, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB3 | D3DFVF_LASTBETA_D3DCOLOR},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB4},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 24, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB4 | D3DFVF_LASTBETA_UBYTE4},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 24, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB4 | D3DFVF_LASTBETA_D3DCOLOR},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 28, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB5 | D3DFVF_LASTBETA_UBYTE4},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB5 | D3DFVF_LASTBETA_D3DCOLOR},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+            D3DDECL_END(),
+        }, D3DFVF_NORMAL},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0},
+            D3DDECL_END(),
+        }, D3DFVF_PSIZE},
+        {{
+            {0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+            D3DDECL_END(),
+        }, D3DFVF_DIFFUSE},
+        {{
+            {0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1},
+            D3DDECL_END(),
+        }, D3DFVF_SPECULAR},
+        /* Make sure textures of different sizes work. */
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            D3DDECL_END(),
+        }, D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEX1},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            D3DDECL_END(),
+        }, D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEX1},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            D3DDECL_END(),
+        }, D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            D3DDECL_END(),
+        }, D3DFVF_TEXCOORDSIZE4(0) | D3DFVF_TEX1},
+        /* Make sure the TEXCOORD index works correctly - try several textures. */
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, 4, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 1},
+            {0, 16, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 2},
+            {0, 24, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 3},
+            D3DDECL_END(),
+        }, D3DFVF_TEX4 | D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEXCOORDSIZE3(1)
+                | D3DFVF_TEXCOORDSIZE2(2) | D3DFVF_TEXCOORDSIZE4(3)},
+        /* Now try some combination tests. */
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+            {0, 32, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1},
+            {0, 36, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, 44, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 1},
+            D3DDECL_END(),
+        }, D3DFVF_XYZB4 | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2
+                | D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEXCOORDSIZE3(1)},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+            {0, 24, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0},
+            {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1},
+            {0, 32, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, 36, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 1},
+            D3DDECL_END(),
+        }, D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_PSIZE | D3DFVF_SPECULAR | D3DFVF_TEX2
+                | D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEXCOORDSIZE4(1)},
+    };
+    unsigned int i;
 
-    /* Test conversions from vertex declaration to an FVF */
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
     {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_XYZ, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_XYZRHW, D3D_OK, TRUE, __LINE__);
-    }
-    for (i = 0; i < 4; i++) {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT1+i, 0, D3DDECLUSAGE_BLENDWEIGHT, 0}, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, 0, D3DERR_INVALIDCALL, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0}, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, 0, D3DERR_INVALIDCALL, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_NORMAL, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_PSIZE, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_DIFFUSE, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_SPECULAR, D3D_OK, TRUE, __LINE__);
-    }
-
-    /* Make sure textures of different sizes work */
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE1(0),
-                         D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE2(0),
-                         D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE3(0),
-                         D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE4(0),
-                         D3D_OK, TRUE, __LINE__);
-    }
-
-    /* Make sure the TEXCOORD index works correctly - try several textures */
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0 },
-              { 0, 4, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 1 },
-              { 0, 16, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 2 },
-              { 0, 24, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 3 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_TEX4 |
-                         D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEXCOORDSIZE2(2) |
-                         D3DFVF_TEXCOORDSIZE3(1) | D3DFVF_TEXCOORDSIZE4(3),
-                         D3D_OK, TRUE, __LINE__);
-    }
-
-    /* Vary usage index */
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 1 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_XYZ, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 1 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, D3DFVF_NORMAL, D3D_OK, TRUE, __LINE__);
-    }
-
-    /* Try empty declaration */
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] = { D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, 0, D3D_OK, TRUE, __LINE__);
-    }
-
-    /* Now try a combination test */
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITIONT, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0 },
-              { 0, 24, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0 },
-              { 0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1 },
-              { 0, 32, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0 },
-              { 0, 44, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 1 }, D3DDECL_END() };
-        test_decl_to_fvf(test_buffer, 0, D3DERR_INVALIDCALL, TRUE, __LINE__);
-    }
-
-    /* Test conversions from FVF to a vertex declaration */
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZ, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITION, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZW, test_buffer, D3DERR_INVALIDCALL, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-          { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZRHW, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-              { 0, 28, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB5 | D3DFVF_LASTBETA_UBYTE4, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-              { 0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB5 | D3DFVF_LASTBETA_D3DCOLOR, test_buffer,
-                         D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-              { 0, 28, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB5, test_buffer, D3DERR_INVALIDCALL, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB1, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB1 | D3DFVF_LASTBETA_UBYTE4, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB1 | D3DFVF_LASTBETA_D3DCOLOR, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-         CONST D3DVERTEXELEMENT9 test_buffer[] =
-             { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-               { 0, 12, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 }, D3DDECL_END() };
-         test_fvf_to_decl(D3DFVF_XYZB2, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-         CONST D3DVERTEXELEMENT9 test_buffer[] =
-             { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-               { 0, 12, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-               { 0, 16, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-         test_fvf_to_decl(D3DFVF_XYZB2 | D3DFVF_LASTBETA_UBYTE4, test_buffer,
-                          D3D_OK, TRUE, __LINE__);
-     }
-     {
-         CONST D3DVERTEXELEMENT9 test_buffer[] =
-             { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-               { 0, 12, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-               { 0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-         test_fvf_to_decl(D3DFVF_XYZB2 | D3DFVF_LASTBETA_D3DCOLOR, test_buffer,
-                          D3D_OK, TRUE, __LINE__);
-     }
-     {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB3, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-              { 0, 20, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB3 | D3DFVF_LASTBETA_UBYTE4, test_buffer,
-                         D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-              { 0, 20, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB3 | D3DFVF_LASTBETA_D3DCOLOR, test_buffer,
-                         D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB4, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-              { 0, 24, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB4 | D3DFVF_LASTBETA_UBYTE4, test_buffer,
-                         D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-              { 0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-              { 0, 24, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_XYZB4 | D3DFVF_LASTBETA_D3DCOLOR, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_NORMAL, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_PSIZE, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_DIFFUSE, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_SPECULAR, test_buffer, D3D_OK, TRUE, __LINE__);
+        test_decl_to_fvf(test_data[i].decl, test_data[i].fvf, D3D_OK, __LINE__, i);
+        test_fvf_to_decl(test_data[i].fvf, test_data[i].decl, D3D_OK, __LINE__, i);
     }
 
-    /* Make sure textures of different sizes work */
+    /* Usage indices for position and normal are apparently ignored. */
     {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEX1, test_buffer,
-                         D3D_OK, TRUE, __LINE__);
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 1},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, D3DFVF_XYZ, D3D_OK, __LINE__, 0);
     }
     {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEX1, test_buffer, D3D_OK, TRUE, __LINE__);
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 1},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, D3DFVF_NORMAL, D3D_OK, __LINE__, 0);
+    }
+    /* These are supposed to fail, both ways. */
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITION, 0},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, D3DFVF_XYZW, D3DERR_INVALIDCALL, __LINE__, 0);
+        test_fvf_to_decl(D3DFVF_XYZW, decl, D3DERR_INVALIDCALL, __LINE__, 0);
     }
     {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1, test_buffer, D3D_OK, TRUE, __LINE__);
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 28, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, D3DFVF_XYZB5, D3DERR_INVALIDCALL, __LINE__, 0);
+        test_fvf_to_decl(D3DFVF_XYZB5, decl, D3DERR_INVALIDCALL, __LINE__, 0);
     }
+    /* Test a declaration that can't be converted to an FVF. */
     {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 0 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_TEXCOORDSIZE4(0) | D3DFVF_TEX1, test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-
-    /* Make sure the TEXCOORD index works correctly - try several textures */
-    {
-        CONST D3DVERTEXELEMENT9 test_buffer[] =
-            { { 0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0 },
-              { 0, 4, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 1 },
-              { 0, 16, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 2 },
-              { 0, 24, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 3 }, D3DDECL_END() };
-        test_fvf_to_decl(D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEXCOORDSIZE3(1) |
-                         D3DFVF_TEXCOORDSIZE2(2) | D3DFVF_TEXCOORDSIZE4(3) | D3DFVF_TEX4,
-                         test_buffer, D3D_OK, TRUE, __LINE__);
-    }
-
-    /* Now try a combination test  */
-    {
-       CONST D3DVERTEXELEMENT9 test_buffer[] =
-                { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
-                  { 0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-                  { 0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0 },
-                  { 0, 32, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1 },
-                  { 0, 36, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0 },
-                  { 0, 44, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 1 }, D3DDECL_END() };
-       test_fvf_to_decl(D3DFVF_XYZB4 | D3DFVF_SPECULAR | D3DFVF_DIFFUSE |
-                        D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEXCOORDSIZE3(1) | D3DFVF_TEX2,
-                        test_buffer, D3D_OK, TRUE, __LINE__);
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+            {0, 24, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0},
+            {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1},
+            {0, 32, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            /* 8 bytes padding */
+            {0, 44, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 1},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
     }
 }
 
