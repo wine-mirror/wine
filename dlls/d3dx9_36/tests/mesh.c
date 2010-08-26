@@ -679,6 +679,36 @@ static void test_fvf_decl_conversion(void)
         };
         test_decl_to_fvf(decl, D3DFVF_NORMAL, D3D_OK, __LINE__, 0);
     }
+    /* D3DFVF_LASTBETA_UBYTE4 and D3DFVF_LASTBETA_D3DCOLOR are ignored if
+     * there are no blend matrices. */
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            D3DDECL_END(),
+        };
+        test_fvf_to_decl(D3DFVF_XYZ | D3DFVF_LASTBETA_UBYTE4, decl, D3D_OK, __LINE__, 0);
+    }
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            D3DDECL_END(),
+        };
+        test_fvf_to_decl(D3DFVF_XYZ | D3DFVF_LASTBETA_D3DCOLOR, decl, D3D_OK, __LINE__, 0);
+    }
+    /* D3DFVF_LASTBETA_UBYTE4 takes precedence over D3DFVF_LASTBETA_D3DCOLOR. */
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0},
+            {0, 28, D3DDECLTYPE_UBYTE4, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+            D3DDECL_END(),
+        };
+        test_fvf_to_decl(D3DFVF_XYZB5 | D3DFVF_LASTBETA_D3DCOLOR | D3DFVF_LASTBETA_UBYTE4,
+                decl, D3D_OK, __LINE__, 0);
+    }
     /* These are supposed to fail, both ways. */
     {
         const D3DVERTEXELEMENT9 decl[] =
@@ -688,6 +718,16 @@ static void test_fvf_decl_conversion(void)
         };
         test_decl_to_fvf(decl, D3DFVF_XYZW, D3DERR_INVALIDCALL, __LINE__, 0);
         test_fvf_to_decl(D3DFVF_XYZW, decl, D3DERR_INVALIDCALL, __LINE__, 0);
+    }
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 16, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, D3DFVF_XYZW | D3DFVF_NORMAL, D3DERR_INVALIDCALL, __LINE__, 0);
+        test_fvf_to_decl(D3DFVF_XYZW | D3DFVF_NORMAL, decl, D3DERR_INVALIDCALL, __LINE__, 0);
     }
     {
         const D3DVERTEXELEMENT9 decl[] =
