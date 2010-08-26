@@ -58,6 +58,7 @@ static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
+static errno_t (__cdecl *p_gcvt_s)(char*,size_t,double,int);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 
@@ -1241,6 +1242,41 @@ static void test_mbstowcs(void)
     ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
 }
 
+static void test_gcvt(void)
+{
+    char buf[1024], *res;
+    errno_t err;
+
+    if(!p_gcvt_s) {
+        win_skip("Skipping _gcvt tests\n");
+        return;
+    }
+
+    errno = 0;
+    res = _gcvt(1.2, -1, buf);
+    ok(res == NULL, "res != NULL\n");
+    ok(errno == ERANGE, "errno = %d\n", errno);
+
+    errno = 0;
+    res = _gcvt(1.2, 5, NULL);
+    ok(res == NULL, "res != NULL\n");
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    res = gcvt(1.2, 5, buf);
+    ok(res == buf, "res != buf\n");
+    ok(!strcmp(buf, "1.2"), "buf = %s\n", buf);
+
+    buf[0] = 'x';
+    err = p_gcvt_s(buf, 5, 1.2, 10);
+    ok(err == ERANGE, "err = %d\n", err);
+    ok(buf[0] == '\0', "buf[0] = %c\n", buf[0]);
+
+    buf[0] = 'x';
+    err = p_gcvt_s(buf, 4, 123456, 2);
+    ok(err == ERANGE, "err = %d\n", err);
+    ok(buf[0] == '\0', "buf[0] = %c\n", buf[0]);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1261,10 +1297,11 @@ START_TEST(string)
     p_wcscpy_s = (void *)GetProcAddress( hMsvcrt,"wcscpy_s" );
     p_wcsupr_s = (void *)GetProcAddress( hMsvcrt,"_wcsupr_s" );
     p_strnlen = (void *)GetProcAddress( hMsvcrt,"strnlen" );
-    p_strtoi64 = (void *) GetProcAddress(hMsvcrt, "_strtoi64");
-    p_strtoui64 = (void *) GetProcAddress(hMsvcrt, "_strtoui64");
-    pmbstowcs_s = (void *) GetProcAddress(hMsvcrt, "mbstowcs_s");
-    pwcstombs_s = (void *) GetProcAddress(hMsvcrt, "wcstombs_s");
+    p_strtoi64 = (void *)GetProcAddress(hMsvcrt, "_strtoi64");
+    p_strtoui64 = (void *)GetProcAddress(hMsvcrt, "_strtoui64");
+    pmbstowcs_s = (void *)GetProcAddress(hMsvcrt, "mbstowcs_s");
+    pwcstombs_s = (void *)GetProcAddress(hMsvcrt, "wcstombs_s");
+    p_gcvt_s = (void *)GetProcAddress(hMsvcrt, "_gcvt_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1298,4 +1335,5 @@ START_TEST(string)
     test__strtoi64();
     test__strtod();
     test_mbstowcs();
+    test_gcvt();
 }

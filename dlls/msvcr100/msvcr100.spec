@@ -674,7 +674,7 @@
 @ varargs _fwscanf_l(ptr wstr ptr) msvcrt._fwscanf_l
 @ varargs _fwscanf_s_l(ptr wstr ptr) msvcrt._fwscanf_s_l
 @ cdecl _gcvt(double long str) msvcrt._gcvt
-@ stub _gcvt_s
+@ cdecl _gcvt_s(ptr long  double long) msvcrt._gcvt_s
 @ stub _get_current_locale
 @ stub _get_daylight
 @ stub _get_doserrno
