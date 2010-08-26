@@ -36,6 +36,7 @@ RC_SRCS = \
 	winmm_Ru.rc \
 	winmm_Si.rc \
 	winmm_Sk.rc \
+	winmm_Sv.rc \
 	winmm_Tr.rc \
 	winmm_Uk.rc \
 	winmm_res.rc

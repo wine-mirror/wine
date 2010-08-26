@@ -1,0 +1,133 @@
+/*
+ * Copyright 2010 Anders Jonsson
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "windef.h"
+#include "mmddk.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SWEDISH, SUBLANG_NEUTRAL
+
+STRINGTABLE
+BEGIN
+
+/* MMSYS errors */
+MMSYSERR_NOERROR, 		"Det angivna kommandot utfördes."
+MMSYSERR_ERROR, 		"Odefinierat externt fel."
+MMSYSERR_BADDEVICEID, 		"Ett enhets-ID som använts är utanför räckvidden för ditt system."
+MMSYSERR_NOTENABLED, 		"Drivrutinen aktiverades inte."
+MMSYSERR_ALLOCATED, 		"Angiven enhet används redan. Vänta tills den är ledig och försök igen."
+MMSYSERR_INVALHANDLE, 		"Angiven handle för enheten är ogiltig."
+MMSYSERR_NODRIVER, 		"Ingen drivrutin finns installerad på ditt system !\n"
+MMSYSERR_NOMEM, 		"Det finns inte tillräckligt minne tillgängligt för denna uppgift. Avsluta ett eller flera program för att utöka tillgängligt minne och försök sedan igen."
+MMSYSERR_NOTSUPPORTED, 		"Denna funktion stöds inte. Använd funktionen Capabilities för att avgöra vilka funktioner och meddelanden som drivrutinen stöder."
+MMSYSERR_BADERRNUM, 		"Ett felnummer som inte är definierat i systemet angavs."
+MMSYSERR_INVALFLAG, 		"En ogiltig flagga skickades till en systemfunktion."
+MMSYSERR_INVALPARAM, 		"En ogiltig parameter skickades till en systemfunktion."
+
+/* WAVE errors */
+WAVERR_BADFORMAT, 		"Angivet format stöds inte eller kan inte översättas. Använd funktionen Capabilities för att avgöra vilka format som stöds"
+WAVERR_STILLPLAYING, 		"Kan inte uföra denna operation medan mediadata fortfarande spelas. Starta om enheten eller vänta tills data spelats klart."
+WAVERR_UNPREPARED, 		"Wave-headern var inte förberedd. Använd funktionen Prepare för att förbereda headern och försök sedan igen."
+WAVERR_SYNC, 			"Kan inte öppna enheten utan att använda flaggan WAVE_ALLOWSYNC. Använd flaggan och försök igen."
+
+/* MIDI errors */
+MIDIERR_UNPREPARED, 		"MIDI-headern var inte förberedd. Använd funktionen Prepare för att förbereda headern och försök sedan igen."
+MIDIERR_STILLPLAYING, 		"Kan inte utföra denna operation medan mediadata fortfarande spelar. Starta om enheten eller vänta tills data spelats klart."
+MIDIERR_NOMAP, 			"Ingen MIDI-mappning hittades. Det kan vara ett problem med drivrutinen, eller så kan filen MIDIMAP.CFG vara korrupt eller saknas."
+MIDIERR_NOTREADY, 		"Porten överför data till enheten. Vänta till allt data överförts och försök sedan igen."
+MIDIERR_NODEVICE, 		"Den nuvarande MIDI Mapper-installationen refererar till en MIDI-enhet som inte är installerad på systemet. Använd MIDI Mapper för att ändra installationen."
+MIDIERR_INVALIDSETUP, 		"Den nuvarande MIDI-installationen är skadad. Kopiera den ursprungliga MIDIMAP.CFG till Windows SYSTEM-katalog och försök sedan igen."
+
+/* MCI errors */
+MCIERR_INVALID_DEVICE_ID, 	"Ogiltigt ID på MCI-enheten. Använd det ID som returneras när MCI-enheten öppnas."
+MCIERR_UNRECOGNIZED_KEYWORD, 	"Drivrutinen känner inte igen den angivna kommandoparametern."
+MCIERR_UNRECOGNIZED_COMMAND,	"Drivrutinen känner inte igen det angivna kommandot."
+MCIERR_HARDWARE, 		"Ett problem uppstod med din mediaenhet. Kontrollera att den fungerar korrekt, kontakta annars enhetens tillverkare."
+MCIERR_INVALID_DEVICE_NAME, 	"Angiven enhet är inte öppen eller känns inte igen av MCI."
+MCIERR_OUT_OF_MEMORY, 		"Otillräckligt minne tillgängligt för denna uppgift.\nAvsluta ett eller flera program för att utöka tillgängligt minne och försök sedan igen."
+MCIERR_DEVICE_OPEN, 		"Enhetsnamnet används redan som ett alias av detta program. Använd ett unikt alias."
+MCIERR_CANNOT_LOAD_DRIVER, 	"Ett oupptäckbart problem uppstod då den angivna enhetsdrivrutinen skulle laddas."
+MCIERR_MISSING_COMMAND_STRING, 	"Inget kommando angavs."
+MCIERR_PARAM_OVERFLOW, 		"Utskriftssträngen var för stor för att rymmas i returbuffern. Utöka bufferns storlek."
+MCIERR_MISSING_STRING_ARGUMENT, "Det angivna kommandot kräver en teckensträngsparameter. Var god uppge en sådan."
+MCIERR_BAD_INTEGER, 		"Det angivna heltalet är ogiltigt för detta kommando."
+MCIERR_PARSER_INTERNAL, 	"Enhetsdrivrutinen returnerade en ogiltig returtyp. Hör med enhetens tillverkare om att få en ny drivrutin."
+MCIERR_DRIVER_INTERNAL, 	"Ett problem uppstod med enhetsdrivrutinen. Hör med enhetens tillverkare om att få en ny drivrutin."
+MCIERR_MISSING_PARAMETER, 	"Angivet kommando kräver en parameter. Var god uppge en sådan."
+MCIERR_UNSUPPORTED_FUNCTION, 	"MCI-enheten du använder stöder inte det angivna kommandot."
+MCIERR_FILE_NOT_FOUND, 		"Kan inte hitta angiven fil. Säkerställ att sökvägen och filnamnet stämmer."
+MCIERR_DEVICE_NOT_READY, 	"Enhetsdrivrutinen är inte redo."
+MCIERR_INTERNAL, 		"Ett problem uppstod då MCI initialiserades. Försök starta om Windows."
+MCIERR_DRIVER, 			"Ett problem uppstod med enhetsdrivrutinen. Drivrutinen har avslutats. Kan inte komma åt fel."
+MCIERR_CANNOT_USE_ALL, 		"Kan inte använda 'all' som enhetsnamn med det angivna kommandot."
+MCIERR_MULTIPLE, 		"Fel uppstod i mer än en enhet. Ange varje kommando och enhet separat för att avgöra vilka enheter som orsakade felet"
+MCIERR_EXTENSION_NOT_FOUND, 	"Kan inte avgöra enhetens typ från den givna filändelsen."
+MCIERR_OUTOFRANGE, 		"Angiven parameter är utanför räckvidden för det angivna kommandot."
+MCIERR_FLAGS_NOT_COMPATIBLE, 	"De angivna parametrarna kan inte användas tillsammans."
+MCIERR_FILE_NOT_SAVED, 		"Kan inte spara angiven fil. Kontrollera att du har tillräckligt diskutrymme och fortfarande är ansluten till nätverket."
+MCIERR_DEVICE_TYPE_REQUIRED, 	"Kan inte hitta angiven enhet. Kontrollera att den är installerad och att enhetsnamnets stavning är korrekt."
+MCIERR_DEVICE_LOCKED, 		"Den angivna enheten stängs nu. Vänta några sekunder och försök sedan igen."
+MCIERR_DUPLICATE_ALIAS, 	"Angivet alias används redan i detta program. Använd ett unikt alias."
+MCIERR_BAD_CONSTANT, 		"Den angivna parametern är ogiltig för detta kommando."
+MCIERR_MUST_USE_SHAREABLE, 	"Enhetsdrivrutinen används redan. Använd parametern 'shareable' med varje 'open'-kommando för att dela den."
+MCIERR_MISSING_DEVICE_NAME, 	"Angivet kommando kräver ett alias, en fil, en drivrutin eller ett enhetsnamn. Var god uppge någon av dessa."
+MCIERR_BAD_TIME_FORMAT, 	"Angivet värde för tidsformatet är ogiltigt. Läs dokumentationen för MCI för att se giltiga format."
+MCIERR_NO_CLOSING_QUOTE, 	"Ett avslutande dubbelt citationstecken saknas från parametervärdet. Var god lägg till ett sådant."
+MCIERR_DUPLICATE_FLAGS, 	"En parameter eller ett värde angavs två gånger. Ange det bara en gång."
+MCIERR_INVALID_FILE, 		"Den angivna filen kan inte spelas på den angivna MCI-enheten. Filen kan vara korrupt eller i fel format."
+MCIERR_NULL_PARAMETER_BLOCK, 	"Ett nullparameterblock skickades till MCI."
+MCIERR_UNNAMED_RESOURCE, 	"Kan inte spara en namnlös fil. Ange ett filnamn."
+MCIERR_NEW_REQUIRES_ALIAS, 	"Du måste ange ett alias då du använder parametern 'new'."
+MCIERR_NOTIFY_ON_AUTO_OPEN, 	"Kan inte använda flaggan 'notify' med auto-öppnade enheter."
+MCIERR_NO_ELEMENT_ALLOWED, 	"Kan inte använda ett filnamn med den angivna enheten."
+MCIERR_NONAPPLICABLE_FUNCTION, 	"Kan inte utföra kommandona i angiven ordning. Rätta till kommandoordningen och försök igen."
+MCIERR_ILLEGAL_FOR_AUTO_OPEN, 	"Kan inte utföra det angivna kommandot på en auto-öppnad enhet. Vänta tills enheten är stängd och försök sedan igen."
+MCIERR_FILENAME_REQUIRED, 	"Filnamnet är ogiltigt. Säkerställ att filnamnet har högst 8 tecken följt av en punkt och en ändelse."
+MCIERR_EXTRA_CHARACTERS, 	"Kan inte ange extra tecken efter en sträng omsluten av citationstecken."
+MCIERR_DEVICE_NOT_INSTALLED, 	"Angiven enhet är inte installerad på systemet. Använd valet Drivers i Control Panel för att installera enheten."
+MCIERR_GET_CD, 			"Kan inte komma åt angiven fil eller MCI-enhet. Försök byta katalog eller starta om din dator."
+MCIERR_SET_CD, 			"Kan inte komma åt angiven fil eller MCI-enhet eftersom programmet inte kan byta katalog."
+MCIERR_SET_DRIVE, 		"Kan inte komma åt angiven fil eller MCI-enhet eftersom programmet inte kan byta diskenhet."
+MCIERR_DEVICE_LENGTH, 		"Ange ett enhets- eller drivrutinsnamn kortare än 79 tecken."
+MCIERR_DEVICE_ORD_LENGTH, 	"Ange ett enhets- eller drivrutinsnamn kortare än 69 tecken."
+MCIERR_NO_INTEGER, 		"Angivet kommando kräver en heltalsparameter. Var god uppge en sådan."
+MCIERR_WAVE_OUTPUTSINUSE, 	"Alla wave-enheter som kan spela filer i det aktuella formatet används. Vänta tills en wave-enhet är ledig och försök sedan igen."
+MCIERR_WAVE_SETOUTPUTINUSE, 	"Kan inte sätta aktuell wave-enhet till uppspelning eftersom den används. Vänta tills enheten är ledig och försök sedan igen."
+MCIERR_WAVE_INPUTSINUSE, 	"Alla wave-enheter som kan spela in filer i aktuellt format används. Vänta tills en wave-enhet är ledig och försök sedan igen."
+MCIERR_WAVE_SETINPUTINUSE, 	"Kan inte sätta aktuell wave-enhet till inspelning eftersom den används. Vänta tills enheten är ledig och försök sedan igen."
+MCIERR_WAVE_OUTPUTUNSPECIFIED,	"Varje kompatibel wave-uppspelningsenhet kan användas."
+MCIERR_WAVE_INPUTUNSPECIFIED, 	"Varje kompatibel wave-inspelningsenhet kan användas."
+MCIERR_WAVE_OUTPUTSUNSUITABLE, 	"Ingen wave-enhet som kan spela filer i det aktuella formatet är installerad. Använd valet Drivers för att installera wave-enheten."
+MCIERR_WAVE_SETOUTPUTUNSUITABLE,"Enheten du försöker spela till känner inte igen det aktuella filformatet."
+MCIERR_WAVE_INPUTSUNSUITABLE, 	"Ingen wave-enhet som kan spela in filer i det aktuella formatet finns installerad. Använd valet Drivers för att installera wave-enheten."
+MCIERR_WAVE_SETINPUTUNSUITABLE, "Enheten du försöker spela in från känner inte igen aktuellt filformat."
+MCIERR_NO_WINDOW, 		"Det finns inget visningsfönster."
+MCIERR_CREATEWINDOW, 		"Kunde inte skapa eller använda fönster."
+MCIERR_FILE_READ, 		"Kan inte läsa angiven fil. Kontrollera att filen fortfarande är kvar, eller kontrollera hårddisken eller nätverksanslutningen."
+MCIERR_FILE_WRITE, 		"Kan inte skriva till angiven fil. Kontrollera att du har tillräckligt minne eller är ansluten till nätverket."
+MCIERR_SEQ_DIV_INCOMPATIBLE, 	"Tidsformaten för ""song pointer"" och SMPTE är ömsesidigt exklusiva. De kan inte användas tillsammans."
+MCIERR_SEQ_NOMIDIPRESENT, 	"Systemet har inga installerade MIDI-enheter. Använd valet Drivers från Control Panel för att installera en MIDI-drivrutin."
+MCIERR_SEQ_PORT_INUSE, 		"Angiven MIDI-port används redan. Vänta tills den är ledig och försök sedan igen."
+MCIERR_SEQ_PORT_MAPNODEVICE, 	"Aktuell MIDI Mapper-installation refererar till en MIDI-enhet som inte är installerad på systemet. Använd valet MIDI Mapper från Control Panel för att ändra installationen."
+MCIERR_SEQ_PORT_MISCERROR, 	"Ett fel inträffade med den angivna porten."
+MCIERR_SEQ_PORT_NONEXISTENT, 	"Den angivna MIDI-enheten är inte installerad på systemet. Använd valet Drivers från Control Panel för att installera en MIDI-enhet."
+MCIERR_SEQ_PORTUNSPECIFIED, 	"Ingen aktuell MIDI-port är angiven i systemet."
+MCIERR_SEQ_TIMER, 		"Alla multimediatimers används av andra program. Avsluta ett av dessa program och försök sedan igen."
+
+END
