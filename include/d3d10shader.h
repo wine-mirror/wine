@@ -127,11 +127,14 @@ typedef enum D3D10_REGISTER_COMPONENT_TYPE
     D3D10_REGISTER_COMPONENT_FLOAT32 = 3,
 } D3D10_REGISTER_COMPONENT_TYPE;
 
-typedef struct _D3D10_SHADER_MACRO
-{
-    LPCSTR Name;
-    LPCSTR Definition;
-} D3D10_SHADER_MACRO, *LPD3D10_SHADER_MACRO;
+/* These are defined as version-neutral in d3dcommon.h */
+typedef D3D_SHADER_MACRO D3D10_SHADER_MACRO;
+typedef D3D_SHADER_MACRO *LPD3D10_SHADER_MACRO;
+
+typedef D3D_INCLUDE_TYPE D3D10_INCLUDE_TYPE;
+typedef ID3DInclude ID3D10Include;
+typedef ID3DInclude *LPD3D10INCLUDE;
+#define IID_ID3D10Include IID_ID3DInclude
 
 typedef enum D3D10_RESOURCE_RETURN_TYPE
 {
@@ -279,6 +282,9 @@ DECLARE_INTERFACE_(ID3D10ShaderReflection, IUnknown)
 };
 #undef INTERFACE
 
+HRESULT WINAPI D3D10CompileShader(LPCSTR data, SIZE_T data_size, LPCSTR filename,
+        const D3D10_SHADER_MACRO *defines, ID3D10Include *include, LPCSTR entrypoint,
+        LPCSTR profile, UINT flags, ID3D10Blob **shader, ID3D10Blob **error_messages);
 LPCSTR WINAPI D3D10GetVertexShaderProfile(ID3D10Device *device);
 LPCSTR WINAPI D3D10GetGeometryShaderProfile(ID3D10Device *device);
 LPCSTR WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device);
