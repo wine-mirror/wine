@@ -55,7 +55,7 @@ XCOPY källa [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n\
 \n\
 Där:\n\
 \n\
-[/I]  Antag att målet är en katalog om målet inte existerar och \n\
+[/I]  Antag att målet är en katalog om målet inte existerar och\n\
 \      två eller fler filer kopieras\n\
 [/S]  Kopiera kataloger och underkataloger\n\
 [/E]  Kopiera kataloger och underkataloger, inklusive tomma sådana\n\

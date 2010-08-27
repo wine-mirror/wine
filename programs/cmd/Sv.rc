@@ -70,12 +70,12 @@ Kravet att dubbla %-tecknet när FOR används i en batchfil\n\
 finns inte i Wines cmd.\n"
 
   WCMD_GOTO,
-"Kommandot GOTO överlåter exekvering till ett annat påstående \n\
+"Kommandot GOTO överlåter exekvering till ett annat påstående\n\
 inom en batch fil.\n\
 \n\
 En etikett, som är GOTO-kommandots mål, kan innehålla upp till 255\n\
 tecken, men blanksteg tillåts ej (till skillnad från andra operativsystem).\n\
-Om två eller flera identiska etiketter existerar i en batchfil, så kommer \n\
+Om två eller flera identiska etiketter existerar i en batchfil, så kommer\n\
 alltid den första exekveras. Vid försök att använda GOTO till en icke\n\
 existerande etikett så avbryts batchfilens exekvering.\n\
 \n\
@@ -100,7 +100,7 @@ Kommandot kommer fråga dig efter enhetens nya namn.\n\
 Du kan visa enhetens namn genom att använda kommandot VOL.\n"
 
   WCMD_MD,
-"MD <name> är en synonym för MKDIR. \nDen skapar en ny mapp i mappen du befinner dig i\n"
+"MD <name> är en synonym för MKDIR.\nDen skapar en ny mapp i mappen du befinner dig i\n"
   WCMD_MKDIR,  "MKDIR <name> skapar en ny mapp i mappen du befinner dig i.\n"
   WCMD_MOVE,
 "MOVE flyttar en fil eller mapp till ett nytt ställe inom filsystemet.\n\
@@ -113,7 +113,7 @@ DOS-enhetsbokstäver. Till exempel från C: till D:.\n"
   WCMD_PATH,
 "PATH visar eller ändrar cmd:s sökväg.\n\
 \n\
-Om du skriver enbart PATH så visas den aktuella sökvägen \n\
+Om du skriver enbart PATH så visas den aktuella sökvägen\n\
 (som står i windowsregistret). För att ändra på denna inställning,\n\
 skriv PATH och sedan den nya sökvägen.\n\
 \n\
@@ -215,7 +215,7 @@ operativsystemet eller skalet som cmd startades ifrån.\n"
 
   WCMD_ALLHELP, "CMD:s inbyggda kommandon är:\n\
 ATTRIB\t\tVisa eller ändra DOS-filers attribut\n\
-CALL\t\tAnropar en batchfil inifrån en annan \n\
+CALL\t\tAnropar en batchfil inifrån en annan\n\
 CD (CHDIR)\tÄndrar nuvarande standardsökväg\n\
 CLS\t\tRensar konsollen\n\
 COPY\t\tKopierar en fil\n\
