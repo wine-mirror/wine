@@ -60,8 +60,11 @@ static void test_versioninfo(void)
     DWORD size, path_len;
     HRESULT hr;
 
-    hr =  pGetCORVersion(NULL, MAX_PATH, &size);
-    ok(hr == E_POINTER,"GetCORVersion returned %08x\n", hr);
+    if (0)  /* crashes on <= w2k3 */
+    {
+        hr = pGetCORVersion(NULL, MAX_PATH, &size);
+        ok(hr == E_POINTER,"GetCORVersion returned %08x\n", hr);
+    }
 
     hr =  pGetCORVersion(version, 1, &size);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),"GetCORVersion returned %08x\n", hr);
@@ -81,8 +84,11 @@ static void test_versioninfo(void)
     hr = pGetCORSystemDirectory(path, path_len-1 , &size);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
 
-    hr = pGetCORSystemDirectory(NULL, MAX_PATH , &size);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+    if (0)  /* crashes on <= w2k3 */
+    {
+        hr = pGetCORSystemDirectory(NULL, MAX_PATH , &size);
+        ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetCORSystemDirectory returned %08x\n", hr);
+    }
 
     hr = pGetCORSystemDirectory(path, MAX_PATH , NULL);
     ok(hr == E_POINTER,"GetCORSystemDirectory returned %08x\n", hr);
