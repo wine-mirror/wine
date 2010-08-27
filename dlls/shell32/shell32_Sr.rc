@@ -241,7 +241,7 @@ STRINGTABLE
         IDS_OVERWRITEFILE_TEXT "Ovaj folder sadrži fajl sa tim imenom '%1'.\n\nDa li želite da zamenite?"
         IDS_OVERWRITEFILE_CAPTION "Potvrdite presnimavanje"
         IDS_OVERWRITEFOLDER_TEXT "Ovaj folder sadrzi folder sa imenom '%1'.\n\n"\
-            "Ako folderi imaju fajlove sa istim imenima \n"\
+            "Ako folderi imaju fajlove sa istim imenima\n"\
             "oni ce biti presnimljeni. Da li i dalje želite da pomerite/kopirate folder?"
 
         /* message box strings */
@@ -529,7 +529,7 @@ STRINGTABLE
     IDS_OVERWRITEFILE_TEXT        "Овај фолдер садржи фајл са именом '%1'.\n\nДа ли желите да замените?"
     IDS_OVERWRITEFILE_CAPTION     "Потврдите преснимавање"
     IDS_OVERWRITEFOLDER_TEXT      "Овај фолдер садржи фолдер са именом '%1'.\n\n" \
-        "ако фолдери имају фајлове са истим именима \n" \
+        "ако фолдери имају фајлове са истим именима\n" \
         "они ће бити преснимљени. Да ли желите да померите/копирате фолдер?"
 
     /* message box strings */
