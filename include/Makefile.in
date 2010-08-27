@@ -486,6 +486,7 @@ SRCDIR_INCLUDES = \
 	vfw.h \
 	vfwmsgs.h \
 	vmrender.idl \
+	werapi.h \
 	wfext.h \
 	wia.h \
 	winbase.h \
