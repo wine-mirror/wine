@@ -72,7 +72,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "&Mostra immagine",            IDM_SHOWPICTURE
         MENUITEM "Salva immagi&ne come...",      IDM_SAVEPICTURE
-        MENUITEM "Invia immagine tramite &e-mail ...",       IDM_MP_EMAILPICTURE
+        MENUITEM "Invia immagine tramite &e-mail...",       IDM_MP_EMAILPICTURE
         MENUITEM "S&tampa immagine...",        IDM_MP_PRINTPICTURE
         MENUITEM "&Vai a Immagini",       IDM_MP_MYPICS
         MENUITEM "Im&posta come sfondo",       IDM_SETWALLPAPER
