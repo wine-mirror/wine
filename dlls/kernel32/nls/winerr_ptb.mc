@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=PTB
 O nome de usuário não foi encontrado
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=PTB
+Conexão recusada
+.

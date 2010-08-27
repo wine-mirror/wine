@@ -3734,3 +3734,8 @@ SymbolicName=NERR_UserNotFound
 Language=PLK
 Nie znaleziono nazwy u¿ytkownika
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=PLK
+Po³¹czenie odmówi³o
+.

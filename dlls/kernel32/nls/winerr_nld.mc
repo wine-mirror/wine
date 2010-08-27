@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=NLD
 Gebruikersnaam niet gevonden
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=NLD
+Verbinding geweigerd
+.

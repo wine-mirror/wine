@@ -3734,3 +3734,8 @@ SymbolicName=NERR_UserNotFound
 Language=PTG
 O nome de utilizador não foi encontrado
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=PTG
+Ligação recusada
+.

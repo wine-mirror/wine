@@ -3737,3 +3737,8 @@ SymbolicName=NERR_UserNotFound
 Language=JPN
 ユーザ名は見つけられません。
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=JPN
+接続は拒否されました。
+.

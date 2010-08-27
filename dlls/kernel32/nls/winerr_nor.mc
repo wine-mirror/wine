@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=NOR
 Brukernavnet finnes ikke
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=NOR
+Tilkobling nektet
+.

@@ -3734,3 +3734,8 @@ SymbolicName=NERR_UserNotFound
 Language=RUS
 Имя пользователя не найдено
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=RUS
+Соединение отвергнуто
+.

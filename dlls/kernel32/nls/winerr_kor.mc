@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=KOR
 사용자 이름을 찾을 수 없습니다
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=KOR
+Connection refused
+.
