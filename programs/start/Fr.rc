@@ -5,6 +5,7 @@
  * Copyright 2003 Dan Kegel
  * Copyright 2003 Vincent Béron
  * Copyright 2008 Jonathan Ernst
+ * Copyright 2010 Frédéric Delanoy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,30 +30,30 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-STRING_USAGE,                                   "Lance un programme, ou ouvre un document dans le programme normalement utilisé avec cette extension.\n\
+STRING_USAGE, "Lance un programme, ou ouvre un document dans le programme normalement associé à cette extension.\n\
 Usage :\n\
 start [options] fichier_programme [...]\n\
 start [options] fichier_document\n\
 \n\
 Options :\n\
-/M[inimized] Lance le programme minimisé.\n\
-/MAX[imized] Lance le programme maximisé.\n\
-/R[estored]  Lance le programme normalement (ni minimisé ni maximisé).\n\
-/W[ait]      Attend que le programme lancé se termine, et termine ensuite avec son code de sortie.\n\
-/ProgIDOpen  Open a document using the following progID.\n\
-/L           Montre la licence d'utilisation.\n\
+/M[inimized]       Lance le programme minimisé.\n\
+/MAX[imized]       Lance le programme maximisé.\n\
+/R[estored]        Lance le programme normalement (ni minimisé ni maximisé).\n\
+/W[ait]            Attend que le programme lancé se termine, et renvoie ensuite son code de sortie.\n\
+/ProgIDOpen progID Ouvre un document en utilisant le programme identifié par progID.\n\
+/L                 Affiche la licence d'utilisation.\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
 Start est fourni sans AUCUNE GARANTIE ; pour les détails lancez avec l'option /L.\n\
 Ceci est un logiciel libre, et vous êtes invité à le redistribuer\n\
-sous certaines condition; lancez 'start /L' pour les détails.\n\
+sous certaines conditions ; lancez 'start /L' pour les détails.\n\
 "
 
 STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
 Ce programme est un logiciel libre ; vous pouvez le redistribuer et/ou\n\
 le modifier suivant les termes de la Licence Générale Publique Limitée GNU\n\
 telle que publiée par la Free Software Foundation ; soit la version 2.1\n\
-de la License, soit (à votre gré) toute version ultérieure.\n\
+de la Licence, soit (à votre gré) toute version ultérieure.\n\
 \n\
 Ce programme est distribué dans l’espoir qu'il sera utile, mais\n\
 SANS AUCUNE GARANTIE : sans même la garantie implicite de\n\
@@ -67,7 +68,7 @@ MA 02110-1301, USA.\n\
 Référez-vous au fichier COPYING.LIB pour plus d’informations sur la licence.\n\
 "
 
-STRING_EXECFAIL "Le programme n'a pas pu être lancé, ou il n'y a pas de programme associé avec le fichier spécifié.\nShellExecuteEx a échoué"
+STRING_EXECFAIL "Le programme n'a pas pu être lancé, ou aucun programme n'est associé au fichier spécifié.\nShellExecuteEx a échoué"
 
 STRING_UNIXFAIL, "Le nom de fichier Unix spécifié n'a pas pu être converti en nom de fichier DOS."
 }
