@@ -37,7 +37,7 @@ Options:\n\
 /M[inimized] Inicia o programa minimizado.\n\
 /MAX[imized] Inicia o programa maximizado.\n\
 /R[estored]  Inicia o programa normalmente (sem minimizar nem maximizar).\n\
-/W[ait]      Aguarda que o programa iniciado termine e então retorna \n\
+/W[ait]      Aguarda que o programa iniciado termine e então retorna\n\
 \t\tseu valor de saída (exit code).\n\
 /ProgIDOpen  Open a document using the following progID.\n\
 /L           Mostra a licença ao usuário.\n\
