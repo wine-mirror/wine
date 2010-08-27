@@ -660,6 +660,7 @@
 @ stdcall GetTimeZoneInformation(ptr)
 @ stdcall GetUserDefaultLCID()
 @ stdcall GetUserDefaultLangID()
+@ stdcall GetUserDefaultLocaleName(ptr long)
 @ stdcall GetUserDefaultUILanguage()
 @ stdcall GetUserGeoID(long)
 @ stub GetVDMCurrentDirectories

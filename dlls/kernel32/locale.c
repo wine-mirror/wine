@@ -3798,3 +3798,9 @@ INT WINAPI GetGeoInfoA(GEOID GeoId, GEOTYPE GeoType, LPSTR lpGeoData,
     FIXME("%d %d %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
     return 0;
 }
+
+INT WINAPI GetUserDefaultLocaleName(LPWSTR localename, int buffersize)
+{
+    FIXME("(%p, %d) stub!\n", localename,  buffersize);
+    return 0;
+}

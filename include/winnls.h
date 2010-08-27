@@ -767,6 +767,7 @@ WINBASEAPI INT         WINAPI GetTimeFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWST
 #define                       GetTimeFormat WINELIB_NAME_AW(GetTimeFormat)
 WINBASEAPI LANGID      WINAPI GetUserDefaultLangID(void);
 WINBASEAPI LCID        WINAPI GetUserDefaultLCID(void);
+WINBASEAPI INT         WINAPI GetUserDefaultLocaleName(LPWSTR,int);
 WINBASEAPI LANGID      WINAPI GetUserDefaultUILanguage(void);
 WINBASEAPI GEOID       WINAPI GetUserGeoID(GEOCLASS);
 WINBASEAPI BOOL        WINAPI IsDBCSLeadByte(BYTE);
