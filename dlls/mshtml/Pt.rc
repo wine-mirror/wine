@@ -51,7 +51,7 @@ FONT 8, "MS Shell Dlg"
 {
     LTEXT "O Wine não pôde encontrar o pacote Gecko que é necessário para aplicações com HTML embutido " \
           "funcionarem corretamente. O Wine pode automaticamente efetuar o download e instalá-lo para você.\n\n" \
-          "Nota: é recomendável usar os pacotes da sua distribuição ao invés disso. \n\
+          "Nota: é recomendável usar os pacotes da sua distribuição ao invés disso.\n\
 Veja http://wiki.winehq.org/Gecko para mais detalhes.",
           ID_DWL_STATUS, 10, 10, 240, 60, SS_LEFT
     CONTROL "Progresso", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 50, 240, 12
@@ -68,7 +68,7 @@ FONT 8, "MS Shell Dlg"
 {
     LTEXT "O Wine não conseguiu encontrar o pacote Gecko que é necessário para aplicações com HTML embutido " \
           "funcionarem corretamente. O Wine pode automaticamente efetuar o download e instalá-lo por si.\n\n" \
-          "Nota: é recomendável usar os pacotes da sua distribuição em vez disso. \n\
+          "Nota: é recomendável usar os pacotes da sua distribuição em vez disso.\n\
 Veja http://wiki.winehq.org/Gecko para mais detalhes.",
           ID_DWL_STATUS, 10, 10, 240, 50, SS_LEFT
     CONTROL "Progresso", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 50, 240, 12
