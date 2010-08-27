@@ -2478,7 +2478,7 @@ static void test_states(void)
     r = create_property_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create Property table: %d\n", r );
 
-    r = add_property_entry( hdb, "'ProductCode', '{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}'" );
+    r = add_property_entry( hdb, "'ProductCode', '{7262AC98-EEBD-4364-8CE3-D654F6A425B9}'" );
     ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
 
     r = add_property_entry( hdb, "'ProductLanguage', '1033'" );
