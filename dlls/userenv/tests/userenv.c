@@ -240,32 +240,29 @@ static void test_get_profiles_dir(void)
     SetLastError(0xdeadbeef);
     r = GetProfilesDirectoryA(NULL, NULL);
     expect(FALSE, r);
-    todo_wine
     expect_gle(ERROR_INVALID_PARAMETER);
     SetLastError(0xdeadbeef);
     r = GetProfilesDirectoryA(NULL, &cch);
     expect(FALSE, r);
-    todo_wine
     expect_gle(ERROR_INVALID_PARAMETER);
     SetLastError(0xdeadbeef);
     cch = 1;
     r = GetProfilesDirectoryA(small_buf, &cch);
     expect(FALSE, r);
-    todo_wine
     expect_gle(ERROR_INSUFFICIENT_BUFFER);
     /* MSDN claims the returned character count includes the NULL terminator
      * when the buffer is too small, but that's not in fact what gets returned.
      */
-    todo_wine
     ok(cch == profiles_len - 1, "expected %d, got %d\n", profiles_len - 1, cch);
-    buf = HeapAlloc(GetProcessHeap(), 0, cch);
+    /* Allocate one more character than the return value to prevent a buffer
+     * overrun.
+     */
+    buf = HeapAlloc(GetProcessHeap(), 0, cch + 1);
     r = GetProfilesDirectoryA(buf, &cch);
     /* Rather than a BOOL, the return value is also the number of characters
      * stored in the buffer.
      */
-    todo_wine
     expect(profiles_len - 1, r);
-    todo_wine
     ok(!strcmp(buf, profiles_dir), "expected %s, got %s\n", profiles_dir, buf);
 
     HeapFree(GetProcessHeap(), 0, buf);
