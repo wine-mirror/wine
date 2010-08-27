@@ -3891,7 +3891,7 @@ static UINT msi_publish_patches( MSIPACKAGE *package )
     WCHAR *p, *all_patches = NULL;
     DWORD len = 0;
 
-    r = MSIREG_OpenProductKey( package->ProductCode, NULL, package->Context, &product_key, FALSE );
+    r = MSIREG_OpenProductKey( package->ProductCode, NULL, package->Context, &product_key, TRUE );
     if (r != ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
 
