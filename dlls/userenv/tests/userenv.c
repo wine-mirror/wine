@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 
 #include "userenv.h"
 
@@ -32,6 +33,7 @@
 
 #define expect(EXPECTED,GOT) ok((GOT)==(EXPECTED), "Expected %d, got %d\n", (EXPECTED), (GOT))
 #define expect_env(EXPECTED,GOT,VAR) ok((GOT)==(EXPECTED), "Expected %d, got %d for %s (%d)\n", (EXPECTED), (GOT), (VAR), j)
+#define expect_gle(EXPECTED) ok(GetLastError() == (EXPECTED), "Expected %d, got %d\n", (EXPECTED), GetLastError())
 
 struct profile_item
 {
@@ -205,7 +207,73 @@ static void test_create_env(void)
     }
 }
 
+static void test_get_profiles_dir(void)
+{
+    static const char ProfileListA[] = "Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList";
+    static const char ProfilesDirectory[] = "ProfilesDirectory";
+    BOOL r;
+    DWORD cch, profiles_len;
+    LONG l;
+    HKEY key;
+    char *profiles_dir, *buf, small_buf[1];
+
+    l = RegOpenKeyExA(HKEY_LOCAL_MACHINE, ProfileListA, 0, KEY_READ, &key);
+    if (l)
+    {
+        win_skip("No ProfileList key (Win9x), skipping tests\n");
+        return;
+    }
+    l = RegQueryValueExA(key, ProfilesDirectory, NULL, NULL, NULL, &cch);
+    if (l)
+    {
+        win_skip("No ProfilesDirectory value, skipping tests\n");
+        return;
+    }
+    buf = HeapAlloc(GetProcessHeap(), 0, cch);
+    RegQueryValueExA(key, ProfilesDirectory, NULL, NULL, (BYTE *)buf, &cch);
+    RegCloseKey(key);
+    profiles_len = ExpandEnvironmentStringsA(buf, NULL, 0);
+    profiles_dir = HeapAlloc(GetProcessHeap(), 0, profiles_len);
+    ExpandEnvironmentStringsA(buf, profiles_dir, profiles_len);
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    SetLastError(0xdeadbeef);
+    r = GetProfilesDirectoryA(NULL, NULL);
+    expect(FALSE, r);
+    todo_wine
+    expect_gle(ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    r = GetProfilesDirectoryA(NULL, &cch);
+    expect(FALSE, r);
+    todo_wine
+    expect_gle(ERROR_INVALID_PARAMETER);
+    SetLastError(0xdeadbeef);
+    cch = 1;
+    r = GetProfilesDirectoryA(small_buf, &cch);
+    expect(FALSE, r);
+    todo_wine
+    expect_gle(ERROR_INSUFFICIENT_BUFFER);
+    /* MSDN claims the returned character count includes the NULL terminator
+     * when the buffer is too small, but that's not in fact what gets returned.
+     */
+    todo_wine
+    ok(cch == profiles_len - 1, "expected %d, got %d\n", profiles_len - 1, cch);
+    buf = HeapAlloc(GetProcessHeap(), 0, cch);
+    r = GetProfilesDirectoryA(buf, &cch);
+    /* Rather than a BOOL, the return value is also the number of characters
+     * stored in the buffer.
+     */
+    todo_wine
+    expect(profiles_len - 1, r);
+    todo_wine
+    ok(!strcmp(buf, profiles_dir), "expected %s, got %s\n", profiles_dir, buf);
+
+    HeapFree(GetProcessHeap(), 0, buf);
+    HeapFree(GetProcessHeap(), 0, profiles_dir);
+}
+
 START_TEST(userenv)
 {
     test_create_env();
+    test_get_profiles_dir();
 }
