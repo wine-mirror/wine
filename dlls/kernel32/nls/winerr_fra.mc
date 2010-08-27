@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=FRA
 Nom d'utilisateur introuvable
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=FRA
+Connexion refusée
+.

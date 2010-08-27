@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=UKR
 Ім'я користувача не знайдено
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=UKR
+У з'єднанні відмовлено
+.

@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=DAN
 Brugernavnet blev ikke fundet
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=DAN
+Forbindelse nægtet
+.

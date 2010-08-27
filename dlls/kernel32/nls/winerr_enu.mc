@@ -3733,3 +3733,8 @@ SymbolicName=NERR_UserNotFound
 Language=ENU
 The username could not be found
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=ENU
+Connection refused
+.

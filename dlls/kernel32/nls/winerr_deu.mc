@@ -3734,3 +3734,8 @@ SymbolicName=NERR_UserNotFound
 Language=DEU
 Der Benutzername konnte nicht gefunden werden
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=DEU
+Verbindung abgelehnt
+.

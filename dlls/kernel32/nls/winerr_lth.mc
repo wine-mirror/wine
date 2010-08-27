@@ -3734,3 +3734,8 @@ SymbolicName=NERR_UserNotFound
 Language=LTH
 Naudotojo vardas nerastas
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=LTH
+Sujungimas nepriimtas
+.

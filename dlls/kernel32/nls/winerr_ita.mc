@@ -3735,3 +3735,8 @@ SymbolicName=NERR_UserNotFound
 Language=ITA
 Impossibile trovare il nome utente
 .
+MessageId=10061
+SymbolicName=WSAECONNREFUSED
+Language=ITA
+Connessione rifiutata
+.
