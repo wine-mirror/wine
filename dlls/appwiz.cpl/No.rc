@@ -41,7 +41,7 @@ STRINGTABLE
    IDS_INSTALL_FILTER, "Installasjonsprogrammer\0*instal*.exe;*setup*.exe;*.msi\0Programmer (*.exe)\0*.exe\0Alle filer (*.*)\0*.*\0\0"
 
    IDS_REMOVE, "Fje&rn..."
-   IDS_MODIFY_REMOVE, "&Endre/Fjern ..."
+   IDS_MODIFY_REMOVE, "&Endre/Fjern..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
