@@ -329,7 +329,7 @@ interface IDXGIFactory : IDXGIObject
     );
 }
 
-[local] HRESULT CreateDXGIFactory(REFIID riid, void **factory);
+[local] HRESULT __stdcall CreateDXGIFactory(REFIID riid, void **factory);
 
 [
     object,

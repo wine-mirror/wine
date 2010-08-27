@@ -2107,7 +2107,7 @@ struct wined3d_shader_signature
 
 struct wined3d_parent_ops
 {
-    void (*wined3d_object_destroyed)(void *parent);
+    void (__stdcall *wined3d_object_destroyed)(void *parent);
 };
 
 interface IWineD3DResource;
@@ -2177,8 +2177,8 @@ interface IWineD3DDeviceParent : IUnknown
         [out] IWineD3DSwapChain **swapchain
     );
 }
-typedef ULONG (*D3DCB_DESTROYSWAPCHAINFN)(IWineD3DSwapChain *pSwapChain);
-typedef HRESULT (*D3DCB_ENUMRESOURCES)(IWineD3DResource *resource, void *pData);
+typedef ULONG (__stdcall *D3DCB_DESTROYSWAPCHAINFN)(IWineD3DSwapChain *pSwapChain);
+typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(IWineD3DResource *resource, void *pData);
 
 [
     object,
@@ -3399,7 +3399,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
 }
 
-IWineD3D *WineDirect3DCreate(UINT dxVersion, IUnknown *parent);
-IWineD3DClipper *WineDirect3DCreateClipper(IUnknown *parent);
-void wined3d_mutex_lock(void);
-void wined3d_mutex_unlock(void);
+IWineD3D * __stdcall WineDirect3DCreate(UINT dxVersion, IUnknown *parent);
+IWineD3DClipper * __stdcall WineDirect3DCreateClipper(IUnknown *parent);
+void __stdcall wined3d_mutex_lock(void);
+void __stdcall wined3d_mutex_unlock(void);
