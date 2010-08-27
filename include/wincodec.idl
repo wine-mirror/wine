@@ -184,6 +184,7 @@ typedef struct WICBitmapPattern {
 typedef UINT32 WICColor;
 
 cpp_quote("#define WINCODEC_ERR_WRONGSTATE 0x88982f04")
+cpp_quote("#define WINCODEC_ERR_VALUEOUTOFRANGE 0x88982f05")
 cpp_quote("#define WINCODEC_ERR_NOTINITIALIZED 0x88982f0c")
 cpp_quote("#define WINCODEC_ERR_CODECNOTHUMBNAIL 0x88982f44")
 cpp_quote("#define WINCODEC_ERR_PALETTEUNAVAILABLE 0x88982f45")
