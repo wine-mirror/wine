@@ -9,4 +9,4 @@
 @ stub RmReserveHeap
 @ stub RmRestart
 @ stub RmShutdown
-@ stub RmStartSession
+@ stdcall RmStartSession(ptr long ptr)

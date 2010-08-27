@@ -46,3 +46,14 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     }
     return TRUE;
 }
+
+/***********************************************************************
+ * RmStartSession (rstrtmgr.@)
+ *
+ * Start a new restart manager session
+ */
+DWORD WINAPI RmStartSession(DWORD *sessionhandle, DWORD flags, WCHAR sessionkey[])
+{
+    FIXME("%p, %d, %p stub!\n", sessionhandle, flags, sessionkey);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
