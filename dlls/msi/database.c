@@ -300,26 +300,38 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
     }
     else if( szPersist == MSIDBOPEN_CREATE || szPersist == MSIDBOPEN_CREATEDIRECT )
     {
-        /* FIXME: MSIDBOPEN_CREATE should case STGM_TRANSACTED flag to be
-         * used here: */
-        r = StgCreateDocfile( szDBPath,
-              STGM_CREATE|STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stg);
-        if( r == ERROR_SUCCESS )
+        if ( szPersist == MSIDBOPEN_CREATE )
+        {
+            r = StgCreateDocfile( szDBPath,
+                STGM_CREATE|STGM_TRANSACTED|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stg);
+        }
+        else
+        {
+            r = StgCreateDocfile( szDBPath,
+                STGM_CREATE|STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stg);
+        }
+        if( SUCCEEDED(r) )
         {
             IStorage_SetClass( stg, patch ? &CLSID_MsiPatch : &CLSID_MsiDatabase );
             /* create the _Tables stream */
             r = write_stream_data(stg, szTables, NULL, 0, TRUE);
             if (SUCCEEDED(r))
+            {
                 r = msi_init_string_table( stg );
+                if (SUCCEEDED(r))
+                {
+                    r = IStorage_Commit( stg, 0 );
+                    if (FAILED(r))
+                        WARN("failed to commit changes 0x%08x\n", r);
+                }
+            }
         }
         created = TRUE;
     }
     else if( szPersist == MSIDBOPEN_TRANSACT )
     {
-        /* FIXME: MSIDBOPEN_TRANSACT should case STGM_TRANSACTED flag to be
-         * used here: */
         r = StgOpenStorage( szDBPath, NULL,
-              STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+              STGM_TRANSACTED|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
     }
     else if( szPersist == MSIDBOPEN_DIRECT )
     {

@@ -2319,6 +2319,7 @@ UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view )
 UINT MSI_CommitTables( MSIDATABASE *db )
 {
     UINT r;
+    HRESULT hr;
     MSITABLE *table = NULL;
 
     TRACE("%p\n",db);
@@ -2344,7 +2345,13 @@ UINT MSI_CommitTables( MSIDATABASE *db )
     /* force everything to reload next time */
     free_cached_tables( db );
 
-    return ERROR_SUCCESS;
+    hr = IStorage_Commit( db->storage, 0 );
+    if (FAILED( hr ))
+    {
+        WARN("failed to commit changes 0x%08x\n", hr);
+        r = ERROR_FUNCTION_FAILED;
+    }
+    return r;
 }
 
 MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table )
