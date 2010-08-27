@@ -237,7 +237,7 @@ int wmain(int argc, WCHAR *argv[])
                     /* This is a complete path conversion failure.
                      * It would typically happen if ntpath == "".
                      */
-                    printf("\n");
+                    printf("%c", separator);
                     break;
                 }
                 c=slash+1;
@@ -249,7 +249,7 @@ int wmain(int argc, WCHAR *argv[])
                     /* If this is not a valid NT path to start with,
                      * then obviously we cannot convert it.
                      */
-                    printf("\n");
+                    printf("%c", separator);
                     break;
                 }
                 if (tail)
@@ -274,7 +274,7 @@ int wmain(int argc, WCHAR *argv[])
                 printf("%s%c", path, separator);
                 HeapFree( GetProcessHeap(), 0, windows_name );
             }
-            else printf( "\n" );
+            else printf("%c", separator);
             HeapFree( GetProcessHeap(), 0, unix_name );
         }
     }
