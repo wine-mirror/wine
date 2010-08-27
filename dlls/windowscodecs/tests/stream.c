@@ -359,7 +359,7 @@ static void test_StreamOnStreamRange(void)
     uNewPos.QuadPart = 20;
     uSize.QuadPart = 20;
     hr = IWICStream_InitializeFromIStreamRegion(pSubStream, (IStream*)pStream, uNewPos, uSize);
-    todo_wine ok(hr == S_OK, "InitializeFromIStreamRegion returned with %#x, expected %#x\n", hr, S_OK);
+    ok(hr == S_OK, "InitializeFromIStreamRegion returned with %#x, expected %#x\n", hr, S_OK);
     if(FAILED(hr)) {
         skip("InitializeFromIStreamRegion unimplemented\n");
         IWICStream_Release(pSubStream);

@@ -259,6 +259,298 @@ const IStreamVtbl StreamOnMemory_Vtbl =
 };
 
 /******************************************
+ * StreamOnStreamRange implementation
+ *
+ * Used by IWICStream_InitializeFromIStreamRegion
+ *
+ */
+typedef struct StreamOnStreamRange {
+    const IStreamVtbl *lpVtbl;
+    LONG ref;
+
+    IStream *stream;
+    ULARGE_INTEGER pos;
+    ULARGE_INTEGER offset;
+    ULARGE_INTEGER max_size;
+
+    CRITICAL_SECTION lock;
+} StreamOnStreamRange;
+
+static HRESULT WINAPI StreamOnStreamRange_QueryInterface(IStream *iface,
+    REFIID iid, void **ppv)
+{
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IStream, iid) ||
+        IsEqualIID(&IID_ISequentialStream, iid))
+    {
+        *ppv = iface;
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI StreamOnStreamRange_AddRef(IStream *iface)
+{
+    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI StreamOnStreamRange_Release(IStream *iface)
+{
+    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0) {
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
+        IStream_Release(This->stream);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI StreamOnStreamRange_Read(IStream *iface,
+    void *pv, ULONG cb, ULONG *pcbRead)
+{
+    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    ULONG uBytesRead=0;
+    HRESULT hr;
+    ULARGE_INTEGER OldPosition;
+    LARGE_INTEGER SetPosition;
+    TRACE("(%p)\n", This);
+
+    if (!pv) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+    SetPosition.QuadPart = 0;
+    hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_CUR, &OldPosition);
+    if (SUCCEEDED(hr))
+    {
+        SetPosition.QuadPart = This->pos.QuadPart + This->offset.QuadPart;
+        hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_CUR, NULL);
+    }
+    if (SUCCEEDED(hr))
+    {
+        if (This->pos.QuadPart + cb > This->max_size.QuadPart)
+        {
+            /* This would read past the end of the stream. */
+            if (This->pos.QuadPart > This->max_size.QuadPart)
+                cb = 0;
+            else
+                cb = This->max_size.QuadPart - This->pos.QuadPart;
+        }
+        hr = IStream_Read(This->stream, pv, cb, &uBytesRead);
+        SetPosition.QuadPart = OldPosition.QuadPart;
+        IStream_Seek(This->stream, SetPosition, STREAM_SEEK_SET, NULL);
+    }
+    if (SUCCEEDED(hr))
+        This->pos.QuadPart += uBytesRead;
+    LeaveCriticalSection(&This->lock);
+
+    if (pcbRead) *pcbRead = uBytesRead;
+
+    return hr;
+}
+
+static HRESULT WINAPI StreamOnStreamRange_Write(IStream *iface,
+    void const *pv, ULONG cb, ULONG *pcbWritten)
+{
+    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    HRESULT hr;
+    ULARGE_INTEGER OldPosition;
+    LARGE_INTEGER SetPosition;
+    ULONG uBytesWritten=0;
+    TRACE("(%p)\n", This);
+
+    if (!pv) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+    SetPosition.QuadPart = 0;
+    hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_CUR, &OldPosition);
+    if (SUCCEEDED(hr))
+    {
+        SetPosition.QuadPart = This->pos.QuadPart + This->offset.QuadPart;
+        hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_CUR, NULL);
+    }
+    if (SUCCEEDED(hr))
+    {
+        if (This->pos.QuadPart + cb > This->max_size.QuadPart)
+        {
+            /* This would read past the end of the stream. */
+            if (This->pos.QuadPart > This->max_size.QuadPart)
+                cb = 0;
+            else
+                cb = This->max_size.QuadPart - This->pos.QuadPart;
+        }
+        hr = IStream_Write(This->stream, pv, cb, &uBytesWritten);
+        SetPosition.QuadPart = OldPosition.QuadPart;
+        IStream_Seek(This->stream, SetPosition, STREAM_SEEK_SET, NULL);
+    }
+    if (SUCCEEDED(hr))
+        This->pos.QuadPart += uBytesWritten;
+    LeaveCriticalSection(&This->lock);
+
+    if (pcbWritten) *pcbWritten = uBytesWritten;
+
+    return hr;
+}
+
+static HRESULT WINAPI StreamOnStreamRange_Seek(IStream *iface,
+    LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+{
+    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    ULARGE_INTEGER NewPosition, actual_size;
+    HRESULT hr=S_OK;
+    STATSTG statstg;
+    TRACE("(%p)\n", This);
+
+    EnterCriticalSection(&This->lock);
+    actual_size = This->max_size;
+    if (dwOrigin == STREAM_SEEK_SET)
+        NewPosition.QuadPart = dlibMove.QuadPart;
+    else if (dwOrigin == STREAM_SEEK_CUR)
+        NewPosition.QuadPart = This->pos.QuadPart + dlibMove.QuadPart;
+    else if (dwOrigin == STREAM_SEEK_END)
+    {
+        hr = IStream_Stat(This->stream, &statstg, STATFLAG_NONAME);
+        if (SUCCEEDED(hr))
+        {
+            if (This->max_size.QuadPart + This->offset.QuadPart > statstg.cbSize.QuadPart)
+                actual_size.QuadPart = statstg.cbSize.QuadPart - This->offset.QuadPart;
+            NewPosition.QuadPart = dlibMove.QuadPart + actual_size.QuadPart;
+        }
+    }
+    else hr = E_INVALIDARG;
+
+    if (SUCCEEDED(hr) && (NewPosition.u.HighPart != 0 || NewPosition.QuadPart > actual_size.QuadPart))
+        hr = WINCODEC_ERR_VALUEOUTOFRANGE;
+
+    if (SUCCEEDED(hr)) {
+        This->pos.QuadPart = NewPosition.QuadPart;
+
+        if(plibNewPosition) plibNewPosition->QuadPart = This->pos.QuadPart;
+    }
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
+}
+
+/* SetSize isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnStreamRange_SetSize(IStream *iface,
+    ULARGE_INTEGER libNewSize)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* CopyTo isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnStreamRange_CopyTo(IStream *iface,
+    IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* Commit isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnStreamRange_Commit(IStream *iface,
+    DWORD grfCommitFlags)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* Revert isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnStreamRange_Revert(IStream *iface)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* LockRegion isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnStreamRange_LockRegion(IStream *iface,
+    ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+/* UnlockRegion isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnStreamRange_UnlockRegion(IStream *iface,
+    ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI StreamOnStreamRange_Stat(IStream *iface,
+    STATSTG *pstatstg, DWORD grfStatFlag)
+{
+    StreamOnStreamRange *This = (StreamOnStreamRange*)iface;
+    HRESULT hr;
+    TRACE("(%p)\n", This);
+
+    if (!pstatstg) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+    hr = IStream_Stat(This->stream, pstatstg, grfStatFlag);
+    if (SUCCEEDED(hr))
+    {
+        pstatstg->cbSize.QuadPart -= This->offset.QuadPart;
+        if (This->max_size.QuadPart < pstatstg->cbSize.QuadPart)
+            pstatstg->cbSize.QuadPart = This->max_size.QuadPart;
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
+}
+
+/* Clone isn't implemented in the native windowscodecs DLL either */
+static HRESULT WINAPI StreamOnStreamRange_Clone(IStream *iface,
+    IStream **ppstm)
+{
+    TRACE("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+
+const IStreamVtbl StreamOnStreamRange_Vtbl =
+{
+    /*** IUnknown methods ***/
+    StreamOnStreamRange_QueryInterface,
+    StreamOnStreamRange_AddRef,
+    StreamOnStreamRange_Release,
+    /*** ISequentialStream methods ***/
+    StreamOnStreamRange_Read,
+    StreamOnStreamRange_Write,
+    /*** IStream methods ***/
+    StreamOnStreamRange_Seek,
+    StreamOnStreamRange_SetSize,
+    StreamOnStreamRange_CopyTo,
+    StreamOnStreamRange_Commit,
+    StreamOnStreamRange_Revert,
+    StreamOnStreamRange_LockRegion,
+    StreamOnStreamRange_UnlockRegion,
+    StreamOnStreamRange_Stat,
+    StreamOnStreamRange_Clone,
+};
+
+
+/******************************************
  * IWICStream implementation
  *
  */
@@ -516,8 +808,34 @@ static HRESULT WINAPI IWICStreamImpl_InitializeFromMemory(IWICStream *iface,
 static HRESULT WINAPI IWICStreamImpl_InitializeFromIStreamRegion(IWICStream *iface,
     IStream *pIStream, ULARGE_INTEGER ulOffset, ULARGE_INTEGER ulMaxSize)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    IWICStreamImpl *This = (IWICStreamImpl*)iface;
+    StreamOnStreamRange *pObject;
+    TRACE("(%p,%p)\n", iface, pIStream);
+
+    if (!pIStream) return E_INVALIDARG;
+    if (This->pStream) return WINCODEC_ERR_WRONGSTATE;
+
+    pObject = HeapAlloc(GetProcessHeap(), 0, sizeof(StreamOnStreamRange));
+    if (!pObject) return E_OUTOFMEMORY;
+
+    pObject->lpVtbl = &StreamOnStreamRange_Vtbl;
+    pObject->ref = 1;
+    IStream_AddRef(pIStream);
+    pObject->stream = pIStream;
+    pObject->pos.QuadPart = 0;
+    pObject->offset = ulOffset;
+    pObject->max_size = ulMaxSize;
+    InitializeCriticalSection(&pObject->lock);
+    pObject->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": StreamOnStreamRange.lock");
+
+    if (InterlockedCompareExchangePointer((void**)&This->pStream, pObject, NULL))
+    {
+        /* Some other thread set the stream first. */
+        IStream_Release((IStream*)pObject);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    return S_OK;
 }
 
 
