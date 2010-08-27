@@ -1659,7 +1659,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     if (!is_win64 && !is_wow64 && (binary_info->flags & BINARY_FLAG_64BIT))
     {
-        ERR( "starting 64-bit process %s not supported on this environment\n", debugstr_w(filename) );
+        ERR( "starting 64-bit process %s not supported in 32-bit wineprefix\n", debugstr_w(filename) );
         SetLastError( ERROR_BAD_EXE_FORMAT );
         return FALSE;
     }
