@@ -1,0 +1,10 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = rstrtmgr.dll
+
+C_SRCS = \
+	main.c
+
+@MAKE_DLL_RULES@
