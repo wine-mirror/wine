@@ -14915,6 +14915,7 @@ wine_fn_config_dll vwin32.vxd enable_win16
 wine_fn_config_dll w32skrnl enable_win16
 wine_fn_config_dll w32sys.dll16 enable_win16
 wine_fn_config_dll wbemprox enable_wbemprox
+wine_fn_config_dll wer enable_wer
 wine_fn_config_dll wiaservc enable_wiaservc
 wine_fn_config_dll win32s16.dll16 enable_win16
 wine_fn_config_dll win87em.dll16 enable_win16
