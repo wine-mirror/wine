@@ -926,7 +926,8 @@ decl_spec_no_type:
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
 						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv declarator			{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv declarator			{ $$ = $2; if ($$->func_type) $$->func_type->attrs = append_attr($$->func_type->attrs, make_attrp(ATTR_CALLCONV, $1));
+						           else if ($$->type) $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
 	| direct_declarator
 	;
 
@@ -944,7 +945,8 @@ direct_declarator:
 abstract_declarator:
 	  '*' m_type_qual_list m_abstract_declarator %prec PPTR
 						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv m_abstract_declarator	{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv m_abstract_declarator	{ $$ = $2; if ($$->func_type) $$->func_type->attrs = append_attr($$->func_type->attrs, make_attrp(ATTR_CALLCONV, $1));
+						           else if ($$->type) $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
 	| abstract_direct_declarator
 	;
 
@@ -952,7 +954,8 @@ abstract_declarator:
 abstract_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; $$->type = append_ptrchain_type($$->type, type_new_pointer(pointer_default, NULL, $2)); }
-	| callconv m_any_declarator		{ $$ = $2; $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
+	| callconv m_any_declarator		{ $$ = $2; if ($$->func_type) $$->func_type->attrs = append_attr($$->func_type->attrs, make_attrp(ATTR_CALLCONV, $1));
+						           else if ($$->type) $$->type->attrs = append_attr($$->type->attrs, make_attrp(ATTR_CALLCONV, $1)); }
 	;
 
 /* abstract declarator or empty */
