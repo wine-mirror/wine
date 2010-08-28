@@ -463,17 +463,6 @@ static BOOL pe_load_coff_symbol_table(struct module* module)
     return TRUE;
 }
 
-static inline void* pe_get_sect(IMAGE_NT_HEADERS* nth, void* mapping,
-                                IMAGE_SECTION_HEADER* sect)
-{
-    return (sect) ? RtlImageRvaToVa(nth, mapping, sect->VirtualAddress, NULL) : NULL;
-}
-
-static inline DWORD pe_get_sect_size(IMAGE_SECTION_HEADER* sect)
-{
-    return (sect) ? sect->SizeOfRawData : 0;
-}
-
 /******************************************************************
  *		pe_load_stabs
  *
