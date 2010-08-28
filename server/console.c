@@ -1295,7 +1295,6 @@ DECL_HANDLER(alloc_console)
     obj_handle_t in = 0;
     obj_handle_t evt = 0;
     struct process *process;
-    struct process *renderer = current->process;
     struct console_input *console;
 
     if (req->pid)
@@ -1304,7 +1303,7 @@ DECL_HANDLER(alloc_console)
     }
     else
     {
-        if (!(process = renderer->parent))
+        if (!(process = current->process->parent))
         {
             set_error( STATUS_ACCESS_DENIED );
             return;
@@ -1312,18 +1311,15 @@ DECL_HANDLER(alloc_console)
         grab_object( process );
     }
 
-    if (process != renderer && process->console)
-    {
+    if (process != current->process && process->console)
         set_error( STATUS_ACCESS_DENIED );
-        goto the_end;
-    }
-    if ((console = (struct console_input*)create_console_input( current )))
+    else if ((console = (struct console_input*)create_console_input( current )))
     {
-        if ((in = alloc_handle( renderer, console, req->access, req->attributes )))
+        if ((in = alloc_handle( current->process, console, req->access, req->attributes )))
         {
-            if ((evt = alloc_handle( renderer, console->evt, SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, 0 )))
+            if ((evt = alloc_handle( current->process, console->evt, SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, 0 )))
             {
-                if (process != renderer)
+                if (process != current->process)
                 {
                     process->console = (struct console_input*)grab_object( console );
                     console->num_proc++;
@@ -1333,7 +1329,7 @@ DECL_HANDLER(alloc_console)
                 release_object( console );
                 goto the_end;
             }
-            close_handle( renderer, in );
+            close_handle( current->process, in );
         }
         free_console( process );
     }
