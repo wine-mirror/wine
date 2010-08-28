@@ -159,7 +159,7 @@ static inline void image_unmap_section(struct image_section_map* ism)
     }
 }
 
-static inline DWORD_PTR image_get_map_rva(struct image_section_map* ism)
+static inline DWORD_PTR image_get_map_rva(const struct image_section_map* ism)
 {
     if (!ism->fmap) return 0;
     switch (ism->fmap->modtype)
@@ -170,7 +170,7 @@ static inline DWORD_PTR image_get_map_rva(struct image_section_map* ism)
     }
 }
 
-static inline unsigned image_get_map_size(struct image_section_map* ism)
+static inline unsigned image_get_map_size(const struct image_section_map* ism)
 {
     if (!ism->fmap) return 0;
     switch (ism->fmap->modtype)

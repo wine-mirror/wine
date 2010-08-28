@@ -2796,7 +2796,7 @@ static void copy_context_reg(CONTEXT *dstcontext, ULONG_PTR dwregdst, CONTEXT* s
     memcpy(ptrdst, ptrsrc, szdst);
 }
 
-static ULONG_PTR eval_expression(struct module* module, struct cpu_stack_walk* csw,
+static ULONG_PTR eval_expression(const struct module* module, struct cpu_stack_walk* csw,
                                  const unsigned char* zp, CONTEXT *context)
 {
     dwarf2_traverse_context_t    ctx;
@@ -2907,7 +2907,7 @@ static ULONG_PTR eval_expression(struct module* module, struct cpu_stack_walk* c
     return stack[sp];
 }
 
-static void apply_frame_state(struct module* module, struct cpu_stack_walk* csw,
+static void apply_frame_state(const struct module* module, struct cpu_stack_walk* csw,
                               CONTEXT *context, struct frame_state *state, ULONG_PTR* cfa)
 {
     unsigned int i;
