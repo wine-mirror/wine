@@ -79,6 +79,14 @@ const char* pe_map_section(struct image_section_map* ism)
         fmap->sect[ism->sidx].mapped == IMAGE_NO_MAP)
     {
         IMAGE_NT_HEADERS*       nth;
+
+        if (fmap->sect[ism->sidx].shdr.Misc.VirtualSize > fmap->sect[ism->sidx].shdr.SizeOfRawData)
+        {
+            FIXME("Section %ld: virtual (0x%x) > raw (0x%x) size - not supported\n",
+                  ism->sidx, fmap->sect[ism->sidx].shdr.Misc.VirtualSize,
+                  fmap->sect[ism->sidx].shdr.SizeOfRawData);
+            return IMAGE_NO_MAP;
+        }
         /* FIXME: that's rather drastic, but that will do for now
          * that's ok if the full file map exists, but we could be less agressive otherwise and
          * only map the relevant section
@@ -162,13 +170,13 @@ DWORD_PTR pe_get_map_rva(const struct image_section_map* ism)
 /******************************************************************
  *		pe_get_map_size
  *
- * Get the size of an PE section
+ * Get the size of a PE section
  */
 unsigned pe_get_map_size(const struct image_section_map* ism)
 {
     if (ism->sidx < 0 || ism->sidx >= ism->fmap->u.pe.ntheader.FileHeader.NumberOfSections)
         return 0;
-    return ism->fmap->u.pe.sect[ism->sidx].shdr.SizeOfRawData;
+    return ism->fmap->u.pe.sect[ism->sidx].shdr.Misc.VirtualSize;
 }
 
 /******************************************************************
