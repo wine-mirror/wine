@@ -726,10 +726,23 @@ static HRESULT WINAPI domtext_splitText(
     LONG offset, IXMLDOMText **txtNode)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    FIXME("(%p)->(%d %p)\n", This, offset, txtNode);
+    LONG length = 0;
+
+    TRACE("(%p)->(%d %p)\n", This, offset, txtNode);
+
+    if (!txtNode || offset < 0) return E_INVALIDARG;
+
+    *txtNode = NULL;
+
+    IXMLDOMText_get_length(iface, &length);
+
+    if (offset > length) return E_INVALIDARG;
+    if (offset == length) return S_FALSE;
+
+    FIXME("adjacent text nodes are not supported\n");
+
     return E_NOTIMPL;
 }
-
 
 static const struct IXMLDOMTextVtbl domtext_vtbl =
 {

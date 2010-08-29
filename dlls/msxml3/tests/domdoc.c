@@ -5614,7 +5614,7 @@ static void test_splitText(void)
     IXMLDOMCDATASection *cdata;
     IXMLDOMElement *root;
     IXMLDOMDocument *doc;
-    IXMLDOMText *text;
+    IXMLDOMText *text, *text2;
     IXMLDOMNode *node;
     VARIANT var;
     VARIANT_BOOL success;
@@ -5683,6 +5683,46 @@ static void test_splitText(void)
     hr = IXMLDOMCDATASection_get_nextSibling(cdata, &node);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IXMLDOMNode_Release(node);
+
+    /* split new text node */
+    hr = IXMLDOMText_get_length(text, &length);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMText_get_nextSibling(text, &node);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(node == 0, "got %p\n", text);
+
+    hr = IXMLDOMText_splitText(text, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    text2 = (void*)0xdeadbeef;
+    /* negative offset */
+    hr = IXMLDOMText_splitText(text, -1, &text2);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(text2 == (void*)0xdeadbeef, "got %p\n", text2);
+
+    text2 = (void*)0xdeadbeef;
+    /* offset outside data */
+    hr = IXMLDOMText_splitText(text, length + 1, &text2);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(text2 == 0, "got %p\n", text2);
+
+    text2 = (void*)0xdeadbeef;
+    /* offset outside data */
+    hr = IXMLDOMText_splitText(text, length, &text2);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(text2 == 0, "got %p\n", text);
+
+    text2 = 0;
+    hr = IXMLDOMText_splitText(text, 4, &text2);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (text2) IXMLDOMText_Release(text2);
+
+    node = 0;
+    hr = IXMLDOMText_get_nextSibling(text, &node);
+    todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (node) IXMLDOMNode_Release(node);
 
     IXMLDOMText_Release(text);
     IXMLDOMElement_Release(root);
