@@ -2146,10 +2146,7 @@ static HRESULT internal_putProperty(
         'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
     };
 
-    FIXME("(%p)->(%s): semi-stub\n", This, debugstr_w(pProp));
-
-    if(!memcmp(pProp, wszCharset, sizeof(wszCharset)))
-        return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pProp));
 
     if(!memcmp(pProp, wszDeclarationHandler, sizeof(wszDeclarationHandler)))
     {
@@ -2176,12 +2173,6 @@ static HRESULT internal_putProperty(
             This->declHandler = (ISAXDeclHandler*)V_UNKNOWN(&value);
         return S_OK;
     }
-
-    if(!memcmp(pProp, wszDomNode, sizeof(wszDomNode)))
-        return E_FAIL;
-
-    if(!memcmp(pProp, wszInputSource, sizeof(wszInputSource)))
-        return E_NOTIMPL;
 
     if(!memcmp(pProp, wszLexicalHandler, sizeof(wszLexicalHandler)))
     {
@@ -2210,6 +2201,17 @@ static HRESULT internal_putProperty(
             This->lexicalHandler = (ISAXLexicalHandler*)V_UNKNOWN(&value);
         return S_OK;
     }
+
+    FIXME("(%p)->(%s): unsupported property\n", This, debugstr_w(pProp));
+
+    if(!memcmp(pProp, wszCharset, sizeof(wszCharset)))
+        return E_NOTIMPL;
+
+    if(!memcmp(pProp, wszDomNode, sizeof(wszDomNode)))
+        return E_FAIL;
+
+    if(!memcmp(pProp, wszInputSource, sizeof(wszInputSource)))
+        return E_NOTIMPL;
 
     if(!memcmp(pProp, wszMaxElementDepth, sizeof(wszMaxElementDepth)))
         return E_NOTIMPL;
