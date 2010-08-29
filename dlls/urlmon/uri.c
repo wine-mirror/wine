@@ -77,7 +77,11 @@ typedef struct {
     const IUriBuilderVtbl  *lpIUriBuilderVtbl;
     LONG ref;
 
-    IUri *uri;
+    Uri *uri;
+    DWORD modified_props;
+
+    WCHAR   *fragment;
+    DWORD   fragment_len;
 } UriBuilder;
 
 typedef struct {
@@ -3243,6 +3247,76 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     return S_OK;
 }
 
+static HRESULT get_builder_component(LPWSTR *component, DWORD *component_len,
+                                     LPCWSTR source, DWORD source_len,
+                                     LPCWSTR *output, DWORD *output_len)
+{
+    if(!output_len) {
+        if(output)
+            *output = NULL;
+        return E_POINTER;
+    }
+
+    if(!output) {
+        *output_len = 0;
+        return E_POINTER;
+    }
+
+    if(!(*component) && source) {
+        /* Allocate 'component', and copy the contents from 'source'
+         * into the new allocation.
+         */
+        *component = heap_alloc((source_len+1)*sizeof(WCHAR));
+        if(!(*component))
+            return E_OUTOFMEMORY;
+
+        memcpy(*component, source, source_len*sizeof(WCHAR));
+        (*component)[source_len] = '\0';
+        *component_len = source_len;
+    }
+
+    *output = *component;
+    *output_len = *component_len;
+    return *output ? S_OK : S_FALSE;
+}
+
+/* Allocates 'component' and copies the string from 'new_value' into 'component'.
+ * If 'prefix' is set and 'new_value' isn't NULL, then it checks if 'new_value'
+ * starts with 'prefix'. If it doesn't then 'prefix' is prepended to 'component'.
+ */
+static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LPCWSTR new_value,
+                                     WCHAR prefix)
+{
+    if(*component)
+        heap_free(*component);
+
+    if(!new_value) {
+        *component = NULL;
+        *component_len = 0;
+    } else {
+        BOOL add_prefix = FALSE;
+        DWORD len = lstrlenW(new_value);
+        DWORD pos = 0;
+
+        if(prefix && *new_value != prefix) {
+            add_prefix = TRUE;
+            *component = heap_alloc((len+2)*sizeof(WCHAR));
+        } else
+            *component = heap_alloc((len+1)*sizeof(WCHAR));
+
+        if(!(*component))
+            return E_OUTOFMEMORY;
+
+        if(add_prefix)
+            (*component)[pos++] = prefix;
+
+        memcpy(*component+pos, new_value, (len+1)*sizeof(WCHAR));
+        *component_len = len+pos;
+    }
+
+    return S_OK;
+}
+
 #define URI(x)         ((IUri*)  &(x)->lpIUriVtbl)
 #define URIBUILDER(x)  ((IUriBuilder*)  &(x)->lpIUriBuilderVtbl)
 
@@ -4234,7 +4308,8 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->uri) IUri_Release(This->uri);
+        if(This->uri) IUri_Release(URI(This->uri));
+        heap_free(This->fragment);
         heap_free(This);
     }
 
@@ -4353,19 +4428,11 @@ static HRESULT WINAPI UriBuilder_GetFragment(IUriBuilder *iface, DWORD *pcchFrag
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchFragment, ppwzFragment);
 
-    if(!pcchFragment) {
-        if(ppwzFragment)
-            *ppwzFragment = NULL;
-        return E_POINTER;
-    }
-
-    if(!ppwzFragment) {
-        *pcchFragment = 0;
-        return E_POINTER;
-    }
-
-    FIXME("(%p)->(%p %p)\n", This, pcchFragment, ppwzFragment);
-    return E_NOTIMPL;
+    if(!This->uri || This->uri->fragment_start == -1 || This->modified_props & Uri_HAS_FRAGMENT)
+        return get_builder_component(&This->fragment, &This->fragment_len, NULL, 0, ppwzFragment, pcchFragment);
+    else
+        return get_builder_component(&This->fragment, &This->fragment_len, This->uri->canon_uri+This->uri->fragment_start,
+                                     This->uri->fragment_len, ppwzFragment, pcchFragment);
 }
 
 static HRESULT WINAPI UriBuilder_GetHost(IUriBuilder *iface, DWORD *pcchHost, LPCWSTR *ppwzHost)
@@ -4511,8 +4578,10 @@ static HRESULT WINAPI UriBuilder_GetUserName(IUriBuilder *iface, DWORD *pcchUser
 static HRESULT WINAPI UriBuilder_SetFragment(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+
+    This->modified_props |= Uri_HAS_FRAGMENT;
+    return set_builder_component(&This->fragment, &This->fragment_len, pwzNewValue, '#');
 }
 
 static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue)
@@ -4626,16 +4695,27 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
     if(!ppIUriBuilder)
         return E_POINTER;
 
-    ret = heap_alloc(sizeof(UriBuilder));
+    ret = heap_alloc_zero(sizeof(UriBuilder));
     if(!ret)
         return E_OUTOFMEMORY;
 
     ret->lpIUriBuilderVtbl = &UriBuilderVtbl;
     ret->ref = 1;
 
-    ret->uri = pIUri;
-    if(pIUri)
-        IUri_AddRef(pIUri);
+    if(pIUri) {
+        Uri *uri;
+
+        if((uri = get_uri_obj(pIUri))) {
+            IUri_AddRef(pIUri);
+            ret->uri = uri;
+        } else {
+            heap_free(ret);
+            *ppIUriBuilder = NULL;
+            FIXME("(%p %x %x %p): Unknown IUri types not supported yet.\n", pIUri, dwFlags,
+                (DWORD)dwReserved, ppIUriBuilder);
+            return E_NOTIMPL;
+        }
+    }
 
     *ppIUriBuilder = URIBUILDER(ret);
     return S_OK;

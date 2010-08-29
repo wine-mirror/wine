@@ -4266,7 +4266,7 @@ typedef struct _uri_builder_test {
 static const uri_builder_test uri_builder_tests[] = {
     {   "http://google.com/",0,S_OK,FALSE,
         {
-            {TRUE,"#fragment",NULL,Uri_PROPERTY_FRAGMENT,S_OK,TRUE},
+            {TRUE,"#fragment",NULL,Uri_PROPERTY_FRAGMENT,S_OK,FALSE},
             {TRUE,"password",NULL,Uri_PROPERTY_PASSWORD,S_OK,TRUE},
             {TRUE,"?query=x",NULL,Uri_PROPERTY_QUERY,S_OK,TRUE},
             {TRUE,"username",NULL,Uri_PROPERTY_USER_NAME,S_OK,TRUE}
@@ -4295,6 +4295,24 @@ static const uri_builder_test uri_builder_tests[] = {
         "http://[::192.2.3.4]/",0,S_OK,TRUE,
         "http://[::192.2.3.4]/",0,S_OK,TRUE,
         "http://[::192.2.3.4]/",0,0,0,S_OK,TRUE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"Frag","#Frag",Uri_PROPERTY_FRAGMENT,S_OK,FALSE}
+        },
+        {FALSE},
+        "http://google.com/#Frag",0,S_OK,TRUE,
+        "http://google.com/#Frag",0,S_OK,TRUE,
+        "http://google.com/#Frag",0,0,0,S_OK,TRUE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"","#",Uri_PROPERTY_FRAGMENT,S_OK,FALSE},
+        },
+        {FALSE},
+        "http://google.com/#",0,S_OK,TRUE,
+        "http://google.com/#",0,S_OK,TRUE,
+        "http://google.com/#",0,0,0,S_OK,TRUE
     }
 };
 
@@ -5819,7 +5837,7 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
             if(uri) IUri_Release(uri);
 
             hr = IUriBuilder_SetFragment(builder, NULL);
-            todo_wine { ok(hr == S_OK, "Error: IUriBuilder_SetFragment returned 0x%08x, expected 0x%08x.\n", hr, S_OK); }
+            ok(hr == S_OK, "Error: IUriBuilder_SetFragment returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
 
             /* The IUriBuilder is changed, so it returns E_NOTIMPL again. */
             uri = (void*) 0xdeadbeef;
