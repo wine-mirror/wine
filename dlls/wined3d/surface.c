@@ -3354,6 +3354,22 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
     context_release(context);
 }
 
+static HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED3DCOLORVALUE *color)
+{
+    IWineD3DDeviceImpl *device = s->resource.device;
+    const struct blit_shader *blitter;
+
+    blitter = wined3d_select_blitter(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
+            NULL, 0, 0, NULL, rect, s->resource.usage, s->resource.pool, s->resource.format_desc);
+    if (!blitter)
+    {
+        FIXME("No blitter is capable of performing the requested color fill operation.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    return blitter->color_fill(device, s, rect, color);
+}
+
 /* Not called from the VTable */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface, const RECT *DestRect,
         IWineD3DSurfaceImpl *src_surface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx,
@@ -3737,21 +3753,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             if (!surface_convert_color_to_float(dst_surface, DDBltFx->u5.dwFillColor, &color))
                 return WINED3DERR_INVALIDCALL;
 
-            if (ffp_blit.blit_supported(gl_info, BLIT_OP_COLOR_FILL,
-                    NULL, 0, 0, NULL,
-                    &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
-                    dst_surface->resource.format_desc))
-            {
-                return ffp_blit.color_fill(device, dst_surface, &dst_rect, &color);
-            }
-            else if (cpu_blit.blit_supported(gl_info, BLIT_OP_COLOR_FILL,
-                    NULL, 0, 0, NULL,
-                    &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
-                    dst_surface->resource.format_desc))
-            {
-                return cpu_blit.color_fill(device, dst_surface, &dst_rect, &color);
-            }
-            return WINED3DERR_INVALIDCALL;
+            return surface_color_fill(dst_surface, &dst_rect, &color);
         }
     }
 

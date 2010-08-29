@@ -3136,3 +3136,26 @@ void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected,
     else if (gl_info->supported[ATI_FRAGMENT_SHADER]) *ps_selected = SHADER_ATI;
     else *ps_selected = SHADER_NONE;
 }
+
+const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format_desc *src_format,
+        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format_desc *dst_format)
+{
+    static const struct blit_shader * const blitters[] =
+    {
+        &arbfp_blit,
+        &ffp_blit,
+        &cpu_blit,
+    };
+    unsigned int i;
+
+    for (i = 0; i < sizeof(blitters) / sizeof(*blitters); ++i)
+    {
+        if (blitters[i]->blit_supported(gl_info, blit_op,
+                src_rect, src_usage, src_pool, src_format,
+                dst_rect, dst_usage, dst_pool, dst_format))
+            return blitters[i];
+    }
+
+    return NULL;
+}
