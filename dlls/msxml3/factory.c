@@ -31,6 +31,7 @@
 #include "msxml.h"
 #include "xmldom.h"
 #include "msxml2.h"
+#include "msxml6.h"
 
 /* undef the #define in msxml2 so that we can access the v.2 version
    independent CLSID as well as the v.3 one. */
@@ -145,10 +146,11 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv );
 
-    if( IsEqualCLSID( rclsid, &CLSID_DOMDocument ) ||   /* Version indep. v 2.x */
+    if( IsEqualCLSID( rclsid, &CLSID_DOMDocument )  ||  /* Version indep. v 2.x */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument2 ) ||  /* Version indep. v 3.0 */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument30 )||  /* Version dep.   v 3.0 */
-        IsEqualCLSID( rclsid, &CLSID_DOMDocument40 ))   /* Version dep.   v 4.0 */
+        IsEqualCLSID( rclsid, &CLSID_DOMDocument40 )||  /* Version dep.   v 4.0 */
+        IsEqualCLSID( rclsid, &CLSID_DOMDocument60 ))   /* Version dep.   v 6.0 */
     {
         cf = (IClassFactory*) &domdoccf.lpVtbl;
     }
@@ -161,9 +163,10 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     {
         cf = (IClassFactory*) &xmldoccf.lpVtbl;
     }
-    else if( IsEqualCLSID( rclsid, &CLSID_DOMFreeThreadedDocument ) ||   /* Version indep. v 2.x */
-             IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument ) ||
-             IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument30 ))
+    else if( IsEqualCLSID( rclsid, &CLSID_DOMFreeThreadedDocument )   ||   /* Version indep. v 2.x */
+             IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument )   ||
+             IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument30 ) ||
+             IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument60 ))
     {
         cf = (IClassFactory*) &domdoccf.lpVtbl;
     }

@@ -14761,6 +14761,7 @@ wine_fn_config_dll mswsock enable_mswsock mswsock
 wine_fn_config_dll msxml3 enable_msxml3
 wine_fn_config_test dlls/msxml3/tests msxml3_test
 wine_fn_config_dll msxml4 enable_msxml4
+wine_fn_config_dll msxml6 enable_msxml6
 wine_fn_config_dll nddeapi enable_nddeapi nddeapi
 wine_fn_config_dll netapi32 enable_netapi32 netapi32
 wine_fn_config_test dlls/netapi32/tests netapi32_test
