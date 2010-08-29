@@ -29,7 +29,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "ole2.h"
-#include "msxml2.h"
+#include "msxml6.h"
 
 #include "msxml_private.h"
 
@@ -768,7 +768,7 @@ static HRESULT WINAPI xmlnode_get_ownerDocument(
 
     TRACE("(%p)->(%p)\n", This, DOMDocument);
 
-    return DOMDocument_create_from_xmldoc(This->node->doc, (IXMLDOMDocument2**)DOMDocument);
+    return DOMDocument_create_from_xmldoc(This->node->doc, (IXMLDOMDocument3**)DOMDocument);
 }
 
 static HRESULT WINAPI xmlnode_cloneNode(

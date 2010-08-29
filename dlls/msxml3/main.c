@@ -30,7 +30,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "msxml.h"
-#include "msxml2.h"
+#include "msxml6.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
