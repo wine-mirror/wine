@@ -189,6 +189,7 @@ include/msinkaut.h
 include/mstask.h
 include/msxml.h
 include/msxml2.h
+include/msxml6.h
 include/netcon.h
 include/netfw.h
 include/oaidl.h

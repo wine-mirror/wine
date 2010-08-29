@@ -61,6 +61,7 @@ PUBLIC_IDL_H_SRCS = \
 	mstask.idl \
 	msxml.idl \
 	msxml2.idl \
+	msxml6.idl \
 	netcon.idl \
 	netfw.idl \
 	oaidl.idl \
@@ -379,6 +380,7 @@ SRCDIR_INCLUDES = \
 	msvcrt/wctype.h \
 	mswsock.h \
 	msxml2did.h \
+	msxml6did.h \
 	msxmldid.h \
 	nb30.h \
 	ndrtypes.h \

@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) 2010 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+
+#include <msxml6did.h>
+import "msxml2.idl";
+
+[
+    uuid(88d96a05-f192-11d4-a65f-0040963251e5)
+]
+coclass DOMDocument60
+{
+    [default] interface IXMLDOMDocument3;
+    [default, source] dispinterface XMLDOMDocumentEvents;
+}
+
+[
+    uuid(88d96a06-f192-11d4-a65f-0040963251e5),
+]
+coclass FreeThreadedDOMDocument60
+{
+    [default] interface IXMLDOMDocument3;
+    [default, source] dispinterface XMLDOMDocumentEvents;
+}
+
+[
+    local,
+    object,
+    dual,
+    uuid(2933bf96-7b36-11d2-b20e-00c04f983e60),
+    oleautomation,
+]
+interface IXMLDOMDocument3 : IXMLDOMDocument2
+{
+    [id(DISPID_XMLDOM_DOCUMENT3_VALIDATENODE)]
+    HRESULT validateNode(
+        [in] IXMLDOMNode *node,
+        [out, retval] IXMLDOMParseError **error);
+
+    [id(DISPID_XMLDOM_DOCUMENT3_IMPORTNODE)]
+    HRESULT importNode(
+        [in] IXMLDOMNode *node,
+        [in] VARIANT_BOOL deep,
+        [out, retval] IXMLDOMNode **clone);
+}
