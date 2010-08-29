@@ -67,7 +67,7 @@
 @ stdcall D3DX10SaveTextureToMemory(ptr ptr ptr long) d3dx10_43.D3DX10SaveTextureToMemory
 @ stdcall D3DX10UnsetAllDeviceObjects(ptr) d3dx10_43.D3DX10UnsetAllDeviceObjects
 @ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr) d3dx10_43.D3DXBoxBoundProbe
-@ stdcall D3DXColorAdjustContrast(ptr ptr long) d3dx10_43.3DXColorAdjustContrast
+@ stdcall D3DXColorAdjustContrast(ptr ptr long) d3dx10_43.D3DXColorAdjustContrast
 @ stdcall D3DXColorAdjustSaturation(ptr ptr long) d3dx10_43.D3DXColorAdjustSaturation
 @ stdcall D3DXComputeBoundingBox(ptr long long ptr ptr) d3dx10_43.D3DXComputeBoundingBox
 @ stdcall D3DXComputeBoundingSphere(ptr long long ptr ptr) d3dx10_43.D3DXComputeBoundingSphere
