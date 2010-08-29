@@ -1961,17 +1961,12 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit)
+static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_count, IWineD3DSurfaceImpl **rts)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    IWineD3DSurfaceImpl *rt = context->current_rt;
-    IWineD3DDeviceImpl *device;
-
-    device = rt->resource.device;
-    if (!surface_is_offscreen(rt))
+    if (!surface_is_offscreen(rts[0]))
     {
         ENTER_GL();
-        glDrawBuffer(surface_get_gl_buffer(rt));
+        glDrawBuffer(surface_get_gl_buffer(rts[0]));
         checkGLcall("glDrawBuffer()");
         LEAVE_GL();
     }
@@ -1980,36 +1975,31 @@ static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit
         ENTER_GL();
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
-            if (!blit)
+            const struct wined3d_gl_info *gl_info = context->gl_info;
+            unsigned int i;
+
+            for (i = 0; i < gl_info->limits.buffers; ++i)
             {
-                unsigned int i;
-
-                for (i = 0; i < gl_info->limits.buffers; ++i)
-                {
-                    if (device->render_targets[i])
-                        context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
-                    else
-                        context->draw_buffers[i] = GL_NONE;
-                }
-
-                if (gl_info->supported[ARB_DRAW_BUFFERS])
-                {
-                    GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, context->draw_buffers));
-                    checkGLcall("glDrawBuffers()");
-                }
+                if (i < rt_count && rts[i])
+                    context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
                 else
-                {
-                    glDrawBuffer(context->draw_buffers[0]);
-                    checkGLcall("glDrawBuffer()");
-                }
-            } else {
-                glDrawBuffer(GL_COLOR_ATTACHMENT0);
+                    context->draw_buffers[i] = GL_NONE;
+            }
+
+            if (gl_info->supported[ARB_DRAW_BUFFERS])
+            {
+                GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, context->draw_buffers));
+                checkGLcall("glDrawBuffers()");
+            }
+            else
+            {
+                glDrawBuffer(context->draw_buffers[0]);
                 checkGLcall("glDrawBuffer()");
             }
         }
         else
         {
-            glDrawBuffer(device->offscreenBuffer);
+            glDrawBuffer(rts[0]->resource.device->offscreenBuffer);
             checkGLcall("glDrawBuffer()");
         }
         LEAVE_GL();
@@ -2122,7 +2112,7 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 
     if (context->draw_buffer_dirty)
     {
-        context_apply_draw_buffer(context, TRUE);
+        context_apply_draw_buffers(context, 1, &context->current_rt);
         if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
             context->draw_buffer_dirty = FALSE;
     }
@@ -2252,7 +2242,7 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
 
     if (context->draw_buffer_dirty)
     {
-        context_apply_draw_buffer(context, FALSE);
+        context_apply_draw_buffers(context, context->gl_info->limits.buffers, device->render_targets);
         context->draw_buffer_dirty = FALSE;
     }
 
