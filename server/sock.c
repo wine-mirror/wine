@@ -492,15 +492,12 @@ static int sock_get_poll_events( struct fd *fd )
     if (sock->state & FD_CONNECT)
         /* connecting, wait for writable */
         return POLLOUT;
-    if (sock->state & FD_WINE_LISTENING)
-        /* listening, wait for readable */
-        return (mask & FD_ACCEPT) ? POLLIN : 0;
 
     if ( async_queued( sock->read_q ) )
     {
         if ( async_waiting( sock->read_q ) ) ev |= POLLIN | POLLPRI;
     }
-    else if (smask & FD_READ)
+    else if (smask & FD_READ || (sock->state & FD_WINE_LISTENING && mask & FD_ACCEPT))
         ev |= POLLIN | POLLPRI;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
     else if ( sock->type == SOCK_STREAM && sock->state & FD_READ && mask & FD_CLOSE &&
@@ -545,7 +542,7 @@ static void sock_queue_async( struct fd *fd, const async_data_t *data, int type,
         return;
     }
 
-    if ( ( !( sock->state & (FD_READ|FD_CONNECT) ) && type == ASYNC_TYPE_READ  ) ||
+    if ( ( !( sock->state & (FD_READ|FD_CONNECT|FD_WINE_LISTENING) ) && type == ASYNC_TYPE_READ  ) ||
          ( !( sock->state & (FD_WRITE|FD_CONNECT) ) && type == ASYNC_TYPE_WRITE ) )
     {
         set_error( STATUS_PIPE_DISCONNECTED );
