@@ -5609,6 +5609,87 @@ static void test_XSLPattern(void)
     free_bstrs();
 }
 
+static void test_splitText(void)
+{
+    IXMLDOMCDATASection *cdata;
+    IXMLDOMElement *root;
+    IXMLDOMDocument *doc;
+    IXMLDOMText *text;
+    IXMLDOMNode *node;
+    VARIANT var;
+    VARIANT_BOOL success;
+    LONG length;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc );
+    ok( hr == S_OK, "got 0x%08x\n", hr );
+    if( hr != S_OK )
+        return;
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<root></root>"), &success);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &root);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("beautiful plumage"), &cdata);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&var) = VT_EMPTY;
+    hr = IXMLDOMElement_appendChild(root, (IXMLDOMNode*)cdata, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    length = 0;
+    hr = IXMLDOMCDATASection_get_length(cdata, &length);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(length > 0, "got %d\n", length);
+
+    hr = IXMLDOMCDATASection_splitText(cdata, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    text = (void*)0xdeadbeef;
+    /* negative offset */
+    hr = IXMLDOMCDATASection_splitText(cdata, -1, &text);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(text == (void*)0xdeadbeef, "got %p\n", text);
+
+    text = (void*)0xdeadbeef;
+    /* offset outside data */
+    hr = IXMLDOMCDATASection_splitText(cdata, length + 1, &text);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(text == 0, "got %p\n", text);
+
+    text = (void*)0xdeadbeef;
+    /* offset outside data */
+    hr = IXMLDOMCDATASection_splitText(cdata, length, &text);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(text == 0, "got %p\n", text);
+
+    /* no empty node created */
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMCDATASection_get_nextSibling(cdata, &node);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(node == 0, "got %p\n", text);
+
+    hr = IXMLDOMCDATASection_splitText(cdata, 10, &text);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    length = 0;
+    hr = IXMLDOMText_get_length(text, &length);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(length == 7, "got %d\n", length);
+
+    hr = IXMLDOMCDATASection_get_nextSibling(cdata, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMText_Release(text);
+    IXMLDOMElement_Release(root);
+    IXMLDOMCDATASection_Release(cdata);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -5619,44 +5700,46 @@ START_TEST(domdoc)
     if (r != S_OK)
         return;
 
-    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
-        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
-    if (SUCCEEDED(r))
-    {
-        IXMLDOMDocument_Release(doc);
-
-        test_domdoc();
-        test_persiststreaminit();
-        test_domnode();
-        test_refs();
-        test_create();
-        test_getElementsByTagName();
-        test_get_text();
-        test_get_childNodes();
-        test_get_firstChild();
-        test_removeChild();
-        test_replaceChild();
-        test_removeNamedItem();
-        test_IXMLDOMDocument2();
-        test_XPath();
-        test_XSLPattern();
-        test_cloneNode();
-        test_xmlTypes();
-        test_nodeTypeTests();
-        test_DocumentSaveToDocument();
-        test_DocumentSaveToFile();
-        test_testTransforms();
-        test_Namespaces();
-        test_FormattingXML();
-        test_NodeTypeValue();
-        test_TransformWithLoadingLocalFile();
-        test_put_nodeValue();
-        test_document_IObjectSafety();
-    }
-    else
-        win_skip("IXMLDOMDocument is not available (0x%08x)\n", r);
-
     test_XMLHTTP();
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc );
+    if (FAILED(r))
+    {
+        win_skip("IXMLDOMDocument is not available (0x%08x)\n", r);
+        return;
+    }
+
+    IXMLDOMDocument_Release(doc);
+
+    test_domdoc();
+    test_persiststreaminit();
+    test_domnode();
+    test_refs();
+    test_create();
+    test_getElementsByTagName();
+    test_get_text();
+    test_get_childNodes();
+    test_get_firstChild();
+    test_removeChild();
+    test_replaceChild();
+    test_removeNamedItem();
+    test_IXMLDOMDocument2();
+    test_XPath();
+    test_XSLPattern();
+    test_cloneNode();
+    test_xmlTypes();
+    test_nodeTypeTests();
+    test_DocumentSaveToDocument();
+    test_DocumentSaveToFile();
+    test_testTransforms();
+    test_Namespaces();
+    test_FormattingXML();
+    test_NodeTypeValue();
+    test_TransformWithLoadingLocalFile();
+    test_put_nodeValue();
+    test_document_IObjectSafety();
+    test_splitText();
 
     CoUninitialize();
 }

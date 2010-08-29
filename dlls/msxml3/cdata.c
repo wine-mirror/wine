@@ -725,10 +725,48 @@ static HRESULT WINAPI domcdata_splitText(
     LONG offset, IXMLDOMText **txtNode)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    FIXME("(%p)->(%d %p)\n", This, offset, txtNode);
-    return E_NOTIMPL;
-}
+    IXMLDOMDocument *doc;
+    LONG length = 0;
+    HRESULT hr;
 
+    TRACE("(%p)->(%d %p)\n", This, offset, txtNode);
+
+    if (!txtNode || offset < 0) return E_INVALIDARG;
+
+    *txtNode = NULL;
+
+    IXMLDOMCDATASection_get_length(iface, &length);
+
+    if (offset > length) return E_INVALIDARG;
+    if (offset == length) return S_FALSE;
+
+    hr = IXMLDOMCDATASection_get_ownerDocument(iface, &doc);
+    if (hr == S_OK)
+    {
+        BSTR data;
+
+        hr = IXMLDOMCDATASection_substringData(iface, offset, length - offset, &data);
+        if (hr == S_OK)
+        {
+            hr = IXMLDOMDocument_createTextNode(doc, data, txtNode);
+            if (hr == S_OK)
+            {
+                IXMLDOMNode *parent;
+
+                hr = IXMLDOMCDATASection_get_parentNode(iface, &parent);
+                if (hr == S_OK)
+                {
+                    IXMLDOMCDATASection_deleteData(iface, 0, offset);
+                    hr = IXMLDOMNode_appendChild(parent, (IXMLDOMNode*)*txtNode, NULL);
+                }
+            }
+            SysFreeString(data);
+        }
+        IXMLDOMDocument_Release(doc);
+    }
+
+    return hr;
+}
 
 static const struct IXMLDOMCDATASectionVtbl domcdata_vtbl =
 {
