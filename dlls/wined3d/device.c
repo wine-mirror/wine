@@ -5500,7 +5500,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         IWineD3DSurface *surface, const WINED3DRECT *pRect, const WINED3DCOLORVALUE *color)
 {
     IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)surface;
-    WINEDDBLTFX BltFx;
 
     TRACE("iface %p, surface %p, rect %s, color {%.8e, %.8e, %.8e, %.8e}.\n",
             iface, surface, wine_dbgstr_rect((const RECT *)pRect),
@@ -5512,22 +5511,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        const RECT draw_rect = {0, 0, s->currentDesc.Width, s->currentDesc.Height};
-
-        return device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &s,
-                !!pRect, (const RECT *)pRect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
-    }
-    else
-    {
-        /* Just forward this to the DirectDraw blitting engine */
-        memset(&BltFx, 0, sizeof(BltFx));
-        BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = wined3d_format_convert_from_float(s->resource.format_desc, color);
-        return IWineD3DSurface_Blt(surface, (const RECT *)pRect, NULL, NULL,
-                WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
-    }
+    return surface_color_fill(s, (const RECT *)pRect, color);
 }
 
 static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *iface,
