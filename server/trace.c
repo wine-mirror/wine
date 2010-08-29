@@ -1539,6 +1539,12 @@ static void dump_accept_socket_reply( const struct accept_socket_reply *req )
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_accept_into_socket_request( const struct accept_into_socket_request *req )
+{
+    fprintf( stderr, " lhandle=%04x", req->lhandle );
+    fprintf( stderr, ", ahandle=%04x", req->ahandle );
+}
+
 static void dump_set_socket_event_request( const struct set_socket_event_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -3874,6 +3880,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_unlock_file_request,
     (dump_func)dump_create_socket_request,
     (dump_func)dump_accept_socket_request,
+    (dump_func)dump_accept_into_socket_request,
     (dump_func)dump_set_socket_event_request,
     (dump_func)dump_get_socket_event_request,
     (dump_func)dump_enable_socket_event_request,
@@ -4120,6 +4127,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_socket_reply,
     (dump_func)dump_accept_socket_reply,
     NULL,
+    NULL,
     (dump_func)dump_get_socket_event_reply,
     NULL,
     NULL,
@@ -4364,6 +4372,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "unlock_file",
     "create_socket",
     "accept_socket",
+    "accept_into_socket",
     "set_socket_event",
     "get_socket_event",
     "enable_socket_event",

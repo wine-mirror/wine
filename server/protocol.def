@@ -1089,6 +1089,13 @@ enum server_fd_type
 @END
 
 
+/* Accept into an initialized socket */
+@REQ(accept_into_socket)
+    obj_handle_t lhandle;       /* handle to the listening socket */
+    obj_handle_t ahandle;       /* handle to the accepting socket */
+@END
+
+
 /* Set socket event parameters */
 @REQ(set_socket_event)
     obj_handle_t  handle;        /* handle to the socket */

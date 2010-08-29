@@ -1599,32 +1599,20 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
 /* duplicate an fd object for a different user */
 struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing, unsigned int options )
 {
-    struct fd *fd = alloc_object( &fd_ops );
+    struct fd *fd = alloc_fd_object();
 
     if (!fd) return NULL;
 
-    fd->fd_ops     = NULL;
-    fd->user       = NULL;
-    fd->inode      = NULL;
-    fd->closed     = NULL;
     fd->access     = access;
     fd->options    = options;
     fd->sharing    = sharing;
-    fd->unix_fd    = -1;
     fd->cacheable  = orig->cacheable;
-    fd->signaled   = 0;
-    fd->fs_locks   = 0;
-    fd->poll_index = -1;
-    fd->read_q     = NULL;
-    fd->write_q    = NULL;
-    fd->wait_q     = NULL;
-    fd->completion = NULL;
-    list_init( &fd->inode_entry );
-    list_init( &fd->locks );
 
-    if (!(fd->unix_name = mem_alloc( strlen(orig->unix_name) + 1 ))) goto failed;
-    strcpy( fd->unix_name, orig->unix_name );
-    if ((fd->poll_index = add_poll_user( fd )) == -1) goto failed;
+    if (orig->unix_name)
+    {
+        if (!(fd->unix_name = mem_alloc( strlen(orig->unix_name) + 1 ))) goto failed;
+        strcpy( fd->unix_name, orig->unix_name );
+    }
 
     if (orig->inode)
     {

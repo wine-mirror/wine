@@ -155,6 +155,7 @@ DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
 DECL_HANDLER(create_socket);
 DECL_HANDLER(accept_socket);
+DECL_HANDLER(accept_into_socket);
 DECL_HANDLER(set_socket_event);
 DECL_HANDLER(get_socket_event);
 DECL_HANDLER(enable_socket_event);
@@ -403,6 +404,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_unlock_file,
     (req_handler)req_create_socket,
     (req_handler)req_accept_socket,
+    (req_handler)req_accept_into_socket,
     (req_handler)req_set_socket_event,
     (req_handler)req_get_socket_event,
     (req_handler)req_enable_socket_event,
@@ -924,6 +926,9 @@ C_ASSERT( FIELD_OFFSET(struct accept_socket_request, attributes) == 20 );
 C_ASSERT( sizeof(struct accept_socket_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct accept_socket_reply, handle) == 8 );
 C_ASSERT( sizeof(struct accept_socket_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct accept_into_socket_request, lhandle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct accept_into_socket_request, ahandle) == 16 );
+C_ASSERT( sizeof(struct accept_into_socket_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, mask) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, event) == 20 );

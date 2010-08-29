@@ -605,6 +605,26 @@ static void sock_destroy( struct object *obj )
     }
 }
 
+static void init_sock(struct sock *sock)
+{
+    sock->state = 0;
+    sock->mask    = 0;
+    sock->hmask   = 0;
+    sock->pmask   = 0;
+    sock->polling = 0;
+    sock->flags   = 0;
+    sock->type    = 0;
+    sock->family  = 0;
+    sock->event   = NULL;
+    sock->window  = 0;
+    sock->message = 0;
+    sock->wparam  = 0;
+    sock->deferred = NULL;
+    sock->read_q  = NULL;
+    sock->write_q = NULL;
+    memset( sock->errors, 0, sizeof(sock->errors) );
+}
+
 /* create a new and unconnected socket */
 static struct object *create_socket( int family, int type, int protocol, unsigned int flags )
 {
@@ -625,22 +645,12 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
         close( sockfd );
         return NULL;
     }
-    sock->state = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
-    sock->mask    = 0;
-    sock->hmask   = 0;
-    sock->pmask   = 0;
-    sock->polling = 0;
-    sock->flags   = flags;
-    sock->type    = type;
-    sock->family  = family;
-    sock->event   = NULL;
-    sock->window  = 0;
-    sock->message = 0;
-    sock->wparam  = 0;
-    sock->deferred = NULL;
-    sock->read_q  = NULL;
-    sock->write_q = NULL;
-    memset( sock->errors, 0, sizeof(sock->errors) );
+    init_sock( sock );
+    sock->state  = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
+    sock->flags  = flags;
+    sock->type   = type;
+    sock->family = family;
+
     if (!(sock->fd = create_anonymous_fd( &sock_fd_ops, sockfd, &sock->obj,
                             (flags & WSA_FLAG_OVERLAPPED) ? 0 : FILE_SYNCHRONOUS_IO_NONALERT )))
     {
@@ -652,17 +662,38 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     return &sock->obj;
 }
 
+/* accepts a socket and inits it */
+static int accept_new_fd( struct sock *sock )
+{
+
+    /* Try to accept(2). We can't be safe that this an already connected socket
+     * or that accept() is allowed on it. In those cases we will get -1/errno
+     * return.
+     */
+    int acceptfd;
+    struct sockaddr saddr;
+    unsigned int slen = sizeof(saddr);
+    acceptfd = accept( get_unix_fd(sock->fd), &saddr, &slen);
+    if (acceptfd == -1)
+    {
+        sock_set_error();
+        return acceptfd;
+    }
+
+    fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
+    return acceptfd;
+}
+
 /* accept a socket (creates a new fd) */
 static struct sock *accept_socket( obj_handle_t handle )
 {
     struct sock *acceptsock;
     struct sock *sock;
     int	acceptfd;
-    struct sockaddr	saddr;
 
     sock = (struct sock *)get_handle_obj( current->process, handle, FILE_READ_DATA, &sock_ops );
     if (!sock)
-    	return NULL;
+        return NULL;
 
     if ( sock->deferred )
     {
@@ -671,16 +702,8 @@ static struct sock *accept_socket( obj_handle_t handle )
     }
     else
     {
-
-        /* Try to accept(2). We can't be safe that this an already connected socket
-         * or that accept() is allowed on it. In those cases we will get -1/errno
-         * return.
-         */
-        unsigned int slen = sizeof(saddr);
-        acceptfd = accept( get_unix_fd(sock->fd), &saddr, &slen);
-        if (acceptfd==-1)
+        if ((acceptfd = accept_new_fd( sock )) == -1)
         {
-            sock_set_error();
             release_object( sock );
             return NULL;
         }
@@ -691,27 +714,18 @@ static struct sock *accept_socket( obj_handle_t handle )
             return NULL;
         }
 
+        init_sock( acceptsock );
         /* newly created socket gets the same properties of the listening socket */
-        fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
         acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
         if (sock->state & FD_WINE_NONBLOCKING)
             acceptsock->state |= FD_WINE_NONBLOCKING;
         acceptsock->mask    = sock->mask;
-        acceptsock->hmask   = 0;
-        acceptsock->pmask   = 0;
-        acceptsock->polling = 0;
         acceptsock->type    = sock->type;
         acceptsock->family  = sock->family;
-        acceptsock->event   = NULL;
         acceptsock->window  = sock->window;
         acceptsock->message = sock->message;
-        acceptsock->wparam  = 0;
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
         acceptsock->flags = sock->flags;
-        acceptsock->deferred = NULL;
-        acceptsock->read_q  = NULL;
-        acceptsock->write_q = NULL;
-        memset( acceptsock->errors, 0, sizeof(acceptsock->errors) );
         if (!(acceptsock->fd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj,
                                                     get_fd_options( sock->fd ) )))
         {
@@ -726,6 +740,54 @@ static struct sock *accept_socket( obj_handle_t handle )
     sock_reselect( sock );
     release_object( sock );
     return acceptsock;
+}
+
+static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
+{
+    int acceptfd;
+    struct fd *newfd;
+    if ( sock->deferred )
+    {
+        newfd = dup_fd_object( sock->deferred->fd, 0, 0,
+                               get_fd_options( acceptsock->fd ) );
+        if ( !newfd )
+            return FALSE;
+
+        set_fd_user( newfd, &sock_fd_ops, &acceptsock->obj );
+
+        release_object( sock->deferred );
+        sock->deferred = NULL;
+    }
+    else
+    {
+        if ((acceptfd = accept_new_fd( sock )) == -1)
+            return FALSE;
+
+        if (!(newfd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj,
+                                            get_fd_options( acceptsock->fd ) )))
+        {
+            close( acceptfd );
+            return FALSE;
+        }
+    }
+
+    acceptsock->state  |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
+    acceptsock->hmask   = 0;
+    acceptsock->pmask   = 0;
+    acceptsock->polling = 0;
+    acceptsock->type    = sock->type;
+    acceptsock->family  = sock->family;
+    acceptsock->wparam  = 0;
+    acceptsock->deferred = NULL;
+    if (acceptsock->fd) release_object( acceptsock->fd );
+    acceptsock->fd = newfd;
+
+    clear_error();
+    sock->pmask &= ~FD_ACCEPT;
+    sock->hmask &= ~FD_ACCEPT;
+    sock_reselect( sock );
+
+    return TRUE;
 }
 
 /* set the last error depending on errno */
@@ -875,6 +937,32 @@ DECL_HANDLER(accept_socket)
         sock_reselect( sock );
         release_object( &sock->obj );
     }
+}
+
+/* accept a socket into an initialized socket */
+DECL_HANDLER(accept_into_socket)
+{
+    struct sock *sock, *acceptsock;
+    const int all_attributes = FILE_READ_ATTRIBUTES|FILE_WRITE_ATTRIBUTES|FILE_READ_DATA;
+
+    if (!(sock = (struct sock *)get_handle_obj( current->process, req->lhandle,
+                                                all_attributes, &sock_ops)))
+        return;
+
+    if (!(acceptsock = (struct sock *)get_handle_obj( current->process, req->ahandle,
+                                                      all_attributes, &sock_ops)))
+    {
+        release_object( sock );
+        return;
+    }
+
+    if (accept_into_socket( sock, acceptsock ))
+    {
+        acceptsock->wparam = req->ahandle;  /* wparam for message is the socket handle */
+        sock_reselect( acceptsock );
+    }
+    release_object( acceptsock );
+    release_object( sock );
 }
 
 /* set socket event parameters */
