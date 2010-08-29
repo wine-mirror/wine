@@ -29,6 +29,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -996,10 +998,10 @@ static HRESULT WINAPI XDNDDATAOBJECT_GetData(IDataObject *dataObject,
             if (current->cf_win == formatEtc->cfFormat)
             {
                 pMedium->tymed = TYMED_HGLOBAL;
-                pMedium->hGlobal = HeapAlloc(GetProcessHeap(), 0, current->size);
-                if (pMedium->hGlobal == NULL)
+                pMedium->u.hGlobal = HeapAlloc(GetProcessHeap(), 0, current->size);
+                if (pMedium->u.hGlobal == NULL)
                     return E_OUTOFMEMORY;
-                memcpy(pMedium->hGlobal, current->data, current->size);
+                memcpy(pMedium->u.hGlobal, current->data, current->size);
                 pMedium->pUnkForRelease = 0;
                 return S_OK;
             }
