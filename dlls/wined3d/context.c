@@ -2154,38 +2154,8 @@ void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
         LEAVE_GL();
     }
 
-    if (!surface_is_offscreen(rts[0]))
-    {
-        ENTER_GL();
-        context_set_draw_buffer(context, surface_get_gl_buffer(rts[0]));
-        LEAVE_GL();
-    }
-    else
-    {
-        ENTER_GL();
-
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-        {
-            const struct wined3d_gl_info *gl_info = context->gl_info;
-            for (i = 0; i < gl_info->limits.buffers; ++i)
-            {
-                if (i < rt_count && rts[i])
-                    context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
-                else
-                    context->draw_buffers[i] = GL_NONE;
-            }
-            GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, context->draw_buffers));
-            checkGLcall("glDrawBuffers()");
-            context->draw_buffer_dirty = TRUE;
-        }
-        else
-        {
-            glDrawBuffer(device->offscreenBuffer);
-            checkGLcall("glDrawBuffer()");
-        }
-
-        LEAVE_GL();
-    }
+    context_apply_draw_buffers(context, rt_count, rts);
+    context->draw_buffer_dirty = TRUE;
 
     if (context->last_was_blit)
     {
