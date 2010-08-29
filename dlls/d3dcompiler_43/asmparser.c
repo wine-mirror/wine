@@ -110,7 +110,7 @@ static void asmparser_dcl_output(struct asm_parser *This, DWORD usage, DWORD num
         asmparser_message(This, "Line %u: Output register declared in a pixel shader\n", This->line_no);
         set_parse_status(This, PARSE_ERR);
     }
-    if(!record_declaration(This->shader, usage, num, 0, TRUE, reg->regnum, reg->writemask, FALSE)) {
+    if(!record_declaration(This->shader, usage, num, 0, TRUE, reg->regnum, reg->u.writemask, FALSE)) {
         ERR("Out of memory\n");
         set_parse_status(This, PARSE_ERR);
     }
@@ -141,7 +141,7 @@ static void asmparser_dcl_input(struct asm_parser *This, DWORD usage, DWORD num,
     instr.shift = 0;
     This->funcs->dstreg(This, &instr, reg);
 
-    if(!record_declaration(This->shader, usage, num, mod, FALSE, reg->regnum, reg->writemask, FALSE)) {
+    if(!record_declaration(This->shader, usage, num, mod, FALSE, reg->regnum, reg->u.writemask, FALSE)) {
         ERR("Out of memory\n");
         set_parse_status(This, PARSE_ERR);
     }
@@ -155,7 +155,7 @@ static void asmparser_dcl_input_ps_2(struct asm_parser *This, DWORD usage, DWORD
     instr.dstmod = mod;
     instr.shift = 0;
     This->funcs->dstreg(This, &instr, reg);
-    if(!record_declaration(This->shader, usage, num, mod, FALSE, instr.dst.regnum, instr.dst.writemask, FALSE)) {
+    if(!record_declaration(This->shader, usage, num, mod, FALSE, instr.dst.regnum, instr.dst.u.writemask, FALSE)) {
         ERR("Out of memory\n");
         set_parse_status(This, PARSE_ERR);
     }
@@ -396,7 +396,7 @@ static void asmparser_texhelper(struct asm_parser *This, DWORD mod, DWORD shift,
     ZeroMemory(&instr->src[1], sizeof(instr->src[1]));
     instr->src[1].type = BWRITERSPR_SAMPLER;
     instr->src[1].regnum = dst->regnum;
-    instr->src[1].swizzle = BWRITERVS_NOSWIZZLE;
+    instr->src[1].u.swizzle = BWRITERVS_NOSWIZZLE;
     instr->src[1].srcmod = BWRITERSPSM_NONE;
     instr->src[1].rel_reg = NULL;
 
@@ -450,7 +450,7 @@ static void asmparser_texld14(struct asm_parser *This, DWORD mod, DWORD shift,
     ZeroMemory(&instr->src[1], sizeof(instr->src[1]));
     instr->src[1].type = BWRITERSPR_SAMPLER;
     instr->src[1].regnum = dst->regnum;
-    instr->src[1].swizzle = BWRITERVS_NOSWIZZLE;
+    instr->src[1].u.swizzle = BWRITERVS_NOSWIZZLE;
     instr->src[1].srcmod = BWRITERSPSM_NONE;
     instr->src[1].rel_reg = NULL;
 
@@ -467,7 +467,7 @@ static void asmparser_texreg2ar(struct asm_parser *This, DWORD mod, DWORD shift,
 
     src = map_oldps_register(src0, FALSE);
     /* Supply the correct swizzle */
-    src.swizzle = BWRITERVS_X_W | BWRITERVS_Y_X | BWRITERVS_Z_X | BWRITERVS_W_X;
+    src.u.swizzle = BWRITERVS_X_W | BWRITERVS_Y_X | BWRITERVS_Z_X | BWRITERVS_W_X;
     asmparser_texhelper(This, mod, shift, dst, &src);
 }
 
@@ -478,7 +478,7 @@ static void asmparser_texreg2gb(struct asm_parser *This, DWORD mod, DWORD shift,
 
     src = map_oldps_register(src0, FALSE);
     /* Supply the correct swizzle */
-    src.swizzle = BWRITERVS_X_Y | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z;
+    src.u.swizzle = BWRITERVS_X_Y | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z;
     asmparser_texhelper(This, mod, shift, dst, &src);
 }
 
@@ -489,7 +489,7 @@ static void asmparser_texreg2rgb(struct asm_parser *This, DWORD mod, DWORD shift
 
     src = map_oldps_register(src0, FALSE);
     /* Supply the correct swizzle */
-    src.swizzle = BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z | BWRITERVS_W_Z;
+    src.u.swizzle = BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z | BWRITERVS_W_Z;
     asmparser_texhelper(This, mod, shift, dst, &src);
 }
 
@@ -618,11 +618,11 @@ static struct shader_reg map_oldvs_register(const struct shader_reg *reg) {
                     break;
                 case BWRITERSRO_FOG:
                     ret.regnum = OFOG_REG;
-                    ret.writemask = OFOG_WRITEMASK;
+                    ret.u.writemask = OFOG_WRITEMASK;
                     break;
                 case BWRITERSRO_POINT_SIZE:
                     ret.regnum = OPTS_REG;
-                    ret.writemask = OPTS_WRITEMASK;
+                    ret.u.writemask = OPTS_WRITEMASK;
                     break;
                 default:
                     FIXME("Unhandled RASTOUT register %u\n", reg->regnum);
@@ -690,9 +690,9 @@ static void check_abs_srcmod(struct asm_parser *This, DWORD srcmod) {
 
 static void check_loop_swizzle(struct asm_parser *This,
                                const struct shader_reg *src) {
-    if((src->type == BWRITERSPR_LOOP && src->swizzle != BWRITERVS_NOSWIZZLE) ||
+    if((src->type == BWRITERSPR_LOOP && src->u.swizzle != BWRITERVS_NOSWIZZLE) ||
        (src->rel_reg && src->rel_reg->type == BWRITERSPR_LOOP &&
-        src->rel_reg->swizzle != BWRITERVS_NOSWIZZLE)) {
+        src->rel_reg->u.swizzle != BWRITERVS_NOSWIZZLE)) {
         asmparser_message(This, "Line %u: Swizzle not allowed on aL register\n", This->line_no);
         set_parse_status(This, PARSE_ERR);
     }

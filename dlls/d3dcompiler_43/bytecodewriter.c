@@ -373,7 +373,7 @@ static void write_declarations(struct bc_writer *This,
         /* Write the dest register */
         reg.type = type;
         reg.regnum = decls[i].regnum;
-        reg.writemask = decls[i].writemask;
+        reg.u.writemask = decls[i].writemask;
         This->funcs->dstreg(This, &reg, buffer, 0, decls[i].mod);
     }
 }
@@ -687,7 +687,7 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
 
     switch(reg->type) {
         case BWRITERSPR_OUTPUT:
-            token |= map_vs_output(This, reg->regnum, reg->writemask, &has_wmask);
+            token |= map_vs_output(This, reg->regnum, reg->u.writemask, &has_wmask);
             break;
 
         case BWRITERSPR_RASTOUT:
@@ -747,7 +747,7 @@ static void vs_12_dstreg(struct bc_writer *This, const struct shader_reg *reg,
     token |= d3d9_dstmod(mod);
 
     if(has_wmask) {
-        token |= d3d9_writemask(reg->writemask);
+        token |= d3d9_writemask(reg->u.writemask);
     }
     put_dword(buffer, token);
 }
@@ -763,7 +763,7 @@ static void vs_1_x_srcreg(struct bc_writer *This, const struct shader_reg *reg,
             /* Map the swizzle to a writemask, the format expected
                by map_vs_output
              */
-            switch(reg->swizzle) {
+            switch(reg->u.swizzle) {
                 case BWRITERVS_SWIZZLE_X:
                     component = BWRITERSP_WRITEMASK_0;
                     break;
@@ -798,7 +798,7 @@ static void vs_1_x_srcreg(struct bc_writer *This, const struct shader_reg *reg,
             if(reg->rel_reg) {
                 if(reg->rel_reg->type != BWRITERSPR_ADDR ||
                    reg->rel_reg->regnum != 0 ||
-                   reg->rel_reg->swizzle != BWRITERVS_SWIZZLE_X) {
+                   reg->rel_reg->u.swizzle != BWRITERVS_SWIZZLE_X) {
                     WARN("Relative addressing in vs_1_x is only allowed with a0.x\n");
                     This->state = E_INVALIDARG;
                     return;
@@ -813,7 +813,7 @@ static void vs_1_x_srcreg(struct bc_writer *This, const struct shader_reg *reg,
             return;
     }
 
-    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
     token |= d3d9_srcmod(reg->srcmod);
     put_dword(buffer, token);
@@ -908,7 +908,7 @@ static void ps_1_0123_srcreg(struct bc_writer *This, const struct shader_reg *re
             return;
     }
 
-    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
     if(reg->srcmod == BWRITERSPSM_DZ || reg->srcmod == BWRITERSPSM_DW ||
        reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG ||
@@ -951,7 +951,7 @@ static void ps_1_0123_dstreg(struct bc_writer *This, const struct shader_reg *re
     token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
     token |= d3d9_dstmod(mod);
 
-    token |= d3d9_writemask(reg->writemask);
+    token |= d3d9_writemask(reg->u.writemask);
     put_dword(buffer, token);
 }
 
@@ -1079,17 +1079,17 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
         swizzlemask = (3 << BWRITERVS_SWIZZLE_SHIFT) |
             (3 << (BWRITERVS_SWIZZLE_SHIFT + 2)) |
             (3 << (BWRITERVS_SWIZZLE_SHIFT + 4));
-        if((instr->src[0].swizzle & swizzlemask) == (BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z)) {
+        if((instr->src[0].u.swizzle & swizzlemask) == (BWRITERVS_X_X | BWRITERVS_Y_Y | BWRITERVS_Z_Z)) {
             TRACE("writing texreg2rgb\n");
             This->funcs->opcode(This, instr, D3DSIO_TEXREG2RGB & D3DSI_OPCODE_MASK, buffer);
-        } else if(instr->src[0].swizzle == (BWRITERVS_X_W | BWRITERVS_Y_X | BWRITERVS_Z_X | BWRITERVS_W_X)) {
+        } else if(instr->src[0].u.swizzle == (BWRITERVS_X_W | BWRITERVS_Y_X | BWRITERVS_Z_X | BWRITERVS_W_X)) {
             TRACE("writing texreg2ar\n");
             This->funcs->opcode(This, instr, D3DSIO_TEXREG2AR & D3DSI_OPCODE_MASK, buffer);
-        } else if(instr->src[0].swizzle == (BWRITERVS_X_Y | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z)) {
+        } else if(instr->src[0].u.swizzle == (BWRITERVS_X_Y | BWRITERVS_Y_Z | BWRITERVS_Z_Z | BWRITERVS_W_Z)) {
             TRACE("writing texreg2gb\n");
             This->funcs->opcode(This, instr, D3DSIO_TEXREG2GB & D3DSI_OPCODE_MASK, buffer);
         } else {
-            WARN("Unsupported src addr swizzle in dependent texld: 0x%08x\n", instr->src[0].swizzle);
+            WARN("Unsupported src addr swizzle in dependent texld: 0x%08x\n", instr->src[0].u.swizzle);
             This->state = E_INVALIDARG;
             return;
         }
@@ -1100,7 +1100,7 @@ static void instr_ps_1_0123_texld(struct bc_writer *This,
          */
         This->funcs->dstreg(This, &instr->dst, buffer, instr->shift, instr->dstmod);
         reg = instr->src[0];
-        reg.swizzle = BWRITERVS_NOSWIZZLE;
+        reg.u.swizzle = BWRITERVS_NOSWIZZLE;
         This->funcs->srcreg(This, &reg, buffer);
     } else {
         WARN("Invalid address data source register\n");
@@ -1211,7 +1211,7 @@ static void ps_1_4_srcreg(struct bc_writer *This, const struct shader_reg *reg,
             return;
     }
 
-    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
     if(reg->srcmod == BWRITERSPSM_ABS || reg->srcmod == BWRITERSPSM_ABSNEG ||
        reg->srcmod == BWRITERSPSM_NOT) {
@@ -1254,7 +1254,7 @@ static void ps_1_4_dstreg(struct bc_writer *This, const struct shader_reg *reg,
     token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
     token |= d3d9_dstmod(mod);
 
-    token |= d3d9_writemask(reg->writemask);
+    token |= d3d9_writemask(reg->u.writemask);
     put_dword(buffer, token);
 }
 
@@ -1388,7 +1388,7 @@ static void vs_2_srcreg(struct bc_writer *This,
             /* Map the swizzle to a writemask, the format expected
                by map_vs_output
              */
-            switch(reg->swizzle) {
+            switch(reg->u.swizzle) {
                 case BWRITERVS_SWIZZLE_X:
                     component = BWRITERSP_WRITEMASK_0;
                     break;
@@ -1461,7 +1461,7 @@ static void vs_2_srcreg(struct bc_writer *This,
             return;
     }
 
-    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
     token |= d3d9_srcmod(reg->srcmod);
 
@@ -1706,7 +1706,7 @@ static void ps_2_srcreg(struct bc_writer *This,
             return;
     }
 
-    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
+    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK; /* already shifted */
 
     token |= d3d9_srcmod(reg->srcmod);
     put_dword(buffer, token);
@@ -1759,7 +1759,7 @@ static void ps_2_0_dstreg(struct bc_writer *This,
     token |= (shift << D3DSP_DSTSHIFT_SHIFT) & D3DSP_DSTSHIFT_MASK;
     token |= d3d9_dstmod(mod);
 
-    token |= d3d9_writemask(reg->writemask);
+    token |= d3d9_writemask(reg->u.writemask);
     put_dword(buffer, token);
 }
 
@@ -1905,7 +1905,7 @@ static void sm_3_srcreg(struct bc_writer *This,
     token |= (d3d9reg << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2;
     token |= reg->regnum & D3DSP_REGNUM_MASK;
 
-    token |= d3d9_swizzle(reg->swizzle) & D3DVS_SWIZZLE_MASK;
+    token |= d3d9_swizzle(reg->u.swizzle) & D3DVS_SWIZZLE_MASK;
     token |= d3d9_srcmod(reg->srcmod);
 
     if(reg->rel_reg) {
@@ -1960,7 +1960,7 @@ static void sm_3_dstreg(struct bc_writer *This,
 
     token |= d3d9_dstmod(mod);
 
-    token |= d3d9_writemask(reg->writemask);
+    token |= d3d9_writemask(reg->u.writemask);
     put_dword(buffer, token);
 
     /* vs_2_0 and newer write the register containing the index explicitly in the

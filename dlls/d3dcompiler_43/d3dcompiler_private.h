@@ -83,7 +83,7 @@ struct shader_reg {
     union {
         DWORD               swizzle;
         DWORD               writemask;
-    };
+    } u;
 };
 
 struct instruction {
