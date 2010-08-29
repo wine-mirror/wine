@@ -665,7 +665,7 @@ static VARIANT WINAPI variant_func( int a0, BOOL a1, DECIMAL a2, VARIANT a3 )
     V_VT(&var) = VT_LPWSTR;
     V_UI4(&var) = 0xbabe;
     ok( a2.Hi32 == 1122, "wrong arg2.Hi32 %x\n", a2.Hi32 );
-    ok( a2.Lo64 == 3344, "wrong arg2.Lo64 %08x%08x\n", (DWORD)(a2.Lo64 >> 32), (DWORD)a2.Lo64 );
+    ok( U1(a2).Lo64 == 3344, "wrong arg2.Lo64 %08x%08x\n", (DWORD)(U1(a2).Lo64 >> 32), (DWORD)U1(a2).Lo64 );
     ok( V_VT(&a3) == VT_EMPTY, "wrong arg3 type %x\n", V_VT(&a3) );
     ok( V_UI4(&a3) == 0xdeadbeef, "wrong arg3 value %x\n", V_UI4(&a3) );
     return var;
@@ -777,7 +777,7 @@ static void test_DispCallFunc(void)
     V_BOOL(&args[1]) = 1;
     types[2] = VT_DECIMAL;
     V_DECIMAL(&args[2]).Hi32 = 1122;
-    V_DECIMAL(&args[2]).Lo64 = 3344;
+    U1(V_DECIMAL(&args[2])).Lo64 = 3344;
     types[3] = VT_VARIANT;
     V_VT(&args[3]) = VT_EMPTY;
     V_UI4(&args[3]) = 0xdeadbeef;
@@ -1513,7 +1513,7 @@ static void test_CreateTypeLib(void) {
 
     edesc = pfuncdesc->lprgelemdescParam;
     ok(edesc->tdesc.vt == VT_BSTR, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->idldesc.wIDLFlags == IDLFLAG_FIN, "got: %x\n", edesc->idldesc.wIDLFlags);
+    ok(U(*edesc).idldesc.wIDLFlags == IDLFLAG_FIN, "got: %x\n", U(*edesc).idldesc.wIDLFlags);
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
@@ -1587,8 +1587,8 @@ static void test_CreateTypeLib(void) {
 
     edesc = pfuncdesc->lprgelemdescParam;
     ok(edesc->tdesc.vt == VT_PTR, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
-    ok(edesc->paramdesc.pparamdescex == NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
     ok(U(edesc->tdesc).lptdesc != NULL, "got: %p\n", U(edesc->tdesc).lptdesc);
     ok(U(edesc->tdesc).lptdesc->vt == VT_BSTR, "got: %d\n", U(edesc->tdesc).lptdesc->vt);
 
@@ -1620,12 +1620,12 @@ static void test_CreateTypeLib(void) {
 
     edesc = pfuncdesc->lprgelemdescParam;
     ok(edesc->tdesc.vt == VT_PTR, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
-    ok(edesc->paramdesc.pparamdescex == NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
     ok(U(edesc->tdesc).lptdesc != NULL, "got: %p\n", U(edesc->tdesc).lptdesc);
     ok(U(edesc->tdesc).lptdesc->vt == VT_PTR, "got: %d\n", U(edesc->tdesc).lptdesc->vt);
-    ok(U(edesc->tdesc).lptdesc->lptdesc != NULL, "got: %p\n", U(edesc->tdesc).lptdesc->lptdesc);
-    ok(U(edesc->tdesc).lptdesc->lptdesc->vt == VT_BSTR, "got: %d\n", U(edesc->tdesc).lptdesc->lptdesc->vt);
+    ok(U(*U(edesc->tdesc).lptdesc).lptdesc != NULL, "got: %p\n", U(*U(edesc->tdesc).lptdesc).lptdesc);
+    ok(U(*U(edesc->tdesc).lptdesc).lptdesc->vt == VT_BSTR, "got: %d\n", U(*U(edesc->tdesc).lptdesc).lptdesc->vt);
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
@@ -1657,14 +1657,14 @@ static void test_CreateTypeLib(void) {
 
     edesc = pfuncdesc->lprgelemdescParam;
     ok(edesc->tdesc.vt == VT_INT, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
-    ok(edesc->paramdesc.pparamdescex != NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
-    ok(edesc->paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
-            edesc->paramdesc.pparamdescex->cBytes);
-    ok(V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue) == VT_I4, "got: %d\n",
-            V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue));
-    ok(V_I4(&edesc->paramdesc.pparamdescex->varDefaultValue) == 0x123, "got: 0x%x\n",
-            V_I4(&edesc->paramdesc.pparamdescex->varDefaultValue));
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_I4, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0x123, "got: 0x%x\n",
+            V_I4(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
@@ -1699,19 +1699,19 @@ static void test_CreateTypeLib(void) {
 
     edesc = pfuncdesc->lprgelemdescParam;
     ok(edesc->tdesc.vt == VT_INT, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
-    ok(edesc->paramdesc.pparamdescex == NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FIN, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
 
     edesc = pfuncdesc->lprgelemdescParam + 1;
     ok(edesc->tdesc.vt == VT_UI2, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
-    ok(edesc->paramdesc.pparamdescex != NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
-    ok(edesc->paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
-            edesc->paramdesc.pparamdescex->cBytes);
-    ok(V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue) == VT_UI2, "got: %d\n",
-            V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue));
-    ok(V_UI2(&edesc->paramdesc.pparamdescex->varDefaultValue) == 0xFFFF, "got: 0x%x\n",
-            V_UI2(&edesc->paramdesc.pparamdescex->varDefaultValue));
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_UI2, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == 0xFFFF, "got: 0x%x\n",
+            V_UI2(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
@@ -1750,32 +1750,32 @@ static void test_CreateTypeLib(void) {
 
     edesc = pfuncdesc->lprgelemdescParam;
     ok(edesc->tdesc.vt == VT_BSTR, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
-    ok(edesc->paramdesc.pparamdescex != NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
-    ok(edesc->paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
-            edesc->paramdesc.pparamdescex->cBytes);
-    ok(V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
-            V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue));
-    ok(!lstrcmpW(V_BSTR(&edesc->paramdesc.pparamdescex->varDefaultValue), defaultQW),
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
             "got: %s\n",
-            wine_dbgstr_w(V_BSTR(&edesc->paramdesc.pparamdescex->varDefaultValue)));
+            wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
 
     edesc = pfuncdesc->lprgelemdescParam + 1;
     ok(edesc->tdesc.vt == VT_BSTR, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
-    ok(edesc->paramdesc.pparamdescex != NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
-    ok(edesc->paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
-            edesc->paramdesc.pparamdescex->cBytes);
-    ok(V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
-            V_VT(&edesc->paramdesc.pparamdescex->varDefaultValue));
-    ok(!lstrcmpW(V_BSTR(&edesc->paramdesc.pparamdescex->varDefaultValue), defaultQW),
+    ok(U(*edesc).paramdesc.wParamFlags == PARAMFLAG_FHASDEFAULT, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex != NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.pparamdescex->cBytes == sizeof(PARAMDESCEX), "got: %d\n",
+            U(*edesc).paramdesc.pparamdescex->cBytes);
+    ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
+            V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
             "got: %s\n",
-            wine_dbgstr_w(V_BSTR(&edesc->paramdesc.pparamdescex->varDefaultValue)));
+            wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
     elemdesc[0].tdesc.vt = VT_USERDEFINED;
-    elemdesc[0].tdesc.hreftype = hreftype;
+    U(elemdesc[0].tdesc).hreftype = hreftype;
     U(elemdesc[0]).paramdesc.pparamdescex = NULL;
     U(elemdesc[0]).paramdesc.wParamFlags = 0;
 
@@ -1806,10 +1806,10 @@ static void test_CreateTypeLib(void) {
     ok(pfuncdesc->wFuncFlags == 0, "got 0x%x\n", pfuncdesc->wFuncFlags);
 
     edesc = pfuncdesc->lprgelemdescParam;
-    ok(edesc->paramdesc.pparamdescex == NULL, "got: %p\n", edesc->paramdesc.pparamdescex);
-    ok(edesc->paramdesc.wParamFlags == 0, "got: 0x%x\n", edesc->paramdesc.wParamFlags);
+    ok(U(*edesc).paramdesc.pparamdescex == NULL, "got: %p\n", U(*edesc).paramdesc.pparamdescex);
+    ok(U(*edesc).paramdesc.wParamFlags == 0, "got: 0x%x\n", U(*edesc).paramdesc.wParamFlags);
     ok(edesc->tdesc.vt == VT_USERDEFINED, "got: %d\n", edesc->tdesc.vt);
-    ok(edesc->tdesc.hreftype == hreftype, "got: 0x%x\n", edesc->tdesc.hreftype);
+    ok(U(edesc->tdesc).hreftype == hreftype, "got: 0x%x\n", U(edesc->tdesc).hreftype);
 
     ITypeInfo2_ReleaseFuncDesc(ti2, pfuncdesc);
 
