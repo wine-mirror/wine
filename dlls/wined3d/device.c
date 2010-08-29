@@ -5518,7 +5518,6 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         IWineD3DRendertargetView *rendertarget_view, const WINED3DCOLORVALUE *color)
 {
     IWineD3DResource *resource;
-    IWineD3DSurfaceImpl *surface;
     HRESULT hr;
 
     hr = IWineD3DRendertargetView_GetResource(rendertarget_view, &resource);
@@ -5535,30 +5534,8 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         return;
     }
 
-    surface = (IWineD3DSurfaceImpl *)resource;
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        const RECT draw_rect = {0, 0, surface->currentDesc.Width, surface->currentDesc.Height};
-
-        device_clear_render_targets((IWineD3DDeviceImpl *)iface, 1, &surface,
-                0, NULL, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
-    }
-    else
-    {
-        WINEDDBLTFX BltFx;
-
-        /* Just forward this to the DirectDraw blitting engine */
-        memset(&BltFx, 0, sizeof(BltFx));
-        BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = wined3d_format_convert_from_float(surface->resource.format_desc, color);
-        hr = IWineD3DSurface_Blt((IWineD3DSurface *)surface, NULL, NULL, NULL,
-                WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
-        if (FAILED(hr))
-        {
-            ERR("Blt failed, hr %#x\n", hr);
-        }
-    }
+    hr = surface_color_fill((IWineD3DSurfaceImpl *)resource, NULL, color);
+    if (FAILED(hr)) ERR("Color fill failed, hr %#x.\n", hr);
 
     IWineD3DResource_Release(resource);
 }
