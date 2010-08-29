@@ -1291,7 +1291,7 @@
 @ cdecl -private _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
 @ cdecl -private _wcsupr(wstr) NTDLL__wcsupr
 @ cdecl -private _wtoi(wstr)
-@ cdecl -private _wtoi64(wstr)
+@ cdecl -private -ret64 _wtoi64(wstr)
 @ cdecl -private _wtol(wstr)
 @ cdecl -private abs(long) NTDLL_abs
 @ cdecl -private atan(double) NTDLL_atan

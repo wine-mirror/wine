@@ -1012,11 +1012,11 @@
 @ cdecl _strtime(ptr) msvcrt._strtime
 @ cdecl _strtime_s(ptr long) msvcrt._strtime_s
 @ cdecl _strtod_l(str ptr ptr) msvcrt._strtod_l
-@ cdecl _strtoi64(str ptr long) msvcrt._strtoi64
-@ cdecl _strtoi64_l(str ptr long ptr) msvcrt._strtoi64_l
+@ cdecl -ret64 _strtoi64(str ptr long) msvcrt._strtoi64
+@ cdecl -ret64 _strtoi64_l(str ptr long ptr) msvcrt._strtoi64_l
 @ stub _strtol_l
-@ cdecl _strtoui64(str ptr long) msvcrt._strtoui64
-@ cdecl _strtoui64_l(str ptr long ptr) msvcrt._strtoui64_l
+@ cdecl -ret64 _strtoui64(str ptr long) msvcrt._strtoui64
+@ cdecl -ret64 _strtoui64_l(str ptr long ptr) msvcrt._strtoui64_l
 @ stub _strtoul_l
 @ cdecl _strupr(str) msvcrt._strupr
 @ stub _strupr_l
@@ -1160,13 +1160,13 @@
 @ cdecl _wcsset(wstr long) msvcrt._wcsset
 @ stub _wcsset_s
 @ cdecl _wcstod_l(wstr ptr) msvcrt._wcstod_l
-@ cdecl _wcstoi64(wstr ptr long) msvcrt._wcstoi64
-@ cdecl _wcstoi64_l(wstr ptr long ptr) msvcrt._wcstoi64_l
+@ cdecl -ret64 _wcstoi64(wstr ptr long) msvcrt._wcstoi64
+@ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) msvcrt._wcstoi64_l
 @ stub _wcstol_l
 @ cdecl _wcstombs_l(ptr ptr long ptr) msvcrt._wcstombs_l
 @ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) msvcrt._wcstombs_s_l
-@ cdecl _wcstoui64(wstr ptr long) msvcrt._wcstoui64
-@ cdecl _wcstoui64_l(wstr ptr long ptr) msvcrt._wcstoui64_l
+@ cdecl -ret64 _wcstoui64(wstr ptr long) msvcrt._wcstoui64
+@ cdecl -ret64 _wcstoui64_l(wstr ptr long ptr) msvcrt._wcstoui64_l
 @ stub _wcstoul_l
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ stub _wcsupr_l
@@ -1264,7 +1264,7 @@
 @ cdecl _wtof(wstr) msvcrt._wtof
 @ cdecl _wtof_l(wstr ptr) msvcrt._wtof_l
 @ cdecl _wtoi(wstr) msvcrt._wtoi
-@ cdecl _wtoi64(wstr) msvcrt._wtoi64
+@ cdecl -ret64 _wtoi64(wstr) msvcrt._wtoi64
 @ stub _wtoi64_l
 @ stub _wtoi_l
 @ cdecl _wtol(wstr) msvcrt._wtol

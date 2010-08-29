@@ -557,8 +557,8 @@
 @ cdecl _strrev(str) msvcrt._strrev
 @ cdecl _strset(str long) msvcrt._strset
 @ cdecl _strtime(ptr) msvcrt._strtime
-@ cdecl _strtoi64(str ptr long) msvcrt._strtoi64
-@ cdecl _strtoui64(str ptr long) msvcrt._strtoui64
+@ cdecl -ret64 _strtoi64(str ptr long) msvcrt._strtoi64
+@ cdecl -ret64 _strtoui64(str ptr long) msvcrt._strtoui64
 @ cdecl _strupr(str) msvcrt._strupr
 @ cdecl _swab(str str long) msvcrt._swab
 @ extern _sys_errlist msvcrt._sys_errlist
@@ -605,8 +605,8 @@
 @ cdecl _wcsnset(wstr long long) msvcrt._wcsnset
 @ cdecl _wcsrev(wstr) msvcrt._wcsrev
 @ cdecl _wcsset(wstr long) msvcrt._wcsset
-@ cdecl _wcstoi64(wstr ptr long) msvcrt._wcstoi64
-@ cdecl _wcstoui64(wstr ptr long) msvcrt._wcstoui64
+@ cdecl -ret64 _wcstoi64(wstr ptr long) msvcrt._wcstoi64
+@ cdecl -ret64 _wcstoui64(wstr ptr long) msvcrt._wcstoui64
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ cdecl _wctime(ptr) msvcrt._wctime
 @ cdecl _wctime64(ptr) msvcrt._wctime64
@@ -671,7 +671,7 @@
 @ stub _wtmpnam
 @ cdecl _wtof(wstr) msvcrt._wtof
 @ cdecl _wtoi(wstr) msvcrt._wtoi
-@ cdecl _wtoi64(wstr) msvcrt._wtoi64
+@ cdecl -ret64 _wtoi64(wstr) msvcrt._wtoi64
 @ cdecl _wtol(wstr) msvcrt._wtol
 @ cdecl _wunlink(wstr) msvcrt._wunlink
 @ cdecl _wutime(wstr ptr) msvcrt._wutime

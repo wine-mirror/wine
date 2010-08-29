@@ -933,11 +933,11 @@
 @ cdecl _strtime(ptr)
 @ cdecl _strtime_s(ptr long)
 @ cdecl _strtod_l(str ptr ptr) MSVCRT_strtod_l
-@ cdecl _strtoi64(str ptr long) MSVCRT_strtoi64
-@ cdecl _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
+@ cdecl -ret64 _strtoi64(str ptr long) MSVCRT_strtoi64
+@ cdecl -ret64 _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
 # stub _strtol_l
-@ cdecl _strtoui64(str ptr long) MSVCRT_strtoui64
-@ cdecl _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
+@ cdecl -ret64 _strtoui64(str ptr long) MSVCRT_strtoui64
+@ cdecl -ret64 _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
 # stub _strtoul_l
 @ cdecl _strupr(str) ntdll._strupr
 # stub _strupr_l
@@ -1075,13 +1075,13 @@
 @ cdecl _wcsrev(wstr)
 @ cdecl _wcsset(wstr long)
 # stub _wcsset_s
-@ cdecl _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
-@ cdecl _wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l
+@ cdecl -ret64 _wcstoi64(wstr ptr long) MSVCRT__wcstoi64
+@ cdecl -ret64 _wcstoi64_l(wstr ptr long ptr) MSVCRT__wcstoi64_l
 # stub _wcstol_l
 @ cdecl _wcstombs_l(ptr ptr long ptr) MSVCRT__wcstombs_l
 @ cdecl _wcstombs_s_l(ptr ptr long wstr long ptr) MSVCRT__wcstombs_s_l
-@ cdecl _wcstoui64(wstr ptr long) MSVCRT__wcstoui64
-@ cdecl _wcstoui64_l(wstr ptr long ptr) MSVCRT__wcstoui64_l
+@ cdecl -ret64 _wcstoui64(wstr ptr long) MSVCRT__wcstoui64
+@ cdecl -ret64 _wcstoui64_l(wstr ptr long ptr) MSVCRT__wcstoui64_l
 # stub _wcstoul_l
 @ cdecl _wcsupr(wstr) ntdll._wcsupr
 # stub _wcsupr_l
@@ -1179,7 +1179,7 @@
 @ cdecl _wtof(wstr) MSVCRT__wtof
 @ cdecl _wtof_l(wstr ptr) MSVCRT__wtof_l
 @ cdecl _wtoi(wstr) ntdll._wtoi
-@ cdecl _wtoi64(wstr) ntdll._wtoi64
+@ cdecl -ret64 _wtoi64(wstr) ntdll._wtoi64
 # stub _wtoi64_l
 # stub _wtoi_l
 @ cdecl _wtol(wstr) ntdll._wtol
@@ -1222,7 +1222,7 @@
 @ cdecl -arch=x86_64 coshf(double) MSVCRT_coshf
 @ cdecl ctime(ptr) MSVCRT_ctime
 @ cdecl difftime(long long) MSVCRT_difftime
-@ cdecl div(long long) MSVCRT_div
+@ cdecl -ret64 div(long long) MSVCRT_div
 @ cdecl exit(long) MSVCRT_exit
 @ cdecl exp(double) MSVCRT_exp
 @ cdecl -arch=x86_64 expf(double) MSVCRT_expf

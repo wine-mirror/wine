@@ -622,7 +622,7 @@
 @ cdecl _wtempnam(wstr wstr) msvcrt._wtempnam
 @ cdecl _wtmpnam(ptr) msvcrt._wtmpnam
 @ cdecl _wtoi(wstr) ntdll._wtoi
-@ cdecl _wtoi64(wstr) ntdll._wtoi64
+@ cdecl -ret64 _wtoi64(wstr) ntdll._wtoi64
 @ cdecl _wtol(wstr) ntdll._wtol
 @ cdecl _wunlink(wstr) msvcrt._wunlink
 @ cdecl _wutime(wstr ptr) msvcrt._wutime
