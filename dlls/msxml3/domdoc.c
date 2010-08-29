@@ -58,10 +58,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #define XML_SAVE_AS_XML    32
 #define XML_SAVE_AS_HTML   64
 
-static const WCHAR SZ_PROPERTY_SELECTION_LANGUAGE[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
-static const WCHAR SZ_PROPERTY_PROHIBIT_DTD[] = {'P','r','o','h','i','b','i','t','D','T','D',0};
-static const WCHAR SZ_VALUE_XPATH[] = {'X','P','a','t','h',0};
-static const WCHAR SZ_VALUE_XSLPATTERN[] = {'X','S','L','P','a','t','t','e','r','n',0};
+static const WCHAR PropertySelectionLanguageW[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
+static const WCHAR PropertySelectionNamespacesW[] = {'S','e','l','e','c','t','i','o','n','N','a','m','e','s','p','a','c','e','s',0};
+static const WCHAR PropertyProhibitDTDW[] = {'P','r','o','h','i','b','i','t','D','T','D',0};
+static const WCHAR PropValueXPathW[] = {'X','P','a','t','h',0};
+static const WCHAR PropValueXSLPatternW[] = {'X','S','L','P','a','t','t','e','r','n',0};
 
 typedef struct _domdoc
 {
@@ -1736,9 +1737,9 @@ static HRESULT WINAPI domdoc_loadXML(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     xmlDocPtr xmldoc = NULL;
+    HRESULT hr = S_FALSE, hr2;
     char *str;
     int len;
-    HRESULT hr = S_FALSE, hr2;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w( bstrXML ), isSuccessful );
 
@@ -1758,6 +1759,7 @@ static HRESULT WINAPI domdoc_loadXML(
             {
                 hr = This->error = S_OK;
                 *isSuccessful = VARIANT_TRUE;
+                TRACE("parsed document %p\n", xmldoc);
             }
         }
     }
@@ -2043,7 +2045,7 @@ static HRESULT WINAPI domdoc_setProperty(
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
-    if (lstrcmpiW(p, SZ_PROPERTY_SELECTION_LANGUAGE) == 0)
+    if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
     {
         VARIANT varStr;
         HRESULT hr;
@@ -2060,9 +2062,9 @@ static HRESULT WINAPI domdoc_setProperty(
             bstr = V_BSTR(&var);
 
         hr = S_OK;
-        if (lstrcmpiW(bstr, SZ_VALUE_XPATH) == 0)
+        if (lstrcmpiW(bstr, PropValueXPathW) == 0)
             This->bUseXPath = TRUE;
-        else if (lstrcmpiW(bstr, SZ_VALUE_XSLPATTERN) == 0)
+        else if (lstrcmpiW(bstr, PropValueXSLPatternW) == 0)
             This->bUseXPath = FALSE;
         else
             hr = E_FAIL;
@@ -2070,11 +2072,17 @@ static HRESULT WINAPI domdoc_setProperty(
         VariantClear(&varStr);
         return hr;
     }
-    else if (lstrcmpiW(p, SZ_PROPERTY_PROHIBIT_DTD) == 0)
+    else if (lstrcmpiW(p, PropertyProhibitDTDW) == 0)
     {
         /* Ignore */
         FIXME("Ignoring property ProhibitDTD, value %d\n", V_BOOL(&var));
         return S_OK;
+    }
+    else if (lstrcmpiW(p, PropertySelectionNamespacesW) == 0)
+    {
+        if (V_VT(&var) == VT_BSTR)
+            FIXME("Unsupported SelectionNamespaces: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+        return E_FAIL;
     }
 
     FIXME("Unknown property %s\n", wine_dbgstr_w(p));
@@ -2092,13 +2100,14 @@ static HRESULT WINAPI domdoc_getProperty(
 
     if (var == NULL)
         return E_INVALIDARG;
-    if (lstrcmpiW(p, SZ_PROPERTY_SELECTION_LANGUAGE) == 0)
+
+    if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
     {
         V_VT(var) = VT_BSTR;
         if (This->bUseXPath)
-            V_BSTR(var) = SysAllocString(SZ_VALUE_XPATH);
+            V_BSTR(var) = SysAllocString(PropValueXPathW);
         else
-            V_BSTR(var) = SysAllocString(SZ_VALUE_XSLPATTERN);
+            V_BSTR(var) = SysAllocString(PropValueXSLPatternW);
         return S_OK;
     }
 

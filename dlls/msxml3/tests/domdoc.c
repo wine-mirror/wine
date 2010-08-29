@@ -2868,14 +2868,15 @@ static void test_XMLHTTP(void)
 
 static void test_IXMLDOMDocument2(void)
 {
-    HRESULT r;
-    VARIANT_BOOL b;
-    BSTR str;
-    IXMLDOMDocument *doc;
+    static const WCHAR emptyW[] = {0};
     IXMLDOMDocument2 *doc2;
+    IXMLDOMDocument *doc;
     IDispatchEx *dispex;
+    VARIANT_BOOL b;
     VARIANT var;
-    int ref;
+    HRESULT r;
+    LONG ref;
+    BSTR str;
 
     r = CoCreateInstance( &CLSID_DOMDocument, NULL,
         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
@@ -2927,6 +2928,17 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
     ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
     ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(emptyW);
+    r = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionNamespaces"), var);
+    todo_wine ok(r == S_OK, "got 0x%08x\n", r);
+    VariantClear(&var);
+
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = 0;
+    r = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionNamespaces"), var);
+    ok(r == E_FAIL, "got 0x%08x\n", r);
 
     /* contrary to what MSDN claims you can switch back from XPath to XSLPattern */
     ole_check(IXMLDOMDocument2_getProperty(doc2, _bstr_("SelectionLanguage"), &var));
