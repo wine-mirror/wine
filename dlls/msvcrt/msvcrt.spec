@@ -892,8 +892,8 @@
 @ cdecl _spawnve(long str ptr ptr) MSVCRT__spawnve
 @ cdecl _spawnvp(long str ptr)
 @ cdecl _spawnvpe(long str ptr ptr) MSVCRT__spawnvpe
-@ cdecl _splitpath(str ptr ptr ptr ptr) ntdll._splitpath
-# stub _splitpath_s
+@ cdecl _splitpath(str ptr ptr ptr ptr)
+@ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long)
 # stub _sprintf_l
 # stub _sprintf_p_l
 # stub _sprintf_s_l

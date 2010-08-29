@@ -745,27 +745,42 @@ int CDECL _wrmdir(const MSVCRT_wchar_t * dir)
   return -1;
 }
 
-/*********************************************************************
- *		_wsplitpath (MSVCRT.@)
- *
- * Unicode version of _splitpath.
+/******************************************************************
+ *		_splitpath_s (MSVCRT.@)
  */
-void CDECL _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
-                       MSVCRT_wchar_t *fname, MSVCRT_wchar_t *ext )
+int _splitpath_s(const char* inpath,
+        char* drive, MSVCRT_size_t sz_drive,
+        char* dir, MSVCRT_size_t sz_dir,
+        char* fname, MSVCRT_size_t sz_fname,
+        char* ext, MSVCRT_size_t sz_ext)
 {
-    const MSVCRT_wchar_t *p, *end;
+    const char *p, *end;
+
+    if (!inpath || (!drive && sz_drive) ||
+            (drive && !sz_drive) ||
+            (!dir && sz_dir) ||
+            (dir && !sz_dir) ||
+            (!fname && sz_fname) ||
+            (fname && !sz_fname) ||
+            (!ext && sz_ext) ||
+            (ext && !sz_ext))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
 
     if (inpath[0] && inpath[1] == ':')
     {
-        if (drv)
+        if (drive)
         {
-            drv[0] = inpath[0];
-            drv[1] = inpath[1];
-            drv[2] = 0;
+            if (sz_drive <= 2) goto do_error;
+            drive[0] = inpath[0];
+            drive[1] = inpath[1];
+            drive[2] = 0;
         }
         inpath += 2;
     }
-    else if (drv) drv[0] = 0;
+    else if (drive) drive[0] = '\0';
 
     /* look for end of directory part */
     end = NULL;
@@ -775,7 +790,8 @@ void CDECL _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT
     {
         if (dir)
         {
-            memcpy( dir, inpath, (end - inpath) * sizeof(MSVCRT_wchar_t) );
+            if (sz_dir <= end - inpath) goto do_error;
+            memcpy( dir, inpath, (end - inpath) );
             dir[end - inpath] = 0;
         }
         inpath = end;
@@ -790,10 +806,33 @@ void CDECL _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT
 
     if (fname)
     {
-        memcpy( fname, inpath, (end - inpath) * sizeof(MSVCRT_wchar_t) );
+        if (sz_fname <= end - inpath) goto do_error;
+        memcpy( fname, inpath, (end - inpath) );
         fname[end - inpath] = 0;
     }
-    if (ext) strcpyW( ext, end );
+    if (ext)
+    {
+        if (sz_ext <= strlen(end)) goto do_error;
+        strcpy( ext, end );
+    }
+    return 0;
+do_error:
+    if (drive)  drive[0] = '\0';
+    if (dir)    dir[0] = '\0';
+    if (fname)  fname[0]= '\0';
+    if (ext)    ext[0]= '\0';
+    *MSVCRT__errno() = MSVCRT_ERANGE;
+    return MSVCRT_ERANGE;
+}
+
+/*********************************************************************
+ *              _splitpath (MSVCRT.@)
+ */
+void CDECL _splitpath(const char *inpath, char *drv, char *dir,
+        char *fname, char *ext)
+{
+    _splitpath_s(inpath, drv, MSVCRT__MAX_DRIVE, dir, MSVCRT__MAX_DIR,
+            fname, MSVCRT__MAX_FNAME, ext, MSVCRT__MAX_EXT);
 }
 
 /******************************************************************
@@ -809,15 +848,18 @@ int _wsplitpath_s(const MSVCRT_wchar_t* inpath,
 {
     const MSVCRT_wchar_t *p, *end;
 
-    if (!inpath) return MSVCRT_EINVAL;
-    if (!drive && sz_drive) return MSVCRT_EINVAL;
-    if (drive && !sz_drive) return MSVCRT_EINVAL;
-    if (!dir && sz_dir) return MSVCRT_EINVAL;
-    if (dir && !sz_dir) return MSVCRT_EINVAL;
-    if (!fname && sz_fname) return MSVCRT_EINVAL;
-    if (fname && !sz_fname) return MSVCRT_EINVAL;
-    if (!ext && sz_ext) return MSVCRT_EINVAL;
-    if (ext && !sz_ext) return MSVCRT_EINVAL;
+    if (!inpath || (!drive && sz_drive) ||
+            (drive && !sz_drive) ||
+            (!dir && sz_dir) ||
+            (dir && !sz_dir) ||
+            (!fname && sz_fname) ||
+            (fname && !sz_fname) ||
+            (!ext && sz_ext) ||
+            (ext && !sz_ext))
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
 
     if (inpath[0] && inpath[1] == ':')
     {
@@ -871,7 +913,20 @@ do_error:
     if (dir)    dir[0] = '\0';
     if (fname)  fname[0]= '\0';
     if (ext)    ext[0]= '\0';
+    *MSVCRT__errno() = MSVCRT_ERANGE;
     return MSVCRT_ERANGE;
+}
+
+/*********************************************************************
+ *		_wsplitpath (MSVCRT.@)
+ *
+ * Unicode version of _splitpath.
+ */
+void CDECL _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
+        MSVCRT_wchar_t *fname, MSVCRT_wchar_t *ext)
+{
+    _wsplitpath_s(inpath, drv, MSVCRT__MAX_DRIVE, dir, MSVCRT__MAX_DIR,
+            fname, MSVCRT__MAX_FNAME, ext, MSVCRT__MAX_EXT);
 }
 
 /*********************************************************************

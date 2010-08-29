@@ -47,6 +47,11 @@
 #define MSVCRT_I64_MIN    (-MSVCRT_I64_MAX-1)
 #define MSVCRT_UI64_MAX   (((unsigned __int64)0xffffffff << 32) | 0xffffffff)
 
+#define MSVCRT__MAX_DRIVE  3
+#define MSVCRT__MAX_DIR    256
+#define MSVCRT__MAX_FNAME  256
+#define MSVCRT__MAX_EXT    256
+
 typedef unsigned short MSVCRT_wchar_t;
 typedef unsigned short MSVCRT_wint_t;
 typedef unsigned short MSVCRT_wctype_t;

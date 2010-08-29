@@ -970,7 +970,7 @@
 @ cdecl _spawnvp(long str ptr) msvcrt._spawnvp
 @ cdecl _spawnvpe(long str ptr ptr) msvcrt._spawnvpe
 @ cdecl _splitpath(str ptr ptr ptr ptr) msvcrt._splitpath
-@ stub _splitpath_s
+@ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long) msvcrt._splitpath_s
 @ stub _sprintf_l
 @ stub _sprintf_p
 @ stub _sprintf_p_l
