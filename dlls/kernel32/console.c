@@ -332,20 +332,7 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
     SERVER_END_REQ;
     if (ret)
         ret = console_handle_map(ret);
-    else
-    {
-        /* likely, we're not attached to wineconsole
-         * let's try to return a handle to the unix-console
-         */
-        int fd = open("/dev/tty", output ? O_WRONLY : O_RDONLY);
-        ret = INVALID_HANDLE_VALUE;
-        if (fd != -1)
-        {
-            DWORD access = (output ? GENERIC_WRITE : GENERIC_READ) | SYNCHRONIZE;
-            wine_server_fd_to_handle(fd, access, inherit ? OBJ_INHERIT : 0, &ret);
-            close(fd);
-        }
-    }
+
     return ret;
 }
 
@@ -1417,8 +1404,6 @@ BOOL WINAPI AllocConsole(void)
 	CloseHandle(handle_in);
 	return FALSE;
     }
-    /* happens when we're running on a Unix console */
-    if (handle_in != INVALID_HANDLE_VALUE) CloseHandle(handle_in);
 
     /* invalidate local copy of input event handle */
     console_wait_event = 0;
