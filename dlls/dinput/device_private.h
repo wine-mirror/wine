@@ -94,7 +94,7 @@ typedef struct
     LONG lSaturation;
 } ObjProps;
 
-extern DWORD joystick_map_pov(POINTL *p);
+extern DWORD joystick_map_pov(const POINTL *p);
 extern LONG joystick_map_axis(ObjProps *props, int val);
 
 typedef struct

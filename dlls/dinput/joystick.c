@@ -434,7 +434,7 @@ LONG joystick_map_axis(ObjProps *props, int val)
  *   22500   13500
  *       18000
  */
-DWORD joystick_map_pov(POINTL *p)
+DWORD joystick_map_pov(const POINTL *p)
 {
     if (p->x > 0)
         return p->y < 0 ?  4500 : !p->y ?  9000 : 13500;

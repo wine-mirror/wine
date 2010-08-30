@@ -55,7 +55,7 @@ typedef struct JoystickGenericImpl
 LONG joystick_map_axis(ObjProps *props, int val);
 HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_map);
 
-DWORD joystick_map_pov(POINTL *p);
+DWORD joystick_map_pov(const POINTL *p);
 
 HRESULT WINAPI JoystickWGenericImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
         LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);

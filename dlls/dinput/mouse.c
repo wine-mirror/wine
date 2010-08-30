@@ -84,7 +84,7 @@ const GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
     0x9e573ed8, 0x7734, 0x11d2, {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
-static void _dump_mouse_state(DIMOUSESTATE2 *m_state)
+static void _dump_mouse_state(const DIMOUSESTATE2 *m_state)
 {
     int i;
 
