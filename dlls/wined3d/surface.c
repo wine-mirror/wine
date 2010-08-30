@@ -4386,7 +4386,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
         }
         else
         {
-            FIXME("Unimplemented location %#x for depth/stencil buffers.\n", flag);
+            FIXME("Unimplemented location %s for depth/stencil buffers.\n", debug_surflocation(flag));
             return WINED3DERR_INVALIDCALL;
         }
     }
