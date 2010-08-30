@@ -2252,6 +2252,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
             fprintf(stderr, "Cannot create gdb\n");
             return FALSE;
         default: /* in parent... success */
+            signal(SIGINT, SIG_IGN);
             break;
         case 0: /* in child... and alive */
             gdb_exec(imh_mod.LoadedImageName, s_addrs.sin_port, flags);
