@@ -1245,7 +1245,11 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
     if (strstr(gl_vendor_string, "ATI")
             || strstr(gl_vendor_string, "Advanced Micro Devices, Inc.")
             || strstr(gl_vendor_string, "X.Org R300 Project")
-            || strstr(gl_vendor_string, "DRI R300 Project"))
+            || strstr(gl_renderer, "R100")
+            || strstr(gl_renderer, "R200")
+            || strstr(gl_renderer, "R300")
+            || strstr(gl_renderer, "R600")
+            || strstr(gl_renderer, "R700"))
         return HW_VENDOR_ATI;
 
     if (strstr(gl_vendor_string, "Intel(R)")
