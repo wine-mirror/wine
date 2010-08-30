@@ -1077,7 +1077,8 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     * and then an optional thread ID at the end..
     * *******************************************/
 
-    fprintf(stderr, "trying to process a verbose packet\n");
+    if (gdbctx->trace & GDBPXY_TRC_COMMAND)
+        fprintf(stderr, "trying to process a verbose packet\n");
     /* now check that we've got Cont */
     assert(strncmp(gdbctx->in_packet, "Cont", 4) == 0);
 
