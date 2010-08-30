@@ -731,6 +731,13 @@ static int set_console_input_info( const struct set_console_input_info_request *
     struct console_renderer_event evt;
 
     if (!(console = console_input_get( req->handle, FILE_WRITE_PROPERTIES ))) goto error;
+    if (console_input_is_bare(console) &&
+        (req->mask & (SET_CONSOLE_INPUT_INFO_ACTIVE_SB|
+                      SET_CONSOLE_INPUT_INFO_WIN)))
+    {
+        set_error( STATUS_UNSUCCESSFUL );
+        goto error;
+    }
 
     memset(&evt.u, 0, sizeof(evt.u));
     if (req->mask & SET_CONSOLE_INPUT_INFO_ACTIVE_SB)
@@ -1339,17 +1346,13 @@ static void read_console_output( struct screen_buffer *screen_buffer, int x, int
 }
 
 /* scroll parts of a screen buffer */
-static void scroll_console_output( obj_handle_t handle, int xsrc, int ysrc, int xdst, int ydst,
+static void scroll_console_output( struct screen_buffer *screen_buffer, int xsrc, int ysrc, int xdst, int ydst,
                                    int w, int h )
 {
-    struct screen_buffer *screen_buffer;
     int				j;
     char_info_t *psrc, *pdst;
     struct console_renderer_event evt;
 
-    if (!(screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, handle,
-                                                                  FILE_WRITE_DATA, &screen_buffer_ops )))
-	return;
     if (xsrc < 0 || ysrc < 0 || xdst < 0 || ydst < 0 ||
 	xsrc + w > screen_buffer->width  ||
 	xdst + w > screen_buffer->width  ||
@@ -1358,7 +1361,6 @@ static void scroll_console_output( obj_handle_t handle, int xsrc, int ysrc, int 
 	w == 0 || h == 0)
     {
 	set_error( STATUS_INVALID_PARAMETER );
-	release_object( screen_buffer );
 	return;
     }
 
@@ -1396,8 +1398,6 @@ static void scroll_console_output( obj_handle_t handle, int xsrc, int ysrc, int 
     evt.u.update.top    = min(ysrc, ydst);
     evt.u.update.bottom = max(ysrc, ydst) + h - 1;
     console_input_events_append( screen_buffer->input, &evt );
-
-    release_object( screen_buffer );
 }
 
 /* allocate a console for the renderer */
@@ -1615,7 +1615,7 @@ DECL_HANDLER(create_console_output)
     {
         if ((fd = thread_get_inflight_fd( current, req->fd )) == -1)
         {
-            set_error( STATUS_INVALID_HANDLE ); /* FIXME */
+            set_error( STATUS_INVALID_HANDLE );
             return;
         }
     }
@@ -1623,6 +1623,12 @@ DECL_HANDLER(create_console_output)
     if (!(console = console_input_get( req->handle_in, FILE_WRITE_PROPERTIES )))
     {
         close(fd);
+        return;
+    }
+    if (console_input_is_bare( console ) ^ (fd != -1))
+    {
+        close( fd );
+        set_error( STATUS_INVALID_HANDLE );
         return;
     }
 
@@ -1683,6 +1689,12 @@ DECL_HANDLER(read_console_output)
     if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
                                                                 FILE_READ_DATA, &screen_buffer_ops )))
     {
+        if (console_input_is_bare( screen_buffer->input ))
+        {
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            release_object( screen_buffer );
+            return;
+        }
         read_console_output( screen_buffer, req->x, req->y, req->mode, req->wrap );
         reply->width  = screen_buffer->width;
         reply->height = screen_buffer->height;
@@ -1698,6 +1710,12 @@ DECL_HANDLER(write_console_output)
     if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
                                                                 FILE_WRITE_DATA, &screen_buffer_ops)))
     {
+        if (console_input_is_bare( screen_buffer->input ))
+        {
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            release_object( screen_buffer );
+            return;
+        }
         reply->written = write_console_output( screen_buffer, get_req_data_size(), get_req_data(),
                                                req->mode, req->x, req->y, req->wrap );
         reply->width  = screen_buffer->width;
@@ -1714,6 +1732,12 @@ DECL_HANDLER(fill_console_output)
     if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
                                                                 FILE_WRITE_DATA, &screen_buffer_ops)))
     {
+        if (console_input_is_bare( screen_buffer->input ))
+        {
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            release_object( screen_buffer );
+            return;
+        }
         reply->written = fill_console_output( screen_buffer, req->data, req->mode,
                                               req->x, req->y, req->count, req->wrap );
         release_object( screen_buffer );
@@ -1723,8 +1747,21 @@ DECL_HANDLER(fill_console_output)
 /* move a rect of data in a screen buffer */
 DECL_HANDLER(move_console_output)
 {
-    scroll_console_output( req->handle, req->x_src, req->y_src, req->x_dst, req->y_dst,
-			   req->w, req->h );
+    struct screen_buffer *screen_buffer;
+
+    if ((screen_buffer = (struct screen_buffer*)get_handle_obj( current->process, req->handle,
+                                                                FILE_WRITE_DATA, &screen_buffer_ops)))
+    {
+        if (console_input_is_bare( screen_buffer->input ))
+        {
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+            release_object( screen_buffer );
+            return;
+        }
+        scroll_console_output( screen_buffer, req->x_src, req->y_src, req->x_dst, req->y_dst,
+                               req->w, req->h );
+        release_object( screen_buffer );
+    }
 }
 
 /* sends a signal to a console (process, group...) */
