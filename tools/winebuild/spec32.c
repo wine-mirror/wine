@@ -58,6 +58,12 @@ static inline int needs_relay( const ORDDEF *odp )
     return 1;
 }
 
+static int is_float_arg( const ORDDEF *odp, unsigned int arg )
+{
+    if (arg >= odp->u.func.nb_args) return 0;
+    return (odp->u.func.args[arg] == ARG_FLOAT || odp->u.func.args[arg] == ARG_DOUBLE);
+}
+
 /* check if dll will output relay thunks */
 int has_relays( DLLSPEC *spec )
 {
@@ -189,10 +195,14 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\t.cfi_startproc\n" );
             output( "\tsubq $40,%%rsp\n" );
             output( "\t.cfi_adjust_cfa_offset 40\n" );
-            output( "\tmovq %%rcx,48(%%rsp)\n" );
-            output( "\tmovq %%rdx,56(%%rsp)\n" );
-            output( "\tmovq %%r8,64(%%rsp)\n" );
-            output( "\tmovq %%r9,72(%%rsp)\n" );
+            switch (args)
+            {
+            default: output( "\tmovq %%%s,72(%%rsp)\n", is_float_arg( odp, 3 ) ? "xmm3" : "r9" );
+            case 3:  output( "\tmovq %%%s,64(%%rsp)\n", is_float_arg( odp, 2 ) ? "xmm2" : "r8" );
+            case 2:  output( "\tmovq %%%s,56(%%rsp)\n", is_float_arg( odp, 1 ) ? "xmm1" : "rdx" );
+            case 1:  output( "\tmovq %%%s,48(%%rsp)\n", is_float_arg( odp, 0 ) ? "xmm0" : "rcx" );
+            case 0:  break;
+            }
             output( "\tleaq 40(%%rsp),%%r8\n" );
             output( "\tmovq $%u,%%rdx\n", (flags << 24) | (args << 16) | (i - spec->base) );
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
