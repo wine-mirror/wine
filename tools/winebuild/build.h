@@ -68,7 +68,10 @@ enum arg_type
     ARG_PTR,      /* pointer */
     ARG_STR,      /* pointer to Ansi string */
     ARG_WSTR,     /* pointer to Unicode string */
-    ARG_DOUBLE,   /* floating point double */
+    ARG_INT64,    /* 64-bit integer */
+    ARG_INT128,   /* 128-bit integer */
+    ARG_FLOAT,    /* 32-bit float */
+    ARG_DOUBLE,   /* 64-bit float */
     ARG_MAXARG = ARG_DOUBLE
 };
 

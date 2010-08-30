@@ -78,11 +78,14 @@ static const char *get_args_str( const ORDDEF *odp )
         case ARG_SWORD:  strcat( buffer, "s" ); break;
         case ARG_SEGSTR: strcat( buffer, "T" ); break;
         case ARG_STR:    strcat( buffer, "t" ); break;
-        case ARG_DOUBLE: strcat( buffer, "ll" ); break;
         case ARG_LONG:
+        case ARG_FLOAT:
         case ARG_SEGPTR: strcat( buffer, "l" ); break;
         case ARG_PTR:
-        case ARG_WSTR:   strcat( buffer, "p" ); break;
+        case ARG_WSTR:
+        case ARG_INT128: strcat( buffer, "p" ); break;
+        case ARG_INT64:
+        case ARG_DOUBLE: strcat( buffer, "ll" ); break;
         }
     }
     return buffer;
@@ -288,8 +291,11 @@ static int get_function_argsize( const ORDDEF *odp )
         case ARG_PTR:
         case ARG_STR:
         case ARG_WSTR:
+        case ARG_FLOAT:
+        case ARG_INT128:
             argsize += 4;
             break;
+        case ARG_INT64:
         case ARG_DOUBLE:
             argsize += 8;
             break;
@@ -362,7 +368,7 @@ static void output_call16_function( ORDDEF *odp )
     /* preserve 16-byte stack alignment */
     stack_words += odp->u.func.nb_args;
     for (i = 0; i < odp->u.func.nb_args; i++)
-        if (odp->u.func.args[i] == ARG_DOUBLE) stack_words++;
+        if (odp->u.func.args[i] == ARG_DOUBLE || odp->u.func.args[i] == ARG_INT64) stack_words++;
     if ((odp->flags & FLAG_REGISTER) || (odp->type == TYPE_VARARGS)) stack_words++;
     if (stack_words % 4) output( "\tsubl $%d,%%esp\n", 16 - 4 * (stack_words % 4) );
 
@@ -398,12 +404,14 @@ static void output_call16_function( ORDDEF *odp )
             if (odp->type == TYPE_PASCAL) pos += 2;
             break;
 
+        case ARG_INT64:
         case ARG_DOUBLE:
             if (odp->type != TYPE_PASCAL) pos -= 4;
             output( "\tpushl %d(%%ecx)\n", pos );
             if (odp->type == TYPE_PASCAL) pos += 4;
             /* fall through */
         case ARG_LONG:
+        case ARG_FLOAT:
         case ARG_SEGPTR:
         case ARG_SEGSTR:
             if (odp->type != TYPE_PASCAL) pos -= 4;
@@ -414,6 +422,7 @@ static void output_call16_function( ORDDEF *odp )
         case ARG_PTR:
         case ARG_STR:
         case ARG_WSTR:
+        case ARG_INT128:
             if (odp->type != TYPE_PASCAL) pos -= 4;
             output( "\tmovzwl %d(%%ecx),%%edx\n", pos + 2 ); /* sel */
             output( "\tshr $3,%%edx\n" );
@@ -707,6 +716,9 @@ static void output_module16( DLLSPEC *spec )
             case ARG_PTR:    type = ARG16_PTR; break;
             case ARG_STR:    type = ARG16_STR; break;
             case ARG_WSTR:   type = ARG16_PTR; break;
+            case ARG_FLOAT:  type = ARG16_LONG; break;
+            case ARG_INT128: type = ARG16_PTR; break;
+            case ARG_INT64:
             case ARG_DOUBLE:
                 type = ARG16_LONG;
                 arg_types[pos / 10] |= type << (3 * (pos % 10));

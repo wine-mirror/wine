@@ -343,10 +343,19 @@ should be one or several of:
 (16-bit signed word)
 .TP
 .B long
-(32-bit value)
+(pointer-sized integer value)
+.TP
+.B int64
+(64-bit integer value)
+.TP
+.B int128
+(128-bit integer value)
+.TP
+.B float
+(32-bit floating point value)
 .TP
 .B double
-(64-bit value)
+(64-bit floating point value)
 .TP
 .B ptr
 (linear pointer)
@@ -363,8 +372,8 @@ should be one or several of:
 .B segstr
 (segmented pointer to a null-terminated ASCII string).
 .HP
-.RB Only\  ptr ,\  str ,\  wstr ,\  long\  and\  double
-are valid for Win32 functions.
+Note: The 16-bit and segmented pointer types are only valid for Win16
+functions.
 .RE
 .PP
 .I handler

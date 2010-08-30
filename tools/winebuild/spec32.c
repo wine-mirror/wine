@@ -117,7 +117,9 @@ static void output_relay_debug( DLLSPEC *spec )
                 {
                 case ARG_STR:    mask |= 1 << (2 * pos++); break;
                 case ARG_WSTR:   mask |= 2 << (2 * pos++); break;
+                case ARG_INT64:
                 case ARG_DOUBLE: pos += 8 / get_ptr_size(); break;
+                case ARG_INT128: pos += (target_cpu == CPU_x86) ? 4 : 1; break;
                 default:         pos++; break;
                 }
             }

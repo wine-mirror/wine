@@ -899,9 +899,18 @@ unsigned int get_args_size( const ORDDEF *odp )
     {
         switch (odp->u.func.args[i])
         {
+        case ARG_INT64:
         case ARG_DOUBLE:
             size += 8;
             break;
+        case ARG_INT128:
+            /* int128 is passed as pointer on x86_64 */
+            if (target_cpu != CPU_x86_64)
+            {
+                size += 16;
+                break;
+            }
+            /* fall through */
         default:
             size += get_ptr_size();
             break;

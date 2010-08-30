@@ -82,6 +82,9 @@ static const char * const ArgNames[ARG_MAXARG + 1] =
     "ptr",     /* ARG_PTR */
     "str",     /* ARG_STR */
     "wstr",    /* ARG_WSTR */
+    "int64",   /* ARG_INT64 */
+    "int128",  /* ARG_INT128 */
+    "float",   /* ARG_FLOAT */
     "double"   /* ARG_DOUBLE */
 };
 
