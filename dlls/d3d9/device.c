@@ -1044,8 +1044,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
     }
 
     /* Colorfill can only be used on rendertarget surfaces, or offscreen plain surfaces in D3DPOOL_DEFAULT */
-    /* Note: D3DRECT is compatible with WINED3DRECT */
-    hr = IWineD3DDevice_ColorFill(This->WineD3DDevice, surface->wineD3DSurface, (const WINED3DRECT *)pRect, &c);
+    hr = IWineD3DDevice_ColorFill(This->WineD3DDevice, surface->wineD3DSurface, pRect, &c);
 
     wined3d_mutex_unlock();
 
@@ -1214,7 +1213,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Clear(LPDIRECT3DDEVICE9EX iface, DW
 
     /* Note: D3DRECT is compatible with WINED3DRECT */
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_Clear(This->WineD3DDevice, Count, (CONST WINED3DRECT*) pRects, Flags, Color, Z, Stencil);
+    hr = IWineD3DDevice_Clear(This->WineD3DDevice, Count, (const RECT *)pRects, Flags, Color, Z, Stencil);
     wined3d_mutex_unlock();
 
     return hr;

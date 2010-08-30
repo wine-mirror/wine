@@ -3790,7 +3790,7 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
                 ERR("Unexpected format for depth fill: %s.\n", debug_d3dformat(This->resource.format_desc->id));
         }
 
-        return IWineD3DDevice_Clear((IWineD3DDevice *)device, DestRect ? 1 : 0, (const WINED3DRECT *)DestRect,
+        return IWineD3DDevice_Clear((IWineD3DDevice *)device, DestRect ? 1 : 0, DestRect,
                 WINED3DCLEAR_ZBUFFER, 0x00000000, depth, 0x00000000);
     }
 

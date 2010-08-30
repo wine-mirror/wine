@@ -5220,9 +5220,8 @@ IDirect3DDeviceImpl_7_Clear(IDirect3DDevice7 *iface,
     TRACE("iface %p, count %u, rects %p, flags %#x, color 0x%08x, z %.8e, stencil %#x.\n",
             iface, Count, Rects, Flags, Color, Z, Stencil);
 
-    /* Note; D3DRECT is compatible with WINED3DRECT */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_Clear(This->wineD3DDevice, Count, (WINED3DRECT*) Rects, Flags, Color, Z, Stencil);
+    hr = IWineD3DDevice_Clear(This->wineD3DDevice, Count, (RECT *)Rects, Flags, Color, Z, Stencil);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }

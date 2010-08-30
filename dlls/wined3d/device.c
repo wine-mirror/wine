@@ -4576,28 +4576,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count,
-        const WINED3DRECT *pRects, DWORD Flags, WINED3DCOLOR color, float Z, DWORD Stencil)
+static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD rect_count,
+        const RECT *rects, DWORD flags, WINED3DCOLOR color, float depth, DWORD stencil)
 {
     const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     RECT draw_rect;
 
-    TRACE("(%p) Count (%d), pRects (%p), Flags (%x), color (0x%08x), Z (%f), Stencil (%d)\n", This,
-          Count, pRects, Flags, color, Z, Stencil);
+    TRACE("iface %p, rect_count %u, rects %p, flags %#x, color 0x%08x, depth %.8e, stencil %u.\n",
+            iface, rect_count, rects, flags, color, depth, stencil);
 
-    if (Flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL) && !This->depth_stencil)
+    if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL) && !device->depth_stencil)
     {
         WARN("Clearing depth and/or stencil without a depth stencil buffer attached, returning WINED3DERR_INVALIDCALL\n");
         /* TODO: What about depth stencil buffers without stencil bits? */
         return WINED3DERR_INVALIDCALL;
     }
 
-    device_get_draw_rect(This, &draw_rect);
+    device_get_draw_rect(device, &draw_rect);
 
-    return device_clear_render_targets(This, This->adapter->gl_info.limits.buffers,
-            This->render_targets, Count, (const RECT *)pRects, &draw_rect, Flags,
-            &c, Z, Stencil);
+    return device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
+            device->render_targets, rect_count, rects, &draw_rect, flags, &c, depth, stencil);
 }
 
 /*****
@@ -5497,12 +5496,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
-        IWineD3DSurface *surface, const WINED3DRECT *pRect, const WINED3DCOLORVALUE *color)
+        IWineD3DSurface *surface, const RECT *rect, const WINED3DCOLORVALUE *color)
 {
     IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)surface;
 
     TRACE("iface %p, surface %p, rect %s, color {%.8e, %.8e, %.8e, %.8e}.\n",
-            iface, surface, wine_dbgstr_rect((const RECT *)pRect),
+            iface, surface, wine_dbgstr_rect(rect),
             color->r, color->g, color->b, color->a);
 
     if (s->resource.pool != WINED3DPOOL_DEFAULT && s->resource.pool != WINED3DPOOL_SYSTEMMEM)
@@ -5511,7 +5510,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    return surface_color_fill(s, (const RECT *)pRect, color);
+    return surface_color_fill(s, rect, color);
 }
 
 static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *iface,

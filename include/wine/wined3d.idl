@@ -1573,14 +1573,6 @@ typedef struct _WINED3DMATRIX
     } DUMMYUNIONNAME;
 } WINED3DMATRIX;
 
-typedef struct _WINED3DRECT
-{
-    LONG x1;
-    LONG y1;
-    LONG x2;
-    LONG y2;
-} WINED3DRECT;
-
 typedef struct _WINED3DLIGHT
 {
     WINED3DLIGHTTYPE Type;
@@ -3305,7 +3297,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT Clear(
         [in] DWORD rect_count,
-        [in] const WINED3DRECT *rects,
+        [in] const RECT *rects,
         [in] DWORD flags,
         [in] WINED3DCOLOR color,
         [in] float z,
@@ -3367,7 +3359,7 @@ interface IWineD3DDevice : IWineD3DBase
     );
     HRESULT ColorFill(
         [in] IWineD3DSurface *surface,
-        [in] const WINED3DRECT *rect,
+        [in] const RECT *rect,
         [in] const WINED3DCOLORVALUE *color
     );
     HRESULT UpdateTexture(
