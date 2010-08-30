@@ -1523,11 +1523,12 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     DWORD	charsread;
     LPWSTR	xbuf = lpBuffer;
     DWORD	mode;
+    BOOL        is_bare;
 
     TRACE("(%p,%p,%d,%p,%p)\n",
 	  hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
 
-    if (!GetConsoleMode(hConsoleInput, &mode))
+    if (!get_console_mode(hConsoleInput, &mode, &is_bare))
         return FALSE;
 
     if (mode & ENABLE_LINE_INPUT)
@@ -1535,7 +1536,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 	if (!S_EditString || S_EditString[S_EditStrPos] == 0)
 	{
 	    HeapFree(GetProcessHeap(), 0, S_EditString);
-	    if (!(S_EditString = CONSOLE_Readline(hConsoleInput)))
+	    if (!(S_EditString = CONSOLE_Readline(hConsoleInput, !is_bare)))
 		return FALSE;
 	    S_EditStrPos = 0;
 	}

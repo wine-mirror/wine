@@ -31,6 +31,6 @@ extern void     CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int
 extern BOOL     CONSOLE_GetEditionMode(HANDLE, int*);
 
 /* editline.c */
-extern WCHAR*   CONSOLE_Readline(HANDLE);
+extern WCHAR*   CONSOLE_Readline(HANDLE, BOOL);
 
 #endif  /* __WINE_CONSOLE_PRIVATE_H */

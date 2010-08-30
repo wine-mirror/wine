@@ -53,6 +53,10 @@ typedef struct WCEL_Context {
     WCHAR*			line;		/* the line being edited */
     size_t			alloc;		/* number of WCHAR in line */
     unsigned    		len;		/* number of chars in line */
+    unsigned                    last_rub;       /* number of chars to rub to get to start
+                                                   (for consoles that can't change cursor pos) */
+    unsigned                    last_max;       /* max number of chars written
+                                                   (for consoles that can't change cursor pos) */
     unsigned			ofs;		/* offset for cursor in current line */
     WCHAR*			yanked;		/* yanked line */
     unsigned			mark;		/* marked point (emacs mode only) */
@@ -61,7 +65,8 @@ typedef struct WCEL_Context {
     HANDLE			hConOut;
     unsigned			done : 1,	/* to 1 when we're done with editing */
 	                        error : 1,	/* to 1 when an error occurred in the editing */
-                                can_wrap : 1;   /* to 1 when multi-line edition can take place */
+                                can_wrap : 1,   /* to 1 when multi-line edition can take place */
+                                can_pos_cursor : 1; /* to 1 when console can (re)position cursor */
     unsigned			histSize;
     unsigned			histPos;
     WCHAR*			histCurr;
@@ -123,10 +128,33 @@ static inline COORD WCEL_GetCoord(WCEL_Context* ctx, int ofs)
 
 static inline void WCEL_Update(WCEL_Context* ctx, int beg, int len)
 {
-    WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[beg], len,
-                                 WCEL_GetCoord(ctx, beg), NULL);
-    FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, len,
-                               WCEL_GetCoord(ctx, beg), NULL);
+    if (ctx->can_pos_cursor)
+    {
+        WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[beg], len,
+                                     WCEL_GetCoord(ctx, beg), NULL);
+        FillConsoleOutputAttribute(ctx->hConOut, ctx->csbi.wAttributes, len,
+                                   WCEL_GetCoord(ctx, beg), NULL);
+    }
+    else
+    {
+        char ch;
+        unsigned i;
+        DWORD dw;
+
+        /* erase previous chars */
+        ch = '\b';
+        for (i = beg; i < ctx->last_rub; i++)
+            WriteFile(ctx->hConOut, &ch, 1, &dw, NULL);
+        beg = min(beg, ctx->last_rub);
+
+        /* write new chars */
+        WriteConsoleW(ctx->hConOut, &ctx->line[beg], ctx->len - beg, &dw, NULL);
+        /* clean rest of line (if any) */
+        ch = ' ';
+        for (i = ctx->len; i < ctx->last_max; i++)
+            WriteFile(ctx->hConOut, &ch, 1, &dw, NULL);
+        ctx->last_rub = max(ctx->last_max, ctx->len);
+    }
 }
 
 /* ====================================================================
@@ -765,7 +793,7 @@ static const KeyMap Win32KeyMap[] =
  *
  * ====================================================================*/
 
-WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
+WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 {
     WCEL_Context	ctx;
     INPUT_RECORD	ir;
@@ -788,6 +816,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 	!GetConsoleScreenBufferInfo(ctx.hConOut, &ctx.csbi))
 	return NULL;
     ctx.can_wrap = (GetConsoleMode(ctx.hConOut, &ks) && (ks & ENABLE_WRAP_AT_EOL_OUTPUT)) ? 1 : 0;
+    ctx.can_pos_cursor = can_pos_cursor;
 
     if (!WCEL_Grow(&ctx, 1))
     {
@@ -842,8 +871,26 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 	else TRACE("Dropped event\n");
 
 /* EPP         WCEL_Dump(&ctx, "after func"); */
-	if (ctx.ofs != ofs)
-	    SetConsoleCursorPosition(ctx.hConOut, WCEL_GetCoord(&ctx, ctx.ofs));
+        if (ctx.can_pos_cursor)
+        {
+            if (ctx.ofs != ofs)
+                SetConsoleCursorPosition(ctx.hConOut, WCEL_GetCoord(&ctx, ctx.ofs));
+        }
+        else if (!ctx.done && !ctx.error)
+        {
+            char        ch;
+            unsigned    i;
+            DWORD       dw;
+
+            /* erase previous chars */
+            ch = '\b';
+            for (i = 0; i < ctx.last_rub; i++)
+                WriteFile(ctx.hConOut, &ch, 1, &dw, NULL);
+
+            /* write chars up to cursor */
+            WriteConsoleW(ctx.hConOut, ctx.line, ctx.ofs, &dw, NULL);
+            if ((ctx.last_rub = ctx.ofs) > ctx.last_max) ctx.last_max = ctx.ofs;
+        }
     }
     if (ctx.error)
     {
