@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "d3dx9_36_private.h"
 
@@ -289,6 +290,17 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI D3DXCreateTextureFromFileInMemory(LPDIRECT3DDEVICE9 device,
+                                                 LPCVOID srcdata,
+                                                 UINT srcdatasize,
+                                                 LPDIRECT3DTEXTURE9 *texture)
+{
+    TRACE("(%p, %p, %d, %p)\n", device, srcdata, srcdatasize, texture);
+
+    return D3DXCreateTextureFromFileInMemoryEx(device, srcdata, srcdatasize, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN,
+                                               D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
+}
+
 HRESULT WINAPI D3DXCreateTextureFromFileExW(LPDIRECT3DDEVICE9 device,
                                             LPCWSTR srcfile,
                                             UINT width,
@@ -326,11 +338,59 @@ HRESULT WINAPI D3DXCreateTextureFromFileExW(LPDIRECT3DDEVICE9 device,
     return hr;
 }
 
+HRESULT WINAPI D3DXCreateTextureFromFileExA(LPDIRECT3DDEVICE9 device,
+                                            LPCSTR srcfile,
+                                            UINT width,
+                                            UINT height,
+                                            UINT miplevels,
+                                            DWORD usage,
+                                            D3DFORMAT format,
+                                            D3DPOOL pool,
+                                            DWORD filter,
+                                            DWORD mipfilter,
+                                            D3DCOLOR colorkey,
+                                            D3DXIMAGE_INFO *srcinfo,
+                                            PALETTEENTRY *palette,
+                                            LPDIRECT3DTEXTURE9 *texture)
+{
+    LPWSTR widename;
+    HRESULT hr;
+    DWORD len;
+
+    TRACE("(%p, %p, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p): relay\n", device, debugstr_a(srcfile), width,
+        height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinfo, palette, texture);
+
+    if (!device || !srcfile || !texture)
+        return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
+    widename = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, srcfile, -1, widename, len);
+
+    hr = D3DXCreateTextureFromFileExW(device, widename, width, height, miplevels,
+                                      usage, format, pool, filter, mipfilter,
+                                      colorkey, srcinfo, palette, texture);
+
+    HeapFree(GetProcessHeap(), 0, widename);
+    return hr;
+}
+
 HRESULT WINAPI D3DXCreateTextureFromFileA(LPDIRECT3DDEVICE9 device,
                                           LPCSTR srcfile,
                                           LPDIRECT3DTEXTURE9 *texture)
 {
-    FIXME("(%p, %s, %p): stub\n", device, debugstr_a(srcfile), texture);
+    TRACE("(%p, %s, %p)\n", device, debugstr_a(srcfile), texture);
 
-    return E_NOTIMPL;
+    return D3DXCreateTextureFromFileExA(device, srcfile, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN,
+                                        D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
+}
+
+HRESULT WINAPI D3DXCreateTextureFromFileW(LPDIRECT3DDEVICE9 device,
+                                          LPCWSTR srcfile,
+                                          LPDIRECT3DTEXTURE9 *texture)
+{
+    TRACE("(%p, %s, %p)\n", device, debugstr_w(srcfile), texture);
+
+    return D3DXCreateTextureFromFileExW(device, srcfile, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN,
+                                        D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
 }

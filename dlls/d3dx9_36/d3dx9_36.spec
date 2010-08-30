@@ -93,12 +93,12 @@
 @ stub D3DXCreateTextA
 @ stub D3DXCreateTextW
 @ stdcall D3DXCreateTexture(ptr long long long long long long ptr)
-@ stdcall D3DXCreateTextureFromFileA(ptr ptr ptr)
-@ stub D3DXCreateTextureFromFileExA
-@ stdcall D3DXCreateTextureFromFileExW(ptr ptr long long long long long long long long long ptr ptr ptr)
-@ stub D3DXCreateTextureFromFileInMemory
+@ stdcall D3DXCreateTextureFromFileA(ptr str ptr)
+@ stdcall D3DXCreateTextureFromFileExA(ptr str long long long long long long long long long ptr ptr ptr)
+@ stdcall D3DXCreateTextureFromFileExW(ptr wstr long long long long long long long long long ptr ptr ptr)
+@ stdcall D3DXCreateTextureFromFileInMemory(ptr ptr long ptr)
 @ stdcall D3DXCreateTextureFromFileInMemoryEx(ptr ptr long long long long long long long long long long ptr ptr ptr)
-@ stub D3DXCreateTextureFromFileW
+@ stdcall D3DXCreateTextureFromFileW(ptr wstr ptr)
 @ stub D3DXCreateTextureFromResourceA
 @ stub D3DXCreateTextureFromResourceExA
 @ stub D3DXCreateTextureFromResourceExW
