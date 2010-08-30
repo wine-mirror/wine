@@ -121,7 +121,7 @@ typedef struct _rtti_object_locator
 typedef struct _basic_string_char
 {
     void *allocator;
-    union _data {
+    union {
         char buf[BUF_SIZE_CHAR];
         char *ptr;
     } data;
@@ -134,5 +134,19 @@ basic_string_char* __stdcall MSVCP_basic_string_char_copy_ctor(basic_string_char
 void __stdcall MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* __stdcall MSVCP_basic_string_char_c_str(basic_string_char*);
 
+#define BUF_SIZE_WCHAR 8
+typedef struct _basic_string_wchar
+{
+    void *allocator;
+    union {
+        wchar_t buf[BUF_SIZE_WCHAR];
+        wchar_t *ptr;
+    } data;
+    size_t size;
+    size_t res;
+} basic_string_wchar;
+
 char* __stdcall MSVCP_allocator_char_allocate(void*, size_t);
 void __stdcall MSVCP_allocator_char_deallocate(void*, char*, size_t);
+wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, size_t);
+void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, size_t);

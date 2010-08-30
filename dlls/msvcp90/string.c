@@ -497,6 +497,7 @@ void CDECL MSVCP__String_base_Xinvarg(void)
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
 /* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB */
+/* ?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB */
 const size_t MSVCP_basic_string_char_npos = -1;
 
 /* Internal: basic_string_char_ptr - return pointer to stored string */
@@ -536,7 +537,7 @@ static MSVCP_BOOL basic_string_char_inside(
 /* Internal: basic_string_char_tidy - initialize basic_string buffer, deallocates data */
 /* Caution: new_size have to be smaller than BUF_SIZE_CHAR */
 static void basic_string_char_tidy(basic_string_char *this,
-        MSVCP_BOOL built, int new_size)
+        MSVCP_BOOL built, size_t new_size)
 {
     if(built && BUF_SIZE_CHAR<=this->res) {
         char *ptr = this->data.ptr;
@@ -737,4 +738,250 @@ void __thiscall MSVCP_basic_string_char_dtor(basic_string_char *this)
 {
     TRACE("%p\n", this);
     basic_string_char_tidy(this, TRUE, 0);
+}
+
+
+/* basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t>> */
+/* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2IB */
+/* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2_KB */
+const size_t MSVCP_basic_string_wchar_npos = -1;
+
+/* Internal: basic_string_wchar_ptr - return pointer to stored string */
+static wchar_t* basic_string_wchar_ptr(basic_string_wchar *this)
+{
+    if(this->res == BUF_SIZE_WCHAR-1)
+        return this->data.buf;
+    return this->data.ptr;
+}
+
+/* Internal: basic_string_wchar_const_ptr - returns const pointer to stored string */
+static const wchar_t* basic_string_wchar_const_ptr(const basic_string_wchar *this)
+{
+    if(this->res == BUF_SIZE_WCHAR-1)
+        return this->data.buf;
+    return this->data.ptr;
+}
+
+/* Internal: basic_string_wchar_eos - sets string length, puts '\0' on the end */
+static void basic_string_wchar_eos(basic_string_wchar *this, size_t len)
+{
+    static const wchar_t nullbyte_w = '\0';
+
+    this->size = len;
+    MSVCP_char_traits_wchar_assign(basic_string_wchar_ptr(this)+len, &nullbyte_w);
+}
+
+/* Internal: basic_string_char_inside - checks if given pointer points inside stored string */
+static MSVCP_BOOL basic_string_wchar_inside(
+        basic_string_wchar *this, const wchar_t *ptr)
+{
+    wchar_t *cstr = basic_string_wchar_ptr(this);
+
+    return (ptr<cstr || ptr>=cstr+this->size) ? FALSE : TRUE;
+}
+
+/* Internal: basic_string_char_tidy - initialize basic_string buffer, deallocates data */
+/* Caution: new_size have to be smaller than BUF_SIZE_WCHAR */
+static void basic_string_wchar_tidy(basic_string_wchar *this,
+        MSVCP_BOOL built, size_t new_size)
+{
+    if(built && BUF_SIZE_WCHAR<=this->res) {
+        wchar_t *ptr = this->data.ptr;
+
+        if(new_size > 0)
+            MSVCP_char_traits_wchar__Copy_s(this->data.buf, BUF_SIZE_WCHAR, ptr, new_size);
+        MSVCP_allocator_wchar_deallocate(this->allocator, ptr, this->res+1);
+    }
+
+    this->res = BUF_SIZE_WCHAR-1;
+    basic_string_wchar_eos(this, new_size);
+}
+
+/* Internal: basic_string_wchar_grow - changes size of internal buffer */
+static MSVCP_BOOL basic_string_wchar_grow(
+        basic_string_wchar *this, size_t new_size, MSVCP_BOOL trim)
+{
+    if(this->res < new_size) {
+        size_t new_res = new_size;
+        wchar_t *ptr;
+
+        new_res |= 0xf;
+
+        if(new_res/3 < this->res/2)
+            new_res = this->res + this->res/2;
+
+        ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_res);
+        if(!ptr)
+            ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_size+1);
+        else
+            new_size = new_res;
+        if(!ptr) {
+            ERR("Out of memory\n");
+            basic_string_wchar_tidy(this, TRUE, 0);
+            return FALSE;
+        }
+
+        MSVCP_char_traits_wchar__Copy_s(ptr, new_size,
+                basic_string_wchar_ptr(this), this->size);
+        basic_string_wchar_tidy(this, TRUE, 0);
+        this->data.ptr = ptr;
+        this->res = new_size;
+        basic_string_wchar_eos(this, this->size);
+    } else if(trim && new_size < BUF_SIZE_WCHAR)
+        basic_string_wchar_tidy(this, TRUE,
+                new_size<this->size ? new_size : this->size);
+    else if(new_size == 0)
+        basic_string_wchar_eos(this, 0);
+
+    return (new_size>0);
+}
+
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@II@Z */
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K0@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_erase, 12)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_erase(
+            basic_string_wchar *this, size_t pos, size_t len)
+{
+    TRACE("%p %d %d\n", this, pos, len);
+
+    if(pos > this->size) {
+        MSVCP__String_base_Xran();
+        return NULL;
+    }
+
+    if(len > this->size-pos)
+        len = this->size-pos;
+
+    if(len) {
+        MSVCP_char_traits_wchar__Move_s(basic_string_wchar_ptr(this)+pos,
+                this->res-pos, basic_string_wchar_ptr(this)+pos+len,
+                this->size-pos-len);
+        basic_string_wchar_eos(this, this->size-len);
+    }
+
+    return this;
+}
+
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@ABV12@II@Z */
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@AEBV12@_K1@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_assign_substr, 16)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_substr(
+            basic_string_wchar *this, const basic_string_wchar *assign,
+            size_t pos, size_t len)
+{
+    TRACE("%p %p %d %d\n", this, assign, pos, len);
+
+    if(assign->size < pos) {
+        MSVCP__String_base_Xran();
+        return NULL;
+    }
+
+    if(len > assign->size-pos)
+        len = assign->size-pos;
+
+    if(this == assign) {
+        MSVCP_basic_string_wchar_erase(this, pos+len, MSVCP_basic_string_wchar_npos);
+        MSVCP_basic_string_wchar_erase(this, 0, pos);
+    } else if(basic_string_wchar_grow(this, len, FALSE)) {
+        MSVCP_char_traits_wchar__Copy_s(basic_string_wchar_ptr(this),
+                this->res, basic_string_wchar_const_ptr(assign)+pos, len);
+        basic_string_wchar_eos(this, len);
+    }
+
+    return this;
+}
+
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@ABV12@@Z */
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@AEBV12@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_assign, 8)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign(
+            basic_string_wchar *this, const basic_string_wchar *assign)
+{
+    return MSVCP_basic_string_wchar_assign_substr(this, assign,
+            0, MSVCP_basic_string_wchar_npos);
+}
+
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@PB_WI@Z */
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@PEB_W_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_assign_cstr_len, 12)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_cstr_len(
+            basic_string_wchar *this, const wchar_t *str, size_t len)
+{
+    TRACE("%p %s %d\n", this, debugstr_w(str), len);
+
+    if(basic_string_wchar_inside(this, str))
+        return MSVCP_basic_string_wchar_assign_substr(this, this,
+                str-basic_string_wchar_ptr(this), len);
+    else if(basic_string_wchar_grow(this, len, FALSE)) {
+        MSVCP_char_traits_wchar__Copy_s(basic_string_wchar_ptr(this),
+                this->res, str, len);
+        basic_string_wchar_eos(this, len);
+    }
+
+    return this;
+}
+
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@PB_W@Z */
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@PEB_W@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_assign_cstr, 8)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_cstr(
+            basic_string_wchar *this, const wchar_t *str)
+{
+    return MSVCP_basic_string_wchar_assign_cstr_len(this, str,
+            MSVCP_char_traits_wchar_length(str));
+}
+
+/* ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ */
+/* ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_c_str, 4)
+const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(basic_string_wchar *this)
+{
+    TRACE("%p\n", this);
+    return basic_string_wchar_const_ptr(this);
+}
+
+/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ */
+/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_ctor, 4)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar *this)
+{
+    TRACE("%p\n", this);
+
+    basic_string_wchar_tidy(this, FALSE, 0);
+    return this;
+}
+
+/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@ABV01@@Z */
+/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_copy_ctor, 8)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_copy_ctor(
+            basic_string_wchar *this, const basic_string_wchar *copy)
+{
+    TRACE("%p %p\n", this, copy);
+
+    basic_string_wchar_tidy(this, FALSE, 0);
+    MSVCP_basic_string_wchar_assign(this, copy);
+    return this;
+}
+
+/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W@Z */
+/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_ctor_cstr, 8)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(
+            basic_string_wchar *this, const wchar_t *str)
+{
+    TRACE("%p %s\n", this, debugstr_w(str));
+
+    basic_string_wchar_tidy(this, FALSE, 0);
+    MSVCP_basic_string_wchar_assign_cstr(this, str);
+    return this;
+}
+
+/* ??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ */
+/* ??1?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_dtor, 4)
+void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar *this)
+{
+    TRACE("%p\n", this);
+    basic_string_wchar_tidy(this, TRUE, 0);
 }
