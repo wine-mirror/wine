@@ -30,6 +30,7 @@ STRINGTABLE
     IDS_INVALID_CALL_ARG    "手続き呼び出しまたは引数が無効です"
     IDS_CREATE_OBJ_ERROR    "オートメーション サーバはオブジェクトを生成できません"
     IDS_NO_PROPERTY         "オブジェクトはこのプロパティまたはメソッドをサポートしていません"
+    IDS_UNSUPPORTED_ACTION  "オブジェクトはこの操作をサポートしていません"
     IDS_ARG_NOT_OPT         "引数は省略できません"
     IDS_SYNTAX_ERROR        "文法エラー"
     IDS_SEMICOLON           "';'を期待していました"
