@@ -1317,10 +1317,8 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	if (dwRet == MCIERR_DEVICE_NOT_INSTALLED)
 	    dwRet = MCIERR_INVALID_DEVICE_NAME;
 	HeapFree(GetProcessHeap(), 0, devType);
-	if (dwRet) {
-	    MCI_UnLoadMciDriver(wmd);
+	if (dwRet)
 	    goto errCleanUp;
-	}
     } else if (!strcmpW(verb, wszSysinfo)) {
 	/* System commands are not subject to auto-open. */
 	/* It's too early to handle Sysinfo here because the
@@ -1411,14 +1409,21 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	data[0] = (DWORD_PTR)hwndCallback;
     }
 
+    if (wMsg == MCI_OPEN && strcmpW(verb, wszOpen)) {
+	ERR("Cannot open with command %s\n", debugstr_w(verb));
+	dwRet = MCIERR_INTERNAL;
+	wMsg = 0;
+	goto errCleanUp;
+    }
+
     TRACE("[%d, %s, %08x, %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx]\n",
 	  wmd ? wmd->wDeviceID : uDevID, MCI_MessageToString(wMsg), dwFlags,
 	  data[0], data[1], data[2], data[3], data[4],
 	  data[5], data[6], data[7], data[8], data[9]);
 
-    if (strcmpW(verb, wszOpen) == 0) {
+    if (wMsg == MCI_OPEN) {
 	if ((dwRet = MCI_FinishOpen(wmd, (LPMCI_OPEN_PARMSW)data, dwFlags)))
-	    MCI_UnLoadMciDriver(wmd);
+	    goto errCleanUp;
 	/* FIXME: notification is not properly shared across two opens */
     } else {
 	dwRet = MCI_SendCommand(wmd ? wmd->wDeviceID : uDevID, wMsg, dwFlags, (DWORD_PTR)data);
@@ -1435,6 +1440,8 @@ errCleanUp:
 	else
 	    FIXME("leaking auto-open device %u\n", auto_open);
     }
+    if (wMsg == MCI_OPEN && LOWORD(dwRet) && wmd)
+	MCI_UnLoadMciDriver(wmd);
     HeapFree(GetProcessHeap(), 0, verb);
     return dwRet;
 }
