@@ -81,7 +81,7 @@ int has_relays( DLLSPEC *spec )
 static void output_relay_debug( DLLSPEC *spec )
 {
     int i;
-    unsigned int j, args, flags;
+    unsigned int j, pos, args, flags;
 
     /* first the table of entry point offsets */
 
@@ -111,10 +111,15 @@ static void output_relay_debug( DLLSPEC *spec )
 
         if (needs_relay( odp ))
         {
-            for (j = 0; j < 16 && odp->u.func.arg_types[j]; j++)
+            for (j = pos = 0; pos < 16 && j < odp->u.func.nb_args; j++)
             {
-                if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
-                if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
+                switch (odp->u.func.args[j])
+                {
+                case ARG_STR:    mask |= 1 << (2 * pos++); break;
+                case ARG_WSTR:   mask |= 2 << (2 * pos++); break;
+                case ARG_DOUBLE: pos += 8 / get_ptr_size(); break;
+                default:         pos++; break;
+                }
             }
         }
         output( "\t.long 0x%08x\n", mask );
@@ -135,7 +140,7 @@ static void output_relay_debug( DLLSPEC *spec )
         output( "\t.align %d\n", get_alignment(4) );
         output( ".L__wine_spec_relay_entry_point_%d:\n", i );
 
-        args = strlen(odp->u.func.arg_types);
+        args = get_args_size(odp) / get_ptr_size();
         flags = 0;
 
         switch (target_cpu)
@@ -831,7 +836,7 @@ void output_def_file( DLLSPEC *spec, int include_private )
             break;
         case TYPE_STDCALL:
         {
-            int at_param = strlen(odp->u.func.arg_types) * get_ptr_size();
+            int at_param = get_args_size( odp );
             if (!kill_at && target_cpu == CPU_x86) output( "@%d", at_param );
             if  (odp->flags & FLAG_FORWARD)
             {

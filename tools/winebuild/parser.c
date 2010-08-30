@@ -72,6 +72,19 @@ static const char * const FlagNames[] =
     NULL
 };
 
+static const char * const ArgNames[ARG_MAXARG + 1] =
+{
+    "word",    /* ARG_WORD */
+    "s_word",  /* ARG_SWORD */
+    "segptr",  /* ARG_SEGPTR */
+    "segstr",  /* ARG_SEGSTR */
+    "long",    /* ARG_LONG */
+    "ptr",     /* ARG_PTR */
+    "str",     /* ARG_STR */
+    "wstr",    /* ARG_WSTR */
+    "double"   /* ARG_DOUBLE */
+};
+
 static int IsNumberString(const char *s)
 {
     while (*s) if (!isdigit(*s++)) return 0;
@@ -228,7 +241,7 @@ static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
 static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
 {
     const char *token;
-    unsigned int i;
+    unsigned int i, arg;
     int is_win32 = (spec->type == SPEC_WIN32) || (odp->flags & FLAG_EXPORT32);
 
     if (!is_win32 && odp->type == TYPE_STDCALL)
@@ -254,61 +267,42 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
         return 0;
     }
 
-    for (i = 0; i < sizeof(odp->u.func.arg_types); i++)
+    odp->u.func.nb_args = 0;
+    for (i = 0; i < MAX_ARGUMENTS; i++)
     {
         if (!(token = GetToken(0))) return 0;
 	if (*token == ')')
 	    break;
 
-        if (!strcmp(token, "word"))
-            odp->u.func.arg_types[i] = 'w';
-        else if (!strcmp(token, "s_word"))
-            odp->u.func.arg_types[i] = 's';
-        else if (!strcmp(token, "long") || !strcmp(token, "segptr"))
-            odp->u.func.arg_types[i] = 'l';
-        else if (!strcmp(token, "ptr"))
-            odp->u.func.arg_types[i] = 'p';
-	else if (!strcmp(token, "str"))
-	    odp->u.func.arg_types[i] = 't';
-	else if (!strcmp(token, "wstr"))
-	    odp->u.func.arg_types[i] = 'W';
-	else if (!strcmp(token, "segstr"))
-	    odp->u.func.arg_types[i] = 'T';
-        else if (!strcmp(token, "double"))
-        {
-            odp->u.func.arg_types[i++] = 'l';
-            if (get_ptr_size() == 4 && i < sizeof(odp->u.func.arg_types))
-                odp->u.func.arg_types[i] = 'l';
-        }
-        else
+        for (arg = 0; arg <= ARG_MAXARG; arg++)
+            if (!strcmp( ArgNames[arg], token )) break;
+
+        if (arg > ARG_MAXARG)
         {
             error( "Unknown argument type '%s'\n", token );
             return 0;
         }
-
-        if (is_win32)
+        if (is_win32) switch (arg)
         {
-            if (strcmp(token, "long") &&
-                strcmp(token, "ptr") &&
-                strcmp(token, "str") &&
-                strcmp(token, "wstr") &&
-                strcmp(token, "double"))
-            {
-                error( "Type '%s' not supported for Win32 function\n", token );
-                return 0;
-            }
+        case ARG_WORD:
+        case ARG_SWORD:
+        case ARG_SEGPTR:
+        case ARG_SEGSTR:
+            error( "Argument type '%s' only allowed for Win16\n", token );
+            return 0;
         }
+        odp->u.func.args[i] = arg;
     }
-    if ((*token != ')') || (i >= sizeof(odp->u.func.arg_types)))
+    if (*token != ')')
     {
         error( "Too many arguments\n" );
         return 0;
     }
 
-    odp->u.func.arg_types[i] = '\0';
+    odp->u.func.nb_args = i;
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
-    if (odp->type == TYPE_THISCALL && odp->u.func.arg_types[0] != 'p')
+    if (odp->type == TYPE_THISCALL && (!i || odp->u.func.args[0] != ARG_PTR))
     {
         error( "First argument of a thiscall function must be a pointer\n" );
         return 0;
@@ -386,7 +380,7 @@ static int parse_spec_equate( ORDDEF *odp, DLLSPEC *spec )
  */
 static int parse_spec_stub( ORDDEF *odp, DLLSPEC *spec )
 {
-    odp->u.func.arg_types[0] = '\0';
+    odp->u.func.nb_args = 0;
     odp->link_name = xstrdup("");
     odp->flags |= FLAG_CPU(CPU_x86) | FLAG_CPU(CPU_x86_64); /* don't bother generating stubs for Winelib */
     return 1;
@@ -806,7 +800,8 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
         odp->lineno = odp16->lineno;
         odp->ordinal = -1;
         odp->link_name = xstrdup( odp16->link_name );
-        strcpy( odp->u.func.arg_types, odp16->u.func.arg_types );
+        odp->u.func.nb_args = odp16->u.func.nb_args;
+        memcpy( odp->u.func.args, odp16->u.func.args, odp->u.func.nb_args * sizeof(odp->u.func.args[0]) );
     }
 
     assign_names( spec32 );
@@ -936,18 +931,23 @@ static int parse_def_export( char *name, DLLSPEC *spec )
     odp->ordinal = -1;
     odp->name = name;
     args = remove_stdcall_decoration( odp->name );
-    if (args == -1) odp->type = TYPE_CDECL;
+    if (args == -1)
+    {
+        odp->type = TYPE_CDECL;
+        args = 0;
+    }
     else
     {
         odp->type = TYPE_STDCALL;
         args /= get_ptr_size();
-        if (args >= sizeof(odp->u.func.arg_types))
+        if (args >= MAX_ARGUMENTS)
         {
             error( "Too many arguments in stdcall function '%s'\n", odp->name );
             return 0;
         }
-        for (i = 0; i < args; i++) odp->u.func.arg_types[i] = 'l';
+        for (i = 0; i < args; i++) odp->u.func.args[i] = ARG_LONG;
     }
+    odp->u.func.nb_args = args;
 
     /* check for optional internal name */
 

@@ -58,6 +58,22 @@ typedef enum
     SPEC_WIN32
 } SPEC_TYPE;
 
+enum arg_type
+{
+    ARG_WORD,     /* 16-bit word */
+    ARG_SWORD,    /* 16-bit signed word */
+    ARG_SEGPTR,   /* segmented pointer */
+    ARG_SEGSTR,   /* segmented pointer to Ansi string */
+    ARG_LONG,     /* long */
+    ARG_PTR,      /* pointer */
+    ARG_STR,      /* pointer to Ansi string */
+    ARG_WSTR,     /* pointer to Unicode string */
+    ARG_DOUBLE,   /* floating point double */
+    ARG_MAXARG = ARG_DOUBLE
+};
+
+#define MAX_ARGUMENTS 32
+
 typedef struct
 {
     int n_values;
@@ -66,7 +82,8 @@ typedef struct
 
 typedef struct
 {
-    char arg_types[21];
+    unsigned int  nb_args;
+    enum arg_type args[MAX_ARGUMENTS];
 } ORD_FUNCTION;
 
 typedef struct
@@ -244,6 +261,7 @@ extern enum target_cpu get_cpu_from_name( const char *name );
 extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);
 extern unsigned int get_ptr_size(void);
+extern unsigned int get_args_size( const ORDDEF *odp );
 extern const char *asm_name( const char *func );
 extern const char *func_declaration( const char *func );
 extern const char *asm_globl( const char *func );
