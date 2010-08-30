@@ -1654,7 +1654,7 @@ struct create_console_output_request
     unsigned int access;
     unsigned int attributes;
     unsigned int share;
-    char __pad_28[4];
+    int          fd;
 };
 struct create_console_output_reply
 {
@@ -5506,6 +5506,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 405
+#define SERVER_PROTOCOL_VERSION 406
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

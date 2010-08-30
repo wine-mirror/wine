@@ -1295,6 +1295,7 @@ struct console_renderer_event
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
     unsigned int share;         /* sharing credentials */
+    int          fd;            /* for bare consoles, fd the screen-buffer is attached to */
 @REPLY
     obj_handle_t handle_out;    /* handle to the screen buffer */
 @END

@@ -1011,6 +1011,7 @@ C_ASSERT( FIELD_OFFSET(struct create_console_output_request, handle_in) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_console_output_request, access) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_console_output_request, attributes) == 20 );
 C_ASSERT( FIELD_OFFSET(struct create_console_output_request, share) == 24 );
+C_ASSERT( FIELD_OFFSET(struct create_console_output_request, fd) == 28 );
 C_ASSERT( sizeof(struct create_console_output_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct create_console_output_reply, handle_out) == 8 );
 C_ASSERT( sizeof(struct create_console_output_reply) == 16 );

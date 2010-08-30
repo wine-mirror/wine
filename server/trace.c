@@ -1704,6 +1704,7 @@ static void dump_create_console_output_request( const struct create_console_outp
     fprintf( stderr, ", access=%08x", req->access );
     fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", share=%08x", req->share );
+    fprintf( stderr, ", fd=%d", req->fd );
 }
 
 static void dump_create_console_output_reply( const struct create_console_output_reply *req )

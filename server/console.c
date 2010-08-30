@@ -143,10 +143,12 @@ struct screen_buffer
     unsigned short        attr;          /* default attribute for screen buffer */
     rectangle_t           win;           /* current visible window on the screen buffer *
 					  * as seen in wineconsole */
+    struct fd            *fd;            /* for bare console, attached output fd */
 };
 
 static void screen_buffer_dump( struct object *obj, int verbose );
 static void screen_buffer_destroy( struct object *obj );
+static struct fd *screen_buffer_get_fd( struct object *obj );
 
 static const struct object_ops screen_buffer_ops =
 {
@@ -158,7 +160,7 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
     no_signal,                        /* signal */
-    no_get_fd,                        /* get_fd */
+    screen_buffer_get_fd,             /* get_fd */
     default_fd_map_access,            /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -395,7 +397,7 @@ static void generate_sb_initial_events( struct console_input *console_input )
     console_input_events_append( console_input->evt, &evt );
 }
 
-static struct screen_buffer *create_console_output( struct console_input *console_input )
+static struct screen_buffer *create_console_output( struct console_input *console_input, int fd )
 {
     struct screen_buffer *screen_buffer;
     int	i;
@@ -416,6 +418,18 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->win.right      = screen_buffer->max_width - 1;
     screen_buffer->win.top        = 0;
     screen_buffer->win.bottom     = screen_buffer->max_height - 1;
+    if (fd == -1)
+        screen_buffer->fd = NULL;
+    else
+    {
+        if (!(screen_buffer->fd = create_anonymous_fd( &console_fd_ops, fd, &screen_buffer->obj,
+                                                       FILE_SYNCHRONOUS_IO_NONALERT )))
+        {
+            release_object( screen_buffer );
+            return NULL;
+        }
+        allow_fd_caching(screen_buffer->fd);
+    }
 
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
@@ -1136,7 +1150,15 @@ static void screen_buffer_destroy( struct object *obj )
             }
         }
     }
+    if (screen_buffer->fd) release_object( screen_buffer->fd );
     free( screen_buffer->data );
+}
+
+static struct fd *screen_buffer_get_fd( struct object *obj )
+{
+    struct screen_buffer *screen_buffer = (struct screen_buffer*)obj;
+    assert( obj->ops == &screen_buffer_ops );
+    return screen_buffer->fd ? (struct fd*)grab_object( screen_buffer->fd ) : NULL;
 }
 
 /* write data into a screen buffer */
@@ -1468,8 +1490,8 @@ DECL_HANDLER(open_console)
     }
     else if (req->from == (obj_handle_t)1)
     {
-         if (current->process->console && current->process->console->active)
-             obj = grab_object( (struct object*)current->process->console->active );
+        if (current->process->console && current->process->console->active)
+            obj = grab_object( (struct object*)current->process->console->active );
     }
     else if ((obj = get_handle_obj( current->process, req->from,
                                     FILE_READ_PROPERTIES|FILE_WRITE_PROPERTIES, &console_input_ops )))
@@ -1575,10 +1597,24 @@ DECL_HANDLER(create_console_output)
 {
     struct console_input*	console;
     struct screen_buffer*	screen_buffer;
+    int                         fd;
 
-    if (!(console = console_input_get( req->handle_in, FILE_WRITE_PROPERTIES ))) return;
+    if (req->fd != -1)
+    {
+        if ((fd = thread_get_inflight_fd( current, req->fd )) == -1)
+        {
+            set_error( STATUS_INVALID_HANDLE ); /* FIXME */
+            return;
+        }
+    }
+    else fd = -1;
+    if (!(console = console_input_get( req->handle_in, FILE_WRITE_PROPERTIES )))
+    {
+        close(fd);
+        return;
+    }
 
-    screen_buffer = create_console_output( console );
+    screen_buffer = create_console_output( console, fd );
     if (screen_buffer)
     {
         /* FIXME: should store sharing and test it when opening the CONOUT$ device
