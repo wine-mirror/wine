@@ -1527,7 +1527,7 @@ static startup_info_t *create_startup_info( LPCWSTR filename, LPCWSTR cmdline,
 
     info->console_flags = cur_params->ConsoleFlags;
     if (flags & CREATE_NEW_PROCESS_GROUP) info->console_flags = 1;
-    if (flags & CREATE_NEW_CONSOLE) info->console = (obj_handle_t)1;  /* FIXME: cf. kernel_main.c */
+    if (flags & CREATE_NEW_CONSOLE) info->console = wine_server_obj_handle(KERNEL32_CONSOLE_ALLOC);
 
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {

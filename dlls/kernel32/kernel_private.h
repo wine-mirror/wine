@@ -28,6 +28,7 @@ BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
 BOOL    WINAPI CloseConsoleHandle(HANDLE handle);
 HANDLE  WINAPI GetConsoleInputWaitHandle(void);
+BOOL           CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params);
 
 static inline BOOL is_console_handle(HANDLE h)
 {
@@ -45,6 +46,10 @@ static inline obj_handle_t console_handle_unmap(HANDLE h)
 {
     return wine_server_obj_handle( h != INVALID_HANDLE_VALUE ? (HANDLE)((UINT_PTR)h ^ 3) : INVALID_HANDLE_VALUE );
 }
+
+/* Some Wine specific values for Console inheritance (params->ConsoleHandle) */
+#define KERNEL32_CONSOLE_ALLOC          ((HANDLE)1)
+#define KERNEL32_CONSOLE_SHELL          ((HANDLE)2)
 
 extern HMODULE kernel32_handle;
 

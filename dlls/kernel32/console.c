@@ -2715,3 +2715,50 @@ DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
 
     return 0;
 }
+
+BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
+{
+    if (params->ConsoleHandle == KERNEL32_CONSOLE_SHELL)
+    {
+        HANDLE  conin;
+
+        /* FIXME: to be done even if program is a GUI ? */
+        /* This is wine specific: we have no parent (we're started from unix)
+         * so, create a simple console with bare handles
+         */
+        SERVER_START_REQ( alloc_console )
+        {
+            req->access     = GENERIC_READ | GENERIC_WRITE;
+            req->attributes = OBJ_INHERIT;
+            req->pid        = 0xffffffff;
+            wine_server_call( req );
+            conin = wine_server_ptr_handle( reply->handle_in );
+            /* reply->event shouldn't be created by server */
+        }
+        SERVER_END_REQ;
+
+        if (!params->hStdInput)
+            params->hStdInput = conin;
+    }
+
+    /* convert value from server:
+     * + 0 => INVALID_HANDLE_VALUE
+     * + console handle needs to be mapped
+     */
+    if (!params->hStdInput)
+        params->hStdInput = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdInput)))
+        params->hStdInput = console_handle_map(params->hStdInput);
+
+    if (!params->hStdOutput)
+        params->hStdOutput = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdOutput)))
+        params->hStdOutput = console_handle_map(params->hStdOutput);
+
+    if (!params->hStdError)
+        params->hStdError = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(params->hStdError)))
+        params->hStdError = console_handle_map(params->hStdError);
+
+    return TRUE;
+}

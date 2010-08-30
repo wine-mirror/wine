@@ -276,12 +276,14 @@ HANDLE thread_init(void)
     }
     else
     {
-        /* This is wine specific: we have no parent (we're started from unix)
-         * so, create a simple console with bare handles to unix stdio
-         */
-        wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params.hStdInput );
-        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdOutput );
-        wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
+        if (isatty(0) || isatty(1) || isatty(2))
+            params.ConsoleHandle = (HANDLE)2; /* see kernel32/kernel_private.h */
+        if (!isatty(0))
+            wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  OBJ_INHERIT, &params.hStdInput );
+        if (!isatty(1))
+            wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdOutput );
+        if (!isatty(2))
+            wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
     }
 
     /* initialize time values in user_shared_data */
