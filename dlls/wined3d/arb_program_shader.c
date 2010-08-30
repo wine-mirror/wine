@@ -6987,10 +6987,10 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surfac
     enum complex_fixup fixup;
     GLenum textype = surface->texture_target;
 
-    if (!is_complex_fixup(surface->resource.format_desc->color_fixup))
+    if (!is_complex_fixup(surface->resource.format->color_fixup))
     {
         TRACE("Fixup:\n");
-        dump_color_fixup_desc(surface->resource.format_desc->color_fixup);
+        dump_color_fixup_desc(surface->resource.format->color_fixup);
         /* Don't bother setting up a shader for unconverted formats */
         ENTER_GL();
         glEnable(textype);
@@ -6999,7 +6999,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surfac
         return WINED3D_OK;
     }
 
-    fixup = get_complex_fixup(surface->resource.format_desc->color_fixup);
+    fixup = get_complex_fixup(surface->resource.format->color_fixup);
 
     switch(fixup)
     {
@@ -7069,10 +7069,8 @@ static void arbfp_blit_unset(IWineD3DDevice *iface) {
 }
 
 static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
-                                 const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool,
-                                 const struct wined3d_format_desc *src_format_desc,
-                                 const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool,
-                                 const struct wined3d_format_desc *dst_format_desc)
+        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
+        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
 {
     enum complex_fixup src_fixup;
 
@@ -7082,27 +7080,27 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum bli
         return FALSE;
     }
 
-    src_fixup = get_complex_fixup(src_format_desc->color_fixup);
+    src_fixup = get_complex_fixup(src_format->color_fixup);
     if (TRACE_ON(d3d_shader) && TRACE_ON(d3d))
     {
         TRACE("Checking support for fixup:\n");
-        dump_color_fixup_desc(src_format_desc->color_fixup);
+        dump_color_fixup_desc(src_format->color_fixup);
     }
 
-    if (!is_identity_fixup(dst_format_desc->color_fixup))
+    if (!is_identity_fixup(dst_format->color_fixup))
     {
         TRACE("Destination fixups are not supported\n");
         return FALSE;
     }
 
-    if (is_identity_fixup(src_format_desc->color_fixup))
+    if (is_identity_fixup(src_format->color_fixup))
     {
         TRACE("[OK]\n");
         return TRUE;
     }
 
      /* We only support YUV conversions. */
-    if (!is_complex_fixup(src_format_desc->color_fixup))
+    if (!is_complex_fixup(src_format->color_fixup))
     {
         TRACE("[FAILED]\n");
         return FALSE;

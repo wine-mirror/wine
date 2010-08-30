@@ -153,7 +153,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSU
 
     TRACE("(%p) : copying into %p\n", This, pDesc);
 
-    pDesc->format = This->resource.format_desc->id;
+    pDesc->format = This->resource.format->id;
     pDesc->resource_type = This->resource.resourceType;
     pDesc->usage = This->resource.usage;
     pDesc->pool = This->resource.pool;
@@ -303,24 +303,24 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD
     return WINED3D_OK;
 }
 
-DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
+DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
+    const struct wined3d_format *format = This->resource.format;
     DWORD ret;
     TRACE("(%p)\n", This);
 
-    if ((format_desc->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH))
-            == WINED3DFMT_FLAG_COMPRESSED)
+    if ((format->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
     {
         /* Since compressed formats are block based, pitch means the amount of
          * bytes to the next row of block rather than the next row of pixels. */
-        UINT row_block_count = (This->currentDesc.Width + format_desc->block_width - 1) / format_desc->block_width;
-        ret = row_block_count * format_desc->block_byte_count;
+        UINT row_block_count = (This->currentDesc.Width + format->block_width - 1) / format->block_width;
+        ret = row_block_count * format->block_byte_count;
     }
     else
     {
         unsigned char alignment = This->resource.device->surface_alignment;
-        ret = This->resource.format_desc->byte_count * This->currentDesc.Width;  /* Bytes / row */
+        ret = This->resource.format->byte_count * This->currentDesc.Width;  /* Bytes / row */
         ret = (ret + alignment - 1) & ~(alignment - 1);
     }
     TRACE("(%p) Returning %d\n", This, ret);
@@ -470,32 +470,32 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wined3d_format_id format_id)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id,
-            &This->resource.device->adapter->gl_info);
+    const struct wined3d_format *format = wined3d_get_format(&This->resource.device->adapter->gl_info, format_id);
 
-    if (This->resource.format_desc->id != WINED3DFMT_UNKNOWN)
+    if (This->resource.format->id != WINED3DFMT_UNKNOWN)
     {
         FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
-    TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format_id, debug_d3dformat(format_id));
+    TRACE("(%p) : Setting texture format to %s (%#x).\n", This, debug_d3dformat(format_id), format_id);
 
-    This->resource.size = wined3d_format_calculate_size(format_desc, This->resource.device->surface_alignment,
+    This->resource.size = wined3d_format_calculate_size(format, This->resource.device->surface_alignment,
             This->pow2Width, This->pow2Height);
 
     This->Flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
 
-    This->resource.format_desc = format_desc;
+    This->resource.format = format;
 
-    TRACE("(%p) : Size %d, bytesPerPixel %d\n", This, This->resource.size, format_desc->byte_count);
+    TRACE("(%p) : Size %d, bytesPerPixel %d\n", This, This->resource.size, format->byte_count);
 
     return WINED3D_OK;
 }
 
-HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
+HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct wined3d_format_desc *format_desc = This->resource.format_desc;
+    const struct wined3d_format *format = This->resource.format;
     int extraline = 0;
     SYSTEM_INFO sysInfo;
     BITMAPINFO* b_info;
@@ -503,13 +503,13 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     DWORD *masks;
     UINT usage;
 
-    if(!(format_desc->Flags & WINED3DFMT_FLAG_GETDC))
+    if (!(format->Flags & WINED3DFMT_FLAG_GETDC))
     {
-        WARN("Cannot use GetDC on a %s surface\n", debug_d3dformat(format_desc->id));
+        WARN("Cannot use GetDC on a %s surface\n", debug_d3dformat(format->id));
         return WINED3DERR_INVALIDCALL;
     }
 
-    switch (format_desc->byte_count)
+    switch (format->byte_count)
     {
         case 2:
         case 4:
@@ -524,7 +524,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
         default:
             /* Allocate extra space for a palette. */
             b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (1 << (format_desc->byte_count * 8)));
+                    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (1 << (format->byte_count * 8)));
             break;
     }
 
@@ -544,11 +544,11 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
 
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
-    b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch(iface) / format_desc->byte_count;
+    b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch(iface) / format->byte_count;
     b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
     b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
     b_info->bmiHeader.biPlanes = 1;
-    b_info->bmiHeader.biBitCount = format_desc->byte_count * 8;
+    b_info->bmiHeader.biBitCount = format->byte_count * 8;
 
     b_info->bmiHeader.biXPelsPerMeter = 0;
     b_info->bmiHeader.biYPelsPerMeter = 0;
@@ -557,7 +557,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
 
     /* Get the bit masks */
     masks = (DWORD *)b_info->bmiColors;
-    switch (This->resource.format_desc->id)
+    switch (This->resource.format->id)
     {
         case WINED3DFMT_B8G8R8_UNORM:
             usage = DIB_RGB_COLORS;
@@ -578,9 +578,9 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
         case WINED3DFMT_R16G16B16A16_UNORM:
             usage = 0;
             b_info->bmiHeader.biCompression = BI_BITFIELDS;
-            masks[0] = format_desc->red_mask;
-            masks[1] = format_desc->green_mask;
-            masks[2] = format_desc->blue_mask;
+            masks[0] = format->red_mask;
+            masks[1] = format->green_mask;
+            masks[2] = format->blue_mask;
             break;
 
         default:
@@ -802,11 +802,11 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     WINED3DLOCKED_RECT lock_src, lock_dst;
     HRESULT hr;
 
-    conv = find_convertor(source->resource.format_desc->id, to_fmt);
+    conv = find_convertor(source->resource.format->id, to_fmt);
     if (!conv)
     {
         FIXME("Cannot find a conversion function from format %s to %s.\n",
-                debug_d3dformat(source->resource.format_desc->id), debug_d3dformat(to_fmt));
+                debug_d3dformat(source->resource.format->id), debug_d3dformat(to_fmt));
         return NULL;
     }
 
@@ -930,7 +930,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     HRESULT     ret = WINED3D_OK;
     WINED3DLOCKED_RECT  dlock, slock;
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
-    const struct wined3d_format_desc *sEntry, *dEntry;
+    const struct wined3d_format *sEntry, *dEntry;
     int x, y;
     const BYTE *sbuf;
     BYTE *dbuf;
@@ -1095,15 +1095,15 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     {
         IWineD3DSurface_LockRect(iface, &dlock, NULL, 0);
         slock = dlock;
-        sEntry = This->resource.format_desc;
+        sEntry = This->resource.format;
         dEntry = sEntry;
     }
     else
     {
-        dEntry = This->resource.format_desc;
+        dEntry = This->resource.format;
         if (src)
         {
-            if (This->resource.format_desc->id != src->resource.format_desc->id)
+            if (This->resource.format->id != src->resource.format->id)
             {
                 src = surface_convert_format(src, dEntry->id);
                 if (!src)
@@ -1114,7 +1114,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                 }
             }
             IWineD3DSurface_LockRect((IWineD3DSurface *)src, &slock, NULL, WINED3DLOCK_READONLY);
-            sEntry = src->resource.format_desc;
+            sEntry = src->resource.format;
         }
         else
         {
@@ -1137,7 +1137,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         }
     }
 
-    bpp = This->resource.format_desc->byte_count;
+    bpp = This->resource.format->byte_count;
     srcheight = xsrc.bottom - xsrc.top;
     srcwidth = xsrc.right - xsrc.left;
     dstheight = xdst.bottom - xdst.top;
@@ -1561,7 +1561,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     RECT                lock_src, lock_dst, lock_union;
     const BYTE          *sbuf;
     BYTE                *dbuf;
-    const struct wined3d_format_desc *sEntry, *dEntry;
+    const struct wined3d_format *sEntry, *dEntry;
 
     TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
             iface, dstx, dsty, src_surface, wine_dbgstr_rect(rsrc), trans);
@@ -1614,7 +1614,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     lock_dst.right = dstx + w;
     lock_dst.bottom = dsty + h;
 
-    bpp = This->resource.format_desc->byte_count;
+    bpp = This->resource.format->byte_count;
 
     /* We need to lock the surfaces, or we won't get refreshes when done. */
     if (src == This)
@@ -1633,7 +1633,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         /* Since slock was originally copied from this surface's description, we can just reuse it */
         sbuf = This->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
         dbuf = This->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
-        sEntry = src->resource.format_desc;
+        sEntry = src->resource.format;
         dEntry = sEntry;
     }
     else
@@ -1647,8 +1647,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         dbuf = dlock.pBits;
         TRACE("Dst is at %p, Src is at %p\n", dbuf, sbuf);
 
-        sEntry = src->resource.format_desc;
-        dEntry = This->resource.format_desc;
+        sEntry = src->resource.format;
+        dEntry = This->resource.format;
     }
 
     /* Handle compressed surfaces first... */
@@ -1661,7 +1661,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
             FIXME("trans arg not supported when a compressed surface is involved\n");
         if (dstx || dsty)
             FIXME("offset for destination surface is not supported\n");
-        if (src->resource.format_desc->id != This->resource.format_desc->id)
+        if (src->resource.format->id != This->resource.format->id)
         {
             FIXME("compressed -> compressed copy only supported for the same type of surface\n");
             ret = WINED3DERR_WRONGTEXTUREFORMAT;
@@ -1690,9 +1690,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     if (trans & (WINEDDBLTFAST_SRCCOLORKEY | WINEDDBLTFAST_DESTCOLORKEY))
     {
         DWORD keylow, keyhigh;
-        DWORD mask = src->resource.format_desc->red_mask
-                | src->resource.format_desc->green_mask
-                | src->resource.format_desc->blue_mask;
+        DWORD mask = src->resource.format->red_mask
+                | src->resource.format->green_mask
+                | src->resource.format->blue_mask;
 
         /* For some 8-bit formats like L8 and P8 color masks don't make sense */
         if(!mask && bpp==1)
@@ -1829,25 +1829,24 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
     }
     else
     {
-        const struct wined3d_format_desc *format_desc = This->resource.format_desc;
+        const struct wined3d_format *format = This->resource.format;
 
         TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n",
               pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
-        if ((format_desc->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH))
-                == WINED3DFMT_FLAG_COMPRESSED)
+        if ((format->Flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
             pLockedRect->pBits = This->resource.allocatedMemory
-                    + ((pRect->top / format_desc->block_height) * pLockedRect->Pitch)
-                    + ((pRect->left / format_desc->block_width) * format_desc->block_byte_count);
+                    + ((pRect->top / format->block_height) * pLockedRect->Pitch)
+                    + ((pRect->left / format->block_width) * format->block_byte_count);
         }
         else
         {
             pLockedRect->pBits = This->resource.allocatedMemory +
                     (pLockedRect->Pitch * pRect->top) +
-                    (pRect->left * format_desc->byte_count);
+                    (pRect->left * format->byte_count);
         }
         This->lockedRect.left   = pRect->left;
         This->lockedRect.top    = pRect->top;

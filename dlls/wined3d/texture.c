@@ -66,8 +66,8 @@ static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRG
         context = context_acquire(device, NULL);
     }
 
-    if (This->resource.format_desc->id == WINED3DFMT_P8_UINT
-            || This->resource.format_desc->id == WINED3DFMT_P8_UINT_A8_UNORM)
+    if (This->resource.format->id == WINED3DFMT_P8_UINT
+            || This->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         for (i = 0; i < This->baseTexture.level_count; ++i)
         {
@@ -466,7 +466,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, gl_info);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     UINT pow2_width, pow2_height;
     UINT tmp_w, tmp_h;
     unsigned int i;
@@ -530,7 +530,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
     texture->lpVtbl = &IWineD3DTexture_Vtbl;
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 1, levels,
-            WINED3DRTYPE_TEXTURE, device, 0, usage, format_desc, pool, parent, parent_ops);
+            WINED3DRTYPE_TEXTURE, device, 0, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);
@@ -552,7 +552,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.minMipLookup = minMipLookup_noFilter;
     }
     else if (gl_info->supported[ARB_TEXTURE_RECTANGLE] && (width != pow2_width || height != pow2_height)
-            && !(format_desc->id == WINED3DFMT_P8_UINT && gl_info->supported[EXT_PALETTED_TEXTURE]
+            && !(format->id == WINED3DFMT_P8_UINT && gl_info->supported[EXT_PALETTED_TEXTURE]
             && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
     {
         if ((width != 1) || (height != 1)) texture->baseTexture.pow2Matrix_identity = FALSE;
@@ -564,7 +564,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->target = GL_TEXTURE_RECTANGLE_ARB;
         texture->cond_np2 = TRUE;
 
-        if(texture->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
+        if(texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING)
         {
             texture->baseTexture.minMipLookup = minMipLookup_noMip;
         }
@@ -603,7 +603,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
 
         /* Use the callback to create the texture surface. */
         hr = IWineD3DDeviceParent_CreateSurface(device->device_parent, parent, tmp_w, tmp_h,
-                format_desc->id, usage, pool, i, 0, &surface);
+                format->id, usage, pool, i, 0, &surface);
         if (FAILED(hr))
         {
             FIXME("Failed to create surface %p, hr %#x\n", texture, hr);

@@ -28,7 +28,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type,
-        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format_desc *format_desc,
+        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
         WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     struct IWineD3DResourceClass *resource = &((IWineD3DResourceImpl *)iface)->resource;
@@ -38,7 +38,7 @@ HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type
     resource->resourceType = resource_type;
     resource->ref = 1;
     resource->pool = pool;
-    resource->format_desc = format_desc;
+    resource->format = format;
     resource->usage = usage;
     resource->size = size;
     resource->priority = 0;

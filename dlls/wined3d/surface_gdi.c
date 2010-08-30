@@ -289,8 +289,8 @@ static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
         return hr;
     }
 
-    if (This->resource.format_desc->id == WINED3DFMT_P8_UINT
-            || This->resource.format_desc->id == WINED3DFMT_P8_UINT_A8_UNORM)
+    if (This->resource.format->id == WINED3DFMT_P8_UINT
+            || This->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         unsigned int n;
         const PALETTEENTRY *pal = NULL;

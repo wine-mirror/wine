@@ -221,7 +221,7 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWine
     {
         struct wined3d_vertex_declaration_element *e = &declaration->elements[i];
 
-        e->format_desc = getFormatDescEntry(elements[i].format, gl_info);
+        e->format = wined3d_get_format(gl_info, elements[i].format);
         e->ffp_valid = declaration_element_valid_ffp(&elements[i]);
         e->input_slot = elements[i].input_slot;
         e->offset = elements[i].offset;
@@ -236,7 +236,7 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWine
          * to be loaded when drawing, but filter tesselation pseudo streams. */
         if (e->input_slot >= MAX_STREAMS) continue;
 
-        if (!e->format_desc->gl_vtx_format)
+        if (!e->format->gl_vtx_format)
         {
             FIXME("The application tries to use an unsupported format (%s), returning E_FAIL.\n",
                     debug_d3dformat(elements[i].format));

@@ -2087,7 +2087,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
     if (stateblock->renderState[WINED3DRS_SRGBWRITEENABLE])
     {
         IWineD3DSurfaceImpl *rt = device->render_targets[0];
-        if(rt->resource.format_desc->Flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
+        if(rt->resource.format->Flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
     }
 
     args->np2_fixup = 0;
@@ -2101,9 +2101,9 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
             args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
             continue;
         }
-        args->color_fixup[i] = texture->resource.format_desc->color_fixup;
+        args->color_fixup[i] = texture->resource.format->color_fixup;
 
-        if (texture->resource.format_desc->Flags & WINED3DFMT_FLAG_SHADOW)
+        if (texture->resource.format->Flags & WINED3DFMT_FLAG_SHADOW)
             args->shadow |= 1 << i;
 
         /* Flag samplers that need NP2 texcoord fixup. */

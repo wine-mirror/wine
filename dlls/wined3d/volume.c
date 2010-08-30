@@ -189,7 +189,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DV
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
 
-    pDesc->Format = This->resource.format_desc->id;
+    pDesc->Format = This->resource.format->id;
     pDesc->Type = This->resource.resourceType;
     pDesc->Usage = This->resource.usage;
     pDesc->Pool = This->resource.pool;
@@ -212,8 +212,8 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
     /* fixme: should we really lock as such? */
     TRACE("(%p) : box=%p, output pbox=%p, allMem=%p\n", This, pBox, pLockedVolume, This->resource.allocatedMemory);
 
-    pLockedVolume->RowPitch = This->resource.format_desc->byte_count * This->currentDesc.Width; /* Bytes / row   */
-    pLockedVolume->SlicePitch = This->resource.format_desc->byte_count
+    pLockedVolume->RowPitch = This->resource.format->byte_count * This->currentDesc.Width; /* Bytes / row   */
+    pLockedVolume->SlicePitch = This->resource.format->byte_count
             * This->currentDesc.Width * This->currentDesc.Height;                               /* Bytes / slice */
     if (!pBox) {
         TRACE("No box supplied - all is ok\n");
@@ -229,7 +229,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
         pLockedVolume->pBits = This->resource.allocatedMemory
                 + (pLockedVolume->SlicePitch * pBox->Front)     /* FIXME: is front < back or vica versa? */
                 + (pLockedVolume->RowPitch * pBox->Top)
-                + (pBox->Left * This->resource.format_desc->byte_count);
+                + (pBox->Left * This->resource.format->byte_count);
         This->lockedBox.Left   = pBox->Left;
         This->lockedBox.Top    = pBox->Top;
         This->lockedBox.Front  = pBox->Front;
@@ -273,36 +273,21 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, int 
 {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
-    const struct wined3d_format_desc *glDesc = This->resource.format_desc;
+    const struct wined3d_format *format = This->resource.format;
 
     TRACE("iface %p, level %u, srgb %#x, format %s (%#x).\n",
-            iface, gl_level, srgb_mode, debug_d3dformat(glDesc->id), glDesc->id);
+            iface, gl_level, srgb_mode, debug_d3dformat(format->id), format->id);
 
     volume_bind_and_dirtify(iface);
 
     TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-            GL_TEXTURE_3D,
-            gl_level,
-            glDesc->glInternal,
-            This->currentDesc.Width,
-            This->currentDesc.Height,
-            This->currentDesc.Depth,
-            0,
-            glDesc->glFormat,
-            glDesc->glType,
-            This->resource.allocatedMemory);
+            GL_TEXTURE_3D, gl_level, format->glInternal, This->currentDesc.Width, This->currentDesc.Height,
+            This->currentDesc.Depth, 0, format->glFormat, format->glType, This->resource.allocatedMemory);
 
     ENTER_GL();
-    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D,
-                gl_level,
-                glDesc->glInternal,
-                This->currentDesc.Width,
-                This->currentDesc.Height,
-                This->currentDesc.Depth,
-                0,
-                glDesc->glFormat,
-                glDesc->glType,
-                This->resource.allocatedMemory));
+    GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, gl_level, format->glInternal,
+            This->currentDesc.Width, This->currentDesc.Height, This->currentDesc.Depth,
+            0, format->glFormat, format->glType, This->resource.allocatedMemory));
     checkGLcall("glTexImage3D");
     LEAVE_GL();
 
@@ -343,7 +328,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
         IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, gl_info);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     HRESULT hr;
 
     if (!gl_info->supported[EXT_TEXTURE3D])
@@ -355,7 +340,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
     volume->lpVtbl = &IWineD3DVolume_Vtbl;
 
     hr = resource_init((IWineD3DResource *)volume, WINED3DRTYPE_VOLUME, device,
-            width * height * depth * format_desc->byte_count, usage, format_desc, pool, parent, parent_ops);
+            width * height * depth * format->byte_count, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);

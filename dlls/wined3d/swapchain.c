@@ -117,7 +117,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
     GetClientRect(This->win_handle, &win_rect);
     win_h = win_rect.bottom - win_rect.top;
 
-    if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format_desc->color_fixup))
+    if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format->color_fixup))
     {
         ENTER_GL();
         context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, SFLAG_INTEXTURE);
@@ -161,7 +161,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
             tex_bottom /= src_h;
         }
 
-        if (is_complex_fixup(backbuffer->resource.format_desc->color_fixup))
+        if (is_complex_fixup(backbuffer->resource.format->color_fixup))
             gl_filter = GL_NEAREST;
 
         ENTER_GL();
@@ -261,7 +261,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         cursor.resource.ref = 1;
         cursor.resource.device = This->device;
         cursor.resource.pool = WINED3DPOOL_SCRATCH;
-        cursor.resource.format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
+        cursor.resource.format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
         cursor.resource.resourceType = WINED3DRTYPE_SURFACE;
         cursor.texture_name = This->device->cursorTexture;
         cursor.texture_target = GL_TEXTURE_2D;
@@ -625,7 +625,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, IUnknown *parent)
 {
     const struct wined3d_adapter *adapter = device->adapter;
-    const struct wined3d_format_desc *format_desc;
+    const struct wined3d_format *format;
     BOOL displaymode_set = FALSE;
     WINED3DDISPLAYMODE mode;
     RECT client_rect;
@@ -679,7 +679,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     swapchain->orig_width = mode.Width;
     swapchain->orig_height = mode.Height;
     swapchain->orig_fmt = mode.Format;
-    format_desc = getFormatDescEntry(mode.Format, &adapter->gl_info);
+    format = wined3d_get_format(&adapter->gl_info, mode.Format);
 
     GetClientRect(window, &client_rect);
     if (present_parameters->Windowed
@@ -795,7 +795,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
          * issue needs to be fixed. */
         for (i = 0; i < (sizeof(formats) / sizeof(*formats)); i++)
         {
-            swapchain->ds_format = getFormatDescEntry(formats[i], gl_info);
+            swapchain->ds_format = wined3d_get_format(gl_info, formats[i]);
             swapchain->context[0] = context_create(swapchain, swapchain->front_buffer, swapchain->ds_format);
             if (swapchain->context[0]) break;
             TRACE("Depth stencil format %s is not supported, trying next format\n",
@@ -886,7 +886,7 @@ err:
         memset(&devmode, 0, sizeof(devmode));
         devmode.dmSize = sizeof(devmode);
         devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        devmode.dmBitsPerPel = format_desc->byte_count * 8;
+        devmode.dmBitsPerPel = format->byte_count * CHAR_BIT;
         devmode.dmPelsWidth = swapchain->orig_width;
         devmode.dmPelsHeight = swapchain->orig_height;
         ChangeDisplaySettingsExW(adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);

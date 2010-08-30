@@ -806,7 +806,7 @@ do {                                                                            
 /* Trace vector and strided data information */
 #define TRACE_STRIDED(si, name) do { if (si->use_map & (1 << name)) \
         TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
-        si->elements[name].data, si->elements[name].stride, si->elements[name].format_desc->id, \
+        si->elements[name].data, si->elements[name].stride, si->elements[name].format->id, \
         si->elements[name].buffer_object, si->elements[name].stream_idx); } while(0)
 
 /* Advance declaration of structures to satisfy compiler */
@@ -862,7 +862,7 @@ enum wined3d_ffp_emit_idx
 
 struct wined3d_stream_info_element
 {
-    const struct wined3d_format_desc *format_desc;
+    const struct wined3d_format *format;
     GLsizei stride;
     const BYTE *data;
     UINT stream_idx;
@@ -1141,8 +1141,8 @@ struct blit_shader
     HRESULT (*set_shader)(IWineD3DDevice *iface, IWineD3DSurfaceImpl *surface);
     void (*unset_shader)(IWineD3DDevice *iface);
     BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
-                           const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format_desc *src_format_desc,
-                           const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format_desc *dst_format_desc);
+            const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
+            const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format);
     HRESULT (*color_fill)(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
             const RECT *dst_rect, const WINED3DCOLORVALUE *color);
 };
@@ -1152,8 +1152,8 @@ extern const struct blit_shader arbfp_blit DECLSPEC_HIDDEN;
 extern const struct blit_shader cpu_blit DECLSPEC_HIDDEN;
 
 const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
-        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format_desc *src_format,
-        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format_desc *dst_format)
+        const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
+        const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
         DECLSPEC_HIDDEN;
 
 /* Temporary blit_shader helper functions */
@@ -1176,7 +1176,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurfaceImpl *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
-        const struct wined3d_format_desc *ds_format_desc) DECLSPEC_HIDDEN;
+        const struct wined3d_format *ds_format) DECLSPEC_HIDDEN;
 void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_free_event_query(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
@@ -1417,7 +1417,7 @@ struct wined3d_gl_info
     WGL_EXT_FUNCS_GEN
 #undef USE_GL_FUNC
 
-    struct wined3d_format_desc *gl_formats;
+    struct wined3d_format *formats;
 };
 
 struct wined3d_driver_info
@@ -1755,7 +1755,7 @@ typedef struct IWineD3DResourceClass
     WINED3DPOOL             pool;
     UINT                    size;
     DWORD                   usage;
-    const struct wined3d_format_desc *format_desc;
+    const struct wined3d_format *format;
     DWORD                   priority;
     BYTE                   *allocatedMemory; /* Pointer to the real data location */
     BYTE                   *heapMemory; /* Pointer to the HeapAlloced block of memory */
@@ -1778,7 +1778,7 @@ DWORD resource_get_priority(IWineD3DResource *iface) DECLSPEC_HIDDEN;
 HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID guid,
         void *data, DWORD *data_size) DECLSPEC_HIDDEN;
 HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type,
-        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format_desc *format_desc,
+        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
         WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface) DECLSPEC_HIDDEN;
 DWORD resource_set_priority(IWineD3DResource *iface, DWORD new_priority) DECLSPEC_HIDDEN;
@@ -1868,7 +1868,7 @@ IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *text
         UINT layer, UINT level) DECLSPEC_HIDDEN;
 HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UINT level_count,
         WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device, UINT size, DWORD usage,
-        const struct wined3d_format_desc *format_desc, WINED3DPOOL pool, IUnknown *parent,
+        const struct wined3d_format *format, WINED3DPOOL pool, IUnknown *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface,
         WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
@@ -2227,9 +2227,9 @@ typedef enum {
     CONVERT_RGB32_888
 } CONVERT_TYPES;
 
-HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing,
-                        struct wined3d_format_desc *desc, CONVERT_TYPES *convert) DECLSPEC_HIDDEN;
-void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey) DECLSPEC_HIDDEN;
+HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *surface, BOOL need_alpha_ck, BOOL use_texturing,
+        struct wined3d_format *format, CONVERT_TYPES *convert) DECLSPEC_HIDDEN;
+void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *surface, BYTE table[256][4], BOOL colorkey) DECLSPEC_HIDDEN;
 
 BOOL palette9_changed(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;
 
@@ -2239,7 +2239,7 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;
 
 struct wined3d_vertex_declaration_element
 {
-    const struct wined3d_format_desc *format_desc;
+    const struct wined3d_format *format;
     BOOL ffp_valid;
     WORD input_slot;
     WORD offset;
@@ -2553,7 +2553,7 @@ struct IWineD3DSwapChainImpl
     enum wined3d_format_id orig_fmt;
     WINED3DGAMMARAMP          orig_gamma;
     BOOL                      render_to_fbo;
-    const struct wined3d_format_desc *ds_format;
+    const struct wined3d_format *ds_format;
 
     LONG prev_time, frames;   /* Performance tracking */
     unsigned int vSyncCounter;
@@ -2652,9 +2652,9 @@ void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock,
 void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 
-BOOL getColorBits(const struct wined3d_format_desc *format_desc,
+BOOL getColorBits(const struct wined3d_format *format,
         short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize) DECLSPEC_HIDDEN;
-BOOL getDepthStencilBits(const struct wined3d_format_desc *format_desc,
+BOOL getDepthStencilBits(const struct wined3d_format *format,
         short *depthSize, short *stencilSize) DECLSPEC_HIDDEN;
 
 /* Math utils */
@@ -2963,7 +2963,7 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3DFMT_FLAG_COMPRESSED                  0x00008000
 #define WINED3DFMT_FLAG_BROKEN_PITCH                0x00010000
 
-struct wined3d_format_desc
+struct wined3d_format
 {
     enum wined3d_format_id id;
 
@@ -2998,11 +2998,11 @@ struct wined3d_format_desc
     void (*convert)(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height);
 };
 
-const struct wined3d_format_desc *getFormatDescEntry(enum wined3d_format_id format_id,
-        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-UINT wined3d_format_calculate_size(const struct wined3d_format_desc *format,
+const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl_info,
+        enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
+UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height) DECLSPEC_HIDDEN;
-DWORD wined3d_format_convert_from_float(const struct wined3d_format_desc *format,
+DWORD wined3d_format_convert_from_float(const struct wined3d_format *format,
         const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
 
 static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)

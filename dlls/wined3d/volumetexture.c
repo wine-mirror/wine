@@ -388,7 +388,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
         WINED3DPOOL pool, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, gl_info);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     UINT tmp_w, tmp_h, tmp_d;
     unsigned int i;
     HRESULT hr;
@@ -433,7 +433,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
     texture->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 1, levels,
-            WINED3DRTYPE_VOLUMETEXTURE, device, 0, usage, format_desc, pool, parent, parent_ops);
+            WINED3DRTYPE_VOLUMETEXTURE, device, 0, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);

@@ -29,13 +29,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UINT level_count,
         WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device, UINT size, DWORD usage,
-        const struct wined3d_format_desc *format_desc, WINED3DPOOL pool, IUnknown *parent,
+        const struct wined3d_format *format, WINED3DPOOL pool, IUnknown *parent,
         const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
 
     hr = resource_init((IWineD3DResource *)texture, resource_type, device,
-            size, usage, format_desc, pool, parent, parent_ops);
+            size, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -60,7 +60,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT layer_count, UIN
     texture->baseTexture.is_srgb = FALSE;
     texture->baseTexture.pow2Matrix_identity = TRUE;
 
-    if (texture->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
+    if (texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING)
     {
         texture->baseTexture.minMipLookup = minMipLookup;
         texture->baseTexture.magLookup = magLookup;
@@ -520,10 +520,10 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = aniso;
     }
 
-    if (!(This->resource.format_desc->Flags & WINED3DFMT_FLAG_SHADOW)
+    if (!(This->resource.format->Flags & WINED3DFMT_FLAG_SHADOW)
             != !gl_tex->states[WINED3DTEXSTA_SHADOW])
     {
-        if (This->resource.format_desc->Flags & WINED3DFMT_FLAG_SHADOW)
+        if (This->resource.format->Flags & WINED3DFMT_FLAG_SHADOW)
         {
             glTexParameteri(textureDimensions, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
             glTexParameteri(textureDimensions, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);

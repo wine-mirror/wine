@@ -70,8 +70,8 @@ static void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3
         context = context_acquire(device, NULL);
     }
 
-    if (This->resource.format_desc->id == WINED3DFMT_P8_UINT
-            || This->resource.format_desc->id == WINED3DFMT_P8_UINT_A8_UNORM)
+    if (This->resource.format->id == WINED3DFMT_P8_UINT
+            || This->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
     {
         for (i = 0; i < sub_count; ++i)
         {
@@ -455,7 +455,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
         IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, gl_info);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     UINT pow2_edge_length;
     unsigned int i, j;
     UINT tmp_w;
@@ -501,7 +501,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
     texture->lpVtbl = &IWineD3DCubeTexture_Vtbl;
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, 6, levels,
-            WINED3DRTYPE_CUBETEXTURE, device, 0, usage, format_desc, pool, parent, parent_ops);
+            WINED3DRTYPE_CUBETEXTURE, device, 0, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x\n", hr);

@@ -274,7 +274,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             if (!element->ffp_valid)
             {
                 WARN("Skipping unsupported fixed function element of format %s and usage %s\n",
-                        debug_d3dformat(element->format_desc->id), debug_d3ddeclusage(element->usage));
+                        debug_d3dformat(element->format->id), debug_d3ddeclusage(element->usage));
                 stride_used = FALSE;
             }
             else
@@ -289,16 +289,16 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
                     "input_slot %u, offset %u, stride %u, format %s, buffer_object %u]\n",
                     use_vshader ? "shader": "fixed function", idx,
                     debug_d3ddeclusage(element->usage), element->usage_idx, element->input_slot,
-                    element->offset, stride, debug_d3dformat(element->format_desc->id), buffer_object);
+                    element->offset, stride, debug_d3dformat(element->format->id), buffer_object);
 
-            stream_info->elements[idx].format_desc = element->format_desc;
+            stream_info->elements[idx].format = element->format;
             stream_info->elements[idx].stride = stride;
             stream_info->elements[idx].data = data;
             stream_info->elements[idx].stream_idx = element->input_slot;
             stream_info->elements[idx].buffer_object = buffer_object;
 
             if (!This->adapter->gl_info.supported[ARB_VERTEX_ARRAY_BGRA]
-                    && element->format_desc->id == WINED3DFMT_B8G8R8A8_UNORM)
+                    && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)
             {
                 stream_info->swizzle_map |= 1 << idx;
             }
@@ -343,8 +343,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
 static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_info,
         const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
 {
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(strided->format, gl_info);
-    e->format_desc = format_desc;
+    e->format = wined3d_get_format(gl_info, strided->format);
     e->stride = strided->dwStride;
     e->data = strided->lpData;
     e->stream_idx = 0;
@@ -378,10 +377,10 @@ static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_inf
 
     for (i = 0; i < sizeof(stream_info->elements) / sizeof(*stream_info->elements); ++i)
     {
-        if (!stream_info->elements[i].format_desc) continue;
+        if (!stream_info->elements[i].format) continue;
 
         if (!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
-                && stream_info->elements[i].format_desc->id == WINED3DFMT_B8G8R8A8_UNORM)
+                && stream_info->elements[i].format->id == WINED3DFMT_B8G8R8A8_UNORM)
         {
             stream_info->swizzle_map |= 1 << i;
         }
@@ -1365,14 +1364,14 @@ struct wined3d_fvf_convert_state
 };
 
 static void append_decl_element(struct wined3d_fvf_convert_state *state,
-        enum wined3d_format_id format, WINED3DDECLUSAGE usage, UINT usage_idx)
+        enum wined3d_format_id format_id, WINED3DDECLUSAGE usage, UINT usage_idx)
 {
     WINED3DVERTEXELEMENT *elements = state->elements;
-    const struct wined3d_format_desc *format_desc;
+    const struct wined3d_format *format;
     UINT offset = state->offset;
     UINT idx = state->idx;
 
-    elements[idx].format = format;
+    elements[idx].format = format_id;
     elements[idx].input_slot = 0;
     elements[idx].offset = offset;
     elements[idx].output_slot = 0;
@@ -1380,8 +1379,8 @@ static void append_decl_element(struct wined3d_fvf_convert_state *state,
     elements[idx].usage = usage;
     elements[idx].usage_idx = usage_idx;
 
-    format_desc = getFormatDescEntry(format, state->gl_info);
-    state->offset += format_desc->component_count * format_desc->component_size;
+    format = wined3d_get_format(state->gl_info, format_id);
+    state->offset += format->component_count * format->component_size;
     ++state->idx;
 }
 
@@ -2190,7 +2189,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
         const WINED3DDISPLAYMODE* pMode) {
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(pMode->Format, &This->adapter->gl_info);
+    const struct wined3d_format *format = wined3d_get_format(&This->adapter->gl_info, pMode->Format);
     LONG ret;
     RECT clip_rc;
 
@@ -2205,7 +2204,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     memset(&devmode, 0, sizeof(devmode));
     devmode.dmSize = sizeof(devmode);
     devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-    devmode.dmBitsPerPel = format_desc->byte_count * 8;
+    devmode.dmBitsPerPel = format->byte_count * CHAR_BIT;
     devmode.dmPelsWidth  = pMode->Width;
     devmode.dmPelsHeight = pMode->Height;
 
@@ -5023,7 +5022,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
         }
 
         texture = (IWineD3DBaseTextureImpl *) This->stateBlock->textures[i];
-        if (!texture || texture->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING) continue;
+        if (!texture || texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING) continue;
 
         if(This->stateBlock->samplerState[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT) {
             WARN("Non-filterable texture and mag filter enabled on samper %u, returning E_FAIL\n", i);
@@ -5054,8 +5053,8 @@ static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
         IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl*)device->stateBlock->textures[i];
-        if (texture && (texture->resource.format_desc->id == WINED3DFMT_P8_UINT
-                || texture->resource.format_desc->id == WINED3DFMT_P8_UINT_A8_UNORM))
+        if (texture && (texture->resource.format->id == WINED3DFMT_P8_UINT
+                || texture->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM))
         {
             IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
         }
@@ -5241,8 +5240,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     IWineD3DSurfaceImpl *src_impl = (IWineD3DSurfaceImpl *)src_surface;
     IWineD3DSurfaceImpl *dst_impl = (IWineD3DSurfaceImpl *)dst_surface;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_format_desc *src_format;
-    const struct wined3d_format_desc *dst_format;
+    const struct wined3d_format *src_format;
+    const struct wined3d_format *dst_format;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     const unsigned char *data;
@@ -5251,7 +5250,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     UINT src_w, src_h;
     UINT dst_x, dst_y;
     DWORD sampler;
-    struct wined3d_format_desc desc;
+    struct wined3d_format format;
 
     TRACE("iface %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s.\n",
             iface, src_surface, wine_dbgstr_rect(src_rect),
@@ -5264,8 +5263,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    src_format = src_impl->resource.format_desc;
-    dst_format = dst_impl->resource.format_desc;
+    src_format = src_impl->resource.format;
+    dst_format = dst_impl->resource.format;
 
     if (src_format->id != dst_format->id)
     {
@@ -5280,8 +5279,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
      * surface to the destination's sysmem copy. If surface conversion is
      * needed, use BltFast instead to copy in sysmem and use regular surface
      * loading. */
-    d3dfmt_get_conv(dst_impl, FALSE, TRUE, &desc, &convert);
-    if (convert != NO_CONVERSION || desc.convert)
+    d3dfmt_get_conv(dst_impl, FALSE, TRUE, &format, &convert);
+    if (convert != NO_CONVERSION || format.convert)
         return IWineD3DSurface_BltFast(dst_surface, dst_x, dst_y, src_surface, src_rect, 0);
 
     context = context_acquire(This, NULL);
@@ -5630,7 +5629,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         {
             swapchain->presentParms.BackBufferWidth = back_impl->currentDesc.Width;
             swapchain->presentParms.BackBufferHeight = back_impl->currentDesc.Height;
-            swapchain->presentParms.BackBufferFormat = back_impl->resource.format_desc->id;
+            swapchain->presentParms.BackBufferFormat = back_impl->resource.format->id;
             swapchain->presentParms.BackBufferCount = 1;
 
             surface_set_container(back_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
@@ -5802,7 +5801,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
         WINED3DLOCKED_RECT rect;
 
         /* MSDN: Cursor must be A8R8G8B8 */
-        if (s->resource.format_desc->id != WINED3DFMT_B8G8R8A8_UNORM)
+        if (s->resource.format->id != WINED3DFMT_B8G8R8A8_UNORM)
         {
             WARN("surface %p has an invalid format.\n", cursor_image);
             return WINED3DERR_INVALIDCALL;
@@ -5831,15 +5830,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
             if (SUCCEEDED(IWineD3DSurface_LockRect(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
             {
                 const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-                const struct wined3d_format_desc *format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
+                const struct wined3d_format *format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
                 struct wined3d_context *context;
                 char *mem, *bits = rect.pBits;
-                GLint intfmt = format_desc->glInternal;
-                GLint format = format_desc->glFormat;
-                GLint type = format_desc->glType;
+                GLint intfmt = format->glInternal;
+                GLint gl_format = format->glFormat;
+                GLint type = format->glType;
                 INT height = This->cursorHeight;
                 INT width = This->cursorWidth;
-                INT bpp = format_desc->byte_count;
+                INT bpp = format->byte_count;
                 DWORD sampler;
                 INT i;
 
@@ -5874,7 +5873,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
                 glBindTexture(GL_TEXTURE_2D, This->cursorTexture);
                 checkGLcall("glBindTexture");
                 /* Copy the bitmap memory into the cursor texture */
-                glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, format, type, mem);
+                glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
                 HeapFree(GetProcessHeap(), 0, mem);
                 checkGLcall("glTexImage2D");
 

@@ -245,7 +245,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     if (!attrib->stride)
     {
         FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else\n",
-                debug_d3dformat(attrib->format_desc->id));
+                debug_d3dformat(attrib->format->id));
     }
     else if(attrib->stride != *stride_this_run && *stride_this_run)
     {
@@ -269,7 +269,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     }
 
     data = (((DWORD_PTR)attrib->data) + offset) % This->stride;
-    attrib_size = attrib->format_desc->component_count * attrib->format_desc->component_size;
+    attrib_size = attrib->format->component_count * attrib->format->component_size;
     for (i = 0; i < attrib_size; ++i)
     {
         DWORD_PTR idx = (data + i) % This->stride;
@@ -302,7 +302,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
             || attrib->buffer_object != This->buffer_object)
         return FALSE;
 
-    format = attrib->format_desc->id;
+    format = attrib->format->id;
     /* Look for newly appeared conversion */
     if (!gl_info->supported[ARB_HALF_FLOAT_VERTEX]
             && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
@@ -350,7 +350,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 
         if (!(strided->use_map & (1 << i)) || strided->elements[i].buffer_object != This->buffer_object) continue;
 
-        format = strided->elements[i].format_desc->id;
+        format = strided->elements[i].format->id;
         if (format == WINED3DFMT_R16G16_FLOAT)
         {
             shift = 4;
@@ -374,8 +374,8 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 
         if (shift)
         {
-            orig_type_size = strided->elements[i].format_desc->component_count
-                    * strided->elements[i].format_desc->component_size;
+            orig_type_size = strided->elements[i].format->component_count
+                    * strided->elements[i].format->component_size;
             for (j = (DWORD_PTR)strided->elements[i].data + orig_type_size; j < stride; ++j)
             {
                 ret[j] += shift;
@@ -1450,9 +1450,9 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         UINT size, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, GLenum bind_hint,
         const char *data, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    const struct wined3d_format_desc *format_desc = getFormatDescEntry(format_id, &device->adapter->gl_info);
-    HRESULT hr;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    HRESULT hr;
     BOOL dynamic_buffer_ok;
 
     if (!size)
@@ -1464,7 +1464,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     buffer->vtbl = &wined3d_buffer_vtbl;
 
     hr = resource_init((IWineD3DResource *)buffer, WINED3DRTYPE_BUFFER,
-            device, size, usage, format_desc, pool, parent, parent_ops);
+            device, size, usage, format, pool, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, hr %#x\n", hr);
@@ -1473,7 +1473,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     buffer->buffer_type_hint = bind_hint;
 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
-            debug_d3dformat(buffer->resource.format_desc->id), buffer->resource.allocatedMemory, buffer);
+            debug_d3dformat(buffer->resource.format->id), buffer->resource.allocatedMemory, buffer);
 
     /* GL_ARB_map_buffer_range is disabled for now due to numerous bugs and no gains */
     dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE];

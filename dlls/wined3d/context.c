@@ -201,7 +201,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 
     if (depth_stencil)
     {
-        DWORD format_flags = depth_stencil->resource.format_desc->Flags;
+        DWORD format_flags = depth_stencil->resource.format->Flags;
 
         if (use_render_buffer && depth_stencil->current_renderbuffer)
         {
@@ -333,7 +333,7 @@ static void context_check_fbo_status(struct wined3d_context *context, GLenum tar
             if (attachment)
             {
                 FIXME("\tColor attachment %d: (%p) %s %ux%u\n",
-                        i, attachment, debug_d3dformat(attachment->resource.format_desc->id),
+                        i, attachment, debug_d3dformat(attachment->resource.format->id),
                         attachment->pow2Width, attachment->pow2Height);
             }
         }
@@ -341,7 +341,7 @@ static void context_check_fbo_status(struct wined3d_context *context, GLenum tar
         if (attachment)
         {
             FIXME("\tDepth attachment: (%p) %s %ux%u\n",
-                    attachment, debug_d3dformat(attachment->resource.format_desc->id),
+                    attachment, debug_d3dformat(attachment->resource.format->id),
                     attachment->pow2Width, attachment->pow2Height);
         }
     }
@@ -1106,7 +1106,7 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
 
 /* This function takes care of WineD3D pixel format selection. */
 static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
-        const struct wined3d_format_desc *color_format_desc, const struct wined3d_format_desc *ds_format_desc,
+        const struct wined3d_format *color_format, const struct wined3d_format *ds_format,
         BOOL auxBuffers, int numSamples, BOOL findCompatible)
 {
     int iPixelFormat=0;
@@ -1141,17 +1141,17 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     int nCfgs = This->adapter->nCfgs;
 
     TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, findCompatible=%d\n",
-          debug_d3dformat(color_format_desc->id), debug_d3dformat(ds_format_desc->id),
+          debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
           auxBuffers, numSamples, findCompatible);
 
-    if (!getColorBits(color_format_desc, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits))
+    if (!getColorBits(color_format, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits))
     {
         ERR("Unable to get color bits for format %s (%#x)!\n",
-                debug_d3dformat(color_format_desc->id), color_format_desc->id);
+                debug_d3dformat(color_format->id), color_format->id);
         return 0;
     }
 
-    getDepthStencilBits(ds_format_desc, &depthBits, &stencilBits);
+    getDepthStencilBits(ds_format, &depthBits, &stencilBits);
 
     for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])) && !iPixelFormat; matchtry++) {
         for(i=0; i<nCfgs; i++) {
@@ -1260,7 +1260,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     }
 
     TRACE("Found iPixelFormat=%d for ColorFormat=%s, DepthStencilFormat=%s\n",
-            iPixelFormat, debug_d3dformat(color_format_desc->id), debug_d3dformat(ds_format_desc->id));
+            iPixelFormat, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id));
     return iPixelFormat;
 }
 
@@ -1276,12 +1276,12 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
  *  pPresentParameters: contains the pixelformats to use for onscreen rendering
  *
  *****************************************************************************/
-struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
-        const struct wined3d_format_desc *ds_format_desc)
+struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
+        IWineD3DSurfaceImpl *target, const struct wined3d_format *ds_format)
 {
     IWineD3DDeviceImpl *device = swapchain->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format_desc *color_format_desc;
+    const struct wined3d_format *color_format;
     struct wined3d_context *ret;
     PIXELFORMATDESCRIPTOR pfd;
     BOOL auxBuffers = FALSE;
@@ -1307,7 +1307,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
         goto out;
     }
 
-    color_format_desc = target->resource.format_desc;
+    color_format = target->resource.format;
 
     /* In case of ORM_BACKBUFFER, make sure to request an alpha component for
      * X4R4G4B4/X8R8G8B8 as we might need it for the backbuffer. */
@@ -1315,10 +1315,10 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
     {
         auxBuffers = TRUE;
 
-        if (color_format_desc->id == WINED3DFMT_B4G4R4X4_UNORM)
-            color_format_desc = getFormatDescEntry(WINED3DFMT_B4G4R4A4_UNORM, gl_info);
-        else if (color_format_desc->id == WINED3DFMT_B8G8R8X8_UNORM)
-            color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
+        if (color_format->id == WINED3DFMT_B4G4R4X4_UNORM)
+            color_format = wined3d_get_format(gl_info, WINED3DFMT_B4G4R4A4_UNORM);
+        else if (color_format->id == WINED3DFMT_B8G8R8X8_UNORM)
+            color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
     }
 
     /* DirectDraw supports 8bit paletted render targets and these are used by
@@ -1327,8 +1327,8 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
      * conversion (ab)uses the alpha component for storing the palette index.
      * For this reason we require a format with 8bit alpha, so request
      * A8R8G8B8. */
-    if (color_format_desc->id == WINED3DFMT_P8_UINT)
-        color_format_desc = getFormatDescEntry(WINED3DFMT_B8G8R8A8_UNORM, gl_info);
+    if (color_format->id == WINED3DFMT_P8_UINT)
+        color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
 
     /* D3D only allows multisampling when SwapEffect is set to WINED3DSWAPEFFECT_DISCARD. */
     if (swapchain->presentParms.MultiSampleType && (swapchain->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD))
@@ -1343,14 +1343,14 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3
     }
 
     /* Try to find a pixel format which matches our requirements. */
-    pixel_format = WineD3D_ChoosePixelFormat(device, hdc, color_format_desc, ds_format_desc,
+    pixel_format = WineD3D_ChoosePixelFormat(device, hdc, color_format, ds_format,
             auxBuffers, numSamples, FALSE /* findCompatible */);
 
     /* Try to locate a compatible format if we weren't able to find anything. */
     if (!pixel_format)
     {
         TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
-        pixel_format = WineD3D_ChoosePixelFormat(device, hdc, color_format_desc, ds_format_desc,
+        pixel_format = WineD3D_ChoosePixelFormat(device, hdc, color_format, ds_format,
                 auxBuffers, 0 /* numSamples */, TRUE /* findCompatible */);
     }
 
@@ -2046,8 +2046,8 @@ static inline void context_set_render_offscreen(struct wined3d_context *context,
     context->render_offscreen = offscreen;
 }
 
-static BOOL match_depth_stencil_format(const struct wined3d_format_desc *existing,
-        const struct wined3d_format_desc *required)
+static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
+        const struct wined3d_format *required)
 {
     short existing_depth, existing_stencil, required_depth, required_stencil;
 
@@ -2071,7 +2071,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
     IWineD3DSwapChainImpl *swapchain = context->current_rt->container.u.swapchain;
 
     if (context->render_offscreen || !depth_stencil) return;
-    if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format_desc)) return;
+    if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format)) return;
 
     /* TODO: If the requested format would satisfy the needs of the existing one(reverse match),
      * or no onscreen depth buffer was created, the OpenGL drawable could be changed to the new
@@ -2253,8 +2253,8 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
     }
     else
     {
-        const struct wined3d_format_desc *old = context->current_rt->resource.format_desc;
-        const struct wined3d_format_desc *new = target->resource.format_desc;
+        const struct wined3d_format *old = context->current_rt->resource.format;
+        const struct wined3d_format *new = target->resource.format;
 
         if (old->id != new->id)
         {
