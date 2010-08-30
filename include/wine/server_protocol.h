@@ -1548,7 +1548,7 @@ struct get_console_mode_reply
 {
     struct reply_header __header;
     int          mode;
-    char __pad_12[4];
+    int          is_bare;
 };
 
 
@@ -5506,6 +5506,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 406
+#define SERVER_PROTOCOL_VERSION 407
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
