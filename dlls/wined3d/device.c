@@ -6265,7 +6265,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         TRACE("Creating the depth stencil buffer\n");
 
         hrc = IWineD3DDeviceParent_CreateDepthStencilSurface(This->device_parent,
-                This->parent,
                 pPresentationParameters->BackBufferWidth,
                 pPresentationParameters->BackBufferHeight,
                 pPresentationParameters->AutoDepthStencilFormat,

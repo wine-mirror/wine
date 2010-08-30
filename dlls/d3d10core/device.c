@@ -1374,18 +1374,17 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format,
-        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL discard,
-        IWineD3DSurface **surface)
+        UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
+        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
     struct d3d10_texture2d *texture;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+    FIXME("iface %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, discard %u, surface %p partial stub!\n",
-            iface, superior, width, height, format, multisample_type, multisample_quality, discard, surface);
+            iface, width, height, format, multisample_type, multisample_quality, discard, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
