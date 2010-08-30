@@ -1588,6 +1588,7 @@ static void dump_alloc_console_request( const struct alloc_console_request *req 
     fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", pid=%04x", req->pid );
+    fprintf( stderr, ", input_fd=%d", req->input_fd );
 }
 
 static void dump_alloc_console_reply( const struct alloc_console_reply *req )

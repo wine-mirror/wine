@@ -1137,6 +1137,7 @@ enum server_fd_type
     unsigned int access;        /* wanted access rights */
     unsigned int attributes;    /* object attributes */
     process_id_t pid;           /* pid of process which shall be attached to the console */
+    int          input_fd;      /* if pid=-1 (bare console to current process), fd for input */
 @REPLY
     obj_handle_t handle_in;     /* handle to console input */
     obj_handle_t event;         /* handle to renderer events change notification */

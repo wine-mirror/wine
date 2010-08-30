@@ -426,8 +426,12 @@ static int debugger_attach( struct process *process, struct thread *debugger )
     if (list_empty( &process->thread_list )) goto error;  /* no thread running in the process */
 
     /* don't let a debugger debug its console... won't work */
-    if (debugger->process->console && console_get_renderer(debugger->process->console)->process == process)
-        goto error;
+    if (debugger->process->console)
+    {
+        struct thread *renderer = console_get_renderer(debugger->process->console);
+        if (renderer && renderer->process == process)
+            goto error;
+    }
 
     suspend_process( process );
     if (!set_process_debugger( process, debugger ))

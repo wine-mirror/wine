@@ -1426,6 +1426,8 @@ struct alloc_console_request
     unsigned int access;
     unsigned int attributes;
     process_id_t pid;
+    int          input_fd;
+    char __pad_28[4];
 };
 struct alloc_console_reply
 {
@@ -5504,6 +5506,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 404
+#define SERVER_PROTOCOL_VERSION 405
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
