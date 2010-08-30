@@ -1831,8 +1831,9 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
     case 'S':
         if (strncmp(gdbctx->in_packet, "Symbol::", gdbctx->in_packet_len) == 0)
             return packet_ok;
-        if (strncmp(gdbctx->in_packet, "Supported", gdbctx->in_packet_len) == 0)
+        if (strncmp(gdbctx->in_packet, "Supported", 9) == 0)
         {
+            /* no features supported */
             packet_reply_open(gdbctx);
             packet_reply_close(gdbctx);
             return packet_done;
@@ -1852,6 +1853,13 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             get_thread_info(gdbctx, tid, result, sizeof(result));
             packet_reply_open(gdbctx);
             packet_reply_hex_to_str(gdbctx, result);
+            packet_reply_close(gdbctx);
+            return packet_done;
+        }
+        if (strncmp(gdbctx->in_packet, "TStatus", 7) == 0)
+        {
+            /* Tracepoints not supported */
+            packet_reply_open(gdbctx);
             packet_reply_close(gdbctx);
             return packet_done;
         }
