@@ -729,7 +729,7 @@
 @ stdcall InitializeCriticalSectionEx(ptr long long)
 @ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
 @ stdcall -arch=i386 InterlockedCompareExchange (ptr long long)
-@ stdcall -arch=i386 -ret64 InterlockedCompareExchange64(ptr double double) ntdll.RtlInterlockedCompareExchange64
+@ stdcall -arch=i386 -ret64 InterlockedCompareExchange64(ptr int64 int64) ntdll.RtlInterlockedCompareExchange64
 @ stdcall -arch=i386 InterlockedDecrement(ptr)
 @ stdcall -arch=i386 InterlockedExchange(ptr long)
 @ stdcall -arch=i386 InterlockedExchangeAdd (ptr long )
@@ -1027,11 +1027,11 @@
 @ stdcall SetFileAttributesA(str long)
 @ stdcall SetFileAttributesW(wstr long)
 @ stdcall SetFilePointer(long long ptr long)
-@ stdcall SetFilePointerEx(long double ptr long)
+@ stdcall SetFilePointerEx(long int64 ptr long)
 # @ stub SetFileShortNameA
 # @ stub SetFileShortNameW
 @ stdcall SetFileTime(long ptr ptr ptr)
-@ stdcall SetFileValidData(ptr double)
+@ stdcall SetFileValidData(ptr int64)
 # @ stub SetFirmwareEnvironmentVariableA
 # @ stub SetFirmwareEnvironmentVariableW
 @ stdcall SetHandleContext(long long)
@@ -1131,8 +1131,8 @@
 @ stdcall VerLanguageNameW(long wstr long)
 @ stdcall -ret64 VerSetConditionMask(long long long long) ntdll.VerSetConditionMask
 @ stdcall VerifyConsoleIoHandle(long)
-@ stdcall VerifyVersionInfoA(long long double)
-@ stdcall VerifyVersionInfoW(long long double)
+@ stdcall VerifyVersionInfoA(long long int64)
+@ stdcall VerifyVersionInfoW(long long int64)
 @ stdcall VirtualAlloc(ptr long long long)
 @ stdcall VirtualAllocEx(long ptr long long long)
 @ stub VirtualBufferExceptionHandler
