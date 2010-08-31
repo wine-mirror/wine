@@ -2001,7 +2001,6 @@ typedef struct IWineD3DClipperImpl
     const IWineD3DClipperVtbl *lpVtbl;
     LONG ref;
 
-    IUnknown *Parent;
     HWND hWnd;
 } IWineD3DClipperImpl;
 

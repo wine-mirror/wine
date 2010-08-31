@@ -309,7 +309,7 @@ HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper)
 {
     clipper->lpVtbl = &ddraw_clipper_vtbl;
     clipper->ref = 1;
-    clipper->wineD3DClipper = pWineDirect3DCreateClipper((IUnknown *)clipper);
+    clipper->wineD3DClipper = pWineDirect3DCreateClipper();
     if (!clipper->wineD3DClipper)
     {
         WARN("Failed to create wined3d clipper.\n");

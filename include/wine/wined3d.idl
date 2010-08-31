@@ -2344,7 +2344,7 @@ interface IWineD3DPalette : IWineD3DBase
     local,
     uuid(8f2bceb1-d338-488c-ab7f-0ec980bf5d2d)
 ]
-interface IWineD3DClipper : IWineD3DBase
+interface IWineD3DClipper : IUnknown
 {
     HRESULT GetClipList(
         [in] const RECT *rect,
@@ -3389,6 +3389,6 @@ interface IWineD3DDevice : IUnknown
 }
 
 IWineD3D * __stdcall WineDirect3DCreate(UINT dxVersion, IUnknown *parent);
-IWineD3DClipper * __stdcall WineDirect3DCreateClipper(IUnknown *parent);
+IWineD3DClipper * __stdcall WineDirect3DCreateClipper(void);
 void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
