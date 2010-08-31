@@ -154,10 +154,10 @@ my %arg_conv =
      "GLboolean" => [ "long", 4 ],
      "GLbyte" => [ "long", 4 ],
      "GLclampd" => [ "double", 8 ],
-     "GLclampf" => [ "long", 4 ],
+     "GLclampf" => [ "float", 4 ],
      "GLdouble" => [ "double", 8 ],
      "GLenum" => [ "long", 4 ],
-     "GLfloat" => [ "long", 4 ],
+     "GLfloat" => [ "float", 4 ],
      "GLint" => [ "long", 4 ],
      "GLshort" => [ "long", 4 ],
      "GLsizei" => [ "long", 4 ],
@@ -172,7 +172,6 @@ my %arg_conv =
      "GLcharARB" => [ "long", 4 ],
      "GLintptr" => [ "long", 4 ],
      "GLsizeiptr" => [ "long", 4 ],
-     "GLvoid" => [ "void", 4 ],
      "_GLfuncptr" => [ "ptr", 4 ]);
 
 #
