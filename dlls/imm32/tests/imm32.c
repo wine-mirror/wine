@@ -345,6 +345,81 @@ static void test_ImmAssociateContextEx(void)
     ImmReleaseContext(hwnd,imc);
 }
 
+typedef struct _igc_threadinfo {
+    HWND hwnd;
+    HANDLE event;
+    HIMC himc;
+} igc_threadinfo;
+
+
+static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
+{
+    HIMC h1,h2;
+    HWND hwnd2;
+    igc_threadinfo *info= (igc_threadinfo*)lpParam;
+    info->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+
+    h1 = ImmGetContext(hwnd);
+    todo_wine ok(info->himc == h1, "hwnd context changed in new thread\n");
+    h2 = ImmGetContext(info->hwnd);
+    todo_wine ok(h2 != h1, "new hwnd in new thread should have different context\n");
+    info->himc = h2;
+    ImmReleaseContext(hwnd,h1);
+
+    hwnd2 = CreateWindowEx(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
+                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                          240, 120, NULL, NULL, GetModuleHandle(0), NULL);
+    h1 = ImmGetContext(hwnd2);
+
+    ok(h1 == h2, "Windows in same thread should have same default context\n");
+    ImmReleaseContext(hwnd2,h1);
+    ImmReleaseContext(info->hwnd,h2);
+    DestroyWindow(hwnd2);
+
+    SetEvent(info->event);
+    Sleep(INFINITE);
+    return 1;
+}
+
+static void test_ImmThreads(void)
+{
+    HIMC himc, otherHimc, h1;
+    igc_threadinfo threadinfo;
+    HANDLE hThread;
+    DWORD dwThreadId;
+
+    himc = ImmGetContext(hwnd);
+    threadinfo.event = CreateEvent(NULL, TRUE, FALSE, NULL);
+    threadinfo.himc = himc;
+    hThread = CreateThread(NULL, 0, ImmGetContextThreadFunc, &threadinfo, 0, &dwThreadId );
+    WaitForSingleObject(threadinfo.event, INFINITE);
+
+    otherHimc = ImmGetContext(threadinfo.hwnd);
+
+    todo_wine ok(himc != otherHimc, "Windows from other threads should have different himc\n");
+    todo_wine ok(otherHimc == threadinfo.himc, "Context from other thread should not change in main thread\n");
+
+    if (0) /* FIXME: Causes wine to hang */
+    {
+    h1 = ImmAssociateContext(hwnd,otherHimc);
+    ok(h1 == NULL, "Should fail to be able to Associate a default context from a different thread\n");
+    h1 = ImmGetContext(hwnd);
+    ok(h1 == himc, "Context for window should remain unchanged\n");
+    ImmReleaseContext(hwnd,h1);
+    }
+
+    ImmReleaseContext(threadinfo.hwnd,otherHimc);
+    ImmReleaseContext(hwnd,himc);
+
+    DestroyWindow(threadinfo.hwnd);
+    TerminateThread(hThread, 1);
+
+    himc = ImmGetContext(GetDesktopWindow());
+    todo_wine ok(himc == NULL, "Should not be able to get himc from other process window\n");
+}
+
 START_TEST(imm32) {
     if (init())
     {
@@ -353,6 +428,7 @@ START_TEST(imm32) {
         test_ImmSetCompositionString();
         test_ImmIME();
         test_ImmAssociateContextEx();
+        test_ImmThreads();
     }
     cleanup();
 }
