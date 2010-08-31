@@ -80,7 +80,7 @@
 @ stdcall ND_RU1(ptr long)
 @ stdcall ND_WI2(ptr long long)
 @ stdcall ND_WI4(ptr long long)
-@ stdcall ND_WI8(ptr long double)
+@ stdcall ND_WI8(ptr long int64)
 @ stdcall ND_WU1(ptr long long)
 @ stub OpenCtrs
 @ stub ReOpenMetaDataWithMemoryEx
