@@ -5116,12 +5116,12 @@ then
   MAINTAINER_MODE=\#
 
 else
-  if test "$FONTFORGE" = "false"; then as_fn_append wine_warnings "|fontforge is missing, fonts can't be rebuilt."; fi
-  if test "$RSVG" = "false"; then as_fn_append wine_warnings "|rsvg is missing, icons can't be rebuilt."; fi
+  if test "$FONTFORGE" = "false"; then as_fn_error "You need fontforge to rebuild fonts in maintainer mode." "$LINENO" 5; fi
+  if test "$RSVG" = "false"; then as_fn_error "You need rsvg to rebuild icons in maintainer mode." "$LINENO" 5; fi
 
     if test "$CONVERT" = false
   then
-    as_fn_append wine_warnings "|imagemagick is missing, icons can't be rebuilt."
+    as_fn_error "You need imagemagick to rebuild icons in maintainer mode." "$LINENO" 5
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for recent enough imagemagick" >&5
 $as_echo_n "checking for recent enough imagemagick... " >&6; }
@@ -5133,13 +5133,13 @@ $as_echo_n "checking for recent enough imagemagick... " >&6; }
       if test "$convert_version_major" -eq 6 -a "$convert_version_minor" -lt 6
       then
         CONVERT=false
-        as_fn_append wine_warnings "|imagemagick version 6.6 or newer is needed to rebuild icons."
       fi
     fi
     if test "$CONVERT" = false
     then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no ($convert_version_major.$convert_version_minor)" >&5
 $as_echo "no ($convert_version_major.$convert_version_minor)" >&6; }
+      as_fn_error "You need imagemagick version 6.6 or newer to rebuild icons in maintainer mode." "$LINENO" 5
     else
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($convert_version_major.$convert_version_minor)" >&5
 $as_echo "yes ($convert_version_major.$convert_version_minor)" >&6; }
@@ -5148,7 +5148,7 @@ $as_echo "yes ($convert_version_major.$convert_version_minor)" >&6; }
 
     if test "$ICOTOOL" = false
   then
-    as_fn_append wine_warnings "|icotool is missing, icons can't be rebuilt."
+    as_fn_error "You need icotool to rebuild icons in maintainer mode." "$LINENO" 5
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for recent enough icotool" >&5
 $as_echo_n "checking for recent enough icotool... " >&6; }
@@ -5167,6 +5167,7 @@ $as_echo_n "checking for recent enough icotool... " >&6; }
     then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no ($icotool_version_major.$icotool_version_minor)" >&5
 $as_echo "no ($icotool_version_major.$icotool_version_minor)" >&6; }
+      as_fn_error "You need icotool version 0.29.0 or newer to rebuild icons in maintainer mode." "$LINENO" 5
     else
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($icotool_version_major.$icotool_version_minor)" >&5
 $as_echo "yes ($icotool_version_major.$icotool_version_minor)" >&6; }

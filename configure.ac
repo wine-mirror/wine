@@ -295,13 +295,13 @@ if test "x$enable_maintainer_mode" != "xyes"
 then
   AC_SUBST([MAINTAINER_MODE],[\#])
 else
-  if test "$FONTFORGE" = "false"; then WINE_WARNING([fontforge is missing, fonts can't be rebuilt.]); fi
-  if test "$RSVG" = "false"; then WINE_WARNING([rsvg is missing, icons can't be rebuilt.]); fi
+  if test "$FONTFORGE" = "false"; then AC_MSG_ERROR([You need fontforge to rebuild fonts in maintainer mode.]); fi
+  if test "$RSVG" = "false"; then AC_MSG_ERROR([You need rsvg to rebuild icons in maintainer mode.]); fi
 
   dnl Check the imagemagick version
   if test "$CONVERT" = false
   then
-    WINE_WARNING([imagemagick is missing, icons can't be rebuilt.])
+    AC_MSG_ERROR([You need imagemagick to rebuild icons in maintainer mode.])
   else
     AC_MSG_CHECKING([for recent enough imagemagick])
     convert_version=`convert --version | head -n1`
@@ -312,12 +312,12 @@ else
       if test "$convert_version_major" -eq 6 -a "$convert_version_minor" -lt 6
       then
         CONVERT=false
-        WINE_WARNING([imagemagick version 6.6 or newer is needed to rebuild icons.])
       fi
     fi
     if test "$CONVERT" = false
     then
       AC_MSG_RESULT([no ($convert_version_major.$convert_version_minor)])
+      AC_MSG_ERROR([You need imagemagick version 6.6 or newer to rebuild icons in maintainer mode.])
     else
       AC_MSG_RESULT([yes ($convert_version_major.$convert_version_minor)])
     fi
@@ -326,7 +326,7 @@ else
   dnl Check the icotool version
   if test "$ICOTOOL" = false
   then
-    WINE_WARNING([icotool is missing, icons can't be rebuilt.])
+    AC_MSG_ERROR([You need icotool to rebuild icons in maintainer mode.])
   else
     AC_MSG_CHECKING([for recent enough icotool])
     icotool_version=`icotool --version | head -n1`
@@ -343,6 +343,7 @@ else
     if test "$ICOTOOL" = false
     then
       AC_MSG_RESULT([no ($icotool_version_major.$icotool_version_minor)])
+      AC_MSG_ERROR([You need icotool version 0.29.0 or newer to rebuild icons in maintainer mode.])
     else
       AC_MSG_RESULT([yes ($icotool_version_major.$icotool_version_minor)])
     fi
