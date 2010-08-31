@@ -5722,7 +5722,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
         return E_OUTOFMEMORY;
     }
 
-    hr = IWineD3D_CreateDevice(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type, NULL, 0, (IUnknown *)ddraw,
+    hr = IWineD3D_CreateDevice(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type, NULL, 0,
             (IWineD3DDeviceParent *)&ddraw->device_parent_vtbl, &ddraw->wineD3DDevice);
     if (FAILED(hr))
     {

@@ -2264,7 +2264,6 @@ interface IWineD3D : IWineD3DBase
         [in] WINED3DDEVTYPE device_type,
         [in] HWND focus_window,
         [in] DWORD behaviour_flags,
-        [in] IUnknown *parent,
         [in] IWineD3DDeviceParent *device_parent,
         [out] IWineD3DDevice **device
     );
@@ -2793,7 +2792,7 @@ interface IWineD3DPixelShader : IWineD3DBaseShader
     local,
     uuid(6d10a2ce-09d0-4a53-a427-11388f9f8ca5)
 ]
-interface IWineD3DDevice : IWineD3DBase
+interface IWineD3DDevice : IUnknown
 {
     HRESULT CreateBuffer(
         [in] struct wined3d_buffer_desc *desc,

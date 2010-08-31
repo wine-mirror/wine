@@ -394,7 +394,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     FIXME("Ignoring adapter type.\n");
     EnterCriticalSection(&dxgi_cs);
     hr = IWineD3D_CreateDevice(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL, 0,
-            (IUnknown *)device, wined3d_device_parent, &device->wined3d_device);
+            wined3d_device_parent, &device->wined3d_device);
     IWineD3DDeviceParent_Release(wined3d_device_parent);
     IWineD3D_Release(wined3d);
     LeaveCriticalSection(&dxgi_cs);

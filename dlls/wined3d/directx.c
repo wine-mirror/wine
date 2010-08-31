@@ -4831,18 +4831,15 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags, IUnknown *parent,
-        IWineD3DDeviceParent *device_parent, IWineD3DDevice **device)
+static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT adapter_idx, WINED3DDEVTYPE device_type,
+        HWND focus_window, DWORD flags, IWineD3DDeviceParent *device_parent, IWineD3DDevice **device)
 {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     IWineD3DDeviceImpl *object;
     HRESULT hr;
 
-    TRACE("iface %p, adapter_idx %u, device_type %#x, focus_window %p, flags %#x.\n"
-            "parent %p, device_parent %p, device %p.\n",
-            iface, adapter_idx, device_type, focus_window, flags,
-            parent, device_parent, device);
+    TRACE("iface %p, adapter_idx %u, device_type %#x, focus_window %p, flags %#x, device_parent %p, device %p.\n",
+            iface, adapter_idx, device_type, focus_window, flags, device_parent, device);
 
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
      * number and create a device without a 3D adapter for 2D only operation. */
@@ -4858,7 +4855,7 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT adapter_id
         return E_OUTOFMEMORY;
     }
 
-    hr = device_init(object, This, adapter_idx, device_type, focus_window, flags, parent, device_parent);
+    hr = device_init(object, This, adapter_idx, device_type, focus_window, flags, device_parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);

@@ -2857,7 +2857,7 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
     if (!(flags & D3DCREATE_FPU_PRESERVE)) setup_fpu();
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CreateDevice(wined3d, adapter, device_type, focus_window, flags, (IUnknown *)device,
+    hr = IWineD3D_CreateDevice(wined3d, adapter, device_type, focus_window, flags,
             (IWineD3DDeviceParent *)&device->device_parent_vtbl, &device->WineD3DDevice);
     if (FAILED(hr))
     {

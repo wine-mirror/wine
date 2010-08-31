@@ -815,19 +815,21 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
  * IUnknown parts follows
  **********************************************************/
 
-static HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface,REFIID riid,LPVOID *ppobj)
+static HRESULT WINAPI IWineD3DDeviceImpl_QueryInterface(IWineD3DDevice *iface, REFIID riid, void **object)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IWineD3DBase)
-        || IsEqualGUID(riid, &IID_IWineD3DDevice)) {
+    if (IsEqualGUID(riid, &IID_IWineD3DDevice)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
         IUnknown_AddRef(iface);
-        *ppobj = This;
+        *object = iface;
         return S_OK;
     }
-    *ppobj = NULL;
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
     return E_NOINTERFACE;
 }
 
@@ -881,16 +883,6 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         This = NULL;
     }
     return refCount;
-}
-
-/**********************************************************
- * IWineD3DDevice implementation follows
- **********************************************************/
-static HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnknown **pParent) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    *pParent = This->parent;
-    IUnknown_AddRef(This->parent);
-    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface, struct wined3d_buffer_desc *desc,
@@ -6646,7 +6638,6 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_AddRef,
     IWineD3DDeviceImpl_Release,
     /*** IWineD3DDevice methods ***/
-    IWineD3DDeviceImpl_GetParent,
     /*** Creation methods**/
     IWineD3DDeviceImpl_CreateBuffer,
     IWineD3DDeviceImpl_CreateVertexBuffer,
@@ -6791,7 +6782,7 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
 
 HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
-        IUnknown *parent, IWineD3DDeviceParent *device_parent)
+        IWineD3DDeviceParent *device_parent)
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;
@@ -6806,7 +6797,6 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->wined3d = (IWineD3D *)wined3d;
     IWineD3D_AddRef(device->wined3d);
     device->adapter = wined3d->adapter_count ? adapter : NULL;
-    device->parent  = parent;
     device->device_parent = device_parent;
     list_init(&device->resources);
     list_init(&device->shaders);
