@@ -86,7 +86,7 @@
 @ stdcall GetThemeTextExtent(ptr ptr long long wstr long long ptr ptr)
 @ stdcall GetThemeTextMetrics(ptr ptr long long ptr)
 @ stdcall GetWindowTheme(ptr)
-@ stdcall HitTestThemeBackground(ptr long long long long ptr long double ptr)
+@ stdcall HitTestThemeBackground(ptr long long long long ptr long int64 ptr)
 @ stdcall IsAppThemed()
 @ stdcall IsThemeActive()
 @ stdcall IsThemeBackgroundPartiallyTransparent(ptr long long)
