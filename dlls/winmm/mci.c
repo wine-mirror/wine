@@ -144,7 +144,7 @@ static UINT MCI_GetDriverFromString(LPCWSTR lpstrName)
 /**************************************************************************
  * 			MCI_MessageToString			[internal]
  */
-const char* MCI_MessageToString(UINT wMsg)
+static const char* MCI_MessageToString(UINT wMsg)
 {
 #define CASE(s) case (s): return #s
 
@@ -213,7 +213,7 @@ const char* MCI_MessageToString(UINT wMsg)
     }
 }
 
-LPWSTR MCI_strdupAtoW( LPCSTR str )
+static LPWSTR MCI_strdupAtoW( LPCSTR str )
 {
     LPWSTR ret;
     INT len;
@@ -222,18 +222,6 @@ LPWSTR MCI_strdupAtoW( LPCSTR str )
     len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
     ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
     if (ret) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
-    return ret;
-}
-
-LPSTR MCI_strdupWtoA( LPCWSTR str )
-{
-    LPSTR ret;
-    INT len;
-
-    if (!str) return NULL;
-    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-    ret = HeapAlloc( GetProcessHeap(), 0, len );
-    if (ret) WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     return ret;
 }
 
