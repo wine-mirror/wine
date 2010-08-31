@@ -284,10 +284,149 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(LPDIRECT3DDEVICE9 device,
                                                    PALETTEENTRY* palette,
                                                    LPDIRECT3DTEXTURE9* texture)
 {
-    FIXME("(%p, %p, %u, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p): stub\n", device, srcdata, srcdatasize, width,
+    IDirect3DTexture9 **texptr;
+    IDirect3DTexture9 *buftex;
+    IDirect3DSurface9 *surface;
+    BOOL file_width = FALSE, file_height = FALSE;
+    BOOL file_format = FALSE, file_miplevels = FALSE;
+    D3DXIMAGE_INFO imginfo;
+    D3DCAPS9 caps;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %u, %u, %u, %u, %x, %x, %x, %u, %u, %x, %p, %p, %p)\n", device, srcdata, srcdatasize, width,
         height, miplevels, usage, format, pool, filter, mipfilter, colorkey, srcinfo, palette, texture);
 
-    return E_NOTIMPL;
+    /* check for invalid parameters */
+    if (!device || !texture || !srcdata || !srcdatasize)
+        return D3DERR_INVALIDCALL;
+
+    hr = D3DXGetImageInfoFromFileInMemory(srcdata, srcdatasize, &imginfo);
+
+    if (FAILED(hr))
+    {
+        *texture = NULL;
+        return hr;
+    }
+
+    /* handle default values */
+    if (width == 0 || width == D3DX_DEFAULT_NONPOW2)
+        width = imginfo.Width;
+
+    if (height == 0 || height == D3DX_DEFAULT_NONPOW2)
+        height = imginfo.Height;
+
+    if (width == D3DX_DEFAULT)
+        width = make_pow2(imginfo.Width);
+
+    if (height == D3DX_DEFAULT)
+        height = make_pow2(imginfo.Height);
+
+    if (format == D3DFMT_UNKNOWN || format == D3DX_DEFAULT)
+        format = imginfo.Format;
+
+    if (width == D3DX_FROM_FILE)
+    {
+        file_width = TRUE;
+        width = imginfo.Width;
+    }
+
+    if (height == D3DX_FROM_FILE)
+    {
+        file_height = TRUE;
+        height = imginfo.Height;
+    }
+
+    if (format == D3DFMT_FROM_FILE)
+    {
+        file_format = TRUE;
+        format = imginfo.Format;
+    }
+
+    if (miplevels == D3DX_FROM_FILE)
+    {
+        file_miplevels = TRUE;
+        miplevels = imginfo.MipLevels;
+    }
+
+    /* fix texture creation parameters */
+    hr = D3DXCheckTextureRequirements(device, &width, &height, &miplevels, usage, &format, pool);
+
+    if (FAILED(hr))
+    {
+        *texture = NULL;
+        return hr;
+    }
+
+    if (((file_width) && (width != imginfo.Width))    ||
+        ((file_height) && (height != imginfo.Height)) ||
+        ((file_format) && (format != imginfo.Format)) ||
+        ((file_miplevels) && (miplevels != imginfo.MipLevels)))
+    {
+        return D3DERR_NOTAVAILABLE;
+    }
+
+    if (FAILED(IDirect3DDevice9_GetDeviceCaps(device, &caps)))
+        return D3DERR_INVALIDCALL;
+
+    /* Create the to-be-filled texture */
+    if ((caps.Caps2 & D3DCAPS2_DYNAMICTEXTURES) && (pool != D3DPOOL_DEFAULT) && (usage != D3DUSAGE_DYNAMIC))
+    {
+        hr = D3DXCreateTexture(device, width, height, miplevels, usage, format, pool, texture);
+        texptr = texture;
+    }
+    else
+    {
+        hr = D3DXCreateTexture(device, width, height, miplevels, usage, format, D3DPOOL_SYSTEMMEM, &buftex);
+        texptr = &buftex;
+    }
+
+    if (FAILED(hr))
+    {
+        *texture = NULL;
+        return hr;
+    }
+
+    /* Load the file */
+    IDirect3DTexture9_GetSurfaceLevel(*texptr, 0, &surface);
+    hr = D3DXLoadSurfaceFromFileInMemory(surface, palette, NULL, srcdata, srcdatasize, NULL, filter, colorkey, NULL);
+    IDirect3DSurface9_Release(surface);
+
+    if (FAILED(hr))
+    {
+        IDirect3DTexture9_Release(*texptr);
+        *texture = NULL;
+        return hr;
+    }
+
+    hr = D3DXFilterTexture((IDirect3DBaseTexture9*) *texptr, palette, 0, mipfilter);
+
+    if (FAILED(hr))
+    {
+        IDirect3DTexture9_Release(*texptr);
+        *texture = NULL;
+        return hr;
+    }
+
+    /* Move the data to the actual texture if necessary */
+    if (texptr == &buftex)
+    {
+        hr = D3DXCreateTexture(device, width, height, miplevels, usage, format, pool, texture);
+
+        if (FAILED(hr))
+        {
+            IDirect3DTexture9_Release(buftex);
+            *texture = NULL;
+            return hr;
+        }
+
+        IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9*)buftex, (IDirect3DBaseTexture9*)(*texture));
+        IDirect3DTexture9_Release(buftex);
+    }
+
+    if (srcinfo)
+        *srcinfo = imginfo;
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI D3DXCreateTextureFromFileInMemory(LPDIRECT3DDEVICE9 device,
