@@ -1810,11 +1810,11 @@ static void test_SystemInfo(void)
     pGetNativeSystemInfo(&nsi);
     if (is_wow64)
     {
-        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+        if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
         {
-            ok(nsi.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64,
+            ok(S(U(nsi)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64,
                "Expected PROCESSOR_ARCHITECTURE_AMD64, got %d\n",
-               nsi.wProcessorArchitecture);
+               S(U(nsi)).wProcessorArchitecture);
             ok(nsi.dwProcessorType == PROCESSOR_AMD_X8664,
                "Expected PROCESSOR_AMD_X8664, got %d\n",
                nsi.dwProcessorType);
@@ -1822,9 +1822,9 @@ static void test_SystemInfo(void)
     }
     else
     {
-        ok(si.wProcessorArchitecture == nsi.wProcessorArchitecture,
+        ok(S(U(si)).wProcessorArchitecture == S(U(nsi)).wProcessorArchitecture,
            "Expected no difference for wProcessorArchitecture, got %d and %d\n",
-           si.wProcessorArchitecture, nsi.wProcessorArchitecture);
+           S(U(si)).wProcessorArchitecture, S(U(nsi)).wProcessorArchitecture);
         ok(si.dwProcessorType == nsi.dwProcessorType,
            "Expected no difference for dwProcessorType, got %d and %d\n",
            si.dwProcessorType, nsi.dwProcessorType);
