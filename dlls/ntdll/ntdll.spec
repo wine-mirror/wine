@@ -549,7 +549,7 @@
 @ stdcall RtlEncodePointer(ptr)
 # @ stub RtlEncodeSystemPointer
 @ stdcall -arch=win32 -ret64 RtlEnlargedIntegerMultiply(long long)
-@ stdcall -arch=win32 RtlEnlargedUnsignedDivide(double long ptr)
+@ stdcall -arch=win32 RtlEnlargedUnsignedDivide(int64 long ptr)
 @ stdcall -arch=win32 -ret64 RtlEnlargedUnsignedMultiply(long long)
 @ stdcall RtlEnterCriticalSection(ptr)
 @ stub RtlEnumProcessHeaps
@@ -570,9 +570,9 @@
 @ stdcall RtlExitUserThread(long)
 @ stdcall RtlExpandEnvironmentStrings_U(ptr ptr ptr ptr)
 @ stub RtlExtendHeap
-@ stdcall -arch=win32 -ret64 RtlExtendedIntegerMultiply(double long)
-@ stdcall -arch=win32 -ret64 RtlExtendedLargeIntegerDivide(double long ptr)
-@ stdcall -arch=win32 -ret64 RtlExtendedMagicDivide(double double long)
+@ stdcall -arch=win32 -ret64 RtlExtendedIntegerMultiply(int64 long)
+@ stdcall -arch=win32 -ret64 RtlExtendedLargeIntegerDivide(int64 long ptr)
+@ stdcall -arch=win32 -ret64 RtlExtendedMagicDivide(int64 int64 long)
 @ stdcall RtlFillMemory(ptr long long)
 @ stdcall RtlFillMemoryUlong(ptr long long)
 @ stub RtlFinalReleaseOutOfProcessMemoryStream
@@ -584,11 +584,11 @@
 @ stdcall RtlFindClearRuns(ptr ptr long long)
 @ stdcall RtlFindLastBackwardRunClear(ptr long ptr)
 @ stdcall RtlFindLastBackwardRunSet(ptr long ptr)
-@ stdcall RtlFindLeastSignificantBit(double)
+@ stdcall RtlFindLeastSignificantBit(int64)
 @ stdcall RtlFindLongestRunClear(ptr long)
 @ stdcall RtlFindLongestRunSet(ptr long)
 @ stdcall RtlFindMessage(long long long long ptr)
-@ stdcall RtlFindMostSignificantBit(double)
+@ stdcall RtlFindMostSignificantBit(int64)
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr)
 @ stdcall RtlFindNextForwardRunSet(ptr long ptr)
 @ stub RtlFindRange
@@ -681,10 +681,10 @@
 # @ stub RtlInitializeStackTraceDataBase
 @ stub RtlInsertElementGenericTable
 # @ stub RtlInsertElementGenericTableAvl
-@ stdcall RtlInt64ToUnicodeString(double long ptr)
+@ stdcall RtlInt64ToUnicodeString(int64 long ptr)
 @ stdcall RtlIntegerToChar(long long long ptr)
 @ stdcall RtlIntegerToUnicodeString(long long ptr)
-@ stdcall -arch=win32 -ret64 RtlInterlockedCompareExchange64(ptr double double)
+@ stdcall -arch=win32 -ret64 RtlInterlockedCompareExchange64(ptr int64 int64)
 @ stdcall RtlInterlockedFlushSList(ptr)
 @ stdcall RtlInterlockedPopEntrySList(ptr)
 @ stdcall RtlInterlockedPushEntrySList(ptr ptr)
@@ -716,13 +716,13 @@
 # @ stub RtlIsThreadWithinLoaderCallout
 @ stdcall RtlIsValidHandle(ptr ptr)
 @ stdcall RtlIsValidIndexHandle(ptr long ptr)
-@ stdcall -arch=win32 -ret64 RtlLargeIntegerAdd(double double)
-@ stdcall -arch=win32 -ret64 RtlLargeIntegerArithmeticShift(double long)
-@ stdcall -arch=win32 -ret64 RtlLargeIntegerDivide(double double ptr)
-@ stdcall -arch=win32 -ret64 RtlLargeIntegerNegate(double)
-@ stdcall -arch=win32 -ret64 RtlLargeIntegerShiftLeft(double long)
-@ stdcall -arch=win32 -ret64 RtlLargeIntegerShiftRight(double long)
-@ stdcall -arch=win32 -ret64 RtlLargeIntegerSubtract(double double)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerAdd(int64 int64)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerArithmeticShift(int64 long)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerDivide(int64 int64 ptr)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerNegate(int64)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerShiftLeft(int64 long)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerShiftRight(int64 long)
+@ stdcall -arch=win32 -ret64 RtlLargeIntegerSubtract(int64 int64)
 @ stdcall RtlLargeIntegerToChar(ptr long long ptr)
 @ stdcall RtlLeaveCriticalSection(ptr)
 @ stdcall RtlLengthRequiredSid(long)
@@ -877,7 +877,7 @@
 # @ stub RtlTraceDatabaseValidate
 @ stdcall RtlTryEnterCriticalSection(ptr)
 @ cdecl -i386 -norelay RtlUlongByteSwap() NTDLL_RtlUlongByteSwap
-@ cdecl -ret64 RtlUlonglongByteSwap(double)
+@ cdecl -ret64 RtlUlonglongByteSwap(int64)
 # @ stub RtlUnhandledExceptionFilter2
 # @ stub RtlUnhandledExceptionFilter
 @ stdcall RtlUnicodeStringToAnsiSize(ptr)
@@ -916,7 +916,7 @@
 @ stdcall RtlValidateHeap(long long ptr)
 @ stub RtlValidateProcessHeaps
 # @ stub RtlValidateUnicodeString
-@ stdcall RtlVerifyVersionInfo(ptr long double)
+@ stdcall RtlVerifyVersionInfo(ptr long int64)
 @ stdcall -arch=x86_64 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr)
 @ stub RtlWalkFrameChain
 @ stdcall RtlWalkHeap(long ptr)
@@ -942,7 +942,7 @@
 @ stdcall RtlxOemStringToUnicodeSize(ptr) RtlOemStringToUnicodeSize
 @ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
-@ stdcall -ret64 VerSetConditionMask(double long long)
+@ stdcall -ret64 VerSetConditionMask(int64 long long)
 @ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stdcall ZwAccessCheckAndAuditAlarm(ptr long ptr ptr ptr long ptr long ptr ptr ptr) NtAccessCheckAndAuditAlarm
@@ -1246,23 +1246,23 @@
 # @ stub __iscsym
 # @ stub __iscsymf
 # @ stub __toascii
-@ stdcall -private -arch=i386 -ret64 _alldiv(double double)
+@ stdcall -private -arch=i386 -ret64 _alldiv(int64 int64)
 # @ stub _alldvrm
-@ stdcall -private -arch=i386 -ret64 _allmul(double double)
+@ stdcall -private -arch=i386 -ret64 _allmul(int64 int64)
 @ stdcall -private -arch=i386 -norelay _alloca_probe()
-@ stdcall -private -arch=i386 -ret64 _allrem(double double)
+@ stdcall -private -arch=i386 -ret64 _allrem(int64 int64)
 # @ stub _allshl
 # @ stub _allshr
 @ cdecl -private -ret64 _atoi64(str)
-@ stdcall -private -arch=i386 -ret64 _aulldiv(double double)
+@ stdcall -private -arch=i386 -ret64 _aulldiv(int64 int64)
 # @ stub _aulldvrm
-@ stdcall -private -arch=i386 -ret64 _aullrem(double double)
+@ stdcall -private -arch=i386 -ret64 _aullrem(int64 int64)
 # @ stub _aullshr
 @ stdcall -private -arch=i386 -norelay _chkstk()
 @ stub _fltused
 @ cdecl -private -arch=i386 -ret64 _ftol() NTDLL__ftol
-@ cdecl -private _i64toa(double ptr long)
-@ cdecl -private _i64tow(double ptr long)
+@ cdecl -private _i64toa(int64 ptr long)
+@ cdecl -private _i64tow(int64 ptr long)
 @ cdecl -private _itoa(long ptr long)
 @ cdecl -private _itow(long ptr long)
 @ cdecl -private _lfind(ptr ptr ptr long ptr)
@@ -1280,8 +1280,8 @@
 @ cdecl -private _strupr(str)
 # @ stub -private _tolower
 # @ stub -private _toupper
-@ cdecl -private _ui64toa(double ptr long)
-@ cdecl -private _ui64tow(double ptr long)
+@ cdecl -private _ui64toa(int64 ptr long)
+@ cdecl -private _ui64tow(int64 ptr long)
 @ cdecl -private _ultoa(long ptr long)
 @ cdecl -private _ultow(long ptr long)
 @ cdecl -private _vsnprintf(ptr long str ptr) NTDLL__vsnprintf

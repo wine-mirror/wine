@@ -52,7 +52,7 @@
 @ stdcall ObfReferenceObject(ptr)
 @ stub RtlPrefetchMemoryNonTemporal
 @ cdecl -i386 -norelay RtlUlongByteSwap() ntdll.RtlUlongByteSwap
-@ cdecl -ret64 RtlUlonglongByteSwap(double) ntdll.RtlUlonglongByteSwap
+@ cdecl -ret64 RtlUlonglongByteSwap(int64) ntdll.RtlUlonglongByteSwap
 @ cdecl -i386 -norelay RtlUshortByteSwap() ntdll.RtlUshortByteSwap
 @ stub WmiGetClock
 @ stub Kei386EoiHelper
@@ -655,11 +655,11 @@
 @ stub MmAddVerifierThunks
 @ stub MmAdjustWorkingSetSize
 @ stub MmAdvanceMdl
-@ stdcall MmAllocateContiguousMemory(long double)
-@ stdcall MmAllocateContiguousMemorySpecifyCache(long double double double long)
+@ stdcall MmAllocateContiguousMemory(long int64)
+@ stdcall MmAllocateContiguousMemorySpecifyCache(long int64 int64 int64 long)
 @ stub MmAllocateMappingAddress
 @ stdcall MmAllocateNonCachedMemory(long)
-@ stdcall MmAllocatePagesForMdl(double double double long)
+@ stdcall MmAllocatePagesForMdl(int64 int64 int64 long)
 @ stub MmBuildMdlForNonPagedPool
 @ stub MmCanFileBeTruncated
 @ stub MmCommitSessionMappedView
@@ -993,7 +993,7 @@
 @ stdcall RtlDowncaseUnicodeString(ptr ptr long) ntdll.RtlDowncaseUnicodeString
 @ stdcall RtlEmptyAtomTable(ptr long) ntdll.RtlEmptyAtomTable
 @ stdcall -ret64 RtlEnlargedIntegerMultiply(long long) ntdll.RtlEnlargedIntegerMultiply
-@ stdcall RtlEnlargedUnsignedDivide(double long ptr) ntdll.RtlEnlargedUnsignedDivide
+@ stdcall RtlEnlargedUnsignedDivide(int64 long ptr) ntdll.RtlEnlargedUnsignedDivide
 @ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long) ntdll.RtlEnlargedUnsignedMultiply
 @ stub RtlEnumerateGenericTable
 @ stub RtlEnumerateGenericTableAvl
@@ -1004,9 +1004,9 @@
 @ stdcall RtlEqualSid(long long) ntdll.RtlEqualSid
 @ stdcall RtlEqualString(ptr ptr long) ntdll.RtlEqualString
 @ stdcall RtlEqualUnicodeString(ptr ptr long) ntdll.RtlEqualUnicodeString
-@ stdcall -ret64 RtlExtendedIntegerMultiply(double long) ntdll.RtlExtendedIntegerMultiply
-@ stdcall -ret64 RtlExtendedLargeIntegerDivide(double long ptr) ntdll.RtlExtendedLargeIntegerDivide
-@ stdcall -ret64 RtlExtendedMagicDivide(double double long) ntdll.RtlExtendedMagicDivide
+@ stdcall -ret64 RtlExtendedIntegerMultiply(int64 long) ntdll.RtlExtendedIntegerMultiply
+@ stdcall -ret64 RtlExtendedLargeIntegerDivide(int64 long ptr) ntdll.RtlExtendedLargeIntegerDivide
+@ stdcall -ret64 RtlExtendedMagicDivide(int64 int64 long) ntdll.RtlExtendedMagicDivide
 @ stdcall RtlFillMemory(ptr long long) ntdll.RtlFillMemory
 @ stdcall RtlFillMemoryUlong(ptr long long) ntdll.RtlFillMemoryUlong
 @ stdcall RtlFindClearBits(ptr long long) ntdll.RtlFindClearBits
@@ -1014,10 +1014,10 @@
 @ stdcall RtlFindClearRuns(ptr ptr long long) ntdll.RtlFindClearRuns
 @ stub RtlFindFirstRunClear
 @ stdcall RtlFindLastBackwardRunClear(ptr long ptr) ntdll.RtlFindLastBackwardRunClear
-@ stdcall RtlFindLeastSignificantBit(double) ntdll.RtlFindLeastSignificantBit
+@ stdcall RtlFindLeastSignificantBit(int64) ntdll.RtlFindLeastSignificantBit
 @ stdcall RtlFindLongestRunClear(ptr long) ntdll.RtlFindLongestRunClear
 @ stdcall RtlFindMessage(long long long long ptr) ntdll.RtlFindMessage
-@ stdcall RtlFindMostSignificantBit(double) ntdll.RtlFindMostSignificantBit
+@ stdcall RtlFindMostSignificantBit(int64) ntdll.RtlFindMostSignificantBit
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr) ntdll.RtlFindNextForwardRunClear
 @ stub RtlFindRange
 @ stdcall RtlFindSetBits(ptr long long) ntdll.RtlFindSetBits
@@ -1064,7 +1064,7 @@
 @ stub RtlInsertElementGenericTableFull
 @ stub RtlInsertElementGenericTableFullAvl
 @ stub RtlInsertUnicodePrefix
-@ stdcall RtlInt64ToUnicodeString(double long ptr) ntdll.RtlInt64ToUnicodeString
+@ stdcall RtlInt64ToUnicodeString(int64 long ptr) ntdll.RtlInt64ToUnicodeString
 @ stdcall RtlIntegerToChar(long long long ptr) ntdll.RtlIntegerToChar
 @ stub RtlIntegerToUnicode
 @ stdcall RtlIntegerToUnicodeString(long long ptr) ntdll.RtlIntegerToUnicodeString
@@ -1090,13 +1090,13 @@
 @ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr) ntdll.RtlIsNameLegalDOS8Dot3
 @ stub RtlIsRangeAvailable
 @ stub RtlIsValidOemCharacter
-@ stdcall -ret64 RtlLargeIntegerAdd(double double) ntdll.RtlLargeIntegerAdd
-@ stdcall -ret64 RtlLargeIntegerArithmeticShift(double long) ntdll.RtlLargeIntegerArithmeticShift
-@ stdcall -ret64 RtlLargeIntegerDivide(double double ptr) ntdll.RtlLargeIntegerDivide
-@ stdcall -ret64 RtlLargeIntegerNegate(double) ntdll.RtlLargeIntegerNegate
-@ stdcall -ret64 RtlLargeIntegerShiftLeft(double long) ntdll.RtlLargeIntegerShiftLeft
-@ stdcall -ret64 RtlLargeIntegerShiftRight(double long) ntdll.RtlLargeIntegerShiftRight
-@ stdcall -ret64 RtlLargeIntegerSubtract(double double) ntdll.RtlLargeIntegerSubtract
+@ stdcall -ret64 RtlLargeIntegerAdd(int64 int64) ntdll.RtlLargeIntegerAdd
+@ stdcall -ret64 RtlLargeIntegerArithmeticShift(int64 long) ntdll.RtlLargeIntegerArithmeticShift
+@ stdcall -ret64 RtlLargeIntegerDivide(int64 int64 ptr) ntdll.RtlLargeIntegerDivide
+@ stdcall -ret64 RtlLargeIntegerNegate(int64) ntdll.RtlLargeIntegerNegate
+@ stdcall -ret64 RtlLargeIntegerShiftLeft(int64 long) ntdll.RtlLargeIntegerShiftLeft
+@ stdcall -ret64 RtlLargeIntegerShiftRight(int64 long) ntdll.RtlLargeIntegerShiftRight
+@ stdcall -ret64 RtlLargeIntegerSubtract(int64 int64) ntdll.RtlLargeIntegerSubtract
 @ stdcall RtlLengthRequiredSid(long) ntdll.RtlLengthRequiredSid
 @ stdcall RtlLengthSecurityDescriptor(ptr) ntdll.RtlLengthSecurityDescriptor
 @ stdcall RtlLengthSid(ptr) ntdll.RtlLengthSid
@@ -1194,7 +1194,7 @@
 @ stub RtlValidRelativeSecurityDescriptor
 @ stdcall RtlValidSecurityDescriptor(ptr) ntdll.RtlValidSecurityDescriptor
 @ stdcall RtlValidSid(ptr) ntdll.RtlValidSid
-@ stdcall RtlVerifyVersionInfo(ptr long double) ntdll.RtlVerifyVersionInfo
+@ stdcall RtlVerifyVersionInfo(ptr long int64) ntdll.RtlVerifyVersionInfo
 @ stub RtlVolumeDeviceToDosName
 @ stub RtlWalkFrameChain
 @ stdcall RtlWriteRegistryValue(long ptr ptr long ptr long) ntdll.RtlWriteRegistryValue
@@ -1256,7 +1256,7 @@
 @ stub SeUnlockSubjectContext
 @ stub SeUnregisterLogonSessionTerminatedRoutine
 @ stub SeValidSecurityDescriptor
-@ stdcall -ret64 VerSetConditionMask(double long long) ntdll.VerSetConditionMask
+@ stdcall -ret64 VerSetConditionMask(int64 long long) ntdll.VerSetConditionMask
 @ stub VfFailDeviceNode
 @ stub VfFailDriver
 @ stub VfFailSystemBIOS
@@ -1395,16 +1395,16 @@
 @ cdecl -private _CIsin() msvcrt._CIsin
 @ cdecl -private _CIsqrt() msvcrt._CIsqrt
 @ cdecl -private _abnormal_termination() msvcrt._abnormal_termination
-@ stdcall -private -ret64 _alldiv(double double) ntdll._alldiv
+@ stdcall -private -ret64 _alldiv(int64 int64) ntdll._alldiv
 @ stub _alldvrm
-@ stdcall -private -ret64 _allmul(double double) ntdll._allmul
+@ stdcall -private -ret64 _allmul(int64 int64) ntdll._allmul
 @ stdcall -private -i386 -norelay _alloca_probe() ntdll._alloca_probe
-@ stdcall -private -ret64 _allrem(double double) ntdll._allrem
+@ stdcall -private -ret64 _allrem(int64 int64) ntdll._allrem
 @ stub _allshl
 @ stub _allshr
-@ stdcall -private -ret64 _aulldiv(double double) ntdll._aulldiv
+@ stdcall -private -ret64 _aulldiv(int64 int64) ntdll._aulldiv
 @ stub _aulldvrm
-@ stdcall -private -ret64 _aullrem(double double) ntdll._aullrem
+@ stdcall -private -ret64 _aullrem(int64 int64) ntdll._aullrem
 @ stub _aullshr
 @ cdecl -private -i386 _except_handler2(ptr ptr ptr ptr) msvcrt._except_handler2
 @ cdecl -private -i386 _except_handler3(ptr ptr ptr ptr) msvcrt._except_handler3
