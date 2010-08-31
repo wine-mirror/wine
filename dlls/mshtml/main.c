@@ -65,7 +65,7 @@ static void thread_detach(void)
     heap_free(thread_data);
 }
 
-void free_strings(void)
+static void free_strings(void)
 {
     int i;
     for(i = 0; i < NUM_STATUS_STRINGS; i++)
