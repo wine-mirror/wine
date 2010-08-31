@@ -45,7 +45,7 @@
 520 cdecl IStream16_Release(ptr) IStream16_fnRelease
 521 cdecl IStream16_Read(ptr ptr long ptr) IStream16_fnRead
 522 cdecl IStream16_Write(ptr ptr long ptr) IStream16_fnWrite
-523 cdecl IStream16_Seek(ptr double long ptr) IStream16_fnSeek
+523 cdecl IStream16_Seek(ptr int64 long ptr) IStream16_fnSeek
 524 stub  IStream16_SetSize
 525 stub  IStream16_CopyTo
 526 stub  IStream16_Commit
