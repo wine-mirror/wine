@@ -750,7 +750,7 @@ BOOL BIDI_DetermineLevels(
 {
     WORD *chartype;
     unsigned baselevel = 0,j;
-    TRACE("%s, %d", debugstr_wn(lpString, uCount), uCount);
+    TRACE("%s, %d\n", debugstr_wn(lpString, uCount), uCount);
 
     chartype = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD));
     if (!chartype)
