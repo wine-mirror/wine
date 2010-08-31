@@ -2442,7 +2442,6 @@ typedef struct IWineD3DQueryImpl
     const IWineD3DQueryVtbl  *lpVtbl;
     LONG                      ref;     /* Note: Ref counting not required */
 
-    IUnknown                 *parent;
     IWineD3DDeviceImpl *device;
 
     /* IWineD3DQuery fields */
@@ -2452,8 +2451,7 @@ typedef struct IWineD3DQueryImpl
     void                     *extendedData;
 } IWineD3DQueryImpl;
 
-HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device,
-        WINED3DQUERYTYPE type, IUnknown *parent) DECLSPEC_HIDDEN;
+HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type) DECLSPEC_HIDDEN;
 
 /* IWineD3DBuffer */
 

@@ -1230,13 +1230,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
-        WINED3DQUERYTYPE type, IWineD3DQuery **query, IUnknown *parent)
+        WINED3DQUERYTYPE type, IWineD3DQuery **query)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DQueryImpl *object;
     HRESULT hr;
 
-    TRACE("iface %p, type %#x, query %p, parent %p.\n", iface, type, query, parent);
+    TRACE("iface %p, type %#x, query %p.\n", iface, type, query);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1245,7 +1245,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
         return E_OUTOFMEMORY;
     }
 
-    hr = query_init(object, This, type, parent);
+    hr = query_init(object, This, type);
     if (FAILED(hr))
     {
         WARN("Failed to initialize query, hr %#x.\n", hr);

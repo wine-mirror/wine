@@ -2658,7 +2658,7 @@ interface IWineD3DStateBlock : IUnknown
     local,
     uuid(905ddbac-6f30-11d9-c687-00046142c14f)
 ]
-interface IWineD3DQuery : IWineD3DBase
+interface IWineD3DQuery : IUnknown
 {
     HRESULT GetData(
         [out] void *data,
@@ -2888,8 +2888,7 @@ interface IWineD3DDevice : IUnknown
     );
     HRESULT CreateQuery(
         [in] WINED3DQUERYTYPE type,
-        [out] IWineD3DQuery **query,
-        [in] IUnknown *parent
+        [out] IWineD3DQuery **query
     );
     HRESULT CreateSwapChain(
         [in] WINED3DPRESENT_PARAMETERS *present_parameters,
