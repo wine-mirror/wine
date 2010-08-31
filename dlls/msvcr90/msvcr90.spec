@@ -311,12 +311,12 @@
 @ stdcall -arch=i386 _adj_fdiv_m16i(long) msvcrt._adj_fdiv_m16i
 @ stdcall -arch=i386 _adj_fdiv_m32(long) msvcrt._adj_fdiv_m32
 @ stdcall -arch=i386 _adj_fdiv_m32i(long) msvcrt._adj_fdiv_m32i
-@ stdcall -arch=i386 _adj_fdiv_m64(double) msvcrt._adj_fdiv_m64
+@ stdcall -arch=i386 _adj_fdiv_m64(int64) msvcrt._adj_fdiv_m64
 @ cdecl -arch=i386 _adj_fdiv_r() msvcrt._adj_fdiv_r
 @ stdcall -arch=i386 _adj_fdivr_m16i(long) msvcrt._adj_fdivr_m16i
 @ stdcall -arch=i386 _adj_fdivr_m32(long) msvcrt._adj_fdivr_m32
 @ stdcall -arch=i386 _adj_fdivr_m32i(long) msvcrt._adj_fdivr_m32i
-@ stdcall -arch=i386 _adj_fdivr_m64(double) msvcrt._adj_fdivr_m64
+@ stdcall -arch=i386 _adj_fdivr_m64(int64) msvcrt._adj_fdivr_m64
 @ cdecl -arch=i386 _adj_fpatan() msvcrt._adj_fpatan
 @ cdecl -arch=i386 _adj_fprem() msvcrt._adj_fprem
 @ cdecl -arch=i386 _adj_fprem1() msvcrt._adj_fprem1
@@ -565,9 +565,9 @@
 @ cdecl _heapwalk(ptr) msvcrt._heapwalk
 @ cdecl _hypot(double double) msvcrt._hypot
 @ cdecl _hypotf(double double) msvcrt.hypotf
-@ cdecl _i64toa(long long ptr long) msvcrt._i64toa
+@ cdecl _i64toa(int64 ptr long) msvcrt._i64toa
 @ stub _i64toa_s
-@ cdecl _i64tow(long long ptr long) msvcrt._i64tow
+@ cdecl _i64tow(int64 ptr long) msvcrt._i64tow
 @ stub _i64tow_s
 @ stub _initptd
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
@@ -694,7 +694,7 @@
 @ cdecl _lsearch(ptr ptr long long ptr) msvcrt._lsearch
 @ stub _lsearch_s
 @ cdecl _lseek(long long long) msvcrt._lseek
-@ cdecl -ret64 _lseeki64(long double long) msvcrt._lseeki64
+@ cdecl -ret64 _lseeki64(long int64 long) msvcrt._lseeki64
 @ cdecl _ltoa(long ptr long) msvcrt._ltoa
 @ stub _ltoa_s
 @ cdecl _ltow(long ptr long) msvcrt._ltow
@@ -1034,9 +1034,9 @@
 @ stub _towupper_l
 @ extern _tzname msvcrt._tzname
 @ cdecl _tzset() msvcrt._tzset
-@ cdecl _ui64toa(long long ptr long) msvcrt._ui64toa
-@ cdecl _ui64toa_s(long ptr long long) msvcrt._ui64toa_s
-@ cdecl _ui64tow(long long ptr long) msvcrt._ui64tow
+@ cdecl _ui64toa(int64 ptr long) msvcrt._ui64toa
+@ cdecl _ui64toa_s(int64 ptr long long) msvcrt._ui64toa_s
+@ cdecl _ui64tow(int64 ptr long) msvcrt._ui64tow
 @ stub _ui64tow_s
 @ cdecl _ultoa(long ptr long) msvcrt._ultoa
 @ stub _ultoa_s

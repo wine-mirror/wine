@@ -215,12 +215,12 @@
 @ stdcall -arch=i386 _adj_fdiv_m16i(long) msvcrt._adj_fdiv_m16i
 @ stdcall -arch=i386 _adj_fdiv_m32(long) msvcrt._adj_fdiv_m32
 @ stdcall -arch=i386 _adj_fdiv_m32i(long) msvcrt._adj_fdiv_m32i
-@ stdcall -arch=i386 _adj_fdiv_m64(double) msvcrt._adj_fdiv_m64
+@ stdcall -arch=i386 _adj_fdiv_m64(int64) msvcrt._adj_fdiv_m64
 @ cdecl -arch=i386 _adj_fdiv_r() msvcrt._adj_fdiv_r
 @ stdcall -arch=i386 _adj_fdivr_m16i(long) msvcrt._adj_fdivr_m16i
 @ stdcall -arch=i386 _adj_fdivr_m32(long) msvcrt._adj_fdivr_m32
 @ stdcall -arch=i386 _adj_fdivr_m32i(long) msvcrt._adj_fdivr_m32i
-@ stdcall -arch=i386 _adj_fdivr_m64(double) msvcrt._adj_fdivr_m64
+@ stdcall -arch=i386 _adj_fdivr_m64(int64) msvcrt._adj_fdivr_m64
 @ cdecl -arch=i386 _adj_fpatan() msvcrt._adj_fpatan
 @ cdecl -arch=i386 _adj_fprem() msvcrt._adj_fprem
 @ cdecl -arch=i386 _adj_fprem1() msvcrt._adj_fprem1
@@ -355,8 +355,8 @@
 @ stub _heapused
 @ cdecl _heapwalk(ptr) msvcrt._heapwalk
 @ cdecl _hypot(double double) msvcrt._hypot
-@ cdecl _i64toa(long long ptr long) msvcrt._i64toa
-@ cdecl _i64tow(long long ptr long) msvcrt._i64tow
+@ cdecl _i64toa(int64 ptr long) msvcrt._i64toa
+@ cdecl _i64tow(int64 ptr long) msvcrt._i64tow
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
 @ stub _inp
 @ stub _inpd
@@ -412,7 +412,7 @@
 @ cdecl _lrotr(long long) msvcrt._lrotr
 @ cdecl _lsearch(ptr ptr long long ptr) msvcrt._lsearch
 @ cdecl _lseek(long long long) msvcrt._lseek
-@ cdecl -ret64 _lseeki64(long double long) msvcrt._lseeki64
+@ cdecl -ret64 _lseeki64(long int64 long) msvcrt._lseeki64
 @ cdecl _ltoa(long ptr long) msvcrt._ltoa
 @ cdecl _ltow(long ptr long) msvcrt._ltow
 @ cdecl _makepath(ptr str str str str) msvcrt._makepath
@@ -572,8 +572,8 @@
 @ cdecl _toupper(long) msvcrt._toupper
 @ extern _tzname msvcrt._tzname
 @ cdecl _tzset() msvcrt._tzset
-@ cdecl _ui64toa(long long ptr long) msvcrt._ui64toa
-@ cdecl _ui64tow(long long ptr long) msvcrt._ui64tow
+@ cdecl _ui64toa(int64 ptr long) msvcrt._ui64toa
+@ cdecl _ui64tow(int64 ptr long) msvcrt._ui64tow
 @ cdecl _ultoa(long ptr long) msvcrt._ultoa
 @ cdecl _ultow(long ptr long) msvcrt._ultow
 @ cdecl _umask(long) msvcrt._umask

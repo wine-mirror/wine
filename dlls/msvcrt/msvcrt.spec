@@ -276,12 +276,12 @@
 @ stdcall -arch=i386 _adj_fdiv_m16i(long)
 @ stdcall -arch=i386 _adj_fdiv_m32(long)
 @ stdcall -arch=i386 _adj_fdiv_m32i(long)
-@ stdcall -arch=i386 _adj_fdiv_m64(double)
+@ stdcall -arch=i386 _adj_fdiv_m64(int64)
 @ cdecl -arch=i386 _adj_fdiv_r()
 @ stdcall -arch=i386 _adj_fdivr_m16i(long)
 @ stdcall -arch=i386 _adj_fdivr_m32(long)
 @ stdcall -arch=i386 _adj_fdivr_m32i(long)
-@ stdcall -arch=i386 _adj_fdivr_m64(double)
+@ stdcall -arch=i386 _adj_fdivr_m64(int64)
 @ cdecl -arch=i386 _adj_fpatan()
 @ cdecl -arch=i386 _adj_fprem()
 @ cdecl -arch=i386 _adj_fprem1()
@@ -510,9 +510,9 @@
 @ cdecl _heapwalk(ptr)
 @ cdecl _hypot(double double)
 @ cdecl _hypotf(double double)
-@ cdecl _i64toa(long long ptr long) ntdll._i64toa
+@ cdecl _i64toa(int64 ptr long) ntdll._i64toa
 # stub _i64toa_s
-@ cdecl _i64tow(long long ptr long) ntdll._i64tow
+@ cdecl _i64tow(int64 ptr long) ntdll._i64tow
 # stub _i64tow_s
 @ cdecl _initterm(ptr ptr)
 # stub _initterm_e
@@ -632,7 +632,7 @@
 @ cdecl _lsearch(ptr ptr long long ptr)
 # stub _lsearch_s
 @ cdecl _lseek(long long long) MSVCRT__lseek
-@ cdecl -ret64 _lseeki64(long double long) MSVCRT__lseeki64
+@ cdecl -ret64 _lseeki64(long int64 long) MSVCRT__lseeki64
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 # stub _ltoa_s
 @ cdecl _ltow(long ptr long) ntdll._ltow
@@ -969,9 +969,9 @@
 # stub _towupper_l
 @ extern _tzname MSVCRT__tzname
 @ cdecl _tzset() MSVCRT__tzset
-@ cdecl _ui64toa(long long ptr long) ntdll._ui64toa
-@ cdecl _ui64toa_s(long ptr long long) MSVCRT__ui64toa_s
-@ cdecl _ui64tow(long long ptr long) ntdll._ui64tow
+@ cdecl _ui64toa(int64 ptr long) ntdll._ui64toa
+@ cdecl _ui64toa_s(int64 ptr long long) MSVCRT__ui64toa_s
+@ cdecl _ui64tow(int64 ptr long) ntdll._ui64tow
 # stub _ui64tow_s
 @ cdecl _ultoa(long ptr long) ntdll._ultoa
 # stub _ultoa_s

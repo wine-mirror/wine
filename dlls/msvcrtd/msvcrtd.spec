@@ -331,8 +331,8 @@
 @ cdecl _heapused(ptr ptr) msvcrt._heapused
 @ cdecl _heapwalk(ptr) msvcrt._heapwalk
 @ cdecl _hypot(double double) msvcrt._hypot
-@ cdecl _i64toa(long long ptr long) ntdll._i64toa
-@ cdecl _i64tow(long long ptr long) ntdll._i64tow
+@ cdecl _i64toa(int64 ptr long) ntdll._i64toa
+@ cdecl _i64tow(int64 ptr long) ntdll._i64tow
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
 @ cdecl -i386 _inp(long) msvcrt._inp
 @ cdecl -i386 _inpd(long) msvcrt._inpd
@@ -387,7 +387,7 @@
 @ cdecl _lrotr(long long) msvcrt._lrotr
 @ cdecl _lsearch(ptr ptr long long ptr) msvcrt._lsearch
 @ cdecl _lseek(long long long) msvcrt._lseek
-@ cdecl -ret64 _lseeki64(long long long long) msvcrt._lseeki64
+@ cdecl -ret64 _lseeki64(long int64 long) msvcrt._lseeki64
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 @ cdecl _ltow(long ptr long) ntdll._ltow
 @ cdecl _makepath(str str str str str) msvcrt._makepath
@@ -536,8 +536,8 @@
 @ cdecl _toupper(long) msvcrt._toupper
 @ extern _tzname msvcrt._tzname
 @ cdecl _tzset() msvcrt._tzset
-@ cdecl _ui64toa(long long ptr long) ntdll._ui64toa
-@ cdecl _ui64tow(long long ptr long) ntdll._ui64tow
+@ cdecl _ui64toa(int64 ptr long) ntdll._ui64toa
+@ cdecl _ui64tow(int64 ptr long) ntdll._ui64tow
 @ cdecl _ultoa(long ptr long) ntdll._ultoa
 @ cdecl _ultow(long ptr long) ntdll._ultow
 @ cdecl _umask(long) msvcrt._umask
