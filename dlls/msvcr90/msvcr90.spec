@@ -564,7 +564,7 @@
 @ stub _heapused
 @ cdecl _heapwalk(ptr) msvcrt._heapwalk
 @ cdecl _hypot(double double) msvcrt._hypot
-@ cdecl _hypotf(double double) msvcrt.hypotf
+@ cdecl _hypotf(float float) msvcrt.hypotf
 @ cdecl _i64toa(int64 ptr long) msvcrt._i64toa
 @ stub _i64toa_s
 @ cdecl _i64tow(int64 ptr long) msvcrt._i64tow
