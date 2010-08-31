@@ -138,6 +138,10 @@ my %debug_conv =
      "GLcharARB" => "%c",
      "GLvoid" => "(void)",
      "_GLfuncptr" => "%p",
+     "GLDEBUGPROCARB" => "%p",
+     "GLDEBUGPROCAMD" => "%p",
+     "GLvdpauSurfaceNV" => "%ld",
+     "INT64" => "%s,wine_dbgstr_longlong(%s)",
      "UINT64" => "%s,wine_dbgstr_longlong(%s)"
     );
 
@@ -186,7 +190,12 @@ sub ConvertType($)
 	      "GLhandleARB" => "unsigned int",
 	      "GLcharARB" => "char",
 	      "GLchar" => "char",
-	      "GLhalfNV" => "unsigned short" );
+	      "GLhalfNV" => "unsigned short",
+              "GLvdpauSurfaceNV" => "INT_PTR",
+              "struct _cl_context" => "void",
+              "struct _cl_event" => "void",
+              "GLDEBUGPROCARB" => "void *",
+              "GLDEBUGPROCAMD" => "void *" );
 
     foreach my $org (reverse sort keys %hash) {
 	if ($type =~ /$org/) {
@@ -250,7 +259,7 @@ sub GenerateThunk($$$$$)
 	if ($type =~ /\*/) {
 	    $trace_arg .= "%p";
             $trace_call_arg .= $name;
-	} else {
+	} elsif (defined $debug_conv{$type}) {
             if ($debug_conv{$type} =~ /(.*),(.*)/)
             {
                 $trace_arg .= $1;
@@ -262,6 +271,7 @@ sub GenerateThunk($$$$$)
                 $trace_call_arg .= $name;
             }
 	}
+	else { printf "Unknown type %s\n", $type; }
 	if ($i+1 < @{$func_ref->[2]}) {
 	    $ret .= ", ";
 	    $call_arg .= ", ";
