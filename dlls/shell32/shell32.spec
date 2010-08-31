@@ -123,9 +123,9 @@
  128 stdcall -noname SHDllGetClassObject(ptr ptr ptr) DllGetClassObject
  129 stdcall -noname DAD_AutoScroll(long ptr ptr)
  130 stdcall -noname DAD_DragEnter(long)
- 131 stdcall -noname DAD_DragEnterEx(long double)
+ 131 stdcall -noname DAD_DragEnterEx(long int64)
  132 stdcall -noname DAD_DragLeave()
- 134 stdcall -noname DAD_DragMove(double)
+ 134 stdcall -noname DAD_DragMove(int64)
  136 stdcall -noname DAD_SetDragImage(long long)
  137 stdcall -noname DAD_ShowDragImage(long)
  139 stub Desktop_UpdateBriefcaseOnEvent
