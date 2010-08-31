@@ -738,7 +738,7 @@ static LPWSTR FD31_DupToW(LPCSTR str, DWORD size)
  *                              FD31_MapOfnStructA          [internal]
  *      map a 32 bits Ansi structure to a Unicode one
  */
-void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL open)
+static void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL open)
 {
     UNICODE_STRING usBuffer;
 
@@ -796,7 +796,7 @@ void FD31_MapOfnStructA(const OPENFILENAMEA *ofnA, LPOPENFILENAMEW ofnW, BOOL op
  *                              FD31_FreeOfnW          [internal]
  *      Undo all allocations done by FD31_MapOfnStructA
  */
-void FD31_FreeOfnW(OPENFILENAMEW *ofnW)
+static void FD31_FreeOfnW(OPENFILENAMEW *ofnW)
 {
    HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrFilter);
    HeapFree(GetProcessHeap(), 0, ofnW->lpstrCustomFilter);
