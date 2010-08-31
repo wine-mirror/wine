@@ -1547,8 +1547,8 @@ fail:
  *
  * Receive a packet from connection and merge the fragments.
  */
-RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
-                          PRPC_MESSAGE pMsg)
+static RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
+                                 PRPC_MESSAGE pMsg)
 {
     return RPCRT4_ReceiveWithAuth(Connection, Header, pMsg, NULL, NULL);
 }

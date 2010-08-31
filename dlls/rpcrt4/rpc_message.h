@@ -36,7 +36,6 @@ RpcPktHdr *RPCRT4_BuildHttpFlowControlHeader(BOOL server, ULONG bytes_transmitte
 VOID RPCRT4_FreeHeader(RpcPktHdr *Header);
 RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header, void *Buffer, unsigned int BufferLength);
 RPC_STATUS RPCRT4_SendWithAuth(RpcConnection *Connection, RpcPktHdr *Header, void *Buffer, unsigned int BufferLength, const void *Auth, unsigned int AuthLength);
-RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header, PRPC_MESSAGE pMsg);
 RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header, PRPC_MESSAGE pMsg, unsigned char **auth_data_out, ULONG *auth_length_out);
 DWORD RPCRT4_GetHeaderSize(const RpcPktHdr *Header);
 RPC_STATUS RPCRT4_ValidateCommonHeader(const RpcPktCommonHdr *hdr);
