@@ -6834,8 +6834,7 @@ static void run_domtest(const char *str, domtest_t test)
     test(doc);
 
     ref = IHTMLDocument2_Release(doc);
-    ok(!ref ||
-       ref == 1, /* Vista */
+    ok(!ref || broken(ref == 1), /* Vista */
        "ref = %d\n", ref);
 }
 
