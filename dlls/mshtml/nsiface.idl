@@ -49,8 +49,8 @@ typedef WORD PRUint16;
 typedef INT16 PRInt16;
 typedef BYTE PRUint8;
 typedef BOOL PRBool;
-typedef LARGE_INTEGER PRInt64;
-typedef ULARGE_INTEGER PRUint64;
+typedef LONGLONG PRInt64;
+typedef ULONGLONG PRUint64;
 typedef PRUint64 DOMTimeStamp;
 typedef PRUint32 nsLoadFlags;
 
