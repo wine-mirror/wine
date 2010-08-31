@@ -139,8 +139,11 @@ static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
 /* ****************************************************
    IWineD3DVolume IWineD3DResource parts follow
    **************************************************** */
-static HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnknown **pParent) {
-    return resource_get_parent((IWineD3DResource *)iface, pParent);
+static void * WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ((IWineD3DVolumeImpl *)iface)->resource.parent;
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
@@ -325,7 +328,7 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
 
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);

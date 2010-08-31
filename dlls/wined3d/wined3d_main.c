@@ -76,7 +76,7 @@ wined3d_settings_t wined3d_settings =
     FALSE,          /* No strict draw ordering. */
 };
 
-IWineD3D * WINAPI WineDirect3DCreate(UINT version, IUnknown *parent)
+IWineD3D * WINAPI WineDirect3DCreate(UINT version, void *parent)
 {
     IWineD3DImpl *object;
     HRESULT hr;

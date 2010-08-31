@@ -2742,7 +2742,8 @@ static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDir
 
     if(wPal)
     {
-        hr = IWineD3DPalette_GetParent(wPal, (IUnknown **) Pal);
+        *Pal = IWineD3DPalette_GetParent(wPal);
+        IDirectDrawPalette_AddRef(*Pal);
     }
     else
     {
@@ -3251,16 +3252,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             LeaveCriticalSection(&ddraw_cs);
             return D3DERR_TEXTURE_LOAD_FAILED;
         }
-        if (wined3d_dst_pal)
-        {
-            hr = IWineD3DPalette_GetParent(wined3d_dst_pal, (IUnknown **)&dst_pal);
-            if (FAILED(hr))
-            {
-                ERR("Failed to get destination palette parent, hr %#x.\n", hr);
-                LeaveCriticalSection(&ddraw_cs);
-                return D3DERR_TEXTURE_LOAD_FAILED;
-            }
-        }
+        if (wined3d_dst_pal) dst_pal = IWineD3DPalette_GetParent(wined3d_dst_pal);
 
         hr = IWineD3DSurface_GetPalette(src_surface->WineD3DSurface, &wined3d_src_pal);
         if (FAILED(hr))
@@ -3269,17 +3261,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             LeaveCriticalSection(&ddraw_cs);
             return D3DERR_TEXTURE_LOAD_FAILED;
         }
-        if (wined3d_src_pal)
-        {
-            hr = IWineD3DPalette_GetParent(wined3d_src_pal, (IUnknown **)&src_pal);
-            if (FAILED(hr))
-            {
-                ERR("Failed to get source palette parent, hr %#x.\n", hr);
-                if (dst_pal) IDirectDrawPalette_Release(dst_pal);
-                LeaveCriticalSection(&ddraw_cs);
-                return D3DERR_TEXTURE_LOAD_FAILED;
-            }
-        }
+        if (wined3d_src_pal) src_pal = IWineD3DPalette_GetParent(wined3d_src_pal);
 
         if (src_pal)
         {
@@ -3287,16 +3269,12 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
 
             if (!dst_pal)
             {
-                IDirectDrawPalette_Release(src_pal);
                 LeaveCriticalSection(&ddraw_cs);
                 return DDERR_NOPALETTEATTACHED;
             }
             IDirectDrawPalette_GetEntries(src_pal, 0, 0, 256, palent);
             IDirectDrawPalette_SetEntries(dst_pal, 0, 0, 256, palent);
         }
-
-        if (dst_pal) IDirectDrawPalette_Release(dst_pal);
-        if (src_pal) IDirectDrawPalette_Release(src_pal);
 
         /* Copy one surface on the other */
         dst_desc = (DDSURFACEDESC *)&(dst_surface->surface_desc);
@@ -3600,9 +3578,9 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->ImplType = surface_type;
 
     hr = IWineD3DDevice_CreateSurface(ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight, format,
-            TRUE /* Lockable */, FALSE /* Discard */, mip_level, &surface->WineD3DSurface,
-            usage, pool, WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type,
-            (IUnknown *)surface, &ddraw_null_wined3d_parent_ops);
+            TRUE /* Lockable */, FALSE /* Discard */, mip_level, usage, pool,
+            WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type, surface,
+            &ddraw_null_wined3d_parent_ops, &surface->WineD3DSurface);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d surface, hr %#x.\n", hr);

@@ -4871,11 +4871,11 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT adapter_id
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {
-    IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    IUnknown_AddRef(This->parent);
-    *pParent = This->parent;
-    return WINED3D_OK;
+static void * WINAPI IWineD3DImpl_GetParent(IWineD3D *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ((IWineD3DImpl *)iface)->parent;
 }
 
 static void WINE_GLAPI invalid_func(const void *data)
@@ -5393,7 +5393,7 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
     wined3d_null_wined3d_object_destroyed,
 };
 
-HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, IUnknown *parent)
+HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, void *parent)
 {
     wined3d->lpVtbl = &IWineD3D_Vtbl;
     wined3d->dxVersion = version;

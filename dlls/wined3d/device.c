@@ -886,7 +886,7 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface, struct wined3d_buffer_desc *desc,
-        const void *data, IUnknown *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBuffer **buffer)
+        const void *data, void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBuffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
@@ -921,8 +921,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface, str
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface,
-        UINT Size, DWORD Usage, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        UINT Size, DWORD Usage, WINED3DPOOL Pool, void *parent,
+        const struct wined3d_parent_ops *parent_ops, IWineD3DBuffer **ppVertexBuffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
@@ -965,8 +965,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface,
-        UINT Length, DWORD Usage, WINED3DPOOL Pool, IWineD3DBuffer **ppIndexBuffer,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        UINT Length, DWORD Usage, WINED3DPOOL Pool, void *parent,
+        const struct wined3d_parent_ops *parent_ops, IWineD3DBuffer **ppIndexBuffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
@@ -1029,9 +1029,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height,
-        enum wined3d_format_id Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **surface,
-        DWORD Usage, WINED3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,
-        WINED3DSURFTYPE Impl, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        enum wined3d_format_id Format, BOOL Lockable, BOOL Discard, UINT Level, DWORD Usage, WINED3DPOOL Pool,
+        WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, WINED3DSURFTYPE Impl,
+        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DSurface **surface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *object;
@@ -1073,7 +1073,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *iface,
-        IWineD3DResource *resource, IUnknown *parent, IWineD3DRendertargetView **rendertarget_view)
+        IWineD3DResource *resource, void *parent, IWineD3DRendertargetView **rendertarget_view)
 {
     struct wined3d_rendertarget_view *object;
 
@@ -1097,7 +1097,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         UINT Width, UINT Height, UINT Levels, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool,
-        IWineD3DTexture **ppTexture, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DTexture **ppTexture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DTextureImpl *object;
@@ -1133,7 +1133,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
         UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool,
-        IWineD3DVolumeTexture **ppVolumeTexture, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DVolumeTexture **ppVolumeTexture)
 {
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeTextureImpl *object;
@@ -1166,8 +1166,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UINT Width, UINT Height,
-        UINT Depth, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, IWineD3DVolume **ppVolume,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        UINT Depth, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, void *parent,
+        const struct wined3d_parent_ops *parent_ops, IWineD3DVolume **ppVolume)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl *object;
@@ -1199,8 +1199,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UIN
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength, UINT Levels,
-        DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, IWineD3DCubeTexture **ppCubeTexture,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, void *parent,
+        const struct wined3d_parent_ops *parent_ops, IWineD3DCubeTexture **ppCubeTexture)
 {
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
@@ -1260,8 +1260,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
-        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain,
-        IUnknown *parent, WINED3DSURFTYPE surface_type)
+        WINED3DPRESENT_PARAMETERS *present_parameters, WINED3DSURFTYPE surface_type,
+        void *parent, IWineD3DSwapChain **swapchain)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSwapChainImpl *object;
@@ -1316,8 +1316,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, U
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice *iface,
-        IWineD3DVertexDeclaration **declaration, IUnknown *parent, const struct wined3d_parent_ops *parent_ops,
-        const WINED3DVERTEXELEMENT *elements, UINT element_count)
+        const WINED3DVERTEXELEMENT *elements, UINT element_count, void *parent,
+        const struct wined3d_parent_ops *parent_ops, IWineD3DVertexDeclaration **declaration)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexDeclarationImpl *object = NULL;
@@ -1485,8 +1485,8 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3DDevice *iface,
-        IWineD3DVertexDeclaration **declaration, IUnknown *parent,
-        const struct wined3d_parent_ops *parent_ops, DWORD fvf)
+        DWORD fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
+        IWineD3DVertexDeclaration **declaration)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     WINED3DVERTEXELEMENT *elements;
@@ -1498,15 +1498,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3D
     size = ConvertFvfToDeclaration(This, fvf, &elements);
     if (size == ~0U) return E_OUTOFMEMORY;
 
-    hr = IWineD3DDevice_CreateVertexDeclaration(iface, declaration, parent, parent_ops, elements, size);
+    hr = IWineD3DDeviceImpl_CreateVertexDeclaration(iface, elements, size, parent, parent_ops, declaration);
     HeapFree(GetProcessHeap(), 0, elements);
     return hr;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
-        IWineD3DVertexShader **ppVertexShader, IUnknown *parent,
-        const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops,
+        IWineD3DVertexShader **ppVertexShader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;
@@ -1535,8 +1535,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *iface,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IWineD3DGeometryShader **shader, IUnknown *parent,
-        const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops,
+        IWineD3DGeometryShader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_geometryshader *object;
@@ -1565,8 +1565,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *if
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
-        IWineD3DPixelShader **ppPixelShader, IUnknown *parent,
-        const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops,
+        IWineD3DPixelShader **ppPixelShader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DPixelShaderImpl *object;
@@ -1594,14 +1594,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD Flags,
-        const PALETTEENTRY *PalEnt, IWineD3DPalette **Palette, IUnknown *Parent)
+        const PALETTEENTRY *PalEnt, void *parent, IWineD3DPalette **Palette)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DPaletteImpl *object;
     HRESULT hr;
 
     TRACE("iface %p, flags %#x, entries %p, palette %p, parent %p.\n",
-            iface, Flags, PalEnt, Palette, Parent);
+            iface, Flags, PalEnt, Palette, parent);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1610,7 +1610,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
         return E_OUTOFMEMORY;
     }
 
-    hr = wined3d_palette_init(object, This, Flags, PalEnt, Parent);
+    hr = wined3d_palette_init(object, This, Flags, PalEnt, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize palette, hr %#x.\n", hr);
@@ -1650,10 +1650,11 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
     }
 
     hr = IWineD3DDevice_CreateSurface((IWineD3DDevice *)This, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, TRUE,
-            FALSE, 0, &This->logo_surface, 0, WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL,
-            NULL, &wined3d_null_parent_ops);
-    if(FAILED(hr)) {
-        ERR("Wine logo requested, but failed to create surface\n");
+            FALSE, 0, 0, WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL, NULL,
+            &wined3d_null_parent_ops, &This->logo_surface);
+    if (FAILED(hr))
+    {
+        ERR("Wine logo requested, but failed to create surface, hr %#x.\n", hr);
         goto out;
     }
 

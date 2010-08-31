@@ -228,11 +228,10 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         FIXME("Implement DXGI<->wined3d usage conversion\n");
 
         hr = IWineD3DDevice_CreateSurface(device->wined3d_device, desc->Width, desc->Height,
-                wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
-                &texture->wined3d_surface, desc->Usage, WINED3DPOOL_DEFAULT,
+                wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0, desc->Usage, WINED3DPOOL_DEFAULT,
                 desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3DMULTISAMPLE_NONE,
-                desc->SampleDesc.Quality, SURFACE_OPENGL, (IUnknown *)texture,
-                &d3d10_texture2d_wined3d_parent_ops);
+                desc->SampleDesc.Quality, SURFACE_OPENGL, texture, &d3d10_texture2d_wined3d_parent_ops,
+                &texture->wined3d_surface);
         if (FAILED(hr))
         {
             ERR("CreateSurface failed, returning %#x\n", hr);

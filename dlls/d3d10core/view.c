@@ -388,17 +388,9 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
         return;
     }
 
-    hr = IWineD3DResource_GetParent(wined3d_resource, &parent);
-    IWineD3DResource_Release(wined3d_resource);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get wined3d resource parent, hr %#x\n", hr);
-        *resource = NULL;
-        return;
-    }
-
+    parent = IWineD3DResource_GetParent(wined3d_resource);
     hr = IUnknown_QueryInterface(parent, &IID_ID3D10Resource, (void **)&resource);
-    IUnknown_Release(parent);
+    IWineD3DResource_Release(wined3d_resource);
     if (FAILED(hr))
     {
         ERR("Resource parent isn't a d3d10 resource, hr %#x\n", hr);

@@ -79,13 +79,11 @@ static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclarat
    IWineD3DVertexDeclaration parts follow
    ******************************************* */
 
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration *iface, IUnknown** parent){
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
+static void * WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration *iface)
+{
+    TRACE("iface %p.\n", iface);
 
-    *parent= This->parent;
-    IUnknown_AddRef(*parent);
-    TRACE("(%p) : returning %p\n", This, *parent);
-    return WINED3D_OK;
+    return ((IWineD3DVertexDeclarationImpl *)iface)->parent;
 }
 
 static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
@@ -188,7 +186,7 @@ static const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
 
 HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,
         const WINED3DVERTEXELEMENT *elements, UINT element_count,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     WORD preloaded = 0; /* MAX_STREAMS, 16 */

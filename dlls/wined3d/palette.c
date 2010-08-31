@@ -175,13 +175,11 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_GetCaps(IWineD3DPalette *iface, DWORD
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI IWineD3DPaletteImpl_GetParent(IWineD3DPalette *iface, IUnknown **Parent) {
-    IWineD3DPaletteImpl *This = (IWineD3DPaletteImpl *)iface;
-    TRACE("(%p)->(%p)\n", This, Parent);
+static void * WINAPI IWineD3DPaletteImpl_GetParent(IWineD3DPalette *iface)
+{
+    TRACE("iface %p.\n", iface);
 
-    *Parent = This->parent;
-    IUnknown_AddRef(This->parent);
-    return WINED3D_OK;
+    return ((IWineD3DPaletteImpl *)iface)->parent;
 }
 
 static const IWineD3DPaletteVtbl IWineD3DPalette_Vtbl =
@@ -198,7 +196,7 @@ static const IWineD3DPaletteVtbl IWineD3DPalette_Vtbl =
 };
 
 HRESULT wined3d_palette_init(IWineD3DPaletteImpl *palette, IWineD3DDeviceImpl *device,
-        DWORD flags, const PALETTEENTRY *entries, IUnknown *parent)
+        DWORD flags, const PALETTEENTRY *entries, void *parent)
 {
     HRESULT hr;
 

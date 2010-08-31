@@ -100,9 +100,8 @@ HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl
     shader->handle = shader_handle;
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreatePixelShader(device->WineD3DDevice, byte_code,
-            NULL, &shader->wineD3DPixelShader, (IUnknown *)shader,
-            &d3d8_pixelshader_wined3d_parent_ops);
+    hr = IWineD3DDevice_CreatePixelShader(device->WineD3DDevice, byte_code, NULL, shader,
+            &d3d8_pixelshader_wined3d_parent_ops, &shader->wineD3DPixelShader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

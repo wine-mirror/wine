@@ -1836,12 +1836,8 @@ static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurfa
         return DDERR_NOTFOUND;
     }
 
-    /* GetBackBuffer AddRef()ed the surface, release it */
+    ddsurf = IWineD3DSurface_GetParent(Surf);
     IWineD3DSurface_Release(Surf);
-
-    IWineD3DSurface_GetParent(Surf,
-                              (IUnknown **) &ddsurf);
-    IDirectDrawSurface7_Release(ddsurf);  /* For the GetParent */
 
     /* Find the front buffer */
     ddsCaps.dwCaps = DDSCAPS_FRONTBUFFER;
@@ -2249,7 +2245,8 @@ static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc, IDir
         return DDERR_NOTFOUND;
     }
 
-    IWineD3DSurface_GetParent(wined3d_surface, (IUnknown **)Surface);
+    *Surface = IWineD3DSurface_GetParent(wined3d_surface);
+    IDirectDrawSurface7_AddRef(*Surface);
     TRACE("Returning surface %p.\n", Surface);
     return DD_OK;
 }
@@ -2359,9 +2356,9 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
 {
     IDirectDrawSurfaceImpl *surfImpl = (IDirectDrawSurfaceImpl *)surf;
     IDirectDrawImpl *This = surfImpl->ddraw;
-    IUnknown *Parent;
     IWineD3DSurface *wineD3DSurface;
     IWineD3DSwapChain *swapchain;
+    void *parent;
     HRESULT hr;
     IWineD3DClipper *clipper = NULL;
 
@@ -2403,13 +2400,10 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     Width = Desc.width;
     Height = Desc.height;
 
-    IWineD3DSurface_GetParent(wineD3DSurface, &Parent);
-
-    /* Create the new surface */
-    hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, Width, Height, Format,
-            TRUE /* Lockable */, FALSE /* Discard */, surfImpl->mipmap_level, &surfImpl->WineD3DSurface, Usage, Pool,
-            MultiSampleType, MultiSampleQuality, This->ImplType, Parent, &ddraw_null_wined3d_parent_ops);
-    IUnknown_Release(Parent);
+    parent = IWineD3DSurface_GetParent(wineD3DSurface);
+    hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, Width, Height, Format, TRUE /* Lockable */,
+            FALSE /* Discard */, surfImpl->mipmap_level, Usage, Pool, MultiSampleType, MultiSampleQuality,
+            This->ImplType, parent, &ddraw_null_wined3d_parent_ops, &surfImpl->WineD3DSurface);
     if (FAILED(hr))
     {
         surfImpl->WineD3DSurface = wineD3DSurface;
@@ -2475,13 +2469,13 @@ static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
     return IDirectDraw7_EnumSurfaces((IDirectDraw7 *)This, 0, &desc, This, ddraw_recreate_surfaces_cb);
 }
 
-ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
-    IUnknown* swapChainParent;
+ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain)
+{
+    IUnknown *swapChainParent;
 
     TRACE("swapchain %p.\n", pSwapChain);
 
-    IWineD3DSwapChain_GetParent(pSwapChain, &swapChainParent);
-    IUnknown_Release(swapChainParent);
+    swapChainParent = IWineD3DSwapChain_GetParent(pSwapChain);
     return IUnknown_Release(swapChainParent);
 }
 
@@ -3295,15 +3289,15 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
          */
         if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         {
-            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice, DDSD->dwWidth /* Edgelength */,
-                    levels, 0 /* usage */, Format, Pool, (IWineD3DCubeTexture **)&object->wineD3DTexture,
-                    (IUnknown *)object, &ddraw_null_wined3d_parent_ops);
+            hr = IWineD3DDevice_CreateCubeTexture(This->wineD3DDevice, DDSD->dwWidth /* Edgelength */, levels,
+                    0 /* usage */, Format, Pool, object, &ddraw_null_wined3d_parent_ops,
+                    (IWineD3DCubeTexture **)&object->wineD3DTexture);
         }
         else
         {
             hr = IWineD3DDevice_CreateTexture(This->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight, levels,
-                    0 /* usage */, Format, Pool, (IWineD3DTexture **)&object->wineD3DTexture,
-                    (IUnknown *)object, &ddraw_null_wined3d_parent_ops);
+                    0 /* usage */, Format, Pool, object, &ddraw_null_wined3d_parent_ops,
+                    (IWineD3DTexture **)&object->wineD3DTexture);
         }
         This->tex_root = NULL;
     }
@@ -5375,8 +5369,8 @@ IWineD3DVertexDeclaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf)
     }
     TRACE("not found. Creating and inserting at position %d.\n", low);
 
-    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(This->wineD3DDevice, &pDecl,
-            (IUnknown *)This, &ddraw_null_wined3d_parent_ops, fvf);
+    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(This->wineD3DDevice,
+            fvf, This, &ddraw_null_wined3d_parent_ops, &pDecl);
     if (hr != S_OK) return NULL;
 
     if(This->declArraySize == This->numConvertedDecls) {
@@ -5644,7 +5638,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     ddraw_parent_init(object);
 
     hr = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice, present_parameters,
-            swapchain, (IUnknown *)object, This->ImplType);
+            This->ImplType, object, swapchain);
     if (FAILED(hr))
     {
         FIXME("(%p) CreateSwapChain failed, returning %#x\n", iface, hr);

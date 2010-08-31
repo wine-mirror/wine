@@ -264,7 +264,7 @@ HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, 
     volume->ref = 1;
 
     hr = IWineD3DDevice_CreateVolume(device->WineD3DDevice, width, height, depth, usage,
-            format, pool, &volume->wineD3DVolume, (IUnknown *)volume, &d3d8_volume_wined3d_parent_ops);
+            format, pool, volume, &d3d8_volume_wined3d_parent_ops, &volume->wineD3DVolume);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d volume, hr %#x.\n", hr);

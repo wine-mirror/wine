@@ -744,10 +744,11 @@ static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
 }
 
 /* IWineD3DBase methods */
-
-static HRESULT STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface, IUnknown **parent)
+static void * STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface)
 {
-    return resource_get_parent((IWineD3DResource *)iface, parent);
+    TRACE("iface %p.\n", iface);
+
+    return ((struct wined3d_buffer *)iface)->resource.parent;
 }
 
 /* IWineD3DResource methods */
@@ -1448,7 +1449,7 @@ static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
 
 HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         UINT size, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, GLenum bind_hint,
-        const char *data, IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        const char *data, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);

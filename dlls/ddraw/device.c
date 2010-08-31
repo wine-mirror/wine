@@ -300,10 +300,8 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         EnterCriticalSection(&ddraw_cs);
         /* Free the index buffer. */
         IWineD3DDevice_SetIndexBuffer(This->wineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
-        IWineD3DBuffer_GetParent(This->indexbuffer,
-                                 (IUnknown **) &IndexBufferParent);
-        IParent_Release(IndexBufferParent); /* Once for the getParent */
-        if( IParent_Release(IndexBufferParent) != 0)  /* And now to destroy it */
+        IndexBufferParent = IWineD3DBuffer_GetParent(This->indexbuffer);
+        if (IParent_Release(IndexBufferParent))
         {
             ERR(" (%p) Something is still holding the index buffer parent %p\n", This, IndexBufferParent);
         }
@@ -2556,24 +2554,13 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
 
             EnterCriticalSection(&ddraw_cs);
 
-            hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
-                                           0,
-                                           &tex);
-
-            if(hr == WINED3D_OK && tex)
+            hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
+            if (SUCCEEDED(hr) && tex)
             {
-                IDirectDrawSurface7 *parent = NULL;
-                hr = IWineD3DBaseTexture_GetParent(tex,
-                                                   (IUnknown **) &parent);
-                if(parent)
-                {
-                    /* The parent of the texture is the IDirectDrawSurface7 interface
-                     * of the ddraw surface
-                     */
-                    IDirectDrawSurfaceImpl *texImpl = (IDirectDrawSurfaceImpl *)parent;
-                    *lpdwRenderState = texImpl->Handle;
-                    IDirectDrawSurface7_Release(parent);
-                }
+                /* The parent of the texture is the IDirectDrawSurface7
+                 * interface of the ddraw surface. */
+                IDirectDrawSurfaceImpl *parent = IWineD3DBaseTexture_GetParent(tex);
+                if (parent) *lpdwRenderState = parent->Handle;
                 IWineD3DBaseTexture_Release(tex);
             }
 
@@ -4353,18 +4340,16 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     {
         UINT size = max(desc.Size * 2, IndexCount * sizeof(WORD));
         IWineD3DBuffer *buffer;
-        IUnknown *parent;
+        IParentImpl *parent;
 
         TRACE("Growing index buffer to %u bytes\n", size);
 
-        IWineD3DBuffer_GetParent(This->indexbuffer, &parent);
-        hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, size,
-                WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, &buffer, parent,
-                &ddraw_null_wined3d_parent_ops);
-        if(hr != D3D_OK)
+        parent = IWineD3DBuffer_GetParent(This->indexbuffer);
+        hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, size, WINED3DUSAGE_DYNAMIC /* Usage */,
+                WINED3DPOOL_DEFAULT, parent, &ddraw_null_wined3d_parent_ops, &buffer);
+        if (FAILED(hr))
         {
             ERR("(%p) IWineD3DDevice::CreateIndexBuffer failed with hr = %08x\n", This, hr);
-            IParent_Release(parent);
             LeaveCriticalSection(&ddraw_cs);
             return hr;
         }
@@ -4372,8 +4357,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
         IWineD3DBuffer_Release(This->indexbuffer);
         This->indexbuffer = buffer;
 
-        ((IParentImpl *)parent)->child = (IUnknown *)buffer;
-        IParent_Release(parent);
+        parent->child = (IUnknown *)buffer;
     }
 
     /* copy the index stream into the index buffer.
@@ -4649,11 +4633,8 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
         return hr;
     }
 
-    /* GetParent AddRef()s, which is perfectly OK.
-     * We have passed the IDirectDrawSurface7 interface to WineD3D, so that's OK too.
-     */
-    hr = IWineD3DBaseTexture_GetParent(Surf,
-                                       (IUnknown **) Texture);
+    *Texture = IWineD3DBaseTexture_GetParent(Surf);
+    IDirectDrawSurface7_AddRef(*Texture);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -7014,8 +6995,8 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     ddraw_parent_init(index_buffer_parent);
 
     hr = IWineD3DDevice_CreateIndexBuffer(ddraw->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
-            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, &device->indexbuffer,
-            (IUnknown *)index_buffer_parent, &ddraw_null_wined3d_parent_ops);
+            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, index_buffer_parent,
+            &ddraw_null_wined3d_parent_ops, &device->indexbuffer);
     if (FAILED(hr))
     {
         ERR("Failed to create an index buffer, hr %#x.\n", hr);

@@ -169,9 +169,8 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
         if (usage) FIXME("Usage %#x not implemented.\n", usage);
 
         wined3d_mutex_lock();
-        hr = IWineD3DDevice_CreateVertexShader(device->WineD3DDevice, byte_code,
-                NULL /* output signature */, &shader->wineD3DVertexShader,
-                (IUnknown *)shader, &d3d8_vertexshader_wined3d_parent_ops);
+        hr = IWineD3DDevice_CreateVertexShader(device->WineD3DDevice, byte_code, NULL /* output signature */,
+                shader, &d3d8_vertexshader_wined3d_parent_ops, &shader->wineD3DVertexShader);
         wined3d_mutex_unlock();
         if (FAILED(hr))
         {

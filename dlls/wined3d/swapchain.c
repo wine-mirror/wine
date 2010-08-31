@@ -622,7 +622,7 @@ void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
 
 
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
-        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, IUnknown *parent)
+        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, void *parent)
 {
     const struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_format *format;

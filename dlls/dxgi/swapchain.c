@@ -174,16 +174,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
         return hr;
     }
 
-    hr = IWineD3DSurface_GetParent(backbuffer, &parent);
+    parent = IWineD3DSurface_GetParent(backbuffer);
+    hr = IUnknown_QueryInterface(parent, riid, surface);
     IWineD3DSurface_Release(backbuffer);
     LeaveCriticalSection(&dxgi_cs);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-
-    hr = IUnknown_QueryInterface(parent, riid, surface);
-    IUnknown_Release(parent);
 
     return hr;
 }
@@ -284,7 +278,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
     swapchain->refcount = 1;
 
     hr = IWineD3DDevice_CreateSwapChain(device->wined3d_device, present_parameters,
-            &swapchain->wined3d_swapchain, (IUnknown *)swapchain, SURFACE_OPENGL);
+            SURFACE_OPENGL, swapchain, &swapchain->wined3d_swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);

@@ -64,12 +64,11 @@ ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface) {
     return refCount;
 }
 
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetParent(IWineD3DSwapChain *iface, IUnknown ** ppParent){
-    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    *ppParent = This->parent;
-    IUnknown_AddRef(*ppParent);
-    TRACE("(%p) returning %p\n", This , *ppParent);
-    return WINED3D_OK;
+void * WINAPI IWineD3DBaseSwapChainImpl_GetParent(IWineD3DSwapChain *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ((IWineD3DSwapChainImpl *)iface)->parent;
 }
 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface, IWineD3DSurface *dst_surface)

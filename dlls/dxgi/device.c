@@ -190,16 +190,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
             goto fail;
         }
 
-        hr = IWineD3DSurface_GetParent(wined3d_surface, &parent);
-        IWineD3DSurface_Release(wined3d_surface);
-        if (FAILED(hr))
-        {
-            ERR("GetParent failed, returning %#x\n", hr);
-            goto fail;
-        }
-
+        parent = IWineD3DSurface_GetParent(wined3d_surface);
         hr = IUnknown_QueryInterface(parent, &IID_IDXGISurface, (void **)&surface[i]);
-        IUnknown_Release(parent);
+        IWineD3DSurface_Release(wined3d_surface);
         if (FAILED(hr))
         {
             ERR("Surface should implement IDXGISurface\n");

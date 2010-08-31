@@ -403,9 +403,8 @@ HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *devic
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateSurface(device->WineD3DDevice, width, height, wined3dformat_from_d3dformat(format),
-            lockable, discard, level, &surface->wineD3DSurface, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool,
-            multisample_type, multisample_quality, SURFACE_OPENGL, (IUnknown *)surface,
-            &d3d9_surface_wined3d_parent_ops);
+            lockable, discard, level, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool, multisample_type,
+            multisample_quality, SURFACE_OPENGL, surface, &d3d9_surface_wined3d_parent_ops, &surface->wineD3DSurface);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

@@ -270,9 +270,8 @@ HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, IDirect3DDevice9Impl
     buffer->format = wined3dformat_from_d3dformat(format);
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreateIndexBuffer(device->WineD3DDevice, size,
-            usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool, &buffer->wineD3DIndexBuffer,
-            (IUnknown *)buffer, &d3d9_indexbuffer_wined3d_parent_ops);
+    hr = IWineD3DDevice_CreateIndexBuffer(device->WineD3DDevice, size, usage & WINED3DUSAGE_MASK,
+            (WINED3DPOOL)pool, buffer, &d3d9_indexbuffer_wined3d_parent_ops, &buffer->wineD3DIndexBuffer);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

@@ -227,8 +227,8 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
         return hr;
     }
 
-    hr = IWineD3DDevice_CreateVertexDeclaration(device->wined3d_device, &layout->wined3d_decl,
-            (IUnknown *)layout, &d3d10_input_layout_wined3d_parent_ops, wined3d_elements, wined3d_element_count);
+    hr = IWineD3DDevice_CreateVertexDeclaration(device->wined3d_device, wined3d_elements, wined3d_element_count,
+            layout, &d3d10_input_layout_wined3d_parent_ops, &layout->wined3d_decl);
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
     if (FAILED(hr))
     {

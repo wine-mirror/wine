@@ -136,9 +136,8 @@ HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, IDirect3DDevice9Impl
     shader->lpVtbl = &Direct3DPixelShader9_Vtbl;
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreatePixelShader(device->WineD3DDevice, byte_code,
-            NULL, &shader->wineD3DPixelShader, (IUnknown *)shader,
-            &d3d9_pixelshader_wined3d_parent_ops);
+    hr = IWineD3DDevice_CreatePixelShader(device->WineD3DDevice, byte_code, NULL, shader,
+            &d3d9_pixelshader_wined3d_parent_ops, &shader->wineD3DPixelShader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -165,10 +164,11 @@ HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShader(LPDIRECT3DDEVICE9EX iface, ID
     return D3D_OK;
 }
 
-HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9EX iface, IDirect3DPixelShader9** ppShader) {
+HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(IDirect3DDevice9Ex *iface, IDirect3DPixelShader9 **ppShader)
+{
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IWineD3DPixelShader *object;
-    HRESULT hrc;
+    HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, ppShader);
 
@@ -178,12 +178,13 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9EX iface, ID
     }
 
     wined3d_mutex_lock();
-    hrc = IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &object);
-    if (SUCCEEDED(hrc))
+    hr = IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &object);
+    if (SUCCEEDED(hr))
     {
         if (object)
         {
-            hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)ppShader);
+            *ppShader = IWineD3DPixelShader_GetParent(object);
+            IDirect3DPixelShader9_AddRef(*ppShader);
             IWineD3DPixelShader_Release(object);
         }
         else
@@ -193,12 +194,12 @@ HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9EX iface, ID
     }
     else
     {
-        WARN("(%p) : Call to IWineD3DDevice_GetPixelShader failed %u (device %p)\n", This, hrc, This->WineD3DDevice);
+        WARN("Failed to get pixel shader, hr %#x.\n", hr);
     }
     wined3d_mutex_unlock();
 
-    TRACE("(%p) : returning %p\n", This, *ppShader);
-    return hrc;
+    TRACE("Returning %p.\n", *ppShader);
+    return hr;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(LPDIRECT3DDEVICE9EX iface, UINT Register, CONST float* pConstantData, UINT Vector4fCount) {

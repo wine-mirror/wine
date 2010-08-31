@@ -286,7 +286,7 @@ int shader_addline(struct wined3d_shader_buffer *buffer, const char *format, ...
 }
 
 static void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDeviceImpl *device,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     shader->ref = 1;
     shader->device = (IWineD3DDevice *)device;
@@ -1534,13 +1534,6 @@ const shader_backend_t none_shader_backend = {
     shader_none_color_fixup_supported,
 };
 
-static void shader_get_parent(IWineD3DBaseShaderImpl *shader, IUnknown **parent)
-{
-    *parent = shader->baseShader.parent;
-    IUnknown_AddRef(*parent);
-    TRACE("shader %p, returning %p.\n", shader, *parent);
-}
-
 static HRESULT shader_get_function(IWineD3DBaseShaderImpl *shader, void *data, UINT *data_size)
 {
     if (!data)
@@ -1654,13 +1647,11 @@ static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DVertexShader *iface)
     return refcount;
 }
 
-static HRESULT STDMETHODCALLTYPE vertexshader_GetParent(IWineD3DVertexShader *iface, IUnknown **parent)
+static void * STDMETHODCALLTYPE vertexshader_GetParent(IWineD3DVertexShader *iface)
 {
-    TRACE("iface %p, parent %p.\n", iface, parent);
+    TRACE("iface %p.\n", iface);
 
-    shader_get_parent((IWineD3DBaseShaderImpl *)iface, parent);
-
-    return WINED3D_OK;
+    return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
 }
 
 static HRESULT STDMETHODCALLTYPE vertexshader_GetFunction(IWineD3DVertexShader *iface, void *data, UINT *data_size)
@@ -1829,7 +1820,7 @@ static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
 
 HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
@@ -1951,13 +1942,11 @@ static ULONG STDMETHODCALLTYPE geometryshader_Release(IWineD3DGeometryShader *if
     return refcount;
 }
 
-static HRESULT STDMETHODCALLTYPE geometryshader_GetParent(IWineD3DGeometryShader *iface, IUnknown **parent)
+static void * STDMETHODCALLTYPE geometryshader_GetParent(IWineD3DGeometryShader *iface)
 {
-    TRACE("iface %p, parent %p.\n", iface, parent);
+    TRACE("iface %p.\n", iface);
 
-    shader_get_parent((IWineD3DBaseShaderImpl *)iface, parent);
-
-    return WINED3D_OK;
+    return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
 }
 
 static HRESULT STDMETHODCALLTYPE geometryshader_GetFunction(IWineD3DGeometryShader *iface, void *data, UINT *data_size)
@@ -1981,7 +1970,7 @@ static const IWineD3DGeometryShaderVtbl wined3d_geometryshader_vtbl =
 
 HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
 
@@ -2048,13 +2037,11 @@ static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DPixelShader *iface)
     return refcount;
 }
 
-static HRESULT STDMETHODCALLTYPE pixelshader_GetParent(IWineD3DPixelShader *iface, IUnknown **parent)
+static void * STDMETHODCALLTYPE pixelshader_GetParent(IWineD3DPixelShader *iface)
 {
-    TRACE("iface %p, parent %p.\n", iface, parent);
+    TRACE("iface %p.\n", iface);
 
-    shader_get_parent((IWineD3DBaseShaderImpl *)iface, parent);
-
-    return WINED3D_OK;
+    return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
 }
 
 static HRESULT STDMETHODCALLTYPE pixelshader_GetFunction(IWineD3DPixelShader *iface, void *data, UINT *data_size)
@@ -2253,7 +2240,7 @@ static void pixelshader_set_limits(IWineD3DPixelShaderImpl *shader)
 
 HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        IUnknown *parent, const struct wined3d_parent_ops *parent_ops)
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;

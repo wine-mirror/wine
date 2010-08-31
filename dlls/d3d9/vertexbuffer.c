@@ -272,9 +272,8 @@ HRESULT vertexbuffer_init(IDirect3DVertexBuffer9Impl *buffer, IDirect3DDevice9Im
     buffer->fvf = fvf;
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_CreateVertexBuffer(device->WineD3DDevice, size,
-            usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool, &buffer->wineD3DVertexBuffer,
-            (IUnknown *)buffer, &d3d9_vertexbuffer_wined3d_parent_ops);
+    hr = IWineD3DDevice_CreateVertexBuffer(device->WineD3DDevice, size, usage & WINED3DUSAGE_MASK,
+            (WINED3DPOOL)pool, buffer, &d3d9_vertexbuffer_wined3d_parent_ops, &buffer->wineD3DVertexBuffer);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
