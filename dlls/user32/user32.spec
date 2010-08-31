@@ -62,8 +62,8 @@
 @ stdcall CheckMenuItem(long long long)
 @ stdcall CheckMenuRadioItem(long long long long long)
 @ stdcall CheckRadioButton(long long long long)
-@ stdcall ChildWindowFromPoint(long double)
-@ stdcall ChildWindowFromPointEx(long double long)
+@ stdcall ChildWindowFromPoint(long int64)
+@ stdcall ChildWindowFromPointEx(long int64 long)
 @ stub CliImmSetHotKey
 @ stub ClientThreadConnect
 @ stub ClientThreadSetup
@@ -175,7 +175,7 @@
 @ stdcall DlgDirSelectComboBoxExW(long ptr long long)
 @ stdcall DlgDirSelectExA(long ptr long long)
 @ stdcall DlgDirSelectExW(long ptr long long)
-@ stdcall DragDetect(long double)
+@ stdcall DragDetect(long int64)
 @ stub DragObject
 @ stdcall DrawAnimatedRects(long long ptr ptr)
 @ stdcall DrawCaption(long long ptr long)
@@ -487,7 +487,7 @@
 @ stdcall MapVirtualKeyExW(long long long)
 @ stdcall MapVirtualKeyW(long long)
 @ stdcall MapWindowPoints(long long ptr long)
-@ stdcall MenuItemFromPoint(long long double)
+@ stdcall MenuItemFromPoint(long long int64)
 @ stub MenuWindowProcA
 @ stub MenuWindowProcW
 @ stdcall MessageBeep(long)
@@ -502,7 +502,7 @@
 # @ stub ModifyAccess
 @ stdcall ModifyMenuA(long long long long ptr)
 @ stdcall ModifyMenuW(long long long long ptr)
-@ stdcall MonitorFromPoint(double long)
+@ stdcall MonitorFromPoint(int64 long)
 @ stdcall MonitorFromRect(ptr long)
 @ stdcall MonitorFromWindow(long long)
 @ stdcall MoveWindow(long long long long long long)
@@ -540,10 +540,10 @@
 @ stdcall PrivateExtractIconsW (wstr long long long ptr ptr long long)
 # @ stub PrivateSetDbgTag
 # @ stub PrivateSetRipFlags
-@ stdcall PtInRect(ptr double)
+@ stdcall PtInRect(ptr int64)
 @ stub QuerySendMessage
 # @ stub QueryUserCounters
-@ stdcall RealChildWindowFromPoint(long double)
+@ stdcall RealChildWindowFromPoint(long int64)
 @ stdcall RealGetWindowClass(long ptr long) RealGetWindowClassA
 @ stdcall RealGetWindowClassA(long ptr long)
 @ stdcall RealGetWindowClassW(long ptr long)
@@ -761,7 +761,7 @@
 @ stdcall WinHelpW(long wstr long long)
 # @ stub WinOldAppHackoMatic
 @ stdcall WindowFromDC(long)
-@ stdcall WindowFromPoint(double)
+@ stdcall WindowFromPoint(int64)
 # @ stub YieldTask
 # @ stub _SetProcessDefaultLayout
 @ stdcall keybd_event(long long long long)
