@@ -2084,14 +2084,28 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
     switch( offset )
     {
     case GWL_STYLE:
-    case GWL_EXSTYLE:
-        style.styleOld =
-            offset == GWL_STYLE ? wndPtr->dwStyle : wndPtr->dwExStyle;
+        style.styleOld = wndPtr->dwStyle;
         style.styleNew = newval;
         WIN_ReleasePtr( wndPtr );
-        SendMessageW( hwnd, WM_STYLECHANGING, offset, (LPARAM)&style );
+        SendMessageW( hwnd, WM_STYLECHANGING, GWL_STYLE, (LPARAM)&style );
         if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
         newval = style.styleNew;
+        /* WS_CLIPSIBLINGS can't be reset on top-level windows */
+        if (wndPtr->parent == GetDesktopWindow()) newval |= WS_CLIPSIBLINGS;
+        break;
+    case GWL_EXSTYLE:
+        style.styleOld = wndPtr->dwExStyle;
+        style.styleNew = newval;
+        WIN_ReleasePtr( wndPtr );
+        SendMessageW( hwnd, WM_STYLECHANGING, GWL_EXSTYLE, (LPARAM)&style );
+        if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
+        /* WS_EX_TOPMOST can only be changed through SetWindowPos */
+        newval = (style.styleNew & ~WS_EX_TOPMOST) | (wndPtr->dwExStyle & WS_EX_TOPMOST);
+        /* WS_EX_WINDOWEDGE depends on some other styles */
+        if ((newval & WS_EX_DLGMODALFRAME) || (wndPtr->dwStyle & WS_THICKFRAME))
+            newval |= WS_EX_WINDOWEDGE;
+        else if (wndPtr->dwStyle & (WS_CHILD|WS_POPUP))
+            newval &= ~WS_EX_WINDOWEDGE;
         break;
     case GWLP_HWNDPARENT:
         if (wndPtr->parent == GetDesktopWindow())
@@ -2165,8 +2179,6 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
             break;
         case GWL_EXSTYLE:
             req->flags = SET_WIN_EXSTYLE;
-            /* WS_EX_TOPMOST can only be changed through SetWindowPos */
-            newval = (newval & ~WS_EX_TOPMOST) | (wndPtr->dwExStyle & WS_EX_TOPMOST);
             req->ex_style = newval;
             break;
         case GWLP_ID:
@@ -2231,6 +2243,8 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
 
     if (offset == GWL_STYLE || offset == GWL_EXSTYLE)
     {
+        style.styleOld = retval;
+        style.styleNew = newval;
         USER_Driver->pSetWindowStyle( hwnd, offset, &style );
         SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
     }

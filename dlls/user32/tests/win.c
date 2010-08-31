@@ -3491,6 +3491,25 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
         "Style (0x%08x) should really be 0x%08x and/or Ex style (0x%08x) should really be 0x%08x\n",
         dwActualStyle, dwStyleOut, dwActualExStyle, dwExStyleOut);
 
+    /* try setting the styles explicitly */
+    SetWindowLong( hwnd, GWL_EXSTYLE, dwExStyleIn );
+    SetWindowLong( hwnd, GWL_STYLE, dwStyleIn );
+    dwActualStyle = GetWindowLong(hwnd, GWL_STYLE);
+    dwActualExStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+    /* WS_CLIPSIBLINGS can't be reset on top-level windows */
+    if (dwStyleIn & WS_CHILD) dwStyleOut = dwStyleIn;
+    else dwStyleOut = dwStyleIn | WS_CLIPSIBLINGS;
+    /* WS_EX_WINDOWEDGE can't always be changed */
+    if ((dwExStyleIn & WS_EX_DLGMODALFRAME) || (dwStyleIn & WS_THICKFRAME))
+        dwExStyleOut = dwExStyleIn | WS_EX_WINDOWEDGE;
+    else if (dwStyleIn & (WS_CHILD | WS_POPUP))
+        dwExStyleOut = dwExStyleIn & ~WS_EX_WINDOWEDGE;
+    else
+        dwExStyleOut = dwExStyleIn;
+    ok((dwActualStyle == dwStyleOut) && (dwActualExStyle == dwExStyleOut),
+        "%08x/%08x: Style (0x%08x) should really be 0x%08x and/or Ex style (0x%08x) should really be 0x%08x\n",
+       dwStyleIn, dwExStyleIn, dwActualStyle, dwStyleOut, dwActualExStyle, dwExStyleOut);
+
     DestroyWindow(hwnd);
     if (hwndParent) DestroyWindow(hwndParent);
 }
