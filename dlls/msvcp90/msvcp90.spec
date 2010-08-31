@@ -795,11 +795,11 @@
 @ stub -arch=win32 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@I_W@Z
 @ stub -arch=win64 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W0@Z
 @ stub -arch=win32 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@I_WABV?$allocator@_W@1@@Z
-@ stub -arch=win64 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W@Z
+@ cdecl -arch=win64 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W@Z(ptr wstr) MSVCP_basic_string_wchar_ctor_cstr
 @ stub -arch=win32 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W0@Z
 @ stub -arch=win64 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_WAEBV?$allocator@_W@1@@Z
 @ thiscall -arch=win32 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_W@Z(ptr wstr) MSVCP_basic_string_wchar_ctor_cstr
-@ cdecl -arch=win64 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W_K@Z(ptr wstr) MSVCP_basic_string_wchar_ctor_cstr
+@ stub -arch=win64 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W_K@Z
 @ stub -arch=win32 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_WABV?$allocator@_W@1@@Z
 @ stub -arch=win64 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@PEB_W_KAEBV?$allocator@_W@1@@Z
 @ stub -arch=win32 ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@PB_WI@Z
