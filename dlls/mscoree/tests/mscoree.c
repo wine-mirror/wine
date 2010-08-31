@@ -101,12 +101,12 @@ static void test_versioninfo(void)
     if(hr == CLR_E_SHIM_RUNTIME) return; /* skipping rest of tests on win2k as .net 2.0 not installed */
 
     ok(hr == S_OK, "GetRequestedRuntimeInfo returned %08x\n", hr);
-    trace(" installed in directory %s is .net version %s \n", wine_dbgstr_w(path), wine_dbgstr_w(version));
+    trace(" installed in directory %s is .net version %s\n", wine_dbgstr_w(path), wine_dbgstr_w(version));
 
     hr = pGetRequestedRuntimeInfo( NULL, v1_1, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
     ok(hr == S_OK || CLR_E_SHIM_RUNTIME /*v1_1 not installed*/, "GetRequestedRuntimeInfo returned %08x\n", hr);
     if(hr == S_OK)
-        trace(" installed in directory %s is .net version %s \n", wine_dbgstr_w(path), wine_dbgstr_w(version));
+        trace(" installed in directory %s is .net version %s\n", wine_dbgstr_w(path), wine_dbgstr_w(version));
     /* version number NULL not allowed without RUNTIME_INFO_UPGRADE_VERSION flag */
     hr = pGetRequestedRuntimeInfo( NULL, NULL, NULL, 0, 0, path, MAX_PATH, &path_len, version, MAX_PATH, &size);
     ok(hr == CLR_E_SHIM_RUNTIME, "GetRequestedRuntimeInfo returned %08x\n", hr);
