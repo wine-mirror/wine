@@ -647,6 +647,8 @@ basic_string_char* __thiscall MSVCP_basic_string_char_assign_substr(
 
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@@Z */
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@@Z */
+/* ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@AEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign, 8)
 basic_string_char* __thiscall MSVCP_basic_string_char_assign(
         basic_string_char *this, const basic_string_char *assign)
@@ -906,6 +908,8 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_substr(
 
 /* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@ABV12@@Z */
 /* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@AEBV12@@Z */
+/* ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@AEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_assign, 8)
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign(
             basic_string_wchar *this, const basic_string_wchar *assign)
