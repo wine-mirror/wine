@@ -383,6 +383,81 @@ HRESULT WINAPI D3DXCompileShader(LPCSTR pSrcData,
     return hr;
 }
 
+HRESULT WINAPI D3DXCompileShaderFromFileA(LPCSTR filename,
+                                          CONST D3DXMACRO* defines,
+                                          LPD3DXINCLUDE include,
+                                          LPCSTR entrypoint,
+                                          LPCSTR profile,
+                                          DWORD flags,
+                                          LPD3DXBUFFER* shader,
+                                          LPD3DXBUFFER* error_messages,
+                                          LPD3DXCONSTANTTABLE* constant_table)
+{
+    LPWSTR filename_w = NULL;
+    DWORD len;
+    HRESULT ret;
+
+    if (!filename) return D3DXERR_INVALIDDATA;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filename_w = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filename_w) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filename_w, len);
+
+    ret = D3DXCompileShaderFromFileW(filename_w, defines, include,
+                                     entrypoint, profile, flags,
+                                     shader, error_messages, constant_table);
+
+    HeapFree(GetProcessHeap(), 0, filename_w);
+    return ret;
+}
+
+HRESULT WINAPI D3DXCompileShaderFromFileW(LPCWSTR filename,
+                                          CONST D3DXMACRO* defines,
+                                          LPD3DXINCLUDE include,
+                                          LPCSTR entrypoint,
+                                          LPCSTR profile,
+                                          DWORD flags,
+                                          LPD3DXBUFFER* shader,
+                                          LPD3DXBUFFER* error_messages,
+                                          LPD3DXCONSTANTTABLE* constant_table)
+{
+    void *buffer;
+    DWORD len;
+    HRESULT hr;
+    struct D3DXIncludeImpl includefromfile;
+    char *filename_a;
+
+    if (FAILED(map_view_of_file(filename, &buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+
+    if (!include)
+    {
+        includefromfile.lpVtbl = &D3DXInclude_Vtbl;
+        include = (LPD3DXINCLUDE)&includefromfile;
+    }
+
+    filename_a = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+    if (!filename_a)
+    {
+        UnmapViewOfFile(buffer);
+        return E_OUTOFMEMORY;
+    }
+    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
+
+    hr = D3DCompile(buffer, len, filename_a, (D3D_SHADER_MACRO *)defines,
+                    (ID3DInclude *)include, entrypoint, profile, flags, 0,
+                    (ID3DBlob **)shader, (ID3DBlob **)error_messages);
+
+    if (SUCCEEDED(hr) && constant_table)
+        hr = D3DXGetShaderConstantTable(ID3DXBuffer_GetBufferPointer(*shader),
+                                        constant_table);
+
+    HeapFree(GetProcessHeap(), 0, filename_a);
+    UnmapViewOfFile(buffer);
+    return hr;
+}
+
 static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;
 
 typedef struct ID3DXConstantTableImpl {
