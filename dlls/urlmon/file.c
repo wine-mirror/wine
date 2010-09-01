@@ -79,7 +79,7 @@ static ULONG WINAPI FileProtocol_Release(IInternetProtocol *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if(This->file)
+        if(This->file != INVALID_HANDLE_VALUE)
             CloseHandle(This->file);
         heap_free(This);
 
@@ -133,7 +133,7 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     if(!(grfBINDF & BINDF_FROMURLMON))
         IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, NULL);
 
-    if(!This->file) {
+    if(This->file == INVALID_HANDLE_VALUE) {
         WCHAR *ptr;
 
         first_call = TRUE;
@@ -163,7 +163,6 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
         if(This->file == INVALID_HANDLE_VALUE) {
-            This->file = NULL;
             IInternetProtocolSink_ReportResult(pOIProtSink, INET_E_RESOURCE_NOT_FOUND,
                     GetLastError(), NULL);
             heap_free(url);
@@ -245,7 +244,7 @@ static HRESULT WINAPI FileProtocol_Read(IInternetProtocol *iface, void *pv,
     if (pcbRead)
         *pcbRead = 0;
 
-    if(!This->file)
+    if(This->file == INVALID_HANDLE_VALUE)
         return INET_E_DATA_NOT_AVAILABLE;
 
     if (!ReadFile(This->file, pv, cb, &read, NULL))
@@ -364,7 +363,7 @@ HRESULT FileProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     ret->lpIInternetProtocolVtbl = &FileProtocolVtbl;
     ret->lpInternetPriorityVtbl = &FilePriorityVtbl;
-    ret->file = NULL;
+    ret->file = INVALID_HANDLE_VALUE;
     ret->priority = 0;
     ret->ref = 1;
 
