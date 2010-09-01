@@ -12,13 +12,12 @@ C_SRCS = \
 	device.c \
 	directx.c \
 	indexbuffer.c \
-	pixelshader.c \
+	shader.c \
 	surface.c \
 	swapchain.c \
 	texture.c \
 	vertexbuffer.c \
 	vertexdeclaration.c \
-	vertexshader.c \
 	volume.c \
 	volumetexture.c
 
