@@ -687,6 +687,8 @@ basic_string_char* __thiscall MSVCP_basic_string_char_assign_cstr(
 
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ */
+/* ?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
+/* ?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_c_str, 4)
 const char* __thiscall MSVCP_basic_string_char_c_str(basic_string_char *this)
 {
@@ -933,6 +935,8 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_cstr(
 
 /* ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ */
 /* ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ */
+/* ?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ */
+/* ?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_c_str, 4)
 const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(basic_string_wchar *this)
 {
