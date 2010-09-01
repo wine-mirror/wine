@@ -831,8 +831,8 @@ do_error:
 void CDECL _splitpath(const char *inpath, char *drv, char *dir,
         char *fname, char *ext)
 {
-    _splitpath_s(inpath, drv, MSVCRT__MAX_DRIVE, dir, MSVCRT__MAX_DIR,
-            fname, MSVCRT__MAX_FNAME, ext, MSVCRT__MAX_EXT);
+    _splitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
+            fname, fname?MSVCRT__MAX_FNAME:0, ext, ext?MSVCRT__MAX_EXT:0);
 }
 
 /******************************************************************
@@ -925,8 +925,8 @@ do_error:
 void CDECL _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
         MSVCRT_wchar_t *fname, MSVCRT_wchar_t *ext)
 {
-    _wsplitpath_s(inpath, drv, MSVCRT__MAX_DRIVE, dir, MSVCRT__MAX_DIR,
-            fname, MSVCRT__MAX_FNAME, ext, MSVCRT__MAX_EXT);
+    _wsplitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
+            fname, fname?MSVCRT__MAX_FNAME:0, ext, ext?MSVCRT__MAX_EXT:0);
 }
 
 /*********************************************************************
