@@ -948,8 +948,6 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    RECT rc;
 	    LONG style;
 	    CBT_CREATEWNDA *createwnd = (CBT_CREATEWNDA *)lParam;
-            trace("HCBT_CREATEWND: hwnd %p, parent %p, style %08x\n",
-		  hwnd, createwnd->lpcs->hwndParent, createwnd->lpcs->style);
 	    ok(createwnd->hwndInsertAfter == HWND_TOP, "hwndInsertAfter should be always HWND_TOP\n");
 
             if (pGetWindowInfo)
@@ -1034,7 +1032,6 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
         break;
     /* on HCBT_DESTROYWND window state is undefined */
     case HCBT_DESTROYWND:
-        trace( "HCBT_DESTROYWND: hwnd %p\n", hwnd );
         break;
     default:
         break;
