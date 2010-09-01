@@ -160,10 +160,6 @@ static const struct {
  * Utility functions follow
  **********************************************************/
 
-static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter,
-        WINED3DDEVTYPE DeviceType, enum wined3d_format_id AdapterFormat, DWORD Usage,
-        WINED3DRESOURCETYPE RType, enum wined3d_format_id CheckFormat, WINED3DSURFTYPE SurfaceType);
-
 const struct min_lookup minMipLookup[] =
 {
     /* NONE         POINT                       LINEAR */
@@ -3217,93 +3213,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
     return WINED3DERR_NOTAVAILABLE;
 }
 
-static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType,
-        enum wined3d_format_id DisplayFormat, enum wined3d_format_id BackBufferFormat, BOOL Windowed)
-{
-    HRESULT hr = WINED3DERR_NOTAVAILABLE;
-    UINT nmodes;
-
-    TRACE("iface %p, adapter_idx %u, device_type %s, display_format %s, backbuffer_format %s, windowed %#x.\n",
-            iface, Adapter, debug_d3ddevicetype(DeviceType), debug_d3dformat(DisplayFormat),
-            debug_d3dformat(BackBufferFormat), Windowed);
-
-    if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
-        WARN_(d3d_caps)("Adapter >= IWineD3D_GetAdapterCount(iface), returning WINED3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* The task of this function is to check whether a certain display / backbuffer format
-     * combination is available on the given adapter. In fullscreen mode microsoft specified
-     * that the display format shouldn't provide alpha and that ignoring alpha the backbuffer
-     * and display format should match exactly.
-     * In windowed mode format conversion can occur and this depends on the driver. When format
-     * conversion is done, this function should nevertheless fail and applications need to use
-     * CheckDeviceFormatConversion.
-     * At the moment we assume that fullscreen and windowed have the same capabilities */
-
-    /* There are only 4 display formats */
-    if (!(DisplayFormat == WINED3DFMT_B5G6R5_UNORM
-            || DisplayFormat == WINED3DFMT_B5G5R5X1_UNORM
-            || DisplayFormat == WINED3DFMT_B8G8R8X8_UNORM
-            || DisplayFormat == WINED3DFMT_B10G10R10A2_UNORM))
-    {
-        TRACE_(d3d_caps)("Format %s unsupported as display format\n", debug_d3dformat(DisplayFormat));
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* If the requested DisplayFormat is not available, don't continue */
-    nmodes = IWineD3DImpl_GetAdapterModeCount(iface, Adapter, DisplayFormat);
-    if(!nmodes) {
-        TRACE_(d3d_caps)("No available modes for display format %s\n", debug_d3dformat(DisplayFormat));
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* Windowed mode allows you to specify WINED3DFMT_UNKNOWN for the backbufferformat, it means 'reuse' the display format for the backbuffer */
-    if(!Windowed && BackBufferFormat == WINED3DFMT_UNKNOWN) {
-        TRACE_(d3d_caps)("BackBufferFormat WINED3FMT_UNKNOWN not available in Windowed mode\n");
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* In FULLSCREEN mode R5G6B5 can only be mixed with backbuffer format R5G6B5 */
-    if (DisplayFormat == WINED3DFMT_B5G6R5_UNORM && BackBufferFormat != WINED3DFMT_B5G6R5_UNORM)
-    {
-        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s/%s\n", debug_d3dformat(DisplayFormat), debug_d3dformat(BackBufferFormat));
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* In FULLSCREEN mode X1R5G5B5 can only be mixed with backbuffer format *1R5G5B5 */
-    if (DisplayFormat == WINED3DFMT_B5G5R5X1_UNORM
-            && !(BackBufferFormat == WINED3DFMT_B5G5R5X1_UNORM || BackBufferFormat == WINED3DFMT_B5G5R5A1_UNORM))
-    {
-        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s/%s\n", debug_d3dformat(DisplayFormat), debug_d3dformat(BackBufferFormat));
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* In FULLSCREEN mode X8R8G8B8 can only be mixed with backbuffer format *8R8G8B8 */
-    if (DisplayFormat == WINED3DFMT_B8G8R8X8_UNORM
-            && !(BackBufferFormat == WINED3DFMT_B8G8R8X8_UNORM || BackBufferFormat == WINED3DFMT_B8G8R8A8_UNORM))
-    {
-        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s/%s\n", debug_d3dformat(DisplayFormat), debug_d3dformat(BackBufferFormat));
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* A2R10G10B10 is only allowed in fullscreen mode and it can only be mixed with backbuffer format A2R10G10B10 */
-    if (DisplayFormat == WINED3DFMT_B10G10R10A2_UNORM
-            && (BackBufferFormat != WINED3DFMT_B10G10R10A2_UNORM || Windowed))
-    {
-        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s/%s\n", debug_d3dformat(DisplayFormat), debug_d3dformat(BackBufferFormat));
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
-    /* Use CheckDeviceFormat to see if the BackBufferFormat is usable with the given DisplayFormat */
-    hr = IWineD3DImpl_CheckDeviceFormat(iface, Adapter, DeviceType, DisplayFormat, WINED3DUSAGE_RENDERTARGET, WINED3DRTYPE_SURFACE, BackBufferFormat, SURFACE_OPENGL);
-    if(FAILED(hr))
-        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s/%s\n", debug_d3dformat(DisplayFormat), debug_d3dformat(BackBufferFormat));
-
-    return hr;
-}
-
-
 /* Check if we support bumpmapping for a format */
 static BOOL CheckBumpMapCapability(struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
@@ -4245,6 +4154,108 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, 
             debug_d3dformat(dst_format));
 
     return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT adapter_idx, WINED3DDEVTYPE device_type,
+        enum wined3d_format_id display_format, enum wined3d_format_id backbuffer_format, BOOL windowed)
+{
+    UINT mode_count;
+    HRESULT hr;
+
+    TRACE("iface %p, adapter_idx %u, device_type %s, display_format %s, backbuffer_format %s, windowed %#x.\n",
+            iface, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(display_format),
+            debug_d3dformat(backbuffer_format), windowed);
+
+    if (adapter_idx >= IWineD3D_GetAdapterCount(iface))
+    {
+        WARN_(d3d_caps)("adapter_idx >= IWineD3D_GetAdapterCount(iface), returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* The task of this function is to check whether a certain display / backbuffer format
+     * combination is available on the given adapter. In fullscreen mode microsoft specified
+     * that the display format shouldn't provide alpha and that ignoring alpha the backbuffer
+     * and display format should match exactly.
+     * In windowed mode format conversion can occur and this depends on the driver. When format
+     * conversion is done, this function should nevertheless fail and applications need to use
+     * CheckDeviceFormatConversion.
+     * At the moment we assume that fullscreen and windowed have the same capabilities. */
+
+    /* There are only 4 display formats. */
+    if (!(display_format == WINED3DFMT_B5G6R5_UNORM
+            || display_format == WINED3DFMT_B5G5R5X1_UNORM
+            || display_format == WINED3DFMT_B8G8R8X8_UNORM
+            || display_format == WINED3DFMT_B10G10R10A2_UNORM))
+    {
+        TRACE_(d3d_caps)("Format %s is not supported as display format.\n", debug_d3dformat(display_format));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* If the requested display format is not available, don't continue. */
+    mode_count = IWineD3DImpl_GetAdapterModeCount(iface, adapter_idx, display_format);
+    if (!mode_count)
+    {
+        TRACE_(d3d_caps)("No available modes for display format %s.\n", debug_d3dformat(display_format));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* Windowed mode allows you to specify WINED3DFMT_UNKNOWN for the backbuffer format,
+     * it means 'reuse' the display format for the backbuffer. */
+    if (!windowed && backbuffer_format == WINED3DFMT_UNKNOWN)
+    {
+        TRACE_(d3d_caps)("backbuffer_format WINED3FMT_UNKNOWN only available in windowed mode.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* In FULLSCREEN mode WINED3DFMT_B5G6R5_UNORM can only be mixed with
+     * backbuffer format WINED3DFMT_B5G6R5_UNORM. */
+    if (display_format == WINED3DFMT_B5G6R5_UNORM && backbuffer_format != WINED3DFMT_B5G6R5_UNORM)
+    {
+        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s / %s.\n",
+                debug_d3dformat(display_format), debug_d3dformat(backbuffer_format));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* In FULLSCREEN mode WINED3DFMT_B5G5R5X1_UNORM can only be mixed with
+     * backbuffer formats WINED3DFMT_B5G5R5X1_UNORM and
+     * WINED3DFMT_B5G5R5A1_UNORM. */
+    if (display_format == WINED3DFMT_B5G5R5X1_UNORM
+            && !(backbuffer_format == WINED3DFMT_B5G5R5X1_UNORM || backbuffer_format == WINED3DFMT_B5G5R5A1_UNORM))
+    {
+        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s / %s.\n",
+                debug_d3dformat(display_format), debug_d3dformat(backbuffer_format));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* In FULLSCREEN mode WINED3DFMT_B8G8R8X8_UNORM can only be mixed with
+     * backbuffer formats WINED3DFMT_B8G8R8X8_UNORM and
+     * WINED3DFMT_B8G8R8A8_UNORM. */
+    if (display_format == WINED3DFMT_B8G8R8X8_UNORM
+            && !(backbuffer_format == WINED3DFMT_B8G8R8X8_UNORM || backbuffer_format == WINED3DFMT_B8G8R8A8_UNORM))
+    {
+        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s / %s.\n",
+                debug_d3dformat(display_format), debug_d3dformat(backbuffer_format));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* WINED3DFMT_B10G10R10A2_UNORM is only allowed in fullscreen mode and it
+     * can only be mixed with backbuffer format WINED3DFMT_B10G10R10A2_UNORM. */
+    if (display_format == WINED3DFMT_B10G10R10A2_UNORM
+            && (backbuffer_format != WINED3DFMT_B10G10R10A2_UNORM || windowed))
+    {
+        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s / %s.\n",
+                debug_d3dformat(display_format), debug_d3dformat(backbuffer_format));
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    /* Use CheckDeviceFormat to see if the backbuffer_format is usable with the given display_format */
+    hr = IWineD3DImpl_CheckDeviceFormat(iface, adapter_idx, device_type, display_format,
+            WINED3DUSAGE_RENDERTARGET, WINED3DRTYPE_SURFACE, backbuffer_format, SURFACE_OPENGL);
+    if (FAILED(hr))
+        TRACE_(d3d_caps)("Unsupported display/backbuffer format combination %s / %s.\n",
+                debug_d3dformat(display_format), debug_d3dformat(backbuffer_format));
+
+    return hr;
 }
 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
