@@ -4058,7 +4058,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     if(!ppURI)
         return E_INVALIDARG;
 
-    if(!pwzURI) {
+    if(!pwzURI || !*pwzURI) {
         *ppURI = NULL;
         return E_INVALIDARG;
     }
