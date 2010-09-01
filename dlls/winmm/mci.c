@@ -898,14 +898,18 @@ static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSW lpParms,
 {
     LPCWSTR alias = NULL;
     /* Open always defines an alias for further reference */
-    if (dwParam & MCI_OPEN_ALIAS)           /* open ... alias */
+    if (dwParam & MCI_OPEN_ALIAS) {         /* open ... alias */
         alias = lpParms->lpstrAlias;
-    else {
+        if (MCI_GetDriverFromString(alias))
+            return MCIERR_DUPLICATE_ALIAS;
+    } else {
         if ((dwParam & MCI_OPEN_ELEMENT)    /* open file.wav */
             && !(dwParam & MCI_OPEN_ELEMENT_ID))
             alias = lpParms->lpstrElementName;
         else if (dwParam & MCI_OPEN_TYPE )  /* open cdaudio */
             alias = wmd->lpstrDeviceType;
+        if (alias && MCI_GetDriverFromString(alias))
+            return MCIERR_DEVICE_OPEN;
     }
     if (alias) {
         wmd->lpstrAlias = HeapAlloc(GetProcessHeap(), 0, (strlenW(alias)+1) * sizeof(WCHAR));

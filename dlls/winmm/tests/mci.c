@@ -525,6 +525,11 @@ static void test_openCloseWAVE(HWND hwnd)
     err = mciGetDeviceID("waveaudio");
     ok(err==1,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
 
+    err = mciSendString("open no-such-file.wav alias waveaudio", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_DUPLICATE_ALIAS, "mci open alias waveaudio returned %s\n", dbg_mcierr(err));
+    /* If it were not already in use, open avivideo alias waveaudio would succeed,
+     * making for funny test cases. */
+
     err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0); /* from MSDN */
     ok(!err,"mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0) returned %s\n", dbg_mcierr(err));
 
@@ -1124,10 +1129,12 @@ static void test_AutoOpenWAVE(HWND hwnd)
     ok(!err,"mci status tempfile.wav mode returned %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"playing"), "mci auto-open status mode, got: %s\n", buf);
 
-    if (0) { /* FIXME: wait until this no more confuses Wine */
     err = mciSendString("open tempfile.wav", buf, sizeof(buf), NULL);
-    todo_wine ok(err==MCIERR_DEVICE_OPEN, "mci open from auto-open returned %s\n", dbg_mcierr(err));
-    }
+    ok(err==MCIERR_DEVICE_OPEN, "mci open from auto-open returned %s\n", dbg_mcierr(err));
+
+    err = mciSendString("open foo.wav alias tempfile.wav", buf, sizeof(buf), NULL);
+    ok(err==MCIERR_DUPLICATE_ALIAS, "mci open re-using alias returned %s\n", dbg_mcierr(err));
+
     /* w2k/xp and Wine differ. While the device is busy playing, it is
      * regularly open and accessible via the filename: subsequent
      * commands must not cause auto-open each.  In Wine, a subsequent
