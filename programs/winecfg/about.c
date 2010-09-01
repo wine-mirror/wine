@@ -170,7 +170,7 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             SetTextColor((HDC)wParam, 0x0000007F);
         case IDC_ABT_PANEL_TEXT:
         case IDC_ABT_LICENSE_TEXT:
-            return (BOOL)CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+            return (INT_PTR)CreateSolidBrush(GetSysColor(COLOR_WINDOW));
         }
         break;
     }
