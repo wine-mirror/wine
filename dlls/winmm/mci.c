@@ -127,10 +127,6 @@ static UINT MCI_GetDriverFromString(LPCWSTR lpstrName)
 	    ret = wmd->wDeviceID;
 	    break;
 	}
-	if (wmd->lpstrDeviceType && strcmpiW(wmd->lpstrDeviceType, lpstrName) == 0) {
-	    ret = wmd->wDeviceID;
-	    break;
-	}
     }
     LeaveCriticalSection(&WINMM_cs);
 

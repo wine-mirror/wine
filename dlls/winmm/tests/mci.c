@@ -565,7 +565,7 @@ static void test_recordWAVE(HWND hwnd)
 
     /* Only the alias is looked up. */
     err = mciGetDeviceID("waveaudio");
-    todo_wine ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+    ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
 
     test_notification(hwnd, "open new", MCI_NOTIFY_SUCCESSFUL);
     test_notification(hwnd, "open new no #2", 0);
@@ -724,6 +724,15 @@ static void test_playWAVE(HWND hwnd)
         return;
     }
 
+    err = mciGetDeviceID("mysound");
+    ok(err==1,"mciGetDeviceID mysound returned %u, expected 1\n", err);
+
+    err = mciGetDeviceID("tempfile.wav");
+    ok(err==0,"mciGetDeviceID tempfile.wav returned %u, expected 0\n", err);
+
+    err = mciGetDeviceID("waveaudio");
+    ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+
     err = mciSendString("status mysound length", buf, sizeof(buf), NULL);
     ok(!err,"mci status length returned %s\n", dbg_mcierr(err));
     todo_wine ok(!strcmp(buf,"2000"), "mci status length gave %s, expected 2000, some tests will fail.\n", buf);
@@ -852,10 +861,10 @@ static void test_asyncWAVE(HWND hwnd)
 
     /* Only the alias is looked up. */
     err = mciGetDeviceID("tempfile.wav");
-    ok(err==0,"mciGetDeviceID element returned %u, expected 0\n", err);
+    ok(err==0,"mciGetDeviceID tempfile.wav returned %u, expected 0\n", err);
 
     err = mciGetDeviceID("waveaudio");
-    todo_wine ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+    ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
 
     err = mciSendString("status mysound mode", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
@@ -1094,6 +1103,9 @@ static void test_AutoOpenWAVE(HWND hwnd)
     /* This is the alias, not necessarily a file name. */
     if(!err) ok(!strcmp(buf,"tempfile.wav"), "sysinfo name 1 open: %s\n", buf);
     test_notification(hwnd, "sysinfo name notify\n", MCI_NOTIFY_SUCCESSFUL);
+
+    err = mciGetDeviceID("tempfile.wav");
+    ok(err==1,"mciGetDeviceID tempfile.wav returned %u, expected 1\n", err);
 
     /* Save the full pathname to the file. */
     err = mciSendString("info tempfile.wav file", path, sizeof(path), NULL);
