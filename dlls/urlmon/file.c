@@ -26,6 +26,7 @@ typedef struct {
     const IInternetPriorityVtbl  *lpInternetPriorityVtbl;
 
     HANDLE file;
+    ULONG size;
     LONG priority;
 
     LONG ref;
@@ -184,10 +185,12 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     heap_free(url);
 
-    if(GetFileSizeEx(This->file, &size))
+    if(GetFileSizeEx(This->file, &size)) {
+        This->size = size.u.LowPart;
         IInternetProtocolSink_ReportData(pOIProtSink,
                 BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,
-                size.u.LowPart, size.u.LowPart);
+                This->size, This->size);
+    }
 
     if(first_call)
         IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
