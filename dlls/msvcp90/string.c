@@ -596,7 +596,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_erase, 12)
 basic_string_char* __thiscall MSVCP_basic_string_char_erase(
         basic_string_char *this, size_t pos, size_t len)
 {
-    TRACE("%p %d %d\n", this, pos, len);
+    TRACE("%p %lu %lu\n", this, (unsigned long)pos, (unsigned long)len);
 
     if(pos > this->size) {
         MSVCP__String_base_Xran();
@@ -623,7 +623,7 @@ basic_string_char* __thiscall MSVCP_basic_string_char_assign_substr(
         basic_string_char *this, const basic_string_char *assign,
         size_t pos, size_t len)
 {
-    TRACE("%p %p %d %d\n", this, assign, pos, len);
+    TRACE("%p %p %lu %lu\n", this, assign, (unsigned long)pos, (unsigned long)len);
 
     if(assign->size < pos) {
         MSVCP__String_base_Xran();
@@ -661,7 +661,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign_cstr_len, 12)
 basic_string_char* __thiscall MSVCP_basic_string_char_assign_cstr_len(
         basic_string_char *this, const char *str, size_t len)
 {
-    TRACE("%p %s %d\n", this, debugstr_a(str), len);
+    TRACE("%p %s %lu\n", this, debugstr_a(str), (unsigned long)len);
 
     if(basic_string_char_inside(this, str))
         return MSVCP_basic_string_char_assign_substr(this, this,
@@ -842,7 +842,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_erase, 12)
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_erase(
             basic_string_wchar *this, size_t pos, size_t len)
 {
-    TRACE("%p %d %d\n", this, pos, len);
+    TRACE("%p %lu %lu\n", this, (unsigned long)pos, (unsigned long)len);
 
     if(pos > this->size) {
         MSVCP__String_base_Xran();
@@ -869,7 +869,7 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_substr(
             basic_string_wchar *this, const basic_string_wchar *assign,
             size_t pos, size_t len)
 {
-    TRACE("%p %p %d %d\n", this, assign, pos, len);
+    TRACE("%p %p %lu %lu\n", this, assign, (unsigned long)pos, (unsigned long)len);
 
     if(assign->size < pos) {
         MSVCP__String_base_Xran();
@@ -907,7 +907,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_assign_cstr_len, 12)
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_cstr_len(
             basic_string_wchar *this, const wchar_t *str, size_t len)
 {
-    TRACE("%p %s %d\n", this, debugstr_w(str), len);
+    TRACE("%p %s %lu\n", this, debugstr_w(str), (unsigned long)len);
 
     if(basic_string_wchar_inside(this, str))
         return MSVCP_basic_string_wchar_assign_substr(this, this,
