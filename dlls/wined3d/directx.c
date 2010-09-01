@@ -4217,7 +4217,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     int ps_selected_mode;
     struct shader_caps shader_caps;
     struct fragment_caps fragment_caps;
-    DWORD ckey_caps, blit_caps, fx_caps;
+    DWORD ckey_caps, blit_caps, fx_caps, pal_caps;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
@@ -4744,6 +4744,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                         WINEDDCAPS_COLORKEY                 |
                                         WINEDDCAPS_COLORKEYHWASSIST         |
                                         WINEDDCAPS_ALIGNBOUNDARYSRC;
+    pal_caps =                          WINEDDPCAPS_8BIT                    |
+                                        WINEDDPCAPS_PRIMARYSURFACE;
 
     /* Fill the ddraw caps structure */
     pCaps->DirectDrawCaps.Caps =        WINEDDCAPS_GDI                      |
@@ -4754,6 +4756,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                         WINEDDCAPS2_PRIMARYGAMMA             |
                                         WINEDDCAPS2_WIDESURFACES             |
                                         WINEDDCAPS2_CANRENDERWINDOWED;
+    pCaps->DirectDrawCaps.CKeyCaps =    ckey_caps;
+    pCaps->DirectDrawCaps.FXCaps =      fx_caps;
+    pCaps->DirectDrawCaps.PalCaps =     pal_caps;
     pCaps->DirectDrawCaps.SVBCaps =     blit_caps;
     pCaps->DirectDrawCaps.SVBCKeyCaps = ckey_caps;
     pCaps->DirectDrawCaps.SVBFXCaps =   fx_caps;
