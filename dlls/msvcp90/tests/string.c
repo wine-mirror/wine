@@ -58,6 +58,7 @@ static void (WINAPI *p_basic_string_char_dtor)(void);
 static basic_string_char* (WINAPI *p_basic_string_char_erase)(size_t, size_t);
 static basic_string_char* (WINAPI *p_basic_string_char_assign_cstr_len)(const char*, size_t);
 static const char* (WINAPI *p_basic_string_char_cstr)(void);
+static const char* (WINAPI *p_basic_string_char_data)(void);
 
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_ctor)(void);
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_copy_ctor)(basic_string_wchar*);
@@ -66,6 +67,7 @@ static void (WINAPI *p_basic_string_wchar_dtor)(void);
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_erase)(size_t, size_t);
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_assign_cstr_len)(const wchar_t*, size_t);
 static const wchar_t* (WINAPI *p_basic_string_wchar_cstr)(void);
+static const wchar_t* (WINAPI *p_basic_string_wchar_data)(void);
 #else
 static basic_string_char* (__cdecl *p_basic_string_char_ctor)(basic_string_char*);
 static basic_string_char* (__cdecl *p_basic_string_char_copy_ctor)(basic_string_char*, basic_string_char*);
@@ -74,6 +76,7 @@ static void (__cdecl *p_basic_string_char_dtor)(basic_string_char*);
 static basic_string_char* (__cdecl *p_basic_string_char_erase)(basic_string_char*, size_t, size_t);
 static basic_string_char* (__cdecl *p_basic_string_char_assign_cstr_len)(basic_string_char*, const char*, size_t);
 static const char* (__cdecl *p_basic_string_char_cstr)(basic_string_char*);
+static const char* (__cdecl *p_basic_string_char_data)(basic_string_char*);
 
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_ctor)(basic_string_wchar*);
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
@@ -82,6 +85,7 @@ static void (__cdecl *p_basic_string_wchar_dtor)(basic_string_wchar*);
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_erase)(basic_string_wchar*, size_t, size_t);
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_assign_cstr_len)(basic_string_wchar*, const wchar_t*, size_t);
 static const wchar_t* (__cdecl *p_basic_string_wchar_cstr)(basic_string_wchar*);
+static const wchar_t* (__cdecl *p_basic_string_wchar_data)(basic_string_wchar*);
 #endif
 
 static int invalid_parameter = 0;
@@ -228,6 +232,8 @@ static BOOL init(void)
                 "?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD_K@Z");
         p_basic_string_char_cstr = (void*)GetProcAddress(msvcp,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
+        p_basic_string_char_data = (void*)GetProcAddress(msvcp,
+                "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
@@ -243,6 +249,9 @@ static BOOL init(void)
                 "?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@PEB_W_K@Z");
         p_basic_string_wchar_cstr = (void*)GetProcAddress(msvcp,
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
+        p_basic_string_wchar_data = (void*)GetProcAddress(msvcp,
+                "?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAPEB_WXZ");
+
     } else {
         p_basic_string_char_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
@@ -258,6 +267,8 @@ static BOOL init(void)
                 "?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z");
         p_basic_string_char_cstr = (void*)GetProcAddress(msvcp,
                 "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
+        p_basic_string_char_data = (void*)GetProcAddress(msvcp,
+                "?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
@@ -273,6 +284,8 @@ static BOOL init(void)
                 "?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@PB_WI@Z");
         p_basic_string_wchar_cstr = (void*)GetProcAddress(msvcp,
                 "?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
+        p_basic_string_wchar_data = (void*)GetProcAddress(msvcp,
+                "?data@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ");
     }
 
     return TRUE;
@@ -285,7 +298,7 @@ static void test_basic_string_char(void) {
     if(!p_basic_string_char_ctor || !p_basic_string_char_copy_ctor
             || !p_basic_string_char_ctor_cstr || !p_basic_string_char_dtor
             || !p_basic_string_char_erase || !p_basic_string_char_assign_cstr_len
-            || !p_basic_string_char_cstr) {
+            || !p_basic_string_char_cstr || !p_basic_string_char_data) {
         win_skip("basic_string<char> unavailable\n");
         return;
     }
@@ -295,32 +308,47 @@ static void test_basic_string_char(void) {
     str = call_func1(p_basic_string_char_cstr, &str1);
     ok(str != NULL, "str = NULL\n");
     ok(*str == '\0', "*str = %c\n", *str);
+    str = call_func1(p_basic_string_char_data, &str1);
+    ok(str != NULL, "str = NULL\n");
+    ok(*str == '\0', "*str = %c\n", *str);
     call_func1(p_basic_string_char_dtor, &str1);
 
     pstr = call_func2(p_basic_string_char_ctor_cstr, &str1, "test");
     ok(pstr == &str1, "pstr != &str1\n");
     str = call_func1(p_basic_string_char_cstr, &str1);
     ok(!memcmp(str, "test", 5), "str = %s\n", str);
+    str = call_func1(p_basic_string_char_data, &str1);
+    ok(!memcmp(str, "test", 5), "str = %s\n", str);
 
     pstr = call_func2(p_basic_string_char_copy_ctor, &str2, &str1);
     ok(pstr == &str2, "pstr != &str2\n");
     str = call_func1(p_basic_string_char_cstr, &str2);
     ok(!memcmp(str, "test", 5), "str = %s\n", str);
+    str = call_func1(p_basic_string_char_data, &str2);
+    ok(!memcmp(str, "test", 5), "str = %s\n", str);
 
     call_func3(p_basic_string_char_erase, &str2, 1, 2);
     str = call_func1(p_basic_string_char_cstr, &str2);
+    ok(!memcmp(str, "tt", 3), "str = %s\n", str);
+    str = call_func1(p_basic_string_char_data, &str2);
     ok(!memcmp(str, "tt", 3), "str = %s\n", str);
 
     call_func3(p_basic_string_char_erase, &str2, 1, 100);
     str = call_func1(p_basic_string_char_cstr, &str2);
     ok(!memcmp(str, "t", 2), "str = %s\n", str);
+    str = call_func1(p_basic_string_char_data, &str2);
+    ok(!memcmp(str, "t", 2), "str = %s\n", str);
 
     call_func3(p_basic_string_char_assign_cstr_len, &str2, "test", 4);
     str = call_func1(p_basic_string_char_cstr, &str2);
     ok(!memcmp(str, "test", 5), "str = %s\n", str);
+    str = call_func1(p_basic_string_char_data, &str2);
+    ok(!memcmp(str, "test", 5), "str = %s\n", str);
 
     call_func3(p_basic_string_char_assign_cstr_len, &str2, (str+1), 2);
     str = call_func1(p_basic_string_char_cstr, &str2);
+    ok(!memcmp(str, "es", 3), "str = %s\n", str);
+    str = call_func1(p_basic_string_char_data, &str2);
     ok(!memcmp(str, "es", 3), "str = %s\n", str);
 
     call_func1(p_basic_string_char_dtor, &str1);
@@ -336,7 +364,7 @@ static void test_basic_string_wchar(void) {
     if(!p_basic_string_wchar_ctor || !p_basic_string_wchar_copy_ctor
             || !p_basic_string_wchar_ctor_cstr || !p_basic_string_wchar_dtor
             || !p_basic_string_wchar_erase || !p_basic_string_wchar_assign_cstr_len
-            || !p_basic_string_wchar_cstr) {
+            || !p_basic_string_wchar_cstr || !p_basic_string_wchar_data) {
         win_skip("basic_string<wchar_t> unavailable\n");
         return;
     }
@@ -346,11 +374,16 @@ static void test_basic_string_wchar(void) {
     str = call_func1(p_basic_string_wchar_cstr, &str1);
     ok(str != NULL, "str = NULL\n");
     ok(*str == '\0', "*str = %c\n", *str);
+    str = call_func1(p_basic_string_wchar_data, &str1);
+    ok(str != NULL, "str = NULL\n");
+    ok(*str == '\0', "*str = %c\n", *str);
     call_func1(p_basic_string_wchar_dtor, &str1);
 
     pstr = call_func2(p_basic_string_wchar_ctor_cstr, &str1, test);
     ok(pstr == &str1, "pstr != &str1\n");
     str = call_func1(p_basic_string_wchar_cstr, &str1);
+    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    str = call_func1(p_basic_string_wchar_data, &str1);
     ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
 
     memset(&str2, 0, sizeof(basic_string_wchar));
@@ -358,21 +391,31 @@ static void test_basic_string_wchar(void) {
     ok(pstr == &str2, "pstr != &str2\n");
     str = call_func1(p_basic_string_wchar_cstr, &str2);
     ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    str = call_func1(p_basic_string_wchar_data, &str2);
+    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
 
     call_func3(p_basic_string_wchar_erase, &str2, 1, 2);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
+    ok(str[0]=='t' && str[1]=='t' && str[2]=='\0', "str = %s\n", wine_dbgstr_w(str));
+    str = call_func1(p_basic_string_wchar_data, &str2);
     ok(str[0]=='t' && str[1]=='t' && str[2]=='\0', "str = %s\n", wine_dbgstr_w(str));
 
     call_func3(p_basic_string_wchar_erase, &str2, 1, 100);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
     ok(str[0]=='t' && str[1]=='\0', "str = %s\n", wine_dbgstr_w(str));
+    str = call_func1(p_basic_string_wchar_data, &str2);
+    ok(str[0]=='t' && str[1]=='\0', "str = %s\n", wine_dbgstr_w(str));
 
     call_func3(p_basic_string_wchar_assign_cstr_len, &str2, test, 4);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
     ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    str = call_func1(p_basic_string_wchar_data, &str2);
+    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
 
     call_func3(p_basic_string_wchar_assign_cstr_len, &str2, (str+1), 2);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
+    ok(str[0]=='e' && str[1]=='s' && str[2]=='\0', "str = %s\n", wine_dbgstr_w(str));
+    str = call_func1(p_basic_string_wchar_data, &str2);
     ok(str[0]=='e' && str[1]=='s' && str[2]=='\0', "str = %s\n", wine_dbgstr_w(str));
 
     call_func1(p_basic_string_wchar_dtor, &str1);
