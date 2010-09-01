@@ -798,13 +798,10 @@ RPC_STATUS WINAPI RpcBindingFree( RPC_BINDING_HANDLE* Binding )
  */
 RPC_STATUS WINAPI RpcBindingVectorFree( RPC_BINDING_VECTOR** BindingVector )
 {
-  RPC_STATUS status;
   ULONG c;
 
   TRACE("(%p)\n", BindingVector);
-  for (c=0; c<(*BindingVector)->Count; c++) {
-    status = RpcBindingFree(&(*BindingVector)->BindingH[c]);
-  }
+  for (c=0; c<(*BindingVector)->Count; c++) RpcBindingFree(&(*BindingVector)->BindingH[c]);
   HeapFree(GetProcessHeap(), 0, *BindingVector);
   *BindingVector = NULL;
   return RPC_S_OK;
