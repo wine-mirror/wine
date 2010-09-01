@@ -458,6 +458,52 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(LPCWSTR filename,
     return hr;
 }
 
+HRESULT WINAPI D3DXCompileShaderFromResourceA(HMODULE module,
+                                              LPCSTR resource,
+                                              CONST D3DXMACRO* defines,
+                                              LPD3DXINCLUDE include,
+                                              LPCSTR entrypoint,
+                                              LPCSTR profile,
+                                              DWORD flags,
+                                              LPD3DXBUFFER* shader,
+                                              LPD3DXBUFFER* error_messages,
+                                              LPD3DXCONSTANTTABLE* constant_table)
+{
+    HRSRC res;
+    LPCSTR buffer;
+    DWORD len;
+
+    if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
+    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+    return D3DXCompileShader(buffer, len, defines, include, entrypoint, profile,
+                             flags, shader, error_messages, constant_table);
+}
+
+HRESULT WINAPI D3DXCompileShaderFromResourceW(HMODULE module,
+                                              LPCWSTR resource,
+                                              CONST D3DXMACRO* defines,
+                                              LPD3DXINCLUDE include,
+                                              LPCSTR entrypoint,
+                                              LPCSTR profile,
+                                              DWORD flags,
+                                              LPD3DXBUFFER* shader,
+                                              LPD3DXBUFFER* error_messages,
+                                              LPD3DXCONSTANTTABLE* constant_table)
+{
+    HRSRC res;
+    LPCSTR buffer;
+    DWORD len;
+
+    if (!(res = FindResourceW(module, resource, (LPCWSTR)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
+    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+    return D3DXCompileShader(buffer, len, defines, include, entrypoint, profile,
+                             flags, shader, error_messages, constant_table);
+}
+
 static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;
 
 typedef struct ID3DXConstantTableImpl {
