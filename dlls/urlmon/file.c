@@ -102,107 +102,21 @@ static HRESULT WINAPI FileProtocol_Start(IInternetProtocolEx *iface, LPCWSTR szU
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
     FileProtocol *This = PROTOCOL_THIS(iface);
-    BINDINFO bindinfo;
-    DWORD grfBINDF = 0;
-    LARGE_INTEGER size;
-    DWORD len;
-    LPWSTR url, mime = NULL, file_name;
-    WCHAR null_char = 0;
-    BOOL first_call = FALSE;
+    IUri *uri;
     HRESULT hres;
-
-    static const WCHAR wszFile[]  = {'f','i','l','e',':'};
 
     TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
-    if(!szUrl || strlenW(szUrl) < sizeof(wszFile)/sizeof(WCHAR)
-            || memcmp(szUrl, wszFile, sizeof(wszFile)))
-        return E_INVALIDARG;
-
-    memset(&bindinfo, 0, sizeof(bindinfo));
-    bindinfo.cbSize = sizeof(BINDINFO);
-    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &grfBINDF, &bindinfo);
-    if(FAILED(hres)) {
-        WARN("GetBindInfo failed: %08x\n", hres);
+    hres = CreateUri(szUrl, Uri_CREATE_FILE_USE_DOS_PATH, 0, &uri);
+    if(FAILED(hres))
         return hres;
-    }
 
-    ReleaseBindInfo(&bindinfo);
+    hres = IInternetProtocolEx_StartEx(PROTOCOLEX(This), uri, pOIProtSink, pOIBindInfo,
+            grfPI, (HANDLE*)dwReserved);
 
-    len = lstrlenW(szUrl)+16;
-    url = heap_alloc(len*sizeof(WCHAR));
-    hres = CoInternetParseUrl(szUrl, PARSE_ENCODE, 0, url, len, &len, 0);
-    if(FAILED(hres)) {
-        heap_free(url);
-        return hres;
-    }
-
-    if(!(grfBINDF & BINDF_FROMURLMON))
-        IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_DIRECTBIND, NULL);
-
-    if(This->file == INVALID_HANDLE_VALUE) {
-        WCHAR *ptr;
-
-        first_call = TRUE;
-
-        IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST, &null_char);
-
-        file_name = url+sizeof(wszFile)/sizeof(WCHAR);
-
-        /* Strip both forward and back slashes */
-        if( (file_name[0] == '/' && file_name[1] == '/') ||
-            (file_name[0] == '\\' && file_name[1] == '\\'))
-            file_name += 2;
-        if(*file_name == '/')
-            file_name++;
-
-        for(ptr = file_name; *ptr; ptr++) {
-            if(*ptr == '?' || *ptr == '#') {
-                *ptr = 0;
-                break;
-            }
-        }
-
-        if(file_name[1] == '|')
-            file_name[1] = ':';
-
-        This->file = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
-                                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-        if(This->file == INVALID_HANDLE_VALUE) {
-            IInternetProtocolSink_ReportResult(pOIProtSink, INET_E_RESOURCE_NOT_FOUND,
-                    GetLastError(), NULL);
-            heap_free(url);
-            return INET_E_RESOURCE_NOT_FOUND;
-        }
-
-        IInternetProtocolSink_ReportProgress(pOIProtSink,
-                BINDSTATUS_CACHEFILENAMEAVAILABLE, file_name);
-
-        hres = FindMimeFromData(NULL, url, NULL, 0, NULL, 0, &mime, 0);
-        if(SUCCEEDED(hres)) {
-            IInternetProtocolSink_ReportProgress(pOIProtSink,
-                    (grfBINDF & BINDF_FROMURLMON) ?
-                    BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE : BINDSTATUS_MIMETYPEAVAILABLE,
-                    mime);
-            CoTaskMemFree(mime);
-        }
-    }
-
-    heap_free(url);
-
-    if(GetFileSizeEx(This->file, &size)) {
-        This->size = size.u.LowPart;
-        IInternetProtocolSink_ReportData(pOIProtSink,
-                BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,
-                This->size, This->size);
-    }
-
-    if(first_call)
-        IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
-
-    return S_OK;
+    IUri_Release(uri);
+    return hres;
 }
 
 static HRESULT WINAPI FileProtocol_Continue(IInternetProtocolEx *iface, PROTOCOLDATA *pProtocolData)
