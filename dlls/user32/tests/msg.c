@@ -1717,6 +1717,8 @@ static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
 static HWINEVENTHOOK (WINAPI *pSetWinEventHook)(DWORD, DWORD, HMODULE, WINEVENTPROC, DWORD, DWORD, DWORD);
 static BOOL (WINAPI *pTrackMouseEvent)(TRACKMOUSEEVENT*);
 static BOOL (WINAPI *pUnhookWinEvent)(HWINEVENTHOOK);
+static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
+static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 /* kernel32 functions */
 static BOOL (WINAPI *pGetCPInfoExA)(UINT, DWORD, LPCPINFOEXA);
 
@@ -1738,6 +1740,8 @@ static void init_procs(void)
     GET_PROC(user32, SetWinEventHook)
     GET_PROC(user32, TrackMouseEvent)
     GET_PROC(user32, UnhookWinEvent)
+    GET_PROC(user32, GetMonitorInfoA)
+    GET_PROC(user32, MonitorFromPoint)
 
     GET_PROC(kernel32, GetCPInfoExA)
 
@@ -10631,71 +10635,132 @@ static void test_ShowWindow(void)
         LPARAM ret; /* ShowWindow return value */
         DWORD style; /* window style after the command */
         const struct message *msg; /* message sequence the command produces */
+        INT wp_cmd, wp_flags; /* window placement after the command */
+        POINT wp_min, wp_max; /* window placement after the command */
         BOOL todo_msg; /* message sequence doesn't match what Wine does */
     } sw[] =
     {
-/*  1 */ { SW_SHOWNORMAL, FALSE, WS_VISIBLE, WmShowNormal, FALSE },
-/*  2 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
-/*  3 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
-/*  4 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/*  5 */ { SW_SHOWMINIMIZED, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinimized_1, FALSE },
-/*  6 */ { SW_SHOWMINIMIZED, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_1, FALSE },
-/*  7 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_1, FALSE },
-/*  8 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq, FALSE },
-/*  9 */ { SW_SHOWMAXIMIZED, FALSE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_1, FALSE },
-/* 10 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2, FALSE },
-/* 11 */ { SW_HIDE, TRUE, WS_MAXIMIZE, WmHide_1, FALSE },
-/* 12 */ { SW_HIDE, FALSE, WS_MAXIMIZE, WmEmptySeq, FALSE },
-/* 13 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_1, FALSE },
-/* 14 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
-/* 15 */ { SW_HIDE, TRUE, 0, WmHide_2, FALSE },
-/* 16 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/* 17 */ { SW_SHOW, FALSE, WS_VISIBLE, WmShow, FALSE },
-/* 18 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
-/* 19 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1, FALSE },
-/* 20 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
-/* 21 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
-/* 22 */ { SW_SHOWMINNOACTIVE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinNoActivate, TRUE },
-/* 23 */ { SW_SHOWMINNOACTIVE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_4, FALSE },
-/* 24 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
-/* 25 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq, FALSE },
-/* 26 */ { SW_SHOWNA, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_1, FALSE },
-/* 27 */ { SW_SHOWNA, TRUE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_2, FALSE },
-/* 28 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
-/* 29 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq, FALSE },
-/* 30 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_1, FALSE },
-/* 31 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
-/* 32 */ { SW_HIDE, TRUE, 0, WmHide_3, FALSE },
-/* 33 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/* 34 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, FALSE }, /* what does this mean?! */
-/* 35 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, FALSE },
-/* 36 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/* 37 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_2, FALSE },
-/* 38 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
-/* 39 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
-/* 40 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_2, FALSE },
-/* 41 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
-/* 42 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_2, FALSE },
-/* 43 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2, FALSE },
-/* 44 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1, FALSE },
-/* 45 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
-/* 46 */ { SW_RESTORE, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmRestore_3, FALSE },
-/* 47 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmRestore_4, FALSE },
-/* 48 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_3, FALSE },
-/* 49 */ { SW_SHOW, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmEmptySeq, FALSE },
-/* 50 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5, FALSE },
-/* 51 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5, FALSE },
-/* 52 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
-/* 53 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/* 54 */ { SW_MINIMIZE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_3, FALSE },
-/* 55 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
-/* 56 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_2, FALSE },
-/* 57 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq, FALSE }
+/*  1 */ { SW_SHOWNORMAL, FALSE, WS_VISIBLE, WmShowNormal,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  2 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  3 */ { SW_HIDE, TRUE, 0, WmHide_1,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  4 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  5 */ { SW_SHOWMINIMIZED, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinimized_1,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  6 */ { SW_SHOWMINIMIZED, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_1,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  7 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_1,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  8 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/*  9 */ { SW_SHOWMAXIMIZED, FALSE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_1,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 10 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 11 */ { SW_HIDE, TRUE, WS_MAXIMIZE, WmHide_1,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 12 */ { SW_HIDE, FALSE, WS_MAXIMIZE, WmEmptySeq,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 13 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_1,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 14 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 15 */ { SW_HIDE, TRUE, 0, WmHide_2,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 16 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 17 */ { SW_SHOW, FALSE, WS_VISIBLE, WmShow,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 18 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 19 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 20 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 21 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 22 */ { SW_SHOWMINNOACTIVE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinNoActivate,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, TRUE },
+/* 23 */ { SW_SHOWMINNOACTIVE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_4,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 24 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 25 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 26 */ { SW_SHOWNA, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_1,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 27 */ { SW_SHOWNA, TRUE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_2,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 28 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 29 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 30 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_1,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 31 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 32 */ { SW_HIDE, TRUE, 0, WmHide_3,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 33 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 34 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, /* what does this mean?! */
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 35 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 36 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 37 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_2,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 38 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 39 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 40 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_2,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 41 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 42 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_2,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 43 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 44 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1,
+           SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 45 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3,
+           SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 46 */ { SW_RESTORE, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmRestore_3,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 47 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmRestore_4,
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 48 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_3,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 49 */ { SW_SHOW, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmEmptySeq,
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 50 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5,
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 51 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5,
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 52 */ { SW_HIDE, TRUE, 0, WmHide_1,
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 53 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+/* 54 */ { SW_MINIMIZE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_3,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 55 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
+           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 56 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_2,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+/* 57 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq,
+           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE }
     };
     HWND hwnd;
     DWORD style;
     LPARAM ret;
     INT i;
+    WINDOWPLACEMENT wp;
+    RECT win_rc, work_rc = {0, 0, 0, 0};
 
 #define WS_BASE (WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|WS_CLIPSIBLINGS)
     hwnd = CreateWindowEx(0, "ShowWindowClass", NULL, WS_BASE,
@@ -10708,6 +10773,52 @@ static void test_ShowWindow(void)
 
     flush_events();
     flush_sequence();
+
+    if (pGetMonitorInfoA && pMonitorFromPoint)
+    {
+        HMONITOR hmon;
+        MONITORINFO mi;
+        POINT pt = {0, 0};
+
+        SetLastError(0xdeadbeef);
+        hmon = pMonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+        ok(hmon != 0, "MonitorFromPoint error %u\n", GetLastError());
+
+        mi.cbSize = sizeof(mi);
+        SetLastError(0xdeadbeef);
+        ret = pGetMonitorInfoA(hmon, &mi);
+        ok(ret, "GetMonitorInfo error %u\n", GetLastError());
+        trace("monitor (%d,%d-%d,%d), work (%d,%d-%d,%d)\n",
+            mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom,
+            mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
+        work_rc = mi.rcWork;
+    }
+
+    GetWindowRect(hwnd, &win_rc);
+    OffsetRect(&win_rc, -work_rc.left, -work_rc.top);
+
+    wp.length = sizeof(wp);
+    SetLastError(0xdeadbeaf);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "GetWindowPlacement error %u\n", GetLastError());
+    ok(wp.flags == 0, "expected 0, got %#x\n", wp.flags);
+    ok(wp.showCmd == SW_SHOWNORMAL, "expected SW_SHOWNORMAL, got %d\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+       "expected -1,-1 got %d,%d\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
+       "expected -1,-1 got %d,%d\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    if (work_rc.left || work_rc.top) todo_wine /* FIXME: remove once Wine is fixed */
+    ok(EqualRect(&win_rc, &wp.rcNormalPosition),
+       "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
+        win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
+        wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+        wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
+    else
+    ok(EqualRect(&win_rc, &wp.rcNormalPosition),
+       "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
+        win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
+        wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+        wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
 
     for (i = 0; i < sizeof(sw)/sizeof(sw[0]); i++)
     {
@@ -10733,6 +10844,33 @@ static void test_ShowWindow(void)
         sprintf(comment, "%d: ShowWindow(%s)", i+1, sw_cmd_name[idx]);
         ok_sequence(sw[i].msg, comment, sw[i].todo_msg);
 
+        wp.length = sizeof(wp);
+        SetLastError(0xdeadbeaf);
+        ret = GetWindowPlacement(hwnd, &wp);
+        ok(ret, "GetWindowPlacement error %u\n", GetLastError());
+        ok(wp.flags == sw[i].wp_flags, "expected %#x, got %#x\n", sw[i].wp_flags, wp.flags);
+        ok(wp.showCmd == sw[i].wp_cmd, "expected %d, got %d\n", sw[i].wp_cmd, wp.showCmd);
+if (0) /* FIXME: Wine behaves completely different here */
+{
+        /* NT moves the minimized window to -32000,-32000, win9x to 3000,3000 */
+        if ((wp.ptMinPosition.x + work_rc.left == -32000 && wp.ptMinPosition.y + work_rc.top == -32000) ||
+            (wp.ptMinPosition.x + work_rc.left == 3000 && wp.ptMinPosition.y + work_rc.top == 3000))
+        todo_wine
+        ok((wp.ptMinPosition.x + work_rc.left == -32000 && wp.ptMinPosition.y + work_rc.top == -32000) ||
+           (wp.ptMinPosition.x + work_rc.left == 3000 && wp.ptMinPosition.y + work_rc.top == 3000),
+           "expected -32000,-32000 got %d,%d\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+        else
+        ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+           "expected -1,-1 got %d,%d\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+
+        ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
+           "expected -1,-1 got %d,%d\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+        ok(EqualRect(&win_rc, &wp.rcNormalPosition),
+           "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
+            win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
+            wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+            wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
+}
         flush_events();
         flush_sequence();
     }

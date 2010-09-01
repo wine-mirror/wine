@@ -880,7 +880,15 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
 
         old_style = WIN_SetStyle( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
-        if (old_style & WS_MINIMIZE) WINPOS_ShowIconTitle( hwnd, FALSE );
+        if (old_style & WS_MINIMIZE)
+        {
+            if ((wndPtr = WIN_GetPtr( hwnd )) && wndPtr != WND_OTHER_PROCESS)
+            {
+                wndPtr->flags |= WIN_RESTORE_MAX;
+                WIN_ReleasePtr( wndPtr );
+            }
+            WINPOS_ShowIconTitle( hwnd, FALSE );
+        }
 
         if (!(old_style & WS_MAXIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y,
@@ -888,6 +896,12 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         break;
 
     case SW_SHOWNOACTIVATE:
+        if ((wndPtr = WIN_GetPtr( hwnd )) && wndPtr != WND_OTHER_PROCESS)
+        {
+            wndPtr->flags &= ~WIN_RESTORE_MAX;
+            WIN_ReleasePtr( wndPtr );
+        }
+        /* fall through */
     case SW_SHOWNORMAL:
     case SW_RESTORE:
         old_style = WIN_SetStyle( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
