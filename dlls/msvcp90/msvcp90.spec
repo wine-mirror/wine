@@ -4456,12 +4456,12 @@
 @ stub ?ldexp@?$_Ctraits@M@std@@SAMMH@Z
 @ stub ?ldexp@?$_Ctraits@N@std@@SANNH@Z
 @ stub ?ldexp@?$_Ctraits@O@std@@SAOOH@Z
-@ stub -arch=win32 ?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ
-@ stub -arch=win64 ?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_char_length
+@ cdecl -arch=win64 ?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_char_length
 @ stub -arch=win32 ?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ
 @ stub -arch=win64 ?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ
-@ stub -arch=win32 ?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ
-@ stub -arch=win64 ?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_wchar_length
+@ cdecl -arch=win64 ?length@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_wchar_length
 @ cdecl -arch=win32 ?length@?$char_traits@D@std@@SAIPBD@Z(ptr) MSVCP_char_traits_char_length
 @ cdecl -arch=win64 ?length@?$char_traits@D@std@@SA_KPEBD@Z(ptr) MSVCP_char_traits_char_length
 @ cdecl -arch=win32 ?length@?$char_traits@G@std@@SAIPBG@Z(ptr) MSVCP_char_traits_short_length
@@ -5407,12 +5407,12 @@
 @ stub ?sin@?$_Ctraits@M@std@@SAMM@Z
 @ stub ?sin@?$_Ctraits@N@std@@SANN@Z
 @ stub ?sin@?$_Ctraits@O@std@@SAOO@Z
-@ stub -arch=win32 ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ
-@ stub -arch=win64 ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_char_length
+@ cdecl -arch=win64 ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_char_length
 @ stub -arch=win32 ?size@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ
 @ stub -arch=win64 ?size@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ
-@ stub -arch=win32 ?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ
-@ stub -arch=win64 ?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_wchar_length
+@ cdecl -arch=win64 ?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_wchar_length
 @ stub -arch=win32 ?snextc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ
 @ stub -arch=win64 ?snextc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ
 @ stub -arch=win32 ?snextc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ
