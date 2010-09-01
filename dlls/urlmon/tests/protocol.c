@@ -31,6 +31,7 @@
 
 static HRESULT (WINAPI *pCoInternetGetSession)(DWORD, IInternetSession **, DWORD);
 static HRESULT (WINAPI *pReleaseBindInfo)(BINDINFO*);
+static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -2020,7 +2021,8 @@ static void test_priority(IInternetProtocol *protocol)
     IInternetPriority_Release(priority);
 }
 
-static BOOL file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL is_first)
+static BOOL file_protocol_start(IInternetProtocol *protocol, LPCWSTR url,
+        IInternetProtocolEx *protocolex, IUri *uri, BOOL is_first)
 {
     HRESULT hres;
 
@@ -2041,12 +2043,17 @@ static BOOL file_protocol_start(IInternetProtocol *protocol, LPCWSTR url, BOOL i
 
     expect_hrResult = S_OK;
 
-    hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
-    if(hres == INET_E_RESOURCE_NOT_FOUND) {
-        win_skip("Start failed\n");
-        return FALSE;
+    if(protocolex) {
+        hres = IInternetProtocolEx_StartEx(protocolex, uri, &protocol_sink, &bind_info, 0, 0);
+        ok(hres == S_OK, "StartEx failed: %08x\n", hres);
+    }else {
+        hres = IInternetProtocol_Start(protocol, url, &protocol_sink, &bind_info, 0, 0);
+        if(hres == INET_E_RESOURCE_NOT_FOUND) {
+            win_skip("Start failed\n");
+            return FALSE;
+        }
+        ok(hres == S_OK, "Start failed: %08x\n", hres);
     }
-    ok(hres == S_OK, "Start failed: %08x\n", hres);
 
     CHECK_CALLED(GetBindInfo);
     if(!(bindf & BINDF_FROMURLMON))
@@ -2071,6 +2078,9 @@ static void test_file_protocol_url(LPCWSTR url)
     IInternetProtocolInfo *protocol_info;
     IUnknown *unk;
     IClassFactory *factory;
+    IInternetProtocol *protocol;
+    BYTE buf[512];
+    ULONG cb;
     HRESULT hres;
 
     hres = CoGetClassObject(&CLSID_FileProtocol, CLSCTX_INPROC_SERVER, NULL,
@@ -2085,80 +2095,100 @@ static void test_file_protocol_url(LPCWSTR url)
 
     hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
     ok(hres == S_OK, "Could not get IClassFactory interface\n");
+    IUnknown_Release(unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+
     if(SUCCEEDED(hres)) {
-        IInternetProtocol *protocol;
-        BYTE buf[512];
-        ULONG cb;
-        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
-        ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
-
-        if(SUCCEEDED(hres)) {
-            if(file_protocol_start(protocol, url, TRUE)) {
-                hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
-                ok(hres == S_OK, "Read failed: %08x\n", hres);
-                ok(cb == 2, "cb=%u expected 2\n", cb);
-                hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
-                ok(hres == S_FALSE, "Read failed: %08x\n", hres);
-                hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
-                ok(hres == S_FALSE, "Read failed: %08x expected S_FALSE\n", hres);
-                ok(cb == 0, "cb=%u expected 0\n", cb);
-                hres = IInternetProtocol_UnlockRequest(protocol);
-                ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
-            }
-
-            if(file_protocol_start(protocol, url, FALSE)) {
-                hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
-                ok(hres == S_FALSE, "Read failed: %08x\n", hres);
-                hres = IInternetProtocol_LockRequest(protocol, 0);
-                ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
-                hres = IInternetProtocol_UnlockRequest(protocol);
-                ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
-            }
-
-            IInternetProtocol_Release(protocol);
+        if(file_protocol_start(protocol, url, NULL, NULL, TRUE)) {
+            hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
+            ok(hres == S_OK, "Read failed: %08x\n", hres);
+            ok(cb == 2, "cb=%u expected 2\n", cb);
+            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+            ok(hres == S_FALSE, "Read failed: %08x\n", hres);
+            hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
+            ok(hres == S_FALSE, "Read failed: %08x expected S_FALSE\n", hres);
+            ok(cb == 0, "cb=%u expected 0\n", cb);
+            hres = IInternetProtocol_UnlockRequest(protocol);
+            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
         }
 
-        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
-        ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
-
-        if(SUCCEEDED(hres)) {
-            if(file_protocol_start(protocol, url, TRUE)) {
-                hres = IInternetProtocol_LockRequest(protocol, 0);
-                ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
-                hres = IInternetProtocol_Terminate(protocol, 0);
-                ok(hres == S_OK, "Terminate failed: %08x\n", hres);
-                hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
-                ok(hres == S_OK, "Read failed: %08x\n\n", hres);
-                hres = IInternetProtocol_UnlockRequest(protocol);
-                ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
-                hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
-                ok(hres == S_OK, "Read failed: %08x\n", hres);
-                hres = IInternetProtocol_Terminate(protocol, 0);
-                ok(hres == S_OK, "Terminate failed: %08x\n", hres);
-            }
-
-            IInternetProtocol_Release(protocol);
+        if(file_protocol_start(protocol, url, NULL, NULL, FALSE)) {
+            hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
+            ok(hres == S_FALSE, "Read failed: %08x\n", hres);
+            hres = IInternetProtocol_LockRequest(protocol, 0);
+            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+            hres = IInternetProtocol_UnlockRequest(protocol);
+            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
         }
 
-        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
-        ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
-
-        if(SUCCEEDED(hres)) {
-            if(file_protocol_start(protocol, url, TRUE)) {
-                hres = IInternetProtocol_Terminate(protocol, 0);
-                ok(hres == S_OK, "Terminate failed: %08x\n", hres);
-                hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
-                ok(hres == S_OK, "Read failed: %08x\n", hres);
-                ok(cb == 2, "cb=%u expected 2\n", cb);
-            }
-
-            IInternetProtocol_Release(protocol);
-        }
-
-        IClassFactory_Release(factory);
+        IInternetProtocol_Release(protocol);
     }
 
-    IUnknown_Release(unk);
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        if(file_protocol_start(protocol, url, NULL, NULL, TRUE)) {
+            hres = IInternetProtocol_LockRequest(protocol, 0);
+            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+            hres = IInternetProtocol_Terminate(protocol, 0);
+            ok(hres == S_OK, "Terminate failed: %08x\n", hres);
+            hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
+            ok(hres == S_OK, "Read failed: %08x\n\n", hres);
+            hres = IInternetProtocol_UnlockRequest(protocol);
+            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
+            hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
+            ok(hres == S_OK, "Read failed: %08x\n", hres);
+            hres = IInternetProtocol_Terminate(protocol, 0);
+            ok(hres == S_OK, "Terminate failed: %08x\n", hres);
+        }
+
+        IInternetProtocol_Release(protocol);
+    }
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        if(file_protocol_start(protocol, url, NULL, NULL, TRUE)) {
+            hres = IInternetProtocol_Terminate(protocol, 0);
+            ok(hres == S_OK, "Terminate failed: %08x\n", hres);
+            hres = IInternetProtocol_Read(protocol, buf, 2, &cb);
+            ok(hres == S_OK, "Read failed: %08x\n", hres);
+            ok(cb == 2, "cb=%u expected 2\n", cb);
+        }
+
+        IInternetProtocol_Release(protocol);
+    }
+
+    if(pCreateUri) {
+        IInternetProtocolEx *protocolex;
+        IUri *uri;
+
+        hres = pCreateUri(url, Uri_CREATE_FILE_USE_DOS_PATH, 0, &uri);
+        ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+
+        hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocolEx, (void**)&protocolex);
+        ok(hres == S_OK, "Could not get IInternetProtocolEx: %08x\n", hres);
+
+        if(file_protocol_start(NULL, NULL, protocolex, uri, TRUE)) {
+            hres = IInternetProtocolEx_Read(protocolex, buf, 2, &cb);
+            ok(hres == S_OK, "Read failed: %08x\n", hres);
+            hres = IInternetProtocolEx_LockRequest(protocolex, 0);
+            ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
+            hres = IInternetProtocolEx_UnlockRequest(protocolex);
+            ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
+        }
+
+        IUri_Release(uri);
+        IInternetProtocolEx_Release(protocolex);
+    }else {
+        win_skip("Skipping file protocol StartEx tests\n");
+    }
+
+    IClassFactory_Release(factory);
 }
 
 static void test_file_protocol_fail(void)
@@ -3061,6 +3091,7 @@ START_TEST(protocol)
     hurlmon = GetModuleHandle("urlmon.dll");
     pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");
     pReleaseBindInfo = (void*) GetProcAddress(hurlmon, "ReleaseBindInfo");
+    pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
 
     if (!pCoInternetGetSession || !pReleaseBindInfo) {
         win_skip("Various needed functions not present in IE 4.0\n");
