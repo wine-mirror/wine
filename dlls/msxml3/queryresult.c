@@ -372,7 +372,7 @@ static dispex_static_data_t queryresult_dispex = {
     queryresult_iface_tids
 };
 
-HRESULT queryresult_create(xmlNodePtr node, LPWSTR szQuery, IXMLDOMNodeList **out)
+HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **out)
 {
     queryresult *This = heap_alloc_zero(sizeof(queryresult));
     xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);

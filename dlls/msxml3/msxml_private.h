@@ -122,13 +122,13 @@ extern IUnknown         *create_doc_Implementation(void);
 extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
 extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );
 
-extern HRESULT queryresult_create( xmlNodePtr, LPWSTR, IXMLDOMNodeList ** );
+extern HRESULT queryresult_create( xmlNodePtr, LPCWSTR, IXMLDOMNodeList ** );
 
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
 
 /* helpers */
-extern xmlChar *xmlChar_from_wchar( LPWSTR str );
+extern xmlChar *xmlChar_from_wchar( LPCWSTR str );
 
 extern LONG xmldoc_add_ref( xmlDocPtr doc );
 extern LONG xmldoc_release( xmlDocPtr doc );

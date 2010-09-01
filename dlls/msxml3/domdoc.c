@@ -1361,28 +1361,42 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     BSTR tagName,
     IXMLDOMNodeList** resultList )
 {
-    static const WCHAR xpathformat[] =
-            { '/','/','*','[','l','o','c','a','l','-','n','a','m','e','(',')','=','\'','%','s','\'',']',0 };
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    LPWSTR szPattern;
     HRESULT hr;
+
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(tagName), resultList);
+
+    if (!tagName || !resultList) return E_INVALIDARG;
 
     if (tagName[0] == '*' && tagName[1] == 0)
     {
-        szPattern = heap_alloc(sizeof(WCHAR)*4);
-        szPattern[0] = szPattern[1] = '/';
-        szPattern[2] = '*';
-        szPattern[3] = 0;
+        static const WCHAR formatallW[] = {'/','/','*',0};
+        hr = queryresult_create((xmlNodePtr)get_doc(This), formatallW, resultList);
     }
     else
     {
-        szPattern = heap_alloc(sizeof(WCHAR)*(20+lstrlenW(tagName)+1));
-        wsprintfW(szPattern, xpathformat, tagName);
-    }
+        static const WCHAR xpathformat[] =
+            { '/','/','*','[','l','o','c','a','l','-','n','a','m','e','(',')','=','\'' };
+        static const WCHAR closeW[] = { '\'',']',0 };
 
-    hr = queryresult_create((xmlNodePtr)get_doc(This), szPattern, resultList);
-    heap_free(szPattern);
+        LPWSTR pattern;
+        WCHAR *ptr;
+        INT length;
+
+        length = lstrlenW(tagName);
+
+        /* without two WCHARs from format specifier */
+        ptr = pattern = heap_alloc(sizeof(xpathformat) + length*sizeof(WCHAR) + sizeof(closeW));
+
+        memcpy(ptr, xpathformat, sizeof(xpathformat));
+        ptr += sizeof(xpathformat)/sizeof(WCHAR);
+        memcpy(ptr, tagName, length*sizeof(WCHAR));
+        ptr += length;
+        memcpy(ptr, closeW, sizeof(closeW));
+
+        hr = queryresult_create((xmlNodePtr)get_doc(This), pattern, resultList);
+        heap_free(pattern);
+    }
 
     return hr;
 }

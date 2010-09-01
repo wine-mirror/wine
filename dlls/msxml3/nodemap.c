@@ -185,7 +185,7 @@ static HRESULT WINAPI xmlnodemap_Invoke(
     return hr;
 }
 
-xmlChar *xmlChar_from_wchar( LPWSTR str )
+xmlChar *xmlChar_from_wchar( LPCWSTR str )
 {
     DWORD len;
     xmlChar *xmlstr;
