@@ -219,7 +219,7 @@ test_pic_with_stream(LPSTREAM stream, unsigned int imgsize)
         if (handle)
         {
             BITMAP bmp;
-            GetObject((HGDIOBJ)handle, sizeof(BITMAP), &bmp);
+            GetObject(UlongToHandle(handle), sizeof(BITMAP), &bmp);
             todo_wine ok(bmp.bmBits != 0, "not a dib\n");
         }
 
