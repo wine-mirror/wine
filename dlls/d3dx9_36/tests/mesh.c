@@ -482,9 +482,9 @@ static void test_decl_to_fvf(const D3DVERTEXELEMENT9 *decl, DWORD expected_fvf,
     DWORD result_fvf = 0xdeadbeef;
 
     hr = D3DXFVFFromDeclarator(decl, &result_fvf);
-    todo_wine ok(hr == expected_hr,
-            "Line %u, test %u: D3DXFVFFromDeclarator returned %#x, expected %#x.\n",
-            line, test_id, hr, expected_hr);
+    ok(hr == expected_hr,
+       "Line %u, test %u: D3DXFVFFromDeclarator returned %#x, expected %#x.\n",
+       line, test_id, hr, expected_hr);
     if (SUCCEEDED(hr))
     {
         ok(expected_fvf == result_fvf, "Line %u, test %u: Got FVF %#x, expected %#x.\n",
@@ -508,6 +508,10 @@ static void test_fvf_decl_conversion(void)
             {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
             D3DDECL_END(),
         }, D3DFVF_XYZ},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0},
+            D3DDECL_END(),
+        }, D3DFVF_XYZRHW},
         {{
             {0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0},
             D3DDECL_END(),
@@ -594,6 +598,11 @@ static void test_fvf_decl_conversion(void)
             {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
             D3DDECL_END(),
         }, D3DFVF_NORMAL},
+        {{
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+            {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+            D3DDECL_END(),
+        }, D3DFVF_NORMAL | D3DFVF_DIFFUSE},
         {{
             {0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_PSIZE, 0},
             D3DDECL_END(),
@@ -751,6 +760,68 @@ static void test_fvf_decl_conversion(void)
             {0, 32, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0},
             /* 8 bytes padding */
             {0, 44, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 1},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
+    }
+    /* Elements must be ordered by offset. */
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
+    }
+    /* Basic tests for element order. */
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+            {0, 16, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
+    }
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+            {0, 4, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
+    }
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+            {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
+    }
+    /* Textures must be ordered by texcoords. */
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT1, 0, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, 4, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TEXCOORD, 2},
+            {0, 16, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 1},
+            {0, 24, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_TEXCOORD, 3},
+            D3DDECL_END(),
+        };
+        test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
+    }
+    /* Duplicate elements are not allowed. */
+    {
+        const D3DVERTEXELEMENT9 decl[] =
+        {
+            {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+            {0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
             D3DDECL_END(),
         };
         test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);

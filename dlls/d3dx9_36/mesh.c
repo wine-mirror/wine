@@ -305,9 +305,149 @@ HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD fvf, D3DVERTEXELEMENT9 declaration[MA
  */
 HRESULT WINAPI D3DXFVFFromDeclarator(const D3DVERTEXELEMENT9 *declaration, DWORD *fvf)
 {
-    FIXME("(%p, %p): stub\n", declaration, fvf);
+    unsigned int i = 0, texture, offset;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", declaration, fvf);
+
+    *fvf = 0;
+    if (declaration[0].Type == D3DDECLTYPE_FLOAT3 && declaration[0].Usage == D3DDECLUSAGE_POSITION)
+    {
+        if ((declaration[1].Type == D3DDECLTYPE_FLOAT4 && declaration[1].Usage == D3DDECLUSAGE_BLENDWEIGHT &&
+             declaration[1].UsageIndex == 0) &&
+            (declaration[2].Type == D3DDECLTYPE_FLOAT1 && declaration[2].Usage == D3DDECLUSAGE_BLENDINDICES &&
+             declaration[2].UsageIndex == 0))
+        {
+            return D3DERR_INVALIDCALL;
+        }
+        else if ((declaration[1].Type == D3DDECLTYPE_UBYTE4 || declaration[1].Type == D3DDECLTYPE_D3DCOLOR) &&
+                 declaration[1].Usage == D3DDECLUSAGE_BLENDINDICES && declaration[1].UsageIndex == 0)
+        {
+            if (declaration[1].Type == D3DDECLTYPE_UBYTE4)
+            {
+                *fvf |= D3DFVF_XYZB1 | D3DFVF_LASTBETA_UBYTE4;
+            }
+            else
+            {
+                *fvf |= D3DFVF_XYZB1 | D3DFVF_LASTBETA_D3DCOLOR;
+            }
+            i = 2;
+        }
+        else if (declaration[1].Type <= D3DDECLTYPE_FLOAT4 && declaration[1].Usage == D3DDECLUSAGE_BLENDWEIGHT &&
+                 declaration[1].UsageIndex == 0)
+        {
+            if ((declaration[2].Type == D3DDECLTYPE_UBYTE4 || declaration[2].Type == D3DDECLTYPE_D3DCOLOR) &&
+                declaration[2].Usage == D3DDECLUSAGE_BLENDINDICES && declaration[2].UsageIndex == 0)
+            {
+                if (declaration[2].Type == D3DDECLTYPE_UBYTE4)
+                {
+                    *fvf |= D3DFVF_LASTBETA_UBYTE4;
+                }
+                else
+                {
+                    *fvf |= D3DFVF_LASTBETA_D3DCOLOR;
+                }
+                switch (declaration[1].Type)
+                {
+                    case D3DDECLTYPE_FLOAT1: *fvf |= D3DFVF_XYZB2; break;
+                    case D3DDECLTYPE_FLOAT2: *fvf |= D3DFVF_XYZB3; break;
+                    case D3DDECLTYPE_FLOAT3: *fvf |= D3DFVF_XYZB4; break;
+                    case D3DDECLTYPE_FLOAT4: *fvf |= D3DFVF_XYZB5; break;
+                }
+                i = 3;
+            }
+            else
+            {
+                switch (declaration[1].Type)
+                {
+                    case D3DDECLTYPE_FLOAT1: *fvf |= D3DFVF_XYZB1; break;
+                    case D3DDECLTYPE_FLOAT2: *fvf |= D3DFVF_XYZB2; break;
+                    case D3DDECLTYPE_FLOAT3: *fvf |= D3DFVF_XYZB3; break;
+                    case D3DDECLTYPE_FLOAT4: *fvf |= D3DFVF_XYZB4; break;
+                }
+                i = 2;
+            }
+        }
+        else
+        {
+            *fvf |= D3DFVF_XYZ;
+            i = 1;
+        }
+    }
+    else if (declaration[0].Type == D3DDECLTYPE_FLOAT4 && declaration[0].Usage == D3DDECLUSAGE_POSITIONT &&
+             declaration[0].UsageIndex == 0)
+    {
+        *fvf |= D3DFVF_XYZRHW;
+        i = 1;
+    }
+
+    if (declaration[i].Type == D3DDECLTYPE_FLOAT3 && declaration[i].Usage == D3DDECLUSAGE_NORMAL)
+    {
+        *fvf |= D3DFVF_NORMAL;
+        i++;
+    }
+    if (declaration[i].Type == D3DDECLTYPE_FLOAT1 && declaration[i].Usage == D3DDECLUSAGE_PSIZE &&
+        declaration[i].UsageIndex == 0)
+    {
+        *fvf |= D3DFVF_PSIZE;
+        i++;
+    }
+    if (declaration[i].Type == D3DDECLTYPE_D3DCOLOR && declaration[i].Usage == D3DDECLUSAGE_COLOR &&
+        declaration[i].UsageIndex == 0)
+    {
+        *fvf |= D3DFVF_DIFFUSE;
+        i++;
+    }
+    if (declaration[i].Type == D3DDECLTYPE_D3DCOLOR && declaration[i].Usage == D3DDECLUSAGE_COLOR &&
+        declaration[i].UsageIndex == 1)
+    {
+        *fvf |= D3DFVF_SPECULAR;
+        i++;
+    }
+
+    for (texture = 0; texture < D3DDP_MAXTEXCOORD; i++, texture++)
+    {
+        if (declaration[i].Stream == 0xFF)
+        {
+            break;
+        }
+        else if (declaration[i].Type == D3DDECLTYPE_FLOAT1 && declaration[i].Usage == D3DDECLUSAGE_TEXCOORD &&
+                 declaration[i].UsageIndex == texture)
+        {
+            *fvf |= D3DFVF_TEXCOORDSIZE1(declaration[i].UsageIndex);
+        }
+        else if (declaration[i].Type == D3DDECLTYPE_FLOAT2 && declaration[i].Usage == D3DDECLUSAGE_TEXCOORD &&
+                 declaration[i].UsageIndex == texture)
+        {
+            *fvf |= D3DFVF_TEXCOORDSIZE2(declaration[i].UsageIndex);
+        }
+        else if (declaration[i].Type == D3DDECLTYPE_FLOAT3 && declaration[i].Usage == D3DDECLUSAGE_TEXCOORD &&
+                 declaration[i].UsageIndex == texture)
+        {
+            *fvf |= D3DFVF_TEXCOORDSIZE3(declaration[i].UsageIndex);
+        }
+        else if (declaration[i].Type == D3DDECLTYPE_FLOAT4 && declaration[i].Usage == D3DDECLUSAGE_TEXCOORD &&
+                 declaration[i].UsageIndex == texture)
+        {
+            *fvf |= D3DFVF_TEXCOORDSIZE4(declaration[i].UsageIndex);
+        }
+        else
+        {
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
+    *fvf |= (texture << D3DFVF_TEXCOUNT_SHIFT);
+
+    for (offset = 0, i = 0; declaration[i].Stream != 0xFF;
+         offset += d3dx_decltype_size[declaration[i].Type], i++)
+    {
+        if (declaration[i].Offset != offset)
+        {
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
+    return D3D_OK;
 }
 
 /*************************************************************************
