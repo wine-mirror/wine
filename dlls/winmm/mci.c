@@ -123,15 +123,11 @@ static UINT MCI_GetDriverFromString(LPCWSTR lpstrName)
 
     EnterCriticalSection(&WINMM_cs);
     for (wmd = MciDrivers; wmd; wmd = wmd->lpNext) {
-	if (wmd->lpstrElementName && strcmpW(wmd->lpstrElementName, lpstrName) == 0) {
+	if (wmd->lpstrAlias && strcmpiW(wmd->lpstrAlias, lpstrName) == 0) {
 	    ret = wmd->wDeviceID;
 	    break;
 	}
 	if (wmd->lpstrDeviceType && strcmpiW(wmd->lpstrDeviceType, lpstrName) == 0) {
-	    ret = wmd->wDeviceID;
-	    break;
-	}
-	if (wmd->lpstrAlias && strcmpiW(wmd->lpstrAlias, lpstrName) == 0) {
 	    ret = wmd->wDeviceID;
 	    break;
 	}
@@ -770,7 +766,6 @@ static	BOOL	MCI_UnLoadMciDriver(LPWINE_MCIDRIVER wmd)
 
     HeapFree(GetProcessHeap(), 0, wmd->lpstrDeviceType);
     HeapFree(GetProcessHeap(), 0, wmd->lpstrAlias);
-    HeapFree(GetProcessHeap(), 0, wmd->lpstrElementName);
 
     HeapFree(GetProcessHeap(), 0, wmd);
     return TRUE;
@@ -888,15 +883,23 @@ static DWORD MCI_SendCommandFrom32(MCIDEVICEID wDevID, UINT16 wMsg, DWORD_PTR dw
 static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSW lpParms,
 			       DWORD dwParam)
 {
-    if (dwParam & MCI_OPEN_ELEMENT)
-    {
-        wmd->lpstrElementName = HeapAlloc(GetProcessHeap(),0,(strlenW(lpParms->lpstrElementName)+1) * sizeof(WCHAR));
-        strcpyW( wmd->lpstrElementName, lpParms->lpstrElementName );
+    LPCWSTR alias = NULL;
+    /* Open always defines an alias for further reference */
+    if (dwParam & MCI_OPEN_ALIAS)           /* open ... alias */
+        alias = lpParms->lpstrAlias;
+    else {
+        if ((dwParam & MCI_OPEN_ELEMENT)    /* open file.wav */
+            && !(dwParam & MCI_OPEN_ELEMENT_ID))
+            alias = lpParms->lpstrElementName;
+        else if (dwParam & MCI_OPEN_TYPE )  /* open cdaudio */
+            alias = wmd->lpstrDeviceType;
     }
-    if (dwParam & MCI_OPEN_ALIAS)
-    {
-        wmd->lpstrAlias = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpParms->lpstrAlias)+1) * sizeof(WCHAR));
-        strcpyW( wmd->lpstrAlias, lpParms->lpstrAlias);
+    if (alias) {
+        wmd->lpstrAlias = HeapAlloc(GetProcessHeap(), 0, (strlenW(alias)+1) * sizeof(WCHAR));
+        if (!wmd->lpstrAlias) return MCIERR_OUT_OF_MEMORY;
+        strcpyW( wmd->lpstrAlias, alias);
+        /* In most cases, natives adds MCI_OPEN_ALIAS to the flags passed to the driver.
+         * Don't.  The drivers don't care about the winmm alias. */
     }
     lpParms->wDeviceID = wmd->wDeviceID;
 

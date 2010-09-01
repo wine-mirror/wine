@@ -95,7 +95,6 @@ typedef struct {
 typedef struct tagWINE_MCIDRIVER {
         UINT			wDeviceID;
         UINT			wType;
-	LPWSTR			lpstrElementName;
         LPWSTR			lpstrDeviceType;
         LPWSTR			lpstrAlias;
         HDRVR			hDriver;

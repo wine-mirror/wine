@@ -644,7 +644,7 @@ static void test_asyncWAVE(HWND hwnd)
 
     /* Only the alias is looked up. */
     err = mciGetDeviceID("tempfile.wav");
-    todo_wine ok(err==0,"mciGetDeviceID element returned %u, expected 0\n", err);
+    ok(err==0,"mciGetDeviceID element returned %u, expected 0\n", err);
 
     err = mciGetDeviceID("waveaudio");
     todo_wine ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
