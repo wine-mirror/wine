@@ -1049,9 +1049,8 @@ static HRESULT WINAPI domdoc_get_documentElement(
     IXMLDOMElement** DOMElement )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    xmlDocPtr xmldoc = NULL;
-    xmlNodePtr root = NULL;
     IXMLDOMNode *element_node;
+    xmlNodePtr root;
     HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, DOMElement);
@@ -1061,16 +1060,14 @@ static HRESULT WINAPI domdoc_get_documentElement(
 
     *DOMElement = NULL;
 
-    xmldoc = get_doc( This );
-
-    root = xmlDocGetRootElement( xmldoc );
+    root = xmlDocGetRootElement( get_doc(This) );
     if ( !root )
         return S_FALSE;
 
     element_node = create_node( root );
     if(!element_node) return S_FALSE;
 
-    hr = IXMLDOMNode_QueryInterface(element_node, &IID_IXMLDOMElement, (LPVOID*)DOMElement);
+    hr = IXMLDOMNode_QueryInterface(element_node, &IID_IXMLDOMElement, (void**)DOMElement);
     IXMLDOMNode_Release(element_node);
 
     return hr;

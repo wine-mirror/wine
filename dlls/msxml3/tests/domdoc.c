@@ -2271,6 +2271,7 @@ static void test_getElementsByTagName(void)
 {
     IXMLDOMNodeList *node_list;
     IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
     WCHAR buff[100];
     VARIANT_BOOL b;
     HRESULT r;
@@ -2345,6 +2346,40 @@ static void test_getElementsByTagName(void)
     ok( len == 0, "len %d\n", len );
     IXMLDOMNodeList_Release( node_list );
     SysFreeString( str );
+
+    /* test for element */
+    r = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok( r == S_OK, "ret %08x\n", r );
+
+    str = SysAllocString( szstar );
+
+    /* null arguments cases */
+    r = IXMLDOMElement_getElementsByTagName(elem, NULL, &node_list);
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+    r = IXMLDOMElement_getElementsByTagName(elem, str, NULL);
+    ok( r == E_INVALIDARG, "ret %08x\n", r );
+
+    r = IXMLDOMElement_getElementsByTagName(elem, str, &node_list);
+    ok( r == S_OK, "ret %08x\n", r );
+    r = IXMLDOMNodeList_get_length( node_list, &len );
+    ok( r == S_OK, "ret %08x\n", r );
+    todo_wine ok( len == 5, "len %d\n", len );
+
+    IXMLDOMNodeList_Release( node_list );
+    SysFreeString( str );
+
+    /* broken query BSTR */
+    memcpy(&buff[2], szstar, sizeof(szstar));
+    /* just a big length */
+    *(DWORD*)buff = 0xf0f0;
+    r = IXMLDOMElement_getElementsByTagName(elem, &buff[2], &node_list);
+    ok( r == S_OK, "ret %08x\n", r );
+    r = IXMLDOMNodeList_get_length( node_list, &len );
+    ok( r == S_OK, "ret %08x\n", r );
+    todo_wine ok( len == 5, "len %d\n", len );
+    IXMLDOMNodeList_Release( node_list );
+
+    IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release( doc );
 }

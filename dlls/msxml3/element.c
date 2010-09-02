@@ -669,38 +669,47 @@ static HRESULT WINAPI domelem_removeAttributeNode(
 
 static HRESULT WINAPI domelem_getElementsByTagName(
     IXMLDOMElement *iface,
-    BSTR bstrName, IXMLDOMNodeList** resultList)
+    BSTR tagName, IXMLDOMNodeList** resultList)
 {
-    static const WCHAR xpathformat[] =
-            { '.','/','/','*','[','l','o','c','a','l','-','n','a','m','e','(',')','=','\'','%','s','\'',']',0 };
     domelem *This = impl_from_IXMLDOMElement( iface );
-    LPWSTR szPattern;
     xmlNodePtr element;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrName), resultList);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(tagName), resultList);
 
-    if (bstrName[0] == '*' && bstrName[1] == 0)
+    if (!tagName || !resultList) return E_INVALIDARG;
+    if (!(element = get_element(This))) return E_FAIL;
+
+    if (tagName[0] == '*' && tagName[1] == 0)
     {
-        szPattern = heap_alloc(sizeof(WCHAR)*5);
-        szPattern[0] = '.';
-        szPattern[1] = szPattern[2] = '/';
-        szPattern[3] = '*';
-        szPattern[4] = 0;
+        static const WCHAR formatallW[] = {'/','/','*',0};
+        hr = queryresult_create(element, formatallW, resultList);
     }
     else
     {
-        szPattern = heap_alloc(sizeof(WCHAR)*(21+lstrlenW(bstrName)+1));
-        wsprintfW(szPattern, xpathformat, bstrName);
-    }
-    TRACE("%s\n", debugstr_w(szPattern));
+        static const WCHAR xpathformat[] =
+            { '/','/','*','[','l','o','c','a','l','-','n','a','m','e','(',')','=','\'' };
+        static const WCHAR closeW[] = { '\'',']',0 };
 
-    element = get_element(This);
-    if (!element)
-        hr = E_FAIL;
-    else
-        hr = queryresult_create(element, szPattern, resultList);
-    heap_free(szPattern);
+        LPWSTR pattern;
+        WCHAR *ptr;
+        INT length;
+
+        length = lstrlenW(tagName);
+
+        /* without two WCHARs from format specifier */
+        ptr = pattern = heap_alloc(sizeof(xpathformat) + length*sizeof(WCHAR) + sizeof(closeW));
+
+        memcpy(ptr, xpathformat, sizeof(xpathformat));
+        ptr += sizeof(xpathformat)/sizeof(WCHAR);
+        memcpy(ptr, tagName, length*sizeof(WCHAR));
+        ptr += length;
+        memcpy(ptr, closeW, sizeof(closeW));
+
+        TRACE("%s\n", debugstr_w(pattern));
+        hr = queryresult_create(element, pattern, resultList);
+        heap_free(pattern);
+    }
 
     return hr;
 }
