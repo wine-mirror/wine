@@ -901,6 +901,9 @@ UINT MSI_DatabaseGetPrimaryKeys( MSIDATABASE *db,
     MSIQUERY *query = NULL;
     UINT r;
 
+    if (!TABLE_Exists( db, table ))
+        return ERROR_INVALID_TABLE;
+
     r = MSI_OpenQuery( db, &query, sql, table );
     if( r != ERROR_SUCCESS )
         return r;
