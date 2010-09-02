@@ -424,6 +424,87 @@ static void test_invisible_create(void)
     DestroyWindow(hwnd_owndc);
 }
 
+static void test_dc_layout(void)
+{
+    DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
+    DWORD (WINAPI *pGetLayout)(HDC hdc);
+    HWND hwnd_cache_rtl, hwnd_owndc_rtl, hwnd_classdc_rtl, hwnd_classdc2_rtl;
+    HDC hdc;
+    DWORD layout;
+    HMODULE mod = GetModuleHandleA("gdi32.dll");
+
+    pGetLayout = (void *)GetProcAddress( mod, "GetLayout" );
+    pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
+    if (!pGetLayout || !pSetLayout)
+    {
+        win_skip( "Don't have SetLayout\n" );
+        return;
+    }
+
+    hdc = GetDC( hwnd_cache );
+    pSetLayout( hdc, LAYOUT_RTL );
+    layout = pGetLayout( hdc );
+    ReleaseDC( hwnd_cache, hdc );
+    if (!layout)
+    {
+        win_skip( "SetLayout not supported\n" );
+        return;
+    }
+
+    hwnd_cache_rtl = CreateWindowExA(WS_EX_LAYOUTRTL, "cache_class", NULL, WS_OVERLAPPED | WS_VISIBLE,
+                                     0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+    hwnd_owndc_rtl = CreateWindowExA(WS_EX_LAYOUTRTL, "owndc_class", NULL, WS_OVERLAPPED | WS_VISIBLE,
+                                     0, 200, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+    hwnd_classdc_rtl = CreateWindowExA(WS_EX_LAYOUTRTL, "classdc_class", NULL, WS_OVERLAPPED | WS_VISIBLE,
+                                       200, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+    hwnd_classdc2_rtl = CreateWindowExA(WS_EX_LAYOUTRTL, "classdc_class", NULL, WS_OVERLAPPED | WS_VISIBLE,
+                                        200, 200, 100, 100, 0, 0, GetModuleHandleA(0), NULL );
+    hdc = GetDC( hwnd_cache_rtl );
+    layout = pGetLayout( hdc );
+
+    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    pSetLayout( hdc, 0 );
+    ReleaseDC( hwnd_cache_rtl, hdc );
+    hdc = GetDC( hwnd_owndc_rtl );
+    layout = pGetLayout( hdc );
+    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ReleaseDC( hwnd_cache_rtl, hdc );
+
+    hdc = GetDC( hwnd_cache );
+    layout = pGetLayout( hdc );
+    ok( layout == 0, "wrong layout %x\n", layout );
+    ReleaseDC( hwnd_cache, hdc );
+
+    hdc = GetDC( hwnd_owndc_rtl );
+    layout = pGetLayout( hdc );
+    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    pSetLayout( hdc, 0 );
+    ReleaseDC( hwnd_owndc_rtl, hdc );
+    hdc = GetDC( hwnd_owndc_rtl );
+    layout = pGetLayout( hdc );
+    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ReleaseDC( hwnd_owndc_rtl, hdc );
+
+    hdc = GetDC( hwnd_classdc_rtl );
+    layout = pGetLayout( hdc );
+    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    pSetLayout( hdc, 0 );
+    ReleaseDC( hwnd_classdc_rtl, hdc );
+    hdc = GetDC( hwnd_classdc2_rtl );
+    layout = pGetLayout( hdc );
+    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ReleaseDC( hwnd_classdc2_rtl, hdc );
+    hdc = GetDC( hwnd_classdc );
+    layout = pGetLayout( hdc );
+    ok( layout == LAYOUT_RTL, "wrong layout %x\n", layout );
+    ReleaseDC( hwnd_classdc_rtl, hdc );
+
+    DestroyWindow(hwnd_classdc2_rtl);
+    DestroyWindow(hwnd_classdc_rtl);
+    DestroyWindow(hwnd_owndc_rtl);
+    DestroyWindow(hwnd_cache_rtl);
+}
+
 static void test_destroyed_window(void)
 {
     HDC dc;
@@ -480,6 +561,7 @@ START_TEST(dce)
     test_dc_visrgn();
     test_begin_paint();
     test_invisible_create();
+    test_dc_layout();
 
     DestroyWindow(hwnd_classdc2);
     DestroyWindow(hwnd_classdc);
