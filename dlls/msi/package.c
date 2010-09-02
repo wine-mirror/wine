@@ -686,6 +686,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szIntel[] = { 'I','n','t','e','l',0 };
     static const WCHAR szMsiAMD64[] = { 'M','s','i','A','M','D','6','4',0 };
     static const WCHAR szMsix64[] = { 'M','s','i','x','6','4',0 };
+    static const WCHAR szSystem64Folder[] = { 'S','y','s','t','e','m','6','4','F','o','l','d','e','r',0 };
     static const WCHAR szUserInfo[] = {
         'S','O','F','T','W','A','R','E','\\',
         'M','i','c','r','o','s','o','f','t','\\',
@@ -852,6 +853,9 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         sprintfW( bufstr, szIntFormat, sys_info.wProcessorLevel );
         msi_set_property( package->db, szMsiAMD64, bufstr );
         msi_set_property( package->db, szMsix64, bufstr );
+
+        GetSystemDirectoryW( pth, MAX_PATH );
+        msi_set_property( package->db, szSystem64Folder, pth );
     }
 
     /* Screen properties. */
