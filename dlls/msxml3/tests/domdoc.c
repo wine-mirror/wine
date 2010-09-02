@@ -872,7 +872,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* test insertData */
@@ -913,7 +913,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* delete data */
@@ -948,7 +948,7 @@ if (0)
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
         /* whitespace preserving needs to be handled here */
-        todo_wine ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+        todo_wine ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* delete from end */
@@ -961,7 +961,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        todo_wine ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append") ), "incorrect get_text string\n");
+        todo_wine ok( !lstrcmpW( str, _bstr_("This &is a Middle; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* delete from inside */
@@ -974,7 +974,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        todo_wine ok( !lstrcmpW( str, _bstr_("") ), "incorrect get_text string\n");
+        todo_wine ok( !lstrcmpW( str, _bstr_("") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* delete whole data ... */
@@ -996,7 +996,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, szstr1 ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, szstr1 ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* test put_data */
@@ -1008,7 +1008,7 @@ if (0)
 
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("99") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("99") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* ::replaceData() */
@@ -1022,14 +1022,14 @@ if (0)
         ok(r == E_INVALIDARG, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         r = IXMLDOMText_replaceData(nodetext, 0, 0, NULL);
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* NULL pointer means delete */
@@ -1037,7 +1037,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* empty string means delete */
@@ -1045,7 +1045,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* zero count means insert */
@@ -1053,7 +1053,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         r = IXMLDOMText_replaceData(nodetext, 0, 2, NULL);
@@ -1063,7 +1063,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* nonempty string, count greater than its length */
@@ -1071,7 +1071,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         /* nonempty string, count less than its length */
@@ -1079,7 +1079,7 @@ if (0)
         ok(r == S_OK, "ret %08x\n", r );
         r = IXMLDOMText_get_text(nodetext, &str);
         ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string\n");
+        ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
         SysFreeString(str);
 
         IXMLDOMText_Release( nodetext );
@@ -3550,7 +3550,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* test insertData */
@@ -3591,7 +3591,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete data */
@@ -3625,7 +3625,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete from end */
@@ -3638,7 +3638,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append ") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete from inside */
@@ -3651,7 +3651,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("  ") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("  ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete whole data ... */
@@ -3675,14 +3675,14 @@ static void test_xmlTypes(void)
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 hr = IXMLDOMComment_replaceData(pComment, 0, 0, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* NULL pointer means delete */
@@ -3690,7 +3690,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* empty string means delete */
@@ -3698,7 +3698,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* zero count means insert */
@@ -3706,7 +3706,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 hr = IXMLDOMComment_replaceData(pComment, 0, 2, NULL);
@@ -3716,7 +3716,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* nonempty string, count greater than its length */
@@ -3724,7 +3724,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* nonempty string, count less than its length */
@@ -3732,7 +3732,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMComment_get_text(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 IXMLDOMComment_Release(pComment);
@@ -4050,7 +4050,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\Append") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* test insertData */
@@ -4091,7 +4091,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("Begin This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete data */
@@ -4125,7 +4125,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append End") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append End") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete from end */
@@ -4138,7 +4138,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append ") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_(" This &is a Middle; test <>\\Append ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete from inside */
@@ -4151,7 +4151,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("  ") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("  ") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* delete whole data ... */
@@ -4176,14 +4176,14 @@ static void test_xmlTypes(void)
                 ok(hr == E_INVALIDARG, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 0, NULL);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("str1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* NULL pointer means delete */
@@ -4191,7 +4191,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("tr1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* empty string means delete */
@@ -4199,7 +4199,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("r1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* zero count means insert */
@@ -4207,7 +4207,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("ar1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 hr = IXMLDOMCDATASection_replaceData(pCDataSec, 0, 2, NULL);
@@ -4217,7 +4217,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("m1") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* nonempty string, count greater than its length */
@@ -4225,7 +4225,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("a1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 /* nonempty string, count less than its length */
@@ -4233,7 +4233,7 @@ static void test_xmlTypes(void)
                 ok(hr == S_OK, "ret %08x\n", hr );
                 hr = IXMLDOMCDATASection_get_text(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string\n");
+                ok( !lstrcmpW( str, _bstr_("wine1.2") ), "incorrect get_text string, got '%s'\n", wine_dbgstr_w(str) );
                 SysFreeString(str);
 
                 IXMLDOMCDATASection_Release(pCDataSec);
