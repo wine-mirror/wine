@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define NB_USER_HANDLES  ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
 #define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
 
+static DWORD process_layout;
+
 /**********************************************************************/
 
 /* helper for Get/SetWindowLong */
@@ -1199,6 +1201,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         if (className != (LPCWSTR)DESKTOP_CLASS_ATOM &&
             (IS_INTRESOURCE(className) || strcmpiW( className, messageW )))
             parent = GetDesktopWindow();
+        if (process_layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
     }
 
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
@@ -3483,6 +3486,36 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
     info.prcDirty = NULL;
     return UpdateLayeredWindowIndirect( hwnd, &info );
 }
+
+
+/******************************************************************************
+ *                    GetProcessDefaultLayout [USER32.@]
+ *
+ * Gets the default layout for parentless windows.
+ */
+BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
+{
+    if (!layout)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+    *layout = process_layout;
+    return TRUE;
+}
+
+
+/******************************************************************************
+ *                    SetProcessDefaultLayout [USER32.@]
+ *
+ * Sets the default layout for parentless windows.
+ */
+BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
+{
+    process_layout = layout;
+    return TRUE;
+}
+
 
 /* 64bit versions */
 

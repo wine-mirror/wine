@@ -53,6 +53,8 @@ static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static int  (WINAPI *pGetWindowRgnBox)(HWND,LPRECT);
 static BOOL (WINAPI *pGetGUIThreadInfo)(DWORD, GUITHREADINFO*);
+static BOOL (WINAPI *pGetProcessDefaultLayout)( DWORD *layout );
+static BOOL (WINAPI *pSetProcessDefaultLayout)( DWORD layout );
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 static DWORD (WINAPI *pGetLayout)(HDC hdc);
 
@@ -4853,6 +4855,43 @@ static void test_CreateWindow(void)
             ok( hwnd != 0, "creation failed err %u\n", GetLastError());
             expect_ex_style( hwnd, 0 );
             DestroyWindow( hwnd );
+
+            if (pGetProcessDefaultLayout && pSetProcessDefaultLayout)
+            {
+                DWORD layout;
+
+                SetLastError( 0xdeadbeef );
+                ok( !pGetProcessDefaultLayout( NULL ), "GetProcessDefaultLayout succeeded\n" );
+                ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
+                SetLastError( 0xdeadbeef );
+                ok( pGetProcessDefaultLayout( &layout ),
+                    "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+                ok( layout == 0, "GetProcessDefaultLayout wrong layout %x\n", layout );
+                SetLastError( 0xdeadbeef );
+                ok( pSetProcessDefaultLayout( 7 ),
+                    "SetProcessDefaultLayout failed err %u\n", GetLastError ());
+                ok( pGetProcessDefaultLayout( &layout ),
+                    "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+                ok( layout == 7, "GetProcessDefaultLayout wrong layout %x\n", layout );
+                SetLastError( 0xdeadbeef );
+                ok( pSetProcessDefaultLayout( LAYOUT_RTL ),
+                    "SetProcessDefaultLayout failed err %u\n", GetLastError ());
+                ok( pGetProcessDefaultLayout( &layout ),
+                    "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+                ok( layout == LAYOUT_RTL, "GetProcessDefaultLayout wrong layout %x\n", layout );
+                hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
+                                      0, 0, 100, 100, 0, 0, 0, NULL);
+                ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+                expect_ex_style( hwnd, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL );
+                DestroyWindow( hwnd );
+                hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
+                                      0, 0, 100, 100, parent, 0, 0, NULL);
+                ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+                expect_ex_style( hwnd, WS_EX_APPWINDOW );
+                DestroyWindow( hwnd );
+                pSetProcessDefaultLayout( 0 );
+            }
+            else win_skip( "SetProcessDefaultLayout not supported\n" );
         }
         else win_skip( "SetLayout not supported\n" );
     }
@@ -6086,6 +6125,8 @@ START_TEST(win)
     pMonitorFromPoint = (void *)GetProcAddress( user32,  "MonitorFromPoint" );
     pGetWindowRgnBox = (void *)GetProcAddress( user32, "GetWindowRgnBox" );
     pGetGUIThreadInfo = (void *)GetProcAddress( user32, "GetGUIThreadInfo" );
+    pGetProcessDefaultLayout = (void *)GetProcAddress( user32, "GetProcessDefaultLayout" );
+    pSetProcessDefaultLayout = (void *)GetProcAddress( user32, "SetProcessDefaultLayout" );
     pGetLayout = (void *)GetProcAddress( gdi32, "GetLayout" );
     pSetLayout = (void *)GetProcAddress( gdi32, "SetLayout" );
 
