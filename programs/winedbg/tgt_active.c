@@ -778,7 +778,7 @@ void	dbg_run_debuggee(const char* args)
 {
     if (args)
     {
-        WINE_FIXME("Re-running current program with %s as args is broken\n", args);
+        WINE_FIXME("Re-running current program with %s as args is broken\n", wine_dbgstr_a(args));
         return;
     }
     else 
