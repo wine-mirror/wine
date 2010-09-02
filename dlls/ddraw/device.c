@@ -2492,6 +2492,12 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             hr = E_NOTIMPL;
             break;
 
+        case D3DRENDERSTATE_TEXTUREHANDLE:
+        case D3DRENDERSTATE_TEXTUREMAPBLEND:
+            WARN("Render state %#x is invalid in d3d7.\n", RenderStateType);
+            hr = DDERR_INVALIDPARAMS;
+            break;
+
         default:
             if (RenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00
                     && RenderStateType <= D3DRENDERSTATE_STIPPLEPATTERN31)
@@ -2800,6 +2806,12 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
              * state. Needs tests. */
             FIXME("Unhandled render state D3DRENDERSTATE_BORDERCOLOR.\n");
             hr = E_NOTIMPL;
+            break;
+
+        case D3DRENDERSTATE_TEXTUREHANDLE:
+        case D3DRENDERSTATE_TEXTUREMAPBLEND:
+            WARN("Render state %#x is invalid in d3d7.\n", RenderStateType);
+            hr = DDERR_INVALIDPARAMS;
             break;
 
         default:
