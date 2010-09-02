@@ -2431,7 +2431,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
         /* Handled by the state manager */
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TRANSFORM(d3dts));
+    if (d3dts < WINED3DTS_WORLDMATRIX(This->adapter->gl_info.limits.blends))
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TRANSFORM(d3dts));
+
     return WINED3D_OK;
 
 }
