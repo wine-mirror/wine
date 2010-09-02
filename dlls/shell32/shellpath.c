@@ -40,6 +40,7 @@
 #include "winuser.h"
 
 #include "shlobj.h"
+#include "shtypes.h"
 #include "shresdef.h"
 #include "shell32_main.h"
 #include "undocshell.h"
@@ -2501,4 +2502,13 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
 
     hr = SHGetFolderLocation(hwndOwner, nFolder, NULL, 0, ppidl);
     return hr;
+}
+
+/*************************************************************************
+ * SHGetKnownFolderPath           [SHELL32.@]
+ */
+HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE token, PWSTR *path)
+{
+    FIXME("(%s, %d, %p, %p) stub!\n", debugstr_guid(rfid), flags, token, path);
+    return E_NOTIMPL;
 }
