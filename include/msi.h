@@ -663,6 +663,12 @@ UINT WINAPI MsiApplyMultiplePatchesA(LPCSTR, LPCSTR, LPCSTR);
 UINT WINAPI MsiApplyMultiplePatchesW(LPCWSTR, LPCWSTR, LPCWSTR);
 #define     MsiApplyMultiplePatches WINELIB_NAME_AW(MsiApplyMultiplePatches)
 
+UINT WINAPI MsiBeginTransactionA(LPCSTR, DWORD, MSIHANDLE *, HANDLE *);
+UINT WINAPI MsiBeginTransactionW(LPCWSTR, DWORD, MSIHANDLE *, HANDLE *);
+#define     MsiBeginTransaction WINELIB_NAME_AW(MsiBeginTransaction)
+
+UINT WINAPI MsiEndTransaction(DWORD);
+
 /* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
 UINT WINAPI MsiCloseAllHandles(void);

@@ -277,9 +277,9 @@
 281 stdcall MsiSetExternalUIRecord(ptr long ptr ptr)
 282 stub MsiGetPatchFileListA
 283 stub MsiGetPatchFileListW
-284 stub MsiBeginTransactionA
-285 stub MsiBeginTransactionW
-286 stub MsiEndTransaction
+284 stdcall MsiBeginTransactionA(str long ptr ptr)
+285 stdcall MsiBeginTransactionW(wstr long ptr ptr)
+286 stdcall MsiEndTransaction(long)
 287 stub MsiJoinTransaction
 288 stub MsiSetOfflineContextW
 289 stub MsiEnumComponentsExA
