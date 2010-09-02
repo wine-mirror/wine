@@ -41,6 +41,7 @@ static BOOL (WINAPI *pOpenProcessToken)( HANDLE, DWORD, PHANDLE );
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static LONG (WINAPI *pRegDeleteKeyExW)(HKEY, LPCWSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static void (WINAPI *pGetSystemInfo)(LPSYSTEM_INFO);
 
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
@@ -63,6 +64,7 @@ static void init_functionpointers(void)
     GET_PROC(hadvapi32, RegDeleteKeyExA)
     GET_PROC(hadvapi32, RegDeleteKeyExW)
     GET_PROC(hkernel32, IsWow64Process)
+    GET_PROC(hkernel32, GetSystemInfo)
 
     hsrclient = LoadLibraryA("srclient.dll");
     GET_PROC(hsrclient, SRRemoveRestorePoint);
@@ -9550,6 +9552,7 @@ static void test_installprops(void)
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
     BOOL wow64;
+    SYSTEM_INFO si;
 
     if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
         access |= KEY_WOW64_64KEY;
@@ -9659,6 +9662,31 @@ static void test_installprops(void)
     size = MAX_PATH;
     r = MsiGetProperty(hpkg, "ScreenY", buf, &size);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
+
+    if (pGetSystemInfo)
+    {
+        pGetSystemInfo(&si);
+        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+        {
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            ok(buf[0], "property not set\n");
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "Msix64", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            ok(buf[0], "property not set\n");
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "System64Folder", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            ok(buf[0], "property not set\n");
+        }
+    }
 
     CloseHandle(hkey1);
     CloseHandle(hkey2);
