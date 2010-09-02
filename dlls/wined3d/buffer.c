@@ -686,6 +686,7 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_inf
     return This->resource.allocatedMemory;
 }
 
+/* Do not call while under the GL lock. */
 static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
@@ -724,6 +725,7 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
     resource_unload((IWineD3DResourceImpl *)This);
 }
 
+/* Do not call while under the GL lock. */
 static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
@@ -921,6 +923,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
         LEAVE_GL();
 }
 
+/* Do not call while under the GL lock. */
 static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;

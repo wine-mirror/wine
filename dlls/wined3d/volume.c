@@ -123,6 +123,7 @@ static ULONG WINAPI IWineD3DVolumeImpl_AddRef(IWineD3DVolume *iface) {
     return InterlockedIncrement(&This->resource.ref);
 }
 
+/* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     ULONG ref;
@@ -166,10 +167,12 @@ static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface) {
     return resource_get_priority((IWineD3DResource *)iface);
 }
 
+/* Do not call while under the GL lock. */
 static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
     FIXME("iface %p stub!\n", iface);
 }
 
+/* Do not call while under the GL lock. */
 static void WINAPI IWineD3DVolumeImpl_UnLoad(IWineD3DVolume *iface)
 {
     TRACE("iface %p.\n", iface);

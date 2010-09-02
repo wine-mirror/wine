@@ -53,7 +53,9 @@ ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface) {
     return refCount;
 }
 
-ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface) {
+/* Do not call while under the GL lock. */
+ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface)
+{
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
     DWORD refCount;
     refCount = InterlockedDecrement(&This->ref);

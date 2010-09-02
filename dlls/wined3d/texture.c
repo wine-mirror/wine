@@ -27,6 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
+/* Do not call while under the GL lock. */
 static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb)
 {
     /* Override the IWineD3DResource PreLoad method. */
@@ -155,6 +156,7 @@ static ULONG WINAPI IWineD3DTextureImpl_AddRef(IWineD3DTexture *iface) {
     return InterlockedIncrement(&This->resource.ref);
 }
 
+/* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     ULONG ref;
@@ -193,10 +195,12 @@ static DWORD WINAPI IWineD3DTextureImpl_GetPriority(IWineD3DTexture *iface) {
     return resource_get_priority((IWineD3DResource *)iface);
 }
 
+/* Do not call while under the GL lock. */
 static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     texture_internal_preload((IWineD3DBaseTexture *) iface, SRGB_ANY);
 }
 
+/* Do not call while under the GL lock. */
 static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {
     unsigned int i;
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;

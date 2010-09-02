@@ -833,6 +833,7 @@ err:
     context->valid = 0;
 }
 
+/* Do not call while under the GL lock. */
 static void context_validate(struct wined3d_context *context)
 {
     HWND wnd = WindowFromDC(context->hdc);
@@ -848,6 +849,7 @@ static void context_validate(struct wined3d_context *context)
         context_update_window(context);
 }
 
+/* Do not call while under the GL lock. */
 static void context_destroy_gl_resources(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -980,6 +982,7 @@ struct wined3d_context *context_get_current(void)
     return TlsGetValue(wined3d_context_tls_idx);
 }
 
+/* Do not call while under the GL lock. */
 BOOL context_set_current(struct wined3d_context *ctx)
 {
     struct wined3d_context *old = context_get_current();
@@ -1264,18 +1267,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     return iPixelFormat;
 }
 
-/*****************************************************************************
- * context_create
- *
- * Creates a new context.
- *
- * * Params:
- *  This: Device to activate the context for
- *  target: Surface this context will render to
- *  win_handle: handle to the window which we are drawing to
- *  pPresentParameters: contains the pixelformats to use for onscreen rendering
- *
- *****************************************************************************/
+/* Do not call while under the GL lock. */
 struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
         IWineD3DSurfaceImpl *target, const struct wined3d_format *ds_format)
 {
@@ -1597,16 +1589,7 @@ out:
     return NULL;
 }
 
-/*****************************************************************************
- * context_destroy
- *
- * Destroys a wined3d context
- *
- * Params:
- *  This: Device to activate the context for
- *  context: Context to destroy
- *
- *****************************************************************************/
+/* Do not call while under the GL lock. */
 void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context)
 {
     BOOL destroy;
@@ -1883,18 +1866,7 @@ static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *
     return swapchain_create_context_for_thread(swapchain);
 }
 
-/*****************************************************************************
- * FindContext
- *
- * Finds a context for the current render target and thread
- *
- * Parameters:
- *  target: Render target to find the context for
- *  tid: Thread to activate the context for
- *
- * Returns: The needed context
- *
- *****************************************************************************/
+/* Do not call while under the GL lock. */
 static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target)
 {
     struct wined3d_context *current_context = context_get_current();
@@ -2300,19 +2272,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
     context_set_render_offscreen(context, StateTable, render_offscreen);
 }
 
-/*****************************************************************************
- * context_acquire
- *
- * Finds a rendering context and drawable matching the device and render
- * target for the current thread, activates them and puts them into the
- * requested state.
- *
- * Params:
- *  This: Device to activate the context for
- *  target: Requested render target
- *  usage: Prepares the context for blitting, drawing or other actions
- *
- *****************************************************************************/
+/* Do not call while under the GL lock. */
 struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *target)
 {
     struct wined3d_context *current_context = context_get_current();

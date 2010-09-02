@@ -1259,6 +1259,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
         WINED3DPRESENT_PARAMETERS *present_parameters, WINED3DSURFTYPE surface_type,
         void *parent, IWineD3DSwapChain **swapchain)
@@ -6079,6 +6080,7 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRE
     return FALSE;
 }
 
+/* Do not call while under the GL lock. */
 static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl *swapchain)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
@@ -6123,6 +6125,7 @@ static void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChainImpl 
     swapchain->num_contexts = 0;
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT create_primary_opengl_context(IWineD3DDevice *iface, IWineD3DSwapChainImpl *swapchain)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
@@ -6187,7 +6190,10 @@ err:
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
+/* Do not call while under the GL lock. */
+static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
+        WINED3DPRESENT_PARAMETERS *pPresentationParameters)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain;
     HRESULT hr;

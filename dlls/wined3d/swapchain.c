@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-/*IWineD3DSwapChain parts follow: */
+/* Do not call while under the GL lock. */
 static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
 {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
@@ -621,6 +621,7 @@ void swapchain_restore_fullscreen_window(IWineD3DSwapChainImpl *swapchain)
 }
 
 
+/* Do not call while under the GL lock. */
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, void *parent)
 {
@@ -917,6 +918,7 @@ err:
     return hr;
 }
 
+/* Do not call while under the GL lock. */
 struct wined3d_context *swapchain_create_context_for_thread(IWineD3DSwapChain *iface)
 {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;

@@ -1630,6 +1630,7 @@ static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DVertexShader *iface)
     return refcount;
 }
 
+/* Do not call while under the GL lock. */
 static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DVertexShader *iface)
 {
     IWineD3DVertexShaderImpl *shader = (IWineD3DVertexShaderImpl *)iface;
@@ -1925,6 +1926,7 @@ static ULONG STDMETHODCALLTYPE geometryshader_AddRef(IWineD3DGeometryShader *ifa
     return refcount;
 }
 
+/* Do not call while under the GL lock. */
 static ULONG STDMETHODCALLTYPE geometryshader_Release(IWineD3DGeometryShader *iface)
 {
     struct wined3d_geometryshader *shader = (struct wined3d_geometryshader *)iface;
@@ -2020,6 +2022,7 @@ static ULONG STDMETHODCALLTYPE pixelshader_AddRef(IWineD3DPixelShader *iface)
     return refcount;
 }
 
+/* Do not call while under the GL lock. */
 static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DPixelShader *iface)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)iface;

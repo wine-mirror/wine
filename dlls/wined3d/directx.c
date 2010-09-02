@@ -243,6 +243,7 @@ static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     }
 }
 
+/* Do not call while under the GL lock. */
 static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
 {
     PIXELFORMATDESCRIPTOR pfd;
@@ -5080,6 +5081,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
     }
 }
 
+/* Do not call while under the GL lock. */
 static BOOL InitAdapters(IWineD3DImpl *This)
 {
     static HMODULE mod_gl;
@@ -5409,6 +5411,7 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
     wined3d_null_wined3d_object_destroyed,
 };
 
+/* Do not call while under the GL lock. */
 HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, void *parent)
 {
     wined3d->lpVtbl = &IWineD3D_Vtbl;

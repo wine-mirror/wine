@@ -1040,6 +1040,7 @@ static BOOL surface_convert_color_to_float(IWineD3DSurfaceImpl *surface, DWORD c
     return TRUE;
 }
 
+/* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -1062,6 +1063,7 @@ static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
    IWineD3DSurface IWineD3DResource parts follow
    **************************************************** */
 
+/* Do not call while under the GL lock. */
 void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srgb)
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
@@ -1161,6 +1163,7 @@ BOOL surface_init_sysmem(IWineD3DSurfaceImpl *surface)
     return TRUE;
 }
 
+/* Do not call while under the GL lock. */
 static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
