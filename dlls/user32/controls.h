@@ -243,4 +243,6 @@ typedef struct tagDIALOGINFO
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create ) DECLSPEC_HIDDEN;
 extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
 
+HRGN set_control_clipping( HDC hdc, const RECT *rect ) DECLSPEC_HIDDEN;
+
 #endif  /* __WINE_CONTROLS_H */
