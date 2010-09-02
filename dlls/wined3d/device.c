@@ -3760,6 +3760,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 }
 
 /* Context activation is done by the caller. */
+/* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount,
         const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD dwFlags,
@@ -3783,9 +3784,6 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         ERR("Source has no position mask\n");
         return WINED3DERR_INVALIDCALL;
     }
-
-    /* We might access VBOs from this code, so hold the lock */
-    ENTER_GL();
 
     if (!dest->resource.allocatedMemory)
         buffer_get_sysmem(dest, gl_info);
@@ -4089,22 +4087,27 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         }
     }
 
-    if(dest_conv) {
+    if (dest_conv)
+    {
+        ENTER_GL();
+
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->buffer_object));
         checkGLcall("glBindBufferARB(GL_ARRAY_BUFFER_ARB)");
         GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, dwDestIndex * get_flexible_vertex_size(DestFVF),
                                       dwCount * get_flexible_vertex_size(DestFVF),
                                       dest_conv_addr));
         checkGLcall("glBufferSubDataARB(GL_ARRAY_BUFFER_ARB)");
+
+        LEAVE_GL();
+
         HeapFree(GetProcessHeap(), 0, dest_conv_addr);
     }
-
-    LEAVE_GL();
 
     return WINED3D_OK;
 }
 #undef copy_and_next
 
+/* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex,
         UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD Flags,
         DWORD DestFVF)
