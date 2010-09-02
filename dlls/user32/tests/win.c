@@ -53,6 +53,8 @@ static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static int  (WINAPI *pGetWindowRgnBox)(HWND,LPRECT);
 static BOOL (WINAPI *pGetGUIThreadInfo)(DWORD, GUITHREADINFO*);
+static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
+static DWORD (WINAPI *pGetLayout)(HDC hdc);
 
 static BOOL test_lbuttondown_flag;
 static HWND hwndMessage;
@@ -4829,6 +4831,33 @@ static void test_CreateWindow(void)
     ok( rc.bottom <= expected_cy, "invalid rect bottom %u\n", rc.bottom );
     DestroyWindow(hwnd);
 
+    if (pGetLayout && pSetLayout)
+    {
+        HDC hdc = GetDC( parent );
+        pSetLayout( hdc, LAYOUT_RTL );
+        if (pGetLayout( hdc ))
+        {
+            ReleaseDC( parent, hdc );
+            DestroyWindow( parent );
+            SetLastError( 0xdeadbeef );
+            parent = CreateWindowEx(WS_EX_APPWINDOW | WS_EX_LAYOUTRTL, "static", NULL, WS_POPUP,
+                                    0, 0, 100, 100, 0, 0, 0, NULL);
+            ok( parent != 0, "creation failed err %u\n", GetLastError());
+            expect_ex_style( parent, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL );
+            hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
+            ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+            expect_ex_style( hwnd, WS_EX_LAYOUTRTL );
+            DestroyWindow( hwnd );
+            SetWindowLongW( parent, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT );
+            hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
+            ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+            expect_ex_style( hwnd, 0 );
+            DestroyWindow( hwnd );
+        }
+        else win_skip( "SetLayout not supported\n" );
+    }
+    else win_skip( "SetLayout not available\n" );
+
     DestroyWindow(parent);
 
     UnregisterClass("MinMax_WndClass", GetModuleHandle(0));
@@ -6047,6 +6076,7 @@ static void test_winregion(void)
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
+    HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
     pGetAncestor = (void *)GetProcAddress( user32, "GetAncestor" );
     pGetWindowInfo = (void *)GetProcAddress( user32, "GetWindowInfo" );
     pGetWindowModuleFileNameA = (void *)GetProcAddress( user32, "GetWindowModuleFileNameA" );
@@ -6056,6 +6086,8 @@ START_TEST(win)
     pMonitorFromPoint = (void *)GetProcAddress( user32,  "MonitorFromPoint" );
     pGetWindowRgnBox = (void *)GetProcAddress( user32, "GetWindowRgnBox" );
     pGetGUIThreadInfo = (void *)GetProcAddress( user32, "GetGUIThreadInfo" );
+    pGetLayout = (void *)GetProcAddress( gdi32, "GetLayout" );
+    pSetLayout = (void *)GetProcAddress( gdi32, "SetLayout" );
 
     if (!RegisterWindowClasses()) assert(0);
 

@@ -1178,6 +1178,12 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
             parent = GetDesktopWindow();
             owner = cs->hwndParent;
         }
+        else
+        {
+            DWORD parent_style = GetWindowLongW( parent, GWL_EXSTYLE );
+            if ((parent_style & WS_EX_LAYOUTRTL) && !(parent_style & WS_EX_NOINHERITLAYOUT))
+                cs->dwExStyle |= WS_EX_LAYOUTRTL;
+        }
     }
     else
     {
