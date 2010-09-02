@@ -380,6 +380,10 @@ typedef JOYDEVMSGPROC *LPJOYDEVMSGPROC;
 #define MCI_HPAL                11
 #define MCI_HDC                 12
 
+#ifdef _WIN64
+#define MCI_INTEGER64           13
+#endif /* _WIN64 */
+
 #define MAKEMCIRESOURCE(wRet, wRes) MAKELRESULT((wRet), (wRes))
 
 typedef struct {
