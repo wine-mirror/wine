@@ -174,6 +174,7 @@ struct bitblt_coords
     int  width;
     int  height;
     RECT visrect;   /* rectangle clipped to the visible part */
+    DWORD layout;   /* DC layout */
 };
 
 
