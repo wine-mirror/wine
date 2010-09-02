@@ -1210,10 +1210,6 @@ static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
 BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
                                   UINT uState )
 {
-    /* Win95 doesn't support drawing in other mapping modes */
-    if(GetMapMode(hdc) != MM_TEXT)
-        return FALSE;
-
     switch(uType)
     {
     case DFC_BUTTON:
