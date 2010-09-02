@@ -39,7 +39,7 @@ typedef union {
       MCI_GENERIC_PARMS   gen;
     } MCI_PARMS_UNION;
 
-static const char* dbg_mcierr(MCIERROR err)
+const char* dbg_mcierr(MCIERROR err)
 {
      switch (err) {
      case 0: return "0=NOERROR";
