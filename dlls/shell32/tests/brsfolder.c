@@ -1,7 +1,7 @@
 /*
  * Unit test of the SHBrowseForFolder function.
  *
- * Copyright 2009 Michael Mc Donnell
+ * Copyright 2009-2010 Michael Mc Donnell
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,9 @@
 
 #include "wine/test.h"
 #define IDD_MAKENEWFOLDER 0x3746 /* From "../shresdef.h" */
+#define TIMER_WAIT_MS 50 /* Should be long enough for slow systems */
+
+static const char new_folder_name[] = "foo";
 
 /*
  * Returns the number of folders in a folder.
@@ -63,9 +66,38 @@ static BOOL does_folder_or_file_exist(LPCSTR folder_path)
 }
 
 /*
- * Callback used by test_click_make_new_folder_button for SHBrowseForFolder
- * dialog box. It clicks the "Make New Folder" button and then closes the dialog
- * box.
+ * Timer callback used by test_click_make_new_folder_button. It simulates a user
+ * making a new folder and calling it "foo".
+ */
+static void CALLBACK make_new_folder_timer_callback(HWND hwnd, UINT uMsg,
+                                                    UINT_PTR idEvent, DWORD dwTime)
+{
+    static int step = 0;
+
+    switch (step++)
+    {
+    case 0:
+        /* Click "Make New Folder" button */
+        PostMessage(hwnd, WM_COMMAND, IDD_MAKENEWFOLDER, 0);
+        break;
+    case 1:
+        /* Set the new folder name to foo by replacing text in edit control */
+        SendMessage(GetFocus(), EM_REPLACESEL, 0, (LPARAM) new_folder_name);
+        SetFocus(hwnd);
+        break;
+    case 2:
+        KillTimer(hwnd, idEvent);
+        /* Close dialog box */
+        SendMessage(hwnd, WM_COMMAND, IDOK, 0);
+        break;
+    default:
+        break;
+    }
+}
+
+/*
+ * Callback used by test_click_make_new_folder_button. It sets up a timer to
+ * simulate user input.
  */
 static int CALLBACK create_new_folder_callback(HWND hwnd, UINT uMsg,
                                                LPARAM lParam, LPARAM lpData)
@@ -73,10 +105,8 @@ static int CALLBACK create_new_folder_callback(HWND hwnd, UINT uMsg,
     switch (uMsg)
     {
     case BFFM_INITIALIZED:
-        /* Click "Make New Folder" button */
-        SendMessage(hwnd, WM_COMMAND, IDD_MAKENEWFOLDER, 0);
-        /* Close dialog box */
-        SendMessage(hwnd, WM_COMMAND, IDCANCEL, 0);
+        /* User input is simulated in timer callback */
+        SetTimer(hwnd, 0, TIMER_WAIT_MS, make_new_folder_timer_callback);
         return TRUE;
     default:
         return FALSE;
@@ -87,16 +117,19 @@ static int CALLBACK create_new_folder_callback(HWND hwnd, UINT uMsg,
  * Tests if clicking the "Make New Folder" button in a SHBrowseForFolder
  * dialog box creates a new folder. (Bug 17986).
  *
- * The algorithm is:
- * 1. Check that there is no "test_click_make_new_folder_button" folder.
- * 2. Create a test folder called "test_click_make_new_folder_button".
- * 3. Use the test folder as root for SHBrowseForFolder dialog box.
- * 3. Hook up SHBrowseForFolder dialog box with callback.
- * 4. Display SHBrowseForFolder dialog box.
- * 5. Callback clicks "Make New Folder" button (by sending a message).
- * 6. Callback closes SHBrowseForFolder dialog box.
- * 7. Check that there is a new folder inside the test folder.
- * 8. Remove the test folder and any subfolders.
+ * Here follows a description of what happens on W2K,Vista, W2K8, W7:
+ * When the "Make New Folder" button is clicked a new folder is created and
+ * inserted into the tree. The folder is given a default name that depends on
+ * the locale (e.g. "New Folder"). The folder name is selected and the dialog
+ * waits for the user to type in a new name. The folder is renamed when the user
+ * types in a name and presses enter.
+ *
+ * Note that XP and W2K3 do not select the folder name or wait for the user
+ * to type in a new folder name. This behavior is considered broken as most
+ * users would like to give the folder a name after creating it. The fact that
+ * it originally waited for the user to type in a new folder name(W2K), and then
+ * again was changed back wait for the new folder name(Vista, W2K8, W7),
+ * indicates that MS also believes that it was broken in XP and W2K3.
  */
 static void test_click_make_new_folder_button(void)
 {
@@ -107,6 +140,7 @@ static void test_click_make_new_folder_button(void)
     IShellFolder *test_folder_object;
     char test_folder_path[MAX_PATH];
     WCHAR test_folder_pathW[MAX_PATH];
+    CHAR new_folder_path[MAX_PATH];
     char selected_folder[MAX_PATH];
     const CHAR title[] = "test_click_make_new_folder_button";
     int number_of_folders = -1;
@@ -160,8 +194,15 @@ static void test_click_make_new_folder_button(void)
     pidl = SHBrowseForFolder(&bi);
 
     number_of_folders = get_number_of_folders(test_folder_path);
-    todo_wine ok(number_of_folders == 1 || broken(number_of_folders == 0) /* W98, W2K */,
+    todo_wine ok(number_of_folders == 1 || broken(number_of_folders == 0) /* W95, W98 */,
         "Clicking \"Make New Folder\" button did not result in a new folder.\n");
+
+    /* There should be a new folder foo inside the test folder */
+    strcpy(new_folder_path, test_folder_path);
+    strcat(new_folder_path, new_folder_name);
+    todo_wine ok(does_folder_or_file_exist(new_folder_path)
+        || broken(!does_folder_or_file_exist(new_folder_path)) /* W95, W98, XP, W2K3 */,
+        "The new folder did not get the name %s\n", new_folder_name);
 
     /* Remove test folder and any subfolders created in this test */
     shfileop.hwnd = NULL;
