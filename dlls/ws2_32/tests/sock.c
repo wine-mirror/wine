@@ -2629,23 +2629,22 @@ static void get_event_details(int event, int *bit, char *name)
     }
 }
 
-static char *dbgstr_event_seq(const LPARAM *seq)
+static const char *dbgstr_event_seq(const LPARAM *seq)
 {
     static char message[1024];
-    char name[10];
+    char name[12];
+    int len = 1;
 
     message[0] = '[';
     message[1] = 0;
     while (*seq)
     {
         get_event_details(WSAGETSELECTEVENT(*seq), NULL, name);
-
-        sprintf(message, "%s%s%s(%d)", message, message[1] == 0 ? "" : " ",
-                                       name, WSAGETSELECTERROR(*seq));
-
+        len += sprintf(message + len, "%s(%d) ", name, WSAGETSELECTERROR(*seq));
         seq++;
     }
-    strcat(message, "]");
+    if (len > 1) len--;
+    strcpy( message + len, "]" );
     return message;
 }
 
@@ -2654,7 +2653,8 @@ static char *dbgstr_event_seq_result(SOCKET s, WSANETWORKEVENTS *netEvents)
     static char message[1024];
     struct async_message *curr = messages_received;
     int index, error, bit = 0;
-    char name[10];
+    char name[12];
+    int len = 1;
 
     message[0] = '[';
     message[1] = 0;
@@ -2685,10 +2685,10 @@ static char *dbgstr_event_seq_result(SOCKET s, WSANETWORKEVENTS *netEvents)
             curr = curr->next;
         }
 
-        sprintf(message, "%s%s%s(%d)", message, message[1] == 0 ? "" : " ",
-                                       name, error);
+        len += sprintf(message + len, "%s(%d) ", name, error);
     }
-    strcat(message, "]");
+    if (len > 1) len--;
+    strcpy( message + len, "]" );
     return message;
 }
 
