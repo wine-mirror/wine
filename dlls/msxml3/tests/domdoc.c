@@ -1321,7 +1321,7 @@ static void test_domnode( void )
 
         type = NODE_INVALID;
         r = IXMLDOMNode_get_nodeType( element, &type);
-        ok( r == S_OK, "getNamedItem returned wrong code\n");
+        ok( r == S_OK, "got %08x\n", r);
         ok( type == NODE_ELEMENT, "node not an element\n");
 
         str = NULL;
@@ -5796,6 +5796,69 @@ static void test_splitText(void)
     free_bstrs();
 }
 
+static void test_getQualifiedItem(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *element;
+    IXMLDOMNode *pr_node, *node;
+    IXMLDOMNodeList *root_list;
+    IXMLDOMNamedNodeMap *map;
+    VARIANT_BOOL b;
+    BSTR str;
+    LONG len;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL,
+         CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc );
+    ok( hr == S_OK, "ret 0x%08x\n", hr);
+    if( hr != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( hr == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok( hr == S_OK, "ret %08x\n", hr);
+
+    hr = IXMLDOMElement_get_childNodes(element, &root_list);
+    ok( hr == S_OK, "ret %08x\n", hr);
+
+    hr = IXMLDOMNodeList_get_item(root_list, 1, &pr_node);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    IXMLDOMNodeList_Release(root_list);
+
+    hr = IXMLDOMNode_get_attributes(pr_node, &map);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    IXMLDOMNode_Release(pr_node);
+
+    hr = IXMLDOMNamedNodeMap_get_length(map, &len);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    ok( len == 3, "length %d\n", len);
+
+    hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, NULL, NULL, NULL);
+    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, NULL, NULL, &node);
+    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+    ok( node == (void*)0xdeadbeef, "got %p\n", node);
+
+    hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, _bstr_("id"), NULL, NULL);
+    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, _bstr_("id"), NULL, &node);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMNamedNodeMap_Release( map );
+    IXMLDOMElement_Release( element );
+    IXMLDOMDocument_Release( doc );
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -5846,6 +5909,7 @@ START_TEST(domdoc)
     test_put_nodeValue();
     test_document_IObjectSafety();
     test_splitText();
+    test_getQualifiedItem();
 
     CoUninitialize();
 }
