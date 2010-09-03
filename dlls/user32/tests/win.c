@@ -678,8 +678,12 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	    /* Win9x does not fixup cx/xy for WM_WINDOWPOSCHANGING */
 	    if (!(winpos->flags & SWP_NOSIZE) && !is_win9x)
 	    {
-		ok(winpos->cx >= 0 && winpos->cx <= 32767, "bad winpos->cx %d\n", winpos->cx);
-		ok(winpos->cy >= 0 && winpos->cy <= 32767, "bad winpos->cy %d\n", winpos->cy);
+		ok((winpos->cx >= 0 && winpos->cx <= 32767) ||
+                   winpos->cx == 32768, /* win7 doesn't truncate */
+                   "bad winpos->cx %d\n", winpos->cx);
+		ok((winpos->cy >= 0 && winpos->cy <= 32767) ||
+                   winpos->cy == 40000, /* win7 doesn't truncate */
+                   "bad winpos->cy %d\n", winpos->cy);
 	    }
 	    break;
 	}
@@ -693,8 +697,12 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	    ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
 	    ok(winpos->y >= -32768 && winpos->y <= 32767, "bad winpos->y %d\n", winpos->y);
 
-	    ok(winpos->cx >= 0 && winpos->cx <= 32767, "bad winpos->cx %d\n", winpos->cx);
-	    ok(winpos->cy >= 0 && winpos->cy <= 32767, "bad winpos->cy %d\n", winpos->cy);
+            ok((winpos->cx >= 0 && winpos->cx <= 32767) ||
+               winpos->cx == 32768, /* win7 doesn't truncate */
+               "bad winpos->cx %d\n", winpos->cx);
+            ok((winpos->cy >= 0 && winpos->cy <= 32767) ||
+               winpos->cy == 40000, /* win7 doesn't truncate */
+               "bad winpos->cy %d\n", winpos->cy);
 
             GetWindowRect(hwnd, &rc1);
             SetRect(&rc2, winpos->x, winpos->y, winpos->x + winpos->cx, winpos->y + winpos->cy);
@@ -4471,6 +4479,8 @@ static LRESULT CALLBACK winsizes_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
             "wrong y size %d/%d\n", cs->cy, expected_cy );
         ok( (rect.right - rect.left == expected_rect.right - expected_rect.left &&
              rect.bottom - rect.top == expected_rect.bottom - expected_rect.top) ||
+            (rect.right - rect.left == min( 65535, expected_rect.right - expected_rect.left ) &&
+             rect.bottom - rect.top == min( 65535, expected_rect.bottom - expected_rect.top )) ||
             broken( rect.right - rect.left == broken_rect.right - broken_rect.left &&
                     rect.bottom - rect.top == broken_rect.bottom - broken_rect.top) ||
             broken( rect.right - rect.left == (short)broken_rect.right - (short)broken_rect.left &&
@@ -4772,8 +4782,10 @@ static void test_CreateWindow(void)
     hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, 300000, 300000, 200000, 200000, parent, 0, 0, NULL);
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
     GetClientRect( hwnd, &rc );
-    ok( rc.right == 200000 || broken(rc.right == (short)200000), "invalid rect right %u\n", rc.right );
-    ok( rc.bottom == 200000 || broken(rc.bottom == (short)200000), "invalid rect bottom %u\n", rc.bottom );
+    ok( rc.right == 200000 || rc.right == 65535 || broken(rc.right == (short)200000),
+        "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 200000 || rc.bottom == 65535 || broken(rc.bottom == (short)200000),
+        "invalid rect bottom %u\n", rc.bottom );
     DestroyWindow(hwnd);
 
     expected_cx = expected_cy = -10;
@@ -4809,7 +4821,8 @@ static void test_CreateWindow(void)
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
     GetClientRect( hwnd, &rc );
     ok( rc.right == 100, "invalid rect right %u\n", rc.right );
-    ok( rc.bottom == 0x7fffffff - 10 || broken(rc.bottom == 0), "invalid rect bottom %u\n", rc.bottom );
+    ok( rc.bottom == 0x7fffffff - 10 || rc.bottom ==65535 || broken(rc.bottom == 0),
+        "invalid rect bottom %u\n", rc.bottom );
     DestroyWindow(hwnd);
 
     expected_cx = 0x7fffffff;
@@ -4819,8 +4832,10 @@ static void test_CreateWindow(void)
     hwnd = CreateWindowExA(0, "Sizes_WndClass", NULL, WS_CHILD, 20, 10, 0x7fffffff, 0x7fffffff, parent, 0, 0, NULL);
     ok( hwnd != 0, "creation failed err %u\n", GetLastError());
     GetClientRect( hwnd, &rc );
-    ok( rc.right == 0x7fffffff - 20 || broken(rc.right == 0), "invalid rect right %u\n", rc.right );
-    ok( rc.bottom == 0x7fffffff - 10 || broken(rc.bottom == 0), "invalid rect bottom %u\n", rc.bottom );
+    ok( rc.right == 0x7fffffff - 20 || rc.right == 65535 || broken(rc.right == 0),
+        "invalid rect right %u\n", rc.right );
+    ok( rc.bottom == 0x7fffffff - 10 || rc.right == 65535 || broken(rc.bottom == 0),
+        "invalid rect bottom %u\n", rc.bottom );
     DestroyWindow(hwnd);
 
     /* top level window */
@@ -4849,6 +4864,10 @@ static void test_CreateWindow(void)
             hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
             ok( hwnd != 0, "creation failed err %u\n", GetLastError());
             expect_ex_style( hwnd, WS_EX_LAYOUTRTL );
+            DestroyWindow( hwnd );
+            hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 20, 20, parent, 0, 0, NULL);
+            ok( hwnd != 0, "creation failed err %u\n", GetLastError());
+            expect_ex_style( hwnd, 0 );
             DestroyWindow( hwnd );
             SetWindowLongW( parent, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_LAYOUTRTL | WS_EX_NOINHERITLAYOUT );
             hwnd = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 20, 20, parent, 0, 0, NULL);
