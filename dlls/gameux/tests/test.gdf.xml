@@ -23,6 +23,7 @@ xmlns:baseTypes="urn:schemas-microsoft-com:GamesExplorerBaseTypes.v1"
 xmlns="urn:schemas-microsoft-com:GameDescription.v1">
     <GameDefinition gameID="{17A6558E-60BE-4078-B66F-9C3ADA2A32E6}">
         <Name>Example Game</Name>
+        <Description>Game Description</Description>
         <Version>
             <VersionNumber versionNumber="1.0.0.0"/>
         </Version>

@@ -23,4 +23,6 @@
 #include <gameux.h>
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: test.gdf.xml */
 ID_GDF_XML          DATA          "test.gdf.xml"

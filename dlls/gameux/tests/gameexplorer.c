@@ -38,6 +38,7 @@
  * older system, which causes problem while loading test binary.
  */
 static BOOL WINAPI (*_ConvertSidToStringSidW)(PSID,LPWSTR*);
+static LONG WINAPI (*_RegGetValueW)(HKEY,LPCWSTR,LPCWSTR,DWORD,LPDWORD,PVOID,LPDWORD);
 
 /*******************************************************************************
  *_loadDynamicRoutines
@@ -55,6 +56,8 @@ static BOOL _loadDynamicRoutines(void)
 
     _ConvertSidToStringSidW = (LPVOID)GetProcAddress(hAdvapiModule, "ConvertSidToStringSidW");
     if (!_ConvertSidToStringSidW) return FALSE;
+    _RegGetValueW = (LPVOID)GetProcAddress(hAdvapiModule, "RegGetValueW");
+    if (!_RegGetValueW) return FALSE;
     return TRUE;
 }
 
@@ -158,6 +161,153 @@ static HRESULT _buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     return hr;
 }
 /*******************************************************************************
+ *  _validateRegistryValue
+ *
+ * Helper function, verifies single registry value with expected
+ *
+ * Parameters:
+ *  hKey                        [I]     handle to game's key. Key must be opened
+ *  keyPath                     [I]     string with path to game's key. Used only
+ *                                      to display more useful message on test fail
+ *  valueName                   [I]     name of value to check
+ *  dwExpectedType              [I]     expected type of value. It should be
+ *                                      one of RRF_RT_* flags
+ *  lpExpectedContent           [I]     expected content of value. It should be
+ *                                      pointer to variable with same type as
+ *                                      passed in dwExpectedType
+ *
+ * Returns:
+ *  S_OK                                value exists and contains expected data
+ *  S_FALSE                             value exists, but contains other data
+ *                                      than expected
+ *  E_OUTOFMEMORY                       allocation problem
+ *  HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
+ *                                      value does not exist
+ *
+ * Note: this function returns error codes instead of failing test case, because
+ * it is sometimes expected that given value may not exist on some systems, or
+ * contain other data.
+ */
+static HRESULT _validateRegistryValue(
+        HKEY hKey,
+        LPCWSTR keyPath,
+        LPCWSTR valueName,
+        DWORD dwExpectedType,
+        LPCVOID lpExpectedContent)
+{
+    HRESULT hr;
+    DWORD dwType, dwSize;
+    LPVOID lpData = NULL;
+
+    hr = HRESULT_FROM_WIN32(_RegGetValueW(hKey, NULL, valueName, dwExpectedType, &dwType, NULL, &dwSize));
+    if(FAILED(hr)) trace("registry value cannot be opened\n"
+                "   key: %s\n"
+                "   value: %s\n"
+                "   expected type: 0x%x\n"
+                "   found type: 0x%x\n"
+                "   result code: 0x%0x\n",
+                wine_dbgstr_w(keyPath),
+                wine_dbgstr_w(valueName),
+                dwExpectedType,
+                dwType,
+                hr);
+
+    if(SUCCEEDED(hr))
+    {
+        lpData = CoTaskMemAlloc(dwSize);
+        if(!lpData)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(_RegGetValueW(hKey, NULL, valueName, dwExpectedType, &dwType, lpData, &dwSize));
+
+    if(SUCCEEDED(hr))
+    {
+        if(memcmp(lpData, lpExpectedContent, dwSize)==0)
+            hr = S_OK;
+        else
+        {
+            if(dwExpectedType == RRF_RT_REG_SZ)
+                /* if value type is REG_SZ, display expected and found values */
+                trace("not expected content of registry value\n"
+                        "   key: %s\n"
+                        "   value: %s\n"
+                        "   expected REG_SZ content: %s\n"
+                        "   found REG_SZ content:    %s\n",
+                        wine_dbgstr_w(keyPath),
+                        wine_dbgstr_w(valueName),
+                        wine_dbgstr_w(lpExpectedContent),
+                        wine_dbgstr_w(lpData));
+            else
+                /* in the other case, do not display content */
+                trace("not expected content of registry value\n"
+                        "   key: %s\n"
+                        "   value: %s\n"
+                        "   value type: 0x%x\n",
+                        wine_dbgstr_w(keyPath),
+                        wine_dbgstr_w(valueName),
+                        dwType);
+
+            hr = S_FALSE;
+        }
+    }
+
+    CoTaskMemFree(lpData);
+    return hr;
+}
+/*******************************************************************************
+ *  _validateGameRegistryValues
+ *
+ * Helper function, verifies values in game's registry key
+ *
+ * Parameters:
+ *  line                        [I]     place of original call. Used only to display
+ *                                      more useful message on test fail
+ *  hKey                        [I]     handle to game's key. Key must be opened
+ *                                      with KEY_READ access permission
+ *  keyPath                     [I]     string with path to game's key. Used only
+ *                                      to display more useful message on test fail
+ *  gameApplicationId           [I]     game application identifier
+ *  gameExePath                 [I]     directory where game executable is stored
+ *  gameExeName                 [I]     full path to executable, including directory and file name
+ */
+static void _validateGameRegistryValues(int line,
+        HKEY hKey,
+        LPCWSTR keyPath,
+        LPCGUID gameApplicationId,
+        LPCWSTR gameExePath,
+        LPCWSTR gameExeName)
+{
+    static const WCHAR sApplicationId[] = {'A','p','p','l','i','c','a','t','i','o','n','I','d',0};
+    static const WCHAR sConfigApplicationPath[] = {'C','o','n','f','i','g','A','p','p','l','i','c','a','t','i','o','n','P','a','t','h',0};
+    static const WCHAR sConfigGDFBinaryPath[] = {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
+    static const WCHAR sDescription[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+    static const WCHAR sExampleGame[] = {'E','x','a','m','p','l','e',' ','G','a','m','e',0};
+    static const WCHAR sGameDescription[] = {'G','a','m','e',' ','D','e','s','c','r','i','p','t','i','o','n',0};
+    static const WCHAR sTitle[] = {'T','i','t','l','e',0};
+
+    HRESULT hr;
+    WCHAR sGameApplicationId[40];
+
+    hr = (StringFromGUID2(gameApplicationId, sGameApplicationId, sizeof(sGameApplicationId)/sizeof(sGameApplicationId[0])) ? S_OK : E_FAIL);
+    ok_(__FILE__, line)(hr == S_OK, "cannot convert game application id to string\n");
+
+    /* these values exist up from Vista */
+    hr = _validateRegistryValue(hKey, keyPath,   sApplicationId,            RRF_RT_REG_SZ,      sGameApplicationId);
+    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+    hr = _validateRegistryValue(hKey, keyPath,   sConfigApplicationPath,    RRF_RT_REG_SZ,      gameExePath);
+    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+    hr = _validateRegistryValue(hKey, keyPath,   sConfigGDFBinaryPath,      RRF_RT_REG_SZ,      gameExeName);
+    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+    hr = _validateRegistryValue(hKey, keyPath,   sTitle,                    RRF_RT_REG_SZ,      sExampleGame);
+    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+
+    /* this value exists up from Win7 */
+    hr = _validateRegistryValue(hKey, keyPath,   sDescription,              RRF_RT_REG_SZ,      sGameDescription);
+    todo_wine ok_(__FILE__, line)(hr==S_OK || broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)), "failed while checking registry value (error 0x%x)\n", hr);
+}
+/*******************************************************************************
  *  _validateGameKey
  *
  * Helper function, verifies current state of game's registry key with expected.
@@ -167,6 +317,9 @@ static HRESULT _buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
  *                                      more useful message on test fail
  *  installScope                [I]     the scope which was used in AddGame/InstallGame call
  *  gameInstanceId              [I]     game instance identifier
+ *  gameApplicationId           [I]     game application identifier
+ *  gameExePath                 [I]     directory where game executable is stored
+ *  gameExeName                 [I]     full path to executable, including directory and file name
  *  presenceExpected            [I]     is it expected that game should be currently
  *                                      registered or not. Should be TRUE if checking
  *                                      after using AddGame/InstallGame, and FALSE
@@ -175,6 +328,9 @@ static HRESULT _buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
 static void _validateGameRegistryKey(int line,
         GAME_INSTALL_SCOPE installScope,
         LPCGUID gameInstanceId,
+        LPCGUID gameApplicationId,
+        LPCWSTR gameExePath,
+        LPCWSTR gameExeName,
         BOOL presenceExpected)
 {
     HRESULT hr;
@@ -198,7 +354,13 @@ static void _validateGameRegistryKey(int line,
     }
 
     if(SUCCEEDED(hr))
+    {
+        if(presenceExpected)
+            /* if the key exists and we expected it, let's verify it's content */
+            _validateGameRegistryValues(line, hKey, lpRegistryPath, gameApplicationId, gameExePath, gameExeName);
+
         RegCloseKey(hKey);
+    }
 
     CoTaskMemFree(lpRegistryPath);
 }
@@ -239,6 +401,8 @@ static void test_add_remove_game(void)
 {
     static const GUID defaultGUID = {0x01234567, 0x89AB, 0xCDEF,
         { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF}};
+    static const GUID applicationId = { 0x17A6558E, 0x60BE, 0x4078,
+        { 0xB6, 0x6F, 0x9C, 0x3A, 0xDA, 0x2A, 0x32, 0xE6 }};
 
     HRESULT hr;
 
@@ -279,13 +443,13 @@ static void test_add_remove_game(void)
 
             if(SUCCEEDED(hr))
             {
-                todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, TRUE);
+                todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
 
                 hr = IGameExplorer_RemoveGame(ge, guid);
                 todo_wine ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08x)\n", hr);
             }
 
-            _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, FALSE);
+            _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
 
 
             /* try to register game with empty guid */
@@ -297,13 +461,13 @@ static void test_add_remove_game(void)
 
             if(SUCCEEDED(hr))
             {
-                todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, TRUE);
+                todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
 
                 hr = IGameExplorer_RemoveGame(ge, guid);
                 todo_wine ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08x)\n", hr);
             }
 
-            _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, FALSE);
+            _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
         }
 
         /* free allocated resources */
