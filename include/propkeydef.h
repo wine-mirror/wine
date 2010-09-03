@@ -60,7 +60,7 @@
 #ifdef __cplusplus
 inline bool operator==(REFPROPERTYKEY guidOne, REFPROPERTYKEY guidOther)
 {
-    return IsEqualPropertyKey(guidOne, guidTwo);
+    return IsEqualPropertyKey(guidOne, guidOther);
 }
 inline bool operator!=(REFPROPERTYKEY guidOne, REFPROPERTYKEY guidOther)
 {
