@@ -1192,7 +1192,7 @@ BOOL WINAPI UnlockFileEx( HANDLE hFile, DWORD reserved, DWORD count_low, DWORD c
  */
 UINT WINAPI SetHandleCount( UINT count )
 {
-    return min( 256, count );
+    return count;
 }
 
 
