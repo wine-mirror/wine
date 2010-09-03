@@ -407,7 +407,7 @@ static void test_basic_string_wchar(void) {
     ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
     str = call_func1(p_basic_string_wchar_data, &str1);
     ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
-    size = (size_t)call_func1(p_basic_string_char_size, &str1);
+    size = (size_t)call_func1(p_basic_string_wchar_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
 
     memset(&str2, 0, sizeof(basic_string_wchar));
@@ -423,7 +423,7 @@ static void test_basic_string_wchar(void) {
     ok(str[0]=='t' && str[1]=='t' && str[2]=='\0', "str = %s\n", wine_dbgstr_w(str));
     str = call_func1(p_basic_string_wchar_data, &str2);
     ok(str[0]=='t' && str[1]=='t' && str[2]=='\0', "str = %s\n", wine_dbgstr_w(str));
-    size = (size_t)call_func1(p_basic_string_char_size, &str1);
+    size = (size_t)call_func1(p_basic_string_wchar_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
 
     call_func3(p_basic_string_wchar_erase, &str2, 1, 100);
@@ -431,7 +431,7 @@ static void test_basic_string_wchar(void) {
     ok(str[0]=='t' && str[1]=='\0', "str = %s\n", wine_dbgstr_w(str));
     str = call_func1(p_basic_string_wchar_data, &str2);
     ok(str[0]=='t' && str[1]=='\0', "str = %s\n", wine_dbgstr_w(str));
-    size = (size_t)call_func1(p_basic_string_char_size, &str1);
+    size = (size_t)call_func1(p_basic_string_wchar_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
 
     call_func3(p_basic_string_wchar_assign_cstr_len, &str2, test, 4);
