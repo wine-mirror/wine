@@ -263,6 +263,19 @@ static void test_mciParser(HWND hwnd)
     err = mciSendString("open all", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_CANNOT_USE_ALL,"open all: %s\n", dbg_mcierr(err));
 
+    /* avivideo is not a known MCI_DEVTYPE resource name */
+    err = mciSendString("sysinfo avivideo quantity", buf, sizeof(buf), hwnd);
+    ok(err==MCIERR_DEVICE_TYPE_REQUIRED,"sysinfo sequencer quantity: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("sysinfo digitalvideo quantity", buf, sizeof(buf), hwnd);
+    ok(!err,"sysinfo digitalvideo quantity: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf,"0"), "sysinfo digitalvideo quantity returned %s\n", buf);
+
+    /* quantity 0 yet open 1 (via type "avivideo"), fun */
+    err = mciSendString("sysinfo digitalvideo quantity open", buf, sizeof(buf), hwnd);
+    ok(!err,"sysinfo digitalvideo quantity open: %s\n", dbg_mcierr(err));
+    if(!err) ok(!strcmp(buf,"1"), "sysinfo digitalvideo quantity open returned %s\n", buf);
+
     err = mciSendString("put a window at 0 0", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_BAD_INTEGER,"put incomplete rect: %s\n", dbg_mcierr(err));
 
@@ -425,10 +438,16 @@ static void test_openCloseWAVE(HWND hwnd)
     if(!err) ok(!strcmp(buf,"mysound"), "sysinfo short name returned %s\n", buf);
 
     err = mciSendString("sysinfo mysound quantity open", buf, sizeof(buf), hwnd);
-    todo_wine ok(err==MCIERR_DEVICE_TYPE_REQUIRED,"sysinfo alias quantity returned %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_DEVICE_TYPE_REQUIRED,"sysinfo alias quantity: %s\n", dbg_mcierr(err));
 
     err = mciSendString("sysinfo nosuchalias quantity open", buf, sizeof(buf), hwnd);
-    todo_wine ok(err==MCIERR_DEVICE_TYPE_REQUIRED,"sysinfo unknown quantity open returned %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_DEVICE_TYPE_REQUIRED,"sysinfo unknown quantity open: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("sysinfo all installname", buf, sizeof(buf), hwnd);
+    ok(err==MCIERR_CANNOT_USE_ALL,"sysinfo all installname: %s\n", dbg_mcierr(err));
+
+    err = mciSendString("sysinfo nodev installname", buf, sizeof(buf), hwnd);
+    ok(err==MCIERR_INVALID_DEVICE_NAME,"sysinfo nodev installname: %s\n", dbg_mcierr(err));
 
     err = mciGetDeviceID("all");
     ok(MCI_ALL_DEVICE_ID==err || /* Win9x */(UINT16)MCI_ALL_DEVICE_ID==err,"mciGetDeviceID all returned %u, expected %d\n", err, MCI_ALL_DEVICE_ID);

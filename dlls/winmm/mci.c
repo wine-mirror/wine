@@ -544,6 +544,23 @@ static	DWORD	MCI_GetDevTypeFromFileName(LPCWSTR fileName, LPWSTR buf, UINT len)
     return MCIERR_EXTENSION_NOT_FOUND;
 }
 
+/**************************************************************************
+ * 				MCI_GetDevTypeFromResource	[internal]
+ */
+static	UINT	MCI_GetDevTypeFromResource(LPCWSTR lpstrName)
+{
+    WCHAR	buf[32];
+    UINT	uDevType;
+    for (uDevType = MCI_DEVTYPE_FIRST; uDevType <= MCI_DEVTYPE_LAST; uDevType++) {
+	if (LoadStringW(hWinMM32Instance, uDevType, buf, sizeof(buf) / sizeof(WCHAR))) {
+	    /* FIXME: ignore digits suffix */
+	    if (!strcmpiW(buf, lpstrName))
+		return uDevType;
+	}
+    }
+    return 0;
+}
+
 #define	MAX_MCICMDTABLE			20
 #define MCI_COMMAND_TABLE_NOT_LOADED	0xFFFE
 
@@ -1319,21 +1336,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	HeapFree(GetProcessHeap(), 0, devType);
 	if (dwRet)
 	    goto errCleanUp;
-    } else if (!strcmpW(verb, wszSysinfo)) {
-	/* System commands are not subject to auto-open. */
-	/* It's too early to handle Sysinfo here because the
-	 * requirements on dev depend on the flags:
-	 * alias with INSTALLNAME, name like "waveaudio"
-	 * with QUANTITY and NAME. */
-	data[4] = MCI_ALL_DEVICE_ID;
-	if (MCI_ALL_DEVICE_ID != uDevID) {
-	    /* FIXME: Map device name like waveaudio to MCI_DEVTYPE_xyz */
-	    uDevID = mciGetDeviceIDW(dev);
-	    wmd = MCI_GetDriver(uDevID);
-	    if (wmd)
-		data[4] = wmd->wType;
-	}
-    } else if (!strcmpW(verb, wszSound) || !strcmpW(verb, wszBreak)) {
+    } else if (!strcmpW(verb, wszSysinfo) || !strcmpW(verb, wszSound) || !strcmpW(verb, wszBreak)) {
 	/* Prevent auto-open for system commands. */
     } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
 	/* auto open */
@@ -1409,11 +1412,32 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	data[0] = (DWORD_PTR)hwndCallback;
     }
 
-    if (wMsg == MCI_OPEN && strcmpW(verb, wszOpen)) {
-	ERR("Cannot open with command %s\n", debugstr_w(verb));
-	dwRet = MCIERR_INTERNAL;
-	wMsg = 0;
-	goto errCleanUp;
+    switch (wMsg) {
+    case MCI_OPEN:
+	if (strcmpW(verb, wszOpen)) {
+	    FIXME("Cannot open with command %s\n", debugstr_w(verb));
+	    dwRet = MCIERR_INTERNAL;
+	    wMsg = 0;
+	    goto errCleanUp;
+	}
+	break;
+    case MCI_SYSINFO:
+	/* Requirements on dev depend on the flags:
+	 * alias with INSTALLNAME, name like "digitalvideo"
+	 * with QUANTITY and NAME. */
+	{
+	    LPMCI_SYSINFO_PARMSW lpParms = (LPMCI_SYSINFO_PARMSW)data;
+	    lpParms->wDeviceType = MCI_ALL_DEVICE_ID;
+	    if (uDevID != MCI_ALL_DEVICE_ID) {
+		if (dwFlags & MCI_SYSINFO_INSTALLNAME)
+		    wmd = MCI_GetDriver(mciGetDeviceIDW(dev));
+		else if (!(lpParms->wDeviceType = MCI_GetDevTypeFromResource(dev))) {
+		    dwRet = MCIERR_DEVICE_TYPE_REQUIRED;
+		    goto errCleanUp;
+		}
+	    }
+	}
+	break;
     }
 
     TRACE("[%d, %s, %08x, %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx]\n",
@@ -1799,7 +1823,17 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	    } else {
 		TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers of type %d\n", lpParms->wDeviceType);
 		FIXME("Don't know how to get # of MCI devices of a given type\n");
-		cnt = 1;
+		/* name = LoadStringW(hWinMM32Instance, LOWORD(lpParms->wDeviceType))
+		 * then lookup registry and/or system.ini for name, ignoring digits suffix */
+		switch (LOWORD(lpParms->wDeviceType)) {
+		case MCI_DEVTYPE_CD_AUDIO:
+		case MCI_DEVTYPE_WAVEFORM_AUDIO:
+		case MCI_DEVTYPE_SEQUENCER:
+		    cnt = 1;
+		    break;
+		default: /* "digitalvideo" gets 0 because it's not in the registry */
+		    cnt = 0;
+		}
 	    }
 	}
 	*(DWORD*)lpParms->lpstrReturn = cnt;
@@ -1814,7 +1848,8 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 				  wmd->lpstrDeviceType);
 	} else {
 	    *lpParms->lpstrReturn = 0;
-	    ret = MCIERR_INVALID_DEVICE_ID;
+	    ret = (uDevID == MCI_ALL_DEVICE_ID)
+		? MCIERR_CANNOT_USE_ALL : MCIERR_INVALID_DEVICE_NAME;
 	}
 	TRACE("(%d) => %s\n", lpParms->dwNumber, debugstr_w(lpParms->lpstrReturn));
 	break;
