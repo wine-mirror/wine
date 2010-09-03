@@ -619,28 +619,17 @@ static void test_sip_create_indirect_data(void)
         skip("Missing CryptSIPCreateIndirectData\n");
         return;
     }
-if (0)
-{
-    /* FIXME: crashes Wine */
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(NULL, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-}
-    /* FIXME: this assignment is only to avoid a crash in Wine, it isn't
-     * needed by native.
-     */
-    subjinfo.pgSubjectType = &unknown;
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     subjinfo.cbSize = sizeof(subjinfo);
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     file = create_temp_file(temp_file);
@@ -655,13 +644,11 @@ if (0)
     subjinfo.hFile = file;
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     subjinfo.pgSubjectType = &unknown;
     SetLastError(0xdeadbeef);
     ret = CryptSIPCreateIndirectData_p(&subjinfo, NULL, NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     count = 0xdeadbeef;
