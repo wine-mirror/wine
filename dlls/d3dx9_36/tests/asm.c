@@ -115,6 +115,7 @@ static void assembleshader_test(void) {
         "#include \"incl4.vsh\"\n"
     };
     const char testincl4_ok[] = {
+        "#define REGISTER r0\n"
         "vs.1.1\n"
     };
     const char testincl4_wrong[] = {
@@ -208,9 +209,9 @@ static void assembleshader_test(void) {
     }
     if(shader) ID3DXBuffer_Release(shader);
 
-    shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader));
+    shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader) - 1);
     if(SUCCEEDED(shader_vsh_res)) {
-        create_file("incl.vsh", testincl, sizeof(testincl));
+        create_file("incl.vsh", testincl, sizeof(testincl) - 1);
 
         /* D3DXAssembleShaderFromFile + #include test */
         shader = NULL;
@@ -238,11 +239,11 @@ static void assembleshader_test(void) {
         }
         if(shader) ID3DXBuffer_Release(shader);
 
-        create_file("shader3.vsh", testshader3, sizeof(testshader3));
-        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong));
+        create_file("shader3.vsh", testshader3, sizeof(testshader3) - 1);
+        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong) - 1);
         if(CreateDirectoryA("include", NULL)) {
-            create_file("include/incl3.vsh", testincl3, sizeof(testincl3));
-            create_file("include/incl4.vsh", testincl4_ok, sizeof(testincl4_ok));
+            create_file("include/incl3.vsh", testincl3, sizeof(testincl3) - 1);
+            create_file("include/incl4.vsh", testincl4_ok, sizeof(testincl4_ok) - 1);
 
             /* path search #include test */
             shader = NULL;
