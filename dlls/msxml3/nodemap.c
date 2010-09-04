@@ -250,43 +250,8 @@ static HRESULT WINAPI xmlnodemap_removeNamedItem(
     IXMLDOMNode** namedItem)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    xmlChar *element_name;
-    xmlAttrPtr attr;
-    xmlNodePtr node;
-
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), namedItem );
-
-    if ( !name)
-        return E_INVALIDARG;
-
-    node = xmlNodePtr_from_domnode( This->node, 0 );
-    if ( !node )
-        return E_FAIL;
-
-    element_name = xmlChar_from_wchar( name );
-    attr = xmlHasNsProp( node, element_name, NULL );
-    heap_free( element_name );
-
-    if ( !attr )
-    {
-        if( namedItem )
-            *namedItem = NULL;
-        return S_FALSE;
-    }
-
-    if ( namedItem )
-    {
-        xmlUnlinkNode( (xmlNodePtr) attr );
-        xmldoc_add_orphan( attr->doc, (xmlNodePtr) attr );
-        *namedItem = create_node( (xmlNodePtr) attr );
-    }
-    else
-    {
-        if( xmlRemoveProp( attr ) == -1 )
-            ERR("xmlRemoveProp failed\n");
-    }
-
-    return S_OK;
+    return IXMLDOMNamedNodeMap_removeQualifiedItem(iface, name, NULL, namedItem);
 }
 
 static HRESULT WINAPI xmlnodemap_get_item(
@@ -394,6 +359,10 @@ static HRESULT WINAPI xmlnodemap_getQualifiedItem(
     }
 
     attr = xmlHasNsProp(node, name, href);
+
+    heap_free(name);
+    heap_free(href);
+
     if (!attr)
     {
         *qualifiedItem = NULL;
@@ -401,9 +370,6 @@ static HRESULT WINAPI xmlnodemap_getQualifiedItem(
     }
 
     *qualifiedItem = create_node((xmlNodePtr)attr);
-
-    heap_free(name);
-    heap_free(href);
 
     return S_OK;
 }
@@ -415,8 +381,58 @@ static HRESULT WINAPI xmlnodemap_removeQualifiedItem(
     IXMLDOMNode** qualifiedItem)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    FIXME("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), qualifiedItem);
-    return E_NOTIMPL;
+    xmlAttrPtr attr;
+    xmlNodePtr node;
+    xmlChar *name;
+    xmlChar *href;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), qualifiedItem);
+
+    if (!baseName) return E_INVALIDARG;
+
+    node = xmlNodePtr_from_domnode( This->node, XML_ELEMENT_NODE );
+    if ( !node )
+        return E_FAIL;
+
+    if (namespaceURI && *namespaceURI)
+    {
+        href = xmlChar_from_wchar(namespaceURI);
+        if (!href) return E_OUTOFMEMORY;
+    }
+    else
+        href = NULL;
+
+    name = xmlChar_from_wchar(baseName);
+    if (!name)
+    {
+        heap_free(href);
+        return E_OUTOFMEMORY;
+    }
+
+    attr = xmlHasNsProp( node, name, href );
+
+    heap_free(name);
+    heap_free(href);
+
+    if ( !attr )
+    {
+        if (qualifiedItem) *qualifiedItem = NULL;
+        return S_FALSE;
+    }
+
+    if ( qualifiedItem )
+    {
+        xmlUnlinkNode( (xmlNodePtr) attr );
+        xmldoc_add_orphan( attr->doc, (xmlNodePtr) attr );
+        *qualifiedItem = create_node( (xmlNodePtr) attr );
+    }
+    else
+    {
+        if (xmlRemoveProp(attr) == -1)
+            ERR("xmlRemoveProp failed\n");
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap_nextNode(
@@ -497,7 +513,6 @@ static HRESULT WINAPI support_error_QueryInterface(
 {
     xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
-
     return IXMLDOMNamedNodeMap_QueryInterface((IXMLDOMNamedNodeMap*)&This->lpVtbl, riid, ppvObject);
 }
 

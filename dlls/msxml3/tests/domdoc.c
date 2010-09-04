@@ -2791,7 +2791,7 @@ static void test_removeNamedItem(void)
     removed_node = (void*)0xdeadbeef;
     r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, NULL, &removed_node);
     ok ( r == E_INVALIDARG, "ret %08x\n", r);
-    ok ( removed_node == (void*)0xdeadbeef, "removed_node == %p\n", removed_node);
+    ok ( removed_node == (void*)0xdeadbeef, "got %p\n", removed_node);
 
     removed_node = (void*)0xdeadbeef;
     str = SysAllocString(szvr);
@@ -2801,7 +2801,7 @@ static void test_removeNamedItem(void)
     removed_node2 = (void*)0xdeadbeef;
     r = IXMLDOMNamedNodeMap_removeNamedItem( pr_attrs, str, &removed_node2);
     ok ( r == S_FALSE, "ret %08x\n", r);
-    ok ( removed_node2 == NULL, "removed_node == %p\n", removed_node2 );
+    ok ( removed_node2 == NULL, "got %p\n", removed_node2 );
 
     r = IXMLDOMNamedNodeMap_get_length( pr_attrs, &len );
     ok( r == S_OK, "ret %08x\n", r);
@@ -5789,6 +5789,71 @@ static void test_getQualifiedItem(void)
     free_bstrs();
 }
 
+static void test_removeQualifiedItem(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *element;
+    IXMLDOMNode *pr_node, *node;
+    IXMLDOMNodeList *root_list;
+    IXMLDOMNamedNodeMap *map;
+    VARIANT_BOOL b;
+    BSTR str;
+    LONG len;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( hr == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    ok( hr == S_OK, "ret %08x\n", hr);
+
+    hr = IXMLDOMElement_get_childNodes(element, &root_list);
+    ok( hr == S_OK, "ret %08x\n", hr);
+
+    hr = IXMLDOMNodeList_get_item(root_list, 1, &pr_node);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    IXMLDOMNodeList_Release(root_list);
+
+    hr = IXMLDOMNode_get_attributes(pr_node, &map);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    IXMLDOMNode_Release(pr_node);
+
+    hr = IXMLDOMNamedNodeMap_get_length(map, &len);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    ok( len == 3, "length %d\n", len);
+
+    hr = IXMLDOMNamedNodeMap_removeQualifiedItem(map, NULL, NULL, NULL);
+    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMNamedNodeMap_removeQualifiedItem(map, NULL, NULL, &node);
+    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+    ok( node == (void*)0xdeadbeef, "got %p\n", node);
+
+    /* out pointer is optional */
+    hr = IXMLDOMNamedNodeMap_removeQualifiedItem(map, _bstr_("id"), NULL, NULL);
+    ok( hr == S_OK, "ret %08x\n", hr);
+
+    /* already removed */
+    hr = IXMLDOMNamedNodeMap_removeQualifiedItem(map, _bstr_("id"), NULL, NULL);
+    ok( hr == S_FALSE, "ret %08x\n", hr);
+
+    hr = IXMLDOMNamedNodeMap_removeQualifiedItem(map, _bstr_("vr"), NULL, &node);
+    ok( hr == S_OK, "ret %08x\n", hr);
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMNamedNodeMap_Release( map );
+    IXMLDOMElement_Release( element );
+    IXMLDOMDocument_Release( doc );
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -5840,6 +5905,7 @@ START_TEST(domdoc)
     test_document_IObjectSafety();
     test_splitText();
     test_getQualifiedItem();
+    test_removeQualifiedItem();
 
     CoUninitialize();
 }
