@@ -58,14 +58,11 @@ static HRESULT WINAPI entityref_QueryInterface(
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMEntityReference ) ||
+         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
-    }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
-    {
-        *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {

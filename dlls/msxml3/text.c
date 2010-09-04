@@ -60,14 +60,11 @@ static HRESULT WINAPI domtext_QueryInterface(
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMText ) ||
          IsEqualGUID( riid, &IID_IXMLDOMCharacterData) ||
+         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
-    }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
-    {
-        *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
@@ -485,14 +482,13 @@ static HRESULT WINAPI domtext_get_data(
     IXMLDOMText *iface,
     BSTR *p)
 {
-    domtext *This = impl_from_IXMLDOMText( iface );
     HRESULT hr;
     VARIANT vRet;
 
     if(!p)
         return E_INVALIDARG;
 
-    hr = IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), &vRet );
+    hr = IXMLDOMNode_get_nodeValue( iface, &vRet );
     if(hr == S_OK)
     {
         *p = V_BSTR(&vRet);

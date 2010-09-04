@@ -58,14 +58,11 @@ static HRESULT WINAPI dom_pi_QueryInterface(
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMProcessingInstruction ) ||
+         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
-    }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
-    {
-        *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
@@ -504,14 +501,13 @@ static HRESULT WINAPI dom_pi_get_data(
     IXMLDOMProcessingInstruction *iface,
     BSTR *p)
 {
-    dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
     HRESULT hr = E_FAIL;
     VARIANT vRet;
 
     if(!p)
         return E_INVALIDARG;
 
-    hr = IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), &vRet );
+    hr = IXMLDOMProcessingInstruction_get_nodeValue( iface, &vRet );
     if(hr == S_OK)
     {
         *p = V_BSTR(&vRet);
@@ -548,7 +544,7 @@ static HRESULT WINAPI dom_pi_put_data(
     V_VT(&val) = VT_BSTR;
     V_BSTR(&val) = data;
 
-    hr = IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(&This->node), val );
+    hr = IXMLDOMProcessingInstruction_put_nodeValue( iface, val );
 
     return hr;
 }

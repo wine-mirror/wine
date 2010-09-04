@@ -425,7 +425,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Save(
 
     TRACE("(%p)->(%p %d)\n", This, stream, clr_dirty);
 
-    hr = IXMLDOMNode_get_xml( IXMLDOMNode_from_impl(&This->node), &xmlString );
+    hr = IXMLDOMDocument3_get_xml( (IXMLDOMDocument3*)&This->lpVtbl, &xmlString );
     if(hr == S_OK)
     {
         DWORD len = SysStringLen(xmlString) * sizeof(WCHAR);
@@ -518,15 +518,12 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
 
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
+         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
          IsEqualGUID( riid, &IID_IXMLDOMDocument ) ||
          IsEqualGUID( riid, &IID_IXMLDOMDocument2 )||
          IsEqualGUID( riid, &IID_IXMLDOMDocument3 ))
     {
         *ppvObject = iface;
-    }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
-    {
-        *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
     else if (IsEqualGUID(&IID_IPersistStream, riid) ||
              IsEqualGUID(&IID_IPersistStreamInit, riid))
@@ -1284,12 +1281,14 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     if (hr == S_OK)
     {
         VARIANT v_data;
+        xmlnode *node_obj;
 
         /* this is to bypass check in ::put_data() that blocks "<?xml" PIs */
+        node_obj = get_node_obj(node);
         V_VT(&v_data)   = VT_BSTR;
         V_BSTR(&v_data) = data;
 
-        hr = IXMLDOMNode_put_nodeValue( node, v_data );
+        hr = IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(node_obj), v_data );
 
         IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMProcessingInstruction, (void**)pi);
         IXMLDOMNode_Release(node);

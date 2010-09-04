@@ -59,14 +59,11 @@ static HRESULT WINAPI domcomment_QueryInterface(
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMComment ) ||
          IsEqualGUID( riid, &IID_IXMLDOMCharacterData) ||
+         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
-    }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
-    {
-        *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
@@ -486,7 +483,7 @@ static HRESULT WINAPI domcomment_get_data(
     if(!p)
         return E_INVALIDARG;
 
-    hr = IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), &vRet );
+    hr = IXMLDOMComment_get_nodeValue( iface, &vRet );
     if(hr == S_OK)
     {
         *p = V_BSTR(&vRet);

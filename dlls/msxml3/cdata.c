@@ -59,14 +59,11 @@ static HRESULT WINAPI domcdata_QueryInterface(
 
     if ( IsEqualGUID( riid, &IID_IXMLDOMCDATASection ) ||
          IsEqualGUID( riid, &IID_IXMLDOMCharacterData) ||
+         IsEqualGUID( riid, &IID_IXMLDOMNode ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
-    }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMNode ) )
-    {
-        *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
     else if ( IsEqualGUID( riid, &IID_IXMLDOMText ) ||
               IsEqualGUID( riid, &IID_IXMLDOMElement ) )
@@ -483,14 +480,13 @@ static HRESULT WINAPI domcdata_get_data(
     IXMLDOMCDATASection *iface,
     BSTR *p)
 {
-    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
     HRESULT hr;
     VARIANT vRet;
 
     if(!p)
         return E_INVALIDARG;
 
-    hr = IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), &vRet );
+    hr = IXMLDOMCDATASection_get_nodeValue( iface, &vRet );
     if(hr == S_OK)
     {
         *p = V_BSTR(&vRet);
@@ -511,7 +507,7 @@ static HRESULT WINAPI domcdata_put_data(
     V_VT(&val) = VT_BSTR;
     V_BSTR(&val) = data;
 
-    return IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(&This->node), val );
+    return IXMLDOMCDATASection_put_nodeValue( iface, val );
 }
 
 static HRESULT WINAPI domcdata_get_length(
