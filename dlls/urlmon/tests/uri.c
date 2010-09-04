@@ -6445,13 +6445,11 @@ static void test_IUriBuilder_GetPort(IUriBuilder *builder, const uri_builder_tes
         }
         if(SUCCEEDED(hr)) {
             DWORD expected;
-            BOOL got_port = FALSE;
 
             hr = IUri_GetPort(uri, &expected);
             ok(SUCCEEDED(hr),
                 "Error: Expected IUri_Port to succeed, but got 0x%08x instead on uri_builder_tests[%d].\n",
                 hr, test_index);
-            got_port = hr == S_OK;
 
             hr = IUriBuilder_GetPort(builder, &has_port, &received);
             todo_wine {
