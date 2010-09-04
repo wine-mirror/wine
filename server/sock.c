@@ -967,7 +967,6 @@ DECL_HANDLER(set_socket_event)
 {
     struct sock *sock;
     struct event *old_event;
-    int pollev;
 
     if (!(sock = (struct sock *)get_handle_obj( current->process, req->handle,
                                                 FILE_WRITE_ATTRIBUTES, &sock_ops))) return;
@@ -982,7 +981,7 @@ DECL_HANDLER(set_socket_event)
 
     if (debug_level && sock->event) fprintf(stderr, "event ptr: %p\n", sock->event);
 
-    pollev = sock_reselect( sock );
+    sock_reselect( sock );
 
     if (sock->mask)
         sock->state |= FD_WINE_NONBLOCKING;
