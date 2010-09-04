@@ -209,8 +209,8 @@ static HRESULT WINAPI xmlnodemap_setNamedItem(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
     xmlNodePtr nodeNew;
-    IXMLDOMNode *pAttr = NULL;
     xmlNodePtr node;
+    xmlnode *ThisNew;
 
     TRACE("(%p)->(%p %p)\n", This, newItem, namedItem );
 
@@ -224,32 +224,24 @@ static HRESULT WINAPI xmlnodemap_setNamedItem(
         return E_FAIL;
 
     /* Must be an Attribute */
-    IUnknown_QueryInterface(newItem, &IID_IXMLDOMNode, (void**)&pAttr);
-    if(pAttr)
-    {
-        xmlnode *ThisNew = impl_from_IXMLDOMNode( pAttr );
-
-        if(ThisNew->node->type != XML_ATTRIBUTE_NODE)
-        {
-            IUnknown_Release(pAttr);
-            return E_FAIL;
-        }
-
-        if(!ThisNew->node->parent)
-            if(xmldoc_remove_orphan(ThisNew->node->doc, ThisNew->node) != S_OK)
-                WARN("%p is not an orphan of %p\n", ThisNew->node, ThisNew->node->doc);
-
-        nodeNew = xmlAddChild(node, ThisNew->node);
-
-        if(namedItem)
-            *namedItem = create_node( nodeNew );
-
-        IUnknown_Release(pAttr);
-
-        return S_OK;
+    ThisNew = get_node_obj( newItem );
+    if(!ThisNew) {
+        FIXME("ThisNew is not our node implementation\n");
+        return E_FAIL;
     }
 
-    return E_INVALIDARG;
+    if(ThisNew->node->type != XML_ATTRIBUTE_NODE)
+        return E_FAIL;
+
+    if(!ThisNew->node->parent)
+        if(xmldoc_remove_orphan(ThisNew->node->doc, ThisNew->node) != S_OK)
+            WARN("%p is not an orphan of %p\n", ThisNew->node, ThisNew->node->doc);
+
+    nodeNew = xmlAddChild(node, ThisNew->node);
+
+    if(namedItem)
+        *namedItem = create_node( nodeNew );
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap_removeNamedItem(
