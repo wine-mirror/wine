@@ -192,7 +192,12 @@ static HRESULT WINAPI domtext_get_nodeName(
     BSTR* p )
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    static const WCHAR textW[] = {'#','t','e','x','t',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(textW, p);
 }
 
 static HRESULT WINAPI domtext_get_nodeValue(

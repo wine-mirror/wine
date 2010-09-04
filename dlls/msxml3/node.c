@@ -178,54 +178,24 @@ static HRESULT WINAPI xmlnode_Invoke(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_get_nodeName(
-    IXMLDOMNode *iface,
-    BSTR* name)
+HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    const xmlChar *str;
-
-    TRACE("(%p)->(%p)\n", This, name );
-
     if (!name)
         return E_INVALIDARG;
 
-    if ( !This->node )
-        return E_FAIL;
-
-    switch( This->node->type )
-    {
-    case XML_CDATA_SECTION_NODE:
-        str = (const xmlChar*) "#cdata-section";
-        break;
-    case XML_COMMENT_NODE:
-        str = (const xmlChar*) "#comment";
-        break;
-    case XML_DOCUMENT_FRAG_NODE:
-        str = (const xmlChar*) "#document-fragment";
-        break;
-    case XML_TEXT_NODE:
-        str = (const xmlChar*) "#text";
-        break;
-    case XML_DOCUMENT_NODE:
-        str = (const xmlChar*) "#document";
-        break;
-    case XML_ATTRIBUTE_NODE:
-    case XML_ELEMENT_NODE:
-    case XML_PI_NODE:
-        str = This->node->name;
-        break;
-    default:
-        FIXME("nodeName not mapped correctly (%d)\n", This->node->type);
-        str = This->node->name;
-        break;
-    }
-
-    *name = bstr_from_xmlChar( str );
+    *name = bstr_from_xmlChar(This->node->name);
     if (!*name)
         return S_FALSE;
 
     return S_OK;
+}
+
+static HRESULT WINAPI xmlnode_get_nodeName(
+    IXMLDOMNode *iface,
+    BSTR* name)
+{
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_get_nodeValue(
@@ -1843,7 +1813,10 @@ static HRESULT WINAPI unknode_get_nodeName(
     BSTR* p )
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return node_get_nodeName(&This->node, p);
 }
 
 static HRESULT WINAPI unknode_get_nodeValue(

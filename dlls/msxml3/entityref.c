@@ -182,7 +182,10 @@ static HRESULT WINAPI entityref_get_nodeName(
     BSTR* p )
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return node_get_nodeName(&This->node, p);
 }
 
 static HRESULT WINAPI entityref_get_nodeValue(

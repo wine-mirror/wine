@@ -159,6 +159,8 @@ extern void destroy_xmlnode(xmlnode*);
 extern BOOL node_query_interface(xmlnode*,REFIID,void**);
 extern xmlnode *get_node_obj(IXMLDOMNode*);
 
+extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
+
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 
 static inline BSTR bstr_from_xmlChar(const xmlChar *str)
@@ -175,6 +177,22 @@ static inline BSTR bstr_from_xmlChar(const xmlChar *str)
         ret = SysAllocStringLen(NULL, 0);
 
     return ret;
+}
+
+static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
+{
+    if(!p)
+        return E_INVALIDARG;
+
+    if(value) {
+        *p = SysAllocString(value);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
+
+    return S_OK;
 }
 
 #endif

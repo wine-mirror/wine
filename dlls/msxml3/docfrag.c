@@ -183,7 +183,13 @@ static HRESULT WINAPI domfrag_get_nodeName(
     BSTR* p )
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    static const WCHAR document_fragmentW[] =
+        {'#','d','o','c','u','m','e','n','t','-','f','r','a','g','m','e','n','t',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(document_fragmentW, p);
 }
 
 static HRESULT WINAPI domfrag_get_nodeValue(

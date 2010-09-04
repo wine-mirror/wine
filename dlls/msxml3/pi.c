@@ -183,7 +183,10 @@ static HRESULT WINAPI dom_pi_get_nodeName(
     BSTR* p )
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return node_get_nodeName(&This->node, p);
 }
 
 static HRESULT WINAPI dom_pi_get_nodeValue(
@@ -492,9 +495,12 @@ static HRESULT WINAPI dom_pi_get_target(
     IXMLDOMProcessingInstruction *iface,
     BSTR *p)
 {
-    /* target returns the same value as nodeName property */
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* target returns the same value as nodeName property */
+    return node_get_nodeName(&This->node, p);
 }
 
 static HRESULT WINAPI dom_pi_get_data(

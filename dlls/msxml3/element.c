@@ -194,7 +194,10 @@ static HRESULT WINAPI domelem_get_nodeName(
     BSTR* p )
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return node_get_nodeName(&This->node, p);
 }
 
 static HRESULT WINAPI domelem_get_nodeValue(

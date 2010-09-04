@@ -190,7 +190,13 @@ static HRESULT WINAPI domcdata_get_nodeName(
     BSTR* p )
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), p );
+
+    static const WCHAR cdata_sectionW[] =
+        {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return return_bstr(cdata_sectionW, p);
 }
 
 static HRESULT WINAPI domcdata_get_nodeValue(

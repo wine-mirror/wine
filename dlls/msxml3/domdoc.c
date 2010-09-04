@@ -686,7 +686,12 @@ static HRESULT WINAPI domdoc_get_nodeName(
     BSTR* name )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_nodeName( IXMLDOMNode_from_impl(&This->node), name );
+
+    static const WCHAR documentW[] = {'#','d','o','c','u','m','e','n','t',0};
+
+    TRACE("(%p)->(%p)\n", This, name);
+
+    return return_bstr(documentW, name);
 }
 
 
