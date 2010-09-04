@@ -146,7 +146,6 @@ typedef struct _xmlnode
     DispatchEx dispex;
     const struct IXMLDOMNodeVtbl *lpVtbl;
     IXMLDOMNode *iface;
-    LONG ref;
     xmlNodePtr node;
 } xmlnode;
 
