@@ -2150,9 +2150,7 @@ HRESULT WINAPI EditStreamSetInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
 
   TRACE("(%p,%p,%d)\n", pstream, asi, size);
 
-  if (pstream == NULL)
-    return AVIERR_BADHANDLE;
-  if ((DWORD)size < sizeof(AVISTREAMINFOA))
+  if (size >= 0 && size < sizeof(AVISTREAMINFOA))
     return AVIERR_BADSIZE;
 
   memcpy(&asiw, asi, sizeof(asiw) - sizeof(asiw.szName));
@@ -2172,6 +2170,9 @@ HRESULT WINAPI EditStreamSetInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
   HRESULT        hr;
 
   TRACE("(%p,%p,%d)\n", pstream, asi, size);
+
+  if (size >= 0 && size < sizeof(AVISTREAMINFOA))
+    return AVIERR_BADSIZE;
 
   hr = IAVIStream_QueryInterface(pstream, &IID_IAVIEditStream,(LPVOID*)&pEdit);
   if (SUCCEEDED(hr) && pEdit != NULL) {

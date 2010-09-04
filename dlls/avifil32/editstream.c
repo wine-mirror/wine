@@ -775,23 +775,15 @@ static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
   TRACE("(%p,%p,%d)\n",iface,asi,size);
 
   /* check parameters */
-  if (asi == NULL)
-    return AVIERR_BADPARAM;
-  if (size != sizeof(AVISTREAMINFOW))
+  if (size >= 0 && size < sizeof(AVISTREAMINFOW))
     return AVIERR_BADSIZE;
-  if (asi->dwScale == 0 || asi->dwRate == 0 || (LONG)asi->dwQuality < -1 ||
-      asi->dwQuality > ICQUALITY_HIGH)
-    return AVIERR_ERROR;
 
   This->sInfo.wLanguage = asi->wLanguage;
   This->sInfo.wPriority = asi->wPriority;
   This->sInfo.dwStart   = asi->dwStart;
-  if (asi->dwRate != 0)
-    This->sInfo.dwRate  = asi->dwRate;
-  if (asi->dwScale != 0)
-    This->sInfo.dwScale = asi->dwScale;
-  if (asi->dwQuality <= ICQUALITY_HIGH)
-    This->sInfo.dwQuality = ICQUALITY_HIGH;
+  This->sInfo.dwRate    = asi->dwRate;
+  This->sInfo.dwScale   = asi->dwScale;
+  This->sInfo.dwQuality = asi->dwQuality;
   CopyRect(&This->sInfo.rcFrame, &asi->rcFrame);
   memcpy(This->sInfo.szName, asi->szName, sizeof(asi->szName));
   This->sInfo.dwEditCount++;
