@@ -611,7 +611,7 @@ IUnknown* create_pi( xmlNodePtr pi )
     This->lpVtbl = &dom_pi_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, pi, (IUnknown*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, pi, (IXMLDOMNode*)&This->lpVtbl, NULL);
 
     return (IUnknown*) &This->lpVtbl;
 }

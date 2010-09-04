@@ -525,7 +525,7 @@ IUnknown* create_doc_entity_ref( xmlNodePtr entity )
     This->lpVtbl = &entityref_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, entity, (IUnknown*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, entity, (IXMLDOMNode*)&This->lpVtbl, NULL);
 
     return (IUnknown*) &This->lpVtbl;
 }

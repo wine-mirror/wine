@@ -89,8 +89,8 @@ static HRESULT WINAPI xmlnode_QueryInterface(
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
-    if(This->pUnkOuter)
-        return IUnknown_QueryInterface(This->pUnkOuter, riid, ppvObject);
+    if(This->iface)
+        return IXMLDOMNode_QueryInterface(This->iface, riid, ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown)) {
         *ppvObject = iface;
@@ -112,8 +112,8 @@ static ULONG WINAPI xmlnode_AddRef(
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
 
-    if(This->pUnkOuter)
-        return IUnknown_AddRef(This->pUnkOuter);
+    if(This->iface)
+        return IXMLDOMNode_AddRef(This->iface);
 
     return InterlockedIncrement(&This->ref);
 }
@@ -124,8 +124,8 @@ static ULONG WINAPI xmlnode_Release(
     xmlnode *This = impl_from_IXMLDOMNode( iface );
     LONG ref;
 
-    if(This->pUnkOuter)
-        return IUnknown_Release(This->pUnkOuter);
+    if(This->iface)
+        return IXMLDOMNode_Release(This->iface);
 
     ref = InterlockedDecrement( &This->ref );
     if(!ref) {
@@ -1713,7 +1713,7 @@ void destroy_xmlnode(xmlnode *This)
         xmldoc_release(This->node->doc);
 }
 
-void init_xmlnode(xmlnode *This, xmlNodePtr node, IUnknown *outer, dispex_static_data_t *dispex_data )
+void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispex_static_data_t *dispex_data)
 {
     if(node)
         xmldoc_add_ref( node->doc );
@@ -1721,10 +1721,10 @@ void init_xmlnode(xmlnode *This, xmlNodePtr node, IUnknown *outer, dispex_static
     This->lpVtbl = &xmlnode_vtbl;
     This->ref = 1;
     This->node = node;
-    This->pUnkOuter = outer;
+    This->iface = node_iface;
 
     if(dispex_data)
-        init_dispex(&This->dispex, This->pUnkOuter, dispex_data);
+        init_dispex(&This->dispex, (IUnknown*)This->iface, dispex_data);
 }
 
 IXMLDOMNode *create_node( xmlNodePtr node )

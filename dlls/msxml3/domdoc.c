@@ -2404,7 +2404,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->safeopt = 0;
     doc->bsc = NULL;
 
-    init_xmlnode(&doc->node, (xmlNodePtr)xmldoc, (IUnknown*)&doc->lpVtbl, &domdoc_dispex);
+    init_xmlnode(&doc->node, (xmlNodePtr)xmldoc, (IXMLDOMNode*)&doc->lpVtbl, &domdoc_dispex);
 
     *document = (IXMLDOMDocument3*)&doc->lpVtbl;
 

@@ -781,7 +781,7 @@ IUnknown* create_comment( xmlNodePtr comment )
     This->lpVtbl = &domcomment_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, comment, (IUnknown*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, comment, (IXMLDOMNode*)&This->lpVtbl, NULL);
 
     return (IUnknown*) &This->lpVtbl;
 }

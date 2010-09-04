@@ -801,7 +801,7 @@ IUnknown* create_element( xmlNodePtr element )
     This->lpVtbl = &domelem_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, element, (IUnknown*)&This->lpVtbl, &domelem_dispex);
+    init_xmlnode(&This->node, element, (IXMLDOMNode*)&This->lpVtbl, &domelem_dispex);
 
     return (IUnknown*) &This->lpVtbl;
 }

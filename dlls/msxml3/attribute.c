@@ -556,7 +556,7 @@ IUnknown* create_attribute( xmlNodePtr attribute )
     This->lpVtbl = &domattr_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, attribute, (IUnknown*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, attribute, (IXMLDOMNode*)&This->lpVtbl, NULL);
 
     return (IUnknown*) &This->lpVtbl;
 }

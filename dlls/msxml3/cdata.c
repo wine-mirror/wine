@@ -835,7 +835,7 @@ IUnknown* create_cdata( xmlNodePtr text )
     This->lpVtbl = &domcdata_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, text, (IUnknown*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->lpVtbl, NULL);
 
     return (IUnknown*) &This->lpVtbl;
 }

@@ -811,7 +811,7 @@ IUnknown* create_text( xmlNodePtr text )
     This->lpVtbl = &domtext_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, text, (IUnknown*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->lpVtbl, NULL);
 
     return (IUnknown*) &This->lpVtbl;
 }

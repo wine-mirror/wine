@@ -145,7 +145,7 @@ typedef struct _xmlnode
 {
     DispatchEx dispex;
     const struct IXMLDOMNodeVtbl *lpVtbl;
-    IUnknown *pUnkOuter;
+    IXMLDOMNode *iface;
     LONG ref;
     xmlNodePtr node;
 } xmlnode;
@@ -160,7 +160,7 @@ static inline IXMLDOMNode *IXMLDOMNode_from_impl(xmlnode *This)
     return (IXMLDOMNode*)&This->lpVtbl;
 }
 
-extern void init_xmlnode(xmlnode*,xmlNodePtr,IUnknown*,dispex_static_data_t*);
+extern void init_xmlnode(xmlnode*,xmlNodePtr,IXMLDOMNode*,dispex_static_data_t*);
 extern void destroy_xmlnode(xmlnode*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);

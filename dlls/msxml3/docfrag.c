@@ -526,7 +526,7 @@ IUnknown* create_doc_fragment( xmlNodePtr fragment )
     This->lpVtbl = &domfrag_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, fragment, (IUnknown*)&This->lpVtbl, NULL);
+    init_xmlnode(&This->node, fragment, (IXMLDOMNode*)&This->lpVtbl, NULL);
 
     return (IUnknown*) &This->lpVtbl;
 }
