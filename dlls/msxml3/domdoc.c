@@ -545,7 +545,7 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
     {
         *ppvObject = &This->lpvtblISupportErrorInfo;
     }
-    else if(dispex_query_interface(&This->node.dispex, riid, ppvObject))
+    else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
     }

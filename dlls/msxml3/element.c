@@ -74,7 +74,7 @@ static HRESULT WINAPI domelem_QueryInterface(
     {
         *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
-    else if(dispex_query_interface(&This->node.dispex, riid, ppvObject))
+    else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
     }

@@ -162,6 +162,7 @@ static inline IXMLDOMNode *IXMLDOMNode_from_impl(xmlnode *This)
 
 extern void init_xmlnode(xmlnode*,xmlNodePtr,IXMLDOMNode*,dispex_static_data_t*);
 extern void destroy_xmlnode(xmlnode*);
+extern BOOL node_query_interface(xmlnode*,REFIID,void**);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 

@@ -67,6 +67,10 @@ static HRESULT WINAPI domattr_QueryInterface(
     {
         *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
+    else if(node_query_interface(&This->node, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));

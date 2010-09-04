@@ -74,6 +74,10 @@ static HRESULT WINAPI domcdata_QueryInterface(
         TRACE("Unsupported interface\n");
         return E_NOINTERFACE;
     }
+    else if(node_query_interface(&This->node, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));

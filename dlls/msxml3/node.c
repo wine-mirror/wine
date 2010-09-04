@@ -80,6 +80,13 @@ xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type )
     return This->node;
 }
 
+BOOL node_query_interface(xmlnode *This, REFIID riid, void **ppv)
+{
+    if(This->dispex.outer)
+        return dispex_query_interface(&This->dispex, riid, ppv);
+    return FALSE;
+}
+
 static HRESULT WINAPI xmlnode_QueryInterface(
     IXMLDOMNode *iface,
     REFIID riid,
@@ -97,6 +104,8 @@ static HRESULT WINAPI xmlnode_QueryInterface(
     }else if (IsEqualGUID( riid, &IID_IDispatch) ||
               IsEqualGUID( riid, &IID_IXMLDOMNode)) {
         *ppvObject = &This->lpVtbl;
+    }else if(node_query_interface(This, riid, ppvObject)) {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
     }else  {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
         *ppvObject = NULL;
@@ -1725,6 +1734,8 @@ void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispe
 
     if(dispex_data)
         init_dispex(&This->dispex, (IUnknown*)This->iface, dispex_data);
+    else
+        This->dispex.outer = NULL;
 }
 
 IXMLDOMNode *create_node( xmlNodePtr node )

@@ -69,6 +69,10 @@ static HRESULT WINAPI domtext_QueryInterface(
     {
         *ppvObject = IXMLDOMNode_from_impl(&This->node);
     }
+    else if(node_query_interface(&This->node, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
     else if ( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
               IsEqualGUID( riid, &IID_IXMLDOMCDATASection ) )
     {
