@@ -644,11 +644,9 @@ static HRESULT WINAPI xmlnode_replaceChild(
     IXMLDOMNode** outOldChild)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlNode *old_child_ptr, *new_child_ptr;
+    xmlnode *old_child, *new_child;
     xmlDocPtr leaving_doc;
     xmlNode *my_ancestor;
-    IXMLDOMNode *realOldChild;
-    HRESULT hr;
 
     TRACE("(%p)->(%p %p %p)\n", This, newChild, oldChild, outOldChild);
 
@@ -660,23 +658,28 @@ static HRESULT WINAPI xmlnode_replaceChild(
     if(outOldChild)
         *outOldChild = NULL;
 
-    hr = IXMLDOMNode_QueryInterface(oldChild,&IID_IXMLDOMNode,(LPVOID*)&realOldChild);
-    if(FAILED(hr))
-        return hr;
+    old_child = get_node_obj(oldChild);
+    if(!old_child) {
+        FIXME("oldChild is not our node implementation\n");
+        return E_FAIL;
+    }
 
-    old_child_ptr = impl_from_IXMLDOMNode(realOldChild)->node;
-    IXMLDOMNode_Release(realOldChild);
-    if(old_child_ptr->parent != This->node)
+    if(old_child->node->parent != This->node)
     {
         WARN("childNode %p is not a child of %p\n", oldChild, iface);
         return E_INVALIDARG;
     }
 
-    new_child_ptr = impl_from_IXMLDOMNode(newChild)->node;
+    new_child = get_node_obj(newChild);
+    if(!new_child) {
+        FIXME("newChild is not our node implementation\n");
+        return E_FAIL;
+    }
+
     my_ancestor = This->node;
     while(my_ancestor)
     {
-        if(my_ancestor == new_child_ptr)
+        if(my_ancestor == new_child->node)
         {
             WARN("tried to create loop\n");
             return E_FAIL;
@@ -684,16 +687,16 @@ static HRESULT WINAPI xmlnode_replaceChild(
         my_ancestor = my_ancestor->parent;
     }
 
-    if(!new_child_ptr->parent)
-        if(xmldoc_remove_orphan(new_child_ptr->doc, new_child_ptr) != S_OK)
-            WARN("%p is not an orphan of %p\n", new_child_ptr, new_child_ptr->doc);
+    if(!new_child->node->parent)
+        if(xmldoc_remove_orphan(new_child->node->doc, new_child->node) != S_OK)
+            WARN("%p is not an orphan of %p\n", new_child->node, new_child->node->doc);
 
-    leaving_doc = new_child_ptr->doc;
-    xmldoc_add_ref(old_child_ptr->doc);
-    xmlReplaceNode(old_child_ptr, new_child_ptr);
+    leaving_doc = new_child->node->doc;
+    xmldoc_add_ref(old_child->node->doc);
+    xmlReplaceNode(old_child->node, new_child->node);
     xmldoc_release(leaving_doc);
 
-    xmldoc_add_orphan(old_child_ptr->doc, old_child_ptr);
+    xmldoc_add_orphan(old_child->node->doc, old_child->node);
 
     if(outOldChild)
     {
