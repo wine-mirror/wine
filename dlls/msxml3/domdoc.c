@@ -700,7 +700,15 @@ static HRESULT WINAPI domdoc_get_nodeValue(
     VARIANT* value )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), value );
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if(!value)
+        return E_INVALIDARG;
+
+    V_VT(value) = VT_NULL;
+    V_BSTR(value) = NULL; /* tests show that we should do this */
+    return S_FALSE;
 }
 
 

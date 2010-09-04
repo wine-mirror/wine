@@ -194,10 +194,17 @@ static HRESULT WINAPI domfrag_get_nodeName(
 
 static HRESULT WINAPI domfrag_get_nodeValue(
     IXMLDOMDocumentFragment *iface,
-    VARIANT* var1 )
+    VARIANT* value)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    FIXME("(%p)->(%p)\n", This, value);
+
+    if(!value)
+        return E_INVALIDARG;
+
+    V_VT(value) = VT_NULL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI domfrag_put_nodeValue(

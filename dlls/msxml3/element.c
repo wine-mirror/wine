@@ -202,10 +202,18 @@ static HRESULT WINAPI domelem_get_nodeName(
 
 static HRESULT WINAPI domelem_get_nodeValue(
     IXMLDOMElement *iface,
-    VARIANT* var1 )
+    VARIANT* value)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if(!value)
+        return E_INVALIDARG;
+
+    V_VT(value) = VT_NULL;
+    V_BSTR(value) = NULL; /* tests show that we should do this */
+    return S_FALSE;
 }
 
 static HRESULT WINAPI domelem_put_nodeValue(

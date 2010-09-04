@@ -190,10 +190,17 @@ static HRESULT WINAPI entityref_get_nodeName(
 
 static HRESULT WINAPI entityref_get_nodeValue(
     IXMLDOMEntityReference *iface,
-    VARIANT* var1 )
+    VARIANT* value)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    FIXME("(%p)->(%p)\n", This, value);
+
+    if(!value)
+        return E_INVALIDARG;
+
+    V_VT(value) = VT_NULL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI entityref_put_nodeValue(

@@ -201,10 +201,13 @@ static HRESULT WINAPI domcdata_get_nodeName(
 
 static HRESULT WINAPI domcdata_get_nodeValue(
     IXMLDOMCDATASection *iface,
-    VARIANT* var1 )
+    VARIANT* value)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    return node_get_content(&This->node, value);
 }
 
 static HRESULT WINAPI domcdata_put_nodeValue(

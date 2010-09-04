@@ -190,10 +190,13 @@ static HRESULT WINAPI domattr_get_nodeName(
 
 static HRESULT WINAPI domattr_get_nodeValue(
     IXMLDOMAttribute *iface,
-    VARIANT* var1 )
+    VARIANT* value)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    return node_get_content(&This->node, value);
 }
 
 static HRESULT WINAPI domattr_put_nodeValue(
@@ -487,10 +490,13 @@ static HRESULT WINAPI domattr_get_name(
 
 static HRESULT WINAPI domattr_get_value(
     IXMLDOMAttribute *iface,
-    VARIANT *var1)
+    VARIANT *value)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    return node_get_content(&This->node, value);
 }
 
 static HRESULT WINAPI domattr_put_value(

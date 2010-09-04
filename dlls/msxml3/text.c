@@ -202,10 +202,18 @@ static HRESULT WINAPI domtext_get_nodeName(
 
 static HRESULT WINAPI domtext_get_nodeValue(
     IXMLDOMText *iface,
-    VARIANT* var1 )
+    VARIANT* value )
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if(!value)
+        return E_INVALIDARG;
+
+    V_VT(value) = VT_BSTR;
+    V_BSTR(value) = bstr_from_xmlChar(This->node.node->content);
+    return S_OK;
 }
 
 static HRESULT WINAPI domtext_put_nodeValue(
@@ -487,19 +495,13 @@ static HRESULT WINAPI domtext_get_data(
     IXMLDOMText *iface,
     BSTR *p)
 {
-    HRESULT hr;
-    VARIANT vRet;
+    domtext *This = impl_from_IXMLDOMText( iface );
 
     if(!p)
         return E_INVALIDARG;
 
-    hr = IXMLDOMNode_get_nodeValue( iface, &vRet );
-    if(hr == S_OK)
-    {
-        *p = V_BSTR(&vRet);
-    }
-
-    return hr;
+    *p = bstr_from_xmlChar(This->node.node->content);
+    return S_OK;
 }
 
 static HRESULT WINAPI domtext_put_data(

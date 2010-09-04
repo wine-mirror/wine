@@ -194,10 +194,13 @@ static HRESULT WINAPI domcomment_get_nodeName(
 
 static HRESULT WINAPI domcomment_get_nodeValue(
     IXMLDOMComment *iface,
-    VARIANT* var1 )
+    VARIANT* value)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    return node_get_content(&This->node, value);
 }
 
 static HRESULT WINAPI domcomment_put_nodeValue(

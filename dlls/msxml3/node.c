@@ -198,52 +198,28 @@ static HRESULT WINAPI xmlnode_get_nodeName(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_get_nodeValue(
-    IXMLDOMNode *iface,
-    VARIANT* value)
+HRESULT node_get_content(xmlnode *This, VARIANT *value)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    HRESULT r = S_FALSE;
-
-    TRACE("(%p)->(%p)\n", This, value);
+    xmlChar *content;
 
     if(!value)
         return E_INVALIDARG;
 
-    V_BSTR(value) = NULL;
-    V_VT(value) = VT_NULL;
+    content = xmlNodeGetContent(This->node);
+    V_VT(value) = VT_BSTR;
+    V_BSTR(value) = bstr_from_xmlChar( content );
+    xmlFree(content);
 
-    switch ( This->node->type )
-    {
-    case XML_CDATA_SECTION_NODE:
-    case XML_COMMENT_NODE:
-    case XML_PI_NODE:
-    case XML_ATTRIBUTE_NODE:
-      {
-        xmlChar *content = xmlNodeGetContent(This->node);
-        V_VT(value) = VT_BSTR;
-        V_BSTR(value) = bstr_from_xmlChar( content );
-        xmlFree(content);
-        r = S_OK;
-        break;
-      }
-    case XML_TEXT_NODE:
-        V_VT(value) = VT_BSTR;
-        V_BSTR(value) = bstr_from_xmlChar( This->node->content );
-        r = S_OK;
-        break;
-    case XML_ELEMENT_NODE:
-    case XML_DOCUMENT_NODE:
-        /* these seem to return NULL */
-        break;
+    TRACE("%p returned %s\n", This, debugstr_w(V_BSTR(value)));
+    return S_OK;
+}
 
-    default:
-        FIXME("node %p type %d\n", This, This->node->type);
-    }
- 
-    TRACE("%p returned %s\n", This, debugstr_w( V_BSTR(value) ) );
-
-    return r;
+static HRESULT WINAPI xmlnode_get_nodeValue(
+    IXMLDOMNode *iface,
+    VARIANT* value)
+{
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_put_nodeValue(
@@ -1821,10 +1797,17 @@ static HRESULT WINAPI unknode_get_nodeName(
 
 static HRESULT WINAPI unknode_get_nodeValue(
     IXMLDOMNode *iface,
-    VARIANT* var1 )
+    VARIANT* value)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+
+    FIXME("(%p)->(%p)\n", This, value);
+
+    if(!value)
+        return E_INVALIDARG;
+
+    V_VT(value) = VT_NULL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI unknode_put_nodeValue(

@@ -160,6 +160,7 @@ extern BOOL node_query_interface(xmlnode*,REFIID,void**);
 extern xmlnode *get_node_obj(IXMLDOMNode*);
 
 extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
+extern HRESULT node_get_content(xmlnode*,VARIANT*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 
