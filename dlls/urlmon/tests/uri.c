@@ -4347,7 +4347,7 @@ static const uri_builder_test uri_builder_tests[] = {
         {
             {TRUE,"http",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE},
             {TRUE,"::192.2.3.4",NULL,Uri_PROPERTY_HOST,S_OK,FALSE},
-            {TRUE,NULL,NULL,Uri_PROPERTY_PATH,S_OK,TRUE}
+            {TRUE,NULL,NULL,Uri_PROPERTY_PATH,S_OK,FALSE}
         },
         {FALSE},
         0,S_OK,TRUE,
@@ -4496,6 +4496,70 @@ static const uri_builder_test uri_builder_tests[] = {
             {":password@test/test",S_OK},
             {"",S_FALSE},
             {":password",S_OK},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"test/test",NULL,Uri_PROPERTY_PATH,S_OK,FALSE},
+        },
+        {FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://google.com/test/test",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/test/test",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/test/test",S_OK},
+            {"/test/test",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/test/test",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "zip:testing/test",0,S_OK,FALSE,
+        {
+            {TRUE,"test",NULL,Uri_PROPERTY_PATH,S_OK,FALSE},
+        },
+        {FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"zip:test",S_OK},
+            {"",S_FALSE},
+            {"zip:test",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"test",S_OK},
+            {"test",S_OK},
+            {"",S_FALSE},
+            {"zip:test",S_OK},
+            {"zip",S_OK},
+            {"",S_FALSE},
             {"",S_FALSE}
         },
         {

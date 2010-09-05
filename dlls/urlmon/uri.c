@@ -88,6 +88,9 @@ typedef struct {
 
     WCHAR   *password;
     DWORD   password_len;
+
+    WCHAR   *path;
+    DWORD   path_len;
 } UriBuilder;
 
 typedef struct {
@@ -4318,6 +4321,7 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
         heap_free(This->fragment);
         heap_free(This->host);
         heap_free(This->password);
+        heap_free(This->path);
         heap_free(This);
     }
 
@@ -4480,19 +4484,11 @@ static HRESULT WINAPI UriBuilder_GetPath(IUriBuilder *iface, DWORD *pcchPath, LP
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchPath, ppwzPath);
 
-    if(!pcchPath) {
-        if(ppwzPath)
-            *ppwzPath = NULL;
-        return E_POINTER;
-    }
-
-    if(!ppwzPath) {
-        *pcchPath = 0;
-        return E_POINTER;
-    }
-
-    FIXME("(%p)->(%p %p)\n", This, pcchPath, ppwzPath);
-    return E_NOTIMPL;
+    if(!This->uri || This->uri->path_start == -1 || This->modified_props & Uri_HAS_PATH)
+        return get_builder_component(&This->path, &This->path_len, NULL, 0, ppwzPath, pcchPath);
+    else
+        return get_builder_component(&This->path, &This->path_len, This->uri->canon_uri+This->uri->path_start,
+                                     This->uri->path_len, ppwzPath, pcchPath);
 }
 
 static HRESULT WINAPI UriBuilder_GetPort(IUriBuilder *iface, BOOL *pfHasPort, DWORD *pdwPort)
@@ -4605,8 +4601,10 @@ static HRESULT WINAPI UriBuilder_SetPassword(IUriBuilder *iface, LPCWSTR pwzNewV
 static HRESULT WINAPI UriBuilder_SetPath(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+
+    This->modified_props |= Uri_HAS_PATH;
+    return set_builder_component(&This->path, &This->path_len, pwzNewValue, 0);
 }
 
 static HRESULT WINAPI UriBuilder_SetPort(IUriBuilder *iface, BOOL fHasPort, DWORD dwNewValue)
