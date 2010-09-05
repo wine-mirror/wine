@@ -4235,32 +4235,44 @@ typedef struct _uri_builder_port {
     BOOL    todo;
 } uri_builder_port;
 
+typedef struct _uri_builder_str_property {
+    const char* expected;
+    HRESULT     result;
+    BOOL        todo;
+} uri_builder_str_property;
+
+typedef struct _uri_builder_dword_property {
+    DWORD   expected;
+    HRESULT result;
+    BOOL    todo;
+} uri_builder_dword_property;
+
 typedef struct _uri_builder_test {
-    const char              *uri;
-    DWORD                   create_flags;
-    HRESULT                 create_builder_expected;
-    BOOL                    create_builder_todo;
+    const char                  *uri;
+    DWORD                       create_flags;
+    HRESULT                     create_builder_expected;
+    BOOL                        create_builder_todo;
 
-    uri_builder_property    properties[URI_BUILDER_STR_PROPERTY_COUNT];
+    uri_builder_property        properties[URI_BUILDER_STR_PROPERTY_COUNT];
 
-    uri_builder_port        port_prop;
+    uri_builder_port            port_prop;
 
-    const char              *uri_expected;
-    DWORD                   uri_flags;
-    HRESULT                 uri_hres;
-    BOOL                    uri_todo;
+    DWORD                       uri_flags;
+    HRESULT                     uri_hres;
+    BOOL                        uri_todo;
 
-    const char              *uri_simple_expected;
-    DWORD                   uri_simple_encode_flags;
-    HRESULT                 uri_simple_hres;
-    BOOL                    uri_simple_todo;
+    DWORD                       uri_simple_encode_flags;
+    HRESULT                     uri_simple_hres;
+    BOOL                        uri_simple_todo;
 
-    const char              *uri_with_expected;
-    DWORD                   uri_with_flags;
-    DWORD                   uri_with_builder_flags;
-    DWORD                   uri_with_encode_flags;
-    HRESULT                 uri_with_hres;
-    BOOL                    uri_with_todo;
+    DWORD                       uri_with_flags;
+    DWORD                       uri_with_builder_flags;
+    DWORD                       uri_with_encode_flags;
+    HRESULT                     uri_with_hres;
+    BOOL                        uri_with_todo;
+
+    uri_builder_str_property    expected_str_props[URI_STR_PROPERTY_COUNT];
+    uri_builder_dword_property  expected_dword_props[URI_DWORD_PROPERTY_COUNT];
 } uri_builder_test;
 
 static const uri_builder_test uri_builder_tests[] = {
@@ -4272,18 +4284,64 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"username",NULL,Uri_PROPERTY_USER_NAME,S_OK,TRUE}
         },
         {FALSE},
-        "http://username:password@google.com/?query=x#fragment",0,S_OK,TRUE,
-        "http://username:password@google.com/?query=x#fragment",0,S_OK,TRUE,
-        "http://username:password@google.com/?query=x#fragment",0,0,0,S_OK,TRUE
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://username:password@google.com/?query=x#fragment",S_OK},
+            {"username:password@google.com",S_OK},
+            {"http://google.com/?query=x#fragment",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"#fragment",S_OK},
+            {"google.com",S_OK},
+            {"password",S_OK},
+            {"/",S_OK},
+            {"/?query=x",S_OK},
+            {"?query=x",S_OK},
+            {"http://username:password@google.com/?query=x#fragment",S_OK},
+            {"http",S_OK},
+            {"username:password",S_OK},
+            {"username",S_OK}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     },
     {   "http://google.com/",0,S_OK,FALSE,
         {
             {TRUE,"test",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE}
         },
         {TRUE,TRUE,120,S_OK,TRUE},
-        "test://google.com:120/",0,S_OK,TRUE,
-        "test://google.com:120/",0,S_OK,TRUE,
-        "test://google.com:120/",0,0,0,S_OK,TRUE
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"test://google.com:120/",S_OK},
+            {"google.com:120",S_OK},
+            {"test://google.com:120/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"test://google.com:120/",S_OK},
+            {"test",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {120,S_OK},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     },
     {   "/Test/test dir",Uri_CREATE_ALLOW_RELATIVE,S_OK,FALSE,
         {
@@ -4292,27 +4350,96 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,NULL,NULL,Uri_PROPERTY_PATH,S_OK,TRUE}
         },
         {FALSE},
-        "http://[::192.2.3.4]/",0,S_OK,TRUE,
-        "http://[::192.2.3.4]/",0,S_OK,TRUE,
-        "http://[::192.2.3.4]/",0,0,0,S_OK,TRUE
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://[::192.2.3.4]/",S_OK},
+            {"[::192.2.3.4]",S_OK},
+            {"http://[::192.2.3.4]/",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"::192.2.3.4",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://[::192.2.3.4]/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_IPV6,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     },
     {   "http://google.com/",0,S_OK,FALSE,
         {
             {TRUE,"Frag","#Frag",Uri_PROPERTY_FRAGMENT,S_OK,FALSE}
         },
         {FALSE},
-        "http://google.com/#Frag",0,S_OK,TRUE,
-        "http://google.com/#Frag",0,S_OK,TRUE,
-        "http://google.com/#Frag",0,0,0,S_OK,TRUE
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://google.com/#Frag",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/#Frag",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"#Frag",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/#Frag",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     },
     {   "http://google.com/",0,S_OK,FALSE,
         {
             {TRUE,"","#",Uri_PROPERTY_FRAGMENT,S_OK,FALSE},
         },
         {FALSE},
-        "http://google.com/#",0,S_OK,TRUE,
-        "http://google.com/#",0,S_OK,TRUE,
-        "http://google.com/#",0,0,0,S_OK,TRUE
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://google.com/#",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/#",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"#",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/#",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 
@@ -5670,15 +5797,70 @@ static void test_IUriBuilder_CreateUri(IUriBuilder *builder, const uri_builder_t
     }
 
     if(SUCCEEDED(hr)) {
-        BSTR received = NULL;
+        DWORD i;
 
-        hr = IUri_GetAbsoluteUri(uri, &received);
-        ok(hr == S_OK, "Error: IUri_GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-            hr, S_OK, test_index);
-        ok(!strcmp_aw(test->uri_expected, received),
-            "Error: Expected the URI to be %s but was %s instead on uri_builder_tests[%d].\n",
-            test->uri_expected, wine_dbgstr_w(received), test_index);
-        SysFreeString(received);
+        for(i = 0; i < sizeof(test->expected_str_props)/sizeof(test->expected_str_props[0]); ++i) {
+            uri_builder_str_property prop = test->expected_str_props[i];
+            BSTR received = NULL;
+
+            hr = IUri_GetPropertyBSTR(uri, i, &received, 0);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.result,
+                        "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_str_props[%d].\n",
+                        hr, prop.result, test_index, i);
+                }
+            } else {
+                ok(hr == prop.result,
+                    "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_str_props[%d].\n",
+                    hr, prop.result, test_index, i);
+            }
+            if(SUCCEEDED(hr)) {
+                if(prop.todo) {
+                    todo_wine {
+                        ok(!strcmp_aw(prop.expected, received),
+                            "Error: Expected %s but got %s instead on uri_builder_tests[%d].expected_str_props[%d].\n",
+                            prop.expected, wine_dbgstr_w(received), test_index, i);
+                    }
+                } else {
+                    ok(!strcmp_aw(prop.expected, received),
+                        "Error: Expected %s but got %s instead on uri_builder_tests[%d].expected_str_props[%d].\n",
+                        prop.expected, wine_dbgstr_w(received), test_index, i);
+                }
+            }
+            SysFreeString(received);
+        }
+
+        for(i = 0; i < sizeof(test->expected_dword_props)/sizeof(test->expected_dword_props[0]); ++i) {
+            uri_builder_dword_property prop = test->expected_dword_props[i];
+            DWORD received = -2;
+
+            hr = IUri_GetPropertyDWORD(uri, i+Uri_PROPERTY_DWORD_START, &received, 0);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.result,
+                        "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                        hr, prop.result, test_index, i);
+                }
+            } else {
+                ok(hr == prop.result,
+                    "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                    hr, prop.result, test_index, i);
+            }
+            if(SUCCEEDED(hr)) {
+                if(prop.todo) {
+                    todo_wine {
+                        ok(received == prop.expected,
+                            "Error: Expected %d but got %d instead on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                            prop.expected, received, test_index, i);
+                    }
+                } else {
+                    ok(received == prop.expected,
+                        "Error: Expected %d but got %d instead on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                        prop.expected, received, test_index, i);
+                }
+            }
+        }
     }
     if(uri) IUri_Release(uri);
 }
@@ -5702,15 +5884,70 @@ static void test_IUriBuilder_CreateUriSimple(IUriBuilder *builder, const uri_bui
     }
 
     if(SUCCEEDED(hr)) {
-        BSTR received = NULL;
+        DWORD i;
 
-        hr = IUri_GetAbsoluteUri(uri, &received);
-        ok(hr == S_OK, "Error: IUri_GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-            hr, S_OK, test_index);
-        ok(!strcmp_aw(test->uri_simple_expected, received),
-            "Error: Expected the URI to be %s but was %s instead on uri_builder_tests[%d].\n",
-            test->uri_simple_expected, wine_dbgstr_w(received), test_index);
-        SysFreeString(received);
+        for(i = 0; i < sizeof(test->expected_str_props)/sizeof(test->expected_str_props[0]); ++i) {
+            uri_builder_str_property prop = test->expected_str_props[i];
+            BSTR received = NULL;
+
+            hr = IUri_GetPropertyBSTR(uri, i, &received, 0);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.result,
+                        "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_str_props[%d].\n",
+                        hr, prop.result, test_index, i);
+                }
+            } else {
+                ok(hr == prop.result,
+                    "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_str_props[%d].\n",
+                    hr, prop.result, test_index, i);
+            }
+            if(SUCCEEDED(hr)) {
+                if(prop.todo) {
+                    todo_wine {
+                        ok(!strcmp_aw(prop.expected, received),
+                            "Error: Expected %s but got %s instead on uri_builder_tests[%d].expected_str_props[%d].\n",
+                            prop.expected, wine_dbgstr_w(received), test_index, i);
+                    }
+                } else {
+                    ok(!strcmp_aw(prop.expected, received),
+                        "Error: Expected %s but got %s instead on uri_builder_tests[%d].expected_str_props[%d].\n",
+                        prop.expected, wine_dbgstr_w(received), test_index, i);
+                }
+            }
+            SysFreeString(received);
+        }
+
+        for(i = 0; i < sizeof(test->expected_dword_props)/sizeof(test->expected_dword_props[0]); ++i) {
+            uri_builder_dword_property prop = test->expected_dword_props[i];
+            DWORD received = -2;
+
+            hr = IUri_GetPropertyDWORD(uri, i+Uri_PROPERTY_DWORD_START, &received, 0);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.result,
+                        "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                        hr, prop.result, test_index, i);
+                }
+            } else {
+                ok(hr == prop.result,
+                    "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                    hr, prop.result, test_index, i);
+            }
+            if(SUCCEEDED(hr)) {
+                if(prop.todo) {
+                    todo_wine {
+                        ok(received == prop.expected,
+                            "Error: Expected %d but got %d instead on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                            prop.expected, received, test_index, i);
+                    }
+                } else {
+                    ok(received == prop.expected,
+                        "Error: Expected %d but got %d instead on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                        prop.expected, received, test_index, i);
+                }
+            }
+        }
     }
     if(uri) IUri_Release(uri);
 }
@@ -5735,15 +5972,70 @@ static void test_IUriBuilder_CreateUriWithFlags(IUriBuilder *builder, const uri_
     }
 
     if(SUCCEEDED(hr)) {
-        BSTR received = NULL;
+        DWORD i;
 
-        hr = IUri_GetAbsoluteUri(uri, &received);
-        ok(hr == S_OK, "Error: IUri_GetAbsoluteUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-            hr, S_OK, test_index);
-        ok(!strcmp_aw(test->uri_with_expected, received),
-            "Error: Expected the URI to be %s but was %s instead on uri_builder_tests[%d].\n",
-            test->uri_with_expected, wine_dbgstr_w(received), test_index);
-        SysFreeString(received);
+        for(i = 0; i < sizeof(test->expected_str_props)/sizeof(test->expected_str_props[0]); ++i) {
+            uri_builder_str_property prop = test->expected_str_props[i];
+            BSTR received = NULL;
+
+            hr = IUri_GetPropertyBSTR(uri, i, &received, 0);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.result,
+                        "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_str_props[%d].\n",
+                        hr, prop.result, test_index, i);
+                }
+            } else {
+                ok(hr == prop.result,
+                    "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_str_props[%d].\n",
+                    hr, prop.result, test_index, i);
+            }
+            if(SUCCEEDED(hr)) {
+                if(prop.todo) {
+                    todo_wine {
+                        ok(!strcmp_aw(prop.expected, received),
+                            "Error: Expected %s but got %s instead on uri_builder_tests[%d].expected_str_props[%d].\n",
+                            prop.expected, wine_dbgstr_w(received), test_index, i);
+                    }
+                } else {
+                    ok(!strcmp_aw(prop.expected, received),
+                        "Error: Expected %s but got %s instead on uri_builder_tests[%d].expected_str_props[%d].\n",
+                        prop.expected, wine_dbgstr_w(received), test_index, i);
+                }
+            }
+            SysFreeString(received);
+        }
+
+        for(i = 0; i < sizeof(test->expected_dword_props)/sizeof(test->expected_dword_props[0]); ++i) {
+            uri_builder_dword_property prop = test->expected_dword_props[i];
+            DWORD received = -2;
+
+            hr = IUri_GetPropertyDWORD(uri, i+Uri_PROPERTY_DWORD_START, &received, 0);
+            if(prop.todo) {
+                todo_wine {
+                    ok(hr == prop.result,
+                        "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                        hr, prop.result, test_index, i);
+                }
+            } else {
+                ok(hr == prop.result,
+                    "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                    hr, prop.result, test_index, i);
+            }
+            if(SUCCEEDED(hr)) {
+                if(prop.todo) {
+                    todo_wine {
+                        ok(received == prop.expected,
+                            "Error: Expected %d but got %d instead on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                            prop.expected, received, test_index, i);
+                    }
+                } else {
+                    ok(received == prop.expected,
+                        "Error: Expected %d but got %d instead on uri_builder_tests[%d].expected_dword_props[%d].\n",
+                        prop.expected, received, test_index, i);
+                }
+            }
+        }
     }
     if(uri) IUri_Release(uri);
 }
