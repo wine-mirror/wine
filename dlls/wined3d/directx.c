@@ -2362,7 +2362,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         TRACE_(d3d_caps)(" IMPLIED: ARB_vertex_array_bgra support (by EXT_vertex_array_bgra).\n");
         gl_info->supported[ARB_VERTEX_ARRAY_BGRA] = TRUE;
     }
-    if (!gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC && gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC]])
+    if (!gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] && gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
     {
         TRACE_(d3d_caps)(" IMPLIED: ARB_texture_compression_rgtc support (by EXT_texture_compression_rgtc).\n");
         gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] = TRUE;
