@@ -3356,6 +3356,7 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
     context_release(context);
 }
 
+/* Do not call while under the GL lock. */
 HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED3DCOLORVALUE *color)
 {
     IWineD3DDeviceImpl *device = s->resource.device;
@@ -3373,6 +3374,7 @@ HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED
 }
 
 /* Not called from the VTable */
+/* Do not call while under the GL lock. */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface, const RECT *DestRect,
         IWineD3DSurfaceImpl *src_surface, const RECT *SrcRect, DWORD Flags, const WINEDDBLTFX *DDBltFx,
         WINED3DTEXTUREFILTERTYPE Filter)
@@ -4873,6 +4875,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     return FALSE;
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
@@ -4924,6 +4927,7 @@ static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     return FALSE;
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {

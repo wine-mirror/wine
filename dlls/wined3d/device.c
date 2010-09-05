@@ -576,6 +576,7 @@ void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
     }
 }
 
+/* Do not call while under the GL lock. */
 void device_switch_onscreen_ds(IWineD3DDeviceImpl *device,
         struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
 {
@@ -653,6 +654,7 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
     surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
 }
 
+/* Do not call while under the GL lock. */
 HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, IWineD3DSurfaceImpl **rts,
         UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags,
         const WINED3DCOLORVALUE *color, float depth, DWORD stencil)
@@ -715,7 +717,11 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
 
         if (location == SFLAG_DS_ONSCREEN && depth_stencil != device->onscreen_depth_stencil)
+        {
+            LEAVE_GL();
             device_switch_onscreen_ds(device, context, depth_stencil);
+            ENTER_GL();
+        }
         prepare_ds_clear(depth_stencil, context, location, draw_rect, rect_count, clear_rect);
         surface_modify_location(depth_stencil, SFLAG_INDRAWABLE, TRUE);
 
@@ -4574,6 +4580,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD rect_count,
         const RECT *rects, DWORD flags, WINED3DCOLOR color, float depth, DWORD stencil)
 {
@@ -5493,6 +5500,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
     return WINED3DERR_INVALIDCALL;
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
         IWineD3DSurface *surface, const RECT *rect, const WINED3DCOLORVALUE *color)
 {
@@ -5511,6 +5519,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
     return surface_color_fill(s, rect, color);
 }
 
+/* Do not call while under the GL lock. */
 static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *iface,
         IWineD3DRendertargetView *rendertarget_view, const WINED3DCOLORVALUE *color)
 {

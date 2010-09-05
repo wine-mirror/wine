@@ -1133,7 +1133,8 @@ enum blit_operation
     BLIT_OP_COLOR_FILL
 };
 
-/* Shaders for color conversions in blits */
+/* Shaders for color conversions in blits. Do not do blit operations while
+ * already under the GL lock. */
 struct blit_shader
 {
     HRESULT (*alloc_private)(IWineD3DDevice *iface);

@@ -7170,6 +7170,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     return WINED3D_OK;
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
