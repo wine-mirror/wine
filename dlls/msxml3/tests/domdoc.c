@@ -5854,6 +5854,84 @@ static void test_removeQualifiedItem(void)
     free_bstrs();
 }
 
+static void test_get_ownerDocument(void)
+{
+    IXMLDOMDocument *doc1, *doc2, *doc3;
+    IXMLDOMDocument2 *doc, *doc_owner;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    VARIANT var;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+    if (!doc) return;
+
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument2_loadXML( doc, str, &b );
+    ok( hr == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("xmlns:wi=\'www.winehq.org\'");
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), var);
+    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument2_get_firstChild(doc, &node);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMNode_get_ownerDocument(node, &doc1);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    VariantClear(&var);
+    hr = IXMLDOMDocument_QueryInterface(doc1, &IID_IXMLDOMDocument2, (void**)&doc_owner);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( doc_owner != doc, "got %p, doc %p\n", doc_owner, doc);
+    hr = IXMLDOMDocument2_getProperty(doc_owner, _bstr_("SelectionNamespaces"), &var);
+    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
+    IXMLDOMDocument2_Release(doc_owner);
+    VariantClear(&var);
+
+    hr = IXMLDOMNode_get_ownerDocument(node, &doc2);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMNode_Release(node);
+
+    ok(doc1 != doc2, "got %p, expected %p. original %p\n", doc2, doc1, doc);
+
+    /* reload */
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument2_loadXML( doc, str, &b );
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    /* property retained even after reload */
+    VariantClear(&var);
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var);
+    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
+    VariantClear(&var);
+
+    hr = IXMLDOMDocument2_get_firstChild(doc, &node);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMNode_get_ownerDocument(node, &doc3);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMDocument_QueryInterface(doc3, &IID_IXMLDOMDocument2, (void**)&doc_owner);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok(doc3 != doc1 && doc3 != doc2 && doc_owner != doc, "got %p, (%p, %p, %p)\n", doc3, doc, doc1, doc2);
+
+    IXMLDOMDocument_Release(doc1);
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMDocument_Release(doc3);
+    IXMLDOMDocument2_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -5906,6 +5984,7 @@ START_TEST(domdoc)
     test_splitText();
     test_getQualifiedItem();
     test_removeQualifiedItem();
+    test_get_ownerDocument();
 
     CoUninitialize();
 }
