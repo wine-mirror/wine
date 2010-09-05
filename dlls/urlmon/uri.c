@@ -85,6 +85,9 @@ typedef struct {
 
     WCHAR   *host;
     DWORD   host_len;
+
+    WCHAR   *password;
+    DWORD   password_len;
 } UriBuilder;
 
 typedef struct {
@@ -4314,6 +4317,7 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
         if(This->uri) IUri_Release(URI(This->uri));
         heap_free(This->fragment);
         heap_free(This->host);
+        heap_free(This->password);
         heap_free(This);
     }
 
@@ -4462,19 +4466,13 @@ static HRESULT WINAPI UriBuilder_GetPassword(IUriBuilder *iface, DWORD *pcchPass
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchPassword, ppwzPassword);
 
-    if(!pcchPassword) {
-        if(ppwzPassword)
-            *ppwzPassword = NULL;
-        return E_POINTER;
+    if(!This->uri || This->uri->userinfo_split == -1 || This->modified_props & Uri_HAS_PASSWORD)
+        return get_builder_component(&This->password, &This->password_len, NULL, 0, ppwzPassword, pcchPassword);
+    else {
+        const WCHAR *start = This->uri->canon_uri+This->uri->userinfo_start+This->uri->userinfo_split+1;
+        DWORD len = This->uri->userinfo_len-This->uri->userinfo_split-1;
+        return get_builder_component(&This->password, &This->password_len, start, len, ppwzPassword, pcchPassword);
     }
-
-    if(!ppwzPassword) {
-        *pcchPassword = 0;
-        return E_POINTER;
-    }
-
-    FIXME("(%p)->(%p %p)\n", This, pcchPassword, ppwzPassword);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UriBuilder_GetPath(IUriBuilder *iface, DWORD *pcchPath, LPCWSTR *ppwzPath)
@@ -4598,8 +4596,10 @@ static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue
 static HRESULT WINAPI UriBuilder_SetPassword(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+
+    This->modified_props |= Uri_HAS_PASSWORD;
+    return set_builder_component(&This->password, &This->password_len, pwzNewValue, 0);
 }
 
 static HRESULT WINAPI UriBuilder_SetPath(IUriBuilder *iface, LPCWSTR pwzNewValue)
