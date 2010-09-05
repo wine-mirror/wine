@@ -266,7 +266,7 @@ typedef struct {
 #define GE(x) { &x, #x }
 
 /* dwPatch from MIDILOCALE */
-extern DWORD MIDILOCALE2Patch (LPMIDILOCALE pLocale);
+extern DWORD MIDILOCALE2Patch (const MIDILOCALE *pLocale);
 /* MIDILOCALE from dwPatch */
 extern void Patch2MIDILOCALE (DWORD dwPatch, LPMIDILOCALE pLocale);
 

@@ -187,7 +187,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  *
  */
 /* dwPatch from MIDILOCALE */
-DWORD MIDILOCALE2Patch (LPMIDILOCALE pLocale) {
+DWORD MIDILOCALE2Patch (const MIDILOCALE *pLocale) {
 	DWORD dwPatch = 0;
 	if (!pLocale) return 0;
 	dwPatch |= (pLocale->ulBank & F_INSTRUMENT_DRUMS); /* set drum bit */
