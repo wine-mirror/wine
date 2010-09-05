@@ -762,10 +762,13 @@ static void test_url_canonicalize(int index, const char *szUrl, DWORD dwFlags, H
 
 static void test_UrlEscape(void)
 {
+    static const WCHAR out[] = { 'f','o','o','%','2','0','b','a','r',0 };
+
     DWORD size = 0;
     HRESULT ret;
     unsigned int i;
     char empty_string[] = "";
+    WCHAR overwrite[] = { 'f','o','o',' ','b','a','r',0,0,0 };
 
     if (!pUrlEscapeA) {
         win_skip("UrlEscapeA noz found\n");
@@ -795,6 +798,14 @@ static void test_UrlEscape(void)
     ret = pUrlEscapeA("/woningplan/woonkamer basis.swf", empty_string, &size, URL_ESCAPE_SPACES_ONLY);
     ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
     ok(size == 34, "got %d, expected %d\n", size, 34);
+
+    if(pUrlEscapeW) {
+        size = sizeof(overwrite)/sizeof(WCHAR);
+        ret = pUrlEscapeW(overwrite, overwrite, &size, URL_ESCAPE_SPACES_ONLY);
+        ok(ret == S_OK, "got %x, expected S_OK\n", ret);
+        ok(size == 9, "got %d, expected 9\n", size);
+        ok(!lstrcmpW(overwrite, out), "got %s, expected %s\n", wine_dbgstr_w(overwrite), wine_dbgstr_w(out));
+    }
 
     for(i=0; i<sizeof(TEST_ESCAPE)/sizeof(TEST_ESCAPE[0]); i++) {
         test_url_escape(TEST_ESCAPE[i].url, TEST_ESCAPE[i].flags,

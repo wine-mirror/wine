@@ -1022,8 +1022,8 @@ HRESULT WINAPI UrlEscapeW(
     DWORD slashes = 0;
     static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
 
-    TRACE("(%s %p %p 0x%08x)\n", debugstr_w(pszUrl), pszEscaped,
-	  pcchEscaped, dwFlags);
+    TRACE("(%p(%s) %p %p 0x%08x)\n", pszUrl, debugstr_w(pszUrl),
+            pszEscaped, pcchEscaped, dwFlags);
 
     if(!pszUrl || !pcchEscaped)
         return E_INVALIDARG;
@@ -1033,6 +1033,12 @@ HRESULT WINAPI UrlEscapeW(
 		   URL_DONT_ESCAPE_EXTRA_INFO |
 		   URL_ESCAPE_PERCENT))
         FIXME("Unimplemented flags: %08x\n", dwFlags);
+
+    if(pszUrl == pszEscaped) {
+        dst = HeapAlloc(GetProcessHeap(), 0, *pcchEscaped*sizeof(WCHAR));
+        if(!dst)
+            return E_OUTOFMEMORY;
+    }
 
     /* fix up flags */
     if (dwFlags & URL_ESCAPE_SPACES_ONLY)
@@ -1150,12 +1156,18 @@ HRESULT WINAPI UrlEscapeW(
 
     if(needed < *pcchEscaped) {
         *dst = '\0';
-	ret = S_OK;
+        if(pszUrl == pszEscaped)
+            memcpy(pszEscaped, dst-needed, (needed+1)*sizeof(WCHAR));
+
+        ret = S_OK;
     } else {
         needed++; /* add one for the '\0' */
-	ret = E_POINTER;
+        ret = E_POINTER;
     }
     *pcchEscaped = needed;
+
+    if(pszUrl == pszEscaped)
+        HeapFree(GetProcessHeap(), 0, dst);
     return ret;
 }
 
