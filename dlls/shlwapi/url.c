@@ -273,7 +273,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     HRESULT hr = S_OK;
     DWORD EscapeFlags;
     LPCWSTR wk1, root;
-    LPWSTR lpszUrlCpy, wk2, mp, mp2;
+    LPWSTR lpszUrlCpy, url, wk2, mp, mp2;
     INT state;
     DWORD nByteLen, nLen, nWkLen;
     WCHAR slash = '\0';
@@ -295,22 +295,40 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
         return S_OK;
     }
 
+    /* Remove '\t' characters from URL */
     nByteLen = (strlenW(pszUrl) + 1) * sizeof(WCHAR); /* length in bytes */
+    url = HeapAlloc(GetProcessHeap(), 0, nByteLen);
+    if(!url)
+        return E_OUTOFMEMORY;
+
+    wk1 = pszUrl;
+    wk2 = url;
+    do {
+        while(*wk1 == '\t')
+            wk1++;
+        *wk2++ = *wk1;
+    } while(*wk1++);
+
     /* Allocate memory for simplified URL (before escaping) */
+    nByteLen = (wk2-url)*sizeof(WCHAR);
     lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0,
             nByteLen+sizeof(wszFilePrefix)+sizeof(WCHAR));
+    if(!lpszUrlCpy) {
+        HeapFree(GetProcessHeap(), 0, url);
+        return E_OUTOFMEMORY;
+    }
 
     if ((nByteLen >= sizeof(wszHttp) &&
-         !memcmp(wszHttp, pszUrl, sizeof(wszHttp))) ||
+         !memcmp(wszHttp, url, sizeof(wszHttp))) ||
         (nByteLen >= sizeof(wszFile) &&
-         !memcmp(wszFile, pszUrl, sizeof(wszFile))))
+         !memcmp(wszFile, url, sizeof(wszFile))))
         slash = '/';
 
     if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
-            && !memcmp(wszFile, pszUrl, sizeof(wszFile)))
+            && !memcmp(wszFile, url, sizeof(wszFile)))
         slash = '\\';
 
-    if(nByteLen >= sizeof(wszRes) && !memcmp(wszRes, pszUrl, sizeof(wszRes))) {
+    if(nByteLen >= sizeof(wszRes) && !memcmp(wszRes, url, sizeof(wszRes))) {
         dwFlags &= ~URL_FILE_USE_PATHURL;
         slash = '\0';
     }
@@ -326,11 +344,11 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
      *         6   have location (found /) save root location
      */
 
-    wk1 = pszUrl;
+    wk1 = url;
     wk2 = lpszUrlCpy;
     state = 0;
 
-    if(pszUrl[1] == ':') { /* Assume path */
+    if(url[1] == ':') { /* Assume path */
         memcpy(wk2, wszFilePrefix, sizeof(wszFilePrefix));
         wk2 += sizeof(wszFilePrefix)/sizeof(WCHAR);
         if (dwFlags & URL_FILE_USE_PATHURL)
@@ -361,7 +379,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
             if (*wk1 != '/') {state = 6; break;}
             *wk2++ = *wk1++;
             if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszLocalhost)
-                        && !strncmpW(wszFile, pszUrl, sizeof(wszFile)/sizeof(WCHAR))
+                        && !strncmpW(wszFile, url, sizeof(wszFile)/sizeof(WCHAR))
                         && !memcmp(wszLocalhost, wk1, sizeof(wszLocalhost))){
                 wk1 += sizeof(wszLocalhost)/sizeof(WCHAR);
                 while(*wk1 == '\\' && (dwFlags & URL_FILE_USE_PATHURL))
@@ -483,6 +501,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
         default:
             FIXME("how did we get here - state=%d\n", state);
             HeapFree(GetProcessHeap(), 0, lpszUrlCpy);
+            HeapFree(GetProcessHeap(), 0, url);
             return E_INVALIDARG;
         }
         *wk2 = '\0';
@@ -495,7 +514,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 
     if((dwFlags & URL_UNESCAPE) ||
        ((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
-                && !memcmp(wszFile, pszUrl, sizeof(wszFile))))
+                && !memcmp(wszFile, url, sizeof(wszFile))))
         UrlUnescapeW(lpszUrlCpy, NULL, &nLen, URL_UNESCAPE_INPLACE);
 
     if((EscapeFlags = dwFlags & (URL_ESCAPE_UNSAFE |
@@ -518,6 +537,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     }
 
     HeapFree(GetProcessHeap(), 0, lpszUrlCpy);
+    HeapFree(GetProcessHeap(), 0, url);
 
     if (hr == S_OK)
 	TRACE("result %s\n", debugstr_w(pszCanonicalized));
