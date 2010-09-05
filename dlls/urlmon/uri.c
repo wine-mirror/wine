@@ -82,6 +82,9 @@ typedef struct {
 
     WCHAR   *fragment;
     DWORD   fragment_len;
+
+    WCHAR   *host;
+    DWORD   host_len;
 } UriBuilder;
 
 typedef struct {
@@ -4310,6 +4313,7 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
     if(!ref) {
         if(This->uri) IUri_Release(URI(This->uri));
         heap_free(This->fragment);
+        heap_free(This->host);
         heap_free(This);
     }
 
@@ -4440,19 +4444,17 @@ static HRESULT WINAPI UriBuilder_GetHost(IUriBuilder *iface, DWORD *pcchHost, LP
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchHost, ppwzHost);
 
-    if(!pcchHost) {
-        if(ppwzHost)
-            *ppwzHost = NULL;
-        return E_POINTER;
+    if(!This->uri || This->uri->host_start == -1 || This->modified_props & Uri_HAS_HOST)
+        return get_builder_component(&This->host, &This->host_len, NULL, 0, ppwzHost, pcchHost);
+    else {
+        if(This->uri->host_type == Uri_HOST_IPV6)
+            /* Don't include the '[' and ']' around the address. */
+            return get_builder_component(&This->host, &This->host_len, This->uri->canon_uri+This->uri->host_start+1,
+                                         This->uri->host_len-2, ppwzHost, pcchHost);
+        else
+            return get_builder_component(&This->host, &This->host_len, This->uri->canon_uri+This->uri->host_start,
+                                         This->uri->host_len, ppwzHost, pcchHost);
     }
-
-    if(!ppwzHost) {
-        *pcchHost = 0;
-        return E_POINTER;
-    }
-
-    FIXME("(%p)->(%p %p)\n", This, pcchHost, ppwzHost);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UriBuilder_GetPassword(IUriBuilder *iface, DWORD *pcchPassword, LPCWSTR *ppwzPassword)
@@ -4587,8 +4589,10 @@ static HRESULT WINAPI UriBuilder_SetFragment(IUriBuilder *iface, LPCWSTR pwzNewV
 static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+
+    This->modified_props |= Uri_HAS_HOST;
+    return set_builder_component(&This->host, &This->host_len, pwzNewValue, 0);
 }
 
 static HRESULT WINAPI UriBuilder_SetPassword(IUriBuilder *iface, LPCWSTR pwzNewValue)

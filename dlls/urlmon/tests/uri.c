@@ -4288,7 +4288,7 @@ static const uri_builder_test uri_builder_tests[] = {
     {   "/Test/test dir",Uri_CREATE_ALLOW_RELATIVE,S_OK,FALSE,
         {
             {TRUE,"http",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE},
-            {TRUE,"::192.2.3.4",NULL,Uri_PROPERTY_HOST,S_OK,TRUE},
+            {TRUE,"::192.2.3.4",NULL,Uri_PROPERTY_HOST,S_OK,FALSE},
             {TRUE,NULL,NULL,Uri_PROPERTY_PATH,S_OK,TRUE}
         },
         {FALSE},
@@ -6920,10 +6920,8 @@ static void test_IUriBuilder_HasBeenModified(void) {
             hr, E_POINTER);
 
         hr = IUriBuilder_SetHost(builder, hostW);
-        todo_wine {
-            ok(hr == S_OK, "Error: IUriBuilder_SetHost returned 0x%08x, expected 0x%08x.\n",
-                hr, S_OK);
-        }
+        ok(hr == S_OK, "Error: IUriBuilder_SetHost returned 0x%08x, expected 0x%08x.\n",
+            hr, S_OK);
 
         hr = IUriBuilder_HasBeenModified(builder, &received);
         todo_wine {
