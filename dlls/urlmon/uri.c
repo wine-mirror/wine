@@ -100,6 +100,9 @@ typedef struct {
 
     WCHAR   *scheme;
     DWORD   scheme_len;
+
+    WCHAR   *username;
+    DWORD   username_len;
 } UriBuilder;
 
 typedef struct {
@@ -4383,6 +4386,7 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
         heap_free(This->path);
         heap_free(This->query);
         heap_free(This->scheme);
+        heap_free(This->username);
         heap_free(This);
     }
 
@@ -4602,19 +4606,22 @@ static HRESULT WINAPI UriBuilder_GetUserName(IUriBuilder *iface, DWORD *pcchUser
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchUserName, ppwzUserName);
 
-    if(!pcchUserName) {
-        if(ppwzUserName)
-            *ppwzUserName = NULL;
-        return E_POINTER;
-    }
+    if(!This->uri || This->uri->userinfo_start == -1 ||
+       This->uri->userinfo_start == This->uri->userinfo_split ||
+       This->modified_props & Uri_HAS_USER_NAME)
+        return get_builder_component(&This->username, &This->username_len, NULL, 0, ppwzUserName, pcchUserName);
+    else {
+        const WCHAR *start = This->uri->canon_uri+This->uri->userinfo_start;
 
-    if(!ppwzUserName) {
-        *pcchUserName = 0;
-        return E_POINTER;
+        /* Check if there's a password in the userinfo section. */
+        if(This->uri->userinfo_split > -1)
+            /* Don't include the password. */
+            return get_builder_component(&This->username, &This->username_len, start,
+                                         This->uri->userinfo_split, ppwzUserName, pcchUserName);
+        else
+            return get_builder_component(&This->username, &This->username_len, start,
+                                         This->uri->userinfo_len, ppwzUserName, pcchUserName);
     }
-
-    FIXME("(%p)->(%p %p)\n", This, pcchUserName, ppwzUserName);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI UriBuilder_SetFragment(IUriBuilder *iface, LPCWSTR pwzNewValue)
@@ -4679,8 +4686,9 @@ static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNe
 static HRESULT WINAPI UriBuilder_SetUserName(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->username, &This->username_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_USER_NAME);
 }
 
 static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPropertyMask)
