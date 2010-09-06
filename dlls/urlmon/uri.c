@@ -3292,9 +3292,11 @@ static HRESULT get_builder_component(LPWSTR *component, DWORD *component_len,
 /* Allocates 'component' and copies the string from 'new_value' into 'component'.
  * If 'prefix' is set and 'new_value' isn't NULL, then it checks if 'new_value'
  * starts with 'prefix'. If it doesn't then 'prefix' is prepended to 'component'.
+ *
+ * If everything is successful, then will set 'success_flag' in 'flags'.
  */
 static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LPCWSTR new_value,
-                                     WCHAR prefix)
+                                     WCHAR prefix, DWORD *flags, DWORD success_flag)
 {
     if(*component)
         heap_free(*component);
@@ -3323,6 +3325,7 @@ static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LP
         *component_len = len+pos;
     }
 
+    *flags |= success_flag;
     return S_OK;
 }
 
@@ -4571,36 +4574,32 @@ static HRESULT WINAPI UriBuilder_SetFragment(IUriBuilder *iface, LPCWSTR pwzNewV
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-
-    This->modified_props |= Uri_HAS_FRAGMENT;
-    return set_builder_component(&This->fragment, &This->fragment_len, pwzNewValue, '#');
+    return set_builder_component(&This->fragment, &This->fragment_len, pwzNewValue, '#',
+                                 &This->modified_props, Uri_HAS_FRAGMENT);
 }
 
 static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-
-    This->modified_props |= Uri_HAS_HOST;
-    return set_builder_component(&This->host, &This->host_len, pwzNewValue, 0);
+    return set_builder_component(&This->host, &This->host_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_HOST);
 }
 
 static HRESULT WINAPI UriBuilder_SetPassword(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-
-    This->modified_props |= Uri_HAS_PASSWORD;
-    return set_builder_component(&This->password, &This->password_len, pwzNewValue, 0);
+    return set_builder_component(&This->password, &This->password_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_PASSWORD);
 }
 
 static HRESULT WINAPI UriBuilder_SetPath(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-
-    This->modified_props |= Uri_HAS_PATH;
-    return set_builder_component(&This->path, &This->path_len, pwzNewValue, 0);
+    return set_builder_component(&This->path, &This->path_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_PATH);
 }
 
 static HRESULT WINAPI UriBuilder_SetPort(IUriBuilder *iface, BOOL fHasPort, DWORD dwNewValue)
