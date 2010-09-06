@@ -132,8 +132,15 @@ static HRESULT WINAPI BitmapDecoderInfo_GetComponentType(IWICBitmapDecoderInfo *
 
 static HRESULT WINAPI BitmapDecoderInfo_GetCLSID(IWICBitmapDecoderInfo *iface, CLSID *pclsid)
 {
-    FIXME("(%p,%p): stub\n", iface, pclsid);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+    TRACE("(%p,%p)\n", iface, pclsid);
+
+    if (!pclsid)
+        return E_INVALIDARG;
+
+    memcpy(pclsid, &This->clsid, sizeof(CLSID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetSigningStatus(IWICBitmapDecoderInfo *iface, DWORD *pStatus)
@@ -564,8 +571,15 @@ static HRESULT WINAPI BitmapEncoderInfo_GetComponentType(IWICBitmapEncoderInfo *
 
 static HRESULT WINAPI BitmapEncoderInfo_GetCLSID(IWICBitmapEncoderInfo *iface, CLSID *pclsid)
 {
-    FIXME("(%p,%p): stub\n", iface, pclsid);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    TRACE("(%p,%p)\n", iface, pclsid);
+
+    if (!pclsid)
+        return E_INVALIDARG;
+
+    memcpy(pclsid, &This->clsid, sizeof(CLSID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetSigningStatus(IWICBitmapEncoderInfo *iface, DWORD *pStatus)
@@ -821,8 +835,15 @@ static HRESULT WINAPI FormatConverterInfo_GetComponentType(IWICFormatConverterIn
 
 static HRESULT WINAPI FormatConverterInfo_GetCLSID(IWICFormatConverterInfo *iface, CLSID *pclsid)
 {
-    FIXME("(%p,%p): stub\n", iface, pclsid);
-    return E_NOTIMPL;
+    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    TRACE("(%p,%p)\n", iface, pclsid);
+
+    if (!pclsid)
+        return E_INVALIDARG;
+
+    memcpy(pclsid, &This->clsid, sizeof(CLSID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI FormatConverterInfo_GetSigningStatus(IWICFormatConverterInfo *iface, DWORD *pStatus)

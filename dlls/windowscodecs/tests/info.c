@@ -35,6 +35,7 @@ static void test_decoder_info(void)
     ULONG len;
     WCHAR value[256];
     const WCHAR expected_mimetype[] = {'i','m','a','g','e','/','b','m','p',0};
+    CLSID clsid;
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICImagingFactory, (void**)&factory);
@@ -46,6 +47,13 @@ static void test_decoder_info(void)
 
     hr = IWICComponentInfo_QueryInterface(info, &IID_IWICBitmapDecoderInfo, (void**)&decoder_info);
     ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
+
+    hr = IWICBitmapDecoderInfo_GetCLSID(decoder_info, NULL);
+    ok(hr == E_INVALIDARG, "GetCLSID failed, hr=%x\n", hr);
+
+    hr = IWICBitmapDecoderInfo_GetCLSID(decoder_info, &clsid);
+    ok(hr == S_OK, "GetCLSID failed, hr=%x\n", hr);
+    ok(IsEqualGUID(&CLSID_WICBmpDecoder, &clsid), "GetCLSID returned wrong result\n");
 
     hr = IWICBitmapDecoderInfo_GetMimeTypes(decoder_info, 0, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetMimeType failed, hr=%x\n", hr);
