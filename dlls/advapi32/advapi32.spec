@@ -220,8 +220,8 @@
 @ stdcall FileEncryptionStatusA(str ptr)
 @ stdcall FileEncryptionStatusW(wstr ptr)
 @ stdcall FindFirstFreeAce(ptr ptr)
-# @ stub FlushTraceA
-# @ stub FlushTraceW
+@ stdcall FlushTraceA(int64 str ptr)
+@ stdcall FlushTraceW(int64 wstr ptr)
 # @ stub FreeEncryptedFileKeyInfo
 # @ stub FreeEncryptionCertificateHashList
 # @ stub FreeInheritedFromArray

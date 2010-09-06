@@ -199,6 +199,23 @@ ULONG WINAPI ControlTraceA( TRACEHANDLE hSession, LPCSTR SessionName, PEVENT_TRA
 }
 
 /******************************************************************************
+ * FlushTraceA [ADVAPI32.@]
+ */
+ULONG WINAPI FlushTraceA ( TRACEHANDLE hSession, LPCSTR SessionName, PEVENT_TRACE_PROPERTIES Properties )
+{
+    return ControlTraceA( hSession, SessionName, Properties, EVENT_TRACE_CONTROL_FLUSH );
+}
+
+/******************************************************************************
+ * FlushTraceW [ADVAPI32.@]
+ */
+ULONG WINAPI FlushTraceW ( TRACEHANDLE hSession, LPCWSTR SessionName, PEVENT_TRACE_PROPERTIES Properties )
+{
+    return ControlTraceW( hSession, SessionName, Properties, EVENT_TRACE_CONTROL_FLUSH );
+}
+
+
+/******************************************************************************
  * DeregisterEventSource [ADVAPI32.@]
  * 
  * Closes a write handle to an event log
