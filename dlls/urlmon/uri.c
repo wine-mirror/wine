@@ -3943,17 +3943,13 @@ static HRESULT WINAPI Uri_GetQuery(IUri *iface, BSTR *pstrQuery)
 
 static HRESULT WINAPI Uri_GetRawUri(IUri *iface, BSTR *pstrRawUri)
 {
-    Uri *This = URI_THIS(iface);
-    TRACE("(%p)->(%p)\n", This, pstrRawUri);
-
-    /* Just forward the call to GetPropertyBSTR. */
+    TRACE("(%p)->(%p)\n", iface, pstrRawUri);
     return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_RAW_URI, pstrRawUri, 0);
 }
 
 static HRESULT WINAPI Uri_GetSchemeName(IUri *iface, BSTR *pstrSchemeName)
 {
-    Uri *This = URI_THIS(iface);
-    TRACE("(%p)->(%p)\n", This, pstrSchemeName);
+    TRACE("(%p)->(%p)\n", iface, pstrSchemeName);
     return Uri_GetPropertyBSTR(iface, Uri_PROPERTY_SCHEME_NAME, pstrSchemeName, 0);
 }
 
