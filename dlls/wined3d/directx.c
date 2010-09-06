@@ -2336,22 +2336,20 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     while (*GL_Extensions)
     {
         const char *start;
-        char current_ext[256];
 
         while (isspace(*GL_Extensions)) ++GL_Extensions;
         start = GL_Extensions;
         while (!isspace(*GL_Extensions) && *GL_Extensions) ++GL_Extensions;
 
         len = GL_Extensions - start;
-        if (!len || len >= sizeof(current_ext)) continue;
+        if (!len) continue;
 
-        memcpy(current_ext, start, len);
-        current_ext[len] = '\0';
-        TRACE_(d3d_caps)("- %s\n", debugstr_a(current_ext));
+        TRACE_(d3d_caps)("- %s\n", debugstr_an(start, len));
 
         for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i)
         {
-            if (!strcmp(current_ext, EXTENSION_MAP[i].extension_string))
+            if (len == strlen(EXTENSION_MAP[i].extension_string)
+                    && !memcmp(start, EXTENSION_MAP[i].extension_string, len))
             {
                 TRACE_(d3d_caps)(" FOUND: %s support.\n", EXTENSION_MAP[i].extension_string);
                 gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
