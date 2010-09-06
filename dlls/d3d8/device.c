@@ -1960,7 +1960,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShader(IDirect3DDevice8 *ifa
 static HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface, DWORD pShader) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DVertexShader8Impl *shader;
-    IWineD3DVertexShader *cur = NULL;
+    IWineD3DVertexShader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
 
@@ -1974,8 +1974,7 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE
         return D3DERR_INVALIDCALL;
     }
 
-    IWineD3DDevice_GetVertexShader(This->WineD3DDevice, &cur);
-
+    cur = IWineD3DDevice_GetVertexShader(This->WineD3DDevice);
     if (cur)
     {
         if (cur == shader->wineD3DVertexShader) IDirect3DDevice8_SetVertexShader(iface, 0);

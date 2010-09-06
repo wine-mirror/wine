@@ -3208,18 +3208,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader** ppShader) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static IWineD3DVertexShader * WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexShader *shader;
 
-    if (NULL == ppShader) {
-        return WINED3DERR_INVALIDCALL;
-    }
-    *ppShader = This->stateBlock->vertexShader;
-    if( NULL != *ppShader)
-        IWineD3DVertexShader_AddRef(*ppShader);
+    TRACE("iface %p.\n", iface);
 
-    TRACE("(%p) : returning %p\n", This, *ppShader);
-    return WINED3D_OK;
+    shader = device->stateBlock->vertexShader;
+    if (shader) IWineD3DVertexShader_AddRef(shader);
+
+    TRACE("Returning %p.\n", shader);
+    return shader;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(

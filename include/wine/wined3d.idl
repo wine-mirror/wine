@@ -3221,8 +3221,7 @@ interface IWineD3DDevice : IUnknown
     HRESULT SetVertexShader(
         [in] IWineD3DVertexShader *shader
     );
-    HRESULT GetVertexShader(
-        [out] IWineD3DVertexShader **shader
+    IWineD3DVertexShader *GetVertexShader(
     );
     HRESULT SetVertexShaderConstantB(
         [in] UINT start_register,
