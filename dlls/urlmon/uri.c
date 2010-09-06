@@ -3427,8 +3427,36 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             *pbstrProperty = SysAllocStringLen(NULL, 0);
             hres = S_FALSE;
         } else {
-            *pbstrProperty = SysAllocString(This->canon_uri);
-            hres = S_OK;
+            if(This->scheme_type != URL_SCHEME_UNKNOWN && This->userinfo_start > -1) {
+                if(This->userinfo_len == 0) {
+                    /* Don't include the '@' after the userinfo component. */
+                    *pbstrProperty = SysAllocStringLen(NULL, This->canon_len-1);
+                    hres = S_OK;
+                    if(*pbstrProperty) {
+                        /* Copy everything before it. */
+                        memcpy(*pbstrProperty, This->canon_uri, This->userinfo_start*sizeof(WCHAR));
+
+                        /* And everything after it. */
+                        memcpy(*pbstrProperty+This->userinfo_start, This->canon_uri+This->userinfo_start+1,
+                               (This->canon_len-This->userinfo_start-1)*sizeof(WCHAR));
+                    }
+                } else if(This->userinfo_split == 0 && This->userinfo_len == 1) {
+                    /* Don't include the ":@" */
+                    *pbstrProperty = SysAllocStringLen(NULL, This->canon_len-2);
+                    hres = S_OK;
+                    if(*pbstrProperty) {
+                        memcpy(*pbstrProperty, This->canon_uri, This->userinfo_start*sizeof(WCHAR));
+                        memcpy(*pbstrProperty+This->userinfo_start, This->canon_uri+This->userinfo_start+2,
+                               (This->canon_len-This->userinfo_start-2)*sizeof(WCHAR));
+                    }
+                } else {
+                    *pbstrProperty = SysAllocString(This->canon_uri);
+                    hres = S_OK;
+                }
+            } else {
+                *pbstrProperty = SysAllocString(This->canon_uri);
+                hres = S_OK;
+            }
         }
 
         if(!(*pbstrProperty))
@@ -3622,7 +3650,7 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
 
         break;
     case Uri_PROPERTY_USER_NAME:
-        if(This->userinfo_start > -1) {
+        if(This->userinfo_start > -1 && This->userinfo_split != 0) {
             /* If userinfo_split is set, that means a password exists
              * so the username is only from userinfo_start to userinfo_split.
              */
@@ -3675,7 +3703,19 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
             *pcchProperty = 0;
             hres = S_FALSE;
         } else {
-            *pcchProperty = This->canon_len;
+            if(This->scheme_type != URL_SCHEME_UNKNOWN) {
+                if(This->userinfo_start > -1 && This->userinfo_len == 0)
+                    /* Don't include the '@' in the length. */
+                    *pcchProperty = This->canon_len-1;
+                else if(This->userinfo_start > -1 && This->userinfo_len == 1 &&
+                        This->userinfo_split == 0)
+                    /* Don't include the ":@" in the length. */
+                    *pcchProperty = This->canon_len-2;
+                else
+                    *pcchProperty = This->canon_len;
+            } else
+                *pcchProperty = This->canon_len;
+
             hres = S_OK;
         }
 
@@ -3753,7 +3793,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         break;
     case Uri_PROPERTY_USER_NAME:
         *pcchProperty = (This->userinfo_split > -1) ? This->userinfo_split : This->userinfo_len;
-        hres = (This->userinfo_start > -1) ? S_OK : S_FALSE;
+        if(This->userinfo_split == 0)
+            hres = S_FALSE;
+        else
+            hres = (This->userinfo_start > -1) ? S_OK : S_FALSE;
         break;
     default:
         FIXME("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
@@ -3864,8 +3907,13 @@ static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *p
         *pfHasProperty = This->scheme_start > -1;
         break;
     case Uri_PROPERTY_USER_INFO:
-    case Uri_PROPERTY_USER_NAME:
         *pfHasProperty = This->userinfo_start > -1;
+        break;
+    case Uri_PROPERTY_USER_NAME:
+        if(This->userinfo_split == 0)
+            *pfHasProperty = FALSE;
+        else
+            *pfHasProperty = This->userinfo_start > -1;
         break;
     case Uri_PROPERTY_HOST_TYPE:
         *pfHasProperty = TRUE;
@@ -4021,8 +4069,11 @@ static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
 
     if(This->authority_start > -1) {
         *pdwProperties |= Uri_HAS_AUTHORITY;
-        if(This->userinfo_start > -1)
-            *pdwProperties |= Uri_HAS_USER_INFO|Uri_HAS_USER_NAME;
+        if(This->userinfo_start > -1) {
+            *pdwProperties |= Uri_HAS_USER_INFO;
+            if(This->userinfo_split != 0)
+                *pdwProperties |= Uri_HAS_USER_NAME;
+        }
         if(This->userinfo_split > -1)
             *pdwProperties |= Uri_HAS_PASSWORD;
         if(This->host_start > -1)
