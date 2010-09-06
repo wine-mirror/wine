@@ -4313,7 +4313,7 @@ static const uri_builder_test uri_builder_tests[] = {
     },
     {   "http://google.com/",0,S_OK,FALSE,
         {
-            {TRUE,"test",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE}
+            {TRUE,"test",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,FALSE}
         },
         {TRUE,TRUE,120,S_OK,FALSE},
         0,S_OK,TRUE,
@@ -4345,7 +4345,7 @@ static const uri_builder_test uri_builder_tests[] = {
     },
     {   "/Test/test dir",Uri_CREATE_ALLOW_RELATIVE,S_OK,FALSE,
         {
-            {TRUE,"http",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE},
+            {TRUE,"http",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,FALSE},
             {TRUE,"::192.2.3.4",NULL,Uri_PROPERTY_HOST,S_OK,FALSE},
             {TRUE,NULL,NULL,Uri_PROPERTY_PATH,S_OK,FALSE}
         },

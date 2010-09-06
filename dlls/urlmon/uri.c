@@ -97,6 +97,9 @@ typedef struct {
 
     WCHAR   *query;
     DWORD   query_len;
+
+    WCHAR   *scheme;
+    DWORD   scheme_len;
 } UriBuilder;
 
 typedef struct {
@@ -4328,6 +4331,7 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
         heap_free(This->password);
         heap_free(This->path);
         heap_free(This->query);
+        heap_free(This->scheme);
         heap_free(This);
     }
 
@@ -4535,19 +4539,11 @@ static HRESULT WINAPI UriBuilder_GetSchemeName(IUriBuilder *iface, DWORD *pcchSc
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchSchemeName, ppwzSchemeName);
 
-    if(!pcchSchemeName) {
-        if(ppwzSchemeName)
-            *ppwzSchemeName = NULL;
-        return E_POINTER;
-    }
-
-    if(!ppwzSchemeName) {
-        *pcchSchemeName = 0;
-        return E_POINTER;
-    }
-
-    FIXME("(%p)->(%p %p)\n", This, pcchSchemeName, ppwzSchemeName);
-    return E_NOTIMPL;
+    if(!This->uri || This->uri->scheme_start == -1 || This->modified_props & Uri_HAS_SCHEME_NAME)
+        return get_builder_component(&This->scheme, &This->scheme_len, NULL, 0, ppwzSchemeName, pcchSchemeName);
+    else
+        return get_builder_component(&This->scheme, &This->scheme_len, This->uri->canon_uri+This->uri->scheme_start,
+                                     This->uri->scheme_len, ppwzSchemeName, pcchSchemeName);
 }
 
 static HRESULT WINAPI UriBuilder_GetUserName(IUriBuilder *iface, DWORD *pcchUserName, LPCWSTR *ppwzUserName)
@@ -4624,8 +4620,9 @@ static HRESULT WINAPI UriBuilder_SetQuery(IUriBuilder *iface, LPCWSTR pwzNewValu
 static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->scheme, &This->scheme_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_SCHEME_NAME);
 }
 
 static HRESULT WINAPI UriBuilder_SetUserName(IUriBuilder *iface, LPCWSTR pwzNewValue)
