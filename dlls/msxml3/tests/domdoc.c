@@ -5932,6 +5932,57 @@ static void test_get_ownerDocument(void)
     free_bstrs();
 }
 
+static void test_setAttributeNode(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    IXMLDOMAttribute *attr, *attr2, *ret_attr;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument2_loadXML( doc, str, &b );
+    ok( hr == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    ret_attr = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_setAttributeNode(elem, NULL, &ret_attr);
+    ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+
+    hr = IXMLDOMDocument_createAttribute(doc, _bstr_("attr"), &attr);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    ret_attr = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
+    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok( ret_attr == NULL, "got %p\n", ret_attr);
+
+    attr2 = NULL;
+    hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("attr"), &attr2);
+    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
+    if (attr2) IXMLDOMAttribute_Release(attr2);
+
+    /* try to add it another time */
+    ret_attr = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
+    todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+
+    IXMLDOMAttribute_Release(attr);
+    IXMLDOMElement_Release(elem);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -5950,7 +6001,6 @@ START_TEST(domdoc)
         win_skip("IXMLDOMDocument is not available (0x%08x)\n", r);
         return;
     }
-
 
     IXMLDOMDocument_Release(doc);
 
@@ -5985,6 +6035,7 @@ START_TEST(domdoc)
     test_getQualifiedItem();
     test_removeQualifiedItem();
     test_get_ownerDocument();
+    test_setAttributeNode();
 
     CoUninitialize();
 }

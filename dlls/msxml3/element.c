@@ -661,7 +661,11 @@ static HRESULT WINAPI domelem_setAttributeNode(
     IXMLDOMAttribute** attributeNode)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
+
     FIXME("(%p)->(%p %p)\n", This, domAttribute, attributeNode);
+
+    if(!domAttribute) return E_INVALIDARG;
+
     return E_NOTIMPL;
 }
 
