@@ -1309,16 +1309,14 @@ void write_header(const statement_list_t *stmts)
 
   fprintf(header, "#ifndef __WIDL_%s\n", header_token);
   fprintf(header, "#define __WIDL_%s\n\n", header_token);
-  start_cplusplus_guard(header);
+
+  fprintf(header, "/* Forward declarations */\n\n");
+  write_forward_decls(header, stmts);
 
   fprintf(header, "/* Headers for imported files */\n\n");
   write_imports(header, stmts);
   fprintf(header, "\n");
-
-  /* FIXME: should be before imported file includes */
-  fprintf(header, "/* Forward declarations */\n\n");
-  write_forward_decls(header, stmts);
-  fprintf(header, "\n");
+  start_cplusplus_guard(header);
 
   write_header_stmts(header, stmts, NULL, FALSE);
 
