@@ -467,6 +467,260 @@ static HRESULT BitmapDecoderInfo_Constructor(HKEY classkey, REFCLSID clsid, IWIC
 }
 
 typedef struct {
+    const IWICBitmapEncoderInfoVtbl *lpIWICBitmapEncoderInfoVtbl;
+    LONG ref;
+    HKEY classkey;
+    CLSID clsid;
+} BitmapEncoderInfo;
+
+static HRESULT WINAPI BitmapEncoderInfo_QueryInterface(IWICBitmapEncoderInfo *iface, REFIID iid,
+    void **ppv)
+{
+    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICComponentInfo, iid) ||
+        IsEqualIID(&IID_IWICBitmapCodecInfo, iid) ||
+        IsEqualIID(&IID_IWICBitmapEncoderInfo ,iid))
+    {
+        *ppv = This;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI BitmapEncoderInfo_AddRef(IWICBitmapEncoderInfo *iface)
+{
+    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI BitmapEncoderInfo_Release(IWICBitmapEncoderInfo *iface)
+{
+    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        RegCloseKey(This->classkey);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetComponentType(IWICBitmapEncoderInfo *iface,
+    WICComponentType *pType)
+{
+    TRACE("(%p,%p)\n", iface, pType);
+    *pType = WICEncoder;
+    return S_OK;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetCLSID(IWICBitmapEncoderInfo *iface, CLSID *pclsid)
+{
+    FIXME("(%p,%p): stub\n", iface, pclsid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetSigningStatus(IWICBitmapEncoderInfo *iface, DWORD *pStatus)
+{
+    FIXME("(%p,%p): stub\n", iface, pStatus);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetAuthor(IWICBitmapEncoderInfo *iface, UINT cchAuthor,
+    WCHAR *wzAuthor, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchAuthor, wzAuthor, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetVendorGUID(IWICBitmapEncoderInfo *iface, GUID *pguidVendor)
+{
+    FIXME("(%p,%p): stub\n", iface, pguidVendor);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetVersion(IWICBitmapEncoderInfo *iface, UINT cchVersion,
+    WCHAR *wzVersion, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchVersion, wzVersion, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetSpecVersion(IWICBitmapEncoderInfo *iface, UINT cchSpecVersion,
+    WCHAR *wzSpecVersion, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchSpecVersion, wzSpecVersion, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetFriendlyName(IWICBitmapEncoderInfo *iface, UINT cchFriendlyName,
+    WCHAR *wzFriendlyName, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFriendlyName, wzFriendlyName, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetContainerFormat(IWICBitmapEncoderInfo *iface,
+    GUID *pguidContainerFormat)
+{
+    FIXME("(%p,%p): stub\n", iface, pguidContainerFormat);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetPixelFormats(IWICBitmapEncoderInfo *iface,
+    UINT cFormats, GUID *pguidPixelFormats, UINT *pcActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cFormats, pguidPixelFormats, pcActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetColorManagementVersion(IWICBitmapEncoderInfo *iface,
+    UINT cchColorManagementVersion, WCHAR *wzColorManagementVersion, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchColorManagementVersion, wzColorManagementVersion, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetDeviceManufacturer(IWICBitmapEncoderInfo *iface,
+    UINT cchDeviceManufacturer, WCHAR *wzDeviceManufacturer, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchDeviceManufacturer, wzDeviceManufacturer, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetDeviceModels(IWICBitmapEncoderInfo *iface,
+    UINT cchDeviceModels, WCHAR *wzDeviceModels, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchDeviceModels, wzDeviceModels, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetMimeTypes(IWICBitmapEncoderInfo *iface,
+    UINT cchMimeTypes, WCHAR *wzMimeTypes, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchMimeTypes, wzMimeTypes, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_GetFileExtensions(IWICBitmapEncoderInfo *iface,
+    UINT cchFileExtensions, WCHAR *wzFileExtensions, UINT *pcchActual)
+{
+    FIXME("(%p,%u,%p,%p): stub\n", iface, cchFileExtensions, wzFileExtensions, pcchActual);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_DoesSupportAnimation(IWICBitmapEncoderInfo *iface,
+    BOOL *pfSupportAnimation)
+{
+    FIXME("(%p,%p): stub\n", iface, pfSupportAnimation);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_DoesSupportChromaKey(IWICBitmapEncoderInfo *iface,
+    BOOL *pfSupportChromaKey)
+{
+    FIXME("(%p,%p): stub\n", iface, pfSupportChromaKey);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_DoesSupportLossless(IWICBitmapEncoderInfo *iface,
+    BOOL *pfSupportLossless)
+{
+    FIXME("(%p,%p): stub\n", iface, pfSupportLossless);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_DoesSupportMultiframe(IWICBitmapEncoderInfo *iface,
+    BOOL *pfSupportMultiframe)
+{
+    FIXME("(%p,%p): stub\n", iface, pfSupportMultiframe);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_MatchesMimeType(IWICBitmapEncoderInfo *iface,
+    LPCWSTR wzMimeType, BOOL *pfMatches)
+{
+    FIXME("(%p,%s,%p): stub\n", iface, debugstr_w(wzMimeType), pfMatches);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BitmapEncoderInfo_CreateInstance(IWICBitmapEncoderInfo *iface,
+    IWICBitmapEncoder **ppIBitmapEncoder)
+{
+    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+
+    TRACE("(%p,%p)\n", iface, ppIBitmapEncoder);
+
+    return CoCreateInstance(&This->clsid, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapEncoder, (void**)ppIBitmapEncoder);
+}
+
+static const IWICBitmapEncoderInfoVtbl BitmapEncoderInfo_Vtbl = {
+    BitmapEncoderInfo_QueryInterface,
+    BitmapEncoderInfo_AddRef,
+    BitmapEncoderInfo_Release,
+    BitmapEncoderInfo_GetComponentType,
+    BitmapEncoderInfo_GetCLSID,
+    BitmapEncoderInfo_GetSigningStatus,
+    BitmapEncoderInfo_GetAuthor,
+    BitmapEncoderInfo_GetVendorGUID,
+    BitmapEncoderInfo_GetVersion,
+    BitmapEncoderInfo_GetSpecVersion,
+    BitmapEncoderInfo_GetFriendlyName,
+    BitmapEncoderInfo_GetContainerFormat,
+    BitmapEncoderInfo_GetPixelFormats,
+    BitmapEncoderInfo_GetColorManagementVersion,
+    BitmapEncoderInfo_GetDeviceManufacturer,
+    BitmapEncoderInfo_GetDeviceModels,
+    BitmapEncoderInfo_GetMimeTypes,
+    BitmapEncoderInfo_GetFileExtensions,
+    BitmapEncoderInfo_DoesSupportAnimation,
+    BitmapEncoderInfo_DoesSupportChromaKey,
+    BitmapEncoderInfo_DoesSupportLossless,
+    BitmapEncoderInfo_DoesSupportMultiframe,
+    BitmapEncoderInfo_MatchesMimeType,
+    BitmapEncoderInfo_CreateInstance
+};
+
+static HRESULT BitmapEncoderInfo_Constructor(HKEY classkey, REFCLSID clsid, IWICComponentInfo **ppIInfo)
+{
+    BitmapEncoderInfo *This;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(BitmapEncoderInfo));
+    if (!This)
+    {
+        RegCloseKey(classkey);
+        return E_OUTOFMEMORY;
+    }
+
+    This->lpIWICBitmapEncoderInfoVtbl = &BitmapEncoderInfo_Vtbl;
+    This->ref = 1;
+    This->classkey = classkey;
+    memcpy(&This->clsid, clsid, sizeof(CLSID));
+
+    *ppIInfo = (IWICComponentInfo*)This;
+    return S_OK;
+}
+
+typedef struct {
     const IWICFormatConverterInfoVtbl *lpIWICFormatConverterInfoVtbl;
     LONG ref;
     HKEY classkey;
@@ -662,6 +916,7 @@ struct category {
 
 static const struct category categories[] = {
     {WICDecoder, &CATID_WICBitmapDecoders, BitmapDecoderInfo_Constructor},
+    {WICEncoder, &CATID_WICBitmapEncoders, BitmapEncoderInfo_Constructor},
     {WICPixelFormatConverter, &CATID_WICFormatConverters, FormatConverterInfo_Constructor},
     {0}
 };
