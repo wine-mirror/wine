@@ -2242,7 +2242,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(IDirect3DDevice8 *ifac
 {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IWineD3DPixelShader *object;
-    HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, ppShader);
 
@@ -2252,8 +2251,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(IDirect3DDevice8 *ifac
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &object);
-    if (SUCCEEDED(hr) && object)
+    object = IWineD3DDevice_GetPixelShader(This->WineD3DDevice);
+    if (object)
     {
         IDirect3DPixelShader8Impl *d3d8_shader;
         d3d8_shader = IWineD3DPixelShader_GetParent(object);
@@ -2268,13 +2267,13 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(IDirect3DDevice8 *ifac
 
     TRACE("(%p) : returning %#x\n", This, *ppShader);
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface, DWORD pShader) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DPixelShader8Impl *shader;
-    IWineD3DPixelShader *cur = NULL;
+    IWineD3DPixelShader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
 
@@ -2288,8 +2287,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 i
         return D3DERR_INVALIDCALL;
     }
 
-    IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &cur);
-
+    cur = IWineD3DDevice_GetPixelShader(This->WineD3DDevice);
     if (cur)
     {
         if (cur == shader->wineD3DPixelShader) IDirect3DDevice8_SetPixelShader(iface, 0);

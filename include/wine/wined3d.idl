@@ -3091,8 +3091,7 @@ interface IWineD3DDevice : IUnknown
     HRESULT SetPixelShader(
         [in] IWineD3DPixelShader *shader
     );
-    HRESULT GetPixelShader(
-        [out] IWineD3DPixelShader **shader
+    IWineD3DPixelShader *GetPixelShader(
     );
     HRESULT SetPixelShaderConstantB(
         [in] UINT start_register,

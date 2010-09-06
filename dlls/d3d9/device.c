@@ -2513,36 +2513,28 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(IDirect3DDevice9Ex *if
         IDirect3DPixelShader9 **shader)
 {
     IWineD3DPixelShader *wined3d_shader;
-    HRESULT hr;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
     if (!shader) return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetPixelShader(((IDirect3DDevice9Impl *)iface)->WineD3DDevice, &wined3d_shader);
-    if (SUCCEEDED(hr))
+    wined3d_shader = IWineD3DDevice_GetPixelShader(((IDirect3DDevice9Impl *)iface)->WineD3DDevice);
+    if (wined3d_shader)
     {
-        if (wined3d_shader)
-        {
-            *shader = IWineD3DPixelShader_GetParent(wined3d_shader);
-            IDirect3DPixelShader9_AddRef(*shader);
-            IWineD3DPixelShader_Release(wined3d_shader);
-        }
-        else
-        {
-            *shader = NULL;
-        }
+        *shader = IWineD3DPixelShader_GetParent(wined3d_shader);
+        IDirect3DPixelShader9_AddRef(*shader);
+        IWineD3DPixelShader_Release(wined3d_shader);
     }
     else
     {
-        WARN("Failed to get pixel shader, hr %#x.\n", hr);
+        *shader = NULL;
     }
     wined3d_mutex_unlock();
 
     TRACE("Returning %p.\n", *shader);
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(IDirect3DDevice9Ex *iface,

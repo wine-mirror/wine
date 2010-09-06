@@ -3604,20 +3604,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader **ppShader) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static IWineD3DPixelShader * WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    IWineD3DPixelShader *shader;
 
-    if (NULL == ppShader) {
-        WARN("(%p) : PShader is NULL, returning INVALIDCALL\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
+    TRACE("iface %p.\n", iface);
 
-    *ppShader =  This->stateBlock->pixelShader;
-    if (NULL != *ppShader) {
-        IWineD3DPixelShader_AddRef(*ppShader);
-    }
-    TRACE("(%p) : returning %p\n", This, *ppShader);
-    return WINED3D_OK;
+    shader = device->stateBlock->pixelShader;
+    if (shader) IWineD3DPixelShader_AddRef(shader);
+
+    TRACE("Returning %p.\n", shader);
+    return shader;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
