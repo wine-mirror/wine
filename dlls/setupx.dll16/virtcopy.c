@@ -670,7 +670,7 @@ RETERR16 WINAPI vcpUICallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 					LPARAM lParam, LPARAM lParamRef)
 {
     static int count = 0;
-    RETERR16 res = VCPN_OK, cbres;
+    RETERR16 res = VCPN_OK;
 
     if (count < 5)
         FIXME("(%p, %04x, %04lx, %08lx, %08lx) - semi-stub\n",
@@ -700,7 +700,7 @@ RETERR16 WINAPI vcpUICallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 	case VCPM_VSTATREAD:
 	    break;
 	case VCPM_VSTATWRITE:
-	    cbres = VCP_Callback(&vcp_status, VCPM_DISKPREPINFO, 0, 0, VCP_MsgRef);
+	    VCP_Callback(&vcp_status, VCPM_DISKPREPINFO, 0, 0, VCP_MsgRef);
 	    break;
 	case VCPM_VSTATCLOSEEND:
 	    RegCloseKey(hKeyFiles);
