@@ -94,6 +94,9 @@ typedef struct {
 
     BOOL    has_port;
     DWORD   port;
+
+    WCHAR   *query;
+    DWORD   query_len;
 } UriBuilder;
 
 typedef struct {
@@ -4324,6 +4327,7 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
         heap_free(This->host);
         heap_free(This->password);
         heap_free(This->path);
+        heap_free(This->query);
         heap_free(This);
     }
 
@@ -4519,19 +4523,11 @@ static HRESULT WINAPI UriBuilder_GetQuery(IUriBuilder *iface, DWORD *pcchQuery, 
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchQuery, ppwzQuery);
 
-    if(!pcchQuery) {
-        if(ppwzQuery)
-            *ppwzQuery = NULL;
-        return E_POINTER;
-    }
-
-    if(!ppwzQuery) {
-        *pcchQuery = 0;
-        return E_POINTER;
-    }
-
-    FIXME("(%p)->(%p %p)\n", This, pcchQuery, ppwzQuery);
-    return E_NOTIMPL;
+    if(!This->uri || This->uri->query_start == -1 || This->modified_props & Uri_HAS_QUERY)
+        return get_builder_component(&This->query, &This->query_len, NULL, 0, ppwzQuery, pcchQuery);
+    else
+        return get_builder_component(&This->query, &This->query_len, This->uri->canon_uri+This->uri->query_start,
+                                     This->uri->query_len, ppwzQuery, pcchQuery);
 }
 
 static HRESULT WINAPI UriBuilder_GetSchemeName(IUriBuilder *iface, DWORD *pcchSchemeName, LPCWSTR *ppwzSchemeName)
@@ -4620,8 +4616,9 @@ static HRESULT WINAPI UriBuilder_SetPort(IUriBuilder *iface, BOOL fHasPort, DWOR
 static HRESULT WINAPI UriBuilder_SetQuery(IUriBuilder *iface, LPCWSTR pwzNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+    return set_builder_component(&This->query, &This->query_len, pwzNewValue, '?',
+                                 &This->modified_props, Uri_HAS_QUERY);
 }
 
 static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNewValue)
