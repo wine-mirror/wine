@@ -582,6 +582,7 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
             , {25,28,2,22,2,22}  /* 2017 */
             , {24,27,1,28,1,28}  /* 2018 */
             , {30,26,7,27,7,27}  /* 2019 */
+            , {0}
         };
         for( j=0 , year = 1999; yeardays[j][0] ; j++, year++) {
             for (i=0; cases[i].nr; i++) {
