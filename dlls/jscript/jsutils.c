@@ -193,7 +193,7 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         V_BSTR(ret) = SysAllocString(V_BSTR(v));
         break;
     case VT_DISPATCH: {
-        DispatchEx *jsdisp;
+        jsdisp_t *jsdisp;
         DISPID id;
         DISPPARAMS dp = {NULL, NULL, 0, 0};
         HRESULT hres;
@@ -593,7 +593,7 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
 /* ECMA-262 3rd Edition    9.9 */
 HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
 {
-    DispatchEx *dispex;
+    jsdisp_t *dispex;
     HRESULT hres;
 
     switch(V_VT(v)) {
@@ -617,7 +617,7 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
             IDispatch_AddRef(V_DISPATCH(v));
             *disp = V_DISPATCH(v);
         }else {
-            DispatchEx *obj;
+            jsdisp_t *obj;
 
             hres = create_object(ctx, NULL, &obj);
             if(FAILED(hres))

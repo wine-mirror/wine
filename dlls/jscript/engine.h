@@ -83,11 +83,11 @@ static inline void *parser_alloc_tmp(parser_ctx_t *ctx, DWORD size)
 
 typedef struct _scope_chain_t {
     LONG ref;
-    DispatchEx *obj;
+    jsdisp_t *obj;
     struct _scope_chain_t *next;
 } scope_chain_t;
 
-HRESULT scope_push(scope_chain_t*,DispatchEx*,scope_chain_t**);
+HRESULT scope_push(scope_chain_t*,jsdisp_t*,scope_chain_t**);
 void scope_release(scope_chain_t*);
 
 static inline void scope_addref(scope_chain_t *scope)
@@ -100,7 +100,7 @@ struct _exec_ctx_t {
 
     parser_ctx_t *parser;
     scope_chain_t *scope_chain;
-    DispatchEx *var_disp;
+    jsdisp_t *var_disp;
     IDispatch *this_obj;
 };
 
@@ -116,7 +116,7 @@ typedef enum {
 } exec_type_t;
 
 void exec_release(exec_ctx_t*);
-HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,DispatchEx*,scope_chain_t*,exec_ctx_t**);
+HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,exec_ctx_t**);
 HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,exec_type_t,jsexcept_t*,VARIANT*);
 
 typedef struct _statement_t statement_t;
@@ -124,7 +124,7 @@ typedef struct _expression_t expression_t;
 typedef struct _parameter_t parameter_t;
 
 HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,
-        const WCHAR*,DWORD,DispatchEx**);
+        const WCHAR*,DWORD,jsdisp_t**);
 
 typedef enum {
     LT_INT,

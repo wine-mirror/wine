@@ -28,7 +28,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
-    DispatchEx dispex;
+    jsdisp_t dispex;
 
     VARIANT num;
 } NumberInstance;
@@ -287,7 +287,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         break;
 
     case DISPATCH_CONSTRUCT: {
-        DispatchEx *obj;
+        jsdisp_t *obj;
 
         if(arg_cnt(dp)) {
             hres = to_number(ctx, get_arg(dp, 0), ei, &num);
@@ -314,7 +314,7 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     return S_OK;
 }
 
-static HRESULT alloc_number(script_ctx_t *ctx, DispatchEx *object_prototype, NumberInstance **ret)
+static HRESULT alloc_number(script_ctx_t *ctx, jsdisp_t *object_prototype, NumberInstance **ret)
 {
     NumberInstance *number;
     HRESULT hres;
@@ -334,7 +334,7 @@ static HRESULT alloc_number(script_ctx_t *ctx, DispatchEx *object_prototype, Num
     return S_OK;
 }
 
-HRESULT create_number_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
+HRESULT create_number_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
     NumberInstance *number;
     HRESULT hres;
@@ -353,7 +353,7 @@ HRESULT create_number_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
     return hres;
 }
 
-HRESULT create_number(script_ctx_t *ctx, VARIANT *num, DispatchEx **ret)
+HRESULT create_number(script_ctx_t *ctx, VARIANT *num, jsdisp_t **ret)
 {
     NumberInstance *number;
     HRESULT hres;

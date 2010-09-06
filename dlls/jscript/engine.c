@@ -133,7 +133,7 @@ static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
         IDispatch_AddRef(disp);
 }
 
-HRESULT scope_push(scope_chain_t *scope, DispatchEx *obj, scope_chain_t **ret)
+HRESULT scope_push(scope_chain_t *scope, jsdisp_t *obj, scope_chain_t **ret)
 {
     scope_chain_t *new_scope;
 
@@ -178,7 +178,7 @@ void scope_release(scope_chain_t *scope)
     heap_free(scope);
 }
 
-HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, DispatchEx *var_disp,
+HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t *var_disp,
         scope_chain_t *scope, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
@@ -375,7 +375,7 @@ static HRESULT literal_to_var(script_ctx_t *ctx, literal_t *literal, VARIANT *v)
         V_BOOL(v) = literal->u.bval;
         break;
     case LT_REGEXP: {
-        DispatchEx *regexp;
+        jsdisp_t *regexp;
         HRESULT hres;
 
         hres = create_regexp(ctx, literal->u.regexp.str, literal->u.regexp.str_len,
@@ -425,7 +425,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     HRESULT hres = S_OK;
 
     for(func = source->functions; func; func = func->next) {
-        DispatchEx *func_obj;
+        jsdisp_t *func_obj;
         VARIANT var;
 
         hres = create_source_function(parser, func->expr->parameter_list, func->expr->source_elements,
@@ -1021,7 +1021,7 @@ HRESULT with_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t *
     with_statement_t *stat = (with_statement_t*)_stat;
     exprval_t exprval;
     IDispatch *disp;
-    DispatchEx *obj;
+    jsdisp_t *obj;
     VARIANT val;
     HRESULT hres;
 
@@ -1171,7 +1171,7 @@ HRESULT throw_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t 
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT catch_eval(exec_ctx_t *ctx, catch_block_t *block, return_type_t *rt, VARIANT *ret)
 {
-    DispatchEx *var_disp;
+    jsdisp_t *var_disp;
     VARIANT ex, val;
     HRESULT hres;
 
@@ -1346,7 +1346,7 @@ HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD fla
         if(FAILED(hres))
             return hres;
     }else {
-        DispatchEx *dispex;
+        jsdisp_t *dispex;
 
         hres = create_source_function(ctx->parser, expr->parameter_list, expr->source_elements, ctx->scope_chain,
                 expr->src_str, expr->src_len, &dispex);
@@ -1692,7 +1692,7 @@ HRESULT array_literal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWOR
     array_literal_expression_t *expr = (array_literal_expression_t*)_expr;
     DWORD length = 0, i = 0;
     array_element_t *elem;
-    DispatchEx *array;
+    jsdisp_t *array;
     exprval_t exprval;
     VARIANT val;
     HRESULT hres;
@@ -1743,7 +1743,7 @@ HRESULT property_value_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWO
 {
     property_value_expression_t *expr = (property_value_expression_t*)_expr;
     VARIANT val, tmp;
-    DispatchEx *obj;
+    jsdisp_t *obj;
     prop_val_t *iter;
     exprval_t exprval;
     BSTR name;
@@ -1991,7 +1991,7 @@ HRESULT binary_and_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
 /* ECMA-262 3rd Edition    11.8.6 */
 static HRESULT instanceof_eval(exec_ctx_t *ctx, VARIANT *inst, VARIANT *objv, jsexcept_t *ei, VARIANT *retv)
 {
-    DispatchEx *obj, *iter, *tmp = NULL;
+    jsdisp_t *obj, *iter, *tmp = NULL;
     VARIANT_BOOL ret = VARIANT_FALSE;
     BOOL b;
     VARIANT var;
@@ -2397,7 +2397,7 @@ static HRESULT typeof_exprval(exec_ctx_t *ctx, exprval_t *exprval, jsexcept_t *e
         *ret = stringW;
         break;
     case VT_DISPATCH: {
-        DispatchEx *dispex;
+        jsdisp_t *dispex;
 
         if(V_DISPATCH(&val) && (dispex = iface_to_jsdisp((IUnknown*)V_DISPATCH(&val)))) {
             *ret = is_class(dispex, JSCLASS_FUNCTION) ? functionW : objectW;

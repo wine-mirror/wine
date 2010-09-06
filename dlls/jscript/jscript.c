@@ -758,7 +758,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
 {
     JScript *This = ASPARSEPROC_THIS(iface);
     parser_ctx_t *parser_ctx;
-    DispatchEx *dispex;
+    jsdisp_t *dispex;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %s %s %p %s %s %u %x %p)\n", This, debugstr_w(pstrCode), debugstr_w(pstrFormalParams),

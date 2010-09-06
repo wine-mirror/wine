@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 #define TIME_EPOCH  ((ULONGLONG)(369 * 365 + 89) * 86400 * 1000)
 
 typedef struct {
-    DispatchEx dispex;
+    jsdisp_t dispex;
 
     /* ECMA-262 3rd Edition    15.9.1.1 */
     DOUBLE time;
@@ -2094,7 +2094,7 @@ static const builtin_info_t Date_info = {
     NULL
 };
 
-static HRESULT create_date(script_ctx_t *ctx, DispatchEx *object_prototype, DOUBLE time, DispatchEx **ret)
+static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE time, jsdisp_t **ret)
 {
     DateInstance *date;
     HRESULT hres;
@@ -2511,7 +2511,7 @@ static HRESULT DateConstr_UTC(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    DispatchEx *date;
+    jsdisp_t *date;
     HRESULT hres;
 
     TRACE("\n");
@@ -2613,9 +2613,9 @@ static const builtin_info_t DateConstr_info = {
     NULL
 };
 
-HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
+HRESULT create_date_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
-    DispatchEx *date;
+    jsdisp_t *date;
     HRESULT hres;
 
     static const WCHAR DateW[] = {'D','a','t','e',0};

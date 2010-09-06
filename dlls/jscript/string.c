@@ -23,7 +23,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
-    DispatchEx dispex;
+    jsdisp_t dispex;
 
     WCHAR *str;
     DWORD length;
@@ -622,7 +622,7 @@ static HRESULT String_match(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
-    DispatchEx *regexp;
+    jsdisp_t *regexp;
     VARIANT *arg_var;
     DWORD length;
     BSTR val_str = NULL;
@@ -710,7 +710,7 @@ static HRESULT strbuf_append(strbuf_t *buf, const WCHAR *str, DWORD len)
     return S_OK;
 }
 
-static HRESULT rep_call(script_ctx_t *ctx, DispatchEx *func, const WCHAR *str, match_result_t *match,
+static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func, const WCHAR *str, match_result_t *match,
         match_result_t *parens, DWORD parens_cnt, BSTR *ret, jsexcept_t *ei, IServiceProvider *caller)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
@@ -778,7 +778,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
     const WCHAR *str;
     DWORD parens_cnt = 0, parens_size=0, rep_len=0, length;
     BSTR rep_str = NULL, match_str = NULL, ret_str, val_str;
-    DispatchEx *rep_func = NULL, *regexp = NULL;
+    jsdisp_t *rep_func = NULL, *regexp = NULL;
     match_result_t *parens = NULL, match = {NULL,0}, **parens_ptr = &parens;
     strbuf_t ret = {NULL,0,0};
     DWORD re_flags = REM_NO_CTX_UPDATE;
@@ -1008,7 +1008,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
 static HRESULT String_search(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    DispatchEx *regexp = NULL;
+    jsdisp_t *regexp = NULL;
     const WCHAR *str, *cp;
     match_result_t match;
     VARIANT *arg;
@@ -1158,7 +1158,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     const WCHAR *str, *ptr, *ptr2;
     BOOL use_regexp = FALSE;
     VARIANT *arg, var;
-    DispatchEx *array;
+    jsdisp_t *array;
     BSTR val_str, match_str = NULL;
     HRESULT hres;
 
@@ -1176,7 +1176,7 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     arg = get_arg(dp, 0);
     switch(V_VT(arg)) {
     case VT_DISPATCH: {
-        DispatchEx *regexp;
+        jsdisp_t *regexp;
 
         regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
         if(regexp) {
@@ -1546,7 +1546,7 @@ static HRESULT String_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     return S_OK;
 }
 
-static void String_destructor(DispatchEx *dispex)
+static void String_destructor(jsdisp_t *dispex)
 {
     StringInstance *This = (StringInstance*)dispex;
 
@@ -1656,7 +1656,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         break;
     }
     case DISPATCH_CONSTRUCT: {
-        DispatchEx *ret;
+        jsdisp_t *ret;
 
         if(arg_cnt(dp)) {
             BSTR str;
@@ -1687,7 +1687,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     return S_OK;
 }
 
-static HRESULT string_alloc(script_ctx_t *ctx, DispatchEx *object_prototype, StringInstance **ret)
+static HRESULT string_alloc(script_ctx_t *ctx, jsdisp_t *object_prototype, StringInstance **ret)
 {
     StringInstance *string;
     HRESULT hres;
@@ -1722,7 +1722,7 @@ static const builtin_info_t StringConstr_info = {
     NULL
 };
 
-HRESULT create_string_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
+HRESULT create_string_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
     StringInstance *string;
     HRESULT hres;
@@ -1740,7 +1740,7 @@ HRESULT create_string_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Di
     return hres;
 }
 
-HRESULT create_string(script_ctx_t *ctx, const WCHAR *str, DWORD len, DispatchEx **ret)
+HRESULT create_string(script_ctx_t *ctx, const WCHAR *str, DWORD len, jsdisp_t **ret)
 {
     StringInstance *string;
     HRESULT hres;

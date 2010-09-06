@@ -24,7 +24,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
-    DispatchEx dispex;
+    jsdisp_t dispex;
 
     VARIANT_BOOL val;
 } BoolInstance;
@@ -131,7 +131,7 @@ static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     switch(flags) {
     case DISPATCH_CONSTRUCT: {
-        DispatchEx *bool;
+        jsdisp_t *bool;
 
         hres = create_bool(ctx, value, &bool);
         if(FAILED(hres))
@@ -157,7 +157,7 @@ static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     return S_OK;
 }
 
-static HRESULT alloc_bool(script_ctx_t *ctx, DispatchEx *object_prototype, BoolInstance **ret)
+static HRESULT alloc_bool(script_ctx_t *ctx, jsdisp_t *object_prototype, BoolInstance **ret)
 {
     BoolInstance *bool;
     HRESULT hres;
@@ -180,7 +180,7 @@ static HRESULT alloc_bool(script_ctx_t *ctx, DispatchEx *object_prototype, BoolI
     return S_OK;
 }
 
-HRESULT create_bool_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
+HRESULT create_bool_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
     BoolInstance *bool;
     HRESULT hres;
@@ -198,7 +198,7 @@ HRESULT create_bool_constr(script_ctx_t *ctx, DispatchEx *object_prototype, Disp
     return hres;
 }
 
-HRESULT create_bool(script_ctx_t *ctx, VARIANT_BOOL b, DispatchEx **ret)
+HRESULT create_bool(script_ctx_t *ctx, VARIANT_BOOL b, jsdisp_t **ret)
 {
     BoolInstance *bool;
     HRESULT hres;

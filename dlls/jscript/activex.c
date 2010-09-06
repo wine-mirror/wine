@@ -181,9 +181,9 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
     return S_OK;
 }
 
-HRESULT create_activex_constr(script_ctx_t *ctx, DispatchEx **ret)
+HRESULT create_activex_constr(script_ctx_t *ctx, jsdisp_t **ret)
 {
-    DispatchEx *prototype;
+    jsdisp_t *prototype;
     HRESULT hres;
 
     static const WCHAR ActiveXObjectW[] = {'A','c','t','i','v','e','X','O','b','j','e','c','t',0};

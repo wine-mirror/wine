@@ -36,7 +36,7 @@ static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DispatchEx *jsthis;
+    jsdisp_t *jsthis;
     BSTR name = NULL, msg = NULL, ret = NULL;
     VARIANT v;
     HRESULT hres;
@@ -165,10 +165,10 @@ static const builtin_info_t ErrorInst_info = {
     NULL
 };
 
-static HRESULT alloc_error(script_ctx_t *ctx, DispatchEx *prototype,
-        DispatchEx *constr, DispatchEx **ret)
+static HRESULT alloc_error(script_ctx_t *ctx, jsdisp_t *prototype,
+        jsdisp_t *constr, jsdisp_t **ret)
 {
-    DispatchEx *err;
+    jsdisp_t *err;
     HRESULT hres;
 
     err = heap_alloc_zero(sizeof(*err));
@@ -189,10 +189,10 @@ static HRESULT alloc_error(script_ctx_t *ctx, DispatchEx *prototype,
     return S_OK;
 }
 
-static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
-        UINT number, const WCHAR *msg, DispatchEx **ret)
+static HRESULT create_error(script_ctx_t *ctx, jsdisp_t *constr,
+        UINT number, const WCHAR *msg, jsdisp_t **ret)
 {
-    DispatchEx *err;
+    jsdisp_t *err;
     VARIANT v;
     HRESULT hres;
 
@@ -229,8 +229,8 @@ static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
 }
 
 static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, DispatchEx *constr) {
-    DispatchEx *err;
+        VARIANT *retv, jsexcept_t *ei, jsdisp_t *constr) {
+    jsdisp_t *err;
     UINT num = 0;
     BSTR msg = NULL;
     HRESULT hres;
@@ -336,7 +336,7 @@ static HRESULT URIErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     return error_constr(ctx, flags, dp, retv, ei, ctx->uri_error_constr);
 }
 
-HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
+HRESULT init_error_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
 {
     static const WCHAR ErrorW[] = {'E','r','r','o','r',0};
     static const WCHAR EvalErrorW[] = {'E','v','a','l','E','r','r','o','r',0};
@@ -348,7 +348,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
     static const WCHAR URIErrorW[] = {'U','R','I','E','r','r','o','r',0};
     static const WCHAR *names[] = {ErrorW, EvalErrorW, RangeErrorW,
         ReferenceErrorW, RegExpErrorW, SyntaxErrorW, TypeErrorW, URIErrorW};
-    DispatchEx **constr_addr[] = {&ctx->error_constr, &ctx->eval_error_constr,
+    jsdisp_t **constr_addr[] = {&ctx->error_constr, &ctx->eval_error_constr,
         &ctx->range_error_constr, &ctx->reference_error_constr, &ctx->regexp_error_constr,
         &ctx->syntax_error_constr, &ctx->type_error_constr,
         &ctx->uri_error_constr};
@@ -356,7 +356,7 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
         RangeErrorConstr_value, ReferenceErrorConstr_value, RegExpErrorConstr_value,
         SyntaxErrorConstr_value, TypeErrorConstr_value, URIErrorConstr_value};
 
-    DispatchEx *err;
+    jsdisp_t *err;
     INT i;
     VARIANT v;
     HRESULT hres;
@@ -388,10 +388,10 @@ HRESULT init_error_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
     return S_OK;
 }
 
-static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str, DispatchEx *constr)
+static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str, jsdisp_t *constr)
 {
     WCHAR buf[1024], *pos = NULL;
-    DispatchEx *err;
+    jsdisp_t *err;
     HRESULT hres;
 
     buf[0] = '\0';

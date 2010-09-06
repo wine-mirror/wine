@@ -106,7 +106,7 @@ static WCHAR int_to_char(int i)
     return 'A'+i-10;
 }
 
-static HRESULT constructor_call(DispatchEx *constr, WORD flags, DISPPARAMS *dp,
+static HRESULT constructor_call(jsdisp_t *constr, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     if(flags != DISPATCH_PROPERTYGET)
@@ -1063,7 +1063,7 @@ static const builtin_info_t JSGlobal_info = {
     NULL
 };
 
-static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype)
+static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
 {
     HRESULT hres;
 
@@ -1112,7 +1112,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype
 
 HRESULT init_global(script_ctx_t *ctx)
 {
-    DispatchEx *math, *object_prototype;
+    jsdisp_t *math, *object_prototype;
     VARIANT var;
     HRESULT hres;
 

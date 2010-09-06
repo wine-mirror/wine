@@ -517,9 +517,9 @@ static const builtin_info_t Math_info = {
     NULL
 };
 
-HRESULT create_math(script_ctx_t *ctx, DispatchEx **ret)
+HRESULT create_math(script_ctx_t *ctx, jsdisp_t **ret)
 {
-    DispatchEx *math;
+    jsdisp_t *math;
     unsigned i;
     VARIANT v;
     HRESULT hres;
@@ -538,7 +538,7 @@ HRESULT create_math(script_ctx_t *ctx, DispatchEx **ret)
         {SQRT2W,    M_SQRT2},    /* ECMA-262 3rd Edition    15.8.1.8 */
     };
 
-    math = heap_alloc_zero(sizeof(DispatchEx));
+    math = heap_alloc_zero(sizeof(jsdisp_t));
     if(!math)
         return E_OUTOFMEMORY;
 

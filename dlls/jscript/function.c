@@ -24,7 +24,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 typedef struct {
-    DispatchEx dispex;
+    jsdisp_t dispex;
     builtin_invoke_t value_proc;
     const WCHAR *name;
     DWORD flags;
@@ -35,7 +35,7 @@ typedef struct {
     const WCHAR *src_str;
     DWORD src_len;
     DWORD length;
-    DispatchEx *arguments;
+    jsdisp_t *arguments;
 } FunctionInstance;
 
 static inline FunctionInstance *function_from_vdisp(vdisp_t *vdisp)
@@ -74,7 +74,7 @@ static IDispatch *get_this(DISPPARAMS *dp)
     return NULL;
 }
 
-static HRESULT init_parameters(DispatchEx *var_disp, FunctionInstance *function, DISPPARAMS *dp,
+static HRESULT init_parameters(jsdisp_t *var_disp, FunctionInstance *function, DISPPARAMS *dp,
         jsexcept_t *ei, IServiceProvider *caller)
 {
     parameter_t *param;
@@ -113,16 +113,16 @@ static const builtin_info_t Arguments_info = {
 };
 
 static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, DISPPARAMS *dp,
-        jsexcept_t *ei, IServiceProvider *caller, DispatchEx **ret)
+        jsexcept_t *ei, IServiceProvider *caller, jsdisp_t **ret)
 {
-    DispatchEx *args;
+    jsdisp_t *args;
     VARIANT var;
     DWORD i;
     HRESULT hres;
 
     static const WCHAR caleeW[] = {'c','a','l','l','e','e',0};
 
-    args = heap_alloc_zero(sizeof(DispatchEx));
+    args = heap_alloc_zero(sizeof(jsdisp_t));
     if(!args)
         return E_OUTOFMEMORY;
 
@@ -159,10 +159,10 @@ static HRESULT create_arguments(script_ctx_t *ctx, IDispatch *calee, DISPPARAMS 
     return S_OK;
 }
 
-static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, DispatchEx *arg_disp,
-        DISPPARAMS *dp, jsexcept_t *ei, IServiceProvider *caller, DispatchEx **ret)
+static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, jsdisp_t *arg_disp,
+        DISPPARAMS *dp, jsexcept_t *ei, IServiceProvider *caller, jsdisp_t **ret)
 {
-    DispatchEx *var_disp;
+    jsdisp_t *var_disp;
     VARIANT var;
     HRESULT hres;
 
@@ -187,7 +187,7 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, Di
 static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDispatch *this_obj, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DispatchEx *var_disp, *arg_disp;
+    jsdisp_t *var_disp, *arg_disp;
     exec_ctx_t *exec_ctx;
     scope_chain_t *scope;
     HRESULT hres;
@@ -215,7 +215,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
     }
     jsdisp_release(var_disp);
     if(SUCCEEDED(hres)) {
-        DispatchEx *prev_args;
+        jsdisp_t *prev_args;
 
         prev_args = function->arguments;
         function->arguments = arg_disp;
@@ -232,7 +232,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    DispatchEx *this_obj;
+    jsdisp_t *this_obj;
     VARIANT var;
     HRESULT hres;
 
@@ -359,7 +359,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     return S_OK;
 }
 
-static HRESULT array_to_args(script_ctx_t *ctx, DispatchEx *arg_array, jsexcept_t *ei, IServiceProvider *caller,
+static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, jsexcept_t *ei, IServiceProvider *caller,
         DISPPARAMS *args)
 {
     VARIANT var, *argv;
@@ -422,7 +422,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
     }
 
     if(argc >= 2) {
-        DispatchEx *arg_array = NULL;
+        jsdisp_t *arg_array = NULL;
 
         if(V_VT(get_arg(dp,1)) == VT_DISPATCH) {
             arg_array = iface_to_jsdisp((IUnknown*)V_DISPATCH(get_arg(dp,1)));
@@ -566,7 +566,7 @@ static HRESULT Function_arguments(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     return hres;
 }
 
-static void Function_destructor(DispatchEx *dispex)
+static void Function_destructor(jsdisp_t *dispex)
 {
     FunctionInstance *This = (FunctionInstance*)dispex;
 
@@ -595,7 +595,7 @@ static const builtin_info_t Function_info = {
 };
 
 static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_info, DWORD flags,
-        BOOL funcprot, DispatchEx *prototype, FunctionInstance **ret)
+        BOOL funcprot, jsdisp_t *prototype, FunctionInstance **ret)
 {
     FunctionInstance *function;
     HRESULT hres;
@@ -620,7 +620,7 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     return S_OK;
 }
 
-static HRESULT set_prototype(script_ctx_t *ctx, DispatchEx *dispex, DispatchEx *prototype)
+static HRESULT set_prototype(script_ctx_t *ctx, jsdisp_t *dispex, jsdisp_t *prototype)
 {
     jsexcept_t jsexcept;
     VARIANT var;
@@ -633,7 +633,7 @@ static HRESULT set_prototype(script_ctx_t *ctx, DispatchEx *dispex, DispatchEx *
 }
 
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, const WCHAR *name,
-        const builtin_info_t *builtin_info, DWORD flags, DispatchEx *prototype, DispatchEx **ret)
+        const builtin_info_t *builtin_info, DWORD flags, jsdisp_t *prototype, jsdisp_t **ret)
 {
     FunctionInstance *function;
     HRESULT hres;
@@ -665,10 +665,10 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
 }
 
 HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, source_elements_t *source,
-        scope_chain_t *scope_chain, const WCHAR *src_str, DWORD src_len, DispatchEx **ret)
+        scope_chain_t *scope_chain, const WCHAR *src_str, DWORD src_len, jsdisp_t **ret)
 {
     FunctionInstance *function;
-    DispatchEx *prototype;
+    jsdisp_t *prototype;
     parameter_t *iter;
     DWORD length = 0;
     HRESULT hres;
@@ -715,7 +715,7 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     WCHAR *str = NULL, *ptr;
     DWORD argc, len = 0, l;
     parser_ctx_t *parser;
-    DispatchEx *function;
+    jsdisp_t *function;
     BSTR *params = NULL;
     int i=0, j=0;
     HRESULT hres = S_OK;
@@ -834,7 +834,7 @@ static HRESULT FunctionProt_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     return E_NOTIMPL;
 }
 
-HRESULT init_function_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
+HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
 {
     FunctionInstance *prot, *constr;
     HRESULT hres;
