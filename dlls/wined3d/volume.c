@@ -187,22 +187,20 @@ static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *ifa
     return resource_get_type((IWineD3DResource *)iface);
 }
 
-/* *******************************************
-   IWineD3DVolume parts follow
-   ******************************************* */
-static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *pDesc)
+static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *desc)
 {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    TRACE("(%p) : copying into %p\n", This, pDesc);
+    IWineD3DVolumeImpl *volume = (IWineD3DVolumeImpl *)iface;
 
-    pDesc->Format = This->resource.format->id;
-    pDesc->Type = This->resource.resourceType;
-    pDesc->Usage = This->resource.usage;
-    pDesc->Pool = This->resource.pool;
-    pDesc->Size = This->resource.size; /* dx8 only */
-    pDesc->Width = This->currentDesc.Width;
-    pDesc->Height = This->currentDesc.Height;
-    pDesc->Depth = This->currentDesc.Depth;
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    desc->Format = volume->resource.format->id;
+    desc->Type = volume->resource.resourceType;
+    desc->Usage = volume->resource.usage;
+    desc->Pool = volume->resource.pool;
+    desc->Size = volume->resource.size; /* dx8 only */
+    desc->Width = volume->currentDesc.Width;
+    desc->Height = volume->currentDesc.Height;
+    desc->Depth = volume->currentDesc.Depth;
 
     return WINED3D_OK;
 }

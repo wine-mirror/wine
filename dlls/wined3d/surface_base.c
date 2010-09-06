@@ -146,24 +146,21 @@ void * WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface)
     return ((IWineD3DSurfaceImpl *)iface)->resource.parent;
 }
 
-/* ******************************************************
-   IWineD3DSurface IWineD3DSurface parts follow
-   ****************************************************** */
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *desc)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *pDesc) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
-    TRACE("(%p) : copying into %p\n", This, pDesc);
-
-    pDesc->format = This->resource.format->id;
-    pDesc->resource_type = This->resource.resourceType;
-    pDesc->usage = This->resource.usage;
-    pDesc->pool = This->resource.pool;
-    pDesc->size = This->resource.size; /* dx8 only */
-    pDesc->multisample_type = This->currentDesc.MultiSampleType;
-    pDesc->multisample_quality = This->currentDesc.MultiSampleQuality;
-    pDesc->width = This->currentDesc.Width;
-    pDesc->height = This->currentDesc.Height;
+    desc->format = surface->resource.format->id;
+    desc->resource_type = surface->resource.resourceType;
+    desc->usage = surface->resource.usage;
+    desc->pool = surface->resource.pool;
+    desc->size = surface->resource.size; /* dx8 only */
+    desc->multisample_type = surface->currentDesc.MultiSampleType;
+    desc->multisample_quality = surface->currentDesc.MultiSampleQuality;
+    desc->width = surface->currentDesc.Width;
+    desc->height = surface->currentDesc.Height;
 
     return WINED3D_OK;
 }
