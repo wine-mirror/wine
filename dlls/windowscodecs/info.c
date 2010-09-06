@@ -36,7 +36,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+static WCHAR const mimetypes_valuename[] = {'M','i','m','e','T','y','p','e','s',0};
 static WCHAR const pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
+
+static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
+    UINT buffer_size, WCHAR *buffer, UINT *actual_size)
+{
+    LONG ret;
+    DWORD cbdata=buffer_size * sizeof(WCHAR);
+
+    if (!actual_size)
+        return E_INVALIDARG;
+
+    ret = RegGetValueW(classkey, NULL, value, RRF_RT_REG_SZ|RRF_NOEXPAND, NULL,
+        buffer, &cbdata);
+
+    if (ret == 0 || ret == ERROR_MORE_DATA)
+        *actual_size = cbdata/sizeof(WCHAR);
+
+    if (!buffer && buffer_size != 0)
+        /* Yes, native returns the correct size in this case. */
+        return E_INVALIDARG;
+
+    if (ret == ERROR_MORE_DATA)
+        return WINCODEC_ERR_INSUFFICIENTBUFFER;
+
+    return HRESULT_FROM_WIN32(ret);
+}
 
 typedef struct {
     const IWICBitmapDecoderInfoVtbl *lpIWICBitmapDecoderInfoVtbl;
@@ -188,8 +214,12 @@ static HRESULT WINAPI BitmapDecoderInfo_GetDeviceModels(IWICBitmapDecoderInfo *i
 static HRESULT WINAPI BitmapDecoderInfo_GetMimeTypes(IWICBitmapDecoderInfo *iface,
     UINT cchMimeTypes, WCHAR *wzMimeTypes, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchMimeTypes, wzMimeTypes, pcchActual);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchMimeTypes, wzMimeTypes, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, mimetypes_valuename,
+        cchMimeTypes, wzMimeTypes, pcchActual);
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetFileExtensions(IWICBitmapDecoderInfo *iface,
@@ -616,8 +646,12 @@ static HRESULT WINAPI BitmapEncoderInfo_GetDeviceModels(IWICBitmapEncoderInfo *i
 static HRESULT WINAPI BitmapEncoderInfo_GetMimeTypes(IWICBitmapEncoderInfo *iface,
     UINT cchMimeTypes, WCHAR *wzMimeTypes, UINT *pcchActual)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cchMimeTypes, wzMimeTypes, pcchActual);
-    return E_NOTIMPL;
+    BitmapEncoderInfo *This = (BitmapEncoderInfo*)iface;
+
+    TRACE("(%p,%u,%p,%p)\n", iface, cchMimeTypes, wzMimeTypes, pcchActual);
+
+    return ComponentInfo_GetStringValue(This->classkey, mimetypes_valuename,
+        cchMimeTypes, wzMimeTypes, pcchActual);
 }
 
 static HRESULT WINAPI BitmapEncoderInfo_GetFileExtensions(IWICBitmapEncoderInfo *iface,

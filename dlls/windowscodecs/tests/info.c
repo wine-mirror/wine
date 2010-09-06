@@ -47,7 +47,6 @@ static void test_decoder_info(void)
     hr = IWICComponentInfo_QueryInterface(info, &IID_IWICBitmapDecoderInfo, (void**)&decoder_info);
     ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
 
-todo_wine {
     hr = IWICBitmapDecoderInfo_GetMimeTypes(decoder_info, 0, NULL, NULL);
     ok(hr == E_INVALIDARG, "GetMimeType failed, hr=%x\n", hr);
 
@@ -76,7 +75,6 @@ todo_wine {
     ok(hr == S_OK, "GetMimeType failed, hr=%x\n", hr);
     ok(lstrcmpW(value, expected_mimetype) == 0, "GetMimeType returned wrong value %s\n", wine_dbgstr_w(value));
     ok(len == lstrlenW(expected_mimetype)+1, "GetMimeType returned wrong len %i\n", len);
-}
 
     IWICBitmapDecoderInfo_Release(decoder_info);
 
