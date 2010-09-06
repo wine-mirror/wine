@@ -149,7 +149,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     enum win_wm_message msg;
     DWORD_PTR		param;
     HANDLE		ev;
-    DWORD               frames_per_period;
 
     wwi->state = WINE_WS_STOPPED;
     InterlockedExchange((LONG*)&wwi->dwTotalRecorded, 0);
@@ -159,7 +158,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     /* make sleep time to be # of ms to output a period */
     dwSleepTime = (wwi->dwPeriodSize * 1000) / wwi->format.Format.nAvgBytesPerSec;
-    frames_per_period = snd_pcm_bytes_to_frames(wwi->pcm, wwi->dwPeriodSize);
     TRACE("sleeptime=%d ms, total buffer length=%d ms (%d bytes)\n", dwSleepTime, wwi->dwBufferSize * 1000 / wwi->format.Format.nAvgBytesPerSec, wwi->dwBufferSize);
 
     for (;;) {
