@@ -91,6 +91,9 @@ typedef struct {
 
     WCHAR   *path;
     DWORD   path_len;
+
+    BOOL    has_port;
+    DWORD   port;
 } UriBuilder;
 
 typedef struct {
@@ -4506,8 +4509,9 @@ static HRESULT WINAPI UriBuilder_GetPort(IUriBuilder *iface, BOOL *pfHasPort, DW
         return E_POINTER;
     }
 
-    FIXME("(%p)->(%p %p)\n", This, pfHasPort, pdwPort);
-    return E_NOTIMPL;
+    *pfHasPort = This->has_port;
+    *pdwPort = This->port;
+    return S_OK;
 }
 
 static HRESULT WINAPI UriBuilder_GetQuery(IUriBuilder *iface, DWORD *pcchQuery, LPCWSTR *ppwzQuery)
@@ -4605,8 +4609,12 @@ static HRESULT WINAPI UriBuilder_SetPath(IUriBuilder *iface, LPCWSTR pwzNewValue
 static HRESULT WINAPI UriBuilder_SetPort(IUriBuilder *iface, BOOL fHasPort, DWORD dwNewValue)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%d %d)\n", This, fHasPort, dwNewValue);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d %d)\n", This, fHasPort, dwNewValue);
+
+    This->has_port = fHasPort;
+    This->port = dwNewValue;
+    This->modified_props |= Uri_HAS_PORT;
+    return S_OK;
 }
 
 static HRESULT WINAPI UriBuilder_SetQuery(IUriBuilder *iface, LPCWSTR pwzNewValue)
@@ -4705,6 +4713,11 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
         if((uri = get_uri_obj(pIUri))) {
             IUri_AddRef(pIUri);
             ret->uri = uri;
+
+            if(uri->has_port)
+                /* Windows doesn't set 'has_port' to TRUE in this case. */
+                ret->port = uri->port;
+
         } else {
             heap_free(ret);
             *ppIUriBuilder = NULL;

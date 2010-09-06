@@ -4315,7 +4315,7 @@ static const uri_builder_test uri_builder_tests[] = {
         {
             {TRUE,"test",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,TRUE}
         },
-        {TRUE,TRUE,120,S_OK,TRUE},
+        {TRUE,TRUE,120,S_OK,FALSE},
         0,S_OK,TRUE,
         0,S_OK,TRUE,
         0,0,0,S_OK,TRUE,
@@ -4566,6 +4566,109 @@ static const uri_builder_test uri_builder_tests[] = {
             {Uri_HOST_UNKNOWN,S_OK},
             {0,S_FALSE},
             {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {FALSE},
+        },
+        /* 555 will be returned from GetPort even though FALSE was passed as the hasPort parameter. */
+        {TRUE,FALSE,555,S_OK,FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            /* Still returns 80, even though earlier the port was disabled. */
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {FALSE},
+        },
+        /* Instead of getting "TRUE" back as the "hasPort" parameter in GetPort,
+         * you'll get 122345 instead.
+         */
+        {TRUE,122345,222,S_OK,FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://google.com:222/",S_OK},
+            {"google.com:222",S_OK},
+            {"http://google.com:222/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com:222/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {222,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* IUri's created with the IUriBuilder can have ports that exceed USHORT_MAX. */
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {FALSE},
+        },
+
+        {TRUE,TRUE,999999,S_OK,FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://google.com:999999/",S_OK},
+            {"google.com:999999",S_OK},
+            {"http://google.com:999999/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com:999999/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {999999,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
     }
@@ -7516,6 +7619,34 @@ static void test_IUriBuilder_RemoveProperties(void) {
     }
 }
 
+static void test_IUriBuilder_Misc(void) {
+    HRESULT hr;
+    IUri *uri;
+
+    hr = pCreateUri(http_urlW, 0, 0, &uri);
+    if(SUCCEEDED(hr)) {
+        IUriBuilder *builder;
+
+        hr = pCreateIUriBuilder(uri, 0, 0, &builder);
+        ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+        if(SUCCEEDED(hr)) {
+            BOOL has = -1;
+            DWORD port = -1;
+
+            hr = IUriBuilder_GetPort(builder, &has, &port);
+            ok(hr == S_OK, "Error: IUriBuilder_GetPort returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            if(SUCCEEDED(hr)) {
+                /* 'has' will be set to FALSE, even though uri had a port. */
+                ok(has == FALSE, "Error: Expected 'has' to be FALSE, was %d instead.\n", has);
+                /* Still sets 'port' to 80. */
+                ok(port == 80, "Error: Expected the port to be 80, but, was %d instead.\n", port);
+            }
+        }
+        if(builder) IUriBuilder_Release(builder);
+    }
+    if(uri) IUri_Release(uri);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -7591,4 +7722,7 @@ START_TEST(uri) {
 
     trace("test IUriBuilder_RemoveProperties...\n");
     test_IUriBuilder_RemoveProperties();
+
+    trace("test IUriBuilder miscellaneous...\n");
+    test_IUriBuilder_Misc();
 }
