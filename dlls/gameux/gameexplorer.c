@@ -23,14 +23,21 @@
 
 #include "ole2.h"
 #include "sddl.h"
+#include "xmldom.h"
 
 #include "gameux.h"
 #include "gameux_private.h"
+
+#include "initguid.h"
+#include "msxml2.h"
 
 #include "wine/debug.h"
 #include "winreg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gameux);
+
+/* function from Shell32, not defined in header */
+extern BOOL WINAPI GUIDFromStringW(LPCWSTR psz, LPGUID pguid);
 
 /*******************************************************************************
  * GameUX helper functions
@@ -186,12 +193,15 @@ static HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
  *
  * List of registry keys associated with structure fields:
  *  Key                              Field in GAMEUX_GAME_DATA structure
+ *   ApplicationId                    guidApplicationId
  *   ConfigApplicationPath            sGameInstallDirectory
  *   ConfigGDFBinaryPath              sGDFBinaryPath
  *
  */
 static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
 {
+    static const WCHAR sApplicationId[] =
+            {'A','p','p','l','i','c','a','t','i','o','n','I','d',0};
     static const WCHAR sConfigApplicationPath[] =
             {'C','o','n','f','i','g','A','p','p','l','i','c','a','t','i','o','n','P','a','t','h',0};
     static const WCHAR sConfigGDFBinaryPath[] =
@@ -200,10 +210,14 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
     HRESULT hr, hr2;
     LPWSTR lpRegistryKey;
     HKEY hKey;
+    WCHAR sGameApplicationId[40];
 
     TRACE("(%p)\n", GameData);
 
     hr = GAMEUX_buildGameRegistryPath(GameData->installScope, &GameData->guidInstanceId, &lpRegistryKey);
+
+    if(SUCCEEDED(hr))
+        hr = (StringFromGUID2(&GameData->guidApplicationId, sGameApplicationId, sizeof(sGameApplicationId)/sizeof(sGameApplicationId[0])) ? S_OK : E_FAIL);
 
     if(SUCCEEDED(hr))
         hr = HRESULT_FROM_WIN32(RegCreateKeyExW(HKEY_LOCAL_MACHINE, lpRegistryKey,
@@ -222,6 +236,11 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
                                                    REG_SZ, (LPBYTE)(GameData->sGDFBinaryPath),
                                                    (lstrlenW(GameData->sGDFBinaryPath)+1)*sizeof(WCHAR)));
 
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sApplicationId, 0,
+                                                   REG_SZ, (LPBYTE)(sGameApplicationId),
+                                                   (lstrlenW(sGameApplicationId)+1)*sizeof(WCHAR)));
+
         RegCloseKey(hKey);
 
         if(FAILED(hr))
@@ -236,6 +255,135 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
 
     HeapFree(GetProcessHeap(), 0, lpRegistryKey);
     TRACE("returning 0x%x\n", hr);
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_ParseGameDefinition
+ *
+ * Helper function, loads data from given XML element into fields of GAME_DATA
+ * structure
+ *
+ * Parameters:
+ *  lpXMLGameDefinitionElement          [I]     Game Definition XML element
+ *  GameData                            [O]     structure where data loaded from
+ *                                              XML element will be stored in
+ */
+static HRESULT GAMEUX_ParseGameDefinition(
+        IXMLDOMElement *gdElement,
+        struct GAMEUX_GAME_DATA *GameData)
+{
+    static const WCHAR sGameId[] = {'g','a','m','e','I','D',0};
+
+    HRESULT hr = S_OK;
+    BSTR bstrAttribute;
+    VARIANT variant;
+
+    TRACE("(%p, %p)\n", gdElement, GameData);
+
+    bstrAttribute = SysAllocString(sGameId);
+    if(!bstrAttribute)
+        hr = E_OUTOFMEMORY;
+
+    hr = IXMLDOMElement_getAttribute(gdElement, bstrAttribute, &variant);
+
+    if(SUCCEEDED(hr))
+    {
+        hr = ( GUIDFromStringW(V_BSTR(&variant), &GameData->guidApplicationId)==TRUE ? S_OK : E_FAIL);
+
+        SysFreeString(V_BSTR(&variant));
+    }
+
+    SysFreeString(bstrAttribute);
+
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_ParseGDFBinary
+ *
+ * Helper funtion, loads given binary and parses embed GDF if there's any.
+ *
+ * Parameters:
+ *  GameData                [I/O]   Structure with game's data. Content of field
+ *                                  sGDFBinaryPath defines path to binary, from
+ *                                  which embed GDF will be loaded. Data from
+ *                                  GDF will be stored in other fields of this
+ *                                  structure.
+ */
+static HRESULT GAMEUX_ParseGDFBinary(struct GAMEUX_GAME_DATA *GameData)
+{
+    static const WCHAR sRes[] = {'r','e','s',':','/','/',0};
+    static const WCHAR sDATA[] = {'D','A','T','A',0};
+    static const WCHAR sSlash[] = {'/',0};
+
+    HRESULT hr = S_OK;
+    WCHAR sResourcePath[MAX_PATH];
+    VARIANT variant;
+    VARIANT_BOOL isSuccessful;
+    IXMLDOMDocument *document;
+    IXMLDOMNode *gdNode;
+    IXMLDOMElement *root, *gdElement;
+
+    TRACE("(%p)->sGDFBinaryPath = %s\n", GameData, debugstr_w(GameData->sGDFBinaryPath));
+
+    /* prepare path to GDF, using res:// prefix */
+    lstrcpyW(sResourcePath, sRes);
+    lstrcatW(sResourcePath, GameData->sGDFBinaryPath);
+    lstrcatW(sResourcePath, sSlash);
+    lstrcatW(sResourcePath, sDATA);
+    lstrcatW(sResourcePath, sSlash);
+    lstrcatW(sResourcePath, ID_GDF_XML_STR);
+
+    hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IXMLDOMDocument, (void**)&document);
+
+    if(SUCCEEDED(hr))
+    {
+        /* load GDF into MSXML */
+        V_VT(&variant) = VT_BSTR;
+        V_BSTR(&variant) = SysAllocString(sResourcePath);
+        if(!V_BSTR(&variant))
+            hr = E_OUTOFMEMORY;
+
+        if(SUCCEEDED(hr))
+        {
+            hr = IXMLDOMDocument_load(document, variant, &isSuccessful);
+            if(hr == S_FALSE || isSuccessful == VARIANT_FALSE)
+                hr = E_FAIL;
+        }
+
+        SysFreeString(V_BSTR(&variant));
+
+        if(SUCCEEDED(hr))
+        {
+            hr = IXMLDOMDocument_get_documentElement(document, &root);
+            if(hr == S_FALSE)
+                hr = E_FAIL;
+        }
+
+        if(SUCCEEDED(hr))
+        {
+            hr = IXMLDOMElement_get_firstChild(root, &gdNode);
+            if(hr == S_FALSE)
+                hr = E_FAIL;
+
+            if(SUCCEEDED(hr))
+            {
+                hr = IXMLDOMNode_QueryInterface(gdNode, &IID_IXMLDOMElement, (LPVOID*)&gdElement);
+                if(SUCCEEDED(hr))
+                {
+                    hr = GAMEUX_ParseGameDefinition(gdElement, GameData);
+                    IXMLDOMElement_Release(gdElement);
+                }
+
+                IXMLDOMNode_Release(gdNode);
+            }
+
+            IXMLDOMElement_Release(root);
+        }
+
+        IXMLDOMDocument_Release(document);
+    }
+
     return hr;
 }
 /*******************************************************************************
@@ -266,7 +414,9 @@ HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
 
     GameData.guidInstanceId = *pInstanceID;
 
-    FIXME("loading game data from GDF file not yet implemented\n");
+    /* load data from GDF binary */
+    if(SUCCEEDED(hr))
+        hr = GAMEUX_ParseGDFBinary(&GameData);
 
     /* save data to registry */
     if(SUCCEEDED(hr))

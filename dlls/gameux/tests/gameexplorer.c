@@ -295,7 +295,7 @@ static void _validateGameRegistryValues(int line,
 
     /* these values exist up from Vista */
     hr = _validateRegistryValue(hKey, keyPath,   sApplicationId,            RRF_RT_REG_SZ,      sGameApplicationId);
-    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+    ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
     hr = _validateRegistryValue(hKey, keyPath,   sConfigApplicationPath,    RRF_RT_REG_SZ,      gameExePath);
     ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
     hr = _validateRegistryValue(hKey, keyPath,   sConfigGDFBinaryPath,      RRF_RT_REG_SZ,      gameExeName);

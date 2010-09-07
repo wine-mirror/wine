@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gameux.dll
-IMPORTS   = uuid ole32 user32 advapi32 oleaut32
+IMPORTS   = uuid shell32 oleaut32 ole32 user32 advapi32
 
 C_SRCS = \
 	factory.c \

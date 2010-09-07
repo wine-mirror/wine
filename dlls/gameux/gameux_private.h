@@ -41,6 +41,7 @@ struct GAMEUX_GAME_DATA
     LPWSTR sGameInstallDirectory;   /* directory passed to AddGame/InstallGame methods */
     GAME_INSTALL_SCOPE installScope;/* game's installation scope */
     GUID guidInstanceId;            /* game installation instance identifier */
+    GUID guidApplicationId;         /* game's application identifier */
 };
 /*******************************************************************************
  * GAMEUX_initGameData
