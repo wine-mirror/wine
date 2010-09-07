@@ -321,7 +321,7 @@ static void BidiLines(int baselevel, LPWSTR pszOutLine, LPCWSTR pszLine, WORD * 
         {
             int i;
             /* reorder each line in place */
-            ScriptLayout(cchLine, plevelLine, run, NULL);
+            ScriptLayout(cchLine, plevelLine, NULL, run);
             for (i = 0; i < cchLine; i++)
                 pszOutLine[done+run[i]] = pszLine[i];
         }
@@ -590,7 +590,7 @@ BOOL BIDI_Reorder(
             for (j = 0; j < nItems; j++)
                 runOrder[j] = pItems[j].a.s.uBidiLevel;
 
-            ScriptLayout(nItems, runOrder, NULL, visOrder);
+            ScriptLayout(nItems, runOrder, visOrder, NULL);
 
             for (j = 0; j < nItems; j++)
             {
