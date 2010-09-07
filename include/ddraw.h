@@ -1220,6 +1220,7 @@ typedef struct tagDDDEVICEIDENTIFIER2 {
 /*****************************************************************************
  * IDirectDrawPalette interface
  */
+#undef INTERFACE
 #define INTERFACE IDirectDrawPalette
 DECLARE_INTERFACE_(IDirectDrawPalette,IUnknown)
 {

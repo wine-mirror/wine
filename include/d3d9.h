@@ -163,6 +163,7 @@ typedef struct IDirect3DQuery9 *LPDIRECT3DQUERY9, *PDIRECT3DQUERY9;
 /*****************************************************************************
  * IDirect3D9 interface
  */
+#undef INTERFACE
 #define INTERFACE IDirect3D9
 DECLARE_INTERFACE_(IDirect3D9,IUnknown)
 {

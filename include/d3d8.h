@@ -129,6 +129,7 @@ typedef struct IDirect3DVolumeTexture8 *LPDIRECT3DVOLUMETEXTURE8, *PDIRECT3DVOLU
 /*****************************************************************************
  * IDirect3D8 interface
  */
+#undef INTERFACE
 #define INTERFACE IDirect3D8
 DECLARE_INTERFACE_(IDirect3D8,IUnknown)
 {
