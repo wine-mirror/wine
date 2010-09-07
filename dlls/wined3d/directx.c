@@ -1103,7 +1103,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     OSVERSIONINFOW os_version;
     WORD driver_os_version;
     unsigned int i;
-    enum wined3d_display_driver driver = DRIVER_NVIDIA_TNT;
+    enum wined3d_display_driver driver = DRIVER_UNKNOWN;
     enum wined3d_driver_model driver_model;
     const struct driver_version_information *version_info;
 
@@ -1220,6 +1220,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
         else
         {
             driver_info->description = "Direct3D HAL";
+            driver_info->name = "Display";
             driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, 15);
             driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
 
