@@ -42,6 +42,7 @@ struct GAMEUX_GAME_DATA
     GAME_INSTALL_SCOPE installScope;/* game's installation scope */
     GUID guidInstanceId;            /* game installation instance identifier */
     GUID guidApplicationId;         /* game's application identifier */
+    BSTR bstrName;                  /* game's title */
 };
 /*******************************************************************************
  * GAMEUX_initGameData

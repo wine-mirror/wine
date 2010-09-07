@@ -51,6 +51,7 @@ void GAMEUX_initGameData(struct GAMEUX_GAME_DATA *GameData)
 {
     GameData->sGDFBinaryPath = NULL;
     GameData->sGameInstallDirectory = NULL;
+    GameData->bstrName = NULL;
 }
 /*******************************************************************************
  * GAMEUX_uninitGameData
@@ -61,6 +62,7 @@ void GAMEUX_uninitGameData(struct GAMEUX_GAME_DATA *GameData)
 {
     HeapFree(GetProcessHeap(), 0, GameData->sGDFBinaryPath);
     HeapFree(GetProcessHeap(), 0, GameData->sGameInstallDirectory);
+    SysFreeString(GameData->bstrName);
 }
 /*******************************************************************************
  * GAMEUX_buildGameRegistryPath
@@ -196,6 +198,7 @@ static HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
  *   ApplicationId                    guidApplicationId
  *   ConfigApplicationPath            sGameInstallDirectory
  *   ConfigGDFBinaryPath              sGDFBinaryPath
+ *   Title                            bstrName
  *
  */
 static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
@@ -206,6 +209,8 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
             {'C','o','n','f','i','g','A','p','p','l','i','c','a','t','i','o','n','P','a','t','h',0};
     static const WCHAR sConfigGDFBinaryPath[] =
             {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
+    static const WCHAR sTitle[] =
+            {'T','i','t','l','e',0};
 
     HRESULT hr, hr2;
     LPWSTR lpRegistryKey;
@@ -241,6 +246,11 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
                                                    REG_SZ, (LPBYTE)(sGameApplicationId),
                                                    (lstrlenW(sGameApplicationId)+1)*sizeof(WCHAR)));
 
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sTitle, 0,
+                                                   REG_SZ, (LPBYTE)(GameData->bstrName),
+                                                   (lstrlenW(GameData->bstrName)+1)*sizeof(WCHAR)));
+
         RegCloseKey(hKey);
 
         if(FAILED(hr))
@@ -255,6 +265,43 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
 
     HeapFree(GetProcessHeap(), 0, lpRegistryKey);
     TRACE("returning 0x%x\n", hr);
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_ProcessGameDefinitionElement
+ *
+ * Helper function, parses single element from Game Definition
+ *
+ * Parameters:
+ *  lpXMLElement                        [I]     game definition element
+ *  GameData                            [O]     structure, where parsed
+ *                                              data will be stored
+ */
+static HRESULT GAMEUX_ProcessGameDefinitionElement(
+        IXMLDOMElement *element,
+        struct GAMEUX_GAME_DATA *GameData)
+{
+    static const WCHAR sName[] =
+            {'N','a','m','e',0};
+
+    HRESULT hr;
+    BSTR bstrElementName;
+
+    TRACE("(%p, %p)\n", element, GameData);
+
+    hr = IXMLDOMElement_get_nodeName(element, &bstrElementName);
+    if(SUCCEEDED(hr))
+    {
+        /* check element name */
+        if(lstrcmpW(bstrElementName, sName) == 0)
+            hr = IXMLDOMElement_get_text(element, &GameData->bstrName);
+
+        else
+            FIXME("entry %s in Game Definition File not yet supported\n", debugstr_w(bstrElementName));
+
+        SysFreeString(bstrElementName);
+    }
+
     return hr;
 }
 /*******************************************************************************
@@ -277,6 +324,9 @@ static HRESULT GAMEUX_ParseGameDefinition(
     HRESULT hr = S_OK;
     BSTR bstrAttribute;
     VARIANT variant;
+    IXMLDOMNodeList *childrenList;
+    IXMLDOMNode *nextNode;
+    IXMLDOMElement *nextElement;
 
     TRACE("(%p, %p)\n", gdElement, GameData);
 
@@ -294,6 +344,36 @@ static HRESULT GAMEUX_ParseGameDefinition(
     }
 
     SysFreeString(bstrAttribute);
+
+    /* browse subnodes */
+    if(SUCCEEDED(hr))
+        hr = IXMLDOMElement_get_childNodes(gdElement, &childrenList);
+
+    if(SUCCEEDED(hr))
+    {
+        do
+        {
+            hr = IXMLDOMNodeList_nextNode(childrenList, &nextNode);
+
+            if(hr == S_OK)
+            {
+                hr = IXMLDOMNode_QueryInterface(nextNode, &IID_IXMLDOMElement,
+                                                (LPVOID*)&nextElement);
+
+                if(SUCCEEDED(hr))
+                {
+                    hr = GAMEUX_ProcessGameDefinitionElement(nextElement, GameData);
+                    IXMLDOMElement_Release(nextElement);
+                }
+
+                IXMLDOMElement_Release(nextNode);
+            }
+        }
+        while(hr == S_OK);
+        hr = S_OK;
+
+        IXMLDOMNodeList_Release(childrenList);
+    }
 
     return hr;
 }

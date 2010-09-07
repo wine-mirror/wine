@@ -301,7 +301,7 @@ static void _validateGameRegistryValues(int line,
     hr = _validateRegistryValue(hKey, keyPath,   sConfigGDFBinaryPath,      RRF_RT_REG_SZ,      gameExeName);
     ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
     hr = _validateRegistryValue(hKey, keyPath,   sTitle,                    RRF_RT_REG_SZ,      sExampleGame);
-    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+    ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
 
     /* this value exists up from Win7 */
     hr = _validateRegistryValue(hKey, keyPath,   sDescription,              RRF_RT_REG_SZ,      sGameDescription);
