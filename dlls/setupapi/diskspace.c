@@ -53,6 +53,14 @@ HDSKSPC WINAPI SetupCreateDiskSpaceListW(PVOID Reserved1, DWORD Reserved2, UINT 
     WCHAR *ptr;
     LPDISKSPACELIST list=NULL;
 
+    TRACE("(%p, %u, 0x%08x)\n", Reserved1, Reserved2, Flags);
+
+    if (Reserved1 || Reserved2 || Flags & ~SPDSL_IGNORE_DISK)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     rc = GetLogicalDriveStringsW(255,drives);
 
     if (rc == 0)
