@@ -437,11 +437,11 @@ static RETERR16 VCP_CheckPaths(void)
 static RETERR16 VCP_CopyFiles(void)
 {
     char fn_src[MAX_PATH], fn_dst[MAX_PATH];
-    RETERR16 res = OK, cbres;
+    RETERR16 res = OK;
     DWORD n;
     LPVIRTNODE lpvn;
 
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCOPYSTART, 0, 0, VCP_MsgRef);
+    VCP_Callback(&vcp_status, VCPM_VSTATCOPYSTART, 0, 0, VCP_MsgRef);
     for (n = 0; n < vn_num; n++)
     {
 	lpvn = pvnlist[n];
@@ -451,7 +451,7 @@ static RETERR16 VCP_CopyFiles(void)
         strcpy(fn_dst, VcpExplain16(lpvn, VCPEX_DST_FULL));
 	/* FIXME: what is this VCPM_VSTATWRITE here for ?
 	 * I guess it's to signal successful destination file creation */
-	cbres = VCP_Callback(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
+	VCP_Callback(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
 
 	/* FIXME: need to do the file copy in small chunks for notifications */
 	TRACE("copying '%s' to '%s'\n", fn_src, fn_dst);
@@ -464,12 +464,12 @@ static RETERR16 VCP_CopyFiles(void)
         }
 
 	vcp_status.prgFileRead.dwSoFar++;
-	cbres = VCP_Callback(&vcp_status, VCPM_VSTATREAD, 0, 0, VCP_MsgRef);
+	VCP_Callback(&vcp_status, VCPM_VSTATREAD, 0, 0, VCP_MsgRef);
 	vcp_status.prgFileWrite.dwSoFar++;
-	cbres = VCP_Callback(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
+	VCP_Callback(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
     }
 
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCOPYEND, 0, 0, VCP_MsgRef);
+    VCP_Callback(&vcp_status, VCPM_VSTATCOPYEND, 0, 0, VCP_MsgRef);
     return res;
 }
 
