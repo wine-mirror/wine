@@ -127,6 +127,18 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC DiskSpace,
     BOOL rc = FALSE;
     static const WCHAR bkslsh[]= {'\\',0};
 
+    if (!DiskSpace)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (!DriveSpec)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     driveW = HeapAlloc(GetProcessHeap(), 0, lstrlenW(DriveSpec) + 2);
     if (!driveW)
     {
@@ -152,6 +164,7 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC DiskSpace,
 
     HeapFree(GetProcessHeap(), 0, driveW);
 
+    if (!rc) SetLastError(ERROR_INVALID_DRIVE);
     return rc;
 }
 
@@ -162,22 +175,34 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC DiskSpace,
                         LPCSTR DriveSpec, LONGLONG *SpaceRequired,
                         PVOID Reserved1, UINT Reserved2)
 {
-    LPWSTR DriveSpecW = NULL;
+    DWORD len;
+    LPWSTR DriveSpecW;
     BOOL ret;
 
-    if (DriveSpec)
+    /* The parameter validation checks are in a different order from the
+     * Unicode variant of SetupQuerySpaceRequiredOnDrive. */
+    if (!DriveSpec)
     {
-        DWORD len = MultiByteToWideChar(CP_ACP, 0, DriveSpec, -1, NULL, 0);
-
-        DriveSpecW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        if (!DriveSpecW)
-        {
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-            return FALSE;
-        }
-
-        MultiByteToWideChar(CP_ACP, 0, DriveSpec, -1, DriveSpecW, len);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
+
+    if (!DiskSpace)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    len = MultiByteToWideChar(CP_ACP, 0, DriveSpec, -1, NULL, 0);
+
+    DriveSpecW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!DriveSpecW)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, DriveSpec, -1, DriveSpecW, len);
 
     ret = SetupQuerySpaceRequiredOnDriveW(DiskSpace, DriveSpecW, SpaceRequired,
                                           Reserved1, Reserved2);
