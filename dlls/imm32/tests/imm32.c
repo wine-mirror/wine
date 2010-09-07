@@ -22,6 +22,7 @@
 
 #include "wine/test.h"
 #include "winuser.h"
+#include "wingdi.h"
 #include "imm.h"
 
 #define NUMELEMS(array) (sizeof((array))/sizeof((array)[0]))
@@ -135,6 +136,19 @@ static void msg_spy_cleanup(void) {
 static const char wndcls[] = "winetest_imm32_wndcls";
 static HWND hwnd;
 
+static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+        case WM_IME_SETCONTEXT:
+        case WM_NCCREATE:
+        case WM_CREATE:
+            return TRUE;
+    }
+
+    return DefWindowProcA(hwnd,msg,wParam,lParam);
+}
+
 static BOOL init(void) {
     WNDCLASSEX wc;
     HIMC imc;
@@ -145,7 +159,7 @@ static BOOL init(void) {
 
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = 0;
-    wc.lpfnWndProc   = DefWindowProc;
+    wc.lpfnWndProc   = wndProc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = GetModuleHandle(0);
@@ -356,6 +370,8 @@ static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
 {
     HIMC h1,h2;
     HWND hwnd2;
+    COMPOSITIONFORM cf;
+    POINT pt;
     igc_threadinfo *info= (igc_threadinfo*)lpParam;
     info->hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, wndcls, "Wine imm32.dll test",
                           WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -378,6 +394,10 @@ static DWORD WINAPI ImmGetContextThreadFunc( LPVOID lpParam)
     ImmReleaseContext(info->hwnd,h2);
     DestroyWindow(hwnd2);
 
+    /* priming for later tests */
+    ImmSetCompositionWindow(h1, &cf);
+    ImmSetStatusWindowPos(h1, &pt);
+
     SetEvent(info->event);
     Sleep(INFINITE);
     return 1;
@@ -389,6 +409,11 @@ static void test_ImmThreads(void)
     igc_threadinfo threadinfo;
     HANDLE hThread;
     DWORD dwThreadId;
+    BOOL rc;
+    LOGFONT lf;
+    COMPOSITIONFORM cf;
+    DWORD status, sentence;
+    POINT pt;
 
     himc = ImmGetContext(hwnd);
     threadinfo.event = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -409,6 +434,70 @@ static void test_ImmThreads(void)
     ok(h1 == himc, "Context for window should remain unchanged\n");
     ImmReleaseContext(hwnd,h1);
     }
+
+
+    /* OpenStatus */
+    rc = ImmSetOpenStatus(himc, TRUE);
+    ok(rc != 0, "ImmSetOpenStatus failed\n");
+    rc = ImmGetOpenStatus(himc);
+    ok(rc != 0, "ImmGetOpenStatus failed\n");
+    rc = ImmSetOpenStatus(himc, FALSE);
+    ok(rc != 0, "ImmSetOpenStatus failed\n");
+    rc = ImmGetOpenStatus(himc);
+    ok(rc == 0, "ImmGetOpenStatus failed\n");
+
+    rc = ImmSetOpenStatus(otherHimc, TRUE);
+    todo_wine ok(rc == 0, "ImmSetOpenStatus should fail\n");
+    rc = ImmGetOpenStatus(otherHimc);
+    todo_wine ok(rc == 0, "ImmGetOpenStatus failed\n");
+    rc = ImmSetOpenStatus(otherHimc, FALSE);
+    todo_wine ok(rc == 0, "ImmSetOpenStatus should fail\n");
+    rc = ImmGetOpenStatus(otherHimc);
+    ok(rc == 0, "ImmGetOpenStatus failed\n");
+
+    /* CompositionFont */
+    rc = ImmGetCompositionFont(himc, &lf);
+    ok(rc != 0, "ImmGetCompositionFont failed\n");
+    rc = ImmSetCompositionFont(himc, &lf);
+    ok(rc != 0, "ImmSetCompositionFont failed\n");
+
+    rc = ImmGetCompositionFont(otherHimc, &lf);
+    ok(rc != 0 || broken(rc == 0), "ImmGetCompositionFont failed\n");
+    rc = ImmSetCompositionFont(otherHimc, &lf);
+    todo_wine ok(rc == 0, "ImmSetCompositionFont should fail\n");
+
+    /* CompositionWindow */
+    rc = ImmSetCompositionWindow(himc, &cf);
+    ok(rc != 0, "ImmSetCompositionWindow failed\n");
+    rc = ImmGetCompositionWindow(himc, &cf);
+    ok(rc != 0, "ImmGetCompositionWindow failed\n");
+
+    rc = ImmSetCompositionWindow(otherHimc, &cf);
+    todo_wine ok(rc == 0, "ImmSetCompositionWindow should fail\n");
+    rc = ImmGetCompositionWindow(otherHimc, &cf);
+    ok(rc != 0 || broken(rc == 0), "ImmGetCompositionWindow failed\n");
+
+    /* ConversionStatus */
+    rc = ImmGetConversionStatus(himc, &status, &sentence);
+    ok(rc != 0, "ImmGetConversionStatus failed\n");
+    rc = ImmSetConversionStatus(himc, status, sentence);
+    ok(rc != 0, "ImmSetConversionStatus failed\n");
+
+    rc = ImmGetConversionStatus(otherHimc, &status, &sentence);
+    ok(rc != 0 || broken(rc == 0), "ImmGetConversionStatus failed\n");
+    rc = ImmSetConversionStatus(otherHimc, status, sentence);
+    todo_wine ok(rc == 0, "ImmSetConversionStatus should fail\n");
+
+    /* StatusWindowPos */
+    rc = ImmSetStatusWindowPos(himc, &pt);
+    ok(rc != 0, "ImmSetStatusWindowPos failed\n");
+    rc = ImmGetStatusWindowPos(himc, &pt);
+    ok(rc != 0, "ImmGetStatusWindowPos failed\n");
+
+    rc = ImmSetStatusWindowPos(otherHimc, &pt);
+    todo_wine ok(rc == 0, "ImmSetStatusWindowPos should fail\n");
+    rc = ImmGetStatusWindowPos(otherHimc, &pt);
+    ok(rc != 0 || broken(rc == 0), "ImmGetStatusWindowPos failed\n");
 
     ImmReleaseContext(threadinfo.hwnd,otherHimc);
     ImmReleaseContext(hwnd,himc);
