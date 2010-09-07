@@ -52,6 +52,7 @@ void GAMEUX_initGameData(struct GAMEUX_GAME_DATA *GameData)
     GameData->sGDFBinaryPath = NULL;
     GameData->sGameInstallDirectory = NULL;
     GameData->bstrName = NULL;
+    GameData->bstrDescription = NULL;
 }
 /*******************************************************************************
  * GAMEUX_uninitGameData
@@ -63,6 +64,7 @@ void GAMEUX_uninitGameData(struct GAMEUX_GAME_DATA *GameData)
     HeapFree(GetProcessHeap(), 0, GameData->sGDFBinaryPath);
     HeapFree(GetProcessHeap(), 0, GameData->sGameInstallDirectory);
     SysFreeString(GameData->bstrName);
+    SysFreeString(GameData->bstrDescription);
 }
 /*******************************************************************************
  * GAMEUX_buildGameRegistryPath
@@ -211,6 +213,8 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
             {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
     static const WCHAR sTitle[] =
             {'T','i','t','l','e',0};
+    static const WCHAR sDescription[] =
+            {'D','e','s','c','r','i','p','t','i','o','n',0};
 
     HRESULT hr, hr2;
     LPWSTR lpRegistryKey;
@@ -251,6 +255,11 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
                                                    REG_SZ, (LPBYTE)(GameData->bstrName),
                                                    (lstrlenW(GameData->bstrName)+1)*sizeof(WCHAR)));
 
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sDescription, 0,
+                                                   REG_SZ, (LPBYTE)(GameData->bstrDescription ? GameData->bstrDescription : GameData->bstrName),
+                                                   (lstrlenW(GameData->bstrDescription ? GameData->bstrDescription : GameData->bstrName)+1)*sizeof(WCHAR)));
+
         RegCloseKey(hKey);
 
         if(FAILED(hr))
@@ -283,6 +292,8 @@ static HRESULT GAMEUX_ProcessGameDefinitionElement(
 {
     static const WCHAR sName[] =
             {'N','a','m','e',0};
+    static const WCHAR sDescription[] =
+            {'D','e','s','c','r','i','p','t','i','o','n',0};
 
     HRESULT hr;
     BSTR bstrElementName;
@@ -295,6 +306,9 @@ static HRESULT GAMEUX_ProcessGameDefinitionElement(
         /* check element name */
         if(lstrcmpW(bstrElementName, sName) == 0)
             hr = IXMLDOMElement_get_text(element, &GameData->bstrName);
+
+        else if(lstrcmpW(bstrElementName, sDescription) == 0)
+            hr = IXMLDOMElement_get_text(element, &GameData->bstrDescription);
 
         else
             FIXME("entry %s in Game Definition File not yet supported\n", debugstr_w(bstrElementName));

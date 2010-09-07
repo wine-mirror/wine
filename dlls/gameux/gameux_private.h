@@ -43,6 +43,7 @@ struct GAMEUX_GAME_DATA
     GUID guidInstanceId;            /* game installation instance identifier */
     GUID guidApplicationId;         /* game's application identifier */
     BSTR bstrName;                  /* game's title */
+    BSTR bstrDescription;           /* game's description */
 };
 /*******************************************************************************
  * GAMEUX_initGameData
