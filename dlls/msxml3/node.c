@@ -222,52 +222,33 @@ static HRESULT WINAPI xmlnode_get_nodeValue(
     return E_NOTIMPL;
 }
 
+HRESULT node_put_value(xmlnode *This, VARIANT *value)
+{
+    VARIANT string_value;
+    xmlChar *str;
+    HRESULT hr;
+
+    VariantInit(&string_value);
+    hr = VariantChangeType(&string_value, value, 0, VT_BSTR);
+    if(FAILED(hr)) {
+        WARN("Couldn't convert to VT_BSTR\n");
+        return hr;
+    }
+
+    str = xmlChar_from_wchar(V_BSTR(&string_value));
+    VariantClear(&string_value);
+
+    xmlNodeSetContent(This->node, str);
+    heap_free(str);
+    return S_OK;
+}
+
 static HRESULT WINAPI xmlnode_put_nodeValue(
     IXMLDOMNode *iface,
     VARIANT value)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    HRESULT hr;
-
-    TRACE("%p type(%d)\n", This, This->node->type);
-
-    /* Document, Document Fragment, Document Type, Element,
-       Entity, Entity Reference, Notation aren't supported. */
-    switch ( This->node->type )
-    {
-    case XML_ATTRIBUTE_NODE:
-    case XML_CDATA_SECTION_NODE:
-    case XML_COMMENT_NODE:
-    case XML_PI_NODE:
-    case XML_TEXT_NODE:
-    {
-        VARIANT string_value;
-        xmlChar *str;
-
-        VariantInit(&string_value);
-        hr = VariantChangeType(&string_value, &value, 0, VT_BSTR);
-        if(FAILED(hr))
-        {
-            VariantClear(&string_value);
-            WARN("Couldn't convert to VT_BSTR\n");
-            return hr;
-        }
-
-        str = xmlChar_from_wchar(V_BSTR(&string_value));
-        VariantClear(&string_value);
-
-        xmlNodeSetContent(This->node, str);
-        heap_free(str);
-        hr = S_OK;
-        break;
-    }
-    default:
-        /* Do nothing for unsupported types. */
-        hr = E_FAIL;
-        break;
-    }
-
-    return hr;
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_get_nodeType(
@@ -1812,10 +1793,11 @@ static HRESULT WINAPI unknode_get_nodeValue(
 
 static HRESULT WINAPI unknode_put_nodeValue(
     IXMLDOMNode *iface,
-    VARIANT var1 )
+    VARIANT value)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(v%d)\n", This, V_VT(&value));
+    return E_FAIL;
 }
 
 static HRESULT WINAPI unknode_get_nodeType(

@@ -161,6 +161,7 @@ extern xmlnode *get_node_obj(IXMLDOMNode*);
 
 extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
 extern HRESULT node_get_content(xmlnode*,VARIANT*);
+extern HRESULT node_put_value(xmlnode*,VARIANT*);
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 

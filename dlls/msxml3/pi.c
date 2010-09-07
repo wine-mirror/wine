@@ -202,14 +202,14 @@ static HRESULT WINAPI dom_pi_get_nodeValue(
 
 static HRESULT WINAPI dom_pi_put_nodeValue(
     IXMLDOMProcessingInstruction *iface,
-    VARIANT var1 )
+    VARIANT value)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
     BSTR sTarget;
     static const WCHAR szXML[] = {'x','m','l',0};
     HRESULT hr;
 
-    TRACE("%p\n", This );
+    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
 
     /* Cannot set data to a PI node whose target is 'xml' */
     hr = dom_pi_get_nodeName(iface, &sTarget);
@@ -224,7 +224,7 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
         SysFreeString(sTarget);
     }
 
-    return IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    return node_put_value(&This->node, &value);
 }
 
 static HRESULT WINAPI dom_pi_get_nodeType(

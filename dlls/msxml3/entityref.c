@@ -205,10 +205,11 @@ static HRESULT WINAPI entityref_get_nodeValue(
 
 static HRESULT WINAPI entityref_put_nodeValue(
     IXMLDOMEntityReference *iface,
-    VARIANT var1 )
+    VARIANT value)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(v%d)\n", This, V_VT(&value));
+    return E_FAIL;
 }
 
 static HRESULT WINAPI entityref_get_nodeType(

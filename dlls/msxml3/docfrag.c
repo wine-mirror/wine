@@ -209,10 +209,11 @@ static HRESULT WINAPI domfrag_get_nodeValue(
 
 static HRESULT WINAPI domfrag_put_nodeValue(
     IXMLDOMDocumentFragment *iface,
-    VARIANT var1 )
+    VARIANT value)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(&This->node), var1 );
+    FIXME("(%p)->(v%d)\n", This, V_VT(&value));
+    return E_FAIL;
 }
 
 static HRESULT WINAPI domfrag_get_nodeType(

@@ -717,7 +717,8 @@ static HRESULT WINAPI domdoc_put_nodeValue(
     VARIANT value)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(&This->node), value );
+    FIXME("(%p)->(v%d)\n", This, V_VT(&value));
+    return E_FAIL;
 }
 
 
@@ -1301,7 +1302,7 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
         V_VT(&v_data)   = VT_BSTR;
         V_BSTR(&v_data) = data;
 
-        hr = IXMLDOMNode_put_nodeValue( IXMLDOMNode_from_impl(node_obj), v_data );
+        hr = node_put_value(node_obj, &v_data);
 
         IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMProcessingInstruction, (void**)pi);
         IXMLDOMNode_Release(node);
