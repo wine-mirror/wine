@@ -480,6 +480,36 @@ static HRESULT GAMEUX_ParseGDFBinary(struct GAMEUX_GAME_DATA *GameData)
 
     return hr;
 }
+/*******************************************************************
+ * GAMEUX_RemoveRegistryRecord
+ *
+ * Helper function, removes registry key associated with given game instance
+ */
+static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
+{
+    HRESULT hr;
+    LPWSTR lpRegistryPath = NULL;
+    TRACE("(%s)\n", debugstr_guid(pInstanceID));
+
+    /* first, check is game installed for all users */
+    hr = GAMEUX_buildGameRegistryPath(GIS_ALL_USERS, pInstanceID, &lpRegistryPath);
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, 0, 0));
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+
+    /* if not, check current user */
+    if(FAILED(hr))
+    {
+        hr = GAMEUX_buildGameRegistryPath(GIS_CURRENT_USER, pInstanceID, &lpRegistryPath);
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryPath, 0, 0));
+
+        HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    }
+
+    return hr;
+}
 /*******************************************************************************
  * GAMEUX_RegisterGame
  *
@@ -628,8 +658,7 @@ static HRESULT WINAPI GameExplorerImpl_RemoveGame(
     GameExplorerImpl *This = impl_from_IGameExplorer(iface);
 
     TRACE("(%p, %s)\n", This, debugstr_guid(&instanceID));
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    return GAMEUX_RemoveRegistryRecord(&instanceID);
 }
 
 static HRESULT WINAPI GameExplorerImpl_UpdateGame(
