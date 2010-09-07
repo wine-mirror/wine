@@ -9666,7 +9666,7 @@ static void test_installprops(void)
     if (pGetSystemInfo)
     {
         pGetSystemInfo(&si);
-        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+        if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
         {
             buf[0] = 0;
             size = MAX_PATH;
