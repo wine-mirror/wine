@@ -477,19 +477,13 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
  *
  * Get the 'inside' rectangle of a window, i.e. the whole window rectangle
  * but without the borders (if any).
- * The rectangle is in window coordinates (for drawing with GetWindowDC()).
  */
-static void NC_GetInsideRect( HWND hwnd, RECT *rect, DWORD style, DWORD ex_style )
+static void NC_GetInsideRect( HWND hwnd, enum coords_relative relative, RECT *rect,
+                              DWORD style, DWORD ex_style )
 {
-    WND *wndPtr = WIN_GetPtr( hwnd );
+    WIN_GetRectangles( hwnd, relative, rect, NULL );
 
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return;
-
-    rect->top    = rect->left = 0;
-    rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
-    rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
-
-    if (style & WS_ICONIC) goto END;
+    if (style & WS_ICONIC) return;
 
     /* Remove frame from rectangle */
     if (HAS_THICKFRAME( style, ex_style ))
@@ -514,9 +508,6 @@ static void NC_GetInsideRect( HWND hwnd, RECT *rect, DWORD style, DWORD ex_style
         if (ex_style & WS_EX_STATICEDGE)
             InflateRect (rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
     }
-
-END:
-    WIN_ReleasePtr( wndPtr );
 }
 
 
@@ -708,7 +699,7 @@ BOOL NC_DrawSysButton (HWND hwnd, HDC hdc, BOOL down)
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
         DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
-        NC_GetInsideRect( hwnd, &rect, style, ex_style );
+        NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
         DrawIconEx (hdc, rect.left + 2, rect.top + 1, hIcon,
                     GetSystemMetrics(SM_CXSMICON),
                     GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL);
@@ -733,7 +724,7 @@ static void NC_DrawCloseButton (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
     DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
     DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
-    NC_GetInsideRect( hwnd, &rect, style, ex_style );
+    NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
 
     /* A tool window has a smaller Close button */
     if (ex_style & WS_EX_TOOLWINDOW)
@@ -778,7 +769,7 @@ static void NC_DrawMaxButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 
     flags = (style & WS_MAXIMIZE) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
 
-    NC_GetInsideRect( hwnd, &rect, style, ex_style );
+    NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
     if (style & WS_SYSMENU)
         rect.right -= GetSystemMetrics(SM_CXSIZE);
     rect.left = rect.right - GetSystemMetrics(SM_CXSIZE);
@@ -806,7 +797,7 @@ static void  NC_DrawMinButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
     /* never draw minimize box when window has WS_EX_TOOLWINDOW style */
     if (ex_style & WS_EX_TOOLWINDOW) return;
 
-    NC_GetInsideRect( hwnd, &rect, style, ex_style );
+    NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
     if (style & WS_SYSMENU)
         rect.right -= GetSystemMetrics(SM_CXSIZE);
     if (style & (WS_MAXIMIZEBOX|WS_MINIMIZEBOX))
@@ -994,7 +985,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
     DWORD dwStyle, dwExStyle;
     WORD flags;
     HRGN hrgn;
-    RECT rectClient, rectWindow;
+    RECT rectClient;
     int has_menu;
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return;
@@ -1002,7 +993,6 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
     dwStyle = wndPtr->dwStyle;
     dwExStyle = wndPtr->dwExStyle;
     flags = wndPtr->flags;
-    rectWindow = wndPtr->rectWindow;
     WIN_ReleasePtr( wndPtr );
 
     if ( dwStyle & WS_MINIMIZE ||
@@ -1019,8 +1009,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
        Now, how is the "system" supposed to tell what happened?
      */
 
-    GetClientRect( hwnd, &rectClient );
-    MapWindowPoints( hwnd, 0, (POINT *)&rectClient, 2 );
+    WIN_GetRectangles( hwnd, COORDS_SCREEN, NULL, &rectClient );
     hrgn = CreateRectRgnIndirect( &rectClient );
 
     if (clip > (HRGN)1)
@@ -1035,9 +1024,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
 
     if (!hdc) return;
 
-    rect.top = rect.left = 0;
-    rect.right  = rectWindow.right - rectWindow.left;
-    rect.bottom = rectWindow.bottom - rectWindow.top;
+    WIN_GetRectangles( hwnd, COORDS_WINDOW, &rect, NULL );
     GetClipBox( hdc, &rectClip );
 
     SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
@@ -1222,15 +1209,10 @@ void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
     {
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
         DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-        WND *wndPtr = WIN_GetPtr( hwnd );
-        if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return;
 
-        NC_GetInsideRect( hwnd, rect, style, ex_style );
-        OffsetRect( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top);
-        if (style & WS_CHILD) ClientToScreen( GetParent(hwnd), (POINT *)rect );
+        NC_GetInsideRect( hwnd, COORDS_SCREEN, rect, style, ex_style );
         rect->right = rect->left + GetSystemMetrics(SM_CYCAPTION) - 1;
         rect->bottom = rect->top + GetSystemMetrics(SM_CYCAPTION) - 1;
-        WIN_ReleasePtr( wndPtr );
     }
 }
 
@@ -1633,7 +1615,6 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 BOOL WINAPI GetTitleBarInfo(HWND hwnd, PTITLEBARINFO tbi) {
     DWORD dwStyle;
     DWORD dwExStyle;
-    RECT wndRect;
 
     TRACE("(%p %p)\n", hwnd, tbi);
 
@@ -1649,13 +1630,7 @@ BOOL WINAPI GetTitleBarInfo(HWND hwnd, PTITLEBARINFO tbi) {
     }
     dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
     dwExStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
-    NC_GetInsideRect(hwnd, &tbi->rcTitleBar, dwStyle, dwExStyle);
-
-    GetWindowRect(hwnd, &wndRect);
-
-    tbi->rcTitleBar.top += wndRect.top;
-    tbi->rcTitleBar.left += wndRect.left;
-    tbi->rcTitleBar.right += wndRect.left;
+    NC_GetInsideRect(hwnd, COORDS_SCREEN, &tbi->rcTitleBar, dwStyle, dwExStyle);
 
     tbi->rcTitleBar.bottom = tbi->rcTitleBar.top;
     if(dwExStyle & WS_EX_TOOLWINDOW)

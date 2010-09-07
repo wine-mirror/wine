@@ -396,23 +396,18 @@ static void make_dc_dirty( struct dce *dce )
  * rectangle. In addition, pWnd->parent DCEs may need to be updated if
  * DCX_CLIPCHILDREN flag is set.
  */
-void invalidate_dce( HWND hwnd, const RECT *rect )
+void invalidate_dce( HWND hwnd, const RECT *extra_rect )
 {
-    RECT window_rect, extra_rect;
+    RECT window_rect;
     struct dce *dce;
     HWND hwndScope = GetAncestor( hwnd, GA_PARENT );
 
     if (!hwndScope) return;
 
     GetWindowRect( hwnd, &window_rect );
-    if (rect)
-    {
-        extra_rect = *rect;
-        MapWindowPoints( hwndScope, 0, (POINT *)&extra_rect, 2 );
-    }
 
     TRACE("%p scope hwnd = %p %s (%s)\n",
-          hwnd, hwndScope, wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(rect) );
+          hwnd, hwndScope, wine_dbgstr_rect(&window_rect), wine_dbgstr_rect(extra_rect) );
 
     /* walk all DCEs and fixup non-empty entries */
 
@@ -439,7 +434,7 @@ void invalidate_dce( HWND hwnd, const RECT *rect )
                 RECT dce_rect, tmp;
                 GetWindowRect( dce->hwnd, &dce_rect );
                 if (IntersectRect( &tmp, &dce_rect, &window_rect ) ||
-                    (rect && IntersectRect( &tmp, &dce_rect, &extra_rect )))
+                    (extra_rect && IntersectRect( &tmp, &dce_rect, extra_rect )))
                     make_dc_dirty( dce );
             }
         }

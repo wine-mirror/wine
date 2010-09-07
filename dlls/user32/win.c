@@ -1386,22 +1386,17 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     /* send WM_NCCALCSIZE */
 
-    if ((wndPtr = WIN_GetPtr(hwnd)))
+    if (WIN_GetRectangles( hwnd, COORDS_PARENT, &rect, NULL ))
     {
         /* yes, even if the CBT hook was called with HWND_TOP */
-        POINT pt;
-        HWND insert_after = (wndPtr->dwStyle & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
-        RECT window_rect = wndPtr->rectWindow;
-        RECT client_rect = window_rect;
-        WIN_ReleasePtr( wndPtr );
+        HWND insert_after = (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
+        RECT client_rect = rect;
 
         /* the rectangle is in screen coords for WM_NCCALCSIZE when wparam is FALSE */
-        pt.x = pt.y = 0;
-        MapWindowPoints( parent, 0, &pt, 1 );
-        OffsetRect( &client_rect, pt.x, pt.y );
+        MapWindowPoints( parent, 0, (POINT *)&client_rect, 2 );
         SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&client_rect );
-        OffsetRect( &client_rect, -pt.x, -pt.y );
-        set_window_pos( hwnd, insert_after, SWP_NOACTIVATE, &window_rect, &client_rect, NULL );
+        MapWindowPoints( 0, parent, (POINT *)&client_rect, 2 );
+        set_window_pos( hwnd, insert_after, SWP_NOACTIVATE, &rect, &client_rect, NULL );
     }
     else return 0;
 
@@ -1425,8 +1420,8 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
           wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
     if (!(wndPtr->flags & WIN_NEED_SIZE))
     {
-        rect = wndPtr->rectClient;
         WIN_ReleasePtr( wndPtr );
+        WIN_GetRectangles( hwnd, COORDS_PARENT, NULL, &rect );
         SendMessageW( hwnd, WM_SIZE, SIZE_RESTORED,
                       MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
         SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ) );

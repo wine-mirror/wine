@@ -57,11 +57,8 @@ static const WCHAR imm32W[] = { 'i','m','m','3','2','\0' };
 static void DEFWND_HandleWindowPosChanged( HWND hwnd, const WINDOWPOS *winpos )
 {
     RECT rect;
-    WND *wndPtr = WIN_GetPtr( hwnd );
 
-    rect = wndPtr->rectClient;
-    WIN_ReleasePtr( wndPtr );
-
+    WIN_GetRectangles( hwnd, COORDS_PARENT, NULL, &rect );
     if (!(winpos->flags & SWP_NOCLIENTMOVE))
         SendMessageW( hwnd, WM_MOVE, 0, MAKELONG(rect.left, rect.top));
 
