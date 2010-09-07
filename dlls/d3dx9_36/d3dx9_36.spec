@@ -11,11 +11,11 @@
 @ stub D3DXCleanMesh
 @ stdcall D3DXColorAdjustContrast(ptr ptr float)
 @ stdcall D3DXColorAdjustSaturation(ptr ptr float)
-@ stdcall D3DXCompileShader(ptr long ptr ptr ptr ptr long ptr ptr ptr)
-@ stub D3DXCompileShaderFromFileA
-@ stub D3DXCompileShaderFromFileW
-@ stub D3DXCompileShaderFromResourceA
-@ stub D3DXCompileShaderFromResourceW
+@ stdcall D3DXCompileShader(ptr long ptr ptr str str long ptr ptr ptr)
+@ stdcall D3DXCompileShaderFromFileA(str ptr ptr str str long ptr ptr ptr)
+@ stdcall D3DXCompileShaderFromFileW(wstr ptr ptr str str long ptr ptr ptr)
+@ stdcall D3DXCompileShaderFromResourceA(ptr str ptr ptr str str long ptr ptr ptr)
+@ stdcall D3DXCompileShaderFromResourceW(ptr wstr ptr ptr str str long ptr ptr ptr)
 @ stdcall D3DXComputeBoundingBox(ptr long long ptr ptr)
 @ stdcall D3DXComputeBoundingSphere(ptr long long ptr ptr)
 @ stub D3DXComputeIMTFromPerTexelSignal
