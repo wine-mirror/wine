@@ -5743,7 +5743,7 @@ __ASM_GLOBAL_FUNC( call_method,
                    "ret" )
 
 /* same function but returning floating point */
-static const double (*call_double_method)(void*,int,const DWORD*,int*) = (void *)call_method;
+static double (* const call_double_method)(void*,int,const DWORD*,int*) = (void *)call_method;
 
 /* ITypeInfo::Invoke
  *
@@ -5821,7 +5821,7 @@ __ASM_GLOBAL_FUNC( call_method,
                    "ret")
 
 /* same function but returning floating point */
-static const double (CDECL *call_double_method)(void*,int,const DWORD_PTR*) = (void *)call_method;
+static double (CDECL * const call_double_method)(void*,int,const DWORD_PTR*) = (void *)call_method;
 
 #endif  /* __x86_64__ */
 
