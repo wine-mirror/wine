@@ -22,12 +22,12 @@
 #ifndef __WINE_DDRAWI_H
 #define __WINE_DDRAWI_H
 
+#include <ddraw.h>
+#include <dciddi.h> /* the DD HAL is layered onto DCI escapes */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <ddraw.h>
-#include <dciddi.h> /* the DD HAL is layered onto DCI escapes */
 
 typedef struct _DDVIDEOPORTCAPS *LPDDVIDEOPORTCAPS; /* should be in dvp.h */
 typedef struct _DDKERNELCAPS *LPDDKERNELCAPS; /* should be in ddkernel.h */

@@ -23,6 +23,8 @@
 #include <commctrl.h>
 #include <prsht.h>
 #include <shlguid.h>
+#include <shtypes.h>
+#include <shobjidl.h>
 
 #ifdef WINE_NO_UNICODE_MACROS
 #undef GetObject
@@ -34,9 +36,6 @@ extern "C" {
 
 /* Except for specific structs, this header is byte packed */
 #include <pshpack1.h>
-
-#include <shtypes.h>
-#include <shobjidl.h>
 
 #ifndef HPSXA_DEFINED
 #define HPSXA_DEFINED

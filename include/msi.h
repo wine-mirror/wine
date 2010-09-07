@@ -19,12 +19,12 @@
 #ifndef __WINE_MSI_H
 #define __WINE_MSI_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef _MSI_NO_CRYPTO
 #include <wincrypt.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 typedef ULONG MSIHANDLE;

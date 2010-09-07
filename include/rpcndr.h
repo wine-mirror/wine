@@ -24,11 +24,11 @@
 #ifndef __WINE_RPCNDR_H
 #define __WINE_RPCNDR_H
 
+#include <basetsd.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <basetsd.h>
 
 #undef CONST_VTBL
 #ifdef CONST_VTABLE

@@ -19,13 +19,13 @@
 #ifndef MAPIVAL_H
 #define MAPIVAL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <mapiutil.h>
 #include <stddef.h>
 #include <stdarg.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 BOOL  WINAPI FBadRglpszW(LPWSTR*,ULONG);
 BOOL  WINAPI FBadRowSet(LPSRowSet);
