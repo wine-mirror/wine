@@ -424,7 +424,7 @@ test_geometric_pens:
             ok(ext_pen.elp.elpHatch == HS_CROSS, "expected HS_CROSS, got %p\n", (void *)ext_pen.elp.elpHatch);
             ok(ext_pen.elp.elpNumEntries == 2, "expected 0, got %x\n", ext_pen.elp.elpNumEntries);
             ok(ext_pen.elp.elpStyleEntry[0] == 0xabc, "expected 0xabc, got %x\n", ext_pen.elp.elpStyleEntry[0]);
-            ok(ext_pen.elp.elpStyleEntry[1] == 0xdef, "expected 0xabc, got %x\n", ext_pen.elp.elpStyleEntry[1]);
+            ok(ext_pen.elp.elpStyleEntry[1] == 0xdef, "expected 0xdef, got %x\n", ext_pen.elp.elpStyleEntry[1]);
             break;
 
         default:
