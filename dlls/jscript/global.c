@@ -112,8 +112,8 @@ static HRESULT constructor_call(jsdisp_t *constr, WORD flags, DISPPARAMS *dp,
     if(flags != DISPATCH_PROPERTYGET)
         return jsdisp_call_value(constr, flags, dp, retv, ei, sp);
 
+    jsdisp_addref(constr);
     var_set_jsdisp(retv, constr);
-    IDispatchEx_AddRef(_IDispatchEx_(constr));
     return S_OK;
 }
 

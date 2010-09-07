@@ -547,7 +547,7 @@ static HRESULT Function_arguments(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     switch(flags) {
     case DISPATCH_PROPERTYGET: {
         if(function->arguments) {
-            IDispatchEx_AddRef(_IDispatchEx_(function->arguments));
+            jsdisp_addref(function->arguments);
             var_set_jsdisp(retv, function->arguments);
         }else {
             V_VT(retv) = VT_NULL;

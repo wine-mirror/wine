@@ -143,7 +143,7 @@ HRESULT scope_push(scope_chain_t *scope, jsdisp_t *obj, scope_chain_t **ret)
 
     new_scope->ref = 1;
 
-    IDispatchEx_AddRef(_IDispatchEx_(obj));
+    jsdisp_addref(obj);
     new_scope->obj = obj;
 
     if(scope) {
@@ -197,7 +197,7 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t 
         ctx->this_obj = to_disp(script_ctx->global);
     IDispatch_AddRef(ctx->this_obj);
 
-    IDispatchEx_AddRef(_IDispatchEx_(var_disp));
+    jsdisp_addref(var_disp);
     ctx->var_disp = var_disp;
 
     if(scope) {

@@ -192,6 +192,11 @@ static inline IDispatch *to_disp(jsdisp_t *jsdisp)
     return (IDispatch*)&jsdisp->lpIDispatchExVtbl;
 }
 
+static inline void jsdisp_addref(jsdisp_t *jsdisp)
+{
+    IDispatchEx_AddRef(_IDispatchEx_(jsdisp));
+}
+
 static inline void jsdisp_release(jsdisp_t *jsdisp)
 {
     IDispatchEx_Release(_IDispatchEx_(jsdisp));

@@ -437,7 +437,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
         *ppv = _IDispatchEx_(This);
     }else if(IsEqualGUID(&IID_IDispatchJS, riid)) {
         TRACE("(%p)->(IID_IDispatchJS %p)\n", This, ppv);
-        IUnknown_AddRef(_IDispatchEx_(This));
+        jsdisp_addref(This);
         *ppv = This;
         return S_OK;
     }else {
@@ -755,7 +755,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
 
     dispex->prototype = prototype;
     if(prototype)
-        IDispatchEx_AddRef(_IDispatchEx_(prototype));
+        jsdisp_addref(prototype);
 
     dispex->prop_cnt = 1;
     dispex->props[0].name = NULL;

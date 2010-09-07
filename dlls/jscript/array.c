@@ -506,8 +506,8 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
     }
 
     if(retv) {
+        jsdisp_addref(jsthis);
         var_set_jsdisp(retv, jsthis);
-        IDispatch_AddRef(V_DISPATCH(retv));
     }
 
     return S_OK;
@@ -745,8 +745,8 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
         if(cmp_func)
             jsdisp_release(cmp_func);
         if(retv) {
+            jsdisp_addref(jsthis);
             var_set_jsdisp(retv, jsthis);
-	    IDispatch_AddRef(V_DISPATCH(retv));
         }
         return S_OK;
     }
@@ -850,8 +850,8 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
         return hres;
 
     if(retv) {
+        jsdisp_addref(jsthis);
         var_set_jsdisp(retv, jsthis);
-        IDispatch_AddRef(V_DISPATCH(retv));
     }
 
     return S_OK;
