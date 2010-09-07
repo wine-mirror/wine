@@ -24,6 +24,8 @@
 #define SECURITY_WIN32
 #include <security.h>
 #include <schannel.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 #include "wine/test.h"
 
@@ -34,6 +36,11 @@ static ENUMERATE_SECURITY_PACKAGES_FN_A pEnumerateSecurityPackagesA;
 static FREE_CONTEXT_BUFFER_FN pFreeContextBuffer;
 static FREE_CREDENTIALS_HANDLE_FN pFreeCredentialsHandle;
 static QUERY_CREDENTIALS_ATTRIBUTES_FN_A pQueryCredentialsAttributesA;
+static INITIALIZE_SECURITY_CONTEXT_FN_A pInitializeSecurityContextA;
+static QUERY_CONTEXT_ATTRIBUTES_FN_A pQueryContextAttributesA;
+static DELETE_SECURITY_CONTEXT_FN pDeleteSecurityContext;
+static DECRYPT_MESSAGE_FN pDecryptMessage;
+static ENCRYPT_MESSAGE_FN pEncryptMessage;
 
 static PCCERT_CONTEXT (WINAPI *pCertCreateCertificateContext)(DWORD,const BYTE*,DWORD);
 static BOOL (WINAPI *pCertFreeCertificateContext)(PCCERT_CONTEXT);
@@ -126,6 +133,11 @@ static void InitFunctionPtrs(void)
         GET_PROC(secdll, FreeContextBuffer);
         GET_PROC(secdll, FreeCredentialsHandle);
         GET_PROC(secdll, QueryCredentialsAttributesA);
+        GET_PROC(secdll, InitializeSecurityContextA);
+        GET_PROC(secdll, QueryContextAttributesA);
+        GET_PROC(secdll, DeleteSecurityContext);
+        GET_PROC(secdll, DecryptMessage);
+        GET_PROC(secdll, EncryptMessage);
     }
 
     GET_PROC(advapi32dll, CryptAcquireContextW);
@@ -454,11 +466,284 @@ static void testAcquireSecurityContext(void)
     }
 }
 
+static const char http_request[] = "HEAD /test.html HTTP/1.1\r\nHost: www.codeweavers.com\r\nConnection: close\r\n\r\n";
+
+static void init_cred(SCHANNEL_CRED *cred)
+{
+    cred->dwVersion = SCHANNEL_CRED_VERSION;
+    cred->cCreds = 0;
+    cred->paCred = 0;
+    cred->hRootStore = NULL;
+    cred->cMappers = 0;
+    cred->aphMappers = NULL;
+    cred->cSupportedAlgs = 0;
+    cred->palgSupportedAlgs = NULL;
+    cred->grbitEnabledProtocols = SP_PROT_SSL3_CLIENT;
+    cred->dwMinimumCipherStrength = 0;
+    cred->dwMaximumCipherStrength = 0;
+    cred->dwSessionLifespan = 0;
+    cred->dwFlags = 0;
+}
+
+static void init_buffers(SecBufferDesc *desc, unsigned count, unsigned size)
+{
+    desc->ulVersion = SECBUFFER_VERSION;
+    desc->cBuffers = count;
+    desc->pBuffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, count*sizeof(SecBuffer));
+
+    desc->pBuffers[0].cbBuffer = size;
+    desc->pBuffers[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+static void reset_buffers(SecBufferDesc *desc)
+{
+    unsigned i;
+
+    for (i = 0; i < desc->cBuffers; ++i)
+    {
+        desc->pBuffers[i].BufferType = SECBUFFER_EMPTY;
+        if (i > 0)
+        {
+            desc->pBuffers[i].cbBuffer = 0;
+            desc->pBuffers[i].pvBuffer = NULL;
+        }
+    }
+}
+
+static void free_buffers(SecBufferDesc *desc)
+{
+    HeapFree(GetProcessHeap(), 0, desc->pBuffers[0].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, desc->pBuffers);
+}
+
+static int receive_data(SOCKET sock, SecBuffer *buf)
+{
+    unsigned received = 0;
+
+    while (1)
+    {
+        unsigned char *data = buf->pvBuffer;
+        unsigned expected = 0;
+        int ret;
+
+        ret = recv(sock, (char *)data+received, buf->cbBuffer-received, 0);
+        if (ret == -1)
+        {
+            skip("recv failed\n");
+            return -1;
+        }
+        else if(ret == 0)
+        {
+            skip("connection closed\n");
+            return -1;
+        }
+        received += ret;
+
+        while (expected < received)
+        {
+            unsigned frame_size = 5 + ((data[3]<<8) | data[4]);
+            expected += frame_size;
+            data += frame_size;
+        }
+
+        if (expected == received)
+            break;
+    }
+
+    buf->cbBuffer = received;
+
+    return received;
+}
+
+static void test_communication(void)
+{
+    int ret;
+
+    WSADATA wsa_data;
+    SOCKET sock;
+    struct hostent *host;
+    struct sockaddr_in addr;
+
+    SECURITY_STATUS status;
+    ULONG attrs;
+
+    SCHANNEL_CRED cred;
+    CredHandle cred_handle;
+    CtxtHandle context;
+    SecPkgContext_StreamSizes sizes;
+
+    SecBufferDesc buffers[2];
+    SecBuffer *buf;
+    unsigned buf_size = 4000;
+    unsigned char *data;
+    unsigned data_size;
+
+    if (!pAcquireCredentialsHandleA || !pFreeCredentialsHandle ||
+        !pInitializeSecurityContextA || !pDeleteSecurityContext ||
+        !pQueryContextAttributesA || !pDecryptMessage || !pEncryptMessage)
+    {
+        skip("Required secur32 functions not available\n");
+        return;
+    }
+
+    /* Create a socket and connect to mail.google.com */
+    ret = WSAStartup(0x0202, &wsa_data);
+    if (ret)
+    {
+        skip("Can't init winsock 2.2\n");
+        return;
+    }
+
+    host = gethostbyname("www.codeweavers.com");
+    if (!host)
+    {
+        skip("Can't resolve www.codeweavers.com\n");
+        return;
+    }
+
+    addr.sin_family = host->h_addrtype;
+    addr.sin_addr = *(struct in_addr *)host->h_addr_list[0];
+    addr.sin_port = htons(443);
+    sock = socket(host->h_addrtype, SOCK_STREAM, 0);
+    if (sock == SOCKET_ERROR)
+    {
+        skip("Can't create socket\n");
+        return;
+    }
+
+    ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+    if (ret == SOCKET_ERROR)
+    {
+        skip("Can't connect to www.codeweavers.com\n");
+        return;
+    }
+
+    /* Create client credentials */
+    init_cred(&cred);
+    cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS|SCH_CRED_MANUAL_CRED_VALIDATION;
+
+    status = pAcquireCredentialsHandleA(NULL, (SEC_CHAR *)UNISP_NAME, SECPKG_CRED_OUTBOUND, NULL,
+        &cred, NULL, NULL, &cred_handle, NULL);
+    ok(status == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", status);
+
+    /* Initialize the connection */
+    init_buffers(&buffers[0], 4, buf_size);
+    init_buffers(&buffers[1], 4, buf_size);
+
+    buffers[0].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    status = pInitializeSecurityContextA(&cred_handle, NULL, (SEC_CHAR *)"localhost",
+        ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+        0, 0, NULL, 0, &context, &buffers[0], &attrs, NULL);
+    ok(status == SEC_I_CONTINUE_NEEDED, "Expected SEC_I_CONTINUE_NEEDED, got %08x\n", status);
+
+    while (status == SEC_I_CONTINUE_NEEDED)
+    {
+        buf = &buffers[0].pBuffers[0];
+        send(sock, buf->pvBuffer, buf->cbBuffer, 0);
+        buf->cbBuffer = buf_size;
+
+        buf = &buffers[1].pBuffers[0];
+        ret = receive_data(sock, buf);
+        if (ret == -1)
+            return;
+
+        buf->BufferType = SECBUFFER_TOKEN;
+
+        status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+        buffers[1].pBuffers[0].cbBuffer = buf_size;
+    }
+
+    ok(status == SEC_E_OK, "InitializeSecurityContext failed: %08x\n", status);
+
+    pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
+
+    reset_buffers(&buffers[0]);
+
+    /* Send a simple request so we get data for testing DecryptMessage */
+    buf = &buffers[0].pBuffers[0];
+    data = buf->pvBuffer;
+    buf->BufferType = SECBUFFER_STREAM_HEADER;
+    buf->cbBuffer = sizes.cbHeader;
+    ++buf;
+    buf->BufferType = SECBUFFER_DATA;
+    buf->pvBuffer = data + sizes.cbHeader;
+    buf->cbBuffer = sizeof(http_request) - 1;
+    memcpy(buf->pvBuffer, http_request, sizeof(http_request) - 1);
+    ++buf;
+    buf->BufferType = SECBUFFER_STREAM_TRAILER;
+    buf->pvBuffer = data + sizes.cbHeader + sizeof(http_request) -1;
+    buf->cbBuffer = sizes.cbTrailer;
+
+    status = pEncryptMessage(&context, 0, &buffers[0], 0);
+    ok(status == SEC_E_OK, "EncryptMessage failed: %08x\n", status);
+    if (status != SEC_E_OK)
+        return;
+
+    buf = &buffers[0].pBuffers[0];
+    send(sock, buf->pvBuffer, buffers[0].pBuffers[0].cbBuffer + buffers[0].pBuffers[1].cbBuffer + buffers[0].pBuffers[2].cbBuffer, 0);
+
+    reset_buffers(&buffers[0]);
+    buf->cbBuffer = buf_size;
+    data_size = receive_data(sock, buf);
+
+    /* Too few buffers */
+    --buffers[0].cBuffers;
+    status = pDecryptMessage(&context, &buffers[0], 0, NULL);
+    ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08x\n", status);
+
+    /* No data buffer */
+    ++buffers[0].cBuffers;
+    status = pDecryptMessage(&context, &buffers[0], 0, NULL);
+    ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08x\n", status);
+
+    /* Two data buffers */
+    buffers[0].pBuffers[0].BufferType = SECBUFFER_DATA;
+    buffers[0].pBuffers[1].BufferType = SECBUFFER_DATA;
+    status = pDecryptMessage(&context, &buffers[0], 0, NULL);
+    ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08x\n", status);
+
+    /* Too few empty buffers */
+    buffers[0].pBuffers[1].BufferType = SECBUFFER_EXTRA;
+    status = pDecryptMessage(&context, &buffers[0], 0, NULL);
+    ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08x\n", status);
+
+    /* Incomplete data */
+    buffers[0].pBuffers[1].BufferType = SECBUFFER_EMPTY;
+    buffers[0].pBuffers[0].cbBuffer = (data[3]<<8) | data[4];
+    status = pDecryptMessage(&context, &buffers[0], 0, NULL);
+    ok(status == SEC_E_INCOMPLETE_MESSAGE, "Expected SEC_E_INCOMPLETE_MESSAGE, got %08x\n", status);
+    ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_MISSING, "Expected first buffer to be SECBUFFER_MISSING\n");
+    ok(buffers[0].pBuffers[0].cbBuffer == 5, "Expected first buffer to be a five bytes\n");
+
+    buffers[0].pBuffers[0].cbBuffer = data_size;
+    buffers[0].pBuffers[0].BufferType = SECBUFFER_DATA;
+    buffers[0].pBuffers[1].BufferType = SECBUFFER_EMPTY;
+    status = pDecryptMessage(&context, &buffers[0], 0, NULL);
+    ok(status == SEC_E_OK, "DecryptMessage failed: %08x\n", status);
+    ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_STREAM_HEADER, "Expected first buffer to be SECBUFFER_STREAM_HEADER\n");
+    ok(buffers[0].pBuffers[1].BufferType == SECBUFFER_DATA, "Expected second buffer to be SECBUFFER_DATA\n");
+    ok(buffers[0].pBuffers[2].BufferType == SECBUFFER_STREAM_TRAILER, "Expected first buffer to be SECBUFFER_STREAM_TRAILER\n");
+
+    data = buffers[0].pBuffers[1].pvBuffer;
+    data[buffers[0].pBuffers[1].cbBuffer] = 0;
+
+    pDeleteSecurityContext(&context);
+    pFreeCredentialsHandle(&cred_handle);
+
+    free_buffers(&buffers[0]);
+    free_buffers(&buffers[1]);
+
+    closesocket(sock);
+}
+
 START_TEST(schannel)
 {
     InitFunctionPtrs();
 
     testAcquireSecurityContext();
+    test_communication();
 
     if(secdll)
         FreeLibrary(secdll);
