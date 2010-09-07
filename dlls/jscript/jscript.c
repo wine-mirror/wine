@@ -558,7 +558,7 @@ static HRESULT WINAPI JScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR 
         return E_UNEXPECTED;
     }
 
-    *ppdisp = (IDispatch*)_IDispatchEx_(This->ctx->global);
+    *ppdisp = to_disp(This->ctx->global);
     IDispatch_AddRef(*ppdisp);
     return S_OK;
 }
@@ -779,7 +779,7 @@ static HRESULT WINAPI JScriptParseProcedure_ParseProcedureText(IActiveScriptPars
     if(FAILED(hres))
         return hres;
 
-    *ppdisp = (IDispatch*)_IDispatchEx_(dispex);
+    *ppdisp = to_disp(dispex);
     return S_OK;
 }
 

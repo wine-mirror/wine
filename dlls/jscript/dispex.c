@@ -285,7 +285,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, jsdisp_t *jsthis, dispex_prop_t 
 
         TRACE("call %s %p\n", debugstr_w(prop->name), V_DISPATCH(&prop->u.var));
 
-        hres = set_this(&new_dp, dp, (IDispatch*)_IDispatchEx_(jsthis));
+        hres = set_this(&new_dp, dp, to_disp(jsthis));
         if(FAILED(hres))
             return hres;
 

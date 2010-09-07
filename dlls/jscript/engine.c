@@ -194,7 +194,7 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t 
     else if(script_ctx->host_global)
         ctx->this_obj = script_ctx->host_global;
     else
-        ctx->this_obj = (IDispatch*)_IDispatchEx_(script_ctx->global);
+        ctx->this_obj = to_disp(script_ctx->global);
     IDispatch_AddRef(ctx->this_obj);
 
     IDispatchEx_AddRef(_IDispatchEx_(var_disp));
@@ -517,13 +517,13 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, js
     }
 
     if(scope) {
-        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(scope->obj), id);
+        exprval_set_idref(ret, to_disp(scope->obj), id);
         return S_OK;
     }
 
     hres = jsdisp_get_id(ctx->parser->script->global, identifier, 0, &id);
     if(SUCCEEDED(hres)) {
-        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->global), id);
+        exprval_set_idref(ret, to_disp(ctx->parser->script->global), id);
         return S_OK;
     }
 
@@ -566,7 +566,7 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, js
         if(FAILED(hres))
             return hres;
 
-        exprval_set_idref(ret, (IDispatch*)_IDispatchEx_(ctx->parser->script->global), id);
+        exprval_set_idref(ret, to_disp(ctx->parser->script->global), id);
         return S_OK;
     }
 
@@ -2017,7 +2017,7 @@ static HRESULT instanceof_eval(exec_ctx_t *ctx, VARIANT *inst, VARIANT *objv, js
         if(V_VT(inst) == VT_DISPATCH)
             tmp = iface_to_jsdisp((IUnknown*)V_DISPATCH(inst));
         for(iter = tmp; iter; iter = iter->prototype) {
-            hres = disp_cmp(V_DISPATCH(&var), (IDispatch*)_IDispatchEx_(iter), &b);
+            hres = disp_cmp(V_DISPATCH(&var), to_disp(iter), &b);
             if(FAILED(hres))
                 break;
             if(b) {

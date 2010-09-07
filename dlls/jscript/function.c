@@ -196,7 +196,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
         return E_FAIL;
     }
 
-    hres = create_arguments(ctx, (IDispatch*)_IDispatchEx_(&function->dispex),
+    hres = create_arguments(ctx, to_disp(&function->dispex),
             dp, ei, caller, &arg_disp);
     if(FAILED(hres))
         return hres;
@@ -239,7 +239,7 @@ static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function,
     if(FAILED(hres))
         return hres;
 
-    hres = invoke_source(ctx, function, (IDispatch*)_IDispatchEx_(this_obj), dp, &var, ei, caller);
+    hres = invoke_source(ctx, function, to_disp(this_obj), dp, &var, ei, caller);
     if(FAILED(hres)) {
         jsdisp_release(this_obj);
         return hres;
@@ -793,7 +793,7 @@ static HRESULT construct_function(script_ctx_t *ctx, DISPPARAMS *dp, jsexcept_t 
     if(FAILED(hres))
         return hres;
 
-    *ret = (IDispatch*)_IDispatchEx_(function);
+    *ret = to_disp(function);
     return S_OK;
 }
 

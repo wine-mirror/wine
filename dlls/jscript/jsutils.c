@@ -602,7 +602,7 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         if(FAILED(hres))
             return hres;
 
-        *disp = (IDispatch*)_IDispatchEx_(dispex);
+        *disp = to_disp(dispex);
         break;
     case VT_I4:
     case VT_R8:
@@ -610,7 +610,7 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         if(FAILED(hres))
             return hres;
 
-        *disp = (IDispatch*)_IDispatchEx_(dispex);
+        *disp = to_disp(dispex);
         break;
     case VT_DISPATCH:
         if(V_DISPATCH(v)) {
@@ -623,7 +623,7 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
             if(FAILED(hres))
                 return hres;
 
-            *disp = (IDispatch*)_IDispatchEx_(obj);
+            *disp = to_disp(obj);
         }
         break;
     case VT_BOOL:
@@ -631,7 +631,7 @@ HRESULT to_object(script_ctx_t *ctx, VARIANT *v, IDispatch **disp)
         if(FAILED(hres))
             return hres;
 
-        *disp = (IDispatch*)_IDispatchEx_(dispex);
+        *disp = to_disp(dispex);
         break;
     default:
         FIXME("unsupported vt %d\n", V_VT(v));

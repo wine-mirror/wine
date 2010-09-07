@@ -3638,7 +3638,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, BSTR input, const match_res
         return hres;
     }
 
-    *ret = (IDispatch*)_IDispatchEx_(array);
+    *ret = to_disp(array);
     return S_OK;
 }
 
