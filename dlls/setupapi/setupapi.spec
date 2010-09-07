@@ -391,8 +391,8 @@
 @ stub SetupDiSetSelectedDriverA
 @ stub SetupDiSetSelectedDriverW
 @ stub SetupDiUnremoveDevice
-@ stub SetupDuplicateDiskSpaceListA
-@ stub SetupDuplicateDiskSpaceListW
+@ stdcall SetupDuplicateDiskSpaceListA(ptr ptr long long)
+@ stdcall SetupDuplicateDiskSpaceListW(ptr ptr long long)
 @ stdcall SetupEnumInfSectionsA(long long ptr long ptr)
 @ stdcall SetupEnumInfSectionsW(long long ptr long ptr)
 @ stdcall SetupFindFirstLineA(long str str ptr)

@@ -102,6 +102,44 @@ HDSKSPC WINAPI SetupCreateDiskSpaceListA(PVOID Reserved1, DWORD Reserved2, UINT 
     return SetupCreateDiskSpaceListW( Reserved1, Reserved2, Flags );
 }
 
+/***********************************************************************
+ *		SetupDuplicateDiskSpaceListW  (SETUPAPI.@)
+ */
+HDSKSPC WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC DiskSpace, PVOID Reserved1, DWORD Reserved2, UINT Flags)
+{
+    DISKSPACELIST *list_copy, *list_original = DiskSpace;
+
+    if (Reserved1 || Reserved2 || Flags)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    if (!DiskSpace)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
+
+    list_copy = HeapAlloc(GetProcessHeap(), 0, sizeof(DISKSPACELIST));
+    if (!list_copy)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return NULL;
+    }
+
+    *list_copy = *list_original;
+
+    return list_copy;
+}
+
+/***********************************************************************
+ *		SetupDuplicateDiskSpaceListA  (SETUPAPI.@)
+ */
+HDSKSPC WINAPI SetupDuplicateDiskSpaceListA(HDSKSPC DiskSpace, PVOID Reserved1, DWORD Reserved2, UINT Flags)
+{
+    return SetupDuplicateDiskSpaceListW(DiskSpace, Reserved1, Reserved2, Flags);
+}
 
 /***********************************************************************
  *		SetupAddInstallSectionToDiskSpaceListA  (SETUPAPI.@)
