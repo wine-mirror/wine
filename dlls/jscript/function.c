@@ -170,8 +170,7 @@ static HRESULT create_var_disp(script_ctx_t *ctx, FunctionInstance *function, js
     if(FAILED(hres))
         return hres;
 
-    V_VT(&var) = VT_DISPATCH;
-    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(arg_disp);
+    var_set_jsdisp(&var, arg_disp);
     hres = jsdisp_propput_name(var_disp, argumentsW, &var, ei, caller);
     if(SUCCEEDED(hres))
         hres = init_parameters(var_disp, function, dp, ei, caller);
@@ -246,13 +245,13 @@ static HRESULT invoke_constructor(script_ctx_t *ctx, FunctionInstance *function,
         return hres;
     }
 
-    V_VT(retv) = VT_DISPATCH;
     if(V_VT(&var) == VT_DISPATCH) {
         jsdisp_release(this_obj);
+        V_VT(retv) = VT_DISPATCH;
         V_DISPATCH(retv) = V_DISPATCH(&var);
     }else {
         VariantClear(&var);
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(this_obj);
+        var_set_jsdisp(retv, this_obj);
     }
     return S_OK;
 }
@@ -549,8 +548,7 @@ static HRESULT Function_arguments(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     case DISPATCH_PROPERTYGET: {
         if(function->arguments) {
             IDispatchEx_AddRef(_IDispatchEx_(function->arguments));
-            V_VT(retv) = VT_DISPATCH;
-            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(function->arguments);
+            var_set_jsdisp(retv, function->arguments);
         }else {
             V_VT(retv) = VT_NULL;
         }
@@ -625,8 +623,7 @@ static HRESULT set_prototype(script_ctx_t *ctx, jsdisp_t *dispex, jsdisp_t *prot
     jsexcept_t jsexcept;
     VARIANT var;
 
-    V_VT(&var) = VT_DISPATCH;
-    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(prototype);
+    var_set_jsdisp(&var, prototype);
     memset(&jsexcept, 0, sizeof(jsexcept));
 
     return jsdisp_propput_name(dispex, prototypeW, &var, &jsexcept, NULL/*FIXME*/);

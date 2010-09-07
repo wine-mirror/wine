@@ -383,8 +383,7 @@ static HRESULT literal_to_var(script_ctx_t *ctx, literal_t *literal, VARIANT *v)
         if(FAILED(hres))
             return hres;
 
-        V_VT(v) = VT_DISPATCH;
-        V_DISPATCH(v) = (IDispatch*)_IDispatchEx_(regexp);
+        var_set_jsdisp(v, regexp);
     }
     }
 
@@ -433,8 +432,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         if(FAILED(hres))
             return hres;
 
-        V_VT(&var) = VT_DISPATCH;
-        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(func_obj);
+        var_set_jsdisp(&var, func_obj);
         hres = jsdisp_propput_name(ctx->var_disp, func->expr->identifier, &var, ei, NULL);
         jsdisp_release(func_obj);
         if(FAILED(hres))
@@ -1353,8 +1351,7 @@ HRESULT function_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD fla
         if(FAILED(hres))
             return hres;
 
-        V_VT(&var) = VT_DISPATCH;
-        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(dispex);
+        var_set_jsdisp(&var, dispex);
     }
 
     ret->type = EXPRVAL_VARIANT;
@@ -1733,8 +1730,7 @@ HRESULT array_literal_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWOR
     }
 
     ret->type = EXPRVAL_VARIANT;
-    V_VT(&ret->u.var) = VT_DISPATCH;
-    V_DISPATCH(&ret->u.var) = (IDispatch*)_IDispatchEx_(array);
+    var_set_jsdisp(&ret->u.var, array);
     return S_OK;
 }
 
@@ -1786,8 +1782,7 @@ HRESULT property_value_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWO
     }
 
     ret->type = EXPRVAL_VARIANT;
-    V_VT(&ret->u.var) = VT_DISPATCH;
-    V_DISPATCH(&ret->u.var) = (IDispatch*)_IDispatchEx_(obj);
+    var_set_jsdisp(&ret->u.var, obj);
     return S_OK;
 }
 

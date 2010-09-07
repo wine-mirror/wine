@@ -321,9 +321,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop, DISPPARAMS *dp,
                 break;
 
             prop->type = PROP_VARIANT;
-            V_VT(&prop->u.var) = VT_DISPATCH;
-            V_DISPATCH(&prop->u.var) = (IDispatch*)_IDispatchEx_(obj);
-
+            var_set_jsdisp(&prop->u.var, obj);
             hres = VariantCopy(retv, &prop->u.var);
         }else {
             vdisp_t vthis;
@@ -839,8 +837,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
         jsexcept_t jsexcept;
         VARIANT var;
 
-        V_VT(&var) = VT_DISPATCH;
-        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(constr);
+        var_set_jsdisp(&var, constr);
         memset(&jsexcept, 0, sizeof(jsexcept));
         hres = prop_put(dispex, prop, &var, &jsexcept, NULL/*FIXME*/);
     }

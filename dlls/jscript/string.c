@@ -1267,12 +1267,10 @@ static HRESULT String_split(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     SysFreeString(val_str);
     heap_free(match_result);
 
-    if(SUCCEEDED(hres) && retv) {
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(array);
-    }else {
+    if(SUCCEEDED(hres) && retv)
+        var_set_jsdisp(retv, array);
+    else
         jsdisp_release(array);
-    }
 
     return hres;
 }
@@ -1674,8 +1672,7 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(FAILED(hres))
             return hres;
 
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
+        var_set_jsdisp(retv, ret);
         break;
     }
 

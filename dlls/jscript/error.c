@@ -265,10 +265,8 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, DISPPARAMS *dp,
         if(FAILED(hres))
             return hres;
 
-        if(retv) {
-            V_VT(retv) = VT_DISPATCH;
-            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(err);
-        }
+        if(retv)
+            var_set_jsdisp(retv, err);
         else
             jsdisp_release(err);
 
@@ -411,12 +409,8 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
     if(FAILED(hres))
         return hres;
 
-    if(!ei)
-        return id;
-
-    V_VT(&ei->var) = VT_DISPATCH;
-    V_DISPATCH(&ei->var) = (IDispatch*)_IDispatchEx_(err);
-
+    if(ei)
+        var_set_jsdisp(&ei->var, err);
     return id;
 }
 

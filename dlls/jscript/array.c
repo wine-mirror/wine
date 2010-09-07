@@ -235,12 +235,10 @@ static HRESULT Array_concat(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
     if(FAILED(hres))
         return hres;
 
-    if(retv) {
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
-    }else {
+    if(retv)
+        var_set_jsdisp(retv, ret);
+    else
         jsdisp_release(ret);
-    }
     return S_OK;
 }
 
@@ -508,8 +506,7 @@ static HRESULT Array_reverse(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISP
     }
 
     if(retv) {
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsthis);
+        var_set_jsdisp(retv, jsthis);
         IDispatch_AddRef(V_DISPATCH(retv));
     }
 
@@ -640,10 +637,8 @@ static HRESULT Array_slice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPA
         }
     }
 
-    if(retv) {
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(arr);
-    }
+    if(retv)
+        var_set_jsdisp(retv, arr);
     else
         jsdisp_release(arr);
 
@@ -750,8 +745,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
         if(cmp_func)
             jsdisp_release(cmp_func);
         if(retv) {
-            V_VT(retv) = VT_DISPATCH;
-            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsthis);
+            var_set_jsdisp(retv, jsthis);
 	    IDispatch_AddRef(V_DISPATCH(retv));
         }
         return S_OK;
@@ -856,8 +850,7 @@ static HRESULT Array_sort(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPPAR
         return hres;
 
     if(retv) {
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsthis);
+        var_set_jsdisp(retv, jsthis);
         IDispatch_AddRef(V_DISPATCH(retv));
     }
 
@@ -967,10 +960,8 @@ static HRESULT Array_splice(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, DISPP
         return hres;
     }
 
-    if(retv) {
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret_array);
-    }
+    if(retv)
+        var_set_jsdisp(retv, ret_array);
     return S_OK;
 }
 
@@ -1153,8 +1144,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
             if(FAILED(hres))
                 return hres;
 
-            V_VT(retv) = VT_DISPATCH;
-            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(obj);
+            var_set_jsdisp(retv, obj);
             return S_OK;
         }
 
@@ -1172,8 +1162,7 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
             return hres;
         }
 
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(obj);
+        var_set_jsdisp(retv, obj);
         break;
     }
     default:

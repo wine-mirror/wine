@@ -112,8 +112,7 @@ static HRESULT constructor_call(jsdisp_t *constr, WORD flags, DISPPARAMS *dp,
     if(flags != DISPATCH_PROPERTYGET)
         return jsdisp_call_value(constr, flags, dp, retv, ei, sp);
 
-    V_VT(retv) = VT_DISPATCH;
-    V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(constr);
+    var_set_jsdisp(retv, constr);
     IDispatchEx_AddRef(_IDispatchEx_(constr));
     return S_OK;
 }
@@ -1136,8 +1135,7 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    V_VT(&var) = VT_DISPATCH;
-    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(math);
+    var_set_jsdisp(&var, math);
     hres = jsdisp_propput_name(ctx->global, MathW, &var, NULL/*FIXME*/, NULL/*FIXME*/);
     jsdisp_release(math);
     if(FAILED(hres))

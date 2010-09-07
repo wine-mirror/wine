@@ -2575,8 +2575,7 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         }
         }
 
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(date);
+        var_set_jsdisp(retv, date);
         return S_OK;
 
     case INVOKE_FUNC: {

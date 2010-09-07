@@ -3987,12 +3987,10 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, BSTR str,
 
     heap_free(match_result);
 
-    if(SUCCEEDED(hres) && retv) {
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(array);
-    }else {
+    if(SUCCEEDED(hres) && retv)
+        var_set_jsdisp(retv, array);
+    else
         jsdisp_release(array);
-    }
     return hres;
 }
 
@@ -4066,12 +4064,10 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
                             return throw_regexp_error(ctx, ei, IDS_REGEXP_SYNTAX_ERROR, NULL);
                         }
 
-                        if(retv) {
-                            V_VT(retv) = VT_DISPATCH;
-                            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(jsdisp);
-                        }else {
+                        if(retv)
+                            var_set_jsdisp(retv, jsdisp);
+                        else
                             jsdisp_release(jsdisp);
-                        }
                         return S_OK;
                     }
                     jsdisp_release(jsdisp);
@@ -4092,12 +4088,10 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(FAILED(hres))
             return hres;
 
-        if(retv) {
-            V_VT(retv) = VT_DISPATCH;
-            V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(ret);
-        }else {
+        if(retv)
+            var_set_jsdisp(retv, ret);
+        else
             jsdisp_release(ret);
-        }
         return S_OK;
     }
     default:

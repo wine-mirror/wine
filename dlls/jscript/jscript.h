@@ -187,6 +187,11 @@ struct jsdisp_t {
 
 #define _IDispatchEx_(x) ((IDispatchEx*) &(x)->lpIDispatchExVtbl)
 
+static inline IDispatch *to_disp(jsdisp_t *jsdisp)
+{
+    return (IDispatch*)&jsdisp->lpIDispatchExVtbl;
+}
+
 static inline void jsdisp_release(jsdisp_t *jsdisp)
 {
     IDispatchEx_Release(_IDispatchEx_(jsdisp));
@@ -401,6 +406,12 @@ static inline void num_set_inf(VARIANT *v, BOOL positive)
     if(!positive)
         V_R8(v) = -V_R8(v);
 #endif
+}
+
+static inline void var_set_jsdisp(VARIANT *v, jsdisp_t *jsdisp)
+{
+    V_VT(v) = VT_DISPATCH;
+    V_DISPATCH(v) = to_disp(jsdisp);
 }
 
 static inline DWORD make_grfdex(script_ctx_t *ctx, DWORD flags)
