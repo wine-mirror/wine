@@ -637,8 +637,7 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
 
         /* check if update rgn overlaps with nonclient area */
         type = GetRgnBox( whole_rgn, &update );
-        GetClientRect( hwnd, &client );
-        MapWindowPoints( hwnd, 0, (POINT *)&client, 2 );
+        WIN_GetRectangles( hwnd, COORDS_SCREEN, 0, &client );
 
         if ((*flags & UPDATE_NONCLIENT) ||
             update.left < client.left || update.top < client.top ||
@@ -1486,8 +1485,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
             RECT r, dummy;
             for (i = 0; list[i]; i++)
             {
-                GetWindowRect( list[i], &r );
-                MapWindowPoints( 0, hwnd, (POINT *)&r, 2 );
+                WIN_GetRectangles( list[i], COORDS_PARENT, &r, NULL );
                 if (!rect || IntersectRect(&dummy, &r, rect))
                     SetWindowPos( list[i], 0, r.left + dx, r.top  + dy, 0, 0,
                                   SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE |

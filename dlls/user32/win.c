@@ -3350,12 +3350,7 @@ UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR module, UINT size )
 BOOL WINAPI GetWindowInfo( HWND hwnd, PWINDOWINFO pwi)
 {
     if (!pwi) return FALSE;
-    if (!IsWindow(hwnd)) return FALSE;
-
-    GetWindowRect(hwnd, &pwi->rcWindow);
-    GetClientRect(hwnd, &pwi->rcClient);
-    /* translate to screen coordinates */
-    MapWindowPoints(hwnd, 0, (LPPOINT)&pwi->rcClient, 2);
+    if (!WIN_GetRectangles( hwnd, COORDS_SCREEN, &pwi->rcWindow, &pwi->rcClient )) return FALSE;
 
     pwi->dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
     pwi->dwExStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);

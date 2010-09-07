@@ -3632,8 +3632,7 @@ BOOL WINAPI EnableMenuItem( HMENU hMenu, UINT wItemID, UINT wFlags )
 		return (UINT)-1;
 
             /* Refresh the frame to reflect the change */
-            GetWindowRect(parentMenu->hWnd, &rc);
-            MapWindowPoints(0, parentMenu->hWnd, (POINT *)&rc, 2);
+            WIN_GetRectangles( parentMenu->hWnd, COORDS_CLIENT, &rc, NULL );
             rc.bottom = 0;
             RedrawWindow(parentMenu->hWnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN);
 	}

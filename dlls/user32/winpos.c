@@ -2428,12 +2428,10 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
       /* Get min/max info */
 
     WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
-    GetWindowRect( hwnd, &sizingRect );
+    WIN_GetRectangles( hwnd, COORDS_PARENT, &sizingRect, NULL );
     if (style & WS_CHILD)
     {
         parent = GetParent(hwnd);
-        /* make sizing rect relative to parent */
-        MapWindowPoints( 0, parent, (POINT*)&sizingRect, 2 );
         GetClientRect( parent, &mouseRect );
     }
     else
