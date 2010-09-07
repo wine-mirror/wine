@@ -574,31 +574,6 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 
 
 /**********************************************************************
- *		get_fpu_code
- *
- * Get the FPU exception code from the FPU status.
- */
-static inline DWORD get_fpu_code( const CONTEXT *context )
-{
-    DWORD status  = context->Fpscr;
-
-    if (status & 0x01)  /* IE */
-    {
-        if (status & 0x40)  /* SF */
-            return EXCEPTION_FLT_STACK_CHECK;
-        else
-            return EXCEPTION_FLT_INVALID_OPERATION;
-    }
-    if (status & 0x02) return EXCEPTION_FLT_DENORMAL_OPERAND;  /* DE flag */
-    if (status & 0x04) return EXCEPTION_FLT_DIVIDE_BY_ZERO;    /* ZE flag */
-    if (status & 0x08) return EXCEPTION_FLT_OVERFLOW;          /* OE flag */
-    if (status & 0x10) return EXCEPTION_FLT_UNDERFLOW;         /* UE flag */
-    if (status & 0x20) return EXCEPTION_FLT_INEXACT_RESULT;    /* PE flag */
-    return EXCEPTION_FLT_INVALID_OPERATION;  /* generic error */
-}
-
-
-/**********************************************************************
  *           call_stack_handlers
  *
  * Call the stack handlers chain.
