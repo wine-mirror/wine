@@ -255,16 +255,8 @@ static HRESULT WINAPI xmlnode_get_nodeType(
     IXMLDOMNode *iface,
     DOMNodeType* type)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-
-    TRACE("(%p)->(%p)\n", This, type);
-
-    assert( (int)NODE_ELEMENT  == (int)XML_ELEMENT_NODE );
-    assert( (int)NODE_NOTATION == (int)XML_NOTATION_NODE );
-
-    *type = This->node->type;
-
-    return S_OK;
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT get_node(
@@ -288,12 +280,17 @@ static HRESULT get_node(
     return S_OK;
 }
 
+HRESULT node_get_parent(xmlnode *This, IXMLDOMNode **parent)
+{
+    return get_node( This, "parent", This->node->parent, parent );
+}
+
 static HRESULT WINAPI xmlnode_get_parentNode(
     IXMLDOMNode *iface,
     IXMLDOMNode** parent)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    return get_node( This, "parent", This->node->parent, parent );
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_get_childNodes(
@@ -1805,7 +1802,11 @@ static HRESULT WINAPI unknode_get_nodeType(
     DOMNodeType* domNodeType )
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_nodeType( IXMLDOMNode_from_impl(&This->node), domNodeType );
+
+    FIXME("(%p)->(%p)\n", This, domNodeType);
+
+    *domNodeType = This->node.node->type;
+    return S_OK;
 }
 
 static HRESULT WINAPI unknode_get_parentNode(
@@ -1813,7 +1814,7 @@ static HRESULT WINAPI unknode_get_parentNode(
     IXMLDOMNode** parent )
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    TRACE("(%p)->(%p)\n", This, parent);
+    FIXME("(%p)->(%p)\n", This, parent);
     if (!parent) return E_INVALIDARG;
     *parent = NULL;
     return S_FALSE;

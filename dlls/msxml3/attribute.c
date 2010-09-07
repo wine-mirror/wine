@@ -215,7 +215,11 @@ static HRESULT WINAPI domattr_get_nodeType(
     DOMNodeType* domNodeType )
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_nodeType( IXMLDOMNode_from_impl(&This->node), domNodeType );
+
+    TRACE("(%p)->(%p)\n", This, domNodeType);
+
+    *domNodeType = NODE_ATTRIBUTE;
+    return S_OK;
 }
 
 static HRESULT WINAPI domattr_get_parentNode(

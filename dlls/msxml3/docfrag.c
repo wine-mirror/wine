@@ -221,7 +221,11 @@ static HRESULT WINAPI domfrag_get_nodeType(
     DOMNodeType* domNodeType )
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_nodeType( IXMLDOMNode_from_impl(&This->node), domNodeType );
+
+    TRACE("(%p)->(%p)\n", This, domNodeType);
+
+    *domNodeType = NODE_DOCUMENT_FRAGMENT;
+    return S_OK;
 }
 
 static HRESULT WINAPI domfrag_get_parentNode(
@@ -229,7 +233,10 @@ static HRESULT WINAPI domfrag_get_parentNode(
     IXMLDOMNode** parent )
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_parentNode( IXMLDOMNode_from_impl(&This->node), parent );
+
+    TRACE("(%p)->(%p)\n", This, parent);
+
+    return node_get_parent(&This->node, parent);
 }
 
 static HRESULT WINAPI domfrag_get_childNodes(
