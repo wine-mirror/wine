@@ -42,4 +42,6 @@ STRINGTABLE
     STRING_DESCRIPTION, "Description"
     STRING_PHYS_ADDR, "Physical address"
     STRING_DHCP_ENABLED, "DHCP enabled"
+    STRING_YES, "Yes"
+    STRING_NO, "No"
 }

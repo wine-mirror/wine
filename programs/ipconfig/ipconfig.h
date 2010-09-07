@@ -38,3 +38,5 @@
 #define STRING_DESCRIPTION      115
 #define STRING_PHYS_ADDR        116
 #define STRING_DHCP_ENABLED     117
+#define STRING_YES              118
+#define STRING_NO               119

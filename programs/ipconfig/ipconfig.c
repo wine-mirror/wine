@@ -229,10 +229,18 @@ static WCHAR *physaddr_to_string(WCHAR *buf, BYTE *addr, DWORD len)
     return buf;
 }
 
+static const WCHAR *boolean_to_string(int value)
+{
+    static WCHAR msg_buffer[15];
+
+    LoadStringW(GetModuleHandleW(NULL), value ? STRING_YES : STRING_NO,
+        msg_buffer, sizeof(msg_buffer)/sizeof(WCHAR));
+
+    return msg_buffer;
+}
+
 static void print_full_information(void)
 {
-    static const WCHAR yesW[] = {'Y','e','s',0};
-    static const WCHAR noW[] = {'N','o',0};
     static const WCHAR newlineW[] = {'\n',0};
 
     FIXED_INFO *info;
@@ -255,7 +263,7 @@ static void print_full_information(void)
             /* FIXME: Output primary DNS suffix. */
 
             print_field(STRING_NODE_TYPE, nodetype_to_string(info->NodeType));
-            print_field(STRING_IP_ROUTING, info->EnableRouting ? yesW : noW);
+            print_field(STRING_IP_ROUTING, boolean_to_string(info->EnableRouting));
 
             /* FIXME: Output WINS proxy status and DNS suffix search list. */
 
@@ -285,7 +293,7 @@ static void print_full_information(void)
                 print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
                 print_field(STRING_DESCRIPTION, p->Description);
                 print_field(STRING_PHYS_ADDR, physaddr_to_string(physaddr_buf, p->PhysicalAddress, p->PhysicalAddressLength));
-                print_field(STRING_DHCP_ENABLED, (p->Flags & IP_ADAPTER_DHCP_ENABLED) ? yesW : noW);
+                print_field(STRING_DHCP_ENABLED, boolean_to_string(p->Flags & IP_ADAPTER_DHCP_ENABLED));
 
                 /* FIXME: Output autoconfiguration status. */
 
