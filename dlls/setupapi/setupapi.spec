@@ -482,7 +482,7 @@
 @ stub SetupQuerySourceListA
 @ stub SetupQuerySourceListW
 @ stdcall SetupQuerySpaceRequiredOnDriveA(long str ptr ptr long)
-@ stub SetupQuerySpaceRequiredOnDriveW
+@ stdcall SetupQuerySpaceRequiredOnDriveW(long wstr ptr ptr long)
 @ stdcall SetupQueueCopyA(long str str str str str str str long)
 @ stdcall SetupQueueCopyIndirectA(ptr)
 @ stdcall SetupQueueCopyIndirectW(ptr)

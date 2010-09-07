@@ -115,20 +115,26 @@ BOOL WINAPI SetupAddInstallSectionToDiskSpaceListA(HDSKSPC DiskSpace,
 }
 
 /***********************************************************************
-*		SetupQuerySpaceRequiredOnDriveA  (SETUPAPI.@)
+*		SetupQuerySpaceRequiredOnDriveW  (SETUPAPI.@)
 */
-BOOL WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC DiskSpace, 
-                        LPCSTR DriveSpec, LONGLONG* SpaceRequired, 
+BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC DiskSpace,
+                        LPCWSTR DriveSpec, LONGLONG *SpaceRequired,
                         PVOID Reserved1, UINT Reserved2)
 {
-    WCHAR driveW[20];
+    WCHAR *driveW;
     unsigned int i;
     LPDISKSPACELIST list = DiskSpace;
     BOOL rc = FALSE;
     static const WCHAR bkslsh[]= {'\\',0};
 
-    MultiByteToWideChar(CP_ACP,0,DriveSpec,-1,driveW,20);
+    driveW = HeapAlloc(GetProcessHeap(), 0, lstrlenW(DriveSpec) + 2);
+    if (!driveW)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
 
+    lstrcpyW(driveW,DriveSpec);
     lstrcatW(driveW,bkslsh);
 
     TRACE("Looking for drive %s\n",debugstr_w(driveW));
@@ -144,7 +150,41 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC DiskSpace,
         }
     }
 
+    HeapFree(GetProcessHeap(), 0, driveW);
+
     return rc;
+}
+
+/***********************************************************************
+*		SetupQuerySpaceRequiredOnDriveA  (SETUPAPI.@)
+*/
+BOOL WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC DiskSpace,
+                        LPCSTR DriveSpec, LONGLONG *SpaceRequired,
+                        PVOID Reserved1, UINT Reserved2)
+{
+    LPWSTR DriveSpecW = NULL;
+    BOOL ret;
+
+    if (DriveSpec)
+    {
+        DWORD len = MultiByteToWideChar(CP_ACP, 0, DriveSpec, -1, NULL, 0);
+
+        DriveSpecW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!DriveSpecW)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+
+        MultiByteToWideChar(CP_ACP, 0, DriveSpec, -1, DriveSpecW, len);
+    }
+
+    ret = SetupQuerySpaceRequiredOnDriveW(DiskSpace, DriveSpecW, SpaceRequired,
+                                          Reserved1, Reserved2);
+
+    HeapFree(GetProcessHeap(), 0, DriveSpecW);
+
+    return ret;
 }
 
 /***********************************************************************
