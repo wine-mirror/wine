@@ -3310,8 +3310,7 @@ static HRESULT get_builder_component(LPWSTR *component, DWORD *component_len,
 static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LPCWSTR new_value,
                                      WCHAR prefix, DWORD *flags, DWORD success_flag)
 {
-    if(*component)
-        heap_free(*component);
+    heap_free(*component);
 
     if(!new_value) {
         *component = NULL;
