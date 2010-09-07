@@ -28,6 +28,7 @@
 #include <winuser.h>
 
 #include "user_private.h"
+#include "wine/server_protocol.h"
 
 struct tagCLASS;
 struct tagDIALOGINFO;
@@ -81,7 +82,7 @@ extern HWND WIN_IsCurrentProcess( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_IsCurrentThread( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_SetOwner( HWND hwnd, HWND owner ) DECLSPEC_HIDDEN;
 extern ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits ) DECLSPEC_HIDDEN;
-extern BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient ) DECLSPEC_HIDDEN;
+extern BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWindow, RECT *rectClient ) DECLSPEC_HIDDEN;
 extern LRESULT WIN_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void WIN_DestroyThreadWindows( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode ) DECLSPEC_HIDDEN;

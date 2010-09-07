@@ -652,7 +652,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
  *
  * Get the window and client rectangles.
  */
-BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
+BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWindow, RECT *rectClient )
 {
     WND *win = WIN_GetPtr( hwnd );
     BOOL ret = TRUE;
@@ -678,38 +678,70 @@ BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient )
         }
         if (rectWindow) *rectWindow = rect;
         if (rectClient) *rectClient = rect;
+        return TRUE;
     }
-    else if (win == WND_OTHER_PROCESS)
+    if (win != WND_OTHER_PROCESS)
     {
-        SERVER_START_REQ( get_window_rectangles )
+        RECT window_rect = win->rectWindow, client_rect = win->rectClient;
+
+        switch (relative)
         {
-            req->handle = wine_server_user_handle( hwnd );
-            if ((ret = !wine_server_call_err( req )))
+        case COORDS_CLIENT:
+            OffsetRect( &window_rect, -win->rectClient.left, -win->rectClient.top );
+            OffsetRect( &client_rect, -win->rectClient.left, -win->rectClient.top );
+            break;
+        case COORDS_WINDOW:
+            OffsetRect( &window_rect, -win->rectWindow.left, -win->rectWindow.top );
+            OffsetRect( &client_rect, -win->rectWindow.left, -win->rectWindow.top );
+            break;
+        case COORDS_PARENT:
+            break;
+        case COORDS_SCREEN:
+            while (win->parent)
             {
-                if (rectWindow)
+                WND *parent = WIN_GetPtr( win->parent );
+                if (parent == WND_DESKTOP) break;
+                if (!parent || parent == WND_OTHER_PROCESS)
                 {
-                    rectWindow->left   = reply->window.left;
-                    rectWindow->top    = reply->window.top;
-                    rectWindow->right  = reply->window.right;
-                    rectWindow->bottom = reply->window.bottom;
+                    WIN_ReleasePtr( win );
+                    goto other_process;
                 }
-                if (rectClient)
-                {
-                    rectClient->left   = reply->client.left;
-                    rectClient->top    = reply->client.top;
-                    rectClient->right  = reply->client.right;
-                    rectClient->bottom = reply->client.bottom;
-                }
+                WIN_ReleasePtr( win );
+                win = parent;
+                OffsetRect( &window_rect, -win->rectClient.left, -win->rectClient.top );
+                OffsetRect( &client_rect, -win->rectClient.left, -win->rectClient.top );
             }
+            break;
         }
-        SERVER_END_REQ;
-    }
-    else
-    {
-        if (rectWindow) *rectWindow = win->rectWindow;
-        if (rectClient) *rectClient = win->rectClient;
+        if (rectWindow) *rectWindow = window_rect;
+        if (rectClient) *rectClient = client_rect;
         WIN_ReleasePtr( win );
     }
+
+other_process:
+    SERVER_START_REQ( get_window_rectangles )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->relative = relative;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            if (rectWindow)
+            {
+                rectWindow->left   = reply->window.left;
+                rectWindow->top    = reply->window.top;
+                rectWindow->right  = reply->window.right;
+                rectWindow->bottom = reply->window.bottom;
+            }
+            if (rectClient)
+            {
+                rectClient->left   = reply->client.left;
+                rectClient->top    = reply->client.top;
+                rectClient->right  = reply->client.right;
+                rectClient->bottom = reply->client.bottom;
+            }
+        }
+    }
+    SERVER_END_REQ;
     return ret;
 }
 

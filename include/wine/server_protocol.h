@@ -3268,6 +3268,8 @@ struct get_window_rectangles_request
 {
     struct request_header __header;
     user_handle_t  handle;
+    int            relative;
+    char __pad_20[4];
 };
 struct get_window_rectangles_reply
 {
@@ -3275,6 +3277,13 @@ struct get_window_rectangles_reply
     rectangle_t    window;
     rectangle_t    visible;
     rectangle_t    client;
+};
+enum coords_relative
+{
+    COORDS_CLIENT,
+    COORDS_WINDOW,
+    COORDS_PARENT,
+    COORDS_SCREEN
 };
 
 
@@ -5506,6 +5515,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 407
+#define SERVER_PROTOCOL_VERSION 408
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

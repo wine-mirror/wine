@@ -1930,9 +1930,10 @@ BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd )
     SERVER_START_REQ( get_window_rectangles )
     {
         req->handle = wine_server_user_handle( hwnd );
+        req->relative = COORDS_CLIENT;
         wine_server_call( req );
-        width  = reply->window.right - reply->window.left;
-        height = reply->window.bottom - reply->window.top;
+        width  = reply->window.right;
+        height = reply->window.bottom;
     }
     SERVER_END_REQ;
 

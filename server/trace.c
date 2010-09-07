@@ -2795,6 +2795,7 @@ static void dump_set_window_pos_reply( const struct set_window_pos_reply *req )
 static void dump_get_window_rectangles_request( const struct get_window_rectangles_request *req )
 {
     fprintf( stderr, " handle=%08x", req->handle );
+    fprintf( stderr, ", relative=%d", req->relative );
 }
 
 static void dump_get_window_rectangles_reply( const struct get_window_rectangles_reply *req )

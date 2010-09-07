@@ -93,12 +93,8 @@ void WINAPI SwitchToThisWindow( HWND hwnd, BOOL alt_tab )
  */
 BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 {
-    BOOL ret = WIN_GetRectangles( hwnd, rect, NULL );
-    if (ret)
-    {
-        MapWindowPoints( GetAncestor( hwnd, GA_PARENT ), 0, (POINT *)rect, 2 );
-        TRACE( "hwnd %p (%s)\n", hwnd, wine_dbgstr_rect(rect) );
-    }
+    BOOL ret = WIN_GetRectangles( hwnd, COORDS_SCREEN, rect, NULL );
+    if (ret) TRACE( "hwnd %p %s\n", hwnd, wine_dbgstr_rect(rect) );
     return ret;
 }
 
@@ -235,15 +231,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
  */
 BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 {
-    BOOL ret;
-
-    if ((ret = WIN_GetRectangles( hwnd, NULL, rect )))
-    {
-        rect->right -= rect->left;
-        rect->bottom -= rect->top;
-        rect->left = rect->top = 0;
-    }
-    return ret;
+    return WIN_GetRectangles( hwnd, COORDS_CLIENT, NULL, rect );
 }
 
 
@@ -407,7 +395,7 @@ HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
 
     for (i = 0; list[i]; i++)
     {
-        if (!WIN_GetRectangles( list[i], &rect, NULL )) continue;
+        if (!WIN_GetRectangles( list[i], COORDS_PARENT, &rect, NULL )) continue;
         if (!PtInRect( &rect, pt )) continue;
         if (uFlags & (CWP_SKIPINVISIBLE|CWP_SKIPDISABLED))
         {

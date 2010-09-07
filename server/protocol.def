@@ -2344,11 +2344,19 @@ enum message_type
 /* Get the window and client rectangles of a window */
 @REQ(get_window_rectangles)
     user_handle_t  handle;        /* handle to the window */
+    int            relative;      /* coords relative to (see below) */
 @REPLY
     rectangle_t    window;        /* window rectangle */
     rectangle_t    visible;       /* visible part of the window rectangle */
     rectangle_t    client;        /* client rectangle */
 @END
+enum coords_relative
+{
+    COORDS_CLIENT,   /* relative to client area */
+    COORDS_WINDOW,   /* relative to whole window area */
+    COORDS_PARENT,   /* relative to parent's client area */
+    COORDS_SCREEN    /* relative to screen origin */
+};
 
 
 /* Get the window text */
