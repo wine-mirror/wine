@@ -31,7 +31,7 @@ static BOOL run_cmd(const char *cmd_data, DWORD cmd_size)
     char command[] = "test.cmd";
     STARTUPINFOA si = {sizeof(si)};
     PROCESS_INFORMATION pi;
-    HANDLE file;
+    HANDLE file,fileerr;
     DWORD size;
     BOOL bres;
 
@@ -53,8 +53,15 @@ static BOOL run_cmd(const char *cmd_data, DWORD cmd_size)
     if(file == INVALID_HANDLE_VALUE)
         return FALSE;
 
+    fileerr = CreateFileA("test.err", GENERIC_WRITE, FILE_SHARE_WRITE|FILE_SHARE_READ, &sa, CREATE_ALWAYS,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(fileerr != INVALID_HANDLE_VALUE, "CreateFile stderr failed\n");
+    if(fileerr == INVALID_HANDLE_VALUE)
+        return FALSE;
+
     si.dwFlags = STARTF_USESTDHANDLES;
     si.hStdOutput = file;
+    si.hStdError = fileerr;
     bres = CreateProcessA(NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
     ok(bres, "CreateProcess failed: %u\n", GetLastError());
     if(!bres) {
@@ -66,6 +73,7 @@ static BOOL run_cmd(const char *cmd_data, DWORD cmd_size)
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
     CloseHandle(file);
+    CloseHandle(fileerr);
     DeleteFileA("test.cmd");
     return TRUE;
 }
@@ -185,8 +193,8 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
             exp_ptr++;
     }
 
-    ok(exp_ptr >= exp_data+exp_size, "unexpected end of output in line %d, expected 0x%x\n", line, *exp_ptr);
-    ok(out_ptr >= out_data+out_size, "too long output\n");
+    ok(exp_ptr >= exp_data+exp_size, "unexpected end of output in line %d, missing %s\n", line, exp_ptr);
+    ok(out_ptr >= out_data+out_size, "too long output, got additional %s\n", out_ptr);
 }
 
 static void run_test(const char *cmd_data, DWORD cmd_size, const char *exp_data, DWORD exp_size)
@@ -203,6 +211,7 @@ static void run_test(const char *cmd_data, DWORD cmd_size, const char *exp_data,
         UnmapViewOfFile(out_data);
     }
     DeleteFileA("test.out");
+    DeleteFileA("test.err");
 }
 
 static void run_from_file(char *file_name)
