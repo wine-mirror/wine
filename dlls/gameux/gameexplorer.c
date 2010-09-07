@@ -22,15 +22,261 @@
 #include "config.h"
 
 #include "ole2.h"
+#include "sddl.h"
 
 #include "gameux.h"
 #include "gameux_private.h"
 
 #include "wine/debug.h"
+#include "winreg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gameux);
 
-/*
+/*******************************************************************************
+ * GameUX helper functions
+ */
+/*******************************************************************************
+ * GAMEUX_initGameData
+ *
+ * Internal helper function. Description available in gameux_private.h file
+ */
+void GAMEUX_initGameData(struct GAMEUX_GAME_DATA *GameData)
+{
+    GameData->sGDFBinaryPath = NULL;
+    GameData->sGameInstallDirectory = NULL;
+}
+/*******************************************************************************
+ * GAMEUX_uninitGameData
+ *
+ * Internal helper function. Description available in gameux_private.h file
+ */
+void GAMEUX_uninitGameData(struct GAMEUX_GAME_DATA *GameData)
+{
+    HeapFree(GetProcessHeap(), 0, GameData->sGDFBinaryPath);
+    HeapFree(GetProcessHeap(), 0, GameData->sGameInstallDirectory);
+}
+/*******************************************************************************
+ * GAMEUX_buildGameRegistryPath
+ *
+ * Helper function, builds registry path to key, where game's data are stored
+ *
+ * Parameters:
+ *  installScope                [I]     the scope which was used in AddGame/InstallGame call
+ *  gameInstanceId              [I]     game instance GUID
+ *  lpRegistryPath              [O]     pointer which will receive address to string
+ *                                      containing expected registry path. Path
+ *                                      is relative to HKLM registry key. It
+ *                                      must be freed by calling HeapFree(GetProcessHeap(), 0, ...)
+ *
+ * Name of game's registry key always follows patterns below:
+ *  When game is installed for current user only (installScope is GIS_CURRENT_USER):
+ *      HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+ *          GameUX\[user's security ID]\[game instance ID]
+ *
+ *  When game is installed for all users (installScope is GIS_ALL_USERS):
+ *      HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+ *          GameUX\Games\[game instance ID]
+ *
+ *
+ */
+static HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
+        LPCGUID gameInstanceId,
+        LPWSTR* lpRegistryPath)
+{
+    static const WCHAR sGameUxRegistryPath[] = {'S','O','F','T','W','A','R','E','\\',
+            'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+            'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','G','a','m','e','U','X',0};
+    static const WCHAR sGames[] = {'G','a','m','e','s',0};
+    static const WCHAR sBackslash[] = {'\\',0};
+
+    HRESULT hr = S_OK;
+    HANDLE hToken = NULL;
+    PTOKEN_USER pTokenUser = NULL;
+    DWORD dwLength;
+    LPWSTR lpSID = NULL;
+    WCHAR sInstanceId[40];
+    WCHAR sRegistryPath[8192];
+
+    TRACE("(0x%x, %s, %p)\n", installScope, debugstr_guid(gameInstanceId), lpRegistryPath);
+
+    lstrcpyW(sRegistryPath, sGameUxRegistryPath);
+    lstrcatW(sRegistryPath, sBackslash);
+
+    if(installScope == GIS_CURRENT_USER)
+    {
+        /* build registry path containing user's SID */
+        if(!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+            hr = HRESULT_FROM_WIN32(GetLastError());
+
+        if(SUCCEEDED(hr))
+        {
+            if(!GetTokenInformation(hToken, TokenUser, NULL, 0, &dwLength) &&
+                    GetLastError()!=ERROR_INSUFFICIENT_BUFFER)
+                hr = HRESULT_FROM_WIN32(GetLastError());
+
+            if(SUCCEEDED(hr))
+            {
+                pTokenUser = HeapAlloc(GetProcessHeap(), 0, dwLength);
+                if(!pTokenUser)
+                    hr = E_OUTOFMEMORY;
+            }
+
+            if(SUCCEEDED(hr))
+                if(!GetTokenInformation(hToken, TokenUser, (LPVOID)pTokenUser, dwLength, &dwLength))
+                    hr = HRESULT_FROM_WIN32(GetLastError());
+
+            if(SUCCEEDED(hr))
+                if(!ConvertSidToStringSidW(pTokenUser->User.Sid, &lpSID))
+                    hr = HRESULT_FROM_WIN32(GetLastError());
+
+            if(SUCCEEDED(hr))
+            {
+                lstrcatW(sRegistryPath, lpSID);
+                LocalFree(lpSID);
+            }
+
+            HeapFree(GetProcessHeap(), 0, pTokenUser);
+            CloseHandle(hToken);
+        }
+    }
+    else if(installScope == GIS_ALL_USERS)
+        /* build registry path without SID */
+        lstrcatW(sRegistryPath, sGames);
+    else
+        hr = E_INVALIDARG;
+
+    /* put game's instance id on the end of path */
+    if(SUCCEEDED(hr))
+        hr = (StringFromGUID2(gameInstanceId, sInstanceId, sizeof(sInstanceId)/sizeof(sInstanceId[0])) ? S_OK : E_FAIL);
+
+    if(SUCCEEDED(hr))
+    {
+        lstrcatW(sRegistryPath, sBackslash);
+        lstrcatW(sRegistryPath, sInstanceId);
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        *lpRegistryPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sRegistryPath)+1)*sizeof(WCHAR));
+        if(!*lpRegistryPath)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+        lstrcpyW(*lpRegistryPath, sRegistryPath);
+
+    TRACE("result: 0x%x, path: %s\n", hr, debugstr_w(*lpRegistryPath));
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_WriteRegistryRecord
+ *
+ * Helper function, writes data associated with game (stored in GAMEUX_GAME_DATA
+ * structure) into expected place in registry.
+ *
+ * Parameters:
+ *  GameData                            [I]     structure with data which will
+ *                                              be written into registry.
+ *                                              Proper values of fields installScope
+ *                                              and guidInstanceId are required
+ *                                              to create registry key.
+ *
+ * Schema of naming registry keys associated with games is available in
+ * description of _buildGameRegistryPath internal function.
+ *
+ * List of registry keys associated with structure fields:
+ *  Key                              Field in GAMEUX_GAME_DATA structure
+ *   ConfigApplicationPath            sGameInstallDirectory
+ *   ConfigGDFBinaryPath              sGDFBinaryPath
+ *
+ */
+static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
+{
+    static const WCHAR sConfigApplicationPath[] =
+            {'C','o','n','f','i','g','A','p','p','l','i','c','a','t','i','o','n','P','a','t','h',0};
+    static const WCHAR sConfigGDFBinaryPath[] =
+            {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
+
+    HRESULT hr, hr2;
+    LPWSTR lpRegistryKey;
+    HKEY hKey;
+
+    TRACE("(%p)\n", GameData);
+
+    hr = GAMEUX_buildGameRegistryPath(GameData->installScope, &GameData->guidInstanceId, &lpRegistryKey);
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegCreateKeyExW(HKEY_LOCAL_MACHINE, lpRegistryKey,
+                                                0, NULL, 0, KEY_ALL_ACCESS, NULL,
+                                                &hKey, NULL));
+
+    if(SUCCEEDED(hr))
+    {
+        /* write game data to registry key */
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sConfigApplicationPath, 0,
+                                               REG_SZ, (LPBYTE)(GameData->sGameInstallDirectory),
+                                               (lstrlenW(GameData->sGameInstallDirectory)+1)*sizeof(WCHAR)));
+
+        if(SUCCEEDED(hr))
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sConfigGDFBinaryPath, 0,
+                                                   REG_SZ, (LPBYTE)(GameData->sGDFBinaryPath),
+                                                   (lstrlenW(GameData->sGDFBinaryPath)+1)*sizeof(WCHAR)));
+
+        RegCloseKey(hKey);
+
+        if(FAILED(hr))
+        {
+            /* if something failed, remove whole key */
+            hr2 = RegDeleteKeyExW(HKEY_LOCAL_MACHINE, lpRegistryKey, 0, 0);
+            /* do not overwrite old failure code with new success code */
+            if(FAILED(hr2))
+                hr = hr2;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryKey);
+    TRACE("returning 0x%x\n", hr);
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_RegisterGame
+ *
+ * Internal helper function. Description available in gameux_private.h file
+ */
+HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
+        LPCWSTR sGameInstallDirectory,
+        GAME_INSTALL_SCOPE installScope,
+        GUID *pInstanceID)
+{
+    HRESULT hr = S_OK;
+    struct GAMEUX_GAME_DATA GameData;
+
+    TRACE("(%s, %s, 0x%x, %s)\n", debugstr_w(sGDFBinaryPath), debugstr_w(sGameInstallDirectory), installScope, debugstr_guid(pInstanceID));
+
+    GAMEUX_initGameData(&GameData);
+    GameData.sGDFBinaryPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sGDFBinaryPath)+1)*sizeof(WCHAR));
+    lstrcpyW(GameData.sGDFBinaryPath, sGDFBinaryPath);
+    GameData.sGameInstallDirectory = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sGameInstallDirectory)+1)*sizeof(WCHAR));
+    lstrcpyW(GameData.sGameInstallDirectory, sGameInstallDirectory);
+    GameData.installScope = installScope;
+
+    /* generate GUID if it was not provided by user */
+    if(IsEqualGUID(pInstanceID, &GUID_NULL))
+        hr = CoCreateGuid(pInstanceID);
+
+    GameData.guidInstanceId = *pInstanceID;
+
+    FIXME("loading game data from GDF file not yet implemented\n");
+
+    /* save data to registry */
+    if(SUCCEEDED(hr))
+        hr = GAMEUX_WriteRegistryRecord(&GameData);
+
+    GAMEUX_uninitGameData(&GameData);
+    TRACE("returing 0x%08x\n", hr);
+    return hr;
+}
+/*******************************************************************************
  * GameExplorer implementation
  */
 
@@ -127,10 +373,8 @@ static HRESULT WINAPI GameExplorerImpl_AddGame(
         GUID *pInstanceID)
 {
     GameExplorerImpl *This = impl_from_IGameExplorer(iface);
-
-    TRACE("(%p, %s, %s, %d, %s)\n", This, debugstr_w(bstrGDFBinaryPath), debugstr_w(sGameInstallDirectory), installScope, debugstr_guid(pInstanceID));
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %s, %s, 0x%x, %s)\n", This, debugstr_w(bstrGDFBinaryPath), debugstr_w(sGameInstallDirectory), installScope, debugstr_guid(pInstanceID));
+    return GAMEUX_RegisterGame(bstrGDFBinaryPath, sGameInstallDirectory, installScope, pInstanceID);
 }
 
 static HRESULT WINAPI GameExplorerImpl_RemoveGame(

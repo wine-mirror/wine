@@ -297,9 +297,9 @@ static void _validateGameRegistryValues(int line,
     hr = _validateRegistryValue(hKey, keyPath,   sApplicationId,            RRF_RT_REG_SZ,      sGameApplicationId);
     todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
     hr = _validateRegistryValue(hKey, keyPath,   sConfigApplicationPath,    RRF_RT_REG_SZ,      gameExePath);
-    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+    ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
     hr = _validateRegistryValue(hKey, keyPath,   sConfigGDFBinaryPath,      RRF_RT_REG_SZ,      gameExeName);
-    todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
+    ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
     hr = _validateRegistryValue(hKey, keyPath,   sTitle,                    RRF_RT_REG_SZ,      sExampleGame);
     todo_wine ok_(__FILE__, line)(hr==S_OK, "failed while checking registry value (error 0x%x)\n", hr);
 
@@ -438,36 +438,36 @@ static void test_add_remove_game(void)
             memcpy(&guid, &defaultGUID, sizeof (guid));
 
             hr = IGameExplorer_AddGame(ge, bstrExeName, bstrExePath, GIS_CURRENT_USER, &guid);
-            todo_wine ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08x)\n", hr);
+            ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08x)\n", hr);
             ok(memcmp(&guid, &defaultGUID, sizeof (guid)) == 0, "AddGame unexpectedly modified GUID\n");
 
             if(SUCCEEDED(hr))
             {
-                todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
+                _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
 
                 hr = IGameExplorer_RemoveGame(ge, guid);
                 todo_wine ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08x)\n", hr);
             }
 
-            _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
+            todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
 
 
             /* try to register game with empty guid */
             memcpy(&guid, &GUID_NULL, sizeof (guid));
 
             hr = IGameExplorer_AddGame(ge, bstrExeName, bstrExePath, GIS_CURRENT_USER, &guid);
-            todo_wine ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08x)\n", hr);
-            todo_wine ok(memcmp(&guid, &GUID_NULL, sizeof (guid)) != 0, "AddGame did not modify GUID\n");
+            ok(SUCCEEDED(hr), "IGameExplorer::AddGame failed (error 0x%08x)\n", hr);
+            ok(memcmp(&guid, &GUID_NULL, sizeof (guid)) != 0, "AddGame did not modify GUID\n");
 
             if(SUCCEEDED(hr))
             {
-                todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
+                _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
 
                 hr = IGameExplorer_RemoveGame(ge, guid);
                 todo_wine ok(SUCCEEDED(hr), "IGameExplorer::RemoveGame failed (error 0x%08x)\n", hr);
             }
 
-            _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
+            todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
         }
 
         /* free allocated resources */
