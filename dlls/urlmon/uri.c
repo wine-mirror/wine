@@ -4605,8 +4605,7 @@ static HRESULT WINAPI UriBuilder_GetUserName(IUriBuilder *iface, DWORD *pcchUser
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%p %p)\n", This, pcchUserName, ppwzUserName);
 
-    if(!This->uri || This->uri->userinfo_start == -1 ||
-       This->uri->userinfo_start == This->uri->userinfo_split ||
+    if(!This->uri || This->uri->userinfo_start == -1 || This->uri->userinfo_split == 0 ||
        This->modified_props & Uri_HAS_USER_NAME)
         return get_builder_component(&This->username, &This->username_len, NULL, 0, ppwzUserName, pcchUserName);
     else {
