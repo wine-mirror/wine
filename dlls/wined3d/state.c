@@ -3915,7 +3915,7 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
 
         /* Window Coord 0 is the middle of the first pixel, so translate by 1/2 pixels */
         glTranslatef(63.0f / 128.0f, 63.0f / 128.0f, 0.0f);
-        checkGLcall("glTranslatef(63.0f / 128.0f, -63.0f / 128.0f, 0.0f)");
+        checkGLcall("glTranslatef(63.0f / 128.0f, 63.0f / 128.0f, 0.0f)");
     }
     else
     {
