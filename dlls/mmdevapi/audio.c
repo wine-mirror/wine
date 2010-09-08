@@ -1370,7 +1370,7 @@ static HRESULT WINAPI ACC_GetBuffer(IAudioCaptureClient *iface, BYTE **data, UIN
     ACCapture *This = (ACCapture*)iface;
     HRESULT hr;
     DWORD block = This->parent->pwfx->nBlockAlign;
-    DWORD ofs, bufsize;
+    DWORD ofs;
     TRACE("(%p)->(%p,%p,%p,%p,%p)\n", This, data, frames, flags, devpos, qpcpos);
 
     if (!data)
@@ -1387,7 +1387,6 @@ static HRESULT WINAPI ACC_GetBuffer(IAudioCaptureClient *iface, BYTE **data, UIN
         goto out;
     IAudioCaptureClient_GetNextPacketSize(iface, frames);
     ofs = This->parent->ofs;
-    bufsize = This->parent->bufsize;
     if ( (ofs*block) % This->parent->psize)
         ERR("Unaligned offset %u with %u\n", ofs*block, This->parent->psize);
     *data = This->parent->buffer + ofs * block;
