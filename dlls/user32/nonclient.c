@@ -60,7 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
      ((exStyle) & WS_EX_DLGMODALFRAME) || \
      !((style) & (WS_CHILD | WS_POPUP)))
 
-#define HAS_MENU(w)  ((((w)->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) && ((w)->wIDmenu != 0))
+#define HAS_MENU(hwnd,style)  ((((style) & (WS_CHILD | WS_POPUP)) != WS_CHILD) && GetMenu(hwnd))
 
 
 /******************************************************************************
@@ -512,33 +512,29 @@ static void NC_GetInsideRect( HWND hwnd, enum coords_relative relative, RECT *re
 
 
 /***********************************************************************
- * NC_DoNCHitTest
+ * NC_HandleNCHitTest
  *
- * Handle a WM_NCHITTEST message. Called from NC_HandleNCHitTest().
- *
- * FIXME:  Just a modified copy of the Win 3.1 version.
+ * Handle a WM_NCHITTEST message. Called from DefWindowProc().
  */
-
-static LRESULT NC_DoNCHitTest (WND *wndPtr, POINT pt )
+LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
 {
     RECT rect, rcClient;
-    POINT ptClient;
+    DWORD style, ex_style;
 
-    TRACE("hwnd=%p pt=%d,%d\n", wndPtr->obj.handle, pt.x, pt.y );
+    TRACE("hwnd=%p pt=%d,%d\n", hwnd, pt.x, pt.y );
 
-    GetWindowRect(wndPtr->obj.handle, &rect );
+    ScreenToClient( hwnd, &pt );
+    WIN_GetRectangles( hwnd, COORDS_CLIENT, &rect, &rcClient );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
 
-    if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
+    if (style & WS_MINIMIZE) return HTCAPTION;
 
-    /* Check client area */
-    ptClient = pt;
-    ScreenToClient( wndPtr->obj.handle, &ptClient );
-    GetClientRect( wndPtr->obj.handle, &rcClient );
-    if (PtInRect( &rcClient, ptClient )) return HTCLIENT;
+    if (PtInRect( &rcClient, pt )) return HTCLIENT;
 
     /* Check borders */
-    if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+    if (HAS_THICKFRAME( style, ex_style ))
     {
         InflateRect( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
         if (!PtInRect( &rect, pt ))
@@ -575,47 +571,46 @@ static LRESULT NC_DoNCHitTest (WND *wndPtr, POINT pt )
     }
     else  /* No thick frame */
     {
-        if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+        if (HAS_DLGFRAME( style, ex_style ))
             InflateRect(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
-        else if (HAS_THINFRAME( wndPtr->dwStyle ))
+        else if (HAS_THINFRAME( style ))
             InflateRect(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
         if (!PtInRect( &rect, pt )) return HTBORDER;
     }
 
     /* Check caption */
 
-    if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
+    if ((style & WS_CAPTION) == WS_CAPTION)
     {
-        if (wndPtr->dwExStyle & WS_EX_TOOLWINDOW)
+        if (ex_style & WS_EX_TOOLWINDOW)
             rect.top += GetSystemMetrics(SM_CYSMCAPTION) - 1;
         else
             rect.top += GetSystemMetrics(SM_CYCAPTION) - 1;
         if (!PtInRect( &rect, pt ))
         {
-            BOOL min_or_max_box = (wndPtr->dwStyle & WS_MAXIMIZEBOX) ||
-                                  (wndPtr->dwStyle & WS_MINIMIZEBOX);
+            BOOL min_or_max_box = (style & WS_MAXIMIZEBOX) ||
+                                  (style & WS_MINIMIZEBOX);
             /* Check system menu */
-            if ((wndPtr->dwStyle & WS_SYSMENU) && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
+            if ((style & WS_SYSMENU) && !(ex_style & WS_EX_TOOLWINDOW))
             {
-                if (NC_IconForWindow(wndPtr->obj.handle))
-                    rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
+                if (NC_IconForWindow(hwnd)) rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
             }
             if (pt.x < rect.left) return HTSYSMENU;
 
             /* Check close button */
-            if (wndPtr->dwStyle & WS_SYSMENU)
+            if (style & WS_SYSMENU)
                 rect.right -= GetSystemMetrics(SM_CYCAPTION);
             if (pt.x > rect.right) return HTCLOSE;
 
             /* Check maximize box */
             /* In win95 there is automatically a Maximize button when there is a minimize one*/
-            if (min_or_max_box && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
+            if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
                 rect.right -= GetSystemMetrics(SM_CXSIZE);
             if (pt.x > rect.right) return HTMAXBUTTON;
 
             /* Check minimize box */
             /* In win95 there is automatically a Maximize button when there is a Maximize one*/
-            if (min_or_max_box && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
+            if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
                 rect.right -= GetSystemMetrics(SM_CXSIZE);
 
             if (pt.x > rect.right) return HTMINBUTTON;
@@ -625,26 +620,26 @@ static LRESULT NC_DoNCHitTest (WND *wndPtr, POINT pt )
 
       /* Check vertical scroll bar */
 
-    if (wndPtr->dwStyle & WS_VSCROLL)
+    if (style & WS_VSCROLL)
     {
-        if((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0)
+        if((ex_style & WS_EX_LEFTSCROLLBAR) != 0)
             rcClient.left -= GetSystemMetrics(SM_CXVSCROLL);
         else
             rcClient.right += GetSystemMetrics(SM_CXVSCROLL);
-        if (PtInRect( &rcClient, ptClient )) return HTVSCROLL;
+        if (PtInRect( &rcClient, pt )) return HTVSCROLL;
     }
 
       /* Check horizontal scroll bar */
 
-    if (wndPtr->dwStyle & WS_HSCROLL)
+    if (style & WS_HSCROLL)
     {
         rcClient.bottom += GetSystemMetrics(SM_CYHSCROLL);
-        if (PtInRect( &rcClient, ptClient ))
+        if (PtInRect( &rcClient, pt ))
         {
             /* Check size box */
-            if ((wndPtr->dwStyle & WS_VSCROLL) &&
-                ((((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0) && (ptClient.x <= rcClient.left + GetSystemMetrics(SM_CXVSCROLL))) ||
-                (((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) == 0) && (ptClient.x >= rcClient.right - GetSystemMetrics(SM_CXVSCROLL)))))
+            if ((style & WS_VSCROLL) &&
+                ((((ex_style & WS_EX_LEFTSCROLLBAR) != 0) && (pt.x <= rcClient.left + GetSystemMetrics(SM_CXVSCROLL))) ||
+                (((ex_style & WS_EX_LEFTSCROLLBAR) == 0) && (pt.x >= rcClient.right - GetSystemMetrics(SM_CXVSCROLL)))))
                 return HTSIZE;
             return HTHSCROLL;
         }
@@ -652,33 +647,15 @@ static LRESULT NC_DoNCHitTest (WND *wndPtr, POINT pt )
 
       /* Check menu bar */
 
-    if (HAS_MENU(wndPtr))
+    if (HAS_MENU( hwnd, style ))
     {
-        if ((ptClient.y < 0) && (ptClient.x >= 0) && (ptClient.x < rcClient.right))
+        if ((pt.y < 0) && (pt.x >= 0) && (pt.x < rcClient.right))
             return HTMENU;
     }
 
     /* Has to return HTNOWHERE if nothing was found
        Could happen when a window has a customized non client area */
     return HTNOWHERE;
-}
-
-
-/***********************************************************************
- * NC_HandleNCHitTest
- *
- * Handle a WM_NCHITTEST message. Called from DefWindowProc().
- */
-LRESULT NC_HandleNCHitTest (HWND hwnd , POINT pt)
-{
-    LRESULT retvalue;
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return HTERROR;
-
-    retvalue = NC_DoNCHitTest (wndPtr, pt);
-    WIN_ReleasePtr( wndPtr );
-    return retvalue;
 }
 
 
@@ -986,10 +963,8 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
     WORD flags;
     HRGN hrgn;
     RECT rectClient;
-    int has_menu;
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return;
-    has_menu = HAS_MENU(wndPtr);
     dwStyle = wndPtr->dwStyle;
     dwExStyle = wndPtr->dwExStyle;
     flags = wndPtr->flags;
@@ -1053,7 +1028,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
             NC_DrawCaption(hdc, &r, hwnd, dwStyle, dwExStyle, active);
     }
 
-    if (has_menu)
+    if (HAS_MENU( hwnd, dwStyle ))
     {
 	RECT r = rect;
 	r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);
