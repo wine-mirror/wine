@@ -1006,7 +1006,7 @@ static void D3DXCreateMeshTest(void)
     hr = D3DXCreateMesh(0, 0, 0, NULL, NULL, NULL);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, (LPD3DVERTEXELEMENT9 *)&decl, NULL, &d3dxmesh);
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl, NULL, &d3dxmesh);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
@@ -1035,13 +1035,13 @@ static void D3DXCreateMeshTest(void)
         return;
     }
 
-    hr = D3DXCreateMesh(0, 3, D3DXMESH_MANAGED, (LPD3DVERTEXELEMENT9 *)&decl, device, &d3dxmesh);
+    hr = D3DXCreateMesh(0, 3, D3DXMESH_MANAGED, decl, device, &d3dxmesh);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 0, D3DXMESH_MANAGED, (LPD3DVERTEXELEMENT9 *)&decl, device, &d3dxmesh);
+    hr = D3DXCreateMesh(1, 0, D3DXMESH_MANAGED, decl, device, &d3dxmesh);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 3, 0, (LPD3DVERTEXELEMENT9 *)&decl, device, &d3dxmesh);
+    hr = D3DXCreateMesh(1, 3, 0, decl, device, &d3dxmesh);
     todo_wine ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
 
     if (hr == D3D_OK)
@@ -1052,10 +1052,10 @@ static void D3DXCreateMeshTest(void)
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, 0, device, &d3dxmesh);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, (LPD3DVERTEXELEMENT9 *)&decl, device, NULL);
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl, device, NULL);
     todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, (LPD3DVERTEXELEMENT9 *)&decl, device, &d3dxmesh);
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl, device, &d3dxmesh);
     todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
 
     if (hr == D3D_OK)

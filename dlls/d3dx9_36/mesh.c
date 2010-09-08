@@ -583,7 +583,7 @@ BOOL WINAPI D3DXSphereBoundProbe(CONST D3DXVECTOR3 *pcenter, FLOAT radius, CONST
     return TRUE;
 }
 
-HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, CONST LPD3DVERTEXELEMENT9 *declaration,
+HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, CONST D3DVERTEXELEMENT9 *declaration,
                               LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh)
 {
     FIXME("(%d, %d, %d, %p, %p, %p): stub\n", numfaces, numvertices, options, declaration, device, mesh);
