@@ -4404,14 +4404,9 @@ static HRESULT WINAPI UriBuilder_CreateUriSimple(IUriBuilder *iface,
         return E_POINTER;
 
     /* Acts the same way as CreateUri. */
-    if(dwAllowEncodingPropertyMask && !This->uri) {
+    if(dwAllowEncodingPropertyMask && (!This->uri || This->modified_props)) {
         *ppIUri = NULL;
         return E_NOTIMPL;
-    }
-
-    if(!This->uri) {
-        *ppIUri = NULL;
-        return INET_E_INVALID_URL;
     }
 
     FIXME("(%p)->(%d %d %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
@@ -4433,17 +4428,10 @@ static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
     /* The only time it doesn't return E_NOTIMPL when the dwAllow parameter
      * has flags set, is when the IUriBuilder has a IUri set and it hasn't
      * been modified (a call to a "Set*" hasn't been performed).
-     *
-     * TODO: Check if the IUriBuilder's properties have been modified.
      */
-    if(dwAllowEncodingPropertyMask && !This->uri) {
+    if(dwAllowEncodingPropertyMask && (!This->uri || This->modified_props)) {
         *ppIUri = NULL;
         return E_NOTIMPL;
-    }
-
-    if(!This->uri) {
-        *ppIUri = NULL;
-        return INET_E_INVALID_URL;
     }
 
     FIXME("(%p)->(0x%08x %d %d %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
@@ -4465,14 +4453,9 @@ static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
         return E_POINTER;
 
     /* Same as CreateUri. */
-    if(dwAllowEncodingPropertyMask && !This->uri) {
+    if(dwAllowEncodingPropertyMask && (!This->uri || This->modified_props)) {
         *ppIUri = NULL;
         return E_NOTIMPL;
-    }
-
-    if(!This->uri) {
-        *ppIUri = NULL;
-        return INET_E_INVALID_URL;
     }
 
     FIXME("(%p)->(0x%08x 0x%08x %d %d %p)\n", This, dwCreateFlags, dwUriBuilderFlags,

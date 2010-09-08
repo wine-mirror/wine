@@ -4888,6 +4888,40 @@ static const uri_builder_test uri_builder_tests[] = {
             {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    /* IUriBuilder doesn't need a base IUri to build a IUri. */
+    {   NULL,0,S_OK,FALSE,
+        {
+            {TRUE,"http",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,FALSE},
+            {TRUE,"google.com",NULL,Uri_PROPERTY_HOST,S_OK,FALSE}
+        },
+        {FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 
@@ -6500,10 +6534,6 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
         IUri *test = NULL, *uri = (void*) 0xdeadbeef;
 
         /* Test what happens if the IUriBuilder doesn't have a IUri set. */
-        hr = IUriBuilder_CreateUri(builder, 0, 0, 0, &uri);
-        ok(hr == INET_E_INVALID_URL, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, INET_E_INVALID_URL);
-        ok(uri == NULL, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
-
         hr = IUriBuilder_CreateUri(builder, 0, 0, 0, NULL);
         ok(hr == E_POINTER, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
 
@@ -6511,12 +6541,6 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
         hr = IUriBuilder_CreateUri(builder, 0, Uri_HAS_USER_NAME, 0, &uri);
         ok(hr == E_NOTIMPL, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, E_NOTIMPL);
         ok(uri == NULL, "Error: expected uri to be NULL, but was %p instead.\n", uri);
-
-        uri = (void*) 0xdeadbeef;
-        hr = IUriBuilder_CreateUriSimple(builder, 0, 0, &uri);
-        ok(hr == INET_E_INVALID_URL, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n",
-            hr, INET_E_INVALID_URL);
-        ok(!uri, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
 
         hr = IUriBuilder_CreateUriSimple(builder, 0, 0, NULL);
         ok(hr == E_POINTER, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n",
@@ -6527,13 +6551,6 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
         ok(hr == E_NOTIMPL, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n",
             hr, E_NOTIMPL);
         ok(!uri, "Error: Expected uri to NULL, but was %p instead.\n", uri);
-
-        uri = (void*) 0xdeadbeef;
-        hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, &uri);
-        ok(hr == INET_E_INVALID_URL,
-            "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
-            hr, INET_E_INVALID_URL);
-        ok(!uri, "Error: Expected uri to be NULL, but was %p instead.\n", uri);
 
         hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, NULL);
         ok(hr == E_POINTER, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
