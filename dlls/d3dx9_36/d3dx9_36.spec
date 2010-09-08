@@ -99,10 +99,10 @@
 @ stdcall D3DXCreateTextureFromFileInMemory(ptr ptr long ptr)
 @ stdcall D3DXCreateTextureFromFileInMemoryEx(ptr ptr long long long long long long long long long long ptr ptr ptr)
 @ stdcall D3DXCreateTextureFromFileW(ptr wstr ptr)
-@ stub D3DXCreateTextureFromResourceA
-@ stub D3DXCreateTextureFromResourceExA
-@ stub D3DXCreateTextureFromResourceExW
-@ stub D3DXCreateTextureFromResourceW
+@ stdcall D3DXCreateTextureFromResourceA(ptr ptr str ptr)
+@ stdcall D3DXCreateTextureFromResourceExA(ptr ptr str long long long long long long long long long ptr ptr ptr)
+@ stdcall D3DXCreateTextureFromResourceExW(ptr ptr wstr long long long long long long long long long ptr ptr ptr)
+@ stdcall D3DXCreateTextureFromResourceW(ptr ptr wstr ptr)
 @ stub D3DXCreateTextureGutterHelper
 @ stub D3DXCreateTextureShader
 @ stub D3DXCreateTorus

@@ -533,3 +533,134 @@ HRESULT WINAPI D3DXCreateTextureFromFileW(LPDIRECT3DDEVICE9 device,
     return D3DXCreateTextureFromFileExW(device, srcfile, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN,
                                         D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
 }
+
+
+HRESULT WINAPI D3DXCreateTextureFromResourceA(LPDIRECT3DDEVICE9 device,
+                                              HMODULE srcmodule,
+                                              LPCSTR resource,
+                                              LPDIRECT3DTEXTURE9 *texture)
+{
+    TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(resource));
+
+    return D3DXCreateTextureFromResourceExA(device, srcmodule, resource, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN,
+                                            D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
+}
+
+HRESULT WINAPI D3DXCreateTextureFromResourceW(LPDIRECT3DDEVICE9 device,
+                                              HMODULE srcmodule,
+                                              LPCWSTR resource,
+                                              LPDIRECT3DTEXTURE9 *texture)
+{
+    TRACE("(%p, %s): relay\n", srcmodule, debugstr_w(resource));
+
+    return D3DXCreateTextureFromResourceExW(device, srcmodule, resource, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN,
+                                            D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, texture);
+}
+
+HRESULT WINAPI D3DXCreateTextureFromResourceExA(LPDIRECT3DDEVICE9 device,
+                                                HMODULE srcmodule,
+                                                LPCSTR resource,
+                                                UINT width,
+                                                UINT height,
+                                                UINT miplevels,
+                                                DWORD usage,
+                                                D3DFORMAT format,
+                                                D3DPOOL pool,
+                                                DWORD filter,
+                                                DWORD mipfilter,
+                                                D3DCOLOR colorkey,
+                                                D3DXIMAGE_INFO *srcinfo,
+                                                PALETTEENTRY *palette,
+                                                LPDIRECT3DTEXTURE9 *texture)
+{
+    HRSRC resinfo;
+
+    TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(resource));
+
+    if (!device || !texture)
+        return D3DERR_INVALIDCALL;
+
+    resinfo = FindResourceA(srcmodule, resource, (LPCSTR) RT_RCDATA);
+
+    if (resinfo)
+    {
+        LPVOID buffer;
+        HRESULT hr;
+        DWORD size;
+
+        hr = load_resource_into_memory(srcmodule, resinfo, &buffer, &size);
+
+        if (FAILED(hr))
+            return D3DXERR_INVALIDDATA;
+
+        return D3DXCreateTextureFromFileInMemoryEx(device, buffer, size, width,
+                                                   height, miplevels, usage, format,
+                                                   pool, filter, mipfilter, colorkey,
+                                                   srcinfo, palette, texture);
+    }
+
+    /* Try loading the resource as bitmap data */
+    resinfo = FindResourceA(srcmodule, resource, (LPCSTR) RT_BITMAP);
+
+    if (resinfo)
+    {
+        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
+        return E_NOTIMPL;
+    }
+
+    return D3DXERR_INVALIDDATA;
+}
+
+HRESULT WINAPI D3DXCreateTextureFromResourceExW(LPDIRECT3DDEVICE9 device,
+                                                HMODULE srcmodule,
+                                                LPCWSTR resource,
+                                                UINT width,
+                                                UINT height,
+                                                UINT miplevels,
+                                                DWORD usage,
+                                                D3DFORMAT format,
+                                                D3DPOOL pool,
+                                                DWORD filter,
+                                                DWORD mipfilter,
+                                                D3DCOLOR colorkey,
+                                                D3DXIMAGE_INFO *srcinfo,
+                                                PALETTEENTRY *palette,
+                                                LPDIRECT3DTEXTURE9 *texture)
+{
+    HRSRC resinfo;
+
+    TRACE("(%p, %s): relay\n", srcmodule, debugstr_w(resource));
+
+    if (!device || !texture)
+        return D3DERR_INVALIDCALL;
+
+    resinfo = FindResourceW(srcmodule, resource, (LPCWSTR) RT_RCDATA);
+
+    if (resinfo)
+    {
+        LPVOID buffer;
+        HRESULT hr;
+        DWORD size;
+
+        hr = load_resource_into_memory(srcmodule, resinfo, &buffer, &size);
+
+        if (FAILED(hr))
+            return D3DXERR_INVALIDDATA;
+
+        return D3DXCreateTextureFromFileInMemoryEx(device, buffer, size, width,
+                                                   height, miplevels, usage, format,
+                                                   pool, filter, mipfilter, colorkey,
+                                                   srcinfo, palette, texture);
+    }
+
+    /* Try loading the resource as bitmap data */
+    resinfo = FindResourceW(srcmodule, resource, (LPCWSTR) RT_BITMAP);
+
+    if (resinfo)
+    {
+        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
+        return E_NOTIMPL;
+    }
+
+    return D3DXERR_INVALIDDATA;
+}
