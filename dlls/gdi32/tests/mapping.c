@@ -313,6 +313,9 @@ static void test_dc_layout(void)
     GetRgnBox( hrgn, &ret_rc );
     ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
         ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+    GetClipBox( hdc, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
     SetRectRgn( hrgn, 60, 10, 80, 20 );
     pSetLayout( hdc, LAYOUT_LTR );
     ExtSelectClipRgn( hdc, hrgn, RGN_OR );
@@ -320,6 +323,9 @@ static void test_dc_layout(void)
     SetRect( &rc, 15, 10, 40, 20 );
     GetClipRgn( hdc, hrgn );
     GetRgnBox( hrgn, &ret_rc );
+    ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
+        ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
+    GetClipBox( hdc, &ret_rc );
     ok( EqualRect( &rc, &ret_rc ), "wrong clip box %d,%d - %d,%d\n",
         ret_rc.left, ret_rc.top, ret_rc.right, ret_rc.bottom );
 
