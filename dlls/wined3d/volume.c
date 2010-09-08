@@ -187,7 +187,7 @@ static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *ifa
     return resource_get_type((IWineD3DResource *)iface);
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *desc)
+static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *desc)
 {
     IWineD3DVolumeImpl *volume = (IWineD3DVolumeImpl *)iface;
 
@@ -201,8 +201,6 @@ static HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DV
     desc->Width = volume->currentDesc.Width;
     desc->Height = volume->currentDesc.Height;
     desc->Depth = volume->currentDesc.Depth;
-
-    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) {

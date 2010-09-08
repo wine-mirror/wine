@@ -273,7 +273,9 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTextu
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DVolume_GetDesc(volume, desc);
+    IWineD3DVolume_GetDesc(volume, desc);
+
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetVolumeLevel(IWineD3DVolumeTexture *iface,

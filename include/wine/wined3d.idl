@@ -2486,7 +2486,7 @@ interface IWineD3DSurface : IWineD3DResource
 ]
 interface IWineD3DVolume : IWineD3DResource
 {
-    HRESULT GetDesc(
+    void GetDesc(
         [out] WINED3DVOLUME_DESC *desc
     );
     HRESULT LockBox(
