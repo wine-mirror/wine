@@ -1233,8 +1233,10 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         /* are we creating the desktop or HWND_MESSAGE parent itself? */
         if (className != (LPCWSTR)DESKTOP_CLASS_ATOM &&
             (IS_INTRESOURCE(className) || strcmpiW( className, messageW )))
+        {
             parent = GetDesktopWindow();
-        if (process_layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
+            if (process_layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
+        }
     }
 
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
