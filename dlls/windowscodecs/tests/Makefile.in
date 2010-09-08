@@ -8,6 +8,7 @@ IMPORTS   = ole32 windowscodecs
 C_SRCS = \
 	bmpformat.c \
 	converter.c \
+	icoformat.c \
 	info.c \
 	palette.c \
 	stream.c
