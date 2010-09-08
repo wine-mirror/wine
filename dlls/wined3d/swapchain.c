@@ -165,7 +165,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
             gl_filter = GL_NEAREST;
 
         ENTER_GL();
-        context_bind_fbo(context2, GL_DRAW_FRAMEBUFFER, NULL);
+        context_bind_fbo(context2, GL_FRAMEBUFFER, NULL);
 
         /* Set up the texture. The surface is not in a IWineD3D*Texture container,
          * so there are no d3d texture settings to dirtify
