@@ -6566,7 +6566,7 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
         ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
         if(SUCCEEDED(hr)) {
             hr = IUriBuilder_SetIUri(builder, test);
-            todo_wine { ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK); }
+            ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
 
             /* No longer returns E_NOTIMPL, since a IUri has been set and hasn't been modified. */
             uri = NULL;
@@ -6795,11 +6795,9 @@ static void test_IUriBuilder_GetFragment(IUriBuilder *builder, const uri_builder
          */
         IUri *uri = NULL;
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 received = (void*) 0xdeadbeef;
@@ -6906,11 +6904,9 @@ static void test_IUriBuilder_GetHost(IUriBuilder *builder, const uri_builder_tes
          */
         IUri *uri = NULL;
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 received = (void*) 0xdeadbeef;
@@ -7017,11 +7013,9 @@ static void test_IUriBuilder_GetPassword(IUriBuilder *builder, const uri_builder
          */
         IUri *uri = NULL;
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 received = (void*) 0xdeadbeef;
@@ -7128,11 +7122,9 @@ static void test_IUriBuilder_GetPath(IUriBuilder *builder, const uri_builder_tes
          */
         IUri *uri = NULL;
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 received = (void*) 0xdeadbeef;
@@ -7231,11 +7223,9 @@ static void test_IUriBuilder_GetPort(IUriBuilder *builder, const uri_builder_tes
         IUri *uri = NULL;
 
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 hr = IUriBuilder_GetPort(builder, &has_port, &received);
@@ -7326,11 +7316,9 @@ static void test_IUriBuilder_GetQuery(IUriBuilder *builder, const uri_builder_te
          */
         IUri *uri = NULL;
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 received = (void*) 0xdeadbeef;
@@ -7437,11 +7425,9 @@ static void test_IUriBuilder_GetSchemeName(IUriBuilder *builder, const uri_build
          */
         IUri *uri = NULL;
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 received = (void*) 0xdeadbeef;
@@ -7548,11 +7534,9 @@ static void test_IUriBuilder_GetUserName(IUriBuilder *builder, const uri_builder
          */
         IUri *uri = NULL;
         hr = IUriBuilder_GetIUri(builder, &uri);
-        todo_wine {
-            ok(hr == S_OK,
-                "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
-                hr, S_OK, test_index);
-        }
+        ok(hr == S_OK,
+            "Error: IUriBuilder_GetIUri returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
+            hr, S_OK, test_index);
         if(SUCCEEDED(hr)) {
             if(!uri) {
                 received = (void*) 0xdeadbeef;
@@ -7708,7 +7692,7 @@ static void test_IUriBuilder_HasBeenModified(void) {
     hr = pCreateIUriBuilder(NULL, 0, 0, &builder);
     ok(hr == S_OK, "Error: CreateIUriBuilder returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
     if(SUCCEEDED(hr)) {
-        static const WCHAR hostW[] = {'w','i','n','e','h','q','.','c','o','m',0};
+        static const WCHAR hostW[] = {'g','o','o','g','l','e','.','c','o','m',0};
         IUri *uri = NULL;
         BOOL received;
 
@@ -7731,11 +7715,12 @@ static void test_IUriBuilder_HasBeenModified(void) {
         hr = pCreateUri(http_urlW, 0, 0, &uri);
         ok(hr == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
         if(SUCCEEDED(hr)) {
+            LPCWSTR prop;
+            DWORD len = -1;
+
             hr = IUriBuilder_SetIUri(builder, uri);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n",
-                    hr, S_OK);
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
 
             hr = IUriBuilder_HasBeenModified(builder, &received);
             todo_wine {
@@ -7744,6 +7729,71 @@ static void test_IUriBuilder_HasBeenModified(void) {
             }
             if(SUCCEEDED(hr))
                 todo_wine { ok(received == FALSE, "Error: Expected received to be FALSE.\n"); }
+
+            /* Test what happens with you call SetIUri with the same IUri again. */
+            hr = IUriBuilder_SetHost(builder, hostW);
+            ok(hr == S_OK, "Error: IUriBuilder_SetHost returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+
+            hr = IUriBuilder_HasBeenModified(builder, &received);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+            }
+            if(SUCCEEDED(hr))
+                todo_wine { ok(received == TRUE, "Error: Expected received to be TRUE.\n"); }
+
+            hr = IUriBuilder_SetIUri(builder, uri);
+            ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+
+            /* IUriBuilder already had 'uri' as it's IUri property and so Windows doesn't
+             * reset any of the changes that were made to the IUriBuilder.
+             */
+            hr = IUriBuilder_HasBeenModified(builder, &received);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            if(SUCCEEDED(hr))
+                todo_wine { ok(received == TRUE, "Error: Expected received to be TRUE.\n"); }
+            hr = IUriBuilder_GetHost(builder, &len, &prop);
+            ok(hr == S_OK, "Error: IUriBuilder_GetHost returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            if(SUCCEEDED(hr)) {
+                ok(!lstrcmpW(prop, hostW), "Error: Expected %s but got %s instead.\n",
+                    wine_dbgstr_w(hostW), wine_dbgstr_w(prop));
+                ok(len == lstrlenW(hostW), "Error: Expected len to be %d, but was %d instead.\n",
+                    lstrlenW(hostW), len);
+            }
+
+            hr = IUriBuilder_SetIUri(builder, NULL);
+            ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+
+            hr = IUriBuilder_SetHost(builder, hostW);
+            ok(hr == S_OK, "Error: IUriBuilder_SetHost returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            hr = IUriBuilder_HasBeenModified(builder, &received);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+            }
+            if(SUCCEEDED(hr))
+                todo_wine { ok(received == TRUE, "Error: Expected received to be TRUE.\n"); }
+
+            hr = IUriBuilder_SetIUri(builder, NULL);
+            ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%09x.\n", hr, S_OK);
+
+            hr = IUriBuilder_HasBeenModified(builder, &received);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_HasBeenModified returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+            }
+            if(SUCCEEDED(hr))
+                todo_wine { ok(received == TRUE, "Error: Expected received to be TRUE.\n"); }
+            hr = IUriBuilder_GetHost(builder, &len, &prop);
+            ok(hr == S_OK, "Error: IUriBuilder_GetHost returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            if(SUCCEEDED(hr)) {
+                ok(!lstrcmpW(prop, hostW), "Error: Expected %s but got %s instead.\n",
+                    wine_dbgstr_w(hostW), wine_dbgstr_w(prop));
+                ok(len == lstrlenW(hostW), "Error: Expected len to %d, but was %d instead.\n",
+                    lstrlenW(hostW), len);
+            }
         }
         if(uri) IUri_Release(uri);
     }
@@ -7772,21 +7822,15 @@ static void test_IUriBuilder_IUriProperty(void) {
             orig_count = get_refcnt(uri);
             hr = IUriBuilder_SetIUri(builder, uri);
             cur_count = get_refcnt(uri);
-            if(SUCCEEDED(hr)) {
-                todo_wine {
-                    ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
-                        orig_count+1, cur_count);
-                }
-            }
+            if(SUCCEEDED(hr))
+                ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count+1, cur_count);
 
             hr = IUriBuilder_SetIUri(builder, NULL);
             cur_count = get_refcnt(uri);
-            if(SUCCEEDED(hr)) {
-                todo_wine {
-                    ok(cur_count == orig_count, "Error: Expected uri ref count to be %d, but was %d instead.\n",
-                        orig_count, cur_count);
-                }
-            }
+            if(SUCCEEDED(hr))
+                ok(cur_count == orig_count, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count, cur_count);
         }
         if(uri) IUri_Release(uri);
     }

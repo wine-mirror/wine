@@ -3343,6 +3343,44 @@ static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LP
 #define URI(x)         ((IUri*)  &(x)->lpIUriVtbl)
 #define URIBUILDER(x)  ((IUriBuilder*)  &(x)->lpIUriBuilderVtbl)
 
+static void reset_builder(UriBuilder *builder) {
+    if(builder->uri)
+        IUri_Release(URI(builder->uri));
+    builder->uri = NULL;
+
+    heap_free(builder->fragment);
+    builder->fragment = NULL;
+    builder->fragment_len = 0;
+
+    heap_free(builder->host);
+    builder->host = NULL;
+    builder->host_len = 0;
+
+    heap_free(builder->password);
+    builder->password = NULL;
+    builder->password_len = 0;
+
+    heap_free(builder->path);
+    builder->path = NULL;
+    builder->path_len = 0;
+
+    heap_free(builder->query);
+    builder->query = NULL;
+    builder->query_len = 0;
+
+    heap_free(builder->scheme);
+    builder->scheme = NULL;
+    builder->scheme_len = 0;
+
+    heap_free(builder->username);
+    builder->username = NULL;
+    builder->username_len = 0;
+
+    builder->has_port = FALSE;
+    builder->port = 0;
+    builder->modified_props = 0;
+}
+
 #define URI_THIS(iface) DEFINE_THIS(Uri, IUri, iface)
 
 static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
@@ -4471,15 +4509,46 @@ static HRESULT WINAPI  UriBuilder_GetIUri(IUriBuilder *iface, IUri **ppIUri)
     if(!ppIUri)
         return E_POINTER;
 
-    FIXME("(%p)->(%p)\n", This, ppIUri);
-    return E_NOTIMPL;
+    if(This->uri) {
+        IUri *uri = URI(This->uri);
+        IUri_AddRef(uri);
+        *ppIUri = uri;
+    } else
+        *ppIUri = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI UriBuilder_SetIUri(IUriBuilder *iface, IUri *pIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pIUri);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pIUri);
+
+    if(pIUri) {
+        Uri *uri;
+
+        if((uri = get_uri_obj(pIUri))) {
+            /* Only reset the builder if it's Uri isn't the same as
+             * the Uri passed to the function.
+             */
+            if(This->uri != uri) {
+                reset_builder(This);
+
+                This->uri = uri;
+                if(uri->has_port)
+                    This->port = uri->port;
+
+                IUri_AddRef(pIUri);
+            }
+        } else {
+            FIXME("(%p)->(%p) Unknown IUri types not supported yet.\n", This, pIUri);
+            return E_NOTIMPL;
+        }
+    } else if(This->uri)
+        /* Only reset the builder if it's Uri isn't NULL. */
+        reset_builder(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI UriBuilder_GetFragment(IUriBuilder *iface, DWORD *pcchFragment, LPCWSTR *ppwzFragment)
