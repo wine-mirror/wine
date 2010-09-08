@@ -295,6 +295,9 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
 
             ptr += strlen("mapid")+1;
             space = strchr(ptr, ' ');
+            /* command line ends without number */
+            if (!space)
+                return 0;
             memcpy(idtxt, ptr, space-ptr);
             idtxt[space-ptr] = '\0';
             mapid = atoi(idtxt);
@@ -315,6 +318,11 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         len = endq - szCmdLine;
     else
         len = strlen(szCmdLine);
+
+    /* no filename given */
+    if (!len)
+        return 0;
+
     buflen = MultiByteToWideChar(CP_ACP, 0, szCmdLine, len, NULL, 0) + 1;
     filename = heap_alloc(buflen * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, szCmdLine, len, filename, buflen);
