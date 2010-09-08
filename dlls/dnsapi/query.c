@@ -52,19 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
 #ifdef HAVE_RESOLV
 
-static CRITICAL_SECTION resolver_cs;
-static CRITICAL_SECTION_DEBUG resolver_cs_debug =
-{
-    0, 0, &resolver_cs,
-    { &resolver_cs_debug.ProcessLocksList,
-      &resolver_cs_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": resolver_cs") }
-};
-static CRITICAL_SECTION resolver_cs = { &resolver_cs_debug, -1, 0, 0, 0, 0 };
-
-#define LOCK_RESOLVER()     do { EnterCriticalSection( &resolver_cs ); } while (0)
-#define UNLOCK_RESOLVER()   do { LeaveCriticalSection( &resolver_cs ); } while (0)
-
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
 /* call once per thread on systems that have per-thread _res */
 static void initialise_resolver( void )
@@ -552,8 +539,7 @@ exit:
     return status;
 }
 
-/*  The resolver lock must be held and res_init() must have been
- *  called before calling these three functions.
+/* res_init() must have been called before calling these three functions.
  */
 static DNS_STATUS dns_set_serverlist( const IP4_ARRAY *addrs )
 {
@@ -704,16 +690,11 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
     if (!name || !result)
         return ERROR_INVALID_PARAMETER;
 
-    LOCK_RESOLVER();
-
     initialise_resolver();
     _res.options |= dns_map_options( options );
 
     if (servers && (ret = dns_set_serverlist( servers )))
-    {
-        UNLOCK_RESOLVER();
         return ret;
-    }
 
     ret = dns_do_query( name, type, options, result );
 
@@ -723,8 +704,6 @@ DNS_STATUS WINAPI DnsQuery_UTF8( PCSTR name, WORD type, DWORD options, PVOID ser
         TRACE( "dns lookup failed, trying netbios query\n" );
         ret = dns_do_query_netbios( name, result );
     }
-
-    UNLOCK_RESOLVER();
 
 #endif
     return ret;
@@ -822,12 +801,8 @@ DNS_STATUS WINAPI DnsQueryConfig( DNS_CONFIG_TYPE config, DWORD flag, PCWSTR ada
     case DnsConfigDnsServerList:
     {
 #ifdef HAVE_RESOLV
-        LOCK_RESOLVER();
-
         initialise_resolver();
         ret = dns_get_serverlist( buffer, len );
-
-        UNLOCK_RESOLVER();
         break;
 #else
         WARN( "compiled without resolver support\n" );
