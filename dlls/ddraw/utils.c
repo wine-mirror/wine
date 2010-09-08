@@ -568,47 +568,7 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
     }
     else if(DDPixelFormat->dwFlags & DDPF_FOURCC)
     {
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('U', 'Y', 'V', 'Y'))
-        {
-            return WINED3DFMT_UYVY;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('Y', 'U', 'Y', '2'))
-        {
-            return WINED3DFMT_YUY2;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('Y', 'V', '1', '2'))
-        {
-            return WINED3DFMT_YV12;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('D', 'X', 'T', '1'))
-        {
-            return WINED3DFMT_DXT1;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('D', 'X', 'T', '2'))
-        {
-            return WINED3DFMT_DXT2;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('D', 'X', 'T', '3'))
-        {
-           return WINED3DFMT_DXT3;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('D', 'X', 'T', '4'))
-        {
-            return WINED3DFMT_DXT4;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('D', 'X', 'T', '5'))
-        {
-            return WINED3DFMT_DXT5;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('G', 'R', 'G', 'B'))
-        {
-            return WINED3DFMT_G8R8_G8B8;
-        }
-        if(DDPixelFormat->dwFourCC == MAKEFOURCC('R', 'G', 'B', 'G'))
-        {
-            return WINED3DFMT_R8G8_B8G8;
-        }
-        return WINED3DFMT_UNKNOWN;  /* Abuse this as an error value */
+        return DDPixelFormat->dwFourCC;
     }
     else if(DDPixelFormat->dwFlags & DDPF_BUMPDUDV)
     {
