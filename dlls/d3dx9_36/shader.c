@@ -423,7 +423,7 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(LPCWSTR filename,
                                           LPD3DXCONSTANTTABLE* constant_table)
 {
     void *buffer;
-    DWORD len;
+    DWORD len, filename_len;
     HRESULT hr;
     struct D3DXIncludeImpl includefromfile;
     char *filename_a;
@@ -437,13 +437,14 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(LPCWSTR filename,
         include = (LPD3DXINCLUDE)&includefromfile;
     }
 
-    filename_a = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+    filename_len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
+    filename_a = HeapAlloc(GetProcessHeap(), 0, filename_len * sizeof(char));
     if (!filename_a)
     {
         UnmapViewOfFile(buffer);
         return E_OUTOFMEMORY;
     }
-    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, filename_len, NULL, NULL);
 
     hr = D3DCompile(buffer, len, filename_a, (D3D_SHADER_MACRO *)defines,
                     (ID3DInclude *)include, entrypoint, profile, flags, 0,
