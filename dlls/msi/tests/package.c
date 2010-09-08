@@ -627,10 +627,6 @@ make_add_entry(appsearch,
                "INSERT INTO `AppSearch` "
                "(`Property`, `Signature_`) VALUES( %s )")
 
-make_add_entry(reglocator,
-               "INSERT INTO `RegLocator` "
-               "(`Signature_`, `Root`, `Key`, `Name`, `Type`) VALUES( %s )")
-
 make_add_entry(signature,
                "INSERT INTO `Signature` "
                "(`Signature`, `FileName`, `MinVersion`, `MaxVersion`,"
@@ -668,6 +664,23 @@ make_add_entry(inilocator,
                "INSERT INTO `IniLocator` "
                "(`Signature_`, `FileName`, `Section`, `Key`, `Field`, `Type`) "
                "VALUES( %s )")
+
+static UINT add_reglocator_entry( MSIHANDLE hdb, const char *sig, UINT root, const char *path,
+                                  const char *name, UINT type )
+{
+    const char insert[] =
+        "INSERT INTO `RegLocator` (`Signature_`, `Root`, `Key`, `Name`, `Type`) "
+        "VALUES( '%s', %u, '%s', '%s', %u )";
+    char *query;
+    UINT sz, r;
+
+    sz = strlen( sig ) + 10 + strlen( path ) + strlen( name ) + 10 + sizeof( insert );
+    query = HeapAlloc( GetProcessHeap(), 0, sz );
+    sprintf( query, insert, sig, root, path, name, type );
+    r = run_query( hdb, query );
+    HeapFree( GetProcessHeap(), 0, query );
+    return r;
+}
 
 static UINT set_summary_info(MSIHANDLE hdb)
 {
@@ -7526,7 +7539,7 @@ static void test_appsearch(void)
     r = create_reglocator_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
 
-    r = add_reglocator_entry( hdb, "'NewSignature1', 0, 'htmlfile\\shell\\open\\command', '', 1" );
+    r = add_reglocator_entry( hdb, "NewSignature1", 0, "htmlfile\\shell\\open\\command", "", 1 );
     ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
 
     r = create_drlocator_table( hdb );
@@ -7881,12 +7894,12 @@ static void test_appsearch_reglocator(void)
     MSIHANDLE hpkg, hdb;
     CHAR path[MAX_PATH], prop[MAX_PATH];
     DWORD binary[2], size, val;
-    BOOL space, version;
+    BOOL space, version, is_64bit = sizeof(void *) > sizeof(int);
     HKEY hklm, classes, hkcu, users;
     LPSTR pathdata, pathvar, ptr;
     LPCSTR str;
     LONG res;
-    UINT r;
+    UINT r, type = 0;
 
     version = TRUE;
     if (!create_file_with_version("test.dll", MAKELONG(2, 1), MAKELONG(4, 3)))
@@ -8114,154 +8127,152 @@ static void test_appsearch_reglocator(void)
     r = create_reglocator_table(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    type = msidbLocatorTypeRawValue;
+    if (is_64bit)
+        type |= msidbLocatorType64bit;
+
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ */
-    str = "'NewSignature1', 2, 'Software\\Wine', 'Value1', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature1", 2, "Software\\Wine", "Value1", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, positive DWORD */
-    str = "'NewSignature2', 2, 'Software\\Wine', 'Value2', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature2", 2, "Software\\Wine", "Value2", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, negative DWORD */
-    str = "'NewSignature3', 2, 'Software\\Wine', 'Value3', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature3", 2, "Software\\Wine", "Value3", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_EXPAND_SZ */
-    str = "'NewSignature4', 2, 'Software\\Wine', 'Value4', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature4", 2, "Software\\Wine", "Value4", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_EXPAND_SZ */
-    str = "'NewSignature5', 2, 'Software\\Wine', 'Value5', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature5", 2, "Software\\Wine", "Value5", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_MULTI_SZ */
-    str = "'NewSignature6', 2, 'Software\\Wine', 'Value6', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature6", 2, "Software\\Wine", "Value6", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_BINARY */
-    str = "'NewSignature7', 2, 'Software\\Wine', 'Value7', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature7", 2, "Software\\Wine", "Value7", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ first char is # */
-    str = "'NewSignature8', 2, 'Software\\Wine', 'Value8', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature8", 2, "Software\\Wine", "Value8", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    type = msidbLocatorTypeFileName;
+    if (is_64bit)
+        type |= msidbLocatorType64bit;
+
     /* HKLM, msidbLocatorTypeFileName, signature, file exists */
-    str = "'NewSignature9', 2, 'Software\\Wine', 'Value9', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature9", 2, "Software\\Wine", "Value9", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeFileName, signature, file does not exist */
-    str = "'NewSignature10', 2, 'Software\\Wine', 'Value10', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature10", 2, "Software\\Wine", "Value10", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeFileName, no signature */
-    str = "'NewSignature11', 2, 'Software\\Wine', 'Value9', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature11", 2, "Software\\Wine", "Value9", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    type = msidbLocatorTypeDirectory;
+    if (is_64bit)
+        type |= msidbLocatorType64bit;
+
     /* HKLM, msidbLocatorTypeDirectory, no signature, file exists */
-    str = "'NewSignature12', 2, 'Software\\Wine', 'Value9', 0";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature12", 2, "Software\\Wine", "Value9", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeDirectory, no signature, directory exists */
-    str = "'NewSignature13', 2, 'Software\\Wine', 'Value11', 0";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature13", 2, "Software\\Wine", "Value11", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeDirectory, signature, file exists */
-    str = "'NewSignature14', 2, 'Software\\Wine', 'Value9', 0";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature14", 2, "Software\\Wine", "Value9", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    type = msidbLocatorTypeRawValue;
+    if (is_64bit)
+        type |= msidbLocatorType64bit;
+
     /* HKCR, msidbLocatorTypeRawValue, REG_SZ */
-    str = "'NewSignature15', 0, 'Software\\Wine', 'Value1', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature15", 0, "Software\\Wine", "Value1", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKCU, msidbLocatorTypeRawValue, REG_SZ */
-    str = "'NewSignature16', 1, 'Software\\Wine', 'Value1', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature16", 1, "Software\\Wine", "Value1", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKU, msidbLocatorTypeRawValue, REG_SZ */
-    str = "'NewSignature17', 3, 'S-1-5-18\\Software\\Wine', 'Value1', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature17", 3, "S-1-5-18\\Software\\Wine", "Value1", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ, NULL Name */
-    str = "'NewSignature18', 2, 'Software\\Wine', '', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature18", 2, "Software\\Wine", "", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ, key does not exist */
-    str = "'NewSignature19', 2, 'Software\\IDontExist', '', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature19", 2, "Software\\IDontExist", "", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeRawValue, REG_SZ, value is empty */
-    str = "'NewSignature20', 2, 'Software\\Wine', 'Value12', 2";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature20", 2, "Software\\Wine", "Value12", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    type = msidbLocatorTypeFileName;
+    if (is_64bit)
+        type |= msidbLocatorType64bit;
+
     /* HKLM, msidbLocatorTypeFileName, signature, file exists w/ version */
-    str = "'NewSignature21', 2, 'Software\\Wine', 'Value13', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature21", 2, "Software\\Wine", "Value13", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeFileName, file exists w/ version, version > max */
-    str = "'NewSignature22', 2, 'Software\\Wine', 'Value14', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature22", 2, "Software\\Wine", "Value14", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeFileName, file exists w/ version, sig->name ignored */
-    str = "'NewSignature23', 2, 'Software\\Wine', 'Value15', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature23", 2, "Software\\Wine", "Value15", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeFileName, no signature, directory exists */
-    str = "'NewSignature24', 2, 'Software\\Wine', 'Value11', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature24", 2, "Software\\Wine", "Value11", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeFileName, no signature, file does not exist */
-    str = "'NewSignature25', 2, 'Software\\Wine', 'Value10', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature25", 2, "Software\\Wine", "Value10", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    type = msidbLocatorTypeDirectory;
+    if (is_64bit)
+        type |= msidbLocatorType64bit;
+
     /* HKLM, msidbLocatorTypeDirectory, signature, directory exists */
-    str = "'NewSignature26', 2, 'Software\\Wine', 'Value11', 0";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature26", 2, "Software\\Wine", "Value11", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeDirectory, signature, file does not exist */
-    str = "'NewSignature27', 2, 'Software\\Wine', 'Value10', 0";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature27", 2, "Software\\Wine", "Value10", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeDirectory, no signature, file does not exist */
-    str = "'NewSignature28', 2, 'Software\\Wine', 'Value10', 0";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature28", 2, "Software\\Wine", "Value10", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    type = msidbLocatorTypeFileName;
+    if (is_64bit)
+        type |= msidbLocatorType64bit;
+
     /* HKLM, msidbLocatorTypeFile, file exists, in quotes */
-    str = "'NewSignature29', 2, 'Software\\Wine', 'Value16', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature29", 2, "Software\\Wine", "Value16", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* HKLM, msidbLocatorTypeFile, file exists, no quotes */
-    str = "'NewSignature30', 2, 'Software\\Wine', 'Value17', 1";
-    r = add_reglocator_entry(hdb, str);
+    r = add_reglocator_entry(hdb, "NewSignature30", 2, "Software\\Wine", "Value17", type);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = create_signature_table(hdb);
@@ -8989,7 +9000,7 @@ static void test_appsearch_drlocator(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* parent */
-    r = add_reglocator_entry(hdb, "'NewSignature12', 2, 'htmlfile\\shell\\open\\nonexistent', '', 1");
+    r = add_reglocator_entry(hdb, "NewSignature12", 2, "htmlfile\\shell\\open\\nonexistent", "", 1);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* parent is in RegLocator, no path, depth 0, no signature */
@@ -9768,7 +9779,7 @@ static void test_ccpsearch(void)
     r = create_reglocator_table(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    r = add_reglocator_entry(hdb, "'CCP_random', 0, 'htmlfile\\shell\\open\\nonexistent', '', 1");
+    r = add_reglocator_entry(hdb, "CCP_random", 0, "htmlfile\\shell\\open\\nonexistent", "", 1);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = create_drlocator_table(hdb);
