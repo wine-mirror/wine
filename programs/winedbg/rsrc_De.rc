@@ -51,7 +51,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_AUTO_CAPTION     "Wine Programm absturz"
+    IDS_AUTO_CAPTION     "Wine Programm Absturz"
     IDS_INVALID_PARAMS   "Interne Fehler - ungültige Parameter empfangen"
     IDS_UNIDENTIFIED     "(unbekannt)"
 END
