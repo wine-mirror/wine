@@ -45,4 +45,6 @@ STRINGTABLE
     STRING_DESCRIPTION, "설명"
     STRING_PHYS_ADDR, "물리 주소"
     STRING_DHCP_ENABLED, "DHCP 가능"
+    STRING_YES, "예"
+    STRING_NO, "아니오"
 }
