@@ -76,6 +76,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
     IHttpNegotiate2 *http_negotiate2 = NULL;
     LPWSTR host, user, pass, path;
     LPOLESTR accept_mimes[257];
+    const WCHAR **accept_types;
     URL_COMPONENTSW url_comp;
     BYTE security_id[512];
     DWORD len = 0;
@@ -113,7 +114,15 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
 
     num = sizeof(accept_mimes)/sizeof(accept_mimes[0])-1;
     hres = IInternetBindInfo_GetBindString(bind_info, BINDSTRING_ACCEPT_MIMES, accept_mimes, num, &num);
-    if(hres != S_OK) {
+    if(hres == INET_E_USE_DEFAULT_SETTING) {
+        static const WCHAR default_accept_mimeW[] = {'*','/','*',0};
+        static const WCHAR *default_accept_mimes[] = {default_accept_mimeW, NULL};
+
+        accept_types = default_accept_mimes;
+        num = 0;
+    }else if(hres == S_OK) {
+        accept_types = (const WCHAR**)accept_mimes;
+    }else {
         WARN("GetBindString BINDSTRING_ACCEPT_MIMES failed: %08x\n", hres);
         return INET_E_NO_VALID_MEDIA;
     }
@@ -130,7 +139,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
     This->base.request = HttpOpenRequestW(This->base.connection,
             This->base.bind_info.dwBindVerb < BINDVERB_CUSTOM
                 ? wszBindVerb[This->base.bind_info.dwBindVerb] : This->base.bind_info.szCustomVerb,
-            path, NULL, NULL, (LPCWSTR *)accept_mimes, request_flags, (DWORD_PTR)&This->base);
+            path, NULL, NULL, accept_types, request_flags, (DWORD_PTR)&This->base);
     heap_free(path);
     while(num--)
         CoTaskMemFree(accept_mimes[num]);
