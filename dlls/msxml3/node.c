@@ -313,38 +313,30 @@ static HRESULT WINAPI xmlnode_get_childNodes(
     return E_NOTIMPL;
 }
 
+HRESULT node_get_first_child(xmlnode *This, IXMLDOMNode **ret)
+{
+    return get_node(This, "firstChild", This->node->children, ret);
+}
+
 static HRESULT WINAPI xmlnode_get_firstChild(
     IXMLDOMNode *iface,
     IXMLDOMNode** firstChild)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    TRACE("(%p)->(%p)\n", This, firstChild);
-    return get_node( This, "firstChild", This->node->children, firstChild );
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
+}
+
+HRESULT node_get_last_child(xmlnode *This, IXMLDOMNode **ret)
+{
+    return get_node(This, "lastChild", This->node->last, ret);
 }
 
 static HRESULT WINAPI xmlnode_get_lastChild(
     IXMLDOMNode *iface,
     IXMLDOMNode** lastChild)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-
-    TRACE("(%p)->(%p)\n", This, lastChild );
-
-    if (!lastChild)
-        return E_INVALIDARG;
-
-    switch( This->node->type )
-    {
-    /* CDATASection, Comment, PI and Text Nodes do not support lastChild */
-    case XML_TEXT_NODE:
-    case XML_CDATA_SECTION_NODE:
-    case XML_PI_NODE:
-    case XML_COMMENT_NODE:
-        *lastChild = NULL;
-        return S_FALSE;
-    default:
-        return get_node( This, "lastChild", This->node->last, lastChild );
-    }
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_get_previousSibling(
@@ -1838,7 +1830,10 @@ static HRESULT WINAPI unknode_get_firstChild(
     IXMLDOMNode** domNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_firstChild( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_first_child(&This->node, domNode);
 }
 
 static HRESULT WINAPI unknode_get_lastChild(
@@ -1846,7 +1841,10 @@ static HRESULT WINAPI unknode_get_lastChild(
     IXMLDOMNode** domNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_lastChild( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_first_child(&This->node, domNode);
 }
 
 static HRESULT WINAPI unknode_get_previousSibling(

@@ -164,6 +164,8 @@ extern HRESULT node_get_content(xmlnode*,VARIANT*);
 extern HRESULT node_put_value(xmlnode*,VARIANT*);
 extern HRESULT node_get_parent(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_get_child_nodes(xmlnode*,IXMLDOMNodeList**);
+extern HRESULT node_get_first_child(xmlnode*,IXMLDOMNode**);
+extern HRESULT node_get_last_child(xmlnode*,IXMLDOMNode**);
 
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
@@ -198,6 +200,14 @@ static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
     }
 
     return S_OK;
+}
+
+static inline HRESULT return_null_node(IXMLDOMNode **p)
+{
+    if(!p)
+        return E_INVALIDARG;
+    *p = NULL;
+    return S_FALSE;
 }
 
 #endif

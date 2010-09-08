@@ -253,7 +253,10 @@ static HRESULT WINAPI domcomment_get_firstChild(
     IXMLDOMNode** domNode)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_firstChild( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return return_null_node(domNode);
 }
 
 static HRESULT WINAPI domcomment_get_lastChild(
@@ -261,7 +264,10 @@ static HRESULT WINAPI domcomment_get_lastChild(
     IXMLDOMNode** domNode)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_lastChild( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return return_null_node(domNode);
 }
 
 static HRESULT WINAPI domcomment_get_previousSibling(

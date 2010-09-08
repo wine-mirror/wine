@@ -251,7 +251,10 @@ static HRESULT WINAPI entityref_get_firstChild(
     IXMLDOMNode** domNode)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_firstChild( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_first_child(&This->node, domNode);
 }
 
 static HRESULT WINAPI entityref_get_lastChild(
@@ -259,7 +262,10 @@ static HRESULT WINAPI entityref_get_lastChild(
     IXMLDOMNode** domNode)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_lastChild( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_first_child(&This->node, domNode);
 }
 
 static HRESULT WINAPI entityref_get_previousSibling(
