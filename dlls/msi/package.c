@@ -1354,7 +1354,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
          * read/write, which is safe because we always create a copy that is thrown
          * away when we're done.
          */
-        r = MSI_OpenDatabaseW( file, MSIDBOPEN_DIRECT, &db );
+        r = MSI_OpenDatabaseW( file, MSIDBOPEN_TRANSACT, &db );
         if( r != ERROR_SUCCESS )
         {
             if (file != szPackage)
