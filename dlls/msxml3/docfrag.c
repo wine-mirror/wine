@@ -244,7 +244,10 @@ static HRESULT WINAPI domfrag_get_childNodes(
     IXMLDOMNodeList** outList)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_childNodes( IXMLDOMNode_from_impl(&This->node), outList );
+
+    TRACE("(%p)->(%p)\n", This, outList);
+
+    return node_get_child_nodes(&This->node, outList);
 }
 
 static HRESULT WINAPI domfrag_get_firstChild(

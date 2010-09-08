@@ -253,7 +253,10 @@ static HRESULT WINAPI domelem_get_childNodes(
     IXMLDOMNodeList** outList)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_childNodes( IXMLDOMNode_from_impl(&This->node), outList );
+
+    TRACE("(%p)->(%p)\n", This, outList);
+
+    return node_get_child_nodes(&This->node, outList);
 }
 
 static HRESULT WINAPI domelem_get_firstChild(

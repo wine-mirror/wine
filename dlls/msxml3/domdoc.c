@@ -752,7 +752,10 @@ static HRESULT WINAPI domdoc_get_childNodes(
     IXMLDOMNodeList** childList )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_childNodes( IXMLDOMNode_from_impl(&This->node), childList );
+
+    TRACE("(%p)->(%p)\n", This, childList);
+
+    return node_get_child_nodes(&This->node, childList);
 }
 
 

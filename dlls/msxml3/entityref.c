@@ -240,7 +240,10 @@ static HRESULT WINAPI entityref_get_childNodes(
     IXMLDOMNodeList** outList)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_childNodes( IXMLDOMNode_from_impl(&This->node), outList );
+
+    TRACE("(%p)->(%p)\n", This, outList);
+
+    return node_get_child_nodes(&This->node, outList);
 }
 
 static HRESULT WINAPI entityref_get_firstChild(

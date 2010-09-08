@@ -293,22 +293,24 @@ static HRESULT WINAPI xmlnode_get_parentNode(
     return E_NOTIMPL;
 }
 
+HRESULT node_get_child_nodes(xmlnode *This, IXMLDOMNodeList **ret)
+{
+    if(!ret)
+        return E_INVALIDARG;
+
+    *ret = create_children_nodelist(This->node);
+    if(!*ret)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI xmlnode_get_childNodes(
     IXMLDOMNode *iface,
     IXMLDOMNodeList** childList)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-
-    TRACE("(%p)->(%p)\n", This, childList );
-
-    if ( !childList )
-        return E_INVALIDARG;
-
-    *childList = create_children_nodelist(This->node);
-    if (*childList == NULL)
-        return E_OUTOFMEMORY;
-
-    return S_OK;
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_get_firstChild(
@@ -1825,7 +1827,10 @@ static HRESULT WINAPI unknode_get_childNodes(
     IXMLDOMNodeList** outList)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_childNodes( IXMLDOMNode_from_impl(&This->node), outList );
+
+    TRACE("(%p)->(%p)\n", This, outList);
+
+    return node_get_child_nodes(&This->node, outList);
 }
 
 static HRESULT WINAPI unknode_get_firstChild(

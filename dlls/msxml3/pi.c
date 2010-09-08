@@ -255,7 +255,10 @@ static HRESULT WINAPI dom_pi_get_childNodes(
     IXMLDOMNodeList** outList)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_childNodes( IXMLDOMNode_from_impl(&This->node), outList );
+
+    TRACE("(%p)->(%p)\n", This, outList);
+
+    return node_get_child_nodes(&This->node, outList);
 }
 
 static HRESULT WINAPI dom_pi_get_firstChild(

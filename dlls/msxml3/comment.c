@@ -242,7 +242,10 @@ static HRESULT WINAPI domcomment_get_childNodes(
     IXMLDOMNodeList** outList)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_childNodes( IXMLDOMNode_from_impl(&This->node), outList );
+
+    TRACE("(%p)->(%p)\n", This, outList);
+
+    return node_get_child_nodes(&This->node, outList);
 }
 
 static HRESULT WINAPI domcomment_get_firstChild(
