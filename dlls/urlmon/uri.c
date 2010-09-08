@@ -4756,8 +4756,8 @@ static HRESULT WINAPI UriBuilder_HasBeenModified(IUriBuilder *iface, BOOL *pfMod
     if(!pfModified)
         return E_POINTER;
 
-    FIXME("(%p)->(%p)\n", This, pfModified);
-    return E_NOTIMPL;
+    *pfModified = This->modified_props > 0;
+    return S_OK;
 }
 
 #undef URIBUILDER_THIS
