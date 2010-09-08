@@ -156,7 +156,7 @@ IDirect3DLightImpl_Release(IDirect3DLight *iface)
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-	return 0;
+        return 0;
     }
     return ref;
 }
@@ -219,7 +219,7 @@ IDirect3DLightImpl_SetLight(IDirect3DLight *iface,
     if (TRACE_ON(ddraw))
     {
         TRACE("  Light definition :\n");
-	dump_light((LPD3DLIGHT2) lpLight);
+        dump_light((LPD3DLIGHT2) lpLight);
     }
 
     if ( (lpLight->dltType == 0) || (lpLight->dltType > D3DLIGHT_PARALLELPOINT) )
@@ -277,7 +277,7 @@ IDirect3DLightImpl_GetLight(IDirect3DLight *iface,
     if (TRACE_ON(ddraw))
     {
         TRACE("  Returning light definition :\n");
-	dump_light(&This->light);
+        dump_light(&This->light);
     }
 
     EnterCriticalSection(&ddraw_cs);

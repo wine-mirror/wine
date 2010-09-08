@@ -52,20 +52,23 @@ void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights) {
     }
 
     /* And copy the values in the structure used by the device */
-    if (This->use_vp2) {
+    if (This->use_vp2)
+    {
         vp.dwX = This->viewports.vp2.dwX;
-	vp.dwY = This->viewports.vp2.dwY;
-	vp.dwHeight = This->viewports.vp2.dwHeight;
-	vp.dwWidth = This->viewports.vp2.dwWidth;
-	vp.dvMinZ = This->viewports.vp2.dvMinZ;
-	vp.dvMaxZ = This->viewports.vp2.dvMaxZ;
-    } else {
+        vp.dwY = This->viewports.vp2.dwY;
+        vp.dwHeight = This->viewports.vp2.dwHeight;
+        vp.dwWidth = This->viewports.vp2.dwWidth;
+        vp.dvMinZ = This->viewports.vp2.dvMinZ;
+        vp.dvMaxZ = This->viewports.vp2.dvMaxZ;
+    }
+    else
+    {
         vp.dwX = This->viewports.vp1.dwX;
-	vp.dwY = This->viewports.vp1.dwY;
-	vp.dwHeight = This->viewports.vp1.dwHeight;
-	vp.dwWidth = This->viewports.vp1.dwWidth;
-	vp.dvMinZ = This->viewports.vp1.dvMinZ;
-	vp.dvMaxZ = This->viewports.vp1.dvMaxZ;
+        vp.dwY = This->viewports.vp1.dwY;
+        vp.dwHeight = This->viewports.vp1.dwHeight;
+        vp.dwWidth = This->viewports.vp1.dwWidth;
+        vp.dvMinZ = This->viewports.vp1.dvMinZ;
+        vp.dvMaxZ = This->viewports.vp1.dvMaxZ;
     }
 
     /* And also set the viewport */
@@ -81,29 +84,29 @@ void viewport_activate(IDirect3DViewportImpl* This, BOOL ignore_lights) {
 static void _dump_D3DVIEWPORT(const D3DVIEWPORT *lpvp)
 {
     TRACE("    - dwSize = %d   dwX = %d   dwY = %d\n",
-	  lpvp->dwSize, lpvp->dwX, lpvp->dwY);
+            lpvp->dwSize, lpvp->dwX, lpvp->dwY);
     TRACE("    - dwWidth = %d   dwHeight = %d\n",
-	  lpvp->dwWidth, lpvp->dwHeight);
+            lpvp->dwWidth, lpvp->dwHeight);
     TRACE("    - dvScaleX = %f   dvScaleY = %f\n",
-	  lpvp->dvScaleX, lpvp->dvScaleY);
+            lpvp->dvScaleX, lpvp->dvScaleY);
     TRACE("    - dvMaxX = %f   dvMaxY = %f\n",
-	  lpvp->dvMaxX, lpvp->dvMaxY);
+            lpvp->dvMaxX, lpvp->dvMaxY);
     TRACE("    - dvMinZ = %f   dvMaxZ = %f\n",
-	  lpvp->dvMinZ, lpvp->dvMaxZ);
+            lpvp->dvMinZ, lpvp->dvMaxZ);
 }
 
 static void _dump_D3DVIEWPORT2(const D3DVIEWPORT2 *lpvp)
 {
     TRACE("    - dwSize = %d   dwX = %d   dwY = %d\n",
-	  lpvp->dwSize, lpvp->dwX, lpvp->dwY);
+            lpvp->dwSize, lpvp->dwX, lpvp->dwY);
     TRACE("    - dwWidth = %d   dwHeight = %d\n",
-	  lpvp->dwWidth, lpvp->dwHeight);
+            lpvp->dwWidth, lpvp->dwHeight);
     TRACE("    - dvClipX = %f   dvClipY = %f\n",
-	  lpvp->dvClipX, lpvp->dvClipY);
+            lpvp->dvClipX, lpvp->dvClipY);
     TRACE("    - dvClipWidth = %f   dvClipHeight = %f\n",
-	  lpvp->dvClipWidth, lpvp->dvClipHeight);
+            lpvp->dvClipWidth, lpvp->dvClipHeight);
     TRACE("    - dvMinZ = %f   dvMaxZ = %f\n",
-	  lpvp->dvMinZ, lpvp->dvMaxZ);
+            lpvp->dvMinZ, lpvp->dvMaxZ);
 }
 
 /*****************************************************************************
@@ -126,25 +129,23 @@ static void _dump_D3DVIEWPORT2(const D3DVIEWPORT2 *lpvp)
  *  E_NOINTERFACE if the requested interface wasn't found
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DViewportImpl_QueryInterface(IDirect3DViewport3 *iface,
-                                     REFIID riid,
-                                     void **obp)
+static HRESULT WINAPI IDirect3DViewportImpl_QueryInterface(IDirect3DViewport3 *iface, REFIID riid, void **object)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obp);
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    *obp = NULL;
-
-    if ( IsEqualGUID(&IID_IUnknown,  riid) ||
-	 IsEqualGUID(&IID_IDirect3DViewport, riid) ||
-	 IsEqualGUID(&IID_IDirect3DViewport2, riid) ||
-	 IsEqualGUID(&IID_IDirect3DViewport3, riid) ) {
+    if (IsEqualGUID(&IID_IDirect3DViewport3, riid)
+            || IsEqualGUID(&IID_IDirect3DViewport2, riid)
+            || IsEqualGUID(&IID_IDirect3DViewport, riid)
+            || IsEqualGUID(&IID_IUnknown, riid))
+    {
         IDirect3DViewport3_AddRef(iface);
-        *obp = iface;
-	TRACE("  Creating IDirect3DViewport1/2/3 interface %p\n", *obp);
-	return S_OK;
+        *object = iface;
+        return S_OK;
     }
-    FIXME("(%p): interface for IID %s NOT found!\n", iface, debugstr_guid(riid));
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
     return E_NOINTERFACE;
 }
 
@@ -187,7 +188,7 @@ IDirect3DViewportImpl_Release(IDirect3DViewport3 *iface)
 
     if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-	return 0;
+        return 0;
     }
     return ref;
 }
@@ -263,7 +264,7 @@ IDirect3DViewportImpl_GetViewport(IDirect3DViewport3 *iface,
     if (TRACE_ON(ddraw))
     {
         TRACE("  returning D3DVIEWPORT :\n");
-	_dump_D3DVIEWPORT(lpData);
+        _dump_D3DVIEWPORT(lpData);
     }
     LeaveCriticalSection(&ddraw_cs);
 
@@ -295,7 +296,7 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
     if (TRACE_ON(ddraw))
     {
         TRACE("  getting D3DVIEWPORT :\n");
-	_dump_D3DVIEWPORT(lpData);
+        _dump_D3DVIEWPORT(lpData);
     }
 
     EnterCriticalSection(&ddraw_cs);
@@ -669,7 +670,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
 
     if (This->active_device == NULL) {
         ERR(" Trying to clear a viewport not attached to a device !\n");
-	return D3DERR_VIEWPORTHASNODEVICE;
+        return D3DERR_VIEWPORTHASNODEVICE;
     }
     d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
 
@@ -738,9 +739,10 @@ IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
     }
 
     /* Find a light number and update both light and viewports objects accordingly */
-    while(map&1) {
-        map>>=1;
-	i++;
+    while (map & 1)
+    {
+        map >>= 1;
+        ++i;
     }
     lpDirect3DLightImpl->dwLightIndex = i;
     This->num_lights++;
@@ -791,18 +793,18 @@ IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *iface,
         if (cur_light == lpDirect3DLightImpl)
         {
             light_deactivate(lpDirect3DLightImpl);
-	    if (prev_light == NULL) This->lights = cur_light->next;
-	    else prev_light->next = cur_light->next;
-	    /* Detach the light to the viewport */
-	    cur_light->active_viewport = NULL;
-	    IDirect3DLight_Release( (IDirect3DLight *)cur_light );
-	    This->num_lights--;
-	    This->map_lights &= ~(1<<lpDirect3DLightImpl->dwLightIndex);
+            if (!prev_light) This->lights = cur_light->next;
+            else prev_light->next = cur_light->next;
+            /* Detach the light from the viewport. */
+            cur_light->active_viewport = NULL;
+            IDirect3DLight_Release((IDirect3DLight *)cur_light);
+            --This->num_lights;
+            This->map_lights &= ~(1 << lpDirect3DLightImpl->dwLightIndex);
             LeaveCriticalSection(&ddraw_cs);
             return D3D_OK;
-	}
-	prev_light = cur_light;
-	cur_light = cur_light->next;
+        }
+        prev_light = cur_light;
+        cur_light = cur_light->next;
     }
     LeaveCriticalSection(&ddraw_cs);
 
@@ -933,7 +935,7 @@ IDirect3DViewportImpl_GetViewport2(IDirect3DViewport3 *iface,
     if (TRACE_ON(ddraw))
     {
         TRACE("  returning D3DVIEWPORT2 :\n");
-	_dump_D3DVIEWPORT2(lpData);
+        _dump_D3DVIEWPORT2(lpData);
     }
 
     LeaveCriticalSection(&ddraw_cs);
@@ -964,7 +966,7 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
     if (TRACE_ON(ddraw))
     {
         TRACE("  getting D3DVIEWPORT2 :\n");
-	_dump_D3DVIEWPORT2(lpData);
+        _dump_D3DVIEWPORT2(lpData);
     }
 
     EnterCriticalSection(&ddraw_cs);

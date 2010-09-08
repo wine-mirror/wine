@@ -52,17 +52,15 @@ static HRESULT WINAPI IDirectDrawClipperImpl_QueryInterface(
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppvObj);
 
-    if (IsEqualGUID(&IID_IUnknown, riid)
-	|| IsEqualGUID(&IID_IDirectDrawClipper, riid))
+    if (IsEqualGUID(&IID_IDirectDrawClipper, riid)
+            || IsEqualGUID(&IID_IUnknown, riid))
     {
         IUnknown_AddRef(iface);
         *ppvObj = iface;
         return S_OK;
     }
-    else
-    {
-	return E_NOINTERFACE;
-    }
+
+    return E_NOINTERFACE;
 }
 
 /*****************************************************************************

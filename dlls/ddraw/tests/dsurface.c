@@ -77,9 +77,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-    if (FAILED(rc)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(rc))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     /* Check the number of created mipmaps */
@@ -107,9 +108,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-    if (FAILED(rc)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(rc))
+    {
+        skip("failed to create surface\n");
+        return;
     }
     /* Check the number of created mipmaps */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
@@ -139,9 +141,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 32;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-    if (FAILED(rc)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(rc))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     /* Check the number of created mipmaps */
@@ -170,9 +173,10 @@ static void MipMapCreationTest(void)
     ddsd.dwHeight = 64;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDDSMipMapTest, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-    if (FAILED(rc)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(rc))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     /* Check the number of created mipmaps */
@@ -234,9 +238,10 @@ static void SrcColorKey32BlitTest(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000FF;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDst, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-    if (FAILED(rc)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(rc))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     ddsd.dwFlags |= DDSD_CKSRCBLT;
@@ -244,9 +249,10 @@ static void SrcColorKey32BlitTest(void)
     ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0xFF00FF;
     rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSrc, NULL);
     ok(rc==DD_OK,"CreateSurface returned: %x\n",rc);
-    if (FAILED(rc)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(rc))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
@@ -1862,10 +1868,11 @@ static void test_lockrect_invalid(void)
 
         hr = IDirectDraw_CreateSurface(lpDD, &surface_desc, &surface, NULL);
         ok(SUCCEEDED(hr), "CreateSurface failed (0x%08x)\n", hr);
-        if (FAILED(hr)) {
-	    skip("failed to create surface\n");
-	    continue;
-	}
+        if (FAILED(hr))
+        {
+            skip("failed to create surface\n");
+            continue;
+        }
 
         for (i = 0; i < (sizeof(valid) / sizeof(*valid)); ++i)
         {
@@ -1951,9 +1958,10 @@ static void CompressedTest(void)
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
-    if (FAILED(hr)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(hr))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     memset(&ddsd2, 0, sizeof(ddsd2));
@@ -1975,9 +1983,10 @@ static void CompressedTest(void)
     U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','3');
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
-    if (FAILED(hr)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(hr))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     memset(&ddsd2, 0, sizeof(ddsd2));
@@ -1998,9 +2007,10 @@ static void CompressedTest(void)
     U4(ddsd).ddpfPixelFormat.dwFourCC = MAKEFOURCC('D','X','T','5');
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
-    if (FAILED(hr)) {
-	skip("failed to create surface\n");
-	return;
+    if (FAILED(hr))
+    {
+        skip("failed to create surface\n");
+        return;
     }
 
     memset(&ddsd2, 0, sizeof(ddsd2));
@@ -2699,9 +2709,10 @@ static void PaletteTest(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000FF;
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSurf, NULL);
     ok(hr==DD_OK, "CreateSurface returned: %x\n",hr);
-    if (FAILED(hr)) {
-	skip("failed to create surface\n");
-	goto err;
+    if (FAILED(hr))
+    {
+        skip("failed to create surface\n");
+        goto err;
     }
 
     hr = IDirectDrawSurface_SetPalette(lpSurf, palette);

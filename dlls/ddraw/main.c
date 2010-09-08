@@ -687,20 +687,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     TRACE("rclsid %s, riid %s, object %p.\n",
             debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if ( !IsEqualGUID( &IID_IClassFactory, riid )
-	 && ! IsEqualGUID( &IID_IUnknown, riid) )
-	return E_NOINTERFACE;
+    if (!IsEqualGUID(&IID_IClassFactory, riid)
+            && !IsEqualGUID(&IID_IUnknown, riid))
+        return E_NOINTERFACE;
 
     for (i=0; i < sizeof(object_creation)/sizeof(object_creation[0]); i++)
     {
-	if (IsEqualGUID(object_creation[i].clsid, rclsid))
-	    break;
+        if (IsEqualGUID(object_creation[i].clsid, rclsid))
+            break;
     }
 
     if (i == sizeof(object_creation)/sizeof(object_creation[0]))
     {
-	FIXME("%s: no class found.\n", debugstr_guid(rclsid));
-	return CLASS_E_CLASSNOTAVAILABLE;
+        FIXME("%s: no class found.\n", debugstr_guid(rclsid));
+        return CLASS_E_CLASSNOTAVAILABLE;
     }
 
     factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory));

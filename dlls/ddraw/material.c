@@ -73,27 +73,27 @@ IDirect3DMaterialImpl_QueryInterface(IDirect3DMaterial3 *iface,
 
     if ( IsEqualGUID( &IID_IUnknown,  riid ) ) {
         IUnknown_AddRef(iface);
-	*obp = iface;
-	TRACE("  Creating IUnknown interface at %p.\n", *obp);
-	return S_OK;
+        *obp = iface;
+        TRACE("  Creating IUnknown interface at %p.\n", *obp);
+        return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial, riid ) ) {
         IDirect3DMaterial_AddRef((IDirect3DMaterial *)&This->IDirect3DMaterial_vtbl);
         *obp = &This->IDirect3DMaterial_vtbl;
-	TRACE("  Creating IDirect3DMaterial interface %p\n", *obp);
-	return S_OK;
+        TRACE("  Creating IDirect3DMaterial interface %p\n", *obp);
+        return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial2, riid ) ) {
         IDirect3DMaterial_AddRef((IDirect3DMaterial2 *)&This->IDirect3DMaterial2_vtbl);
         *obp = &This->IDirect3DMaterial2_vtbl;
-	TRACE("  Creating IDirect3DMaterial2 interface %p\n", *obp);
-	return S_OK;
+        TRACE("  Creating IDirect3DMaterial2 interface %p\n", *obp);
+        return S_OK;
     }
     if ( IsEqualGUID( &IID_IDirect3DMaterial3, riid ) ) {
         IDirect3DMaterial3_AddRef((IDirect3DMaterial3 *)This);
         *obp = This;
-	TRACE("  Creating IDirect3DMaterial3 interface %p\n", *obp);
-	return S_OK;
+        TRACE("  Creating IDirect3DMaterial3 interface %p\n", *obp);
+        return S_OK;
     }
     FIXME("(%p): interface for IID %s NOT found!\n", This, debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -326,10 +326,8 @@ IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DMaterialImpl_2_GetHandle(LPDIRECT3DMATERIAL2 iface,
-					LPDIRECT3DDEVICE2 lpDirect3DDevice2,
-					LPD3DMATERIALHANDLE lpHandle)
+static HRESULT WINAPI Thunk_IDirect3DMaterialImpl_2_GetHandle(IDirect3DMaterial2 *iface,
+        IDirect3DDevice2 *lpDirect3DDevice2, D3DMATERIALHANDLE *lpHandle)
 {
     TRACE("iface %p, device %p, handle %p.\n", iface, lpDirect3DDevice2, lpHandle);
 
@@ -337,10 +335,8 @@ Thunk_IDirect3DMaterialImpl_2_GetHandle(LPDIRECT3DMATERIAL2 iface,
             (IDirect3DDevice3 *)&device_from_device2(lpDirect3DDevice2)->IDirect3DDevice3_vtbl : NULL, lpHandle);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DMaterialImpl_1_GetHandle(LPDIRECT3DMATERIAL iface,
-					LPDIRECT3DDEVICE lpDirect3DDevice,
-					LPD3DMATERIALHANDLE lpHandle)
+static HRESULT WINAPI Thunk_IDirect3DMaterialImpl_1_GetHandle(IDirect3DMaterial *iface,
+        IDirect3DDevice *lpDirect3DDevice, D3DMATERIALHANDLE *lpHandle)
 {
     TRACE("iface %p, device %p, handle %p.\n", iface, lpDirect3DDevice, lpHandle);
 

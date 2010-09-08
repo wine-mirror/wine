@@ -3094,7 +3094,7 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
         {
             case D3DLIGHTSTATE_AMBIENT:       /* 2 */
                 rs = D3DRENDERSTATE_AMBIENT;
-                break;		
+                break;
             case D3DLIGHTSTATE_FOGMODE:       /* 4 */
                 rs = D3DRENDERSTATE_FOGVERTEXMODE;
                 break;
@@ -3190,7 +3190,7 @@ IDirect3DDeviceImpl_3_GetLightState(IDirect3DDevice3 *iface,
         {
             case D3DLIGHTSTATE_AMBIENT:       /* 2 */
                 rs = D3DRENDERSTATE_AMBIENT;
-                break;		
+                break;
             case D3DLIGHTSTATE_FOGMODE:       /* 4 */
                 rs = D3DRENDERSTATE_FOGVERTEXMODE;
                 break;
@@ -6161,7 +6161,7 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
             /* Try UpdateSurface that may perform a more direct opengl loading. But skip this if destination is paletted texture and has no palette.
              * Some games like Sacrifice set palette after Load, and it is a waste of effort to try to load texture without palette and generates
              * warnings in wined3d. */
-	    if (!palette_missing)
+            if (!palette_missing)
                 hr = IWineD3DDevice_UpdateSurface(device->wineD3DDevice, src_level->WineD3DSurface, &rect, dest_level->WineD3DSurface,
                                 &point);
 

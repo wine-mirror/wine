@@ -598,7 +598,7 @@ enum wined3d_format_id PixelFormat_DD2WineD3D(const DDPIXELFORMAT *DDPixelFormat
         }
         if(DDPixelFormat->dwFourCC == MAKEFOURCC('D', 'X', 'T', '5'))
         {
-	    return WINED3DFMT_DXT5;
+            return WINED3DFMT_DXT5;
         }
         if(DDPixelFormat->dwFourCC == MAKEFOURCC('G', 'R', 'G', 'B'))
         {
@@ -664,7 +664,7 @@ DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck)
 static void DDRAW_dump_flags_nolf(DWORD flags, const flag_info* names,
                                   size_t num_names)
 {
-    unsigned int	i;
+    unsigned int i;
 
     for (i=0; i < num_names; i++)
         if ((flags & names[i].val) ||      /* standard flag value */
