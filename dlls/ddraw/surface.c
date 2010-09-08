@@ -3588,13 +3588,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     }
 
     surface->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-    hr = IWineD3DSurface_GetDesc(surface->WineD3DSurface, &wined3d_desc);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get wined3d surface desc, hr %#x.\n", hr);
-        IWineD3DSurface_Release(surface->WineD3DSurface);
-        return hr;
-    }
+    IWineD3DSurface_GetDesc(surface->WineD3DSurface, &wined3d_desc);
 
     format = wined3d_desc.format;
     if (format == WINED3DFMT_UNKNOWN)

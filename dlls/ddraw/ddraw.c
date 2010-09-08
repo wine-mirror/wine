@@ -2389,8 +2389,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     IWineD3DSurface_GetClipper(wineD3DSurface, &clipper);
 
     /* Get the surface properties */
-    hr = IWineD3DSurface_GetDesc(wineD3DSurface, &Desc);
-    if(hr != D3D_OK) return hr;
+    IWineD3DSurface_GetDesc(wineD3DSurface, &Desc);
 
     Format = Desc.format;
     Usage = Desc.usage;

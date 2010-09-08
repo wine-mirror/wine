@@ -2373,7 +2373,7 @@ interface IWineD3DClipper : IUnknown
 ]
 interface IWineD3DSurface : IWineD3DResource
 {
-    HRESULT GetDesc(
+    void GetDesc(
         [out] WINED3DSURFACE_DESC *desc
     );
     HRESULT LockRect(

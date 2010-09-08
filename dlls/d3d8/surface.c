@@ -190,27 +190,23 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 ifac
 static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3DSURFACE_DESC *pDesc) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     WINED3DSURFACE_DESC    wined3ddesc;
-    HRESULT hr;
 
     TRACE("iface %p, desc %p.\n", iface, pDesc);
 
     wined3d_mutex_lock();
-    hr = IWineD3DSurface_GetDesc(This->wineD3DSurface, &wined3ddesc);
+    IWineD3DSurface_GetDesc(This->wineD3DSurface, &wined3ddesc);
     wined3d_mutex_unlock();
 
-    if (SUCCEEDED(hr))
-    {
-        pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.format);
-        pDesc->Type = wined3ddesc.resource_type;
-        pDesc->Usage = wined3ddesc.usage;
-        pDesc->Pool = wined3ddesc.pool;
-        pDesc->Size = wined3ddesc.size;
-        pDesc->MultiSampleType = wined3ddesc.multisample_type;
-        pDesc->Width = wined3ddesc.width;
-        pDesc->Height = wined3ddesc.height;
-    }
+    pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.format);
+    pDesc->Type = wined3ddesc.resource_type;
+    pDesc->Usage = wined3ddesc.usage;
+    pDesc->Pool = wined3ddesc.pool;
+    pDesc->Size = wined3ddesc.size;
+    pDesc->MultiSampleType = wined3ddesc.multisample_type;
+    pDesc->Width = wined3ddesc.width;
+    pDesc->Height = wined3ddesc.height;
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKED_RECT *pLockedRect, CONST RECT *pRect, DWORD Flags) {
