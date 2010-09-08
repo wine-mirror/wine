@@ -3875,13 +3875,20 @@ static BOOL StorageImpl_ReadBigBlock(
   void*          buffer)
 {
   ULARGE_INTEGER ulOffset;
-  DWORD  read;
+  DWORD  read=0;
 
   ulOffset.u.HighPart = 0;
   ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
 
   StorageImpl_ReadAt(This, ulOffset, buffer, This->bigBlockSize, &read);
-  return (read == This->bigBlockSize);
+
+  if (read && read < This->bigBlockSize)
+  {
+    /* File ends during this block; fill the rest with 0's. */
+    memset((LPBYTE)buffer+read, 0, This->bigBlockSize-read);
+  }
+
+  return (read != 0);
 }
 
 static BOOL StorageImpl_ReadDWordFromBigBlock(
