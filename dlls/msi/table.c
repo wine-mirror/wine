@@ -988,8 +988,8 @@ done:
 /* try to find the table name in the _Tables table */
 BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name )
 {
-    UINT r, table_id = 0, i, count;
-    MSITABLE *table = NULL;
+    UINT r, table_id, i;
+    MSITABLE *table;
 
     static const WCHAR szStreams[] = {'_','S','t','r','e','a','m','s',0};
     static const WCHAR szStorages[] = {'_','S','t','o','r','a','g','e','s',0};
@@ -1012,10 +1012,11 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name )
         return FALSE;
     }
 
-    count = table->row_count;
-    for( i=0; i<count; i++ )
-        if( table->data[ i ][ 0 ] == table_id )
+    for( i = 0; i < table->row_count; i++ )
+    {
+        if( read_table_int( table->data, i, 0, db->bytes_per_strref ) == table_id )
             return TRUE;
+    }
 
     return FALSE;
 }
