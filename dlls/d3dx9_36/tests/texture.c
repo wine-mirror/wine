@@ -22,6 +22,7 @@
 #define COBJMACROS
 #include "wine/test.h"
 #include "d3dx9tex.h"
+#include "resources.h"
 
 static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
 {
@@ -313,6 +314,49 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
 
         IDirect3DTexture9_Release(texture);
     }
+
+    /* D3DXCreateTextureFromResource */
+    todo_wine {
+        hr = D3DXCreateTextureFromResourceA(device, NULL, MAKEINTRESOURCEA(IDB_BITMAP_1x1), &texture);
+        ok(hr == D3D_OK, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+        if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+
+        hr = D3DXCreateTextureFromResourceA(device, NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), &texture);
+        ok(hr == D3D_OK, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+        if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+    }
+
+    hr = D3DXCreateTextureFromResourceA(device, NULL, MAKEINTRESOURCEA(IDS_STRING), &texture);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+
+    hr = D3DXCreateTextureFromResourceA(NULL, NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), &texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateTextureFromResourceA(device, NULL, NULL, &texture);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+
+    hr = D3DXCreateTextureFromResourceA(device, NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTextureFromResource returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+
+    /* D3DXCreateTextureFromResourceEx */
+    todo_wine {
+        hr = D3DXCreateTextureFromResourceExA(device, NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+        ok(hr == D3D_OK, "D3DXCreateTextureFromResourceEx returned %#x, expected %#x\n", hr, D3D_OK);
+        if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+    }
+
+    hr = D3DXCreateTextureFromResourceExA(device, NULL, MAKEINTRESOURCEA(IDS_STRING), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXCreateTextureFromResourceEx returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+
+    hr = D3DXCreateTextureFromResourceExA(NULL, NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTextureFromResourceEx returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateTextureFromResourceExA(device, NULL, NULL, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXCreateTextureFromResourceEx returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+
+    hr = D3DXCreateTextureFromResourceExA(device, NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateTextureFromResourceEx returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 }
 
 static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
