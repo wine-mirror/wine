@@ -67,12 +67,6 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
-#define CHECK_CALLED_BROKEN(func) \
-    do { \
-        ok(called_ ## func || broken(!called_ ## func), "expected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
-    }while(0)
-
 #define CLEAR_CALLED(func) \
     expect_ ## func = called_ ## func = FALSE
 
@@ -1828,13 +1822,13 @@ static void test_ie_funcs(IUnknown *unk)
 
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_TRUE));
-    ok(hres == S_OK || broken(hres == E_NOTIMPL), "put_Resizable failed: %08x\n", hres);
-    CHECK_CALLED_BROKEN(Invoke_WINDOWSETRESIZABLE);
+    ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
     SET_EXPECT(Invoke_WINDOWSETRESIZABLE);
     hres = IWebBrowser2_put_Resizable(wb, (exvb = VARIANT_FALSE));
-    ok(hres == S_OK || broken(hres == E_NOTIMPL), "put_Resizable failed: %08x\n", hres);
-    CHECK_CALLED_BROKEN(Invoke_WINDOWSETRESIZABLE);
+    ok(hres == S_OK, "put_Resizable failed: %08x\n", hres);
+    CHECK_CALLED(Invoke_WINDOWSETRESIZABLE);
 
     hres = IWebBrowser2_get_Resizable(wb, &b);
     ok(hres == E_NOTIMPL, "get_Resizable failed: %08x\n", hres);
@@ -2213,12 +2207,12 @@ static void test_Navigate2(IUnknown *unk)
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
         CHECK_CALLED(Invoke_AMBIENT_PALETTE);
         CHECK_CALLED(GetOptionKeyPath);
-        CHECK_CALLED_BROKEN(GetOverridesKeyPath);
+        CHECK_CALLED(GetOverridesKeyPath);
         todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
         todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
         todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
-        todo_wine CHECK_CALLED_BROKEN(Invoke_SETSECURELOCKICON);
-        todo_wine CHECK_CALLED_BROKEN(Invoke_FILEDOWNLOAD);
+        todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
+        todo_wine CHECK_CALLED(Invoke_FILEDOWNLOAD);
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
         todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
         CHECK_CALLED(EnableModeless_TRUE);
@@ -2482,15 +2476,24 @@ static void test_WebBrowser(BOOL do_download)
 
     hres = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "CoCreateInterface failed: %08x\n", hres);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        win_skip("Could not create WebBrowser, probably too old IE\n");
         return;
+    }
 
     is_downloading = FALSE;
     is_first_load = TRUE;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
+
+    hres = IWebBrowser2_put_Resizable(wb, VARIANT_TRUE);
+    if(hres == E_NOTIMPL) {
+        win_skip("put_Resizable returned E_NOTIMPL, assuming IE <6\n");
+        IWebBrowser_Release(wb);
+        IUnknown_Release(unk);
+        return;
+    }
 
     test_QueryInterface(unk);
     test_ready_state(READYSTATE_UNINITIALIZED);
