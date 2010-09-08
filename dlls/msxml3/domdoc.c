@@ -779,7 +779,7 @@ static HRESULT WINAPI domdoc_get_lastChild(
 
     TRACE("(%p)->(%p)\n", This, lastChild);
 
-    return node_get_first_child(&This->node, lastChild);
+    return node_get_last_child(&This->node, lastChild);
 }
 
 

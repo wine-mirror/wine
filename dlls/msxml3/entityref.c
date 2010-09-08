@@ -265,7 +265,7 @@ static HRESULT WINAPI entityref_get_lastChild(
 
     TRACE("(%p)->(%p)\n", This, domNode);
 
-    return node_get_first_child(&This->node, domNode);
+    return node_get_last_child(&This->node, domNode);
 }
 
 static HRESULT WINAPI entityref_get_previousSibling(
