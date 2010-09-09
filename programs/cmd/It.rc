@@ -31,9 +31,9 @@ STRINGTABLE
 {
   WCMD_ATTRIB, "Aiuto su ATTRIB\n"
   WCMD_CALL,
-"CALL <batchfilename> si usa all'interno di un file batch per eseguire comandi\n\
-da un altro file batch. Quando il file batch esiste, il controllo torna al\n\
-file che l'ha chiamato. Il comando CALL può passare parametri alla\n\
+"CALL <nomedelfilebatch> si usa all'interno di un file batch per eseguire\n\
+comandi da un altro file batch. Quando il file batch esiste, il controllo\n\
+torna al file che l'ha chiamato. Il comando CALL può passare parametri alla\n\
 procedura chiamata.\n\
 \n\
 Cambiamenti alla cartella predefinita, alle variabili d'ambiente etc fatti dentro una\n\
@@ -189,9 +189,9 @@ se chiamato dalla linea di comando.\n"
 se rediretto). Nessun controllo è fatto se il file sia testo leggibile.\n"
 
   WCMD_VERIFY,
-"VERIFY è usato per settare, pulire o verificare la flag di verify. Forme valide sono:\n\
+"VERIFY è usato per impostare, pulire o verificare la flag di verify. Forme valide sono:\n\
 \n\
-VERIFY ON	Setta la flag\n\
+VERIFY ON	Imposta la flag\n\
 VERIFY OFF	Pulisce la flag\n\
 VERIFY		Mostra ON o OFF a seconda dei casi.\n\
 \n\
@@ -248,7 +248,7 @@ Inserisci HELP <comando> per maggiori informazioni su ciascuno dei comandi sopra
   WCMD_YES, "S"
   WCMD_NO, "N"
   WCMD_NOASSOC, "Associazione di file mancante per l'estensione %s\n"
-  WCMD_NOFTYPE, "Nessun comando open associato con il tipo di file '%s'\n"
+  WCMD_NOFTYPE, "Nessun comando di apertura associato con il tipo di file '%s'\n"
   WCMD_OVERWRITE, "Sovrascrivere %s"
   WCMD_MORESTR, "Di più..."
   WCMD_TRUNCATEDLINE, "Linea nell'elaborazione Batch probabilmente troncata. Uso:\n"
@@ -265,7 +265,7 @@ Inserisci HELP <comando> per maggiori informazioni su ciascuno dei comandi sopra
   WCMD_MISSINGENV, "Variabile d'ambiente %s non definita\n"
   WCMD_READFAIL, "Impossibile aprire '%s'\n"
   WCMD_CALLINSCRIPT, "Impossibile chiamare un'etichetta batch fuori da uno script batch\n"
-  WCMD_ALL, "A"
+  WCMD_ALL, "T"
   WCMD_DELPROMPT, "%s, Cancella"
   WCMD_ECHOPROMPT, "Echo è %s\n"
   WCMD_VERIFYPROMPT, "Verify è %s\n"
