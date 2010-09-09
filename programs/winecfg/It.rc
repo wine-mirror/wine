@@ -59,7 +59,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Impostazioni delle applicazioni",IDC_STATIC, 8,4,244,210
-    LTEXT           "Wine può simulare diverse versioni e stili di Windows per ogni applicazione",
+    LTEXT           "Wine può simulare diverse versioni e stili di Windows per ogni applicazione. Questo tab è collegato ai tab Librerie e Grafica per permetterti di cambiare le impostazioni a livello di sistema o per applicazione pure in quelle tab.",
                     IDC_STATIC,15,20,227,30
     CONTROL         "Applicazioni",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,120
@@ -100,13 +100,13 @@ IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " DLL Overrides ",IDC_STATIC,8,4,244,210
+    GROUPBOX        " Sostituzioni di DLL ",IDC_STATIC,8,4,244,210
     LTEXT           "Le Dynamic Link Libraries possono essere specificate individualmente per essere builtin (fornite da Wine) o native (prese da Windows o fornite dall'applicazione)."
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "&Nuovo override per la libreria:",IDC_STATIC,16,48,100,8
+    LTEXT           "&Nuova sostituzione per la libreria:",IDC_STATIC,16,48,100,8
     COMBOBOX        IDC_DLLCOMBO,16,58,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
     PUSHBUTTON      "&Aggiungi",IDC_DLLS_ADDDLL, 164,58,82,13
-    LTEXT           "&Override esistenti:",IDC_STATIC,16,76,100,8
+    LTEXT           "&Sostituzioni esistenti:",IDC_STATIC,16,76,100,8
     LISTBOX         IDC_DLLS_LIST,16,86,140,122,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Modifica...",IDC_DLLS_EDITDLL,164,86,82,14
     PUSHBUTTON      "&Rimuovi",IDC_DLLS_REMOVEDLL,164,104,82,14
@@ -114,14 +114,14 @@ END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Modifica Override"
+CAPTION "Modifica sostituzione"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Carica l'ordine ",IDC_STATIC,8,4,94,66
     CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
-    CONTROL         "&Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "B&uiltin poi Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "N&ative poi Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "&Nativa (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
+    CONTROL         "B&uiltin poi Nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "N&ativa poi Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "&Disabilita",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "Annulla",IDCANCEL,57,74,45,14,WS_GROUP
@@ -158,7 +158,7 @@ BEGIN
     COMBOBOX        IDC_COMBO_TYPE,51,136,97,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
     PUSHBUTTON      "Mostra controlli &avanzati",IDC_BUTTON_SHOW_HIDE_ADVANCED,154,135,92,13
-    LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,26,9
+    LTEXT           "&Unità:",IDC_STATIC_DEVICE,15,153,26,9
     EDITTEXT        IDC_EDIT_DEVICE,51,150,150,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "Na&viga...",IDC_BUTTON_BROWSE_DEVICE,206,150,40,13
 
