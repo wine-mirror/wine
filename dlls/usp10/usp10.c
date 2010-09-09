@@ -1290,7 +1290,10 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 
     if (!psa->fNoGlyphIndex)
     {
-        WCHAR *rChars = heap_alloc(sizeof(WCHAR) * cChars);
+        WCHAR *rChars;
+        if ((hr = SHAPE_CheckFontForRequiredFeatures(hdc, (ScriptCache *)*psc, psa)) != S_OK) return hr;
+
+        rChars = heap_alloc(sizeof(WCHAR) * cChars);
         if (!rChars) return E_OUTOFMEMORY;
         for (i = 0; i < cChars; i++)
         {

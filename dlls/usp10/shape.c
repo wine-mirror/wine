@@ -273,6 +273,15 @@ static OPENTYPE_FEATURE_RECORD arabic_features[] =
     { 0x7465736d /*mset*/, 1},
 };
 
+static const char* required_arabic_features[] =
+{
+    "fina",
+    "init",
+    "medi",
+    "rlig",
+    NULL
+};
+
 static OPENTYPE_FEATURE_RECORD hebrew_features[] =
 {
     { 0x67696c64 /*dlig*/, 1},
@@ -284,6 +293,18 @@ static OPENTYPE_FEATURE_RECORD syriac_features[] =
     { 0x746c6163 /*calt*/, 1},
     { 0x6167696c /*liga*/, 1},
     { 0x67696c64 /*dlig*/, 1},
+};
+
+static const char* required_syriac_features[] =
+{
+    "fina",
+    "fin2",
+    "fin3",
+    "init",
+    "medi",
+    "med2",
+    "rlig",
+    NULL
 };
 
 static OPENTYPE_FEATURE_RECORD sinhala_features[] =
@@ -310,8 +331,15 @@ static OPENTYPE_FEATURE_RECORD thai_features[] =
     { 0x706d6363 /*ccmp*/, 1},
 };
 
+static const char* required_lao_features[] =
+{
+    "ccmp",
+    NULL
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES  defaultTextRange;
+    const char**          requiredFeatures;
     CHAR                  otTag[5];
     ContextualShapingProc contextProc;
 } ScriptShapeData;
@@ -319,30 +347,30 @@ typedef struct ScriptShapeDataTag {
 /* in order of scripts */
 static const ScriptShapeData ShapingData[] =
 {
-    {{ standard_features, 2}, "", NULL},
-    {{ standard_features, 2}, "latn", NULL},
-    {{ standard_features, 2}, "latn", NULL},
-    {{ standard_features, 2}, "latn", NULL},
-    {{ standard_features, 2}, "" , NULL},
-    {{ standard_features, 2}, "latn", NULL},
-    {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
-    {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
-    {{ hebrew_features, 1}, "hebr", NULL},
-    {{ syriac_features, 4}, "syrc", ContextualShape_Syriac},
-    {{ arabic_features, 6}, "arab", ContextualShape_Arabic},
-    {{ NULL, 0}, "thaa", NULL},
-    {{ standard_features, 2}, "grek", NULL},
-    {{ standard_features, 2}, "cyrl", NULL},
-    {{ standard_features, 2}, "armn", NULL},
-    {{ standard_features, 2}, "geor", NULL},
-    {{ sinhala_features, 7}, "sinh", NULL},
-    {{ tibetan_features, 2}, "tibt", NULL},
-    {{ tibetan_features, 2}, "tibt", NULL},
-    {{ tibetan_features, 2}, "phag", ContextualShape_Phags_pa},
-    {{ thai_features, 1}, "thai", NULL},
-    {{ thai_features, 1}, "thai", NULL},
-    {{ thai_features, 1}, "lao", NULL},
-    {{ thai_features, 1}, "lao", NULL},
+    {{ standard_features, 2}, NULL, "", NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL},
+    {{ standard_features, 2}, NULL, "" , NULL},
+    {{ standard_features, 2}, NULL, "latn", NULL},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic},
+    {{ hebrew_features, 1}, NULL, "hebr", NULL},
+    {{ syriac_features, 4}, required_syriac_features, "syrc", ContextualShape_Syriac},
+    {{ arabic_features, 6}, required_arabic_features, "arab", ContextualShape_Arabic},
+    {{ NULL, 0}, NULL, "thaa", NULL},
+    {{ standard_features, 2}, NULL, "grek", NULL},
+    {{ standard_features, 2}, NULL, "cyrl", NULL},
+    {{ standard_features, 2}, NULL, "armn", NULL},
+    {{ standard_features, 2}, NULL, "geor", NULL},
+    {{ sinhala_features, 7}, NULL, "sinh", NULL},
+    {{ tibetan_features, 2}, NULL, "tibt", NULL},
+    {{ tibetan_features, 2}, NULL, "tibt", NULL},
+    {{ tibetan_features, 2}, NULL, "phag", ContextualShape_Phags_pa},
+    {{ thai_features, 1}, NULL, "thai", NULL},
+    {{ thai_features, 1}, NULL, "thai", NULL},
+    {{ thai_features, 1}, required_lao_features, "lao", NULL},
+    {{ thai_features, 1}, required_lao_features, "lao", NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -1307,4 +1335,26 @@ const TEXTRANGE_PROPERTIES *rpRangeProperties;
 rpRangeProperties = &ShapingData[psa->eScript].defaultTextRange;
 
     SHAPE_ApplyOpenTypeFeatures(hdc, psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, cChars, rpRangeProperties, pwLogClust);
+}
+
+HRESULT SHAPE_CheckFontForRequiredFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa)
+{
+    const GSUB_Feature *feature;
+    int i;
+
+    if (!ShapingData[psa->eScript].requiredFeatures)
+        return S_OK;
+
+    if (!psc->GSUB_Table)
+        psc->GSUB_Table = load_gsub_table(hdc);
+
+    i = 0;
+    while (ShapingData[psa->eScript].requiredFeatures[i])
+    {
+        feature = load_GSUB_feature(hdc, psa, psc, ShapingData[psa->eScript].requiredFeatures[i]);
+        if (!feature)
+            return USP_E_SCRIPT_NOT_IN_FONT;
+        i++;
+    }
+    return S_OK;
 }
