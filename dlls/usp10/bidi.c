@@ -883,3 +883,38 @@ int BIDI_ReorderL2vLevel(int level, int *pIndexs, const BYTE* plevel, int cch, B
 
     return ich;
 }
+
+BOOL BIDI_GetStrengths(LPCWSTR lpString, INT uCount, const SCRIPT_CONTROL *c,
+                      WORD* lpStrength)
+{
+    int i;
+    classify(lpString, lpStrength, uCount, c);
+
+    for ( i = 0; i < uCount; i++)
+    {
+        switch(lpStrength[i])
+        {
+            case L:
+            case LRE:
+            case LRO:
+            case R:
+            case AL:
+            case RLE:
+            case RLO:
+                lpStrength[i] = 1;
+                break;
+            case PDF:
+            case EN:
+            case ES:
+            case ET:
+            case AN:
+            case CS:
+            case BN:
+                lpStrength[i] = 2;
+                break;
+            default: /* Neutrals and NSM */
+                lpStrength[i] = 0;
+        }
+    }
+    return TRUE;
+}

@@ -599,9 +599,10 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 
 #define Numeric_space 0x0020
 
-    int   cnt = 0, index = 0;
+    int   cnt = 0, index = 0, str = 0;
     int   New_Script = SCRIPT_UNDEFINED;
     WORD  *levels = NULL;
+    WORD  *strength = NULL;
     WORD  baselevel = 0;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
@@ -622,10 +623,18 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         for (i = 0; i < cInChars; i++)
             if (levels[i]!=levels[0])
                 break;
-        if (i >= cInChars)
+        if (i >= cInChars && !odd(baselevel))
         {
             heap_free(levels);
             levels = NULL;
+        }
+        else
+        {
+            if (!psControl->fMergeNeutralItems)
+            {
+                strength = heap_alloc_zero(cInChars * sizeof(WORD));
+                BIDI_GetStrengths(pwcInChars, cInChars, psControl, strength);
+            }
         }
     }
 
@@ -645,21 +654,28 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         pItems[index].a.fRTL = odd(baselevel);
     }
 
-    TRACE("New_Level=%i New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
-          levels?levels[cnt]:-1, New_Script, pItems[index].a.eScript, index, cnt,
+    if (strength)
+        str = strength[0];
+
+    TRACE("New_Level=%i New_Strength=%i New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
+          levels?levels[cnt]:-1, str, New_Script, pItems[index].a.eScript, index, cnt,
           pItems[index].iCharPos);
 
     for (cnt=1; cnt < cInChars; cnt++)
     {
-        if (levels && (levels[cnt] == pItems[index].a.s.uBidiLevel))
+        if (levels && (levels[cnt] == pItems[index].a.s.uBidiLevel && (!strength || (strength[cnt] == 0 || strength[cnt] == str))))
             continue;
 
         if(pwcInChars[cnt] != Numeric_space)
             New_Script = get_char_script(pwcInChars[cnt]);
 
-        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel)) || New_Script != pItems[index].a.eScript || New_Script == Script_Control)
+        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel || (strength && (strength[cnt] != str)))) || New_Script != pItems[index].a.eScript || New_Script == Script_Control)
         {
-            TRACE("New_Level = %i, New_Script=%d, eScript=%d ", levels?levels[cnt]:-1, New_Script, pItems[index].a.eScript);
+            TRACE("New_Level = %i, New_Strength = %i, New_Script=%d, eScript=%d ", levels?levels[cnt]:-1, strength?strength[cnt]:str, New_Script, pItems[index].a.eScript);
+
+            if (strength && strength[cnt] != 0)
+                str = strength[cnt];
+
             index++;
             if  (index+1 > cMaxItems)
                 return E_OUTOFMEMORY;
@@ -700,6 +716,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     /*  Set SCRIPT_ITEM                                     */
     pItems[index].iCharPos = cnt;         /* the last item contains the ptr to the lastchar */
     heap_free(levels);
+    heap_free(strength);
     return S_OK;
 }
 
