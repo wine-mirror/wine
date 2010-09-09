@@ -346,6 +346,30 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Msxml2.DOMDocument",
 	"6.0"
     },
+    {   &CLSID_XMLSchemaCache60,
+    "XML Schema Cache 6.0",
+    NULL,
+    "msxml6.dll",
+    "Both",
+    "Msxml2.XMLSchemaCache",
+    "6.0"
+    },
+    {   &CLSID_MXXMLWriter60,
+    "IMXWriter interface 6.0",
+    NULL,
+    "msxml6.dll",
+    "Both",
+    "Msxml2.MXXMLWriter",
+    "6.0"
+    },
+    {   &CLSID_SAXAttributes60,
+    "SAX Attribute 6.0",
+    NULL,
+    "msxml6.dll",
+    "Both",
+    "Msxml2.SAXAttributes",
+    "6.0"
+    },
     {   &CLSID_FreeThreadedDOMDocument60,
     "Free Threaded XML DOM Document 6.0",
     NULL,
@@ -365,6 +389,21 @@ static struct progid const progid_list[] = {
 	"XML DOM Document 6.0",
 	&CLSID_DOMDocument60,
 	NULL
+    },
+    {   "Msxml2.XMLSchemaCache.6.0",
+    "XML Schema Cache 6.0",
+    &CLSID_XMLSchemaCache60,
+    NULL
+    },
+    {   "Msxml2.MXXMLWriter.6.0",
+    "MXXMLWriter 6.0",
+    &CLSID_MXXMLWriter60,
+    NULL
+    },
+    {   "Msxml2.SAXAttributes.6.0",
+    "SAX Attribute 6.0",
+    &CLSID_SAXAttributes60,
+    NULL
     },
     {   "MSXML.FreeThreadedDOMDocument60",
     "Free threaded XML DOM Document 6.0",
