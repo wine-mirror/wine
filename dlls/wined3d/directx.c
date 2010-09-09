@@ -999,6 +999,17 @@ static const struct driver_version_information driver_version_table[] =
     {DRIVER_ATI_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
     {DRIVER_ATI_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
 
+    /* Intel
+     * The drivers are unified but not all versions support all GPUs. At some point the 2k/xp
+     * drivers used ialmrnt5.dll for GMA800/GMA900 but at some point the file was renamed to
+     * igxprd32.dll but the GMA800 driver was never updated. */
+    {DRIVER_INTEL_GMA800,       DRIVER_MODEL_NT5X,  "ialmrnt5.dll", 14, 10, 3889},
+    {DRIVER_INTEL_GMA900,       DRIVER_MODEL_NT5X,  "igxprd32.dll", 14, 10, 4764},
+    {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT5X,  "igxprd32.dll", 14, 10, 4926},
+    {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT5X,  "igxprd32.dll", 14, 10, 5218},
+    {DRIVER_INTEL_GMA950,       DRIVER_MODEL_NT6X,  "igdumd32.dll", 14, 10, 1504},
+    {DRIVER_INTEL_GMA3000,      DRIVER_MODEL_NT6X,  "igdumd32.dll", 15, 10, 1666},
+
     /* Nvidia
      * - Geforce6 and newer cards are supported by the current driver (197.x) on XP-Win7
      * - GeforceFX support is up to 173.x on <= XP
@@ -1074,9 +1085,17 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_ATI_R600,         },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        DRIVER_ATI_R600,         },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_ATI_R600,         }
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_ATI_R600,         },
+    /* Intel cards */
+    {HW_VENDOR_INTEL,      CARD_INTEL_I830G,               "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800  },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I855G,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800  },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I865G,               "Intel(R) 82865G Graphics Controller",                       DRIVER_INTEL_GMA800  },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I915G,               "Intel(R) 82915G/GV/910GL Express Chipset Family",           DRIVER_INTEL_GMA900  },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I915GM,              "Mobile Intel(R) 915GM/GMS,910GML Express Chipset Family",   DRIVER_INTEL_GMA900  },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I945GM,              "Mobile Intel(R) 945GM Express Chipset Family",              DRIVER_INTEL_GMA950  },
+    {HW_VENDOR_INTEL,      CARD_INTEL_X3100,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000 }
 
-    /* TODO: Add information about legacy ATI hardware, Intel and other cards. */
+    /* TODO: Add information about legacy ATI hardware and other cards. */
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
