@@ -837,6 +837,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
     case 3000028:
     case 3000029:
     case 3000030:
+    case 3000031:
         /* TODO */
         return S_OK;
     }
