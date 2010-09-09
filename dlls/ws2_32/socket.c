@@ -6020,3 +6020,16 @@ INT WINAPI WSCWriteProviderOrder( LPDWORD entry, DWORD number )
     FIXME("(%p 0x%08x) Stub!\n", entry, number);
     return 0;
 }
+
+/***********************************************************************
+ *              WSANSPIoctl                       (WS2_32.91)
+ */
+INT WINAPI WSANSPIoctl( HANDLE hLookup, DWORD dwControlCode, LPVOID lpvInBuffer,
+                        DWORD cbInBuffer, LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+                        LPDWORD lpcbBytesReturned, LPWSACOMPLETION lpCompletion )
+{
+    FIXME("(%p, 0x%08x, %p, 0x%08x, %p, 0x%08x, %p, %p) Stub!\n", hLookup, dwControlCode,
+    lpvInBuffer, cbInBuffer, lpvOutBuffer, cbOutBuffer, lpcbBytesReturned, lpCompletion);
+    WSASetLastError(WSA_NOT_ENOUGH_MEMORY);
+    return SOCKET_ERROR;
+};

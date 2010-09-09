@@ -85,7 +85,7 @@
 @ stdcall WSALookupServiceEnd(long)
 @ stdcall WSALookupServiceNextA(long long ptr ptr)
 @ stdcall WSALookupServiceNextW(long long ptr ptr)
-@ stub    WSANSPIoctl
+@ stdcall WSANSPIoctl(ptr long ptr long ptr long ptr ptr)
 @ stdcall WSANtohl(long long ptr)
 @ stdcall WSANtohs(long long ptr)
 @ stdcall WSAProviderConfigChange(ptr ptr ptr)
