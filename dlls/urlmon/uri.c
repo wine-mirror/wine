@@ -4743,9 +4743,41 @@ static HRESULT WINAPI UriBuilder_SetUserName(IUriBuilder *iface, LPCWSTR pwzNewV
 
 static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPropertyMask)
 {
+    const DWORD accepted_flags = Uri_HAS_AUTHORITY|Uri_HAS_DOMAIN|Uri_HAS_EXTENSION|Uri_HAS_FRAGMENT|Uri_HAS_HOST|
+                                 Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|
+                                 Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME;
+
     UriBuilder *This = URIBUILDER_THIS(iface);
-    FIXME("(%p)->(0x%08x)\n", This, dwPropertyMask);
-    return E_NOTIMPL;
+    TRACE("(%p)->(0x%08x)\n", This, dwPropertyMask);
+
+    if(dwPropertyMask & ~accepted_flags)
+        return E_INVALIDARG;
+
+    if(dwPropertyMask & Uri_HAS_FRAGMENT)
+        UriBuilder_SetFragment(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_HOST)
+        UriBuilder_SetHost(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_PASSWORD)
+        UriBuilder_SetPassword(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_PATH)
+        UriBuilder_SetPath(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_PORT)
+        UriBuilder_SetPort(iface, FALSE, 0);
+
+    if(dwPropertyMask & Uri_HAS_QUERY)
+        UriBuilder_SetQuery(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_SCHEME_NAME)
+        UriBuilder_SetSchemeName(iface, NULL);
+
+    if(dwPropertyMask & Uri_HAS_USER_NAME)
+        UriBuilder_SetUserName(iface, NULL);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI UriBuilder_HasBeenModified(IUriBuilder *iface, BOOL *pfModified)

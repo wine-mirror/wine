@@ -4943,16 +4943,38 @@ typedef struct _uri_builder_remove_test {
 
 static const uri_builder_remove_test uri_builder_remove_tests[] = {
     {   "http://google.com/test?test=y#Frag",0,S_OK,FALSE,
-        Uri_HAS_FRAGMENT|Uri_HAS_PATH|Uri_HAS_QUERY,S_OK,TRUE,
+        Uri_HAS_FRAGMENT|Uri_HAS_PATH|Uri_HAS_QUERY,S_OK,FALSE,
         "http://google.com/",0,S_OK,TRUE
     },
     {   "http://user:pass@winehq.org/",0,S_OK,FALSE,
-        Uri_HAS_USER_NAME|Uri_HAS_PASSWORD,S_OK,TRUE,
+        Uri_HAS_USER_NAME|Uri_HAS_PASSWORD,S_OK,FALSE,
         "http://winehq.org/",0,S_OK,TRUE
     },
     {   "zip://google.com?Test=x",0,S_OK,FALSE,
-        Uri_HAS_HOST,S_OK,TRUE,
+        Uri_HAS_HOST,S_OK,FALSE,
         "zip:/?Test=x",0,S_OK,TRUE
+    },
+    /* Doesn't remove the whole userinfo component. */
+    {   "http://username:pass@google.com/",0,S_OK,FALSE,
+        Uri_HAS_USER_INFO,S_OK,FALSE,
+        "http://username:pass@google.com/",0,S_OK,TRUE
+    },
+    /* Doesn't remove the domain. */
+    {   "http://google.com/",0,S_OK,FALSE,
+        Uri_HAS_DOMAIN,S_OK,FALSE,
+        "http://google.com/",0,S_OK,TRUE
+    },
+    {   "http://google.com:120/",0,S_OK,FALSE,
+        Uri_HAS_AUTHORITY,S_OK,FALSE,
+        "http://google.com:120/",0,S_OK,TRUE
+    },
+    {   "http://google.com/test.com/",0,S_OK,FALSE,
+        Uri_HAS_EXTENSION,S_OK,FALSE,
+        "http://google.com/test.com/",0,S_OK,TRUE
+    },
+    {   "http://google.com/?test=x",0,S_OK,FALSE,
+        Uri_HAS_PATH_AND_QUERY,S_OK,FALSE,
+        "http://google.com/?test=x",0,S_OK,TRUE
     }
 };
 
@@ -7837,19 +7859,22 @@ static void test_IUriBuilder_RemoveProperties(void) {
         for(i = Uri_PROPERTY_STRING_START; i <= Uri_PROPERTY_DWORD_LAST; ++i) {
             hr = IUriBuilder_RemoveProperties(builder, i << 1);
             if((i << 1) & invalid) {
-                todo_wine {
-                    ok(hr == E_INVALIDARG,
-                        "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x with prop=%d.\n",
-                        hr, E_INVALIDARG, i);
-                }
+                ok(hr == E_INVALIDARG,
+                    "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x with prop=%d.\n",
+                    hr, E_INVALIDARG, i);
             } else {
-                todo_wine {
-                    ok(hr == S_OK,
-                        "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x with prop=%d.\n",
-                        hr, S_OK, i);
-                }
+                ok(hr == S_OK,
+                    "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x with prop=%d.\n",
+                    hr, S_OK, i);
             }
         }
+
+        /* Also doesn't accept anything that's outside the range of the
+         * Uri_HAS flags.
+         */
+        hr = IUriBuilder_RemoveProperties(builder, (Uri_PROPERTY_DWORD_LAST+1) << 1);
+        ok(hr == E_INVALIDARG, "Error: IUriBuilder_RemoveProperties returned 0x%08x, expected 0x%08x.\n",
+            hr, E_INVALIDARG);
     }
     if(builder) IUriBuilder_Release(builder);
 
