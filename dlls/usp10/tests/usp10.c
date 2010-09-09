@@ -78,6 +78,8 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
             todo_wine winetest_ok(outpItems[x].a.s.uBidiLevel == items[x].uBidiLevel, "%i:Wrong BidiLevel\n",x);
         else
             winetest_ok(outpItems[x].a.s.uBidiLevel == items[x].uBidiLevel, "%i:Wrong BidiLevel(%i)\n",x,outpItems[x].a.s.uBidiLevel);
+        if (x != outnItems)
+            winetest_ok(outpItems[x].a.eScript != SCRIPT_UNDEFINED, "%i: Undefined script\n",x);
     }
 }
 
@@ -90,6 +92,10 @@ static void test_ScriptItemize( void )
     static const itemTest t11[2] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},4,0,0,0}};
     static const itemTest t12[2] = {{{0,0,0,0},0,0,0,2},{{0,0,0,0},4,0,0,0}};
 
+    static const WCHAR test1b[] = {' ', ' ', ' ', ' ',0};
+    static const itemTest t1b1[2] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},4,0,0,0}};
+    static const itemTest t1b2[2] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,0,0,0}};
+
     /* Arabic, English*/
     static const WCHAR test2[] = {'1','2','3','-','5','2',0x064a,0x064f,0x0633,0x0627,0x0648,0x0650,0x064a,'7','1','.',0};
     static const itemTest t21[7] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},3,0,0,0},{{0,0,0,0},4,0,0,0},{{0,0,0,0},6,1,1,1},{{0,0,0,0},13,0,0,0},{{0,0,0,0},15,0,0,0},{{0,0,0,0},16,0,0,0}};
@@ -100,6 +106,20 @@ static void test_ScriptItemize( void )
     static const itemTest t2b1[5] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},3,0,0,0},{{0,0,0,0},4,0,0,0},{{0,0,0,0},8,1,1,1},{{0,0,0,0},11,0,0,0}};
     static const itemTest t2b2[5] = {{{0,0,0,0},0,0,0,2},{{0,0,0,0},3,0,0,2},{{0,0,0,0},4,0,0,2},{{0,0,0,0},7,1,1,1},{{0,0,0,0},11,0,0,0}};
     static const itemTest t2b3[3] = {{{0,0,0,0},0,0,0,2},{{0,0,0,0},7,1,1,1},{{0,0,0,0},11,0,0,0}};
+
+    /* leading space */
+    static const WCHAR test2c[] = {' ',0x0621,0x0623,0x0624,'A','B','C','-','D','E','F',0};
+    static const itemTest t2c1[5] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,0,0,0},{{0,0,0,0},7,0,0,0},{{0,0,0,0},8,0,0,0},{{0,0,0,0},11,0,0,0}};
+    static const itemTest t2c2[6] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},1,1,1,1},{{0,0,0,0},4,0,0,0},{{0,0,0,0},7,0,0,0},{{0,0,0,0},8,0,0,0},{{0,0,0,0},11,0,0,0}};
+    static const itemTest t2c3[5] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,0,0,2},{{0,0,0,0},7,0,0,2},{{0,0,0,0},8,0,0,2},{{0,0,0,0},11,0,0,0}};
+    static const itemTest t2c4[3] = {{{0,0,0,0},0,1,1,1},{{0,0,0,0},4,0,0,2},{{0,0,0,0},11,0,0,0}};
+
+    /* trailing space */
+    static const WCHAR test2d[] = {'A','B','C','-','D','E','F',0x0621,0x0623,0x0624,' ',0};
+    static const itemTest t2d1[5] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},3,0,0,0},{{0,0,0,0},4,0,0,0},{{0,0,0,0},7,1,1,1},{{0,0,0,0},11,0,0,0}};
+    static const itemTest t2d2[6] = {{{0,0,0,0},0,0,0,0},{{0,0,0,0},3,0,0,0},{{0,0,0,0},4,0,0,0},{{0,0,0,0},7,1,1,1},{{0,0,0,0},10,0,0,0},{{0,0,0,0},11,0,0,0}};
+    static const itemTest t2d3[5] = {{{0,0,0,0},0,0,0,2},{{0,0,0,0},3,0,0,2},{{0,0,0,0},4,0,0,2},{{0,0,0,0},7,1,1,1},{{0,0,0,0},11,0,0,0}};
+    static const itemTest t2d4[3] = {{{0,0,0,0},0,0,0,2},{{0,0,0,0},7,1,1,1},{{0,0,0,0},11,0,0,0}};
 
     /* Thai */
     static const WCHAR test3[] =
@@ -168,8 +188,11 @@ static void test_ScriptItemize( void )
     ok (hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG if cInChars is 0\n");
 
     test_items_ok(test1,4,NULL,NULL,1,t11,FALSE,0);
+    test_items_ok(test1b,4,NULL,NULL,1,t1b1,FALSE,0);
     test_items_ok(test2,16,NULL,NULL,6,t21,FALSE,0);
     test_items_ok(test2b,11,NULL,NULL,4,t2b1,FALSE,0);
+    test_items_ok(test2c,11,NULL,NULL,4,t2c1,FALSE,0);
+    test_items_ok(test2d,11,NULL,NULL,4,t2d1,FALSE,0);
     test_items_ok(test3,41,NULL,NULL,1,t31,FALSE,0);
     test_items_ok(test4,12,NULL,NULL,5,t41,FALSE,0);
     test_items_ok(test5,38,NULL,NULL,1,t51,FALSE,0);
@@ -181,8 +204,11 @@ static void test_ScriptItemize( void )
 
     State.uBidiLevel = 0;
     test_items_ok(test1,4,&Control,&State,1,t11,FALSE,0);
+    test_items_ok(test1b,4,&Control,&State,1,t1b1,FALSE,0);
     test_items_ok(test2,16,&Control,&State,4,t22,FALSE,0);
     test_items_ok(test2b,11,&Control,&State,4,t2b1,FALSE,0);
+    test_items_ok(test2c,11,&Control,&State,5,t2c2,FALSE,0);
+    test_items_ok(test2d,11,&Control,&State,5,t2d2,FALSE,0);
     test_items_ok(test3,41,&Control,&State,1,t31,FALSE,0);
     test_items_ok(test4,12,&Control,&State,5,t41,FALSE,0);
     test_items_ok(test5,38,&Control,&State,1,t51,FALSE,0);
@@ -194,8 +220,11 @@ static void test_ScriptItemize( void )
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
+    test_items_ok(test1b,4,&Control,&State,1,t1b2,FALSE,0);
     test_items_ok(test2,16,&Control,&State,4,t23,FALSE,0);
     test_items_ok(test2b,11,&Control,&State,4,t2b2,FALSE,0);
+    test_items_ok(test2c,11,&Control,&State,4,t2c3,FALSE,0);
+    test_items_ok(test2d,11,&Control,&State,4,t2d3,FALSE,0);
     test_items_ok(test3,41,&Control,&State,1,t32,FALSE,0);
     test_items_ok(test4,12,&Control,&State,4,t42,FALSE,0);
     test_items_ok(test5,38,&Control,&State,1,t51,FALSE,0);
@@ -208,8 +237,11 @@ static void test_ScriptItemize( void )
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
+    test_items_ok(test1b,4,&Control,&State,1,t1b2,FALSE,0);
     test_items_ok(test2,16,&Control,&State,4,t23,FALSE,0);
     test_items_ok(test2b,11,&Control,&State,2,t2b3,FALSE,4);
+    test_items_ok(test2c,11,&Control,&State,2,t2c4,FALSE,4);
+    test_items_ok(test2d,11,&Control,&State,2,t2d4,FALSE,4);
     test_items_ok(test3,41,&Control,&State,1,t32,FALSE,0);
     test_items_ok(test4,12,&Control,&State,3,t43,FALSE,4);
     test_items_ok(test5,38,&Control,&State,1,t51,FALSE,0);

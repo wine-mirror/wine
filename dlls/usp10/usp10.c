@@ -638,9 +638,22 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         }
     }
 
+    while (pwcInChars[cnt] == Numeric_space && cnt < cInChars)
+        cnt++;
+
+    if (cnt == cInChars) /* All Spaces */
+    {
+        cnt = 0;
+        New_Script = get_char_script(pwcInChars[cnt]);
+    }
+
     pItems[index].iCharPos = 0;
     pItems[index].a = scriptInformation[get_char_script(pwcInChars[cnt])].a;
 
+    if (strength)
+        str = strength[cnt];
+
+    cnt = 0;
     if (levels)
     {
         pItems[index].a.fRTL = odd(levels[cnt]);
@@ -654,9 +667,6 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
         pItems[index].a.fRTL = odd(baselevel);
     }
 
-    if (strength)
-        str = strength[0];
-
     TRACE("New_Level=%i New_Strength=%i New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
           levels?levels[cnt]:-1, str, New_Script, pItems[index].a.eScript, index, cnt,
           pItems[index].iCharPos);
@@ -668,6 +678,13 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 
         if(pwcInChars[cnt] != Numeric_space)
             New_Script = get_char_script(pwcInChars[cnt]);
+        else if (levels)
+        {
+            int j = 1;
+            while (cnt + j < cInChars - 1 && pwcInChars[cnt+j] == Numeric_space)
+                j++;
+            New_Script = get_char_script(pwcInChars[cnt+j]);
+        }
 
         if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel || (strength && (strength[cnt] != str)))) || New_Script != pItems[index].a.eScript || New_Script == Script_Control)
         {
