@@ -500,15 +500,15 @@ static void ps_1_3_test(void) {
             "texm3x3pad_x2 t2, t0\n"
             "texm3x3tex_x2 t3, t0\n",
             {0xffff0103, 0x00000042, 0xb00f0000, 0x00000049, 0xb10f0001, 0xb0e40000,
-	     0x00000049, 0xb10f0002, 0xb0e40000, 0x0000004a, 0xb10f0003, 0xb0e40000,
-	     0x0000ffff}
+             0x00000049, 0xb10f0002, 0xb0e40000, 0x0000004a, 0xb10f0003, 0xb0e40000,
+             0x0000ffff}
         },
         {   /* shader 35 */
             "ps_1_3\n"
             "tex t0\n"
             "texdp3tex_x8 t1, t0\n",
             {0xffff0103, 0x00000042, 0xb00f0000, 0x00000053, 0xb30f0001, 0xb0e40000,
-	     0x0000ffff}
+             0x0000ffff}
         },
     };
 
@@ -1227,7 +1227,7 @@ static void ps_3_0_test(void) {
             "ps_3_0\n"
             "texldd_pp r0, r1, r2, r3, r4\n",
             {0xffff0300, 0x0500005d, 0x802f0000, 0x80e40001, 0x80e40002, 0x80e40003,
-	     0x80e40004, 0x0000ffff}
+             0x80e40004, 0x0000ffff}
         },
         {   /* shader 10 */
             "ps_3_0\n"
@@ -1409,10 +1409,10 @@ static void failure_test(void) {
         hr = D3DAssemble(tests[i], strlen(tests[i]), NULL,
                          NULL, NULL, D3DCOMPILE_SKIP_VALIDATION,
                          &shader, &messages);
-	ok(hr == D3DXERR_INVALIDDATA, "Failure test, shader %d: "
+        ok(hr == D3DXERR_INVALIDDATA, "Failure test, shader %d: "
            "expected D3DAssemble failure with D3DXERR_INVALIDDATA, "
            "got 0x%x - %d\n", i, hr, hr & 0x0000FFFF);
-	if(messages) {
+        if(messages) {
             trace("D3DAssemble messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
             ID3D10Blob_Release(messages);
         }
@@ -1420,32 +1420,55 @@ static void failure_test(void) {
             DWORD *res = ID3D10Blob_GetBufferPointer(shader);
             dump_shader(res);
             ID3D10Blob_Release(shader);
-	}
+        }
     }
 }
 
-static HRESULT WINAPI testD3DInclude_open(ID3DInclude *iface,
-                                          D3D_INCLUDE_TYPE include_type,
-                                          LPCSTR filename, LPCVOID parent_data,
-                                          LPCVOID *data, UINT *bytes) {
+static HRESULT WINAPI testD3DInclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE include_type,
+        const char *filename, const void *parent_data, const void **data, UINT *bytes)
+{
     char *buffer;
     char include[] = "#define REGISTER r0\nvs.1.1\n";
+    char include2[] = "#include \"incl3.vsh\"\n";
+    char include3[] = "vs.1.1\n";
 
-    trace("filename = %s\n",filename);
+    trace("filename %s\n", filename);
+    trace("parent_data (%p) -> %s\n", parent_data, (char *)parent_data);
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
-    CopyMemory(buffer, include, sizeof(include));
+    if (!strcmp(filename, "incl.vsh"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
+        CopyMemory(buffer, include, sizeof(include));
+        *bytes = sizeof(include);
+    }
+    else if (!strcmp(filename, "incl3.vsh"))
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include3));
+        CopyMemory(buffer, include3, sizeof(include3));
+        *bytes = sizeof(include3);
+        /* Also check for the correct parent_data content */
+        ok(parent_data != NULL && !strncmp(include2, parent_data, strlen(include2)), "wrong parent_data value\n");
+    }
+    else
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include2));
+        CopyMemory(buffer, include2, sizeof(include2));
+        *bytes = sizeof(include2);
+    }
+
     *data = buffer;
-    *bytes = sizeof(include);
+
     return S_OK;
 }
 
-static HRESULT WINAPI testD3DInclude_close(ID3DInclude *iface, LPCVOID data) {
+static HRESULT WINAPI testD3DInclude_close(ID3DInclude *iface, const void *data)
+{
     HeapFree(GetProcessHeap(), 0, (LPVOID)data);
     return S_OK;
 }
 
-static const struct ID3DIncludeVtbl D3DInclude_Vtbl = {
+static const struct ID3DIncludeVtbl D3DInclude_Vtbl =
+{
     testD3DInclude_open,
     testD3DInclude_close
 };
@@ -1538,6 +1561,111 @@ static void assembleshader_test(void) {
     if(shader) ID3D10Blob_Release(shader);
 }
 
+static void d3dpreprocess_test(void)
+{
+    const char test1[] =
+    {
+        "vs.1.1\n"
+        "mov DEF2, v0\n"
+    };
+    const char testshader[] =
+    {
+        "#include \"incl.vsh\"\n"
+        "mov REGISTER, v0\n"
+    };
+    const char testshader2[] =
+    {
+        "#include \"incl2.vsh\"\n"
+        "mov REGISTER, v0\n"
+    };
+    HRESULT hr;
+    ID3DBlob *shader, *messages;
+    D3D_SHADER_MACRO defines[] =
+    {
+        {
+            "DEF1", "10 + 15"
+        },
+        {
+            "DEF2", "r0"
+        },
+        {
+            NULL, NULL
+        }
+    };
+    struct D3DIncludeImpl include;
+
+    /* pDefines test */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DPreprocess(test1, strlen(test1), NULL,
+            defines, NULL, &shader, &messages);
+    ok(hr == S_OK, "pDefines test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if (messages)
+    {
+        trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
+        ID3D10Blob_Release(messages);
+    }
+    if (shader) ID3D10Blob_Release(shader);
+
+    /* NULL messages test */
+    shader = NULL;
+    hr = D3DPreprocess(test1, strlen(test1), NULL,
+            defines, NULL, &shader, NULL);
+    ok(hr == S_OK, "NULL messages test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if (shader) ID3D10Blob_Release(shader);
+
+    /* NULL shader test */
+    messages = NULL;
+    hr = D3DPreprocess(test1, strlen(test1), NULL,
+            defines, NULL, NULL, &messages);
+    ok(hr == E_INVALIDARG, "NULL shader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if (messages)
+    {
+        trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
+        ID3D10Blob_Release(messages);
+    }
+
+    /* pInclude test */
+    shader = NULL;
+    messages = NULL;
+    include.lpVtbl = &D3DInclude_Vtbl;
+    hr = D3DPreprocess(testshader, strlen(testshader), NULL,
+            NULL, (ID3DInclude *)&include, &shader, &messages);
+    ok(hr == S_OK, "pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if (messages)
+    {
+        trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
+        ID3D10Blob_Release(messages);
+    }
+    if (shader) ID3D10Blob_Release(shader);
+
+    /* recursive #include test */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DPreprocess(testshader2, strlen(testshader2), NULL,
+            NULL, (ID3DInclude *)&include, &shader, &messages);
+    ok(hr == S_OK, "D3DPreprocess test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if (messages)
+    {
+        trace("recursive D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
+        ID3D10Blob_Release(messages);
+    }
+    if (shader) ID3D10Blob_Release(shader);
+
+    /* NULL shader tests */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DPreprocess(NULL, 0, NULL,
+            NULL, NULL, &shader, &messages);
+    ok(hr == E_INVALIDARG, "NULL shader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if (messages)
+    {
+        trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
+        ID3D10Blob_Release(messages);
+    }
+    if (shader) ID3D10Blob_Release(shader);
+}
+
 START_TEST(asm)
 {
     preproc_test();
@@ -1555,4 +1683,6 @@ START_TEST(asm)
     failure_test();
 
     assembleshader_test();
+
+    d3dpreprocess_test();
 }
