@@ -2558,6 +2558,48 @@ static void test_get_firstChild(void)
     IXMLDOMDocument_Release( doc );
 }
 
+static void test_get_lastChild(void)
+{
+    static WCHAR lcW[] = {'l','c',0};
+    static WCHAR foW[] = {'f','o',0};
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *node, *child;
+    VARIANT_BOOL b;
+    HRESULT r;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    r = IXMLDOMDocument_get_lastChild( doc, &node );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNode_get_nodeName( node, &str );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    ok(memcmp(str, lcW, sizeof(lcW)) == 0, "expected \"lc\" node name\n");
+    SysFreeString(str);
+
+    r = IXMLDOMNode_get_lastChild( node, &child );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    r = IXMLDOMNode_get_nodeName( child, &str );
+    ok( r == S_OK, "ret %08x\n", r);
+
+    ok(memcmp(str, foW, sizeof(foW)) == 0, "expected \"fo\" node name\n");
+    SysFreeString(str);
+
+    IXMLDOMNode_Release( child );
+    IXMLDOMNode_Release( node );
+    IXMLDOMDocument_Release( doc );
+}
+
 static void test_removeChild(void)
 {
     HRESULT r;
@@ -6013,6 +6055,7 @@ START_TEST(domdoc)
     test_get_text();
     test_get_childNodes();
     test_get_firstChild();
+    test_get_lastChild();
     test_removeChild();
     test_replaceChild();
     test_removeNamedItem();
