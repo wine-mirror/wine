@@ -437,8 +437,8 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
     tzE.StandardBias=0;
     tzE.DaylightBias=-60;
     tzE.StandardDate.wMonth=10;
-    tzE.StandardDate.wDayOfWeek=0; /*sunday */
-    tzE.StandardDate.wDay=5;       /* last (sunday) of the month */
+    tzE.StandardDate.wDayOfWeek=0; /* Sunday */
+    tzE.StandardDate.wDay=5;       /* last (Sunday) of the month */
     tzE.StandardDate.wHour=3;
     tzE.DaylightDate.wMonth=3;
     tzE.DaylightDate.wDay=5;
@@ -448,19 +448,19 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
     tzW.StandardBias=0;
     tzW.DaylightBias=-60;
     tzW.StandardDate.wMonth=10;
-    tzW.StandardDate.wDayOfWeek=0; /*sunday */
-    tzW.StandardDate.wDay=4;       /* 4th (sunday) of the month */
+    tzW.StandardDate.wDayOfWeek=0; /* Sunday */
+    tzW.StandardDate.wDay=4;       /* 4th (Sunday) of the month */
     tzW.StandardDate.wHour=2;
     tzW.DaylightDate.wMonth=4;
     tzW.DaylightDate.wDay=1;
     tzW.DaylightDate.wHour=2;
-    /* timezone Eastern hemisphere */
+    /* timezone Southern hemisphere */
     tzS.Bias=240;
     tzS.StandardBias=0;
     tzS.DaylightBias=-60;
     tzS.StandardDate.wMonth=4;
-    tzS.StandardDate.wDayOfWeek=0; /*sunday */
-    tzS.StandardDate.wDay=1;       /* 1st  (sunday) of the month */
+    tzS.StandardDate.wDayOfWeek=0; /*Sunday */
+    tzS.StandardDate.wDay=1;       /* 1st (Sunday) of the month */
     tzS.StandardDate.wHour=2;
     tzS.DaylightDate.wMonth=10;
     tzS.DaylightDate.wDay=4;
@@ -483,7 +483,7 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
             { 10, &tzW, {2004,10,-1,24,1,0,0,0}, 4},
             { 11, &tzW, {2004,10,-1,24,1,59,59,999}, 4},
             { 12, &tzW, {2004,10,-1,24,2,0,0,0 }, 6},
-            /* and now south */
+            /* and now South */
             { 13, &tzS, {2004,4,-1,4,1,0,0,0}, 4},
             { 14, &tzS, {2004,4,-1,4,1,59,59,999}, 4},
             { 15, &tzS, {2004,4,-1,4,2,0,0,0}, 6},
@@ -548,7 +548,7 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
             { 10, &tzW, {2004,10,-1,24,4,0,0,0}, 1},
             { 11, &tzW, {2004,10,-1,24,4,59,59,999}, 1},
             { 12, &tzW, {2004,10,-1,24,5,0,0,0 }, 1},
-            /* and now south */
+            /* and now South */
             { 13, &tzS, {2004,4,-1,4,4,0,0,0}, 1},
             { 14, &tzS, {2004,4,-1,4,4,59,59,999}, 1},
             { 15, &tzS, {2004,4,-1,4,5,0,0,0}, 1},
