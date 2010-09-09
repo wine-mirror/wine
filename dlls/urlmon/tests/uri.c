@@ -7897,6 +7897,7 @@ static void test_IUriBuilder_IUriProperty(void) {
 
         hr = pCreateUri(http_urlW, 0, 0, &uri);
         if(SUCCEEDED(hr)) {
+            IUri *test = NULL;
             ULONG cur_count, orig_count;
 
             /* IUriBuilder doesn't clone the IUri, it use the same IUri. */
@@ -7912,6 +7913,51 @@ static void test_IUriBuilder_IUriProperty(void) {
             if(SUCCEEDED(hr))
                 ok(cur_count == orig_count, "Error: Expected uri ref count to be %d, but was %d instead.\n",
                     orig_count, cur_count);
+
+            /* CreateUri* functions will return back the same IUri if nothing has changed. */
+            hr = IUriBuilder_SetIUri(builder, uri);
+            ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            orig_count = get_refcnt(uri);
+
+            hr = IUriBuilder_CreateUri(builder, 0, 0, 0, &test);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            if(SUCCEEDED(hr)) {
+                cur_count = get_refcnt(uri);
+                ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count+1, cur_count);
+                ok(test == uri, "Error: Expected test to be %p, but was %p instead.\n",
+                    uri, test);
+            }
+            if(test) IUri_Release(test);
+
+            test = NULL;
+            hr = IUriBuilder_CreateUriSimple(builder, 0, 0, &test);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            if(SUCCEEDED(hr)) {
+                cur_count = get_refcnt(uri);
+                ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count+1, cur_count);
+                ok(test == uri, "Error: Expected test to be %p, but was %p instead.\n", uri, test);
+            }
+            if(test) IUri_Release(test);
+
+            test = NULL;
+            hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, &test);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+                    hr, S_OK);
+            }
+            if(SUCCEEDED(hr)) {
+                cur_count = get_refcnt(uri);
+                ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count+1, cur_count);
+                ok(test == uri, "Error: Expected test to be %p, but was %p instead.\n", uri, test);
+            }
+            if(test) IUri_Release(test);
         }
         if(uri) IUri_Release(uri);
     }
