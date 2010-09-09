@@ -26,8 +26,8 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-    IDS_DEVENUM_DSDEFAULT  "DirectSound di Default"
-    IDS_DEVENUM_DS         "DirectSound: %s"
-    IDS_DEVENUM_WODEFAULT  "Dispositivo WaveOut di Default"
-    IDS_DEVENUM_MIDEFAULT  "Dispositivo MidiOut di Default"
+    IDS_DEVENUM_DSDEFAULT  "DirectSound predefinito"
+    IDS_DEVENUM_DS         "DirectSound : %s"
+    IDS_DEVENUM_WODEFAULT  "Dispositivo WaveOut predefinito"
+    IDS_DEVENUM_MIDEFAULT  "Dispositivo MidiOut predefinito"
 }
