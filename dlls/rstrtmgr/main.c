@@ -23,6 +23,8 @@
 #include "winbase.h"
 #include "wine/debug.h"
 
+#include "restartmanager.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(rstrtmgr);
 
 /*****************************************************
@@ -48,9 +50,35 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 }
 
 /***********************************************************************
+ * RmGetList (rstrtmgr.@)
+ *
+ * Retrieve the list of all applications and services using resources registered with the Restart Manager session
+ */
+DWORD WINAPI RmGetList(DWORD dwSessionHandle, UINT *pnProcInfoNeeded, UINT *pnProcInfo,
+                                      RM_PROCESS_INFO *rgAffectedApps[], LPDWORD lpdwRebootReasons)
+{
+    FIXME("%d, %p, %p, %p, %p stub!\n", dwSessionHandle, pnProcInfoNeeded, pnProcInfo, rgAffectedApps, lpdwRebootReasons);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ * RmRegisterResources (rstrtmgr.@)
+ *
+ * Register resources for a Restart Manager session
+ */
+DWORD WINAPI RmRegisterResources(DWORD dwSessionHandle, UINT nFiles, LPCWSTR rgsFilenames[],
+                                                     UINT nApplications, RM_UNIQUE_PROCESS *rgApplications,
+                                                     UINT nServices, LPCWSTR rgsServiceNames[])
+{
+    FIXME("%d, %d, %p, %d, %p, %d, %p stub!\n", dwSessionHandle, nFiles, rgsFilenames,
+              nApplications, rgApplications, nServices, rgsServiceNames);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
  * RmStartSession (rstrtmgr.@)
  *
- * Start a new restart manager session
+ * Start a new Restart Manager session
  */
 DWORD WINAPI RmStartSession(DWORD *sessionhandle, DWORD flags, WCHAR sessionkey[])
 {

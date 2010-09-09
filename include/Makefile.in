@@ -425,6 +425,7 @@ SRCDIR_INCLUDES = \
 	raserror.h \
 	reason.h \
 	regstr.h \
+	restartmanager.h \
 	richedit.h \
 	rmxfguid.h \
 	row.idl \

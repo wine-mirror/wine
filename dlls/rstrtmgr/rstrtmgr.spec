@@ -2,9 +2,9 @@
 @ stub RmCancelCurrentTask
 @ stub RmEndSession
 @ stub RmGetFilterList
-@ stub RmGetList
+@ stdcall RmGetList(long ptr ptr ptr ptr)
 @ stub RmJoinSession
-@ stub RmRegisterResources
+@ stdcall RmRegisterResources(long long ptr long ptr long ptr)
 @ stub RmRemoveFilter
 @ stub RmReserveHeap
 @ stub RmRestart
