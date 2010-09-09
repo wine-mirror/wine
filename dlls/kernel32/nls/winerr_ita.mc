@@ -853,7 +853,7 @@ Chiamate annidate LoadModule non permesse
 MessageId=216
 SymbolicName=ERROR_EXE_MACHINE_TYPE_MISMATCH
 Language=ITA
-Machine type mismatch
+Discordanza di tipo di macchina
 .
 MessageId=230
 SymbolicName=ERROR_BAD_PIPE
