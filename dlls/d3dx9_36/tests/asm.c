@@ -325,7 +325,139 @@ static void assembleshader_test(void) {
     }
 }
 
+static void d3dxpreprocess_test(void) {
+    const char testincl[] = {
+        "#define REGISTER r0\n"
+        "vs.1.1\n"
+    };
+    const char testshader[] = {
+        "#include \"incl.vsh\"\n"
+        "mov REGISTER, v0\n"
+    };
+    const char testshader3[] = {
+        "#include \"include/incl3.vsh\"\n"
+        "mov REGISTER, v0\n"
+    };
+    const char testincl3[] = {
+        "#include \"incl4.vsh\"\n"
+    };
+    const char testincl4_ok[] = {
+        "#define REGISTER r0\n"
+        "vs.1.1\n"
+    };
+    const char testincl4_wrong[] = {
+        "#error \"wrong include\"\n"
+    };
+    HRESULT hr;
+    LPD3DXBUFFER shader, messages;
+    HRESULT shader_vsh_res;
+    struct D3DXIncludeImpl include = {&D3DXInclude_Vtbl};
+
+    shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader) - 1);
+    if(SUCCEEDED(shader_vsh_res)) {
+        create_file("incl.vsh", testincl, sizeof(testincl) - 1);
+        create_file("shader3.vsh", testshader3, sizeof(testshader3) - 1);
+        create_file("incl4.vsh", testincl4_wrong, sizeof(testincl4_wrong) - 1);
+        if(CreateDirectoryA("include", NULL)) {
+            create_file("include/incl3.vsh", testincl3, sizeof(testincl3) - 1);
+            create_file("include/incl4.vsh", testincl4_ok, sizeof(testincl4_ok) - 1);
+
+            /* path search #include test */
+            shader = NULL;
+            messages = NULL;
+            hr = D3DXPreprocessShaderFromFileA("shader3.vsh", NULL, NULL,
+                                               &shader, &messages);
+            ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile path search test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+            if(messages) {
+                trace("D3DXPreprocessShaderFromFile path search messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+                ID3DXBuffer_Release(messages);
+            }
+            if(shader) ID3DXBuffer_Release(shader);
+        } else skip("Couldn't create \"include\" directory\n");
+
+        /* D3DXPreprocessShaderFromFile + #include test */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXPreprocessShaderFromFileA("shader.vsh",
+                                           NULL, NULL,
+                                           &shader, &messages);
+        ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+        if(messages) {
+            trace("D3DXPreprocessShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if(shader) ID3DXBuffer_Release(shader);
+
+        /* D3DXPreprocessShaderFromFile + pInclude test */
+        shader = NULL;
+        messages = NULL;
+        hr = D3DXPreprocessShaderFromFileA("shader.vsh",
+                                           NULL, (LPD3DXINCLUDE)&include,
+                                           &shader, &messages);
+        ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile + pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+        if(messages) {
+            trace("D3DXPreprocessShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+            ID3DXBuffer_Release(messages);
+        }
+        if(shader) ID3DXBuffer_Release(shader);
+    } else skip("Couldn't create \"shader.vsh\"\n");
+
+    /* NULL shader tests */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DXPreprocessShaderFromFileA("nonexistent.vsh",
+                                       NULL, NULL,
+                                       &shader, &messages);
+    ok(hr == D3DXERR_INVALIDDATA || hr == E_FAIL, /* I get this on WinXP */
+        "D3DXPreprocessShaderFromFile nonexistent file test failed with error 0x%x - %d\n",
+        hr, hr & 0x0000FFFF);
+    if(messages) {
+        trace("D3DXPreprocessShaderFromFile messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if(shader) ID3DXBuffer_Release(shader);
+
+    /* D3DXPreprocessShaderFromResource test */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DXPreprocessShaderFromResourceA(NULL, MAKEINTRESOURCEA(IDB_ASMSHADER),
+                                           NULL, NULL,
+                                           &shader, &messages);
+    ok(hr == D3D_OK, "D3DXPreprocessShaderFromResource test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if(messages) {
+        trace("D3DXPreprocessShaderFromResource messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if(shader) ID3DXBuffer_Release(shader);
+
+    /* D3DXPreprocessShaderFromResource with missing shader resource test */
+    shader = NULL;
+    messages = NULL;
+    hr = D3DXPreprocessShaderFromResourceA(NULL, "notexisting",
+                                           NULL, NULL,
+                                           &shader, &messages);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXPreprocessShaderFromResource NULL shader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    if(messages) {
+        trace("D3DXPreprocessShaderFromResource messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
+        ID3DXBuffer_Release(messages);
+    }
+    if(shader) ID3DXBuffer_Release(shader);
+
+    /* cleanup */
+    if(SUCCEEDED(shader_vsh_res)) {
+        DeleteFileA("shader.vsh");
+        DeleteFileA("incl.vsh");
+        DeleteFileA("shader3.vsh");
+        DeleteFileA("incl4.vsh");
+        DeleteFileA("include/incl3.vsh");
+        DeleteFileA("include/incl4.vsh");
+        RemoveDirectoryA("include");
+    }
+}
+
 START_TEST(asm)
 {
     assembleshader_test();
+
+    d3dxpreprocess_test();
 }

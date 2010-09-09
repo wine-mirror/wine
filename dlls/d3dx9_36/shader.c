@@ -446,7 +446,7 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(LPCWSTR filename,
     }
     WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, filename_len, NULL, NULL);
 
-    hr = D3DCompile(buffer, len, filename_a, (D3D_SHADER_MACRO *)defines,
+    hr = D3DCompile(buffer, len, filename_a, (const D3D_SHADER_MACRO *)defines,
                     (ID3DInclude *)include, entrypoint, profile, flags, 0,
                     (ID3DBlob **)shader, (ID3DBlob **)error_messages);
 
@@ -503,6 +503,121 @@ HRESULT WINAPI D3DXCompileShaderFromResourceW(HMODULE module,
         return D3DXERR_INVALIDDATA;
     return D3DXCompileShader(buffer, len, defines, include, entrypoint, profile,
                              flags, shader, error_messages, constant_table);
+}
+
+HRESULT WINAPI D3DXPreprocessShader(LPCSTR data,
+                                    UINT data_len,
+                                    CONST D3DXMACRO* defines,
+                                    LPD3DXINCLUDE include,
+                                    LPD3DXBUFFER* shader,
+                                    LPD3DXBUFFER* error_messages)
+{
+    TRACE("Forward to D3DPreprocess\n");
+    return D3DPreprocess(data, data_len, NULL,
+                         (const D3D_SHADER_MACRO *)defines, (ID3DInclude *)include,
+                         (ID3DBlob **)shader, (ID3DBlob **)error_messages);
+}
+
+HRESULT WINAPI D3DXPreprocessShaderFromFileA(LPCSTR filename,
+                                             CONST D3DXMACRO* defines,
+                                             LPD3DXINCLUDE include,
+                                             LPD3DXBUFFER* shader,
+                                             LPD3DXBUFFER* error_messages)
+{
+    WCHAR *filename_w = NULL;
+    DWORD len;
+    HRESULT ret;
+
+    if (!filename) return D3DXERR_INVALIDDATA;
+
+    len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
+    filename_w = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (!filename_w) return E_OUTOFMEMORY;
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, filename_w, len);
+
+    ret = D3DXPreprocessShaderFromFileW(filename_w, defines, include, shader, error_messages);
+
+    HeapFree(GetProcessHeap(), 0, filename_w);
+    return ret;
+}
+
+HRESULT WINAPI D3DXPreprocessShaderFromFileW(LPCWSTR filename,
+                                             CONST D3DXMACRO* defines,
+                                             LPD3DXINCLUDE include,
+                                             LPD3DXBUFFER* shader,
+                                             LPD3DXBUFFER* error_messages)
+{
+    void *buffer;
+    DWORD len, filename_len;
+    HRESULT hr;
+    struct D3DXIncludeImpl includefromfile;
+    char *filename_a;
+
+    if (FAILED(map_view_of_file(filename, &buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+
+    if (!include)
+    {
+        includefromfile.lpVtbl = &D3DXInclude_Vtbl;
+        include = (LPD3DXINCLUDE)&includefromfile;
+    }
+
+    filename_len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
+    filename_a = HeapAlloc(GetProcessHeap(), 0, filename_len * sizeof(char));
+    if (!filename_a)
+    {
+        UnmapViewOfFile(buffer);
+        return E_OUTOFMEMORY;
+    }
+    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, filename_len, NULL, NULL);
+
+    hr = D3DPreprocess(buffer, len, NULL,
+                       (const D3D_SHADER_MACRO *)defines,
+                       (ID3DInclude *) include,
+                       (ID3DBlob **)shader, (ID3DBlob **)error_messages);
+
+    HeapFree(GetProcessHeap(), 0, filename_a);
+    UnmapViewOfFile(buffer);
+    return hr;
+}
+
+HRESULT WINAPI D3DXPreprocessShaderFromResourceA(HMODULE module,
+                                                 LPCSTR resource,
+                                                 CONST D3DXMACRO* defines,
+                                                 LPD3DXINCLUDE include,
+                                                 LPD3DXBUFFER* shader,
+                                                 LPD3DXBUFFER* error_messages)
+{
+    HRSRC res;
+    const char *buffer;
+    DWORD len;
+
+    if (!(res = FindResourceA(module, resource, (LPCSTR)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
+    if (FAILED(load_resource_into_memory(module, res, (LPVOID *)&buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+    return D3DXPreprocessShader(buffer, len, defines, include,
+                                shader, error_messages);
+}
+
+HRESULT WINAPI D3DXPreprocessShaderFromResourceW(HMODULE module,
+                                                 LPCWSTR resource,
+                                                 CONST D3DXMACRO* defines,
+                                                 LPD3DXINCLUDE include,
+                                                 LPD3DXBUFFER* shader,
+                                                 LPD3DXBUFFER* error_messages)
+{
+    HRSRC res;
+    const char *buffer;
+    DWORD len;
+
+    if (!(res = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA)))
+        return D3DXERR_INVALIDDATA;
+    if (FAILED(load_resource_into_memory(module, res, (void **)&buffer, &len)))
+        return D3DXERR_INVALIDDATA;
+    return D3DXPreprocessShader(buffer, len, defines, include,
+                                shader, error_messages);
+
 }
 
 static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl;

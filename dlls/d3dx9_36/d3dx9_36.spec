@@ -236,11 +236,11 @@
 @ stdcall D3DXPlaneNormalize(ptr ptr)
 @ stdcall D3DXPlaneTransform(ptr ptr ptr)
 @ stdcall D3DXPlaneTransformArray(ptr long ptr long ptr long)
-@ stub D3DXPreprocessShader
-@ stub D3DXPreprocessShaderFromFileA
-@ stub D3DXPreprocessShaderFromFileW
-@ stub D3DXPreprocessShaderFromResourceA
-@ stub D3DXPreprocessShaderFromResourceW
+@ stdcall D3DXPreprocessShader(ptr long ptr ptr ptr ptr)
+@ stdcall D3DXPreprocessShaderFromFileA(str ptr ptr ptr ptr)
+@ stdcall D3DXPreprocessShaderFromFileW(wstr ptr ptr ptr ptr)
+@ stdcall D3DXPreprocessShaderFromResourceA(long str ptr ptr ptr ptr)
+@ stdcall D3DXPreprocessShaderFromResourceW(long wstr ptr ptr ptr ptr)
 @ stdcall D3DXQuaternionBaryCentric(ptr ptr ptr ptr float float)
 @ stdcall D3DXQuaternionExp(ptr ptr)
 @ stdcall D3DXQuaternionInverse(ptr ptr)
