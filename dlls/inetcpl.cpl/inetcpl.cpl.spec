@@ -1,0 +1,25 @@
+@ stub ClearMyTracksByProcessW
+@ stub AddInternetPropertySheets
+@ stub AddInternetPropertySheetsEx
+@ stdcall CPlApplet(long long long long)
+@ stub DisplayPopupWindowManagementDialog
+@ stub DllInstall
+@ stub GetAddSitesDisplayUrl
+@ stub ImportExportPFX
+@ stub LaunchAddSitesDialog
+@ stub LaunchConnectionDialog
+@ stub LaunchInternetControlPanel
+@ stub LaunchPerSitePrivacyActionDialog
+@ stub LaunchPopupWindowManagementDialog
+@ stub LaunchPrivacyDialog
+@ stub LaunchSecurityDialog
+@ stub LaunchSecurityDialogEx
+@ stub LaunchSiteCertDialog
+@ stub OpenFontsDialog
+@ stub OpenFontsDialogEx
+@ stub OpenLanguageDialog
+@ stub ResetIEtoDefaults
+@ stub ShowDeleteBrowsingHistoryDialog
+@ stub ShowFeedOptionsDialog
+@ stub ShowLanguageDialog
+@ stub SiteCert_RunFromCmdLine

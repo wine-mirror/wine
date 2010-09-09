@@ -14660,6 +14660,7 @@ wine_fn_config_dll imm32 enable_imm32 imm32
 wine_fn_config_test dlls/imm32/tests imm32_test
 wine_fn_config_dll inetcomm enable_inetcomm inetcomm
 wine_fn_config_test dlls/inetcomm/tests inetcomm_test
+wine_fn_config_dll inetcpl.cpl enable_inetcpl_cpl
 wine_fn_config_dll inetmib1 enable_inetmib1
 wine_fn_config_test dlls/inetmib1/tests inetmib1_test
 wine_fn_config_dll infosoft enable_infosoft

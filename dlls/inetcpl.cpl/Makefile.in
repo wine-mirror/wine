@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = inetcpl.cpl
+
+C_SRCS = \
+	inetcpl.c
+
+RC_SRCS = \
+	cpl_En.rc \
+	inetcpl.rc
+
+@MAKE_DLL_RULES@
