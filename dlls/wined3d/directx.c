@@ -996,6 +996,8 @@ static const struct driver_version_information driver_version_table[] =
      * - Radeon 9500 (R300) - X1*00 (R5xx) supported upto Catalyst 9.3 (Linux) and 10.2 (XP/Vista/Win7) */
     {DRIVER_ATI_R300,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6764},
     {DRIVER_ATI_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 8681},
+    {DRIVER_ATI_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
+    {DRIVER_ATI_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
 
     /* Nvidia
      * - Geforce6 and newer cards are supported by the current driver (197.x) on XP-Win7
