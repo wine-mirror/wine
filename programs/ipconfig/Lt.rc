@@ -45,4 +45,6 @@ STRINGTABLE
     STRING_DESCRIPTION, "Aprašas"
     STRING_PHYS_ADDR, "Fizinis adresas"
     STRING_DHCP_ENABLED, "DHCP įjungta"
+    STRING_YES, "Taip"
+    STRING_NO, "Ne"
 }
