@@ -622,7 +622,10 @@ BOOL BIDI_Reorder(
                 }
                 if (res)
                 {
-                    FIXME("Unable to shape string (%x)\n",res);
+                    if (res == USP_E_SCRIPT_NOT_IN_FONT)
+                        TRACE("Unable to shape with currently selected font\n");
+                    else
+                        FIXME("Unable to shape string (%x)\n",res);
                     j = nItems;
                     doGlyphs = FALSE;
                     HeapFree(GetProcessHeap(), 0, *lpGlyphs);
