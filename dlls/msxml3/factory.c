@@ -154,8 +154,10 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     {
         cf = (IClassFactory*) &domdoccf.lpVtbl;
     }
-    else if( IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache ) ||
-             IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache30 ) )
+    else if( IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache )   ||
+             IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache30 ) ||
+             IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache40 ) ||
+             IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache60 ))
     {
         cf = (IClassFactory*) &schemacf.lpVtbl;
     }
@@ -173,7 +175,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     }
     else if( IsEqualCLSID( rclsid, &CLSID_SAXXMLReader) ||
              IsEqualCLSID( rclsid, &CLSID_SAXXMLReader30 ) ||
-             IsEqualCLSID( rclsid, &CLSID_SAXXMLReader40 ))
+             IsEqualCLSID( rclsid, &CLSID_SAXXMLReader40 ) ||
+             IsEqualCLSID( rclsid, &CLSID_SAXXMLReader60 ))
     {
         cf = (IClassFactory*) &saxreadcf.lpVtbl;
     }
