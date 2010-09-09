@@ -443,7 +443,7 @@
 @ stdcall StrNCpyW(wstr wstr long) shlwapi.StrCpyNW
 @ stdcall StrRChrA(str str long) shlwapi.StrRChrA
 @ stdcall StrRChrIA(str str long) shlwapi.StrRChrIA
-@ stdcall StrRChrIW(str str long) shlwapi.StrRChrIW
+@ stdcall StrRChrIW(wstr wstr long) shlwapi.StrRChrIW
 @ stdcall StrRChrW(wstr wstr long) shlwapi.StrRChrW
 @ stub StrRStrA
 @ stdcall StrRStrIA(str str str) shlwapi.StrRStrIA

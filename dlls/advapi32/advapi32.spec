@@ -95,7 +95,7 @@
 # @ stub CreatePrivateObjectSecurityWithMultipleInheritance
 @ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
 # @ stub CreateProcessAsUserSecure
-@ stdcall CreateProcessAsUserW(long str str ptr ptr long long ptr str ptr ptr)
+@ stdcall CreateProcessAsUserW(long wstr wstr ptr ptr long long ptr wstr ptr ptr)
 @ stdcall CreateProcessWithLogonW(wstr wstr wstr long wstr wstr long ptr wstr ptr ptr)
 @ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr)
 @ stdcall CreateServiceA(long str str long long long long str str ptr str str str)
@@ -314,7 +314,7 @@
 @ stdcall InitiateSystemShutdownA(str str long long long)
 @ stdcall InitiateSystemShutdownExA(str str long long long long)
 @ stdcall InitiateSystemShutdownExW(wstr wstr long long long long)
-@ stdcall InitiateSystemShutdownW(str str long long long)
+@ stdcall InitiateSystemShutdownW(wstr wstr long long long)
 @ stub InstallApplication
 @ stub IsProcessRestricted
 @ stdcall IsTextUnicode(ptr long ptr)

@@ -174,7 +174,7 @@
 178 stdcall MsiGetPatchInfoA(str str ptr ptr)
 179 stdcall MsiGetPatchInfoW(wstr wstr ptr ptr)
 180 stdcall MsiEnumPatchesA(str long ptr ptr ptr)
-181 stdcall MsiEnumPatchesW(str long ptr ptr ptr)
+181 stdcall MsiEnumPatchesW(wstr long ptr ptr ptr)
 182 stdcall -private DllGetVersion(ptr)
 183 stub MsiGetProductCodeFromPackageCodeA
 184 stub MsiGetProductCodeFromPackageCodeW
@@ -214,7 +214,7 @@
 218 stdcall MsiGetFileHashA(str long ptr)
 219 stdcall MsiGetFileHashW(wstr long ptr)
 220 stub MsiEnumComponentCostsA
-221 stdcall MsiEnumComponentCostsW(long str long long ptr ptr ptr ptr)
+221 stdcall MsiEnumComponentCostsW(long wstr long long ptr ptr ptr ptr)
 222 stdcall MsiCreateAndVerifyInstallerDirectory(long)
 223 stdcall MsiGetFileSignatureInformationA(str long ptr ptr ptr)
 224 stdcall MsiGetFileSignatureInformationW(wstr long ptr ptr ptr)
