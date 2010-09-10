@@ -369,30 +369,8 @@ static HRESULT WINAPI xmlnode_get_attributes(
     IXMLDOMNode *iface,
     IXMLDOMNamedNodeMap** attributeMap)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    TRACE("(%p)->(%p)\n", This, attributeMap);
-
-    if (!attributeMap)
-        return E_INVALIDARG;
-
-    switch( This->node->type )
-    {
-    /* Attribute, CDataSection, Comment, Documents, Documents Fragments,
-       Entity and Text Nodes does not support get_attributes */
-    case XML_ATTRIBUTE_NODE:
-    case XML_CDATA_SECTION_NODE:
-    case XML_COMMENT_NODE:
-    case XML_DOCUMENT_NODE:
-    case XML_DOCUMENT_FRAG_NODE:
-    case XML_ENTITY_NODE:
-    case XML_ENTITY_REF_NODE:
-    case XML_TEXT_NODE:
-        *attributeMap = NULL;
-        return S_FALSE;
-    default:
-        *attributeMap = create_nodemap( This->iface );
-        return S_OK;
-    }
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_insertBefore(
@@ -1852,7 +1830,10 @@ static HRESULT WINAPI unknode_get_attributes(
     IXMLDOMNamedNodeMap** attributeMap)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_attributes( IXMLDOMNode_from_impl(&This->node), attributeMap );
+
+    FIXME("(%p)->(%p)\n", This, attributeMap);
+
+    return return_null_ptr((void**)attributeMap);
 }
 
 static HRESULT WINAPI unknode_insertBefore(

@@ -310,7 +310,11 @@ static HRESULT WINAPI dom_pi_get_attributes(
     IXMLDOMNamedNodeMap** attributeMap)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_attributes( IXMLDOMNode_from_impl(&This->node), attributeMap );
+
+    TRACE("(%p)->(%p)\n", This, attributeMap);
+
+    *attributeMap = create_nodemap((IXMLDOMNode*)&This->lpVtbl);
+    return S_OK;
 }
 
 static HRESULT WINAPI dom_pi_insertBefore(

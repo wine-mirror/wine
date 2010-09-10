@@ -299,7 +299,10 @@ static HRESULT WINAPI domfrag_get_attributes(
     IXMLDOMNamedNodeMap** attributeMap)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_attributes( IXMLDOMNode_from_impl(&This->node), attributeMap );
+
+    TRACE("(%p)->(%p)\n", This, attributeMap);
+
+    return return_null_ptr((void**)attributeMap);
 }
 
 static HRESULT WINAPI domfrag_insertBefore(

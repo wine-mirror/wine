@@ -308,7 +308,11 @@ static HRESULT WINAPI domelem_get_attributes(
     IXMLDOMNamedNodeMap** attributeMap)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_attributes( IXMLDOMNode_from_impl(&This->node), attributeMap );
+
+    TRACE("(%p)->(%p)\n", This, attributeMap);
+
+    *attributeMap = create_nodemap((IXMLDOMNode*)&This->lpVtbl);
+    return S_OK;
 }
 
 static HRESULT WINAPI domelem_insertBefore(

@@ -212,6 +212,14 @@ static inline HRESULT return_null_node(IXMLDOMNode **p)
     return S_FALSE;
 }
 
+static inline HRESULT return_null_ptr(void **p)
+{
+    if(!p)
+        return E_INVALIDARG;
+    *p = NULL;
+    return S_FALSE;
+}
+
 #endif
 
 void* libxslt_handle;

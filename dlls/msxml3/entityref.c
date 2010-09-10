@@ -295,7 +295,10 @@ static HRESULT WINAPI entityref_get_attributes(
     IXMLDOMNamedNodeMap** attributeMap)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_attributes( IXMLDOMNode_from_impl(&This->node), attributeMap );
+
+    TRACE("(%p)->(%p)\n", This, attributeMap);
+
+    return return_null_ptr((void**)attributeMap);
 }
 
 static HRESULT WINAPI entityref_insertBefore(

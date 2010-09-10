@@ -310,7 +310,10 @@ static HRESULT WINAPI domtext_get_attributes(
     IXMLDOMNamedNodeMap** attributeMap)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_get_attributes( IXMLDOMNode_from_impl(&This->node), attributeMap );
+
+    TRACE("(%p)->(%p)\n", This, attributeMap);
+
+    return return_null_ptr((void**)attributeMap);
 }
 
 static HRESULT WINAPI domtext_insertBefore(

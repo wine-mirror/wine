@@ -303,8 +303,11 @@ static HRESULT WINAPI domcdata_get_attributes(
     IXMLDOMCDATASection *iface,
     IXMLDOMNamedNodeMap** attributeMap)
 {
-	domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_get_attributes( IXMLDOMNode_from_impl(&This->node), attributeMap );
+    domcdata *This = impl_from_IXMLDOMCDATASection( iface );
+
+    TRACE("(%p)->(%p)\n", This, attributeMap);
+
+    return return_null_ptr((void**)attributeMap);
 }
 
 static HRESULT WINAPI domcdata_insertBefore(
