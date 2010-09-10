@@ -55,6 +55,23 @@ static const DWORD shader_with_invalid_ctab[] = {
                 0x00000000, 0x00000000,
     0x0000ffff};                                                            /* END                          */
 
+static const DWORD shader_with_ctab_constants[] = {
+    0xfffe0300,                                                             /* vs_3_0                       */
+    0x002efffe, FCC_CTAB,                                                   /* CTAB comment                 */
+    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
+    0x0000009c,
+    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc              */
+    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc              */
+    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc              */
+    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string       */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc         */
+    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string       */
+    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc     */
+    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string       */
+    0x335f7376, 0xab00305f,                                                 /* Target name string           */
+    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string          */
+    0x0000ffff};                                                            /* END                          */
+
 static void test_get_shader_size(void)
 {
     UINT shader_size, expected;
@@ -154,6 +171,94 @@ static void test_get_shader_constant_table_ex(void)
         ok(desc.Creator == (LPCSTR)data + 0x10, "Got result %p, expected %p\n", desc.Creator, (LPCSTR)data + 0x10);
         ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %x, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
         ok(desc.Constants == 0, "Got result %x, expected 0\n", desc.Constants);
+
+        ID3DXConstantTable_Release(constant_table);
+    }
+
+    hr = D3DXGetShaderConstantTableEx(shader_with_ctab_constants, 0, &constant_table);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        D3DXHANDLE constant;
+        D3DXCONSTANT_DESC constant_desc;
+        D3DXCONSTANT_DESC constant_desc_save;
+        UINT nb;
+
+        /* Test GetDesc */
+        hr = ID3DXConstantTable_GetDesc(constant_table, &desc);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(!strcmp(desc.Creator, "Wine project"), "Got result '%s', expected 'Wine project'\n", desc.Creator);
+        ok(desc.Version == D3DVS_VERSION(3, 0), "Got result %x, expected %x\n", desc.Version, D3DVS_VERSION(3, 0));
+        ok(desc.Constants == 3, "Got result %x, expected 3\n", desc.Constants);
+
+        /* Test GetConstant */
+        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 0);
+        ok(constant != NULL, "No constant found\n");
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(!strcmp(constant_desc.Name, "Constant1"), "Got result '%s', expected 'Constant1'\n",
+            constant_desc.Name);
+        ok(constant_desc.Class == D3DXPC_VECTOR, "Got result %x, expected %u (D3DXPC_VECTOR)\n",
+            constant_desc.Class, D3DXPC_VECTOR);
+        ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
+            constant_desc.Type, D3DXPT_FLOAT);
+        ok(constant_desc.Rows == 1, "Got result %x, expected 1\n", constant_desc.Rows);
+        ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
+
+        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 1);
+        ok(constant != NULL, "No constant found\n");
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(!strcmp(constant_desc.Name, "Constant2"), "Got result '%s', expected 'Constant2'\n",
+            constant_desc.Name);
+        ok(constant_desc.Class == D3DXPC_MATRIX_COLUMNS, "Got result %x, expected %u (D3DXPC_MATRIX_COLUMNS)\n",
+            constant_desc.Class, D3DXPC_MATRIX_COLUMNS);
+        ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
+            constant_desc.Type, D3DXPT_FLOAT);
+        ok(constant_desc.Rows == 4, "Got result %x, expected 1\n", constant_desc.Rows);
+        ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
+
+        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 2);
+        ok(constant != NULL, "No constant found\n");
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(!strcmp(constant_desc.Name, "Constant3"), "Got result '%s', expected 'Constant3'\n",
+            constant_desc.Name);
+        ok(constant_desc.Class == D3DXPC_MATRIX_COLUMNS, "Got result %x, expected %u (D3DXPC_MATRIX_COLUMNS)\n",
+            constant_desc.Class, D3DXPC_MATRIX_COLUMNS);
+        ok(constant_desc.Type == D3DXPT_FLOAT, "Got result %x, expected %u (D3DXPT_FLOAT)\n",
+            constant_desc.Type, D3DXPT_FLOAT);
+        ok(constant_desc.Rows == 4, "Got result %x, expected 1\n", constant_desc.Rows);
+        ok(constant_desc.Columns == 4, "Got result %x, expected 4\n", constant_desc.Columns);
+        constant_desc_save = constant_desc; /* For GetConstantDesc test */
+
+        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 3);
+        ok(constant == NULL, "Got result %p, expected NULL\n", constant);
+
+        /* Test GetConstantByName */
+        constant = ID3DXConstantTable_GetConstantByName(constant_table, NULL, "Constant unknown");
+        ok(constant == NULL, "Got result %p, expected NULL\n", constant);
+        constant = ID3DXConstantTable_GetConstantByName(constant_table, NULL, "Constant3");
+        ok(constant != NULL, "No constant found\n");
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, &nb);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(!memcmp(&constant_desc, &constant_desc_save, sizeof(D3DXCONSTANT_DESC)), "Got different constant data\n");
+
+        /* Test GetConstantDesc */
+        constant = ID3DXConstantTable_GetConstant(constant_table, NULL, 0);
+        ok(constant != NULL, "No constant found\n");
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, NULL, &constant_desc, &nb);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, NULL, &nb);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, constant, &constant_desc, NULL);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant unknow", &constant_desc, &nb);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        hr = ID3DXConstantTable_GetConstantDesc(constant_table, "Constant3", &constant_desc, &nb);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(!memcmp(&constant_desc, &constant_desc_save, sizeof(D3DXCONSTANT_DESC)), "Got different constant data\n");
 
         ID3DXConstantTable_Release(constant_table);
     }
