@@ -8,6 +8,7 @@ C_SRCS = \
 	inetcpl.c
 
 RC_SRCS = \
+	cpl_De.rc \
 	cpl_En.rc \
 	inetcpl.rc
 
