@@ -89,6 +89,7 @@ AddReg=\
     ContentIndex,\
     ControlClass,\
     CurrentVersion,\
+    CurrentVersionWow64,\
     Debugger,\
     Desktop,\
     Dotnet,\
@@ -473,6 +474,10 @@ HKLM,%CurrentVersionNT%\Perflib,,16
 HKLM,%CurrentVersionNT%\Ports,,16
 HKLM,%CurrentVersionNT%\Print,,16
 HKLM,%CurrentVersionNT%\ProfileList,,16
+
+[CurrentVersionWow64]
+HKLM,%CurrentVersion%,"ProgramFilesDir (x86)",,"%16426%"
+HKLM,%CurrentVersion%,"CommonFilesDir (x86)",,"%16428%"
 
 [Debugger]
 HKLM,%CurrentVersionNT%\AeDebug,"Debugger",2,"winedbg --auto %ld %ld"
