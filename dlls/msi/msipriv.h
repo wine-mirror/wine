@@ -103,6 +103,7 @@ typedef struct tagMSIFIELD
     union
     {
         INT iVal;
+        INT_PTR pVal;
         LPWSTR szwVal;
         IStream *stream;
     } u;
@@ -709,11 +710,13 @@ extern UINT MSI_RecordGetIStream( MSIRECORD *, UINT, IStream **);
 extern const WCHAR *MSI_RecordGetString( const MSIRECORD *, UINT );
 extern MSIRECORD *MSI_CreateRecord( UINT );
 extern UINT MSI_RecordSetInteger( MSIRECORD *, UINT, int );
+extern UINT MSI_RecordSetIntPtr( MSIRECORD *, UINT, INT_PTR );
 extern UINT MSI_RecordSetStringW( MSIRECORD *, UINT, LPCWSTR );
 extern BOOL MSI_RecordIsNull( MSIRECORD *, UINT );
 extern UINT MSI_RecordGetStringW( MSIRECORD * , UINT, LPWSTR, LPDWORD);
 extern UINT MSI_RecordGetStringA( MSIRECORD *, UINT, LPSTR, LPDWORD);
 extern int MSI_RecordGetInteger( MSIRECORD *, UINT );
+extern INT_PTR MSI_RecordGetIntPtr( MSIRECORD *, UINT );
 extern UINT MSI_RecordReadStream( MSIRECORD *, UINT, char *, LPDWORD);
 extern UINT MSI_RecordSetStream(MSIRECORD *, UINT, IStream *);
 extern UINT MSI_RecordGetFieldCount( const MSIRECORD *rec );
