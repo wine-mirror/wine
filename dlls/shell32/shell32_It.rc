@@ -83,15 +83,15 @@ MENU_SHV_FILE MENU
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
-	  MENUITEM "E&splora",		FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "&Seleziona"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Esplora",		FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "&Apri",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Taglia",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Copia",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
 	  MENUITEM "Crea Co&llegamento",	FCIDM_SHVIEW_CREATELINK
-	  MENUITEM "&Cancella",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "Ca&ncella",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Rinomina",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Proprietà",	FCIDM_SHVIEW_PROPERTIES
@@ -270,7 +270,9 @@ STRINGTABLE
 	IDS_LOCAL_APPDATA           "Settaggi Locali\\Applicazioni"
 	IDS_CDBURN_AREA             "Settaggi Locali\\Applicazioni\\Microsoft\\CD Burning"
 	IDS_PROGRAM_FILES           "Programmi"
+	IDS_PROGRAM_FILESX86        "Programmi (x86)"
 	IDS_PROGRAM_FILES_COMMON    "Programmi\\File Comuni"
+	IDS_PROGRAM_FILES_COMMONX86 "Programmi (x86)\\File Comuni"
 	IDS_COMMON_DOCUMENTS        "Documenti"
 	IDS_COMMON_MUSIC            "Documenti\\Musica"
 	IDS_COMMON_PICTURES         "Documenti\\Immagini"
@@ -281,13 +283,13 @@ STRINGTABLE
 	IDS_MYPICTURES              "Immagini"
 	IDS_FAVORITES               "Favoriti"
 	IDS_RECENT                  "Recenti"
-	IDS_SENDTO                  "SendTo"
+	IDS_SENDTO                  "Invia A"
 	IDS_DESKTOPDIRECTORY        "Desktop"
-	IDS_NETHOOD                 "NetHood"
+	IDS_NETHOOD                 "Reti condivise"
 	IDS_TEMPLATES               "Modelli"
 	IDS_APPDATA                 "Applicazioni"
-	IDS_PRINTHOOD               "PrintHood"
-	IDS_COOKIES                 "Cookies"
+	IDS_PRINTHOOD               "Stampanti condivise"
+	IDS_COOKIES                 "Cookie"
 
 	IDS_NEWFOLDER		"Nuova cartella"
 
