@@ -767,6 +767,7 @@ static const WCHAR Common_DesktopW[] = {'C','o','m','m','o','n',' ','D','e','s',
 static const WCHAR Common_DocumentsW[] = {'C','o','m','m','o','n',' ','D','o','c','u','m','e','n','t','s','\0'};
 static const WCHAR Common_FavoritesW[] = {'C','o','m','m','o','n',' ','F','a','v','o','r','i','t','e','s','\0'};
 static const WCHAR CommonFilesDirW[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r','\0'};
+static const WCHAR CommonFilesDirX86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
 static const WCHAR CommonMusicW[] = {'C','o','m','m','o','n','M','u','s','i','c','\0'};
 static const WCHAR CommonPicturesW[] = {'C','o','m','m','o','n','P','i','c','t','u','r','e','s','\0'};
 static const WCHAR Common_ProgramsW[] = {'C','o','m','m','o','n',' ','P','r','o','g','r','a','m','s','\0'};
@@ -787,6 +788,7 @@ static const WCHAR NetHoodW[] = {'N','e','t','H','o','o','d','\0'};
 static const WCHAR PersonalW[] = {'P','e','r','s','o','n','a','l','\0'};
 static const WCHAR PrintHoodW[] = {'P','r','i','n','t','H','o','o','d','\0'};
 static const WCHAR ProgramFilesDirW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r','\0'};
+static const WCHAR ProgramFilesDirX86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')','\0'};
 static const WCHAR ProgramsW[] = {'P','r','o','g','r','a','m','s','\0'};
 static const WCHAR RecentW[] = {'R','e','c','e','n','t','\0'};
 static const WCHAR ResourcesW[] = {'R','e','s','o','u','r','c','e','s','\0'};
@@ -1037,9 +1039,9 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL
     },
     { /* 0x2a - CSIDL_PROGRAM_FILESX86 */
-        CSIDL_Type_NonExistent,
-        NULL,
-        NULL
+        CSIDL_Type_CurrVer,
+        ProgramFilesDirX86W,
+        MAKEINTRESOURCEW(IDS_PROGRAM_FILESX86)
     },
     { /* 0x2b - CSIDL_PROGRAM_FILES_COMMON */
         CSIDL_Type_CurrVer,
@@ -1047,9 +1049,9 @@ static const CSIDL_DATA CSIDL_Data[] =
         MAKEINTRESOURCEW(IDS_PROGRAM_FILES_COMMON)
     },
     { /* 0x2c - CSIDL_PROGRAM_FILES_COMMONX86 */
-        CSIDL_Type_NonExistent,
-        NULL,
-        NULL
+        CSIDL_Type_CurrVer,
+        CommonFilesDirX86W,
+        MAKEINTRESOURCEW(IDS_PROGRAM_FILES_COMMONX86)
     },
     { /* 0x2d - CSIDL_COMMON_TEMPLATES */
         CSIDL_Type_AllUsers,

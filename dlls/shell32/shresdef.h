@@ -90,6 +90,8 @@
 #define IDS_COMMON_PICTURES         69
 #define IDS_COMMON_VIDEO            70
 #define IDS_CDBURN_AREA             71
+#define IDS_PROGRAM_FILESX86        72
+#define IDS_PROGRAM_FILES_COMMONX86 73
 
 #define IDS_CREATEFOLDER_DENIED     128
 #define IDS_CREATEFOLDER_CAPTION    129
