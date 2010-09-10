@@ -522,8 +522,16 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
     if (!str)
         return E_OUTOFMEMORY;
 
-    ptr = strstrW(str, separator);
+    ptr = strchrW(str, ',');
     if (ptr) *ptr = '\0';
+
+    /* no ',' but ' ' only */
+    if( !ptr && strchrW(str, ' ') )
+    {
+        hr = FUSION_E_INVALID_NAME;
+        goto done;
+    }
+
     name->name = strdupW(str);
     if (!name->name)
         return E_OUTOFMEMORY;
