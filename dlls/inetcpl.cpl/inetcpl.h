@@ -22,6 +22,9 @@
 #include <windef.h>
 #include <winuser.h>
 
+/* icons */
+#define ICO_MAIN            100
+
 /* strings */
 #define IDS_CPL_NAME        1
 #define IDS_CPL_INFO        2

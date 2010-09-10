@@ -11,4 +11,7 @@ RC_SRCS = \
 	cpl_En.rc \
 	inetcpl.rc
 
+SVG_SRCS = \
+	inetcpl.svg
+
 @MAKE_DLL_RULES@
