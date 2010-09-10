@@ -138,6 +138,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         return process_attach( hinst );
     case DLL_PROCESS_DETACH:
         WritePrivateProfileSectionW( NULL, NULL, NULL );
+        CONSOLE_Exit();
         break;
     }
     return TRUE;

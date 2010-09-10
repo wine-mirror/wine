@@ -28,9 +28,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -66,7 +63,6 @@ struct console_input
     user_handle_t                win;           /* window handle if backend supports it */
     struct event                *event;         /* event to wait on for input queue */
     struct fd                   *fd;            /* for bare console, attached input fd */
-    struct termios               termios;       /* for bare console, saved termio info */
 };
 
 static void console_input_dump( struct object *obj, int verbose );
@@ -328,36 +324,10 @@ static struct object *create_console_input( struct thread* renderer, int fd )
     }
     if (fd != -1) /* bare console */
     {
-        struct termios  term;
-
         if (!(console_input->fd = create_anonymous_fd( &console_fd_ops, fd, &console_input->obj,
                                                        FILE_SYNCHRONOUS_IO_NONALERT )))
         {
             release_object( console_input );
-            return NULL;
-        }
-        if (tcgetattr(fd, &term) < 0)
-        {
-            release_object( console_input );
-            set_error( STATUS_INVALID_HANDLE );
-            return NULL;
-        }
-        console_input->termios = term;
-        term.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN);
-        term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-        term.c_cflag &= ~(CSIZE | PARENB);
-        term.c_cflag |= CS8;
-        /* FIXME: we should actually disable output processing here
-         * and let kernel32/console.c do the job (with support of enable/disable of
-         * processed output)
-         */
-        /* term.c_oflag &= ~(OPOST); */
-        term.c_cc[VMIN] = 1;
-        term.c_cc[VTIME] = 0;
-        if (tcsetattr(fd, TCSANOW, &term) < 0)
-        {
-            release_object( console_input );
-            set_error( STATUS_INVALID_HANDLE );
             return NULL;
         }
         allow_fd_caching( console_input->fd );
@@ -1129,10 +1099,7 @@ static void console_input_destroy( struct object *obj )
     }
     release_object( console_in->event );
     if (console_in->fd)
-    {
-        tcsetattr(get_unix_fd(console_in->fd), TCSANOW, &console_in->termios);
         release_object( console_in->fd );
-    }
 
     for (i = 0; i < console_in->history_size; i++)
         free( console_in->history[i] );

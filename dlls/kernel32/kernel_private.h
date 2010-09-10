@@ -29,6 +29,7 @@ HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
 BOOL    WINAPI CloseConsoleHandle(HANDLE handle);
 HANDLE  WINAPI GetConsoleInputWaitHandle(void);
 BOOL           CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params);
+BOOL           CONSOLE_Exit(void);
 
 static inline BOOL is_console_handle(HANDLE h)
 {

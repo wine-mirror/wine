@@ -42,6 +42,8 @@
 # include <termios.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -143,6 +145,96 @@ static BOOL get_console_mode(HANDLE conin, DWORD* mode, BOOL* bare)
         }
     }
     SERVER_END_REQ;
+    return ret;
+}
+
+static struct termios S_termios;        /* saved termios for bare consoles */
+static BOOL S_termios_raw /* = FALSE */;
+
+/* The scheme for bare consoles for managing raw/cooked settings is as follows:
+ * - a bare console is created for all CUI programs started from command line (without
+ *   wineconsole) (let's call those PS)
+ * - of course, every child of a PS which requires console inheritance will get it
+ * - the console termios attributes are saved at the start of program which is attached to be
+ *   bare console
+ * - if any program attached to a bare console requests input from console, the console is
+ *   turned into raw mode
+ * - when the program which created the bare console (the program started from command line)
+ *   exits, it will restore the console termios attributes it saved at startup (this
+ *   will put back the console into cooked mode if it had been put in raw mode)
+ * - if any other program attached to this bare console is still alive, the Unix shell will put
+ *   it in the background, hence forbidding access to the console. Therefore, reading console
+ *   input will not be available when the bare console creator has died.
+ *   FIXME: This is a limitation of current implementation
+ */
+
+/* returns the fd for a bare console (-1 otherwise) */
+static int  get_console_bare_fd(HANDLE hin)
+{
+    BOOL        is_bare;
+    int         fd;
+
+    if (get_console_mode(hin, NULL, &is_bare) && is_bare &&
+        wine_server_handle_to_fd(hin, 0, &fd, NULL) == STATUS_SUCCESS)
+        return fd;
+    return -1;
+}
+
+static BOOL save_console_mode(HANDLE hin)
+{
+    int         fd;
+    BOOL        ret;
+
+    if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
+    ret = tcgetattr(fd, &S_termios) >= 0;
+    close(fd);
+    return ret;
+}
+
+static BOOL put_console_into_raw_mode(HANDLE hin)
+{
+    int            fd;
+
+    if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
+
+    RtlEnterCriticalSection(&CONSOLE_CritSect);
+    if (!S_termios_raw)
+    {
+        struct termios term = S_termios;
+
+        term.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN);
+        term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+        term.c_cflag &= ~(CSIZE | PARENB);
+        term.c_cflag |= CS8;
+        /* FIXME: we should actually disable output processing here
+         * and let kernel32/console.c do the job (with support of enable/disable of
+         * processed output)
+         */
+        /* term.c_oflag &= ~(OPOST); */
+        term.c_cc[VMIN] = 1;
+        term.c_cc[VTIME] = 0;
+        S_termios_raw = tcsetattr(fd, TCSANOW, &term) >= 0;
+    }
+    RtlLeaveCriticalSection(&CONSOLE_CritSect);
+
+    close(fd);
+    return S_termios_raw;
+}
+
+/* put back the console in cooked mode iff we're the process which created the bare console
+ * we don't test if thie process has set the console in raw mode as it could be one of its
+ * child who did it
+ */
+static BOOL restore_console_mode(HANDLE hin)
+{
+    int         fd;
+    BOOL        ret;
+
+    if (RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != KERNEL32_CONSOLE_SHELL)
+        return TRUE;
+    if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
+    ret = tcsetattr(fd, TCSANOW, &S_termios) >= 0;
+    close(fd);
     return ret;
 }
 
@@ -1080,6 +1172,7 @@ static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_R
 
     if (bare)
     {
+        put_console_into_raw_mode(handle);
         if (WaitForSingleObject(GetConsoleInputWaitHandle(), 0) != WAIT_OBJECT_0)
         {
             ret = bare_console_fetch_input(handle, timeout);
@@ -2893,6 +2986,7 @@ DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
 
 BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
 {
+    memset(&S_termios, 0, sizeof(S_termios));
     if (params->ConsoleHandle == KERNEL32_CONSOLE_SHELL)
     {
         HANDLE  conin;
@@ -2956,7 +3050,10 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
     if (!params->hStdInput)
         params->hStdInput = INVALID_HANDLE_VALUE;
     else if (VerifyConsoleIoHandle(console_handle_map(params->hStdInput)))
+    {
         params->hStdInput = console_handle_map(params->hStdInput);
+        save_console_mode(params->hStdInput);
+    }
 
     if (!params->hStdOutput)
         params->hStdOutput = INVALID_HANDLE_VALUE;
@@ -2969,4 +3066,10 @@ BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
         params->hStdError = console_handle_map(params->hStdError);
 
     return TRUE;
+}
+
+BOOL CONSOLE_Exit(void)
+{
+    /* the console is in raw mode, put it back in cooked mode */
+    return restore_console_mode(GetStdHandle(STD_INPUT_HANDLE));
 }
