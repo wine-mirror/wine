@@ -788,7 +788,10 @@ static HRESULT WINAPI domdoc_get_previousSibling(
     IXMLDOMNode** previousSibling )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_previousSibling( IXMLDOMNode_from_impl(&This->node), previousSibling );
+
+    TRACE("(%p)->(%p)\n", This, previousSibling);
+
+    return return_null_node(previousSibling);
 }
 
 
@@ -797,7 +800,10 @@ static HRESULT WINAPI domdoc_get_nextSibling(
     IXMLDOMNode** nextSibling )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_nextSibling( IXMLDOMNode_from_impl(&This->node), nextSibling );
+
+    TRACE("(%p)->(%p)\n", This, nextSibling);
+
+    return return_null_node(nextSibling);
 }
 
 

@@ -339,52 +339,30 @@ static HRESULT WINAPI xmlnode_get_lastChild(
     return E_NOTIMPL;
 }
 
+HRESULT node_get_previous_sibling(xmlnode *This, IXMLDOMNode **ret)
+{
+    return get_node(This, "previous", This->node->prev, ret);
+}
+
 static HRESULT WINAPI xmlnode_get_previousSibling(
     IXMLDOMNode *iface,
     IXMLDOMNode** previousSibling)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
+}
 
-    TRACE("(%p)->(%p)\n", This, previousSibling );
-
-    if (!previousSibling)
-        return E_INVALIDARG;
-
-    switch( This->node->type )
-    {
-    /* Attribute, Document and Document Fragment Nodes do not support previousSibling */
-    case XML_DOCUMENT_NODE:
-    case XML_DOCUMENT_FRAG_NODE:
-    case XML_ATTRIBUTE_NODE:
-        *previousSibling = NULL;
-        return S_FALSE;
-    default:
-        return get_node( This, "previous", This->node->prev, previousSibling );
-    }
+HRESULT node_get_next_sibling(xmlnode *This, IXMLDOMNode **ret)
+{
+    return get_node(This, "next", This->node->next, ret);
 }
 
 static HRESULT WINAPI xmlnode_get_nextSibling(
     IXMLDOMNode *iface,
     IXMLDOMNode** nextSibling)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-
-    TRACE("(%p)->(%p)\n", This, nextSibling );
-
-    if (!nextSibling)
-        return E_INVALIDARG;
-
-    switch( This->node->type )
-    {
-    /* Attribute, Document and Document Fragment Nodes do not support nextSibling */
-    case XML_DOCUMENT_NODE:
-    case XML_DOCUMENT_FRAG_NODE:
-    case XML_ATTRIBUTE_NODE:
-        *nextSibling = NULL;
-        return S_FALSE;
-    default:
-        return get_node( This, "next", This->node->next, nextSibling );
-    }
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_get_attributes(
@@ -1852,7 +1830,10 @@ static HRESULT WINAPI unknode_get_previousSibling(
     IXMLDOMNode** domNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_previousSibling( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_previous_sibling(&This->node, domNode);
 }
 
 static HRESULT WINAPI unknode_get_nextSibling(
@@ -1860,7 +1841,10 @@ static HRESULT WINAPI unknode_get_nextSibling(
     IXMLDOMNode** domNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_nextSibling( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_next_sibling(&This->node, domNode);
 }
 
 static HRESULT WINAPI unknode_get_attributes(

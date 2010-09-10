@@ -166,6 +166,8 @@ extern HRESULT node_get_parent(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_get_child_nodes(xmlnode*,IXMLDOMNodeList**);
 extern HRESULT node_get_first_child(xmlnode*,IXMLDOMNode**);
 extern HRESULT node_get_last_child(xmlnode*,IXMLDOMNode**);
+extern HRESULT node_get_previous_sibling(xmlnode*,IXMLDOMNode**);
+extern HRESULT node_get_next_sibling(xmlnode*,IXMLDOMNode**);
 
 
 extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);

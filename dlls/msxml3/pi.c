@@ -288,7 +288,10 @@ static HRESULT WINAPI dom_pi_get_previousSibling(
     IXMLDOMNode** domNode)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_previousSibling( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_previous_sibling(&This->node, domNode);
 }
 
 static HRESULT WINAPI dom_pi_get_nextSibling(
@@ -296,7 +299,10 @@ static HRESULT WINAPI dom_pi_get_nextSibling(
     IXMLDOMNode** domNode)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_get_nextSibling( IXMLDOMNode_from_impl(&This->node), domNode );
+
+    TRACE("(%p)->(%p)\n", This, domNode);
+
+    return node_get_next_sibling(&This->node, domNode);
 }
 
 static HRESULT WINAPI dom_pi_get_attributes(
