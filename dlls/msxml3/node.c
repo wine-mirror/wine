@@ -373,47 +373,37 @@ static HRESULT WINAPI xmlnode_get_attributes(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_insertBefore(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* newChild,
-    VARIANT refChild,
-    IXMLDOMNode** outNewChild)
+HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT *ref_child,
+        IXMLDOMNode **ret)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlNodePtr before_node, new_child_node;
     IXMLDOMNode *before = NULL;
     xmlnode *node_obj;
     HRESULT hr;
 
-    TRACE("(%p)->(%p var %p)\n",This,newChild,outNewChild);
-
-    if (!newChild)
+    if(!new_child)
         return E_INVALIDARG;
 
-    switch(V_VT(&refChild))
+    node_obj = get_node_obj(new_child);
+    if(!node_obj) {
+        FIXME("newChild is not our node implementation\n");
+        return E_FAIL;
+    }
+
+    switch(V_VT(ref_child))
     {
     case VT_EMPTY:
     case VT_NULL:
         break;
 
     case VT_UNKNOWN:
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&refChild), &IID_IXMLDOMNode, (LPVOID)&before);
-        if(FAILED(hr)) return hr;
-        break;
-
     case VT_DISPATCH:
-        hr = IDispatch_QueryInterface(V_DISPATCH(&refChild), &IID_IXMLDOMNode, (LPVOID)&before);
+        hr = IUnknown_QueryInterface(V_UNKNOWN(ref_child), &IID_IXMLDOMNode, (LPVOID)&before);
         if(FAILED(hr)) return hr;
         break;
 
     default:
-        FIXME("refChild var type %x\n", V_VT(&refChild));
-        return E_FAIL;
-    }
-
-    node_obj = get_node_obj(newChild);
-    if(!node_obj) {
-        FIXME("newChild is not our node implementation\n");
+        FIXME("refChild var type %x\n", V_VT(ref_child));
         return E_FAIL;
     }
 
@@ -441,12 +431,23 @@ static HRESULT WINAPI xmlnode_insertBefore(
         xmlAddChild(This->node, new_child_node);
     }
 
-    IXMLDOMNode_AddRef(newChild);
-    if(outNewChild)
-        *outNewChild = newChild;
+    if(ret) {
+        IXMLDOMNode_AddRef(new_child);
+        *ret = new_child;
+    }
 
     TRACE("ret S_OK\n");
     return S_OK;
+}
+
+static HRESULT WINAPI xmlnode_insertBefore(
+    IXMLDOMNode *iface,
+    IXMLDOMNode* newChild,
+    VARIANT refChild,
+    IXMLDOMNode** outNewChild)
+{
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_replaceChild(
@@ -1838,11 +1839,14 @@ static HRESULT WINAPI unknode_get_attributes(
 
 static HRESULT WINAPI unknode_insertBefore(
     IXMLDOMNode *iface,
-    IXMLDOMNode* newNode, VARIANT var1,
+    IXMLDOMNode* newNode, VARIANT refChild,
     IXMLDOMNode** outOldNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_insertBefore( IXMLDOMNode_from_impl(&This->node), newNode, var1, outOldNode );
+
+    FIXME("(%p)->(%p x%d %p)\n", This, newNode, V_VT(&refChild), outOldNode);
+
+    return node_insert_before(&This->node, newNode, &refChild, outOldNode);
 }
 
 static HRESULT WINAPI unknode_replaceChild(
