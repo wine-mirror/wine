@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <setjmp.h>
 
 #ifdef SONAME_LIBJPEG
 /* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
@@ -54,6 +55,7 @@
 #include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
+WINE_DECLARE_DEBUG_CHANNEL(jpeg);
 
 #ifdef SONAME_LIBJPEG
 
@@ -89,6 +91,38 @@ static void *load_libjpeg(void)
 #undef LOAD_FUNCPTR
     }
     return libjpeg_handle;
+}
+
+static void error_exit_fn(j_common_ptr cinfo)
+{
+    char message[JMSG_LENGTH_MAX];
+    if (ERR_ON(jpeg))
+    {
+        cinfo->err->format_message(cinfo, message);
+        ERR_(jpeg)("%s\n", message);
+    }
+    longjmp(*(jmp_buf*)cinfo->client_data, 1);
+}
+
+static void emit_message_fn(j_common_ptr cinfo, int msg_level)
+{
+    char message[JMSG_LENGTH_MAX];
+
+    if (msg_level < 0 && ERR_ON(jpeg))
+    {
+        cinfo->err->format_message(cinfo, message);
+        ERR_(jpeg)("%s\n", message);
+    }
+    else if (msg_level == 0 && WARN_ON(jpeg))
+    {
+        cinfo->err->format_message(cinfo, message);
+        WARN_(jpeg)("%s\n", message);
+    }
+    else if (msg_level > 0 && TRACE_ON(jpeg))
+    {
+        cinfo->err->format_message(cinfo, message);
+        TRACE_(jpeg)("%s\n", message);
+    }
 }
 
 typedef struct {
@@ -227,6 +261,7 @@ static HRESULT WINAPI JpegDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
     JpegDecoder *This = (JpegDecoder*)iface;
     int ret;
     LARGE_INTEGER seek;
+    jmp_buf jmpbuf;
     TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOptions);
 
     EnterCriticalSection(&This->lock);
@@ -237,7 +272,20 @@ static HRESULT WINAPI JpegDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
         return WINCODEC_ERR_WRONGSTATE;
     }
 
-    This->cinfo.err = pjpeg_std_error(&This->jerr);
+    pjpeg_std_error(&This->jerr);
+
+    This->jerr.error_exit = error_exit_fn;
+    This->jerr.emit_message = emit_message_fn;
+
+    This->cinfo.err = &This->jerr;
+
+    This->cinfo.client_data = &jmpbuf;
+
+    if (setjmp(jmpbuf))
+    {
+        LeaveCriticalSection(&This->lock);
+        return E_FAIL;
+    }
 
     pjpeg_CreateDecompress(&This->cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
 
@@ -470,6 +518,7 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     UINT stride;
     UINT data_size;
     UINT max_row_needed;
+    jmp_buf jmpbuf;
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
     if (This->cinfo.out_color_space == JCS_GRAYSCALE) bpp = 8;
@@ -492,6 +541,14 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
             LeaveCriticalSection(&This->lock);
             return E_OUTOFMEMORY;
         }
+    }
+
+    This->cinfo.client_data = &jmpbuf;
+
+    if (setjmp(jmpbuf))
+    {
+        LeaveCriticalSection(&This->lock);
+        return E_FAIL;
     }
 
     while (max_row_needed > This->cinfo.output_scanline)
