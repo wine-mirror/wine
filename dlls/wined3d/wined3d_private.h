@@ -1456,6 +1456,7 @@ struct wined3d_driver_info
     enum wined3d_pci_device device;
     const char *name;
     const char *description;
+    unsigned int vidmem;
     DWORD version_high;
     DWORD version_low;
 };

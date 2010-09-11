@@ -1033,76 +1033,79 @@ struct gpu_description
     WORD card;                      /* reported PCI card device ID  */
     const char *description;        /* Description of the card e.g. NVIDIA RIVA TNT */
     enum wined3d_display_driver driver;
+    unsigned int vidmem;
 };
 
+/* The amount of video memory stored in the gpu description table is the minimum amount of video memory
+ * found on a board containing a specific GPU. */
 static const struct gpu_description gpu_description_table[] =
 {
     /* Nvidia cards */
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  DRIVER_NVIDIA_TNT        },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        DRIVER_NVIDIA_TNT        },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               DRIVER_NVIDIA_TNT        },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", DRIVER_NVIDIA_TNT        },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        DRIVER_NVIDIA_GEFORCE2MX },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  DRIVER_NVIDIA_GEFORCE2MX },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           DRIVER_NVIDIA_GEFORCE2MX },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          DRIVER_NVIDIA_GEFORCE2MX },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           DRIVER_NVIDIA_GEFORCEFX  },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           DRIVER_NVIDIA_GEFORCEFX  },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           DRIVER_NVIDIA_GEFORCEFX  },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8400GS,     "NVIDIA GeForce 8400 GS",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTX,    "NVIDIA GeForce 8800 GTX",          DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_210,        "NVIDIA GeForce 210",               DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT220,      "NVIDIA GeForce GT 220",            DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT325M,     "NVIDIA GeForce GT 325M",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTS350M,    "NVIDIA GeForce GTS 350M",          DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX460,     "NVIDIA GeForce GTX 460",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX470,     "NVIDIA GeForce GTX 470",           DRIVER_NVIDIA_GEFORCE6   },
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX480,     "NVIDIA GeForce GTX 480",           DRIVER_NVIDIA_GEFORCE6   },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  DRIVER_NVIDIA_TNT,       16  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        DRIVER_NVIDIA_TNT,       32  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               DRIVER_NVIDIA_TNT,       32  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", DRIVER_NVIDIA_TNT,       32  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        DRIVER_NVIDIA_GEFORCE2MX,32  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  DRIVER_NVIDIA_GEFORCE2MX,64  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           DRIVER_NVIDIA_GEFORCE2MX,64  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          DRIVER_NVIDIA_GEFORCE2MX,64, },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           DRIVER_NVIDIA_GEFORCEFX, 64  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           DRIVER_NVIDIA_GEFORCEFX, 128 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           DRIVER_NVIDIA_GEFORCEFX, 256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              DRIVER_NVIDIA_GEFORCE6,  64  },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           DRIVER_NVIDIA_GEFORCE6,  128 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              DRIVER_NVIDIA_GEFORCE6,  128 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           DRIVER_NVIDIA_GEFORCE6,  128 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8400GS,     "NVIDIA GeForce 8400 GS",           DRIVER_NVIDIA_GEFORCE6,  128 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          DRIVER_NVIDIA_GEFORCE6,  512 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          DRIVER_NVIDIA_GEFORCE6,  320 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTX,    "NVIDIA GeForce 8800 GTX",          DRIVER_NVIDIA_GEFORCE6,  768 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           DRIVER_NVIDIA_GEFORCE6,  256 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           DRIVER_NVIDIA_GEFORCE6,  384 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           DRIVER_NVIDIA_GEFORCE6,  512 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_210,        "NVIDIA GeForce 210",               DRIVER_NVIDIA_GEFORCE6,  512 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT220,      "NVIDIA GeForce GT 220",            DRIVER_NVIDIA_GEFORCE6,  512 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT240,      "NVIDIA GeForce GT 240",            DRIVER_NVIDIA_GEFORCE6,  512 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           DRIVER_NVIDIA_GEFORCE6,  1024},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           DRIVER_NVIDIA_GEFORCE6,  896 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           DRIVER_NVIDIA_GEFORCE6,  1024},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GT325M,     "NVIDIA GeForce GT 325M",           DRIVER_NVIDIA_GEFORCE6,  1024},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTS350M,    "NVIDIA GeForce GTS 350M",          DRIVER_NVIDIA_GEFORCE6,  1024},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX460,     "NVIDIA GeForce GTX 460",           DRIVER_NVIDIA_GEFORCE6,  768 },
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX470,     "NVIDIA GeForce GTX 470",           DRIVER_NVIDIA_GEFORCE6,  1280},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX480,     "NVIDIA GeForce GTX 480",           DRIVER_NVIDIA_GEFORCE6,  1536},
     /* ATI cards */
-    {HW_VENDOR_ATI,        CARD_ATI_RAGE_128PRO,           "ATI Rage Fury",                    DRIVER_ATI_RAGE_128PRO,  },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_7200,           "ATI RADEON 7200 SERIES",           DRIVER_ATI_R100,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_8500,           "ATI RADEON 8500 SERIES",           DRIVER_ATI_R100,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  DRIVER_ATI_R300,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_XPRESS_200M,    "ATI RADEON XPRESS 200M Series",    DRIVER_ATI_R300,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               DRIVER_ATI_R300,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          DRIVER_ATI_R300,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2350,         "ATI Mobility Radeon HD 2350",      DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_ATI_R600,         },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_ATI_R600,         },
+    {HW_VENDOR_ATI,        CARD_ATI_RAGE_128PRO,           "ATI Rage Fury",                    DRIVER_ATI_RAGE_128PRO,  16  },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_7200,           "ATI RADEON 7200 SERIES",           DRIVER_ATI_R100,         32  },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_8500,           "ATI RADEON 8500 SERIES",           DRIVER_ATI_R100,         64  },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  DRIVER_ATI_R300,         64  },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_XPRESS_200M,    "ATI RADEON XPRESS 200M Series",    DRIVER_ATI_R300,         64  },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               DRIVER_ATI_R300,         128 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          DRIVER_ATI_R300,         128 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2350,         "ATI Mobility Radeon HD 2350",      DRIVER_ATI_R600,         256 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      DRIVER_ATI_R600,         256 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               DRIVER_ATI_R600,         256 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_ATI_R600,         1024},
     /* Intel cards */
-    {HW_VENDOR_INTEL,      CARD_INTEL_I830G,               "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800  },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I855G,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800  },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I865G,               "Intel(R) 82865G Graphics Controller",                       DRIVER_INTEL_GMA800  },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I915G,               "Intel(R) 82915G/GV/910GL Express Chipset Family",           DRIVER_INTEL_GMA900  },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I915GM,              "Mobile Intel(R) 915GM/GMS,910GML Express Chipset Family",   DRIVER_INTEL_GMA900  },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I945GM,              "Mobile Intel(R) 945GM Express Chipset Family",              DRIVER_INTEL_GMA950  },
-    {HW_VENDOR_INTEL,      CARD_INTEL_X3100,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000 }
+    {HW_VENDOR_INTEL,      CARD_INTEL_I830G,               "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I855G,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800,  32 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I865G,               "Intel(R) 82865G Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I915G,               "Intel(R) 82915G/GV/910GL Express Chipset Family",           DRIVER_INTEL_GMA900,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I915GM,              "Mobile Intel(R) 915GM/GMS,910GML Express Chipset Family",   DRIVER_INTEL_GMA900,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_I945GM,              "Mobile Intel(R) 945GM Express Chipset Family",              DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_X3100,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000, 128}
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
@@ -1149,6 +1152,10 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
         device = wined3d_settings.pci_device_id;
     }
     driver_info->device = device;
+
+    /* Set a default amount of video memory (64MB). In general this code isn't used unless the user
+     * overrides the pci ids to a card which is not in our database. */
+    driver_info->vidmem = WINE_DEFAULT_VIDMEM;
 
     memset(&os_version, 0, sizeof(os_version));
     os_version.dwOSVersionInfoSize = sizeof(os_version);
@@ -1212,6 +1219,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
             TRACE_(d3d_caps)("Found card %04x:%04x in driver DB.\n", vendor, device);
 
             driver_info->description = gpu_description_table[i].description;
+            driver_info->vidmem = gpu_description_table[i].vidmem * 1024*1024;
             driver = gpu_description_table[i].driver;
             break;
         }
@@ -1379,28 +1387,25 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
 
 
 static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer, unsigned int *vidmem)
+        const char *gl_renderer)
 {
     if (WINE_D3D10_CAPABLE(gl_info))
     {
         /* Geforce 400 - highend */
         if (strstr(gl_renderer, "GTX 480"))
         {
-            *vidmem = 1536;
             return CARD_NVIDIA_GEFORCE_GTX480;
         }
 
         /* Geforce 400 - midend high */
         if (strstr(gl_renderer, "GTX 470"))
         {
-            *vidmem = 1280;
             return CARD_NVIDIA_GEFORCE_GTX470;
         }
 
         /* Geforce 400 - midend */
         if (strstr(gl_renderer, "GTX 460"))
         {
-            *vidmem = 768;  /* 1024MB model also available */
             return CARD_NVIDIA_GEFORCE_GTX460;
         }
 
@@ -1408,16 +1413,14 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         if (strstr(gl_renderer, "GTS 350M")
                 || strstr(gl_renderer, "GTS 360M"))
         {
-           *vidmem = 1024;
-           return CARD_NVIDIA_GEFORCE_GTS350M;
+            return CARD_NVIDIA_GEFORCE_GTS350M;
         }
 
         /* Geforce 300 midend mobile (Geforce GT 325M/330M use the same core) */
         if (strstr(gl_renderer, "GT 325M")
                 || strstr(gl_renderer, "GT 330M"))
         {
-           *vidmem = 1024;
-           return CARD_NVIDIA_GEFORCE_GT325M;
+            return CARD_NVIDIA_GEFORCE_GT325M;
         }
 
         /* Geforce 200 - highend */
@@ -1425,34 +1428,29 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "GTX 285")
                 || strstr(gl_renderer, "GTX 295"))
         {
-            *vidmem = 1024;
             return CARD_NVIDIA_GEFORCE_GTX280;
         }
 
         /* Geforce 200 - midend high */
         if (strstr(gl_renderer, "GTX 275"))
         {
-            *vidmem = 896;
             return CARD_NVIDIA_GEFORCE_GTX275;
         }
 
         /* Geforce 200 - midend */
         if (strstr(gl_renderer, "GTX 260"))
         {
-            *vidmem = 1024;
             return CARD_NVIDIA_GEFORCE_GTX260;
         }
         /* Geforce 200 - midend */
         if (strstr(gl_renderer, "GT 240"))
         {
-           *vidmem = 512;
            return CARD_NVIDIA_GEFORCE_GT240;
         }
 
         /* Geforce 200 lowend */
         if (strstr(gl_renderer, "GT 220"))
         {
-           *vidmem = 512; /* The GT 220 has 512-1024MB */
            return CARD_NVIDIA_GEFORCE_GT220;
         }
         /* Geforce 200 lowend (Geforce 305/310 use the same core) */
@@ -1461,7 +1459,6 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "Geforce 305")
                 || strstr(gl_renderer, "Geforce 310"))
         {
-           *vidmem = 512;
            return CARD_NVIDIA_GEFORCE_210;
         }
 
@@ -1470,7 +1467,6 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "GTS 150")
                 || strstr(gl_renderer, "GTS 250"))
         {
-            *vidmem = 512;
             return CARD_NVIDIA_GEFORCE_9800GT;
         }
 
@@ -1478,7 +1474,6 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         if (strstr(gl_renderer, "9600")
                 || strstr(gl_renderer, "GT 140"))
         {
-            *vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
             return CARD_NVIDIA_GEFORCE_9600GT;
         }
 
@@ -1487,14 +1482,12 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "GT 120")
                 || strstr(gl_renderer, "GT 130"))
         {
-            *vidmem = 256; /* The 9500GT has 256-1024MB */
             return CARD_NVIDIA_GEFORCE_9500GT;
         }
 
         /* Geforce9 - lowend */
         if (strstr(gl_renderer, "9400"))
         {
-            *vidmem = 256; /* The 9400GT has 256-1024MB */
             return CARD_NVIDIA_GEFORCE_9400GT;
         }
 
@@ -1504,28 +1497,24 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "9300")
                 || strstr(gl_renderer, "G 100"))
         {
-            *vidmem = 256; /* The 9100-9300 cards have 256MB */
             return CARD_NVIDIA_GEFORCE_9200;
         }
 
         /* Geforce8 - highend high*/
         if (strstr(gl_renderer, "8800 GTX"))
         {
-            *vidmem = 768;
             return CARD_NVIDIA_GEFORCE_8800GTX;
         }
 
         /* Geforce8 - highend */
         if (strstr(gl_renderer, "8800"))
         {
-            *vidmem = 320; /* The 8800GTS uses 320MB, a 8800GTX can have 768MB */
             return CARD_NVIDIA_GEFORCE_8800GTS;
         }
 
         /* Geforce8 - midend mobile */
         if (strstr(gl_renderer, "8600 M"))
         {
-            *vidmem = 512;
             return CARD_NVIDIA_GEFORCE_8600MGT;
         }
 
@@ -1533,29 +1522,25 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         if (strstr(gl_renderer, "8600")
                 || strstr(gl_renderer, "8700"))
         {
-            *vidmem = 256;
             return CARD_NVIDIA_GEFORCE_8600GT;
         }
 
-	/* Geforce8 - mid-lowend */
-	if (strstr(gl_renderer, "8400")
-		|| strstr(gl_renderer, "8500"))
-	{
-	    *vidmem = 128; /* 128-256MB for a 8400, 256-512MB for a 8500 */
+        /* Geforce8 - mid-lowend */
+        if (strstr(gl_renderer, "8400")
+                || strstr(gl_renderer, "8500"))
+        {
             return CARD_NVIDIA_GEFORCE_8400GS;
-	}
+        }
 
         /* Geforce8 - lowend */
         if (strstr(gl_renderer, "8100")
                 || strstr(gl_renderer, "8200")
                 || strstr(gl_renderer, "8300"))
         {
-            *vidmem = 128; /* 128-256MB for a 8300 */
             return CARD_NVIDIA_GEFORCE_8300GS;
         }
 
         /* Geforce8-compatible fall back if the GPU is not in the list yet */
-        *vidmem = 128;
         return CARD_NVIDIA_GEFORCE_8300GS;
     }
 
@@ -1571,7 +1556,6 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "Quadro FX 4")
                 || strstr(gl_renderer, "Quadro FX 5"))
         {
-            *vidmem = 256; /* A 7800GT uses 256MB while highend 7900 cards can use 512MB */
             return CARD_NVIDIA_GEFORCE_7800GT;
         }
 
@@ -1579,28 +1563,24 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
         if (strstr(gl_renderer, "7600")
                 || strstr(gl_renderer, "7700"))
         {
-            *vidmem = 256; /* The 7600 uses 256-512MB */
             return CARD_NVIDIA_GEFORCE_7600;
         }
 
         /* Geforce7 lower medium */
         if (strstr(gl_renderer, "7400"))
         {
-            *vidmem = 256; /* The 7400 uses 256-512MB */
             return CARD_NVIDIA_GEFORCE_7400;
         }
 
         /* Geforce7 lowend */
         if (strstr(gl_renderer, "7300"))
         {
-            *vidmem = 256; /* Mac Pros with this card have 256 MB */
             return CARD_NVIDIA_GEFORCE_7300;
         }
 
         /* Geforce6 highend */
         if (strstr(gl_renderer, "6800"))
         {
-            *vidmem = 128; /* The 6800 uses 128-256MB, the 7600 uses 256-512MB */
             return CARD_NVIDIA_GEFORCE_6800;
         }
 
@@ -1609,12 +1589,10 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "6610")
                 || strstr(gl_renderer, "6700"))
         {
-            *vidmem = 128; /* A 6600GT has 128-256MB */
             return CARD_NVIDIA_GEFORCE_6600GT;
         }
 
         /* Geforce6/7 lowend */
-        *vidmem = 64; /* */
         return CARD_NVIDIA_GEFORCE_6200; /* Geforce 6100/6150/6200/7300/7400/7500 */
     }
 
@@ -1626,7 +1604,6 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "5950")
                 || strstr(gl_renderer, "Quadro FX"))
         {
-            *vidmem = 256; /* 5800-5900 cards use 256MB */
             return CARD_NVIDIA_GEFORCEFX_5800;
         }
 
@@ -1636,12 +1613,10 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
                 || strstr(gl_renderer, "5700")
                 || strstr(gl_renderer, "5750"))
         {
-            *vidmem = 128; /* A 5600 uses 128-256MB */
             return CARD_NVIDIA_GEFORCEFX_5600;
         }
 
         /* GeforceFX - lowend */
-        *vidmem = 64; /* Normal FX5200 cards use 64-256MB; laptop (non-standard) can have less */
         return CARD_NVIDIA_GEFORCEFX_5200; /* GeforceFX 5100/5200/5250/5300/5500 */
     }
 
@@ -1649,11 +1624,9 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
     {
         if (strstr(gl_renderer, "GeForce4 Ti") || strstr(gl_renderer, "Quadro4"))
         {
-            *vidmem = 64; /* Geforce4 Ti cards have 64-128MB */
             return CARD_NVIDIA_GEFORCE4_TI4200; /* Geforce4 Ti4200/Ti4400/Ti4600/Ti4800, Quadro4 */
         }
 
-        *vidmem = 64; /* Geforce3 cards have 64-128MB */
         return CARD_NVIDIA_GEFORCE3; /* Geforce3 standard/Ti200/Ti500, Quadro DCC */
     }
 
@@ -1661,43 +1634,32 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
     {
         if (strstr(gl_renderer, "GeForce4 MX"))
         {
-            /* Most Geforce4MX GPUs have at least 64MB of memory, some
-             * early models had 32MB but most have 64MB or even 128MB. */
-            *vidmem = 64;
             return CARD_NVIDIA_GEFORCE4_MX; /* MX420/MX440/MX460/MX4000 */
         }
 
         if (strstr(gl_renderer, "GeForce2 MX") || strstr(gl_renderer, "Quadro2 MXR"))
         {
-            *vidmem = 32; /* Geforce2MX GPUs have 32-64MB of video memory */
             return CARD_NVIDIA_GEFORCE2_MX; /* Geforce2 standard/MX100/MX200/MX400, Quadro2 MXR */
         }
 
         if (strstr(gl_renderer, "GeForce2") || strstr(gl_renderer, "Quadro2"))
         {
-            *vidmem = 32; /* Geforce2 GPUs have 32-64MB of video memory */
             return CARD_NVIDIA_GEFORCE2; /* Geforce2 GTS/Pro/Ti/Ultra, Quadro2 */
         }
 
-        /* Most Geforce1 cards have 32MB, there are also some rare 16
-         * and 64MB (Dell) models. */
-        *vidmem = 32;
         return CARD_NVIDIA_GEFORCE; /* Geforce 256/DDR, Quadro */
     }
 
     if (strstr(gl_renderer, "TNT2"))
     {
-        *vidmem = 32; /* Most TNT2 boards have 32MB, though there are 16MB boards too */
         return CARD_NVIDIA_RIVA_TNT2; /* Riva TNT2 standard/M64/Pro/Ultra */
     }
 
-    *vidmem = 16; /* Most TNT boards have 16MB, some rare models have 8MB */
     return CARD_NVIDIA_RIVA_TNT; /* Riva TNT, Vanta */
-
 }
 
 static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer, unsigned int *vidmem)
+        const char *gl_renderer)
 {
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
      *
@@ -1710,7 +1672,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 5850")   /* Radeon EG CYPRESS XT */
                 || strstr(gl_renderer, "HD 5870"))  /* Radeon EG CYPRESS PRO */
         {
-            *vidmem = 1024; /* note: HD58xx cards use 1024MB  */
             return CARD_ATI_RADEON_HD5800;
         }
 
@@ -1719,7 +1680,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 5750")   /* Radeon EG JUNIPER LE */
                 || strstr(gl_renderer, "HD 5770"))  /* Radeon EG JUNIPER XT */
         {
-            *vidmem = 512; /* note: HD5770 cards use 1024MB and HD5750 cards use 512MB or 1024MB  */
             return CARD_ATI_RADEON_HD5700;
         }
 
@@ -1730,7 +1690,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 4870")   /* Radeon RV770 */
                 || strstr(gl_renderer, "HD 4890"))  /* Radeon RV790 */
         {
-            *vidmem = 512; /* note: HD4890 cards use 1024MB */
             return CARD_ATI_RADEON_HD4800;
         }
 
@@ -1738,7 +1697,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
         if (strstr(gl_renderer, "HD 4700")          /* Radeon RV770 */
                 || strstr(gl_renderer, "HD 4770"))  /* Radeon RV740 */
         {
-            *vidmem = 512;
             return CARD_ATI_RADEON_HD4700;
         }
 
@@ -1747,7 +1705,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 4650")   /* Radeon RV730 */
                 || strstr(gl_renderer, "HD 4670"))  /* Radeon RV730 */
         {
-            *vidmem = 512;
             return CARD_ATI_RADEON_HD4600;
         }
 
@@ -1755,7 +1712,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
         if (strstr(gl_renderer, "HD 4350")          /* Radeon RV710 */
                 || strstr(gl_renderer, "HD 4550"))  /* Radeon RV710 */
         {
-            *vidmem = 256;
             return CARD_ATI_RADEON_HD4350;
         }
 
@@ -1764,7 +1720,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 3870")
                 || strstr(gl_renderer, "HD 3850"))
         {
-            *vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
             return CARD_ATI_RADEON_HD2900;
         }
 
@@ -1774,7 +1729,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 3690")
                 || strstr(gl_renderer, "HD 3650"))
         {
-            *vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
             return CARD_ATI_RADEON_HD2600;
         }
 
@@ -1787,7 +1741,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 3430")
                 || strstr(gl_renderer, "HD 3400"))
         {
-            *vidmem = 256; /* HD2350/2400 use 256MB, HD34xx use 256-512MB */
             return CARD_ATI_RADEON_HD2350;
         }
 
@@ -1796,12 +1749,10 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 3200")
                 || strstr(gl_renderer, "HD 3300"))
         {
-            *vidmem = 128; /* 128MB */
             return CARD_ATI_RADEON_HD3200;
         }
 
         /* Default for when no GPU has been found */
-        *vidmem = 128; /* 128MB */
         return CARD_ATI_RADEON_HD3200;
     }
 
@@ -1814,7 +1765,6 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "X1900")
                 || strstr(gl_renderer, "X1950"))
         {
-            *vidmem = 128; /* X1600 uses 128-256MB, >=X1800 uses 256MB */
             return CARD_ATI_RADEON_X1600;
         }
 
@@ -1832,53 +1782,44 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 2300")
                 )
         {
-            *vidmem = 128; /* x700/x8*0 use 128-256MB, >=x1300 128-512MB */
             return CARD_ATI_RADEON_X700;
         }
 
         /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400MHz */
         if (strstr(gl_renderer, "Radeon Xpress"))
         {
-            *vidmem = 64; /* Shared RAM, BIOS configurable, 64-256M */
             return CARD_ATI_RADEON_XPRESS_200M;
         }
 
         /* Radeon R3xx */
-        *vidmem = 64; /* Radeon 9500 uses 64MB, higher models use up to 256MB */
         return CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
     }
 
     if (WINE_D3D8_CAPABLE(gl_info))
     {
-        *vidmem = 64; /* 8500/9000 cards use mostly 64MB, though there are 32MB and 128MB models */
         return CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
     }
 
     if (WINE_D3D7_CAPABLE(gl_info))
     {
-        *vidmem = 32; /* There are models with up to 64MB */
         return CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
     }
 
-    *vidmem = 16; /* There are 16-32MB models */
     return CARD_ATI_RAGE_128PRO;
-
 }
 
 static enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer, unsigned int *vidmem)
+        const char *gl_renderer)
 {
     if (strstr(gl_renderer, "X3100"))
     {
         /* MacOS calls the card GMA X3100, otherwise known as GM965/GL960 */
-        *vidmem = 128;
         return CARD_INTEL_X3100;
     }
 
     if (strstr(gl_renderer, "GMA 950") || strstr(gl_renderer, "945GM"))
     {
         /* MacOS calls the card GMA 950, but everywhere else the PCI ID is named 945GM */
-        *vidmem = 64;
         return CARD_INTEL_I945GM;
     }
 
@@ -1892,7 +1833,7 @@ static enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_
 }
 
 static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer, unsigned int *vidmem)
+        const char *gl_renderer)
 {
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
      *
@@ -1905,28 +1846,24 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "RV770")  /* Radeon RV770 */
                 || strstr(gl_renderer, "RV790"))  /* Radeon RV790 */
         {
-            *vidmem = 512; /* note: HD4890 cards use 1024MB */
             return CARD_ATI_RADEON_HD4800;
         }
 
         /* Radeon R740 HD4700 - midend */
         if (strstr(gl_renderer, "RV740"))          /* Radeon RV740 */
         {
-            *vidmem = 512;
             return CARD_ATI_RADEON_HD4700;
         }
 
         /* Radeon R730 HD4600 - midend */
         if (strstr(gl_renderer, "RV730"))        /* Radeon RV730 */
         {
-            *vidmem = 512;
             return CARD_ATI_RADEON_HD4600;
         }
 
         /* Radeon R710 HD4500/HD4350 - lowend */
         if (strstr(gl_renderer, "RV710"))          /* Radeon RV710 */
         {
-            *vidmem = 256;
             return CARD_ATI_RADEON_HD4350;
         }
 
@@ -1935,7 +1872,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "RV670")
                 || strstr(gl_renderer, "R680"))
         {
-            *vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
             return CARD_ATI_RADEON_HD2900;
         }
 
@@ -1943,7 +1879,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         if (strstr(gl_renderer, "RV630")
                 || strstr(gl_renderer, "RV635"))
         {
-            *vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
             return CARD_ATI_RADEON_HD2600;
         }
 
@@ -1951,7 +1886,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         if (strstr(gl_renderer, "RV610")
                 || strstr(gl_renderer, "RV620"))
         {
-            *vidmem = 256; /* HD2350/2400 use 256MB, HD34xx use 256-512MB */
             return CARD_ATI_RADEON_HD2350;
         }
 
@@ -1959,7 +1893,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         if (strstr(gl_renderer, "RS780")
                 || strstr(gl_renderer, "RS880"))
         {
-            *vidmem = 128; /* 128MB */
             return CARD_ATI_RADEON_HD3200;
         }
 
@@ -1971,7 +1904,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "RV570")
                 || strstr(gl_renderer, "R580"))
         {
-            *vidmem = 128; /* X1600 uses 128-256MB, >=X1800 uses 256MB */
             return CARD_ATI_RADEON_X1600;
         }
 
@@ -1986,7 +1918,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "RV515")
                 || strstr(gl_renderer, "RV516"))
         {
-            *vidmem = 128; /* x700/x8*0 use 128-256MB, >=x1300 128-512MB */
             return CARD_ATI_RADEON_X700;
         }
 
@@ -1999,7 +1930,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "RS690")
                 || strstr(gl_renderer, "RS740"))
         {
-            *vidmem = 64; /* Shared RAM, BIOS configurable, 64-256M */
             return CARD_ATI_RADEON_XPRESS_200M;
         }
 
@@ -2012,7 +1942,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "R350")
                 || strstr(gl_renderer, "R360"))
         {
-            *vidmem = 64; /* Radeon 9500 uses 64MB, higher models use up to 256MB */
             return CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
         }
     }
@@ -2024,28 +1953,24 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "(RV770")  /* Radeon RV770 */
                 || strstr(gl_renderer, "(RV790"))  /* Radeon RV790 */
         {
-            *vidmem = 512; /* note: HD4890 cards use 1024MB */
             return CARD_ATI_RADEON_HD4800;
         }
 
         /* Radeon R740 HD4700 - midend */
         if (strstr(gl_renderer, "(RV740"))          /* Radeon RV740 */
         {
-            *vidmem = 512;
             return CARD_ATI_RADEON_HD4700;
         }
 
         /* Radeon R730 HD4600 - midend */
         if (strstr(gl_renderer, "(RV730"))        /* Radeon RV730 */
         {
-            *vidmem = 512;
             return CARD_ATI_RADEON_HD4600;
         }
 
         /* Radeon R710 HD4500/HD4350 - lowend */
         if (strstr(gl_renderer, "(RV710"))          /* Radeon RV710 */
         {
-            *vidmem = 256;
             return CARD_ATI_RADEON_HD4350;
         }
 
@@ -2054,7 +1979,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
                 || strstr(gl_renderer, "(RV670")
                 || strstr(gl_renderer, "(R680"))
         {
-            *vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
             return CARD_ATI_RADEON_HD2900;
         }
 
@@ -2062,7 +1986,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         if (strstr(gl_renderer, "(RV630")
                 || strstr(gl_renderer, "(RV635"))
         {
-            *vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
             return CARD_ATI_RADEON_HD2600;
         }
 
@@ -2070,7 +1993,6 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         if (strstr(gl_renderer, "(RV610")
                 || strstr(gl_renderer, "(RV620"))
         {
-            *vidmem = 256; /* HD2350/2400 use 256MB, HD34xx use 256-512MB */
             return CARD_ATI_RADEON_HD2350;
         }
 
@@ -2078,30 +2000,25 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         if (strstr(gl_renderer, "(RS780")
                 || strstr(gl_renderer, "(RS880"))
         {
-            *vidmem = 128; /* 128MB */
             return CARD_ATI_RADEON_HD3200;
         }
     }
 
     if (WINE_D3D8_CAPABLE(gl_info))
     {
-        *vidmem = 64; /* 8500/9000 cards use mostly 64MB, though there are 32MB and 128MB models */
         return CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
     }
 
     if (WINE_D3D7_CAPABLE(gl_info))
     {
-        *vidmem = 32; /* There are models with up to 64MB */
         return CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
     }
 
-    *vidmem = 16; /* There are 16-32MB models */
     return CARD_ATI_RAGE_128PRO;
-
 }
 
 static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer, unsigned int *vidmem)
+        const char *gl_renderer)
 {
     FIXME_(d3d_caps)("Card selection not handled for Mesa Nouveau driver\n");
     if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
@@ -2112,7 +2029,7 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
 }
 
 static enum wined3d_pci_device select_card_intel_mesa(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer, unsigned int *vidmem)
+        const char *gl_renderer)
 {
     FIXME_(d3d_caps)("Card selection not handled for Mesa Intel driver\n");
     return CARD_INTEL_I915G;
@@ -2124,8 +2041,7 @@ struct vendor_card_selection
     enum wined3d_gl_vendor gl_vendor;
     enum wined3d_pci_vendor card_vendor;
     const char *description;        /* Description of the card selector i.e. Apple OS/X Intel */
-    enum wined3d_pci_device (*select_card)(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-            unsigned int *vidmem );
+    enum wined3d_pci_device (*select_card)(const struct wined3d_gl_info *gl_info, const char *gl_renderer);
 };
 
 static const struct vendor_card_selection vendor_card_select_table[] =
@@ -2143,7 +2059,7 @@ static const struct vendor_card_selection vendor_card_select_table[] =
 
 
 static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor, unsigned int *vidmem)
+        enum wined3d_gl_vendor *gl_vendor, enum wined3d_pci_vendor *card_vendor)
 {
     /* Above is a list of Nvidia and ATI GPUs. Both vendors have dozens of
      * different GPUs with roughly the same features. In most cases GPUs from a
@@ -2208,7 +2124,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
             || (vendor_card_select_table[i].card_vendor != *card_vendor))
                 continue;
         TRACE_(d3d_caps)("Applying card_selector \"%s\".\n", vendor_card_select_table[i].description);
-        return vendor_card_select_table[i].select_card(gl_info, gl_renderer, vidmem);
+        return vendor_card_select_table[i].select_card(gl_info, gl_renderer);
     }
 
     FIXME_(d3d_caps)("No card selector available for GL vendor %d and card vendor %04x.\n",
@@ -2277,7 +2193,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     GLfloat     gl_floatv[2];
     unsigned    i;
     HDC         hdc;
-    unsigned int vidmem=0;
     DWORD gl_version;
     size_t len;
 
@@ -2772,14 +2687,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     card_vendor = wined3d_guess_card_vendor(gl_vendor_str, gl_renderer_str);
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x/0x%04x)\n", debugstr_a(gl_vendor_str), gl_vendor, card_vendor);
 
-    device = wined3d_guess_card(gl_info, gl_renderer_str, &gl_vendor, &card_vendor, &vidmem);
+    device = wined3d_guess_card(gl_info, gl_renderer_str, &gl_vendor, &card_vendor);
     TRACE_(d3d_caps)("FOUND (fake) card: 0x%x (vendor id), 0x%x (device id)\n", card_vendor, device);
-
-    /* If we have an estimate use it, else default to 64MB;  */
-    if(vidmem)
-        gl_info->vidmem = vidmem*1024*1024; /* convert from MBs to bytes */
-    else
-        gl_info->vidmem = WINE_DEFAULT_VIDMEM;
 
     gl_info->wrap_lookup[WINED3DTADDRESS_WRAP - WINED3DTADDRESS_WRAP] = GL_REPEAT;
     gl_info->wrap_lookup[WINED3DTADDRESS_MIRROR - WINED3DTADDRESS_WRAP] =
@@ -5304,7 +5213,7 @@ static BOOL InitAdapters(IWineD3DImpl *This)
         if(wined3d_settings.emulated_textureram)
             adapter->TextureRam = wined3d_settings.emulated_textureram;
         else
-            adapter->TextureRam = adapter->gl_info.vidmem;
+            adapter->TextureRam = adapter->driver_info.vidmem;
         adapter->UsedTextureRam = 0;
         TRACE("Emulating %dMB of texture ram\n", adapter->TextureRam/(1024*1024));
 
