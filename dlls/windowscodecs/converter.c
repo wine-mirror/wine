@@ -52,6 +52,7 @@ enum pixelformat {
     format_32bppBGRA,
     format_48bppRGB,
     format_64bppRGBA,
+    format_32bppCMYK,
 };
 
 typedef HRESULT (*copyfunc)(struct FormatConverter *This, const WICRect *prc,
@@ -673,6 +674,27 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             return res;
         }
         return S_OK;
+    case format_32bppCMYK:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+            if (FAILED(res)) return res;
+
+            for (y=0; y<prc->Height; y++)
+                for (x=0; x<prc->Width; x++)
+                {
+                    BYTE *pixel = pbBuffer+cbStride*y+4*x;
+                    BYTE c=pixel[0], m=pixel[1], y=pixel[2], k=pixel[3];
+                    pixel[0] = (255-y)*(255-k)/255; /* blue */
+                    pixel[1] = (255-m)*(255-k)/255; /* green */
+                    pixel[2] = (255-c)*(255-k)/255; /* red */
+                    pixel[3] = 255; /* alpha */
+                }
+        }
+        return S_OK;
     default:
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
     }
@@ -710,6 +732,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
     {format_48bppRGB, &GUID_WICPixelFormat48bppRGB, NULL},
     {format_64bppRGBA, &GUID_WICPixelFormat64bppRGBA, NULL},
+    {format_32bppCMYK, &GUID_WICPixelFormat32bppCMYK, NULL},
     {0}
 };
 
