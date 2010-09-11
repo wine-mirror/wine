@@ -108,6 +108,9 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     WORD                val;
     BOOL                do_switch;
     unsigned            deltapc = 1;
+#ifdef __i386__
+    CONTEXT             _context;
+#endif
 
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
@@ -120,6 +123,21 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
           (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch);
 
+#ifdef __i386__
+    if (!context)
+    {
+        /* setup a pseudo context for the rest of the code (esp. unwinding) */
+        context = &_context;
+        memset(context, 0, sizeof(*context));
+        context->ContextFlags = CONTEXT_CONTROL | CONTEXT_SEGMENTS;
+        if (frame->AddrPC.Mode != AddrModeFlat)    context->SegCs = frame->AddrPC.Segment;
+        context->Eip = frame->AddrPC.Offset;
+        if (frame->AddrFrame.Mode != AddrModeFlat) context->SegSs = frame->AddrFrame.Segment;
+        context->Ebp = frame->AddrFrame.Offset;
+        if (frame->AddrStack.Mode != AddrModeFlat) context->SegSs = frame->AddrStack.Segment;
+        context->Esp = frame->AddrStack.Offset;
+    }
+#endif
     if (curr_mode == stm_start)
     {
         THREAD_BASIC_INFORMATION info;
