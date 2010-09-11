@@ -1036,6 +1036,7 @@ static const BYTE jpeg_magic[] = {0xff, 0xd8, 0xff, 0xe0};
 
 static GUID const * const jpeg_formats[] = {
     &GUID_WICPixelFormat24bppBGR,
+    &GUID_WICPixelFormat32bppCMYK,
     &GUID_WICPixelFormat8bppGray,
     NULL
 };

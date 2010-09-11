@@ -266,10 +266,24 @@ static HRESULT WINAPI JpegDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
         return E_FAIL;
     }
 
-    if (This->cinfo.jpeg_color_space == JCS_GRAYSCALE)
+    switch (This->cinfo.jpeg_color_space)
+    {
+    case JCS_GRAYSCALE:
         This->cinfo.out_color_space = JCS_GRAYSCALE;
-    else
+        break;
+    case JCS_RGB:
+    case JCS_YCbCr:
         This->cinfo.out_color_space = JCS_RGB;
+        break;
+    case JCS_CMYK:
+    case JCS_YCCK:
+        This->cinfo.out_color_space = JCS_CMYK;
+        break;
+    default:
+        ERR("Unknown JPEG color space %i\n", This->cinfo.jpeg_color_space);
+        LeaveCriticalSection(&This->lock);
+        return E_FAIL;
+    }
 
     if (!pjpeg_start_decompress(&This->cinfo))
     {
@@ -427,6 +441,8 @@ static HRESULT WINAPI JpegDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *if
     TRACE("(%p,%p)\n", iface, pPixelFormat);
     if (This->cinfo.out_color_space == JCS_RGB)
         memcpy(pPixelFormat, &GUID_WICPixelFormat24bppBGR, sizeof(GUID));
+    else if (This->cinfo.out_color_space == JCS_CMYK)
+        memcpy(pPixelFormat, &GUID_WICPixelFormat32bppCMYK, sizeof(GUID));
     else /* This->cinfo.out_color_space == JCS_GRAYSCALE */
         memcpy(pPixelFormat, &GUID_WICPixelFormat8bppGray, sizeof(GUID));
     return S_OK;
@@ -457,6 +473,7 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
     if (This->cinfo.out_color_space == JCS_GRAYSCALE) bpp = 8;
+    else if (This->cinfo.out_color_space == JCS_CMYK) bpp = 32;
     else bpp = 24;
 
     stride = bpp * This->cinfo.output_width;
@@ -514,6 +531,11 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
                 }
             }
         }
+
+        if (This->cinfo.out_color_space == JCS_CMYK && This->cinfo.saw_Adobe_marker)
+            /* Adobe JPEG's have inverted CMYK data. */
+            for (i=0; i<data_size; i++)
+                This->image_data[i] ^= 0xff;
     }
 
     LeaveCriticalSection(&This->lock);
