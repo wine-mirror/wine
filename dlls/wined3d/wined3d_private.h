@@ -1432,7 +1432,6 @@ struct wined3d_gl_limits
 struct wined3d_gl_info
 {
     DWORD glsl_version;
-    UINT vidmem;
     struct wined3d_gl_limits limits;
     DWORD reserved_glsl_constants;
     DWORD quirks;

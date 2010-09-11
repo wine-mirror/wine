@@ -70,7 +70,7 @@ wined3d_settings_t wined3d_settings =
     RTL_READTEX,    /* Default render target locking method */
     PCI_VENDOR_NONE,/* PCI Vendor ID */
     PCI_DEVICE_NONE,/* PCI Device ID */
-    0,              /* The default of memory is set in FillGLCaps */
+    0,              /* The default of memory is set in init_driver_info */
     NULL,           /* No wine logo by default */
     FALSE,          /* Disable multisampling for now due to Nvidia driver bugs which happens for some users */
     FALSE,          /* No strict draw ordering. */

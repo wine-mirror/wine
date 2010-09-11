@@ -1225,6 +1225,12 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
         }
     }
 
+    if (wined3d_settings.emulated_textureram)
+    {
+        TRACE_(d3d_caps)("Overriding amount of video memory with: %d byte\n", wined3d_settings.emulated_textureram);
+        driver_info->vidmem = wined3d_settings.emulated_textureram;
+    }
+
     /* Try to obtain driver version information for the current Windows version. This fails in
      * some cases:
      * - the gpu is not available on the currently selected OS version:
@@ -5209,11 +5215,7 @@ static BOOL InitAdapters(IWineD3DImpl *This)
 
         hdc = fake_gl_ctx.dc;
 
-        /* Use the VideoRamSize registry setting when set */
-        if(wined3d_settings.emulated_textureram)
-            adapter->TextureRam = wined3d_settings.emulated_textureram;
-        else
-            adapter->TextureRam = adapter->driver_info.vidmem;
+        adapter->TextureRam = adapter->driver_info.vidmem;
         adapter->UsedTextureRam = 0;
         TRACE("Emulating %dMB of texture ram\n", adapter->TextureRam/(1024*1024));
 
