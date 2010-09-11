@@ -993,7 +993,11 @@ static const struct driver_version_information driver_version_table[] =
 {
     /* ATI
      * - Radeon HD2x00 (R600) and up supported by current drivers.
-     * - Radeon 9500 (R300) - X1*00 (R5xx) supported upto Catalyst 9.3 (Linux) and 10.2 (XP/Vista/Win7) */
+     * - Radeon 9500 (R300) - X1*00 (R5xx) supported upto Catalyst 9.3 (Linux) and 10.2 (XP/Vista/Win7)
+     * - Radeon 7xxx (R100) - 9250 (RV250) supported upto Catalyst 6.11 (XP)
+     * - Rage 128 supported upto XP, latest official build 6.13.3279 dated October 2001 */
+    {DRIVER_ATI_RAGE_128PRO,    DRIVER_MODEL_NT5X,  "ati2dvaa.dll", 13, 3279,  0},
+    {DRIVER_ATI_R100,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6614},
     {DRIVER_ATI_R300,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6764},
     {DRIVER_ATI_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 8681},
     {DRIVER_ATI_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
@@ -1075,7 +1079,11 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX470,     "NVIDIA GeForce GTX 470",           DRIVER_NVIDIA_GEFORCE6   },
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX480,     "NVIDIA GeForce GTX 480",           DRIVER_NVIDIA_GEFORCE6   },
     /* ATI cards */
+    {HW_VENDOR_ATI,        CARD_ATI_RAGE_128PRO,           "ATI Rage Fury",                    DRIVER_ATI_RAGE_128PRO,  },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_7200,           "ATI RADEON 7200 SERIES",           DRIVER_ATI_R100,         },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_8500,           "ATI RADEON 8500 SERIES",           DRIVER_ATI_R100,         },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  DRIVER_ATI_R300,         },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_XPRESS_200M,    "ATI RADEON XPRESS 200M Series",    DRIVER_ATI_R300,         },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               DRIVER_ATI_R300,         },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          DRIVER_ATI_R300,         },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2350,         "ATI Mobility Radeon HD 2350",      DRIVER_ATI_R600,         },
@@ -1095,8 +1103,6 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_I915GM,              "Mobile Intel(R) 915GM/GMS,910GML Express Chipset Family",   DRIVER_INTEL_GMA900  },
     {HW_VENDOR_INTEL,      CARD_INTEL_I945GM,              "Mobile Intel(R) 945GM Express Chipset Family",              DRIVER_INTEL_GMA950  },
     {HW_VENDOR_INTEL,      CARD_INTEL_X3100,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000 }
-
-    /* TODO: Add information about legacy ATI hardware and other cards. */
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,

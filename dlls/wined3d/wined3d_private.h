@@ -1239,6 +1239,8 @@ typedef struct WineD3D_PixelFormat
  * R3xx, R4xx and R5xx GPUs. */
 enum wined3d_display_driver
 {
+    DRIVER_ATI_RAGE_128PRO,
+    DRIVER_ATI_R100,
     DRIVER_ATI_R300,
     DRIVER_ATI_R600,
     DRIVER_INTEL_GMA800,
