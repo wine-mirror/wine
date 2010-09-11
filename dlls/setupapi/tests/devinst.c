@@ -40,6 +40,7 @@ static BOOL     (WINAPI *pSetupDiCallClassInstaller)(DI_FUNCTION, HDEVINFO, PSP_
 static BOOL     (WINAPI *pSetupDiDestroyDeviceInfoList)(HDEVINFO);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInfo)(HDEVINFO, DWORD, PSP_DEVINFO_DATA);
 static BOOL     (WINAPI *pSetupDiEnumDeviceInterfaces)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, DWORD, PSP_DEVICE_INTERFACE_DATA);
+static BOOL     (WINAPI *pSetupDiGetINFClassA)(PCSTR, LPGUID, PSTR, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiInstallClassA)(HWND, PCSTR, DWORD, HSPFILEQ);
 static HKEY     (WINAPI *pSetupDiOpenClassRegKeyExA)(GUID*,REGSAM,DWORD,PCSTR,PVOID);
 static HKEY     (WINAPI *pSetupDiOpenDevRegKey)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, DWORD, DWORD, REGSAM);
@@ -83,6 +84,7 @@ static void init_function_pointers(void)
     pSetupDiRegisterDeviceInfo = (void *)GetProcAddress(hSetupAPI, "SetupDiRegisterDeviceInfo");
     pSetupDiGetClassDevsA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsA");
     pSetupDiGetClassDevsW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetClassDevsW");
+    pSetupDiGetINFClassA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetINFClassA");
     pSetupDiSetDeviceRegistryPropertyA = (void *)GetProcAddress(hSetupAPI, "SetupDiSetDeviceRegistryPropertyA");
     pSetupDiSetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiSetDeviceRegistryPropertyW");
     pSetupDiGetDeviceRegistryPropertyA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyA");
@@ -1343,6 +1345,152 @@ static void testDeviceRegistryPropertyW(void)
     }
 }
 
+static void testSetupDiGetINFClassA(void)
+{
+    static const char inffile[] = "winetest.inf";
+    static const char content[] = "[Version]\r\n\r\n";
+
+    char cn[MAX_PATH];
+    char filename[MAX_PATH];
+    DWORD count;
+    BOOL retval;
+    GUID guid;
+    HANDLE h;
+
+    if(!pSetupDiGetINFClassA)
+    {
+        win_skip("SetupDiGetINFClassA not present\n");
+        return;
+    }
+
+    count = GetTempPathA(MAX_PATH, filename);
+    if(!count)
+    {
+        win_skip("GetTempPathA failed\n");
+        return;
+    }
+
+    strcat(filename, inffile);
+    DeleteFileA(filename);
+
+    /* not existing file */
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError())
+    {
+        skip("SetupDiGetINFClassA is not implemented\n");
+        return;
+    }
+    ok(ERROR_FILE_NOT_FOUND == GetLastError(),
+        "expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
+
+    /* missing file wins against other invalid parameter */
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, NULL, cn, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(ERROR_FILE_NOT_FOUND == GetLastError(),
+        "expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, &guid, NULL, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(ERROR_FILE_NOT_FOUND == GetLastError(),
+        "expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, &guid, cn, 0, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(ERROR_FILE_NOT_FOUND == GetLastError(),
+        "expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, NULL);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(ERROR_FILE_NOT_FOUND == GetLastError(),
+        "expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
+
+    /* test file content */
+    h = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                    FILE_ATTRIBUTE_NORMAL, NULL);
+    if(h == INVALID_HANDLE_VALUE)
+    {
+        win_skip("failed to create file %s (error %u)\n", filename, GetLastError());
+        return;
+    }
+    CloseHandle( h);
+
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+
+    h = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                    FILE_ATTRIBUTE_NORMAL, NULL);
+    if(h == INVALID_HANDLE_VALUE)
+    {
+        win_skip("failed to create file %s (error %u)\n", filename, GetLastError());
+        return;
+    }
+    WriteFile( h, content, sizeof(content), &count, NULL);
+    CloseHandle( h);
+
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+
+    WritePrivateProfileStringA("Version", "Signature", "\"$CHICAGO$\"", filename);
+
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+
+    WritePrivateProfileStringA("Version", "Class", "WINE", filename);
+
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+    ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
+
+    /* invalid parameter */
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, NULL, cn, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, &guid, NULL, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, &guid, cn, 0, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError() ||
+       ERROR_INVALID_PARAMETER == GetLastError(),
+        "expected error ERROR_INSUFFICIENT_BUFFER or ERROR_INVALID_PARAMETER, "
+        "got %u\n", GetLastError());
+
+    DeleteFileA(filename);
+
+    WritePrivateProfileStringA("Version", "Signature", "\"$CHICAGO$\"", filename);
+    WritePrivateProfileStringA("Version", "ClassGUID", "WINE", filename);
+
+    SetLastError(0xdeadbeef);
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+    ok(RPC_S_INVALID_STRING_UUID == GetLastError() ||
+       ERROR_INVALID_PARAMETER == GetLastError(),
+        "expected error RPC_S_INVALID_STRING_UUID or ERROR_INVALID_PARAMETER, "
+        "got %u\n", GetLastError());
+
+    /* network adapter guid */
+    WritePrivateProfileStringA("Version", "ClassGUID",
+                               "{4d36e972-e325-11ce-bfc1-08002be10318}", filename);
+
+    /* this test succeeds only if the guid is known to the system */
+    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+    ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
+
+    DeleteFileA(filename);
+}
+
 START_TEST(devinst)
 {
     HDEVINFO set;
@@ -1381,4 +1529,5 @@ START_TEST(devinst)
     testRegisterAndGetDetail();
     testDeviceRegistryPropertyA();
     testDeviceRegistryPropertyW();
+    testSetupDiGetINFClassA();
 }

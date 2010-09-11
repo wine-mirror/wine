@@ -236,6 +236,7 @@ BOOL WINAPI SetupDiGetINFClassA(PCSTR inf, LPGUID class_guid, PSTR class_name,
         DWORD size, PDWORD required_size)
 {
     FIXME("%s %p %p %d %p\n", debugstr_a(inf), class_guid, class_name, size, required_size);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
