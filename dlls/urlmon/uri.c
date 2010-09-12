@@ -4729,8 +4729,13 @@ static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNe
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
-    return set_builder_component(&This->scheme, &This->scheme_len, pwzNewValue, 0,
-                                 &This->modified_props, Uri_HAS_SCHEME_NAME);
+
+    /* Only set the scheme name if it's not NULL or empty. */
+    if(pwzNewValue && *pwzNewValue)
+        return set_builder_component(&This->scheme, &This->scheme_len, pwzNewValue, 0,
+                                     &This->modified_props, Uri_HAS_SCHEME_NAME);
+    else
+        return E_INVALIDARG;
 }
 
 static HRESULT WINAPI UriBuilder_SetUserName(IUriBuilder *iface, LPCWSTR pwzNewValue)
@@ -4745,7 +4750,7 @@ static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPr
 {
     const DWORD accepted_flags = Uri_HAS_AUTHORITY|Uri_HAS_DOMAIN|Uri_HAS_EXTENSION|Uri_HAS_FRAGMENT|Uri_HAS_HOST|
                                  Uri_HAS_PASSWORD|Uri_HAS_PATH|Uri_HAS_PATH_AND_QUERY|Uri_HAS_QUERY|
-                                 Uri_HAS_SCHEME_NAME|Uri_HAS_USER_INFO|Uri_HAS_USER_NAME;
+                                 Uri_HAS_USER_INFO|Uri_HAS_USER_NAME;
 
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(0x%08x)\n", This, dwPropertyMask);
@@ -4770,9 +4775,6 @@ static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPr
 
     if(dwPropertyMask & Uri_HAS_QUERY)
         UriBuilder_SetQuery(iface, NULL);
-
-    if(dwPropertyMask & Uri_HAS_SCHEME_NAME)
-        UriBuilder_SetSchemeName(iface, NULL);
 
     if(dwPropertyMask & Uri_HAS_USER_NAME)
         UriBuilder_SetUserName(iface, NULL);

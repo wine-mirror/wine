@@ -4922,6 +4922,72 @@ static const uri_builder_test uri_builder_tests[] = {
             {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    /* Can't set the scheme name to NULL. */
+    {   "zip://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,NULL,"zip",Uri_PROPERTY_SCHEME_NAME,E_INVALIDARG,FALSE}
+        },
+        {FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"zip://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"zip://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"zip://google.com/",S_OK},
+            {"zip",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* Can't set the scheme name to an empty string. */
+    {   "zip://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"","zip",Uri_PROPERTY_SCHEME_NAME,E_INVALIDARG,FALSE}
+        },
+        {FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"zip://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"zip://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"zip://google.com/",S_OK},
+            {"zip",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 
@@ -4974,6 +5040,11 @@ static const uri_builder_remove_test uri_builder_remove_tests[] = {
     },
     {   "http://google.com/?test=x",0,S_OK,FALSE,
         Uri_HAS_PATH_AND_QUERY,S_OK,FALSE,
+        "http://google.com/?test=x",0,S_OK,TRUE
+    },
+    /* Can't remove the scheme name. */
+    {   "http://google.com/?test=x",0,S_OK,FALSE,
+        Uri_HAS_SCHEME_NAME|Uri_HAS_QUERY,E_INVALIDARG,FALSE,
         "http://google.com/?test=x",0,S_OK,TRUE
     }
 };
@@ -7519,7 +7590,7 @@ static void test_IUriBuilder_GetUserName(IUriBuilder *builder, const uri_builder
             prop = &(test->properties[i]);
     }
 
-    if(prop) {
+    if(prop && prop->value && *prop->value) {
         /* Use expected_value unless it's NULL, then use value. */
         LPCSTR expected = prop->expected_value ? prop->expected_value : prop->value;
         hr = IUriBuilder_GetUserName(builder, &len, &received);
@@ -7652,8 +7723,11 @@ static void test_IUriBuilder(void) {
             for(j = 0; j < URI_BUILDER_STR_PROPERTY_COUNT; ++j) {
                 uri_builder_property prop = test.properties[j];
                 if(prop.change) {
-                    modified = TRUE;
                     change_property(builder, &prop, i);
+                    if(prop.property != Uri_PROPERTY_SCHEME_NAME)
+                        modified = TRUE;
+                    else if(prop.value && *prop.value)
+                        modified = TRUE;
                 }
             }
 
