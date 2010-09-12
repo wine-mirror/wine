@@ -142,9 +142,11 @@ typedef struct {
     DWORD           scheme_len;
     URL_SCHEME      scheme_type;
 
-    const WCHAR     *userinfo;
-    DWORD           userinfo_len;
-    INT             userinfo_split;
+    const WCHAR     *username;
+    DWORD           username_len;
+
+    const WCHAR     *password;
+    DWORD           password_len;
 
     const WCHAR     *host;
     DWORD           host_len;
@@ -1279,6 +1281,64 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD
     return TRUE;
 }
 
+static BOOL parse_username(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    data->username = *ptr;
+
+    while(**ptr != ':' && **ptr != '@') {
+        if(**ptr == '%') {
+            if(!check_pct_encoded(ptr)) {
+                if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+                    *ptr = data->username;
+                    data->username = NULL;
+                    return FALSE;
+                }
+            } else
+                continue;
+        } else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
+            *ptr = data->username;
+            data->username = NULL;
+            return FALSE;
+        }
+
+        ++(*ptr);
+    }
+
+    data->username_len = *ptr - data->username;
+    return TRUE;
+}
+
+static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags) {
+    const WCHAR *start = *ptr;
+
+    if(**ptr != ':')
+        return TRUE;
+
+    ++(*ptr);
+    data->password = *ptr;
+
+    while(**ptr != '@') {
+        if(**ptr == '%') {
+            if(!check_pct_encoded(ptr)) {
+                if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+                    *ptr = start;
+                    data->password = NULL;
+                    return FALSE;
+                }
+            } else
+                continue;
+        } else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
+            *ptr = start;
+            data->password = NULL;
+            return FALSE;
+        }
+
+        ++(*ptr);
+    }
+
+    data->password_len = *ptr - data->password;
+    return TRUE;
+}
+
 /* Parses the userinfo part of the URI (if it exists). The userinfo field of
  * a URI can consist of "username:password@", or just "username@".
  *
@@ -1299,45 +1359,40 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD
  *      a URI, as long as it's not an authority delimeter character set.
  */
 static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
-    data->userinfo = *ptr;
-    data->userinfo_split = -1;
+    const WCHAR *start = *ptr;
 
-    while(**ptr != '@') {
-        if(**ptr == ':' && data->userinfo_split == -1)
-            data->userinfo_split = *ptr - data->userinfo;
-        else if(**ptr == '%') {
-            /* If it's a known scheme type, it has to be a valid percent
-             * encoded value.
-             */
-            if(!check_pct_encoded(ptr)) {
-                if(data->scheme_type != URL_SCHEME_UNKNOWN) {
-                    *ptr = data->userinfo;
-                    data->userinfo = NULL;
-                    data->userinfo_split = -1;
+    if(!parse_username(ptr, data, flags)) {
+        TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
+        return;
+    }
 
-                    TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
-                    return;
-                }
-            } else
-                continue;
-        } else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN))
-            break;
-
-        ++(*ptr);
+    if(!parse_password(ptr, data, flags)) {
+        *ptr = start;
+        data->username = NULL;
+        data->username_len = 0;
+        TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
+        return;
     }
 
     if(**ptr != '@') {
-        *ptr = data->userinfo;
-        data->userinfo = NULL;
-        data->userinfo_split = -1;
+        *ptr = start;
+        data->username = NULL;
+        data->username_len = 0;
+        data->password = NULL;
+        data->password_len = 0;
 
         TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
         return;
     }
 
-    data->userinfo_len = *ptr - data->userinfo;
-    TRACE("(%p %p %x): Found userinfo=%s userinfo_len=%d split=%d.\n", ptr, data, flags,
-            debugstr_wn(data->userinfo, data->userinfo_len), data->userinfo_len, data->userinfo_split);
+    if(data->username)
+        TRACE("(%p %p %x): Found username %s len=%d.\n", ptr, data, flags,
+            debugstr_wn(data->username, data->username_len), data->username_len);
+
+    if(data->password)
+        TRACE("(%p %p %x): Found password %s len=%d.\n", ptr, data, flags,
+            debugstr_wn(data->password, data->password_len), data->password_len);
+
     ++(*ptr);
 }
 
@@ -2109,6 +2164,112 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
     return TRUE;
 }
 
+static BOOL canonicalize_username(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    const WCHAR *ptr;
+
+    if(!data->username) {
+        uri->userinfo_start = -1;
+        return TRUE;
+    }
+
+    uri->userinfo_start = uri->canon_len;
+    for(ptr = data->username; ptr < data->username+data->username_len; ++ptr) {
+        if(*ptr == '%') {
+            /* Only decode % encoded values for known scheme types. */
+            if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+                /* See if the value really needs decoded. */
+                WCHAR val = decode_pct_val(ptr);
+                if(is_unreserved(val)) {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = val;
+
+                    ++uri->canon_len;
+
+                    /* Move pass the hex characters. */
+                    ptr += 2;
+                    continue;
+                }
+            }
+        } else if(!is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
+            /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
+             * is NOT set.
+             */
+            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
+                if(!computeOnly)
+                    pct_encode_val(*ptr, uri->canon_uri + uri->canon_len);
+
+                uri->canon_len += 3;
+                continue;
+            }
+        }
+
+        if(!computeOnly)
+            /* Nothing special, so just copy the character over. */
+            uri->canon_uri[uri->canon_len] = *ptr;
+        ++uri->canon_len;
+    }
+
+    return TRUE;
+}
+
+static BOOL canonicalize_password(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
+    const WCHAR *ptr;
+
+    if(!data->password) {
+        uri->userinfo_split = -1;
+        return TRUE;
+    }
+
+    if(uri->userinfo_start == -1)
+        /* Has a password, but, doesn't have a username. */
+        uri->userinfo_start = uri->canon_len;
+
+    uri->userinfo_split = uri->canon_len - uri->userinfo_start;
+
+    /* Add the ':' to the userinfo component. */
+    if(!computeOnly)
+        uri->canon_uri[uri->canon_len] = ':';
+    ++uri->canon_len;
+
+    for(ptr = data->password; ptr < data->password+data->password_len; ++ptr) {
+        if(*ptr == '%') {
+            /* Only decode % encoded values for known scheme types. */
+            if(data->scheme_type != URL_SCHEME_UNKNOWN) {
+                /* See if the value really needs decoded. */
+                WCHAR val = decode_pct_val(ptr);
+                if(is_unreserved(val)) {
+                    if(!computeOnly)
+                        uri->canon_uri[uri->canon_len] = val;
+
+                    ++uri->canon_len;
+
+                    /* Move pass the hex characters. */
+                    ptr += 2;
+                    continue;
+                }
+            }
+        } else if(!is_reserved(*ptr) && !is_unreserved(*ptr) && *ptr != '\\') {
+            /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
+             * is NOT set.
+             */
+            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
+                if(!computeOnly)
+                    pct_encode_val(*ptr, uri->canon_uri + uri->canon_len);
+
+                uri->canon_len += 3;
+                continue;
+            }
+        }
+
+        if(!computeOnly)
+            /* Nothing special, so just copy the character over. */
+            uri->canon_uri[uri->canon_len] = *ptr;
+        ++uri->canon_len;
+    }
+
+    return TRUE;
+}
+
 /* Canonicalizes the userinfo of the URI represented by the parse_data.
  *
  * Canonicalization of the userinfo is a simple process. If there are any percent
@@ -2118,59 +2279,18 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
  * change.
  */
 static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
-    DWORD i = 0;
-
     uri->userinfo_start = uri->userinfo_split = -1;
     uri->userinfo_len = 0;
 
-    if(!data->userinfo)
+    if(!data->username && !data->password)
         /* URI doesn't have userinfo, so nothing to do here. */
         return TRUE;
 
-    uri->userinfo_start = uri->canon_len;
+    if(!canonicalize_username(data, uri, flags, computeOnly))
+        return FALSE;
 
-    while(i < data->userinfo_len) {
-        if(data->userinfo[i] == ':' && uri->userinfo_split == -1)
-            /* Windows only considers the first ':' as the delimiter. */
-            uri->userinfo_split = uri->canon_len - uri->userinfo_start;
-        else if(data->userinfo[i] == '%') {
-            /* Only decode % encoded values for known scheme types. */
-            if(data->scheme_type != URL_SCHEME_UNKNOWN) {
-                /* See if the value really needs decoded. */
-                WCHAR val = decode_pct_val(data->userinfo + i);
-                if(is_unreserved(val)) {
-                    if(!computeOnly)
-                        uri->canon_uri[uri->canon_len] = val;
-
-                    ++uri->canon_len;
-
-                    /* Move pass the hex characters. */
-                    i += 3;
-                    continue;
-                }
-            }
-        } else if(!is_reserved(data->userinfo[i]) && !is_unreserved(data->userinfo[i]) &&
-                  data->userinfo[i] != '\\') {
-            /* Only percent encode forbidden characters if the NO_ENCODE_FORBIDDEN_CHARACTERS flag
-             * is NOT set.
-             */
-            if(!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
-                if(!computeOnly)
-                    pct_encode_val(data->userinfo[i], uri->canon_uri + uri->canon_len);
-
-                uri->canon_len += 3;
-                ++i;
-                continue;
-            }
-        }
-
-        if(!computeOnly)
-            /* Nothing special, so just copy the character over. */
-            uri->canon_uri[uri->canon_len] = data->userinfo[i];
-
-        ++uri->canon_len;
-        ++i;
-    }
+    if(!canonicalize_password(data, uri, flags, computeOnly))
+        return FALSE;
 
     uri->userinfo_len = uri->canon_len - uri->userinfo_start;
     if(!computeOnly)
@@ -2181,8 +2301,8 @@ static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags,
     /* Now insert the '@' after the userinfo. */
     if(!computeOnly)
         uri->canon_uri[uri->canon_len] = '@';
-
     ++uri->canon_len;
+
     return TRUE;
 }
 
