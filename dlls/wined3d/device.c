@@ -4199,12 +4199,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
  * Get / Set Texture Stage States
  * TODO: Verify against dx9 definitions
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    DWORD oldValue = This->updateStateBlock->textureState[Stage][Type];
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+    DWORD oldValue;
 
     TRACE("(%p) : Stage=%d, Type=%s(%d), Value=%d\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
+
+    if (Type > WINED3D_HIGHEST_TEXTURE_STATE)
+    {
+        WARN("Invalid Type %d passed.\n", Type);
+        return WINED3D_OK;
+    }
 
     if (Stage >= gl_info->limits.texture_stages)
     {
@@ -4213,6 +4220,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
         return WINED3D_OK;
     }
 
+    oldValue = This->updateStateBlock->textureState[Stage][Type];
     This->updateStateBlock->changed.textureState[Stage] |= 1 << Type;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
 
@@ -4276,9 +4284,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD* pValue) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD *pValue)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    if (Type > WINED3D_HIGHEST_TEXTURE_STATE)
+    {
+        WARN("Invalid Type %d passed.\n", Type);
+        return WINED3D_OK;
+    }
+
     TRACE("(%p) : requesting Stage %d, Type %d getting %d\n", This, Stage, Type, This->updateStateBlock->textureState[Stage][Type]);
+
     *pValue = This->updateStateBlock->textureState[Stage][Type];
     return WINED3D_OK;
 }

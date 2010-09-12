@@ -4870,7 +4870,7 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     HRESULT hr;
-    const struct tss_lookup *l = &tss_lookup[TexStageStateType];
+    const struct tss_lookup *l;
 
     TRACE("iface %p, stage %u, state %#x, value %p.\n",
             iface, Stage, TexStageStateType, State);
@@ -4881,9 +4881,10 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
     if (TexStageStateType > D3DTSS_TEXTURETRANSFORMFLAGS)
     {
         WARN("Invalid TexStageStateType %#x passed.\n", TexStageStateType);
-        *State = 0;
         return DD_OK;
     }
+
+    l = &tss_lookup[TexStageStateType];
 
     EnterCriticalSection(&ddraw_cs);
 
@@ -5003,7 +5004,7 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
                                            DWORD State)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    const struct tss_lookup *l = &tss_lookup[TexStageStateType];
+    const struct tss_lookup *l;
     HRESULT hr;
 
     TRACE("iface %p, stage %u, state %#x, value %#x.\n",
@@ -5014,6 +5015,8 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
         WARN("Invalid TexStageStateType %#x passed.\n", TexStageStateType);
         return DD_OK;
     }
+
+    l = &tss_lookup[TexStageStateType];
 
     EnterCriticalSection(&ddraw_cs);
 
