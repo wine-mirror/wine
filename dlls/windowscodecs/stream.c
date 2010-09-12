@@ -341,7 +341,7 @@ static HRESULT WINAPI StreamOnStreamRange_Read(IStream *iface,
     if (SUCCEEDED(hr))
     {
         SetPosition.QuadPart = This->pos.QuadPart + This->offset.QuadPart;
-        hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_CUR, NULL);
+        hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_SET, NULL);
     }
     if (SUCCEEDED(hr))
     {
@@ -384,7 +384,7 @@ static HRESULT WINAPI StreamOnStreamRange_Write(IStream *iface,
     if (SUCCEEDED(hr))
     {
         SetPosition.QuadPart = This->pos.QuadPart + This->offset.QuadPart;
-        hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_CUR, NULL);
+        hr = IStream_Seek(This->stream, SetPosition, STREAM_SEEK_SET, NULL);
     }
     if (SUCCEEDED(hr))
     {
