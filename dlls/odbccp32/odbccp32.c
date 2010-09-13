@@ -522,8 +522,12 @@ BOOL WINAPI SQLInstallDriverManagerW(LPWSTR lpszPath, WORD cbPathMax,
     UINT len;
     WCHAR path[MAX_PATH];
 
-    clear_errors();
     TRACE("(%p %d %p)\n", lpszPath, cbPathMax, pcbPathOut);
+
+    if (cbPathMax < MAX_PATH)
+        return FALSE;
+
+    clear_errors();
 
     len = GetSystemDirectoryW(path, MAX_PATH);
 
@@ -545,8 +549,12 @@ BOOL WINAPI SQLInstallDriverManager(LPSTR lpszPath, WORD cbPathMax,
     WORD len, cbOut = 0;
     WCHAR path[MAX_PATH];
 
-    clear_errors();
     TRACE("(%p %d %p)\n", lpszPath, cbPathMax, pcbPathOut);
+
+    if (cbPathMax < MAX_PATH)
+        return FALSE;
+
+    clear_errors();
 
     ret = SQLInstallDriverManagerW(path, MAX_PATH, &cbOut);
     if (ret)
