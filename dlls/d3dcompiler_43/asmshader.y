@@ -32,9 +32,49 @@ WINE_DEFAULT_DEBUG_CHANNEL(asmshader);
 
 struct asm_parser asm_ctx;
 
-/* Needed lexer functions declarations */
-void asmshader_error(const char *s);
-int asmshader_lex(void);
+/* Error reporting function */
+void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) {
+    va_list args;
+    char* newbuffer;
+    int rc, newsize;
+
+    if(ctx->messagecapacity == 0) {
+        ctx->messages = asm_alloc(MESSAGEBUFFER_INITIAL_SIZE);
+        if(ctx->messages == NULL) {
+            ERR("Error allocating memory for parser messages\n");
+            return;
+        }
+        ctx->messagecapacity = MESSAGEBUFFER_INITIAL_SIZE;
+    }
+
+    while(1) {
+        va_start(args, fmt);
+        rc = vsnprintf(ctx->messages + ctx->messagesize,
+                       ctx->messagecapacity - ctx->messagesize, fmt, args);
+        va_end(args);
+
+        if (rc < 0 ||                                           /* C89 */
+            rc >= ctx->messagecapacity - ctx->messagesize) {    /* C99 */
+            /* Resize the buffer */
+            newsize = ctx->messagecapacity * 2;
+            newbuffer = asm_realloc(ctx->messages, newsize);
+            if(newbuffer == NULL){
+                ERR("Error reallocating memory for parser messages\n");
+                return;
+            }
+            ctx->messages = newbuffer;
+            ctx->messagecapacity = newsize;
+        } else {
+            ctx->messagesize += rc;
+            return;
+        }
+    }
+}
+
+void asmshader_error(char const *s) {
+    asmparser_message(&asm_ctx, "Line %u: Error \"%s\" from bison\n", asm_ctx.line_no, s);
+    set_parse_status(&asm_ctx, PARSE_ERR);
+}
 
 void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
     /* We can have an additional offset without true relative addressing
@@ -52,6 +92,10 @@ void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
         reg->rel_reg->regnum = rel->rel_regnum;
     }
 }
+
+/* Needed lexer functions declarations */
+int asmshader_lex(void);
+
 
 %}
 
@@ -1659,50 +1703,6 @@ predicate:            '(' REG_PREDICATE swizzle ')'
                         }
 
 %%
-
-void asmshader_error (char const *s) {
-    asmparser_message(&asm_ctx, "Line %u: Error \"%s\" from bison\n", asm_ctx.line_no, s);
-    set_parse_status(&asm_ctx, PARSE_ERR);
-}
-
-/* Error reporting function */
-void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) {
-    va_list args;
-    char* newbuffer;
-    int rc, newsize;
-
-    if(ctx->messagecapacity == 0) {
-        ctx->messages = asm_alloc(MESSAGEBUFFER_INITIAL_SIZE);
-        if(ctx->messages == NULL) {
-            ERR("Error allocating memory for parser messages\n");
-            return;
-        }
-        ctx->messagecapacity = MESSAGEBUFFER_INITIAL_SIZE;
-    }
-
-    while(1) {
-        va_start(args, fmt);
-        rc = vsnprintf(ctx->messages + ctx->messagesize,
-                       ctx->messagecapacity - ctx->messagesize, fmt, args);
-        va_end(args);
-
-        if (rc < 0 ||                                           /* C89 */
-            rc >= ctx->messagecapacity - ctx->messagesize) {    /* C99 */
-            /* Resize the buffer */
-            newsize = ctx->messagecapacity * 2;
-            newbuffer = asm_realloc(ctx->messages, newsize);
-            if(newbuffer == NULL){
-                ERR("Error reallocating memory for parser messages\n");
-                return;
-            }
-            ctx->messages = newbuffer;
-            ctx->messagecapacity = newsize;
-        } else {
-            ctx->messagesize += rc;
-            return;
-        }
-    }
-}
 
 /* New status is the worst between current status and parameter value */
 void set_parse_status(struct asm_parser *ctx, enum parse_status status) {
