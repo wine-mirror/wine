@@ -411,7 +411,7 @@ static const ICommDlgBrowser3Vtbl cdbvtbl =
     ICommDlgBrowser3_fnOnPreviewCreated
 };
 
-ICommDlgBrowser3Impl *create_commdlgbrowser3(void)
+static ICommDlgBrowser3Impl *create_commdlgbrowser3(void)
 {
     ICommDlgBrowser3Impl *cdb;
 
