@@ -71,12 +71,12 @@ void asmparser_message(struct asm_parser *ctx, const char *fmt, ...) {
     }
 }
 
-void asmshader_error(char const *s) {
+static void asmshader_error(char const *s) {
     asmparser_message(&asm_ctx, "Line %u: Error \"%s\" from bison\n", asm_ctx.line_no, s);
     set_parse_status(&asm_ctx, PARSE_ERR);
 }
 
-void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
+static void set_rel_reg(struct shader_reg *reg, struct rel_reg *rel) {
     /* We can have an additional offset without true relative addressing
      * ex. c2[ 4 ] */
     reg->regnum += rel->additional_offset;
