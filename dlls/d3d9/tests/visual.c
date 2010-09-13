@@ -10549,6 +10549,125 @@ static void depth_clamp_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
 }
 
+static void depth_bounds_test(IDirect3DDevice9 *device)
+{
+    const struct tvertex quad1[] =
+    {
+        {    0,    0, 0.0f, 1, 0xfff9e814},
+        {  640,    0, 0.0f, 1, 0xfff9e814},
+        {    0,  480, 1.0f, 1, 0xfff9e814},
+        {  640,  480, 1.0f, 1, 0xfff9e814},
+    };
+    const struct tvertex quad2[] =
+    {
+        {    0,    0,  0.6f, 1, 0xff002b7f},
+        {  640,    0,  0.6f, 1, 0xff002b7f},
+        {    0,  480,  0.6f, 1, 0xff002b7f},
+        {  640,  480,  0.6f, 1, 0xff002b7f},
+    };
+    const struct tvertex quad3[] =
+    {
+        {    0,  100, 0.6f, 1, 0xfff91414},
+        {  640,  100, 0.6f, 1, 0xfff91414},
+        {    0,  160, 0.6f, 1, 0xfff91414},
+        {  640,  160, 0.6f, 1, 0xfff91414},
+    };
+
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    IDirect3D9 *d3d = NULL;
+    IDirect3DSurface9 *offscreen_surface = NULL;
+    D3DCOLOR color;
+    HRESULT hr;
+
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            0,  D3DRTYPE_SURFACE, MAKEFOURCC('N','V','D','B')) != D3D_OK) {
+        skip("No NVDB (depth bounds test) support\n");
+        IDirect3D9_Release(d3d);
+        return;
+    }
+    IDirect3D9_Release(d3d);
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
+            MAKEFOURCC('N','V','D','B'), D3DPOOL_DEFAULT, &offscreen_surface, NULL);
+    todo_wine ok(hr != D3D_OK, "Able to create surface, hr = %08x\n", hr);
+    if(offscreen_surface)
+    {
+        IDirect3DSurface9_Release(offscreen_surface);
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_ALWAYS);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(*quad1));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ADAPTIVETESS_X, MAKEFOURCC('N','V','D','B'));
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    tmpvalue.f = 0.625;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ADAPTIVETESS_Z, tmpvalue.d);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    tmpvalue.f = 0.75;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ADAPTIVETESS_W, tmpvalue.d);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    tmpvalue.f = 0.75;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ADAPTIVETESS_Z, tmpvalue.d);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, sizeof(*quad3));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ADAPTIVETESS_X, 0);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 150, 130);
+    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 150, 200);
+    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 150, 300-5);
+    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 150, 300+5);
+    ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);/**/
+    color = getPixelColor(device, 150, 330);
+    ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);
+    color = getPixelColor(device, 150, 360-5);
+    ok(color_match(color, 0x00002b7f, 1), "color 0x%08x.\n", color);/**/
+    color = getPixelColor(device, 150, 360+5);
+    ok(color_match(color, 0x00f9e814, 1), "color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+}
+
 static void depth_buffer_test(IDirect3DDevice9 *device)
 {
     static const struct vertex quad1[] =
@@ -11246,6 +11365,7 @@ START_TEST(visual)
     depth_buffer_test(device_ptr);
     shadow_test(device_ptr);
     fp_special_test(device_ptr);
+    depth_bounds_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
