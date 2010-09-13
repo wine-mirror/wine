@@ -99,6 +99,7 @@ typedef struct {
     WCHAR *filename;
     WCHAR *portname;
     WCHAR *document_title;
+    WCHAR *printer_name;
 } job_t;
 
 
@@ -2296,6 +2297,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     job->filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
     job->document_title = strdupW(default_doc_title);
+    job->printer_name = strdupW(printer->name);
     list_add_tail(&printer->queue->jobs, &job->entry);
 
     *pcbNeeded = (len + 1) * sizeof(WCHAR) + sizeof(*addjob);
@@ -7073,6 +7075,20 @@ static BOOL get_job_info_1(job_t *job, JOB_INFO_1W *ji1, LPBYTE buf, DWORD cbBuf
         space = FALSE;
     *pcbNeeded += size;
 
+    if (job->printer_name)
+    {
+        string_to_buf(job->printer_name, ptr, left, &size, unicode);
+        if(space && size <= left)
+        {
+            ji1->pPrinterName = (LPWSTR)ptr;
+            ptr += size;
+            left -= size;
+        }
+        else
+            space = FALSE;
+        *pcbNeeded += size;
+    }
+
     return space;
 }
 
@@ -7103,6 +7119,20 @@ static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf
     else
         space = FALSE;
     *pcbNeeded += size;
+
+    if (job->printer_name)
+    {
+        string_to_buf(job->printer_name, ptr, left, &size, unicode);
+        if(space && size <= left)
+        {
+            ji2->pPrinterName = (LPWSTR)ptr;
+            ptr += size;
+            left -= size;
+        }
+        else
+            space = FALSE;
+        *pcbNeeded += size;
+    }
 
     return space;
 }
@@ -7537,6 +7567,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         }
         list_remove(cursor);
         HeapFree(GetProcessHeap(), 0, job->document_title);
+        HeapFree(GetProcessHeap(), 0, job->printer_name);
         HeapFree(GetProcessHeap(), 0, job->portname);
         HeapFree(GetProcessHeap(), 0, job->filename);
         HeapFree(GetProcessHeap(), 0, job);
