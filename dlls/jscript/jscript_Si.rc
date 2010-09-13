@@ -28,6 +28,7 @@ STRINGTABLE
     IDS_INVALID_CALL_ARG    "Napačen klic postopka ali argument"
     IDS_CREATE_OBJ_ERROR    "Avtomatizacijski server ne more ustvariti objekta"
     IDS_NO_PROPERTY         "Objekt ne podpira atributa ali metode"
+    IDS_UNSUPPORTED_ACTION  "Objekt ne podpira akcije"
     IDS_ARG_NOT_OPT         "Argument je obvezen"
     IDS_SYNTAX_ERROR        "Napačna sintaksa"
     IDS_SEMICOLON           "Pričakujem ';'"
