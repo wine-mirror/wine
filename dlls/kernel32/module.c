@@ -848,6 +848,14 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
     NTSTATUS nts;
     HMODULE hModule;
     WCHAR *load_path;
+    static const DWORD unsupported_flags = 
+        LOAD_IGNORE_CODE_AUTHZ_LEVEL |
+        LOAD_LIBRARY_AS_IMAGE_RESOURCE |
+        LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
+        LOAD_LIBRARY_REQUIRE_SIGNED_TARGET;
+
+    if( flags & unsupported_flags)
+        FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags & ~unsupported_flags);
 
     load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
 
