@@ -37,6 +37,7 @@
 #include "initguid.h"
 
 DEFINE_GUID(IID_IObjectSafety, 0xcb5bdc81, 0x93c1, 0x11cf, 0x8f,0x20, 0x00,0x80,0x5f,0x2c,0xd0,0x64);
+DEFINE_GUID(CLSID_DOMDocument60, 0x88d96a05, 0xf192, 0x11d4, 0xa6,0x5f, 0x00,0x40,0x96,0x32,0x51,0xe5);
 
 static const WCHAR szEmpty[] = { 0 };
 static const WCHAR szIncomplete[] = {
@@ -5617,6 +5618,50 @@ static void test_document_IObjectSafety(void)
     IXMLDOMDocument_Release(doc);
 }
 
+typedef struct _property_test_t {
+    const GUID *guid;
+    const char *clsid;
+    const char *property;
+    const char *value;
+} property_test_t;
+
+static const property_test_t properties_test_data[] = {
+    { &CLSID_DOMDocument,  "CLSID_DOMDocument" , "SelectionLanguage", "XSLPattern" },
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2" , "SelectionLanguage", "XSLPattern" },
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", "SelectionLanguage", "XSLPattern" },
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", "SelectionLanguage", "XPath" },
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", "SelectionLanguage", "XPath" },
+    { 0 }
+};
+
+static void test_default_properties(void)
+{
+    const property_test_t *entry = properties_test_data;
+    IXMLDOMDocument2 *doc;
+    VARIANT var;
+    HRESULT hr;
+
+    while (entry->guid)
+    {
+        hr = CoCreateInstance(entry->guid, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument2, (void**)&doc);
+        if (hr != S_OK)
+        {
+            win_skip("can't create %s instance\n", entry->clsid);
+            continue;
+        }
+
+        hr = IXMLDOMDocument2_getProperty(doc, _bstr_(entry->property), &var);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(lstrcmpW(V_BSTR(&var), _bstr_(entry->value)) == 0, "expected %s, for %s\n",
+           entry->value, entry->clsid);
+        VariantClear(&var);
+
+        IXMLDOMDocument2_Release(doc);
+
+        entry++;
+    }
+}
+
 static void test_XSLPattern(void)
 {
     IXMLDOMDocument2 *doc;
@@ -5630,7 +5675,7 @@ static void test_XSLPattern(void)
     ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b));
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
 
-    /* switch to XPath */
+    /* switch to XSLPattern */
     ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XSLPattern")));
 
     /* XPath doesn't select elements with non-null default namespace with unqualified selectors, XSLPattern does */
@@ -6229,6 +6274,7 @@ START_TEST(domdoc)
     test_put_dataType();
     test_createNode();
     test_get_prefix();
+    test_default_properties();
 
     CoUninitialize();
 }

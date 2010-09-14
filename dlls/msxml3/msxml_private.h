@@ -244,11 +244,11 @@ MAKE_FUNCPTR(xsltParseStylesheetDoc);
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos );
-extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
-extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
-extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
-extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj );
-extern HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+extern HRESULT DOMDocument_create( const GUID *clsid, IUnknown *pUnkOuter, void **ppObj );
+extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, void **pObj );
+extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, void **pObj );
+extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, void **pObj );
+extern HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **pObj);
 
 typedef struct bsc_t bsc_t;
 

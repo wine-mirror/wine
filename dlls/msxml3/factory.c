@@ -43,26 +43,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-typedef HRESULT (*fnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
+typedef HRESULT (*ClassFactoryCreateInstanceFunc)(IUnknown *pUnkOuter, LPVOID *ppObj);
+typedef HRESULT (*DOMFactoryCreateInstanceFunc)(const GUID *clsid, IUnknown *pUnkOuter, LPVOID *ppObj);
 
 /******************************************************************************
  * MSXML ClassFactory
  */
-typedef struct _xmlcf
+typedef struct
 {
     const struct IClassFactoryVtbl *lpVtbl;
-    fnCreateInstance pfnCreateInstance;
-} xmlcf;
+    ClassFactoryCreateInstanceFunc pCreateInstance;
+} ClassFactory;
 
-static inline xmlcf *impl_from_IClassFactory( IClassFactory *iface )
+typedef struct
 {
-    return (xmlcf *)((char*)iface - FIELD_OFFSET(xmlcf, lpVtbl));
-}
+    const struct IClassFactoryVtbl *lpVtbl;
+    LONG ref;
+    DOMFactoryCreateInstanceFunc pCreateInstance;
+    GUID clsid;
+} DOMFactory;
 
-static HRESULT WINAPI xmlcf_QueryInterface(
+static HRESULT WINAPI ClassFactory_QueryInterface(
     IClassFactory *iface,
     REFIID riid,
-    LPVOID *ppobj )
+    void **ppobj )
 {
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_IClassFactory))
@@ -76,28 +80,26 @@ static HRESULT WINAPI xmlcf_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI xmlcf_AddRef(
-    IClassFactory *iface )
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface )
 {
     return 2;
 }
 
-static ULONG WINAPI xmlcf_Release(
-    IClassFactory *iface )
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface )
 {
     return 1;
 }
 
-static HRESULT WINAPI xmlcf_CreateInstance(
+static HRESULT WINAPI ClassFactory_CreateInstance(
     IClassFactory *iface,
-    LPUNKNOWN pOuter,
+    IUnknown *pOuter,
     REFIID riid,
-    LPVOID *ppobj )
+    void **ppobj )
 {
-    xmlcf *This = impl_from_IClassFactory( iface );
-    HRESULT r;
+    ClassFactory *This = (ClassFactory*)iface;
     IUnknown *punk;
-    
+    HRESULT r;
+
     TRACE("%p %s %p\n", pOuter, debugstr_guid(riid), ppobj );
 
     *ppobj = NULL;
@@ -105,7 +107,7 @@ static HRESULT WINAPI xmlcf_CreateInstance(
     if (pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    r = This->pfnCreateInstance( pOuter, (LPVOID*) &punk );
+    r = This->pCreateInstance( pOuter, (void**) &punk );
     if (FAILED(r))
         return r;
 
@@ -114,7 +116,7 @@ static HRESULT WINAPI xmlcf_CreateInstance(
     return r;
 }
 
-static HRESULT WINAPI xmlcf_LockServer(
+static HRESULT WINAPI ClassFactory_LockServer(
     IClassFactory *iface,
     BOOL dolock)
 {
@@ -122,29 +124,100 @@ static HRESULT WINAPI xmlcf_LockServer(
     return S_OK;
 }
 
-static const struct IClassFactoryVtbl xmlcf_vtbl =
+static ULONG WINAPI DOMClassFactory_AddRef(IClassFactory *iface )
 {
-    xmlcf_QueryInterface,
-    xmlcf_AddRef,
-    xmlcf_Release,
-    xmlcf_CreateInstance,
-    xmlcf_LockServer
+    DOMFactory *This = (DOMFactory*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) ref = %u\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI DOMClassFactory_Release(IClassFactory *iface )
+{
+    DOMFactory *This = (DOMFactory*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) ref = %u\n", This, ref);
+    if(!ref) {
+        heap_free(This);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI DOMClassFactory_CreateInstance(
+    IClassFactory *iface,
+    IUnknown *pOuter,
+    REFIID riid,
+    void **ppobj )
+{
+    DOMFactory *This = (DOMFactory*)iface;
+    IUnknown *punk;
+    HRESULT r;
+
+    TRACE("%p %s %p\n", pOuter, debugstr_guid(riid), ppobj );
+
+    *ppobj = NULL;
+
+    if (pOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    r = This->pCreateInstance( &This->clsid, pOuter, (void**) &punk );
+    if (FAILED(r))
+        return r;
+
+    r = IUnknown_QueryInterface( punk, riid, ppobj );
+    IUnknown_Release( punk );
+    return r;
+}
+
+static const struct IClassFactoryVtbl ClassFactoryVtbl =
+{
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
 };
 
-static xmlcf domdoccf = { &xmlcf_vtbl, DOMDocument_create };
-static xmlcf schemacf = { &xmlcf_vtbl, SchemaCache_create };
-static xmlcf xmldoccf = { &xmlcf_vtbl, XMLDocument_create };
-static xmlcf saxreadcf = { &xmlcf_vtbl, SAXXMLReader_create };
-static xmlcf httpreqcf = { &xmlcf_vtbl, XMLHTTPRequest_create };
+static const struct IClassFactoryVtbl DOMClassFactoryVtbl =
+{
+    ClassFactory_QueryInterface,
+    DOMClassFactory_AddRef,
+    DOMClassFactory_Release,
+    DOMClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static HRESULT DOMClassFactory_Create(const GUID *clsid, REFIID riid, void **ppv, DOMFactoryCreateInstanceFunc fnCreateInstance)
+{
+    DOMFactory *ret = heap_alloc(sizeof(DOMFactory));
+    HRESULT hres;
+
+    ret->lpVtbl = &DOMClassFactoryVtbl;
+    ret->ref = 0;
+    ret->clsid = *clsid;
+    ret->pCreateInstance = fnCreateInstance;
+
+    hres = IClassFactory_QueryInterface((IClassFactory*)ret, riid, ppv);
+    if(FAILED(hres)) {
+        heap_free(ret);
+        *ppv = NULL;
+    }
+    return hres;
+}
+
+static ClassFactory schemacf = { &ClassFactoryVtbl, SchemaCache_create };
+static ClassFactory xmldoccf = { &ClassFactoryVtbl, XMLDocument_create };
+static ClassFactory saxreadcf = { &ClassFactoryVtbl, SAXXMLReader_create };
+static ClassFactory httpreqcf = { &ClassFactoryVtbl, XMLHTTPRequest_create };
 
 /******************************************************************
  *		DllGetClassObject (MSXML3.@)
  */
-HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
+HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
 {
     IClassFactory *cf = NULL;
 
-    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv );
+    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv );
 
     if( IsEqualCLSID( rclsid, &CLSID_DOMDocument )  ||  /* Version indep. v 2.x */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument2 ) ||  /* Version indep. v 3.0 */
@@ -152,7 +225,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
         IsEqualCLSID( rclsid, &CLSID_DOMDocument40 )||  /* Version dep.   v 4.0 */
         IsEqualCLSID( rclsid, &CLSID_DOMDocument60 ))   /* Version dep.   v 6.0 */
     {
-        cf = (IClassFactory*) &domdoccf.lpVtbl;
+        return DOMClassFactory_Create(rclsid, riid, ppv, DOMDocument_create);
     }
     else if( IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache )   ||
              IsEqualCLSID( rclsid, &CLSID_XMLSchemaCache30 ) ||
@@ -171,7 +244,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
              IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument40 ) ||
              IsEqualCLSID( rclsid, &CLSID_FreeThreadedDOMDocument60 ))
     {
-        cf = (IClassFactory*) &domdoccf.lpVtbl;
+        return DOMClassFactory_Create(rclsid, riid, ppv, DOMDocument_create);
     }
     else if( IsEqualCLSID( rclsid, &CLSID_SAXXMLReader) ||
              IsEqualCLSID( rclsid, &CLSID_SAXXMLReader30 ) ||
@@ -188,5 +261,5 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     if ( !cf )
         return CLASS_E_CLASSNOTAVAILABLE;
 
-    return IClassFactory_QueryInterface( cf, iid, ppv );
+    return IClassFactory_QueryInterface( cf, riid, ppv );
 }

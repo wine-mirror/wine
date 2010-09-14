@@ -77,7 +77,7 @@ typedef struct _domdoc
     VARIANT_BOOL validating;
     VARIANT_BOOL resolving;
     VARIANT_BOOL preserving;
-    BOOL bUseXPath;
+    BOOL XPath;
     IXMLDOMSchemaCollection *schema;
     bsc_t *bsc;
     HRESULT error;
@@ -2139,9 +2139,9 @@ static HRESULT WINAPI domdoc_setProperty(
 
         hr = S_OK;
         if (lstrcmpiW(bstr, PropValueXPathW) == 0)
-            This->bUseXPath = TRUE;
+            This->XPath = TRUE;
         else if (lstrcmpiW(bstr, PropValueXSLPatternW) == 0)
-            This->bUseXPath = FALSE;
+            This->XPath = FALSE;
         else
             hr = E_FAIL;
 
@@ -2180,7 +2180,7 @@ static HRESULT WINAPI domdoc_getProperty(
     if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
     {
         V_VT(var) = VT_BSTR;
-        if (This->bUseXPath)
+        if (This->XPath)
             V_BSTR(var) = SysAllocString(PropValueXPathW);
         else
             V_BSTR(var) = SysAllocString(PropValueXSLPatternW);
@@ -2461,7 +2461,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->validating = 0;
     doc->resolving = 0;
     doc->preserving = 0;
-    doc->bUseXPath = FALSE;
+    doc->XPath = FALSE;
     doc->error = S_OK;
     doc->schema = NULL;
     doc->stream = NULL;
@@ -2477,7 +2477,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     return S_OK;
 }
 
-HRESULT DOMDocument_create(IUnknown *pUnkOuter, void **ppObj)
+HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
 {
     xmlDocPtr xmldoc;
     HRESULT hr;
@@ -2493,6 +2493,14 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, void **ppObj)
     hr = DOMDocument_create_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
         xmlFreeDoc(xmldoc);
+
+    /* properties that are dependent on object versions */
+    if (IsEqualCLSID( clsid, &CLSID_DOMDocument40 ) ||
+        IsEqualCLSID( clsid, &CLSID_DOMDocument60 ))
+    {
+        domdoc *This = impl_from_IXMLDOMDocument3(*ppObj);
+        This->XPath = TRUE;
+    }
 
     return hr;
 }
