@@ -52,6 +52,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Spaudinio pe&ržiūra...",      ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&Savybės...",                 ID_BROWSE_PROPERTIES
+        MENUITEM "&Užverti",                    ID_BROWSE_QUIT
     }
     POPUP "&Rodymas"
     {
