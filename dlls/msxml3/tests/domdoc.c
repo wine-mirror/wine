@@ -6103,8 +6103,8 @@ static void test_createNode(void)
     ok( hr == S_OK, "got 0x%08x\n", hr);
     prefix = (void*)0xdeadbeef;
     hr = IXMLDOMNode_get_prefix(node, &prefix);
-    todo_wine ok( hr == S_FALSE, "got 0x%08x\n", hr);
-    todo_wine ok(prefix == 0, "expected empty prefix, got %p\n", prefix);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(prefix == 0, "expected empty prefix, got %p\n", prefix);
 
     hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
@@ -6118,9 +6118,55 @@ static void test_createNode(void)
     hr = IXMLDOMElement_get_namespaceURI(elem, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
     ok( lstrcmpW(str, _bstr_("http://winehq.org/default")) == 0, "expected default namespace\n");
+    SysFreeString(str);
 
     IXMLDOMElement_Release(elem);
     IXMLDOMNode_Release(node);
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
+static void test_get_prefix(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *element;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    /* no prefix */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &element);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMElement_get_prefix(element, NULL);
+    ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_get_prefix(element, &str);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok( str == 0, "got %p\n", str);
+
+    IXMLDOMElement_Release(element);
+
+    /* with prefix */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("a:elem"), &element);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_get_prefix(element, &str);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(str, _bstr_("a")) == 0, "expected prefix \"a\"\n");
+    SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_get_namespaceURI(element, &str);
+    todo_wine ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    todo_wine ok( str == 0, "got %p\n", str);
+
+    IXMLDOMElement_Release(element);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();
@@ -6182,6 +6228,7 @@ START_TEST(domdoc)
     test_setAttributeNode();
     test_put_dataType();
     test_createNode();
+    test_get_prefix();
 
     CoUninitialize();
 }
