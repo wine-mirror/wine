@@ -273,6 +273,7 @@ SRCDIR_INCLUDES = \
 	icm.h \
 	icmpapi.h \
 	idispids.h \
+	ifdef.h \
 	imagehlp.h \
 	imm.h \
 	in6addr.h \
