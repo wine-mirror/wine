@@ -49,6 +49,8 @@
 #include "shlwapi.h"
 #include "xdg.h"
 #include "sddl.h"
+#define INITGUID
+#include "knownfolders.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -775,6 +777,7 @@ static const WCHAR Common_StartUpW[] = {'C','o','m','m','o','n',' ','S','t','a',
 static const WCHAR Common_Start_MenuW[] = {'C','o','m','m','o','n',' ','S','t','a','r','t',' ','M','e','n','u','\0'};
 static const WCHAR Common_TemplatesW[] = {'C','o','m','m','o','n',' ','T','e','m','p','l','a','t','e','s','\0'};
 static const WCHAR CommonVideoW[] = {'C','o','m','m','o','n','V','i','d','e','o','\0'};
+static const WCHAR ContactsW[] = {'C','o','n','t','a','c','t','s','\0'};
 static const WCHAR CookiesW[] = {'C','o','o','k','i','e','s','\0'};
 static const WCHAR DesktopW[] = {'D','e','s','k','t','o','p','\0'};
 static const WCHAR FavoritesW[] = {'F','a','v','o','r','i','t','e','s','\0'};
@@ -796,6 +799,8 @@ static const WCHAR SendToW[] = {'S','e','n','d','T','o','\0'};
 static const WCHAR StartUpW[] = {'S','t','a','r','t','U','p','\0'};
 static const WCHAR Start_MenuW[] = {'S','t','a','r','t',' ','M','e','n','u','\0'};
 static const WCHAR TemplatesW[] = {'T','e','m','p','l','a','t','e','s','\0'};
+static const WCHAR UsersW[] = {'U','s','e','r','s','\0'};
+static const WCHAR UsersPublicW[] = {'U','s','e','r','s','\\','P','u','b','l','i','c','\0'};
 static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t','\0'};
 static const WCHAR AllUsersProfileW[] = {'%','A','L','L','U','S','E','R','S','P','R','O','F','I','L','E','%','\0'};
 static const WCHAR UserProfileW[] = {'%','U','S','E','R','P','R','O','F','I','L','E','%','\0'};
@@ -821,6 +826,7 @@ typedef enum _CSIDL_Type {
 
 typedef struct
 {
+    const KNOWNFOLDERID *id;
     CSIDL_Type type;
     LPCWSTR    szValueName;
     LPCWSTR    szDefaultPath; /* fallback string or resource ID */
@@ -829,317 +835,692 @@ typedef struct
 static const CSIDL_DATA CSIDL_Data[] =
 {
     { /* 0x00 - CSIDL_DESKTOP */
+        &FOLDERID_Desktop,
         CSIDL_Type_User,
         DesktopW,
         MAKEINTRESOURCEW(IDS_DESKTOPDIRECTORY)
     },
     { /* 0x01 - CSIDL_INTERNET */
+        &FOLDERID_InternetFolder,
         CSIDL_Type_Disallowed,
         NULL,
         NULL
     },
     { /* 0x02 - CSIDL_PROGRAMS */
+        &FOLDERID_Programs,
         CSIDL_Type_User,
         ProgramsW,
         MAKEINTRESOURCEW(IDS_PROGRAMS)
     },
     { /* 0x03 - CSIDL_CONTROLS (.CPL files) */
+        &FOLDERID_ControlPanelFolder,
         CSIDL_Type_SystemPath,
         NULL,
         NULL
     },
     { /* 0x04 - CSIDL_PRINTERS */
+        &FOLDERID_PrintersFolder,
         CSIDL_Type_SystemPath,
         NULL,
         NULL
     },
     { /* 0x05 - CSIDL_PERSONAL */
+        &GUID_NULL,
         CSIDL_Type_User,
         PersonalW,
         MAKEINTRESOURCEW(IDS_PERSONAL)
     },
     { /* 0x06 - CSIDL_FAVORITES */
+        &FOLDERID_Favorites,
         CSIDL_Type_User,
         FavoritesW,
         MAKEINTRESOURCEW(IDS_FAVORITES)
     },
     { /* 0x07 - CSIDL_STARTUP */
+        &FOLDERID_Startup,
         CSIDL_Type_User,
         StartUpW,
         MAKEINTRESOURCEW(IDS_STARTUP)
     },
     { /* 0x08 - CSIDL_RECENT */
+        &FOLDERID_Recent,
         CSIDL_Type_User,
         RecentW,
         MAKEINTRESOURCEW(IDS_RECENT)
     },
     { /* 0x09 - CSIDL_SENDTO */
+        &FOLDERID_SendTo,
         CSIDL_Type_User,
         SendToW,
         MAKEINTRESOURCEW(IDS_SENDTO)
     },
     { /* 0x0a - CSIDL_BITBUCKET - Recycle Bin */
+        &FOLDERID_RecycleBinFolder,
         CSIDL_Type_Disallowed,
         NULL,
         NULL,
     },
     { /* 0x0b - CSIDL_STARTMENU */
+        &FOLDERID_StartMenu,
         CSIDL_Type_User,
         Start_MenuW,
         MAKEINTRESOURCEW(IDS_STARTMENU)
     },
     { /* 0x0c - CSIDL_MYDOCUMENTS */
+        &GUID_NULL,
         CSIDL_Type_Disallowed, /* matches WinXP--can't get its path */
         NULL,
         NULL
     },
     { /* 0x0d - CSIDL_MYMUSIC */
+        &FOLDERID_Music,
         CSIDL_Type_User,
         My_MusicW,
         MAKEINTRESOURCEW(IDS_MYMUSIC)
     },
     { /* 0x0e - CSIDL_MYVIDEO */
+        &FOLDERID_Videos,
         CSIDL_Type_User,
         My_VideoW,
         MAKEINTRESOURCEW(IDS_MYVIDEO)
     },
     { /* 0x0f - unassigned */
+        &GUID_NULL,
         CSIDL_Type_Disallowed,
         NULL,
         NULL,
     },
     { /* 0x10 - CSIDL_DESKTOPDIRECTORY */
+        &FOLDERID_Desktop,
         CSIDL_Type_User,
         DesktopW,
         MAKEINTRESOURCEW(IDS_DESKTOPDIRECTORY)
     },
     { /* 0x11 - CSIDL_DRIVES */
+        &FOLDERID_ComputerFolder,
         CSIDL_Type_Disallowed,
         NULL,
         NULL,
     },
     { /* 0x12 - CSIDL_NETWORK */
+        &FOLDERID_NetworkFolder,
         CSIDL_Type_Disallowed,
         NULL,
         NULL,
     },
     { /* 0x13 - CSIDL_NETHOOD */
+        &FOLDERID_NetHood,
         CSIDL_Type_User,
         NetHoodW,
         MAKEINTRESOURCEW(IDS_NETHOOD)
     },
     { /* 0x14 - CSIDL_FONTS */
+        &FOLDERID_Fonts,
         CSIDL_Type_WindowsPath,
         FontsW,
         FontsW
     },
     { /* 0x15 - CSIDL_TEMPLATES */
+        &FOLDERID_Templates,
         CSIDL_Type_User,
         TemplatesW,
         MAKEINTRESOURCEW(IDS_TEMPLATES)
     },
     { /* 0x16 - CSIDL_COMMON_STARTMENU */
+        &FOLDERID_CommonStartMenu,
         CSIDL_Type_AllUsers,
         Common_Start_MenuW,
         MAKEINTRESOURCEW(IDS_STARTMENU)
     },
     { /* 0x17 - CSIDL_COMMON_PROGRAMS */
+        &FOLDERID_CommonPrograms,
         CSIDL_Type_AllUsers,
         Common_ProgramsW,
         MAKEINTRESOURCEW(IDS_PROGRAMS)
     },
     { /* 0x18 - CSIDL_COMMON_STARTUP */
+        &FOLDERID_CommonStartup,
         CSIDL_Type_AllUsers,
         Common_StartUpW,
         MAKEINTRESOURCEW(IDS_STARTUP)
     },
     { /* 0x19 - CSIDL_COMMON_DESKTOPDIRECTORY */
+        &FOLDERID_PublicDesktop,
         CSIDL_Type_AllUsers,
         Common_DesktopW,
         MAKEINTRESOURCEW(IDS_DESKTOPDIRECTORY)
     },
     { /* 0x1a - CSIDL_APPDATA */
+        &FOLDERID_RoamingAppData,
         CSIDL_Type_User,
         AppDataW,
         MAKEINTRESOURCEW(IDS_APPDATA)
     },
     { /* 0x1b - CSIDL_PRINTHOOD */
+        &FOLDERID_PrintHood,
         CSIDL_Type_User,
         PrintHoodW,
         MAKEINTRESOURCEW(IDS_PRINTHOOD)
     },
     { /* 0x1c - CSIDL_LOCAL_APPDATA */
+        &FOLDERID_LocalAppData,
         CSIDL_Type_User,
         Local_AppDataW,
         MAKEINTRESOURCEW(IDS_LOCAL_APPDATA)
     },
     { /* 0x1d - CSIDL_ALTSTARTUP */
+        &GUID_NULL,
         CSIDL_Type_NonExistent,
         NULL,
         NULL
     },
     { /* 0x1e - CSIDL_COMMON_ALTSTARTUP */
+        &GUID_NULL,
         CSIDL_Type_NonExistent,
         NULL,
         NULL
     },
     { /* 0x1f - CSIDL_COMMON_FAVORITES */
+        &FOLDERID_Favorites,
         CSIDL_Type_AllUsers,
         Common_FavoritesW,
         MAKEINTRESOURCEW(IDS_FAVORITES)
     },
     { /* 0x20 - CSIDL_INTERNET_CACHE */
+        &FOLDERID_InternetCache,
         CSIDL_Type_User,
         CacheW,
         MAKEINTRESOURCEW(IDS_INTERNET_CACHE)
     },
     { /* 0x21 - CSIDL_COOKIES */
+        &FOLDERID_Cookies,
         CSIDL_Type_User,
         CookiesW,
         MAKEINTRESOURCEW(IDS_COOKIES)
     },
     { /* 0x22 - CSIDL_HISTORY */
+        &FOLDERID_History,
         CSIDL_Type_User,
         HistoryW,
         MAKEINTRESOURCEW(IDS_HISTORY)
     },
     { /* 0x23 - CSIDL_COMMON_APPDATA */
+        &FOLDERID_ProgramData,
         CSIDL_Type_AllUsers,
         Common_AppDataW,
         MAKEINTRESOURCEW(IDS_APPDATA)
     },
     { /* 0x24 - CSIDL_WINDOWS */
+        &FOLDERID_Windows,
         CSIDL_Type_WindowsPath,
         NULL,
         NULL
     },
     { /* 0x25 - CSIDL_SYSTEM */
+        &FOLDERID_System,
         CSIDL_Type_SystemPath,
         NULL,
         NULL
     },
     { /* 0x26 - CSIDL_PROGRAM_FILES */
+        &FOLDERID_ProgramFiles,
         CSIDL_Type_CurrVer,
         ProgramFilesDirW,
         MAKEINTRESOURCEW(IDS_PROGRAM_FILES)
     },
     { /* 0x27 - CSIDL_MYPICTURES */
+        &FOLDERID_Pictures,
         CSIDL_Type_User,
         My_PicturesW,
         MAKEINTRESOURCEW(IDS_MYPICTURES)
     },
     { /* 0x28 - CSIDL_PROFILE */
+        &FOLDERID_Profile,
         CSIDL_Type_User,
         NULL,
         NULL
     },
     { /* 0x29 - CSIDL_SYSTEMX86 */
+        &FOLDERID_SystemX86,
         CSIDL_Type_SystemX86Path,
         NULL,
         NULL
     },
     { /* 0x2a - CSIDL_PROGRAM_FILESX86 */
+        &FOLDERID_ProgramFilesX86,
         CSIDL_Type_CurrVer,
         ProgramFilesDirX86W,
         MAKEINTRESOURCEW(IDS_PROGRAM_FILESX86)
     },
     { /* 0x2b - CSIDL_PROGRAM_FILES_COMMON */
+        &FOLDERID_ProgramFilesCommon,
         CSIDL_Type_CurrVer,
         CommonFilesDirW,
         MAKEINTRESOURCEW(IDS_PROGRAM_FILES_COMMON)
     },
     { /* 0x2c - CSIDL_PROGRAM_FILES_COMMONX86 */
+        &FOLDERID_ProgramFilesCommonX86,
         CSIDL_Type_CurrVer,
         CommonFilesDirX86W,
         MAKEINTRESOURCEW(IDS_PROGRAM_FILES_COMMONX86)
     },
     { /* 0x2d - CSIDL_COMMON_TEMPLATES */
+        &FOLDERID_CommonTemplates,
         CSIDL_Type_AllUsers,
         Common_TemplatesW,
         MAKEINTRESOURCEW(IDS_TEMPLATES)
     },
     { /* 0x2e - CSIDL_COMMON_DOCUMENTS */
+        &FOLDERID_PublicDocuments,
         CSIDL_Type_AllUsers,
         Common_DocumentsW,
         MAKEINTRESOURCEW(IDS_COMMON_DOCUMENTS)
     },
     { /* 0x2f - CSIDL_COMMON_ADMINTOOLS */
+        &FOLDERID_CommonAdminTools,
         CSIDL_Type_AllUsers,
         Common_Administrative_ToolsW,
         MAKEINTRESOURCEW(IDS_ADMINTOOLS)
     },
     { /* 0x30 - CSIDL_ADMINTOOLS */
+        &FOLDERID_AdminTools,
         CSIDL_Type_User,
         Administrative_ToolsW,
         MAKEINTRESOURCEW(IDS_ADMINTOOLS)
     },
     { /* 0x31 - CSIDL_CONNECTIONS */
+        &FOLDERID_ConnectionsFolder,
         CSIDL_Type_Disallowed,
         NULL,
         NULL
     },
     { /* 0x32 - unassigned */
+        &GUID_NULL,
         CSIDL_Type_Disallowed,
         NULL,
         NULL
     },
     { /* 0x33 - unassigned */
+        &GUID_NULL,
         CSIDL_Type_Disallowed,
         NULL,
         NULL
     },
     { /* 0x34 - unassigned */
+        &GUID_NULL,
         CSIDL_Type_Disallowed,
         NULL,
         NULL
     },
     { /* 0x35 - CSIDL_COMMON_MUSIC */
+        &FOLDERID_PublicMusic,
         CSIDL_Type_AllUsers,
         CommonMusicW,
         MAKEINTRESOURCEW(IDS_COMMON_MUSIC)
     },
     { /* 0x36 - CSIDL_COMMON_PICTURES */
+        &FOLDERID_PublicPictures,
         CSIDL_Type_AllUsers,
         CommonPicturesW,
         MAKEINTRESOURCEW(IDS_COMMON_PICTURES)
     },
     { /* 0x37 - CSIDL_COMMON_VIDEO */
+        &FOLDERID_PublicVideos,
         CSIDL_Type_AllUsers,
         CommonVideoW,
         MAKEINTRESOURCEW(IDS_COMMON_VIDEO)
     },
     { /* 0x38 - CSIDL_RESOURCES */
+        &FOLDERID_ResourceDir,
         CSIDL_Type_WindowsPath,
         NULL,
         ResourcesW
     },
     { /* 0x39 - CSIDL_RESOURCES_LOCALIZED */
+        &FOLDERID_LocalizedResourcesDir,
         CSIDL_Type_NonExistent,
         NULL,
         NULL
     },
     { /* 0x3a - CSIDL_COMMON_OEM_LINKS */
-        CSIDL_Type_NonExistent,
+        &FOLDERID_CommonOEMLinks,
+        CSIDL_Type_AllUsers,
         NULL,
-        NULL
+        MAKEINTRESOURCEW(IDS_COMMON_OEM_LINKS)
     },
     { /* 0x3b - CSIDL_CDBURN_AREA */
+        &FOLDERID_CDBurning,
         CSIDL_Type_User,
         CD_BurningW,
         MAKEINTRESOURCEW(IDS_CDBURN_AREA)
     },
     { /* 0x3c unassigned */
+        &GUID_NULL,
         CSIDL_Type_Disallowed,
         NULL,
         NULL
     },
     { /* 0x3d - CSIDL_COMPUTERSNEARME */
+        &GUID_NULL,
         CSIDL_Type_Disallowed, /* FIXME */
         NULL,
         NULL
     },
     { /* 0x3e - CSIDL_PROFILES */
+        &GUID_NULL,
         CSIDL_Type_Disallowed, /* oddly, this matches WinXP */
+        NULL,
+        NULL
+    },
+    { /* 0x3f */
+        &FOLDERID_AddNewPrograms,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x40 */
+        &FOLDERID_AppUpdates,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x41 */
+        &FOLDERID_ChangeRemovePrograms,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x42 */
+        &FOLDERID_ConflictFolder,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x43 */
+        &FOLDERID_Contacts,
+        CSIDL_Type_User,
+        ContactsW,
+        MAKEINTRESOURCEW(IDS_CONTACTS)
+    },
+    { /* 0x44 */
+        &FOLDERID_DeviceMetadataStore,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x45 */
+        &FOLDERID_Documents,
+        CSIDL_Type_User,
+        NULL,
+        MAKEINTRESOURCEW(IDS_DOCUMENTS)
+    },
+    { /* 0x46 */
+        &FOLDERID_DocumentsLibrary,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x47 */
+        &FOLDERID_Downloads,
+        CSIDL_Type_User,
+        NULL,
+        MAKEINTRESOURCEW(IDS_DOWNLOADS)
+    },
+    { /* 0x48 */
+        &FOLDERID_Games,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x49 */
+        &FOLDERID_GameTasks,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x4a */
+        &FOLDERID_HomeGroup,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x4b */
+        &FOLDERID_ImplicitAppShortcuts,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x4c */
+        &FOLDERID_Libraries,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x4d */
+        &FOLDERID_Links,
+        CSIDL_Type_User,
+        NULL,
+        MAKEINTRESOURCEW(IDS_LINKS)
+    },
+    { /* 0x4e */
+        &FOLDERID_LocalAppDataLow,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x4f */
+        &FOLDERID_MusicLibrary,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x50 */
+        &FOLDERID_OriginalImages,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x51 */
+        &FOLDERID_PhotoAlbums,
+        CSIDL_Type_User,
+        NULL,
+        MAKEINTRESOURCEW(IDS_PHOTO_ALBUMS)
+    },
+    { /* 0x52 */
+        &FOLDERID_PicturesLibrary,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x53 */
+        &FOLDERID_Playlists,
+        CSIDL_Type_User,
+        NULL,
+        MAKEINTRESOURCEW(IDS_PLAYLISTS)
+    },
+    { /* 0x54 */
+        &FOLDERID_ProgramFilesX64,
+        CSIDL_Type_NonExistent,
+        NULL,
+        NULL
+    },
+    { /* 0x55 */
+        &FOLDERID_ProgramFilesCommonX64,
+        CSIDL_Type_NonExistent,
+        NULL,
+        NULL
+    },
+    { /* 0x56 */
+        &FOLDERID_Public,
+        CSIDL_Type_CurrVer, /* FIXME */
+        NULL,
+        UsersPublicW
+    },
+    { /* 0x57 */
+        &FOLDERID_PublicDownloads,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_PUBLIC_DOWNLOADS)
+    },
+    { /* 0x58 */
+        &FOLDERID_PublicGameTasks,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_PUBLIC_GAME_TASKS)
+    },
+    { /* 0x59 */
+        &FOLDERID_PublicLibraries,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_PUBLIC_LIBRARIES)
+    },
+    { /* 0x5a */
+        &FOLDERID_PublicRingtones,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_PUBLIC_RINGTONES)
+    },
+    { /* 0x5b */
+        &FOLDERID_QuickLaunch,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x5c */
+        &FOLDERID_RecordedTVLibrary,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x5d */
+        &FOLDERID_Ringtones,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x5e */
+        &FOLDERID_SampleMusic,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_SAMPLE_MUSIC)
+    },
+    { /* 0x5f */
+        &FOLDERID_SamplePictures,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_SAMPLE_PICTURES)
+    },
+    { /* 0x60 */
+        &FOLDERID_SamplePlaylists,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_SAMPLE_PLAYLISTS)
+    },
+    { /* 0x61 */
+        &FOLDERID_SampleVideos,
+        CSIDL_Type_AllUsers,
+        NULL,
+        MAKEINTRESOURCEW(IDS_SAMPLE_VIDEOS)
+    },
+    { /* 0x62 */
+        &FOLDERID_SavedGames,
+        CSIDL_Type_User,
+        NULL,
+        MAKEINTRESOURCEW(IDS_SAVED_GAMES)
+    },
+    { /* 0x63 */
+        &FOLDERID_SavedSearches,
+        CSIDL_Type_User,
+        NULL,
+        MAKEINTRESOURCEW(IDS_SAVED_SEARCHES)
+    },
+    { /* 0x64 */
+        &FOLDERID_SEARCH_CSC,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x65 */
+        &FOLDERID_SEARCH_MAPI,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x66 */
+        &FOLDERID_SearchHome,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x67 */
+        &FOLDERID_SidebarDefaultParts,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x68 */
+        &FOLDERID_SidebarParts,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x69 */
+        &FOLDERID_SyncManagerFolder,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x6a */
+        &FOLDERID_SyncResultsFolder,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x6b */
+        &FOLDERID_SyncSetupFolder,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x6c */
+        &FOLDERID_UserPinned,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x6d */
+        &FOLDERID_UserProfiles,
+        CSIDL_Type_CurrVer,
+        UsersW,
+        MAKEINTRESOURCEW(IDS_USER_PROFILES)
+    },
+    { /* 0x6e */
+        &FOLDERID_UserProgramFiles,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x6f */
+        &FOLDERID_UserProgramFilesCommon,
+        CSIDL_Type_Disallowed, /* FIXME */
+        NULL,
+        NULL
+    },
+    { /* 0x70 */
+        &FOLDERID_UsersFiles,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x71 */
+        &FOLDERID_UsersLibraries,
+        CSIDL_Type_Disallowed,
+        NULL,
+        NULL
+    },
+    { /* 0x72 */
+        &FOLDERID_VideosLibrary,
+        CSIDL_Type_Disallowed, /* FIXME */
         NULL,
         NULL
     }
@@ -2506,11 +2887,53 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
     return hr;
 }
 
+static int csidl_from_id( const KNOWNFOLDERID *id )
+{
+    int i;
+    for (i = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); i++)
+        if (IsEqualGUID( CSIDL_Data[i].id, id )) return i;
+    return -1;
+}
+
 /*************************************************************************
  * SHGetKnownFolderPath           [SHELL32.@]
  */
 HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE token, PWSTR *path)
 {
-    FIXME("(%s, %d, %p, %p) stub!\n", debugstr_guid(rfid), flags, token, path);
-    return E_NOTIMPL;
+    HRESULT hr;
+    WCHAR folder[MAX_PATH];
+    int index = csidl_from_id( rfid );
+
+    TRACE("%s, 0x%08x, %p, %p\n", debugstr_guid(rfid), flags, token, path);
+
+    if (index < 0)
+        return E_INVALIDARG;
+
+    if (flags & KF_FLAG_CREATE)
+        index |= CSIDL_FLAG_CREATE;
+
+    if (flags & KF_FLAG_DONT_VERIFY)
+        index |= CSIDL_FLAG_DONT_VERIFY;
+
+    if (flags & KF_FLAG_NO_ALIAS)
+        index |= CSIDL_FLAG_NO_ALIAS;
+
+    if (flags & KF_FLAG_INIT)
+        index |= CSIDL_FLAG_PER_USER_INIT;
+
+    if (flags & ~(KF_FLAG_CREATE|KF_FLAG_DONT_VERIFY|KF_FLAG_NO_ALIAS|KF_FLAG_INIT))
+    {
+        FIXME("flags 0x%08x not supported\n", flags);
+        return E_INVALIDARG;
+    }
+
+    hr = SHGetFolderPathW( NULL, index, token, 0, folder );
+    if (SUCCEEDED(hr))
+    {
+        *path = CoTaskMemAlloc( (strlenW( folder ) + 1) * sizeof(WCHAR) );
+        if (!*path)
+            return E_OUTOFMEMORY;
+        strcpyW( *path, folder );
+    }
+    return hr;
 }

@@ -92,6 +92,25 @@
 #define IDS_CDBURN_AREA             71
 #define IDS_PROGRAM_FILESX86        72
 #define IDS_PROGRAM_FILES_COMMONX86 73
+#define IDS_CONTACTS                74
+#define IDS_LINKS                   75
+#define IDS_PHOTO_ALBUMS            76
+#define IDS_PICTURES_LIBRARY        77
+#define IDS_PLAYLISTS               78
+#define IDS_PUBLIC_DOWNLOADS        79
+#define IDS_PUBLIC_GAME_TASKS       84
+#define IDS_PUBLIC_LIBRARIES        85
+#define IDS_PUBLIC_RINGTONES        86
+#define IDS_SAMPLE_MUSIC            87
+#define IDS_SAMPLE_PICTURES         88
+#define IDS_SAMPLE_PLAYLISTS        89
+#define IDS_SAMPLE_VIDEOS           90
+#define IDS_SAVED_GAMES             91
+#define IDS_SAVED_SEARCHES          92
+#define IDS_USER_PROFILES           93
+#define IDS_COMMON_OEM_LINKS        94
+#define IDS_DOCUMENTS               95
+#define IDS_DOWNLOADS               96
 
 #define IDS_CREATEFOLDER_DENIED     128
 #define IDS_CREATEFOLDER_CAPTION    129
