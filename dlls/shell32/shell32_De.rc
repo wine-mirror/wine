@@ -1,6 +1,7 @@
 /*
  * Copyright 1998 Juergen Schmied
  * Copyright 2004 Henning Gerhardt
+ * Copyright 2010 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -276,8 +277,10 @@ STRINGTABLE
 	IDS_COOKIES		"Cookies"
 	IDS_HISTORY		"Lokale Einstellungen\\Verlauf"
 	IDS_PROGRAM_FILES	"Programme"
+	IDS_PROGRAM_FILESX86	"Programme (x86)"
 	IDS_MYPICTURES		"Eigene Bilder"
 	IDS_PROGRAM_FILES_COMMON "Programme\\Gemeinsame Dateien"
+	IDS_PROGRAM_FILES_COMMONX86 "Programme (x86)\\Gemeinsame Dateien"
 	IDS_COMMON_DOCUMENTS	"Dokumente"
 	IDS_ADMINTOOLS		"Startmenü\\Programme\\Verwaltung"
 	IDS_COMMON_MUSIC	"Musik"
