@@ -2027,7 +2027,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
         op = WINED3DTOP_SELECTARG1;
     }
 
-    if (isAlpha && This->stateBlock->textures[Stage] == NULL && arg1 == WINED3DTA_TEXTURE) {
+    if (isAlpha && !This->stateBlock->textures[Stage] && arg1 == WINED3DTA_TEXTURE)
+    {
         get_src_and_opr(WINED3DTA_DIFFUSE, isAlpha, &src1, &opr1);
     } else {
         get_src_and_opr(arg1, isAlpha, &src1, &opr1);
@@ -3099,7 +3100,7 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
     arg2 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG2];
     arg0 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG0];
 
-    if (stateblock->renderState[WINED3DRS_COLORKEYENABLE] && stage == 0 && stateblock->textures[0])
+    if (stateblock->renderState[WINED3DRS_COLORKEYENABLE] && !stage && stateblock->textures[0])
     {
         UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
 
@@ -3475,9 +3476,9 @@ static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
 static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)stateblock->pixelShader;
 
-    if (stateblock->pixelShader && stage != 0
-            && (((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.reg_maps.luminanceparams & (1 << stage)))
+    if (stateblock->pixelShader && stage && (ps->baseShader.reg_maps.luminanceparams & (1 << stage)))
     {
         /* The pixel shader has to know the luminance scale. Do a constants update if it
          * isn't scheduled anyway
@@ -3563,7 +3564,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
 
         if (!use_ps(stateblock) && sampler < stateblock->lowest_disabled_stage)
         {
-            if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
+            if (stateblock->renderState[WINED3DRS_COLORKEYENABLE] && !sampler)
+            {
                 /* If color keying is enabled update the alpha test, it depends on the existence
                  * of a color key in stage 0
                  */
@@ -3581,9 +3583,11 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     }
     else if (mapped_stage < gl_info->limits.textures)
     {
-        if(sampler < stateblock->lowest_disabled_stage) {
+        if (sampler < stateblock->lowest_disabled_stage)
+        {
             /* TODO: What should I do with pixel shaders here ??? */
-            if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
+            if (stateblock->renderState[WINED3DRS_COLORKEYENABLE] && !sampler)
+            {
                 /* If color keying is enabled update the alpha test, it depends on the existence
                 * of a color key in stage 0
                 */
@@ -3642,8 +3646,9 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct w
 static void shader_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    if (stateblock->pixelShader && stage != 0
-            && (((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.reg_maps.bumpmat & (1 << stage)))
+    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)stateblock->pixelShader;
+
+    if (stateblock->pixelShader && stage && (ps->baseShader.reg_maps.bumpmat & (1 << stage)))
     {
         /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
          * anyway
@@ -4837,7 +4842,8 @@ static void indexbuffer(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if(stateblock->streamIsUP || stateblock->pIndexData == NULL ) {
+    if (stateblock->streamIsUP || !stateblock->pIndexData)
+    {
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
     } else {
         struct wined3d_buffer *ib = (struct wined3d_buffer *) stateblock->pIndexData;

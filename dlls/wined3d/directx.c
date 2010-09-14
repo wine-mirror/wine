@@ -375,7 +375,9 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
-    if (ref == 0) {
+
+    if (!ref)
+    {
         unsigned int i;
 
         for (i = 0; i < This->adapter_count; ++i)
@@ -414,7 +416,8 @@ static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_inf
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prog));
     GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
                                   strlen(testcode), testcode));
-    if(glGetError() != 0) {
+    if (glGetError())
+    {
         TRACE("OpenGL implementation does not allow indirect addressing offsets > 63\n");
         TRACE("error: %s\n", debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
         ret = TRUE;
@@ -2719,22 +2722,24 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
         if(GL_EXTCALL(wglGetExtensionsStringARB))
             WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
 
-        if (NULL == WGL_Extensions) {
+        if (!WGL_Extensions)
+        {
             ERR("   WGL_Extensions returns NULL\n");
-        } else {
+        }
+        else
+        {
             TRACE_(d3d_caps)("WGL_Extensions reported:\n");
-            while (*WGL_Extensions != 0x00) {
+            while (*WGL_Extensions)
+            {
                 const char *Start;
                 char ThisExtn[256];
 
                 while (isspace(*WGL_Extensions)) WGL_Extensions++;
                 Start = WGL_Extensions;
-                while (!isspace(*WGL_Extensions) && *WGL_Extensions != 0x00) {
-                    WGL_Extensions++;
-                }
+                while (!isspace(*WGL_Extensions) && *WGL_Extensions) ++WGL_Extensions;
 
                 len = WGL_Extensions - Start;
-                if (len == 0 || len >= sizeof(ThisExtn))
+                if (!len || len >= sizeof(ThisExtn))
                     continue;
 
                 memcpy(ThisExtn, Start, len);
@@ -2885,7 +2890,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
             }
         }
 
-        if (i == 0)
+        if (!i)
         {
             TRACE_(d3d_caps)("No modes found for format (%x - %s)\n", format_id, debug_d3dformat(format_id));
             return WINED3DERR_INVALIDCALL;
@@ -2928,10 +2933,8 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
 {
     TRACE("iface %p, adapter_idx %u, display_mode %p.\n", iface, Adapter, pMode);
 
-    if (NULL == pMode ||
-        Adapter >= IWineD3D_GetAdapterCount(iface)) {
+    if (!pMode || Adapter >= IWineD3D_GetAdapterCount(iface))
         return WINED3DERR_INVALIDCALL;
-    }
 
     if (Adapter == 0) { /* Display */
         int bpp = 0;

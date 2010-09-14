@@ -92,7 +92,7 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_GetEntries(IWineD3DPalette *iface, DW
 
     TRACE("(%p)->(%08x,%d,%d,%p)\n",This,Flags,Start,Count,PalEnt);
 
-    if (Flags != 0) return WINED3DERR_INVALIDCALL; /* unchecked */
+    if (Flags) return WINED3DERR_INVALIDCALL; /* unchecked */
     if (Start + Count > IWineD3DPaletteImpl_Size(This->Flags))
         return WINED3DERR_INVALIDCALL;
 
@@ -149,8 +149,8 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface,
 #if 0
     /* Now, if we are in 'depth conversion mode', update the screen palette */
     /* FIXME: we need to update the image or we won't get palette fading. */
-    if (This->ddraw->d->palette_convert != NULL)
-        This->ddraw->d->palette_convert(palent,This->screen_palents,start,count);
+    if (This->ddraw->d->palette_convert)
+            This->ddraw->d->palette_convert(palent,This->screen_palents,start,count);
 #endif
 
     /* If the palette is attached to the render target, update all render targets */

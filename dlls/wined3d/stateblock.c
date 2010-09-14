@@ -1222,10 +1222,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     for (i = 0; i < MAX_TEXTURES; i++) {
         TRACE("Setting up default texture states for texture Stage %d\n", i);
         memcpy(&This->transforms[WINED3DTS_TEXTURE0 + i], identity, sizeof(identity));
-        This->textureState[i][WINED3DTSS_COLOROP               ] = (i==0)? WINED3DTOP_MODULATE :  WINED3DTOP_DISABLE;
+        This->textureState[i][WINED3DTSS_COLOROP               ] = i ? WINED3DTOP_DISABLE : WINED3DTOP_MODULATE;
         This->textureState[i][WINED3DTSS_COLORARG1             ] = WINED3DTA_TEXTURE;
         This->textureState[i][WINED3DTSS_COLORARG2             ] = WINED3DTA_CURRENT;
-        This->textureState[i][WINED3DTSS_ALPHAOP               ] = (i==0)? WINED3DTOP_SELECTARG1 :  WINED3DTOP_DISABLE;
+        This->textureState[i][WINED3DTSS_ALPHAOP               ] = i ? WINED3DTOP_DISABLE : WINED3DTOP_SELECTARG1;
         This->textureState[i][WINED3DTSS_ALPHAARG1             ] = WINED3DTA_TEXTURE;
         This->textureState[i][WINED3DTSS_ALPHAARG2             ] = WINED3DTA_CURRENT;
         This->textureState[i][WINED3DTSS_BUMPENVMAT00          ] = 0;
@@ -1269,7 +1269,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
 
     /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
     hr = IWineD3DDevice_GetSwapChain(device, 0, &swapchain);
-    if( hr == WINED3D_OK && swapchain != NULL) {
+    if (SUCCEEDED(hr) && swapchain)
+    {
         WINED3DVIEWPORT vp;
 
         hr = IWineD3DSwapChain_GetBackBuffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);

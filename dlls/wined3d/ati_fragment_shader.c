@@ -273,11 +273,7 @@ static GLuint register_for_arg(DWORD arg, const struct wined3d_gl_info *gl_info,
              * instruction writing to reg0. Afterwards texture0 is not used any longer.
              * If we're reading from current
              */
-            if(stage == 0) {
-                ret = GL_PRIMARY_COLOR;
-            } else {
-                ret = GL_REG_0_ATI;
-            }
+            ret = stage ? GL_REG_0_ATI : GL_PRIMARY_COLOR;
             break;
 
         case WINED3DTA_TEXTURE:
@@ -517,9 +513,12 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
     }
 
     /* Pass 4: Generate the arithmetic instructions */
-    for(stage = 0; stage < MAX_TEXTURES; stage++) {
-        if(op[stage].cop == WINED3DTOP_DISABLE) {
-            if(stage == 0) {
+    for (stage = 0; stage < MAX_TEXTURES; ++stage)
+    {
+        if (op[stage].cop == WINED3DTOP_DISABLE)
+        {
+            if (!stage)
+            {
                 /* Handle complete texture disabling gracefully */
                 wrap_op1(gl_info, GL_MOV_ATI, GL_REG_0_ATI, GL_NONE, GL_NONE,
                          GL_PRIMARY_COLOR, GL_NONE, GL_NONE);
@@ -679,7 +678,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         switch(op[stage].aop) {
             case WINED3DTOP_DISABLE:
                 /* Get the primary color to the output if on stage 0, otherwise leave register 0 untouched */
-                if(stage == 0) {
+                if (!stage)
+                {
                     wrap_op1(gl_info, GL_MOV_ATI, GL_REG_0_ATI, GL_ALPHA, GL_NONE,
                              GL_PRIMARY_COLOR, GL_NONE, GL_NONE);
                 }

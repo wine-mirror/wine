@@ -221,8 +221,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
          */
 
         /* For indexed data, we need to go a few more strides in */
-        if (idxData != NULL) {
-
+        if (idxData)
+        {
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2)
                 SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
@@ -284,7 +284,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         }
 
         /* Normal -------------------------------- */
-        if (normal != NULL) {
+        if (normal)
+        {
             const void *ptrToCoords = normal + SkipnStrides * si->elements[WINED3D_FFP_NORMAL].stride;
             normal_funcs[si->elements[WINED3D_FFP_NORMAL].format->emit_idx](ptrToCoords);
         }
@@ -296,9 +297,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         }
 
         /* For non indexed mode, step onto next parts */
-        if (idxData == NULL) {
-            ++SkipnStrides;
-        }
+        if (!idxData) ++SkipnStrides;
     }
 
     glEnd();
@@ -450,9 +449,10 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
     /* Start drawing in GL */
     glBegin(glPrimitiveType);
 
-    for (vx_index = 0; vx_index < numberOfVertices; ++vx_index) {
-        if (idxData != NULL) {
-
+    for (vx_index = 0; vx_index < numberOfVertices; ++vx_index)
+    {
+        if (idxData)
+        {
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2)
                 SkipnStrides = pIdxBufS[startIdx + vx_index] + stateblock->loadBaseVertexIndex;
@@ -487,7 +487,8 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
 
-    if (idxSize == 0) {
+    if (!idxSize)
+    {
         /* This is a nasty thing. MSDN says no hardware supports that and apps have to use software vertex processing.
          * We don't support this for now
          *
@@ -501,16 +502,17 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
     TRACE("(%p) : glElements(%x, %d, ...)\n", This, glPrimitiveType, numberOfVertices);
 
     /* First, figure out how many instances we have to draw */
-    for(i = 0; i < MAX_STREAMS; i++) {
+    for (i = 0; i < MAX_STREAMS; ++i)
+    {
         /* Look at the streams and take the first one which matches */
-        if(((stateblock->streamFlags[i] & WINED3DSTREAMSOURCE_INSTANCEDATA) || (stateblock->streamFlags[i] & WINED3DSTREAMSOURCE_INDEXEDDATA)) && stateblock->streamSource[i]) {
-            /* D3D9 could set streamFreq 0 with (INSTANCEDATA or INDEXEDDATA) and then it is handled as 1. See d3d9/tests/visual.c-> stream_test() */
-            if(stateblock->streamFreq[i] == 0){
-                numInstances = 1;
-            } else {
-                numInstances = stateblock->streamFreq[i]; /* use the specified number of instances from the first matched stream. See d3d9/tests/visual.c-> stream_test() */
-            }
-            break; /* break, because only the first suitable value is interesting */
+        if (stateblock->streamSource[i] && ((stateblock->streamFlags[i] & WINED3DSTREAMSOURCE_INSTANCEDATA)
+                || (stateblock->streamFlags[i] & WINED3DSTREAMSOURCE_INDEXEDDATA)))
+        {
+            /* Use the specified number of instances from the first matched
+             * stream. A streamFreq of 0 (with INSTANCEDATA or INDEXEDDATA)
+             * is handled as 1. See d3d9/tests/visual.c-> stream_test(). */
+            numInstances = stateblock->streamFreq[i] ? stateblock->streamFreq[i] : 1;
+            break;
         }
     }
 

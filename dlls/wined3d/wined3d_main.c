@@ -102,19 +102,19 @@ IWineD3D * WINAPI WineDirect3DCreate(UINT version, void *parent)
     return (IWineD3D *)object;
 }
 
-static inline DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
+static DWORD get_config_key(HKEY defkey, HKEY appkey, const char *name, char *buffer, DWORD size)
 {
-    if (0 != appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
-    if (0 != defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
+    if (appkey && !RegQueryValueExA(appkey, name, 0, NULL, (BYTE *)buffer, &size)) return 0;
+    if (defkey && !RegQueryValueExA(defkey, name, 0, NULL, (BYTE *)buffer, &size)) return 0;
     return ERROR_FILE_NOT_FOUND;
 }
 
-static inline DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char* name, DWORD *data)
+static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *name, DWORD *data)
 {
     DWORD type;
     DWORD size = sizeof(DWORD);
-    if (0 != appkey && !RegQueryValueExA( appkey, name, 0, &type, (LPBYTE) data, &size ) && (type == REG_DWORD)) return 0;
-    if (0 != defkey && !RegQueryValueExA( defkey, name, 0, &type, (LPBYTE) data, &size ) && (type == REG_DWORD)) return 0;
+    if (appkey && !RegQueryValueExA(appkey, name, 0, &type, (BYTE *)data, &size) && (type == REG_DWORD)) return 0;
+    if (defkey && !RegQueryValueExA(defkey, name, 0, &type, (BYTE *)data, &size) && (type == REG_DWORD)) return 0;
     return ERROR_FILE_NOT_FOUND;
 }
 
@@ -200,7 +200,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         }
     }
 
-    if ( 0 != hkey || 0 != appkey )
+    if (hkey || appkey)
     {
         if ( !get_config_key( hkey, appkey, "VertexShaderMode", buffer, size) )
         {

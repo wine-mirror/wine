@@ -453,10 +453,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     if (This->presentParms.PresentationInterval != WINED3DPRESENT_INTERVAL_IMMEDIATE
             && gl_info->supported[SGI_VIDEO_SYNC])
     {
-        retval = GL_EXTCALL(glXGetVideoSyncSGI(&sync));
-        if(retval != 0) {
+        if ((retval = GL_EXTCALL(glXGetVideoSyncSGI(&sync))))
             ERR("glXGetVideoSyncSGI failed(retval = %d\n", retval);
-        }
 
         switch(This->presentParms.PresentationInterval) {
             case WINED3DPRESENT_INTERVAL_DEFAULT:

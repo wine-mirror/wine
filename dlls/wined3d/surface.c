@@ -826,7 +826,9 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct win
 
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
-        if(This->Flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED) || This->resource.allocatedMemory == NULL) {
+        if (This->Flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED)
+                || !This->resource.allocatedMemory)
+        {
             /* In some cases we want to disable client storage.
              * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
              * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
@@ -1356,7 +1358,8 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
     if(This->Flags & SFLAG_PBO) {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
         checkGLcall("glBindBufferARB");
-        if(mem != NULL) {
+        if (mem)
+        {
             ERR("mem not null for pbo -- unexpected\n");
             mem = NULL;
         }
@@ -1604,9 +1607,8 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
 
         GL_EXTCALL(glGenBuffersARB(1, &This->pbo));
         error = glGetError();
-        if(This->pbo == 0 || error != GL_NO_ERROR) {
+        if (!This->pbo || error != GL_NO_ERROR)
             ERR("Failed to bind the PBO with error %s (%#x)\n", debug_glerror(error), error);
-        }
 
         TRACE("Attaching pbo=%#x to (%p)\n", This->pbo, This);
 
@@ -1684,7 +1686,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
     /* surface_load_location() does not check if the rectangle specifies
      * the full surface. Most callers don't need that, so do it here. */
-    if (pRect && pRect->top == 0 && pRect->left == 0
+    if (pRect && !pRect->top && !pRect->left
             && pRect->right == This->currentDesc.Width
             && pRect->bottom == This->currentDesc.Height)
     {
@@ -1894,10 +1896,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             goto unlock_end;
         }
 
-        if(This->dirtyRect.left   == 0 &&
-           This->dirtyRect.top    == 0 &&
-           This->dirtyRect.right  == This->currentDesc.Width &&
-           This->dirtyRect.bottom == This->currentDesc.Height) {
+        if (!This->dirtyRect.left && !This->dirtyRect.top
+                && This->dirtyRect.right == This->currentDesc.Width
+                && This->dirtyRect.bottom == This->currentDesc.Height)
+        {
             fullsurface = TRUE;
         } else {
             /* TODO: Proper partial rectangle tracking */
@@ -2324,13 +2326,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         case CONVERT_PALETTED:
         case CONVERT_PALETTED_CK:
         {
-            IWineD3DPaletteImpl* pal = This->palette;
             BYTE table[256][4];
             unsigned int x, y;
-
-            if( pal == NULL) {
-                /* TODO: If we are a sublevel, try to get the palette from level 0 */
-            }
 
             d3dfmt_p8_init_palette(This, table, (convert == CONVERT_PALETTED_CK));
 
@@ -2656,7 +2653,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *M
         /* LockRect and GetDC will re-create the dib section and allocated memory */
         This->resource.allocatedMemory = NULL;
         /* HeapMemory should be NULL already */
-        if(This->resource.heapMemory != NULL) ERR("User pointer surface has heap memory allocated\n");
+        if (This->resource.heapMemory)
+            ERR("User pointer surface has heap memory allocated.\n");
         This->Flags &= ~SFLAG_USERPTR;
 
         if (This->Flags & SFLAG_CLIENT)
@@ -2783,7 +2781,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     /* Just overwrite the swapchain presentation interval. This is ok because only ddraw apps can call Flip,
      * and only d3d8 and d3d9 apps specify the presentation interval
      */
-    if((Flags & (WINEDDFLIP_NOVSYNC | WINEDDFLIP_INTERVAL2 | WINEDDFLIP_INTERVAL3 | WINEDDFLIP_INTERVAL4)) == 0) {
+    if (!(Flags & (WINEDDFLIP_NOVSYNC | WINEDDFLIP_INTERVAL2 | WINEDDFLIP_INTERVAL3 | WINEDDFLIP_INTERVAL4)))
+    {
         /* Most common case first to avoid wasting time on all the other cases */
         swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_ONE;
     } else if(Flags & WINEDDFLIP_NOVSYNC) {
@@ -3492,7 +3491,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             TRACE("Yes\n");
 
             /* These flags are unimportant for the flag check, remove them */
-            if((Flags & ~(WINEDDBLT_DONOTWAIT | WINEDDBLT_WAIT)) == 0) {
+            if (!(Flags & ~(WINEDDBLT_DONOTWAIT | WINEDDBLT_WAIT)))
+            {
                 WINED3DSWAPEFFECT orig_swap = dstSwapchain->presentParms.SwapEffect;
 
                 /* The idea behind this is that a glReadPixels and a glDrawPixels call

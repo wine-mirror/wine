@@ -219,16 +219,16 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD
         return WINED3D_OK;
     }
 
-    if(This->palette != NULL)
-        if(This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+    if (This->palette)
+        if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
             This->palette->Flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
 
     This->palette = PalImpl;
 
-    if(PalImpl != NULL) {
-        if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
-            (PalImpl)->Flags |= WINEDDPCAPS_PRIMARYSURFACE;
-        }
+    if (PalImpl)
+    {
+        if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+            PalImpl->Flags |= WINEDDPCAPS_PRIMARYSURFACE;
 
         return IWineD3DSurface_RealizePalette(iface);
     }
@@ -240,7 +240,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
 
-    if ((Flags & WINEDDCKEY_COLORSPACE) != 0) {
+    if (Flags & WINEDDCKEY_COLORSPACE)
+    {
         FIXME(" colorkey value not supported (%08x) !\n", Flags);
         return WINED3DERR_INVALIDCALL;
     }
@@ -359,7 +360,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface
         TRACE("(%p): Not an overlay surface\n", This);
         return WINEDDERR_NOTAOVERLAYSURFACE;
     }
-    if(This->overlay_dest == NULL) {
+
+    if (!This->overlay_dest)
+    {
         *X = 0; *Y = 0;
         hr = WINEDDERR_OVERLAYNOTVISIBLE;
     } else {
@@ -587,8 +590,8 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface)
             break;
     }
 
-    ddc = GetDC(0);
-    if (ddc == 0) {
+    if (!(ddc = GetDC(0)))
+    {
         HeapFree(GetProcessHeap(), 0, b_info);
         return HRESULT_FROM_WIN32(GetLastError());
     }
@@ -1812,7 +1815,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
 
     pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
 
-    if (NULL == pRect)
+    if (!pRect)
     {
         pLockedRect->pBits = This->resource.allocatedMemory;
         This->lockedRect.left   = 0;

@@ -63,12 +63,9 @@ static ULONG WINAPI IWineD3DClipperImpl_Release(IWineD3DClipper *iface)
 
     TRACE("(%p)->() decrementing from %u.\n", This, ref + 1);
 
-    if (ref == 0)
-    {
-        HeapFree(GetProcessHeap(), 0, This);
-        return 0;
-    }
-    else return ref;
+    if (!ref) HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
 }
 
 static HRESULT WINAPI IWineD3DClipperImpl_SetHwnd(IWineD3DClipper *iface, DWORD Flags, HWND hWnd)
@@ -135,7 +132,7 @@ static HRESULT WINAPI IWineD3DClipperImpl_SetClipList(IWineD3DClipper *iface, co
 {
     static int warned = 0;
 
-    if (warned++ < 10 || rgn == NULL)
+    if (warned++ < 10 || !rgn)
         FIXME("iface %p, region %p, flags %#x stub!\n", iface, rgn, Flags);
 
     return WINED3D_OK;

@@ -2805,7 +2805,7 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
     {
         case WINED3DSPR_RASTOUT:
             /* oFog & oPts */
-            if (reg->idx != 0) return TRUE;
+            if (reg->idx) return TRUE;
             /* oPos */
             return FALSE;
 

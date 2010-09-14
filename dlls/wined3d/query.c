@@ -46,7 +46,7 @@ enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_qu
 
     TRACE("(%p) : device %p\n", query, device);
 
-    if (query->context == NULL)
+    if (!query->context)
     {
         TRACE("Query not started\n");
         return WINED3D_EVENT_QUERY_NOT_STARTED;
@@ -259,7 +259,9 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
-    if (ref == 0) {
+
+    if (!ref)
+    {
         /* Queries are specific to the GL context that created them. Not
          * deleting the query will obviously leak it, but that's still better
          * than potentially deleting a different query with the same id in this

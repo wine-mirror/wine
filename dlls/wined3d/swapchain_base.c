@@ -60,9 +60,9 @@ ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface)
     DWORD refCount;
     refCount = InterlockedDecrement(&This->ref);
     TRACE("(%p) : ReleaseRef to %d\n", This, refCount);
-    if (refCount == 0) {
-        IWineD3DSwapChain_Destroy(iface);
-    }
+
+    if (!refCount) IWineD3DSwapChain_Destroy(iface);
+
     return refCount;
 }
 

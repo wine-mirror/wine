@@ -232,8 +232,10 @@ static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLhandleA
         GL_EXTCALL(glGetInfoLogARB(obj, infologLength, NULL, infoLog));
         is_spam = FALSE;
 
-        for(i = 0; i < sizeof(spam) / sizeof(spam[0]); i++) {
-            if(strcmp(infoLog, spam[i]) == 0) {
+        for (i = 0; i < sizeof(spam) / sizeof(*spam); ++i)
+        {
+            if (!strcmp(infoLog, spam[i]))
+            {
                 is_spam = TRUE;
                 break;
             }
@@ -1374,7 +1376,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             }
             else
             {
-                if (reg->idx == 0) strcpy(register_name, "gl_Color");
+                if (!reg->idx) strcpy(register_name, "gl_Color");
                 else strcpy(register_name, "gl_SecondaryColor");
                 break;
             }
@@ -1442,7 +1444,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_ATTROUT:
-            if (reg->idx == 0) sprintf(register_name, "OUT[8]");
+            if (!reg->idx) sprintf(register_name, "OUT[8]");
             else sprintf(register_name, "OUT[9]");
             break;
 
@@ -1452,7 +1454,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_MISCTYPE:
-            if (reg->idx == 0)
+            if (!reg->idx)
             {
                 /* vPos */
                 sprintf(register_name, "vpos");
@@ -3655,7 +3657,7 @@ static void shader_glsl_input_pack(IWineD3DPixelShader *iface, struct wined3d_sh
         }
         else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
         {
-            if (semantic_idx == 0)
+            if (!semantic_idx)
                 shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
                         This->input_reg_map[i], reg_mask, reg_mask);
             else if (semantic_idx == 1)
@@ -3851,7 +3853,7 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 
             if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
             {
-                if (semantic_idx == 0)
+                if (!semantic_idx)
                     shader_addline(buffer, "gl_FrontColor%s = clamp(OUT[%u]%s, -FLT_MAX, FLT_MAX);\n",
                             reg_mask, i, reg_mask);
                 else if (semantic_idx == 1)
@@ -4147,9 +4149,11 @@ static GLhandleARB find_glsl_pshader(const struct wined3d_context *context,
      * so a linear search is more performant than a hashmap or a binary search
      * (cache coherency etc)
      */
-    for(i = 0; i < shader_data->num_gl_shaders; i++) {
-        if(memcmp(&shader_data->gl_shaders[i].args, args, sizeof(*args)) == 0) {
-            if(args->np2_fixup) *np2fixup_info = &shader_data->gl_shaders[i].np2fixup;
+    for (i = 0; i < shader_data->num_gl_shaders; ++i)
+    {
+        if (!memcmp(&shader_data->gl_shaders[i].args, args, sizeof(*args)))
+        {
+            if (args->np2_fixup) *np2fixup_info = &shader_data->gl_shaders[i].np2fixup;
             return shader_data->gl_shaders[i].prgId;
         }
     }
@@ -4674,7 +4678,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     if(pshader) {
         struct glsl_pshader_private *shader_data;
         shader_data = This->baseShader.backend_data;
-        if(!shader_data || shader_data->num_gl_shaders == 0)
+        if (!shader_data || !shader_data->num_gl_shaders)
         {
             HeapFree(GetProcessHeap(), 0, shader_data);
             This->baseShader.backend_data = NULL;
@@ -4693,7 +4697,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     } else {
         struct glsl_vshader_private *shader_data;
         shader_data = This->baseShader.backend_data;
-        if(!shader_data || shader_data->num_gl_shaders == 0)
+        if (!shader_data || !shader_data->num_gl_shaders)
         {
             HeapFree(GetProcessHeap(), 0, shader_data);
             This->baseShader.backend_data = NULL;

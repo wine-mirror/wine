@@ -139,7 +139,7 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID refguid,
     resource_free_private_data(iface, refguid);
 
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
-    if (NULL == data) return E_OUTOFMEMORY;
+    if (!data) return E_OUTOFMEMORY;
 
     data->tag = *refguid;
     data->flags = Flags;
@@ -157,7 +157,8 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID refguid,
     else
     {
         data->ptr.data = HeapAlloc(GetProcessHeap(), 0, SizeOfData);
-        if (NULL == data->ptr.data) {
+        if (!data->ptr.data)
+        {
             HeapFree(GetProcessHeap(), 0, data);
             return E_OUTOFMEMORY;
         }
@@ -176,7 +177,7 @@ HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID refguid, void
 
     TRACE("(%p) : %p %p %p\n", This, refguid, pData, pSizeOfData);
     data = resource_find_private_data(This, refguid);
-    if (data == NULL) return WINED3DERR_NOTFOUND;
+    if (!data) return WINED3DERR_NOTFOUND;
 
     if (*pSizeOfData < data->size) {
         *pSizeOfData = data->size;
@@ -207,13 +208,15 @@ HRESULT resource_free_private_data(IWineD3DResource *iface, REFGUID refguid)
 
     TRACE("(%p) : %s\n", This, debugstr_guid(refguid));
     data = resource_find_private_data(This, refguid);
-    if (data == NULL) return WINED3DERR_NOTFOUND;
+    if (!data) return WINED3DERR_NOTFOUND;
 
     if (data->flags & WINED3DSPD_IUNKNOWN)
     {
-        if (data->ptr.object != NULL)
+        if (data->ptr.object)
             IUnknown_Release(data->ptr.object);
-    } else {
+    }
+    else
+    {
         HeapFree(GetProcessHeap(), 0, data->ptr.data);
     }
     list_remove(&data->entry);

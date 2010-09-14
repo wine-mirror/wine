@@ -277,7 +277,8 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
     textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     ENTER_GL();
     /* Generate a texture name if we don't already have one */
-    if (gl_tex->name == 0) {
+    if (!gl_tex->name)
+    {
         *set_surface_desc = TRUE;
         glGenTextures(1, &gl_tex->name);
         checkGLcall("glGenTextures");
@@ -319,7 +320,8 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
     }
 
     /* Bind the texture */
-    if (gl_tex->name != 0) {
+    if (gl_tex->name)
+    {
         glBindTexture(textureDimensions, gl_tex->name);
         checkGLcall("glBindTexture");
         if (isNewTexture) {

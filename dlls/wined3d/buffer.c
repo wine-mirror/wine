@@ -78,7 +78,7 @@ static inline void buffer_clear_dirty_areas(struct wined3d_buffer *This)
 
 static inline BOOL buffer_is_dirty(struct wined3d_buffer *This)
 {
-    return This->modified_areas != 0;
+    return !!This->modified_areas;
 }
 
 static inline BOOL buffer_is_fully_dirty(struct wined3d_buffer *This)
@@ -87,7 +87,7 @@ static inline BOOL buffer_is_fully_dirty(struct wined3d_buffer *This)
 
     for(i = 0; i < This->modified_areas; i++)
     {
-        if(This->maps[i].offset == 0 && This->maps[i].size == This->resource.size)
+        if (!This->maps[i].offset && This->maps[i].size == This->resource.size)
         {
             return TRUE;
         }
@@ -534,7 +534,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
         if (float16_used) FIXME("Float16 conversion used with fixed function vertex processing\n");
     }
 
-    if (stride_this_run == 0 && This->conversion_map)
+    if (!stride_this_run && This->conversion_map)
     {
         /* Sanity test */
         if (!ret) ERR("no converted attributes found, old conversion map exists, and no declaration change?\n");
@@ -1348,7 +1348,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
      * number of Map calls, d3d returns always D3D_OK.
      * This is also needed to prevent Map from returning garbage on
      * the next call (this will happen if the lock_count is < 0). */
-    if(This->lock_count == 0)
+    if (!This->lock_count)
     {
         TRACE("Unmap called without a previous Map call!\n");
         return WINED3D_OK;

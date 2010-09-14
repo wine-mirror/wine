@@ -378,7 +378,7 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *shader, struct 
         case WINED3DSPR_MISCTYPE:
             if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
             {
-                if (reg->idx == 0) reg_maps->vpos = 1;
+                if (!reg->idx) reg_maps->vpos = 1;
                 else if (reg->idx == 1) reg_maps->usesfacing = 1;
             }
             break;
@@ -721,7 +721,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct
                 {
                     IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)shader;
 
-                    if (dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
+                    if (dst_param.reg.type == WINED3DSPR_COLOROUT && !dst_param.reg.idx)
                     {
                     /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
                      * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
@@ -885,7 +885,7 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
                 break;
 
             case WINED3DDECLUSAGE_COLOR:
-                if (semantic->usage_idx == 0) TRACE("color");
+                if (!semantic->usage_idx) TRACE("color");
                 else TRACE("specular%u", (semantic->usage_idx - 1));
                 break;
 
