@@ -746,6 +746,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
             IP_ADAPTER_UNICAST_ADDRESS *ua;
             struct sockaddr_in *sa;
 
+            aa->Flags |= IP_ADAPTER_IPV4_ENABLED;
             ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
             for (i = 0; i < num_v4addrs; i++)
             {
@@ -776,6 +777,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
             IP_ADAPTER_UNICAST_ADDRESS *ua;
             struct WS_sockaddr_in6 *sa;
 
+            aa->Flags |= IP_ADAPTER_IPV6_ENABLED;
             if (aa->FirstUnicastAddress)
             {
                 for (ua = aa->FirstUnicastAddress; ua->Next; ua = ua->Next)
