@@ -499,11 +499,14 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             if (This->textures[counter]) IWineD3DBaseTexture_Release(This->textures[counter]);
         }
 
-        for (counter = 0; counter < MAX_STREAMS; counter++) {
-            if(This->streamSource[counter]) {
-                if (IWineD3DBuffer_Release(This->streamSource[counter]))
+        for (counter = 0; counter < MAX_STREAMS; ++counter)
+        {
+            struct wined3d_buffer *buffer = This->streams[counter].buffer;
+            if (buffer)
+            {
+                if (IWineD3DBuffer_Release((IWineD3DBuffer *)buffer))
                 {
-                    TRACE("Vertex buffer still referenced by stateblock, applications has leaked Stream %u, buffer %p\n", counter, This->streamSource[counter]);
+                    WARN("Buffer %p still referenced by stateblock, stream %u.\n", buffer, counter);
                 }
             }
         }
@@ -765,16 +768,18 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (This->streamStride[i] != targetStateBlock->streamStride[i]
-                || This->streamSource[i] != targetStateBlock->streamSource[i])
+        if (This->streams[i].stride != targetStateBlock->streams[i].stride
+                || This->streams[i].buffer != targetStateBlock->streams[i].buffer)
         {
             TRACE("Updating stream source %u to %p, stride to %u.\n",
-                    i, targetStateBlock->streamSource[i], targetStateBlock->streamStride[i]);
+                    i, targetStateBlock->streams[i].buffer, targetStateBlock->streams[i].stride);
 
-            This->streamStride[i] = targetStateBlock->streamStride[i];
-            if (targetStateBlock->streamSource[i]) IWineD3DBuffer_AddRef(targetStateBlock->streamSource[i]);
-            if (This->streamSource[i]) IWineD3DBuffer_Release(This->streamSource[i]);
-            This->streamSource[i] = targetStateBlock->streamSource[i];
+            This->streams[i].stride = targetStateBlock->streams[i].stride;
+            if (targetStateBlock->streams[i].buffer)
+                    IWineD3DBuffer_AddRef((IWineD3DBuffer *)targetStateBlock->streams[i].buffer);
+            if (This->streams[i].buffer)
+                    IWineD3DBuffer_Release((IWineD3DBuffer *)This->streams[i].buffer);
+            This->streams[i].buffer = targetStateBlock->streams[i].buffer;
         }
     }
 
@@ -783,14 +788,14 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (This->streamFreq[i] != targetStateBlock->streamFreq[i]
-                || This->streamFlags[i] != targetStateBlock->streamFlags[i])
+        if (This->streams[i].frequency != targetStateBlock->streams[i].frequency
+                || This->streams[i].flags != targetStateBlock->streams[i].flags)
         {
             TRACE("Updating stream frequency %u to %u flags to %#x.\n",
-                    i, targetStateBlock->streamFreq[i], targetStateBlock->streamFlags[i]);
+                    i, targetStateBlock->streams[i].frequency, targetStateBlock->streams[i].flags);
 
-            This->streamFreq[i] = targetStateBlock->streamFreq[i];
-            This->streamFlags[i] = targetStateBlock->streamFlags[i];
+            This->streams[i].frequency = targetStateBlock->streams[i].frequency;
+            This->streams[i].flags = targetStateBlock->streams[i].flags;
         }
     }
 
@@ -1001,13 +1006,17 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     map = This->changed.streamSource;
     for (i = 0; map; map >>= 1, ++i)
     {
-        if (map & 1) IWineD3DDevice_SetStreamSource(device, i, This->streamSource[i], 0, This->streamStride[i]);
+        if (map & 1)
+            IWineD3DDevice_SetStreamSource(device, i,
+                    (IWineD3DBuffer *)This->streams[i].buffer,
+                    0, This->streams[i].stride);
     }
 
     map = This->changed.streamFreq;
     for (i = 0; map; map >>= 1, ++i)
     {
-        if (map & 1) IWineD3DDevice_SetStreamSourceFreq(device, i, This->streamFreq[i] | This->streamFlags[i]);
+        if (map & 1)
+            IWineD3DDevice_SetStreamSourceFreq(device, i, This->streams[i].frequency | This->streams[i].flags);
     }
 
     map = This->changed.textures;

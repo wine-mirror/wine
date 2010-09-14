@@ -2338,6 +2338,15 @@ struct StageState {
     DWORD state;
 };
 
+struct wined3d_stream_state
+{
+    struct wined3d_buffer *buffer;
+    UINT offset;
+    UINT stride;
+    UINT frequency;
+    UINT flags;
+};
+
 struct IWineD3DStateBlockImpl
 {
     /* IUnknown fields */
@@ -2366,11 +2375,7 @@ struct IWineD3DStateBlockImpl
 
     /* Stream Source */
     BOOL                      streamIsUP;
-    UINT                      streamStride[MAX_STREAMS];
-    UINT                      streamOffset[MAX_STREAMS + 1 /* tesselated pseudo-stream */ ];
-    IWineD3DBuffer           *streamSource[MAX_STREAMS];
-    UINT                      streamFreq[MAX_STREAMS + 1];
-    UINT                      streamFlags[MAX_STREAMS + 1];     /*0 | WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA  */
+    struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
 
     /* Indices */
     IWineD3DBuffer*           pIndexData;
