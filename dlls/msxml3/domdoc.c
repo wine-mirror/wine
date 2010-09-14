@@ -1468,18 +1468,18 @@ static HRESULT WINAPI domdoc_createNode(
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     DOMNodeType node_type;
     xmlNodePtr xmlnode;
-    xmlChar *xml_name;
+    xmlChar *xml_name, *href;
     HRESULT hr;
 
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(name), debugstr_w(namespaceURI), node);
 
     if(!node) return E_INVALIDARG;
 
-    if(namespaceURI && namespaceURI[0])
-        FIXME("nodes with namespaces currently not supported.\n");
-
     hr = get_node_type(Type, &node_type);
     if(FAILED(hr)) return hr;
+
+    if(namespaceURI && namespaceURI[0] && node_type != NODE_ELEMENT)
+        FIXME("nodes with namespaces currently not supported.\n");
 
     TRACE("node_type %d\n", node_type);
 
@@ -1496,12 +1496,31 @@ static HRESULT WINAPI domdoc_createNode(
     }
 
     xml_name = xmlChar_from_wchar(name);
+    /* prevent empty href to be allocated */
+    href = namespaceURI ? xmlChar_from_wchar(namespaceURI) : NULL;
 
     switch(node_type)
     {
     case NODE_ELEMENT:
-        xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
+    {
+        xmlChar *local, *prefix;
+
+        local = xmlSplitQName2(xml_name, &prefix);
+
+        xmlnode = xmlNewDocNode(get_doc(This), NULL, local ? local : xml_name, NULL);
+
+        /* allow to create default namespace xmlns= */
+        if (local || (href && *href))
+        {
+            xmlNsPtr ns = xmlNewNs(xmlnode, href, prefix);
+            xmlSetNs(xmlnode, ns);
+        }
+
+        xmlFree(local);
+        xmlFree(prefix);
+
         break;
+    }
     case NODE_ATTRIBUTE:
         xmlnode = (xmlNodePtr)xmlNewDocProp(get_doc(This), xml_name, NULL);
         break;
@@ -1543,6 +1562,7 @@ static HRESULT WINAPI domdoc_createNode(
 
     *node = create_node(xmlnode);
     heap_free(xml_name);
+    heap_free(href);
 
     if(*node)
     {

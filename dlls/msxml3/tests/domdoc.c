@@ -5910,7 +5910,7 @@ static void test_get_ownerDocument(void)
     if (!doc) return;
 
     str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument2_loadXML( doc, str, &b );
+    hr = IXMLDOMDocument_loadXML( doc, str, &b );
     ok( hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
@@ -5976,7 +5976,7 @@ static void test_get_ownerDocument(void)
 
 static void test_setAttributeNode(void)
 {
-    IXMLDOMDocument *doc;
+    IXMLDOMDocument *doc, *doc2;
     IXMLDOMElement *elem;
     IXMLDOMAttribute *attr, *attr2, *ret_attr;
     VARIANT_BOOL b;
@@ -6019,8 +6019,109 @@ static void test_setAttributeNode(void)
     todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
     ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
 
-    IXMLDOMAttribute_Release(attr);
     IXMLDOMElement_Release(elem);
+
+    /* add attribute already attached to another document */
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument_loadXML( doc2, str, &b );
+    ok( hr == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    hr = IXMLDOMDocument_get_documentElement(doc2, &elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMElement_setAttributeNode(elem, attr, NULL);
+    todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    IXMLDOMElement_Release(elem);
+
+    IXMLDOMDocument_Release(doc2);
+
+    IXMLDOMAttribute_Release(attr);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
+static void test_put_dataType(void)
+{
+    IXMLDOMCDATASection *cdata;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( hr == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("test"), &cdata);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMCDATASection_put_dataType(cdata, _bstr_("number"));
+    ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    hr = IXMLDOMCDATASection_put_dataType(cdata, _bstr_("string"));
+    ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    IXMLDOMCDATASection_Release(cdata);
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
+static void test_createNode(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    IXMLDOMNode *node;
+    VARIANT v, var;
+    BSTR prefix, str;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    /* NODE_ELEMENT nodes */
+    /* 1. specified namespace */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("ns1:test"), _bstr_("http://winehq.org"), &node);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    prefix = NULL;
+    hr = IXMLDOMNode_get_prefix(node, &prefix);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok(lstrcmpW(prefix, _bstr_("ns1")) == 0, "wrong prefix\n");
+    SysFreeString(prefix);
+    IXMLDOMNode_Release(node);
+
+    /* 2. default namespace */
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("test"), _bstr_("http://winehq.org/default"), &node);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    prefix = (void*)0xdeadbeef;
+    hr = IXMLDOMNode_get_prefix(node, &prefix);
+    todo_wine ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    todo_wine ok(prefix == 0, "expected empty prefix, got %p\n", prefix);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&var) = VT_BSTR;
+    hr = IXMLDOMElement_getAttribute(elem, _bstr_("xmlns"), &var);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok( V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
+
+    str = NULL;
+    hr = IXMLDOMElement_get_namespaceURI(elem, &str);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(str, _bstr_("http://winehq.org/default")) == 0, "expected default namespace\n");
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMNode_Release(node);
+
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
@@ -6079,6 +6180,8 @@ START_TEST(domdoc)
     test_removeQualifiedItem();
     test_get_ownerDocument();
     test_setAttributeNode();
+    test_put_dataType();
+    test_createNode();
 
     CoUninitialize();
 }

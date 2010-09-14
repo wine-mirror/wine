@@ -1098,35 +1098,34 @@ static HRESULT WINAPI xmlnode_put_dataType(
        lstrcmpiW(dataTypeName,szBinHex) == 0  ||
        lstrcmpiW(dataTypeName,szBinBase64) == 0)
     {
-        xmlNsPtr pNS = NULL;
-        xmlAttrPtr pAttr = NULL;
         xmlChar* str = xmlChar_from_wchar(dataTypeName);
+        xmlAttrPtr attr;
 
-        pAttr = xmlHasNsProp(This->node, (const xmlChar*)"dt",
+        if (!str) return E_OUTOFMEMORY;
+
+        attr = xmlHasNsProp(This->node, (const xmlChar*)"dt",
                             (const xmlChar*)"urn:schemas-microsoft-com:datatypes");
-        if (pAttr)
+        if (attr)
         {
-            pAttr = xmlSetNsProp(This->node, pAttr->ns, (const xmlChar*)"dt", str);
-
+            attr = xmlSetNsProp(This->node, attr->ns, (const xmlChar*)"dt", str);
             hr = S_OK;
         }
         else
         {
-            pNS = xmlNewNs(This->node, (const xmlChar*)"urn:schemas-microsoft-com:datatypes", (const xmlChar*)"dt");
-            if(pNS)
+            xmlNsPtr ns = xmlNewNs(This->node, (const xmlChar*)"urn:schemas-microsoft-com:datatypes", (const xmlChar*)"dt");
+            if (ns)
             {
-                pAttr = xmlNewNsProp(This->node, pNS, (const xmlChar*)"dt", str);
-                if(pAttr)
+                attr = xmlNewNsProp(This->node, ns, (const xmlChar*)"dt", str);
+                if (attr)
                 {
-                    xmlAddChild(This->node, (xmlNodePtr)pAttr);
-
+                    xmlAddChild(This->node, (xmlNodePtr)attr);
                     hr = S_OK;
                 }
                 else
                     ERR("Failed to create Attribute\n");
             }
             else
-                ERR("Failed to Create Namepsace\n");
+                ERR("Failed to create Namespace\n");
         }
         heap_free( str );
     }
