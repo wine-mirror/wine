@@ -290,7 +290,7 @@ static const unsigned short Mp3SampleRates[2][4] =
 
 typedef struct tagAcmMpeg3Data
 {
-    LRESULT (*convert)(PACMDRVSTREAMINSTANCE adsi, const unsigned char*,
+    LRESULT (*convert)(PACMDRVSTREAMINSTANCE adsi, unsigned char*,
                        LPDWORD, unsigned char*, LPDWORD);
     AudioConverterRef acr;
     AudioStreamBasicDescription in,out;
@@ -395,7 +395,7 @@ static SInt32 Mp3GetPacketLength(const unsigned char* src)
  and *nsrc to the length of the unwanted data and return no error.
  */
 static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
-                                 const unsigned char* src, LPDWORD nsrc,
+                                 unsigned char* src, LPDWORD nsrc,
                                  unsigned char* dst, LPDWORD ndst)
 {
     OSStatus err;
@@ -406,7 +406,7 @@ static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
 
     TRACE("ndst %u %p  <-  %u %p\n", *ndst, dst, *nsrc, src);
 
-    TRACE("First 16 bytes to input: %s\n", wine_dbgstr_an(src, 16));
+    TRACE("First 16 bytes to input: %s\n", wine_dbgstr_an((const char *)src, 16));
 
     /* Parse ID3 tag */
     if (!memcmp(src, "ID3", 3) && amd->tagBytesLeft == -1)
@@ -429,7 +429,7 @@ static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
     {
         src += amd->tagBytesLeft;
         *nsrc -= amd->tagBytesLeft;
-        TRACE("Skipping %d for ID3 tag\n", amd->tagBytesLeft);
+        TRACE("Skipping %ld for ID3 tag\n", amd->tagBytesLeft);
     }
 
     /*
@@ -460,7 +460,7 @@ static LRESULT mp3_leopard_horse(PACMDRVSTREAMINSTANCE adsi,
                 syncSkip = psrc - src;
                 src += syncSkip;
                 *nsrc -= syncSkip;
-                TRACE("Skipping %d for frame sync\n", syncSkip);
+                TRACE("Skipping %ld for frame sync\n", syncSkip);
             }
             break;
         }
