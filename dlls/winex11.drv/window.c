@@ -2342,7 +2342,7 @@ void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags
             !memcmp( &valid_rects[0], &data->client_rect, sizeof(RECT) ))
         {
             /* if we have an X window the bits will be moved by the X server */
-            if (!data->whole_window)
+            if (!data->whole_window && (x_offset != 0 || y_offset != 0))
                 move_window_bits( data, &old_whole_rect, &data->whole_rect, &old_client_rect );
         }
         else
