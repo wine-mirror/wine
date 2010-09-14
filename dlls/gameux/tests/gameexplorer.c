@@ -368,7 +368,7 @@ static void _validateGameRegistryKey(int line,
 /*******************************************************************************
  * Test routines
  */
-static void test_create(BOOL* gameExplorerAvailable)
+static void test_create(BOOL* gameExplorerAvailable, BOOL* gameExplorer2Available)
 {
     HRESULT hr;
 
@@ -391,6 +391,7 @@ static void test_create(BOOL* gameExplorerAvailable)
     if(ge2)
     {
         ok( hr == S_OK, "IGameExplorer2 creating failed (result false)\n");
+        *gameExplorer2Available = TRUE;
         IGameExplorer2_Release(ge2);
     }
     else
@@ -477,21 +478,61 @@ static void test_add_remove_game(void)
         IGameExplorer_Release(ge);
     }
 }
+void test_install_uninstall_game(void)
+{
+    HRESULT hr;
+
+    IGameExplorer2* ge2 = NULL;
+    WCHAR sExeName[MAX_PATH];
+    WCHAR sExePath[MAX_PATH];
+    DWORD dwExeNameLen;
+
+    hr = CoCreateInstance(&CLSID_GameExplorer, NULL, CLSCTX_INPROC_SERVER, &IID_IGameExplorer2, (LPVOID*)&ge2);
+    ok(ge2 != NULL, "cannot create coclass IGameExplorer2\n");
+    ok(hr == S_OK, "cannot create coclass IGameExplorer2\n");
+
+    if(ge2)
+    {
+        /* prepare path to binary */
+        dwExeNameLen = GetModuleFileNameW(NULL, sExeName, sizeof (sExeName) / sizeof (sExeName[0]));
+        ok(dwExeNameLen != 0, "GetModuleFileNameW returned invalid value\n");
+        lstrcpynW(sExePath, sExeName, StrRChrW(sExeName, NULL, '\\') - sExeName + 1);
+
+        trace("prepared EXE name: %s\n", wine_dbgstr_w(sExeName));
+        trace("prepared EXE path: %s\n", wine_dbgstr_w(sExePath));
+
+
+        hr = IGameExplorer2_InstallGame(ge2, sExeName, sExePath, GIS_CURRENT_USER);
+        todo_wine ok(SUCCEEDED(hr), "IGameExplorer2::InstallGame failed (error 0x%08x)\n", hr);
+
+        if(SUCCEEDED(hr))
+        {
+            hr = IGameExplorer2_UninstallGame(ge2, sExeName);
+            todo_wine ok(SUCCEEDED(hr), "IGameExplorer2::UninstallGame failed (error 0x%08x)\n", hr);
+        }
+
+        IGameExplorer2_Release(ge2);
+    }
+}
 
 START_TEST(gameexplorer)
 {
     HRESULT r;
     BOOL gameExplorerAvailable = FALSE;
+    BOOL gameExplorer2Available = FALSE;
 
     if(_loadDynamicRoutines())
     {
         r = CoInitialize( NULL );
         ok( r == S_OK, "failed to init COM\n");
 
-        test_create(&gameExplorerAvailable);
+        test_create(&gameExplorerAvailable, &gameExplorer2Available);
 
         if(gameExplorerAvailable)
             test_add_remove_game();
+
+        if(gameExplorer2Available)
+            test_install_uninstall_game();
     }
     else
         /* this is not a failure, because both procedures loaded by address

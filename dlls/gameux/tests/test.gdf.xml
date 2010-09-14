@@ -27,5 +27,14 @@ xmlns="urn:schemas-microsoft-com:GameDescription.v1">
         <Version>
             <VersionNumber versionNumber="1.0.0.0"/>
         </Version>
+        <ExtendedProperties>
+            <GameTasks>
+                <Play>
+                    <Primary>
+                        <FileTask path="gameux_crosstest.exe" arguments="" />
+                    </Primary>
+                </Play>
+            </GameTasks>
+        </ExtendedProperties>
     </GameDefinition>
 </GameDefinitionFile>
