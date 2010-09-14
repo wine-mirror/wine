@@ -291,6 +291,7 @@ SRCDIR_INCLUDES = \
 	iprtrmib.h \
 	iptypes.h \
 	isguids.h \
+	knownfolders.h \
 	ks.h \
 	ksguid.h \
 	ksmedia.h \
