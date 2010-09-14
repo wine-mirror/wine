@@ -458,7 +458,7 @@ static void test_openCloseWAVE(HWND hwnd)
     Sleep(5);
     test_notification(hwnd, command_close_my, 0);
 
-    err = mciSendString("open no-such-file-exists.wav alias y", buf, sizeof(buf), NULL);
+    err = mciSendString("open no-such-file-exists.wav alias y buffer 6", buf, sizeof(buf), NULL);
     ok(err==MCIERR_FILE_NOT_FOUND,"open no-such-file.wav returned %s\n", dbg_mcierr(err));
     if(!err) {
         err = mciSendString("close y", NULL, 0, NULL);
@@ -485,7 +485,7 @@ static void test_openCloseWAVE(HWND hwnd)
     /* FIXME? use broken(INVALID_DEVICE_NAME) and have Wine not mimic Win9X? */
 
     err = mciSendString("close waveaudio", buf, sizeof(buf), NULL);
-    todo_wine ok(err==MCIERR_INVALID_DEVICE_NAME,"open nosuchdevice!name: %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_INVALID_DEVICE_NAME,"close waveaudio: %s\n", dbg_mcierr(err));
 
     err = mciSendString(command_close_all, NULL, 0, NULL);
     ok(!err,"mci %s (without buffer) returned %s\n", command_close_all, dbg_mcierr(err));
@@ -743,7 +743,7 @@ static void test_playWAVE(HWND hwnd)
     todo_wine ok(!strcmp(buf,"2000"), "mci status length gave %s, expected 2000, some tests will fail.\n", buf);
 
     err = mciSendString("cue output", NULL, 0, NULL);
-    todo_wine ok(err==MCIERR_UNRECOGNIZED_COMMAND,"mci incorrect cue output returned %s\n", dbg_mcierr(err));
+    ok(err==MCIERR_UNRECOGNIZED_COMMAND,"mci incorrect cue output returned %s\n", dbg_mcierr(err));
 
     /* Test MCI to the bones -- Some todo_wine from Cue and
      * from Play from 0 to 0 are not worth fixing. */

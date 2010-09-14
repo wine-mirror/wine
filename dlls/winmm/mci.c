@@ -1242,9 +1242,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
     static const WCHAR  wszTypeS[]   = {'t','y','p','e',' ',0};
-    static const WCHAR  wszSysinfo[] = {'s','y','s','i','n','f','o',0};
-    static const WCHAR  wszSound[]   = {'s','o','u','n','d',0};
-    static const WCHAR  wszBreak[]   = {'b','r','e','a','k',0};
 
     TRACE("(%s, %p, %d, %p)\n", 
           debugstr_w(lpstrCommand), lpstrRet, uRetLen, hwndCallback);
@@ -1337,26 +1334,37 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	HeapFree(GetProcessHeap(), 0, devType);
 	if (dwRet)
 	    goto errCleanUp;
-    } else if (!strcmpW(verb, wszSysinfo) || !strcmpW(verb, wszSound) || !strcmpW(verb, wszBreak)) {
-	/* Prevent auto-open for system commands. */
-    } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))) {
-	/* auto open */
-        static const WCHAR wszOpenWait[] = {'o','p','e','n',' ','%','s',' ','w','a','i','t',0};
-	WCHAR   buf[138], retbuf[6];
-	snprintfW(buf, sizeof(buf)/sizeof(WCHAR), wszOpenWait, dev);
-	/* open via mciSendString handles quoting, dev!file syntax and alias creation */
-	if ((dwRet = mciSendStringW(buf, retbuf, sizeof(retbuf)/sizeof(WCHAR), 0)) != 0)
+    } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))
+	       && (lpCmd = MCI_FindCommand(MCI_GetCommandTable(0), verb))) {
+	/* auto-open uses the core command table */
+	switch (MCI_GetMessage(lpCmd)) {
+	case MCI_SOUND:   /* command does not use a device name */
+	case MCI_SYSINFO:
+	    break;
+	case MCI_CLOSE:   /* don't auto-open for close */
+	case MCI_BREAK:   /* no auto-open for system commands */
+	    dwRet = MCIERR_INVALID_DEVICE_NAME;
 	    goto errCleanUp;
-	auto_open = strtoulW(retbuf, NULL, 10);
-	TRACE("auto-opened %u\n", auto_open);
+	    break;
+	default:
+	    {
+		static const WCHAR wszOpenWait[] = {'o','p','e','n',' ','%','s',' ','w','a','i','t',0};
+		WCHAR   buf[138], retbuf[6];
+		snprintfW(buf, sizeof(buf)/sizeof(WCHAR), wszOpenWait, dev);
+		/* open via mciSendString handles quoting, dev!file syntax and alias creation */
+		if ((dwRet = mciSendStringW(buf, retbuf, sizeof(retbuf)/sizeof(WCHAR), 0)) != 0)
+		    goto errCleanUp;
+		auto_open = strtoulW(retbuf, NULL, 10);
+		TRACE("auto-opened %u for %s\n", auto_open, debugstr_w(dev));
 
-	/* FIXME: test for notify flag (how to preparse?) before opening */
-	/* FIXME: Accept only core commands yet parse them with the specific table */
-	wmd = MCI_GetDriver(auto_open);
-	if (!wmd) {
-	    ERR("No auto-open device %d for %s\n", auto_open, debugstr_w(dev));
-	    dwRet = MCIERR_INVALID_DEVICE_ID;
-	    goto errCleanUp;
+		/* FIXME: test for notify flag (how to preparse?) before opening */
+		wmd = MCI_GetDriver(auto_open);
+		if (!wmd) {
+		    ERR("No auto-open device %u\n", auto_open);
+		    dwRet = MCIERR_INVALID_DEVICE_ID;
+		    goto errCleanUp;
+		}
+	    }
 	}
     }
 
