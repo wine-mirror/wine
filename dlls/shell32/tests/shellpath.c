@@ -31,6 +31,7 @@
 #include "shlobj.h"
 #include "shlwapi.h"
 #include "initguid.h"
+#include "knownfolders.h"
 #include "wine/test.h"
 
 /* CSIDL_MYDOCUMENTS is now the same as CSIDL_PERSONAL, but what we want
@@ -93,6 +94,9 @@ static LPITEMIDLIST (WINAPI *pILFindLastID)(LPCITEMIDLIST);
 static int (WINAPI *pSHFileOperationA)(LPSHFILEOPSTRUCTA);
 static HRESULT (WINAPI *pSHGetMalloc)(LPMALLOC *);
 static UINT (WINAPI *pGetSystemWow64DirectoryA)(LPSTR,UINT);
+static HRESULT (WINAPI *pSHGetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
+static HRESULT (WINAPI *pSHGetFolderPathEx)(REFKNOWNFOLDERID, DWORD, HANDLE, LPWSTR, DWORD);
+
 static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
 static const BYTE guidType[] = { PT_GUID };
@@ -187,7 +191,9 @@ static void loadShell32(void)
 
     GET_PROC(DllGetVersion)
     GET_PROC(SHGetFolderPathA)
+    GET_PROC(SHGetFolderPathEx)
     GET_PROC(SHGetFolderLocation)
+    GET_PROC(SHGetKnownFolderPath)
     GET_PROC(SHGetSpecialFolderPathA)
     GET_PROC(SHGetSpecialFolderLocation)
     GET_PROC(ILFindLastID)
@@ -833,6 +839,50 @@ static void test_NonExistentPath(void)
     else skip("RegOpenKeyExA(HKEY_CURRENT_USER, %s, ...) failed\n", userShellFolders);
 }
 
+static void test_SHGetFolderPathEx(void)
+{
+    HRESULT hr;
+    WCHAR buffer[MAX_PATH], *path;
+    DWORD len;
+
+    if (!pSHGetKnownFolderPath || !pSHGetFolderPathEx)
+    {
+        win_skip("SHGetKnownFolderPath or SHGetFolderPathEx not available\n");
+        return;
+    }
+
+if (0) { /* crashes */
+    hr = pSHGetKnownFolderPath(&FOLDERID_Desktop, 0, NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
+}
+    path = NULL;
+    hr = pSHGetKnownFolderPath(&FOLDERID_Desktop, 0, NULL, &path);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(path != NULL, "expected path != NULL\n");
+
+    hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, MAX_PATH);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(!lstrcmpiW(path, buffer), "expected equal paths\n");
+    len = lstrlenW(buffer);
+    CoTaskMemFree(path);
+
+    hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, 0);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
+
+if (0) { /* crashes */
+    hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, NULL, len + 1);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
+
+    hr = pSHGetFolderPathEx(NULL, 0, NULL, buffer, MAX_PATH);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
+}
+    hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, len);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "expected 0x8007007a, got 0x%08x\n", hr);
+
+    hr = pSHGetFolderPathEx(&FOLDERID_Desktop, 0, NULL, buffer, len + 1);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+}
+
 START_TEST(shellpath)
 {
     if (!init()) return;
@@ -858,5 +908,6 @@ START_TEST(shellpath)
         testWinDir();
         testSystemDir();
         test_NonExistentPath();
+        test_SHGetFolderPathEx();
     }
 }

@@ -356,6 +356,7 @@
 @ stdcall SHGetFileInfoW(ptr long ptr long long)
 @ stdcall SHGetFolderLocation(long long long long ptr)
 @ stdcall SHGetFolderPathA(long long long long ptr)
+@ stdcall SHGetFolderPathEx(ptr long ptr ptr long)
 @ stdcall SHGetFolderPathAndSubDirA(long long long long str ptr)
 @ stdcall SHGetFolderPathAndSubDirW(long long long long wstr ptr)
 @ stdcall SHGetFolderPathW(long long long long ptr)

@@ -2937,3 +2937,29 @@ HRESULT WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE t
     }
     return hr;
 }
+
+/*************************************************************************
+ * SHGetFolderPathEx           [SHELL32.@]
+ */
+HRESULT WINAPI SHGetFolderPathEx(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE token, LPWSTR path, DWORD len)
+{
+    HRESULT hr;
+    WCHAR *buffer;
+
+    TRACE("%s, 0x%08x, %p, %p, %u\n", debugstr_guid(rfid), flags, token, path, len);
+
+    if (!path || !len) return E_INVALIDARG;
+
+    hr = SHGetKnownFolderPath( rfid, flags, token, &buffer );
+    if (SUCCEEDED( hr ))
+    {
+        if (strlenW( buffer ) + 1 > len)
+        {
+            CoTaskMemFree( buffer );
+            return HRESULT_FROM_WIN32( ERROR_INSUFFICIENT_BUFFER );
+        }
+        strcpyW( path, buffer );
+        CoTaskMemFree( buffer );
+    }
+    return hr;
+}
