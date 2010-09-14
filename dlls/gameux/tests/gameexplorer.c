@@ -33,6 +33,9 @@
 
 #include "wine/test.h"
 
+/* function from Shell32, not defined in header */
+extern BOOL WINAPI GUIDFromStringW(LPCWSTR psz, LPGUID pguid);
+
 /*******************************************************************************
  * Pointers used instead of direct calls. These procedures are not available on
  * older system, which causes problem while loading test binary.
@@ -68,7 +71,8 @@ static BOOL _loadDynamicRoutines(void)
  *
  * Parameters:
  *  installScope                [I]     the scope which was used in AddGame/InstallGame call
- *  gameInstanceId              [I]     game instance GUID
+ *  gameInstanceId              [I]     game instance GUID. If NULL, then only
+ *                                      path to scope is returned
  *  lpRegistryPath              [O]     pointer which will receive address to string
  *                                      containing expected registry path. Path
  *                                      is relative to HKLM registry key. It
@@ -138,14 +142,17 @@ static HRESULT _buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     else
         hr = E_INVALIDARG;
 
-    /* put game's instance id on the end of path */
-    if(SUCCEEDED(hr))
-        hr = (StringFromGUID2(gameInstanceId, sInstanceId, sizeof(sInstanceId)/sizeof(sInstanceId[0])) ? S_OK : E_FAIL);
-
-    if(SUCCEEDED(hr))
+    /* put game's instance id on the end of path, but only if id was passes */
+    if(gameInstanceId)
     {
-        lstrcatW(sRegistryPath, sBackslash);
-        lstrcatW(sRegistryPath, sInstanceId);
+        if(SUCCEEDED(hr))
+            hr = (StringFromGUID2(gameInstanceId, sInstanceId, sizeof(sInstanceId)/sizeof(sInstanceId[0])) ? S_OK : E_FAIL);
+
+        if(SUCCEEDED(hr))
+        {
+            lstrcatW(sRegistryPath, sBackslash);
+            lstrcatW(sRegistryPath, sInstanceId);
+        }
     }
 
     if(SUCCEEDED(hr))
@@ -366,6 +373,128 @@ static void _validateGameRegistryKey(int line,
 }
 
 /*******************************************************************************
+ * _LoadRegistryString
+ *
+ * Helper function, loads string from registry value and allocates buffer for it
+ *
+ * Parameters:
+ *  hRootKey                        [I]     base key for reading. Should be opened
+ *                                          with KEY_READ permission
+ *  lpRegistryKey                   [I]     name of registry key, subkey of root key
+ *  lpRegistryValue                 [I]     name of registry value
+ *  lpValue                         [O]     pointer where address of received
+ *                                          value will be stored. Value should be
+ *                                          freed by CoTaskMemFree call
+ */
+static HRESULT _LoadRegistryString(HKEY hRootKey,
+        LPCWSTR lpRegistryKey,
+        LPCWSTR lpRegistryValue,
+        LPWSTR* lpValue)
+{
+    HRESULT hr;
+    DWORD dwSize;
+
+    *lpValue = NULL;
+
+    hr = HRESULT_FROM_WIN32(_RegGetValueW(hRootKey, lpRegistryKey, lpRegistryValue,
+            RRF_RT_REG_SZ, NULL, NULL, &dwSize));
+
+    if(SUCCEEDED(hr))
+    {
+        *lpValue = CoTaskMemAlloc(dwSize);
+        if(!*lpValue)
+            hr = E_OUTOFMEMORY;
+    }
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(_RegGetValueW(hRootKey, lpRegistryKey, lpRegistryValue,
+                RRF_RT_REG_SZ, NULL, *lpValue, &dwSize));
+
+    return hr;
+}
+/*******************************************************************************
+ * _findGameInstanceId
+ *
+ * Helper funtion. Searches for instance identifier of given game in given
+ * installation scope.
+ *
+ * Parameters:
+ *  line                                    [I]     line to display messages
+ *  sGDFBinaryPath                          [I]     path to binary containing GDF
+ *  installScope                            [I]     game install scope to search in
+ *  pInstanceId                             [O]     instance identifier of given game
+ */
+static void _findGameInstanceId(int line,
+        LPWSTR sGDFBinaryPath,
+        GAME_INSTALL_SCOPE installScope,
+        GUID* pInstanceId)
+{
+    static const WCHAR sConfigGDFBinaryPath[] =
+            {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
+
+    HRESULT hr;
+    BOOL found = FALSE;
+    LPWSTR lpRegistryPath = NULL;
+    HKEY hRootKey;
+    DWORD dwSubKeys, dwSubKeyLen, dwMaxSubKeyLen, i;
+    LPWSTR lpName = NULL, lpValue = NULL;
+
+    hr = _buildGameRegistryPath(installScope, NULL, &lpRegistryPath);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "cannot get registry path to given scope: %d\n", installScope);
+
+    if(SUCCEEDED(hr))
+        /* enumerate all subkeys of received one and search them for value "ConfigGGDFBinaryPath" */
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                lpRegistryPath, 0, KEY_READ | KEY_WOW64_64KEY, &hRootKey));
+    ok_(__FILE__, line)(SUCCEEDED(hr), "cannot open key registry key: %s\n", wine_dbgstr_w(lpRegistryPath));
+
+    if(SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegQueryInfoKeyW(hRootKey, NULL, NULL, NULL,
+                &dwSubKeys, &dwMaxSubKeyLen, NULL, NULL, NULL, NULL, NULL, NULL));
+
+        if(SUCCEEDED(hr))
+        {
+            ++dwMaxSubKeyLen; /* for string terminator */
+            lpName = CoTaskMemAlloc(dwMaxSubKeyLen*sizeof(WCHAR));
+            if(!lpName) hr = E_OUTOFMEMORY;
+            ok_(__FILE__, line)(SUCCEEDED(hr), "cannot allocate memory for key name");
+        }
+
+        if(SUCCEEDED(hr))
+        {
+            for(i=0; i<dwSubKeys && !found; ++i)
+            {
+                dwSubKeyLen = dwMaxSubKeyLen;
+                hr = HRESULT_FROM_WIN32(RegEnumKeyExW(hRootKey, i, lpName, &dwSubKeyLen,
+                        NULL, NULL, NULL, NULL));
+
+                if(SUCCEEDED(hr))
+                    hr = _LoadRegistryString(hRootKey, lpName,
+                                             sConfigGDFBinaryPath, &lpValue);
+
+                if(SUCCEEDED(hr))
+                    if(lstrcmpW(lpValue, sGDFBinaryPath)==0)
+                    {
+                        /* key found, let's copy instance id and exit */
+                        hr = (GUIDFromStringW(lpName, pInstanceId) ? S_OK : E_FAIL);
+                        ok(SUCCEEDED(hr), "cannot convert subkey to guid: %s\n",
+                               wine_dbgstr_w(lpName));
+
+                        found = TRUE;
+                    }
+                CoTaskMemFree(lpValue);
+            }
+        }
+
+        CoTaskMemFree(lpName);
+        RegCloseKey(hRootKey);
+    }
+
+    CoTaskMemFree(lpRegistryPath);
+    todo_wine ok_(__FILE__, line)(found==TRUE, "cannot find game with GDF path %s in scope %d\n",
+            wine_dbgstr_w(sGDFBinaryPath), installScope);
+}
+/*******************************************************************************
  * Test routines
  */
 static void test_create(BOOL* gameExplorerAvailable, BOOL* gameExplorer2Available)
@@ -480,12 +609,16 @@ static void test_add_remove_game(void)
 }
 void test_install_uninstall_game(void)
 {
+    static const GUID applicationId = { 0x17A6558E, 0x60BE, 0x4078,
+        { 0xB6, 0x6F, 0x9C, 0x3A, 0xDA, 0x2A, 0x32, 0xE6 }};
+
     HRESULT hr;
 
     IGameExplorer2* ge2 = NULL;
     WCHAR sExeName[MAX_PATH];
     WCHAR sExePath[MAX_PATH];
     DWORD dwExeNameLen;
+    GUID guid;
 
     hr = CoCreateInstance(&CLSID_GameExplorer, NULL, CLSCTX_INPROC_SERVER, &IID_IGameExplorer2, (LPVOID*)&ge2);
     ok(ge2 != NULL, "cannot create coclass IGameExplorer2\n");
@@ -504,12 +637,19 @@ void test_install_uninstall_game(void)
 
         hr = IGameExplorer2_InstallGame(ge2, sExeName, sExePath, GIS_CURRENT_USER);
         todo_wine ok(SUCCEEDED(hr), "IGameExplorer2::InstallGame failed (error 0x%08x)\n", hr);
+        /* in comparision to AddGame, InstallGame does not return instance ID,
+         * so we need to find it manually */
+        _findGameInstanceId(__LINE__, sExeName, GIS_CURRENT_USER, &guid);
 
         if(SUCCEEDED(hr))
         {
+            todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
+
             hr = IGameExplorer2_UninstallGame(ge2, sExeName);
             todo_wine ok(SUCCEEDED(hr), "IGameExplorer2::UninstallGame failed (error 0x%08x)\n", hr);
         }
+
+        _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
 
         IGameExplorer2_Release(ge2);
     }
