@@ -51,6 +51,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Seiten&vorschau...",                ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "Ei&genschaften...",                 ID_BROWSE_PROPERTIES
+        MENUITEM "&Beenden",                          ID_BROWSE_QUIT
     }
     POPUP "&Ansicht"
     {
