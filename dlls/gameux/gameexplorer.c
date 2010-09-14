@@ -110,6 +110,9 @@ static HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
 
     TRACE("(0x%x, %s, %p)\n", installScope, debugstr_guid(gameInstanceId), lpRegistryPath);
 
+    /* this will make freeing it easier for user */
+    *lpRegistryPath = NULL;
+
     lstrcpyW(sRegistryPath, sGameUxRegistryPath);
     lstrcatW(sRegistryPath, sBackslash);
 
@@ -551,6 +554,143 @@ HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
     return hr;
 }
 /*******************************************************************************
+ * GAMEUX_IsGameKeyExist
+ *
+ * Helper function, checks if game's registry ath exists in given scope
+ *
+ * Parameters:
+ *  installScope            [I]     scope to search game in
+ *  InstanceID              [I]     game instance identifier
+ *  lpRegistryPath          [O]     place to store address of registry path to
+ *                                  the game. It is filled only if key exists.
+ *                                  It must be freed by HeapFree(GetProcessHeap(), 0, ...)
+ *
+ * Returns:
+ *  S_OK                key was found properly
+ *  S_FALSE             key does not exists
+ *
+ */
+static HRESULT GAMEUX_IsGameKeyExist(GAME_INSTALL_SCOPE installScope,
+    LPCGUID InstanceID,
+    LPWSTR* lpRegistryPath) {
+
+    HRESULT hr;
+    HKEY hKey;
+
+    hr = GAMEUX_buildGameRegistryPath(installScope, InstanceID, lpRegistryPath);
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, *lpRegistryPath,
+                                              0, KEY_WOW64_64KEY, &hKey));
+
+    if(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+        hr = S_FALSE;
+
+    if(hr == S_OK)
+        RegCloseKey(hKey);
+    else
+    {
+        /* if key does not exist or other error occured, do not return the path */
+        HeapFree(GetProcessHeap(), 0, *lpRegistryPath);
+        *lpRegistryPath = NULL;
+    }
+
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_LoadRegistryString
+ *
+ * Helper function, loads string from registry value and allocates buffer for it
+ */
+static HRESULT GAMEUX_LoadRegistryString(HKEY hRootKey,
+        LPCWSTR lpRegistryKey,
+        LPCWSTR lpRegistryValue,
+        LPWSTR* lpValue)
+{
+    HRESULT hr;
+    DWORD dwSize;
+
+    *lpValue = NULL;
+
+    hr = HRESULT_FROM_WIN32(RegGetValueW(hRootKey, lpRegistryKey, lpRegistryValue,
+            RRF_RT_REG_SZ, NULL, NULL, &dwSize));
+
+    if(SUCCEEDED(hr))
+    {
+        *lpValue = HeapAlloc(GetProcessHeap(), 0, dwSize);
+        if(!*lpValue)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegGetValueW(hRootKey, lpRegistryKey, lpRegistryValue,
+                RRF_RT_REG_SZ, NULL, *lpValue, &dwSize));
+
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_UpdateGame
+ *
+ * Helper function, updates stored data about game with given InstanceID
+ */
+static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
+    static const WCHAR sConfigGDFBinaryPath[] = {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
+    static const WCHAR sConfigApplicationPath[] = {'C','o','n','f','i','g','A','p','p','l','i','c','a','t','i','o','n','P','a','t','h',0};
+
+    HRESULT hr;
+    GAME_INSTALL_SCOPE installScope;
+    LPWSTR lpRegistryPath;
+    LPWSTR lpGDFBinaryPath, lpGameInstallDirectory;
+
+    TRACE("(%p)\n", debugstr_guid(InstanceID));
+
+    /* first, check is game exists in CURRENT_USER scope  */
+    installScope = GIS_CURRENT_USER;
+    hr = GAMEUX_IsGameKeyExist(installScope, InstanceID, &lpRegistryPath);
+
+    if(hr == S_FALSE)
+    {
+        /* game not found in CURRENT_USER scope, let's check in ALL_USERS */
+        installScope = GIS_ALL_USERS;
+        hr = GAMEUX_IsGameKeyExist(installScope, InstanceID, &lpRegistryPath);
+    }
+
+    if(hr == S_FALSE)
+        /* still not found? let's inform user that game does not exists */
+        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    if(SUCCEEDED(hr))
+    {
+        /* game found, it's registry path is in lpRegistryPath and install
+         * scope in installScope */
+        TRACE("game found in registry (path %s), updating\n", debugstr_w(lpRegistryPath));
+
+        /* first, read required data about game */
+        hr = GAMEUX_LoadRegistryString(HKEY_LOCAL_MACHINE, lpRegistryPath,
+            sConfigGDFBinaryPath, &lpGDFBinaryPath);
+
+        if(SUCCEEDED(hr))
+            hr = GAMEUX_LoadRegistryString(HKEY_LOCAL_MACHINE, lpRegistryPath,
+                sConfigApplicationPath, &lpGameInstallDirectory);
+
+        /* now remove currently existing registry key */
+        if(SUCCEEDED(hr))
+            hr = GAMEUX_RemoveRegistryRecord(InstanceID);
+
+        /* and add it again, it will cause in reparsing of whole GDF */
+        if(SUCCEEDED(hr))
+            hr = GAMEUX_RegisterGame(lpGDFBinaryPath, lpGameInstallDirectory,
+                                     installScope, InstanceID);
+
+        HeapFree(GetProcessHeap(), 0, lpGDFBinaryPath);
+        HeapFree(GetProcessHeap(), 0, lpGameInstallDirectory);
+    }
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+    TRACE("returning 0x%x\n", hr);
+    return hr;
+}
+/*******************************************************************************
  * GameExplorer implementation
  */
 
@@ -668,8 +808,7 @@ static HRESULT WINAPI GameExplorerImpl_UpdateGame(
     GameExplorerImpl *This = impl_from_IGameExplorer(iface);
 
     TRACE("(%p, %s)\n", This, debugstr_guid(&instanceID));
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    return GAMEUX_UpdateGame(&instanceID);
 }
 
 static HRESULT WINAPI GameExplorerImpl_VerifyAccess(
