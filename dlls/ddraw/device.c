@@ -4345,10 +4345,9 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     }
 
     /* check that the buffer is large enough to hold the indices,
-     * reallocate if necessary.
-     */
-    hr = IWineD3DBuffer_GetDesc(This->indexbuffer, &desc);
-    if(desc.Size < IndexCount * sizeof(WORD))
+     * reallocate if necessary. */
+    IWineD3DBuffer_GetDesc(This->indexbuffer, &desc);
+    if (desc.Size < IndexCount * sizeof(WORD))
     {
         UINT size = max(desc.Size * 2, IndexCount * sizeof(WORD));
         IWineD3DBuffer *buffer;

@@ -212,25 +212,21 @@ static HRESULT WINAPI d3d8_vertexbuffer_GetDesc(IDirect3DVertexBuffer8 *iface, D
 {
     IDirect3DVertexBuffer8Impl *buffer = (IDirect3DVertexBuffer8Impl *)iface;
     WINED3DBUFFER_DESC wined3d_desc;
-    HRESULT hr;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    hr = IWineD3DBuffer_GetDesc(buffer->wineD3DVertexBuffer, &wined3d_desc);
+    IWineD3DBuffer_GetDesc(buffer->wineD3DVertexBuffer, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    if (SUCCEEDED(hr))
-    {
-        desc->Type = D3DRTYPE_VERTEXBUFFER;
-        desc->Usage = wined3d_desc.Usage;
-        desc->Pool = wined3d_desc.Pool;
-        desc->Size = wined3d_desc.Size;
-        desc->FVF = buffer->fvf;
-        desc->Format = D3DFMT_VERTEXDATA;
-    }
+    desc->Type = D3DRTYPE_VERTEXBUFFER;
+    desc->Usage = wined3d_desc.Usage;
+    desc->Pool = wined3d_desc.Pool;
+    desc->Size = wined3d_desc.Size;
+    desc->FVF = buffer->fvf;
+    desc->Format = D3DFMT_VERTEXDATA;
 
-    return hr;
+    return D3D_OK;
 }
 
 static const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
@@ -479,25 +475,21 @@ static HRESULT WINAPI d3d8_indexbuffer_Unlock(IDirect3DIndexBuffer8 *iface)
 static HRESULT WINAPI d3d8_indexbuffer_GetDesc(IDirect3DIndexBuffer8 *iface, D3DINDEXBUFFER_DESC *desc)
 {
     IDirect3DIndexBuffer8Impl *buffer = (IDirect3DIndexBuffer8Impl *)iface;
-    HRESULT hr;
     WINED3DBUFFER_DESC wined3d_desc;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    hr = IWineD3DBuffer_GetDesc(buffer->wineD3DIndexBuffer, &wined3d_desc);
+    IWineD3DBuffer_GetDesc(buffer->wineD3DIndexBuffer, &wined3d_desc);
     wined3d_mutex_unlock();
 
-    if (SUCCEEDED(hr))
-    {
-        desc->Format = d3dformat_from_wined3dformat(buffer->format);
-        desc->Type = D3DRTYPE_INDEXBUFFER;
-        desc->Usage = wined3d_desc.Usage;
-        desc->Pool = wined3d_desc.Pool;
-        desc->Size = wined3d_desc.Size;
-    }
+    desc->Format = d3dformat_from_wined3dformat(buffer->format);
+    desc->Type = D3DRTYPE_INDEXBUFFER;
+    desc->Usage = wined3d_desc.Usage;
+    desc->Pool = wined3d_desc.Pool;
+    desc->Size = wined3d_desc.Size;
 
-    return hr;
+    return D3D_OK;
 }
 
 static const IDirect3DIndexBuffer8Vtbl d3d8_indexbuffer_vtbl =

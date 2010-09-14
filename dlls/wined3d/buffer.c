@@ -1413,7 +1413,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBUFFER_DESC *desc)
+static void STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBUFFER_DESC *desc)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
@@ -1423,8 +1423,6 @@ static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBU
     desc->Usage = This->resource.usage;
     desc->Pool = This->resource.pool;
     desc->Size = This->resource.size;
-
-    return WINED3D_OK;
 }
 
 static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =

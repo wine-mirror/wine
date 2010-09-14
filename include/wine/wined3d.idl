@@ -2736,7 +2736,7 @@ interface IWineD3DBuffer : IWineD3DResource
     );
     HRESULT Unmap(
     );
-    HRESULT GetDesc(
+    void GetDesc(
         [out] WINED3DBUFFER_DESC *desc
     );
 }
