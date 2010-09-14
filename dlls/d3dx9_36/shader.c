@@ -548,10 +548,9 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileW(LPCWSTR filename,
                                              LPD3DXBUFFER* error_messages)
 {
     void *buffer;
-    DWORD len, filename_len;
+    DWORD len;
     HRESULT hr;
     struct D3DXIncludeImpl includefromfile;
-    char *filename_a;
 
     if (FAILED(map_view_of_file(filename, &buffer, &len)))
         return D3DXERR_INVALIDDATA;
@@ -562,21 +561,11 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileW(LPCWSTR filename,
         include = (LPD3DXINCLUDE)&includefromfile;
     }
 
-    filename_len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
-    filename_a = HeapAlloc(GetProcessHeap(), 0, filename_len * sizeof(char));
-    if (!filename_a)
-    {
-        UnmapViewOfFile(buffer);
-        return E_OUTOFMEMORY;
-    }
-    WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, filename_len, NULL, NULL);
-
     hr = D3DPreprocess(buffer, len, NULL,
                        (const D3D_SHADER_MACRO *)defines,
                        (ID3DInclude *) include,
                        (ID3DBlob **)shader, (ID3DBlob **)error_messages);
 
-    HeapFree(GetProcessHeap(), 0, filename_a);
     UnmapViewOfFile(buffer);
     return hr;
 }
