@@ -179,4 +179,14 @@ typedef enum _IF_ADMINISTRATIVE_STATE {
     IF_ADMINISTRATIVE_STATE_DEMANDDIAL = 2
 } IF_ADMINISTRATIVE_STATE, *PIF_ADMINISTRATIVE_STATE;
 
+typedef enum {
+    IfOperStatusUp = 1,
+    IfOperStatusDown,
+    IfOperStatusTesting,
+    IfOperStatusUnknown,
+    IfOperStatusDormant,
+    IfOperStatusNotPresent,
+    IfOperStatusLowerLayerDown
+} IF_OPER_STATUS;
+
 #endif /* WINE_IFDEF_H*/

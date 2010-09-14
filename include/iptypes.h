@@ -20,6 +20,7 @@
 #define WINE_IPTYPES_H_
 
 #include <time.h>
+#include <ifdef.h>
 
 #define MAX_ADAPTER_DESCRIPTION_LENGTH  128
 #define MAX_ADAPTER_NAME_LENGTH         256
@@ -102,16 +103,6 @@ typedef enum {
     IpSuffixOriginRandom,
     IpSuffixOriginUnchanged = 16
 } IP_SUFFIX_ORIGIN;
-
-typedef enum {
-    IfOperStatusUp = 1,
-    IfOperStatusDown,
-    IfOperStatusTesting,
-    IfOperStatusUnknown,
-    IfOperStatusDormant,
-    IfOperStatusNotPresent,
-    IfOperStatusLowerLayerDown
-} IF_OPER_STATUS;
 
 typedef enum {
     IpDadStateInvalid = 0,
