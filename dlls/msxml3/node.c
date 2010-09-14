@@ -1402,8 +1402,7 @@ static HRESULT WINAPI xmlnode_get_namespaceURI(
     BSTR* namespaceURI)
 {
     xmlnode *This = impl_from_IXMLDOMNode( iface );
-    HRESULT hr = S_FALSE;
-    xmlNsPtr *pNSList;
+    xmlNsPtr *ns;
 
     TRACE("(%p)->(%p)\n", This, namespaceURI );
 
@@ -1412,16 +1411,15 @@ static HRESULT WINAPI xmlnode_get_namespaceURI(
 
     *namespaceURI = NULL;
 
-    pNSList = xmlGetNsList(This->node->doc, This->node);
-    if(pNSList)
+    if ((ns = xmlGetNsList(This->node->doc, This->node)))
     {
-        *namespaceURI = bstr_from_xmlChar( pNSList[0]->href );
-
-        xmlFree( pNSList );
-        hr = S_OK;
+        if (ns[0]->href) *namespaceURI = bstr_from_xmlChar( ns[0]->href );
+        xmlFree(ns);
     }
 
-    return hr;
+    TRACE("uri: %s\n", debugstr_w(*namespaceURI));
+
+    return *namespaceURI ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI xmlnode_get_prefix(
@@ -1444,7 +1442,7 @@ static HRESULT WINAPI xmlnode_get_prefix(
         xmlFree(ns);
     }
 
-    TRACE("prefix %s\n", debugstr_w(*prefixString));
+    TRACE("prefix: %s\n", debugstr_w(*prefixString));
 
     return *prefixString ? S_OK : S_FALSE;
 }

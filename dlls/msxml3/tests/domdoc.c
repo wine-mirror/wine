@@ -6163,8 +6163,8 @@ static void test_get_prefix(void)
 
     str = (void*)0xdeadbeef;
     hr = IXMLDOMElement_get_namespaceURI(element, &str);
-    todo_wine ok( hr == S_FALSE, "got 0x%08x\n", hr);
-    todo_wine ok( str == 0, "got %p\n", str);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok( str == 0, "got %p\n", str);
 
     IXMLDOMElement_Release(element);
 
