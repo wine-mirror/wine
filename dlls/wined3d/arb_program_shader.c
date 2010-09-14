@@ -5313,7 +5313,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
 
         bool_const = get_bool_const(ins, This, ins->src[0].reg.idx);
         if(ins->src[0].modifiers == WINED3DSPSM_NOT) bool_const = !bool_const;
-        if(!priv->muted && bool_const == FALSE)
+        if (!priv->muted && !bool_const)
         {
             shader_addline(buffer, "#if(FALSE){\n");
             priv->muted = TRUE;

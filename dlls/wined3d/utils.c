@@ -2880,7 +2880,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         memset(&settings->op[i], 0xff, sizeof(settings->op[i]));
     }
 
-    if(stateblock->renderState[WINED3DRS_FOGENABLE] == FALSE) {
+    if (!stateblock->renderState[WINED3DRS_FOGENABLE])
+    {
         settings->fog = FOG_OFF;
     } else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
         if(use_vs(stateblock) || ((IWineD3DVertexDeclarationImpl *) stateblock->vertexDecl)->position_transformed) {
