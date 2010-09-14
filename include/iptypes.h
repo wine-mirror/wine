@@ -28,6 +28,8 @@
 #define MAX_HOSTNAME_LEN                128
 #define MAX_DOMAIN_NAME_LEN             128
 #define MAX_SCOPE_ID_LEN                256
+#define MAX_DHCPV6_DUID_LENGTH          130
+#define MAX_DNS_SUFFIX_STRING_LENGTH    256
 
 #define BROADCAST_NODETYPE              1
 #define PEER_TO_PEER_NODETYPE           2
@@ -180,6 +182,34 @@ typedef struct _IP_ADAPTER_PREFIX {
     ULONG                      PrefixLength;
 } IP_ADAPTER_PREFIX, *PIP_ADAPTER_PREFIX;
 
+typedef struct _IP_ADAPTER_WINS_SERVER_ADDRESS_LH {
+    union {
+        ULONGLONG Alignment;
+        struct {
+            ULONG Length;
+            DWORD Reserved;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_WINS_SERVER_ADDRESS_LH *Next;
+    SOCKET_ADDRESS Address;
+} IP_ADAPTER_WINS_SERVER_ADDRESS_LH, *PIP_ADAPTER_WINS_SERVER_ADDRESS_LH;
+typedef IP_ADAPTER_WINS_SERVER_ADDRESS_LH IP_ADAPTER_WINS_SERVER_ADDRESS;
+typedef IP_ADAPTER_WINS_SERVER_ADDRESS_LH *PIP_ADAPTER_WINS_SERVER_ADDRESS;
+
+typedef struct _IP_ADAPTER_GATEWAY_ADDRESS_LH {
+    union {
+        ULONGLONG Alignment;
+        struct {
+            ULONG Length;
+            DWORD Reserved;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_GATEWAY_ADDRESS_LH *Next;
+    SOCKET_ADDRESS Address;
+} IP_ADAPTER_GATEWAY_ADDRESS_LH, *PIP_ADAPTER_GATEWAY_ADDRESS_LH;
+typedef IP_ADAPTER_GATEWAY_ADDRESS_LH IP_ADAPTER_GATEWAY_ADDRESS;
+typedef IP_ADAPTER_GATEWAY_ADDRESS_LH *PIP_ADAPTER_GATEWAY_ADDRESS;
+
 #define IP_ADAPTER_DDNS_ENABLED               0x1
 #define IP_ADAPTER_REGISTER_ADAPTER_SUFFIX    0x2
 #define IP_ADAPTER_DHCP_ENABLED               0x4
@@ -217,6 +247,22 @@ typedef struct _IP_ADAPTER_ADDRESSES {
     DWORD                           Ipv6IfIndex;
     DWORD                           ZoneIndices[16];
     PIP_ADAPTER_PREFIX              FirstPrefix;
+    ULONG64                         TransmitLinkSpeed;
+    ULONG64                         ReceiveLinkSpeed;
+    PIP_ADAPTER_WINS_SERVER_ADDRESS_LH FirstWinsServerAddress;
+    PIP_ADAPTER_GATEWAY_ADDRESS_LH  FirstGatewayAddress;
+    ULONG                           Ipv4Metric;
+    ULONG                           Ipv6Metric;
+    IF_LUID                         Luid;
+    SOCKET_ADDRESS                  Dhcpv4Server;
+    NET_IF_COMPARTMENT_ID           CompartmentId;
+    NET_IF_NETWORK_GUID             NetworkGuid;
+    NET_IF_CONNECTION_TYPE          ConnectionType;
+    TUNNEL_TYPE                     TunnelType;
+    SOCKET_ADDRESS                  Dhcpv6Server;
+    BYTE                            Dhcpv6ClientDuid[MAX_DHCPV6_DUID_LENGTH];
+    ULONG                           Dhcpv6ClientDuidLength;
+    ULONG                           Dhcpv6Iaid;
 } IP_ADAPTER_ADDRESSES, *PIP_ADAPTER_ADDRESSES;
 
 #endif /* _WINSOCK2API_ */
