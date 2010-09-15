@@ -2980,7 +2980,7 @@ static void DX1_BackBufferFlipTest(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask         = 0x000000ff;
 
     hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &Backbuffer, NULL);
-    todo_wine ok(hr==DD_OK, "IDirectDraw_CreateSurface returned: %08x\n", hr);
+    ok(hr==DD_OK, "IDirectDraw_CreateSurface returned: %08x\n", hr);
     if(FAILED(hr)) goto out;
 
     hr = IDirectDrawSurface_AddAttachedSurface(Primary, Backbuffer);

@@ -3425,7 +3425,7 @@ static void BackBufferCreateSurfaceTest(void)
     created_ddsd.dwSize = sizeof(DDSURFACEDESC);
 
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surf, NULL);
-    todo_wine ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed: 0x%08x\n", hr);
+    ok(SUCCEEDED(hr), "IDirectDraw_CreateSurface failed: 0x%08x\n", hr);
     if (surf != NULL)
     {
         hr = IDirectDrawSurface_GetSurfaceDesc(surf, &created_ddsd);
@@ -3482,7 +3482,7 @@ static void BackBufferAttachmentFlipTest(void)
     ddsd.dwWidth = GetSystemMetrics(SM_CXSCREEN);
     ddsd.dwHeight = GetSystemMetrics(SM_CYSCREEN);
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface2, NULL);
-    todo_wine ok(SUCCEEDED(hr), "CreateSurface returned: %x\n",hr);
+    ok(SUCCEEDED(hr), "CreateSurface returned: %x\n",hr);
 
     if (surface2 != NULL)
     {

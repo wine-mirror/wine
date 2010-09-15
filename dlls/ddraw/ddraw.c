@@ -2880,7 +2880,7 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
  *  DDERR_* if an error occurs
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
+static HRESULT CreateSurface(IDirectDraw7 *iface,
         DDSURFACEDESC2 *DDSD, IDirectDrawSurface7 **Surf, IUnknown *UnkOuter)
 {
     IDirectDrawImpl *This = (IDirectDrawImpl *)iface;
@@ -2944,9 +2944,9 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
         return DDERR_NOEXCLUSIVEMODE;
     }
 
-    if(DDSD->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER)) {
-        WARN("Application tried to create an explicit front or back buffer\n");
-        LeaveCriticalSection(&ddraw_cs);
+    if((DDSD->ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
+    {
+        WARN("Application wanted to create back buffer primary surface\n");
         return DDERR_INVALIDCAPS;
     }
 
@@ -3305,6 +3305,27 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
     return hr;
 }
 
+static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
+        DDSURFACEDESC2 *surface_desc, IDirectDrawSurface7 **surface, IUnknown *outer_unknown)
+{
+    TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
+            iface, surface_desc, surface, outer_unknown);
+
+    if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
+    {
+        if (TRACE_ON(ddraw))
+        {
+            TRACE(" (%p) Requesting surface desc :\n", iface);
+            DDRAW_dump_surface_desc(surface_desc);
+        }
+
+        WARN("Application tried to create an explicit front or back buffer\n");
+        return DDERR_INVALIDCAPS;
+    }
+
+    return CreateSurface(iface, surface_desc, surface, outer_unknown);
+}
+
 static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         DDSURFACEDESC2 *surface_desc, IDirectDrawSurface4 **surface, IUnknown *outer_unknown)
 {
@@ -3315,7 +3336,19 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
-    hr = ddraw7_CreateSurface((IDirectDraw7 *)ddraw, surface_desc, (IDirectDrawSurface7 **)surface, outer_unknown);
+    if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
+    {
+        if (TRACE_ON(ddraw))
+        {
+            TRACE(" (%p) Requesting surface desc :\n", iface);
+            DDRAW_dump_surface_desc(surface_desc);
+        }
+
+        WARN("Application tried to create an explicit front or back buffer\n");
+        return DDERR_INVALIDCAPS;
+    }
+
+    hr = CreateSurface((IDirectDraw7 *)ddraw, surface_desc, (IDirectDrawSurface7 **)surface, outer_unknown);
     impl = (IDirectDrawSurfaceImpl *)*surface;
     if (SUCCEEDED(hr) && impl)
     {
@@ -3339,7 +3372,19 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
-    hr = ddraw7_CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
+    {
+        if (TRACE_ON(ddraw))
+        {
+            TRACE(" (%p) Requesting surface desc :\n", iface);
+            DDRAW_dump_surface_desc((LPDDSURFACEDESC2)surface_desc);
+        }
+
+        WARN("Application tried to create an explicit front or back buffer\n");
+        return DDERR_INVALIDCAPS;
+    }
+
+    hr = CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3367,7 +3412,19 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
-    hr = ddraw7_CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
+    {
+        if (TRACE_ON(ddraw))
+        {
+            TRACE(" (%p) Requesting surface desc :\n", iface);
+            DDRAW_dump_surface_desc((LPDDSURFACEDESC2)surface_desc);
+        }
+
+        WARN("Application tried to create an explicit front or back buffer\n");
+        return DDERR_INVALIDCAPS;
+    }
+
+    hr = CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3397,7 +3454,7 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     /* Remove front buffer flag, this causes failure in v7, and its added to normal
      * primaries anyway. */
     surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
-    hr = ddraw7_CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
+    hr = CreateSurface((IDirectDraw7 *)ddraw, (DDSURFACEDESC2 *)surface_desc, &surface7, outer_unknown);
     if (FAILED(hr))
     {
         *surface = NULL;
