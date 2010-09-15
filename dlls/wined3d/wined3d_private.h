@@ -2349,6 +2349,8 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
+    RECT scissor_rect;
+
     DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
 };
 
@@ -2424,9 +2426,6 @@ struct IWineD3DStateBlockImpl
     DWORD                     lowest_disabled_stage;
     /* Sampler States */
     DWORD                     samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-
-    /* Scissor test rectangle */
-    RECT                      scissorRect;
 
     /* Contained state management */
     DWORD                     contained_render_states[WINEHIGHEST_RENDER_STATE + 1];

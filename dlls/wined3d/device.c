@@ -567,7 +567,7 @@ void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
 
     if (stateblock->state.render_states[WINED3DRS_SCISSORTESTENABLE])
     {
-        IntersectRect(rect, rect, &stateblock->scissorRect);
+        IntersectRect(rect, rect, &stateblock->state.scissor_rect);
     }
 }
 
@@ -3138,11 +3138,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, C
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     This->updateStateBlock->changed.scissorRect = TRUE;
-    if(EqualRect(&This->updateStateBlock->scissorRect, pRect)) {
-        TRACE("App is setting the old scissor rectangle over, nothing to do\n");
+    if (EqualRect(&This->updateStateBlock->state.scissor_rect, pRect))
+    {
+        TRACE("App is setting the old scissor rectangle over, nothing to do.\n");
         return WINED3D_OK;
     }
-    CopyRect(&This->updateStateBlock->scissorRect, pRect);
+    CopyRect(&This->updateStateBlock->state.scissor_rect, pRect);
 
     if(This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
@@ -3157,7 +3158,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, C
 static HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, RECT* pRect) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    *pRect = This->updateStateBlock->scissorRect;
+    *pRect = This->updateStateBlock->state.scissor_rect;
     TRACE("(%p)Returning a Scissor Rect of %d:%d-%d:%d\n", This, pRect->left, pRect->top, pRect->right, pRect->bottom);
     return WINED3D_OK;
 }
@@ -5759,10 +5760,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
         device->stateBlock->viewport.MinZ   = 0.0f;
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VIEWPORT);
 
-        device->stateBlock->scissorRect.top = 0;
-        device->stateBlock->scissorRect.left = 0;
-        device->stateBlock->scissorRect.right = device->stateBlock->viewport.Width;
-        device->stateBlock->scissorRect.bottom = device->stateBlock->viewport.Height;
+        device->stateBlock->state.scissor_rect.top = 0;
+        device->stateBlock->state.scissor_rect.left = 0;
+        device->stateBlock->state.scissor_rect.right = device->stateBlock->viewport.Width;
+        device->stateBlock->state.scissor_rect.bottom = device->stateBlock->viewport.Height;
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SCISSORRECT);
     }
 

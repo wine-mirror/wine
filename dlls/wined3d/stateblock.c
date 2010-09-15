@@ -755,12 +755,12 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->viewport = targetStateBlock->viewport;
     }
 
-    if(This->changed.scissorRect
-            && memcmp(&targetStateBlock->scissorRect, &This->scissorRect, sizeof(This->scissorRect)))
+    if (This->changed.scissorRect && memcmp(&targetStateBlock->state.scissor_rect,
+            &This->state.scissor_rect, sizeof(This->state.scissor_rect)))
     {
         TRACE("Updating scissor rect.\n");
 
-        This->scissorRect = targetStateBlock->scissorRect;
+        This->state.scissor_rect = targetStateBlock->state.scissor_rect;
     }
 
     map = This->changed.streamSource;
@@ -1000,7 +1000,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
 
     if (This->changed.scissorRect)
     {
-        IWineD3DDevice_SetScissorRect(device, &This->scissorRect);
+        IWineD3DDevice_SetScissorRect(device, &This->state.scissor_rect);
     }
 
     map = This->changed.streamSource;

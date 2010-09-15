@@ -4880,7 +4880,7 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3
 static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
-    RECT *pRect = &stateblock->scissorRect;
+    RECT *pRect = &stateblock->state.scissor_rect;
     UINT height;
     UINT width;
 
