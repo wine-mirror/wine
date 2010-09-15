@@ -385,7 +385,11 @@ static int parse_spec_stub( ORDDEF *odp, DLLSPEC *spec )
 {
     odp->u.func.nb_args = 0;
     odp->link_name = xstrdup("");
-    odp->flags |= FLAG_CPU(CPU_x86) | FLAG_CPU(CPU_x86_64); /* don't bother generating stubs for Winelib */
+    /* don't bother generating stubs for Winelib */
+    if (odp->flags & FLAG_CPU_MASK)
+        odp->flags &= FLAG_CPU(CPU_x86) | FLAG_CPU(CPU_x86_64);
+    else
+        odp->flags |= FLAG_CPU(CPU_x86) | FLAG_CPU(CPU_x86_64);
     return 1;
 }
 
