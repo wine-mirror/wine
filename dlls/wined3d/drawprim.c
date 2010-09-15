@@ -139,10 +139,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         specular = element->data + streams[element->stream_idx].offset;
 
         /* special case where the fog density is stored in the specular alpha channel */
-        if (This->stateBlock->renderState[WINED3DRS_FOGENABLE]
-                && (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
+        if (This->stateBlock->state.render_states[WINED3DRS_FOGENABLE]
+                && (This->stateBlock->state.render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
                     || si->elements[WINED3D_FFP_POSITION].format->id == WINED3DFMT_R32G32B32A32_FLOAT)
-                && This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+                && This->stateBlock->state.render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
         {
             if (gl_info->supported[EXT_FOG_COORD])
             {
@@ -580,7 +580,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 
     if (!index_count) return;
 
-    if (This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE])
+    if (This->stateBlock->state.render_states[WINED3DRS_COLORWRITEENABLE])
     {
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
@@ -615,8 +615,8 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
-        if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE]
-                || This->stateBlock->renderState[WINED3DRS_ZENABLE])
+        if (This->stateBlock->state.render_states[WINED3DRS_ZWRITEENABLE]
+                || This->stateBlock->state.render_states[WINED3DRS_ZENABLE])
         {
             RECT current_rect, draw_rect, r;
 
@@ -636,7 +636,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             if (!EqualRect(&r, &draw_rect))
                 surface_load_ds_location(This->depth_stencil, context, location);
 
-            if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
+            if (This->stateBlock->state.render_states[WINED3DRS_ZWRITEENABLE])
             {
                 surface_modify_ds_location(This->depth_stencil, location,
                         This->depth_stencil->ds_current_size.cx,
@@ -649,7 +649,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     if ((!context->gl_info->supported[WINED3D_GL_VERSION_2_0]
             || (!glPointParameteri && !context->gl_info->supported[NV_POINT_SPRITE]))
             && context->render_offscreen
-            && This->stateBlock->renderState[WINED3DRS_POINTSPRITEENABLE]
+            && This->stateBlock->state.render_states[WINED3DRS_POINTSPRITEENABLE]
             && This->stateBlock->gl_primitive_type == GL_POINTS)
     {
         FIXME("Point sprite coordinate origin switching not supported.\n");
@@ -666,7 +666,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
         if (!use_vs(This->stateBlock))
         {
             if (!This->strided_streams.position_transformed && context->num_untracked_materials
-                    && This->stateBlock->renderState[WINED3DRS_LIGHTING])
+                    && This->stateBlock->state.render_states[WINED3DRS_LIGHTING])
             {
                 static BOOL warned;
                 if (!warned) {
@@ -677,7 +677,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
                 }
                 emulation = TRUE;
             }
-            else if (context->fog_coord && This->stateBlock->renderState[WINED3DRS_FOGENABLE])
+            else if (context->fog_coord && This->stateBlock->state.render_states[WINED3DRS_FOGENABLE])
             {
                 /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
                  * to a float in the vertex buffer

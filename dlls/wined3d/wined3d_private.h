@@ -2347,6 +2347,11 @@ struct wined3d_stream_state
     UINT flags;
 };
 
+struct wined3d_state
+{
+    DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
+};
+
 struct IWineD3DStateBlockImpl
 {
     /* IUnknown fields */
@@ -2359,6 +2364,7 @@ struct IWineD3DStateBlockImpl
 
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
+    struct wined3d_state state;
 
     /* Vertex Shader Declaration */
     IWineD3DVertexDeclaration *vertexDecl;
@@ -2409,9 +2415,6 @@ struct IWineD3DStateBlockImpl
     BOOL                       pixelShaderConstantB[MAX_CONST_B];
     INT                        pixelShaderConstantI[MAX_CONST_I * 4];
     float                     *pixelShaderConstantF;
-
-    /* RenderState */
-    DWORD                     renderState[WINEHIGHEST_RENDER_STATE + 1];
 
     /* Texture */
     IWineD3DBaseTexture      *textures[MAX_COMBINED_SAMPLERS];

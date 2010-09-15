@@ -849,7 +849,7 @@ static void state_texfactor_atifs(DWORD state, IWineD3DStateBlockImpl *statebloc
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
-    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(stateblock->state.render_states[WINED3DRS_TEXTUREFACTOR], col);
 
     GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col));
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col)");
@@ -914,7 +914,7 @@ static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *statebl
 
 static void atifs_srgbwriteenable(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    if (stateblock->renderState[WINED3DRS_SRGBWRITEENABLE])
+    if (stateblock->state.render_states[WINED3DRS_SRGBWRITEENABLE])
         WARN("sRGB writes are not supported by this fragment pipe.\n");
 }
 

@@ -2800,7 +2800,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
         }
 
-        if (!i && stateblock->textures[0] && stateblock->renderState[WINED3DRS_COLORKEYENABLE])
+        if (!i && stateblock->textures[0] && stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
         {
             UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
 
@@ -2818,7 +2818,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                     }
                     else if (aop == WINED3DTOP_SELECTARG1 && aarg1 != WINED3DTA_TEXTURE)
                     {
-                        if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE])
+                        if (stateblock->state.render_states[WINED3DRS_ALPHABLENDENABLE])
                         {
                             aarg2 = WINED3DTA_TEXTURE;
                             aop = WINED3DTOP_MODULATE;
@@ -2827,7 +2827,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                     }
                     else if (aop == WINED3DTOP_SELECTARG2 && aarg2 != WINED3DTA_TEXTURE)
                     {
-                        if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE])
+                        if (stateblock->state.render_states[WINED3DRS_ALPHABLENDENABLE])
                         {
                             aarg1 = WINED3DTA_TEXTURE;
                             aop = WINED3DTOP_MODULATE;
@@ -2880,14 +2880,20 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         memset(&settings->op[i], 0xff, sizeof(settings->op[i]));
     }
 
-    if (!stateblock->renderState[WINED3DRS_FOGENABLE])
+    if (!stateblock->state.render_states[WINED3DRS_FOGENABLE])
     {
         settings->fog = FOG_OFF;
-    } else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
-        if(use_vs(stateblock) || ((IWineD3DVertexDeclarationImpl *) stateblock->vertexDecl)->position_transformed) {
+    }
+    else if (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    {
+        if (use_vs(stateblock) || ((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->position_transformed)
+        {
             settings->fog = FOG_LINEAR;
-        } else {
-            switch(stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
+        }
+        else
+        {
+            switch (stateblock->state.render_states[WINED3DRS_FOGVERTEXMODE])
+            {
                 case WINED3DFOG_NONE:
                 case WINED3DFOG_LINEAR:
                     settings->fog = FOG_LINEAR;
@@ -2900,8 +2906,11 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                     break;
             }
         }
-    } else {
-        switch(stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
+    }
+    else
+    {
+        switch (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE])
+        {
             case WINED3DFOG_LINEAR:
                 settings->fog = FOG_LINEAR;
                 break;
@@ -2913,15 +2922,16 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                 break;
         }
     }
-    if (stateblock->renderState[WINED3DRS_SRGBWRITEENABLE]
+    if (stateblock->state.render_states[WINED3DRS_SRGBWRITEENABLE]
             && rt->resource.format->Flags & WINED3DFMT_FLAG_SRGB_WRITE)
     {
         settings->sRGB_write = 1;
     } else {
         settings->sRGB_write = 0;
     }
-    if(device->vs_clipping || !use_vs(stateblock) || !stateblock->renderState[WINED3DRS_CLIPPING] ||
-       !stateblock->renderState[WINED3DRS_CLIPPLANEENABLE]) {
+    if (device->vs_clipping || !use_vs(stateblock) || !stateblock->state.render_states[WINED3DRS_CLIPPING]
+            || !stateblock->state.render_states[WINED3DRS_CLIPPLANEENABLE])
+    {
         /* No need to emulate clipplanes if GL supports native vertex shader clipping or if
          * the fixed function vertex pipeline is used(which always supports clipplanes), or
          * if no clipplane is enabled

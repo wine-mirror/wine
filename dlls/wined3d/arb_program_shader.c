@@ -4405,15 +4405,12 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
      * is quite expensive because it forces the driver to disable early Z discards. It is cheaper to
      * duplicate the shader than have a no-op KIL instruction in every shader
      */
-    if((!((IWineD3DDeviceImpl *) shader->baseShader.device)->vs_clipping) && use_vs(stateblock) &&
-       stateblock->renderState[WINED3DRS_CLIPPING] && stateblock->renderState[WINED3DRS_CLIPPLANEENABLE])
-    {
+    if ((!((IWineD3DDeviceImpl *)shader->baseShader.device)->vs_clipping) && use_vs(stateblock)
+            && stateblock->state.render_states[WINED3DRS_CLIPPING]
+            && stateblock->state.render_states[WINED3DRS_CLIPPLANEENABLE])
         args->clip = 1;
-    }
     else
-    {
         args->clip = 0;
-    }
 
     /* Skip if unused or local, or supported natively */
     int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
@@ -4468,12 +4465,10 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
 
-    if(args->clip.boolclip.clip_texcoord)
+    if (args->clip.boolclip.clip_texcoord)
     {
-        if(stateblock->renderState[WINED3DRS_CLIPPING])
-        {
-            args->clip.boolclip.clipplane_mask = (unsigned char) stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
-        }
+        if (stateblock->state.render_states[WINED3DRS_CLIPPING])
+            args->clip.boolclip.clipplane_mask = (unsigned char)stateblock->state.render_states[WINED3DRS_CLIPPLANEENABLE];
         /* clipplane_mask was set to 0 by setting boolclip_compare to 0 */
     }
 
@@ -5543,7 +5538,7 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
     }
 
-    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(stateblock->state.render_states[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col)");
 
@@ -5565,7 +5560,8 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
 
-    if(stateblock->renderState[WINED3DRS_SPECULARENABLE]) {
+    if (stateblock->state.render_states[WINED3DRS_SPECULARENABLE])
+    {
         /* The specular color has no alpha */
         col[0] = 1.0f; col[1] = 1.0f;
         col[2] = 1.0f; col[3] = 0.0f;
@@ -6248,17 +6244,19 @@ static void state_arbfp_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, str
         fragment_prog_arbfp(state, stateblock, context);
     }
 
-    if(!stateblock->renderState[WINED3DRS_FOGENABLE]) return;
+    if (!stateblock->state.render_states[WINED3DRS_FOGENABLE]) return;
 
-    if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
+    if (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    {
         if(use_vs(stateblock)) {
             new_source = FOGSOURCE_VS;
-        } else {
-            if(stateblock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw) {
+        }
+        else
+        {
+            if (stateblock->state.render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
                 new_source = FOGSOURCE_COORD;
-            } else {
+            else
                 new_source = FOGSOURCE_FFP;
-            }
         }
     } else {
         new_source = FOGSOURCE_FFP;

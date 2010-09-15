@@ -565,7 +565,7 @@ void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
 
     SetRect(rect, vp->X, vp->Y, vp->X + vp->Width, vp->Y + vp->Height);
 
-    if (stateblock->renderState[WINED3DRS_SCISSORTESTENABLE])
+    if (stateblock->state.render_states[WINED3DRS_SCISSORTESTENABLE])
     {
         IntersectRect(rect, rect, &stateblock->scissorRect);
     }
@@ -3021,19 +3021,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINE
     return WINED3D_OK;
 }
 
-/*****
- * Get / Set Render States
- * TODO: Verify against dx9 definitions
- *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, WINED3DRENDERSTATETYPE State, DWORD Value) {
-
-    IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
-    DWORD oldValue = This->stateBlock->renderState[State];
+static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface,
+        WINED3DRENDERSTATETYPE State, DWORD Value)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    DWORD oldValue = This->stateBlock->state.render_states[State];
 
     TRACE("iface %p, state %s (%#x), value %#x.\n", iface, debug_d3drenderstate(State), State, Value);
 
     This->updateStateBlock->changed.renderState[State >> 5] |= 1 << (State & 0x1f);
-    This->updateStateBlock->renderState[State] = Value;
+    This->updateStateBlock->state.render_states[State] = Value;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -3051,12 +3048,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, WINED3DRENDERSTATETYPE State, DWORD *pValue) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface,
+        WINED3DRENDERSTATETYPE State, DWORD *pValue)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("iface %p, state %s (%#x), value %p.\n", iface, debug_d3drenderstate(State), State, pValue);
 
-    *pValue = This->stateBlock->renderState[State];
+    *pValue = This->stateBlock->state.render_states[State];
     return WINED3D_OK;
 }
 
@@ -3836,11 +3835,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         dest_conv = dest_conv_addr;
     }
 
-    /* Should I clip?
-     * a) WINED3DRS_CLIPPING is enabled
-     * b) WINED3DVOP_CLIP is passed
-     */
-    if(This->stateBlock->renderState[WINED3DRS_CLIPPING]) {
+    if (This->stateBlock->state.render_states[WINED3DRS_CLIPPING])
+    {
         static BOOL warned = FALSE;
         /*
          * The clipping code is not quite correct. Some things need

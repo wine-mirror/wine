@@ -606,7 +606,7 @@ static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
-    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(stateblock->state.render_states[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
 }
 

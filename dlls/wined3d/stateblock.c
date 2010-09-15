@@ -816,9 +816,9 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         WINED3DRENDERSTATETYPE rs = This->contained_render_states[i];
 
-        TRACE("Updating renderState %#x to %u.\n", rs, targetStateBlock->renderState[rs]);
+        TRACE("Updating render state %#x to %u.\n", rs, targetStateBlock->state.render_states[rs]);
 
-        This->renderState[rs] = targetStateBlock->renderState[rs];
+        This->state.render_states[rs] = targetStateBlock->state.render_states[rs];
     }
 
     /* Texture states */
@@ -942,7 +942,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     for (i = 0; i < This->num_contained_render_states; ++i)
     {
         IWineD3DDevice_SetRenderState(device, This->contained_render_states[i],
-                This->renderState[This->contained_render_states[i]]);
+                This->state.render_states[This->contained_render_states[i]]);
     }
 
     /* Texture states */
