@@ -1516,7 +1516,7 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
     if (stateblock->state.render_states[WINED3DRS_POINTSCALEENABLE])
     {
         GLfloat scaleFactor;
-        DWORD h = stateblock->viewport.Height;
+        DWORD h = stateblock->state.viewport.Height;
 
         if (pointSize.f < gl_info->limits.pointsize_min)
         {
@@ -3943,10 +3943,10 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
 
     if (context->last_was_rhw)
     {
-        double x = stateblock->viewport.X;
-        double y = stateblock->viewport.Y;
-        double w = stateblock->viewport.Width;
-        double h = stateblock->viewport.Height;
+        double x = stateblock->state.viewport.X;
+        double y = stateblock->state.viewport.Y;
+        double w = stateblock->state.viewport.Width;
+        double h = stateblock->state.viewport.Height;
 
         TRACE("Calling glOrtho with x %.8e, y %.8e, w %.8e, h %.8e.\n", x, y, w, h);
         if (context->render_offscreen)
@@ -4010,8 +4010,8 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
          * filling convention. We want the difference to be large enough that
          * it doesn't get lost due to rounding inside the driver, but small
          * enough to prevent it from interfering with any anti-aliasing. */
-        GLfloat xoffset = (63.0f / 64.0f) / stateblock->viewport.Width;
-        GLfloat yoffset = -(63.0f / 64.0f) / stateblock->viewport.Height;
+        GLfloat xoffset = (63.0f / 64.0f) / stateblock->state.viewport.Width;
+        GLfloat yoffset = -(63.0f / 64.0f) / stateblock->state.viewport.Height;
 
         if (context->render_offscreen)
         {
@@ -4597,7 +4597,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, s
          */
         if (useVertexShaderFunction)
         {
-            GLfloat yoffset = -(63.0f / 64.0f) / stateblock->viewport.Height;
+            GLfloat yoffset = -(63.0f / 64.0f) / stateblock->state.viewport.Height;
             device->posFixup[1] = context->render_offscreen ? -1.0f : 1.0f;
             device->posFixup[3] = device->posFixup[1] * yoffset;
         }
@@ -4723,7 +4723,7 @@ static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 {
     IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
     UINT width, height;
-    WINED3DVIEWPORT vp = stateblock->viewport;
+    WINED3DVIEWPORT vp = stateblock->state.viewport;
 
     if(vp.Width > target->currentDesc.Width) vp.Width = target->currentDesc.Width;
     if(vp.Height > target->currentDesc.Height) vp.Height = target->currentDesc.Height;
@@ -4748,9 +4748,9 @@ static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
 static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    GLfloat yoffset = -(63.0f / 64.0f) / stateblock->viewport.Height;
+    GLfloat yoffset = -(63.0f / 64.0f) / stateblock->state.viewport.Height;
 
-    stateblock->device->posFixup[2] = (63.0f / 64.0f) / stateblock->viewport.Width;
+    stateblock->device->posFixup[2] = (63.0f / 64.0f) / stateblock->state.viewport.Width;
     stateblock->device->posFixup[3] = stateblock->device->posFixup[1] * yoffset;
 
     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {

@@ -747,12 +747,12 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->material = targetStateBlock->material;
     }
 
-    if (This->changed.viewport
-            && memcmp(&targetStateBlock->viewport, &This->viewport, sizeof(This->viewport)))
+    if (This->changed.viewport && memcmp(&targetStateBlock->state.viewport,
+            &This->state.viewport, sizeof(This->state.viewport)))
     {
         TRACE("Updating viewport.\n");
 
-        This->viewport = targetStateBlock->viewport;
+        This->state.viewport = targetStateBlock->state.viewport;
     }
 
     if (This->changed.scissorRect && memcmp(&targetStateBlock->state.scissor_rect,
@@ -995,7 +995,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
 
     if (This->changed.viewport)
     {
-        IWineD3DDevice_SetViewport(device, &This->viewport);
+        IWineD3DDevice_SetViewport(device, &This->state.viewport);
     }
 
     if (This->changed.scissorRect)

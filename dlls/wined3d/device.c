@@ -561,7 +561,7 @@ void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *c
 void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
 {
     IWineD3DStateBlockImpl *stateblock = device->stateBlock;
-    WINED3DVIEWPORT *vp = &stateblock->viewport;
+    WINED3DVIEWPORT *vp = &stateblock->state.viewport;
 
     SetRect(rect, vp->X, vp->Y, vp->X + vp->Width, vp->Y + vp->Height);
 
@@ -2998,7 +2998,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
 
     TRACE("(%p)\n", This);
     This->updateStateBlock->changed.viewport = TRUE;
-    This->updateStateBlock->viewport = *pViewport;
+    This->updateStateBlock->state.viewport = *pViewport;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -3017,7 +3017,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
 static HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINED3DVIEWPORT* pViewport) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)\n", This);
-    *pViewport = This->stateBlock->viewport;
+    *pViewport = This->stateBlock->state.viewport;
     return WINED3D_OK;
 }
 
@@ -5752,18 +5752,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
         /* Set the viewport and scissor rectangles, if requested. Tests show
          * that stateblock recording is ignored, the change goes directly
          * into the primary stateblock. */
-        device->stateBlock->viewport.Height = device->render_targets[0]->currentDesc.Height;
-        device->stateBlock->viewport.Width  = device->render_targets[0]->currentDesc.Width;
-        device->stateBlock->viewport.X      = 0;
-        device->stateBlock->viewport.Y      = 0;
-        device->stateBlock->viewport.MaxZ   = 1.0f;
-        device->stateBlock->viewport.MinZ   = 0.0f;
+        device->stateBlock->state.viewport.Height = device->render_targets[0]->currentDesc.Height;
+        device->stateBlock->state.viewport.Width  = device->render_targets[0]->currentDesc.Width;
+        device->stateBlock->state.viewport.X      = 0;
+        device->stateBlock->state.viewport.Y      = 0;
+        device->stateBlock->state.viewport.MaxZ   = 1.0f;
+        device->stateBlock->state.viewport.MinZ   = 0.0f;
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VIEWPORT);
 
         device->stateBlock->state.scissor_rect.top = 0;
         device->stateBlock->state.scissor_rect.left = 0;
-        device->stateBlock->state.scissor_rect.right = device->stateBlock->viewport.Width;
-        device->stateBlock->state.scissor_rect.bottom = device->stateBlock->viewport.Height;
+        device->stateBlock->state.scissor_rect.right = device->stateBlock->state.viewport.Width;
+        device->stateBlock->state.scissor_rect.bottom = device->stateBlock->state.viewport.Height;
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SCISSORRECT);
     }
 

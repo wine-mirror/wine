@@ -2349,6 +2349,7 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
+    WINED3DVIEWPORT viewport;
     RECT scissor_rect;
 
     DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
@@ -2403,9 +2404,6 @@ struct IWineD3DStateBlockImpl
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];
     WINED3DCLIPSTATUS         clip_status;
-
-    /* ViewPort */
-    WINED3DVIEWPORT           viewport;
 
     /* Material */
     WINED3DMATERIAL           material;
