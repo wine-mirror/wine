@@ -2521,7 +2521,7 @@ IUnknown* create_domdoc( xmlNodePtr document )
 
 #else
 
-HRESULT DOMDocument_create(IUnknown *pUnkOuter, void **ppObj)
+HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
 {
     MESSAGE("This program tried to use a DOMDocument object, but\n"
             "libxml2 support was not present at compile time.\n");
