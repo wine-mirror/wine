@@ -95,18 +95,20 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
             if (!(status = server_get_unix_name( handle, &unix_name )))
             {
                 UNICODE_STRING nt_name;
-                NTSTATUS status;
 
                 if (!(status = wine_unix_to_nt_file_name( &unix_name, &nt_name )))
                 {
-                    if (sizeof(*p) + nt_name.MaximumLength <= len)
+                    if (len < sizeof(*p))
+                        status = STATUS_INFO_LENGTH_MISMATCH;
+                    else if (len < sizeof(*p) + nt_name.MaximumLength)
+                        status = STATUS_BUFFER_OVERFLOW;
+                    else
                     {
                         p->Name.Buffer = (WCHAR *)(p + 1);
                         p->Name.Length = nt_name.Length;
                         p->Name.MaximumLength = nt_name.MaximumLength;
                         memcpy( p->Name.Buffer, nt_name.Buffer, nt_name.MaximumLength );
                     }
-                    else status = STATUS_INFO_LENGTH_MISMATCH;
                     if (used_len) *used_len = sizeof(*p) + nt_name.MaximumLength;
                     RtlFreeUnicodeString( &nt_name );
                 }

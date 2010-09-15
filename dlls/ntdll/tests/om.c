@@ -661,7 +661,7 @@ static void test_query_object(void)
     HANDLE handle;
     char buffer[1024];
     NTSTATUS status;
-    ULONG len;
+    ULONG len, expected_len;
     UNICODE_STRING *str;
     char dir[MAX_PATH];
 
@@ -713,10 +713,26 @@ static void test_query_object(void)
     ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
     ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
     str = (UNICODE_STRING *)buffer;
-    ok( sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR) == len ||
-        broken(sizeof(UNICODE_STRING) + str->Length == len), /* NT4 */
+    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
+    ok( len == expected_len || broken(len == expected_len - sizeof(WCHAR)), /* NT4 */
         "unexpected len %u\n", len );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
+
+    len = 0;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, 0, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH || broken(status == STATUS_INSUFFICIENT_RESOURCES),
+        "NtQueryObject failed %x\n", status );
+    ok( len == expected_len || broken(!len || len == sizeof(UNICODE_STRING)),
+        "unexpected len %u\n", len );
+
+    len = 0;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(UNICODE_STRING), &len );
+    ok( status == STATUS_BUFFER_OVERFLOW || broken(status == STATUS_INSUFFICIENT_RESOURCES
+            || status == STATUS_INFO_LENGTH_MISMATCH),
+        "NtQueryObject failed %x\n", status );
+    ok( len == expected_len || broken(!len),
+        "unexpected len %u\n", len );
+
     pNtClose( handle );
 }
 
