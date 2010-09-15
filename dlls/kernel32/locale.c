@@ -3801,6 +3801,10 @@ INT WINAPI GetGeoInfoA(GEOID GeoId, GEOTYPE GeoType, LPSTR lpGeoData,
 
 INT WINAPI GetUserDefaultLocaleName(LPWSTR localename, int buffersize)
 {
-    FIXME("(%p, %d) stub!\n", localename,  buffersize);
-    return 0;
+    LCID userlcid;
+
+    TRACE("%p, %d\n", localename,  buffersize);
+    
+    userlcid = GetUserDefaultLCID();
+    return LCIDToLocaleName(userlcid, localename, buffersize, 0);
 }
