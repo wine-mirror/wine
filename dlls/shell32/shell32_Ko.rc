@@ -1,6 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
- * Copyright 2006, 2007 YunSong Hwang
+ * Copyright 2006, 2007,2010 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,14 +19,16 @@
 
 #include "shresdef.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 MENU_001 MENU
 BEGIN
-MENUITEM "Å« ¾ÆÀÌÄÜ(&G)",	FCIDM_SHVIEW_BIGICON
-MENUITEM "ÀÛÀº ¾ÆÀÌÄÜ(&M)",	FCIDM_SHVIEW_SMALLICON
-MENUITEM "¸ñ·Ï(&L)",		FCIDM_SHVIEW_LISTVIEW
-MENUITEM "ÀÚ¼¼È÷(&D)",		FCIDM_SHVIEW_REPORTVIEW
+MENUITEM "í° ì•„ì´ì½˜(&G)",	FCIDM_SHVIEW_BIGICON
+MENUITEM "ìž‘ì€ ì•„ì´ì½˜(&M)",	FCIDM_SHVIEW_SMALLICON
+MENUITEM "ëª©ë¡(&L)",		FCIDM_SHVIEW_LISTVIEW
+MENUITEM "ìžì„¸ížˆ(&D)",		FCIDM_SHVIEW_REPORTVIEW
 END
 
 /*
@@ -36,38 +38,38 @@ MENU_002 MENU
 BEGIN
 POPUP ""
 BEGIN
-POPUP "º¸±â(&V)"
+POPUP "ë³´ê¸°(&V)"
 BEGIN
-MENUITEM "Å« ¾ÆÀÌÄÜ(&G)",	FCIDM_SHVIEW_BIGICON
-MENUITEM "ÀÛÀº ¾ÆÀÌÄÜ(&M)",	FCIDM_SHVIEW_SMALLICON
-MENUITEM "¸ñ·Ï(&L)",		FCIDM_SHVIEW_LISTVIEW
-MENUITEM "ÀÚ¼¼È÷(&D)",	FCIDM_SHVIEW_REPORTVIEW
+MENUITEM "í° ì•„ì´ì½˜(&G)",	FCIDM_SHVIEW_BIGICON
+MENUITEM "ìž‘ì€ ì•„ì´ì½˜(&M)",	FCIDM_SHVIEW_SMALLICON
+MENUITEM "ëª©ë¡(&L)",		FCIDM_SHVIEW_LISTVIEW
+MENUITEM "ìžì„¸ížˆ(&D)",	FCIDM_SHVIEW_REPORTVIEW
 END
 MENUITEM SEPARATOR
-POPUP "¾ÆÀÌÄÜ Á¤·Ä(&I)"
+POPUP "ì•„ì´ì½˜ ì •ë ¬(&I)"
 BEGIN
-MENUITEM "ÀÌ¸§À¸·Î(&N)",	0x30	/* column 0 */
-MENUITEM "Çü½ÄÀ¸·Î(&T)",	0x32	/* column 2 */
-MENUITEM "Å©±â·Î(&S)",	0x31	/* ... */
-MENUITEM "³¯Â¥·Î(&D)",	0x33
+MENUITEM "ì´ë¦„ìœ¼ë¡œ(&N)",	0x30	/* column 0 */
+MENUITEM "í˜•ì‹ìœ¼ë¡œ(&T)",	0x32	/* column 2 */
+MENUITEM "í¬ê¸°ë¡œ(&S)",	0x31	/* ... */
+MENUITEM "ë‚ ì§œë¡œ(&D)",	0x33
 MENUITEM SEPARATOR
-MENUITEM "ÀÚµ¿ Á¤·Ä(&A)",	FCIDM_SHVIEW_AUTOARRANGE
+MENUITEM "ìžë™ ì •ë ¬(&A)",	FCIDM_SHVIEW_AUTOARRANGE
 END
-MENUITEM "¾ÆÀÌÄÜ Á¤·Ä",	FCIDM_SHVIEW_SNAPTOGRID
+MENUITEM "ì•„ì´ì½˜ ì •ë ¬",	FCIDM_SHVIEW_SNAPTOGRID
 MENUITEM SEPARATOR
-MENUITEM "»õ·Î °íÄ§",		FCIDM_SHVIEW_REFRESH
+MENUITEM "ìƒˆë¡œ ê³ ì¹¨",		FCIDM_SHVIEW_REFRESH
 MENUITEM SEPARATOR
-MENUITEM "ºÙ¿©³Ö±â",		FCIDM_SHVIEW_INSERT
-MENUITEM "¸µÅ©·Î ºÙ¿©³Ö±â",	FCIDM_SHVIEW_INSERTLINK
+MENUITEM "ë¶™ì—¬ë„£ê¸°",		FCIDM_SHVIEW_INSERT
+MENUITEM "ë§í¬ë¡œ ë¶™ì—¬ë„£ê¸°",	FCIDM_SHVIEW_INSERTLINK
 MENUITEM SEPARATOR
-POPUP "»õ ÀÛ¾÷"
+POPUP "ìƒˆ ìž‘ì—…"
 BEGIN
-MENUITEM "»õ Æú´õ(&F)",	FCIDM_SHVIEW_NEWFOLDER
-MENUITEM "»õ ¸µÅ©(&L)",	FCIDM_SHVIEW_NEWLINK
+MENUITEM "ìƒˆ í´ë”(&F)",	FCIDM_SHVIEW_NEWFOLDER
+MENUITEM "ìƒˆ ë§í¬(&L)",	FCIDM_SHVIEW_NEWLINK
 MENUITEM SEPARATOR
 END
 MENUITEM SEPARATOR
-MENUITEM "¼Ó¼º",	FCIDM_SHVIEW_PROPERTIES
+MENUITEM "ì†ì„±",	FCIDM_SHVIEW_PROPERTIES
 END
 END
 
@@ -79,50 +81,50 @@ BEGIN
 POPUP ""
 BEGIN
 MENUITEM "&Select"		FCIDM_SHVIEW_OPEN
-MENUITEM "Å½»ö(&X)",		FCIDM_SHVIEW_EXPLORE
-MENUITEM "¿­±â(&O)",		FCIDM_SHVIEW_OPEN
+MENUITEM "íƒìƒ‰(&X)",		FCIDM_SHVIEW_EXPLORE
+MENUITEM "ì—´ê¸°(&O)",		FCIDM_SHVIEW_OPEN
 MENUITEM SEPARATOR
-MENUITEM "Àß¶ó³»±â(&U)",		FCIDM_SHVIEW_CUT
-MENUITEM "º¹»ç(&C)",		FCIDM_SHVIEW_COPY
+MENUITEM "ìž˜ë¼ë‚´ê¸°(&U)",		FCIDM_SHVIEW_CUT
+MENUITEM "ë³µì‚¬(&C)",		FCIDM_SHVIEW_COPY
 MENUITEM SEPARATOR
-MENUITEM "¸µÅ© ¸¸µé±â(&L)",	FCIDM_SHVIEW_CREATELINK
-MENUITEM "Áö¿ì±â(&D)",		FCIDM_SHVIEW_DELETE
-MENUITEM "ÀÌ¸§ ¹Ù²Ù±â(&R)",		FCIDM_SHVIEW_RENAME
+MENUITEM "ë§í¬ ë§Œë“¤ê¸°(&L)",	FCIDM_SHVIEW_CREATELINK
+MENUITEM "ì§€ìš°ê¸°(&D)",		FCIDM_SHVIEW_DELETE
+MENUITEM "ì´ë¦„ ë°”ê¾¸ê¸°(&R)",		FCIDM_SHVIEW_RENAME
 MENUITEM SEPARATOR
-MENUITEM "¼Ó¼º(&P)",	FCIDM_SHVIEW_PROPERTIES
+MENUITEM "ì†ì„±(&P)",	FCIDM_SHVIEW_PROPERTIES
 END
 END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "ÆÄÀÏ(&F)"
+    POPUP "íŒŒì¼(&F)"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "³ª±â±â(&X)", IDM_CPANEL_EXIT
+        MENUITEM "ë‚˜ê¸°ê¸°(&X)", IDM_CPANEL_EXIT
     END
 
-    POPUP "º¸±â(&V)"
+    POPUP "ë³´ê¸°(&V)"
     BEGIN
-        MENUITEM "Å« ¾ÆÀÌÄÜ(&G)", FCIDM_SHVIEW_BIGICON
-        MENUITEM "ÀÛÀº ¾ÆÀÌÄÜ(&M)", FCIDM_SHVIEW_SMALLICON
-        MENUITEM "¸ñ·Ï(&L)", FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "ÀÚ¼¼È÷(&D)", FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "í° ì•„ì´ì½˜(&G)", FCIDM_SHVIEW_BIGICON
+        MENUITEM "ìž‘ì€ ì•„ì´ì½˜(&M)", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "ëª©ë¡(&L)", FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "ìžì„¸ížˆ(&D)", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "µµ¿ò¸»(&H)"
+    POPUP "ë„ì›€ë§(&H)"
     BEGIN
-        MENUITEM "Á¦¾îÆÇ Á¤º¸(&A)...", IDM_CPANEL_ABOUT
+        MENUITEM "ì œì–´íŒ ì •ë³´(&A)...", IDM_CPANEL_ABOUT
     END
 END
 
 
 SHBRSFORFOLDER_MSGBOX DIALOG 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Æú´õ Å½»ö"
+CAPTION "í´ë” íƒìƒ‰"
 FONT 9, "MS Shell Dlg"
 {
-DEFPUSHBUTTON "È®ÀÎ", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
-PUSHBUTTON "Ãë¼Ò", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+DEFPUSHBUTTON "í™•ì¸", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+PUSHBUTTON "ì·¨ì†Œ", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
 LTEXT "", IDD_TITLE, 4, 4, 180, 12
 LTEXT "", IDD_STATUS, 4, 25, 180, 12
 CONTROL "", IDD_TREEVIEW, "SysTreeView32",
@@ -134,48 +136,48 @@ WS_BORDER | WS_TABSTOP,
 
 SHNEWBRSFORFOLDER_MSGBOX DIALOG 15, 40, 218, 196
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Æú´õ Å½»ö"
+CAPTION "í´ë” íƒìƒ‰"
 FONT 9, "MS Shell Dlg"
 {
 LTEXT "", IDD_TITLE, 10, 8, 198, 24
 LTEXT "", IDD_STATUS, 10, 25, 198, 12
-LTEXT "Æú´õ:", IDD_FOLDER, 10, 156, 40, 12
+LTEXT "í´ë”:", IDD_FOLDER, 10, 156, 40, 12
 CONTROL "", IDD_TREEVIEW, "SysTreeView32",
 TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
 WS_BORDER | WS_TABSTOP,
 12, 38, 194, 105
 EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
-PUSHBUTTON "»õ Æú´õ ¸¸µé±â(&M)", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
-DEFPUSHBUTTON "È®ÀÎ", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
-PUSHBUTTON "Ãë¼Ò", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+PUSHBUTTON "ìƒˆ í´ë” ë§Œë“¤ê¸°(&M)", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+DEFPUSHBUTTON "í™•ì¸", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+PUSHBUTTON "ì·¨ì†Œ", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
 }
 
 SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "¸Þ½ÃÁö"
+CAPTION "ë©”ì‹œì§€"
 FONT 9, "MS Shell Dlg"
 {
-DEFPUSHBUTTON "¿¹(&Y)", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
-PUSHBUTTON "¸ðµÎ ¿¹(&A)", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
-PUSHBUTTON " ¾Æ´Ï¿À(&N)", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
-PUSHBUTTON "Ãë¼Ò(&C)", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+DEFPUSHBUTTON "ì˜ˆ(&Y)", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+PUSHBUTTON "ëª¨ë‘ ì˜ˆ(&A)", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+PUSHBUTTON " ì•„ë‹ˆì˜¤(&N)", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+PUSHBUTTON "ì·¨ì†Œ(&C)", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
 ICON "", IDD_ICON, 10, 10, 16, 16
 LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
 }
 
 SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION " %s Á¤º¸"
+CAPTION " %s ì •ë³´"
 FONT 10, "MS Shell Dlg"
 {
- DEFPUSHBUTTON "È®ÀÎ", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine ¶óÀÌ¼¾½º(&l)...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ DEFPUSHBUTTON "í™•ì¸", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Wine ë¼ì´ì„¼ìŠ¤(&l)...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
- LTEXT "%s ½ÇÇàÁß", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Wine ¿¡ µµ¿òÁÖ½Å ºÐ:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "%s ì‹¤í–‰ì¤‘", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine ì— ë„ì›€ì£¼ì‹  ë¶„:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 
@@ -185,117 +187,137 @@ CAPTION ""
 FONT 9, "MS Shell Dlg"
 {
  ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Ç®±×¸²,Æú´õ,¹®¼­³ª ÀÎÅÍ³Ý ÀÚ¿ø, ±×¸®°í WineÀÌ ¿­  °ÍÀÇ ÀÌ¸§À» Àû¾îÁÖ¼¼¿ä.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
- LTEXT "¿­±â(&O):", IDC_RUNDLG_LABEL, 7, 39, 24, 10
+ LTEXT "í’€ê·¸ë¦¼,í´ë”,ë¬¸ì„œë‚˜ ì¸í„°ë„· ìžì›, ê·¸ë¦¬ê³  Wineì´ ì—´  ê²ƒì˜ ì´ë¦„ì„ ì ì–´ì£¼ì„¸ìš”.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "ì—´ê¸°(&O):", IDC_RUNDLG_LABEL, 7, 39, 24, 10
  CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
- DEFPUSHBUTTON "È®ÀÎ", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Ãë¼Ò", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Ã£±â(&B)...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
+ DEFPUSHBUTTON "í™•ì¸", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "ì·¨ì†Œ", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "ì°¾ê¸°(&B)...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
 }
 
 
 STRINGTABLE
 {
 /* columns in the shellview */
-IDS_SHV_COLUMN1		"ÆÄÀÏ"
-IDS_SHV_COLUMN2		"Å©±â"
-IDS_SHV_COLUMN3		"Çü½Ä"
-IDS_SHV_COLUMN4		"¼öÁ¤³¯Â¥"
-IDS_SHV_COLUMN5		"¼Ó¼º"
-IDS_SHV_COLUMN6		"Å©±â"
-IDS_SHV_COLUMN7		"°¡´ÉÇÑ Å©±â"
-IDS_SHV_COLUMN8		"ÀÌ¸§"
-IDS_SHV_COLUMN9		"ÁÖ¼®"
-IDS_SHV_COLUMN10	"¼ÒÀ¯ÀÚ"
-IDS_SHV_COLUMN11	"±×·ì"
-IDS_SHV_COLUMN_DELFROM	"¿ø·¡ À§Ä¡"
-IDS_SHV_COLUMN_DELDATE	"Áö¿öÁø ³¯Â¥"
+IDS_SHV_COLUMN1		"íŒŒì¼"
+IDS_SHV_COLUMN2		"í¬ê¸°"
+IDS_SHV_COLUMN3		"í˜•ì‹"
+IDS_SHV_COLUMN4		"ìˆ˜ì •ë‚ ì§œ"
+IDS_SHV_COLUMN5		"ì†ì„±"
+IDS_SHV_COLUMN6		"í¬ê¸°"
+IDS_SHV_COLUMN7		"ê°€ëŠ¥í•œ í¬ê¸°"
+IDS_SHV_COLUMN8		"ì´ë¦„"
+IDS_SHV_COLUMN9		"ì£¼ì„"
+IDS_SHV_COLUMN10	"ì†Œìœ ìž"
+IDS_SHV_COLUMN11	"ê·¸ë£¹"
+IDS_SHV_COLUMN_DELFROM	"ì›ëž˜ ìœ„ì¹˜"
+IDS_SHV_COLUMN_DELDATE	"ì§€ì›Œì§„ ë‚ ì§œ"
 
 /* special folders */
-IDS_DESKTOP		"µ¥½ºÅ©Å¾"
-IDS_MYCOMPUTER		"³» ÄÄÇ»ÅÍ"
-IDS_RECYCLEBIN_FOLDER_NAME      "ÈÞÁöÅë"
-IDS_CONTROLPANEL	"Á¦¾îÆÇ"
+IDS_DESKTOP		"ë°ìŠ¤í¬íƒ‘"
+IDS_MYCOMPUTER		"ë‚´ ì»´í“¨í„°"
+IDS_RECYCLEBIN_FOLDER_NAME      "íœ´ì§€í†µ"
+IDS_CONTROLPANEL	"ì œì–´íŒ"
 
 /* context menus */
-IDS_VIEW_LARGE		"Å« ¾ÆÀÌÄÜ(&G)"
-IDS_VIEW_SMALL		"ÀÛÀº ¾ÆÀÌÄÜ(&M)"
-IDS_VIEW_LIST		"¸ñ·Ï(&L)"
-IDS_VIEW_DETAILS	"ÀÚ¼¼È÷(&D)"
-IDS_SELECT		"¼±ÅÃ"
-IDS_OPEN		"¿­±â"
+IDS_VIEW_LARGE		"í° ì•„ì´ì½˜(&G)"
+IDS_VIEW_SMALL		"ìž‘ì€ ì•„ì´ì½˜(&M)"
+IDS_VIEW_LIST		"ëª©ë¡(&L)"
+IDS_VIEW_DETAILS	"ìžì„¸ížˆ(&D)"
+IDS_SELECT		"ì„ íƒ"
+IDS_OPEN		"ì—´ê¸°"
 
-IDS_CREATEFOLDER_DENIED "»õ Æú´õ¸¦ ¸¸µé ¼ö ¾ø½À´Ï´Ù: ¸¸µé ±ÇÇÑÀÌ ¾ø½À´Ï´Ù."
-IDS_CREATEFOLDER_CAPTION "»õ Æú´õ¸¦ ¸¸µå´Â °úÁ¤¿¡¼­ ¿¡·¯¹ß»ý"
-IDS_DELETEITEM_CAPTION "ÆÄÀÏ Áö¿ì±â È®ÀÎ"
-IDS_DELETEFOLDER_CAPTION "Æú´õ Áö¿ì±â È®ÀÎ"
-IDS_DELETEITEM_TEXT "´ç½ÅÀº  '%1'À» Áö¿ì±â¸¦ ¹Ù¶ø´Ï±î?"
-IDS_DELETEMULTIPLE_TEXT "´ç½ÅÀº %1 ¾ÆÀÌÅÛ(µé)À» Áö¿ì±â¸¦ ¹Ù¶ø´Ï±î?"
-IDS_DELETESELECTED_TEXT "´ç½ÅÀº ¼±ÅÃµÈ ¾ÆÀÌÅÛ(µé)À» Áö¿ì±â¸¦ ¹Ù¶ø´Ï±î?"
-IDS_TRASHITEM_TEXT "´ç½ÅÀº '%1' À»(¸¦) ÈÞÁöÅëÀ¸·Î º¸³»±â¸¦ ¹Ù¶ø´Ï±î?"
-IDS_TRASHFOLDER_TEXT "´ç½ÅÀº '%1' °ú ±× ¾ÈÀÇ ³»¿ëÀ» ÈÞÁöÅëÀ¸·Î º¸³»±â¸¦ ¹Ù¶ø´Ï±î?"
-IDS_TRASHMULTIPLE_TEXT "´ç½ÅÀº '%1' µéÀ»(¸¦) ÈÞÁöÅëÀ¸·Î º¸³»±â¸¦ ¹Ù¶ø´Ï±î?"
-IDS_CANTTRASH_TEXT "ÀÌ ¾ÆÀÌÅÛ'%1'À» ÈÞÁöÅëÀ¸·Î º¸³¾ ¼ö ¾ø½À´Ï´Ù. ´ë½Å Áö¿ì°Ú½À´Ï±î?"
-IDS_OVERWRITEFILE_TEXT "ÀÌ Æú´õ´Â ÀÌ¹Ì '%1' ÆÄÀÏÀ» °¡Áö°í ÀÖ½À´Ï´Ù.\n\n¹Ù²Ù°Ú½À´Ï±î?"
-IDS_OVERWRITEFILE_CAPTION "ÆÄÀÏ µ¤¾î¾²±â È®ÀÎ"
-IDS_OVERWRITEFOLDER_TEXT "  ÀÌ Æú´õ´Â ÀÌ¹Ì '%1'ÀÌ¶õ ÀÌ¸§À» °¡Áø Æú´õ¸¦ Æ÷ÇÔÇÏ°í ÀÖ½À´Ï´Ù.\n\n"\
-     "¸¸¾à ´ç½ÅÀÌ °°Àº ÀÌ¸§À¸·Î ´ë»ó Æú´õ¸¦ ÁöÁ¤ÇÑ´Ù¸é ¼±ÅÃµÈ Æú´õ´Â ´ëÃ¼µÉ °ÍÀÔ´Ï´Ù\n"\
-     " ´ëÃ¼µÉ °ÍÀÔ´Ï´Ù. ´ç½ÅÀº ÀÌ Æú´õ¸¦ ÀÌµ¿½ÃÅ°°Å³ª º¹»çÇÏ°Ú½À´Ï±î?"
+IDS_CREATEFOLDER_DENIED "ìƒˆ í´ë”ë¥¼ ë§Œë“¤ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: ë§Œë“¤ ê¶Œí•œì´ ì—†ìŠµë‹ˆë‹¤."
+IDS_CREATEFOLDER_CAPTION "ìƒˆ í´ë”ë¥¼ ë§Œë“œëŠ” ê³¼ì •ì—ì„œ ì—ëŸ¬ë°œìƒ"
+IDS_DELETEITEM_CAPTION "íŒŒì¼ ì§€ìš°ê¸° í™•ì¸"
+IDS_DELETEFOLDER_CAPTION "í´ë” ì§€ìš°ê¸° í™•ì¸"
+IDS_DELETEITEM_TEXT "ë‹¹ì‹ ì€  '%1'ì„ ì§€ìš°ê¸°ë¥¼ ë°”ëžë‹ˆê¹Œ?"
+IDS_DELETEMULTIPLE_TEXT "ë‹¹ì‹ ì€ %1 ì•„ì´í…œ(ë“¤)ì„ ì§€ìš°ê¸°ë¥¼ ë°”ëžë‹ˆê¹Œ?"
+IDS_DELETESELECTED_TEXT "ë‹¹ì‹ ì€ ì„ íƒëœ ì•„ì´í…œ(ë“¤)ì„ ì§€ìš°ê¸°ë¥¼ ë°”ëžë‹ˆê¹Œ?"
+IDS_TRASHITEM_TEXT "ë‹¹ì‹ ì€ '%1' ì„(ë¥¼) íœ´ì§€í†µìœ¼ë¡œ ë³´ë‚´ê¸°ë¥¼ ë°”ëžë‹ˆê¹Œ?"
+IDS_TRASHFOLDER_TEXT "ë‹¹ì‹ ì€ '%1' ê³¼ ê·¸ ì•ˆì˜ ë‚´ìš©ì„ íœ´ì§€í†µìœ¼ë¡œ ë³´ë‚´ê¸°ë¥¼ ë°”ëžë‹ˆê¹Œ?"
+IDS_TRASHMULTIPLE_TEXT "ë‹¹ì‹ ì€ '%1' ë“¤ì„(ë¥¼) íœ´ì§€í†µìœ¼ë¡œ ë³´ë‚´ê¸°ë¥¼ ë°”ëžë‹ˆê¹Œ?"
+IDS_CANTTRASH_TEXT "ì´ ì•„ì´í…œ'%1'ì„ íœ´ì§€í†µìœ¼ë¡œ ë³´ë‚¼ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ëŒ€ì‹  ì§€ìš°ê² ìŠµë‹ˆê¹Œ?"
+IDS_OVERWRITEFILE_TEXT "ì´ í´ë”ëŠ” ì´ë¯¸ '%1' íŒŒì¼ì„ ê°€ì§€ê³  ìžˆìŠµë‹ˆë‹¤.\n\në°”ê¾¸ê² ìŠµë‹ˆê¹Œ?"
+IDS_OVERWRITEFILE_CAPTION "íŒŒì¼ ë®ì–´ì“°ê¸° í™•ì¸"
+IDS_OVERWRITEFOLDER_TEXT "  ì´ í´ë”ëŠ” ì´ë¯¸ '%1'ì´ëž€ ì´ë¦„ì„ ê°€ì§„ í´ë”ë¥¼ í¬í•¨í•˜ê³  ìžˆìŠµë‹ˆë‹¤.\n\n"\
+     "ë§Œì•½ ë‹¹ì‹ ì´ ê°™ì€ ì´ë¦„ìœ¼ë¡œ ëŒ€ìƒ í´ë”ë¥¼ ì§€ì •í•œë‹¤ë©´ ì„ íƒëœ í´ë”ëŠ” ëŒ€ì²´ë  ê²ƒìž…ë‹ˆë‹¤\n"\
+     " ëŒ€ì²´ë  ê²ƒìž…ë‹ˆë‹¤. ë‹¹ì‹ ì€ ì´ í´ë”ë¥¼ ì´ë™ì‹œí‚¤ê±°ë‚˜ ë³µì‚¬í•˜ê² ìŠµë‹ˆê¹Œ?"
 
 
 /* message box strings */
-IDS_RESTART_TITLE       "´Ù½Ã ½ÃÀÛ" 
-IDS_RESTART_PROMPT      "´ç½ÅÀº À©µµ¿ìÁî ÀçºÎÆÃÀ»  ÀçÇöÇÏ°Ú½À´Ï±î?"
-IDS_SHUTDOWN_TITLE      "²ô±â"
-IDS_SHUTDOWN_PROMPT     "´ç½ÅÀº  Wine ¼¼¼ÇÀ» ²ô°Ú½À´Ï±î?"
+IDS_RESTART_TITLE       "ë‹¤ì‹œ ì‹œìž‘" 
+IDS_RESTART_PROMPT      "ë‹¹ì‹ ì€ ìœˆë„ìš°ì¦ˆ ìž¬ë¶€íŒ…ì„  ìž¬í˜„í•˜ê² ìŠµë‹ˆê¹Œ?"
+IDS_SHUTDOWN_TITLE      "ë„ê¸°"
+IDS_SHUTDOWN_PROMPT     "ë‹¹ì‹ ì€  Wine ì„¸ì…˜ì„ ë„ê² ìŠµë‹ˆê¹Œ?"
 
 /* Run File dialog */
-IDS_RUNDLG_ERROR           "ÆÄÀÏ ½ÇÇà ´ëÈ­ »óÀÚ¸¦ º¸¿©ÁÙ¼ö ¾ø½À´Ï´Ù(³»ºÎ ¿¡·¯)"
-IDS_RUNDLG_BROWSE_ERROR    "Ã£±â ´ëÈ­ »óÀÚ¸¦ º¸¿© ÁÙ ¼ö ¾ø½À´Ï´Ù(³»ºÎ ¿¡·¯)"
-IDS_RUNDLG_BROWSE_CAPTION  "Ã£±â"
-IDS_RUNDLG_BROWSE_FILTER   "½ÇÇà ÆÄÀÏ\0*.exe\0A¸ðµç ÆÄÀÏ\0*.*\0\0"
+IDS_RUNDLG_ERROR           "íŒŒì¼ ì‹¤í–‰ ëŒ€í™” ìƒìžë¥¼ ë³´ì—¬ì¤„ìˆ˜ ì—†ìŠµë‹ˆë‹¤(ë‚´ë¶€ ì—ëŸ¬)"
+IDS_RUNDLG_BROWSE_ERROR    "ì°¾ê¸° ëŒ€í™” ìƒìžë¥¼ ë³´ì—¬ ì¤„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤(ë‚´ë¶€ ì—ëŸ¬)"
+IDS_RUNDLG_BROWSE_CAPTION  "ì°¾ê¸°"
+IDS_RUNDLG_BROWSE_FILTER   "ì‹¤í–‰ íŒŒì¼\0*.exe\0Aëª¨ë“  íŒŒì¼\0*.*\0\0"
 
 /* shell folder path default values */
-IDS_PROGRAMS                "½ÃÀÛ ¸Þ´º\\ÇÁ·Î±×·¥"
-IDS_PERSONAL                "³» ¹®¼­"
-IDS_FAVORITES               "Áñ°ÜÃ£±â"
-IDS_STARTUP                 "½ÃÀÛ ¸Þ´º\\ÇÁ·Î±×·¥\\½ÃÀÛ ÇÁ·Î±×·¥"
-IDS_RECENT                  "ÃÖ±Ù ÆÄÀÏ"
-IDS_SENDTO                  "º¸³»±â"
-IDS_STARTMENU               "½ÃÀÛ ¸Þ´º"
-IDS_MYMUSIC                 "³» À½¾Ç"
-IDS_MYVIDEO                 "³» ºñµð¿À"
-IDS_DESKTOPDIRECTORY        "µ¥½ºÅ©Å¾"
-IDS_NETHOOD                 "³×Æ®¿öÅ© È¯°æ"
+IDS_PROGRAMS                "ì‹œìž‘ ë©”ë‰´\\í”„ë¡œê·¸ëž¨"
+IDS_PERSONAL                "ë‚´ ë¬¸ì„œ"
+IDS_FAVORITES               "ì¦ê²¨ì°¾ê¸°"
+IDS_STARTUP                 "ì‹œìž‘ ë©”ë‰´\\í”„ë¡œê·¸ëž¨\\ì‹œìž‘ í”„ë¡œê·¸ëž¨"
+IDS_RECENT                  "ìµœê·¼ íŒŒì¼"
+IDS_SENDTO                  "ë³´ë‚´ê¸°"
+IDS_STARTMENU               "ì‹œìž‘ ë©”ë‰´"
+IDS_MYMUSIC                 "ë‚´ ìŒì•…"
+IDS_MYVIDEO                 "ë‚´ ë¹„ë””ì˜¤"
+IDS_DESKTOPDIRECTORY        "ë°ìŠ¤í¬íƒ‘"
+IDS_NETHOOD                 "ë„¤íŠ¸ì›Œí¬ í™˜ê²½"
 IDS_TEMPLATES               "Templates"
 IDS_APPDATA                 "Application Data"
-IDS_PRINTHOOD               "³×Æ®¿öÅ© È¯°æ"
+IDS_PRINTHOOD               "ë„¤íŠ¸ì›Œí¬ í™˜ê²½"
 IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
 IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
 IDS_COOKIES                 "Cookies"
 IDS_HISTORY                 "Local Settings\\History"
 IDS_PROGRAM_FILES           "Program Files"
-IDS_MYPICTURES              "³» ±×¸²"
+IDS_PROGRAM_FILESX86        "Program Files (x86)"
+IDS_MYPICTURES              "ë‚´ ê·¸ë¦¼"
 IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
-IDS_COMMON_DOCUMENTS        "¹®¼­"
-IDS_ADMINTOOLS              "½ÃÀÛ¸Þ´º\\ÇÁ·Î±×·¥\\°ü¸® µµ±¸"
-IDS_COMMON_MUSIC            "³» À½¾Ç"
-IDS_COMMON_PICTURES         "³» ±×¸²"
-IDS_COMMON_VIDEO            "³» ºñµð¿À"
+IDS_PROGRAM_FILES_COMMONX86 "Program Files (x86)\\Common Files"
+IDS_COMMON_DOCUMENTS        "ë¬¸ì„œ"
+IDS_ADMINTOOLS              "ì‹œìž‘ë©”ë‰´\\í”„ë¡œê·¸ëž¨\\ê´€ë¦¬ ë„êµ¬"
+IDS_COMMON_MUSIC            "ë‚´ ìŒì•…"
+IDS_COMMON_PICTURES         "ë‚´ ê·¸ë¦¼"
+IDS_COMMON_VIDEO            "ë‚´ ë¹„ë””ì˜¤"
 IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+IDS_CONTACTS                "Contacts"
+IDS_LINKS                   "Links"
+IDS_PHOTO_ALBUMS            "Pictures\\Slide Shows"
+IDS_PLAYLISTS               "Music\\Playlists"
+IDS_PUBLIC_DOWNLOADS        "Downloads"
+IDS_PUBLIC_GAME_TASKS       "Microsoft\\Windows\\GameExplorer"
+IDS_PUBLIC_LIBRARIES        "Microsoft\\Windows\\Libraries"
+IDS_PUBLIC_RINGTONES        "Microsoft\\Windows\\Ringtones"
+IDS_SAMPLE_MUSIC            "Music\\Sample Music"
+IDS_SAMPLE_PICTURES         "Pictures\\Sample Pictures"
+IDS_SAMPLE_PLAYLISTS        "Music\\Sample Playlists"
+IDS_SAMPLE_VIDEOS           "Videos\\Sample Videos"
+IDS_SAVED_GAMES             "Saved Games"
+IDS_SAVED_SEARCHES          "Searches"
+IDS_USER_PROFILES           "Users"
+IDS_COMMON_OEM_LINKS        "OEM Links"
+IDS_DOCUMENTS               "Documents"
+IDS_DOWNLOADS               "Downloads"
 
-IDS_NEWFOLDER		"»õ Æú´õ"
+IDS_NEWFOLDER		"ìƒˆ í´ë”"
 
-IDS_CPANEL_TITLE            "Wine Á¦¾îÆÇ"
-IDS_CPANEL_NAME             "ÀÌ¸§"
-IDS_CPANEL_DESCRIPTION      "¼³¸í"
-IDS_SHLEXEC_NOASSOC         "ÀÌ Çü½ÄÀÇ ÆÄÀÏÀ» µµ·Ï ±¸¼ºµÈ À©µµ¿ì ÇÁ·Î±×·¥ÀÌ ¾ø½À´Ï´Ù."
+IDS_CPANEL_TITLE            "Wine ì œì–´íŒ"
+IDS_CPANEL_NAME             "ì´ë¦„"
+IDS_CPANEL_DESCRIPTION      "ì„¤ëª…"
+IDS_SHLEXEC_NOASSOC         "ì´ í˜•ì‹ì˜ íŒŒì¼ì„ ë„ë¡ êµ¬ì„±ëœ ìœˆë„ìš° í”„ë¡œê·¸ëž¨ì´ ì—†ìŠµë‹ˆë‹¤."
 
 }
 
 STRINGTABLE
 {
-IDS_LICENSE_CAPTION,            "Wine ¶óÀÌ¼¾½º"
+IDS_LICENSE_CAPTION,            "Wine ë¼ì´ì„¼ìŠ¤"
 IDS_LICENSE,
 "Wine is free software; you can redistribute it and/or \
 modify it under the terms of the GNU Lesser General Public \
