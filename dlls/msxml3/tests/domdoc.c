@@ -5647,6 +5647,7 @@ static void test_default_properties(void)
         if (hr != S_OK)
         {
             win_skip("can't create %s instance\n", entry->clsid);
+            entry++;
             continue;
         }
 
