@@ -1144,6 +1144,49 @@ static int schan_decrypt_message_get_next_buffer(const struct schan_transport *t
     return -1;
 }
 
+static int schan_validate_decrypt_buffer_desc(PSecBufferDesc message)
+{
+    int data_idx = -1;
+    unsigned int empty_count = 0;
+    unsigned int i;
+
+    if (message->cBuffers < 4)
+    {
+        WARN("Less than four buffers passed\n");
+        return -1;
+    }
+
+    for (i = 0; i < message->cBuffers; ++i)
+    {
+        SecBuffer *b = &message->pBuffers[i];
+        if (b->BufferType == SECBUFFER_DATA)
+        {
+            if (data_idx != -1)
+            {
+                WARN("More than one data buffer passed\n");
+                return -1;
+            }
+            data_idx = i;
+        }
+        else if (b->BufferType == SECBUFFER_EMPTY)
+            ++empty_count;
+    }
+
+    if (data_idx == -1)
+    {
+        WARN("No data buffer passed\n");
+        return -1;
+    }
+
+    if (empty_count < 3)
+    {
+        WARN("Less than three empty buffers passed\n");
+        return -1;
+    }
+
+    return data_idx;
+}
+
 static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle,
         PSecBufferDesc message, ULONG message_seq_no, PULONG quality)
 {
@@ -1164,12 +1207,9 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
 
     dump_buffer_desc(message);
 
-    idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_DATA);
+    idx = schan_validate_decrypt_buffer_desc(message);
     if (idx == -1)
-    {
-        WARN("No data buffer passed\n");
-        return SEC_E_INTERNAL_ERROR;
-    }
+        return SEC_E_INVALID_TOKEN;
     buffer = &message->pBuffers[idx];
 
     data_size = buffer->cbBuffer;
