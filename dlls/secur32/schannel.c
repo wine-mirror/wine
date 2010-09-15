@@ -1187,6 +1187,19 @@ static int schan_validate_decrypt_buffer_desc(PSecBufferDesc message)
     return data_idx;
 }
 
+static void schan_decrypt_fill_buffer(PSecBufferDesc message, ULONG buffer_type, void *data, ULONG size)
+{
+    int idx;
+    SecBuffer *buffer;
+
+    idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_EMPTY);
+    buffer = &message->pBuffers[idx];
+
+    buffer->BufferType = buffer_type;
+    buffer->pvBuffer = data;
+    buffer->cbBuffer = size;
+}
+
 static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle,
         PSecBufferDesc message, ULONG message_seq_no, PULONG quality)
 {
@@ -1198,6 +1211,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     ssize_t received = 0;
     ssize_t ret;
     int idx;
+    char *buf_ptr;
 
     TRACE("context_handle %p, message %p, message_seq_no %d, quality %p\n",
             context_handle, message, message_seq_no, quality);
@@ -1252,9 +1266,18 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
 
     TRACE("Received %zd bytes\n", received);
 
-    memcpy(buffer->pvBuffer, data, received);
-    buffer->cbBuffer = received;
+    buf_ptr = buffer->pvBuffer;
+    memcpy(buf_ptr + 5, data, received);
     HeapFree(GetProcessHeap(), 0, data);
+
+    schan_decrypt_fill_buffer(message, SECBUFFER_DATA,
+        buf_ptr + 5, received);
+
+    schan_decrypt_fill_buffer(message, SECBUFFER_STREAM_TRAILER,
+        buf_ptr + 5 + received, buffer->cbBuffer - 5 - received);
+
+    buffer->BufferType = SECBUFFER_STREAM_HEADER;
+    buffer->cbBuffer = 5;
 
     return SEC_E_OK;
 }
