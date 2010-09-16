@@ -927,6 +927,8 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
     InterfaceIndexTable *table;
     ULONG i, size, total_size, ret = ERROR_NO_DATA;
 
+    TRACE("(%d, %08x, %p, %p, %p)\n", family, flags, reserved, aa, buflen);
+
     if (!buflen) return ERROR_INVALID_PARAMETER;
 
     table = getInterfaceIndexTable();
