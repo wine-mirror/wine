@@ -696,34 +696,82 @@ static char *debugstr_ipv6(const struct WS_sockaddr_in6 *sin, char *buf)
     return buf;
 }
 
+static ULONG count_v4_gateways(DWORD index, PMIB_IPFORWARDTABLE routeTable)
+{
+    DWORD i, num_gateways = 0;
+
+    for (i = 0; i < routeTable->dwNumEntries; i++)
+    {
+        if (routeTable->table[i].dwForwardIfIndex == index &&
+            routeTable->table[i].dwForwardType == MIB_IPROUTE_TYPE_INDIRECT)
+            num_gateways++;
+    }
+    return num_gateways;
+}
+
+static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
+                                         PMIB_IPFORWARDTABLE routeTable)
+{
+    DWORD i;
+    PMIB_IPFORWARDROW row = NULL;
+
+    for (i = 0; !row && i < routeTable->dwNumEntries; i++)
+    {
+        if (routeTable->table[i].dwForwardIfIndex == index &&
+            routeTable->table[i].dwForwardType == MIB_IPROUTE_TYPE_INDIRECT)
+            row = &routeTable->table[i];
+    }
+    return row;
+}
+
 static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
-    ULONG ret, i, num_v4addrs = 0, num_v6addrs = 0, total_size;
+    ULONG ret, i, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
     DWORD *v4addrs = NULL;
     SOCKET_ADDRESS *v6addrs = NULL;
+    PMIB_IPFORWARDTABLE routeTable = NULL;
 
     if (family == AF_INET)
-        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+    {
+        ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
+                                                    GetProcessHeap(), 0);
+        if (!ret)
+        {
+            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+            num_v4_gateways = count_v4_gateways(index, routeTable);
+        }
+    }
     else if (family == AF_INET6)
         ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
     else if (family == AF_UNSPEC)
     {
-        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
+                                                    GetProcessHeap(), 0);
         if (!ret)
-            ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+        {
+            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+            num_v4_gateways = count_v4_gateways(index, routeTable);
+            if (!ret)
+                ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+        }
     }
     else
     {
         FIXME("address family %u unsupported\n", family);
         ret = ERROR_NO_DATA;
     }
-    if (ret) return ret;
+    if (ret)
+    {
+        HeapFree(GetProcessHeap(), 0, routeTable);
+        return ret;
+    }
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
     total_size += IF_NAMESIZE;
     total_size += IF_NAMESIZE * sizeof(WCHAR);
     total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v4addrs;
     total_size += sizeof(struct sockaddr_in) * num_v4addrs;
+    total_size += (sizeof(IP_ADAPTER_GATEWAY_ADDRESS) + sizeof(SOCKADDR_IN)) * num_v4_gateways;
     total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v6addrs;
     total_size += sizeof(SOCKET_ADDRESS) * num_v6addrs;
     for (i = 0; i < num_v6addrs; i++)
@@ -751,11 +799,44 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
 
         TRACE("%s: %d IPv4 addresses, %d IPv6 addresses:\n", name, num_v4addrs,
               num_v6addrs);
+        if (num_v4_gateways)
+        {
+            PMIB_IPFORWARDROW adapterRow;
+
+            if ((adapterRow = findIPv4Gateway(index, routeTable)))
+            {
+                PIP_ADAPTER_GATEWAY_ADDRESS gw;
+                PSOCKADDR_IN sin;
+
+                for (gw = aa->FirstGatewayAddress; gw && gw->Next;
+                     gw = gw->Next)
+                    ;
+                if (!gw)
+                {
+                    gw = (PIP_ADAPTER_GATEWAY_ADDRESS)ptr;
+                    aa->FirstGatewayAddress = gw;
+                }
+                else
+                {
+                    gw->Next = (PIP_ADAPTER_GATEWAY_ADDRESS)ptr;
+                    gw = gw->Next;
+                }
+                gw->u.s.Length = sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
+                ptr += sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
+                sin = (PSOCKADDR_IN)ptr;
+                sin->sin_family = AF_INET;
+                sin->sin_port = 0;
+                memcpy(&sin->sin_addr, &adapterRow->dwForwardNextHop,
+                       sizeof(DWORD));
+                gw->Address.lpSockaddr = (LPSOCKADDR)sin;
+                gw->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
+                ptr += sizeof(SOCKADDR_IN);
+            }
+        }
         if (num_v4addrs)
         {
             IP_ADAPTER_UNICAST_ADDRESS *ua;
             struct sockaddr_in *sa;
-
             aa->Flags |= IP_ADAPTER_IPV4_ENABLED;
             ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
             for (i = 0; i < num_v4addrs; i++)
@@ -834,6 +915,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
         else aa->OperStatus = IfOperStatusUnknown;
     }
     *size = total_size;
+    HeapFree(GetProcessHeap(), 0, routeTable);
     HeapFree(GetProcessHeap(), 0, v6addrs);
     HeapFree(GetProcessHeap(), 0, v4addrs);
     return ERROR_SUCCESS;
