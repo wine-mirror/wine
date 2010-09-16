@@ -2349,6 +2349,7 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
+    WINED3DMATRIX transforms[HIGHEST_TRANSFORMSTATE + 1];
     WINED3DMATERIAL material;
     WINED3DVIEWPORT viewport;
     RECT scissor_rect;
@@ -2392,9 +2393,6 @@ struct IWineD3DStateBlockImpl
     enum wined3d_format_id IndexFmt;
     INT                       baseVertexIndex;
     INT                       loadBaseVertexIndex; /* non-indexed drawing needs 0 here, indexed baseVertexIndex */
-
-    /* Transform */
-    WINED3DMATRIX             transforms[HIGHEST_TRANSFORMSTATE + 1];
 
     /* Light hashmap . Collisions are handled using standard wine double linked lists */
 #define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */

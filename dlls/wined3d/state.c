@@ -3246,7 +3246,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, s
     generated = (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU;
     coordIdx = min(stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX & 0x0000FFFF], MAX_TEXTURES - 1);
 
-    set_texture_matrix(&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
+    set_texture_matrix(&stateblock->state.transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
             stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS], generated, context->last_was_rhw,
             stateblock->device->strided_streams.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
             ? stateblock->device->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format->id
@@ -3727,14 +3727,14 @@ static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, str
         /* In the general case, the view matrix is the identity matrix */
         if (stateblock->device->view_ident)
         {
-            glLoadMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            glLoadMatrixf(&stateblock->state.transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
         }
         else
         {
-            glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+            glLoadMatrixf(&stateblock->state.transforms[WINED3DTS_VIEW].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
-            glMultMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            glMultMatrixf(&stateblock->state.transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
             checkGLcall("glMultMatrixf");
         }
     }
@@ -3753,8 +3753,10 @@ static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     if(!use_vs(stateblock)) {
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
-    } else {
+        glLoadMatrixf(&stateblock->state.transforms[WINED3DTS_VIEW].u.m[0][0]);
+    }
+    else
+    {
         /* with vertex shaders, clip planes are not transformed in direct3d,
          * in OpenGL they are still transformed by the model view.
          * Use this to swap the y coordinate if necessary
@@ -3808,14 +3810,14 @@ static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock, s
      */
     if (stateblock->device->view_ident)
     {
-        glLoadMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
+        glLoadMatrixf(&stateblock->state.transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
     }
     else
     {
-        glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        glLoadMatrixf(&stateblock->state.transforms[WINED3DTS_VIEW].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
-        glMultMatrixf(&stateblock->transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
+        glMultMatrixf(&stateblock->state.transforms[WINED3DTS_WORLDMATRIX(matrix)].u.m[0][0]);
         checkGLcall("glMultMatrixf");
     }
 }
@@ -3889,7 +3891,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
-    glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+    glLoadMatrixf(&stateblock->state.transforms[WINED3DTS_VIEW].u.m[0][0]);
     checkGLcall("glLoadMatrixf(...)");
 
     /* Reset lights. TODO: Call light apply func */
@@ -4030,7 +4032,7 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
         }
         checkGLcall("glScalef");
 
-        glMultMatrixf(&stateblock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
+        glMultMatrixf(&stateblock->state.transforms[WINED3DTS_PROJECTION].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
     }
 }
@@ -4781,7 +4783,7 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3
         /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        glLoadMatrixf(&stateblock->state.transforms[WINED3DTS_VIEW].u.m[0][0]);
 
         /* Diffuse: */
         colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;

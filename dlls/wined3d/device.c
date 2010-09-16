@@ -2413,7 +2413,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
         This->updateStateBlock->changed.transform[d3dts >> 5] |= 1 << (d3dts & 0x1f);
-        This->updateStateBlock->transforms[d3dts] = *lpmatrix;
+        This->updateStateBlock->state.transforms[d3dts] = *lpmatrix;
         return WINED3D_OK;
     }
 
@@ -2425,11 +2425,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
      *
      * From here on we assume that the new matrix is different, wherever it matters.
      */
-    if (!memcmp(&This->stateBlock->transforms[d3dts].u.m[0][0], lpmatrix, sizeof(WINED3DMATRIX))) {
+    if (!memcmp(&This->stateBlock->state.transforms[d3dts].u.m[0][0], lpmatrix, sizeof(*lpmatrix)))
+    {
         TRACE("The app is setting the same matrix over again\n");
         return WINED3D_OK;
-    } else {
-        conv_mat(lpmatrix, &This->stateBlock->transforms[d3dts].u.m[0][0]);
+    }
+    else
+    {
+        conv_mat(lpmatrix, &This->stateBlock->state.transforms[d3dts].u.m[0][0]);
     }
 
     /*
@@ -2452,10 +2455,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
     return WINED3D_OK;
 
 }
-static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface, WINED3DTRANSFORMSTATETYPE State, WINED3DMATRIX* pMatrix) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : for Transform State %s\n", This, debug_d3dtstype(State));
-    *pMatrix = This->stateBlock->transforms[State];
+
+static HRESULT WINAPI IWineD3DDeviceImpl_GetTransform(IWineD3DDevice *iface,
+        WINED3DTRANSFORMSTATETYPE state, WINED3DMATRIX *matrix)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("iface %p, state %s, matrix %p.\n", iface, debug_d3dtstype(state), matrix);
+
+    *matrix = device->stateBlock->state.transforms[state];
+
     return WINED3D_OK;
 }
 
@@ -2473,8 +2482,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
 
     if (State <= HIGHEST_TRANSFORMSTATE)
     {
-        mat = &This->updateStateBlock->transforms[State];
-    } else {
+        mat = &This->updateStateBlock->state.transforms[State];
+    }
+    else
+    {
         FIXME("Unhandled transform state!!\n");
     }
 

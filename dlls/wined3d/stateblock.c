@@ -710,7 +710,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         TRACE("Updating transform %#x.\n", transform);
 
-        This->transforms[transform] = targetStateBlock->transforms[transform];
+        This->state.transforms[transform] = targetStateBlock->state.transforms[transform];
     }
 
     if (This->changed.primitive_type) This->gl_primitive_type = targetStateBlock->gl_primitive_type;
@@ -968,7 +968,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     for (i = 0; i < This->num_contained_transform_states; ++i)
     {
         IWineD3DDevice_SetTransform(device, This->contained_transform_states[i],
-                &This->transforms[This->contained_transform_states[i]]);
+                &This->state.transforms[This->contained_transform_states[i]]);
     }
 
     if (This->changed.primitive_type)
@@ -1084,10 +1084,11 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     This->blockType = WINED3DSBT_INIT;
 
     /* Set some of the defaults for lights, transforms etc */
-    memcpy(&This->transforms[WINED3DTS_PROJECTION], identity, sizeof(identity));
-    memcpy(&This->transforms[WINED3DTS_VIEW], identity, sizeof(identity));
-    for (i = 0; i < 256; ++i) {
-      memcpy(&This->transforms[WINED3DTS_WORLDMATRIX(i)], identity, sizeof(identity));
+    memcpy(&This->state.transforms[WINED3DTS_PROJECTION], identity, sizeof(identity));
+    memcpy(&This->state.transforms[WINED3DTS_VIEW], identity, sizeof(identity));
+    for (i = 0; i < 256; ++i)
+    {
+        memcpy(&This->state.transforms[WINED3DTS_WORLDMATRIX(i)], identity, sizeof(identity));
     }
 
     TRACE("Render states\n");
@@ -1228,9 +1229,10 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     This->clip_status.ClipIntersection = 0xFFFFFFFF;
 
     /* Texture Stage States - Put directly into state block, we will call function below */
-    for (i = 0; i < MAX_TEXTURES; i++) {
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
         TRACE("Setting up default texture states for texture Stage %d\n", i);
-        memcpy(&This->transforms[WINED3DTS_TEXTURE0 + i], identity, sizeof(identity));
+        memcpy(&This->state.transforms[WINED3DTS_TEXTURE0 + i], identity, sizeof(identity));
         This->textureState[i][WINED3DTSS_COLOROP               ] = i ? WINED3DTOP_DISABLE : WINED3DTOP_MODULATE;
         This->textureState[i][WINED3DTSS_COLORARG1             ] = WINED3DTA_TEXTURE;
         This->textureState[i][WINED3DTSS_COLORARG2             ] = WINED3DTA_CURRENT;
