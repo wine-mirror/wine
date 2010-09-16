@@ -1826,7 +1826,7 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
     return CARD_ATI_RAGE_128PRO;
 }
 
-static enum wined3d_pci_device select_card_intel_binary(const struct wined3d_gl_info *gl_info,
+static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
     if (strstr(gl_renderer, "X3100"))
@@ -2046,13 +2046,6 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
     return CARD_NVIDIA_RIVA_128;
 }
 
-static enum wined3d_pci_device select_card_intel_mesa(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer)
-{
-    FIXME_(d3d_caps)("Card selection not handled for Mesa Intel driver\n");
-    return CARD_INTEL_I915G;
-}
-
 
 struct vendor_card_selection
 {
@@ -2067,12 +2060,12 @@ static const struct vendor_card_selection vendor_card_select_table[] =
     {GL_VENDOR_NVIDIA, HW_VENDOR_NVIDIA,  "Nvidia binary driver",     select_card_nvidia_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_NVIDIA,  "Apple OSX NVidia binary driver",   select_card_nvidia_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_ATI,     "Apple OSX AMD/ATI binary driver",  select_card_ati_binary},
-    {GL_VENDOR_APPLE,  HW_VENDOR_INTEL,   "Apple OSX Intel binary driver",    select_card_intel_binary},
+    {GL_VENDOR_APPLE,  HW_VENDOR_INTEL,   "Apple OSX Intel binary driver",    select_card_intel},
     {GL_VENDOR_FGLRX,  HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary},
     {GL_VENDOR_MESA,   HW_VENDOR_ATI,     "Mesa AMD/ATI driver",      select_card_ati_mesa},
     {GL_VENDOR_MESA,   HW_VENDOR_NVIDIA,  "Mesa Nouveau driver",      select_card_nvidia_mesa},
-    {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel_mesa},
-    {GL_VENDOR_INTEL,  HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel_mesa}
+    {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel},
+    {GL_VENDOR_INTEL,  HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel}
 };
 
 
