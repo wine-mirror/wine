@@ -58,6 +58,9 @@ struct mesh
 
     DWORD number_of_faces;
     face *faces;
+
+    DWORD fvf;
+    UINT vertex_size;
 };
 
 static void free_mesh(struct mesh *mesh)
@@ -132,11 +135,18 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
             ok(vertex_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, vertex_buffer_description.Usage, 0);
             ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
                name, vertex_buffer_description.Pool, D3DPOOL_DEFAULT);
-            expected = number_of_vertices * sizeof(D3DXVECTOR3) * 2;
+            ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, result %x, expected %x\n",
+               name, vertex_buffer_description.FVF, mesh->fvf);
+            if (mesh->fvf == 0)
+            {
+                expected = number_of_vertices * mesh->vertex_size;
+            }
+            else
+            {
+                expected = number_of_vertices * D3DXGetFVFVertexSize(mesh->fvf);
+            }
             ok(vertex_buffer_description.Size == expected, "Test %s, result %x, expected %x\n",
                name, vertex_buffer_description.Size, expected);
-            ok(vertex_buffer_description.FVF == (D3DFVF_XYZ | D3DFVF_NORMAL), "Test %s, result %x, expected %x (D3DFVF_XYZ | D3DFVF_NORMAL)\n",
-               name, vertex_buffer_description.FVF, D3DFVF_XYZ | D3DFVF_NORMAL);
         }
 
         /* specify offset and size to avoid potential overruns */
@@ -191,7 +201,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
                name, index_buffer_description.Format, D3DFMT_INDEX16);
             ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
                name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
-            ok(index_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, index_buffer_description.Usage, 0);
+            todo_wine ok(index_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, index_buffer_description.Usage, 0);
             ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_DEFAULT)\n",
                name, index_buffer_description.Pool, D3DPOOL_DEFAULT);
             expected = number_of_faces * sizeof(WORD) * 3;
@@ -995,19 +1005,30 @@ static void D3DXCreateMeshTest(void)
     ID3DXMesh *d3dxmesh;
     int i, size;
     D3DVERTEXELEMENT9 test_decl[MAX_FVF_DECL_SIZE];
-    DWORD fvf, options;
+    DWORD options;
     struct mesh mesh;
 
-    static const D3DVERTEXELEMENT9 decl[3] = {
+    static const D3DVERTEXELEMENT9 decl1[3] = {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 0xC, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
         D3DDECL_END(), };
 
-    hr = D3DXCreateMesh(0, 0, 0, NULL, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    static const D3DVERTEXELEMENT9 decl2[] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        {0, 24, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_PSIZE, 0},
+        {0, 28, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 1},
+        {0, 32, D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        /* 8 bytes padding */
+        {0, 44, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
+        D3DDECL_END(),
+    };
 
-    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl, NULL, &d3dxmesh);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateMesh(0, 0, 0, NULL, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, NULL, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
     if (!wnd)
@@ -1035,14 +1056,14 @@ static void D3DXCreateMeshTest(void)
         return;
     }
 
-    hr = D3DXCreateMesh(0, 3, D3DXMESH_MANAGED, decl, device, &d3dxmesh);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateMesh(0, 3, D3DXMESH_MANAGED, decl1, device, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 0, D3DXMESH_MANAGED, decl, device, &d3dxmesh);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateMesh(1, 0, D3DXMESH_MANAGED, decl1, device, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 3, 0, decl, device, &d3dxmesh);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    hr = D3DXCreateMesh(1, 3, 0, decl1, device, &d3dxmesh);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
 
     if (hr == D3D_OK)
     {
@@ -1050,13 +1071,77 @@ static void D3DXCreateMeshTest(void)
     }
 
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, 0, device, &d3dxmesh);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl, device, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, device, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl, device, &d3dxmesh);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, device, &d3dxmesh);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+
+    if (hr == D3D_OK)
+    {
+        /* device */
+        hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+        hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, &test_device);
+        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        ok(test_device == device, "Got result %p, expected %p\n", test_device, device);
+
+        if (hr == D3D_OK)
+        {
+            IDirect3DDevice9_Release(device);
+        }
+
+        /* declaration */
+        hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+        hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, test_decl);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+
+        if (hr == D3D_OK)
+        {
+            size = sizeof(decl1) / sizeof(decl1[0]);
+            for (i = 0; i < size - 1; i++)
+            {
+                ok(test_decl[i].Stream == decl1[i].Stream, "Returned stream %d, expected %d\n", test_decl[i].Stream, decl1[i].Stream);
+                ok(test_decl[i].Type == decl1[i].Type, "Returned type %d, expected %d\n", test_decl[i].Type, decl1[i].Type);
+                ok(test_decl[i].Method == decl1[i].Method, "Returned method %d, expected %d\n", test_decl[i].Method, decl1[i].Method);
+                ok(test_decl[i].Usage == decl1[i].Usage, "Returned usage %d, expected %d\n", test_decl[i].Usage, decl1[i].Usage);
+                ok(test_decl[i].UsageIndex == decl1[i].UsageIndex, "Returned usage index %d, expected %d\n", test_decl[i].UsageIndex, decl1[i].UsageIndex);
+                ok(test_decl[i].Offset == decl1[i].Offset, "Returned offset %d, expected %d\n", test_decl[i].Offset, decl1[i].Offset);
+            }
+            ok(decl1[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+        }
+
+        /* options */
+        options = d3dxmesh->lpVtbl->GetOptions(d3dxmesh);
+        ok(options == D3DXMESH_MANAGED, "Got result %x, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
+
+        /* rest */
+        if (!new_mesh(&mesh, 3, 1))
+        {
+            skip("Couldn't create mesh\n");
+        }
+        else
+        {
+            memset(mesh.vertices, 0, mesh.number_of_vertices * sizeof(*mesh.vertices));
+            memset(mesh.faces, 0, mesh.number_of_faces * sizeof(*mesh.faces));
+            mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
+
+            compare_mesh("createmesh1", d3dxmesh, &mesh);
+
+            free_mesh(&mesh);
+        }
+
+        d3dxmesh->lpVtbl->Release(d3dxmesh);
+    }
+
+    /* Test a declaration that can't be converted to an FVF. */
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl2, device, &d3dxmesh);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
 
     if (hr == D3D_OK)
     {
@@ -1079,22 +1164,18 @@ static void D3DXCreateMeshTest(void)
 
         if (hr == D3D_OK)
         {
-            size = sizeof(decl) / sizeof(decl[0]);
+            size = sizeof(decl2) / sizeof(decl2[0]);
             for (i = 0; i < size - 1; i++)
             {
-                ok(test_decl[i].Stream == decl[i].Stream, "Returned stream %d, expected %d\n", test_decl[i].Stream, decl[i].Stream);
-                ok(test_decl[i].Type == decl[i].Type, "Returned type %d, expected %d\n", test_decl[i].Type, decl[i].Type);
-                ok(test_decl[i].Method == decl[i].Method, "Returned method %d, expected %d\n", test_decl[i].Method, decl[i].Method);
-                ok(test_decl[i].Usage == decl[i].Usage, "Returned usage %d, expected %d\n", test_decl[i].Usage, decl[i].Usage);
-                ok(test_decl[i].UsageIndex == decl[i].UsageIndex, "Returned usage index %d, expected %d\n", test_decl[i].UsageIndex, decl[i].UsageIndex);
-                ok(test_decl[i].Offset == decl[i].Offset, "Returned offset %d, expected %d\n", decl[1].Offset, decl[i].Offset);
+                ok(test_decl[i].Stream == decl2[i].Stream, "Returned stream %d, expected %d\n", test_decl[i].Stream, decl2[i].Stream);
+                ok(test_decl[i].Type == decl2[i].Type, "Returned type %d, expected %d\n", test_decl[i].Type, decl2[i].Type);
+                ok(test_decl[i].Method == decl2[i].Method, "Returned method %d, expected %d\n", test_decl[i].Method, decl2[i].Method);
+                ok(test_decl[i].Usage == decl2[i].Usage, "Returned usage %d, expected %d\n", test_decl[i].Usage, decl2[i].Usage);
+                ok(test_decl[i].UsageIndex == decl2[i].UsageIndex, "Returned usage index %d, expected %d\n", test_decl[i].UsageIndex, decl2[i].UsageIndex);
+                ok(test_decl[i].Offset == decl2[i].Offset, "Returned offset %d, expected %d\n", test_decl[i].Offset, decl2[i].Offset);
             }
-            ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+            ok(decl2[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
         }
-
-        /* FVF */
-        fvf = d3dxmesh->lpVtbl->GetFVF(d3dxmesh);
-        ok(fvf == (D3DFVF_XYZ | D3DFVF_NORMAL), "Got result %x, expected %x (D3DFVF_XYZ | D3DFVF_NORMAL)\n", fvf, D3DFVF_XYZ | D3DFVF_NORMAL);
 
         /* options */
         options = d3dxmesh->lpVtbl->GetOptions(d3dxmesh);
@@ -1109,8 +1190,10 @@ static void D3DXCreateMeshTest(void)
         {
             memset(mesh.vertices, 0, mesh.number_of_vertices * sizeof(*mesh.vertices));
             memset(mesh.faces, 0, mesh.number_of_faces * sizeof(*mesh.faces));
+            mesh.fvf = 0;
+            mesh.vertex_size = 60;
 
-            compare_mesh("createmeshfvf", d3dxmesh, &mesh);
+            compare_mesh("createmesh2", d3dxmesh, &mesh);
 
             free_mesh(&mesh);
         }
@@ -1326,6 +1409,8 @@ static void test_sphere(IDirect3DDevice9 *device, FLOAT radius, UINT slices, UIN
         sphere->lpVtbl->Release(sphere);
         return;
     }
+
+    mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
 
     sprintf(name, "sphere (%g, %u, %u)", radius, slices, stacks);
     compare_mesh(name, sphere, &mesh);
