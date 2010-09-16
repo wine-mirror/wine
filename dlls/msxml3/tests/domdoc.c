@@ -6218,6 +6218,74 @@ static void test_get_prefix(void)
     free_bstrs();
 }
 
+static void test_selectSingleNode(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMNodeList *list;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    LONG len;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    hr = IXMLDOMDocument_selectSingleNode(doc, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_selectNodes(doc, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    str = SysAllocString( szComplete4 );
+    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( hr == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    hr = IXMLDOMDocument_selectSingleNode(doc, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_selectNodes(doc, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("lc"), NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("lc"), NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("lc"), &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("lc"), &list);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMNodeList_Release(list);
+
+    list = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument_selectNodes(doc, NULL, &list);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(list == (void*)0xdeadbeef, "got %p\n", list);
+
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("nonexistent"), &node);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(node == 0, "got %p\n", node);
+
+    list = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("nonexistent"), &list);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    len = 1;
+    hr = IXMLDOMNodeList_get_length(list, &len);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(len == 0, "got %d\n", len);
+    IXMLDOMNodeList_Release(list);
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -6276,6 +6344,7 @@ START_TEST(domdoc)
     test_createNode();
     test_get_prefix();
     test_default_properties();
+    test_selectSingleNode();
 
     CoUninitialize();
 }
