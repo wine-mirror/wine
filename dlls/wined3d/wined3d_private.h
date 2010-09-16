@@ -2349,6 +2349,7 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
+    WINED3DMATERIAL material;
     WINED3DVIEWPORT viewport;
     RECT scissor_rect;
 
@@ -2404,9 +2405,6 @@ struct IWineD3DStateBlockImpl
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];
     WINED3DCLIPSTATUS         clip_status;
-
-    /* Material */
-    WINED3DMATERIAL           material;
 
     /* Pixel Shader */
     IWineD3DPixelShader      *pixelShader;

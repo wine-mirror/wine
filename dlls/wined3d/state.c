@@ -716,10 +716,10 @@ static void state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock
     TRACE("Setting specular enable state and materials\n");
     if (stateblock->state.render_states[WINED3DRS_SPECULARENABLE])
     {
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &stateblock->material.Specular);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&stateblock->state.material.Specular);
         checkGLcall("glMaterialfv");
 
-        if (stateblock->material.Power > gl_info->limits.shininess)
+        if (stateblock->state.material.Power > gl_info->limits.shininess)
         {
             /* glMaterialf man page says that the material says that GL_SHININESS must be between 0.0
              * and 128.0, although in d3d neither -1 nor 129 produce an error. GL_NV_max_light_exponent
@@ -727,10 +727,12 @@ static void state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock
              * value reported by the extension, otherwise 128. For values > gl_info->limits.shininess clamp
              * them, it should be safe to do so without major visual distortions.
              */
-            WARN("Material power = %f, limit %f\n", stateblock->material.Power, gl_info->limits.shininess);
+            WARN("Material power = %f, limit %f\n", stateblock->state.material.Power, gl_info->limits.shininess);
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, gl_info->limits.shininess);
-        } else {
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, stateblock->material.Power);
+        }
+        else
+        {
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, stateblock->state.material.Power);
         }
         checkGLcall("glMaterialf(GL_SHININESS)");
 
@@ -775,23 +777,23 @@ static void state_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock
     }
 
     TRACE("(%p) : Diffuse {%.8e, %.8e, %.8e, %.8e}\n", stateblock->device,
-            stateblock->material.Diffuse.r, stateblock->material.Diffuse.g,
-            stateblock->material.Diffuse.b, stateblock->material.Diffuse.a);
+            stateblock->state.material.Diffuse.r, stateblock->state.material.Diffuse.g,
+            stateblock->state.material.Diffuse.b, stateblock->state.material.Diffuse.a);
     TRACE("(%p) : Ambient {%.8e, %.8e, %.8e, %.8e}\n", stateblock->device,
-            stateblock->material.Ambient.r, stateblock->material.Ambient.g,
-            stateblock->material.Ambient.b, stateblock->material.Ambient.a);
+            stateblock->state.material.Ambient.r, stateblock->state.material.Ambient.g,
+            stateblock->state.material.Ambient.b, stateblock->state.material.Ambient.a);
     TRACE("(%p) : Specular {%.8e, %.8e, %.8e, %.8e}\n", stateblock->device,
-            stateblock->material.Specular.r, stateblock->material.Specular.g,
-            stateblock->material.Specular.b, stateblock->material.Specular.a);
+            stateblock->state.material.Specular.r, stateblock->state.material.Specular.g,
+            stateblock->state.material.Specular.b, stateblock->state.material.Specular.a);
     TRACE("(%p) : Emissive {%.8e, %.8e, %.8e, %.8e}\n", stateblock->device,
-            stateblock->material.Emissive.r, stateblock->material.Emissive.g,
-            stateblock->material.Emissive.b, stateblock->material.Emissive.a);
+            stateblock->state.material.Emissive.r, stateblock->state.material.Emissive.g,
+            stateblock->state.material.Emissive.b, stateblock->state.material.Emissive.a);
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &stateblock->material.Ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&stateblock->state.material.Ambient);
     checkGLcall("glMaterialfv(GL_AMBIENT)");
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &stateblock->material.Diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&stateblock->state.material.Diffuse);
     checkGLcall("glMaterialfv(GL_DIFFUSE)");
-    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &stateblock->material.Emissive);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&stateblock->state.material.Emissive);
     checkGLcall("glMaterialfv(GL_EMISSION)");
 }
 
@@ -1317,23 +1319,23 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
      * tracking with glColorMaterial, so apply those here. */
     switch (context->tracking_parm) {
         case GL_AMBIENT_AND_DIFFUSE:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*)&device->updateStateBlock->material.Ambient);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*)&device->updateStateBlock->material.Diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&device->updateStateBlock->state.material.Ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&device->updateStateBlock->state.material.Diffuse);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_DIFFUSE:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*)&device->updateStateBlock->material.Diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&device->updateStateBlock->state.material.Diffuse);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_AMBIENT:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*)&device->updateStateBlock->material.Ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&device->updateStateBlock->state.material.Ambient);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_EMISSION:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*)&device->updateStateBlock->material.Emissive);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&device->updateStateBlock->state.material.Emissive);
             checkGLcall("glMaterialfv");
             break;
 
@@ -1341,7 +1343,8 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
             /* Only change material color if specular is enabled, otherwise it is set to black */
             if (device->stateBlock->state.render_states[WINED3DRS_SPECULARENABLE])
             {
-                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&device->updateStateBlock->material.Specular);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,
+                        (float *)&device->updateStateBlock->state.material.Specular);
                 checkGLcall("glMaterialfv");
             } else {
                 static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};

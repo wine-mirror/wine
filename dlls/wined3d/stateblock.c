@@ -739,12 +739,12 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->vertexDecl = targetStateBlock->vertexDecl;
     }
 
-    if (This->changed.material
-            && memcmp(&targetStateBlock->material, &This->material, sizeof(This->material)))
+    if (This->changed.material && memcmp(&targetStateBlock->state.material,
+            &This->state.material, sizeof(This->state.material)))
     {
         TRACE("Updating material.\n");
 
-        This->material = targetStateBlock->material;
+        This->state.material = targetStateBlock->state.material;
     }
 
     if (This->changed.viewport && memcmp(&targetStateBlock->state.viewport,
@@ -990,7 +990,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
 
     if (This->changed.material)
     {
-        IWineD3DDevice_SetMaterial(device, &This->material);
+        IWineD3DDevice_SetMaterial(device, &This->state.material);
     }
 
     if (This->changed.viewport)
