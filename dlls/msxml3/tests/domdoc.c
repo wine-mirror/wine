@@ -3141,7 +3141,7 @@ static void test_XPath(void)
 
 static void test_cloneNode(void )
 {
-    IXMLDOMDocument *doc = NULL;
+    IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     IXMLDOMNodeList *pList;
     IXMLDOMNamedNodeMap *mapAttr;
@@ -3154,7 +3154,7 @@ static void test_cloneNode(void )
     BSTR str;
     static const WCHAR szSearch[] = { 'l', 'c', '/', 'p', 'r', 0 };
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
     str = SysAllocString( szComplete4 );
@@ -3272,11 +3272,11 @@ static void test_cloneNode(void )
     r = IXMLDOMNode_get_childNodes(node_clone, &pList);
     ok( r == S_OK, "ret %08x\n", r );
     if (pList)
-	{
-		IXMLDOMNodeList_get_length(pList, &nLength1);
+    {
+        IXMLDOMNodeList_get_length(pList, &nLength1);
         ok( nLength1 == 0, "Length should be 0 (%d)\n", nLength1);
-		IXMLDOMNodeList_Release(pList);
-	}
+        IXMLDOMNodeList_Release(pList);
+    }
 
     r = IXMLDOMNode_get_attributes(node_clone, &mapAttr);
     ok( r == S_OK, "ret %08x\n", r );
@@ -3314,7 +3314,7 @@ static void test_xmlTypes(void)
     VARIANT v;
     LONG len = 0;
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
     pNextChild = (void*)0xdeadbeef;
@@ -4385,7 +4385,7 @@ static void test_nodeTypeTests( void )
     IXMLDOMElement *pElement;
     HRESULT hr;
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), NULL);
@@ -4727,10 +4727,10 @@ static void test_DocumentSaveToDocument(void)
     IXMLDOMElement *pRoot;
     HRESULT hr;
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    doc2 = create_document(&IID_IXMLDOMDocument2);
+    doc2 = create_document(&IID_IXMLDOMDocument);
     if (!doc2)
     {
         IXMLDOMDocument_Release(doc);
@@ -4781,7 +4781,7 @@ static void test_DocumentSaveToFile(void)
     DWORD read = 0;
     HRESULT hr;
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
     hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
@@ -4826,10 +4826,10 @@ static void test_testTransforms(void)
 
     HRESULT hr;
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    docSS = create_document(&IID_IXMLDOMDocument2);
+    docSS = create_document(&IID_IXMLDOMDocument);
     if (!docSS)
     {
         IXMLDOMDocument_Release(doc);
@@ -4864,7 +4864,7 @@ static void test_testTransforms(void)
 
 static void test_Namespaces(void)
 {
-    IXMLDOMDocument2 *doc;
+    IXMLDOMDocument *doc;
     IXMLDOMNode *pNode;
     IXMLDOMNode *pNode2 = NULL;
     VARIANT_BOOL bSucc;
@@ -4876,10 +4876,10 @@ static void test_Namespaces(void)
 "<WEB:Site version=\"1.0\" />\n"
 "</root>";
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szNamespacesXML), &bSucc);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szNamespacesXML), &bSucc);
     ok(hr == S_OK, "ret %08x\n", hr );
     ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
 
@@ -4915,14 +4915,14 @@ static void test_Namespaces(void)
         IXMLDOMNode_Release(pNode);
     }
 
-    IXMLDOMDocument2_Release(doc);
+    IXMLDOMDocument_Release(doc);
 
     free_bstrs();
 }
 
 static void test_FormattingXML(void)
 {
-    IXMLDOMDocument2 *doc;
+    IXMLDOMDocument *doc;
     IXMLDOMElement *pElement;
     VARIANT_BOOL bSucc;
     HRESULT hr;
@@ -4930,16 +4930,16 @@ static void test_FormattingXML(void)
     static const CHAR szLinefeedXML[] = "<?xml version=\"1.0\"?>\n<Root>\n\t<Sub val=\"A\" />\n</Root>";
     static const CHAR szLinefeedRootXML[] = "<Root>\r\n\t<Sub val=\"A\"/>\r\n</Root>";
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szLinefeedXML), &bSucc);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szLinefeedXML), &bSucc);
     ok(hr == S_OK, "ret %08x\n", hr );
     ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
 
     if(bSucc == VARIANT_TRUE)
     {
-        hr = IXMLDOMDocument2_get_documentElement(doc, &pElement);
+        hr = IXMLDOMDocument_get_documentElement(doc, &pElement);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -4952,43 +4952,43 @@ static void test_FormattingXML(void)
         }
     }
 
-    IXMLDOMDocument2_Release(doc);
+    IXMLDOMDocument_Release(doc);
 
     free_bstrs();
 }
 
 static void test_NodeTypeValue(void)
 {
-    IXMLDOMDocument2 *doc;
+    IXMLDOMDocument *doc;
     IXMLDOMNode *pNode;
     VARIANT_BOOL bSucc;
     HRESULT hr;
     VARIANT v;
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szTypeValueXML), &bSucc);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szTypeValueXML), &bSucc);
     ok(hr == S_OK, "ret %08x\n", hr );
     ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
     if(bSucc == VARIANT_TRUE)
     {
-        hr = IXMLDOMDocument2_get_nodeValue(doc, NULL);
+        hr = IXMLDOMDocument_get_nodeValue(doc, NULL);
         ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
         V_VT(&v) = VT_BSTR;
         V_BSTR(&v) = NULL;
-        hr = IXMLDOMDocument2_get_nodeValue(doc, &v);
+        hr = IXMLDOMDocument_get_nodeValue(doc, &v);
         ok(hr == S_FALSE, "ret %08x\n", hr );
         ok(V_VT(&v) == VT_NULL, "expect VT_NULL got %d\n", V_VT(&v));
 
-        hr = IXMLDOMDocument2_get_nodeTypedValue(doc, NULL);
+        hr = IXMLDOMDocument_get_nodeTypedValue(doc, NULL);
         ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
-        hr = IXMLDOMDocument2_get_nodeTypedValue(doc, &v);
+        hr = IXMLDOMDocument_get_nodeTypedValue(doc, &v);
         ok(hr == S_FALSE, "ret %08x\n", hr );
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/string"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/string"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5010,7 +5010,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/string2"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/string2"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5023,7 +5023,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/number"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/number"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5036,7 +5036,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/number2"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/number2"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5049,7 +5049,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/int"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/int"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5062,7 +5062,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/fixed"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/fixed"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5074,7 +5074,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/bool"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/bool"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5087,7 +5087,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/datetime"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/datetime"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5100,7 +5100,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/datetimetz"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/datetimetz"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5113,7 +5113,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/date"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/date"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5126,7 +5126,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/time"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/time"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5139,7 +5139,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/timetz"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/timetz"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5152,7 +5152,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/i1"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/i1"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5165,7 +5165,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/i2"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/i2"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5178,7 +5178,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/i4"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/i4"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5191,7 +5191,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/ui1"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/ui1"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5204,7 +5204,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/ui2"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/ui2"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5217,7 +5217,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/ui4"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/ui4"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5243,7 +5243,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/r8"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/r8"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5256,7 +5256,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/float"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/float"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5269,7 +5269,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/uuid"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/uuid"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5282,7 +5282,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/binhex"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/binhex"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5299,7 +5299,7 @@ static void test_NodeTypeValue(void)
             IXMLDOMNode_Release(pNode);
         }
 
-        hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("root/binbase64"), &pNode);
+        hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/binbase64"), &pNode);
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
@@ -5317,15 +5317,15 @@ static void test_NodeTypeValue(void)
         }
     }
 
-    IXMLDOMDocument2_Release(doc);
+    IXMLDOMDocument_Release(doc);
 
     free_bstrs();
 }
 
 static void test_TransformWithLoadingLocalFile(void)
 {
-    IXMLDOMDocument2 *doc = NULL;
-    IXMLDOMDocument2 *xsl = NULL;
+    IXMLDOMDocument *doc;
+    IXMLDOMDocument *xsl;
     IXMLDOMNode *pNode;
     VARIANT_BOOL bSucc;
     HRESULT hr;
@@ -5353,17 +5353,17 @@ static void test_TransformWithLoadingLocalFile(void)
             lpPathBuffer[i] = '/';
     }
 
-    doc = create_document(&IID_IXMLDOMDocument2);
+    doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    xsl = create_document(&IID_IXMLDOMDocument2);
+    xsl = create_document(&IID_IXMLDOMDocument);
     if (!xsl)
     {
         IXMLDOMDocument2_Release(doc);
         return;
     }
 
-    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szTypeValueXML), &bSucc);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szTypeValueXML), &bSucc);
     ok(hr == S_OK, "ret %08x\n", hr );
     ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
     if(bSucc == VARIANT_TRUE)
@@ -5379,19 +5379,19 @@ static void test_TransformWithLoadingLocalFile(void)
         lstrcatW(sXSL, sFileName);
         lstrcatW(sXSL, sPart2);
 
-        hr = IXMLDOMDocument2_loadXML(xsl, sXSL, &bSucc);
+        hr = IXMLDOMDocument_loadXML(xsl, sXSL, &bSucc);
         ok(hr == S_OK, "ret %08x\n", hr );
         ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
         if(bSucc == VARIANT_TRUE)
         {
             BSTR sResult;
 
-            hr = IXMLDOMDocument_QueryInterface(xsl, &IID_IXMLDOMNode, (LPVOID*)&pNode );
+            hr = IXMLDOMDocument_QueryInterface(xsl, &IID_IXMLDOMNode, (void**)&pNode );
             ok(hr == S_OK, "ret %08x\n", hr );
             if(hr == S_OK)
             {
                 /* This will load the temp file via the XSL */
-                hr = IXMLDOMDocument2_transformNode(doc, pNode, &sResult);
+                hr = IXMLDOMDocument_transformNode(doc, pNode, &sResult);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 if(hr == S_OK)
                 {
@@ -5406,8 +5406,8 @@ static void test_TransformWithLoadingLocalFile(void)
         SysFreeString(sXSL);
     }
 
-    IXMLDOMDocument2_Release(doc);
-    IXMLDOMDocument2_Release(xsl);
+    IXMLDOMDocument_Release(doc);
+    IXMLDOMDocument_Release(xsl);
 
     DeleteFile(lpPathBuffer);
     free_bstrs();
@@ -6221,19 +6221,19 @@ static void test_get_prefix(void)
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
-    HRESULT r;
+    HRESULT hr;
 
-    r = CoInitialize( NULL );
-    ok( r == S_OK, "failed to init com\n");
-    if (r != S_OK)
+    hr = CoInitialize( NULL );
+    ok( hr == S_OK, "failed to init com\n");
+    if (hr != S_OK)
         return;
 
     test_XMLHTTP();
 
-    doc = create_document(&IID_IXMLDOMDocument);
-    if (!doc)
+    hr = CoCreateInstance( &CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc );
+    if (hr != S_OK)
     {
-        win_skip("IXMLDOMDocument is not available (0x%08x)\n", r);
+        win_skip("IXMLDOMDocument is not available (0x%08x)\n", hr);
         return;
     }
 
