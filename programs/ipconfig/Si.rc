@@ -1,0 +1,49 @@
+/*
+ * IP configuration utility
+ * Slovenian language support
+ *
+ * Copyright 2010 Matej Špindler
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "ipconfig.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Uporaba: ipconfig [ /? | /all ]\n"
+    STRING_INVALID_CMDLINE, "Napaka: Nepoznana ali nepopolna ukazna vrstica\n"
+    STRING_ADAPTER_FRIENDLY, "%s kartica %s\n"
+    STRING_ETHERNET, "Ethernet"
+    STRING_UNKNOWN, "Nepoznano"
+    STRING_CONN_DNS_SUFFIX, "S povezavo določena DNS pripona"
+    STRING_IP_ADDRESS, "IP naslov"
+    STRING_HOSTNAME, "Ime gostitelja"
+    STRING_NODE_TYPE, "Tip vozlišča"
+    STRING_BROADCAST, "Broadcast"
+    STRING_PEER_TO_PEER, "Vsak z vsakim"
+    STRING_MIXED, "Mešan"
+    STRING_HYBRID, "Hibriden"
+    STRING_IP_ROUTING, "IP usmerjanje omogočeno"
+    STRING_DESCRIPTION, "Opis"
+    STRING_PHYS_ADDR, "Fizični naslov"
+    STRING_DHCP_ENABLED, "DHCP omogočen"
+    STRING_YES, "Da"
+    STRING_NO, "Ne"
+}
