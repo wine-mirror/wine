@@ -5961,6 +5961,17 @@ static void test_get_ownerDocument(void)
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(V_BSTR(&var), _bstr_("XSLPattern")) == 0, "expected XSLPattern\n");
+    VariantClear(&var);
+
+    /* set to XPath and check that new instances use it */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("XPath");
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), var);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = _bstr_("xmlns:wi=\'www.winehq.org\'");
     hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), var);
@@ -5979,8 +5990,13 @@ static void test_get_ownerDocument(void)
     hr = IXMLDOMDocument2_getProperty(doc_owner, _bstr_("SelectionNamespaces"), &var);
     todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
-    IXMLDOMDocument2_Release(doc_owner);
     VariantClear(&var);
+
+    hr = IXMLDOMDocument2_getProperty(doc_owner, _bstr_("SelectionLanguage"), &var);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(V_BSTR(&var), _bstr_("XPath")) == 0, "expected XPath\n");
+    VariantClear(&var);
+    IXMLDOMDocument2_Release(doc_owner);
 
     hr = IXMLDOMNode_get_ownerDocument(node, &doc2);
     ok( hr == S_OK, "got 0x%08x\n", hr);

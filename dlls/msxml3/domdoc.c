@@ -77,7 +77,6 @@ typedef struct _domdoc
     VARIANT_BOOL validating;
     VARIANT_BOOL resolving;
     VARIANT_BOOL preserving;
-    BOOL XPath;
     IXMLDOMSchemaCollection *schema;
     bsc_t *bsc;
     HRESULT error;
@@ -117,6 +116,7 @@ typedef struct _domdoc
 typedef struct _xmldoc_priv {
     LONG refs;
     struct list orphans;
+    BOOL XPath;
 } xmldoc_priv;
 
 typedef struct _orphan_entry {
@@ -124,9 +124,24 @@ typedef struct _orphan_entry {
     xmlNode * node;
 } orphan_entry;
 
-static inline xmldoc_priv * priv_from_xmlDocPtr(xmlDocPtr doc)
+static inline xmldoc_priv * priv_from_xmlDocPtr(const xmlDocPtr doc)
 {
     return doc->_private;
+}
+
+static inline BOOL is_xpathmode(const xmlDocPtr doc)
+{
+    return priv_from_xmlDocPtr(doc)->XPath;
+}
+
+static inline void set_xpathmode(const xmlDocPtr doc)
+{
+    priv_from_xmlDocPtr(doc)->XPath = TRUE;
+}
+
+static inline void reset_xpathmode(const xmlDocPtr doc)
+{
+    priv_from_xmlDocPtr(doc)->XPath = FALSE;
 }
 
 static xmldoc_priv * create_priv(void)
@@ -134,9 +149,10 @@ static xmldoc_priv * create_priv(void)
     xmldoc_priv *priv;
     priv = heap_alloc( sizeof (*priv) );
 
-    if(priv)
+    if (priv)
     {
         priv->refs = 0;
+        priv->XPath = FALSE;
         list_init( &priv->orphans );
     }
 
@@ -2139,9 +2155,9 @@ static HRESULT WINAPI domdoc_setProperty(
 
         hr = S_OK;
         if (lstrcmpiW(bstr, PropValueXPathW) == 0)
-            This->XPath = TRUE;
+            set_xpathmode(get_doc(This));
         else if (lstrcmpiW(bstr, PropValueXSLPatternW) == 0)
-            This->XPath = FALSE;
+            reset_xpathmode(get_doc(This));
         else
             hr = E_FAIL;
 
@@ -2174,17 +2190,16 @@ static HRESULT WINAPI domdoc_getProperty(
 
     TRACE("(%p)->(%p)\n", This, debugstr_w(p));
 
-    if (var == NULL)
+    if (!var)
         return E_INVALIDARG;
 
     if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
     {
         V_VT(var) = VT_BSTR;
-        if (This->XPath)
-            V_BSTR(var) = SysAllocString(PropValueXPathW);
-        else
-            V_BSTR(var) = SysAllocString(PropValueXSLPatternW);
-        return S_OK;
+        V_BSTR(var) = is_xpathmode(This->node.node->doc) ?
+                      SysAllocString(PropValueXPathW) :
+                      SysAllocString(PropValueXSLPatternW);
+        return V_BSTR(var) ? S_OK : E_OUTOFMEMORY;
     }
 
     FIXME("Unknown property %s\n", wine_dbgstr_w(p));
@@ -2461,7 +2476,6 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->validating = 0;
     doc->resolving = 0;
     doc->preserving = 0;
-    doc->XPath = FALSE;
     doc->error = S_OK;
     doc->schema = NULL;
     doc->stream = NULL;
@@ -2482,7 +2496,7 @@ HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
     xmlDocPtr xmldoc;
     HRESULT hr;
 
-    TRACE("(%p, %p)\n", pUnkOuter, ppObj);
+    TRACE("(%s, %p, %p)\n", debugstr_guid(clsid), pUnkOuter, ppObj);
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
@@ -2492,14 +2506,17 @@ HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
 
     hr = DOMDocument_create_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
+    {
         xmlFreeDoc(xmldoc);
+        return hr;
+    }
 
     /* properties that are dependent on object versions */
     if (IsEqualCLSID( clsid, &CLSID_DOMDocument40 ) ||
         IsEqualCLSID( clsid, &CLSID_DOMDocument60 ))
     {
         domdoc *This = impl_from_IXMLDOMDocument3(*ppObj);
-        This->XPath = TRUE;
+        set_xpathmode(get_doc(This));
     }
 
     return hr;
