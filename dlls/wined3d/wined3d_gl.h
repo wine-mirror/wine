@@ -1787,6 +1787,7 @@ typedef enum wined3d_gl_extension
     EXT_BLEND_FUNC_SEPARATE,
     EXT_BLEND_MINMAX,
     EXT_DRAW_BUFFERS2,
+    EXT_DEPTH_BOUNDS_TEST,
     EXT_FOG_COORD,
     EXT_FRAMEBUFFER_BLIT,
     EXT_FRAMEBUFFER_MULTISAMPLE,
@@ -2981,6 +2982,14 @@ typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONSEPARATEEXTPROC)(GLenum modeRGB, GLe
 #endif
 typedef void (WINE_GLAPI *PGLFNBLENDFUNCSEPARATEEXTPROC)(GLenum sfactorRGB, GLenum dfactorRGB,
         GLenum sfactorAlpha, GLenum dfactorAlpha);
+
+/* GL_EXT_depth_bounds_test */
+#ifndef GL_EXT_depth_bounds_test
+#define GL_EXT_depth_bounds_test 1
+#define GL_DEPTH_BOUNDS_TEST_EXT                            0x8890
+#define GL_DEPTH_BOUNDS_EXT                                 0x8891
+#endif
+typedef void (WINE_GLAPI *PGLFNDEPTHBOUNDSEXTPROC)(GLclampd zmin, GLclampd zmax);
 
 /* GL_EXT_draw_buffers2 */
 typedef GLvoid (WINE_GLAPI *PGLFNCOLORMASKINDEXEDEXTPROC)(GLuint buffer_idx, GLboolean r, GLboolean g,
@@ -4221,6 +4230,9 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSETPIXELFORMATWINE)(HDC hdc, int iPixelForma
     /* GL_EXT_blend_func_separate */ \
     USE_GL_FUNC(PGLFNBLENDEQUATIONSEPARATEEXTPROC, \
             glBlendEquationSeparateEXT,                 EXT_BLEND_EQUATION_SEPARATE,    NULL) \
+    /* GL_EXT_depth_bounds_test */ \
+    USE_GL_FUNC(PGLFNDEPTHBOUNDSEXTPROC, \
+            glDepthBoundsEXT,                           EXT_DEPTH_BOUNDS_TEST,          NULL) \
     /* GL_EXT_draw_buffers2 */ \
     USE_GL_FUNC(PGLFNCOLORMASKINDEXEDEXTPROC, \
             glColorMaskIndexedEXT,                      EXT_DRAW_BUFFERS2,              NULL) \

@@ -129,6 +129,7 @@ static const struct StaticPixelFormatDesc formats[] =
     {WINED3DFMT_R16G16B16A16_SNORM,         0x0,        0x0,        0x0,        0x0,        8,      0,      0},
     /* Vendor-specific formats */
     {WINED3DFMT_ATI2N,                      0x0,        0x0,        0x0,        0x0,        1,      0,      0},
+    {WINED3DFMT_NVDB,                       0x0,        0x0,        0x0,        0x0,        0,      0,      0},
     {WINED3DFMT_NVHU,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
     {WINED3DFMT_NVHS,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
 };
@@ -167,6 +168,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_R8G8B8A8_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_R8G8B8X8_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_ATI2N,              WINED3DFMT_FLAG_FOURCC | WINED3DFMT_FLAG_BROKEN_PITCH},
+    {WINED3DFMT_NVDB,               WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_NVHU,               WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_NVHS,               WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_R32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
@@ -1626,6 +1628,7 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_VERTEXDATA);
         FMT_TO_STR(WINED3DFMT_R8G8_SNORM_Cx);
         FMT_TO_STR(WINED3DFMT_ATI2N);
+        FMT_TO_STR(WINED3DFMT_NVDB);
         FMT_TO_STR(WINED3DFMT_NVHU);
         FMT_TO_STR(WINED3DFMT_NVHS);
         FMT_TO_STR(WINED3DFMT_R32G32B32A32_TYPELESS);

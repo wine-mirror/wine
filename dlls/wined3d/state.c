@@ -1880,6 +1880,42 @@ static void state_tessellation(DWORD state, IWineD3DStateBlockImpl *stateblock, 
                 stateblock->state.render_states[WINED3DRS_ENABLEADAPTIVETESSELLATION]);
 }
 
+static void state_nvdb(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
+    union {
+        DWORD d;
+        float f;
+    } zmin, zmax;
+
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (stateblock->state.render_states[WINED3DRS_ADAPTIVETESS_X] == WINED3DFMT_NVDB)
+    {
+        zmin.d = stateblock->state.render_states[WINED3DRS_ADAPTIVETESS_Z];
+        zmax.d = stateblock->state.render_states[WINED3DRS_ADAPTIVETESS_W];
+
+        /* If zmin is larger than zmax INVALID_VALUE error is generated.
+         * In d3d9 test is not performed in this case*/
+        if (zmin.f <= zmax.f)
+        {
+            glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
+            checkGLcall("glEnable(GL_DEPTH_BOUNDS_TEST_EXT)");
+            GL_EXTCALL(glDepthBoundsEXT(zmin.f, zmax.f));
+            checkGLcall("glDepthBoundsEXT(...)");
+        }
+        else {
+            glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
+            checkGLcall("glDisable(GL_DEPTH_BOUNDS_TEST_EXT)");
+        }
+    }
+    else {
+        glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
+        checkGLcall("glDisable(GL_DEPTH_BOUNDS_TEST_EXT)");
+    }
+
+    state_tessellation(state, stateblock, context);
+}
+
 static void state_wrapu(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     if (stateblock->state.render_states[WINED3DRS_WRAPU])
@@ -5078,6 +5114,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_ADAPTIVETESS_Y),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_ADAPTIVETESS_Z),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_ADAPTIVETESS_W),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_nvdb          }, EXT_DEPTH_BOUNDS_TEST           },
     { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_tessellation  }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_msaa          }, ARB_MULTISAMPLE                 },
     { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_msaa_w        }, WINED3D_GL_EXT_NONE             },

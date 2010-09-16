@@ -105,6 +105,7 @@ static const struct {
     {"GL_EXT_blend_equation_separate",      EXT_BLEND_EQUATION_SEPARATE,    0                           },
     {"GL_EXT_blend_func_separate",          EXT_BLEND_FUNC_SEPARATE,        0                           },
     {"GL_EXT_blend_minmax",                 EXT_BLEND_MINMAX,               0                           },
+    {"GL_EXT_depth_bounds_test",            EXT_DEPTH_BOUNDS_TEST,          0                           },
     {"GL_EXT_draw_buffers2",                EXT_DRAW_BUFFERS2,              0                           },
     {"GL_EXT_fog_coord",                    EXT_FOG_COORD,                  0                           },
     {"GL_EXT_framebuffer_blit",             EXT_FRAMEBUFFER_BLIT,           0                           },
@@ -3605,6 +3606,21 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter, const struct
                     return TRUE;
                 }
 
+                TRACE_(d3d_caps)("[OK]\n");
+                return TRUE;
+            }
+            TRACE_(d3d_caps)("[FAILED]\n");
+            return FALSE;
+
+        /* Depth bound test. To query if the card supports it CheckDeviceFormat with the special
+         * format MAKEFOURCC('N','V','D','B') is used.
+         * It is enabled by setting D3DRS_ADAPTIVETESS_X render state to MAKEFOURCC('N','V','D','B') and
+         * then controlled by setting D3DRS_ADAPTIVETESS_Z (zMin) and D3DRS_ADAPTIVETESS_W (zMax)
+         * to test value.
+         */
+        case WINED3DFMT_NVDB:
+            if (gl_info->supported[EXT_DEPTH_BOUNDS_TEST])
+            {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
             }
