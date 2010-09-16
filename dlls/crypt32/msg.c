@@ -809,9 +809,16 @@ static BOOL CSignerInfo_Construct(CMSG_CMS_SIGNER_INFO *info,
              &info->SignerId.u.IssuerSerialNumber.SerialNumber,
              &in->pCertInfo->SerialNumber);
         info->SignerId.dwIdChoice = CERT_ID_ISSUER_SERIAL_NUMBER;
+        info->HashEncryptionAlgorithm.pszObjId =
+         in->pCertInfo->SubjectPublicKeyInfo.Algorithm.pszObjId;
+        if (ret)
+            ret = CRYPT_ConstructBlob(&info->HashEncryptionAlgorithm.Parameters,
+             &in->pCertInfo->SubjectPublicKeyInfo.Algorithm.Parameters);
     }
     else
     {
+        const CRYPT_ALGORITHM_IDENTIFIER *pEncrAlg;
+
         /* Implicitly in->cbSize == sizeof(CMSG_SIGNER_ENCODE_INFO_WITH_CMS).
          * See CRYPT_IsValidSigner.
          */
@@ -845,6 +852,13 @@ static BOOL CSignerInfo_Construct(CMSG_CMS_SIGNER_INFO *info,
             ret = CRYPT_ConstructBlob(&info->SignerId.u.KeyId,
              &in->SignerId.u.KeyId);
         }
+        pEncrAlg = in->HashEncryptionAlgorithm.pszObjId ?
+         &in->HashEncryptionAlgorithm :
+         &in->pCertInfo->SubjectPublicKeyInfo.Algorithm;
+        info->HashEncryptionAlgorithm.pszObjId = pEncrAlg->pszObjId;
+        if (ret)
+            ret = CRYPT_ConstructBlob(&info->HashEncryptionAlgorithm.Parameters,
+             &pEncrAlg->Parameters);
     }
     /* Assumption:  algorithm IDs will point to static strings, not
      * stack-based ones, so copying the pointer values is safe.
@@ -853,8 +867,6 @@ static BOOL CSignerInfo_Construct(CMSG_CMS_SIGNER_INFO *info,
     if (ret)
         ret = CRYPT_ConstructBlob(&info->HashAlgorithm.Parameters,
          &in->HashAlgorithm.Parameters);
-    memset(&info->HashEncryptionAlgorithm, 0,
-     sizeof(info->HashEncryptionAlgorithm));
     if (ret)
         ret = CRYPT_ConstructAttributes(&info->AuthAttrs,
          (CRYPT_ATTRIBUTES *)&in->cAuthAttr);
@@ -876,6 +888,7 @@ static void CSignerInfo_Free(CMSG_CMS_SIGNER_INFO *info)
     else
         CryptMemFree(info->SignerId.u.KeyId.pbData);
     CryptMemFree(info->HashAlgorithm.Parameters.pbData);
+    CryptMemFree(info->HashEncryptionAlgorithm.Parameters.pbData);
     CryptMemFree(info->EncryptedHash.pbData);
     for (i = 0; i < info->AuthAttrs.cAttr; i++)
     {
