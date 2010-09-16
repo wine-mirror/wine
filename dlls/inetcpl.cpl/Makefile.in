@@ -10,6 +10,7 @@ C_SRCS = \
 RC_SRCS = \
 	cpl_De.rc \
 	cpl_En.rc \
+	cpl_Fr.rc \
 	cpl_It.rc \
 	inetcpl.rc
 
