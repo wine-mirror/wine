@@ -193,7 +193,10 @@ static struct fd *console_input_get_fd( struct object* obj )
 {
     struct console_input *console_input = (struct console_input*)obj;
     assert( obj->ops == &console_input_ops );
-    return console_input->fd ? (struct fd*)grab_object( console_input->fd ) : NULL;
+    if (console_input->fd)
+        return (struct fd*)grab_object( console_input->fd );
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return NULL;
 }
 
 static enum server_fd_type console_get_fd_type( struct fd *fd )
@@ -1144,7 +1147,10 @@ static struct fd *screen_buffer_get_fd( struct object *obj )
 {
     struct screen_buffer *screen_buffer = (struct screen_buffer*)obj;
     assert( obj->ops == &screen_buffer_ops );
-    return screen_buffer->fd ? (struct fd*)grab_object( screen_buffer->fd ) : NULL;
+    if (screen_buffer->fd)
+        return (struct fd*)grab_object( screen_buffer->fd );
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return NULL;
 }
 
 /* write data into a screen buffer */
