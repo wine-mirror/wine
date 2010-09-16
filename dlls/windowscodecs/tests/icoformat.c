@@ -136,7 +136,7 @@ static void test_bad_icondirentry_size(void)
                 UINT width = 0, height = 0;
                 hr = IWICBitmapFrameDecode_GetSize(framedecode, &width, &height);
                 ok(hr == S_OK, "GetFrameSize failed, hr=%x\n", hr);
-                todo_wine ok(width == 16 && height == 16, "framesize=%ux%u\n", width, height);
+                ok(width == 16 && height == 16, "framesize=%ux%u\n", width, height);
                 IWICBitmapFrameDecode_Release(framedecode);
             }
 

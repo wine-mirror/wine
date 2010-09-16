@@ -68,8 +68,7 @@ typedef struct {
 typedef struct {
     const IWICBitmapFrameDecodeVtbl *lpVtbl;
     LONG ref;
-    ICONDIRENTRY entry;
-    IcoDecoder *parent;
+    UINT width, height;
     BYTE *bits;
 } IcoFrameDecode;
 
@@ -116,7 +115,6 @@ static ULONG WINAPI IcoFrameDecode_Release(IWICBitmapFrameDecode *iface)
 
     if (ref == 0)
     {
-        IUnknown_Release((IUnknown*)This->parent);
         HeapFree(GetProcessHeap(), 0, This->bits);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -129,8 +127,8 @@ static HRESULT WINAPI IcoFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
 {
     IcoFrameDecode *This = (IcoFrameDecode*)iface;
 
-    *puiWidth = This->entry.bWidth ? This->entry.bWidth : 256;
-    *puiHeight = This->entry.bHeight ? This->entry.bHeight : 256;
+    *puiWidth = This->width;
+    *puiHeight = This->height;
 
     TRACE("(%p) -> (%i,%i)\n", iface, *puiWidth, *puiHeight);
 
@@ -158,378 +156,13 @@ static HRESULT WINAPI IcoFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     return WINCODEC_ERR_PALETTEUNAVAILABLE;
 }
 
-static inline void pixel_set_trans(DWORD* pixel, BOOL transparent)
-{
-    if (transparent) *pixel = 0;
-    else *pixel |= 0xff000000;
-}
-
-static HRESULT IcoFrameDecode_ReadPixels(IcoFrameDecode *This)
-{
-    BITMAPINFOHEADER bih;
-    DWORD colors[256];
-    UINT colorcount=0;
-    LARGE_INTEGER seek;
-    ULONG bytesread;
-    HRESULT hr;
-    BYTE *tempdata = NULL;
-    BYTE *bits = NULL;
-    UINT bitsStride;
-    UINT bitsSize;
-    UINT width, height;
-
-    width = This->entry.bWidth ? This->entry.bWidth : 256;
-    height = This->entry.bHeight ? This->entry.bHeight : 256;
-
-    /* read the BITMAPINFOHEADER */
-    seek.QuadPart = This->entry.dwDIBOffset;
-    hr = IStream_Seek(This->parent->stream, seek, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr)) goto fail;
-
-    hr = IStream_Read(This->parent->stream, &bih, sizeof(BITMAPINFOHEADER), &bytesread);
-    if (FAILED(hr) || bytesread != sizeof(BITMAPINFOHEADER)) goto fail;
-
-    if (bih.biBitCount <= 8)
-    {
-        /* read the palette */
-        colorcount = bih.biClrUsed ? bih.biClrUsed : 1 << bih.biBitCount;
-
-        hr = IStream_Read(This->parent->stream, colors, sizeof(RGBQUAD)*colorcount, &bytesread);
-        if (FAILED(hr) || bytesread != sizeof(RGBQUAD)*colorcount) goto fail;
-    }
-
-    bitsStride = width * 4;
-    bitsSize = bitsStride * height;
-
-    /* read the XOR data */
-    switch (bih.biBitCount)
-    {
-    case 1:
-    {
-        UINT xorBytesPerRow = (width+31)/32*4;
-        UINT xorBytes = xorBytesPerRow * height;
-        INT xorStride;
-        BYTE *xorRow;
-        BYTE *bitsRow;
-        UINT x, y;
-
-        tempdata = HeapAlloc(GetProcessHeap(), 0, xorBytes);
-        if (!tempdata)
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        hr = IStream_Read(This->parent->stream, tempdata, xorBytes, &bytesread);
-        if (FAILED(hr) || bytesread != xorBytes) goto fail;
-
-        if (bih.biHeight > 0) /* bottom-up DIB */
-        {
-            xorStride = -xorBytesPerRow;
-            xorRow = tempdata + (height-1)*xorBytesPerRow;
-        }
-        else /* top-down DIB */
-        {
-            xorStride = xorBytesPerRow;
-            xorRow = tempdata;
-        }
-
-        bits = HeapAlloc(GetProcessHeap(), 0, bitsSize);
-
-        /* palette-map the 1-bit data */
-        bitsRow = bits;
-        for (y=0; y<height; y++) {
-            BYTE *xorByte=xorRow;
-            DWORD *bitsPixel=(DWORD*)bitsRow;
-            for (x=0; x<width; x+=8) {
-                BYTE xorVal;
-                xorVal=*xorByte++;
-                *bitsPixel++ = colors[xorVal>>7];
-                if (x+1 < width) *bitsPixel++ = colors[xorVal>>6&1];
-                if (x+2 < width) *bitsPixel++ = colors[xorVal>>5&1];
-                if (x+3 < width) *bitsPixel++ = colors[xorVal>>4&1];
-                if (x+4 < width) *bitsPixel++ = colors[xorVal>>3&1];
-                if (x+5 < width) *bitsPixel++ = colors[xorVal>>2&1];
-                if (x+6 < width) *bitsPixel++ = colors[xorVal>>1&1];
-                if (x+7 < width) *bitsPixel++ = colors[xorVal&1];
-            }
-            xorRow += xorStride;
-            bitsRow += bitsStride;
-        }
-
-        HeapFree(GetProcessHeap(), 0, tempdata);
-        break;
-    }
-    case 4:
-    {
-        UINT xorBytesPerRow = (width+7)/8*4;
-        UINT xorBytes = xorBytesPerRow * height;
-        INT xorStride;
-        BYTE *xorRow;
-        BYTE *bitsRow;
-        UINT x, y;
-
-        tempdata = HeapAlloc(GetProcessHeap(), 0, xorBytes);
-        if (!tempdata)
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        hr = IStream_Read(This->parent->stream, tempdata, xorBytes, &bytesread);
-        if (FAILED(hr) || bytesread != xorBytes) goto fail;
-
-        if (bih.biHeight > 0) /* bottom-up DIB */
-        {
-            xorStride = -xorBytesPerRow;
-            xorRow = tempdata + (height-1)*xorBytesPerRow;
-        }
-        else /* top-down DIB */
-        {
-            xorStride = xorBytesPerRow;
-            xorRow = tempdata;
-        }
-
-        bits = HeapAlloc(GetProcessHeap(), 0, bitsSize);
-
-        /* palette-map the 4-bit data */
-        bitsRow = bits;
-        for (y=0; y<height; y++) {
-            BYTE *xorByte=xorRow;
-            DWORD *bitsPixel=(DWORD*)bitsRow;
-            for (x=0; x<width; x+=2) {
-                BYTE xorVal;
-                xorVal=*xorByte++;
-                *bitsPixel++ = colors[xorVal>>4];
-                if (x+1 < width) *bitsPixel++ = colors[xorVal&0xf];
-            }
-            xorRow += xorStride;
-            bitsRow += bitsStride;
-        }
-
-        HeapFree(GetProcessHeap(), 0, tempdata);
-        break;
-    }
-    case 8:
-    {
-        UINT xorBytesPerRow = (width+3)/4*4;
-        UINT xorBytes = xorBytesPerRow * height;
-        INT xorStride;
-        BYTE *xorRow;
-        BYTE *bitsRow;
-        UINT x, y;
-
-        tempdata = HeapAlloc(GetProcessHeap(), 0, xorBytes);
-        if (!tempdata)
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        hr = IStream_Read(This->parent->stream, tempdata, xorBytes, &bytesread);
-        if (FAILED(hr) || bytesread != xorBytes) goto fail;
-
-        if (bih.biHeight > 0) /* bottom-up DIB */
-        {
-            xorStride = -xorBytesPerRow;
-            xorRow = tempdata + (height-1)*xorBytesPerRow;
-        }
-        else /* top-down DIB */
-        {
-            xorStride = xorBytesPerRow;
-            xorRow = tempdata;
-        }
-
-        bits = HeapAlloc(GetProcessHeap(), 0, bitsSize);
-
-        /* palette-map the 8-bit data */
-        bitsRow = bits;
-        for (y=0; y<height; y++) {
-            BYTE *xorByte=xorRow;
-            DWORD *bitsPixel=(DWORD*)bitsRow;
-            for (x=0; x<width; x++)
-                *bitsPixel++ = colors[*xorByte++];
-            xorRow += xorStride;
-            bitsRow += bitsStride;
-        }
-
-        HeapFree(GetProcessHeap(), 0, tempdata);
-        break;
-    }
-    case 24:
-    {
-        UINT xorBytesPerRow = (width*3+3)/4*4;
-        UINT xorBytes = xorBytesPerRow * height;
-        INT xorStride;
-        BYTE *xorRow;
-        BYTE *bitsRow;
-        UINT x, y;
-
-        tempdata = HeapAlloc(GetProcessHeap(), 0, xorBytes);
-        if (!tempdata)
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        hr = IStream_Read(This->parent->stream, tempdata, xorBytes, &bytesread);
-        if (FAILED(hr) || bytesread != xorBytes) goto fail;
-
-        if (bih.biHeight > 0) /* bottom-up DIB */
-        {
-            xorStride = -xorBytesPerRow;
-            xorRow = tempdata + (height-1)*xorBytesPerRow;
-        }
-        else /* top-down DIB */
-        {
-            xorStride = xorBytesPerRow;
-            xorRow = tempdata;
-        }
-
-        bits = HeapAlloc(GetProcessHeap(), 0, bitsSize);
-
-        /* copy BGR->BGRA */
-        bitsRow = bits;
-        for (y=0; y<height; y++) {
-            BYTE *xorByte=xorRow;
-            BYTE *bitsByte=bitsRow;
-            for (x=0; x<width; x++)
-            {
-                *bitsByte++ = *xorByte++; /* blue */
-                *bitsByte++ = *xorByte++; /* green */
-                *bitsByte++ = *xorByte++; /* red */
-                bitsByte++; /* alpha */
-            }
-            xorRow += xorStride;
-            bitsRow += bitsStride;
-        }
-
-        HeapFree(GetProcessHeap(), 0, tempdata);
-        break;
-    }
-    case 32:
-    {
-        UINT xorBytesPerRow = width*4;
-        UINT xorBytes = xorBytesPerRow * height;
-
-        bits = HeapAlloc(GetProcessHeap(), 0, xorBytes);
-        if (!bits)
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        if (bih.biHeight > 0) /* bottom-up DIB */
-        {
-            /* read the rows backwards so we get a top-down DIB */
-            UINT i;
-            BYTE *xorRow = bits + xorBytesPerRow * (height-1);
-
-            for (i=0; i<height; i++)
-            {
-                hr = IStream_Read(This->parent->stream, xorRow, xorBytesPerRow, &bytesread);
-                if (FAILED(hr) || bytesread != xorBytesPerRow) goto fail;
-                xorRow -= xorBytesPerRow;
-            }
-        }
-        else /* top-down DIB */
-        {
-            hr = IStream_Read(This->parent->stream, bits, xorBytes, &bytesread);
-            if (FAILED(hr) || bytesread != xorBytes) goto fail;
-        }
-        break;
-    }
-    default:
-        FIXME("unsupported bitcount: %u\n", bih.biBitCount);
-        goto fail;
-    }
-
-    if (bih.biBitCount < 32)
-    {
-        /* set alpha data based on the AND mask */
-        UINT andBytesPerRow = (width+31)/32*4;
-        UINT andBytes = andBytesPerRow * height;
-        INT andStride;
-        BYTE *andRow;
-        BYTE *bitsRow;
-        UINT x, y;
-
-        tempdata = HeapAlloc(GetProcessHeap(), 0, andBytes);
-        if (!tempdata)
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        hr = IStream_Read(This->parent->stream, tempdata, andBytes, &bytesread);
-        if (FAILED(hr) || bytesread != andBytes) goto fail;
-
-        if (bih.biHeight > 0) /* bottom-up DIB */
-        {
-            andStride = -andBytesPerRow;
-            andRow = tempdata + (height-1)*andBytesPerRow;
-        }
-        else /* top-down DIB */
-        {
-            andStride = andBytesPerRow;
-            andRow = tempdata;
-        }
-
-        bitsRow = bits;
-        for (y=0; y<height; y++) {
-            BYTE *andByte=andRow;
-            DWORD *bitsPixel=(DWORD*)bitsRow;
-            for (x=0; x<width; x+=8) {
-                BYTE andVal=*andByte++;
-                pixel_set_trans(bitsPixel++, andVal>>7&1);
-                if (x+1 < width) pixel_set_trans(bitsPixel++, andVal>>6&1);
-                if (x+2 < width) pixel_set_trans(bitsPixel++, andVal>>5&1);
-                if (x+3 < width) pixel_set_trans(bitsPixel++, andVal>>4&1);
-                if (x+4 < width) pixel_set_trans(bitsPixel++, andVal>>3&1);
-                if (x+5 < width) pixel_set_trans(bitsPixel++, andVal>>2&1);
-                if (x+6 < width) pixel_set_trans(bitsPixel++, andVal>>1&1);
-                if (x+7 < width) pixel_set_trans(bitsPixel++, andVal&1);
-            }
-            andRow += andStride;
-            bitsRow += bitsStride;
-        }
-
-        HeapFree(GetProcessHeap(), 0, tempdata);
-    }
-
-    This->bits = bits;
-
-    return S_OK;
-
-fail:
-    HeapFree(GetProcessHeap(), 0, tempdata);
-    HeapFree(GetProcessHeap(), 0, bits);
-    if (SUCCEEDED(hr)) hr = E_FAIL;
-    TRACE("<-- %x\n", hr);
-    return hr;
-}
-
 static HRESULT WINAPI IcoFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
     IcoFrameDecode *This = (IcoFrameDecode*)iface;
-    HRESULT hr=S_OK;
-    UINT width, height, stride;
     TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
 
-    EnterCriticalSection(&This->parent->lock);
-    if (!This->bits)
-    {
-        hr = IcoFrameDecode_ReadPixels(This);
-    }
-    LeaveCriticalSection(&This->parent->lock);
-    if (FAILED(hr)) return hr;
-
-    width = This->entry.bWidth ? This->entry.bWidth : 256;
-    height = This->entry.bHeight ? This->entry.bHeight : 256;
-    stride = width * 4;
-
-    return copy_pixels(32, This->bits, width, height, stride,
+    return copy_pixels(32, This->bits, This->width, This->height, This->width * 4,
         prc, cbStride, cbBufferSize, pbBuffer);
 }
 
@@ -567,6 +200,148 @@ static const IWICBitmapFrameDecodeVtbl IcoFrameDecode_Vtbl = {
     IcoFrameDecode_GetColorContexts,
     IcoFrameDecode_GetThumbnail
 };
+
+static inline void pixel_set_trans(DWORD* pixel, BOOL transparent)
+{
+    if (transparent) *pixel = 0;
+    else *pixel |= 0xff000000;
+}
+
+static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
+{
+    HRESULT hr;
+    IWICBitmapDecoder *decoder;
+    IWICBitmapFrameDecode *framedecode;
+    WICPixelFormatGUID pixelformat;
+    IWICBitmapSource *source;
+    int has_alpha=FALSE; /* if TRUE, alpha data might be in the image data */
+    WICRect rc;
+
+    hr = IcoDibDecoder_CreateInstance(NULL, &IID_IWICBitmapDecoder, (void**)&decoder);
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
+
+        if (SUCCEEDED(hr))
+            hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICBitmapFrameDecode_GetSize(framedecode, &result->width, &result->height);
+
+            if (SUCCEEDED(hr))
+            {
+                result->bits = HeapAlloc(GetProcessHeap(), 0, result->width * result->height * 4);
+                if (!result->bits) hr = E_OUTOFMEMORY;
+            }
+
+            if (SUCCEEDED(hr))
+                hr = IWICBitmapFrameDecode_GetPixelFormat(framedecode, &pixelformat);
+
+            if (IsEqualGUID(&pixelformat, &GUID_WICPixelFormat32bppBGR) ||
+                IsEqualGUID(&pixelformat, &GUID_WICPixelFormat32bppBGRA))
+            {
+                source = (IWICBitmapSource*)framedecode;
+                IWICBitmapSource_AddRef(source);
+                has_alpha = TRUE;
+            }
+            else
+            {
+                hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA,
+                    (IWICBitmapSource*)framedecode, &source);
+                has_alpha = FALSE;
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                rc.X = 0;
+                rc.Y = 0;
+                rc.Width = result->width;
+                rc.Height = result->height;
+                hr = IWICBitmapSource_CopyPixels(source, &rc, result->width * 4,
+                    result->width * result->height * 4, result->bits);
+
+                IWICBitmapSource_Release(source);
+            }
+
+            IWICBitmapFrameDecode_Release(framedecode);
+        }
+
+        if (SUCCEEDED(hr) && !has_alpha)
+        {
+            /* set alpha data based on the AND mask */
+            UINT andBytesPerRow = (result->width+31)/32*4;
+            UINT andBytes = andBytesPerRow * result->height;
+            INT andStride;
+            BYTE *tempdata=NULL;
+            BYTE *andRow;
+            BYTE *bitsRow;
+            UINT bitsStride = result->width * 4;
+            UINT x, y;
+            ULONG offset;
+            ULONG bytesread;
+            LARGE_INTEGER seek;
+            int topdown;
+
+            BmpDecoder_FindIconMask(decoder, &offset, &topdown);
+
+            if (offset)
+            {
+                seek.QuadPart = offset;
+
+                hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, 0);
+
+                if (SUCCEEDED(hr))
+                {
+                    tempdata = HeapAlloc(GetProcessHeap(), 0, andBytes);
+                    if (!tempdata) hr = E_OUTOFMEMORY;
+                }
+
+                if (SUCCEEDED(hr))
+                    hr = IStream_Read(stream, tempdata, andBytes, &bytesread);
+
+                if (SUCCEEDED(hr) && bytesread == andBytes)
+                {
+                    if (topdown)
+                    {
+                        andStride = andBytesPerRow;
+                        andRow = tempdata;
+                    }
+                    else
+                    {
+                        andStride = -andBytesPerRow;
+                        andRow = tempdata + (result->height-1)*andBytesPerRow;
+                    }
+
+                    bitsRow = result->bits;
+                    for (y=0; y<result->height; y++) {
+                        BYTE *andByte=andRow;
+                        DWORD *bitsPixel=(DWORD*)bitsRow;
+                        for (x=0; x<result->width; x+=8) {
+                            BYTE andVal=*andByte++;
+                            pixel_set_trans(bitsPixel++, andVal>>7&1);
+                            if (x+1 < result->width) pixel_set_trans(bitsPixel++, andVal>>6&1);
+                            if (x+2 < result->width) pixel_set_trans(bitsPixel++, andVal>>5&1);
+                            if (x+3 < result->width) pixel_set_trans(bitsPixel++, andVal>>4&1);
+                            if (x+4 < result->width) pixel_set_trans(bitsPixel++, andVal>>3&1);
+                            if (x+5 < result->width) pixel_set_trans(bitsPixel++, andVal>>2&1);
+                            if (x+6 < result->width) pixel_set_trans(bitsPixel++, andVal>>1&1);
+                            if (x+7 < result->width) pixel_set_trans(bitsPixel++, andVal&1);
+                        }
+                        andRow += andStride;
+                        bitsRow += bitsStride;
+                    }
+                }
+
+                HeapFree(GetProcessHeap(), 0, tempdata);
+            }
+        }
+
+        IWICBitmapDecoder_Release(decoder);
+    }
+
+    return hr;
+}
 
 static HRESULT WINAPI IcoDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
@@ -736,8 +511,12 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
     IcoDecoder *This = (IcoDecoder*)iface;
     IcoFrameDecode *result=NULL;
     LARGE_INTEGER seek;
+    ULARGE_INTEGER offset, length;
     HRESULT hr;
     ULONG bytesread;
+    ICONDIRENTRY entry;
+    IWICStream *substream=NULL;
+    DWORD magic;
     TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
 
     EnterCriticalSection(&This->lock);
@@ -763,7 +542,6 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
 
     result->lpVtbl = &IcoFrameDecode_Vtbl;
     result->ref = 1;
-    result->parent = This;
     result->bits = NULL;
 
     /* read the icon entry */
@@ -771,10 +549,42 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
     hr = IStream_Seek(This->stream, seek, STREAM_SEEK_SET, 0);
     if (FAILED(hr)) goto fail;
 
-    hr = IStream_Read(This->stream, &result->entry, sizeof(ICONDIRENTRY), &bytesread);
+    hr = IStream_Read(This->stream, &entry, sizeof(ICONDIRENTRY), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(ICONDIRENTRY)) goto fail;
 
-    IWICBitmapDecoder_AddRef(iface);
+    /* create a stream object for this icon */
+    hr = StreamImpl_Create(&substream);
+    if (FAILED(hr)) goto fail;
+
+    offset.QuadPart = entry.dwDIBOffset;
+    length.QuadPart = entry.dwDIBSize;
+    hr = IWICStream_InitializeFromIStreamRegion(substream, This->stream, offset, length);
+    if (FAILED(hr)) goto fail;
+
+    /* read the bitmapinfo size or magic number */
+    hr = IWICStream_Read(substream, &magic, sizeof(magic), &bytesread);
+    if (FAILED(hr) || bytesread != sizeof(magic)) goto fail;
+
+    /* forward to the appropriate decoding function based on the magic number */
+    switch (magic)
+    {
+    case sizeof(BITMAPCOREHEADER):
+    case 64: /* sizeof(BITMAPCOREHEADER2) */
+    case sizeof(BITMAPINFOHEADER):
+    case sizeof(BITMAPV4HEADER):
+    case sizeof(BITMAPV5HEADER):
+        hr = ReadIcoDib((IStream*)substream, result);
+        break;
+    case 0x474e5089:
+        FIXME("PNG decoding not supported\n");
+        hr = E_FAIL;
+        break;
+    default:
+        FIXME("Unrecognized ICO frame magic: %x\n", magic);
+        hr = E_FAIL;
+        break;
+    }
+    if (FAILED(hr)) goto fail;
 
     *ppIBitmapFrame = (IWICBitmapFrameDecode*)result;
 
@@ -785,6 +595,7 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
 fail:
     LeaveCriticalSection(&This->lock);
     HeapFree(GetProcessHeap(), 0, result);
+    if (substream) IStream_Release(substream);
     if (SUCCEEDED(hr)) hr = E_FAIL;
     TRACE("<-- %x\n", hr);
     return hr;
