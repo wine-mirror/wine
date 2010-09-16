@@ -51,6 +51,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "&Förhandsgranska...",           ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&Egenskaper...",              ID_BROWSE_PROPERTIES
+        MENUITEM "Stä&ng",                      ID_BROWSE_QUIT
     }
     POPUP "&Visa"
     {
