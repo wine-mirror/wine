@@ -887,8 +887,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
             break;
         }
         default:
-            WARN("Unknown property %s\n", debugstr_guid(rguid));
-            break;
+            FIXME("Unknown property %s\n", debugstr_guid(rguid));
+            return DIERR_INVALIDPARAM;
     }
 
     return DI_OK;
