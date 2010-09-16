@@ -959,7 +959,6 @@ static void test_sign_message(void)
     memset(&para, 0, sizeof(para));
     SetLastError(0xdeadbeef);
     ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, NULL, &signedBlobSize);
-    todo_wine
     ok(!ret &&
      (GetLastError() == E_INVALIDARG ||
       GetLastError() == ERROR_ARITHMETIC_OVERFLOW), /* Win7 */
@@ -970,16 +969,13 @@ static void test_sign_message(void)
     SetLastError(0xdeadbeef);
     signedBlobSize = 255;
     ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, NULL, &signedBlobSize);
-    todo_wine
     ok(!ret && GetLastError() == E_INVALIDARG,
      "expected E_INVALIDARG, got %08x\n", GetLastError());
-    todo_wine
     ok(!signedBlobSize, "unexpected size %d\n", signedBlobSize);
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, NULL, &signedBlobSize);
-    todo_wine
     ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
     todo_wine
     ok(signedBlobSize, "bad size\n");
@@ -1020,7 +1016,6 @@ static void test_sign_message(void)
     SetLastError(0xdeadbeef);
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 0, NULL, NULL, NULL, &signedBlobSize);
-    todo_wine
     ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
@@ -1028,11 +1023,11 @@ static void test_sign_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 0, NULL, NULL, signedBlob,
          &signedBlobSize);
-        todo_wine
         ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
         todo_wine
         ok(signedBlobSize == sizeof(signedHashForEmptyMessage),
          "unexpected size %d\n", signedBlobSize);
+        todo_wine
         ok(!memcmp(signedBlob, signedHashForEmptyMessage, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1041,7 +1036,6 @@ static void test_sign_message(void)
     SetLastError(0xdeadbeef);
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, NULL, &signedBlobSize);
-    todo_wine
     ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
@@ -1049,11 +1043,11 @@ static void test_sign_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, FALSE, 0, NULL, NULL, signedBlob,
          &signedBlobSize);
-        todo_wine
         ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
         todo_wine
         ok(signedBlobSize == sizeof(signedEmptyMessage), "unexpected size %d\n",
          signedBlobSize);
+        todo_wine
         ok(!memcmp(signedBlob, signedEmptyMessage, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1063,7 +1057,6 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, NULL,
      &signedBlobSize);
-    todo_wine
     ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
@@ -1071,11 +1064,11 @@ static void test_sign_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, signedBlob,
          &signedBlobSize);
-        todo_wine
         ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
         todo_wine
         ok(signedBlobSize == sizeof(signedHash),
          "unexpected size of signed blob %d\n", signedBlobSize);
+        todo_wine
         ok(!memcmp(signedBlob, signedHash, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1088,7 +1081,6 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, NULL,
      &signedBlobSize);
-    todo_wine
     ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
@@ -1096,11 +1088,11 @@ static void test_sign_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, signedBlob,
          &signedBlobSize);
-        todo_wine
         ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
         todo_wine
         ok(signedBlobSize == sizeof(signedHashWithCert),
          "unexpected size of signed blob %d\n", signedBlobSize);
+        todo_wine
         ok(!memcmp(signedBlob, signedHashWithCert, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1120,7 +1112,6 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, NULL,
      &signedBlobSize);
-    todo_wine
     ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
@@ -1128,11 +1119,11 @@ static void test_sign_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, TRUE, 2, toSign, signSize, signedBlob,
          &signedBlobSize);
-        todo_wine
         ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
         todo_wine
         ok(signedBlobSize == sizeof(signedHashWithCRL),
          "unexpected size of signed blob %d\n", signedBlobSize);
+        todo_wine
         ok(!memcmp(signedBlob, signedHashWithCRL, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);
@@ -1146,7 +1137,6 @@ static void test_sign_message(void)
     signedBlobSize = 0;
     ret = CryptSignMessage(&para, FALSE, 1, toSign, signSize, NULL,
      &signedBlobSize);
-    todo_wine
     ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
     signedBlob = CryptMemAlloc(signedBlobSize);
     if (signedBlob)
@@ -1154,11 +1144,11 @@ static void test_sign_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptSignMessage(&para, FALSE, 1, toSign, signSize, signedBlob,
          &signedBlobSize);
-        todo_wine
         ok(ret, "CryptSignMessage failed: %08x\n", GetLastError());
         todo_wine
         ok(signedBlobSize == sizeof(signedData),
          "unexpected size of signed blob %d\n", signedBlobSize);
+        todo_wine
         ok(!memcmp(signedBlob, signedData, signedBlobSize),
          "unexpected value\n");
         CryptMemFree(signedBlob);

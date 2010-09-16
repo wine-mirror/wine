@@ -420,7 +420,114 @@ BOOL WINAPI CryptSignMessage(PCRYPT_SIGN_MESSAGE_PARA pSignPara,
  BOOL fDetachedSignature, DWORD cToBeSigned, const BYTE *rgpbToBeSigned[],
  DWORD rgcbToBeSigned[], BYTE *pbSignedBlob, DWORD *pcbSignedBlob)
 {
-    FIXME("(%p, %d, %d, %p, %p, %p, %p): stub\n", pSignPara, fDetachedSignature,
+    HCRYPTPROV hCryptProv;
+    BOOL ret, freeProv = FALSE;
+    DWORD i, keySpec;
+    PCERT_BLOB certBlob = NULL;
+    PCRL_BLOB crlBlob = NULL;
+    CMSG_SIGNED_ENCODE_INFO signInfo;
+    CMSG_SIGNER_ENCODE_INFO signer;
+    HCRYPTMSG msg = 0;
+
+    TRACE("(%p, %d, %d, %p, %p, %p, %p)\n", pSignPara, fDetachedSignature,
      cToBeSigned, rgpbToBeSigned, rgcbToBeSigned, pbSignedBlob, pcbSignedBlob);
-    return FALSE;
+
+    if (pSignPara->cbSize != sizeof(CRYPT_SIGN_MESSAGE_PARA) ||
+     GET_CMSG_ENCODING_TYPE(pSignPara->dwMsgEncodingType) !=
+     PKCS_7_ASN_ENCODING)
+    {
+        *pcbSignedBlob = 0;
+        SetLastError(E_INVALIDARG);
+        return FALSE;
+    }
+    if (!pSignPara->pSigningCert)
+        return TRUE;
+
+    ret = CryptAcquireCertificatePrivateKey(pSignPara->pSigningCert,
+     CRYPT_ACQUIRE_CACHE_FLAG, NULL, &hCryptProv, &keySpec, &freeProv);
+    if (!ret)
+        return FALSE;
+
+    memset(&signer, 0, sizeof(signer));
+    signer.cbSize = sizeof(signer);
+    signer.pCertInfo = pSignPara->pSigningCert->pCertInfo;
+    signer.hCryptProv = hCryptProv;
+    signer.dwKeySpec = keySpec;
+    signer.HashAlgorithm = pSignPara->HashAlgorithm;
+    signer.pvHashAuxInfo = pSignPara->pvHashAuxInfo;
+    signer.cAuthAttr = pSignPara->cAuthAttr;
+    signer.rgAuthAttr = pSignPara->rgAuthAttr;
+    signer.cUnauthAttr = pSignPara->cUnauthAttr;
+    signer.rgUnauthAttr = pSignPara->rgUnauthAttr;
+
+    memset(&signInfo, 0, sizeof(signInfo));
+    signInfo.cbSize = sizeof(signInfo);
+    signInfo.cSigners = 1;
+    signInfo.rgSigners = &signer;
+
+    if (pSignPara->cMsgCert)
+    {
+        certBlob = CryptMemAlloc(sizeof(CERT_BLOB) * pSignPara->cMsgCert);
+        if (certBlob)
+        {
+            for (i = 0; i < pSignPara->cMsgCert; ++i)
+            {
+                certBlob[i].cbData = pSignPara->rgpMsgCert[i]->cbCertEncoded;
+                certBlob[i].pbData = pSignPara->rgpMsgCert[i]->pbCertEncoded;
+            }
+            signInfo.cCertEncoded = pSignPara->cMsgCert;
+            signInfo.rgCertEncoded = certBlob;
+        }
+        else
+            ret = FALSE;
+    }
+    if (pSignPara->cMsgCrl)
+    {
+        crlBlob = CryptMemAlloc(sizeof(CRL_BLOB) * pSignPara->cMsgCrl);
+        if (crlBlob)
+        {
+            for (i = 0; i < pSignPara->cMsgCrl; ++i)
+            {
+                crlBlob[i].cbData = pSignPara->rgpMsgCrl[i]->cbCrlEncoded;
+                crlBlob[i].pbData = pSignPara->rgpMsgCrl[i]->pbCrlEncoded;
+            }
+            signInfo.cCrlEncoded = pSignPara->cMsgCrl;
+            signInfo.rgCrlEncoded = crlBlob;
+        }
+        else
+            ret = FALSE;
+    }
+    if (pSignPara->dwFlags || pSignPara->dwInnerContentType)
+        FIXME("unimplemented feature\n");
+
+    if (ret)
+        msg = CryptMsgOpenToEncode(pSignPara->dwMsgEncodingType,
+         fDetachedSignature ? CMSG_DETACHED_FLAG : 0, CMSG_SIGNED, &signInfo,
+         NULL, NULL);
+    if (msg)
+    {
+        if (cToBeSigned)
+        {
+            for (i = 0; ret && i < cToBeSigned; ++i)
+            {
+                ret = CryptMsgUpdate(msg, rgpbToBeSigned[i], rgcbToBeSigned[i],
+                 i == cToBeSigned - 1 ? TRUE : FALSE);
+            }
+        }
+        else
+            ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+        if (ret)
+            ret = CryptMsgGetParam(msg, CMSG_CONTENT_PARAM, 0, pbSignedBlob,
+             pcbSignedBlob);
+        CryptMsgClose(msg);
+    }
+    else
+        ret = FALSE;
+    if (crlBlob)
+        CryptMemFree(crlBlob);
+    if (certBlob)
+        CryptMemFree(certBlob);
+    if (freeProv)
+        CryptReleaseContext(hCryptProv, 0);
+    return ret;
 }
