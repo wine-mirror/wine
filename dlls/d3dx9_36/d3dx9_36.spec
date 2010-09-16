@@ -147,7 +147,7 @@
 @ stub D3DXGatherFragmentsFromResourceW
 @ stub D3DXGenerateOutputDecl
 @ stub D3DXGeneratePMesh
-@ stub D3DXGetDeclLength
+@ stdcall D3DXGetDeclLength(ptr)
 @ stdcall D3DXGetDeclVertexSize(ptr long)
 @ stdcall D3DXGetDriverLevel(ptr)
 @ stdcall D3DXGetFVFVertexSize(long)

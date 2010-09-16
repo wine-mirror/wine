@@ -521,6 +521,22 @@ UINT WINAPI D3DXGetDeclVertexSize(const D3DVERTEXELEMENT9 *decl, DWORD stream_id
 }
 
 /*************************************************************************
+ * D3DXGetDeclLength
+ */
+UINT WINAPI D3DXGetDeclLength(const D3DVERTEXELEMENT9 *decl)
+{
+    const D3DVERTEXELEMENT9 *element;
+
+    TRACE("decl %p\n", decl);
+
+    /* null decl results in exception on Windows XP */
+
+    for (element = decl; element->Stream != 0xff; ++element);
+
+    return element - decl;
+}
+
+/*************************************************************************
  * D3DXIntersectTri
  */
 BOOL WINAPI D3DXIntersectTri(CONST D3DXVECTOR3 *p0, CONST D3DXVECTOR3 *p1, CONST D3DXVECTOR3 *p2, CONST D3DXVECTOR3 *praypos, CONST D3DXVECTOR3 *praydir, FLOAT *pu, FLOAT *pv, FLOAT *pdist)
