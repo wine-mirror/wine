@@ -491,7 +491,7 @@ static void _findGameInstanceId(int line,
     }
 
     CoTaskMemFree(lpRegistryPath);
-    todo_wine ok_(__FILE__, line)(found==TRUE, "cannot find game with GDF path %s in scope %d\n",
+    ok_(__FILE__, line)(found==TRUE, "cannot find game with GDF path %s in scope %d\n",
             wine_dbgstr_w(sGDFBinaryPath), installScope);
 }
 /*******************************************************************************
@@ -636,20 +636,20 @@ void test_install_uninstall_game(void)
 
 
         hr = IGameExplorer2_InstallGame(ge2, sExeName, sExePath, GIS_CURRENT_USER);
-        todo_wine ok(SUCCEEDED(hr), "IGameExplorer2::InstallGame failed (error 0x%08x)\n", hr);
+        ok(SUCCEEDED(hr), "IGameExplorer2::InstallGame failed (error 0x%08x)\n", hr);
         /* in comparision to AddGame, InstallGame does not return instance ID,
          * so we need to find it manually */
         _findGameInstanceId(__LINE__, sExeName, GIS_CURRENT_USER, &guid);
 
         if(SUCCEEDED(hr))
         {
-            todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
+            _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
 
             hr = IGameExplorer2_UninstallGame(ge2, sExeName);
             todo_wine ok(SUCCEEDED(hr), "IGameExplorer2::UninstallGame failed (error 0x%08x)\n", hr);
         }
 
-        _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
+        todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
 
         IGameExplorer2_Release(ge2);
     }

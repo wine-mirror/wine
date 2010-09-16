@@ -73,7 +73,8 @@ void GAMEUX_uninitGameData(struct GAMEUX_GAME_DATA *GameData)
  *
  * Parameters:
  *  installScope                [I]     the scope which was used in AddGame/InstallGame call
- *  gameInstanceId              [I]     game instance GUID
+ *  gameInstanceId              [I]     game instance GUID. If NULL, then only
+ *                                      path to scope will be returned
  *  lpRegistryPath              [O]     pointer which will receive address to string
  *                                      containing expected registry path. Path
  *                                      is relative to HKLM registry key. It
@@ -159,14 +160,17 @@ static HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     else
         hr = E_INVALIDARG;
 
-    /* put game's instance id on the end of path */
-    if(SUCCEEDED(hr))
-        hr = (StringFromGUID2(gameInstanceId, sInstanceId, sizeof(sInstanceId)/sizeof(sInstanceId[0])) ? S_OK : E_FAIL);
-
-    if(SUCCEEDED(hr))
+    /* put game's instance id on the end of path, only if instance id was given */
+    if(gameInstanceId)
     {
-        lstrcatW(sRegistryPath, sBackslash);
-        lstrcatW(sRegistryPath, sInstanceId);
+        if(SUCCEEDED(hr))
+            hr = (StringFromGUID2(gameInstanceId, sInstanceId, sizeof(sInstanceId)/sizeof(sInstanceId[0])) ? S_OK : E_FAIL);
+
+        if(SUCCEEDED(hr))
+        {
+            lstrcatW(sRegistryPath, sBackslash);
+            lstrcatW(sRegistryPath, sInstanceId);
+        }
     }
 
     if(SUCCEEDED(hr))
@@ -691,6 +695,90 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
     return hr;
 }
 /*******************************************************************************
+ * GAMEUX_FindGameInstanceId
+ *
+ * Helper funtion. Searches for instance identifier of given game in given
+ * installation scope.
+ *
+ * Parameters:
+ *  sGDFBinaryPath                          [I]     path to binary containing GDF
+ *  installScope                            [I]     game install scope to search in
+ *  pInstanceId                             [O]     instance identifier of given game
+ *
+ * Returns:
+ *  S_OK                    id was returned properly
+ *  S_FALSE                 id was not found in the registry
+ *  E_OUTOFMEMORY           problem while memory allocation
+ */
+static HRESULT GAMEUX_FindGameInstanceId(
+        LPCWSTR sGDFBinaryPath,
+        GAME_INSTALL_SCOPE installScope,
+        GUID* pInstanceId)
+{
+    static const WCHAR sConfigGDFBinaryPath[] =
+            {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
+
+    HRESULT hr;
+    BOOL found = FALSE;
+    LPWSTR lpRegistryPath = NULL;
+    HKEY hRootKey;
+    DWORD dwSubKeys, dwSubKeyLen, dwMaxSubKeyLen, i;
+    LPWSTR lpName = NULL, lpValue = NULL;
+
+    hr = GAMEUX_buildGameRegistryPath(installScope, NULL, &lpRegistryPath);
+
+    if(SUCCEEDED(hr))
+        /* enumerate all subkeys of received one and search them for value "ConfigGGDFBinaryPath" */
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                lpRegistryPath, 0, KEY_READ | KEY_WOW64_64KEY, &hRootKey));
+
+    if(SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegQueryInfoKeyW(hRootKey, NULL, NULL, NULL,
+                &dwSubKeys, &dwMaxSubKeyLen, NULL, NULL, NULL, NULL, NULL, NULL));
+
+        if(SUCCEEDED(hr))
+        {
+            ++dwMaxSubKeyLen; /* for string terminator */
+            lpName = CoTaskMemAlloc(dwMaxSubKeyLen*sizeof(WCHAR));
+            if(!lpName) hr = E_OUTOFMEMORY;
+        }
+
+        if(SUCCEEDED(hr))
+        {
+            for(i=0; i<dwSubKeys && !found; ++i)
+            {
+                dwSubKeyLen = dwMaxSubKeyLen;
+                hr = HRESULT_FROM_WIN32(RegEnumKeyExW(hRootKey, i, lpName, &dwSubKeyLen,
+                        NULL, NULL, NULL, NULL));
+
+                if(SUCCEEDED(hr))
+                    hr = GAMEUX_LoadRegistryString(hRootKey, lpName,
+                                             sConfigGDFBinaryPath, &lpValue);
+
+                if(SUCCEEDED(hr))
+                    if(lstrcmpW(lpValue, sGDFBinaryPath)==0)
+                    {
+                        /* key found, let's copy instance id and exit */
+                        hr = (GUIDFromStringW(lpName, pInstanceId) ? S_OK : E_FAIL);
+                        found = TRUE;
+                    }
+                HeapFree(GetProcessHeap(), 0, lpValue);
+            }
+        }
+
+        HeapFree(GetProcessHeap(), 0, lpName);
+        RegCloseKey(hRootKey);
+    }
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+
+    if((SUCCEEDED(hr) && !found) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+        hr = S_FALSE;
+
+    return hr;
+}
+/*******************************************************************************
  * GameExplorer implementation
  */
 
@@ -872,9 +960,31 @@ static HRESULT WINAPI GameExplorer2Impl_InstallGame(
         LPCWSTR installDirectory,
         GAME_INSTALL_SCOPE installScope)
 {
+    HRESULT hr;
+    GUID instanceId;
     GameExplorerImpl *This = impl_from_IGameExplorer2(iface);
-    FIXME("stub (%p, %s, %s, 0x%x)\n", This, debugstr_w(binaryGDFPath), debugstr_w(installDirectory), installScope);
-    return E_NOTIMPL;
+
+    TRACE("(%p, %s, %s, 0x%x)\n", This, debugstr_w(binaryGDFPath), debugstr_w(installDirectory), installScope);
+
+    if(!binaryGDFPath)
+        return E_INVALIDARG;
+
+    hr = GAMEUX_FindGameInstanceId(binaryGDFPath, GIS_CURRENT_USER, &instanceId);
+
+    if(hr == S_FALSE)
+        hr = GAMEUX_FindGameInstanceId(binaryGDFPath, GIS_ALL_USERS, &instanceId);
+
+    if(hr == S_FALSE)
+    {
+        /* if game isn't yet registered, then install it */
+        instanceId = GUID_NULL;
+        hr = GAMEUX_RegisterGame(binaryGDFPath, installDirectory, installScope, &instanceId);
+    }
+    else if(hr == S_OK)
+        /* otherwise, update game */
+        hr = GAMEUX_UpdateGame(&instanceId);
+
+    return hr;
 }
 
 static HRESULT WINAPI GameExplorer2Impl_UninstallGame(
