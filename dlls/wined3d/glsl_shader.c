@@ -796,16 +796,17 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
             if(prog->bumpenvmat_location[i] == -1) continue;
 
-            data = (const float *)&stateBlock->textureState[i][WINED3DTSS_BUMPENVMAT00];
+            data = (const float *)&stateBlock->state.texture_states[i][WINED3DTSS_BUMPENVMAT00];
             GL_EXTCALL(glUniformMatrix2fvARB(prog->bumpenvmat_location[i], 1, 0, data));
             checkGLcall("glUniformMatrix2fvARB");
 
-            /* texbeml needs the luminance scale and offset too. If texbeml is used, needsbumpmat
-             * is set too, so we can check that in the needsbumpmat check
-             */
-            if(prog->luminancescale_location[i] != -1) {
-                const GLfloat *scale = (const GLfloat *)&stateBlock->textureState[i][WINED3DTSS_BUMPENVLSCALE];
-                const GLfloat *offset = (const GLfloat *)&stateBlock->textureState[i][WINED3DTSS_BUMPENVLOFFSET];
+            /* texbeml needs the luminance scale and offset too. If texbeml
+             * is used, needsbumpmat is set too, so we can check that in the
+             * needsbumpmat check. */
+            if (prog->luminancescale_location[i] != -1)
+            {
+                const GLfloat *scale = (const GLfloat *)&stateBlock->state.texture_states[i][WINED3DTSS_BUMPENVLSCALE];
+                const GLfloat *offset = (const GLfloat *)&stateBlock->state.texture_states[i][WINED3DTSS_BUMPENVLOFFSET];
 
                 GL_EXTCALL(glUniform1fvARB(prog->luminancescale_location[i], 1, scale));
                 checkGLcall("glUniform1fvARB");
@@ -3027,7 +3028,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
-        DWORD flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+        DWORD flags = deviceImpl->stateBlock->state.texture_states[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
         WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
 
         /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
@@ -3474,7 +3475,7 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     char coord_mask[6];
 
     sampler_idx = ins->dst[0].reg.idx;
-    flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+    flags = deviceImpl->stateBlock->state.texture_states[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
 
     /* Dependent read, not valid with conditional NP2 */
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, 0, &sample_function);

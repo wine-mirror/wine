@@ -3427,15 +3427,17 @@ static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
     int i;
 
     This->fixed_function_usage_map = 0;
-    for (i = 0; i < MAX_TEXTURES; ++i) {
-        WINED3DTEXTUREOP color_op = This->stateBlock->textureState[i][WINED3DTSS_COLOROP];
-        WINED3DTEXTUREOP alpha_op = This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP];
-        DWORD color_arg1 = This->stateBlock->textureState[i][WINED3DTSS_COLORARG1] & WINED3DTA_SELECTMASK;
-        DWORD color_arg2 = This->stateBlock->textureState[i][WINED3DTSS_COLORARG2] & WINED3DTA_SELECTMASK;
-        DWORD color_arg3 = This->stateBlock->textureState[i][WINED3DTSS_COLORARG0] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg1 = This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg2 = This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg3 = This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0] & WINED3DTA_SELECTMASK;
+    for (i = 0; i < MAX_TEXTURES; ++i)
+    {
+        const struct wined3d_state *state = &This->stateBlock->state;
+        WINED3DTEXTUREOP color_op = state->texture_states[i][WINED3DTSS_COLOROP];
+        WINED3DTEXTUREOP alpha_op = state->texture_states[i][WINED3DTSS_ALPHAOP];
+        DWORD color_arg1 = state->texture_states[i][WINED3DTSS_COLORARG1] & WINED3DTA_SELECTMASK;
+        DWORD color_arg2 = state->texture_states[i][WINED3DTSS_COLORARG2] & WINED3DTA_SELECTMASK;
+        DWORD color_arg3 = state->texture_states[i][WINED3DTSS_COLORARG0] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg1 = state->texture_states[i][WINED3DTSS_ALPHAARG1] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg2 = state->texture_states[i][WINED3DTSS_ALPHAARG2] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg3 = state->texture_states[i][WINED3DTSS_ALPHAARG0] & WINED3DTA_SELECTMASK;
 
         if (color_op == WINED3DTOP_DISABLE) {
             /* Not used, and disable higher stages */
@@ -3466,7 +3468,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This, const s
     ffu_map = This->fixed_function_usage_map;
 
     if (This->max_ffp_textures == gl_info->limits.texture_stages
-            || This->stateBlock->lowest_disabled_stage <= This->max_ffp_textures)
+            || This->stateBlock->state.lowest_disabled_stage <= This->max_ffp_textures)
     {
         for (i = 0; ffu_map; ffu_map >>= 1, ++i)
         {
@@ -4228,9 +4230,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
         return WINED3D_OK;
     }
 
-    oldValue = This->updateStateBlock->textureState[Stage][Type];
+    oldValue = This->updateStateBlock->state.texture_states[Stage][Type];
     This->updateStateBlock->changed.textureState[Stage] |= 1 << Type;
-    This->updateStateBlock->textureState[Stage][Type]         = Value;
+    This->updateStateBlock->state.texture_states[Stage][Type] = Value;
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
@@ -4243,8 +4245,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
         return WINED3D_OK;
     }
 
-    if(Stage > This->stateBlock->lowest_disabled_stage &&
-       This->StateTable[STATE_TEXTURESTAGE(0, Type)].representative == STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP)) {
+    if (Stage > This->stateBlock->state.lowest_disabled_stage
+            && This->StateTable[STATE_TEXTURESTAGE(0, Type)].representative
+            == STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP))
+    {
         /* Colorop change above lowest disabled stage? That won't change anything in the gl setup
          * Changes in other states are important on disabled stages too
          */
@@ -4260,11 +4264,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
              *
              * The current stage is dirtified below.
              */
-            for(i = Stage + 1; i < This->stateBlock->lowest_disabled_stage; i++) {
+            for (i = Stage + 1; i < This->stateBlock->state.lowest_disabled_stage; ++i)
+            {
                 TRACE("Additionally dirtifying stage %u\n", i);
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
             }
-            This->stateBlock->lowest_disabled_stage = Stage;
+            This->stateBlock->state.lowest_disabled_stage = Stage;
             TRACE("New lowest disabled: %u\n", Stage);
         } else if(Value != WINED3DTOP_DISABLE && oldValue == WINED3DTOP_DISABLE) {
             /* Previously disabled stage enabled. Stages above it may need enabling
@@ -4276,13 +4281,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
 
             for (i = Stage + 1; i < This->adapter->gl_info.limits.texture_stages; ++i)
             {
-                if(This->updateStateBlock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
+                if (This->updateStateBlock->state.texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
                     break;
-                }
                 TRACE("Additionally dirtifying stage %u due to enable\n", i);
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
             }
-            This->stateBlock->lowest_disabled_stage = i;
+            This->stateBlock->state.lowest_disabled_stage = i;
             TRACE("New lowest disabled: %u\n", i);
         }
     }
@@ -4296,15 +4300,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *if
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
+    TRACE("iface %p, stage %u, state %s, value %p.\n",
+            iface, Stage, debug_d3dtexturestate(Type), pValue);
+
     if (Type > WINED3D_HIGHEST_TEXTURE_STATE)
     {
         WARN("Invalid Type %d passed.\n", Type);
         return WINED3D_OK;
     }
 
-    TRACE("(%p) : requesting Stage %d, Type %d getting %d\n", This, Stage, Type, This->updateStateBlock->textureState[Stage][Type]);
+    *pValue = This->updateStateBlock->state.texture_states[Stage][Type];
+    TRACE("Returning %#x.\n", *pValue);
 
-    *pValue = This->updateStateBlock->textureState[Stage][Type];
     return WINED3D_OK;
 }
 

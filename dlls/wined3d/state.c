@@ -1685,7 +1685,7 @@ static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
         if (gl_info->limits.point_sprite_units < gl_info->limits.textures && !warned)
         {
-            if (use_ps(stateblock) || stateblock->lowest_disabled_stage > gl_info->limits.point_sprite_units)
+            if (use_ps(stateblock) || stateblock->state.lowest_disabled_stage > gl_info->limits.point_sprite_units)
             {
                 FIXME("The app uses point sprite texture coordinates on more units than supported by the driver\n");
                 warned = TRUE;
@@ -3017,11 +3017,10 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
         {
             DWORD op2;
 
-            if (isAlpha) {
-                op2 = This->stateBlock->textureState[Stage][WINED3DTSS_COLOROP];
-            } else {
-                op2 = This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAOP];
-            }
+            if (isAlpha)
+                op2 = This->stateBlock->state.texture_states[Stage][WINED3DTSS_COLOROP];
+            else
+                op2 = This->stateBlock->state.texture_states[Stage][WINED3DTSS_ALPHAOP];
 
             /* Note: If COMBINE4 in effect can't go back to combine! */
             switch (op2) {
@@ -3084,7 +3083,8 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
         checkGLcall("glActiveTextureARB");
     }
 
-    if(stage >= stateblock->lowest_disabled_stage) {
+    if (stage >= stateblock->state.lowest_disabled_stage)
+    {
         TRACE("Stage disabled\n");
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
         {
@@ -3116,10 +3116,10 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
     }
 
     set_tex_op(context, (IWineD3DDevice *)stateblock->device, FALSE, stage,
-                stateblock->textureState[stage][WINED3DTSS_COLOROP],
-                stateblock->textureState[stage][WINED3DTSS_COLORARG1],
-                stateblock->textureState[stage][WINED3DTSS_COLORARG2],
-                stateblock->textureState[stage][WINED3DTSS_COLORARG0]);
+            stateblock->state.texture_states[stage][WINED3DTSS_COLOROP],
+            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG1],
+            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG2],
+            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG0]);
 }
 
 void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
@@ -3143,10 +3143,10 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
         checkGLcall("glActiveTextureARB");
     }
 
-    op = stateblock->textureState[stage][WINED3DTSS_ALPHAOP];
-    arg1 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG1];
-    arg2 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG2];
-    arg0 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG0];
+    op = stateblock->state.texture_states[stage][WINED3DTSS_ALPHAOP];
+    arg1 = stateblock->state.texture_states[stage][WINED3DTSS_ALPHAARG1];
+    arg2 = stateblock->state.texture_states[stage][WINED3DTSS_ALPHAARG2];
+    arg0 = stateblock->state.texture_states[stage][WINED3DTSS_ALPHAARG0];
 
     if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !stage && stateblock->textures[0])
     {
@@ -3215,7 +3215,7 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
     if (gl_info->supported[NV_REGISTER_COMBINERS])
     {
         set_tex_op_nvrc((IWineD3DDevice *)stateblock->device, TRUE, stage, op, arg1, arg2, arg0,
-                mapped_stage, stateblock->textureState[stage][WINED3DTSS_RESULTARG]);
+                mapped_stage, stateblock->state.texture_states[stage][WINED3DTSS_RESULTARG]);
     }
     else
     {
@@ -3243,11 +3243,13 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
     checkGLcall("glActiveTextureARB");
-    generated = (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU;
-    coordIdx = min(stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX & 0x0000FFFF], MAX_TEXTURES - 1);
+    generated = (stateblock->state.texture_states[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xffff0000)
+            != WINED3DTSS_TCI_PASSTHRU;
+    coordIdx = min(stateblock->state.texture_states[texUnit][WINED3DTSS_TEXCOORDINDEX & 0x0000ffff], MAX_TEXTURES - 1);
 
     set_texture_matrix(&stateblock->state.transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
-            stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS], generated, context->last_was_rhw,
+            stateblock->state.texture_states[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS],
+            generated, context->last_was_rhw,
             stateblock->device->strided_streams.use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))
             ? stateblock->device->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].format->id
             : WINED3DFMT_UNKNOWN,
@@ -3287,7 +3289,7 @@ static void loadTexCoords(const struct wined3d_gl_info *gl_info, IWineD3DStateBl
 
     for (textureNo = 0; textureNo < gl_info->limits.texture_stages; ++textureNo)
     {
-        int coordIdx = stateblock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
+        int coordIdx = stateblock->state.texture_states[textureNo][WINED3DTSS_TEXCOORDINDEX];
 
         mapped_stage = stateblock->device->texUnitMap[textureNo];
         if (mapped_stage == WINED3D_UNMAPPED_STAGE) continue;
@@ -3363,7 +3365,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
      * state. We do not (yet) support the WINED3DRENDERSTATE_WRAPx values, nor tie them up
      * to the TEXCOORDINDEX value
      */
-    switch (stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX] & 0xffff0000)
+    switch (stateblock->state.texture_states[stage][WINED3DTSS_TEXCOORDINDEX] & 0xffff0000)
     {
         case WINED3DTSS_TCI_PASSTHRU:
             /* Use the specified texture coordinates contained within the
@@ -3477,8 +3479,8 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
             break;
 
         default:
-            FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %#x\n",
-                    stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX]);
+            FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %#x.\n",
+                    stateblock->state.texture_states[stage][WINED3DTSS_TEXCOORDINDEX]);
             glDisable(GL_TEXTURE_GEN_S);
             glDisable(GL_TEXTURE_GEN_T);
             glDisable(GL_TEXTURE_GEN_R);
@@ -3599,7 +3601,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
         IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
         IWineD3DBaseTexture_BindTexture(stateblock->textures[sampler], srgb);
         basetexture_apply_state_changes(stateblock->textures[sampler],
-                stateblock->textureState[sampler], stateblock->samplerState[sampler], gl_info);
+                stateblock->state.texture_states[sampler], stateblock->samplerState[sampler], gl_info);
 
         if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
         {
@@ -3610,7 +3612,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
             checkGLcall("glTexEnvi(GL_TEXTURE_LOD_BIAS_EXT, ...)");
         }
 
-        if (!use_ps(stateblock) && sampler < stateblock->lowest_disabled_stage)
+        if (!use_ps(stateblock) && sampler < stateblock->state.lowest_disabled_stage)
         {
             if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !sampler)
             {
@@ -3631,7 +3633,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     }
     else if (mapped_stage < gl_info->limits.textures)
     {
-        if (sampler < stateblock->lowest_disabled_stage)
+        if (sampler < stateblock->state.lowest_disabled_stage)
         {
             /* TODO: What should I do with pixel shaders here ??? */
             if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !sampler)

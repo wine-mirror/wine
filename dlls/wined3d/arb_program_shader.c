@@ -177,7 +177,7 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
 
 static inline BOOL ffp_clip_emul(IWineD3DStateBlockImpl *stateblock)
 {
-    return stateblock->lowest_disabled_stage < 7;
+    return stateblock->state.lowest_disabled_stage < 7;
 }
 
 /* ARB_program_shader private data */
@@ -542,8 +542,9 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         int texunit = gl_shader->bumpenvmatconst[i].texunit;
 
         /* The state manager takes care that this function is always called if the bump env matrix changes */
-        const float *data = (const float *)&stateBlock->textureState[texunit][WINED3DTSS_BUMPENVMAT00];
-        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->bumpenvmatconst[i].const_num, data));
+        const float *data = (const float *)&stateBlock->state.texture_states[texunit][WINED3DTSS_BUMPENVMAT00];
+        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
+                gl_shader->bumpenvmatconst[i].const_num, data));
 
         if (gl_shader->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED)
         {
@@ -552,8 +553,9 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
              * don't care about them. The pointers are valid for sure because the stateblock is bigger.
              * (they're WINED3DTSS_TEXTURETRANSFORMFLAGS and WINED3DTSS_ADDRESSW, so most likely 0 or NaN
             */
-            const float *scale = (const float *)&stateBlock->textureState[texunit][WINED3DTSS_BUMPENVLSCALE];
-            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->luminanceconst[i].const_num, scale));
+            const float *scale = (const float *)&stateBlock->state.texture_states[texunit][WINED3DTSS_BUMPENVLSCALE];
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
+                    gl_shader->luminanceconst[i].const_num, scale));
         }
     }
     checkGLcall("Load bumpmap consts");
@@ -1920,12 +1922,10 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
         DWORD flags = 0;
-        if(reg_sampler_code < MAX_TEXTURES) {
-            flags = deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
-        }
-        if (flags & WINED3DTTFF_PROJECTED) {
+        if (reg_sampler_code < MAX_TEXTURES)
+            flags = deviceImpl->stateBlock->state.texture_states[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+        if (flags & WINED3DTTFF_PROJECTED)
             myflags |= TEX_PROJ;
-        }
     }
     else if (shader_version < WINED3D_SHADER_VERSION(2,0))
     {
@@ -1987,7 +1987,7 @@ static void pshader_hw_texreg2ar(const struct wined3d_shader_instruction *ins)
      /* Move .x first in case src_str is "TA" */
      shader_addline(buffer, "MOV TA.y, %s.x;\n", src_str);
      shader_addline(buffer, "MOV TA.x, %s.w;\n", src_str);
-     flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+     flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->state.texture_states[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
      shader_hw_sample(ins, reg1, dst_str, "TA", flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
 }
 
@@ -2054,7 +2054,8 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     /* with projective textures, texbem only divides the static texture coord, not the displacement,
      * so we can't let the GL handle this.
      */
-    if (device->stateBlock->textureState[reg_dest_code][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED)
+    if (device->stateBlock->state.texture_states[reg_dest_code][WINED3DTSS_TEXTURETRANSFORMFLAGS]
+            & WINED3DTTFF_PROJECTED)
     {
         shader_addline(buffer, "RCP TB.w, %s.w;\n", reg_coord);
         shader_addline(buffer, "MUL TB.xy, %s, TB.w;\n", reg_coord);
@@ -2109,7 +2110,7 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 %s.y, fragment.texcoord[%u], %s;\n", dst_reg, reg, src0_name);
-    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->state.texture_states[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
     shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
 }
 
@@ -2154,7 +2155,7 @@ static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
 
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
-    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->state.texture_states[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
     shader_hw_sample(ins, reg, dst_str, dst_name, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
     current_state->current_row = 0;
 }
@@ -2196,7 +2197,7 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
 
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
-    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->state.texture_states[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
     shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
     current_state->current_row = 0;
 }
@@ -2238,7 +2239,7 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
 
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
-    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
+    flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->state.texture_states[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
     shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0, NULL, NULL);
     current_state->current_row = 0;
 }
@@ -5601,10 +5602,10 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, s
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
     }
 
-    mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
-    mat[0][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT01]);
-    mat[1][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT10]);
-    mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
+    mat[0][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
+    mat[0][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
+    mat[1][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
+    mat[1][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
 
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0]));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0])");
@@ -5638,8 +5639,8 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
     }
 
-    param[0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVLSCALE]);
-    param[1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET]);
+    param[0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVLSCALE]);
+    param[1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVLOFFSET]);
     param[2] = 0.0f;
     param[3] = 0.0f;
 

@@ -2349,6 +2349,9 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
+    DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    DWORD lowest_disabled_stage;
+
     WINED3DMATRIX transforms[HIGHEST_TRANSFORMSTATE + 1];
     WINED3DMATERIAL material;
     WINED3DVIEWPORT viewport;
@@ -2415,9 +2418,6 @@ struct IWineD3DStateBlockImpl
     /* Texture */
     IWineD3DBaseTexture      *textures[MAX_COMBINED_SAMPLERS];
 
-    /* Texture State Stage */
-    DWORD                     textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
-    DWORD                     lowest_disabled_stage;
     /* Sampler States */
     DWORD                     samplerState[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
 

@@ -861,10 +861,10 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float mat[2][2];
 
-    mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
-    mat[1][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT01]);
-    mat[0][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT10]);
-    mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
+    mat[0][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
+    mat[1][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
+    mat[0][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
+    mat[1][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
     /* GL_ATI_fragment_shader allows only constants from 0.0 to 1.0, but the bumpmat
      * constants can be in any range. While they should stay between [-1.0 and 1.0] because
      * Shader Model 1.x pixel shaders are clamped to that range negative values are used occasionally,

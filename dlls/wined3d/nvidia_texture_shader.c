@@ -34,8 +34,9 @@ static void nvts_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateb
 {
     BOOL bumpmap = FALSE;
 
-    if(stage > 0 && (stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE ||
-                     stateblock->textureState[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP)) {
+    if (stage > 0 && (stateblock->state.texture_states[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE
+            || stateblock->state.texture_states[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP))
+    {
         bumpmap = TRUE;
         context->texShaderBumpMap |= (1 << stage);
     } else {
@@ -477,13 +478,17 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
         checkGLcall("glActiveTextureARB");
     }
 
-    if(stateblock->lowest_disabled_stage > 0) {
+    if (stateblock->state.lowest_disabled_stage > 0)
+    {
         glEnable(GL_REGISTER_COMBINERS_NV);
-        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, stateblock->lowest_disabled_stage));
-    } else {
+        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, stateblock->state.lowest_disabled_stage));
+    }
+    else
+    {
         glDisable(GL_REGISTER_COMBINERS_NV);
     }
-    if(stage >= stateblock->lowest_disabled_stage) {
+    if (stage >= stateblock->state.lowest_disabled_stage)
+    {
         TRACE("Stage disabled\n");
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
         {
@@ -531,22 +536,23 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
 
     /* Set the texture combiners */
     set_tex_op_nvrc((IWineD3DDevice *)stateblock->device, FALSE, stage,
-                        stateblock->textureState[stage][WINED3DTSS_COLOROP],
-                        stateblock->textureState[stage][WINED3DTSS_COLORARG1],
-                        stateblock->textureState[stage][WINED3DTSS_COLORARG2],
-                        stateblock->textureState[stage][WINED3DTSS_COLORARG0],
-                        mapped_stage,
-                        stateblock->textureState[stage][WINED3DTSS_RESULTARG]);
+            stateblock->state.texture_states[stage][WINED3DTSS_COLOROP],
+            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG1],
+            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG2],
+            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG0],
+            mapped_stage,
+            stateblock->state.texture_states[stage][WINED3DTSS_RESULTARG]);
 
     /* In register combiners bump mapping is done in the stage AFTER the one that has the bump map operation set,
      * thus the texture shader may have to be updated
      */
     if (gl_info->supported[NV_TEXTURE_SHADER2])
     {
-        BOOL usesBump = (stateblock->textureState[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE ||
-                            stateblock->textureState[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP) ? TRUE : FALSE;
-        BOOL usedBump = (context->texShaderBumpMap & 1 << (stage + 1)) ? TRUE : FALSE;
-        if(usesBump != usedBump) {
+        BOOL usesBump = (stateblock->state.texture_states[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE
+                || stateblock->state.texture_states[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP);
+        BOOL usedBump = !!(context->texShaderBumpMap & 1 << (stage + 1));
+        if (usesBump != usedBump)
+        {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage + 1));
             checkGLcall("glActiveTextureARB");
             nvts_activate_dimensions(stage + 1, stateblock, context);
@@ -566,8 +572,8 @@ static void nvts_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
     * will take care of this business
     */
     if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures) return;
-    if(sampler >= stateblock->lowest_disabled_stage) return;
-    if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
+    if (sampler >= stateblock->state.lowest_disabled_stage) return;
+    if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 
     nvts_activate_dimensions(sampler, stateblock, context);
 }
@@ -590,14 +596,13 @@ static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, str
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
         checkGLcall("GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage))");
 
-        /* We can't just pass a pointer to the stateblock to GL due to the different matrix
-         * format(column major vs row major)
-         */
-        mat[0][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT00]);
-        mat[1][0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT01]);
-        mat[0][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT10]);
-        mat[1][1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVMAT11]);
-        glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, (float *) mat);
+        /* We can't just pass a pointer to the stateblock to GL due to the
+         * different matrix format (column major vs row major). */
+        mat[0][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
+        mat[1][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
+        mat[0][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
+        mat[1][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
+        glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, (float *)mat);
         checkGLcall("glTexEnvfv(GL_TEXTURE_SHADER_NV, GL_OFFSET_TEXTURE_MATRIX_NV, mat)");
     }
 }

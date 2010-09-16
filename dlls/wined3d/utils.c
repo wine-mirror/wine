@@ -2728,7 +2728,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     {
         IWineD3DBaseTextureImpl *texture;
         settings->op[i].padding = 0;
-        if(stateblock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
+        if (stateblock->state.texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
+        {
             settings->op[i].cop = WINED3DTOP_DISABLE;
             settings->op[i].aop = WINED3DTOP_DISABLE;
             settings->op[i].carg0 = settings->op[i].carg1 = settings->op[i].carg2 = ARG_UNUSED;
@@ -2772,12 +2773,12 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             settings->op[i].tex_type = tex_1d;
         }
 
-        cop = stateblock->textureState[i][WINED3DTSS_COLOROP];
-        aop = stateblock->textureState[i][WINED3DTSS_ALPHAOP];
+        cop = stateblock->state.texture_states[i][WINED3DTSS_COLOROP];
+        aop = stateblock->state.texture_states[i][WINED3DTSS_ALPHAOP];
 
-        carg1 = (args[cop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_COLORARG1] : ARG_UNUSED;
-        carg2 = (args[cop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
-        carg0 = (args[cop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
+        carg1 = (args[cop] & ARG1) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG1] : ARG_UNUSED;
+        carg2 = (args[cop] & ARG2) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
+        carg0 = (args[cop] & ARG0) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
 
         if(is_invalid_op(device, i, cop, carg1, carg2, carg0)) {
             carg0 = ARG_UNUSED;
@@ -2794,10 +2795,12 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             aarg1 = carg1;
             aarg2 = carg2;
             aarg0 = carg0;
-        } else {
-            aarg1 = (args[aop] & ARG1) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG1] : ARG_UNUSED;
-            aarg2 = (args[aop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG2] : ARG_UNUSED;
-            aarg0 = (args[aop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
+        }
+        else
+        {
+            aarg1 = (args[aop] & ARG1) ? stateblock->state.texture_states[i][WINED3DTSS_ALPHAARG1] : ARG_UNUSED;
+            aarg2 = (args[aop] & ARG2) ? stateblock->state.texture_states[i][WINED3DTSS_ALPHAARG2] : ARG_UNUSED;
+            aarg0 = (args[aop] & ARG0) ? stateblock->state.texture_states[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
         }
 
         if (!i && stateblock->textures[0] && stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
@@ -2845,10 +2848,12 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                aop = WINED3DTOP_SELECTARG1;
         }
 
-        if(carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE ||
-           aarg1 == WINED3DTA_TEXTURE || aarg2 == WINED3DTA_TEXTURE || aarg0 == WINED3DTA_TEXTURE) {
-            ttff = stateblock->textureState[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
-            if(ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3)) {
+        if (carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE
+                || aarg1 == WINED3DTA_TEXTURE || aarg2 == WINED3DTA_TEXTURE || aarg0 == WINED3DTA_TEXTURE)
+        {
+            ttff = stateblock->state.texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+            if (ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3))
+            {
                 settings->op[i].projected = proj_count3;
             } else if(ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT4)) {
                 settings->op[i].projected = proj_count4;
@@ -2868,7 +2873,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         settings->op[i].aarg1 = aarg1;
         settings->op[i].aarg2 = aarg2;
 
-        if(stateblock->textureState[i][WINED3DTSS_RESULTARG] == WINED3DTA_TEMP) {
+        if (stateblock->state.texture_states[i][WINED3DTSS_RESULTARG] == WINED3DTA_TEMP)
+        {
             settings->op[i].dst = tempreg;
         } else {
             settings->op[i].dst = resultreg;
@@ -3060,8 +3066,8 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     * will take care of this business
     */
     if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures) return;
-    if(sampler >= stateblock->lowest_disabled_stage) return;
-    if(isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
+    if (sampler >= stateblock->state.lowest_disabled_stage) return;
+    if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 
     texture_activate_dimensions(sampler, stateblock, context);
 }
