@@ -46,13 +46,14 @@ IDR_BROWSE_MAIN_MENU MENU
         }
         MENUITEM "&Apri...",                    ID_BROWSE_OPEN
         MENUITEM "&Salva",                       ID_BROWSE_SAVE
-        MENUITEM "Salva &come...",                 ID_BROWSE_SAVE_AS
+        MENUITEM "Sa&lva come...",                 ID_BROWSE_SAVE_AS
         MENUITEM SEPARATOR
         MENUITEM "&Imposta pagina...",            ID_BROWSE_PRINT_FORMAT
         MENUITEM "S&tampa...",                   ID_BROWSE_PRINT
         MENUITEM "Antepri&ma di stampa...",           ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&Proprietà...",              ID_BROWSE_PROPERTIES
+        MENUITEM "&Chiudi",                      ID_BROWSE_QUIT
     }
     POPUP "&Visualizza"
     {
