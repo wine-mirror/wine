@@ -632,6 +632,60 @@ static ULONG v4addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
     return ERROR_SUCCESS;
 }
 
+static char *debugstr_ipv4(const in_addr_t *in_addr, char *buf)
+{
+    const BYTE *addrp;
+    char *p = buf;
+
+    for (addrp = (const BYTE *)in_addr;
+     addrp - (const BYTE *)in_addr < sizeof(*in_addr);
+     addrp++)
+    {
+        if (addrp == (const BYTE *)in_addr + sizeof(*in_addr) - 1)
+            sprintf(p, "%d", *addrp);
+        else
+        {
+            int n;
+
+            sprintf(p, "%d.%n", *addrp, &n);
+            p += n;
+        }
+    }
+    return buf;
+}
+
+static char *debugstr_ipv6(const struct WS_sockaddr_in6 *sin, char *buf)
+{
+    const IN6_ADDR *addr = &sin->sin6_addr;
+    char *p = buf;
+    int i;
+    BOOL in_zero = FALSE;
+
+    for (i = 0; i < 7; i++)
+    {
+        if (!addr->u.Word[i])
+        {
+            if (i == 0)
+                *p++ = ':';
+            if (!in_zero)
+            {
+                *p++ = ':';
+                in_zero = TRUE;
+            }
+        }
+        else
+        {
+            int n;
+
+            sprintf(p, "%x:%n", ntohs(addr->u.Word[i]), &n);
+            p += n;
+            in_zero = FALSE;
+        }
+    }
+    sprintf(p, "%x", ntohs(addr->u.Word[7]));
+    return buf;
+}
+
 static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
     ULONG ret, i, num_v4addrs = 0, num_v6addrs = 0, total_size;
@@ -685,6 +739,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
         *dst++ = 0;
         ptr = (char *)dst;
 
+        TRACE("%s: %d IPv4 addresses, %d IPv6 addresses:\n", name, num_v4addrs,
+              num_v6addrs);
         if (num_v4addrs)
         {
             IP_ADAPTER_UNICAST_ADDRESS *ua;
@@ -693,6 +749,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
             ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
             for (i = 0; i < num_v4addrs; i++)
             {
+                char addr_buf[16];
+
                 memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
                 ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
                 ua->Address.iSockaddrLength = sizeof(struct sockaddr_in);
@@ -702,6 +760,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
                 sa->sin_family      = AF_INET;
                 sa->sin_addr.s_addr = v4addrs[i];
                 sa->sin_port        = 0;
+                TRACE("IPv4 %d/%d: %s\n", i + 1, num_v4addrs,
+                      debugstr_ipv4(&sa->sin_addr.s_addr, addr_buf));
 
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v4addrs - 1)
@@ -727,6 +787,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
                 ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
             for (i = 0; i < num_v6addrs; i++)
             {
+                char addr_buf[46];
+
                 memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
                 ua->u.s.Length              = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
                 ua->Address.iSockaddrLength = v6addrs[i].iSockaddrLength;
@@ -734,6 +796,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
 
                 sa = (struct WS_sockaddr_in6 *)ua->Address.lpSockaddr;
                 memcpy(sa, v6addrs[i].lpSockaddr, sizeof(*sa));
+                TRACE("IPv6 %d/%d: %s\n", i + 1, num_v6addrs,
+                      debugstr_ipv6(sa, addr_buf));
 
                 ptr += ua->u.s.Length + ua->Address.iSockaddrLength;
                 if (i < num_v6addrs - 1)
