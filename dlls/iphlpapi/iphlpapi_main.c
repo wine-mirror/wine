@@ -608,6 +608,16 @@ static DWORD typeFromMibType(DWORD mib_type)
     }
 }
 
+static DWORD connectionTypeFromMibType(DWORD mib_type)
+{
+    switch (mib_type)
+    {
+    case MIB_IF_TYPE_PPP:       return NET_IF_CONNECTION_DEMAND;
+    case MIB_IF_TYPE_SLIP:      return NET_IF_CONNECTION_DEMAND;
+    default:                    return NET_IF_CONNECTION_DEDICATED;
+    }
+}
+
 static ULONG v4addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
 {
     ULONG ret, i, j;
@@ -814,6 +824,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
         getInterfacePhysicalByIndex(index, &buflen, aa->PhysicalAddress, &type);
         aa->PhysicalAddressLength = buflen;
         aa->IfType = typeFromMibType(type);
+        aa->ConnectionType = connectionTypeFromMibType(type);
 
         getInterfaceMtuByName(name, &aa->Mtu);
 
