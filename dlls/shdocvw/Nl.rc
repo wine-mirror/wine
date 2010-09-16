@@ -49,6 +49,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Afdruk&voorbeeld...",         ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&Eigenschappen...",           ID_BROWSE_PROPERTIES
+        MENUITEM "&Afsluiten",                  ID_BROWSE_QUIT
     }
     POPUP "Bee&ld"
     {
