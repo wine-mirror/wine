@@ -12,6 +12,7 @@ RC_SRCS = \
 	cpl_En.rc \
 	cpl_Fr.rc \
 	cpl_It.rc \
+	cpl_Ko.rc \
 	inetcpl.rc
 
 SVG_SRCS = \
