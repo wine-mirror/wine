@@ -51,6 +51,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Predo&gled tiskanja...",          ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&Lastnosti...",                   ID_BROWSE_PROPERTIES
+        MENUITEM "&Zapri",                          ID_BROWSE_QUIT
     }
     POPUP "Pogl&ed"
     {
