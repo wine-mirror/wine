@@ -18,6 +18,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -67,7 +68,8 @@ typedef struct BmpDecoder {
     LONG ref;
     BOOL initialized;
     IStream *stream;
-    BITMAPFILEHEADER bfh;
+    ULONG palette_offset;
+    ULONG image_offset;
     BITMAPV5HEADER bih;
     const WICPixelFormatGUID *pixelformat;
     int bitsperpixel;
@@ -76,6 +78,8 @@ typedef struct BmpDecoder {
     BYTE *imagedata;
     BYTE *imagedatastart;
     CRITICAL_SECTION lock; /* must be held when initialized/imagedata is set or stream is accessed */
+    int packed; /* If TRUE, don't look for a file header and assume a packed DIB. */
+    int icoframe; /* If TRUE, this is a frame of a .ico file. */
 } BmpDecoder;
 
 static inline BmpDecoder *impl_from_frame(IWICBitmapFrameDecode *iface)
@@ -213,7 +217,7 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
                 goto end;
             }
 
-            offset.QuadPart = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPCOREHEADER);
+            offset.QuadPart = This->palette_offset;
             hr = IStream_Seek(This->stream, offset, STREAM_SEEK_SET, NULL);
             if (FAILED(hr)) goto end;
 
@@ -259,7 +263,7 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
                 goto end;
             }
 
-            offset.QuadPart = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
+            offset.QuadPart = This->palette_offset;
             hr = IStream_Seek(This->stream, offset, STREAM_SEEK_SET, NULL);
             if (FAILED(hr)) goto end;
 
@@ -369,7 +373,7 @@ static HRESULT BmpFrameDecode_ReadUncompressed(BmpDecoder* This)
     This->imagedata = HeapAlloc(GetProcessHeap(), 0, datasize);
     if (!This->imagedata) return E_OUTOFMEMORY;
 
-    offbits.QuadPart = This->bfh.bfOffBits;
+    offbits.QuadPart = This->image_offset;
     hr = IStream_Seek(This->stream, offbits, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) goto fail;
 
@@ -447,7 +451,7 @@ static HRESULT BmpFrameDecode_ReadRLE8(BmpDecoder* This)
     }
 
     /* read palette */
-    offbits.QuadPart = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
+    offbits.QuadPart = This->palette_offset;
     hr = IStream_Seek(This->stream, offbits, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) goto fail;
 
@@ -455,7 +459,7 @@ static HRESULT BmpFrameDecode_ReadRLE8(BmpDecoder* This)
     if (FAILED(hr) || bytesread != palettesize) goto fail;
 
     /* read RLE data */
-    offbits.QuadPart = This->bfh.bfOffBits;
+    offbits.QuadPart = This->image_offset;
     hr = IStream_Seek(This->stream, offbits, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) goto fail;
 
@@ -571,7 +575,7 @@ static HRESULT BmpFrameDecode_ReadRLE4(BmpDecoder* This)
     }
 
     /* read palette */
-    offbits.QuadPart = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
+    offbits.QuadPart = This->palette_offset;
     hr = IStream_Seek(This->stream, offbits, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) goto fail;
 
@@ -579,7 +583,7 @@ static HRESULT BmpFrameDecode_ReadRLE4(BmpDecoder* This)
     if (FAILED(hr) || bytesread != palettesize) goto fail;
 
     /* read RLE data */
-    offbits.QuadPart = This->bfh.bfOffBits;
+    offbits.QuadPart = This->image_offset;
     hr = IStream_Seek(This->stream, offbits, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) goto fail;
 
@@ -730,10 +734,15 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
     hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr)) return hr;
 
-    hr = IStream_Read(stream, &This->bfh, sizeof(BITMAPFILEHEADER), &bytesread);
-    if (FAILED(hr)) return hr;
-    if (bytesread != sizeof(BITMAPFILEHEADER) ||
-        This->bfh.bfType != 0x4d42 /* "BM" */) return E_FAIL;
+    if (!This->packed)
+    {
+        BITMAPFILEHEADER bfh;
+        hr = IStream_Read(stream, &bfh, sizeof(BITMAPFILEHEADER), &bytesread);
+        if (FAILED(hr)) return hr;
+        if (bytesread != sizeof(BITMAPFILEHEADER) ||
+            bfh.bfType != 0x4d42 /* "BM" */) return E_FAIL;
+        This->image_offset = bfh.bfOffBits;
+    }
 
     hr = IStream_Read(stream, &This->bih.bV5Size, sizeof(DWORD), &bytesread);
     if (FAILED(hr)) return hr;
@@ -749,6 +758,24 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
     if (FAILED(hr)) return hr;
     if (bytestoread != bytesread) return E_FAIL;
 
+    if (This->packed)
+        This->palette_offset = This->bih.bV5Size;
+    else
+        This->palette_offset = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
+
+    if (This->icoframe)
+    {
+        if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER))
+        {
+            BITMAPCOREHEADER *bch = (BITMAPCOREHEADER*)&This->bih;
+            bch->bcHeight /= 2;
+        }
+        else
+        {
+            This->bih.bV5Height /= 2;
+        }
+    }
+
     /* if this is a BITMAPINFOHEADER with BI_BITFIELDS compression, we need to
         read the extra fields */
     if (This->bih.bV5Size == sizeof(BITMAPINFOHEADER) &&
@@ -758,6 +785,7 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
         if (FAILED(hr)) return hr;
         if (bytesread != 12) return E_FAIL;
         This->bih.bV5AlphaMask = 0;
+        This->palette_offset += 12;
     }
 
     /* decide what kind of bitmap this is and how/if we can read it */
@@ -878,6 +906,23 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
             FIXME("unsupported bitmap type header=%i compression=%i depth=%i\n", This->bih.bV5Size, This->bih.bV5Compression, This->bih.bV5BitCount);
             break;
         }
+    }
+
+    if (This->packed)
+    {
+        /* In a packed DIB, the image follows the palette. */
+        ULONG palette_count, palette_size;
+        if (This->bih.bV5ClrUsed)
+            palette_count = This->bih.bV5ClrUsed;
+        else if (This->bih.bV5BitCount <= 8)
+            palette_count = 1 << This->bih.bV5BitCount;
+        else
+            palette_count = 0;
+        if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER))
+            palette_size = sizeof(RGBTRIPLE) * palette_count;
+        else
+            palette_size = sizeof(RGBQUAD) * palette_count;
+        This->image_offset = This->palette_offset + palette_size;
     }
 
     This->initialized = TRUE;
@@ -1075,7 +1120,7 @@ static const IWICBitmapDecoderVtbl BmpDecoder_Vtbl = {
     BmpDecoder_GetFrame
 };
 
-HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+static HRESULT BmpDecoder_Construct(int packed, int icoframe, IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
     BmpDecoder *This;
     HRESULT ret;
@@ -1097,9 +1142,49 @@ HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->imagedata = NULL;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BmpDecoder.lock");
+    This->packed = packed;
+    This->icoframe = icoframe;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
 
     return ret;
+}
+
+HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    return BmpDecoder_Construct(FALSE, FALSE, pUnkOuter, iid, ppv);
+}
+
+HRESULT DibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    return BmpDecoder_Construct(TRUE, FALSE, pUnkOuter, iid, ppv);
+}
+
+HRESULT IcoDibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    return BmpDecoder_Construct(TRUE, TRUE, pUnkOuter, iid, ppv);
+}
+
+/* Return the offset where the mask of an icon might be, or 0 for failure. */
+void BmpDecoder_FindIconMask(IWICBitmapDecoder *decoder, ULONG *mask_offset, int *topdown)
+{
+    BmpDecoder *This = (BmpDecoder*)decoder;
+
+    assert(This->lpVtbl == &BmpDecoder_Vtbl);
+    assert(This->stream != NULL);
+
+    if (This->read_data_func == BmpFrameDecode_ReadUncompressed)
+    {
+        /* RGB or BITFIELDS data */
+        ULONG width, height, bytesperrow, datasize;
+        IWICBitmapFrameDecode_GetSize((IWICBitmapFrameDecode*)&This->lpFrameVtbl, &width, &height);
+        bytesperrow = (((width * This->bitsperpixel)+31)/32)*4;
+        datasize = bytesperrow * height;
+        *mask_offset = This->image_offset + datasize;
+    }
+    else
+        *mask_offset = 0;
+
+    *topdown = This->stride > 0;
 }

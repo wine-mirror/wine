@@ -29,11 +29,14 @@ extern HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void*
 extern HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT PngEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT BmpEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
+extern HRESULT DibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
 extern HRESULT IcoDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
+
+extern HRESULT IcoDibDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
 extern HRESULT FlipRotator_Create(IWICBitmapFlipRotator **fliprotator);
 extern HRESULT PaletteImpl_Create(IWICPalette **palette);
@@ -47,5 +50,7 @@ extern HRESULT CreatePropertyBag2(IPropertyBag2 **ppPropertyBag2);
 
 extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo);
 extern HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown);
+
+void BmpDecoder_FindIconMask(IWICBitmapDecoder *decoder, ULONG *mask_offset, int *topdown);
 
 #endif /* WINCODECS_PRIVATE_H */
