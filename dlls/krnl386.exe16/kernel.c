@@ -643,7 +643,7 @@ DWORD WINAPI MapProcessHandle( HANDLE hProcess )
  *           SetProcessDword    (KERNEL.484)
  * 'Of course you cannot directly access Windows internal structures'
  */
-void WINAPI SetProcessDword16( DWORD dwProcessID, INT offset, DWORD value )
+void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
 {
     TRACE("(%d, %d)\n", dwProcessID, offset );
 
@@ -684,7 +684,7 @@ void WINAPI SetProcessDword16( DWORD dwProcessID, INT offset, DWORD value )
  *           GetProcessDword    (KERNEL.485)
  * 'Of course you cannot directly access Windows internal structures'
  */
-DWORD WINAPI GetProcessDword16( DWORD dwProcessID, INT offset )
+DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
 {
     DWORD               x, y;
     STARTUPINFOW        siw;
