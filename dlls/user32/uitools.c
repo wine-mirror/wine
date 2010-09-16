@@ -939,7 +939,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
 
     UITOOLS95_DFC_ButtonPush(dc, r, uFlags & 0xff00);
 
-    switch(uFlags & 0xff)
+    switch(uFlags & 0xf)
     {
     case DFCS_CAPTIONCLOSE:     str[0] = 0x72; break;
     case DFCS_CAPTIONHELP:      str[0] = 0x73; break;
