@@ -68,4 +68,14 @@ typedef struct _SOCKET_ADDRESS_LIST {
         SOCKET_ADDRESS  Address[1];
 } SOCKET_ADDRESS_LIST, *LPSOCKET_ADDRESS_LIST;
 
+typedef enum {
+    ScopeLevelInterface    = 1,
+    ScopeLevelLink         = 2,
+    ScopeLevelSubnet       = 3,
+    ScopeLevelAdmin        = 4,
+    ScopeLevelSite         = 5,
+    ScopeLevelOrganization = 8,
+    ScopeLevelGlobal       = 14
+} SCOPE_LEVEL;
+
 #endif /* _WS2DEF_ */
