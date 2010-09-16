@@ -3596,16 +3596,18 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
     checkGLcall("glActiveTextureARB");
 
-    if(stateblock->textures[sampler]) {
-        BOOL srgb = stateblock->samplerState[sampler][WINED3DSAMP_SRGBTEXTURE];
+    if (stateblock->textures[sampler])
+    {
+        BOOL srgb = stateblock->state.sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
         IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
         IWineD3DBaseTexture_BindTexture(stateblock->textures[sampler], srgb);
         basetexture_apply_state_changes(stateblock->textures[sampler],
-                stateblock->state.texture_states[sampler], stateblock->samplerState[sampler], gl_info);
+                stateblock->state.texture_states[sampler],
+                stateblock->state.sampler_states[sampler], gl_info);
 
         if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
         {
-            tmpvalue.d = stateblock->samplerState[sampler][WINED3DSAMP_MIPMAPLODBIAS];
+            tmpvalue.d = stateblock->state.sampler_states[sampler][WINED3DSAMP_MIPMAPLODBIAS];
             glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                       GL_TEXTURE_LOD_BIAS_EXT,
                       tmpvalue.f);

@@ -459,7 +459,7 @@ static void device_preload_texture(IWineD3DStateBlockImpl *stateblock, unsigned 
     enum WINED3DSRGB srgb;
 
     if (!(texture = (IWineD3DBaseTextureImpl *)stateblock->textures[idx])) return;
-    srgb = stateblock->samplerState[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
+    srgb = stateblock->state.sampler_states[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
     texture->baseTexture.internal_preload((IWineD3DBaseTexture *)texture, srgb);
 }
 
@@ -3086,27 +3086,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
         Sampler -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
     }
 
-    if (Sampler >= sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])) {
+    if (Sampler >= sizeof(This->stateBlock->state.sampler_states) / sizeof(*This->stateBlock->state.sampler_states))
+    {
         ERR("Current Sampler overflows sampleState0 array (sampler %d)\n", Sampler);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
-    /**
-    * SetSampler is designed to allow for more than the standard up to 8 textures
-    *  and Geforce has stopped supporting more than 6 standard textures in openGL.
-    * So I have to use ARB for Gforce. (maybe if the sampler > 4 then use ARB?)
-    *
-    * http://developer.nvidia.com/object/General_FAQ.html#t6
-    *
-    * There are two new settings for GForce
-    * the sampler one:
-    * GL_MAX_TEXTURE_IMAGE_UNITS_ARB
-    * and the texture one:
-    * GL_MAX_TEXTURE_COORDS_ARB.
-    * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
-     ******************/
 
-    oldValue = This->stateBlock->samplerState[Sampler][Type];
-    This->updateStateBlock->samplerState[Sampler][Type]         = Value;
+    oldValue = This->stateBlock->state.sampler_states[Sampler][Type];
+    This->updateStateBlock->state.sampler_states[Sampler][Type] = Value;
     This->updateStateBlock->changed.samplerState[Sampler] |= 1 << Type;
 
     /* Handle recording of state blocks */
@@ -3135,11 +3122,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, 
         Sampler -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
     }
 
-    if (Sampler >= sizeof(This->stateBlock->samplerState)/sizeof(This->stateBlock->samplerState[0])) {
+    if (Sampler >= sizeof(This->stateBlock->state.sampler_states) / sizeof(*This->stateBlock->state.sampler_states))
+    {
         ERR("Current Sampler overflows sampleState0 array (sampler %d)\n", Sampler);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
-    *Value = This->stateBlock->samplerState[Sampler][Type];
+    *Value = This->stateBlock->state.sampler_states[Sampler][Type];
     TRACE("(%p) : Returning %#x\n", This, *Value);
 
     return WINED3D_OK;
@@ -5069,12 +5057,15 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
 
     TRACE("(%p) : %p\n", This, pNumPasses);
 
-    for(i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
-        if(This->stateBlock->samplerState[i][WINED3DSAMP_MINFILTER] == WINED3DTEXF_NONE) {
+    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
+    {
+        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MINFILTER] == WINED3DTEXF_NONE)
+        {
             WARN("Sampler state %u has minfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
         }
-        if(This->stateBlock->samplerState[i][WINED3DSAMP_MAGFILTER] == WINED3DTEXF_NONE) {
+        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MAGFILTER] == WINED3DTEXF_NONE)
+        {
             WARN("Sampler state %u has magfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
         }
@@ -5082,16 +5073,19 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
         texture = (IWineD3DBaseTextureImpl *) This->stateBlock->textures[i];
         if (!texture || texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING) continue;
 
-        if(This->stateBlock->samplerState[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT) {
+        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT)
+        {
             WARN("Non-filterable texture and mag filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if(This->stateBlock->samplerState[i][WINED3DSAMP_MINFILTER] != WINED3DTEXF_POINT) {
+        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MINFILTER] != WINED3DTEXF_POINT)
+        {
             WARN("Non-filterable texture and min filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if(This->stateBlock->samplerState[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_NONE &&
-           This->stateBlock->samplerState[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_POINT /* sic! */) {
+        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_NONE
+                && This->stateBlock->state.sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_POINT)
+        {
             WARN("Non-filterable texture and mip filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }

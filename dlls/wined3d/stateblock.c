@@ -852,10 +852,11 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         DWORD stage = This->contained_sampler_states[i].stage;
         DWORD state = This->contained_sampler_states[i].state;
 
-        TRACE("Updating sampler state %u, %u to %u (was %u).\n", stage, state,
-                targetStateBlock->samplerState[stage][state], This->samplerState[stage][state]);
+        TRACE("Updating sampler state %u, %u to %#x (was %#x).\n", stage, state,
+                targetStateBlock->state.sampler_states[stage][state],
+                This->state.sampler_states[stage][state]);
 
-        This->samplerState[stage][state] = targetStateBlock->samplerState[stage][state];
+        This->state.sampler_states[stage][state] = targetStateBlock->state.sampler_states[stage][state];
     }
 
     if (This->changed.pixelShader && This->pixelShader != targetStateBlock->pixelShader)
@@ -960,7 +961,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     {
         DWORD stage = This->contained_sampler_states[i].stage;
         DWORD state = This->contained_sampler_states[i].state;
-        DWORD value = This->samplerState[stage][state];
+        DWORD value = This->state.sampler_states[stage][state];
 
         if (stage >= MAX_FRAGMENT_SAMPLERS) stage += WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS;
         IWineD3DDevice_SetSamplerState(device, stage, state, value);
@@ -1255,21 +1256,24 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     This->state.lowest_disabled_stage = 1;
 
         /* Sampler states*/
-    for (i = 0 ; i <  MAX_COMBINED_SAMPLERS; i++) {
-        TRACE("Setting up default samplers states for sampler %d\n", i);
-        This->samplerState[i][WINED3DSAMP_ADDRESSU         ] = WINED3DTADDRESS_WRAP;
-        This->samplerState[i][WINED3DSAMP_ADDRESSV         ] = WINED3DTADDRESS_WRAP;
-        This->samplerState[i][WINED3DSAMP_ADDRESSW         ] = WINED3DTADDRESS_WRAP;
-        This->samplerState[i][WINED3DSAMP_BORDERCOLOR      ] = 0x00;
-        This->samplerState[i][WINED3DSAMP_MAGFILTER        ] = WINED3DTEXF_POINT;
-        This->samplerState[i][WINED3DSAMP_MINFILTER        ] = WINED3DTEXF_POINT;
-        This->samplerState[i][WINED3DSAMP_MIPFILTER        ] = WINED3DTEXF_NONE;
-        This->samplerState[i][WINED3DSAMP_MIPMAPLODBIAS    ] = 0;
-        This->samplerState[i][WINED3DSAMP_MAXMIPLEVEL      ] = 0;
-        This->samplerState[i][WINED3DSAMP_MAXANISOTROPY    ] = 1;
-        This->samplerState[i][WINED3DSAMP_SRGBTEXTURE      ] = 0;
-        This->samplerState[i][WINED3DSAMP_ELEMENTINDEX     ] = 0; /* TODO: Indicates which element of a  multielement texture to use */
-        This->samplerState[i][WINED3DSAMP_DMAPOFFSET       ] = 0; /* TODO: Vertex offset in the presampled displacement map */
+    for (i = 0 ; i <  MAX_COMBINED_SAMPLERS; ++i)
+    {
+        TRACE("Setting up default samplers states for sampler %u.\n", i);
+        This->state.sampler_states[i][WINED3DSAMP_ADDRESSU] = WINED3DTADDRESS_WRAP;
+        This->state.sampler_states[i][WINED3DSAMP_ADDRESSV] = WINED3DTADDRESS_WRAP;
+        This->state.sampler_states[i][WINED3DSAMP_ADDRESSW] = WINED3DTADDRESS_WRAP;
+        This->state.sampler_states[i][WINED3DSAMP_BORDERCOLOR] = 0;
+        This->state.sampler_states[i][WINED3DSAMP_MAGFILTER] = WINED3DTEXF_POINT;
+        This->state.sampler_states[i][WINED3DSAMP_MINFILTER] = WINED3DTEXF_POINT;
+        This->state.sampler_states[i][WINED3DSAMP_MIPFILTER] = WINED3DTEXF_NONE;
+        This->state.sampler_states[i][WINED3DSAMP_MIPMAPLODBIAS] = 0;
+        This->state.sampler_states[i][WINED3DSAMP_MAXMIPLEVEL] = 0;
+        This->state.sampler_states[i][WINED3DSAMP_MAXANISOTROPY] = 1;
+        This->state.sampler_states[i][WINED3DSAMP_SRGBTEXTURE] = 0;
+        /* TODO: Indicates which element of a multielement texture to use. */
+        This->state.sampler_states[i][WINED3DSAMP_ELEMENTINDEX] = 0;
+        /* TODO: Vertex offset in the presampled displacement map. */
+        This->state.sampler_states[i][WINED3DSAMP_DMAPOFFSET] = 0;
     }
 
     for (i = 0; i < gl_info->limits.textures; ++i)
