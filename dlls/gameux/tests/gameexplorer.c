@@ -646,10 +646,10 @@ void test_install_uninstall_game(void)
             _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, TRUE);
 
             hr = IGameExplorer2_UninstallGame(ge2, sExeName);
-            todo_wine ok(SUCCEEDED(hr), "IGameExplorer2::UninstallGame failed (error 0x%08x)\n", hr);
+            ok(SUCCEEDED(hr), "IGameExplorer2::UninstallGame failed (error 0x%08x)\n", hr);
         }
 
-        todo_wine _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
+        _validateGameRegistryKey(__LINE__, GIS_CURRENT_USER, &guid, &applicationId, sExePath, sExeName, FALSE);
 
         IGameExplorer2_Release(ge2);
     }

@@ -991,9 +991,23 @@ static HRESULT WINAPI GameExplorer2Impl_UninstallGame(
         IGameExplorer2 *iface,
         LPCWSTR binaryGDFPath)
 {
+    HRESULT hr;
+    GUID instanceId;
     GameExplorerImpl *This = impl_from_IGameExplorer2(iface);
-    FIXME("stub (%p, %s)\n", This, debugstr_w(binaryGDFPath));
-    return E_NOTIMPL;
+    TRACE("(%p, %s)\n", This, debugstr_w(binaryGDFPath));
+
+    if(!binaryGDFPath)
+        return E_INVALIDARG;
+
+    hr = GAMEUX_FindGameInstanceId(binaryGDFPath, GIS_CURRENT_USER, &instanceId);
+
+    if(hr == S_FALSE)
+        hr = GAMEUX_FindGameInstanceId(binaryGDFPath, GIS_ALL_USERS, &instanceId);
+
+    if(hr == S_OK)
+        hr = GAMEUX_RemoveRegistryRecord(&instanceId);
+
+    return hr;
 }
 
 static const struct IGameExplorer2Vtbl GameExplorer2ImplVtbl =
