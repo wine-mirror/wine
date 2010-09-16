@@ -206,7 +206,6 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
     BSTR sTarget;
-    static const WCHAR szXML[] = {'x','m','l',0};
     HRESULT hr;
 
     TRACE("(%p)->(v%d)\n", This, V_VT(&value));
@@ -215,7 +214,8 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
     hr = dom_pi_get_nodeName(iface, &sTarget);
     if(hr == S_OK)
     {
-        if(lstrcmpW( sTarget, szXML) == 0)
+        static const WCHAR xmlW[] = {'x','m','l',0};
+        if(lstrcmpW( sTarget, xmlW) == 0)
         {
             SysFreeString(sTarget);
             return E_FAIL;
@@ -539,16 +539,19 @@ static HRESULT WINAPI dom_pi_get_data(
     IXMLDOMProcessingInstruction *iface,
     BSTR *p)
 {
-    HRESULT hr = E_FAIL;
-    VARIANT vRet;
+    dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
+    HRESULT hr;
+    VARIANT ret;
+
+    TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_INVALIDARG;
 
-    hr = IXMLDOMProcessingInstruction_get_nodeValue( iface, &vRet );
+    hr = IXMLDOMProcessingInstruction_get_nodeValue( iface, &ret );
     if(hr == S_OK)
     {
-        *p = V_BSTR(&vRet);
+        *p = V_BSTR(&ret);
     }
 
     return hr;
@@ -559,10 +562,9 @@ static HRESULT WINAPI dom_pi_put_data(
     BSTR data)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    HRESULT hr = E_FAIL;
+    HRESULT hr;
     VARIANT val;
     BSTR sTarget;
-    static const WCHAR szXML[] = {'x','m','l',0};
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(data) );
 
@@ -570,7 +572,8 @@ static HRESULT WINAPI dom_pi_put_data(
     hr = dom_pi_get_nodeName(iface, &sTarget);
     if(hr == S_OK)
     {
-        if(lstrcmpW( sTarget, szXML) == 0)
+        static const WCHAR xmlW[] = {'x','m','l',0};
+        if(lstrcmpW( sTarget, xmlW) == 0)
         {
             SysFreeString(sTarget);
             return E_FAIL;
@@ -582,9 +585,7 @@ static HRESULT WINAPI dom_pi_put_data(
     V_VT(&val) = VT_BSTR;
     V_BSTR(&val) = data;
 
-    hr = IXMLDOMProcessingInstruction_put_nodeValue( iface, val );
-
-    return hr;
+    return IXMLDOMProcessingInstruction_put_nodeValue( iface, val );
 }
 
 static const struct IXMLDOMProcessingInstructionVtbl dom_pi_vtbl =
