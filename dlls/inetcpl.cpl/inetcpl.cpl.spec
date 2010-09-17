@@ -14,7 +14,7 @@
 @ stub LaunchPrivacyDialog
 @ stub LaunchSecurityDialog
 @ stub LaunchSecurityDialogEx
-@ stub LaunchSiteCertDialog
+@ stdcall LaunchSiteCertDialog(long)
 @ stub OpenFontsDialog
 @ stub OpenFontsDialogEx
 @ stub OpenLanguageDialog

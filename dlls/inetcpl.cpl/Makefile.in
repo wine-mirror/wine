@@ -1,6 +1,8 @@
 MODULE    = inetcpl.cpl
+DELAYIMPORTS = cryptui
 
 C_SRCS = \
+	content.c \
 	inetcpl.c
 
 RC_SRCS = \
