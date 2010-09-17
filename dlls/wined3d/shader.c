@@ -2086,7 +2086,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
     {
         if (!shader->baseShader.reg_maps.sampler_type[i]) continue;
-        texture = (IWineD3DBaseTextureImpl *)stateblock->textures[i];
+        texture = stateblock->state.textures[i];
         if (!texture)
         {
             args->color_fixup[i] = COLOR_FIXUP_IDENTITY;

@@ -458,7 +458,7 @@ static void device_preload_texture(IWineD3DStateBlockImpl *stateblock, unsigned 
     IWineD3DBaseTextureImpl *texture;
     enum WINED3DSRGB srgb;
 
-    if (!(texture = (IWineD3DBaseTextureImpl *)stateblock->textures[idx])) return;
+    if (!(texture = stateblock->state.textures[idx])) return;
     srgb = stateblock->state.sampler_states[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
     texture->baseTexture.internal_preload((IWineD3DBaseTexture *)texture, srgb);
 }
@@ -4319,7 +4319,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
         stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
 
     /* Windows accepts overflowing this array... we do not. */
-    if (stage >= sizeof(This->stateBlock->textures) / sizeof(*This->stateBlock->textures))
+    if (stage >= sizeof(This->stateBlock->state.textures) / sizeof(*This->stateBlock->state.textures))
     {
         WARN("Ignoring invalid stage %u.\n", stage);
         return WINED3D_OK;
@@ -4334,7 +4334,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
 
     This->updateStateBlock->changed.textures |= 1 << stage;
 
-    prev = This->updateStateBlock->textures[stage];
+    prev = (IWineD3DBaseTexture *)This->updateStateBlock->state.textures[stage];
     TRACE("Previous texture %p.\n", prev);
 
     if (texture == prev)
@@ -4344,7 +4344,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
     }
 
     TRACE("Setting new texture to %p.\n", texture);
-    This->updateStateBlock->textures[stage] = texture;
+    This->updateStateBlock->state.textures[stage] = (IWineD3DBaseTextureImpl *)texture;
 
     if (This->isRecordingState)
     {
@@ -4401,7 +4401,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
             TRACE("Searching for other stages the texture is bound to.\n");
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
             {
-                if (This->updateStateBlock->textures[i] == prev)
+                if (This->updateStateBlock->state.textures[i] == t)
                 {
                     TRACE("Texture is also bound to stage %u.\n", i);
                     t->baseTexture.sampler = i;
@@ -4425,12 +4425,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD
         Stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
     }
 
-    if (Stage >= sizeof(This->stateBlock->textures)/sizeof(This->stateBlock->textures[0])) {
+    if (Stage >= sizeof(This->stateBlock->state.textures) / sizeof(*This->stateBlock->state.textures))
+    {
         ERR("Current stage overflows textures array (stage %d)\n", Stage);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
 
-    *ppTexture=This->stateBlock->textures[Stage];
+    *ppTexture = (IWineD3DBaseTexture *)This->stateBlock->state.textures[Stage];
     if (*ppTexture)
         IWineD3DBaseTexture_AddRef(*ppTexture);
 
@@ -5068,7 +5069,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
         }
 
-        texture = (IWineD3DBaseTextureImpl *) This->stateBlock->textures[i];
+        texture = This->stateBlock->state.textures[i];
         if (!texture || texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING) continue;
 
         if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT)
@@ -5102,7 +5103,7 @@ static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
 
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
-        IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl*)device->stateBlock->textures[i];
+        IWineD3DBaseTextureImpl *texture = device->stateBlock->state.textures[i];
         if (texture && (texture->resource.format->id == WINED3DFMT_P8_UINT
                 || texture->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM))
         {
@@ -6593,19 +6594,19 @@ void device_resource_released(IWineD3DDeviceImpl *device, IWineD3DResource *reso
         case WINED3DRTYPE_VOLUMETEXTURE:
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
             {
-                if (device->stateBlock && device->stateBlock->textures[i] == (IWineD3DBaseTexture *)resource)
+                if (device->stateBlock && device->stateBlock->state.textures[i] == (IWineD3DBaseTextureImpl *)resource)
                 {
                     ERR("Texture %p is still in use by stateblock %p, stage %u.\n",
                             resource, device->stateBlock, i);
-                    device->stateBlock->textures[i] = NULL;
+                    device->stateBlock->state.textures[i] = NULL;
                 }
 
                 if (device->updateStateBlock != device->stateBlock
-                        && device->updateStateBlock->textures[i] == (IWineD3DBaseTexture *)resource)
+                        && device->updateStateBlock->state.textures[i] == (IWineD3DBaseTextureImpl *)resource)
                 {
                     ERR("Texture %p is still in use by stateblock %p, stage %u.\n",
                             resource, device->updateStateBlock, i);
-                    device->updateStateBlock->textures[i] = NULL;
+                    device->updateStateBlock->state.textures[i] = NULL;
                 }
             }
             break;

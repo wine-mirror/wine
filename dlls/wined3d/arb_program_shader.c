@@ -503,8 +503,8 @@ static void shader_arb_load_np2fixup_constants(
 
         for (i = 0; active; active >>= 1, ++i) {
             const unsigned char idx = fixup->super.idx[i];
-            const IWineD3DTextureImpl* const tex = (const IWineD3DTextureImpl*) stateBlock->textures[i];
-            GLfloat* tex_dim = &np2fixup_constants[(idx >> 1) * 4];
+            const IWineD3DBaseTextureImpl *tex = stateBlock->state.textures[i];
+            GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
             if (!(active & 1)) continue;
 
@@ -1326,6 +1326,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     DWORD sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
+    IWineD3DBaseTextureImpl *texture;
     const char *tex_type;
     BOOL np2_fixup = FALSE;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
@@ -1343,9 +1344,8 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             break;
 
         case WINED3DSTT_2D:
-            if (device->stateBlock->textures[sampler_idx]
-                    && ((IWineD3DBaseTextureImpl *)device->stateBlock->textures[sampler_idx])->baseTexture.target
-                    == GL_TEXTURE_RECTANGLE_ARB)
+            texture = device->stateBlock->state.textures[sampler_idx];
+            if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
             {
                 tex_type = "RECT";
             } else {
@@ -4229,6 +4229,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This, struct
 /* GL locking is done by the caller */
 static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb_ps_compile_args *args)
 {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
     UINT i;
     DWORD new_size;
     struct arb_ps_compiled_shader *new_array;
@@ -4238,7 +4239,6 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
 
     if (!shader->baseShader.backend_data)
     {
-        IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) shader->baseShader.device;
         const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
         struct shader_arb_priv *priv = device->shader_priv;
 
@@ -4293,7 +4293,7 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
     shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
     pixelshader_update_samplers(&shader->baseShader.reg_maps,
-            ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
+            (IWineD3DBaseTexture **)device->stateBlock->state.textures);
 
     if (!shader_buffer_init(&buffer))
     {

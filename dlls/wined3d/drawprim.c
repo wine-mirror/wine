@@ -178,7 +178,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
             continue;
         }
 
-        if (!pixelShader && !This->stateBlock->textures[textureNo]) continue;
+        if (!pixelShader && !This->stateBlock->state.textures[textureNo]) continue;
 
         if (texture_idx == WINED3D_UNMAPPED_STAGE) continue;
 

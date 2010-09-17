@@ -496,13 +496,13 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
      * used WINED3DRS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
      * in case it finds some texture+colorkeyenable combination which needs extra care.
      */
-    if (stateblock->textures[0])
+    if (stateblock->state.textures[0])
     {
-        GLenum texture_dimensions = ((IWineD3DBaseTextureImpl *)stateblock->textures[0])->baseTexture.target;
+        IWineD3DBaseTextureImpl *texture = stateblock->state.textures[0];
+        GLenum texture_dimensions = texture->baseTexture.target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)stateblock->textures[0];
             IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[0];
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT)
@@ -2111,7 +2111,7 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
         op = WINED3DTOP_SELECTARG1;
     }
 
-    if (isAlpha && !This->stateBlock->textures[Stage] && arg1 == WINED3DTA_TEXTURE)
+    if (isAlpha && !This->stateBlock->state.textures[Stage] && arg1 == WINED3DTA_TEXTURE)
     {
         get_src_and_opr(WINED3DTA_DIFFUSE, isAlpha, &src1, &opr1);
     } else {
@@ -3184,9 +3184,9 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
     arg2 = stateblock->state.texture_states[stage][WINED3DTSS_ALPHAARG2];
     arg0 = stateblock->state.texture_states[stage][WINED3DTSS_ALPHAARG0];
 
-    if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !stage && stateblock->textures[0])
+    if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !stage && stateblock->state.textures[0])
     {
-        IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)stateblock->textures[0];
+        IWineD3DBaseTextureImpl *texture = stateblock->state.textures[0];
         GLenum texture_dimensions = texture->baseTexture.target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
@@ -3292,7 +3292,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, s
             stateblock->device->frag_pipe->ffp_proj_control);
 
     /* The sampler applying function calls us if this changes */
-    if ((context->lastWasPow2Texture & (1 << texUnit)) && stateblock->textures[texUnit])
+    if ((context->lastWasPow2Texture & (1 << texUnit)) && stateblock->state.textures[texUnit])
     {
         if(generated) {
             FIXME("Non-power2 texture being used with generated texture coords\n");
@@ -3301,7 +3301,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, s
            fixed-function-pipeline fixup via pow2Matrix when no PS is used. */
         if (!use_ps(stateblock)) {
             TRACE("Non power two matrix multiply fixup\n");
-            glMultMatrixf(((IWineD3DTextureImpl *) stateblock->textures[texUnit])->baseTexture.pow2Matrix);
+            glMultMatrixf(stateblock->state.textures[texUnit]->baseTexture.pow2Matrix);
         }
     }
 }
@@ -3579,7 +3579,7 @@ static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     const DWORD sampler = state - STATE_SAMPLER(0);
-    IWineD3DBaseTexture *texture = stateblock->textures[sampler];
+    IWineD3DBaseTextureImpl *texture = stateblock->state.textures[sampler];
 
     TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
 
@@ -3592,7 +3592,7 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, s
      * misc pipeline
      */
     if(sampler < MAX_TEXTURES) {
-        const BOOL texIsPow2 = !((IWineD3DBaseTextureImpl *)texture)->baseTexture.pow2Matrix_identity;
+        const BOOL texIsPow2 = !texture->baseTexture.pow2Matrix_identity;
 
         if (texIsPow2 || (context->lastWasPow2Texture & (1 << sampler)))
         {
@@ -3632,12 +3632,13 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
     checkGLcall("glActiveTextureARB");
 
-    if (stateblock->textures[sampler])
+    if (stateblock->state.textures[sampler])
     {
+        IWineD3DBaseTexture *texture = (IWineD3DBaseTexture *)stateblock->state.textures[sampler];
         BOOL srgb = stateblock->state.sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
-        IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
-        IWineD3DBaseTexture_BindTexture(stateblock->textures[sampler], srgb);
-        basetexture_apply_state_changes(stateblock->textures[sampler],
+
+        IWineD3DBaseTexture_BindTexture(texture, srgb);
+        basetexture_apply_state_changes(texture,
                 stateblock->state.texture_states[sampler],
                 stateblock->state.sampler_states[sampler], gl_info);
 
@@ -3662,7 +3663,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
         }
 
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
-        if (!tex_impl->baseTexture.pow2Matrix_identity)
+        if (!stateblock->state.textures[sampler]->baseTexture.pow2Matrix_identity)
         {
             IWineD3DDeviceImpl *d3ddevice = stateblock->device;
             d3ddevice->shader_backend->shader_load_np2fixup_constants(

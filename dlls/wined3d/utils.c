@@ -2368,7 +2368,7 @@ GLenum CompareFunc(DWORD func) {
 
 BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3) {
     if (op == WINED3DTOP_DISABLE) return FALSE;
-    if (This->stateBlock->textures[stage]) return FALSE;
+    if (This->stateBlock->state.textures[stage]) return FALSE;
 
     if ((arg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
             && op != WINED3DTOP_SELECTARG2) return TRUE;
@@ -2745,8 +2745,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             break;
         }
 
-        texture = (IWineD3DBaseTextureImpl *) stateblock->textures[i];
-        if (texture)
+        if ((texture = stateblock->state.textures[i]))
         {
             settings->op[i].color_fixup = texture->resource.format->color_fixup;
             if (ignore_textype)
@@ -2809,9 +2808,9 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             aarg0 = (args[aop] & ARG0) ? stateblock->state.texture_states[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
         }
 
-        if (!i && stateblock->textures[0] && stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
+        if (!i && stateblock->state.textures[0] && stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
         {
-            IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)stateblock->textures[0];
+            IWineD3DBaseTextureImpl *texture = stateblock->state.textures[0];
             GLenum texture_dimensions = texture->baseTexture.target;
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
@@ -2980,9 +2979,9 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (stateblock->textures[stage])
+    if (stateblock->state.textures[stage])
     {
-        switch (((IWineD3DBaseTextureImpl *)stateblock->textures[stage])->baseTexture.target)
+        switch (stateblock->state.textures[stage]->baseTexture.target)
         {
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);

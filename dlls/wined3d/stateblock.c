@@ -496,7 +496,8 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
         for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++)
         {
-            if (This->textures[counter]) IWineD3DBaseTexture_Release(This->textures[counter]);
+            if (This->state.textures[counter])
+                IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)This->state.textures[counter]);
         }
 
         for (counter = 0; counter < MAX_STREAMS; ++counter)
@@ -840,11 +841,14 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        TRACE("Updating texture %u to %p (was %p).\n", i, targetStateBlock->textures[i], This->textures[i]);
+        TRACE("Updating texture %u to %p (was %p).\n",
+                i, targetStateBlock->state.textures[i], This->state.textures[i]);
 
-        if (targetStateBlock->textures[i]) IWineD3DBaseTexture_AddRef(targetStateBlock->textures[i]);
-        if (This->textures[i]) IWineD3DBaseTexture_Release(This->textures[i]);
-        This->textures[i] = targetStateBlock->textures[i];
+        if (targetStateBlock->state.textures[i])
+            IWineD3DBaseTexture_AddRef((IWineD3DBaseTexture *)targetStateBlock->state.textures[i]);
+        if (This->state.textures[i])
+            IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)This->state.textures[i]);
+        This->state.textures[i] = targetStateBlock->state.textures[i];
     }
 
     for (i = 0; i < This->num_contained_sampler_states; ++i)
@@ -1029,7 +1033,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
         if (!(map & 1)) continue;
 
         stage = i < MAX_FRAGMENT_SAMPLERS ? i : WINED3DVERTEXTEXTURESAMPLER0 + i - MAX_FRAGMENT_SAMPLERS;
-        IWineD3DDevice_SetTexture(device, stage, This->textures[i]);
+        IWineD3DDevice_SetTexture(device, stage, (IWineD3DBaseTexture *)This->state.textures[i]);
     }
 
     map = This->changed.clipplane;
@@ -1280,7 +1284,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     {
         /* Note: This avoids calling SetTexture, so pretend it has been called */
         This->changed.textures |= 1 << i;
-        This->textures[i]         = NULL;
+        This->state.textures[i] = NULL;
     }
 
     /* check the return values, because the GetBackBuffer call isn't valid for ddraw */

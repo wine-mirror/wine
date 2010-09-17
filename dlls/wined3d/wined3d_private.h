@@ -2349,7 +2349,7 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
-    /* Sampler States */
+    IWineD3DBaseTextureImpl *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
     DWORD lowest_disabled_stage;
@@ -2416,9 +2416,6 @@ struct IWineD3DStateBlockImpl
     BOOL                       pixelShaderConstantB[MAX_CONST_B];
     INT                        pixelShaderConstantI[MAX_CONST_I * 4];
     float                     *pixelShaderConstantF;
-
-    /* Texture */
-    IWineD3DBaseTexture      *textures[MAX_COMBINED_SAMPLERS];
 
     /* Contained state management */
     DWORD                     contained_render_states[WINEHIGHEST_RENDER_STATE + 1];

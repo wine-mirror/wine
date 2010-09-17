@@ -43,9 +43,9 @@ static void nvts_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateb
         context->texShaderBumpMap &= ~(1 << stage);
     }
 
-    if (stateblock->textures[stage])
+    if (stateblock->state.textures[stage])
     {
-        switch (((IWineD3DBaseTextureImpl *)stateblock->textures[stage])->baseTexture.target)
+        switch (stateblock->state.textures[stage]->baseTexture.target)
         {
             case GL_TEXTURE_2D:
                 glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);
