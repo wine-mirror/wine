@@ -586,7 +586,7 @@ static void test_communication(void)
         return;
     }
 
-    /* Create a socket and connect to mail.google.com */
+    /* Create a socket and connect to www.codeweavers.com */
     ret = WSAStartup(0x0202, &wsa_data);
     if (ret)
     {
@@ -634,6 +634,23 @@ static void test_communication(void)
     status = pInitializeSecurityContextA(&cred_handle, NULL, (SEC_CHAR *)"localhost",
         ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
         0, 0, NULL, 0, &context, &buffers[0], &attrs, NULL);
+    ok(status == SEC_I_CONTINUE_NEEDED, "Expected SEC_I_CONTINUE_NEEDED, got %08x\n", status);
+
+    buffers[1].cBuffers = 1;
+    buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    data_size = buffers[0].pBuffers[0].cbBuffer;
+    status = pInitializeSecurityContextA(&cred_handle, &context, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, &buffers[1], 0, NULL, &buffers[0], &attrs, NULL);
+    ok(status == SEC_E_INVALID_TOKEN, "Expected SEC_E_INVALID_TOKEN, got %08x\n", status);
+
+    buffers[0].pBuffers[0].cbBuffer = buf_size;
+    buffers[1].cBuffers = 4;
+    buffers[1].pBuffers[0].cbBuffer = buf_size;
+
+    status = pInitializeSecurityContextA(&cred_handle, NULL, (SEC_CHAR *)"localhost",
+            ISC_REQ_CONFIDENTIALITY|ISC_REQ_STREAM,
+            0, 0, NULL, 0, &context, &buffers[0], &attrs, NULL);
     ok(status == SEC_I_CONTINUE_NEEDED, "Expected SEC_I_CONTINUE_NEEDED, got %08x\n", status);
 
     while (status == SEC_I_CONTINUE_NEEDED)

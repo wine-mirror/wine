@@ -775,6 +775,14 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     /* Perform the TLS handshake */
     err = pgnutls_handshake(ctx->session);
 
+    if(transport.in.offset && transport.in.offset != pInput->pBuffers[0].cbBuffer) {
+        if(pInput->cBuffers<2 || pInput->pBuffers[1].BufferType!=SECBUFFER_EMPTY)
+            return SEC_E_INVALID_TOKEN;
+
+        pInput->pBuffers[1].BufferType = SECBUFFER_EXTRA;
+        pInput->pBuffers[1].cbBuffer = pInput->pBuffers[0].cbBuffer-transport.in.offset;
+    }
+
     out_buffers = &transport.out;
     if (out_buffers->current_buffer_idx != -1)
     {
