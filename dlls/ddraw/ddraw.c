@@ -3311,6 +3311,12 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
+    if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC2))
+    {
+        WARN("Application supplied invalid surface descriptor\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
         if (TRACE_ON(ddraw))
@@ -3335,6 +3341,12 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
+
+    if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC2))
+    {
+        WARN("Application supplied invalid surface descriptor\n");
+        return DDERR_INVALIDPARAMS;
+    }
 
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
@@ -3371,6 +3383,12 @@ static HRESULT WINAPI ddraw3_CreateSurface(IDirectDraw3 *iface,
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
+
+    if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC))
+    {
+        WARN("Application supplied invalid surface descriptor\n");
+        return DDERR_INVALIDPARAMS;
+    }
 
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
@@ -3412,6 +3430,12 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
+    if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC))
+    {
+        WARN("Application supplied invalid surface descriptor\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     if(surface_desc->ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER))
     {
         if (TRACE_ON(ddraw))
@@ -3450,6 +3474,12 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
 
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
+
+    if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC))
+    {
+        WARN("Application supplied invalid surface descriptor\n");
+        return DDERR_INVALIDPARAMS;
+    }
 
     /* Remove front buffer flag, this causes failure in v7, and its added to normal
      * primaries anyway. */

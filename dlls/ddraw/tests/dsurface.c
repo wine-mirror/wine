@@ -3638,16 +3638,19 @@ static void CreateSurfaceBadCapsSizeTest(void)
     IDirectDrawSurface_Release(surf);
 
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd_bad1, &surf, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd_bad2, &surf, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd_bad3, &surf, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd_bad4, &surf, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+       DDERR_INVALIDPARAMS, hr);
+    hr = IDirectDraw_CreateSurface(lpDD, NULL, &surf, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
 
     hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
@@ -3658,16 +3661,19 @@ static void CreateSurfaceBadCapsSizeTest(void)
     IDirectDrawSurface_Release(surf);
 
     hr = IDirectDraw2_CreateSurface(dd2, &ddsd_bad1, &surf, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw2_CreateSurface(dd2, &ddsd_bad2, &surf, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw2_CreateSurface(dd2, &ddsd_bad3, &surf, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw2_CreateSurface(dd2, &ddsd_bad4, &surf, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+       DDERR_INVALIDPARAMS, hr);
+    hr = IDirectDraw2_CreateSurface(dd2, NULL, &surf, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw2_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
 
     IDirectDraw2_Release(dd2);
@@ -3680,16 +3686,19 @@ static void CreateSurfaceBadCapsSizeTest(void)
     IDirectDrawSurface4_Release(surf4);
 
     hr = IDirectDraw4_CreateSurface(dd4, &ddsd2_bad1, &surf4, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw4_CreateSurface(dd4, &ddsd2_bad2, &surf4, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw4_CreateSurface(dd4, &ddsd2_bad3, &surf4, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw4_CreateSurface(dd4, &ddsd2_bad4, &surf4, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+       DDERR_INVALIDPARAMS, hr);
+    hr = IDirectDraw4_CreateSurface(dd4, NULL, &surf4, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw4_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
 
     IDirectDraw4_Release(dd4);
@@ -3702,16 +3711,19 @@ static void CreateSurfaceBadCapsSizeTest(void)
     IDirectDrawSurface7_Release(surf7);
 
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd2_bad1, &surf7, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd2_bad2, &surf7, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd2_bad3, &surf7, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
     hr = IDirectDraw7_CreateSurface(dd7, &ddsd2_bad4, &surf7, NULL);
-    todo_wine ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
+       DDERR_INVALIDPARAMS, hr);
+    hr = IDirectDraw7_CreateSurface(dd7, NULL, &surf7, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirectDraw7_CreateSurface didn't return 0x%08x, but 0x%08x\n",
        DDERR_INVALIDPARAMS, hr);
 
     IDirectDraw7_Release(dd7);
