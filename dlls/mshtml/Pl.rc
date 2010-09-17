@@ -24,6 +24,12 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
+    IDS_STATUS_DONE            "Skoñczone"
+    IDS_STATUS_DOWNLOADINGFROM "Pobieranie od %s..."
+}
+
+STRINGTABLE
+{
     IDS_HTMLDISABLED    "Wyœwietlanie HTML jest aktualnie wy³¹czone."
     IDS_HTMLDOCUMENT    "Dokument HTML"
     IDS_DOWNLOADING     "Pobieranie plików..."
