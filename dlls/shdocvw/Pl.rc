@@ -49,9 +49,38 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Podgl¹&d wydruku...",           ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "&W³aœciwoœci...",              ID_BROWSE_PROPERTIES
+        MENUITEM "&Zamknij...",              ID_BROWSE_QUIT
+    }
+    POPUP "&Widok"
+    {
+        POPUP "&Paski narzêdzi"
+        {
+            MENUITEM "Pasek &standardowy"            ID_BROWSE_BAR_STD
+            MENUITEM "&Pasek adresu"             ID_BROWSE_BAR_ADDR
+        }
+    }
+    POPUP "&Ulubione"
+    {
+        MENUITEM "&Dodaj do ulubionych..."         ID_BROWSE_ADDFAV
+        MENUITEM SEPARATOR
     }
     POPUP "&Pomoc"
     {
         MENUITEM "&O Internet Explorer...", ID_BROWSE_ABOUT
     }
+}
+
+STRINGTABLE
+{
+    IDS_TB_BACK             "Wstecz"
+    IDS_TB_FORWARD          "Dalej"
+    IDS_TB_STOP             "Zatrzymaj"
+    IDS_TB_REFRESH          "Odœwierz"
+    IDS_TB_HOME             "Strona g³ówna"
+    IDS_TB_PRINT            "Drukuj"
+}
+
+STRINGTABLE
+{
+    IDS_ADDRESS             "Adres"
 }
