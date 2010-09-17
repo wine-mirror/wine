@@ -7932,6 +7932,37 @@ static void test_IUriBuilder_IUriProperty(void) {
             }
             if(test) IUri_Release(test);
 
+            /* Doesn't return the same IUri, if the flag combination is different then the one that created
+             * the base IUri.
+             */
+            test = NULL;
+            hr = IUriBuilder_CreateUri(builder, Uri_CREATE_ALLOW_RELATIVE, 0, 0, &test);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(test != uri, "Error: Wasn't expecting 'test' to be 'uri'\n");
+                }
+            }
+            if(test) IUri_Release(test);
+
+            /* Still returns the same IUri, even though the base one wasn't created with CREATE_CANONICALIZE
+             * explicitly set (because it's a default flags).
+             */
+            test = NULL;
+            hr = IUriBuilder_CreateUri(builder, Uri_CREATE_CANONICALIZE, 0, 0, &test);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            if(SUCCEEDED(hr)) {
+                cur_count = get_refcnt(uri);
+                ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count+1, cur_count);
+                ok(test == uri, "Error: Expected 'test' to be %p, but was %p instead.\n", uri, test);
+            }
+            if(test) IUri_Release(test);
+
             test = NULL;
             hr = IUriBuilder_CreateUriSimple(builder, 0, 0, &test);
             todo_wine {
@@ -7956,6 +7987,37 @@ static void test_IUriBuilder_IUriProperty(void) {
                 ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
                     orig_count+1, cur_count);
                 ok(test == uri, "Error: Expected test to be %p, but was %p instead.\n", uri, test);
+            }
+            if(test) IUri_Release(test);
+
+            /* Doesn't return the same IUri, if the flag combination is different then the one that created
+             * the base IUri.
+             */
+            test = NULL;
+            hr = IUriBuilder_CreateUriWithFlags(builder, Uri_CREATE_ALLOW_RELATIVE, 0, 0, 0, &test);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            if(SUCCEEDED(hr)) {
+                todo_wine {
+                    ok(test != uri, "Error: Wasn't expecting 'test' to be 'uri'\n");
+                }
+            }
+            if(test) IUri_Release(test);
+
+            /* Still returns the same IUri, even though the base one wasn't created with CREATE_CANONICALIZE
+             * explicitly set (because it's a default flags).
+             */
+            test = NULL;
+            hr = IUriBuilder_CreateUriWithFlags(builder, Uri_CREATE_CANONICALIZE, 0, 0, 0, &test);
+            todo_wine {
+                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            }
+            if(SUCCEEDED(hr)) {
+                cur_count = get_refcnt(uri);
+                ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count+1, cur_count);
+                ok(test == uri, "Error: Expected 'test' to be %p, but was %p instead.\n", uri, test);
             }
             if(test) IUri_Release(test);
         }
