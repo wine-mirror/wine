@@ -492,7 +492,8 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     if (!refCount) {
         int counter;
 
-        if (This->vertexDecl) IWineD3DVertexDeclaration_Release(This->vertexDecl);
+        if (This->state.vertex_declaration)
+            IWineD3DVertexDeclaration_Release((IWineD3DVertexDeclaration *)This->state.vertex_declaration);
 
         for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++)
         {
@@ -731,13 +732,17 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->IndexFmt = targetStateBlock->IndexFmt;
     }
 
-    if (This->changed.vertexDecl && This->vertexDecl != targetStateBlock->vertexDecl)
+    if (This->changed.vertexDecl && This->state.vertex_declaration != targetStateBlock->state.vertex_declaration)
     {
-        TRACE("Updating vertex declaration from %p to %p.\n", This->vertexDecl, targetStateBlock->vertexDecl);
+        TRACE("Updating vertex declaration from %p to %p.\n",
+                This->state.vertex_declaration, targetStateBlock->state.vertex_declaration);
 
-        if (targetStateBlock->vertexDecl) IWineD3DVertexDeclaration_AddRef(targetStateBlock->vertexDecl);
-        if (This->vertexDecl) IWineD3DVertexDeclaration_Release(This->vertexDecl);
-        This->vertexDecl = targetStateBlock->vertexDecl;
+        if (targetStateBlock->state.vertex_declaration)
+                IWineD3DVertexDeclaration_AddRef(
+                        (IWineD3DVertexDeclaration *)targetStateBlock->state.vertex_declaration);
+        if (This->state.vertex_declaration)
+                IWineD3DVertexDeclaration_Release((IWineD3DVertexDeclaration *)This->state.vertex_declaration);
+        This->state.vertex_declaration = targetStateBlock->state.vertex_declaration;
     }
 
     if (This->changed.material && memcmp(&targetStateBlock->state.material,
@@ -989,9 +994,9 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
         IWineD3DDevice_SetBaseVertexIndex(device, This->baseVertexIndex);
     }
 
-    if (This->changed.vertexDecl && This->vertexDecl)
+    if (This->changed.vertexDecl && This->state.vertex_declaration)
     {
-        IWineD3DDevice_SetVertexDeclaration(device, This->vertexDecl);
+        IWineD3DDevice_SetVertexDeclaration(device, (IWineD3DVertexDeclaration *)This->state.vertex_declaration);
     }
 
     if (This->changed.material)

@@ -2897,7 +2897,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     }
     else if (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
     {
-        if (use_vs(stateblock) || ((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->position_transformed)
+        if (use_vs(stateblock) || stateblock->state.vertex_declaration->position_transformed)
         {
             settings->fog = FOG_LINEAR;
         }

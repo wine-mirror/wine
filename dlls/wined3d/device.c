@@ -177,7 +177,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup)
 {
     /* We need to deal with frequency data! */
-    IWineD3DVertexDeclarationImpl *declaration = (IWineD3DVertexDeclarationImpl *)This->stateBlock->vertexDecl;
+    IWineD3DVertexDeclarationImpl *declaration = This->stateBlock->state.vertex_declaration;
     unsigned int i;
 
     stream_info->use_map = 0;
@@ -426,7 +426,7 @@ void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_
 
     if (vs && !stream_info->position_transformed)
     {
-        if (((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->half_float_conv_needed && !fixup)
+        if (stateblock->state.vertex_declaration->half_float_conv_needed && !fixup)
         {
             TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion.\n");
             device->useDrawStridedSlow = TRUE;
@@ -3164,14 +3164,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, R
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration* pDecl) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DVertexDeclaration *oldDecl = This->updateStateBlock->vertexDecl;
+    IWineD3DVertexDeclaration *oldDecl = (IWineD3DVertexDeclaration *)This->updateStateBlock->state.vertex_declaration;
 
     TRACE("(%p) : pDecl=%p\n", This, pDecl);
 
     if (pDecl) IWineD3DVertexDeclaration_AddRef(pDecl);
     if (oldDecl) IWineD3DVertexDeclaration_Release(oldDecl);
 
-    This->updateStateBlock->vertexDecl = pDecl;
+    This->updateStateBlock->state.vertex_declaration = (IWineD3DVertexDeclarationImpl *)pDecl;
     This->updateStateBlock->changed.vertexDecl = TRUE;
 
     if (This->isRecordingState) {
@@ -3192,7 +3192,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* if
 
     TRACE("(%p) : ppDecl=%p\n", This, ppDecl);
 
-    *ppDecl = This->stateBlock->vertexDecl;
+    *ppDecl = (IWineD3DVertexDeclaration *)This->stateBlock->state.vertex_declaration;
     if (*ppDecl) IWineD3DVertexDeclaration_AddRef(*ppDecl);
     return WINED3D_OK;
 }
@@ -4671,7 +4671,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, UI
 
     TRACE("(%p) : start %u, count %u\n", This, StartVertex, vertex_count);
 
-    if(!This->stateBlock->vertexDecl) {
+    if (!This->stateBlock->state.vertex_declaration)
+    {
         WARN("(%p) : Called without a valid vertex declaration set\n", This);
         return WINED3DERR_INVALIDCALL;
     }
@@ -4709,7 +4710,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
         return WINED3DERR_INVALIDCALL;
     }
 
-    if(!This->stateBlock->vertexDecl) {
+    if (!This->stateBlock->state.vertex_declaration)
+    {
         WARN("(%p) : Called without a valid vertex declaration set\n", This);
         return WINED3DERR_INVALIDCALL;
     }
@@ -4749,7 +4751,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     TRACE("(%p) : vertex count %u, pVtxData %p, stride %u\n",
             This, vertex_count, pVertexStreamZeroData, VertexStreamZeroStride);
 
-    if(!This->stateBlock->vertexDecl) {
+    if (!This->stateBlock->state.vertex_declaration)
+    {
         WARN("(%p) : Called without a valid vertex declaration set\n", This);
         return WINED3DERR_INVALIDCALL;
     }
@@ -4792,7 +4795,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     TRACE("(%p) : index count %u, pidxdata %p, IdxFmt %u, pVtxdata %p, stride=%u.\n",
             This, index_count, pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 
-    if(!This->stateBlock->vertexDecl) {
+    if (!This->stateBlock->state.vertex_declaration)
+    {
         WARN("(%p) : Called without a valid vertex declaration set\n", This);
         return WINED3DERR_INVALIDCALL;
     }

@@ -2349,6 +2349,8 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
+    IWineD3DVertexDeclarationImpl *vertex_declaration;
+
     IWineD3DBaseTextureImpl *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
@@ -2375,9 +2377,6 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     struct wined3d_state state;
-
-    /* Vertex Shader Declaration */
-    IWineD3DVertexDeclaration *vertexDecl;
 
     IWineD3DVertexShader      *vertexShader;
 
@@ -3036,7 +3035,7 @@ static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
      * stateblock->vertexShader implies a vertex declaration instead of ddraw
      * style strided data. */
     return (stateblock->vertexShader
-            && !((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->position_transformed
+            && !stateblock->state.vertex_declaration->position_transformed
             && stateblock->device->vs_selected_mode != SHADER_NONE);
 }
 

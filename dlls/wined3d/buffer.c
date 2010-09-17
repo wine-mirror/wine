@@ -467,7 +467,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
          * analyse the strided streams in depth, just set them up for no conversion. Return decl changed
          * if we used conversion before
          */
-        if (!((IWineD3DVertexDeclarationImpl *) device->stateBlock->vertexDecl)->half_float_conv_needed)
+        if (!device->stateBlock->state.vertex_declaration->half_float_conv_needed)
         {
             if (This->conversion_map)
             {
