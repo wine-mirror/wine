@@ -244,9 +244,11 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTextur
 
 static UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface)
 {
+    IWineD3DVolumeTextureImpl *texture = (IWineD3DVolumeTextureImpl *)iface;
+
     TRACE("iface %p.\n", iface);
 
-    return GL_TEXTURE_3D;
+    return texture->baseTexture.target;
 }
 
 static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *iface)
@@ -453,6 +455,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
     texture->baseTexture.pow2Matrix[5] = 1.0f;
     texture->baseTexture.pow2Matrix[10] = 1.0f;
     texture->baseTexture.pow2Matrix[15] = 1.0f;
+    texture->baseTexture.target = GL_TEXTURE_3D;
 
     /* Generate all the surfaces. */
     tmp_w = width;

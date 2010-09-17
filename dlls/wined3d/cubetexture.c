@@ -308,9 +308,11 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *i
 
 static UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *iface)
 {
+    IWineD3DCubeTextureImpl *texture = (IWineD3DCubeTextureImpl *)iface;
+
     TRACE("iface %p.\n", iface);
 
-    return GL_TEXTURE_CUBE_MAP_ARB;
+    return texture->baseTexture.target;
 }
 
 static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
@@ -538,6 +540,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
         texture->baseTexture.pow2Matrix[15] = 1.0f;
         texture->baseTexture.pow2Matrix_identity = FALSE;
     }
+    texture->baseTexture.target = GL_TEXTURE_CUBE_MAP_ARB;
 
     /* Generate all the surfaces. */
     tmp_w = edge_length;

@@ -1871,6 +1871,7 @@ typedef struct IWineD3DBaseTextureClass
     BOOL                    pow2Matrix_identity;
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
+    GLenum target;
     void                    (*internal_preload)(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
 } IWineD3DBaseTextureClass;
 
@@ -1917,7 +1918,6 @@ typedef struct IWineD3DTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DTexture */
-    UINT                      target;
     BOOL                      cond_np2;
 
 } IWineD3DTextureImpl;

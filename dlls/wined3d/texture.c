@@ -327,7 +327,7 @@ static UINT WINAPI IWineD3DTextureImpl_GetTextureDimensions(IWineD3DTexture *ifa
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     TRACE("(%p)\n", This);
 
-    return This->target;
+    return This->baseTexture.target;
 }
 
 static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DTexture *iface) {
@@ -556,7 +556,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.pow2Matrix[5] = 1.0f;
         texture->baseTexture.pow2Matrix[10] = 1.0f;
         texture->baseTexture.pow2Matrix[15] = 1.0f;
-        texture->target = GL_TEXTURE_2D;
+        texture->baseTexture.target = GL_TEXTURE_2D;
         texture->cond_np2 = TRUE;
         texture->baseTexture.minMipLookup = minMipLookup_noFilter;
     }
@@ -570,7 +570,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.pow2Matrix[5] = (float)height;
         texture->baseTexture.pow2Matrix[10] = 1.0f;
         texture->baseTexture.pow2Matrix[15] = 1.0f;
-        texture->target = GL_TEXTURE_RECTANGLE_ARB;
+        texture->baseTexture.target = GL_TEXTURE_RECTANGLE_ARB;
         texture->cond_np2 = TRUE;
 
         if(texture->resource.format->Flags & WINED3DFMT_FLAG_FILTERING)
@@ -598,7 +598,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
 
         texture->baseTexture.pow2Matrix[10] = 1.0f;
         texture->baseTexture.pow2Matrix[15] = 1.0f;
-        texture->target = GL_TEXTURE_2D;
+        texture->baseTexture.target = GL_TEXTURE_2D;
         texture->cond_np2 = FALSE;
     }
     TRACE("xf(%f) yf(%f)\n", texture->baseTexture.pow2Matrix[0], texture->baseTexture.pow2Matrix[5]);
@@ -621,7 +621,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         }
 
         surface_set_container((IWineD3DSurfaceImpl *)surface, WINED3D_CONTAINER_TEXTURE, (IWineD3DBase *)texture);
-        surface_set_texture_target((IWineD3DSurfaceImpl *)surface, texture->target);
+        surface_set_texture_target((IWineD3DSurfaceImpl *)surface, texture->baseTexture.target);
         texture->baseTexture.sub_resources[i] = (IWineD3DResourceImpl *)surface;
         TRACE("Created surface level %u @ %p.\n", i, surface);
         /* Calculate the next mipmap level. */
