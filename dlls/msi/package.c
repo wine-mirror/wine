@@ -660,8 +660,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 {'W','i','n','d','o','w','s','V','o','l','u','m','e',0};
     static const WCHAR TF[]=
 {'T','e','m','p','F','o','l','d','e','r',0};
-    static const WCHAR szAdminUser[] =
-{'A','d','m','i','n','U','s','e','r',0};
     static const WCHAR szPriv[] =
 {'P','r','i','v','i','l','e','g','e','d',0};
     static const WCHAR v9x[] = { 'V','e','r','s','i','o','n','9','X',0 };
@@ -1054,7 +1052,7 @@ static UINT msi_load_admin_properties(MSIPACKAGE *package)
     return r;
 }
 
-void msi_adjust_allusers_property( MSIPACKAGE *package )
+void msi_adjust_privilege_properties( MSIPACKAGE *package )
 {
     /* FIXME: this should depend on the user's privileges */
     if (msi_get_property_int( package->db, szAllUsers, 0 ) == 2)
@@ -1062,6 +1060,7 @@ void msi_adjust_allusers_property( MSIPACKAGE *package )
         TRACE("resetting ALLUSERS property from 2 to 1\n");
         msi_set_property( package->db, szAllUsers, szOne );
     }
+    msi_set_property( package->db, szAdminUser, szOne );
 }
 
 MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
@@ -1086,7 +1085,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 
         create_temp_property_table( package );
         msi_clone_properties( package );
-        msi_adjust_allusers_property( package );
+        msi_adjust_privilege_properties( package );
 
         package->ProductCode = msi_dup_property( package->db, szProductCode );
         package->script = msi_alloc_zero( sizeof(MSISCRIPT) );
@@ -1423,7 +1422,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     if (index)
     {
         msi_clone_properties( package );
-        msi_adjust_allusers_property( package );
+        msi_adjust_privilege_properties( package );
     }
 
     *pPackage = package;

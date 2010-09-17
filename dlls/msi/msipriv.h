@@ -768,7 +768,7 @@ extern UINT msi_package_add_info(MSIPACKAGE *, DWORD, DWORD, LPCWSTR, LPWSTR);
 extern UINT msi_package_add_media_disk(MSIPACKAGE *, DWORD, DWORD, DWORD, LPWSTR, LPWSTR);
 extern UINT msi_clone_properties(MSIPACKAGE *);
 extern UINT msi_set_context(MSIPACKAGE *);
-extern void msi_adjust_allusers_property(MSIPACKAGE *);
+extern void msi_adjust_privilege_properties(MSIPACKAGE *);
 extern UINT MSI_GetFeatureCost(MSIPACKAGE *, MSIFEATURE *, MSICOSTTREE, INSTALLSTATE, LPINT);
 
 /* for deformating */
@@ -1126,6 +1126,7 @@ static const WCHAR szMIMEDatabase[] = {'M','I','M','E','\\','D','a','t','a','b',
 static const WCHAR szLocalPackage[] = {'L','o','c','a','l','P','a','c','k','a','g','e',0};
 static const WCHAR szOriginalDatabase[] = {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
 static const WCHAR szUpgradeCode[] = {'U','p','g','r','a','d','e','C','o','d','e',0};
+static const WCHAR szAdminUser[] = {'A','d','m','i','n','U','s','e','r',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

@@ -7498,7 +7498,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     msi_clone_properties( package );
 
     msi_parse_command_line( package, szCommandLine, FALSE );
-    msi_adjust_allusers_property( package );
+    msi_adjust_privilege_properties( package );
     msi_set_context( package );
 
     if (needs_ui_sequence( package))
