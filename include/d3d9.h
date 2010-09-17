@@ -96,6 +96,18 @@
 #define D3DERR_WASSTILLDRAWING                  MAKE_D3DHRESULT(540)
 #define D3DOK_NOAUTOGEN                         MAKE_D3DSTATUS(2159)
 
+#define D3DERR_DEVICEREMOVED                    MAKE_D3DHRESULT(2160)
+#define D3DERR_DEVICEHUNG                       MAKE_D3DHRESULT(2164)
+#define S_NOT_RESIDENT                          MAKE_D3DSTATUS(2165)
+#define S_RESIDENT_IN_SHARED_MEMORY             MAKE_D3DSTATUS(2166)
+#define S_PRESENT_MODE_CHANGED                  MAKE_D3DSTATUS(2167)
+#define S_PRESENT_OCCLUDED                      MAKE_D3DSTATUS(2168)
+#define D3DERR_UNSUPPORTEDOVERLAY               MAKE_D3DHRESULT(2171)
+#define D3DERR_UNSUPPORTEDOVERLAYFORMAT         MAKE_D3DHRESULT(2172)
+#define D3DERR_CANNOTPROTECTCONTENT             MAKE_D3DHRESULT(2173)
+#define D3DERR_UNSUPPORTEDCRYPTO                MAKE_D3DHRESULT(2174)
+#define D3DERR_PRESENT_STATISTICS_DISJOINT      MAKE_D3DHRESULT(2180)
+
 
 /*****************************************************************************
  * Predeclare the interfaces
