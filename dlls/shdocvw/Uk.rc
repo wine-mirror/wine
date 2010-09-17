@@ -53,6 +53,7 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM "Попередній пе&регляд...",	ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
         MENUITEM "В&ластивості...",             ID_BROWSE_PROPERTIES
+        MENUITEM "За&крити",                    ID_BROWSE_QUIT
     }
     POPUP "&Вигляд"
     {
