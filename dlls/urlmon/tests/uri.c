@@ -4862,9 +4862,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {FALSE},
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://:password@google.com/",S_OK},
             {":password@google.com",S_OK},
@@ -4929,9 +4929,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,NULL,"zip",Uri_PROPERTY_SCHEME_NAME,E_INVALIDARG,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"zip://google.com/",S_OK},
             {"google.com",S_OK},
@@ -4962,9 +4962,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"","zip",Uri_PROPERTY_SCHEME_NAME,E_INVALIDARG,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"zip://google.com/",S_OK},
             {"google.com",S_OK},
@@ -4986,6 +4986,103 @@ static const uri_builder_test uri_builder_tests[] = {
             {Uri_HOST_DNS,S_OK},
             {0,S_FALSE},
             {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* -1 to CreateUri makes it use the same flags as the base IUri was created with.
+     * CreateUriSimple always uses the flags the base IUri was created with (if any).
+     */
+    {   "http://google.com/../../",Uri_CREATE_NO_CANONICALIZE,S_OK,FALSE,
+        {{FALSE}},
+        {FALSE},
+        -1,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,UriBuilder_USE_ORIGINAL_FLAGS,0,S_OK,FALSE,
+        {
+            {"http://google.com/../../",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/../../",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/../../",S_OK},
+            {"/../../",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/../../",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"#Fr<|>g",NULL,Uri_PROPERTY_FRAGMENT,S_OK,FALSE}
+        },
+        {FALSE},
+        -1,S_OK,TRUE,
+        0,S_OK,TRUE,
+        Uri_CREATE_NO_DECODE_EXTRA_INFO,UriBuilder_USE_ORIGINAL_FLAGS,0,S_OK,TRUE,
+        {
+            {"http://google.com/#Fr%3C%7C%3Eg",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/#Fr%3C%7C%3Eg",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"#Fr%3C%7C%3Eg",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/#Fr<|>g",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"#Fr<|>g",NULL,Uri_PROPERTY_FRAGMENT,S_OK,FALSE}
+        },
+        {FALSE},
+        Uri_CREATE_CANONICALIZE|Uri_CREATE_NO_CANONICALIZE,E_INVALIDARG,FALSE,
+        0,S_OK,TRUE,
+        Uri_CREATE_CANONICALIZE|Uri_CREATE_NO_CANONICALIZE,UriBuilder_USE_ORIGINAL_FLAGS,0,S_OK,TRUE,
+        {
+            {"http://google.com/#Fr%3C%7C%3Eg",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/#Fr%3C%7C%3Eg",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"#Fr%3C%7C%3Eg",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/#Fr<|>g",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
     }
@@ -5023,29 +5120,29 @@ static const uri_builder_remove_test uri_builder_remove_tests[] = {
     /* Doesn't remove the whole userinfo component. */
     {   "http://username:pass@google.com/",0,S_OK,FALSE,
         Uri_HAS_USER_INFO,S_OK,FALSE,
-        "http://username:pass@google.com/",0,S_OK,TRUE
+        "http://username:pass@google.com/",0,S_OK,FALSE
     },
     /* Doesn't remove the domain. */
     {   "http://google.com/",0,S_OK,FALSE,
         Uri_HAS_DOMAIN,S_OK,FALSE,
-        "http://google.com/",0,S_OK,TRUE
+        "http://google.com/",0,S_OK,FALSE
     },
     {   "http://google.com:120/",0,S_OK,FALSE,
         Uri_HAS_AUTHORITY,S_OK,FALSE,
-        "http://google.com:120/",0,S_OK,TRUE
+        "http://google.com:120/",0,S_OK,FALSE
     },
     {   "http://google.com/test.com/",0,S_OK,FALSE,
         Uri_HAS_EXTENSION,S_OK,FALSE,
-        "http://google.com/test.com/",0,S_OK,TRUE
+        "http://google.com/test.com/",0,S_OK,FALSE
     },
     {   "http://google.com/?test=x",0,S_OK,FALSE,
         Uri_HAS_PATH_AND_QUERY,S_OK,FALSE,
-        "http://google.com/?test=x",0,S_OK,TRUE
+        "http://google.com/?test=x",0,S_OK,FALSE
     },
     /* Can't remove the scheme name. */
     {   "http://google.com/?test=x",0,S_OK,FALSE,
         Uri_HAS_SCHEME_NAME|Uri_HAS_QUERY,E_INVALIDARG,FALSE,
-        "http://google.com/?test=x",0,S_OK,TRUE
+        "http://google.com/?test=x",0,S_OK,FALSE
     }
 };
 
@@ -6664,28 +6761,22 @@ static void test_IUriBuilder_CreateInvalidArgs(void) {
             /* No longer returns E_NOTIMPL, since a IUri has been set and hasn't been modified. */
             uri = NULL;
             hr = IUriBuilder_CreateUri(builder, 0, Uri_HAS_USER_NAME, 0, &uri);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
-            todo_wine { ok(uri != NULL, "Error: The uri was NULL.\n"); }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            ok(uri != NULL, "Error: The uri was NULL.\n");
             if(uri) IUri_Release(uri);
 
             uri = NULL;
             hr = IUriBuilder_CreateUriSimple(builder, Uri_HAS_USER_NAME, 0, &uri);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n",
-                    hr, S_OK);
-            }
-            todo_wine { ok(uri != NULL, "Error: uri was NULL.\n"); }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
+            ok(uri != NULL, "Error: uri was NULL.\n");
             if(uri) IUri_Release(uri);
 
             uri = NULL;
             hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, &uri);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
-                    hr, S_OK);
-            }
-            todo_wine { ok(uri != NULL, "Error: uri was NULL.\n"); }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
+            ok(uri != NULL, "Error: uri was NULL.\n");
             if(uri) IUri_Release(uri);
 
             hr = IUriBuilder_SetFragment(builder, NULL);
@@ -7920,15 +8011,24 @@ static void test_IUriBuilder_IUriProperty(void) {
             orig_count = get_refcnt(uri);
 
             hr = IUriBuilder_CreateUri(builder, 0, 0, 0, &test);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
             if(SUCCEEDED(hr)) {
                 cur_count = get_refcnt(uri);
                 ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
                     orig_count+1, cur_count);
                 ok(test == uri, "Error: Expected test to be %p, but was %p instead.\n",
                     uri, test);
+            }
+            if(test) IUri_Release(test);
+
+            test = NULL;
+            hr = IUriBuilder_CreateUri(builder, -1, 0, 0, &test);
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            if(SUCCEEDED(hr)) {
+                cur_count = get_refcnt(uri);
+                ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
+                    orig_count+1, cur_count);
+                ok(test == uri, "Error: Expected test to be %p, but was %p instead.\n", uri, test);
             }
             if(test) IUri_Release(test);
 
@@ -7952,9 +8052,7 @@ static void test_IUriBuilder_IUriProperty(void) {
              */
             test = NULL;
             hr = IUriBuilder_CreateUri(builder, Uri_CREATE_CANONICALIZE, 0, 0, &test);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
             if(SUCCEEDED(hr)) {
                 cur_count = get_refcnt(uri);
                 ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
@@ -7965,9 +8063,7 @@ static void test_IUriBuilder_IUriProperty(void) {
 
             test = NULL;
             hr = IUriBuilder_CreateUriSimple(builder, 0, 0, &test);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
             if(SUCCEEDED(hr)) {
                 cur_count = get_refcnt(uri);
                 ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
@@ -7978,10 +8074,8 @@ static void test_IUriBuilder_IUriProperty(void) {
 
             test = NULL;
             hr = IUriBuilder_CreateUriWithFlags(builder, 0, 0, 0, 0, &test);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
-                    hr, S_OK);
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n",
+                hr, S_OK);
             if(SUCCEEDED(hr)) {
                 cur_count = get_refcnt(uri);
                 ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",
@@ -8010,9 +8104,7 @@ static void test_IUriBuilder_IUriProperty(void) {
              */
             test = NULL;
             hr = IUriBuilder_CreateUriWithFlags(builder, Uri_CREATE_CANONICALIZE, 0, 0, 0, &test);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
             if(SUCCEEDED(hr)) {
                 cur_count = get_refcnt(uri);
                 ok(cur_count == orig_count+1, "Error: Expected uri ref count to be %d, but was %d instead.\n",

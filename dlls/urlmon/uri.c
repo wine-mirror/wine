@@ -41,6 +41,7 @@ typedef struct {
     DWORD           canon_size;
     DWORD           canon_len;
     BOOL            display_absolute;
+    DWORD           create_flags;
 
     INT             scheme_start;
     DWORD           scheme_len;
@@ -333,6 +334,31 @@ static inline BOOL is_hierarchical_scheme(URL_SCHEME type) {
            type == URL_SCHEME_TELNET || type == URL_SCHEME_WAIS ||
            type == URL_SCHEME_FILE || type == URL_SCHEME_HTTPS ||
            type == URL_SCHEME_RES);
+}
+
+/* Checks if 'flags' contains an invalid combination of Uri_CREATE flags. */
+static inline BOOL has_invalid_flag_combination(DWORD flags) {
+    return((flags & Uri_CREATE_DECODE_EXTRA_INFO && flags & Uri_CREATE_NO_DECODE_EXTRA_INFO) ||
+           (flags & Uri_CREATE_CANONICALIZE && flags & Uri_CREATE_NO_CANONICALIZE) ||
+           (flags & Uri_CREATE_CRACK_UNKNOWN_SCHEMES && flags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES) ||
+           (flags & Uri_CREATE_PRE_PROCESS_HTML_URI && flags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI) ||
+           (flags & Uri_CREATE_IE_SETTINGS && flags & Uri_CREATE_NO_IE_SETTINGS));
+}
+
+/* Applies each default Uri_CREATE flags to 'flags' if it
+ * doesn't cause a flag conflict.
+ */
+static void apply_default_flags(DWORD *flags) {
+    if(!(*flags & Uri_CREATE_NO_CANONICALIZE))
+        *flags |= Uri_CREATE_CANONICALIZE;
+    if(!(*flags & Uri_CREATE_NO_DECODE_EXTRA_INFO))
+        *flags |= Uri_CREATE_DECODE_EXTRA_INFO;
+    if(!(*flags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES))
+        *flags |= Uri_CREATE_CRACK_UNKNOWN_SCHEMES;
+    if(!(*flags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI))
+        *flags |= Uri_CREATE_PRE_PROCESS_HTML_URI;
+    if(!(*flags & Uri_CREATE_IE_SETTINGS))
+        *flags |= Uri_CREATE_NO_IE_SETTINGS;
 }
 
 /* Determines if the URI is hierarchical using the information already parsed into
@@ -3381,6 +3407,40 @@ static void reset_builder(UriBuilder *builder) {
     builder->modified_props = 0;
 }
 
+static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_flags,
+                         DWORD use_orig_flags, DWORD encoding_mask)
+{
+    if(!uri)
+        return E_POINTER;
+
+    if(encoding_mask && (!builder->uri || builder->modified_props)) {
+        *uri = NULL;
+        return E_NOTIMPL;
+    }
+
+    /* Decide what flags should be used when creating the Uri. */
+    if((use_orig_flags & UriBuilder_USE_ORIGINAL_FLAGS) && builder->uri)
+        create_flags = builder->uri->create_flags;
+    else {
+        if(has_invalid_flag_combination(create_flags)) {
+            *uri = NULL;
+            return E_INVALIDARG;
+        }
+
+        /* Set the default flags if they don't cause a conflict. */
+        apply_default_flags(&create_flags);
+    }
+
+    /* Return the base IUri if no changes have been made and the create_flags match. */
+    if(builder->uri && !builder->modified_props && builder->uri->create_flags == create_flags) {
+        *uri = URI(builder->uri);
+        IUri_AddRef(*uri);
+        return S_OK;
+    }
+
+    return E_NOTIMPL;
+}
+
 #define URI_THIS(iface) DEFINE_THIS(Uri, IUri, iface)
 
 static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
@@ -4246,11 +4306,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     }
 
     /* Check for invalid flags. */
-    if((dwFlags & Uri_CREATE_DECODE_EXTRA_INFO && dwFlags & Uri_CREATE_NO_DECODE_EXTRA_INFO) ||
-       (dwFlags & Uri_CREATE_CANONICALIZE && dwFlags & Uri_CREATE_NO_CANONICALIZE) ||
-       (dwFlags & Uri_CREATE_CRACK_UNKNOWN_SCHEMES && dwFlags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES) ||
-       (dwFlags & Uri_CREATE_PRE_PROCESS_HTML_URI && dwFlags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI) ||
-       (dwFlags & Uri_CREATE_IE_SETTINGS && dwFlags & Uri_CREATE_NO_IE_SETTINGS)) {
+    if(has_invalid_flag_combination(dwFlags)) {
         *ppURI = NULL;
         return E_INVALIDARG;
     }
@@ -4265,6 +4321,9 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
 
     ret->lpIUriVtbl = &UriVtbl;
     ret->ref = 1;
+
+    /* Explicitly set the default flags if it doesn't cause a flag conflict. */
+    apply_default_flags(&dwFlags);
 
     /* Pre process the URI, unless told otherwise. */
     if(!(dwFlags & Uri_CREATE_NO_PRE_PROCESS_HTML_URI))
@@ -4297,6 +4356,8 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
         *ppURI = NULL;
         return hr;
     }
+
+    ret->create_flags = dwFlags;
 
     *ppURI = URI(ret);
     return S_OK;
@@ -4436,19 +4497,13 @@ static HRESULT WINAPI UriBuilder_CreateUriSimple(IUriBuilder *iface,
                                                  IUri       **ppIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    HRESULT hr;
     TRACE("(%p)->(%d %d %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
 
-    if(!ppIUri)
-        return E_POINTER;
-
-    /* Acts the same way as CreateUri. */
-    if(dwAllowEncodingPropertyMask && (!This->uri || This->modified_props)) {
-        *ppIUri = NULL;
-        return E_NOTIMPL;
-    }
-
-    FIXME("(%p)->(%d %d %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
-    return E_NOTIMPL;
+    hr = build_uri(This, ppIUri, 0, UriBuilder_USE_ORIGINAL_FLAGS, dwAllowEncodingPropertyMask);
+    if(hr == E_NOTIMPL)
+        FIXME("(%p)->(%d %d %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+    return hr;
 }
 
 static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
@@ -4458,22 +4513,17 @@ static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
                                            IUri       **ppIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    HRESULT hr;
     TRACE("(%p)->(0x%08x %d %d %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
 
-    if(!ppIUri)
-        return E_POINTER;
+    if(dwCreateFlags == -1)
+        hr = build_uri(This, ppIUri, 0, UriBuilder_USE_ORIGINAL_FLAGS, dwAllowEncodingPropertyMask);
+    else
+        hr = build_uri(This, ppIUri, dwCreateFlags, 0, dwAllowEncodingPropertyMask);
 
-    /* The only time it doesn't return E_NOTIMPL when the dwAllow parameter
-     * has flags set, is when the IUriBuilder has a IUri set and it hasn't
-     * been modified (a call to a "Set*" hasn't been performed).
-     */
-    if(dwAllowEncodingPropertyMask && (!This->uri || This->modified_props)) {
-        *ppIUri = NULL;
-        return E_NOTIMPL;
-    }
-
-    FIXME("(%p)->(0x%08x %d %d %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
-    return E_NOTIMPL;
+    if(hr == E_NOTIMPL)
+        FIXME("(%p)->(0x%08x %d %d %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+    return hr;
 }
 
 static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
@@ -4484,21 +4534,15 @@ static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
                                          IUri       **ppIUri)
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
+    HRESULT hr;
     TRACE("(%p)->(0x%08x 0x%08x %d %d %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
         dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
 
-    if(!ppIUri)
-        return E_POINTER;
-
-    /* Same as CreateUri. */
-    if(dwAllowEncodingPropertyMask && (!This->uri || This->modified_props)) {
-        *ppIUri = NULL;
-        return E_NOTIMPL;
-    }
-
-    FIXME("(%p)->(0x%08x 0x%08x %d %d %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
-        dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
-    return E_NOTIMPL;
+    hr = build_uri(This, ppIUri, dwCreateFlags, dwUriBuilderFlags, dwAllowEncodingPropertyMask);
+    if(hr == E_NOTIMPL)
+        FIXME("(%p)->(0x%08x 0x%08x %d %d %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
+            dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+    return hr;
 }
 
 static HRESULT WINAPI  UriBuilder_GetIUri(IUriBuilder *iface, IUri **ppIUri)
