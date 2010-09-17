@@ -26,6 +26,7 @@ STRINGTABLE
     IDS_INVALID_CALL_ARG    "Niew³aœciwe wywo³anie procedury lub argument"
     IDS_CREATE_OBJ_ERROR    "Serwer automatyzacji nie mo¿e stworzyæ obiektu"
     IDS_NO_PROPERTY         "Obiekt nie wspiera tej w³aœciwoœci lub metody"
+    IDS_UNSUPPORTED_ACTION  "Obiekt nie wspiera tej akcji"
     IDS_ARG_NOT_OPT         "Argument nieopcjonalny"
     IDS_SYNTAX_ERROR        "B³¹d sk³adni"
     IDS_SEMICOLON           "Oczekiwane ';'"
