@@ -89,29 +89,23 @@ static void test_query_interface(void)
     ULONG ref;
     IUnknown *iface= NULL;
 
-    hr = IUnknown_QueryInterface(pAviSplitter, &IID_IBaseFilter,
-        (void**)&iface);
+#define TEST_INTERFACE(riid,expected) do { \
+    hr = IUnknown_QueryInterface(pAviSplitter, &riid, (void**)&iface); \
+    ok( hr == expected, #riid" should %s got %08X\n", expected==S_OK ? "exist" : "not be present", GetLastError() ); \
+    if (hr == S_OK) { \
+        ref = IUnknown_Release(iface); \
+        ok(ref == 1, "Reference is %u, expected 1\n", ref); \
+    } \
+    iface = NULL; \
+    } while(0)
 
-    ok(hr == S_OK,
-        "IID_IBaseFilter should exist, got %08x!\n", GetLastError());
-    if (hr == S_OK)
-    {
-        ref = IUnknown_Release(iface);
-        iface = NULL;
-        ok(ref == 1, "Reference is %u, expected 1\n", ref);
-    }
-
-    hr = IUnknown_QueryInterface(pAviSplitter, &IID_IMediaSeeking,
-        (void**)&iface);
-    if (hr == S_OK)
-        ref = IUnknown_Release(iface);
-    iface = NULL;
-    todo_wine ok(hr == E_NOINTERFACE,
-        "Query for IMediaSeeking returned: %08x\n", hr);
-
-/* These interfaces should not be present:
-    IID_IKsPropertySet, IID_IMediaPosition, IID_IQualityControl, IID_IQualProp
-*/
+    TEST_INTERFACE(IID_IBaseFilter,S_OK);
+    TEST_INTERFACE(IID_IMediaSeeking,E_NOINTERFACE);
+    TEST_INTERFACE(IID_IKsPropertySet,E_NOINTERFACE);
+    TEST_INTERFACE(IID_IMediaPosition,E_NOINTERFACE);
+    TEST_INTERFACE(IID_IQualityControl,E_NOINTERFACE);
+    TEST_INTERFACE(IID_IQualProp,E_NOINTERFACE);
+#undef TEST_INTERFACE
 }
 
 static void test_pin(IPin *pin)

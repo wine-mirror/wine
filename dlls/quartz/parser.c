@@ -114,16 +114,11 @@ HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * 
 
     *ppv = NULL;
 
-    if (IsEqualIID(riid, &IID_IUnknown))
+    if ( IsEqualIID(riid, &IID_IUnknown)
+      || IsEqualIID(riid, &IID_IPersist)
+      || IsEqualIID(riid, &IID_IMediaFilter)
+      || IsEqualIID(riid, &IID_IBaseFilter) )
         *ppv = This;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        *ppv = &This->mediaSeeking;
 
     if (*ppv)
     {
