@@ -46,4 +46,6 @@ STRINGTABLE
     STRING_DESCRIPTION, "Опис"
     STRING_PHYS_ADDR, "Фізична адреса"
     STRING_DHCP_ENABLED, "DHCP ввімкнено"
+    STRING_YES, "Так"
+    STRING_NO, "Ні"
 }
