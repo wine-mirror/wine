@@ -6448,7 +6448,7 @@ static void test_IUriBuilder_CreateUriSimple(IUriBuilder *builder, const uri_bui
     IUri *uri = NULL;
 
     hr = IUriBuilder_CreateUriSimple(builder, test->uri_simple_encode_flags, 0, &uri);
-    if(test->uri_todo) {
+    if(test->uri_simple_todo) {
         todo_wine {
             ok(hr == test->uri_simple_hres,
                 "Error: IUriBuilder_CreateUriSimple returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
@@ -6536,7 +6536,7 @@ static void test_IUriBuilder_CreateUriWithFlags(IUriBuilder *builder, const uri_
 
     hr = IUriBuilder_CreateUriWithFlags(builder, test->uri_with_flags, test->uri_with_builder_flags,
                                         test->uri_with_encode_flags, 0, &uri);
-    if(test->uri_todo) {
+    if(test->uri_with_todo) {
         todo_wine {
             ok(hr == test->uri_with_hres,
                 "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x on uri_builder_tests[%d].\n",
