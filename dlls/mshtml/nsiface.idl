@@ -107,7 +107,6 @@ interface nsISupports
 /* Currently we don't need a full declaration of these interfaces */
 typedef nsISupports nsISHistory;
 typedef nsISupports nsIWidget;
-typedef nsISupports nsIHttpHeaderVisitor;
 typedef nsISupports nsIDOMBarProp;
 typedef nsISupports nsIPrompt;
 typedef nsISupports nsIAuthPrompt;
@@ -426,6 +425,16 @@ interface nsIChannel : nsIRequest
     nsresult SetContentLength(PRInt32 aContentLength);
     nsresult Open(nsIInputStream **_retval);
     nsresult AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext);
+}
+
+[
+    object,
+    uuid(0cf40717-d7c1-4a94-8c1e-d6c9734101bb),
+    local
+]
+interface nsIHttpHeaderVisitor : nsISupports
+{
+    nsresult VisitHeader(const nsACString *aHeader, const nsACString *aValue);
 }
 
 [

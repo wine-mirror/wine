@@ -419,6 +419,38 @@ static nsresult set_channel_http_header(struct list *headers, const nsACString *
     return SUCCEEDED(hres) ? NS_OK : NS_ERROR_UNEXPECTED;
 }
 
+static nsresult visit_http_headers(struct list *headers, nsIHttpHeaderVisitor *visitor)
+{
+    nsACString header_str, value_str;
+    char *header, *value;
+    http_header_t *iter;
+    nsresult nsres;
+
+    LIST_FOR_EACH_ENTRY(iter, headers, http_header_t, entry) {
+        header = heap_strdupWtoA(iter->header);
+        if(!header)
+            return NS_ERROR_OUT_OF_MEMORY;
+
+        value = heap_strdupWtoA(iter->data);
+        if(!value) {
+            heap_free(header);
+            return NS_ERROR_OUT_OF_MEMORY;
+        }
+
+        nsACString_InitDepend(&header_str, header);
+        nsACString_InitDepend(&value_str, value);
+        nsres = nsIHttpHeaderVisitor_VisitHeader(visitor, &header_str, &value_str);
+        nsACString_Finish(&header_str);
+        nsACString_Finish(&value_str);
+        heap_free(header);
+        heap_free(value);
+        if(NS_FAILED(nsres))
+            break;
+    }
+
+    return NS_OK;
+}
+
 static void free_http_headers(struct list *list)
 {
     http_header_t *iter, *iter_next;
@@ -1211,9 +1243,9 @@ static nsresult NSAPI nsChannel_VisitResponseHeaders(nsIHttpChannel *iface,
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
 
-    FIXME("(%p)->(%p)\n", This, aVisitor);
+    TRACE("(%p)->(%p)\n", This, aVisitor);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return visit_http_headers(&This->response_headers, aVisitor);
 }
 
 static nsresult NSAPI nsChannel_IsNoStoreResponse(nsIHttpChannel *iface, PRBool *_retval)
