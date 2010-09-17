@@ -802,6 +802,9 @@ static HRESULT StdMemAllocator_Alloc(IMemAllocator * iface)
     /* allocate memory */
     This->pMemory = VirtualAlloc(NULL, (This->base.props.cbBuffer + This->base.props.cbPrefix) * This->base.props.cBuffers, MEM_COMMIT, PAGE_READWRITE);
 
+    if (!This->pMemory)
+        return E_OUTOFMEMORY;
+
     for (i = This->base.props.cBuffers - 1; i >= 0; i--)
     {
         /* pbBuffer does not start at the base address, it starts at base + cbPrefix */
