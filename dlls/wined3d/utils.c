@@ -2752,8 +2752,11 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             if (ignore_textype)
             {
                 settings->op[i].tex_type = tex_1d;
-            } else {
-                switch (IWineD3DBaseTexture_GetTextureDimensions((IWineD3DBaseTexture *)texture)) {
+            }
+            else
+            {
+                switch (texture->baseTexture.target)
+                {
                     case GL_TEXTURE_1D:
                         settings->op[i].tex_type = tex_1d;
                         break;
@@ -2808,11 +2811,11 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 
         if (!i && stateblock->textures[0] && stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
         {
-            UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
+            IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)stateblock->textures[0];
+            GLenum texture_dimensions = texture->baseTexture.target;
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
             {
-                IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)stateblock->textures[0];
                 IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[0];
 
                 if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)
@@ -2979,7 +2982,8 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
 
     if (stateblock->textures[stage])
     {
-        switch (IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[stage])) {
+        switch (((IWineD3DBaseTextureImpl *)stateblock->textures[stage])->baseTexture.target)
+        {
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);
                 checkGLcall("glDisable(GL_TEXTURE_3D)");

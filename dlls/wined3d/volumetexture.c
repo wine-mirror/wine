@@ -242,15 +242,6 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTextur
     return basetexture_bind((IWineD3DBaseTexture *)iface, srgb, &dummy);
 }
 
-static UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface)
-{
-    IWineD3DVolumeTextureImpl *texture = (IWineD3DVolumeTextureImpl *)iface;
-
-    TRACE("iface %p.\n", iface);
-
-    return texture->baseTexture.target;
-}
-
 static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *iface)
 {
     TRACE("iface %p.\n", iface);
@@ -383,7 +374,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GetDirty,
     /* not in d3d */
     IWineD3DVolumeTextureImpl_BindTexture,
-    IWineD3DVolumeTextureImpl_GetTextureDimensions,
     IWineD3DVolumeTextureImpl_IsCondNP2,
     /* volume texture */
     IWineD3DVolumeTextureImpl_GetLevelDesc,

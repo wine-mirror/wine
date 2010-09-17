@@ -4360,14 +4360,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
     {
         IWineD3DBaseTextureImpl *t = (IWineD3DBaseTextureImpl *)texture;
         LONG bind_count = InterlockedIncrement(&t->baseTexture.bindCount);
-        UINT dimensions = IWineD3DBaseTexture_GetTextureDimensions(texture);
+        GLenum dimensions = t->baseTexture.target;
 
         IWineD3DBaseTexture_AddRef(texture);
 
-        if (!prev || dimensions != IWineD3DBaseTexture_GetTextureDimensions(prev))
-        {
+        if (!prev || dimensions != ((IWineD3DBaseTextureImpl *)prev)->baseTexture.target)
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
-        }
 
         if (!prev && stage < gl_info->limits.texture_stages)
         {

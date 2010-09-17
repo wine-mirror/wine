@@ -2329,7 +2329,7 @@ void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseT
             continue;
         }
 
-        switch (IWineD3DBaseTexture_GetTextureDimensions(textures[i]))
+        switch (((IWineD3DBaseTextureImpl *)textures[i])->baseTexture.target)
         {
             case GL_TEXTURE_RECTANGLE_ARB:
             case GL_TEXTURE_2D:
@@ -2349,7 +2349,7 @@ void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseT
 
             default:
                 FIXME("Unrecognized texture type %#x, using 2D.\n",
-                        IWineD3DBaseTexture_GetTextureDimensions(textures[i]));
+                        ((IWineD3DBaseTextureImpl *)textures[i])->baseTexture.target);
                 sampler_type[i] = WINED3DSTT_2D;
         }
     }

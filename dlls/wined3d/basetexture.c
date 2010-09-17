@@ -184,7 +184,7 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
 {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
   IWineD3DDeviceImpl *device = This->resource.device;
-  UINT textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
+  GLenum textureDimensions = This->baseTexture.target;
 
   if (!(This->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)) {
       TRACE("(%p) : returning invalid call\n", This);
@@ -262,7 +262,7 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
 {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     HRESULT hr = WINED3D_OK;
-    UINT textureDimensions;
+    GLenum textureDimensions;
     BOOL isNewTexture = FALSE;
     struct gl_texture *gl_tex;
     TRACE("(%p) : About to bind texture\n", This);
@@ -274,7 +274,7 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
         gl_tex = &This->baseTexture.texture_rgb;
     }
 
-    textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
+    textureDimensions = This->baseTexture.target;
     ENTER_GL();
     /* Generate a texture name if we don't already have one */
     if (!gl_tex->name)
@@ -389,8 +389,8 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         const struct wined3d_gl_info *gl_info)
 {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    GLenum textureDimensions = This->baseTexture.target;
     DWORD state;
-    GLint textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2(iface);
     DWORD aniso;
     struct gl_texture *gl_tex;

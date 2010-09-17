@@ -498,7 +498,7 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
      */
     if (stateblock->textures[0])
     {
-        UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
+        GLenum texture_dimensions = ((IWineD3DBaseTextureImpl *)stateblock->textures[0])->baseTexture.target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
@@ -3186,11 +3186,11 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
 
     if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !stage && stateblock->textures[0])
     {
-        UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[0]);
+        IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)stateblock->textures[0];
+        GLenum texture_dimensions = texture->baseTexture.target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)stateblock->textures[0];
             IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[0];
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)

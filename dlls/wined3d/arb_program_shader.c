@@ -1343,8 +1343,10 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             break;
 
         case WINED3DSTT_2D:
-            if(device->stateBlock->textures[sampler_idx] &&
-               IWineD3DBaseTexture_GetTextureDimensions(device->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+            if (device->stateBlock->textures[sampler_idx]
+                    && ((IWineD3DBaseTextureImpl *)device->stateBlock->textures[sampler_idx])->baseTexture.target
+                    == GL_TEXTURE_RECTANGLE_ARB)
+            {
                 tex_type = "RECT";
             } else {
                 tex_type = "2D";

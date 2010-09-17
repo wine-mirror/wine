@@ -2532,8 +2532,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
     HRESULT BindTexture(
         [in] BOOL srgb
     );
-    UINT GetTextureDimensions(
-    );
     BOOL IsCondNP2(
     );
 }

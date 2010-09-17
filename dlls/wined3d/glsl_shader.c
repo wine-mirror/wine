@@ -1062,7 +1062,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     if (pshader && ps_args->shadow & (1 << i))
                     {
                         if (device->stateBlock->textures[i]
-                                && IWineD3DBaseTexture_GetTextureDimensions(device->stateBlock->textures[i])
+                                && ((IWineD3DBaseTextureImpl *)device->stateBlock->textures[i])->baseTexture.target
                                 == GL_TEXTURE_RECTANGLE_ARB)
                             shader_addline(buffer, "uniform sampler2DRectShadow %csampler%u;\n", prefix, i);
                         else
@@ -1071,7 +1071,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     else
                     {
                         if (device->stateBlock->textures[i]
-                                && IWineD3DBaseTexture_GetTextureDimensions(device->stateBlock->textures[i])
+                                && ((IWineD3DBaseTextureImpl *)device->stateBlock->textures[i])->baseTexture.target
                                 == GL_TEXTURE_RECTANGLE_ARB)
                             shader_addline(buffer, "uniform sampler2DRect %csampler%u;\n", prefix, i);
                         else
@@ -3063,8 +3063,10 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
         }
     }
 
-    if(deviceImpl->stateBlock->textures[sampler_idx] &&
-       IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+    if (deviceImpl->stateBlock->textures[sampler_idx]
+            && ((IWineD3DBaseTextureImpl *)deviceImpl->stateBlock->textures[sampler_idx])->baseTexture.target
+            == GL_TEXTURE_RECTANGLE_ARB)
+    {
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
     }
 
@@ -3117,10 +3119,10 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     }
 
     sampler_idx = ins->src[1].reg.idx;
-    if(deviceImpl->stateBlock->textures[sampler_idx] &&
-       IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+    if (deviceImpl->stateBlock->textures[sampler_idx]
+            && ((IWineD3DBaseTextureImpl *)deviceImpl->stateBlock->textures[sampler_idx])->baseTexture.target
+            == GL_TEXTURE_RECTANGLE_ARB)
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
-    }
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
@@ -3143,10 +3145,11 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     DWORD swizzle = ins->src[1].swizzle;
 
     sampler_idx = ins->src[1].reg.idx;
-    if(deviceImpl->stateBlock->textures[sampler_idx] &&
-       IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+    if (deviceImpl->stateBlock->textures[sampler_idx]
+            && ((IWineD3DBaseTextureImpl *)deviceImpl->stateBlock->textures[sampler_idx])->baseTexture.target
+            == GL_TEXTURE_RECTANGLE_ARB)
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
-    }
+
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
 
