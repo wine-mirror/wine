@@ -882,27 +882,34 @@ static HTMLWindow *get_window_from_load_group(nsChannel *This)
 
 static HTMLWindow *get_channel_window(nsChannel *This)
 {
-    nsIRequestObserver *req_observer;
     nsIWebProgress *web_progress;
     nsIDOMWindow *nswindow;
     HTMLWindow *window;
     nsresult nsres;
 
-    if(!This->load_group) {
-        ERR("NULL load_group\n");
-        return NULL;
-    }
+    if(This->load_group) {
+        nsIRequestObserver *req_observer;
 
-    nsres = nsILoadGroup_GetGroupObserver(This->load_group, &req_observer);
-    if(NS_FAILED(nsres) || !req_observer) {
-        ERR("GetGroupObserver failed: %08x\n", nsres);
-        return NULL;
-    }
+        nsres = nsILoadGroup_GetGroupObserver(This->load_group, &req_observer);
+        if(NS_FAILED(nsres) || !req_observer) {
+            ERR("GetGroupObserver failed: %08x\n", nsres);
+            return NULL;
+        }
 
-    nsres = nsIRequestObserver_QueryInterface(req_observer, &IID_nsIWebProgress, (void**)&web_progress);
-    nsIRequestObserver_Release(req_observer);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIWebProgress iface: %08x\n", nsres);
+        nsres = nsIRequestObserver_QueryInterface(req_observer, &IID_nsIWebProgress, (void**)&web_progress);
+        nsIRequestObserver_Release(req_observer);
+        if(NS_FAILED(nsres)) {
+            ERR("Could not get nsIWebProgress iface: %08x\n", nsres);
+            return NULL;
+        }
+    }else if(This->notif_callback) {
+        nsres = nsIInterfaceRequestor_GetInterface(This->notif_callback, &IID_nsIWebProgress, (void**)&web_progress);
+        if(NS_FAILED(nsres)) {
+            ERR("GetInterface(IID_nsIWebProgress failed: %08x\n", nsres);
+            return NULL;
+        }
+    }else {
+        ERR("no load group nor notif callback\n");
         return NULL;
     }
 
@@ -1008,8 +1015,12 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         if(This->uri->window_ref && This->uri->window_ref->window) {
             window = This->uri->window_ref->window;
             IHTMLWindow2_AddRef(HTMLWINDOW2(window));
-        }else if(This->load_group) {
-            window = get_window_from_load_group(This);
+        }else {
+            /* FIXME: Analyze removing get_window_from_load_group call */
+            if(This->load_group)
+                window = get_window_from_load_group(This);
+            if(!window)
+                window = get_channel_window(This);
             if(window)
                 set_uri_window(This->uri, window);
         }
