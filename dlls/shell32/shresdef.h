@@ -111,6 +111,7 @@
 #define IDS_COMMON_OEM_LINKS        94
 #define IDS_DOCUMENTS               95
 #define IDS_DOWNLOADS               96
+#define IDS_LOCAL_APPDATA_LOW       97
 
 #define IDS_CREATEFOLDER_DENIED     128
 #define IDS_CREATEFOLDER_CAPTION    129

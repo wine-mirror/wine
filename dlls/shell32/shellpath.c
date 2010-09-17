@@ -1304,9 +1304,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x4e */
         &FOLDERID_LocalAppDataLow,
-        CSIDL_Type_Disallowed, /* FIXME */
+        CSIDL_Type_User,
         NULL,
-        NULL
+        MAKEINTRESOURCEW(IDS_LOCAL_APPDATA_LOW)
     },
     { /* 0x4f */
         &FOLDERID_MusicLibrary,
