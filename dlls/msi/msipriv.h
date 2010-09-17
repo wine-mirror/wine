@@ -304,10 +304,20 @@ struct tagMSIVIEW
 struct msi_dialog_tag;
 typedef struct msi_dialog_tag msi_dialog;
 
+enum platform
+{
+    PLATFORM_INTEL,
+    PLATFORM_INTEL64,
+    PLATFORM_X64
+};
+
 typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
     MSIDATABASE *db;
+    enum platform platform;
+    UINT num_langids;
+    LANGID *langids;
     struct list patches;
     struct list components;
     struct list features;
@@ -1127,6 +1137,9 @@ static const WCHAR szLocalPackage[] = {'L','o','c','a','l','P','a','c','k','a','
 static const WCHAR szOriginalDatabase[] = {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
 static const WCHAR szUpgradeCode[] = {'U','p','g','r','a','d','e','C','o','d','e',0};
 static const WCHAR szAdminUser[] = {'A','d','m','i','n','U','s','e','r',0};
+static const WCHAR szIntel[] = {'I','n','t','e','l',0};
+static const WCHAR szIntel64[] = {'I','n','t','e','l','6','4',0};
+static const WCHAR szX64[] = {'x','6','4',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

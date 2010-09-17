@@ -280,6 +280,7 @@ static void free_package_structures( MSIPACKAGE *package )
     msi_free( package->ProductCode );
     msi_free( package->ActionFormat );
     msi_free( package->LastAction );
+    msi_free( package->langids );
 
     /* cleanup control event subscriptions */
     ControlEvent_CleanupSubscriptions( package );
@@ -681,7 +682,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szScreenY[] = {'S','c','r','e','e','n','Y',0};
     static const WCHAR szColorBits[] = {'C','o','l','o','r','B','i','t','s',0};
     static const WCHAR szIntFormat[] = {'%','d',0};
-    static const WCHAR szIntel[] = { 'I','n','t','e','l',0 };
     static const WCHAR szMsiAMD64[] = { 'M','s','i','A','M','D','6','4',0 };
     static const WCHAR szMsix64[] = { 'M','s','i','x','6','4',0 };
     static const WCHAR szSystem64Folder[] = { 'S','y','s','t','e','m','6','4','F','o','l','d','e','r',0 };
@@ -1271,6 +1271,64 @@ static UINT apply_registered_patch( MSIPACKAGE *package, LPCWSTR patch_code )
     return r;
 }
 
+static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
+{
+    WCHAR *template, *p, *q;
+    DWORD i, count;
+
+    template = msi_suminfo_dup_string( si, PID_TEMPLATE );
+    if (!template)
+        return ERROR_SUCCESS; /* native accepts missing template property */
+
+    TRACE("template: %s\n", debugstr_w(template));
+
+    p = strchrW( template, ';' );
+    if (!p)
+    {
+        WARN("invalid template string %s\n", debugstr_w(template));
+        msi_free( template );
+        return ERROR_PATCH_PACKAGE_INVALID;
+    }
+    *p = 0;
+    if (!template[0] || !strcmpW( template, szIntel ))
+        package->platform = PLATFORM_INTEL;
+    else if (!strcmpW( template, szIntel64 ))
+        package->platform = PLATFORM_INTEL64;
+    else if (!strcmpW( template, szX64 ))
+        package->platform = PLATFORM_X64;
+    else
+    {
+        WARN("unknown platform %s\n", debugstr_w(template));
+        msi_free( template );
+        return ERROR_PATCH_PACKAGE_INVALID;
+    }
+
+    count = 1;
+    for (q = ++p; (q = strchrW( q, ',' )); q++) count++;
+
+    package->langids = msi_alloc( count * sizeof(LANGID) );
+    if (!package->langids)
+    {
+        msi_free( template );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    i = 0;
+    while (*p)
+    {
+        q = strchrW( p, ',' );
+        if (q) *q = 0;
+        package->langids[i] = atoiW( p );
+        if (!q) break;
+        p = q + 1;
+        i++;
+    }
+    package->num_langids = i + 1;
+
+    msi_free( template );
+    return ERROR_SUCCESS;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
@@ -1283,6 +1341,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     WCHAR temppath[MAX_PATH], localfile[MAX_PATH], cachefile[MAX_PATH];
     LPCWSTR file = szPackage;
     DWORD index = 0;
+    MSISUMMARYINFO *si;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -1382,6 +1441,23 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     if( file != szPackage )
         track_tempfile( package, file );
 
+    si = MSI_GetSummaryInformationW( db->storage, 0 );
+    if (!si)
+    {
+        WARN("failed to load summary info %u\n", r);
+        msiobj_release( &package->hdr );
+        return ERROR_INSTALL_PACKAGE_INVALID;
+    }
+
+    r = msi_parse_summary( si, package );
+    msiobj_release( &si->hdr );
+    if (r != ERROR_SUCCESS)
+    {
+        WARN("failed to parse summary info %u\n", r);
+        msiobj_release( &package->hdr );
+        return r;
+    }
+
     msi_set_property( package->db, Database, db->path );
 
     if( UrlIsW( szPackage, URLIS_URL ) )
@@ -1412,7 +1488,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         if (r != ERROR_SUCCESS)
         {
             ERR("registered patch failed to apply %u\n", r);
-            MSI_FreePackage( (MSIOBJECTHDR *)package );
+            msiobj_release( &package->hdr );
             return r;
         }
 

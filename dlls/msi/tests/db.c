@@ -1998,7 +1998,7 @@ static const CHAR suminfo[] = "PropertyId\tValue\n"
                               "4\tWineHQ\n"
                               "5\tInstaller\n"
                               "6\tInstaller comments\n"
-                              "7\tIntel;1033\n"
+                              "7\tIntel;1033,2057\n"
                               "9\t{12345678-1234-1234-1234-123456789012}\n"
                               "12\t2009/04/12 15:46:11\n"
                               "13\t2009/04/12 15:46:11\n"
@@ -2107,8 +2107,8 @@ static void test_suminfo_import(void)
     r = MsiSummaryInfoGetPropertyA(hsi, PID_TEMPLATE, &type, NULL, NULL, str_value, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
-    ok(!strcmp(str_value, "Intel;1033"),
-       "Expected \"Intel;1033\", got %s\n", str_value);
+    ok(!strcmp(str_value, "Intel;1033,2057"),
+       "Expected \"Intel;1033,2057\", got %s\n", str_value);
 
     size = sizeof(str_value);
     r = MsiSummaryInfoGetPropertyA(hsi, PID_REVNUMBER, &type, NULL, NULL, str_value, &size);
@@ -2877,7 +2877,7 @@ static UINT set_summary_info(MSIHANDLE hdb)
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
     res = MsiSummaryInfoSetProperty(suminfo,7, VT_LPSTR, 0,NULL,
-                    ";1033");
+                    ";1033,2057");
     ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
     res = MsiSummaryInfoSetProperty(suminfo,9, VT_LPSTR, 0,NULL,
