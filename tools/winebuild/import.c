@@ -676,8 +676,10 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tjmp $31,($0)\n" );
         break;
     case CPU_ARM:
-        output( "\tmov r4, #%s\n", table );
-        output( "\tldr r15, [r4, #%d]\n", pos );
+        output( "\tldr IP,[PC,#0]\n");
+        output( "\tmov PC,PC\n");
+        output( "\t%s %s\n", get_asm_ptr_keyword(), table );
+        output( "\tldr PC,[IP,#%d]\n", pos);
         break;
     case CPU_POWERPC:
         output( "\tmr %s, %s\n", ppc_reg(0), ppc_reg(31) );
@@ -992,9 +994,15 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tjmp $31,($0)\n" );
         break;
     case CPU_ARM:
-        output( "\tstmfd  sp!, {r4, r5, r6, r7, r8, r9, r10, lr}\n" );
-        output( "\tblx %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\tldmfd  sp!, {r4, r5, r6, r7, r8, r9, r10, pc}\n" );
+        output( "\tstmfd  SP!, {r4-r10,FP,LR}\n" );
+        output( "\tmov LR,PC\n");
+        output( "\tadd LR,LR,#8\n");
+        output( "\tldr PC,[PC,#-4]\n");
+        output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name("__wine_spec_delay_load") );
+        output( "\tmov IP,r0\n");
+        output( "\tldmfd  SP!, {r4-r10,FP,LR}\n" );
+        output( "\tldmfd  SP!, {r0-r3}\n" );
+        output( "\tbx IP\n");
         break;
     case CPU_POWERPC:
         if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
@@ -1080,7 +1088,17 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tjmp $31,%s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_ARM:
-                output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
+                output( "\tstmfd  SP!, {r0-r3}\n" );
+                output( "\tmov r0, #%d\n", idx );
+                output( "\tmov r1, #16384\n" );
+                output( "\tmul r1, r0, r1\n" );
+                output( "\tmov r0, r1\n" );
+                output( "\tmov r1, #4\n" );
+                output( "\tmul r1, r0, r1\n" );
+                output( "\tmov r0, r1\n" );
+                output( "\tadd r0, #%d\n", j );
+                output( "\tldr PC,[PC,#-4]\n");
+                output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)

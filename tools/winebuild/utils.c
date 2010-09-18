@@ -840,11 +840,11 @@ unsigned int get_alignment(unsigned int align)
     case CPU_x86:
     case CPU_x86_64:
     case CPU_SPARC:
-    case CPU_ARM:
         if (target_platform != PLATFORM_APPLE) return align;
         /* fall through */
     case CPU_POWERPC:
     case CPU_ALPHA:
+    case CPU_ARM:
         n = 0;
         while ((1u << n) != align) n++;
         return n;

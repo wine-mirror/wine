@@ -396,8 +396,6 @@ static void output_asm_constructor( const char *constructor )
             output( "\tjsr $26,%s\n", asm_name(constructor) );
             break;
         case CPU_ARM:
-            output( "\tblx %s\n", asm_name(constructor) );
-            break;
         case CPU_POWERPC:
             output( "\tbl %s\n", asm_name(constructor) );
             break;
