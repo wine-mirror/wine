@@ -426,6 +426,22 @@ static size_t cpu_register_map[] = {
     FIELD_OFFSET(CONTEXT, i6),
     FIELD_OFFSET(CONTEXT, i7),
 };
+#elif defined(__arm__)
+static size_t cpu_register_map[] = {
+    FIELD_OFFSET(CONTEXT, R0),
+    FIELD_OFFSET(CONTEXT, R1),
+    FIELD_OFFSET(CONTEXT, R2),
+    FIELD_OFFSET(CONTEXT, R3),
+    FIELD_OFFSET(CONTEXT, R4),
+    FIELD_OFFSET(CONTEXT, R5),
+    FIELD_OFFSET(CONTEXT, R6),
+    FIELD_OFFSET(CONTEXT, R7),
+    FIELD_OFFSET(CONTEXT, R8),
+    FIELD_OFFSET(CONTEXT, R9),
+    FIELD_OFFSET(CONTEXT, R10),
+    FIELD_OFFSET(CONTEXT, Fp),
+    FIELD_OFFSET(CONTEXT, Ip),
+};
 #else
 # error Define the registers map for your CPU
 #endif
