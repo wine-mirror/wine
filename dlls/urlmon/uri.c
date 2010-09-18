@@ -26,7 +26,9 @@
 #define UINT_MAX 0xffffffff
 #define USHORT_MAX 0xffff
 
-#define ALLOW_NULL_TERM_SCHEME 0x1
+#define ALLOW_NULL_TERM_SCHEME      0x1
+#define ALLOW_NULL_TERM_USER_NAME   0x2
+#define ALLOW_NULL_TERM_PASSWORD    0x4
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
@@ -1281,7 +1283,7 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD
     return TRUE;
 }
 
-static BOOL parse_username(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_username(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
     data->username = *ptr;
 
     while(**ptr != ':' && **ptr != '@') {
@@ -1294,7 +1296,9 @@ static BOOL parse_username(const WCHAR **ptr, parse_data *data, DWORD flags) {
                 }
             } else
                 continue;
-        } else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
+        } else if(extras & ALLOW_NULL_TERM_USER_NAME && !**ptr)
+            break;
+        else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
             *ptr = data->username;
             data->username = NULL;
             return FALSE;
@@ -1307,7 +1311,7 @@ static BOOL parse_username(const WCHAR **ptr, parse_data *data, DWORD flags) {
     return TRUE;
 }
 
-static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
     const WCHAR *start = *ptr;
 
     if(**ptr != ':')
@@ -1326,7 +1330,9 @@ static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags) {
                 }
             } else
                 continue;
-        } else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
+        } else if(extras & ALLOW_NULL_TERM_PASSWORD && !**ptr)
+            break;
+        else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
             *ptr = start;
             data->password = NULL;
             return FALSE;
@@ -1361,12 +1367,12 @@ static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags) {
 static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const WCHAR *start = *ptr;
 
-    if(!parse_username(ptr, data, flags)) {
+    if(!parse_username(ptr, data, flags, 0)) {
         TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
         return;
     }
 
-    if(!parse_password(ptr, data, flags)) {
+    if(!parse_password(ptr, data, flags, 0)) {
         *ptr = start;
         data->username = NULL;
         data->username_len = 0;
@@ -3561,6 +3567,90 @@ static HRESULT validate_scheme_name(const UriBuilder *builder, parse_data *data,
     return S_OK;
 }
 
+static HRESULT validate_username(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->username) {
+        ptr = builder->username;
+        expected_len = builder->username_len;
+    } else if(!(builder->modified_props & Uri_HAS_USER_NAME) && builder->uri &&
+              builder->uri->userinfo_start > -1 && builder->uri->userinfo_split != 0) {
+        /* Just use the username from the base Uri. */
+        data->username = builder->uri->canon_uri+builder->uri->userinfo_start;
+        data->username_len = (builder->uri->userinfo_split > -1) ?
+                                        builder->uri->userinfo_split : builder->uri->userinfo_len;
+        ptr = NULL;
+    } else {
+        ptr = NULL;
+        expected_len = 0;
+    }
+
+    if(ptr) {
+        pptr = &ptr;
+        if(parse_username(pptr, data, flags, ALLOW_NULL_TERM_USER_NAME) &&
+           data->username_len == expected_len)
+            TRACE("(%p %p %x): Found valid username component %s.\n", builder, data, flags,
+                debugstr_wn(data->username, data->username_len));
+        else {
+            TRACE("(%p %p %x): Invalid username component found %s.\n", builder, data, flags,
+                debugstr_wn(ptr, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_password(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->password) {
+        ptr = builder->password;
+        expected_len = builder->password_len;
+    } else if(!(builder->modified_props & Uri_HAS_PASSWORD) && builder->uri &&
+              builder->uri->userinfo_split > -1) {
+        data->password = builder->uri->canon_uri+builder->uri->userinfo_start+builder->uri->userinfo_split+1;
+        data->password_len = builder->uri->userinfo_len-builder->uri->userinfo_split-1;
+        ptr = NULL;
+    } else {
+        ptr = NULL;
+        expected_len = 0;
+    }
+
+    if(ptr) {
+        pptr = &ptr;
+        if(parse_password(pptr, data, flags, ALLOW_NULL_TERM_PASSWORD) &&
+           data->password_len == expected_len)
+            TRACE("(%p %p %x): Found valid password component %s.\n", builder, data, flags,
+                debugstr_wn(data->password, data->password_len));
+        else {
+            TRACE("(%p %p %x): Invalid password component found %s.\n", builder, data, flags,
+                debugstr_wn(ptr, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_userinfo(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    HRESULT hr;
+
+    hr = validate_username(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    hr = validate_password(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    return S_OK;
+}
+
 static HRESULT validate_components(const UriBuilder *builder, parse_data *data, DWORD flags) {
     HRESULT hr;
 
@@ -3581,6 +3671,10 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
             return INET_E_INVALID_URL;
         }
     }
+
+    hr = validate_userinfo(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
 
     return E_NOTIMPL;
 }

@@ -5124,6 +5124,90 @@ static const uri_builder_test uri_builder_tests[] = {
         0,INET_E_INVALID_URL,FALSE,
         0,INET_E_INVALID_URL,FALSE,
         0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    /* UserName can't contain any character that is a delimeter for another
+     * component that appears after it in a normal URI.
+     */
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"user:pass",NULL,Uri_PROPERTY_USER_NAME,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"user@google.com",NULL,Uri_PROPERTY_USER_NAME,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"user/path",NULL,Uri_PROPERTY_USER_NAME,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"user?Query",NULL,Uri_PROPERTY_USER_NAME,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"user#Frag",NULL,Uri_PROPERTY_USER_NAME,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"pass@google.com",NULL,Uri_PROPERTY_PASSWORD,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"pass/path",NULL,Uri_PROPERTY_PASSWORD,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"pass?query",NULL,Uri_PROPERTY_PASSWORD,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+       0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"pass#frag",NULL,Uri_PROPERTY_PASSWORD,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
     }
 };
 
