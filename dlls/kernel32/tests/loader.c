@@ -56,6 +56,8 @@ static IMAGE_NT_HEADERS nt_header =
       IMAGE_FILE_MACHINE_POWERPC, /* Machine */
 #elif defined __sparc__
       IMAGE_FILE_MACHINE_SPARC, /* Machine */
+#elif defined __arm__
+      IMAGE_FILE_MACHINE_ARM, /* Machine */
 #else
 # error You must specify the machine type
 #endif
