@@ -3452,6 +3452,16 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
     if(FAILED(hr))
         return hr;
 
+    /* Extra validation for file schemes. */
+    if(data->scheme_type == URL_SCHEME_FILE) {
+        if((builder->password || (builder->uri && builder->uri->userinfo_split > -1)) ||
+           (builder->username || (builder->uri && builder->uri->userinfo_start > -1))) {
+            TRACE("(%p %p %x): File schemes can't contain a username or password.\n",
+                builder, data, flags);
+            return INET_E_INVALID_URL;
+        }
+    }
+
     return E_NOTIMPL;
 }
 

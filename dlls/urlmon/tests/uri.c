@@ -5104,6 +5104,26 @@ static const uri_builder_test uri_builder_tests[] = {
         0,INET_E_INVALID_URL,FALSE,
         0,INET_E_INVALID_URL,FALSE,
         0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    /* File scheme's can't have a username set. */
+    {   "file://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"username",NULL,Uri_PROPERTY_USER_NAME,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    /* File schemes can't have a password set. */
+    {   "file://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"password",NULL,Uri_PROPERTY_PASSWORD,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
     }
 };
 
