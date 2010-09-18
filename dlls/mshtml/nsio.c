@@ -2124,8 +2124,10 @@ static nsresult NSAPI nsURL_GetQuery(nsIURL *iface, nsACString *aQuery)
 
     ptr_end = url.lpszExtraInfo+url.dwExtraInfoLength;
     for(ptr = url.lpszExtraInfo; ptr < ptr_end; ptr++) {
-        if(*ptr == '#')
+        if(*ptr == '#') {
+            ptr_end = ptr;
             break;
+        }
     }
 
     ptr = url.lpszExtraInfo;
