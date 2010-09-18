@@ -6,6 +6,7 @@ DELAYIMPORTS = version
 
 C_SRCS = \
 	coff.c \
+	cpu_arm.c \
 	cpu_i386.c \
 	cpu_ppc.c \
 	cpu_sparc.c \
