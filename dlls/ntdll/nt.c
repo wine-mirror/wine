@@ -920,6 +920,8 @@ void fill_cpu_info(void)
     cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_AMD64;
 #elif defined(__powerpc__)
     cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_PPC;
+#elif defined(__arm__)
+    cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_ARM;
 #elif defined(__ALPHA__)
     cached_sci.Architecture     = PROCESSOR_ARCHITECTURE_ALPHA;
 #elif defined(__sparc__)

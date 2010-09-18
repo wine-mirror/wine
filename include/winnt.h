@@ -1314,13 +1314,14 @@ typedef struct _CONTEXT {
 	ULONG R8;
 	ULONG R9;
 	ULONG R10;
-	ULONG R11;
-	ULONG R12;
+	ULONG Fp;
+	ULONG Ip;
 
+	/* These are selected by CONTEXT_CONTROL */
 	ULONG Sp;
 	ULONG Lr;
 	ULONG Pc;
-	ULONG Psr;
+	ULONG Cpsr;
 } CONTEXT;
 
 #endif /* __arm__ */
