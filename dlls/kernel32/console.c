@@ -2276,7 +2276,7 @@ static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
          * happen if we're asked to overwrite more than twice the part of the line,
          * which is unlikely
          */
-        for (blk = done = 0; done < len; done += blk)
+        for (done = 0; done < len; done += blk)
         {
             blk = min(len - done, csbi->dwSize.X - csbi->dwCursorPosition.X);
 
