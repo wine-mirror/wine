@@ -5085,6 +5085,25 @@ static const uri_builder_test uri_builder_tests[] = {
             {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    {   NULL,0,S_OK,FALSE,
+        {
+            {TRUE,"/test/test/",NULL,Uri_PROPERTY_PATH,S_OK,FALSE},
+            {TRUE,"#Fr<|>g",NULL,Uri_PROPERTY_FRAGMENT,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"ht%xxtp",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
     }
 };
 

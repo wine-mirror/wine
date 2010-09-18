@@ -26,6 +26,8 @@
 #define UINT_MAX 0xffffffff
 #define USHORT_MAX 0xffff
 
+#define ALLOW_NULL_TERM_SCHEME 0x1
+
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 static const IID IID_IUriObj = {0x4b364760,0x9f51,0x11df,{0x98,0x1c,0x08,0x00,0x20,0x0c,0x9a,0x66}};
@@ -1148,7 +1150,7 @@ static BOOL check_ipv4address(const WCHAR **ptr, BOOL strict) {
  * scheme = ALPHA *(ALPHA | NUM | '+' | '-' | '.') as defined by RFC 3896.
  * NOTE: Windows accepts a number as the first character of a scheme.
  */
-static BOOL parse_scheme_name(const WCHAR **ptr, parse_data *data) {
+static BOOL parse_scheme_name(const WCHAR **ptr, parse_data *data, DWORD extras) {
     const WCHAR *start = *ptr;
 
     data->scheme = NULL;
@@ -1172,7 +1174,7 @@ static BOOL parse_scheme_name(const WCHAR **ptr, parse_data *data) {
         return FALSE;
 
     /* Schemes must end with a ':' */
-    if(**ptr != ':') {
+    if(**ptr != ':' && !((extras & ALLOW_NULL_TERM_SCHEME) && !**ptr)) {
         *ptr = start;
         return FALSE;
     }
@@ -1225,7 +1227,7 @@ static BOOL parse_scheme_type(parse_data *data) {
  *
  * Returns TRUE if it was able to successfully parse the information.
  */
-static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
     static const WCHAR fileW[] = {'f','i','l','e',0};
     static const WCHAR wildcardW[] = {'*',0};
 
@@ -1245,7 +1247,7 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags) {
                     ptr, data, flags);
             return FALSE;
         }
-    } else if(!parse_scheme_name(ptr, data)) {
+    } else if(!parse_scheme_name(ptr, data, extras)) {
         /* No Scheme was found, this means it could be:
          *      a) an implicit Wildcard scheme
          *      b) a relative URI
@@ -2091,7 +2093,7 @@ static BOOL parse_uri(parse_data *data, DWORD flags) {
 
     TRACE("(%p %x): BEGINNING TO PARSE URI %s.\n", data, flags, debugstr_w(data->uri));
 
-    if(!parse_scheme(pptr, data, flags))
+    if(!parse_scheme(pptr, data, flags, 0))
         return FALSE;
 
     if(!parse_hierpart(pptr, data, flags))
@@ -3407,9 +3409,58 @@ static void reset_builder(UriBuilder *builder) {
     builder->modified_props = 0;
 }
 
+static HRESULT validate_scheme_name(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->scheme) {
+        ptr = builder->scheme;
+        expected_len = builder->scheme_len;
+    } else if(builder->uri && builder->uri->scheme_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->scheme_start;
+        expected_len = builder->uri->scheme_len;
+    } else {
+        static const WCHAR nullW[] = {0};
+        ptr = nullW;
+        expected_len = 0;
+    }
+
+    pptr = &ptr;
+    if(parse_scheme(pptr, data, flags, ALLOW_NULL_TERM_SCHEME) &&
+       data->scheme_len == expected_len) {
+        if(data->scheme)
+            TRACE("(%p %p %x): Found valid scheme component %s.\n", builder, data, flags,
+               debugstr_wn(data->scheme, data->scheme_len));
+    } else {
+        TRACE("(%p %p %x): Invalid scheme component found %s.\n", builder, data, flags,
+            debugstr_wn(ptr, expected_len));
+        return INET_E_INVALID_URL;
+   }
+
+    return S_OK;
+}
+
+static HRESULT validate_components(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    HRESULT hr;
+
+    memset(data, 0, sizeof(parse_data));
+
+    TRACE("(%p %p %x): Beginning to validate builder components.\n", builder, data, flags);
+
+    hr = validate_scheme_name(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    return E_NOTIMPL;
+}
+
 static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_flags,
                          DWORD use_orig_flags, DWORD encoding_mask)
 {
+    HRESULT hr;
+    parse_data data;
+
     if(!uri)
         return E_POINTER;
 
@@ -3438,7 +3489,13 @@ static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_fla
         return S_OK;
     }
 
-    return E_NOTIMPL;
+    hr = validate_components(builder, &data, create_flags);
+    if(FAILED(hr)) {
+        *uri = NULL;
+        return hr;
+    }
+
+    return S_OK;
 }
 
 #define URI_THIS(iface) DEFINE_THIS(Uri, IUri, iface)
