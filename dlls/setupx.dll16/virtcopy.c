@@ -484,7 +484,6 @@ static RETERR16 VCP_CopyFiles(void)
 RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
 {
     RETERR16 res = OK;
-    WORD cbres = VCPN_PROCEED;
 
     TRACE("(%04x, '%s')\n", fl, lpszBackupDest);
 
@@ -495,7 +494,7 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
     memset(&vcp_status, 0, sizeof(VCPSTATUS));
     /* yes, vcp_status.cbSize is 0 ! */
     TRACE("#2\n");
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCLOSESTART, 0, 0, VCP_MsgRef);
+    VCP_Callback(&vcp_status, VCPM_VSTATCLOSESTART, 0, 0, VCP_MsgRef);
     TRACE("#3\n");
 
     res = VCP_CheckPaths();
@@ -505,7 +504,7 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
     VCP_CopyFiles();
 
     TRACE("#5\n");
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATCLOSEEND, 0, 0, VCP_MsgRef);
+    VCP_Callback(&vcp_status, VCPM_VSTATCLOSEEND, 0, 0, VCP_MsgRef);
     TRACE("#6\n");
     VCP_Proc = NULL;
     VCP_opened = FALSE;
