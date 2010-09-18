@@ -569,6 +569,14 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             fprintf( stderr, ",fpscr=%g", ctx.fp.powerpc_regs.fpscr );
         }
         break;
+    case CPU_ARM:
+        if (ctx.flags & SERVER_CTX_CONTROL)
+            fprintf( stderr, ",sp=%08x,lr=%08x,pc=%08x,cpsr=%08x",
+                     ctx.ctl.arm_regs.sp, ctx.ctl.arm_regs.lr,
+                     ctx.ctl.arm_regs.pc, ctx.ctl.arm_regs.cpsr );
+        if (ctx.flags & SERVER_CTX_INTEGER)
+            for (i = 0; i < 13; i++) fprintf( stderr, ",r%u=%08x", i, ctx.integer.arm_regs.r[i] );
+        break;
     case CPU_SPARC:
         if (ctx.flags & SERVER_CTX_CONTROL)
             fprintf( stderr, ",psr=%08x,pc=%08x,npc=%08x,y=%08x,wim=%08x,tbr=%08x",
