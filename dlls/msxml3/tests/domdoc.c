@@ -5073,22 +5073,28 @@ static void test_nodeTypedValue(void)
 
         if (entry->type != VT_BSTR)
         {
-           if (entry->type == VT_DATE)
+           if (entry->type == VT_DATE ||
+               entry->type == VT_R8 ||
+               entry->type == VT_CY)
            {
-               hr = VariantChangeType(&value, &value, 0, VT_R4);
+               if (entry->type == VT_DATE)
+               {
+                   hr = VariantChangeType(&value, &value, 0, VT_R4);
+                   ok(hr == S_OK, "ret %08x\n", hr );
+               }
+               hr = VariantChangeTypeEx(&value, &value,
+                                        MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), SORT_DEFAULT),
+                                        VARIANT_NOUSEROVERRIDE, VT_BSTR);
                ok(hr == S_OK, "ret %08x\n", hr );
-               hr = VariantChangeType(&value, &value, 0, VT_BSTR);
-               ok(hr == S_OK, "ret %08x\n", hr );
-               ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
-                   "expected %s, got %s\n", entry->value, wine_dbgstr_w(V_BSTR(&value)));
            }
            else
            {
                hr = VariantChangeType(&value, &value, 0, VT_BSTR);
                ok(hr == S_OK, "ret %08x\n", hr );
-               ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
-                   "expected %s, got %s\n", entry->value, wine_dbgstr_w(V_BSTR(&value)));
            }
+
+           ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
+              "expected %s, got %s\n", entry->value, wine_dbgstr_w(V_BSTR(&value)));
         }
         else
            ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
