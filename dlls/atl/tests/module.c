@@ -91,10 +91,14 @@ static void test_StructSize(void)
 			ok (hres == S_OK, "AtlModuleInit with %d failed (0x%x).\n", i, (int)hres);
 			break;
 		default:
-			ok (FAILED(hres), "AtlModuleInit with %d succeeded? (0x%x).\n", i, (int)hres);
+			ok (FAILED(hres) ||
+                            broken((i > FIELD_OFFSET( struct _ATL_MODULEW, dwAtlBuildVer )) && (hres == S_OK)), /* Win95 */
+                            "AtlModuleInit with %d succeeded? (0x%x).\n", i, (int)hres);
 			break;
 		}
 	}
+
+        HeapFree (GetProcessHeap(), 0, tst);
 }
 
 START_TEST(module)
