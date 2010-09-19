@@ -1,7 +1,7 @@
 /*
  *  Lithuanian resources for Task Manager
  *
- *  Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ *  Copyright 2009-2010 Aurimas Fišeras <aurimas@gmail.com>
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -386,7 +386,7 @@ BEGIN
                     WS_TABSTOP,7,127,108,10
     CONTROL         "Į/I perskaityta baitų",IDC_IOREADBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,108,10
-    CONTROL         "&Sesijos identifikatorius",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "&Seanso identifikatorius",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,108,10
     CONTROL         "&Naudotojo vardas",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,108,10
@@ -513,7 +513,7 @@ BEGIN
     IDS_USEROBJECTS       "USER objektai"
     IDS_IOREADS           "I/O skaitymai"
     IDS_IOREADBYTES       "I/O persk. baitų"
-    IDS_SESSIONID         "Sesijos ID"
+    IDS_SESSIONID         "Seanso ID"
     IDS_USERNAME          "Naudotojas"
     IDS_PAGEFAULTSDELTA   "PK pokytis"
     IDS_VIRTUALMEMORYSIZE "VA dydis"
