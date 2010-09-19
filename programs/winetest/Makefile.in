@@ -24,7 +24,7 @@ clean::
 	$(RM) build.nfo winetest-dist.exe $(TESTBINS) $(TESTRCS)
 
 build.rc: dummy
-	build="BUILD_INFO STRINGRES build.nfo STRINGTABLE { 1 \"`GIT_DIR=$(TOPSRCDIR)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || ($(RM) $@ && exit 1)
+	build="BUILD_INFO STRINGRES build.nfo STRINGTABLE { 1 \"`GIT_DIR=$(top_srcdir)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || ($(RM) $@ && exit 1)
 
 build.nfo:
 	-$(CC) -v 2>$@

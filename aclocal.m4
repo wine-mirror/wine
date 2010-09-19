@@ -271,9 +271,9 @@ $ac_file.cross.a: dlls/$ac_dir/Makefile dummy
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.$IMPLIBEXT
 $ac_file.def: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$[@] --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$[@] --export \$(srcdir)/dlls/$ac_dir/$ac_dir.spec
 $ac_file.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile \$(WINEBUILD)
-	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$[@] --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec
+	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$[@] --export \$(srcdir)/dlls/$ac_dir/$ac_dir.spec
 install-dev:: dlls/$ac_dir/Makefile __builddeps__ 
 	@cd dlls/$ac_dir && \$(MAKE) install-dev"
         if test "x$CROSSTEST_DISABLE" = x
@@ -281,7 +281,7 @@ install-dev:: dlls/$ac_dir/Makefile __builddeps__
             wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__builddeps__: $ac_file.cross.a
 $ac_file.cross.a: dlls/$ac_dir/$ac_dir.spec dlls/$ac_dir/Makefile \$(WINEBUILD)
-	\$(WINEBUILD) \$(CROSSTARGET:%=-b %)$ac_implibflags -w --implib -o \$[@] --export \$(SRCDIR)/dlls/$ac_dir/$ac_dir.spec"
+	\$(WINEBUILD) \$(CROSSTARGET:%=-b %)$ac_implibflags -w --implib -o \$[@] --export \$(srcdir)/dlls/$ac_dir/$ac_dir.spec"
         fi
 
         if test "$ac_dir" != "$ac_implib"
@@ -338,8 +338,8 @@ wine_fn_config_test ()
     ac_name=$[2]
     wine_fn_append_file ALL_TEST_BINARIES $ac_name.exe
     wine_fn_append_rule ALL_WINETEST_DEPENDS \
-"$ac_name.exe: \$(TOPOBJDIR)/$ac_dir/$ac_name.exe$DLLEXT
-	cp \$(TOPOBJDIR)/$ac_dir/$ac_name.exe$DLLEXT \$[@] && \$(STRIP) \$[@]
+"$ac_name.exe: \$(top_builddir)/$ac_dir/$ac_name.exe$DLLEXT
+	cp \$(top_builddir)/$ac_dir/$ac_name.exe$DLLEXT \$[@] && \$(STRIP) \$[@]
 $ac_name.rc:
 	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 $ac_name.res: $ac_name.rc $ac_name.exe"

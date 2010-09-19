@@ -1,7 +1,7 @@
 TESTDLL   = msvcr90.dll
 APPMODE   = -mno-cygwin
 MODCFLAGS = @BUILTINFLAG@
-EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
 	msvcr90.c

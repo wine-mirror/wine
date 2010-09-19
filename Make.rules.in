@@ -13,7 +13,7 @@
 # First some useful definitions
 
 LDSHARED     = @LDSHARED@
-INCLUDES     = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
+INCLUDES     = -I$(srcdir) -I. -I$(top_srcdir)/include -I$(top_builddir)/include $(EXTRAINCL)
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
@@ -35,7 +35,7 @@ CROSSOBJS = $(OBJS:.o=.cross.o)
 LINTS  = $(C_SRCS:.c=.ln)
 
 filter: dummy
-	@$(TOPSRCDIR)/tools/winapi/make_filter --make $(MAKE) all
+	@$(top_srcdir)/tools/winapi/make_filter --make $(MAKE) all
 
 .PHONY: all filter
 
@@ -89,7 +89,7 @@ filter: dummy
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
 .sfd.ttf:
-	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
+	$(FONTFORGE) -script $(top_srcdir)/fonts/genttf.ff $< $@
 
 .man.in.man:
 	LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $< >$@ || ($(RM) $@ && false)
@@ -133,7 +133,7 @@ DEPEND_SRCS = $(C_SRCS) $(RC_SRCS) $(MC_SRCS) \
               $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
 
 depend: dummy
-	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(DEPEND_SRCS)
+	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(srcdir) -S$(top_srcdir) -T$(top_builddir) $(EXTRAINCL) $(DEPEND_SRCS)
 
 .PHONY: depend
 

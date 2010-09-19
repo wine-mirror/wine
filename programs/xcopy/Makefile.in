@@ -2,7 +2,7 @@ EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = xcopy.exe
 APPMODE   = -mconsole -municode -mno-cygwin
 IMPORTS   = shell32 user32
-EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \

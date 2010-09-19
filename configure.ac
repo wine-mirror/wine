@@ -217,11 +217,11 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
      fi
    fi
    if test -z "$wine_cv_toolsdir"; then
-     wine_cv_toolsdir="\$(TOPOBJDIR)"
+     wine_cv_toolsdir="\$(top_builddir)"
    elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
      case "$wine_cv_toolsdir" in
        /*) ;;
-       *)  wine_cv_toolsdir="\$(TOPOBJDIR)/$wine_cv_toolsdir" ;;
+       *)  wine_cv_toolsdir="\$(top_builddir)/$wine_cv_toolsdir" ;;
      esac
    else
      AC_MSG_ERROR([could not find Wine tools in $wine_cv_toolsdir])
@@ -271,7 +271,7 @@ AC_PROG_INSTALL
 dnl Prepend src dir to install path dir if it's a relative path
 case "$INSTALL" in
   [[\\/$]]* | ?:[[\\/]]* ) ;;
-  *)  INSTALL="\\\$(TOPSRCDIR)/$INSTALL" ;;
+  *)  INSTALL="\\\$(top_srcdir)/$INSTALL" ;;
 esac
 
 dnl Check for lint
@@ -691,7 +691,7 @@ case $host_os in
     LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDSHARED="\$(CC) -dynamiclib"
     STRIP="$STRIP -x"
-    LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(TOPOBJDIR)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
+    LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(top_builddir)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
     dnl declare needed frameworks
     AC_SUBST(SECURITYLIB,"-framework Security -framework CoreFoundation")
     AC_SUBST(COREFOUNDATIONLIB,"-framework CoreFoundation")
@@ -779,10 +779,10 @@ case $host_os in
 
       WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
                       [LDRPATH_INSTALL="-Wl,--rpath,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
-                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"],
+                       LDRPATH_LOCAL="-Wl,--rpath,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"],
           [WINE_TRY_CFLAGS([-fPIC -Wl,-R,\$ORIGIN/../lib],
                            [LDRPATH_INSTALL="-Wl,-R,\\\$\$ORIGIN/\`\$(RELPATH) \$(bindir) \$(libdir)\`"
-                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(TOPOBJDIR)/libs/wine"])])
+                            LDRPATH_LOCAL="-Wl,-R,\\\$\$ORIGIN/\$(top_builddir)/libs/wine"])])
 
       WINE_TRY_CFLAGS([-Wl,--enable-new-dtags],
                       [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
@@ -1787,7 +1787,7 @@ dnl Mingw needs explicit msvcrt for linking libwine and winsock for wininet
 case $host_os in
   mingw32*)
     AC_SUBST(CRTLIBS,"-lmsvcrt")
-    AC_SUBST(SOCKETLIBS,"-L\$(TOPOBJDIR)/dlls/ws2_32 -lws2_32")
+    AC_SUBST(SOCKETLIBS,"-L\$(top_builddir)/dlls/ws2_32 -lws2_32")
     ;;
 esac
 

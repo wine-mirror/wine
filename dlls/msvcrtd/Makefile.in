@@ -2,7 +2,7 @@ MODULE    = msvcrtd.dll
 IMPORTLIB = msvcrtd
 IMPORTS   = msvcrt
 MODCFLAGS = @BUILTINFLAG@
-EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
 	debug.c

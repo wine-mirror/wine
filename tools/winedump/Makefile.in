@@ -36,7 +36,7 @@ winedump$(EXEEXT): $(OBJS)
 install install-dev:: $(PROGRAMS) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)
 	$(INSTALL_DATA) winedump.man $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)
-	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
+	$(INSTALL_SCRIPT) $(srcdir)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
 
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/function_grep.pl $(DESTDIR)$(bindir)/winedump$(EXEEXT) $(DESTDIR)$(mandir)/man$(prog_manext)/winedump.$(prog_manext)

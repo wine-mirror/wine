@@ -59,19 +59,19 @@ sfnt2fnt$(EXEEXT): sfnt2fnt.o relpath$(EXEEXT)
 	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS) $(LDRPATH_LOCAL)
 
 wine.inf: wine.inf.in
-	LC_ALL=C sed -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.inf.in >$@ || ($(RM) $@ && false)
+	LC_ALL=C sed -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(srcdir)/wine.inf.in >$@ || ($(RM) $@ && false)
 
 wineapploader: wineapploader.in
-	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
+	sed -e 's,@bindir\@,$(bindir),g' $(srcdir)/wineapploader.in >$@ || ($(RM) $@ && false)
 
 install install-lib:: wine.inf $(INSTALLDIRS)
 	$(INSTALL_DATA) wine.inf $(DESTDIR)$(datadir)/wine/wine.inf
-	$(INSTALL_DATA) $(SRCDIR)/l_intl.nls $(DESTDIR)$(datadir)/wine/l_intl.nls
-	$(INSTALL_DATA) $(SRCDIR)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop
+	$(INSTALL_DATA) $(srcdir)/l_intl.nls $(DESTDIR)$(datadir)/wine/l_intl.nls
+	$(INSTALL_DATA) $(srcdir)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop
 	-$(UPDATE_DESKTOP_DATABASE)
 
 install install-dev:: $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
-	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(DESTDIR)$(bindir)/winemaker
+	$(INSTALL_SCRIPT) $(srcdir)/winemaker $(DESTDIR)$(bindir)/winemaker
 	$(INSTALL_DATA) winemaker.man $(DESTDIR)$(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) winemaker.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) winemaker.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)

@@ -33,12 +33,12 @@ WINAPI_CHECK_EXTRA_FLAGS = --global
 
 # Rules for re-running configure
 
-$(SRCDIR)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
-	cd $(SRCDIR) && autoconf --warnings=all
+$(srcdir)/configure: @MAINTAINER_MODE@ configure.ac aclocal.m4
+	cd $(srcdir) && autoconf --warnings=all
 
-$(SRCDIR)/include/config.h.in: @MAINTAINER_MODE@ include/stamp-h.in
-$(SRCDIR)/include/stamp-h.in: configure.ac aclocal.m4
-	cd $(SRCDIR) && autoheader --warnings=all
+$(srcdir)/include/config.h.in: @MAINTAINER_MODE@ include/stamp-h.in
+$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
+	cd $(srcdir) && autoheader --warnings=all
 	@echo timestamp > $@
 
 config.status: configure
@@ -80,8 +80,8 @@ $(MAKEDEP): include/config.h tools/Makefile
 
 TAGS etags:
 	$(RM) TAGS
-	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs etags -a
+	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs etags -a
 
 tags ctags:
 	$(RM) tags
-	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs ctags -a
+	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs ctags -a

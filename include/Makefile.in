@@ -561,9 +561,9 @@ all: $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb)
 
 install install-dev:: $(OBJDIR_INCLUDES) $(INSTALLDIRS)
 	for f in $(SRCDIR_INCLUDES); do case $$f in \
-	  wine/*)   $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
-	  msvcrt/*) $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/$$f ;; \
-	  *)        $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/windows/$$f ;; \
+	  wine/*)   $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
+	  msvcrt/*) $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/$$f ;; \
+	  *)        $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/windows/$$f ;; \
 	esac; done
 	for f in $(OBJDIR_INCLUDES); do case $$f in \
 	  wine/*)   $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \

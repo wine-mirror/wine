@@ -23,7 +23,7 @@ INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(datadir)/w
 all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
 $(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(OBJS) Makefile.in
-	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+	$(WINEGCC) -shared $(srcdir)/$(MAINSPEC) $(OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 
 # Rules for import libraries
 
@@ -36,7 +36,7 @@ all: $(IMPORTLIBFILE) $(IMPLIB_SRCS:%=__static_implib__%) @CROSSTEST_DISABLE@ $(
 $(IMPLIB_SRCS:%=__static_implib__%): $(STATICIMPLIB)
 
 $(IMPORTLIB:%=lib%.def): $(MAINSPEC)
-	$(WINEBUILD) $(IMPLIBFLAGS) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
+	$(WINEBUILD) $(IMPLIBFLAGS) -w --def -o $@ --export $(srcdir)/$(MAINSPEC)
 
 $(IMPORTLIB:%=lib%.def.a): $(IMPLIB_OBJS)
 	$(RM) $@
@@ -44,24 +44,24 @@ $(IMPORTLIB:%=lib%.def.a): $(IMPLIB_OBJS)
 	$(RANLIB) $@
 
 $(IMPORTLIB:%=lib%.a): $(MAINSPEC) $(IMPLIB_OBJS)
-	$(WINEBUILD) $(IMPLIBFLAGS) -w --implib -o $@ --export $(SRCDIR)/$(MAINSPEC) $(IMPLIB_OBJS)
+	$(WINEBUILD) $(IMPLIBFLAGS) -w --implib -o $@ --export $(srcdir)/$(MAINSPEC) $(IMPLIB_OBJS)
 
 $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_CROSSOBJS)
-	$(WINEBUILD) $(IMPLIBFLAGS) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(SRCDIR)/$(MAINSPEC) $(IMPLIB_CROSSOBJS)
+	$(WINEBUILD) $(IMPLIBFLAGS) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(srcdir)/$(MAINSPEC) $(IMPLIB_CROSSOBJS)
 
 # Rules for auto documentation
 
 manpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/man$(api_manext) -R$(TOPOBJDIR) -C$(SRCDIR) -S$(api_manext) $(INCLUDES) $(MAINSPEC:%=-w %) $(C_SRCS)
+	$(C2MAN) -o $(top_builddir)/documentation/man$(api_manext) -R$(top_builddir) -C$(srcdir) -S$(api_manext) $(INCLUDES) $(MAINSPEC:%=-w %) $(C_SRCS)
 
 htmlpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/html -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Th $(MAINSPEC:%=-w %) $(C_SRCS)
+	$(C2MAN) -o $(top_builddir)/documentation/html -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Th $(MAINSPEC:%=-w %) $(C_SRCS)
 
 sgmlpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(C_SRCS)
+	$(C2MAN) -o $(top_builddir)/documentation/api-guide -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(C_SRCS)
 
 xmlpages:: $(C_SRCS) dummy
-	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide-xml -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
+	$(C2MAN) -o $(top_builddir)/documentation/api-guide-xml -R$(top_builddir) -C$(srcdir) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(C_SRCS)
 
 # Rules for installation
 

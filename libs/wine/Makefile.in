@@ -1,6 +1,6 @@
 DLLFLAGS  = @DLLFLAGS@
 MODULE    = libwine.$(LIBEXT)
-VERSCRIPT = $(SRCDIR)/wine.map
+VERSCRIPT = $(srcdir)/wine.map
 EXTRALIBS = $(LIBPORT) @LIBDL@ @CRTLIBS@
 DEFS      = -D__WINESRC__ -DWINE_UNICODE_API=""
 
@@ -109,7 +109,7 @@ CONFIGDIRS = \
 	-DBIN_TO_DATADIR=\"`$(RELPATH) $(bindir) $(datadir)/wine`\"
 
 config.o: config.c $(RELPATH)
-	$(CC) -c $(ALLCFLAGS) -o $@ $(SRCDIR)/config.c $(CONFIGDIRS)
+	$(CC) -c $(ALLCFLAGS) -o $@ $(srcdir)/config.c $(CONFIGDIRS)
 
 # Linking rules
 
@@ -123,10 +123,10 @@ libwine.so: libwine.so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
 
 libwine.a: wine.def
-	$(DLLTOOL) -l $@ -d $(SRCDIR)/wine.def
+	$(DLLTOOL) -l $@ -d $(srcdir)/wine.def
 
 libwine.dll: $(OBJS) wine.def Makefile.in
-	$(DLLWRAP) --def $(SRCDIR)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
+	$(DLLWRAP) --def $(srcdir)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
 
 DYLIB_LDFLAGS = -compatibility_version $(SOVERSION) -current_version $(VERSION)
 
@@ -171,7 +171,7 @@ uninstall::
 		libwine.so.$(SOVERSION) libwine.dylib libwine.$(VERSION).dylib libwine.$(SOVERSION).dylib
 
 version.c: dummy
-	version=`(GIT_DIR=$(TOPSRCDIR)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
+	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
 
 clean::
 	$(RM) libwine.so.$(SOVERSION) libwine.so.$(VERSION) version.c

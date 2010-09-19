@@ -2,7 +2,7 @@ MODULE    = crtdll.dll
 IMPORTLIB = crtdll
 IMPORTS   = msvcrt
 MODCFLAGS = @BUILTINFLAG@
-EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
 	crtdll_main.c

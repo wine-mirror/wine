@@ -94,7 +94,7 @@ EXTRASUBDIRS = data
 @MAKE_DLL_RULES@
 
 install-ppd:: $(DESTDIR)$(datadir)/wine dummy
-	$(INSTALL_DATA) $(SRCDIR)/generic.ppd $(DESTDIR)$(datadir)/wine/generic.ppd
+	$(INSTALL_DATA) $(srcdir)/generic.ppd $(DESTDIR)$(datadir)/wine/generic.ppd
 
 .PHONY: install-ppd
 
