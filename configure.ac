@@ -1088,8 +1088,8 @@ else
     enable_glu32=${enable_glu32:-no}
 fi
 WINE_ERROR_WITH(x,[test "x$XLIB" = "x"],[X ${notice_platform}development files not found. Wine will be built
-without X support, which probably isn't what you want. You will need to install
-${notice_platform}development packages of Xlib/Xfree86 at the very least.])
+without X support, which probably isn't what you want. You will need
+to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.])
 
 dnl **** Check for libxml2 ****
 

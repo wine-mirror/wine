@@ -9031,8 +9031,8 @@ if test "x$XLIB" = "x"; then :
   case "x$with_x" in
   xno) ;;
   *)   as_fn_error $? "X ${notice_platform}development files not found. Wine will be built
-without X support, which probably isn't what you want. You will need to install
-${notice_platform}development packages of Xlib/Xfree86 at the very least.
+without X support, which probably isn't what you want. You will need
+to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.
 Use the --without-x option if you really want this." "$LINENO" 5  ;;
 esac
 fi
