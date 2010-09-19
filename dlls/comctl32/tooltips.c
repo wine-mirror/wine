@@ -1848,7 +1848,7 @@ TOOLTIPS_WindowFromPoint (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-TOOLTIPS_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
+TOOLTIPS_Create (HWND hwnd)
 {
     TOOLTIPS_INFO *infoPtr;
 
@@ -2272,7 +2272,7 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 	case WM_CREATE:
-	    return TOOLTIPS_Create (hwnd, (LPCREATESTRUCTW)lParam);
+	    return TOOLTIPS_Create (hwnd);
 
 	case WM_DESTROY:
 	    return TOOLTIPS_Destroy (infoPtr);
