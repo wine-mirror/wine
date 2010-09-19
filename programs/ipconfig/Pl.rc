@@ -1,0 +1,46 @@
+/*
+ * IP configuration utility
+ *
+ * Copyright 2010 £ukasz Wojni³owicz
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "ipconfig.h"
+
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Sposób u¿ycia: ipconfig [ /? | /all ]\n"
+    STRING_INVALID_CMDLINE, "B³¹d: Nierozpoznany lub niepe³ny wiersz polecenia\n"
+    STRING_ADAPTER_FRIENDLY, "%s karta %s\n"
+    STRING_ETHERNET, "Ethernet"
+    STRING_UNKNOWN, "Nieznane"
+    STRING_CONN_DNS_SUFFIX, "Sufiks DNS konkretnego po³¹czenia"
+    STRING_IP_ADDRESS, "Adres IP"
+    STRING_HOSTNAME, "Nazwa hosta"
+    STRING_NODE_TYPE, "Typ wêz³a"
+    STRING_BROADCAST, "Nadawca"
+    STRING_PEER_TO_PEER, "Peer-to-peer"
+    STRING_MIXED, "Mieszane"
+    STRING_HYBRID, "Hybrydowe"
+    STRING_IP_ROUTING, "Przekierowywanie IP w³¹czone"
+    STRING_DESCRIPTION, "Opis"
+    STRING_PHYS_ADDR, "Adres fizyczny"
+    STRING_DHCP_ENABLED, "DHCP w³¹czone"
+    STRING_YES, "Tak"
+    STRING_NO, "Nie"
+}
