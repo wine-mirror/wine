@@ -35,7 +35,7 @@ BEGIN
     PUSHBUTTON      "Termina il processo",IDOK,51,49,71,15
     LTEXT           "Una disconnessione o uno spegnimento simulato sono in corso, ma questo programma non risponde.",
                     IDC_STATIC,7,7,172,19
-    LTEXT           "Se termini il processo, rischi di perdere tutti i dati non salvati.",
+    LTEXT           "Se termini il processo rischi di perdere tutti i dati non salvati.",
                     IDC_STATIC,7,28,172,15
 END
 
