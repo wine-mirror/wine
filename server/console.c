@@ -381,7 +381,11 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     struct screen_buffer *screen_buffer;
     int	i;
 
-    if (!(screen_buffer = alloc_object( &screen_buffer_ops ))) return NULL;
+    if (!(screen_buffer = alloc_object( &screen_buffer_ops )))
+    {
+        if (fd != -1) close( fd );
+        return NULL;
+    }
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
     screen_buffer->input          = console_input;
     screen_buffer->cursor_size    = 100;
@@ -1438,7 +1442,7 @@ DECL_HANDLER(alloc_console)
             }
             close_handle( current->process, in );
         }
-        free_console( process );
+        release_object( console );
     }
  the_end:
     release_object( process );
@@ -1601,6 +1605,7 @@ DECL_HANDLER(create_console_output)
     if (console_input_is_bare( console ) ^ (fd != -1))
     {
         close( fd );
+        release_object( console );
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
