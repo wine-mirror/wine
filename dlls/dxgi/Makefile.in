@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = dxgi.dll
 IMPORTLIB = dxgi
 IMPORTS   = dxguid uuid wined3d

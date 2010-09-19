@@ -1,8 +1,4 @@
 EXTRADEFS = -DUSE_WS_PREFIX
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = ws2_32.dll
 IMPORTLIB = ws2_32
 DELAYIMPORTS = iphlpapi user32

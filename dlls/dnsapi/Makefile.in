@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = dnsapi.dll
 IMPORTLIB = dnsapi
 IMPORTS   = netapi32

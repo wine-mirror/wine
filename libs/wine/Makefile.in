@@ -1,9 +1,4 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 DLLFLAGS  = @DLLFLAGS@
-LIBEXT    = @LIBEXT@
 MODULE    = libwine.$(LIBEXT)
 VERSCRIPT = $(SRCDIR)/wine.map
 EXTRALIBS = $(LIBPORT) @LIBDL@ @CRTLIBS@

@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 TESTDLL   = rpcrt4.dll
 IMPORTS   = ole32 rpcrt4 advapi32
 EXTRAIDLFLAGS = --prefix-server=s_

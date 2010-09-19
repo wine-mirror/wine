@@ -1,8 +1,4 @@
 EXTRADEFS = -D_MT
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = msvcrt.dll
 IMPORTLIB = msvcrt
 DELAYIMPORTS = advapi32 user32

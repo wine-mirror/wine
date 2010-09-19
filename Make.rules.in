@@ -1,12 +1,6 @@
 # Global rules shared by all makefiles     -*-Makefile-*-
 #
-# Each individual makefile must define the following variables:
-# TOPSRCDIR    : top-level source directory
-# TOPOBJDIR    : top-level object directory
-# SRCDIR       : source directory for this module
-# MODULE       : name of the module being built
-#
-# Each individual makefile may define the following additional variables:
+# Each individual makefile may define the following variables:
 # C_SRCS       : C sources for the module
 # RC_SRCS      : resource source files
 # EXTRA_SRCS   : extra source files for make depend
@@ -18,104 +12,19 @@
 
 # First some useful definitions
 
-SHELL     = /bin/sh
-CC        = @CC@
-CFLAGS    = @CFLAGS@
-CPPFLAGS  = @CPPFLAGS@
-LIBS      = @LIBS@
-BISON     = @BISON@
-FLEX      = @FLEX@
-EXEEXT    = @EXEEXT@
-OBJEXT    = @OBJEXT@
-LIBEXT    = @LIBEXT@
-DLLEXT    = @DLLEXT@
-TOOLSEXT  = @TOOLSEXT@
-IMPLIBEXT = @IMPLIBEXT@
-LDSHARED  = @LDSHARED@
-DLLTOOL   = @DLLTOOL@
-DLLWRAP   = @DLLWRAP@
-AR        = @AR@
-ARFLAGS   = @ARFLAGS@
-RANLIB    = @RANLIB@
-STRIP     = @STRIP@
-LN_S      = @LN_S@
-TOOLSDIR  = @TOOLSDIR@
-LDFLAGS   = @LDFLAGS@
-PRELINK   = @PRELINK@
-RM        = rm -f
-MV        = mv
-LINT      = @LINT@
-LINTFLAGS = @LINTFLAGS@
-FONTFORGE = @FONTFORGE@
-RSVG      = @RSVG@
-CONVERT   = @CONVERT@
-ICOTOOL   = @ICOTOOL@
-CROSSCC   = @CROSSCC@
-CROSSTARGET = @CROSSTARGET@
-CROSSAR     = $(CROSSTARGET)-ar
-CROSSRANLIB = $(CROSSTARGET)-ranlib
-FAKEEXT   = $(DLLEXT:.so=.fake)
+LDSHARED     = @LDSHARED@
 INCLUDES     = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
-EXTRACFLAGS  = @EXTRACFLAGS@
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
-TARGETFLAGS  = @TARGETFLAGS@
-MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs -m 755
-WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi/winapi_check
-BUILDIMAGE   = $(TOPSRCDIR)/tools/buildimage
-C2MAN        = $(TOPSRCDIR)/tools/c2man.pl
-RUNTEST      = $(TOPSRCDIR)/tools/runtest
-WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild$(TOOLSEXT)
-MAKEDEP      = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
-MAKECTESTS   = $(TOOLSDIR)/tools/make_ctests$(TOOLSEXT)
-WRC          = $(TOOLSDIR)/tools/wrc/wrc$(TOOLSEXT)
-WMC          = $(TOOLSDIR)/tools/wmc/wmc$(TOOLSEXT)
-WIDL         = $(TOOLSDIR)/tools/widl/widl$(TOOLSEXT)
-WINEGCC      = $(TOOLSDIR)/tools/winegcc/winegcc $(TARGETFLAGS) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR) @UNWINDFLAGS@
-CROSSWINEGCC = $(TOOLSDIR)/tools/winegcc/winegcc $(CROSSTARGET:%=-b %) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR) --lib-suffix=.cross.a
-RELPATH      = $(TOOLSDIR)/tools/relpath$(TOOLSEXT)
-SFNT2FNT     = $(TOOLSDIR)/tools/sfnt2fnt$(TOOLSEXT)
-RC           = $(WRC)
 RCFLAGS      = --nostdinc $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
-LDPATH       = @LDPATH@
-DLLDIR       = $(TOPOBJDIR)/dlls
-LIBPORT      = $(TOPOBJDIR)/libs/port/libwine_port.a
-LIBWPP       = $(TOPOBJDIR)/libs/wpp/libwpp.a
-LIBWINE      = -L$(TOPOBJDIR)/libs/wine -lwine
-LDRPATH_INSTALL = @LDRPATH_INSTALL@
-LDRPATH_LOCAL   = @LDRPATH_LOCAL@
-
-@SET_MAKE@
-
-# Installation infos
-
-INSTALL         = @INSTALL@ $(INSTALL_FLAGS)
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(INSTALL_PROGRAM_FLAGS)
-INSTALL_SCRIPT  = @INSTALL_SCRIPT@ $(INSTALL_SCRIPT_FLAGS)
-INSTALL_DATA    = @INSTALL_DATA@ $(INSTALL_DATA_FLAGS)
-prefix          = @prefix@
-exec_prefix     = @exec_prefix@
-bindir          = @bindir@
-libdir          = @libdir@
-datarootdir     = @datarootdir@
-datadir         = @datadir@
-infodir         = @infodir@
-mandir          = @mandir@
-sysconfdir      = @sysconfdir@
-includedir      = @includedir@/wine
-dlldir          = @libdir@/wine
-fakedlldir      = $(dlldir)/fakedlls
-prog_manext     = 1
-api_manext      = 3w
-conf_manext     = 5
-CLEAN_FILES     = *.o *.a *.so *.ln *.res *.fake *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
 
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
 IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=.h) \
                   $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
 
+CLEAN_FILES   = *.o *.a *.so *.ln *.res *.fake *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
 CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:%=dlldata.c) \
                 $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) $(MC_SRCS:.mc=.mc.rc)
 
@@ -124,10 +33,6 @@ OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_
 
 CROSSOBJS = $(OBJS:.o=.cross.o)
 LINTS  = $(C_SRCS:.c=.ln)
-
-# 'all' target first in case the enclosing Makefile didn't define any target
-
-all:
 
 filter: dummy
 	@$(TOPSRCDIR)/tools/winapi/make_filter --make $(MAKE) all
@@ -157,7 +62,7 @@ filter: dummy
 	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<
 
 .rc.res:
-	$(LDPATH) $(RC) $(RCFLAGS) -fo$@ $<
+	$(LDPATH) $(WRC) $(RCFLAGS) -fo$@ $<
 
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -H $@ $<

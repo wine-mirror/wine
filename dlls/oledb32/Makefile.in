@@ -1,8 +1,4 @@
 EXTRADEFS = -DCOM_NO_WINDOWS_H
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = oledb32.dll
 IMPORTS   = uuid oleaut32 ole32 user32 advapi32
 

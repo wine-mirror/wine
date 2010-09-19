@@ -1,9 +1,5 @@
 DEFS      = -D__WINESRC__
 DLLFLAGS  = @DLLFLAGS@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = libwine_port.a
 
 C_SRCS = \

@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = appwiz.cpl
 IMPORTS   = comctl32 advapi32 shell32 user32 comdlg32
 

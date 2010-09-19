@@ -1,8 +1,4 @@
 EXTRADEFS = -D_ADVAPI32_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = advapi32.dll
 IMPORTLIB = advapi32
 DELAYIMPORTS = rpcrt4

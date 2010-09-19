@@ -1,13 +1,6 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
-EXEEXT    = @EXEEXT@
 DEFS      = -D__WINESRC__ -DINCLUDEDIR="\"$(includedir)\"" $(EXTRADEFS)
-
 PROGRAMS = wrc$(EXEEXT) wrc-installed
 MANPAGES = wrc.man
-MODULE   = none
 
 C_SRCS = \
 	dumpres.c \

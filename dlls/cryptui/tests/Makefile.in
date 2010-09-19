@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 TESTDLL   = cryptui.dll
 IMPORTS   = cryptui crypt32 user32
 

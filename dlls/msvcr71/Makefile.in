@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = msvcr71.dll
 IMPORTLIB = msvcr71
 IMPORTS   = msvcrt

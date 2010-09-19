@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 TESTDLL   = opengl32.dll
 IMPORTS   = opengl32 user32 gdi32
 

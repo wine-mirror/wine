@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
 IMPORTS   = dxguid uuid ole32 user32 advapi32

@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = winedbg.exe
 APPMODE   = -mconsole
 IMPORTS   = psapi dbghelp advapi32

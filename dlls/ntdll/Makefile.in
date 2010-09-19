@@ -1,8 +1,4 @@
 EXTRADEFS = -D_NTSYSTEM_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = ntdll.dll
 IMPORTLIB = ntdll
 IMPORTS   = winecrt0

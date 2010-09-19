@@ -1,8 +1,4 @@
 EXTRADEFS = -D_USER32_ -D_WINABLE_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = user32.dll
 IMPORTLIB = user32
 IMPORTS   = gdi32 advapi32

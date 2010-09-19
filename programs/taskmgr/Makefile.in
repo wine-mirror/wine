@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = taskmgr.exe
 APPMODE   = -mwindows -mno-cygwin
 IMPORTS   = psapi shell32 comctl32 user32 gdi32 advapi32

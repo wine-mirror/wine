@@ -146,7 +146,7 @@ AC_DEFUN([WINE_CONFIG_HELPERS],
 .INIT: Makefile
 .MAKEFILEDEPS:
 all: Makefile
-Makefile: Makefile.in Make.rules config.status
+Makefile: Makefile.in Make.vars.in Make.rules config.status
 	@./config.status Make.tmp Makefile"
 
 AC_SUBST(ALL_WINETEST_DEPENDS,["# Test binaries"])
@@ -171,12 +171,12 @@ wine_fn_all_dir_rules ()
 $[1]/__clean__: $[1]/Makefile
 	@cd $[1] && \$(MAKE) clean
 	\$(RM) $[1]/Makefile
-$[1]/Makefile: $[1]/Makefile.in config.status $[2]
-	@./config.status --file $[1]/Makefile && cd $[1] && \$(MAKE) depend
+$[1]/Makefile: $[1]/Makefile.in Make.vars.in config.status $[2]
+	@./config.status --file $[1]/Makefile:Make.vars.in:$[1]/Makefile.in && cd $[1] && \$(MAKE) depend
 depend: $[1]/__depend__
 .PHONY: $[1]/__depend__
 $[1]/__depend__: \$(MAKEDEP) dummy
-	@./config.status --file $[1]/Makefile && cd $[1] && \$(MAKE) depend"
+	@./config.status --file $[1]/Makefile:Make.vars.in:$[1]/Makefile.in && cd $[1] && \$(MAKE) depend"
 }
 
 wine_fn_config_makefile ()

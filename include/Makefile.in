@@ -1,9 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
-SRCDIR    = @srcdir@
-VPATH	  = @srcdir@
-MODULE	  = none
-
 PRIVATE_IDL_H_SRCS = \
 	wine/wined3d.idl \
 	wine/winedxgi.idl

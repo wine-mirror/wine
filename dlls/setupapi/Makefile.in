@@ -1,8 +1,4 @@
 EXTRADEFS = -D_SETUPAPI_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = setupapi.dll
 IMPORTLIB = setupapi
 IMPORTS   = uuid user32 version advapi32 rpcrt4

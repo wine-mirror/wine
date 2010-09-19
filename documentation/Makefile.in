@@ -1,9 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
-MODULE    = none
-
 INSTALLDIRS = $(DESTDIR)$(mandir)/man$(api_manext)
 
 @MAKE_RULES@

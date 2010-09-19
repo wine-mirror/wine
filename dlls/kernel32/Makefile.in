@@ -1,8 +1,4 @@
 EXTRADEFS = -D_KERNEL32_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = kernel32.dll
 IMPORTLIB = kernel32
 IMPORTS   = winecrt0 ntdll

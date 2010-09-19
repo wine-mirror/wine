@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = avifil32.dll
 IMPORTLIB = avifil32
 IMPORTS   = uuid msacm32 msvfw32 winmm ole32 user32 advapi32

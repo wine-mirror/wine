@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = secur32.dll
 IMPORTLIB = secur32
 IMPORTS   = netapi32 advapi32

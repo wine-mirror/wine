@@ -1,8 +1,4 @@
 EXTRADEFS = -DUSE_MSVCRT_PREFIX
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = msvcrt20.dll
 IMPORTLIB = msvcrt20
 IMPORTS   = msvcrt

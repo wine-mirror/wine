@@ -9,13 +9,6 @@ DEFS = \
 	-DCXX="\"@CXX@\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
-EXEEXT    = @EXEEXT@
-MODULE    = none
-
 PROGRAMS = \
 	winecpp$(EXEEXT) \
 	winegcc$(EXEEXT) \

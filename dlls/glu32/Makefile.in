@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = glu32.dll
 IMPORTLIB = glu32
 EXTRAINCL = @X_CFLAGS@

@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = atl.dll
 IMPORTLIB = atl
 IMPORTS   = uuid ole32 oleaut32 user32 gdi32 advapi32

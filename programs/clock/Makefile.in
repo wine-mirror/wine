@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = clock.exe
 APPMODE   = -mwindows
 IMPORTS   = comdlg32 shell32 user32 gdi32

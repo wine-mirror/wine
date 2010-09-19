@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = advpack.dll
 IMPORTLIB = advpack
 IMPORTS   = ole32 setupapi version advapi32

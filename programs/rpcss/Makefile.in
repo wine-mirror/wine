@@ -1,8 +1,4 @@
 EXTRADEFS = -D__WINESRC__
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = rpcss.exe
 APPMODE   = -mconsole
 IMPORTS   = rpcrt4

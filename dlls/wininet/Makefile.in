@@ -1,8 +1,4 @@
 EXTRADEFS = -D_WINX32_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = wininet.dll
 IMPORTLIB = wininet
 IMPORTS   = mpr shlwapi shell32 user32 advapi32

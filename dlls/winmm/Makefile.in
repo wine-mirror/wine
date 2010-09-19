@@ -1,8 +1,4 @@
 EXTRADEFS = -D_WINMM_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = winmm.dll
 IMPORTLIB = winmm
 IMPORTS   = user32 advapi32

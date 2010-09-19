@@ -1,8 +1,4 @@
 EXTRADEFS = -DCOM_NO_WINDOWS_H
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = msxml3.dll
 IMPORTS   = uuid urlmon shlwapi oleaut32 ole32 user32 advapi32
 EXTRALIBS = @XML2LIBS@

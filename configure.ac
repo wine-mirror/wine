@@ -2848,7 +2848,7 @@ _WINE_EOF
     AS_ERROR([could not create Makefile])
 }])
 
-AC_CONFIG_FILES([Make.tmp:Makefile.in])
+AC_CONFIG_FILES([Make.tmp:Make.vars.in:Makefile.in])
 
 dnl Some final makefile rules
 

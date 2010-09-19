@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = winex11.drv
 IMPORTS   = uuid user32 gdi32 advapi32 imm32
 DELAYIMPORTS = comctl32 ole32 shell32

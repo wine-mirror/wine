@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 TESTDLL   = msvcrt.dll
 APPMODE   = -mno-cygwin
 MODCFLAGS = @BUILTINFLAG@

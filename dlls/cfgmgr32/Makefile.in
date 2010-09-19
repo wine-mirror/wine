@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = cfgmgr32.dll
 IMPORTLIB = cfgmgr32
 IMPORTS   = setupapi

@@ -1,13 +1,7 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
-EXEEXT    = @EXEEXT@
 DEFS      = -D__WINESRC__ $(EXTRADEFS)
 
 PROGRAMS = widl$(EXEEXT)
 MANPAGES = widl.man
-MODULE   = none
 
 C_SRCS = \
 	client.c \

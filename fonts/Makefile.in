@@ -1,9 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
-MODULE    = none
-fontdir   = $(datadir)/wine/fonts
 INSTALLDIRS = $(DESTDIR)$(fontdir)
 
 BITMAP_FONTS  = \

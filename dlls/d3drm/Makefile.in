@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = d3drm.dll
 IMPORTLIB = d3drm
 IMPORTS   = dxguid uuid d3dxof

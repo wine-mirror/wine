@@ -1,8 +1,4 @@
 EXTRADEFS = -D_SHDOCVW_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = shdocvw.dll
 IMPORTLIB = shdocvw
 IMPORTS   = uuid shell32 comctl32 shlwapi user32 gdi32 advapi32

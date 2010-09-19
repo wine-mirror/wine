@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = unicows.dll
 IMPORTLIB = unicows
 IMPORTS   = avicap32 msvfw32 oledlg comdlg32 shell32 winmm winspool \

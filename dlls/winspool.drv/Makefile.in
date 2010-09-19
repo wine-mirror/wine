@@ -1,8 +1,4 @@
 EXTRADEFS = -D_SPOOL32_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = winspool.drv
 IMPORTLIB = winspool
 IMPORTS   = user32 gdi32 advapi32

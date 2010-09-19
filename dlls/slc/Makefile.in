@@ -1,8 +1,4 @@
 EXTRADEFS = -D_SLC_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = slc.dll
 IMPORTLIB = slc
 

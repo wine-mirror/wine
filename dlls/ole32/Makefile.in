@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = ole32.dll
 IMPORTLIB = ole32
 IMPORTS   = uuid advapi32 user32 gdi32 rpcrt4

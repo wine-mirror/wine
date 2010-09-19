@@ -1,8 +1,4 @@
 EXTRADEFS = -D_CRYPT32_
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = crypt32.dll
 IMPORTLIB = crypt32
 IMPORTS   = user32 advapi32

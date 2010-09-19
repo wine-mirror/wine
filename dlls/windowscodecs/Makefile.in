@@ -1,7 +1,3 @@
-TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
-SRCDIR    = @srcdir@
-VPATH     = @srcdir@
 MODULE    = windowscodecs.dll
 IMPORTLIB = windowscodecs
 IMPORTS   = uuid ole32 shlwapi advapi32
