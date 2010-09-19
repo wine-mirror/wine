@@ -305,6 +305,7 @@ STRINGTABLE
 	IDS_COMMON_OEM_LINKS        "OEM Links"
 	IDS_DOCUMENTS               "Dokumente"
 	IDS_DOWNLOADS               "Downloads"
+	IDS_LOCAL_APPDATA_LOW       "Anwendungsdaten\\LocalLow"
 
 	IDS_NEWFOLDER		"Neuer Ordner"
 
