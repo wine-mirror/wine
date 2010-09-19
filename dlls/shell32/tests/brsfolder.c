@@ -86,6 +86,19 @@ static void CALLBACK make_new_folder_timer_callback(HWND hwnd, UINT uMsg,
         SetFocus(hwnd);
         break;
     case 2:
+        /*
+         * The test does not trigger the correct state on Windows. This results
+         * in the new folder pidl not being returned. The result is as
+         * expected if the same steps are done manually.
+         * Sending the down key selects the new folder again which sets the
+         * correct state. This ensures that the correct pidl is returned.
+         */
+        keybd_event(VK_DOWN, 0, 0, 0);
+        break;
+    case 3:
+        keybd_event(VK_DOWN, 0, KEYEVENTF_KEYUP, 0);
+        break;
+    case 4:
         KillTimer(hwnd, idEvent);
         /* Close dialog box */
         SendMessage(hwnd, WM_COMMAND, IDOK, 0);
@@ -141,6 +154,7 @@ static void test_click_make_new_folder_button(void)
     char test_folder_path[MAX_PATH];
     WCHAR test_folder_pathW[MAX_PATH];
     CHAR new_folder_path[MAX_PATH];
+    CHAR new_folder_pidl_path[MAX_PATH];
     char selected_folder[MAX_PATH];
     const CHAR title[] = "test_click_make_new_folder_button";
     int number_of_folders = -1;
@@ -203,6 +217,14 @@ static void test_click_make_new_folder_button(void)
     todo_wine ok(does_folder_or_file_exist(new_folder_path)
         || broken(!does_folder_or_file_exist(new_folder_path)) /* W95, W98, XP, W2K3 */,
         "The new folder did not get the name %s\n", new_folder_name);
+
+    /* Dialog should return a pidl pointing to the new folder */
+    ok(SHGetPathFromIDListA(pidl, new_folder_pidl_path),
+        "SHGetPathFromIDList failed for new folder.\n");
+    todo_wine ok(strcmp(new_folder_path, new_folder_pidl_path) == 0
+        || broken(strcmp(new_folder_path, new_folder_pidl_path) != 0) /* earlier than Vista */,
+        "SHBrowseForFolder did not return the pidl for the new folder. "
+        "Expected '%s' got '%s'\n", new_folder_path, new_folder_pidl_path);
 
     /* Remove test folder and any subfolders created in this test */
     shfileop.hwnd = NULL;
