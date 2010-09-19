@@ -366,7 +366,7 @@ static BOOL is_dib_monochrome( const BITMAPINFO* info )
  *           DIB_GetBitmapInfo
  *
  * Get the info from a bitmap header.
- * Return 1 for INFOHEADER, 0 for COREHEADER,
+ * Return 1 for INFOHEADER, 0 for COREHEADER, -1 in case of failure.
  */
 static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
                               LONG *height, WORD *bpp, DWORD *compr )
@@ -2257,6 +2257,12 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     memcpy(scaled_info, fix_info, size);
     bm_type = DIB_GetBitmapInfo( &fix_info->bmiHeader, &width, &height,
                                  &bpp_dummy, &compr_dummy);
+    if (bm_type == -1)
+    {
+        WARN("Invalid bitmap format!\n");
+        goto end_close;
+    }
+
     if(desiredx != 0)
         new_width = desiredx;
     else
