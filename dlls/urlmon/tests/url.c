@@ -176,7 +176,7 @@ static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 static const WCHAR cache_fileW[] = {'c',':','\\','c','a','c','h','e','.','h','t','m',0};
 static const CHAR dwl_htmlA[] = "dwl.html";
 static const WCHAR dwl_htmlW[] = {'d','w','l','.','h','t','m','l',0};
-static const WCHAR test_txtW[] = {'t','e','s','t','.','t','x','t',0};
+static const CHAR test_txtA[] = "test.txt";
 static const WCHAR emptyW[] = {0};
 
 static BOOL stopped_binding = FALSE, stopped_obj_binding = FALSE, emulate_protocol = FALSE,
@@ -2831,11 +2831,11 @@ static void create_file(void)
 
 static void create_cache_file(void)
 {
-    char buf[6500];
+    char buf[6500], curdir[MAX_PATH];
     HANDLE file;
     DWORD size;
 
-    file = CreateFileW(test_txtW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+    file = CreateFileA(test_txtA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
     if(file == INVALID_HANDLE_VALUE)
@@ -2845,9 +2845,12 @@ static void create_cache_file(void)
     WriteFile(file, buf, sizeof(buf), &size, NULL);
     CloseHandle(file);
 
-    size = GetCurrentDirectoryW(MAX_PATH, cache_file_name);
-    cache_file_name[size] = '\\';
-    memcpy(cache_file_name+size+1, test_txtW, sizeof(test_txtW));
+    memset(curdir, 0, sizeof(curdir));
+    GetCurrentDirectoryA(MAX_PATH, curdir);
+    lstrcatA(curdir, "\\");
+    lstrcatA(curdir, test_txtA);
+
+    MultiByteToWideChar(CP_ACP, 0, curdir, -1, cache_file_name, MAX_PATH);
 }
 
 static void test_ReportResult(HRESULT exhres)
@@ -3114,7 +3117,7 @@ START_TEST(url)
     }
 
     DeleteFileA(wszIndexHtmlA);
-    DeleteFileW(test_txtW);
+    DeleteFileA(test_txtA);
     CloseHandle(complete_event);
     CloseHandle(complete_event2);
     CoUninitialize();
