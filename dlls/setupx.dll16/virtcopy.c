@@ -211,7 +211,6 @@ static RETERR16 VCP_VirtnodeCreate(const VCPFILESPEC *vfsSrc, const VCPFILESPEC 
 {
     HANDLE heap;
     LPVIRTNODE lpvn;
-    RETERR16 cbres;
 
     while (vn_last < vn_num)
     {
@@ -248,9 +247,9 @@ static RETERR16 VCP_VirtnodeCreate(const VCPFILESPEC *vfsSrc, const VCPFILESPEC 
 
     lpvn->vhstrDstFinalName = 0xffff; /* FIXME: what is this ? */
 
-    cbres = VCP_Callback(lpvn, VCPM_NODECREATE, 0, 0, VCP_MsgRef);
+    VCP_Callback(lpvn, VCPM_NODECREATE, 0, 0, VCP_MsgRef);
     lpvn->fl |= VFNL_CREATED;
-    cbres = VCP_Callback(lpvn, VCPM_NODEACCEPT, 0, 0, VCP_MsgRef);
+    VCP_Callback(lpvn, VCPM_NODEACCEPT, 0, 0, VCP_MsgRef);
 
     return OK;
 }
