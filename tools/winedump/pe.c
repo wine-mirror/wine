@@ -193,6 +193,14 @@ static inline void print_subsys(const char *title, WORD value)
         case IMAGE_SUBSYSTEM_WINDOWS_CUI:   str = "Windows CUI";    break;
         case IMAGE_SUBSYSTEM_OS2_CUI:       str = "OS/2 CUI";       break;
         case IMAGE_SUBSYSTEM_POSIX_CUI:     str = "Posix CUI";      break;
+        case IMAGE_SUBSYSTEM_NATIVE_WINDOWS:           str = "native Win9x driver";  break;
+        case IMAGE_SUBSYSTEM_WINDOWS_CE_GUI:           str = "Windows CE GUI";       break;
+        case IMAGE_SUBSYSTEM_EFI_APPLICATION:          str = "EFI application";      break;
+        case IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER:  str = "EFI driver (boot)";    break;
+        case IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER:       str = "EFI driver (runtime)"; break;
+        case IMAGE_SUBSYSTEM_EFI_ROM:                  str = "EFI ROM";              break;
+        case IMAGE_SUBSYSTEM_XBOX:                     str = "Xbox application";     break;
+        case IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION: str = "Boot application";     break;
     }
     printf("  %-34s 0x%X (%s)\n", title, value, str);
 }
