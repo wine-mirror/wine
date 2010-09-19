@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include "debugger.h"
 
-#if defined(__GNUC__) && (GCC_VERSION >= 30000)
+#if defined(__GNUC__) && (__GNUC__ >= 3)
 static int             (*db_printf)(const char* format, ...) __attribute__((format (printf,1,2)));
 #else
 static int             (*db_printf)(const char* format, ...);
