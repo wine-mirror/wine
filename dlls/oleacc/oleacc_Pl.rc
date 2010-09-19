@@ -24,7 +24,7 @@ LANGUAGE LANG_POLISH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-    0 "unknown object" /* undocumented */
+    0 "nieznany obiekt" /* undocumented */
     ROLE_SYSTEM_TITLEBAR    "pasek tytu³u"
     ROLE_SYSTEM_MENUBAR     "pasek menu"
     ROLE_SYSTEM_SCROLLBAR   "pasek przewijania"
