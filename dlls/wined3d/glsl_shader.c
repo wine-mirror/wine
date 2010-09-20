@@ -752,8 +752,9 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
     programId = prog->programId;
     constant_version = prog->constant_version;
 
-    if (useVertexShader) {
-        IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
+    if (useVertexShader)
+    {
+        IWineD3DBaseShaderImpl *vshader = (IWineD3DBaseShaderImpl *)stateBlock->state.vertex_shader;
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
         shader_glsl_load_constantsF(vshader, gl_info, stateBlock->vertexShaderConstantF,
@@ -4277,7 +4278,7 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
 static void set_glsl_shader_program(const struct wined3d_context *context,
         IWineD3DDeviceImpl *device, BOOL use_ps, BOOL use_vs)
 {
-    IWineD3DVertexShader *vshader = use_vs ? device->stateBlock->vertexShader : NULL;
+    IWineD3DVertexShader *vshader = use_vs ? (IWineD3DVertexShader *)device->stateBlock->state.vertex_shader : NULL;
     IWineD3DPixelShader *pshader = use_ps ? device->stateBlock->pixelShader : NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = device->shader_priv;

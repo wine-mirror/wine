@@ -2351,6 +2351,8 @@ struct wined3d_state
 {
     IWineD3DVertexDeclarationImpl *vertex_declaration;
 
+    struct IWineD3DVertexShaderImpl *vertex_shader;
+
     IWineD3DBaseTextureImpl *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
@@ -2377,8 +2379,6 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     struct wined3d_state state;
-
-    IWineD3DVertexShader      *vertexShader;
 
     /* Vertex Shader Constants */
     BOOL                       vertexShaderConstantB[MAX_CONST_B];
@@ -2725,7 +2725,7 @@ int shader_addline(struct wined3d_shader_buffer *buffer, const char *fmt, ...) P
 int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *fmt, va_list args) DECLSPEC_HIDDEN;
 
 /* Vertex shader utility functions */
-extern BOOL vshader_get_input(IWineD3DVertexShader *iface,
+extern BOOL vshader_get_input(struct IWineD3DVertexShaderImpl *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -3034,7 +3034,7 @@ static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
      * IWineD3DDeviceImpl_FindTexUnitMap(). This is safe because
      * stateblock->vertexShader implies a vertex declaration instead of ddraw
      * style strided data. */
-    return (stateblock->vertexShader
+    return (stateblock->state.vertex_shader
             && !stateblock->state.vertex_declaration->position_transformed
             && stateblock->device->vs_selected_mode != SHADER_NONE);
 }

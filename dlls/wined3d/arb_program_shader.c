@@ -640,8 +640,9 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
     IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (useVertexShader) {
-        IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
+    if (useVertexShader)
+    {
+        IWineD3DBaseShaderImpl *vshader = (IWineD3DBaseShaderImpl *)stateBlock->state.vertex_shader;
 
         /* Load DirectX 9 float constants for vertex shader */
         device->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
@@ -4582,9 +4583,9 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
     if (useVS) {
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
-        IWineD3DVertexShaderImpl *vs = (IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader;
+        IWineD3DVertexShaderImpl *vs = This->stateBlock->state.vertex_shader;
 
-        TRACE("Using vertex shader %p\n", This->stateBlock->vertexShader);
+        TRACE("Using vertex shader %p\n", vs);
         find_arb_vs_compile_args(vs, This->stateBlock, &compile_args);
         compiled = find_arb_vshader(vs, &compile_args);
         priv->current_vprogram_id = compiled->prgId;

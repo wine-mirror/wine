@@ -259,7 +259,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
                 /* TODO: Assuming vertexdeclarations are usually used with the
                  * same or a similar shader, it might be worth it to store the
                  * last used output slot and try that one first. */
-                stride_used = vshader_get_input(This->stateBlock->vertexShader,
+                stride_used = vshader_get_input(This->stateBlock->state.vertex_shader,
                         element->usage, element->usage_idx, &idx);
             }
             else
@@ -408,7 +408,7 @@ void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_
 {
     struct wined3d_stream_info *stream_info = &device->strided_streams;
     IWineD3DStateBlockImpl *stateblock = device->stateBlock;
-    BOOL vs = stateblock->vertexShader && device->vs_selected_mode != SHADER_NONE;
+    BOOL vs = stateblock->state.vertex_shader && device->vs_selected_mode != SHADER_NONE;
     BOOL fixup = FALSE;
 
     if (device->up_strided)
@@ -472,7 +472,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
     {
         for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
         {
-            if (((IWineD3DBaseShaderImpl *)stateblock->vertexShader)->baseShader.reg_maps.sampler_type[i])
+            if (stateblock->state.vertex_shader->baseShader.reg_maps.sampler_type[i])
                 device_preload_texture(stateblock, MAX_FRAGMENT_SAMPLERS + i);
         }
     }
@@ -3197,11 +3197,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* if
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader* pShader) {
-    IWineD3DDeviceImpl *This        = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexShader* oldShader = This->updateStateBlock->vertexShader;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader *pShader)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexShader *oldShader = (IWineD3DVertexShader *)This->updateStateBlock->state.vertex_shader;
 
-    This->updateStateBlock->vertexShader         = pShader;
+    This->updateStateBlock->state.vertex_shader = (IWineD3DVertexShaderImpl *)pShader;
     This->updateStateBlock->changed.vertexShader = TRUE;
 
     if (This->isRecordingState) {
@@ -3231,7 +3232,7 @@ static IWineD3DVertexShader * WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3D
 
     TRACE("iface %p.\n", iface);
 
-    shader = device->stateBlock->vertexShader;
+    shader = (IWineD3DVertexShader *)device->stateBlock->state.vertex_shader;
     if (shader) IWineD3DVertexShader_AddRef(shader);
 
     TRACE("Returning %p.\n", shader);
@@ -3533,7 +3534,7 @@ static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const WINED3DSAMPL
 static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct wined3d_gl_info *gl_info)
 {
     const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_type =
-            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.reg_maps.sampler_type;
+            This->stateBlock->state.vertex_shader->baseShader.reg_maps.sampler_type;
     const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_type = NULL;
     int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
     int i;

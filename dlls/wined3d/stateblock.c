@@ -513,7 +513,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             }
         }
         if(This->pIndexData) IWineD3DBuffer_Release(This->pIndexData);
-        if(This->vertexShader) IWineD3DVertexShader_Release(This->vertexShader);
+        if (This->state.vertex_shader) IWineD3DVertexShader_Release((IWineD3DVertexShader *)This->state.vertex_shader);
         if(This->pixelShader) IWineD3DPixelShader_Release(This->pixelShader);
 
         for(counter = 0; counter < LIGHTMAP_SIZE; counter++) {
@@ -603,13 +603,16 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
     TRACE("(%p) : Updating state block %p ------------------v\n", targetStateBlock, This);
 
-    if (This->changed.vertexShader && This->vertexShader != targetStateBlock->vertexShader)
+    if (This->changed.vertexShader && This->state.vertex_shader != targetStateBlock->state.vertex_shader)
     {
-        TRACE("Updating vertex shader from %p to %p\n", This->vertexShader, targetStateBlock->vertexShader);
+        TRACE("Updating vertex shader from %p to %p\n",
+                This->state.vertex_shader, targetStateBlock->state.vertex_shader);
 
-        if (targetStateBlock->vertexShader) IWineD3DVertexShader_AddRef(targetStateBlock->vertexShader);
-        if (This->vertexShader) IWineD3DVertexShader_Release(This->vertexShader);
-        This->vertexShader = targetStateBlock->vertexShader;
+        if (targetStateBlock->state.vertex_shader)
+            IWineD3DVertexShader_AddRef((IWineD3DVertexShader *)targetStateBlock->state.vertex_shader);
+        if (This->state.vertex_shader)
+            IWineD3DVertexShader_Release((IWineD3DVertexShader *)This->state.vertex_shader);
+        This->state.vertex_shader = targetStateBlock->state.vertex_shader;
     }
 
     /* Vertex Shader Float Constants */
@@ -909,7 +912,8 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
 
     TRACE("Blocktype: %d\n", This->blockType);
 
-    if (This->changed.vertexShader) IWineD3DDevice_SetVertexShader(device, This->vertexShader);
+    if (This->changed.vertexShader)
+        IWineD3DDevice_SetVertexShader(device, (IWineD3DVertexShader *)This->state.vertex_shader);
 
     /* Vertex Shader Constants */
     for (i = 0; i < This->num_contained_vs_consts_f; ++i)
