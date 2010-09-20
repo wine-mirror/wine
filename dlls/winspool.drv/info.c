@@ -7,6 +7,7 @@
  * Copyright 1999, 2000 Huw D M Davies
  * Copyright 2001 Marcus Meissner
  * Copyright 2005-2010 Detlef Riekenberg
+ * Copyright 2010 Vitaly Perov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -100,6 +101,7 @@ typedef struct {
     WCHAR *portname;
     WCHAR *document_title;
     WCHAR *printer_name;
+    LPDEVMODEW devmode;
 } job_t;
 
 
@@ -2298,6 +2300,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
     job->document_title = strdupW(default_doc_title);
     job->printer_name = strdupW(printer->name);
+    job->devmode = NULL;
     list_add_tail(&printer->queue->jobs, &job->entry);
 
     *pcbNeeded = (len + 1) * sizeof(WCHAR) + sizeof(*addjob);
@@ -2852,6 +2855,7 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
 {
     BOOL ret = FALSE;
     job_t *job;
+    DWORD size;
 
     TRACE("(%p, %d, %d, %p, %d)\n", hPrinter, JobId, Level, pJob, Command);
     FIXME("Ignoring everything other than document title\n");
@@ -2877,6 +2881,15 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
         JOB_INFO_2W *info2 = (JOB_INFO_2W*)pJob;
         HeapFree(GetProcessHeap(), 0, job->document_title);
         job->document_title = strdupW(info2->pDocument);
+        HeapFree(GetProcessHeap(), 0, job->devmode);
+        if (info2->pDevMode)
+        {
+            size = info2->pDevMode->dmSize + info2->pDevMode->dmDriverExtra;
+            job->devmode = HeapAlloc(GetProcessHeap(), 0, size);
+            memcpy(job->devmode, info2->pDevMode, size);
+        }
+        else
+            job->devmode = NULL;
         break;
       }
     case 3:
@@ -7099,8 +7112,11 @@ static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf
                            LPDWORD pcbNeeded, BOOL unicode)
 {
     DWORD size, left = cbBuf;
+    DWORD shift;
     BOOL space = (cbBuf > 0);
     LPBYTE ptr = buf;
+    LPDEVMODEA  dmA;
+    LPDEVMODEW  devmode;
 
     *pcbNeeded = 0;
 
@@ -7132,6 +7148,43 @@ static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf
         else
             space = FALSE;
         *pcbNeeded += size;
+    }
+
+    if (job->devmode)
+    {
+        if (!unicode)
+        {
+            dmA = DEVMODEdupWtoA(job->devmode);
+            devmode = (LPDEVMODEW) dmA;
+            if (dmA) size = dmA->dmSize + dmA->dmDriverExtra;
+        }
+        else
+        {
+            devmode = job->devmode;
+            size = devmode->dmSize + devmode->dmDriverExtra;
+        }
+
+        if (!devmode)
+             FIXME("Can't convert DEVMODE W to A\n");
+        else
+        {
+            /* align DEVMODE to a DWORD boundary */
+            shift= (4 - ( (DWORD_PTR) ptr & 3)) & 3;
+            size += shift;
+
+            if (size <= left)
+            {
+                ptr += shift;
+                memcpy(ptr, devmode, size-shift);
+                ji2->pDevMode = (LPDEVMODEW)ptr;
+                if (!unicode) HeapFree(GetProcessHeap(), 0, dmA);
+                ptr += size;
+                left -= size;
+            }
+            else
+                space = FALSE;
+            *pcbNeeded +=size;
+        }
     }
 
     return space;
@@ -7570,6 +7623,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         HeapFree(GetProcessHeap(), 0, job->printer_name);
         HeapFree(GetProcessHeap(), 0, job->portname);
         HeapFree(GetProcessHeap(), 0, job->filename);
+        HeapFree(GetProcessHeap(), 0, job->devmode);
         HeapFree(GetProcessHeap(), 0, job);
         break;
     }
