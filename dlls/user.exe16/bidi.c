@@ -62,7 +62,7 @@ DWORD WINAPI ChangeKeyboardCodePage16( UINT16 iLangLeft, UINT16 iLangRight )
  * RETURNS
  *    The old keyboard layout pair.
  */
-DWORD WINAPI ChangeKeyboardLanguage16( UINT16 iLangLeft, UINT iLangRight )
+DWORD WINAPI ChangeKeyboardLanguage16( UINT16 iLangLeft, UINT16 iLangRight )
 {
     FIXME( "( %hu, %hu ): stub\n", iLangLeft, iLangRight );
     return 0;
