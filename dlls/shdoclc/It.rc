@@ -26,7 +26,7 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-    IDS_MESSAGE_BOX_TITLE, "Wine Internet Explorer"
+    IDS_MESSAGE_BOX_TITLE, "Internet Explorer di Wine"
 }
 
 STRINGTABLE
@@ -54,7 +54,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "Aggiungi ai &Preferiti",      IDM_ADDFAVORITES
         MENUITEM "&Mostra il codice",           IDM_VIEWSOURCE
         MENUITEM SEPARATOR
-        MENUITEM "&Encoding",              IDM_LANGUAGE
+        MENUITEM "&Codifica",              IDM_LANGUAGE
         MENUITEM SEPARATOR
         MENUITEM "S&tampa",                 IDM_PRINT
         MENUITEM "A&ggiorna",               _IDM_REFRESH
@@ -66,7 +66,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
     POPUP "Immagine"
     {
         MENUITEM "&Apri collegamento",               IDM_FOLLOWLINKC
-        MENUITEM "Apri collegamento in una Nuova &Finestra", IDM_FOLLOWLINKN
+        MENUITEM "Apri collegamento in una nuova &finestra", IDM_FOLLOWLINKN
         MENUITEM "Salva o&ggetto come...",       IDM_SAVETARGET
         MENUITEM "&Stampa oggetto",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
@@ -145,7 +145,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM "P&roprietà",          IDM_PROPERTIES
     }
 
-    POPUP "Contesto Sconosciuto"
+    POPUP "Contesto sconosciuto"
     {
         MENUITEM SEPARATOR
     }
@@ -153,12 +153,12 @@ IDR_BROWSE_CONTEXT_MENU MENU
     POPUP "Immagine DYNSRC"
     {
         MENUITEM "&Apri collegamento",               IDM_FOLLOWLINKC
-        MENUITEM "Apri collegamento in una &Nuova Finestra", IDM_FOLLOWLINKN
+        MENUITEM "Apri collegamento in una &nuova finestra", IDM_FOLLOWLINKN
         MENUITEM "Salva oggetto &come...",       IDM_SAVETARGET
         MENUITEM "&Stampa oggetto",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
         MENUITEM "&Mostra immagine",            IDM_SHOWPICTURE
-        MENUITEM "Salva &Video come...",        IDM_SAVEPICTURE
+        MENUITEM "Salva &video come...",        IDM_SAVEPICTURE
         MENUITEM "Imposta come s&fondo",       IDM_SETWALLPAPER
         MENUITEM "Aggiungi come elemento del &Desktop...",  IDM_SETDESKTOPITEM
         MENUITEM SEPARATOR
@@ -178,7 +178,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
     POPUP "Immagine ART"
     {
 		MENUITEM "&Apri collegamento",               IDM_FOLLOWLINKC
-        MENUITEM "Apri collegamento in una &Nuova Finestra", IDM_FOLLOWLINKN
+        MENUITEM "Apri collegamento in una &nuova finestra", IDM_FOLLOWLINKN
         MENUITEM "Salva oggetto &come...",       IDM_SAVETARGET
         MENUITEM "&Stampa oggetto",            IDM_PRINTTARGET
         MENUITEM SEPARATOR
@@ -206,7 +206,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
     {
         MENUITEM "Etichette di trace",         IDM_TRACETAGS
         MENUITEM "Fallimenti della risorsa",  IDM_RESOURCEFAILURES
-        MENUITEM "Dump Tracking Info", IDM_DUMPTRACKINGINFO
+        MENUITEM "Informazioni di Dump Tracking", IDM_DUMPTRACKINGINFO
         MENUITEM "Break del Debug",        IDM_DEBUGBREAK
         MENUITEM "Vista del Debug",         IDM_DEBUGVIEW
         MENUITEM "Dump Tree",          IDM_DUMPTREE
