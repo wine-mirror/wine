@@ -9842,7 +9842,7 @@ static LRESULT LISTVIEW_LButtonDblClk(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, 
 {
     LVHITTESTINFO htInfo;
 
-    TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, x, y);
+    TRACE("(key=%hu, X=%u, Y=%u)\n", wKey, x, y);
     
     /* Cancel the item edition if any */
     if (infoPtr->itemEdit.fEnabled)
@@ -9886,7 +9886,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   POINT pt = { x, y };
   INT nItem;
 
-  TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, x, y);
+  TRACE("(key=%hu, X=%u, Y=%u)\n", wKey, x, y);
 
   /* send NM_RELEASEDCAPTURE notification */
   if (!notify(infoPtr, NM_RELEASEDCAPTURE)) return 0;
@@ -10002,7 +10002,7 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
 {
     LVHITTESTINFO lvHitTestInfo;
     
-    TRACE("(key=%hu, X=%hu, Y=%hu)\n", wKey, x, y);
+    TRACE("(key=%hu, X=%u, Y=%u)\n", wKey, x, y);
 
     if (!infoPtr->bLButtonDown) return 0;
 
@@ -10462,7 +10462,7 @@ static LRESULT LISTVIEW_RButtonDblClk(const LISTVIEW_INFO *infoPtr, WORD wKey, I
 {
     LVHITTESTINFO lvHitTestInfo;
     
-    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, x, y);
+    TRACE("(key=%hu,X=%u,Y=%u)\n", wKey, x, y);
 
     /* send NM_RELEASEDCAPTURE notification */
     if (!notify(infoPtr, NM_RELEASEDCAPTURE)) return 0;
@@ -10493,7 +10493,7 @@ static LRESULT LISTVIEW_RButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
     LVHITTESTINFO lvHitTestInfo;
     INT nItem;
 
-    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, x, y);
+    TRACE("(key=%hu,X=%u,Y=%u)\n", wKey, x, y);
 
     /* send NM_RELEASEDCAPTURE notification */
     if (!notify(infoPtr, NM_RELEASEDCAPTURE)) return 0;
@@ -10541,7 +10541,7 @@ static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
     LVHITTESTINFO lvHitTestInfo;
     POINT pt;
 
-    TRACE("(key=%hu,X=%hu,Y=%hu)\n", wKey, x, y);
+    TRACE("(key=%hu,X=%u,Y=%u)\n", wKey, x, y);
 
     if (!infoPtr->bRButtonDown) return 0;
  
