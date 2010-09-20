@@ -2357,6 +2357,9 @@ struct wined3d_state
     float *vs_consts_f;
 
     struct IWineD3DPixelShaderImpl *pixel_shader;
+    BOOL ps_consts_b[MAX_CONST_B];
+    INT ps_consts_i[MAX_CONST_I * 4];
+    float *ps_consts_f;
 
     IWineD3DBaseTextureImpl *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
@@ -2407,11 +2410,6 @@ struct IWineD3DStateBlockImpl
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];
     WINED3DCLIPSTATUS         clip_status;
-
-    /* Pixel Shader Constants */
-    BOOL                       pixelShaderConstantB[MAX_CONST_B];
-    INT                        pixelShaderConstantI[MAX_CONST_I * 4];
-    float                     *pixelShaderConstantF;
 
     /* Contained state management */
     DWORD                     contained_render_states[WINEHIGHEST_RENDER_STATE + 1];

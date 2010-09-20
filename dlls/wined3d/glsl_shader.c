@@ -778,15 +778,15 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
         IWineD3DBaseShaderImpl *pshader = (IWineD3DBaseShaderImpl *)stateBlock->state.pixel_shader;
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
-        shader_glsl_load_constantsF(pshader, gl_info, stateBlock->pixelShaderConstantF,
+        shader_glsl_load_constantsF(pshader, gl_info, stateBlock->state.ps_consts_f,
                 prog->puniformF_locations, &priv->pconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations, stateBlock->pixelShaderConstantI,
+        shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations, stateBlock->state.ps_consts_i,
                 stateBlock->changed.pixelShaderConstantsI & pshader->baseShader.reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
-        shader_glsl_load_constantsB(pshader, gl_info, programId, stateBlock->pixelShaderConstantB,
+        shader_glsl_load_constantsB(pshader, gl_info, programId, stateBlock->state.ps_consts_b,
                 stateBlock->changed.pixelShaderConstantsB & pshader->baseShader.reg_maps.boolean_constants);
 
         /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.

@@ -3653,7 +3653,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
 
     if (!srcData || start >= MAX_CONST_B) return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->pixelShaderConstantB[start], srcData, cnt * sizeof(BOOL));
+    memcpy(&This->updateStateBlock->state.ps_consts_b[start], srcData, cnt * sizeof(BOOL));
     for (i = 0; i < cnt; i++)
         TRACE("Set BOOL constant %u to %s\n", start + i, srcData[i]? "true":"false");
 
@@ -3681,7 +3681,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantB(
     if (!dstData || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->stateBlock->pixelShaderConstantB[start], cnt * sizeof(BOOL));
+    memcpy(dstData, &This->stateBlock->state.ps_consts_b[start], cnt * sizeof(BOOL));
     return WINED3D_OK;
 }
 
@@ -3699,7 +3699,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
 
     if (!srcData || start >= MAX_CONST_I) return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->pixelShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
+    memcpy(&This->updateStateBlock->state.ps_consts_i[start * 4], srcData, cnt * sizeof(int) * 4);
     for (i = 0; i < cnt; i++)
         TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", start + i,
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
@@ -3728,7 +3728,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantI(
     if (!dstData || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->stateBlock->pixelShaderConstantI[start * 4], cnt * sizeof(int) * 4);
+    memcpy(dstData, &This->stateBlock->state.ps_consts_i[start * 4], cnt * sizeof(int) * 4);
     return WINED3D_OK;
 }
 
@@ -3748,7 +3748,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
     if (!srcData || start + count > This->d3d_pshader_constantF || start > This->d3d_pshader_constantF)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, count * sizeof(float) * 4);
+    memcpy(&This->updateStateBlock->state.ps_consts_f[start * 4], srcData, count * sizeof(float) * 4);
     if(TRACE_ON(d3d)) {
         for (i = 0; i < count; i++)
             TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
@@ -3782,7 +3782,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
     if (!dstData || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->stateBlock->pixelShaderConstantF[start * 4], cnt * sizeof(float) * 4);
+    memcpy(dstData, &This->stateBlock->state.ps_consts_f[start * 4], cnt * sizeof(float) * 4);
     return WINED3D_OK;
 }
 

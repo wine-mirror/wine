@@ -584,9 +584,9 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = (float) stateBlock->pixelShaderConstantI[4 * i];
-            val[1] = (float) stateBlock->pixelShaderConstantI[4 * i + 1];
-            val[2] = (float) stateBlock->pixelShaderConstantI[4 * i + 2];
+            val[0] = (float)stateBlock->state.ps_consts_i[4 * i];
+            val[1] = (float)stateBlock->state.ps_consts_i[4 * i + 1];
+            val[2] = (float)stateBlock->state.ps_consts_i[4 * i + 2];
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -656,7 +656,7 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
 
         /* Load DirectX 9 float constants for pixel shader */
         device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                device->highest_dirty_ps_const, stateBlock->pixelShaderConstantF, context->pshader_const_dirty);
+                device->highest_dirty_ps_const, stateBlock->state.ps_consts_f, context->pshader_const_dirty);
         shader_arb_ps_local_constants(device);
     }
 }
@@ -4403,7 +4403,8 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
 
     for(i = 0; i < MAX_CONST_B; i++)
     {
-        if(stateblock->pixelShaderConstantB[i]) args->bools |= ( 1 << i);
+        if (stateblock->state.ps_consts_b[i])
+            args->bools |= ( 1 << i);
     }
 
     /* Only enable the clip plane emulation KIL if at least one clipplane is enabled. The KIL instruction
@@ -4435,9 +4436,9 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
         }
         else
         {
-            args->loop_ctrl[i][0] = stateblock->pixelShaderConstantI[i * 4];
-            args->loop_ctrl[i][1] = stateblock->pixelShaderConstantI[i * 4 + 1];
-            args->loop_ctrl[i][2] = stateblock->pixelShaderConstantI[i * 4 + 2];
+            args->loop_ctrl[i][0] = stateblock->state.ps_consts_i[i * 4];
+            args->loop_ctrl[i][1] = stateblock->state.ps_consts_i[i * 4 + 1];
+            args->loop_ctrl[i][2] = stateblock->state.ps_consts_i[i * 4 + 2];
         }
     }
 }

@@ -196,9 +196,9 @@ static HRESULT stateblock_allocate_shader_constants(IWineD3DStateBlockImpl *obje
     IWineD3DDeviceImpl *device = object->device;
 
     /* Allocate space for floating point constants */
-    object->pixelShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+    object->state.ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(float) * device->d3d_pshader_constantF * 4);
-    if (!object->pixelShaderConstantF) goto fail;
+    if (!object->state.ps_consts_f) goto fail;
 
     object->changed.pixelShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(BOOL) * device->d3d_pshader_constantF);
@@ -224,7 +224,7 @@ static HRESULT stateblock_allocate_shader_constants(IWineD3DStateBlockImpl *obje
 
 fail:
     ERR("Failed to allocate memory\n");
-    HeapFree(GetProcessHeap(), 0, object->pixelShaderConstantF);
+    HeapFree(GetProcessHeap(), 0, object->state.ps_consts_f);
     HeapFree(GetProcessHeap(), 0, object->changed.pixelShaderConstantsF);
     HeapFree(GetProcessHeap(), 0, object->state.vs_consts_f);
     HeapFree(GetProcessHeap(), 0, object->changed.vertexShaderConstantsF);
@@ -528,7 +528,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
         HeapFree(GetProcessHeap(), 0, This->state.vs_consts_f);
         HeapFree(GetProcessHeap(), 0, This->changed.vertexShaderConstantsF);
-        HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
+        HeapFree(GetProcessHeap(), 0, This->state.ps_consts_f);
         HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->contained_vs_consts_f);
         HeapFree(GetProcessHeap(), 0, This->contained_ps_consts_f);
@@ -670,15 +670,15 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         TRACE("Setting %p from %p %u to {%.8e, %.8e, %.8e, %.8e}.\n",
                 This, targetStateBlock, idx,
-                targetStateBlock->pixelShaderConstantF[idx * 4 + 0],
-                targetStateBlock->pixelShaderConstantF[idx * 4 + 1],
-                targetStateBlock->pixelShaderConstantF[idx * 4 + 2],
-                targetStateBlock->pixelShaderConstantF[idx * 4 + 3]);
+                targetStateBlock->state.ps_consts_f[idx * 4 + 0],
+                targetStateBlock->state.ps_consts_f[idx * 4 + 1],
+                targetStateBlock->state.ps_consts_f[idx * 4 + 2],
+                targetStateBlock->state.ps_consts_f[idx * 4 + 3]);
 
-        This->pixelShaderConstantF[idx * 4 + 0] = targetStateBlock->pixelShaderConstantF[idx * 4 + 0];
-        This->pixelShaderConstantF[idx * 4 + 1] = targetStateBlock->pixelShaderConstantF[idx * 4 + 1];
-        This->pixelShaderConstantF[idx * 4 + 2] = targetStateBlock->pixelShaderConstantF[idx * 4 + 2];
-        This->pixelShaderConstantF[idx * 4 + 3] = targetStateBlock->pixelShaderConstantF[idx * 4 + 3];
+        This->state.ps_consts_f[idx * 4 + 0] = targetStateBlock->state.ps_consts_f[idx * 4 + 0];
+        This->state.ps_consts_f[idx * 4 + 1] = targetStateBlock->state.ps_consts_f[idx * 4 + 1];
+        This->state.ps_consts_f[idx * 4 + 2] = targetStateBlock->state.ps_consts_f[idx * 4 + 2];
+        This->state.ps_consts_f[idx * 4 + 3] = targetStateBlock->state.ps_consts_f[idx * 4 + 3];
     }
 
     /* Pixel Shader Integer Constants */
@@ -687,15 +687,15 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         unsigned int idx = This->contained_ps_consts_i[i];
         TRACE("Setting %p from %p %u to {%d, %d, %d, %d}.\n",
                 This, targetStateBlock, idx,
-                targetStateBlock->pixelShaderConstantI[idx * 4 + 0],
-                targetStateBlock->pixelShaderConstantI[idx * 4 + 1],
-                targetStateBlock->pixelShaderConstantI[idx * 4 + 2],
-                targetStateBlock->pixelShaderConstantI[idx * 4 + 3]);
+                targetStateBlock->state.ps_consts_i[idx * 4 + 0],
+                targetStateBlock->state.ps_consts_i[idx * 4 + 1],
+                targetStateBlock->state.ps_consts_i[idx * 4 + 2],
+                targetStateBlock->state.ps_consts_i[idx * 4 + 3]);
 
-        This->pixelShaderConstantI[idx * 4 + 0] = targetStateBlock->pixelShaderConstantI[idx * 4 + 0];
-        This->pixelShaderConstantI[idx * 4 + 1] = targetStateBlock->pixelShaderConstantI[idx * 4 + 1];
-        This->pixelShaderConstantI[idx * 4 + 2] = targetStateBlock->pixelShaderConstantI[idx * 4 + 2];
-        This->pixelShaderConstantI[idx * 4 + 3] = targetStateBlock->pixelShaderConstantI[idx * 4 + 3];
+        This->state.ps_consts_i[idx * 4 + 0] = targetStateBlock->state.ps_consts_i[idx * 4 + 0];
+        This->state.ps_consts_i[idx * 4 + 1] = targetStateBlock->state.ps_consts_i[idx * 4 + 1];
+        This->state.ps_consts_i[idx * 4 + 2] = targetStateBlock->state.ps_consts_i[idx * 4 + 2];
+        This->state.ps_consts_i[idx * 4 + 3] = targetStateBlock->state.ps_consts_i[idx * 4 + 3];
     }
 
     /* Pixel Shader Boolean Constants */
@@ -703,9 +703,9 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         unsigned int idx = This->contained_ps_consts_b[i];
         TRACE("Setting %p from %p %u to %s.\n", This, targetStateBlock, idx,
-                targetStateBlock->pixelShaderConstantB[idx] ? "TRUE" : "FALSE");
+                targetStateBlock->state.ps_consts_b[idx] ? "TRUE" : "FALSE");
 
-        This->pixelShaderConstantB[idx] = targetStateBlock->pixelShaderConstantB[idx];
+        This->state.ps_consts_b[idx] = targetStateBlock->state.ps_consts_b[idx];
     }
 
     /* Others + Render & Texture */
@@ -943,17 +943,17 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     for (i = 0; i < This->num_contained_ps_consts_f; ++i)
     {
         IWineD3DDevice_SetPixelShaderConstantF(device, This->contained_ps_consts_f[i],
-                This->pixelShaderConstantF + This->contained_ps_consts_f[i] * 4, 1);
+                This->state.ps_consts_f + This->contained_ps_consts_f[i] * 4, 1);
     }
     for (i = 0; i < This->num_contained_ps_consts_i; ++i)
     {
         IWineD3DDevice_SetPixelShaderConstantI(device, This->contained_ps_consts_i[i],
-                This->pixelShaderConstantI + This->contained_ps_consts_i[i] * 4, 1);
+                This->state.ps_consts_i + This->contained_ps_consts_i[i] * 4, 1);
     }
     for (i = 0; i < This->num_contained_ps_consts_b; ++i)
     {
         IWineD3DDevice_SetPixelShaderConstantB(device, This->contained_ps_consts_b[i],
-                This->pixelShaderConstantB + This->contained_ps_consts_b[i], 1);
+                This->state.ps_consts_b + This->contained_ps_consts_b[i], 1);
     }
 
     /* Render */
