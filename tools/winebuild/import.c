@@ -1002,7 +1002,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tmov IP,r0\n");
         output( "\tldmfd  SP!, {r4-r10,FP,LR}\n" );
         output( "\tldmfd  SP!, {r0-r3}\n" );
-        output( "\tbx IP\n");
+        output( "\tmov PC,IP\n");
         break;
     case CPU_POWERPC:
         if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
