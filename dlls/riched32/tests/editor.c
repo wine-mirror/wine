@@ -844,7 +844,7 @@ static void test_EM_POSFROMCHAR(void)
   /* Fails on builtin because horizontal scrollbar is not being shown */
   ok(pl.x < xpos ||
       broken(pl.x == xpos), /* Win9x, WinME and NT4 */
-      "EM_POSFROMCHAR reports x=%hd, expected value less than %d\n", pl.x, xpos);
+      "EM_POSFROMCHAR reports x=%d, expected value less than %d\n", pl.x, xpos);
   }
   DestroyWindow(hwndRichEdit);
 }
