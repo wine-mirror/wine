@@ -349,10 +349,6 @@ static void test_polices(void)
     IInternetSecurityManager *secmgr = NULL;
     HRESULT hres;
 
-    if(!pCoInternetCreateSecurityManager || !pCoInternetCreateZoneManager) {
-        return;
-    }
-
     hres = pCoInternetCreateSecurityManager(NULL, &secmgr, 0);
     ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
     hres = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
@@ -378,10 +374,6 @@ static void test_CoInternetCreateZoneManager(void)
     IInternetZoneManager *zonemgr = NULL;
     IUnknown *punk = NULL;
     HRESULT hr;
-
-    if(!pCoInternetCreateZoneManager) {
-        return;
-    }
 
     hr = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
@@ -426,10 +418,6 @@ static void test_CreateZoneEnumerator(void)
     DWORD dwEnum2;
     DWORD dwCount;
     DWORD dwCount2;
-
-    if (!pCoInternetCreateZoneManager) {
-        return;
-    }
 
     hr = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
@@ -641,10 +629,6 @@ static void test_InternetSecurityMarshalling(void)
     IStream *stream;
     HRESULT hres;
 
-    if(!pCoInternetCreateSecurityManager) {
-        return;
-    }
-
     hres = pCoInternetCreateSecurityManager(NULL, &secmgr, 0);
     ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
     if(FAILED(hres))
@@ -680,10 +664,6 @@ static void test_InternetGetSecurityUrl(void)
     DWORD i;
     HRESULT hres;
 
-    if (!pCoInternetGetSecurityUrl) {
-        return;
-    }
-
     for(i=0; i<sizeof(in)/sizeof(WCHAR*); i++) {
         hres = pCoInternetGetSecurityUrl(in[i], &sec, PSU_DEFAULT, 0);
         ok(hres == S_OK, "(%d) CoInternetGetSecurityUrl returned: %08x\n", i, hres);
@@ -708,8 +688,6 @@ START_TEST(sec_mgr)
 {
     HMODULE hurlmon;
 
-    OleInitialize(NULL);
-
     hurlmon = GetModuleHandle("urlmon.dll");
     pCoInternetCreateSecurityManager = (void*) GetProcAddress(hurlmon, "CoInternetCreateSecurityManager");
     pCoInternetCreateZoneManager = (void*) GetProcAddress(hurlmon, "CoInternetCreateZoneManager");
@@ -718,7 +696,10 @@ START_TEST(sec_mgr)
     if (!pCoInternetCreateSecurityManager || !pCoInternetCreateZoneManager ||
         !pCoInternetGetSecurityUrl) {
         win_skip("Various CoInternet* functions not present in IE 4.0\n");
+        return;
     }
+
+    OleInitialize(NULL);
 
     test_InternetGetSecurityUrl();
     test_SecurityManager();

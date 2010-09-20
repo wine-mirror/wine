@@ -317,10 +317,6 @@ static void test_CoInternetParseUrl(void)
 
     static WCHAR buf[4096];
 
-    if (!pCoInternetParseUrl) {
-        return;
-    }
-
     memset(buf, 0xf0, sizeof(buf));
     hres = pCoInternetParseUrl(parse_tests[0].url, PARSE_SCHEMA, 0, buf,
             3, &size, 0);
@@ -380,10 +376,6 @@ static void test_CoInternetCompareUrl(void)
 {
     HRESULT hres;
 
-    if (!pCoInternetCompareUrl) {
-        return;
-    }
-
     hres = pCoInternetCompareUrl(url1, url1, 0);
     ok(hres == S_OK, "CoInternetCompareUrl failed: %08x\n", hres);
 
@@ -413,10 +405,6 @@ static void test_CoInternetQueryInfo(void)
     BYTE buf[100];
     DWORD cb, i;
     HRESULT hres;
-
-    if (!pCoInternetQueryInfo) {
-        return;
-    }
 
     for(i=0; i < sizeof(query_info_tests)/sizeof(query_info_tests[0]); i++) {
         cb = 0xdeadbeef;
@@ -665,10 +653,6 @@ static void test_FindMimeFromData(void)
     LPWSTR mime;
     int i;
 
-    if (!pFindMimeFromData) {
-        return;
-    }
-
     for(i=0; i<sizeof(mime_tests)/sizeof(mime_tests[0]); i++) {
         mime = (LPWSTR)0xf0f0f0f0;
         hres = pFindMimeFromData(NULL, mime_tests[i].url, NULL, 0, NULL, 0, &mime, 0);
@@ -769,10 +753,6 @@ static void register_protocols(void)
     HRESULT hres;
 
     static const WCHAR wszAbout[] = {'a','b','o','u','t',0};
-
-    if (!pCoInternetGetSession) {
-        return;
-    }
 
     hres = pCoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
@@ -947,10 +927,6 @@ static void test_NameSpace(void)
 
     static const WCHAR wszTest[] = {'t','e','s','t',0};
 
-    if (!pCoInternetGetSession || !pCoInternetParseUrl) {
-        return;
-    }
-
     hres = pCoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
     if(FAILED(hres))
@@ -1105,10 +1081,6 @@ static void test_MimeFilter(void)
 
     static const WCHAR mimeW[] = {'t','e','s','t','/','m','i','m','e',0};
 
-    if (!pCoInternetGetSession) {
-        return;
-    }
-
     hres = pCoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
     if(FAILED(hres))
@@ -1146,10 +1118,6 @@ static void test_ReleaseBindInfo(void)
     BINDINFO bi;
     IUnknown unk = { &unk_vtbl };
 
-    if (!pReleaseBindInfo) {
-        return;
-    }
-
     pReleaseBindInfo(NULL); /* shouldn't crash */
 
     memset(&bi, 0, sizeof(bi));
@@ -1182,11 +1150,6 @@ static void test_CopyStgMedium(void)
     HRESULT hres;
 
     static WCHAR fileW[] = {'f','i','l','e',0};
-
-    if (!pCopyStgMedium) {
-        return;
-    }
-
 
     memset(&src, 0xf0, sizeof(src));
     memset(&dst, 0xe0, sizeof(dst));
@@ -1230,11 +1193,6 @@ static void test_UrlMkGetSessionOption(void)
 {
     DWORD encoding, size;
     HRESULT hres;
-
-
-    if (!pUrlMkGetSessionOption) {
-        return;
-    }
 
     size = encoding = 0xdeadbeef;
     hres = pUrlMkGetSessionOption(URLMON_OPTION_URL_ENCODING, &encoding,
@@ -1280,10 +1238,6 @@ static void test_user_agent(void)
     LPSTR str2 = NULL;
     HRESULT hres;
     DWORD size, saved;
-
-    if (!pObtainUserAgentString || !pUrlMkGetSessionOption) {
-        return;
-    }
 
     hres = pObtainUserAgentString(0, NULL, NULL);
     ok(hres == E_INVALIDARG, "ObtainUserAgentString failed: %08x\n", hres);
@@ -1507,8 +1461,6 @@ START_TEST(misc)
 {
     HMODULE hurlmon;
 
-    OleInitialize(NULL);
-
     hurlmon = GetModuleHandle("urlmon.dll");
     pCoInternetCompareUrl = (void *) GetProcAddress(hurlmon, "CoInternetCompareUrl");
     pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");
@@ -1524,7 +1476,10 @@ START_TEST(misc)
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
         !pCoInternetGetSession || !pCoInternetParseUrl) {
         win_skip("Various needed functions not present in IE 4.0\n");
+        return;
     }
+
+    OleInitialize(NULL);
 
     register_protocols();
 
