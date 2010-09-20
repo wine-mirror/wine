@@ -2,6 +2,7 @@
  * Copyright 2000 Huw D M Davies
  * Copyright 2003-2004 Ivan Leo Puoti
  * Copyright 2006 Antonio Codazzi
+ * Copyright 2010 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,9 @@
 
 #include "psdlg.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 PAPER DIALOG 5, 43, 227, 215
@@ -31,11 +35,11 @@ FONT 8, "MS Shell Dlg"
  LISTBOX IDD_PAPERS, 10, 15, 200, 45, LBS_STANDARD | LBS_HASSTRINGS |
 	 WS_TABSTOP
  GROUPBOX "Orientamento", -1, 10, 80, 200, 50
- CONTROL "&Orizzontale", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+ CONTROL "&Ritratto", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
 	WS_TABSTOP, 20, 90, 60, 10
- CONTROL "&Verticale", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+ CONTROL "&Paesaggio", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
 	 20, 110, 60, 10
- LTEXT "Duplex:", IDD_DUPLEX_NAME, 10, 140, 100, 8 
+ LTEXT "Fronte retro:", IDD_DUPLEX_NAME, 10, 140, 100, 8
  COMBOBOX IDD_DUPLEX, 10, 151, 200, 20, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
         WS_TABSTOP
 }
