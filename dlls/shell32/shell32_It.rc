@@ -28,8 +28,8 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 MENU_001 MENU
 BEGIN
-	MENUITEM "Icone &Grandi",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "Icone &Piccole",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "Icone &grandi",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "Icone &piccole",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Dettagli",		FCIDM_SHVIEW_REPORTVIEW
 END
@@ -43,32 +43,32 @@ BEGIN
 	BEGIN
 	  POPUP "&Visualizza"
 	  BEGIN
-	    MENUITEM "Icone &Grandi",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "Icone &Piccole",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "Icone &grandi",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "Icone &piccole",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
 	    MENUITEM "&Dettagli",	FCIDM_SHVIEW_REPORTVIEW
 	  END
 	  MENUITEM SEPARATOR
 	  POPUP "Disponi &Icone"
 	  BEGIN
-	    MENUITEM "Per &Nome",	0x30	/* column 0 */
-	    MENUITEM "Per &Tipo",	0x32	/* column 2 */
-	    MENUITEM "Per Di&mensione",	0x31	/* ... */
-	    MENUITEM "Per &Data",	0x33
+	    MENUITEM "Per &nome",	0x30	/* column 0 */
+	    MENUITEM "Per &tipo",	0x32	/* column 2 */
+	    MENUITEM "Per di&mensione",	0x31	/* ... */
+	    MENUITEM "Per &data",	0x33
 	    MENUITEM SEPARATOR
-	    MENUITEM "&Disponi Automaticamente",	FCIDM_SHVIEW_AUTOARRANGE
+	    MENUITEM "&Disponi automaticamente",	FCIDM_SHVIEW_AUTOARRANGE
 	  END
-	  MENUITEM "Allinea Icone",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM "Allinea icone",	FCIDM_SHVIEW_SNAPTOGRID
 	  MENUITEM SEPARATOR
 	  MENUITEM "Aggiorna",		FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
 	  MENUITEM "Incolla",		FCIDM_SHVIEW_INSERT
-	  MENUITEM "Crea Collegamento",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM "Crea collegamento",	FCIDM_SHVIEW_INSERTLINK
 	  MENUITEM SEPARATOR
 	  POPUP "Nuovo"
 	  BEGIN
-	    MENUITEM "Nuova &Cartella",	FCIDM_SHVIEW_NEWFOLDER
-	    MENUITEM "Nuovo Co&llegamento",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM "Nuova &cartella",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "Nuovo co&llegamento",	FCIDM_SHVIEW_NEWLINK
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
@@ -90,7 +90,7 @@ BEGIN
 	  MENUITEM "&Taglia",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Copia",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Crea Co&llegamento",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Crea co&llegamento",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "Ca&ncella",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Rinomina",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
@@ -108,15 +108,15 @@ BEGIN
 
     POPUP "&Vista"
     BEGIN
-        MENUITEM "Icone &Grandi", FCIDM_SHVIEW_BIGICON
-        MENUITEM "Icone &Piccole", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "Icone &grandi", FCIDM_SHVIEW_BIGICON
+        MENUITEM "Icone &piccole", FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Lista", FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Dettagli", FCIDM_SHVIEW_REPORTVIEW
     END
 
     POPUP "&Aiuto"
     BEGIN
-        MENUITEM "&Sul Pannello di Controllo...", IDM_CPANEL_ABOUT
+        MENUITEM "&Riguardo al pannello di controllo...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -212,7 +212,7 @@ STRINGTABLE
 	IDS_SHV_COLUMN_DELFROM	"Locazione originale"
 	IDS_SHV_COLUMN_DELDATE	"Data di eliminazione"
     IDS_SHV_COL_DOCS    "Documenti"
-    IDS_SHV_COL_STATUS  "Status"
+    IDS_SHV_COL_STATUS  "Stato"
     IDS_SHV_COL_LOCATION    "Locazione"
     IDS_SHV_COL_MODEL   "Modello"
 
@@ -223,26 +223,26 @@ STRINGTABLE
 	IDS_CONTROLPANEL	"Pannello di Controllo"
 
 	/*  context menus  */
-	IDS_VIEW_LARGE		"Icone &Grandi"
-	IDS_VIEW_SMALL		"Icone &Piccole"
+	IDS_VIEW_LARGE		"Icone &grandi"
+	IDS_VIEW_SMALL		"Icone &piccole"
 	IDS_VIEW_LIST		"&Lista"
 	IDS_VIEW_DETAILS	"&Dettagli"
 	IDS_SELECT		"Selezione"
 	IDS_OPEN		"Apri"
 
-	IDS_CREATEFOLDER_DENIED "Impossibile creare la cartella: Accesso negato."
+	IDS_CREATEFOLDER_DENIED "Impossibile creare la cartella: accesso negato."
 	IDS_CREATEFOLDER_CAPTION "Errore durante la creazione della cartella"
 	IDS_DELETEITEM_CAPTION "Confermare la cancellazione del file"
 	IDS_DELETEFOLDER_CAPTION "Confermare la cancellazione della cartella"
 	IDS_DELETEITEM_TEXT "Sei sicuro di voler cancellare '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Sei sicuro di voler cancellare questi %1 elementi?"
 	IDS_DELETESELECTED_TEXT "Sei sicuro di voler cancellare gli oggetti selezionati?"
-	IDS_TRASHITEM_TEXT "Sei sicuro di voler mandare '%1' Nel Cestino?"
-	IDS_TRASHFOLDER_TEXT "Sei sicuro di voler mandare '%1' e tutto il suo contenuto nel Cestino?"
+	IDS_TRASHITEM_TEXT "Sei sicuro di voler mandare '%1' nel cestino?"
+	IDS_TRASHFOLDER_TEXT "Sei sicuro di voler mandare '%1' e tutto il suo contenuto nel cestino?"
 	IDS_TRASHMULTIPLE_TEXT "Sei sicuro di voler mandare qeusti %1 oggetti nel Cestino?"
 	IDS_CANTTRASH_TEXT "L'oggetto '%1' non può essere mandato al Cestino. Vuoi cancellarlo direttamente?"
 	IDS_OVERWRITEFILE_TEXT "Questa cartella contiene già un file chiamato '%1'.\n\nVuoi sostituirlo?"
-	IDS_OVERWRITEFILE_CAPTION "Confermare la sovrascrizione del File"
+	IDS_OVERWRITEFILE_CAPTION "Confermare la sovrascrizione del file"
 	IDS_OVERWRITEFOLDER_TEXT "Questa cartella contiene già una cartella chiamata '%1'.\n\n"\
 	    "Se i file nella cartella di destinazione hanno gli stessi nomi dei file nella\n"\
 	    "cartella selezionata, saranno sostituiti. Vuoi spostare o copiare\n"\
@@ -255,20 +255,20 @@ STRINGTABLE
        IDS_SHUTDOWN_PROMPT     "Vuoi terminare la sessione di Wine?"
 
         /* Run File dialog */
-        IDS_RUNDLG_ERROR           "Impossibile mostrare la finestra Esegui File (errore interno)"
+        IDS_RUNDLG_ERROR           "Impossibile mostrare la finestra Esegui file (errore interno)"
         IDS_RUNDLG_BROWSE_ERROR    "Impossibile mostrare la finestra Sfoglia (errore interno)"
         IDS_RUNDLG_BROWSE_CAPTION  "Sfoglia"
         IDS_RUNDLG_BROWSE_FILTER   "File eseguibili\0*.exe\0Tutti i file\0*.*\0\0"
 
 	/* shell folder path default values */
-	IDS_STARTMENU               "Start Menu"
-	IDS_PROGRAMS                "Start Menu\\Programmi"
-	IDS_STARTUP                 "Start Menu\\Programmi\\StartUp"
-	IDS_ADMINTOOLS              "Start Menu\\Programmi\\Strumenti di Amministrazione"
-	IDS_INTERNET_CACHE          "Settaggi Locali\\Temporary Internet Files"
-	IDS_HISTORY                 "Settaggi Locali\\Cronologia"
-	IDS_LOCAL_APPDATA           "Settaggi Locali\\Applicazioni"
-	IDS_CDBURN_AREA             "Settaggi Locali\\Applicazioni\\Microsoft\\CD Burning"
+	IDS_STARTMENU               "Menu Start"
+	IDS_PROGRAMS                "Menu Start\\Programmi"
+	IDS_STARTUP                 "Menu Start\\Programmi\\Esecuzione automatica"
+	IDS_ADMINTOOLS              "Start Menu\\Programmi\\Strumenti di amministrazione"
+	IDS_INTERNET_CACHE          "Impostazioni locali\\File Internet Temporanei"
+	IDS_HISTORY                 "Impostazioni locali\\Cronologia"
+	IDS_LOCAL_APPDATA           "Impostazioni locali\\Applicazioni"
+	IDS_CDBURN_AREA             "Impostazioni locali\\Applicazioni\\Microsoft\\CD Burning"
 	IDS_PROGRAM_FILES           "Programmi"
 	IDS_PROGRAM_FILESX86        "Programmi (x86)"
 	IDS_PROGRAM_FILES_COMMON    "Programmi\\File Comuni"
@@ -277,7 +277,7 @@ STRINGTABLE
 	IDS_COMMON_MUSIC            "Documenti\\Musica"
 	IDS_COMMON_PICTURES         "Documenti\\Immagini"
 	IDS_COMMON_VIDEO            "Documenti\\Video"
-	IDS_PERSONAL                "Miei Documenti"
+	IDS_PERSONAL                "Miei documenti"
 	IDS_MYMUSIC                 "Musica"
 	IDS_MYVIDEO                 "Video"
 	IDS_MYPICTURES              "Immagini"
