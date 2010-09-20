@@ -768,7 +768,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
     total_size += IF_NAMESIZE;
-    total_size += IF_NAMESIZE * sizeof(WCHAR);
+    total_size += 2 * IF_NAMESIZE * sizeof(WCHAR);
     total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_v4addrs;
     total_size += sizeof(struct sockaddr_in) * num_v4addrs;
     total_size += (sizeof(IP_ADAPTER_GATEWAY_ADDRESS) + sizeof(SOCKADDR_IN)) * num_v4_gateways;
@@ -792,6 +792,11 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
         aa->AdapterName = ptr;
         ptr += IF_NAMESIZE;
         aa->FriendlyName = (WCHAR *)ptr;
+        for (src = name, dst = (WCHAR *)ptr; *src; src++, dst++)
+            *dst = *src;
+        *dst++ = 0;
+        ptr = (char *)dst;
+        aa->Description = (WCHAR *)ptr;
         for (src = name, dst = (WCHAR *)ptr; *src; src++, dst++)
             *dst = *src;
         *dst++ = 0;
