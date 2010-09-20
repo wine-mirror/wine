@@ -91,9 +91,9 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "&Configura", 1024, 206, 46, 56, 14, WS_GROUP | WS_TABSTOP
  LTEXT "&Da:", 1090, 60, 80, 30, 9
  LTEXT "&A:", 1091, 120, 80, 30, 9
- LTEXT "&Qualità di Stampa:", 1092, 6, 100, 76, 9
+ LTEXT "&Qualità di stampa:", 1092, 6, 100, 76, 9
  COMBOBOX 1136, 80, 100, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- CHECKBOX "Stampa su Fi&le", 1040, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "Stampa su fi&le", 1040, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
  CHECKBOX "Condensato", 1041, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
 }
 
@@ -104,9 +104,9 @@ CAPTION "Configurazione Stampante"
 FONT 8, "MS Shell Dlg"
 {
  GROUPBOX "Stampante", 1072, 6, 10, 180, 72, BS_GROUPBOX
- RADIOBUTTON "Stampante &Preferita", 1056, 16, 20, 78, 12
- LTEXT "[none]", 1088, 35, 35, 120, 9
- RADIOBUTTON "Stampante &Specifica", 1057, 16, 50, 78, 12
+ RADIOBUTTON "Stampante &preferita", 1056, 16, 20, 78, 12
+ LTEXT "[nessuna]", 1088, 35, 35, 120, 9
+ RADIOBUTTON "Stampante &specifica", 1057, 16, 50, 78, 12
  COMBOBOX 1136, 35, 65, 149, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  DEFPUSHBUTTON "Ok", IDOK, 206, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annulla", IDCANCEL, 206, 24, 56, 14, WS_GROUP | WS_TABSTOP
@@ -244,13 +244,13 @@ FONT 8, "MS Shell Dlg"
     LTEXT           "&Nome:",         stc6,  16, 20,  36,8
     COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
     LTEXT           "Stato:",        stc8,  16, 36,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Stato fittizio",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Tipo:",          stc7,  16, 48,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Tipo fittizio",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Su:",         stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Locazione fittizia", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Commento:",       stc9,  16, 72,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Commento fittizio",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Copie",         grp2, 160, 92, 120,64, WS_GROUP
     LTEXT           "Numero di &copie:",stc5,168,108,140,8
@@ -283,13 +283,13 @@ BEGIN
     LTEXT           "&Nome:",         stc6,  16, 20,  36,8
     COMBOBOX                          cmb1,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
     LTEXT           "Stato:",        stc8,  16, 36,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Stato fittizio",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Tipo:",          stc7,  16, 48,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Tipo fittizio",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Su:",         stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Locazione fittizia", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Commento:",       stc9,  16, 72,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Remark",   stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Commento fittizio",   stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Carta",          grp2,   8, 92, 164,56, WS_GROUP
     LTEXT           "Di&mensione:",         stc2,  13,108,  38, 8
@@ -359,26 +359,26 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE
 {
-    IDS_ABOUTBOX            "&Informazioni sul Test FolderPicker"
-    IDS_DOCUMENTFOLDERS     "Cartelle Documenti"
+    IDS_ABOUTBOX            "&Informazioni sul test FolderPicker"
+    IDS_DOCUMENTFOLDERS     "Cartelle dei documenti"
     IDS_PERSONAL            "Documenti"
     IDS_FAVORITES           "Preferiti"
-    IDS_PATH                "Percorso di Sistema"
+    IDS_PATH                "Percorso di sistema"
     IDS_DESKTOP             "Desktop"
     IDS_FONTS               "Carattere"
-    IDS_MYCOMPUTER          "Risorse del Computer"
+    IDS_MYCOMPUTER          "Risorse del computer"
 }
 
 STRINGTABLE
 {
-    IDS_SYSTEMFOLDERS       "Cartelle di Sistema"
-    IDS_LOCALHARDRIVES      "Dischi Rigidi Locali"
+    IDS_SYSTEMFOLDERS       "Cartelle di sistema"
+    IDS_LOCALHARDRIVES      "Dischi rigidi locali"
     IDS_FILENOTFOUND        "File non trovato"
     IDS_VERIFYFILE          "Controllare che il nome del file fornito sia corretto"
     IDS_CREATEFILE          "Il file non esiste\nCreare il file"
     IDS_OVERWRITEFILE       "Il file esiste già.\nSovrascriverlo?"
     IDS_INVALID_FILENAME_TITLE "Caratteri invalidi nel percorso"
-    IDS_INVALID_FILENAME    "Il nome di un file non può contenere i seguenrti caratteri:\n                          / : < > |"
+    IDS_INVALID_FILENAME    "Il nome di un file non può contenere i seguenti caratteri:\n                          / : < > |"
     IDS_PATHNOTEXISTING     "Il percorso specificato non esiste"
     IDS_FILENOTEXISTING     "Il file non esiste"
 }
@@ -386,10 +386,10 @@ STRINGTABLE
 STRINGTABLE
 {
     IDS_UPFOLDER         "Su di un livello"
-    IDS_NEWFOLDER        "Crea nuova directory"
+    IDS_NEWFOLDER        "Crea nuova cartella"
     IDS_LISTVIEW         "Lista"
     IDS_REPORTVIEW       "Dettagli"
-    IDS_TODESKTOP        "Vai al Desktop"
+    IDS_TODESKTOP        "Vai al desktop"
 }
 
 STRINGTABLE
@@ -441,7 +441,7 @@ STRINGTABLE
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Memoria esaurita; "
     PD32_PRINTER_STATUS_DOOR_OPEN         "La porta stampante è aperta; "
     PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Server di stampa sconosciuto; "
-    PD32_PRINTER_STATUS_POWER_SAVE        "Modalitè risparmio energetico; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Modalità risparmio energetico; "
 }
 
 STRINGTABLE /* Font styles */
@@ -449,7 +449,7 @@ STRINGTABLE /* Font styles */
     IDS_FONT_REGULAR       "Regolare"
     IDS_FONT_BOLD          "Grassetto"
     IDS_FONT_ITALIC        "Corsivo"
-    IDS_FONT_BOLD_ITALIC   "Grassetto Corsivo"
+    IDS_FONT_BOLD_ITALIC   "Grassetto corsivo"
 }
 
 STRINGTABLE /* Color names */
@@ -468,13 +468,13 @@ STRINGTABLE /* Color names */
     IDS_COLOR_YELLOW    "Giallo"
     IDS_COLOR_BLUE      "Blu"
     IDS_COLOR_FUCHSIA   "Fucsia"
-    IDS_COLOR_AQUA      "Aqua"
+    IDS_COLOR_AQUA      "Acqua"
     IDS_COLOR_WHITE     "Bianco"
 }
 
 STRINGTABLE
 {
-IDS_FONT_SIZE   "Scegli la dimesione del carattere tra %d e %d punti."
+IDS_FONT_SIZE   "Scegli la dimensione del carattere tra %d e %d punti."
 IDS_SAVE_BUTTON "Salva"
 IDS_SAVE_IN     "Salva &in:"
 IDS_SAVE        "Salva"
