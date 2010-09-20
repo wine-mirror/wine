@@ -4864,7 +4864,7 @@ static void delete_pfmsitest_files(void)
     shfl.wFunc = FO_DELETE;
     shfl.pFrom = path;
     shfl.pTo = NULL;
-    shfl.fFlags = FOF_FILESONLY | FOF_NOCONFIRMATION | FOF_NORECURSION | FOF_SILENT;
+    shfl.fFlags = FOF_FILESONLY | FOF_NOCONFIRMATION | FOF_NORECURSION | FOF_SILENT | FOF_NOERRORUI;
 
     SHFileOperation(&shfl);
 
