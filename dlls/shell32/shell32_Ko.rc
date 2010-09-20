@@ -305,6 +305,7 @@ IDS_USER_PROFILES           "Users"
 IDS_COMMON_OEM_LINKS        "OEM Links"
 IDS_DOCUMENTS               "Documents"
 IDS_DOWNLOADS               "Downloads"
+IDS_LOCAL_APPDATA_LOW       "AppData\\LocalLow"
 
 IDS_NEWFOLDER		"새 폴더"
 
