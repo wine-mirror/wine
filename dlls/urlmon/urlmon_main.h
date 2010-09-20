@@ -105,12 +105,12 @@ typedef struct {
 } Protocol;
 
 struct ProtocolVtbl {
-    HRESULT (*open_request)(Protocol*,LPCWSTR,DWORD,HINTERNET,IInternetBindInfo*);
+    HRESULT (*open_request)(Protocol*,IUri*,DWORD,HINTERNET,IInternetBindInfo*);
     HRESULT (*start_downloading)(Protocol*);
     void (*close_connection)(Protocol*);
 };
 
-HRESULT protocol_start(Protocol*,IInternetProtocol*,LPCWSTR,IInternetProtocolSink*,IInternetBindInfo*);
+HRESULT protocol_start(Protocol*,IInternetProtocol*,IUri*,IInternetProtocolSink*,IInternetBindInfo*);
 HRESULT protocol_continue(Protocol*,PROTOCOLDATA*);
 HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*);
 HRESULT protocol_lock_request(Protocol*);

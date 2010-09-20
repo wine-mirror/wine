@@ -67,19 +67,18 @@ static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
 
 #define ASYNCPROTOCOL_THIS(iface) DEFINE_THIS2(HttpProtocol, base, iface)
 
-static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD request_flags,
+static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD request_flags,
         HINTERNET internet_session, IInternetBindInfo *bind_info)
 {
     HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
     LPWSTR addl_header = NULL, post_cookie = NULL, optional = NULL;
     IServiceProvider *service_provider = NULL;
     IHttpNegotiate2 *http_negotiate2 = NULL;
-    LPWSTR host, user, pass, path;
+    BSTR url, host, user, pass, path;
     LPOLESTR accept_mimes[257];
     const WCHAR **accept_types;
-    URL_COMPONENTSW url_comp;
     BYTE security_id[512];
-    DWORD len = 0;
+    DWORD len = 0, port;
     ULONG num;
     BOOL res, b;
     HRESULT hres;
@@ -89,24 +88,28 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
          {'P','O','S','T',0},
          {'P','U','T',0}};
 
-    memset(&url_comp, 0, sizeof(url_comp));
-    url_comp.dwStructSize = sizeof(url_comp);
-    url_comp.dwSchemeLength = url_comp.dwHostNameLength = url_comp.dwUrlPathLength = url_comp.dwExtraInfoLength =
-        url_comp.dwUserNameLength = url_comp.dwPasswordLength = 1;
-    if (!InternetCrackUrlW(url, 0, 0, &url_comp))
-        return MK_E_SYNTAX;
+    hres = IUri_GetPort(uri, &port);
+    if(FAILED(hres))
+        return hres;
 
-    if(!url_comp.nPort)
-        url_comp.nPort = This->https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+    hres = IUri_GetHost(uri, &host);
+    if(FAILED(hres))
+        return hres;
 
-    host = heap_strndupW(url_comp.lpszHostName, url_comp.dwHostNameLength);
-    user = heap_strndupW(url_comp.lpszUserName, url_comp.dwUserNameLength);
-    pass = heap_strndupW(url_comp.lpszPassword, url_comp.dwPasswordLength);
-    This->base.connection = InternetConnectW(internet_session, host, url_comp.nPort, user, pass,
-            INTERNET_SERVICE_HTTP, This->https ? INTERNET_FLAG_SECURE : 0, (DWORD_PTR)&This->base);
-    heap_free(pass);
-    heap_free(user);
-    heap_free(host);
+    hres = IUri_GetUserName(uri, &user);
+    if(SUCCEEDED(hres)) {
+        hres = IUri_GetPassword(uri, &pass);
+
+        if(SUCCEEDED(hres)) {
+            This->base.connection = InternetConnectW(internet_session, host, port, user, pass,
+                    INTERNET_SERVICE_HTTP, This->https ? INTERNET_FLAG_SECURE : 0, (DWORD_PTR)&This->base);
+            SysFreeString(pass);
+        }
+        SysFreeString(user);
+    }
+    SysFreeString(host);
+    if(FAILED(hres))
+        return hres;
     if(!This->base.connection) {
         WARN("InternetConnect failed: %d\n", GetLastError());
         return INET_E_CANNOT_CONNECT;
@@ -128,21 +131,21 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
     }
     accept_mimes[num] = 0;
 
-    path = heap_alloc((url_comp.dwUrlPathLength+url_comp.dwExtraInfoLength+1)*sizeof(WCHAR));
-    if(url_comp.dwUrlPathLength)
-        memcpy(path, url_comp.lpszUrlPath, url_comp.dwUrlPathLength*sizeof(WCHAR));
-    if(url_comp.dwExtraInfoLength)
-        memcpy(path+url_comp.dwUrlPathLength, url_comp.lpszExtraInfo, url_comp.dwExtraInfoLength*sizeof(WCHAR));
-    path[url_comp.dwUrlPathLength+url_comp.dwExtraInfoLength] = 0;
     if(This->https)
         request_flags |= INTERNET_FLAG_SECURE;
-    This->base.request = HttpOpenRequestW(This->base.connection,
-            This->base.bind_info.dwBindVerb < BINDVERB_CUSTOM
-                ? wszBindVerb[This->base.bind_info.dwBindVerb] : This->base.bind_info.szCustomVerb,
-            path, NULL, NULL, accept_types, request_flags, (DWORD_PTR)&This->base);
-    heap_free(path);
+
+    hres = IUri_GetPathAndQuery(uri, &path);
+    if(SUCCEEDED(hres)) {
+        This->base.request = HttpOpenRequestW(This->base.connection,
+                This->base.bind_info.dwBindVerb < BINDVERB_CUSTOM
+                    ? wszBindVerb[This->base.bind_info.dwBindVerb] : This->base.bind_info.szCustomVerb,
+                path, NULL, NULL, accept_types, request_flags, (DWORD_PTR)&This->base);
+        SysFreeString(path);
+    }
     while(num--)
         CoTaskMemFree(accept_mimes[num]);
+    if(FAILED(hres))
+        return hres;
     if (!This->base.request) {
         WARN("HttpOpenRequest failed: %d\n", GetLastError());
         return INET_E_RESOURCE_NOT_FOUND;
@@ -162,8 +165,15 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, LPCWSTR url, DWORD requ
         return hres;
     }
 
+    hres = IUri_GetAbsoluteUri(uri, &url);
+    if(FAILED(hres)) {
+        IServiceProvider_Release(service_provider);
+        return hres;
+    }
+
     hres = IHttpNegotiate_BeginningTransaction(This->http_negotiate, url, wszHeaders,
             0, &addl_header);
+    SysFreeString(url);
     if(hres != S_OK) {
         WARN("IHttpNegotiate_BeginningTransaction failed: %08x\n", hres);
         IServiceProvider_Release(service_provider);
@@ -391,6 +401,8 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         DWORD grfPI, HANDLE_PTR dwReserved)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
+    IUri *uri;
+    HRESULT hres;
 
     static const WCHAR httpW[] = {'h','t','t','p',':'};
     static const WCHAR httpsW[] = {'h','t','t','p','s',':'};
@@ -403,7 +415,14 @@ static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         : strncmpW(szUrl, httpW, sizeof(httpW)/sizeof(WCHAR)))
         return MK_E_SYNTAX;
 
-    return protocol_start(&This->base, PROTOCOL(This), szUrl, pOIProtSink, pOIBindInfo);
+    hres = CreateUri(szUrl, 0, 0, &uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = protocol_start(&This->base, PROTOCOL(This), uri, pOIProtSink, pOIBindInfo);
+
+    IUri_Release(uri);
+    return hres;
 }
 
 static HRESULT WINAPI HttpProtocol_Continue(IInternetProtocol *iface, PROTOCOLDATA *pProtocolData)
