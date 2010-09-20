@@ -2350,6 +2350,8 @@ struct wined3d_stream_state
 struct wined3d_state
 {
     IWineD3DVertexDeclarationImpl *vertex_declaration;
+    struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
+    BOOL user_stream;
 
     struct IWineD3DVertexShaderImpl *vertex_shader;
     BOOL vs_consts_b[MAX_CONST_B];
@@ -2390,10 +2392,6 @@ struct IWineD3DStateBlockImpl
 
     /* primitive type */
     GLenum gl_primitive_type;
-
-    /* Stream Source */
-    BOOL                      streamIsUP;
-    struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
 
     /* Indices */
     IWineD3DBuffer*           pIndexData;

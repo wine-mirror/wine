@@ -503,7 +503,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
         for (counter = 0; counter < MAX_STREAMS; ++counter)
         {
-            struct wined3d_buffer *buffer = This->streams[counter].buffer;
+            struct wined3d_buffer *buffer = This->state.streams[counter].buffer;
             if (buffer)
             {
                 if (IWineD3DBuffer_Release((IWineD3DBuffer *)buffer))
@@ -777,18 +777,19 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (This->streams[i].stride != targetStateBlock->streams[i].stride
-                || This->streams[i].buffer != targetStateBlock->streams[i].buffer)
+        if (This->state.streams[i].stride != targetStateBlock->state.streams[i].stride
+                || This->state.streams[i].buffer != targetStateBlock->state.streams[i].buffer)
         {
             TRACE("Updating stream source %u to %p, stride to %u.\n",
-                    i, targetStateBlock->streams[i].buffer, targetStateBlock->streams[i].stride);
+                    i, targetStateBlock->state.streams[i].buffer,
+                    targetStateBlock->state.streams[i].stride);
 
-            This->streams[i].stride = targetStateBlock->streams[i].stride;
-            if (targetStateBlock->streams[i].buffer)
-                    IWineD3DBuffer_AddRef((IWineD3DBuffer *)targetStateBlock->streams[i].buffer);
-            if (This->streams[i].buffer)
-                    IWineD3DBuffer_Release((IWineD3DBuffer *)This->streams[i].buffer);
-            This->streams[i].buffer = targetStateBlock->streams[i].buffer;
+            This->state.streams[i].stride = targetStateBlock->state.streams[i].stride;
+            if (targetStateBlock->state.streams[i].buffer)
+                    IWineD3DBuffer_AddRef((IWineD3DBuffer *)targetStateBlock->state.streams[i].buffer);
+            if (This->state.streams[i].buffer)
+                    IWineD3DBuffer_Release((IWineD3DBuffer *)This->state.streams[i].buffer);
+            This->state.streams[i].buffer = targetStateBlock->state.streams[i].buffer;
         }
     }
 
@@ -797,14 +798,14 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (This->streams[i].frequency != targetStateBlock->streams[i].frequency
-                || This->streams[i].flags != targetStateBlock->streams[i].flags)
+        if (This->state.streams[i].frequency != targetStateBlock->state.streams[i].frequency
+                || This->state.streams[i].flags != targetStateBlock->state.streams[i].flags)
         {
             TRACE("Updating stream frequency %u to %u flags to %#x.\n",
-                    i, targetStateBlock->streams[i].frequency, targetStateBlock->streams[i].flags);
+                    i, targetStateBlock->state.streams[i].frequency, targetStateBlock->state.streams[i].flags);
 
-            This->streams[i].frequency = targetStateBlock->streams[i].frequency;
-            This->streams[i].flags = targetStateBlock->streams[i].flags;
+            This->state.streams[i].frequency = targetStateBlock->state.streams[i].frequency;
+            This->state.streams[i].flags = targetStateBlock->state.streams[i].flags;
         }
     }
 
@@ -1026,15 +1027,16 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     {
         if (map & 1)
             IWineD3DDevice_SetStreamSource(device, i,
-                    (IWineD3DBuffer *)This->streams[i].buffer,
-                    0, This->streams[i].stride);
+                    (IWineD3DBuffer *)This->state.streams[i].buffer,
+                    0, This->state.streams[i].stride);
     }
 
     map = This->changed.streamFreq;
     for (i = 0; map; map >>= 1, ++i)
     {
         if (map & 1)
-            IWineD3DDevice_SetStreamSourceFreq(device, i, This->streams[i].frequency | This->streams[i].flags);
+            IWineD3DDevice_SetStreamSourceFreq(device, i,
+                    This->state.streams[i].frequency | This->state.streams[i].flags);
     }
 
     map = This->changed.textures;

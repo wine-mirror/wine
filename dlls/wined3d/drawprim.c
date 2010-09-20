@@ -69,7 +69,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_stream_state *streams = This->stateBlock->streams;
+    const struct wined3d_stream_state *streams = This->stateBlock->state.streams;
     LONG SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
     BOOL pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
@@ -464,9 +464,9 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
         {
             if (!(si->use_map & (1 << i))) continue;
 
-            ptr = si->elements[i].data +
-                  si->elements[i].stride * SkipnStrides +
-                  stateblock->streams[si->elements[i].stream_idx].offset;
+            ptr = si->elements[i].data
+                    + si->elements[i].stride * SkipnStrides
+                    + stateblock->state.streams[si->elements[i].stream_idx].offset;
 
             send_attribute(This, si->elements[i].format->id, i, ptr);
         }
@@ -505,13 +505,14 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
     for (i = 0; i < MAX_STREAMS; ++i)
     {
         /* Look at the streams and take the first one which matches */
-        if (stateblock->streams[i].buffer && ((stateblock->streams[i].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
-                || (stateblock->streams[i].flags & WINED3DSTREAMSOURCE_INDEXEDDATA)))
+        if (stateblock->state.streams[i].buffer
+                && ((stateblock->state.streams[i].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
+                || (stateblock->state.streams[i].flags & WINED3DSTREAMSOURCE_INDEXEDDATA)))
         {
             /* Use the specified number of instances from the first matched
              * stream. A streamFreq of 0 (with INSTANCEDATA or INDEXEDDATA)
              * is handled as 1. See d3d9/tests/visual.c-> stream_test(). */
-            numInstances = stateblock->streams[i].frequency ? stateblock->streams[i].frequency : 1;
+            numInstances = stateblock->state.streams[i].frequency ? stateblock->state.streams[i].frequency : 1;
             break;
         }
     }
@@ -520,7 +521,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
     {
         if (!(si->use_map & (1 << i))) continue;
 
-        if (stateblock->streams[si->elements[i].stream_idx].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
+        if (stateblock->state.streams[si->elements[i].stream_idx].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
         {
             instancedData[numInstancedAttribs] = i;
             numInstancedAttribs++;
@@ -531,12 +532,12 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
     for(i = 0; i < numInstances; i++) {
         /* Specify the instanced attributes using immediate mode calls */
         for(j = 0; j < numInstancedAttribs; j++) {
-            const BYTE *ptr = si->elements[instancedData[j]].data +
-                        si->elements[instancedData[j]].stride * i +
-                        stateblock->streams[si->elements[instancedData[j]].stream_idx].offset;
+            const BYTE *ptr = si->elements[instancedData[j]].data
+                    + si->elements[instancedData[j]].stride * i
+                    + stateblock->state.streams[si->elements[instancedData[j]].stream_idx].offset;
             if (si->elements[instancedData[j]].buffer_object)
             {
-                struct wined3d_buffer *vb = stateblock->streams[si->elements[instancedData[j]].stream_idx].buffer;
+                struct wined3d_buffer *vb = stateblock->state.streams[si->elements[instancedData[j]].stream_idx].buffer;
                 ptr += (ULONG_PTR)buffer_get_sysmem(vb, &This->adapter->gl_info);
             }
 
@@ -563,7 +564,7 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, const struct wined3d_gl
         e = &s->elements[i];
         if (e->buffer_object)
         {
-            struct wined3d_buffer *vb = This->stateBlock->streams[e->stream_idx].buffer;
+            struct wined3d_buffer *vb = This->stateBlock->state.streams[e->stream_idx].buffer;
             e->buffer_object = 0;
             e->data = (BYTE *)((ULONG_PTR)e->data + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
         }
@@ -800,7 +801,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     e = &stream_info.elements[WINED3D_FFP_POSITION];
     if (e->buffer_object)
     {
-        struct wined3d_buffer *vb = This->stateBlock->streams[e->stream_idx].buffer;
+        struct wined3d_buffer *vb = This->stateBlock->state.streams[e->stream_idx].buffer;
         e->data = (BYTE *)((ULONG_PTR)e->data + (ULONG_PTR)buffer_get_sysmem(vb, context->gl_info));
     }
     vtxStride = e->stride;

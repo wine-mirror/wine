@@ -3333,7 +3333,7 @@ static void loadTexCoords(const struct wined3d_gl_info *gl_info, IWineD3DStateBl
         if (coordIdx < MAX_TEXTURES && (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx))))
         {
             const struct wined3d_stream_info_element *e = &si->elements[WINED3D_FFP_TEXCOORD0 + coordIdx];
-            const struct wined3d_stream_state *stream = &stateblock->streams[e->stream_idx];
+            const struct wined3d_stream_state *stream = &stateblock->state.streams[e->stream_idx];
 
             TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
                     textureNo, mapped_stage, coordIdx, e->data);
@@ -4148,7 +4148,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
             continue;
         }
 
-        stream = &stateblock->streams[stream_info->elements[i].stream_idx];
+        stream = &stateblock->state.streams[stream_info->elements[i].stream_idx];
 
         /* Do not load instance data. It will be specified using glTexCoord by drawprim */
         if (stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
@@ -4327,7 +4327,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
             || si->use_map & (1 << WINED3D_FFP_BLENDINDICES))
     {
         e = &si->elements[WINED3D_FFP_BLENDWEIGHT];
-        stream = &stateblock->streams[e->stream_idx];
+        stream = &stateblock->state.streams[e->stream_idx];
 
         if (gl_info->supported[ARB_VERTEX_BLEND])
         {
@@ -4394,7 +4394,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     if (si->use_map & (1 << WINED3D_FFP_POSITION))
     {
         e = &si->elements[WINED3D_FFP_POSITION];
-        stream = &stateblock->streams[e->stream_idx];
+        stream = &stateblock->state.streams[e->stream_idx];
 
         if (curVBO != e->buffer_object)
         {
@@ -4435,7 +4435,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     if (si->use_map & (1 << WINED3D_FFP_NORMAL))
     {
         e = &si->elements[WINED3D_FFP_NORMAL];
-        stream = &stateblock->streams[e->stream_idx];
+        stream = &stateblock->state.streams[e->stream_idx];
 
         if (curVBO != e->buffer_object)
         {
@@ -4469,7 +4469,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
     if (si->use_map & (1 << WINED3D_FFP_DIFFUSE))
     {
         e = &si->elements[WINED3D_FFP_DIFFUSE];
-        stream = &stateblock->streams[e->stream_idx];
+        stream = &stateblock->state.streams[e->stream_idx];
 
         if (curVBO != e->buffer_object)
         {
@@ -4498,7 +4498,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         TRACE("setting specular colour\n");
 
         e = &si->elements[WINED3D_FFP_SPECULAR];
-        stream = &stateblock->streams[e->stream_idx];
+        stream = &stateblock->state.streams[e->stream_idx];
 
         if (gl_info->supported[EXT_SECONDARY_COLOR])
         {
@@ -4950,7 +4950,7 @@ static void indexbuffer(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (stateblock->streamIsUP || !stateblock->pIndexData)
+    if (stateblock->state.user_stream || !stateblock->pIndexData)
     {
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
     } else {
