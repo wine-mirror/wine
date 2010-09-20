@@ -616,9 +616,9 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = (float) stateBlock->vertexShaderConstantI[4 * i];
-            val[1] = (float) stateBlock->vertexShaderConstantI[4 * i + 1];
-            val[2] = (float) stateBlock->vertexShaderConstantI[4 * i + 2];
+            val[0] = (float)stateBlock->state.vs_consts_i[4 * i];
+            val[1] = (float)stateBlock->state.vs_consts_i[4 * i + 1];
+            val[2] = (float)stateBlock->state.vs_consts_i[4 * i + 2];
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -646,7 +646,7 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
 
         /* Load DirectX 9 float constants for vertex shader */
         device->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                device->highest_dirty_vs_const, stateBlock->vertexShaderConstantF, context->vshader_const_dirty);
+                device->highest_dirty_vs_const, stateBlock->state.vs_consts_f, context->vshader_const_dirty);
         shader_arb_vs_local_constants(device);
     }
 
@@ -4481,7 +4481,8 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
     for(i = 0; i < MAX_CONST_B; i++)
     {
-        if(stateblock->vertexShaderConstantB[i]) args->clip.boolclip.bools |= ( 1 << i);
+        if (stateblock->state.vs_consts_b[i])
+            args->clip.boolclip.bools |= ( 1 << i);
     }
 
     args->vertex.samplers[0] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
@@ -4508,9 +4509,9 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         }
         else
         {
-            args->loop_ctrl[i][0] = stateblock->vertexShaderConstantI[i * 4];
-            args->loop_ctrl[i][1] = stateblock->vertexShaderConstantI[i * 4 + 1];
-            args->loop_ctrl[i][2] = stateblock->vertexShaderConstantI[i * 4 + 2];
+            args->loop_ctrl[i][0] = stateblock->state.vs_consts_i[i * 4];
+            args->loop_ctrl[i][1] = stateblock->state.vs_consts_i[i * 4 + 1];
+            args->loop_ctrl[i][2] = stateblock->state.vs_consts_i[i * 4 + 2];
         }
     }
 }

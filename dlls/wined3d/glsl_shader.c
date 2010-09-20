@@ -757,15 +757,15 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
         IWineD3DBaseShaderImpl *vshader = (IWineD3DBaseShaderImpl *)stateBlock->state.vertex_shader;
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
-        shader_glsl_load_constantsF(vshader, gl_info, stateBlock->vertexShaderConstantF,
+        shader_glsl_load_constantsF(vshader, gl_info, stateBlock->state.vs_consts_f,
                 prog->vuniformF_locations, &priv->vconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations, stateBlock->vertexShaderConstantI,
+        shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations, stateBlock->state.vs_consts_i,
                 stateBlock->changed.vertexShaderConstantsI & vshader->baseShader.reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
-        shader_glsl_load_constantsB(vshader, gl_info, programId, stateBlock->vertexShaderConstantB,
+        shader_glsl_load_constantsB(vshader, gl_info, programId, stateBlock->state.vs_consts_b,
                 stateBlock->changed.vertexShaderConstantsB & vshader->baseShader.reg_maps.boolean_constants);
 
         /* Upload the position fixup params */

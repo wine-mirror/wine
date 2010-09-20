@@ -2352,6 +2352,9 @@ struct wined3d_state
     IWineD3DVertexDeclarationImpl *vertex_declaration;
 
     struct IWineD3DVertexShaderImpl *vertex_shader;
+    BOOL vs_consts_b[MAX_CONST_B];
+    INT vs_consts_i[MAX_CONST_I * 4];
+    float *vs_consts_f;
 
     IWineD3DBaseTextureImpl *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
@@ -2379,11 +2382,6 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     struct wined3d_state state;
-
-    /* Vertex Shader Constants */
-    BOOL                       vertexShaderConstantB[MAX_CONST_B];
-    INT                        vertexShaderConstantI[MAX_CONST_I * 4];
-    float                     *vertexShaderConstantF;
 
     /* primitive type */
     GLenum gl_primitive_type;

@@ -3253,7 +3253,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
 
     if (!srcData || start >= MAX_CONST_B) return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->vertexShaderConstantB[start], srcData, cnt * sizeof(BOOL));
+    memcpy(&This->updateStateBlock->state.vs_consts_b[start], srcData, cnt * sizeof(BOOL));
     for (i = 0; i < cnt; i++)
         TRACE("Set BOOL constant %u to %s\n", start + i, srcData[i]? "true":"false");
 
@@ -3281,7 +3281,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantB(
     if (!dstData || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->stateBlock->vertexShaderConstantB[start], cnt * sizeof(BOOL));
+    memcpy(dstData, &This->stateBlock->state.vs_consts_b[start], cnt * sizeof(BOOL));
     return WINED3D_OK;
 }
 
@@ -3299,7 +3299,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
 
     if (!srcData || start >= MAX_CONST_I) return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->vertexShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
+    memcpy(&This->updateStateBlock->state.vs_consts_i[start * 4], srcData, cnt * sizeof(int) * 4);
     for (i = 0; i < cnt; i++)
         TRACE("Set INT constant %u to { %d, %d, %d, %d }\n", start + i,
            srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
@@ -3328,7 +3328,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantI(
     if (!dstData || ((signed int)MAX_CONST_I - (signed int)start) <= 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->stateBlock->vertexShaderConstantI[start * 4], cnt * sizeof(int) * 4);
+    memcpy(dstData, &This->stateBlock->state.vs_consts_i[start * 4], cnt * sizeof(int) * 4);
     return WINED3D_OK;
 }
 
@@ -3348,7 +3348,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
     if (!srcData || start + count > This->d3d_vshader_constantF || start > This->d3d_vshader_constantF)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, count * sizeof(float) * 4);
+    memcpy(&This->updateStateBlock->state.vs_consts_f[start * 4], srcData, count * sizeof(float) * 4);
     if(TRACE_ON(d3d)) {
         for (i = 0; i < count; i++)
             TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
@@ -3382,7 +3382,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
     if (!dstData || cnt < 0)
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(dstData, &This->stateBlock->vertexShaderConstantF[start * 4], cnt * sizeof(float) * 4);
+    memcpy(dstData, &This->stateBlock->state.vs_consts_f[start * 4], cnt * sizeof(float) * 4);
     return WINED3D_OK;
 }
 

@@ -204,9 +204,9 @@ static HRESULT stateblock_allocate_shader_constants(IWineD3DStateBlockImpl *obje
             sizeof(BOOL) * device->d3d_pshader_constantF);
     if (!object->changed.pixelShaderConstantsF) goto fail;
 
-    object->vertexShaderConstantF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+    object->state.vs_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(float) * device->d3d_vshader_constantF * 4);
-    if (!object->vertexShaderConstantF) goto fail;
+    if (!object->state.vs_consts_f) goto fail;
 
     object->changed.vertexShaderConstantsF = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(BOOL) * device->d3d_vshader_constantF);
@@ -226,7 +226,7 @@ fail:
     ERR("Failed to allocate memory\n");
     HeapFree(GetProcessHeap(), 0, object->pixelShaderConstantF);
     HeapFree(GetProcessHeap(), 0, object->changed.pixelShaderConstantsF);
-    HeapFree(GetProcessHeap(), 0, object->vertexShaderConstantF);
+    HeapFree(GetProcessHeap(), 0, object->state.vs_consts_f);
     HeapFree(GetProcessHeap(), 0, object->changed.vertexShaderConstantsF);
     HeapFree(GetProcessHeap(), 0, object->contained_vs_consts_f);
     HeapFree(GetProcessHeap(), 0, object->contained_ps_consts_f);
@@ -526,7 +526,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             }
         }
 
-        HeapFree(GetProcessHeap(), 0, This->vertexShaderConstantF);
+        HeapFree(GetProcessHeap(), 0, This->state.vs_consts_f);
         HeapFree(GetProcessHeap(), 0, This->changed.vertexShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->pixelShaderConstantF);
         HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
@@ -622,15 +622,15 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         TRACE("Setting %p from %p %u to {%.8e, %.8e, %.8e, %.8e}.\n",
                 This, targetStateBlock, idx,
-                targetStateBlock->vertexShaderConstantF[idx * 4 + 0],
-                targetStateBlock->vertexShaderConstantF[idx * 4 + 1],
-                targetStateBlock->vertexShaderConstantF[idx * 4 + 2],
-                targetStateBlock->vertexShaderConstantF[idx * 4 + 3]);
+                targetStateBlock->state.vs_consts_f[idx * 4 + 0],
+                targetStateBlock->state.vs_consts_f[idx * 4 + 1],
+                targetStateBlock->state.vs_consts_f[idx * 4 + 2],
+                targetStateBlock->state.vs_consts_f[idx * 4 + 3]);
 
-        This->vertexShaderConstantF[idx * 4 + 0] = targetStateBlock->vertexShaderConstantF[idx * 4 + 0];
-        This->vertexShaderConstantF[idx * 4 + 1] = targetStateBlock->vertexShaderConstantF[idx * 4 + 1];
-        This->vertexShaderConstantF[idx * 4 + 2] = targetStateBlock->vertexShaderConstantF[idx * 4 + 2];
-        This->vertexShaderConstantF[idx * 4 + 3] = targetStateBlock->vertexShaderConstantF[idx * 4 + 3];
+        This->state.vs_consts_f[idx * 4 + 0] = targetStateBlock->state.vs_consts_f[idx * 4 + 0];
+        This->state.vs_consts_f[idx * 4 + 1] = targetStateBlock->state.vs_consts_f[idx * 4 + 1];
+        This->state.vs_consts_f[idx * 4 + 2] = targetStateBlock->state.vs_consts_f[idx * 4 + 2];
+        This->state.vs_consts_f[idx * 4 + 3] = targetStateBlock->state.vs_consts_f[idx * 4 + 3];
     }
 
     /* Vertex Shader Integer Constants */
@@ -640,15 +640,15 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         TRACE("Setting %p from %p %u to {%d, %d, %d, %d}.\n",
                 This, targetStateBlock, idx,
-                targetStateBlock->vertexShaderConstantI[idx * 4 + 0],
-                targetStateBlock->vertexShaderConstantI[idx * 4 + 1],
-                targetStateBlock->vertexShaderConstantI[idx * 4 + 2],
-                targetStateBlock->vertexShaderConstantI[idx * 4 + 3]);
+                targetStateBlock->state.vs_consts_i[idx * 4 + 0],
+                targetStateBlock->state.vs_consts_i[idx * 4 + 1],
+                targetStateBlock->state.vs_consts_i[idx * 4 + 2],
+                targetStateBlock->state.vs_consts_i[idx * 4 + 3]);
 
-        This->vertexShaderConstantI[idx * 4 + 0] = targetStateBlock->vertexShaderConstantI[idx * 4 + 0];
-        This->vertexShaderConstantI[idx * 4 + 1] = targetStateBlock->vertexShaderConstantI[idx * 4 + 1];
-        This->vertexShaderConstantI[idx * 4 + 2] = targetStateBlock->vertexShaderConstantI[idx * 4 + 2];
-        This->vertexShaderConstantI[idx * 4 + 3] = targetStateBlock->vertexShaderConstantI[idx * 4 + 3];
+        This->state.vs_consts_i[idx * 4 + 0] = targetStateBlock->state.vs_consts_i[idx * 4 + 0];
+        This->state.vs_consts_i[idx * 4 + 1] = targetStateBlock->state.vs_consts_i[idx * 4 + 1];
+        This->state.vs_consts_i[idx * 4 + 2] = targetStateBlock->state.vs_consts_i[idx * 4 + 2];
+        This->state.vs_consts_i[idx * 4 + 3] = targetStateBlock->state.vs_consts_i[idx * 4 + 3];
     }
 
     /* Vertex Shader Boolean Constants */
@@ -658,9 +658,9 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         TRACE("Setting %p from %p %u to %s.\n",
                 This, targetStateBlock, idx,
-                targetStateBlock->vertexShaderConstantB[idx] ? "TRUE" : "FALSE");
+                targetStateBlock->state.vs_consts_b[idx] ? "TRUE" : "FALSE");
 
-        This->vertexShaderConstantB[idx] = targetStateBlock->vertexShaderConstantB[idx];
+        This->state.vs_consts_b[idx] = targetStateBlock->state.vs_consts_b[idx];
     }
 
     /* Pixel Shader Float Constants */
@@ -919,17 +919,17 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     for (i = 0; i < This->num_contained_vs_consts_f; ++i)
     {
         IWineD3DDevice_SetVertexShaderConstantF(device, This->contained_vs_consts_f[i],
-                This->vertexShaderConstantF + This->contained_vs_consts_f[i] * 4, 1);
+                This->state.vs_consts_f + This->contained_vs_consts_f[i] * 4, 1);
     }
     for (i = 0; i < This->num_contained_vs_consts_i; ++i)
     {
         IWineD3DDevice_SetVertexShaderConstantI(device, This->contained_vs_consts_i[i],
-                This->vertexShaderConstantI + This->contained_vs_consts_i[i] * 4, 1);
+                This->state.vs_consts_i + This->contained_vs_consts_i[i] * 4, 1);
     }
     for (i = 0; i < This->num_contained_vs_consts_b; ++i)
     {
         IWineD3DDevice_SetVertexShaderConstantB(device, This->contained_vs_consts_b[i],
-                This->vertexShaderConstantB + This->contained_vs_consts_b[i], 1);
+                This->state.vs_consts_b + This->contained_vs_consts_b[i], 1);
     }
 
     apply_lights(device, This);
