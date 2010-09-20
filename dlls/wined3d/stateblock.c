@@ -512,7 +512,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 }
             }
         }
-        if(This->pIndexData) IWineD3DBuffer_Release(This->pIndexData);
+        if (This->state.index_buffer) IWineD3DBuffer_Release((IWineD3DBuffer *)This->state.index_buffer);
         if (This->state.vertex_shader) IWineD3DVertexShader_Release((IWineD3DVertexShader *)This->state.vertex_shader);
         if (This->state.pixel_shader) IWineD3DPixelShader_Release((IWineD3DPixelShader *)This->state.pixel_shader);
 
@@ -721,18 +721,20 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     if (This->changed.primitive_type) This->gl_primitive_type = targetStateBlock->gl_primitive_type;
 
     if (This->changed.indices
-            && ((This->pIndexData != targetStateBlock->pIndexData)
+            && ((This->state.index_buffer != targetStateBlock->state.index_buffer)
                 || (This->baseVertexIndex != targetStateBlock->baseVertexIndex)
-                || (This->IndexFmt != targetStateBlock->IndexFmt)))
+                || (This->state.index_format != targetStateBlock->state.index_format)))
     {
-        TRACE("Updating pIndexData to %p, baseVertexIndex to %d.\n",
-                targetStateBlock->pIndexData, targetStateBlock->baseVertexIndex);
+        TRACE("Updating index buffer to %p, baseVertexIndex to %d.\n",
+                targetStateBlock->state.index_buffer, targetStateBlock->baseVertexIndex);
 
-        if (targetStateBlock->pIndexData) IWineD3DBuffer_AddRef(targetStateBlock->pIndexData);
-        if (This->pIndexData) IWineD3DBuffer_Release(This->pIndexData);
-        This->pIndexData = targetStateBlock->pIndexData;
+        if (targetStateBlock->state.index_buffer)
+            IWineD3DBuffer_AddRef((IWineD3DBuffer *)targetStateBlock->state.index_buffer);
+        if (This->state.index_buffer)
+            IWineD3DBuffer_Release((IWineD3DBuffer *)This->state.index_buffer);
+        This->state.index_buffer = targetStateBlock->state.index_buffer;
         This->baseVertexIndex = targetStateBlock->baseVertexIndex;
-        This->IndexFmt = targetStateBlock->IndexFmt;
+        This->state.index_format = targetStateBlock->state.index_format;
     }
 
     if (This->changed.vertexDecl && This->state.vertex_declaration != targetStateBlock->state.vertex_declaration)
@@ -998,7 +1000,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
 
     if (This->changed.indices)
     {
-        IWineD3DDevice_SetIndexBuffer(device, This->pIndexData, This->IndexFmt);
+        IWineD3DDevice_SetIndexBuffer(device, (IWineD3DBuffer *)This->state.index_buffer, This->state.index_format);
         IWineD3DDevice_SetBaseVertexIndex(device, This->baseVertexIndex);
     }
 

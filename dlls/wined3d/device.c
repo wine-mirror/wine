@@ -2922,11 +2922,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndexBuffer(IWineD3DDevice *iface,
     IWineD3DBuffer *oldIdxs;
 
     TRACE("(%p) : Setting to %p\n", This, pIndexData);
-    oldIdxs = This->updateStateBlock->pIndexData;
+    oldIdxs = (IWineD3DBuffer *)This->updateStateBlock->state.index_buffer;
 
     This->updateStateBlock->changed.indices = TRUE;
-    This->updateStateBlock->pIndexData = pIndexData;
-    This->updateStateBlock->IndexFmt = fmt;
+    This->updateStateBlock->state.index_buffer = (struct wined3d_buffer *)pIndexData;
+    This->updateStateBlock->state.index_format = fmt;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -2955,7 +2955,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetIndexBuffer(IWineD3DDevice *iface, I
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    *ppIndexData = This->stateBlock->pIndexData;
+    *ppIndexData = (IWineD3DBuffer *)This->stateBlock->state.index_buffer;
 
     /* up ref count on ppindexdata */
     if (*ppIndexData) {
@@ -4699,13 +4699,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, UI
 
 static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface, UINT startIndex, UINT index_count)
 {
-    IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_buffer *index_buffer;
     UINT                 idxStride = 2;
-    IWineD3DBuffer *pIB;
     GLuint vbo;
 
-    pIB = This->stateBlock->pIndexData;
-    if (!pIB) {
+    index_buffer = This->stateBlock->state.index_buffer;
+    if (!index_buffer)
+    {
         /* D3D9 returns D3DERR_INVALIDCALL when DrawIndexedPrimitive is called
          * without an index buffer set. (The first time at least...)
          * D3D8 simply dies, but I doubt it can do much harm to return
@@ -4725,15 +4726,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
         This->stateBlock->state.user_stream = FALSE;
     }
-    vbo = ((struct wined3d_buffer *) pIB)->buffer_object;
+    vbo = index_buffer->buffer_object;
 
     TRACE("(%p) : startIndex %u, index count %u.\n", This, startIndex, index_count);
 
-    if (This->stateBlock->IndexFmt == WINED3DFMT_R16_UINT) {
+    if (This->stateBlock->state.index_format == WINED3DFMT_R16_UINT)
         idxStride = 2;
-    } else {
+    else
         idxStride = 4;
-    }
 
     if(This->stateBlock->loadBaseVertexIndex != This->stateBlock->baseVertexIndex) {
         This->stateBlock->loadBaseVertexIndex = This->stateBlock->baseVertexIndex;
@@ -4741,7 +4741,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
     }
 
     drawPrimitive(iface, index_count, startIndex, idxStride,
-            vbo ? NULL : ((struct wined3d_buffer *)pIB)->resource.allocatedMemory);
+            vbo ? NULL : index_buffer->resource.allocatedMemory);
 
     return WINED3D_OK;
 }
@@ -4832,10 +4832,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     stream->buffer = NULL;
     stream->stride = 0;
-    ib = This->stateBlock->pIndexData;
-    if(ib) {
+    ib = (IWineD3DBuffer *)This->stateBlock->state.index_buffer;
+    if (ib)
+    {
         IWineD3DBuffer_Release(ib);
-        This->stateBlock->pIndexData = NULL;
+        This->stateBlock->state.index_buffer = NULL;
     }
     /* No need to mark the stream source state dirty here. Either the app calls UP drawing again, or it has to call
      * SetStreamSource to specify a vertex buffer
@@ -6640,19 +6641,19 @@ void device_resource_released(IWineD3DDeviceImpl *device, IWineD3DResource *reso
 
             }
 
-            if (device->stateBlock && device->stateBlock->pIndexData == (IWineD3DBuffer *)resource)
+            if (device->stateBlock && device->stateBlock->state.index_buffer == (struct wined3d_buffer *)resource)
             {
                 ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
                         resource, device->stateBlock);
-                device->stateBlock->pIndexData =  NULL;
+                device->stateBlock->state.index_buffer =  NULL;
             }
 
             if (device->updateStateBlock != device->stateBlock
-                    && device->updateStateBlock->pIndexData == (IWineD3DBuffer *)resource)
+                    && device->updateStateBlock->state.index_buffer == (struct wined3d_buffer *)resource)
             {
                 ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
                         resource, device->updateStateBlock);
-                device->updateStateBlock->pIndexData =  NULL;
+                device->updateStateBlock->state.index_buffer =  NULL;
             }
             break;
 

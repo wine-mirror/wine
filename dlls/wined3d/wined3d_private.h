@@ -2352,6 +2352,8 @@ struct wined3d_state
     IWineD3DVertexDeclarationImpl *vertex_declaration;
     struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
     BOOL user_stream;
+    struct wined3d_buffer *index_buffer;
+    enum wined3d_format_id index_format;
 
     struct IWineD3DVertexShaderImpl *vertex_shader;
     BOOL vs_consts_b[MAX_CONST_B];
@@ -2393,9 +2395,6 @@ struct IWineD3DStateBlockImpl
     /* primitive type */
     GLenum gl_primitive_type;
 
-    /* Indices */
-    IWineD3DBuffer*           pIndexData;
-    enum wined3d_format_id IndexFmt;
     INT                       baseVertexIndex;
     INT                       loadBaseVertexIndex; /* non-indexed drawing needs 0 here, indexed baseVertexIndex */
 

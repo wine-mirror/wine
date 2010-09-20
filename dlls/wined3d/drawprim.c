@@ -91,7 +91,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
          * supported or other reason), or with user pointer drawing idxData
          * will be non-NULL. */
         if (!idxData)
-            idxData = buffer_get_sysmem((struct wined3d_buffer *)This->stateBlock->pIndexData, gl_info);
+            idxData = buffer_get_sysmem(This->stateBlock->state.index_buffer, gl_info);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;
@@ -437,7 +437,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
          * supported or other reason), or with user pointer drawing idxData
          * will be non-NULL. */
         if (!idxData)
-            idxData = buffer_get_sysmem((struct wined3d_buffer *)This->stateBlock->pIndexData, gl_info);
+            idxData = buffer_get_sysmem(This->stateBlock->state.index_buffer, gl_info);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;

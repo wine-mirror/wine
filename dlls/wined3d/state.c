@@ -4950,11 +4950,13 @@ static void indexbuffer(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (stateblock->state.user_stream || !stateblock->pIndexData)
+    if (stateblock->state.user_stream || !stateblock->state.index_buffer)
     {
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
-    } else {
-        struct wined3d_buffer *ib = (struct wined3d_buffer *) stateblock->pIndexData;
+    }
+    else
+    {
+        struct wined3d_buffer *ib = stateblock->state.index_buffer;
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ib->buffer_object));
     }
 }
