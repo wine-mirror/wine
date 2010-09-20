@@ -2356,6 +2356,8 @@ struct wined3d_state
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
 
+    struct IWineD3DPixelShaderImpl *pixel_shader;
+
     IWineD3DBaseTextureImpl *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
@@ -2405,9 +2407,6 @@ struct IWineD3DStateBlockImpl
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];
     WINED3DCLIPSTATUS         clip_status;
-
-    /* Pixel Shader */
-    IWineD3DPixelShader      *pixelShader;
 
     /* Pixel Shader Constants */
     BOOL                       pixelShaderConstantB[MAX_CONST_B];
@@ -3039,7 +3038,7 @@ static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
 
 static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)
 {
-    return (stateblock->pixelShader && stateblock->device->ps_selected_mode != SHADER_NONE);
+    return (stateblock->state.pixel_shader && stateblock->device->ps_selected_mode != SHADER_NONE);
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

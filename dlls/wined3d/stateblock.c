@@ -514,7 +514,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
         }
         if(This->pIndexData) IWineD3DBuffer_Release(This->pIndexData);
         if (This->state.vertex_shader) IWineD3DVertexShader_Release((IWineD3DVertexShader *)This->state.vertex_shader);
-        if(This->pixelShader) IWineD3DPixelShader_Release(This->pixelShader);
+        if (This->state.pixel_shader) IWineD3DPixelShader_Release((IWineD3DPixelShader *)This->state.pixel_shader);
 
         for(counter = 0; counter < LIGHTMAP_SIZE; counter++) {
             struct list *e1, *e2;
@@ -871,11 +871,13 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->state.sampler_states[stage][state] = targetStateBlock->state.sampler_states[stage][state];
     }
 
-    if (This->changed.pixelShader && This->pixelShader != targetStateBlock->pixelShader)
+    if (This->changed.pixelShader && This->state.pixel_shader != targetStateBlock->state.pixel_shader)
     {
-        if (targetStateBlock->pixelShader) IWineD3DPixelShader_AddRef(targetStateBlock->pixelShader);
-        if (This->pixelShader) IWineD3DPixelShader_Release(This->pixelShader);
-        This->pixelShader = targetStateBlock->pixelShader;
+        if (targetStateBlock->state.pixel_shader)
+            IWineD3DPixelShader_AddRef((IWineD3DPixelShader *)targetStateBlock->state.pixel_shader);
+        if (This->state.pixel_shader)
+            IWineD3DPixelShader_Release((IWineD3DPixelShader *)This->state.pixel_shader);
+        This->state.pixel_shader = targetStateBlock->state.pixel_shader;
     }
 
     record_lights(This, targetStateBlock);
@@ -934,7 +936,8 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
 
     apply_lights(device, This);
 
-    if (This->changed.pixelShader) IWineD3DDevice_SetPixelShader(device, This->pixelShader);
+    if (This->changed.pixelShader)
+        IWineD3DDevice_SetPixelShader(device, (IWineD3DPixelShader *)This->state.pixel_shader);
 
     /* Pixel Shader Constants */
     for (i = 0; i < This->num_contained_ps_consts_f; ++i)

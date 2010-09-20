@@ -481,7 +481,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
     {
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
         {
-            if (((IWineD3DBaseShaderImpl *)stateblock->pixelShader)->baseShader.reg_maps.sampler_type[i])
+            if (stateblock->state.pixel_shader->baseShader.reg_maps.sampler_type[i])
                 device_preload_texture(stateblock, i);
         }
     }
@@ -3491,7 +3491,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This, const s
 static void device_map_psamplers(IWineD3DDeviceImpl *This, const struct wined3d_gl_info *gl_info)
 {
     const WINED3DSAMPLER_TEXTURE_TYPE *sampler_type =
-            ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.reg_maps.sampler_type;
+            This->stateBlock->state.pixel_shader->baseShader.reg_maps.sampler_type;
     unsigned int i;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
@@ -3539,8 +3539,9 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct
     int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
     int i;
 
-    if (ps) {
-        IWineD3DPixelShaderImpl *pshader = (IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader;
+    if (ps)
+    {
+        IWineD3DPixelShaderImpl *pshader = This->stateBlock->state.pixel_shader;
 
         /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
          * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
@@ -3591,10 +3592,11 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This)
     if (vs) device_map_vsamplers(This, ps, gl_info);
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader) {
-    IWineD3DDeviceImpl *This        = (IWineD3DDeviceImpl *)iface;
-    IWineD3DPixelShader *oldShader  = This->updateStateBlock->pixelShader;
-    This->updateStateBlock->pixelShader         = pShader;
+static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DPixelShader *oldShader = (IWineD3DPixelShader *)This->updateStateBlock->state.pixel_shader;
+    This->updateStateBlock->state.pixel_shader = (IWineD3DPixelShaderImpl *)pShader;
     This->updateStateBlock->changed.pixelShader = TRUE;
 
     /* Handle recording of state blocks */
@@ -3630,7 +3632,7 @@ static IWineD3DPixelShader * WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDe
 
     TRACE("iface %p.\n", iface);
 
-    shader = device->stateBlock->pixelShader;
+    shader = (IWineD3DPixelShader *)device->stateBlock->state.pixel_shader;
     if (shader) IWineD3DPixelShader_AddRef(shader);
 
     TRACE("Returning %p.\n", shader);

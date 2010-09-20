@@ -650,8 +650,9 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
         shader_arb_vs_local_constants(device);
     }
 
-    if (usePixelShader) {
-        IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
+    if (usePixelShader)
+    {
+        IWineD3DBaseShaderImpl *pshader = (IWineD3DBaseShaderImpl *)stateBlock->state.pixel_shader;
 
         /* Load DirectX 9 float constants for pixel shader */
         device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
@@ -3978,7 +3979,7 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
     /* Instead of searching for the signature in the signature list, read the one from the current pixel shader.
      * Its maybe not the shader where the signature came from, but it is the same signature and faster to find
      */
-    sig = ((IWineD3DPixelShaderImpl *)device->stateBlock->pixelShader)->baseShader.input_signature;
+    sig = device->stateBlock->state.pixel_shader->baseShader.input_signature;
     TRACE("Pixel shader uses declared varyings\n");
 
     /* Map builtin to declared. /dev/null the results by default to the TA temp reg */
@@ -4453,7 +4454,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     args->clip.boolclip_compare = 0;
     if(use_ps(stateblock))
     {
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) stateblock->pixelShader;
+        IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
         struct arb_pshader_private *shader_priv = ps->baseShader.backend_data;
         args->ps_signature = shader_priv->input_signature_idx;
 
@@ -4528,9 +4529,9 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
     if (usePS) {
         struct arb_ps_compile_args compile_args;
         struct arb_ps_compiled_shader *compiled;
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader;
+        IWineD3DPixelShaderImpl *ps = This->stateBlock->state.pixel_shader;
 
-        TRACE("Using pixel shader %p\n", This->stateBlock->pixelShader);
+        TRACE("Using pixel shader %p.\n", ps);
         find_arb_ps_compile_args(ps, This->stateBlock, &compile_args);
         compiled = find_arb_pshader(ps, &compile_args);
         priv->current_fprogram_id = compiled->prgId;
@@ -5587,7 +5588,7 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
     if (use_ps(stateblock))
     {
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)stateblock->pixelShader;
+        IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
         if (stage && (ps->baseShader.reg_maps.bumpmat & (1 << stage)))
         {
             /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
@@ -5624,7 +5625,7 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
 
     if (use_ps(stateblock))
     {
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)stateblock->pixelShader;
+        IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
         if (stage && (ps->baseShader.reg_maps.luminanceparams & (1 << stage)))
         {
             /* The pixel shader has to know the luminance offset. Do a constants update if it
