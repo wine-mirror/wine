@@ -32,7 +32,7 @@ STRINGTABLE
     IDS_POLICY_ID "Identificatore della policy: "
     IDS_POLICY_QUALIFIER_INFO "Informazioni sul qualificatore della policy"
     IDS_POLICY_QUALIFIER_ID "Id qualificatore della policy="
-    IDS_CPS "CPS" /* Certification Practice Statement */
+    IDS_CPS "Documento delle pratiche di certificazione" /* Certification Practice Statement */
     IDS_USER_NOTICE "Notifica dell'utente"
     IDS_QUALIFIER "Qualificatore"
     IDS_NOTICE_REF "Riferimento della notifica"
