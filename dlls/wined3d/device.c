@@ -220,12 +220,13 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
              * sources. In most sane cases the pointer - offset will still be > 0, otherwise it will wrap
              * around to some big value. Hope that with the indices, the driver wraps it back internally. If
              * not, drawStridedSlow is needed, including a vertex buffer path. */
-            if (This->stateBlock->loadBaseVertexIndex < 0)
+            if (This->stateBlock->state.load_base_vertex_index < 0)
             {
-                WARN("loadBaseVertexIndex is < 0 (%d), not using vbos\n", This->stateBlock->loadBaseVertexIndex);
+                WARN("load_base_vertex_index is < 0 (%d), not using VBOs.\n",
+                        This->stateBlock->state.load_base_vertex_index);
                 buffer_object = 0;
                 data = buffer_get_sysmem(buffer, &This->adapter->gl_info);
-                if ((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride)
+                if ((UINT_PTR)data < -This->stateBlock->state.load_base_vertex_index * stride)
                 {
                     FIXME("System memory vertex data load offset is negative!\n");
                 }
@@ -2974,12 +2975,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetBaseVertexIndex(IWineD3DDevice *ifac
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)->(%d)\n", This, BaseIndex);
 
-    if(This->updateStateBlock->baseVertexIndex == BaseIndex) {
+    if (This->updateStateBlock->state.base_vertex_index == BaseIndex)
+    {
         TRACE("Application is setting the old value over, nothing to do\n");
         return WINED3D_OK;
     }
 
-    This->updateStateBlock->baseVertexIndex = BaseIndex;
+    This->updateStateBlock->state.base_vertex_index = BaseIndex;
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
@@ -2994,7 +2996,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetBaseVertexIndex(IWineD3DDevice *ifac
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : base_index %p\n", This, base_index);
 
-    *base_index = This->stateBlock->baseVertexIndex;
+    *base_index = This->stateBlock->state.base_vertex_index;
 
     TRACE("Returning %u\n", *base_index);
 
@@ -4687,9 +4689,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, UI
         This->stateBlock->state.user_stream = FALSE;
     }
 
-    if (This->stateBlock->loadBaseVertexIndex)
+    if (This->stateBlock->state.load_base_vertex_index)
     {
-        This->stateBlock->loadBaseVertexIndex = 0;
+        This->stateBlock->state.load_base_vertex_index = 0;
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     }
     /* Account for the loading offset due to index buffers. Instead of reloading all sources correct it with the startvertex parameter */
@@ -4735,8 +4737,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
     else
         idxStride = 4;
 
-    if(This->stateBlock->loadBaseVertexIndex != This->stateBlock->baseVertexIndex) {
-        This->stateBlock->loadBaseVertexIndex = This->stateBlock->baseVertexIndex;
+    if (This->stateBlock->state.load_base_vertex_index != This->stateBlock->state.base_vertex_index)
+    {
+        This->stateBlock->state.load_base_vertex_index = This->stateBlock->state.base_vertex_index;
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     }
 
@@ -4770,7 +4773,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     stream->offset = 0;
     stream->stride = VertexStreamZeroStride;
     This->stateBlock->state.user_stream = TRUE;
-    This->stateBlock->loadBaseVertexIndex = 0;
+    This->stateBlock->state.load_base_vertex_index = 0;
 
     /* TODO: Only mark dirty if drawing from a different UP address */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
@@ -4821,8 +4824,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     This->stateBlock->state.user_stream = TRUE;
 
     /* Set to 0 as per msdn. Do it now due to the stream source loading during drawPrimitive */
-    This->stateBlock->baseVertexIndex = 0;
-    This->stateBlock->loadBaseVertexIndex = 0;
+    This->stateBlock->state.base_vertex_index = 0;
+    This->stateBlock->state.load_base_vertex_index = 0;
     /* Mark the state dirty until we have nicer tracking of the stream source pointers */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
@@ -4856,7 +4859,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided(IWineD3DDevice *if
      */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
-    This->stateBlock->baseVertexIndex = 0;
+    This->stateBlock->state.base_vertex_index = 0;
     This->up_strided = DrawPrimStrideData;
     drawPrimitive(iface, vertex_count, 0, 0, NULL);
     This->up_strided = NULL;
@@ -4877,7 +4880,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDev
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
     This->stateBlock->state.user_stream = TRUE;
-    This->stateBlock->baseVertexIndex = 0;
+    This->stateBlock->state.base_vertex_index = 0;
     This->up_strided = DrawPrimStrideData;
     drawPrimitive(iface, vertex_count, 0 /* start_idx */, idxSize, pIndexData);
     This->up_strided = NULL;

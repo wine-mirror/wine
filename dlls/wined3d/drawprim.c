@@ -70,7 +70,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     UINT vx_index;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct wined3d_stream_state *streams = This->stateBlock->state.streams;
-    LONG SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
+    LONG SkipnStrides = startIdx + This->stateBlock->state.load_base_vertex_index;
     BOOL pixelShader = use_ps(This->stateBlock);
     BOOL specular_fog = FALSE;
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
@@ -225,9 +225,9 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         {
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2)
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
+                SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->state.load_base_vertex_index;
             else
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
+                SkipnStrides = pIdxBufL[startIdx + vx_index] + This->stateBlock->state.load_base_vertex_index;
         }
 
         tmp_tex_mask = tex_mask;
@@ -422,9 +422,9 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    LONG                      SkipnStrides = startIdx + This->stateBlock->loadBaseVertexIndex;
-    const WORD                *pIdxBufS     = NULL;
-    const DWORD               *pIdxBufL     = NULL;
+    LONG SkipnStrides = startIdx + This->stateBlock->state.load_base_vertex_index;
+    const DWORD *pIdxBufL = NULL;
+    const WORD *pIdxBufS = NULL;
     UINT vx_index;
     int i;
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
@@ -455,9 +455,9 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
         {
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2)
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + stateblock->loadBaseVertexIndex;
+                SkipnStrides = pIdxBufS[startIdx + vx_index] + stateblock->state.load_base_vertex_index;
             else
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + stateblock->loadBaseVertexIndex;
+                SkipnStrides = pIdxBufL[startIdx + vx_index] + stateblock->state.load_base_vertex_index;
         }
 
         for (i = MAX_ATTRIBS - 1; i >= 0; i--)

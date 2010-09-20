@@ -3350,7 +3350,7 @@ static void loadTexCoords(const struct wined3d_gl_info *gl_info, IWineD3DStateBl
 
             /* The coords to supply depend completely on the fvf / vertex shader */
             glTexCoordPointer(e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                    e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         } else {
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + mapped_stage, 0, 0, 0, 1));
@@ -4187,7 +4187,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                         stream_info->elements[i].format->gl_vtx_type,
                         stream_info->elements[i].format->gl_normalized,
                         vb->conversion_stride, stream_info->elements[i].data + vb->conversion_shift[shift_index]
-                        + stateblock->loadBaseVertexIndex * stream_info->elements[i].stride
+                        + stateblock->state.load_base_vertex_index * stream_info->elements[i].stride
                         + stream->offset));
 
             } else {
@@ -4195,7 +4195,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                         stream_info->elements[i].format->gl_vtx_type,
                         stream_info->elements[i].format->gl_normalized,
                         stream_info->elements[i].stride, stream_info->elements[i].data
-                        + stateblock->loadBaseVertexIndex * stream_info->elements[i].stride
+                        + stateblock->state.load_base_vertex_index * stream_info->elements[i].stride
                         + stream->offset));
             }
 
@@ -4332,7 +4332,7 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         if (gl_info->supported[ARB_VERTEX_BLEND])
         {
             TRACE("Blend %u %p %u\n", e->format->component_count,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride, e->stride + stream->offset);
+                    e->data + stateblock->state.load_base_vertex_index * e->stride, e->stride + stream->offset);
 
             glEnableClientState(GL_WEIGHT_ARRAY_ARB);
             checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
@@ -4350,9 +4350,9 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
                     e->format->gl_vtx_format,
                     e->format->gl_vtx_type,
                     e->stride,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                    e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
             GL_EXTCALL(glWeightPointerARB(e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset));
+                    e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset));
 
             checkGLcall("glWeightPointerARB");
 
@@ -4414,17 +4414,17 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         if (!e->buffer_object)
         {
             TRACE("glVertexPointer(3, %#x, %#x, %p);\n", e->format->gl_vtx_type, e->stride,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                    e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
             glVertexPointer(3 /* min(e->format->gl_vtx_format, 3) */, e->format->gl_vtx_type, e->stride,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                    e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
         }
         else
         {
             TRACE("glVertexPointer(%#x, %#x, %#x, %p);\n",
                     e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                    e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
             glVertexPointer(e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                    e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                    e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
         }
         checkGLcall("glVertexPointer(...)");
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -4445,9 +4445,9 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
         }
 
         TRACE("glNormalPointer(%#x, %#x, %p);\n", e->format->gl_vtx_type, e->stride,
-                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
         glNormalPointer(e->format->gl_vtx_type, e->stride,
-                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
         checkGLcall("glNormalPointer(...)");
         glEnableClientState(GL_NORMAL_ARRAY);
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
@@ -4480,9 +4480,9 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
 
         TRACE("glColorPointer(%#x, %#x %#x, %p);\n",
                 e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
         glColorPointer(e->format->gl_vtx_format, e->format->gl_vtx_type, e->stride,
-                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
         checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
         glEnableClientState(GL_COLOR_ARRAY);
         checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
@@ -4520,9 +4520,9 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
                  * 4 component secondary colors use it
                  */
                 TRACE("glSecondaryColorPointer(%#x, %#x, %#x, %p);\n", format, type, e->stride,
-                        e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                        e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
                 GL_EXTCALL(glSecondaryColorPointerEXT(format, type, e->stride,
-                        e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset));
+                        e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset));
                 checkGLcall("glSecondaryColorPointerEXT(format, type, ...)");
             }
             else
@@ -4531,9 +4531,9 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
                 {
                     case GL_UNSIGNED_BYTE:
                         TRACE("glSecondaryColorPointer(3, GL_UNSIGNED_BYTE, %#x, %p);\n", e->stride,
-                                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
                         GL_EXTCALL(glSecondaryColorPointerEXT(3, GL_UNSIGNED_BYTE, e->stride,
-                                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset));
+                                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset));
                         checkGLcall("glSecondaryColorPointerEXT(3, GL_UNSIGNED_BYTE, ...)");
                         break;
 
@@ -4541,9 +4541,9 @@ static void loadVertexData(const struct wined3d_context *context, IWineD3DStateB
                         FIXME("Add 4 component specular color pointers for type %x\n", type);
                         /* Make sure that the right color component is dropped */
                         TRACE("glSecondaryColorPointer(3, %#x, %#x, %p);\n", type, e->stride,
-                                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset);
+                                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset);
                         GL_EXTCALL(glSecondaryColorPointerEXT(3, type, e->stride,
-                                e->data + stateblock->loadBaseVertexIndex * e->stride + stream->offset));
+                                e->data + stateblock->state.load_base_vertex_index * e->stride + stream->offset));
                         checkGLcall("glSecondaryColorPointerEXT(3, type, ...)");
                 }
             }
