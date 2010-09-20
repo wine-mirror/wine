@@ -99,7 +99,7 @@ HCTX WINAPI WTMgrDefContext(HMGR hMgr, BOOL fSystem)
  */
 HCTX WINAPI WTMgrDefContextEx(HMGR hMgr, UINT wDevice, BOOL fSystem)
 {
-    FIXME("(%p, %hu, %hu): stub\n", hMgr, wDevice, fSystem);
+    FIXME("(%p, %u, %u): stub\n", hMgr, wDevice, fSystem);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 
