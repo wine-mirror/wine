@@ -20,6 +20,9 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 IDD_PROXYDLG DIALOG 36, 24, 250, 154
@@ -29,7 +32,7 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "Inserire il nome utente e la password:", -1, 40, 6, 150, 15
  LTEXT "Proxy", -1, 40, 26, 50, 10
- LTEXT "Realm", -1, 40, 46, 50, 10
+ LTEXT "Dominio", -1, 40, 46, 50, 10
  LTEXT "Utente", -1, 40, 66, 50, 10
  LTEXT "Password", -1, 40, 86, 50, 10
  LTEXT "" IDC_PROXY, 80, 26, 150, 14, 0
@@ -49,7 +52,7 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "Inserire il nome utente e la password:", -1, 40, 6, 150, 15
  LTEXT "Server", -1, 40, 26, 50, 10
- LTEXT "Realm", -1, 40, 46, 50, 10
+ LTEXT "Dominio", -1, 40, 46, 50, 10
  LTEXT "Utente", -1, 40, 66, 50, 10
  LTEXT "Password", -1, 40, 86, 50, 10
  LTEXT "" IDC_SERVER, 80, 26, 150, 14, 0
