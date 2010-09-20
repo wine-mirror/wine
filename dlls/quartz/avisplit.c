@@ -535,8 +535,8 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
 
     TRACE("FOURCC: %s\n", debugstr_an((char *)&pIndex->fcc, 4));
     TRACE("wLongsPerEntry: %hd\n", pIndex->wLongsPerEntry);
-    TRACE("bIndexSubType: %hd\n", pIndex->bIndexSubType);
-    TRACE("bIndexType: %hd\n", pIndex->bIndexType);
+    TRACE("bIndexSubType: %u\n", pIndex->bIndexSubType);
+    TRACE("bIndexType: %u\n", pIndex->bIndexType);
     TRACE("nEntriesInUse: %u\n", pIndex->nEntriesInUse);
     TRACE("dwChunkId: %.4s\n", (char *)&pIndex->dwChunkId);
     TRACE("qwBaseOffset: %x%08x\n", (DWORD)(pIndex->qwBaseOffset >> 32), (DWORD)pIndex->qwBaseOffset);
@@ -785,8 +785,8 @@ static HRESULT AVISplitter_ProcessStreamList(AVISplitterImpl * This, const BYTE 
             }
 
             TRACE("wLongsPerEntry: %hd\n", pIndex->wLongsPerEntry);
-            TRACE("bIndexSubType: %hd\n", pIndex->bIndexSubType);
-            TRACE("bIndexType: %hd\n", pIndex->bIndexType);
+            TRACE("bIndexSubType: %u\n", pIndex->bIndexSubType);
+            TRACE("bIndexType: %u\n", pIndex->bIndexType);
             TRACE("nEntriesInUse: %u\n", pIndex->nEntriesInUse);
             TRACE("dwChunkId: %.4s\n", (const char *)&pIndex->dwChunkId);
             if (pIndex->dwReserved[0])
