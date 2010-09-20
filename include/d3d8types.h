@@ -1053,11 +1053,14 @@ typedef struct _D3DINDEXBUFFER_DESC {
     UINT                Size;
 } D3DINDEXBUFFER_DESC;
 
+#ifndef D3DVECTOR_DEFINED
 typedef struct _D3DVECTOR {
     float x;
     float y;
     float z;
 } D3DVECTOR;
+#define D3DVECTOR_DEFINED
+#endif
 
 typedef struct _D3DLIGHT8 {
     D3DLIGHTTYPE    Type;
