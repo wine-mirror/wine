@@ -1097,6 +1097,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2350,         "ATI Mobility Radeon HD 2350",      DRIVER_ATI_R600,         256 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      DRIVER_ATI_R600,         256 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            DRIVER_ATI_R600,         512 },
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD3200,         "ATI Radeon HD 3200 Graphics",      DRIVER_ATI_R600,         128 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               DRIVER_ATI_R600,         256 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_ATI_R600,         512 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_ATI_R600,         512 },
