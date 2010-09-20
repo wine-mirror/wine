@@ -34,12 +34,12 @@ IDS_PASTE,		"&Incolla"
 IDS_SELECTALL,		"&Seleziona tutto"
 IDS_SCROLL,		"Sc&orri"
 IDS_SEARCH,		"C&erca"
-IDS_FNT_DISPLAY,	"Il carattere è %ld pixel di larghezza e %ld pixel di altezza"
+IDS_FNT_DISPLAY,	"Il carattere è largo %ld pixel e alto %ld pixel"
 IDS_FNT_PREVIEW,	"Questa è una prova"
 IDS_DLG_TIT_DEFAULT,    "Impostazioni predefinite"
 IDS_DLG_TIT_CURRENT,    "Impostazioni correnti"
 IDS_DLG_TIT_ERROR,	"Errore di configurazione"
-IDS_DLG_ERR_SBWINSIZE,	"Il buffer dello schermo deve essere più grande o uguale a quello della finestra"
+IDS_DLG_ERR_SBWINSIZE,	"Il buffer dello schermo deve essere uguale o più grande di quello della finestra"
 
 IDS_CMD_INVALID_EVENT_ID   "wineconsole: impossibile analizzare id evento\n"
 IDS_CMD_INVALID_BACKEND    "wineconsole: backend non valido\n"
@@ -50,7 +50,7 @@ IDS_CMD_LAUNCH_FAILED      "wineconsole: impossibile avviare %s.\n"\
 
 IDS_USAGE_HEADER           "\nUso:\n  wineconsole [opzioni] <comando>\n\nOpzioni:\n"
 IDS_USAGE_BACKEND          "  --backend={user|curses}  Scegliere user farà aprire una nuova finestra, curses proverà\n"\
-                           "                            ad inizializzare terminale corrente come una console Wine\n"
+                           "                            a inizializzare il terminale corrente come una console Wine\n"
 IDS_USAGE_COMMAND          "  <comando>                 Il programma di Wine da lanciare in una console\n"
 IDS_USAGE_FOOTER           "\nEsempio:\n  wineconsole cmd\nAvvia il prompt dei comandi di Wine in una console Wine\n\n"
 END
