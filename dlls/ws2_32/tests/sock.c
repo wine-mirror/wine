@@ -1946,7 +1946,7 @@ static void test_select(void)
     FD_SET(INVALID_SOCKET, &readfds);
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
-    todo_wine ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
     ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
     ok ( !FD_ISSET(fdRead, &readfds), "FD should not be set\n");
 
@@ -1954,7 +1954,7 @@ static void test_select(void)
     FD_SET(INVALID_SOCKET, &writefds);
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
-    todo_wine ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
     ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
     ok ( !FD_ISSET(fdRead, &writefds), "FD should not be set\n");
 
@@ -1962,7 +1962,7 @@ static void test_select(void)
     FD_SET(INVALID_SOCKET, &exceptfds);
     SetLastError(0);
     ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
-    todo_wine ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
     ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
     ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
 }
