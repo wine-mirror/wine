@@ -59,7 +59,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        "Impostazioni delle applicazioni",IDC_STATIC, 8,4,244,210
-    LTEXT           "Wine può simulare diverse versioni e stili di Windows per ogni applicazione. Questo tab è collegato ai tab Librerie e Grafica per permetterti di cambiare le impostazioni a livello di sistema o per applicazione pure in quelle tab.",
+    LTEXT           "Wine può simulare diverse versioni e stili di Windows per ogni applicazione. Questa scheda è collegato a quelle Librerie e Grafica per permetterti di cambiare le impostazioni a livello di sistema o per applicazione pure in quelle schede.",
                     IDC_STATIC,15,15,235,33
     CONTROL         "Applicazioni",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,120
@@ -224,7 +224,7 @@ BEGIN
     IDS_CHOOSE_PATH         "Seleziona la cartella Unix desiderata, prego."
     IDS_HIDE_ADVANCED       "Nascondi controlli &avanzati"
     IDS_SHOW_ADVANCED       "Mostra controlli &avanzati"
-    IDS_NOTHEME             "(Nessun Tema)"
+    IDS_NOTHEME             "(Nessun tema)"
     IDS_TAB_GRAPHICS        "Grafica"
     IDS_TAB_DESKTOP_INTEGRATION "Integrazione del desktop"
     IDS_TAB_AUDIO           "Audio"
@@ -306,7 +306,7 @@ BEGIN
     IDC_SYSPARAMS_DESKTOP           "Scrivania"
     IDC_SYSPARAMS_MENU              "Menu - Sfondo"
     IDC_SYSPARAMS_MENU_TEXT         "Menu - Testo"
-    IDC_SYSPARAMS_SCROLLBAR         "Barra Di Scorrimento"
+    IDC_SYSPARAMS_SCROLLBAR         "Barra di scorrimento"
     IDC_SYSPARAMS_SELECTION         "Selezione - Sfondo"
     IDC_SYSPARAMS_SELECTION_TEXT    "Selezione - Testo"
     IDC_SYSPARAMS_TOOLTIP           "ToolTip - Sfondo"
@@ -317,7 +317,7 @@ BEGIN
     IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Titolo attivo - Testo"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Titolo inattivo - Barra"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Titolo inattivo - Testo"
-    IDC_SYSPARAMS_MSGBOX_TEXT       "Testo della Casella Di Messaggio"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Testo della casella di Messaggio"
     IDC_SYSPARAMS_APPWORKSPACE      "Spazio di lavoro dell'applicazione"
     IDC_SYSPARAMS_WINDOW_FRAME      "Frame della finestra"
     IDC_SYSPARAMS_ACTIVE_BORDER     "Bordo attivo"
