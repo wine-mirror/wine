@@ -80,7 +80,7 @@ STRINGTABLE
     IDS_TB_FORWARD          "Avanti"
     IDS_TB_STOP             "Ferma"
     IDS_TB_REFRESH          "Aggiorna"
-    IDS_TB_HOME             "Home"
+    IDS_TB_HOME             "Inizio"
     IDS_TB_PRINT            "Stampa"
 }
 
