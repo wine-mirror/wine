@@ -286,7 +286,7 @@ static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',
 		/* TODO: JOYCAPS_POVCTS handling */
 		break;
 	    default:
-		WARN("Unknown axis %hhu(%hhu). Skipped.\n", jstck->axesMap[i], i);
+		WARN("Unknown axis %hhu(%u). Skipped.\n", jstck->axesMap[i], i);
 	    }
 	}
     }
