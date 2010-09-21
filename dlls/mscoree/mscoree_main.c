@@ -22,6 +22,7 @@
 #include <stdarg.h>
 
 #include "wine/unicode.h"
+#include "wine/library.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -40,7 +41,34 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
-static BOOL get_mono_path(LPWSTR path)
+BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int* abi_version)
+{
+    static const WCHAR mono_dll[] = {'\\','b','i','n','\\','m','o','n','o','.','d','l','l',0};
+    static const WCHAR libmono_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','.','d','l','l',0};
+    DWORD attributes;
+
+    strcpyW(dll_path, path);
+    strcatW(dll_path, mono_dll);
+    attributes = GetFileAttributesW(dll_path);
+
+    if (attributes == INVALID_FILE_ATTRIBUTES)
+    {
+        strcpyW(dll_path, path);
+        strcatW(dll_path, libmono_dll);
+        attributes = GetFileAttributesW(dll_path);
+    }
+
+    if (attributes != INVALID_FILE_ATTRIBUTES)
+    {
+        /* FIXME: Test for appropriate architecture. */
+        *abi_version = 1;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL get_mono_path_from_registry(LPWSTR path)
 {
     static const WCHAR mono_key[] = {'S','o','f','t','w','a','r','e','\\','N','o','v','e','l','l','\\','M','o','n','o',0};
     static const WCHAR defaul_clr[] = {'D','e','f','a','u','l','t','C','L','R',0};
@@ -50,6 +78,8 @@ static BOOL get_mono_path(LPWSTR path)
     WCHAR version[64], version_key[MAX_PATH];
     DWORD len;
     HKEY key;
+    WCHAR dll_path[MAX_PATH];
+    int abi_version;
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, mono_key, 0, KEY_READ, &key))
         return FALSE;
@@ -77,7 +107,80 @@ static BOOL get_mono_path(LPWSTR path)
     }
     RegCloseKey(key);
 
-    return TRUE;
+    return find_mono_dll(path, dll_path, &abi_version);
+}
+
+static BOOL get_mono_path_from_folder(LPCWSTR folder, LPWSTR mono_path)
+{
+    static const WCHAR mono_one_dot_zero[] = {'\\','m','o','n','o','-','1','.','0', 0};
+    WCHAR mono_dll_path[MAX_PATH];
+    int abi_version;
+    BOOL found = FALSE;
+
+    strcpyW(mono_path, folder);
+    strcatW(mono_path, mono_one_dot_zero);
+
+    found = find_mono_dll(mono_path, mono_dll_path, &abi_version);
+
+    if (found && abi_version != 1)
+    {
+        ERR("found wrong ABI in %s\n", debugstr_w(mono_path));
+        found = FALSE;
+    }
+
+    return found;
+}
+
+static BOOL get_mono_path(LPWSTR path)
+{
+    static const WCHAR subdir_mono[] = {'\\','m','o','n','o',0};
+    static const WCHAR sibling_mono[] = {'\\','.','.','\\','m','o','n','o',0};
+    WCHAR base_path[MAX_PATH];
+    const char *unix_data_dir;
+    WCHAR *dos_data_dir;
+    int build_tree=0;
+    static WCHAR* (CDECL *wine_get_dos_file_name)(const char*);
+
+    /* First try c:\windows\mono */
+    GetWindowsDirectoryW(base_path, MAX_PATH);
+    strcatW(base_path, subdir_mono);
+
+    if (get_mono_path_from_folder(base_path, path))
+        return TRUE;
+
+    /* Next: /usr/share/wine/mono */
+    unix_data_dir = wine_get_data_dir();
+
+    if (!unix_data_dir)
+    {
+        unix_data_dir = wine_get_build_dir();
+        build_tree = 1;
+    }
+
+    if (unix_data_dir)
+    {
+        if (!wine_get_dos_file_name)
+            wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "wine_get_dos_file_name");
+
+        if (wine_get_dos_file_name)
+        {
+            dos_data_dir = wine_get_dos_file_name(unix_data_dir);
+
+            if (dos_data_dir)
+            {
+                strcpyW(base_path, dos_data_dir);
+                strcatW(base_path, build_tree ? sibling_mono : subdir_mono);
+
+                HeapFree(GetProcessHeap(), 0, dos_data_dir);
+
+                if (get_mono_path_from_folder(base_path, path))
+                    return TRUE;
+            }
+        }
+    }
+
+    /* Last: the registry */
+    return get_mono_path_from_registry(path);
 }
 
 static BOOL get_install_root(LPWSTR install_dir)
@@ -139,8 +242,6 @@ static void set_environment(LPCWSTR bin_path)
 
 static HMODULE load_mono(void)
 {
-    static const WCHAR mono_dll[] = {'\\','b','i','n','\\','m','o','n','o','.','d','l','l',0};
-    static const WCHAR libmono_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','.','d','l','l',0};
     static const WCHAR bin[] = {'\\','b','i','n',0};
     static const WCHAR lib[] = {'\\','l','i','b',0};
     static const WCHAR etc[] = {'\\','e','t','c',0};
@@ -148,6 +249,7 @@ static HMODULE load_mono(void)
     WCHAR mono_path[MAX_PATH], mono_dll_path[MAX_PATH+16], mono_bin_path[MAX_PATH+4];
     WCHAR mono_lib_path[MAX_PATH+4], mono_etc_path[MAX_PATH+4];
     char mono_lib_path_a[MAX_PATH], mono_etc_path_a[MAX_PATH];
+    int abi_version;
 
     EnterCriticalSection(&mono_lib_cs);
 
@@ -167,16 +269,11 @@ static HMODULE load_mono(void)
         strcatW(mono_etc_path, etc);
         WideCharToMultiByte(CP_UTF8, 0, mono_etc_path, -1, mono_etc_path_a, MAX_PATH, NULL, NULL);
 
-        strcpyW(mono_dll_path, mono_path);
-        strcatW(mono_dll_path, mono_dll);
-        mono_handle = LoadLibraryW(mono_dll_path);
+        if (!find_mono_dll(mono_path, mono_dll_path, &abi_version)) goto end;
 
-        if (!mono_handle)
-        {
-            strcpyW(mono_dll_path, mono_path);
-            strcatW(mono_dll_path, libmono_dll);
-            mono_handle = LoadLibraryW(mono_dll_path);
-        }
+        if (abi_version != 1) goto end;
+
+        mono_handle = LoadLibraryW(mono_dll_path);
 
         if (!mono_handle) goto end;
 
