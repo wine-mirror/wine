@@ -8,6 +8,7 @@ C_SRCS = taskkill.c
 RC_SRCS = \
 	De.rc \
 	En.rc \
-	It.rc
+	It.rc \
+	Lt.rc
 
 @MAKE_PROG_RULES@
