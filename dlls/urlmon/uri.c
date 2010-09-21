@@ -26,9 +26,12 @@
 #define UINT_MAX 0xffffffff
 #define USHORT_MAX 0xffff
 
-#define ALLOW_NULL_TERM_SCHEME      0x1
-#define ALLOW_NULL_TERM_USER_NAME   0x2
-#define ALLOW_NULL_TERM_PASSWORD    0x4
+#define ALLOW_NULL_TERM_SCHEME          0x01
+#define ALLOW_NULL_TERM_USER_NAME       0x02
+#define ALLOW_NULL_TERM_PASSWORD        0x04
+#define ALLOW_BRACKETLESS_IP_LITERAL    0x08
+#define SKIP_IP_FUTURE_CHECK            0x10
+#define IGNORE_PORT_DELIMITER           0x20
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
@@ -1516,11 +1519,11 @@ static BOOL parse_ipv4address(const WCHAR **ptr, parse_data *data, DWORD flags) 
  *
  *  A reg-name CAN be empty.
  */
-static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
     const BOOL has_start_bracket = **ptr == '[';
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
     BOOL inside_brackets = has_start_bracket;
-    BOOL ignore_col = FALSE;
+    BOOL ignore_col = extras & IGNORE_PORT_DELIMITER;
 
     /* We have to be careful with file schemes. */
     if(data->scheme_type == URL_SCHEME_FILE) {
@@ -1554,7 +1557,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
                     if(data->scheme_type != URL_SCHEME_UNKNOWN) {
                         *ptr = data->host;
                         data->host = NULL;
-                        TRACE("(%p %p %x): Expected valid port\n", ptr, data, flags);
+                        TRACE("(%p %p %x %x): Expected valid port\n", ptr, data, flags, extras);
                         return FALSE;
                     } else
                         /* Windows gives up on trying to parse a port when it
@@ -1585,8 +1588,8 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
     if(has_start_bracket) {
         /* Make sure the last character of the host wasn't a ']'. */
         if(*(*ptr-1) == ']') {
-            TRACE("(%p %p %x): Expected an IP literal inside of the host\n",
-                ptr, data, flags);
+            TRACE("(%p %p %x %x): Expected an IP literal inside of the host\n",
+                ptr, data, flags, extras);
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
@@ -1603,7 +1606,7 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD flags) {
     else
         data->host_type = Uri_HOST_DNS;
 
-    TRACE("(%p %p %x): Parsed reg-name. host=%s len=%d\n", ptr, data, flags,
+    TRACE("(%p %p %x %x): Parsed reg-name. host=%s len=%d\n", ptr, data, flags, extras,
         debugstr_wn(data->host, data->host_len), data->host_len);
     return TRUE;
 }
@@ -1816,27 +1819,33 @@ static BOOL parse_ipvfuture(const WCHAR **ptr, parse_data *data, DWORD flags) {
 }
 
 /* IP-literal = "[" ( IPv6address / IPvFuture  ) "]" */
-static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags) {
+static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
     data->host = *ptr;
 
-    if(**ptr != '[') {
+    if(**ptr != '[' && !(extras & ALLOW_BRACKETLESS_IP_LITERAL)) {
         data->host = NULL;
         return FALSE;
-    }
+    } else if(**ptr == '[')
+        ++(*ptr);
 
-    ++(*ptr);
     if(!parse_ipv6address(ptr, data, flags)) {
-        if(!parse_ipvfuture(ptr, data, flags)) {
+        if(extras & SKIP_IP_FUTURE_CHECK || !parse_ipvfuture(ptr, data, flags)) {
             *ptr = data->host;
             data->host = NULL;
             return FALSE;
         }
     }
 
-    if(**ptr != ']') {
+    if(**ptr != ']' && !(extras & ALLOW_BRACKETLESS_IP_LITERAL)) {
         *ptr = data->host;
         data->host = NULL;
         return FALSE;
+    } else if(!**ptr && extras & ALLOW_BRACKETLESS_IP_LITERAL) {
+        /* The IP literal didn't contain brackets and was followed by
+         * a NULL terminator, so no reason to even check the port.
+         */
+        data->host_len = *ptr - data->host;
+        return TRUE;
     }
 
     ++(*ptr);
@@ -1860,12 +1869,12 @@ static BOOL parse_ip_literal(const WCHAR **ptr, parse_data *data, DWORD flags) {
  *
  * host = IP-literal / IPv4address / reg-name
  */
-static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD flags) {
-    if(!parse_ip_literal(ptr, data, flags)) {
+static BOOL parse_host(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
+    if(!parse_ip_literal(ptr, data, flags, extras)) {
         if(!parse_ipv4address(ptr, data, flags)) {
-            if(!parse_reg_name(ptr, data, flags)) {
-                TRACE("(%p %p %x): Malformed URI, Unknown host type.\n",
-                    ptr, data, flags);
+            if(!parse_reg_name(ptr, data, flags, extras)) {
+                TRACE("(%p %p %x %x): Malformed URI, Unknown host type.\n",
+                    ptr, data, flags, extras);
                 return FALSE;
             }
         }
@@ -1884,7 +1893,7 @@ static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
     /* Parsing the port will happen during one of the host parsing
      * routines (if the URI has a port).
      */
-    if(!parse_host(ptr, data, flags))
+    if(!parse_host(ptr, data, flags, 0))
         return FALSE;
 
     return TRUE;
@@ -3651,6 +3660,37 @@ static HRESULT validate_userinfo(const UriBuilder *builder, parse_data *data, DW
     return S_OK;
 }
 
+static HRESULT validate_host(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->host) {
+        ptr = builder->host;
+        expected_len = builder->host_len;
+    } else if(!(builder->modified_props & Uri_HAS_HOST) && builder->uri && builder->uri->host_start > -1) {
+        ptr = builder->uri->canon_uri + builder->uri->host_start;
+        expected_len = builder->uri->host_len;
+    } else
+        ptr = NULL;
+
+    if(ptr) {
+        DWORD extras = ALLOW_BRACKETLESS_IP_LITERAL|IGNORE_PORT_DELIMITER|SKIP_IP_FUTURE_CHECK;
+        pptr = &ptr;
+
+        if(parse_host(pptr, data, flags, extras) && data->host_len == expected_len)
+            TRACE("(%p %p %x): Found valid host name %s len=%d type=%d.\n", builder, data, flags,
+                debugstr_wn(data->host, data->host_len), data->host_len, data->host_type);
+        else {
+            TRACE("(%p %p %x): Invalid host name found %s expected_len=%d.\n", builder, data, flags,
+                debugstr_wn(ptr, expected_len), expected_len);
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT validate_components(const UriBuilder *builder, parse_data *data, DWORD flags) {
     HRESULT hr;
 
@@ -3675,6 +3715,13 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
     hr = validate_userinfo(builder, data, flags);
     if(FAILED(hr))
         return hr;
+
+    hr = validate_host(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    /* The URI is opaque if it doesn't have an authority component. */
+    data->is_opaque = !data->username && !data->password && !data->host;
 
     return E_NOTIMPL;
 }

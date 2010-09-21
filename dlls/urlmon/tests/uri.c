@@ -4823,7 +4823,6 @@ static const uri_builder_test uri_builder_tests[] = {
         {
             {FALSE},
         },
-
         {TRUE,TRUE,999999,S_OK,FALSE},
         0,S_OK,TRUE,
         0,S_OK,TRUE,
@@ -5236,6 +5235,66 @@ static const uri_builder_test uri_builder_tests[] = {
         0,INET_E_INVALID_URL,FALSE,
         0,INET_E_INVALID_URL,FALSE,
         0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"winehq.org/test",NULL,Uri_PROPERTY_HOST,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"winehq.org?test",NULL,Uri_PROPERTY_HOST,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"winehq.org#test",NULL,Uri_PROPERTY_HOST,S_OK,FALSE}
+        },
+        {FALSE},
+        0,INET_E_INVALID_URL,FALSE,
+        0,INET_E_INVALID_URL,FALSE,
+        0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    /* Hostname is allowed to contain a ':' (even for known scheme types). */
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"winehq.org:test",NULL,Uri_PROPERTY_HOST,S_OK,FALSE},
+        },
+        {FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http://winehq.org:test/",S_OK},
+            {"winehq.org:test",S_OK},
+            {"http://winehq.org:test/",S_OK},
+            {"winehq.org:test",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"winehq.org:test",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://winehq.org:test/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 
