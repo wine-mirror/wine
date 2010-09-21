@@ -1,7 +1,11 @@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = taskkill.exe
 APPMODE   = -mconsole -municode
+IMPORTS   = user32
 
 C_SRCS = taskkill.c
+
+RC_SRCS = \
+	En.rc
 
 @MAKE_PROG_RULES@
