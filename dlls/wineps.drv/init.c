@@ -271,6 +271,7 @@ static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
     LPDEVMODEA dmA;
     DWORD size;
     BOOL Formname;
+    /* there is no pointer dereference here, if your code checking tool complains it's broken */
     ptrdiff_t off_formname = (const char *)dmW->dmFormName - (const char *)dmW;
 
     if(!dmW) return NULL;
