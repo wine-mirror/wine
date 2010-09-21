@@ -62,10 +62,57 @@ void cleanup(void)
     FreeLibrary(hmscoree);
 }
 
+void test_enumruntimes(void)
+{
+    IEnumUnknown *runtime_enum;
+    IUnknown *unk;
+    DWORD count;
+    ICLRRuntimeInfo *runtime_info;
+    HRESULT hr;
+    WCHAR buf[MAX_PATH];
+
+    hr = ICLRMetaHost_EnumerateInstalledRuntimes(metahost, &runtime_enum);
+    ok(hr == S_OK, "EnumerateInstalledRuntimes returned %x\n", hr);
+    if (FAILED(hr)) return;
+
+    while ((hr = IEnumUnknown_Next(runtime_enum, 1, &unk, &count)) == S_OK)
+    {
+        hr = IUnknown_QueryInterface(unk, &IID_ICLRRuntimeInfo, (void**)&runtime_info);
+        ok(hr == S_OK, "QueryInterface returned %x\n", hr);
+
+        count = 1;
+        hr = ICLRRuntimeInfo_GetVersionString(runtime_info, buf, &count);
+        ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), "GetVersionString returned %x\n", hr);
+        ok(count > 1, "GetVersionString returned count %u\n", count);
+
+        count = 0xdeadbeef;
+        hr = ICLRRuntimeInfo_GetVersionString(runtime_info, NULL, &count);
+        ok(hr == S_OK, "GetVersionString returned %x\n", hr);
+        ok(count > 1 && count != 0xdeadbeef, "GetVersionString returned count %u\n", count);
+
+        count = MAX_PATH;
+        hr = ICLRRuntimeInfo_GetVersionString(runtime_info, buf, &count);
+        ok(hr == S_OK, "GetVersionString returned %x\n", hr);
+        ok(count > 1, "GetVersionString returned count %u\n", count);
+
+        trace("runtime found: %s\n", wine_dbgstr_w(buf));
+
+        ICLRRuntimeInfo_Release(runtime_info);
+
+        IUnknown_Release(unk);
+    }
+
+    ok(hr == S_FALSE, "IEnumUnknown_Next returned %x\n", hr);
+
+    IEnumUnknown_Release(runtime_enum);
+}
+
 START_TEST(metahost)
 {
     if (!init_pointers())
         return;
+
+    test_enumruntimes();
 
     cleanup();
 }
