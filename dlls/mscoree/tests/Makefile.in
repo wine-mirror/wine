@@ -1,6 +1,7 @@
 TESTDLL   = mscoree.dll
 
 C_SRCS = \
+	metahost.c \
 	mscoree.c
 
 @MAKE_TEST_RULES@
