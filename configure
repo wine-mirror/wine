@@ -15016,6 +15016,7 @@ wine_fn_config_program services enable_services install
 wine_fn_config_program spoolsv enable_spoolsv install
 wine_fn_config_program start enable_start install
 wine_fn_config_program svchost enable_svchost install
+wine_fn_config_program taskkill enable_taskkill install
 wine_fn_config_program taskmgr enable_taskmgr install
 wine_fn_config_program termsv enable_termsv install
 wine_fn_config_program uninstaller enable_uninstaller install
