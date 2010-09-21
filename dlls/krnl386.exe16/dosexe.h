@@ -64,25 +64,6 @@ typedef struct {
   DWORD offset;
 } SEGPTR48, FARPROC48;
 
-#define DOSCONF_MEM_HIGH        0x0001
-#define DOSCONF_MEM_UMB         0x0002
-#define DOSCONF_NUMLOCK         0x0004
-#define DOSCONF_KEYB_CONV       0x0008
-
-typedef struct {
-    char lastdrive;
-    int brk_flag;
-    int files;
-    int stacks_nr;
-    int stacks_sz;
-    int buf;
-    int buf2;
-    int fcbs;
-    int flags;
-    char *shell;
-    char *country;
-} DOSCONF;
-
 typedef void (*DOSRELAY)(CONTEXT86*,void*);
 typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
 typedef void (WINAPI *INTPROC)(CONTEXT86*);
@@ -387,9 +368,6 @@ extern BYTE DMA_ioport_in( WORD port );
 
 /* dosaspi.c */
 extern void DOSVM_ASPIHandler(CONTEXT86*);
-
-/* dosconf.c */
-extern DOSCONF *DOSCONF_GetConfig( void );
 
 /* dosmem.c */
 extern BIOSDATA *DOSVM_BiosData( void );

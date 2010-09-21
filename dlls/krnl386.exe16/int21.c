@@ -263,6 +263,7 @@ typedef struct
 #define KEY_NPAGE       0x49
 #define KEY_PPAGE       0x51
 
+static int brk_flag;
 
 struct magic_device
 {
@@ -408,10 +409,6 @@ static BOOL INT21_ReadChar( BYTE *input, CONTEXT86 *waitctx )
  */
 static WORD INT21_GetSystemCountryCode( void )
 {
-    /*
-     * FIXME: Determine country code. We should probably use
-     *        DOSCONF structure for that.
-     */
     return GetSystemDefaultLangID();
 }
 
@@ -4594,12 +4591,12 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
         case 0x00: /* GET CURRENT EXTENDED BREAK STATE */
             TRACE("GET CURRENT EXTENDED BREAK STATE\n");
-            SET_DL( context, DOSCONF_GetConfig()->brk_flag );
+            SET_DL( context, brk_flag );
             break;
 
         case 0x01: /* SET EXTENDED BREAK STATE */
             TRACE("SET CURRENT EXTENDED BREAK STATE\n");
-            DOSCONF_GetConfig()->brk_flag = (DL_reg(context) > 0) ? 1 : 0;
+            brk_flag = (DL_reg(context) > 0) ? 1 : 0;
             break;
 
         case 0x02: /* GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE*/
@@ -4607,13 +4604,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             /* ugly coding in order to stay reentrant */
             if (DL_reg(context))
             {
-                SET_DL( context, DOSCONF_GetConfig()->brk_flag );
-                DOSCONF_GetConfig()->brk_flag = 1;
+                SET_DL( context, brk_flag );
+                brk_flag = 1;
             }
             else
             {
-                SET_DL( context, DOSCONF_GetConfig()->brk_flag );
-                DOSCONF_GetConfig()->brk_flag = 0;
+                SET_DL( context, brk_flag );
+                brk_flag = 0;
             }
             break;
 

@@ -10,7 +10,6 @@ C_SRCS = \
 	atom.c \
 	dma.c \
 	dosaspi.c \
-	dosconf.c \
 	dosdev.c \
 	dosexe.c \
 	dosmem.c \
