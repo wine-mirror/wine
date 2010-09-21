@@ -6,6 +6,7 @@ IMPORTS   = psapi user32
 C_SRCS = taskkill.c
 
 RC_SRCS = \
+	De.rc \
 	En.rc \
 	It.rc
 
