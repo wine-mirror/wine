@@ -2188,6 +2188,23 @@ static const struct blit_shader *select_blit_implementation(struct wined3d_adapt
     else return &ffp_blit;
 }
 
+static void load_gl_funcs(struct wined3d_gl_info *gl_info, DWORD gl_version)
+{
+    DWORD ver;
+
+#define USE_GL_FUNC(type, pfn, ext, replace) \
+    if (gl_info->supported[ext]) gl_info->pfn = (type)pwglGetProcAddress(#pfn); \
+    else if ((ver = ver_for_ext(ext)) && ver <= gl_version) gl_info->pfn = (type)pwglGetProcAddress(#replace); \
+    else gl_info->pfn = NULL;
+
+    GL_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
+
+#define USE_GL_FUNC(type, pfn, ext, replace) gl_info->pfn = (type)pwglGetProcAddress(#pfn);
+    WGL_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
+}
+
 /* Context activation is done by the caller. */
 static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
 {
@@ -2322,19 +2339,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_adapter *adapter)
     }
 
     /* Now work out what GL support this card really has */
-#define USE_GL_FUNC(type, pfn, ext, replace) \
-{ \
-    DWORD ver = ver_for_ext(ext); \
-    if (gl_info->supported[ext]) gl_info->pfn = (type)pwglGetProcAddress(#pfn); \
-    else if (ver && ver <= gl_version) gl_info->pfn = (type)pwglGetProcAddress(#replace); \
-    else gl_info->pfn = NULL; \
-}
-    GL_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
-
-#define USE_GL_FUNC(type, pfn, ext, replace) gl_info->pfn = (type)pwglGetProcAddress(#pfn);
-    WGL_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
+    load_gl_funcs( gl_info, gl_version );
 
     ENTER_GL();
 
