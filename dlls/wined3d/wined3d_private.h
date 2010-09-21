@@ -2378,6 +2378,12 @@ struct wined3d_state
     WINED3DVIEWPORT viewport;
     RECT scissor_rect;
 
+    /* Light hashmap . Collisions are handled using standard wine double linked lists */
+#define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */
+#define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE) /* Primitive and simple function */
+    struct list light_map[LIGHTMAP_SIZE]; /* Hash map containing the lights */
+    const struct wined3d_light_info *lights[MAX_ACTIVE_LIGHTS]; /* Map of opengl lights to d3d lights */
+
     DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
 };
 
@@ -2394,12 +2400,6 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     struct wined3d_state state;
-
-    /* Light hashmap . Collisions are handled using standard wine double linked lists */
-#define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */
-#define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE) /* Primitive and simple function */
-    struct list               lightMap[LIGHTMAP_SIZE]; /* Hash map containing the lights */
-    const struct wined3d_light_info *activeLights[MAX_ACTIVE_LIGHTS]; /* Map of opengl lights to d3d lights */
 
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];

@@ -3938,7 +3938,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
     /* Reset lights. TODO: Call light apply func */
     for (k = 0; k < stateblock->device->maxConcurrentLights; ++k)
     {
-        light = stateblock->activeLights[k];
+        light = stateblock->state.lights[k];
         if(!light) continue;
         glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, light->lightPosn);
         checkGLcall("glLightfv posn");
@@ -4812,7 +4812,7 @@ static void viewport_vertexpart(DWORD state, IWineD3DStateBlockImpl *stateblock,
 static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     UINT Index = state - STATE_ACTIVELIGHT(0);
-    const struct wined3d_light_info *lightInfo = stateblock->activeLights[Index];
+    const struct wined3d_light_info *lightInfo = stateblock->state.lights[Index];
 
     if(!lightInfo) {
         glDisable(GL_LIGHT0 + Index);

@@ -452,7 +452,7 @@ static void stateblock_init_lights(IWineD3DStateBlockImpl *stateblock, struct li
             struct wined3d_light_info *dst_light = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_light));
 
             *dst_light = *src_light;
-            list_add_tail(&stateblock->lightMap[i], &dst_light->entry);
+            list_add_tail(&stateblock->state.light_map[i], &dst_light->entry);
         }
     }
 }
@@ -518,7 +518,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
         for(counter = 0; counter < LIGHTMAP_SIZE; counter++) {
             struct list *e1, *e2;
-            LIST_FOR_EACH_SAFE(e1, e2, &This->lightMap[counter])
+            LIST_FOR_EACH_SAFE(e1, e2, &This->state.light_map[counter])
             {
                 struct wined3d_light_info *light = LIST_ENTRY(e1, struct wined3d_light_info, entry);
                 list_remove(&light->entry);
@@ -549,12 +549,14 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
      */
     for(i = 0; i < LIGHTMAP_SIZE; i++) {
         struct list *e, *f;
-        LIST_FOR_EACH(e, &This->lightMap[i]) {
+        LIST_FOR_EACH(e, &This->state.light_map[i])
+        {
             BOOL updated = FALSE;
             struct wined3d_light_info *src = LIST_ENTRY(e, struct wined3d_light_info, entry), *realLight;
 
             /* Look up the light in the destination */
-            LIST_FOR_EACH(f, &targetStateBlock->lightMap[i]) {
+            LIST_FOR_EACH(f, &targetStateBlock->state.light_map[i])
+            {
                 realLight = LIST_ENTRY(f, struct wined3d_light_info, entry);
                 if (realLight->OriginalIndex == src->OriginalIndex)
                 {
@@ -563,12 +565,12 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
                     if (realLight->glIndex == -1 && src->glIndex != -1)
                     {
                         /* Light disabled */
-                        This->activeLights[src->glIndex] = NULL;
+                        This->state.lights[src->glIndex] = NULL;
                     }
                     else if (realLight->glIndex != -1 && src->glIndex == -1)
                     {
                         /* Light enabled */
-                        This->activeLights[realLight->glIndex] = src;
+                        This->state.lights[realLight->glIndex] = src;
                     }
                     src->glIndex = realLight->glIndex;
                     updated = TRUE;
@@ -586,7 +588,7 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
                 src->OriginalParms = WINED3D_default_light;
                 if (src->glIndex != -1)
                 {
-                    This->activeLights[src->glIndex] = NULL;
+                    This->state.lights[src->glIndex] = NULL;
                     src->glIndex = -1;
                 }
             }
@@ -896,7 +898,7 @@ static void apply_lights(IWineD3DDevice *device, const IWineD3DStateBlockImpl *T
     for(i = 0; i < LIGHTMAP_SIZE; i++) {
         struct list *e;
 
-        LIST_FOR_EACH(e, &This->lightMap[i])
+        LIST_FOR_EACH(e, &This->state.light_map[i])
         {
             const struct wined3d_light_info *light = LIST_ENTRY(e, struct wined3d_light_info, entry);
 
@@ -1371,7 +1373,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
 
     for (i = 0; i < LIGHTMAP_SIZE; i++)
     {
-        list_init(&stateblock->lightMap[i]);
+        list_init(&stateblock->state.light_map[i]);
     }
 
     hr = stateblock_allocate_shader_constants(stateblock);
@@ -1387,7 +1389,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
     switch (type)
     {
         case WINED3DSBT_ALL:
-            stateblock_init_lights(stateblock, device->stateBlock->lightMap);
+            stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
             stateblock_savedstates_set_all(&stateblock->changed, device->d3d_vshader_constantF,
                                            device->d3d_pshader_constantF);
             break;
@@ -1397,7 +1399,7 @@ HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *
             break;
 
         case WINED3DSBT_VERTEXSTATE:
-            stateblock_init_lights(stateblock, device->stateBlock->lightMap);
+            stateblock_init_lights(stateblock, device->stateBlock->state.light_map);
             stateblock_savedstates_set_vertex(&stateblock->changed, device->d3d_vshader_constantF);
             break;
 

@@ -2546,7 +2546,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         return WINED3DERR_INVALIDCALL;
     }
 
-    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi])
+    LIST_FOR_EACH(e, &This->updateStateBlock->state.light_map[Hi])
     {
         object = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(object->OriginalIndex == Index) break;
@@ -2560,7 +2560,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
             ERR("Out of memory error when allocating a light\n");
             return E_OUTOFMEMORY;
         }
-        list_add_head(&This->updateStateBlock->lightMap[Hi], &object->entry);
+        list_add_head(&This->updateStateBlock->state.light_map[Hi], &object->entry);
         object->glIndex = -1;
         object->OriginalIndex = Index;
     }
@@ -2659,7 +2659,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD I
     struct list *e;
     TRACE("(%p) : Idx(%d), pLight(%p)\n", This, Index, pLight);
 
-    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi])
+    LIST_FOR_EACH(e, &This->stateBlock->state.light_map[Hi])
     {
         lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(lightInfo->OriginalIndex == Index) break;
@@ -2688,7 +2688,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
     struct list *e;
     TRACE("(%p) : Idx(%d), enable? %d\n", This, Index, Enable);
 
-    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi])
+    LIST_FOR_EACH(e, &This->updateStateBlock->state.light_map[Hi])
     {
         lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(lightInfo->OriginalIndex == Index) break;
@@ -2703,7 +2703,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         IWineD3DDeviceImpl_SetLight(iface, Index, &WINED3D_default_light);
 
         /* Search for it again! Should be fairly quick as near head of list */
-        LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi])
+        LIST_FOR_EACH(e, &This->updateStateBlock->state.light_map[Hi])
         {
             lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
             if(lightInfo->OriginalIndex == Index) break;
@@ -2722,7 +2722,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(lightInfo->glIndex));
             }
 
-            This->updateStateBlock->activeLights[lightInfo->glIndex] = NULL;
+            This->updateStateBlock->state.lights[lightInfo->glIndex] = NULL;
             lightInfo->glIndex = -1;
         } else {
             TRACE("Light already disabled, nothing to do\n");
@@ -2738,9 +2738,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
             /* Find a free gl light */
             for (i = 0; i < This->maxConcurrentLights; ++i)
             {
-                if (!This->updateStateBlock->activeLights[i])
+                if (!This->updateStateBlock->state.lights[i])
                 {
-                    This->updateStateBlock->activeLights[i] = lightInfo;
+                    This->updateStateBlock->state.lights[i] = lightInfo;
                     lightInfo->glIndex = i;
                     break;
                 }
@@ -2775,7 +2775,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, D
     UINT Hi = LIGHTMAP_HASHFUNC(Index);
     TRACE("(%p) : for idx(%d)\n", This, Index);
 
-    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi])
+    LIST_FOR_EACH(e, &This->stateBlock->state.light_map[Hi])
     {
         lightInfo = LIST_ENTRY(e, struct wined3d_light_info, entry);
         if(lightInfo->OriginalIndex == Index) break;
