@@ -2808,18 +2808,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWO
 
     This->updateStateBlock->changed.clipplane |= 1 << Index;
 
-    if(This->updateStateBlock->clipplane[Index][0] == pPlane[0] &&
-       This->updateStateBlock->clipplane[Index][1] == pPlane[1] &&
-       This->updateStateBlock->clipplane[Index][2] == pPlane[2] &&
-       This->updateStateBlock->clipplane[Index][3] == pPlane[3]) {
+    if (This->updateStateBlock->state.clip_planes[Index][0] == pPlane[0]
+            && This->updateStateBlock->state.clip_planes[Index][1] == pPlane[1]
+            && This->updateStateBlock->state.clip_planes[Index][2] == pPlane[2]
+            && This->updateStateBlock->state.clip_planes[Index][3] == pPlane[3])
+    {
         TRACE("Application is setting old values over, nothing to do\n");
         return WINED3D_OK;
     }
 
-    This->updateStateBlock->clipplane[Index][0] = pPlane[0];
-    This->updateStateBlock->clipplane[Index][1] = pPlane[1];
-    This->updateStateBlock->clipplane[Index][2] = pPlane[2];
-    This->updateStateBlock->clipplane[Index][3] = pPlane[3];
+    This->updateStateBlock->state.clip_planes[Index][0] = pPlane[0];
+    This->updateStateBlock->state.clip_planes[Index][1] = pPlane[1];
+    This->updateStateBlock->state.clip_planes[Index][2] = pPlane[2];
+    This->updateStateBlock->state.clip_planes[Index][3] = pPlane[3];
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -2843,10 +2844,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetClipPlane(IWineD3DDevice *iface, DWO
         return WINED3DERR_INVALIDCALL;
     }
 
-    pPlane[0] = (float) This->stateBlock->clipplane[Index][0];
-    pPlane[1] = (float) This->stateBlock->clipplane[Index][1];
-    pPlane[2] = (float) This->stateBlock->clipplane[Index][2];
-    pPlane[3] = (float) This->stateBlock->clipplane[Index][3];
+    pPlane[0] = (float)This->stateBlock->state.clip_planes[Index][0];
+    pPlane[1] = (float)This->stateBlock->state.clip_planes[Index][1];
+    pPlane[2] = (float)This->stateBlock->state.clip_planes[Index][2];
+    pPlane[3] = (float)This->stateBlock->state.clip_planes[Index][3];
     return WINED3D_OK;
 }
 

@@ -818,10 +818,12 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (memcmp(targetStateBlock->clipplane[i], This->clipplane[i], sizeof(*This->clipplane)))
+        if (memcmp(targetStateBlock->state.clip_planes[i],
+                This->state.clip_planes[i], sizeof(*This->state.clip_planes)))
         {
             TRACE("Updating clipplane %u.\n", i);
-            memcpy(This->clipplane[i], targetStateBlock->clipplane[i], sizeof(*This->clipplane));
+            memcpy(This->state.clip_planes[i],
+                    targetStateBlock->state.clip_planes[i], sizeof(*This->state.clip_planes));
         }
     }
 
@@ -1061,10 +1063,10 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
 
         if (!(map & 1)) continue;
 
-        clip[0] = This->clipplane[i][0];
-        clip[1] = This->clipplane[i][1];
-        clip[2] = This->clipplane[i][2];
-        clip[3] = This->clipplane[i][3];
+        clip[0] = This->state.clip_planes[i][0];
+        clip[1] = This->state.clip_planes[i][1];
+        clip[2] = This->state.clip_planes[i][2];
+        clip[3] = This->state.clip_planes[i][3];
         IWineD3DDevice_SetClipPlane(device, i, clip);
     }
 

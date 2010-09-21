@@ -3809,11 +3809,11 @@ static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     }
 
     TRACE("Clipplane [%f,%f,%f,%f]\n",
-          stateblock->clipplane[index][0],
-          stateblock->clipplane[index][1],
-          stateblock->clipplane[index][2],
-          stateblock->clipplane[index][3]);
-    glClipPlane(GL_CLIP_PLANE0 + index, stateblock->clipplane[index]);
+            stateblock->state.clip_planes[index][0],
+            stateblock->state.clip_planes[index][1],
+            stateblock->state.clip_planes[index][2],
+            stateblock->state.clip_planes[index][3]);
+    glClipPlane(GL_CLIP_PLANE0 + index, stateblock->state.clip_planes[index]);
     checkGLcall("glClipPlane");
 
     glPopMatrix();
