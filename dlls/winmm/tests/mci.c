@@ -189,11 +189,15 @@ static void test_mciParser(HWND hwnd)
     err = mciSendString("open avivideo alias a", buf, sizeof(buf), hwnd);
     ok(!err,"open another: %s\n", dbg_mcierr(err));
 
+    buf[0]='z';
     err = mciSendString("", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_MISSING_COMMAND_STRING,"empty string: %s\n", dbg_mcierr(err));
+    ok(!buf[0], "error buffer %s\n", buf);
 
+    buf[0]='d';
     err = mciSendString("open", buf, sizeof(buf), NULL);
     ok(err==MCIERR_MISSING_DEVICE_NAME,"open void: %s\n", dbg_mcierr(err));
+    ok(!buf[0], "open error buffer %s\n", buf);
 
     err = mciSendString("open notify", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_INVALID_DEVICE_NAME,"open notify: %s\n", dbg_mcierr(err));
@@ -214,15 +218,19 @@ static void test_mciParser(HWND hwnd)
     err = mciSendString("status x length position", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"status length+position: %s\n", dbg_mcierr(err));
 
+    buf[0]='I';
     err = mciSendString("set x time format milliseconds time format ms", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_FLAGS_NOT_COMPATIBLE,"status length+position: %s\n", dbg_mcierr(err));
+    ok(!buf[0], "set error buffer %s\n", buf);
 
     /* device's response, not a parser test */
     err = mciSendString("status x", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_MISSING_PARAMETER,"status waveaudio nokeyword: %s\n", dbg_mcierr(err));
 
+    buf[0]='G';
     err = mciSendString("status a", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_UNSUPPORTED_FUNCTION,"status avivideo nokeyword: %s\n", dbg_mcierr(err));
+    ok(!buf[0], "status error buffer %s\n", buf);
 
     err = mciSendString("status x track", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_BAD_INTEGER,"status waveaudio no track: %s\n", dbg_mcierr(err));
@@ -283,6 +291,7 @@ static void test_mciParser(HWND hwnd)
      * and return the one error code or MCIERR_MULTIPLE if they differ. */
     err = mciSendString("pause all", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_MULTIPLE || broken(err==MCIERR_NONAPPLICABLE_FUNCTION),"pause all: %s\n", dbg_mcierr(err));
+    ok(!buf[0], "pause error buffer %s\n", buf);
 
     /* MCI_STATUS' dwReturn is a DWORD_PTR, others' a plain DWORD. */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
@@ -448,6 +457,7 @@ static void test_openCloseWAVE(HWND hwnd)
 
     err = mciSendString("sysinfo nodev installname", buf, sizeof(buf), hwnd);
     ok(err==MCIERR_INVALID_DEVICE_NAME,"sysinfo nodev installname: %s\n", dbg_mcierr(err));
+    ok(!buf[0], "sysinfo error buffer %s\n", buf);
 
     err = mciGetDeviceID("all");
     ok(MCI_ALL_DEVICE_ID==err || /* Win9x */(UINT16)MCI_ALL_DEVICE_ID==err,"mciGetDeviceID all returned %u, expected %d\n", err, MCI_ALL_DEVICE_ID);
@@ -584,6 +594,7 @@ static void test_recordWAVE(HWND hwnd)
     /* Info file fails until named in Open or Save. */
     err = mciSendString("info x file", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci info new file returned %s\n", dbg_mcierr(err));
+    ok(!buf[0], "info error buffer %s\n", buf);
 
     /* Check the default recording: 8-bits per sample, mono, 11kHz */
     err = mciSendString("status x samplespersec", buf, sizeof(buf), NULL);

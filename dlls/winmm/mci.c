@@ -1535,8 +1535,10 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	dwRet = MCI_SendCommand(wmd ? wmd->wDeviceID : uDevID, wMsg, dwFlags, (DWORD_PTR)&data);
     }
     TRACE("=> 1/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
-    dwRet = MCI_HandleReturnValues(dwRet, wmd, retType, &data.generic, lpstrRet, uRetLen);
-    TRACE("=> 2/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
+    if (!LOWORD(dwRet)) {
+	dwRet = MCI_HandleReturnValues(dwRet, wmd, retType, &data.generic, lpstrRet, uRetLen);
+	TRACE("=> 2/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
+    }
 
 errCleanUp:
     if (auto_open) {
@@ -1569,9 +1571,9 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     MultiByteToWideChar( CP_ACP, 0, lpstrCommand, -1, lpwstrCommand, len );
     if (lpstrRet)
     {
+        if (uRetLen) *lpstrRet = '\0'; /* NT-w2k3 use memset(lpstrRet, 0, uRetLen); */
         lpwstrRet = HeapAlloc(GetProcessHeap(), 0, uRetLen * sizeof(WCHAR));
         if (!lpwstrRet) {
-            WARN("no memory\n");
             HeapFree( GetProcessHeap(), 0, lpwstrCommand );
             return MCIERR_OUT_OF_MEMORY;
         }
