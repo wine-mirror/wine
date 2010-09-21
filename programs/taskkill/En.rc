@@ -33,6 +33,8 @@ STRINGTABLE
     STRING_MUTUAL_EXCLUSIVE, "Error: Options /im and /pid are mutually exclusive.\n"
     STRING_CLOSE_PID_SEARCH, "Close message sent to top-level windows of process with PID %u.\n"
     STRING_CLOSE_PROC_SRCH, "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+    STRING_TERM_PID_SEARCH, "Process with PID %u was forcibly terminated.\n"
     STRING_SEARCH_FAILED, "Error: Could not find process \"%s\".\n"
     STRING_ENUM_FAILED, "Error: Unable to enumerate the process list.\n"
+    STRING_TERMINATE_FAILED, "Error: Unable to terminate process \"%s\".\n"
 }

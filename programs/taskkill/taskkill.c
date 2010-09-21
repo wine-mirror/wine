@@ -278,6 +278,57 @@ static int send_close_messages(void)
     return status_code;
 }
 
+static int terminate_processes(void)
+{
+    unsigned int i;
+    int status_code = 0;
+
+    for (i = 0; i < task_count; i++)
+    {
+        WCHAR *p = task_list[i];
+        BOOL is_numeric = TRUE;
+
+        /* Determine whether the string is not numeric. */
+        while (*p)
+        {
+            if (!isdigitW(*p++))
+            {
+                is_numeric = FALSE;
+                break;
+            }
+        }
+
+        if (is_numeric)
+        {
+            DWORD pid = atoiW(task_list[i]);
+            HANDLE process;
+
+            process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+            if (!process)
+            {
+                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+                status_code = 128;
+                continue;
+            }
+
+            if (!TerminateProcess(process, 0))
+            {
+                taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
+                status_code = 1;
+                CloseHandle(process);
+                continue;
+            }
+
+            taskkill_message_printfW(STRING_TERM_PID_SEARCH, pid);
+            CloseHandle(process);
+        }
+        else
+            WINE_FIXME("Forcible process termination by name is not implemented\n");
+    }
+
+    return status_code;
+}
+
 static BOOL add_to_task_list(WCHAR *name)
 {
     static unsigned int list_size = 16;
@@ -389,7 +440,7 @@ int wmain(int argc, WCHAR *argv[])
     }
 
     if (force_termination)
-        WINE_FIXME("Forced termination is not implemented\n");
+        status_code = terminate_processes();
     else
         status_code = send_close_messages();
 
