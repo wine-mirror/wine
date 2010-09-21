@@ -1386,6 +1386,7 @@ DECL_HANDLER(alloc_console)
     struct thread *renderer;
     struct console_input *console;
     int fd;
+    int attach = 0;
 
     switch (req->pid)
     {
@@ -1398,12 +1399,14 @@ DECL_HANDLER(alloc_console)
             return;
         }
         grab_object( process );
+        attach = 1;
         break;
     case 0xffffffff:
         /* no renderer, console to be attached to current process */
         renderer = NULL;
         process = current->process;
         grab_object( process );
+        attach = 1;
         break;
     default:
         /* renderer is current, console to be attached to req->pid */
@@ -1411,7 +1414,7 @@ DECL_HANDLER(alloc_console)
         if (!(process = get_process_from_id( req->pid ))) return;
     }
 
-    if (process != current->process && process->console)
+    if (attach && process->console)
     {
         set_error( STATUS_ACCESS_DENIED );
         goto the_end;
@@ -1433,8 +1436,11 @@ DECL_HANDLER(alloc_console)
             if (!console->evt ||
                 (evt = alloc_handle( current->process, console->evt, SYNCHRONIZE|GENERIC_READ|GENERIC_WRITE, 0 )))
             {
-                process->console = (struct console_input*)grab_object( console );
-                console->num_proc++;
+                if (attach)
+                {
+                    process->console = (struct console_input*)grab_object( console );
+                    console->num_proc++;
+                }
                 reply->handle_in = in;
                 reply->event = evt;
                 release_object( console );
