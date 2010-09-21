@@ -54,6 +54,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+static const BOOL is_win64 = sizeof(void *) > sizeof(int);
+
 /*
 	########## Combining and Constructing paths ##########
 */
@@ -1634,6 +1636,25 @@ static HRESULT _SHGetDefaultValue(BYTE folder, LPWSTR pszPath)
     if (!pszPath)
         return E_INVALIDARG;
 
+    if (!is_win64)
+    {
+        BOOL is_wow64;
+
+        switch (folder)
+        {
+        case CSIDL_PROGRAM_FILES:
+        case CSIDL_PROGRAM_FILESX86:
+            IsWow64Process( GetCurrentProcess(), &is_wow64 );
+            folder = is_wow64 ? CSIDL_PROGRAM_FILESX86 : CSIDL_PROGRAM_FILES;
+            break;
+        case CSIDL_PROGRAM_FILES_COMMON:
+        case CSIDL_PROGRAM_FILES_COMMONX86:
+            IsWow64Process( GetCurrentProcess(), &is_wow64 );
+            folder = is_wow64 ? CSIDL_PROGRAM_FILES_COMMONX86 : CSIDL_PROGRAM_FILES_COMMON;
+            break;
+        }
+    }
+
     if (CSIDL_Data[folder].szDefaultPath &&
      IS_INTRESOURCE(CSIDL_Data[folder].szDefaultPath))
     {
@@ -1719,8 +1740,22 @@ static HRESULT _SHGetCurrentVersionPath(DWORD dwFlags, BYTE folder,
             {
                 hr = _SHGetDefaultValue(folder, pszPath);
                 dwType = REG_EXPAND_SZ;
-                RegSetValueExW(hKey, CSIDL_Data[folder].szValueName, 0, dwType,
-                 (LPBYTE)pszPath, (strlenW(pszPath)+1)*sizeof(WCHAR));
+                switch (folder)
+                {
+                case CSIDL_PROGRAM_FILESX86:
+                case CSIDL_PROGRAM_FILES_COMMONX86:
+                    /* these two should never be set on 32-bit setups */
+                    if (!is_win64)
+                    {
+                        BOOL is_wow64;
+                        IsWow64Process( GetCurrentProcess(), &is_wow64 );
+                        if (!is_wow64) break;
+                    }
+                    /* fall through */
+                default:
+                    RegSetValueExW(hKey, CSIDL_Data[folder].szValueName, 0, dwType,
+                                   (LPBYTE)pszPath, (strlenW(pszPath)+1)*sizeof(WCHAR));
+                }
             }
             else
             {

@@ -68,6 +68,7 @@ static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 static HRESULT (WINAPI *pSHGetItemFromDataObject)(IDataObject*,DATAOBJ_GET_ITEM_FLAGS,REFIID,void**);
 static HRESULT (WINAPI *pSHGetIDListFromObject)(IUnknown*, PIDLIST_ABSOLUTE*);
 static HRESULT (WINAPI *pSHGetItemFromObject)(IUnknown*,REFIID,void**);
+static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
@@ -142,6 +143,8 @@ static void init_function_pointers(void)
 
     hmod = GetModuleHandleA("shlwapi.dll");
     pStrRetToBufW = (void*)GetProcAddress(hmod, "StrRetToBufW");
+
+    pIsWow64Process = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
 
     hr = SHGetMalloc(&ppM);
     ok(hr == S_OK, "SHGetMalloc failed %08x\n", hr);
@@ -1656,6 +1659,93 @@ static void test_ITEMIDLIST_format(void) {
     }
 
     IShellFolder_Release(psfPersonal);
+}
+
+static void test_SHGetFolderPathA(void)
+{
+    static const BOOL is_win64 = sizeof(void *) > sizeof(int);
+    BOOL is_wow64;
+    char path[MAX_PATH];
+    char path_x86[MAX_PATH];
+    char path_key[MAX_PATH];
+    HRESULT hr;
+    HKEY key;
+
+    if (!pSHGetFolderPathA)
+    {
+        win_skip("SHGetFolderPathA not present\n");
+        return;
+    }
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
+    hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path );
+    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILESX86, 0, SHGFP_TYPE_CURRENT, path_x86 );
+    if (hr == E_FAIL)
+    {
+        win_skip( "Program Files (x86) not supported\n" );
+        return;
+    }
+    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    if (is_win64)
+    {
+        ok( lstrcmpiA( path, path_x86 ), "paths are identical '%s'\n", path );
+        ok( strstr( path, "x86" ) == NULL, "64-bit path '%s' contains x86\n", path );
+        ok( strstr( path_x86, "x86" ) != NULL, "32-bit path '%s' doesn't contain x86\n", path_x86 );
+    }
+    else
+    {
+        ok( !lstrcmpiA( path, path_x86 ), "paths differ '%s' != '%s'\n", path, path_x86 );
+        if (is_wow64)
+            ok( strstr( path, "x86" ) != NULL, "32-bit path '%s' doesn't contain x86\n", path );
+        else
+            ok( strstr( path, "x86" ) == NULL, "32-bit path '%s' contains x86\n", path );
+    }
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &key ))
+    {
+        DWORD type, count = sizeof(path_x86);
+        if (!RegQueryValueExA( key, "ProgramFilesDir (x86)", NULL, &type, (BYTE *)path_key, &count ))
+        {
+            ok( is_win64 || is_wow64, "ProgramFilesDir (x86) exists on 32-bit setup\n" );
+            ok( !lstrcmpiA( path_key, path_x86 ), "paths differ '%s' != '%s'\n", path_key, path_x86 );
+        }
+        else ok( !is_win64 && !is_wow64, "ProgramFilesDir (x86) should exist on 64-bit setup\n" );
+        RegCloseKey( key );
+    }
+
+    hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILES_COMMON, 0, SHGFP_TYPE_CURRENT, path );
+    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILES_COMMONX86, 0, SHGFP_TYPE_CURRENT, path_x86 );
+    if (hr == E_FAIL)
+    {
+        win_skip( "Common Files (x86) not supported\n" );
+        return;
+    }
+    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    if (is_win64)
+    {
+        ok( lstrcmpiA( path, path_x86 ), "paths are identical '%s'\n", path );
+        ok( strstr( path, "x86" ) == NULL, "64-bit path '%s' contains x86\n", path );
+        ok( strstr( path_x86, "x86" ) != NULL, "32-bit path '%s' doesn't contain x86\n", path_x86 );
+    }
+    else
+    {
+        ok( !lstrcmpiA( path, path_x86 ), "paths differ '%s' != '%s'\n", path, path_x86 );
+        if (is_wow64)
+            ok( strstr( path, "x86" ) != NULL, "32-bit path '%s' doesn't contain x86\n", path );
+        else
+            ok( strstr( path, "x86" ) == NULL, "32-bit path '%s' contains x86\n", path );
+    }
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion", &key ))
+    {
+        DWORD type, count = sizeof(path_x86);
+        if (!RegQueryValueExA( key, "CommonFilesDir (x86)", NULL, &type, (BYTE *)path_key, &count ))
+        {
+            ok( is_win64 || is_wow64, "CommonFilesDir (x86) exists on 32-bit setup\n" );
+            ok( !lstrcmpiA( path_key, path_x86 ), "paths differ '%s' != '%s'\n", path_key, path_x86 );
+        }
+        else ok( !is_win64 && !is_wow64, "CommonFilesDir (x86) should exist on 64-bit setup\n" );
+    }
 }
 
 static void test_SHGetFolderPathAndSubDirA(void)
@@ -4062,6 +4152,7 @@ START_TEST(shlfolder)
     test_CallForAttributes();
     test_FolderShortcut();
     test_ITEMIDLIST_format();
+    test_SHGetFolderPathA();
     test_SHGetFolderPathAndSubDirA();
     test_LocalizedNames();
     test_SHCreateShellItem();
