@@ -65,3 +65,5 @@ interface ICLRMetaHost : IUnknown
     HRESULT ExitProcess(
         [in] INT32 iExitCode);
 };
+
+cpp_quote("HRESULT WINAPI CLRCreateInstance(REFCLSID clsid, REFIID riid, LPVOID *ppInterface);")

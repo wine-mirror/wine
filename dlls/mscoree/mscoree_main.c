@@ -29,12 +29,14 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "ocidl.h"
 #include "shellapi.h"
 
 #include "initguid.h"
 #include "cor.h"
 #include "corerror.h"
 #include "mscoree.h"
+#include "metahost.h"
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
@@ -636,6 +638,13 @@ BOOL WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOL forceVerifi
 {
     FIXME("(%s, %u, %p): stub\n", debugstr_w(filename), forceVerification, pVerified);
     return FALSE;
+}
+
+HRESULT WINAPI CLRCreateInstance(REFCLSID clsid, REFIID riid, LPVOID *ppInterface)
+{
+    FIXME("(%s,%s,%p): stub\n", debugstr_guid(clsid), debugstr_guid(riid), ppInterface);
+
+    return E_NOTIMPL;
 }
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)

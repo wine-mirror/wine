@@ -7,6 +7,7 @@
 
 @ stub CallFunctionShim
 @ stub CloseCtrs
+@ stdcall CLRCreateInstance(ptr ptr ptr)
 @ stdcall ClrCreateManagedInstance(wstr ptr ptr)
 @ stub CoEEShutDownCOM
 @ stdcall CoInitializeCor(long)
