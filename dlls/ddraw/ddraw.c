@@ -5090,7 +5090,7 @@ HRESULT IDirect3DImpl_GetCaps(IWineD3D *wined3d, D3DDEVICEDESC *desc1, D3DDEVICE
     desc7->dwReserved4 = 0;
 
     /* Fill the old structure */
-    memset(desc1, 0, sizeof(desc1));
+    memset(desc1, 0, sizeof(*desc1));
     desc1->dwSize = sizeof(D3DDEVICEDESC);
     desc1->dwFlags = D3DDD_COLORMODEL
             | D3DDD_DEVCAPS
