@@ -2862,8 +2862,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetClipStatus(IWineD3DDevice *iface, 
     if (!pClipStatus)
         return WINED3DERR_INVALIDCALL;
 
-    This->updateStateBlock->clip_status.ClipUnion = pClipStatus->ClipUnion;
-    This->updateStateBlock->clip_status.ClipIntersection = pClipStatus->ClipIntersection;
+    This->updateStateBlock->state.clip_status.ClipUnion = pClipStatus->ClipUnion;
+    This->updateStateBlock->state.clip_status.ClipIntersection = pClipStatus->ClipIntersection;
     return WINED3D_OK;
 }
 
@@ -2874,8 +2874,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetClipStatus(IWineD3DDevice *iface, 
     if (!pClipStatus)
         return WINED3DERR_INVALIDCALL;
 
-    pClipStatus->ClipUnion = This->updateStateBlock->clip_status.ClipUnion;
-    pClipStatus->ClipIntersection = This->updateStateBlock->clip_status.ClipIntersection;
+    pClipStatus->ClipUnion = This->updateStateBlock->state.clip_status.ClipUnion;
+    pClipStatus->ClipIntersection = This->updateStateBlock->state.clip_status.ClipIntersection;
     return WINED3D_OK;
 }
 

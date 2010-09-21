@@ -616,12 +616,15 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
     if (disable & WINED3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
 
     /** update clipping status */
-    if (enable) {
-        stateblock->clip_status.ClipUnion = 0;
-        stateblock->clip_status.ClipIntersection = 0xFFFFFFFF;
-    } else {
-        stateblock->clip_status.ClipUnion = 0;
-        stateblock->clip_status.ClipIntersection = 0;
+    if (enable)
+    {
+        stateblock->state.clip_status.ClipUnion = 0;
+        stateblock->state.clip_status.ClipIntersection = 0xFFFFFFFF;
+    }
+    else
+    {
+        stateblock->state.clip_status.ClipUnion = 0;
+        stateblock->state.clip_status.ClipIntersection = 0;
     }
 }
 

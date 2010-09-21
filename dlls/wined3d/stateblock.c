@@ -1251,8 +1251,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOPALPHA,             WINED3DBLENDOP_ADD);
 
     /* clipping status */
-    This->clip_status.ClipUnion = 0;
-    This->clip_status.ClipIntersection = 0xFFFFFFFF;
+    This->state.clip_status.ClipUnion = 0;
+    This->state.clip_status.ClipIntersection = 0xFFFFFFFF;
 
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i = 0; i < MAX_TEXTURES; ++i)

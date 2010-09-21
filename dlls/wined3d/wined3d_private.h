@@ -2375,6 +2375,7 @@ struct wined3d_state
 
     WINED3DMATRIX transforms[HIGHEST_TRANSFORMSTATE + 1];
     double clip_planes[MAX_CLIPPLANES][4];
+    WINED3DCLIPSTATUS clip_status;
     WINED3DMATERIAL material;
     WINED3DVIEWPORT viewport;
     RECT scissor_rect;
@@ -2401,9 +2402,6 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     struct wined3d_state state;
-
-    /* Clipping */
-    WINED3DCLIPSTATUS         clip_status;
 
     /* Contained state management */
     DWORD                     contained_render_states[WINEHIGHEST_RENDER_STATE + 1];
