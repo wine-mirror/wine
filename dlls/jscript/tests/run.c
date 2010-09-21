@@ -1090,8 +1090,15 @@ static void run_tests(void)
 
 static BOOL check_jscript(void)
 {
+    IActiveScriptProperty *script_prop;
     BSTR str;
     HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IActiveScriptProperty, (void**)&script_prop);
+    if(FAILED(hres))
+        return FALSE;
+    IActiveScriptProperty_Release(script_prop);
 
     str = a2bstr("if(!('localeCompare' in String.prototype)) throw 1;");
     hres = parse_script(0, str);

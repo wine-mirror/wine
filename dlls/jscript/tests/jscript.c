@@ -335,10 +335,9 @@ static HRESULT set_script_prop(IActiveScript *engine, DWORD property, VARIANT *v
 
     hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptProperty,
             (void**)&script_prop);
-    if(FAILED(hres)) {
-        win_skip("IActiveScriptProperty not supported\n");
-        return E_NOTIMPL;
-    }
+    ok(hres == S_OK, "Could not get IActiveScriptProperty: %08x\n", hres);
+    if(FAILED(hres))
+        return hres;
 
     hres = IActiveScriptProperty_SetProperty(script_prop, property, NULL, val);
     IActiveScriptProperty_Release(script_prop);
@@ -523,12 +522,29 @@ static void test_jscript2(void)
     ok(!ref, "ref = %d\n", ref);
 }
 
+static BOOL check_jscript(void)
+{
+    IActiveScriptProperty *script_prop;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IActiveScriptProperty, (void**)&script_prop);
+    if(SUCCEEDED(hres))
+        IActiveScriptProperty_Release(script_prop);
+
+    return hres == S_OK;
+}
+
 START_TEST(jscript)
 {
     CoInitialize(NULL);
 
-    test_jscript();
-    test_jscript2();
+    if(check_jscript()) {
+        test_jscript();
+        test_jscript2();
+    }else {
+        win_skip("Broken engine, probably too old\n");
+    }
 
     CoUninitialize();
 }

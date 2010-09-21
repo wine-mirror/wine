@@ -701,7 +701,7 @@ static void _parse_script_a(unsigned line, IActiveScriptParse *parser, const cha
     ok_(__FILE__,line)(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 }
 
-static IActiveScriptParse *create_script(void)
+static IActiveScriptParse *create_script(BOOL skip_tests)
 {
     IActiveScriptParse *parser;
     IActiveScript *script;
@@ -719,11 +719,13 @@ static IActiveScriptParse *create_script(void)
 
     hres = CoCreateInstance(&CLSID_JScript, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IActiveScript, (void**)&script);
-    ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+    if(!skip_tests)
+        ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
     if(FAILED(hres))
         return NULL;
 
-    set_safety_options((IUnknown*)script);
+    if(!skip_tests)
+        set_safety_options((IUnknown*)script);
 
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
     ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
@@ -743,17 +745,19 @@ static IActiveScriptParse *create_script(void)
 
     IActiveScript_Release(script);
 
-    parse_script_a(parser,
-            "function testException(func, type, number) {\n"
-            "try {\n"
-            "    func();\n"
-            "}catch(e) {\n"
-            "    ok(e.name === type, 'e.name = ' + e.name + ', expected ' + type)\n"
-            "    ok(e.number === number, 'e.number = ' + e.number + ', expected ' + number);\n"
-            "    return;\n"
-            "}"
-            "ok(false, 'exception expected');\n"
-            "}");
+    if(!skip_tests) {
+        parse_script_a(parser,
+                "function testException(func, type, number) {\n"
+                "    try {\n"
+                "        func();\n"
+                "    }catch(e) {\n"
+                "        ok(e.name === type, 'e.name = ' + e.name + ', expected ' + type)\n"
+                "        ok(e.number === number, 'e.number = ' + e.number + ', expected ' + number);\n"
+                "        return;\n"
+                "    }\n"
+                "    ok(false, 'exception expected');\n"
+                "}");
+    }
 
     return parser;
 }
@@ -800,7 +804,7 @@ static void test_ActiveXObject(void)
     IActiveScriptParse *parser;
     IDispatchEx *proc;
 
-    parser = create_script();
+    parser = create_script(FALSE);
 
     SET_EXPECT(Host_QS_SecMgr);
     SET_EXPECT(ProcessUrlAction);
@@ -845,7 +849,7 @@ static void test_ActiveXObject(void)
     IDispatchEx_Release(proc);
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     proc = parse_procedure_a(parser, "(new ActiveXObject('Wine.Test')).reportSuccess();");
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -867,7 +871,7 @@ static void test_ActiveXObject(void)
     IDispatchEx_Release(proc);
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     QS_SecMgr_hres = E_NOINTERFACE;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -876,7 +880,7 @@ static void test_ActiveXObject(void)
 
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     ProcessUrlAction_hres = E_FAIL;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -887,7 +891,7 @@ static void test_ActiveXObject(void)
 
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     ProcessUrlAction_policy = URLPOLICY_DISALLOW;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -898,7 +902,7 @@ static void test_ActiveXObject(void)
 
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     CreateInstance_hres = E_FAIL;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -911,7 +915,7 @@ static void test_ActiveXObject(void)
 
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     QueryCustomPolicy_hres = E_FAIL;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -926,7 +930,7 @@ static void test_ActiveXObject(void)
 
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     QueryCustomPolicy_psize = 6;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -945,7 +949,7 @@ static void test_ActiveXObject(void)
 
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     QueryCustomPolicy_policy = URLPOLICY_DISALLOW;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -981,7 +985,7 @@ static void test_ActiveXObject(void)
 
     IUnknown_Release(parser);
 
-    parser = create_script();
+    parser = create_script(FALSE);
     object_with_site = &ObjectWithSite;
 
     SET_EXPECT(Host_QS_SecMgr);
@@ -1062,18 +1066,24 @@ static BOOL register_activex(void)
 
 static BOOL check_jscript(void)
 {
+    IActiveScriptProperty *script_prop;
     IActiveScriptParse *parser;
     BSTR str;
     HRESULT hres;
 
-    parser = create_script();
+    parser = create_script(TRUE);
     if(!parser)
         return FALSE;
 
     str = a2bstr("if(!('localeCompare' in String.prototype)) throw 1;");
     hres = IActiveScriptParse64_ParseScriptText(parser, str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     SysFreeString(str);
+
+    if(hres == S_OK)
+        hres = IUnknown_QueryInterface(parser, &IID_IActiveScriptProperty, (void**)&script_prop);
     IUnknown_Release(parser);
+    if(hres == S_OK)
+        IActiveScriptProperty_Release(script_prop);
 
     return hres == S_OK;
 }
