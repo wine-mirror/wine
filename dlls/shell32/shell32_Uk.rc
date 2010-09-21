@@ -303,6 +303,7 @@ STRINGTABLE
 	IDS_COMMON_OEM_LINKS        "OEM Посилання"
 	IDS_DOCUMENTS               "Документи"
 	IDS_DOWNLOADS               "Завантаження"
+	IDS_LOCAL_APPDATA_LOW       "AppData\\LocalLow"
 
 	IDS_NEWFOLDER		"Нова Тека"
 
