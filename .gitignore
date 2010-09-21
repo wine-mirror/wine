@@ -178,6 +178,7 @@ include/imnact.h
 include/imnxport.h
 include/indexsrv.h
 include/mediaobj.h
+include/metahost.h
 include/mimeinfo.h
 include/mimeole.h
 include/mlang.h

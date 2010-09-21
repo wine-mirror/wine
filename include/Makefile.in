@@ -41,6 +41,7 @@ PUBLIC_IDL_H_SRCS = \
 	imnxport.idl \
 	indexsrv.idl \
 	mediaobj.idl \
+	metahost.idl \
 	mimeinfo.idl \
 	mimeole.idl \
 	mlang.idl \

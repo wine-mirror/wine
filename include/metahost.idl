@@ -1,0 +1,67 @@
+/*
+ * Copyright 2010 Vincent Povirk for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "wtypes.idl";
+import "propidl.idl";
+
+interface ICLRRuntimeInfo;
+
+typedef HRESULT (__stdcall *CallbackThreadSetFnPtr)();
+typedef HRESULT (__stdcall *CallbackThreadUnsetFnPtr)();
+
+typedef void (__stdcall *RuntimeLoadedCallbackFnPtr)(
+    ICLRRuntimeInfo *pRuntimeInfo,
+    CallbackThreadSetFnPtr pfnCallbackThreadSet,
+    CallbackThreadUnsetFnPtr pfnCallbackThreadUnset);
+
+cpp_quote("DEFINE_GUID(CLSID_CLRMetaHost, 0x9280188d,0x0e8e,0x4867,0xb3,0x0c,0x7f,0xa8,0x38,0x84,0xe8,0xde);")
+
+[
+    object,
+    local,
+    uuid(d332db9e-b9b3-4125-8207-a14884f53216)
+]
+interface ICLRMetaHost : IUnknown
+{
+    HRESULT GetRuntime(
+        [in] LPCWSTR pwzVersion,
+        [in] REFIID iid,
+        [out, iid_is(iid), retval] LPVOID *ppRuntime);
+
+    HRESULT GetVersionFromFile(
+        [in] LPCWSTR pwzFilePath,
+        [out, size_is(*pcchBuffer)] LPWSTR pwzBuffer,
+        [in, out] DWORD *pcchBuffer);
+
+    HRESULT EnumerateInstalledRuntimes(
+        [out, retval] IEnumUnknown **ppEnumerator);
+
+    HRESULT EnumerateLoadedRuntimes(
+        [in] HANDLE hndProcess,
+        [out, retval] IEnumUnknown **ppEnumerator);
+
+    HRESULT RequestRuntimeLoadedNotification(
+        [in] RuntimeLoadedCallbackFnPtr pCallbackFunction);
+
+    HRESULT QueryLegacyV2RuntimeBinding(
+        [in] REFIID riid,
+        [out, iid_is(riid), retval] LPVOID *ppUnk);
+
+    HRESULT ExitProcess(
+        [in] INT32 iExitCode);
+};
