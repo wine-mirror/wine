@@ -280,8 +280,16 @@ static int send_close_messages(void)
 
 static int terminate_processes(void)
 {
+    DWORD *pid_list, pid_list_size;
     unsigned int i;
     int status_code = 0;
+
+    pid_list = enumerate_processes(&pid_list_size);
+    if (!pid_list)
+    {
+        taskkill_message(STRING_ENUM_FAILED);
+        return 1;
+    }
 
     for (i = 0; i < task_count; i++)
     {
@@ -323,9 +331,50 @@ static int terminate_processes(void)
             CloseHandle(process);
         }
         else
-            WINE_FIXME("Forcible process termination by name is not implemented\n");
+        {
+            DWORD index;
+            BOOL found_process = FALSE;
+
+            for (index = 0; index < pid_list_size; index++)
+            {
+                WCHAR process_name[MAX_PATH];
+
+                if (get_process_name_from_pid(pid_list[index], process_name, MAX_PATH) &&
+                    !strcmpiW(process_name, task_list[i]))
+                {
+                    HANDLE process;
+
+                    process = OpenProcess(PROCESS_TERMINATE, FALSE, pid_list[index]);
+                    if (!process)
+                    {
+                        taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+                        status_code = 128;
+                        continue;
+                    }
+
+                    if (!TerminateProcess(process, 0))
+                    {
+                        taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
+                        status_code = 1;
+                        CloseHandle(process);
+                        continue;
+                    }
+
+                    found_process = TRUE;
+                    taskkill_message_printfW(STRING_TERM_PROC_SEARCH, task_list[i], pid_list[index]);
+                    CloseHandle(process);
+                }
+            }
+
+            if (!found_process)
+            {
+                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+                status_code = 128;
+            }
+        }
     }
 
+    HeapFree(GetProcessHeap(), 0, pid_list);
     return status_code;
 }
 
