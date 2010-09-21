@@ -1028,7 +1028,6 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     case HCBT_MOVESIZE:
     case HCBT_MINMAX:
     case HCBT_ACTIVATE:
-    case HCBT_SETFOCUS:
 	if (pGetWindowInfo && IsWindow(hwnd))
 	{
 	    WINDOWINFO info;
@@ -1042,7 +1041,8 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    verify_window_info(code_name, hwnd, &info);
 	}
         break;
-    /* on HCBT_DESTROYWND window state is undefined */
+    /* window state is undefined */
+    case HCBT_SETFOCUS:
     case HCBT_DESTROYWND:
         break;
     default:
