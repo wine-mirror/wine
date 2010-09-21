@@ -49,6 +49,7 @@ static BOOL (WINAPI *pGetWindowInfo)(HWND,WINDOWINFO*);
 static UINT (WINAPI *pGetWindowModuleFileNameA)(HWND,LPSTR,UINT);
 static BOOL (WINAPI *pGetLayeredWindowAttributes)(HWND,COLORREF*,BYTE*,DWORD*);
 static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
+static BOOL (WINAPI *pUpdateLayeredWindow)(HWND,HDC,POINT*,SIZE*,HDC,POINT*,COLORREF,BLENDFUNCTION*,DWORD);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static int  (WINAPI *pGetWindowRgnBox)(HWND,LPRECT);
@@ -5568,21 +5569,38 @@ static void test_layered_window(void)
     COLORREF key = 0;
     BYTE alpha = 0;
     DWORD flags = 0;
+    POINT pt = { 0, 0 };
+    SIZE sz = { 200, 200 };
+    HDC hdc;
+    HBITMAP hbm;
     BOOL ret;
 
-    if (!pGetLayeredWindowAttributes || !pSetLayeredWindowAttributes)
+    if (!pGetLayeredWindowAttributes || !pSetLayeredWindowAttributes || !pUpdateLayeredWindow)
     {
         win_skip( "layered windows not supported\n" );
         return;
     }
+
+    hdc = CreateCompatibleDC( 0 );
+    hbm = CreateCompatibleBitmap( hdc, 200, 200 );
+    SelectObject( hdc, hbm );
+
     hwnd = CreateWindowExA(0, "MainWindowClass", "message window", WS_CAPTION,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     assert( hwnd );
+    SetLastError( 0xdeadbeef );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( !ret, "UpdateLayeredWindow should fail on non-layered window\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError() );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( !ret, "GetLayeredWindowAttributes should fail on non-layered window\n" );
     ret = pSetLayeredWindowAttributes( hwnd, 0, 0, LWA_ALPHA );
     ok( !ret, "SetLayeredWindowAttributes should fail on non-layered window\n" );
     SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
+    ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
+    ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
     ret = pSetLayeredWindowAttributes( hwnd, 0x123456, 44, LWA_ALPHA );
@@ -5592,14 +5610,23 @@ static void test_layered_window(void)
     ok( key == 0x123456 || key == 0, "wrong color key %x\n", key );
     ok( alpha == 44, "wrong alpha %u\n", alpha );
     ok( flags == LWA_ALPHA, "wrong flags %x\n", flags );
+    SetLastError( 0xdeadbeef );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( !ret, "UpdateLayeredWindow should fail on layered but initialized window\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError() );
 
     /* clearing WS_EX_LAYERED resets attributes */
     SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED );
+    SetLastError( 0xdeadbeef );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( !ret, "UpdateLayeredWindow should fail on non-layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( !ret, "GetLayeredWindowAttributes should fail on no longer layered window\n" );
     SetWindowLong( hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
     ok( !ret, "GetLayeredWindowAttributes should fail on layered but not initialized window\n" );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( ret, "UpdateLayeredWindow should succeed on layered window\n" );
     ret = pSetLayeredWindowAttributes( hwnd, 0x654321, 22, LWA_COLORKEY | LWA_ALPHA );
     ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
     ret = pGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags );
@@ -5607,6 +5634,10 @@ static void test_layered_window(void)
     ok( key == 0x654321, "wrong color key %x\n", key );
     ok( alpha == 22, "wrong alpha %u\n", alpha );
     ok( flags == (LWA_COLORKEY | LWA_ALPHA), "wrong flags %x\n", flags );
+    SetLastError( 0xdeadbeef );
+    ret = pUpdateLayeredWindow( hwnd, 0, NULL, &sz, hdc, &pt, 0, NULL, ULW_OPAQUE );
+    ok( !ret, "UpdateLayeredWindow should fail on layered but initialized window\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError() );
 
     ret = pSetLayeredWindowAttributes( hwnd, 0x888888, 33, LWA_COLORKEY );
     ok( ret, "SetLayeredWindowAttributes should succeed on layered window\n" );
@@ -5640,6 +5671,8 @@ static void test_layered_window(void)
     ok( flags == 0, "wrong flags %x\n", flags );
 
     DestroyWindow( hwnd );
+    DeleteDC( hdc );
+    DeleteObject( hbm );
 }
 
 static MONITORINFO mi;
@@ -6140,6 +6173,7 @@ START_TEST(win)
     pGetWindowModuleFileNameA = (void *)GetProcAddress( user32, "GetWindowModuleFileNameA" );
     pGetLayeredWindowAttributes = (void *)GetProcAddress( user32, "GetLayeredWindowAttributes" );
     pSetLayeredWindowAttributes = (void *)GetProcAddress( user32, "SetLayeredWindowAttributes" );
+    pUpdateLayeredWindow = (void *)GetProcAddress( user32, "UpdateLayeredWindow" );
     pGetMonitorInfoA = (void *)GetProcAddress( user32,  "GetMonitorInfoA" );
     pMonitorFromPoint = (void *)GetProcAddress( user32,  "MonitorFromPoint" );
     pGetWindowRgnBox = (void *)GetProcAddress( user32, "GetWindowRgnBox" );

@@ -3434,6 +3434,13 @@ BOOL WINAPI UpdateLayeredWindowIndirect( HWND hwnd, const UPDATELAYEREDWINDOWINF
 {
     BYTE alpha = 0xff;
 
+    if (!(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
+        GetLayeredWindowAttributes( hwnd, NULL, NULL, NULL ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     if (!(info->dwFlags & ULW_EX_NORESIZE) && (info->pptDst || info->psize))
     {
         int x = 0, y = 0, cx = 0, cy = 0;
