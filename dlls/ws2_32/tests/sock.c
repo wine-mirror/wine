@@ -3839,12 +3839,12 @@ static void test_AcceptEx(void)
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small local address size "
+    todo_wine ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small local address size "
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 16, 0,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small remote address size "
+    todo_wine ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small remote address size "
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pAcceptEx(listener, acceptor, buffer, 0,
@@ -3856,7 +3856,7 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on a non-listening socket "
+    todo_wine ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on a non-listening socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
     iret = listen(listener, 5);
@@ -3879,13 +3879,14 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0,
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    ok((bret == FALSE && WSAGetLastError() == WSAEINVAL) || broken(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING) /* NT4 */,
+    todo_wine ok((bret == FALSE && WSAGetLastError() == WSAEINVAL) || broken(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING) /* NT4 */,
        "AcceptEx on already pending socket returned %d + errno %d\n", bret, WSAGetLastError());
     if (bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING) {
         /* We need to cancel this call, otherwise things fail */
         bret = CancelIo((HANDLE) listener);
         ok(bret, "Failed to cancel failed test. Bailing...\n");
         if (!bret) return;
+        WaitForSingleObject(overlapped.hEvent, 0);
 
         bret = pAcceptEx(listener, acceptor, buffer, 0,
             sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
@@ -3894,7 +3895,7 @@ static void test_AcceptEx(void)
     }
 
     iret = connect(acceptor,  (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok((iret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL) || broken(!iret) /* NT4 */,
+    todo_wine ok((iret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL) || broken(!iret) /* NT4 */,
        "connecting to acceptex acceptor succeeded? return %d + errno %d\n", iret, WSAGetLastError());
     if (!iret || (iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK)) {
         /* We need to cancel this call, otherwise things fail */
@@ -4132,7 +4133,7 @@ static void test_AcceptEx(void)
     acceptor = INVALID_SOCKET;
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0 || broken(dwret == WAIT_TIMEOUT) /* NT4/2000 */,
+    todo_wine ok(dwret == WAIT_OBJECT_0 || broken(dwret == WAIT_TIMEOUT) /* NT4/2000 */,
        "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
 
     if (dwret != WAIT_TIMEOUT) {
@@ -4143,6 +4144,7 @@ static void test_AcceptEx(void)
         bret = CancelIo((HANDLE) listener);
         ok(bret, "Failed to cancel failed test. Bailing...\n");
         if (!bret) return;
+        WaitForSingleObject(overlapped.hEvent, 0);
     }
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
