@@ -1505,7 +1505,7 @@ static void test_LookupAccountSid(void)
     PSID pUsersSid = NULL;
     SID_NAME_USE use;
     BOOL ret;
-    DWORD size,cbti = 0;
+    DWORD error, size, cbti = 0;
     MAX_SID  max_sid;
     CHAR *str_sidA;
     int i;
@@ -1666,6 +1666,16 @@ static void test_LookupAccountSid(void)
     ok(dom_sizeW == real_dom_sizeW + 1,
        "LookupAccountSidW() Expected dom_size = %u, got %u\n",
        real_dom_sizeW + 1, dom_sizeW);
+
+    acc_sizeW = dom_sizeW = use = 0;
+    SetLastError(0xdeadbeef);
+    ret = LookupAccountSidW(NULL, pUsersSid, NULL, &acc_sizeW, NULL, &dom_sizeW, &use);
+    error = GetLastError();
+    ok(!ret, "LookupAccountSidW failed %u\n", GetLastError());
+    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
+    ok(acc_sizeW, "expected non-zero account size\n");
+    ok(dom_sizeW, "expected non-zero domain size\n");
+    ok(!use, "expected zero use %u\n", use);
 
     FreeSid(pUsersSid);
 
