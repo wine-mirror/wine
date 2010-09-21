@@ -2069,6 +2069,11 @@ LookupAccountSidA(
         } else
             *domainSize = domainSizeW + 1;
     }
+    else
+    {
+        *accountSize = accountSizeW + 1;
+        *domainSize = domainSizeW + 1;
+    }
 
     HeapFree( GetProcessHeap(), 0, systemW );
     HeapFree( GetProcessHeap(), 0, accountW );
@@ -2225,8 +2230,11 @@ LookupAccountSidW(
             if (domain)
                 lstrcpyW(domain, dm);
         }
-        if (((*accountSize != 0) && (*accountSize < ac_len)) ||
-            ((*domainSize != 0) && (*domainSize < dm_len))) {
+        if ((*accountSize && *accountSize < ac_len) ||
+            (!account && !*accountSize && ac_len)   ||
+            (*domainSize && *domainSize < dm_len)   ||
+            (!domain && !*domainSize && dm_len))
+        {
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
             status = FALSE;
         }
@@ -2238,9 +2246,10 @@ LookupAccountSidW(
             *accountSize = ac_len;
         else
             *accountSize = ac_len + 1;
-        *name_use = use;
+
         HeapFree(GetProcessHeap(), 0, account_name);
         HeapFree(GetProcessHeap(), 0, computer_name);
+        if (status) *name_use = use;
         return status;
     }
 
