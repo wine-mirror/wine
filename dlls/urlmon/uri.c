@@ -3545,6 +3545,7 @@ static void reset_builder(UriBuilder *builder) {
 }
 
 static HRESULT validate_scheme_name(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *component;
     const WCHAR *ptr;
     const WCHAR **pptr;
     DWORD expected_len;
@@ -3561,15 +3562,16 @@ static HRESULT validate_scheme_name(const UriBuilder *builder, parse_data *data,
         expected_len = 0;
     }
 
+    component = ptr;
     pptr = &ptr;
     if(parse_scheme(pptr, data, flags, ALLOW_NULL_TERM_SCHEME) &&
        data->scheme_len == expected_len) {
         if(data->scheme)
-            TRACE("(%p %p %x): Found valid scheme component %s.\n", builder, data, flags,
-               debugstr_wn(data->scheme, data->scheme_len));
+            TRACE("(%p %p %x): Found valid scheme component %s len=%d.\n", builder, data, flags,
+               debugstr_wn(data->scheme, data->scheme_len), data->scheme_len);
     } else {
         TRACE("(%p %p %x): Invalid scheme component found %s.\n", builder, data, flags,
-            debugstr_wn(ptr, expected_len));
+            debugstr_wn(component, expected_len));
         return INET_E_INVALID_URL;
    }
 
@@ -3597,14 +3599,15 @@ static HRESULT validate_username(const UriBuilder *builder, parse_data *data, DW
     }
 
     if(ptr) {
+        const WCHAR *component = ptr;
         pptr = &ptr;
         if(parse_username(pptr, data, flags, ALLOW_NULL_TERM_USER_NAME) &&
            data->username_len == expected_len)
-            TRACE("(%p %p %x): Found valid username component %s.\n", builder, data, flags,
-                debugstr_wn(data->username, data->username_len));
+            TRACE("(%p %p %x): Found valid username component %s len=%d.\n", builder, data, flags,
+                debugstr_wn(data->username, data->username_len), data->username_len);
         else {
             TRACE("(%p %p %x): Invalid username component found %s.\n", builder, data, flags,
-                debugstr_wn(ptr, expected_len));
+                debugstr_wn(component, expected_len));
             return INET_E_INVALID_URL;
         }
     }
@@ -3631,14 +3634,15 @@ static HRESULT validate_password(const UriBuilder *builder, parse_data *data, DW
     }
 
     if(ptr) {
+        const WCHAR *component = ptr;
         pptr = &ptr;
         if(parse_password(pptr, data, flags, ALLOW_NULL_TERM_PASSWORD) &&
            data->password_len == expected_len)
-            TRACE("(%p %p %x): Found valid password component %s.\n", builder, data, flags,
-                debugstr_wn(data->password, data->password_len));
+            TRACE("(%p %p %x): Found valid password component %s len=%d.\n", builder, data, flags,
+                debugstr_wn(data->password, data->password_len), data->password_len);
         else {
             TRACE("(%p %p %x): Invalid password component found %s.\n", builder, data, flags,
-                debugstr_wn(ptr, expected_len));
+                debugstr_wn(component, expected_len));
             return INET_E_INVALID_URL;
         }
     }
@@ -3675,6 +3679,7 @@ static HRESULT validate_host(const UriBuilder *builder, parse_data *data, DWORD 
         ptr = NULL;
 
     if(ptr) {
+        const WCHAR *component = ptr;
         DWORD extras = ALLOW_BRACKETLESS_IP_LITERAL|IGNORE_PORT_DELIMITER|SKIP_IP_FUTURE_CHECK;
         pptr = &ptr;
 
@@ -3682,8 +3687,8 @@ static HRESULT validate_host(const UriBuilder *builder, parse_data *data, DWORD 
             TRACE("(%p %p %x): Found valid host name %s len=%d type=%d.\n", builder, data, flags,
                 debugstr_wn(data->host, data->host_len), data->host_len, data->host_type);
         else {
-            TRACE("(%p %p %x): Invalid host name found %s expected_len=%d.\n", builder, data, flags,
-                debugstr_wn(ptr, expected_len), expected_len);
+            TRACE("(%p %p %x): Invalid host name found %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
             return INET_E_INVALID_URL;
         }
     }
