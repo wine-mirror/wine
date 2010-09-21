@@ -32,6 +32,12 @@ int force_termination;
 WCHAR **task_list;
 unsigned int task_count;
 
+struct pid_close_info
+{
+    DWORD pid;
+    BOOL found;
+};
+
 static int taskkill_vprintfW(const WCHAR *msg, va_list va_args)
 {
     int wlen;
@@ -98,6 +104,78 @@ static int taskkill_message(int msg)
         sizeof(msg_buffer)/sizeof(WCHAR));
 
     return taskkill_printfW(formatW, msg_buffer);
+}
+
+/* Post WM_CLOSE to all top-level windows belonging to the process with specified PID. */
+static BOOL CALLBACK pid_enum_proc(HWND hwnd, LPARAM lParam)
+{
+    struct pid_close_info *info = (struct pid_close_info *)lParam;
+    DWORD hwnd_pid;
+
+    GetWindowThreadProcessId(hwnd, &hwnd_pid);
+
+    if (hwnd_pid == info->pid)
+    {
+        PostMessageW(hwnd, WM_CLOSE, 0, 0);
+        info->found = TRUE;
+    }
+
+    return TRUE;
+}
+
+/* The implemented task enumeration and termination behavior does not
+ * exactly match native behavior. On Windows:
+ *
+ * In the case of terminating by process name, specifying a particular
+ * process name more times than the number of running instances causes
+ * all instances to be terminated, but termination failure messages to
+ * be printed as many times as the difference between the specification
+ * quantity and the number of running instances.
+ *
+ * Successful terminations are all listed first in order, with failing
+ * terminations being listed at the end.
+ *
+ * A PID of zero causes taskkill to warn about the inability to terminate
+ * system processes. */
+static int send_close_messages(void)
+{
+    unsigned int i;
+    int status_code = 0;
+
+    for (i = 0; i < task_count; i++)
+    {
+        WCHAR *p = task_list[i];
+        BOOL is_numeric = TRUE;
+
+        /* Determine whether the string is not numeric. */
+        while (*p)
+        {
+            if (!isdigitW(*p++))
+            {
+                is_numeric = FALSE;
+                break;
+            }
+        }
+
+        if (is_numeric)
+        {
+            DWORD pid = atoiW(task_list[i]);
+            struct pid_close_info info = { pid };
+
+            EnumWindows(pid_enum_proc, (LPARAM)&info);
+            if (info.found)
+                taskkill_message_printfW(STRING_CLOSE_PID_SEARCH, pid);
+            else
+            {
+                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+                status_code = 128;
+            }
+        }
+        else
+            WINE_FIXME("Termination by name is not implemented\n");
+    }
+
+    return status_code;
 }
 
 static BOOL add_to_task_list(WCHAR *name)
@@ -202,14 +280,19 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
 
 int wmain(int argc, WCHAR *argv[])
 {
+    int status_code = 0;
+
     if (!process_arguments(argc, argv))
     {
         HeapFree(GetProcessHeap(), 0, task_list);
         return 1;
     }
 
-    WINE_FIXME("taskkill.exe functionality is not implemented\n");
+    if (force_termination)
+        WINE_FIXME("Forced termination is not implemented\n");
+    else
+        status_code = send_close_messages();
 
     HeapFree(GetProcessHeap(), 0, task_list);
-    return 0;
+    return status_code;
 }
