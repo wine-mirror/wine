@@ -451,13 +451,11 @@ void  output_makefile (void)
     puts ("Creating makefile");
 
   fprintf (makefile,
-           "# Generated from %s by winedump.\nTOPSRCDIR = @top_srcdir@\n"
-           "TOPOBJDIR = ../..\nSRCDIR    = @srcdir@\nVPATH     = @srcdir@\n"
+           "# Generated from %s by winedump.\n"
            "MODULE    = %s.dll\n", globals.input_name, OUTPUT_DLL_NAME);
 
-  fprintf (makefile, "IMPORTS   = kernel32");
   if (globals.forward_dll)
-    fprintf (makefile, " %s", globals.forward_dll);
+    fprintf (makefile, "IMPORTS   = %s", globals.forward_dll);
 
   fprintf (makefile, "\n\nC_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n",
            OUTPUT_DLL_NAME);
