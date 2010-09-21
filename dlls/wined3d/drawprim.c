@@ -651,7 +651,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             || (!glPointParameteri && !context->gl_info->supported[NV_POINT_SPRITE]))
             && context->render_offscreen
             && This->stateBlock->state.render_states[WINED3DRS_POINTSPRITEENABLE]
-            && This->stateBlock->gl_primitive_type == GL_POINTS)
+            && This->stateBlock->state.gl_primitive_type == GL_POINTS)
     {
         FIXME("Point sprite coordinate origin switching not supported.\n");
     }
@@ -659,7 +659,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
     {
-        GLenum glPrimType = This->stateBlock->gl_primitive_type;
+        GLenum glPrimType = This->stateBlock->state.gl_primitive_type;
         BOOL emulation = FALSE;
         const struct wined3d_stream_info *stream_info = &This->strided_streams;
         struct wined3d_stream_info stridedlcl;

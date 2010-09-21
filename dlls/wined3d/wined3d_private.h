@@ -2356,6 +2356,7 @@ struct wined3d_state
     enum wined3d_format_id index_format;
     INT base_vertex_index;
     INT load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
+    GLenum gl_primitive_type;
 
     struct IWineD3DVertexShaderImpl *vertex_shader;
     BOOL vs_consts_b[MAX_CONST_B];
@@ -2393,9 +2394,6 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     struct wined3d_state state;
-
-    /* primitive type */
-    GLenum gl_primitive_type;
 
     /* Light hashmap . Collisions are handled using standard wine double linked lists */
 #define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */

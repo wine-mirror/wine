@@ -4655,7 +4655,7 @@ static void WINAPI IWineD3DDeviceImpl_SetPrimitiveType(IWineD3DDevice *iface,
     TRACE("iface %p, primitive_type %s\n", iface, debug_d3dprimitivetype(primitive_type));
 
     This->updateStateBlock->changed.primitive_type = TRUE;
-    This->updateStateBlock->gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
+    This->updateStateBlock->state.gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
 }
 
 static void WINAPI IWineD3DDeviceImpl_GetPrimitiveType(IWineD3DDevice *iface,
@@ -4665,7 +4665,7 @@ static void WINAPI IWineD3DDeviceImpl_GetPrimitiveType(IWineD3DDevice *iface,
 
     TRACE("iface %p, primitive_type %p\n", iface, primitive_type);
 
-    *primitive_type = d3d_primitive_type_from_gl(This->stateBlock->gl_primitive_type);
+    *primitive_type = d3d_primitive_type_from_gl(This->stateBlock->state.gl_primitive_type);
 
     TRACE("Returning %s\n", debug_d3dprimitivetype(*primitive_type));
 }
@@ -5513,10 +5513,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UI
     }
 
     This->currentPatch = patch;
-    old_primitive_type = This->stateBlock->gl_primitive_type;
-    This->stateBlock->gl_primitive_type = GL_TRIANGLES;
+    old_primitive_type = This->stateBlock->state.gl_primitive_type;
+    This->stateBlock->state.gl_primitive_type = GL_TRIANGLES;
     IWineD3DDevice_DrawPrimitiveStrided(iface, patch->numSegs[0] * patch->numSegs[1] * 2 * 3, &patch->strided);
-    This->stateBlock->gl_primitive_type = old_primitive_type;
+    This->stateBlock->state.gl_primitive_type = old_primitive_type;
     This->currentPatch = NULL;
 
     /* Destroy uncached patches */

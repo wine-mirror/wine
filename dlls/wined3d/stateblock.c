@@ -718,7 +718,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->state.transforms[transform] = targetStateBlock->state.transforms[transform];
     }
 
-    if (This->changed.primitive_type) This->gl_primitive_type = targetStateBlock->gl_primitive_type;
+    if (This->changed.primitive_type) This->state.gl_primitive_type = targetStateBlock->state.gl_primitive_type;
 
     if (This->changed.indices
             && ((This->state.index_buffer != targetStateBlock->state.index_buffer)
@@ -995,7 +995,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     if (This->changed.primitive_type)
     {
         This->device->updateStateBlock->changed.primitive_type = TRUE;
-        This->device->updateStateBlock->gl_primitive_type = This->gl_primitive_type;
+        This->device->updateStateBlock->state.gl_primitive_type = This->state.gl_primitive_type;
     }
 
     if (This->changed.indices)
