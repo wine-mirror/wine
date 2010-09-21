@@ -19,7 +19,66 @@
 import "wtypes.idl";
 import "propidl.idl";
 
-interface ICLRRuntimeInfo;
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef LoadLibrary")
+cpp_quote("#endif")
+
+[
+    object,
+    local,
+    uuid(bd39d1d2-ba2f-486a-89b0-b4b0cb466891)
+]
+interface ICLRRuntimeInfo : IUnknown
+{
+    HRESULT GetVersionString(
+        [out, size_is(*pcchBuffer)] LPWSTR pwzBuffer,
+        [in, out] DWORD *pcchBuffer);
+
+    HRESULT GetRuntimeDirectory(
+        [out, size_is(*pcchBuffer)] LPWSTR pwzBuffer,
+        [in, out] DWORD *pcchBuffer);
+
+    HRESULT IsLoaded(
+        [in] HANDLE hndProcess,
+        [out, retval] BOOL *pbLoaded);
+
+    HRESULT LoadErrorString(
+        [in] UINT iResourceID,
+        [out, size_is(*pcchBuffer)] LPWSTR pwzBuffer,
+        [in, out] DWORD *pcchBuffer,
+        [in] LONG iLocaleid);
+
+    HRESULT LoadLibrary(
+        [in] LPCWSTR pwzDllName,
+        [out, retval] HMODULE *phndModule);
+
+    HRESULT GetProcAddress(
+        [in] LPCSTR pszProcName,
+        [out, retval] LPVOID *ppProc);
+
+    HRESULT GetInterface(
+        [in] REFCLSID rclsid,
+        [in] REFIID riid,
+        [out, iid_is(riid), retval] LPVOID *ppUnk);
+
+    HRESULT IsLoadable(
+        [out, retval] BOOL *pbLoadable);
+
+    HRESULT SetDefaultStartupFlags(
+        [in] DWORD dwStartupFlags,
+        [in] LPCWSTR pwzHostConfigFile);
+
+    HRESULT GetDefaultStartupFlags(
+        [out] DWORD *pdwStartupFlags,
+        [out, size_is(*pcchHostConfigFile)] LPWSTR pwzHostConfigFile,
+        [in, out] DWORD *pcchHostConfigFile);
+
+    HRESULT BindAsLegacyV2Runtime();
+
+    HRESULT IsStarted(
+        [out] BOOL *pbStarted,
+        [out] DWORD *pdwStartupFlags);
+};
 
 typedef HRESULT (__stdcall *CallbackThreadSetFnPtr)();
 typedef HRESULT (__stdcall *CallbackThreadUnsetFnPtr)();
