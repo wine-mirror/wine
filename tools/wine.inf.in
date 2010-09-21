@@ -114,6 +114,7 @@ WineFakeDlls=FakeDllsWin32,FakeDllsWow64
 CopyFiles=@l_intl.nls
 AddReg=\
     CurrentVersion,\
+    CurrentVersionWow64,\
     Debugger,\
     DirectX,\
     Dotnet,\
