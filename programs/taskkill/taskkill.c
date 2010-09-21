@@ -20,6 +20,7 @@
  */
 
 #include <windows.h>
+#include <psapi.h>
 #include <wine/debug.h>
 #include <wine/unicode.h>
 
@@ -123,6 +124,72 @@ static BOOL CALLBACK pid_enum_proc(HWND hwnd, LPARAM lParam)
     return TRUE;
 }
 
+static DWORD *enumerate_processes(DWORD *list_count)
+{
+    DWORD *pid_list, alloc_bytes = 1024 * sizeof(*pid_list), needed_bytes;
+
+    pid_list = HeapAlloc(GetProcessHeap(), 0, alloc_bytes);
+    if (!pid_list)
+        return NULL;
+
+    for (;;)
+    {
+        DWORD *realloc_list;
+
+        if (!EnumProcesses(pid_list, alloc_bytes, &needed_bytes))
+        {
+            HeapFree(GetProcessHeap(), 0, pid_list);
+            return NULL;
+        }
+
+        /* EnumProcesses can't signal an insufficient buffer condition, so the
+         * only way to possibly determine whether a larger buffer is required
+         * is to see whether the written number of bytes is the same as the
+         * buffer size. If so, the buffer will be reallocated to twice the
+         * size. */
+        if (alloc_bytes != needed_bytes)
+            break;
+
+        alloc_bytes *= 2;
+        realloc_list = HeapReAlloc(GetProcessHeap(), 0, pid_list, alloc_bytes);
+        if (!realloc_list)
+        {
+            HeapFree(GetProcessHeap(), 0, pid_list);
+            return NULL;
+        }
+        pid_list = realloc_list;
+    }
+
+    *list_count = needed_bytes / sizeof(*pid_list);
+    return pid_list;
+}
+
+static BOOL get_process_name_from_pid(DWORD pid, WCHAR *buf, DWORD chars)
+{
+    HANDLE process;
+    HMODULE module;
+    DWORD required_size;
+
+    process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (!process)
+        return FALSE;
+
+    if (!EnumProcessModules(process, &module, sizeof(module), &required_size))
+    {
+        CloseHandle(process);
+        return FALSE;
+    }
+
+    if (!GetModuleBaseNameW(process, module, buf, chars))
+    {
+        CloseHandle(process);
+        return FALSE;
+    }
+
+    CloseHandle(process);
+    return TRUE;
+}
+
 /* The implemented task enumeration and termination behavior does not
  * exactly match native behavior. On Windows:
  *
@@ -139,8 +206,16 @@ static BOOL CALLBACK pid_enum_proc(HWND hwnd, LPARAM lParam)
  * system processes. */
 static int send_close_messages(void)
 {
+    DWORD *pid_list, pid_list_size;
     unsigned int i;
     int status_code = 0;
+
+    pid_list = enumerate_processes(&pid_list_size);
+    if (!pid_list)
+    {
+        taskkill_message(STRING_ENUM_FAILED);
+        return 1;
+    }
 
     for (i = 0; i < task_count; i++)
     {
@@ -172,9 +247,34 @@ static int send_close_messages(void)
             }
         }
         else
-            WINE_FIXME("Termination by name is not implemented\n");
+        {
+            DWORD index;
+            BOOL found_process = FALSE;
+
+            for (index = 0; index < pid_list_size; index++)
+            {
+                WCHAR process_name[MAX_PATH];
+
+                if (get_process_name_from_pid(pid_list[index], process_name, MAX_PATH) &&
+                    !strcmpiW(process_name, task_list[i]))
+                {
+                    struct pid_close_info info = { pid_list[index] };
+
+                    found_process = TRUE;
+                    EnumWindows(pid_enum_proc, (LPARAM)&info);
+                    taskkill_message_printfW(STRING_CLOSE_PROC_SRCH, process_name, pid_list[index]);
+                }
+            }
+
+            if (!found_process)
+            {
+                taskkill_message_printfW(STRING_SEARCH_FAILED, task_list[i]);
+                status_code = 128;
+            }
+        }
     }
 
+    HeapFree(GetProcessHeap(), 0, pid_list);
     return status_code;
 }
 
