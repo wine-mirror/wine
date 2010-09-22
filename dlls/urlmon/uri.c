@@ -3713,6 +3713,106 @@ static void setup_port(const UriBuilder *builder, parse_data *data, DWORD flags)
         TRACE("(%p %p %x): Using %u as port for IUri.\n", builder, data, flags, data->port_value);
 }
 
+static HRESULT validate_path(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr = NULL;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->path) {
+        ptr = builder->path;
+        expected_len = builder->path_len;
+    } else if(!(builder->modified_props & Uri_HAS_PATH) &&
+              builder->uri && builder->uri->path_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->path_start;
+        expected_len = builder->uri->path_len;
+    }
+
+    if(ptr) {
+        BOOL valid = FALSE;
+        const WCHAR *component = ptr;
+        pptr = &ptr;
+
+        /* How the path is validated depends on what type of
+         * URI it is.
+         */
+        valid = data->is_opaque ?
+            parse_path_opaque(pptr, data, flags) : parse_path_hierarchical(pptr, data, flags);
+
+        if(!valid || expected_len != data->path_len) {
+            TRACE("(%p %p %x): Invalid path componet %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+
+        TRACE("(%p %p %x): Valid path component %s len=%d.\n", builder, data, flags,
+            debugstr_wn(data->path, data->path_len), data->path_len);
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_query(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr = NULL;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->query) {
+        ptr = builder->query;
+        expected_len = builder->query_len;
+    } else if(!(builder->modified_props & Uri_HAS_QUERY) && builder->uri &&
+              builder->uri->query_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->query_start;
+        expected_len = builder->uri->query_len;
+    }
+
+    if(ptr) {
+        const WCHAR *component = ptr;
+        pptr = &ptr;
+
+        if(parse_query(pptr, data, flags) && expected_len == data->query_len)
+            TRACE("(%p %p %x): Valid query component %s len=%d.\n", builder, data, flags,
+                debugstr_wn(data->query, data->query_len), data->query_len);
+        else {
+            TRACE("(%p %p %x): Invalid query component %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT validate_fragment(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    const WCHAR *ptr = NULL;
+    const WCHAR **pptr;
+    DWORD expected_len;
+
+    if(builder->fragment) {
+        ptr = builder->fragment;
+        expected_len = builder->fragment_len;
+    } else if(!(builder->modified_props & Uri_HAS_FRAGMENT) && builder->uri &&
+              builder->uri->fragment_start > -1) {
+        ptr = builder->uri->canon_uri+builder->uri->fragment_start;
+        expected_len = builder->uri->fragment_len;
+    }
+
+    if(ptr) {
+        const WCHAR *component = ptr;
+        pptr = &ptr;
+
+        if(parse_query(pptr, data, flags) && expected_len == data->fragment_len)
+            TRACE("(%p %p %x): Valid fragment component %s len=%d.\n", builder, data, flags,
+                debugstr_wn(data->fragment, data->fragment_len), data->fragment_len);
+        else {
+            TRACE("(%p %p %x): Invalid fragment component %s.\n", builder, data, flags,
+                debugstr_wn(component, expected_len));
+            return INET_E_INVALID_URL;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT validate_components(const UriBuilder *builder, parse_data *data, DWORD flags) {
     HRESULT hr;
 
@@ -3747,7 +3847,21 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
 
     setup_port(builder, data, flags);
 
-    return E_NOTIMPL;
+    hr = validate_path(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    hr = validate_query(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    hr = validate_fragment(builder, data, flags);
+    if(FAILED(hr))
+        return hr;
+
+    TRACE("(%p %p %x): Finished validating builder components.\n", builder, data, flags);
+
+    return S_OK;
 }
 
 static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_flags,
@@ -3790,7 +3904,7 @@ static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_fla
         return hr;
     }
 
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 #define URI_THIS(iface) DEFINE_THIS(Uri, IUri, iface)
