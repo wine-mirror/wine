@@ -47,7 +47,7 @@ BOOL init_pointers(void)
 
     if (FAILED(hr))
     {
-        todo_wine win_skip(".NET 4 is not installed\n");
+        win_skip(".NET 4 is not installed\n");
         FreeLibrary(hmscoree);
         return FALSE;
     }
@@ -72,7 +72,7 @@ void test_enumruntimes(void)
     WCHAR buf[MAX_PATH];
 
     hr = ICLRMetaHost_EnumerateInstalledRuntimes(metahost, &runtime_enum);
-    ok(hr == S_OK, "EnumerateInstalledRuntimes returned %x\n", hr);
+    todo_wine ok(hr == S_OK, "EnumerateInstalledRuntimes returned %x\n", hr);
     if (FAILED(hr)) return;
 
     while ((hr = IEnumUnknown_Next(runtime_enum, 1, &unk, &count)) == S_OK)

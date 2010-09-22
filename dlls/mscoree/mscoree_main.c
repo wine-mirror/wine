@@ -642,9 +642,14 @@ BOOL WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOL forceVerifi
 
 HRESULT WINAPI CLRCreateInstance(REFCLSID clsid, REFIID riid, LPVOID *ppInterface)
 {
-    FIXME("(%s,%s,%p): stub\n", debugstr_guid(clsid), debugstr_guid(riid), ppInterface);
+    TRACE("(%s,%s,%p)\n", debugstr_guid(clsid), debugstr_guid(riid), ppInterface);
 
-    return E_NOTIMPL;
+    if (IsEqualGUID(clsid, &CLSID_CLRMetaHost))
+        return CLRMetaHost_CreateInstance(riid, ppInterface);
+
+    FIXME("not implemented for class %s\n", debugstr_guid(clsid));
+
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)

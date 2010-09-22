@@ -3,6 +3,7 @@ IMPORTS   = uuid shell32 advapi32
 
 C_SRCS = \
 	corruntimehost.c \
+	metahost.c \
 	mscoree_main.c
 
 @MAKE_DLL_RULES@
