@@ -5082,6 +5082,11 @@ static HRESULT WINAPI UriBuilder_SetHost(IUriBuilder *iface, LPCWSTR pwzNewValue
 {
     UriBuilder *This = URIBUILDER_THIS(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
+
+    /* Host name can't be set to NULL. */
+    if(!pwzNewValue)
+        return E_INVALIDARG;
+
     return set_builder_component(&This->host, &This->host_len, pwzNewValue, 0,
                                  &This->modified_props, Uri_HAS_HOST);
 }
@@ -5127,11 +5132,11 @@ static HRESULT WINAPI UriBuilder_SetSchemeName(IUriBuilder *iface, LPCWSTR pwzNe
     TRACE("(%p)->(%s)\n", This, debugstr_w(pwzNewValue));
 
     /* Only set the scheme name if it's not NULL or empty. */
-    if(pwzNewValue && *pwzNewValue)
-        return set_builder_component(&This->scheme, &This->scheme_len, pwzNewValue, 0,
-                                     &This->modified_props, Uri_HAS_SCHEME_NAME);
-    else
+    if(!pwzNewValue || !*pwzNewValue)
         return E_INVALIDARG;
+
+    return set_builder_component(&This->scheme, &This->scheme_len, pwzNewValue, 0,
+                                 &This->modified_props, Uri_HAS_SCHEME_NAME);
 }
 
 static HRESULT WINAPI UriBuilder_SetUserName(IUriBuilder *iface, LPCWSTR pwzNewValue)
@@ -5157,8 +5162,12 @@ static HRESULT WINAPI UriBuilder_RemoveProperties(IUriBuilder *iface, DWORD dwPr
     if(dwPropertyMask & Uri_HAS_FRAGMENT)
         UriBuilder_SetFragment(iface, NULL);
 
+    /* Even though you can't set the host name to NULL or an
+     * empty string, you can still remove it... for some reason.
+     */
     if(dwPropertyMask & Uri_HAS_HOST)
-        UriBuilder_SetHost(iface, NULL);
+        set_builder_component(&This->host, &This->host_len, NULL, 0,
+                              &This->modified_props, Uri_HAS_HOST);
 
     if(dwPropertyMask & Uri_HAS_PASSWORD)
         UriBuilder_SetPassword(iface, NULL);

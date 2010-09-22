@@ -5295,6 +5295,72 @@ static const uri_builder_test uri_builder_tests[] = {
             {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    /* Can't set the host name to NULL. */
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,NULL,"google.com",Uri_PROPERTY_HOST,E_INVALIDARG,FALSE}
+        },
+        {FALSE},
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
+        {
+            {"http://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* Can set the host name to an empty string. */
+    {   "http://google.com/",0,S_OK,FALSE,
+        {
+            {TRUE,"",NULL,Uri_PROPERTY_HOST,S_OK,FALSE}
+        },
+        {FALSE},
+        0,S_OK,TRUE,
+        0,S_OK,TRUE,
+        0,0,0,S_OK,TRUE,
+        {
+            {"http:///",S_OK},
+            {"",S_OK},
+            {"http:///",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_OK},
+            {"",S_FALSE},
+            {"/",S_OK},
+            {"/",S_OK},
+            {"",S_FALSE},
+            {"http:///",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 
@@ -8025,9 +8091,13 @@ static void test_IUriBuilder(void) {
                 uri_builder_property prop = test.properties[j];
                 if(prop.change) {
                     change_property(builder, &prop, i);
-                    if(prop.property != Uri_PROPERTY_SCHEME_NAME)
+                    if(prop.property != Uri_PROPERTY_SCHEME_NAME &&
+                       prop.property != Uri_PROPERTY_HOST)
                         modified = TRUE;
                     else if(prop.value && *prop.value)
+                        modified = TRUE;
+                    else if(prop.value && !*prop.value && prop.property == Uri_PROPERTY_HOST)
+                        /* Host name property can't be NULL, but it can be empty. */
                         modified = TRUE;
                 }
             }
