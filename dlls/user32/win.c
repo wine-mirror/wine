@@ -44,6 +44,14 @@ static DWORD process_layout;
 
 /**********************************************************************/
 
+static inline void mirror_rect( const RECT *window_rect, RECT *rect )
+{
+    int width = window_rect->right - window_rect->left;
+    int tmp = rect->left;
+    rect->left = width - rect->right;
+    rect->right = width - tmp;
+}
+
 /* helper for Get/SetWindowLong */
 static inline LONG_PTR get_win_data( const void *ptr, UINT size )
 {
@@ -689,12 +697,32 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
         case COORDS_CLIENT:
             OffsetRect( &window_rect, -win->rectClient.left, -win->rectClient.top );
             OffsetRect( &client_rect, -win->rectClient.left, -win->rectClient.top );
+            if (win->dwExStyle & WS_EX_LAYOUTRTL)
+                mirror_rect( &win->rectClient, &window_rect );
             break;
         case COORDS_WINDOW:
             OffsetRect( &window_rect, -win->rectWindow.left, -win->rectWindow.top );
             OffsetRect( &client_rect, -win->rectWindow.left, -win->rectWindow.top );
+            if (win->dwExStyle & WS_EX_LAYOUTRTL)
+                mirror_rect( &win->rectWindow, &client_rect );
             break;
         case COORDS_PARENT:
+            if (win->parent)
+            {
+                WND *parent = WIN_GetPtr( win->parent );
+                if (parent == WND_DESKTOP) break;
+                if (!parent || parent == WND_OTHER_PROCESS)
+                {
+                    WIN_ReleasePtr( win );
+                    goto other_process;
+                }
+                if (parent->dwExStyle & WS_EX_LAYOUTRTL)
+                {
+                    mirror_rect( &parent->rectClient, &window_rect );
+                    mirror_rect( &parent->rectClient, &client_rect );
+                }
+                WIN_ReleasePtr( parent );
+            }
             break;
         case COORDS_SCREEN:
             while (win->parent)

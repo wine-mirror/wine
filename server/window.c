@@ -905,6 +905,16 @@ static inline void offset_rect( rectangle_t *rect, int offset_x, int offset_y )
 }
 
 
+/* mirror a rectangle respective to the window client area */
+static inline void mirror_rect( const rectangle_t *window_rect, rectangle_t *rect )
+{
+    int width = window_rect->right - window_rect->left;
+    int tmp = rect->left;
+    rect->left = width - rect->right;
+    rect->right = width - tmp;
+}
+
+
 /* set the region to the client rect clipped by the window rect, in parent-relative coordinates */
 static void set_region_client_rect( struct region *region, struct window *win )
 {
@@ -2134,13 +2144,29 @@ DECL_HANDLER(get_window_rectangles)
         offset_rect( &reply->window, -win->client_rect.left, -win->client_rect.top );
         offset_rect( &reply->visible, -win->client_rect.left, -win->client_rect.top );
         offset_rect( &reply->client, -win->client_rect.left, -win->client_rect.top );
+        if (win->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_rect( &win->client_rect, &reply->window );
+            mirror_rect( &win->client_rect, &reply->visible );
+        }
         break;
     case COORDS_WINDOW:
         offset_rect( &reply->window, -win->window_rect.left, -win->window_rect.top );
         offset_rect( &reply->visible, -win->window_rect.left, -win->window_rect.top );
         offset_rect( &reply->client, -win->window_rect.left, -win->window_rect.top );
+        if (win->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_rect( &win->window_rect, &reply->visible );
+            mirror_rect( &win->window_rect, &reply->client );
+        }
         break;
     case COORDS_PARENT:
+        if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_rect( &win->parent->client_rect, &reply->window );
+            mirror_rect( &win->parent->client_rect, &reply->visible );
+            mirror_rect( &win->parent->client_rect, &reply->client );
+        }
         break;
     case COORDS_SCREEN:
         client_to_screen_rect( win->parent, &reply->window );
