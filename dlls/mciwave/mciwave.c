@@ -1463,6 +1463,7 @@ static DWORD WAVE_mciStatus(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_STATUS_PARM
     TRACE("(%u, %08X, %p);\n", wDevID, dwFlags, lpParms);
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wmw == NULL)		return MCIERR_INVALID_DEVICE_ID;
+    if (!(dwFlags & MCI_STATUS_ITEM))	return MCIERR_MISSING_PARAMETER;
 
     if (dwFlags & MCI_STATUS_ITEM) {
 	switch (lpParms->dwItem) {
@@ -1572,7 +1573,7 @@ static DWORD WAVE_mciStatus(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_STATUS_PARM
 	    break;
 	default:
             WARN("unknown command %08X !\n", lpParms->dwItem);
-	    return MCIERR_UNRECOGNIZED_COMMAND;
+	    return MCIERR_UNSUPPORTED_FUNCTION;
 	}
     }
     if ((dwFlags & MCI_NOTIFY) && HRESULT_CODE(ret)==0)
