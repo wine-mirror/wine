@@ -483,7 +483,7 @@ static LRESULT WAVE_mciOpenFile(WINE_MCIWAVE* wmw, LPCWSTR filename)
         {
             LPMMCKINFO          lpckMainRIFF = &wmw->ckMainRIFF;
 
-            /* make sure we're are the beginning of the file */
+            /* make sure we're at the beginning of the file */
             mmioSeek(wmw->hFile, 0, SEEK_SET);
 
             /* first reading of this file. read the waveformat chunk */
@@ -916,7 +916,7 @@ cleanUp:
 
     wmw->dwStatus = MCI_MODE_STOP;
 
-    /* Let the potentically asynchronous commands support FAILURE notification. */
+    /* Let the potentially asynchronous commands support FAILURE notification. */
     if (oldcb) mciDriverNotify(oldcb, wDevID,
 	dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
 
@@ -1752,7 +1752,7 @@ LRESULT CALLBACK MCIWAVE_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_CUT:
     case MCI_DELETE:
     case MCI_PASTE:
-	FIXME("Unsupported yet command [%u]\n", wMsg);
+	FIXME("Unsupported command [%u]\n", wMsg);
 	break;
     case MCI_WINDOW:
 	TRACE("Unsupported command [%u]\n", wMsg);
