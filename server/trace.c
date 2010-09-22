@@ -2839,6 +2839,7 @@ static void dump_get_windows_offset_reply( const struct get_windows_offset_reply
 {
     fprintf( stderr, " x=%d", req->x );
     fprintf( stderr, ", y=%d", req->y );
+    fprintf( stderr, ", mirror=%d", req->mirror );
 }
 
 static void dump_get_visible_region_request( const struct get_visible_region_request *req )

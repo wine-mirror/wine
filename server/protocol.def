@@ -2383,6 +2383,7 @@ enum coords_relative
 @REPLY
     int            x;             /* x coordinate offset */
     int            y;             /* y coordinate offset */
+    int            mirror;        /* whether to mirror the x coordinate */
 @END
 
 

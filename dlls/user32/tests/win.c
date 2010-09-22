@@ -6164,6 +6164,44 @@ static void test_winregion(void)
     DestroyWindow(hwnd);
 }
 
+static void test_rtl_layout(void)
+{
+    HWND parent, child;
+    RECT r;
+    POINT pt;
+
+    if (!pSetProcessDefaultLayout)
+    {
+        win_skip( "SetProcessDefaultLayout not supported\n" );
+        return;
+    }
+
+    parent = CreateWindowExA(WS_EX_LAYOUTRTL, "static", NULL, WS_POPUP, 100, 100, 300, 300, NULL, 0, 0, NULL);
+    child = CreateWindowExA(0, "static", NULL, WS_CHILD, 10, 10, 20, 20, parent, 0, 0, NULL);
+
+    GetWindowRect( parent, &r );
+    ok( r.left == 100 && r.right == 400, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    GetClientRect( parent, &r );
+    ok( r.left == 0 && r.right == 300, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    GetClientRect( child, &r );
+    ok( r.left == 0 && r.right == 20, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    MapWindowPoints( child, parent, (POINT *)&r, 2 );
+    ok( r.left == 10 && r.right == 30, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    GetWindowRect( child, &r );
+    ok( r.left == 370 && r.right == 390, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    MapWindowPoints( NULL, parent, (POINT *)&r, 2 );
+    ok( r.left == 10 && r.right == 30, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    GetWindowRect( child, &r );
+    MapWindowPoints( NULL, parent, (POINT *)&r, 1 );
+    MapWindowPoints( NULL, parent, (POINT *)&r + 1, 1 );
+    ok( r.left == 30 && r.right == 10, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    pt.x = pt.y = 12;
+    MapWindowPoints( child, parent, &pt, 1 );
+    ok( pt.x == 22 && pt.y == 22, "wrong point %d,%d\n", pt.x, pt.y );
+    DestroyWindow( child );
+    DestroyWindow( parent );
+}
+
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
@@ -6218,6 +6256,7 @@ START_TEST(win)
     test_capture_2();
     test_capture_3(hwndMain, hwndMain2);
     test_capture_4();
+    test_rtl_layout();
 
     test_CreateWindow();
     test_parent_owner();

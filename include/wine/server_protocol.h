@@ -3328,6 +3328,8 @@ struct get_windows_offset_reply
     struct reply_header __header;
     int            x;
     int            y;
+    int            mirror;
+    char __pad_20[4];
 };
 
 
@@ -5517,6 +5519,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 409
+#define SERVER_PROTOCOL_VERSION 410
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2193,11 +2193,17 @@ DECL_HANDLER(set_window_text)
 DECL_HANDLER(get_windows_offset)
 {
     struct window *win;
+    int mirror_from = 0, mirror_to = 0;
 
     reply->x = reply->y = 0;
     if (req->from)
     {
         if (!(win = get_window( req->from ))) return;
+        if (win->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_from = 1;
+            reply->x += win->client_rect.right - win->client_rect.left - 1;
+        }
         while (win && !is_desktop_window(win))
         {
             reply->x += win->client_rect.left;
@@ -2208,6 +2214,11 @@ DECL_HANDLER(get_windows_offset)
     if (req->to)
     {
         if (!(win = get_window( req->to ))) return;
+        if (win->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_to = 1;
+            reply->x -= win->client_rect.right - win->client_rect.left - 1;
+        }
         while (win && !is_desktop_window(win))
         {
             reply->x -= win->client_rect.left;
@@ -2215,6 +2226,8 @@ DECL_HANDLER(get_windows_offset)
             win = win->parent;
         }
     }
+    if (mirror_from) reply->x = -reply->x;
+    reply->mirror = mirror_from ^ mirror_to;
 }
 
 
