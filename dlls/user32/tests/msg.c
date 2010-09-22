@@ -10649,111 +10649,111 @@ static void test_ShowWindow(void)
 /*  4 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
            SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
 /*  5 */ { SW_SHOWMINIMIZED, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinimized_1,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /*  6 */ { SW_SHOWMINIMIZED, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_1,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /*  7 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_1,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /*  8 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /*  9 */ { SW_SHOWMAXIMIZED, FALSE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_1,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 10 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 11 */ { SW_HIDE, TRUE, WS_MAXIMIZE, WmHide_1,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 12 */ { SW_HIDE, FALSE, WS_MAXIMIZE, WmEmptySeq,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 13 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_1,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 14 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 15 */ { SW_HIDE, TRUE, 0, WmHide_2,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 16 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 17 */ { SW_SHOW, FALSE, WS_VISIBLE, WmShow,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 18 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 19 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 20 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 21 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 22 */ { SW_SHOWMINNOACTIVE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinNoActivate,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, TRUE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, TRUE },
 /* 23 */ { SW_SHOWMINNOACTIVE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_4,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 24 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 25 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 26 */ { SW_SHOWNA, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_1,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 27 */ { SW_SHOWNA, TRUE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_2,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 28 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 29 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 30 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_1,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 31 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 32 */ { SW_HIDE, TRUE, 0, WmHide_3,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 33 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 34 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq, /* what does this mean?! */
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 35 */ { SW_NORMALNA, FALSE, 0, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 36 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 37 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_2,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 38 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 39 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 40 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_2,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 41 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 42 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_2,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 43 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 44 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1,
-           SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 45 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3,
-           SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 46 */ { SW_RESTORE, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmRestore_3,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 47 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmRestore_4,
-           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 48 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_3,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 49 */ { SW_SHOW, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmEmptySeq,
-           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMAXIMIZED, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 50 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5,
-           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 51 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5,
-           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 52 */ { SW_HIDE, TRUE, 0, WmHide_1,
-           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 53 */ { SW_HIDE, FALSE, 0, WmEmptySeq,
-           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, WPF_RESTORETOMAXIMIZED, {-32000,-32000}, {-1,-1}, FALSE },
 /* 54 */ { SW_MINIMIZE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_3,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 55 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2,
-           SW_SHOWMINIMIZED, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWMINIMIZED, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 56 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_2,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE },
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE },
 /* 57 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq,
-           SW_SHOWNORMAL, 0, {-1,-1}, {-1,-1}, FALSE }
+           SW_SHOWNORMAL, 0, {-32000,-32000}, {-1,-1}, FALSE }
     };
     HWND hwnd;
     DWORD style;
@@ -10850,27 +10850,41 @@ static void test_ShowWindow(void)
         ok(ret, "GetWindowPlacement error %u\n", GetLastError());
         ok(wp.flags == sw[i].wp_flags, "expected %#x, got %#x\n", sw[i].wp_flags, wp.flags);
         ok(wp.showCmd == sw[i].wp_cmd, "expected %d, got %d\n", sw[i].wp_cmd, wp.showCmd);
-if (0) /* FIXME: Wine behaves completely different here */
-{
+
         /* NT moves the minimized window to -32000,-32000, win9x to 3000,3000 */
         if ((wp.ptMinPosition.x + work_rc.left == -32000 && wp.ptMinPosition.y + work_rc.top == -32000) ||
             (wp.ptMinPosition.x + work_rc.left == 3000 && wp.ptMinPosition.y + work_rc.top == 3000))
-        todo_wine
-        ok((wp.ptMinPosition.x + work_rc.left == -32000 && wp.ptMinPosition.y + work_rc.top == -32000) ||
-           (wp.ptMinPosition.x + work_rc.left == 3000 && wp.ptMinPosition.y + work_rc.top == 3000),
-           "expected -32000,-32000 got %d,%d\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+        {
+            ok((wp.ptMinPosition.x + work_rc.left == sw[i].wp_min.x && wp.ptMinPosition.y + work_rc.top == sw[i].wp_min.y) ||
+               (wp.ptMinPosition.x + work_rc.left == 3000 && wp.ptMinPosition.y + work_rc.top == 3000),
+               "expected %d,%d got %d,%d\n", sw[i].wp_min.x, sw[i].wp_min.y, wp.ptMinPosition.x, wp.ptMinPosition.y);
+        }
         else
-        ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
-           "expected -1,-1 got %d,%d\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+        {
+            if (wp.ptMinPosition.x != sw[i].wp_min.x || wp.ptMinPosition.y != sw[i].wp_min.y)
+            todo_wine
+            ok(wp.ptMinPosition.x == sw[i].wp_min.x && wp.ptMinPosition.y == sw[i].wp_min.y,
+               "expected %d,%d got %d,%d\n", sw[i].wp_min.x, sw[i].wp_min.y, wp.ptMinPosition.x, wp.ptMinPosition.y);
+            else
+            ok(wp.ptMinPosition.x == sw[i].wp_min.x && wp.ptMinPosition.y == sw[i].wp_min.y,
+               "expected %d,%d got %d,%d\n", sw[i].wp_min.x, sw[i].wp_min.y, wp.ptMinPosition.x, wp.ptMinPosition.y);
+        }
 
-        ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
-           "expected -1,-1 got %d,%d\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+        if (wp.ptMaxPosition.x != sw[i].wp_max.x || wp.ptMaxPosition.y != sw[i].wp_max.y)
+        todo_wine
+        ok(wp.ptMaxPosition.x == sw[i].wp_max.x && wp.ptMaxPosition.y == sw[i].wp_max.y,
+           "expected %d,%d got %d,%d\n", sw[i].wp_max.x, sw[i].wp_max.y, wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+        else
+        ok(wp.ptMaxPosition.x == sw[i].wp_max.x && wp.ptMaxPosition.y == sw[i].wp_max.y,
+           "expected %d,%d got %d,%d\n", sw[i].wp_max.x, sw[i].wp_max.y, wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+
+if (0) /* FIXME: Wine behaves completely different here */
         ok(EqualRect(&win_rc, &wp.rcNormalPosition),
            "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
             win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
             wp.rcNormalPosition.left, wp.rcNormalPosition.top,
             wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
-}
+
         flush_events();
         flush_sequence();
     }
