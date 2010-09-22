@@ -441,7 +441,7 @@ BOOL WINAPI VerifyConsoleIoHandle(HANDLE handle)
     SERVER_START_REQ(get_console_mode)
     {
 	req->handle = console_handle_unmap(handle);
-	ret = !wine_server_call_err( req );
+	ret = !wine_server_call( req );
     }
     SERVER_END_REQ;
     return ret;
