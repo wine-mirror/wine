@@ -1038,6 +1038,23 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     return D3D_OK;
 }
 
+/*************************************************************************
+ * D3DXCreateMeshFVF
+ */
+HRESULT WINAPI D3DXCreateMeshFVF(DWORD numfaces, DWORD numvertices, DWORD options, DWORD fvf,
+                                 LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh)
+{
+    HRESULT hr;
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];
+
+    TRACE("(%u, %u, %u, %u, %p, %p)\n", numfaces, numvertices, options, fvf, device, mesh);
+
+    hr = D3DXDeclaratorFromFVF(fvf, declaration);
+    if (FAILED(hr)) return hr;
+
+    return D3DXCreateMesh(numfaces, numvertices, options, declaration, device, mesh);
+}
+
 HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height,
                              FLOAT depth, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
 {

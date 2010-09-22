@@ -1208,6 +1208,145 @@ static void D3DXCreateMeshTest(void)
     DestroyWindow(wnd);
 }
 
+static void D3DXCreateMeshFVFTest(void)
+{
+    HRESULT hr;
+    HWND wnd;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device, *test_device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh *d3dxmesh;
+    int i, size;
+    D3DVERTEXELEMENT9 test_decl[MAX_FVF_DECL_SIZE];
+    DWORD options;
+    struct mesh mesh;
+
+    static const D3DVERTEXELEMENT9 decl[3] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END(), };
+
+    hr = D3DXCreateMeshFVF(0, 0, 0, 0, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, NULL, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = D3DXCreateMeshFVF(0, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateMeshFVF(1, 0, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateMeshFVF(1, 3, 0, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+
+    if (hr == D3D_OK)
+    {
+        d3dxmesh->lpVtbl->Release(d3dxmesh);
+    }
+
+    hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, 0xdeadbeef, device, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+
+    if (hr == D3D_OK)
+    {
+        /* device */
+        hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+        hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, &test_device);
+        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        ok(test_device == device, "Got result %p, expected %p\n", test_device, device);
+
+        if (hr == D3D_OK)
+        {
+            IDirect3DDevice9_Release(device);
+        }
+
+        /* declaration */
+        hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+        hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, test_decl);
+        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+
+        if (hr == D3D_OK)
+        {
+            size = sizeof(decl) / sizeof(decl[0]);
+            for (i = 0; i < size - 1; i++)
+            {
+                ok(test_decl[i].Stream == decl[i].Stream, "Returned stream %d, expected %d\n", test_decl[i].Stream, decl[i].Stream);
+                ok(test_decl[i].Type == decl[i].Type, "Returned type %d, expected %d\n", test_decl[i].Type, decl[i].Type);
+                ok(test_decl[i].Method == decl[i].Method, "Returned method %d, expected %d\n", test_decl[i].Method, decl[i].Method);
+                ok(test_decl[i].Usage == decl[i].Usage, "Returned usage %d, expected %d\n", test_decl[i].Usage, decl[i].Usage);
+                ok(test_decl[i].UsageIndex == decl[i].UsageIndex, "Returned usage index %d, expected %d\n",
+                   test_decl[i].UsageIndex, decl[i].UsageIndex);
+                ok(test_decl[i].Offset == decl[i].Offset, "Returned offset %d, expected %d\n", test_decl[i].Offset, decl[i].Offset);
+            }
+            ok(decl[size-1].Stream == 0xFF, "Returned too long vertex declaration\n"); /* end element */
+        }
+
+        /* options */
+        options = d3dxmesh->lpVtbl->GetOptions(d3dxmesh);
+        ok(options == D3DXMESH_MANAGED, "Got result %x, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
+
+        /* rest */
+        if (!new_mesh(&mesh, 3, 1))
+        {
+            skip("Couldn't create mesh\n");
+        }
+        else
+        {
+            memset(mesh.vertices, 0, mesh.number_of_vertices * sizeof(*mesh.vertices));
+            memset(mesh.faces, 0, mesh.number_of_faces * sizeof(*mesh.faces));
+            mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
+
+            compare_mesh("createmeshfvf", d3dxmesh, &mesh);
+
+            free_mesh(&mesh);
+        }
+
+        d3dxmesh->lpVtbl->Release(d3dxmesh);
+    }
+
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(wnd);
+}
+
 struct sincos_table
 {
     float *sin;
@@ -1624,6 +1763,7 @@ START_TEST(mesh)
     D3DXGetFVFVertexSizeTest();
     D3DXIntersectTriTest();
     D3DXCreateMeshTest();
+    D3DXCreateMeshFVFTest();
     D3DXCreateSphereTest();
     test_get_decl_length();
     test_get_decl_vertex_size();

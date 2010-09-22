@@ -72,7 +72,7 @@
 @ stdcall D3DXCreateLine(ptr ptr)
 @ stdcall D3DXCreateMatrixStack(long ptr)
 @ stdcall D3DXCreateMesh(long long long ptr ptr ptr)
-@ stub D3DXCreateMeshFVF
+@ stdcall D3DXCreateMeshFVF(long long long long ptr ptr)
 @ stub D3DXCreateNPatchMesh
 @ stub D3DXCreatePMeshFromStream
 @ stub D3DXCreatePatchMesh
