@@ -1177,7 +1177,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
             pt.y = (short)HIWORD(lParam);
             ClientToScreen(hWnd, &pt);
             WCUSER_SetMenuDetails(data, PRIVATE(data)->hPopMenu);
-            TrackPopupMenu(PRIVATE(data)->hPopMenu, TPM_LEFTALIGN|TPM_TOPALIGN,
+            TrackPopupMenu(PRIVATE(data)->hPopMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_RIGHTBUTTON,
                            pt.x, pt.y, 0, hWnd, NULL);
         }
         else
