@@ -6,7 +6,7 @@
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
 @ stub MatchExactGetIDsOfNames
-@ stub PrintHTML
+@ stdcall PrintHTML(ptr ptr str long)
 @ stdcall RNIGetCompatibleVersion()
 @ stdcall RunHTMLApplication(long long str long)
 @ stdcall ShowHTMLDialog(ptr ptr ptr wstr ptr)
