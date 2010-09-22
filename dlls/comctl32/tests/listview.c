@@ -3269,6 +3269,7 @@ static void test_getitemrect(void)
     LVCOLUMNA col;
     INT order[2];
     POINT pt;
+    HDC hdc;
 
     /* rectangle isn't empty for empty text items */
     hwnd = create_listview_control(LVS_LIST);
@@ -3282,7 +3283,9 @@ static void test_getitemrect(void)
     expect(TRUE, r);
     expect(0, rect.left);
     expect(0, rect.top);
-    todo_wine expect(96, rect.right);
+    hdc = GetDC(hwnd);
+    todo_wine expect(GetDeviceCaps(hdc, LOGPIXELSX), rect.right);
+    ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 
     hwnd = create_listview_control(LVS_REPORT);
@@ -4110,6 +4113,7 @@ static void test_getcolumnwidth(void)
     DWORD_PTR style;
     LVCOLUMNA col;
     LVITEMA itema;
+    HDC hdc;
 
     /* default column width */
     hwnd = create_listview_control(LVS_ICON);
@@ -4133,7 +4137,9 @@ static void test_getcolumnwidth(void)
     memset(&itema, 0, sizeof(itema));
     SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&itema);
     ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
-    todo_wine expect(96, ret);
+    hdc = GetDC(hwnd);
+    todo_wine expect(GetDeviceCaps(hdc, LOGPIXELSX), ret);
+    ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
 }
 
