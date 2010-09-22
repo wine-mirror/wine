@@ -72,7 +72,7 @@ void test_enumruntimes(void)
     WCHAR buf[MAX_PATH];
 
     hr = ICLRMetaHost_EnumerateInstalledRuntimes(metahost, &runtime_enum);
-    todo_wine ok(hr == S_OK, "EnumerateInstalledRuntimes returned %x\n", hr);
+    ok(hr == S_OK, "EnumerateInstalledRuntimes returned %x\n", hr);
     if (FAILED(hr)) return;
 
     while ((hr = IEnumUnknown_Next(runtime_enum, 1, &unk, &count)) == S_OK)
