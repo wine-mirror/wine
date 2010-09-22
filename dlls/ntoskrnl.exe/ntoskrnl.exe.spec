@@ -921,7 +921,7 @@
 @ stub PsSetThreadWin32Thread
 @ stdcall PsTerminateSystemThread(long)
 @ stub PsThreadType
-@ stub READ_REGISTER_BUFFER_UCHAR
+@ stdcall READ_REGISTER_BUFFER_UCHAR(ptr ptr long)
 @ stub READ_REGISTER_BUFFER_ULONG
 @ stub READ_REGISTER_BUFFER_USHORT
 @ stub READ_REGISTER_UCHAR
