@@ -939,6 +939,94 @@ static void test_timer_queue(void)
        GetLastError());
 }
 
+static HANDLE modify_handle(HANDLE handle, DWORD modify)
+{
+    DWORD tmp = HandleToULong(handle);
+    tmp |= modify;
+    return ULongToHandle(tmp);
+}
+
+static void test_WaitForSingleObject(void)
+{
+    HANDLE signaled, nonsignaled, invalid;
+    DWORD ret;
+
+    signaled = CreateEventW(NULL, TRUE, TRUE, NULL);
+    if(signaled == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Handles work differently on win9x\n");
+        return;
+    }
+    nonsignaled = CreateEventW(NULL, TRUE, FALSE, NULL);
+    invalid = (HANDLE) 0xdeadbee0;
+
+    /* invalid handle with different values for lower 2 bits */
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(invalid, 0);
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(invalid, 1), 0);
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(invalid, 2), 0);
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(invalid, 3), 0);
+    todo_wine ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+    /* valid handle with different values for lower 2 bits */
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(nonsignaled, 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(nonsignaled, 1), 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(nonsignaled, 2), 0);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(nonsignaled, 3), 0);
+    todo_wine ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
+    todo_wine ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    /* valid handle with different values for lower 2 bits */
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(signaled, 0);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(signaled, 1), 0);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(signaled, 2), 0);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WaitForSingleObject(modify_handle(signaled, 3), 0);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
+    todo_wine ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
+
+    CloseHandle(signaled);
+    CloseHandle(nonsignaled);
+}
+
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandle("kernel32");
@@ -958,4 +1046,5 @@ START_TEST(sync)
     test_waitable_timer();
     test_iocp_callback();
     test_timer_queue();
+    test_WaitForSingleObject();
 }
