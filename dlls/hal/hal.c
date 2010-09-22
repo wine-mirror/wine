@@ -74,6 +74,17 @@ VOID WINAPI ExReleaseFastMutex(PFAST_MUTEX FastMutex)
 }
 
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT( ExTryToAcquireFastMutex )
+BOOLEAN WINAPI __regs_ExTryToAcquireFastMutex(PFAST_MUTEX FastMutex)
+#else
+BOOLEAN WINAPI ExTryToAcquireFastMutex(PFAST_MUTEX FastMutex)
+#endif
+{
+    FIXME("(%p) stub\n", FastMutex);
+    return TRUE;
+}
+
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( KfAcquireSpinLock )
 KIRQL WINAPI __regs_KfAcquireSpinLock(PKSPIN_LOCK SpinLock)
 #else

@@ -1,6 +1,6 @@
 @ stdcall -norelay ExAcquireFastMutex(ptr)
 @ stdcall -norelay ExReleaseFastMutex(ptr)
-@ stub ExTryToAcquireFastMutex
+@ stdcall -norelay ExTryToAcquireFastMutex(ptr)
 @ stub HalClearSoftwareInterrupt
 @ stub HalRequestSoftwareInterrupt
 @ stub HalSystemVectorDispatchEntry
