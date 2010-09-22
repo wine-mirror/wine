@@ -1134,6 +1134,41 @@ static void test_VerifyConsoleIoHandle(void)
     ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
 }
 
+static void test_GetSetStdHandle(void)
+{
+    HANDLE handle;
+    DWORD error;
+    BOOL ret;
+
+    /* get invalid std handle */
+    SetLastError(0xdeadbeef);
+    handle = GetStdHandle(42);
+    error = GetLastError();
+    ok(error == ERROR_INVALID_HANDLE || broken(error == ERROR_INVALID_FUNCTION)/* Win9x */,
+       "wrong GetLastError() %d\n", error);
+    ok(handle == INVALID_HANDLE_VALUE, "expected INVALID_HANDLE_VALUE\n");
+
+    /* get valid */
+    SetLastError(0xdeadbeef);
+    handle = GetStdHandle(STD_INPUT_HANDLE);
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+
+    /* set invalid std handle */
+    SetLastError(0xdeadbeef);
+    ret = SetStdHandle(42, handle);
+    error = GetLastError();
+    ok(!ret, "expected SetStdHandle to fail\n");
+    ok(error == ERROR_INVALID_HANDLE || broken(error == ERROR_INVALID_FUNCTION)/* Win9x */,
+       "wrong GetLastError() %d\n", error);
+
+    /* set valid (restore old value) */
+    SetLastError(0xdeadbeef);
+    ret = SetStdHandle(STD_INPUT_HANDLE, handle);
+    error = GetLastError();
+    ok(ret, "expected SetStdHandle to succeed\n");
+    ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
+}
 
 START_TEST(console)
 {
@@ -1187,4 +1222,5 @@ START_TEST(console)
     test_GetConsoleProcessList();
     test_OpenConsoleW();
     test_VerifyConsoleIoHandle();
+    test_GetSetStdHandle();
 }

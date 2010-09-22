@@ -396,7 +396,7 @@ HANDLE WINAPI GetStdHandle( DWORD std_handle )
         case STD_OUTPUT_HANDLE: return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
         case STD_ERROR_HANDLE:  return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
     }
-    SetLastError( ERROR_INVALID_PARAMETER );
+    SetLastError( ERROR_INVALID_HANDLE );
     return INVALID_HANDLE_VALUE;
 }
 
@@ -412,7 +412,7 @@ BOOL WINAPI SetStdHandle( DWORD std_handle, HANDLE handle )
         case STD_OUTPUT_HANDLE: NtCurrentTeb()->Peb->ProcessParameters->hStdOutput = handle; return TRUE;
         case STD_ERROR_HANDLE:  NtCurrentTeb()->Peb->ProcessParameters->hStdError = handle;  return TRUE;
     }
-    SetLastError( ERROR_INVALID_PARAMETER );
+    SetLastError( ERROR_INVALID_HANDLE );
     return FALSE;
 }
 
