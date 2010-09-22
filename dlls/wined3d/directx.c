@@ -1829,7 +1829,7 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
 static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
-    if (strstr(gl_renderer, "X3100"))
+    if (strstr(gl_renderer, "X3100") || strstr(gl_renderer, "965GM"))
     {
         /* MacOS calls the card GMA X3100, otherwise known as GM965/GL960 */
         return CARD_INTEL_X3100;
