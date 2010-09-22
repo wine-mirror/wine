@@ -284,6 +284,8 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
 
     XDNDxy.x = event->data.l[2] >> 16;
     XDNDxy.y = event->data.l[2] & 0xFFFF;
+    XDNDxy.x += virtual_screen_rect.left;
+    XDNDxy.y += virtual_screen_rect.top;
     targetWindow = WindowFromPoint(XDNDxy);
 
     pointl.x = XDNDxy.x;
