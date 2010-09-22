@@ -836,6 +836,8 @@ static void test_fvf_decl_conversion(void)
         };
         test_decl_to_fvf(decl, 0, D3DERR_INVALIDCALL, __LINE__, 0);
     }
+    /* Invalid FVFs cannot be converted to a declarator. */
+    test_fvf_to_decl(0xdeadbeef, NULL, D3DERR_INVALIDCALL, __LINE__, 0);
 }
 
 static void D3DXGetFVFVertexSizeTest(void)

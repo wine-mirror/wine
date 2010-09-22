@@ -559,6 +559,8 @@ HRESULT WINAPI D3DXDeclaratorFromFVF(DWORD fvf, D3DVERTEXELEMENT9 declaration[MA
 
     TRACE("fvf %#x, declaration %p.\n", fvf, declaration);
 
+    if (fvf & (D3DFVF_RESERVED0 | D3DFVF_RESERVED2)) return D3DERR_INVALIDCALL;
+
     if (fvf & D3DFVF_POSITION_MASK)
     {
         BOOL has_blend = (fvf & D3DFVF_XYZB5) >= D3DFVF_XYZB1;
