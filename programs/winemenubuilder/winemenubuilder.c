@@ -164,6 +164,8 @@ struct xdg_mime_type
     struct list entry;
 };
 
+DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0x54,0xd4,0xf0,0x5c);
+
 static char *xdg_config_dir;
 static char *xdg_data_dir;
 static char *xdg_desktop_dir;
@@ -770,6 +772,70 @@ static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppSt
     return hr;
 }
 
+#ifdef __APPLE__
+static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
+                                   int bestIndex, LPCWSTR icoPathW,
+                                   const char *destFilename, char **nativeIdentifier)
+{
+    GUID guid;
+    WCHAR *guidStrW = NULL;
+    char *guidStrA = NULL;
+    char *icnsPath = NULL;
+    LARGE_INTEGER zero;
+    HRESULT hr;
+
+    hr = CoCreateGuid(&guid);
+    if (FAILED(hr))
+    {
+        WINE_WARN("CoCreateGuid failed, error 0x%08X\n", hr);
+        goto end;
+    }
+    hr = StringFromCLSID(&guid, &guidStrW);
+    if (FAILED(hr))
+    {
+        WINE_WARN("StringFromCLSID failed, error 0x%08X\n", hr);
+        goto end;
+    }
+    guidStrA = wchars_to_utf8_chars(guidStrW);
+    if (guidStrA == NULL)
+    {
+        hr = E_OUTOFMEMORY;
+        WINE_WARN("out of memory converting GUID string\n");
+        goto end;
+    }
+    icnsPath = heap_printf("/tmp/%s.icns", guidStrA);
+    if (icnsPath == NULL)
+    {
+        hr = E_OUTOFMEMORY;
+        WINE_WARN("out of memory creating ICNS path\n");
+        goto end;
+    }
+    zero.QuadPart = 0;
+    hr = IStream_Seek(icoStream, zero, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr))
+    {
+        WINE_WARN("seeking icon stream failed, error 0x%08X\n", hr);
+        goto end;
+    }
+    hr = convert_to_native_icon(icoStream, &bestIndex, 1, &CLSID_WICIcnsEncoder,
+                                icnsPath, icoPathW);
+    if (FAILED(hr))
+    {
+        WINE_WARN("converting %s to %s failed, error 0x%08X\n",
+            wine_dbgstr_w(icoPathW), wine_dbgstr_a(icnsPath), hr);
+        goto end;
+    }
+
+end:
+    CoTaskMemFree(guidStrW);
+    HeapFree(GetProcessHeap(), 0, guidStrA);
+    if (SUCCEEDED(hr))
+        *nativeIdentifier = icnsPath;
+    else
+        HeapFree(GetProcessHeap(), 0, icnsPath);
+    return hr;
+}
+#else
 static HRESULT platform_write_icon(IStream *icoStream, int exeIndex,
                                    int bestIndex, LPCWSTR icoPathW,
                                    const char *destFilename, char **nativeIdentifier)
@@ -835,6 +901,7 @@ end:
     HeapFree(GetProcessHeap(), 0, pngPath);
     return hr;
 }
+#endif /* defined(__APPLE__) */
 
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
 static char *extract_icon(LPCWSTR icoPathW, int index, const char *destFilename, BOOL bWait)
