@@ -180,11 +180,8 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
          */
         if (is_console_handle(hloc[i]))
         {
-            if (!VerifyConsoleIoHandle(hloc[i]))
-            {
-                return FALSE;
-            }
-            hloc[i] = GetConsoleInputWaitHandle();
+            if (VerifyConsoleIoHandle(hloc[i]))
+                hloc[i] = GetConsoleInputWaitHandle();
         }
     }
 

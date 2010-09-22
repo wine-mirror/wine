@@ -978,7 +978,7 @@ static void test_WaitForSingleObject(void)
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(invalid, 3), 0);
-    todo_wine ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
+    ok(ret == WAIT_FAILED, "expected WAIT_FAILED, got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     /* valid handle with different values for lower 2 bits */
@@ -999,7 +999,7 @@ static void test_WaitForSingleObject(void)
 
     SetLastError(0xdeadbeef);
     ret = WaitForSingleObject(modify_handle(nonsignaled, 3), 0);
-    todo_wine ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %d\n", ret);
     todo_wine ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
 
     /* valid handle with different values for lower 2 bits */
