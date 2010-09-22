@@ -160,9 +160,10 @@ typedef struct {
     BOOL            has_ipv6;
     ipv6_address    ipv6_address;
 
+    BOOL            has_port;
     const WCHAR     *port;
     DWORD           port_len;
-    USHORT          port_value;
+    DWORD           port_value;
 
     const WCHAR     *path;
     DWORD           path_len;
@@ -1435,6 +1436,7 @@ static BOOL parse_port(const WCHAR **ptr, parse_data *data, DWORD flags) {
         ++(*ptr);
     }
 
+    data->has_port = TRUE;
     data->port_value = port;
     data->port_len = *ptr - data->port;
 
@@ -3696,6 +3698,21 @@ static HRESULT validate_host(const UriBuilder *builder, parse_data *data, DWORD 
     return S_OK;
 }
 
+static void setup_port(const UriBuilder *builder, parse_data *data, DWORD flags) {
+    if(builder->modified_props & Uri_HAS_PORT) {
+        if(builder->has_port) {
+            data->has_port = TRUE;
+            data->port_value = builder->port;
+        }
+    } else if(builder->uri && builder->uri->has_port) {
+        data->has_port = TRUE;
+        data->port_value = builder->uri->port;
+    }
+
+    if(data->has_port)
+        TRACE("(%p %p %x): Using %u as port for IUri.\n", builder, data, flags, data->port_value);
+}
+
 static HRESULT validate_components(const UriBuilder *builder, parse_data *data, DWORD flags) {
     HRESULT hr;
 
@@ -3727,6 +3744,8 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
 
     /* The URI is opaque if it doesn't have an authority component. */
     data->is_opaque = !data->username && !data->password && !data->host;
+
+    setup_port(builder, data, flags);
 
     return E_NOTIMPL;
 }
