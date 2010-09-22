@@ -6,6 +6,8 @@
 @ stdcall ExpandEnvironmentStringsForUserW(ptr wstr ptr long)
 @ stdcall GetAllUsersProfileDirectoryA(ptr ptr)
 @ stdcall GetAllUsersProfileDirectoryW(ptr ptr)
+@ stdcall GetDefaultUserProfileDirectoryA(ptr ptr)
+@ stdcall GetDefaultUserProfileDirectoryW(ptr ptr)
 @ stdcall GetProfilesDirectoryA(ptr ptr)
 @ stdcall GetProfilesDirectoryW(ptr ptr)
 @ stdcall GetProfileType(ptr)

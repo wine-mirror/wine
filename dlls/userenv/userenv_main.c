@@ -100,6 +100,18 @@ BOOL WINAPI ExpandEnvironmentStringsForUserW( HANDLE hToken, LPCWSTR lpSrc,
     return ret;
 }
 
+BOOL WINAPI GetDefaultUserProfileDirectoryA( LPSTR lpProfileDir, LPDWORD lpcchSize )
+{
+    FIXME("%p %p\n", lpProfileDir, lpcchSize );
+    return FALSE;
+}
+
+BOOL WINAPI GetDefaultUserProfileDirectoryW( LPWSTR lpProfileDir, LPDWORD lpcchSize )
+{
+    FIXME("%p %p\n", lpProfileDir, lpcchSize );
+    return FALSE;
+}
+
 BOOL WINAPI GetUserProfileDirectoryA( HANDLE hToken, LPSTR lpProfileDir,
                      LPDWORD lpcchSize )
 {
