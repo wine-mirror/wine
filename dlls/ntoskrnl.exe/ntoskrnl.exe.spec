@@ -545,7 +545,7 @@
 @ stub KeIcacheFlushCount
 @ stub KeInitializeApc
 @ stub KeInitializeDeviceQueue
-@ stub KeInitializeDpc
+@ stdcall KeInitializeDpc(ptr ptr ptr)
 @ stdcall KeInitializeEvent(ptr long long)
 @ stub KeInitializeInterrupt
 @ stub KeInitializeMutant
