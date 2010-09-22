@@ -3385,3 +3385,12 @@ DWORD WINAPI WTSGetActiveConsoleSessionId(void)
     FIXME("stub\n");
     return 0;
 }
+
+/**********************************************************************
+ *           GetSystemDEPPolicy     (KERNEL32.@)
+ */
+DEP_SYSTEM_POLICY_TYPE WINAPI GetSystemDEPPolicy(void)
+{
+    FIXME("stub\n");
+    return OptIn;
+}

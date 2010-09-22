@@ -624,6 +624,7 @@
 @ stdcall GetSystemDefaultLCID()
 @ stdcall GetSystemDefaultLangID()
 @ stdcall GetSystemDefaultUILanguage()
+@ stdcall GetSystemDEPPolicy()
 @ stdcall GetSystemDirectoryA(ptr long)
 @ stdcall GetSystemDirectoryW(ptr long)
 @ stdcall GetSystemInfo(ptr)

@@ -1234,6 +1234,13 @@ typedef struct tagHW_PROFILE_INFOW {
 DECL_WINELIB_TYPE_AW(HW_PROFILE_INFO)
 DECL_WINELIB_TYPE_AW(LPHW_PROFILE_INFO)
 
+typedef enum _DEP_SYSTEM_POLICY_TYPE {
+    AlwaysOff = 0,
+    AlwaysOn = 1,
+    OptIn = 2,
+    OptOut = 3
+} DEP_SYSTEM_POLICY_TYPE;
+
 /* Event Logging */
 
 #define EVENTLOG_FULL_INFO          0
