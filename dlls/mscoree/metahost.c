@@ -86,9 +86,36 @@ static HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
 static HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
     LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD *pcchBuffer)
 {
-    FIXME("%s %p %p\n", debugstr_w(pwzFilePath), pwzBuffer, pcchBuffer);
+    ASSEMBLY *assembly;
+    HRESULT hr;
+    LPSTR version;
+    ULONG buffer_size=*pcchBuffer;
 
-    return E_NOTIMPL;
+    TRACE("%s %p %p\n", debugstr_w(pwzFilePath), pwzBuffer, pcchBuffer);
+
+    hr = assembly_create(&assembly, pwzFilePath);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = assembly_get_runtime_version(assembly, &version);
+
+        if (SUCCEEDED(hr))
+        {
+            *pcchBuffer = MultiByteToWideChar(CP_UTF8, 0, version, -1, NULL, 0);
+
+            if (pwzBuffer)
+            {
+                if (buffer_size >= *pcchBuffer)
+                    MultiByteToWideChar(CP_UTF8, 0, version, -1, pwzBuffer, buffer_size);
+                else
+                    hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+            }
+        }
+
+        assembly_release(assembly);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI CLRMetaHost_EnumerateInstalledRuntimes(ICLRMetaHost* iface,

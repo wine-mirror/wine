@@ -24,6 +24,12 @@ extern IUnknown* create_corruntimehost(void);
 
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj);
 
+typedef struct tagASSEMBLY ASSEMBLY;
+
+HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file);
+HRESULT assembly_release(ASSEMBLY *assembly);
+HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version);
+
 /* Mono 2.6 embedding */
 typedef struct _MonoDomain MonoDomain;
 typedef struct _MonoAssembly MonoAssembly;

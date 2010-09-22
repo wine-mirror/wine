@@ -1,7 +1,8 @@
 MODULE    = mscoree.dll
-IMPORTS   = uuid shell32 advapi32
+IMPORTS   = dbghelp uuid shell32 advapi32
 
 C_SRCS = \
+	assembly.c \
 	corruntimehost.c \
 	metahost.c \
 	mscoree_main.c
