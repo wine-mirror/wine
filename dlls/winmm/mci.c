@@ -1843,7 +1843,6 @@ static DWORD MCI_WriteString(LPWSTR lpDstStr, DWORD dstSize, LPCWSTR lpSrcStr)
 
     if (lpSrcStr) {
 	if (dstSize <= strlenW(lpSrcStr)) {
-	    lstrcpynW(lpDstStr, lpSrcStr, dstSize - 1);
 	    ret = MCIERR_PARAM_OVERFLOW;
 	} else {
 	    strcpyW(lpDstStr, lpSrcStr);
@@ -1931,7 +1930,6 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	    ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize,
 				  wmd->lpstrDeviceType);
 	} else {
-	    *lpParms->lpstrReturn = 0;
 	    ret = (uDevID == MCI_ALL_DEVICE_ID)
 		? MCIERR_CANNOT_USE_ALL : MCIERR_INVALID_DEVICE_NAME;
 	}
