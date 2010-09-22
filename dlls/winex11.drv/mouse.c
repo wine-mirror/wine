@@ -345,6 +345,8 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
 {
     POINT pt;
 
+    if (!time) time = GetTickCount();
+
     if (flags & MOUSEEVENTF_MOVE && flags & MOUSEEVENTF_ABSOLUTE)
     {
         if (injected_flags & LLMHF_INJECTED)
