@@ -666,14 +666,8 @@ static void wave_in_tests(void)
        dev_name(ndev+1),wave_in_error(rc));
 
     rc=waveInGetDevCapsA(WAVE_MAPPER,&capsA,sizeof(capsA));
-    if (ndev>0)
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NODRIVER,
-           "waveInGetDevCapsA(%s): MMSYSERR_NOERROR or MMSYSERR_NODRIVER "
-           "expected, got %s\n",dev_name(WAVE_MAPPER),wave_in_error(rc));
-    else
-        ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
-           "waveInGetDevCapsA(%s): MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER "
-           "expected, got %s\n",dev_name(WAVE_MAPPER),wave_in_error(rc));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NODRIVER || (!ndev && (rc==MMSYSERR_BADDEVICEID)),
+       "waveInGetDevCapsA(%s): got %s\n",dev_name(WAVE_MAPPER),wave_in_error(rc));
 
     rc=waveInGetDevCapsW(ndev+1,&capsW,sizeof(capsW));
     ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NOTSUPPORTED,
@@ -681,18 +675,9 @@ static void wave_in_tests(void)
        "expected, got %s\n",dev_name(ndev+1),wave_in_error(rc));
 
     rc=waveInGetDevCapsW(WAVE_MAPPER,&capsW,sizeof(capsW));
-    if (ndev>0)
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NODRIVER ||
-           rc==MMSYSERR_NOTSUPPORTED,
-           "waveInGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NODRIVER or "
-           "MMSYSERR_NOTSUPPORTED expected, got %s\n",
-           dev_name(ndev+1),wave_in_error(rc));
-    else
-        ok(rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER ||
-          rc==MMSYSERR_NOTSUPPORTED,
-           "waveInGetDevCapsW(%s): MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER or"
-           "MMSYSERR_NOTSUPPORTED expected, got %s\n",
-           dev_name(ndev+1),wave_in_error(rc));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NODRIVER ||
+       rc==MMSYSERR_NOTSUPPORTED || (!ndev && (rc==MMSYSERR_BADDEVICEID)),
+       "waveInGetDevCapsW(%s): got %s\n", dev_name(ndev+1),wave_in_error(rc));
 
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
