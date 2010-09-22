@@ -83,6 +83,8 @@ static DWORD MSF_Add(DWORD d1, DWORD d2)
     return MCI_MAKE_MSF(m,s,f);
 }
 
+static MCIERROR ok_open = 0; /* MCIERR_CANNOT_LOAD_DRIVER */
+
 /* TODO show that shareable flag is not what Wine implements. */
 
 static void test_play(HWND hwnd)
@@ -99,6 +101,7 @@ static void test_play(HWND hwnd)
     err = mciSendString("open cdaudio alias c notify shareable", buf, sizeof(buf), hwnd);
     ok(!err || err == MCIERR_CANNOT_LOAD_DRIVER || err == MCIERR_MUST_USE_SHAREABLE,
        "mci open cdaudio notify returned %s\n", dbg_mcierr(err));
+    ok_open = err;
     test_notification(hwnd, "open alias notify", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
     /* Native returns MUST_USE_SHAREABLE when there's trouble with the hardware
      * (e.g. unreadable disk) or when Media Player already has the device open,
@@ -110,6 +113,11 @@ static void test_play(HWND hwnd)
     }
     wDeviceID = atoi(buf);
     ok(!strcmp(buf,"1"), "mci open deviceId: %s, expected 1\n", buf);
+    /* Win9X-ME may start the MCI and media player upon insertion of a CD. */
+
+    err = mciSendString("sysinfo all name 1 open", buf, sizeof(buf), NULL);
+    ok(!err,"sysinfo all name 1 returned %s\n", dbg_mcierr(err));
+    if(!err && wDeviceID != 1) trace("Device '%s' is open.\n", buf);
 
     err = mciSendString("capability c has video notify", buf, sizeof(buf), hwnd);
     ok(!err, "capability video: %s\n", dbg_mcierr(err));
@@ -267,12 +275,16 @@ static void test_play(HWND hwnd)
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "stopped"), "status mode after seek is %s\n", buf);
 
-    /* MCICDA ignores MCI_SET_VIDEO
-     * One xp machine ignored SET_AUDIO, one w2k and one w7 machine honoured it
+    /* MCICDA ignores MCI_SET_VIDEO */
+    err = mciSendString("set c video on", buf, sizeof(buf), hwnd);
+    ok(!err, "set video: %s\n", dbg_mcierr(err));
+
+    /* One xp machine ignored SET_AUDIO, one w2k and one w7 machine honoured it
      * and simultaneously toggled the mute button in the mixer control panel.
-     * Or does it only depend on the HW, not the OS? */
-    err = mciSendString("set c video audio all on", buf, sizeof(buf), hwnd);
-    ok(!err, "set video/audio: %s\n", dbg_mcierr(err));
+     * Or does it only depend on the HW, not the OS?
+     * Some vmware machines return MCIERR_HARDWARE. */
+    err = mciSendString("set c audio all on", buf, sizeof(buf), hwnd);
+    ok(!err || err == MCIERR_HARDWARE, "set audio: %s\n", dbg_mcierr(err));
 
     err = mciSendString("set c time format ms", buf, sizeof(buf), hwnd);
     ok(!err, "set time format ms: %s\n", dbg_mcierr(err));
@@ -542,6 +554,11 @@ static void test_openclose(HWND hwnd)
     MCI_PARMS_UNION parm;
     MCIERROR err;
     char drive[] = {'a',':','\\','X','\0'};
+    if (ok_open == MCIERR_CANNOT_LOAD_DRIVER) {
+        /* todo_wine Every open below should yield this same error. */
+        skip("CD-ROM device likely not installed or disabled.\n");
+        return;
+    }
 
     /* Bug in native since NT: After OPEN "c" without MCI_OPEN_ALIAS fails with
      * MCIERR_DEVICE_OPEN, any subsequent OPEN fails with EXTENSION_NOT_FOUND! */
