@@ -1185,9 +1185,10 @@ void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
         DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
         DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
 
-        NC_GetInsideRect( hwnd, COORDS_SCREEN, rect, style, ex_style );
+        NC_GetInsideRect( hwnd, COORDS_CLIENT, rect, style, ex_style );
         rect->right = rect->left + GetSystemMetrics(SM_CYCAPTION) - 1;
         rect->bottom = rect->top + GetSystemMetrics(SM_CYCAPTION) - 1;
+        MapWindowPoints( hwnd, 0, (POINT *)rect, 2 );
     }
 }
 
