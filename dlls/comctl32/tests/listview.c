@@ -3278,7 +3278,8 @@ static void test_getitemrect(void)
     r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
     expect(0, r);
     rect.left = LVIR_LABEL;
-    SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
     expect(0, rect.left);
     expect(0, rect.top);
     todo_wine expect(96, rect.right);
