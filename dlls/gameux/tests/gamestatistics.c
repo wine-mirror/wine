@@ -256,8 +256,8 @@ static void test_gamestatisticsmgr( void )
         ok(uMaxValueLength==30, "getting maximum value length returned invalid value: %d\n", uMaxValueLength);
 
         hr = IGameStatistics_GetMaxCategories(gs, &wMaxCategories);
-        todo_wine ok(hr==S_OK, "getting maximum number of categories failed\n");
-        todo_wine ok(wMaxCategories==10, "getting maximum number of categories returned invalid value: %d\n", wMaxCategories);
+        ok(hr==S_OK, "getting maximum number of categories failed\n");
+        ok(wMaxCategories==10, "getting maximum number of categories returned invalid value: %d\n", wMaxCategories);
 
         hr = IGameStatistics_GetMaxStatsPerCategory(gs, &wMaxStatsPerCategory);
         todo_wine ok(hr==S_OK, "getting maximum number of statistics per category failed\n");
