@@ -2639,8 +2639,8 @@ const char *debug_surflocation(DWORD flag) DECLSPEC_HIDDEN;
 /* Routines for GL <-> D3D values */
 GLenum StencilOp(DWORD op) DECLSPEC_HIDDEN;
 GLenum CompareFunc(DWORD func) DECLSPEC_HIDDEN;
-BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op,
-        DWORD arg1, DWORD arg2, DWORD arg3) DECLSPEC_HIDDEN;
+BOOL is_invalid_op(const struct wined3d_state *state, int stage,
+        WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3) DECLSPEC_HIDDEN;
 void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op,
         DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst) DECLSPEC_HIDDEN;
 void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords,

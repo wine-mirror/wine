@@ -144,7 +144,8 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 
     /* If a texture stage references an invalid texture unit the stage just
     * passes through the result from the previous stage */
-    if (is_invalid_op(This, stage, op, arg1, arg2, arg3)) {
+    if (is_invalid_op(&This->stateBlock->state, stage, op, arg1, arg2, arg3))
+    {
         arg1 = WINED3DTA_CURRENT;
         op = WINED3DTOP_SELECTARG1;
     }

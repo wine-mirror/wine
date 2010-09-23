@@ -2366,9 +2366,11 @@ GLenum CompareFunc(DWORD func) {
     }
 }
 
-BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3) {
+BOOL is_invalid_op(const struct wined3d_state *state, int stage,
+        WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
+{
     if (op == WINED3DTOP_DISABLE) return FALSE;
-    if (This->stateBlock->state.textures[stage]) return FALSE;
+    if (state->textures[stage]) return FALSE;
 
     if ((arg1 & WINED3DTA_SELECTMASK) == WINED3DTA_TEXTURE
             && op != WINED3DTOP_SELECTARG2) return TRUE;
@@ -2785,7 +2787,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         carg2 = (args[cop] & ARG2) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
         carg0 = (args[cop] & ARG0) ? stateblock->state.texture_states[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
 
-        if(is_invalid_op(device, i, cop, carg1, carg2, carg0)) {
+        if (is_invalid_op(&stateblock->state, i, cop, carg1, carg2, carg0))
+        {
             carg0 = ARG_UNUSED;
             carg2 = ARG_UNUSED;
             carg1 = WINED3DTA_CURRENT;
@@ -2846,7 +2849,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             }
         }
 
-        if(is_invalid_op(device, i, aop, aarg1, aarg2, aarg0)) {
+        if (is_invalid_op(&stateblock->state, i, aop, aarg1, aarg2, aarg0))
+        {
                aarg0 = ARG_UNUSED;
                aarg2 = ARG_UNUSED;
                aarg1 = WINED3DTA_CURRENT;

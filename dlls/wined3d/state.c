@@ -2109,7 +2109,8 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
 
         /* If a texture stage references an invalid texture unit the stage just
         * passes through the result from the previous stage */
-    if (is_invalid_op(This, Stage, op, arg1, arg2, arg3)) {
+    if (is_invalid_op(&This->stateBlock->state, Stage, op, arg1, arg2, arg3))
+    {
         arg1 = WINED3DTA_CURRENT;
         op = WINED3DTOP_SELECTARG1;
     }
