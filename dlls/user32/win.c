@@ -44,14 +44,6 @@ static DWORD process_layout;
 
 /**********************************************************************/
 
-static inline void mirror_rect( const RECT *window_rect, RECT *rect )
-{
-    int width = window_rect->right - window_rect->left;
-    int tmp = rect->left;
-    rect->left = width - rect->right;
-    rect->right = width - tmp;
-}
-
 /* helper for Get/SetWindowLong */
 static inline LONG_PTR get_win_data( const void *ptr, UINT size )
 {

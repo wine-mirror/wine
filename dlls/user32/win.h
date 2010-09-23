@@ -120,4 +120,12 @@ extern BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                             const RECT *window_rect, const RECT *client_rect,
                             const RECT *valid_rects ) DECLSPEC_HIDDEN;
 
+static inline void mirror_rect( const RECT *window_rect, RECT *rect )
+{
+    int width = window_rect->right - window_rect->left;
+    int tmp = rect->left;
+    rect->left = width - rect->right;
+    rect->right = width - tmp;
+}
+
 #endif  /* __WINE_WIN_H */

@@ -1931,6 +1931,13 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             win->dwExStyle  = reply->new_ex_style;
             win->rectWindow = *window_rect;
             win->rectClient = *client_rect;
+            if (GetWindowLongW( win->parent, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+            {
+                RECT client;
+                GetClientRect( win->parent, &client );
+                mirror_rect( &client, &win->rectWindow );
+                mirror_rect( &client, &win->rectClient );
+            }
         }
     }
     SERVER_END_REQ;
