@@ -2330,7 +2330,13 @@ BOOL WINAPI CreateUrlCacheEntryW(
     CacheDir = (BYTE)(rand() % pHeader->DirectoryCount);
 
     lBufferSize = MAX_PATH * sizeof(WCHAR);
-    URLCache_LocalFileNameToPathW(pContainer, pHeader, szFile, CacheDir, lpszFileName, &lBufferSize);
+    if (!URLCache_LocalFileNameToPathW(pContainer, pHeader, szFile, CacheDir, lpszFileName, &lBufferSize))
+    {
+        WARN("Failed to get full path for filename %s, needed %u bytes.\n",
+                debugstr_a(szFile), lBufferSize);
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        return FALSE;
+    }
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
