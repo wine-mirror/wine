@@ -1266,17 +1266,22 @@ WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"],
 
 
 dnl **** Check for resolver library ***
-AC_SUBST(RESOLVLIBS,"")
 if test "$ac_cv_header_resolv_h" = "yes"
 then
     ac_save_LIBS="$LIBS"
-    LIBS="$LIBS -lresolv"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_NETINET_IN_H
+    for lib in '' -lresolv
+    do
+      LIBS="$lib $ac_save_LIBS"
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include <resolv.h>]],[[res_init();]])],
+#include <resolv.h>]],[[res_query("foo",ns_c_in,0,0,0);]])],
         [AC_DEFINE(HAVE_RESOLV, 1, [Define if you have the resolver library and header])
-         RESOLVLIBS="-lresolv"])
+         AC_SUBST(RESOLVLIBS,"$lib")])
+      if test "${RESOLVLIBS+set}" = set; then
+        break
+      fi
+    done
     LIBS="$ac_save_LIBS"
 fi
 

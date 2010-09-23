@@ -9977,13 +9977,13 @@ esac
 fi
 
 
-RESOLVLIBS=""
-
 if test "$ac_cv_header_resolv_h" = "yes"
 then
     ac_save_LIBS="$LIBS"
-    LIBS="$LIBS -lresolv"
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    for lib in '' -lresolv
+    do
+      LIBS="$lib $ac_save_LIBS"
+      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -9992,7 +9992,7 @@ then
 int
 main ()
 {
-res_init();
+res_query("foo",ns_c_in,0,0,0);
   ;
   return 0;
 }
@@ -10001,10 +10001,15 @@ if ac_fn_c_try_link "$LINENO"; then :
 
 $as_echo "#define HAVE_RESOLV 1" >>confdefs.h
 
-         RESOLVLIBS="-lresolv"
+         RESOLVLIBS="$lib"
+
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
+      if test "${RESOLVLIBS+set}" = set; then
+        break
+      fi
+    done
     LIBS="$ac_save_LIBS"
 fi
 
