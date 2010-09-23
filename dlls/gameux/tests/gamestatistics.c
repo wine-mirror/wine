@@ -248,8 +248,8 @@ static void test_gamestatisticsmgr( void )
         ok(uMaxCategoryLength==60, "getting maximum length of category returned invalid value: %d\n", uMaxCategoryLength);
 
         hr = IGameStatistics_GetMaxNameLength(gs, &uMaxNameLength);
-        todo_wine ok(hr==S_OK, "getting maximum name length failed\n");
-        todo_wine ok(uMaxNameLength==30, "getting maximum name length returned invalid value: %d\n", uMaxNameLength);
+        ok(hr==S_OK, "getting maximum name length failed\n");
+        ok(uMaxNameLength==30, "getting maximum name length returned invalid value: %d\n", uMaxNameLength);
 
         hr = IGameStatistics_GetMaxValueLength(gs, &uMaxValueLength);
         todo_wine ok(hr==S_OK, "getting maximum value length failed\n");
