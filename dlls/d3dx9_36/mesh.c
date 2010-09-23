@@ -213,36 +213,36 @@ static HRESULT WINAPI ID3DXMeshImpl_LockVertexBuffer(ID3DXMesh *iface, DWORD fla
 {
     ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
 
-    FIXME("(%p)->(%u,%p): stub\n", This, flags, data);
+    TRACE("(%p)->(%u,%p)\n", This, flags, data);
 
-    return E_NOTIMPL;
+    return IDirect3DVertexBuffer9_Lock(This->vertex_buffer, 0, 0, data, flags);
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockVertexBuffer(ID3DXMesh *iface)
 {
     ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
 
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    return IDirect3DVertexBuffer9_Unlock(This->vertex_buffer);
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_LockIndexBuffer(ID3DXMesh *iface, DWORD flags, LPVOID *data)
 {
     ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
 
-    FIXME("(%p)->(%u,%p): stub\n", This, flags, data);
+    TRACE("(%p)->(%u,%p)\n", This, flags, data);
 
-    return E_NOTIMPL;
+    return IDirect3DIndexBuffer9_Lock(This->index_buffer, 0, 0, data, flags);
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockIndexBuffer(ID3DXMesh *iface)
 {
     ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
 
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    return IDirect3DIndexBuffer9_Unlock(This->index_buffer);
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_GetAttributeTable(ID3DXMesh *iface, D3DXATTRIBUTERANGE *attrib_table, DWORD *attrib_table_size)
