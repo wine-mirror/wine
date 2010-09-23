@@ -39,7 +39,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Esci", CM_U_EXIT
  }
 
- POPUP "&Commdlg"
+ POPUP "&Dialogo comune"
  {
   MENUITEM "&Apri", CM_U_OPEN
   MENUITEM "&Salva", CM_U_SAVE
@@ -51,10 +51,10 @@ CmdlgtstMenu MENU
   MENUITEM "S&ostituisci", CM_U_REPLACE
   MENUITEM SEPARATOR
   MENUITEM "Sta&mpa", CM_U_PRINT
-  MENUITEM "&Impostazione Pagina", CM_U_PAGESETUP
+  MENUITEM "&Impostazione della pagina", CM_U_PAGESETUP
  }
 
- POPUP "&Bandiere"
+ POPUP "F&lag"
  {
   MENUITEM "&File", CM_F_FILE
   MENUITEM SEPARATOR
@@ -64,7 +64,7 @@ CmdlgtstMenu MENU
   MENUITEM "&Trova/Sostituisci", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
   MENUITEM "&Stampa", CM_F_PRINT
-  MENUITEM "&Impostazione Pagina", CM_F_PAGESETUP
+  MENUITEM "&Impostazione della pagina", CM_F_PAGESETUP
  }
 
  POPUP "&Aiuto"
@@ -77,7 +77,7 @@ CmdlgtstMenu MENU
 
 Color_Flags_Dialog DIALOG 11, 20, 207, 107
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Bandiere Dialogo Carattere"
+CAPTION "Flag per i colori"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -94,7 +94,7 @@ FONT 8, "MS Shell Dlg"
 
 Font_Flags_Dialog DIALOG 9, 20, 207, 313
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Font Dialog Flags"
+CAPTION "Flag per i caratteri"
  FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -128,7 +128,7 @@ CAPTION "Font Dialog Flags"
 
 Find_Flags_Dialog DIALOG 8, 24, 207, 306
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Trova/Sostituisci Dialog Flags"
+CAPTION "Flag di Trova/Sostituisci"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -156,12 +156,12 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Marca flags che sono settati dal sistema e devono essere confermati dall'utente.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Marca flag che sono impostati dal sistema e devono essere confermati dall'utente.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Stampa / Configurazione di stampa dei Flags"
+CAPTION "Flag di Stampa/Configurazione di stampa"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
@@ -221,7 +221,7 @@ FONT 8, "MS Shell Dlg"
 
 File_Flags_Dialog DIALOG 6, 15, 207, 227
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Apri File/Salva File Flags"
+CAPTION "Flag di Apri file/Salva file"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -265,7 +265,7 @@ FONT 8, "MS Shell Dlg"
  DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
  LTEXT "Common Dialog Test Jig Exerciser, versione 1.20", -1, 13, 48, 168, 12
  LTEXT "Questo programma testa COMMDLG per Wine.", -1, 12, 72, 168, 12
- LTEXT "Le Bandiere sono specificate nel menù bandiere.", -1, 12, 96, 168, 12
+ LTEXT "Le flag sono specificate nel menù Flag.", -1, 12, 96, 168, 12
  LTEXT "La finestra di dialogo dei colori modifica il colore dello sfondo.", -1, 12, 120, 168, 12
  LTEXT "La finestra di dialogo dei caratteri modifica tutti i caratteri e il loro colore se CF_EFFECTS è selezionato.", -1, 12, 144, 168, 24
  LTEXT "L'angolo in alto a sinistra indica il percorso completo e il titolo dell'ultima operazione di apertura o salvataggio conclusa con successo.", -1, 12, 180, 168, 24
