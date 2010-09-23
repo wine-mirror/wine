@@ -2057,10 +2057,9 @@ static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* op
 }
 
 /* Setup the texture operations texture stage states */
-static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *iface,
+static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
         BOOL isAlpha, int Stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum src1, src2, src3;
     GLenum opr1, opr2, opr3;
     GLenum comb_target;
@@ -2069,7 +2068,6 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
     GLenum scal_target;
     GLenum opr=0, invopr, src3_target, opr3_target;
     BOOL Handled = FALSE;
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("Alpha?(%d), Stage:%d Op(%s), a1(%d), a2(%d), a3(%d)\n", isAlpha, Stage, debug_d3dtop(op), arg1, arg2, arg3);
 
@@ -2109,13 +2107,13 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
 
         /* If a texture stage references an invalid texture unit the stage just
         * passes through the result from the previous stage */
-    if (is_invalid_op(&This->stateBlock->state, Stage, op, arg1, arg2, arg3))
+    if (is_invalid_op(state, Stage, op, arg1, arg2, arg3))
     {
         arg1 = WINED3DTA_CURRENT;
         op = WINED3DTOP_SELECTARG1;
     }
 
-    if (isAlpha && !This->stateBlock->state.textures[Stage] && arg1 == WINED3DTA_TEXTURE)
+    if (isAlpha && !state->textures[Stage] && arg1 == WINED3DTA_TEXTURE)
     {
         get_src_and_opr(WINED3DTA_DIFFUSE, isAlpha, &src1, &opr1);
     } else {
@@ -3058,9 +3056,9 @@ static void set_tex_op(const struct wined3d_context *context, IWineD3DDevice *if
             DWORD op2;
 
             if (isAlpha)
-                op2 = This->stateBlock->state.texture_states[Stage][WINED3DTSS_COLOROP];
+                op2 = state->texture_states[Stage][WINED3DTSS_COLOROP];
             else
-                op2 = This->stateBlock->state.texture_states[Stage][WINED3DTSS_ALPHAOP];
+                op2 = state->texture_states[Stage][WINED3DTSS_ALPHAOP];
 
             /* Note: If COMBINE4 in effect can't go back to combine! */
             switch (op2) {
@@ -3155,7 +3153,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
         if (tex_used) texture_activate_dimensions(stage, stateblock, context);
     }
 
-    set_tex_op(context, (IWineD3DDevice *)stateblock->device, FALSE, stage,
+    set_tex_op(gl_info, &stateblock->state, FALSE, stage,
             stateblock->state.texture_states[stage][WINED3DTSS_COLOROP],
             stateblock->state.texture_states[stage][WINED3DTSS_COLORARG1],
             stateblock->state.texture_states[stage][WINED3DTSS_COLORARG2],
@@ -3259,7 +3257,7 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
     }
     else
     {
-        set_tex_op(context, (IWineD3DDevice *)stateblock->device, TRUE, stage, op, arg1, arg2, arg0);
+        set_tex_op(gl_info, &stateblock->state, TRUE, stage, op, arg1, arg2, arg0);
     }
 }
 
