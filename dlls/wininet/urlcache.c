@@ -2271,6 +2271,12 @@ BOOL WINAPI CreateUrlCacheEntryW(
     if (((lpszUrlEnd - lpszUrlName) > 1) && (*(lpszUrlEnd - 1) == '/' || *(lpszUrlEnd - 1) == '\\'))
         lpszUrlEnd--;
 
+    lpszUrlPart = memchrW(lpszUrlName, '?', lpszUrlEnd - lpszUrlName);
+    if (!lpszUrlPart)
+        lpszUrlPart = memchrW(lpszUrlName, '#', lpszUrlEnd - lpszUrlName);
+    if (lpszUrlPart)
+        lpszUrlEnd = lpszUrlPart;
+
     for (lpszUrlPart = lpszUrlEnd; 
         (lpszUrlPart >= lpszUrlName); 
         lpszUrlPart--)
@@ -2280,10 +2286,6 @@ BOOL WINAPI CreateUrlCacheEntryW(
             bFound = TRUE;
             lpszUrlPart++;
             break;
-        }
-        else if(*lpszUrlPart == '?' || *lpszUrlPart == '#')
-        {
-            lpszUrlEnd = lpszUrlPart;
         }
     }
     if (!lstrcmpW(lpszUrlPart, szWWW))
