@@ -1070,3 +1070,10 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh, LPD3DXBUFFER* adjacency)
+{
+    FIXME("(%p, %p, %p): stub\n", device, mesh, adjacency);
+
+    return E_NOTIMPL;
+}

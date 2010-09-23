@@ -89,7 +89,7 @@
 @ stub D3DXCreateSkinInfoFVF
 @ stdcall D3DXCreateSphere(ptr float long long ptr ptr)
 @ stdcall D3DXCreateSprite(ptr ptr)
-@ stub D3DXCreateTeapot
+@ stdcall D3DXCreateTeapot(ptr ptr ptr)
 @ stub D3DXCreateTextA
 @ stub D3DXCreateTextW
 @ stdcall D3DXCreateTexture(ptr long long long long long long ptr)
