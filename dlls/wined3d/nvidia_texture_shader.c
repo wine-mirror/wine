@@ -131,9 +131,9 @@ static void get_src_and_opr_nvrc(DWORD stage, DWORD arg, BOOL is_alpha, GLenum* 
     *input = d3dta_to_combiner_input(arg & WINED3DTA_SELECTMASK, stage, texture_idx);
 }
 
-void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl*)iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state, BOOL is_alpha,
+        int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst)
+{
     tex_op_args tex_op_args = {{0}, {0}, {0}};
     GLenum portion = is_alpha ? GL_ALPHA : GL_RGB;
     GLenum target = GL_COMBINER0_NV + stage;
@@ -144,7 +144,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 
     /* If a texture stage references an invalid texture unit the stage just
     * passes through the result from the previous stage */
-    if (is_invalid_op(&This->stateBlock->state, stage, op, arg1, arg2, arg3))
+    if (is_invalid_op(state, stage, op, arg1, arg2, arg3))
     {
         arg1 = WINED3DTA_CURRENT;
         op = WINED3DTOP_SELECTARG1;
@@ -538,7 +538,7 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
     }
 
     /* Set the texture combiners */
-    set_tex_op_nvrc((IWineD3DDevice *)stateblock->device, FALSE, stage,
+    set_tex_op_nvrc(gl_info, &stateblock->state, FALSE, stage,
             stateblock->state.texture_states[stage][WINED3DTSS_COLOROP],
             stateblock->state.texture_states[stage][WINED3DTSS_COLORARG1],
             stateblock->state.texture_states[stage][WINED3DTSS_COLORARG2],

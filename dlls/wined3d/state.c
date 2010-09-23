@@ -3254,7 +3254,7 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d
     TRACE("Setting alpha op for stage %d\n", stage);
     if (gl_info->supported[NV_REGISTER_COMBINERS])
     {
-        set_tex_op_nvrc((IWineD3DDevice *)stateblock->device, TRUE, stage, op, arg1, arg2, arg0,
+        set_tex_op_nvrc(gl_info, &stateblock->state, TRUE, stage, op, arg1, arg2, arg0,
                 mapped_stage, stateblock->state.texture_states[stage][WINED3DTSS_RESULTARG]);
     }
     else
