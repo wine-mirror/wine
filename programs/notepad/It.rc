@@ -110,7 +110,7 @@ END
 STRINGTABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Page &p"
+STRING_PAGESETUP_FOOTERVALUE,   "Pagina &p"
 
 STRING_NOTEPAD,                                 "Blocco Note"
 STRING_ERROR,                                   "ERRORE"
@@ -122,7 +122,7 @@ STRING_UNTITLED,                                "(senza nome)"
 STRING_ALL_FILES,                               "Tutti i file (*.*)"
 STRING_TEXT_FILES_TXT,                  "File di testo (*.txt)"
 
-STRING_TOOLARGE,                                "Il file '%s' è troppo grande per il blocco note.\n \
+STRING_TOOLARGE,                                "Il file '%s' è troppo grande per il Blocco Note.\n \
 Per favore usare un altro editor."
 STRING_NOTEXT,                                  "Non è stato inserito alcun testo. \
 \nPer favore digitare qualcosa e riprovare"
@@ -142,6 +142,6 @@ STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
 Questo file contiene caratteri Unicode che andranno persi se\n\
 salvi questo file nella codifica %s.\n\
 Per mantenere questi caratteri, clicca Annulla e scegli\n\
-una delle opzioni Unicode nel menu a tendina Codifica.\n\
+una delle opzioni Unicode nel menù a tendina Codifica.\n\
 Continuare?"
 }
