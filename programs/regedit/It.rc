@@ -154,18 +154,18 @@ END
 
 IDD_ADDFAVORITE DIALOG  22, 17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Aggiungi Favorito"
+CAPTION "Aggiungi preferito"
 FONT 8, "MS Shell Dlg"
 BEGIN
 LTEXT           "Nome:",IDC_STATIC,5,5,119,8
 EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
 DEFPUSHBUTTON   "OK",IDOK,140,40,30,11,WS_GROUP
-PUSHBUTTON      "Cancella",IDCANCEL,175,40,30,11, WS_GROUP
+PUSHBUTTON      "Annulla",IDCANCEL,175,40,30,11, WS_GROUP
 END
 
 IDD_DELFAVORITE DIALOG  22, 17, 210, 90
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Rimuovi Favorito"
+CAPTION "Rimuovi preferito"
 FONT 8, "MS Shell Dlg"
 BEGIN
 LTEXT           "Nome:",IDC_STATIC,5,5,119,8
@@ -176,7 +176,7 @@ END
 
 IDD_EDIT_STRING DIALOG  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Edita Stringa"
+CAPTION "Modifica stringa"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Nome del valore:",IDC_STATIC,5,5,119,8
@@ -189,7 +189,7 @@ END
 
 IDD_EDIT_DWORD DIALOG  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Edita DWORD"
+CAPTION "Modifica DWORD"
 FONT 8, "MS Shell Dlg"
 BEGIN
    LTEXT           "Nome del valore:",IDC_STATIC,5,5,119,8
@@ -205,7 +205,7 @@ END
 
 IDD_EDIT_BINARY DIALOG  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Modifica Binario"
+CAPTION "Modifica binario"
 FONT 8, "MS Shell Dlg"
 BEGIN
    LTEXT           "Nome del valore:",IDC_STATIC,5,5,119,8
@@ -218,7 +218,7 @@ END
 
 IDD_EDIT_MULTI_STRING DIALOG  22, 17, 210, 175
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Modifica Multistringa"
+CAPTION "Modifica multistringa"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Nome del valore:",IDC_STATIC,5,5,119,8
@@ -271,7 +271,7 @@ BEGIN
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "Si disconnette dal Registro di un computer remoto"
     ID_REGISTRY_PRINT       "Stampa tutto o parte del Registro"
-/*    ID_HELP_HELPTOPICS      "Apre l'aiuto dell'Editor del Registro" */
+/*    ID_HELP_HELPTOPICS      "Apre l'aiuto dell'editor del Registro" */
     ID_HELP_ABOUT           "Visualizza informazioni sul programma, numero di versione e copyright"
 END
 
@@ -298,11 +298,11 @@ BEGIN
     IDS_BAD_VALUE           "Impossibile trovare il valore '%s'"
     IDS_UNSUPPORTED_TYPE    "Impossibile modificare valori di questo tipo (%u)"
     IDS_TOO_BIG_VALUE       "Valore troppo grande (%u)"
-    IDS_DELETE_BOX_TITLE    "Confermare Eliminazione del Valore"
+    IDS_DELETE_BOX_TITLE    "Confermare l'eliminazione del valore"
     IDS_DELETE_BOX_TEXT     "Sei sicuro di volere eliminare il valore '%s'?"
     IDS_DELETE_BOX_TEXT_MULTIPLE "Sei sicuro di volere eliminare questi valori?"
-    IDS_NEWKEY              "Nuova Chiave #%d"
-    IDS_NEWVALUE            "Nuovo Valore #%d"
+    IDS_NEWKEY              "Nuova chiave #%d"
+    IDS_NEWVALUE            "Nuovo valore #%d"
     IDS_NOTFOUND            "Stringa di ricerca '%s' non trovata"
 END
 
@@ -316,7 +316,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_REGISTRY_ROOT_NAME           "Il mio computer"
-    IDS_REGISTRY_DEFAULT_VALUE       "(Default)"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Predefinito)"
     IDS_REGISTRY_VALUE_NOT_SET       "(valore non immesso)"
     IDS_REGISTRY_VALUE_CANT_DISPLAY  "(impossibile visualizzare valore)"
     IDS_REGISTRY_UNKNOWN_TYPE        "(%d sconosciuto)"
