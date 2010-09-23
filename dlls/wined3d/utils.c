@@ -2979,13 +2979,11 @@ void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *des
  * Requires the caller to activate the correct unit before
  */
 /* GL locking is done by the caller (state handler) */
-void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+void texture_activate_dimensions(IWineD3DBaseTextureImpl *texture, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    if (stateblock->state.textures[stage])
+    if (texture)
     {
-        switch (stateblock->state.textures[stage]->baseTexture.target)
+        switch (texture->baseTexture.target)
         {
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);
@@ -3079,7 +3077,7 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wine
     if (sampler >= stateblock->state.lowest_disabled_stage) return;
     if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 
-    texture_activate_dimensions(sampler, stateblock, context);
+    texture_activate_dimensions(stateblock->state.textures[sampler], context->gl_info);
 }
 
 void *wined3d_rb_alloc(size_t size)

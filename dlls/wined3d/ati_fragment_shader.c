@@ -838,7 +838,7 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, st
         {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
             checkGLcall("glActiveTextureARB");
-            texture_activate_dimensions(i, stateblock, context);
+            texture_activate_dimensions(stateblock->state.textures[i], gl_info);
         }
     }
 

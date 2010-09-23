@@ -3146,12 +3146,10 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
         return;
     }
 
-    /* The sampler will also activate the correct texture dimensions, so no need to do it here
-     * if the sampler for this stage is dirty
-     */
-    if(!isStateDirty(context, STATE_SAMPLER(stage))) {
-        if (tex_used) texture_activate_dimensions(stage, stateblock, context);
-    }
+    /* The sampler will also activate the correct texture dimensions, so no
+     * need to do it here if the sampler for this stage is dirty. */
+    if (!isStateDirty(context, STATE_SAMPLER(stage)) && tex_used)
+        texture_activate_dimensions(stateblock->state.textures[stage], gl_info);
 
     set_tex_op(gl_info, &stateblock->state, FALSE, stage,
             stateblock->state.texture_states[stage][WINED3DTSS_COLOROP],

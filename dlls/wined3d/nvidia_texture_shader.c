@@ -532,7 +532,7 @@ static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
             }
             else
             {
-                texture_activate_dimensions(stage, stateblock, context);
+                texture_activate_dimensions(stateblock->state.textures[stage], gl_info);
             }
         }
     }

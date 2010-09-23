@@ -2646,8 +2646,8 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
         INT texture_idx, DWORD dst) DECLSPEC_HIDDEN;
 void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords,
         BOOL transformed, enum wined3d_format_id coordtype, BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;
-void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock,
-        struct wined3d_context *context) DECLSPEC_HIDDEN;
+void texture_activate_dimensions(IWineD3DBaseTextureImpl *texture,
+        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock,
