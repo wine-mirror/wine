@@ -86,3 +86,52 @@ HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
         LPCWSTR sGameInstallDirectory,
         GAME_INSTALL_SCOPE installScope,
         GUID *pInstanceID);
+/*******************************************************************************
+ * GAMEUX_FindGameInstanceId
+ *
+ * Helper funtion. Searches for instance identifier of given game in given
+ * installation scope. Implemented in gameexplorer.c
+ *
+ * Parameters:
+ *  sGDFBinaryPath                          [I]     path to binary containing GDF
+ *  installScope                            [I]     game install scope to search in
+ *  pInstanceId                             [O]     instance identifier of given game
+ *
+ * Returns:
+ *  S_OK                    id was returned properly
+ *  S_FALSE                 id was not found in the registry
+ *  E_OUTOFMEMORY           problem while memory allocation
+ */
+HRESULT GAMEUX_FindGameInstanceId(
+        LPCWSTR sGDFBinaryPath,
+        GAME_INSTALL_SCOPE installScope,
+        GUID* pInstanceId);
+/*******************************************************************************
+ * GAMEUX_buildGameRegistryPath
+ *
+ * Helper function, builds registry path to key, where game's data are stored.
+ * Implemented in gameexplorer.c
+ *
+ * Parameters:
+ *  installScope                [I]     the scope which was used in AddGame/InstallGame call
+ *  gameInstanceId              [I]     game instance GUID. If NULL, then only
+ *                                      path to scope will be returned
+ *  lpRegistryPath              [O]     pointer which will receive address to string
+ *                                      containing expected registry path. Path
+ *                                      is relative to HKLM registry key. It
+ *                                      must be freed by calling HeapFree(GetProcessHeap(), 0, ...)
+ *
+ * Name of game's registry key always follows patterns below:
+ *  When game is installed for current user only (installScope is GIS_CURRENT_USER):
+ *      HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+ *          GameUX\[user's security ID]\[game instance ID]
+ *
+ *  When game is installed for all users (installScope is GIS_ALL_USERS):
+ *      HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\
+ *          GameUX\Games\[game instance ID]
+ *
+ *
+ */
+HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
+        LPCGUID gameInstanceId,
+        LPWSTR* lpRegistryPath);

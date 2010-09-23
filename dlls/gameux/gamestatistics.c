@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include "ole2.h"
+#include "winreg.h"
 
 #include "gameux.h"
 #include "gameux_private.h"
@@ -107,8 +108,55 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
         GAMESTATS_OPEN_RESULT *pOpenResult,
         IGameStatistics **ppiStats)
 {
-    FIXME("stub (%p, %s, 0x%x, %p, %p)\n", iface, debugstr_w(GDFBinaryPath), openType, pOpenResult, ppiStats);
-    return E_NOTIMPL;
+    static const WCHAR sApplicationId[] =
+            {'A','p','p','l','i','c','a','t','i','o','n','I','d',0};
+
+    HRESULT hr;
+    GUID instanceId;
+    LPWSTR lpRegistryPath = NULL;
+    WCHAR lpApplicationId[49];
+    DWORD dwLength = sizeof(lpApplicationId);
+    GAME_INSTALL_SCOPE installScope;
+
+    TRACE("(%p, %s, 0x%x, %p, %p)\n", iface, debugstr_w(GDFBinaryPath), openType, pOpenResult, ppiStats);
+
+    if(!GDFBinaryPath)
+        return E_INVALIDARG;
+
+    installScope = GIS_CURRENT_USER;
+    hr = GAMEUX_FindGameInstanceId(GDFBinaryPath, installScope, &instanceId);
+
+    if(hr == S_FALSE)
+    {
+        installScope = GIS_ALL_USERS;
+        hr = GAMEUX_FindGameInstanceId(GDFBinaryPath, installScope, &instanceId);
+    }
+
+    if(hr == S_FALSE)
+        /* game not registered, so statistics cannot be used */
+        hr = E_FAIL;
+
+    if(SUCCEEDED(hr))
+        /* game is registered, let's read it's application id from registry */
+        hr = GAMEUX_buildGameRegistryPath(installScope, &instanceId, &lpRegistryPath);
+
+    if(SUCCEEDED(hr))
+    {
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE,
+                lpRegistryPath, sApplicationId, RRF_RT_REG_SZ,
+                NULL, lpApplicationId, &dwLength));
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        TRACE("found app id: %s\n", debugstr_w(lpApplicationId));
+        FIXME("creating instance of IGameStatistics not yet implemented\n");
+        hr = E_NOTIMPL;
+    }
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_RemoveGameStatistics(
