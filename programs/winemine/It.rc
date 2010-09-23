@@ -23,6 +23,9 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE {
@@ -82,7 +85,7 @@ CAPTION "Congratulazioni!"
 DLG_CUSTOM DIALOG  0, 0, 100, 100
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Gioco Personalizzato"
+CAPTION "Gioco personalizzato"
 {
     LTEXT           "Righe",   -1,   5,   5,  30,  10
     LTEXT           "Colonne",   -1,   5,  35,  30,  10
