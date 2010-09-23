@@ -2811,6 +2811,162 @@ interface IFileDialogControlEvents : IUnknown
         [in] DWORD dwIDCtl);
 }
 
+typedef [v1_enum] enum tagKF_CATEGORY
+{
+    KF_CATEGORY_VIRTUAL = 0x00000001,
+    KF_CATEGORY_FIXED   = 0x00000002,
+    KF_CATEGORY_COMMON  = 0x00000003,
+    KF_CATEGORY_PERUSER = 0x00000004
+} KF_CATEGORY;
+
+typedef [v1_enum] enum tagKF_REDIRECTION_CAPABILITIES
+{
+    KF_REDIRECTION_CAPABILITIES_ALLOW_ALL               = 0x000000ff,
+    KF_REDIRECTION_CAPABILITIES_REDIRECTABLE            = 0x00000001,
+    KF_REDIRECTION_CAPABILITIES_DENY_ALL                = 0x000fff00,
+    KF_REDIRECTION_CAPABILITIES_DENY_POLICY_REDIRECTED  = 0x00000100,
+    KF_REDIRECTION_CAPABILITIES_DENY_POLICY             = 0x00000200,
+    KF_REDIRECTION_CAPABILITIES_DENY_PERMISSIONS        = 0x00000400
+} KF_REDIRECTION_CAPABILITIES;
+
+typedef [v1_enum] enum tagKF_DEFINITION_FLAGS
+{
+    KFDF_LOCAL_REDIRECT_ONLY    = 0x00000002,
+    KFDF_ROAMABLE               = 0x00000004,
+    KFDF_PRECREATE              = 0x00000008
+} KF_DEFINITION_FLAGS;
+
+typedef struct tagKNOWNFOLDER_DEFINITION
+{
+    KF_CATEGORY         category;
+    LPWSTR              pszName;
+    LPWSTR              pszDescription;
+    KNOWNFOLDERID       fidParent;
+    LPWSTR              pszRelativePath;
+    LPWSTR              pszParsingName;
+    LPWSTR              pszTooltip;
+    LPWSTR              pszLocalizedName;
+    LPWSTR              pszIcon;
+    LPWSTR              pszSecurity;
+    DWORD               dwAttributes;
+    KF_DEFINITION_FLAGS kfdFlags;
+    FOLDERTYPEID        ftidType;
+} KNOWNFOLDER_DEFINITION;
+
+[
+ object,
+ uuid(3aa7af7e-9b36-420C-a8e3-f77d4674a488),
+ pointer_default(ref)
+]
+interface IKnownFolder : IUnknown
+{
+    HRESULT GetId(
+        [out] KNOWNFOLDERID *pkfid);
+
+    HRESULT GetCategory(
+        [out] KF_CATEGORY *pCategory);
+
+    HRESULT GetShellItem(
+        [in] DWORD dwFlags,
+        [in] REFIID riid,
+        [out, iid_is(riid)] void **ppv);
+
+    HRESULT GetPath(
+        [in] DWORD dwFlags,
+        [out, string] LPWSTR *ppszPath);
+
+    HRESULT SetPath(
+        [in] DWORD dwFlags,
+        [in, string] LPCWSTR pszPath);
+
+    HRESULT GetIDList(
+        [in] DWORD dwFlags,
+        [out] PIDLIST_ABSOLUTE *ppidl);
+
+    HRESULT GetFolderType(
+        [out] FOLDERTYPEID *pftid);
+
+    HRESULT GetRedirectionCapabilities(
+        [out] KF_REDIRECTION_CAPABILITIES *pCapabilities);
+
+    HRESULT GetFolderDefinition(
+        [out] KNOWNFOLDER_DEFINITION *pKFD);
+}
+
+typedef [v1_enum] enum tagKF_REDIRECT_FLAGS
+{
+    KF_REDIRECT_USER_EXCLUSIVE      = 0x00000001,
+    KF_REDIRECT_COPY_SOURCE_DACL    = 0x00000002,
+    KF_REDIRECT_OWNER_USER          = 0x00000004,
+    KF_REDIRECT_SET_OWNER_EXPLICIT  = 0x00000008,
+    KF_REDIRECT_CHECK_ONLY          = 0x00000010,
+    KF_REDIRECT_WITH_UI             = 0x00000020,
+    KF_REDIRECT_UNPIN               = 0x00000040,
+    KF_REDIRECT_PIN                 = 0x00000080,
+    KF_REDIRECT_COPY_CONTENTS       = 0x00000200,
+    KF_REDIRECT_DEL_SOURCE_CONTENTS = 0x00000400,
+    KF_REDIRECT_EXCLUDE_ALL_KNOWN_SUBFOLDERS = 0x00000800
+} KF_REDIRECT_FLAGS;
+
+[
+    object,
+    uuid(8BE2D872-86AA-4d47-B776-32CCA40C7018),
+    pointer_default(ref)
+]
+interface IKnownFolderManager : IUnknown
+{
+    typedef [v1_enum] enum tagFFFP_MODE
+    {
+        FFFP_EXACTMATCH,
+        FFFP_NEARESTPARENTMATCH
+    } FFFP_MODE;
+
+    HRESULT FolderIdFromCsidl(
+        [in] int nCsidl,
+        [out] KNOWNFOLDERID *pfid);
+
+    HRESULT FolderIdToCsidl(
+        [in] REFKNOWNFOLDERID rfid,
+        [out] int *pnCsidl);
+
+    HRESULT GetFolderIds(
+        [out, size_is(, *pCount)] KNOWNFOLDERID **ppKFId,
+        [in, out] UINT *pCount);
+
+    HRESULT GetFolder(
+        [in] REFKNOWNFOLDERID rfid,
+        [out] IKnownFolder **ppkf);
+
+    HRESULT GetFolderByName(
+        [in, string] LPCWSTR pszCanonicalName,
+        [out] IKnownFolder **ppkf);
+
+    HRESULT RegisterFolder(
+        [in] REFKNOWNFOLDERID rfid,
+        [in] KNOWNFOLDER_DEFINITION const *pKFD);
+
+    HRESULT UnregisterFolder(
+        [in] REFKNOWNFOLDERID rfid);
+
+    HRESULT FindFolderFromPath(
+        [in, string] LPCWSTR pszPath,
+        [in] FFFP_MODE mode,
+        [out] IKnownFolder **ppkf);
+
+    HRESULT FindFolderFromIDList(
+        [in] PCIDLIST_ABSOLUTE pidl,
+        [out] IKnownFolder **ppkf);
+
+    HRESULT Redirect(
+        [in] REFKNOWNFOLDERID rfid,
+        [in, unique] HWND hwnd,
+        [in] KF_REDIRECT_FLAGS flags,
+        [in, unique, string] LPCWSTR pszTargetPath,
+        [in] UINT cFolders,
+        [in, size_is(cFolders), unique] KNOWNFOLDERID const *pExclusion,
+        [out, string] LPWSTR *ppszError);
+}
+
 /*****************************************************************************
  * ShellObjects typelibrary
  */
@@ -2851,5 +3007,13 @@ library ShellObjects
     coclass NamespaceTreeControl
     {
         interface INameSpaceTreeControl2;
+    }
+
+    [
+        uuid(4df0c730-df9d-4ae3-9153-aa6b82e9795a)
+    ]
+    coclass KnownFolderManager
+    {
+        interface IKnownFolderManager;
     }
 }
