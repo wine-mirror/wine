@@ -24,6 +24,8 @@
  *
  */
 
+#define COBJMACROS
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -51,6 +53,7 @@
 #include "sddl.h"
 #define INITGUID
 #include "knownfolders.h"
+#include "shobjidl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -2997,4 +3000,444 @@ HRESULT WINAPI SHGetFolderPathEx(REFKNOWNFOLDERID rfid, DWORD flags, HANDLE toke
         CoTaskMemFree( buffer );
     }
     return hr;
+}
+
+struct knownfolder
+{
+    const struct IKnownFolderVtbl *vtbl;
+    LONG refs;
+    KNOWNFOLDERID id;
+};
+
+static inline struct knownfolder *impl_from_IKnownFolder( IKnownFolder *iface )
+{
+    return (struct knownfolder *)((char *)iface - FIELD_OFFSET( struct knownfolder, vtbl ));
+}
+
+static ULONG WINAPI knownfolder_AddRef(
+    IKnownFolder *iface )
+{
+    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+    return InterlockedIncrement( &knownfolder->refs );
+}
+
+static ULONG WINAPI knownfolder_Release(
+    IKnownFolder *iface )
+{
+    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+    LONG refs = InterlockedDecrement( &knownfolder->refs );
+    if (!refs)
+    {
+        TRACE("destroying %p\n", knownfolder);
+        HeapFree( GetProcessHeap(), 0, knownfolder );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI knownfolder_QueryInterface(
+    IKnownFolder *iface,
+    REFIID riid,
+    void **ppv )
+{
+    struct knownfolder *This = impl_from_IKnownFolder( iface );
+
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppv );
+
+    if ( IsEqualGUID( riid, &IID_IKnownFolder ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppv = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    IKnownFolder_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT knowfolder_set_id(
+    IKnownFolder *iface,
+    const KNOWNFOLDERID *kfid)
+{
+    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+
+    TRACE("%s\n", debugstr_guid(kfid));
+
+    knownfolder->id = *kfid;
+    return S_OK;
+}
+
+static HRESULT WINAPI knownfolder_GetId(
+    IKnownFolder *iface,
+    KNOWNFOLDERID *pkfid)
+{
+    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+
+    TRACE("%p\n", pkfid);
+
+    *pkfid = knownfolder->id;
+    return S_OK;
+}
+
+static HRESULT WINAPI knownfolder_GetCategory(
+    IKnownFolder *iface,
+    KF_CATEGORY *pCategory)
+{
+    FIXME("%p\n", pCategory);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI knownfolder_GetShellItem(
+    IKnownFolder *iface,
+    DWORD dwFlags,
+    REFIID riid,
+    void **ppv)
+{
+    FIXME("0x%08x, %s, %p\n", dwFlags, debugstr_guid(riid), ppv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI knownfolder_GetPath(
+    IKnownFolder *iface,
+    DWORD dwFlags,
+    LPWSTR *ppszPath)
+{
+    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
+
+    TRACE("0x%08x, %p\n", dwFlags, ppszPath);
+    return SHGetKnownFolderPath( &knownfolder->id, dwFlags, NULL, ppszPath );
+}
+
+static HRESULT WINAPI knownfolder_SetPath(
+    IKnownFolder *iface,
+    DWORD dwFlags,
+    LPCWSTR pszPath)
+{
+    FIXME("0x%08x, %p\n", dwFlags, debugstr_w(pszPath));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI knownfolder_GetIDList(
+    IKnownFolder *iface,
+    DWORD dwFlags,
+    PIDLIST_ABSOLUTE *ppidl)
+{
+    FIXME("0x%08x, %p\n", dwFlags, ppidl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI knownfolder_GetFolderType(
+    IKnownFolder *iface,
+    FOLDERTYPEID *pftid)
+{
+    FIXME("%p\n", pftid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI knownfolder_GetRedirectionCapabilities(
+    IKnownFolder *iface,
+    KF_REDIRECTION_CAPABILITIES *pCapabilities)
+{
+    FIXME("%p\n", pCapabilities);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI knownfolder_GetFolderDefinition(
+    IKnownFolder *iface,
+    KNOWNFOLDER_DEFINITION *pKFD)
+{
+    FIXME("%p\n", pKFD);
+    return E_NOTIMPL;
+}
+
+static const struct IKnownFolderVtbl knownfolder_vtbl =
+{
+    knownfolder_QueryInterface,
+    knownfolder_AddRef,
+    knownfolder_Release,
+    knownfolder_GetId,
+    knownfolder_GetCategory,
+    knownfolder_GetShellItem,
+    knownfolder_GetPath,
+    knownfolder_SetPath,
+    knownfolder_GetIDList,
+    knownfolder_GetFolderType,
+    knownfolder_GetRedirectionCapabilities,
+    knownfolder_GetFolderDefinition
+};
+
+static HRESULT knownfolder_create( void **ppv )
+{
+    struct knownfolder *kf;
+
+    kf = HeapAlloc( GetProcessHeap(), 0, sizeof(*kf) );
+    if (!kf) return E_OUTOFMEMORY;
+
+    kf->vtbl = &knownfolder_vtbl;
+    kf->refs = 1;
+    memset( &kf->id, 0, sizeof(kf->id) );
+
+    *ppv = &kf->vtbl;
+
+    TRACE("returning iface %p\n", *ppv);
+    return S_OK;
+}
+
+struct foldermanager
+{
+    const struct IKnownFolderManagerVtbl *vtbl;
+    LONG refs;
+    UINT num_ids;
+    KNOWNFOLDERID *ids;
+};
+
+static inline struct foldermanager *impl_from_IKnownFolderManager( IKnownFolderManager *iface )
+{
+    return (struct foldermanager *)((char *)iface - FIELD_OFFSET( struct foldermanager, vtbl ));
+}
+
+static ULONG WINAPI foldermanager_AddRef(
+    IKnownFolderManager *iface )
+{
+    struct foldermanager *foldermanager = impl_from_IKnownFolderManager( iface );
+    return InterlockedIncrement( &foldermanager->refs );
+}
+
+static ULONG WINAPI foldermanager_Release(
+    IKnownFolderManager *iface )
+{
+    struct foldermanager *foldermanager = impl_from_IKnownFolderManager( iface );
+    LONG refs = InterlockedDecrement( &foldermanager->refs );
+    if (!refs)
+    {
+        TRACE("destroying %p\n", foldermanager);
+        HeapFree( GetProcessHeap(), 0, foldermanager->ids );
+        HeapFree( GetProcessHeap(), 0, foldermanager );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI foldermanager_QueryInterface(
+    IKnownFolderManager *iface,
+    REFIID riid,
+    void **ppv )
+{
+    struct foldermanager *This = impl_from_IKnownFolderManager( iface );
+
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppv );
+
+    if ( IsEqualGUID( riid, &IID_IKnownFolderManager ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppv = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+    IKnownFolderManager_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI foldermanager_FolderIdFromCsidl(
+    IKnownFolderManager *iface,
+    int nCsidl,
+    KNOWNFOLDERID *pfid)
+{
+    TRACE("%d, %p\n", nCsidl, pfid);
+
+    if (nCsidl >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
+        return E_INVALIDARG;
+    *pfid = *CSIDL_Data[nCsidl].id;
+    return S_OK;
+}
+
+static HRESULT WINAPI foldermanager_FolderIdToCsidl(
+    IKnownFolderManager *iface,
+    REFKNOWNFOLDERID rfid,
+    int *pnCsidl)
+{
+    int csidl;
+
+    TRACE("%s, %p\n", debugstr_guid(rfid), pnCsidl);
+
+    csidl = csidl_from_id( rfid );
+    if (csidl == -1) return E_INVALIDARG;
+    *pnCsidl = csidl;
+    return S_OK;
+}
+
+static HRESULT WINAPI foldermanager_GetFolderIds(
+    IKnownFolderManager *iface,
+    KNOWNFOLDERID **ppKFId,
+    UINT *pCount)
+{
+    struct foldermanager *fm = impl_from_IKnownFolderManager( iface );
+
+    TRACE("%p, %p\n", ppKFId, pCount);
+
+    *ppKFId = fm->ids;
+    *pCount = fm->num_ids;
+    return S_OK;
+}
+
+static BOOL is_knownfolder( struct foldermanager *fm, const KNOWNFOLDERID *id )
+{
+    UINT i;
+
+    for (i = 0; i < fm->num_ids; i++)
+        if (IsEqualGUID( &fm->ids[i], id )) return TRUE;
+
+    return FALSE;
+}
+
+static HRESULT WINAPI foldermanager_GetFolder(
+    IKnownFolderManager *iface,
+    REFKNOWNFOLDERID rfid,
+    IKnownFolder **ppkf)
+{
+    struct foldermanager *fm = impl_from_IKnownFolderManager( iface );
+    HRESULT hr;
+
+    TRACE("%s, %p\n", debugstr_guid(rfid), ppkf);
+
+    if (!is_knownfolder( fm, rfid ))
+    {
+        WARN("unknown folder\n");
+        return E_INVALIDARG;
+    }
+    hr = knownfolder_create( (void **)ppkf );
+    if (SUCCEEDED( hr ))
+        hr = knowfolder_set_id( *ppkf, rfid );
+
+    return hr;
+}
+
+static HRESULT WINAPI foldermanager_GetFolderByName(
+    IKnownFolderManager *iface,
+    LPCWSTR pszCanonicalName,
+    IKnownFolder **ppkf)
+{
+    FIXME("%s, %p\n", debugstr_w(pszCanonicalName), ppkf);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldermanager_RegisterFolder(
+    IKnownFolderManager *iface,
+    REFKNOWNFOLDERID rfid,
+    KNOWNFOLDER_DEFINITION const *pKFD)
+{
+    FIXME("%p, %p\n", rfid, pKFD);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldermanager_UnregisterFolder(
+    IKnownFolderManager *iface,
+    REFKNOWNFOLDERID rfid)
+{
+    FIXME("%p\n", rfid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldermanager_FindFolderFromPath(
+    IKnownFolderManager *iface,
+    LPCWSTR pszPath,
+    FFFP_MODE mode,
+    IKnownFolder **ppkf)
+{
+    FIXME("%s, 0x%08x, %p\n", debugstr_w(pszPath), mode, ppkf);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldermanager_FindFolderFromIDList(
+    IKnownFolderManager *iface,
+    PCIDLIST_ABSOLUTE pidl,
+    IKnownFolder **ppkf)
+{
+    FIXME("%p, %p\n", pidl, ppkf);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldermanager_Redirect(
+    IKnownFolderManager *iface,
+    REFKNOWNFOLDERID rfid,
+    HWND hwnd,
+    KF_REDIRECT_FLAGS flags,
+    LPCWSTR pszTargetPath,
+    UINT cFolders,
+    KNOWNFOLDERID const *pExclusion,
+    LPWSTR *ppszError)
+{
+    FIXME("%p, %p, 0x%08x, %s, %u, %p, %p\n", rfid, hwnd, flags,
+          debugstr_w(pszTargetPath), cFolders, pExclusion, ppszError);
+    return E_NOTIMPL;
+}
+
+static const struct IKnownFolderManagerVtbl foldermanager_vtbl =
+{
+    foldermanager_QueryInterface,
+    foldermanager_AddRef,
+    foldermanager_Release,
+    foldermanager_FolderIdFromCsidl,
+    foldermanager_FolderIdToCsidl,
+    foldermanager_GetFolderIds,
+    foldermanager_GetFolder,
+    foldermanager_GetFolderByName,
+    foldermanager_RegisterFolder,
+    foldermanager_UnregisterFolder,
+    foldermanager_FindFolderFromPath,
+    foldermanager_FindFolderFromIDList,
+    foldermanager_Redirect
+};
+
+static HRESULT foldermanager_create( void **ppv )
+{
+    UINT i, j;
+    struct foldermanager *fm;
+
+    fm = HeapAlloc( GetProcessHeap(), 0, sizeof(*fm) );
+    if (!fm) return E_OUTOFMEMORY;
+
+    fm->vtbl = &foldermanager_vtbl;
+    fm->refs = 1;
+    fm->num_ids = 0;
+
+    for (i = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); i++)
+    {
+        if (!IsEqualGUID( CSIDL_Data[i].id, &GUID_NULL )) fm->num_ids++;
+    }
+    fm->ids = HeapAlloc( GetProcessHeap(), 0, fm->num_ids * sizeof(KNOWNFOLDERID) );
+    if (!fm->ids)
+    {
+        HeapFree( GetProcessHeap(), 0, fm );
+        return E_OUTOFMEMORY;
+    }
+    for (i = j = 0; i < sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]); i++)
+    {
+        if (!IsEqualGUID( CSIDL_Data[i].id, &GUID_NULL ))
+        {
+            fm->ids[j] = *CSIDL_Data[i].id;
+            j++;
+        }
+    }
+    TRACE("found %u known folders\n", fm->num_ids);
+    *ppv = &fm->vtbl;
+
+    TRACE("returning iface %p\n", *ppv);
+    return S_OK;
+}
+
+HRESULT WINAPI KnownFolderManager_Constructor( IUnknown *punk, REFIID riid, void **ppv )
+{
+    TRACE("%p, %s, %p\n", punk, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    if (punk)
+        return CLASS_E_NOAGGREGATION;
+
+    return foldermanager_create( ppv );
 }

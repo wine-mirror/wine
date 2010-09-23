@@ -78,6 +78,7 @@ static const struct {
 	{&CLSID_UnixDosFolder,  UnixDosFolder_Constructor},
 	{&CLSID_UnixFolder,     UnixFolder_Constructor},
 	{&CLSID_ExplorerBrowser,ExplorerBrowser_Constructor},
+	{&CLSID_KnownFolderManager, KnownFolderManager_Constructor},
 	{NULL, NULL}
 };
 

@@ -688,6 +688,13 @@ static struct regsvr_coclass const coclass_list[] = {
         "shell32.dll",
         "Apartment"
     },
+    {   &CLSID_KnownFolderManager,
+        "Known Folder Manager",
+        0,
+        NULL,
+        "shell32.dll",
+        "Apartment"
+    },
     { NULL }			/* list terminator */
 };
 
