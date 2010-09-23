@@ -22,6 +22,7 @@
 
 #include "shlwapi.h"
 #include "oleauto.h"
+#include "shlobj.h"
 
 #include "gameux.h"
 #include "wine/test.h"
@@ -32,6 +33,25 @@
 static IGameExplorer *ge = NULL;
 static WCHAR sExeName[MAX_PATH] = {0};
 static GUID gameInstanceId;
+static HRESULT WINAPI (*pSHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR);
+/*******************************************************************************
+ *_loadDynamicRoutines
+ *
+ * Helper function, prepares pointers to system procedures which may be not
+ * available on older operating systems.
+ *
+ * Returns:
+ *  TRUE                        procedures were loaded successfully
+ *  FALSE                       procedures were not loaded successfully
+ */
+static BOOL _loadDynamicRoutines(void)
+{
+    HMODULE hModule = LoadLibraryA( "shell32.dll" );
+
+    pSHGetFolderPathW = (LPVOID)GetProcAddress(hModule, "SHGetFolderPathW");
+    if (!pSHGetFolderPathW) return FALSE;
+    return TRUE;
+}
 /*******************************************************************************
  * _registerGame
  * Registers test suite executable as game in Games Explorer. Required to test
@@ -92,6 +112,71 @@ static HRESULT _unregisterGame(void) {
     return hr;
 }
 /*******************************************************************************
+ * _buildStatisticsFilePath
+ * Creates path to file contaning statistics of game with given id.
+ *
+ * Parameters:
+ *  guidApplicationId                       [I]     application id of game
+ *  lpStatisticsFile                        [O]     pointer where address of
+ *                                                  string with path will be
+ *                                                  stored. Path must be deallocated
+ *                                                  using CoTaskMemFree(...)
+ */
+static HRESULT _buildStatisticsFilePath(LPCGUID guidApplicationId, LPWSTR *lpStatisticsFile)
+{
+    static const WCHAR sBackslash[] = {'\\',0};
+    static const WCHAR sStatisticsDir[] = {'\\','M','i','c','r','o','s','o','f','t',
+            '\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p',
+            'l','o','r','e','r','\\','G','a','m','e','S','t','a','t','i','s',
+            't','i','c','s',0};
+    static const WCHAR sDotGamestats[] = {'.','g','a','m','e','s','t','a','t','s',0};
+    static const DWORD dwGuidLength = 49;
+
+    HRESULT hr;
+    WCHAR sGuid[dwGuidLength], sPath[MAX_PATH] = {0};
+
+    hr = pSHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, sPath);
+
+    if(SUCCEEDED(hr))
+        hr = (StringFromGUID2(guidApplicationId, sGuid, dwGuidLength)!=0 ? S_OK : E_FAIL);
+
+    if(SUCCEEDED(hr))
+    {
+        lstrcatW(sPath, sStatisticsDir);
+        lstrcatW(sPath, sGuid);
+        lstrcatW(sPath, sBackslash);
+        lstrcatW(sPath, sGuid);
+        lstrcatW(sPath, sDotGamestats);
+
+        *lpStatisticsFile = CoTaskMemAlloc((lstrlenW(sPath)+1)*sizeof(WCHAR));
+        if(!*lpStatisticsFile) hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+        lstrcpyW(*lpStatisticsFile, sPath);
+
+    return hr;
+}
+/*******************************************************************************
+ * _isFileExist
+ * Checks if given file exists
+ *
+ * Parameters:
+ *  lpFile                          [I]     path to file
+ *
+ * Result:
+ *  TRUE        file exists
+ *  FALSE       file does not exist
+ */
+BOOL _isFileExists(LPCWSTR lpFile)
+{
+    HANDLE hFile = CreateFileW(lpFile, GENERIC_READ, 0, NULL,
+                               OPEN_EXISTING, 0, NULL);
+    if(hFile == INVALID_HANDLE_VALUE) return FALSE;
+    CloseHandle(hFile);
+    return TRUE;
+}
+/*******************************************************************************
  * test routines
  */
 static void test_create(BOOL* gameStatisticsAvailable)
@@ -114,8 +199,30 @@ static void test_create(BOOL* gameStatisticsAvailable)
 }
 static void test_gamestatisticsmgr( void )
 {
+    static const GUID guidApplicationId = { 0x17A6558E, 0x60BE, 0x4078, { 0xB6, 0x6F, 0x9C, 0x3A, 0xDA, 0x2A, 0x32, 0xE6 } };
+    static const WCHAR sCategory0[] = {'C','a','t','e','g','o','r','y','0',0};
+    static const WCHAR sCategory1[] = {'C','a','t','e','g','o','r','y','1',0};
+    static const WCHAR sCategory2[] = {'C','a','t','e','g','o','r','y','2',0};
+    static const WCHAR sCategory0a[] = {'C','a','t','e','g','o','r','y','0','a',0};
+    static const WCHAR sStatistic00[] = {'S','t','a','t','i','s','t','i','c','0','0',0};
+    static const WCHAR sStatistic01[] = {'S','t','a','t','i','s','t','i','c','0','1',0};
+    static const WCHAR sStatistic10[] = {'S','t','a','t','i','s','t','i','c','1','0',0};
+    static const WCHAR sStatistic11[] = {'S','t','a','t','i','s','t','i','c','1','1',0};
+    static const WCHAR sStatistic20[] = {'S','t','a','t','i','s','t','i','c','2','0',0};
+    static const WCHAR sStatistic21[] = {'S','t','a','t','i','s','t','i','c','2','1',0};
+    static const WCHAR sValue00[] = {'V','a','l','u','e','0','0',0};
+    static const WCHAR sValue01[] = {'V','a','l','u','e','0','1',0};
+    static const WCHAR sValue10[] = {'V','a','l','u','e','1','0',0};
+    static const WCHAR sValue11[] = {'V','a','l','u','e','1','1',0};
+    static const WCHAR sValue20[] = {'V','a','l','u','e','2','0',0};
+    static const WCHAR sValue21[] = {'V','a','l','u','e','2','1',0};
+
     HRESULT hr;
     DWORD dwOpenResult;
+    LPWSTR lpStatisticsFile = NULL;
+    LPWSTR lpName = NULL, lpValue = NULL, sTooLongString = NULL;
+    UINT uMaxCategoryLength = 0, uMaxNameLength = 0, uMaxValueLength = 0;
+    WORD wMaxStatsPerCategory = 0, wMaxCategories = 0;
 
     IGameStatisticsMgr* gsm = NULL;
     IGameStatistics* gs = NULL;
@@ -124,21 +231,197 @@ static void test_gamestatisticsmgr( void )
     ok(hr == S_OK, "IGameStatisticsMgr creating failed (result false)\n");
 
     /* test trying to create interface IGameStatistics using GetGameStatistics method */
+
+    /* this should fail, cause statistics doesn't yet exists */
+    hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &dwOpenResult, &gs);
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
+
+    /* now, allow to create */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
     todo_wine ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%x\n", hr);
     todo_wine ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
     if(gs)
     {
+        /* test of limit values returned from interface */
+        hr = IGameStatistics_GetMaxCategoryLength(gs, &uMaxCategoryLength);
+        todo_wine ok(hr==S_OK, "getting maximum length of category failed\n");
+        todo_wine ok(uMaxCategoryLength==60, "getting maximum length of category returned invalid value: %d\n", uMaxCategoryLength);
+
+        hr = IGameStatistics_GetMaxNameLength(gs, &uMaxNameLength);
+        todo_wine ok(hr==S_OK, "getting maximum name length failed\n");
+        todo_wine ok(uMaxNameLength==30, "getting maximum name length returned invalid value: %d\n", uMaxNameLength);
+
+        hr = IGameStatistics_GetMaxValueLength(gs, &uMaxValueLength);
+        todo_wine ok(hr==S_OK, "getting maximum value length failed\n");
+        todo_wine ok(uMaxValueLength==30, "getting maximum value length returned invalid value: %d\n", uMaxValueLength);
+
+        hr = IGameStatistics_GetMaxCategories(gs, &wMaxCategories);
+        todo_wine ok(hr==S_OK, "getting maximum number of categories failed\n");
+        todo_wine ok(wMaxCategories==10, "getting maximum number of categories returned invalid value: %d\n", wMaxCategories);
+
+        hr = IGameStatistics_GetMaxStatsPerCategory(gs, &wMaxStatsPerCategory);
+        todo_wine ok(hr==S_OK, "getting maximum number of statistics per category failed\n");
+        todo_wine ok(wMaxStatsPerCategory==10, "getting maximum number of statistics per category returned invalid value: %d\n", wMaxStatsPerCategory);
+
+        /* create name of statistics file */
+        hr = _buildStatisticsFilePath(&guidApplicationId, &lpStatisticsFile);
+        ok(SUCCEEDED(hr), "cannot build path to game statistics (error 0x%x)\n", hr);
+        trace("statistics file path: %s\n", wine_dbgstr_w(lpStatisticsFile));
+        ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s already exists\n", wine_dbgstr_w(lpStatisticsFile));
+
+        /* write sample statistics */
+        hr = IGameStatistics_SetCategoryTitle(gs, wMaxCategories, NULL);
+        todo_wine ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
+
+        hr = IGameStatistics_SetCategoryTitle(gs, wMaxCategories, sCategory0);
+        todo_wine ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
+
+        /* check what happen if string is too long */
+        sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxCategoryLength+2));
+        memset(sTooLongString, 'a', sizeof(WCHAR)*(uMaxCategoryLength+1));
+        sTooLongString[uMaxCategoryLength+1]=0;
+
+        /* when string is too long, Windows returns S_FALSE, but saves string (stripped to expected number of characters) */
+        hr = IGameStatistics_SetCategoryTitle(gs, 0, sTooLongString);
+        todo_wine ok(hr==S_FALSE, "setting category title invalid result: 0x%x\n", hr);
+        CoTaskMemFree(sTooLongString);
+
+        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 0, sCategory0)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory0));
+        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 1, sCategory1)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory1));
+        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 2, sCategory2)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory1));
+
+        /* check what happen if any string is NULL */
+        hr = IGameStatistics_SetStatistic(gs, 0, 0, NULL, sValue00);
+        todo_wine ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+
+        hr = IGameStatistics_SetStatistic(gs, 0, 0, sStatistic00, NULL);
+        todo_wine ok(hr == S_OK, "setting statistic returned unexpected value: 0x%x)\n", hr);
+
+        /* check what happen if any string is too long */
+        sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxNameLength+2));
+        memset(sTooLongString, 'a', sizeof(WCHAR)*(uMaxNameLength+1));
+        sTooLongString[uMaxNameLength+1]=0;
+        hr = IGameStatistics_SetStatistic(gs, 0, 0, sTooLongString, sValue00);
+        todo_wine ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        CoTaskMemFree(sTooLongString);
+
+        sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxValueLength+2));
+        memset(sTooLongString, 'a', sizeof(WCHAR)*(uMaxValueLength+1));
+        sTooLongString[uMaxValueLength+1]=0;
+        hr = IGameStatistics_SetStatistic(gs, 0, 0, sStatistic00, sTooLongString);
+        todo_wine ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        CoTaskMemFree(sTooLongString);
+
+        /* check what happen on too big index of category or statistic */
+        hr = IGameStatistics_SetStatistic(gs, wMaxCategories, 0, sStatistic00, sValue00);
+        todo_wine ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
+
+        hr = IGameStatistics_SetStatistic(gs, 0, wMaxStatsPerCategory, sStatistic00, sValue00);
+        todo_wine ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
+
+        todo_wine ok(IGameStatistics_SetStatistic(gs, 0, 0, sStatistic00, sValue00)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic00), wine_dbgstr_w(sValue00));
+        todo_wine ok(IGameStatistics_SetStatistic(gs, 0, 1, sStatistic01, sValue01)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic01), wine_dbgstr_w(sValue01));
+        todo_wine ok(IGameStatistics_SetStatistic(gs, 1, 0, sStatistic10, sValue10)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic10), wine_dbgstr_w(sValue10));
+        todo_wine ok(IGameStatistics_SetStatistic(gs, 1, 1, sStatistic11, sValue11)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic11), wine_dbgstr_w(sValue11));
+        todo_wine ok(IGameStatistics_SetStatistic(gs, 2, 0, sStatistic20, sValue20)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic20), wine_dbgstr_w(sValue20));
+        todo_wine ok(IGameStatistics_SetStatistic(gs, 2, 1, sStatistic21, sValue21)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic21), wine_dbgstr_w(sValue21));
+
+        ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s already exists\n", wine_dbgstr_w(lpStatisticsFile));
+
+        todo_wine ok(IGameStatistics_Save(gs, FALSE)==S_OK, "statistic saving failed\n");
+
+        todo_wine ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
+
+        /* this value should not be stored in storage, we need it only to test is it not saved */
+        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 0, sCategory0a)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory0a));
+
+        hr = IGameStatistics_Release(gs);
+        ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%08x\n", hr);
+
+        /* try to read written statisticd */
+        hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
+        todo_wine ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%08x\n", hr);
+        todo_wine ok(dwOpenResult == GAMESTATS_OPEN_OPENED, "GetGameStatistics returned invalid open result: 0x%x\n", dwOpenResult);
+        ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
+
+        /* verify values with these which we stored before*/
+        hr = IGameStatistics_GetCategoryTitle(gs, 0, &lpName);
+        todo_wine ok(hr == S_OK, "getting category title failed\n");
+        todo_wine ok(lstrcmpW(lpName, sCategory0)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        CoTaskMemFree(lpName);
+
+        hr = IGameStatistics_GetCategoryTitle(gs, 1, &lpName);
+        todo_wine ok(hr == S_OK, "getting category title failed\n");
+        todo_wine ok(lstrcmpW(lpName, sCategory1)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        CoTaskMemFree(lpName);
+
+        hr = IGameStatistics_GetCategoryTitle(gs, 2, &lpName);
+        todo_wine ok(hr == S_OK, "getting category title failed\n");
+        todo_wine ok(lstrcmpW(lpName, sCategory2)==0, "getting category title returned invalid string (%s)\n", wine_dbgstr_w(lpName));
+        CoTaskMemFree(lpName);
+
+        /* check result if category doesn't exists */
+        hr = IGameStatistics_GetCategoryTitle(gs, 3, &lpName);
+        todo_wine ok(hr == S_OK, "getting category title failed\n");
+        ok(lpName == NULL, "getting category title failed\n");
+        CoTaskMemFree(lpName);
+
+        hr = IGameStatistics_GetStatistic(gs, 0, 0, &lpName, &lpValue);
+        todo_wine ok(hr == S_OK, "getting statistic failed\n");
+        todo_wine ok(lstrcmpW(lpName, sStatistic00)==0, "getting statistic returned invalid name\n");
+        todo_wine ok(lstrcmpW(lpValue, sValue00)==0, "getting statistic returned invalid value\n");
+        CoTaskMemFree(lpName);
+        CoTaskMemFree(lpValue);
+
+        hr = IGameStatistics_GetStatistic(gs, 0, 1, &lpName, &lpValue);
+        todo_wine ok(hr == S_OK, "getting statistic failed\n");
+        todo_wine ok(lstrcmpW(lpName, sStatistic01)==0, "getting statistic returned invalid name\n");
+        todo_wine ok(lstrcmpW(lpValue, sValue01)==0, "getting statistic returned invalid value\n");
+        CoTaskMemFree(lpName);
+        CoTaskMemFree(lpValue);
+
+        hr = IGameStatistics_GetStatistic(gs, 1, 0, &lpName, &lpValue);
+        todo_wine ok(hr == S_OK, "getting statistic failed\n");
+        todo_wine ok(lstrcmpW(lpName, sStatistic10)==0, "getting statistic returned invalid name\n");
+        todo_wine ok(lstrcmpW(lpValue, sValue10)==0, "getting statistic returned invalid value\n");
+        CoTaskMemFree(lpName);
+        CoTaskMemFree(lpValue);
+
+        hr = IGameStatistics_GetStatistic(gs, 1, 1, &lpName, &lpValue);
+        todo_wine ok(hr == S_OK, "getting statistic failed\n");
+        todo_wine ok(lstrcmpW(lpName, sStatistic11)==0, "getting statistic returned invalid name\n");
+        todo_wine ok(lstrcmpW(lpValue, sValue11)==0, "getting statistic returned invalid value\n");
+        CoTaskMemFree(lpName);
+        CoTaskMemFree(lpValue);
+
+        hr = IGameStatistics_GetStatistic(gs, 2, 0, &lpName, &lpValue);
+        todo_wine ok(hr == S_OK, "getting statistic failed\n");
+        todo_wine ok(lstrcmpW(lpName, sStatistic20)==0, "getting statistic returned invalid name\n");
+        todo_wine ok(lstrcmpW(lpValue, sValue20)==0, "getting statistic returned invalid value\n");
+        CoTaskMemFree(lpName);
+        CoTaskMemFree(lpValue);
+
+        hr = IGameStatistics_GetStatistic(gs, 2, 1, &lpName, &lpValue);
+        todo_wine ok(hr == S_OK, "getting statistic failed\n");
+        todo_wine ok(lstrcmpW(lpName, sStatistic21)==0, "getting statistic returned invalid name\n");
+        todo_wine ok(lstrcmpW(lpValue, sValue21)==0, "getting statistic returned invalid value\n");
+        CoTaskMemFree(lpName);
+        CoTaskMemFree(lpValue);
+
         hr = IGameStatistics_Release(gs);
         ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%x\n", hr);
 
         /* test of removing game statistics from underlying storage */
+        todo_wine ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
         hr = IGameStatisticsMgr_RemoveGameStatistics(gsm, sExeName);
         todo_wine ok(SUCCEEDED(hr), "cannot remove game statistics, error: 0x%x\n", hr);
+        ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s still exists\n", wine_dbgstr_w(lpStatisticsFile));
     }
 
     hr = IGameStatisticsMgr_Release(gsm);
     ok(SUCCEEDED(hr), "releasing IGameStatisticsMgr returned error: 0x%x\n", hr);
+
+    CoTaskMemFree(lpStatisticsFile);
 }
 
 START_TEST(gamestatistics)
@@ -146,21 +429,28 @@ START_TEST(gamestatistics)
     HRESULT hr;
     BOOL gameStatisticsAvailable;
 
-    hr = CoInitialize( NULL );
-    ok( hr == S_OK, "failed to init COM\n");
-
-    test_create(&gameStatisticsAvailable);
-
-    if(gameStatisticsAvailable)
+    if(_loadDynamicRoutines())
     {
-        hr = _registerGame();
-        ok( hr == S_OK, "cannot register game in Game Explorer (error: 0x%x)\n", hr);
+        hr = CoInitialize( NULL );
+        ok( hr == S_OK, "failed to init COM\n");
 
-        test_gamestatisticsmgr();
+        test_create(&gameStatisticsAvailable);
 
-        hr = _unregisterGame();
-        ok( hr == S_OK, "cannot unregister game from Game Explorer (error: 0x%x)\n", hr);
+        if(gameStatisticsAvailable)
+        {
+            hr = _registerGame();
+            ok( hr == S_OK, "cannot register game in Game Explorer (error: 0x%x)\n", hr);
+
+            test_gamestatisticsmgr();
+
+            hr = _unregisterGame();
+            ok( hr == S_OK, "cannot unregister game from Game Explorer (error: 0x%x)\n", hr);
+        }
+
+        CoUninitialize();
     }
-
-    CoUninitialize();
+    else
+        /* this is not a failure, because a procedure loaded by address
+         * is always available on systems which has gameux.dll */
+        win_skip("too old system, cannot load required dynamic procedures\n");
 }
