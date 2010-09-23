@@ -77,9 +77,9 @@ BEGIN
     CONTROL     "Le applicazioni Direct&X impediscono al mouse di lasciare la finestra",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Permetti al gestore delle finestre di &decorare le finestre",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Permetti al &gestore delle finestre di controllare le finestre",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "&Emula una scrivania virtuale",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "&Emula un desktop virtuale",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "Dimensione della Scrivania:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "Dimensione del desktop:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
@@ -101,7 +101,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Sostituzioni di DLL ",IDC_STATIC,8,4,244,210
-    LTEXT           "Le Dynamic Link Libraries possono essere specificate individualmente per essere builtin (fornite da Wine) o native (prese da Windows o fornite dall'applicazione)."
+    LTEXT           "Le Dynamic Link Libraries possono essere specificate individualmente per essere integrate (fornite da Wine) o native (prese da Windows o fornite dall'applicazione)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "&Nuova sostituzione per la libreria:",IDC_STATIC,16,48,100,8
     COMBOBOX        IDC_DLLCOMBO,16,58,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -118,10 +118,10 @@ CAPTION "Modifica sostituzione"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Carica l'ordine ",IDC_STATIC,8,4,94,66
-    CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
+    CONTROL         "&Integrata (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
     CONTROL         "&Nativa (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "B&uiltin poi Nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "N&ativa poi Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
+    CONTROL         "In&tegrata poi nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
+    CONTROL         "N&ativa poi integrata",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "&Disabilita",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "Annulla",IDCANCEL,57,74,45,14,WS_GROUP
@@ -228,7 +228,7 @@ BEGIN
     IDS_TAB_GRAPHICS        "Grafica"
     IDS_TAB_DESKTOP_INTEGRATION "Integrazione del desktop"
     IDS_TAB_AUDIO           "Audio"
-    IDS_TAB_ABOUT           "Riguardo A"
+    IDS_TAB_ABOUT           "Riguardo a"
     IDS_WINECFG_TITLE       "Configurazione di Wine"
     IDS_WINECFG_TITLE_APP   "Configurazione di Wine per %s"
     IDS_THEMEFILE           "File del tema (*.msstyles; *.theme)"
@@ -242,10 +242,10 @@ STRINGTABLE
 BEGIN
     IDS_DLL_WARNING         "Cambiare l'ordine di caricamento di questa libreria non è raccomandato.\nSei sicuro di volerlo fare?"
     IDS_DLL_WARNING_CAPTION "Attenzione: libreria di sistema"
-    IDS_DLL_NATIVE          "native"
-    IDS_DLL_BUILTIN         "builtin"
-    IDS_DLL_NATIVE_BUILTIN  "native, builtin"
-    IDS_DLL_BUILTIN_NATIVE  "builtin, native"
+    IDS_DLL_NATIVE          "nativa"
+    IDS_DLL_BUILTIN         "integrata"
+    IDS_DLL_NATIVE_BUILTIN  "nativa, integrata"
+    IDS_DLL_BUILTIN_NATIVE  "integrata, nativa"
     IDS_DLL_DISABLED        "disabilitato"
     IDS_DEFAULT_SETTINGS    "Impostazioni predefinite"
     IDS_EXECUTABLE_FILTER   "Programmi di Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
