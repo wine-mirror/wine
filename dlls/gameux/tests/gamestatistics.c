@@ -239,7 +239,7 @@ static void test_gamestatisticsmgr( void )
     /* now, allow to create */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
     todo_wine ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%x\n", hr);
-    todo_wine ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
+    ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");
     if(gs)
     {
         /* test of limit values returned from interface */

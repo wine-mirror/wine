@@ -31,10 +31,221 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gameux);
 
-/*
+/*******************************************************************************
+ * IGameStatistics implementation
+ */
+typedef struct _GameStatisticsImpl
+{
+    const struct IGameStatisticsVtbl *lpVtbl;
+    LONG ref;
+} GameStatisticsImpl;
+
+static inline GameStatisticsImpl *impl_from_IGameStatistics( IGameStatistics *iface )
+{
+    return (GameStatisticsImpl *)((char*)iface - FIELD_OFFSET(GameStatisticsImpl, lpVtbl));
+}
+static inline IGameStatistics *IGameStatistics_from_impl( GameStatisticsImpl* This )
+{
+    return (struct IGameStatistics*)&This->lpVtbl;
+}
+
+
+static HRESULT WINAPI GameStatisticsImpl_QueryInterface(
+        IGameStatistics *iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    GameStatisticsImpl *This = impl_from_IGameStatistics( iface );
+
+    TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppvObject );
+
+    *ppvObject = NULL;
+
+    if ( IsEqualGUID( riid, &IID_IUnknown ) ||
+         IsEqualGUID( riid, &IID_IGameStatistics ) )
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IGameStatistics_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI GameStatisticsImpl_AddRef(IGameStatistics *iface)
+{
+    GameStatisticsImpl *This = impl_from_IGameStatistics( iface );
+    LONG ref;
+
+    ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p): ref=%d\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI GameStatisticsImpl_Release(IGameStatistics *iface)
+{
+    GameStatisticsImpl *This = impl_from_IGameStatistics( iface );
+    LONG ref;
+
+    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p): ref=%d\n", This, ref);
+
+    if ( ref == 0 )
+    {
+        TRACE("freeing IGameStatistics\n");
+        HeapFree( GetProcessHeap(), 0, This );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetMaxCategoryLength(
+    IGameStatistics *iface,
+    UINT *cch)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetMaxNameLength(
+    IGameStatistics *iface,
+    UINT *cch)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetMaxValueLength(
+    IGameStatistics *iface,
+    UINT *cch)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetMaxCategories(
+    IGameStatistics *iface,
+    WORD *pMax)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetMaxStatsPerCategory(
+    IGameStatistics *iface,
+    WORD *pMax)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_SetCategoryTitle(
+    IGameStatistics *iface,
+    WORD categoryIndex,
+    LPCWSTR title)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetCategoryTitle(
+    IGameStatistics *iface,
+    WORD categoryIndex,
+    LPWSTR *pTitle)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetStatistic(
+    IGameStatistics *iface,
+    WORD categoryIndex,
+    WORD statIndex,
+    LPWSTR *pName,
+    LPWSTR *pValue)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_SetStatistic(
+    IGameStatistics *iface,
+    WORD categoryIndex,
+    WORD statIndex,
+    LPCWSTR name,
+    LPCWSTR value)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_Save(
+    IGameStatistics *iface,
+    BOOL trackChanges)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_SetLastPlayedCategory(
+    IGameStatistics *iface,
+    UINT categoryIndex)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GameStatisticsImpl_GetLastPlayedCategory(
+    IGameStatistics *iface,
+    UINT *pCategoryIndex)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static const struct IGameStatisticsVtbl GameStatisticsImplVtbl =
+{
+    GameStatisticsImpl_QueryInterface,
+    GameStatisticsImpl_AddRef,
+    GameStatisticsImpl_Release,
+    GameStatisticsImpl_GetMaxCategoryLength,
+    GameStatisticsImpl_GetMaxNameLength,
+    GameStatisticsImpl_GetMaxValueLength,
+    GameStatisticsImpl_GetMaxCategories,
+    GameStatisticsImpl_GetMaxStatsPerCategory,
+    GameStatisticsImpl_SetCategoryTitle,
+    GameStatisticsImpl_GetCategoryTitle,
+    GameStatisticsImpl_GetStatistic,
+    GameStatisticsImpl_SetStatistic,
+    GameStatisticsImpl_Save,
+    GameStatisticsImpl_SetLastPlayedCategory,
+    GameStatisticsImpl_GetLastPlayedCategory
+};
+
+
+HRESULT create_IGameStatistics(GameStatisticsImpl** ppStats)
+{
+    TRACE("(%p)\n", ppStats);
+
+    *ppStats = HeapAlloc( GetProcessHeap(), 0, sizeof(**ppStats));
+    if(!(*ppStats))
+        return E_OUTOFMEMORY;
+
+    (*ppStats)->lpVtbl = &GameStatisticsImplVtbl;
+    (*ppStats)->ref = 1;
+
+    TRACE("returing coclass: %p\n", *ppStats);
+    return S_OK;
+}
+
+/*******************************************************************************
  * IGameStatisticsMgr implementation
  */
-
 typedef struct _GameStatisticsMgrImpl
 {
     const struct IGameStatisticsMgrVtbl *lpVtbl;
@@ -117,6 +328,7 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
     WCHAR lpApplicationId[49];
     DWORD dwLength = sizeof(lpApplicationId);
     GAME_INSTALL_SCOPE installScope;
+    GameStatisticsImpl *statisticsImpl;
 
     TRACE("(%p, %s, 0x%x, %p, %p)\n", iface, debugstr_w(GDFBinaryPath), openType, pOpenResult, ppiStats);
 
@@ -150,7 +362,13 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
     if(SUCCEEDED(hr))
     {
         TRACE("found app id: %s\n", debugstr_w(lpApplicationId));
-        FIXME("creating instance of IGameStatistics not yet implemented\n");
+        hr = create_IGameStatistics(&statisticsImpl);
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        *ppiStats = IGameStatistics_from_impl(statisticsImpl);
+        FIXME("loading game statistics not yet implemented\n");
         hr = E_NOTIMPL;
     }
 
