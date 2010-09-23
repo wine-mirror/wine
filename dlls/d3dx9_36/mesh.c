@@ -1063,12 +1063,230 @@ HRESULT WINAPI D3DXCreateBox(LPDIRECT3DDEVICE9 device, FLOAT width, FLOAT height
     return E_NOTIMPL;
 }
 
+struct vertex
+{
+    D3DXVECTOR3 position;
+    D3DXVECTOR3 normal;
+};
+
+typedef WORD face[3];
+
+struct sincos_table
+{
+    float *sin;
+    float *cos;
+};
+
+static void free_sincos_table(struct sincos_table *sincos_table)
+{
+    HeapFree(GetProcessHeap(), 0, sincos_table->cos);
+    HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+}
+
+/* pre compute sine and cosine tables; caller must free */
+static BOOL compute_sincos_table(struct sincos_table *sincos_table, float angle_start, float angle_step, int n)
+{
+    float angle;
+    int i;
+
+    sincos_table->sin = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->sin));
+    if (!sincos_table->sin)
+    {
+        return FALSE;
+    }
+    sincos_table->cos = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->cos));
+    if (!sincos_table->cos)
+    {
+        HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+        return FALSE;
+    }
+
+    angle = angle_start;
+    for (i = 0; i < n; i++)
+    {
+        sincos_table->sin[i] = sin(angle);
+        sincos_table->cos[i] = cos(angle);
+        angle += angle_step;
+    }
+
+    return TRUE;
+}
+
+static WORD sphere_vertex(UINT slices, int slice, int stack)
+{
+    return stack*slices+slice+1;
+}
+
 HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT slices,
                                 UINT stacks, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
 {
-    FIXME("(%p, %f, %d, %d, %p, %p): stub\n", device, radius, slices, stacks, mesh, adjacency);
+    DWORD number_of_vertices, number_of_faces;
+    HRESULT hr;
+    ID3DXMesh *sphere;
+    struct vertex *vertices;
+    face *faces;
+    float phi_step, phi_start;
+    struct sincos_table phi;
+    float theta_step, theta, sin_theta, cos_theta;
+    DWORD vertex, face;
+    int slice, stack;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %f, %u, %u, %p, %p)\n", device, radius, slices, stacks, mesh, adjacency);
+
+    if (!device || radius < 0.0f || slices < 2 || stacks < 2 || !mesh)
+    {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (adjacency)
+    {
+        FIXME("Case of adjacency != NULL not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    number_of_vertices = 2 + slices * (stacks-1);
+    number_of_faces = 2 * slices + (stacks - 2) * (2 * slices);
+
+    hr = D3DXCreateMeshFVF(number_of_faces, number_of_vertices, D3DXMESH_MANAGED,
+                           D3DFVF_XYZ | D3DFVF_NORMAL, device, &sphere);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = sphere->lpVtbl->LockVertexBuffer(sphere, D3DLOCK_DISCARD, (LPVOID *)&vertices);
+    if (FAILED(hr))
+    {
+        sphere->lpVtbl->Release(sphere);
+        return hr;
+    }
+
+    hr = sphere->lpVtbl->LockIndexBuffer(sphere, D3DLOCK_DISCARD, (LPVOID *)&faces);
+    if (FAILED(hr))
+    {
+        sphere->lpVtbl->UnlockVertexBuffer(sphere);
+        sphere->lpVtbl->Release(sphere);
+        return hr;
+    }
+
+    /* phi = angle on xz plane wrt z axis */
+    phi_step = -2 * M_PI / slices;
+    phi_start = M_PI / 2;
+
+    if (!compute_sincos_table(&phi, phi_start, phi_step, slices))
+    {
+        sphere->lpVtbl->UnlockIndexBuffer(sphere);
+        sphere->lpVtbl->UnlockVertexBuffer(sphere);
+        sphere->lpVtbl->Release(sphere);
+        return E_OUTOFMEMORY;
+    }
+
+    /* theta = angle on xy plane wrt x axis */
+    theta_step = M_PI / stacks;
+    theta = theta_step;
+
+    vertex = 0;
+    face = 0;
+    stack = 0;
+
+    vertices[vertex].normal.x = 0.0f;
+    vertices[vertex].normal.y = 0.0f;
+    vertices[vertex].normal.z = 1.0f;
+    vertices[vertex].position.x = 0.0f;
+    vertices[vertex].position.y = 0.0f;
+    vertices[vertex].position.z = radius;
+    vertex++;
+
+    for (stack = 0; stack < stacks - 1; stack++)
+    {
+        sin_theta = sin(theta);
+        cos_theta = cos(theta);
+
+        for (slice = 0; slice < slices; slice++)
+        {
+            vertices[vertex].normal.x = sin_theta * phi.cos[slice];
+            vertices[vertex].normal.y = sin_theta * phi.sin[slice];
+            vertices[vertex].normal.z = cos_theta;
+            vertices[vertex].position.x = radius * sin_theta * phi.cos[slice];
+            vertices[vertex].position.y = radius * sin_theta * phi.sin[slice];
+            vertices[vertex].position.z = radius * cos_theta;
+            vertex++;
+
+            if (slice > 0)
+            {
+                if (stack == 0)
+                {
+                    /* top stack is triangle fan */
+                    faces[face][0] = 0;
+                    faces[face][1] = slice + 1;
+                    faces[face][2] = slice;
+                    face++;
+                }
+                else
+                {
+                    /* stacks in between top and bottom are quad strips */
+                    faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+                    faces[face][1] = sphere_vertex(slices, slice, stack-1);
+                    faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    face++;
+
+                    faces[face][0] = sphere_vertex(slices, slice, stack-1);
+                    faces[face][1] = sphere_vertex(slices, slice, stack);
+                    faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    face++;
+                }
+            }
+        }
+
+        theta += theta_step;
+
+        if (stack == 0)
+        {
+            faces[face][0] = 0;
+            faces[face][1] = 1;
+            faces[face][2] = slice;
+            face++;
+        }
+        else
+        {
+            faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+            faces[face][1] = sphere_vertex(slices, 0, stack-1);
+            faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            face++;
+
+            faces[face][0] = sphere_vertex(slices, 0, stack-1);
+            faces[face][1] = sphere_vertex(slices, 0, stack);
+            faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            face++;
+        }
+    }
+
+    vertices[vertex].position.x = 0.0f;
+    vertices[vertex].position.y = 0.0f;
+    vertices[vertex].position.z = -radius;
+    vertices[vertex].normal.x = 0.0f;
+    vertices[vertex].normal.y = 0.0f;
+    vertices[vertex].normal.z = -1.0f;
+
+    /* bottom stack is triangle fan */
+    for (slice = 1; slice < slices; slice++)
+    {
+        faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+        faces[face][1] = sphere_vertex(slices, slice, stack-1);
+        faces[face][2] = vertex;
+        face++;
+    }
+
+    faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
+    faces[face][1] = sphere_vertex(slices, 0, stack-1);
+    faces[face][2] = vertex;
+
+    free_sincos_table(&phi);
+    sphere->lpVtbl->UnlockIndexBuffer(sphere);
+    sphere->lpVtbl->UnlockVertexBuffer(sphere);
+    *mesh = sphere;
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh, LPD3DXBUFFER* adjacency)

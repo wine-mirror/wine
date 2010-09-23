@@ -1537,7 +1537,7 @@ static void test_sphere(IDirect3DDevice9 *device, FLOAT radius, UINT slices, UIN
     char name[256];
 
     hr = D3DXCreateSphere(device, radius, slices, stacks, &sphere, NULL);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
     if (hr != D3D_OK)
     {
         skip("Couldn't create sphere\n");
@@ -1571,16 +1571,16 @@ static void D3DXCreateSphereTest(void)
     ID3DXMesh* sphere = NULL;
 
     hr = D3DXCreateSphere(NULL, 0.0f, 0, 0, NULL, NULL);
-    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(NULL, 0.1f, 0, 0, NULL, NULL);
-    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(NULL, 0.0f, 1, 0, NULL, NULL);
-    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(NULL, 0.0f, 0, 1, NULL, NULL);
-    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -1609,16 +1609,16 @@ static void D3DXCreateSphereTest(void)
     }
 
     hr = D3DXCreateSphere(device, 1.0f, 1, 1, &sphere, NULL);
-    todo_wine ok( hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(device, 1.0f, 2, 1, &sphere, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(device, 1.0f, 1, 2, &sphere, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(device, -0.1f, 1, 2, &sphere, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     test_sphere(device, 0.0f, 2, 2);
     test_sphere(device, 1.0f, 2, 2);
