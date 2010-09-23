@@ -1234,8 +1234,9 @@ void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
 }
 
-static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_colormat(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
     GLenum Parm = 0;
 
@@ -1249,57 +1250,55 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
 
     context->num_untracked_materials = 0;
     if ((device->strided_streams.use_map & (1 << WINED3D_FFP_DIFFUSE))
-            && stateblock->state.render_states[WINED3DRS_COLORVERTEX])
+            && state->render_states[WINED3DRS_COLORVERTEX])
     {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
-              stateblock->state.render_states[WINED3DRS_DIFFUSEMATERIALSOURCE],
-              stateblock->state.render_states[WINED3DRS_AMBIENTMATERIALSOURCE],
-              stateblock->state.render_states[WINED3DRS_EMISSIVEMATERIALSOURCE],
-              stateblock->state.render_states[WINED3DRS_SPECULARMATERIALSOURCE]);
+                state->render_states[WINED3DRS_DIFFUSEMATERIALSOURCE],
+                state->render_states[WINED3DRS_AMBIENTMATERIALSOURCE],
+                state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE],
+                state->render_states[WINED3DRS_SPECULARMATERIALSOURCE]);
 
-        if (stateblock->state.render_states[WINED3DRS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        if (state->render_states[WINED3DRS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
-            if (stateblock->state.render_states[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
-            {
+            if (state->render_states[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
                 Parm = GL_AMBIENT_AND_DIFFUSE;
-            } else {
+            else
                 Parm = GL_DIFFUSE;
-            }
-            if (stateblock->state.render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
                 context->num_untracked_materials++;
             }
-            if (stateblock->state.render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (stateblock->state.render_states[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
             Parm = GL_AMBIENT;
-            if (stateblock->state.render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
                 context->num_untracked_materials++;
             }
-            if (stateblock->state.render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (stateblock->state.render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
             Parm = GL_EMISSION;
-            if (stateblock->state.render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (stateblock->state.render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
             Parm = GL_SPECULAR;
         }
@@ -1322,32 +1321,31 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
      * tracking with glColorMaterial, so apply those here. */
     switch (context->tracking_parm) {
         case GL_AMBIENT_AND_DIFFUSE:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&device->updateStateBlock->state.material.Ambient);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&device->updateStateBlock->state.material.Diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.Ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.Diffuse);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_DIFFUSE:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&device->updateStateBlock->state.material.Diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.Diffuse);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_AMBIENT:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&device->updateStateBlock->state.material.Ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.Ambient);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_EMISSION:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&device->updateStateBlock->state.material.Emissive);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&state->material.Emissive);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_SPECULAR:
             /* Only change material color if specular is enabled, otherwise it is set to black */
-            if (device->stateBlock->state.render_states[WINED3DRS_SPECULARENABLE])
+            if (state->render_states[WINED3DRS_SPECULARENABLE])
             {
-                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,
-                        (float *)&device->updateStateBlock->state.material.Specular);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&state->material.Specular);
                 checkGLcall("glMaterialfv");
             } else {
                 static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
