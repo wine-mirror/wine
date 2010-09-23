@@ -260,8 +260,8 @@ static void test_gamestatisticsmgr( void )
         ok(wMaxCategories==10, "getting maximum number of categories returned invalid value: %d\n", wMaxCategories);
 
         hr = IGameStatistics_GetMaxStatsPerCategory(gs, &wMaxStatsPerCategory);
-        todo_wine ok(hr==S_OK, "getting maximum number of statistics per category failed\n");
-        todo_wine ok(wMaxStatsPerCategory==10, "getting maximum number of statistics per category returned invalid value: %d\n", wMaxStatsPerCategory);
+        ok(hr==S_OK, "getting maximum number of statistics per category failed\n");
+        ok(wMaxStatsPerCategory==10, "getting maximum number of statistics per category returned invalid value: %d\n", wMaxStatsPerCategory);
 
         /* create name of statistics file */
         hr = _buildStatisticsFilePath(&guidApplicationId, &lpStatisticsFile);
