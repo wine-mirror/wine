@@ -30,7 +30,7 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i files con quell'estensione\n\
+STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i file con quell'estensione\n\
 Usage:\n\
 start [opzioni] nome_programma [...]\n\
 start [opzioni] nome_documento\n\
@@ -40,7 +40,7 @@ Options:\n\
 /MAX[imized] Avvia il programma massimizato.\n\
 /R[estored]  Avvia il programma normalmente (né minimizzato né massimizzato).\n\
 /W[ait]      Attendi l'uscita del programma, poi esci con il suo codice di uscita.\n\
-/Unix        Usa un nome file Unix e apre il file come windows explorer.\n\
+/Unix        Usa un nome file Unix e apre il file come Windows Explorer.\n\
 /ProgIDOpen  Apri un documento usando il seguente progID.\n\
 /L           Mostra l'accordo di licenza con l'utente finale.\n\
 \n\
