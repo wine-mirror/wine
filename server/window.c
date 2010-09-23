@@ -2073,7 +2073,7 @@ DECL_HANDLER(get_window_tree)
 /* set the position and Z order of a window */
 DECL_HANDLER(set_window_pos)
 {
-    const rectangle_t *visible_rect = NULL, *valid_rects = NULL;
+    rectangle_t window_rect, client_rect, visible_rect;
     struct window *previous = NULL;
     struct window *win = get_window( req->handle );
     unsigned int flags = req->flags;
@@ -2117,11 +2117,30 @@ DECL_HANDLER(set_window_pos)
         return;
     }
 
-    if (get_req_data_size() >= sizeof(rectangle_t)) visible_rect = get_req_data();
-    if (get_req_data_size() >= 3 * sizeof(rectangle_t)) valid_rects = visible_rect + 1;
+    window_rect = visible_rect = req->window;
+    client_rect = req->client;
+    if (get_req_data_size() >= sizeof(rectangle_t))
+        memcpy( &visible_rect, get_req_data(), sizeof(rectangle_t) );
+    if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
+    {
+        mirror_rect( &win->parent->client_rect, &window_rect );
+        mirror_rect( &win->parent->client_rect, &visible_rect );
+        mirror_rect( &win->parent->client_rect, &client_rect );
+    }
 
-    if (!visible_rect) visible_rect = &req->window;
-    set_window_pos( win, previous, flags, &req->window, &req->client, visible_rect, valid_rects );
+    if (get_req_data_size() >= 3 * sizeof(rectangle_t))
+    {
+        rectangle_t valid_rects[2];
+        memcpy( valid_rects, (const rectangle_t *)get_req_data() + 1, 2 * sizeof(rectangle_t) );
+        if (win->ex_style & WS_EX_LAYOUTRTL)
+        {
+            mirror_rect( &win->client_rect, &valid_rects[0] );
+            mirror_rect( &win->client_rect, &valid_rects[1] );
+        }
+        set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, valid_rects );
+    }
+    else set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, NULL );
+
     reply->new_style = win->style;
     reply->new_ex_style = win->ex_style;
 }
