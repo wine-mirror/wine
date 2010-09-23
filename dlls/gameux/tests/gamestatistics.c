@@ -244,8 +244,8 @@ static void test_gamestatisticsmgr( void )
     {
         /* test of limit values returned from interface */
         hr = IGameStatistics_GetMaxCategoryLength(gs, &uMaxCategoryLength);
-        todo_wine ok(hr==S_OK, "getting maximum length of category failed\n");
-        todo_wine ok(uMaxCategoryLength==60, "getting maximum length of category returned invalid value: %d\n", uMaxCategoryLength);
+        ok(hr==S_OK, "getting maximum length of category failed\n");
+        ok(uMaxCategoryLength==60, "getting maximum length of category returned invalid value: %d\n", uMaxCategoryLength);
 
         hr = IGameStatistics_GetMaxNameLength(gs, &uMaxNameLength);
         todo_wine ok(hr==S_OK, "getting maximum name length failed\n");

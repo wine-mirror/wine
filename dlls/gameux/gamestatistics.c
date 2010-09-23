@@ -31,6 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gameux);
 
+#define MAX_CATEGORY_LENGTH 60
 /*******************************************************************************
  * IGameStatistics implementation
  */
@@ -108,8 +109,12 @@ static HRESULT WINAPI GameStatisticsImpl_GetMaxCategoryLength(
     IGameStatistics *iface,
     UINT *cch)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p, %p)\n", iface, cch);
+    if(!cch)
+        return E_INVALIDARG;
+
+    *cch = MAX_CATEGORY_LENGTH;
+    return S_OK;
 }
 
 static HRESULT WINAPI GameStatisticsImpl_GetMaxNameLength(
