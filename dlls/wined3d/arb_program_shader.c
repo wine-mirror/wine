@@ -175,9 +175,9 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
     }
 }
 
-static inline BOOL ffp_clip_emul(IWineD3DStateBlockImpl *stateblock)
+static inline BOOL ffp_clip_emul(const struct wined3d_state *state)
 {
-    return stateblock->state.lowest_disabled_stage < 7;
+    return state->lowest_disabled_stage < 7;
 }
 
 /* ARB_program_shader private data */
@@ -4450,12 +4450,14 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     WORD int_skip;
     IWineD3DDeviceImpl *dev = (IWineD3DDeviceImpl *)shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &dev->adapter->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
+
     find_vs_compile_args(shader, stateblock, &args->super);
 
     args->clip.boolclip_compare = 0;
     if(use_ps(stateblock))
     {
-        IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
+        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
         struct arb_pshader_private *shader_priv = ps->baseShader.backend_data;
         args->ps_signature = shader_priv->input_signature_idx;
 
@@ -4466,15 +4468,15 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         args->ps_signature = ~0;
         if(!dev->vs_clipping)
         {
-            args->clip.boolclip.clip_texcoord = ffp_clip_emul(stateblock) ? gl_info->limits.texture_stages : 0;
+            args->clip.boolclip.clip_texcoord = ffp_clip_emul(state) ? gl_info->limits.texture_stages : 0;
         }
         /* Otherwise: Setting boolclip_compare set clip_texcoord to 0 */
     }
 
     if (args->clip.boolclip.clip_texcoord)
     {
-        if (stateblock->state.render_states[WINED3DRS_CLIPPING])
-            args->clip.boolclip.clipplane_mask = (unsigned char)stateblock->state.render_states[WINED3DRS_CLIPPLANEENABLE];
+        if (state->render_states[WINED3DRS_CLIPPING])
+            args->clip.boolclip.clipplane_mask = (unsigned char)state->render_states[WINED3DRS_CLIPPLANEENABLE];
         /* clipplane_mask was set to 0 by setting boolclip_compare to 0 */
     }
 
@@ -4483,7 +4485,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
     for(i = 0; i < MAX_CONST_B; i++)
     {
-        if (stateblock->state.vs_consts_b[i])
+        if (state->vs_consts_b[i])
             args->clip.boolclip.bools |= ( 1 << i);
     }
 
@@ -4511,9 +4513,9 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         }
         else
         {
-            args->loop_ctrl[i][0] = stateblock->state.vs_consts_i[i * 4];
-            args->loop_ctrl[i][1] = stateblock->state.vs_consts_i[i * 4 + 1];
-            args->loop_ctrl[i][2] = stateblock->state.vs_consts_i[i * 4 + 2];
+            args->loop_ctrl[i][0] = state->vs_consts_i[i * 4];
+            args->loop_ctrl[i][1] = state->vs_consts_i[i * 4 + 1];
+            args->loop_ctrl[i][2] = state->vs_consts_i[i * 4 + 2];
         }
     }
 }
@@ -5979,7 +5981,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
                        srgb_sub_high, 0.0, 0.0, 0.0);
     }
 
-    if(ffp_clip_emul(stateblock) && settings->emul_clipplanes) shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
+    if (ffp_clip_emul(&stateblock->state) && settings->emul_clipplanes)
+        shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
 
     /* Generate texture sampling instructions) */
     for(stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3DTOP_DISABLE; stage++) {
