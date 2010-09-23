@@ -77,7 +77,7 @@ MENU_SHV_FILE MENU
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "&Select"			FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Valitse"			FCIDM_SHVIEW_OPEN
 	  MENUITEM "&Selaa",			FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "&Avaa",			FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
@@ -94,23 +94,23 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Tiedosto"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "S&ulje", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Näytä"
     BEGIN
         MENUITEM "&Suuret kuvakkeet", FCIDM_SHVIEW_BIGICON
         MENUITEM "&Pienet kuvakkeet", FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Lista", FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "&Tiedot", FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "T&iedot", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Ohje"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "Ti&etoja Ohjauspaneelista...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -131,17 +131,17 @@ FONT 8, "MS Shell Dlg"
 
 SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Tietoja %s"
+CAPTION "Tietoja ohjelmasta %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "Wine &license...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "Winen &lisenssi...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 170, 10
- LTEXT "Running on %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Wine:n toi Sinulle:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "Käytössä on versio %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Winen ovat tehneet:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 SHELL_RUN_DLG DIALOG 0, 0, 227, 95
@@ -150,7 +150,7 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Anna ohjelma, dokumentti, tai Internet -resurssi, ja Wine avaa sen Sinulle.", 12289, 36, 11, 182, 18
+ LTEXT "Anna ohjelma, dokumentti tai Internet-osoite, niin Wine avaa sen.", 12289, 36, 11, 182, 18
  LTEXT "&Avaa:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
@@ -172,13 +172,13 @@ STRINGTABLE
 	IDS_SHV_COLUMN9		"Kommentit"
 	IDS_SHV_COLUMN10	"Omistaja"
 	IDS_SHV_COLUMN11	"Ryhmä"
-	IDS_SHV_COLUMN_DELFROM	"Original location"
-	IDS_SHV_COLUMN_DELDATE	"Date deleted"
+	IDS_SHV_COLUMN_DELFROM	"Alkuperäinen sijainti"
+	IDS_SHV_COLUMN_DELDATE	"Poistoaika"
 
         /* special folders */
 	IDS_DESKTOP		"Työpöytä"
 	IDS_MYCOMPUTER		"Oma tietokone"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_CONTROLPANEL	"Ohjauspaneeli"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Suuret kuvakkeet"
@@ -192,19 +192,18 @@ STRINGTABLE
 	IDS_CREATEFOLDER_CAPTION "Virhe luotaessa uutta kansiota"
 	IDS_DELETEITEM_CAPTION "Vahvista tiedoston tuhoaminen"
 	IDS_DELETEFOLDER_CAPTION "Vahvista kansion tuhoaminen"
-	IDS_DELETEITEM_TEXT "Haluatko varmasti tuhota '%1':n?"
+	IDS_DELETEITEM_TEXT "Haluatko varmasti tuhota kohteen '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Haluatko varmasti tuhota nämä %1?"
-	IDS_DELETESELECTED_TEXT "Are you sure you want to delete the selected item(s)?"
-	IDS_TRASHITEM_TEXT "Are you sure that you want to send '%1' to the Trash?"
-	IDS_TRASHFOLDER_TEXT "Are you sure that you want to send '%1' and all its content to the Trash?"
-	IDS_TRASHMULTIPLE_TEXT "Are you sure that you want to send these %1 items to the Trash?"
-	IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_DELETESELECTED_TEXT "Haluatko varmasti tuhota valitut kohteet?"
+	IDS_TRASHITEM_TEXT "Haluatko varmasti siirtää kohteen '%1' Roskakoriin?"
+	IDS_TRASHFOLDER_TEXT "Haluatko varmasti siirtää kohteen '%1' ja kaiken sen sisällön Roskakoriin?"
+	IDS_TRASHMULTIPLE_TEXT "Haluatko varmasti siirtää nämä %1 kohdetta roskakoriin?"
+	IDS_CANTTRASH_TEXT "Kohdetta '%1' ei voida siirtää Roskakoriin. Haluatko sen sijaan poistaa sen kokonaan?"
+	IDS_OVERWRITEFILE_TEXT "Tässä kansiossa on jo tiedosto nimeltä '%1'.\n\nKorvataanko entinen tiedosto?"
 	IDS_OVERWRITEFILE_CAPTION "Vahvista tiedoston ylikirjoitus"
-	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+	IDS_OVERWRITEFOLDER_TEXT "Tässä kansiossa on jo kansio nimeltä '%1'.\n\n"\
+	    "Jos kohdekansiossa on samannimisiä tiedostoja kuin valitussa kansiossa,\n"\
+	    "ne korvataan uusilla. Jatketaanko?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Käynnistä uudelleen"
@@ -235,15 +234,15 @@ STRINGTABLE
 	IDS_MYPICTURES              "Omat kuvatiedostot"
 	IDS_PROGRAM_FILES_COMMON    "Ohjelmatiedostot\\Yhteiset tiedostot"
 	IDS_COMMON_DOCUMENTS        "Dokumentit"
-	IDS_ADMINTOOLS              "Käynnistä-valikko\\Ohjelmat\\Administrative Tools"
+	IDS_ADMINTOOLS              "Käynnistä-valikko\\Ohjelmat\\Hallintatyökalut"
 	IDS_COMMON_MUSIC            "Dokumentit\\Omat musiikkitiedostot"
 	IDS_COMMON_PICTURES         "Dokumentit\\Omat kuvatiedostot"
 	IDS_COMMON_VIDEO            "Dokumentit\\Omat videotiedostot"
 	IDS_CDBURN_AREA             "Paikalliset asetukset\\Ohjelmien tiedot\\Microsoft\\CD Burning"
 
-	IDS_NEWFOLDER		"New Folder"
+	IDS_NEWFOLDER		"Uusi hakemisto"
 
-	IDS_CPANEL_TITLE            "Wine Control Panel"
-	IDS_CPANEL_NAME             "Name"
-	IDS_CPANEL_DESCRIPTION      "Description"
+	IDS_CPANEL_TITLE            "Winen Ohjauspaneeli"
+	IDS_CPANEL_NAME             "Nimi"
+	IDS_CPANEL_DESCRIPTION      "Kuvaus"
 }
