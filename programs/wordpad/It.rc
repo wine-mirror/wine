@@ -54,7 +54,7 @@ BEGIN
         MENUITEM "Trova s&uccessivo\tF3",              ID_FIND_NEXT
         MENUITEM "S&ostituisci...\tCtrl+H",         ID_REPLACE
         MENUITEM SEPARATOR
-        MENUITEM "Solo &Lettura",                  ID_EDIT_READONLY
+        MENUITEM "Sola &lettura",                  ID_EDIT_READONLY
         MENUITEM "&Modificato",                   ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
         POPUP "E&xtra"
@@ -71,7 +71,7 @@ BEGIN
         MENUITEM "Barra degli &strumenti",        ID_TOGGLE_TOOLBAR
         MENUITEM "Barra del &formato",      ID_TOGGLE_FORMATBAR
         MENUITEM "&Righello",          ID_TOGGLE_RULER
-        MENUITEM "Barra dello s&tato",      ID_TOGGLE_STATUSBAR
+        MENUITEM "Barra di s&tato",      ID_TOGGLE_STATUSBAR
         MENUITEM SEPARATOR
         MENUITEM "&Opzioni...",     ID_VIEWPROPERTIES
     END
@@ -119,8 +119,8 @@ BEGIN
         MENUITEM "Verde"             ID_COLOR_GREEN
         MENUITEM "Verde oliva"       ID_COLOR_OLIVE
         MENUITEM "Blu oltremare"     ID_COLOR_NAVY
-        MENUITEM "Propora"           ID_COLOR_PURPLE
-        MENUITEM "Teal"              ID_COLOR_TEAL
+        MENUITEM "Porpora"           ID_COLOR_PURPLE
+        MENUITEM "Foglia di Tè"      ID_COLOR_TEAL
         MENUITEM "Grigio"            ID_COLOR_GRAY
         MENUITEM "Argento"           ID_COLOR_SILVER
         MENUITEM "Rosso"             ID_COLOR_RED
@@ -128,9 +128,9 @@ BEGIN
         MENUITEM "Giallo"            ID_COLOR_YELLOW
         MENUITEM "Blu"               ID_COLOR_BLUE
         MENUITEM "Fucsia"            ID_COLOR_FUCHSIA
-        MENUITEM "Aqua"              ID_COLOR_AQUA
+        MENUITEM "Acqua"             ID_COLOR_AQUA
         MENUITEM "Bianco"            ID_COLOR_WHITE
-        MENUITEM "Automatico"         ID_COLOR_AUTOMATIC
+        MENUITEM "Automatico"        ID_COLOR_AUTOMATIC
     END
 END
 
@@ -201,13 +201,13 @@ BEGIN
     CHECKBOX "Barra degli &strumenti", IDC_PAGEFMT_TB, 180, 20, 80, 15
     CHECKBOX "Barra del &formato", IDC_PAGEFMT_FB, 180, 38, 80, 15
     CHECKBOX "&Righello", IDC_PAGEFMT_RU, 180, 56, 80, 15
-    CHECKBOX "Barra dello s&tato", IDC_PAGEFMT_SB, 180, 74, 80, 15
+    CHECKBOX "Barra di s&tato", IDC_PAGEFMT_SB, 180, 74, 80, 15
     LTEXT "", IDC_PAGEFMT_ID, 0,0,0,0
 END
 
 STRINGTABLE
 BEGIN
-    STRING_ALL_FILES,              "Tutti i files (*.*)"
+    STRING_ALL_FILES,              "Tutti i file (*.*)"
     STRING_TEXT_FILES_TXT,         "File di testo (*.txt)"
     STRING_TEXT_FILES_UNICODE_TXT, "File di testo Unicode (*.txt)"
     STRING_RICHTEXT_FILES_RTF,     "Formato rich text (*.rtf)"
