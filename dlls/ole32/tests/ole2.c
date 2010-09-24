@@ -53,6 +53,7 @@ struct expected_method
 };
 
 static const struct expected_method *expected_method_list;
+static FORMATETC *g_expected_fetc = NULL;
 
 BOOL g_showRunnable = TRUE;
 BOOL g_isRunning = TRUE;
@@ -496,6 +497,22 @@ static HRESULT WINAPI OleObjectCache_Cache
 )
 {
     CHECK_EXPECTED_METHOD("OleObjectCache_Cache");
+    if (g_expected_fetc) {
+        ok(pformatetc != NULL, "pformatetc should not be NULL\n");
+        if (pformatetc) {
+            ok(pformatetc->cfFormat == g_expected_fetc->cfFormat,
+                    "cfFormat: %x\n", pformatetc->cfFormat);
+            ok((pformatetc->ptd != NULL) == (g_expected_fetc->ptd != NULL),
+                    "ptd: %p\n", pformatetc->ptd);
+            ok(pformatetc->dwAspect == g_expected_fetc->dwAspect,
+                    "dwAspect: %x\n", pformatetc->dwAspect);
+            ok(pformatetc->lindex == g_expected_fetc->lindex,
+                    "lindex: %x\n", pformatetc->lindex);
+            ok(pformatetc->tymed == g_expected_fetc->tymed,
+                    "tymed: %x\n", pformatetc->tymed);
+        }
+    } else
+        ok(pformatetc == NULL, "pformatetc should be NULL\n");
     return S_OK;
 }
 
@@ -796,6 +813,12 @@ static void test_OleCreate(IStorage *pStorage)
         { NULL, 0 }
     };
 
+    g_expected_fetc = &formatetc;
+    formatetc.cfFormat = 0;
+    formatetc.ptd = NULL;
+    formatetc.dwAspect = DVASPECT_CONTENT;
+    formatetc.lindex = -1;
+    formatetc.tymed = TYMED_NULL;
     runnable = &OleObjectRunnable;
     cache = &OleObjectCache;
     expected_method_list = methods_olerender_none;
@@ -836,6 +859,8 @@ static void test_OleCreate(IStorage *pStorage)
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
 
+    formatetc.cfFormat = 0;
+    formatetc.tymed = TYMED_NULL;
     runnable = NULL;
     expected_method_list = methods_olerender_draw_no_runnable;
     trace("OleCreate with OLERENDER_DRAW (no IRunnableObject):\n");

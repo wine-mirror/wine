@@ -2530,7 +2530,19 @@ HRESULT WINAPI OleCreate(
             if (SUCCEEDED(hres2))
             {
                 DWORD dwConnection;
-                hres = IOleCache_Cache(pOleCache, pFormatEtc, ADVF_PRIMEFIRST, &dwConnection);
+                FORMATETC *pfe;
+                if (renderopt == OLERENDER_DRAW && !pFormatEtc) {
+                    pfe = HeapAlloc(GetProcessHeap(), 0, sizeof(FORMATETC));
+                    pfe->cfFormat = 0;
+                    pfe->ptd = NULL;
+                    pfe->dwAspect = DVASPECT_CONTENT;
+                    pfe->lindex = -1;
+                    pfe->tymed = TYMED_NULL;
+                }else
+                    pfe = pFormatEtc;
+                hres = IOleCache_Cache(pOleCache, pfe, ADVF_PRIMEFIRST, &dwConnection);
+                if (!pFormatEtc && pfe)
+                    HeapFree(GetProcessHeap(), 0, pfe);
                 IOleCache_Release(pOleCache);
             }
         }
