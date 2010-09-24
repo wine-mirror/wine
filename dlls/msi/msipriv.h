@@ -399,7 +399,6 @@ typedef struct tagMSIFEATURE
 typedef struct tagMSICOMPONENT
 {
     struct list entry;
-    DWORD magic;
     LPWSTR Component;
     LPWSTR ComponentId;
     LPWSTR Directory;
