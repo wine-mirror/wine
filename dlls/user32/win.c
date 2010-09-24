@@ -27,6 +27,7 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winver.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "win.h"
@@ -40,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define NB_USER_HANDLES  ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
 #define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
 
-static DWORD process_layout;
+static DWORD process_layout = ~0u;
 
 /**********************************************************************/
 
@@ -1254,8 +1255,10 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         if (className != (LPCWSTR)DESKTOP_CLASS_ATOM &&
             (IS_INTRESOURCE(className) || strcmpiW( className, messageW )))
         {
+            DWORD layout;
+            GetProcessDefaultLayout( &layout );
+            if (layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
             parent = GetDesktopWindow();
-            if (process_layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
         }
     }
 
@@ -3551,6 +3554,41 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
     {
         SetLastError( ERROR_NOACCESS );
         return FALSE;
+    }
+    if (process_layout == ~0u)
+    {
+        static const WCHAR translationW[] = { '\\','V','a','r','F','i','l','e','I','n','f','o',
+                                              '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
+        static const WCHAR filedescW[] = { '\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
+                                           '\\','%','0','4','x','%','0','4','x',
+                                           '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0 };
+        WCHAR *str, buffer[MAX_PATH];
+        DWORD i, len, version_layout = 0;
+        DWORD user_lang = GetUserDefaultLangID();
+        DWORD *languages;
+        void *data = NULL;
+
+        GetModuleFileNameW( 0, buffer, MAX_PATH );
+        if (!(len = GetFileVersionInfoSizeW( buffer, NULL ))) goto done;
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, len ))) goto done;
+        if (!GetFileVersionInfoW( buffer, 0, len, data )) goto done;
+        if (!VerQueryValueW( data, translationW, (void **)&languages, &len ) || !len) goto done;
+
+        len /= sizeof(DWORD);
+        for (i = 0; i < len; i++) if (LOWORD(languages[i]) == user_lang) break;
+        if (i == len)  /* try neutral language */
+            for (i = 0; i < len; i++)
+                if (LOWORD(languages[i]) == MAKELANGID( PRIMARYLANGID(user_lang), SUBLANG_NEUTRAL )) break;
+        if (i == len) i = 0;  /* default to the first one */
+
+        sprintfW( buffer, filedescW, LOWORD(languages[i]), HIWORD(languages[i]) );
+        if (!VerQueryValueW( data, buffer, (void **)&str, &len )) goto done;
+        TRACE( "found description %s\n", debugstr_w( str ));
+        if (str[0] == 0x200e && str[1] == 0x200e) version_layout = LAYOUT_RTL;
+
+    done:
+        HeapFree( GetProcessHeap(), 0, data );
+        process_layout = version_layout;
     }
     *layout = process_layout;
     return TRUE;
