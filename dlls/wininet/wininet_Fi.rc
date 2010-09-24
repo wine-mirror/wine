@@ -22,7 +22,7 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 
 IDD_PROXYDLG DIALOG 36, 24, 250, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Anna Verkon Salasana"
+CAPTION "Anna verkon salasana"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "Anna käyttäjän nimi ja salasana:", -1, 40, 6, 150, 15
