@@ -2310,25 +2310,28 @@ UINT WINAPI ArrangeIconicWindows( HWND parent )
  *
  * Draw the frame used when moving or resizing window.
  */
-static void draw_moving_frame( HDC hdc, RECT *rect, BOOL thickframe )
+static void draw_moving_frame( HWND parent, HDC hdc, RECT *screen_rect, BOOL thickframe )
 {
+    RECT rect = *screen_rect;
+
+    if (parent) MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
     if (thickframe)
     {
         const int width = GetSystemMetrics(SM_CXFRAME);
         const int height = GetSystemMetrics(SM_CYFRAME);
 
         HBRUSH hbrush = SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
-        PatBlt( hdc, rect->left, rect->top,
-                rect->right - rect->left - width, height, PATINVERT );
-        PatBlt( hdc, rect->left, rect->top + height, width,
-                rect->bottom - rect->top - height, PATINVERT );
-        PatBlt( hdc, rect->left + width, rect->bottom - 1,
-                rect->right - rect->left - width, -height, PATINVERT );
-        PatBlt( hdc, rect->right - 1, rect->top, -width,
-                rect->bottom - rect->top - height, PATINVERT );
+        PatBlt( hdc, rect.left, rect.top,
+                rect.right - rect.left - width, height, PATINVERT );
+        PatBlt( hdc, rect.left, rect.top + height, width,
+                rect.bottom - rect.top - height, PATINVERT );
+        PatBlt( hdc, rect.left + width, rect.bottom - 1,
+                rect.right - rect.left - width, -height, PATINVERT );
+        PatBlt( hdc, rect.right - 1, rect.top, -width,
+                rect.bottom - rect.top - height, PATINVERT );
         SelectObject( hdc, hbrush );
     }
-    else DrawFocusRect( hdc, rect );
+    else DrawFocusRect( hdc, &rect );
 }
 
 
@@ -2486,10 +2489,13 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     WINPOS_GetMinMaxInfo( hwnd, NULL, NULL, &minTrack, &maxTrack );
     WIN_GetRectangles( hwnd, COORDS_PARENT, &sizingRect, NULL );
+    origRect = sizingRect;
     if (style & WS_CHILD)
     {
         parent = GetParent(hwnd);
         GetClientRect( parent, &mouseRect );
+        MapWindowPoints( parent, 0, (LPPOINT)&mouseRect, 2 );
+        MapWindowPoints( parent, 0, (LPPOINT)&sizingRect, 2 );
     }
     else
     {
@@ -2500,7 +2506,6 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         mouseRect.right = mouseRect.left + GetSystemMetrics( SM_CXVIRTUALSCREEN );
         mouseRect.bottom = mouseRect.top + GetSystemMetrics( SM_CYVIRTUALSCREEN );
     }
-    origRect = sizingRect;
 
     if (ON_LEFT_BORDER(hittest))
     {
@@ -2522,7 +2527,6 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         mouseRect.top    = max( mouseRect.top, sizingRect.top+minTrack.y );
         mouseRect.bottom = min( mouseRect.bottom, sizingRect.top+maxTrack.y );
     }
-    if (parent) MapWindowPoints( parent, 0, (LPPOINT)&mouseRect, 2 );
 
     /* Retrieve a default cache DC (without using the window style) */
     hdc = GetDCEx( parent, 0, DCX_CACHE );
@@ -2593,39 +2597,40 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                     WINPOS_ShowIconTitle( hwnd, FALSE );
                 }
                 else if(!DragFullWindows)
-                    draw_moving_frame( hdc, &sizingRect, thickframe );
+                    draw_moving_frame( parent, hdc, &sizingRect, thickframe );
             }
 
             if (msg.message == WM_KEYDOWN) SetCursorPos( pt.x, pt.y );
             else
             {
-                RECT newRect = sizingRect;
                 WPARAM wpSizingHit = 0;
 
-                if (hittest == HTCAPTION) OffsetRect( &newRect, dx, dy );
-                if (ON_LEFT_BORDER(hittest)) newRect.left += dx;
-                else if (ON_RIGHT_BORDER(hittest)) newRect.right += dx;
-                if (ON_TOP_BORDER(hittest)) newRect.top += dy;
-                else if (ON_BOTTOM_BORDER(hittest)) newRect.bottom += dy;
-                if(!iconic && !DragFullWindows) draw_moving_frame( hdc, &sizingRect, thickframe );
+                if(!iconic && !DragFullWindows) draw_moving_frame( parent, hdc, &sizingRect, thickframe );
+                if (hittest == HTCAPTION) OffsetRect( &sizingRect, dx, dy );
+                if (ON_LEFT_BORDER(hittest)) sizingRect.left += dx;
+                else if (ON_RIGHT_BORDER(hittest)) sizingRect.right += dx;
+                if (ON_TOP_BORDER(hittest)) sizingRect.top += dy;
+                else if (ON_BOTTOM_BORDER(hittest)) sizingRect.bottom += dy;
                 capturePoint = pt;
 
                 /* determine the hit location */
                 if (hittest >= HTLEFT && hittest <= HTBOTTOMRIGHT)
                     wpSizingHit = WMSZ_LEFT + (hittest - HTLEFT);
-                SendMessageW( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&newRect );
+                SendMessageW( hwnd, WM_SIZING, wpSizingHit, (LPARAM)&sizingRect );
 
                 if (!iconic)
                 {
                     if(!DragFullWindows)
-                        draw_moving_frame( hdc, &newRect, thickframe );
+                        draw_moving_frame( parent, hdc, &sizingRect, thickframe );
                     else
-                        SetWindowPos( hwnd, 0, newRect.left, newRect.top,
-                                      newRect.right - newRect.left,
-                                      newRect.bottom - newRect.top,
+                    {
+                        RECT rect = sizingRect;
+                        MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
+                        SetWindowPos( hwnd, 0, rect.left, rect.top,
+                                      rect.right - rect.left, rect.bottom - rect.top,
                                       ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+                    }
                 }
-                sizingRect = newRect;
             }
         }
     }
@@ -2640,11 +2645,12 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     }
     else if (moved && !DragFullWindows)
     {
-        draw_moving_frame( hdc, &sizingRect, thickframe );
+        draw_moving_frame( parent, hdc, &sizingRect, thickframe );
     }
 
     set_capture_window( 0, GUI_INMOVESIZE, NULL );
     ReleaseDC( parent, hdc );
+    if (parent) MapWindowPoints( 0, parent, (POINT *)&sizingRect, 2 );
 
     if (HOOK_CallHooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizingRect, TRUE ))
         moved = FALSE;
