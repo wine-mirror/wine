@@ -2839,6 +2839,82 @@ char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
     return NULL;
 }
 
+static const char *debugstr_wsaioctl(DWORD ioctl)
+{
+    switch(ioctl & 0x18000000)
+    {
+    case WS_IOC_UNIX:
+    {
+        BYTE size = (ioctl >> 16) & WS_IOCPARM_MASK;
+        char x = (ioctl & 0xff00) >> 8;
+        BYTE y = ioctl & 0xff;
+        const char *buf_type;
+        char args[14];
+
+        switch (ioctl & (WS_IOC_VOID|WS_IOC_INOUT))
+        {
+            case WS_IOC_VOID:
+                buf_type = "_IO";
+                sprintf(args, "%d, %d", x, y);
+                break;
+            case WS_IOC_IN:
+                buf_type = "_IOW";
+                sprintf(args, "'%c', %d, %d", x, y, size);
+                break;
+            case WS_IOC_OUT:
+                buf_type = "_IOR";
+                sprintf(args, "'%c', %d, %d", x, y, size);
+                break;
+            default:
+                buf_type = "?";
+                sprintf(args, "'%c', %d, %d", x, y, size);
+                break;
+        }
+        return wine_dbg_sprintf("%s(%s)", buf_type, args);
+    }
+    default:
+    {
+        USHORT code = ioctl & 0xffff;
+        const char *family, *buf_type;
+
+        /* This switch looks redundant, but isn't:  the case WS_IOC_UNIX
+         * is handled differently than all others.
+         */
+        switch(ioctl & 0x18000000)
+        {
+        case WS_IOC_WS2:
+            family = "IOC_WS2";
+            break;
+        case WS_IOC_PROTOCOL:
+            family = "IOC_PROTOCOL";
+            break;
+        case WS_IOC_VENDOR:
+            family = "IOC_VENDOR";
+            break;
+        }
+        switch (ioctl & (WS_IOC_VOID|WS_IOC_INOUT))
+        {
+            case WS_IOC_VOID:
+                buf_type = "_WSAIO";
+                break;
+            case WS_IOC_INOUT:
+                buf_type = "_WSAIORW";
+                break;
+            case WS_IOC_IN:
+                buf_type = "_WSAIOW";
+                break;
+            case WS_IOC_OUT:
+                buf_type = "_WSAIOR";
+                break;
+            default:
+                buf_type = "?";
+                break;
+        }
+        return wine_dbg_sprintf("%s(%s, %d)", buf_type, family, code);
+    }
+    }
+}
+
 /**********************************************************************
  *              WSAIoctl                (WS2_32.50)
  *
@@ -3185,7 +3261,8 @@ INT WINAPI WSAIoctl(SOCKET s,
        FIXME("WS_SIO_UDP_CONNRESET stub\n");
        break;
    default:
-       FIXME("unsupported WS_IOCTL cmd (%08x)\n", dwIoControlCode);
+       FIXME("unsupported WS_IOCTL cmd (%s)\n",
+             debugstr_wsaioctl(dwIoControlCode));
        WSASetLastError(WSAEOPNOTSUPP);
        return SOCKET_ERROR;
    }
