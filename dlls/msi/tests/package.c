@@ -3283,6 +3283,19 @@ static void test_states(void)
     r = MsiDoAction( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
+    r = MsiGetFeatureState(hpkg, "one", NULL, NULL);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+
+    action = 0xdeadbee;
+    r = MsiGetFeatureState(hpkg, "one", NULL, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
+    state = 0xdeadbee;
+    r = MsiGetFeatureState( hpkg, "one", &state, NULL);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetFeatureState(hpkg, "one", &state, &action);
