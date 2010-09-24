@@ -230,7 +230,8 @@ static BOOL restore_console_mode(HANDLE hin)
     int         fd;
     BOOL        ret;
 
-    if (RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != KERNEL32_CONSOLE_SHELL)
+    if (!S_termios_raw ||
+        RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != KERNEL32_CONSOLE_SHELL)
         return TRUE;
     if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
     ret = tcsetattr(fd, TCSANOW, &S_termios) >= 0;
