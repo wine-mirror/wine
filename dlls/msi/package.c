@@ -711,6 +711,9 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szSystemLangID[] = {'S','y','s','t','e','m','L','a','n','g','u','a','g','e','I','D',0};
     static const WCHAR szProductState[] = {'P','r','o','d','u','c','t','S','t','a','t','e',0};
     static const WCHAR szLogonUser[] = {'L','o','g','o','n','U','s','e','r',0};
+    static const WCHAR szNetHoodFolder[] = {'N','e','t','H','o','o','d','F','o','l','d','e','r',0};
+    static const WCHAR szPrintHoodFolder[] = {'P','r','i','n','t','H','o','o','d','F','o','l','d','e','r',0};
+    static const WCHAR szRecentFolder[] = {'R','e','c','e','n','t','F','o','l','d','e','r',0};
 
     /*
      * Other things that probably should be set:
@@ -761,6 +764,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     strcatW(pth, szBackSlash);
     msi_set_property(package->db, DF, pth);
 
+    /* FIXME: set to AllUsers profile path if ALLUSERS is set */
     SHGetFolderPathW(NULL,CSIDL_PROGRAMS,NULL,0,pth);
     strcatW(pth, szBackSlash);
     msi_set_property(package->db, PMF, pth);
@@ -794,6 +798,18 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     strcatW(pth, szBackSlash);
     msi_set_property(package->db, WF, pth);
     
+    SHGetFolderPathW(NULL, CSIDL_PRINTHOOD, NULL, 0, pth);
+    strcatW(pth, szBackSlash);
+    msi_set_property(package->db, szPrintHoodFolder, pth);
+
+    SHGetFolderPathW(NULL, CSIDL_NETHOOD, NULL, 0, pth);
+    strcatW(pth, szBackSlash);
+    msi_set_property(package->db, szNetHoodFolder, pth);
+
+    SHGetFolderPathW(NULL, CSIDL_RECENT, NULL, 0, pth);
+    strcatW(pth, szBackSlash);
+    msi_set_property(package->db, szRecentFolder, pth);
+
     /* Physical Memory is specified in MB. Using total amount. */
     msex.dwLength = sizeof(msex);
     GlobalMemoryStatusEx( &msex );
