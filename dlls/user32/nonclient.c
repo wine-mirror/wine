@@ -527,8 +527,7 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
     TRACE("hwnd=%p pt=%d,%d\n", hwnd, pt.x, pt.y );
 
-    ScreenToClient( hwnd, &pt );
-    WIN_GetRectangles( hwnd, COORDS_CLIENT, &rect, &rcClient );
+    WIN_GetRectangles( hwnd, COORDS_SCREEN, &rect, &rcClient );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
 
     style = GetWindowLongW( hwnd, GWL_STYLE );
@@ -594,36 +593,81 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
         {
             BOOL min_or_max_box = (style & WS_MAXIMIZEBOX) ||
                                   (style & WS_MINIMIZEBOX);
-            /* Check system menu */
-            if ((style & WS_SYSMENU) && !(ex_style & WS_EX_TOOLWINDOW))
+            if (ex_style & WS_EX_LAYOUTRTL)
             {
-                if (NC_IconForWindow(hwnd)) rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
+                /* Check system menu */
+                if ((style & WS_SYSMENU) && !(ex_style & WS_EX_TOOLWINDOW) && NC_IconForWindow(hwnd))
+                {
+                    rect.right -= GetSystemMetrics(SM_CYCAPTION) - 1;
+                    if (pt.x > rect.right) return HTSYSMENU;
+                }
+
+                /* Check close button */
+                if (style & WS_SYSMENU)
+                {
+                    rect.left += GetSystemMetrics(SM_CYCAPTION);
+                    if (pt.x < rect.left) return HTCLOSE;
+                }
+
+                /* Check maximize box */
+                /* In win95 there is automatically a Maximize button when there is a minimize one*/
+                if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
+                {
+                    rect.left += GetSystemMetrics(SM_CXSIZE);
+                    if (pt.x < rect.left) return HTMAXBUTTON;
+                }
+
+                /* Check minimize box */
+                if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
+                {
+                    rect.left += GetSystemMetrics(SM_CXSIZE);
+                    if (pt.x < rect.left) return HTMINBUTTON;
+                }
             }
-            if (pt.x < rect.left) return HTSYSMENU;
+            else
+            {
+                /* Check system menu */
+                if ((style & WS_SYSMENU) && !(ex_style & WS_EX_TOOLWINDOW) && NC_IconForWindow(hwnd))
+                {
+                    rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
+                    if (pt.x < rect.left) return HTSYSMENU;
+                }
 
-            /* Check close button */
-            if (style & WS_SYSMENU)
-                rect.right -= GetSystemMetrics(SM_CYCAPTION);
-            if (pt.x > rect.right) return HTCLOSE;
+                /* Check close button */
+                if (style & WS_SYSMENU)
+                {
+                    rect.right -= GetSystemMetrics(SM_CYCAPTION);
+                    if (pt.x > rect.right) return HTCLOSE;
+                }
 
-            /* Check maximize box */
-            /* In win95 there is automatically a Maximize button when there is a minimize one*/
-            if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
-                rect.right -= GetSystemMetrics(SM_CXSIZE);
-            if (pt.x > rect.right) return HTMAXBUTTON;
+                /* Check maximize box */
+                /* In win95 there is automatically a Maximize button when there is a minimize one*/
+                if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
+                {
+                    rect.right -= GetSystemMetrics(SM_CXSIZE);
+                    if (pt.x > rect.right) return HTMAXBUTTON;
+                }
 
-            /* Check minimize box */
-            /* In win95 there is automatically a Maximize button when there is a Maximize one*/
-            if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
-                rect.right -= GetSystemMetrics(SM_CXSIZE);
-
-            if (pt.x > rect.right) return HTMINBUTTON;
+                /* Check minimize box */
+                if (min_or_max_box && !(ex_style & WS_EX_TOOLWINDOW))
+                {
+                    rect.right -= GetSystemMetrics(SM_CXSIZE);
+                    if (pt.x > rect.right) return HTMINBUTTON;
+                }
+            }
             return HTCAPTION;
         }
     }
 
+      /* Check menu bar */
+
+    if (HAS_MENU( hwnd, style ) && (pt.y < rcClient.top) &&
+        (pt.x >= rcClient.left) && (pt.x < rcClient.right))
+        return HTMENU;
+
       /* Check vertical scroll bar */
 
+    if (ex_style & WS_EX_LAYOUTRTL) ex_style ^= WS_EX_LEFTSCROLLBAR;
     if (style & WS_VSCROLL)
     {
         if((ex_style & WS_EX_LEFTSCROLLBAR) != 0)
@@ -647,14 +691,6 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
                 return HTSIZE;
             return HTHSCROLL;
         }
-    }
-
-      /* Check menu bar */
-
-    if (HAS_MENU( hwnd, style ))
-    {
-        if ((pt.y < 0) && (pt.x >= 0) && (pt.x < rcClient.right))
-            return HTMENU;
     }
 
     /* Has to return HTNOWHERE if nothing was found
