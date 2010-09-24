@@ -89,6 +89,7 @@ typedef struct VideoRendererImpl
     BOOL bAggregatable;
     REFERENCE_TIME rtLastStop;
     MediaSeekingImpl mediaSeeking;
+    LONG WindowStyle;
 
     /* During pause we can hold a single sample, for use in GetCurrentImage */
     IMediaSample *sample_held;
@@ -611,6 +612,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     ZeroMemory(&pVideoRenderer->DestRect, sizeof(RECT));
     ZeroMemory(&pVideoRenderer->WindowPos, sizeof(RECT));
     pVideoRenderer->hWndMsgDrain = NULL;
+    pVideoRenderer->WindowStyle = WS_OVERLAPPED;
 
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
@@ -1782,8 +1784,10 @@ static HRESULT WINAPI Videowindow_put_WindowStyle(IVideoWindow *iface,
 
     if (WindowStyle & (WS_DISABLED|WS_HSCROLL|WS_ICONIC|WS_MAXIMIZE|WS_MINIMIZE|WS_VSCROLL))
         return E_INVALIDARG;
-    
+
     SetWindowLongA(This->hWnd, GWL_STYLE, WindowStyle);
+    SetWindowPos(This->hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
+    This->WindowStyle = WindowStyle;
 
     return S_OK;
 }
@@ -1794,7 +1798,7 @@ static HRESULT WINAPI Videowindow_get_WindowStyle(IVideoWindow *iface,
 
     TRACE("(%p/%p)->(%p)\n", This, iface, WindowStyle);
 
-    *WindowStyle = GetWindowLongA(This->hWnd, GWL_STYLE);
+    *WindowStyle = This->WindowStyle;
 
     return S_OK;
 }
@@ -2013,6 +2017,15 @@ static HRESULT WINAPI Videowindow_put_Owner(IVideoWindow *iface,
     TRACE("(%p/%p)->(%08x)\n", This, iface, (DWORD) Owner);
 
     SetParent(This->hWnd, (HWND)Owner);
+    if (This->WindowStyle & WS_CHILD)
+    {
+        LONG old = GetWindowLongA(This->hWnd, GWL_STYLE);
+        if (old != This->WindowStyle)
+        {
+            SetWindowLongA(This->hWnd, GWL_STYLE, This->WindowStyle);
+            SetWindowPos(This->hWnd,0,0,0,0,0,SWP_FRAMECHANGED|SWP_NOSIZE|SWP_NOZORDER);
+        }
+    }
 
     return S_OK;
 }
