@@ -136,7 +136,7 @@ FONT 8, "MS Shell Dlg"
     DEFPUSHBUTTON   "OK",IDOK,218,6,40,14,WS_GROUP
     PUSHBUTTON      "Peruuta",       IDCANCEL,218,23,40,14,WS_GROUP
     PUSHBUTTON      "&Ota käyttöön", psh3,218,40,40,14,WS_GROUP
-    PUSHBUTTON      "&Ohje" ,        pshHelp,218,57,40,14,WS_GROUP
+    PUSHBUTTON      "O&hje" ,        pshHelp,218,57,40,14,WS_GROUP
     GROUPBOX        "Efektit",       grp1,6,72,84,34,WS_GROUP
     CHECKBOX	    "Yli&viivattu",  chx1, 10,82,50,10, BS_AUTOCHECKBOX | WS_TABSTOP
     CHECKBOX 	    "A&lleviivattu", chx2, 10,94,50,10, BS_AUTOCHECKBOX
@@ -145,7 +145,7 @@ FONT 8, "MS Shell Dlg"
 		    CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Näyte",grp2,98,72,120,36,WS_GROUP
     CTEXT           "AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Scr&ipt (translate):",stc7 ,98,114,80,9
+    LTEXT           "Merk&istö:",stc7 ,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -354,14 +354,14 @@ FONT 8, "MS Shell Dlg"
 
 STRINGTABLE
 {
-    IDS_ABOUTBOX            "&Tietoja FolderPicker Test:stä"
+    IDS_ABOUTBOX            "&Tietoja FolderPicker-testistä"
     IDS_DOCUMENTFOLDERS     "Dokumenttikansiot"
-    IDS_PERSONAL            "Omat Dokumentit"
+    IDS_PERSONAL            "Omat tiedostot"
     IDS_FAVORITES           "Suosikit"
     IDS_PATH                "Järjestelmäkansio"
     IDS_DESKTOP             "Työpöytä"
     IDS_FONTS               "Fontit"
-    IDS_MYCOMPUTER          "Oma Tietokone"
+    IDS_MYCOMPUTER          "Oma tietokone"
 }
 
 STRINGTABLE
@@ -370,7 +370,7 @@ STRINGTABLE
     IDS_LOCALHARDRIVES      "Paikalliset kiintolevyt"
     IDS_FILENOTFOUND        "Tiedostoa ei löydy"
     IDS_VERIFYFILE          "Varmista, että tiedoston nimi on oikein"
-    IDS_CREATEFILE          "Tiedostoa ei ole olemassa\nHaluatko luoda tiedoston"
+    IDS_CREATEFILE          "Tiedostoa ei ole olemassa.\nHaluatko luoda sen?"
     IDS_OVERWRITEFILE       "Tiedosto on jo olemassa.\nHaluatko ylikirjoitaa sen?"
     IDS_INVALID_FILENAME_TITLE "Kansio sisältää epäkelpoja merkkejä"
     IDS_INVALID_FILENAME    "Tiedoston nimi ei voi sisältää näitä merkkejä:\n                          / : < > |"
@@ -380,11 +380,11 @@ STRINGTABLE
 
 STRINGTABLE
 {
-    IDS_UPFOLDER         "Kansio Ylöspäin"
-    IDS_NEWFOLDER        "Luo Uusi Kansio"
+    IDS_UPFOLDER         "Ylempi kansio"
+    IDS_NEWFOLDER        "Luo uusi kansio"
     IDS_LISTVIEW         "Lista"
     IDS_REPORTVIEW       "Tiedot"
-    IDS_TODESKTOP        "Selaa Työpöytää"
+    IDS_TODESKTOP        "Työpöytä"
 }
 
 STRINGTABLE
@@ -403,14 +403,13 @@ STRINGTABLE
     PD32_OUT_OF_MEMORY                    "Muisti loppu."
     PD32_GENERIC_ERROR                    "Virhe."
     PD32_DRIVER_UNKNOWN                   "Tuntematon tulostinajuri."
-    PD32_NO_DEVICES                       "Before you can perform printer-related tasks \
-such as page setup or printing a document, you need to install a printer. \
-Please install one and retry."
+    PD32_NO_DEVICES                       "Jotta voisit käyttää tulostimia tai muokata niiden asetuksia, \
+sinun täytyy ensin asentaa jokin tulostin."
 
     PD32_DEFAULT_PRINTER                  "Oletustulostin; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Jonossa on %d dokumenttia"
-    PD32_MARGINS_IN_INCHES                "Marginaalit [inches]"
-    PD32_MARGINS_IN_MILLIMETERS           "Marginaalit [mm]"
+    PD32_MARGINS_IN_INCHES                "Marginaalit (tuumina)"
+    PD32_MARGINS_IN_MILLIMETERS           "Marginaalit (mm)"
     PD32_MILLIMETERS                      "mm"
 
     PD32_PRINTER_STATUS_READY             "Valmis"
@@ -422,17 +421,17 @@ Please install one and retry."
     PD32_PRINTER_STATUS_MANUAL_FEED       "Syötä paperi käsin; "
     PD32_PRINTER_STATUS_PAPER_PROBLEM     "Ongelma paperin kanssa; "
     PD32_PRINTER_STATUS_OFFLINE           "Ei yhteyttä tulostimeen; "
-    PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Toiminnassa; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "Tiedonsiirto meneillään; "
     PD32_PRINTER_STATUS_BUSY              "Varattu; "
     PD32_PRINTER_STATUS_PRINTING          "Tulostaa; "
-    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Output tray is full; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Paperin luovutustaso on täynnä; "
     PD32_PRINTER_STATUS_NOT_AVAILABLE     "Ei saatavilla; "
     PD32_PRINTER_STATUS_WAITING           "Odottaa; "
     PD32_PRINTER_STATUS_PROCESSING        "Käsitellään; "
     PD32_PRINTER_STATUS_INITIALIZING      "Alustetaan; "
     PD32_PRINTER_STATUS_WARMING_UP        "Lämmitetään; "
     PD32_PRINTER_STATUS_TONER_LOW         "Väriaine vähissä; "
-    PD32_PRINTER_STATUS_NO_TONER          "Ei väriäainetta; "
+    PD32_PRINTER_STATUS_NO_TONER          "Ei väriainetta; "
     PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
     PD32_PRINTER_STATUS_USER_INTERVENTION "Käyttäjän keskeyttämä; "
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Muisti loppu; "
@@ -468,5 +467,5 @@ STRINGTABLE
     IDS_SAVE_IN     "&Kansioon:"
     IDS_SAVE        "Tallenna"
     IDS_SAVE_AS     "Tallenna nimellä"
-    IDS_OPEN_FILE   "Avaa Tiedosto"
+    IDS_OPEN_FILE   "Avaa tiedosto"
 }
