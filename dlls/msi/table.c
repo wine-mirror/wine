@@ -1578,39 +1578,60 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
-static UINT find_insert_index( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *pidx )
+static int compare_record( MSITABLEVIEW *tv, UINT row, MSIRECORD *rec )
 {
-    UINT r, idx, j, ivalue, x;
+    UINT r, i, ivalue, x;
 
-    TRACE("%p %p %p\n", tv, rec, pidx);
-
-    for (idx = 0; idx < tv->table->row_count; idx++)
+    for (i = 0; i < tv->num_cols; i++ )
     {
-        for (j = 0; j < tv->num_cols; j++ )
+        r = get_table_value_from_record( tv, rec, i + 1, &ivalue );
+        if (r != ERROR_SUCCESS)
+            return 1;
+
+        r = TABLE_fetch_int( &tv->view, row, i + 1, &x );
+        if (r != ERROR_SUCCESS)
         {
-            r = get_table_value_from_record (tv, rec, j+1, &ivalue);
-            if (r != ERROR_SUCCESS)
-                break;
+            WARN("TABLE_fetch_int should not fail here %u\n", r);
+            return -1;
+        }
+        if (ivalue > x)
+        {
+            return 1;
+        }
+        else if (ivalue == x)
+        {
+            if (i < tv->num_cols - 1) continue;
+            return 0;
+        }
+        else
+            return -1;
+    }
+    return 1;
+}
 
-            r = TABLE_fetch_int(&tv->view, idx, j + 1, &x);
-            if (r != ERROR_SUCCESS)
-                return r;
+static int find_insert_index( MSITABLEVIEW *tv, MSIRECORD *rec )
+{
+    int idx, c, low = 0, high = tv->table->row_count - 1;
 
-            if (ivalue > x)
-                break;
-            else if (ivalue == x)
-                continue;
-            else {
-                TRACE("Found %d.\n", idx);
-                *pidx = idx;
-                return ERROR_SUCCESS;
-            }
+    TRACE("%p %p\n", tv, rec);
+
+    while (low <= high)
+    {
+        idx = (low + high) / 2;
+        c = compare_record( tv, idx, rec );
+
+        if (c < 0)
+            high = idx - 1;
+        else if (c > 0)
+            low = idx + 1;
+        else
+        {
+            TRACE("found %u\n", idx);
+            return idx;
         }
     }
-
-    TRACE("Found %d.\n", idx);
-    *pidx = idx;
-    return ERROR_SUCCESS;
+    TRACE("found %u\n", high + 1);
+    return high + 1;
 }
 
 static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, UINT row, BOOL temporary )
@@ -1626,11 +1647,7 @@ static UINT TABLE_insert_row( struct tagMSIVIEW *view, MSIRECORD *rec, UINT row,
         return ERROR_FUNCTION_FAILED;
 
     if (row == -1)
-    {
-        r = find_insert_index(tv, rec, &row);
-        if( r != ERROR_SUCCESS )
-            return ERROR_FUNCTION_FAILED;
-    }
+        row = find_insert_index( tv, rec );
 
     r = table_create_new_row( view, &row, temporary );
     TRACE("insert_row returned %08x\n", r);
