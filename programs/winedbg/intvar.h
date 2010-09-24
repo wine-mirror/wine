@@ -23,7 +23,7 @@
 INTERNAL_VAR(BreakAllThreadsStartup,	FALSE,		NULL,  			dbg_itype_unsigned_int)
 INTERNAL_VAR(BreakOnCritSectTimeOut,    FALSE,          NULL,  			dbg_itype_unsigned_int)
 INTERNAL_VAR(BreakOnAttach,		FALSE,		NULL,			dbg_itype_unsigned_int)
-INTERNAL_VAR(BreakOnFirstChance,	TRUE,		NULL,			dbg_itype_unsigned_int)
+INTERNAL_VAR(BreakOnFirstChance,	FALSE,		NULL,			dbg_itype_unsigned_int)
 INTERNAL_VAR(BreakOnDllLoad,		FALSE, 		NULL, 			dbg_itype_unsigned_int)
 INTERNAL_VAR(CanDeferOnBPByAddr,        FALSE,          NULL,                   dbg_itype_unsigned_int)
 
