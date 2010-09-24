@@ -410,7 +410,7 @@ BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exSty
  *
  * Handle a WM_NCCALCSIZE message. Called from DefWindowProc().
  */
-LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
+LRESULT NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
 {
     RECT tmpRect = { 0, 0, 0, 0 };
     LRESULT result = 0;
@@ -451,7 +451,11 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
                         - GetSystemMetrics(SM_CYEDGE));
 
         if (style & WS_VSCROLL)
-            if( winRect->right - winRect->left >= GetSystemMetrics(SM_CXVSCROLL)){
+            if (winRect->right - winRect->left >= GetSystemMetrics(SM_CXVSCROLL))
+            {
+                /* rectangle is in screen coords when wparam is false */
+                if (!wparam && (exStyle & WS_EX_LAYOUTRTL)) exStyle ^= WS_EX_LEFTSCROLLBAR;
+
                 if((exStyle & WS_EX_LEFTSCROLLBAR) != 0)
                     winRect->left  += GetSystemMetrics(SM_CXVSCROLL);
                 else

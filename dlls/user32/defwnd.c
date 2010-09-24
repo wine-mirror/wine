@@ -309,7 +309,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         }
 
     case WM_NCCALCSIZE:
-        return NC_HandleNCCalcSize( hwnd, (RECT *)lParam );
+        return NC_HandleNCCalcSize( hwnd, wParam, (RECT *)lParam );
 
     case WM_WINDOWPOSCHANGING:
         return WINPOS_HandleWindowPosChanging( hwnd, (WINDOWPOS *)lParam );
