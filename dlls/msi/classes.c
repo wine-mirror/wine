@@ -1072,7 +1072,7 @@ static UINT register_progid( const MSIPROGID* progid )
         if (clsid)
             msi_reg_set_subkey_val( hkey, szCLSID, NULL, clsid );
         else
-            ERR("%s has no class\n", debugstr_w( progid->ProgID ) );
+            TRACE("%s has no class\n", debugstr_w( progid->ProgID ) );
 
         if (progid->Description)
             msi_reg_set_val_str( hkey, NULL, progid->Description );
