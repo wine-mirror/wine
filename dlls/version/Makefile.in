@@ -1,6 +1,5 @@
 MODULE    = version.dll
 IMPORTLIB = version
-IMPORTS   = lz32
 
 C_SRCS = \
 	info.c \
