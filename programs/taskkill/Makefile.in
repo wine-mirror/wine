@@ -13,6 +13,7 @@ RC_SRCS = \
 	Ko.rc \
 	Lt.rc \
 	Nl.rc \
+	Si.rc \
 	Sv.rc
 
 @MAKE_PROG_RULES@

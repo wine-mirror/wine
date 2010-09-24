@@ -1,0 +1,43 @@
+/*
+ * Task termination utility
+ * Slovenian language support
+ *
+ * Copyright 2010 Matej Špindler
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "taskkill.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
+
+STRINGTABLE
+{
+    STRING_USAGE, "Uporaba: taskkill [/?] [/f] [/im ImeProcesa | /pid IDProcesa]\n"
+    STRING_INVALID_OPTION, "Napaka: Nepoznana ali nepopolna ukazna vrstica.\n"
+    STRING_INVALID_PARAM, "Napaka: Nepravilen parameter ukazne vrstice.\n"
+    STRING_MISSING_OPTION, "Napaka: Ena izmed opcija /im ali /pid mora biti izbrana.\n"
+    STRING_MISSING_PARAM, "Napaka: Opcija %s pričakuje parameter v ukazni vstici.\n"
+    STRING_MUTUAL_EXCLUSIVE, "Napaka: Opciji /im in /pid se izključujeta.\n"
+    STRING_CLOSE_PID_SEARCH, "Sporočilo zapri poslano vrhnjemu oknu procesa s PID %u.\n"
+    STRING_CLOSE_PROC_SRCH, "Sporočilo zapri poslano vrhnjemu oknu procesa \"%s\" s PID %u.\n"
+    STRING_TERM_PID_SEARCH, "Proces s PID %u je bil prisilno končan.\n"
+    STRING_TERM_PROC_SEARCH, "Proces \"%s\" s PID %u je bil prisilno končan.\n"
+    STRING_SEARCH_FAILED, "Napaka: Procesa \"%s\" ni mogoče najti.\n"
+    STRING_ENUM_FAILED, "Napaka: Ne morem dobiti seznama procesov.\n"
+    STRING_TERMINATE_FAILED, "Napaka: Procesa  \"%s\" ni mogoče končati.\n"
+}
