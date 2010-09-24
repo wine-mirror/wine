@@ -310,7 +310,7 @@ INT CDECL PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPC
 
 	TRACE("END_PATH\n");
         if(!physDev->pathdepth) {
-	    ERR("END_PATH called without a BEIGN_PATH\n");
+	    ERR("END_PATH called without a BEGIN_PATH\n");
 	    return -1;
 	}
 	TRACE("RenderMode = %d, FillMode = %d, BkMode = %d\n",
