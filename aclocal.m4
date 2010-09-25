@@ -164,6 +164,13 @@ wine_fn_append_rule ()
 
 wine_fn_all_dir_rules ()
 {
+    ac_makedep=""
+    if test "$[1]" != tools
+    then
+        dnl makedep is in tools so tools makefile cannot depend on it
+        ac_makedep=" \$(MAKEDEP)"
+    fi
+
     wine_fn_append_file ALL_DIRS $[1]
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "__clean__: $[1]/__clean__
@@ -171,11 +178,11 @@ wine_fn_all_dir_rules ()
 $[1]/__clean__: $[1]/Makefile
 	@cd $[1] && \$(MAKE) clean
 	\$(RM) $[1]/Makefile
-$[1]/Makefile: $[1]/Makefile.in Make.vars.in config.status $[2]
+$[1]/Makefile: $[1]/Makefile.in Make.vars.in config.status $[2]$ac_makedep
 	@./config.status --file $[1]/Makefile:Make.vars.in:$[1]/Makefile.in && cd $[1] && \$(MAKE) depend
 depend: $[1]/__depend__
 .PHONY: $[1]/__depend__
-$[1]/__depend__: $[2] dummy
+$[1]/__depend__: $[2] \$(MAKEDEP) dummy
 	@./config.status --file $[1]/Makefile:Make.vars.in:$[1]/Makefile.in && cd $[1] && \$(MAKE) depend"
 }
 
@@ -185,7 +192,7 @@ wine_fn_config_makefile ()
     ac_enable=$[2]
     AS_VAR_IF([$ac_enable],[no],[return 0])
 
-    wine_fn_all_dir_rules $ac_dir "Make.rules \$(MAKEDEP)"
+    wine_fn_all_dir_rules $ac_dir Make.rules
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all: $ac_dir
 .PHONY: $ac_dir
@@ -205,7 +212,7 @@ wine_fn_config_lib ()
 {
     ac_name=$[1]
     ac_dir=dlls/$ac_name
-    wine_fn_all_dir_rules $ac_dir "dlls/Makeimplib.rules \$(MAKEDEP)"
+    wine_fn_all_dir_rules $ac_dir dlls/Makeimplib.rules
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all __builddeps__: $ac_dir
 $ac_dir: $ac_dir/Makefile tools/widl tools/winebuild tools/winegcc include dummy
@@ -230,7 +237,7 @@ wine_fn_config_dll ()
       *16) ac_implibflags=" -m16" ;;
     esac
 
-    wine_fn_all_dir_rules dlls/$ac_dir "dlls/Makedll.rules \$(MAKEDEP)"
+    wine_fn_all_dir_rules dlls/$ac_dir dlls/Makedll.rules
 
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
@@ -308,7 +315,7 @@ wine_fn_config_program ()
     ac_dir=$[1]
     ac_enable=$[2]
     ac_install=$[3]
-    wine_fn_all_dir_rules programs/$ac_dir "programs/Makeprog.rules \$(MAKEDEP)"
+    wine_fn_all_dir_rules programs/$ac_dir programs/Makeprog.rules
 
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all: programs/$ac_dir
@@ -343,7 +350,7 @@ wine_fn_config_test ()
 $ac_name.rc:
 	echo \"$ac_name.exe TESTRES \\\"$ac_name.exe\\\"\" >\$[@] || (\$(RM) \$[@] && false)
 $ac_name.res: $ac_name.rc $ac_name.exe"
-    wine_fn_all_dir_rules $ac_dir "Maketest.rules \$(MAKEDEP)"
+    wine_fn_all_dir_rules $ac_dir Maketest.rules
 
     AS_VAR_IF([enable_tests],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "all programs/winetest: $ac_dir
@@ -370,13 +377,7 @@ $ac_dir/__crosstest__: $ac_dir/Makefile __builddeps__ dummy
 wine_fn_config_tool ()
 {
     ac_dir=$[1]
-    ac_deps="Make.rules"
-    if test "$ac_dir" != tools
-    then
-        dnl makedep is in tools so tools makefile cannot depend on it
-        ac_deps="$ac_deps \$(MAKEDEP)"
-    fi
-    wine_fn_all_dir_rules $ac_dir "$ac_deps"
+    wine_fn_all_dir_rules $ac_dir Make.rules
 
     AS_VAR_IF([enable_tools],[no],,[case $ac_dir in
       dnl tools directory has both install-lib and install-dev
