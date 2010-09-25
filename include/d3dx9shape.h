@@ -39,6 +39,10 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device,
                                 LPD3DXMESH* mesh,
                                 LPD3DXBUFFER* adjacency);
 
+HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device,
+                                LPD3DXMESH *mesh,
+                                LPD3DXBUFFER *adjacency);
+
 #ifdef __cplusplus
 }
 #endif
