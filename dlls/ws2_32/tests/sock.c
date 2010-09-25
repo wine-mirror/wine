@@ -4274,6 +4274,73 @@ static void test_getpeername(void)
     closesocket(sock);
 }
 
+static void test_sioRoutingInterfaceQuery(void)
+{
+    int ret;
+    SOCKET sock;
+    SOCKADDR_IN sin = { 0 }, sout = { 0 };
+    DWORD bytesReturned;
+
+    sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+    ok(sock != INVALID_SOCKET, "Expected socket to return a valid socket\n");
+    if (sock == INVALID_SOCKET)
+    {
+        skip("Socket creation failed with %d\n", WSAGetLastError());
+        return;
+    }
+    ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, NULL, 0, NULL, 0, NULL,
+                   NULL, NULL);
+    todo_wine
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "expected WSAEFAULT, got %d\n", WSAGetLastError());
+    ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
+                   NULL, 0, NULL, NULL, NULL);
+    todo_wine
+    ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
+       "expected WSAEFAULT, got %d\n", WSAGetLastError());
+    ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
+                   NULL, 0, &bytesReturned, NULL, NULL);
+    todo_wine
+    ok(ret == SOCKET_ERROR &&
+       (WSAGetLastError() == WSAEFAULT /* Win98 */ ||
+        WSAGetLastError() == WSAEINVAL /* NT4 */||
+        WSAGetLastError() == WSAEAFNOSUPPORT),
+       "expected WSAEFAULT or WSAEINVAL or WSAEAFNOSUPPORT, got %d\n",
+       WSAGetLastError());
+    sin.sin_family = AF_INET;
+    ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
+                   NULL, 0, &bytesReturned, NULL, NULL);
+    todo_wine
+    ok(ret == SOCKET_ERROR &&
+       (WSAGetLastError() == WSAEFAULT /* Win98 */ ||
+        WSAGetLastError() == WSAEINVAL),
+       "expected WSAEFAULT or WSAEINVAL, got %d\n", WSAGetLastError());
+    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
+                   NULL, 0, &bytesReturned, NULL, NULL);
+    todo_wine
+    ok(ret == SOCKET_ERROR &&
+       (WSAGetLastError() == WSAEINVAL /* NT4 */ ||
+        WSAGetLastError() == WSAEFAULT),
+       "expected WSAEINVAL or WSAEFAULT, got %d\n", WSAGetLastError());
+    ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
+                   &sout, sizeof(sout), &bytesReturned, NULL, NULL);
+    todo_wine
+    ok(!ret || broken(WSAGetLastError() == WSAEINVAL /* NT4 */),
+       "WSAIoctl failed: %d\n", WSAGetLastError());
+    if (!ret)
+    {
+        ok(sout.sin_family == AF_INET, "expected AF_INET, got %d\n",
+           sout.sin_family);
+        if (sout.sin_family == AF_INET)
+            ok(sout.sin_addr.s_addr == htonl(INADDR_LOOPBACK),
+               "expected %08x, got %08x\n", htonl(INADDR_LOOPBACK),
+               htonl(sout.sin_addr.s_addr));
+    }
+    closesocket(sock);
+}
+
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -4330,6 +4397,8 @@ START_TEST( sock )
 
     test_AcceptEx();
     test_ConnectEx();
+
+    test_sioRoutingInterfaceQuery();
 
     /* this is a io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
