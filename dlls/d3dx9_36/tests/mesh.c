@@ -1388,7 +1388,7 @@ static BOOL compute_sincos_table(struct sincos_table *sincos_table, float angle_
     return TRUE;
 }
 
-static WORD sphere_vertex(UINT slices, int slice, int stack)
+static WORD vertex_index(UINT slices, int slice, int stack)
 {
     return stack*slices+slice+1;
 }
@@ -1469,14 +1469,14 @@ static BOOL compute_sphere(struct mesh *mesh, FLOAT radius, UINT slices, UINT st
                 else
                 {
                     /* stacks in between top and bottom are quad strips */
-                    mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-                    mesh->faces[face][1] = sphere_vertex(slices, slice, stack-1);
-                    mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    mesh->faces[face][0] = vertex_index(slices, slice-1, stack-1);
+                    mesh->faces[face][1] = vertex_index(slices, slice, stack-1);
+                    mesh->faces[face][2] = vertex_index(slices, slice-1, stack);
                     face++;
 
-                    mesh->faces[face][0] = sphere_vertex(slices, slice, stack-1);
-                    mesh->faces[face][1] = sphere_vertex(slices, slice, stack);
-                    mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    mesh->faces[face][0] = vertex_index(slices, slice, stack-1);
+                    mesh->faces[face][1] = vertex_index(slices, slice, stack);
+                    mesh->faces[face][2] = vertex_index(slices, slice-1, stack);
                     face++;
                 }
             }
@@ -1491,14 +1491,14 @@ static BOOL compute_sphere(struct mesh *mesh, FLOAT radius, UINT slices, UINT st
         }
         else
         {
-            mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-            mesh->faces[face][1] = sphere_vertex(slices, 0, stack-1);
-            mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            mesh->faces[face][0] = vertex_index(slices, slice-1, stack-1);
+            mesh->faces[face][1] = vertex_index(slices, 0, stack-1);
+            mesh->faces[face][2] = vertex_index(slices, slice-1, stack);
             face++;
 
-            mesh->faces[face][0] = sphere_vertex(slices, 0, stack-1);
-            mesh->faces[face][1] = sphere_vertex(slices, 0, stack);
-            mesh->faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            mesh->faces[face][0] = vertex_index(slices, 0, stack-1);
+            mesh->faces[face][1] = vertex_index(slices, 0, stack);
+            mesh->faces[face][2] = vertex_index(slices, slice-1, stack);
             face++;
         }
     }
@@ -1513,14 +1513,14 @@ static BOOL compute_sphere(struct mesh *mesh, FLOAT radius, UINT slices, UINT st
     /* bottom stack is triangle fan */
     for (slice = 1; slice < slices; slice++)
     {
-        mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-        mesh->faces[face][1] = sphere_vertex(slices, slice, stack-1);
+        mesh->faces[face][0] = vertex_index(slices, slice-1, stack-1);
+        mesh->faces[face][1] = vertex_index(slices, slice, stack-1);
         mesh->faces[face][2] = vertex;
         face++;
     }
 
-    mesh->faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-    mesh->faces[face][1] = sphere_vertex(slices, 0, stack-1);
+    mesh->faces[face][0] = vertex_index(slices, slice-1, stack-1);
+    mesh->faces[face][1] = vertex_index(slices, 0, stack-1);
     mesh->faces[face][2] = vertex;
 
     free_sincos_table(&phi);
@@ -1627,6 +1627,281 @@ static void D3DXCreateSphereTest(void)
     test_sphere(device, 1.0f, 3, 4);
     test_sphere(device, 5.0f, 6, 7);
     test_sphere(device, 10.0f, 11, 12);
+
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(wnd);
+}
+
+static BOOL compute_cylinder(struct mesh *mesh, FLOAT radius1, FLOAT radius2, FLOAT length, UINT slices, UINT stacks)
+{
+    float theta_step, theta_start;
+    struct sincos_table theta;
+    FLOAT delta_radius, radius, radius_step;
+    FLOAT z, z_step, z_normal;
+    DWORD number_of_vertices, number_of_faces;
+    DWORD vertex, face;
+    int slice, stack;
+
+    /* theta = angle on xy plane wrt x axis */
+    theta_step = -2 * M_PI / slices;
+    theta_start = M_PI / 2;
+
+    if (!compute_sincos_table(&theta, theta_start, theta_step, slices))
+    {
+        return FALSE;
+    }
+
+    number_of_vertices = 2 + (slices * (3 + stacks));
+    number_of_faces = 2 * slices + stacks * (2 * slices);
+
+    if (!new_mesh(mesh, number_of_vertices, number_of_faces))
+    {
+        free_sincos_table(&theta);
+        return FALSE;
+    }
+
+    vertex = 0;
+    face = 0;
+    stack = 0;
+
+    delta_radius = radius1 - radius2;
+    radius = radius1;
+    radius_step = delta_radius / stacks;
+
+    z = -length / 2;
+    z_step = length / stacks;
+    z_normal = delta_radius / length;
+    if (isnan(z_normal))
+    {
+        z_normal = 0.0f;
+    }
+
+    mesh->vertices[vertex].normal.x = 0.0f;
+    mesh->vertices[vertex].normal.y = 0.0f;
+    mesh->vertices[vertex].normal.z = -1.0f;
+    mesh->vertices[vertex].position.x = 0.0f;
+    mesh->vertices[vertex].position.y = 0.0f;
+    mesh->vertices[vertex++].position.z = z;
+
+    for (slice = 0; slice < slices; slice++, vertex++)
+    {
+        mesh->vertices[vertex].normal.x = 0.0f;
+        mesh->vertices[vertex].normal.y = 0.0f;
+        mesh->vertices[vertex].normal.z = -1.0f;
+        mesh->vertices[vertex].position.x = radius * theta.cos[slice];
+        mesh->vertices[vertex].position.y = radius * theta.sin[slice];
+        mesh->vertices[vertex].position.z = z;
+
+        if (slice > 0)
+        {
+            mesh->faces[face][0] = 0;
+            mesh->faces[face][1] = slice;
+            mesh->faces[face++][2] = slice + 1;
+        }
+    }
+
+    mesh->faces[face][0] = 0;
+    mesh->faces[face][1] = slice;
+    mesh->faces[face++][2] = 1;
+
+    for (stack = 1; stack <= stacks+1; stack++)
+    {
+        for (slice = 0; slice < slices; slice++, vertex++)
+        {
+            mesh->vertices[vertex].normal.x = theta.cos[slice];
+            mesh->vertices[vertex].normal.y = theta.sin[slice];
+            mesh->vertices[vertex].normal.z = z_normal;
+            D3DXVec3Normalize(&mesh->vertices[vertex].normal, &mesh->vertices[vertex].normal);
+            mesh->vertices[vertex].position.x = radius * theta.cos[slice];
+            mesh->vertices[vertex].position.y = radius * theta.sin[slice];
+            mesh->vertices[vertex].position.z = z;
+
+            if (stack > 1 && slice > 0)
+            {
+                mesh->faces[face][0] = vertex_index(slices, slice-1, stack-1);
+                mesh->faces[face][1] = vertex_index(slices, slice-1, stack);
+                mesh->faces[face++][2] = vertex_index(slices, slice, stack-1);
+
+                mesh->faces[face][0] = vertex_index(slices, slice, stack-1);
+                mesh->faces[face][1] = vertex_index(slices, slice-1, stack);
+                mesh->faces[face++][2] = vertex_index(slices, slice, stack);
+            }
+        }
+
+        if (stack > 1)
+        {
+            mesh->faces[face][0] = vertex_index(slices, slice-1, stack-1);
+            mesh->faces[face][1] = vertex_index(slices, slice-1, stack);
+            mesh->faces[face++][2] = vertex_index(slices, 0, stack-1);
+
+            mesh->faces[face][0] = vertex_index(slices, 0, stack-1);
+            mesh->faces[face][1] = vertex_index(slices, slice-1, stack);
+            mesh->faces[face++][2] = vertex_index(slices, 0, stack);
+        }
+
+        if (stack < stacks + 1)
+        {
+            z += z_step;
+            radius -= radius_step;
+        }
+    }
+
+    for (slice = 0; slice < slices; slice++, vertex++)
+    {
+        mesh->vertices[vertex].normal.x = 0.0f;
+        mesh->vertices[vertex].normal.y = 0.0f;
+        mesh->vertices[vertex].normal.z = 1.0f;
+        mesh->vertices[vertex].position.x = radius * theta.cos[slice];
+        mesh->vertices[vertex].position.y = radius * theta.sin[slice];
+        mesh->vertices[vertex].position.z = z;
+
+        if (slice > 0)
+        {
+            mesh->faces[face][0] = vertex_index(slices, slice-1, stack);
+            mesh->faces[face][1] = number_of_vertices - 1;
+            mesh->faces[face++][2] = vertex_index(slices, slice, stack);
+        }
+    }
+
+    mesh->vertices[vertex].position.x = 0.0f;
+    mesh->vertices[vertex].position.y = 0.0f;
+    mesh->vertices[vertex].position.z = z;
+    mesh->vertices[vertex].normal.x = 0.0f;
+    mesh->vertices[vertex].normal.y = 0.0f;
+    mesh->vertices[vertex].normal.z = 1.0f;
+
+    mesh->faces[face][0] = vertex_index(slices, slice-1, stack);
+    mesh->faces[face][1] = number_of_vertices - 1;
+    mesh->faces[face][2] = vertex_index(slices, 0, stack);
+
+    free_sincos_table(&theta);
+
+    return TRUE;
+}
+
+static void test_cylinder(IDirect3DDevice9 *device, FLOAT radius1, FLOAT radius2, FLOAT length, UINT slices, UINT stacks)
+{
+    HRESULT hr;
+    ID3DXMesh *cylinder;
+    struct mesh mesh;
+    char name[256];
+
+    hr = D3DXCreateCylinder(device, radius1, radius2, length, slices, stacks, &cylinder, NULL);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    if (hr != D3D_OK)
+    {
+        skip("Couldn't create cylinder\n");
+        return;
+    }
+
+    if (!compute_cylinder(&mesh, radius1, radius2, length, slices, stacks))
+    {
+        skip("Couldn't create mesh\n");
+        cylinder->lpVtbl->Release(cylinder);
+        return;
+    }
+
+    mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
+
+    sprintf(name, "cylinder (%g, %g, %g, %u, %u)", radius1, radius2, length, slices, stacks);
+    compare_mesh(name, cylinder, &mesh);
+
+    free_mesh(&mesh);
+
+    cylinder->lpVtbl->Release(cylinder);
+}
+
+static void D3DXCreateCylinderTest(void)
+{
+    HRESULT hr;
+    HWND wnd;
+    IDirect3D9* d3d;
+    IDirect3DDevice9* device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh* cylinder = NULL;
+
+    hr = D3DXCreateCylinder(NULL, 0.0f, 0.0f, 0.0f, 0, 0, NULL, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateCylinder(NULL, 1.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = D3DXCreateCylinder(device, -0.1f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateCylinder(device, 0.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+
+    if (SUCCEEDED(hr) && cylinder)
+    {
+        cylinder->lpVtbl->Release(cylinder);
+    }
+
+    hr = D3DXCreateCylinder(device, 1.0f, -0.1f, 1.0f, 2, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateCylinder(device, 1.0f, 0.0f, 1.0f, 2, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+
+    if (SUCCEEDED(hr) && cylinder)
+    {
+        cylinder->lpVtbl->Release(cylinder);
+    }
+
+    hr = D3DXCreateCylinder(device, 1.0f, 1.0f, -0.1f, 2, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    /* Test with length == 0.0f succeeds */
+    hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 0.0f, 2, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+
+    if (SUCCEEDED(hr) && cylinder)
+    {
+        cylinder->lpVtbl->Release(cylinder);
+    }
+
+    hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 1, 1, &cylinder, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 2, 0, &cylinder, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 2, 1, NULL, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+
+    test_cylinder(device, 0.0f, 0.0f, 0.0f, 2, 1);
+    test_cylinder(device, 1.0f, 1.0f, 1.0f, 2, 1);
+    test_cylinder(device, 1.0f, 1.0f, 2.0f, 3, 4);
+    test_cylinder(device, 3.0f, 2.0f, 4.0f, 3, 4);
+    test_cylinder(device, 2.0f, 3.0f, 4.0f, 3, 4);
+    test_cylinder(device, 3.0f, 4.0f, 5.0f, 11, 20);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
@@ -1765,6 +2040,7 @@ START_TEST(mesh)
     D3DXCreateMeshTest();
     D3DXCreateMeshFVFTest();
     D3DXCreateSphereTest();
+    D3DXCreateCylinderTest();
     test_get_decl_length();
     test_get_decl_vertex_size();
     test_fvf_decl_conversion();
