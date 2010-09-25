@@ -1065,7 +1065,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
         DWORD numShifts, mask;
 
         for (numShifts = 0, mask = table->table[ndx].dwForwardMask;
-         mask && !(mask & 1); mask >>= 1, numShifts++)
+         mask && mask & 1; mask >>= 1, numShifts++)
           ;
         if (numShifts > matchedBits) {
           matchedBits = numShifts;
