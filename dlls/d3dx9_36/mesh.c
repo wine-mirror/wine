@@ -1289,6 +1289,14 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
     return D3D_OK;
 }
 
+HRESULT WINAPI D3DXCreateCylinder(LPDIRECT3DDEVICE9 device, FLOAT radius1, FLOAT radius2, FLOAT length, UINT slices,
+                                  UINT stacks, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
+{
+    FIXME("(%p, %f, %f, %f, %u, %u, %p, %p): stub\n", device, radius1, radius2, length, slices, stacks, mesh, adjacency);
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh, LPD3DXBUFFER* adjacency)
 {
     FIXME("(%p, %p, %p): stub\n", device, mesh, adjacency);

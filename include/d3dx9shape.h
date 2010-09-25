@@ -39,6 +39,15 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device,
                                 LPD3DXMESH* mesh,
                                 LPD3DXBUFFER* adjacency);
 
+HRESULT WINAPI D3DXCreateCylinder(LPDIRECT3DDEVICE9 device,
+                                  FLOAT radius1,
+                                  FLOAT radius2,
+                                  FLOAT length,
+                                  UINT slices,
+                                  UINT stacks,
+                                  LPD3DXMESH *mesh,
+                                  LPD3DXBUFFER *adjacency);
+
 HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device,
                                 LPD3DXMESH *mesh,
                                 LPD3DXBUFFER *adjacency);

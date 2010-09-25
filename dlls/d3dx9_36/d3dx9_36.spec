@@ -45,7 +45,7 @@
 @ stub D3DXCreateCubeTextureFromResourceExA
 @ stub D3DXCreateCubeTextureFromResourceExW
 @ stub D3DXCreateCubeTextureFromResourceW
-@ stub D3DXCreateCylinder
+@ stdcall D3DXCreateCylinder(ptr long long long long long ptr ptr)
 @ stdcall D3DXCreateEffect(ptr ptr long ptr ptr long ptr ptr ptr)
 @ stdcall D3DXCreateEffectCompiler(ptr long ptr ptr long ptr ptr)
 @ stdcall D3DXCreateEffectCompilerFromFileA(str ptr ptr long ptr ptr)
