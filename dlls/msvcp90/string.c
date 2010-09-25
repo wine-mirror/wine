@@ -679,6 +679,8 @@ basic_string_char* __thiscall MSVCP_basic_string_char_assign_cstr_len(
 
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBD@Z */
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD@Z */
+/* ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@PBD@Z */
+/* ??4?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@PEBD@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign_cstr, 8)
 basic_string_char* __thiscall MSVCP_basic_string_char_assign_cstr(
         basic_string_char *this, const char *str)
