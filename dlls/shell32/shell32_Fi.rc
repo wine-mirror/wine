@@ -1,5 +1,6 @@
 /*
  * Copyright 2005 Kimmo Myllyvirta
+ * Copyright 2010 Lauri Kenttä
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -129,6 +130,37 @@ FONT 8, "MS Shell Dlg"
 	4, 40, 180, 120
 }
 
+SHNEWBRSFORFOLDER_MSGBOX DIALOG 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+CAPTION "Valitse kansio"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "Kansio:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Luo uusi kansio", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Peruuta", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Viesti"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&Kyllä", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Kyllä k&aikkiin", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Ei", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&Peruuta", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
 SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Tietoja ohjelmasta %s"
@@ -174,10 +206,15 @@ STRINGTABLE
 	IDS_SHV_COLUMN11	"Ryhmä"
 	IDS_SHV_COLUMN_DELFROM	"Alkuperäinen sijainti"
 	IDS_SHV_COLUMN_DELDATE	"Poistoaika"
+	IDS_SHV_COL_DOCS	"Asiakirjat"
+	IDS_SHV_COL_STATUS	"Tila"
+	IDS_SHV_COL_LOCATION	"Sijainti"
+	IDS_SHV_COL_MODEL	"Malli"
 
         /* special folders */
 	IDS_DESKTOP		"Työpöytä"
 	IDS_MYCOMPUTER		"Oma tietokone"
+	IDS_RECYCLEBIN_FOLDER_NAME      "Roskakori"
 	IDS_CONTROLPANEL	"Ohjauspaneeli"
 
         /* context menus */
@@ -211,6 +248,12 @@ STRINGTABLE
         IDS_SHUTDOWN_TITLE      "Sammuta"
         IDS_SHUTDOWN_PROMPT     "Haluatko lopettaa Wine-istunnon?"
 
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Suorita tiedosto -valintaikkunaa ei voida näyttää (sisäinen virhe)"
+        IDS_RUNDLG_BROWSE_ERROR    "Selaa-valintaikkunaa ei voida näyttää (sisäinen virhe)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Selaa"
+        IDS_RUNDLG_BROWSE_FILTER   "Suoritettavat tiedostot\0*.exe\0Kaikki tiedostot\0*.*\0\0"
+
         /* shell folder path default values */
 	IDS_PROGRAMS                "Käynnistä-valikko\\Ohjelmat"
 	IDS_PERSONAL                "Omat tiedostot"
@@ -231,18 +274,58 @@ STRINGTABLE
 	IDS_COOKIES                 "Evästeet"
 	IDS_HISTORY                 "Paikalliset asetukset\\Historia"
 	IDS_PROGRAM_FILES           "Ohjelmatiedostot"
+	IDS_PROGRAM_FILESX86        "Ohjelmatiedostot (x86)"
 	IDS_MYPICTURES              "Omat kuvatiedostot"
 	IDS_PROGRAM_FILES_COMMON    "Ohjelmatiedostot\\Yhteiset tiedostot"
-	IDS_COMMON_DOCUMENTS        "Dokumentit"
+	IDS_PROGRAM_FILES_COMMONX86 "Ohjelmatiedostot (x86)\\Yhteiset tiedostot"
+	IDS_COMMON_DOCUMENTS        "Tiedostot"
 	IDS_ADMINTOOLS              "Käynnistä-valikko\\Ohjelmat\\Hallintatyökalut"
-	IDS_COMMON_MUSIC            "Dokumentit\\Omat musiikkitiedostot"
-	IDS_COMMON_PICTURES         "Dokumentit\\Omat kuvatiedostot"
-	IDS_COMMON_VIDEO            "Dokumentit\\Omat videotiedostot"
+	IDS_COMMON_MUSIC            "Musiikki"
+	IDS_COMMON_PICTURES         "Kuvat"
+	IDS_COMMON_VIDEO            "Videot"
 	IDS_CDBURN_AREA             "Paikalliset asetukset\\Ohjelmien tiedot\\Microsoft\\CD Burning"
+	IDS_CONTACTS                "Kontaktit"
+	IDS_LINKS                   "Linkit"
+	IDS_PHOTO_ALBUMS            "Kuvat\\Diaesitykset"
+	IDS_PLAYLISTS               "Musiikki\\Soittolistat"
+	IDS_PUBLIC_DOWNLOADS        "Lataukset"
+	IDS_PUBLIC_GAME_TASKS       "Microsoft\\Windows\\GameExplorer"
+	IDS_PUBLIC_LIBRARIES        "Microsoft\\Windows\\Libraries"
+	IDS_PUBLIC_RINGTONES        "Microsoft\\Windows\\Soittoäänet"
+	IDS_SAMPLE_MUSIC            "Musiikki\\Esimerkkimusiikki"
+	IDS_SAMPLE_PICTURES         "Kuvat\\Esimerkkikuvat"
+	IDS_SAMPLE_PLAYLISTS        "Musiikki\\Esimerkkisoittolistat"
+	IDS_SAMPLE_VIDEOS           "Videot\\Esimerkkivideot"
+	IDS_SAVED_GAMES             "Tallennetut pelit"
+	IDS_SAVED_SEARCHES          "Haut"
+	IDS_USER_PROFILES           "Käyttäjät"
+	IDS_COMMON_OEM_LINKS        "OEM Links"
+	IDS_DOCUMENTS               "Tiedostot"
+	IDS_DOWNLOADS               "Lataukset"
+	IDS_LOCAL_APPDATA_LOW       "AppData\\LocalLow"
 
-	IDS_NEWFOLDER		"Uusi hakemisto"
+	IDS_NEWFOLDER		"Uusi kansio"
 
 	IDS_CPANEL_TITLE            "Winen Ohjauspaneeli"
 	IDS_CPANEL_NAME             "Nimi"
 	IDS_CPANEL_DESCRIPTION      "Kuvaus"
+
+        IDS_SHLEXEC_NOASSOC         "Tämän tiedostotyypin avaamiseen ei ole kytketty mitään Windows-ohjelmaa."
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "Winen lisenssi"
+IDS_LICENSE,
+"Wine is free software; you can redistribute it and/or \
+modify it under the terms of the GNU Lesser General Public \
+License as published by the Free Software Foundation; either \
+version 2.1 of the License, or (at your option) any later version.\n\n\
+Wine is distributed in the hope that it will be useful, \
+but WITHOUT ANY WARRANTY; without even the implied warranty of \
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU \
+Lesser General Public License for more details.\n\n\
+You should have received a copy of the GNU Lesser General Public \
+License along with Wine; if not, write to the Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 }
