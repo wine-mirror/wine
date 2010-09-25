@@ -2549,7 +2549,7 @@ static void test_SHGetItemFromDataObject(void)
 static void test_ShellItemCompare(void)
 {
     IShellItem *psi[9]; /* a\a, a\b, a\c, b\a, .. */
-    IShellItem *psi_a, *psi_b, *psi_c;
+    IShellItem *psi_a = NULL, *psi_b = NULL, *psi_c = NULL;
     IShellFolder *psf_desktop, *psf_current;
     LPITEMIDLIST pidl_cwd;
     WCHAR curdirW[MAX_PATH];
@@ -2620,7 +2620,6 @@ static void test_ShellItemCompare(void)
     }
 
     /* Generate ShellItems for the folders */
-    psi_a = psi_b = psi_c = NULL;
     hr = IShellItem_GetParent(psi[0], &psi_a);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(FAILED(hr)) failed = TRUE;
