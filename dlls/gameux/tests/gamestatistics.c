@@ -271,10 +271,10 @@ static void test_gamestatisticsmgr( void )
 
         /* write sample statistics */
         hr = IGameStatistics_SetCategoryTitle(gs, wMaxCategories, NULL);
-        todo_wine ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
+        ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
 
         hr = IGameStatistics_SetCategoryTitle(gs, wMaxCategories, sCategory0);
-        todo_wine ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
+        ok(hr==E_INVALIDARG, "setting category title invalid value: 0x%x\n", hr);
 
         /* check what happen if string is too long */
         sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxCategoryLength+2));
@@ -283,12 +283,12 @@ static void test_gamestatisticsmgr( void )
 
         /* when string is too long, Windows returns S_FALSE, but saves string (stripped to expected number of characters) */
         hr = IGameStatistics_SetCategoryTitle(gs, 0, sTooLongString);
-        todo_wine ok(hr==S_FALSE, "setting category title invalid result: 0x%x\n", hr);
+        ok(hr==S_FALSE, "setting category title invalid result: 0x%x\n", hr);
         CoTaskMemFree(sTooLongString);
 
-        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 0, sCategory0)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory0));
-        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 1, sCategory1)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory1));
-        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 2, sCategory2)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory1));
+        ok(IGameStatistics_SetCategoryTitle(gs, 0, sCategory0)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory0));
+        ok(IGameStatistics_SetCategoryTitle(gs, 1, sCategory1)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory1));
+        ok(IGameStatistics_SetCategoryTitle(gs, 2, sCategory2)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory1));
 
         /* check what happen if any string is NULL */
         hr = IGameStatistics_SetStatistic(gs, 0, 0, NULL, sValue00);
@@ -333,7 +333,7 @@ static void test_gamestatisticsmgr( void )
         todo_wine ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
 
         /* this value should not be stored in storage, we need it only to test is it not saved */
-        todo_wine ok(IGameStatistics_SetCategoryTitle(gs, 0, sCategory0a)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory0a));
+        ok(IGameStatistics_SetCategoryTitle(gs, 0, sCategory0a)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory0a));
 
         hr = IGameStatistics_Release(gs);
         ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%08x\n", hr);

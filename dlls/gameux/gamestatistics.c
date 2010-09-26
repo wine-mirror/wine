@@ -40,12 +40,36 @@ WINE_DEFAULT_DEBUG_CHANNEL(gameux);
 #define MAX_CATEGORIES 10
 #define MAX_STATS_PER_CATEGORY 10
 /*******************************************************************************
+ * Game statistics helper components
+ */
+/*******************************************************************************
+ * struct GAMEUX_STATS
+ *
+ * set of structures for containing game's data
+ */
+struct GAMEUX_STATS_STAT
+{
+    WCHAR sName[MAX_NAME_LENGTH+1];
+    WCHAR sValue[MAX_VALUE_LENGTH+1];
+};
+struct GAMEUX_STATS_CATEGORY
+{
+    WCHAR sName[MAX_CATEGORY_LENGTH+1];
+    struct GAMEUX_STATS_STAT stats[MAX_STATS_PER_CATEGORY];
+};
+struct GAMEUX_STATS
+{
+    WCHAR sStatsFile[MAX_PATH];
+    struct GAMEUX_STATS_CATEGORY categories[MAX_CATEGORIES];
+};
+/*******************************************************************************
  * IGameStatistics implementation
  */
 typedef struct _GameStatisticsImpl
 {
     const struct IGameStatisticsVtbl *lpVtbl;
     LONG ref;
+    struct GAMEUX_STATS stats;
 } GameStatisticsImpl;
 
 static inline GameStatisticsImpl *impl_from_IGameStatistics( IGameStatistics *iface )
@@ -177,8 +201,27 @@ static HRESULT WINAPI GameStatisticsImpl_SetCategoryTitle(
     WORD categoryIndex,
     LPCWSTR title)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    DWORD dwLength;
+    GameStatisticsImpl *This = impl_from_IGameStatistics(iface);
+
+    TRACE("(%p, %d, %s)\n", This, categoryIndex, debugstr_w(title));
+
+    if(!title || categoryIndex >= MAX_CATEGORIES)
+        return E_INVALIDARG;
+
+    dwLength = lstrlenW(title);
+
+    if(dwLength > MAX_CATEGORY_LENGTH)
+    {
+        hr = S_FALSE;
+        dwLength = MAX_CATEGORY_LENGTH;
+    }
+
+    lstrcpynW(This->stats.categories[categoryIndex].sName,
+              title, dwLength+1);
+
+    return hr;
 }
 
 static HRESULT WINAPI GameStatisticsImpl_GetCategoryTitle(
