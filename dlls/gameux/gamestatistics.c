@@ -23,6 +23,9 @@
 
 #include "ole2.h"
 #include "winreg.h"
+#include "msxml2.h"
+#include "shlwapi.h"
+#include "shlobj.h"
 
 #include "gameux.h"
 #include "gameux_private.h"
@@ -63,6 +66,124 @@ struct GAMEUX_STATS
     struct GAMEUX_STATS_CATEGORY categories[MAX_CATEGORIES];
 };
 /*******************************************************************************
+ * GAMEUX_createStatsDirectory
+ *
+ * Helper function, creates directory to store game statistics
+ *
+ * Parameters
+ *  path                [I]     path to game statistics file.
+ *                              base directory of this file will
+ *                              be created if it doesn't exists
+ */
+static HRESULT GAMEUX_createStatsDirectory(LPCWSTR lpFilePath)
+{
+    HRESULT hr;
+    WCHAR lpDirectoryPath[MAX_PATH];
+    LPCWSTR lpEnd;
+
+    lpEnd = StrRChrW(lpFilePath, NULL, '\\');
+    lstrcpynW(lpDirectoryPath, lpFilePath, lpEnd-lpFilePath+1);
+
+    hr = HRESULT_FROM_WIN32(SHCreateDirectoryExW(NULL, lpDirectoryPath, NULL));
+
+    if(hr == HRESULT_FROM_WIN32(ERROR_FILE_EXISTS) ||
+       hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
+        hr = S_FALSE;
+
+    return hr;
+}
+/*******************************************************************
+ * GAMEUX_updateStatisticsFile
+ *
+ * Helper function updating data stored in statistics file
+ *
+ * Parameters:
+ *  data                [I]     pointer to struct containing
+ *                              statistics data
+ */
+static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
+{
+    static const WCHAR sStatistics[] = {'S','t','a','t','i','s','t','i','c','s',0};
+
+    HRESULT hr = S_OK;
+    IXMLDOMDocument *document;
+    IXMLDOMElement *root;
+    VARIANT vStatsFilePath;
+    BSTR bstrStatistics = NULL;
+
+    TRACE("(%p)\n", stats);
+
+    V_VT(&vStatsFilePath) = VT_BSTR;
+    V_BSTR(&vStatsFilePath) = SysAllocString(stats->sStatsFile);
+    if(!V_BSTR(&vStatsFilePath))
+        hr = E_OUTOFMEMORY;
+
+    if(SUCCEEDED(hr))
+        hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
+                              &IID_IXMLDOMDocument, (void**)&document);
+
+    if(SUCCEEDED(hr))
+    {
+        bstrStatistics = SysAllocString(sStatistics);
+        if(!bstrStatistics)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+        hr = IXMLDOMDocument_createElement(document, bstrStatistics, &root);
+
+    FIXME("writing statistics not fully implemented\n");
+
+    TRACE("saving game statistics in %s file\n", debugstr_w(stats->sStatsFile));
+    if(SUCCEEDED(hr))
+        hr = GAMEUX_createStatsDirectory(stats->sStatsFile);
+
+    if(SUCCEEDED(hr))
+        hr = IXMLDOMDocument_save(document, vStatsFilePath);
+
+    SysFreeString(V_BSTR(&vStatsFilePath));
+    SysFreeString(bstrStatistics);
+    TRACE("ret=0x%x\n", hr);
+    return hr;
+}
+/*******************************************************************************
+ * GAMEUX_buildStatisticsFilePath
+ * Creates path to file contaning statistics of game with given id.
+ *
+ * Parameters:
+ *  lpApplicationId                         [I]     application id of game,
+ *                                                  as string
+ *  lpStatisticsFile                        [O]     array where path will be
+ *                                                  stored. It's size must be
+ *                                                  at least MAX_PATH
+ */
+static HRESULT GAMEUX_buildStatisticsFilePath(
+        LPCWSTR lpApplicationId,
+        LPWSTR lpStatisticsFile)
+{
+    static const WCHAR sBackslash[] = {'\\',0};
+    static const WCHAR sStatisticsDir[] = {'\\','M','i','c','r','o','s','o','f','t',
+            '\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p',
+            'l','o','r','e','r','\\','G','a','m','e','S','t','a','t','i','s',
+            't','i','c','s',0};
+    static const WCHAR sDotGamestats[] = {'.','g','a','m','e','s','t','a','t','s',0};
+
+    HRESULT hr;
+
+    hr = SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpStatisticsFile);
+
+    if(SUCCEEDED(hr))
+    {
+        lstrcatW(lpStatisticsFile, sStatisticsDir);
+        lstrcatW(lpStatisticsFile, lpApplicationId);
+        lstrcatW(lpStatisticsFile, sBackslash);
+        lstrcatW(lpStatisticsFile, lpApplicationId);
+        lstrcatW(lpStatisticsFile, sDotGamestats);
+    }
+
+    return hr;
+}
+/*******************************************************************
  * IGameStatistics implementation
  */
 typedef struct _GameStatisticsImpl
@@ -299,8 +420,17 @@ static HRESULT WINAPI GameStatisticsImpl_Save(
     IGameStatistics *iface,
     BOOL trackChanges)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    GameStatisticsImpl *This = impl_from_IGameStatistics(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("(%p, %d)\n", This, trackChanges);
+
+    if(trackChanges == TRUE)
+        FIXME("tracking changes not yet implemented\n");
+
+    hr = GAMEUX_updateStatisticsFile(&This->stats);
+
+    return hr;
 }
 
 static HRESULT WINAPI GameStatisticsImpl_SetLastPlayedCategory(
@@ -479,6 +609,11 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
     if(SUCCEEDED(hr))
     {
         *ppiStats = IGameStatistics_from_impl(statisticsImpl);
+        hr = GAMEUX_buildStatisticsFilePath(lpApplicationId, statisticsImpl->stats.sStatsFile);
+    }
+
+    if(SUCCEEDED(hr))
+    {
         FIXME("loading game statistics not yet implemented\n");
         hr = E_NOTIMPL;
     }

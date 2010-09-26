@@ -328,9 +328,9 @@ static void test_gamestatisticsmgr( void )
 
         ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s already exists\n", wine_dbgstr_w(lpStatisticsFile));
 
-        todo_wine ok(IGameStatistics_Save(gs, FALSE)==S_OK, "statistic saving failed\n");
+        ok(IGameStatistics_Save(gs, FALSE)==S_OK, "statistic saving failed\n");
 
-        todo_wine ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
+        ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
 
         /* this value should not be stored in storage, we need it only to test is it not saved */
         ok(IGameStatistics_SetCategoryTitle(gs, 0, sCategory0a)==S_OK, "setting category title failed: %s\n", wine_dbgstr_w(sCategory0a));
@@ -412,10 +412,10 @@ static void test_gamestatisticsmgr( void )
         ok(SUCCEEDED(hr), "releasing IGameStatistics returned error: 0x%x\n", hr);
 
         /* test of removing game statistics from underlying storage */
-        todo_wine ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
+        ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
         hr = IGameStatisticsMgr_RemoveGameStatistics(gsm, sExeName);
         todo_wine ok(SUCCEEDED(hr), "cannot remove game statistics, error: 0x%x\n", hr);
-        ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s still exists\n", wine_dbgstr_w(lpStatisticsFile));
+        todo_wine ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s still exists\n", wine_dbgstr_w(lpStatisticsFile));
     }
 
     hr = IGameStatisticsMgr_Release(gsm);
