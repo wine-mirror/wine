@@ -5873,20 +5873,20 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, BOOL isW)
 static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
+    HWND hwndSelf = infoPtr->hwndSelf;
     NMLVDISPINFOW dispInfo;
+    HFONT hOldFont = NULL;
+    TEXTMETRICW tm;
     RECT rect;
     SIZE sz;
-    HWND hwndSelf = infoPtr->hwndSelf;
     HDC hdc;
-    HFONT hOldFont = NULL;
-    TEXTMETRICW textMetric;
 
     TRACE("(nItem=%d, isW=%d)\n", nItem, isW);
 
     if (~infoPtr->dwStyle & LVS_EDITLABELS) return 0;
 
-    /* Is the EditBox still there, if so remove it */
-    if(infoPtr->hwndEdit != 0)
+    /* remove existing edit box */
+    if (infoPtr->hwndEdit)
     {
         SetFocus(infoPtr->hwndSelf);
         infoPtr->hwndEdit = 0;
@@ -5924,27 +5924,38 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 	return 0;
     }
 
-    /* Now position and display edit box */
+    /* position and display edit box */
     hdc = GetDC(infoPtr->hwndSelf);
 
-    /* Select the font to get appropriate metric dimensions */
-    if(infoPtr->hFont != 0)
+    /* select the font to get appropriate metric dimensions */
+    if (infoPtr->hFont)
         hOldFont = SelectObject(hdc, infoPtr->hFont);
 
-    /* Get String Length in pixels */
-    GetTextExtentPoint32W(hdc, dispInfo.item.pszText, lstrlenW(dispInfo.item.pszText), &sz);
+    /* get string length in pixels */
+    TRACE("text=%s\n", debugtext_t(dispInfo.item.pszText, isW));
 
-    /* Add Extra spacing for the next character */
-    GetTextMetricsW(hdc, &textMetric);
-    sz.cx += (textMetric.tmMaxCharWidth * 2);
+    if (isW)
+        GetTextExtentPoint32W(hdc, dispInfo.item.pszText, lstrlenW(dispInfo.item.pszText), &sz);
+    else
+    {
+        const CHAR *textA = (CHAR*)dispInfo.item.pszText;
+        GetTextExtentPoint32A(hdc, textA, lstrlenA(textA), &sz);
+    }
 
-    if(infoPtr->hFont != 0)
+    /* add extra spacing for the next character */
+    GetTextMetricsW(hdc, &tm);
+    sz.cx += tm.tmMaxCharWidth * 2;
+
+    if (infoPtr->hFont)
         SelectObject(hdc, hOldFont);
 
     ReleaseDC(infoPtr->hwndSelf, hdc);
 
-    MoveWindow(infoPtr->hwndEdit, rect.left - 2, rect.top - 1, sz.cx,
-                                  rect.bottom - rect.top + 2, FALSE);
+    sz.cy = rect.bottom - rect.top + 2;
+    rect.left -= 2;
+    rect.top  -= 1;
+    TRACE("moving edit=(%d,%d)-(%d,%d)\n", rect.left, rect.top, sz.cx, sz.cy);
+    MoveWindow(infoPtr->hwndEdit, rect.left, rect.top, sz.cx, sz.cy, FALSE);
     ShowWindow(infoPtr->hwndEdit, SW_NORMAL);
     SetFocus(infoPtr->hwndEdit);
     SendMessageW(infoPtr->hwndEdit, EM_SETSEL, 0, -1);
@@ -6074,7 +6085,7 @@ static INT LISTVIEW_FindItemW(const LISTVIEW_INFO *infoPtr, INT nStart,
     }
 
     if (!lpFindInfo || nItem < 0) return -1;
-    
+
     lvItem.mask = 0;
     if (lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL) ||
         lpFindInfo->flags &  LVFI_SUBSTRING)
@@ -6210,24 +6221,6 @@ static INT LISTVIEW_FindItemA(const LISTVIEW_INFO *infoPtr, INT nStart,
     textfreeT(strW, FALSE);
     return res;
 }
-
-/***
- * DESCRIPTION:
- * Retrieves the background image of the listview control.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [O] lpBkImage : background image attributes
- *
- * RETURN:
- *   SUCCESS : TRUE
- *   FAILURE : FALSE
- */
-/* static BOOL LISTVIEW_GetBkImage(const LISTVIEW_INFO *infoPtr, LPLVBKIMAGE lpBkImage)   */
-/* {   */
-/*   FIXME (listview, "empty stub!\n"); */
-/*   return FALSE;   */
-/* }   */
 
 /***
  * DESCRIPTION:
