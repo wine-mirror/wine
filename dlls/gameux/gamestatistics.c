@@ -183,6 +183,64 @@ static HRESULT GAMEUX_buildStatisticsFilePath(
 
     return hr;
 }
+/*******************************************************************************
+ * GAMEUX_getAppIdFromGDFPath
+ *
+ * Loads application identifier associated with given GDF binary.
+ * Routine reads identifier from registry, so will fail if game
+ * is not registered.
+ *
+ * Parameters:
+ *  GDFBinaryPath                       [I]     path to gdf binary
+ *  lpApplicationId                     [O]     place to store application id.
+ *                                              must be at least 49 characters
+ *                                              to store guid and termination 0
+ */
+static HRESULT GAMEUX_getAppIdFromGDFPath(
+        LPCWSTR GDFBinaryPath,
+        LPWSTR lpApplicationId)
+{
+    static const WCHAR sApplicationId[] =
+            {'A','p','p','l','i','c','a','t','i','o','n','I','d',0};
+
+    HRESULT hr;
+    GAME_INSTALL_SCOPE installScope;
+    GUID instanceId;
+    LPWSTR lpRegistryPath;
+    DWORD dwLength = 49*sizeof(WCHAR);/* place for GUID */
+
+    TRACE("(%s, %p)\n", debugstr_w(GDFBinaryPath), lpApplicationId);
+
+    if(!GDFBinaryPath)
+        return E_INVALIDARG;
+
+    installScope = GIS_CURRENT_USER;
+    hr = GAMEUX_FindGameInstanceId(GDFBinaryPath, installScope, &instanceId);
+
+    if(hr == S_FALSE)
+    {
+        installScope = GIS_ALL_USERS;
+        hr = GAMEUX_FindGameInstanceId(GDFBinaryPath, installScope, &instanceId);
+    }
+
+    if(hr == S_FALSE)
+        /* game not registered, so statistics cannot be used */
+        hr = E_FAIL;
+
+    if(SUCCEEDED(hr))
+        /* game is registered, let's read it's application id from registry */
+        hr = GAMEUX_buildGameRegistryPath(installScope, &instanceId, &lpRegistryPath);
+
+    if(SUCCEEDED(hr))
+        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE,
+                lpRegistryPath, sApplicationId, RRF_RT_REG_SZ,
+                NULL, lpApplicationId, &dwLength));
+
+    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
+
+    TRACE("found app id: %s, return: %#x\n", debugstr_w(lpApplicationId), hr);
+    return hr;
+}
 /*******************************************************************
  * IGameStatistics implementation
  */
@@ -560,51 +618,16 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
         GAMESTATS_OPEN_RESULT *pOpenResult,
         IGameStatistics **ppiStats)
 {
-    static const WCHAR sApplicationId[] =
-            {'A','p','p','l','i','c','a','t','i','o','n','I','d',0};
-
     HRESULT hr;
-    GUID instanceId;
-    LPWSTR lpRegistryPath = NULL;
     WCHAR lpApplicationId[49];
-    DWORD dwLength = sizeof(lpApplicationId);
-    GAME_INSTALL_SCOPE installScope;
     GameStatisticsImpl *statisticsImpl;
 
     TRACE("(%p, %s, 0x%x, %p, %p)\n", iface, debugstr_w(GDFBinaryPath), openType, pOpenResult, ppiStats);
 
-    if(!GDFBinaryPath)
-        return E_INVALIDARG;
-
-    installScope = GIS_CURRENT_USER;
-    hr = GAMEUX_FindGameInstanceId(GDFBinaryPath, installScope, &instanceId);
-
-    if(hr == S_FALSE)
-    {
-        installScope = GIS_ALL_USERS;
-        hr = GAMEUX_FindGameInstanceId(GDFBinaryPath, installScope, &instanceId);
-    }
-
-    if(hr == S_FALSE)
-        /* game not registered, so statistics cannot be used */
-        hr = E_FAIL;
+    hr = GAMEUX_getAppIdFromGDFPath(GDFBinaryPath, lpApplicationId);
 
     if(SUCCEEDED(hr))
-        /* game is registered, let's read it's application id from registry */
-        hr = GAMEUX_buildGameRegistryPath(installScope, &instanceId, &lpRegistryPath);
-
-    if(SUCCEEDED(hr))
-    {
-        hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE,
-                lpRegistryPath, sApplicationId, RRF_RT_REG_SZ,
-                NULL, lpApplicationId, &dwLength));
-    }
-
-    if(SUCCEEDED(hr))
-    {
-        TRACE("found app id: %s\n", debugstr_w(lpApplicationId));
         hr = create_IGameStatistics(&statisticsImpl);
-    }
 
     if(SUCCEEDED(hr))
     {
@@ -618,8 +641,6 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_GetGameStatistics(
         hr = E_NOTIMPL;
     }
 
-    HeapFree(GetProcessHeap(), 0, lpRegistryPath);
-
     return hr;
 }
 
@@ -627,8 +648,21 @@ static HRESULT STDMETHODCALLTYPE GameStatisticsMgrImpl_RemoveGameStatistics(
         IGameStatisticsMgr* iface,
         LPCWSTR GDFBinaryPath)
 {
-    FIXME("stub (%p, %s)\n", iface, debugstr_w(GDFBinaryPath));
-    return E_NOTIMPL;
+    HRESULT hr;
+    WCHAR lpApplicationId[49];
+    WCHAR sStatsFile[MAX_PATH];
+
+    TRACE("(%p, %s)\n", iface, debugstr_w(GDFBinaryPath));
+
+    hr = GAMEUX_getAppIdFromGDFPath(GDFBinaryPath, lpApplicationId);
+
+    if(SUCCEEDED(hr))
+        hr = GAMEUX_buildStatisticsFilePath(lpApplicationId, sStatsFile);
+
+    if(SUCCEEDED(hr))
+        hr = (DeleteFileW(sStatsFile)==TRUE ? S_OK : HRESULT_FROM_WIN32(GetLastError()));
+
+    return hr;
 }
 
 static const struct IGameStatisticsMgrVtbl GameStatisticsMgrImplVtbl =

@@ -414,8 +414,8 @@ static void test_gamestatisticsmgr( void )
         /* test of removing game statistics from underlying storage */
         ok(_isFileExists(lpStatisticsFile) == TRUE, "statistics file %s does not exists\n", wine_dbgstr_w(lpStatisticsFile));
         hr = IGameStatisticsMgr_RemoveGameStatistics(gsm, sExeName);
-        todo_wine ok(SUCCEEDED(hr), "cannot remove game statistics, error: 0x%x\n", hr);
-        todo_wine ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s still exists\n", wine_dbgstr_w(lpStatisticsFile));
+        ok(SUCCEEDED(hr), "cannot remove game statistics, error: 0x%x\n", hr);
+        ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s still exists\n", wine_dbgstr_w(lpStatisticsFile));
     }
 
     hr = IGameStatisticsMgr_Release(gsm);
