@@ -104,12 +104,20 @@ static HRESULT GAMEUX_createStatsDirectory(LPCWSTR lpFilePath)
 static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
 {
     static const WCHAR sStatistics[] = {'S','t','a','t','i','s','t','i','c','s',0};
+    static const WCHAR sCategory[] = {'C','a','t','e','g','o','r','y',0};
+    static const WCHAR sIndex[] = {'I','n','d','e','x',0};
+    static const WCHAR sStatistic[] = {'S','t','a','t','i','s','t','i','c',0};
+    static const WCHAR sName[] = {'N','a','m','e',0};
+    static const WCHAR sValue[] = {'V','a','l','u','e',0};
 
     HRESULT hr = S_OK;
     IXMLDOMDocument *document;
-    IXMLDOMElement *root;
-    VARIANT vStatsFilePath;
-    BSTR bstrStatistics = NULL;
+    IXMLDOMElement *root, *categoryElement, *statisticsElement;
+    IXMLDOMNode *categoryNode, *statisticsNode;
+    VARIANT vStatsFilePath, vValue;
+    BSTR bstrStatistics = NULL, bstrCategory = NULL, bstrIndex = NULL,
+        bstrStatistic = NULL, bstrName = NULL, bstrValue = NULL;
+    int i, j;
 
     TRACE("(%p)\n", stats);
 
@@ -132,7 +140,150 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
     if(SUCCEEDED(hr))
         hr = IXMLDOMDocument_createElement(document, bstrStatistics, &root);
 
-    FIXME("writing statistics not fully implemented\n");
+    if(SUCCEEDED(hr))
+    {
+        bstrCategory = SysAllocString(sCategory);
+        if(!bstrCategory)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrIndex = SysAllocString(sIndex);
+        if(!bstrIndex)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrStatistic = SysAllocString(sStatistic);
+        if(!bstrStatistic)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrName = SysAllocString(sName);
+        if(!bstrName)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        bstrValue = SysAllocString(sValue);
+        if(!bstrValue)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if(SUCCEEDED(hr))
+
+    if(SUCCEEDED(hr))
+        for(i=0; i<MAX_CATEGORIES; ++i)
+        {
+            if(lstrlenW(stats->categories[i].sName)==0)
+                continue;
+
+            V_VT(&vValue) = VT_INT;
+            V_INT(&vValue) = NODE_ELEMENT;
+
+            hr = IXMLDOMDocument_createNode(document, vValue, bstrCategory, NULL, &categoryNode);
+
+            if(SUCCEEDED(hr))
+                hr = IXMLDOMNode_QueryInterface(categoryNode, &IID_IXMLDOMElement, (LPVOID*)&categoryElement);
+
+            V_INT(&vValue) = i;
+            if(SUCCEEDED(hr))
+                hr = IXMLDOMElement_setAttribute(categoryElement, bstrIndex, vValue);
+
+            if(SUCCEEDED(hr))
+            {
+                V_VT(&vValue) = VT_BSTR;
+                V_BSTR(&vValue) = SysAllocString(stats->categories[i].sName);
+                if(!V_BSTR(&vValue))
+                    hr = E_OUTOFMEMORY;
+            }
+
+            if(SUCCEEDED(hr))
+            {
+                TRACE("storing category %d: %s\n", i, debugstr_w(V_BSTR(&vValue)));
+                hr = IXMLDOMElement_setAttribute(categoryElement, bstrName, vValue);
+            }
+
+            SysFreeString(V_BSTR(&vValue));
+
+            if(SUCCEEDED(hr))
+            {
+                for(j=0; j<MAX_STATS_PER_CATEGORY; ++j)
+                {
+                    if(lstrlenW(stats->categories[i].stats[j].sName)==0)
+                        continue;
+
+                    V_VT(&vValue) = VT_INT;
+                    V_INT(&vValue) = NODE_ELEMENT;
+
+                    hr = IXMLDOMDocument_createNode(document, vValue, bstrStatistic, NULL, &statisticsNode);
+
+                    if(SUCCEEDED(hr))
+                        hr = IXMLDOMNode_QueryInterface(statisticsNode, &IID_IXMLDOMElement, (LPVOID*)&statisticsElement);
+
+                    V_INT(&vValue) = j;
+                    if(SUCCEEDED(hr))
+                        hr = IXMLDOMElement_setAttribute(statisticsElement, bstrIndex, vValue);
+
+                    if(SUCCEEDED(hr))
+                    {
+                        V_VT(&vValue) = VT_BSTR;
+                        V_BSTR(&vValue) = SysAllocString(stats->categories[i].stats[j].sName);
+                        if(!V_BSTR(&vValue))
+                            hr = E_OUTOFMEMORY;
+                    }
+
+                    if(SUCCEEDED(hr))
+                    {
+                        TRACE("    storing statistic %d: name: %s\n", j, debugstr_w(V_BSTR(&vValue)));
+                        hr = IXMLDOMElement_setAttribute(statisticsElement, bstrName, vValue);
+                    }
+
+                    SysFreeString(V_BSTR(&vValue));
+
+                    if(SUCCEEDED(hr))
+                    {
+                        V_VT(&vValue) = VT_BSTR;
+                        V_BSTR(&vValue) = SysAllocString(stats->categories[i].stats[j].sValue);
+                        if(!V_BSTR(&vValue))
+                            hr = E_OUTOFMEMORY;
+                    }
+
+                    if(SUCCEEDED(hr))
+                    {
+                        TRACE("    storing statistic %d: name: %s\n", j, debugstr_w(V_BSTR(&vValue)));
+                        hr = IXMLDOMElement_setAttribute(statisticsElement, bstrValue, vValue);
+                    }
+
+                    SysFreeString(V_BSTR(&vValue));
+
+                    if(SUCCEEDED(hr))
+                        hr = IXMLDOMElement_appendChild(categoryNode, statisticsNode, &statisticsNode);
+
+                    IXMLDOMElement_Release(statisticsElement);
+                    IXMLDOMNode_Release(statisticsNode);
+                }
+            }
+
+            if(SUCCEEDED(hr))
+                hr = IXMLDOMElement_appendChild(root, categoryNode, &categoryNode);
+
+            IXMLDOMElement_Release(categoryElement);
+            IXMLDOMNode_Release(categoryNode);
+
+            if(FAILED(hr))
+                break;
+        }
+
+    if(SUCCEEDED(hr))
+        hr = IXMLDOMDocument_putref_documentElement(document, root);
+
+    IXMLDOMElement_Release(root);
 
     TRACE("saving game statistics in %s file\n", debugstr_w(stats->sStatsFile));
     if(SUCCEEDED(hr))
@@ -141,8 +292,15 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
     if(SUCCEEDED(hr))
         hr = IXMLDOMDocument_save(document, vStatsFilePath);
 
-    SysFreeString(V_BSTR(&vStatsFilePath));
+    IXMLDOMDocument_Release(document);
+
+    SysFreeString(bstrValue);
+    SysFreeString(bstrName);
+    SysFreeString(bstrStatistic);
+    SysFreeString(bstrIndex);
+    SysFreeString(bstrCategory);
     SysFreeString(bstrStatistics);
+    SysFreeString(V_BSTR(&vStatsFilePath));
     TRACE("ret=0x%x\n", hr);
     return hr;
 }
