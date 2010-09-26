@@ -2921,6 +2921,7 @@ TREEVIEW_Paint(TREEVIEW_INFO *infoPtr, HDC hdc_ref)
     {
         hdc = hdc_ref;
         GetClientRect(infoPtr->hwnd, &rc);
+        TREEVIEW_FillBkgnd(infoPtr, hdc, &rc);
     }
     else
     {

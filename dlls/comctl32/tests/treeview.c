@@ -1265,6 +1265,39 @@ static void test_TVS_SINGLEEXPAND(void)
     DestroyWindow(hTree);
 }
 
+static void test_WM_PAINT(void)
+{
+    HWND hTree;
+    COLORREF clr;
+    LONG ret;
+    RECT rc;
+    HDC hdc;
+
+    hTree = create_treeview_control();
+
+    clr = SendMessageA(hTree, TVM_SETBKCOLOR, 0, RGB(255, 0, 0));
+    ok(clr == -1, "got %d, expected -1\n", clr);
+
+    hdc = GetDC(hMainWnd);
+
+    GetClientRect(hMainWnd, &rc);
+    FillRect(hdc, &rc, GetStockObject(BLACK_BRUSH));
+
+    clr = GetPixel(hdc, 1, 1);
+    ok(clr == RGB(0, 0, 0), "got 0x%x\n", clr);
+
+    ret = SendMessageA(hTree, WM_PAINT, (WPARAM)hdc, 0);
+    ok(ret == 0, "got %d\n", ret);
+
+    clr = GetPixel(hdc, 1, 1);
+    ok(clr == RGB(255, 0, 0) || broken(clr == RGB(0, 0, 0)) /* win98 */,
+        "got 0x%x\n", clr);
+
+    ReleaseDC(hMainWnd, hdc);
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -1330,6 +1363,7 @@ START_TEST(treeview)
     test_treeview_classinfo();
     test_expandnotify();
     test_TVS_SINGLEEXPAND();
+    test_WM_PAINT();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
