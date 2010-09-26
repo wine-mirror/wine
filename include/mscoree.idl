@@ -131,6 +131,8 @@ interface IHostControl : IUnknown
                             [in] IUnknown* appDomainManager);
 }
 
+cpp_quote("DEFINE_GUID(CLSID_CorRuntimeHost, 0xcb2f6723,0xab3a,0x11d2,0x9c,0x40,0x00,0xc0,0x4f,0xa3,0x0a,0x3e);")
+
 [
     uuid(CB2F6722-AB3A-11d2-9C40-00C04FA30A3E),
     version(1.0),

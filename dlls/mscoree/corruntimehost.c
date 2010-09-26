@@ -29,20 +29,24 @@
 
 #include "cor.h"
 #include "mscoree.h"
+#include "mscoree_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
-typedef struct _corruntimehost
+struct RuntimeHost
 {
     const struct ICorRuntimeHostVtbl *lpVtbl;
+    const CLRRuntimeInfo *version;
+    const loaded_mono *mono;
     LONG ref;
-} corruntimehost;
+    BOOL legacy; /* if True, this was created by create_corruntimehost, and Release frees it */
+};
 
-static inline corruntimehost *impl_from_ICorRuntimeHost( ICorRuntimeHost *iface )
+static inline RuntimeHost *impl_from_ICorRuntimeHost( ICorRuntimeHost *iface )
 {
-    return (corruntimehost *)((char*)iface - FIELD_OFFSET(corruntimehost, lpVtbl));
+    return (RuntimeHost *)((char*)iface - FIELD_OFFSET(RuntimeHost, lpVtbl));
 }
 
 /*** IUnknown methods ***/
@@ -50,7 +54,7 @@ static HRESULT WINAPI corruntimehost_QueryInterface(ICorRuntimeHost* iface,
         REFIID riid,
         void **ppvObject)
 {
-    corruntimehost *This = impl_from_ICorRuntimeHost( iface );
+    RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
     TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_ICorRuntimeHost ) ||
@@ -71,19 +75,19 @@ static HRESULT WINAPI corruntimehost_QueryInterface(ICorRuntimeHost* iface,
 
 static ULONG WINAPI corruntimehost_AddRef(ICorRuntimeHost* iface)
 {
-    corruntimehost *This = impl_from_ICorRuntimeHost( iface );
+    RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
     return InterlockedIncrement( &This->ref );
 }
 
 static ULONG WINAPI corruntimehost_Release(ICorRuntimeHost* iface)
 {
-    corruntimehost *This = impl_from_ICorRuntimeHost( iface );
+    RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
     ULONG ref;
 
     ref = InterlockedDecrement( &This->ref );
-    if ( ref == 0 )
+    if ( ref == 0 && This->legacy )
     {
-        HeapFree( GetProcessHeap(), 0, This );
+        RuntimeHost_Destroy(This);
     }
 
     return ref;
@@ -271,18 +275,64 @@ static const struct ICorRuntimeHostVtbl corruntimehost_vtbl =
     corruntimehost_CurrentDomain
 };
 
-IUnknown* create_corruntimehost(void)
+HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
+    const loaded_mono *loaded_mono, RuntimeHost** result)
 {
-    corruntimehost *This;
+    RuntimeHost *This;
 
     This = HeapAlloc( GetProcessHeap(), 0, sizeof *This );
     if ( !This )
-        return NULL;
+        return E_OUTOFMEMORY;
 
     This->lpVtbl = &corruntimehost_vtbl;
     This->ref = 1;
+    This->version = runtime_version;
+    This->mono = loaded_mono;
+    This->legacy = FALSE;
 
-    FIXME("return iface %p\n", This);
+    return S_OK;
+}
 
-    return (IUnknown*) &This->lpVtbl;
+HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv)
+{
+    IUnknown *unk;
+
+    if (IsEqualGUID(clsid, &CLSID_CorRuntimeHost))
+        unk = (IUnknown*)&This->lpVtbl;
+    else
+        unk = NULL;
+
+    if (unk)
+        return IUnknown_QueryInterface(unk, riid, ppv);
+    else
+        FIXME("not implemented for class %s\n", debugstr_guid(clsid));
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+HRESULT RuntimeHost_Destroy(RuntimeHost *This)
+{
+    HeapFree( GetProcessHeap(), 0, This );
+    return S_OK;
+}
+
+IUnknown* create_corruntimehost(void)
+{
+    RuntimeHost *This;
+    IUnknown *result;
+
+    if (FAILED(RuntimeHost_Construct(NULL, NULL, &This)))
+        return NULL;
+
+    This->legacy = TRUE;
+
+    if (FAILED(RuntimeHost_GetInterface(This, &CLSID_CorRuntimeHost, &IID_IUnknown, (void**)&result)))
+    {
+        RuntimeHost_Destroy(This);
+        return NULL;
+    }
+
+    FIXME("return iface %p\n", result);
+
+    return result;
 }

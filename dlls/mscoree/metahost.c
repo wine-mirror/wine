@@ -43,16 +43,6 @@ static const WCHAR net_11_subdir[] = {'1','.','0',0};
 static const WCHAR net_20_subdir[] = {'2','.','0',0};
 static const WCHAR net_40_subdir[] = {'4','.','0',0};
 
-struct CLRRuntimeInfo
-{
-    const struct ICLRRuntimeInfoVtbl *ICLRRuntimeInfo_vtbl;
-    LPCWSTR mono_libdir;
-    DWORD major;
-    DWORD minor;
-    DWORD build;
-    int mono_abi_version;
-};
-
 const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl;
 
 #define NUM_RUNTIMES 3
@@ -74,6 +64,53 @@ static CRITICAL_SECTION_DEBUG runtime_list_cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": runtime_list_cs") }
 };
 static CRITICAL_SECTION runtime_list_cs = { &runtime_list_cs_debug, -1, 0, 0, 0, 0 };
+
+static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
+{
+    /* FIXME: stub */
+    *result = NULL;
+
+    return S_OK;
+}
+
+static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost **result)
+{
+    HRESULT hr = S_OK;
+    loaded_mono *ploaded_mono;
+
+    if (This->loaded_runtime)
+    {
+        *result = This->loaded_runtime;
+        return hr;
+    }
+
+    EnterCriticalSection(&runtime_list_cs);
+
+    if (!This->loaded_runtime)
+        goto end;
+
+    hr = load_mono(This, &ploaded_mono);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_Construct(This, ploaded_mono, &This->loaded_runtime);
+
+end:
+    LeaveCriticalSection(&runtime_list_cs);
+
+    if (SUCCEEDED(hr))
+        *result = This->loaded_runtime;
+
+    return hr;
+}
+
+void unload_all_runtimes(void)
+{
+    int i;
+
+    for (i=0; i<NUM_RUNTIMES; i++)
+        if (runtimes[i].loaded_runtime)
+            RuntimeHost_Destroy(runtimes[i].loaded_runtime);
+}
 
 static HRESULT WINAPI CLRRuntimeInfo_QueryInterface(ICLRRuntimeInfo* iface,
         REFIID riid,
@@ -178,9 +215,18 @@ static HRESULT WINAPI CLRRuntimeInfo_GetProcAddress(ICLRRuntimeInfo* iface,
 static HRESULT WINAPI CLRRuntimeInfo_GetInterface(ICLRRuntimeInfo* iface,
     REFCLSID rclsid, REFIID riid, LPVOID *ppUnk)
 {
-    FIXME("%p %s %s %p\n", iface, debugstr_guid(rclsid), debugstr_guid(riid), ppUnk);
+    struct CLRRuntimeInfo *This = (struct CLRRuntimeInfo*)iface;
+    RuntimeHost *host;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %s %p\n", iface, debugstr_guid(rclsid), debugstr_guid(riid), ppUnk);
+
+    hr = CLRRuntimeInfo_GetRuntimeHost(This, &host);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_GetInterface(host, rclsid, riid, ppUnk);
+
+    return hr;
 }
 
 static HRESULT WINAPI CLRRuntimeInfo_IsLoadable(ICLRRuntimeInfo* iface,
@@ -403,6 +449,9 @@ static void find_runtimes(void)
                 if (GetFileAttributesW(lib_path) != INVALID_FILE_ATTRIBUTES)
                 {
                     runtimes[i].mono_abi_version = abi_version;
+
+                    strcpyW(runtimes[i].mono_path, mono_path);
+                    strcpyW(runtimes[i].mscorlib_path, lib_path);
 
                     any_runtimes_found = TRUE;
                 }
