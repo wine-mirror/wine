@@ -110,17 +110,22 @@ static CRITICAL_SECTION IconCrst = { &critsect_debug, -1, 0, 0, 0, 0 };
  * User objects management
  */
 
-struct cursoricon_object
+struct cursoricon_frame
 {
-    struct user_object obj;      /* object header */
-    ULONG_PTR          param;    /* opaque param used by 16-bit code */
     HBITMAP            color;    /* color bitmap */
     HBITMAP            alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
     HBITMAP            mask;     /* mask bitmap (followed by color for 1-bpp icons) */
-    BOOL               is_icon;  /* whether icon or cursor */
-    UINT               width;
-    UINT               height;
-    POINT              hotspot;
+};
+
+struct cursoricon_object
+{
+    struct user_object      obj;      /* object header */
+    ULONG_PTR               param;    /* opaque param used by 16-bit code */
+    BOOL                    is_icon;  /* whether icon or cursor */
+    UINT                    width;
+    UINT                    height;
+    POINT                   hotspot;
+    struct cursoricon_frame frame;    /* icon frame information */
 };
 
 static HICON alloc_icon_handle(void)
@@ -128,9 +133,9 @@ static HICON alloc_icon_handle(void)
     struct cursoricon_object *obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) );
     if (!obj) return 0;
     obj->param = 0;
-    obj->color = 0;
-    obj->alpha = 0;
-    obj->mask  = 0;
+    obj->frame.color = 0;
+    obj->frame.mask  = 0;
+    obj->frame.alpha  = 0;
     return alloc_user_handle( &obj->obj, USER_ICON );
 }
 
@@ -158,9 +163,9 @@ static BOOL free_icon_handle( HICON handle )
     else if (obj)
     {
         ULONG_PTR param = obj->param;
-        if (obj->color) DeleteObject( obj->color );
-        if (obj->alpha) DeleteObject( obj->alpha );
-        DeleteObject( obj->mask );
+        if (obj->frame.alpha) DeleteObject( obj->frame.alpha );
+        if (obj->frame.color) DeleteObject( obj->frame.color );
+        DeleteObject( obj->frame.mask );
         HeapFree( GetProcessHeap(), 0, obj );
         if (wow_handlers.free_icon_param && param) wow_handlers.free_icon_param( param );
         USER_Driver->pDestroyCursorIcon( handle );
@@ -921,13 +926,13 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
     {
         struct cursoricon_object *info = get_icon_ptr( hObj );
 
-        info->color   = color;
-        info->mask    = mask;
-        info->alpha   = alpha;
         info->is_icon = bIcon;
         info->hotspot = hotspot;
         info->width   = width;
         info->height  = height;
+        info->frame.color = color;
+        info->frame.mask  = mask;
+        info->frame.alpha = alpha;
         release_icon_ptr( hObj, info );
         USER_Driver->pCreateCursorIcon( hObj );
     }
@@ -1532,13 +1537,13 @@ HICON WINAPI CopyIcon( HICON hIcon )
     if ((hNew = alloc_icon_handle()))
     {
         ptrNew = get_icon_ptr( hNew );
-        ptrNew->color   = copy_bitmap( ptrOld->color );
-        ptrNew->alpha   = copy_bitmap( ptrOld->alpha );
-        ptrNew->mask    = copy_bitmap( ptrOld->mask );
         ptrNew->is_icon = ptrOld->is_icon;
         ptrNew->width   = ptrOld->width;
         ptrNew->height  = ptrOld->height;
         ptrNew->hotspot = ptrOld->hotspot;
+        ptrNew->frame.mask  = copy_bitmap( ptrOld->frame.mask );
+        ptrNew->frame.color = copy_bitmap( ptrOld->frame.color );
+        ptrNew->frame.alpha = copy_bitmap( ptrOld->frame.alpha );
         release_icon_ptr( hNew, ptrNew );
     }
     release_icon_ptr( hIcon, ptrOld );
@@ -1824,8 +1829,8 @@ BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
     iconinfo->fIcon    = ptr->is_icon;
     iconinfo->xHotspot = ptr->hotspot.x;
     iconinfo->yHotspot = ptr->hotspot.y;
-    iconinfo->hbmColor = copy_bitmap( ptr->color );
-    iconinfo->hbmMask  = copy_bitmap( ptr->mask );
+    iconinfo->hbmColor = copy_bitmap( ptr->frame.color );
+    iconinfo->hbmMask  = copy_bitmap( ptr->frame.mask );
     release_icon_ptr( hIcon, ptr );
 
     return TRUE;
@@ -1935,12 +1940,12 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     {
         struct cursoricon_object *info = get_icon_ptr( hObj );
 
-        info->color   = color;
-        info->mask    = mask;
-        info->alpha   = create_alpha_bitmap( iconinfo->hbmColor, mask, NULL, NULL );
         info->is_icon = iconinfo->fIcon;
         info->width   = width;
         info->height  = height;
+        info->frame.color = color;
+        info->frame.mask  = mask;
+        info->frame.alpha = create_alpha_bitmap( iconinfo->hbmColor, mask, NULL, NULL );
         if (info->is_icon)
         {
             info->hotspot.x = width / 2;
@@ -2053,7 +2058,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     oldFg = SetTextColor( hdc, RGB(0,0,0) );
     oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
-    if (ptr->alpha && (flags & DI_IMAGE))
+    if (ptr->frame.alpha && (flags & DI_IMAGE))
     {
         BOOL is_mono = FALSE;
 
@@ -2066,7 +2071,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
         if (!is_mono)
         {
             BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-            SelectObject( hMemDC, ptr->alpha );
+            SelectObject( hMemDC, ptr->frame.alpha );
             if (GdiAlphaBlend( hdc_dest, x, y, cxWidth, cyWidth, hMemDC,
                                0, 0, ptr->width, ptr->height, pixelblend )) goto done;
         }
@@ -2074,24 +2079,24 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 
     if (flags & DI_MASK)
     {
-        SelectObject( hMemDC, ptr->mask );
+        SelectObject( hMemDC, ptr->frame.mask );
         StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
                     hMemDC, 0, 0, ptr->width, ptr->height, SRCAND );
     }
 
     if (flags & DI_IMAGE)
     {
-        if (ptr->color)
+        if (ptr->frame.color)
         {
             DWORD rop = (flags & DI_MASK) ? SRCINVERT : SRCCOPY;
-            SelectObject( hMemDC, ptr->color );
+            SelectObject( hMemDC, ptr->frame.color );
             StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
                         hMemDC, 0, 0, ptr->width, ptr->height, rop );
         }
         else
         {
             DWORD rop = (flags & DI_MASK) ? SRCINVERT : SRCCOPY;
-            SelectObject( hMemDC, ptr->mask );
+            SelectObject( hMemDC, ptr->frame.mask );
             StretchBlt( hdc_dest, x, y, cxWidth, cyWidth,
                         hMemDC, 0, ptr->height, ptr->width, ptr->height, rop );
         }
