@@ -292,39 +292,39 @@ static void test_gamestatisticsmgr( void )
 
         /* check what happen if any string is NULL */
         hr = IGameStatistics_SetStatistic(gs, 0, 0, NULL, sValue00);
-        todo_wine ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
 
         hr = IGameStatistics_SetStatistic(gs, 0, 0, sStatistic00, NULL);
-        todo_wine ok(hr == S_OK, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_OK, "setting statistic returned unexpected value: 0x%x)\n", hr);
 
         /* check what happen if any string is too long */
         sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxNameLength+2));
         memset(sTooLongString, 'a', sizeof(WCHAR)*(uMaxNameLength+1));
         sTooLongString[uMaxNameLength+1]=0;
         hr = IGameStatistics_SetStatistic(gs, 0, 0, sTooLongString, sValue00);
-        todo_wine ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
         CoTaskMemFree(sTooLongString);
 
         sTooLongString = CoTaskMemAlloc(sizeof(WCHAR)*(uMaxValueLength+2));
         memset(sTooLongString, 'a', sizeof(WCHAR)*(uMaxValueLength+1));
         sTooLongString[uMaxValueLength+1]=0;
         hr = IGameStatistics_SetStatistic(gs, 0, 0, sStatistic00, sTooLongString);
-        todo_wine ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == S_FALSE, "setting statistic returned unexpected value: 0x%x)\n", hr);
         CoTaskMemFree(sTooLongString);
 
         /* check what happen on too big index of category or statistic */
         hr = IGameStatistics_SetStatistic(gs, wMaxCategories, 0, sStatistic00, sValue00);
-        todo_wine ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
 
         hr = IGameStatistics_SetStatistic(gs, 0, wMaxStatsPerCategory, sStatistic00, sValue00);
-        todo_wine ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
+        ok(hr == E_INVALIDARG, "setting statistic returned unexpected value: 0x%x)\n", hr);
 
-        todo_wine ok(IGameStatistics_SetStatistic(gs, 0, 0, sStatistic00, sValue00)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic00), wine_dbgstr_w(sValue00));
-        todo_wine ok(IGameStatistics_SetStatistic(gs, 0, 1, sStatistic01, sValue01)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic01), wine_dbgstr_w(sValue01));
-        todo_wine ok(IGameStatistics_SetStatistic(gs, 1, 0, sStatistic10, sValue10)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic10), wine_dbgstr_w(sValue10));
-        todo_wine ok(IGameStatistics_SetStatistic(gs, 1, 1, sStatistic11, sValue11)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic11), wine_dbgstr_w(sValue11));
-        todo_wine ok(IGameStatistics_SetStatistic(gs, 2, 0, sStatistic20, sValue20)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic20), wine_dbgstr_w(sValue20));
-        todo_wine ok(IGameStatistics_SetStatistic(gs, 2, 1, sStatistic21, sValue21)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic21), wine_dbgstr_w(sValue21));
+        ok(IGameStatistics_SetStatistic(gs, 0, 0, sStatistic00, sValue00)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic00), wine_dbgstr_w(sValue00));
+        ok(IGameStatistics_SetStatistic(gs, 0, 1, sStatistic01, sValue01)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic01), wine_dbgstr_w(sValue01));
+        ok(IGameStatistics_SetStatistic(gs, 1, 0, sStatistic10, sValue10)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic10), wine_dbgstr_w(sValue10));
+        ok(IGameStatistics_SetStatistic(gs, 1, 1, sStatistic11, sValue11)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic11), wine_dbgstr_w(sValue11));
+        ok(IGameStatistics_SetStatistic(gs, 2, 0, sStatistic20, sValue20)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic20), wine_dbgstr_w(sValue20));
+        ok(IGameStatistics_SetStatistic(gs, 2, 1, sStatistic21, sValue21)==S_OK, "setting statistic failed: name=%s, value=%s\n", wine_dbgstr_w(sStatistic21), wine_dbgstr_w(sValue21));
 
         ok(_isFileExists(lpStatisticsFile) == FALSE, "statistics file %s already exists\n", wine_dbgstr_w(lpStatisticsFile));
 

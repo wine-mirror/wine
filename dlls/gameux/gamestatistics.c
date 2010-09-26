@@ -251,8 +251,48 @@ static HRESULT WINAPI GameStatisticsImpl_SetStatistic(
     LPCWSTR name,
     LPCWSTR value)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    DWORD dwNameLen, dwValueLen;
+    GameStatisticsImpl *This = impl_from_IGameStatistics(iface);
+
+    TRACE("(%p, %d, %d, %s, %s)\n", This, categoryIndex, statIndex,
+          debugstr_w(name), debugstr_w(value));
+
+    if(!name)
+        return S_FALSE;
+
+    if(categoryIndex >= MAX_CATEGORIES || statIndex >= MAX_STATS_PER_CATEGORY)
+        return E_INVALIDARG;
+
+    dwNameLen = lstrlenW(name);
+
+    if(dwNameLen > MAX_NAME_LENGTH)
+    {
+        hr = S_FALSE;
+        dwNameLen = MAX_NAME_LENGTH;
+    }
+
+    lstrcpynW(This->stats.categories[categoryIndex].stats[statIndex].sName,
+              name, dwNameLen+1);
+
+    if(value)
+    {
+        dwValueLen = lstrlenW(value);
+
+        if(dwValueLen > MAX_VALUE_LENGTH)
+        {
+            hr = S_FALSE;
+            dwValueLen = MAX_VALUE_LENGTH;
+        }
+
+        lstrcpynW(This->stats.categories[categoryIndex].stats[statIndex].sValue,
+                  value, dwValueLen+1);
+    }
+    else
+        /* Windows allows to pass NULL as value */
+        This->stats.categories[categoryIndex].stats[statIndex].sValue[0] = 0;
+
+    return hr;
 }
 
 static HRESULT WINAPI GameStatisticsImpl_Save(
