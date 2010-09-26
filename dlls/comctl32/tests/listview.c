@@ -3052,7 +3052,7 @@ static void test_hittest(void)
     test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE);
     /* subitem returned with -1 item too */
     x = pos.x + 150;
-    y = -10;
+    y = -1;
     test_lvm_subitemhittest(hwnd, x, y, -1, 1, LVHT_NOWHERE, FALSE, FALSE, FALSE);
     /* parent client area is 100x100 by default */
     MoveWindow(hwnd, 0, 0, 300, 100, FALSE);
