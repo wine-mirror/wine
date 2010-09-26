@@ -235,7 +235,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
         return hr;
     }
 
-    swapchain = IWineD3DSwapChain_GetParent(wined3d_swapchain);
+    *swapchain = IWineD3DSwapChain_GetParent(wined3d_swapchain);
     IUnknown_Release(wined3d_swapchain);
 
     /* FIXME? The swapchain is created with refcount 1 by the wined3d device,
