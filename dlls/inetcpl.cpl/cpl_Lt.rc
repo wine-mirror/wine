@@ -31,3 +31,18 @@ BEGIN
     IDS_CPL_NAME        "Interneto nuostatos"
     IDS_CPL_INFO        "Konfigūruokite Wine interneto naršyklės ir susijusias nuostatas"
 END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Turinys"
+BEGIN
+
+    GROUPBOX    " Liudijimai ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Liudijimai yra naudojami jūsų tapatumo nustatymui ir liudijimo įstaigų bei publikuotojų tapatumui nustatyti.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Liudijimai...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON	"Publikuotojai... ", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
+END
