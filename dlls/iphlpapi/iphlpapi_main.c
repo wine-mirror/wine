@@ -813,19 +813,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
                 PIP_ADAPTER_GATEWAY_ADDRESS gw;
                 PSOCKADDR_IN sin;
 
-                for (gw = aa->FirstGatewayAddress; gw && gw->Next;
-                     gw = gw->Next)
-                    ;
-                if (!gw)
-                {
-                    gw = (PIP_ADAPTER_GATEWAY_ADDRESS)ptr;
-                    aa->FirstGatewayAddress = gw;
-                }
-                else
-                {
-                    gw->Next = (PIP_ADAPTER_GATEWAY_ADDRESS)ptr;
-                    gw = gw->Next;
-                }
+                gw = (PIP_ADAPTER_GATEWAY_ADDRESS)ptr;
+                aa->FirstGatewayAddress = gw;
+
                 gw->u.s.Length = sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
                 ptr += sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
                 sin = (PSOCKADDR_IN)ptr;
@@ -835,6 +825,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
                        sizeof(DWORD));
                 gw->Address.lpSockaddr = (LPSOCKADDR)sin;
                 gw->Address.iSockaddrLength = sizeof(SOCKADDR_IN);
+                gw->Next = NULL;
                 ptr += sizeof(SOCKADDR_IN);
             }
         }
