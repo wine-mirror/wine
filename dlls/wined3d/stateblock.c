@@ -895,13 +895,15 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     return WINED3D_OK;
 }
 
-static void apply_lights(IWineD3DDevice *device, const IWineD3DStateBlockImpl *This)
+static void apply_lights(IWineD3DDevice *device, const struct wined3d_state *state)
 {
     UINT i;
-    for(i = 0; i < LIGHTMAP_SIZE; i++) {
+
+    for (i = 0; i < LIGHTMAP_SIZE; ++i)
+    {
         struct list *e;
 
-        LIST_FOR_EACH(e, &This->state.light_map[i])
+        LIST_FOR_EACH(e, &state->light_map[i])
         {
             const struct wined3d_light_info *light = LIST_ENTRY(e, struct wined3d_light_info, entry);
 
@@ -942,7 +944,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
                 This->state.vs_consts_b + This->contained_vs_consts_b[i], 1);
     }
 
-    apply_lights(device, This);
+    apply_lights(device, &This->state);
 
     if (This->changed.pixelShader)
         IWineD3DDevice_SetPixelShader(device, (IWineD3DPixelShader *)This->state.pixel_shader);
