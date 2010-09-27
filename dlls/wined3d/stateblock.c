@@ -600,22 +600,24 @@ static void record_lights(IWineD3DStateBlockImpl *This, const struct wined3d_sta
 static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 {
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    IWineD3DStateBlockImpl *targetStateBlock = This->device->stateBlock;
+    const struct wined3d_state *src_state = &This->device->stateBlock->state;
     unsigned int i;
     DWORD map;
 
-    TRACE("(%p) : Updating state block %p ------------------v\n", targetStateBlock, This);
+    TRACE("iface %p.\n", iface);
 
-    if (This->changed.vertexShader && This->state.vertex_shader != targetStateBlock->state.vertex_shader)
+    TRACE("Capturing state %p.\n", src_state);
+
+    if (This->changed.vertexShader && This->state.vertex_shader != src_state->vertex_shader)
     {
         TRACE("Updating vertex shader from %p to %p\n",
-                This->state.vertex_shader, targetStateBlock->state.vertex_shader);
+                This->state.vertex_shader, src_state->vertex_shader);
 
-        if (targetStateBlock->state.vertex_shader)
-            IWineD3DVertexShader_AddRef((IWineD3DVertexShader *)targetStateBlock->state.vertex_shader);
+        if (src_state->vertex_shader)
+            IWineD3DVertexShader_AddRef((IWineD3DVertexShader *)src_state->vertex_shader);
         if (This->state.vertex_shader)
             IWineD3DVertexShader_Release((IWineD3DVertexShader *)This->state.vertex_shader);
-        This->state.vertex_shader = targetStateBlock->state.vertex_shader;
+        This->state.vertex_shader = src_state->vertex_shader;
     }
 
     /* Vertex Shader Float Constants */
@@ -623,17 +625,16 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         unsigned int idx = This->contained_vs_consts_f[i];
 
-        TRACE("Setting %p from %p %u to {%.8e, %.8e, %.8e, %.8e}.\n",
-                This, targetStateBlock, idx,
-                targetStateBlock->state.vs_consts_f[idx * 4 + 0],
-                targetStateBlock->state.vs_consts_f[idx * 4 + 1],
-                targetStateBlock->state.vs_consts_f[idx * 4 + 2],
-                targetStateBlock->state.vs_consts_f[idx * 4 + 3]);
+        TRACE("Setting vs_consts_f[%u] to {%.8e, %.8e, %.8e, %.8e}.\n", idx,
+                src_state->vs_consts_f[idx * 4 + 0],
+                src_state->vs_consts_f[idx * 4 + 1],
+                src_state->vs_consts_f[idx * 4 + 2],
+                src_state->vs_consts_f[idx * 4 + 3]);
 
-        This->state.vs_consts_f[idx * 4 + 0] = targetStateBlock->state.vs_consts_f[idx * 4 + 0];
-        This->state.vs_consts_f[idx * 4 + 1] = targetStateBlock->state.vs_consts_f[idx * 4 + 1];
-        This->state.vs_consts_f[idx * 4 + 2] = targetStateBlock->state.vs_consts_f[idx * 4 + 2];
-        This->state.vs_consts_f[idx * 4 + 3] = targetStateBlock->state.vs_consts_f[idx * 4 + 3];
+        This->state.vs_consts_f[idx * 4 + 0] = src_state->vs_consts_f[idx * 4 + 0];
+        This->state.vs_consts_f[idx * 4 + 1] = src_state->vs_consts_f[idx * 4 + 1];
+        This->state.vs_consts_f[idx * 4 + 2] = src_state->vs_consts_f[idx * 4 + 2];
+        This->state.vs_consts_f[idx * 4 + 3] = src_state->vs_consts_f[idx * 4 + 3];
     }
 
     /* Vertex Shader Integer Constants */
@@ -641,17 +642,16 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         unsigned int idx = This->contained_vs_consts_i[i];
 
-        TRACE("Setting %p from %p %u to {%d, %d, %d, %d}.\n",
-                This, targetStateBlock, idx,
-                targetStateBlock->state.vs_consts_i[idx * 4 + 0],
-                targetStateBlock->state.vs_consts_i[idx * 4 + 1],
-                targetStateBlock->state.vs_consts_i[idx * 4 + 2],
-                targetStateBlock->state.vs_consts_i[idx * 4 + 3]);
+        TRACE("Setting vs_consts[%u] to {%d, %d, %d, %d}.\n", idx,
+                src_state->vs_consts_i[idx * 4 + 0],
+                src_state->vs_consts_i[idx * 4 + 1],
+                src_state->vs_consts_i[idx * 4 + 2],
+                src_state->vs_consts_i[idx * 4 + 3]);
 
-        This->state.vs_consts_i[idx * 4 + 0] = targetStateBlock->state.vs_consts_i[idx * 4 + 0];
-        This->state.vs_consts_i[idx * 4 + 1] = targetStateBlock->state.vs_consts_i[idx * 4 + 1];
-        This->state.vs_consts_i[idx * 4 + 2] = targetStateBlock->state.vs_consts_i[idx * 4 + 2];
-        This->state.vs_consts_i[idx * 4 + 3] = targetStateBlock->state.vs_consts_i[idx * 4 + 3];
+        This->state.vs_consts_i[idx * 4 + 0] = src_state->vs_consts_i[idx * 4 + 0];
+        This->state.vs_consts_i[idx * 4 + 1] = src_state->vs_consts_i[idx * 4 + 1];
+        This->state.vs_consts_i[idx * 4 + 2] = src_state->vs_consts_i[idx * 4 + 2];
+        This->state.vs_consts_i[idx * 4 + 3] = src_state->vs_consts_i[idx * 4 + 3];
     }
 
     /* Vertex Shader Boolean Constants */
@@ -659,11 +659,10 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         unsigned int idx = This->contained_vs_consts_b[i];
 
-        TRACE("Setting %p from %p %u to %s.\n",
-                This, targetStateBlock, idx,
-                targetStateBlock->state.vs_consts_b[idx] ? "TRUE" : "FALSE");
+        TRACE("Setting vs_consts_b[%u] to %s.\n",
+                idx, src_state->vs_consts_b[idx] ? "TRUE" : "FALSE");
 
-        This->state.vs_consts_b[idx] = targetStateBlock->state.vs_consts_b[idx];
+        This->state.vs_consts_b[idx] = src_state->vs_consts_b[idx];
     }
 
     /* Pixel Shader Float Constants */
@@ -671,44 +670,42 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         unsigned int idx = This->contained_ps_consts_f[i];
 
-        TRACE("Setting %p from %p %u to {%.8e, %.8e, %.8e, %.8e}.\n",
-                This, targetStateBlock, idx,
-                targetStateBlock->state.ps_consts_f[idx * 4 + 0],
-                targetStateBlock->state.ps_consts_f[idx * 4 + 1],
-                targetStateBlock->state.ps_consts_f[idx * 4 + 2],
-                targetStateBlock->state.ps_consts_f[idx * 4 + 3]);
+        TRACE("Setting ps_consts_f[%u] to {%.8e, %.8e, %.8e, %.8e}.\n", idx,
+                src_state->ps_consts_f[idx * 4 + 0],
+                src_state->ps_consts_f[idx * 4 + 1],
+                src_state->ps_consts_f[idx * 4 + 2],
+                src_state->ps_consts_f[idx * 4 + 3]);
 
-        This->state.ps_consts_f[idx * 4 + 0] = targetStateBlock->state.ps_consts_f[idx * 4 + 0];
-        This->state.ps_consts_f[idx * 4 + 1] = targetStateBlock->state.ps_consts_f[idx * 4 + 1];
-        This->state.ps_consts_f[idx * 4 + 2] = targetStateBlock->state.ps_consts_f[idx * 4 + 2];
-        This->state.ps_consts_f[idx * 4 + 3] = targetStateBlock->state.ps_consts_f[idx * 4 + 3];
+        This->state.ps_consts_f[idx * 4 + 0] = src_state->ps_consts_f[idx * 4 + 0];
+        This->state.ps_consts_f[idx * 4 + 1] = src_state->ps_consts_f[idx * 4 + 1];
+        This->state.ps_consts_f[idx * 4 + 2] = src_state->ps_consts_f[idx * 4 + 2];
+        This->state.ps_consts_f[idx * 4 + 3] = src_state->ps_consts_f[idx * 4 + 3];
     }
 
     /* Pixel Shader Integer Constants */
     for (i = 0; i < This->num_contained_ps_consts_i; ++i)
     {
         unsigned int idx = This->contained_ps_consts_i[i];
-        TRACE("Setting %p from %p %u to {%d, %d, %d, %d}.\n",
-                This, targetStateBlock, idx,
-                targetStateBlock->state.ps_consts_i[idx * 4 + 0],
-                targetStateBlock->state.ps_consts_i[idx * 4 + 1],
-                targetStateBlock->state.ps_consts_i[idx * 4 + 2],
-                targetStateBlock->state.ps_consts_i[idx * 4 + 3]);
+        TRACE("Setting ps_consts_i[%u] to {%d, %d, %d, %d}.\n", idx,
+                src_state->ps_consts_i[idx * 4 + 0],
+                src_state->ps_consts_i[idx * 4 + 1],
+                src_state->ps_consts_i[idx * 4 + 2],
+                src_state->ps_consts_i[idx * 4 + 3]);
 
-        This->state.ps_consts_i[idx * 4 + 0] = targetStateBlock->state.ps_consts_i[idx * 4 + 0];
-        This->state.ps_consts_i[idx * 4 + 1] = targetStateBlock->state.ps_consts_i[idx * 4 + 1];
-        This->state.ps_consts_i[idx * 4 + 2] = targetStateBlock->state.ps_consts_i[idx * 4 + 2];
-        This->state.ps_consts_i[idx * 4 + 3] = targetStateBlock->state.ps_consts_i[idx * 4 + 3];
+        This->state.ps_consts_i[idx * 4 + 0] = src_state->ps_consts_i[idx * 4 + 0];
+        This->state.ps_consts_i[idx * 4 + 1] = src_state->ps_consts_i[idx * 4 + 1];
+        This->state.ps_consts_i[idx * 4 + 2] = src_state->ps_consts_i[idx * 4 + 2];
+        This->state.ps_consts_i[idx * 4 + 3] = src_state->ps_consts_i[idx * 4 + 3];
     }
 
     /* Pixel Shader Boolean Constants */
     for (i = 0; i < This->num_contained_ps_consts_b; ++i)
     {
         unsigned int idx = This->contained_ps_consts_b[i];
-        TRACE("Setting %p from %p %u to %s.\n", This, targetStateBlock, idx,
-                targetStateBlock->state.ps_consts_b[idx] ? "TRUE" : "FALSE");
+        TRACE("Setting ps_consts_b[%u] to %s.\n",
+                idx, src_state->ps_consts_b[idx] ? "TRUE" : "FALSE");
 
-        This->state.ps_consts_b[idx] = targetStateBlock->state.ps_consts_b[idx];
+        This->state.ps_consts_b[idx] = src_state->ps_consts_b[idx];
     }
 
     /* Others + Render & Texture */
@@ -718,63 +715,61 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
 
         TRACE("Updating transform %#x.\n", transform);
 
-        This->state.transforms[transform] = targetStateBlock->state.transforms[transform];
+        This->state.transforms[transform] = src_state->transforms[transform];
     }
 
-    if (This->changed.primitive_type) This->state.gl_primitive_type = targetStateBlock->state.gl_primitive_type;
+    if (This->changed.primitive_type)
+        This->state.gl_primitive_type = src_state->gl_primitive_type;
 
     if (This->changed.indices
-            && ((This->state.index_buffer != targetStateBlock->state.index_buffer)
-                || (This->state.base_vertex_index != targetStateBlock->state.base_vertex_index)
-                || (This->state.index_format != targetStateBlock->state.index_format)))
+            && ((This->state.index_buffer != src_state->index_buffer)
+                || (This->state.base_vertex_index != src_state->base_vertex_index)
+                || (This->state.index_format != src_state->index_format)))
     {
-        TRACE("Updating index buffer to %p, baseVertexIndex to %d.\n",
-                targetStateBlock->state.index_buffer, targetStateBlock->state.base_vertex_index);
+        TRACE("Updating index buffer to %p, base vertex index to %d.\n",
+                src_state->index_buffer, src_state->base_vertex_index);
 
-        if (targetStateBlock->state.index_buffer)
-            IWineD3DBuffer_AddRef((IWineD3DBuffer *)targetStateBlock->state.index_buffer);
+        if (src_state->index_buffer)
+            IWineD3DBuffer_AddRef((IWineD3DBuffer *)src_state->index_buffer);
         if (This->state.index_buffer)
             IWineD3DBuffer_Release((IWineD3DBuffer *)This->state.index_buffer);
-        This->state.index_buffer = targetStateBlock->state.index_buffer;
-        This->state.base_vertex_index = targetStateBlock->state.base_vertex_index;
-        This->state.index_format = targetStateBlock->state.index_format;
+        This->state.index_buffer = src_state->index_buffer;
+        This->state.base_vertex_index = src_state->base_vertex_index;
+        This->state.index_format = src_state->index_format;
     }
 
-    if (This->changed.vertexDecl && This->state.vertex_declaration != targetStateBlock->state.vertex_declaration)
+    if (This->changed.vertexDecl && This->state.vertex_declaration != src_state->vertex_declaration)
     {
         TRACE("Updating vertex declaration from %p to %p.\n",
-                This->state.vertex_declaration, targetStateBlock->state.vertex_declaration);
+                This->state.vertex_declaration, src_state->vertex_declaration);
 
-        if (targetStateBlock->state.vertex_declaration)
-                IWineD3DVertexDeclaration_AddRef(
-                        (IWineD3DVertexDeclaration *)targetStateBlock->state.vertex_declaration);
+        if (src_state->vertex_declaration)
+                IWineD3DVertexDeclaration_AddRef((IWineD3DVertexDeclaration *)src_state->vertex_declaration);
         if (This->state.vertex_declaration)
                 IWineD3DVertexDeclaration_Release((IWineD3DVertexDeclaration *)This->state.vertex_declaration);
-        This->state.vertex_declaration = targetStateBlock->state.vertex_declaration;
+        This->state.vertex_declaration = src_state->vertex_declaration;
     }
 
-    if (This->changed.material && memcmp(&targetStateBlock->state.material,
-            &This->state.material, sizeof(This->state.material)))
+    if (This->changed.material && memcmp(&src_state->material, &This->state.material, sizeof(This->state.material)))
     {
         TRACE("Updating material.\n");
 
-        This->state.material = targetStateBlock->state.material;
+        This->state.material = src_state->material;
     }
 
-    if (This->changed.viewport && memcmp(&targetStateBlock->state.viewport,
-            &This->state.viewport, sizeof(This->state.viewport)))
+    if (This->changed.viewport && memcmp(&src_state->viewport, &This->state.viewport, sizeof(This->state.viewport)))
     {
         TRACE("Updating viewport.\n");
 
-        This->state.viewport = targetStateBlock->state.viewport;
+        This->state.viewport = src_state->viewport;
     }
 
-    if (This->changed.scissorRect && memcmp(&targetStateBlock->state.scissor_rect,
+    if (This->changed.scissorRect && memcmp(&src_state->scissor_rect,
             &This->state.scissor_rect, sizeof(This->state.scissor_rect)))
     {
         TRACE("Updating scissor rect.\n");
 
-        This->state.scissor_rect = targetStateBlock->state.scissor_rect;
+        This->state.scissor_rect = src_state->scissor_rect;
     }
 
     map = This->changed.streamSource;
@@ -782,19 +777,19 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (This->state.streams[i].stride != targetStateBlock->state.streams[i].stride
-                || This->state.streams[i].buffer != targetStateBlock->state.streams[i].buffer)
+        if (This->state.streams[i].stride != src_state->streams[i].stride
+                || This->state.streams[i].buffer != src_state->streams[i].buffer)
         {
             TRACE("Updating stream source %u to %p, stride to %u.\n",
-                    i, targetStateBlock->state.streams[i].buffer,
-                    targetStateBlock->state.streams[i].stride);
+                    i, src_state->streams[i].buffer,
+                    src_state->streams[i].stride);
 
-            This->state.streams[i].stride = targetStateBlock->state.streams[i].stride;
-            if (targetStateBlock->state.streams[i].buffer)
-                    IWineD3DBuffer_AddRef((IWineD3DBuffer *)targetStateBlock->state.streams[i].buffer);
+            This->state.streams[i].stride = src_state->streams[i].stride;
+            if (src_state->streams[i].buffer)
+                    IWineD3DBuffer_AddRef((IWineD3DBuffer *)src_state->streams[i].buffer);
             if (This->state.streams[i].buffer)
                     IWineD3DBuffer_Release((IWineD3DBuffer *)This->state.streams[i].buffer);
-            This->state.streams[i].buffer = targetStateBlock->state.streams[i].buffer;
+            This->state.streams[i].buffer = src_state->streams[i].buffer;
         }
     }
 
@@ -803,14 +798,14 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (This->state.streams[i].frequency != targetStateBlock->state.streams[i].frequency
-                || This->state.streams[i].flags != targetStateBlock->state.streams[i].flags)
+        if (This->state.streams[i].frequency != src_state->streams[i].frequency
+                || This->state.streams[i].flags != src_state->streams[i].flags)
         {
             TRACE("Updating stream frequency %u to %u flags to %#x.\n",
-                    i, targetStateBlock->state.streams[i].frequency, targetStateBlock->state.streams[i].flags);
+                    i, src_state->streams[i].frequency, src_state->streams[i].flags);
 
-            This->state.streams[i].frequency = targetStateBlock->state.streams[i].frequency;
-            This->state.streams[i].flags = targetStateBlock->state.streams[i].flags;
+            This->state.streams[i].frequency = src_state->streams[i].frequency;
+            This->state.streams[i].flags = src_state->streams[i].flags;
         }
     }
 
@@ -819,12 +814,10 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         if (!(map & 1)) continue;
 
-        if (memcmp(targetStateBlock->state.clip_planes[i],
-                This->state.clip_planes[i], sizeof(*This->state.clip_planes)))
+        if (memcmp(src_state->clip_planes[i], This->state.clip_planes[i], sizeof(*This->state.clip_planes)))
         {
             TRACE("Updating clipplane %u.\n", i);
-            memcpy(This->state.clip_planes[i],
-                    targetStateBlock->state.clip_planes[i], sizeof(*This->state.clip_planes));
+            memcpy(This->state.clip_planes[i], src_state->clip_planes[i], sizeof(*This->state.clip_planes));
         }
     }
 
@@ -833,9 +826,9 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     {
         WINED3DRENDERSTATETYPE rs = This->contained_render_states[i];
 
-        TRACE("Updating render state %#x to %u.\n", rs, targetStateBlock->state.render_states[rs]);
+        TRACE("Updating render state %#x to %u.\n", rs, src_state->render_states[rs]);
 
-        This->state.render_states[rs] = targetStateBlock->state.render_states[rs];
+        This->state.render_states[rs] = src_state->render_states[rs];
     }
 
     /* Texture states */
@@ -845,10 +838,9 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         DWORD state = This->contained_tss_states[i].state;
 
         TRACE("Updating texturestage state %u, %u to %#x (was %#x).\n", stage, state,
-                targetStateBlock->state.texture_states[stage][state],
-                This->state.texture_states[stage][state]);
+                src_state->texture_states[stage][state], This->state.texture_states[stage][state]);
 
-        This->state.texture_states[stage][state] = targetStateBlock->state.texture_states[stage][state];
+        This->state.texture_states[stage][state] = src_state->texture_states[stage][state];
     }
 
     /* Samplers */
@@ -858,13 +850,13 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         if (!(map & 1)) continue;
 
         TRACE("Updating texture %u to %p (was %p).\n",
-                i, targetStateBlock->state.textures[i], This->state.textures[i]);
+                i, src_state->textures[i], This->state.textures[i]);
 
-        if (targetStateBlock->state.textures[i])
-            IWineD3DBaseTexture_AddRef((IWineD3DBaseTexture *)targetStateBlock->state.textures[i]);
+        if (src_state->textures[i])
+            IWineD3DBaseTexture_AddRef((IWineD3DBaseTexture *)src_state->textures[i]);
         if (This->state.textures[i])
             IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)This->state.textures[i]);
-        This->state.textures[i] = targetStateBlock->state.textures[i];
+        This->state.textures[i] = src_state->textures[i];
     }
 
     for (i = 0; i < This->num_contained_sampler_states; ++i)
@@ -873,24 +865,23 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         DWORD state = This->contained_sampler_states[i].state;
 
         TRACE("Updating sampler state %u, %u to %#x (was %#x).\n", stage, state,
-                targetStateBlock->state.sampler_states[stage][state],
-                This->state.sampler_states[stage][state]);
+                src_state->sampler_states[stage][state], This->state.sampler_states[stage][state]);
 
-        This->state.sampler_states[stage][state] = targetStateBlock->state.sampler_states[stage][state];
+        This->state.sampler_states[stage][state] = src_state->sampler_states[stage][state];
     }
 
-    if (This->changed.pixelShader && This->state.pixel_shader != targetStateBlock->state.pixel_shader)
+    if (This->changed.pixelShader && This->state.pixel_shader != src_state->pixel_shader)
     {
-        if (targetStateBlock->state.pixel_shader)
-            IWineD3DPixelShader_AddRef((IWineD3DPixelShader *)targetStateBlock->state.pixel_shader);
+        if (src_state->pixel_shader)
+            IWineD3DPixelShader_AddRef((IWineD3DPixelShader *)src_state->pixel_shader);
         if (This->state.pixel_shader)
             IWineD3DPixelShader_Release((IWineD3DPixelShader *)This->state.pixel_shader);
-        This->state.pixel_shader = targetStateBlock->state.pixel_shader;
+        This->state.pixel_shader = src_state->pixel_shader;
     }
 
-    record_lights(This, &targetStateBlock->state);
+    record_lights(This, src_state);
 
-    TRACE("(%p) : Updated state block %p ------------------^\n", targetStateBlock, This);
+    TRACE("Captue done.\n");
 
     return WINED3D_OK;
 }
