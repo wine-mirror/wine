@@ -48,4 +48,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP abilitato"
     STRING_YES, "Sì"
     STRING_NO, "No"
+    STRING_DEFAULT_GATEWAY, "Gateway predefinito"
 }
