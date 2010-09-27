@@ -150,6 +150,8 @@ IPropertyPageSiteVtbl PropertyPageSiteVtbl = {
  */
 HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
 {
+    static const WCHAR comctlW[] = { 'c','o','m','c','t','l','3','2','.','d','l','l',0 };
+
     PROPSHEETHEADERW property_sheet;
     PROPSHEETPAGEW property_sheet_page;
     struct {
@@ -162,6 +164,14 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
     IPropertyPageSite *property_page_site;
     HRESULT res;
     int i;
+    HMODULE hcomctl;
+    HRSRC property_sheet_dialog_find = NULL;
+    HGLOBAL property_sheet_dialog_load = NULL;
+    WCHAR *property_sheet_dialog_data = NULL;
+    HDC hdc;
+    LOGFONTW font_desc;
+    HFONT hfont;
+    LONG font_width = 4, font_height = 8;
 
     if(!lpParams)
         return E_POINTER;
@@ -182,6 +192,47 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
 
     if(lpParams->dispidInitialProperty)
         FIXME("dispidInitialProperty not yet implemented\n");
+
+    hdc = GetDC(NULL);
+    hcomctl = LoadLibraryW(comctlW);
+    if(hcomctl)
+        property_sheet_dialog_find = FindResourceW(hcomctl,
+                MAKEINTRESOURCEW(1006 /*IDD_PROPSHEET*/), (LPWSTR)RT_DIALOG);
+    if(property_sheet_dialog_find)
+        property_sheet_dialog_load = LoadResource(hcomctl, property_sheet_dialog_find);
+    if(property_sheet_dialog_load)
+        property_sheet_dialog_data = LockResource(property_sheet_dialog_load);
+
+    if(property_sheet_dialog_data) {
+        if(property_sheet_dialog_data[1] == 0xffff) {
+            ERR("Expected DLGTEMPLATE structure\n");
+            return E_OUTOFMEMORY;
+        }
+
+        property_sheet_dialog_data += sizeof(DLGTEMPLATE)/sizeof(WCHAR);
+        /* Skip menu, class and title */
+        property_sheet_dialog_data += lstrlenW(property_sheet_dialog_data)+1;
+        property_sheet_dialog_data += lstrlenW(property_sheet_dialog_data)+1;
+        property_sheet_dialog_data += lstrlenW(property_sheet_dialog_data)+1;
+
+        memset(&font_desc, 0, sizeof(LOGFONTW));
+        /* Calculate logical height */
+        font_desc.lfHeight = -MulDiv(property_sheet_dialog_data[0],
+                GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        font_desc.lfCharSet = DEFAULT_CHARSET;
+        memcpy(font_desc.lfFaceName, property_sheet_dialog_data+1,
+                sizeof(WCHAR*)*(lstrlenW(property_sheet_dialog_data+1)+1));
+        hfont = CreateFontIndirectW(&font_desc);
+
+        if(hfont) {
+            hfont = SelectObject(hdc, hfont);
+            font_width = GdiGetCharDimensions(hdc, NULL, &font_height);
+            SelectObject(hdc, hfont);
+        }
+    }
+    if(hcomctl)
+        FreeLibrary(hcomctl);
+    ReleaseDC(NULL, hdc);
 
     memset(&property_sheet, 0, sizeof(property_sheet));
     property_sheet.dwSize = sizeof(property_sheet);
@@ -237,8 +288,8 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
         if(FAILED(res))
             continue;
 
-        dialogs[i].template.cx = page_info.size.cx;
-        dialogs[i].template.cy = page_info.size.cy;
+        dialogs[i].template.cx = MulDiv(page_info.size.cx, 4, font_width);
+        dialogs[i].template.cy = MulDiv(page_info.size.cy, 8, font_height);
 
         property_sheet_page.u.pResource = &dialogs[i].template;
         property_sheet_page.lParam = (LPARAM)property_page[i];
