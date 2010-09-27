@@ -1112,7 +1112,7 @@ static BOOL compute_sincos_table(struct sincos_table *sincos_table, float angle_
     return TRUE;
 }
 
-static WORD sphere_vertex(UINT slices, int slice, int stack)
+static WORD vertex_index(UINT slices, int slice, int stack)
 {
     return stack*slices+slice+1;
 }
@@ -1225,14 +1225,14 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
                 else
                 {
                     /* stacks in between top and bottom are quad strips */
-                    faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-                    faces[face][1] = sphere_vertex(slices, slice, stack-1);
-                    faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    faces[face][0] = vertex_index(slices, slice-1, stack-1);
+                    faces[face][1] = vertex_index(slices, slice, stack-1);
+                    faces[face][2] = vertex_index(slices, slice-1, stack);
                     face++;
 
-                    faces[face][0] = sphere_vertex(slices, slice, stack-1);
-                    faces[face][1] = sphere_vertex(slices, slice, stack);
-                    faces[face][2] = sphere_vertex(slices, slice-1, stack);
+                    faces[face][0] = vertex_index(slices, slice, stack-1);
+                    faces[face][1] = vertex_index(slices, slice, stack);
+                    faces[face][2] = vertex_index(slices, slice-1, stack);
                     face++;
                 }
             }
@@ -1249,14 +1249,14 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
         }
         else
         {
-            faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-            faces[face][1] = sphere_vertex(slices, 0, stack-1);
-            faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            faces[face][0] = vertex_index(slices, slice-1, stack-1);
+            faces[face][1] = vertex_index(slices, 0, stack-1);
+            faces[face][2] = vertex_index(slices, slice-1, stack);
             face++;
 
-            faces[face][0] = sphere_vertex(slices, 0, stack-1);
-            faces[face][1] = sphere_vertex(slices, 0, stack);
-            faces[face][2] = sphere_vertex(slices, slice-1, stack);
+            faces[face][0] = vertex_index(slices, 0, stack-1);
+            faces[face][1] = vertex_index(slices, 0, stack);
+            faces[face][2] = vertex_index(slices, slice-1, stack);
             face++;
         }
     }
@@ -1271,14 +1271,14 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
     /* bottom stack is triangle fan */
     for (slice = 1; slice < slices; slice++)
     {
-        faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-        faces[face][1] = sphere_vertex(slices, slice, stack-1);
+        faces[face][0] = vertex_index(slices, slice-1, stack-1);
+        faces[face][1] = vertex_index(slices, slice, stack-1);
         faces[face][2] = vertex;
         face++;
     }
 
-    faces[face][0] = sphere_vertex(slices, slice-1, stack-1);
-    faces[face][1] = sphere_vertex(slices, 0, stack-1);
+    faces[face][0] = vertex_index(slices, slice-1, stack-1);
+    faces[face][1] = vertex_index(slices, 0, stack-1);
     faces[face][2] = vertex;
 
     free_sincos_table(&phi);
@@ -1292,9 +1292,188 @@ HRESULT WINAPI D3DXCreateSphere(LPDIRECT3DDEVICE9 device, FLOAT radius, UINT sli
 HRESULT WINAPI D3DXCreateCylinder(LPDIRECT3DDEVICE9 device, FLOAT radius1, FLOAT radius2, FLOAT length, UINT slices,
                                   UINT stacks, LPD3DXMESH* mesh, LPD3DXBUFFER* adjacency)
 {
-    FIXME("(%p, %f, %f, %f, %u, %u, %p, %p): stub\n", device, radius1, radius2, length, slices, stacks, mesh, adjacency);
+    DWORD number_of_vertices, number_of_faces;
+    HRESULT hr;
+    ID3DXMesh *cylinder;
+    struct vertex *vertices;
+    face *faces;
+    float theta_step, theta_start;
+    struct sincos_table theta;
+    float delta_radius, radius, radius_step;
+    float z, z_step, z_normal;
+    DWORD vertex, face;
+    int slice, stack;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %f, %f, %f, %u, %u, %p, %p)\n", device, radius1, radius2, length, slices, stacks, mesh, adjacency);
+
+    if (device == NULL || radius1 < 0.0f || radius2 < 0.0f || length < 0.0f || slices < 2 || stacks < 1 || mesh == NULL)
+    {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (adjacency)
+    {
+        FIXME("Case of adjacency != NULL not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    number_of_vertices = 2 + (slices * (3 + stacks));
+    number_of_faces = 2 * slices + stacks * (2 * slices);
+
+    hr = D3DXCreateMeshFVF(number_of_faces, number_of_vertices, D3DXMESH_MANAGED,
+                           D3DFVF_XYZ | D3DFVF_NORMAL, device, &cylinder);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = cylinder->lpVtbl->LockVertexBuffer(cylinder, D3DLOCK_DISCARD, (LPVOID *)&vertices);
+    if (FAILED(hr))
+    {
+        cylinder->lpVtbl->Release(cylinder);
+        return hr;
+    }
+
+    hr = cylinder->lpVtbl->LockIndexBuffer(cylinder, D3DLOCK_DISCARD, (LPVOID *)&faces);
+    if (FAILED(hr))
+    {
+        cylinder->lpVtbl->UnlockVertexBuffer(cylinder);
+        cylinder->lpVtbl->Release(cylinder);
+        return hr;
+    }
+
+    /* theta = angle on xy plane wrt x axis */
+    theta_step = -2 * M_PI / slices;
+    theta_start = M_PI / 2;
+
+    if (!compute_sincos_table(&theta, theta_start, theta_step, slices))
+    {
+        cylinder->lpVtbl->UnlockIndexBuffer(cylinder);
+        cylinder->lpVtbl->UnlockVertexBuffer(cylinder);
+        cylinder->lpVtbl->Release(cylinder);
+        return E_OUTOFMEMORY;
+    }
+
+    vertex = 0;
+    face = 0;
+    stack = 0;
+
+    delta_radius = radius1 - radius2;
+    radius = radius1;
+    radius_step = delta_radius / stacks;
+
+    z = -length / 2;
+    z_step = length / stacks;
+    z_normal = delta_radius / length;
+    if (isnan(z_normal))
+    {
+        z_normal = 0.0f;
+    }
+
+    vertices[vertex].normal.x = 0.0f;
+    vertices[vertex].normal.y = 0.0f;
+    vertices[vertex].normal.z = -1.0f;
+    vertices[vertex].position.x = 0.0f;
+    vertices[vertex].position.y = 0.0f;
+    vertices[vertex++].position.z = z;
+
+    for (slice = 0; slice < slices; slice++, vertex++)
+    {
+        vertices[vertex].normal.x = 0.0f;
+        vertices[vertex].normal.y = 0.0f;
+        vertices[vertex].normal.z = -1.0f;
+        vertices[vertex].position.x = radius * theta.cos[slice];
+        vertices[vertex].position.y = radius * theta.sin[slice];
+        vertices[vertex].position.z = z;
+
+        if (slice > 0)
+        {
+            faces[face][0] = 0;
+            faces[face][1] = slice;
+            faces[face++][2] = slice + 1;
+        }
+    }
+
+    faces[face][0] = 0;
+    faces[face][1] = slice;
+    faces[face++][2] = 1;
+
+    for (stack = 1; stack <= stacks+1; stack++)
+    {
+        for (slice = 0; slice < slices; slice++, vertex++)
+        {
+            vertices[vertex].normal.x = theta.cos[slice];
+            vertices[vertex].normal.y = theta.sin[slice];
+            vertices[vertex].normal.z = z_normal;
+            D3DXVec3Normalize(&vertices[vertex].normal, &vertices[vertex].normal);
+            vertices[vertex].position.x = radius * theta.cos[slice];
+            vertices[vertex].position.y = radius * theta.sin[slice];
+            vertices[vertex].position.z = z;
+
+            if (stack > 1 && slice > 0)
+            {
+                faces[face][0] = vertex_index(slices, slice-1, stack-1);
+                faces[face][1] = vertex_index(slices, slice-1, stack);
+                faces[face++][2] = vertex_index(slices, slice, stack-1);
+
+                faces[face][0] = vertex_index(slices, slice, stack-1);
+                faces[face][1] = vertex_index(slices, slice-1, stack);
+                faces[face++][2] = vertex_index(slices, slice, stack);
+            }
+        }
+
+        if (stack > 1)
+        {
+            faces[face][0] = vertex_index(slices, slice-1, stack-1);
+            faces[face][1] = vertex_index(slices, slice-1, stack);
+            faces[face++][2] = vertex_index(slices, 0, stack-1);
+
+            faces[face][0] = vertex_index(slices, 0, stack-1);
+            faces[face][1] = vertex_index(slices, slice-1, stack);
+            faces[face++][2] = vertex_index(slices, 0, stack);
+        }
+
+        if (stack < stacks + 1)
+        {
+            z += z_step;
+            radius -= radius_step;
+        }
+    }
+
+    for (slice = 0; slice < slices; slice++, vertex++)
+    {
+        vertices[vertex].normal.x = 0.0f;
+        vertices[vertex].normal.y = 0.0f;
+        vertices[vertex].normal.z = 1.0f;
+        vertices[vertex].position.x = radius * theta.cos[slice];
+        vertices[vertex].position.y = radius * theta.sin[slice];
+        vertices[vertex].position.z = z;
+
+        if (slice > 0)
+        {
+            faces[face][0] = vertex_index(slices, slice-1, stack);
+            faces[face][1] = number_of_vertices - 1;
+            faces[face++][2] = vertex_index(slices, slice, stack);
+        }
+    }
+
+    vertices[vertex].position.x = 0.0f;
+    vertices[vertex].position.y = 0.0f;
+    vertices[vertex].position.z = z;
+    vertices[vertex].normal.x = 0.0f;
+    vertices[vertex].normal.y = 0.0f;
+    vertices[vertex].normal.z = 1.0f;
+
+    faces[face][0] = vertex_index(slices, slice-1, stack);
+    faces[face][1] = number_of_vertices - 1;
+    faces[face][2] = vertex_index(slices, 0, stack);
+
+    free_sincos_table(&theta);
+    cylinder->lpVtbl->UnlockIndexBuffer(cylinder);
+    cylinder->lpVtbl->UnlockVertexBuffer(cylinder);
+    *mesh = cylinder;
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh, LPD3DXBUFFER* adjacency)

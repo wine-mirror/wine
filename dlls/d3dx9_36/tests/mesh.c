@@ -1788,7 +1788,7 @@ static void test_cylinder(IDirect3DDevice9 *device, FLOAT radius1, FLOAT radius2
     char name[256];
 
     hr = D3DXCreateCylinder(device, radius1, radius2, length, slices, stacks, &cylinder, NULL);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
     if (hr != D3D_OK)
     {
         skip("Couldn't create cylinder\n");
@@ -1822,10 +1822,10 @@ static void D3DXCreateCylinderTest(void)
     ID3DXMesh* cylinder = NULL;
 
     hr = D3DXCreateCylinder(NULL, 0.0f, 0.0f, 0.0f, 0, 0, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(NULL, 1.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -1854,10 +1854,10 @@ static void D3DXCreateCylinderTest(void)
     }
 
     hr = D3DXCreateCylinder(device, -0.1f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 0.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
 
     if (SUCCEEDED(hr) && cylinder)
     {
@@ -1865,10 +1865,10 @@ static void D3DXCreateCylinderTest(void)
     }
 
     hr = D3DXCreateCylinder(device, 1.0f, -0.1f, 1.0f, 2, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 1.0f, 0.0f, 1.0f, 2, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
 
     if (SUCCEEDED(hr) && cylinder)
     {
@@ -1876,11 +1876,11 @@ static void D3DXCreateCylinderTest(void)
     }
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, -0.1f, 2, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     /* Test with length == 0.0f succeeds */
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 0.0f, 2, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
 
     if (SUCCEEDED(hr) && cylinder)
     {
@@ -1888,13 +1888,13 @@ static void D3DXCreateCylinderTest(void)
     }
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 1, 1, &cylinder, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 2, 0, &cylinder, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 2, 1, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     test_cylinder(device, 0.0f, 0.0f, 0.0f, 2, 1);
     test_cylinder(device, 1.0f, 1.0f, 1.0f, 2, 1);
