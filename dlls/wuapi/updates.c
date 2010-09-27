@@ -151,7 +151,7 @@ static HRESULT WINAPI automatic_updates_Resume(
     IAutomaticUpdates *This )
 {
     FIXME("\n");
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI automatic_updates_ShowSettingsDialog(
