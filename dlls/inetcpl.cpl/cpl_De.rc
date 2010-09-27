@@ -30,3 +30,18 @@ BEGIN
     IDS_CPL_NAME        "Internet Einstellungen"
     IDS_CPL_INFO        "Wine Internet Browser und zugehörige Einstellungen anpassen." 
 END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Inhalte"
+BEGIN
+
+    GROUPBOX    " Zertifikate ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Zertifikate werden benutzt, um sich persönlich, Zertifizierungsstellen und Herausgeber von Zertifikaten zu identifizieren.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Zertifikate...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON  "Herausgeber... ", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
+END
