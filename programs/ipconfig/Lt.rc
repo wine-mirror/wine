@@ -47,4 +47,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP įjungta"
     STRING_YES, "Taip"
     STRING_NO, "Ne"
+    STRING_DEFAULT_GATEWAY, "Numatytasis šliuzas"
 }
