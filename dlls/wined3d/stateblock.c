@@ -1078,11 +1078,12 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* iface) {
-    IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)iface;
-    IWineD3DDevice *device = (IWineD3DDevice *)This->device;
-    IWineD3DDeviceImpl *device_impl = (IWineD3DDeviceImpl *)device;
-    const struct wined3d_gl_info *gl_info = &device_impl->adapter->gl_info;
+static HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock *iface)
+{
+    IWineD3DStateBlockImpl *stateblock = (IWineD3DStateBlockImpl *)iface;
+    IWineD3DDeviceImpl *device = stateblock->device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    struct wined3d_state *state = &stateblock->state;
     union {
         WINED3DLINEPATTERN lp;
         DWORD d;
@@ -1096,248 +1097,238 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DSurface *backbuffer;
     HRESULT hr;
 
-    /* Note this may have a large overhead but it should only be executed
-       once, in order to initialize the complete state of the device and
-       all opengl equivalents                                            */
-    TRACE("(%p) -----------------------> Setting up device defaults... %p\n", This, device);
-    /* TODO: make a special stateblock type for the primary stateblock (it never gets applied so it doesn't need a real type) */
-    This->blockType = WINED3DSBT_INIT;
+    TRACE("iface %p.\n", iface);
+
+    stateblock->blockType = WINED3DSBT_INIT;
 
     /* Set some of the defaults for lights, transforms etc */
-    memcpy(&This->state.transforms[WINED3DTS_PROJECTION], identity, sizeof(identity));
-    memcpy(&This->state.transforms[WINED3DTS_VIEW], identity, sizeof(identity));
+    memcpy(&state->transforms[WINED3DTS_PROJECTION], identity, sizeof(identity));
+    memcpy(&state->transforms[WINED3DTS_VIEW], identity, sizeof(identity));
     for (i = 0; i < 256; ++i)
     {
-        memcpy(&This->state.transforms[WINED3DTS_WORLDMATRIX(i)], identity, sizeof(identity));
+        memcpy(&state->transforms[WINED3DTS_WORLDMATRIX(i)], identity, sizeof(identity));
     }
 
     TRACE("Render states\n");
     /* Render states: */
-    if (device_impl->auto_depth_stencil)
-       IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       WINED3DZB_TRUE);
+    if (device->auto_depth_stencil)
+       state->render_states[WINED3DRS_ZENABLE] = WINED3DZB_TRUE;
     else
-       IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       WINED3DZB_FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FILLMODE,         WINED3DFILL_SOLID);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SHADEMODE,        WINED3DSHADE_GOURAUD);
+       state->render_states[WINED3DRS_ZENABLE] = WINED3DZB_FALSE;
+    state->render_states[WINED3DRS_FILLMODE] = WINED3DFILL_SOLID;
+    state->render_states[WINED3DRS_SHADEMODE] = WINED3DSHADE_GOURAUD;
     lp.lp.wRepeatFactor = 0;
-    lp.lp.wLinePattern  = 0;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_LINEPATTERN,      lp.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ZWRITEENABLE,     TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHATESTENABLE,  FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_LASTPIXEL,        TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLEND,         WINED3DBLEND_ONE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLEND,        WINED3DBLEND_ZERO);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CULLMODE,         WINED3DCULL_CCW);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ZFUNC,            WINED3DCMP_LESSEQUAL);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAFUNC,        WINED3DCMP_ALWAYS);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAREF,         0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DITHERENABLE,     FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHABLENDENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGENABLE,        FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SPECULARENABLE,   FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ZVISIBLE,         0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGCOLOR,         0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGTABLEMODE,     WINED3DFOG_NONE);
+    lp.lp.wLinePattern = 0;
+    state->render_states[WINED3DRS_LINEPATTERN] = lp.d;
+    state->render_states[WINED3DRS_ZWRITEENABLE] = TRUE;
+    state->render_states[WINED3DRS_ALPHATESTENABLE] = FALSE;
+    state->render_states[WINED3DRS_LASTPIXEL] = TRUE;
+    state->render_states[WINED3DRS_SRCBLEND] = WINED3DBLEND_ONE;
+    state->render_states[WINED3DRS_DESTBLEND] = WINED3DBLEND_ZERO;
+    state->render_states[WINED3DRS_CULLMODE] = WINED3DCULL_CCW;
+    state->render_states[WINED3DRS_ZFUNC] = WINED3DCMP_LESSEQUAL;
+    state->render_states[WINED3DRS_ALPHAFUNC] = WINED3DCMP_ALWAYS;
+    state->render_states[WINED3DRS_ALPHAREF] = 0;
+    state->render_states[WINED3DRS_DITHERENABLE] = FALSE;
+    state->render_states[WINED3DRS_ALPHABLENDENABLE] = FALSE;
+    state->render_states[WINED3DRS_FOGENABLE] = FALSE;
+    state->render_states[WINED3DRS_SPECULARENABLE] = FALSE;
+    state->render_states[WINED3DRS_ZVISIBLE] = 0;
+    state->render_states[WINED3DRS_FOGCOLOR] = 0;
+    state->render_states[WINED3DRS_FOGTABLEMODE] = WINED3DFOG_NONE;
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGSTART,         tmpfloat.d);
+    state->render_states[WINED3DRS_FOGSTART] = tmpfloat.d;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGEND,           tmpfloat.d);
+    state->render_states[WINED3DRS_FOGEND] = tmpfloat.d;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGDENSITY,       tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_EDGEANTIALIAS,    FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ZBIAS,            0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_RANGEFOGENABLE,   FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILENABLE,    FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILFAIL,      WINED3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILZFAIL,     WINED3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILPASS,      WINED3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILREF,       0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILMASK,      0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILFUNC,      WINED3DCMP_ALWAYS);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILWRITEMASK, 0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_TEXTUREFACTOR,    0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP0, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP1, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP2, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP3, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP4, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP5, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP6, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP7, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CLIPPING,                 TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_LIGHTING,                 TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_AMBIENT,                  0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGVERTEXMODE,            WINED3DFOG_NONE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORVERTEX,              TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_LOCALVIEWER,              TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_NORMALIZENORMALS,         FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DIFFUSEMATERIALSOURCE,    WINED3DMCS_COLOR1);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SPECULARMATERIALSOURCE,   WINED3DMCS_COLOR2);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_AMBIENTMATERIALSOURCE,    WINED3DMCS_MATERIAL);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_EMISSIVEMATERIALSOURCE,   WINED3DMCS_MATERIAL);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_VERTEXBLEND,              WINED3DVBF_DISABLE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CLIPPLANEENABLE,          0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SOFTWAREVERTEXPROCESSING, FALSE);
+    state->render_states[WINED3DRS_FOGDENSITY] = tmpfloat.d;
+    state->render_states[WINED3DRS_EDGEANTIALIAS] = FALSE;
+    state->render_states[WINED3DRS_ZBIAS] = 0;
+    state->render_states[WINED3DRS_RANGEFOGENABLE] = FALSE;
+    state->render_states[WINED3DRS_STENCILENABLE] = FALSE;
+    state->render_states[WINED3DRS_STENCILFAIL] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3DRS_STENCILZFAIL] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3DRS_STENCILPASS] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3DRS_STENCILREF] = 0;
+    state->render_states[WINED3DRS_STENCILMASK] = 0xffffffff;
+    state->render_states[WINED3DRS_STENCILFUNC] = WINED3DCMP_ALWAYS;
+    state->render_states[WINED3DRS_STENCILWRITEMASK] = 0xffffffff;
+    state->render_states[WINED3DRS_TEXTUREFACTOR] = 0xffffffff;
+    state->render_states[WINED3DRS_WRAP0] = 0;
+    state->render_states[WINED3DRS_WRAP1] = 0;
+    state->render_states[WINED3DRS_WRAP2] = 0;
+    state->render_states[WINED3DRS_WRAP3] = 0;
+    state->render_states[WINED3DRS_WRAP4] = 0;
+    state->render_states[WINED3DRS_WRAP5] = 0;
+    state->render_states[WINED3DRS_WRAP6] = 0;
+    state->render_states[WINED3DRS_WRAP7] = 0;
+    state->render_states[WINED3DRS_CLIPPING] = TRUE;
+    state->render_states[WINED3DRS_LIGHTING] = TRUE;
+    state->render_states[WINED3DRS_AMBIENT] = 0;
+    state->render_states[WINED3DRS_FOGVERTEXMODE] = WINED3DFOG_NONE;
+    state->render_states[WINED3DRS_COLORVERTEX] = TRUE;
+    state->render_states[WINED3DRS_LOCALVIEWER] = TRUE;
+    state->render_states[WINED3DRS_NORMALIZENORMALS] = FALSE;
+    state->render_states[WINED3DRS_DIFFUSEMATERIALSOURCE] = WINED3DMCS_COLOR1;
+    state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] = WINED3DMCS_COLOR2;
+    state->render_states[WINED3DRS_AMBIENTMATERIALSOURCE] = WINED3DMCS_MATERIAL;
+    state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] = WINED3DMCS_MATERIAL;
+    state->render_states[WINED3DRS_VERTEXBLEND] = WINED3DVBF_DISABLE;
+    state->render_states[WINED3DRS_CLIPPLANEENABLE] = 0;
+    state->render_states[WINED3DRS_SOFTWAREVERTEXPROCESSING] = FALSE;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSIZE,                tmpfloat.d);
+    state->render_states[WINED3DRS_POINTSIZE] = tmpfloat.d;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSIZE_MIN,            tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSPRITEENABLE,        FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSCALEENABLE,         FALSE);
+    state->render_states[WINED3DRS_POINTSIZE_MIN] = tmpfloat.d;
+    state->render_states[WINED3DRS_POINTSPRITEENABLE] = FALSE;
+    state->render_states[WINED3DRS_POINTSCALEENABLE] = FALSE;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSCALE_A,             tmpfloat.d);
+    state->render_states[WINED3DRS_POINTSCALE_A] = tmpfloat.d;
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSCALE_B,             tmpfloat.d);
+    state->render_states[WINED3DRS_POINTSCALE_B] = tmpfloat.d;
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSCALE_C,             tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_MULTISAMPLEANTIALIAS,     TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_MULTISAMPLEMASK,          0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_PATCHEDGESTYLE,           WINED3DPATCHEDGE_DISCRETE);
+    state->render_states[WINED3DRS_POINTSCALE_C] = tmpfloat.d;
+    state->render_states[WINED3DRS_MULTISAMPLEANTIALIAS] = TRUE;
+    state->render_states[WINED3DRS_MULTISAMPLEMASK] = 0xffffffff;
+    state->render_states[WINED3DRS_PATCHEDGESTYLE] = WINED3DPATCHEDGE_DISCRETE;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_PATCHSEGMENTS,            tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DEBUGMONITORTOKEN,        0xbaadcafe);
+    state->render_states[WINED3DRS_PATCHSEGMENTS] = tmpfloat.d;
+    state->render_states[WINED3DRS_DEBUGMONITORTOKEN] = 0xbaadcafe;
     tmpfloat.f = gl_info->limits.pointsize_max;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSIZE_MAX,            tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_INDEXEDVERTEXBLENDENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE,         0x0000000F);
+    state->render_states[WINED3DRS_POINTSIZE_MAX] = tmpfloat.d;
+    state->render_states[WINED3DRS_INDEXEDVERTEXBLENDENABLE] = FALSE;
+    state->render_states[WINED3DRS_COLORWRITEENABLE] = 0x0000000f;
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_TWEENFACTOR,              tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOP,                  WINED3DBLENDOP_ADD);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_POSITIONDEGREE,           WINED3DDEGREE_CUBIC);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_NORMALDEGREE,             WINED3DDEGREE_LINEAR);
+    state->render_states[WINED3DRS_TWEENFACTOR] = tmpfloat.d;
+    state->render_states[WINED3DRS_BLENDOP] = WINED3DBLENDOP_ADD;
+    state->render_states[WINED3DRS_POSITIONDEGREE] = WINED3DDEGREE_CUBIC;
+    state->render_states[WINED3DRS_NORMALDEGREE] = WINED3DDEGREE_LINEAR;
     /* states new in d3d9 */
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SCISSORTESTENABLE,        FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SLOPESCALEDEPTHBIAS,      0);
+    state->render_states[WINED3DRS_SCISSORTESTENABLE] = FALSE;
+    state->render_states[WINED3DRS_SLOPESCALEDEPTHBIAS] = 0;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_MINTESSELLATIONLEVEL,     tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_MAXTESSELLATIONLEVEL,     tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ANTIALIASEDLINEENABLE,    FALSE);
+    state->render_states[WINED3DRS_MINTESSELLATIONLEVEL] = tmpfloat.d;
+    state->render_states[WINED3DRS_MAXTESSELLATIONLEVEL] = tmpfloat.d;
+    state->render_states[WINED3DRS_ANTIALIASEDLINEENABLE] = FALSE;
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ADAPTIVETESS_X,           tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ADAPTIVETESS_Y,           tmpfloat.d);
+    state->render_states[WINED3DRS_ADAPTIVETESS_X] = tmpfloat.d;
+    state->render_states[WINED3DRS_ADAPTIVETESS_Y] = tmpfloat.d;
     tmpfloat.f = 1.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ADAPTIVETESS_Z,           tmpfloat.d);
+    state->render_states[WINED3DRS_ADAPTIVETESS_Z] = tmpfloat.d;
     tmpfloat.f = 0.0f;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ADAPTIVETESS_W,           tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ENABLEADAPTIVETESSELLATION, FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_TWOSIDEDSTENCILMODE,      FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILFAIL,          WINED3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILZFAIL,         WINED3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILPASS,          WINED3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILFUNC,          WINED3DCMP_ALWAYS);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE1,        0x0000000F);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE2,        0x0000000F);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE3,        0x0000000F);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDFACTOR,              0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SRGBWRITEENABLE,          0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DEPTHBIAS,                0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP8,  0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP9,  0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP10, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP11, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP12, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP13, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP14, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP15, 0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SEPARATEALPHABLENDENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLENDALPHA,            WINED3DBLEND_ONE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLENDALPHA,           WINED3DBLEND_ZERO);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOPALPHA,             WINED3DBLENDOP_ADD);
+    state->render_states[WINED3DRS_ADAPTIVETESS_W] = tmpfloat.d;
+    state->render_states[WINED3DRS_ENABLEADAPTIVETESSELLATION] = FALSE;
+    state->render_states[WINED3DRS_TWOSIDEDSTENCILMODE] = FALSE;
+    state->render_states[WINED3DRS_CCW_STENCILFAIL] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3DRS_CCW_STENCILZFAIL] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3DRS_CCW_STENCILPASS] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3DRS_CCW_STENCILFUNC] = WINED3DCMP_ALWAYS;
+    state->render_states[WINED3DRS_COLORWRITEENABLE1] = 0x0000000f;
+    state->render_states[WINED3DRS_COLORWRITEENABLE2] = 0x0000000f;
+    state->render_states[WINED3DRS_COLORWRITEENABLE3] = 0x0000000f;
+    state->render_states[WINED3DRS_BLENDFACTOR] = 0xFFFFFFFF;
+    state->render_states[WINED3DRS_SRGBWRITEENABLE] = 0;
+    state->render_states[WINED3DRS_DEPTHBIAS] = 0;
+    state->render_states[WINED3DRS_WRAP8] = 0;
+    state->render_states[WINED3DRS_WRAP9] = 0;
+    state->render_states[WINED3DRS_WRAP10] = 0;
+    state->render_states[WINED3DRS_WRAP11] = 0;
+    state->render_states[WINED3DRS_WRAP12] = 0;
+    state->render_states[WINED3DRS_WRAP13] = 0;
+    state->render_states[WINED3DRS_WRAP14] = 0;
+    state->render_states[WINED3DRS_WRAP15] = 0;
+    state->render_states[WINED3DRS_SEPARATEALPHABLENDENABLE] = FALSE;
+    state->render_states[WINED3DRS_SRCBLENDALPHA] = WINED3DBLEND_ONE;
+    state->render_states[WINED3DRS_DESTBLENDALPHA] = WINED3DBLEND_ZERO;
+    state->render_states[WINED3DRS_BLENDOPALPHA] = WINED3DBLENDOP_ADD;
 
     /* clipping status */
-    This->state.clip_status.ClipUnion = 0;
-    This->state.clip_status.ClipIntersection = 0xFFFFFFFF;
+    state->clip_status.ClipUnion = 0;
+    state->clip_status.ClipIntersection = 0xFFFFFFFF;
 
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
         TRACE("Setting up default texture states for texture Stage %u.\n", i);
-        memcpy(&This->state.transforms[WINED3DTS_TEXTURE0 + i], identity, sizeof(identity));
-        This->state.texture_states[i][WINED3DTSS_COLOROP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_MODULATE;
-        This->state.texture_states[i][WINED3DTSS_COLORARG1] = WINED3DTA_TEXTURE;
-        This->state.texture_states[i][WINED3DTSS_COLORARG2] = WINED3DTA_CURRENT;
-        This->state.texture_states[i][WINED3DTSS_ALPHAOP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_SELECTARG1;
-        This->state.texture_states[i][WINED3DTSS_ALPHAARG1] = WINED3DTA_TEXTURE;
-        This->state.texture_states[i][WINED3DTSS_ALPHAARG2] = WINED3DTA_CURRENT;
-        This->state.texture_states[i][WINED3DTSS_BUMPENVMAT00] = 0;
-        This->state.texture_states[i][WINED3DTSS_BUMPENVMAT01] = 0;
-        This->state.texture_states[i][WINED3DTSS_BUMPENVMAT10] = 0;
-        This->state.texture_states[i][WINED3DTSS_BUMPENVMAT11] = 0;
-        This->state.texture_states[i][WINED3DTSS_TEXCOORDINDEX] = i;
-        This->state.texture_states[i][WINED3DTSS_BUMPENVLSCALE] = 0;
-        This->state.texture_states[i][WINED3DTSS_BUMPENVLOFFSET] = 0;
-        This->state.texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS] = WINED3DTTFF_DISABLE;
-        This->state.texture_states[i][WINED3DTSS_COLORARG0] = WINED3DTA_CURRENT;
-        This->state.texture_states[i][WINED3DTSS_ALPHAARG0] = WINED3DTA_CURRENT;
-        This->state.texture_states[i][WINED3DTSS_RESULTARG] = WINED3DTA_CURRENT;
+        memcpy(&state->transforms[WINED3DTS_TEXTURE0 + i], identity, sizeof(identity));
+        state->texture_states[i][WINED3DTSS_COLOROP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_MODULATE;
+        state->texture_states[i][WINED3DTSS_COLORARG1] = WINED3DTA_TEXTURE;
+        state->texture_states[i][WINED3DTSS_COLORARG2] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3DTSS_ALPHAOP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_SELECTARG1;
+        state->texture_states[i][WINED3DTSS_ALPHAARG1] = WINED3DTA_TEXTURE;
+        state->texture_states[i][WINED3DTSS_ALPHAARG2] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3DTSS_BUMPENVMAT00] = 0;
+        state->texture_states[i][WINED3DTSS_BUMPENVMAT01] = 0;
+        state->texture_states[i][WINED3DTSS_BUMPENVMAT10] = 0;
+        state->texture_states[i][WINED3DTSS_BUMPENVMAT11] = 0;
+        state->texture_states[i][WINED3DTSS_TEXCOORDINDEX] = i;
+        state->texture_states[i][WINED3DTSS_BUMPENVLSCALE] = 0;
+        state->texture_states[i][WINED3DTSS_BUMPENVLOFFSET] = 0;
+        state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS] = WINED3DTTFF_DISABLE;
+        state->texture_states[i][WINED3DTSS_COLORARG0] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3DTSS_ALPHAARG0] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3DTSS_RESULTARG] = WINED3DTA_CURRENT;
     }
-    This->state.lowest_disabled_stage = 1;
+    state->lowest_disabled_stage = 1;
 
         /* Sampler states*/
     for (i = 0 ; i <  MAX_COMBINED_SAMPLERS; ++i)
     {
         TRACE("Setting up default samplers states for sampler %u.\n", i);
-        This->state.sampler_states[i][WINED3DSAMP_ADDRESSU] = WINED3DTADDRESS_WRAP;
-        This->state.sampler_states[i][WINED3DSAMP_ADDRESSV] = WINED3DTADDRESS_WRAP;
-        This->state.sampler_states[i][WINED3DSAMP_ADDRESSW] = WINED3DTADDRESS_WRAP;
-        This->state.sampler_states[i][WINED3DSAMP_BORDERCOLOR] = 0;
-        This->state.sampler_states[i][WINED3DSAMP_MAGFILTER] = WINED3DTEXF_POINT;
-        This->state.sampler_states[i][WINED3DSAMP_MINFILTER] = WINED3DTEXF_POINT;
-        This->state.sampler_states[i][WINED3DSAMP_MIPFILTER] = WINED3DTEXF_NONE;
-        This->state.sampler_states[i][WINED3DSAMP_MIPMAPLODBIAS] = 0;
-        This->state.sampler_states[i][WINED3DSAMP_MAXMIPLEVEL] = 0;
-        This->state.sampler_states[i][WINED3DSAMP_MAXANISOTROPY] = 1;
-        This->state.sampler_states[i][WINED3DSAMP_SRGBTEXTURE] = 0;
+        state->sampler_states[i][WINED3DSAMP_ADDRESSU] = WINED3DTADDRESS_WRAP;
+        state->sampler_states[i][WINED3DSAMP_ADDRESSV] = WINED3DTADDRESS_WRAP;
+        state->sampler_states[i][WINED3DSAMP_ADDRESSW] = WINED3DTADDRESS_WRAP;
+        state->sampler_states[i][WINED3DSAMP_BORDERCOLOR] = 0;
+        state->sampler_states[i][WINED3DSAMP_MAGFILTER] = WINED3DTEXF_POINT;
+        state->sampler_states[i][WINED3DSAMP_MINFILTER] = WINED3DTEXF_POINT;
+        state->sampler_states[i][WINED3DSAMP_MIPFILTER] = WINED3DTEXF_NONE;
+        state->sampler_states[i][WINED3DSAMP_MIPMAPLODBIAS] = 0;
+        state->sampler_states[i][WINED3DSAMP_MAXMIPLEVEL] = 0;
+        state->sampler_states[i][WINED3DSAMP_MAXANISOTROPY] = 1;
+        state->sampler_states[i][WINED3DSAMP_SRGBTEXTURE] = 0;
         /* TODO: Indicates which element of a multielement texture to use. */
-        This->state.sampler_states[i][WINED3DSAMP_ELEMENTINDEX] = 0;
+        state->sampler_states[i][WINED3DSAMP_ELEMENTINDEX] = 0;
         /* TODO: Vertex offset in the presampled displacement map. */
-        This->state.sampler_states[i][WINED3DSAMP_DMAPOFFSET] = 0;
+        state->sampler_states[i][WINED3DSAMP_DMAPOFFSET] = 0;
     }
 
     for (i = 0; i < gl_info->limits.textures; ++i)
     {
-        /* Note: This avoids calling SetTexture, so pretend it has been called */
-        This->changed.textures |= 1 << i;
-        This->state.textures[i] = NULL;
+        state->textures[i] = NULL;
     }
 
     /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
-    hr = IWineD3DDevice_GetSwapChain(device, 0, &swapchain);
+    hr = IWineD3DDevice_GetSwapChain((IWineD3DDevice *)device, 0, &swapchain);
     if (SUCCEEDED(hr) && swapchain)
     {
-        WINED3DVIEWPORT vp;
-
         hr = IWineD3DSwapChain_GetBackBuffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
         if (SUCCEEDED(hr) && backbuffer)
         {
             WINED3DSURFACE_DESC desc;
-            RECT scissorrect;
 
             IWineD3DSurface_GetDesc(backbuffer, &desc);
             IWineD3DSurface_Release(backbuffer);
 
             /* Set the default scissor rect values */
-            scissorrect.left = 0;
-            scissorrect.right = desc.width;
-            scissorrect.top = 0;
-            scissorrect.bottom = desc.height;
-            hr = IWineD3DDevice_SetScissorRect(device, &scissorrect);
-            if (FAILED(hr)) ERR("This should never happen, expect rendering issues!\n");
+            state->scissor_rect.left = 0;
+            state->scissor_rect.right = desc.width;
+            state->scissor_rect.top = 0;
+            state->scissor_rect.bottom = desc.height;
         }
 
         /* Set the default viewport */
-        vp.X      = 0;
-        vp.Y      = 0;
-        vp.Width  = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferWidth;
-        vp.Height = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferHeight;
-        vp.MinZ   = 0.0f;
-        vp.MaxZ   = 1.0f;
-        IWineD3DDevice_SetViewport(device, &vp);
+        state->viewport.X = 0;
+        state->viewport.Y = 0;
+        state->viewport.Width = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferWidth;
+        state->viewport.Height = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferHeight;
+        state->viewport.MinZ = 0.0f;
+        state->viewport.MaxZ = 1.0f;
 
         IWineD3DSwapChain_Release(swapchain);
     }
 
-    TRACE("-----------------------> Device defaults now set up...\n");
+    TRACE("Done.\n");
+
     return WINED3D_OK;
 }
 
