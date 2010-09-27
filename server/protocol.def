@@ -2405,7 +2405,7 @@ enum coords_relative
     user_handle_t  window;        /* handle to the window */
 @REPLY
     data_size_t    total_size;    /* total size of the resulting region */
-    VARARG(region,rectangles);    /* list of rectangles for the region */
+    VARARG(region,rectangles);    /* list of rectangles for the region (in window coords) */
 @END
 
 
@@ -2413,7 +2413,7 @@ enum coords_relative
 @REQ(set_window_region)
     user_handle_t  window;        /* handle to the window */
     int            redraw;        /* redraw the window? */
-    VARARG(region,rectangles);    /* list of rectangles for the region */
+    VARARG(region,rectangles);    /* list of rectangles for the region (in window coords) */
 @END
 
 
@@ -2449,7 +2449,7 @@ enum coords_relative
 @REQ(redraw_window)
     user_handle_t  window;        /* handle to the window */
     unsigned int   flags;         /* RDW_* flags */
-    VARARG(region,rectangles);    /* list of rectangles for the region */
+    VARARG(region,rectangles);    /* list of rectangles for the region (in window coords) */
 @END
 
 

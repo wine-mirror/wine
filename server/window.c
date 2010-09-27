@@ -905,16 +905,6 @@ static inline void offset_rect( rectangle_t *rect, int offset_x, int offset_y )
 }
 
 
-/* mirror a rectangle respective to the window client area */
-static inline void mirror_rect( const rectangle_t *window_rect, rectangle_t *rect )
-{
-    int width = window_rect->right - window_rect->left;
-    int tmp = rect->left;
-    rect->left = width - rect->right;
-    rect->right = width - tmp;
-}
-
-
 /* set the region to the client rect clipped by the window rect, in parent-relative coordinates */
 static void set_region_client_rect( struct region *region, struct window *win )
 {
@@ -2314,15 +2304,28 @@ DECL_HANDLER(get_visible_region)
 /* get the window region */
 DECL_HANDLER(get_window_region)
 {
+    rectangle_t *data;
     struct window *win = get_window( req->window );
 
     if (!win) return;
+    if (!win->win_region) return;
 
-    if (win->win_region)
+    if (win->ex_style & WS_EX_LAYOUTRTL)
     {
-        rectangle_t *data = get_region_data( win->win_region, get_reply_max_size(), &reply->total_size );
-        if (data) set_reply_data_ptr( data, reply->total_size );
+        struct region *region = create_empty_region();
+
+        if (!region) return;
+        if (!copy_region( region, win->win_region ))
+        {
+            free_region( region );
+            return;
+        }
+        mirror_region( &win->window_rect, region );
+        data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
     }
+    else data = get_region_data( win->win_region, get_reply_max_size(), &reply->total_size );
+
+    if (data) set_reply_data_ptr( data, reply->total_size );
 }
 
 
@@ -2338,6 +2341,7 @@ DECL_HANDLER(set_window_region)
     {
         if (!(region = create_region_from_req_data( get_req_data(), get_req_data_size() )))
             return;
+        if (win->ex_style & WS_EX_LAYOUTRTL) mirror_region( &win->window_rect, region );
     }
     set_window_region( win, region, req->redraw );
 }
@@ -2458,6 +2462,7 @@ DECL_HANDLER(redraw_window)
         {
             if (!(region = create_region_from_req_data( get_req_data(), get_req_data_size() )))
                 return;
+            if (win->ex_style & WS_EX_LAYOUTRTL) mirror_region( &win->client_rect, region );
         }
     }
 
