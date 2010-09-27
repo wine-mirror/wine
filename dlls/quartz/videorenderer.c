@@ -298,23 +298,36 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 
     if (!This->init)
     {
-        DWORD style = GetWindowLongW(This->hWnd, GWL_STYLE);
-        DWORD style_ex = GetWindowLongW(This->hWnd, GWL_EXSTYLE);
+        if (!This->WindowPos.right || !This->WindowPos.top)
+        {
+            DWORD style = GetWindowLongW(This->hWnd, GWL_STYLE);
+            DWORD style_ex = GetWindowLongW(This->hWnd, GWL_EXSTYLE);
 
-        if (!This->WindowPos.right || !This->WindowPos.bottom)
-            This->WindowPos = This->SourceRect;
+            if (!This->WindowPos.right)
+            {
+                This->WindowPos.left = This->SourceRect.left;
+                This->WindowPos.right = This->SourceRect.right;
+            }
+            if (!This->WindowPos.bottom)
+            {
+                This->WindowPos.top = This->SourceRect.top;
+                This->WindowPos.bottom = This->SourceRect.bottom;
+            }
 
-        AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
+            AdjustWindowRectEx(&This->WindowPos, style, TRUE, style_ex);
 
-        TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
-        SetWindowPos(This->hWnd, NULL,
-            This->WindowPos.left,
-            This->WindowPos.top,
-            This->WindowPos.right - This->WindowPos.left,
-            This->WindowPos.bottom - This->WindowPos.top,
-            SWP_NOZORDER|SWP_NOMOVE);
+            TRACE("WindowPos: %d %d %d %d\n", This->WindowPos.left, This->WindowPos.top, This->WindowPos.right, This->WindowPos.bottom);
+            SetWindowPos(This->hWnd, NULL,
+                This->WindowPos.left,
+                This->WindowPos.top,
+                This->WindowPos.right - This->WindowPos.left,
+                This->WindowPos.bottom - This->WindowPos.top,
+                SWP_NOZORDER|SWP_NOMOVE|SWP_DEFERERASE);
 
-        GetClientRect(This->hWnd, &This->DestRect);
+            GetClientRect(This->hWnd, &This->DestRect);
+        }
+        else
+            This->DestRect = This->WindowPos;
         This->init = TRUE;
     }
 
