@@ -822,6 +822,9 @@ static DWORD MCIQTZ_mciUpdate(UINT wDevID, DWORD dwFlags, LPMCI_DGV_UPDATE_PARMS
         LONG visible = OATRUE;
 
         res = MCIERR_INTERNAL;
+        IMediaControl_GetState(wma->pmctrl, -1, &state);
+        if (state == State_Running)
+            return MCIERR_UNSUPPORTED_FUNCTION;
         /* If in stopped state, nothing has been drawn to screen
          * moving to pause, which is needed for the old dib renderer, will result
          * in a single frame drawn, so hide the window here */
