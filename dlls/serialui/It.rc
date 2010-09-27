@@ -1,4 +1,6 @@
 /*
+ * Serialui Italian language support
+ *
  * Copyright 2000 Mike McCormack
  * Copyright 2003 Ivan Leo Puoti
  *
@@ -19,16 +21,19 @@
 
 #include "serialui.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 IDD_SERIALUICONFIG DIALOG 0, 0, 160, 159
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE
-CAPTION "Propriet‡ per "
+CAPTION "Propriet√† per "
 FONT 8, "MS Shell Dlg"
 BEGIN
-  LTEXT         "Bit per secondo", -1,5,20,55,10
+  LTEXT         "Bit per secondo (baud)", -1,5,20,55,10
   COMBOBOX      IDC_BAUD, 60, 20, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Parit‡", -1,5,40,55,10
+  LTEXT         "Parit√†", -1,5,40,55,10
   COMBOBOX      IDC_PARITY, 60, 40, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
   LTEXT         "Controllo di flusso", -1,5,60,55,10
   COMBOBOX      IDC_FLOW, 60, 60, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
