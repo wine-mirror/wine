@@ -540,14 +540,15 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 /**********************************************************
  * IWineD3DStateBlockImpl parts follows
  **********************************************************/
-static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlockImpl *targetStateBlock)
+static void record_lights(IWineD3DStateBlockImpl *This, const struct wined3d_state *state)
 {
     UINT i;
 
     /* Lights... For a recorded state block, we just had a chain of actions to perform,
      * so we need to walk that chain and update any actions which differ
      */
-    for(i = 0; i < LIGHTMAP_SIZE; i++) {
+    for (i = 0; i < LIGHTMAP_SIZE; ++i)
+    {
         struct list *e, *f;
         LIST_FOR_EACH(e, &This->state.light_map[i])
         {
@@ -555,7 +556,7 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
             struct wined3d_light_info *src = LIST_ENTRY(e, struct wined3d_light_info, entry), *realLight;
 
             /* Look up the light in the destination */
-            LIST_FOR_EACH(f, &targetStateBlock->state.light_map[i])
+            LIST_FOR_EACH(f, &state->light_map[i])
             {
                 realLight = LIST_ENTRY(f, struct wined3d_light_info, entry);
                 if (realLight->OriginalIndex == src->OriginalIndex)
@@ -582,8 +583,8 @@ static void record_lights(IWineD3DStateBlockImpl *This, const IWineD3DStateBlock
             {
                 /* This can happen if the light was originally created as a
                  * default light for SetLightEnable() while recording. */
-                WARN("Light %u in stateblock %p does not exist in device stateblock %p.\n",
-                        src->OriginalIndex, This, targetStateBlock);
+                WARN("Light %u in stateblock %p does not exist in device state %p.\n",
+                        src->OriginalIndex, This, state);
 
                 src->OriginalParms = WINED3D_default_light;
                 if (src->glIndex != -1)
@@ -887,7 +888,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->state.pixel_shader = targetStateBlock->state.pixel_shader;
     }
 
-    record_lights(This, targetStateBlock);
+    record_lights(This, &targetStateBlock->state);
 
     TRACE("(%p) : Updated state block %p ------------------^\n", targetStateBlock, This);
 
