@@ -1196,6 +1196,43 @@ static void test_delete_selection(HWND parent_wnd)
     DestroyWindow(hTab);
 }
 
+static void test_TCM_SETITEMEXTRA(HWND parent_wnd)
+{
+    HWND hTab;
+    DWORD ret;
+
+    hTab = CreateWindowA(
+	WC_TABCONTROLA,
+	"TestTab",
+	WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | TCS_FIXEDWIDTH,
+        10, 10, 300, 100,
+        parent_wnd, NULL, NULL, 0);
+
+    /* zero is valid size too */
+    ret = SendMessageA(hTab, TCM_SETITEMEXTRA, 0, 0);
+    if (ret == FALSE)
+    {
+        win_skip("TCM_SETITEMEXTRA not supported\n");
+        DestroyWindow(hTab);
+        return;
+    }
+
+    ret = SendMessageA(hTab, TCM_SETITEMEXTRA, -1, 0);
+    ok(ret == FALSE, "got %d\n", ret);
+
+    ret = SendMessageA(hTab, TCM_SETITEMEXTRA, 2, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    DestroyWindow(hTab);
+
+    /* it's not possible to change extra data size for control with tabs */
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, 4);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    ret = SendMessageA(hTab, TCM_SETITEMEXTRA, 2, 0);
+    ok(ret == FALSE, "got %d\n", ret);
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     HWND parent_wnd;
@@ -1240,6 +1277,7 @@ START_TEST(tab)
     test_delete_focus(parent_wnd);
     test_delete_selection(parent_wnd);
     test_removeimage(parent_wnd);
+    test_TCM_SETITEMEXTRA(parent_wnd);
 
     DestroyWindow(parent_wnd);
 }

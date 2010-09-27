@@ -3190,15 +3190,8 @@ TAB_SetItemExtra (TAB_INFO *infoPtr, INT cbInfo)
 {
   TRACE("(%p %d)\n", infoPtr, cbInfo);
 
-  if (cbInfo <= 0)
-    return FALSE;
+  if (cbInfo < 0 || infoPtr->uNumItem) return FALSE;
 
-  if (infoPtr->uNumItem)
-  {
-    /* FIXME: MSDN says this is not allowed, but this hasn't been verified */
-    return FALSE;
-  }
-    
   infoPtr->cbInfo = cbInfo;
   return TRUE;
 }
