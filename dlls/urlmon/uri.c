@@ -3081,6 +3081,11 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
                 if(!computeOnly)
                     uri->canon_uri[uri->canon_len] = *ptr;
                 ++uri->canon_len;
+            } else if(data->scheme_type == URL_SCHEME_MK && *ptr == '\\') {
+                /* MK URIs don't get '\\' percent encoded. */
+                if(!computeOnly)
+                    uri->canon_uri[uri->canon_len] = *ptr;
+                ++uri->canon_len;
             } else {
                 if(!computeOnly)
                     pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
