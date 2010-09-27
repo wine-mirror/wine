@@ -66,6 +66,12 @@ HRESULT WINAPI PSUnregisterPropertySchema(PCWSTR path)
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI PSGetPropertyDescription(REFPROPERTYKEY propkey, REFIID riid, void **ppv)
+{
+    FIXME("%p, %p, %p\n", propkey, riid, ppv);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI PSStringFromPropertyKey(REFPROPERTYKEY pkey, LPWSTR psz, UINT cch)
 {
     static const WCHAR guid_fmtW[] = {'{','%','0','8','X','-','%','0','4','X','-',

@@ -79,7 +79,7 @@
 @ stub PSGetItemPropertyHandlerWithCreateObject
 @ stub PSGetNameFromPropertyKey
 @ stub PSGetNamedPropertyFromPropertyStorage
-@ stub PSGetPropertyDescription
+@ stdcall PSGetPropertyDescription(ptr ptr ptr)
 @ stub PSGetPropertyDescriptionByName
 @ stub PSGetPropertyDescriptionListFromString
 @ stub PSGetPropertyFromPropertyStorage
