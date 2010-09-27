@@ -2423,18 +2423,20 @@ DECL_HANDLER(get_update_region)
 /* update the z order of a window so that a given rectangle is fully visible */
 DECL_HANDLER(update_window_zorder)
 {
-    rectangle_t tmp;
+    rectangle_t tmp, rect = req->rect;
     struct window *ptr, *win = get_window( req->window );
 
     if (!win || !win->parent || !is_visible( win )) return;  /* nothing to do */
+    if (win->ex_style & WS_EX_LAYOUTRTL) mirror_rect( &win->client_rect, &rect );
+    offset_rect( &rect, win->client_rect.left, win->client_rect.top );
 
     LIST_FOR_EACH_ENTRY( ptr, &win->parent->children, struct window, entry )
     {
         if (ptr == win) break;
         if (!(ptr->style & WS_VISIBLE)) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
-        if (!intersect_rect( &tmp, &ptr->visible_rect, &req->rect )) continue;
-        if (ptr->win_region && !rect_in_region( ptr->win_region, &req->rect )) continue;
+        if (!intersect_rect( &tmp, &ptr->visible_rect, &rect )) continue;
+        if (ptr->win_region && !rect_in_region( ptr->win_region, &rect )) continue;
         /* found a window obscuring the rectangle, now move win above this one */
         /* making sure to not violate the topmost rule */
         if (!(ptr->ex_style & WS_EX_TOPMOST) || (win->ex_style & WS_EX_TOPMOST))

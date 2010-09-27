@@ -2441,7 +2441,7 @@ enum coords_relative
 /* Update the z order of a window so that a given rectangle is fully visible */
 @REQ(update_window_zorder)
     user_handle_t  window;        /* handle to the window */
-    rectangle_t    rect;          /* rectangle that must be visible */
+    rectangle_t    rect;          /* rectangle that must be visible (in client coords) */
 @END
 
 

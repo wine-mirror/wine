@@ -120,29 +120,6 @@ void X11DRV_Xcursor_Init(void)
 
 
 /***********************************************************************
- *		get_coords
- *
- * get the coordinates of a mouse event
- */
-static inline void get_coords( HWND hwnd, Window window, int x, int y, POINT *pt )
-{
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-
-    if (!data) return;
-
-    if (window == data->client_window)
-    {
-        pt->x = x + data->client_rect.left;
-        pt->y = y + data->client_rect.top;
-    }
-    else
-    {
-        pt->x = x + data->whole_rect.left;
-        pt->y = y + data->whole_rect.top;
-    }
-}
-
-/***********************************************************************
  *		clip_point_to_rect
  *
  * Clip point to the provided rectangle
@@ -241,25 +218,33 @@ void set_window_cursor( HWND hwnd, HCURSOR handle )
  */
 static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned int state, POINT *pt )
 {
-    struct x11drv_thread_data *data = x11drv_thread_data();
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
-    get_coords( hwnd, window, x, y, pt );
+    if (!data) return;
+
+    if (window == data->whole_window)
+    {
+        x += data->whole_rect.left - data->client_rect.left;
+        y += data->whole_rect.top - data->client_rect.top;
+    }
+    pt->x = x + data->client_rect.left;
+    pt->y = y + data->client_rect.top;
 
     cursor_window = hwnd;
 
     /* update the wine server Z-order */
 
-    if (window != data->grab_window &&
+    if (window != x11drv_thread_data()->grab_window &&
         /* ignore event if a button is pressed, since the mouse is then grabbed too */
         !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
         SERVER_START_REQ( update_window_zorder )
         {
             req->window      = wine_server_user_handle( hwnd );
-            req->rect.left   = pt->x;
-            req->rect.top    = pt->y;
-            req->rect.right  = pt->x + 1;
-            req->rect.bottom = pt->y + 1;
+            req->rect.left   = x;
+            req->rect.top    = y;
+            req->rect.right  = x + 1;
+            req->rect.bottom = y + 1;
             wine_server_call( req );
         }
         SERVER_END_REQ;
