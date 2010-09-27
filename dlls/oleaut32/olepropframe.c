@@ -1,6 +1,7 @@
 /*
  * Copyright 1999 Corel Corporation
  * Sean Langley
+ * Copyright 2010  Geoffrey Hausheer
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -44,8 +45,19 @@ HRESULT WINAPI OleCreatePropertyFrame(
         LPUNKNOWN* ppUnk, ULONG cPages, LPCLSID pPageClsID, LCID lcid,
         DWORD dwReserved, LPVOID pvReserved)
 {
-    FIXME("(%p,%d,%d,%s,%d,%p,%d,%p,%x,%d,%p), not implemented (olepro32.dll)\n",
-            hwndOwner, x, y, debugstr_w(lpszCaption), cObjects, ppUnk, cPages,
-            pPageClsID, (int)lcid, dwReserved, pvReserved);
-    return S_OK;
+    OCPFIPARAMS ocpf;
+
+    ocpf.cbStructSize =  sizeof(OCPFIPARAMS);
+    ocpf.hWndOwner    = hwndOwner;
+    ocpf.x            = x;
+    ocpf.y            = y;
+    ocpf.lpszCaption  = lpszCaption;
+    ocpf.cObjects     = cObjects;
+    ocpf.lplpUnk      = ppUnk;
+    ocpf.cPages       = cPages;
+    ocpf.lpPages      = pPageClsID;
+    ocpf.lcid         = lcid;
+    ocpf.dispidInitialProperty = 0;
+
+    return OleCreatePropertyFrameIndirect(&ocpf);
 }
