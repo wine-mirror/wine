@@ -123,6 +123,16 @@ BEGIN
     PUSHBUTTON      "Avbryt",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
+IDD_DRIVECHOOSE DIALOG  60, 70, 170, 60
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Välj enhetsbokstav"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,105,10,45,14,WS_GROUP
+    PUSHBUTTON      "Avbryt",IDCANCEL,105,30,45,14,WS_GROUP
+END
+
 IDD_DRIVECFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
@@ -287,8 +297,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDC_SYSPARAMS_BUTTON            "Kontrollerar bakgrunden"
-    IDC_SYSPARAMS_BUTTON_TEXT       "Kontrollerar text"
+    IDC_SYSPARAMS_BUTTON            "Bakgrund i kontroller"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Text i kontroller"
     IDC_SYSPARAMS_DESKTOP           "Skrivbord"
     IDC_SYSPARAMS_MENU              "Menybakgrund"
     IDC_SYSPARAMS_MENU_TEXT         "Menytext"
@@ -300,7 +310,23 @@ BEGIN
     IDC_SYSPARAMS_WINDOW            "Fönsterbakgrund"
     IDC_SYSPARAMS_WINDOW_TEXT       "Fönstertext"
     IDC_SYSPARAMS_ACTIVE_TITLE      "Aktiv titellist"
-    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Aktiv titellist"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Aktiv titeltext"
     IDC_SYSPARAMS_INACTIVE_TITLE    "Inaktiv titellist"
-    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inaktiv titellist"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inaktiv titeltext"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Text i meddelandefönster"
+    IDC_SYSPARAMS_APPWORKSPACE      "Arbetsyta i program"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Fönsterram"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "Aktiv kant"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "Inaktiv kant"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Skugga i kontroller"
+    IDC_SYSPARAMS_GRAY_TEXT         "Grå text"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Markering i kontroller"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Mörk skugga i kontroller"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Ljus i kontroller"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Alternativ bakgrund i kontroller"
+    IDC_SYSPARAMS_HOT_TRACKING      "Hovrat föremål"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Gradient för aktiv titellist"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Gradient för inaktiv titellist"
+    IDC_SYSPARAMS_MENU_HILIGHT      "Menymarkering"
+    IDC_SYSPARAMS_MENUBAR           "Menyrad"
 END
