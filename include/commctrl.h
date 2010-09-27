@@ -5212,6 +5212,96 @@ static const WCHAR WC_SCROLLBARW[] = { 'S','c','r','o','l','l','B','a','r',0 };
 #endif
 #define WC_SCROLLBAR              WINELIB_NAME_AW(WC_SCROLLBAR)
 
+/**************************************************************************
+ * Task dialog
+ */
+
+#ifndef NOTASKDIALOG
+
+#include <pshpack1.h>
+
+enum _TASKDIALOG_FLAGS
+{
+    TDF_ENABLE_HYPERLINKS           = 0x0001,
+    TDF_USE_HICON_MAIN              = 0x0002,
+    TDF_USE_HICON_FOOTER            = 0x0004,
+    TDF_ALLOW_DIALOG_CANCELLATION   = 0x0008,
+    TDF_USE_COMMAND_LINKS           = 0x0010,
+    TDF_USE_COMMAND_LINKS_NO_ICON   = 0x0020,
+    TDF_EXPAND_FOOTER_AREA          = 0x0040,
+    TDF_EXPANDED_BY_DEFAULT         = 0x0080,
+    TDF_VERIFICATION_FLAG_CHECKED   = 0x0100,
+    TDF_SHOW_PROGRESS_BAR           = 0x0200,
+    TDF_SHOW_MARQUEE_PROGRESS_BAR   = 0x0400,
+    TDF_CALLBACK_TIMER              = 0x0800,
+    TDF_POSITION_RELATIVE_TO_WINDOW = 0x1000,
+    TDF_RTL_LAYOUT                  = 0x2000,
+    TDF_NO_DEFAULT_RADIO_BUTTON     = 0x4000,
+    TDF_CAN_BE_MINIMIZED            = 0x8000
+};
+typedef int TASKDIALOG_FLAGS;
+
+enum _TASKDIALOG_COMMON_BUTTON_FLAGS
+{
+    TDCBF_OK_BUTTON     = 0x0001,
+    TDCBF_YES_BUTTON    = 0x0002,
+    TDCBF_NO_BUTTON     = 0x0004,
+    TDCBF_CANCEL_BUTTON = 0x0008,
+    TDCBF_RETRY_BUTTON  = 0x0010,
+    TDCBF_CLOSE_BUTTON  = 0x0020
+};
+typedef int TASKDIALOG_COMMON_BUTTON_FLAGS;
+
+typedef struct _TASKDIALOG_BUTTON
+{
+    int     nButtonID;
+    PCWSTR  pszButtonText;
+} TASKDIALOG_BUTTON;
+
+typedef HRESULT (CALLBACK *PFTASKDIALOGCALLBACK)(HWND, UINT, WPARAM, LPARAM, LONG_PTR);
+
+typedef struct _TASKDIALOGCONFIG
+{
+    UINT        cbSize;
+    HWND        hwndParent;
+    HINSTANCE   hInstance;
+    TASKDIALOG_FLAGS    dwFlags;
+    TASKDIALOG_COMMON_BUTTON_FLAGS  dwCommonButtons;
+    PCWSTR      pszWindowTitle;
+    union
+    {
+        HICON   hMainIcon;
+        PCWSTR  pszMainIcon;
+    } DUMMYUNIONNAME;
+    PCWSTR      pszMainInstruction;
+    PCWSTR      pszContent;
+    UINT        cButtons;
+    const TASKDIALOG_BUTTON *pButtons;
+    int         nDefaultButton;
+    UINT        cRadioButtons;
+    const TASKDIALOG_BUTTON *pRadioButtons;
+    int         nDefaultRadioButton;
+    PCWSTR      pszVerificationText;
+    PCWSTR      pszExpandedInformation;
+    PCWSTR      pszExpandedControlText;
+    PCWSTR      pszCollapsedControlText;
+    union
+    {
+        HICON   hFooterIcon;
+        PCWSTR  pszFooterIcon;
+    } DUMMYUNIONNAME2;
+    PCWSTR      pszFooter;
+    PFTASKDIALOGCALLBACK pfCallback;
+    LONG_PTR    lpCallbackData;
+    UINT        cxWidth;
+} TASKDIALOGCONFIG;
+
+HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *, int *, int *, BOOL *);
+
+#include <poppack.h>
+
+#endif /* NOTASKDIALOG */
+
 #ifdef __cplusplus
 }
 #endif
