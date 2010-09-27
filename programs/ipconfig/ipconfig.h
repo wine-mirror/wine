@@ -40,3 +40,4 @@
 #define STRING_DHCP_ENABLED     117
 #define STRING_YES              118
 #define STRING_NO               119
+#define STRING_DEFAULT_GATEWAY  120

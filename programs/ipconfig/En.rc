@@ -44,4 +44,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP enabled"
     STRING_YES, "Yes"
     STRING_NO, "No"
+    STRING_DEFAULT_GATEWAY, "Default gateway"
 }
