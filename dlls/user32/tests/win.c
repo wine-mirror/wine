@@ -58,6 +58,7 @@ static BOOL (WINAPI *pGetProcessDefaultLayout)( DWORD *layout );
 static BOOL (WINAPI *pSetProcessDefaultLayout)( DWORD layout );
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 static DWORD (WINAPI *pGetLayout)(HDC hdc);
+static BOOL (WINAPI *pMirrorRgn)(HWND hwnd, HRGN hrgn);
 
 static BOOL test_lbuttondown_flag;
 static HWND hwndMessage;
@@ -6126,7 +6127,7 @@ static void test_winregion(void)
 {
     HWND hwnd;
     RECT r;
-    int ret;
+    int ret, width;
     HRGN hrgn;
 
     if (!pGetWindowRgnBox)
@@ -6159,7 +6160,21 @@ static void test_winregion(void)
         ok( r.left == 2 && r.top == 3 && r.right == 10 && r.bottom == 15,
            "Expected (2,3,10,15), got (%d,%d,%d,%d)\n", r.left, r.top,
                                                             r.right, r.bottom);
-        DeleteObject(hrgn);
+        if (pMirrorRgn)
+        {
+            hrgn = CreateRectRgn(2, 3, 10, 15);
+            ret = pMirrorRgn( hwnd, hrgn );
+            ok( ret == TRUE, "MirrorRgn failed %u\n", ret );
+            r.left = r.top = r.right = r.bottom = 0;
+            GetWindowRect( hwnd, &r );
+            width = r.right - r.left;
+            r.left = r.top = r.right = r.bottom = 0;
+            ret = GetRgnBox( hrgn, &r );
+            ok( ret == SIMPLEREGION, "GetRgnBox failed %u\n", ret );
+            ok( r.left == width - 10 && r.top == 3 && r.right == width - 2 && r.bottom == 15,
+                "Wrong rectangle (%d,%d,%d,%d) for width %d\n", r.left, r.top, r.right, r.bottom, width );
+        }
+        else win_skip( "MirrorRgn not supported\n" );
     }
     DestroyWindow(hwnd);
 }
@@ -6220,6 +6235,7 @@ START_TEST(win)
     pSetProcessDefaultLayout = (void *)GetProcAddress( user32, "SetProcessDefaultLayout" );
     pGetLayout = (void *)GetProcAddress( gdi32, "GetLayout" );
     pSetLayout = (void *)GetProcAddress( gdi32, "SetLayout" );
+    pMirrorRgn = (void *)GetProcAddress( gdi32, "MirrorRgn" );
 
     if (!RegisterWindowClasses()) assert(0);
 
