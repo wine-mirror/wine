@@ -619,65 +619,39 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     SYSTEMTIME systemtime;
     LANGID langid;
 
-    static const WCHAR CFF[] = 
-{'C','o','m','m','o','n','F','i','l','e','s','F','o','l','d','e','r',0};
-    static const WCHAR PFF[] = 
-{'P','r','o','g','r','a','m','F','i','l','e','s','F','o','l','d','e','r',0};
-    static const WCHAR CADF[] = 
-{'C','o','m','m','o','n','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
-    static const WCHAR FaF[] = 
-{'F','a','v','o','r','i','t','e','s','F','o','l','d','e','r',0};
-    static const WCHAR FoF[] = 
-{'F','o','n','t','s','F','o','l','d','e','r',0};
-    static const WCHAR SendTF[] = 
-{'S','e','n','d','T','o','F','o','l','d','e','r',0};
-    static const WCHAR SMF[] = 
-{'S','t','a','r','t','M','e','n','u','F','o','l','d','e','r',0};
-    static const WCHAR StF[] = 
-{'S','t','a','r','t','u','p','F','o','l','d','e','r',0};
-    static const WCHAR TemplF[] = 
-{'T','e','m','p','l','a','t','e','F','o','l','d','e','r',0};
-    static const WCHAR DF[] = 
-{'D','e','s','k','t','o','p','F','o','l','d','e','r',0};
-    static const WCHAR PMF[] = 
-{'P','r','o','g','r','a','m','M','e','n','u','F','o','l','d','e','r',0};
-    static const WCHAR ATF[] = 
-{'A','d','m','i','n','T','o','o','l','s','F','o','l','d','e','r',0};
-    static const WCHAR ADF[] = 
-{'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
-    static const WCHAR SF[] = 
-{'S','y','s','t','e','m','F','o','l','d','e','r',0};
-    static const WCHAR SF16[] = 
-{'S','y','s','t','e','m','1','6','F','o','l','d','e','r',0};
-    static const WCHAR LADF[] = 
-{'L','o','c','a','l','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
-    static const WCHAR MPF[] = 
-{'M','y','P','i','c','t','u','r','e','s','F','o','l','d','e','r',0};
-    static const WCHAR PF[] = 
-{'P','e','r','s','o','n','a','l','F','o','l','d','e','r',0};
-    static const WCHAR WF[] = 
-{'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
-    static const WCHAR WV[] = 
-{'W','i','n','d','o','w','s','V','o','l','u','m','e',0};
-    static const WCHAR TF[]=
-{'T','e','m','p','F','o','l','d','e','r',0};
-    static const WCHAR szPriv[] =
-{'P','r','i','v','i','l','e','g','e','d',0};
-    static const WCHAR v9x[] = { 'V','e','r','s','i','o','n','9','X',0 };
-    static const WCHAR vNT[] = { 'V','e','r','s','i','o','n','N','T',0 };
-    static const WCHAR szMsiNTProductType[] = { 'M','s','i','N','T','P','r','o','d','u','c','t','T','y','p','e',0 };
+    static const WCHAR szCommonFilesFolder[] = {'C','o','m','m','o','n','F','i','l','e','s','F','o','l','d','e','r',0};
+    static const WCHAR szProgramFilesFolder[] = {'P','r','o','g','r','a','m','F','i','l','e','s','F','o','l','d','e','r',0};
+    static const WCHAR szCommonAppDataFolder[] = {'C','o','m','m','o','n','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
+    static const WCHAR szFavoritesFolder[] = {'F','a','v','o','r','i','t','e','s','F','o','l','d','e','r',0};
+    static const WCHAR szFontsFolder[] = {'F','o','n','t','s','F','o','l','d','e','r',0};
+    static const WCHAR szSendToFolder[] = {'S','e','n','d','T','o','F','o','l','d','e','r',0};
+    static const WCHAR szStartMenuFolder[] = {'S','t','a','r','t','M','e','n','u','F','o','l','d','e','r',0};
+    static const WCHAR szStartupFolder[] = {'S','t','a','r','t','u','p','F','o','l','d','e','r',0};
+    static const WCHAR szTemplateFolder[] = {'T','e','m','p','l','a','t','e','F','o','l','d','e','r',0};
+    static const WCHAR szDesktopFolder[] = {'D','e','s','k','t','o','p','F','o','l','d','e','r',0};
+    static const WCHAR szProgramMenuFolder[] = {'P','r','o','g','r','a','m','M','e','n','u','F','o','l','d','e','r',0};
+    static const WCHAR szAdminToolsFolder[] = {'A','d','m','i','n','T','o','o','l','s','F','o','l','d','e','r',0};
+    static const WCHAR szAppDataFolder[] = {'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
+    static const WCHAR szSystemFolder[] = {'S','y','s','t','e','m','F','o','l','d','e','r',0};
+    static const WCHAR szSystem16Folder[] = {'S','y','s','t','e','m','1','6','F','o','l','d','e','r',0};
+    static const WCHAR szLocalAppDataFolder[] = {'L','o','c','a','l','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
+    static const WCHAR szMyPicturesFolder[] = {'M','y','P','i','c','t','u','r','e','s','F','o','l','d','e','r',0};
+    static const WCHAR szPersonalFolder[] = {'P','e','r','s','o','n','a','l','F','o','l','d','e','r',0};
+    static const WCHAR szWindowsFolder[] = {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
+    static const WCHAR szWindowsVolume[] = {'W','i','n','d','o','w','s','V','o','l','u','m','e',0};
+    static const WCHAR szTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
+    static const WCHAR szPrivileged[] = {'P','r','i','v','i','l','e','g','e','d',0};
+    static const WCHAR szVersion9x[] = {'V','e','r','s','i','o','n','9','X',0};
+    static const WCHAR szVersionNT[] = {'V','e','r','s','i','o','n','N','T',0};
+    static const WCHAR szMsiNTProductType[] = {'M','s','i','N','T','P','r','o','d','u','c','t','T','y','p','e',0};
     static const WCHAR szFormat[] = {'%','l','i',0};
-    static const WCHAR szWinBuild[] =
-{'W','i','n','d','o','w','s','B','u','i','l','d', 0 };
-    static const WCHAR szSPL[] = 
-{'S','e','r','v','i','c','e','P','a','c','k','L','e','v','e','l',0 };
+    static const WCHAR szWindowsBuild[] = {'W','i','n','d','o','w','s','B','u','i','l','d',0};
+    static const WCHAR szServicePackLevel[] = {'S','e','r','v','i','c','e','P','a','c','k','L','e','v','e','l',0};
     static const WCHAR szSix[] = {'6',0 };
-
     static const WCHAR szVersionMsi[] = { 'V','e','r','s','i','o','n','M','s','i',0 };
     static const WCHAR szVersionDatabase[] = { 'V','e','r','s','i','o','n','D','a','t','a','b','a','s','e',0 };
     static const WCHAR szPhysicalMemory[] = { 'P','h','y','s','i','c','a','l','M','e','m','o','r','y',0 };
     static const WCHAR szFormat2[] = {'%','l','i','.','%','l','i',0};
-/* Screen properties */
     static const WCHAR szScreenX[] = {'S','c','r','e','e','n','X',0};
     static const WCHAR szScreenY[] = {'S','c','r','e','e','n','Y',0};
     static const WCHAR szColorBits[] = {'C','o','l','o','r','B','i','t','s',0};
@@ -700,14 +674,14 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0
     };
     static const WCHAR szRegisteredUser[] = {'R','e','g','i','s','t','e','r','e','d','O','w','n','e','r',0};
-    static const WCHAR szRegisteredOrg[] = {
+    static const WCHAR szRegisteredOrganization[] = {
         'R','e','g','i','s','t','e','r','e','d','O','r','g','a','n','i','z','a','t','i','o','n',0
     };
     static const WCHAR szUSERNAME[] = {'U','S','E','R','N','A','M','E',0};
     static const WCHAR szCOMPANYNAME[] = {'C','O','M','P','A','N','Y','N','A','M','E',0};
     static const WCHAR szDate[] = {'D','a','t','e',0};
     static const WCHAR szTime[] = {'T','i','m','e',0};
-    static const WCHAR szUserLangID[] = {'U','s','e','r','L','a','n','g','u','a','g','e','I','D',0};
+    static const WCHAR szUserLanguageID[] = {'U','s','e','r','L','a','n','g','u','a','g','e','I','D',0};
     static const WCHAR szSystemLangID[] = {'S','y','s','t','e','m','L','a','n','g','u','a','g','e','I','D',0};
     static const WCHAR szProductState[] = {'P','r','o','d','u','c','t','S','t','a','t','e',0};
     static const WCHAR szLogonUser[] = {'L','o','g','o','n','U','s','e','r',0};
@@ -724,79 +698,79 @@ static VOID set_installer_properties(MSIPACKAGE *package)
      * RedirectedDllSupport
      */
 
-    SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES_COMMON,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, CFF, pth);
+    msi_set_property(package->db, szCommonFilesFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, PFF, pth);
+    msi_set_property(package->db, szProgramFilesFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_COMMON_APPDATA,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, CADF, pth);
+    msi_set_property(package->db, szCommonAppDataFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_FAVORITES,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_FAVORITES, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, FaF, pth);
+    msi_set_property(package->db, szFavoritesFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_FONTS,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_FONTS, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, FoF, pth);
+    msi_set_property(package->db, szFontsFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_SENDTO,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_SENDTO, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, SendTF, pth);
+    msi_set_property(package->db, szSendToFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_STARTMENU,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_STARTMENU, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, SMF, pth);
+    msi_set_property(package->db, szStartMenuFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_STARTUP,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_STARTUP, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, StF, pth);
+    msi_set_property(package->db, szStartupFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_TEMPLATES,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_TEMPLATES, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, TemplF, pth);
+    msi_set_property(package->db, szTemplateFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_DESKTOP,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, DF, pth);
+    msi_set_property(package->db, szDesktopFolder, pth);
 
     /* FIXME: set to AllUsers profile path if ALLUSERS is set */
-    SHGetFolderPathW(NULL,CSIDL_PROGRAMS,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_PROGRAMS, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, PMF, pth);
+    msi_set_property(package->db, szProgramMenuFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_ADMINTOOLS,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_ADMINTOOLS, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, ATF, pth);
+    msi_set_property(package->db, szAdminToolsFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_APPDATA,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, ADF, pth);
+    msi_set_property(package->db, szAppDataFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_SYSTEM,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_SYSTEM, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, SF, pth);
-    msi_set_property(package->db, SF16, pth);
+    msi_set_property(package->db, szSystemFolder, pth);
+    msi_set_property(package->db, szSystem16Folder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_LOCAL_APPDATA,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, LADF, pth);
+    msi_set_property(package->db, szLocalAppDataFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_MYPICTURES,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_MYPICTURES, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, MPF, pth);
+    msi_set_property(package->db, szMyPicturesFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_PERSONAL,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, PF, pth);
+    msi_set_property(package->db, szPersonalFolder, pth);
 
-    SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_WINDOWS, NULL, 0, pth);
     strcatW(pth, szBackSlash);
-    msi_set_property(package->db, WF, pth);
+    msi_set_property(package->db, szWindowsFolder, pth);
     
     SHGetFolderPathW(NULL, CSIDL_PRINTHOOD, NULL, 0, pth);
     strcatW(pth, szBackSlash);
@@ -813,43 +787,41 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     /* Physical Memory is specified in MB. Using total amount. */
     msex.dwLength = sizeof(msex);
     GlobalMemoryStatusEx( &msex );
-    sprintfW( bufstr, szIntFormat, (int)(msex.ullTotalPhys/1024/1024));
+    sprintfW( bufstr, szIntFormat, (int)(msex.ullTotalPhys / 1024 / 1024) );
     msi_set_property(package->db, szPhysicalMemory, bufstr);
 
-    SHGetFolderPathW(NULL,CSIDL_WINDOWS,NULL,0,pth);
+    SHGetFolderPathW(NULL, CSIDL_WINDOWS, NULL, 0, pth);
     ptr = strchrW(pth,'\\');
-    if (ptr)
-	*(ptr+1) = 0;
-    msi_set_property(package->db, WV, pth);
+    if (ptr) *(ptr + 1) = 0;
+    msi_set_property(package->db, szWindowsVolume, pth);
     
     GetTempPathW(MAX_PATH,pth);
-    msi_set_property(package->db, TF, pth);
-
+    msi_set_property(package->db, szTempFolder, pth);
 
     /* in a wine environment the user is always admin and privileged */
     msi_set_property(package->db, szAdminUser, szOne);
-    msi_set_property(package->db, szPriv, szOne);
+    msi_set_property(package->db, szPrivileged, szOne);
 
     /* set the os things */
     OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
     GetVersionExW((OSVERSIONINFOW *)&OSVersion);
-    verval = OSVersion.dwMinorVersion+OSVersion.dwMajorVersion*100;
-    sprintfW(verstr,szFormat,verval);
+    verval = OSVersion.dwMinorVersion + OSVersion.dwMajorVersion * 100;
+    sprintfW(verstr, szFormat, verval);
     switch (OSVersion.dwPlatformId)
     {
         case VER_PLATFORM_WIN32_WINDOWS:    
-            msi_set_property(package->db, v9x, verstr);
+            msi_set_property(package->db, szVersion9x, verstr);
             break;
         case VER_PLATFORM_WIN32_NT:
-            msi_set_property(package->db, vNT, verstr);
-            sprintfW(verstr,szFormat,OSVersion.wProductType);
+            msi_set_property(package->db, szVersionNT, verstr);
+            sprintfW(verstr, szFormat,OSVersion.wProductType);
             msi_set_property(package->db, szMsiNTProductType, verstr);
             break;
     }
-    sprintfW(verstr,szFormat,OSVersion.dwBuildNumber);
-    msi_set_property(package->db, szWinBuild, verstr);
+    sprintfW(verstr, szFormat, OSVersion.dwBuildNumber);
+    msi_set_property(package->db, szWindowsBuild, verstr);
     /* just fudge this */
-    msi_set_property(package->db, szSPL, szSix);
+    msi_set_property(package->db, szServicePackLevel, szSix);
 
     sprintfW( bufstr, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
     msi_set_property( package->db, szVersionMsi, bufstr );
@@ -904,7 +876,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
             (username = msi_reg_get_val_str( hkey, szRegisteredUser )))
             msi_set_property( package->db, szUSERNAME, username );
         if (!companyname &&
-            (companyname = msi_reg_get_val_str( hkey, szRegisteredOrg )))
+            (companyname = msi_reg_get_val_str( hkey, szRegisteredOrganization )))
             msi_set_property( package->db, szCOMPANYNAME, companyname );
         CloseHandle( hkey );
     }
@@ -934,7 +906,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     langid = GetUserDefaultLangID();
     sprintfW(bufstr, szIntFormat, langid);
-    msi_set_property( package->db, szUserLangID, bufstr );
+    msi_set_property( package->db, szUserLanguageID, bufstr );
 
     langid = GetSystemDefaultLangID();
     sprintfW(bufstr, szIntFormat, langid);
