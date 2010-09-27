@@ -152,9 +152,9 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     },
     /* WIN7 */
     {
-        sizeof(RTL_OSVERSIONINFOEXW), 6, 1, 0x1DB0, VER_PLATFORM_WIN32_NT,
-        {' ',0},
-        0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
+        sizeof(RTL_OSVERSIONINFOEXW), 6, 1, 0x1DB1, VER_PLATFORM_WIN32_NT,
+        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','1',0},
+        1, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
     }
 };
 
