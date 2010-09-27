@@ -474,8 +474,10 @@ static void sync_window_region( Display *display, struct x11drv_win_data *data, 
     }
     else
     {
-        RGNDATA *pRegionData = X11DRV_GetRegionData( hrgn, 0 );
-        if (pRegionData)
+        RGNDATA *pRegionData;
+
+        if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) MirrorRgn( data->hwnd, hrgn );
+        if ((pRegionData = X11DRV_GetRegionData( hrgn, 0 )))
         {
             wine_tsx11_lock();
             XShapeCombineRectangles( display, data->whole_window, ShapeBounding,
