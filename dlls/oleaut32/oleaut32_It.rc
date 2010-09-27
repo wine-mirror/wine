@@ -20,13 +20,16 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
   IDS_TRUE  "Vero"
   IDS_FALSE "Falso"
-  IDS_YES   "Si"
+  IDS_YES   "Sì"
   IDS_NO    "No"
   IDS_ON    "On"
   IDS_OFF   "Off"
