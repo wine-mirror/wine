@@ -1,4 +1,5 @@
 MODULE    = inetcpl.cpl
+IMPORTS   = comctl32 user32
 DELAYIMPORTS = cryptui
 
 C_SRCS = \

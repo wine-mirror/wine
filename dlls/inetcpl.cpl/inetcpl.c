@@ -24,6 +24,10 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <commctrl.h>
+#include <commdlg.h>
 #include <cpl.h>
 
 #include "wine/debug.h"
@@ -32,6 +36,8 @@
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
+
+HMODULE hcpl;
 
 /*********************************************************************
  *  DllMain (inetcpl.@)
@@ -47,8 +53,63 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hdll);
+            hcpl = hdll;
     }
     return TRUE;
+}
+
+/******************************************************************************
+ * propsheet_callback [internal]
+ *
+ */
+static int CALLBACK propsheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
+{
+
+    TRACE("(%p, 0x%08x/%d, 0x%lx)\n", hwnd, msg, msg, lparam);
+    switch (msg)
+    {
+        case PSCB_INITIALIZED:
+            SendMessageW(hwnd, WM_SETICON, ICON_BIG, (LPARAM) LoadIconW(hcpl, MAKEINTRESOURCEW(ICO_MAIN)));
+            break;
+    }
+    return 0;
+}
+
+/******************************************************************************
+ * display_cpl_sheets [internal]
+ *
+ * Build and display the dialog with all control panel propertysheets
+ *
+ */
+static void display_cpl_sheets(HWND parent)
+{
+    PROPSHEETPAGEW psp[NUM_PROPERTY_PAGES];
+    PROPSHEETHEADERW psh;
+    DWORD id = 0;
+
+    ZeroMemory(&psh, sizeof(psh));
+    ZeroMemory(psp, sizeof(psp));
+
+    /* Fill out all PROPSHEETPAGE */
+    psp[id].dwSize = sizeof (PROPSHEETPAGEW);
+    psp[id].hInstance = hcpl;
+    psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_CONTENT);
+    psp[id].pfnDlgProc = content_dlgproc;
+    id++;
+
+    /* Fill out the PROPSHEETHEADER */
+    psh.dwSize = sizeof (PROPSHEETHEADERW);
+    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK;
+    psh.hwndParent = parent;
+    psh.hInstance = hcpl;
+    psh.u.pszIcon = MAKEINTRESOURCEW(ICO_MAIN);
+    psh.pszCaption = MAKEINTRESOURCEW(IDS_CPL_NAME);
+    psh.nPages = id;
+    psh.u3.ppsp = psp;
+    psh.pfnCallback = propsheet_callback;
+
+    /* display the dialog */
+    PropertySheetW(&psh);
 }
 
 /*********************************************************************
@@ -90,7 +151,7 @@ LONG CALLBACK CPlApplet(HWND hWnd, UINT command, LPARAM lParam1, LPARAM lParam2)
         }
 
         case CPL_DBLCLK:
-            FIXME("not implemented yet\n");
+            display_cpl_sheets(hWnd);
             break;
     }
 

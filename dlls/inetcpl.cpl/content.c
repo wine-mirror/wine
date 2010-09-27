@@ -27,6 +27,7 @@
 #include <winuser.h>
 #include <cryptuiapi.h>
 
+#include "inetcpl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
@@ -57,7 +58,7 @@ static BOOL display_cert_manager(HWND parent, DWORD flags)
  * Launch a dialog to manage personal certificates
  *
  * PARAMS
- *  hWnd    [I] Handle for the parrent window
+ *  parent  [I] Handle for the parent window
  *
  * RETURNS
  *  Failure: FALSE
@@ -70,4 +71,29 @@ static BOOL display_cert_manager(HWND parent, DWORD flags)
 BOOL WINAPI LaunchSiteCertDialog(HWND parent)
 {
     return display_cert_manager(parent, 0);
+}
+
+/*********************************************************************
+ * content_dlgproc [internal]
+ *
+ */
+INT_PTR CALLBACK content_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+
+    TRACE("(%p, 0x%08x/%d, 0x%lx, 0x%lx)\n", hwnd, msg, msg, wparam, lparam);
+
+    if (msg == WM_COMMAND)
+    {
+        switch (LOWORD(wparam))
+        {
+            case IDC_CERT:
+                display_cert_manager(hwnd, 0);
+                break;
+
+            case IDC_CERT_PUBLISHER:
+                display_cert_manager(hwnd, CRYPTUI_CERT_MGR_PUBLISHER_TAB);
+                break;
+        }
+    }
+    return FALSE;
 }
