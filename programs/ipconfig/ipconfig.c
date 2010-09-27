@@ -130,6 +130,13 @@ static void print_field(int msg, const WCHAR *value)
     ipconfig_printfW(formatW, field, value);
 }
 
+static BOOL socket_address_to_string(WCHAR *buf, DWORD len, SOCKET_ADDRESS *addr)
+{
+    return WSAAddressToStringW(addr->lpSockaddr,
+                               addr->iSockaddrLength, NULL,
+                               buf, &len) == 0;
+}
+
 static void print_basic_information(void)
 {
     IP_ADAPTER_ADDRESSES *adapters;
@@ -150,6 +157,7 @@ static void print_basic_information(void)
                 static const WCHAR newlineW[] = {'\n',0};
 
                 IP_ADAPTER_UNICAST_ADDRESS *addr;
+                WCHAR addr_buf[54];
 
                 ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
                 ipconfig_printfW(newlineW);
@@ -157,12 +165,7 @@ static void print_basic_information(void)
 
                 for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
                 {
-                    WCHAR addr_buf[54];
-                    DWORD len = sizeof(addr_buf)/sizeof(WCHAR);
-
-                    if (WSAAddressToStringW(addr->Address.lpSockaddr,
-                                            addr->Address.iSockaddrLength, NULL,
-                                            addr_buf, &len) == 0)
+                    if (socket_address_to_string(addr_buf, sizeof(addr_buf)/sizeof(WCHAR), &addr->Address))
                         print_field(STRING_IP_ADDRESS, addr_buf);
                     /* FIXME: Output corresponding subnet mask. */
                 }
@@ -287,6 +290,7 @@ static void print_full_information(void)
             {
                 IP_ADAPTER_UNICAST_ADDRESS *addr;
                 WCHAR physaddr_buf[3 * MAX_ADAPTER_ADDRESS_LENGTH];
+                WCHAR addr_buf[54];
 
                 ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
                 ipconfig_printfW(newlineW);
@@ -299,12 +303,7 @@ static void print_full_information(void)
 
                 for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
                 {
-                    WCHAR addr_buf[54];
-                    DWORD len = sizeof(addr_buf)/sizeof(WCHAR);
-
-                    if (WSAAddressToStringW(addr->Address.lpSockaddr,
-                                            addr->Address.iSockaddrLength, NULL,
-                                            addr_buf, &len) == 0)
+                    if (socket_address_to_string(addr_buf, sizeof(addr_buf)/sizeof(WCHAR), &addr->Address))
                         print_field(STRING_IP_ADDRESS, addr_buf);
                     /* FIXME: Output corresponding subnet mask. */
                 }
