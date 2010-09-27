@@ -221,6 +221,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         if (!bRedraw) swp_flags |= SWP_NOREDRAW;
         SetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
         invalidate_dce( hwnd, NULL );
+        if (hrgn) DeleteObject( hrgn );
     }
     return ret;
 }
