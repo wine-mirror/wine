@@ -5755,14 +5755,10 @@ static void test_get_ownerDocument(void)
     VariantClear(&var);
 
     /* set to XPath and check that new instances use it */
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = _bstr_("XPath");
-    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), var);
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath"));
     ok( hr == S_OK, "got 0x%08x\n", hr);
 
-    V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = _bstr_("xmlns:wi=\'www.winehq.org\'");
-    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), var);
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:wi=\'www.winehq.org\'"));
     todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXMLDOMDocument2_get_firstChild(doc, &node);
@@ -5771,7 +5767,6 @@ static void test_get_ownerDocument(void)
     hr = IXMLDOMNode_get_ownerDocument(node, &doc1);
     ok( hr == S_OK, "got 0x%08x\n", hr);
 
-    VariantClear(&var);
     hr = IXMLDOMDocument_QueryInterface(doc1, &IID_IXMLDOMDocument2, (void**)&doc_owner);
     ok( hr == S_OK, "got 0x%08x\n", hr);
     ok( doc_owner != doc, "got %p, doc %p\n", doc_owner, doc);
