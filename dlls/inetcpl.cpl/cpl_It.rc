@@ -1,5 +1,5 @@
 /*
- * Internet control panel applet
+ * Italian resources for the Internet control panel applet
  *
  * Copyright 2010 Luca Bennati <lucak3@gmail.com
  *
@@ -22,12 +22,27 @@
 #include "inetcpl.h"
 
 /* UTF-8 */
-#pragma codepage(65001)
+#pragma code_page(65001)
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_CPL_NAME        "Impostazioni di Internet"
-    IDS_CPL_INFO        "Configura il browser Internet di Wine e le relative impostazioni" 
+    IDS_CPL_INFO        "Configura il browser Internet di Wine e le relative impostazioni"
+END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Contenuto"
+BEGIN
+
+    GROUPBOX    " Certificati ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "I certificati sono usati per la tua identificazione personale e per identificare le autorità e gli editori dei certificati.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Certificati...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON	"Editori... ", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
 END
