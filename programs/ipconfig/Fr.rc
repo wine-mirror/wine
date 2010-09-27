@@ -46,4 +46,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP activé"
     STRING_YES, "Oui"
     STRING_NO, "Non"
+    STRING_DEFAULT_GATEWAY, "Passerelle par défaut"
 }
