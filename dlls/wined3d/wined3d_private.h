@@ -3017,14 +3017,13 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format,
 DWORD wined3d_format_convert_from_float(const struct wined3d_format *format,
         const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
 
-static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
+static inline BOOL use_vs(const struct wined3d_state *state)
 {
     /* Check stateblock->vertexDecl to allow this to be used from
      * IWineD3DDeviceImpl_FindTexUnitMap(). This is safe because
      * stateblock->vertexShader implies a vertex declaration instead of ddraw
      * style strided data. */
-    return stateblock->state.vertex_shader
-            && !stateblock->state.vertex_declaration->position_transformed;
+    return state->vertex_shader && !state->vertex_declaration->position_transformed;
 }
 
 static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)

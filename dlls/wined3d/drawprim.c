@@ -576,12 +576,13 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
 {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_state *state = &This->stateBlock->state;
     struct wined3d_context *context;
     unsigned int i;
 
     if (!index_count) return;
 
-    if (This->stateBlock->state.render_states[WINED3DRS_COLORWRITEENABLE])
+    if (state->render_states[WINED3DRS_COLORWRITEENABLE])
     {
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < This->adapter->gl_info.limits.buffers; ++i)
@@ -616,8 +617,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
-        if (This->stateBlock->state.render_states[WINED3DRS_ZWRITEENABLE]
-                || This->stateBlock->state.render_states[WINED3DRS_ZENABLE])
+        if (state->render_states[WINED3DRS_ZWRITEENABLE] || state->render_states[WINED3DRS_ZENABLE])
         {
             RECT current_rect, draw_rect, r;
 
@@ -637,7 +637,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             if (!EqualRect(&r, &draw_rect))
                 surface_load_ds_location(This->depth_stencil, context, location);
 
-            if (This->stateBlock->state.render_states[WINED3DRS_ZWRITEENABLE])
+            if (state->render_states[WINED3DRS_ZWRITEENABLE])
             {
                 surface_modify_ds_location(This->depth_stencil, location,
                         This->depth_stencil->ds_current_size.cx,
@@ -650,8 +650,8 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     if ((!context->gl_info->supported[WINED3D_GL_VERSION_2_0]
             || (!glPointParameteri && !context->gl_info->supported[NV_POINT_SPRITE]))
             && context->render_offscreen
-            && This->stateBlock->state.render_states[WINED3DRS_POINTSPRITEENABLE]
-            && This->stateBlock->state.gl_primitive_type == GL_POINTS)
+            && state->render_states[WINED3DRS_POINTSPRITEENABLE]
+            && state->gl_primitive_type == GL_POINTS)
     {
         FIXME("Point sprite coordinate origin switching not supported.\n");
     }
@@ -659,15 +659,15 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
     {
-        GLenum glPrimType = This->stateBlock->state.gl_primitive_type;
+        GLenum glPrimType = state->gl_primitive_type;
         BOOL emulation = FALSE;
         const struct wined3d_stream_info *stream_info = &This->strided_streams;
         struct wined3d_stream_info stridedlcl;
 
-        if (!use_vs(This->stateBlock))
+        if (!use_vs(state))
         {
             if (!This->strided_streams.position_transformed && context->num_untracked_materials
-                    && This->stateBlock->state.render_states[WINED3DRS_LIGHTING])
+                    && state->render_states[WINED3DRS_LIGHTING])
             {
                 static BOOL warned;
                 if (!warned) {
@@ -678,7 +678,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
                 }
                 emulation = TRUE;
             }
-            else if (context->fog_coord && This->stateBlock->state.render_states[WINED3DRS_FOGENABLE])
+            else if (context->fog_coord && state->render_states[WINED3DRS_FOGENABLE])
             {
                 /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
                  * to a float in the vertex buffer
@@ -700,9 +700,10 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             }
         }
 
-        if (This->useDrawStridedSlow || emulation) {
+        if (This->useDrawStridedSlow || emulation)
+        {
             /* Immediate mode drawing */
-            if (use_vs(This->stateBlock))
+            if (use_vs(state))
             {
                 static BOOL warned;
                 if (!warned) {

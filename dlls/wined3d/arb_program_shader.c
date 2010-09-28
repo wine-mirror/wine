@@ -4396,6 +4396,8 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
     int i;
     WORD int_skip;
     const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
+
     find_ps_compile_args(shader, stateblock, &args->super);
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
@@ -4403,7 +4405,7 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
 
     for(i = 0; i < MAX_CONST_B; i++)
     {
-        if (stateblock->state.ps_consts_b[i])
+        if (state->ps_consts_b[i])
             args->bools |= ( 1 << i);
     }
 
@@ -4411,9 +4413,9 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
      * is quite expensive because it forces the driver to disable early Z discards. It is cheaper to
      * duplicate the shader than have a no-op KIL instruction in every shader
      */
-    if ((!((IWineD3DDeviceImpl *)shader->baseShader.device)->vs_clipping) && use_vs(stateblock)
-            && stateblock->state.render_states[WINED3DRS_CLIPPING]
-            && stateblock->state.render_states[WINED3DRS_CLIPPLANEENABLE])
+    if ((!((IWineD3DDeviceImpl *)shader->baseShader.device)->vs_clipping) && use_vs(state)
+            && state->render_states[WINED3DRS_CLIPPING]
+            && state->render_states[WINED3DRS_CLIPPLANEENABLE])
         args->clip = 1;
     else
         args->clip = 0;
@@ -4436,9 +4438,9 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
         }
         else
         {
-            args->loop_ctrl[i][0] = stateblock->state.ps_consts_i[i * 4];
-            args->loop_ctrl[i][1] = stateblock->state.ps_consts_i[i * 4 + 1];
-            args->loop_ctrl[i][2] = stateblock->state.ps_consts_i[i * 4 + 2];
+            args->loop_ctrl[i][0] = state->ps_consts_i[i * 4];
+            args->loop_ctrl[i][1] = state->ps_consts_i[i * 4 + 1];
+            args->loop_ctrl[i][2] = state->ps_consts_i[i * 4 + 2];
         }
     }
 }
@@ -6152,8 +6154,8 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DDeviceImpl *device = stateblock->device;
     struct shader_arb_priv *priv = device->fragment_priv;
+    BOOL use_vshader = use_vs(&stateblock->state);
     BOOL use_pshader = use_ps(stateblock);
-    BOOL use_vshader = use_vs(stateblock);
     struct ffp_frag_settings settings;
     const struct arbfp_ffp_desc *desc;
     unsigned int i;
@@ -6244,26 +6246,28 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
  * is that changing the fog start and fog end(which links to FOGENABLE in vertex) results in the
  * fragment_prog_arbfp function being called because FOGENABLE is dirty, which calls this function here
  */
-static void state_arbfp_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_arbfp_fog(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_state *state = &stateblock->state;
     enum fogsource new_source;
 
-    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
+    TRACE("state_id %#x, stateblock %p, context %p\n", state_id, stateblock, context);
 
     if(!isStateDirty(context, STATE_PIXELSHADER)) {
-        fragment_prog_arbfp(state, stateblock, context);
+        fragment_prog_arbfp(state_id, stateblock, context);
     }
 
-    if (!stateblock->state.render_states[WINED3DRS_FOGENABLE]) return;
+    if (!state->render_states[WINED3DRS_FOGENABLE]) return;
 
-    if (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    if (state->render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
     {
-        if(use_vs(stateblock)) {
+        if (use_vs(state))
+        {
             new_source = FOGSOURCE_VS;
         }
         else
         {
-            if (stateblock->state.render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
+            if (state->render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
                 new_source = FOGSOURCE_COORD;
             else
                 new_source = FOGSOURCE_FFP;

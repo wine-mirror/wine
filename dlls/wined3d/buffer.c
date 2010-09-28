@@ -401,6 +401,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
     IWineD3DDeviceImpl *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_stream_info *si = &device->strided_streams;
+    const struct wined3d_state *state = &device->stateBlock->state;
     UINT stride_this_run = 0;
     BOOL float16_used = FALSE;
     BOOL ret = FALSE;
@@ -460,14 +461,14 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
      * conversion types depend on the semantic as well, for example a FLOAT4
      * texcoord needs no conversion while a FLOAT4 positiont needs one
      */
-    if (use_vs(device->stateBlock))
+    if (use_vs(state))
     {
         TRACE("vshader\n");
         /* If the current vertex declaration is marked for no half float conversion don't bother to
          * analyse the strided streams in depth, just set them up for no conversion. Return decl changed
          * if we used conversion before
          */
-        if (!device->stateBlock->state.vertex_declaration->half_float_conv_needed)
+        if (!state->vertex_declaration->half_float_conv_needed)
         {
             if (This->conversion_map)
             {

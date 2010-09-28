@@ -466,13 +466,14 @@ static void device_preload_texture(IWineD3DStateBlockImpl *stateblock, unsigned 
 void device_preload_textures(IWineD3DDeviceImpl *device)
 {
     IWineD3DStateBlockImpl *stateblock = device->stateBlock;
+    const struct wined3d_state *state = &stateblock->state;
     unsigned int i;
 
-    if (use_vs(stateblock))
+    if (use_vs(state))
     {
         for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
         {
-            if (stateblock->state.vertex_shader->baseShader.reg_maps.sampler_type[i])
+            if (state->vertex_shader->baseShader.reg_maps.sampler_type[i])
                 device_preload_texture(stateblock, MAX_FRAGMENT_SAMPLERS + i);
         }
     }
@@ -481,7 +482,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
     {
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
         {
-            if (stateblock->state.pixel_shader->baseShader.reg_maps.sampler_type[i])
+            if (state->pixel_shader->baseShader.reg_maps.sampler_type[i])
                 device_preload_texture(stateblock, i);
         }
     }
@@ -3585,7 +3586,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This)
 {
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    BOOL vs = use_vs(This->stateBlock);
+    BOOL vs = use_vs(&This->stateBlock->state);
     BOOL ps = use_ps(This->stateBlock);
     /*
      * Rules are:

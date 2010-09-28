@@ -887,10 +887,11 @@ static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, struct
     }
 }
 
-static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void atifs_apply_pixelshader(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
-    BOOL use_vshader = use_vs(stateblock);
+    BOOL use_vshader = use_vs(state);
 
     context->last_was_pshader = use_ps(stateblock);
     /* The ATIFS code does not support pixel shaders currently, but we have to provide a state handler

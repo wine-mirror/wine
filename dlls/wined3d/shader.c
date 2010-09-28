@@ -2070,12 +2070,13 @@ static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
         IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args)
 {
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DBaseTextureImpl *texture;
     IWineD3DDeviceImpl *device = stateblock->device;
     UINT i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
-    if (stateblock->state.render_states[WINED3DRS_SRGBWRITEENABLE])
+    if (state->render_states[WINED3DRS_SRGBWRITEENABLE])
     {
         IWineD3DSurfaceImpl *rt = device->render_targets[0];
         if(rt->resource.format->Flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
@@ -2086,7 +2087,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
     {
         if (!shader->baseShader.reg_maps.sampler_type[i]) continue;
-        texture = stateblock->state.textures[i];
+        texture = state->textures[i];
         if (!texture)
         {
             args->color_fixup[i] = COLOR_FIXUP_IDENTITY;
@@ -2109,7 +2110,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
         {
             args->vp_mode = pretransformed;
         }
-        else if (use_vs(stateblock))
+        else if (use_vs(state))
         {
             args->vp_mode = vertexshader;
         }
@@ -2122,18 +2123,18 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
     else
     {
         args->vp_mode = vertexshader;
-        if (stateblock->state.render_states[WINED3DRS_FOGENABLE])
+        if (state->render_states[WINED3DRS_FOGENABLE])
         {
-            switch (stateblock->state.render_states[WINED3DRS_FOGTABLEMODE])
+            switch (state->render_states[WINED3DRS_FOGTABLEMODE])
             {
                 case WINED3DFOG_NONE:
-                    if (device->strided_streams.position_transformed || use_vs(stateblock))
+                    if (device->strided_streams.position_transformed || use_vs(state))
                     {
                         args->fog = FOG_LINEAR;
                         break;
                     }
 
-                    switch (stateblock->state.render_states[WINED3DRS_FOGVERTEXMODE])
+                    switch (state->render_states[WINED3DRS_FOGVERTEXMODE])
                     {
                         case WINED3DFOG_NONE: /* Fall through. */
                         case WINED3DFOG_LINEAR: args->fog = FOG_LINEAR; break;

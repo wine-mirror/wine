@@ -917,6 +917,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
+    const struct wined3d_state *state = &device->stateBlock->state;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i, extra_constants_needed = 0;
@@ -1062,7 +1063,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                         shader_addline(buffer, "uniform sampler1D %csampler%u;\n", prefix, i);
                     break;
                 case WINED3DSTT_2D:
-                    texture = device->stateBlock->state.textures[i];
+                    texture = state->textures[i];
                     if (pshader && ps_args->shadow & (1 << i))
                     {
                         if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
@@ -1142,7 +1143,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
      */
     if (pshader && reg_maps->shader_version.major >= 3)
     {
-        if (use_vs(device->stateBlock))
+        if (use_vs(state))
         {
             shader_addline(buffer, "varying vec4 IN[%u];\n", vec4_varyings(reg_maps->shader_version.major, gl_info));
         } else {
