@@ -1892,14 +1892,25 @@ static nsresult NSAPI nsURI_SetHost(nsIURL *iface, const nsACString *aHost)
 static nsresult NSAPI nsURI_GetPort(nsIURL *iface, PRInt32 *aPort)
 {
     nsWineURI *This = NSURI_THIS(iface);
+    DWORD port;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, aPort);
 
     if(This->nsuri)
         return nsIURI_GetPort(This->nsuri, aPort);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
+    hres = IUri_GetPort(This->uri, &port);
+    if(FAILED(hres)) {
+        WARN("GetPort failed: %08x\n", hres);
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    *aPort = port ? port : -1;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_SetPort(nsIURL *iface, PRInt32 aPort)
