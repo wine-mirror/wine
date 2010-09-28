@@ -30,3 +30,18 @@ BEGIN
     IDS_CPL_NAME        "Internetinställningar"
     IDS_CPL_INFO        "Konfigurera Wines webbläsare och tillhörande inställningar"
 END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Content"
+BEGIN
+
+    GROUPBOX    " Certifikat ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Certifikat används för din personliga identifikation samt för att identifiera certifikats-auktoriteter och -utgivare.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Certifikat...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON	"Utgivare... ", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
+END
