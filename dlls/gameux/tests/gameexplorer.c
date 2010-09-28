@@ -607,7 +607,8 @@ static void test_add_remove_game(void)
         IGameExplorer_Release(ge);
     }
 }
-void test_install_uninstall_game(void)
+
+static void test_install_uninstall_game(void)
 {
     static const GUID applicationId = { 0x17A6558E, 0x60BE, 0x4078,
         { 0xB6, 0x6F, 0x9C, 0x3A, 0xDA, 0x2A, 0x32, 0xE6 }};

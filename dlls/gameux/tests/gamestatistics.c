@@ -168,7 +168,7 @@ static HRESULT _buildStatisticsFilePath(LPCGUID guidApplicationId, LPWSTR *lpSta
  *  TRUE        file exists
  *  FALSE       file does not exist
  */
-BOOL _isFileExists(LPCWSTR lpFile)
+static BOOL _isFileExists(LPCWSTR lpFile)
 {
     HANDLE hFile = CreateFileW(lpFile, GENERIC_READ, 0, NULL,
                                OPEN_EXISTING, 0, NULL);
