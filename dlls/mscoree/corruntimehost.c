@@ -290,6 +290,8 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
     This->mono = loaded_mono;
     This->legacy = FALSE;
 
+    *result = This;
+
     return S_OK;
 }
 

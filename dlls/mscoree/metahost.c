@@ -31,6 +31,7 @@
 #include "winreg.h"
 #include "ole2.h"
 
+#include "corerror.h"
 #include "mscoree.h"
 #include "metahost.h"
 #include "mscoree_private.h"
@@ -86,15 +87,11 @@ static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost *
 
     EnterCriticalSection(&runtime_list_cs);
 
-    if (!This->loaded_runtime)
-        goto end;
-
     hr = load_mono(This, &ploaded_mono);
 
     if (SUCCEEDED(hr))
         hr = RuntimeHost_Construct(This, ploaded_mono, &This->loaded_runtime);
 
-end:
     LeaveCriticalSection(&runtime_list_cs);
 
     if (SUCCEEDED(hr))
@@ -662,12 +659,81 @@ static ULONG WINAPI CLRMetaHost_Release(ICLRMetaHost* iface)
     return 1;
 }
 
+static BOOL parse_runtime_version(LPCWSTR version, DWORD *major, DWORD *minor, DWORD *build)
+{
+    *major = 0;
+    *minor = 0;
+    *build = 0;
+
+    if (version[0] == 'v')
+    {
+        version++;
+        if (!isdigit(*version))
+            return FALSE;
+
+        while (isdigit(*version))
+            *major = *major * 10 + (*version++ - '0');
+
+        if (*version == 0)
+            return TRUE;
+
+        if (*version++ != '.' || !isdigit(*version))
+            return FALSE;
+
+        while (isdigit(*version))
+            *minor = *minor * 10 + (*version++ - '0');
+
+        if (*version == 0)
+            return TRUE;
+
+        if (*version++ != '.' || !isdigit(*version))
+            return FALSE;
+
+        while (isdigit(*version))
+            *build = *build * 10 + (*version++ - '0');
+
+        return *version == 0;
+    }
+    else
+        return FALSE;
+}
+
 static HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
     LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime)
 {
-    FIXME("%s %s %p\n", debugstr_w(pwzVersion), debugstr_guid(iid), ppRuntime);
+    int i;
+    DWORD major, minor, build;
 
-    return E_NOTIMPL;
+    TRACE("%s %s %p\n", debugstr_w(pwzVersion), debugstr_guid(iid), ppRuntime);
+
+    if (!pwzVersion)
+        return E_POINTER;
+
+    if (!parse_runtime_version(pwzVersion, &major, &minor, &build))
+    {
+        ERR("Cannot parse %s\n", debugstr_w(pwzVersion));
+        return CLR_E_SHIM_RUNTIME;
+    }
+
+    find_runtimes();
+
+    for (i=0; i<NUM_RUNTIMES; i++)
+    {
+        if (runtimes[i].major == major && runtimes[i].minor == minor &&
+            runtimes[i].build == build)
+        {
+            if (runtimes[i].mono_abi_version)
+                return IUnknown_QueryInterface((IUnknown*)&runtimes[i], iid, ppRuntime);
+            else
+            {
+                ERR("Mono is missing %s runtime\n", debugstr_w(pwzVersion));
+                return CLR_E_SHIM_RUNTIME;
+            }
+        }
+    }
+
+    FIXME("Unrecognized version %s\n", debugstr_w(pwzVersion));
+    return CLR_E_SHIM_RUNTIME;
 }
 
 static HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,

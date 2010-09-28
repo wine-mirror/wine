@@ -118,10 +118,14 @@ void test_getruntime(void)
     WCHAR buf[MAX_PATH];
 
     hr = ICLRMetaHost_GetRuntime(metahost, NULL, &IID_ICLRRuntimeInfo, (void**)&info);
-    todo_wine ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
+    ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
 
     hr = ICLRMetaHost_GetRuntime(metahost, twodotzero, &IID_ICLRRuntimeInfo, (void**)&info);
-    todo_wine ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    if (hr == CLR_E_SHIM_RUNTIME)
+        /* FIXME: Get Mono properly packaged so we can fail here. */
+        todo_wine ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    else
+        ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
     if (hr != S_OK) return;
 
     count = MAX_PATH;
@@ -134,7 +138,7 @@ void test_getruntime(void)
 
     /* Versions must match exactly. */
     hr = ICLRMetaHost_GetRuntime(metahost, twodotzerodotzero, &IID_ICLRRuntimeInfo, (void**)&info);
-    todo_wine ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
 }
 
 START_TEST(metahost)
