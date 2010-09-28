@@ -3257,6 +3257,86 @@ INT WINAPI WSAIoctl(SOCKET s,
         release_sock_fd(s, fd);
         break;
    }
+   case WS_SIO_ROUTING_INTERFACE_QUERY:
+   {
+       struct WS_sockaddr *daddr = (struct WS_sockaddr *)lpvInBuffer;
+       struct WS_sockaddr_in *daddr_in = (struct WS_sockaddr_in *)daddr;
+       struct WS_sockaddr_in *saddr_in = (struct WS_sockaddr_in *)lpbOutBuffer;
+       MIB_IPFORWARDROW row;
+       PMIB_IPADDRTABLE ipAddrTable = NULL;
+       DWORD size, i, found_index;
+
+       TRACE("-> WS_SIO_ROUTING_INTERFACE_QUERY request\n");
+
+       if (!lpvInBuffer)
+       {
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       if (cbInBuffer < sizeof(struct WS_sockaddr))
+       {
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       if (!lpbOutBuffer)
+       {
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       if (!lpcbBytesReturned)
+       {
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       if (daddr->sa_family != AF_INET)
+       {
+           FIXME("unsupported address family %d\n", daddr->sa_family);
+           WSASetLastError(WSAEAFNOSUPPORT);
+           return SOCKET_ERROR;
+       }
+       if (cbOutBuffer < sizeof(struct WS_sockaddr_in))
+       {
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       if (GetBestRoute(daddr_in->sin_addr.S_un.S_addr, 0, &row) != NOERROR)
+       {
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       if (GetIpAddrTable(NULL, &size, FALSE) != ERROR_INSUFFICIENT_BUFFER)
+       {
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       ipAddrTable = HeapAlloc(GetProcessHeap(), 0, size);
+       if (GetIpAddrTable(ipAddrTable, &size, FALSE))
+       {
+           HeapFree(GetProcessHeap(), 0, ipAddrTable);
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       for (i = 0, found_index = ipAddrTable->dwNumEntries;
+            i < ipAddrTable->dwNumEntries; i++)
+       {
+           if (ipAddrTable->table[i].dwIndex == row.dwForwardIfIndex)
+               found_index = i;
+       }
+       if (found_index == ipAddrTable->dwNumEntries)
+       {
+           ERR("no matching IP address for interface %d\n",
+               row.dwForwardIfIndex);
+           HeapFree(GetProcessHeap(), 0, ipAddrTable);
+           WSASetLastError(WSAEFAULT);
+           return SOCKET_ERROR;
+       }
+       saddr_in->sin_family = AF_INET;
+       saddr_in->sin_addr.S_un.S_addr = ipAddrTable->table[found_index].dwAddr;
+       saddr_in->sin_port = 0;
+       *lpcbBytesReturned = sizeof(struct WS_sockaddr_in);
+       HeapFree(GetProcessHeap(), 0, ipAddrTable);
+       return 0;
+   }
    case WS_SIO_UDP_CONNRESET:
        FIXME("WS_SIO_UDP_CONNRESET stub\n");
        break;

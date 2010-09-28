@@ -4290,17 +4290,14 @@ static void test_sioRoutingInterfaceQuery(void)
     }
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, NULL, 0, NULL, 0, NULL,
                    NULL, NULL);
-    todo_wine
     ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
        "expected WSAEFAULT, got %d\n", WSAGetLastError());
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
                    NULL, 0, NULL, NULL, NULL);
-    todo_wine
     ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
        "expected WSAEFAULT, got %d\n", WSAGetLastError());
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
                    NULL, 0, &bytesReturned, NULL, NULL);
-    todo_wine
     ok(ret == SOCKET_ERROR &&
        (WSAGetLastError() == WSAEFAULT /* Win98 */ ||
         WSAGetLastError() == WSAEINVAL /* NT4 */||
@@ -4310,7 +4307,6 @@ static void test_sioRoutingInterfaceQuery(void)
     sin.sin_family = AF_INET;
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
                    NULL, 0, &bytesReturned, NULL, NULL);
-    todo_wine
     ok(ret == SOCKET_ERROR &&
        (WSAGetLastError() == WSAEFAULT /* Win98 */ ||
         WSAGetLastError() == WSAEINVAL),
@@ -4318,24 +4314,23 @@ static void test_sioRoutingInterfaceQuery(void)
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
                    NULL, 0, &bytesReturned, NULL, NULL);
-    todo_wine
     ok(ret == SOCKET_ERROR &&
        (WSAGetLastError() == WSAEINVAL /* NT4 */ ||
         WSAGetLastError() == WSAEFAULT),
        "expected WSAEINVAL or WSAEFAULT, got %d\n", WSAGetLastError());
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &sin, sizeof(sin),
                    &sout, sizeof(sout), &bytesReturned, NULL, NULL);
-    todo_wine
     ok(!ret || broken(WSAGetLastError() == WSAEINVAL /* NT4 */),
        "WSAIoctl failed: %d\n", WSAGetLastError());
     if (!ret)
     {
         ok(sout.sin_family == AF_INET, "expected AF_INET, got %d\n",
            sout.sin_family);
-        if (sout.sin_family == AF_INET)
-            ok(sout.sin_addr.s_addr == htonl(INADDR_LOOPBACK),
-               "expected %08x, got %08x\n", htonl(INADDR_LOOPBACK),
-               htonl(sout.sin_addr.s_addr));
+        /* We expect the source address to be INADDR_LOOPBACK as well, but
+         * there's no guarantee that a route to the loopback address exists,
+         * so rather than introduce spurious test failures we do not test the
+         * source address.
+         */
     }
     closesocket(sock);
 }
