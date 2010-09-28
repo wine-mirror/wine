@@ -523,10 +523,9 @@ BOOL WINAPI CryptSignMessage(PCRYPT_SIGN_MESSAGE_PARA pSignPara,
     }
     else
         ret = FALSE;
-    if (crlBlob)
-        CryptMemFree(crlBlob);
-    if (certBlob)
-        CryptMemFree(certBlob);
+
+    CryptMemFree(crlBlob);
+    CryptMemFree(certBlob);
     if (freeProv)
         CryptReleaseContext(hCryptProv, 0);
     return ret;
