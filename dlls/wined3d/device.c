@@ -408,8 +408,7 @@ static void device_trace_strided_stream_info(const struct wined3d_stream_info *s
 void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_stream_info *stream_info = &device->strided_streams;
-    IWineD3DStateBlockImpl *stateblock = device->stateBlock;
-    BOOL vs = stateblock->state.vertex_shader && device->vs_selected_mode != SHADER_NONE;
+    const struct wined3d_state *state = &device->stateBlock->state;
     BOOL fixup = FALSE;
 
     if (device->up_strided)
@@ -422,12 +421,12 @@ void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_
     else
     {
         TRACE("============================= Vertex Declaration =============================\n");
-        device_stream_info_from_declaration(device, vs, stream_info, &fixup);
+        device_stream_info_from_declaration(device, !!state->vertex_shader, stream_info, &fixup);
     }
 
-    if (vs && !stream_info->position_transformed)
+    if (state->vertex_shader && !stream_info->position_transformed)
     {
-        if (stateblock->state.vertex_declaration->half_float_conv_needed && !fixup)
+        if (state->vertex_declaration->half_float_conv_needed && !fixup)
         {
             TRACE("Using drawStridedSlow with vertex shaders for FLOAT16 conversion.\n");
             device->useDrawStridedSlow = TRUE;
@@ -1515,6 +1514,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     IWineD3DVertexShaderImpl *object;
     HRESULT hr;
 
+    if (This->vs_selected_mode == SHADER_NONE)
+        return WINED3DERR_INVALIDCALL;
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -1574,6 +1576,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DPixelShaderImpl *object;
     HRESULT hr;
+
+    if (This->ps_selected_mode == SHADER_NONE)
+        return WINED3DERR_INVALIDCALL;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)

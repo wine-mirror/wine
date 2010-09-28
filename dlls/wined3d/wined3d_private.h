@@ -3023,14 +3023,13 @@ static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
      * IWineD3DDeviceImpl_FindTexUnitMap(). This is safe because
      * stateblock->vertexShader implies a vertex declaration instead of ddraw
      * style strided data. */
-    return (stateblock->state.vertex_shader
-            && !stateblock->state.vertex_declaration->position_transformed
-            && stateblock->device->vs_selected_mode != SHADER_NONE);
+    return stateblock->state.vertex_shader
+            && !stateblock->state.vertex_declaration->position_transformed;
 }
 
 static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)
 {
-    return (stateblock->state.pixel_shader && stateblock->device->ps_selected_mode != SHADER_NONE);
+    return !!stateblock->state.pixel_shader;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
