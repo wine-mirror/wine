@@ -41,7 +41,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
-BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int* abi_version)
+static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int* abi_version)
 {
     static const WCHAR mono_dll[] = {'\\','b','i','n','\\','m','o','n','o','.','d','l','l',0};
     static const WCHAR libmono_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','.','d','l','l',0};
