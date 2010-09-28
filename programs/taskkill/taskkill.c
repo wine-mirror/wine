@@ -21,12 +21,10 @@
 
 #include <windows.h>
 #include <psapi.h>
-#include <wine/debug.h>
 #include <wine/unicode.h>
 
 #include "taskkill.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(taskkill);
 
 int force_termination;
 
