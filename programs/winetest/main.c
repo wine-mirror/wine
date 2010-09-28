@@ -48,6 +48,7 @@ struct wine_test
 };
 
 char *tag = NULL;
+char *description = NULL;
 char *email = NULL;
 BOOL aborting = FALSE;
 static struct wine_test *wine_tests;
@@ -247,6 +248,8 @@ static void print_version (void)
     xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
     xprintf ("    bRunningOnVisibleDesktop=%d\n", running_on_visible_desktop ());
     xprintf ("    Submitter=%s\n", email );
+    if (description)
+        xprintf ("    Description=%s\n", description );
     xprintf ("    dwMajorVersion=%u\n    dwMinorVersion=%u\n"
              "    dwBuildNumber=%u\n    PlatformId=%u\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
@@ -1004,6 +1007,7 @@ usage (void)
 " -d DIR    Use DIR as temp directory (default: %%TEMP%%\\wct)\n"
 " -e        preserve the environment\n"
 " -h        print this message and exit\n"
+" -i INFO   an optional description of the test platform\n"
 " -m MAIL   an email address to enable developers to contact you\n"
 " -n        exclude the specified tests\n"
 " -p        shutdown when the tests are done\n"
@@ -1056,6 +1060,13 @@ int main( int argc, char *argv[] )
         case '?':
             usage ();
             exit (0);
+        case 'i':
+            if (!(description = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
+            break;
         case 'm':
             if (!(email = argv[++i]))
             {
