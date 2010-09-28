@@ -1762,6 +1762,17 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
     http_request_t *req = (http_request_t*)hdr;
 
     switch(option) {
+    case INTERNET_OPTION_SECURITY_FLAGS:
+    {
+        DWORD flags;
+
+        if (!buffer || size != sizeof(DWORD))
+            return ERROR_INVALID_PARAMETER;
+        flags = *(DWORD *)buffer;
+        TRACE("%08x\n", flags);
+        req->netConnection.security_flags = flags;
+        return ERROR_SUCCESS;
+    }
     case INTERNET_OPTION_SEND_TIMEOUT:
     case INTERNET_OPTION_RECEIVE_TIMEOUT:
         TRACE("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT\n");
