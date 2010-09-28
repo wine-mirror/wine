@@ -58,7 +58,7 @@ struct  nsWineURI {
 
     LONG ref;
 
-    nsIURI *uri;
+    nsIURI *nsuri;
     nsIURL *nsurl;
     NSContainer *container;
     windowref_t *window_ref;
@@ -260,7 +260,7 @@ HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
         heap_free(This->wine_url);
         This->wine_url = new_url;
 
-        if(This->uri) {
+        if(This->nsuri) {
             /* FIXME: Always use wine url */
             This->use_wine_url =
                    strncmpW(url, wszFtp,   sizeof(wszFtp)/sizeof(WCHAR))
@@ -1566,7 +1566,7 @@ static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **
     }
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
-    return This->uri ? nsIURI_QueryInterface(This->uri, riid, result) : NS_NOINTERFACE;
+    return This->nsuri ? nsIURI_QueryInterface(This->nsuri, riid, result) : NS_NOINTERFACE;
 }
 
 static nsrefcnt NSAPI nsURI_AddRef(nsIURL *iface)
@@ -1593,8 +1593,8 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
         if(This->nsurl)
             nsIURL_Release(This->nsurl);
-        if(This->uri)
-            nsIURI_Release(This->uri);
+        if(This->nsuri)
+            nsIURI_Release(This->nsuri);
         heap_free(This->wine_url);
         heap_free(This);
     }
@@ -1616,8 +1616,8 @@ static nsresult NSAPI nsURI_GetSpec(nsIURL *iface, nsACString *aSpec)
         return NS_OK;
     }
 
-    if(This->uri)
-        return nsIURI_GetSpec(This->uri, aSpec);
+    if(This->nsuri)
+        return nsIURI_GetSpec(This->nsuri, aSpec);
 
     TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1630,8 +1630,8 @@ static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
 
     TRACE("(%p)->(%p)\n", This, debugstr_nsacstr(aSpec));
 
-    if(This->uri)
-        return nsIURI_SetSpec(This->uri, aSpec);
+    if(This->nsuri)
+        return nsIURI_SetSpec(This->nsuri, aSpec);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1643,8 +1643,8 @@ static nsresult NSAPI nsURI_GetPrePath(nsIURL *iface, nsACString *aPrePath)
 
     TRACE("(%p)->(%p)\n", This, aPrePath);
 
-    if(This->uri)
-        return nsIURI_GetPrePath(This->uri, aPrePath);
+    if(This->nsuri)
+        return nsIURI_GetPrePath(This->nsuri, aPrePath);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1674,8 +1674,8 @@ static nsresult NSAPI nsURI_GetScheme(nsIURL *iface, nsACString *aScheme)
         return NS_OK;
     }
 
-    if(This->uri)
-        return nsIURI_GetScheme(This->uri, aScheme);
+    if(This->nsuri)
+        return nsIURI_GetScheme(This->nsuri, aScheme);
 
     TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1687,8 +1687,8 @@ static nsresult NSAPI nsURI_SetScheme(nsIURL *iface, const nsACString *aScheme)
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aScheme));
 
-    if(This->uri)
-        return nsIURI_SetScheme(This->uri, aScheme);
+    if(This->nsuri)
+        return nsIURI_SetScheme(This->nsuri, aScheme);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1700,8 +1700,8 @@ static nsresult NSAPI nsURI_GetUserPass(nsIURL *iface, nsACString *aUserPass)
 
     TRACE("(%p)->(%p)\n", This, aUserPass);
 
-    if(This->uri)
-        return nsIURI_GetUserPass(This->uri, aUserPass);
+    if(This->nsuri)
+        return nsIURI_GetUserPass(This->nsuri, aUserPass);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1713,8 +1713,8 @@ static nsresult NSAPI nsURI_SetUserPass(nsIURL *iface, const nsACString *aUserPa
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aUserPass));
 
-    if(This->uri)
-        return nsIURI_SetUserPass(This->uri, aUserPass);
+    if(This->nsuri)
+        return nsIURI_SetUserPass(This->nsuri, aUserPass);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1726,8 +1726,8 @@ static nsresult NSAPI nsURI_GetUsername(nsIURL *iface, nsACString *aUsername)
 
     TRACE("(%p)->(%p)\n", This, aUsername);
 
-    if(This->uri)
-        return nsIURI_GetUsername(This->uri, aUsername);
+    if(This->nsuri)
+        return nsIURI_GetUsername(This->nsuri, aUsername);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1739,8 +1739,8 @@ static nsresult NSAPI nsURI_SetUsername(nsIURL *iface, const nsACString *aUserna
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aUsername));
 
-    if(This->uri)
-        return nsIURI_SetUsername(This->uri, aUsername);
+    if(This->nsuri)
+        return nsIURI_SetUsername(This->nsuri, aUsername);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1752,8 +1752,8 @@ static nsresult NSAPI nsURI_GetPassword(nsIURL *iface, nsACString *aPassword)
 
     TRACE("(%p)->(%p)\n", This, aPassword);
 
-    if(This->uri)
-        return nsIURI_GetPassword(This->uri, aPassword);
+    if(This->nsuri)
+        return nsIURI_GetPassword(This->nsuri, aPassword);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1765,8 +1765,8 @@ static nsresult NSAPI nsURI_SetPassword(nsIURL *iface, const nsACString *aPasswo
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aPassword));
 
-    if(This->uri)
-        return nsIURI_SetPassword(This->uri, aPassword);
+    if(This->nsuri)
+        return nsIURI_SetPassword(This->nsuri, aPassword);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1778,8 +1778,8 @@ static nsresult NSAPI nsURI_GetHostPort(nsIURL *iface, nsACString *aHostPort)
 
     TRACE("(%p)->(%p)\n", This, aHostPort);
 
-    if(This->uri)
-        return nsIURI_GetHostPort(This->uri, aHostPort);
+    if(This->nsuri)
+        return nsIURI_GetHostPort(This->nsuri, aHostPort);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1791,8 +1791,8 @@ static nsresult NSAPI nsURI_SetHostPort(nsIURL *iface, const nsACString *aHostPo
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aHostPort));
 
-    if(This->uri)
-        return nsIURI_SetHostPort(This->uri, aHostPort);
+    if(This->nsuri)
+        return nsIURI_SetHostPort(This->nsuri, aHostPort);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1804,8 +1804,8 @@ static nsresult NSAPI nsURI_GetHost(nsIURL *iface, nsACString *aHost)
 
     TRACE("(%p)->(%p)\n", This, aHost);
 
-    if(This->uri)
-        return nsIURI_GetHost(This->uri, aHost);
+    if(This->nsuri)
+        return nsIURI_GetHost(This->nsuri, aHost);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1817,8 +1817,8 @@ static nsresult NSAPI nsURI_SetHost(nsIURL *iface, const nsACString *aHost)
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aHost));
 
-    if(This->uri)
-        return nsIURI_SetHost(This->uri, aHost);
+    if(This->nsuri)
+        return nsIURI_SetHost(This->nsuri, aHost);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1830,8 +1830,8 @@ static nsresult NSAPI nsURI_GetPort(nsIURL *iface, PRInt32 *aPort)
 
     TRACE("(%p)->(%p)\n", This, aPort);
 
-    if(This->uri)
-        return nsIURI_GetPort(This->uri, aPort);
+    if(This->nsuri)
+        return nsIURI_GetPort(This->nsuri, aPort);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1843,8 +1843,8 @@ static nsresult NSAPI nsURI_SetPort(nsIURL *iface, PRInt32 aPort)
 
     TRACE("(%p)->(%d)\n", This, aPort);
 
-    if(This->uri)
-        return nsIURI_SetPort(This->uri, aPort);
+    if(This->nsuri)
+        return nsIURI_SetPort(This->nsuri, aPort);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1856,8 +1856,8 @@ static nsresult NSAPI nsURI_GetPath(nsIURL *iface, nsACString *aPath)
 
     TRACE("(%p)->(%p)\n", This, aPath);
 
-    if(This->uri)
-        return nsIURI_GetPath(This->uri, aPath);
+    if(This->nsuri)
+        return nsIURI_GetPath(This->nsuri, aPath);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1886,10 +1886,10 @@ static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
             WARN("UrlCombine failed: %08x\n", hres);
     }
 
-    if(!This->uri)
+    if(!This->nsuri)
         return NS_OK;
 
-    return nsIURI_SetPath(This->uri, aPath);
+    return nsIURI_SetPath(This->nsuri, aPath);
 }
 
 static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval)
@@ -1900,8 +1900,8 @@ static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval
 
     TRACE("(%p)->(%p %p)\n", This, other, _retval);
 
-    if(This->uri)
-        return nsIURI_Equals(This->uri, other, _retval);
+    if(This->nsuri)
+        return nsIURI_Equals(This->nsuri, other, _retval);
 
     nsres = nsIURI_QueryInterface(other, &IID_nsWineURI, (void**)&wine_uri);
     if(NS_FAILED(nsres)) {
@@ -1932,8 +1932,8 @@ static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *
         return NS_OK;
     }
 
-    if(This->uri)
-        return nsIURI_SchemeIs(This->uri, scheme, _retval);
+    if(This->nsuri)
+        return nsIURI_SchemeIs(This->nsuri, scheme, _retval);
 
     TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1948,8 +1948,8 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
 
     TRACE("(%p)->(%p)\n", This, _retval);
 
-    if(This->uri) {
-        nsres = nsIURI_Clone(This->uri, &nsuri);
+    if(This->nsuri) {
+        nsres = nsIURI_Clone(This->nsuri, &nsuri);
         if(NS_FAILED(nsres)) {
             WARN("Clone failed: %08x\n", nsres);
             return nsres;
@@ -1981,8 +1981,8 @@ static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePa
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_nsacstr(aRelativePath), _retval);
 
-    if(This->uri)
-        return nsIURI_Resolve(This->uri, aRelativePath, _retval);
+    if(This->nsuri)
+        return nsIURI_Resolve(This->nsuri, aRelativePath, _retval);
 
     nsACString_GetData(aRelativePath, &patha);
     path = heap_strdupAtoW(patha);
@@ -2017,8 +2017,8 @@ static nsresult NSAPI nsURI_GetAsciiSpec(nsIURL *iface, nsACString *aAsciiSpec)
     if(This->use_wine_url)
         return nsIURI_GetSpec(NSURI(This), aAsciiSpec);
 
-    if(This->uri)
-        return nsIURI_GetAsciiSpec(This->uri, aAsciiSpec);
+    if(This->nsuri)
+        return nsIURI_GetAsciiSpec(This->nsuri, aAsciiSpec);
 
     TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2030,8 +2030,8 @@ static nsresult NSAPI nsURI_GetAsciiHost(nsIURL *iface, nsACString *aAsciiHost)
 
     TRACE("(%p)->(%p)\n", This, aAsciiHost);
 
-    if(This->uri)
-        return nsIURI_GetAsciiHost(This->uri, aAsciiHost);
+    if(This->nsuri)
+        return nsIURI_GetAsciiHost(This->nsuri, aAsciiHost);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2043,8 +2043,8 @@ static nsresult NSAPI nsURI_GetOriginCharset(nsIURL *iface, nsACString *aOriginC
 
     TRACE("(%p)->(%p)\n", This, aOriginCharset);
 
-    if(This->uri)
-        return nsIURI_GetOriginCharset(This->uri, aOriginCharset);
+    if(This->nsuri)
+        return nsIURI_GetOriginCharset(This->nsuri, aOriginCharset);
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2410,19 +2410,19 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURL_GetRelativeSpec
 };
 
-static nsresult create_uri(nsIURI *uri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
+static nsresult create_uri(nsIURI *nsuri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
 {
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
 
     ret->lpIURLVtbl = &nsURLVtbl;
     ret->ref = 1;
-    ret->uri = uri;
+    ret->nsuri = nsuri;
 
     set_uri_nscontainer(ret, container);
     set_uri_window(ret, window);
 
-    if(uri)
-        nsIURI_QueryInterface(uri, &IID_nsIURL, (void**)&ret->nsurl);
+    if(nsuri)
+        nsIURI_QueryInterface(nsuri, &IID_nsIURL, (void**)&ret->nsurl);
 
     TRACE("retval=%p\n", ret);
     *_retval = ret;
