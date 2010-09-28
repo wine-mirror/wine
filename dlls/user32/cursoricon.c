@@ -2239,7 +2239,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
         if (bmfh->bfType != 0x4d42 /* 'BM' */)
         {
             WARN("Invalid/unsupported bitmap format!\n");
-            goto end_close;
+            goto end;
         }
         if (bmfh->bfOffBits) offbits = bmfh->bfOffBits - sizeof(BITMAPFILEHEADER);
     }
@@ -2260,7 +2260,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     if (bm_type == -1)
     {
         WARN("Invalid bitmap format!\n");
-        goto end_close;
+        goto end;
     }
 
     if(desiredx != 0)
@@ -2319,7 +2319,6 @@ end:
     if (screen_mem_dc) DeleteDC(screen_mem_dc);
     HeapFree(GetProcessHeap(), 0, scaled_info);
     HeapFree(GetProcessHeap(), 0, fix_info);
-end_close:
     if (loadflags & LR_LOADFROMFILE) UnmapViewOfFile( ptr );
 
     return hbitmap;
