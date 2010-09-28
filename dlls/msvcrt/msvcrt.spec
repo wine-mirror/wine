@@ -462,7 +462,7 @@
 @ varargs _fwscanf_s_l(ptr wstr ptr) MSVCRT__fwscanf_s_l
 @ cdecl _gcvt(double long str)
 @ cdecl _gcvt_s(ptr long  double long)
-# stub _get_doserrno
+@ cdecl _get_doserrno(ptr)
 # stub _get_environ
 @ cdecl _get_errno(ptr)
 # stub _get_fileinfo

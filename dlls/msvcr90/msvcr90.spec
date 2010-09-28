@@ -511,7 +511,7 @@
 @ stub _get_amblksiz
 @ stub _get_current_locale
 @ stub _get_daylight
-@ stub _get_doserrno
+@ cdecl _get_doserrno(ptr) msvcrt._get_doserrno
 @ stub _get_dstbias
 @ cdecl _get_errno(ptr) msvcrt._get_errno
 @ stub _get_fmode
