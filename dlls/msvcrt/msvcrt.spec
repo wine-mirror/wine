@@ -464,7 +464,7 @@
 @ cdecl _gcvt_s(ptr long  double long)
 # stub _get_doserrno
 # stub _get_environ
-# stub _get_errno
+@ cdecl _get_errno(ptr)
 # stub _get_fileinfo
 # stub _get_fmode
 @ cdecl _get_heap_handle()

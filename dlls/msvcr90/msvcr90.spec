@@ -513,7 +513,7 @@
 @ stub _get_daylight
 @ stub _get_doserrno
 @ stub _get_dstbias
-@ stub _get_errno
+@ cdecl _get_errno(ptr) msvcrt._get_errno
 @ stub _get_fmode
 @ cdecl _get_heap_handle() msvcrt._get_heap_handle
 @ cdecl _get_invalid_parameter_handler() msvcrt._get_invalid_parameter_handler

@@ -204,6 +204,18 @@ MSVCRT_ulong* CDECL MSVCRT___doserrno(void)
 }
 
 /*********************************************************************
+ *		_get_errno (MSVCRT.@)
+ */
+int CDECL _get_errno(int *pValue)
+{
+    if (!pValue)
+        return MSVCRT_EINVAL;
+
+    *pValue = *MSVCRT__errno();
+    return 0;
+}
+
+/*********************************************************************
  *		strerror (MSVCRT.@)
  */
 char* CDECL MSVCRT_strerror(int err)
