@@ -60,6 +60,7 @@ static char build_id[64];
 /* filters for running only specific tests */
 static char *filters[64];
 static unsigned int nb_filters = 0;
+static BOOL exclude_tests = FALSE;
 
 /* Needed to check for .NET dlls */
 static HMODULE hmscoree;
@@ -86,17 +87,17 @@ static BOOL test_filtered_out( LPCSTR module, LPCSTR testname )
     if (p) *p = 0;
     len = strlen(dllname);
 
-    if (!nb_filters) return FALSE;
+    if (!nb_filters) return exclude_tests;
     for (i = 0; i < nb_filters; i++)
     {
         if (!strncmp( dllname, filters[i], len ))
         {
-            if (!filters[i][len]) return FALSE;
+            if (!filters[i][len]) return exclude_tests;
             if (filters[i][len] != ':') continue;
-            if (!testname || !strcmp( testname, &filters[i][len+1] )) return FALSE;
+            if (!testname || !strcmp( testname, &filters[i][len+1] )) return exclude_tests;
         }
     }
-    return TRUE;
+    return !exclude_tests;
 }
 
 static char * get_file_version(char * file_name)
@@ -1004,6 +1005,7 @@ usage (void)
 " -e        preserve the environment\n"
 " -h        print this message and exit\n"
 " -m MAIL   an email address to enable developers to contact you\n"
+" -n        exclude the specified tests\n"
 " -p        shutdown when the tests are done\n"
 " -q        quiet mode, no output at all\n"
 " -o FILE   put report into FILE, do not submit\n"
@@ -1060,6 +1062,9 @@ int main( int argc, char *argv[] )
                 usage();
                 exit( 2 );
             }
+            break;
+        case 'n':
+            exclude_tests = TRUE;
             break;
         case 'p':
             poweroff = 1;
