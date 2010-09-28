@@ -1338,7 +1338,7 @@ static void test_domnode( void )
         /* check if nodename is correct */
         r = IXMLDOMElement_get_nodeName( element, NULL );
         ok ( r == E_INVALIDARG, "get_nodeName (NULL) wrong code\n");
-    
+
         /* content doesn't matter here */
         str = NULL;
         r = IXMLDOMElement_get_nodeName( element, &str );
@@ -2434,7 +2434,7 @@ static void test_get_text(void)
     ok( r == E_INVALIDARG, "ret %08x\n", r );
 
     r = IXMLDOMNodeList_get_item( node_list, 0, &node );
-    ok( r == S_OK, "ret %08x\n", r ); 
+    ok( r == S_OK, "ret %08x\n", r );
     IXMLDOMNodeList_Release( node_list );
 
     /* Invalid output parameter*/
@@ -2448,7 +2448,7 @@ static void test_get_text(void)
 
     r = IXMLDOMNode_get_attributes( node, &node_map );
     ok( r == S_OK, "ret %08x\n", r );
-    
+
     str = SysAllocString( szvr );
     r = IXMLDOMNamedNodeMap_getNamedItem( node_map, str, &node2 );
     ok( r == S_OK, "ret %08x\n", r );
@@ -2625,10 +2625,10 @@ static void test_removeChild(void)
 
     r = IXMLDOMNodeList_get_item( root_list, 3, &fo_node );
     ok( r == S_OK, "ret %08x\n", r);
- 
+
     r = IXMLDOMNode_get_childNodes( fo_node, &fo_list );
     ok( r == S_OK, "ret %08x\n", r);
- 
+
     r = IXMLDOMNodeList_get_item( fo_list, 0, &ba_node );
     ok( r == S_OK, "ret %08x\n", r);
 
@@ -5800,11 +5800,15 @@ static void test_get_ownerDocument(void)
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    /* property retained even after reload */
-    VariantClear(&var);
+    /* properties retained even after reload */
     hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var);
     ok( hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
+    ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
+    VariantClear(&var);
+
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &var);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(V_BSTR(&var), _bstr_("XPath")) == 0, "expected XPath\n");
     VariantClear(&var);
 
     hr = IXMLDOMDocument2_get_firstChild(doc, &node);

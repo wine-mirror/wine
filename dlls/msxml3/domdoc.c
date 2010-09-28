@@ -66,6 +66,16 @@ static const WCHAR PropertyProhibitDTDW[] = {'P','r','o','h','i','b','i','t','D'
 static const WCHAR PropValueXPathW[] = {'X','P','a','t','h',0};
 static const WCHAR PropValueXSLPatternW[] = {'X','S','L','P','a','t','t','e','r','n',0};
 
+/* Data used by domdoc_getProperty()/domdoc_setProperty().
+ * We need to preserve this when reloading a document,
+ * and also need access to it from the libxml backend. */
+typedef struct _domdoc_properties {
+    struct list selectNsList;
+    xmlChar const* selectNsStr;
+    LONG selectNsStr_len;
+    BOOL XPath;
+} domdoc_properties;
+
 typedef struct _domdoc
 {
     xmlnode node;
@@ -79,6 +89,7 @@ typedef struct _domdoc
     VARIANT_BOOL validating;
     VARIANT_BOOL resolving;
     VARIANT_BOOL preserving;
+    domdoc_properties* properties;
     IXMLDOMSchemaCollection *schema;
     bsc_t *bsc;
     HRESULT error;
@@ -118,10 +129,7 @@ typedef struct _domdoc
 typedef struct _xmldoc_priv {
     LONG refs;
     struct list orphans;
-    BOOL XPath;
-    struct list selectNsList;
-    xmlChar const* selectNsStr;
-    LONG selectNsStr_len;
+    domdoc_properties* properties;
 } xmldoc_priv;
 
 typedef struct _orphan_entry {
@@ -142,26 +150,21 @@ static inline xmldoc_priv * priv_from_xmlDocPtr(const xmlDocPtr doc)
     return doc->_private;
 }
 
+static inline domdoc_properties * properties_from_xmlDocPtr(xmlDocPtr doc)
+{
+    return priv_from_xmlDocPtr(doc)->properties;
+}
+
 static inline BOOL is_xpathmode(const xmlDocPtr doc)
 {
-    return priv_from_xmlDocPtr(doc)->XPath;
-}
-
-static inline void set_xpathmode(const xmlDocPtr doc)
-{
-    priv_from_xmlDocPtr(doc)->XPath = TRUE;
-}
-
-static inline void reset_xpathmode(const xmlDocPtr doc)
-{
-    priv_from_xmlDocPtr(doc)->XPath = FALSE;
+    return properties_from_xmlDocPtr(doc)->XPath;
 }
 
 int registerNamespaces(xmlXPathContextPtr ctxt)
 {
     int n = 0;
     const select_ns_entry* ns = NULL;
-    const struct list* pNsList = &priv_from_xmlDocPtr(ctxt->doc)->selectNsList;
+    const struct list* pNsList = &properties_from_xmlDocPtr(ctxt->doc)->selectNsList;
 
     TRACE("(%p)\n", ctxt);
 
@@ -174,6 +177,16 @@ int registerNamespaces(xmlXPathContextPtr ctxt)
     return n;
 }
 
+static inline void clear_selectNsList(struct list* pNsList)
+{
+    select_ns_entry *ns, *ns2;
+    LIST_FOR_EACH_ENTRY_SAFE( ns, ns2, pNsList, select_ns_entry, entry )
+    {
+        heap_free( ns );
+    }
+    list_init(pNsList);
+}
+
 static xmldoc_priv * create_priv(void)
 {
     xmldoc_priv *priv;
@@ -182,14 +195,71 @@ static xmldoc_priv * create_priv(void)
     if (priv)
     {
         priv->refs = 0;
-        priv->XPath = FALSE;
         list_init( &priv->orphans );
-        list_init( &priv->selectNsList );
-        priv->selectNsStr = heap_alloc_zero(sizeof(xmlChar));
-        priv->selectNsStr_len = 0;
+        priv->properties = NULL;
     }
 
     return priv;
+}
+
+static domdoc_properties * create_properties(const GUID *clsid)
+{
+    domdoc_properties *properties = heap_alloc(sizeof(domdoc_properties));
+
+    list_init( &properties->selectNsList );
+    properties->selectNsStr = heap_alloc_zero(sizeof(xmlChar));
+    properties->selectNsStr_len = 0;
+    properties->XPath = FALSE;
+
+    /* properties that are dependent on object versions */
+    if (IsEqualCLSID( clsid, &CLSID_DOMDocument40 ) ||
+        IsEqualCLSID( clsid, &CLSID_DOMDocument60 ))
+    {
+        properties->XPath = TRUE;
+    }
+
+    return properties;
+}
+
+static domdoc_properties* copy_properties(domdoc_properties const* properties)
+{
+    domdoc_properties* pcopy = heap_alloc(sizeof(domdoc_properties));
+    select_ns_entry const* ns = NULL;
+    select_ns_entry* new_ns = NULL;
+    int len = (properties->selectNsStr_len+1)*sizeof(xmlChar);
+    ptrdiff_t offset;
+
+    if (pcopy)
+    {
+        pcopy->XPath = properties->XPath;
+        pcopy->selectNsStr_len = properties->selectNsStr_len;
+        list_init( &pcopy->selectNsList );
+        pcopy->selectNsStr = heap_alloc(len);
+        memcpy((xmlChar*)pcopy->selectNsStr, properties->selectNsStr, len);
+        offset = pcopy->selectNsStr - properties->selectNsStr;
+
+        LIST_FOR_EACH_ENTRY( ns, (&properties->selectNsList), select_ns_entry, entry )
+        {
+            new_ns = heap_alloc(sizeof(select_ns_entry));
+            memcpy(new_ns, ns, sizeof(select_ns_entry));
+            new_ns->href += offset;
+            new_ns->prefix += offset;
+            list_add_tail(&pcopy->selectNsList, &new_ns->entry);
+        }
+
+    }
+
+    return pcopy;
+}
+
+static void free_properties(domdoc_properties* properties)
+{
+    if (properties)
+    {
+        clear_selectNsList(&properties->selectNsList);
+        heap_free((xmlChar*)properties->selectNsStr);
+        heap_free(properties);
+    }
 }
 
 /* links a "<?xml" node as a first child */
@@ -270,16 +340,6 @@ LONG xmldoc_add_ref(xmlDocPtr doc)
     return ref;
 }
 
-static inline void clear_selectNsList(struct list* pNsList)
-{
-    select_ns_entry *ns, *ns2;
-    LIST_FOR_EACH_ENTRY_SAFE( ns, ns2, pNsList, select_ns_entry, entry )
-    {
-        heap_free( ns );
-    }
-    list_init(pNsList);
-}
-
 LONG xmldoc_release(xmlDocPtr doc)
 {
     xmldoc_priv *priv = priv_from_xmlDocPtr(doc);
@@ -295,8 +355,7 @@ LONG xmldoc_release(xmlDocPtr doc)
             xmlFreeNode( orphan->node );
             heap_free( orphan );
         }
-        clear_selectNsList(&priv->selectNsList);
-        heap_free((xmlChar*)priv->selectNsStr);
+        free_properties(priv->properties);
         heap_free(doc->_private);
 
         xmlFreeDoc(doc);
@@ -337,14 +396,28 @@ HRESULT xmldoc_remove_orphan(xmlDocPtr doc, xmlNodePtr node)
     return S_FALSE;
 }
 
-static HRESULT attach_xmldoc( xmlnode *node, xmlDocPtr xml )
+static inline xmlDocPtr get_doc( domdoc *This )
 {
-    if(node->node)
-        xmldoc_release(node->node->doc);
+    return (xmlDocPtr)This->node.node;
+}
 
-    node->node = (xmlNodePtr) xml;
-    if(node->node)
-        xmldoc_add_ref(node->node->doc);
+static HRESULT attach_xmldoc(domdoc *This, xmlDocPtr xml )
+{
+    if(This->node.node)
+    {
+        priv_from_xmlDocPtr(get_doc(This))->properties = NULL;
+        if (xmldoc_release(get_doc(This)) != 0)
+            priv_from_xmlDocPtr(get_doc(This))->properties =
+                copy_properties(This->properties);
+    }
+
+    This->node.node = (xmlNodePtr) xml;
+
+    if(This->node.node)
+    {
+        xmldoc_add_ref(get_doc(This));
+        priv_from_xmlDocPtr(get_doc(This))->properties = This->properties;
+    }
 
     return S_OK;
 }
@@ -352,11 +425,6 @@ static HRESULT attach_xmldoc( xmlnode *node, xmlDocPtr xml )
 static inline domdoc *impl_from_IXMLDOMDocument3( IXMLDOMDocument3 *iface )
 {
     return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpVtbl));
-}
-
-static inline xmlDocPtr get_doc( domdoc *This )
-{
-    return (xmlDocPtr)This->node.node;
 }
 
 static inline domdoc *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
@@ -474,7 +542,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Load(
 
     xmldoc->_private = create_priv();
 
-    return attach_xmldoc( &This->node, xmldoc );
+    return attach_xmldoc(This, xmldoc);
 }
 
 static HRESULT WINAPI domdoc_IPersistStreamInit_Save(
@@ -1653,7 +1721,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     xmldoc = doparse( ptr, len, NULL );
     if(xmldoc) {
         xmldoc->_private = create_priv();
-        return attach_xmldoc(&This->node, xmldoc);
+        return attach_xmldoc(This, xmldoc);
     }
 
     return S_OK;
@@ -1706,7 +1774,7 @@ static HRESULT WINAPI domdoc_load(
             {
                 domdoc *newDoc = impl_from_IXMLDOMDocument3( pNewDoc );
                 xmldoc = xmlCopyDoc(get_doc(newDoc), 1);
-                hr = attach_xmldoc(&This->node, xmldoc);
+                hr = attach_xmldoc(This, xmldoc);
 
                 if(SUCCEEDED(hr))
                     *isSuccessful = VARIANT_TRUE;
@@ -1755,7 +1823,7 @@ static HRESULT WINAPI domdoc_load(
     if ( filename )
     {
         hr = doread( This, filename );
-    
+
         if ( FAILED(hr) )
             This->error = E_FAIL;
         else
@@ -1768,7 +1836,7 @@ static HRESULT WINAPI domdoc_load(
     if(!filename || FAILED(hr)) {
         xmldoc = xmlNewDoc(NULL);
         xmldoc->_private = create_priv();
-        hr = attach_xmldoc(&This->node, xmldoc);
+        hr = attach_xmldoc(This, xmldoc);
         if(SUCCEEDED(hr))
             hr = S_FALSE;
     }
@@ -1904,7 +1972,8 @@ static HRESULT WINAPI domdoc_loadXML(
         xmldoc = xmlNewDoc(NULL);
 
     xmldoc->_private = create_priv();
-    hr2 = attach_xmldoc( &This->node, xmldoc );
+
+    hr2 = attach_xmldoc(This, xmldoc);
     if( FAILED(hr2) )
         hr = hr2;
 
@@ -2200,9 +2269,9 @@ static HRESULT WINAPI domdoc_setProperty(
 
         hr = S_OK;
         if (lstrcmpiW(bstr, PropValueXPathW) == 0)
-            set_xpathmode(get_doc(This));
+            This->properties->XPath = TRUE;
         else if (lstrcmpiW(bstr, PropValueXSLPatternW) == 0)
-            reset_xpathmode(get_doc(This));
+            This->properties->XPath = FALSE;
         else
             hr = E_FAIL;
 
@@ -2215,7 +2284,7 @@ static HRESULT WINAPI domdoc_setProperty(
         HRESULT hr;
         BSTR bstr;
         xmlChar *pTokBegin, *pTokEnd, *pTokInner;
-        xmlChar *nsStr = (xmlChar*)priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr;
+        xmlChar *nsStr = (xmlChar*)This->properties->selectNsStr;
         xmlXPathContextPtr ctx;
         struct list *pNsList;
         select_ns_entry* pNsEntry = NULL;
@@ -2232,7 +2301,7 @@ static HRESULT WINAPI domdoc_setProperty(
 
         hr = S_OK;
 
-        pNsList = &(priv_from_xmlDocPtr(This->node.node->doc)->selectNsList);
+        pNsList = &(This->properties->selectNsList);
         clear_selectNsList(pNsList);
         heap_free(nsStr);
         nsStr = xmlChar_from_wchar(bstr);
@@ -2240,8 +2309,8 @@ static HRESULT WINAPI domdoc_setProperty(
 
         TRACE("Setting SelectionNamespaces property to: %s\n", nsStr);
 
-        priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr = nsStr;
-        priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr_len = xmlStrlen(nsStr);
+        This->properties->selectNsStr = nsStr;
+        This->properties->selectNsStr_len = xmlStrlen(nsStr);
         if (bstr && *bstr)
         {
             ctx = xmlXPathNewContext(This->node.node->doc);
@@ -2360,7 +2429,7 @@ static HRESULT WINAPI domdoc_getProperty(
     if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
     {
         V_VT(var) = VT_BSTR;
-        V_BSTR(var) = is_xpathmode(This->node.node->doc) ?
+        V_BSTR(var) = This->properties->XPath ?
                       SysAllocString(PropValueXPathW) :
                       SysAllocString(PropValueXSLPatternW);
         return V_BSTR(var) ? S_OK : E_OUTOFMEMORY;
@@ -2374,9 +2443,9 @@ static HRESULT WINAPI domdoc_getProperty(
         select_ns_entry* pNsEntry;
 
         V_VT(var) = VT_BSTR;
-        nsStr = priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr;
-        pNsList = &priv_from_xmlDocPtr(This->node.node->doc)->selectNsList;
-        lenA = priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr_len;
+        nsStr = This->properties->selectNsStr;
+        pNsList = &This->properties->selectNsList;
+        lenA = This->properties->selectNsStr_len;
         lenW = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, NULL, 0);
         rebuiltStr = heap_alloc(lenW*sizeof(WCHAR));
         MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, rebuiltStr, lenW);
@@ -2675,6 +2744,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->validating = 0;
     doc->resolving = 0;
     doc->preserving = 0;
+    doc->properties = properties_from_xmlDocPtr(xmldoc);
     doc->error = S_OK;
     doc->schema = NULL;
     doc->stream = NULL;
@@ -2702,20 +2772,13 @@ HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
         return E_OUTOFMEMORY;
 
     xmldoc->_private = create_priv();
+    priv_from_xmlDocPtr(xmldoc)->properties = create_properties(clsid);
 
     hr = DOMDocument_create_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
     {
         xmlFreeDoc(xmldoc);
         return hr;
-    }
-
-    /* properties that are dependent on object versions */
-    if (IsEqualCLSID( clsid, &CLSID_DOMDocument40 ) ||
-        IsEqualCLSID( clsid, &CLSID_DOMDocument60 ))
-    {
-        domdoc *This = impl_from_IXMLDOMDocument3(*ppObj);
-        set_xpathmode(get_doc(This));
     }
 
     return hr;
