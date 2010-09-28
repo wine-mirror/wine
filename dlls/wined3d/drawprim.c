@@ -69,9 +69,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_stream_state *streams = This->stateBlock->state.streams;
-    LONG SkipnStrides = startIdx + This->stateBlock->state.load_base_vertex_index;
-    BOOL pixelShader = use_ps(This->stateBlock);
+    const struct wined3d_state *state = &This->stateBlock->state;
+    const struct wined3d_stream_state *streams = state->streams;
+    LONG SkipnStrides = startIdx + state->load_base_vertex_index;
+    BOOL pixelShader = use_ps(state);
     BOOL specular_fog = FALSE;
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
@@ -91,7 +92,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
          * supported or other reason), or with user pointer drawing idxData
          * will be non-NULL. */
         if (!idxData)
-            idxData = buffer_get_sysmem(This->stateBlock->state.index_buffer, gl_info);
+            idxData = buffer_get_sysmem(state->index_buffer, gl_info);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;
@@ -139,10 +140,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         specular = element->data + streams[element->stream_idx].offset;
 
         /* special case where the fog density is stored in the specular alpha channel */
-        if (This->stateBlock->state.render_states[WINED3DRS_FOGENABLE]
-                && (This->stateBlock->state.render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
+        if (state->render_states[WINED3DRS_FOGENABLE]
+                && (state->render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
                     || si->elements[WINED3D_FFP_POSITION].format->id == WINED3DFMT_R32G32B32A32_FLOAT)
-                && This->stateBlock->state.render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+                && state->render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
         {
             if (gl_info->supported[EXT_FOG_COORD])
             {
@@ -169,7 +170,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
 
     for (textureNo = 0; textureNo < texture_stages; ++textureNo)
     {
-        int coordIdx = This->stateBlock->state.texture_states[textureNo][WINED3DTSS_TEXCOORDINDEX];
+        int coordIdx = state->texture_states[textureNo][WINED3DTSS_TEXCOORDINDEX];
         DWORD texture_idx = This->texUnitMap[textureNo];
 
         if (!gl_info->supported[ARB_MULTITEXTURE] && textureNo > 0)
@@ -178,7 +179,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
             continue;
         }
 
-        if (!pixelShader && !This->stateBlock->state.textures[textureNo]) continue;
+        if (!pixelShader && !state->textures[textureNo]) continue;
 
         if (texture_idx == WINED3D_UNMAPPED_STAGE) continue;
 
@@ -225,9 +226,9 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         {
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2)
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->state.load_base_vertex_index;
+                SkipnStrides = pIdxBufS[startIdx + vx_index] + state->load_base_vertex_index;
             else
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + This->stateBlock->state.load_base_vertex_index;
+                SkipnStrides = pIdxBufL[startIdx + vx_index] + state->load_base_vertex_index;
         }
 
         tmp_tex_mask = tex_mask;
@@ -239,7 +240,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
 
             if (!(tmp_tex_mask & 1)) continue;
 
-            coord_idx = This->stateBlock->state.texture_states[texture][WINED3DTSS_TEXCOORDINDEX];
+            coord_idx = state->texture_states[texture][WINED3DTSS_TEXCOORDINDEX];
             ptr = texCoords[coord_idx] + (SkipnStrides * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
 
             texture_idx = This->texUnitMap[texture];

@@ -893,7 +893,7 @@ static void atifs_apply_pixelshader(DWORD state_id, IWineD3DStateBlockImpl *stat
     IWineD3DDeviceImpl *device = stateblock->device;
     BOOL use_vshader = use_vs(state);
 
-    context->last_was_pshader = use_ps(stateblock);
+    context->last_was_pshader = use_ps(state);
     /* The ATIFS code does not support pixel shaders currently, but we have to provide a state handler
      * to call shader_select to select a vertex shader if one is applied because the vertex shader state
      * may defer calling the shader backend if the pshader state is dirty.

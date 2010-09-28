@@ -4457,7 +4457,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     find_vs_compile_args(shader, stateblock, &args->super);
 
     args->clip.boolclip_compare = 0;
-    if(use_ps(stateblock))
+    if (use_ps(state))
     {
         IWineD3DPixelShaderImpl *ps = state->pixel_shader;
         struct arb_pshader_private *shader_priv = ps->baseShader.backend_data;
@@ -5533,45 +5533,50 @@ static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
     caps->MaxSimultaneousTextures = min(gl_info->limits.fragment_samplers, 8);
 }
 
-static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_texfactor_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
     float col[4];
 
     /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
      * application provided constants
      */
-    if(device->shader_backend == &arb_program_shader_backend) {
-        if (use_ps(stateblock)) return;
+    if (device->shader_backend == &arb_program_shader_backend)
+    {
+        if (use_ps(state)) return;
 
         context->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
     }
 
-    D3DCOLORTOGLFLOAT4(stateblock->state.render_states[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_TEXTUREFACTOR], col);
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col)");
 
 }
 
-static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_arb_specularenable(DWORD state_id,
+        IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
     float col[4];
 
     /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
      * application provided constants
      */
-    if(device->shader_backend == &arb_program_shader_backend) {
-        if (use_ps(stateblock)) return;
+    if (device->shader_backend == &arb_program_shader_backend)
+    {
+        if (use_ps(state)) return;
 
         context->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
 
-    if (stateblock->state.render_states[WINED3DRS_SPECULARENABLE])
+    if (state->render_states[WINED3DRS_SPECULARENABLE])
     {
         /* The specular color has no alpha */
         col[0] = 1.0f; col[1] = 1.0f;
@@ -5584,16 +5589,17 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
 }
 
-static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void set_bumpmat_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
     float mat[2][2];
 
-    if (use_ps(stateblock))
+    if (use_ps(state))
     {
-        IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
+        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
         if (stage && (ps->baseShader.reg_maps.bumpmat & (1 << stage)))
         {
             /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
@@ -5612,25 +5618,26 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, s
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
     }
 
-    mat[0][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
-    mat[0][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
-    mat[1][0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
-    mat[1][1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
+    mat[0][0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
+    mat[0][1] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT01]);
+    mat[1][0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT10]);
+    mat[1][1] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT11]);
 
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0]));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0])");
 }
 
-static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void tex_bumpenvlum_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
     float param[4];
 
-    if (use_ps(stateblock))
+    if (use_ps(state))
     {
-        IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
+        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
         if (stage && (ps->baseShader.reg_maps.luminanceparams & (1 << stage)))
         {
             /* The pixel shader has to know the luminance offset. Do a constants update if it
@@ -5649,8 +5656,8 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
     }
 
-    param[0] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVLSCALE]);
-    param[1] = *((float *)&stateblock->state.texture_states[stage][WINED3DTSS_BUMPENVLOFFSET]);
+    param[0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVLSCALE]);
+    param[1] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVLOFFSET]);
     param[2] = 0.0f;
     param[3] = 0.0f;
 
@@ -6149,18 +6156,19 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     return ret;
 }
 
-static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void fragment_prog_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
     struct shader_arb_priv *priv = device->fragment_priv;
-    BOOL use_vshader = use_vs(&stateblock->state);
-    BOOL use_pshader = use_ps(stateblock);
+    BOOL use_vshader = use_vs(state);
+    BOOL use_pshader = use_ps(state);
     struct ffp_frag_settings settings;
     const struct arbfp_ffp_desc *desc;
     unsigned int i;
 
-    TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
+    TRACE("state_id %#x, stateblock %p, context %p\n", state_id, stateblock, context);
 
     if(isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE))) {
         if(!use_pshader && device->shader_backend == &arb_program_shader_backend && context->last_was_pshader) {

@@ -3026,9 +3026,9 @@ static inline BOOL use_vs(const struct wined3d_state *state)
     return state->vertex_shader && !state->vertex_declaration->position_transformed;
 }
 
-static inline BOOL use_ps(IWineD3DStateBlockImpl *stateblock)
+static inline BOOL use_ps(const struct wined3d_state *state)
 {
-    return !!stateblock->state.pixel_shader;
+    return !!state->pixel_shader;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

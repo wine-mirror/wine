@@ -456,17 +456,18 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
 }
 
 
-static void nvrc_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void nvrc_colorop(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     BOOL tex_used = stateblock->device->fixed_function_usage_map & (1 << stage);
     DWORD mapped_stage = stateblock->device->texUnitMap[stage];
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
 
-    TRACE("Setting color op for stage %d\n", stage);
+    TRACE("Setting color op for stage %u.\n", stage);
 
     /* Using a pixel shader? Don't care for anything here, the shader applying does it */
-    if (use_ps(stateblock)) return;
+    if (use_ps(state)) return;
 
     if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
 

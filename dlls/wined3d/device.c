@@ -478,7 +478,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
         }
     }
 
-    if (use_ps(stateblock))
+    if (use_ps(state))
     {
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
         {
@@ -3586,8 +3586,9 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This)
 {
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    BOOL vs = use_vs(&This->stateBlock->state);
-    BOOL ps = use_ps(This->stateBlock);
+    const struct wined3d_state *state = &This->stateBlock->state;
+    BOOL vs = use_vs(state);
+    BOOL ps = use_ps(state);
     /*
      * Rules are:
      * -> Pixel shaders need a 1:1 map. In theory the shader input could be mapped too, but

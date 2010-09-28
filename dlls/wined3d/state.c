@@ -1681,17 +1681,18 @@ static void state_pointsprite_w(DWORD state, IWineD3DStateBlockImpl *stateblock,
     }
 }
 
-static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_pointsprite(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
 
-    if (stateblock->state.render_states[WINED3DRS_POINTSPRITEENABLE])
+    if (state->render_states[WINED3DRS_POINTSPRITEENABLE])
     {
         static BOOL warned;
 
         if (gl_info->limits.point_sprite_units < gl_info->limits.textures && !warned)
         {
-            if (use_ps(stateblock) || stateblock->state.lowest_disabled_stage > gl_info->limits.point_sprite_units)
+            if (use_ps(state) || state->lowest_disabled_stage > gl_info->limits.point_sprite_units)
             {
                 FIXME("The app uses point sprite texture coordinates on more units than supported by the driver\n");
                 warned = TRUE;
@@ -3099,17 +3100,18 @@ static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined
 }
 
 
-static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void tex_colorop(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
+    DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     BOOL tex_used = stateblock->device->fixed_function_usage_map & (1 << stage);
     DWORD mapped_stage = stateblock->device->texUnitMap[stage];
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
 
     TRACE("Setting color op for stage %d\n", stage);
 
     /* Using a pixel shader? Don't care for anything here, the shader applying does it */
-    if (use_ps(stateblock)) return;
+    if (use_ps(state)) return;
 
     if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
 
@@ -3124,7 +3126,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
         checkGLcall("glActiveTextureARB");
     }
 
-    if (stage >= stateblock->state.lowest_disabled_stage)
+    if (stage >= state->lowest_disabled_stage)
     {
         TRACE("Stage disabled\n");
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
@@ -3152,13 +3154,13 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
     /* The sampler will also activate the correct texture dimensions, so no
      * need to do it here if the sampler for this stage is dirty. */
     if (!isStateDirty(context, STATE_SAMPLER(stage)) && tex_used)
-        texture_activate_dimensions(stateblock->state.textures[stage], gl_info);
+        texture_activate_dimensions(state->textures[stage], gl_info);
 
-    set_tex_op(gl_info, &stateblock->state, FALSE, stage,
-            stateblock->state.texture_states[stage][WINED3DTSS_COLOROP],
-            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG1],
-            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG2],
-            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG0]);
+    set_tex_op(gl_info, state, FALSE, stage,
+            state->texture_states[stage][WINED3DTSS_COLOROP],
+            state->texture_states[stage][WINED3DTSS_COLORARG1],
+            state->texture_states[stage][WINED3DTSS_COLORARG2],
+            state->texture_states[stage][WINED3DTSS_COLORARG0]);
 }
 
 void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
@@ -3302,7 +3304,8 @@ static void transform_texture(DWORD state_id, IWineD3DStateBlockImpl *stateblock
         }
         /* NP2 texcoord fixup is implemented for pixelshaders so only enable the
            fixed-function-pipeline fixup via pow2Matrix when no PS is used. */
-        if (!use_ps(stateblock)) {
+        if (!use_ps(state))
+        {
             TRACE("Non power two matrix multiply fixup\n");
             glMultMatrixf(state->textures[texUnit]->baseTexture.pow2Matrix);
         }
@@ -3547,8 +3550,9 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
     }
 }
 
-static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void shaderconstant(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
 
     /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
@@ -3559,7 +3563,7 @@ static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
        return;
     }
 
-    device->shader_backend->shader_load_constants(context, use_ps(stateblock), use_vs(&stateblock->state));
+    device->shader_backend->shader_load_constants(context, use_ps(state), use_vs(state));
 }
 
 static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
@@ -3655,7 +3659,7 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
             checkGLcall("glTexEnvi(GL_TEXTURE_LOD_BIAS_EXT, ...)");
         }
 
-        if (!use_ps(stateblock) && sampler < state->lowest_disabled_stage)
+        if (!use_ps(state) && sampler < state->lowest_disabled_stage)
         {
             if (state->render_states[WINED3DRS_COLORKEYENABLE] && !sampler)
             {
@@ -3671,7 +3675,7 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
         {
             IWineD3DDeviceImpl *d3ddevice = stateblock->device;
             d3ddevice->shader_backend->shader_load_np2fixup_constants(
-                (IWineD3DDevice*)d3ddevice, use_ps(stateblock), use_vs(state));
+                (IWineD3DDevice*)d3ddevice, use_ps(state), use_vs(state));
         }
     }
     else if (mapped_stage < gl_info->limits.textures)
@@ -3692,11 +3696,12 @@ static void sampler(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct w
     }
 }
 
-void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+void apply_pixelshader(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
+    const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
-    BOOL use_vshader = use_vs(&stateblock->state);
-    BOOL use_pshader = use_ps(stateblock);
+    BOOL use_vshader = use_vs(state);
+    BOOL use_pshader = use_ps(state);
     unsigned int i;
 
     if (use_pshader) {
@@ -4610,12 +4615,13 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
     }
 }
 
-static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void vertexdeclaration(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &stateblock->state;
+    BOOL useVertexShaderFunction = use_vs(state);
+    BOOL usePixelShaderFunction = use_ps(state);
     BOOL updateFog = FALSE;
-    BOOL useVertexShaderFunction = use_vs(&stateblock->state);
-    BOOL usePixelShaderFunction = use_ps(stateblock);
     IWineD3DDeviceImpl *device = stateblock->device;
     BOOL transformed;
     BOOL wasrhw = context->last_was_rhw;
