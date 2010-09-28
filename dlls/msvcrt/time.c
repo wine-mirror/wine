@@ -756,6 +756,9 @@ MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
  */
 char * CDECL MSVCRT_asctime(const struct MSVCRT_tm *mstm)
 {
+    char bufferA[30];
+    WCHAR bufferW[30];
+
     thread_data_t *data = msvcrt_get_thread_data();
     struct tm tm;
 
@@ -764,12 +767,13 @@ char * CDECL MSVCRT_asctime(const struct MSVCRT_tm *mstm)
     if (!data->asctime_buffer)
         data->asctime_buffer = MSVCRT_malloc( 30 ); /* ought to be enough */
 
-    /* FIXME: may want to map from Unix codepage to CP_ACP */
 #ifdef HAVE_ASCTIME_R
-    asctime_r( &tm, data->asctime_buffer );
+    asctime_r( &tm, bufferA );
 #else
-    strcpy( data->asctime_buffer, asctime(&tm) );
+    strcpy( bufferA, asctime(&tm) );
 #endif
+    MultiByteToWideChar( CP_UNIXCP, 0, bufferA, -1, bufferW, 30 );
+    WideCharToMultiByte( CP_ACP, 0, bufferW, -1, data->asctime_buffer, 30, NULL, NULL );
     return data->asctime_buffer;
 }
 
