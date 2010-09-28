@@ -1837,14 +1837,38 @@ static nsresult NSAPI nsURI_SetPassword(nsIURL *iface, const nsACString *aPasswo
 static nsresult NSAPI nsURI_GetHostPort(nsIURL *iface, nsACString *aHostPort)
 {
     nsWineURI *This = NSURI_THIS(iface);
+    const WCHAR *ptr;
+    char *vala;
+    BSTR val;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, aHostPort);
 
     if(This->nsuri)
         return nsIURI_GetHostPort(This->nsuri, aHostPort);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
+    hres = IUri_GetAuthority(This->uri, &val);
+    if(FAILED(hres)) {
+        WARN("GetAuthority failed: %08x\n", hres);
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    ptr = strchrW(val, '@');
+    if(!ptr)
+        ptr = val;
+
+    vala = heap_strdupWtoA(ptr);
+    SysFreeString(val);
+    if(!vala)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    TRACE("ret %s\n", debugstr_a(vala));
+    nsACString_SetData(aHostPort, vala);
+    heap_free(vala);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_SetHostPort(nsIURL *iface, const nsACString *aHostPort)
