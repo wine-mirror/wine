@@ -36,10 +36,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+static const WCHAR MethodGetW[] = {'G','E','T',0};
+static const WCHAR MethodPutW[] = {'P','U','T',0};
+static const WCHAR MethodPostW[] = {'P','O','S','T',0};
+
 typedef struct _httprequest
 {
     const struct IXMLHTTPRequestVtbl *lpVtbl;
     LONG ref;
+
+    BINDVERB verb;
+    BSTR url;
+    BOOL async;
+
+    /* credentials */
+    BSTR user;
+    BSTR password;
 } httprequest;
 
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
@@ -83,6 +95,9 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        SysFreeString(This->url);
+        SysFreeString(This->user);
+        SysFreeString(This->password);
         heap_free( This );
     }
 
@@ -158,14 +173,57 @@ static HRESULT WINAPI httprequest_Invoke(IXMLHTTPRequest *iface, DISPID dispIdMe
     return hr;
 }
 
-static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR bstrMethod, BSTR bstrUrl,
-        VARIANT varAsync, VARIANT bstrUser, VARIANT bstrPassword)
+static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR url,
+        VARIANT async, VARIANT user, VARIANT password)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    HRESULT hr;
+    VARIANT str;
 
-    FIXME("stub (%p)\n", This);
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(method), debugstr_w(url));
 
-    return E_NOTIMPL;
+    if (!method || !url) return E_INVALIDARG;
+
+    /* free previously set data */
+    SysFreeString(This->url);
+    SysFreeString(This->user);
+    SysFreeString(This->password);
+    This->url = This->user = This->password = NULL;
+
+    if (lstrcmpiW(method, MethodGetW) == 0)
+    {
+        This->verb = BINDVERB_GET;
+    }
+    else if (lstrcmpiW(method, MethodPutW) == 0)
+    {
+        This->verb = BINDVERB_PUT;
+    }
+    else if (lstrcmpiW(method, MethodPostW) == 0)
+    {
+        This->verb = BINDVERB_POST;
+    }
+    else
+    {
+        FIXME("unsupported request type %s\n", debugstr_w(method));
+        This->verb = -1;
+        return E_FAIL;
+    }
+
+    This->url = SysAllocString(url);
+
+    hr = VariantChangeType(&async, &async, 0, VT_BOOL);
+    This->async = hr == S_OK && V_BOOL(&async) == VARIANT_TRUE;
+
+    VariantInit(&str);
+    hr = VariantChangeType(&str, &user, 0, VT_BSTR);
+    if (hr == S_OK)
+        This->user = V_BSTR(&str);
+
+    hr = VariantChangeType(&str, &password, 0, VT_BSTR);
+    if (hr == S_OK)
+        This->password = V_BSTR(&str);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR bstrHeader, BSTR bstrValue)
@@ -323,6 +381,10 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     req->lpVtbl = &dimimpl_vtbl;
     req->ref = 1;
+
+    req->async = FALSE;
+    req->verb = -1;
+    req->url = req->user = req->password = NULL;
 
     *ppObj = &req->lpVtbl;
 

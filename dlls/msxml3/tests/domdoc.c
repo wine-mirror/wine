@@ -2883,9 +2883,9 @@ static void test_XMLHTTP(void)
         'p','o','s','t','t','e','s','t','.','p','h','p',0};
     static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
     IXMLHttpRequest *pXMLHttpRequest;
-    BSTR bstrResponse, str1, str2;
+    BSTR bstrResponse, method, url;
     VARIANT dummy;
-    VARIANT varfalse;
+    VARIANT async;
     VARIANT varbody;
     HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
                                   CLSCTX_INPROC_SERVER, &IID_IXMLHttpRequest,
@@ -2899,18 +2899,30 @@ static void test_XMLHTTP(void)
     VariantInit(&dummy);
     V_VT(&dummy) = VT_ERROR;
     V_ERROR(&dummy) = DISP_E_MEMBERNOTFOUND;
-    VariantInit(&varfalse);
-    V_VT(&varfalse) = VT_BOOL;
-    V_BOOL(&varfalse) = VARIANT_FALSE;
+    VariantInit(&async);
+    V_VT(&async) = VT_BOOL;
+    V_BOOL(&async) = VARIANT_FALSE;
     V_VT(&varbody) = VT_BSTR;
     V_BSTR(&varbody) = SysAllocString(wszBody);
 
-    str1 = SysAllocString(wszPOST);
-    str2 = SysAllocString(wszUrl);
-    hr = IXMLHttpRequest_open(pXMLHttpRequest, str1, str2, varfalse, dummy, dummy);
-    todo_wine ok(hr == S_OK, "IXMLHttpRequest_open should have succeeded instead of failing with 0x%08x\n", hr);
-    SysFreeString(str1);
-    SysFreeString(str2);
+    method = SysAllocString(wszPOST);
+    url = SysAllocString(wszUrl);
+
+    /* invalid parameters */
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, NULL, NULL, async, dummy, dummy);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, method, NULL, async, dummy, dummy);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, NULL, url, async, dummy, dummy);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, method, url, async, dummy, dummy);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SysFreeString(method);
+    SysFreeString(url);
 
     hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
     if (hr == INET_E_RESOURCE_NOT_FOUND)
