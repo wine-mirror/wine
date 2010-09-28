@@ -1846,7 +1846,7 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
 /***********************************************************************
  *     AcceptEx
  */
-BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DWORD dest_len,
+static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DWORD dest_len,
                          DWORD local_addr_len, DWORD rem_addr_len, LPDWORD received,
                          LPOVERLAPPED overlapped)
 {
@@ -1945,7 +1945,7 @@ BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DWORD des
 /***********************************************************************
  *     GetAcceptExSockaddrs
  */
-void WINAPI WS2_GetAcceptExSockaddrs(PVOID buffer, DWORD data_size, DWORD local_size, DWORD remote_size,
+static void WINAPI WS2_GetAcceptExSockaddrs(PVOID buffer, DWORD data_size, DWORD local_size, DWORD remote_size,
                                      struct WS_sockaddr **local_addr, LPINT local_addr_len,
                                      struct WS_sockaddr **remote_addr, LPINT remote_addr_len)
 {
