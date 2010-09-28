@@ -6161,6 +6161,16 @@ static void test_paint_messages(void)
     flush_events();
     ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
 
+    trace("testing UpdateWindow(NULL)\n");
+    SetLastError(0xdeadbeef);
+    ok(!UpdateWindow(NULL), "UpdateWindow(NULL) should fail\n");
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE ||
+       broken( GetLastError() == 0xdeadbeef ) /* win9x */,
+       "wrong error code %d\n", GetLastError());
+    check_update_rgn( hwnd, 0 );
+    flush_events();
+    ok_sequence( WmEmptySeq, "WmEmptySeq", FALSE );
+
     /* now with frame */
     SetRectRgn( hrgn, -5, -5, 20, 20 );
 
