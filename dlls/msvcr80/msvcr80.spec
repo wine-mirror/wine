@@ -1435,7 +1435,7 @@
 @ cdecl strcpy_s(ptr long str) msvcrt.strcpy_s
 @ cdecl strcspn(str str) msvcrt.strcspn
 @ cdecl strerror(long) msvcrt.strerror
-@ stub strerror_s
+@ cdecl strerror_s(ptr long long) msvcrt.strerror_s
 @ cdecl strftime(str long str ptr) msvcrt.strftime
 @ cdecl strlen(str) msvcrt.strlen
 @ cdecl strncat(str str long) msvcrt.strncat

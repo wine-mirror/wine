@@ -44,6 +44,7 @@ static inline void* memccpy(void *s1, const void *s2, int c, size_t n) { return 
 int   __cdecl _strcmpi(const char*,const char*);
 char* __cdecl _strdup(const char*);
 char* __cdecl _strerror(const char*);
+errno_t __cdecl strerror_s(char*,size_t,int);
 int   __cdecl _stricmp(const char*,const char*);
 int   __cdecl _stricoll(const char*,const char*);
 char* __cdecl _strlwr(char*);

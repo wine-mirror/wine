@@ -1374,7 +1374,7 @@
 @ cdecl strcpy_s(ptr long str) MSVCRT_strcpy_s
 @ cdecl strcspn(str str) ntdll.strcspn
 @ cdecl strerror(long) MSVCRT_strerror
-# stub strerror_s
+@ cdecl strerror_s(ptr long long)
 @ cdecl strftime(str long str ptr) MSVCRT_strftime
 @ cdecl strlen(str) ntdll.strlen
 @ cdecl strncat(str str long) ntdll.strncat

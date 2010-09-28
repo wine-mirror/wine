@@ -219,6 +219,33 @@ char* CDECL MSVCRT_strerror(int err)
 }
 
 /**********************************************************************
+ *		strerror_s	(MSVCRT.@)
+ */
+int CDECL strerror_s(char *buffer, MSVCRT_size_t numberOfElements, int errnum)
+{
+    char *ptr;
+
+    if (!buffer || !numberOfElements)
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if (errnum < 0 || errnum > MSVCRT__sys_nerr)
+        errnum = MSVCRT__sys_nerr;
+
+    ptr = MSVCRT__sys_errlist[errnum];
+    while (*ptr && numberOfElements > 1)
+    {
+        *buffer++ = *ptr++;
+        numberOfElements--;
+    }
+
+    *buffer = '\0';
+    return 0;
+}
+
+/**********************************************************************
  *		_strerror	(MSVCRT.@)
  */
 char* CDECL _strerror(const char* str)

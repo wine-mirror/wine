@@ -25,6 +25,7 @@
 static int (__cdecl *prand_s)(unsigned int *);
 static int (__cdecl *pmemcpy_s)(void *, MSVCRT_size_t, void*, MSVCRT_size_t);
 static int (__cdecl *pI10_OUTPUT)(long double, int, int, void*);
+static int (__cdecl *pstrerror_s)(char *, MSVCRT_size_t, int);
 
 static void init(void)
 {
@@ -33,6 +34,7 @@ static void init(void)
     prand_s = (void *)GetProcAddress(hmod, "rand_s");
     pmemcpy_s = (void*)GetProcAddress(hmod, "memcpy_s");
     pI10_OUTPUT = (void*)GetProcAddress(hmod, "$I10_OUTPUT");
+    pstrerror_s = (void *)GetProcAddress(hmod, "strerror_s");
 }
 
 static void test_rand_s(void)
@@ -192,6 +194,53 @@ static void test_I10_OUTPUT(void)
     }
 }
 
+static void test_strerror_s(void)
+{
+    int ret;
+    char buf[256];
+
+    if (!pstrerror_s)
+    {
+        win_skip("strerror_s is not available\n");
+        return;
+    }
+
+    errno = EBADF;
+    ret = pstrerror_s(NULL, 0, 0);
+    ok(ret == EINVAL, "Expected strerror_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    ret = pstrerror_s(NULL, sizeof(buf), 0);
+    ok(ret == EINVAL, "Expected strerror_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    memset(buf, 'X', sizeof(buf));
+    errno = EBADF;
+    ret = pstrerror_s(buf, 0, 0);
+    ok(ret == EINVAL, "Expected strerror_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(buf[0] == 'X', "Expected output buffer to be untouched\n");
+
+    memset(buf, 'X', sizeof(buf));
+    ret = pstrerror_s(buf, 1, 0);
+    ok(ret == 0, "Expected strerror_s to return 0, got %d\n", ret);
+    ok(strlen(buf) == 0, "Expected output buffer to be null terminated\n");
+
+    memset(buf, 'X', sizeof(buf));
+    ret = pstrerror_s(buf, 2, 0);
+    ok(ret == 0, "Expected strerror_s to return 0, got %d\n", ret);
+    ok(strlen(buf) == 1, "Expected output buffer to be truncated\n");
+
+    memset(buf, 'X', sizeof(buf));
+    ret = pstrerror_s(buf, sizeof(buf), 0);
+    ok(ret == 0, "Expected strerror_s to return 0, got %d\n", ret);
+
+    memset(buf, 'X', sizeof(buf));
+    ret = pstrerror_s(buf, sizeof(buf), -1);
+    ok(ret == 0, "Expected strerror_s to return 0, got %d\n", ret);
+}
+
 START_TEST(misc)
 {
     init();
@@ -199,4 +248,5 @@ START_TEST(misc)
     test_rand_s();
     test_memcpy_s();
     test_I10_OUTPUT();
+    test_strerror_s();
 }
