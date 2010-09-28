@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "ole2.h"
 
+#include "corerror.h"
 #include "initguid.h"
 #include "metahost.h"
 #include "wine/test.h"
@@ -107,12 +108,43 @@ void test_enumruntimes(void)
     IEnumUnknown_Release(runtime_enum);
 }
 
+void test_getruntime(void)
+{
+    static const WCHAR twodotzero[] = {'v','2','.','0','.','5','0','7','2','7',0};
+    static const WCHAR twodotzerodotzero[] = {'v','2','.','0','.','0',0};
+    HRESULT hr;
+    ICLRRuntimeInfo *info;
+    DWORD count;
+    WCHAR buf[MAX_PATH];
+
+    hr = ICLRMetaHost_GetRuntime(metahost, NULL, &IID_ICLRRuntimeInfo, (void**)&info);
+    todo_wine ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
+
+    hr = ICLRMetaHost_GetRuntime(metahost, twodotzero, &IID_ICLRRuntimeInfo, (void**)&info);
+    todo_wine ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    if (hr != S_OK) return;
+
+    count = MAX_PATH;
+    hr = ICLRRuntimeInfo_GetVersionString(info, buf, &count);
+    ok(hr == S_OK, "GetVersionString returned %x\n", hr);
+    ok(count == lstrlenW(buf)+1, "GetVersionString returned count %u but string of length %u\n", count, lstrlenW(buf)+1);
+    ok(lstrcmpW(buf, twodotzero) == 0, "got unexpected version %s\n", wine_dbgstr_w(buf));
+
+    ICLRRuntimeInfo_Release(info);
+
+    /* Versions must match exactly. */
+    hr = ICLRMetaHost_GetRuntime(metahost, twodotzerodotzero, &IID_ICLRRuntimeInfo, (void**)&info);
+    todo_wine ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
+}
+
 START_TEST(metahost)
 {
     if (!init_pointers())
         return;
 
     test_enumruntimes();
+
+    test_getruntime();
 
     cleanup();
 }
