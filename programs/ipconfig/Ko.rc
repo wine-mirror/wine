@@ -47,4 +47,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP 가능"
     STRING_YES, "예"
     STRING_NO, "아니오"
+    STRING_DEFAULT_GATEWAY, "기본 게이트웨이"
 }
