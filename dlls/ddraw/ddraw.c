@@ -2947,6 +2947,7 @@ static HRESULT CreateSurface(IDirectDraw7 *iface,
     if((DDSD->ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
     {
         WARN("Application wanted to create back buffer primary surface\n");
+        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDCAPS;
     }
 
