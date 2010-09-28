@@ -2429,6 +2429,7 @@ struct IWineD3DStateBlockImpl
 HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock,
         IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type) DECLSPEC_HIDDEN;
 void stateblock_init_contained_states(IWineD3DStateBlockImpl *object) DECLSPEC_HIDDEN;
+void stateblock_init_default_state(IWineD3DStateBlockImpl *stateblock) DECLSPEC_HIDDEN;
 
 static inline void stateblock_apply_state(DWORD state, IWineD3DStateBlockImpl *stateblock,
         struct wined3d_context *context)

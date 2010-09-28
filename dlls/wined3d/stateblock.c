@@ -1078,9 +1078,8 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Apply(IWineD3DStateBlock *iface)
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock *iface)
+void stateblock_init_default_state(IWineD3DStateBlockImpl *stateblock)
 {
-    IWineD3DStateBlockImpl *stateblock = (IWineD3DStateBlockImpl *)iface;
     IWineD3DDeviceImpl *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_state *state = &stateblock->state;
@@ -1097,7 +1096,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DState
     IWineD3DSurface *backbuffer;
     HRESULT hr;
 
-    TRACE("iface %p.\n", iface);
+    TRACE("stateblock %p.\n", stateblock);
 
     stateblock->blockType = WINED3DSBT_INIT;
 
@@ -1328,8 +1327,6 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DState
     }
 
     TRACE("Done.\n");
-
-    return WINED3D_OK;
 }
 
 /**********************************************************
@@ -1345,7 +1342,6 @@ static const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl =
     /* IWineD3DStateBlock */
     IWineD3DStateBlockImpl_Capture,
     IWineD3DStateBlockImpl_Apply,
-    IWineD3DStateBlockImpl_InitStartupStateBlock
 };
 
 HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type)

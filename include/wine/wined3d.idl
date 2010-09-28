@@ -2647,8 +2647,6 @@ interface IWineD3DStateBlock : IUnknown
     );
     HRESULT Apply(
     );
-    HRESULT InitStartupStateBlock(
-    );
 }
 
 [

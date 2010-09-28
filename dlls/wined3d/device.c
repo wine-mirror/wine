@@ -1888,7 +1888,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     /* Set up some starting GL setup */
 
     /* Setup all the devices defaults */
-    IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
+    stateblock_init_default_state(This->stateBlock);
 
     context = context_acquire(This, swapchain->front_buffer);
 
@@ -6469,10 +6469,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
     This->updateStateBlock = This->stateBlock;
     IWineD3DStateBlock_AddRef((IWineD3DStateBlock *)This->updateStateBlock);
 
-    hr = IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *) This->stateBlock);
-    if(FAILED(hr)) {
-        ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
-    }
+    stateblock_init_default_state(This->stateBlock);
 
     if(wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
