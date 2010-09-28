@@ -28,6 +28,7 @@ static int (__cdecl *pI10_OUTPUT)(long double, int, int, void*);
 static int (__cdecl *pstrerror_s)(char *, MSVCRT_size_t, int);
 static int (__cdecl *p_get_doserrno)(int *);
 static int (__cdecl *p_get_errno)(int *);
+static int (__cdecl *p_set_doserrno)(int);
 static int (__cdecl *p_set_errno)(int);
 
 static void init(void)
@@ -40,6 +41,7 @@ static void init(void)
     pstrerror_s = (void *)GetProcAddress(hmod, "strerror_s");
     p_get_doserrno = (void *)GetProcAddress(hmod, "_get_doserrno");
     p_get_errno = (void *)GetProcAddress(hmod, "_get_errno");
+    p_set_doserrno = (void *)GetProcAddress(hmod, "_set_doserrno");
     p_set_errno = (void *)GetProcAddress(hmod, "_set_errno");
 }
 
@@ -294,6 +296,35 @@ static void test__get_errno(void)
     ok(out == EBADF, "Expected output variable to be EBADF, got %d\n", out);
 }
 
+static void test__set_doserrno(void)
+{
+    int ret;
+
+    if (!p_set_doserrno)
+    {
+        win_skip("_set_doserrno is not available\n");
+        return;
+    }
+
+    _doserrno = ERROR_INVALID_CMM;
+    ret = p_set_doserrno(ERROR_FILE_NOT_FOUND);
+    ok(ret == 0, "Expected _set_doserrno to return 0, got %d\n", ret);
+    ok(_doserrno == ERROR_FILE_NOT_FOUND,
+       "Expected _doserrno to be ERROR_FILE_NOT_FOUND, got %d\n", _doserrno);
+
+    _doserrno = ERROR_INVALID_CMM;
+    ret = p_set_doserrno(-1);
+    ok(ret == 0, "Expected _set_doserrno to return 0, got %d\n", ret);
+    ok(_doserrno == -1,
+       "Expected _doserrno to be -1, got %d\n", _doserrno);
+
+    _doserrno = ERROR_INVALID_CMM;
+    ret = p_set_doserrno(0xdeadbeef);
+    ok(ret == 0, "Expected _set_doserrno to return 0, got %d\n", ret);
+    ok(_doserrno == 0xdeadbeef,
+       "Expected _doserrno to be 0xdeadbeef, got %d\n", _doserrno);
+}
+
 static void test__set_errno(void)
 {
     int ret;
@@ -330,5 +361,6 @@ START_TEST(misc)
     test_strerror_s();
     test__get_doserrno();
     test__get_errno();
+    test__set_doserrno();
     test__set_errno();
 }

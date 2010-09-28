@@ -1070,7 +1070,7 @@
 @ cdecl _set_SSE2_enable(long) msvcrt._set_SSE2_enable
 @ stub _set_abort_behavior
 @ stub _set_controlfp
-@ stub _set_doserrno
+@ cdecl _set_doserrno(long) msvcrt._set_doserrno
 @ cdecl _set_errno(long) msvcrt._set_errno
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
 @ stub _set_fmode

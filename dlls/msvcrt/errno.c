@@ -237,6 +237,15 @@ int CDECL _set_errno(int value)
 }
 
 /*********************************************************************
+ *		_set_doserrno (MSVCRT.@)
+ */
+int CDECL _set_doserrno(int value)
+{
+    *MSVCRT___doserrno() = value;
+    return 0;
+}
+
+/*********************************************************************
  *		strerror (MSVCRT.@)
  */
 char* CDECL MSVCRT_strerror(int err)

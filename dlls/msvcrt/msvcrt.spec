@@ -848,7 +848,7 @@
 @ stdcall -i386 _seh_longjmp_unwind(ptr)
 @ cdecl _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 # stub _set_controlfp
-# stub _set_doserrno
+@ cdecl _set_doserrno(long)
 @ cdecl _set_errno(long)
 @ cdecl _set_error_mode(long)
 # stub _set_fileinfo
