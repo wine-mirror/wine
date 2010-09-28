@@ -1633,6 +1633,8 @@ static HRESULT WINAPI DataCache_Draw(
     if (cache_entry->stgmedium.tymed == TYMED_NULL)
       continue;
 
+    if (pfnContinue && !pfnContinue(dwContinue)) return E_ABORT;
+
     switch (cache_entry->data_cf)
     {
       case CF_METAFILEPICT:

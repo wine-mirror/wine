@@ -897,6 +897,12 @@ static BOOL STDMETHODCALLTYPE draw_continue(ULONG_PTR param)
     return TRUE;
 }
 
+static BOOL STDMETHODCALLTYPE draw_continue_false(ULONG_PTR param)
+{
+    CHECK_EXPECTED_METHOD("draw_continue_false");
+    return FALSE;
+}
+
 static HRESULT WINAPI AdviseSink_QueryInterface(IAdviseSink *iface, REFIID riid, void **ppv)
 {
     if (IsEqualIID(riid, &IID_IAdviseSink) || IsEqualIID(riid, &IID_IUnknown))
@@ -1117,6 +1123,7 @@ static void test_data_cache(void)
         { "AdviseSink_OnViewChange", 0 },
         { "AdviseSink_OnViewChange", 0 },
         { "draw_continue", 1 },
+        { "draw_continue_false", 1 },
         { "DataObject_DAdvise", 0 },
         { "DataObject_DAdvise", 0 },
         { "DataObject_DUnadvise", 0 },
@@ -1267,6 +1274,16 @@ static void test_data_cache(void)
 
     hr = IViewObject_Draw(pViewObject, DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
     ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
+
+    /* a NULL draw_continue fn ptr */
+    hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, NULL, 0xdeadbeef);
+    ok_ole_success(hr, "IViewObject_Draw");
+
+    /* draw_continue that returns FALSE to abort drawing */
+    hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue_false, 0xdeadbeef);
+    ok(hr == E_ABORT ||
+       broken(hr == S_OK), /* win9x may skip the callbacks */
+       "IViewObject_Draw with draw_continue_false returns 0x%08x\n", hr);
 
     DeleteDC(hdcMem);
 
