@@ -117,6 +117,7 @@ static SSL_METHOD *meth;
 static SSL_CTX *ctx;
 static int hostname_idx;
 static int error_idx;
+static int conn_idx;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 
@@ -454,6 +455,15 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
             LeaveCriticalSection(&init_ssl_cs);
             return ERROR_OUTOFMEMORY;
         }
+        conn_idx = pSSL_get_ex_new_index(0, (void *)"netconn index",
+                NULL, NULL, NULL);
+        if (conn_idx == -1)
+        {
+            ERR("SSL_get_ex_new_index failed; %s\n",
+                pERR_error_string(pERR_get_error(), 0));
+            LeaveCriticalSection(&init_ssl_cs);
+            return ERROR_OUTOFMEMORY;
+        }
         pSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, netconn_secure_verify);
 
         pCRYPTO_set_id_callback(ssl_thread_id);
@@ -665,7 +675,20 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
         ERR("SSL_connect failed: %d\n", res);
         goto fail;
     }
-    pSSL_set_ex_data(connection->ssl_s, hostname_idx, hostname);
+    if (!pSSL_set_ex_data(connection->ssl_s, hostname_idx, hostname))
+    {
+        ERR("SSL_set_ex_data failed: %s\n",
+            pERR_error_string(pERR_get_error(), 0));
+        res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+        goto fail;
+    }
+    if (!pSSL_set_ex_data(connection->ssl_s, conn_idx, connection))
+    {
+        ERR("SSL_set_ex_data failed: %s\n",
+            pERR_error_string(pERR_get_error(), 0));
+        res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+        goto fail;
+    }
     cert = pSSL_get_peer_certificate(connection->ssl_s);
     if (!cert)
     {
