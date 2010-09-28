@@ -53,6 +53,7 @@ typedef struct
     BOOL useSSL;
     int socketFD;
     void *ssl_s;
+    DWORD security_flags;
 } WININET_NETCONNECTION;
 
 static inline LPWSTR heap_strdupW(LPCWSTR str)
