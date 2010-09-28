@@ -46,4 +46,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP aktiverat"
     STRING_YES, "Ja"
     STRING_NO, "Nej"
+    STRING_DEFAULT_GATEWAY, "Förvald gateway"
 }
