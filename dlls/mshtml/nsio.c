@@ -64,6 +64,7 @@ struct  nsWineURI {
     windowref_t *window_ref;
     nsChannelBSC *channel_bsc;
     LPWSTR wine_url;
+    IUri *uri;
     BOOL is_doc_uri;
     BOOL use_wine_url;
 };
@@ -1538,6 +1539,55 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_GetCanceled
 };
 
+static BOOL ensure_uri(nsWineURI *This)
+{
+    if(!This->uri) {
+        HRESULT hres;
+
+        hres = CreateUri(This->wine_url, 0, 0, &This->uri);
+        if(FAILED(hres)) {
+            WARN("CreateUri failed: %08x\n", hres);
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static nsresult get_uri_string(nsWineURI *This, Uri_PROPERTY prop, nsACString *ret)
+{
+    char *vala;
+    BSTR val;
+    HRESULT hres;
+
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
+    hres = IUri_GetPropertyBSTR(This->uri, prop, &val, 0);
+    if(FAILED(hres)) {
+        WARN("GetPropertyBSTR failed: %08x\n", hres);
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    vala = heap_strdupWtoA(val);
+    SysFreeString(val);
+    if(!vala)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    TRACE("ret %s\n", debugstr_a(vala));
+    nsACString_SetData(ret, vala);
+    heap_free(vala);
+    return NS_OK;
+}
+
+static void invalidate_uri(nsWineURI *This)
+{
+    if(This->uri) {
+        IUri_Release(This->uri);
+        This->uri = NULL;
+    }
+}
+
 #define NSURI_THIS(iface) DEFINE_THIS(nsWineURI, IURL, iface)
 
 static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **result)
@@ -1595,6 +1645,8 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
             nsIURL_Release(This->nsurl);
         if(This->nsuri)
             nsIURI_Release(This->nsuri);
+        if(This->uri)
+            IUri_Release(This->uri);
         heap_free(This->wine_url);
         heap_free(This);
     }
@@ -1630,8 +1682,10 @@ static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
 
     TRACE("(%p)->(%p)\n", This, debugstr_nsacstr(aSpec));
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetSpec(This->nsuri, aSpec);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1687,8 +1741,10 @@ static nsresult NSAPI nsURI_SetScheme(nsIURL *iface, const nsACString *aScheme)
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aScheme));
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetScheme(This->nsuri, aScheme);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1713,8 +1769,10 @@ static nsresult NSAPI nsURI_SetUserPass(nsIURL *iface, const nsACString *aUserPa
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aUserPass));
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetUserPass(This->nsuri, aUserPass);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1739,8 +1797,10 @@ static nsresult NSAPI nsURI_SetUsername(nsIURL *iface, const nsACString *aUserna
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aUsername));
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetUsername(This->nsuri, aUsername);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1765,8 +1825,10 @@ static nsresult NSAPI nsURI_SetPassword(nsIURL *iface, const nsACString *aPasswo
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aPassword));
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetPassword(This->nsuri, aPassword);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1791,8 +1853,10 @@ static nsresult NSAPI nsURI_SetHostPort(nsIURL *iface, const nsACString *aHostPo
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aHostPort));
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetHostPort(This->nsuri, aHostPort);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1807,8 +1871,7 @@ static nsresult NSAPI nsURI_GetHost(nsIURL *iface, nsACString *aHost)
     if(This->nsuri)
         return nsIURI_GetHost(This->nsuri, aHost);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return get_uri_string(This, Uri_PROPERTY_HOST, aHost);
 }
 
 static nsresult NSAPI nsURI_SetHost(nsIURL *iface, const nsACString *aHost)
@@ -1817,8 +1880,10 @@ static nsresult NSAPI nsURI_SetHost(nsIURL *iface, const nsACString *aHost)
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aHost));
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetHost(This->nsuri, aHost);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1843,8 +1908,10 @@ static nsresult NSAPI nsURI_SetPort(nsIURL *iface, PRInt32 aPort)
 
     TRACE("(%p)->(%d)\n", This, aPort);
 
-    if(This->nsuri)
+    if(This->nsuri) {
+        invalidate_uri(This);
         return nsIURI_SetPort(This->nsuri, aPort);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -1869,6 +1936,8 @@ static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
     const char *path;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aPath));
+
+    invalidate_uri(This);
 
     nsACString_GetData(aPath, &path);
     if(This->wine_url) {
@@ -1963,6 +2032,11 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
     }
 
     set_wine_url(wine_uri, This->wine_url);
+
+    if(This->uri) {
+        IUri_AddRef(This->uri);
+        wine_uri->uri = This->uri;
+    }
 
     *_retval = NSURI(wine_uri);
     return NS_OK;
@@ -2069,8 +2143,10 @@ static nsresult NSAPI nsURL_SetFilePath(nsIURL *iface, const nsACString *aFilePa
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFilePath));
 
-    if(This->nsurl)
+    if(This->nsurl) {
+        invalidate_uri(This);
         return nsIURL_SetFilePath(This->nsurl, aFilePath);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2095,8 +2171,10 @@ static nsresult NSAPI nsURL_SetParam(nsIURL *iface, const nsACString *aParam)
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aParam));
 
-    if(This->nsurl)
+    if(This->nsurl) {
+        invalidate_uri(This);
         return nsIURL_SetParam(This->nsurl, aParam);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2153,6 +2231,8 @@ static nsresult NSAPI nsURL_SetQuery(nsIURL *iface, const nsACString *aQuery)
     DWORD len, size;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aQuery));
+
+    invalidate_uri(This);
 
     if(This->nsurl)
         nsIURL_SetQuery(This->nsurl, aQuery);
@@ -2217,8 +2297,10 @@ static nsresult NSAPI nsURL_SetRef(nsIURL *iface, const nsACString *aRef)
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aRef));
 
-    if(This->nsurl)
+    if(This->nsurl) {
+        invalidate_uri(This);
         return nsIURL_SetRef(This->nsurl, aRef);
+    }
 
     nsACString_GetData(aRef, &refa);
     if(!*refa)
@@ -2247,8 +2329,10 @@ static nsresult NSAPI nsURL_SetDirectory(nsIURL *iface, const nsACString *aDirec
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aDirectory));
 
-    if(This->nsurl)
+    if(This->nsurl) {
+        invalidate_uri(This);
         return nsIURL_SetDirectory(This->nsurl, aDirectory);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2273,8 +2357,10 @@ static nsresult NSAPI nsURL_SetFileName(nsIURL *iface, const nsACString *aFileNa
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileName));
 
-    if(This->nsurl)
+    if(This->nsurl) {
+        invalidate_uri(This);
         return nsIURL_SetFileName(This->nsurl, aFileName);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2299,8 +2385,10 @@ static nsresult NSAPI nsURL_SetFileBaseName(nsIURL *iface, const nsACString *aFi
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileBaseName));
 
-    if(This->nsurl)
+    if(This->nsurl) {
+        invalidate_uri(This);
         return nsIURL_SetFileBaseName(This->nsurl, aFileBaseName);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -2325,8 +2413,10 @@ static nsresult NSAPI nsURL_SetFileExtension(nsIURL *iface, const nsACString *aF
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileExtension));
 
-    if(This->nsurl)
+    if(This->nsurl) {
+        invalidate_uri(This);
         return nsIURL_SetFileExtension(This->nsurl, aFileExtension);
+    }
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
