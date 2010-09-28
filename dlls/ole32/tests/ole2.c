@@ -1116,7 +1116,7 @@ static void test_data_cache(void)
     {
         { "AdviseSink_OnViewChange", 0 },
         { "AdviseSink_OnViewChange", 0 },
-        { "draw_continue", 0 },
+        { "draw_continue", 1 },
         { "DataObject_DAdvise", 0 },
         { "DataObject_DAdvise", 0 },
         { "DataObject_DUnadvise", 0 },
@@ -1126,9 +1126,9 @@ static void test_data_cache(void)
     static const struct expected_method methods_cacheload[] =
     {
         { "AdviseSink_OnViewChange", 0 },
-        { "draw_continue", 0 },
-        { "draw_continue", 0 },
-        { "draw_continue", 0 },
+        { "draw_continue", 1 },
+        { "draw_continue", 1 },
+        { "draw_continue", 1 },
         { "DataObject_GetData", 0 },
         { "DataObject_GetData", 0 },
         { "DataObject_GetData", 0 },
