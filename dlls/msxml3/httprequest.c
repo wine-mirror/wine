@@ -31,6 +31,7 @@
 #include "msxml_private.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -40,14 +41,34 @@ static const WCHAR MethodGetW[] = {'G','E','T',0};
 static const WCHAR MethodPutW[] = {'P','U','T',0};
 static const WCHAR MethodPostW[] = {'P','O','S','T',0};
 
+struct reqheader
+{
+    struct list entry;
+    BSTR header;
+    BSTR value;
+};
+
+enum READYSTATE
+{
+    STATE_UNINITIALIZED = 0,
+    STATE_LOADING       = 1,
+    STATE_LOADED        = 2,
+    STATE_INTERACTIVE   = 3,
+    STATE_COMPLETED     = 4
+};
+
 typedef struct _httprequest
 {
     const struct IXMLHTTPRequestVtbl *lpVtbl;
     LONG ref;
 
+    READYSTATE state;
+
+    /* request */
     BINDVERB verb;
     BSTR url;
     BOOL async;
+    struct list reqheaders;
 
     /* credentials */
     BSTR user;
@@ -57,6 +78,12 @@ typedef struct _httprequest
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
 {
     return (httprequest *)((char*)iface - FIELD_OFFSET(httprequest, lpVtbl));
+}
+
+/* TODO: process OnChange callback */
+static void httprequest_setreadystate(httprequest *This, READYSTATE state)
+{
+    This->state = state;
 }
 
 static HRESULT WINAPI httprequest_QueryInterface(IXMLHTTPRequest *iface, REFIID riid, void **ppvObject)
@@ -95,9 +122,20 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
     {
+        struct reqheader *header, *header2;
+
         SysFreeString(This->url);
         SysFreeString(This->user);
         SysFreeString(This->password);
+
+        /* request headers */
+        LIST_FOR_EACH_ENTRY_SAFE(header, header2, &This->reqheaders, struct reqheader, entry)
+        {
+            list_remove(&header->entry);
+            SysFreeString(header->header);
+            SysFreeString(header->value);
+        }
+
         heap_free( This );
     }
 
@@ -223,16 +261,41 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
     if (hr == S_OK)
         This->password = V_BSTR(&str);
 
+    httprequest_setreadystate(This, STATE_LOADING);
+
     return S_OK;
 }
 
-static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR bstrHeader, BSTR bstrValue)
+static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR header, BSTR value)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    struct reqheader *entry;
 
-    FIXME("stub (%p) %s %s\n", This, debugstr_w(bstrHeader), debugstr_w(bstrValue));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(header), debugstr_w(value));
 
-    return E_NOTIMPL;
+    if (!header || !*header) return E_INVALIDARG;
+    if (This->state != STATE_LOADING) return E_FAIL;
+    if (!value) return E_INVALIDARG;
+
+    /* replace existing header value if already added */
+    LIST_FOR_EACH_ENTRY(entry, &This->reqheaders, struct reqheader, entry)
+    {
+        if (lstrcmpW(entry->header, header) == 0)
+        {
+            return SysReAllocString(&entry->value, value) ? S_OK : E_OUTOFMEMORY;
+        }
+    }
+
+    entry = heap_alloc(sizeof(*entry));
+    if (!entry) return E_OUTOFMEMORY;
+
+    /* new header */
+    entry->header = SysAllocString(header);
+    entry->value  = SysAllocString(value);
+
+    list_add_head(&This->reqheaders, &entry->entry);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI httprequest_getResponseHeader(IXMLHTTPRequest *iface, BSTR bstrHeader, BSTR *pbstrValue)
@@ -325,13 +388,16 @@ static HRESULT WINAPI httprequest_get_responseStream(IXMLHTTPRequest *iface, VAR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI httprequest_get_readyState(IXMLHTTPRequest *iface, LONG *plState)
+static HRESULT WINAPI httprequest_get_readyState(IXMLHTTPRequest *iface, LONG *state)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
 
-    FIXME("stub %p %p\n", This, plState);
+    TRACE("(%p)->(%p)\n", This, state);
 
-    return E_NOTIMPL;
+    if (!state) return E_INVALIDARG;
+
+    *state = This->state;
+    return S_OK;
 }
 
 static HRESULT WINAPI httprequest_put_onreadystatechange(IXMLHTTPRequest *iface, IDispatch *pReadyStateSink)
@@ -385,6 +451,8 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     req->async = FALSE;
     req->verb = -1;
     req->url = req->user = req->password = NULL;
+    req->state = STATE_UNINITIALIZED;
+    list_init(&req->reqheaders);
 
     *ppObj = &req->lpVtbl;
 

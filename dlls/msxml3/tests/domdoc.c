@@ -2887,6 +2887,7 @@ static void test_XMLHTTP(void)
     VARIANT dummy;
     VARIANT async;
     VARIANT varbody;
+    LONG state;
     HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
                                   CLSCTX_INPROC_SERVER, &IID_IXMLHttpRequest,
                                   (void **)&pXMLHttpRequest);
@@ -2918,8 +2919,42 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_open(pXMLHttpRequest, NULL, url, async, dummy, dummy);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
+    hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, _bstr_("header1"), NULL);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, NULL, _bstr_("value1"));
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, _bstr_("header1"), _bstr_("value1"));
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    state = -1;
+    hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(state == 0, "got %d, expected 0\n", state);
+
     hr = IXMLHttpRequest_open(pXMLHttpRequest, method, url, async, dummy, dummy);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    state = -1;
+    hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(state == 1, "got %d, expected 1\n", state);
+
+    hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, _bstr_("header1"), _bstr_("value1"));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, NULL, _bstr_("value1"));
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, _bstr_(""), _bstr_("value1"));
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     SysFreeString(method);
     SysFreeString(url);
@@ -2945,6 +2980,7 @@ static void test_XMLHTTP(void)
     }
 
     IXMLHttpRequest_Release(pXMLHttpRequest);
+    free_bstrs();
 }
 
 static void test_IXMLDOMDocument2(void)
