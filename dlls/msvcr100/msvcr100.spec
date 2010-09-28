@@ -1071,7 +1071,7 @@
 @ stub _set_abort_behavior
 @ stub _set_controlfp
 @ stub _set_doserrno
-@ stub _set_errno
+@ cdecl _set_errno(long) msvcrt._set_errno
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
 @ stub _set_fmode
 @ cdecl _set_invalid_parameter_handler(ptr) msvcrt._set_invalid_parameter_handler

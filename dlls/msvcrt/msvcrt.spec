@@ -849,7 +849,7 @@
 @ cdecl _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 # stub _set_controlfp
 # stub _set_doserrno
-# stub _set_errno
+@ cdecl _set_errno(long)
 @ cdecl _set_error_mode(long)
 # stub _set_fileinfo
 # stub _set_fmode

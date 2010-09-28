@@ -130,6 +130,7 @@ extern int*           __cdecl _errno(void);
 
 errno_t       __cdecl _get_doserrno(int*);
 errno_t       __cdecl _get_errno(int*);
+errno_t       __cdecl _set_errno(int);
 
 typedef int (__cdecl *_onexit_t)(void);
 

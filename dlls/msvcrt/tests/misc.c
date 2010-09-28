@@ -28,6 +28,7 @@ static int (__cdecl *pI10_OUTPUT)(long double, int, int, void*);
 static int (__cdecl *pstrerror_s)(char *, MSVCRT_size_t, int);
 static int (__cdecl *p_get_doserrno)(int *);
 static int (__cdecl *p_get_errno)(int *);
+static int (__cdecl *p_set_errno)(int);
 
 static void init(void)
 {
@@ -39,6 +40,7 @@ static void init(void)
     pstrerror_s = (void *)GetProcAddress(hmod, "strerror_s");
     p_get_doserrno = (void *)GetProcAddress(hmod, "_get_doserrno");
     p_get_errno = (void *)GetProcAddress(hmod, "_get_errno");
+    p_set_errno = (void *)GetProcAddress(hmod, "_set_errno");
 }
 
 static void test_rand_s(void)
@@ -292,6 +294,32 @@ static void test__get_errno(void)
     ok(out == EBADF, "Expected output variable to be EBADF, got %d\n", out);
 }
 
+static void test__set_errno(void)
+{
+    int ret;
+
+    if (!p_set_errno)
+    {
+        win_skip("_set_errno is not available\n");
+        return;
+    }
+
+    errno = EBADF;
+    ret = p_set_errno(EINVAL);
+    ok(ret == 0, "Expected _set_errno to return 0, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    ret = p_set_errno(-1);
+    ok(ret == 0, "Expected _set_errno to return 0, got %d\n", ret);
+    ok(errno == -1, "Expected errno to be -1, got %d\n", errno);
+
+    errno = EBADF;
+    ret = p_set_errno(0xdeadbeef);
+    ok(ret == 0, "Expected _set_errno to return 0, got %d\n", ret);
+    ok(errno == 0xdeadbeef, "Expected errno to be 0xdeadbeef, got %d\n", errno);
+}
+
 START_TEST(misc)
 {
     init();
@@ -302,4 +330,5 @@ START_TEST(misc)
     test_strerror_s();
     test__get_doserrno();
     test__get_errno();
+    test__set_errno();
 }
