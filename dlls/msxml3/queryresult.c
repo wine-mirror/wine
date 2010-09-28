@@ -50,6 +50,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #include <libxml/xpath.h>
 
+int registerNamespaces(xmlXPathContextPtr ctxt);
+
 typedef struct _queryresult
 {
     DispatchEx dispex;
@@ -395,6 +397,8 @@ HRESULT queryresult_create(xmlNodePtr node, LPCWSTR szQuery, IXMLDOMNodeList **o
     xmldoc_add_ref(This->node->doc);
 
     ctxt->node = node;
+    registerNamespaces(ctxt);
+
     This->result = xmlXPathEval(str, ctxt);
     if (!This->result || This->result->type != XPATH_NODESET)
     {

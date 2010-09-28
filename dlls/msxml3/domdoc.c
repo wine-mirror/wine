@@ -2,6 +2,7 @@
  *    DOM Document implementation
  *
  * Copyright 2005 Mike McCormack
+ * Copyright 2010 Adam Martinson for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+#include <libxml/xpathInternals.h>
 #include <libxml/xmlsave.h>
 
 /* not defined in older versions */
@@ -117,12 +119,23 @@ typedef struct _xmldoc_priv {
     LONG refs;
     struct list orphans;
     BOOL XPath;
+    struct list selectNsList;
+    xmlChar const* selectNsStr;
+    LONG selectNsStr_len;
 } xmldoc_priv;
 
 typedef struct _orphan_entry {
     struct list entry;
     xmlNode * node;
 } orphan_entry;
+
+typedef struct _select_ns_entry {
+    struct list entry;
+    xmlChar const* prefix;
+    xmlChar prefix_end;
+    xmlChar const* href;
+    xmlChar href_end;
+} select_ns_entry;
 
 static inline xmldoc_priv * priv_from_xmlDocPtr(const xmlDocPtr doc)
 {
@@ -144,6 +157,23 @@ static inline void reset_xpathmode(const xmlDocPtr doc)
     priv_from_xmlDocPtr(doc)->XPath = FALSE;
 }
 
+int registerNamespaces(xmlXPathContextPtr ctxt)
+{
+    int n = 0;
+    const select_ns_entry* ns = NULL;
+    const struct list* pNsList = &priv_from_xmlDocPtr(ctxt->doc)->selectNsList;
+
+    TRACE("(%p)\n", ctxt);
+
+    LIST_FOR_EACH_ENTRY( ns, pNsList, select_ns_entry, entry )
+    {
+        xmlXPathRegisterNs(ctxt, ns->prefix, ns->href);
+        ++n;
+    }
+
+    return n;
+}
+
 static xmldoc_priv * create_priv(void)
 {
     xmldoc_priv *priv;
@@ -154,6 +184,9 @@ static xmldoc_priv * create_priv(void)
         priv->refs = 0;
         priv->XPath = FALSE;
         list_init( &priv->orphans );
+        list_init( &priv->selectNsList );
+        priv->selectNsStr = heap_alloc_zero(sizeof(xmlChar));
+        priv->selectNsStr_len = 0;
     }
 
     return priv;
@@ -237,6 +270,16 @@ LONG xmldoc_add_ref(xmlDocPtr doc)
     return ref;
 }
 
+static inline void clear_selectNsList(struct list* pNsList)
+{
+    select_ns_entry *ns, *ns2;
+    LIST_FOR_EACH_ENTRY_SAFE( ns, ns2, pNsList, select_ns_entry, entry )
+    {
+        heap_free( ns );
+    }
+    list_init(pNsList);
+}
+
 LONG xmldoc_release(xmlDocPtr doc)
 {
     xmldoc_priv *priv = priv_from_xmlDocPtr(doc);
@@ -252,6 +295,8 @@ LONG xmldoc_release(xmlDocPtr doc)
             xmlFreeNode( orphan->node );
             heap_free( orphan );
         }
+        clear_selectNsList(&priv->selectNsList);
+        heap_free((xmlChar*)priv->selectNsStr);
         heap_free(doc->_private);
 
         xmlFreeDoc(doc);
@@ -2164,17 +2209,136 @@ static HRESULT WINAPI domdoc_setProperty(
         VariantClear(&varStr);
         return hr;
     }
+    else if (lstrcmpiW(p, PropertySelectionNamespacesW) == 0)
+    {
+        VARIANT varStr;
+        HRESULT hr;
+        BSTR bstr;
+        xmlChar *pTokBegin, *pTokEnd, *pTokInner;
+        xmlChar *nsStr = (xmlChar*)priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr;
+        xmlXPathContextPtr ctx;
+        struct list *pNsList;
+        select_ns_entry* pNsEntry = NULL;
+
+        V_VT(&varStr) = VT_EMPTY;
+        if (V_VT(&var) != VT_BSTR)
+        {
+            if (FAILED(hr = VariantChangeType(&varStr, &var, 0, VT_BSTR)))
+                return hr;
+            bstr = V_BSTR(&varStr);
+        }
+        else
+            bstr = V_BSTR(&var);
+
+        hr = S_OK;
+
+        pNsList = &(priv_from_xmlDocPtr(This->node.node->doc)->selectNsList);
+        clear_selectNsList(pNsList);
+        heap_free(nsStr);
+        nsStr = xmlChar_from_wchar(bstr);
+
+
+        TRACE("Setting SelectionNamespaces property to: %s\n", nsStr);
+
+        priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr = nsStr;
+        priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr_len = xmlStrlen(nsStr);
+        if (bstr && *bstr)
+        {
+            ctx = xmlXPathNewContext(This->node.node->doc);
+            pTokBegin = nsStr;
+            pTokEnd = nsStr;
+            for (; *pTokBegin; pTokBegin = pTokEnd)
+            {
+                if (pNsEntry != NULL)
+                    memset(pNsEntry, 0, sizeof(select_ns_entry));
+                else
+                    pNsEntry = heap_alloc_zero(sizeof(select_ns_entry));
+
+                while (*pTokBegin == ' ')
+                    ++pTokBegin;
+                pTokEnd = pTokBegin;
+                while (*pTokEnd != ' ' && *pTokEnd != 0)
+                    ++pTokEnd;
+
+                if (xmlStrncmp(pTokBegin, (xmlChar const*)"xmlns", 5) != 0)
+                {
+                    hr = E_FAIL;
+                    WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
+                          wine_dbgstr_w(bstr), wine_dbgstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
+                    continue;
+                }
+
+                pTokBegin += 5;
+                if (*pTokBegin == '=')
+                {
+                    /*valid for XSLPattern?*/
+                    FIXME("Setting default xmlns not supported - skipping.\n");
+                    pTokBegin = pTokEnd;
+                    continue;
+                }
+                else if (*pTokBegin == ':')
+                {
+                    pNsEntry->prefix = ++pTokBegin;
+                    for (pTokInner = pTokBegin; pTokInner != pTokEnd && *pTokInner != '='; ++pTokInner)
+                        ;
+
+                    if (pTokInner == pTokEnd)
+                    {
+                        hr = E_FAIL;
+                        WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
+                              wine_dbgstr_w(bstr), wine_dbgstr_an((const char*)pTokBegin, pTokEnd-pTokBegin));
+                        continue;
+                    }
+
+                    pNsEntry->prefix_end = *pTokInner;
+                    *pTokInner = 0;
+                    ++pTokInner;
+
+                    if (pTokEnd-pTokInner > 1 &&
+                        ((*pTokInner == '\'' && *(pTokEnd-1) == '\'') ||
+                         (*pTokInner == '"' && *(pTokEnd-1) == '"')))
+                    {
+                        pNsEntry->href = ++pTokInner;
+                        pNsEntry->href_end = *(pTokEnd-1);
+                        *(pTokEnd-1) = 0;
+                        list_add_tail(pNsList, &pNsEntry->entry);
+                        /*let libxml figure out if they're valid from here ;)*/
+                        if (xmlXPathRegisterNs(ctx, pNsEntry->prefix, pNsEntry->href) != 0)
+                        {
+                            hr = E_FAIL;
+                        }
+                        pNsEntry = NULL;
+                        continue;
+                    }
+                    else
+                    {
+                        WARN("Syntax error in xmlns string: %s\n\tat token: %s\n",
+                              wine_dbgstr_w(bstr), wine_dbgstr_an((const char*)pTokInner, pTokEnd-pTokInner));
+                        list_add_tail(pNsList, &pNsEntry->entry);
+
+                        pNsEntry = NULL;
+                        hr = E_FAIL;
+                        continue;
+                    }
+                }
+                else
+                {
+                    hr = E_FAIL;
+                    continue;
+                }
+            }
+            heap_free(pNsEntry);
+            xmlXPathFreeContext(ctx);
+        }
+
+        VariantClear(&varStr);
+        return hr;
+    }
     else if (lstrcmpiW(p, PropertyProhibitDTDW) == 0)
     {
         /* Ignore */
         FIXME("Ignoring property ProhibitDTD, value %d\n", V_BOOL(&var));
         return S_OK;
-    }
-    else if (lstrcmpiW(p, PropertySelectionNamespacesW) == 0)
-    {
-        if (V_VT(&var) == VT_BSTR)
-            FIXME("Unsupported SelectionNamespaces: %s\n", wine_dbgstr_w(V_BSTR(&var)));
-        return E_FAIL;
     }
 
     FIXME("Unknown property %s\n", wine_dbgstr_w(p));
@@ -2200,6 +2364,41 @@ static HRESULT WINAPI domdoc_getProperty(
                       SysAllocString(PropValueXPathW) :
                       SysAllocString(PropValueXSLPatternW);
         return V_BSTR(var) ? S_OK : E_OUTOFMEMORY;
+    }
+    else if (lstrcmpiW(p, PropertySelectionNamespacesW) == 0)
+    {
+        int lenA, lenW;
+        BSTR rebuiltStr, cur;
+        const xmlChar *nsStr;
+        struct list *pNsList;
+        select_ns_entry* pNsEntry;
+
+        V_VT(var) = VT_BSTR;
+        nsStr = priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr;
+        pNsList = &priv_from_xmlDocPtr(This->node.node->doc)->selectNsList;
+        lenA = priv_from_xmlDocPtr(This->node.node->doc)->selectNsStr_len;
+        lenW = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, NULL, 0);
+        rebuiltStr = heap_alloc(lenW*sizeof(WCHAR));
+        MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)nsStr, lenA+1, rebuiltStr, lenW);
+        cur = rebuiltStr;
+        /* this is fine because all of the chars that end tokens are ASCII*/
+        LIST_FOR_EACH_ENTRY(pNsEntry, pNsList, select_ns_entry, entry)
+        {
+            while (*cur != 0) ++cur;
+            if (pNsEntry->prefix_end)
+            {
+                *cur = pNsEntry->prefix_end;
+                while (*cur != 0) ++cur;
+            }
+
+            if (pNsEntry->href_end)
+            {
+                *cur = pNsEntry->href_end;
+            }
+        }
+        V_BSTR(var) = SysAllocString(rebuiltStr);
+        heap_free(rebuiltStr);
+        return S_OK;
     }
 
     FIXME("Unknown property %s\n", wine_dbgstr_w(p));

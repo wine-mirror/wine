@@ -2998,7 +2998,7 @@ static void test_IXMLDOMDocument2(void)
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(emptyW);
     r = IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionNamespaces"), var);
-    todo_wine ok(r == S_OK, "got 0x%08x\n", r);
+    ok(r == S_OK, "got 0x%08x\n", r);
     VariantClear(&var);
 
     V_VT(&var) = VT_I2;
@@ -3100,18 +3100,24 @@ static void test_XPath(void)
     expect_list_and_release(list, "E3.E4.E2.D1");
 
     /* it has to be declared in SelectionNamespaces */
-    todo_wine ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
+    ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
         _variantbstr_("xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'")));
 
     /* now the namespace can be used */
-    todo_wine ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//test:c"), &list));
-    todo_wine expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
-    todo_wine ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_(".//test:c"), &list));
-    todo_wine expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
-    todo_wine ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//test:c"), &list));
-    todo_wine expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
-    todo_wine ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_(".//test:x"), &list));
-    todo_wine expect_list_and_release(list, "E5.E1.E4.E1.E2.D1");
+    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//test:c"), &list));
+    expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+    ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_(".//test:c"), &list));
+    expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+    ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//test:c"), &list));
+    expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
+    ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_(".//test:x"), &list));
+    {
+        char *str = list_to_string(list);
+        /* it's the correct node, just the wrong index due to whitespace-only nodes */
+        todo_wine ok(strcmp(str, "E5.E1.E4.E1.E2.D1")==0, "Invalid node list: %s, expected %s\n", str, "E5.E1.E4.E1.E2.D1");
+        if (list)
+            IXMLDOMNodeList_Release(list);
+    }
 
     /* SelectionNamespaces syntax error - the namespaces doesn't work anymore but the value is stored */
     ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
@@ -3120,8 +3126,8 @@ static void test_XPath(void)
     ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
 
     VariantInit(&var);
-    todo_wine ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
-    todo_wine expect_eq(V_VT(&var), VT_BSTR, int, "%x");
+    ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
+    expect_eq(V_VT(&var), VT_BSTR, int, "%x");
     if (V_VT(&var) == VT_BSTR)
         expect_bstr_eq_and_free(V_BSTR(&var), "xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' xmlns:foo=###");
 
@@ -5759,7 +5765,7 @@ static void test_get_ownerDocument(void)
     ok( hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"), _variantbstr_("xmlns:wi=\'www.winehq.org\'"));
-    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXMLDOMDocument2_get_firstChild(doc, &node);
     ok( hr == S_OK, "got 0x%08x\n", hr);
@@ -5771,8 +5777,8 @@ static void test_get_ownerDocument(void)
     ok( hr == S_OK, "got 0x%08x\n", hr);
     ok( doc_owner != doc, "got %p, doc %p\n", doc_owner, doc);
     hr = IXMLDOMDocument2_getProperty(doc_owner, _bstr_("SelectionNamespaces"), &var);
-    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
-    todo_wine ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
     VariantClear(&var);
 
     hr = IXMLDOMDocument2_getProperty(doc_owner, _bstr_("SelectionLanguage"), &var);
@@ -5797,7 +5803,7 @@ static void test_get_ownerDocument(void)
     /* property retained even after reload */
     VariantClear(&var);
     hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var);
-    todo_wine ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok( lstrcmpW(V_BSTR(&var), _bstr_("xmlns:wi=\'www.winehq.org\'")) == 0, "expected previously set value\n");
     VariantClear(&var);
 
