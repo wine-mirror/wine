@@ -22,6 +22,12 @@
 #include "mmddk.h"
 #include "digitalv.h"
 
+#ifdef MCI_INTEGER64
+#define MCI_DWORD_PTR MCI_INTEGER64
+#else
+#define MCI_DWORD_PTR MCI_INTEGER
+#endif
+
 MCIAVI RCDATA
 BEGIN
 L"play\0", MCI_PLAY, 0, MCI_COMMAND_HEAD,
@@ -415,7 +421,7 @@ L"cancel\0", 0x00080000L, MCI_FLAG,
 L"return position\0", 0x00100000L, MCI_FLAG,
 L"\0", 0x00000000L, MCI_END_COMMAND,
 L"status\0", MCI_STATUS, 0, MCI_COMMAND_HEAD,
-L"\0", MCI_INTEGER, 0, MCI_RETURN,
+L"\0", MCI_DWORD_PTR, 0, MCI_RETURN,
 L"notify\0", 0x00000001L, MCI_FLAG,
 L"wait\0", 0x00000002L, MCI_FLAG,
 L"test\0", 0x00000020L, MCI_FLAG,
