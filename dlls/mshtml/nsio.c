@@ -1928,8 +1928,7 @@ static nsresult NSAPI nsURI_GetPath(nsIURL *iface, nsACString *aPath)
     if(This->nsuri)
         return nsIURI_GetPath(This->nsuri, aPath);
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return get_uri_string(This, Uri_PROPERTY_PATH, aPath);
 }
 
 static nsresult NSAPI nsURI_SetPath(nsIURL *iface, const nsACString *aPath)
