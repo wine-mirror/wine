@@ -343,53 +343,49 @@ static int netconn_secure_verify( int preverify_ok, X509_STORE_CTX *ctx )
     WCHAR *server;
     BOOL ret = FALSE;
     netconn_t *conn;
+    HCERTSTORE store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0,
+     CERT_STORE_CREATE_NEW_FLAG, NULL );
 
     ssl = pX509_STORE_CTX_get_ex_data( ctx, pSSL_get_ex_data_X509_STORE_CTX_idx() );
     server = pSSL_get_ex_data( ssl, hostname_idx );
     conn = pSSL_get_ex_data( ssl, conn_idx );
-    if (preverify_ok)
+    if (store)
     {
-        HCERTSTORE store = CertOpenStore( CERT_STORE_PROV_MEMORY, 0, 0,
-         CERT_STORE_CREATE_NEW_FLAG, NULL );
+        X509 *cert;
+        int i;
+        PCCERT_CONTEXT endCert = NULL;
 
-        if (store)
+        ret = TRUE;
+        for (i = 0; ret && i < psk_num((struct stack_st *)ctx->chain); i++)
         {
-            X509 *cert;
-            int i;
-            PCCERT_CONTEXT endCert = NULL;
+            PCCERT_CONTEXT context;
 
-            ret = TRUE;
-            for (i = 0; ret && i < psk_num((struct stack_st *)ctx->chain); i++)
+            cert = (X509 *)psk_value((struct stack_st *)ctx->chain, i);
+            if ((context = X509_to_cert_context( cert )))
             {
-                PCCERT_CONTEXT context;
-
-                cert = (X509 *)psk_value((struct stack_st *)ctx->chain, i);
-                if ((context = X509_to_cert_context( cert )))
-                {
-                    if (i == 0)
-                        ret = CertAddCertificateContextToStore( store, context,
-                            CERT_STORE_ADD_ALWAYS, &endCert );
-                    else
-                        ret = CertAddCertificateContextToStore( store, context,
-                            CERT_STORE_ADD_ALWAYS, NULL );
-                    CertFreeCertificateContext( context );
-                }
+                if (i == 0)
+                    ret = CertAddCertificateContextToStore( store, context,
+                        CERT_STORE_ADD_ALWAYS, &endCert );
+                else
+                    ret = CertAddCertificateContextToStore( store, context,
+                        CERT_STORE_ADD_ALWAYS, NULL );
+                CertFreeCertificateContext( context );
             }
-            if (!endCert) ret = FALSE;
-            if (ret)
-            {
-                DWORD_PTR err = netconn_verify_cert( endCert, store, server,
-                                                     conn->security_flags );
-
-                if (err)
-                {
-                    pSSL_set_ex_data( ssl, error_idx, (void *)err );
-                    ret = FALSE;
-                }
-            }
-            CertFreeCertificateContext( endCert );
-            CertCloseStore( store, 0 );
         }
+        if (!endCert) ret = FALSE;
+        if (ret)
+        {
+            DWORD_PTR err = netconn_verify_cert( endCert, store, server,
+                                                 conn->security_flags );
+
+            if (err)
+            {
+                pSSL_set_ex_data( ssl, error_idx, (void *)err );
+                ret = FALSE;
+            }
+        }
+        CertFreeCertificateContext( endCert );
+        CertCloseStore( store, 0 );
     }
     return ret;
 }
