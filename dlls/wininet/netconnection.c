@@ -671,14 +671,6 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
         goto fail;
     }
 
-    if (pSSL_connect(connection->ssl_s) <= 0)
-    {
-        res = (DWORD_PTR)pSSL_get_ex_data(connection->ssl_s, error_idx);
-        if (!res)
-            res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-        ERR("SSL_connect failed: %d\n", res);
-        goto fail;
-    }
     if (!pSSL_set_ex_data(connection->ssl_s, hostname_idx, hostname))
     {
         ERR("SSL_set_ex_data failed: %s\n",
@@ -691,6 +683,14 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
         ERR("SSL_set_ex_data failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
         res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+        goto fail;
+    }
+    if (pSSL_connect(connection->ssl_s) <= 0)
+    {
+        res = (DWORD_PTR)pSSL_get_ex_data(connection->ssl_s, error_idx);
+        if (!res)
+            res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+        ERR("SSL_connect failed: %d\n", res);
         goto fail;
     }
     verify_res = pSSL_get_verify_result(connection->ssl_s);
