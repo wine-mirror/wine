@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlsave.h>
+#include <libxml/SAX2.h>
 
 /* not defined in older versions */
 #define XML_SAVE_FORMAT     1
@@ -287,21 +288,47 @@ xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc)
     return node;
 }
 
-static xmlDocPtr doparse( char *ptr, int len, const char *encoding )
+static xmlDocPtr doparse(domdoc* This, char *ptr, int len)
 {
     xmlDocPtr doc;
+    static xmlSAXHandler sax_handler = {
+        xmlSAX2InternalSubset,          /* internalSubset */
+        xmlSAX2IsStandalone,            /* isStandalone */
+        xmlSAX2HasInternalSubset,       /* hasInternalSubset */
+        xmlSAX2HasExternalSubset,       /* hasExternalSubset */
+        xmlSAX2ResolveEntity,           /* resolveEntity */
+        xmlSAX2GetEntity,               /* getEntity */
+        xmlSAX2EntityDecl,              /* entityDecl */
+        xmlSAX2NotationDecl,            /* notationDecl */
+        xmlSAX2AttributeDecl,           /* attributeDecl */
+        xmlSAX2ElementDecl,             /* elementDecl */
+        xmlSAX2UnparsedEntityDecl,      /* unparsedEntityDecl */
+        xmlSAX2SetDocumentLocator,      /* setDocumentLocator */
+        xmlSAX2StartDocument,           /* startDocument */
+        xmlSAX2EndDocument,             /* endDocument */
+        xmlSAX2StartElement,            /* startElement */
+        xmlSAX2EndElement,              /* endElement */
+        xmlSAX2Reference,               /* reference */
+        xmlSAX2Characters,              /* characters */
+        NULL,                           /* TODO: ignorableWhitespace */
+        xmlSAX2ProcessingInstruction,   /* processingInstruction */
+        xmlSAX2Comment,                 /* comment */
+        NULL,                           /* TODO: warning */
+        NULL,                           /* TODO: error */
+        NULL,                           /* TODO: fatalError */
+        xmlSAX2GetParameterEntity,      /* getParameterEntity */
+        xmlSAX2CDataBlock,              /* cdataBlock */
+        xmlSAX2ExternalSubset,          /* externalSubset */
+        0,                              /* initialized */
+        NULL,                           /* _private */
+        xmlSAX2StartElementNs,          /* startElementNs */
+        xmlSAX2EndElementNs,            /* endElementNs */
+        NULL                            /* TODO: serror */
+    };
 
-#ifdef HAVE_XMLREADMEMORY
-    /*
-     * use xmlReadMemory if possible so we can suppress
-     * writing errors to stderr
-     */
-    doc = xmlReadMemory( ptr, len, NULL, encoding,
-                           XML_PARSE_NOERROR | XML_PARSE_NOWARNING | XML_PARSE_NOBLANKS );
-#else
-    doc = xmlParseMemory( ptr, len );
-#endif
+    doc = xmlSAXParseMemoryWithData(&sax_handler, ptr, len, 0, This);
 
+    /* TODO: put this in one of the SAX callbacks */
     /* create first child as a <?xml...?> */
     if (doc && doc->standalone != -1)
     {
@@ -531,7 +558,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Load(
     len = GlobalSize(hglobal);
     ptr = GlobalLock(hglobal);
     if (len != 0)
-        xmldoc = doparse(ptr, len, NULL);
+        xmldoc = doparse(This, ptr, len);
     GlobalUnlock(hglobal);
 
     if (!xmldoc)
@@ -1718,7 +1745,7 @@ static HRESULT domdoc_onDataAvailable(void *obj, char *ptr, DWORD len)
     domdoc *This = obj;
     xmlDocPtr xmldoc;
 
-    xmldoc = doparse( ptr, len, NULL );
+    xmldoc = doparse(This, ptr, len);
     if(xmldoc) {
         xmldoc->_private = create_priv();
         return attach_xmldoc(This, xmldoc);
@@ -1956,7 +1983,7 @@ static HRESULT WINAPI domdoc_loadXML(
 
         if ( bstrXML && bstr_to_utf8( bstrXML, &str, &len ) )
         {
-            xmldoc = doparse( str, len, "UTF-8" );
+            xmldoc = doparse(This, str, len);
             heap_free( str );
             if ( !xmldoc )
                 This->error = E_FAIL;
