@@ -308,12 +308,19 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
             else if (chain->TrustStatus.dwErrorStatus & ~supportedErrors)
                 err = ERROR_WINHTTP_SECURE_INVALID_CERT;
         }
-        else
+        if (!err)
         {
             CERT_CHAIN_POLICY_PARA policyPara;
             SSL_EXTRA_CERT_CHAIN_POLICY_PARA sslExtraPolicyPara;
             CERT_CHAIN_POLICY_STATUS policyStatus;
+            CERT_CHAIN_CONTEXT chainCopy;
 
+            /* Clear chain->TrustStatus.dwErrorStatus so
+             * CertVerifyCertificateChainPolicy will verify additional checks
+             * rather than stopping with an existing, ignored error.
+             */
+            memcpy(&chainCopy, chain, sizeof(chainCopy));
+            chainCopy.TrustStatus.dwErrorStatus = 0;
             sslExtraPolicyPara.u.cbSize = sizeof(sslExtraPolicyPara);
             sslExtraPolicyPara.dwAuthType = AUTHTYPE_SERVER;
             sslExtraPolicyPara.pwszServerName = server;
@@ -321,7 +328,7 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
             policyPara.dwFlags = 0;
             policyPara.pvExtraPolicyPara = &sslExtraPolicyPara;
             ret = CertVerifyCertificateChainPolicy( CERT_CHAIN_POLICY_SSL,
-                                                    chain, &policyPara,
+                                                    &chainCopy, &policyPara,
                                                     &policyStatus );
             /* Any error in the policy status indicates that the
              * policy couldn't be verified.
