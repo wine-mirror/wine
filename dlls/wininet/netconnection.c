@@ -145,7 +145,6 @@ MAKE_FUNCPTR(SSL_get_ex_new_index);
 MAKE_FUNCPTR(SSL_get_ex_data);
 MAKE_FUNCPTR(SSL_set_ex_data);
 MAKE_FUNCPTR(SSL_get_ex_data_X509_STORE_CTX_idx);
-MAKE_FUNCPTR(SSL_get_verify_result);
 MAKE_FUNCPTR(SSL_get_peer_certificate);
 MAKE_FUNCPTR(SSL_CTX_get_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_timeout);
@@ -426,7 +425,6 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_get_ex_data);
 	DYNSSL(SSL_set_ex_data);
 	DYNSSL(SSL_get_ex_data_X509_STORE_CTX_idx);
-	DYNSSL(SSL_get_verify_result);
 	DYNSSL(SSL_get_peer_certificate);
 	DYNSSL(SSL_CTX_get_timeout);
 	DYNSSL(SSL_CTX_set_timeout);
@@ -670,9 +668,8 @@ DWORD NETCON_close(WININET_NETCONNECTION *connection)
 DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
 {
     DWORD res = ERROR_NOT_SUPPORTED;
-#ifdef SONAME_LIBSSL
-    long verify_res;
 
+#ifdef SONAME_LIBSSL
     /* can't connect if we are already connected */
     if (connection->useSSL)
     {
@@ -718,13 +715,6 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
             res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
         ERR("SSL_connect failed: %d\n", res);
         goto fail;
-    }
-    verify_res = pSSL_get_verify_result(connection->ssl_s);
-    if (verify_res != X509_V_OK)
-    {
-        ERR("couldn't verify the security of the connection, %ld\n", verify_res);
-        /* FIXME: we should set an error and return, but we only warn at
-         * the moment */
     }
 
     connection->useSSL = TRUE;
