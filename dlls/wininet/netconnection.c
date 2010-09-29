@@ -646,7 +646,6 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
     DWORD res = ERROR_NOT_SUPPORTED;
 #ifdef SONAME_LIBSSL
     long verify_res;
-    X509 *cert;
 
     /* can't connect if we are already connected */
     if (connection->useSSL)
@@ -692,14 +691,6 @@ DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
         ERR("SSL_set_ex_data failed: %s\n",
             pERR_error_string(pERR_get_error(), 0));
         res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-        goto fail;
-    }
-    cert = pSSL_get_peer_certificate(connection->ssl_s);
-    if (!cert)
-    {
-        ERR("no certificate for server %s\n", debugstr_w(hostname));
-        /* FIXME: is this the best error? */
-        res = ERROR_INTERNET_INVALID_CA;
         goto fail;
     }
     verify_res = pSSL_get_verify_result(connection->ssl_s);
