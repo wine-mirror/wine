@@ -17,7 +17,7 @@ INCLUDES     = -I$(srcdir) -I. -I$(top_srcdir)/include -I$(top_builddir)/include
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
-RCFLAGS      = --nostdinc $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
+RCFLAGS      = --nostdinc $(TARGETFLAGS) $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
 
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
@@ -62,7 +62,7 @@ filter: dummy
 	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<
 
 .rc.res:
-	$(LDPATH) $(WRC) $(RCFLAGS) -fo$@ $<
+	$(LDPATH) $(WRC) $(RCFLAGS) -o $@ $<
 
 .idl.h:
 	$(WIDL) $(IDLFLAGS) -h -H $@ $<
