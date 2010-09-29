@@ -4390,13 +4390,12 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
     return &shader_data->gl_shaders[shader_data->num_gl_shaders++];
 }
 
-static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,
-        struct arb_ps_compile_args *args)
+static void find_arb_ps_compile_args(const struct wined3d_state *state,
+        IWineD3DPixelShaderImpl *shader, struct arb_ps_compile_args *args)
 {
     int i;
     WORD int_skip;
     const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
 
     find_ps_compile_args(state, shader, &args->super);
 
@@ -4538,7 +4537,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         struct arb_ps_compiled_shader *compiled;
 
         TRACE("Using pixel shader %p.\n", ps);
-        find_arb_ps_compile_args(ps, This->stateBlock, &compile_args);
+        find_arb_ps_compile_args(state, ps, &compile_args);
         compiled = find_arb_pshader(ps, &compile_args);
         priv->current_fprogram_id = compiled->prgId;
         priv->compiled_fprog = compiled;
