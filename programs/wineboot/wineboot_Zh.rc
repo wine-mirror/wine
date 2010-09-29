@@ -2,6 +2,7 @@
  * wineboot (Simplified and Traditional Chinese Resource)
  *
  * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ * Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,9 +34,9 @@ FONT 9, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "取消",IDCANCEL,129,49,50,15
     PUSHBUTTON      "中断进程",IDOK,51,49,71,15
-    LTEXT           "正在模拟关机, 但是这个程序没有反应.",
+    LTEXT           "正在模拟关机，但是这个程序没有响应。",
                     IDC_STATIC,7,7,172,19
-    LTEXT           "如果你中断进程，有可能丢失没有保存的数据.",
+    LTEXT           "如果你中断进程，有可能丢失没有保存的数据。",
                     IDC_STATIC,7,28,172,15
 END
 
@@ -45,7 +46,7 @@ CAPTION "Wine"
 FONT 8, "MS Shell Dlg"
 BEGIN
     ICON "", IDC_WAITICON, 3, 3, 10, 10
-    LTEXT "正在更新位于 %s 的 Wine 配置, 请稍候...",
+    LTEXT "正在更新位于 %s 的 Wine 配置，请稍候……",
           IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
 END
 
