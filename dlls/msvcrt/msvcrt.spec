@@ -1444,7 +1444,7 @@
 @ cdecl wcsncmp(wstr wstr long) ntdll.wcsncmp
 @ cdecl wcsncpy(ptr wstr long) ntdll.wcsncpy
 @ cdecl wcsncpy_s(ptr long wstr long) MSVCRT_wcsncpy_s
-# stub wcsnlen
+@ cdecl wcsnlen(wstr long) MSVCRT_wcsnlen
 @ cdecl wcspbrk(wstr wstr) MSVCRT_wcspbrk
 @ cdecl wcsrchr(wstr long) ntdll.wcsrchr
 # stub wcsrtombs

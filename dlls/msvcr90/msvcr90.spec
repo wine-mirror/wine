@@ -1482,7 +1482,7 @@
 @ cdecl wcsncmp(wstr wstr long) msvcrt.wcsncmp
 @ cdecl wcsncpy(ptr wstr long) msvcrt.wcsncpy
 @ cdecl wcsncpy_s(ptr long wstr long) msvcrt.wcsncpy_s
-@ stub wcsnlen
+@ cdecl wcsnlen(wstr long) msvcrt.wcsnlen
 @ cdecl wcspbrk(wstr wstr) msvcrt.wcspbrk
 @ cdecl wcsrchr(wstr long) msvcrt.wcsrchr
 @ stub wcsrtombs
