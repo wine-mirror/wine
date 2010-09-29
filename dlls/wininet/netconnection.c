@@ -282,6 +282,7 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
             sslExtraPolicyPara.u.cbSize = sizeof(sslExtraPolicyPara);
             sslExtraPolicyPara.dwAuthType = AUTHTYPE_SERVER;
             sslExtraPolicyPara.pwszServerName = server;
+            sslExtraPolicyPara.fdwChecks = security_flags;
             policyPara.cbSize = sizeof(policyPara);
             policyPara.dwFlags = 0;
             policyPara.pvExtraPolicyPara = &sslExtraPolicyPara;
@@ -293,11 +294,7 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
             if (ret && policyStatus.dwError)
             {
                 if (policyStatus.dwError == CERT_E_CN_NO_MATCH)
-                {
-                    if (!(security_flags &
-                          SECURITY_FLAG_IGNORE_CERT_CN_INVALID))
-                        err = ERROR_INTERNET_SEC_CERT_CN_INVALID;
-                }
+                    err = ERROR_INTERNET_SEC_CERT_CN_INVALID;
                 else
                     err = ERROR_INTERNET_SEC_INVALID_CERT;
             }
