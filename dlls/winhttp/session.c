@@ -615,6 +615,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
     case WINHTTP_OPTION_SECURITY_CERTIFICATE_STRUCT:
     {
         const CERT_CONTEXT *cert;
+        const CRYPT_OID_INFO *oidInfo;
         WINHTTP_CERTIFICATE_INFO *ci = buffer;
 
         FIXME("partial stub\n");
@@ -632,7 +633,13 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         ci->lpszSubjectInfo = blob_to_str( cert->dwCertEncodingType, &cert->pCertInfo->Subject );
         ci->lpszIssuerInfo  = blob_to_str( cert->dwCertEncodingType, &cert->pCertInfo->Issuer );
         ci->lpszProtocolName      = NULL;
-        ci->lpszSignatureAlgName  = NULL;
+        oidInfo = CryptFindOIDInfo( CRYPT_OID_INFO_OID_KEY,
+                                    cert->pCertInfo->SignatureAlgorithm.pszObjId,
+                                    0 );
+        if (oidInfo)
+            ci->lpszSignatureAlgName = (LPWSTR)oidInfo->pwszName;
+        else
+            ci->lpszSignatureAlgName  = NULL;
         ci->lpszEncryptionAlgName = NULL;
         ci->dwKeySize = 128;
 
