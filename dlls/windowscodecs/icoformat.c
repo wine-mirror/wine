@@ -343,6 +343,52 @@ static HRESULT ReadIcoDib(IStream *stream, IcoFrameDecode *result)
     return hr;
 }
 
+static HRESULT ReadIcoPng(IStream *stream, IcoFrameDecode *result)
+{
+    IWICBitmapDecoder *decoder = NULL;
+    IWICBitmapFrameDecode *sourceFrame = NULL;
+    IWICBitmapSource *sourceBitmap = NULL;
+    WICRect rect;
+    HRESULT hr;
+
+    hr = PngDecoder_CreateInstance(NULL, &IID_IWICBitmapDecoder, (void**)&decoder);
+    if (FAILED(hr))
+        goto end;
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
+    if (FAILED(hr))
+        goto end;
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &sourceFrame);
+    if (FAILED(hr))
+        goto end;
+    hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)sourceFrame, &sourceBitmap);
+    if (FAILED(hr))
+        goto end;
+    hr = IWICBitmapFrameDecode_GetSize(sourceFrame, &result->width, &result->height);
+    if (FAILED(hr))
+        goto end;
+    result->bits = HeapAlloc(GetProcessHeap(), 0, 4 * result->width * result->height);
+    if (result->bits == NULL)
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+    rect.X = 0;
+    rect.Y = 0;
+    rect.Width = result->width;
+    rect.Height = result->height;
+    hr = IWICBitmapSource_CopyPixels(sourceBitmap, &rect, 4*result->width,
+                                     4*result->width*result->height, result->bits);
+
+end:
+    if (decoder != NULL)
+        IWICBitmapDecoder_Release(decoder);
+    if (sourceFrame != NULL)
+        IWICBitmapFrameDecode_Release(sourceFrame);
+    if (sourceBitmap != NULL)
+        IWICBitmapSource_Release(sourceBitmap);
+    return hr;
+}
+
 static HRESULT WINAPI IcoDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
 {
@@ -576,8 +622,7 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
         hr = ReadIcoDib((IStream*)substream, result);
         break;
     case 0x474e5089:
-        FIXME("PNG decoding not supported\n");
-        hr = E_FAIL;
+        hr = ReadIcoPng((IStream*)substream, result);
         break;
     default:
         FIXME("Unrecognized ICO frame magic: %x\n", magic);
