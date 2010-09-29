@@ -4454,7 +4454,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     const struct wined3d_gl_info *gl_info = &dev->adapter->gl_info;
     const struct wined3d_state *state = &stateblock->state;
 
-    find_vs_compile_args(shader, stateblock, &args->super);
+    find_vs_compile_args(state, shader, &args->super);
 
     args->clip.boolclip_compare = 0;
     if (use_ps(state))

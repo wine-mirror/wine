@@ -4279,8 +4279,9 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
 static void set_glsl_shader_program(const struct wined3d_context *context,
         IWineD3DDeviceImpl *device, BOOL use_ps, BOOL use_vs)
 {
-    IWineD3DVertexShader *vshader = use_vs ? (IWineD3DVertexShader *)device->stateBlock->state.vertex_shader : NULL;
-    IWineD3DPixelShader *pshader = use_ps ? (IWineD3DPixelShader *)device->stateBlock->state.pixel_shader : NULL;
+    const struct wined3d_state *state = &device->stateBlock->state;
+    IWineD3DVertexShader *vshader = use_vs ? (IWineD3DVertexShader *)state->vertex_shader : NULL;
+    IWineD3DPixelShader *pshader = use_ps ? (IWineD3DPixelShader *)state->pixel_shader : NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = device->shader_priv;
     struct glsl_shader_prog_link *entry    = NULL;
@@ -4291,7 +4292,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     struct ps_compile_args ps_compile_args;
     struct vs_compile_args vs_compile_args;
 
-    if (vshader) find_vs_compile_args((IWineD3DVertexShaderImpl *)vshader, device->stateBlock, &vs_compile_args);
+    if (vshader) find_vs_compile_args(state, (IWineD3DVertexShaderImpl *)vshader, &vs_compile_args);
     if (pshader) find_ps_compile_args((IWineD3DPixelShaderImpl *)pshader, device->stateBlock, &ps_compile_args);
 
     entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);

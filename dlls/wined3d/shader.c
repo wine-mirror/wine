@@ -1706,13 +1706,13 @@ static const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     vertexshader_SetLocalConstantsF,
 };
 
-void find_vs_compile_args(IWineD3DVertexShaderImpl *shader,
-        IWineD3DStateBlockImpl *stateblock, struct vs_compile_args *args)
+void find_vs_compile_args(const struct wined3d_state *state,
+        IWineD3DVertexShaderImpl *shader, struct vs_compile_args *args)
 {
-    args->fog_src = stateblock->state.render_states[WINED3DRS_FOGTABLEMODE]
+    args->fog_src = state->render_states[WINED3DRS_FOGTABLEMODE]
             == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
-    args->clip_enabled = stateblock->state.render_states[WINED3DRS_CLIPPING]
-            && stateblock->state.render_states[WINED3DRS_CLIPPLANEENABLE];
+    args->clip_enabled = state->render_states[WINED3DRS_CLIPPING]
+            && state->render_states[WINED3DRS_CLIPPLANEENABLE];
     args->swizzle_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.swizzle_map;
 }
 
