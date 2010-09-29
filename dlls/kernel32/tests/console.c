@@ -1085,11 +1085,10 @@ static void test_OpenConsoleW(void)
         CloseHandle(ret);
 }
 
-static void test_VerifyConsoleIoHandle(void)
+static void test_VerifyConsoleIoHandle( HANDLE handle )
 {
     BOOL ret;
     DWORD error;
-    HANDLE handle;
 
     if (!pVerifyConsoleIoHandle)
     {
@@ -1125,7 +1124,6 @@ static void test_VerifyConsoleIoHandle(void)
     ok(!ret, "expected VerifyConsoleIoHandle to fail\n");
     ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
 
-    handle = GetStdHandle(STD_INPUT_HANDLE);
     /* valid handle */
     SetLastError(0xdeadbeef);
     ret = pVerifyConsoleIoHandle(handle);
@@ -1221,6 +1219,6 @@ START_TEST(console)
 
     test_GetConsoleProcessList();
     test_OpenConsoleW();
-    test_VerifyConsoleIoHandle();
+    test_VerifyConsoleIoHandle(hConOut);
     test_GetSetStdHandle();
 }
