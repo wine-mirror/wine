@@ -3805,7 +3805,7 @@ static HRESULT validate_fragment(const UriBuilder *builder, parse_data *data, DW
         const WCHAR *component = ptr;
         pptr = &ptr;
 
-        if(parse_query(pptr, data, flags) && expected_len == data->fragment_len)
+        if(parse_fragment(pptr, data, flags) && expected_len == data->fragment_len)
             TRACE("(%p %p %x): Valid fragment component %s len=%d.\n", builder, data, flags,
                 debugstr_wn(data->fragment, data->fragment_len), data->fragment_len);
         else {
