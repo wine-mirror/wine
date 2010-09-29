@@ -580,6 +580,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
     case WINHTTP_OPTION_SECURITY_FLAGS:
     {
         DWORD flags;
+        int bits;
 
         if (!buffer || *buflen < sizeof(flags))
         {
@@ -591,7 +592,13 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         flags = 0;
         if (hdr->flags & WINHTTP_FLAG_SECURE) flags |= SECURITY_FLAG_SECURE;
         flags |= request->netconn.security_flags;
-        /* FIXME: set connection cipher strength (SECURITY_FLAG_STRENGTH_*) */
+        bits = netconn_get_cipher_strength( &request->netconn );
+        if (bits >= 128)
+            flags |= SECURITY_FLAG_STRENGTH_STRONG;
+        else if (bits >= 56)
+            flags |= SECURITY_FLAG_STRENGTH_MEDIUM;
+        else
+            flags |= SECURITY_FLAG_STRENGTH_WEAK;
         *(DWORD *)buffer = flags;
         *buflen = sizeof(flags);
         return TRUE;
