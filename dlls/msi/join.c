@@ -225,10 +225,12 @@ static UINT JOIN_get_column_info( struct tagMSIVIEW *view,
 static UINT join_find_row( MSIJOINVIEW *jv, MSIRECORD *rec, UINT *row )
 {
     LPCWSTR str;
-    UINT i, id, data;
+    UINT r, i, id, data;
 
     str = MSI_RecordGetString( rec, 1 );
-    msi_string2idW( jv->db->strings, str, &id );
+    r = msi_string2idW( jv->db->strings, str, &id );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     for (i = 0; i < jv->rows; i++)
     {
