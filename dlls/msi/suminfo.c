@@ -469,7 +469,7 @@ UINT WINAPI MsiGetSummaryInformationW( MSIHANDLE hDatabase,
     if( !pHandle )
         return ERROR_INVALID_PARAMETER;
 
-    if( szDatabase )
+    if( szDatabase && szDatabase[0] )
     {
         LPCWSTR persist = uiUpdateCount ? MSIDBOPEN_TRANSACT : MSIDBOPEN_READONLY;
 
