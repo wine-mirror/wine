@@ -121,7 +121,6 @@ MAKE_FUNCPTR( SSL_get_ex_new_index );
 MAKE_FUNCPTR( SSL_get_ex_data );
 MAKE_FUNCPTR( SSL_set_ex_data );
 MAKE_FUNCPTR( SSL_get_ex_data_X509_STORE_CTX_idx );
-MAKE_FUNCPTR( SSL_get_verify_result );
 MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
 MAKE_FUNCPTR( SSL_CTX_set_verify );
@@ -451,7 +450,6 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_get_ex_data );
     LOAD_FUNCPTR( SSL_set_ex_data );
     LOAD_FUNCPTR( SSL_get_ex_data_X509_STORE_CTX_idx );
-    LOAD_FUNCPTR( SSL_get_verify_result );
     LOAD_FUNCPTR( SSL_get_peer_certificate );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
     LOAD_FUNCPTR( SSL_CTX_set_verify );
