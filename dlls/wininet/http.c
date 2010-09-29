@@ -1701,7 +1701,8 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             *(DWORD*)buffer = SECURITY_FLAG_SECURE;
         else
             *(DWORD*)buffer = 0;
-        FIXME("Semi-STUB INTERNET_OPTION_SECURITY_FLAGS: %x\n",*(DWORD*)buffer);
+        *(DWORD *)buffer |= req->netConnection.security_flags;
+        /* FIXME: set connection cipher strength (SECURITY_FLAG_STRENGTH_*) */
         return ERROR_SUCCESS;
     }
 
