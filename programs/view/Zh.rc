@@ -2,6 +2,7 @@
  * View (Simplified and Traditional Chinese Resource)
  *
  * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ * Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,7 +41,7 @@ BEGIN
     END
     POPUP "平移(&P)"
     BEGIN
-      MENUITEM "放大至视窗(&S)", IDM_SET_EXT_TO_WIN
+      MENUITEM "缩放至窗口(&S)", IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
       MENUITEM "左(&L)", IDM_LEFT
       MENUITEM "右(&R)", IDM_RIGHT
