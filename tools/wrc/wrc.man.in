@@ -21,6 +21,17 @@ specified with \fI-o\fR, then \fBwrc\fR will write the output to
 no inputfile was given.
 .SH OPTIONS
 .TP
+.BI \-b,\ --target= cpu-manufacturer[-kernel]-os
+Specify the target CPU and platform on which the generated code will
+be built. The target specification is in the standard autoconf format
+as returned by config.sub.
+.TP
+.I \fB\-D\fR, \fB\-\-define\fR=\fIid[=val]\fR
+Define preprocessor identifier \fIid\fR to (optionally) value \fIval\fR.
+See also
+.B PREPROCESSOR
+below.
+.TP
 .I \fB\-\-debug\fR=\fInn\fR
 Set debug level to \fInn\fR. The value is a bitmask consisting of
 1=verbose, 2=dump internals, 4=resource parser trace, 8=preprocessor
@@ -32,19 +43,10 @@ l[ittle] or b[ig].  Only resources in source-form can be reorderd. Native
 ordering depends on the system on which \fBwrc\fR was built. You can see
 the native ordering by typing \fIwrc \-h\fR.
 .TP
-.I \fB\-D\fR, \fB\-\-define\fR=\fIid[=val]\fR
-Define preprocessor identifier \fIid\fR to (optionally) value \fIval\fR.
-See also
-.B PREPROCESSOR
-below.
-.TP
 .I \fB\-E\fR
 Preprocess only. The output is written to standard output if no
 outputfile was selected. The output is compatible with what gcc would
 generate.
-.TP
-.I \fB\-F\fR, \fB\-\-target\fR
-Ignored for compatibility with \fIwindres\fR.
 .TP
 .I \fB\-h\fR, \fB\-\-help\fR
 Prints a summary message and exits.
@@ -72,6 +74,11 @@ input to 'rc16' disables the recognition of win32 keywords.
 .I \fB\-l\fR, \fB\-\-language\fR=\fIlan\fR
 Set default language to \fIlan\fR. Default is the neutral language 0
 (i.e. "LANGUAGE 0, 0").
+.TP
+.B \-m16, -m32, -m64
+Generate resources for 16-bit, 32-bit, respectively 64-bit
+platforms. The only difference between 32-bit and 64-bit is whether
+the _WIN64 preprocessor symbol is defined.
 .TP
 .I \fB\-\-nostdinc\fR
 Do not search the standard include path, look for include files only
@@ -136,7 +143,7 @@ __WRC_MINOR__   Minor version of wrc
 .br
 __WRC_PATCHLEVEL__   Patch level
 .PP
-Win32 compilation mode also sets __WIN32__ to 1 and __FLAT__ to 1.
+Win32 compilation mode also sets _WIN32 to 1.
 .PP
 Special macros __FILE__, __LINE__, __TIME__ and __DATE__ are also
 recognized and expand to their respective equivalent.
