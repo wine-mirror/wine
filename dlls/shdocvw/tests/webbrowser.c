@@ -2436,6 +2436,7 @@ static void test_QueryInterface(IUnknown *unk)
     IOleCache *cache = (void*)0xdeadbeef;
     IObjectWithSite *site = (void*)0xdeadbeef;
     IViewObjectEx *viewex = (void*)0xdeadbeef;
+    IOleLink *link = (void*)0xdeadbeef;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
@@ -2465,6 +2466,10 @@ static void test_QueryInterface(IUnknown *unk)
     hres = IUnknown_QueryInterface(unk, &IID_IViewObjectEx, (void**)&viewex);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(viewex == NULL, "viewex=%p, expected NULL\n", viewex);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleLink, (void**)&link);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(link == NULL, "link=%p, expected NULL\n", link);
 
 }
 
