@@ -124,6 +124,8 @@ MAKE_FUNCPTR( SSL_get_ex_data_X509_STORE_CTX_idx );
 MAKE_FUNCPTR( SSL_get_peer_certificate );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
 MAKE_FUNCPTR( SSL_CTX_set_verify );
+MAKE_FUNCPTR( SSL_get_current_cipher );
+MAKE_FUNCPTR( SSL_CIPHER_get_bits );
 
 MAKE_FUNCPTR( CRYPTO_num_locks );
 MAKE_FUNCPTR( CRYPTO_set_id_callback );
@@ -464,6 +466,8 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_get_peer_certificate );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
     LOAD_FUNCPTR( SSL_CTX_set_verify );
+    LOAD_FUNCPTR( SSL_get_current_cipher );
+    LOAD_FUNCPTR( SSL_CIPHER_get_bits );
 #undef LOAD_FUNCPTR
 
 #define LOAD_FUNCPTR(x) \
@@ -1065,5 +1069,20 @@ const void *netconn_get_certificate( netconn_t *conn )
     return ret;
 #else
     return NULL;
+#endif
+}
+
+int netconn_get_cipher_strength( netconn_t *conn )
+{
+#ifdef SONAME_LIBSSL
+    SSL_CIPHER *cipher;
+    int bits = 0;
+
+    if (!conn->secure) return 0;
+    if (!(cipher = pSSL_get_current_cipher( conn->ssl_conn ))) return 0;
+    pSSL_CIPHER_get_bits( cipher, &bits );
+    return bits;
+#else
+    return 0;
 #endif
 }

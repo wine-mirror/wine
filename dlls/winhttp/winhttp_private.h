@@ -229,6 +229,7 @@ BOOL netconn_secure_connect( netconn_t *, WCHAR * );
 BOOL netconn_send( netconn_t *, const void *, size_t, int, int * );
 DWORD netconn_set_timeout( netconn_t *, BOOL, int );
 const void *netconn_get_certificate( netconn_t * );
+int netconn_get_cipher_strength( netconn_t * );
 
 BOOL set_cookies( request_t *, const WCHAR * );
 BOOL add_cookie_headers( request_t * );

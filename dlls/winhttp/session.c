@@ -641,7 +641,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
         else
             ci->lpszSignatureAlgName  = NULL;
         ci->lpszEncryptionAlgName = NULL;
-        ci->dwKeySize = 128;
+        ci->dwKeySize = netconn_get_cipher_strength( &request->netconn );
 
         CertFreeCertificateContext( cert );
         *buflen = sizeof(*ci);
@@ -656,7 +656,7 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
             return FALSE;
         }
 
-        *(DWORD *)buffer = 128; /* FIXME */
+        *(DWORD *)buffer = netconn_get_cipher_strength( &request->netconn );
         *buflen = sizeof(DWORD);
         return TRUE;
     }
