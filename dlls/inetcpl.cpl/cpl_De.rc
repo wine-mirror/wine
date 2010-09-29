@@ -42,6 +42,6 @@ BEGIN
     LTEXT       "Zertifikate werden benutzt, um sich persönlich, Zertifizierungsstellen und Herausgeber von Zertifikaten zu identifizieren.",
                 IDC_STATIC, 58, 14, 252, 18
     PUSHBUTTON  "Zertifikate...", IDC_CERT, 146, 34, 80, 14
-    PUSHBUTTON  "Herausgeber... ", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+    PUSHBUTTON  "Herausgeber...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
 
 END

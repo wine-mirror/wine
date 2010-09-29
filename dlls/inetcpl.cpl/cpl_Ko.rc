@@ -43,6 +43,6 @@ BEGIN
     LTEXT       " 인증서는 당신의 개인 식별과 인증기관과 게시자 식별에 사용됩니다.",
                 IDC_STATIC, 58, 14, 252, 18
     PUSHBUTTON  "인증서...", IDC_CERT, 146, 34, 80, 14
-    PUSHBUTTON	"발행자... ", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+    PUSHBUTTON	"발행자...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
 
 END

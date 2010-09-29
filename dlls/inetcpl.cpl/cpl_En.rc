@@ -40,6 +40,6 @@ BEGIN
     LTEXT       "Certificates are used for your personal identification and to identify certificate authorities and publishers.",
                 IDC_STATIC, 58, 14, 252, 18
     PUSHBUTTON  "Certificates...", IDC_CERT, 146, 34, 80, 14
-    PUSHBUTTON	"Publishers... ", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+    PUSHBUTTON	"Publishers...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
 
 END
