@@ -419,17 +419,16 @@ static RETERR16 VCP_CheckPaths(void)
 {
     DWORD n;
     LPVIRTNODE lpvn;
-    RETERR16 cbres;
 
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATPATHCHECKSTART, 0, 0, VCP_MsgRef);
+    VCP_Callback(&vcp_status, VCPM_VSTATPATHCHECKSTART, 0, 0, VCP_MsgRef);
     for (n = 0; n < vn_num; n++)
     {
 	lpvn = pvnlist[n];
 	if (!lpvn) continue;
         /* FIXME: check paths of all VIRTNODEs here ! */
-	cbres = VCP_Callback(&lpvn->vfsDst, VCPM_CHECKPATH, 0, (DWORD)lpvn, VCP_MsgRef);
+	VCP_Callback(&lpvn->vfsDst, VCPM_CHECKPATH, 0, (DWORD)lpvn, VCP_MsgRef);
     }
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATPATHCHECKEND, 0, 0, VCP_MsgRef);
+    VCP_Callback(&vcp_status, VCPM_VSTATPATHCHECKEND, 0, 0, VCP_MsgRef);
     return OK;
 }
 
