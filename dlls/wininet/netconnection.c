@@ -215,7 +215,7 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
 }
 
 static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
-    WCHAR *server)
+    WCHAR *server, DWORD security_flags)
 {
     BOOL ret;
     CERT_CHAIN_PARA chainPara = { sizeof(chainPara), { 0 } };
@@ -232,30 +232,49 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
     {
         if (chain->TrustStatus.dwErrorStatus)
         {
+            static const DWORD supportedErrors =
+                CERT_TRUST_IS_NOT_TIME_VALID |
+                CERT_TRUST_IS_UNTRUSTED_ROOT |
+                CERT_TRUST_IS_OFFLINE_REVOCATION |
+                CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
+                CERT_TRUST_IS_REVOKED |
+                CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
+
             if (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID)
                 err = ERROR_INTERNET_SEC_CERT_DATE_INVALID;
             else if (chain->TrustStatus.dwErrorStatus &
-                     CERT_TRUST_IS_UNTRUSTED_ROOT)
+                     CERT_TRUST_IS_UNTRUSTED_ROOT &&
+                     !(security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
                 err = ERROR_INTERNET_INVALID_CA;
-            else if ((chain->TrustStatus.dwErrorStatus &
+            else if (!(security_flags & SECURITY_FLAG_IGNORE_REVOCATION) &&
+                     ((chain->TrustStatus.dwErrorStatus &
                       CERT_TRUST_IS_OFFLINE_REVOCATION) ||
-                     (chain->TrustStatus.dwErrorStatus &
-                      CERT_TRUST_REVOCATION_STATUS_UNKNOWN))
+                      (chain->TrustStatus.dwErrorStatus &
+                       CERT_TRUST_REVOCATION_STATUS_UNKNOWN)))
                 err = ERROR_INTERNET_SEC_CERT_NO_REV;
-            else if (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_REVOKED)
+            else if (!(security_flags & SECURITY_FLAG_IGNORE_REVOCATION) &&
+                     (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_REVOKED))
                 err = ERROR_INTERNET_SEC_CERT_REVOKED;
-            else if (chain->TrustStatus.dwErrorStatus &
-                CERT_TRUST_IS_NOT_VALID_FOR_USAGE)
+            else if (!(security_flags & SECURITY_FLAG_IGNORE_WRONG_USAGE) &&
+                     (chain->TrustStatus.dwErrorStatus &
+                      CERT_TRUST_IS_NOT_VALID_FOR_USAGE))
                 err = ERROR_INTERNET_SEC_INVALID_CERT;
-            else
+            else if (chain->TrustStatus.dwErrorStatus & ~supportedErrors)
                 err = ERROR_INTERNET_SEC_INVALID_CERT;
         }
-        else
+        if (!err)
         {
             CERT_CHAIN_POLICY_PARA policyPara;
             SSL_EXTRA_CERT_CHAIN_POLICY_PARA sslExtraPolicyPara;
             CERT_CHAIN_POLICY_STATUS policyStatus;
+            CERT_CHAIN_CONTEXT chainCopy;
 
+            /* Clear chain->TrustStatus.dwErrorStatus so
+             * CertVerifyCertificateChainPolicy will verify additional checks
+             * rather than stopping with an existing, ignored error.
+             */
+            memcpy(&chainCopy, chain, sizeof(chainCopy));
+            chainCopy.TrustStatus.dwErrorStatus = 0;
             sslExtraPolicyPara.u.cbSize = sizeof(sslExtraPolicyPara);
             sslExtraPolicyPara.dwAuthType = AUTHTYPE_SERVER;
             sslExtraPolicyPara.pwszServerName = server;
@@ -263,14 +282,18 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
             policyPara.dwFlags = 0;
             policyPara.pvExtraPolicyPara = &sslExtraPolicyPara;
             ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL,
-                chain, &policyPara, &policyStatus);
+                &chainCopy, &policyPara, &policyStatus);
             /* Any error in the policy status indicates that the
              * policy couldn't be verified.
              */
             if (ret && policyStatus.dwError)
             {
                 if (policyStatus.dwError == CERT_E_CN_NO_MATCH)
-                    err = ERROR_INTERNET_SEC_CERT_CN_INVALID;
+                {
+                    if (!(security_flags &
+                          SECURITY_FLAG_IGNORE_CERT_CN_INVALID))
+                        err = ERROR_INTERNET_SEC_CERT_CN_INVALID;
+                }
                 else
                     err = ERROR_INTERNET_SEC_INVALID_CERT;
             }
@@ -288,10 +311,12 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
     BOOL ret = FALSE;
     HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
         CERT_STORE_CREATE_NEW_FLAG, NULL);
+    WININET_NETCONNECTION *conn;
 
     ssl = pX509_STORE_CTX_get_ex_data(ctx,
         pSSL_get_ex_data_X509_STORE_CTX_idx());
     server = pSSL_get_ex_data(ssl, hostname_idx);
+    conn = pSSL_get_ex_data(ssl, conn_idx);
     if (store)
     {
         X509 *cert;
@@ -318,7 +343,8 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
         if (!endCert) ret = FALSE;
         if (ret)
         {
-            DWORD_PTR err = netconn_verify_cert(endCert, store, server);
+            DWORD_PTR err = netconn_verify_cert(endCert, store, server,
+                                                conn->security_flags);
 
             if (err)
             {
