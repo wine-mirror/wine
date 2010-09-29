@@ -933,6 +933,19 @@ static DWORD ui2ipv4(WCHAR *dest, UINT address) {
     return ret;
 }
 
+static DWORD ui2str(WCHAR *dest, UINT value) {
+    static const WCHAR formatW[] = {'%','u',0};
+    DWORD ret = 0;
+
+    if(!dest) {
+        WCHAR tmp[11];
+        ret = sprintfW(tmp, formatW, value);
+    } else
+        ret = sprintfW(dest, formatW, value);
+
+    return ret;
+}
+
 /* Converts an h16 component (from an IPv6 address) into it's
  * numerical value.
  *
@@ -3847,10 +3860,13 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
     if(FAILED(hr))
         return hr;
 
-    /* The URI is opaque if it doesn't have an authority component. */
-    data->is_opaque = !data->username && !data->password && !data->host;
-
     setup_port(builder, data, flags);
+
+    /* The URI is opaque if it doesn't have an authority component. */
+    if(!data->is_relative)
+        data->is_opaque = !data->username && !data->password && !data->host && !data->has_port;
+    else
+        data->is_opaque = !data->host && !data->has_port;
 
     hr = validate_path(builder, data, flags);
     if(FAILED(hr))
@@ -3869,11 +3885,144 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
     return S_OK;
 }
 
+/* Generates a raw uri string using the parse_data. */
+static DWORD generate_raw_uri(const parse_data *data, BSTR uri) {
+    DWORD length = 0;
+
+    if(data->scheme) {
+        if(uri) {
+            memcpy(uri, data->scheme, data->scheme_len*sizeof(WCHAR));
+            uri[data->scheme_len] = ':';
+        }
+        length += data->scheme_len+1;
+    }
+
+    if(!data->is_opaque) {
+        /* For the "//" which appears before the authority component. */
+        if(uri) {
+            uri[length] = '/';
+            uri[length+1] = '/';
+        }
+        length += 2;
+    }
+
+    if(data->username) {
+        if(uri)
+            memcpy(uri+length, data->username, data->username_len*sizeof(WCHAR));
+        length += data->username_len;
+    }
+
+    if(data->password) {
+        if(uri) {
+            uri[length] = ':';
+            memcpy(uri+length+1, data->password, data->password_len*sizeof(WCHAR));
+        }
+        length += data->password_len+1;
+    }
+
+    if(data->password || data->username) {
+        if(uri)
+            uri[length] = '@';
+        ++length;
+    }
+
+    if(data->host) {
+        /* IPv6 addresses get the brackets added around them if they don't already
+         * have them.
+         */
+        const BOOL add_brackets = data->host_type == Uri_HOST_IPV6 && *(data->host) != '[';
+        if(add_brackets) {
+            if(uri)
+                uri[length] = '[';
+            ++length;
+        }
+
+        if(uri)
+            memcpy(uri+length, data->host, data->host_len*sizeof(WCHAR));
+        length += data->host_len;
+
+        if(add_brackets) {
+            if(uri)
+                uri[length] = ']';
+            length++;
+        }
+    }
+
+    if(data->has_port) {
+        /* The port isn't included in the raw uri if it's the default
+         * port for the scheme type.
+         */
+        DWORD i;
+        BOOL is_default = FALSE;
+
+        for(i = 0; i < sizeof(default_ports)/sizeof(default_ports[0]); ++i) {
+            if(data->scheme_type == default_ports[i].scheme &&
+               data->port_value == default_ports[i].port)
+                is_default = TRUE;
+        }
+
+        if(!is_default) {
+            if(uri)
+                uri[length] = ':';
+            ++length;
+
+            if(uri)
+                length += ui2str(uri+length, data->port_value);
+            else
+                length += ui2str(NULL, data->port_value);
+        }
+    }
+
+    /* Check if a '/' should be added before the path for hierarchical URIs. */
+    if(!data->is_opaque && data->path && *(data->path) != '/') {
+        if(uri)
+            uri[length] = '/';
+        ++length;
+    }
+
+    if(data->path) {
+        if(uri)
+            memcpy(uri+length, data->path, data->path_len*sizeof(WCHAR));
+        length += data->path_len;
+    }
+
+    if(data->query) {
+        if(uri)
+            memcpy(uri+length, data->query, data->query_len*sizeof(WCHAR));
+        length += data->query_len;
+    }
+
+    if(data->fragment) {
+        if(uri)
+            memcpy(uri+length, data->fragment, data->fragment_len*sizeof(WCHAR));
+        length += data->fragment_len;
+    }
+
+    if(uri)
+        TRACE("(%p %p): Generated raw uri=%s len=%d\n", data, uri, debugstr_wn(uri, length), length);
+    else
+        TRACE("(%p %p): Computed raw uri len=%d\n", data, uri, length);
+
+    return length;
+}
+
+static HRESULT generate_uri(const UriBuilder *builder, const parse_data *data, Uri *uri, DWORD flags) {
+    DWORD length = generate_raw_uri(data, NULL);
+    uri->raw_uri = SysAllocStringLen(NULL, length);
+    if(!uri->raw_uri)
+        return E_OUTOFMEMORY;
+
+    generate_raw_uri(data, uri->raw_uri);
+
+    return E_NOTIMPL;
+}
+
 static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_flags,
                          DWORD use_orig_flags, DWORD encoding_mask)
 {
     HRESULT hr;
     parse_data data;
+    Uri *ret;
 
     if(!uri)
         return E_POINTER;
@@ -3909,7 +4058,22 @@ static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_fla
         return hr;
     }
 
-    return E_NOTIMPL;
+    ret = heap_alloc_zero(sizeof(Uri));
+    if(!ret) {
+        *uri = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    hr = generate_uri(builder, &data, ret, create_flags);
+    if(FAILED(hr)) {
+        SysFreeString(ret->raw_uri);
+        heap_free(ret->canon_uri);
+        heap_free(ret);
+        *uri = NULL;
+        return hr;
+    }
+
+    return S_OK;
 }
 
 #define URI_THIS(iface) DEFINE_THIS(Uri, IUri, iface)
