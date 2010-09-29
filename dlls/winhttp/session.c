@@ -590,6 +590,8 @@ static BOOL request_query_option( object_header_t *hdr, DWORD option, LPVOID buf
 
         flags = 0;
         if (hdr->flags & WINHTTP_FLAG_SECURE) flags |= SECURITY_FLAG_SECURE;
+        flags |= request->netconn.security_flags;
+        /* FIXME: set connection cipher strength (SECURITY_FLAG_STRENGTH_*) */
         *(DWORD *)buffer = flags;
         *buflen = sizeof(flags);
         return TRUE;
