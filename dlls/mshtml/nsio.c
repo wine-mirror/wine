@@ -2171,43 +2171,13 @@ static nsresult NSAPI nsURL_SetParam(nsIURL *iface, const nsACString *aParam)
 static nsresult NSAPI nsURL_GetQuery(nsIURL *iface, nsACString *aQuery)
 {
     nsWineURI *This = NSURI_THIS(iface);
-    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
-    WCHAR *ptr_end, *ptr;
-    char *query;
-    int len;
 
     TRACE("(%p)->(%p)\n", This, aQuery);
 
     if(This->nsurl)
         return nsIURL_GetQuery(This->nsurl, aQuery);
 
-    url.dwExtraInfoLength = 1;
-    if(!InternetCrackUrlW(This->wine_url, 0, 0, &url)) {
-        WARN("InternetCrackUrlW failed: 0x%08x\n", GetLastError());
-        nsACString_SetData(aQuery, "");
-        return NS_OK;
-    }
-
-    ptr_end = url.lpszExtraInfo+url.dwExtraInfoLength;
-    for(ptr = url.lpszExtraInfo; ptr < ptr_end; ptr++) {
-        if(*ptr == '#') {
-            ptr_end = ptr;
-            break;
-        }
-    }
-
-    ptr = url.lpszExtraInfo;
-    len = WideCharToMultiByte(CP_ACP, 0, ptr, ptr_end-ptr, NULL, 0, NULL, NULL);
-    query = heap_alloc(len+1);
-    if(!query)
-        return NS_ERROR_OUT_OF_MEMORY;
-    WideCharToMultiByte(CP_ACP, 0, ptr, ptr_end-ptr, query, len, NULL, NULL);
-    query[len] = 0;
-    nsACString_SetData(aQuery, query);
-
-    TRACE("ret %s\n", debugstr_a(query));
-    heap_free(query);
-    return NS_OK;
+    return get_uri_string(This, Uri_PROPERTY_QUERY, aQuery);
 }
 
 static nsresult NSAPI nsURL_SetQuery(nsIURL *iface, const nsACString *aQuery)
