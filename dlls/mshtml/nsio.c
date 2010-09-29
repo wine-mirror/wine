@@ -66,7 +66,6 @@ struct  nsWineURI {
     LPWSTR wine_url;
     IUri *uri;
     BOOL is_doc_uri;
-    BOOL use_wine_url;
 };
 
 #define NSURI(x)  ((nsIURI*)  &(x)->lpIURLVtbl)
@@ -246,10 +245,6 @@ nsresult on_start_uri_open(NSContainer *nscontainer, nsIURI *uri, PRBool *_retva
 
 HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
 {
-    static const WCHAR wszFtp[]   = {'f','t','p',':'};
-    static const WCHAR wszHttp[]  = {'h','t','t','p',':'};
-    static const WCHAR wszHttps[] = {'h','t','t','p','s',':'};
-
     TRACE("(%p)->(%s)\n", This, debugstr_w(url));
 
     if(url) {
@@ -260,20 +255,9 @@ HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
             return E_OUTOFMEMORY;
         heap_free(This->wine_url);
         This->wine_url = new_url;
-
-        if(This->nsuri) {
-            /* FIXME: Always use wine url */
-            This->use_wine_url =
-                   strncmpW(url, wszFtp,   sizeof(wszFtp)/sizeof(WCHAR))
-                && strncmpW(url, wszHttp,  sizeof(wszHttp)/sizeof(WCHAR))
-                && strncmpW(url, wszHttps, sizeof(wszHttps)/sizeof(WCHAR));
-        }else {
-            This->use_wine_url = TRUE;
-        }
     }else {
         heap_free(This->wine_url);
         This->wine_url = NULL;
-        This->use_wine_url = FALSE;
     }
 
     return S_OK;
@@ -1657,23 +1641,13 @@ static nsrefcnt NSAPI nsURI_Release(nsIURL *iface)
 static nsresult NSAPI nsURI_GetSpec(nsIURL *iface, nsACString *aSpec)
 {
     nsWineURI *This = NSURI_THIS(iface);
+    char speca[INTERNET_MAX_URL_LENGTH];
 
     TRACE("(%p)->(%p)\n", This, aSpec);
 
-    if(This->use_wine_url) {
-        char speca[INTERNET_MAX_URL_LENGTH];
-        WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca, sizeof(speca), NULL, NULL);
-        nsACString_SetData(aSpec, speca);
-
-        return NS_OK;
-    }
-
-    if(This->nsuri)
-        return nsIURI_GetSpec(This->nsuri, aSpec);
-
-    TRACE("returning error\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
-
+    WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca, sizeof(speca), NULL, NULL);
+    nsACString_SetData(aSpec, speca);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
@@ -2016,24 +1990,17 @@ static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval
 static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *_retval)
 {
     nsWineURI *This = NSURI_THIS(iface);
+    WCHAR buf[INTERNET_MAX_SCHEME_LENGTH];
+    int len;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_a(scheme), _retval);
 
-    if(This->use_wine_url) {
-        WCHAR buf[INTERNET_MAX_SCHEME_LENGTH];
-        int len = MultiByteToWideChar(CP_ACP, 0, scheme, -1, buf, sizeof(buf)/sizeof(WCHAR))-1;
+    len = MultiByteToWideChar(CP_ACP, 0, scheme, -1, buf, sizeof(buf)/sizeof(WCHAR))-1;
 
-        *_retval = lstrlenW(This->wine_url) > len
-            && This->wine_url[len] == ':'
-            && !memcmp(buf, This->wine_url, len*sizeof(WCHAR));
-        return NS_OK;
-    }
-
-    if(This->nsuri)
-        return nsIURI_SchemeIs(This->nsuri, scheme, _retval);
-
-    TRACE("returning error\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    *_retval = lstrlenW(This->wine_url) > len
+        && This->wine_url[len] == ':'
+        && !memcmp(buf, This->wine_url, len*sizeof(WCHAR));
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
@@ -2116,14 +2083,7 @@ static nsresult NSAPI nsURI_GetAsciiSpec(nsIURL *iface, nsACString *aAsciiSpec)
 
     TRACE("(%p)->(%p)\n", This, aAsciiSpec);
 
-    if(This->use_wine_url)
-        return nsIURI_GetSpec(NSURI(This), aAsciiSpec);
-
-    if(This->nsuri)
-        return nsIURI_GetAsciiSpec(This->nsuri, aAsciiSpec);
-
-    TRACE("returning error\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return nsIURI_GetSpec(NSURI(This), aAsciiSpec);
 }
 
 static nsresult NSAPI nsURI_GetAsciiHost(nsIURL *iface, nsACString *aAsciiHost)
