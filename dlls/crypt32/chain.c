@@ -3285,6 +3285,13 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
 {
+    HTTPSPolicyCallbackData *sslPara = NULL;
+    DWORD checks = 0;
+
+    if (pPolicyPara)
+        sslPara = pPolicyPara->pvExtraPolicyPara;
+    if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
+        checks = sslPara->fdwChecks;
     pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = -1;
     if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_IS_NOT_SIGNATURE_VALID)
@@ -3295,7 +3302,8 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
          &pPolicyStatus->lElementIndex);
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
-     CERT_TRUST_IS_UNTRUSTED_ROOT)
+     CERT_TRUST_IS_UNTRUSTED_ROOT &&
+     !(checks & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
     {
         pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
         find_element_with_error(pChainContext,
@@ -3312,7 +3320,8 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
         pPolicyStatus->lElementIndex = -1;
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
-     CERT_TRUST_IS_NOT_TIME_VALID)
+     CERT_TRUST_IS_NOT_TIME_VALID &&
+     !(checks & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
     {
         pPolicyStatus->dwError = CERT_E_EXPIRED;
         find_element_with_error(pChainContext,
@@ -3327,13 +3336,11 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     if (!pPolicyStatus->dwError && pPolicyPara &&
      pPolicyPara->cbSize >= sizeof(CERT_CHAIN_POLICY_PARA))
     {
-        HTTPSPolicyCallbackData *sslPara = pPolicyPara->pvExtraPolicyPara;
-
         if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
         {
             if (sslPara->dwAuthType == AUTHTYPE_SERVER &&
              sslPara->pwszServerName &&
-             !(sslPara->fdwChecks & SECURITY_FLAG_IGNORE_CERT_CN_INVALID))
+             !(checks & SECURITY_FLAG_IGNORE_CERT_CN_INVALID))
             {
                 PCCERT_CONTEXT cert;
                 PCERT_EXTENSION altNameExt;

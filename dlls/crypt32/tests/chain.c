@@ -3790,17 +3790,12 @@ static const ChainPolicyCheck sslPolicyCheck[] = {
 
 static const ChainPolicyCheck ignoredUnknownCAPolicyCheck = {
  { sizeof(chain0) / sizeof(chain0[0]), chain0 },
- { 0, CERT_E_EXPIRED, 0, 0, NULL }, NULL, TODO_ERROR
+ { 0, CERT_E_EXPIRED, 0, 0, NULL }, NULL, 0
 };
 
 static const ChainPolicyCheck googlePolicyCheckWithMatchingNameExpired = {
  { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
  { 0, CERT_E_EXPIRED, 0, 0, NULL}, NULL, 0
-};
-
-static const ChainPolicyCheck googlePolicyCheckWithMatchingNameIgnoringExpired = {
- { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
- { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
 };
 
 static const ChainPolicyCheck googlePolicyCheckWithMatchingName = {
@@ -4157,8 +4152,7 @@ static void check_ssl_policy(void)
      */
     sslPolicyPara.fdwChecks = SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, NULL,
-     &googlePolicyCheckWithMatchingNameIgnoringExpired, 0, &oct2007,
-     &policyPara);
+     &googlePolicyCheckWithMatchingName, 0, &oct2007, &policyPara);
     sslPolicyPara.fdwChecks = 0;
     /* And again, but checking the Google chain at a good date */
     sslPolicyPara.pwszServerName = google_dot_com;
