@@ -4445,14 +4445,13 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
     }
 }
 
-static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,
-        struct arb_vs_compile_args *args)
+static void find_arb_vs_compile_args(const struct wined3d_state *state,
+        IWineD3DVertexShaderImpl *shader, struct arb_vs_compile_args *args)
 {
     int i;
     WORD int_skip;
     IWineD3DDeviceImpl *dev = (IWineD3DDeviceImpl *)shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &dev->adapter->gl_info;
-    const struct wined3d_state *state = &stateblock->state;
 
     find_vs_compile_args(state, shader, &args->super);
 
@@ -4528,13 +4527,15 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
     IWineD3DDeviceImpl *This = context->swapchain->device;
     struct shader_arb_priv *priv = This->shader_priv;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_state *state = &This->stateBlock->state;
     int i;
 
     /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
-    if (usePS) {
+    if (usePS)
+    {
+        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
         struct arb_ps_compile_args compile_args;
         struct arb_ps_compiled_shader *compiled;
-        IWineD3DPixelShaderImpl *ps = This->stateBlock->state.pixel_shader;
 
         TRACE("Using pixel shader %p.\n", ps);
         find_arb_ps_compile_args(ps, This->stateBlock, &compile_args);
@@ -4587,13 +4588,14 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         priv->current_fprogram_id = 0;
     }
 
-    if (useVS) {
+    if (useVS)
+    {
+        IWineD3DVertexShaderImpl *vs = state->vertex_shader;
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
-        IWineD3DVertexShaderImpl *vs = This->stateBlock->state.vertex_shader;
 
         TRACE("Using vertex shader %p\n", vs);
-        find_arb_vs_compile_args(vs, This->stateBlock, &compile_args);
+        find_arb_vs_compile_args(state, vs, &compile_args);
         compiled = find_arb_vshader(vs, &compile_args);
         priv->current_vprogram_id = compiled->prgId;
         priv->compiled_vprog = compiled;
