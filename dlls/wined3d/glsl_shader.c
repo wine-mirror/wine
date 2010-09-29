@@ -4293,7 +4293,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
     struct vs_compile_args vs_compile_args;
 
     if (vshader) find_vs_compile_args(state, (IWineD3DVertexShaderImpl *)vshader, &vs_compile_args);
-    if (pshader) find_ps_compile_args((IWineD3DPixelShaderImpl *)pshader, device->stateBlock, &ps_compile_args);
+    if (pshader) find_ps_compile_args(state, (IWineD3DPixelShaderImpl *)pshader, &ps_compile_args);
 
     entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);
     if (entry) {

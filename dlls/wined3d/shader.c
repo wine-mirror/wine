@@ -2067,12 +2067,11 @@ static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     pixelshader_GetFunction
 };
 
-void find_ps_compile_args(IWineD3DPixelShaderImpl *shader,
-        IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args)
+void find_ps_compile_args(const struct wined3d_state *state,
+        IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args)
 {
-    const struct wined3d_state *state = &stateblock->state;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
     IWineD3DBaseTextureImpl *texture;
-    IWineD3DDeviceImpl *device = stateblock->device;
     UINT i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */

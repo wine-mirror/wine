@@ -4398,7 +4398,7 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
     const struct wined3d_gl_info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
     const struct wined3d_state *state = &stateblock->state;
 
-    find_ps_compile_args(shader, stateblock, &args->super);
+    find_ps_compile_args(state, shader, &args->super);
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
     args->bools = shader->baseShader.reg_maps.local_bool_consts;
