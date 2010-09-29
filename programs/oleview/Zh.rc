@@ -2,6 +2,7 @@
  * OleView (Simplified and Traditional Chinese Resources)
  *
  * Copyright 2008 Hongbo Ni <hongbo.at.njstar.com>
+ * Copyright 2010 Cheer Xiao <xiaqqaix.at.gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,7 +61,7 @@ IDM_MENU MENU
     }
     POPUP "视图(&V)"
     {
-        MENUITEM "专家状态(&E)", IDM_EXPERT,CHECKED
+        MENUITEM "专家模式(&E)", IDM_EXPERT,CHECKED
         MENUITEM SEPARATOR
         MENUITEM "隐藏部件分类(&H)", IDM_HIDDEN, GRAYED
         MENUITEM SEPARATOR
@@ -97,7 +98,7 @@ STRINGTABLE
     IDS_APPTITLE           "OleView"
     IDS_READY              "待命"
     IDS_ABOUT              "OleView - OLE/COM 对象查看器"
-    IDS_ABOUTVER           "版本 1.0 "
+    IDS_ABOUTVER           "版本 1.0"
     IDS_TYPELIBTITLE       "ITypeLib 查看器"
     IDS_OPEN               "打开"
     IDS_OPEN_TYPELIB_FILTER "TypeLib 文件 (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
@@ -106,7 +107,7 @@ STRINGTABLE
     IDM_TYPELIB,           "打开 TypeLib 文件并查看内容"
     IDM_SYSCONF,           "修改本机分布式 COM 设置"
     IDM_REGEDIT,           "运行 Wine 注册表编辑器"
-    IDM_EXIT,              "退出程序. 提示保存"
+    IDM_EXIT,              "退出程序。提示保存"
     IDM_CREATEINST,        "创建当前选定对象实例"
     IDM_CREATEINSTON,      "创建当前选定对象在指定计算机的实例"
     IDM_RELEASEINST,       "释放当前选定对象实例"
@@ -148,7 +149,7 @@ STRINGTABLE
     IDS_BYTES,             "字节"
 
     IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) 失败 ($%x)"
-    IDS_INHERITINTERFACES, "遗传界面"
+    IDS_INHERITINTERFACES, "继承的界面"
 }
 
 DLG_CREATEINSTON DIALOG 0, 0, 250, 41
@@ -156,7 +157,7 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "连接到另外一台计算机"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT         "计算机名称(&M):", -1, 5, 6, 190, 8
+    LTEXT         "计算机名称(&M)：", -1, 5, 6, 190, 8
     EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON "确定(&O)", IDOK, 200, 5, 45, 14
     PUSHBUTTON    "取消(&C)", IDCANCEL, 200, 22, 45, 14
@@ -170,7 +171,7 @@ FONT 9, "MS Shell Dlg"
     LTEXT         "系统设置", -1, 5, 6, 160, 8
     CHECKBOX      "启用分布式CO&M", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX      "启用远程连接(限&Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT         "这些设置只改变注册表值.\n它对Wine的性能没有影响.", -1, 5, 50, 160, 40
+    LTEXT         "这些设置只改变寄存器值(register values)。\n它对Wine的性能没有影响。", -1, 5, 50, 160, 40
     DEFPUSHBUTTON "确定(&O)", IDOK, 70, 80, 45, 14
     PUSHBUTTON    "取消(&C)", IDCANCEL, 120, 80, 45, 14
 }
@@ -182,7 +183,7 @@ FONT 9, "MS Shell Dlg"
 {
     LTEXT   "界面", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "IID:", -1, 5, 16, 50, 8
+    LTEXT   "IID：", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON    "查看类型信息(&V)", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
@@ -193,9 +194,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "IPersist 界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "类别名称:", -1, 5, 6, 50, 8
+    LTEXT   "类别名称：", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "CLSID：", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
 }
@@ -205,9 +206,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "IPersistStream 界面查看器"
 FONT 9, "MS Shell Dlg"
 {
-    LTEXT   "类别名称:", -1, 5, 6, 50, 8
+    LTEXT   "类别名称：", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "CLSID：", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON "关闭(&C)", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON    "已修改(&I)", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
