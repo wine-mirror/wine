@@ -276,6 +276,11 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
     {
         if (chain->TrustStatus.dwErrorStatus)
         {
+            static const DWORD supportedErrors =
+                CERT_TRUST_IS_NOT_TIME_VALID |
+                CERT_TRUST_IS_UNTRUSTED_ROOT |
+                CERT_TRUST_IS_NOT_VALID_FOR_USAGE;
+
             if (chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID)
             {
                 if (!(security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
@@ -283,7 +288,10 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
             }
             else if (chain->TrustStatus.dwErrorStatus &
                      CERT_TRUST_IS_UNTRUSTED_ROOT)
-                err = ERROR_WINHTTP_SECURE_INVALID_CA;
+            {
+                if (!(security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
+                    err = ERROR_WINHTTP_SECURE_INVALID_CA;
+            }
             else if ((chain->TrustStatus.dwErrorStatus &
                       CERT_TRUST_IS_OFFLINE_REVOCATION) ||
                      (chain->TrustStatus.dwErrorStatus &
@@ -297,7 +305,7 @@ static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, HCERTSTORE store,
                 if (!(security_flags & SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE))
                     err = ERROR_WINHTTP_SECURE_CERT_WRONG_USAGE;
             }
-            else
+            else if (chain->TrustStatus.dwErrorStatus & ~supportedErrors)
                 err = ERROR_WINHTTP_SECURE_INVALID_CERT;
         }
         else
