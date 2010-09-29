@@ -1201,6 +1201,43 @@ static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD ret
 	    }
 	    break;
         }
+#ifdef MCI_INTEGER64
+	case MCI_INTEGER64:
+        {
+	    static const WCHAR fmt_ld [] = {'%','l','d',0};
+	    DWORD_PTR data = *(DWORD_PTR *)(params + 1);
+	    switch (dwRet & 0xFFFF0000ul) {
+	    case 0:
+	    case MCI_INTEGER_RETURNED:
+		snprintfW(lpstrRet, uRetLen, fmt_ld, data);
+		break;
+	    case MCI_RESOURCE_RETURNED:
+		/* return string which ID is HIWORD(data),
+		 * string is loaded from mmsystem.dll */
+		LoadStringW(hWinMM32Instance, HIWORD(data), lpstrRet, uRetLen);
+		break;
+	    case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
+		/* return string which ID is HIWORD(data),
+		 * string is loaded from driver */
+		/* FIXME: this is wrong for a 16 bit handle */
+		LoadStringW(GetDriverModuleHandle(wmd->hDriver),
+			    HIWORD(data), lpstrRet, uRetLen);
+		break;
+	    case MCI_COLONIZED3_RETURN:
+		snprintfW(lpstrRet, uRetLen, wszCol3,
+			  LOBYTE(LOWORD(data)), HIBYTE(LOWORD(data)),
+			  LOBYTE(HIWORD(data)));
+		break;
+	    case MCI_COLONIZED4_RETURN:
+		snprintfW(lpstrRet, uRetLen, wszCol4,
+			  LOBYTE(LOWORD(data)), HIBYTE(LOWORD(data)),
+			  LOBYTE(HIWORD(data)), HIBYTE(HIWORD(data)));
+		break;
+	    default:	ERR("Ooops (%04X)\n", HIWORD(dwRet));
+	    }
+	    break;
+        }
+#endif
 	case MCI_STRING:
 	    switch (dwRet & 0xFFFF0000ul) {
 	    case 0:
@@ -1421,6 +1458,11 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     case MCI_RECT:
         offset += 4 * sizeof(DWORD);
         break;
+#ifdef MCI_INTEGER64
+    case MCI_INTEGER64:
+	offset += sizeof(DWORD_PTR);
+        break;
+#endif
     default:
 	ERR("oops\n");
     }
