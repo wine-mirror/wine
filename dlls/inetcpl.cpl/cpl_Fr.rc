@@ -32,3 +32,18 @@ BEGIN
     IDS_CPL_NAME        "Paramètres Internet"
     IDS_CPL_INFO        "Configurer le navigateur internet de Wine et d'autres paramètres associés"
 END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Content"
+BEGIN
+
+    GROUPBOX    " Certificats ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Les certificats sont utilisés pour votre identification personnelle, celle d'autorités de certification ou d'éditeurs.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Certificats...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON	"Éditeurs...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
+END
