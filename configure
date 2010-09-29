@@ -15011,6 +15011,7 @@ wine_fn_config_program icinfo enable_icinfo install
 wine_fn_config_program iexplore enable_iexplore install
 wine_fn_config_program ipconfig enable_ipconfig install
 wine_fn_config_program lodctr enable_lodctr install
+wine_fn_config_program mofcomp enable_mofcomp install
 wine_fn_config_program mshta enable_mshta install
 wine_fn_config_program msiexec enable_msiexec installbin
 wine_fn_config_program net enable_net install

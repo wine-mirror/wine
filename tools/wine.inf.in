@@ -2588,7 +2588,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,mui,
 11,spool\drivers\color,
 11,spool\printers,
-11,wbem,
 10,,explorer.exe
 10,,hh.exe
 10,,notepad.exe
@@ -2599,6 +2598,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 12,,mountmgr.sys
 10,Microsoft.NET\Framework\v1.1.4322,ngen.exe
 10,Microsoft.NET\Framework\v2.0.50727,ngen.exe
+11,wbem,mofcomp.exe
 16422,Internet Explorer,iexplore.exe
 11,,*
 
