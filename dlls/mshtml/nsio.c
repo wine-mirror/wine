@@ -1707,32 +1707,26 @@ static nsresult NSAPI nsURI_GetPrePath(nsIURL *iface, nsACString *aPrePath)
 static nsresult NSAPI nsURI_GetScheme(nsIURL *iface, nsACString *aScheme)
 {
     nsWineURI *This = NSURI_THIS(iface);
+    DWORD scheme;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, aScheme);
 
-    if(This->use_wine_url) {
-        char scheme[INTERNET_MAX_SCHEME_LENGTH+1];
-        WCHAR *ptr;
-        int len;
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
 
-        ptr = strchrW(This->wine_url, ':');
-        if(!ptr) {
-            nsACString_SetData(aScheme, "wine");
-            return NS_OK;
-        }
+    hres = IUri_GetScheme(This->uri, &scheme);
+    if(FAILED(hres)) {
+        WARN("GetScheme failed: %08x\n", hres);
+        return NS_ERROR_UNEXPECTED;
+    }
 
-        len = WideCharToMultiByte(CP_ACP, 0, This->wine_url, ptr-This->wine_url, scheme,
-                sizeof(scheme), NULL, NULL);
-        scheme[min(len,sizeof(scheme)-1)] = 0;
-        nsACString_SetData(aScheme, strcmp(scheme, "about") ? scheme : "wine");
+    if(scheme == URL_SCHEME_ABOUT) {
+        nsACString_SetData(aScheme, "wine");
         return NS_OK;
     }
 
-    if(This->nsuri)
-        return nsIURI_GetScheme(This->nsuri, aScheme);
-
-    TRACE("returning error\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return get_uri_string(This, Uri_PROPERTY_SCHEME_NAME, aScheme);
 }
 
 static nsresult NSAPI nsURI_SetScheme(nsIURL *iface, const nsACString *aScheme)
