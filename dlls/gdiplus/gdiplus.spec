@@ -626,5 +626,5 @@
 @ stdcall GdipWindingModeOutline(ptr ptr float)
 @ stdcall GdiplusNotificationHook(ptr)
 @ stdcall GdiplusNotificationUnhook(ptr)
-@ stdcall GdiplusShutdown(ptr)
+@ stdcall GdiplusShutdown(ptr) GdiplusShutdown_wrapper
 @ stdcall GdiplusStartup(ptr ptr ptr)

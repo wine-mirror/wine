@@ -121,6 +121,14 @@ void WINAPI GdiplusShutdown(ULONG_PTR token)
     /* FIXME: no object tracking */
 }
 
+/* "bricksntiles" expects a return value of 0, which native coincidentally gives */
+ULONG WINAPI GdiplusShutdown_wrapper(ULONG_PTR token)
+{
+    GdiplusShutdown(token);
+
+    return 0;
+}
+
 /*****************************************************
  *      GdipAlloc [GDIPLUS.@]
  */
