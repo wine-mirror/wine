@@ -204,8 +204,6 @@ MSVCRT_wchar_t*** CDECL __p___wargv(void) { return &MSVCRT___wargv; }
  */
 char*** CDECL __p__environ(void)
 {
-  if (!MSVCRT__environ)
-    MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(NULL);
   return &MSVCRT__environ;
 }
 
@@ -214,8 +212,6 @@ char*** CDECL __p__environ(void)
  */
 MSVCRT_wchar_t*** CDECL __p__wenviron(void)
 {
-  if (!MSVCRT__wenviron)
-    MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
   return &MSVCRT__wenviron;
 }
 
@@ -311,9 +307,10 @@ void msvcrt_init_args(void)
   MSVCRT___setlc_active = 0;
   MSVCRT___unguarded_readlc_active = 0;
   MSVCRT__fmode = MSVCRT__O_TEXT;
-  
-  MSVCRT___initenv= msvcrt_SnapshotOfEnvironmentA(NULL);
-  MSVCRT___winitenv= msvcrt_SnapshotOfEnvironmentW(NULL);
+
+  MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(NULL);
+  MSVCRT___initenv = msvcrt_SnapshotOfEnvironmentA(NULL);
+  MSVCRT___winitenv = msvcrt_SnapshotOfEnvironmentW(NULL);
 
   MSVCRT__pgmptr = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
   if (MSVCRT__pgmptr)
@@ -368,6 +365,10 @@ void CDECL __wgetmainargs(int *argc, MSVCRT_wchar_t** *wargv, MSVCRT_wchar_t** *
                           int expand_wildcards, int *new_mode)
 {
   TRACE("(%p,%p,%p,%d,%p).\n", argc, wargv, wenvp, expand_wildcards, new_mode);
+
+  /* Initialize the _wenviron array if it's not already created. */
+  if (!MSVCRT__wenviron)
+    MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
   *argc = MSVCRT___argc;
   *wargv = MSVCRT___wargv;
   *wenvp = MSVCRT___winitenv;

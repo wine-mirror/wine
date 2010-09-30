@@ -42,6 +42,20 @@ static const char *a_very_long_env_string =
  "/usr/lib/mingw32/3.4.2/;"
  "/usr/lib/";
 
+void __cdecl __getmainargs(int *, char ***, char ***, int, int *);
+void __cdecl __wgetmainargs(int *, wchar_t ***, wchar_t ***, int, int *);
+
+static char ***p_environ;
+static WCHAR ***p_wenviron;
+
+static void init(void)
+{
+    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+
+    p_environ = (void *)GetProcAddress(hmod, "_environ");
+    p_wenviron = (void *)GetProcAddress(hmod, "_wenviron");
+}
+
 static void test_system(void)
 {
     int ret = system(NULL);
@@ -51,7 +65,112 @@ static void test_system(void)
     ok(ret == 0, "Expected system to return 0, got %d\n", ret);
 }
 
-START_TEST(environ)
+static void test__environ(void)
+{
+    int argc;
+    char **argv, **envp = NULL;
+    int i, mode = 0;
+
+    ok( p_environ != NULL, "Expected the pointer to _environ to be non-NULL\n" );
+    if (p_environ)
+        ok( *p_environ != NULL, "Expected _environ to be initialized on startup\n" );
+
+    if (!p_environ || !*p_environ)
+    {
+        skip( "_environ pointers are not valid\n" );
+        return;
+    }
+
+    /* Note that msvcrt from Windows versions older than Vista
+     * expects the mode pointer parameter to be valid.*/
+    __getmainargs(&argc, &argv, &envp, 0, &mode);
+
+    ok( envp != NULL, "Expected initial environment block pointer to be non-NULL\n" );
+    if (!envp)
+    {
+        skip( "Initial environment block pointer is not valid\n" );
+        return;
+    }
+
+    for (i = 0; ; i++)
+    {
+        if ((*p_environ)[i])
+        {
+            ok( envp[i] != NULL, "Expected environment block pointer element to be non-NULL\n" );
+            ok( !strcmp((*p_environ)[i], envp[i]),
+                "Expected _environ and environment block pointer strings (%s vs. %s) to match\n",
+                (*p_environ)[i], envp[i] );
+        }
+        else
+        {
+            ok( !envp[i], "Expected environment block pointer element to be NULL, got %p\n", envp[i] );
+            break;
+        }
+    }
+}
+
+static void test__wenviron(void)
+{
+    int argc;
+    char **argv, **envp = NULL;
+    WCHAR **wargv, **wenvp = NULL;
+    int i, mode = 0;
+
+    ok( p_wenviron != NULL, "Expected the pointer to _wenviron to be non-NULL\n" );
+    if (p_wenviron)
+        ok( *p_wenviron == NULL, "Expected _wenviron to be NULL, got %p\n", *p_wenviron );
+    else
+    {
+        skip( "Pointer to _wenviron is not valid\n" );
+        return;
+    }
+
+    /* __getmainargs doesn't initialize _wenviron. */
+    __getmainargs(&argc, &argv, &envp, 0, &mode);
+
+    ok( *p_wenviron == NULL, "Expected _wenviron to be NULL, got %p\n", *p_wenviron);
+    ok( envp != NULL, "Expected initial environment block pointer to be non-NULL\n" );
+    if (!envp)
+    {
+        skip( "Initial environment block pointer is not valid\n" );
+        return;
+    }
+
+    /* Neither does calling the non-Unicode environment manipulation functions. */
+    ok( _putenv("cat=dog") == 0, "failed setting cat=dog\n" );
+    ok( *p_wenviron == NULL, "Expected _wenviron to be NULL, got %p\n", *p_wenviron);
+    ok( _putenv("cat=") == 0, "failed deleting cat\n" );
+
+    /* _wenviron isn't initialized until __wgetmainargs is called or
+     * one of the Unicode environment manipulation functions is called. */
+    __wgetmainargs(&argc, &wargv, &wenvp, 0, &mode);
+
+    ok( *p_wenviron != NULL, "Expected _wenviron to be non-NULL\n" );
+    ok( wenvp != NULL, "Expected initial environment block pointer to be non-NULL\n" );
+    if (!wenvp)
+    {
+        skip( "Initial environment block pointer is not valid\n" );
+        return;
+    }
+
+    for (i = 0; ; i++)
+    {
+        if ((*p_wenviron)[i])
+        {
+            ok( wenvp[i] != NULL, "Expected environment block pointer element to be non-NULL\n" );
+            ok( !winetest_strcmpW((*p_wenviron)[i], wenvp[i]),
+                "Expected _wenviron and environment block pointer strings (%s vs. %s) to match\n",
+                wine_dbgstr_w((*p_wenviron)[i]), wine_dbgstr_w(wenvp[i]) );
+        }
+        else
+        {
+            ok( !wenvp[i], "Expected environment block pointer element to be NULL, got %p\n", wenvp[i] );
+            break;
+        }
+    }
+}
+
+static void test_environment_manipulation(void)
 {
     ok( _putenv("cat=") == 0, "_putenv failed on deletion of nonexistent environment variable\n" );
     ok( _putenv("cat=dog") == 0, "failed setting cat=dog\n" );
@@ -63,6 +182,16 @@ START_TEST(environ)
     ok( _putenv(a_very_long_env_string) == 0, "_putenv failed for long environment string\n");
 
     ok( getenv("nonexistent") == NULL, "getenv should fail with nonexistent var name\n" );
+}
 
+START_TEST(environ)
+{
+    init();
+
+    /* The environ tests should always be run first, as they assume
+     * that the process has not manipulated the environment. */
+    test__environ();
+    test__wenviron();
+    test_environment_manipulation();
     test_system();
 }

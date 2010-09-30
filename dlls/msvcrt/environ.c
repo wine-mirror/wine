@@ -104,9 +104,8 @@ int CDECL _putenv(const char *str)
  /* _putenv returns success on deletion of nonexistent variable, unlike [Rtl]SetEnvironmentVariable */
  if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
 
- /* Update the __p__environ array only when already initialized */
- if (MSVCRT__environ)
-   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
+ MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
+ /* Update the __p__wenviron array only when already initialized */
  if (MSVCRT__wenviron)
    MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
    
@@ -150,11 +149,8 @@ int CDECL _wputenv(const MSVCRT_wchar_t *str)
  /* _putenv returns success on deletion of nonexistent variable, unlike [Rtl]SetEnvironmentVariable */
  if ((ret == -1) && (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) ret = 0;
 
- /* Update the __p__environ array only when already initialized */
- if (MSVCRT__environ)
-   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
- if (MSVCRT__wenviron)
-   MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
+ MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
+ MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
 
 finish:
  HeapFree(GetProcessHeap(), 0, name);
