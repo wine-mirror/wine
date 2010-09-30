@@ -1690,19 +1690,26 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
     case INTERNET_OPTION_SECURITY_FLAGS:
     {
-        http_session_t *lpwhs;
-        lpwhs = req->lpHttpSession;
+        http_session_t *lpwhs = req->lpHttpSession;
+        DWORD flags;
+        int bits;
 
         if (*size < sizeof(ULONG))
             return ERROR_INSUFFICIENT_BUFFER;
 
         *size = sizeof(DWORD);
+        flags = 0;
         if (lpwhs->hdr.dwFlags & INTERNET_FLAG_SECURE)
-            *(DWORD*)buffer = SECURITY_FLAG_SECURE;
+            flags |= SECURITY_FLAG_SECURE;
+        flags |= req->netConnection.security_flags;
+        bits = NETCON_GetCipherStrength(&req->netConnection);
+        if (bits >= 128)
+            flags |= SECURITY_FLAG_STRENGTH_STRONG;
+        else if (bits >= 56)
+            flags |= SECURITY_FLAG_STRENGTH_MEDIUM;
         else
-            *(DWORD*)buffer = 0;
-        *(DWORD *)buffer |= req->netConnection.security_flags;
-        /* FIXME: set connection cipher strength (SECURITY_FLAG_STRENGTH_*) */
+            flags |= SECURITY_FLAG_STRENGTH_WEAK;
+        *(DWORD *)buffer = flags;
         return ERROR_SUCCESS;
     }
 
