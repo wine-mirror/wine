@@ -2568,6 +2568,188 @@ static void test_http_connection(void)
     CloseHandle(hThread);
 }
 
+static void test_secure_connection(void)
+{
+    static const WCHAR gizmo5[] = {'G','i','z','m','o','5',0};
+    static const WCHAR testbot[] = {'t','e','s','t','b','o','t','.','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR get[] = {'G','E','T',0};
+    static const WCHAR slash[] = {'/',0};
+    HINTERNET ses, con, req;
+    DWORD size, flags;
+    INTERNET_CERTIFICATE_INFOA *certificate_structA = NULL;
+    INTERNET_CERTIFICATE_INFOW *certificate_structW = NULL;
+    BOOL ret;
+
+    ses = InternetOpen("Gizmo5", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnect(ses, "testbot.winehq.org",
+                          INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL,
+                          INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequest(con, "GET", "/", NULL, NULL, NULL,
+                          INTERNET_FLAG_SECURE, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %d\n", GetLastError());
+
+    size = sizeof(flags);
+    ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
+    ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
+    todo_wine
+    ok(flags & SECURITY_FLAG_SECURE, "expected secure flag to be set\n");
+
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                               NULL, &size);
+    ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    certificate_structA = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                              certificate_structA, &size);
+    ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
+    if (ret)
+    {
+        ok(certificate_structA->lpszSubjectInfo &&
+           strlen(certificate_structA->lpszSubjectInfo) > 1,
+           "expected a non-empty subject name\n");
+        ok(certificate_structA->lpszIssuerInfo &&
+           strlen(certificate_structA->lpszIssuerInfo) > 1,
+           "expected a non-empty issuer name\n");
+        ok(!certificate_structA->lpszSignatureAlgName,
+           "unexpected signature algorithm name\n");
+        ok(!certificate_structA->lpszEncryptionAlgName,
+           "unexpected encryption algorithm name\n");
+        ok(!certificate_structA->lpszProtocolName,
+           "unexpected protocol name\n");
+        todo_wine
+        ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+    }
+    HeapFree(GetProcessHeap(), 0, certificate_structA);
+
+    /* Querying the same option through InternetQueryOptionW still results in
+     * ASCII strings being returned.
+     */
+    size = 0;
+    ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                               NULL, &size);
+    ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    certificate_structW = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                              certificate_structW, &size);
+    certificate_structA = (INTERNET_CERTIFICATE_INFOA *)certificate_structW;
+    ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
+    if (ret)
+    {
+        ok(certificate_structA->lpszSubjectInfo &&
+           strlen(certificate_structA->lpszSubjectInfo) > 1,
+           "expected a non-empty subject name\n");
+        ok(certificate_structA->lpszIssuerInfo &&
+           strlen(certificate_structA->lpszIssuerInfo) > 1,
+           "expected a non-empty issuer name\n");
+        ok(!certificate_structA->lpszSignatureAlgName,
+           "unexpected signature algorithm name\n");
+        ok(!certificate_structA->lpszEncryptionAlgName,
+           "unexpected encryption algorithm name\n");
+        ok(!certificate_structA->lpszProtocolName,
+           "unexpected protocol name\n");
+        todo_wine
+        ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+    }
+    HeapFree(GetProcessHeap(), 0, certificate_structW);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+
+    /* Repeating the tests with the W functions has the same result: */
+    ses = InternetOpenW(gizmo5, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnectW(ses, testbot,
+                          INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL,
+                          INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequestW(con, get, slash, NULL, NULL, NULL,
+                          INTERNET_FLAG_SECURE, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequest(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %d\n", GetLastError());
+
+    size = sizeof(flags);
+    ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
+    ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
+    todo_wine
+    ok(flags & SECURITY_FLAG_SECURE, "expected secure flag to be set\n");
+
+    ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                               NULL, &size);
+    ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    certificate_structA = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                               certificate_structA, &size);
+    ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
+    if (ret)
+    {
+        todo_wine
+        ok(certificate_structA->lpszSubjectInfo &&
+           strlen(certificate_structA->lpszSubjectInfo) > 1,
+           "expected a non-empty subject name\n");
+        todo_wine
+        ok(certificate_structA->lpszIssuerInfo &&
+           strlen(certificate_structA->lpszIssuerInfo) > 1,
+           "expected a non-empty issuer name\n");
+        ok(!certificate_structA->lpszSignatureAlgName,
+           "unexpected signature algorithm name\n");
+        ok(!certificate_structA->lpszEncryptionAlgName,
+           "unexpected encryption algorithm name\n");
+        ok(!certificate_structA->lpszProtocolName,
+           "unexpected protocol name\n");
+        todo_wine
+        ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+    }
+    HeapFree(GetProcessHeap(), 0, certificate_structA);
+
+    /* Again, querying the same option through InternetQueryOptionW still
+     * results in ASCII strings being returned.
+     */
+    size = 0;
+    ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                               NULL, &size);
+    ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    certificate_structW = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+                               certificate_structW, &size);
+    certificate_structA = (INTERNET_CERTIFICATE_INFOA *)certificate_structW;
+    ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
+    if (ret)
+    {
+        todo_wine
+        ok(certificate_structA->lpszSubjectInfo &&
+           strlen(certificate_structA->lpszSubjectInfo) > 1,
+           "expected a non-empty subject name\n");
+        todo_wine
+        ok(certificate_structA->lpszIssuerInfo &&
+           strlen(certificate_structA->lpszIssuerInfo) > 1,
+           "expected a non-empty issuer name\n");
+        ok(!certificate_structA->lpszSignatureAlgName,
+           "unexpected signature algorithm name\n");
+        ok(!certificate_structA->lpszEncryptionAlgName,
+           "unexpected encryption algorithm name\n");
+        ok(!certificate_structA->lpszProtocolName,
+           "unexpected protocol name\n");
+        todo_wine
+        ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
+    }
+    HeapFree(GetProcessHeap(), 0, certificate_structW);
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 static void test_user_agent_header(void)
 {
     HINTERNET ses, con, req;
@@ -3000,6 +3182,7 @@ START_TEST(http)
     InternetOpenUrlA_test();
     HttpHeaders_test();
     test_http_connection();
+    test_secure_connection();
     test_user_agent_header();
     test_bogus_accept_types_array();
     InternetReadFile_chunked_test();
