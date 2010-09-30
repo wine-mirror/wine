@@ -101,6 +101,7 @@ timeout_t server_start_time = 0;  /* time of server startup */
 
 sigset_t server_block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
+static pid_t server_pid;
 
 static RTL_CRITICAL_SECTION fd_cache_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -400,6 +401,13 @@ static int receive_fd( obj_handle_t *handle )
             {
                 if (cmsg->cmsg_level != SOL_SOCKET) continue;
                 if (cmsg->cmsg_type == SCM_RIGHTS) fd = *(int *)CMSG_DATA(cmsg);
+#ifdef SCM_CREDENTIALS
+                else if (cmsg->cmsg_type == SCM_CREDENTIALS)
+                {
+                    struct ucred *ucred = (struct ucred *)CMSG_DATA(cmsg);
+                    server_pid = ucred->pid;
+                }
+#endif
             }
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
             if (fd != -1) fcntl( fd, F_SETFD, FD_CLOEXEC ); /* in case MSG_CMSG_CLOEXEC is not supported */
@@ -958,6 +966,7 @@ void server_init_process(void)
     obj_handle_t version;
     const char *env_socket = getenv( "WINESERVERSOCKET" );
 
+    server_pid = -1;
     if (env_socket)
     {
         fd_socket = atoi( env_socket );
@@ -979,6 +988,17 @@ void server_init_process(void)
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
     /* receive the first thread request fd on the main socket */
+#ifdef SO_PASSCRED
+    if (server_pid == -1)
+    {
+        int enable = 1;
+        setsockopt( fd_socket, SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
+        ntdll_get_thread_data()->request_fd = receive_fd( &version );
+        enable = 0;
+        setsockopt( fd_socket, SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
+    }
+    else
+#endif
     ntdll_get_thread_data()->request_fd = receive_fd( &version );
 
     if (version != SERVER_PROTOCOL_VERSION)
