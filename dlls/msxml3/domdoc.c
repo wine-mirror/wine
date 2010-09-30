@@ -1911,8 +1911,13 @@ static HRESULT WINAPI domdoc_get_readyState(
     LONG *value )
 {
     domdoc *This = impl_from_IXMLDOMDocument3(iface);
-    FIXME("(%p)->(%p)\n", This, value);
-    return E_NOTIMPL;
+    FIXME("stub! (%p)->(%p)\n", This, value);
+
+    if (!value)
+        return E_INVALIDARG;
+
+    *value = READYSTATE_COMPLETE;
+    return S_OK;
 }
 
 

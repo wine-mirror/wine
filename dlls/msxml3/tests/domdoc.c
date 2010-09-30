@@ -3028,21 +3028,28 @@ static void test_IXMLDOMDocument2(void)
     VARIANT_BOOL b;
     VARIANT var;
     HRESULT r;
-    LONG ref;
+    LONG ref, res;
     BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
+    r = IXMLDOMDocument_QueryInterface( doc, &IID_IXMLDOMDocument2, (void**)&doc2 );
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( doc == (IXMLDOMDocument*)doc2, "interfaces differ\n");
+
+    ole_expect(IXMLDOMDocument2_get_readyState(doc2, NULL), E_INVALIDARG);
+    ole_check(IXMLDOMDocument2_get_readyState(doc2, &res));
+    ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
+
     str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc2, str, &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    r = IXMLDOMDocument_QueryInterface( doc, &IID_IXMLDOMDocument2, (void**)&doc2 );
-    ok( r == S_OK, "ret %08x\n", r );
-    ok( doc == (IXMLDOMDocument*)doc2, "interfaces differ\n");
+    ole_check(IXMLDOMDocument2_get_readyState(doc, &res));
+    ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
 
     r = IXMLDOMDocument_QueryInterface( doc, &IID_IDispatchEx, (void**)&dispex );
     ok( r == S_OK, "ret %08x\n", r );
