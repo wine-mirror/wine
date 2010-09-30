@@ -41,6 +41,8 @@ static const WCHAR MethodGetW[] = {'G','E','T',0};
 static const WCHAR MethodPutW[] = {'P','U','T',0};
 static const WCHAR MethodPostW[] = {'P','O','S','T',0};
 
+typedef struct BindStatusCallback BindStatusCallback;
+
 struct reqheader
 {
     struct list entry;
@@ -57,7 +59,7 @@ enum READYSTATE
     STATE_COMPLETED     = 4
 };
 
-typedef struct _httprequest
+typedef struct
 {
     const struct IXMLHTTPRequestVtbl *lpVtbl;
     LONG ref;
@@ -73,11 +75,313 @@ typedef struct _httprequest
     /* credentials */
     BSTR user;
     BSTR password;
+
+    /* bind callback */
+    BindStatusCallback *bsc;
 } httprequest;
 
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
 {
     return (httprequest *)((char*)iface - FIELD_OFFSET(httprequest, lpVtbl));
+}
+
+struct BindStatusCallback
+{
+    const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
+    const IHttpNegotiateVtbl      *lpHttpNegotiateVtbl;
+    LONG ref;
+
+    IBinding *binding;
+    const httprequest *request;
+};
+
+static inline BindStatusCallback *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
+{
+    return (BindStatusCallback *)((char*)iface - FIELD_OFFSET(BindStatusCallback, lpBindStatusCallbackVtbl));
+}
+
+static inline BindStatusCallback *impl_from_IHttpNegotiate( IHttpNegotiate *iface )
+{
+    return (BindStatusCallback *)((char*)iface - FIELD_OFFSET(BindStatusCallback, lpHttpNegotiateVtbl));
+}
+
+void BindStatusCallback_Detach(BindStatusCallback *bsc)
+{
+    if (bsc)
+    {
+        if (bsc->binding) IBinding_Abort(bsc->binding);
+        bsc->request = NULL;
+        IBindStatusCallback_Release((IBindStatusCallback*)bsc);
+    }
+}
+
+static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *iface,
+        REFIID riid, void **ppv)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    *ppv = NULL;
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(&IID_IUnknown, riid) ||
+        IsEqualGUID(&IID_IBindStatusCallback, riid))
+    {
+        *ppv = &This->lpBindStatusCallbackVtbl;
+    }
+    else if (IsEqualGUID(&IID_IServiceProvider, riid) ||
+             IsEqualGUID(&IID_IBindStatusCallbackEx, riid))
+    {
+        return E_NOINTERFACE;
+    }
+
+    if (*ppv)
+    {
+        IBindStatusCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    FIXME("Unsupported riid = %s\n", debugstr_guid(riid));
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI BindStatusCallback_AddRef(IBindStatusCallback *iface)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref = %d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref = %d\n", This, ref);
+
+    if (!ref)
+    {
+        if (This->binding) IBinding_Release(This->binding);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *iface,
+        DWORD reserved, IBinding *pbind)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%d %p)\n", This, reserved, pbind);
+
+    if (!pbind) return E_INVALIDARG;
+
+    This->binding = pbind;
+    IBinding_AddRef(pbind);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_GetPriority(IBindStatusCallback *iface, LONG *pPriority)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%p)\n", This, pPriority);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnLowResource(IBindStatusCallback *iface, DWORD reserved)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%d)\n", This, reserved);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, ULONG ulProgress,
+        ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("%p)->(%u %u %u %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
+            debugstr_w(szStatusText));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *iface,
+        HRESULT hr, LPCWSTR error)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(0x%08x %s)\n", This, hr, debugstr_w(error));
+
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
+        DWORD *bind_flags, BINDINFO *pbindinfo)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    TRACE("(%p)->(%p %p)\n", This, bind_flags, pbindinfo);
+
+    *bind_flags = 0;
+    if (This->request->async) *bind_flags |= BINDF_ASYNCHRONOUS;
+
+    if (This->request->verb != BINDVERB_GET)
+    {
+        FIXME("only GET verb supported. Got %d\n", This->request->verb);
+        return E_FAIL;
+    }
+
+    pbindinfo->dwBindVerb = This->request->verb;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *iface,
+        DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    FIXME("(%p)->(%08x %d %p %p): stub\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
+        REFIID riid, IUnknown *punk)
+{
+    BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), punk);
+
+    return E_NOTIMPL;
+}
+
+#undef STATUSCLB_THIS
+
+static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
+    BindStatusCallback_QueryInterface,
+    BindStatusCallback_AddRef,
+    BindStatusCallback_Release,
+    BindStatusCallback_OnStartBinding,
+    BindStatusCallback_GetPriority,
+    BindStatusCallback_OnLowResource,
+    BindStatusCallback_OnProgress,
+    BindStatusCallback_OnStopBinding,
+    BindStatusCallback_GetBindInfo,
+    BindStatusCallback_OnDataAvailable,
+    BindStatusCallback_OnObjectAvailable
+};
+
+static HRESULT WINAPI BSCHttpNegotiate_QueryInterface(IHttpNegotiate *iface,
+        REFIID riid, void **ppv)
+{
+    BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
+    return IBindStatusCallback_QueryInterface((IBindStatusCallback*)This, riid, ppv);
+}
+
+static ULONG WINAPI BSCHttpNegotiate_AddRef(IHttpNegotiate *iface)
+{
+    BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
+    return IBindStatusCallback_AddRef((IBindStatusCallback*)This);
+}
+
+static ULONG WINAPI BSCHttpNegotiate_Release(IHttpNegotiate *iface)
+{
+    BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
+    return IBindStatusCallback_Release((IBindStatusCallback*)This);
+}
+
+static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
+        LPCWSTR url, LPCWSTR headers, DWORD reserved, LPWSTR *add_headers)
+{
+    BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
+
+    FIXME("(%p)->(%s %s %d %p): stub\n", This, debugstr_w(url), debugstr_w(headers), reserved, add_headers);
+
+    *add_headers = NULL;
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD code,
+        LPCWSTR resp_headers, LPCWSTR req_headers, LPWSTR *add_reqheaders)
+{
+    BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
+
+    TRACE("(%p)->(%d %s %s %p)\n", This, code, debugstr_w(resp_headers),
+          debugstr_w(req_headers), add_reqheaders);
+
+    return S_OK;
+}
+
+#undef HTTPNEG2_THIS
+
+static const IHttpNegotiateVtbl BSCHttpNegotiateVtbl = {
+    BSCHttpNegotiate_QueryInterface,
+    BSCHttpNegotiate_AddRef,
+    BSCHttpNegotiate_Release,
+    BSCHttpNegotiate_BeginningTransaction,
+    BSCHttpNegotiate_OnResponse
+};
+
+static HRESULT BindStatusCallback_create(const httprequest* This, BindStatusCallback **obj)
+{
+    BindStatusCallback *bsc;
+    IBindCtx *pbc;
+    HRESULT hr;
+
+    hr = CreateBindCtx(0, &pbc);
+    if (hr != S_OK) return hr;
+
+    bsc = heap_alloc(sizeof(*bsc));
+    if (!bsc)
+    {
+        IBindCtx_Release(pbc);
+        return E_OUTOFMEMORY;
+    }
+
+    bsc->lpBindStatusCallbackVtbl = &BindStatusCallbackVtbl;
+    bsc->lpHttpNegotiateVtbl = &BSCHttpNegotiateVtbl;
+    bsc->ref = 1;
+    bsc->request = This;
+    bsc->binding = NULL;
+
+    hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)bsc, NULL, 0);
+    if (hr == S_OK)
+    {
+        IMoniker *moniker;
+
+        hr = CreateURLMoniker(NULL, This->url, &moniker);
+        if (hr == S_OK)
+        {
+            IStream *stream;
+
+            hr = IMoniker_BindToStorage(moniker, pbc, NULL, &IID_IStream, (void**)&stream);
+            IMoniker_Release(moniker);
+            if (stream) IStream_Release(stream);
+        }
+        IBindCtx_Release(pbc);
+    }
+
+    if (FAILED(hr))
+    {
+        IBindStatusCallback_Release((IBindStatusCallback*)bsc);
+        bsc = NULL;
+    }
+
+    *obj = bsc;
+    return hr;
 }
 
 /* TODO: process OnChange callback */
@@ -111,15 +415,18 @@ static HRESULT WINAPI httprequest_QueryInterface(IXMLHTTPRequest *iface, REFIID 
 static ULONG WINAPI httprequest_AddRef(IXMLHTTPRequest *iface)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%u)\n", This, ref );
+    return ref;
 }
 
 static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p)->(%u)\n", This, ref );
+
     if ( ref == 0 )
     {
         struct reqheader *header, *header2;
@@ -135,6 +442,9 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
             SysFreeString(header->header);
             SysFreeString(header->value);
         }
+
+        /* detach callback object */
+        BindStatusCallback_Detach(This->bsc);
 
         heap_free( This );
     }
@@ -319,10 +629,20 @@ static HRESULT WINAPI httprequest_getAllResponseHeaders(IXMLHTTPRequest *iface, 
 static HRESULT WINAPI httprequest_send(IXMLHTTPRequest *iface, VARIANT varBody)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    BindStatusCallback *bsc = NULL;
+    HRESULT hr;
 
-    FIXME("stub (%p)\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    if (This->state != STATE_LOADING) return E_FAIL;
+
+    hr = BindStatusCallback_create(This, &bsc);
+    if (FAILED(hr)) return hr;
+
+    BindStatusCallback_Detach(This->bsc);
+    This->bsc = bsc;
+
+    return hr;
 }
 
 static HRESULT WINAPI httprequest_abort(IXMLHTTPRequest *iface)
@@ -434,7 +754,7 @@ static const struct IXMLHTTPRequestVtbl dimimpl_vtbl =
     httprequest_put_onreadystatechange
 };
 
-HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
 {
     httprequest *req;
     HRESULT hr = S_OK;
@@ -452,6 +772,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     req->verb = -1;
     req->url = req->user = req->password = NULL;
     req->state = STATE_UNINITIALIZED;
+    req->bsc = NULL;
     list_init(&req->reqheaders);
 
     *ppObj = &req->lpVtbl;
@@ -463,7 +784,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 #else
 
-HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
 {
     MESSAGE("This program tried to use a XMLHTTPRequest object, but\n"
             "libxml2 support was not present at compile time.\n");

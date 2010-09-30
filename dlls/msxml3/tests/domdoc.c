@@ -2883,10 +2883,13 @@ static void test_removeNamedItem(void)
 static void test_XMLHTTP(void)
 {
     static const WCHAR wszBody[] = {'m','o','d','e','=','T','e','s','t',0};
-    static WCHAR wszPOST[] = {'P','O','S','T',0};
-    static WCHAR wszUrl[] = {'h','t','t','p',':','/','/',
+    static const WCHAR wszPOST[] = {'P','O','S','T',0};
+    static const WCHAR wszUrl[] = {'h','t','t','p',':','/','/',
         'c','r','o','s','s','o','v','e','r','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
         'p','o','s','t','t','e','s','t','.','p','h','p',0};
+    static const WCHAR xmltestW[] = {'h','t','t','p',':','/','/',
+        'c','r','o','s','s','o','v','e','r','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
+        'x','m','l','t','e','s','t','.','x','m','l',0};
     static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
     IXMLHttpRequest *pXMLHttpRequest;
     BSTR bstrResponse, method, url;
@@ -2914,6 +2917,10 @@ static void test_XMLHTTP(void)
 
     method = SysAllocString(wszPOST);
     url = SysAllocString(wszUrl);
+
+    /* send before open */
+    hr = IXMLHttpRequest_send(pXMLHttpRequest, dummy);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
 
     /* invalid parameters */
     hr = IXMLHttpRequest_open(pXMLHttpRequest, NULL, NULL, async, dummy, dummy);
@@ -2973,6 +2980,10 @@ static void test_XMLHTTP(void)
         return;
     }
     todo_wine ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+
     VariantClear(&varbody);
 
     hr = IXMLHttpRequest_get_responseText(pXMLHttpRequest, &bstrResponse);
@@ -2984,6 +2995,25 @@ static void test_XMLHTTP(void)
         ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)), "bstrResponse differs from what was expected\n");
         SysFreeString(bstrResponse);
     }
+
+    /* GET request */
+    url = SysAllocString(xmltestW);
+
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, _bstr_("GET"), url, async, dummy, dummy);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&varbody) = VT_EMPTY;
+
+    hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
+    if (hr == INET_E_RESOURCE_NOT_FOUND)
+    {
+        skip("No connection could be made with crossover.codeweavers.com\n");
+        IXMLHttpRequest_Release(pXMLHttpRequest);
+        return;
+    }
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SysFreeString(url);
 
     IXMLHttpRequest_Release(pXMLHttpRequest);
     free_bstrs();
