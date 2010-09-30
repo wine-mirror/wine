@@ -430,6 +430,10 @@ static void sync_window_cursor( struct x11drv_win_data *data )
     SERVER_END_REQ;
 
     set_window_cursor( data->hwnd, cursor );
+
+    /* setting the cursor can fail if the window isn't created yet */
+    /* so make sure that we try again once we receive a mouse event */
+    data->cursor = (HANDLE)~0u;
 }
 
 
