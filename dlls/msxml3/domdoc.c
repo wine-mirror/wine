@@ -288,6 +288,38 @@ xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc)
     return node;
 }
 
+static inline BOOL strn_isspace(xmlChar const* str, int len)
+{
+    for (; str && len > 0 && *str; ++str, --len)
+        if (!isspace(*str))
+            break;
+
+    return len == 0;
+}
+
+static void sax_characters(void *ctx, const xmlChar *ch, int len)
+{
+    xmlParserCtxtPtr pctx;
+    domdoc const* This;
+
+    pctx = (xmlParserCtxtPtr) ctx;
+    This = (domdoc const*) pctx->_private;
+
+    if (!This->preserving)
+    {
+        xmlChar* ws = xmlGetNsProp(pctx->node, BAD_CAST "space", XML_XML_NAMESPACE);
+        if ((!ws || xmlStrcmp(ws, BAD_CAST "preserve") != 0) &&
+            strn_isspace(ch, len))
+        {
+            xmlFree(ws);
+            return;
+        }
+        xmlFree(ws);
+    }
+
+    xmlSAX2Characters(ctx, ch, len);
+}
+
 static xmlDocPtr doparse(domdoc* This, char *ptr, int len)
 {
     xmlDocPtr doc;
@@ -309,8 +341,8 @@ static xmlDocPtr doparse(domdoc* This, char *ptr, int len)
         xmlSAX2StartElement,            /* startElement */
         xmlSAX2EndElement,              /* endElement */
         xmlSAX2Reference,               /* reference */
-        xmlSAX2Characters,              /* characters */
-        NULL,                           /* TODO: ignorableWhitespace */
+        sax_characters,                 /* characters */
+        sax_characters,                 /* ignorableWhitespace */
         xmlSAX2ProcessingInstruction,   /* processingInstruction */
         xmlSAX2Comment,                 /* comment */
         NULL,                           /* TODO: warning */

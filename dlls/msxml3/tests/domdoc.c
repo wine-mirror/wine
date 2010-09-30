@@ -112,6 +112,9 @@ static const CHAR szExampleXML[] =
 "            <html xmlns='http://www.w3.org/1999/xhtml'>\n"
 "                This is <strong>a</strong> <i>description</i>. <bar:x/>\n"
 "            </html>\n"
+"            <html xml:space='preserve' xmlns='http://www.w3.org/1999/xhtml'>\n"
+"                This is <strong>a</strong> <i>description</i> with preserved whitespace. <bar:x/>\n"
+"            </html>\n"
 "        </description>\n"
 "    </elem>\n"
 "\n"
@@ -376,6 +379,9 @@ static void get_str_for_type(DOMNodeType type, char *buf)
             break;
         case NODE_DOCUMENT:
             strcpy(buf, "D");
+            break;
+        case NODE_TEXT:
+            strcpy(buf, "T");
             break;
         default:
             wsprintfA(buf, "[%d]", type);
@@ -3064,6 +3070,120 @@ static void test_IXMLDOMDocument2(void)
     free_bstrs();
 }
 
+static inline void check_ws_ignored(IXMLDOMDocument2* doc)
+{
+    IXMLDOMNode *node1, *node2;
+    IXMLDOMNodeList *list;
+
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//*[local-name()='html']"), &list));
+    ole_check(IXMLDOMNodeList_get_item(list, 0, &node1));
+    ole_check(IXMLDOMNodeList_get_item(list, 1, &node2));
+    ole_check(IXMLDOMNodeList_reset(list));
+    expect_list_and_release(list, "E1.E4.E1.E2.D1 E2.E4.E1.E2.D1");
+
+    ole_check(IXMLDOMNode_get_childNodes(node1, &list));
+    expect_list_and_release(list, "T1.E1.E4.E1.E2.D1 E2.E1.E4.E1.E2.D1 E3.E1.E4.E1.E2.D1 T4.E1.E4.E1.E2.D1 E5.E1.E4.E1.E2.D1");
+    IXMLDOMNode_Release(node1);
+    ole_check(IXMLDOMNode_get_childNodes(node2, &list));
+    expect_list_and_release(list, "T1.E2.E4.E1.E2.D1 E2.E2.E4.E1.E2.D1 T3.E2.E4.E1.E2.D1 E4.E2.E4.E1.E2.D1 T5.E2.E4.E1.E2.D1 E6.E2.E4.E1.E2.D1 T7.E2.E4.E1.E2.D1");
+    IXMLDOMNode_Release(node2);
+}
+
+static inline void check_ws_preserved(IXMLDOMDocument2* doc)
+{
+    IXMLDOMNode *node1, *node2;
+    IXMLDOMNodeList *list;
+
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//*[local-name()='html']"), &list));
+    ole_check(IXMLDOMNodeList_get_item(list, 0, &node1));
+    ole_check(IXMLDOMNodeList_get_item(list, 1, &node2));
+    ole_check(IXMLDOMNodeList_reset(list));
+    expect_list_and_release(list, "E2.E8.E2.E2.D1 E4.E8.E2.E2.D1");
+
+    ole_check(IXMLDOMNode_get_childNodes(node1, &list));
+    expect_list_and_release(list, "T1.E2.E8.E2.E2.D1 E2.E2.E8.E2.E2.D1 T3.E2.E8.E2.E2.D1 E4.E2.E8.E2.E2.D1 T5.E2.E8.E2.E2.D1 E6.E2.E8.E2.E2.D1 T7.E2.E8.E2.E2.D1");
+    IXMLDOMNode_Release(node1);
+    ole_check(IXMLDOMNode_get_childNodes(node2, &list));
+    expect_list_and_release(list, "T1.E4.E8.E2.E2.D1 E2.E4.E8.E2.E2.D1 T3.E4.E8.E2.E2.D1 E4.E4.E8.E2.E2.D1 T5.E4.E8.E2.E2.D1 E6.E4.E8.E2.E2.D1 T7.E4.E8.E2.E2.D1");
+    IXMLDOMNode_Release(node2);
+}
+
+static void test_whitespace(void)
+{
+    VARIANT_BOOL b;
+    IXMLDOMDocument2 *doc1, *doc2, *doc3, *doc4;
+
+    doc1 = create_document(&IID_IXMLDOMDocument2);
+    doc2 = create_document(&IID_IXMLDOMDocument2);
+    if (!doc1 || !doc2) return;
+
+    ole_check(IXMLDOMDocument2_put_preserveWhiteSpace(doc2, VARIANT_TRUE));
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc1, &b));
+    ok(b == VARIANT_FALSE, "expected false\n");
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc2, &b));
+    ok(b == VARIANT_TRUE, "expected true\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(doc1, _bstr_(szExampleXML), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+    ole_check(IXMLDOMDocument2_loadXML(doc2, _bstr_(szExampleXML), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    /* switch to XPath */
+    ole_check(IXMLDOMDocument2_setProperty(doc1, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
+    ole_check(IXMLDOMDocument2_setProperty(doc2, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
+
+    check_ws_ignored(doc1);
+    check_ws_preserved(doc2);
+
+    /* new instances copy the property */
+    ole_check(IXMLDOMDocument2_QueryInterface(doc1, &IID_IXMLDOMDocument2, (void**) &doc3));
+    ole_check(IXMLDOMDocument2_QueryInterface(doc2, &IID_IXMLDOMDocument2, (void**) &doc4));
+
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc3, &b));
+    ok(b == VARIANT_FALSE, "expected false\n");
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc4, &b));
+    ok(b == VARIANT_TRUE, "expected true\n");
+
+    check_ws_ignored(doc3);
+    check_ws_preserved(doc4);
+
+    /* setting after loading xml does nothing */
+    ole_check(IXMLDOMDocument2_put_preserveWhiteSpace(doc1, VARIANT_TRUE));
+    ole_check(IXMLDOMDocument2_put_preserveWhiteSpace(doc2, VARIANT_FALSE));
+
+    check_ws_ignored(doc1);
+    check_ws_preserved(doc2);
+
+    /* it takes effect on reload */
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc1, &b));
+    ok(b == VARIANT_TRUE, "expected true\n");
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc2, &b));
+    ok(b == VARIANT_FALSE, "expected false\n");
+
+    ole_check(IXMLDOMDocument2_loadXML(doc1, _bstr_(szExampleXML), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+    ole_check(IXMLDOMDocument2_loadXML(doc2, _bstr_(szExampleXML), &b));
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    check_ws_preserved(doc1);
+    check_ws_ignored(doc2);
+
+    /* other instances follow suit */
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc3, &b));
+    ok(b == VARIANT_TRUE, "expected true\n");
+    ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc4, &b));
+    ok(b == VARIANT_FALSE, "expected false\n");
+
+    check_ws_preserved(doc3);
+    check_ws_ignored(doc4);
+
+    IXMLDOMDocument_Release(doc1);
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMDocument_Release(doc3);
+    IXMLDOMDocument_Release(doc4);
+    free_bstrs();
+}
+
 static void test_XPath(void)
 {
     VARIANT var;
@@ -3159,13 +3279,7 @@ static void test_XPath(void)
     ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//test:c"), &list));
     expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
     ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_(".//test:x"), &list));
-    {
-        char *str = list_to_string(list);
-        /* it's the correct node, just the wrong index due to whitespace-only nodes */
-        todo_wine ok(strcmp(str, "E5.E1.E4.E1.E2.D1")==0, "Invalid node list: %s, expected %s\n", str, "E5.E1.E4.E1.E2.D1");
-        if (list)
-            IXMLDOMNodeList_Release(list);
-    }
+    expect_list_and_release(list, "E5.E1.E4.E1.E2.D1 E6.E2.E4.E1.E2.D1");
 
     /* SelectionNamespaces syntax error - the namespaces doesn't work anymore but the value is stored */
     ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
@@ -6178,6 +6292,7 @@ START_TEST(domdoc)
     test_replaceChild();
     test_removeNamedItem();
     test_IXMLDOMDocument2();
+    test_whitespace();
     test_XPath();
     test_XSLPattern();
     test_cloneNode();
