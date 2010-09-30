@@ -97,20 +97,6 @@ static const enum cpu_type client_cpu = CPU_SPARC;
 unsigned int server_cpus = 0;
 int is_wow64 = FALSE;
 
-#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-/* data structure used to pass an fd with sendmsg/recvmsg */
-struct cmsg_fd
-{
-    struct
-    {
-        size_t len;   /* size of structure */
-        int    level; /* SOL_SOCKET */
-        int    type;  /* SCM_RIGHTS */
-    } header;
-    int fd;          /* fd to pass */
-};
-#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
-
 timeout_t server_start_time = 0;  /* time of server startup */
 
 sigset_t server_block_set;  /* signals to block during server calls */
@@ -332,34 +318,35 @@ void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sig
  */
 void CDECL wine_server_send_fd( int fd )
 {
-#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-    struct cmsg_fd cmsg;
-#endif
     struct send_fd data;
     struct msghdr msghdr;
     struct iovec vec;
     int ret;
 
-    vec.iov_base = (void *)&data;
-    vec.iov_len  = sizeof(data);
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+    msghdr.msg_accrights    = (void *)&fd;
+    msghdr.msg_accrightslen = sizeof(fd);
+#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
+    char cmsg_buffer[256];
+    struct cmsghdr *cmsg;
+    msghdr.msg_control    = cmsg_buffer;
+    msghdr.msg_controllen = sizeof(cmsg_buffer);
+    msghdr.msg_flags      = 0;
+    cmsg = CMSG_FIRSTHDR( &msghdr );
+    cmsg->cmsg_len   = CMSG_LEN( sizeof(fd) );
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type  = SCM_RIGHTS;
+    *(int *)CMSG_DATA(cmsg) = fd;
+    msghdr.msg_controllen = cmsg->cmsg_len;
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
 
-#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-    msghdr.msg_accrights    = (void *)&fd;
-    msghdr.msg_accrightslen = sizeof(fd);
-#else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
-    cmsg.header.len   = sizeof(cmsg.header) + sizeof(fd);
-    cmsg.header.level = SOL_SOCKET;
-    cmsg.header.type  = SCM_RIGHTS;
-    cmsg.fd           = fd;
-    msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
-    msghdr.msg_flags      = 0;
-#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
+    vec.iov_base = (void *)&data;
+    vec.iov_len  = sizeof(data);
 
     data.tid = GetCurrentThreadId();
     data.fd  = fd;
@@ -383,24 +370,16 @@ void CDECL wine_server_send_fd( int fd )
 static int receive_fd( obj_handle_t *handle )
 {
     struct iovec vec;
-    int ret, fd;
+    struct msghdr msghdr;
+    int ret, fd = -1;
 
 #ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-    struct msghdr msghdr;
-
-    fd = -1;
     msghdr.msg_accrights    = (void *)&fd;
     msghdr.msg_accrightslen = sizeof(fd);
 #else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
-    struct msghdr msghdr;
-    struct cmsg_fd cmsg;
-
-    cmsg.header.len   = sizeof(cmsg.header) + sizeof(fd);
-    cmsg.header.level = SOL_SOCKET;
-    cmsg.header.type  = SCM_RIGHTS;
-    cmsg.fd           = -1;
-    msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
+    char cmsg_buffer[256];
+    msghdr.msg_control    = cmsg_buffer;
+    msghdr.msg_controllen = sizeof(cmsg_buffer);
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
@@ -416,8 +395,13 @@ static int receive_fd( obj_handle_t *handle )
         if ((ret = recvmsg( fd_socket, &msghdr, MSG_CMSG_CLOEXEC )) > 0)
         {
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-            fd = cmsg.fd;
-#endif
+            struct cmsghdr *cmsg;
+            for (cmsg = CMSG_FIRSTHDR( &msghdr ); cmsg; cmsg = CMSG_NXTHDR( &msghdr, cmsg ))
+            {
+                if (cmsg->cmsg_level != SOL_SOCKET) continue;
+                if (cmsg->cmsg_type == SCM_RIGHTS) fd = *(int *)CMSG_DATA(cmsg);
+            }
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
             if (fd != -1) fcntl( fd, F_SETFD, FD_CLOEXEC ); /* in case MSG_CMSG_CLOEXEC is not supported */
             return fd;
         }

@@ -126,23 +126,6 @@ int config_dir_fd = -1;    /* file descriptor for the config dir */
 static struct master_socket *master_socket;  /* the master socket object */
 static struct timeout_user *master_timeout;
 
-/* socket communication static structures */
-static struct iovec myiovec;
-static struct msghdr msghdr;
-#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-struct cmsg_fd
-{
-    struct
-    {
-        size_t len;   /* size of structure */
-        int    level; /* SOL_SOCKET */
-        int    type;  /* SCM_RIGHTS */
-    } header;
-    int fd;           /* fd to pass */
-};
-static struct cmsg_fd cmsg = { { sizeof(cmsg.header) + sizeof(cmsg.fd), SOL_SOCKET, SCM_RIGHTS }, -1 };
-#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
-
 /* complain about a protocol error and terminate the client connection */
 void fatal_protocol_error( struct thread *thread, const char *err, ... )
 {
@@ -359,25 +342,41 @@ error:
 /* receive a file descriptor on the process socket */
 int receive_fd( struct process *process )
 {
+    struct iovec vec;
     struct send_fd data;
-    int fd, ret;
+    struct msghdr msghdr;
+    int fd = -1, ret;
 
 #ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(int);
     msghdr.msg_accrights = (void *)&fd;
 #else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
-    msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
-    cmsg.fd = -1;
+    char cmsg_buffer[256];
+    msghdr.msg_control    = cmsg_buffer;
+    msghdr.msg_controllen = sizeof(cmsg_buffer);
+    msghdr.msg_flags      = 0;
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
-    myiovec.iov_base = (void *)&data;
-    myiovec.iov_len  = sizeof(data);
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = &vec;
+    msghdr.msg_iovlen  = 1;
+    vec.iov_base = (void *)&data;
+    vec.iov_len  = sizeof(data);
 
     ret = recvmsg( get_unix_fd( process->msg_fd ), &msghdr, 0 );
+
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-    fd = cmsg.fd;
-#endif
+    if (ret > 0)
+    {
+        struct cmsghdr *cmsg;
+        for (cmsg = CMSG_FIRSTHDR( &msghdr ); cmsg; cmsg = CMSG_NXTHDR( &msghdr, cmsg ))
+        {
+            if (cmsg->cmsg_level != SOL_SOCKET) continue;
+            if (cmsg->cmsg_type == SCM_RIGHTS) fd = *(int *)CMSG_DATA(cmsg);
+        }
+    }
+#endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
     if (ret == sizeof(data))
     {
@@ -412,6 +411,7 @@ int receive_fd( struct process *process )
     {
         fprintf( stderr, "Protocol error: process %04x: partial recvmsg %d for fd\n",
                  process->id, ret );
+        if (fd != -1) close( fd );
         kill_process( process, 1 );
     }
     else
@@ -429,23 +429,37 @@ int receive_fd( struct process *process )
 /* send an fd to a client */
 int send_client_fd( struct process *process, int fd, obj_handle_t handle )
 {
+    struct iovec vec;
+    struct msghdr msghdr;
     int ret;
-
-    if (debug_level)
-        fprintf( stderr, "%04x: *fd* %04x -> %d\n",
-                 current ? current->id : process->id, handle, fd );
 
 #ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(fd);
     msghdr.msg_accrights = (void *)&fd;
 #else  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
-    msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg.header) + sizeof(fd);
-    cmsg.fd = fd;
+    char cmsg_buffer[256];
+    struct cmsghdr *cmsg;
+    msghdr.msg_control    = cmsg_buffer;
+    msghdr.msg_controllen = sizeof(cmsg_buffer);
+    msghdr.msg_flags      = 0;
+    cmsg = CMSG_FIRSTHDR( &msghdr );
+    cmsg->cmsg_len   = CMSG_LEN( sizeof(fd) );
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type  = SCM_RIGHTS;
+    *(int *)CMSG_DATA(cmsg) = fd;
+    msghdr.msg_controllen = cmsg->cmsg_len;
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
-    myiovec.iov_base = (void *)&handle;
-    myiovec.iov_len  = sizeof(handle);
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = &vec;
+    msghdr.msg_iovlen  = 1;
+
+    vec.iov_base = (void *)&handle;
+    vec.iov_len  = sizeof(handle);
+
+    if (debug_level)
+        fprintf( stderr, "%04x: *fd* %04x -> %d\n", current ? current->id : process->id, handle, fd );
 
     ret = sendmsg( get_unix_fd( process->msg_fd ), &msghdr, 0 );
 
@@ -796,12 +810,6 @@ void open_master_socket(void)
     {
         acquire_lock();
     }
-
-    /* setup msghdr structure constant fields */
-    msghdr.msg_name    = NULL;
-    msghdr.msg_namelen = 0;
-    msghdr.msg_iov     = &myiovec;
-    msghdr.msg_iovlen  = 1;
 
     /* init the process tracing mechanism */
     init_tracing_mechanism();
