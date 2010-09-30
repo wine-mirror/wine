@@ -411,17 +411,15 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
 }
 
 /* GL locking is done by the caller */
-static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream_info *si, UINT numberOfVertices,
-        GLenum glPrimitiveType, const void *idxData, UINT idxSize, UINT startIdx)
+static void drawStridedSlowVs(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
+        const struct wined3d_stream_info *si, UINT numberOfVertices, GLenum glPrimitiveType,
+        const void *idxData, UINT idxSize, UINT startIdx)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    LONG SkipnStrides = startIdx + This->stateBlock->state.load_base_vertex_index;
+    LONG SkipnStrides = startIdx + state->load_base_vertex_index;
     const DWORD *pIdxBufL = NULL;
     const WORD *pIdxBufS = NULL;
     UINT vx_index;
     int i;
-    IWineD3DStateBlockImpl *stateblock = This->stateBlock;
     const BYTE *ptr;
 
     if (idxSize)
@@ -431,7 +429,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
          * supported or other reason), or with user pointer drawing idxData
          * will be non-NULL. */
         if (!idxData)
-            idxData = buffer_get_sysmem(This->stateBlock->state.index_buffer, gl_info);
+            idxData = buffer_get_sysmem(state->index_buffer, gl_info);
 
         if (idxSize == 2) pIdxBufS = idxData;
         else pIdxBufL = idxData;
@@ -449,18 +447,17 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
         {
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2)
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + stateblock->state.load_base_vertex_index;
+                SkipnStrides = pIdxBufS[startIdx + vx_index] + state->load_base_vertex_index;
             else
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + stateblock->state.load_base_vertex_index;
+                SkipnStrides = pIdxBufL[startIdx + vx_index] + state->load_base_vertex_index;
         }
 
         for (i = MAX_ATTRIBS - 1; i >= 0; i--)
         {
             if (!(si->use_map & (1 << i))) continue;
 
-            ptr = si->elements[i].data
-                    + si->elements[i].stride * SkipnStrides
-                    + stateblock->state.streams[si->elements[i].stream_idx].offset;
+            ptr = si->elements[i].data + si->elements[i].stride * SkipnStrides
+                    + state->streams[si->elements[i].stream_idx].offset;
 
             send_attribute(gl_info, si->elements[i].format->id, i, ptr);
         }
@@ -707,8 +704,11 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
                 } else {
                     TRACE("Using immediate mode with vertex shaders for half float emulation\n");
                 }
-                drawStridedSlowVs(iface, stream_info, index_count, glPrimType, idxData, idxSize, StartIdx);
-            } else {
+                drawStridedSlowVs(context->gl_info, state, stream_info,
+                        index_count, glPrimType, idxData, idxSize, StartIdx);
+            }
+            else
+            {
                 drawStridedSlow(iface, context, stream_info, index_count,
                         glPrimType, idxData, idxSize, StartIdx);
             }
