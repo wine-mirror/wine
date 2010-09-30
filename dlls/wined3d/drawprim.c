@@ -33,13 +33,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 #include <math.h>
 
 /* GL locking is done by the caller */
-static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
-        UINT count, UINT idx_size, const void *idx_data, UINT start_idx)
+static void drawStridedFast(GLenum primitive_type, UINT count, UINT idx_size, const void *idx_data, UINT start_idx)
 {
     if (idx_size)
     {
-        TRACE("(%p) : glElements(%x, %d, ...)\n", iface, primitive_type, count);
-
         glDrawElements(primitive_type, count,
                 idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
                 (const char *)idx_data + (idx_size * start_idx));
@@ -47,8 +44,6 @@ static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
     }
     else
     {
-        TRACE("(%p) : glDrawArrays(%#x, %d, %d)\n", iface, primitive_type, start_idx, count);
-
         glDrawArrays(primitive_type, start_idx, count);
         checkGLcall("glDrawArrays");
     }
@@ -722,7 +717,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             drawStridedInstanced(iface, &This->strided_streams, index_count,
                     glPrimType, idxData, idxSize, StartIdx);
         } else {
-            drawStridedFast(iface, glPrimType, index_count, idxSize, idxData, StartIdx);
+            drawStridedFast(glPrimType, index_count, idxSize, idxData, StartIdx);
         }
     }
 
