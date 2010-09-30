@@ -380,9 +380,9 @@
 @ stdcall GdipGetRegionData(ptr ptr long ptr)
 @ stdcall GdipGetRegionDataSize(ptr ptr)
 @ stdcall GdipGetRegionHRgn(ptr ptr ptr)
-@ stub GdipGetRegionScans
+@ stdcall GdipGetRegionScans(ptr ptr ptr ptr)
 @ stdcall GdipGetRegionScansCount(ptr ptr ptr)
-@ stub GdipGetRegionScansI
+@ stdcall GdipGetRegionScansI(ptr ptr ptr ptr)
 @ stdcall GdipGetRenderingOrigin(ptr ptr ptr)
 @ stdcall GdipGetSmoothingMode(ptr ptr)
 @ stdcall GdipGetSolidFillColor(ptr ptr)

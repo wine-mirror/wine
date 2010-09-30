@@ -22,6 +22,7 @@
 #include "gdiplus.h"
 #include "wingdi.h"
 #include "wine/test.h"
+#include <math.h>
 
 #define RGNDATA_RECT            0x10000000
 #define RGNDATA_PATH            0x10000001
@@ -32,6 +33,9 @@
 #define RGNDATA_MAGIC2          0xdbc01002
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+
+#define expectf_(expected, got, precision) ok(fabs(expected - got) < precision, "Expected %.2f, got %.2f\n", expected, got)
+#define expectf(expected, got) expectf_(expected, got, 0.0001)
 
 #define expect_magic(value) ok(*value == RGNDATA_MAGIC || *value == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *value)
 
@@ -1237,6 +1241,9 @@ static void test_scans(void)
     GpRectF rectf;
     GpStatus status;
     ULONG count=80085;
+    INT icount;
+    GpRectF scans[2];
+    GpRect scansi[2];
 
     status = GdipCreateRegion(&region);
     expect(Ok, status);
@@ -1254,10 +1261,43 @@ static void test_scans(void)
     status = GdipGetRegionScansCount(region, &count, NULL);
     expect(InvalidParameter, status);
 
+    status = GdipGetRegionScans(NULL, scans, &icount, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipGetRegionScans(region, scans, NULL, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipGetRegionScans(region, scans, &icount, NULL);
+    expect(InvalidParameter, status);
+
     /* infinite */
     status = GdipGetRegionScansCount(region, &count, matrix);
     expect(Ok, status);
     expect(1, count);
+
+    status = GdipGetRegionScans(region, NULL, &icount, matrix);
+    expect(Ok, status);
+    expect(1, icount);
+
+    status = GdipGetRegionScans(region, scans, &icount, matrix);
+    expect(Ok, status);
+    expect(1, icount);
+
+    status = GdipGetRegionScansI(region, scansi, &icount, matrix);
+    expect(Ok, status);
+    expect(1, icount);
+    expect(-0x400000, scansi[0].X);
+    expect(-0x400000, scansi[0].Y);
+    expect(0x800000, scansi[0].Width);
+    expect(0x800000, scansi[0].Height);
+
+    status = GdipGetRegionScans(region, scans, &icount, matrix);
+    expect(Ok, status);
+    expect(1, icount);
+    expectf((double)-0x400000, scans[0].X);
+    expectf((double)-0x400000, scans[0].Y);
+    expectf((double)0x800000, scans[0].Width);
+    expectf((double)0x800000, scans[0].Height);
 
     /* empty */
     status = GdipSetEmpty(region);
@@ -1266,6 +1306,10 @@ static void test_scans(void)
     status = GdipGetRegionScansCount(region, &count, matrix);
     expect(Ok, status);
     expect(0, count);
+
+    status = GdipGetRegionScans(region, scans, &icount, matrix);
+    expect(Ok, status);
+    expect(0, icount);
 
     /* single rectangle */
     rectf.X = rectf.Y = 0.0;
@@ -1277,6 +1321,14 @@ static void test_scans(void)
     expect(Ok, status);
     expect(1, count);
 
+    status = GdipGetRegionScans(region, scans, &icount, matrix);
+    expect(Ok, status);
+    expect(1, icount);
+    expectf(0.0, scans[0].X);
+    expectf(0.0, scans[0].Y);
+    expectf(5.0, scans[0].Width);
+    expectf(5.0, scans[0].Height);
+
     /* two rectangles */
     rectf.X = rectf.Y = 5.0;
     rectf.Width = rectf.Height = 5.0;
@@ -1286,6 +1338,33 @@ static void test_scans(void)
     status = GdipGetRegionScansCount(region, &count, matrix);
     expect(Ok, status);
     expect(2, count);
+
+    /* Native ignores the initial value of count */
+    scans[1].X = scans[1].Y = scans[1].Width = scans[1].Height = 8.0;
+    icount = 1;
+    status = GdipGetRegionScans(region, scans, &icount, matrix);
+    expect(Ok, status);
+    expect(2, icount);
+    expectf(0.0, scans[0].X);
+    expectf(0.0, scans[0].Y);
+    expectf(5.0, scans[0].Width);
+    expectf(5.0, scans[0].Height);
+    expectf(5.0, scans[1].X);
+    expectf(5.0, scans[1].Y);
+    expectf(5.0, scans[1].Width);
+    expectf(5.0, scans[1].Height);
+
+    status = GdipGetRegionScansI(region, scansi, &icount, matrix);
+    expect(Ok, status);
+    expect(2, icount);
+    expect(0, scansi[0].X);
+    expect(0, scansi[0].Y);
+    expect(5, scansi[0].Width);
+    expect(5, scansi[0].Height);
+    expect(5, scansi[1].X);
+    expect(5, scansi[1].Y);
+    expect(5, scansi[1].Width);
+    expect(5, scansi[1].Height);
 
     status = GdipDeleteRegion(region);
     expect(Ok, status);

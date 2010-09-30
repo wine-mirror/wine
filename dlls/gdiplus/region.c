@@ -1441,3 +1441,71 @@ GpStatus WINGDIPAPI GdipGetRegionScansCount(GpRegion *region, UINT *count, GpMat
 
     return stat;
 }
+
+GpStatus WINGDIPAPI GdipGetRegionScansI(GpRegion *region, GpRect *scans, INT *count, GpMatrix *matrix)
+{
+    GpStatus stat;
+    INT i;
+    LPRGNDATA data;
+    RECT *rects;
+
+    if (!region || !count || !matrix)
+        return InvalidParameter;
+
+    stat = get_region_scans_data(region, matrix, &data);
+
+    if (stat == Ok)
+    {
+        *count = data->rdh.nCount;
+        rects = (RECT*)&data->Buffer;
+
+        if (scans)
+        {
+            for (i=0; i<data->rdh.nCount; i++)
+            {
+                scans[i].X = rects[i].left;
+                scans[i].Y = rects[i].top;
+                scans[i].Width = rects[i].right - rects[i].left;
+                scans[i].Height = rects[i].bottom - rects[i].top;
+            }
+        }
+
+        GdipFree(data);
+    }
+
+    return Ok;
+}
+
+GpStatus WINGDIPAPI GdipGetRegionScans(GpRegion *region, GpRectF *scans, INT *count, GpMatrix *matrix)
+{
+    GpStatus stat;
+    INT i;
+    LPRGNDATA data;
+    RECT *rects;
+
+    if (!region || !count || !matrix)
+        return InvalidParameter;
+
+    stat = get_region_scans_data(region, matrix, &data);
+
+    if (stat == Ok)
+    {
+        *count = data->rdh.nCount;
+        rects = (RECT*)&data->Buffer;
+
+        if (scans)
+        {
+            for (i=0; i<data->rdh.nCount; i++)
+            {
+                scans[i].X = rects[i].left;
+                scans[i].Y = rects[i].top;
+                scans[i].Width = rects[i].right - rects[i].left;
+                scans[i].Height = rects[i].bottom - rects[i].top;
+            }
+        }
+
+        GdipFree(data);
+    }
+
+    return Ok;
+}
