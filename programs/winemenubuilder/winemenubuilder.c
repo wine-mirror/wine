@@ -2280,6 +2280,23 @@ static char *get_start_exe_path(void)
     return escape(start_path);
 }
 
+static char* escape_unix_link_arg(LPCSTR unix_link)
+{
+    char *ret = NULL;
+    WCHAR *unix_linkW = utf8_chars_to_wchars(unix_link);
+    if (unix_linkW)
+    {
+        char *escaped_lnk = escape(unix_linkW);
+        if (escaped_lnk)
+        {
+            ret = heap_printf("/Unix %s", escaped_lnk);
+            HeapFree(GetProcessHeap(), 0, escaped_lnk);
+        }
+        HeapFree(GetProcessHeap(), 0, unix_linkW);
+    }
+    return ret;
+}
+
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 {
     static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
@@ -2445,7 +2462,18 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
         location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (location)
         {
-            r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, description, work_dir, icon_name);
+            if (csidl == CSIDL_COMMON_DESKTOPDIRECTORY)
+            {
+                char *link_arg = escape_unix_link_arg(unix_link);
+                if (link_arg)
+                {
+                    r = !write_desktop_entry(unix_link, location, lastEntry,
+                        start_path, link_arg, description, work_dir, icon_name);
+                    HeapFree(GetProcessHeap(), 0, link_arg);
+                }
+            }
+            else
+                r = !write_desktop_entry(NULL, location, lastEntry, escaped_path, escaped_args, description, work_dir, icon_name);
             if (r == 0)
                 chmod(location, 0755);
             HeapFree(GetProcessHeap(), 0, location);
@@ -2453,21 +2481,11 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
     }
     else
     {
-        WCHAR *unix_linkW = utf8_chars_to_wchars(unix_link);
-        if (unix_linkW)
+        char *link_arg = escape_unix_link_arg(unix_link);
+        if (link_arg)
         {
-            char *escaped_lnk = escape(unix_linkW);
-            if (escaped_lnk)
-            {
-                char *menuarg = heap_printf("/Unix %s", escaped_lnk);
-                if (menuarg)
-                {
-                    r = !write_menu_entry(unix_link, link_name, start_path, menuarg, description, work_dir, icon_name);
-                    HeapFree(GetProcessHeap(), 0, menuarg);
-                }
-                HeapFree(GetProcessHeap(), 0, escaped_lnk);
-            }
-            HeapFree(GetProcessHeap(), 0, unix_linkW);
+            r = !write_menu_entry(unix_link, link_name, start_path, link_arg, description, work_dir, icon_name);
+            HeapFree(GetProcessHeap(), 0, link_arg);
         }
     }
 
