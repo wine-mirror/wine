@@ -306,11 +306,9 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
 }
 
 /* GL locking is done by the caller */
-static inline void send_attribute(IWineD3DDeviceImpl *This,
+static inline void send_attribute(const struct wined3d_gl_info *gl_info,
         enum wined3d_format_id format, const UINT index, const void *ptr)
 {
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-
     switch(format)
     {
         case WINED3DFMT_R32_FLOAT:
@@ -469,7 +467,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
                     + si->elements[i].stride * SkipnStrides
                     + stateblock->state.streams[si->elements[i].stream_idx].offset;
 
-            send_attribute(This, si->elements[i].format->id, i, ptr);
+            send_attribute(gl_info, si->elements[i].format->id, i, ptr);
         }
         SkipnStrides++;
     }
@@ -486,6 +484,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
     int numInstancedAttribs = 0, j;
     UINT instancedData[sizeof(si->elements) / sizeof(*si->elements) /* 16 */];
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
 
     if (!idxSize)
@@ -542,7 +541,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
                 ptr += (ULONG_PTR)buffer_get_sysmem(vb, &This->adapter->gl_info);
             }
 
-            send_attribute(This, si->elements[instancedData[j]].format->id, instancedData[j], ptr);
+            send_attribute(gl_info, si->elements[instancedData[j]].format->id, instancedData[j], ptr);
         }
 
         glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
