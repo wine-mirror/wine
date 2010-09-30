@@ -2250,6 +2250,29 @@ static void test_colorkey(void)
     GdipDisposeImageAttributes(imageattr);
 }
 
+static void test_dispose(void)
+{
+    GpStatus stat;
+    GpImage *image;
+    char invalid_image[256];
+
+    stat = GdipDisposeImage(NULL);
+    expect(InvalidParameter, stat);
+
+    stat = GdipCreateBitmapFromScan0(2, 2, 0, PixelFormat32bppARGB, NULL, (GpBitmap**)&image);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage(image);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage(image);
+    expect(ObjectBusy, stat);
+
+    memset(invalid_image, 0, 256);
+    stat = GdipDisposeImage((GpImage*)invalid_image);
+    expect(ObjectBusy, stat);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2289,6 +2312,7 @@ START_TEST(image)
     test_rotateflip();
     test_remaptable();
     test_colorkey();
+    test_dispose();
 
     GdiplusShutdown(gdiplusToken);
 }

@@ -1958,8 +1958,6 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
     if(!image)
         return InvalidParameter;
 
-    if (image->picture)
-        IPicture_Release(image->picture);
     if (image->type == ImageTypeBitmap)
     {
         GdipFree(((GpBitmap*)image)->bitmapbits);
@@ -1967,7 +1965,15 @@ GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
         DeleteDC(((GpBitmap*)image)->hdc);
         DeleteObject(((GpBitmap*)image)->hbitmap);
     }
+    else if (image->type != ImageTypeMetafile)
+    {
+        WARN("invalid image: %p\n", image);
+        return ObjectBusy;
+    }
+    if (image->picture)
+        IPicture_Release(image->picture);
     GdipFree(image->palette_entries);
+    image->type = ~0;
     GdipFree(image);
 
     return Ok;
