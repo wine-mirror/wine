@@ -45,6 +45,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_PRCTL_H
+# include <sys/prctl.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -1010,6 +1013,10 @@ void server_init_process(void)
                                (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
 #ifdef __APPLE__
     send_server_task_port();
+#endif
+#if defined(__linux__) && defined(HAVE_PRCTL)
+    /* work around Ubuntu's ptrace breakage */
+    if (server_pid != -1) prctl( 0x59616d61 /* PR_SET_PTRACER */, server_pid );
 #endif
 }
 
