@@ -3031,13 +3031,15 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
-        DWORD flags = deviceImpl->stateBlock->state.texture_states[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+        const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+        DWORD flags = (priv->cur_ps_args->tex_transform >> sampler_idx * WINED3D_PSARGS_TEXTRANSFORM_SHIFT)
+                & WINED3D_PSARGS_TEXTRANSFORM_MASK;
         WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
 
         /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
-        if (flags & WINED3DTTFF_PROJECTED && sampler_type != WINED3DSTT_CUBE) {
+        if (flags & WINED3D_PSARGS_PROJECTED && sampler_type != WINED3DSTT_CUBE) {
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
-            switch (flags & ~WINED3DTTFF_PROJECTED) {
+            switch (flags & ~WINED3D_PSARGS_PROJECTED) {
                 case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
                 case WINED3DTTFF_COUNT2: mask = WINED3DSP_WRITEMASK_1; break;
                 case WINED3DTTFF_COUNT3: mask = WINED3DSP_WRITEMASK_2; break;
@@ -3467,8 +3469,7 @@ static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *in
  */
 static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param;
     DWORD sampler_idx;
@@ -3477,7 +3478,8 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     char coord_mask[6];
 
     sampler_idx = ins->dst[0].reg.idx;
-    flags = deviceImpl->stateBlock->state.texture_states[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+    flags = (priv->cur_ps_args->tex_transform >> sampler_idx * WINED3D_PSARGS_TEXTRANSFORM_SHIFT)
+            & WINED3D_PSARGS_TEXTRANSFORM_MASK;
 
     /* Dependent read, not valid with conditional NP2 */
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, 0, &sample_function);
@@ -3488,10 +3490,10 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     /* with projective textures, texbem only divides the static texture coord, not the displacement,
          * so we can't let the GL handle this.
          */
-    if (flags & WINED3DTTFF_PROJECTED) {
+    if (flags & WINED3D_PSARGS_PROJECTED) {
         DWORD div_mask=0;
         char coord_div_mask[3];
-        switch (flags & ~WINED3DTTFF_PROJECTED) {
+        switch (flags & ~WINED3D_PSARGS_PROJECTED) {
             case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
             case WINED3DTTFF_COUNT2: div_mask = WINED3DSP_WRITEMASK_1; break;
             case WINED3DTTFF_COUNT3: div_mask = WINED3DSP_WRITEMASK_2; break;

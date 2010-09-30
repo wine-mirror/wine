@@ -2081,7 +2081,18 @@ void find_ps_compile_args(const struct wined3d_state *state,
         if(rt->resource.format->Flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
     }
 
-    args->np2_fixup = 0;
+    if (shader->baseShader.reg_maps.shader_version.major == 1
+            && shader->baseShader.reg_maps.shader_version.minor <= 3)
+    {
+        for (i = 0; i < 4; ++i)
+        {
+            DWORD flags = state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+            DWORD tex_transform = flags & ~WINED3DTTFF_PROJECTED;
+            if (flags & WINED3DTTFF_PROJECTED)
+                tex_transform |= WINED3D_PSARGS_PROJECTED;
+            args->tex_transform |= tex_transform << i * WINED3D_PSARGS_TEXTRANSFORM_SHIFT;
+        }
+    }
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
     {
