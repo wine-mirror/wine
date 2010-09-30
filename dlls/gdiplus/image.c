@@ -1630,7 +1630,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     INT row_size, dib_stride;
     HDC hdc;
     BYTE *bits=NULL, *own_bits=NULL;
-    int i;
     REAL xres, yres;
     GpStatus stat;
 
@@ -1655,7 +1654,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     if(stride == 0)
         stride = dib_stride;
 
-    if (format & PixelFormatGDI)
+    if (format & PixelFormatGDI && !(format & (PixelFormatAlpha|PixelFormatIndexed)) && !scan0)
     {
         pbmi = GdipAlloc(sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD));
         if (!pbmi)
@@ -1691,12 +1690,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
     {
         /* Not a GDI format; don't try to make an HBITMAP. */
         if (scan0)
-        {
-            /* FIXME: We should do this with GDI formats too when scan0 is
-             * provided, but for now we need the HDC for most drawing
-             * operations. */
             bits = scan0;
-        }
         else
         {
             INT size = abs(stride) * height;
@@ -1708,12 +1702,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
                 bits += stride * (1 - height);
         }
     }
-
-    /* copy bits to the dib if necessary */
-    /* FIXME: should reference the bits instead of copying them */
-    if (scan0 && bits != scan0)
-        for (i=0; i<height; i++)
-            memcpy(bits+i*dib_stride, scan0+i*stride, row_size);
 
     *bitmap = GdipAlloc(sizeof(GpBitmap));
     if(!*bitmap)

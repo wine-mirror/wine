@@ -2194,7 +2194,7 @@ static void test_fromMemoryBitmap(void)
 
     GdipDeleteGraphics(graphics);
 
-    todo_wine expect(0x79, bits[0]);
+    expect(0x79, bits[0]);
     todo_wine expect(0x68, bits[3]);
 
     GdipDisposeImage((GpImage*)bitmap);
