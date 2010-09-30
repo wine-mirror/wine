@@ -1123,6 +1123,113 @@ static void test_translate(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_transform(void)
+{
+    GpRegion *region, *region2;
+    GpMatrix *matrix;
+    GpGraphics *graphics;
+    GpPath *path;
+    GpRectF rectf;
+    GpStatus status;
+    HDC hdc = GetDC(0);
+    BOOL res;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+
+    status = GdipCreateRegion(&region);
+    expect(Ok, status);
+    status = GdipCreateRegion(&region2);
+    expect(Ok, status);
+
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+    status = GdipScaleMatrix(matrix, 2.0, 3.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    /* NULL */
+    status = GdipTransformRegion(NULL, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipTransformRegion(region, NULL);
+    expect(InvalidParameter, status);
+
+    /* infinite */
+    status = GdipTransformRegion(region, matrix);
+    expect(Ok, status);
+
+    res = FALSE;
+    status = GdipIsEqualRegion(region, region2, graphics, &res);
+    expect(Ok, status);
+    ok(res, "Expected to be equal.\n");
+
+    /* empty */
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+    status = GdipTransformRegion(region, matrix);
+    expect(Ok, status);
+
+    status = GdipSetEmpty(region2);
+    expect(Ok, status);
+
+    res = FALSE;
+    status = GdipIsEqualRegion(region, region2, graphics, &res);
+    expect(Ok, status);
+    ok(res, "Expected to be equal.\n");
+
+    /* rect */
+    rectf.X = 10.0;
+    rectf.Y = 0.0;
+    rectf.Width = rectf.Height = 100.0;
+    status = GdipCombineRegionRect(region, &rectf, CombineModeReplace);
+    expect(Ok, status);
+    rectf.X = 20.0;
+    rectf.Y = 0.0;
+    rectf.Width = 200.0;
+    rectf.Height = 300.0;
+    status = GdipCombineRegionRect(region2, &rectf, CombineModeReplace);
+    expect(Ok, status);
+    status = GdipTransformRegion(region, matrix);
+    expect(Ok, status);
+    res = FALSE;
+    status = GdipIsEqualRegion(region, region2, graphics, &res);
+    expect(Ok, status);
+    ok(res, "Expected to be equal.\n");
+
+    /* path */
+    status = GdipAddPathEllipse(path, 0.0, 10.0, 100.0, 150.0);
+    expect(Ok, status);
+    status = GdipCombineRegionPath(region, path, CombineModeReplace);
+    expect(Ok, status);
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathEllipse(path, 0.0, 30.0, 200.0, 450.0);
+    expect(Ok, status);
+    status = GdipCombineRegionPath(region2, path, CombineModeReplace);
+    expect(Ok, status);
+    status = GdipTransformRegion(region, matrix);
+    expect(Ok, status);
+    res = FALSE;
+    status = GdipIsEqualRegion(region, region2, graphics, &res);
+    expect(Ok, status);
+    ok(res, "Expected to be equal.\n");
+
+    status = GdipDeleteRegion(region);
+    expect(Ok, status);
+    status = GdipDeleteRegion(region2);
+    expect(Ok, status);
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    status = GdipDeletePath(path);
+    expect(Ok, status);
+    status = GdipDeleteMatrix(matrix);
+    expect(Ok, status);
+    ReleaseDC(0, hdc);
+}
+
 static void test_getbounds(void)
 {
     GpRegion *region;
@@ -1634,6 +1741,7 @@ START_TEST(region)
     test_gethrgn();
     test_isequal();
     test_translate();
+    test_transform();
     test_getbounds();
     test_isvisiblepoint();
     test_isvisiblerect();

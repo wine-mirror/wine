@@ -1248,11 +1248,66 @@ GpStatus WINGDIPAPI GdipSetInfinite(GpRegion *region)
     return stat;
 }
 
+/* Transforms GpRegion elements with given matrix */
+static GpStatus transform_region_element(region_element* element, GpMatrix *matrix)
+{
+    GpStatus stat;
+
+    switch(element->type)
+    {
+        case RegionDataEmptyRect:
+        case RegionDataInfiniteRect:
+            return Ok;
+        case RegionDataRect:
+        {
+            /* We can't transform a rectangle, so convert it to a path. */
+            GpRegion *new_region;
+            GpPath *path;
+
+            stat = GdipCreatePath(FillModeAlternate, &path);
+            if (stat == Ok)
+            {
+                stat = GdipAddPathRectangle(path,
+                    element->elementdata.rect.X, element->elementdata.rect.Y,
+                    element->elementdata.rect.Width, element->elementdata.rect.Height);
+
+                if (stat == Ok)
+                    stat = GdipCreateRegionPath(path, &new_region);
+
+                GdipDeletePath(path);
+            }
+
+            if (stat == Ok)
+            {
+                /* Steal the element from the created region. */
+                memcpy(element, &new_region->node, sizeof(region_element));
+                HeapFree(GetProcessHeap(), 0, new_region);
+            }
+            else
+                return stat;
+        }
+        /* Fall-through to do the actual conversion. */
+        case RegionDataPath:
+            stat = GdipTransformMatrixPoints(matrix,
+                element->elementdata.pathdata.path->pathdata.Points,
+                element->elementdata.pathdata.path->pathdata.Count);
+            return stat;
+        default:
+            stat = transform_region_element(element->elementdata.combine.left, matrix);
+            if (stat == Ok)
+                stat = transform_region_element(element->elementdata.combine.right, matrix);
+            return stat;
+    }
+}
+
 GpStatus WINGDIPAPI GdipTransformRegion(GpRegion *region, GpMatrix *matrix)
 {
-    FIXME("(%p, %p): stub\n", region, matrix);
+    TRACE("(%p, %p)\n", region, matrix);
 
-    return NotImplemented;
+    if (!region || !matrix)
+        return InvalidParameter;
+
+    return transform_region_element(&region->node, matrix);
 }
 
 /* Translates GpRegion elements with specified offsets */
