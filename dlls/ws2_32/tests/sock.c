@@ -1937,6 +1937,32 @@ static void test_select(void)
          broken(thread_params.ReadKilled == 0), /*Win98*/
             "closesocket did not wakeup select\n");
 
+    /* Test selecting invalid handles */
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+    FD_ZERO(&exceptfds);
+    FD_SET(INVALID_SOCKET, &readfds);
+    SetLastError(0);
+    ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
+    ok ( !FD_ISSET(fdRead, &readfds), "FD should not be set\n");
+
+    FD_ZERO(&readfds);
+    FD_SET(INVALID_SOCKET, &writefds);
+    SetLastError(0);
+    ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
+    ok ( !FD_ISSET(fdRead, &writefds), "FD should not be set\n");
+
+    FD_ZERO(&writefds);
+    FD_SET(INVALID_SOCKET, &exceptfds);
+    SetLastError(0);
+    ret = select(maxfd+1, &readfds, &writefds, &exceptfds, &select_timeout);
+    ok ( (ret == SOCKET_ERROR), "expected SOCKET_ERROR, got %i\n", ret);
+    ok ( GetLastError() == WSAENOTSOCK, "expected WSAENOTSOCK, got %i\n", ret);
+    ok ( !FD_ISSET(fdRead, &exceptfds), "FD should not be set\n");
 }
 
 static DWORD WINAPI AcceptKillThread(select_thread_params *par)

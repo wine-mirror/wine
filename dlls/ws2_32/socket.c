@@ -2958,11 +2958,16 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
     if (exceptfds) count += exceptfds->fd_count;
     *count_ptr = count;
     if (!count) return NULL;
-    if (!(fds = HeapAlloc( GetProcessHeap(), 0, count * sizeof(fds[0])))) return NULL;
+    if (!(fds = HeapAlloc( GetProcessHeap(), 0, count * sizeof(fds[0]))))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
     if (readfds)
         for (i = 0; i < readfds->fd_count; i++, j++)
         {
             fds[j].fd = get_sock_fd( readfds->fd_array[i], FILE_READ_DATA, NULL );
+            if (fds[j].fd == -1) goto failed;
             fds[j].events = POLLIN;
             fds[j].revents = 0;
         }
@@ -2970,6 +2975,7 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
         for (i = 0; i < writefds->fd_count; i++, j++)
         {
             fds[j].fd = get_sock_fd( writefds->fd_array[i], FILE_WRITE_DATA, NULL );
+            if (fds[j].fd == -1) goto failed;
             fds[j].events = POLLOUT;
             fds[j].revents = 0;
         }
@@ -2977,10 +2983,26 @@ static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set
         for (i = 0; i < exceptfds->fd_count; i++, j++)
         {
             fds[j].fd = get_sock_fd( exceptfds->fd_array[i], 0, NULL );
+            if (fds[j].fd == -1) goto failed;
             fds[j].events = POLLHUP;
             fds[j].revents = 0;
         }
     return fds;
+
+failed:
+    count = j;
+    j = 0;
+    if (readfds)
+        for (i = 0; i < readfds->fd_count && j < count; i++, j++)
+            release_sock_fd( readfds->fd_array[i], fds[j].fd );
+    if (writefds)
+        for (i = 0; i < writefds->fd_count && j < count; i++, j++)
+            release_sock_fd( writefds->fd_array[i], fds[j].fd );
+    if (exceptfds)
+        for (i = 0; i < exceptfds->fd_count && j < count; i++, j++)
+            release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
+    HeapFree( GetProcessHeap(), 0, fds );
+    return NULL;
 }
 
 /* release the file descriptor obtained in fd_sets_to_poll */
@@ -3059,10 +3081,7 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
           ws_readfds, ws_writefds, ws_exceptfds, ws_timeout);
 
     if (!(pollfds = fd_sets_to_poll( ws_readfds, ws_writefds, ws_exceptfds, &count )) && count)
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return SOCKET_ERROR;
-    }
 
     if (ws_timeout)
     {
