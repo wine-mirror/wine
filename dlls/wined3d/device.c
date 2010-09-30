@@ -453,20 +453,19 @@ void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_
     }
 }
 
-static void device_preload_texture(IWineD3DStateBlockImpl *stateblock, unsigned int idx)
+static void device_preload_texture(const struct wined3d_state *state, unsigned int idx)
 {
     IWineD3DBaseTextureImpl *texture;
     enum WINED3DSRGB srgb;
 
-    if (!(texture = stateblock->state.textures[idx])) return;
-    srgb = stateblock->state.sampler_states[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
+    if (!(texture = state->textures[idx])) return;
+    srgb = state->sampler_states[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
     texture->baseTexture.internal_preload((IWineD3DBaseTexture *)texture, srgb);
 }
 
 void device_preload_textures(IWineD3DDeviceImpl *device)
 {
-    IWineD3DStateBlockImpl *stateblock = device->stateBlock;
-    const struct wined3d_state *state = &stateblock->state;
+    const struct wined3d_state *state = &device->stateBlock->state;
     unsigned int i;
 
     if (use_vs(state))
@@ -474,7 +473,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
         for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
         {
             if (state->vertex_shader->baseShader.reg_maps.sampler_type[i])
-                device_preload_texture(stateblock, MAX_FRAGMENT_SAMPLERS + i);
+                device_preload_texture(state, MAX_FRAGMENT_SAMPLERS + i);
         }
     }
 
@@ -483,7 +482,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
         {
             if (state->pixel_shader->baseShader.reg_maps.sampler_type[i])
-                device_preload_texture(stateblock, i);
+                device_preload_texture(state, i);
         }
     }
     else
@@ -493,7 +492,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
         for (i = 0; ffu_map; ffu_map >>= 1, ++i)
         {
             if (ffu_map & 1)
-                device_preload_texture(stateblock, i);
+                device_preload_texture(state, i);
         }
     }
 }
