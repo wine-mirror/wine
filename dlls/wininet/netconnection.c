@@ -150,6 +150,8 @@ MAKE_FUNCPTR(SSL_CTX_get_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_timeout);
 MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
 MAKE_FUNCPTR(SSL_CTX_set_verify);
+MAKE_FUNCPTR(SSL_get_current_cipher);
+MAKE_FUNCPTR(SSL_CIPHER_get_bits);
 MAKE_FUNCPTR(X509_STORE_CTX_get_ex_data);
 
 /* OpenSSL's libcrypto functions that we use */
@@ -427,6 +429,8 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_CTX_set_timeout);
 	DYNSSL(SSL_CTX_set_default_verify_paths);
 	DYNSSL(SSL_CTX_set_verify);
+        DYNSSL(SSL_get_current_cipher);
+        DYNSSL(SSL_CIPHER_get_bits);
 	DYNSSL(X509_STORE_CTX_get_ex_data);
 #undef DYNSSL
 
@@ -865,6 +869,24 @@ LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
     return r;
 #else
     return NULL;
+#endif
+}
+
+int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection)
+{
+#ifdef SONAME_LIBSSL
+    SSL_CIPHER *cipher;
+    int bits = 0;
+
+    if (!connection->useSSL)
+        return 0;
+    cipher = pSSL_get_current_cipher(connection->ssl_s);
+    if (!cipher)
+        return 0;
+    pSSL_CIPHER_get_bits(cipher, &bits);
+    return bits;
+#else
+    return 0;
 #endif
 }
 

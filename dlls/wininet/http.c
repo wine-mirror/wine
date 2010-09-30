@@ -1847,6 +1847,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
                 CertNameToStrA(context->dwCertEncodingType,
                          &context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR,
                          info->lpszIssuerInfo, len);
+            info->dwKeySize = NETCON_GetCipherStrength(&req->netConnection);
             CertFreeCertificateContext(context);
             return ERROR_SUCCESS;
         }

@@ -2622,7 +2622,6 @@ static void test_secure_connection(void)
            "unexpected encryption algorithm name\n");
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
-        todo_wine
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
     }
     HeapFree(GetProcessHeap(), 0, certificate_structA);
@@ -2653,7 +2652,6 @@ static void test_secure_connection(void)
            "unexpected encryption algorithm name\n");
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
-        todo_wine
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
     }
     HeapFree(GetProcessHeap(), 0, certificate_structW);
@@ -2705,7 +2703,6 @@ static void test_secure_connection(void)
            "unexpected encryption algorithm name\n");
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
-        todo_wine
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
     }
     HeapFree(GetProcessHeap(), 0, certificate_structA);
@@ -2736,7 +2733,6 @@ static void test_secure_connection(void)
            "unexpected encryption algorithm name\n");
         ok(!certificate_structA->lpszProtocolName,
            "unexpected protocol name\n");
-        todo_wine
         ok(certificate_structA->dwKeySize, "expected a non-zero key size\n");
     }
     HeapFree(GetProcessHeap(), 0, certificate_structW);
