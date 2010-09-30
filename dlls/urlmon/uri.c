@@ -2764,8 +2764,6 @@ static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOO
     USHORT default_port = 0;
     DWORD i;
 
-    uri->has_port = FALSE;
-
     /* Check if the scheme has a default port. */
     for(i = 0; i < sizeof(default_ports)/sizeof(default_ports[0]); ++i) {
         if(default_ports[i].scheme == data->scheme_type) {
@@ -2775,8 +2773,7 @@ static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOO
         }
     }
 
-    if(data->port || has_default_port)
-        uri->has_port = TRUE;
+    uri->has_port = data->has_port || has_default_port;
 
     /* Possible cases:
      *  1)  Has a port which is the default port.
@@ -2784,38 +2781,42 @@ static BOOL canonicalize_port(const parse_data *data, Uri *uri, DWORD flags, BOO
      *  3)  Doesn't have a port, but, scheme has a default port.
      *  4)  No port.
      */
-    if(has_default_port && data->port && data->port_value == default_port) {
+    if(has_default_port && data->has_port && data->port_value == default_port) {
         /* If it's the default port and this flag isn't set, don't do anything. */
         if(flags & Uri_CREATE_NO_CANONICALIZE) {
-            /* Copy the original port over. */
-            if(!computeOnly) {
+            if(!computeOnly)
                 uri->canon_uri[uri->canon_len] = ':';
-                memcpy(uri->canon_uri+uri->canon_len+1, data->port, data->port_len*sizeof(WCHAR));
+            ++uri->canon_len;
+
+            if(data->port) {
+                /* Copy the original port over. */
+                if(!computeOnly)
+                    memcpy(uri->canon_uri+uri->canon_len, data->port, data->port_len*sizeof(WCHAR));
+                uri->canon_len += data->port_len;
+            } else {
+                if(!computeOnly)
+                    uri->canon_len += ui2str(uri->canon_uri+uri->canon_len, data->port_value);
+                else
+                    uri->canon_len += ui2str(NULL, data->port_value);
             }
-            uri->canon_len += data->port_len+1;
         }
 
         uri->port = default_port;
-    } else if(data->port) {
+    } else if(data->has_port) {
         if(!computeOnly)
             uri->canon_uri[uri->canon_len] = ':';
         ++uri->canon_len;
 
-        if(flags & Uri_CREATE_NO_CANONICALIZE) {
+        if(flags & Uri_CREATE_NO_CANONICALIZE && data->port) {
             /* Copy the original over without changes. */
             if(!computeOnly)
                 memcpy(uri->canon_uri+uri->canon_len, data->port, data->port_len*sizeof(WCHAR));
             uri->canon_len += data->port_len;
         } else {
-            const WCHAR formatW[] = {'%','u',0};
-            INT len = 0;
             if(!computeOnly)
-                len = sprintfW(uri->canon_uri+uri->canon_len, formatW, data->port_value);
-            else {
-                WCHAR tmp[6];
-                len = sprintfW(tmp, formatW, data->port_value);
-            }
-            uri->canon_len += len;
+                uri->canon_len += ui2str(uri->canon_uri+uri->canon_len, data->port_value);
+            else
+                uri->canon_len += ui2str(NULL, data->port_value);
         }
 
         uri->port = data->port_value;
