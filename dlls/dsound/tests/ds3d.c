@@ -805,8 +805,8 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                   wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
         }
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-        ok(rc==DS_OK && secondary!=NULL,"IDirectSound_CreateSoundBuffer() "
-           "failed to create a %s%ssecondary buffer %s%s%s%sat %dx%dx%d (%s): %08x\n",
+        ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
+           "IDirectSound_CreateSoundBuffer() failed to create a %s%ssecondary buffer %s%s%s%sat %dx%dx%d (%s): %08x\n",
            has_3dbuffer?"3D ":"", has_duplicate?"duplicated ":"",
            listener!=NULL||move_sound?"with ":"", move_listener?"moving ":"",
            listener!=NULL?"listener ":"",

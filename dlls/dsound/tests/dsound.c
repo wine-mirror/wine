@@ -326,7 +326,7 @@ static HRESULT test_dsound(LPGUID lpGuid)
                                     wfx.nBlockAlign);
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-        ok(rc==DS_OK && secondary!=NULL,
+        ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
            "IDirectSound_CreateSoundBuffer() failed to create a secondary "
            "buffer %08x\n",rc);
         if (rc==DS_OK && secondary!=NULL) {
@@ -618,7 +618,7 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
                       wfx2.nSamplesPerSec,wfx2.wBitsPerSample,wfx2.nChannels);
             }
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(rc==DS_OK && secondary!=NULL,
+            ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
                "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
 
             if (rc==DS_OK && secondary!=NULL) {
@@ -729,7 +729,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
                         "should have returned (DSERR_CONTROLUNAVAIL or DSERR_INVALIDCALL) "
                         "and NULL, returned: %08x %p\n", rc, secondary);
                 else
-                    ok(rc==DS_OK && secondary!=NULL,
+                    ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
                         "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
             }
             else
@@ -883,8 +883,8 @@ static HRESULT test_block_align(LPGUID lpGuid)
     bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec + 1;
     bufdesc.lpwfxFormat=&wfx;
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-    ok(rc==DS_OK,"IDirectSound_CreateSoundBuffer() "
-       "should have returned DS_OK, returned: %08x\n", rc);
+    ok(rc == DS_OK || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
+       "IDirectSound_CreateSoundBuffer() should have returned DS_OK, returned: %08x\n", rc);
 
     if (rc==DS_OK && secondary!=NULL) {
         ZeroMemory(&dsbcaps, sizeof(dsbcaps));
@@ -993,7 +993,7 @@ static HRESULT test_frequency(LPGUID lpGuid)
                       wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
             }
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(rc==DS_OK && secondary!=NULL,
+            ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
                "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %08x\n",rc);
 
             if (rc==DS_OK && secondary!=NULL) {

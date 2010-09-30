@@ -616,8 +616,8 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         trace("  Testing a secondary buffer at %dx%dx%d\n",
             wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-        ok(rc==DS_OK&&secondary!=NULL,"IDirectSound_CreateSoundBuffer() "
-           "failed to create a secondary buffer: %08x\n",rc);
+        ok((rc==DS_OK && secondary!=NULL) || broken(rc == DSERR_CONTROLUNAVAIL), /* vmware drivers on w2k */
+           "IDirectSound_CreateSoundBuffer() failed to create a secondary buffer: %08x\n",rc);
         if (rc==DS_OK&&secondary!=NULL) {
             IKsPropertySet * pPropertySet=NULL;
             rc=IDirectSoundBuffer_QueryInterface(secondary,
