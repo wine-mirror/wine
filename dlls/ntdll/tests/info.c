@@ -1125,7 +1125,8 @@ static void test_queryvirtualmemory(void)
     ok (mbi.AllocationBase == module, "mbi.AllocationBase is 0x%p, expected 0x%p\n", mbi.AllocationBase, module);
     ok (mbi.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "mbi.AllocationProtect is 0x%x, expected 0x%x\n", mbi.AllocationProtect, PAGE_EXECUTE_WRITECOPY);
     ok (mbi.State == MEM_COMMIT, "mbi.State is 0x%x, expected 0x%X\n", mbi.State, MEM_COMMIT);
-    ok (mbi.Protect == PAGE_READWRITE, "mbi.Protect is 0x%x, expected 0x%X\n", mbi.Protect, PAGE_READWRITE);
+    ok (mbi.Protect == PAGE_READWRITE || mbi.Protect == PAGE_WRITECOPY,
+        "mbi.Protect is 0x%x\n", mbi.Protect);
 
     trace("Check flags of read-write uninitialized data (.bss) at %p\n", rwtestbuf);
     status = pNtQueryVirtualMemory(NtCurrentProcess(), rwtestbuf, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
