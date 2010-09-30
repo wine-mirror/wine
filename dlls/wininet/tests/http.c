@@ -2693,11 +2693,9 @@ static void test_secure_connection(void)
     ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(certificate_structA->lpszSubjectInfo &&
            strlen(certificate_structA->lpszSubjectInfo) > 1,
            "expected a non-empty subject name\n");
-        todo_wine
         ok(certificate_structA->lpszIssuerInfo &&
            strlen(certificate_structA->lpszIssuerInfo) > 1,
            "expected a non-empty issuer name\n");
@@ -2726,11 +2724,9 @@ static void test_secure_connection(void)
     ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
     if (ret)
     {
-        todo_wine
         ok(certificate_structA->lpszSubjectInfo &&
            strlen(certificate_structA->lpszSubjectInfo) > 1,
            "expected a non-empty subject name\n");
-        todo_wine
         ok(certificate_structA->lpszIssuerInfo &&
            strlen(certificate_structA->lpszIssuerInfo) > 1,
            "expected a non-empty issuer name\n");
