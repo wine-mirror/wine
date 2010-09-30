@@ -32,6 +32,10 @@ C_SRCS = \
 	xmldoc.c \
 	xmlelem.c
 
+LEX_SRCS = xslpattern.l
+
+BISON_SRCS = xslpattern.y
+
 RC_SRCS = version.rc
 
 IDL_TLB_SRCS = msxml3_v1.idl

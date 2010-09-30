@@ -3,6 +3,7 @@
  *
  * Copyright 2005 Mike McCormack for CodeWeavers
  * Copyright 2007-2008 Alistair Leslie-Hughes
+ * Copyright 2010 Adam Martinson for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -6052,16 +6053,223 @@ static void test_XSLPattern(void)
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
     /* should select <elem><c> and <elem xmlns='...'><c> but not <elem><foo:c> */
-    todo_wine ok(len == 3, "expected 3 entries in list, got %d\n", len);
+    ok(len == 3, "expected 3 entries in list, got %d\n", len);
     IXMLDOMNodeList_Release(list);
 
     /* for XSLPattern start index is 0, for XPath it's 1 */
     ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[0]"), &list));
     len = 0;
     ole_check(IXMLDOMNodeList_get_length(list, &len));
-    todo_wine ok(len != 0, "expected filled list\n");
+    ok(len != 0, "expected filled list\n");
     if (len)
-        todo_wine expect_list_and_release(list, "E1.E2.D1");
+        expect_list_and_release(list, "E1.E2.D1");
+
+    /* index() */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index()=1]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1");
+
+    /* $eq$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() $eq$ 1]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1");
+
+    /* end() */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E4.E2.D1");
+
+    /* $not$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[$not$ end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1 E3.E2.D1");
+
+    /* !=/$ne$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() != 0]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1 E3.E2.D1 E4.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() $ne$ 0]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1 E3.E2.D1 E4.E2.D1");
+
+    /* </$lt$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() < 2]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() $lt$ 2]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1");
+
+    /* <=/$le$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() <= 1]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() $le$ 1]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1");
+
+    /* >/$gt$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() > 1]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.E2.D1 E4.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() $gt$ 1]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.E2.D1 E4.E2.D1");
+
+    /* >=/$ge$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() >= 2]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.E2.D1 E4.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index() $ge$ 2]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.E2.D1 E4.E2.D1");
+
+    /* $ieq$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[a $ieq$ 'a2 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1");
+
+    /* $ine$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[a $ine$ 'a2 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E3.E2.D1 E4.E2.D1");
+
+    /* $ilt$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[a $ilt$ 'a3 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1");
+
+    /* $ile$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[a $ile$ 'a2 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E2.E2.D1");
+
+    /* $igt$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[a $igt$ 'a2 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.E2.D1 E4.E2.D1");
+
+    /* $ige$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[a $ige$ 'a3 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E3.E2.D1 E4.E2.D1");
+
+    /* $any$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[$any$ *='B2 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1");
+
+    /* $all$ */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[$all$ *!='B2 field']"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E3.E2.D1 E4.E2.D1");
+
+    /* or/$or$/|| */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index()=0 or end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E4.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index()=0 $or$ end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E4.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index()=0 || end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E1.E2.D1 E4.E2.D1");
+
+    /* and/$and$/&& */
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index()>0 and $not$ end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1 E3.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index()>0 $and$ $not$ end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1 E3.E2.D1");
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//elem[index()>0 && $not$ end()]"), &list));
+    len = 0;
+    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    ok(len != 0, "expected filled list\n");
+    if (len)
+        expect_list_and_release(list, "E2.E2.D1 E3.E2.D1");
+
 
     IXMLDOMDocument2_Release(doc);
     free_bstrs();

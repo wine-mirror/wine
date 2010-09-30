@@ -156,7 +156,7 @@ static inline domdoc_properties * properties_from_xmlDocPtr(xmlDocPtr doc)
     return priv_from_xmlDocPtr(doc)->properties;
 }
 
-static inline BOOL is_xpathmode(const xmlDocPtr doc)
+BOOL is_xpathmode(const xmlDocPtr doc)
 {
     return properties_from_xmlDocPtr(doc)->XPath;
 }
