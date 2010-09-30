@@ -1230,6 +1230,69 @@ static void test_transform(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_scans(void)
+{
+    GpRegion *region;
+    GpMatrix *matrix;
+    GpRectF rectf;
+    GpStatus status;
+    ULONG count=80085;
+
+    status = GdipCreateRegion(&region);
+    expect(Ok, status);
+
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+
+    /* test NULL values */
+    status = GdipGetRegionScansCount(NULL, &count, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipGetRegionScansCount(region, NULL, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipGetRegionScansCount(region, &count, NULL);
+    expect(InvalidParameter, status);
+
+    /* infinite */
+    status = GdipGetRegionScansCount(region, &count, matrix);
+    expect(Ok, status);
+    expect(1, count);
+
+    /* empty */
+    status = GdipSetEmpty(region);
+    expect(Ok, status);
+
+    status = GdipGetRegionScansCount(region, &count, matrix);
+    expect(Ok, status);
+    expect(0, count);
+
+    /* single rectangle */
+    rectf.X = rectf.Y = 0.0;
+    rectf.Width = rectf.Height = 5.0;
+    status = GdipCombineRegionRect(region, &rectf, CombineModeReplace);
+    expect(Ok, status);
+
+    status = GdipGetRegionScansCount(region, &count, matrix);
+    expect(Ok, status);
+    expect(1, count);
+
+    /* two rectangles */
+    rectf.X = rectf.Y = 5.0;
+    rectf.Width = rectf.Height = 5.0;
+    status = GdipCombineRegionRect(region, &rectf, CombineModeUnion);
+    expect(Ok, status);
+
+    status = GdipGetRegionScansCount(region, &count, matrix);
+    expect(Ok, status);
+    expect(2, count);
+
+    status = GdipDeleteRegion(region);
+    expect(Ok, status);
+    status = GdipDeleteMatrix(matrix);
+    expect(Ok, status);
+}
+
 static void test_getbounds(void)
 {
     GpRegion *region;
@@ -1742,6 +1805,7 @@ START_TEST(region)
     test_isequal();
     test_translate();
     test_transform();
+    test_scans();
     test_getbounds();
     test_isvisiblepoint();
     test_isvisiblerect();

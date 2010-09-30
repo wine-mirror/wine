@@ -1362,14 +1362,82 @@ GpStatus WINGDIPAPI GdipTranslateRegionI(GpRegion *region, INT dx, INT dy)
     return GdipTranslateRegion(region, (REAL)dx, (REAL)dy);
 }
 
+static GpStatus get_region_scans_data(GpRegion *region, GpMatrix *matrix, LPRGNDATA *data)
+{
+    GpRegion *region_copy;
+    GpStatus stat;
+    HRGN hrgn;
+    DWORD data_size;
+
+    stat = GdipCloneRegion(region, &region_copy);
+
+    if (stat == Ok)
+    {
+        stat = GdipTransformRegion(region_copy, matrix);
+
+        if (stat == Ok)
+            stat = GdipGetRegionHRgn(region_copy, NULL, &hrgn);
+
+        if (stat == Ok)
+        {
+            if (hrgn)
+            {
+                data_size = GetRegionData(hrgn, 0, NULL);
+
+                *data = GdipAlloc(data_size);
+
+                if (*data)
+                    GetRegionData(hrgn, data_size, *data);
+                else
+                    stat = OutOfMemory;
+
+                DeleteObject(hrgn);
+            }
+            else
+            {
+                data_size = sizeof(RGNDATAHEADER) + sizeof(RECT);
+
+                *data = GdipAlloc(data_size);
+
+                if (*data)
+                {
+                    (*data)->rdh.dwSize = sizeof(RGNDATAHEADER);
+                    (*data)->rdh.iType = RDH_RECTANGLES;
+                    (*data)->rdh.nCount = 1;
+                    (*data)->rdh.nRgnSize = sizeof(RECT);
+                    (*data)->rdh.rcBound.left = (*data)->rdh.rcBound.top = -0x400000;
+                    (*data)->rdh.rcBound.right = (*data)->rdh.rcBound.bottom = 0x400000;
+
+                    memcpy(&(*data)->Buffer, &(*data)->rdh.rcBound, sizeof(RECT));
+                }
+                else
+                    stat = OutOfMemory;
+            }
+        }
+
+        GdipDeleteRegion(region_copy);
+    }
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipGetRegionScansCount(GpRegion *region, UINT *count, GpMatrix *matrix)
 {
-    static int calls;
+    GpStatus stat;
+    LPRGNDATA data;
 
     TRACE("(%p, %p, %p)\n", region, count, matrix);
 
-    if (!(calls++))
-        FIXME("not implemented\n");
+    if (!region || !count || !matrix)
+        return InvalidParameter;
 
-    return NotImplemented;
+    stat = get_region_scans_data(region, matrix, &data);
+
+    if (stat == Ok)
+    {
+        *count = data->rdh.nCount;
+        GdipFree(data);
+    }
+
+    return stat;
 }

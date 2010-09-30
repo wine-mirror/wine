@@ -643,6 +643,7 @@ GpStatus WINGDIPAPI GdipGetRegionBoundsI(GpRegion *, GpGraphics *, GpRect *);
 GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *, BYTE *, UINT, UINT *);
 GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *, UINT *);
 GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *, GpGraphics *, HRGN *);
+GpStatus WINGDIPAPI GdipGetRegionScansCount(GpRegion *, UINT *, GpMatrix *);
 GpStatus WINGDIPAPI GdipIsEmptyRegion(GpRegion *, GpGraphics *, BOOL *);
 GpStatus WINGDIPAPI GdipIsEqualRegion(GpRegion *, GpRegion *, GpGraphics *, BOOL *);
 GpStatus WINGDIPAPI GdipIsInfiniteRegion(GpRegion *, GpGraphics *, BOOL *);
