@@ -8995,17 +8995,18 @@ static char rename_ops[]      = "PendingFileRenameOperations";
 static void process_pending_renames(HKEY hkey)
 {
     char *buf, *src, *dst, *buf2, *buf2ptr;
-    DWORD size, buf2len = 0;
+    DWORD size;
     LONG ret;
     BOOL found = FALSE;
 
     ret = RegQueryValueExA(hkey, rename_ops, NULL, NULL, NULL, &size);
-    buf = HeapAlloc(GetProcessHeap(), 0, size);
-    buf2ptr = buf2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-    buf[0] = 0;
+    buf = HeapAlloc(GetProcessHeap(), 0, size + 1);
+    buf2ptr = buf2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + 1);
 
     ret = RegQueryValueExA(hkey, rename_ops, NULL, NULL, (LPBYTE)buf, &size);
-    ok(!ret, "RegQueryValueExA failed %d (%u)\n", ret, GetLastError());
+    buf[size] = 0;
+    ok(!ret, "RegQueryValueExA failed %d\n", ret);
+    if (ret) return;
 
     for (src = buf; *src; src = dst + strlen(dst) + 1)
     {
@@ -9016,16 +9017,13 @@ static void process_pending_renames(HKEY hkey)
         if (!strstr(src, "msitest"))
         {
             lstrcpyA(buf2ptr, src);
-            buf2len += strlen(src) + 1;
             buf2ptr += strlen(src) + 1;
             if (*dst)
             {
                 lstrcpyA(buf2ptr, dst);
                 buf2ptr += strlen(dst) + 1;
-                buf2len += strlen(dst) + 1;
             }
             buf2ptr++;
-            buf2len++;
             continue;
         }
 
@@ -9049,10 +9047,7 @@ static void process_pending_renames(HKEY hkey)
     ok(found, "Expected a 'msitest' entry\n");
 
     if (*buf2)
-    {
-        buf2len++;
-        RegSetValueExA(hkey, rename_ops, 0, REG_MULTI_SZ, (LPBYTE)buf2, buf2len);
-    }
+        RegSetValueExA(hkey, rename_ops, 0, REG_MULTI_SZ, (LPBYTE)buf2, buf2ptr + 1 - buf2);
     else
         RegDeleteValueA(hkey, rename_ops);
 
