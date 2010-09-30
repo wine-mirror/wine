@@ -74,6 +74,7 @@ static HRESULT (WINAPI *pFindMimeFromData)(LPBC, LPCWSTR, LPVOID, DWORD, LPCWSTR
 static HRESULT (WINAPI *pObtainUserAgentString)(DWORD, LPSTR, DWORD*);
 static HRESULT (WINAPI *pReleaseBindInfo)(BINDINFO*);
 static HRESULT (WINAPI *pUrlMkGetSessionOption)(DWORD, LPVOID, DWORD, DWORD *, DWORD);
+static HRESULT (WINAPI *pCompareSecurityIds)(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 
 
 static void test_CreateFormatEnum(void)
@@ -1472,10 +1473,11 @@ START_TEST(misc)
     pObtainUserAgentString = (void*) GetProcAddress(hurlmon, "ObtainUserAgentString");
     pReleaseBindInfo = (void*) GetProcAddress(hurlmon, "ReleaseBindInfo");
     pUrlMkGetSessionOption = (void*) GetProcAddress(hurlmon, "UrlMkGetSessionOption");
+    pCompareSecurityIds = (void*) GetProcAddress(hurlmon, "CompareSecurityIds");
 
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
-        !pCoInternetGetSession || !pCoInternetParseUrl) {
-        win_skip("Various needed functions not present in IE 4.0\n");
+        !pCoInternetGetSession || !pCoInternetParseUrl || !pCompareSecurityIds) {
+        win_skip("Various needed functions not present, too old IE\n");
         return;
     }
 
