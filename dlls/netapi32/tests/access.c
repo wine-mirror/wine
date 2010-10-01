@@ -29,8 +29,8 @@
 
 #include "wine/test.h"
 
-WCHAR user_name[UNLEN + 1];
-WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
+static WCHAR user_name[UNLEN + 1];
+static WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
 
 static const WCHAR sNonexistentUser[] = {'N','o','n','e','x','i','s','t','e','n','t',' ',
                                 'U','s','e','r',0};

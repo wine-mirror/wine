@@ -39,8 +39,8 @@ static NET_API_STATUS (WINAPI *pNetWkstaUserGetInfo)(LPWSTR,DWORD,PBYTE*)=NULL;
 static NET_API_STATUS (WINAPI *pNetWkstaTransportEnum)(LPWSTR,DWORD,LPBYTE*,
  DWORD,LPDWORD,LPDWORD,LPDWORD)=NULL;
 
-WCHAR user_name[UNLEN + 1];
-WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
+static WCHAR user_name[UNLEN + 1];
+static WCHAR computer_name[MAX_COMPUTERNAME_LENGTH + 1];
 
 static int init_wksta_tests(void)
 {
