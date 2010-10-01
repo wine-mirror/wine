@@ -3236,15 +3236,15 @@ static void test_IXMLDOMDocument2(void)
     ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
 
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(doc2, NULL), S_FALSE);
-    todo_wine ole_expect(IXMLDOMDocument2_validate(doc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected a pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(doc2, NULL), S_FALSE);
+    ole_expect(IXMLDOMDocument2_validate(doc2, &err), S_FALSE);
+    ok(err != NULL, "expected a pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_E_NOTWF */
-        todo_wine ok(res == 0xC00CE223, "got %08x\n", res);
+        ok(res == 0xC00CE223, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
     }
 
@@ -3258,12 +3258,12 @@ static void test_IXMLDOMDocument2(void)
     ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
 
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(doc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected a pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(doc2, &err), S_FALSE);
+    ok(err != NULL, "expected a pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_E_NODTD */
         todo_wine ok(res == 0xC00CE224, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3328,25 +3328,25 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_check(IXMLDOMDocument2_validate(dtddoc2, &err));
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_check(IXMLDOMDocument2_validate(dtddoc2, &err));
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_expect(IXMLDOMParseError_get_errorCode(err, &res), S_FALSE);
-        todo_wine ok(res == 0, "got %08x\n", res);
+        ole_expect(IXMLDOMParseError_get_errorCode(err, &res), S_FALSE);
+        ok(res == 0, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
     }
 
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_0D), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_ELEMENT_UNDECLARED */
         todo_wine ok(res == 0xC00CE00D, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3355,12 +3355,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_0E), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_ELEMENT_ID_NOT_FOUND */
         todo_wine ok(res == 0xC00CE00E, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3369,12 +3369,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_11), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_EMPTY_NOT_ALLOWED */
         todo_wine ok(res == 0xC00CE011, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3383,12 +3383,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_13), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_ROOT_NAME_MISMATCH */
         todo_wine ok(res == 0xC00CE013, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3397,12 +3397,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_14), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_INVALID_CONTENT */
         todo_wine ok(res == 0xC00CE014, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3411,12 +3411,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_15), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_ATTRIBUTE_NOT_DEFINED */
         todo_wine ok(res == 0xC00CE015, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3425,12 +3425,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_16), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_ATTRIBUTE_FIXED */
         todo_wine ok(res == 0xC00CE016, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3439,12 +3439,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_17), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_ATTRIBUTE_VALUE */
         todo_wine ok(res == 0xC00CE017, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3453,12 +3453,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_18), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_ILLEGAL_TEXT */
         todo_wine ok(res == 0xC00CE018, "got %08x\n", res);
         IXMLDOMParseError_Release(err);
@@ -3467,12 +3467,12 @@ static void test_IXMLDOMDocument2(void)
     ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_20), &b));
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     err = NULL;
-    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
-    todo_wine ok(err != NULL, "expected pointer\n");
+    ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    ok(err != NULL, "expected pointer\n");
     if (err)
     {
         res = 0;
-        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        ole_check(IXMLDOMParseError_get_errorCode(err, &res));
         /* XML_REQUIRED_ATTRIBUTE_MISSING */
         todo_wine ok(res == 0xC00CE020, "got %08x\n", res);
         IXMLDOMParseError_Release(err);

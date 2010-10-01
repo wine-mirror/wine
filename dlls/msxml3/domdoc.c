@@ -2302,8 +2302,35 @@ static HRESULT WINAPI domdoc_validate(
     IXMLDOMParseError** err)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("(%p)->(%p)\n", This, err);
-    return E_NOTIMPL;
+    LONG state;
+    xmlValidCtxtPtr vctx;
+
+    TRACE("(%p)->(%p)\n", This, err);
+    domdoc_get_readyState(iface, &state);
+    if (state != READYSTATE_COMPLETE)
+    {
+        if (err)
+            *err = create_parseError(0, NULL, NULL, NULL, 0, 0, 0);
+        return E_PENDING;
+    }
+
+    vctx = xmlNewValidCtxt();
+    vctx->error = NULL; /* TODO: error callback */
+    vctx->warning = NULL; /* TODO: warning callback */
+
+    if (xmlValidateDocument(vctx, get_doc(This)))
+    {
+        if (err)
+            *err = create_parseError(0, NULL, NULL, NULL, 0, 0, 0);
+        xmlFreeValidCtxt(vctx);
+        return S_OK;
+    }
+
+    FIXME("partial stub!\n");
+    if (err)
+        *err = create_parseError(0xC00CE223, NULL, NULL, NULL, 0, 0, 0);
+    xmlFreeValidCtxt(vctx);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI domdoc_setProperty(
