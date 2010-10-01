@@ -1894,6 +1894,9 @@ exception_test(function() {(new Object()) instanceof nullDisp;}, "TypeError", -2
 exception_test(function() {"test" in 3;}, "TypeError", -2146823281);
 exception_test(function() {"test" in null;}, "TypeError", -2146823281);
 exception_test(function() {"test" in nullDisp;}, "TypeError", -2146823281);
+exception_test(function() {new 3;}, "TypeError", -2146827843);
+exception_test(function() {new null;}, "TypeError", -2146823281);
+exception_test(function() {new nullDisp;}, "TypeError", -2146827850);
 
 function testThisExcept(func, number) {
     exception_test(function() {func.call(new Object())}, "TypeError", number);

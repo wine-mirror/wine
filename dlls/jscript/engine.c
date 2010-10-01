@@ -1562,10 +1562,17 @@ HRESULT new_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, j
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(&constr) != VT_DISPATCH) {
-        FIXME("throw TypeError\n");
+    /* NOTE: Should use to_object here */
+
+    if(V_VT(&constr) == VT_NULL) {
         VariantClear(&constr);
-        return E_FAIL;
+        return throw_type_error(ctx->parser->script, ei, IDS_OBJECT_EXPECTED, NULL);
+    } else if(V_VT(&constr) != VT_DISPATCH) {
+        VariantClear(&constr);
+        return throw_type_error(ctx->parser->script, ei, IDS_UNSUPPORTED_ACTION, NULL);
+    } else if(!V_DISPATCH(&constr)) {
+        VariantClear(&constr);
+        return throw_type_error(ctx->parser->script, ei, IDS_NO_PROPERTY, NULL);
     }
 
     hres = disp_call(ctx->parser->script, V_DISPATCH(&constr), DISPID_VALUE,
