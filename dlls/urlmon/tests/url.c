@@ -2674,13 +2674,11 @@ static void test_BindToObject(int protocol, DWORD flags)
         CHECK_CALLED(Obj_OnStopBinding);
     }
 
-    if(test_protocol != HTTP_TEST || emulate_protocol || !(bindf & BINDF_ASYNCHRONOUS)) {
-        ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
+    ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
+    if(test_protocol != HTTP_TEST || emulate_protocol || !(bindf & BINDF_ASYNCHRONOUS))
         ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
-    }else {
-        todo_wine ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
+    else
         IBindCtx_Release(bctx);
-    }
 
     if(emulate_protocol)
         CoRevokeClassObject(regid);
