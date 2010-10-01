@@ -27,7 +27,6 @@
 #include <wingdi.h>
 #include <winuser.h>
 #include <commctrl.h>
-#include <commdlg.h>
 #include <cpl.h>
 
 #include "wine/debug.h"
@@ -91,6 +90,12 @@ static void display_cpl_sheets(HWND parent)
     ZeroMemory(psp, sizeof(psp));
 
     /* Fill out all PROPSHEETPAGE */
+    psp[id].dwSize = sizeof (PROPSHEETPAGEW);
+    psp[id].hInstance = hcpl;
+    psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_GENERAL);
+    psp[id].pfnDlgProc = general_dlgproc;
+    id++;
+
     psp[id].dwSize = sizeof (PROPSHEETPAGEW);
     psp[id].hInstance = hcpl;
     psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_CONTENT);

@@ -19,12 +19,16 @@
  *
  */
 
+#ifndef __WINE_INETCPL__
+#define __WINE_INETCPL__
+
 #include <windef.h>
 #include <winuser.h>
 
 
 extern HMODULE hcpl;
 INT_PTR CALLBACK content_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
+INT_PTR CALLBACK general_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
 
 #define NUM_PROPERTY_PAGES 8
 
@@ -38,6 +42,14 @@ INT_PTR CALLBACK content_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
 /* dialogs */
 #define IDC_STATIC          -1
 
+#define IDD_GENERAL         1000
+#define IDC_HOME_EDIT       1000
+#define IDC_HOME_CURRENT    1001
+#define IDC_HOME_DEFAULT    1002
+#define IDC_HOME_BLANK      1003
+
 #define IDD_CONTENT         4000
 #define IDC_CERT            4100
 #define IDC_CERT_PUBLISHER  4101
+
+#endif

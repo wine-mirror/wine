@@ -29,6 +29,23 @@ BEGIN
     IDS_CPL_INFO        "Configure Wine Internet Browser and related settings" 
 END
 
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "General"
+BEGIN
+
+    GROUPBOX    " Home page ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "You can choose the address that will be used as your home page.",
+                IDC_STATIC, 58, 10, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "&Current page", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "&Default page", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "&Blank page", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
 /* "Content" propsheet */
 IDD_CONTENT DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
