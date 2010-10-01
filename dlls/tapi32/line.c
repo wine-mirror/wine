@@ -471,7 +471,10 @@ DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTR
 DWORD WINAPI lineGetDevCapsW(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion,
                              DWORD dwExtVersion, LPLINEDEVCAPS lpLineDevCaps)
 {
-    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion,
+    static int warn_once;
+
+    if(!warn_once++)
+        FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion,
                                                  dwExtVersion, lpLineDevCaps);
     return LINEERR_OPERATIONFAILED;
 }
@@ -482,7 +485,10 @@ DWORD WINAPI lineGetDevCapsW(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVer
 DWORD WINAPI lineGetDevCapsA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion,
                              DWORD dwExtVersion, LPLINEDEVCAPS lpLineDevCaps)
 {
-    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion,
+    static int warn_once;
+
+    if(!warn_once++)
+        FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion,
                                                  dwExtVersion, lpLineDevCaps);
     return LINEERR_OPERATIONFAILED;
 }
@@ -1079,8 +1085,11 @@ DWORD WINAPI lineNegotiateAPIVersion(
   LPLINEEXTENSIONID lpExtensionID
 )
 {
-    FIXME("(%p, %d, %d, %d, %p, %p): stub.\n", hLineApp, dwDeviceID,
-	  dwAPILowVersion, dwAPIHighVersion, lpdwAPIVersion, lpExtensionID);
+    static int warn_once;
+
+    if(!warn_once++)
+        FIXME("(%p, %d, %d, %d, %p, %p): stub.\n", hLineApp, dwDeviceID,
+              dwAPILowVersion, dwAPIHighVersion, lpdwAPIVersion, lpExtensionID);
     *lpdwAPIVersion = dwAPIHighVersion;
     return 0;
 }
