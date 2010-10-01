@@ -672,7 +672,7 @@ static void offscreen_test(IDirect3DDevice7 *device)
     DWORD color;
     DDSURFACEDESC2 ddsd;
 
-    static const float quad[][5] = {
+    static float quad[][5] = {
         {-0.5f, -0.5f, 0.1f, 0.0f, 0.0f},
         {-0.5f,  0.5f, 0.1f, 0.0f, 1.0f},
         { 0.5f, -0.5f, 0.1f, 1.0f, 0.0f},
@@ -795,7 +795,7 @@ static void alpha_test(IDirect3DDevice7 *device)
         { 1.0f,  0.0f,   0.1f,                          0xc00000ff},
         { 1.0f,  1.0f,   0.1f,                          0xc00000ff},
     };
-    static const float composite_quad[][5] = {
+    static float composite_quad[][5] = {
         { 0.0f, -1.0f, 0.1f, 0.0f, 1.0f},
         { 0.0f,  1.0f, 0.1f, 0.0f, 0.0f},
         { 1.0f, -1.0f, 0.1f, 1.0f, 1.0f},
