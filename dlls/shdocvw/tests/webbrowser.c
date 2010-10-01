@@ -2437,6 +2437,8 @@ static void test_QueryInterface(IUnknown *unk)
     IObjectWithSite *site = (void*)0xdeadbeef;
     IViewObjectEx *viewex = (void*)0xdeadbeef;
     IOleLink *link = (void*)0xdeadbeef;
+    IMarshal *marshal = (void*)0xdeadbeef;
+    IStdMarshalInfo *marshalinfo = (void*)0xdeadbeef;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&qa);
@@ -2470,6 +2472,14 @@ static void test_QueryInterface(IUnknown *unk)
     hres = IUnknown_QueryInterface(unk, &IID_IOleLink, (void**)&link);
     ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
     ok(link == NULL, "link=%p, expected NULL\n", link);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IMarshal, (void**)&marshal);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(marshal == NULL, "marshal=%p, expected NULL\n", marshal);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IStdMarshalInfo, (void**)&marshalinfo);
+    ok(hres == E_NOINTERFACE, "QueryInterface returned %08x, expected E_NOINTERFACE\n", hres);
+    ok(marshalinfo == NULL, "marshalinfo=%p, expected NULL\n", marshalinfo);
 
 }
 

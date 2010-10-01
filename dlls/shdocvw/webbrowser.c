@@ -130,6 +130,12 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
     }else if(IsEqualGUID(&IID_IOleLink, riid)) {
         TRACE("(%p)->(IID_IOleLink %p) returning NULL\n", This, ppv);
         return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IMarshal, riid)) {
+        TRACE("(%p)->(IID_IMarshal %p) returning NULL\n", This, ppv);
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_IStdMarshalInfo, riid)) {
+        TRACE("(%p)->(IID_IStdMarshalInfo %p) returning NULL\n", This, ppv);
+        return E_NOINTERFACE;
     }else if(HlinkFrame_QI(&This->hlink_frame, riid, ppv)) {
         return S_OK;
     }
