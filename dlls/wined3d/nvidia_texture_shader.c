@@ -30,12 +30,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 /* GL locking for state handlers is done by the caller. */
 
-static void nvts_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void nvts_activate_dimensions(const struct wined3d_state *state, DWORD stage, struct wined3d_context *context)
 {
     BOOL bumpmap = FALSE;
 
-    if (stage > 0 && (stateblock->state.texture_states[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE
-            || stateblock->state.texture_states[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP))
+    if (stage > 0 && (state->texture_states[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE
+            || state->texture_states[stage - 1][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP))
     {
         bumpmap = TRUE;
         context->texShaderBumpMap |= (1 << stage);
@@ -43,9 +43,9 @@ static void nvts_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateb
         context->texShaderBumpMap &= ~(1 << stage);
     }
 
-    if (stateblock->state.textures[stage])
+    if (state->textures[stage])
     {
-        switch (stateblock->state.textures[stage]->baseTexture.target)
+        switch (state->textures[stage]->baseTexture.target)
         {
             case GL_TEXTURE_2D:
                 glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);
@@ -482,16 +482,16 @@ static void nvrc_colorop(DWORD state_id, IWineD3DStateBlockImpl *stateblock, str
         checkGLcall("glActiveTextureARB");
     }
 
-    if (stateblock->state.lowest_disabled_stage > 0)
+    if (state->lowest_disabled_stage > 0)
     {
         glEnable(GL_REGISTER_COMBINERS_NV);
-        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, stateblock->state.lowest_disabled_stage));
+        GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, state->lowest_disabled_stage));
     }
     else
     {
         glDisable(GL_REGISTER_COMBINERS_NV);
     }
-    if (stage >= stateblock->state.lowest_disabled_stage)
+    if (stage >= state->lowest_disabled_stage)
     {
         TRACE("Stage disabled\n");
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
@@ -529,57 +529,58 @@ static void nvrc_colorop(DWORD state_id, IWineD3DStateBlockImpl *stateblock, str
         {
             if (gl_info->supported[NV_TEXTURE_SHADER2])
             {
-                nvts_activate_dimensions(stage, stateblock, context);
+                nvts_activate_dimensions(state, stage, context);
             }
             else
             {
-                texture_activate_dimensions(stateblock->state.textures[stage], gl_info);
+                texture_activate_dimensions(state->textures[stage], gl_info);
             }
         }
     }
 
     /* Set the texture combiners */
-    set_tex_op_nvrc(gl_info, &stateblock->state, FALSE, stage,
-            stateblock->state.texture_states[stage][WINED3DTSS_COLOROP],
-            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG1],
-            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG2],
-            stateblock->state.texture_states[stage][WINED3DTSS_COLORARG0],
+    set_tex_op_nvrc(gl_info, state, FALSE, stage,
+            state->texture_states[stage][WINED3DTSS_COLOROP],
+            state->texture_states[stage][WINED3DTSS_COLORARG1],
+            state->texture_states[stage][WINED3DTSS_COLORARG2],
+            state->texture_states[stage][WINED3DTSS_COLORARG0],
             mapped_stage,
-            stateblock->state.texture_states[stage][WINED3DTSS_RESULTARG]);
+            state->texture_states[stage][WINED3DTSS_RESULTARG]);
 
     /* In register combiners bump mapping is done in the stage AFTER the one that has the bump map operation set,
      * thus the texture shader may have to be updated
      */
     if (gl_info->supported[NV_TEXTURE_SHADER2])
     {
-        BOOL usesBump = (stateblock->state.texture_states[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE
-                || stateblock->state.texture_states[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP);
+        BOOL usesBump = (state->texture_states[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAPLUMINANCE
+                || state->texture_states[stage][WINED3DTSS_COLOROP] == WINED3DTOP_BUMPENVMAP);
         BOOL usedBump = !!(context->texShaderBumpMap & 1 << (stage + 1));
         if (usesBump != usedBump)
         {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage + 1));
             checkGLcall("glActiveTextureARB");
-            nvts_activate_dimensions(stage + 1, stateblock, context);
+            nvts_activate_dimensions(state, stage + 1, context);
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
             checkGLcall("glActiveTextureARB");
         }
     }
 }
 
-static void nvts_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void nvts_texdim(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    DWORD sampler = state - STATE_SAMPLER(0);
+    DWORD sampler = state_id - STATE_SAMPLER(0);
     DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
+    const struct wined3d_state *state = &stateblock->state;
 
     /* No need to enable / disable anything here for unused samplers. The tex_colorop
     * handler takes care. Also no action is needed with pixel shaders, or if tex_colorop
     * will take care of this business
     */
     if (mapped_stage == WINED3D_UNMAPPED_STAGE || mapped_stage >= context->gl_info->limits.textures) return;
-    if (sampler >= stateblock->state.lowest_disabled_stage) return;
+    if (sampler >= state->lowest_disabled_stage) return;
     if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) return;
 
-    nvts_activate_dimensions(sampler, stateblock, context);
+    nvts_activate_dimensions(state, sampler, context);
 }
 
 static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
