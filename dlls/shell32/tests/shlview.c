@@ -471,7 +471,7 @@ static const struct message folderview_getselectionmarked_seq[] = {
 };
 
 static const struct message folderview_getfocused_seq[] = {
-    { LVM_GETNEXTITEM, sent|wparam|lparam, -1, LVNI_FOCUSED },
+    { LVM_GETNEXTITEM, sent|wparam|lparam|optional, -1, LVNI_FOCUSED },
     { 0 }
 };
 
@@ -535,7 +535,7 @@ static void test_IFolderView(void)
     HWND hwnd_view, hwnd_list;
     PITEMID_CHILD pidl;
     HRESULT hr;
-    INT ret;
+    INT ret, count;
     POINT pt;
     LONG ref1, ref2;
     RECT r;
@@ -618,6 +618,19 @@ if (0)
         ok(pt.x == LOWORD(ret) && pt.y == HIWORD(ret), "got (%d, %d)\n", LOWORD(ret), HIWORD(ret));
     }
 
+    /* IFolderView::ItemCount */
+if (0)
+{
+    /* crashes on XP */
+    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, NULL);
+}
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, &count);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, count ? folderview_itemcount_seq : empty_seq,
+                                  "IFolderView::ItemCount", FALSE);
+
     /* IFolderView::GetSelectionMarkedItem */
 if (0)
 {
@@ -627,16 +640,22 @@ if (0)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hr = IFolderView_GetSelectionMarkedItem(fv, &ret);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    if (count)
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+    else
+        ok(hr == S_FALSE, "got (0x%08x)\n", hr);
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_getselectionmarked_seq,
-                                  "IFolderView::GetSelectionMarkedItem", FALSE);
+                "IFolderView::GetSelectionMarkedItem", FALSE);
 
     /* IFolderView::GetFocusedItem */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hr = IFolderView_GetFocusedItem(fv, &ret);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    if (count)
+        ok(hr == S_OK, "got (0x%08x)\n", hr);
+    else
+        ok(hr == S_FALSE, "got (0x%08x)\n", hr);
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_getfocused_seq,
-                                  "IFolderView::GetFocusedItem", FALSE);
+                "IFolderView::GetFocusedItem", FALSE);
 
     /* IFolderView::GetFolder, just return pointer */
 if (0)
@@ -655,21 +674,9 @@ if (0)
     ok(hr == S_OK, "got (0x%08x)\n", hr);
     ref2 = IShellFolder_AddRef(desktop);
     IShellFolder_Release(desktop);
-    ok(ref1 == ref2, "expected same refcount, got %d\n", ref2);
+    ok(ref1 == ref2 || ref1 + 1 == ref2, /* >= vista */
+       "expected same refcount, got %d\n", ref2);
     ok(desktop == folder, "\n");
-
-    /* IFolderView::ItemCount */
-if (0)
-{
-    /* crashes on XP */
-    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, NULL);
-}
-
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, &ret);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
-    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, folderview_itemcount_seq,
-                                  "IFolderView::ItemCount", FALSE);
 
     IShellBrowser_Release(browser);
     IFolderView_Release(fv);
@@ -821,7 +828,7 @@ static const struct message folderview_setcurrentviewmode3_prevista[] = {
 
 static const struct message folderview_setcurrentviewmode4_prevista[] = {
     { LVM_GETHEADER, sent},
-    { LVM_GETITEMCOUNT, sent},
+    { LVM_GETITEMCOUNT, sent|optional },
     { LVM_SETSELECTEDCOLUMN, sent},
     { WM_NOTIFY, sent },
     { WM_NOTIFY, sent },
