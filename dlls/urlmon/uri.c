@@ -2921,6 +2921,13 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
         }
     }
 
+    if(!is_file && *(data->path) && *(data->path) != '/') {
+        /* Prepend a '/' to the path if it doesn't have one. */
+        if(!computeOnly)
+            uri->canon_uri[uri->canon_len] = '/';
+        ++uri->canon_len;
+    }
+
     for(; ptr < data->path+data->path_len; ++ptr) {
         if(*ptr == '%') {
             const WCHAR *tmp = ptr;
