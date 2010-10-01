@@ -537,26 +537,23 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     return refCount;
 }
 
-/**********************************************************
- * IWineD3DStateBlockImpl parts follows
- **********************************************************/
-static void record_lights(IWineD3DStateBlockImpl *This, const struct wined3d_state *state)
+static void wined3d_state_record_lights(struct wined3d_state *dst_state, const struct wined3d_state *src_state)
 {
     UINT i;
 
-    /* Lights... For a recorded state block, we just had a chain of actions to perform,
-     * so we need to walk that chain and update any actions which differ
-     */
+    /* Lights... For a recorded state block, we just had a chain of actions
+     * to perform, so we need to walk that chain and update any actions which
+     * differ. */
     for (i = 0; i < LIGHTMAP_SIZE; ++i)
     {
         struct list *e, *f;
-        LIST_FOR_EACH(e, &This->state.light_map[i])
+        LIST_FOR_EACH(e, &dst_state->light_map[i])
         {
             BOOL updated = FALSE;
             struct wined3d_light_info *src = LIST_ENTRY(e, struct wined3d_light_info, entry), *realLight;
 
             /* Look up the light in the destination */
-            LIST_FOR_EACH(f, &state->light_map[i])
+            LIST_FOR_EACH(f, &src_state->light_map[i])
             {
                 realLight = LIST_ENTRY(f, struct wined3d_light_info, entry);
                 if (realLight->OriginalIndex == src->OriginalIndex)
@@ -566,12 +563,12 @@ static void record_lights(IWineD3DStateBlockImpl *This, const struct wined3d_sta
                     if (realLight->glIndex == -1 && src->glIndex != -1)
                     {
                         /* Light disabled */
-                        This->state.lights[src->glIndex] = NULL;
+                        dst_state->lights[src->glIndex] = NULL;
                     }
                     else if (realLight->glIndex != -1 && src->glIndex == -1)
                     {
                         /* Light enabled */
-                        This->state.lights[realLight->glIndex] = src;
+                        dst_state->lights[realLight->glIndex] = src;
                     }
                     src->glIndex = realLight->glIndex;
                     updated = TRUE;
@@ -583,13 +580,13 @@ static void record_lights(IWineD3DStateBlockImpl *This, const struct wined3d_sta
             {
                 /* This can happen if the light was originally created as a
                  * default light for SetLightEnable() while recording. */
-                WARN("Light %u in stateblock %p does not exist in device state %p.\n",
-                        src->OriginalIndex, This, state);
+                WARN("Light %u in dst_state %p does not exist in src_state %p.\n",
+                        src->OriginalIndex, dst_state, src_state);
 
                 src->OriginalParms = WINED3D_default_light;
                 if (src->glIndex != -1)
                 {
-                    This->state.lights[src->glIndex] = NULL;
+                    dst_state->lights[src->glIndex] = NULL;
                     src->glIndex = -1;
                 }
             }
@@ -879,7 +876,7 @@ static HRESULT WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->state.pixel_shader = src_state->pixel_shader;
     }
 
-    record_lights(This, src_state);
+    wined3d_state_record_lights(&This->state, src_state);
 
     TRACE("Captue done.\n");
 
