@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
 #include "wine/unicode.h"
 #include "wine/library.h"
 #include "windef.h"
@@ -516,35 +517,33 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
     LPWSTR pVersion, DWORD cchBuffer, DWORD *dwlength)
 {
     HRESULT ret;
-    DWORD ver_len, dir_len;
-    WCHAR dirW[MAX_PATH], verW[MAX_PATH];
+    ICLRRuntimeInfo *info;
+    DWORD length_dummy;
 
-    FIXME("(%s, %s, %s, 0x%08x, 0x%08x, %p, 0x%08x, %p, %p, 0x%08x, %p) semi-stub\n", debugstr_w(pExe),
+    TRACE("(%s, %s, %s, 0x%08x, 0x%08x, %p, 0x%08x, %p, %p, 0x%08x, %p)\n", debugstr_w(pExe),
           debugstr_w(pwszVersion), debugstr_w(pConfigurationFile), startupFlags, runtimeInfoFlags, pDirectory,
           dwDirectory, dwDirectoryLength, pVersion, cchBuffer, dwlength);
 
-    if (!pwszVersion && !(runtimeInfoFlags & RUNTIME_INFO_UPGRADE_VERSION))
-        return CLR_E_SHIM_RUNTIME;
+    if (!dwDirectoryLength) dwDirectoryLength = &length_dummy;
 
-    ret = GetCORSystemDirectory(dirW, dwDirectory, &dir_len);
+    if (!dwlength) dwlength = &length_dummy;
 
-    if (ret == S_OK)
+    ret = get_runtime_info(pExe, pwszVersion, pConfigurationFile, startupFlags, runtimeInfoFlags, TRUE, &info);
+
+    if (SUCCEEDED(ret))
     {
-        if (dwDirectoryLength)
-            *dwDirectoryLength = dir_len;
-        if (pDirectory)
-            lstrcpyW(pDirectory, dirW);
+        *dwlength = cchBuffer;
+        ret = ICLRRuntimeInfo_GetVersionString(info, pVersion, dwlength);
 
-        ret = GetCORVersion(verW, cchBuffer, &ver_len);
-
-        if (ret == S_OK)
+        if (SUCCEEDED(ret))
         {
-            if (dwlength)
-                *dwlength = ver_len;
-            if (pVersion)
-                lstrcpyW(pVersion, verW);
+            *dwDirectoryLength = dwDirectory;
+            ret = ICLRRuntimeInfo_GetRuntimeDirectory(info, pDirectory, dwDirectoryLength);
         }
+
+        ICLRRuntimeInfo_Release(info);
     }
+
     return ret;
 }
 

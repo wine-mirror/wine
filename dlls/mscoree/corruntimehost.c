@@ -29,6 +29,7 @@
 
 #include "cor.h"
 #include "mscoree.h"
+#include "metahost.h"
 #include "mscoree_private.h"
 
 #include "wine/debug.h"

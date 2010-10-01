@@ -899,3 +899,51 @@ extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
 {
     return ICLRMetaHost_QueryInterface((ICLRMetaHost*)&GlobalCLRMetaHost, riid, ppobj);
 }
+
+HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
+    DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result)
+{
+    static const DWORD supported_startup_flags = 0;
+    static const DWORD supported_runtime_flags = RUNTIME_INFO_UPGRADE_VERSION;
+    int i;
+
+    if (exefile)
+        FIXME("ignoring exe filename %s\n", debugstr_w(exefile));
+
+    if (config_file)
+        FIXME("ignoring config filename %s\n", debugstr_w(config_file));
+
+    if (startup_flags & ~supported_startup_flags)
+        FIXME("unsupported startup flags %x\n", startup_flags & ~supported_startup_flags);
+
+    if (runtimeinfo_flags & ~supported_runtime_flags)
+        FIXME("unsupported runtimeinfo flags %x\n", runtimeinfo_flags & ~supported_runtime_flags);
+
+    if (version)
+    {
+        return CLRMetaHost_GetRuntime(0, version, &IID_ICLRRuntimeInfo, (void**)result);
+    }
+
+    if (runtimeinfo_flags & RUNTIME_INFO_UPGRADE_VERSION)
+    {
+        find_runtimes();
+
+        if (legacy)
+            i = 2;
+        else
+            i = NUM_RUNTIMES;
+
+        while (i--)
+        {
+            if (runtimes[i].mono_abi_version)
+                return IUnknown_QueryInterface((IUnknown*)&runtimes[i],
+                    &IID_ICLRRuntimeInfo, (void**)result);
+        }
+
+        ERR("No %s.NET runtime installed\n", legacy ? "legacy " : "");
+
+        return CLR_E_SHIM_RUNTIME;
+    }
+
+    return CLR_E_SHIM_RUNTIME;
+}
