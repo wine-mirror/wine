@@ -566,7 +566,7 @@ struct find_s {
 };
 
 
-struct find_s find_tests[] = {
+static struct find_s find_tests[] = {
   /* Find in empty text */
   {0, -1, "foo", FR_DOWN, -1},
   {0, -1, "foo", 0, -1},
@@ -575,7 +575,7 @@ struct find_s find_tests[] = {
   {5, 20, "foo", FR_DOWN, -1}
 };
 
-struct find_s find_tests2[] = {
+static struct find_s find_tests2[] = {
   /* No-result find */
   {0, -1, "foo", FR_DOWN | FR_MATCHCASE, -1},
   {5, 20, "WINE", FR_DOWN | FR_MATCHCASE, -1},
@@ -642,7 +642,7 @@ struct find_s find_tests2[] = {
   {4, -1, "INEW", 0, 10},
 };
 
-struct find_s find_tests3[] = {
+static struct find_s find_tests3[] = {
   /* Searching for end of line characters */
   {0, -1, "t\r\r\ns", FR_DOWN | FR_MATCHCASE, 4},
   {6, -1, "\r\n", FR_DOWN | FR_MATCHCASE, 6},
