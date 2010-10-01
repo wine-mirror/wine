@@ -8819,7 +8819,7 @@ struct formats {
     DWORD resultColorNoBlending;
 };
 
-const struct formats test_formats[] = {
+static const struct formats test_formats[] = {
   { "D3DFMT_G16R16", D3DFMT_G16R16, 0x001818ff, 0x002010ff},
   { "D3DFMT_R16F", D3DFMT_R16F, 0x0018ffff, 0x0020ffff },
   { "D3DFMT_G16R16F", D3DFMT_G16R16F, 0x001818ff, 0x002010ff },

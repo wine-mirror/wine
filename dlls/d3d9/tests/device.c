@@ -2069,7 +2069,7 @@ struct formats {
     BOOL shouldPass;
 };
 
-struct formats r5g6b5_format_list[] =
+static const struct formats r5g6b5_format_list[] =
 {
     { D3DFMT_R5G6B5, D3DFMT_R5G6B5, TRUE },
     { D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, FALSE },
@@ -2079,7 +2079,7 @@ struct formats r5g6b5_format_list[] =
     { 0, 0, 0}
 };
 
-struct formats x1r5g5b5_format_list[] =
+static const struct formats x1r5g5b5_format_list[] =
 {
     { D3DFMT_X1R5G5B5, D3DFMT_R5G6B5, FALSE },
     { D3DFMT_X1R5G5B5, D3DFMT_X1R5G5B5, TRUE },
@@ -2096,7 +2096,7 @@ struct formats x1r5g5b5_format_list[] =
     { 0, 0, 0}
 };
 
-struct formats x8r8g8b8_format_list[] =
+static const struct formats x8r8g8b8_format_list[] =
 {
     { D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, FALSE },
     { D3DFMT_X8R8G8B8, D3DFMT_X1R5G5B5, FALSE },
@@ -2347,7 +2347,7 @@ fail:
 }
 
 static HWND filter_messages;
-struct
+static struct
 {
     HWND window;
     UINT message;
