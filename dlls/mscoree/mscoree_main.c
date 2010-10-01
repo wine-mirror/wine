@@ -319,17 +319,25 @@ HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor
                                     DWORD startupFlags, REFCLSID rclsid,
                                     REFIID riid, LPVOID *ppv)
 {
-    FIXME("(%s, %s, %s, %p, %d, %s, %s, %p): semi-stub!\n", debugstr_w(pwszVersion),
+    HRESULT ret;
+    ICLRRuntimeInfo *info;
+
+    TRACE("(%s, %s, %s, %p, %d, %s, %s, %p)\n", debugstr_w(pwszVersion),
           debugstr_w(pwszBuildFlavor), debugstr_w(pwszHostConfigFile), pReserved,
           startupFlags, debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if (!get_mono_path(NULL))
+    *ppv = NULL;
+
+    ret = get_runtime_info(NULL, pwszVersion, pwszHostConfigFile, startupFlags, 0, TRUE, &info);
+
+    if (SUCCEEDED(ret))
     {
-        MESSAGE("wine: Install the Windows version of Mono to run .NET executables\n");
-        return E_FAIL;
+        ret = ICLRRuntimeInfo_GetInterface(info, rclsid, riid, ppv);
+
+        ICLRRuntimeInfo_Release(info);
     }
 
-    return S_OK;
+    return ret;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
