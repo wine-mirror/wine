@@ -25,11 +25,10 @@
 
 #include "taskkill.h"
 
+static int force_termination;
 
-int force_termination;
-
-WCHAR **task_list;
-unsigned int task_count;
+static WCHAR **task_list;
+static unsigned int task_count;
 
 struct pid_close_info
 {
