@@ -392,7 +392,7 @@ static DWORD CALLBACK alarmThreadMain(LPVOID arg)
     return 1;
 }
 
-HANDLE hnp = INVALID_HANDLE_VALUE;
+static HANDLE hnp = INVALID_HANDLE_VALUE;
 
 /** Trivial byte echo server - disconnects after each session */
 static DWORD CALLBACK serverThreadMain1(LPVOID arg)

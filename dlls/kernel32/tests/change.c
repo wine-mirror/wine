@@ -369,9 +369,8 @@ static void test_ffcnMultipleThreads(void)
     ok( r == TRUE, "failed to remove dir\n");
 }
 
-typedef BOOL (WINAPI *fnReadDirectoryChangesW)(HANDLE,LPVOID,DWORD,BOOL,DWORD,
+static BOOL (WINAPI *pReadDirectoryChangesW)(HANDLE,LPVOID,DWORD,BOOL,DWORD,
                          LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
-fnReadDirectoryChangesW pReadDirectoryChangesW;
 
 static void test_readdirectorychanges(void)
 {
@@ -874,8 +873,7 @@ static void test_ffcn_directory_overlap(void)
 START_TEST(change)
 {
     HMODULE hkernel32 = GetModuleHandle("kernel32");
-    pReadDirectoryChangesW = (fnReadDirectoryChangesW)
-        GetProcAddress(hkernel32, "ReadDirectoryChangesW");
+    pReadDirectoryChangesW = (void *)GetProcAddress(hkernel32, "ReadDirectoryChangesW");
 
     test_ffcnMultipleThreads();
     /* The above function runs a test that must occur before FindCloseChangeNotification is run in the

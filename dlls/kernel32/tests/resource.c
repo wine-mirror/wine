@@ -26,11 +26,11 @@
 static const char filename[] = "test_.exe";
 static DWORD GLE;
 
-enum {
+enum constants {
     page_size = 0x1000,
     rva_rsrc_start = page_size * 3,
     max_sections = 3
-} constants;
+};
 
 /* rodata @ [0x1000-0x3000) */
 static const IMAGE_SECTION_HEADER sh_rodata_1 =

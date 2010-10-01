@@ -146,7 +146,7 @@ static void cleanup_thread_sync_helpers(void)
   CloseHandle(stop_event);
 }
 
-DWORD tlsIndex;
+static DWORD tlsIndex;
 
 typedef struct {
   int threadnum;
@@ -157,7 +157,7 @@ typedef struct {
 /* WinME supports OpenThread but doesn't know about access restrictions so
    we require them to be either completely ignored or always obeyed.
 */
-INT obeying_ars = 0; /* -1 == no, 0 == dunno yet, 1 == yes */
+static INT obeying_ars = 0; /* -1 == no, 0 == dunno yet, 1 == yes */
 #define obey_ar(x) \
   (obeying_ars == 0 \
     ? ((x) \
