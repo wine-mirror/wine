@@ -31,7 +31,7 @@
 #include "wine/test.h"
 
 static const char msifile[] = "winetest-package.msi";
-char CURR_DIR[MAX_PATH];
+static char CURR_DIR[MAX_PATH];
 
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
 

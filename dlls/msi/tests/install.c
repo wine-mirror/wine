@@ -7661,7 +7661,7 @@ error:
     RemoveDirectory("msitest");
 }
 
-struct sourcepathmap
+static const struct sourcepathmap
 {
     BOOL sost; /* shortone\shorttwo */
     BOOL solt; /* shortone\longtwo */

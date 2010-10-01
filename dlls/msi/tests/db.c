@@ -8230,7 +8230,7 @@ static void test_select_with_tablenames(void)
     DeleteFileA(msifile);
 }
 
-UINT ordervals[6][3] =
+static const UINT ordervals[6][3] =
 {
     { MSI_NULL_INTEGER, 12, 13 },
     { 1, 2, 3 },

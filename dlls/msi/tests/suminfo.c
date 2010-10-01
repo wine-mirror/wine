@@ -63,7 +63,7 @@
 #define PID_MSISOURCE PID_WORDCOUNT
 #define PID_MSIRESTRICT PID_CHARCOUNT
 
-const char *msifile = "winetest-suminfo.msi";
+static const char *msifile = "winetest-suminfo.msi";
 static const WCHAR msifileW[] = {
     'w','i','n','e','t','e','s','t','-','s','u','m','i','n','f','o','.','m','s','i',0 };
 
