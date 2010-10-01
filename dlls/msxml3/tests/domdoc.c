@@ -225,6 +225,191 @@ static const CHAR szBasicTransformXML[] =
 static const CHAR szBasicTransformOutput[] =
 "<HTML><BODY><TABLE><TD>Wine</TD><TD>$25.00</TD></TABLE></BODY></HTML>";
 
+#define SZ_EMAIL_DTD \
+"<!DOCTYPE email ["\
+"   <!ELEMENT email         (recipients,from,reply-to?,subject,body,attachment*)>"\
+"       <!ATTLIST email attachments IDREFS #REQUIRED>"\
+"       <!ATTLIST email sent (yes|no) \"no\">"\
+"   <!ELEMENT recipients    (to+,cc*)>"\
+"   <!ELEMENT to            (#PCDATA)>"\
+"       <!ATTLIST to name CDATA #IMPLIED>"\
+"   <!ELEMENT cc            (#PCDATA)>"\
+"       <!ATTLIST cc name CDATA #IMPLIED>"\
+"   <!ELEMENT from          (#PCDATA)>"\
+"       <!ATTLIST from name CDATA #IMPLIED>"\
+"   <!ELEMENT reply-to      (#PCDATA)>"\
+"       <!ATTLIST reply-to name CDATA #IMPLIED>"\
+"   <!ELEMENT subject       ANY>"\
+"   <!ELEMENT body          ANY>"\
+"       <!ATTLIST body enc CDATA #FIXED \"UTF-8\">"\
+"   <!ELEMENT attachment    (#PCDATA)>"\
+"       <!ATTLIST attachment id ID #REQUIRED>"\
+"]>"
+
+static const CHAR szEmailXML[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 87)</subject>"
+"   <body>"
+"       It no longer causes spontaneous combustion..."
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_0D[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 88)</subject>"
+"   <body>"
+"       <undecl />"
+"       XML_ELEMENT_UNDECLARED 0xC00CE00D"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_0E[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 89)</subject>"
+"   <body>"
+"       XML_ELEMENT_ID_NOT_FOUND 0xC00CE00E"
+"   </body>"
+"   <attachment id=\"patch\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_11[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 90)</subject>"
+"   <body>"
+"       XML_EMPTY_NOT_ALLOWED 0xC00CE011"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_13[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<msg attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 91)</subject>"
+"   <body>"
+"       XML_ROOT_NAME_MISMATCH 0xC00CE013"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</msg>";
+
+static const CHAR szEmailXML_14[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <to>wine-patches@winehq.org</to>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 92)</subject>"
+"   <body>"
+"       XML_INVALID_CONTENT 0xC00CE014"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_15[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\" ip=\"127.0.0.1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 93)</subject>"
+"   <body>"
+"       XML_ATTRIBUTE_NOT_DEFINED 0xC00CE015"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_16[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 94)</subject>"
+"   <body enc=\"ASCII\">"
+"       XML_ATTRIBUTE_FIXED 0xC00CE016"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_17[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\" sent=\"true\">"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 95)</subject>"
+"   <body>"
+"       XML_ATTRIBUTE_VALUE 0xC00CE017"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_18[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email attachments=\"patch1\">"
+"   oops"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 96)</subject>"
+"   <body>"
+"       XML_ILLEGAL_TEXT 0xC00CE018"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
+static const CHAR szEmailXML_20[] =
+"<?xml version=\"1.0\"?>"
+SZ_EMAIL_DTD
+"<email>"
+"   <recipients>"
+"       <to>wine-patches@winehq.org</to>"
+"   </recipients>"
+"   <from name=\"Anonymous\">user@localhost</from>"
+"   <subject>msxml3/tests: DTD validation (try 97)</subject>"
+"   <body>"
+"       XML_REQUIRED_ATTRIBUTE_MISSING 0xC00CE020"
+"   </body>"
+"   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
+"</email>";
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -3022,8 +3207,9 @@ static void test_XMLHTTP(void)
 static void test_IXMLDOMDocument2(void)
 {
     static const WCHAR emptyW[] = {0};
-    IXMLDOMDocument2 *doc2;
+    IXMLDOMDocument2 *doc2, *dtddoc2;
     IXMLDOMDocument *doc;
+    IXMLDOMParseError* err;
     IDispatchEx *dispex;
     VARIANT_BOOL b;
     VARIANT var;
@@ -3034,6 +3220,13 @@ static void test_IXMLDOMDocument2(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
+    dtddoc2 = create_document(&IID_IXMLDOMDocument2);
+    if (!dtddoc2)
+    {
+        IXMLDOMDocument_Release(doc);
+        return;
+    }
+
     r = IXMLDOMDocument_QueryInterface( doc, &IID_IXMLDOMDocument2, (void**)&doc2 );
     ok( r == S_OK, "ret %08x\n", r );
     ok( doc == (IXMLDOMDocument*)doc2, "interfaces differ\n");
@@ -3041,6 +3234,19 @@ static void test_IXMLDOMDocument2(void)
     ole_expect(IXMLDOMDocument2_get_readyState(doc2, NULL), E_INVALIDARG);
     ole_check(IXMLDOMDocument2_get_readyState(doc2, &res));
     ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
+
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(doc2, NULL), S_FALSE);
+    todo_wine ole_expect(IXMLDOMDocument2_validate(doc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected a pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_E_NOTWF */
+        todo_wine ok(res == 0xC00CE223, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
 
     str = SysAllocString( szComplete4 );
     r = IXMLDOMDocument_loadXML( doc2, str, &b );
@@ -3050,6 +3256,18 @@ static void test_IXMLDOMDocument2(void)
 
     ole_check(IXMLDOMDocument2_get_readyState(doc, &res));
     ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
+
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(doc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected a pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_E_NODTD */
+        todo_wine ok(res == 0xC00CE224, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
 
     r = IXMLDOMDocument_QueryInterface( doc, &IID_IDispatchEx, (void**)&dispex );
     ok( r == S_OK, "ret %08x\n", r );
@@ -3104,6 +3322,163 @@ static void test_IXMLDOMDocument2(void)
 
     IXMLDOMDocument2_Release( doc2 );
     IXMLDOMDocument_Release( doc );
+
+    /* DTD validation */
+    ole_check(IXMLDOMDocument2_put_validateOnParse(dtddoc2, VARIANT_FALSE));
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_check(IXMLDOMDocument2_validate(dtddoc2, &err));
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_expect(IXMLDOMParseError_get_errorCode(err, &res), S_FALSE);
+        todo_wine ok(res == 0, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_0D), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_ELEMENT_UNDECLARED */
+        todo_wine ok(res == 0xC00CE00D, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_0E), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_ELEMENT_ID_NOT_FOUND */
+        todo_wine ok(res == 0xC00CE00E, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_11), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_EMPTY_NOT_ALLOWED */
+        todo_wine ok(res == 0xC00CE011, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_13), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_ROOT_NAME_MISMATCH */
+        todo_wine ok(res == 0xC00CE013, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_14), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_INVALID_CONTENT */
+        todo_wine ok(res == 0xC00CE014, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_15), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_ATTRIBUTE_NOT_DEFINED */
+        todo_wine ok(res == 0xC00CE015, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_16), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_ATTRIBUTE_FIXED */
+        todo_wine ok(res == 0xC00CE016, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_17), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_ATTRIBUTE_VALUE */
+        todo_wine ok(res == 0xC00CE017, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_18), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_ILLEGAL_TEXT */
+        todo_wine ok(res == 0xC00CE018, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    ole_check(IXMLDOMDocument2_loadXML(dtddoc2, _bstr_(szEmailXML_20), &b));
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    err = NULL;
+    todo_wine ole_expect(IXMLDOMDocument2_validate(dtddoc2, &err), S_FALSE);
+    todo_wine ok(err != NULL, "expected pointer\n");
+    if (err)
+    {
+        res = 0;
+        todo_wine ole_check(IXMLDOMParseError_get_errorCode(err, &res));
+        /* XML_REQUIRED_ATTRIBUTE_MISSING */
+        todo_wine ok(res == 0xC00CE020, "got %08x\n", res);
+        IXMLDOMParseError_Release(err);
+    }
+
+    IXMLDOMDocument2_Release( dtddoc2 );
     free_bstrs();
 }
 
