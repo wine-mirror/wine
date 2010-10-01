@@ -33,11 +33,28 @@ BEGIN
     IDS_CPL_INFO        "Configurer le navigateur internet de Wine et d'autres paramètres associés"
 END
 
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Général"
+BEGIN
+
+    GROUPBOX    " Page d'accueil ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "Vous pouvez spécifier une adresse à utiliser comme page d'accueil :",
+                IDC_STATIC, 68, 10, 242, 10
+    EDITTEXT    IDC_HOME_EDIT, 68, 22, 242, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "Page &courante", IDC_HOME_CURRENT, 68, 36, 77, 14
+    PUSHBUTTON  "Page par &défaut", IDC_HOME_DEFAULT, 151, 36, 77, 14
+    PUSHBUTTON  "Page &blanche", IDC_HOME_BLANK, 233, 36, 77, 14
+
+END
+
 /* "Content" propsheet */
 IDD_CONTENT DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
-CAPTION "Content"
+CAPTION "Contenu"
 BEGIN
 
     GROUPBOX    " Certificats ", IDC_STATIC, 4, 4, 312, 50
