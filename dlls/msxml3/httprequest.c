@@ -50,15 +50,6 @@ struct reqheader
     BSTR value;
 };
 
-enum READYSTATE
-{
-    STATE_UNINITIALIZED = 0,
-    STATE_LOADING       = 1,
-    STATE_LOADED        = 2,
-    STATE_INTERACTIVE   = 3,
-    STATE_COMPLETED     = 4
-};
-
 typedef struct
 {
     const struct IXMLHTTPRequestVtbl *lpVtbl;
@@ -571,7 +562,7 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
     if (hr == S_OK)
         This->password = V_BSTR(&str);
 
-    httprequest_setreadystate(This, STATE_LOADING);
+    httprequest_setreadystate(This, READYSTATE_LOADING);
 
     return S_OK;
 }
@@ -584,7 +575,7 @@ static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(header), debugstr_w(value));
 
     if (!header || !*header) return E_INVALIDARG;
-    if (This->state != STATE_LOADING) return E_FAIL;
+    if (This->state != READYSTATE_LOADING) return E_FAIL;
     if (!value) return E_INVALIDARG;
 
     /* replace existing header value if already added */
@@ -634,7 +625,7 @@ static HRESULT WINAPI httprequest_send(IXMLHTTPRequest *iface, VARIANT varBody)
 
     TRACE("(%p)\n", This);
 
-    if (This->state != STATE_LOADING) return E_FAIL;
+    if (This->state != READYSTATE_LOADING) return E_FAIL;
 
     hr = BindStatusCallback_create(This, &bsc);
     if (FAILED(hr)) return hr;
@@ -771,7 +762,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->async = FALSE;
     req->verb = -1;
     req->url = req->user = req->password = NULL;
-    req->state = STATE_UNINITIALIZED;
+    req->state = READYSTATE_UNINITIALIZED;
     req->bsc = NULL;
     list_init(&req->reqheaders);
 
