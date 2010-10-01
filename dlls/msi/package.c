@@ -659,6 +659,9 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szMsiAMD64[] = { 'M','s','i','A','M','D','6','4',0 };
     static const WCHAR szMsix64[] = { 'M','s','i','x','6','4',0 };
     static const WCHAR szSystem64Folder[] = { 'S','y','s','t','e','m','6','4','F','o','l','d','e','r',0 };
+    static const WCHAR szCommonFiles64Folder[] = { 'C','o','m','m','o','n','F','i','l','e','s','6','4','F','o','l','d','e','r',0 };
+    static const WCHAR szProgramFiles64Folder[] = { 'P','r','o','g','r','a','m','F','i','l','e','s','6','4','F','o','l','d','e','r',0 };
+    static const WCHAR szVersionNT64[] = { 'V','e','r','s','i','o','n','N','T','6','4',0 };
     static const WCHAR szUserInfo[] = {
         'S','O','F','T','W','A','R','E','\\',
         'M','i','c','r','o','s','o','f','t','\\',
@@ -697,14 +700,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
      * CaptionHeight BorderTop BorderSide TextHeight
      * RedirectedDllSupport
      */
-
-    SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, pth);
-    strcatW(pth, szBackSlash);
-    msi_set_property(package->db, szCommonFilesFolder, pth);
-
-    SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, pth);
-    strcatW(pth, szBackSlash);
-    msi_set_property(package->db, szProgramFilesFolder, pth);
 
     SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, pth);
     strcatW(pth, szBackSlash);
@@ -828,20 +823,53 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     sprintfW( bufstr, szFormat, MSI_MAJORVERSION * 100);
     msi_set_property( package->db, szVersionDatabase, bufstr );
 
-    GetSystemInfo( &sys_info );
+    GetNativeSystemInfo( &sys_info );
+    sprintfW( bufstr, szIntFormat, sys_info.wProcessorLevel );
     if (sys_info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
-        sprintfW( bufstr, szIntFormat, sys_info.wProcessorLevel );
         msi_set_property( package->db, szIntel, bufstr );
+
+        GetSystemDirectoryW( pth, MAX_PATH );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szSystemFolder, pth );
+
+        SHGetFolderPathW( NULL, CSIDL_PROGRAM_FILES, NULL, 0, pth );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szProgramFilesFolder, pth );
+
+        SHGetFolderPathW( NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, pth );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szCommonFilesFolder, pth );
     }
     else if (sys_info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
-        sprintfW( bufstr, szIntFormat, sys_info.wProcessorLevel );
         msi_set_property( package->db, szMsiAMD64, bufstr );
         msi_set_property( package->db, szMsix64, bufstr );
+        msi_set_property( package->db, szVersionNT64, verstr );
 
         GetSystemDirectoryW( pth, MAX_PATH );
+        PathAddBackslashW( pth );
         msi_set_property( package->db, szSystem64Folder, pth );
+
+        GetSystemWow64DirectoryW( pth, MAX_PATH );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szSystemFolder, pth );
+
+        SHGetFolderPathW( NULL, CSIDL_PROGRAM_FILES, NULL, 0, pth );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szProgramFiles64Folder, pth );
+
+        SHGetFolderPathW( NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, pth );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szProgramFilesFolder, pth );
+
+        SHGetFolderPathW( NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, pth );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szCommonFiles64Folder, pth );
+
+        SHGetFolderPathW( NULL, CSIDL_PROGRAM_FILES_COMMONX86, NULL, 0, pth );
+        PathAddBackslashW( pth );
+        msi_set_property( package->db, szCommonFilesFolder, pth );
     }
 
     /* Screen properties. */

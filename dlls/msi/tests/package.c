@@ -27,6 +27,7 @@
 #include <msi.h>
 #include <msiquery.h>
 #include <srrestoreptapi.h>
+#include <shlobj.h>
 
 #include "wine/test.h"
 
@@ -34,6 +35,7 @@ static const char msifile[] = "winetest-package.msi";
 static char CURR_DIR[MAX_PATH];
 
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
+static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 static BOOL (WINAPI *pGetTokenInformation)( HANDLE, TOKEN_INFORMATION_CLASS, LPVOID, DWORD, PDWORD );
@@ -42,6 +44,7 @@ static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static LONG (WINAPI *pRegDeleteKeyExW)(HKEY, LPCWSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static void (WINAPI *pGetSystemInfo)(LPSYSTEM_INFO);
+static UINT (WINAPI *pGetSystemWow64DirectoryA)(LPSTR, UINT);
 
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
@@ -51,12 +54,14 @@ static void init_functionpointers(void)
     HMODULE hmsi = GetModuleHandleA("msi.dll");
     HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE hshell32 = GetModuleHandleA("shell32.dll");
     HMODULE hsrclient;
 
 #define GET_PROC(mod, func) \
     p ## func = (void*)GetProcAddress(mod, #func);
 
     GET_PROC(hmsi, MsiApplyMultiplePatchesA);
+    GET_PROC(hshell32, SHGetFolderPathA);
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
     GET_PROC(hadvapi32, GetTokenInformation);
@@ -65,6 +70,7 @@ static void init_functionpointers(void)
     GET_PROC(hadvapi32, RegDeleteKeyExW)
     GET_PROC(hkernel32, IsWow64Process)
     GET_PROC(hkernel32, GetSystemInfo)
+    GET_PROC(hkernel32, GetSystemWow64DirectoryA)
 
     hsrclient = LoadLibraryA("srclient.dll");
     GET_PROC(hsrclient, SRRemoveRestorePoint);
@@ -9575,7 +9581,7 @@ static void test_installprops(void)
     int res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
+    BOOL wow64 = FALSE;
     SYSTEM_INFO si;
 
     if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
@@ -9687,7 +9693,7 @@ static void test_installprops(void)
     r = MsiGetProperty(hpkg, "ScreenY", buf, &size);
     ok(atol(buf) == res, "Expected %d, got %ld\n", res, atol(buf));
 
-    if (pGetSystemInfo)
+    if (pGetSystemInfo && pSHGetFolderPathA)
     {
         pGetSystemInfo(&si);
         if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
@@ -9708,7 +9714,184 @@ static void test_installprops(void)
             size = MAX_PATH;
             r = MsiGetProperty(hpkg, "System64Folder", buf, &size);
             ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            GetSystemDirectoryA(path, MAX_PATH);
+            if (size) buf[size - 1] = 0;
+            ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "SystemFolder", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            pGetSystemWow64DirectoryA(path, MAX_PATH);
+            if (size) buf[size - 1] = 0;
+            ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "ProgramFiles64Folder", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
+            if (size) buf[size - 1] = 0;
+            ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "ProgramFilesFolder", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
+            if (size) buf[size - 1] = 0;
+            ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "CommonFiles64Folder", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, path);
+            if (size) buf[size - 1] = 0;
+            ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "CommonFilesFolder", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+            pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMONX86, NULL, 0, path);
+            if (size) buf[size - 1] = 0;
+            ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+            buf[0] = 0;
+            size = MAX_PATH;
+            r = MsiGetProperty(hpkg, "VersionNT64", buf, &size);
+            ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
             ok(buf[0], "property not set\n");
+        }
+        else if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+        {
+            if (!wow64)
+            {
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "Msix64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "System64Folder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "SystemFolder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                GetSystemDirectoryA(path, MAX_PATH);
+                if (size) buf[size - 1] = 0;
+                ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "ProgramFiles64Folder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "ProgramFilesFolder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
+                if (size) buf[size - 1] = 0;
+                ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "CommonFiles64Folder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "CommonFilesFolder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, 0, path);
+                if (size) buf[size - 1] = 0;
+                ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "VersionNT64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+            }
+            else
+            {
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "MsiAMD64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(buf[0], "property not set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "Msix64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(buf[0], "property not set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "System64Folder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                GetSystemDirectoryA(path, MAX_PATH);
+                if (size) buf[size - 1] = 0;
+                ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "SystemFolder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                pGetSystemWow64DirectoryA(path, MAX_PATH);
+                if (size) buf[size - 1] = 0;
+                ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "ProgramFilesFolder64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "ProgramFilesFolder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
+                if (size) buf[size - 1] = 0;
+                ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "CommonFilesFolder64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(!buf[0], "property set\n");
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "CommonFilesFolder", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                pSHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES_COMMONX86, NULL, 0, path);
+                if (size) buf[size - 1] = 0;
+                ok(!lstrcmpiA(path, buf), "expected \"%s\", got \"%s\"\n", path, buf);
+
+                buf[0] = 0;
+                size = MAX_PATH;
+                r = MsiGetProperty(hpkg, "VersionNT64", buf, &size);
+                ok(r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+                ok(buf[0], "property not set\n");
+            }
         }
     }
 

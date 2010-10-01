@@ -3448,7 +3448,8 @@ static BOOL get_system_dirs(void)
     }
 
     size = MAX_PATH;
-    if (RegQueryValueExA(hkey, "CommonFilesDir", 0, &type, (LPBYTE)COMMON_FILES_DIR, &size)) {
+    if (RegQueryValueExA(hkey, "CommonFilesDir (x86)", 0, &type, (LPBYTE)COMMON_FILES_DIR, &size) &&
+        RegQueryValueExA(hkey, "CommonFilesDir", 0, &type, (LPBYTE)COMMON_FILES_DIR, &size)) {
         RegCloseKey(hkey);
         return FALSE;
     }
