@@ -36,7 +36,7 @@ static inline void debugstr_guid( char* buf, CONST GUID *id )
 static HMODULE hd3dxof;
 static HRESULT (WINAPI *pDirectXFileCreate)(LPDIRECTXFILE*);
 
-char template[] =
+static char template[] =
 "xof 0302txt 0064\n"
 "template Header\n"
 "{\n"
@@ -47,7 +47,7 @@ char template[] =
 "}\n";
 
 /* Same version as above compressed with mszip */
-char compressed_template[] =
+static char compressed_template[] =
 "xof 0302tzip0064\x71\x00\x00\x00\x61\x00\x5a\x00"
 "\x43\x4B\x2B\x49\xCD\x2D\xC8\x49\x2C\x49\x55\xF0\x48\x4D\x4C\x49"
 "\x2D\xE2\xAA\xE6\xB2\x31\x76\xB1\x30\x72\x74\x32\x31\xD6\x35\x33"
@@ -56,7 +56,7 @@ char compressed_template[] =
 "\xC8\x4D\xCC\xCA\x2F\xB2\x86\xB2\x33\xF3\x40\x6C\x17\x30\x27\x2D"
 "\x27\x31\xBD\xD8\x9A\xAB\x96\x8B\x0B\x00";
 
-char object[] =
+static char object[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
 "{\n"
@@ -64,24 +64,24 @@ char object[] =
 "}\n";
 
 /* Same version as above compressed with mszip */
-char compressed_object[] =
+static char compressed_object[] =
 "xof 0302tzip0064\x2c\x00\x00\x00\x1c\x00\x20\x00"
 "\x43\x4b\xf3\x48\x4d\x4c\x49\x2d\x52\xf0\x4f\xca\x4a\x4d\x2e\xe1"
 "\xaa\xe6\x32\xb4\x56\x30\xb2\x56\x30\xb6\xe6\xaa\xe5\xe2\x02\x00";
 
-char empty_txt_file[]  = "xof 0302txt 0064";
-char empty_bin_file[]  = "xof 0302bin 0064";
+static char empty_txt_file[]  = "xof 0302txt 0064";
+static char empty_bin_file[]  = "xof 0302bin 0064";
 /* MSZip data is generated with the command "MAKECAB.EXE /D Compress=ON /D CompressionType=MSZip file packed"
  * Data in cab is after the filename (null terminated) and the 32-bit checksum:
  * size (16-bit), packed_size (16-bit) and compressed data (with leading 16-bit CK signature)
  * Data in x files is preceding by 2 16-bit words: size with xof header (16 bytes) and a 0 value
  * It does not seem possible to generate a MSZip data with no byte, so put just 1 byte here */
 /* "\n" packed with MSZip => not text */
-char empty_tzip_file[] = "xof 0302tzip0064\x11\x00\x00\x00\x01\x00\x05\x00\x43\x4b\xe3\x02\x00";
+static char empty_tzip_file[] = "xof 0302tzip0064\x11\x00\x00\x00\x01\x00\x05\x00\x43\x4b\xe3\x02\x00";
 /* "\n" packed with MSZip => not token (token are 16-bit and there is only 1 byte) */
-char empty_bzip_file[] = "xof 0302bzip0064\x11\x00\x00\x00\x01\x00\x05\x00\x43\x4b\xe3\x02\x00";
-char empty_cmp_file[]  = "xof 0302cmp 0064";
-char empty_xxxx_file[] = "xof 0302xxxx0064";
+static char empty_bzip_file[] = "xof 0302bzip0064\x11\x00\x00\x00\x01\x00\x05\x00\x43\x4b\xe3\x02\x00";
+static char empty_cmp_file[]  = "xof 0302cmp 0064";
+static char empty_xxxx_file[] = "xof 0302xxxx0064";
 
 static void init_function_pointers(void)
 {
