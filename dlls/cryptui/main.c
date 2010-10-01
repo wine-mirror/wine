@@ -4434,7 +4434,7 @@ BOOL WINAPI CryptUIDlgViewCertificateW(
     }
     /* Make a local copy in case we have to call WinVerifyTrust ourselves */
     memcpy(&viewInfo, pCertViewInfo, sizeof(viewInfo));
-    if (!viewInfo.u.hWVTStateData)
+    if (!pCertViewInfo->u.hWVTStateData)
     {
         memset(&wvt, 0, sizeof(wvt));
         wvt.cbStruct = sizeof(wvt);
@@ -4476,7 +4476,7 @@ BOOL WINAPI CryptUIDlgViewCertificateW(
     if (ret)
     {
         ret = show_cert_dialog(&viewInfo, provCert, pfPropertiesChanged);
-        if (!viewInfo.u.hWVTStateData)
+        if (!pCertViewInfo->u.hWVTStateData)
         {
             wvt.dwStateAction = WTD_STATEACTION_CLOSE;
             WinVerifyTrust(NULL, &generic_cert_verify, &wvt);
