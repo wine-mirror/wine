@@ -35,8 +35,8 @@ HRESULT CStdStubBuffer_Delegating_Construct(REFIID riid, LPUNKNOWN pUnkServer, P
 
 const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface);
 
-const IRpcStubBufferVtbl CStdStubBuffer_Vtbl;
-const IRpcStubBufferVtbl CStdStubBuffer_Delegating_Vtbl;
+extern const IRpcStubBufferVtbl CStdStubBuffer_Vtbl;
+extern const IRpcStubBufferVtbl CStdStubBuffer_Delegating_Vtbl;
 
 BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num);
 HRESULT create_proxy(REFIID iid, IUnknown *pUnkOuter, IRpcProxyBuffer **pproxy, void **ppv);

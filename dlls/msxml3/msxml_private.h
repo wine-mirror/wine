@@ -223,7 +223,7 @@ static inline HRESULT return_null_ptr(void **p)
 
 #endif
 
-void* libxslt_handle;
+extern void* libxslt_handle;
 #ifdef SONAME_LIBXSLT
 # ifdef HAVE_LIBXSLT_PATTERN_H
 #  include <libxslt/pattern.h>
