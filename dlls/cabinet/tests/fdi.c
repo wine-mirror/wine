@@ -28,7 +28,7 @@
 #define MEDIA_SIZE          999999999
 #define FOLDER_THRESHOLD    900000
 
-CHAR CURR_DIR[MAX_PATH];
+static CHAR CURR_DIR[MAX_PATH];
 
 /* FDI callbacks */
 
