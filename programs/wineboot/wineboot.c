@@ -643,7 +643,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
         'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
     HKEY hkWin, hkRun;
-    DWORD res;
+    DWORD res, dispos;
     DWORD i, nMaxCmdLine=0, nMaxValue=0;
     WCHAR *szCmdLine=NULL;
     WCHAR *szValue=NULL;
@@ -653,15 +653,17 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
     else
         WINE_TRACE("processing %s entries under HKCU\n",wine_dbgstr_w(szKeyName) );
 
-    if (RegOpenKeyExW( hkRoot, WINKEY_NAME, 0, KEY_READ, &hkWin ) != ERROR_SUCCESS)
+    if (RegCreateKeyExW( hkRoot, WINKEY_NAME, 0, NULL, 0, KEY_READ, NULL, &hkWin, NULL ) != ERROR_SUCCESS)
         return TRUE;
 
-    if (RegOpenKeyExW( hkWin, szKeyName, 0, bDelete?KEY_ALL_ACCESS:KEY_READ, &hkRun ) != ERROR_SUCCESS)
+    if ((res = RegCreateKeyExW( hkWin, szKeyName, 0, NULL, 0, bDelete ? KEY_ALL_ACCESS : KEY_READ,
+                                NULL, &hkRun, &dispos ) != ERROR_SUCCESS))
     {
         RegCloseKey( hkWin );
         return TRUE;
     }
     RegCloseKey( hkWin );
+    if (dispos == REG_CREATED_NEW_KEY) goto end;
 
     if( (res=RegQueryInfoKeyW( hkRun, NULL, NULL, NULL, NULL, NULL, NULL, &i, &nMaxValue,
                     &nMaxCmdLine, NULL, NULL ))!=ERROR_SUCCESS )
