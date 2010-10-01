@@ -53,7 +53,7 @@ static BOOL     (WINAPI *pStringTableStringFromIdEx)(HSTRING_TABLE, DWORD, LPWST
 static VOID     (WINAPI *pStringTableTrim)(HSTRING_TABLE);
 #endif
 
-HMODULE hdll;
+static HMODULE hdll;
 static WCHAR string[] = {'s','t','r','i','n','g',0};
 static WCHAR String[] = {'S','t','r','i','n','g',0};
 static WCHAR foo[] = {'f','o','o',0};
