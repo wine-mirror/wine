@@ -37,7 +37,7 @@ static BOOL    (WINAPI *pPathAppendA)(LPSTR, LPCSTR);
 
 /* ################ */
 
-struct {
+static const struct {
     const char *url;
     const char *path;
     DWORD ret;
@@ -106,7 +106,7 @@ static struct {
     {NULL, FALSE}
 };
 
-struct {
+static const struct {
     const char *path;
     const char *result;
 } TEST_PATH_UNQUOTE_SPACES[] = {
