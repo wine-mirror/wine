@@ -255,11 +255,11 @@ double CDECL NTDLL_tan( double d )
 
 /* Merge Sort. Algorithm taken from http://www.linux-related.de/index.html?/coding/sort/sort_merge.htm */
 static void
-NTDLL_mergesort( void *arr, void *barr, int elemsize, int(__cdecl *compar)(const void *, const void *),
-                 int left, int right )
+NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(const void *, const void *),
+                 size_t left, size_t right )
 {
     if(right>left) {
-        int i, j, k, m;
+        size_t i, j, k, m;
         m=(right+left)/2;
         NTDLL_mergesort( arr, barr, elemsize, compar, left, m);
         NTDLL_mergesort( arr, barr, elemsize, compar, m+1, right);
