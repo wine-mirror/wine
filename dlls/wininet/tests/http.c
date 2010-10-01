@@ -2598,7 +2598,6 @@ static void test_secure_connection(void)
     size = sizeof(flags);
     ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
     ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
-    todo_wine
     ok(flags & SECURITY_FLAG_SECURE, "expected secure flag to be set\n");
 
     ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
@@ -2679,7 +2678,6 @@ static void test_secure_connection(void)
     size = sizeof(flags);
     ret = InternetQueryOption(req, INTERNET_OPTION_SECURITY_FLAGS, &flags, &size);
     ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
-    todo_wine
     ok(flags & SECURITY_FLAG_SECURE, "expected secure flag to be set\n");
 
     ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,

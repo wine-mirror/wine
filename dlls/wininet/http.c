@@ -1690,7 +1690,6 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
     case INTERNET_OPTION_SECURITY_FLAGS:
     {
-        http_session_t *lpwhs = req->lpHttpSession;
         DWORD flags;
         int bits;
 
@@ -1699,7 +1698,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
         *size = sizeof(DWORD);
         flags = 0;
-        if (lpwhs->hdr.dwFlags & INTERNET_FLAG_SECURE)
+        if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
             flags |= SECURITY_FLAG_SECURE;
         flags |= req->netConnection.security_flags;
         bits = NETCON_GetCipherStrength(&req->netConnection);
