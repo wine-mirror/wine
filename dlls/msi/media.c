@@ -211,9 +211,6 @@ static INT_PTR CDECL cabinet_open_stream( char *pszFile, int oflag, int pmode )
     UINT r;
     IStream *stm;
 
-    if (oflag)
-        WARN("ignoring open flags 0x%08x\n", oflag);
-
     r = db_get_raw_stream( cab_stream.db, cab_stream.name, &stm );
     if (r != ERROR_SUCCESS)
     {
