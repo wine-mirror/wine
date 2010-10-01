@@ -42,7 +42,6 @@ struct RuntimeHost
     const CLRRuntimeInfo *version;
     const loaded_mono *mono;
     LONG ref;
-    BOOL legacy; /* if True, this was created by create_corruntimehost, and Release frees it */
 };
 
 static inline RuntimeHost *impl_from_ICorRuntimeHost( ICorRuntimeHost *iface )
@@ -86,10 +85,6 @@ static ULONG WINAPI corruntimehost_Release(ICorRuntimeHost* iface)
     ULONG ref;
 
     ref = InterlockedDecrement( &This->ref );
-    if ( ref == 0 && This->legacy )
-    {
-        RuntimeHost_Destroy(This);
-    }
 
     return ref;
 }
@@ -289,7 +284,6 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
     This->ref = 1;
     This->version = runtime_version;
     This->mono = loaded_mono;
-    This->legacy = FALSE;
 
     *result = This;
 
@@ -317,25 +311,4 @@ HRESULT RuntimeHost_Destroy(RuntimeHost *This)
 {
     HeapFree( GetProcessHeap(), 0, This );
     return S_OK;
-}
-
-IUnknown* create_corruntimehost(void)
-{
-    RuntimeHost *This;
-    IUnknown *result;
-
-    if (FAILED(RuntimeHost_Construct(NULL, NULL, &This)))
-        return NULL;
-
-    This->legacy = TRUE;
-
-    if (FAILED(RuntimeHost_GetInterface(This, &CLSID_CorRuntimeHost, &IID_IUnknown, (void**)&result)))
-    {
-        RuntimeHost_Destroy(This);
-        return NULL;
-    }
-
-    FIXME("return iface %p\n", result);
-
-    return result;
 }

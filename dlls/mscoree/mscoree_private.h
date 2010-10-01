@@ -20,8 +20,6 @@
 #ifndef __MSCOREE_PRIVATE__
 #define __MSCOREE_PRIVATE__
 
-extern IUnknown* create_corruntimehost(void);
-
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj);
 
 typedef struct tagASSEMBLY ASSEMBLY;

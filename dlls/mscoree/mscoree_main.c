@@ -628,16 +628,24 @@ HRESULT WINAPI LoadStringRC(UINT resId, LPWSTR pBuffer, int iBufLen, int bQuiet)
 HRESULT WINAPI CorBindToRuntimeEx(LPWSTR szVersion, LPWSTR szBuildFlavor, DWORD nflags, REFCLSID rslsid,
                                   REFIID riid, LPVOID *ppv)
 {
-    FIXME("%s %s %d %s %s %p\n", debugstr_w(szVersion), debugstr_w(szBuildFlavor), nflags, debugstr_guid( rslsid ),
+    HRESULT ret;
+    ICLRRuntimeInfo *info;
+
+    TRACE("%s %s %d %s %s %p\n", debugstr_w(szVersion), debugstr_w(szBuildFlavor), nflags, debugstr_guid( rslsid ),
           debugstr_guid( riid ), ppv);
 
-    if(IsEqualGUID( riid, &IID_ICorRuntimeHost ))
-    {
-        *ppv = create_corruntimehost();
-        return S_OK;
-    }
     *ppv = NULL;
-    return E_NOTIMPL;
+
+    ret = get_runtime_info(NULL, szVersion, NULL, nflags, 0, TRUE, &info);
+
+    if (SUCCEEDED(ret))
+    {
+        ret = ICLRRuntimeInfo_GetInterface(info, rslsid, riid, ppv);
+
+        ICLRRuntimeInfo_Release(info);
+    }
+
+    return ret;
 }
 
 HRESULT WINAPI CorBindToCurrentRuntime(LPCWSTR filename, REFCLSID rclsid, REFIID riid, LPVOID *ppv)
