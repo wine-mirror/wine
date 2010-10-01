@@ -62,23 +62,23 @@ typedef struct _OBJECT_BASIC_INFORMATION {
 static BOOL (WINAPI *pAddAccessAllowedAceEx)(PACL, DWORD, DWORD, DWORD, PSID);
 static BOOL (WINAPI *pAddAccessDeniedAceEx)(PACL, DWORD, DWORD, DWORD, PSID);
 static BOOL (WINAPI *pAddAuditAccessAceEx)(PACL, DWORD, DWORD, DWORD, PSID, BOOL, BOOL);
-typedef VOID (WINAPI *fnBuildTrusteeWithSidA)( PTRUSTEEA pTrustee, PSID pSid );
-typedef VOID (WINAPI *fnBuildTrusteeWithNameA)( PTRUSTEEA pTrustee, LPSTR pName );
-typedef VOID (WINAPI *fnBuildTrusteeWithObjectsAndNameA)( PTRUSTEEA pTrustee,
+static VOID (WINAPI *pBuildTrusteeWithSidA)( PTRUSTEEA pTrustee, PSID pSid );
+static VOID (WINAPI *pBuildTrusteeWithNameA)( PTRUSTEEA pTrustee, LPSTR pName );
+static VOID (WINAPI *pBuildTrusteeWithObjectsAndNameA)( PTRUSTEEA pTrustee,
                                                           POBJECTS_AND_NAME_A pObjName,
                                                           SE_OBJECT_TYPE ObjectType,
                                                           LPSTR ObjectTypeName,
                                                           LPSTR InheritedObjectTypeName,
                                                           LPSTR Name );
-typedef VOID (WINAPI *fnBuildTrusteeWithObjectsAndSidA)( PTRUSTEEA pTrustee,
+static VOID (WINAPI *pBuildTrusteeWithObjectsAndSidA)( PTRUSTEEA pTrustee,
                                                          POBJECTS_AND_SID pObjSid,
                                                          GUID* pObjectGuid,
                                                          GUID* pInheritedObjectGuid,
                                                          PSID pSid );
-typedef LPSTR (WINAPI *fnGetTrusteeNameA)( PTRUSTEEA pTrustee );
-typedef BOOL (WINAPI *fnMakeSelfRelativeSD)( PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR, LPDWORD );
-typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
-typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
+static LPSTR (WINAPI *pGetTrusteeNameA)( PTRUSTEEA pTrustee );
+static BOOL (WINAPI *pMakeSelfRelativeSD)( PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR, LPDWORD );
+static BOOL (WINAPI *pConvertSidToStringSidA)( PSID pSid, LPSTR *str );
+static BOOL (WINAPI *pConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 static BOOL (WINAPI *pCheckTokenMembership)(HANDLE, PSID, PBOOL);
 static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorA)(LPCSTR, DWORD,
                                                                             PSECURITY_DESCRIPTOR*, PULONG );
@@ -86,9 +86,9 @@ static BOOL (WINAPI *pConvertStringSecurityDescriptorToSecurityDescriptorW)(LPCW
                                                                             PSECURITY_DESCRIPTOR*, PULONG );
 static BOOL (WINAPI *pConvertSecurityDescriptorToStringSecurityDescriptorA)(PSECURITY_DESCRIPTOR, DWORD,
                                                                             SECURITY_INFORMATION, LPSTR *, PULONG );
-typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
+static BOOL (WINAPI *pGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
-typedef BOOL (WINAPI *fnSetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
+static BOOL (WINAPI *pSetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR);
 static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_INFORMATION,
                                               PSID*, PSID*, PACL*, PACL*,
@@ -96,15 +96,15 @@ static DWORD (WINAPI *pGetNamedSecurityInfoA)(LPSTR, SE_OBJECT_TYPE, SECURITY_IN
 static PDWORD (WINAPI *pGetSidSubAuthority)(PSID, DWORD);
 static PUCHAR (WINAPI *pGetSidSubAuthorityCount)(PSID);
 static BOOL (WINAPI *pIsValidSid)(PSID);
-typedef DWORD (WINAPI *fnRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
-typedef BOOL (WINAPI *fnCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
-typedef BOOL (WINAPI *fnDuplicateTokenEx)(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,
+static DWORD (WINAPI *pRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
+static BOOL (WINAPI *pCreateWellKnownSid)(WELL_KNOWN_SID_TYPE,PSID,PSID,DWORD*);
+static BOOL (WINAPI *pDuplicateTokenEx)(HANDLE,DWORD,LPSECURITY_ATTRIBUTES,
                                         SECURITY_IMPERSONATION_LEVEL,TOKEN_TYPE,PHANDLE);
 
-typedef NTSTATUS (WINAPI *fnLsaQueryInformationPolicy)(LSA_HANDLE,POLICY_INFORMATION_CLASS,PVOID*);
-typedef NTSTATUS (WINAPI *fnLsaClose)(LSA_HANDLE);
-typedef NTSTATUS (WINAPI *fnLsaFreeMemory)(PVOID);
-typedef NTSTATUS (WINAPI *fnLsaOpenPolicy)(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
+static NTSTATUS (WINAPI *pLsaQueryInformationPolicy)(LSA_HANDLE,POLICY_INFORMATION_CLASS,PVOID*);
+static NTSTATUS (WINAPI *pLsaClose)(LSA_HANDLE);
+static NTSTATUS (WINAPI *pLsaFreeMemory)(PVOID);
+static NTSTATUS (WINAPI *pLsaOpenPolicy)(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
 static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE,OBJECT_INFORMATION_CLASS,PVOID,ULONG,PULONG);
 static DWORD (WINAPI *pSetEntriesInAclW)(ULONG, PEXPLICIT_ACCESSW, PACL, PACL*);
 static BOOL (WINAPI *pSetSecurityDescriptorControl)(PSECURITY_DESCRIPTOR, SECURITY_DESCRIPTOR_CONTROL,
@@ -117,24 +117,6 @@ static NTSTATUS (WINAPI *pNtAccessCheck)(PSECURITY_DESCRIPTOR, HANDLE, ACCESS_MA
 static HMODULE hmod;
 static int     myARGC;
 static char**  myARGV;
-
-fnBuildTrusteeWithSidA   pBuildTrusteeWithSidA;
-fnBuildTrusteeWithNameA  pBuildTrusteeWithNameA;
-fnBuildTrusteeWithObjectsAndNameA pBuildTrusteeWithObjectsAndNameA;
-fnBuildTrusteeWithObjectsAndSidA pBuildTrusteeWithObjectsAndSidA;
-fnGetTrusteeNameA pGetTrusteeNameA;
-fnMakeSelfRelativeSD pMakeSelfRelativeSD;
-fnConvertSidToStringSidA pConvertSidToStringSidA;
-fnConvertStringSidToSidA pConvertStringSidToSidA;
-fnGetFileSecurityA pGetFileSecurityA;
-fnSetFileSecurityA pSetFileSecurityA;
-fnRtlAdjustPrivilege pRtlAdjustPrivilege;
-fnCreateWellKnownSid pCreateWellKnownSid;
-fnDuplicateTokenEx pDuplicateTokenEx;
-fnLsaQueryInformationPolicy pLsaQueryInformationPolicy;
-fnLsaClose pLsaClose;
-fnLsaFreeMemory pLsaFreeMemory;
-fnLsaOpenPolicy pLsaOpenPolicy;
 
 struct sidRef
 {
@@ -161,9 +143,9 @@ static void init(void)
         (void *)GetProcAddress(hmod, "ConvertStringSecurityDescriptorToSecurityDescriptorW" );
     pConvertSecurityDescriptorToStringSecurityDescriptorA =
         (void *)GetProcAddress(hmod, "ConvertSecurityDescriptorToStringSecurityDescriptorA" );
-    pGetFileSecurityA = (fnGetFileSecurityA)GetProcAddress(hmod, "GetFileSecurityA" );
-    pSetFileSecurityA = (fnSetFileSecurityA)GetProcAddress(hmod, "SetFileSecurityA" );
-    pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
+    pGetFileSecurityA = (void *)GetProcAddress(hmod, "GetFileSecurityA" );
+    pSetFileSecurityA = (void *)GetProcAddress(hmod, "SetFileSecurityA" );
+    pCreateWellKnownSid = (void *)GetProcAddress( hmod, "CreateWellKnownSid" );
     pGetNamedSecurityInfoA = (void *)GetProcAddress(hmod, "GetNamedSecurityInfoA");
     pGetSidSubAuthority = (void *)GetProcAddress(hmod, "GetSidSubAuthority");
     pGetSidSubAuthorityCount = (void *)GetProcAddress(hmod, "GetSidSubAuthorityCount");
@@ -216,12 +198,10 @@ static void test_sid(void)
     BOOL r;
     LPSTR str = NULL;
 
-    pConvertSidToStringSidA = (fnConvertSidToStringSidA)
-                    GetProcAddress( hmod, "ConvertSidToStringSidA" );
+    pConvertSidToStringSidA = (void *)GetProcAddress( hmod, "ConvertSidToStringSidA" );
     if( !pConvertSidToStringSidA )
         return;
-    pConvertStringSidToSidA = (fnConvertStringSidToSidA)
-                    GetProcAddress( hmod, "ConvertStringSidToSidA" );
+    pConvertStringSidToSidA = (void *)GetProcAddress( hmod, "ConvertStringSidToSidA" );
     if( !pConvertStringSidToSidA )
         return;
 
@@ -355,16 +335,11 @@ static void test_trustee(void)
 
     memset( &ZeroGuid, 0x00, sizeof (ZeroGuid) );
 
-    pBuildTrusteeWithSidA = (fnBuildTrusteeWithSidA)
-                    GetProcAddress( hmod, "BuildTrusteeWithSidA" );
-    pBuildTrusteeWithNameA = (fnBuildTrusteeWithNameA)
-                    GetProcAddress( hmod, "BuildTrusteeWithNameA" );
-    pBuildTrusteeWithObjectsAndNameA = (fnBuildTrusteeWithObjectsAndNameA)
-                    GetProcAddress (hmod, "BuildTrusteeWithObjectsAndNameA" );
-    pBuildTrusteeWithObjectsAndSidA = (fnBuildTrusteeWithObjectsAndSidA)
-                    GetProcAddress (hmod, "BuildTrusteeWithObjectsAndSidA" );
-    pGetTrusteeNameA = (fnGetTrusteeNameA)
-                    GetProcAddress (hmod, "GetTrusteeNameA" );
+    pBuildTrusteeWithSidA = (void *)GetProcAddress( hmod, "BuildTrusteeWithSidA" );
+    pBuildTrusteeWithNameA = (void *)GetProcAddress( hmod, "BuildTrusteeWithNameA" );
+    pBuildTrusteeWithObjectsAndNameA = (void *)GetProcAddress (hmod, "BuildTrusteeWithObjectsAndNameA" );
+    pBuildTrusteeWithObjectsAndSidA = (void *)GetProcAddress (hmod, "BuildTrusteeWithObjectsAndSidA" );
+    pGetTrusteeNameA = (void *)GetProcAddress (hmod, "GetTrusteeNameA" );
     if( !pBuildTrusteeWithSidA || !pBuildTrusteeWithNameA ||
         !pBuildTrusteeWithObjectsAndNameA || !pBuildTrusteeWithObjectsAndSidA ||
         !pGetTrusteeNameA )
@@ -862,8 +837,7 @@ static void test_AccessCheck(void)
         skip("not running on NT, skipping test\n");
         return;
     }
-    pRtlAdjustPrivilege = (fnRtlAdjustPrivilege)
-                          GetProcAddress(NtDllModule, "RtlAdjustPrivilege");
+    pRtlAdjustPrivilege = (void *)GetProcAddress(NtDllModule, "RtlAdjustPrivilege");
     if (!pRtlAdjustPrivilege)
     {
         win_skip("missing RtlAdjustPrivilege, skipping test\n");
@@ -1377,7 +1351,7 @@ static void test_sid_str(PSID * sid)
     }
 }
 
-struct well_known_sid_value
+static const struct well_known_sid_value
 {
     BOOL without_domain;
     const char *sid_string;
@@ -1452,7 +1426,7 @@ static void test_CreateWellKnownSid(void)
 
     for (i = 0; i < sizeof(well_known_sid_values)/sizeof(well_known_sid_values[0]); i++)
     {
-        struct well_known_sid_value *value = &well_known_sid_values[i];
+        const struct well_known_sid_value *value = &well_known_sid_values[i];
         char sid_buffer[SECURITY_MAX_SID_SIZE];
         LPSTR str;
         DWORD cb;
@@ -1725,10 +1699,10 @@ static void test_LookupAccountSid(void)
             }
         }
 
-        pLsaQueryInformationPolicy = (fnLsaQueryInformationPolicy)GetProcAddress( hmod, "LsaQueryInformationPolicy");
-        pLsaOpenPolicy = (fnLsaOpenPolicy)GetProcAddress( hmod, "LsaOpenPolicy");
-        pLsaFreeMemory = (fnLsaFreeMemory)GetProcAddress( hmod, "LsaFreeMemory");
-        pLsaClose = (fnLsaClose)GetProcAddress( hmod, "LsaClose");
+        pLsaQueryInformationPolicy = (void *)GetProcAddress( hmod, "LsaQueryInformationPolicy");
+        pLsaOpenPolicy = (void *)GetProcAddress( hmod, "LsaOpenPolicy");
+        pLsaFreeMemory = (void *)GetProcAddress( hmod, "LsaFreeMemory");
+        pLsaClose = (void *)GetProcAddress( hmod, "LsaClose");
 
         if (pLsaQueryInformationPolicy && pLsaOpenPolicy && pLsaFreeMemory && pLsaClose)
         {
@@ -2401,7 +2375,7 @@ static void test_impersonation_level(void)
     HKEY hkey;
     DWORD error;
 
-    pDuplicateTokenEx = (fnDuplicateTokenEx) GetProcAddress(hmod, "DuplicateTokenEx");
+    pDuplicateTokenEx = (void *)GetProcAddress(hmod, "DuplicateTokenEx");
     if( !pDuplicateTokenEx ) {
         win_skip("DuplicateTokenEx is not available\n");
         return;

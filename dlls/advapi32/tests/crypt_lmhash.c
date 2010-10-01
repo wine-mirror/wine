@@ -34,56 +34,44 @@ struct ustring {
     unsigned char *Buffer;
 };
 
-typedef NTSTATUS (WINAPI *fnSystemFunction001)(const BYTE *, const BYTE *, LPBYTE);
-typedef NTSTATUS (WINAPI *fnSystemFunction002)(const BYTE *, const BYTE *, LPBYTE);
-typedef NTSTATUS (WINAPI *fnSystemFunction003)(const BYTE *, LPBYTE);
-typedef NTSTATUS (WINAPI *fnSystemFunction004)(const struct ustring *, const struct ustring *, struct ustring *);
-typedef NTSTATUS (WINAPI *fnSystemFunction005)(const struct ustring *, const struct ustring *, struct ustring *);
-typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
-typedef NTSTATUS (WINAPI *fnSystemFunction008)(const BYTE *, const BYTE *, LPBYTE);
-typedef NTSTATUS (WINAPI *fnSystemFunction009)(const BYTE *, const BYTE *, LPBYTE);
 typedef int (WINAPI *descrypt)(unsigned char *, unsigned char *, unsigned char *);
-typedef NTSTATUS (WINAPI *fnSystemFunction030)(const void*, const void*);
-typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, const struct ustring *);
-
-fnSystemFunction001 pSystemFunction001;
-fnSystemFunction002 pSystemFunction002;
-fnSystemFunction003 pSystemFunction003;
-fnSystemFunction004 pSystemFunction004;
-fnSystemFunction004 pSystemFunction005;
-fnSystemFunction006 pSystemFunction006;
-fnSystemFunction008 pSystemFunction008;
-fnSystemFunction008 pSystemFunction009;
+static NTSTATUS (WINAPI *pSystemFunction001)(const BYTE *, const BYTE *, LPBYTE);
+static NTSTATUS (WINAPI *pSystemFunction002)(const BYTE *, const BYTE *, LPBYTE);
+static NTSTATUS (WINAPI *pSystemFunction003)(const BYTE *, LPBYTE);
+static NTSTATUS (WINAPI *pSystemFunction004)(const struct ustring *, const struct ustring *, struct ustring *);
+static NTSTATUS (WINAPI *pSystemFunction005)(const struct ustring *, const struct ustring *, struct ustring *);
+static VOID (WINAPI *pSystemFunction006)( PCSTR passwd, PSTR lmhash );
+static NTSTATUS (WINAPI *pSystemFunction008)(const BYTE *, const BYTE *, LPBYTE);
+static NTSTATUS (WINAPI *pSystemFunction009)(const BYTE *, const BYTE *, LPBYTE);
+static NTSTATUS (WINAPI *pSystemFunction032)(struct ustring *, const struct ustring *);
 
 /* encrypt two blocks */
-descrypt pSystemFunction012;
-descrypt pSystemFunction014;
-descrypt pSystemFunction016;
-descrypt pSystemFunction018;
-descrypt pSystemFunction020;
-descrypt pSystemFunction022;
+static descrypt pSystemFunction012;
+static descrypt pSystemFunction014;
+static descrypt pSystemFunction016;
+static descrypt pSystemFunction018;
+static descrypt pSystemFunction020;
+static descrypt pSystemFunction022;
 
 /* decrypt two blocks */
-descrypt pSystemFunction013;
-descrypt pSystemFunction015;
-descrypt pSystemFunction017;
-descrypt pSystemFunction019;
-descrypt pSystemFunction021;
-descrypt pSystemFunction023;
+static descrypt pSystemFunction013;
+static descrypt pSystemFunction015;
+static descrypt pSystemFunction017;
+static descrypt pSystemFunction019;
+static descrypt pSystemFunction021;
+static descrypt pSystemFunction023;
 
 /* encrypt two blocks with a 32bit key */
-descrypt pSystemFunction024;
-descrypt pSystemFunction025;
+static descrypt pSystemFunction024;
+static descrypt pSystemFunction025;
 
 /* decrypt two blocks with a 32bit key */
-descrypt pSystemFunction026;
-descrypt pSystemFunction027;
+static descrypt pSystemFunction026;
+static descrypt pSystemFunction027;
 
 typedef int (WINAPI *memcmpfunc)(unsigned char *, unsigned char *);
-memcmpfunc pSystemFunction030;
-memcmpfunc pSystemFunction031;
-
-fnSystemFunction032 pSystemFunction032;
+static memcmpfunc pSystemFunction030;
+static memcmpfunc pSystemFunction031;
 
 static void test_SystemFunction006(void)
 {
@@ -545,49 +533,49 @@ START_TEST(crypt_lmhash)
 {
     HMODULE module = GetModuleHandleA("advapi32.dll");
 
-    pSystemFunction001 = (fnSystemFunction001)GetProcAddress( module, "SystemFunction001" );
+    pSystemFunction001 = (void *)GetProcAddress( module, "SystemFunction001" );
     if (pSystemFunction001)
         test_SystemFunction001();
     else
         win_skip("SystemFunction001 is not available\n");
 
-    pSystemFunction002 = (fnSystemFunction002)GetProcAddress( module, "SystemFunction002" );
+    pSystemFunction002 = (void *)GetProcAddress( module, "SystemFunction002" );
     if (pSystemFunction002)
         test_SystemFunction002();
     else
         win_skip("SystemFunction002 is not available\n");
 
-    pSystemFunction003 = (fnSystemFunction003)GetProcAddress( module, "SystemFunction003" );
+    pSystemFunction003 = (void *)GetProcAddress( module, "SystemFunction003" );
     if (pSystemFunction003)
         test_SystemFunction003();
     else
         win_skip("SystemFunction002 is not available\n");
 
-    pSystemFunction004 = (fnSystemFunction004)GetProcAddress( module, "SystemFunction004" );
+    pSystemFunction004 = (void *)GetProcAddress( module, "SystemFunction004" );
     if (pSystemFunction004)
         test_SystemFunction004();
     else
         win_skip("SystemFunction004 is not available\n");
 
-    pSystemFunction005 = (fnSystemFunction005)GetProcAddress( module, "SystemFunction005" );
+    pSystemFunction005 = (void *)GetProcAddress( module, "SystemFunction005" );
     if (pSystemFunction005)
         test_SystemFunction005();
     else
         win_skip("SystemFunction005 is not available\n");
 
-    pSystemFunction006 = (fnSystemFunction006)GetProcAddress( module, "SystemFunction006" );
+    pSystemFunction006 = (void *)GetProcAddress( module, "SystemFunction006" );
     if (pSystemFunction006) 
         test_SystemFunction006();
     else
         win_skip("SystemFunction006 is not available\n");
 
-    pSystemFunction008 = (fnSystemFunction008)GetProcAddress( module, "SystemFunction008" );
+    pSystemFunction008 = (void *)GetProcAddress( module, "SystemFunction008" );
     if (pSystemFunction008)
         test_SystemFunction008();
     else
         win_skip("SystemFunction008 is not available\n");
 
-    pSystemFunction009 = (fnSystemFunction009)GetProcAddress( module, "SystemFunction009" );
+    pSystemFunction009 = (void *)GetProcAddress( module, "SystemFunction009" );
     if (pSystemFunction009)
         test_SystemFunction009();
     else
@@ -641,7 +629,7 @@ START_TEST(crypt_lmhash)
     test_memcmpfunc(pSystemFunction030);
     test_memcmpfunc(pSystemFunction031);
 
-    pSystemFunction032 = (fnSystemFunction032)GetProcAddress( module, "SystemFunction032" );
+    pSystemFunction032 = (void *)GetProcAddress( module, "SystemFunction032" );
     if (pSystemFunction032)
         test_SystemFunction032();
     else
