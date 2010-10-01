@@ -996,8 +996,8 @@ static void test_listbox_LB_DIR(void)
     DeleteFileA( "wtest1.tmp.c" );
 }
 
-HWND g_listBox;
-HWND g_label;
+static HWND g_listBox;
+static HWND g_label;
 
 #define ID_TEST_LABEL    1001
 #define ID_TEST_LISTBOX  1002

@@ -414,7 +414,7 @@ struct message {
     LPARAM lParam;         /* expected value of lParam */
 };
 
-struct sendinput_test_s {
+static const struct sendinput_test_s {
     WORD wVk;
     DWORD dwFlags;
     BOOL _todo_wine;
@@ -674,10 +674,10 @@ static struct message sent_messages[MAXKEYMESSAGES];
 static UINT sent_messages_cnt;
 
 /* Verify that only specified key state transitions occur */
-static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_test_s *test)
+static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, const struct sendinput_test_s *test)
 {
     int i, failcount = 0;
-    struct transition_s *t = test->expected_transitions;
+    const struct transition_s *t = test->expected_transitions;
     UINT actual_cnt = 0;
     const struct message *expected = test->expected_messages;
 
