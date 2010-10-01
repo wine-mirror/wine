@@ -38,7 +38,7 @@
 DEFINE_GUID(CLSID_StdGlobalInterfaceTable,0x00000323,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
 /* functions that are not present on all versions of Windows */
-HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
+static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 
 /* helper macros to make tests a bit leaner */
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
@@ -1845,7 +1845,7 @@ static const IClassFactoryVtbl TestREClassFactory_Vtbl =
     Test_IClassFactory_LockServer
 };
 
-IClassFactory TestRE_ClassFactory = { &TestREClassFactory_Vtbl };
+static IClassFactory TestRE_ClassFactory = { &TestREClassFactory_Vtbl };
 
 static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -2011,7 +2011,7 @@ static IClassFactoryVtbl TestMsgClassFactory_Vtbl =
     Test_IClassFactory_LockServer
 };
 
-IClassFactory TestMsg_ClassFactory = { &TestMsgClassFactory_Vtbl };
+static IClassFactory TestMsg_ClassFactory = { &TestMsgClassFactory_Vtbl };
 
 static void test_call_from_message(void)
 {

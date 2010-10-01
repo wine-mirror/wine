@@ -387,9 +387,9 @@ static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
     return S_OK;
 }
 
-const char *cmpl_stm_data = "complex stream";
-const char *cmpl_text_data = "complex text";
-const WCHAR device_name[] = {'m','y','d','e','v',0};
+static const char *cmpl_stm_data = "complex stream";
+static const char *cmpl_text_data = "complex text";
+static const WCHAR device_name[] = {'m','y','d','e','v',0};
 
 static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
 {

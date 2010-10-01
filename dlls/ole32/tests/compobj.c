@@ -36,11 +36,11 @@
 #include "wine/test.h"
 
 /* functions that are not present on all versions of Windows */
-HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
-HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
-HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppOldObject);
-HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
-HRESULT (WINAPI * pCoGetContextToken)(ULONG_PTR *token);
+static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
+static HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
+static HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppOldObject);
+static HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
+static HRESULT (WINAPI * pCoGetContextToken)(ULONG_PTR *token);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)

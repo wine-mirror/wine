@@ -55,8 +55,8 @@ struct expected_method
 static const struct expected_method *expected_method_list;
 static FORMATETC *g_expected_fetc = NULL;
 
-BOOL g_showRunnable = TRUE;
-BOOL g_isRunning = TRUE;
+static BOOL g_showRunnable = TRUE;
+static BOOL g_isRunning = TRUE;
 
 #define CHECK_EXPECTED_METHOD(method_name) \
     do { \
