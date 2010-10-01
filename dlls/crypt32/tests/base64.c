@@ -40,14 +40,11 @@
 #define X509_HEADER_NOCR          "-----BEGIN X509 CRL-----\n"
 #define X509_TRAILER_NOCR         "-----END X509 CRL-----\n"
 
-typedef BOOL (WINAPI *CryptBinaryToStringAFunc)(const BYTE *pbBinary,
+static BOOL (WINAPI *pCryptBinaryToStringA)(const BYTE *pbBinary,
  DWORD cbBinary, DWORD dwFlags, LPSTR pszString, DWORD *pcchString);
-typedef BOOL (WINAPI *CryptStringToBinaryAFunc)(LPCSTR pszString,
+static BOOL (WINAPI *pCryptStringToBinaryA)(LPCSTR pszString,
  DWORD cchString, DWORD dwFlags, BYTE *pbBinary, DWORD *pcbBinary,
  DWORD *pdwSkip, DWORD *pdwFlags);
-
-CryptBinaryToStringAFunc pCryptBinaryToStringA;
-CryptStringToBinaryAFunc pCryptStringToBinaryA;
 
 struct BinTests
 {
@@ -64,7 +61,7 @@ static const BYTE toEncode4[] =
  "abcdefghijlkmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
  "abcdefghijlkmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890";
 
-struct BinTests tests[] = {
+static const struct BinTests tests[] = {
  { toEncode1, sizeof(toEncode1), "AA==\r\n", },
  { toEncode2, sizeof(toEncode2), "AQI=\r\n", },
  /* { toEncode3, sizeof(toEncode3), "AQID\r\n", },  This test fails on Vista. */
@@ -76,7 +73,7 @@ struct BinTests tests[] = {
    "SElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODkwAA==\r\n" },
 };
 
-struct BinTests testsNoCR[] = {
+static const struct BinTests testsNoCR[] = {
  { toEncode1, sizeof(toEncode1), "AA==\n", },
  { toEncode2, sizeof(toEncode2), "AQI=\n", },
  /* { toEncode3, sizeof(toEncode3), "AQID\n", },  This test fails on Vista. */
@@ -306,7 +303,7 @@ struct BadString
     DWORD       format;
 };
 
-struct BadString badStrings[] = {
+static const struct BadString badStrings[] = {
  { "A\r\nA\r\n=\r\n=\r\n", CRYPT_STRING_BASE64 },
  { "AA\r\n=\r\n=\r\n", CRYPT_STRING_BASE64 },
  { "AA=\r\n=\r\n", CRYPT_STRING_BASE64 },
@@ -441,10 +438,8 @@ START_TEST(base64)
 {
     HMODULE lib = GetModuleHandleA("crypt32");
 
-    pCryptBinaryToStringA = (CryptBinaryToStringAFunc)GetProcAddress(lib,
-     "CryptBinaryToStringA");
-    pCryptStringToBinaryA = (CryptStringToBinaryAFunc)GetProcAddress(lib,
-     "CryptStringToBinaryA");
+    pCryptBinaryToStringA = (void *)GetProcAddress(lib, "CryptBinaryToStringA");
+    pCryptStringToBinaryA = (void *)GetProcAddress(lib, "CryptStringToBinaryA");
 
     if (pCryptBinaryToStringA)
         testBinaryToStringA();

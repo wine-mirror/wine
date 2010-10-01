@@ -2356,7 +2356,7 @@ struct EncodedRSAPubKey
     size_t decodedModulusLen;
 };
 
-struct EncodedRSAPubKey rsaPubKeys[] = {
+static const struct EncodedRSAPubKey rsaPubKeys[] = {
     { modulus1, sizeof(modulus1), mod1_encoded, sizeof(modulus1) },
     { modulus2, sizeof(modulus2), mod2_encoded, 5 },
     { modulus3, sizeof(modulus3), mod3_encoded, 5 },
@@ -7137,7 +7137,7 @@ static CERT_GENERAL_SUBTREE IPAddressWithMinSubtree = {
 static CERT_GENERAL_SUBTREE IPAddressWithMinMaxSubtree = {
  { CERT_ALT_NAME_IP_ADDRESS, { 0 } }, 5, TRUE, 3 };
 
-struct EncodedNameConstraints encodedNameConstraints[] = {
+static const struct EncodedNameConstraints encodedNameConstraints[] = {
  { { sizeof(emptySequence), (LPBYTE)emptySequence }, { 0 } },
  { { sizeof(emptyDNSPermittedConstraints), emptyDNSPermittedConstraints },
    { 1, &emptyDNSSubtree, 0, NULL } },

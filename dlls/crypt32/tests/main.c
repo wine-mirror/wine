@@ -28,7 +28,7 @@
 
 #include "wine/test.h"
 
-HMODULE hCrypt;
+static HMODULE hCrypt;
 
 static void test_findAttribute(void)
 {

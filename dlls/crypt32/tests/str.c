@@ -191,7 +191,7 @@ typedef BOOL (WINAPI *CertStrToNameWFunc)(DWORD dwCertEncodingType,
  LPCWSTR pszX500, DWORD dwStrType, void *pvReserved, BYTE *pbEncoded,
  DWORD *pcbEncoded, LPCWSTR *ppszError);
 
-HMODULE dll;
+static HMODULE dll;
 static CertNameToStrAFunc pCertNameToStrA;
 static CertNameToStrWFunc pCertNameToStrW;
 static CryptDecodeObjectFunc pCryptDecodeObject;
@@ -470,7 +470,7 @@ struct StrToNameA
     const BYTE *encoded;
 };
 
-const BYTE encodedSimpleCN[] = {
+static const BYTE encodedSimpleCN[] = {
 0x30,0x0c,0x31,0x0a,0x30,0x08,0x06,0x03,0x55,0x04,0x03,0x13,0x01,0x31 };
 static const BYTE encodedSingleQuotedCN[] = { 0x30,0x0e,0x31,0x0c,0x30,0x0a,
  0x06,0x03,0x55,0x04,0x03,0x13,0x03,0x27,0x31,0x27 };
@@ -481,7 +481,7 @@ static const BYTE encodedQuotedCN[] = { 0x30,0x11,0x31,0x0f,0x30,0x0d,0x06,0x03,
 static const BYTE encodedMultipleAttrCN[] = { 0x30,0x0e,0x31,0x0c,0x30,0x0a,
  0x06,0x03,0x55,0x04,0x03,0x13,0x03,0x31,0x2b,0x32 };
 
-struct StrToNameA namesA[] = {
+static const struct StrToNameA namesA[] = {
  { "CN=1", sizeof(encodedSimpleCN), encodedSimpleCN },
  { "CN=\"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
  { "CN = \"1\"", sizeof(encodedSimpleCN), encodedSimpleCN },
@@ -562,7 +562,7 @@ static const WCHAR japaneseCN_W[] = { 'C','N','=',0x226f,0x575b,0 };
 static const BYTE encodedJapaneseCN[] = { 0x30,0x0f,0x31,0x0d,0x30,0x0b,0x06,
  0x03,0x55,0x04,0x03,0x1e,0x04,0x22,0x6f,0x57,0x5b };
 
-struct StrToNameW namesW[] = {
+static const struct StrToNameW namesW[] = {
  { simpleCN_W, sizeof(encodedSimpleCN), encodedSimpleCN },
  { simpleCN2_W, sizeof(encodedSimpleCN), encodedSimpleCN },
  { simpleCN3_W, sizeof(encodedSimpleCN), encodedSimpleCN },
