@@ -248,6 +248,7 @@ SRCDIR_INCLUDES = \
 	errorrep.h \
 	errors.h \
 	evcode.h \
+	evntprov.h \
 	evntrace.h \
 	excpt.h \
 	exdispid.h \

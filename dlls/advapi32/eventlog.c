@@ -28,6 +28,7 @@
 #include "winternl.h"
 #include "wmistr.h"
 #include "evntrace.h"
+#include "evntprov.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -805,5 +806,14 @@ ULONG WINAPI TraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER EventTra
 ULONG WINAPI UnregisterTraceGuids( TRACEHANDLE RegistrationHandle )
 {
     FIXME("%s: stub\n", wine_dbgstr_longlong(RegistrationHandle));
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ * EventRegister [ADVAPI32.@]
+ */
+ULONG WINAPI EventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID context, PREGHANDLE handle )
+{
+    FIXME("%s, %p, %p, %p\n", debugstr_guid(provider), callback, context, handle);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
