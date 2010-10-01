@@ -35,31 +35,31 @@
 UINT    ColumnDataHints[25];
 
 /* Column Headers; Begin */
-WCHAR    wszImageName[255];
-WCHAR    wszPID[255];
-WCHAR    wszUserName[255];
-WCHAR    wszSessionID[255];
-WCHAR    wszCPU[255];
-WCHAR    wszCPUTime[255];
-WCHAR    wszMemUsage[255];
-WCHAR    wszPeakMemUsage[255];
-WCHAR    wszMemDelta[255];
-WCHAR    wszPageFaults[255];
-WCHAR    wszPFDelta[255];
-WCHAR    wszVMSize[255];
-WCHAR    wszPagedPool[255];
-WCHAR    wszNPPool[255];
-WCHAR    wszBasePri[255];
-WCHAR    wszHandles[255];
-WCHAR    wszThreads[255];
-WCHAR    wszUSERObjects[255];
-WCHAR    wszGDIObjects[255];
-WCHAR    wszIOReads[255];
-WCHAR    wszIOWrites[255];
-WCHAR    wszIOOther[255];
-WCHAR    wszIOReadBytes[255];
-WCHAR    wszIOWriteBytes[255];
-WCHAR    wszIOOtherBytes[255];
+static WCHAR wszImageName[255];
+static WCHAR wszPID[255];
+static WCHAR wszUserName[255];
+static WCHAR wszSessionID[255];
+static WCHAR wszCPU[255];
+static WCHAR wszCPUTime[255];
+static WCHAR wszMemUsage[255];
+static WCHAR wszPeakMemUsage[255];
+static WCHAR wszMemDelta[255];
+static WCHAR wszPageFaults[255];
+static WCHAR wszPFDelta[255];
+static WCHAR wszVMSize[255];
+static WCHAR wszPagedPool[255];
+static WCHAR wszNPPool[255];
+static WCHAR wszBasePri[255];
+static WCHAR wszHandles[255];
+static WCHAR wszThreads[255];
+static WCHAR wszUSERObjects[255];
+static WCHAR wszGDIObjects[255];
+static WCHAR wszIOReads[255];
+static WCHAR wszIOWrites[255];
+static WCHAR wszIOOther[255];
+static WCHAR wszIOReadBytes[255];
+static WCHAR wszIOWriteBytes[255];
+static WCHAR wszIOOtherBytes[255];
 /* Column Headers; End */
 
 static void load_column_headers(void)

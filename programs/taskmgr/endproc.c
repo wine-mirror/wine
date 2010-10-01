@@ -33,9 +33,9 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 
-WCHAR    wszWarnMsg[511];
-WCHAR    wszWarnTitle[255];
-WCHAR    wszUnable2Terminate[255];
+static WCHAR wszWarnMsg[511];
+static WCHAR wszWarnTitle[255];
+static WCHAR wszUnable2Terminate[255];
 
 static void load_message_strings(void)
 {
