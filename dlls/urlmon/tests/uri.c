@@ -4520,9 +4520,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"username",NULL,Uri_PROPERTY_USER_NAME,S_OK,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://username:password@google.com/?query=x#fragment",S_OK},
             {"username:password@google.com",S_OK},
@@ -4552,9 +4552,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"test",NULL,Uri_PROPERTY_SCHEME_NAME,S_OK,FALSE}
         },
         {TRUE,TRUE,120,S_OK,FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"test://google.com:120/",S_OK},
             {"google.com:120",S_OK},
@@ -4586,9 +4586,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,NULL,NULL,Uri_PROPERTY_PATH,S_OK,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://[::192.2.3.4]/",S_OK},
             {"[::192.2.3.4]",S_OK},
@@ -4618,9 +4618,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"Frag","#Frag",Uri_PROPERTY_FRAGMENT,S_OK,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com/#Frag",S_OK},
             {"google.com",S_OK},
@@ -4650,9 +4650,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"","#",Uri_PROPERTY_FRAGMENT,S_OK,FALSE},
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com/#",S_OK},
             {"google.com",S_OK},
@@ -4682,9 +4682,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,":password",NULL,Uri_PROPERTY_PASSWORD,S_OK,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://::password@google.com/",S_OK},
             {"::password@google.com",S_OK},
@@ -4714,9 +4714,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"password",NULL,Uri_PROPERTY_PASSWORD,S_OK,FALSE}
         },
         {FALSE},
-        Uri_CREATE_ALLOW_RELATIVE,S_OK,TRUE,
-        0,S_OK,TRUE,
-        Uri_CREATE_ALLOW_RELATIVE,0,0,S_OK,TRUE,
+        Uri_CREATE_ALLOW_RELATIVE,S_OK,FALSE,
+        0,S_OK,FALSE,
+        Uri_CREATE_ALLOW_RELATIVE,0,0,S_OK,FALSE,
         {
             {":password@test/test",S_OK},
             {":password@",S_OK},
@@ -4746,9 +4746,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"test/test",NULL,Uri_PROPERTY_PATH,S_OK,FALSE},
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com/test/test",S_OK},
             {"google.com",S_OK},
@@ -4778,9 +4778,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"test",NULL,Uri_PROPERTY_PATH,S_OK,FALSE},
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"zip:test",S_OK},
             {"",S_FALSE},
@@ -4811,9 +4811,9 @@ static const uri_builder_test uri_builder_tests[] = {
         },
         /* 555 will be returned from GetPort even though FALSE was passed as the hasPort parameter. */
         {TRUE,FALSE,555,S_OK,FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com/",S_OK},
             {"google.com",S_OK},
@@ -4847,9 +4847,9 @@ static const uri_builder_test uri_builder_tests[] = {
          * you'll get 122345 instead.
          */
         {TRUE,122345,222,S_OK,FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com:222/",S_OK},
             {"google.com:222",S_OK},
@@ -4880,9 +4880,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {FALSE},
         },
         {TRUE,TRUE,999999,S_OK,FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com:999999/",S_OK},
             {"google.com:999999",S_OK},
@@ -4913,9 +4913,9 @@ static const uri_builder_test uri_builder_tests[] = {
         },
 
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com/?test",S_OK},
             {"google.com",S_OK},
@@ -4979,9 +4979,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"google.com",NULL,Uri_PROPERTY_HOST,S_OK,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://google.com/",S_OK},
             {"google.com",S_OK},
@@ -5110,9 +5110,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"#Fr<|>g",NULL,Uri_PROPERTY_FRAGMENT,S_OK,FALSE}
         },
         {FALSE},
-        -1,S_OK,TRUE,
-        0,S_OK,TRUE,
-        Uri_CREATE_NO_DECODE_EXTRA_INFO,UriBuilder_USE_ORIGINAL_FLAGS,0,S_OK,TRUE,
+        -1,S_OK,FALSE,
+        0,S_OK,FALSE,
+        Uri_CREATE_NO_DECODE_EXTRA_INFO,UriBuilder_USE_ORIGINAL_FLAGS,0,S_OK,FALSE,
         {
             {"http://google.com/#Fr%3C%7C%3Eg",S_OK},
             {"google.com",S_OK},
@@ -5143,8 +5143,8 @@ static const uri_builder_test uri_builder_tests[] = {
         },
         {FALSE},
         Uri_CREATE_CANONICALIZE|Uri_CREATE_NO_CANONICALIZE,E_INVALIDARG,FALSE,
-        0,S_OK,TRUE,
-        Uri_CREATE_CANONICALIZE|Uri_CREATE_NO_CANONICALIZE,UriBuilder_USE_ORIGINAL_FLAGS,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        Uri_CREATE_CANONICALIZE|Uri_CREATE_NO_CANONICALIZE,UriBuilder_USE_ORIGINAL_FLAGS,0,S_OK,FALSE,
         {
             {"http://google.com/#Fr%3C%7C%3Eg",S_OK},
             {"google.com",S_OK},
@@ -5325,9 +5325,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"winehq.org:test",NULL,Uri_PROPERTY_HOST,S_OK,FALSE},
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http://winehq.org:test/",S_OK},
             {"winehq.org:test",S_OK},
@@ -5391,9 +5391,9 @@ static const uri_builder_test uri_builder_tests[] = {
             {TRUE,"",NULL,Uri_PROPERTY_HOST,S_OK,FALSE}
         },
         {FALSE},
-        0,S_OK,TRUE,
-        0,S_OK,TRUE,
-        0,0,0,S_OK,TRUE,
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
         {
             {"http:///",S_OK},
             {"",S_OK},
@@ -5466,15 +5466,15 @@ typedef struct _uri_builder_remove_test {
 static const uri_builder_remove_test uri_builder_remove_tests[] = {
     {   "http://google.com/test?test=y#Frag",0,S_OK,FALSE,
         Uri_HAS_FRAGMENT|Uri_HAS_PATH|Uri_HAS_QUERY,S_OK,FALSE,
-        "http://google.com/",0,S_OK,TRUE
+        "http://google.com/",0,S_OK,FALSE
     },
     {   "http://user:pass@winehq.org/",0,S_OK,FALSE,
         Uri_HAS_USER_NAME|Uri_HAS_PASSWORD,S_OK,FALSE,
-        "http://winehq.org/",0,S_OK,TRUE
+        "http://winehq.org/",0,S_OK,FALSE
     },
     {   "zip://google.com?Test=x",0,S_OK,FALSE,
         Uri_HAS_HOST,S_OK,FALSE,
-        "zip:/?Test=x",0,S_OK,TRUE
+        "zip:/?Test=x",0,S_OK,FALSE
     },
     /* Doesn't remove the whole userinfo component. */
     {   "http://username:pass@google.com/",0,S_OK,FALSE,
@@ -8400,14 +8400,10 @@ static void test_IUriBuilder_IUriProperty(void) {
              */
             test = NULL;
             hr = IUriBuilder_CreateUri(builder, Uri_CREATE_ALLOW_RELATIVE, 0, 0, &test);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
-            if(SUCCEEDED(hr)) {
-                todo_wine {
-                    ok(test != uri, "Error: Wasn't expecting 'test' to be 'uri'\n");
-                }
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            if(SUCCEEDED(hr))
+                ok(test != uri, "Error: Wasn't expecting 'test' to be 'uri'\n");
+
             if(test) IUri_Release(test);
 
             /* Still returns the same IUri, even though the base one wasn't created with CREATE_CANONICALIZE
@@ -8452,14 +8448,10 @@ static void test_IUriBuilder_IUriProperty(void) {
              */
             test = NULL;
             hr = IUriBuilder_CreateUriWithFlags(builder, Uri_CREATE_ALLOW_RELATIVE, 0, 0, 0, &test);
-            todo_wine {
-                ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-            }
-            if(SUCCEEDED(hr)) {
-                todo_wine {
-                    ok(test != uri, "Error: Wasn't expecting 'test' to be 'uri'\n");
-                }
-            }
+            ok(hr == S_OK, "Error: IUriBuilder_CreateUriWithFlags returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
+            if(SUCCEEDED(hr))
+                ok(test != uri, "Error: Wasn't expecting 'test' to be 'uri'\n");
+
             if(test) IUri_Release(test);
 
             /* Still returns the same IUri, even though the base one wasn't created with CREATE_CANONICALIZE

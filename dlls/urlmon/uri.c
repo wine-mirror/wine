@@ -62,7 +62,7 @@ typedef struct {
     DWORD           host_len;
     Uri_HOST_TYPE   host_type;
 
-    USHORT          port;
+    DWORD           port;
     BOOL            has_port;
 
     INT             authority_start;
@@ -1329,19 +1329,13 @@ static BOOL parse_username(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
 }
 
 static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
-    const WCHAR *start = *ptr;
-
-    if(**ptr != ':')
-        return TRUE;
-
-    ++(*ptr);
     data->password = *ptr;
 
     while(**ptr != '@') {
         if(**ptr == '%') {
             if(!check_pct_encoded(ptr)) {
                 if(data->scheme_type != URL_SCHEME_UNKNOWN) {
-                    *ptr = start;
+                    *ptr = data->password;
                     data->password = NULL;
                     return FALSE;
                 }
@@ -1350,7 +1344,7 @@ static BOOL parse_password(const WCHAR **ptr, parse_data *data, DWORD flags, DWO
         } else if(extras & ALLOW_NULL_TERM_PASSWORD && !**ptr)
             break;
         else if(is_auth_delim(**ptr, data->scheme_type != URL_SCHEME_UNKNOWN)) {
-            *ptr = start;
+            *ptr = data->password;
             data->password = NULL;
             return FALSE;
         }
@@ -1389,12 +1383,15 @@ static void parse_userinfo(const WCHAR **ptr, parse_data *data, DWORD flags) {
         return;
     }
 
-    if(!parse_password(ptr, data, flags, 0)) {
-        *ptr = start;
-        data->username = NULL;
-        data->username_len = 0;
-        TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
-        return;
+    if(**ptr == ':') {
+        ++(*ptr);
+        if(!parse_password(ptr, data, flags, 0)) {
+            *ptr = start;
+            data->username = NULL;
+            data->username_len = 0;
+            TRACE("(%p %p %x): URI contained no userinfo.\n", ptr, data, flags);
+            return;
+        }
     }
 
     if(**ptr != '@') {
@@ -2840,7 +2837,7 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
     if(!canonicalize_port(data, uri, flags, computeOnly))
         return FALSE;
 
-    if(uri->host_start != -1)
+    if(uri->host_start != -1 || (data->is_relative && (data->password || data->username)))
         uri->authority_len = uri->canon_len - uri->authority_start;
     else
         uri->authority_start = -1;
@@ -3135,9 +3132,15 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
 static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags, BOOL computeOnly) {
     uri->display_absolute = TRUE;
 
-    if(!data->is_opaque) {
-        /* "//" is only added for non-wildcard scheme types. */
-        if(data->scheme_type != URL_SCHEME_WILDCARD) {
+    if(!data->is_opaque || (data->is_relative && (data->password || data->username))) {
+        /* "//" is only added for non-wildcard scheme types.
+         *
+         * A "//" is only added to a relative URI if it has a
+         * host or port component (this only happens if a IUriBuilder
+         * is generating an IUri).
+         */
+        if((data->is_relative && (data->host || data->has_port)) ||
+           (!data->is_relative && data->scheme_type != URL_SCHEME_WILDCARD)) {
             if(!computeOnly) {
                 INT pos = uri->canon_len;
 
@@ -3150,10 +3153,13 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
         if(!canonicalize_authority(data, uri, flags, computeOnly))
             return FALSE;
 
-        /* TODO: Canonicalize the path of the URI. */
-        if(!canonicalize_path_hierarchical(data, uri, flags, computeOnly))
-            return FALSE;
-
+        if(data->is_relative && (data->password || data->username)) {
+            if(!canonicalize_path_opaque(data, uri, flags, computeOnly))
+                return FALSE;
+        } else {
+            if(!canonicalize_path_hierarchical(data, uri, flags, computeOnly))
+                return FALSE;
+        }
     } else {
         /* Opaque URI's don't have an authority. */
         uri->userinfo_start = uri->userinfo_split = -1;
@@ -4019,6 +4025,7 @@ static DWORD generate_raw_uri(const parse_data *data, BSTR uri) {
 }
 
 static HRESULT generate_uri(const UriBuilder *builder, const parse_data *data, Uri *uri, DWORD flags) {
+    HRESULT hr;
     DWORD length = generate_raw_uri(data, NULL);
     uri->raw_uri = SysAllocStringLen(NULL, length);
     if(!uri->raw_uri)
@@ -4026,65 +4033,14 @@ static HRESULT generate_uri(const UriBuilder *builder, const parse_data *data, U
 
     generate_raw_uri(data, uri->raw_uri);
 
-    return E_NOTIMPL;
-}
-
-static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_flags,
-                         DWORD use_orig_flags, DWORD encoding_mask)
-{
-    HRESULT hr;
-    parse_data data;
-    Uri *ret;
-
-    if(!uri)
-        return E_POINTER;
-
-    if(encoding_mask && (!builder->uri || builder->modified_props)) {
-        *uri = NULL;
-        return E_NOTIMPL;
-    }
-
-    /* Decide what flags should be used when creating the Uri. */
-    if((use_orig_flags & UriBuilder_USE_ORIGINAL_FLAGS) && builder->uri)
-        create_flags = builder->uri->create_flags;
-    else {
-        if(has_invalid_flag_combination(create_flags)) {
-            *uri = NULL;
-            return E_INVALIDARG;
-        }
-
-        /* Set the default flags if they don't cause a conflict. */
-        apply_default_flags(&create_flags);
-    }
-
-    /* Return the base IUri if no changes have been made and the create_flags match. */
-    if(builder->uri && !builder->modified_props && builder->uri->create_flags == create_flags) {
-        *uri = URI(builder->uri);
-        IUri_AddRef(*uri);
-        return S_OK;
-    }
-
-    hr = validate_components(builder, &data, create_flags);
+    hr = canonicalize_uri(data, uri, flags);
     if(FAILED(hr)) {
-        *uri = NULL;
+        if(hr == E_INVALIDARG)
+            return INET_E_INVALID_URL;
         return hr;
     }
 
-    ret = heap_alloc_zero(sizeof(Uri));
-    if(!ret) {
-        *uri = NULL;
-        return E_OUTOFMEMORY;
-    }
-
-    hr = generate_uri(builder, &data, ret, create_flags);
-    if(FAILED(hr)) {
-        SysFreeString(ret->raw_uri);
-        heap_free(ret->canon_uri);
-        heap_free(ret);
-        *uri = NULL;
-        return hr;
-    }
-
+    uri->create_flags = flags;
     return S_OK;
 }
 
@@ -4907,6 +4863,16 @@ static const IUriVtbl UriVtbl = {
     Uri_IsEqual
 };
 
+static Uri* create_uri_obj(void) {
+    Uri *ret = heap_alloc_zero(sizeof(Uri));
+    if(ret) {
+        ret->lpIUriVtbl = &UriVtbl;
+        ret->ref = 1;
+    }
+
+    return ret;
+}
+
 /***********************************************************************
  *           CreateUri (urlmon.@)
  *
@@ -5082,6 +5048,64 @@ HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD 
         hres = CreateUri(pwzURI, dwFlags, 0, ppURI);
 
     return hres;
+}
+
+static HRESULT build_uri(const UriBuilder *builder, IUri **uri, DWORD create_flags,
+                         DWORD use_orig_flags, DWORD encoding_mask)
+{
+    HRESULT hr;
+    parse_data data;
+    Uri *ret;
+
+    if(!uri)
+        return E_POINTER;
+
+    if(encoding_mask && (!builder->uri || builder->modified_props)) {
+        *uri = NULL;
+        return E_NOTIMPL;
+    }
+
+    /* Decide what flags should be used when creating the Uri. */
+    if((use_orig_flags & UriBuilder_USE_ORIGINAL_FLAGS) && builder->uri)
+        create_flags = builder->uri->create_flags;
+    else {
+        if(has_invalid_flag_combination(create_flags)) {
+            *uri = NULL;
+            return E_INVALIDARG;
+        }
+
+        /* Set the default flags if they don't cause a conflict. */
+        apply_default_flags(&create_flags);
+    }
+
+    /* Return the base IUri if no changes have been made and the create_flags match. */
+    if(builder->uri && !builder->modified_props && builder->uri->create_flags == create_flags) {
+        *uri = URI(builder->uri);
+        IUri_AddRef(*uri);
+        return S_OK;
+    }
+
+    hr = validate_components(builder, &data, create_flags);
+    if(FAILED(hr)) {
+        *uri = NULL;
+        return hr;
+    }
+
+    ret = create_uri_obj();
+    if(!ret) {
+        *uri = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    hr = generate_uri(builder, &data, ret, create_flags);
+    if(FAILED(hr)) {
+        IUri_Release(URI(ret));
+        *uri = NULL;
+        return hr;
+    }
+
+    *uri = URI(ret);
+    return S_OK;
 }
 
 #define URIBUILDER_THIS(iface) DEFINE_THIS(UriBuilder, IUriBuilder, iface)
