@@ -724,7 +724,7 @@ static HRESULT get_connected(PassThruImpl *This, IMediaSeeking **seek) {
     *seek = NULL;
     hr = IPin_ConnectedTo(This->pin, &pin);
     if (FAILED(hr))
-        return hr;
+        return VFW_E_NOT_CONNECTED;
     hr = IPin_QueryInterface(pin, &IID_IMediaSeeking, (void**)seek);
     IPin_Release(pin);
     if (FAILED(hr))
@@ -743,6 +743,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetCapabilities(IMediaSeeking * iface
         hr = IMediaSeeking_GetCapabilities(seek, pCapabilities);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -757,6 +759,8 @@ static HRESULT WINAPI MediaSeekingPassThru_CheckCapabilities(IMediaSeeking * ifa
         hr = IMediaSeeking_CheckCapabilities(seek, pCapabilities);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -771,6 +775,8 @@ static HRESULT WINAPI MediaSeekingPassThru_IsFormatSupported(IMediaSeeking * ifa
         hr = IMediaSeeking_IsFormatSupported(seek, pFormat);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -785,6 +791,8 @@ static HRESULT WINAPI MediaSeekingPassThru_QueryPreferredFormat(IMediaSeeking * 
         hr = IMediaSeeking_QueryPreferredFormat(seek, pFormat);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -799,6 +807,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetTimeFormat(IMediaSeeking * iface, 
         hr = IMediaSeeking_GetTimeFormat(seek, pFormat);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -813,6 +823,8 @@ static HRESULT WINAPI MediaSeekingPassThru_IsUsingTimeFormat(IMediaSeeking * ifa
         hr = IMediaSeeking_IsUsingTimeFormat(seek, pFormat);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -827,6 +839,8 @@ static HRESULT WINAPI MediaSeekingPassThru_SetTimeFormat(IMediaSeeking * iface, 
         hr = IMediaSeeking_SetTimeFormat(seek, pFormat);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -841,6 +855,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetDuration(IMediaSeeking * iface, LO
         hr = IMediaSeeking_GetDuration(seek, pDuration);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -855,6 +871,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetStopPosition(IMediaSeeking * iface
         hr = IMediaSeeking_GetStopPosition(seek, pStop);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -881,6 +899,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetCurrentPosition(IMediaSeeking * if
         hr = IMediaSeeking_GetCurrentPosition(seek, pCurrent);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -895,6 +915,8 @@ static HRESULT WINAPI MediaSeekingPassThru_ConvertTimeFormat(IMediaSeeking * ifa
         hr = IMediaSeeking_ConvertTimeFormat(seek, pTarget, pTargetFormat, Source, pSourceFormat);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -908,7 +930,8 @@ static HRESULT WINAPI MediaSeekingPassThru_SetPositions(IMediaSeeking * iface, L
     if (SUCCEEDED(hr)) {
         hr = IMediaSeeking_SetPositions(seek, pCurrent, dwCurrentFlags, pStop, dwStopFlags);
         IMediaSeeking_Release(seek);
-    }
+    } else if (hr == VFW_E_NOT_CONNECTED)
+        hr = S_OK;
     return hr;
 }
 
@@ -923,6 +946,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetPositions(IMediaSeeking * iface, L
         hr = IMediaSeeking_GetPositions(seek, pCurrent, pStop);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -937,6 +962,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetAvailable(IMediaSeeking * iface, L
         hr = IMediaSeeking_GetAvailable(seek, pEarliest, pLatest);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -951,6 +978,8 @@ static HRESULT WINAPI MediaSeekingPassThru_SetRate(IMediaSeeking * iface, double
         hr = IMediaSeeking_SetRate(seek, dRate);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -965,6 +994,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetRate(IMediaSeeking * iface, double
         hr = IMediaSeeking_GetRate(seek, dRate);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
@@ -979,6 +1010,8 @@ static HRESULT WINAPI MediaSeekingPassThru_GetPreroll(IMediaSeeking * iface, LON
         hr = IMediaSeeking_GetPreroll(seek, pPreroll);
         IMediaSeeking_Release(seek);
     }
+    else
+        return E_NOTIMPL;
     return hr;
 }
 
