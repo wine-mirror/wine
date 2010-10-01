@@ -160,7 +160,7 @@ STRINGTABLE
     IDS_QUALIFIED_SUBORDINATION "Qualifizierte Unterordnung"
     IDS_KEY_RECOVERY "Schlüsselwiederherstellung"
     IDS_DOCUMENT_SIGNING "Dokumentensignatur"
-    IDS_IPSEC_IKE_INTERMEDIATE "dazwischenliegende IP Sicherheits-IKE"
+    IDS_IPSEC_IKE_INTERMEDIATE "Dazwischenliegende IP Sicherheits-IKE"
     IDS_FILE_RECOVERY "Dateiwiederherstellung"
     IDS_ROOT_LIST_SIGNER "Stammlistengeber"
     IDS_ANY_APPLICATION_POLICIES "Alle Anwendungsrichtlinien"
