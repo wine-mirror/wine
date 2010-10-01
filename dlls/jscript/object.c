@@ -186,7 +186,7 @@ static HRESULT ObjectConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
         if(arg_cnt(dp)) {
             VARIANT *arg = get_arg(dp,0);
 
-            if(V_VT(arg) != VT_EMPTY && V_VT(arg) != VT_NULL) {
+            if(V_VT(arg) != VT_EMPTY && V_VT(arg) != VT_NULL && (V_VT(arg) != VT_DISPATCH || V_DISPATCH(arg))) {
                 IDispatch *disp;
 
                 hres = to_object(ctx, arg, &disp);
