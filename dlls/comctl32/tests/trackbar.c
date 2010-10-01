@@ -30,7 +30,7 @@
 #define PARENT_SEQ_INDEX 0
 #define TRACKBAR_SEQ_INDEX 1
 
-HWND hWndParent;
+static HWND hWndParent;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCE];
 

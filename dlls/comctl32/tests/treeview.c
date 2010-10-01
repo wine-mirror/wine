@@ -33,7 +33,7 @@
 #include "v6util.h"
 #include "msg.h"
 
-const char *TEST_CALLBACK_TEXT = "callback_text";
+static const char *TEST_CALLBACK_TEXT = "callback_text";
 
 #define NUM_MSG_SEQUENCES   2
 #define TREEVIEW_SEQ_INDEX  0

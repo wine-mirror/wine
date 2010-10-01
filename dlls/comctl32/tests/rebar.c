@@ -30,7 +30,7 @@
 
 #include "wine/test.h"
 
-RECT height_change_notify_rect;
+static RECT height_change_notify_rect;
 static HWND hMainWnd;
 
 
@@ -182,7 +182,7 @@ typedef struct {
     rbband_result_t bands[50];
 } rbsize_result_t;
 
-rbsize_result_t rbsize_results[] = {
+static const rbsize_result_t rbsize_results[] = {
   { {0, 0, 672, 0}, 0, 0, {0, }, 0, {{{0, 0, 0, 0}, 0, 0},
   }, },
   { {0, 0, 672, 4}, 4, 1, {4, }, 1, {
@@ -299,7 +299,7 @@ static int rbsize_numtests = 0;
         RECT rc; \
         REBARBANDINFO rbi; \
         int count, i/*, mask=(todomask)*/; \
-        rbsize_result_t *res = &rbsize_results[rbsize_numtests]; \
+        const rbsize_result_t *res = &rbsize_results[rbsize_numtests]; \
         assert(rbsize_numtests < sizeof(rbsize_results)/sizeof(rbsize_results[0])); \
         GetClientRect(hRebar, &rc); \
         check_rect("client", rc, res->rcClient); \
@@ -547,7 +547,7 @@ typedef struct {
     BOOL heightNotify;
 } rbresize_test_result_t;
 
-rbresize_test_result_t resize_results[] = {
+static const rbresize_test_result_t resize_results[] = {
 /* style 00000001 */
     {{0, 2, 672, 2}, 0, FALSE},
     {{0, 2, 672, 22}, 1, TRUE},
@@ -673,7 +673,7 @@ static int resize_numtests = 0;
 #define comment(fmt, arg1)
 #define check_client() { \
         RECT r; \
-        rbresize_test_result_t *res = &resize_results[resize_numtests++]; \
+        const rbresize_test_result_t *res = &resize_results[resize_numtests++]; \
         assert(resize_numtests <= sizeof(resize_results)/sizeof(resize_results[0])); \
         GetWindowRect(hRebar, &r); \
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2); \
