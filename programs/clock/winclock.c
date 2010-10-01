@@ -46,7 +46,7 @@ typedef struct
     POINT End;
 } HandData;
 
-HandData HourHand, MinuteHand, SecondHand;
+static HandData HourHand, MinuteHand, SecondHand;
 
 static void DrawTicks(HDC dc, const POINT* centre, int radius)
 {
