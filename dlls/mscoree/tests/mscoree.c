@@ -87,6 +87,14 @@ static void test_versioninfo(void)
     }
 
     hr =  pGetCORVersion(version, 1, &size);
+    if (hr == CLR_E_SHIM_RUNTIME)
+    {
+        /* FIXME: Get Mono packaged properly so we can fail here. */
+        todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),"GetCORVersion returned %08x\n", hr);
+        skip("No .NET runtimes are installed\n");
+        return;
+    }
+
     ok(hr == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER),"GetCORVersion returned %08x\n", hr);
 
     hr =  pGetCORVersion(version, MAX_PATH, &size);

@@ -460,56 +460,48 @@ HRESULT WINAPI _CorValidateImage(PVOID* imageBase, LPCWSTR imageName)
 
 HRESULT WINAPI GetCORSystemDirectory(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
 {
-    static const WCHAR slash[] = {'\\',0};
-    WCHAR system_dir[MAX_PATH];
-    WCHAR version[MAX_PATH];
+    ICLRRuntimeInfo *info;
+    HRESULT ret;
 
-    FIXME("(%p, %d, %p): semi-stub!\n", pbuffer, cchBuffer, dwLength);
-
-    if (!dwLength)
-        return E_POINTER;
-
-    if (!pbuffer)
-        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-
-    if (!get_install_root(system_dir))
-    {
-        ERR("error reading registry key for installroot, returning empty path\n");
-        *dwLength = 0;
-    }
-    else
-    {
-        GetCORVersion(version, MAX_PATH, dwLength);
-        lstrcatW(system_dir, version);
-        lstrcatW(system_dir, slash);
-        *dwLength = lstrlenW(system_dir) + 1;
-
-        if (cchBuffer < *dwLength)
-            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-
-        lstrcpyW(pbuffer, system_dir);
-    }
-
-    return S_OK;
-}
-
-HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
-{
-    static const WCHAR version[] = {'v','2','.','0','.','5','0','7','2','7',0};
-
-    FIXME("(%p, %d, %p): semi-stub!\n", pbuffer, cchBuffer, dwLength);
+    TRACE("(%p, %d, %p)!\n", pbuffer, cchBuffer, dwLength);
 
     if (!dwLength || !pbuffer)
         return E_POINTER;
 
-    *dwLength = lstrlenW(version) + 1;
+    ret = get_runtime_info(NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
 
-    if (cchBuffer < *dwLength)
-        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+    if (SUCCEEDED(ret))
+    {
+        *dwLength = cchBuffer;
+        ret = ICLRRuntimeInfo_GetRuntimeDirectory(info, pbuffer, dwLength);
 
-    lstrcpyW(pbuffer, version);
+        ICLRRuntimeInfo_Release(info);
+    }
 
-    return S_OK;
+    return ret;
+}
+
+HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
+{
+    ICLRRuntimeInfo *info;
+    HRESULT ret;
+
+    TRACE("(%p, %d, %p)!\n", pbuffer, cchBuffer, dwLength);
+
+    if (!dwLength || !pbuffer)
+        return E_POINTER;
+
+    ret = get_runtime_info(NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+
+    if (SUCCEEDED(ret))
+    {
+        *dwLength = cchBuffer;
+        ret = ICLRRuntimeInfo_GetVersionString(info, pbuffer, dwLength);
+
+        ICLRRuntimeInfo_Release(info);
+    }
+
+    return ret;
 }
 
 HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWSTR pConfigurationFile,
