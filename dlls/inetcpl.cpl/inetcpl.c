@@ -162,3 +162,24 @@ LONG CALLBACK CPlApplet(HWND hWnd, UINT command, LPARAM lParam1, LPARAM lParam2)
 
     return FALSE;
 }
+
+/*********************************************************************
+ * LaunchInternetControlPanel (inetcpl.@)
+ *
+ * Launch the Internet Control Panel dialog
+ *
+ * PARAMS
+ *  parent  [I] Handle for the parent window
+ *
+ * RETURNS
+ *  Success: TRUE
+ *
+ * NOTES
+ *  rundll32 callable function: rundll32 inetcpl.cpl,LaunchInternetControlPanel
+ *
+ */
+BOOL WINAPI LaunchInternetControlPanel(HWND parent)
+{
+    display_cpl_sheets(parent);
+    return TRUE;
+}
