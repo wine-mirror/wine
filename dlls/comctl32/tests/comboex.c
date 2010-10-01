@@ -234,7 +234,8 @@ static void test_WM_LBUTTONDOWN(void)
     COMBOBOXINFO cbInfo;
     UINT x, y, item_height;
     LRESULT result;
-    int i, idx;
+    UINT i;
+    int idx;
     RECT rect;
     WCHAR buffer[3];
     static const UINT choices[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
@@ -503,16 +504,16 @@ static void test_get_set_item(void)
     item.lParam = 0xdeadbeef;
     ret = SendMessage(hComboEx, CBEM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    ok(item.lParam == 0, "Expected zero, got %ld\n", item.lParam);
+    ok(item.lParam == 0, "Expected zero, got %lx\n", item.lParam);
 
-    item.lParam = 0xdeadbeef;
+    item.lParam = 0x1abe11ed;
     ret = SendMessage(hComboEx, CBEM_SETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
 
     item.lParam = 0;
     ret = SendMessage(hComboEx, CBEM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
-    ok(item.lParam == 0xdeadbeef, "Expected 0xdeadbeef, got %ld\n", item.lParam);
+    ok(item.lParam == 0x1abe11ed, "Expected 0x1abe11ed, got %lx\n", item.lParam);
 
     DestroyWindow(hComboEx);
 }
