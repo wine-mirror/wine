@@ -537,8 +537,8 @@ static void drawStridedInstanced(const struct wined3d_gl_info *gl_info, const st
     }
 }
 
-static inline void remove_vbos(IWineD3DDeviceImpl *This, const struct wined3d_gl_info *gl_info,
-        struct wined3d_stream_info *s)
+static void remove_vbos(const struct wined3d_gl_info *gl_info,
+        const struct wined3d_state *state, struct wined3d_stream_info *s)
 {
     unsigned int i;
 
@@ -551,7 +551,7 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, const struct wined3d_gl
         e = &s->elements[i];
         if (e->buffer_object)
         {
-            struct wined3d_buffer *vb = This->stateBlock->state.streams[e->stream_idx].buffer;
+            struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
             e->buffer_object = 0;
             e->data = (BYTE *)((ULONG_PTR)e->data + (ULONG_PTR)buffer_get_sysmem(vb, gl_info));
         }
@@ -683,7 +683,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT StartIdx, UINT 
             if(emulation) {
                 stream_info = &stridedlcl;
                 memcpy(&stridedlcl, &This->strided_streams, sizeof(stridedlcl));
-                remove_vbos(This, context->gl_info, &stridedlcl);
+                remove_vbos(context->gl_info, state, &stridedlcl);
             }
         }
 
