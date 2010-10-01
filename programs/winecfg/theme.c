@@ -423,8 +423,8 @@ static void do_apply_theme (int themeIndex, int colorIndex, int sizeIndex)
     }
 }
 
-int updating_ui;
-BOOL theme_dirty;
+static int updating_ui;
+static BOOL theme_dirty;
 
 static void enable_size_and_color_controls (HWND dialog, BOOL enable)
 {

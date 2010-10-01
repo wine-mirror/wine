@@ -116,7 +116,7 @@ void apply_drive_changes(void);
 BOOL browse_for_unix_folder(HWND dialog, WCHAR *pszPath);
 extern struct drive drives[26]; /* one for each drive letter */
 
-BOOL gui_mode;
+extern BOOL gui_mode;
 
 /* Some basic utilities to make win32 suck less */
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
