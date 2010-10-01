@@ -270,9 +270,9 @@ NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(co
         for (j=m; j<right; j++)
             memcpy (X(barr,(right+m-j)),X(arr,(j+1)),elemsize);
 
-        for (k=left; k<=right; k++) {
-            /*arr[k]=(barr[i]<barr[j])?barr[i++]:barr[j--];*/
-            if (i != j && compar(X(barr,i),X(barr,j))<0) {
+        /* i=left; j=right; */
+        for (k=left; i<=m && j>m; k++) {
+            if (compar(X(barr,i),X(barr,j))<=0) {
                 memcpy(X(arr,k),X(barr,i),elemsize);
                 i++;
             } else {
@@ -280,6 +280,10 @@ NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(co
                 j--;
             }
         }
+        for (; i<=m; i++, k++)
+            memcpy(X(arr,k),X(barr,i),elemsize);
+        for (; j>m; j--, k++)
+            memcpy(X(arr,k),X(barr,j),elemsize);
     }
 #undef X
 }
