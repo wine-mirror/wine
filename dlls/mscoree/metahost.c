@@ -925,9 +925,9 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     static const DWORD supported_startup_flags = 0;
     static const DWORD supported_runtime_flags = RUNTIME_INFO_UPGRADE_VERSION;
     int i;
-
-    if (exefile)
-        FIXME("ignoring exe filename %s\n", debugstr_w(exefile));
+    WCHAR local_version[MAX_PATH];
+    ULONG local_version_size = MAX_PATH;
+    HRESULT hr;
 
     if (config_file)
         FIXME("ignoring config filename %s\n", debugstr_w(config_file));
@@ -937,6 +937,15 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
 
     if (runtimeinfo_flags & ~supported_runtime_flags)
         FIXME("unsupported runtimeinfo flags %x\n", runtimeinfo_flags & ~supported_runtime_flags);
+
+    if (exefile && !version)
+    {
+        hr = CLRMetaHost_GetVersionFromFile(0, exefile, local_version, &local_version_size);
+
+        version = local_version;
+
+        if (FAILED(hr)) return hr;
+    }
 
     if (version)
     {
