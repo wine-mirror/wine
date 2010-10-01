@@ -31,6 +31,24 @@ BEGIN
     IDS_CPL_INFO        "Wine Internet Browser und zugehörige Einstellungen anpassen." 
 END
 
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Allgemein"
+BEGIN
+
+    GROUPBOX    " Startseite ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "Sie können eine Addresse wählen, die als Startseite verwendet wird.",
+                IDC_STATIC, 58, 10, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "A&ktuelle Seite", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "&Standardseite", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "&Leere Seite", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
+
 /* "Content" propsheet */
 IDD_CONTENT DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
