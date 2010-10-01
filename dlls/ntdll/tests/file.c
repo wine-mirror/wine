@@ -112,9 +112,9 @@ static HANDLE create_temp_file( ULONG flags )
 #define CKEY_FIRST 0x1030341
 #define CKEY_SECOND 0x132E46
 
-ULONG_PTR completionKey;
-IO_STATUS_BLOCK ioSb;
-ULONG_PTR completionValue;
+static ULONG_PTR completionKey;
+static IO_STATUS_BLOCK ioSb;
+static ULONG_PTR completionValue;
 
 static ULONG get_pending_msgs(HANDLE h)
 {

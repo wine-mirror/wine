@@ -50,7 +50,7 @@ static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirection)( BOOLEAN enable );
 static NTSTATUS (WINAPI *pRtlWow64EnableFsRedirectionEx)( ULONG disable, ULONG *old_value );
 
 /* The attribute sets to test */
-struct testfile_s {
+static struct testfile_s {
     int todo;                 /* set if it doesn't work on wine yet */
     const DWORD attr;         /* desired attribute */
     const char *name;         /* filename to use */
