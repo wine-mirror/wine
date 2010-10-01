@@ -128,7 +128,6 @@ static void test_midiIn_device(UINT udev, HWND hwnd)
     test_notification(hwnd, "midiInOpen", MIM_OPEN, 0);
 
     memset(&mhdr, 0, sizeof(mhdr));
-    mhdr.dwFlags = 0;
     mhdr.dwUser = 0x56FA552C;
     mhdr.dwBufferLength = 70000; /* > 64KB! */
     mhdr.lpData = HeapAlloc(GetProcessHeap(), 0 , mhdr.dwBufferLength);
@@ -285,7 +284,6 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     }
 
     memset(&mhdr, 0, sizeof(mhdr));
-    mhdr.dwFlags = 0;
     mhdr.dwUser   = 0x56FA552C;
     mhdr.dwOffset = 0xDEADBEEF;
     mhdr.dwBufferLength = 70000; /* > 64KB! */
@@ -410,7 +408,6 @@ static void test_midiStream(UINT udev, HWND hwnd)
     todo_wine ok(24==LOWORD(midiprop.tdiv.dwTimeDiv), "default stream time division %u\n", midiprop.tdiv.dwTimeDiv);
 
     memset(&mhdr, 0, sizeof(mhdr));
-    mhdr.dwFlags = 0;
     mhdr.dwUser   = 0x56FA552C;
     mhdr.dwOffset = 1234567890;
     mhdr.dwBufferLength = sizeof(strmEvents);
