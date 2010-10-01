@@ -36,16 +36,16 @@
 #define near_match(a, b) (abs((a) - (b)) <= 6)
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 
-LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
-BOOL  (WINAPI *pGetCharABCWidthsI)(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPABC abc);
-BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
-DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
-DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
-DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
-BOOL  (WINAPI *pGdiRealizationInfo)(HDC hdc, DWORD *);
-HFONT (WINAPI *pCreateFontIndirectExA)(const ENUMLOGFONTEXDV *);
-HANDLE (WINAPI *pAddFontMemResourceEx)(PVOID, DWORD, PVOID, DWORD *);
-BOOL  (WINAPI *pRemoveFontMemResourceEx)(HANDLE);
+static LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
+static BOOL  (WINAPI *pGetCharABCWidthsI)(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPABC abc);
+static BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
+static DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
+static DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+static BOOL  (WINAPI *pGdiRealizationInfo)(HDC hdc, DWORD *);
+static HFONT (WINAPI *pCreateFontIndirectExA)(const ENUMLOGFONTEXDV *);
+static HANDLE (WINAPI *pAddFontMemResourceEx)(PVOID, DWORD, PVOID, DWORD *);
+static BOOL  (WINAPI *pRemoveFontMemResourceEx)(HANDLE);
 
 static HMODULE hgdi32 = 0;
 

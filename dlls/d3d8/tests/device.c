@@ -1504,7 +1504,7 @@ cleanup:
 }
 
 static HWND filter_messages;
-struct
+static struct
 {
     HWND window;
     UINT message;

@@ -24,19 +24,19 @@
 #include "ddraw.h"
 #include "d3d.h"
 
-HWND window;
-IDirectDraw7        *DirectDraw = NULL;
-IDirectDrawSurface7 *Surface;
-IDirectDrawSurface7 *depth_buffer;
-IDirect3D7          *Direct3D = NULL;
-IDirect3DDevice7    *Direct3DDevice = NULL;
+static HWND window;
+static IDirectDraw7        *DirectDraw;
+static IDirectDrawSurface7 *Surface;
+static IDirectDrawSurface7 *depth_buffer;
+static IDirect3D7          *Direct3D;
+static IDirect3DDevice7    *Direct3DDevice;
 
-IDirectDraw *DirectDraw1 = NULL;
-IDirectDrawSurface *Surface1 = NULL;
-IDirect3D *Direct3D1 = NULL;
-IDirect3DDevice *Direct3DDevice1 = NULL;
-IDirect3DExecuteBuffer *ExecuteBuffer = NULL;
-IDirect3DViewport *Viewport = NULL;
+static IDirectDraw *DirectDraw1;
+static IDirectDrawSurface *Surface1;
+static IDirect3D *Direct3D1;
+static IDirect3DDevice *Direct3DDevice1;
+static IDirect3DExecuteBuffer *ExecuteBuffer;
+static IDirect3DViewport *Viewport;
 
 static BOOL refdevice = FALSE;
 

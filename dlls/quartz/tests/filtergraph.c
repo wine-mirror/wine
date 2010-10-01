@@ -31,7 +31,7 @@
 static const char avifileA[FILE_LEN] = "test.avi";
 static const char mpegfileA[FILE_LEN] = "test.mpg";
 
-IGraphBuilder* pgraph;
+static IGraphBuilder *pgraph;
 
 static int createfiltergraph(void)
 {

@@ -65,7 +65,7 @@ static unsigned char *p_mbctype;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
 
-HMODULE hMsvcrt;
+static HMODULE hMsvcrt;
 
 static void test_swab( void ) {
     char original[]  = "BADCFEHGJILKNMPORQTSVUXWZY@#";

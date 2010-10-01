@@ -24,7 +24,7 @@
 #include <wine/test.h>
 #include <dmusici.h>
 
-IDirectMusicPerformance8 *idmusicperformance;
+static IDirectMusicPerformance8 *idmusicperformance;
 
 static HRESULT test_InitAudio(void)
 {

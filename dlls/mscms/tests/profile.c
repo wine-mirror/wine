@@ -30,8 +30,8 @@
 
 #include "wine/test.h"
 
-HMODULE hmscms;
-HMODULE huser32;
+static HMODULE hmscms;
+static HMODULE huser32;
 
 static BOOL     (WINAPI *pAssociateColorProfileWithDeviceA)(PCSTR,PCSTR,PCSTR);
 static BOOL     (WINAPI *pCloseColorProfile)(HPROFILE);

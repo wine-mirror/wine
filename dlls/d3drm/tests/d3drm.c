@@ -47,21 +47,21 @@ static BOOL InitFunctionPtrs(void)
     return TRUE;
 }
 
-char data_bad_version[] =
+static char data_bad_version[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
 "{\n"
 "1; 2; 3;\n"
 "}\n";
 
-char data_no_mesh[] =
+static char data_no_mesh[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
 "{\n"
 "1; 0; 1;\n"
 "}\n";
 
-char data_ok[] =
+static char data_ok[] =
 "xof 0302txt 0064\n"
 "Header Object\n"
 "{\n"

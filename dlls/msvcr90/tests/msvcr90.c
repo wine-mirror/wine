@@ -40,7 +40,7 @@ static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
-int cb_called[4];
+static int cb_called[4];
 
 /* ########## */
 

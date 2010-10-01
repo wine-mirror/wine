@@ -952,7 +952,7 @@ static void do_test( test_setup *test )
 
 /********* some tests for getsockopt(setsockopt(X)) == X ***********/
 /* optname = SO_LINGER */
-LINGER linger_testvals[] = {
+static const LINGER linger_testvals[] = {
     {0,0},
     {0,73}, 
     {1,0},

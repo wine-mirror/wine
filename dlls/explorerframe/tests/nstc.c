@@ -295,7 +295,7 @@ static HRESULT WINAPI NSTCEvents_fnOnGetDefaultIconIndex(
     return E_NOTIMPL;
 }
 
-const INameSpaceTreeControlEventsVtbl vt_NSTCEvents = {
+static const INameSpaceTreeControlEventsVtbl vt_NSTCEvents = {
     NSTCEvents_fnQueryInterface,
     NSTCEvents_fnAddRef,
     NSTCEvents_fnRelease,

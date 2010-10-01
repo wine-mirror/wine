@@ -146,7 +146,7 @@ static void test_dcinfo(void)
     IDCInfo_Release(info);
 }
 
-struct can_convert
+static const struct can_convert
 {
     DBTYPE type;
     DWORD can_convert_to;

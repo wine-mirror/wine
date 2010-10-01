@@ -304,7 +304,7 @@ static void test_create_view_template(void)
 }
 
 /* test cases for resizing of the file dialog */
-struct {
+static const struct {
     DWORD flags;
     int resize_folderchange;/* change in CDN_FOLDERCHANGE handler */
     int resize_timer1;      /* change in first WM_TIMER handler */

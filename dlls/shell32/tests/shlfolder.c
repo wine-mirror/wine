@@ -2810,7 +2810,7 @@ static ULONG WINAPI unk_fnRelease(IUnknown *iunk)
     return 1;
 }
 
-const IUnknownVtbl vt_IUnknown = {
+static const IUnknownVtbl vt_IUnknown = {
     unk_fnQueryInterface,
     unk_fnAddRef,
     unk_fnRelease

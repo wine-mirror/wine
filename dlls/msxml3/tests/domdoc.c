@@ -311,8 +311,8 @@ static BSTR alloc_str_from_narrow(const char *str)
     return ret;
 }
 
-BSTR alloced_bstrs[256];
-int alloced_bstrs_count = 0;
+static BSTR alloced_bstrs[256];
+static int alloced_bstrs_count;
 
 static BSTR _bstr_(const char *str)
 {

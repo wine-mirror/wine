@@ -35,7 +35,7 @@ const unsigned char * WINAPI glGetString(unsigned int);
 typedef void* HPBUFFERARB;
 
 /* WGL_ARB_create_context */
-HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int *attribList);
+static HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int *attribList);
 /* GetLastError */
 #define ERROR_INVALID_VERSION_ARB 0x2095
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
