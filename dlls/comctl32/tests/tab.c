@@ -61,7 +61,8 @@
 	    "%s: Expected [%d,%d] got [%d,%d]\n", msg, (int)width, (int)height,\
             rTab.right - rTab.left, rTab.bottom - rTab.top);
 
-static HFONT hFont = 0;
+static HFONT hFont;
+static DRAWITEMSTRUCT g_drawitem;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -336,6 +337,10 @@ static LRESULT WINAPI parentWindowProcess(HWND hwnd, UINT message, WPARAM wParam
         msg.lParam = lParam;
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
+
+    /* dump sent structure data */
+    if (message == WM_DRAWITEM)
+        g_drawitem = *(DRAWITEMSTRUCT*)lParam;
 
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
@@ -790,10 +795,42 @@ static void test_unicodeformat(HWND parent_wnd, INT nTabs)
 
 static void test_getset_item(HWND parent_wnd, INT nTabs)
 {
-    TCITEM tcItem;
-    DWORD ret;
     char szText[32] = "New Label";
+    TCITEM tcItem;
+    LPARAM lparam;
+    DWORD ret;
     HWND hTab;
+
+    hTab = CreateWindowA(
+	WC_TABCONTROLA,
+	"TestTab",
+	WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED,
+        10, 10, 300, 100,
+        parent_wnd, NULL, NULL, 0);
+
+    ok(GetParent(hTab) == NULL, "got %p, expected null parent\n", GetParent(hTab));
+
+    ret = SendMessageA(hTab, TCM_SETITEMEXTRA, sizeof(LPARAM)-1, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    /* set some item data */
+    tcItem.lParam = ~0;
+    tcItem.mask = TCIF_PARAM;
+
+    ret = SendMessageA(hTab, TCM_INSERTITEMA, 0, (LPARAM)&tcItem);
+    ok(ret == 0, "got %d\n", ret);
+
+    /* all sizeof(LPARAM) returned anyway when using sizeof(LPARAM)-1 size */
+    memset(&lparam, 0xaa, sizeof(lparam));
+    tcItem.lParam = lparam;
+    tcItem.mask = TCIF_PARAM;
+    ret = SendMessage(hTab, TCM_GETITEM, 0, (LPARAM)&tcItem);
+    expect(TRUE, ret);
+    /* everything higher specified size is preserved */
+    memset(&lparam, 0xff, sizeof(lparam)-1);
+    ok(tcItem.lParam == lparam, "Expected 0x%lx, got 0x%lx\n", lparam, tcItem.lParam);
+
+    DestroyWindow(hTab);
 
     hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE, nTabs);
     ok(hTab != NULL, "Failed to create tab control\n");
@@ -1233,6 +1270,101 @@ static void test_TCM_SETITEMEXTRA(HWND parent_wnd)
     DestroyWindow(hTab);
 }
 
+static void test_TCS_OWNERDRAWFIXED(HWND parent_wnd)
+{
+    LPARAM lparam, lparam2;
+    TCITEMA item;
+    HWND hTab;
+    BOOL ret;
+
+    hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH|TCS_OWNERDRAWFIXED, TCIF_TEXT|TCIF_IMAGE, 4);
+    ok(hTab != NULL, "Failed to create tab control\n");
+
+    ok(GetParent(hTab) == NULL, "got %p, expected null parent\n", GetParent(hTab));
+
+    /* set some item data */
+    memset(&lparam, 0xde, sizeof(LPARAM));
+
+    item.mask = TCIF_PARAM;
+    item.lParam = lparam;
+    ret = SendMessageA(hTab, TCM_SETITEMA, 0, (LPARAM)&item);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    memset(&g_drawitem, 0, sizeof(g_drawitem));
+
+    ShowWindow(hTab, SW_SHOW);
+    RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
+
+    lparam = 0;
+    memset(&lparam, 0xde, 4);
+    ok(g_drawitem.itemData == lparam, "got %lx, expected %lx\n", g_drawitem.itemData, lparam);
+
+    DestroyWindow(hTab);
+
+    /* now with custom extra data length */
+    hTab = CreateWindowA(
+	WC_TABCONTROLA,
+	"TestTab",
+	WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED,
+        10, 10, 300, 100,
+        parent_wnd, NULL, NULL, 0);
+
+    ok(GetParent(hTab) == NULL, "got %p, expected null parent\n", GetParent(hTab));
+
+    ret = SendMessageA(hTab, TCM_SETITEMEXTRA, sizeof(LPARAM)+1, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    /* set some item data */
+    memset(&lparam, 0xde, sizeof(LPARAM));
+    item.mask = TCIF_PARAM;
+    item.lParam = lparam;
+
+    ret = SendMessageA(hTab, TCM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 0, "got %d\n", ret);
+
+    memset(&g_drawitem, 0, sizeof(g_drawitem));
+
+    ShowWindow(hTab, SW_SHOW);
+    RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
+
+    ok(*(ULONG_PTR*)g_drawitem.itemData == lparam, "got %lx, expected %lx\n", g_drawitem.itemData, lparam);
+
+    DestroyWindow(hTab);
+
+    /* same thing, but size smaller than default */
+    hTab = CreateWindowA(
+	WC_TABCONTROLA,
+	"TestTab",
+	WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED,
+        10, 10, 300, 100,
+        parent_wnd, NULL, NULL, 0);
+
+    ok(GetParent(hTab) == NULL, "got %p, expected null parent\n", GetParent(hTab));
+
+    ret = SendMessageA(hTab, TCM_SETITEMEXTRA, sizeof(LPARAM)-1, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    memset(&lparam, 0xde, sizeof(lparam));
+    item.mask = TCIF_PARAM;
+    item.lParam = lparam;
+
+    ret = SendMessageA(hTab, TCM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(ret == 0, "got %d\n", ret);
+
+    memset(&g_drawitem, 0, sizeof(g_drawitem));
+
+    ShowWindow(hTab, SW_SHOW);
+    RedrawWindow(hTab, NULL, 0, RDW_UPDATENOW);
+
+    lparam = 0;
+    memset(&lparam, 0xde, 4);
+    memset(&lparam2, 0xde, sizeof(LPARAM)-1);
+    ok(g_drawitem.itemData == lparam || broken(g_drawitem.itemData == lparam2) /* win98 */,
+        "got 0x%lx, expected 0x%lx\n", g_drawitem.itemData, lparam);
+
+    DestroyWindow(hTab);
+}
+
 START_TEST(tab)
 {
     HWND parent_wnd;
@@ -1278,6 +1410,7 @@ START_TEST(tab)
     test_delete_selection(parent_wnd);
     test_removeimage(parent_wnd);
     test_TCM_SETITEMEXTRA(parent_wnd);
+    test_TCS_OWNERDRAWFIXED(parent_wnd);
 
     DestroyWindow(parent_wnd);
 }
