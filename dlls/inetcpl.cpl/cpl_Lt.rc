@@ -32,6 +32,23 @@ BEGIN
     IDS_CPL_INFO        "Konfigūruokite Wine interneto naršyklės ir susijusias nuostatas"
 END
 
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Bendrosios"
+BEGIN
+
+    GROUPBOX    " Pradžios tinklalapis ", IDC_STATIC, 4, 4, 312, 56
+    LTEXT       "Galite pasirinkti adresą, kuris bus naudojamas kaip jūsų pradžios tinklalapis.",
+                IDC_STATIC, 58, 14, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 26, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "&Dabartinis puslapis", IDC_HOME_CURRENT, 58, 40, 80, 14
+    PUSHBUTTON  "&Numatytasis puslapis", IDC_HOME_DEFAULT, 144, 40, 80, 14
+    PUSHBUTTON  "&Tuščias puslapis", IDC_HOME_BLANK, 230, 40, 80, 14
+
+END
+
 /* "Content" propsheet */
 IDD_CONTENT DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
