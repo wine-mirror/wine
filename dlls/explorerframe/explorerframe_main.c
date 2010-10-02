@@ -211,7 +211,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 /*************************************************************************
  *          Register/Unregister DLL, based on shdocvw/factory.c
  */
-static HRESULT reg_install(LPCSTR section, STRTABLEA *strtable)
+static HRESULT reg_install(LPCSTR section, const STRTABLEA *strtable)
 {
     HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
     HMODULE hadvpack;

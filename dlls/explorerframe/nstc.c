@@ -422,7 +422,7 @@ static void collapse_all(NSTC2Impl *This, HTREEITEM node)
     if(next) collapse_all(This, next);
 }
 
-static HTREEITEM treeitem_from_point(NSTC2Impl *This, POINT *pt, UINT *hitflag)
+static HTREEITEM treeitem_from_point(NSTC2Impl *This, const POINT *pt, UINT *hitflag)
 {
     TVHITTESTINFO tviht;
     tviht.pt.x = pt->x;
