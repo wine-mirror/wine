@@ -450,7 +450,7 @@ static HRESULT parse_version(IAssemblyNameImpl *name, LPWSTR version)
     return S_OK;
 }
 
-static HRESULT parse_culture(IAssemblyNameImpl *name, LPWSTR culture)
+static HRESULT parse_culture(IAssemblyNameImpl *name, LPCWSTR culture)
 {
     static const WCHAR empty[] = {0};
 
@@ -480,7 +480,7 @@ static BYTE hextobyte(WCHAR c)
     return 0;
 }
 
-static HRESULT parse_pubkey(IAssemblyNameImpl *name, LPWSTR pubkey)
+static HRESULT parse_pubkey(IAssemblyNameImpl *name, LPCWSTR pubkey)
 {
     int i;
     BYTE val;
