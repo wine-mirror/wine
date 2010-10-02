@@ -3421,14 +3421,12 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     uri->canon_size = len;
     if(!canonicalize_scheme(data, uri, flags, FALSE)) {
         ERR("(%p %p %x): Unable to canonicalize the scheme of the URI.\n", data, uri, flags);
-        heap_free(uri->canon_uri);
         return E_INVALIDARG;
     }
     uri->scheme_type = data->scheme_type;
 
     if(!canonicalize_hierpart(data, uri, flags, FALSE)) {
         ERR("(%p %p %x): Unable to canonicalize the heirpart of the URI\n", data, uri, flags);
-        heap_free(uri->canon_uri);
         return E_INVALIDARG;
     }
 
@@ -4928,12 +4926,11 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     if(dwFlags & ~supported_flags)
         FIXME("Ignoring unsupported flag(s) %x\n", dwFlags & ~supported_flags);
 
-    ret = heap_alloc(sizeof(Uri));
-    if(!ret)
+    ret = create_uri_obj();
+    if(!ret) {
+        *ppURI = NULL;
         return E_OUTOFMEMORY;
-
-    ret->lpIUriVtbl = &UriVtbl;
-    ret->ref = 1;
+    }
 
     /* Explicitly set the default flags if it doesn't cause a flag conflict. */
     apply_default_flags(&dwFlags);
@@ -4955,8 +4952,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     /* Validate and parse the URI into it's components. */
     if(!parse_uri(&data, dwFlags)) {
         /* Encountered an unsupported or invalid URI */
-        SysFreeString(ret->raw_uri);
-        heap_free(ret);
+        IUri_Release(URI(ret));
         *ppURI = NULL;
         return E_INVALIDARG;
     }
@@ -4964,8 +4960,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     /* Canonicalize the URI. */
     hr = canonicalize_uri(&data, ret, dwFlags);
     if(FAILED(hr)) {
-        SysFreeString(ret->raw_uri);
-        heap_free(ret);
+        IUri_Release(URI(ret));
         *ppURI = NULL;
         return hr;
     }
