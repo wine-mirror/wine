@@ -1575,15 +1575,13 @@ static void test_UdateFromDate( int line, DATE dt, ULONG flags, HRESULT r, WORD 
 
     memset(&ud, 0, sizeof(ud));
     res = pVarUdateFromDate(dt, flags, &ud);
-    ok_(__FILE__,line)(r == res, "Wrong result %x/%x\n", r, res);
-    if (SUCCEEDED(res))
-        ok_(__FILE__,line)(ud.st.wYear == y && ud.st.wMonth == m && ud.st.wDay == d &&
-                           ud.st.wHour == h && ud.st.wMinute == mn && ud.st.wSecond == s &&
-                           ud.st.wMilliseconds == ms && ud.st.wDayOfWeek == dw && ud.wDayOfYear == dy,
-                           "%.16g expected %d,%d,%d,%d,%d,%d,%d  %d %d, got %d,%d,%d,%d,%d,%d,%d  %d %d\n",
-                           dt, d, m, y, h, mn, s, ms, dw, dy,
-                           ud.st.wDay, ud.st.wMonth, ud.st.wYear, ud.st.wHour, ud.st.wMinute,
-                           ud.st.wSecond, ud.st.wMilliseconds, ud.st.wDayOfWeek, ud.wDayOfYear );
+    ok_(__FILE__,line)(r == res && (FAILED(res) || (ud.st.wYear == y && ud.st.wMonth == m && ud.st.wDay == d &&
+                       ud.st.wHour == h && ud.st.wMinute == mn && ud.st.wSecond == s &&
+                       ud.st.wMilliseconds == ms && ud.st.wDayOfWeek == dw && ud.wDayOfYear == dy)),
+                       "%.16g expected res(%x) %d,%d,%d,%d,%d,%d,%d  %d %d, got res(%x) %d,%d,%d,%d,%d,%d,%d  %d %d\n",
+                       dt, r, d, m, y, h, mn, s, ms, dw, dy,
+                       res, ud.st.wDay, ud.st.wMonth, ud.st.wYear, ud.st.wHour, ud.st.wMinute,
+                       ud.st.wSecond, ud.st.wMilliseconds, ud.st.wDayOfWeek, ud.wDayOfYear );
 }
 #define DT2UD(dt,flags,r,d,m,y,h,mn,s,ms,dw,dy) test_UdateFromDate(__LINE__,dt,flags,r,d,m,y,h,mn,s,ms,dw,dy)
 
@@ -1609,6 +1607,14 @@ static void test_VarUdateFromDate(void)
   DT2UD(29221.5,0,S_OK,1,1,1980,12,0,0,0,2,1);           /* 12 AM */
   DT2UD(29221.9888884444,0,S_OK,1,1,1980,23,44,0,0,2,1); /* 11:44 PM */
   DT2UD(29221.7508765432,0,S_OK,1,1,1980,18,1,16,0,2,1); /* 6:18:02 PM */
+
+  /* Test handling of times on dates prior to the epoch */
+  todo_wine {
+    DT2UD(-5.25,0,S_OK,25,12,1899,6,0,0,0,1,359);
+    DT2UD(-5.9999884259259,0,S_OK,25,12,1899,23,59,59,0,1,359);
+  }
+  /* This just demostrates the non-linear nature of values prior to the epoch */
+  DT2UD(-4.0,0,S_OK,26,12,1899,0,0,0,0,2,360);
 }
 
 
@@ -1672,6 +1678,14 @@ static void test_VarDateFromUdate(void)
   UD2T(1,1,-1,18,1,16,0,0,0,0,S_OK,36161.75087962963);               /* Test year -1 = 1999 */
   UD2T(1,-1,1980,18,1,16,0,0,0,0,S_OK,29160.7508796296);             /* Test month -1 = 11 */
   UD2T(1,13,1980,0,0,0,0,2,1,0,S_OK,29587.0);                        /* Rolls fwd to 1/1/1981 */
+
+  /* Test handling of times on dates prior to the epoch */
+  todo_wine {
+    UD2T(25,12,1899,6,0,0,0,1,359,0,S_OK,-5.25);
+    UD2T(25,12,1899,23,59,59,0,1,359,0,S_OK,-5.9999884259259);
+  }
+  /* This just demostrates the non-linear nature of values prior to the epoch */
+  UD2T(26,12,1899,0,0,0,0,2,360,0,S_OK,-4.0);
 }
 
 static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
