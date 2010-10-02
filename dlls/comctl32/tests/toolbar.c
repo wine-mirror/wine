@@ -505,6 +505,14 @@ static void test_add_string(void)
     ok(ret == 2, "TB_ADDSTRINGA - unexpected return %d\n", ret);
     CHECK_STRING_TABLE(3, ret2);
 
+    /* null instance handle */
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, IDS_TBADD1);
+    ok(ret == -1, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+
+    /* invalid instance handle */
+    ret = SendMessageA(hToolbar, TB_ADDSTRINGA, 0xdeadbeef, IDS_TBADD1);
+    ok(ret == -1, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+
     ret = SendMessageA(hToolbar, TB_ADDSTRINGA, (WPARAM)GetModuleHandle(NULL), IDS_TBADD1);
     ok(ret == 3, "TB_ADDSTRINGA - unexpected return %d\n", ret);
     CHECK_STRING_TABLE(3, ret2);
