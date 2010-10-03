@@ -64,6 +64,15 @@ extern void (*mono_set_dirs)(const char *assembly_dir, const char *config_dir);
 
 typedef struct loaded_mono
 {
+    HMODULE mono_handle;
+
+    void (*mono_config_parse)(const char *filename);
+    MonoAssembly* (*mono_domain_assembly_open) (MonoDomain *domain, const char *name);
+    void (*mono_jit_cleanup)(MonoDomain *domain);
+    int (*mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
+    MonoDomain* (*mono_jit_init)(const char *file);
+    int (*mono_jit_set_trace_options)(const char* options);
+    void (*mono_set_dirs)(const char *assembly_dir, const char *config_dir);
 } loaded_mono;
 
 /* loaded runtime interfaces */

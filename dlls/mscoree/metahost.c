@@ -66,18 +66,104 @@ static CRITICAL_SECTION_DEBUG runtime_list_cs_debug =
 };
 static CRITICAL_SECTION runtime_list_cs = { &runtime_list_cs_debug, -1, 0, 0, 0, 0 };
 
+#define NUM_ABI_VERSIONS 1
+
+static loaded_mono loaded_monos[NUM_ABI_VERSIONS];
+
+static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version);
+
+static void set_environment(LPCWSTR bin_path)
+{
+    WCHAR path_env[MAX_PATH];
+    int len;
+
+    static const WCHAR pathW[] = {'P','A','T','H',0};
+
+    /* We have to modify PATH as Mono loads other DLLs from this directory. */
+    GetEnvironmentVariableW(pathW, path_env, sizeof(path_env)/sizeof(WCHAR));
+    len = strlenW(path_env);
+    path_env[len++] = ';';
+    strcpyW(path_env+len, bin_path);
+    SetEnvironmentVariableW(pathW, path_env);
+}
+
 static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 {
-    /* FIXME: stub */
+    static const WCHAR bin[] = {'\\','b','i','n',0};
+    static const WCHAR lib[] = {'\\','l','i','b',0};
+    static const WCHAR etc[] = {'\\','e','t','c',0};
+    WCHAR mono_dll_path[MAX_PATH+16], mono_bin_path[MAX_PATH+4];
+    WCHAR mono_lib_path[MAX_PATH+4], mono_etc_path[MAX_PATH+4];
+    char mono_lib_path_a[MAX_PATH], mono_etc_path_a[MAX_PATH];
+    int trace_size;
+    char trace_setting[256];
+
     if (This->mono_abi_version == -1)
         MESSAGE("wine: Install the Windows version of Mono to run .NET executables\n");
 
-    if (This->mono_abi_version <= 0)
+    if (This->mono_abi_version <= 0 || This->mono_abi_version > NUM_ABI_VERSIONS)
         return E_FAIL;
 
-    *result = NULL;
+    *result = &loaded_monos[This->mono_abi_version-1];
+
+    if (!(*result)->mono_handle)
+    {
+        strcpyW(mono_bin_path, This->mono_path);
+        strcatW(mono_bin_path, bin);
+        set_environment(mono_bin_path);
+
+        strcpyW(mono_lib_path, This->mono_path);
+        strcatW(mono_lib_path, lib);
+        WideCharToMultiByte(CP_UTF8, 0, mono_lib_path, -1, mono_lib_path_a, MAX_PATH, NULL, NULL);
+
+        strcpyW(mono_etc_path, This->mono_path);
+        strcatW(mono_etc_path, etc);
+        WideCharToMultiByte(CP_UTF8, 0, mono_etc_path, -1, mono_etc_path_a, MAX_PATH, NULL, NULL);
+
+        if (!find_mono_dll(This->mono_path, mono_dll_path, This->mono_abi_version)) goto fail;
+
+        if (This->mono_abi_version != 1) goto fail;
+
+        (*result)->mono_handle = LoadLibraryW(mono_dll_path);
+
+        if (!(*result)->mono_handle) goto fail;
+
+#define LOAD_MONO_FUNCTION(x) do { \
+    (*result)->x = (void*)GetProcAddress((*result)->mono_handle, #x); \
+    if (!(*result)->x) { \
+        goto fail; \
+    } \
+} while (0);
+
+        LOAD_MONO_FUNCTION(mono_config_parse);
+        LOAD_MONO_FUNCTION(mono_domain_assembly_open);
+        LOAD_MONO_FUNCTION(mono_jit_cleanup);
+        LOAD_MONO_FUNCTION(mono_jit_exec);
+        LOAD_MONO_FUNCTION(mono_jit_init);
+        LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
+        LOAD_MONO_FUNCTION(mono_set_dirs);
+
+#undef LOAD_MONO_FUNCTION
+
+        (*result)->mono_set_dirs(mono_lib_path_a, mono_etc_path_a);
+
+        (*result)->mono_config_parse(NULL);
+
+        trace_size = GetEnvironmentVariableA("WINE_MONO_TRACE", trace_setting, sizeof(trace_setting));
+
+        if (trace_size)
+        {
+            (*result)->mono_jit_set_trace_options(trace_setting);
+        }
+    }
 
     return S_OK;
+
+fail:
+    ERR("Could not load Mono into this process\n");
+    FreeLibrary((*result)->mono_handle);
+    (*result)->mono_handle = NULL;
+    return E_FAIL;
 }
 
 static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost **result)
