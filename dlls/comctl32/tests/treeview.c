@@ -713,6 +713,32 @@ static void test_get_set_itemheight(void)
     ok_sequence(sequences, TREEVIEW_SEQ_INDEX, test_get_set_itemheight_seq,
         "test get set item height", FALSE);
 
+    /* without TVS_NONEVENHEIGHT */
+    SetWindowLong(hTree, GWL_STYLE, GetWindowLong(hTree, GWL_STYLE) & ~TVS_NONEVENHEIGHT);
+    /* odd value */
+    ulOldHeight = SendMessage( hTree, TVM_SETITEMHEIGHT, 3, 0);
+    ok(ulOldHeight == 8, "got %d, expected %d\n", ulOldHeight, 8);
+    ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+    ok(ulNewHeight == 2, "got %d, expected %d\n", ulNewHeight, 2);
+
+    ulOldHeight = SendMessage( hTree, TVM_SETITEMHEIGHT, 4, 0);
+    ok(ulOldHeight == 2, "got %d, expected %d\n", ulOldHeight, 2);
+    ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+    ok(ulNewHeight == 4, "got %d, expected %d\n", ulNewHeight, 4);
+
+    /* with TVS_NONEVENHEIGHT */
+    SetWindowLong(hTree, GWL_STYLE, GetWindowLong(hTree, GWL_STYLE) | TVS_NONEVENHEIGHT);
+    /* odd value */
+    ulOldHeight = SendMessage( hTree, TVM_SETITEMHEIGHT, 3, 0);
+    ok(ulOldHeight == 4, "got %d, expected %d\n", ulOldHeight, 4);
+    ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+    ok(ulNewHeight == 3, "got %d, expected %d\n", ulNewHeight, 3);
+    /* even value */
+    ulOldHeight = SendMessage( hTree, TVM_SETITEMHEIGHT, 10, 0);
+    ok(ulOldHeight == 3, "got %d, expected %d\n", ulOldHeight, 3);
+    ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+    ok(ulNewHeight == 10, "got %d, expected %d\n", ulNewHeight, 10);
+
     DestroyWindow(hTree);
 }
 

@@ -1828,7 +1828,7 @@ TREEVIEW_SetItemHeight(TREEVIEW_INFO *infoPtr, INT newHeight)
 {
     INT prevHeight = infoPtr->uItemHeight;
 
-    TRACE("%d\n", newHeight);
+    TRACE("new=%d, old=%d\n", newHeight, prevHeight);
     if (newHeight == -1)
     {
 	infoPtr->uItemHeight = TREEVIEW_NaturalHeight(infoPtr);
@@ -1836,13 +1836,17 @@ TREEVIEW_SetItemHeight(TREEVIEW_INFO *infoPtr, INT newHeight)
     }
     else
     {
-	infoPtr->uItemHeight = newHeight;
-	infoPtr->bHeightSet = TRUE;
+        if (newHeight == 0) newHeight = 1;
+        infoPtr->uItemHeight = newHeight;
+        infoPtr->bHeightSet = TRUE;
     }
 
     /* Round down, unless we support odd ("non even") heights. */
-    if (!(infoPtr->dwStyle & TVS_NONEVENHEIGHT))
-	infoPtr->uItemHeight &= ~1;
+    if (!(infoPtr->dwStyle & TVS_NONEVENHEIGHT) && infoPtr->uItemHeight != 1)
+    {
+        infoPtr->uItemHeight &= ~1;
+        TRACE("after rounding=%d\n", infoPtr->uItemHeight);
+    }
 
     if (infoPtr->uItemHeight != prevHeight)
     {
@@ -2062,6 +2066,7 @@ static inline LRESULT
 TREEVIEW_GetVisibleCount(const TREEVIEW_INFO *infoPtr)
 {
     /* Surprise! This does not take integral height into account. */
+    TRACE("client=%d, item=%d\n", infoPtr->clientHeight, infoPtr->uItemHeight);
     return infoPtr->clientHeight / infoPtr->uItemHeight;
 }
 
