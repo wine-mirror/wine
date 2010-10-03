@@ -39,10 +39,16 @@ WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 struct RuntimeHost
 {
     const struct ICorRuntimeHostVtbl *lpVtbl;
+    const struct ICLRRuntimeHostVtbl *lpCLRHostVtbl;
     const CLRRuntimeInfo *version;
     const loaded_mono *mono;
     LONG ref;
 };
+
+static inline RuntimeHost *impl_from_ICLRRuntimeHost( ICLRRuntimeHost *iface )
+{
+    return (RuntimeHost *)((char*)iface - FIELD_OFFSET(RuntimeHost, lpCLRHostVtbl));
+}
 
 static inline RuntimeHost *impl_from_ICorRuntimeHost( ICorRuntimeHost *iface )
 {
@@ -271,6 +277,121 @@ static const struct ICorRuntimeHostVtbl corruntimehost_vtbl =
     corruntimehost_CurrentDomain
 };
 
+static HRESULT WINAPI CLRRuntimeHost_QueryInterface(ICLRRuntimeHost* iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+
+    if ( IsEqualGUID( riid, &IID_ICLRRuntimeHost ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    ICLRRuntimeHost_AddRef( iface );
+
+    return S_OK;
+}
+
+static ULONG WINAPI CLRRuntimeHost_AddRef(ICLRRuntimeHost* iface)
+{
+    RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
+    return IUnknown_AddRef((IUnknown*)&This->lpVtbl);
+}
+
+static ULONG WINAPI CLRRuntimeHost_Release(ICLRRuntimeHost* iface)
+{
+    RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
+    return IUnknown_Release((IUnknown*)&This->lpVtbl);
+}
+
+static HRESULT WINAPI CLRRuntimeHost_Start(ICLRRuntimeHost* iface)
+{
+    FIXME("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_Stop(ICLRRuntimeHost* iface)
+{
+    FIXME("(%p)\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_SetHostControl(ICLRRuntimeHost* iface,
+    IHostControl *pHostControl)
+{
+    FIXME("(%p,%p)\n", iface, pHostControl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_GetCLRControl(ICLRRuntimeHost* iface,
+    ICLRControl **pCLRControl)
+{
+    FIXME("(%p,%p)\n", iface, pCLRControl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_UnloadAppDomain(ICLRRuntimeHost* iface,
+    DWORD dwAppDomainId, BOOL fWaitUntilDone)
+{
+    FIXME("(%p,%u,%i)\n", iface, dwAppDomainId, fWaitUntilDone);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_ExecuteInAppDomain(ICLRRuntimeHost* iface,
+    DWORD dwAppDomainId, FExecuteInAppDomainCallback pCallback, void *cookie)
+{
+    FIXME("(%p,%u,%p,%p)\n", iface, dwAppDomainId, pCallback, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_GetCurrentAppDomainId(ICLRRuntimeHost* iface,
+    DWORD *pdwAppDomainId)
+{
+    FIXME("(%p,%p)\n", iface, pdwAppDomainId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_ExecuteApplication(ICLRRuntimeHost* iface,
+    LPCWSTR pwzAppFullName, DWORD dwManifestPaths, LPCWSTR *ppwzManifestPaths,
+    DWORD dwActivationData, LPCWSTR *ppwzActivationData, int *pReturnValue)
+{
+    FIXME("(%p,%s,%u,%u)\n", iface, debugstr_w(pwzAppFullName), dwManifestPaths, dwActivationData);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* iface,
+    LPCWSTR pwzAssemblyPath, LPCWSTR pwzTypeName, LPCWSTR pwzMethodName,
+    LPCWSTR pwzArgument, DWORD *pReturnValue)
+{
+    FIXME("(%p,%s,%s,%s,%s)\n", iface, debugstr_w(pwzAssemblyPath),
+        debugstr_w(pwzTypeName), debugstr_w(pwzMethodName), debugstr_w(pwzArgument));
+    return E_NOTIMPL;
+}
+
+static const struct ICLRRuntimeHostVtbl CLRHostVtbl =
+{
+    CLRRuntimeHost_QueryInterface,
+    CLRRuntimeHost_AddRef,
+    CLRRuntimeHost_Release,
+    CLRRuntimeHost_Start,
+    CLRRuntimeHost_Stop,
+    CLRRuntimeHost_SetHostControl,
+    CLRRuntimeHost_GetCLRControl,
+    CLRRuntimeHost_UnloadAppDomain,
+    CLRRuntimeHost_ExecuteInAppDomain,
+    CLRRuntimeHost_GetCurrentAppDomainId,
+    CLRRuntimeHost_ExecuteApplication,
+    CLRRuntimeHost_ExecuteInDefaultAppDomain
+};
+
 HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
     const loaded_mono *loaded_mono, RuntimeHost** result)
 {
@@ -281,6 +402,7 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
         return E_OUTOFMEMORY;
 
     This->lpVtbl = &corruntimehost_vtbl;
+    This->lpCLRHostVtbl = &CLRHostVtbl;
     This->ref = 1;
     This->version = runtime_version;
     This->mono = loaded_mono;
@@ -296,6 +418,8 @@ HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid,
 
     if (IsEqualGUID(clsid, &CLSID_CorRuntimeHost))
         unk = (IUnknown*)&This->lpVtbl;
+    else if (IsEqualGUID(clsid, &CLSID_CLRRuntimeHost))
+        unk = (IUnknown*)&This->lpCLRHostVtbl;
     else
         unk = NULL;
 
