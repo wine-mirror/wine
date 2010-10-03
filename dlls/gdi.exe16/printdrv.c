@@ -514,7 +514,7 @@ DWORD WINAPI GetSpoolJob16(int nOption, LONG param)
  *
  * Helper for DrvGetPrinterData
  */
-static DWORD DrvGetPrinterDataInternal(LPSTR RegStr_Printer,
+static DWORD DrvGetPrinterDataInternal(LPCSTR RegStr_Printer,
 LPBYTE lpPrinterData, int cbData, int what)
 {
     DWORD res = -1;
