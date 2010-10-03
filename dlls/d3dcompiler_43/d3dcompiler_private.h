@@ -21,7 +21,8 @@
 #ifndef __WINE_D3DCOMPILER_PRIVATE_H
 #define __WINE_D3DCOMPILER_PRIVATE_H
 
-#include <stdarg.h>
+#include "wine/debug.h"
+#include "wine/list.h"
 
 #define COBJMACROS
 #include "windef.h"
@@ -37,6 +38,9 @@
  */
 #define D3DERR_INVALIDCALL 0x8876086c
 
+/* TRACE helper functions */
+const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part);
+
 /* ID3DBlob */
 struct d3dcompiler_blob
 {
@@ -48,6 +52,9 @@ struct d3dcompiler_blob
 };
 
 HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size) DECLSPEC_HIDDEN;
+
+/* blob handling */
+HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob) DECLSPEC_HIDDEN;
 
 /* Shader assembler definitions */
 typedef enum _shader_type {
@@ -569,5 +576,45 @@ typedef enum _BWRITERDECLUSAGE {
 struct bwriter_shader *SlAssembleShader(const char *text, char **messages);
 DWORD SlWriteBytecode(const struct bwriter_shader *shader, int dxversion, DWORD **result);
 void SlDeleteShader(struct bwriter_shader *shader);
+
+#define MAKE_TAG(ch0, ch1, ch2, ch3) \
+    ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
+    ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
+#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+
+struct dxbc_section
+{
+    DWORD tag;
+    const char *data;
+    DWORD data_size;
+};
+
+struct dxbc
+{
+    UINT size;
+    UINT count;
+    struct dxbc_section *sections;
+};
+
+HRESULT dxbc_write_blob(struct dxbc *dxbc, ID3DBlob **blob) DECLSPEC_HIDDEN;
+void dxbc_destroy(struct dxbc *dxbc) DECLSPEC_HIDDEN;
+HRESULT dxbc_parse(const char *data, SIZE_T data_size, struct dxbc *dxbc) DECLSPEC_HIDDEN;
+HRESULT dxbc_add_section(struct dxbc *dxbc, DWORD tag, const char *data, DWORD data_size) DECLSPEC_HIDDEN;
+HRESULT dxbc_init(struct dxbc *dxbc, DWORD count) DECLSPEC_HIDDEN;
+
+static inline void read_dword(const char **ptr, DWORD *d)
+{
+    memcpy(d, *ptr, sizeof(*d));
+    *ptr += sizeof(*d);
+}
+
+static inline void write_dword(char **ptr, DWORD d)
+{
+    memcpy(*ptr, &d, sizeof(d));
+    *ptr += sizeof(d);
+}
+
+void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
+void write_dword_unknown(char **ptr, DWORD d) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DCOMPILER_PRIVATE_H */

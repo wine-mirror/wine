@@ -83,7 +83,8 @@ HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob)
 
 HRESULT WINAPI D3DGetBlobPart(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob)
 {
-    FIXME("data %p, data_size %lu, part %#x, flags %#x, blob %p stub!\n", data, data_size, part, flags, blob);
+    TRACE("data %p, data_size %lu, part %s, flags %#x, blob %p\n", data,
+           data_size, debug_d3dcompiler_d3d_blob_part(part), flags, blob);
 
-    return E_NOTIMPL;
+    return d3dcompiler_get_blob_part(data, data_size, part, flags, blob);
 }

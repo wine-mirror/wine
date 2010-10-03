@@ -23,7 +23,6 @@
 #include "wine/port.h"
 
 #include "d3dcompiler_private.h"
-#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
@@ -118,4 +117,41 @@ HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size)
     }
 
     return S_OK;
+}
+
+HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob)
+{
+    struct dxbc src_dxbc, dst_dxbc;
+    HRESULT hr;
+
+    if (!data || !data_size || flags || !blob)
+    {
+        WARN("Invalid arguments: data %p, data_size %lu, flags %#x, blob %p\n", data, data_size, flags, blob);
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (part > D3D_BLOB_TEST_COMPILE_PERF
+            || (part < D3D_BLOB_TEST_ALTERNATE_SHADER && part > D3D_BLOB_XNA_SHADER))
+    {
+        WARN("Invalid D3D_BLOB_PART: part %s\n", debug_d3dcompiler_d3d_blob_part(part));
+        return D3DERR_INVALIDCALL;
+    }
+
+    hr = dxbc_parse(data, data_size, &src_dxbc);
+    if (FAILED(hr))
+    {
+        WARN("Failed to parse blob part\n");
+        return hr;
+    }
+
+    hr = dxbc_write_blob(&dst_dxbc, blob);
+    if (FAILED(hr))
+    {
+        WARN("Failed to write blob part\n");
+    }
+
+    dxbc_destroy(&src_dxbc);
+    dxbc_destroy(&dst_dxbc);
+
+    return hr;
 }

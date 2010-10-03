@@ -9,7 +9,8 @@ C_SRCS = \
 	blob.c \
 	bytecodewriter.c \
 	compiler.c \
-	d3dcompiler_43_main.c
+	d3dcompiler_43_main.c \
+	utils.c
 
 LEX_SRCS = asmshader.l
 BISON_SRCS = asmshader.y
