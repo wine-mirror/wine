@@ -10,7 +10,7 @@
 @ stub D3DGetDebugInfo
 @ stub D3DGetInputAndOutputSignatureBlob
 @ stdcall D3DGetInputSignatureBlob(ptr long ptr)
-@ stub D3DGetOutputSignatureBlob
+@ stdcall D3DGetOutputSignatureBlob(ptr long ptr)
 @ stdcall D3DPreprocess(ptr long str ptr ptr ptr ptr)
 @ stub D3DReflect
 @ stub D3DReturnFailure1

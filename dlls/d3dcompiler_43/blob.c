@@ -129,6 +129,10 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
             if (tag == TAG_ISGN) add = TRUE;
             break;
 
+        case D3D_BLOB_OUTPUT_SIGNATURE_BLOB:
+            if (tag == TAG_OSGN) add = TRUE;
+            break;
+
         default:
             FIXME("Unhandled D3D_BLOB_PART %s.\n", debug_d3dcompiler_d3d_blob_part(part));
             break;
@@ -195,6 +199,7 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
     switch(part)
     {
         case D3D_BLOB_INPUT_SIGNATURE_BLOB:
+        case D3D_BLOB_OUTPUT_SIGNATURE_BLOB:
             if (count != 1) count = 0;
             break;
 
