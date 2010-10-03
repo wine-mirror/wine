@@ -225,11 +225,13 @@ static HRESULT WINAPI CLRRuntimeInfo_QueryInterface(ICLRRuntimeInfo* iface,
 
 static ULONG WINAPI CLRRuntimeInfo_AddRef(ICLRRuntimeInfo* iface)
 {
+    MSCOREE_LockModule();
     return 2;
 }
 
 static ULONG WINAPI CLRRuntimeInfo_Release(ICLRRuntimeInfo* iface)
 {
+    MSCOREE_UnlockModule();
     return 1;
 }
 
@@ -668,6 +670,8 @@ static ULONG WINAPI InstalledRuntimeEnum_AddRef(IEnumUnknown* iface)
     struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
     ULONG ref = InterlockedIncrement(&This->ref);
 
+    MSCOREE_LockModule();
+
     TRACE("(%p) refcount=%u\n", iface, ref);
 
     return ref;
@@ -677,6 +681,8 @@ static ULONG WINAPI InstalledRuntimeEnum_Release(IEnumUnknown* iface)
 {
     struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
     ULONG ref = InterlockedDecrement(&This->ref);
+
+    MSCOREE_UnlockModule();
 
     TRACE("(%p) refcount=%u\n", iface, ref);
 
@@ -818,11 +824,13 @@ static HRESULT WINAPI CLRMetaHost_QueryInterface(ICLRMetaHost* iface,
 
 static ULONG WINAPI CLRMetaHost_AddRef(ICLRMetaHost* iface)
 {
+    MSCOREE_LockModule();
     return 2;
 }
 
 static ULONG WINAPI CLRMetaHost_Release(ICLRMetaHost* iface)
 {
+    MSCOREE_UnlockModule();
     return 1;
 }
 

@@ -108,6 +108,8 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
 
     list_add_tail(&This->domains, &entry->entry);
 
+    MSCOREE_LockModule();
+
     *result = entry->domain;
 
 end:
@@ -149,6 +151,7 @@ static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
             if (This->default_domain == domain)
                 This->default_domain = NULL;
             HeapFree(GetProcessHeap(), 0, entry);
+            MSCOREE_UnlockModule();
             break;
         }
     }
@@ -193,6 +196,9 @@ static HRESULT WINAPI corruntimehost_QueryInterface(ICorRuntimeHost* iface,
 static ULONG WINAPI corruntimehost_AddRef(ICorRuntimeHost* iface)
 {
     RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
+
+    MSCOREE_LockModule();
+
     return InterlockedIncrement( &This->ref );
 }
 
@@ -200,6 +206,8 @@ static ULONG WINAPI corruntimehost_Release(ICorRuntimeHost* iface)
 {
     RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
     ULONG ref;
+
+    MSCOREE_UnlockModule();
 
     ref = InterlockedDecrement( &This->ref );
 

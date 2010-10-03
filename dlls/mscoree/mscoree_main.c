@@ -44,6 +44,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
+LONG dll_refs = 0;
+
 static BOOL get_install_root(LPWSTR install_dir)
 {
     const WCHAR dotnet_key[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','.','N','E','T','F','r','a','m','e','w','o','r','k','\\',0};
@@ -398,7 +400,10 @@ HRESULT WINAPI DllUnregisterServer(void)
 
 HRESULT WINAPI DllCanUnloadNow(VOID)
 {
-    return S_OK;
+    if (dll_refs)
+        return S_FALSE;
+    else
+        return S_OK;
 }
 
 INT WINAPI ND_RU1( const void *ptr, INT offset )

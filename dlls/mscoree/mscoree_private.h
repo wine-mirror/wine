@@ -20,6 +20,10 @@
 #ifndef __MSCOREE_PRIVATE__
 #define __MSCOREE_PRIVATE__
 
+extern LONG dll_refs;
+static inline void MSCOREE_LockModule(void) { InterlockedIncrement(&dll_refs); }
+static inline void MSCOREE_UnlockModule(void) { InterlockedDecrement(&dll_refs); }
+
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj);
 
 typedef struct tagASSEMBLY ASSEMBLY;
