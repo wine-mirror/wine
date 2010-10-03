@@ -8,7 +8,7 @@
 @ stub D3DDisassemble
 @ stdcall D3DGetBlobPart(ptr long long long ptr)
 @ stub D3DGetDebugInfo
-@ stub D3DGetInputAndOutputSignatureBlob
+@ stdcall D3DGetInputAndOutputSignatureBlob(ptr long ptr)
 @ stdcall D3DGetInputSignatureBlob(ptr long ptr)
 @ stdcall D3DGetOutputSignatureBlob(ptr long ptr)
 @ stdcall D3DPreprocess(ptr long str ptr ptr ptr ptr)
