@@ -6,7 +6,7 @@
 @ stub D3DDecompressShaders
 @ stub D3DDisassemble10Effect
 @ stub D3DDisassemble
-@ stub D3DGetBlobPart
+@ stdcall D3DGetBlobPart(ptr long long long ptr)
 @ stub D3DGetDebugInfo
 @ stub D3DGetInputAndOutputSignatureBlob
 @ stub D3DGetInputSignatureBlob
