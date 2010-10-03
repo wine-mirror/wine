@@ -436,6 +436,15 @@ const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl = {
     CLRRuntimeInfo_IsStarted
 };
 
+HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result)
+{
+    struct CLRRuntimeInfo *This = (struct CLRRuntimeInfo*)iface;
+
+    assert(This->ICLRRuntimeInfo_vtbl == &CLRRuntimeInfoVtbl);
+
+    return CLRRuntimeInfo_GetRuntimeHost(This, result);
+}
+
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version)
 {
     static const WCHAR mono_dll[] = {'\\','b','i','n','\\','m','o','n','o','.','d','l','l',0};

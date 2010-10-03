@@ -24,8 +24,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "shellapi.h"
 
 #include "cor.h"
 #include "mscoree.h"
@@ -33,6 +35,7 @@
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
@@ -42,8 +45,116 @@ struct RuntimeHost
     const struct ICLRRuntimeHostVtbl *lpCLRHostVtbl;
     const CLRRuntimeInfo *version;
     const loaded_mono *mono;
+    struct list domains;
+    MonoDomain *default_domain;
+    CRITICAL_SECTION lock;
     LONG ref;
 };
+
+struct DomainEntry
+{
+    struct list entry;
+    MonoDomain *domain;
+};
+
+static char *WtoA(LPCWSTR wstr)
+{
+    int length;
+    char *result;
+
+    length = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
+
+    result = HeapAlloc(GetProcessHeap(), 0, length);
+
+    if (result)
+        WideCharToMultiByte(CP_UTF8, 0, wstr, -1, result, length, NULL, NULL);
+
+    return result;
+}
+
+static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
+{
+    struct DomainEntry *entry;
+    char *mscorlib_path;
+    HRESULT res=S_OK;
+
+    EnterCriticalSection(&This->lock);
+
+    entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
+    if (!entry)
+    {
+        res = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    mscorlib_path = WtoA(This->version->mscorlib_path);
+    if (!mscorlib_path)
+    {
+        HeapFree(GetProcessHeap(), 0, entry);
+        res = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    entry->domain = This->mono->mono_jit_init(mscorlib_path);
+
+    HeapFree(GetProcessHeap(), 0, mscorlib_path);
+
+    if (!entry->domain)
+    {
+        HeapFree(GetProcessHeap(), 0, entry);
+        res = E_FAIL;
+        goto end;
+    }
+
+    list_add_tail(&This->domains, &entry->entry);
+
+    *result = entry->domain;
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return res;
+}
+
+static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, MonoDomain **result)
+{
+    HRESULT res=S_OK;
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->default_domain) goto end;
+
+    res = RuntimeHost_AddDomain(This, &This->default_domain);
+
+end:
+    *result = This->default_domain;
+
+    LeaveCriticalSection(&This->lock);
+
+    return res;
+}
+
+static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
+{
+    struct DomainEntry *entry;
+
+    EnterCriticalSection(&This->lock);
+
+    LIST_FOR_EACH_ENTRY(entry, &This->domains, struct DomainEntry, entry)
+    {
+        if (entry->domain == domain)
+        {
+            This->mono->mono_jit_cleanup(domain);
+            list_remove(&entry->entry);
+            if (This->default_domain == domain)
+                This->default_domain = NULL;
+            HeapFree(GetProcessHeap(), 0, entry);
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&This->lock);
+}
 
 static inline RuntimeHost *impl_from_ICLRRuntimeHost( ICLRRuntimeHost *iface )
 {
@@ -392,6 +503,86 @@ static const struct ICLRRuntimeHostVtbl CLRHostVtbl =
     CLRRuntimeHost_ExecuteInDefaultAppDomain
 };
 
+static void get_utf8_args(int *argc, char ***argv)
+{
+    WCHAR **argvw;
+    int size=0, i;
+    char *current_arg;
+
+    argvw = CommandLineToArgvW(GetCommandLineW(), argc);
+
+    for (i=0; i<*argc; i++)
+    {
+        size += sizeof(char*);
+        size += WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, NULL, 0, NULL, NULL);
+    }
+    size += sizeof(char*);
+
+    *argv = HeapAlloc(GetProcessHeap(), 0, size);
+    current_arg = (char*)(*argv + *argc + 1);
+
+    for (i=0; i<*argc; i++)
+    {
+        (*argv)[i] = current_arg;
+        current_arg += WideCharToMultiByte(CP_UTF8, 0, argvw[i], -1, current_arg, size, NULL, NULL);
+    }
+
+    (*argv)[*argc] = NULL;
+
+    HeapFree(GetProcessHeap(), 0, argvw);
+}
+
+__int32 WINAPI _CorExeMain(void)
+{
+    int exit_code;
+    int argc;
+    char **argv;
+    MonoDomain *domain;
+    MonoAssembly *assembly;
+    WCHAR filename[MAX_PATH];
+    char *filenameA;
+    ICLRRuntimeInfo *info;
+    RuntimeHost *host;
+    HRESULT hr;
+
+    get_utf8_args(&argc, &argv);
+
+    GetModuleFileNameW(NULL, filename, MAX_PATH);
+
+    filenameA = WtoA(filename);
+    if (!filenameA)
+        return -1;
+
+    hr = get_runtime_info(filename, NULL, NULL, 0, 0, FALSE, &info);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
+
+        if (SUCCEEDED(hr))
+            hr = RuntimeHost_GetDefaultDomain(host, &domain);
+
+        if (SUCCEEDED(hr))
+        {
+            assembly = host->mono->mono_domain_assembly_open(domain, filenameA);
+
+            exit_code = host->mono->mono_jit_exec(domain, assembly, argc, argv);
+
+            RuntimeHost_DeleteDomain(host, domain);
+        }
+        else
+            exit_code = -1;
+
+        ICLRRuntimeInfo_Release(info);
+    }
+    else
+        exit_code = -1;
+
+    HeapFree(GetProcessHeap(), 0, argv);
+
+    return exit_code;
+}
+
 HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
     const loaded_mono *loaded_mono, RuntimeHost** result)
 {
@@ -406,6 +597,10 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
     This->ref = 1;
     This->version = runtime_version;
     This->mono = loaded_mono;
+    list_init(&This->domains);
+    This->default_domain = NULL;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RuntimeHost.lock");
 
     *result = This;
 
@@ -433,6 +628,18 @@ HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid,
 
 HRESULT RuntimeHost_Destroy(RuntimeHost *This)
 {
+    struct DomainEntry *cursor, *cursor2;
+
+    This->lock.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&This->lock);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->domains, struct DomainEntry, entry)
+    {
+        This->mono->mono_jit_cleanup(cursor->domain);
+        list_remove(&cursor->entry);
+        HeapFree(GetProcessHeap(), 0, cursor);
+    }
+
     HeapFree( GetProcessHeap(), 0, This );
     return S_OK;
 }

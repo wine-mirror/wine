@@ -48,19 +48,11 @@ extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config
 
 extern HRESULT force_get_runtime_info(ICLRRuntimeInfo **result);
 
+extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result);
+
 /* Mono 2.6 embedding */
 typedef struct _MonoDomain MonoDomain;
 typedef struct _MonoAssembly MonoAssembly;
-
-extern HMODULE mono_handle;
-
-extern void (*mono_config_parse)(const char *filename);
-extern MonoAssembly* (*mono_domain_assembly_open) (MonoDomain *domain, const char *name);
-extern void (*mono_jit_cleanup)(MonoDomain *domain);
-extern int (*mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
-extern MonoDomain* (*mono_jit_init)(const char *file);
-extern int (*mono_jit_set_trace_options)(const char* options);
-extern void (*mono_set_dirs)(const char *assembly_dir, const char *config_dir);
 
 typedef struct loaded_mono
 {
