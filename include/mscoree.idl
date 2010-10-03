@@ -46,6 +46,8 @@ typedef enum RUNTIME_INFO_FLAGS {
     RUNTIME_INFO_DONT_SHOW_ERROR_DIALOG = 0x40
 } RUNTIME_INFO_FLAGS;
 
+typedef HRESULT (__stdcall *FExecuteInAppDomainCallback)([in] void* cookie);
+
 [
     uuid(F31D1788-C397-4725-87A5-6AF3472C2791),
     version(1.0),
@@ -182,3 +184,43 @@ interface ICorRuntimeHost : IUnknown
 
     HRESULT CurrentDomain([out] IUnknown** appDomain);
 };
+
+cpp_quote("DEFINE_GUID(CLSID_CLRRuntimeHost, 0x90f1a06e,0x7712,0x4762,0x86,0xb5,0x7a,0x5e,0xba,0x6b,0xdb,0x02);")
+
+[
+    uuid(90f1a06c-7712-4762-86b5-7a5eba6bdb02),
+    local,
+    object
+]
+interface ICLRRuntimeHost : IUnknown
+{
+    HRESULT Start();
+
+    HRESULT Stop();
+
+    HRESULT SetHostControl([in] IHostControl *pHostControl);
+
+    HRESULT GetCLRControl([out] ICLRControl **pCLRControl);
+
+    HRESULT UnloadAppDomain([in] DWORD dwAppDomainId,
+                            [in] BOOL fWaitUntilDone);
+
+    HRESULT ExecuteInAppDomain([in] DWORD dwAppDomainId,
+                               [in] FExecuteInAppDomainCallback pCallback,
+                               [in] void *cookie);
+
+    HRESULT GetCurrentAppDomainId([out] DWORD *pdwAppDomainId);
+
+    HRESULT ExecuteApplication([in] LPCWSTR pwzAppFullName,
+                               [in] DWORD dwManifestPaths,
+                               [in] LPCWSTR *ppwzManifestPaths,
+                               [in] DWORD dwActivationData,
+                               [in] LPCWSTR *ppwzActivationData,
+                               [out] int *pReturnValue);
+
+    HRESULT ExecuteInDefaultAppDomain([in] LPCWSTR pwzAssemblyPath,
+                                      [in] LPCWSTR pwzTypeName,
+                                      [in] LPCWSTR pwzMethodName,
+                                      [in] LPCWSTR pwzArgument,
+                                      [out] DWORD *pReturnValue);
+}
