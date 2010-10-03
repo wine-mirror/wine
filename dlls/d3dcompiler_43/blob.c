@@ -137,6 +137,10 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
             if (tag == TAG_ISGN || tag == TAG_OSGN) add = TRUE;
             break;
 
+        case D3D_BLOB_DEBUG_INFO:
+            if (tag == TAG_SDBG) add = TRUE;
+            break;
+
         default:
             FIXME("Unhandled D3D_BLOB_PART %s.\n", debug_d3dcompiler_d3d_blob_part(part));
             break;
@@ -204,6 +208,7 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
     {
         case D3D_BLOB_INPUT_SIGNATURE_BLOB:
         case D3D_BLOB_OUTPUT_SIGNATURE_BLOB:
+        case D3D_BLOB_DEBUG_INFO:
             if (count != 1) count = 0;
             break;
 
@@ -224,10 +229,26 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
         return E_FAIL;
     }
 
-    hr = dxbc_write_blob(&dst_dxbc, blob);
-    if (FAILED(hr))
+    /* some parts aren't full DXBCs, they contain only the data */
+    if (count == 1 && (part == D3D_BLOB_DEBUG_INFO))
     {
-        WARN("Failed to write blob part\n");
+        hr = D3DCreateBlob(dst_dxbc.sections[0].data_size, blob);
+        if (SUCCEEDED(hr))
+        {
+            memcpy(ID3D10Blob_GetBufferPointer(*blob), dst_dxbc.sections[0].data, dst_dxbc.sections[0].data_size);
+        }
+        else
+        {
+            WARN("Could not create blob\n");
+        }
+    }
+    else
+    {
+        hr = dxbc_write_blob(&dst_dxbc, blob);
+        if (FAILED(hr))
+        {
+            WARN("Failed to write blob part\n");
+        }
     }
 
     dxbc_destroy(&src_dxbc);

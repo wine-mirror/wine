@@ -7,7 +7,7 @@
 @ stub D3DDisassemble10Effect
 @ stub D3DDisassemble
 @ stdcall D3DGetBlobPart(ptr long long long ptr)
-@ stub D3DGetDebugInfo
+@ stdcall D3DGetDebugInfo(ptr long ptr)
 @ stdcall D3DGetInputAndOutputSignatureBlob(ptr long ptr)
 @ stdcall D3DGetInputSignatureBlob(ptr long ptr)
 @ stdcall D3DGetOutputSignatureBlob(ptr long ptr)

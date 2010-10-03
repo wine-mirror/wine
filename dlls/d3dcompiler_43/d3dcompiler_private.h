@@ -583,6 +583,7 @@ void SlDeleteShader(struct bwriter_shader *shader);
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
+#define TAG_SDBG MAKE_TAG('S', 'D', 'B', 'G')
 
 struct dxbc_section
 {
