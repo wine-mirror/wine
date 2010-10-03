@@ -88,3 +88,10 @@ HRESULT WINAPI D3DGetBlobPart(const void *data, SIZE_T data_size, D3D_BLOB_PART 
 
     return d3dcompiler_get_blob_part(data, data_size, part, flags, blob);
 }
+
+HRESULT WINAPI D3DGetInputSignatureBlob(const void *data, SIZE_T data_size, ID3DBlob **blob)
+{
+    TRACE("data %p, data_size %lu, blob %p\n", data, data_size, blob);
+
+    return d3dcompiler_get_blob_part(data, data_size, D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, blob);
+}

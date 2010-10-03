@@ -119,10 +119,31 @@ HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size)
     return S_OK;
 }
 
+static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
+{
+    BOOL add = FALSE;
+
+    switch(part)
+    {
+        case D3D_BLOB_INPUT_SIGNATURE_BLOB:
+            if (tag == TAG_ISGN) add = TRUE;
+            break;
+
+        default:
+            FIXME("Unhandled D3D_BLOB_PART %s.\n", debug_d3dcompiler_d3d_blob_part(part));
+            break;
+    }
+
+    TRACE("%s tag %s\n", add ? "Add" : "Skip", debugstr_an((const char *)&tag, 4));
+
+    return add;
+}
+
 HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob)
 {
     struct dxbc src_dxbc, dst_dxbc;
     HRESULT hr;
+    unsigned int i, count;
 
     if (!data || !data_size || flags || !blob)
     {
@@ -142,6 +163,52 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
     {
         WARN("Failed to parse blob part\n");
         return hr;
+    }
+
+    hr = dxbc_init(&dst_dxbc, 0);
+    if (FAILED(hr))
+    {
+        dxbc_destroy(&src_dxbc);
+        WARN("Failed to init dxbc\n");
+        return hr;
+    }
+
+    for (i = 0; i < src_dxbc.count; ++i)
+    {
+        struct dxbc_section *section = &src_dxbc.sections[i];
+
+        if (check_blob_part(section->tag, part))
+        {
+            hr = dxbc_add_section(&dst_dxbc, section->tag, section->data, section->data_size);
+            if (FAILED(hr))
+            {
+                dxbc_destroy(&src_dxbc);
+                dxbc_destroy(&dst_dxbc);
+                WARN("Failed to add section to dxbc\n");
+                return hr;
+            }
+        }
+    }
+
+    count = dst_dxbc.count;
+
+    switch(part)
+    {
+        case D3D_BLOB_INPUT_SIGNATURE_BLOB:
+            if (count != 1) count = 0;
+            break;
+
+        default:
+            FIXME("Unhandled D3D_BLOB_PART %s.\n", debug_d3dcompiler_d3d_blob_part(part));
+            break;
+    }
+
+    if (count == 0)
+    {
+        dxbc_destroy(&src_dxbc);
+        dxbc_destroy(&dst_dxbc);
+        WARN("Nothing to write into the blob (count = 0)\n");
+        return E_FAIL;
     }
 
     hr = dxbc_write_blob(&dst_dxbc, blob);
