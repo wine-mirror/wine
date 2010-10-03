@@ -66,7 +66,7 @@ static CRITICAL_SECTION_DEBUG runtime_list_cs_debug =
 };
 static CRITICAL_SECTION runtime_list_cs = { &runtime_list_cs_debug, -1, 0, 0, 0, 0 };
 
-#define NUM_ABI_VERSIONS 1
+#define NUM_ABI_VERSIONS 2
 
 static loaded_mono loaded_monos[NUM_ABI_VERSIONS];
 
@@ -121,8 +121,6 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
         WideCharToMultiByte(CP_UTF8, 0, mono_etc_path, -1, mono_etc_path_a, MAX_PATH, NULL, NULL);
 
         if (!find_mono_dll(This->mono_path, mono_dll_path, This->mono_abi_version)) goto fail;
-
-        if (This->mono_abi_version != 1) goto fail;
 
         (*result)->mono_handle = LoadLibraryW(mono_dll_path);
 
@@ -451,6 +449,8 @@ static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version)
 {
     static const WCHAR mono_dll[] = {'\\','b','i','n','\\','m','o','n','o','.','d','l','l',0};
     static const WCHAR libmono_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','.','d','l','l',0};
+    static const WCHAR mono2_dll[] = {'\\','b','i','n','\\','m','o','n','o','-','2','.','0','.','d','l','l',0};
+    static const WCHAR libmono2_dll[] = {'\\','b','i','n','\\','l','i','b','m','o','n','o','-','2','.','0','.','d','l','l',0};
     DWORD attributes=INVALID_FILE_ATTRIBUTES;
 
     if (abi_version == 1)
@@ -463,6 +463,19 @@ static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version)
         {
             strcpyW(dll_path, path);
             strcatW(dll_path, libmono_dll);
+            attributes = GetFileAttributesW(dll_path);
+        }
+    }
+    else if (abi_version == 2)
+    {
+        strcpyW(dll_path, path);
+        strcatW(dll_path, mono2_dll);
+        attributes = GetFileAttributesW(dll_path);
+
+        if (attributes == INVALID_FILE_ATTRIBUTES)
+        {
+            strcpyW(dll_path, path);
+            strcatW(dll_path, libmono2_dll);
             attributes = GetFileAttributesW(dll_path);
         }
     }
@@ -514,6 +527,7 @@ static BOOL get_mono_path_from_registry(LPWSTR path, int abi_version)
 static BOOL get_mono_path_from_folder(LPCWSTR folder, LPWSTR mono_path, int abi_version)
 {
     static const WCHAR mono_one_dot_zero[] = {'\\','m','o','n','o','-','1','.','0', 0};
+    static const WCHAR mono_two_dot_zero[] = {'\\','m','o','n','o','-','2','.','0', 0};
     WCHAR mono_dll_path[MAX_PATH];
     BOOL found = FALSE;
 
@@ -521,6 +535,8 @@ static BOOL get_mono_path_from_folder(LPCWSTR folder, LPWSTR mono_path, int abi_
 
     if (abi_version == 1)
         strcatW(mono_path, mono_one_dot_zero);
+    else if (abi_version == 2)
+        strcatW(mono_path, mono_two_dot_zero);
 
     found = find_mono_dll(mono_path, mono_dll_path, abi_version);
 
@@ -593,7 +609,7 @@ static void find_runtimes(void)
 
     if (runtimes_initialized) goto end;
 
-    for (abi_version=1; abi_version>0; abi_version--)
+    for (abi_version=NUM_ABI_VERSIONS; abi_version>0; abi_version--)
     {
         if (!get_mono_path(mono_path, abi_version))
             continue;
