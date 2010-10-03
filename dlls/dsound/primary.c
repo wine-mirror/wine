@@ -441,10 +441,17 @@ HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LP
 	return DS_OK;
 }
 
+static DWORD DSOUND_GetFormatSize(LPCWAVEFORMATEX wfex)
+{
+	if (wfex->wFormatTag == WAVE_FORMAT_PCM)
+		return sizeof(WAVEFORMATEX);
+	else
+		return sizeof(WAVEFORMATEX) + wfex->cbSize;
+}
+
 LPWAVEFORMATEX DSOUND_CopyFormat(LPCWAVEFORMATEX wfex)
 {
-	DWORD size = wfex->wFormatTag == WAVE_FORMAT_PCM ?
-		sizeof(WAVEFORMATEX) : sizeof(WAVEFORMATEX) + wfex->cbSize;
+	DWORD size = DSOUND_GetFormatSize(wfex);
 	LPWAVEFORMATEX pwfx = HeapAlloc(GetProcessHeap(),0,size);
 	if (pwfx == NULL) {
 		WARN("out of memory\n");
@@ -501,11 +508,10 @@ static HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATE
 	device->pwfx = DSOUND_CopyFormat(wfex);
 	if (device->pwfx == NULL) {
 		device->pwfx = oldpwfx;
+		oldpwfx = NULL;
 		err = DSERR_OUTOFMEMORY;
 		goto done;
 	}
-	/* TODO: on failure below (bad format?), reinstall oldpwfx */
-	HeapFree(GetProcessHeap(), 0, oldpwfx);
 
 	if (!(device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMSETFORMAT) && device->hwbuf) {
 		err = IDsDriverBuffer_SetFormat(device->hwbuf, device->pwfx);
@@ -520,9 +526,12 @@ static HRESULT DSOUND_PrimarySetFormat(DirectSoundDevice *device, LPCWAVEFORMATE
 		}
 
 		if (err != DSERR_BUFFERLOST && FAILED(err)) {
+			DWORD size = DSOUND_GetFormatSize(oldpwfx);
 			WARN("IDsDriverBuffer_SetFormat failed\n");
-			if (!forced)
+			if (!forced) {
+				CopyMemory(device->pwfx, oldpwfx, size);
 				err = DS_OK;
+			}
 			goto done;
 		}
 
@@ -599,6 +608,7 @@ done:
 	RtlReleaseResource(&(device->buffer_list_lock));
 	/* **** */
 
+	HeapFree(GetProcessHeap(), 0, oldpwfx);
 	return err;
 }
 
