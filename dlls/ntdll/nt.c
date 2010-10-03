@@ -1063,7 +1063,8 @@ void fill_cpu_info(void)
                     user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
                 if (strstr(value, "pae"))
                     user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
-
+                if (strstr(value, "ht"))
+                    cached_sci.FeatureSet |= CPU_FEATURE_HTT;
                 continue;
             }
 	}
