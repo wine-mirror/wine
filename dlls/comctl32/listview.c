@@ -6,7 +6,7 @@
  * Copyright 2000 Jason Mawdsley
  * Copyright 2001 CodeWeavers Inc.
  * Copyright 2002 Dimitrie O. Paun
- * Copyright 2009 Nikolay Sivov
+ * Copyright 2009, 2010 Nikolay Sivov
  * Copyright 2009 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -5840,7 +5840,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, BOOL isW)
 
     TRACE("(%p, text=%s, isW=%d)\n", infoPtr, debugtext_t(text, isW), isW);
 
-    /* Window will be resized and positioned after LVN_BEGINLABELEDIT */
+    /* window will be resized and positioned after LVN_BEGINLABELEDIT */
     if (isW)
 	hedit = CreateWindowW(WC_EDITW, text, style, 0, 0, 0, 0, infoPtr->hwndSelf, 0, hinst, 0);
     else
@@ -5872,7 +5872,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, BOOL isW)
  */
 static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 {
-    WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
+    WCHAR disptextW[DISP_TEXT_SIZE] = { 0 };
     HWND hwndSelf = infoPtr->hwndSelf;
     NMLVDISPINFOW dispInfo;
     HFONT hOldFont = NULL;
@@ -5908,7 +5908,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     dispInfo.item.iItem = nItem;
     dispInfo.item.iSubItem = 0;
     dispInfo.item.stateMask = ~0;
-    dispInfo.item.pszText = szDispText;
+    dispInfo.item.pszText = disptextW;
     dispInfo.item.cchTextMax = DISP_TEXT_SIZE;
     if (!LISTVIEW_GetItemT(infoPtr, &dispInfo.item, isW)) return 0;
 
@@ -5924,6 +5924,8 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 	return 0;
     }
 
+    TRACE("disp text=%s\n", debugtext_t(dispInfo.item.pszText, isW));
+
     /* position and display edit box */
     hdc = GetDC(infoPtr->hwndSelf);
 
@@ -5931,16 +5933,12 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     if (infoPtr->hFont)
         hOldFont = SelectObject(hdc, infoPtr->hFont);
 
-    /* get string length in pixels */
-    TRACE("text=%s\n", debugtext_t(dispInfo.item.pszText, isW));
+    /* use real edit box content, it could be altered during LVN_BEGINLABELEDIT notification */
+    GetWindowTextW(infoPtr->hwndEdit, disptextW, DISP_TEXT_SIZE);
+    TRACE("edit box text=%s\n", debugstr_w(disptextW));
 
-    if (isW)
-        GetTextExtentPoint32W(hdc, dispInfo.item.pszText, lstrlenW(dispInfo.item.pszText), &sz);
-    else
-    {
-        const CHAR *textA = (CHAR*)dispInfo.item.pszText;
-        GetTextExtentPoint32A(hdc, textA, lstrlenA(textA), &sz);
-    }
+    /* get string length in pixels */
+    GetTextExtentPoint32W(hdc, disptextW, lstrlenW(disptextW), &sz);
 
     /* add extra spacing for the next character */
     GetTextMetricsW(hdc, &tm);
