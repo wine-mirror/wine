@@ -3988,6 +3988,37 @@ CONFIGRET WINAPI CM_Get_Device_ID_Size( PULONG  pulLen, DEVINST dnDevInst,
 }
 
 /***********************************************************************
+ *      SetupDiGetINFClassA (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetINFClassA(PCSTR inf, LPGUID class_guid, PSTR class_name,
+        DWORD size, PDWORD required_size)
+{
+    BOOL retval;
+    DWORD required_sizeA, required_sizeW;
+    PWSTR class_nameW = NULL;
+    UNICODE_STRING infW;
+
+    if (inf) RtlCreateUnicodeStringFromAsciiz(&infW, inf);
+    else infW.Buffer = NULL;
+    if (class_name && size)
+        class_nameW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+
+    retval = SetupDiGetINFClassW(infW.Buffer, class_guid, class_nameW, size, &required_sizeW);
+
+    if (retval)
+    {
+        required_sizeA = WideCharToMultiByte( CP_ACP, 0, class_nameW, required_sizeW,
+                                              class_name, size, NULL, NULL);
+
+        if(required_size) *required_size = required_sizeA;
+    }
+    else
+        if(required_size) *required_size = required_sizeW;
+
+    return retval;
+}
+
+/***********************************************************************
  *              SetupDiGetINFClassW (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,

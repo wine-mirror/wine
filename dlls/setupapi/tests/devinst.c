@@ -1509,6 +1509,7 @@ static void testSetupDiGetINFClassA(void)
     count = 0xdeadbeef;
     retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
     ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
+    todo_wine
     ok(count == 4, "expected count==4, got %u(%s)\n", count, cn);
 
     DeleteFileA(filename);
