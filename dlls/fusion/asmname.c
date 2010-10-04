@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 #define INITGUID
@@ -39,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(fusion);
 
 typedef struct {
     const IAssemblyNameVtbl *lpIAssemblyNameVtbl;
+
+    LPWSTR path;
 
     LPWSTR displayname;
     LPWSTR name;
@@ -104,6 +107,7 @@ static ULONG WINAPI IAssemblyNameImpl_Release(IAssemblyName *iface)
 
     if (!refCount)
     {
+        HeapFree(GetProcessHeap(), 0, This->path);
         HeapFree(GetProcessHeap(), 0, This->displayname);
         HeapFree(GetProcessHeap(), 0, This->name);
         HeapFree(GetProcessHeap(), 0, This->culture);
@@ -424,6 +428,43 @@ static const IAssemblyNameVtbl AssemblyNameVtbl = {
     IAssemblyNameImpl_IsEqual,
     IAssemblyNameImpl_Clone
 };
+
+/* Internal methods */
+HRESULT IAssemblyName_SetPath(IAssemblyName *iface, LPCWSTR path)
+{
+    IAssemblyNameImpl *name = (IAssemblyNameImpl *)iface;
+
+    assert(name->lpIAssemblyNameVtbl == &AssemblyNameVtbl);
+
+    name->path = strdupW(path);
+    if (!name->path)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
+HRESULT IAssemblyName_GetPath(IAssemblyName *iface, LPWSTR buf, ULONG *len)
+{
+    ULONG buffer_size = *len;
+    IAssemblyNameImpl *name = (IAssemblyNameImpl *)iface;
+
+    assert(name->lpIAssemblyNameVtbl == &AssemblyNameVtbl);
+
+    if (!name->path)
+        return S_OK;
+
+    if (!buf)
+        buffer_size = 0;
+
+    *len = lstrlenW(name->path) + 1;
+
+    if (*len <= buffer_size)
+        lstrcpyW(buf, name->path);
+    else
+        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+
+    return S_OK;
+}
 
 static HRESULT parse_version(IAssemblyNameImpl *name, LPWSTR version)
 {

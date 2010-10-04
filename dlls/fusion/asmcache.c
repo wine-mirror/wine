@@ -223,6 +223,8 @@ static HRESULT WINAPI IAssemblyCacheImpl_QueryAssemblyInfo(IAssemblyCache *iface
     if (!pAsmInfo)
         goto done;
 
+    hr = IAssemblyName_GetPath(next, pAsmInfo->pszCurrentAssemblyPathBuf, &pAsmInfo->cchBuf);
+
     pAsmInfo->dwAssemblyFlags = ASSEMBLYINFO_FLAG_INSTALLED;
 
 done:

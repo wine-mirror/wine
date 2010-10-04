@@ -287,6 +287,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
     WIN32_FIND_DATAW ffd;
     WCHAR buf[MAX_PATH];
     WCHAR disp[MAX_PATH];
+    WCHAR asmpath[MAX_PATH];
     ASMNAME *asmname;
     HANDLE hfind;
     LPWSTR ptr;
@@ -297,9 +298,9 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
     static const WCHAR dot[] = {'.',0};
     static const WCHAR dotdot[] = {'.','.',0};
     static const WCHAR search_fmt[] = {'%','s','\\','*',0};
-    static const WCHAR parent_fmt[] = {'%','s',',',' ',0};
     static const WCHAR dblunder[] = {'_','_',0};
-    static const WCHAR fmt[] = {'V','e','r','s','i','o','n','=','%','s',',',' ',
+    static const WCHAR path_fmt[] = {'%','s','\\','%','s','\\','%','s','.','d','l','l',0};
+    static const WCHAR fmt[] = {'%','s',',',' ','V','e','r','s','i','o','n','=','%','s',',',' ',
         'C','u','l','t','u','r','e','=','n','e','u','t','r','a','l',',',' ',
         'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',0};
     static const WCHAR ss_fmt[] = {'%','s','\\','%','s',0};
@@ -325,17 +326,17 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
             else
                 ptr = ffd.cFileName;
 
-            sprintfW(parent, parent_fmt, ptr);
+            lstrcpyW(parent, ptr);
         }
         else if (depth == 1)
         {
+            sprintfW(asmpath, path_fmt, path, ffd.cFileName, parent);
+
             ptr = strstrW(ffd.cFileName, dblunder);
             *ptr = '\0';
             ptr += 2;
-            sprintfW(buf, fmt, ffd.cFileName, ptr);
 
-            lstrcpyW(disp, parent);
-            lstrcatW(disp, buf);
+            sprintfW(disp, fmt, parent, ffd.cFileName, ptr);
 
             asmname = HeapAlloc(GetProcessHeap(), 0, sizeof(ASMNAME));
             if (!asmname)
@@ -348,6 +349,14 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
                                           CANOF_PARSE_DISPLAY_NAME, NULL);
             if (FAILED(hr))
             {
+                HeapFree(GetProcessHeap(), 0, asmname);
+                break;
+            }
+
+            hr = IAssemblyName_SetPath(asmname->name, asmpath);
+            if (FAILED(hr))
+            {
+                IAssemblyName_Release(asmname->name);
                 HeapFree(GetProcessHeap(), 0, asmname);
                 break;
             }
