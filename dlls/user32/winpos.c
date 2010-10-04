@@ -445,7 +445,7 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                 mirror_from = TRUE;
                 offset.x += wndPtr->rectClient.right - wndPtr->rectClient.left;
             }
-            while (wndPtr != WND_DESKTOP)
+            for (;;)
             {
                 offset.x += wndPtr->rectClient.left;
                 offset.y += wndPtr->rectClient.top;
@@ -453,6 +453,12 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                 WIN_ReleasePtr( wndPtr );
                 if (!(wndPtr = WIN_GetPtr( hwnd ))) break;
                 if (wndPtr == WND_OTHER_PROCESS) goto other_process;
+                if (wndPtr == WND_DESKTOP) break;
+                if (wndPtr->flags & WIN_CHILDREN_MOVED)
+                {
+                    WIN_ReleasePtr( wndPtr );
+                    goto other_process;
+                }
             }
         }
     }
@@ -469,7 +475,7 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                 mirror_to = TRUE;
                 offset.x -= wndPtr->rectClient.right - wndPtr->rectClient.left;
             }
-            while (wndPtr != WND_DESKTOP)
+            for (;;)
             {
                 offset.x -= wndPtr->rectClient.left;
                 offset.y -= wndPtr->rectClient.top;
@@ -477,6 +483,12 @@ static POINT WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored )
                 WIN_ReleasePtr( wndPtr );
                 if (!(wndPtr = WIN_GetPtr( hwnd ))) break;
                 if (wndPtr == WND_OTHER_PROCESS) goto other_process;
+                if (wndPtr == WND_DESKTOP) break;
+                if (wndPtr->flags & WIN_CHILDREN_MOVED)
+                {
+                    WIN_ReleasePtr( wndPtr );
+                    goto other_process;
+                }
             }
         }
     }
@@ -1932,6 +1944,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
     WND *win;
     BOOL ret;
     RECT visible_rect, old_window_rect;
+    int old_width;
 
     visible_rect = *window_rect;
     USER_Driver->pWindowPosChanging( hwnd, insert_after, swp_flags,
@@ -1941,6 +1954,7 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
     if (win == WND_DESKTOP || win == WND_OTHER_PROCESS) return FALSE;
+    old_width = win->rectClient.right - win->rectClient.left;
 
     SERVER_START_REQ( set_window_pos )
     {
@@ -1974,6 +1988,9 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
                 mirror_rect( &client, &win->rectWindow );
                 mirror_rect( &client, &win->rectClient );
             }
+            /* if an RTL window is resized the children have moved */
+            if (win->dwExStyle & WS_EX_LAYOUTRTL && client_rect->right - client_rect->left != old_width)
+                win->flags |= WIN_CHILDREN_MOVED;
         }
     }
     SERVER_END_REQ;

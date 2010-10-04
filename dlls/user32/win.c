@@ -709,6 +709,12 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
                     WIN_ReleasePtr( win );
                     goto other_process;
                 }
+                if (parent->flags & WIN_CHILDREN_MOVED)
+                {
+                    WIN_ReleasePtr( parent );
+                    WIN_ReleasePtr( win );
+                    goto other_process;
+                }
                 if (parent->dwExStyle & WS_EX_LAYOUTRTL)
                 {
                     mirror_rect( &parent->rectClient, &window_rect );
@@ -728,6 +734,11 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
                     goto other_process;
                 }
                 WIN_ReleasePtr( win );
+                if (parent->flags & WIN_CHILDREN_MOVED)
+                {
+                    WIN_ReleasePtr( parent );
+                    goto other_process;
+                }
                 win = parent;
                 OffsetRect( &window_rect, win->rectClient.left, win->rectClient.top );
                 OffsetRect( &client_rect, win->rectClient.left, win->rectClient.top );
