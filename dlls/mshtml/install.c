@@ -258,10 +258,12 @@ static BOOL install_from_default_dir(void)
     ret = install_from_unix_file(file_name);
 
     heap_free(file_name);
-    if(ret)
-        return TRUE;
 
-    return install_from_unix_file("/usr/share/wine/gecko/" GECKO_FILE_NAME);
+    if (!ret)
+        ret = install_from_unix_file( GECKO_DATADIR "/wine/gecko/" GECKO_FILE_NAME);
+    if (!ret && strcmp( GECKO_DATADIR, "/usr/share" ))
+        ret = install_from_unix_file("/usr/share/wine/gecko/" GECKO_FILE_NAME);
+    return ret;
 }
 
 static HRESULT WINAPI InstallCallback_QueryInterface(IBindStatusCallback *iface,
