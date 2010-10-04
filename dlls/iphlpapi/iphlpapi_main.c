@@ -654,12 +654,7 @@ static char *debugstr_ipv4(const in_addr_t *in_addr, char *buf)
         if (addrp == (const BYTE *)in_addr + sizeof(*in_addr) - 1)
             sprintf(p, "%d", *addrp);
         else
-        {
-            int n;
-
-            sprintf(p, "%d.%n", *addrp, &n);
-            p += n;
-        }
+            p += sprintf(p, "%d.", *addrp);
     }
     return buf;
 }
@@ -685,10 +680,7 @@ static char *debugstr_ipv6(const struct WS_sockaddr_in6 *sin, char *buf)
         }
         else
         {
-            int n;
-
-            sprintf(p, "%x:%n", ntohs(addr->u.Word[i]), &n);
-            p += n;
+            p += sprintf(p, "%x:", ntohs(addr->u.Word[i]));
             in_zero = FALSE;
         }
     }
