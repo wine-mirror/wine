@@ -174,7 +174,7 @@ static void testGetNumberOfInterfaces(void)
 
     /* Crashes on Vista */
     if (0) {
-      apiReturn = gGetNumberOfInterfaces(NULL), numInterfaces;
+      apiReturn = gGetNumberOfInterfaces(NULL);
       if (apiReturn == ERROR_NOT_SUPPORTED)
         return;
       ok(apiReturn == ERROR_INVALID_PARAMETER,
