@@ -613,7 +613,7 @@ static INT_PTR PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   DWORD resSize;
   WORD resID = IDD_PROPSHEET;
 
-  TRACE("\n");
+  TRACE("(%p)\n", psInfo);
   if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)
     resID = IDD_WIZARD;
 
