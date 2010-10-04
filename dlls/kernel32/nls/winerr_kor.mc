@@ -58,7 +58,7 @@ Language=KOR
 MessageId=7
 SymbolicName=ERROR_ARENA_TRASHED
 Language=KOR
-Memory trashed
+메모리가 버려짐
 .
 MessageId=8
 SymbolicName=ERROR_NOT_ENOUGH_MEMORY
@@ -68,7 +68,7 @@ Language=KOR
 MessageId=9
 SymbolicName=ERROR_INVALID_BLOCK
 Language=KOR
-잘못된 블록(block)
+잘못된 블록
 .
 MessageId=10
 SymbolicName=ERROR_BAD_ENVIRONMENT
@@ -78,7 +78,7 @@ Language=KOR
 MessageId=11
 SymbolicName=ERROR_BAD_FORMAT
 Language=KOR
-잘못된 포맷(format)
+잘못된 형식
 .
 MessageId=12
 SymbolicName=ERROR_INVALID_ACCESS
@@ -88,7 +88,7 @@ Language=KOR
 MessageId=13
 SymbolicName=ERROR_INVALID_DATA
 Language=KOR
-잘못된 데이타
+잘못된 데이터
 .
 MessageId=14
 SymbolicName=ERROR_OUTOFMEMORY
@@ -113,7 +113,7 @@ Language=KOR
 MessageId=18
 SymbolicName=ERROR_NO_MORE_FILES
 Language=KOR
-더 이상 파일이 업습니다
+더 이상 파일이 없습니다
 .
 MessageId=19
 SymbolicName=ERROR_WRITE_PROTECT
@@ -143,7 +143,7 @@ CRC 에러
 MessageId=24
 SymbolicName=ERROR_BAD_LENGTH
 Language=KOR
-Bad length
+나쁜 길이
 .
 MessageId=25
 SymbolicName=ERROR_SEEK
@@ -198,7 +198,7 @@ Language=KOR
 MessageId=36
 SymbolicName=ERROR_SHARING_BUFFER_EXCEEDED
 Language=KOR
-공유 버퍼 가 한계를 넘었습니다
+공유 버퍼가 한계를 넘었습니다
 .
 MessageId=38
 SymbolicName=ERROR_HANDLE_EOF
@@ -268,7 +268,7 @@ Language=KOR
 MessageId=61
 SymbolicName=ERROR_PRINTQ_FULL
 Language=KOR
-Print queue full
+프린터 재기열이 꽉 참
 .
 MessageId=62
 SymbolicName=ERROR_NO_SPOOL_SPACE
@@ -323,7 +323,7 @@ Language=KOR
 MessageId=72
 SymbolicName=ERROR_REDIR_PAUSED
 Language=KOR
-리다이렉터(Redirector) 정지됨
+리다이렉터(Redirector)가 정지됨
 .
 MessageId=80
 SymbolicName=ERROR_FILE_EXISTS
@@ -553,22 +553,22 @@ Language=KOR
 MessageId=138
 SymbolicName=ERROR_JOIN_TO_JOIN
 Language=KOR
-Attempt to JOIN onto a JOINed drive
+JOIN된 드,라이브에 JOIN 시도함
 .
 MessageId=139
 SymbolicName=ERROR_SUBST_TO_SUBST
 Language=KOR
-Attempt to SUBST onto a SUBSTed drive
+SUBST된 드라이브에 SUBST시도함
 .
 MessageId=140
 SymbolicName=ERROR_JOIN_TO_SUBST
 Language=KOR
-Attempt to JOIN to a SUBSTed drive
+SUBST된 드라이브에 JOIN시도함
 .
 MessageId=141
 SymbolicName=ERROR_SUBST_TO_JOIN
 Language=KOR
-Attempt to SUBST to a JOINed drive
+JOIN된 드라이브에 SUBST시도함
 .
 MessageId=142
 SymbolicName=ERROR_BUSY_DRIVE
@@ -613,7 +613,7 @@ Language=KOR
 MessageId=150
 SymbolicName=ERROR_SYSTEM_TRACE
 Language=KOR
-System trace not specified or disallowed
+시스템 추적은 명시되지 않았거나 허용되지 않음
 .
 MessageId=151
 SymbolicName=ERROR_INVALID_EVENT_COUNT
@@ -658,7 +658,7 @@ Language=KOR
 MessageId=159
 SymbolicName=ERROR_BAD_THREADID_ADDR
 Language=KOR
-나쁜 쓰레드  ID 주소
+나쁜 쓰레드 ID 주소
 .
 MessageId=160
 SymbolicName=ERROR_BAD_ARGUMENTS
@@ -673,12 +673,12 @@ Language=KOR
 MessageId=162
 SymbolicName=ERROR_SIGNAL_PENDING
 Language=KOR
-Signal pending
+시그널 대기중
 .
 MessageId=164
 SymbolicName=ERROR_MAX_THRDS_REACHED
 Language=KOR
-Max systemwide thread count reached
+최대 시스템 전역 쓰레드 카운트 도달
 .
 MessageId=167
 SymbolicName=ERROR_LOCK_FAILED
@@ -733,7 +733,7 @@ Language=KOR
 MessageId=189
 SymbolicName=ERROR_INVALID_STACKSEG
 Language=KOR
-올바르지 않은starting stack segment for %1
+올바르지 않은 %1 스택 세그먼트 시작
 .
 MessageId=190
 SymbolicName=ERROR_INVALID_MODULETYPE
@@ -768,7 +768,7 @@ Language=KOR
 MessageId=196
 SymbolicName=ERROR_DYNLINK_FROM_INVALID_RING
 Language=KOR
-Dynlink from invalid ring
+올바르지 않은 링으로부터 온 Dynlink
 .
 MessageId=197
 SymbolicName=ERROR_IOPL_NOT_ENABLED
@@ -793,7 +793,7 @@ Language=KOR
 MessageId=201
 SymbolicName=ERROR_RELOC_CHAIN_XEEDS_SEGLIM
 Language=KOR
-Relocation chain exceeds segment limit in %1
+재배치 체인이 %1의 세그맨트 제한 도달
 .
 MessageId=202
 SymbolicName=ERROR_INFLOOP_IN_RELOC_CHAIN
@@ -808,7 +808,7 @@ Language=KOR
 MessageId=205
 SymbolicName=ERROR_NO_SIGNAL_SENT
 Language=KOR
-No signal sent
+어떤 시그널도 보내지지 않음
 .
 MessageId=206
 SymbolicName=ERROR_FILENAME_EXCED_RANGE
@@ -923,7 +923,7 @@ Extended attribute file corrupt
 MessageId=277
 SymbolicName=ERROR_EA_TABLE_FULL
 Language=KOR
-Extended attribute table full
+확장 속성 테이블이 가득참
 .
 MessageId=278
 SymbolicName=ERROR_INVALID_EA_HANDLE
@@ -933,7 +933,7 @@ Language=KOR
 MessageId=282
 SymbolicName=ERROR_EAS_NOT_SUPPORTED
 Language=KOR
-Extended attributes not supported
+확장 속성은 지원하지 않음
 .
 MessageId=288
 SymbolicName=ERROR_NOT_OWNER
@@ -973,7 +973,7 @@ Language=KOR
 MessageId=534
 SymbolicName=ERROR_ARITHMETIC_OVERFLOW
 Language=KOR
-Arithmetic 오버플로우
+연산 오버플로우
 .
 MessageId=535
 SymbolicName=ERROR_PIPE_CONNECTED
@@ -983,12 +983,12 @@ Language=KOR
 MessageId=536
 SymbolicName=ERROR_PIPE_LISTENING
 Language=KOR
-Pipe listening
+파이프 리스닝
 .
 MessageId=994
 SymbolicName=ERROR_EA_ACCESS_DENIED
 Language=KOR
-Extended attribute access denied
+확장 속성 접근 거부됨
 .
 MessageId=995
 SymbolicName=ERROR_OPERATION_ABORTED
@@ -1168,7 +1168,7 @@ Language=KOR
 MessageId=1059
 SymbolicName=ERROR_CIRCULAR_DEPENDENCY
 Language=KOR
-Circular dependency
+의존성의 순환
 .
 MessageId=1060
 SymbolicName=ERROR_SERVICE_DOES_NOT_EXIST
@@ -1193,7 +1193,7 @@ Language=KOR
 MessageId=1064
 SymbolicName=ERROR_EXCEPTION_IN_SERVICE
 Language=KOR
-Exception in service
+서비스의 예외
 .
 MessageId=1065
 SymbolicName=ERROR_DATABASE_DOES_NOT_EXIST
@@ -1408,12 +1408,12 @@ Floppy ID address mark not found
 MessageId=1123
 SymbolicName=ERROR_FLOPPY_WRONG_CYLINDER
 Language=KOR
-Floppy reports wrong cylinder
+플로피가 잘몫된 실린더를 보고함
 .
 MessageId=1124
 SymbolicName=ERROR_FLOPPY_UNKNOWN_ERROR
 Language=KOR
-Unknown floppy error
+알 수 없는 플로피 에러
 .
 MessageId=1125
 SymbolicName=ERROR_FLOPPY_BAD_REGISTERS
@@ -1483,7 +1483,7 @@ Language=KOR
 MessageId=1152
 SymbolicName=ERROR_SINGLE_INSTANCE_APP
 Language=KOR
-Single-instance application
+단일 인스턴트 어플리케이션
 .
 MessageId=1153
 SymbolicName=ERROR_RMODE_APP
@@ -1563,7 +1563,7 @@ ERROR_DEVICE_NOT_CONNECTED
 MessageId=1168
 SymbolicName=ERROR_NOT_FOUND
 Language=KOR
-ERROR_NOT_FOUND
+에러를 발견할 수 없음
 .
 MessageId=1169
 SymbolicName=ERROR_NO_MATCH
@@ -1628,7 +1628,7 @@ ERROR_JOURNAL_ENTRY_DELETED
 MessageId=1200
 SymbolicName=ERROR_BAD_DEVICE
 Language=KOR
-올바르지 않은device name
+올바르지 않은 장치 이름
 .
 MessageId=1201
 SymbolicName=ERROR_CONNECTION_UNAVAIL
@@ -1638,32 +1638,32 @@ Language=KOR
 MessageId=1202
 SymbolicName=ERROR_DEVICE_ALREADY_REMEMBERED
 Language=KOR
-Device already remembered
+장치는 이미 기억됨
 .
 MessageId=1203
 SymbolicName=ERROR_NO_NET_OR_BAD_PATH
 Language=KOR
-No network or bad path
+네트워크가 없거나 경로가 잘못됨
 .
 MessageId=1204
 SymbolicName=ERROR_BAD_PROVIDER
 Language=KOR
-올바르지 않은network provider name
+올바르지 않은 네트워크 제공자 이름
 .
 MessageId=1205
 SymbolicName=ERROR_CANNOT_OPEN_PROFILE
 Language=KOR
-Cannot open network connection profile
+네트워크 연결 프로필을 열 수 없음
 .
 MessageId=1206
 SymbolicName=ERROR_BAD_PROFILE
 Language=KOR
-Corrupt network connection profile
+망가진 네트워크 연결 프로필
 .
 MessageId=1207
 SymbolicName=ERROR_NOT_CONTAINER
 Language=KOR
-Not a container
+컨테이너가 아님
 .
 MessageId=1208
 SymbolicName=ERROR_EXTENDED_ERROR
@@ -1718,7 +1718,7 @@ Language=KOR
 MessageId=1218
 SymbolicName=ERROR_INVALID_MESSAGEDEST
 Language=KOR
-올바르지 않은 메세지 destination
+올바르지 않은 메세지 방향
 .
 MessageId=1219
 SymbolicName=ERROR_SESSION_CREDENTIAL_CONFLICT
@@ -1728,22 +1728,22 @@ Session credential conflict
 MessageId=1220
 SymbolicName=ERROR_REMOTE_SESSION_LIMIT_EXCEEDED
 Language=KOR
-Remote session limit exceeded
+원격 세션 제한 도달
 .
 MessageId=1221
 SymbolicName=ERROR_DUP_DOMAINNAME
 Language=KOR
-Duplicate domain or workgroup name
+도메인이나 작업 그룸 이름이 중복됨
 .
 MessageId=1222
 SymbolicName=ERROR_NO_NETWORK
 Language=KOR
-No network
+네트쿼크 없음
 .
 MessageId=1223
 SymbolicName=ERROR_CANCELLED
 Language=KOR
-Operation cancelled by user
+작업이 사용자에 위해 취소됨
 .
 MessageId=1224
 SymbolicName=ERROR_USER_MAPPED_FILE
@@ -1753,7 +1753,7 @@ File has a user-mapped section
 MessageId=1225
 SymbolicName=ERROR_CONNECTION_REFUSED
 Language=KOR
-Connection refused
+연결이 거부됨
 .
 MessageId=1226
 SymbolicName=ERROR_GRACEFUL_DISCONNECT
@@ -1773,32 +1773,32 @@ Address not associated with transport endpoint
 MessageId=1229
 SymbolicName=ERROR_CONNECTION_INVALID
 Language=KOR
-Connection invalid
+올바르지 않은 연결
 .
 MessageId=1230
 SymbolicName=ERROR_CONNECTION_ACTIVE
 Language=KOR
-Connection is active
+연결이 활성화됨
 .
 MessageId=1231
 SymbolicName=ERROR_NETWORK_UNREACHABLE
 Language=KOR
-Network unreachable
+접근할 수 없는 네트워크
 .
 MessageId=1232
 SymbolicName=ERROR_HOST_UNREACHABLE
 Language=KOR
-Host unreachable
+접근할 수 없는 호스트
 .
 MessageId=1233
 SymbolicName=ERROR_PROTOCOL_UNREACHABLE
 Language=KOR
-Protocol unreachable
+접근할 수 없는 프르토콜
 .
 MessageId=1234
 SymbolicName=ERROR_PORT_UNREACHABLE
 Language=KOR
-Port unreachable
+접근할 수 없는 포트
 .
 MessageId=1235
 SymbolicName=ERROR_REQUEST_ABORTED
@@ -1848,27 +1848,27 @@ Language=KOR
 MessageId=1244
 SymbolicName=ERROR_NOT_AUTHENTICATED
 Language=KOR
-User not authenticated
+사용자가 인증되지 않음
 .
 MessageId=1245
 SymbolicName=ERROR_NOT_LOGGED_ON
 Language=KOR
-User not logged on
+사용자가 로그인되어있지 않음
 .
 MessageId=1246
 SymbolicName=ERROR_CONTINUE
 Language=KOR
-Continue work in progress
+계속 진행중인 작업
 .
 MessageId=1247
 SymbolicName=ERROR_ALREADY_INITIALIZED
 Language=KOR
-Already initialised
+이미 초기화됨
 .
 MessageId=1248
 SymbolicName=ERROR_NO_MORE_DEVICES
 Language=KOR
-No more local devices
+더 이상의 지역 장치가 없음
 .
 MessageId=1249
 SymbolicName=ERROR_NO_SUCH_SITE
@@ -2103,7 +2103,7 @@ Bad inherited ACL
 MessageId=1341
 SymbolicName=ERROR_SERVER_DISABLED
 Language=KOR
-Server disabled
+서버가 가능하지 않음
 .
 MessageId=1342
 SymbolicName=ERROR_SERVER_NOT_DISABLED
@@ -2123,7 +2123,7 @@ Allotted space exceeded
 MessageId=1345
 SymbolicName=ERROR_INVALID_GROUP_ATTRIBUTES
 Language=KOR
-올바르지 않은group attributes
+올바르지 않은 그룹 속성
 .
 MessageId=1346
 SymbolicName=ERROR_BAD_IMPERSONATION_LEVEL
@@ -2153,7 +2153,7 @@ No security on object
 MessageId=1351
 SymbolicName=ERROR_CANT_ACCESS_DOMAIN_INFO
 Language=KOR
-Can't access domain information
+도메인 정보에 접근할 수 없음
 .
 MessageId=1352
 SymbolicName=ERROR_INVALID_SERVER_STATE
@@ -2183,7 +2183,7 @@ Language=KOR
 MessageId=1357
 SymbolicName=ERROR_DOMAIN_LIMIT_EXCEEDED
 Language=KOR
-Domain limit exceeded
+도메인 제한 도달
 .
 MessageId=1358
 SymbolicName=ERROR_INTERNAL_DB_CORRUPTION
@@ -2243,7 +2243,7 @@ Cannot impersonate
 MessageId=1369
 SymbolicName=ERROR_RXACT_INVALID_STATE
 Language=KOR
-올바르지 않은transaction state
+올바르지 않은 처리 상태
 .
 MessageId=1370
 SymbolicName=ERROR_RXACT_COMMIT_FAILURE
@@ -2293,7 +2293,7 @@ User already in local group
 MessageId=1379
 SymbolicName=ERROR_ALIAS_EXISTS
 Language=KOR
-Local group already exists
+지역 그룹이 이미 존재함
 .
 MessageId=1380
 SymbolicName=ERROR_LOGON_NOT_GRANTED
@@ -2313,7 +2313,7 @@ Secret too long
 MessageId=1383
 SymbolicName=ERROR_INTERNAL_DB_ERROR
 Language=KOR
-Internal security DB error
+내부 보안 ID 에러
 .
 MessageId=1384
 SymbolicName=ERROR_TOO_MANY_CONTEXT_IDS
@@ -3708,7 +3708,7 @@ RPC_S_INTERFACE_NOT_EXPORTED
 MessageId=1925
 SymbolicName=RPC_S_PROFILE_NOT_ADDED
 Language=KOR
-RPC_S_PROFILE_NOT_ADDED
+RPC_S_PROFILE를 추가할 수 없음
 .
 MessageId=1926
 SymbolicName=RPC_S_PRF_ELT_NOT_ADDED
@@ -3723,20 +3723,15 @@ RPC_S_PRF_ELT_NOT_REMOVED
 MessageId=1928
 SymbolicName=RPC_S_GRP_ELT_NOT_ADDED
 Language=KOR
-RPC_S_GRP_ELT_NOT_ADDED
+RPC_S_GRP_ELT를 추가 할 수 없음
 .
 MessageId=1929
 SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=KOR
-RPC_S_GRP_ELT_NOT_REMOVED
+RPC_S_GRP_ELT를 제거할 수 없음
 .
 MessageId=2221
 SymbolicName=NERR_UserNotFound
 Language=KOR
 사용자 이름을 찾을 수 없습니다
-.
-MessageId=10061
-SymbolicName=WSAECONNREFUSED
-Language=KOR
-Connection refused
 .
