@@ -32,12 +32,16 @@
 #include "ole2.h"
 #include "ocidl.h"
 #include "shellapi.h"
+#include "xmldom.h"
+#include "xmldso.h"
 
 #include "initguid.h"
+#include "msxml2.h"
 #include "cor.h"
 #include "corerror.h"
 #include "mscoree.h"
 #include "metahost.h"
+#include "wine/list.h"
 #include "mscoree_private.h"
 
 #include "wine/debug.h"

@@ -54,6 +54,21 @@ extern HRESULT force_get_runtime_info(ICLRRuntimeInfo **result);
 
 extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result);
 
+typedef struct parsed_config_file
+{
+    struct list supported_runtimes;
+} parsed_config_file;
+
+typedef struct supported_runtime
+{
+    struct list entry;
+    LPWSTR version;
+} supported_runtime;
+
+extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result);
+
+extern void free_parsed_config_file(parsed_config_file *file);
+
 /* Mono 2.6 embedding */
 typedef struct _MonoDomain MonoDomain;
 typedef struct _MonoAssembly MonoAssembly;

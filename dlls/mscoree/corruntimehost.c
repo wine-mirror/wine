@@ -32,10 +32,10 @@
 #include "cor.h"
 #include "mscoree.h"
 #include "metahost.h"
+#include "wine/list.h"
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
-#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 

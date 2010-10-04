@@ -34,6 +34,7 @@
 #include "corerror.h"
 #include "mscoree.h"
 #include "metahost.h"
+#include "wine/list.h"
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
@@ -1041,21 +1042,58 @@ extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
 HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result)
 {
+    static const WCHAR dotconfig[] = {'.','c','o','n','f','i','g',0};
     static const DWORD supported_startup_flags = 0;
     static const DWORD supported_runtime_flags = RUNTIME_INFO_UPGRADE_VERSION;
     int i;
     WCHAR local_version[MAX_PATH];
     ULONG local_version_size = MAX_PATH;
+    WCHAR local_config_file[MAX_PATH];
     HRESULT hr;
-
-    if (config_file)
-        FIXME("ignoring config filename %s\n", debugstr_w(config_file));
+    parsed_config_file parsed_config;
 
     if (startup_flags & ~supported_startup_flags)
         FIXME("unsupported startup flags %x\n", startup_flags & ~supported_startup_flags);
 
     if (runtimeinfo_flags & ~supported_runtime_flags)
         FIXME("unsupported runtimeinfo flags %x\n", runtimeinfo_flags & ~supported_runtime_flags);
+
+    if (exefile && !config_file)
+    {
+        strcpyW(local_config_file, exefile);
+        strcatW(local_config_file, dotconfig);
+
+        config_file = local_config_file;
+    }
+
+    if (config_file)
+    {
+        int found=0;
+        hr = parse_config_file(config_file, &parsed_config);
+
+        if (SUCCEEDED(hr))
+        {
+            supported_runtime *entry;
+            LIST_FOR_EACH_ENTRY(entry, &parsed_config.supported_runtimes, supported_runtime, entry)
+            {
+                hr = CLRMetaHost_GetRuntime(0, entry->version, &IID_ICLRRuntimeInfo, (void**)result);
+                if (SUCCEEDED(hr))
+                {
+                    found = 1;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            WARN("failed to parse config file %s, hr=%x\n", debugstr_w(config_file), hr);
+        }
+
+        free_parsed_config_file(&parsed_config);
+
+        if (found)
+            return S_OK;
+    }
 
     if (exefile && !version)
     {

@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "corhdr.h"
 #include "metahost.h"
+#include "wine/list.h"
 #include "mscoree_private.h"
 
 #include "wine/debug.h"
