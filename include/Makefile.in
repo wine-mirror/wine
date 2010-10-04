@@ -326,6 +326,7 @@ SRCDIR_INCLUDES = \
 	mmreg.h \
 	mmsystem.h \
 	mprapi.h \
+	mprerror.h \
 	msacm.h \
 	msacmdlg.h \
 	msacmdrv.h \
