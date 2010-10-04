@@ -423,8 +423,10 @@ static HRESULT WINAPI BindProtocol_Abort(IInternetProtocol *iface, HRESULT hrRea
         DWORD dwOptions)
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
+
+    return IInternetProtocol_Abort(This->protocol_handler, hrReason, dwOptions);
 }
 
 static HRESULT WINAPI BindProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
@@ -653,8 +655,13 @@ static HRESULT WINAPI ProtocolHandler_Abort(IInternetProtocol *iface, HRESULT hr
         DWORD dwOptions)
 {
     BindProtocol *This = PROTOCOLHANDLER_THIS(iface);
-    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
+
+    if(This->protocol && !This->reported_result)
+        return IInternetProtocol_Abort(This->protocol, hrReason, dwOptions);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProtocolHandler_Terminate(IInternetProtocol *iface, DWORD dwOptions)

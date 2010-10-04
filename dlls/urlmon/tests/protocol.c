@@ -108,6 +108,7 @@ DEFINE_EXPECT(Read2);
 DEFINE_EXPECT(SetPriority);
 DEFINE_EXPECT(LockRequest);
 DEFINE_EXPECT(UnlockRequest);
+DEFINE_EXPECT(Abort);
 DEFINE_EXPECT(MimeFilter_CreateInstance);
 DEFINE_EXPECT(MimeFilter_Start);
 DEFINE_EXPECT(MimeFilter_ReportProgress);
@@ -1159,8 +1160,16 @@ static ULONG WINAPI Protocol_Release(IInternetProtocol *iface)
 static HRESULT WINAPI Protocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
         DWORD dwOptions)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    CHECK_EXPECT(Abort);
+
+    SET_EXPECT(ReportResult);
+    hres = IInternetProtocolSink_ReportResult(binding_sink, S_OK, ERROR_SUCCESS, NULL);
+    ok(hres == S_OK, "ReportResult failed: %08x\n", hres);
+    CHECK_CALLED(ReportResult);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Protocol_Suspend(IInternetProtocol *iface)
@@ -1261,6 +1270,11 @@ static DWORD WINAPI thread_proc(PVOID arg)
             CHECK_CALLED(MimeFilter_Switch);
         else
             CHECK_CALLED(Switch);
+
+        if(test_abort) {
+            SetEvent(event_complete);
+            return 0;
+        }
 
         prot_state = 2;
         if(mimefilter_test)
@@ -2999,6 +3013,18 @@ static void test_CreateBinding(void)
     IInternetBindInfo_Release(prot_bind_info);
     IInternetProtocol_Release(protocol);
 
+    hres = IInternetSession_CreateBinding(session, NULL, test_url, NULL, NULL, &protocol, 0);
+    ok(hres == S_OK, "CreateBinding failed: %08x\n", hres);
+    ok(protocol != NULL, "protocol == NULL\n");
+
+    hres = IInternetProtocol_Abort(protocol, E_ABORT, 0);
+    ok(hres == S_OK, "Abort failed: %08x\n", hres);
+
+    hres = IInternetProtocol_Abort(protocol, E_FAIL, 0);
+    ok(hres == S_OK, "Abort failed: %08x\n", hres);
+
+    IInternetProtocol_Release(protocol);
+
     hres = IInternetSession_UnregisterNameSpace(session, &ClassFactory, wsz_test);
     ok(hres == S_OK, "UnregisterNameSpace failed: %08x\n", hres);
 
@@ -3063,6 +3089,17 @@ static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
                 SET_EXPECT(Continue);
                 IInternetProtocol_Continue(protocol, pdata);
                 CHECK_CALLED(Continue);
+            }
+            if(test_abort && prot_state == 2) {
+                SET_EXPECT(Abort);
+                hres = IInternetProtocol_Abort(protocol, E_ABORT, 0);
+                ok(hres == S_OK, "Abort failed: %08x\n", hres);
+                CHECK_CALLED(Abort);
+
+                hres = IInternetProtocol_Abort(protocol, E_ABORT, 0);
+                ok(hres == S_OK, "Abort failed: %08x\n", hres);
+                SetEvent(event_complete2);
+                break;
             }
             SetEvent(event_complete2);
         }
@@ -3179,6 +3216,8 @@ START_TEST(protocol)
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_FILTER);
     trace("Testing http binding (mime verification, emulate prot, direct read)...\n");
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_DIRECT_READ);
+    trace("Testing http binding (mime verification, emulate prot, abort)...\n");
+    test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_ABORT);
 
     CloseHandle(event_complete);
     CloseHandle(event_complete2);
