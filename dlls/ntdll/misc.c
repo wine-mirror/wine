@@ -272,7 +272,7 @@ NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(co
 
         /* i=left; j=right; */
         for (k=left; i<=m && j>m; k++) {
-            if (compar(X(barr,i),X(barr,j))<=0) {
+            if (i==j || compar(X(barr,i),X(barr,j))<=0) {
                 memcpy(X(arr,k),X(barr,i),elemsize);
                 i++;
             } else {
