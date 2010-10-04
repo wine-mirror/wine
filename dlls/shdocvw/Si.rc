@@ -42,15 +42,15 @@ IDR_BROWSE_MAIN_MENU MENU
         {
             MENUITEM "&Okno"                        ID_BROWSE_NEW_WINDOW
         }
-        MENUITEM "&Odpri...",                       ID_BROWSE_OPEN
+        MENUITEM "&Odpri ...",                      ID_BROWSE_OPEN
         MENUITEM "&Shrani",                         ID_BROWSE_SAVE
-        MENUITEM "Shrani &kot...",                  ID_BROWSE_SAVE_AS
+        MENUITEM "Shrani &kot ...",                 ID_BROWSE_SAVE_AS
         MENUITEM SEPARATOR
-        MENUITEM "Nastavitve tiskanja...",          ID_BROWSE_PRINT_FORMAT
-        MENUITEM "Na&tisni...",                     ID_BROWSE_PRINT
-        MENUITEM "Predo&gled tiskanja...",          ID_BROWSE_PRINT_PREVIEW
+        MENUITEM "Nastavitve tiskanja ...",         ID_BROWSE_PRINT_FORMAT
+        MENUITEM "Na&tisni ...",                    ID_BROWSE_PRINT
+        MENUITEM "Predo&gled tiskanja ...",         ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
-        MENUITEM "&Lastnosti...",                   ID_BROWSE_PROPERTIES
+        MENUITEM "&Lastnosti ...",                  ID_BROWSE_PROPERTIES
         MENUITEM "&Zapri",                          ID_BROWSE_QUIT
     }
     POPUP "Pogl&ed"
@@ -63,12 +63,12 @@ IDR_BROWSE_MAIN_MENU MENU
     }
     POPUP "&Priljubljene"
     {
-        MENUITEM "&Dodaj med priljubljene..."       ID_BROWSE_ADDFAV
+        MENUITEM "&Dodaj med priljubljene ..."      ID_BROWSE_ADDFAV
         MENUITEM SEPARATOR
     }
     POPUP "&Pomoč"
     {
-        MENUITEM "O programu Internet Explorer...", ID_BROWSE_ABOUT
+        MENUITEM "O programu Internet Explorer ...",ID_BROWSE_ABOUT
     }
 }
 
