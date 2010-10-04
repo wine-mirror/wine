@@ -41,6 +41,9 @@ static const WCHAR MethodGetW[] = {'G','E','T',0};
 static const WCHAR MethodPutW[] = {'P','U','T',0};
 static const WCHAR MethodPostW[] = {'P','O','S','T',0};
 
+static const WCHAR colspaceW[] = {':',' ',0};
+static const WCHAR crlfW[] = {'\r','\n',0};
+
 typedef struct BindStatusCallback BindStatusCallback;
 
 struct reqheader
@@ -62,6 +65,8 @@ typedef struct
     BSTR url;
     BOOL async;
     struct list reqheaders;
+    /* cached resulting custom request headers string length in WCHARs */
+    LONG reqheader_size;
 
     /* credentials */
     BSTR user;
@@ -119,6 +124,10 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
         IsEqualGUID(&IID_IBindStatusCallback, riid))
     {
         *ppv = &This->lpBindStatusCallbackVtbl;
+    }
+    else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
+    {
+        *ppv = &This->lpHttpNegotiateVtbl;
     }
     else if (IsEqualGUID(&IID_IServiceProvider, riid) ||
              IsEqualGUID(&IID_IBindStatusCallbackEx, riid))
@@ -297,12 +306,37 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
         LPCWSTR url, LPCWSTR headers, DWORD reserved, LPWSTR *add_headers)
 {
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
+    const struct reqheader *entry;
+    WCHAR *buff, *ptr;
 
-    FIXME("(%p)->(%s %s %d %p): stub\n", This, debugstr_w(url), debugstr_w(headers), reserved, add_headers);
+    TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(url), debugstr_w(headers), reserved, add_headers);
 
     *add_headers = NULL;
 
-    return E_NOTIMPL;
+    if (list_empty(&This->request->reqheaders)) return S_OK;
+
+    buff = CoTaskMemAlloc(This->request->reqheader_size*sizeof(WCHAR));
+    if (!buff) return E_OUTOFMEMORY;
+
+    ptr = buff;
+    LIST_FOR_EACH_ENTRY(entry, &This->request->reqheaders, struct reqheader, entry)
+    {
+        lstrcpyW(ptr, entry->header);
+        ptr += SysStringLen(entry->header);
+
+        lstrcpyW(ptr, colspaceW);
+        ptr += sizeof(colspaceW)/sizeof(WCHAR)-1;
+
+        lstrcpyW(ptr, entry->value);
+        ptr += SysStringLen(entry->value);
+
+        lstrcpyW(ptr, crlfW);
+        ptr += sizeof(crlfW)/sizeof(WCHAR)-1;
+    }
+
+    *add_headers = buff;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD code,
@@ -583,7 +617,15 @@ static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR 
     {
         if (lstrcmpW(entry->header, header) == 0)
         {
-            return SysReAllocString(&entry->value, value) ? S_OK : E_OUTOFMEMORY;
+            LONG length = SysStringLen(entry->value);
+            HRESULT hr;
+
+            hr = SysReAllocString(&entry->value, value) ? S_OK : E_OUTOFMEMORY;
+
+            if (hr == S_OK)
+                This->reqheader_size += (SysStringLen(entry->value) - length);
+
+            return hr;
         }
     }
 
@@ -593,6 +635,10 @@ static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR 
     /* new header */
     entry->header = SysAllocString(header);
     entry->value  = SysAllocString(value);
+
+    /* header length including null terminator */
+    This->reqheader_size += SysStringLen(entry->header) + sizeof(colspaceW)/sizeof(WCHAR) +
+                            SysStringLen(entry->value)  + sizeof(crlfW)/sizeof(WCHAR) - 1;
 
     list_add_head(&This->reqheaders, &entry->entry);
 
@@ -764,6 +810,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->url = req->user = req->password = NULL;
     req->state = READYSTATE_UNINITIALIZED;
     req->bsc = NULL;
+    req->reqheader_size = 0;
     list_init(&req->reqheaders);
 
     *ppObj = &req->lpVtbl;
