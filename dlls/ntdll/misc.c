@@ -260,7 +260,7 @@ NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(co
 {
     if(right>left) {
         size_t i, j, k, m;
-        m=(right+left)/2;
+        m=left+(right-left)/2;
         NTDLL_mergesort( arr, barr, elemsize, compar, left, m);
         NTDLL_mergesort( arr, barr, elemsize, compar, m+1, right);
 
