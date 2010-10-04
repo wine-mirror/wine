@@ -241,16 +241,6 @@ BOOL WINAPI SetupDiGetINFClassA(PCSTR inf, LPGUID class_guid, PSTR class_name,
 }
 
 /***********************************************************************
- *      SetupDiGetINFClassW (SETUPAPI.@)
- */
-BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
-        DWORD size, PDWORD required_size)
-{
-    FIXME("%s %p %p %d %p\n", debugstr_w(inf), class_guid, class_name, size, required_size);
-    return FALSE;
-}
-
-/***********************************************************************
  *      SetupDiDestroyClassImageList (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiDestroyClassImageList(PSP_CLASSIMAGELIST_DATA ClassListImageData)

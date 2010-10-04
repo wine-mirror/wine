@@ -46,6 +46,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 /* Unicode constants */
+static const WCHAR Chicago[]  = {'$','C','h','i','c','a','g','o','$',0};
 static const WCHAR ClassGUID[]  = {'C','l','a','s','s','G','U','I','D',0};
 static const WCHAR Class[]  = {'C','l','a','s','s',0};
 static const WCHAR ClassInstall32[]  = {'C','l','a','s','s','I','n','s','t','a','l','l','3','2',0};
@@ -54,6 +55,7 @@ static const WCHAR NoInstallClass[]  = {'N','o','I','n','s','t','a','l','l','C',
 static const WCHAR NoUseClass[]  = {'N','o','U','s','e','C','l','a','s','s',0};
 static const WCHAR NtExtension[]  = {'.','N','T',0};
 static const WCHAR NtPlatformExtension[]  = {'.','N','T','x','8','6',0};
+static const WCHAR Signature[]  = {'S','i','g','n','a','t','u','r','e',0};
 static const WCHAR Version[]  = {'V','e','r','s','i','o','n',0};
 static const WCHAR WinExtension[]  = {'.','W','i','n',0};
 
@@ -3983,4 +3985,74 @@ CONFIGRET WINAPI CM_Get_Device_ID_Size( PULONG  pulLen, DEVINST dnDevInst,
     *pulLen = lstrlenW(ppdevInfo->instanceId);
     GlobalUnlock((HANDLE)dnDevInst);
     return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *              SetupDiGetINFClassW (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
+        DWORD size, PDWORD required_size)
+{
+    BOOL have_guid, have_name;
+    DWORD dret;
+    WCHAR buffer[MAX_PATH];
+
+    if (!inf)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(inf))
+    {
+        FIXME("%s not found. Searching via DevicePath not implemented\n", debugstr_w(inf));
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (!class_guid || !class_name || !size)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!GetPrivateProfileStringW(Version, Signature, NULL, buffer, MAX_PATH, inf))
+        return FALSE;
+
+    if (lstrcmpiW(buffer, Chicago))
+        return FALSE;
+
+    buffer[0] = '\0';
+    have_guid = 0 < GetPrivateProfileStringW(Version, ClassGUID, NULL, buffer, MAX_PATH, inf);
+    if (have_guid)
+    {
+        buffer[lstrlenW(buffer)-1] = 0;
+        if (RPC_S_OK != UuidFromStringW(buffer + 1, class_guid))
+        {
+            FIXME("failed to convert \"%s\" into a guid\n", debugstr_w(buffer));
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+    }
+
+    buffer[0] = '\0';
+    dret = GetPrivateProfileStringW(Version, Class, NULL, buffer, MAX_PATH, inf);
+    have_name = 0 < dret;
+
+    if (dret >= MAX_PATH -1) FIXME("buffer might be too small\n");
+    if (have_guid && !have_name) FIXME("class name lookup via guid not implemented\n");
+
+    if (have_name)
+    {
+        if (dret < size) lstrcpyW(class_name, buffer);
+        else
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            have_name = FALSE;
+        }
+    }
+
+    if (required_size) *required_size = dret + ((dret) ? 1 : 0);
+
+    return (have_guid || have_name);
 }
