@@ -115,6 +115,7 @@ HRESULT protocol_continue(Protocol*,PROTOCOLDATA*);
 HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*);
 HRESULT protocol_lock_request(Protocol*);
 HRESULT protocol_unlock_request(Protocol*);
+HRESULT protocol_abort(Protocol*,HRESULT);
 void protocol_close_connection(Protocol*);
 
 typedef struct {

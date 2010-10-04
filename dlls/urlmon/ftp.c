@@ -186,8 +186,10 @@ static HRESULT WINAPI FtpProtocol_Abort(IInternetProtocol *iface, HRESULT hrReas
         DWORD dwOptions)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
+
+    return protocol_abort(&This->base, hrReason);
 }
 
 static HRESULT WINAPI FtpProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)

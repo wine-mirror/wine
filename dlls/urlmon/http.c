@@ -162,6 +162,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
             &IID_IHttpNegotiate, (void **)&This->http_negotiate);
     if (hres != S_OK) {
         WARN("IServiceProvider_QueryService IID_IHttpNegotiate failed: %08x\n", hres);
+        IServiceProvider_Release(service_provider);
         return hres;
     }
 
@@ -438,8 +439,10 @@ static HRESULT WINAPI HttpProtocol_Abort(IInternetProtocol *iface, HRESULT hrRea
         DWORD dwOptions)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
-    FIXME("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x %08x)\n", This, hrReason, dwOptions);
+
+    return protocol_abort(&This->base, hrReason);
 }
 
 static HRESULT WINAPI HttpProtocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)

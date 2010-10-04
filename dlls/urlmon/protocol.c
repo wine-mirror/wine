@@ -428,6 +428,18 @@ HRESULT protocol_unlock_request(Protocol *protocol)
     return S_OK;
 }
 
+HRESULT protocol_abort(Protocol *protocol, HRESULT reason)
+{
+    if(!protocol->protocol_sink)
+        return S_OK;
+
+    if(protocol->flags & FLAG_RESULT_REPORTED)
+        return INET_E_RESULT_DISPATCHED;
+
+    report_result(protocol, reason);
+    return S_OK;
+}
+
 void protocol_close_connection(Protocol *protocol)
 {
     protocol->vtbl->close_connection(protocol);
