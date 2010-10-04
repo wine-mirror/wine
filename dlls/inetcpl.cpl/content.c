@@ -79,8 +79,8 @@ BOOL WINAPI LaunchSiteCertDialog(HWND parent)
  */
 INT_PTR CALLBACK content_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-
-    TRACE("(%p, 0x%08x/%d, 0x%lx, 0x%lx)\n", hwnd, msg, msg, wparam, lparam);
+    if ((msg != WM_SETCURSOR) && (msg != WM_NCHITTEST) && (msg != WM_MOUSEMOVE))
+        TRACE("(%p, 0x%08x/%d, 0x%lx, 0x%lx)\n", hwnd, msg, msg, wparam, lparam);
 
     if (msg == WM_COMMAND)
     {
