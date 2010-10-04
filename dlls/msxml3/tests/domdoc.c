@@ -3082,7 +3082,7 @@ static void test_XMLHTTP(void)
     VARIANT dummy;
     VARIANT async;
     VARIANT varbody;
-    LONG state;
+    LONG state, status;
     HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
                                   CLSCTX_INPROC_SERVER, &IID_IXMLHttpRequest,
                                   (void **)&pXMLHttpRequest);
@@ -3107,6 +3107,15 @@ static void test_XMLHTTP(void)
     /* send before open */
     hr = IXMLHttpRequest_send(pXMLHttpRequest, dummy);
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+
+    /* initial status code */
+    hr = IXMLHttpRequest_get_status(pXMLHttpRequest, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    status = 0xdeadbeef;
+    hr = IXMLHttpRequest_get_status(pXMLHttpRequest, &status);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(status == 0xdeadbeef, "got %d\n", status);
 
     /* invalid parameters */
     hr = IXMLHttpRequest_open(pXMLHttpRequest, NULL, NULL, async, dummy, dummy);
@@ -3141,6 +3150,12 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_open(pXMLHttpRequest, method, url, async, dummy, dummy);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* status code after ::open() */
+    status = 0xdeadbeef;
+    hr = IXMLHttpRequest_get_status(pXMLHttpRequest, &status);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(status == 0xdeadbeef, "got %d\n", status);
+
     state = -1;
     hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, &state);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3167,6 +3182,15 @@ static void test_XMLHTTP(void)
     }
     todo_wine ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
 
+    /* status code after ::send() */
+    status = 0xdeadbeef;
+    hr = IXMLHttpRequest_get_status(pXMLHttpRequest, &status);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(status == 200, "got %d\n", status);
+}
+
+    /* another ::send() after completed request */
     hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
 

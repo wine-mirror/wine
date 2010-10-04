@@ -2,6 +2,7 @@
  *    IXMLHTTPRequest implementation
  *
  * Copyright 2008 Alistair Leslie-Hughes
+ * Copyright 2010 Nikolay Sivov for Codeweavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -74,6 +75,7 @@ typedef struct
 
     /* bind callback */
     BindStatusCallback *bsc;
+    LONG status;
 } httprequest;
 
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
@@ -88,7 +90,7 @@ struct BindStatusCallback
     LONG ref;
 
     IBinding *binding;
-    const httprequest *request;
+    httprequest *request;
 };
 
 static inline BindStatusCallback *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
@@ -349,6 +351,8 @@ static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD c
     TRACE("(%p)->(%d %s %s %p)\n", This, code, debugstr_w(resp_headers),
           debugstr_w(req_headers), add_reqheaders);
 
+    This->request->status = code;
+
     return S_OK;
 }
 
@@ -362,7 +366,7 @@ static const IHttpNegotiateVtbl BSCHttpNegotiateVtbl = {
     BSCHttpNegotiate_OnResponse
 };
 
-static HRESULT BindStatusCallback_create(const httprequest* This, BindStatusCallback **obj)
+static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback **obj)
 {
     BindStatusCallback *bsc;
     IBindCtx *pbc;
@@ -693,13 +697,18 @@ static HRESULT WINAPI httprequest_abort(IXMLHTTPRequest *iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI httprequest_get_status(IXMLHTTPRequest *iface, LONG *plStatus)
+static HRESULT WINAPI httprequest_get_status(IXMLHTTPRequest *iface, LONG *status)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
 
-    FIXME("stub %p %p\n", This, plStatus);
+    TRACE("(%p)->(%p)\n", This, status);
 
-    return E_NOTIMPL;
+    if (!status) return E_INVALIDARG;
+    if (This->state != READYSTATE_COMPLETE) return E_FAIL;
+
+    *status = This->status;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI httprequest_get_statusText(IXMLHTTPRequest *iface, BSTR *pbstrStatus)
@@ -812,6 +821,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->url = req->user = req->password = NULL;
     req->state = READYSTATE_UNINITIALIZED;
     req->bsc = NULL;
+    req->status = 0;
     req->reqheader_size = 0;
     list_init(&req->reqheaders);
 
