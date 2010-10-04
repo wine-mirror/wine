@@ -24,55 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
-{
-    *pDest = *pSrc;
-    if (!pSrc->pbFormat) return S_OK;
-    if (!(pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat)))
-        return E_OUTOFMEMORY;
-    memcpy(pDest->pbFormat, pSrc->pbFormat, pSrc->cbFormat);
-    if (pDest->pUnk)
-        IUnknown_AddRef(pDest->pUnk);
-    return S_OK;
-}
-
-void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
-{
-    if (pMediaType->pbFormat)
-    {
-        CoTaskMemFree(pMediaType->pbFormat);
-        pMediaType->pbFormat = NULL;
-    }
-    if (pMediaType->pUnk)
-    {
-        IUnknown_Release(pMediaType->pUnk);
-        pMediaType->pUnk = NULL;
-    }
-}
-
-static AM_MEDIA_TYPE * CreateMediaType(AM_MEDIA_TYPE const * pSrc)
-{
-    AM_MEDIA_TYPE * pDest;
-    
-    pDest = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
-    if (!pDest)
-        return NULL;
-
-    if (FAILED(CopyMediaType(pDest, pSrc)))
-    {
-        CoTaskMemFree(pDest);
-	return NULL;
-    }
-
-    return pDest;
-}
-
-void DeleteMediaType(AM_MEDIA_TYPE * pMediaType)
-{
-    FreeMediaType(pMediaType);
-    CoTaskMemFree(pMediaType);
-}
-
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards)
 {
     TRACE("pmt1: ");

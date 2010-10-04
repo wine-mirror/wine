@@ -32,36 +32,9 @@
 #include "qcap_main.h"
 
 #include "wine/debug.h"
+#include "wine/strmbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
-
-HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc)
-{
-    *pDest = *pSrc;
-    if (!pSrc->pbFormat) return S_OK;
-    if (!(pDest->pbFormat = CoTaskMemAlloc(pSrc->cbFormat)))
-        return E_OUTOFMEMORY;
-    memcpy(pDest->pbFormat, pSrc->pbFormat, pSrc->cbFormat);
-    return S_OK;
-}
-
-static void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
-{
-    CoTaskMemFree(pMediaType->pbFormat);
-    pMediaType->pbFormat = NULL;
-
-    if (pMediaType->pUnk)
-    {
-        IUnknown_Release(pMediaType->pUnk);
-        pMediaType->pUnk = NULL;
-    }
-}
-
-void DeleteMediaType(AM_MEDIA_TYPE * pMediaType)
-{
-   FreeMediaType(pMediaType);
-   CoTaskMemFree(pMediaType);
-}
 
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2,
                        BOOL bWildcards)

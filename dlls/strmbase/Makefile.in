@@ -1,0 +1,6 @@
+MODULE    = strmbase
+
+C_SRCS = \
+	mediatype.c
+
+@MAKE_IMPLIB_RULES@

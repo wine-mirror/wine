@@ -14884,6 +14884,7 @@ wine_fn_config_dll sti enable_sti sti
 wine_fn_config_test dlls/sti/tests sti_test
 wine_fn_config_dll storage.dll16 enable_win16
 wine_fn_config_dll stress.dll16 enable_win16
+wine_fn_config_lib strmbase
 wine_fn_config_lib strmiids
 wine_fn_config_dll svrapi enable_svrapi
 wine_fn_config_dll sxs enable_sxs

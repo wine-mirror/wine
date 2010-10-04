@@ -1,5 +1,5 @@
 MODULE    = qcap.dll
-IMPORTS   = strmiids uuid ole32 gdi32 advapi32
+IMPORTS   = strmiids strmbase uuid ole32 gdi32 advapi32
 
 C_SRCS = \
 	capturegraph.c \
