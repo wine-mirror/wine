@@ -6213,6 +6213,26 @@ static void test_rtl_layout(void)
     pt.x = pt.y = 12;
     MapWindowPoints( child, parent, &pt, 1 );
     ok( pt.x == 22 && pt.y == 22, "wrong point %d,%d\n", pt.x, pt.y );
+    SetWindowPos( parent, 0, 0, 0, 250, 250, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
+    GetWindowRect( parent, &r );
+    ok( r.left == 100 && r.right == 350, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    GetWindowRect( child, &r );
+    ok( r.left == 320 && r.right == 340, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    SetWindowLongW( parent, GWL_EXSTYLE, 0 );
+    GetWindowRect( child, &r );
+    ok( r.left == 320 && r.right == 340, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    MapWindowPoints( NULL, parent, (POINT *)&r, 2 );
+    ok( r.left == 220 && r.right == 240, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    SetWindowLongW( parent, GWL_EXSTYLE, WS_EX_LAYOUTRTL );
+    GetWindowRect( child, &r );
+    ok( r.left == 320 && r.right == 340, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    MapWindowPoints( NULL, parent, (POINT *)&r, 2 );
+    ok( r.left == 10 && r.right == 30, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    SetWindowPos( child, 0, 0, 0, 30, 30, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE );
+    GetWindowRect( child, &r );
+    ok( r.left == 310 && r.right == 340, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
+    MapWindowPoints( NULL, parent, (POINT *)&r, 2 );
+    ok( r.left == 10 && r.right == 40, "wrong rect %d,%d - %d,%d\n", r.left, r.top, r.right, r.bottom );
     DestroyWindow( child );
     DestroyWindow( parent );
 }

@@ -1536,6 +1536,21 @@ static void set_window_pos( struct window *win, struct window *previous,
     if (swp_flags & SWP_SHOWWINDOW) win->style |= WS_VISIBLE;
     else if (swp_flags & SWP_HIDEWINDOW) win->style &= ~WS_VISIBLE;
 
+    /* keep children at the same position relative to top right corner when the parent is mirrored */
+    if (win->ex_style & WS_EX_LAYOUTRTL)
+    {
+        struct window *child;
+        int old_size = old_client_rect.right - old_client_rect.left;
+        int new_size = win->client_rect.right - win->client_rect.left;
+
+        if (old_size != new_size) LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
+        {
+            offset_rect( &child->window_rect, new_size - old_size, 0 );
+            offset_rect( &child->visible_rect, new_size - old_size, 0 );
+            offset_rect( &child->client_rect, new_size - old_size, 0 );
+        }
+    }
+
     /* if the window is not visible, everything is easy */
     if (!visible) return;
 
@@ -2237,7 +2252,7 @@ DECL_HANDLER(get_windows_offset)
         if (win->ex_style & WS_EX_LAYOUTRTL)
         {
             mirror_from = 1;
-            reply->x += win->client_rect.right - win->client_rect.left - 1;
+            reply->x += win->client_rect.right - win->client_rect.left;
         }
         while (win && !is_desktop_window(win))
         {
@@ -2252,7 +2267,7 @@ DECL_HANDLER(get_windows_offset)
         if (win->ex_style & WS_EX_LAYOUTRTL)
         {
             mirror_to = 1;
-            reply->x -= win->client_rect.right - win->client_rect.left - 1;
+            reply->x -= win->client_rect.right - win->client_rect.left;
         }
         while (win && !is_desktop_window(win))
         {
