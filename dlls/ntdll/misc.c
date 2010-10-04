@@ -294,7 +294,9 @@ NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(co
 void __cdecl NTDLL_qsort( void *base, size_t nmemb, size_t size,
                           int(__cdecl *compar)(const void *, const void *) )
 {
-    void *secondarr = RtlAllocateHeap (GetProcessHeap(), 0, nmemb*size);
+    void *secondarr;
+    if (nmemb < 2 || size == 0) return;
+    secondarr = RtlAllocateHeap (GetProcessHeap(), 0, nmemb*size);
     NTDLL_mergesort( base, secondarr, size, compar, 0, nmemb-1 );
     RtlFreeHeap (GetProcessHeap(),0, secondarr);
 }
