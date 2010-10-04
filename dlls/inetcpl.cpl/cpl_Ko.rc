@@ -32,6 +32,23 @@ BEGIN
     IDS_CPL_INFO        "Wine 인터넷 브라우저와 관련 설정 처리"
 END
 
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "일반"
+BEGIN
+
+    GROUPBOX    " 홈 페이지 ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "홈페이지로 사용할 주소를 선택할 수 있습니다.",
+                IDC_STATIC, 58, 10, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "현재 페이지(&C)", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "기본 페이지(&D)", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "빈 페이지(&B)", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
 /* "Content" propsheet */
 IDD_CONTENT DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
