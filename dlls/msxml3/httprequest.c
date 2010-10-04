@@ -130,7 +130,9 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
         *ppv = &This->lpHttpNegotiateVtbl;
     }
     else if (IsEqualGUID(&IID_IServiceProvider, riid) ||
-             IsEqualGUID(&IID_IBindStatusCallbackEx, riid))
+             IsEqualGUID(&IID_IBindStatusCallbackEx, riid) ||
+             IsEqualGUID(&IID_IInternetProtocol, riid) ||
+             IsEqualGUID(&IID_IHttpNegotiate2, riid))
     {
         return E_NOINTERFACE;
     }
