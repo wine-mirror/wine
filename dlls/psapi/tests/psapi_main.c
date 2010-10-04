@@ -25,13 +25,6 @@
 #include "wine/test.h"
 #include "psapi.h"
 
-#define expect_eq_d(expected, actual) \
-    do { \
-      int value = (actual); \
-      ok((expected) == value, "Expected " #actual " to be %d (" #expected ") is %d\n", \
-          (expected), value); \
-    } while (0)
-
 #define PSAPI_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(hpsapi, #func); \
     if(!p ## func) { \
@@ -223,7 +216,7 @@ static void test_GetProcessImageFileName(void)
     ret = pGetProcessImageFileNameW(hpQI, szImgPathW, sizeof(szImgPathW)/sizeof(WCHAR));
     ok(ret > 0, "GetProcessImageFileNameW should have succeeded.\n");
     ok(szImgPathW[0] == '\\', "GetProcessImageFileNameW should have returned an NT path.\n");
-    expect_eq_d(lstrlenW(szImgPathW), ret);
+    ok(lstrlenW(szImgPathW) == ret, "Expected length to be %d, got %d\n", ret, lstrlenW(szImgPathW));
 
     /* boundary values of 'size' */
     w32_err(pGetProcessImageFileNameW(hpQI, szImgPathW, ret), ERROR_INSUFFICIENT_BUFFER);
@@ -232,7 +225,7 @@ static void test_GetProcessImageFileName(void)
     ret = pGetProcessImageFileNameW(hpQI, szImgPathW, ret + 1);
     ok(ret > 0, "GetProcessImageFileNameW should have succeeded.\n");
     ok(szImgPathW[0] == '\\', "GetProcessImageFileNameW should have returned an NT path.\n");
-    expect_eq_d(lstrlenW(szImgPathW), ret);
+    ok(lstrlenW(szImgPathW) == ret, "Expected length to be %d, got %d\n", ret, lstrlenW(szImgPathW));
 }
 
 static void test_GetModuleFileNameEx(void)
