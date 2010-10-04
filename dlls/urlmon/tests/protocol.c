@@ -147,7 +147,7 @@ static BOOL binding_test;
 static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
 static DWORD prot_read, pi, filter_state;
 static BOOL security_problem;
-static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read;
+static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
 
 static enum {
     FILE_TEST,
@@ -823,7 +823,7 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
     else
         ok(hrResult == expect_hrResult, "hrResult = %08x, expected: %08x\n",
            hrResult, expect_hrResult);
-    if(SUCCEEDED(hrResult) || tested_protocol == FTP_TEST)
+    if(SUCCEEDED(hrResult) || tested_protocol == FTP_TEST || test_abort)
         ok(dwError == ERROR_SUCCESS, "dwError = %d, expected ERROR_SUCCESS\n", dwError);
     else
         ok(dwError != ERROR_SUCCESS ||
@@ -1959,14 +1959,15 @@ static const IClassFactoryVtbl MimeFilterCFVtbl = {
 
 static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 
-#define TEST_BINDING     0x01
-#define TEST_FILTER      0x02
-#define TEST_FIRST_HTTP  0x04
-#define TEST_DIRECT_READ 0x08
-#define TEST_POST        0x10
-#define TEST_EMULATEPROT 0x20
-#define TEST_SHORT_READ  0x40
-#define TEST_REDIRECT    0x80
+#define TEST_BINDING     0x0001
+#define TEST_FILTER      0x0002
+#define TEST_FIRST_HTTP  0x0004
+#define TEST_DIRECT_READ 0x0008
+#define TEST_POST        0x0010
+#define TEST_EMULATEPROT 0x0020
+#define TEST_SHORT_READ  0x0040
+#define TEST_REDIRECT    0x0080
+#define TEST_ABORT       0x0100
 
 static void init_test(int prot, DWORD flags)
 {
@@ -1993,6 +1994,7 @@ static void init_test(int prot, DWORD flags)
     wait_for_switch = TRUE;
     short_read = (flags & TEST_SHORT_READ) != 0;
     test_redirect = (flags & TEST_REDIRECT) != 0;
+    test_abort = (flags & TEST_ABORT) != 0;
 }
 
 static void test_priority(IInternetProtocol *protocol)
@@ -2019,6 +2021,24 @@ static void test_priority(IInternetProtocol *protocol)
     ok(pr == 1, "pr=%d, expected 1\n", pr);
 
     IInternetPriority_Release(priority);
+}
+
+static void test_early_abort(const CLSID *clsid)
+{
+    IInternetProtocol *protocol;
+    HRESULT hres;
+
+    hres = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IInternetProtocol, (void**)&protocol);
+    ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+
+    hres = IInternetProtocol_Abort(protocol, E_ABORT, 0);
+    ok(hres == S_OK, "Abort failed: %08x\n", hres);
+
+    hres = IInternetProtocol_Abort(protocol, E_FAIL, 0);
+    ok(hres == S_OK, "Abort failed: %08x\n", hres);
+
+    IInternetProtocol_Release(protocol);
 }
 
 static BOOL file_protocol_start(IInternetProtocol *protocol, LPCWSTR url,
@@ -2413,7 +2433,7 @@ static void test_protocol_terminate(IInternetProtocol *protocol)
     ok(hres == S_OK, "LockRequest failed: %08x\n", hres);
 
     hres = IInternetProtocol_Read(protocol, buf, 1, &cb);
-    ok(hres == S_FALSE, "Read failed: %08x\n", hres);
+    ok(hres == test_abort ? S_OK : S_FALSE, "Read failed: %08x\n", hres);
 
     hres = IInternetProtocol_Terminate(protocol, 0);
     ok(hres == S_OK, "Terminate failed: %08x\n", hres);
@@ -2507,9 +2527,9 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
         if(!http_protocol_start(url))
             return;
 
-        if(!direct_read)
+        if(!direct_read && !test_abort)
             SET_EXPECT(ReportResult);
-        expect_hrResult = S_OK;
+        expect_hrResult = test_abort ? E_ABORT : S_OK;
 
         if(direct_read) {
             while(wait_for_switch) {
@@ -2547,6 +2567,19 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
                         CHECK_CALLED(Switch);
                     else
                         CHECK_CALLED(ReportData);
+
+                    if(test_abort) {
+                        HRESULT hres;
+
+                        SET_EXPECT(ReportResult);
+                        hres = IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
+                        ok(hres == S_OK, "Abort failed: %08x\n", hres);
+                        CHECK_CALLED(ReportResult);
+
+                        hres = IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
+                        ok(hres == INET_E_RESULT_DISPATCHED, "Abort failed: %08x\n", hres);
+                        break;
+                    }
                 }else {
                     if(bindf & BINDF_FROMURLMON)
                         CHECK_NOT_CALLED(Switch);
@@ -2555,15 +2588,24 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
                     if(cb == 0) break;
                 }
             }
-            ok(hres == S_FALSE, "Read failed: %08x\n", hres);
-            CHECK_CALLED(ReportResult);
+            if(!test_abort) {
+                ok(hres == S_FALSE, "Read failed: %08x\n", hres);
+                CHECK_CALLED(ReportResult);
+            }
         }
         if(prot == HTTPS_TEST)
             CLEAR_CALLED(ReportProgress_SENDINGREQUEST);
 
+        hres = IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
+        ok(hres == INET_E_RESULT_DISPATCHED, "Abort failed: %08x\n", hres);
+
         test_protocol_terminate(async_protocol);
+
+        hres = IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
+        ok(hres == S_OK, "Abort failed: %08x\n", hres);
+
         ref = IInternetProtocol_Release(async_protocol);
-        ok(!ref, "ref=%x\n", hres);
+        ok(!ref, "ref=%x\n", ref);
     }
 
     IClassFactory_Release(factory);
@@ -2607,6 +2649,12 @@ static void test_http_protocol(void)
     trace("Testing http protocol (redirected)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT);
+
+    trace("Testing http protocol abort...\n");
+    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_ABORT);
+
+    test_early_abort(&CLSID_HttpProtocol);
+    test_early_abort(&CLSID_HttpSProtocol);
 }
 
 static void test_https_protocol(void)
@@ -2684,7 +2732,6 @@ static void test_ftp_protocol(void)
     WaitForSingleObject(event_complete, INFINITE);
 
     while(1) {
-
         hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
         if(hres == E_PENDING)
             WaitForSingleObject(event_complete, INFINITE);
@@ -2700,6 +2747,8 @@ static void test_ftp_protocol(void)
 
     ref = IInternetProtocol_Release(async_protocol);
     ok(!ref, "ref=%d\n", ref);
+
+    test_early_abort(&CLSID_FtpProtocol);
 }
 
 static void test_gopher_protocol(void)
@@ -2735,6 +2784,8 @@ static void test_gopher_protocol(void)
     test_priority(async_protocol);
 
     IInternetProtocol_Release(async_protocol);
+
+    test_early_abort(&CLSID_GopherProtocol);
 }
 
 static void test_mk_protocol(void)
