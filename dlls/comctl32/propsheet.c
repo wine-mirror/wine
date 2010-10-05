@@ -1074,18 +1074,13 @@ static PADDING_INFO PROPSHEET_GetPaddingInfo(HWND hwndDlg)
 {
   HWND hwndTab = GetDlgItem(hwndDlg, IDC_TABCONTROL);
   RECT rcTab;
-  POINT tl;
   PADDING_INFO padding;
 
   GetWindowRect(hwndTab, &rcTab);
+  MapWindowPoints( 0, hwndDlg, (POINT *)&rcTab, 2 );
 
-  tl.x = rcTab.left;
-  tl.y = rcTab.top;
-
-  ScreenToClient(hwndDlg, &tl);
-
-  padding.x = tl.x;
-  padding.y = tl.y;
+  padding.x = rcTab.left;
+  padding.y = rcTab.top;
 
   return padding;
 }
@@ -1131,20 +1126,16 @@ static PADDING_INFO PROPSHEET_GetPaddingInfoWizard(HWND hwndDlg, const PropSheet
 
   hwndControl = GetDlgItem(hwndDlg, idButton);
   GetWindowRect(hwndControl, &rc);
-
+  MapWindowPoints( 0, hwndDlg, (POINT *)&rc, 2 );
   ptButton.x = rc.left;
   ptButton.y = rc.top;
-
-  ScreenToClient(hwndDlg, &ptButton);
 
   /* Line */
   hwndControl = GetDlgItem(hwndDlg, IDC_SUNKEN_LINE);
   GetWindowRect(hwndControl, &rc);
-
+  MapWindowPoints( 0, hwndDlg, (POINT *)&rc, 2 );
   ptLine.x = rc.left;
   ptLine.y = rc.bottom;
-
-  ScreenToClient(hwndDlg, &ptLine);
 
   padding.y = ptButton.y - ptLine.y;
 
