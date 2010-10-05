@@ -3745,6 +3745,38 @@ static const ChainPolicyCheck basePolicyCheck[] = {
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
 };
 
+static const ChainPolicyCheck ignoredUnknownCABasePolicyCheck = {
+ { sizeof(chain0) / sizeof(chain0[0]), chain0 },
+ { 0, CERT_E_EXPIRED, 0, 0, NULL }, NULL, TODO_ERROR
+};
+
+/* Windows NT 4 has a different error code when the validity period doesn't
+ * nest.  (It's arguably more correct than other Windows versions, but since
+ * others do not emulate its behavior, we mark its behavior broken.)
+ */
+static const CERT_CHAIN_POLICY_STATUS badDateNestingStatus =
+ { 0, CERT_E_VALIDITYPERIODNESTING, 0, 0, NULL };
+
+static const ChainPolicyCheck ignoredBadDateNestingBasePolicyCheck = {
+ { sizeof(chain2) / sizeof(chain2[0]), chain2 },
+ { 0, CERT_E_EXPIRED, 0, 1, NULL}, &badDateNestingStatus, TODO_ERROR
+};
+
+static const ChainPolicyCheck ignoredInvalidDateBasePolicyCheck = {
+ { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
+ { 0, CERT_E_EXPIRED, 0, 1, NULL}, NULL, TODO_ERROR
+};
+
+static const ChainPolicyCheck ignoredInvalidUsageBasePolicyCheck = {
+ { sizeof(chain15) / sizeof(chain15[0]), chain15 },
+ { 0, CERT_E_EXPIRED, 0, 1, NULL}, NULL, TODO_ERROR
+};
+
+static const ChainPolicyCheck invalidUsageBasePolicyCheck = {
+ { sizeof(chain15) / sizeof(chain15[0]), chain15 },
+ { 0, CERT_E_WRONG_USAGE, 0, 1, NULL}, NULL, TODO_ERROR
+};
+
 static const ChainPolicyCheck sslPolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
@@ -4039,6 +4071,39 @@ static void checkChainPolicyStatus(LPCSTR policy, HCERTCHAINENGINE engine,
     }
 }
 
+static void check_base_policy(void)
+{
+    DWORD i;
+    CERT_CHAIN_POLICY_PARA policyPara = { 0 };
+
+    for (i = 0;
+     i < sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
+        checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
+         &basePolicyCheck[i], i, &oct2007, NULL);
+    policyPara.cbSize = sizeof(policyPara);
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
+     &ignoredUnknownCABasePolicyCheck, 0, &oct2007, &policyPara);
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG |
+     CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
+     &ignoredBadDateNestingBasePolicyCheck, 0, &oct2007, &policyPara);
+    policyPara.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
+     &ignoredInvalidDateBasePolicyCheck, 0, &oct2007, &policyPara);
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG |
+     CERT_CHAIN_POLICY_IGNORE_WRONG_USAGE_FLAG;
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG |
+     CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG |
+     CERT_CHAIN_POLICY_IGNORE_WRONG_USAGE_FLAG;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
+     &ignoredInvalidUsageBasePolicyCheck, 0, &oct2007, &policyPara);
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG |
+     CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
+     &invalidUsageBasePolicyCheck, 0, &oct2007, &policyPara);
+}
+
 static void check_ssl_policy(void)
 {
     DWORD i;
@@ -4288,10 +4353,7 @@ static void testVerifyCertChainPolicy(void)
     pCertFreeCertificateChain(chain);
     CertFreeCertificateContext(cert);
 
-    for (i = 0;
-     i < sizeof(basePolicyCheck) / sizeof(basePolicyCheck[0]); i++)
-        checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
-         &basePolicyCheck[i], i, &oct2007, NULL);
+    check_base_policy();
     check_ssl_policy();
     /* The authenticode policy doesn't seem to check anything beyond the base
      * policy.  It might check for chains signed by the MS test cert, but none
