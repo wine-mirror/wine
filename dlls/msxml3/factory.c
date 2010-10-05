@@ -253,7 +253,11 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, void **ppv )
     {
         cf = (IClassFactory*) &saxreadcf.lpVtbl;
     }
-    else if( IsEqualCLSID( rclsid, &CLSID_XMLHTTPRequest))
+    else if( IsEqualCLSID( rclsid, &CLSID_XMLHTTPRequest ) ||
+             IsEqualCLSID( rclsid, &CLSID_XMLHTTP26 ) ||
+             IsEqualCLSID( rclsid, &CLSID_XMLHTTP30 ) ||
+             IsEqualCLSID( rclsid, &CLSID_XMLHTTP40 ) ||
+             IsEqualCLSID( rclsid, &CLSID_XMLHTTP60 ))
     {
         cf = (IClassFactory*) &httpreqcf.lpVtbl;
     }
