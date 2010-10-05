@@ -431,18 +431,13 @@ static void COMBOEX_ReSize (const COMBOEX_INFO *infoPtr)
     if (infoPtr->hwndCombo) {
         SendMessageW (infoPtr->hwndCombo, CB_SETITEMHEIGHT, 0, cy);
 	if ( !(infoPtr->flags & CBES_EX_NOSIZELIMIT)) {
-	    RECT comboRect;
-	    if (GetWindowRect(infoPtr->hwndCombo, &comboRect)) {
-		RECT ourRect;
-		if (GetWindowRect(infoPtr->hwndSelf, &ourRect)) {
-		    if (comboRect.bottom > ourRect.bottom) {
-			POINT pt = { ourRect.left, ourRect.top };
-			if (ScreenToClient(infoPtr->hwndSelf, &pt))
-			    MoveWindow( infoPtr->hwndSelf, pt.x, pt.y, ourRect.right - ourRect.left,
-					comboRect.bottom - comboRect.top, FALSE);
-		    }
-		}
-	    }
+	    RECT comboRect, ourRect;
+	    GetWindowRect(infoPtr->hwndCombo, &comboRect);
+            GetWindowRect(infoPtr->hwndSelf, &ourRect);
+            if (comboRect.bottom > ourRect.bottom)
+                SetWindowPos( infoPtr->hwndSelf, 0, 0, 0, ourRect.right - ourRect.left,
+                              comboRect.bottom - comboRect.top,
+                              SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
 	}
     }
 }
