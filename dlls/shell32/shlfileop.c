@@ -94,15 +94,13 @@ static void confirm_msg_move_button(HWND hDlg, INT iId, INT *xPos, INT yOffset, 
     RECT r;
 
     if (bShow) {
-        POINT pt;
         int width;
 
         GetWindowRect(hButton, &r);
+        MapWindowPoints( 0, hDlg, (POINT *)&r, 2 );
         width = r.right - r.left;
-        pt.x = r.left;
-        pt.y = r.top;
-        ScreenToClient(hDlg, &pt);
-        MoveWindow(hButton, *xPos - width, pt.y - yOffset, width, r.bottom - r.top, FALSE);
+        SetWindowPos(hButton, 0, *xPos - width, r.top - yOffset, 0, 0,
+                     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
         *xPos -= width + 5;
     }
     else
