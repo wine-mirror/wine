@@ -169,12 +169,65 @@ static HRESULT WINAPI CLRRuntimeInfo_GetVersionString(ICLRRuntimeInfo* iface,
     return hr;
 }
 
+static BOOL get_install_root(LPWSTR install_dir)
+{
+    const WCHAR dotnet_key[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','.','N','E','T','F','r','a','m','e','w','o','r','k','\\',0};
+    const WCHAR install_root[] = {'I','n','s','t','a','l','l','R','o','o','t',0};
+
+    DWORD len;
+    HKEY key;
+
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, dotnet_key, 0, KEY_READ, &key))
+        return FALSE;
+
+    len = MAX_PATH;
+    if (RegQueryValueExW(key, install_root, 0, NULL, (LPBYTE)install_dir, &len))
+    {
+        RegCloseKey(key);
+        return FALSE;
+    }
+    RegCloseKey(key);
+
+    return TRUE;
+}
+
 static HRESULT WINAPI CLRRuntimeInfo_GetRuntimeDirectory(ICLRRuntimeInfo* iface,
     LPWSTR pwzBuffer, DWORD *pcchBuffer)
 {
-    FIXME("%p %p %p\n", iface, pwzBuffer, pcchBuffer);
+    static const WCHAR slash[] = {'\\',0};
+    DWORD buffer_size = *pcchBuffer;
+    WCHAR system_dir[MAX_PATH];
+    WCHAR version[MAX_PATH];
+    DWORD version_size, size;
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p %p %p\n", iface, pwzBuffer, pcchBuffer);
+
+    if (!get_install_root(system_dir))
+    {
+        ERR("error reading registry key for installroot\n");
+        return E_FAIL;
+    }
+    else
+    {
+        version_size = MAX_PATH;
+        ICLRRuntimeInfo_GetVersionString(iface, version, &version_size);
+        lstrcatW(system_dir, version);
+        lstrcatW(system_dir, slash);
+        size = lstrlenW(system_dir) + 1;
+    }
+
+    *pcchBuffer = size;
+
+    if (pwzBuffer)
+    {
+        if (buffer_size >= size)
+            strcpyW(pwzBuffer, system_dir);
+        else
+            hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI CLRRuntimeInfo_IsLoaded(ICLRRuntimeInfo* iface,
