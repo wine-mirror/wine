@@ -54,6 +54,7 @@ static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
 
 static BOOL on_win9x = FALSE;
+static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
 static const char *msifile = "msitest.msi";
 static const char *msifile2 = "winetest2.msi";
@@ -5009,10 +5010,12 @@ static void test_publish_registerproduct(void)
     char temp[MAX_PATH];
     char keypath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
+    BOOL wow64 = FALSE;
 
     static const CHAR uninstall[] = "Software\\Microsoft\\Windows\\CurrentVersion"
                                     "\\Uninstall\\{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
+    static const CHAR uninstall_32node[] = "Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion"
+                                           "\\Uninstall\\{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
     static const CHAR userdata[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Installer"
                                    "\\UserData\\%s\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
     static const CHAR ugkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Installer"
@@ -5056,8 +5059,16 @@ static void test_publish_registerproduct(void)
     res = RegOpenKeyA(HKEY_CURRENT_USER, userugkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall, 0, access, &hkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall_32node, 0, KEY_ALL_ACCESS, &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall, 0, KEY_ALL_ACCESS, &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_DEL_REG_STR(hkey, "DisplayName", "MSITEST");
     CHECK_DEL_REG_STR(hkey, "DisplayVersion", "1.1.1");
@@ -5155,8 +5166,16 @@ static void test_publish_registerproduct(void)
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, userugkey, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall, 0, access, &hkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall_32node, 0, KEY_ALL_ACCESS, &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall, 0, KEY_ALL_ACCESS, &hkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_DEL_REG_STR(hkey, "DisplayName", "MSITEST");
     CHECK_DEL_REG_STR(hkey, "DisplayVersion", "1.1.1");
@@ -5555,7 +5574,7 @@ static void test_publish_publishfeatures(void)
     RegCloseKey(hkey);
 
     sprintf(keypath, udpath, usersid);
-    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_REG_STR(hkey, "feature", "VGtfp^p+,?82@JU1j_KE");
@@ -5590,7 +5609,7 @@ static void test_publish_publishfeatures(void)
     RegCloseKey(hkey);
 
     sprintf(keypath, udpath, "S-1-5-18");
-    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, keypath, &hkey);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_REG_STR(hkey, "feature", "VGtfp^p+,?82@JU1j_KE");
@@ -5905,14 +5924,15 @@ static void test_publish(void)
 {
     UINT r;
     LONG res;
-    HKEY uninstall, prodkey;
+    HKEY uninstall, prodkey, uninstall_32node = NULL;
     INSTALLSTATE state;
     CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
     char date[MAX_PATH], temp[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
+    BOOL wow64 = FALSE;
 
     static const CHAR subkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+    static const CHAR subkey_32node[] = "Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 
     if (!pMsiQueryComponentStateA)
     {
@@ -5931,8 +5951,14 @@ static void test_publish(void)
     if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
         access |= KEY_WOW64_64KEY;
 
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, subkey, 0, access, &uninstall);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, subkey, 0, KEY_ALL_ACCESS, &uninstall);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    if (is_64bit)
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, subkey_32node, 0, KEY_ALL_ACCESS, &uninstall_32node);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
@@ -6006,8 +6032,16 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
     CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
@@ -6080,8 +6114,16 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(uninstall, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
     CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
@@ -6155,8 +6197,16 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(uninstall, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
     CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
@@ -6207,8 +6257,16 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(uninstall, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
     CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
@@ -6259,8 +6317,16 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(uninstall, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
     CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
@@ -6334,8 +6400,16 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    res = RegOpenKeyExA(uninstall, prodcode, 0, access, &prodkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
+    else
+    {
+        res = RegOpenKeyExA(uninstall, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    }
 
     CHECK_REG_STR(prodkey, "DisplayName", "MSITEST");
     CHECK_REG_STR(prodkey, "DisplayVersion", "1.1.1");
@@ -6394,6 +6468,7 @@ static void test_publish(void)
 
 error:
     RegCloseKey(uninstall);
+    RegCloseKey(uninstall_32node);
     DeleteFile(msifile);
     DeleteFile("msitest\\maximus");
     RemoveDirectory("msitest");

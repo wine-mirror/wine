@@ -418,7 +418,7 @@ static UINT set_installed_prop( MSIPACKAGE *package )
     HKEY hkey = 0;
     UINT r;
 
-    r = MSIREG_OpenUninstallKey( package->ProductCode, &hkey, FALSE );
+    r = MSIREG_OpenUninstallKey( package, &hkey, FALSE );
     if (r == ERROR_SUCCESS)
     {
         RegCloseKey( hkey );
