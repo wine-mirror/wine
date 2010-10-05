@@ -24,6 +24,8 @@ extern LONG dll_refs;
 static inline void MSCOREE_LockModule(void) { InterlockedIncrement(&dll_refs); }
 static inline void MSCOREE_UnlockModule(void) { InterlockedDecrement(&dll_refs); }
 
+extern char *WtoA(LPCWSTR wstr);
+
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj);
 
 typedef struct tagASSEMBLY ASSEMBLY;
@@ -71,21 +73,36 @@ extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result);
 
 extern void free_parsed_config_file(parsed_config_file *file);
 
-/* Mono 2.6 embedding */
+/* Mono embedding */
 typedef struct _MonoDomain MonoDomain;
 typedef struct _MonoAssembly MonoAssembly;
+typedef struct _MonoAssemblyName MonoAssemblyName;
+
+typedef enum {
+	MONO_IMAGE_OK,
+	MONO_IMAGE_ERROR_ERRNO,
+	MONO_IMAGE_MISSING_ASSEMBLYREF,
+	MONO_IMAGE_IMAGE_INVALID
+} MonoImageOpenStatus;
+
+typedef MonoAssembly* (*MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 
 typedef struct loaded_mono
 {
     HMODULE mono_handle;
+    HMODULE glib_handle;
 
+    MonoAssembly* (*mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
     void (*mono_config_parse)(const char *filename);
     MonoAssembly* (*mono_domain_assembly_open) (MonoDomain *domain, const char *name);
+    void (*mono_free)(void *);
+    void (*mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
     void (*mono_jit_cleanup)(MonoDomain *domain);
     int (*mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
     MonoDomain* (*mono_jit_init)(const char *file);
     int (*mono_jit_set_trace_options)(const char* options);
     void (*mono_set_dirs)(const char *assembly_dir, const char *config_dir);
+    char* (*mono_stringify_assembly_name)(MonoAssemblyName *aname);
 } loaded_mono;
 
 /* loaded runtime interfaces */

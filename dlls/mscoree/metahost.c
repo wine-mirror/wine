@@ -33,6 +33,7 @@
 
 #include "corerror.h"
 #include "mscoree.h"
+#include "fusion.h"
 #include "metahost.h"
 #include "wine/list.h"
 #include "mscoree_private.h"
@@ -73,6 +74,8 @@ static loaded_mono loaded_monos[NUM_ABI_VERSIONS];
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version);
 
+static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
+
 static void set_environment(LPCWSTR bin_path)
 {
     WCHAR path_env[MAX_PATH];
@@ -93,6 +96,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
     static const WCHAR bin[] = {'\\','b','i','n',0};
     static const WCHAR lib[] = {'\\','l','i','b',0};
     static const WCHAR etc[] = {'\\','e','t','c',0};
+    static const WCHAR glibdll[] = {'l','i','b','g','l','i','b','-','2','.','0','-','0','.','d','l','l',0};
     WCHAR mono_dll_path[MAX_PATH+16], mono_bin_path[MAX_PATH+4];
     WCHAR mono_lib_path[MAX_PATH+4], mono_etc_path[MAX_PATH+4];
     char mono_lib_path_a[MAX_PATH], mono_etc_path_a[MAX_PATH];
@@ -134,19 +138,38 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
     } \
 } while (0);
 
+        LOAD_MONO_FUNCTION(mono_assembly_open);
         LOAD_MONO_FUNCTION(mono_config_parse);
         LOAD_MONO_FUNCTION(mono_domain_assembly_open);
+        LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
         LOAD_MONO_FUNCTION(mono_jit_cleanup);
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);
         LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
         LOAD_MONO_FUNCTION(mono_set_dirs);
+        LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
+
+        /* GLib imports obsoleted by the 2.0 ABI */
+        if (This->mono_abi_version == 1)
+        {
+            (*result)->glib_handle = LoadLibraryW(glibdll);
+            if (!(*result)->glib_handle) goto fail;
+
+            (*result)->mono_free = (void*)GetProcAddress((*result)->glib_handle, "g_free");
+            if (!(*result)->mono_free) goto fail;
+        }
+        else
+        {
+            LOAD_MONO_FUNCTION(mono_free);
+        }
 
 #undef LOAD_MONO_FUNCTION
 
         (*result)->mono_set_dirs(mono_lib_path_a, mono_etc_path_a);
 
         (*result)->mono_config_parse(NULL);
+
+        (*result)->mono_install_assembly_preload_hook(mono_assembly_search_hook_fn, *result);
 
         trace_size = GetEnvironmentVariableA("WINE_MONO_TRACE", trace_setting, sizeof(trace_setting));
 
@@ -161,7 +184,9 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 fail:
     ERR("Could not load Mono into this process\n");
     FreeLibrary((*result)->mono_handle);
+    FreeLibrary((*result)->glib_handle);
     (*result)->mono_handle = NULL;
+    (*result)->glib_handle = NULL;
     return E_FAIL;
 }
 
@@ -1037,6 +1062,93 @@ static const struct CLRMetaHost GlobalCLRMetaHost = {
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
 {
     return ICLRMetaHost_QueryInterface((ICLRMetaHost*)&GlobalCLRMetaHost, riid, ppobj);
+}
+
+static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
+{
+    loaded_mono *mono = user_data;
+    HRESULT hr=S_OK;
+    MonoAssembly *result=NULL;
+    char *stringname=NULL;
+    LPWSTR stringnameW;
+    int stringnameW_size;
+    IAssemblyCache *asmcache;
+    ASSEMBLY_INFO info;
+    WCHAR path[MAX_PATH];
+    char *pathA;
+    MonoImageOpenStatus stat;
+    static WCHAR fusiondll[] = {'f','u','s','i','o','n',0};
+    HMODULE hfusion=NULL;
+    static HRESULT WINAPI (*pCreateAssemblyCache)(IAssemblyCache**,DWORD);
+
+    stringname = mono->mono_stringify_assembly_name(aname);
+
+    TRACE("%s\n", debugstr_a(stringname));
+
+    if (!stringname) return NULL;
+
+    /* FIXME: We should search the given paths before the GAC. */
+
+    if (!pCreateAssemblyCache)
+    {
+        hr = LoadLibraryShim(fusiondll, NULL, NULL, &hfusion);
+
+        if (SUCCEEDED(hr))
+        {
+            pCreateAssemblyCache = (void*)GetProcAddress(hfusion, "CreateAssemblyCache");
+            if (!pCreateAssemblyCache)
+                hr = E_FAIL;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+        hr = pCreateAssemblyCache(&asmcache, 0);
+
+    if (SUCCEEDED(hr))
+    {
+        stringnameW_size = MultiByteToWideChar(CP_UTF8, 0, stringname, -1, NULL, 0);
+
+        stringnameW = HeapAlloc(GetProcessHeap(), 0, stringnameW_size * sizeof(WCHAR));
+        if (stringnameW)
+            MultiByteToWideChar(CP_UTF8, 0, stringname, -1, stringnameW, stringnameW_size);
+        else
+            hr = E_OUTOFMEMORY;
+
+        if (SUCCEEDED(hr))
+        {
+            info.cbAssemblyInfo = sizeof(info);
+            info.pszCurrentAssemblyPathBuf = path;
+            info.cchBuf = MAX_PATH;
+            path[0] = 0;
+
+            hr = IAssemblyCache_QueryAssemblyInfo(asmcache, 0, stringnameW, &info);
+        }
+
+        HeapFree(GetProcessHeap(), 0, stringnameW);
+
+        IAssemblyCache_Release(asmcache);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        TRACE("found: %s\n", debugstr_w(path));
+
+        pathA = WtoA(path);
+
+        if (pathA)
+        {
+            result = mono->mono_assembly_open(pathA, &stat);
+
+            if (!result)
+                ERR("Failed to load %s, status=%u\n", debugstr_w(path), stat);
+
+            HeapFree(GetProcessHeap(), 0, pathA);
+        }
+    }
+
+    mono->mono_free(stringname);
+
+    return result;
 }
 
 HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,

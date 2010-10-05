@@ -40,6 +40,7 @@
 #include "cor.h"
 #include "corerror.h"
 #include "mscoree.h"
+#include "fusion.h"
 #include "metahost.h"
 #include "wine/list.h"
 #include "mscoree_private.h"
@@ -49,6 +50,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
 LONG dll_refs = 0;
+
+char *WtoA(LPCWSTR wstr)
+{
+    int length;
+    char *result;
+
+    length = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
+
+    result = HeapAlloc(GetProcessHeap(), 0, length);
+
+    if (result)
+        WideCharToMultiByte(CP_UTF8, 0, wstr, -1, result, length, NULL, NULL);
+
+    return result;
+}
 
 static BOOL get_install_root(LPWSTR install_dir)
 {

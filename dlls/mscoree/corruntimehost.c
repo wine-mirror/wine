@@ -57,21 +57,6 @@ struct DomainEntry
     MonoDomain *domain;
 };
 
-static char *WtoA(LPCWSTR wstr)
-{
-    int length;
-    char *result;
-
-    length = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
-
-    result = HeapAlloc(GetProcessHeap(), 0, length);
-
-    if (result)
-        WideCharToMultiByte(CP_UTF8, 0, wstr, -1, result, length, NULL, NULL);
-
-    return result;
-}
-
 static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
 {
     struct DomainEntry *entry;
