@@ -30,6 +30,7 @@
 static MCIERROR ok_saved = MCIERR_FILE_NOT_FOUND;
 
 typedef union {
+      MCI_INFO_PARMS      info;
       MCI_STATUS_PARMS    status;
       MCI_WAVE_SET_PARMS  set;
       MCI_WAVE_OPEN_PARMS open;
@@ -485,6 +486,19 @@ static void test_openCloseWAVE(HWND hwnd)
     err = mciSendCommandW(24000, MCI_SYSINFO, MCI_SYSINFO_INSTALLNAME, (DWORD_PTR)&parm);
     ok(err==MCIERR_INVALID_DEVICE_NAME || broken(err==MMSYSERR_NOTSUPPORTED/* Win9x */), "mciCommand MCI_SYSINFO nodev installname: %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"K"), "output buffer %s\n", buf);
+
+    buf[1] = 'L';
+    parm.info.lpstrReturn = buf;
+    parm.info.dwRetSize = 2;
+    err = mciSendCommand(1, MCI_INFO, MCI_INFO_PRODUCT, (DWORD_PTR)&parm);
+    ok(!err, "mciCommand MCI_INFO product: %s\n", dbg_mcierr(err));
+    ok(buf[0] && !buf[1], "info product output buffer %s\n", buf);
+
+    buf[0] = 'K';
+    parm.info.dwRetSize = sizeof(buf);
+    err = mciSendCommandW(1, MCI_INFO, 0x07000000, (DWORD_PTR)&parm);
+    ok(err==MCIERR_UNRECOGNIZED_KEYWORD, "mciCommand MCI_INFO other: %s\n", dbg_mcierr(err));
+    ok(!strcmp(buf,"K"), "info output buffer %s\n", buf);
 
     err = mciGetDeviceID("all");
     ok(MCI_ALL_DEVICE_ID==err || /* Win9x */(WORD)MCI_ALL_DEVICE_ID==err,"mciGetDeviceID all returned %u, expected %d\n", err, MCI_ALL_DEVICE_ID);

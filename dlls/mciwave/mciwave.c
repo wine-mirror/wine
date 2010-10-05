@@ -1665,14 +1665,14 @@ static DWORD WAVE_mciInfo(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW l
     if (!lpParms || !lpParms->lpstrReturn)
 	return MCIERR_NULL_PARAMETER_BLOCK;
 
+    TRACE("buf=%p, len=%u\n", lpParms->lpstrReturn, lpParms->dwRetSize);
+
     if (wmw == NULL) {
 	ret = MCIERR_INVALID_DEVICE_ID;
     } else {
         static const WCHAR wszAudio  [] = {'W','i','n','e','\'','s',' ','a','u','d','i','o',' ','p','l','a','y','e','r',0};
         static const WCHAR wszWaveIn [] = {'W','i','n','e',' ','W','a','v','e',' ','I','n',0};
         static const WCHAR wszWaveOut[] = {'W','i','n','e',' ','W','a','v','e',' ','O','u','t',0};
-
-	TRACE("buf=%p, len=%u\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
 	switch (dwFlags & ~(MCI_WAIT|MCI_NOTIFY)) {
 	case MCI_INFO_PRODUCT: str = wszAudio; break;
@@ -1681,17 +1681,16 @@ static DWORD WAVE_mciInfo(MCIDEVICEID wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW l
 	case MCI_WAVE_OUTPUT:  str = wszWaveOut; break;
 	default:
             WARN("Don't know this info command (%u)\n", dwFlags);
-	    ret = MCIERR_UNRECOGNIZED_COMMAND;
+	    ret = MCIERR_UNRECOGNIZED_KEYWORD;
 	}
     }
-    if (str) {
-	if (strlenW(str) + 1 > lpParms->dwRetSize) {
-	    ret = MCIERR_PARAM_OVERFLOW;
-	} else {
-	    lstrcpynW(lpParms->lpstrReturn, str, lpParms->dwRetSize);
-	}
-    } else {
-	lpParms->lpstrReturn[0] = 0;
+    if (!ret) {
+	if (lpParms->dwRetSize) {
+	    WCHAR zero = 0;
+	    /* FIXME? Since NT, mciwave, mciseq and mcicda set dwRetSize
+	     *        to the number of characters written, excluding \0. */
+	    lstrcpynW(lpParms->lpstrReturn, str ? str : &zero, lpParms->dwRetSize);
+	} else ret = MCIERR_PARAM_OVERFLOW;
     }
     if (MMSYSERR_NOERROR==ret && (dwFlags & MCI_NOTIFY))
 	WAVE_mciNotify(lpParms->dwCallback, wmw, MCI_NOTIFY_SUCCESSFUL);

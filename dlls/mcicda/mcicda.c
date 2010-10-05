@@ -650,18 +650,15 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 	WARN("Don't know this info command (%u)\n", dwFlags);
 	ret = MCIERR_MISSING_PARAMETER;
     }
-    if (str) {
-	if (lpParms->dwRetSize <= strlenW(str)) {
-	    lstrcpynW(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
-	    ret = MCIERR_PARAM_OVERFLOW;
-	} else {
-	    strcpyW(lpParms->lpstrReturn, str);
-	}
-    } else {
-	*lpParms->lpstrReturn = 0;
+    if (!ret) {
+	TRACE("=> %s\n", debugstr_w(str));
+	if (lpParms->dwRetSize) {
+	    WCHAR zero = 0;
+	    /* FIXME? Since NT, mciwave, mciseq and mcicda set dwRetSize
+	     *        to the number of characters written, excluding \0. */
+	    lstrcpynW(lpParms->lpstrReturn, str ? str : &zero, lpParms->dwRetSize);
+	} else ret = MCIERR_PARAM_OVERFLOW;
     }
-    TRACE("=> %s (%d)\n", debugstr_w(lpParms->lpstrReturn), ret);
-
     if (MMSYSERR_NOERROR==ret && (dwFlags & MCI_NOTIFY))
 	MCICDA_Notify(lpParms->dwCallback, wmcda, MCI_NOTIFY_SUCCESSFUL);
     return ret;
