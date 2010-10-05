@@ -380,8 +380,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     if (pdi.theme)
     {
         GetWindowRect( infoPtr->Self, &pdi.bgRect );
-        ScreenToClient( infoPtr->Self, (POINT*)&pdi.bgRect );
-        ScreenToClient( infoPtr->Self, (POINT*)&pdi.bgRect.right );
+        MapWindowPoints( infoPtr->Self, 0, (POINT*)&pdi.bgRect, 2 );
     }
 
     if (!barSmooth)
