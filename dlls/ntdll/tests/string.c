@@ -1175,6 +1175,27 @@ static void test_qsort(void)
 	"."
     };
 
+    p_qsort ((void*)arr, 0, sizeof(int), intcomparefunc);
+    ok(arr[0] == 23, "badly sorted, nmemb=0, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 42, "badly sorted, nmemb=0, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 8,  "badly sorted, nmemb=0, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 4,  "badly sorted, nmemb=0, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 16, "badly sorted, nmemb=0, arr[4] is %d\n", arr[4]);
+
+    p_qsort ((void*)arr, 1, sizeof(int), intcomparefunc);
+    ok(arr[0] == 23, "badly sorted, nmemb=1, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 42, "badly sorted, nmemb=1, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 8,  "badly sorted, nmemb=1, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 4,  "badly sorted, nmemb=1, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 16, "badly sorted, nmemb=1, arr[4] is %d\n", arr[4]);
+
+    p_qsort ((void*)arr, 5, 0, intcomparefunc);
+    ok(arr[0] == 23, "badly sorted, size=0, arr[0] is %d\n", arr[0]);
+    ok(arr[1] == 42, "badly sorted, size=0, arr[1] is %d\n", arr[1]);
+    ok(arr[2] == 8,  "badly sorted, size=0, arr[2] is %d\n", arr[2]);
+    ok(arr[3] == 4,  "badly sorted, size=0, arr[3] is %d\n", arr[3]);
+    ok(arr[4] == 16, "badly sorted, size=0, arr[4] is %d\n", arr[4]);
+
     p_qsort ((void*)arr, 5, sizeof(int), intcomparefunc);
     ok(arr[0] == 4,  "badly sorted, arr[0] is %d\n", arr[0]);
     ok(arr[1] == 8,  "badly sorted, arr[1] is %d\n", arr[1]);
