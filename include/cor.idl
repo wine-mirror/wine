@@ -16,10 +16,88 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+import "propidl.idl";
+
 cpp_quote("#include <ole2.h>")
 /* FIXME: #include "specstrings.h" */
 /* FIXME: #include "corerror.h" */
 /* FIXME: #include "corhdr.h" */
+
+cpp_quote("DEFINE_GUID(CLSID_CorMetaDataDispenser, 0xe5cb7a31,0x7512,0x11d2,0x89,0xce,0x00,0x80,0xc7,0x92,0xe5,0xd8);")
+cpp_quote("DEFINE_GUID(CLSID_CorMetaDataDispenserRuntime, 0x1ec2de53,0x75cc,0x11d2,0x97,0x75,0x00,0xa0,0xc9,0xb4,0xd5,0x0c);")
+
+[
+    object,
+    local,
+    uuid(809c652e-7396-11d2-9771-00a0c9b4d50c)
+]
+interface IMetaDataDispenser : IUnknown
+{
+    HRESULT DefineScope(
+        [in] REFCLSID rclsid,
+        [in] DWORD dwCreateFlags,
+        [in] REFIID riid,
+        [out] IUnknown **ppIUnk);
+
+    HRESULT OpenScope(
+        [in] LPCWSTR szScope,
+        [in] DWORD dwOpenFlags,
+        [in] REFIID riid,
+        [out] IUnknown **ppIUnk);
+
+    HRESULT OpenScopeOnMemory(
+        [in] const void *pData,
+        [in] ULONG cbData,
+        [in] DWORD dwOpenFlags,
+        [in] REFIID riid,
+        [out] IUnknown **ppIUnk);
+}
+
+[
+    object,
+    local,
+    uuid(31bcfce2-dafb-11d2-9f81-00c04f79a0a3)
+]
+interface IMetaDataDispenserEx : IMetaDataDispenser
+{
+    HRESULT SetOption(
+        [in] REFGUID optionid,
+        [in] const VARIANT *value);
+
+    HRESULT GetOption(
+        [in] REFGUID optionid,
+        [out] VARIANT *pvalue);
+
+    HRESULT OpenScopeOnITypeInfo(
+        [in] ITypeInfo *pITI,
+        [in] DWORD dwOpenFlags,
+        [in] REFIID riid,
+        [out] IUnknown **ppIUnk);
+
+    HRESULT GetCORSystemDirectory(
+        [out, size_is(cchBuffer)] LPWSTR szBuffer,
+        [in] DWORD cchBuffer,
+        [out] DWORD *pchBuffer);
+
+    HRESULT FindAssembly(
+        [in] LPCWSTR szAppBase,
+        [in] LPCWSTR szPrivateBin,
+        [in] LPCWSTR szGlobalBin,
+        [in] LPCWSTR szAssemblyName,
+        [out, size_is(cchName)] LPWSTR szName,
+        [in] ULONG cchName,
+        [out] ULONG *pcName);
+
+    HRESULT FindAssemblyModule(
+        [in] LPCWSTR szAppBase,
+        [in] LPCWSTR szPrivateBin,
+        [in] LPCWSTR szGlobalBin,
+        [in] LPCWSTR szAssemblyName,
+        [in] LPCWSTR szModuleName,
+        [out, size_is(cchName)] LPWSTR szName,
+        [in] ULONG cchName,
+        [out] ULONG *pcName);
+}
 
 cpp_quote("BOOL        WINAPI _CorDllMain(HINSTANCE,DWORD,LPVOID);")
 cpp_quote("__int32     WINAPI _CorExeMain(void);")
