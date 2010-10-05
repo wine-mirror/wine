@@ -440,6 +440,14 @@ sinun täytyy ensin asentaa jokin tulostin."
     PD32_PRINTER_STATUS_POWER_SAVE        "Virransäästötila; "
 }
 
+STRINGTABLE /* Font styles */
+{
+    IDS_FONT_REGULAR       "Tavallinen"
+    IDS_FONT_BOLD          "Lihavoitu"
+    IDS_FONT_ITALIC        "Kursivoitu"
+    IDS_FONT_BOLD_ITALIC   "Lihavoitu kursivoitu"
+}
+
 STRINGTABLE /* Color names */
 {
     IDS_COLOR_BLACK     "Musta"
