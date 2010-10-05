@@ -24,15 +24,15 @@ typedef struct TransformFilterImpl TransformFilterImpl;
 
 typedef struct TransformFuncsTable {
     HRESULT (*pfnProcessBegin) (TransformFilterImpl *This);
-    HRESULT (*pfnProcessSampleData) (InputPin *pin, IMediaSample *pSample);
+    BaseInputPin_Receive pfnProcessSampleData;
     HRESULT (*pfnProcessEnd) (TransformFilterImpl *This);
     HRESULT (*pfnQueryConnect) (TransformFilterImpl *This, const AM_MEDIA_TYPE * pmt);
-    HRESULT (*pfnConnectInput) (InputPin *pin, const AM_MEDIA_TYPE * pmt);
-    HRESULT (*pfnCleanup) (InputPin *pin);
-    HRESULT (*pfnEndOfStream) (InputPin *pin);
-    HRESULT (*pfnBeginFlush) (InputPin *pin);
-    HRESULT (*pfnEndFlush) (InputPin *pin);
-    HRESULT (*pfnNewSegment) (InputPin *pin, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
+    HRESULT (*pfnConnectInput) (BaseInputPin *pin, const AM_MEDIA_TYPE * pmt);
+    HRESULT (*pfnCleanup) (BaseInputPin *pin);
+    HRESULT (*pfnEndOfStream) (BaseInputPin *pin);
+    HRESULT (*pfnBeginFlush) (BaseInputPin *pin);
+    HRESULT (*pfnEndFlush) (BaseInputPin *pin);
+    HRESULT (*pfnNewSegment) (BaseInputPin *pin, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 } TransformFuncsTable;
 
 struct TransformFilterImpl

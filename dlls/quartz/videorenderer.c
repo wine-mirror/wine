@@ -68,7 +68,7 @@ typedef struct VideoRendererImpl
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
 
-    InputPin *pInputPin;
+    BaseInputPin *pInputPin;
 
     BOOL init;
     HANDLE hThread;
@@ -354,9 +354,10 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     return S_OK;
 }
 
-static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
+static HRESULT WINAPI VideoRenderer_Receive(IPin* iface, IMediaSample * pSample)
 {
-    VideoRendererImpl *This = iface;
+    BaseInputPin* pin = (BaseInputPin*)iface;
+    VideoRendererImpl *This = (VideoRendererImpl *)pin->pin.pinInfo.pFilter;
     LPBYTE pbSrcStream = NULL;
     LONG cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -491,8 +492,11 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     return S_OK;
 }
 
-static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI VideoRenderer_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
+    BaseInputPin* pin = (BaseInputPin*)iface;
+    VideoRendererImpl *This = (VideoRendererImpl *)pin->pin.pinInfo.pFilter;
+
     if (!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video))
         return S_FALSE;
 
@@ -501,7 +505,6 @@ static HRESULT VideoRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt
         IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB565) ||
         IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_RGB8))
     {
-        VideoRendererImpl* This = iface;
         LONG height;
 
         if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
@@ -580,7 +583,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     piInput.pFilter = (IBaseFilter *)pVideoRenderer;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    hr = InputPin_Construct(&VideoRenderer_InputPin_Vtbl, &piInput, VideoRenderer_Sample, (LPVOID)pVideoRenderer, VideoRenderer_QueryAccept, NULL, &pVideoRenderer->csFilter, NULL, (IPin **)&pVideoRenderer->pInputPin);
+    hr = BaseInputPin_Construct(&VideoRenderer_InputPin_Vtbl, &piInput, VideoRenderer_CheckMediaType, VideoRenderer_Receive, &pVideoRenderer->csFilter, NULL, (IPin **)&pVideoRenderer->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -1010,7 +1013,7 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
 
 static HRESULT WINAPI VideoRenderer_InputPin_EndOfStream(IPin * iface)
 {
-    InputPin* This = (InputPin*)iface;
+    BaseInputPin* This = (BaseInputPin*)iface;
     VideoRendererImpl *pFilter;
     IMediaEventSink* pEventSink;
     HRESULT hr;
@@ -1031,7 +1034,7 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndOfStream(IPin * iface)
 
 static HRESULT WINAPI VideoRenderer_InputPin_BeginFlush(IPin * iface)
 {
-    InputPin* This = (InputPin*)iface;
+    BaseInputPin* This = (BaseInputPin*)iface;
     VideoRendererImpl *pVideoRenderer = (VideoRendererImpl *)This->pin.pinInfo.pFilter;
     HRESULT hr;
 
@@ -1041,7 +1044,7 @@ static HRESULT WINAPI VideoRenderer_InputPin_BeginFlush(IPin * iface)
     if (pVideoRenderer->state == State_Paused)
         SetEvent(pVideoRenderer->blocked);
 
-    hr = InputPin_BeginFlush(iface);
+    hr = BaseInputPinImpl_BeginFlush(iface);
     LeaveCriticalSection(This->pin.pCritSec);
 
     return hr;
@@ -1049,7 +1052,7 @@ static HRESULT WINAPI VideoRenderer_InputPin_BeginFlush(IPin * iface)
 
 static HRESULT WINAPI VideoRenderer_InputPin_EndFlush(IPin * iface)
 {
-    InputPin* This = (InputPin*)iface;
+    BaseInputPin* This = (BaseInputPin*)iface;
     VideoRendererImpl *pVideoRenderer = (VideoRendererImpl *)This->pin.pinInfo.pFilter;
     HRESULT hr;
 
@@ -1059,7 +1062,7 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndFlush(IPin * iface)
     if (pVideoRenderer->state == State_Paused)
         ResetEvent(pVideoRenderer->blocked);
 
-    hr = InputPin_EndFlush(iface);
+    hr = BaseInputPinImpl_EndFlush(iface);
     LeaveCriticalSection(This->pin.pCritSec);
     MediaSeekingPassThru_ResetMediaTime(pVideoRenderer->seekthru_unk);
 
@@ -1068,24 +1071,24 @@ static HRESULT WINAPI VideoRenderer_InputPin_EndFlush(IPin * iface)
 
 static const IPinVtbl VideoRenderer_InputPin_Vtbl = 
 {
-    InputPin_QueryInterface,
+    BaseInputPinImpl_QueryInterface,
     BasePinImpl_AddRef,
-    InputPin_Release,
-    InputPin_Connect,
-    InputPin_ReceiveConnection,
+    BaseInputPinImpl_Release,
+    BaseInputPinImpl_Connect,
+    BaseInputPinImpl_ReceiveConnection,
     BasePinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    InputPin_QueryAccept,
+    BaseInputPinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     VideoRenderer_InputPin_EndOfStream,
     VideoRenderer_InputPin_BeginFlush,
     VideoRenderer_InputPin_EndFlush,
-    InputPin_NewSegment
+    BaseInputPinImpl_NewSegment
 };
 
 /*** IUnknown methods ***/

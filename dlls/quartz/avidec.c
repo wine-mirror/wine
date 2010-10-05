@@ -66,8 +66,9 @@ static HRESULT AVIDec_ProcessBegin(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
-static HRESULT AVIDec_ProcessSampleData(InputPin *pin, IMediaSample *pSample)
+static HRESULT WINAPI AVIDec_ProcessSampleData(IPin *iface, IMediaSample *pSample)
 {
+    BaseInputPin *pin = (BaseInputPin*)iface;
     AVIDecImpl* This = (AVIDecImpl *)pin->pin.pinInfo.pFilter;
     AM_MEDIA_TYPE amt;
     HRESULT hr;
@@ -182,7 +183,7 @@ static HRESULT AVIDec_ProcessEnd(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
-static HRESULT AVIDec_ConnectInput(InputPin *pin, const AM_MEDIA_TYPE * pmt)
+static HRESULT AVIDec_ConnectInput(BaseInputPin *pin, const AM_MEDIA_TYPE * pmt)
 {
     AVIDecImpl* This = (AVIDecImpl*)pin->pin.pinInfo.pFilter;
     HRESULT hr = VFW_E_TYPE_NOT_ACCEPTED;
@@ -283,7 +284,7 @@ failed:
     return hr;
 }
 
-static HRESULT AVIDec_Cleanup(InputPin *pin)
+static HRESULT AVIDec_Cleanup(BaseInputPin *pin)
 {
     AVIDecImpl *This = (AVIDecImpl *)pin->pin.pinInfo.pFilter;
 

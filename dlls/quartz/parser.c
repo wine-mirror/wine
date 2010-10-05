@@ -781,7 +781,7 @@ static const IPinVtbl Parser_InputPin_Vtbl =
     PullPin_QueryInterface,
     BasePinImpl_AddRef,
     PullPin_Release,
-    InputPin_Connect,
+    BaseInputPinImpl_Connect,
     Parser_PullPin_ReceiveConnection,
     Parser_PullPin_Disconnect,
     BasePinImpl_ConnectedTo,

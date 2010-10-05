@@ -63,7 +63,7 @@ typedef struct DSoundRenderImpl
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
 
-    InputPin * pInputPin;
+    BaseInputPin * pInputPin;
 
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
@@ -211,9 +211,10 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, const BYTE *d
     return hr;
 }
 
-static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
+static HRESULT WINAPI DSoundRender_Receive(IPin *iface, IMediaSample * pSample)
 {
-    DSoundRenderImpl *This = iface;
+    BaseInputPin *pin = (BaseInputPin*)iface;
+    DSoundRenderImpl *This = (DSoundRenderImpl*)pin->pin.pinInfo.pFilter;
     LPBYTE pbSrcStream = NULL;
     LONG cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
@@ -344,7 +345,7 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
     return hr;
 }
 
-static HRESULT DSoundRender_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI DSoundRender_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
     WAVEFORMATEX* format;
 
@@ -397,7 +398,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pDSoundRender;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
-    hr = InputPin_Construct(&DSoundRender_InputPin_Vtbl, &piInput, DSoundRender_Sample, pDSoundRender, DSoundRender_QueryAccept, NULL, &pDSoundRender->csFilter, NULL, (IPin **)&pDSoundRender->pInputPin);
+    hr = BaseInputPin_Construct(&DSoundRender_InputPin_Vtbl, &piInput, DSoundRender_CheckMediaType, DSoundRender_Receive, &pDSoundRender->csFilter, NULL, (IPin **)&pDSoundRender->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -809,7 +810,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
 
 static HRESULT WINAPI DSoundRender_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    InputPin *This = (InputPin *)iface;
+    BaseInputPin *This = (BaseInputPin *)iface;
     PIN_DIRECTION pindirReceive;
     DSoundRenderImpl *DSImpl;
     HRESULT hr = S_OK;
@@ -825,7 +826,7 @@ static HRESULT WINAPI DSoundRender_InputPin_ReceiveConnection(IPin * iface, IPin
         if (This->pin.pConnectedTo)
             hr = VFW_E_ALREADY_CONNECTED;
 
-        if (SUCCEEDED(hr) && This->fnQueryAccept(This->pUserData, pmt) != S_OK)
+        if (SUCCEEDED(hr) && This->fnCheckMediaType(iface, pmt) != S_OK)
             hr = VFW_E_TYPE_NOT_ACCEPTED;
 
         if (SUCCEEDED(hr))
@@ -914,7 +915,7 @@ static HRESULT WINAPI DSoundRender_InputPin_Disconnect(IPin * iface)
 
 static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
 {
-    InputPin* This = (InputPin*)iface;
+    BaseInputPin* This = (BaseInputPin*)iface;
     DSoundRenderImpl *me = (DSoundRenderImpl*)This->pin.pinInfo.pFilter;
     IMediaEventSink* pEventSink;
     HRESULT hr;
@@ -922,7 +923,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
     EnterCriticalSection(This->pin.pCritSec);
 
     TRACE("(%p/%p)->()\n", This, iface);
-    hr = InputPin_EndOfStream(iface);
+    hr = BaseInputPinImpl_EndOfStream(iface);
     if (hr != S_OK)
     {
         ERR("%08x\n", hr);
@@ -954,14 +955,14 @@ static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
 
 static HRESULT WINAPI DSoundRender_InputPin_BeginFlush(IPin * iface)
 {
-    InputPin *This = (InputPin *)iface;
+    BaseInputPin *This = (BaseInputPin *)iface;
     DSoundRenderImpl *pFilter = (DSoundRenderImpl *)This->pin.pinInfo.pFilter;
     HRESULT hr;
 
     TRACE("\n");
 
     EnterCriticalSection(This->pin.pCritSec);
-    hr = InputPin_BeginFlush(iface);
+    hr = BaseInputPinImpl_BeginFlush(iface);
     SetEvent(pFilter->blocked);
     LeaveCriticalSection(This->pin.pCritSec);
 
@@ -970,7 +971,7 @@ static HRESULT WINAPI DSoundRender_InputPin_BeginFlush(IPin * iface)
 
 static HRESULT WINAPI DSoundRender_InputPin_EndFlush(IPin * iface)
 {
-    InputPin *This = (InputPin *)iface;
+    BaseInputPin *This = (BaseInputPin *)iface;
     DSoundRenderImpl *pFilter = (DSoundRenderImpl *)This->pin.pinInfo.pFilter;
     HRESULT hr;
 
@@ -1002,7 +1003,7 @@ static HRESULT WINAPI DSoundRender_InputPin_EndFlush(IPin * iface)
         memset(buffer, 0, size);
         IDirectSoundBuffer_Unlock(pFilter->dsbuffer, buffer, size, NULL, 0);
     }
-    hr = InputPin_EndFlush(iface);
+    hr = BaseInputPinImpl_EndFlush(iface);
     LeaveCriticalSection(This->pin.pCritSec);
     MediaSeekingPassThru_ResetMediaTime(pFilter->seekthru_unk);
 
@@ -1011,10 +1012,10 @@ static HRESULT WINAPI DSoundRender_InputPin_EndFlush(IPin * iface)
 
 static const IPinVtbl DSoundRender_InputPin_Vtbl =
 {
-    InputPin_QueryInterface,
+    BaseInputPinImpl_QueryInterface,
     BasePinImpl_AddRef,
-    InputPin_Release,
-    InputPin_Connect,
+    BaseInputPinImpl_Release,
+    BaseInputPinImpl_Connect,
     DSoundRender_InputPin_ReceiveConnection,
     DSoundRender_InputPin_Disconnect,
     BasePinImpl_ConnectedTo,
@@ -1022,13 +1023,13 @@ static const IPinVtbl DSoundRender_InputPin_Vtbl =
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    InputPin_QueryAccept,
+    BaseInputPinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     DSoundRender_InputPin_EndOfStream,
     DSoundRender_InputPin_BeginFlush,
     DSoundRender_InputPin_EndFlush,
-    InputPin_NewSegment
+    BaseInputPinImpl_NewSegment
 };
 
 /*** IUnknown methods ***/

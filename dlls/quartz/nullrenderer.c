@@ -62,15 +62,16 @@ typedef struct NullRendererImpl
     IReferenceClock * pClock;
     FILTER_INFO filterInfo;
 
-    InputPin *pInputPin;
+    BaseInputPin *pInputPin;
     IUnknown * pUnkOuter;
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
 } NullRendererImpl;
 
-static HRESULT NullRenderer_Sample(LPVOID iface, IMediaSample * pSample)
+static HRESULT WINAPI NullRenderer_Receive(IPin *iface, IMediaSample * pSample)
 {
-    NullRendererImpl *This = iface;
+    BaseInputPin *pin = (BaseInputPin*)iface;
+    NullRendererImpl *This = ((NullRendererImpl*)pin->pin.pinInfo.pFilter);
     HRESULT hr = S_OK;
     REFERENCE_TIME start, stop;
 
@@ -86,7 +87,7 @@ static HRESULT NullRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     return hr;
 }
 
-static HRESULT NullRenderer_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI NullRenderer_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
     TRACE("Not a stub!\n");
     return S_OK;
@@ -121,7 +122,7 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     piInput.pFilter = (IBaseFilter *)pNullRenderer;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    hr = InputPin_Construct(&NullRenderer_InputPin_Vtbl, &piInput, NullRenderer_Sample, (LPVOID)pNullRenderer, NullRenderer_QueryAccept, NULL, &pNullRenderer->csFilter, NULL, (IPin **)&pNullRenderer->pInputPin);
+    hr = BaseInputPin_Construct(&NullRenderer_InputPin_Vtbl, &piInput, NullRenderer_CheckMediaType, NullRenderer_Receive, &pNullRenderer->csFilter, NULL, (IPin **)&pNullRenderer->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -511,7 +512,7 @@ static const IBaseFilterVtbl NullRenderer_Vtbl =
 
 static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
 {
-    InputPin* This = (InputPin*)iface;
+    BaseInputPin* This = (BaseInputPin*)iface;
     IMediaEventSink* pEventSink;
     NullRendererImpl *pNull;
     IFilterGraph *graph;
@@ -519,7 +520,7 @@ static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    InputPin_EndOfStream(iface);
+    BaseInputPinImpl_EndOfStream(iface);
     pNull = (NullRendererImpl*)This->pin.pinInfo.pFilter;
     graph = pNull->filterInfo.pGraph;
     if (graph)
@@ -538,13 +539,13 @@ static HRESULT WINAPI NullRenderer_InputPin_EndOfStream(IPin * iface)
 
 static HRESULT WINAPI NullRenderer_InputPin_EndFlush(IPin * iface)
 {
-    InputPin* This = (InputPin*)iface;
+    BaseInputPin* This = (BaseInputPin*)iface;
     NullRendererImpl *pNull;
     HRESULT hr = S_OK;
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    hr = InputPin_EndOfStream(iface);
+    hr = BaseInputPinImpl_EndOfStream(iface);
     pNull = (NullRendererImpl*)This->pin.pinInfo.pFilter;
     MediaSeekingPassThru_ResetMediaTime(pNull->seekthru_unk);
     return hr;
@@ -552,22 +553,22 @@ static HRESULT WINAPI NullRenderer_InputPin_EndFlush(IPin * iface)
 
 static const IPinVtbl NullRenderer_InputPin_Vtbl =
 {
-    InputPin_QueryInterface,
+    BaseInputPinImpl_QueryInterface,
     BasePinImpl_AddRef,
-    InputPin_Release,
-    InputPin_Connect,
-    InputPin_ReceiveConnection,
+    BaseInputPinImpl_Release,
+    BaseInputPinImpl_Connect,
+    BaseInputPinImpl_ReceiveConnection,
     BasePinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    InputPin_QueryAccept,
+    BaseInputPinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     NullRenderer_InputPin_EndOfStream,
-    InputPin_BeginFlush,
+    BaseInputPinImpl_BeginFlush,
     NullRenderer_InputPin_EndFlush,
-    InputPin_NewSegment
+    BaseInputPinImpl_NewSegment
 };

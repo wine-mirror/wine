@@ -47,7 +47,7 @@ static const IBaseFilterVtbl TransformFilter_Vtbl;
 static const IPinVtbl TransformFilter_InputPin_Vtbl;
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
-static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI TransformFilter_Input_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
     TransformFilterImpl* This = (TransformFilterImpl *)((BasePin *)iface)->pinInfo.pFilter;
     TRACE("%p\n", iface);
@@ -105,7 +105,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
     piOutput.pFilter = (IBaseFilter *)pTransformFilter;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
-    hr = InputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, (SAMPLEPROC_PUSH)pFuncsTable->pfnProcessSampleData, NULL, TransformFilter_Input_QueryAccept, NULL, &pTransformFilter->csFilter, NULL, &pTransformFilter->ppPins[0]);
+    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, TransformFilter_Input_CheckMediaType, pFuncsTable->pfnProcessSampleData, &pTransformFilter->csFilter, NULL, &pTransformFilter->ppPins[0]);
 
     if (SUCCEEDED(hr))
     {
@@ -114,8 +114,6 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
         props.cbPrefix = 0;
         props.cbBuffer = 0; /* Will be updated at connection time */
         props.cBuffers = 1;
-
-       ((InputPin *)pTransformFilter->ppPins[0])->pUserData = pTransformFilter->ppPins[0];
 
         hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin), &piOutput, &props, NULL, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
 
@@ -291,7 +289,7 @@ static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tS
     {
         if (This->state == State_Stopped)
         {
-            ((InputPin *)This->ppPins[0])->end_of_stream = 0;
+            ((BaseInputPin *)This->ppPins[0])->end_of_stream = 0;
             if (This->pFuncsTable->pfnProcessBegin)
                 hr = This->pFuncsTable->pfnProcessBegin(This);
             if (SUCCEEDED(hr))
@@ -467,7 +465,7 @@ static const IBaseFilterVtbl TransformFilter_Vtbl =
 
 static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 {
-    InputPin* This = (InputPin*) iface;
+    BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilterImpl* pTransform;
     IPin* ppin;
     HRESULT hr;
@@ -493,7 +491,7 @@ static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 
 static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    InputPin* This = (InputPin*) iface;
+    BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilterImpl* pTransform;
     HRESULT hr;
 
@@ -504,7 +502,7 @@ static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, I
     hr = pTransform->pFuncsTable->pfnConnectInput(This, pmt);
     if (SUCCEEDED(hr))
     {
-        hr = InputPin_ReceiveConnection(iface, pReceivePin, pmt);
+        hr = BaseInputPinImpl_ReceiveConnection(iface, pReceivePin, pmt);
         if (FAILED(hr))
             pTransform->pFuncsTable->pfnCleanup(This);
     }
@@ -514,7 +512,7 @@ static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, I
 
 static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
 {
-    InputPin* This = (InputPin*) iface;
+    BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilterImpl* pTransform;
 
     TRACE("(%p)->()\n", iface);
@@ -527,7 +525,7 @@ static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
 
 static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
 {
-    InputPin* This = (InputPin*) iface;
+    BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilterImpl* pTransform;
     HRESULT hr = S_OK;
 
@@ -538,14 +536,14 @@ static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
     if (pTransform->pFuncsTable->pfnBeginFlush)
         hr = pTransform->pFuncsTable->pfnBeginFlush(This);
     if (SUCCEEDED(hr))
-        hr = InputPin_BeginFlush(iface);
+        hr = BaseInputPinImpl_BeginFlush(iface);
     LeaveCriticalSection(&pTransform->csFilter);
     return hr;
 }
 
 static HRESULT WINAPI TransformFilter_InputPin_EndFlush(IPin * iface)
 {
-    InputPin* This = (InputPin*) iface;
+    BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilterImpl* pTransform;
     HRESULT hr = S_OK;
 
@@ -556,14 +554,14 @@ static HRESULT WINAPI TransformFilter_InputPin_EndFlush(IPin * iface)
     if (pTransform->pFuncsTable->pfnEndFlush)
         hr = pTransform->pFuncsTable->pfnEndFlush(This);
     if (SUCCEEDED(hr))
-        hr = InputPin_EndFlush(iface);
+        hr = BaseInputPinImpl_EndFlush(iface);
     LeaveCriticalSection(&pTransform->csFilter);
     return hr;
 }
 
 static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
-    InputPin* This = (InputPin*) iface;
+    BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilterImpl* pTransform;
     HRESULT hr = S_OK;
 
@@ -574,17 +572,17 @@ static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENC
     if (pTransform->pFuncsTable->pfnNewSegment)
         hr = pTransform->pFuncsTable->pfnNewSegment(This, tStart, tStop, dRate);
     if (SUCCEEDED(hr))
-        hr = InputPin_NewSegment(iface, tStart, tStop, dRate);
+        hr = BaseInputPinImpl_NewSegment(iface, tStart, tStop, dRate);
     LeaveCriticalSection(&pTransform->csFilter);
     return hr;
 }
 
 static const IPinVtbl TransformFilter_InputPin_Vtbl = 
 {
-    InputPin_QueryInterface,
+    BaseInputPinImpl_QueryInterface,
     BasePinImpl_AddRef,
-    InputPin_Release,
-    InputPin_Connect,
+    BaseInputPinImpl_Release,
+    BaseInputPinImpl_Connect,
     TransformFilter_InputPin_ReceiveConnection,
     TransformFilter_InputPin_Disconnect,
     BasePinImpl_ConnectedTo,
@@ -592,7 +590,7 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     BasePinImpl_QueryPinInfo,
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
-    InputPin_QueryAccept,
+    BaseInputPinImpl_QueryAccept,
     BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     TransformFilter_InputPin_EndOfStream,

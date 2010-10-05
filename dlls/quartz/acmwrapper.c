@@ -52,8 +52,9 @@ typedef struct ACMWrapperImpl
     LONGLONG lasttime_sent;
 } ACMWrapperImpl;
 
-static HRESULT ACMWrapper_ProcessSampleData(InputPin *pin, IMediaSample *pSample)
+static HRESULT WINAPI ACMWrapper_ProcessSampleData(IPin *iface, IMediaSample *pSample)
 {
+    BaseInputPin *pin = (BaseInputPin*) iface;
     ACMWrapperImpl* This = (ACMWrapperImpl*)pin->pin.pinInfo.pFilter;
     AM_MEDIA_TYPE amt;
     IMediaSample* pOutSample = NULL;
@@ -234,7 +235,7 @@ error:
     return hr;
 }
 
-static HRESULT ACMWrapper_ConnectInput(InputPin *pin, const AM_MEDIA_TYPE * pmt)
+static HRESULT ACMWrapper_ConnectInput(BaseInputPin *pin, const AM_MEDIA_TYPE * pmt)
 {
     ACMWrapperImpl* This = (ACMWrapperImpl *)pin->pin.pinInfo.pFilter;
     MMRESULT res;
@@ -286,7 +287,7 @@ static HRESULT ACMWrapper_ConnectInput(InputPin *pin, const AM_MEDIA_TYPE * pmt)
     return VFW_E_TYPE_NOT_ACCEPTED;
 }
 
-static HRESULT ACMWrapper_Cleanup(InputPin *pin)
+static HRESULT ACMWrapper_Cleanup(BaseInputPin *pin)
 {
     ACMWrapperImpl *This = (ACMWrapperImpl *)pin->pin.pinInfo.pFilter;
 

@@ -24,7 +24,6 @@
  * Cookie is the cookie that was set when requesting the buffer, if you don't
  * implement custom requesting, you can safely ignore this
  */
-typedef HRESULT (* SAMPLEPROC_PUSH)(LPVOID userdata, IMediaSample * pSample);
 typedef HRESULT (* SAMPLEPROC_PULL)(LPVOID userdata, IMediaSample * pSample, DWORD_PTR cookie);
 
 /* This function will determine whether a type is supported or not.
@@ -66,24 +65,6 @@ typedef HRESULT (* STOPPROCESSPROC) (LPVOID userdata);
 #define ALIGNDOWN(value,boundary) ((value)/(boundary)*(boundary))
 #define ALIGNUP(value,boundary) (ALIGNDOWN((value)+(boundary)-1, (boundary)))
 
-typedef struct InputPin
-{
-	/* inheritance C style! */
-	BasePin pin;
-	LPVOID pUserData;
-
-	const IMemInputPinVtbl * lpVtblMemInput;
-	IMemAllocator * pAllocator;
-	QUERYACCEPTPROC fnQueryAccept;
-	SAMPLEPROC_PUSH fnSampleProc;
-	CLEANUPPROC fnCleanProc;
-	REFERENCE_TIME tStart;
-	REFERENCE_TIME tStop;
-	double dRate;
-	BOOL flushing, end_of_stream;
-	IMemAllocator *preferred_allocator;
-} InputPin;
-
 typedef struct PullPin
 {
 	/* inheritance C style! */
@@ -120,22 +101,10 @@ typedef struct PullPin
 #define Req_Pause  3
 
 /*** Constructors ***/
-HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
 HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, STOPPROCESSPROC, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
 /**************************/
 /*** Pin Implementation ***/
-
-/* Input Pin */
-HRESULT WINAPI InputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
-ULONG   WINAPI InputPin_Release(IPin * iface);
-HRESULT WINAPI InputPin_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI InputPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI InputPin_EndOfStream(IPin * iface);
-HRESULT WINAPI InputPin_BeginFlush(IPin * iface);
-HRESULT WINAPI InputPin_EndFlush(IPin * iface);
-HRESULT WINAPI InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 /* Pull Pin */
 HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
