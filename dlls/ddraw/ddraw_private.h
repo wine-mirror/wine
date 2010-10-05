@@ -359,7 +359,6 @@ struct IDirect3DDeviceImpl
     IDirectDrawImpl         *ddraw;
     IWineD3DBuffer          *indexbuffer;
     IDirectDrawSurfaceImpl  *target;
-    BOOL                    OffScreenTarget;
 
     /* Viewport management */
     IDirect3DViewportImpl *viewport_list;

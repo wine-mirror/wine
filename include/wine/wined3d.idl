@@ -3137,10 +3137,6 @@ interface IWineD3DDevice : IUnknown
         [in] DWORD render_target_idx,
         [out] IWineD3DSurface **render_target
     );
-    HRESULT SetFrontBackBuffers(
-        [in] IWineD3DSurface *front,
-        [in] IWineD3DSurface *back
-    );
     HRESULT SetSamplerState(
         [in] DWORD sampler_idx,
         [in] WINED3DSAMPLERSTATETYPE state,

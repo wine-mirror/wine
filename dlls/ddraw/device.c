@@ -311,34 +311,10 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
          * IDirect3DVertexBuffer::Release will unset it.
          */
 
-        /* Restore the render targets */
-        if(This->OffScreenTarget)
-        {
-            WINED3DVIEWPORT vp;
-
-            vp.X = 0;
-            vp.Y = 0;
-            vp.Width = This->ddraw->d3d_target->surface_desc.dwWidth;
-            vp.Height = This->ddraw->d3d_target->surface_desc.dwHeight;
-            vp.MinZ = 0.0;
-            vp.MaxZ = 1.0;
-            IWineD3DDevice_SetViewport(This->wineD3DDevice,
-                                       &vp);
-
-            /* Set the device up to render to the front buffer since the back buffer will
-             * vanish soon.
-             */
-            IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
-                                           This->ddraw->d3d_target->WineD3DSurface,
-                                           FALSE);
-            /* This->target is the offscreen target.
-             * This->ddraw->d3d_target is the target used by DDraw
-             */
-            TRACE("(%p) Release: Using %p as front buffer, %p as back buffer\n", This, This->ddraw->d3d_target, NULL);
-            IWineD3DDevice_SetFrontBackBuffers(This->wineD3DDevice,
-                                               This->ddraw->d3d_target->WineD3DSurface,
-                                               NULL);
-        }
+        /* Set the device up to render to the front buffer since the back
+         * buffer will vanish soon. */
+        IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
+                This->ddraw->d3d_target->WineD3DSurface, TRUE);
 
         /* Release the WineD3DDevice. This won't destroy it */
         if(IWineD3DDevice_Release(This->wineD3DDevice) <= 0)
@@ -7024,46 +7000,14 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     device->wineD3DDevice = ddraw->wineD3DDevice;
     IWineD3DDevice_AddRef(ddraw->wineD3DDevice);
 
-    /* This is for apps which create a non-flip, non-d3d primary surface
-     * and an offscreen D3DDEVICE surface, then render to the offscreen surface
-     * and do a Blt from the offscreen to the primary surface.
-     *
-     * Set the offscreen D3DDDEVICE surface(=target) as the back buffer,
-     * and the primary surface(=This->d3d_target) as the front buffer.
-     *
-     * This way the app will render to the D3DDEVICE surface and WineD3D
-     * will catch the Blt was Back Buffer -> Front buffer blt and perform
-     * a flip instead. This way we don't have to deal with a mixed GL / GDI
-     * environment.
-     *
-     * This should be checked against windowed apps. The only app tested with
-     * this is moto racer 2 during the loading screen.
-     */
-    TRACE("Is rendertarget: %s, d3d_target %p.\n",
-            target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE ? "true" : "false", ddraw->d3d_target);
-
-    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-            && ddraw->d3d_target != target)
+    /* Render to the back buffer */
+    hr = IWineD3DDevice_SetRenderTarget(ddraw->wineD3DDevice, 0, target->WineD3DSurface, TRUE);
+    if (FAILED(hr))
     {
-        TRACE("Using %p as front buffer, %p as back buffer.\n", ddraw->d3d_target, target);
-
-        hr = IWineD3DDevice_SetFrontBackBuffers(ddraw->wineD3DDevice,
-                ddraw->d3d_target->WineD3DSurface, target->WineD3DSurface);
-        if (FAILED(hr))
-        {
-            ERR("Failed to set front and back buffer, hr %#x.\n", hr);
-            IParent_Release((IParent *)index_buffer_parent);
-            ddraw_handle_table_destroy(&device->handle_table);
-            return hr;
-        }
-
-        /* Render to the back buffer */
-        IWineD3DDevice_SetRenderTarget(ddraw->wineD3DDevice, 0, target->WineD3DSurface, TRUE);
-        device->OffScreenTarget = TRUE;
-    }
-    else
-    {
-        device->OffScreenTarget = FALSE;
+        ERR("Failed to set render target, hr %#x.\n", hr);
+        IParent_Release((IParent *)index_buffer_parent);
+        ddraw_handle_table_destroy(&device->handle_table);
+        return hr;
     }
 
     /* FIXME: This is broken. The target AddRef() makes some sense, because

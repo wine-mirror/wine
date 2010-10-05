@@ -5636,91 +5636,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *iface,
-        IWineD3DSurface *front, IWineD3DSurface *back)
-{
-    IWineD3DSurfaceImpl *front_impl = (IWineD3DSurfaceImpl *)front;
-    IWineD3DSurfaceImpl *back_impl = (IWineD3DSurfaceImpl *)back;
-    IWineD3DSwapChainImpl *swapchain;
-    HRESULT hr;
-
-    TRACE("iface %p, front %p, back %p.\n", iface, front, back);
-
-    if (FAILED(hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **)&swapchain)))
-    {
-        ERR("Failed to get the swapchain, hr %#x.\n", hr);
-        return hr;
-    }
-
-    if (front_impl && !(front_impl->resource.usage & WINED3DUSAGE_RENDERTARGET))
-    {
-        ERR("Trying to set a front buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage.\n");
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (back_impl)
-    {
-        if (!(back_impl->resource.usage & WINED3DUSAGE_RENDERTARGET))
-        {
-            ERR("Trying to set a back buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage.\n");
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (!swapchain->back_buffers)
-        {
-            swapchain->back_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*swapchain->back_buffers));
-            if (!swapchain->back_buffers)
-            {
-                ERR("Failed to allocate back buffer array memory.\n");
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-                return E_OUTOFMEMORY;
-            }
-        }
-    }
-
-    if (swapchain->front_buffer != front_impl)
-    {
-        TRACE("Changing the front buffer from %p to %p.\n", swapchain->front_buffer, front_impl);
-
-        if (swapchain->front_buffer)
-            surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
-        swapchain->front_buffer = front_impl;
-
-        if (front_impl)
-            surface_set_container(front_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
-    }
-
-    if (swapchain->back_buffers[0] != back_impl)
-    {
-        TRACE("Changing the back buffer from %p to %p.\n", swapchain->back_buffers[0], back_impl);
-
-        if (swapchain->back_buffers[0])
-            surface_set_container(swapchain->back_buffers[0], WINED3D_CONTAINER_NONE, NULL);
-        swapchain->back_buffers[0] = back_impl;
-
-        if (back_impl)
-        {
-            swapchain->presentParms.BackBufferWidth = back_impl->currentDesc.Width;
-            swapchain->presentParms.BackBufferHeight = back_impl->currentDesc.Height;
-            swapchain->presentParms.BackBufferFormat = back_impl->resource.format->id;
-            swapchain->presentParms.BackBufferCount = 1;
-
-            surface_set_container(back_impl, WINED3D_CONTAINER_SWAPCHAIN, (IWineD3DBase *)swapchain);
-        }
-        else
-        {
-            swapchain->presentParms.BackBufferCount = 0;
-            HeapFree(GetProcessHeap(), 0, swapchain->back_buffers);
-            swapchain->back_buffers = NULL;
-        }
-    }
-
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface **depth_stencil)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
@@ -6803,7 +6718,6 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetRenderState,
     IWineD3DDeviceImpl_SetRenderTarget,
     IWineD3DDeviceImpl_GetRenderTarget,
-    IWineD3DDeviceImpl_SetFrontBackBuffers,
     IWineD3DDeviceImpl_SetSamplerState,
     IWineD3DDeviceImpl_GetSamplerState,
     IWineD3DDeviceImpl_SetScissorRect,
