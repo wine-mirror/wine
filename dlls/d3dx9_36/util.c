@@ -152,3 +152,12 @@ const PixelFormatDesc *get_format_info(D3DFORMAT format)
     while(formats[i].format != format && formats[i].format != D3DFMT_UNKNOWN) i++;
     return &formats[i];
 }
+
+const PixelFormatDesc *get_format_info_idx(int idx)
+{
+    if(idx >= sizeof(formats) / sizeof(formats[0]))
+        return NULL;
+    if(formats[idx].format == D3DFMT_UNKNOWN)
+        return NULL;
+    return &formats[idx];
+}

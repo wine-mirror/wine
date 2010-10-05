@@ -27,9 +27,12 @@
 static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
 {
     UINT width, height, mipmaps;
-    D3DFORMAT format;
+    D3DFORMAT format, expected;
     D3DCAPS9 caps;
     HRESULT hr;
+    IDirect3D9 *d3d;
+    D3DDEVICE_CREATION_PARAMETERS params;
+    D3DDISPLAYMODE mode;
 
     IDirect3DDevice9_GetDeviceCaps(device, &caps);
 
@@ -145,15 +148,51 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     ok(hr == D3DERR_INVALIDCALL, "D3DXCheckTextureRequirements succeeded, but should've failed.\n");
 
     /* format */
+    hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+
     format = D3DFMT_UNKNOWN;
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_A8R8G8B8);
 
-    format = 0;
+    format = D3DX_DEFAULT;
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_A8R8G8B8);
+
+    format = D3DFMT_R8G8B8;
+    hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == D3DFMT_X8R8G8B8, "Returned format %u, expected %u\n", format, D3DFMT_X8R8G8B8);
+
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    IDirect3DDevice9_GetCreationParameters(device, &params);
+    IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+
+    if(SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+                                              mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_R3G3B2)))
+        expected = D3DFMT_R3G3B2;
+    else
+        expected = D3DFMT_X4R4G4B4;
+
+    format = D3DFMT_R3G3B2;
+    hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == expected, "Returned format %u, expected %u\n", format, expected);
+
+    if(SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+                                              mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_A8R3G3B2)))
+        expected = D3DFMT_A8R3G3B2;
+    else
+        expected = D3DFMT_A8R8G8B8;
+
+    format = D3DFMT_A8R3G3B2;
+    hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(format == expected, "Returned format %u, expected %u\n", format, expected);
+
+    IDirect3D9_Release(d3d);
 }
 
 static void test_D3DXCreateTexture(IDirect3DDevice9 *device)

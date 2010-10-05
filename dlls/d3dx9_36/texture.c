@@ -122,6 +122,11 @@ HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
     UINT w = (width && *width) ? *width : 1;
     UINT h = (height && *height) ? *height : 1;
     D3DCAPS9 caps;
+    D3DDEVICE_CREATION_PARAMETERS params;
+    IDirect3D9 *d3d = NULL;
+    D3DDISPLAYMODE mode;
+    HRESULT hr;
+    D3DFORMAT usedformat = D3DFMT_UNKNOWN;
 
     TRACE("(%p, %p, %p, %p, %u, %p, %u)\n", device, width, height, miplevels, usage, format, pool);
 
@@ -129,8 +134,9 @@ HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
         return D3DERR_INVALIDCALL;
 
     /* usage */
-    if ((usage != D3DX_DEFAULT) &&
-        (usage & (D3DUSAGE_WRITEONLY | D3DUSAGE_DONOTCLIP | D3DUSAGE_POINTS | D3DUSAGE_RTPATCHES | D3DUSAGE_NPATCHES)))
+    if (usage == D3DX_DEFAULT)
+        usage = 0;
+    if (usage & (D3DUSAGE_WRITEONLY | D3DUSAGE_DONOTCLIP | D3DUSAGE_POINTS | D3DUSAGE_RTPATCHES | D3DUSAGE_NPATCHES))
         return D3DERR_INVALIDCALL;
 
     /* pool */
@@ -202,43 +208,105 @@ HRESULT WINAPI D3DXCheckTextureRequirements(LPDIRECT3DDEVICE9 device,
     /* format */
     if (format)
     {
-        D3DDEVICE_CREATION_PARAMETERS params;
-        IDirect3D9 *d3d = NULL;
-        D3DDISPLAYMODE mode;
-        HRESULT hr;
+        TRACE("Requested format %x\n", *format);
+        usedformat = *format;
+    }
 
-        hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
 
-        if (FAILED(hr))
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = IDirect3DDevice9_GetCreationParameters(device, &params);
+
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+
+    if (FAILED(hr))
+        goto cleanup;
+
+    if ((usedformat == D3DFMT_UNKNOWN) || (usedformat == D3DX_DEFAULT))
+        usedformat = D3DFMT_A8R8G8B8;
+
+    hr = IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType, mode.Format,
+        usage, D3DRTYPE_TEXTURE, usedformat);
+
+    if (FAILED(hr))
+    {
+        /* Heuristic to choose the fallback format */
+        const PixelFormatDesc *fmt = get_format_info(usedformat);
+        BOOL allow_24bits;
+        int bestscore = INT_MIN, i = 0, j;
+        unsigned int channels;
+        const PixelFormatDesc *curfmt;
+
+        if (!fmt)
+        {
+            FIXME("Pixel format %x not handled\n", usedformat);
             goto cleanup;
+        }
 
-        hr = IDirect3DDevice9_GetCreationParameters(device, &params);
+        allow_24bits = fmt->bytes_per_pixel == 3;
+        channels = (fmt->bits[0] ? 1 : 0) + (fmt->bits[1] ? 1 : 0)
+            + (fmt->bits[2] ? 1 : 0) + (fmt->bits[3] ? 1 : 0);
+        usedformat = D3DFMT_UNKNOWN;
 
-        if (FAILED(hr))
-            goto cleanup;
+        while ((curfmt = get_format_info_idx(i)))
+        {
+            unsigned int curchannels = (curfmt->bits[0] ? 1 : 0) + (curfmt->bits[1] ? 1 : 0)
+                + (curfmt->bits[2] ? 1 : 0) + (curfmt->bits[3] ? 1 : 0);
+            int score;
 
-        hr = IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+            i++;
 
-        if (FAILED(hr))
-            goto cleanup;
+            if (curchannels < channels)
+                continue;
+            if (curfmt->bytes_per_pixel == 3 && !allow_24bits)
+                continue;
 
-        if ((*format == D3DFMT_UNKNOWN) || (*format == D3DX_DEFAULT))
-            *format = D3DFMT_A8R8G8B8;
+            hr = IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+                mode.Format, usage, D3DRTYPE_TEXTURE, curfmt->format);
+            if (FAILED(hr))
+                continue;
 
-        hr = IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType, mode.Format, usage,
-            D3DRTYPE_TEXTURE, *format);
+            /* This format can be used, let's evaluate it.
+               Weights chosen quite arbitrarily... */
+            score = 16 - 4 * (curchannels - channels);
 
-        if (FAILED(hr))
-            FIXME("Pixel format adjustment not implemented yet\n");
+            for (j = 0; j < 4; j++)
+            {
+                int diff = curfmt->bits[j] - fmt->bits[j];
+                score += 16 - (diff < 0 ? -diff * 4 : diff);
+            }
+
+            if (score > bestscore)
+            {
+                bestscore = score;
+                usedformat = curfmt->format;
+            }
+        }
+        hr = D3D_OK;
+    }
 
 cleanup:
 
-        if (d3d)
-            IDirect3D9_Release(d3d);
+    if (d3d)
+        IDirect3D9_Release(d3d);
 
-        if (FAILED(hr))
-            return D3DERR_INVALIDCALL;
+    if (FAILED(hr))
+        return hr;
+
+    if (usedformat == D3DFMT_UNKNOWN)
+    {
+        WARN("Couldn't find a suitable pixel format\n");
+        return D3DERR_NOTAVAILABLE;
     }
+
+    TRACE("Format chosen: %x\n", usedformat);
+    if (format)
+        *format = usedformat;
 
     return D3D_OK;
 }

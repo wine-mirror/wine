@@ -48,7 +48,7 @@ HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length);
 HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length);
 
 const PixelFormatDesc *get_format_info(D3DFORMAT format);
-
+const PixelFormatDesc *get_format_info_idx(int idx);
 
 extern const ID3DXBufferVtbl D3DXBuffer_Vtbl;
 
