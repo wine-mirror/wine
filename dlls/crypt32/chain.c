@@ -2904,21 +2904,18 @@ static BOOL WINAPI verify_base_policy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
 {
+    DWORD checks = 0;
+
+    if (pPolicyPara)
+        checks = pPolicyPara->dwFlags;
     pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = -1;
+    pPolicyStatus->dwError = NO_ERROR;
     if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_IS_NOT_SIGNATURE_VALID)
     {
         pPolicyStatus->dwError = TRUST_E_CERT_SIGNATURE;
         find_element_with_error(pChainContext,
          CERT_TRUST_IS_NOT_SIGNATURE_VALID, &pPolicyStatus->lChainIndex,
-         &pPolicyStatus->lElementIndex);
-    }
-    else if (pChainContext->TrustStatus.dwErrorStatus &
-     CERT_TRUST_IS_UNTRUSTED_ROOT)
-    {
-        pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
-        find_element_with_error(pChainContext,
-         CERT_TRUST_IS_UNTRUSTED_ROOT, &pPolicyStatus->lChainIndex,
          &pPolicyStatus->lElementIndex);
     }
     else if (pChainContext->TrustStatus.dwErrorStatus & CERT_TRUST_IS_CYCLIC)
@@ -2929,8 +2926,33 @@ static BOOL WINAPI verify_base_policy(LPCSTR szPolicyOID,
         /* For a cyclic chain, which element is a cycle isn't meaningful */
         pPolicyStatus->lElementIndex = -1;
     }
-    else
-        pPolicyStatus->dwError = NO_ERROR;
+    if (!pPolicyStatus->dwError &&
+     pChainContext->TrustStatus.dwErrorStatus & CERT_TRUST_IS_UNTRUSTED_ROOT &&
+     !(checks & CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG))
+    {
+        pPolicyStatus->dwError = CERT_E_UNTRUSTEDROOT;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_UNTRUSTED_ROOT, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    if (!pPolicyStatus->dwError &&
+     pChainContext->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID)
+    {
+        pPolicyStatus->dwError = CERT_E_EXPIRED;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_NOT_TIME_VALID, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    if (!pPolicyStatus->dwError &&
+     pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_IS_NOT_VALID_FOR_USAGE &&
+     !(checks & CERT_CHAIN_POLICY_IGNORE_WRONG_USAGE_FLAG))
+    {
+        pPolicyStatus->dwError = CERT_E_WRONG_USAGE;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_IS_NOT_VALID_FOR_USAGE, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
     return TRUE;
 }
 

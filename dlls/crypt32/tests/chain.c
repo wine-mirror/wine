@@ -3745,11 +3745,6 @@ static const ChainPolicyCheck basePolicyCheck[] = {
    { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL }, NULL, 0 },
 };
 
-static const ChainPolicyCheck ignoredUnknownCABasePolicyCheck = {
- { sizeof(chain0) / sizeof(chain0[0]), chain0 },
- { 0, CERT_E_EXPIRED, 0, 0, NULL }, NULL, TODO_ERROR
-};
-
 /* Windows NT 4 has a different error code when the validity period doesn't
  * nest.  (It's arguably more correct than other Windows versions, but since
  * others do not emulate its behavior, we mark its behavior broken.)
@@ -3759,12 +3754,12 @@ static const CERT_CHAIN_POLICY_STATUS badDateNestingStatus =
 
 static const ChainPolicyCheck ignoredBadDateNestingBasePolicyCheck = {
  { sizeof(chain2) / sizeof(chain2[0]), chain2 },
- { 0, CERT_E_EXPIRED, 0, 1, NULL}, &badDateNestingStatus, TODO_ERROR
+ { 0, CERT_E_EXPIRED, 0, 1, NULL}, &badDateNestingStatus, TODO_ELEMENTS
 };
 
 static const ChainPolicyCheck ignoredInvalidDateBasePolicyCheck = {
  { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
- { 0, CERT_E_EXPIRED, 0, 1, NULL}, NULL, TODO_ERROR
+ { 0, CERT_E_EXPIRED, 0, 1, NULL}, NULL, TODO_ELEMENTS
 };
 
 static const ChainPolicyCheck ignoredInvalidUsageBasePolicyCheck = {
@@ -3774,7 +3769,7 @@ static const ChainPolicyCheck ignoredInvalidUsageBasePolicyCheck = {
 
 static const ChainPolicyCheck invalidUsageBasePolicyCheck = {
  { sizeof(chain15) / sizeof(chain15[0]), chain15 },
- { 0, CERT_E_WRONG_USAGE, 0, 1, NULL}, NULL, TODO_ERROR
+ { 0, CERT_E_WRONG_USAGE, 0, 1, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck sslPolicyCheck[] = {
@@ -4083,7 +4078,7 @@ static void check_base_policy(void)
     policyPara.cbSize = sizeof(policyPara);
     policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
-     &ignoredUnknownCABasePolicyCheck, 0, &oct2007, &policyPara);
+     &ignoredUnknownCAPolicyCheck, 0, &oct2007, &policyPara);
     policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG |
      CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
