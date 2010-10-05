@@ -204,7 +204,7 @@ static void set_states(ID3DXSpriteImpl *object)
     /* Matrices */
     D3DXMatrixIdentity(&mat);
     IDirect3DDevice9_SetTransform(object->device, D3DTS_WORLD, &mat);
-    IDirect3DDevice9_SetTransform(object->device, D3DTS_VIEW, &mat);
+    IDirect3DDevice9_SetTransform(object->device, D3DTS_VIEW, &object->view);
     IDirect3DDevice9_GetViewport(object->device, &vp);
     D3DXMatrixOrthoOffCenterLH(&mat, vp.X+0.5f, (float)vp.Width+vp.X+0.5f, (float)vp.Height+vp.Y+0.5f, vp.Y+0.5f, vp.MinZ, vp.MaxZ);
     IDirect3DDevice9_SetTransform(object->device, D3DTS_PROJECTION, &mat);
@@ -258,9 +258,6 @@ D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
 
     /* Apply device state */
     set_states(This);
-
-    D3DXMatrixIdentity(&This->transform);
-    D3DXMatrixIdentity(&This->view);
 
     This->flags=flags;
     This->ready=TRUE;
@@ -323,6 +320,7 @@ static HRESULT WINAPI ID3DXSpriteImpl_Draw(LPD3DXSPRITE iface, LPDIRECT3DTEXTURE
     } else This->sprites[This->sprite_count].pos=*position;
 
     This->sprites[This->sprite_count].color=color;
+    This->sprites[This->sprite_count].transform=This->transform;
     This->sprite_count++;
 
     return D3D_OK;
@@ -332,57 +330,61 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
 {
     ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
     SPRITEVERTEX *vertices;
-    int i;
+    int i, count, start;
     TRACE("(%p)->(): relay\n", This);
 
     if(!This->ready) return D3DERR_INVALIDCALL;
     if(!This->sprite_count) return D3D_OK;
 
 /* TODO: use of a vertex buffer here */
-    vertices=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SPRITEVERTEX)*4*This->sprite_count);
+    vertices=HeapAlloc(GetProcessHeap(), 0, sizeof(SPRITEVERTEX)*6*This->sprite_count);
 
-    for(i=0;i<This->sprite_count;i++) {
-        float spritewidth=(float)This->sprites[i].rect.right-(float)This->sprites[i].rect.left;
-        float spriteheight=(float)This->sprites[i].rect.bottom-(float)This->sprites[i].rect.top;
+    for(start=0;start<This->sprite_count;start+=count,count=0) {
+        i=start;
+        while(i<This->sprite_count &&
+              (count==0 || This->sprites[i].texture==This->sprites[i-1].texture)) {
+            float spritewidth=(float)This->sprites[i].rect.right-(float)This->sprites[i].rect.left;
+            float spriteheight=(float)This->sprites[i].rect.bottom-(float)This->sprites[i].rect.top;
 
-        vertices[4*i  ].pos.x = This->sprites[i].pos.x - This->sprites[i].center.x;
-        vertices[4*i  ].pos.y = This->sprites[i].pos.y - This->sprites[i].center.y;
-        vertices[4*i  ].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
-        vertices[4*i+1].pos.x = spritewidth + This->sprites[i].pos.x - This->sprites[i].center.x;
-        vertices[4*i+1].pos.y = This->sprites[i].pos.y - This->sprites[i].center.y;
-        vertices[4*i+1].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
-        vertices[4*i+2].pos.x = spritewidth + This->sprites[i].pos.x - This->sprites[i].center.x;
-        vertices[4*i+2].pos.y = spriteheight + This->sprites[i].pos.y - This->sprites[i].center.y;
-        vertices[4*i+2].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
-        vertices[4*i+3].pos.x = This->sprites[i].pos.x - This->sprites[i].center.x;
-        vertices[4*i+3].pos.y = spriteheight + This->sprites[i].pos.y - This->sprites[i].center.y;
-        vertices[4*i+3].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
-        vertices[4*i  ].col   = This->sprites[i].color;
-        vertices[4*i+1].col   = This->sprites[i].color;
-        vertices[4*i+2].col   = This->sprites[i].color;
-        vertices[4*i+3].col   = This->sprites[i].color;
-        vertices[4*i  ].tex.x = (float)This->sprites[i].rect.left / (float)This->sprites[i].texw;
-        vertices[4*i  ].tex.y = (float)This->sprites[i].rect.top / (float)This->sprites[i].texh;
-        vertices[4*i+1].tex.x = (float)This->sprites[i].rect.right / (float)This->sprites[i].texw;
-        vertices[4*i+1].tex.y = (float)This->sprites[i].rect.top / (float)This->sprites[i].texh;
-        vertices[4*i+2].tex.x = (float)This->sprites[i].rect.right / (float)This->sprites[i].texw;
-        vertices[4*i+2].tex.y = (float)This->sprites[i].rect.bottom / (float)This->sprites[i].texh;
-        vertices[4*i+3].tex.x = (float)This->sprites[i].rect.left / (float)This->sprites[i].texw;
-        vertices[4*i+3].tex.y = (float)This->sprites[i].rect.bottom / (float)This->sprites[i].texh;
-    }
+            vertices[6*i  ].pos.x = This->sprites[i].pos.x - This->sprites[i].center.x;
+            vertices[6*i  ].pos.y = This->sprites[i].pos.y - This->sprites[i].center.y;
+            vertices[6*i  ].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
+            vertices[6*i+1].pos.x = spritewidth + This->sprites[i].pos.x - This->sprites[i].center.x;
+            vertices[6*i+1].pos.y = This->sprites[i].pos.y - This->sprites[i].center.y;
+            vertices[6*i+1].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
+            vertices[6*i+2].pos.x = spritewidth + This->sprites[i].pos.x - This->sprites[i].center.x;
+            vertices[6*i+2].pos.y = spriteheight + This->sprites[i].pos.y - This->sprites[i].center.y;
+            vertices[6*i+2].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
+            vertices[6*i+3].pos.x = This->sprites[i].pos.x - This->sprites[i].center.x;
+            vertices[6*i+3].pos.y = spriteheight + This->sprites[i].pos.y - This->sprites[i].center.y;
+            vertices[6*i+3].pos.z = This->sprites[i].pos.z - This->sprites[i].center.z;
+            vertices[6*i  ].col   = This->sprites[i].color;
+            vertices[6*i+1].col   = This->sprites[i].color;
+            vertices[6*i+2].col   = This->sprites[i].color;
+            vertices[6*i+3].col   = This->sprites[i].color;
+            vertices[6*i  ].tex.x = (float)This->sprites[i].rect.left / (float)This->sprites[i].texw;
+            vertices[6*i  ].tex.y = (float)This->sprites[i].rect.top / (float)This->sprites[i].texh;
+            vertices[6*i+1].tex.x = (float)This->sprites[i].rect.right / (float)This->sprites[i].texw;
+            vertices[6*i+1].tex.y = (float)This->sprites[i].rect.top / (float)This->sprites[i].texh;
+            vertices[6*i+2].tex.x = (float)This->sprites[i].rect.right / (float)This->sprites[i].texw;
+            vertices[6*i+2].tex.y = (float)This->sprites[i].rect.bottom / (float)This->sprites[i].texh;
+            vertices[6*i+3].tex.x = (float)This->sprites[i].rect.left / (float)This->sprites[i].texw;
+            vertices[6*i+3].tex.y = (float)This->sprites[i].rect.bottom / (float)This->sprites[i].texh;
 
-    D3DXVec3TransformCoordArray(&vertices[0].pos, sizeof(SPRITEVERTEX), &vertices[0].pos, sizeof(SPRITEVERTEX), &This->transform, 4*This->sprite_count);
-    D3DXVec3TransformCoordArray(&vertices[0].pos, sizeof(SPRITEVERTEX), &vertices[0].pos, sizeof(SPRITEVERTEX), &This->view,      4*This->sprite_count);
+            vertices[6*i+4]=vertices[6*i];
+            vertices[6*i+5]=vertices[6*i+2];
 
-    IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
+            D3DXVec3TransformCoordArray(&vertices[6*i].pos, sizeof(SPRITEVERTEX),
+                                        &vertices[6*i].pos, sizeof(SPRITEVERTEX),
+                                        &This->sprites[i].transform, 6);
+            count++;
+            i++;
+        }
 
-    for(i=0;i<This->sprite_count;i++) {
-        if(!i)
-            IDirect3DDevice9_SetTexture(This->device, 0, (LPDIRECT3DBASETEXTURE9)(This->sprites[i].texture));
-        else if(This->sprites[i].texture!=This->sprites[i-1].texture)
-            IDirect3DDevice9_SetTexture(This->device, 0, (LPDIRECT3DBASETEXTURE9)(This->sprites[i].texture));
+        IDirect3DDevice9_SetTexture(This->device, 0, (LPDIRECT3DBASETEXTURE9)(This->sprites[start].texture));
+        IDirect3DDevice9_SetVertexDeclaration(This->device, This->vdecl);
 
-        IDirect3DDevice9_DrawPrimitiveUP(This->device, D3DPT_TRIANGLEFAN, 2, vertices+4*i, sizeof(SPRITEVERTEX));
+        IDirect3DDevice9_DrawPrimitiveUP(This->device, D3DPT_TRIANGLELIST, 2*count, vertices+6*start, sizeof(SPRITEVERTEX));
     }
     HeapFree(GetProcessHeap(), 0, vertices);
 

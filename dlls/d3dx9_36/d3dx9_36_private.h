@@ -119,6 +119,7 @@ typedef struct _SPRITE {
     D3DXVECTOR3 center;
     D3DXVECTOR3 pos;
     D3DCOLOR color;
+    D3DXMATRIX transform;
 } SPRITE;
 
 typedef struct ID3DXSpriteImpl
