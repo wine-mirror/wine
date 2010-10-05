@@ -120,7 +120,7 @@ static HRESULT ACMWrapper_ProcessSampleData(InputPin *pin, IMediaSample *pSample
 
     while(hr == S_OK && ash.cbSrcLength)
     {
-        hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+        hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
@@ -205,7 +205,7 @@ static HRESULT ACMWrapper_ProcessSampleData(InputPin *pin, IMediaSample *pSample
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
         LeaveCriticalSection(&This->tf.csFilter);
-        hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
+        hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
         EnterCriticalSection(&This->tf.csFilter);
 
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
@@ -272,7 +272,7 @@ static HRESULT ACMWrapper_ConnectInput(InputPin *pin, const AM_MEDIA_TYPE * pmt)
             This->has = drv;
 
             /* Update buffer size of media samples in output */
-            ((OutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pWfOut->nAvgBytesPerSec / 2;
+            ((BaseOutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pWfOut->nAvgBytesPerSec / 2;
             TRACE("Connection accepted\n");
             return S_OK;
         }

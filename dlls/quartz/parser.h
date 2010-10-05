@@ -49,7 +49,7 @@ struct ParserImpl
 
 typedef struct Parser_OutputPin
 {
-    OutputPin pin;
+    BaseOutputPin pin;
 
     AM_MEDIA_TYPE * pmt;
     LONGLONG dwSamplesProcessed;

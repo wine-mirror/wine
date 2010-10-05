@@ -132,7 +132,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
 
         IMediaSample_SetTime(pSample, &tAviStart, &tAviStop);
 
-        hr = OutputPin_SendSample(&pOutputPin->pin, pSample);
+        hr = BaseOutputPinImpl_Deliver(&pOutputPin->pin, pSample);
         if (hr != S_OK && hr != S_FALSE && hr != VFW_E_WRONG_STATE)
             ERR("Error sending sample (%x)\n", hr);
         else if (hr != S_OK)

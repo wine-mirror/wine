@@ -311,7 +311,7 @@ static HRESULT AVISplitter_Receive(AVISplitterImpl *This, IMediaSample *sample, 
 
     IMediaSample_SetTime(sample, &start, &stop);
 
-    hr = OutputPin_SendSample(&pin->pin, sample);
+    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)&pin->pin, sample);
 
 /* Uncomment this if you want to debug the time differences between the
  * different streams, it is useful for that

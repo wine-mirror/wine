@@ -35,21 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
-BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2,
-                       BOOL bWildcards)
-{
-    TRACE("pmt1: ");
-    dump_AM_MEDIA_TYPE(pmt1);
-    TRACE("pmt2: ");
-    dump_AM_MEDIA_TYPE(pmt2);
-    return (((bWildcards && (IsEqualGUID(&pmt1->majortype, &GUID_NULL) ||
-              IsEqualGUID(&pmt2->majortype, &GUID_NULL))) ||
-              IsEqualGUID(&pmt1->majortype, &pmt2->majortype)) &&
-              ((bWildcards && (IsEqualGUID(&pmt1->subtype, &GUID_NULL) ||
-              IsEqualGUID(&pmt2->subtype, &GUID_NULL))) ||
-              IsEqualGUID(&pmt1->subtype, &pmt2->subtype)));
-}
-
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
 {
     if (!pmt)

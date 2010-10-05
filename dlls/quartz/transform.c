@@ -117,7 +117,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
 
        ((InputPin *)pTransformFilter->ppPins[0])->pUserData = pTransformFilter->ppPins[0];
 
-        hr = OutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(OutputPin), &piOutput, &props, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
+        hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin), &piOutput, &props, NULL, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
 
         if (FAILED(hr))
             ERR("Cannot create output pin (%x)\n", hr);
@@ -295,7 +295,7 @@ static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tS
             if (This->pFuncsTable->pfnProcessBegin)
                 hr = This->pFuncsTable->pfnProcessBegin(This);
             if (SUCCEEDED(hr))
-                hr = OutputPin_CommitAllocator((OutputPin *)This->ppPins[1]);
+                hr = BaseOutputPinImpl_Active((BaseOutputPin *)This->ppPins[1]);
         }
 
         if (SUCCEEDED(hr))
@@ -624,12 +624,12 @@ static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumM
 
 static const IPinVtbl TransformFilter_OutputPin_Vtbl =
 {
-    OutputPin_QueryInterface,
+    BaseOutputPinImpl_QueryInterface,
     BasePinImpl_AddRef,
-    OutputPin_Release,
-    OutputPin_Connect,
-    OutputPin_ReceiveConnection,
-    OutputPin_Disconnect,
+    BaseOutputPinImpl_Release,
+    BaseOutputPinImpl_Connect,
+    BaseOutputPinImpl_ReceiveConnection,
+    BaseOutputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
@@ -638,8 +638,8 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl =
     TransformFilter_Output_QueryAccept,
     TransformFilter_Output_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
-    OutputPin_EndOfStream,
-    OutputPin_BeginFlush,
-    OutputPin_EndFlush,
-    OutputPin_NewSegment
+    BaseOutputPinImpl_EndOfStream,
+    BaseOutputPinImpl_BeginFlush,
+    BaseOutputPinImpl_EndFlush,
+    BaseOutputPinImpl_NewSegment
 };

@@ -5,7 +5,6 @@ C_SRCS = \
 	capturegraph.c \
 	dllsetup.c \
 	enummedia.c \
-	pin.c \
 	qcap_main.c \
 	v4l.c \
 	vfwcapture.c \

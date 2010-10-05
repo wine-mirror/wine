@@ -26,6 +26,7 @@ void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType);
 
 typedef HRESULT (WINAPI *BasePin_GetMediaType)(IPin* iface, int iPosition, AM_MEDIA_TYPE *amt);
 typedef LONG (WINAPI *BasePin_GetMediaTypeVersion)(IPin* iface);
+typedef HRESULT (WINAPI *BasePin_AttemptConnection)(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt);
 
 typedef IPin* (WINAPI *BaseFilter_GetPin)(IBaseFilter* iface, int iPosition);
 typedef LONG (WINAPI *BaseFilter_GetPinCount)(IBaseFilter* iface);
@@ -47,6 +48,19 @@ typedef struct BasePin
 	AM_MEDIA_TYPE mtCurrent;
 } BasePin;
 
+typedef struct BaseOutputPin
+{
+	/* inheritance C style! */
+	BasePin pin;
+
+	IMemInputPin * pMemInputPin;
+	BasePin_AttemptConnection pAttemptConnection;
+	BOOL custom_allocator;
+	IMemAllocator *alloc;
+	BOOL readonly;
+	ALLOCATOR_PROPERTIES allocProps;
+} BaseOutputPin;
+
 /* Base Pin */
 HRESULT WINAPI BasePinImpl_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt);
 LONG WINAPI BasePinImpl_GetMediaTypeVersion(IPin *iface);
@@ -60,3 +74,21 @@ HRESULT WINAPI BasePinImpl_QueryId(IPin * iface, LPWSTR * Id);
 HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum);
 HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin);
+
+/* Base Output Pin */
+HRESULT WINAPI BaseOutputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
+ULONG WINAPI BaseOutputPinImpl_Release(IPin * iface);
+HRESULT WINAPI BaseOutputPinImpl_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
+HRESULT WINAPI BaseOutputPinImpl_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
+HRESULT WINAPI BaseOutputPinImpl_Disconnect(IPin * iface);
+HRESULT WINAPI BaseOutputPinImpl_EndOfStream(IPin * iface);
+HRESULT WINAPI BaseOutputPinImpl_BeginFlush(IPin * iface);
+HRESULT WINAPI BaseOutputPinImpl_EndFlush(IPin * iface);
+HRESULT WINAPI BaseOutputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
+
+HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin * This, IMediaSample ** ppSample, REFERENCE_TIME * tStart, REFERENCE_TIME * tStop, DWORD dwFlags);
+HRESULT WINAPI BaseOutputPinImpl_Deliver(BaseOutputPin * This, IMediaSample * pSample);
+HRESULT WINAPI BaseOutputPinImpl_BreakConnect(BaseOutputPin * This);
+HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin * This);
+HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin * This);
+HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, BasePin_AttemptConnection pConnectProc, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);

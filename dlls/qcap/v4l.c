@@ -43,7 +43,6 @@
 
 #include "capture.h"
 #include "qcap_main.h"
-#include "pin.h"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -619,7 +618,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
         EnterCriticalSection(&capBox->CritSect);
         if (capBox->stopped)
             break;
-        hr = OutputPin_GetDeliveryBuffer((OutputPin *)capBox->pOut, &pSample, NULL, NULL, 0);
+        hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin *)capBox->pOut, &pSample, NULL, NULL, 0);
         if (SUCCEEDED(hr))
         {
             int len;
@@ -638,7 +637,7 @@ static DWORD WINAPI ReadThread(LPVOID lParam)
             V4l_GetFrame(capBox, &pInput);
             capBox->renderer(capBox, pOutput, pInput);
             Resize(capBox, pTarget, pOutput);
-            hr = OutputPin_SendSample((OutputPin *)capBox->pOut, pSample);
+            hr = BaseOutputPinImpl_Deliver((BaseOutputPin *)capBox->pOut, pSample);
             TRACE("%p -> Frame %u: %x\n", capBox, ++framecount, hr);
             IMediaSample_Release(pSample);
             V4l_FreeFrame(capBox);
@@ -686,7 +685,7 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
         {
             IMemAllocator * pAlloc = NULL;
             ALLOCATOR_PROPERTIES ap, actual;
-            OutputPin *out;
+            BaseOutputPin *out;
 
             ap.cBuffers = 3;
             if (!capBox->swresize)
@@ -697,7 +696,7 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
             ap.cbAlign = 1;
             ap.cbPrefix = 0;
 
-            out = (OutputPin *)capBox->pOut;
+            out = (BaseOutputPin *)capBox->pOut;
             hr = IMemInputPin_GetAllocator(out->pMemInputPin, &pAlloc);
 
             if (SUCCEEDED(hr))

@@ -234,7 +234,7 @@ HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
 
     for (i = 1; i < (This->cStreams + 1); i++)
     {
-        OutputPin_DecommitAllocator((OutputPin *)This->ppPins[i]);
+        BaseOutputPinImpl_Inactive((BaseOutputPin *)This->ppPins[i]);
     }
 
     LeaveCriticalSection(&This->csFilter);
@@ -308,7 +308,7 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
         for (i = 1; i < (This->cStreams + 1); i++)
         {
-            hr = OutputPin_CommitAllocator((OutputPin *)This->ppPins[i]);
+            hr = BaseOutputPinImpl_Active((BaseOutputPin *)This->ppPins[i]);
             if (SUCCEEDED(hr))
                 hr_any = hr;
         }
@@ -491,7 +491,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     This->ppPins = CoTaskMemAlloc((This->cStreams + 2) * sizeof(IPin *));
     memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
 
-    hr = OutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, &This->csFilter, This->ppPins + (This->cStreams + 1));
+    hr = BaseOutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, NULL, &This->csFilter, This->ppPins + (This->cStreams + 1));
 
     if (SUCCEEDED(hr))
     {
@@ -532,7 +532,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
 
     for (i = 0; i < This->cStreams; i++)
     {
-        hr = OutputPin_DeliverDisconnect((OutputPin *)ppOldPins[i + 1]);
+        hr = BaseOutputPinImpl_BreakConnect((BaseOutputPin *)ppOldPins[i + 1]);
         TRACE("Disconnect: %08x\n", hr);
         IPin_Release(ppOldPins[i + 1]);
     }
@@ -684,7 +684,7 @@ static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin,
     This->pin.alloc = parser->pInputPin->pAlloc;
     LeaveCriticalSection(This->pin.pin.pCritSec);
 
-    return OutputPin_Connect(iface, pReceivePin, pmt);
+    return BaseOutputPinImpl_Connect(iface, pReceivePin, pmt);
 }
 
 static HRESULT WINAPI Parser_OutputPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE * pmt)
@@ -703,8 +703,8 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     BasePinImpl_AddRef,
     Parser_OutputPin_Release,
     Parser_OutputPin_Connect,
-    OutputPin_ReceiveConnection,
-    OutputPin_Disconnect,
+    BaseOutputPinImpl_ReceiveConnection,
+    BaseOutputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,
@@ -713,10 +713,10 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     Parser_OutputPin_QueryAccept,
     Parser_OutputPin_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
-    OutputPin_EndOfStream,
-    OutputPin_BeginFlush,
-    OutputPin_EndFlush,
-    OutputPin_NewSegment
+    BaseOutputPinImpl_EndOfStream,
+    BaseOutputPinImpl_BeginFlush,
+    BaseOutputPinImpl_EndFlush,
+    BaseOutputPinImpl_NewSegment
 };
 
 static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)

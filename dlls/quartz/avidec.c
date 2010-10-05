@@ -112,7 +112,7 @@ static HRESULT AVIDec_ProcessSampleData(InputPin *pin, IMediaSample *pSample)
     /* Update input size to match sample size */
     This->pBihIn->biSizeImage = cbSrcStream;
 
-    hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
+    hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->tf.ppPins[1], &pOutSample, NULL, NULL, 0);
     if (FAILED(hr)) {
         ERR("Unable to get delivery buffer (%x)\n", hr);
         goto error;
@@ -149,7 +149,7 @@ static HRESULT AVIDec_ProcessSampleData(InputPin *pin, IMediaSample *pSample)
         IMediaSample_SetTime(pOutSample, NULL, NULL);
 
     LeaveCriticalSection(&This->tf.csFilter);
-    hr = OutputPin_SendSample((OutputPin*)This->tf.ppPins[1], pOutSample);
+    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
     IMediaSample_Release(pOutSample);
@@ -269,7 +269,7 @@ static HRESULT AVIDec_ConnectInput(InputPin *pin, const AM_MEDIA_TYPE * pmt)
                 assert(0);
 
             /* Update buffer size of media samples in output */
-            ((OutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pBihOut->biSizeImage;
+            ((BaseOutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pBihOut->biSizeImage;
 
             TRACE("Connection accepted\n");
             return S_OK;

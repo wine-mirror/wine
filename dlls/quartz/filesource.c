@@ -773,7 +773,7 @@ typedef struct DATAREQUEST
 
 typedef struct FileAsyncReader
 {
-    OutputPin pin;
+    BaseOutputPin pin;
     const struct IAsyncReaderVtbl * lpVtblAR;
 
     HANDLE hFile;
@@ -886,8 +886,8 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
     FileAsyncReaderPin_QueryInterface,
     BasePinImpl_AddRef,
     FileAsyncReaderPin_Release,
-    OutputPin_Connect,
-    OutputPin_ReceiveConnection,
+    BaseOutputPinImpl_Connect,
+    BaseOutputPinImpl_ReceiveConnection,
     BasePinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
@@ -897,19 +897,19 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
     FileAsyncReaderPin_QueryAccept,
     FileAsyncReaderPin_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
-    OutputPin_EndOfStream,
-    OutputPin_BeginFlush,
-    OutputPin_EndFlush,
-    OutputPin_NewSegment
+    BaseOutputPinImpl_EndOfStream,
+    BaseOutputPinImpl_BeginFlush,
+    BaseOutputPinImpl_EndFlush,
+    BaseOutputPinImpl_NewSegment
 };
 
 /* Function called as a helper to IPin_Connect */
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
-/* this differs from standard OutputPin_ConnectSpecific only in that it
+/* this differs from standard OutputPin_AttemptConnection only in that it
  * doesn't need the IMemInputPin interface on the receiving pin */
-static HRESULT FileAsyncReaderPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
-    OutputPin *This = (OutputPin *)iface;
+    BaseOutputPin *This = (BaseOutputPin *)iface;
     HRESULT hr;
 
     TRACE("(%p, %p)\n", pReceivePin, pmt);
@@ -943,7 +943,7 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
     strcpyW(piOutput.achName, wszOutputPinName);
-    hr = OutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, NULL, pCritSec, ppPin);
+    hr = BaseOutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, NULL, FileAsyncReaderPin_AttemptConnection, pCritSec, ppPin);
 
     if (SUCCEEDED(hr))
     {
@@ -954,7 +954,6 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
         pPinImpl->sample_list = NULL;
         pPinImpl->handle_list = NULL;
         pPinImpl->queued_number = 0;
-        pPinImpl->pin.pConnectSpecific = FileAsyncReaderPin_ConnectSpecific;
         InitializeCriticalSection(&pPinImpl->csList);
         pPinImpl->csList.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": FileAsyncReader.csList");
     }

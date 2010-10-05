@@ -35,7 +35,6 @@
 #include "qcap_main.h"
 #include "wine/debug.h"
 
-#include "pin.h"
 #include "capture.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
@@ -78,7 +77,7 @@ typedef struct VfwCapture
 /* VfwPin implementation */
 typedef struct VfwPinImpl
 {
-    OutputPin pin;
+    BaseOutputPin pin;
     Capture *driver_info;
     VfwCapture *parent;
     const IKsPropertySetVtbl * KSP_VT;
@@ -786,13 +785,10 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
 {
     static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
     ALLOCATOR_PROPERTIES ap;
-    VfwPinImpl * pPinImpl;
     PIN_INFO piOutput;
     HRESULT hr;
 
-    pPinImpl = CoTaskMemAlloc( sizeof(*pPinImpl) );
-    if (!pPinImpl)
-        return E_OUTOFMEMORY;
+    ppPin = NULL;
 
     /* What we put here doesn't matter, the
        driver function should override it then commit */
@@ -806,17 +802,15 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     lstrcpyW(piOutput.achName, wszOutputPinName);
     ObjectRefCount(TRUE);
 
-    hr = OutputPin_Init(&piOutput, &ap, pCritSec, &pPinImpl->pin);
+    hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, &ap, NULL, pCritSec, ppPin);
+
     if (SUCCEEDED(hr))
     {
+        VfwPinImpl *pPinImpl = (VfwPinImpl*)*ppPin;
         pPinImpl->KSP_VT = &KSP_VTable;
-        pPinImpl->pin.pin.lpVtbl = &VfwPin_Vtbl;
-        *ppPin = (IPin *)(&pPinImpl->pin.pin.lpVtbl);
-        return S_OK;
     }
 
-    CoTaskMemFree(pPinImpl);
-    return E_FAIL;
+    return hr;
 }
 
 static HRESULT WINAPI VfwPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
@@ -924,9 +918,9 @@ static const IPinVtbl VfwPin_Vtbl =
     VfwPin_QueryInterface,
     VfwPin_AddRef,
     VfwPin_Release,
-    OutputPin_Connect,
-    OutputPin_ReceiveConnection,
-    OutputPin_Disconnect,
+    BaseOutputPinImpl_Connect,
+    BaseOutputPinImpl_ReceiveConnection,
+    BaseOutputPinImpl_Disconnect,
     BasePinImpl_ConnectedTo,
     BasePinImpl_ConnectionMediaType,
     BasePinImpl_QueryPinInfo,

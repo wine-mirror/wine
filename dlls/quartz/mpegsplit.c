@@ -226,7 +226,7 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
 
     IMediaSample_SetTime(pCurrentSample, &time, &This->position);
 
-    hr = OutputPin_SendSample(&pOutputPin->pin, pCurrentSample);
+    hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)&pOutputPin->pin, pCurrentSample);
 
     if (hr != S_OK)
     {
