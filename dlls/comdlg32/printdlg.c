@@ -3487,8 +3487,7 @@ static INT_PTR CALLBACK pagesetup_dlg_proc(HWND hDlg, UINT uMsg, WPARAM wParam, 
         SetPropW(hDlg, pagesetupdlg_prop, data);
         SetPropW(hDrawWnd, pagesetupdlg_prop, data);
         GetWindowRect(hDrawWnd, &data->rtDrawRect); /* Calculating rect in client coordinates where paper draws */
-        ScreenToClient(hDlg, (LPPOINT)&data->rtDrawRect);
-        ScreenToClient(hDlg, (LPPOINT)(&data->rtDrawRect.right));
+        MapWindowPoints( 0, hDlg, (LPPOINT)&data->rtDrawRect, 2 );
         lpfnStaticWndProc = (WNDPROC)SetWindowLongPtrW(
             hDrawWnd,
             GWLP_WNDPROC,
