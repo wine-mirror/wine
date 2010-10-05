@@ -741,6 +741,29 @@ static const IKsPropertySetVtbl KSP_VTable =
    KSP_QuerySupported
 };
 
+static HRESULT WINAPI VfwPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+{
+    VfwPinImpl *This = (VfwPinImpl *)iface;
+    AM_MEDIA_TYPE *vfw_pmt;
+    HRESULT hr;
+
+    if (iPosition < 0)
+        return E_INVALIDARG;
+    if (iPosition > 0)
+        return VFW_S_NO_MORE_ITEMS;
+
+    hr = qcap_driver_get_format(This->driver_info, &vfw_pmt);
+    CopyMediaType(pmt, vfw_pmt);
+    DeleteMediaType(vfw_pmt);
+
+    return hr;
+}
+
+LONG WINAPI VfwPin_GetMediaTypeVersion(IPin *iface)
+{
+    return 1;
+}
+
 static HRESULT
 VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
                   IPin ** ppPin )
@@ -833,18 +856,16 @@ VfwPin_Release(IPin * iface)
 static HRESULT WINAPI
 VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
-    ENUMMEDIADETAILS emd;
     AM_MEDIA_TYPE *pmt;
     HRESULT hr;
 
     VfwPinImpl *This = (VfwPinImpl *)iface;
-    emd.cMediaTypes = 1;
     hr = qcap_driver_get_format(This->driver_info, &pmt);
-    emd.pMediaTypes = pmt;
     if (SUCCEEDED(hr))
-        hr = IEnumMediaTypesImpl_Construct(&emd, ppEnum);
+        hr = EnumMediaTypes_Construct(iface, VfwPin_GetMediaType, VfwPin_GetMediaTypeVersion, ppEnum);
     TRACE("%p -- %x\n", This, hr);
     DeleteMediaType(pmt);
+
     return hr;
 }
 

@@ -591,18 +591,25 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     TransformFilter_InputPin_NewSegment
 };
 
-static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
+static HRESULT WINAPI TransformFilter_Output_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     IPinImpl *This = (IPinImpl *)iface;
     TransformFilterImpl *pTransform = (TransformFilterImpl *)This->pinInfo.pFilter;
-    ENUMMEDIADETAILS emd;
 
+    if (iPosition < 0)
+        return E_INVALIDARG;
+    if (iPosition > 0)
+        return VFW_S_NO_MORE_ITEMS;
+    CopyMediaType(pmt, &pTransform->pmt);
+    return S_OK;
+}
+
+static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
+{
+    IPinImpl *This = (IPinImpl *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    emd.cMediaTypes = 1;
-    emd.pMediaTypes = &pTransform->pmt;
-
-    return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
+    return EnumMediaTypes_Construct(iface, TransformFilter_Output_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
 }
 
 static const IPinVtbl TransformFilter_OutputPin_Vtbl =

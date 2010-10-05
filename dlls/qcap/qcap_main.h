@@ -43,14 +43,7 @@ typedef struct tagENUMPINDETAILS
        IPin ** ppPins;
 } ENUMPINDETAILS;
 
-typedef struct tagENUMEDIADETAILS
-{
-       ULONG cMediaTypes;
-       AM_MEDIA_TYPE * pMediaTypes;
-} ENUMMEDIADETAILS;
-
 HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** ppEnum);
-HRESULT IEnumMediaTypesImpl_Construct(const ENUMMEDIADETAILS * pDetails, IEnumMediaTypes ** ppEnum);
 
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards); 
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);

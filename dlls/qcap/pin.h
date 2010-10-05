@@ -43,7 +43,6 @@ typedef struct IPinImpl
 	PIN_INFO pinInfo;
 	IPin * pConnectedTo;
 	AM_MEDIA_TYPE mtCurrent;
-	ENUMMEDIADETAILS enumMediaDetails;
 	QUERYACCEPTPROC fnQueryAccept;
 	LPVOID pUserData;
 } IPinImpl;

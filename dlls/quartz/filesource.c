@@ -794,6 +794,17 @@ static HRESULT AcceptProcAFR(LPVOID iface, const AM_MEDIA_TYPE *pmt)
     return S_FALSE;
 }
 
+static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+{
+    FileAsyncReader *This = (FileAsyncReader *)iface;
+    if (iPosition < 0)
+        return E_INVALIDARG;
+    if (iPosition > 0)
+        return VFW_S_NO_MORE_ITEMS;
+    CopyMediaType(pmt, ((AsyncReader *)This->pin.pin.pinInfo.pFilter)->pmt);
+    return S_OK;
+}
+
 /* overridden pin functions */
 
 static HRESULT WINAPI FileAsyncReaderPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
@@ -850,15 +861,9 @@ static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
 
 static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
-    ENUMMEDIADETAILS emd;
-    FileAsyncReader *This = (FileAsyncReader *)iface;
-
     TRACE("(%p)\n", ppEnum);
 
-    emd.cMediaTypes = 1;
-    emd.pMediaTypes = ((AsyncReader *)This->pin.pin.pinInfo.pFilter)->pmt;
-
-    return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
+    return EnumMediaTypes_Construct(iface, FileAsyncReaderPin_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
 }
 
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 

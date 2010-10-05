@@ -599,6 +599,17 @@ static const IMediaSeekingVtbl Parser_Seeking_Vtbl =
     MediaSeekingImpl_GetPreroll
 };
 
+static HRESULT WINAPI Parser_OutputPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+{
+    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    if (iPosition < 0)
+        return E_INVALIDARG;
+    if (iPosition > 0)
+        return VFW_S_NO_MORE_ITEMS;
+    CopyMediaType(pmt, This->pmt);
+    return S_OK;
+}
+
 static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
@@ -647,16 +658,11 @@ static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
 
 static HRESULT WINAPI Parser_OutputPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
-    ENUMMEDIADETAILS emd;
-    Parser_OutputPin *This = (Parser_OutputPin *)iface;
-
     TRACE("(%p)\n", ppEnum);
 
     /* override this method to allow enumeration of your types */
-    emd.cMediaTypes = 1;
-    emd.pMediaTypes = This->pmt;
 
-    return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
+    return EnumMediaTypes_Construct(iface, Parser_OutputPin_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
 }
 
 static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)

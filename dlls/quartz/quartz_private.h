@@ -63,16 +63,9 @@ HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
 
-typedef struct tagENUMEDIADETAILS
-{
-	ULONG cMediaTypes;
-	AM_MEDIA_TYPE * pMediaTypes;
-} ENUMMEDIADETAILS;
-
 typedef HRESULT (* FNOBTAINPIN)(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick);
 
 HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, IBaseFilter *base);
-HRESULT IEnumMediaTypesImpl_Construct(const ENUMMEDIADETAILS * pDetails, IEnumMediaTypes ** ppEnum);
 HRESULT IEnumRegFiltersImpl_Construct(REGFILTER * pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum);
 HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEnumFilters ** ppEnum);
 
@@ -93,5 +86,9 @@ typedef struct StdMediaSample2
     LONGLONG tMediaStart;
     LONGLONG tMediaEnd;
 } StdMediaSample2;
+
+
+HRESULT WINAPI BasePinImpl_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt);
+LONG WINAPI BasePinImpl_GetMediaTypeVersion(IPin *iface);
 
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */

@@ -154,6 +154,19 @@ static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
     pDest->pFilter = pSrc->pFilter;
 }
 
+/*** Common Base Pin function */
+HRESULT WINAPI BasePinImpl_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+{
+    if (iPosition < 0)
+        return E_INVALIDARG;
+    return VFW_S_NO_MORE_ITEMS;
+}
+
+LONG WINAPI BasePinImpl_GetMediaTypeVersion(IPin *iface)
+{
+    return 1;
+}
+
 /*** Common pin functions ***/
 
 ULONG WINAPI IPinImpl_AddRef(IPin * iface)
@@ -292,15 +305,12 @@ HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
 HRESULT WINAPI IPinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
     IPinImpl *This = (IPinImpl *)iface;
-    ENUMMEDIADETAILS emd;
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
     /* override this method to allow enumeration of your types */
-    emd.cMediaTypes = 0;
-    emd.pMediaTypes = NULL;
 
-    return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
+    return EnumMediaTypes_Construct(iface, BasePinImpl_GetMediaType, BasePinImpl_GetMediaTypeVersion , ppEnum);
 }
 
 HRESULT WINAPI IPinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
