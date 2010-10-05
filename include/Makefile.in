@@ -17,6 +17,7 @@ PUBLIC_IDL_H_SRCS = \
 	comcat.idl \
 	commoncontrols.idl \
 	control.idl \
+	cor.idl \
 	ctfutb.idl \
 	ctxtcall.idl \
 	d3d10.idl \
@@ -142,7 +143,6 @@ SRCDIR_INCLUDES = \
 	commctrl.rh \
 	commdlg.h \
 	compobj.h \
-	cor.h \
 	corerror.h \
 	corhdr.h \
 	cpl.h \

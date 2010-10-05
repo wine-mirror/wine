@@ -16,28 +16,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_COR_H
-#define __WINE_COR_H
-
-#include "ole2.h"
+cpp_quote("#include <ole2.h>")
 /* FIXME: #include "specstrings.h" */
 /* FIXME: #include "corerror.h" */
 /* FIXME: #include "corhdr.h" */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-BOOL        WINAPI _CorDllMain(HINSTANCE,DWORD,LPVOID);
-__int32     WINAPI _CorExeMain(void);
-__int32     WINAPI _CorExeMain2(PBYTE,DWORD,LPWSTR,LPWSTR,LPWSTR);
-VOID        WINAPI _CorImageUnloading(PVOID);
-HRESULT     WINAPI _CorValidateImage(PVOID*,LPCWSTR);
-HRESULT     WINAPI CoInitializeCor(DWORD);
-void        WINAPI CoUninitializeCor(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __WINE_COR_H */
+cpp_quote("BOOL        WINAPI _CorDllMain(HINSTANCE,DWORD,LPVOID);")
+cpp_quote("__int32     WINAPI _CorExeMain(void);")
+cpp_quote("__int32     WINAPI _CorExeMain2(PBYTE,DWORD,LPWSTR,LPWSTR,LPWSTR);")
+cpp_quote("VOID        WINAPI _CorImageUnloading(PVOID);")
+cpp_quote("HRESULT     WINAPI _CorValidateImage(PVOID*,LPCWSTR);")
+cpp_quote("HRESULT     WINAPI CoInitializeCor(DWORD);")
+cpp_quote("void        WINAPI CoUninitializeCor(void);")
