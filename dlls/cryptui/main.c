@@ -4284,7 +4284,6 @@ static BOOL init_hierarchy_page(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
 static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
 {
     RECT rc;
-    POINT topLeft;
 
     TRACE("(%p, %08x, %08lx)\n", hwnd, msg, lp);
 
@@ -4293,17 +4292,12 @@ static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
     case PSCB_INITIALIZED:
         /* Get cancel button's position.. */
         GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rc);
-        topLeft.x = rc.left;
-        topLeft.y = rc.top;
-        ScreenToClient(hwnd, &topLeft);
+        MapWindowPoints( 0, hwnd, (POINT *)&rc, 2 );
         /* hide the cancel button.. */
         ShowWindow(GetDlgItem(hwnd, IDCANCEL), FALSE);
-        /* get the OK button's size.. */
-        GetWindowRect(GetDlgItem(hwnd, IDOK), &rc);
         /* and move the OK button to the cancel button's original position. */
-        MoveWindow(GetDlgItem(hwnd, IDOK), topLeft.x, topLeft.y,
-         rc.right - rc.left, rc.bottom - rc.top, FALSE);
-        GetWindowRect(GetDlgItem(hwnd, IDOK), &rc);
+        SetWindowPos(GetDlgItem(hwnd, IDOK), 0, rc.left, rc.top, 0, 0,
+                     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
         break;
     }
     return 0;
