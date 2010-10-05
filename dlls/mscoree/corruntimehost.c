@@ -496,6 +496,138 @@ static const struct ICLRRuntimeHostVtbl CLRHostVtbl =
     CLRRuntimeHost_ExecuteInDefaultAppDomain
 };
 
+/* Create an instance of a type given its name, by calling its constructor with
+ * no arguments. Note that result MUST be in the stack, or the garbage
+ * collector may free it prematurely. */
+HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
+    MonoDomain *domain, MonoObject **result)
+{
+    HRESULT hr=S_OK;
+    char *nameA=NULL;
+    MonoType *type;
+    MonoClass *klass;
+    MonoObject *obj;
+
+    if (!domain)
+        hr = RuntimeHost_GetDefaultDomain(This, &domain);
+
+    if (SUCCEEDED(hr))
+    {
+        nameA = WtoA(name);
+        if (!nameA)
+            hr = E_OUTOFMEMORY;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        type = This->mono->mono_reflection_type_from_name(nameA, NULL);
+        if (!type)
+        {
+            ERR("Cannot find type %s\n", debugstr_w(name));
+            hr = E_FAIL;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        klass = This->mono->mono_class_from_mono_type(type);
+        if (!klass)
+        {
+            ERR("Cannot convert type %s to a class\n", debugstr_w(name));
+            hr = E_FAIL;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        obj = This->mono->mono_object_new(domain, klass);
+        if (!obj)
+        {
+            ERR("Cannot allocate object of type %s\n", debugstr_w(name));
+            hr = E_FAIL;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        /* FIXME: Detect exceptions from the constructor? */
+        This->mono->mono_runtime_object_init(obj);
+        *result = obj;
+    }
+
+    HeapFree(GetProcessHeap(), 0, nameA);
+
+    return hr;
+}
+
+/* Get an IUnknown pointer for a Mono object.
+ *
+ * This is just a "light" wrapper around
+ * System.Runtime.InteropServices.Marshal:GetIUnknownForObject
+ *
+ * NOTE: The IUnknown* is created with a reference to the object.
+ * Until they have a reference, objects must be in the stack to prevent the
+ * garbage collector from freeing them. */
+HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
+    IUnknown **ppUnk)
+{
+    MonoDomain *domain;
+    MonoAssembly *assembly;
+    MonoImage *image;
+    MonoClass *klass;
+    MonoMethod *method;
+    MonoObject *result;
+    void *args[2];
+
+    domain = This->mono->mono_object_get_domain(obj);
+
+    assembly = This->mono->mono_domain_assembly_open(domain, "mscorlib");
+    if (!assembly)
+    {
+        ERR("Cannot load mscorlib\n");
+        return E_FAIL;
+    }
+
+    image = This->mono->mono_assembly_get_image(assembly);
+    if (!image)
+    {
+        ERR("Couldn't get assembly image\n");
+        return E_FAIL;
+    }
+
+    klass = This->mono->mono_class_from_name(image, "System.Runtime.InteropServices", "Marshal");
+    if (!klass)
+    {
+        ERR("Couldn't get class from image\n");
+        return E_FAIL;
+    }
+
+    method = This->mono->mono_class_get_method_from_name(klass, "GetIUnknownForObject", 1);
+    if (!method)
+    {
+        ERR("Couldn't get method from class\n");
+        return E_FAIL;
+    }
+
+    args[0] = obj;
+    args[1] = NULL;
+    result = This->mono->mono_runtime_invoke(method, NULL, args, NULL);
+    if (!result)
+    {
+        ERR("Couldn't get result pointer\n");
+        return E_FAIL;
+    }
+
+    *ppUnk = *(IUnknown**)This->mono->mono_object_unbox(result);
+    if (!*ppUnk)
+    {
+        ERR("GetIUnknownForObject returned 0\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 static void get_utf8_args(int *argc, char ***argv)
 {
     WCHAR **argvw;

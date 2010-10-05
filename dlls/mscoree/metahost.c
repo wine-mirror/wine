@@ -138,14 +138,24 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
     } \
 } while (0);
 
+        LOAD_MONO_FUNCTION(mono_assembly_get_image);
         LOAD_MONO_FUNCTION(mono_assembly_open);
         LOAD_MONO_FUNCTION(mono_config_parse);
+        LOAD_MONO_FUNCTION(mono_class_from_mono_type);
+        LOAD_MONO_FUNCTION(mono_class_from_name);
+        LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
         LOAD_MONO_FUNCTION(mono_domain_assembly_open);
         LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
         LOAD_MONO_FUNCTION(mono_jit_cleanup);
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);
         LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
+        LOAD_MONO_FUNCTION(mono_object_get_domain);
+        LOAD_MONO_FUNCTION(mono_object_new);
+        LOAD_MONO_FUNCTION(mono_object_unbox);
+        LOAD_MONO_FUNCTION(mono_reflection_type_from_name);
+        LOAD_MONO_FUNCTION(mono_runtime_invoke);
+        LOAD_MONO_FUNCTION(mono_runtime_object_init);
         LOAD_MONO_FUNCTION(mono_set_dirs);
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
 

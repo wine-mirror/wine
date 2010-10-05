@@ -369,8 +369,37 @@ HRESULT WINAPI CorBindToCurrentRuntime(LPCWSTR filename, REFCLSID rclsid, REFIID
 
 STDAPI ClrCreateManagedInstance(LPCWSTR pTypeName, REFIID riid, void **ppObject)
 {
-    FIXME("(%s,%s,%p)\n", debugstr_w(pTypeName), debugstr_guid(riid), ppObject);
-    return E_NOTIMPL;
+    HRESULT ret;
+    ICLRRuntimeInfo *info;
+    RuntimeHost *host;
+    MonoObject *obj;
+    IUnknown *unk;
+
+    TRACE("(%s,%s,%p)\n", debugstr_w(pTypeName), debugstr_guid(riid), ppObject);
+
+    /* FIXME: How to determine which runtime version to use? */
+    ret = get_runtime_info(NULL, NULL, NULL, 0, RUNTIME_INFO_UPGRADE_VERSION, TRUE, &info);
+
+    if (SUCCEEDED(ret))
+    {
+        ret = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
+
+        ICLRRuntimeInfo_Release(info);
+    }
+
+    if (SUCCEEDED(ret))
+        ret = RuntimeHost_CreateManagedInstance(host, pTypeName, NULL, &obj);
+
+    if (SUCCEEDED(ret))
+        ret = RuntimeHost_GetIUnknownForObject(host, obj, &unk);
+
+    if (SUCCEEDED(ret))
+    {
+        ret = IUnknown_QueryInterface(unk, riid, ppObject);
+        IUnknown_Release(unk);
+    }
+
+    return ret;
 }
 
 BOOL WINAPI StrongNameSignatureVerification(LPCWSTR filename, DWORD inFlags, DWORD* pOutFlags)
