@@ -1922,7 +1922,10 @@ static void test_classesroot(void)
 
     /* create a key in the user's classes */
     if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Classes\\WineTestCls", &hkey ))
+    {
         delete_key( hkey );
+        RegCloseKey( hkey );
+    }
     if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Classes\\WineTestCls", 0, NULL, 0,
                          KEY_QUERY_VALUE|KEY_SET_VALUE, NULL, &hkey, NULL )) return;
 
@@ -1932,6 +1935,13 @@ static void test_classesroot(void)
     todo_wine ok(res == ERROR_SUCCESS ||
                  broken(res == ERROR_FILE_NOT_FOUND /* Win9x */),
                  "test key not found in hkcr: %d\n", res);
+    if (res)
+    {
+        trace( "HKCR key merging not supported\n" );
+        delete_key( hkey );
+        RegCloseKey( hkey );
+        return;
+    }
 
     /* set a value in user's classes */
     res = RegSetValueExA(hkey, "val1", 0, REG_SZ, (const BYTE *)"user", sizeof("user"));
@@ -1939,31 +1949,22 @@ static void test_classesroot(void)
 
     /* try to find the value in hkcr */
     res = RegQueryValueExA(hkcr, "val1", NULL, &type, (LPBYTE)buffer, &size);
-    todo_wine
-    {
-        ok(res == ERROR_SUCCESS ||
-           broken(res == ERROR_BADKEY /* Win9x */) ||
-           broken(res == ERROR_INVALID_HANDLE /* NT+ */),
-           "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
-        ok(!strcmp( buffer, "user" ) || broken(!strcmp( buffer, "" ) /* Win9x */),
-           "value set to '%s'\n", buffer );
-    }
+    ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d\n", res);
+    ok(!strcmp( buffer, "user" ), "value set to '%s'\n", buffer );
 
     /* modify the value in hkcr */
     res = RegSetValueExA(hkcr, "val1", 0, REG_SZ, (const BYTE *)"hkcr", sizeof("hkcr"));
-    todo_wine ok(res == ERROR_SUCCESS ||
-                 broken(res == ERROR_BADKEY /* Win9x */) ||
-                 broken(res == ERROR_INVALID_HANDLE /* NT+ */),
-                 "RegSetValueExA failed: %d, GLE=%x\n", res, GetLastError());
+    ok(res == ERROR_SUCCESS, "RegSetValueExA failed: %d\n", res);
 
     /* check if the value is also modified in user's classes */
     res = RegQueryValueExA(hkey, "val1", NULL, &type, (LPBYTE)buffer, &size);
     ok(res == ERROR_SUCCESS, "RegQueryValueExA failed: %d, GLE=%x\n", res, GetLastError());
-    todo_wine ok(!strcmp( buffer, "hkcr" ) || broken(!strcmp( buffer, "user" ) /* Win9x */),
-                 "value set to '%s'\n", buffer );
+    ok(!strcmp( buffer, "hkcr" ), "value set to '%s'\n", buffer );
 
     /* cleanup */
     delete_key( hkey );
+    RegCloseKey( hkey );
+    RegCloseKey( hkcr );
 }
 
 static void test_deleted_key(void)
