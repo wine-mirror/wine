@@ -3049,7 +3049,7 @@ TOOLBAR_AutoSize (TOOLBAR_INFO *infoPtr)
         if ((infoPtr->dwStyle & CCS_BOTTOM) == CCS_NOMOVEY)
         {
             GetWindowRect(infoPtr->hwndSelf, &window_rect);
-            ScreenToClient(parent, (LPPOINT)&window_rect.left);
+            MapWindowPoints( 0, parent, (POINT *)&window_rect, 2 );
             y = window_rect.top;
         }
         if ((infoPtr->dwStyle & CCS_BOTTOM) == CCS_BOTTOM)
