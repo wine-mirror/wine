@@ -2107,13 +2107,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
         This->onscreen_depth_stencil = NULL;
     }
 
-    TRACE("Releasing the depth stencil buffer at %p\n", This->depth_stencil);
-    if (This->depth_stencil && IWineD3DSurface_Release((IWineD3DSurface *)This->depth_stencil))
+    if (This->depth_stencil)
     {
-        if (This->auto_depth_stencil != This->depth_stencil)
-            FIXME("(%p) Something is still holding the depth/stencil buffer.\n",This);
+        IWineD3DSurfaceImpl *ds = This->depth_stencil;
+
+        TRACE("Releasing depth/stencil buffer %p.\n", ds);
+
+        This->depth_stencil = NULL;
+        if (IWineD3DSurface_Release((IWineD3DSurface *)ds)
+                && ds != This->auto_depth_stencil)
+        {
+            ERR("Something is still holding a reference to depth/stencil buffer %p.\n", ds);
+        }
     }
-    This->depth_stencil = NULL;
 
     TRACE("Releasing the render target at %p\n", This->render_targets[0]);
     IWineD3DSurface_Release((IWineD3DSurface *)This->render_targets[0]);
