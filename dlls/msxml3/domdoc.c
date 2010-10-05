@@ -64,6 +64,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 static const WCHAR PropertySelectionLanguageW[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
 static const WCHAR PropertySelectionNamespacesW[] = {'S','e','l','e','c','t','i','o','n','N','a','m','e','s','p','a','c','e','s',0};
 static const WCHAR PropertyProhibitDTDW[] = {'P','r','o','h','i','b','i','t','D','T','D',0};
+static const WCHAR PropertyNewParserW[] = {'N','e','w','P','a','r','s','e','r',0};
 static const WCHAR PropValueXPathW[] = {'X','P','a','t','h',0};
 static const WCHAR PropValueXSLPatternW[] = {'X','S','L','P','a','t','t','e','r','n',0};
 
@@ -2494,10 +2495,11 @@ static HRESULT WINAPI domdoc_setProperty(
         VariantClear(&varStr);
         return hr;
     }
-    else if (lstrcmpiW(p, PropertyProhibitDTDW) == 0)
+    else if (lstrcmpiW(p, PropertyProhibitDTDW) == 0 ||
+             lstrcmpiW(p, PropertyNewParserW) == 0)
     {
         /* Ignore */
-        FIXME("Ignoring property ProhibitDTD, value %d\n", V_BOOL(&var));
+        FIXME("Ignoring property %s, value %d\n", debugstr_w(p), V_BOOL(&var));
         return S_OK;
     }
 
