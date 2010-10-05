@@ -618,16 +618,36 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
 HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv)
 {
     IUnknown *unk;
+    HRESULT hr;
 
     if (IsEqualGUID(clsid, &CLSID_CorRuntimeHost))
+    {
         unk = (IUnknown*)&This->lpVtbl;
+        IUnknown_AddRef(unk);
+    }
     else if (IsEqualGUID(clsid, &CLSID_CLRRuntimeHost))
+    {
         unk = (IUnknown*)&This->lpCLRHostVtbl;
+        IUnknown_AddRef(unk);
+    }
+    else if (IsEqualGUID(clsid, &CLSID_CorMetaDataDispenser) ||
+             IsEqualGUID(clsid, &CLSID_CorMetaDataDispenserRuntime))
+    {
+        hr = MetaDataDispenser_CreateInstance(&unk);
+        if (FAILED(hr))
+            return hr;
+    }
     else
         unk = NULL;
 
     if (unk)
-        return IUnknown_QueryInterface(unk, riid, ppv);
+    {
+        hr = IUnknown_QueryInterface(unk, riid, ppv);
+
+        IUnknown_Release(unk);
+
+        return hr;
+    }
     else
         FIXME("not implemented for class %s\n", debugstr_guid(clsid));
 

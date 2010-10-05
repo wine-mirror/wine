@@ -54,6 +54,8 @@ extern HRESULT force_get_runtime_info(ICLRRuntimeInfo **result);
 
 extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result);
 
+extern HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk);
+
 typedef struct parsed_config_file
 {
     struct list supported_runtimes;

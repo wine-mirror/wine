@@ -5,6 +5,7 @@ C_SRCS = \
 	assembly.c \
 	config.c \
 	corruntimehost.c \
+	metadata.c \
 	metahost.c \
 	mscoree_main.c
 
