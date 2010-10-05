@@ -35,22 +35,10 @@ typedef HRESULT (* QUERYACCEPTPROC)(LPVOID userdata, const AM_MEDIA_TYPE * pmt);
  */
 typedef HRESULT (* PRECONNECTPROC)(IPin * iface, IPin * pConnectPin);
 
-typedef struct IPinImpl
-{
-	const struct IPinVtbl * lpVtbl;
-	LONG refCount;
-	LPCRITICAL_SECTION pCritSec;
-	PIN_INFO pinInfo;
-	IPin * pConnectedTo;
-	AM_MEDIA_TYPE mtCurrent;
-	QUERYACCEPTPROC fnQueryAccept;
-	LPVOID pUserData;
-} IPinImpl;
-
 typedef struct OutputPin
 {
 	/* inheritance C style! */
-	IPinImpl pin;
+	BasePin pin;
 
 	IMemInputPin * pMemInputPin;
 	HRESULT (* pConnectSpecific)(IPin * iface, IPin * pReceiver, const AM_MEDIA_TYPE * pmt);
@@ -59,17 +47,7 @@ typedef struct OutputPin
 
 /*** Initializers ***/
 HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES *props,
-                       LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
                        LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl);
-
-/* Common */
-HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin);
-HRESULT WINAPI IPinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI IPinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo);
-HRESULT WINAPI IPinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir);
-HRESULT WINAPI IPinImpl_QueryId(IPin * iface, LPWSTR * Id);
-HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI IPinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum);
 
 /* Output Pin */
 HRESULT WINAPI OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);

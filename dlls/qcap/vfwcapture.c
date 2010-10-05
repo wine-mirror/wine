@@ -193,7 +193,7 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
 
     if (!refCount)
     {
-        IPinImpl *pin;
+        BasePin *pin;
 
         TRACE("destroying everything\n");
         if (This->init)
@@ -202,7 +202,7 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
                 qcap_driver_stop(This->driver_info, &This->state);
             qcap_driver_destroy(This->driver_info);
         }
-        pin = (IPinImpl*) This->pOutputPin;
+        pin = (BasePin*) This->pOutputPin;
         if (pin->pConnectedTo != NULL)
         {
             IPin_Disconnect(pin->pConnectedTo);
@@ -414,7 +414,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 {
     HRESULT hr;
     ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
-    IPinImpl *pin;
+    BasePin *pin;
 
     TRACE("(%p): %p->%p\n", iface, pmt, pmt ? pmt->pbFormat : NULL);
 
@@ -432,7 +432,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 
     dump_AM_MEDIA_TYPE(pmt);
 
-    pin = (IPinImpl *)This->pOutputPin;
+    pin = (BasePin *)This->pOutputPin;
     if (pin->pConnectedTo != NULL)
     {
         hr = IPin_QueryAccept(pin->pConnectedTo, pmt);
@@ -806,7 +806,7 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     lstrcpyW(piOutput.achName, wszOutputPinName);
     ObjectRefCount(TRUE);
 
-    hr = OutputPin_Init(&piOutput, &ap, pBaseFilter, NULL, pCritSec, &pPinImpl->pin);
+    hr = OutputPin_Init(&piOutput, &ap, pCritSec, &pPinImpl->pin);
     if (SUCCEEDED(hr))
     {
         pPinImpl->KSP_VT = &KSP_VTable;
@@ -927,12 +927,12 @@ static const IPinVtbl VfwPin_Vtbl =
     OutputPin_Connect,
     OutputPin_ReceiveConnection,
     OutputPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    BasePinImpl_QueryAccept,
     VfwPin_EnumMediaTypes,
     VfwPin_QueryInternalConnections,
     VfwPin_EndOfStream,

@@ -2,6 +2,7 @@ MODULE    = strmbase
 
 C_SRCS = \
 	enumpins.c \
-	mediatype.c
+	mediatype.c \
+	pin.c
 
 @MAKE_IMPLIB_RULES@

@@ -825,7 +825,7 @@ static HRESULT WINAPI DSoundRender_InputPin_ReceiveConnection(IPin * iface, IPin
         if (This->pin.pConnectedTo)
             hr = VFW_E_ALREADY_CONNECTED;
 
-        if (SUCCEEDED(hr) && This->pin.fnQueryAccept(This->pin.pUserData, pmt) != S_OK)
+        if (SUCCEEDED(hr) && This->fnQueryAccept(This->pUserData, pmt) != S_OK)
             hr = VFW_E_TYPE_NOT_ACCEPTED;
 
         if (SUCCEEDED(hr))
@@ -899,7 +899,7 @@ static HRESULT WINAPI DSoundRender_InputPin_ReceiveConnection(IPin * iface, IPin
 
 static HRESULT WINAPI DSoundRender_InputPin_Disconnect(IPin * iface)
 {
-    IPinImpl *This = (IPinImpl*)iface;
+    BasePin *This = (BasePin*)iface;
     DSoundRenderImpl *DSImpl;
 
     TRACE("(%p)->()\n", iface);
@@ -909,7 +909,7 @@ static HRESULT WINAPI DSoundRender_InputPin_Disconnect(IPin * iface)
         IDirectSoundBuffer_Release(DSImpl->dsbuffer);
     DSImpl->dsbuffer = NULL;
 
-    return IPinImpl_Disconnect(iface);
+    return BasePinImpl_Disconnect(iface);
 }
 
 static HRESULT WINAPI DSoundRender_InputPin_EndOfStream(IPin * iface)
@@ -1012,19 +1012,19 @@ static HRESULT WINAPI DSoundRender_InputPin_EndFlush(IPin * iface)
 static const IPinVtbl DSoundRender_InputPin_Vtbl =
 {
     InputPin_QueryInterface,
-    IPinImpl_AddRef,
+    BasePinImpl_AddRef,
     InputPin_Release,
     InputPin_Connect,
     DSoundRender_InputPin_ReceiveConnection,
     DSoundRender_InputPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
-    IPinImpl_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    InputPin_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
+    BasePinImpl_QueryInternalConnections,
     DSoundRender_InputPin_EndOfStream,
     DSoundRender_InputPin_BeginFlush,
     DSoundRender_InputPin_EndFlush,

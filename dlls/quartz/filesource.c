@@ -794,17 +794,18 @@ static inline FileAsyncReader *impl_from_IAsyncReader( IAsyncReader *iface )
     return (FileAsyncReader *)((char*)iface - FIELD_OFFSET(FileAsyncReader, lpVtblAR));
 }
 
-static HRESULT AcceptProcAFR(LPVOID iface, const AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI FileAsyncReaderPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
 {
-    AsyncReader *This = iface;
+    FileAsyncReader *This = (FileAsyncReader *)iface;
+    AM_MEDIA_TYPE *pmt_filter = ((AsyncReader *)This->pin.pin.pinInfo.pFilter)->pmt;
 
     FIXME("(%p, %p)\n", iface, pmt);
 
-    if (IsEqualGUID(&pmt->majortype, &This->pmt->majortype) &&
-        IsEqualGUID(&pmt->subtype, &This->pmt->subtype) &&
+    if (IsEqualGUID(&pmt->majortype, &pmt_filter->majortype) &&
+        IsEqualGUID(&pmt->subtype, &pmt_filter->subtype) &&
         IsEqualGUID(&pmt->formattype, &FORMAT_None))
         return S_OK;
-    
+
     return S_FALSE;
 }
 
@@ -883,19 +884,19 @@ static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMedia
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
 {
     FileAsyncReaderPin_QueryInterface,
-    IPinImpl_AddRef,
+    BasePinImpl_AddRef,
     FileAsyncReaderPin_Release,
     OutputPin_Connect,
     OutputPin_ReceiveConnection,
-    IPinImpl_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
+    BasePinImpl_Disconnect,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    FileAsyncReaderPin_QueryAccept,
     FileAsyncReaderPin_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
+    BasePinImpl_QueryInternalConnections,
     OutputPin_EndOfStream,
     OutputPin_BeginFlush,
     OutputPin_EndFlush,
@@ -942,7 +943,7 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
     strcpyW(piOutput.achName, wszOutputPinName);
-    hr = OutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, NULL, pBaseFilter, AcceptProcAFR, pCritSec, ppPin);
+    hr = OutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, NULL, pCritSec, ppPin);
 
     if (SUCCEEDED(hr))
     {

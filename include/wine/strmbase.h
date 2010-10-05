@@ -34,3 +34,29 @@ typedef LONG (WINAPI *BaseFilter_GetPinVersion)(IBaseFilter* iface);
 HRESULT WINAPI EnumMediaTypes_Construct(IPin *iface, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum);
 
 HRESULT WINAPI EnumPins_Construct(IBaseFilter *base,  BaseFilter_GetPin receive_pin, BaseFilter_GetPinCount receive_pincount, BaseFilter_GetPinVersion receive_version, IEnumPins ** ppEnum);
+
+/* Pin functions */
+
+typedef struct BasePin
+{
+	const struct IPinVtbl * lpVtbl;
+	LONG refCount;
+	LPCRITICAL_SECTION pCritSec;
+	PIN_INFO pinInfo;
+	IPin * pConnectedTo;
+	AM_MEDIA_TYPE mtCurrent;
+} BasePin;
+
+/* Base Pin */
+HRESULT WINAPI BasePinImpl_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt);
+LONG WINAPI BasePinImpl_GetMediaTypeVersion(IPin *iface);
+ULONG WINAPI BasePinImpl_AddRef(IPin * iface);
+HRESULT WINAPI BasePinImpl_Disconnect(IPin * iface);
+HRESULT WINAPI BasePinImpl_ConnectedTo(IPin * iface, IPin ** ppPin);
+HRESULT WINAPI BasePinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt);
+HRESULT WINAPI BasePinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo);
+HRESULT WINAPI BasePinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir);
+HRESULT WINAPI BasePinImpl_QueryId(IPin * iface, LPWSTR * Id);
+HRESULT WINAPI BasePinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
+HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum);
+HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin);

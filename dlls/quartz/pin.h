@@ -66,25 +66,15 @@ typedef HRESULT (* STOPPROCESSPROC) (LPVOID userdata);
 #define ALIGNDOWN(value,boundary) ((value)/(boundary)*(boundary))
 #define ALIGNUP(value,boundary) (ALIGNDOWN((value)+(boundary)-1, (boundary)))
 
-typedef struct IPinImpl
-{
-	const struct IPinVtbl * lpVtbl;
-	LONG refCount;
-	LPCRITICAL_SECTION pCritSec;
-	PIN_INFO pinInfo;
-	IPin * pConnectedTo;
-	AM_MEDIA_TYPE mtCurrent;
-	QUERYACCEPTPROC fnQueryAccept;
-	LPVOID pUserData;
-} IPinImpl;
-
 typedef struct InputPin
 {
 	/* inheritance C style! */
-	IPinImpl pin;
+	BasePin pin;
+	LPVOID pUserData;
 
 	const IMemInputPinVtbl * lpVtblMemInput;
 	IMemAllocator * pAllocator;
+	QUERYACCEPTPROC fnQueryAccept;
 	SAMPLEPROC_PUSH fnSampleProc;
 	CLEANUPPROC fnCleanProc;
 	REFERENCE_TIME tStart;
@@ -97,7 +87,7 @@ typedef struct InputPin
 typedef struct OutputPin
 {
 	/* inheritance C style! */
-	IPinImpl pin;
+	BasePin  pin;
 
 	IMemInputPin * pMemInputPin;
 	HRESULT (* pConnectSpecific)(IPin * iface, IPin * pReceiver, const AM_MEDIA_TYPE * pmt);
@@ -110,11 +100,13 @@ typedef struct OutputPin
 typedef struct PullPin
 {
 	/* inheritance C style! */
-	IPinImpl pin;
+	BasePin pin;
+	LPVOID pUserData;
 
 	REFERENCE_TIME rtStart, rtCurrent, rtNext, rtStop;
 	IAsyncReader * pReader;
 	IMemAllocator * pAlloc;
+	QUERYACCEPTPROC fnQueryAccept;
 	SAMPLEPROC_PULL fnSampleProc;
 	PRECONNECTPROC fnPreConnect;
 	REQUESTPROC fnCustomRequest;
@@ -142,29 +134,18 @@ typedef struct PullPin
 
 /*** Constructors ***/
 HRESULT InputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PUSH pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
-HRESULT OutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT OutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 HRESULT PullPin_Construct(const IPinVtbl *PullPin_Vtbl, const PIN_INFO * pPinInfo, SAMPLEPROC_PULL pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, CLEANUPPROC pCleanUp, STOPPROCESSPROC, REQUESTPROC pCustomRequest, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
 /**************************/
 /*** Pin Implementation ***/
-
-/* Common */
-ULONG   WINAPI IPinImpl_AddRef(IPin * iface);
-HRESULT WINAPI IPinImpl_Disconnect(IPin * iface);
-HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin);
-HRESULT WINAPI IPinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI IPinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo);
-HRESULT WINAPI IPinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir);
-HRESULT WINAPI IPinImpl_QueryId(IPin * iface, LPWSTR * Id);
-HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
-HRESULT WINAPI IPinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum);
-HRESULT WINAPI IPinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin);
 
 /* Input Pin */
 HRESULT WINAPI InputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
 ULONG   WINAPI InputPin_Release(IPin * iface);
 HRESULT WINAPI InputPin_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt);
+HRESULT WINAPI InputPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI InputPin_EndOfStream(IPin * iface);
 HRESULT WINAPI InputPin_BeginFlush(IPin * iface);
 HRESULT WINAPI InputPin_EndFlush(IPin * iface);
@@ -193,6 +174,7 @@ HRESULT WINAPI PullPin_Disconnect(IPin * iface);
 HRESULT WINAPI PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
 ULONG   WINAPI PullPin_Release(IPin * iface);
 HRESULT WINAPI PullPin_EndOfStream(IPin * iface);
+HRESULT WINAPI PullPin_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt);
 HRESULT WINAPI PullPin_BeginFlush(IPin * iface);
 HRESULT WINAPI PullPin_EndFlush(IPin * iface);
 HRESULT WINAPI PullPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);

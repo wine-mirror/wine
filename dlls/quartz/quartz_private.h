@@ -84,8 +84,4 @@ typedef struct StdMediaSample2
     LONGLONG tMediaEnd;
 } StdMediaSample2;
 
-
-HRESULT WINAPI BasePinImpl_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt);
-LONG WINAPI BasePinImpl_GetMediaTypeVersion(IPin *iface);
-
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */

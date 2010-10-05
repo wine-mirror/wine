@@ -41,7 +41,6 @@ static const IMediaSeekingVtbl Parser_Seeking_Vtbl;
 static const IPinVtbl Parser_OutputPin_Vtbl;
 static const IPinVtbl Parser_InputPin_Vtbl;
 
-static HRESULT Parser_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt);
 static HRESULT Parser_ChangeCurrent(IBaseFilter *iface);
 static HRESULT Parser_ChangeStop(IBaseFilter *iface);
 static HRESULT Parser_ChangeRate(IBaseFilter *iface);
@@ -492,7 +491,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     This->ppPins = CoTaskMemAlloc((This->cStreams + 2) * sizeof(IPin *));
     memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
 
-    hr = OutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, NULL, Parser_OutputPin_QueryAccept, &This->csFilter, This->ppPins + (This->cStreams + 1));
+    hr = OutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, &This->csFilter, This->ppPins + (This->cStreams + 1));
 
     if (SUCCEEDED(hr))
     {
@@ -502,7 +501,6 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
         CopyMediaType(pin->pmt, amt);
         pin->dwSamplesProcessed = 0;
 
-        pin->pin.pin.pUserData = This->ppPins[This->cStreams + 1];
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
         pin->pin.custom_allocator = 1;
         This->cStreams++;
@@ -689,9 +687,9 @@ static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin,
     return OutputPin_Connect(iface, pReceivePin, pmt);
 }
 
-static HRESULT Parser_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI Parser_OutputPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
-    Parser_OutputPin *This = iface;
+    Parser_OutputPin *This = (Parser_OutputPin *)iface;
 
     TRACE("()\n");
     dump_AM_MEDIA_TYPE(pmt);
@@ -702,19 +700,19 @@ static HRESULT Parser_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * 
 static const IPinVtbl Parser_OutputPin_Vtbl = 
 {
     Parser_OutputPin_QueryInterface,
-    IPinImpl_AddRef,
+    BasePinImpl_AddRef,
     Parser_OutputPin_Release,
     Parser_OutputPin_Connect,
     OutputPin_ReceiveConnection,
     OutputPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    Parser_OutputPin_QueryAccept,
     Parser_OutputPin_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
+    BasePinImpl_QueryInternalConnections,
     OutputPin_EndOfStream,
     OutputPin_BeginFlush,
     OutputPin_EndFlush,
@@ -768,7 +766,7 @@ static HRESULT WINAPI Parser_PullPin_ReceiveConnection(IPin * iface, IPin * pRec
     hr = PullPin_ReceiveConnection(iface, pReceivePin, pmt);
     if (FAILED(hr))
     {
-        IPinImpl *This = (IPinImpl *)iface;
+        BasePin *This = (BasePin *)iface;
 
         EnterCriticalSection(This->pCritSec);
         Parser_RemoveOutputPins((ParserImpl *)This->pinInfo.pFilter);
@@ -781,19 +779,19 @@ static HRESULT WINAPI Parser_PullPin_ReceiveConnection(IPin * iface, IPin * pRec
 static const IPinVtbl Parser_InputPin_Vtbl =
 {
     PullPin_QueryInterface,
-    IPinImpl_AddRef,
+    BasePinImpl_AddRef,
     PullPin_Release,
     InputPin_Connect,
     Parser_PullPin_ReceiveConnection,
     Parser_PullPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
-    IPinImpl_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    PullPin_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
+    BasePinImpl_QueryInternalConnections,
     PullPin_EndOfStream,
     PullPin_BeginFlush,
     PullPin_EndFlush,

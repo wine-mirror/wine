@@ -49,7 +49,7 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
 static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 {
-    TransformFilterImpl* This = (TransformFilterImpl *)((IPinImpl *)iface)->pinInfo.pFilter;
+    TransformFilterImpl* This = (TransformFilterImpl *)((BasePin *)iface)->pinInfo.pFilter;
     TRACE("%p\n", iface);
     dump_AM_MEDIA_TYPE(pmt);
 
@@ -61,9 +61,10 @@ static HRESULT TransformFilter_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TY
 }
 
 
-static HRESULT TransformFilter_Output_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI TransformFilter_Output_QueryAccept(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
-    TransformFilterImpl* pTransformFilter = iface;
+    BasePin *This = (BasePin *)iface;
+    TransformFilterImpl *pTransformFilter = (TransformFilterImpl *)This->pinInfo.pFilter;
     AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
     TRACE("%p\n", iface);
 
@@ -114,9 +115,9 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
         props.cbBuffer = 0; /* Will be updated at connection time */
         props.cBuffers = 1;
 
-       ((InputPin *)pTransformFilter->ppPins[0])->pin.pUserData = pTransformFilter->ppPins[0];
+       ((InputPin *)pTransformFilter->ppPins[0])->pUserData = pTransformFilter->ppPins[0];
 
-        hr = OutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(OutputPin), &piOutput, &props, pTransformFilter, TransformFilter_Output_QueryAccept, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
+        hr = OutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(OutputPin), &piOutput, &props, &pTransformFilter->csFilter, &pTransformFilter->ppPins[1]);
 
         if (FAILED(hr))
             ERR("Cannot create output pin (%x)\n", hr);
@@ -521,7 +522,7 @@ static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
     pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
     pTransform->pFuncsTable->pfnCleanup(This);
 
-    return IPinImpl_Disconnect(iface);
+    return BasePinImpl_Disconnect(iface);
 }
 
 static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
@@ -581,19 +582,19 @@ static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENC
 static const IPinVtbl TransformFilter_InputPin_Vtbl = 
 {
     InputPin_QueryInterface,
-    IPinImpl_AddRef,
+    BasePinImpl_AddRef,
     InputPin_Release,
     InputPin_Connect,
     TransformFilter_InputPin_ReceiveConnection,
     TransformFilter_InputPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
-    IPinImpl_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    InputPin_QueryAccept,
+    BasePinImpl_EnumMediaTypes,
+    BasePinImpl_QueryInternalConnections,
     TransformFilter_InputPin_EndOfStream,
     TransformFilter_InputPin_BeginFlush,
     TransformFilter_InputPin_EndFlush,
@@ -602,7 +603,7 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
 
 static HRESULT WINAPI TransformFilter_Output_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
-    IPinImpl *This = (IPinImpl *)iface;
+    BasePin *This = (BasePin *)iface;
     TransformFilterImpl *pTransform = (TransformFilterImpl *)This->pinInfo.pFilter;
 
     if (iPosition < 0)
@@ -615,7 +616,7 @@ static HRESULT WINAPI TransformFilter_Output_GetMediaType(IPin *iface, int iPosi
 
 static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
-    IPinImpl *This = (IPinImpl *)iface;
+    BasePin *This = (BasePin *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
     return EnumMediaTypes_Construct(iface, TransformFilter_Output_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
@@ -624,19 +625,19 @@ static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumM
 static const IPinVtbl TransformFilter_OutputPin_Vtbl =
 {
     OutputPin_QueryInterface,
-    IPinImpl_AddRef,
+    BasePinImpl_AddRef,
     OutputPin_Release,
     OutputPin_Connect,
     OutputPin_ReceiveConnection,
     OutputPin_Disconnect,
-    IPinImpl_ConnectedTo,
-    IPinImpl_ConnectionMediaType,
-    IPinImpl_QueryPinInfo,
-    IPinImpl_QueryDirection,
-    IPinImpl_QueryId,
-    IPinImpl_QueryAccept,
+    BasePinImpl_ConnectedTo,
+    BasePinImpl_ConnectionMediaType,
+    BasePinImpl_QueryPinInfo,
+    BasePinImpl_QueryDirection,
+    BasePinImpl_QueryId,
+    TransformFilter_Output_QueryAccept,
     TransformFilter_Output_EnumMediaTypes,
-    IPinImpl_QueryInternalConnections,
+    BasePinImpl_QueryInternalConnections,
     OutputPin_EndOfStream,
     OutputPin_BeginFlush,
     OutputPin_EndFlush,

@@ -30,13 +30,13 @@
 #include "dshow.h"
 
 #include "qcap_main.h"
-#include "pin.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "uuids.h"
 #include "vfwmsgs.h"
 #include <assert.h>
+#include "pin.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
@@ -52,103 +52,6 @@ static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
     strcpyW(pDest->achName, pSrc->achName);
     pDest->dir = pSrc->dir;
     pDest->pFilter = pSrc->pFilter;
-}
-
-HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
-{
-    HRESULT hr;
-    IPinImpl *This = (IPinImpl *)iface;
-
-/*  TRACE("(%p)\n", ppPin);*/
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        if (This->pConnectedTo)
-        {
-            *ppPin = This->pConnectedTo;
-            IPin_AddRef(*ppPin);
-            hr = S_OK;
-        }
-        else
-            hr = VFW_E_NOT_CONNECTED;
-    }
-    LeaveCriticalSection(This->pCritSec);
-
-    return hr;
-}
-
-HRESULT WINAPI IPinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
-{
-    HRESULT hr;
-    IPinImpl *This = (IPinImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
-
-    EnterCriticalSection(This->pCritSec);
-    {
-        if (This->pConnectedTo)
-        {
-            CopyMediaType(pmt, &This->mtCurrent);
-            hr = S_OK;
-        }
-        else
-        {
-            ZeroMemory(pmt, sizeof(*pmt));
-            hr = VFW_E_NOT_CONNECTED;
-        }
-    }
-    LeaveCriticalSection(This->pCritSec);
-
-    return hr;
-}
-
-HRESULT WINAPI IPinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo)
-{
-    IPinImpl *This = (IPinImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pInfo);
-
-    Copy_PinInfo(pInfo, &This->pinInfo);
-    IBaseFilter_AddRef(pInfo->pFilter);
-
-    return S_OK;
-}
-
-HRESULT WINAPI IPinImpl_QueryDirection(IPin * iface, PIN_DIRECTION * pPinDir)
-{
-    IPinImpl *This = (IPinImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pPinDir);
-
-    *pPinDir = This->pinInfo.dir;
-
-    return S_OK;
-}
-
-HRESULT WINAPI IPinImpl_QueryId(IPin * iface, LPWSTR * Id)
-{
-    IPinImpl *This = (IPinImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, Id);
-
-    *Id = CoTaskMemAlloc((strlenW(This->pinInfo.achName) + 1) * sizeof(WCHAR));
-    if (!*Id)
-        return E_OUTOFMEMORY;
-
-    strcpyW(*Id, This->pinInfo.achName);
-
-    return S_OK;
-}
-
-HRESULT WINAPI IPinImpl_QueryAccept(IPin * iface, const AM_MEDIA_TYPE * pmt)
-{
-    IPinImpl *This = (IPinImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pmt);
-
-    if (!This->fnQueryAccept) return S_OK;
-
-    return (This->fnQueryAccept(This->pUserData, pmt) == S_OK ? S_OK : S_FALSE);
 }
 
 /* Function called as a helper to IPin_Connect */
@@ -215,7 +118,6 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
 }
 
 HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES * props,
-                       LPVOID pUserData, QUERYACCEPTPROC pQueryAccept,
                        LPCRITICAL_SECTION pCritSec, OutputPin * pPinImpl)
 {
     TRACE("\n");
@@ -223,8 +125,6 @@ HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, const ALLOCATOR_PROPERTIES * p
     /* Common attributes */
     pPinImpl->pin.refCount = 1;
     pPinImpl->pin.pConnectedTo = NULL;
-    pPinImpl->pin.fnQueryAccept = pQueryAccept;
-    pPinImpl->pin.pUserData = pUserData;
     pPinImpl->pin.pCritSec = pCritSec;
     Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
 
