@@ -337,24 +337,6 @@ static inline BOOL is_local_file(LPWSTR name)
     return (name[0] && (name[1] == ':') && (name[2] == '\\'));
 }
 
-/******************************************************************
- * Return the number of bytes for an multi_sz string.
- * The result includes all \0s
- * (specifically the extra \0, that is needed as multi_sz terminator).
- */
-#if 0
-static int multi_sz_lenW(const WCHAR *str)
-{
-    const WCHAR *ptr = str;
-    if(!str) return 0;
-    do
-    {
-        ptr += lstrlenW(ptr) + 1;
-    } while(*ptr);
-
-    return (ptr - str + 1) * sizeof(WCHAR);
-}
-#endif
 /* ################################ */
 
 static int multi_sz_lenA(const char *str)
