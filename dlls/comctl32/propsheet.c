@@ -3415,10 +3415,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       {
         /* set up the Next and Back buttons by default */
         PROPSHEET_SetWizButtons(hwnd, PSWIZB_BACK|PSWIZB_NEXT);
-        SetFocus(GetDlgItem(hwnd, IDC_NEXT_BUTTON));
       }
-      else
-        SetFocus(GetDlgItem(hwnd, IDOK));
 
       /* Set up fonts */
       SystemParametersInfoW (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -3464,6 +3461,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         ShowWindow(hwndTabCtrl, SW_HIDE);
         PROPSHEET_AdjustSizeWizard(hwnd, psInfo);
         PROPSHEET_AdjustButtonsWizard(hwnd, psInfo);
+        SetFocus(GetDlgItem(hwnd, IDC_NEXT_BUTTON));
       }
       else
       {
@@ -3472,6 +3470,7 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
           PROPSHEET_AdjustSize(hwnd, psInfo);
           PROPSHEET_AdjustButtons(hwnd, psInfo);
         }
+        SetFocus(GetDlgItem(hwnd, IDOK));
       }
 
       if (IS_INTRESOURCE(psInfo->ppshheader.pszCaption) &&
