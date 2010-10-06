@@ -104,6 +104,8 @@ static void request_complete(Protocol *protocol, INTERNET_ASYNC_RESULT *ar)
 {
     PROTOCOLDATA data;
 
+    TRACE("(%p)->(%p)\n", protocol, ar);
+
     if(!ar->dwResult) {
         WARN("request failed: %d\n", ar->dwError);
         return;
@@ -189,6 +191,42 @@ static void WINAPI internet_status_callback(HINTERNET internet, DWORD_PTR contex
     default:
         WARN("Unhandled Internet status callback %d\n", internet_status);
     }
+}
+
+static HRESULT write_post_stream(Protocol *protocol)
+{
+    BYTE buf[0x20000];
+    DWORD written;
+    ULONG size;
+    BOOL res;
+    HRESULT hres;
+
+    protocol->flags &= ~FLAG_REQUEST_COMPLETE;
+
+    while(1) {
+        size = 0;
+        hres = IStream_Read(protocol->post_stream, buf, sizeof(buf), &size);
+        if(FAILED(hres) || !size)
+            break;
+        res = InternetWriteFile(protocol->request, buf, size, &written);
+        if(!res) {
+            FIXME("InternetWriteFile failed: %u\n", GetLastError());
+            hres = E_FAIL;
+            break;
+        }
+    }
+
+    if(SUCCEEDED(hres)) {
+        IStream_Release(protocol->post_stream);
+        protocol->post_stream = NULL;
+
+        hres = protocol->vtbl->end_request(protocol);
+    }
+
+    if(FAILED(hres))
+        return report_result(protocol, hres);
+
+    return S_OK;
 }
 
 static HINTERNET create_internet_session(IInternetBindInfo *bind_info)
@@ -292,6 +330,9 @@ HRESULT protocol_continue(Protocol *protocol, PROTOCOLDATA *data)
         WARN("Expected IInternetProtocolSink pointer to be non-NULL\n");
         return S_OK;
     }
+
+    if(protocol->post_stream)
+        return write_post_stream(protocol);
 
     if(data->pData == (LPVOID)BINDSTATUS_DOWNLOADINGDATA) {
         hres = protocol->vtbl->start_downloading(protocol);
@@ -449,6 +490,11 @@ void protocol_close_connection(Protocol *protocol)
 
     if(protocol->connection)
         InternetCloseHandle(protocol->connection);
+
+    if(protocol->post_stream) {
+        IStream_Release(protocol->post_stream);
+        protocol->post_stream = NULL;
+    }
 
     protocol->flags = 0;
 }

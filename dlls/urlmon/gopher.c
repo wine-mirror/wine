@@ -56,6 +56,11 @@ static HRESULT GopherProtocol_open_request(Protocol *prot, IUri *uri, DWORD requ
     return S_OK;
 }
 
+static HRESULT GopherProtocol_end_request(Protocol *prot)
+{
+    return E_NOTIMPL;
+}
+
 static HRESULT GopherProtocol_start_downloading(Protocol *prot)
 {
     return S_OK;
@@ -69,6 +74,7 @@ static void GopherProtocol_close_connection(Protocol *prot)
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     GopherProtocol_open_request,
+    GopherProtocol_end_request,
     GopherProtocol_start_downloading,
     GopherProtocol_close_connection
 };

@@ -59,6 +59,11 @@ static HRESULT FtpProtocol_open_request(Protocol *prot, IUri *uri, DWORD request
     return S_OK;
 }
 
+static HRESULT FtpProtocol_end_request(Protocol *prot)
+{
+    return E_NOTIMPL;
+}
+
 static HRESULT FtpProtocol_start_downloading(Protocol *prot)
 {
     FtpProtocol *This = ASYNCPROTOCOL_THIS(prot);
@@ -82,6 +87,7 @@ static void FtpProtocol_close_connection(Protocol *prot)
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     FtpProtocol_open_request,
+    FtpProtocol_end_request,
     FtpProtocol_start_downloading,
     FtpProtocol_close_connection
 };

@@ -71,7 +71,8 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
         HINTERNET internet_session, IInternetBindInfo *bind_info)
 {
     HttpProtocol *This = ASYNCPROTOCOL_THIS(prot);
-    LPWSTR addl_header = NULL, post_cookie = NULL, optional = NULL;
+    INTERNET_BUFFERSW send_buffer = {sizeof(INTERNET_BUFFERSW)};
+    LPWSTR addl_header = NULL, post_cookie = NULL;
     IServiceProvider *service_provider = NULL;
     IHttpNegotiate2 *http_negotiate2 = NULL;
     BSTR url, host, user, pass, path;
@@ -220,13 +221,30 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
         }
     }
 
+    send_buffer.lpcszHeader = This->full_header;
+    send_buffer.dwHeadersLength = send_buffer.dwHeadersTotal = strlenW(This->full_header);
+
     if(This->base.bind_info.dwBindVerb != BINDVERB_GET) {
-        /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
-        if (This->base.bind_info.stgmedData.tymed != TYMED_HGLOBAL)
-            WARN("Expected This->base.bind_info.stgmedData.tymed to be TYMED_HGLOBAL, not %d\n",
-                 This->base.bind_info.stgmedData.tymed);
-        else
-            optional = (LPWSTR)This->base.bind_info.stgmedData.u.hGlobal;
+        switch(This->base.bind_info.stgmedData.tymed) {
+        case TYMED_HGLOBAL:
+            /* Native does not use GlobalLock/GlobalUnlock, so we won't either */
+            send_buffer.lpvBuffer = This->base.bind_info.stgmedData.u.hGlobal;
+            send_buffer.dwBufferLength = send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
+            break;
+        case TYMED_ISTREAM: {
+            LARGE_INTEGER offset;
+
+            send_buffer.dwBufferTotal = This->base.bind_info.cbstgmedData;
+            This->base.post_stream = This->base.bind_info.stgmedData.u.pstm;
+            IStream_AddRef(This->base.post_stream);
+
+            offset.QuadPart = 0;
+            IStream_Seek(This->base.post_stream, offset, STREAM_SEEK_SET, NULL);
+            break;
+        }
+        default:
+            FIXME("Unsupported This->base.bind_info.stgmedData.tymed %d\n", This->base.bind_info.stgmedData.tymed);
+        }
     }
 
     b = TRUE;
@@ -234,11 +252,27 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     if(!res)
         WARN("InternetSetOption(INTERNET_OPTION_HTTP_DECODING) failed: %08x\n", GetLastError());
 
-    res = HttpSendRequestW(This->base.request, This->full_header, lstrlenW(This->full_header),
-            optional, optional ? This->base.bind_info.cbstgmedData : 0);
+    if(This->base.post_stream)
+        res = HttpSendRequestExW(This->base.request, &send_buffer, NULL, 0, 0);
+    else
+        res = HttpSendRequestW(This->base.request, send_buffer.lpcszHeader, send_buffer.dwHeadersLength,
+                send_buffer.lpvBuffer, send_buffer.dwBufferLength);
     if(!res && GetLastError() != ERROR_IO_PENDING) {
         WARN("HttpSendRequest failed: %d\n", GetLastError());
         return INET_E_DOWNLOAD_FAILURE;
+    }
+
+    return S_OK;
+}
+
+static HRESULT HttpProtocol_end_request(Protocol *protocol)
+{
+    BOOL res;
+
+    res = HttpEndRequestW(protocol->request, NULL, 0, 0);
+    if(!res && GetLastError() != ERROR_IO_PENDING) {
+        FIXME("HttpEndRequest failed: %u\n", GetLastError());
+        return E_FAIL;
     }
 
     return S_OK;
@@ -332,6 +366,7 @@ static void HttpProtocol_close_connection(Protocol *prot)
 
 static const ProtocolVtbl AsyncProtocolVtbl = {
     HttpProtocol_open_request,
+    HttpProtocol_end_request,
     HttpProtocol_start_downloading,
     HttpProtocol_close_connection
 };

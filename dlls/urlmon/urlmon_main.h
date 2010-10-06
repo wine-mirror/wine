@@ -103,11 +103,14 @@ typedef struct {
     ULONG content_length;
     ULONG available_bytes;
 
+    IStream *post_stream;
+
     LONG priority;
 } Protocol;
 
 struct ProtocolVtbl {
     HRESULT (*open_request)(Protocol*,IUri*,DWORD,HINTERNET,IInternetBindInfo*);
+    HRESULT (*end_request)(Protocol*);
     HRESULT (*start_downloading)(Protocol*);
     void (*close_connection)(Protocol*);
 };
