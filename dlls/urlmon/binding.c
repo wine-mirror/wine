@@ -882,8 +882,19 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
 static HRESULT WINAPI Binding_Abort(IBinding *iface)
 {
     Binding *This = BINDING_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)\n", This);
+
+    if(This->state & BINDING_ABORTED)
+        return E_FAIL;
+
+    hres = IInternetProtocol_Abort(This->protocol, E_ABORT, ERROR_SUCCESS);
+    if(FAILED(hres))
+        return hres;
+
+    This->state |= BINDING_ABORTED;
+    return S_OK;
 }
 
 static HRESULT WINAPI Binding_Suspend(IBinding *iface)
@@ -1053,7 +1064,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 
     TRACE("(%p)->(%d %u %u)\n", This, bscf, progress, progress_max);
 
-    if(This->download_state == END_DOWNLOAD || (This->state & BINDING_STOPPED))
+    if(This->download_state == END_DOWNLOAD || (This->state & (BINDING_STOPPED|BINDING_ABORTED)))
         return;
 
     if(This->stgmed_buf->file != INVALID_HANDLE_VALUE)
@@ -1080,6 +1091,9 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_DOWNLOADINGDATA, This->url);
     }
+
+    if(This->state & (BINDING_STOPPED|BINDING_ABORTED))
+        return;
 
     if(This->to_object) {
         if(!(This->state & BINDING_OBJAVAIL)) {
