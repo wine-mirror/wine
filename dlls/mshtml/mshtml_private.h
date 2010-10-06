@@ -34,6 +34,9 @@
 
 #include "nsiface.h"
 
+#define NS_ERROR_GENERATE_FAILURE(module,code) \
+    ((nsresult) (((PRUint32)(1<<31)) | ((PRUint32)(module+0x45)<<16) | ((PRUint32)(code))))
+
 #define NS_OK                     ((nsresult)0x00000000L)
 #define NS_ERROR_FAILURE          ((nsresult)0x80004005L)
 #define NS_ERROR_OUT_OF_MEMORY    ((nsresult)0x8007000EL)
@@ -42,7 +45,11 @@
 #define NS_ERROR_NOT_AVAILABLE    ((nsresult)0x80040111L)
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
 #define NS_ERROR_UNEXPECTED       ((nsresult)0x8000ffffL)
-#define NS_ERROR_UNKNOWN_PROTOCOL ((nsresult)0x804b0012L)
+
+#define NS_ERROR_MODULE_NETWORK    6
+
+#define NS_BINDING_ABORTED         NS_ERROR_GENERATE_FAILURE(NS_ERROR_MODULE_NETWORK, 2)
+#define NS_ERROR_UNKNOWN_PROTOCOL  NS_ERROR_GENERATE_FAILURE(NS_ERROR_MODULE_NETWORK, 18)
 
 #define NS_FAILED(res) ((res) & 0x80000000)
 #define NS_SUCCEEDED(res) (!NS_FAILED(res))

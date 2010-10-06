@@ -992,7 +992,18 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
 
 static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
 {
-    nsresult nsres;
+    nsresult nsres, request_result;
+
+    switch(result) {
+    case S_OK:
+        request_result = NS_OK;
+        break;
+    case E_ABORT:
+        request_result = NS_BINDING_ABORTED;
+        break;
+    default:
+        request_result = NS_ERROR_FAILURE;
+    }
 
     if(!This->bsc.readed && SUCCEEDED(result)) {
         TRACE("No data read! Calling OnStartRequest\n");
@@ -1001,15 +1012,14 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
 
     if(This->nslistener) {
         nsres = nsIStreamListener_OnStopRequest(This->nslistener,
-                 (nsIRequest*)NSCHANNEL(This->nschannel),
-                 This->nscontext, SUCCEEDED(result) ? NS_OK : NS_ERROR_FAILURE);
+                 (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext, request_result);
         if(NS_FAILED(nsres))
             WARN("OnStopRequet failed: %08x\n", nsres);
     }
 
     if(This->nschannel->load_group) {
         nsres = nsILoadGroup_RemoveRequest(This->nschannel->load_group,
-                (nsIRequest*)NSCHANNEL(This->nschannel), NULL, NS_OK);
+                (nsIRequest*)NSCHANNEL(This->nschannel), NULL, request_result);
         if(NS_FAILED(nsres))
             ERR("RemoveRequest failed: %08x\n", nsres);
     }
