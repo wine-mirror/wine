@@ -1042,7 +1042,7 @@ static void test_createfromstream(void)
 
 /* 1x1 pixel gif, missing trailer */
 static unsigned char gifimage_notrailer[] = {
-0x47,0x49,0x46,0x38,0x37,0x61,0x01,0x00,0x01,0x00,0x80,0x00,0x00,0xff,0xff,0xff,
+0x47,0x49,0x46,0x38,0x37,0x61,0x01,0x00,0x01,0x00,0x80,0x00,0x71,0xff,0xff,0xff,
 0xff,0xff,0xff,0x2c,0x00,0x00,0x00,0x00,0x01,0x00,0x01,0x00,0x00,0x02,0x02,0x44,
 0x01,0x00
 };
@@ -1054,6 +1054,7 @@ static void test_gif_notrailer(void)
     HRESULT hr;
     IWICStream *gifstream;
     IWICBitmapFrameDecode *framedecode;
+    double dpiX = 0.0, dpiY = 0.0;
     UINT framecount;
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
@@ -1086,7 +1087,15 @@ static void test_gif_notrailer(void)
             {
                 hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
                 ok(hr == S_OK, "GetFrame failed, hr=%x\n", hr);
-                if (SUCCEEDED(hr)) IWICBitmapFrameDecode_Release(framedecode);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IWICBitmapFrameDecode_GetResolution(framedecode, &dpiX, &dpiY);
+                    ok(SUCCEEDED(hr), "GetResolution failed, hr=%x\n", hr);
+                    ok(dpiX == 48.0, "expected dpiX=48.0, got %f\n", dpiX);
+                    ok(dpiY == 96.0, "expected dpiY=96.0, got %f\n", dpiY);
+
+                    IWICBitmapFrameDecode_Release(framedecode);
+                }
             }
 
             if (SUCCEEDED(hr))
