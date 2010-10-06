@@ -76,6 +76,7 @@ typedef enum {
 #define BINDING_LOCKED    0x0001
 #define BINDING_STOPPED   0x0002
 #define BINDING_OBJAVAIL  0x0004
+#define BINDING_ABORTED   0x0008
 
 struct Binding {
     const IBindingVtbl               *lpBindingVtbl;
@@ -681,6 +682,10 @@ static HRESULT stgmed_stream_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
 static HRESULT stgmed_stream_get_result(stgmed_obj_t *obj, DWORD bindf, void **result)
 {
     ProtocolStream *stream = (ProtocolStream*)obj;
+
+    if(!(bindf & BINDF_ASYNCHRONOUS) && stream->buf->file == INVALID_HANDLE_VALUE
+       && (stream->buf->hres != S_FALSE || stream->buf->size))
+        return INET_E_DATA_NOT_AVAILABLE;
 
     IStream_AddRef(STREAM(stream));
     *result = STREAM(stream);
@@ -1573,8 +1578,10 @@ HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
             IInternetProtocol_UnlockRequest(binding->protocol);
 
         hres = binding->stgmed_obj->vtbl->get_result(binding->stgmed_obj, binding->bindf, ppv);
-    }else {
+    }else if(binding->bindf & BINDF_ASYNCHRONOUS) {
         hres = MK_S_ASYNCHRONOUS;
+    }else {
+        hres = FAILED(binding->hres) ? binding->hres : S_OK;
     }
 
     IBinding_Release(BINDING(binding));
