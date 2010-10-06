@@ -10160,8 +10160,16 @@ static void test_remove_registry_values(void)
     ok(res == ERROR_SUCCESS, "key removed\n");
     RegCloseKey(key);
 
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", 0, access, &key);
-    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\key2", 0, KEY_ALL_ACCESS, &key);
+        ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    }
+    else
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", 0, KEY_ALL_ACCESS, &key);
+        ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    }
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", 0, NULL, 0, access, NULL, &key, NULL);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -10170,8 +10178,16 @@ static void test_remove_registry_values(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key1", 0, access, &key);
-    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\key1", 0, KEY_ALL_ACCESS, &key);
+        ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    }
+    else
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key1", 0, KEY_ALL_ACCESS, &key);
+        ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    }
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", 0, access, &key);
     ok(res == ERROR_SUCCESS, "key removed\n");
@@ -10181,8 +10197,16 @@ static void test_remove_registry_values(void)
     ok(res == ERROR_SUCCESS, "key removed\n");
     RegCloseKey(key);
 
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyB", 0, access, &key);
-    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    if (is_64bit && !wow64)
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\keyB", 0, KEY_ALL_ACCESS, &key);
+        ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    }
+    else
+    {
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyB", 0, KEY_ALL_ACCESS, &key);
+        ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+    }
 
     delete_key(HKEY_LOCAL_MACHINE, "Software\\Wine\\keyA", access);
     delete_key(HKEY_LOCAL_MACHINE, "Software\\Wine\\key2", access);
