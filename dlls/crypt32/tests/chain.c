@@ -3962,6 +3962,11 @@ static const ChainPolicyCheck stanfordPolicyCheckWithoutMatchingName = {
  { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
 };
 
+static const ChainPolicyCheck invalidExtensionPolicyCheck = {
+ { sizeof(chain30) / sizeof(chain30[0]), chain30 },
+ { 0, CERT_E_CRITICAL, 0, 1, NULL}, NULL, TODO_ERROR
+};
+
 static const ChainPolicyCheck authenticodePolicyCheck[] = {
  { { sizeof(chain0) / sizeof(chain0[0]), chain0 },
    { 0, CERT_E_UNTRUSTEDROOT, 0, 1, NULL }, NULL, 0 },
@@ -4190,6 +4195,12 @@ static void check_base_policy(void)
      CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
     checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
      &invalidUsageBasePolicyCheck, 0, &oct2007, &policyPara);
+    /* Test chain30, which has an invalid critical extension in an intermediate
+     * cert, against the base policy.
+     */
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_BASE, NULL,
+     &invalidExtensionPolicyCheck, 0, &oct2007, &policyPara);
 }
 
 static void check_ssl_policy(void)
@@ -4377,6 +4388,13 @@ static void check_ssl_policy(void)
      &winehqPolicyCheckWithMatchingName, 0, &oct2007, &policyPara);
     CertFreeCertificateChainEngine(engine);
     CertCloseStore(testRoot, 0);
+    /* Test chain30, which has an invalid critical extension in an intermediate
+     * cert, against the SSL policy.
+     */
+    sslPolicyPara.fdwChecks = SECURITY_FLAG_IGNORE_UNKNOWN_CA;
+    sslPolicyPara.pwszServerName = NULL;
+    checkChainPolicyStatus(CERT_CHAIN_POLICY_SSL, NULL,
+     &invalidExtensionPolicyCheck, 0, &oct2007, &policyPara);
 }
 
 static void testVerifyCertChainPolicy(void)
