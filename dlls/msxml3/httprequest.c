@@ -60,6 +60,7 @@ typedef struct
     LONG ref;
 
     READYSTATE state;
+    IDispatch *sink;
 
     /* request */
     BINDVERB verb;
@@ -415,10 +416,17 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
     return hr;
 }
 
-/* TODO: process OnChange callback */
 static void httprequest_setreadystate(httprequest *This, READYSTATE state)
 {
     This->state = state;
+
+    if (This->sink)
+    {
+        DISPPARAMS params;
+
+        memset(&params, 0, sizeof(params));
+        IDispatch_Invoke(This->sink, 0, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, 0, 0, 0);
+    }
 }
 
 static HRESULT WINAPI httprequest_QueryInterface(IXMLHTTPRequest *iface, REFIID riid, void **ppvObject)
@@ -476,6 +484,8 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
 
         /* detach callback object */
         BindStatusCallback_Detach(This->bsc);
+
+        if (This->sink) IDispatch_Release(This->sink);
 
         heap_free( This );
     }
@@ -768,13 +778,16 @@ static HRESULT WINAPI httprequest_get_readyState(IXMLHTTPRequest *iface, LONG *s
     return S_OK;
 }
 
-static HRESULT WINAPI httprequest_put_onreadystatechange(IXMLHTTPRequest *iface, IDispatch *pReadyStateSink)
+static HRESULT WINAPI httprequest_put_onreadystatechange(IXMLHTTPRequest *iface, IDispatch *sink)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
 
-    FIXME("stub %p %p\n", This, pReadyStateSink);
+    TRACE("(%p)->(%p)\n", This, sink);
 
-    return E_NOTIMPL;
+    if (This->sink) IDispatch_Release(This->sink);
+    if ((This->sink = sink)) IDispatch_AddRef(This->sink);
+
+    return S_OK;
 }
 
 static const struct IXMLHTTPRequestVtbl dimimpl_vtbl =
@@ -819,7 +832,10 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->async = FALSE;
     req->verb = -1;
     req->url = req->user = req->password = NULL;
+
     req->state = READYSTATE_UNINITIALIZED;
+    req->sink = NULL;
+
     req->bsc = NULL;
     req->status = 0;
     req->reqheader_size = 0;

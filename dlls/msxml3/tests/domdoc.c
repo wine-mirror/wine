@@ -40,6 +40,117 @@
 DEFINE_GUID(IID_IObjectSafety, 0xcb5bdc81, 0x93c1, 0x11cf, 0x8f,0x20, 0x00,0x80,0x5f,0x2c,0xd0,0x64);
 DEFINE_GUID(CLSID_DOMDocument60, 0x88d96a05, 0xf192, 0x11d4, 0xa6,0x5f, 0x00,0x40,0x96,0x32,0x51,0xe5);
 
+static int g_unexpectedcall, g_expectedcall;
+
+typedef struct
+{
+    const struct IDispatchVtbl *lpVtbl;
+    LONG ref;
+} dispevent;
+
+static inline dispevent *impl_from_IDispatch( IDispatch *iface )
+{
+    return (dispevent *)((char*)iface - FIELD_OFFSET(dispevent, lpVtbl));
+}
+
+static HRESULT WINAPI dispevent_QueryInterface(IDispatch *iface, REFIID riid, void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if ( IsEqualGUID( riid, &IID_IDispatch) ||
+         IsEqualGUID( riid, &IID_IUnknown) )
+    {
+        *ppvObject = iface;
+    }
+    else
+        return E_NOINTERFACE;
+
+    IDispatch_AddRef( iface );
+
+    return S_OK;
+}
+
+static ULONG WINAPI dispevent_AddRef(IDispatch *iface)
+{
+    dispevent *This = impl_from_IDispatch( iface );
+    return InterlockedIncrement( &This->ref );
+}
+
+static ULONG WINAPI dispevent_Release(IDispatch *iface)
+{
+    dispevent *This = impl_from_IDispatch( iface );
+    ULONG ref = InterlockedDecrement( &This->ref );
+
+    if (ref == 0)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI dispevent_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    g_unexpectedcall++;
+    *pctinfo = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI dispevent_GetTypeInfo(IDispatch *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    g_unexpectedcall++;
+    return S_OK;
+}
+
+static HRESULT WINAPI dispevent_GetIDsOfNames(IDispatch *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    g_unexpectedcall++;
+    return S_OK;
+}
+
+static HRESULT WINAPI dispevent_Invoke(IDispatch *iface, DISPID member, REFIID riid,
+        LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result,
+        EXCEPINFO *excepInfo, UINT *argErr)
+{
+    ok(member == 0, "expected 0 member, got %d\n", member);
+    ok(lcid == LOCALE_SYSTEM_DEFAULT, "expected LOCALE_SYSTEM_DEFAULT, got lcid %x\n", lcid);
+    ok(flags == DISPATCH_METHOD, "expected DISPATCH_METHOD, got %d\n", flags);
+
+    ok(params->cArgs == 0, "got %d\n", params->cArgs);
+    ok(params->cNamedArgs == 0, "got %d\n", params->cNamedArgs);
+    ok(params->rgvarg == NULL, "got %p\n", params->rgvarg);
+    ok(params->rgdispidNamedArgs == NULL, "got %p\n", params->rgdispidNamedArgs);
+
+    ok(result == NULL, "got %p\n", result);
+    ok(excepInfo == NULL, "got %p\n", excepInfo);
+    ok(argErr == NULL, "got %p\n", argErr);
+
+    g_expectedcall++;
+    return E_FAIL;
+}
+
+static const IDispatchVtbl dispeventVtbl =
+{
+    dispevent_QueryInterface,
+    dispevent_AddRef,
+    dispevent_Release,
+    dispevent_GetTypeInfoCount,
+    dispevent_GetTypeInfo,
+    dispevent_GetIDsOfNames,
+    dispevent_Invoke
+};
+
+static IDispatch* create_dispevent(void)
+{
+    dispevent *event = HeapAlloc(GetProcessHeap(), 0, sizeof(*event));
+
+    event->lpVtbl = &dispeventVtbl;
+    event->ref = 1;
+
+    return (IDispatch*)&event->lpVtbl;
+}
+
+
 static const WCHAR szEmpty[] = { 0 };
 static const WCHAR szIncomplete[] = {
     '<','?','x','m','l',' ',
@@ -3082,7 +3193,8 @@ static void test_XMLHTTP(void)
     VARIANT dummy;
     VARIANT async;
     VARIANT varbody;
-    LONG state, status;
+    LONG state, status, ref;
+    IDispatch *event;
     HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
                                   CLSCTX_INPROC_SERVER, &IID_IXMLHttpRequest,
                                   (void **)&pXMLHttpRequest);
@@ -3103,6 +3215,13 @@ static void test_XMLHTTP(void)
 
     method = SysAllocString(wszPOST);
     url = SysAllocString(wszUrl);
+
+if (0)
+{
+    /* crashes on win98 */
+    hr = IXMLHttpRequest_put_onreadystatechange(pXMLHttpRequest, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
 
     /* send before open */
     hr = IXMLHttpRequest_send(pXMLHttpRequest, dummy);
@@ -3147,8 +3266,25 @@ static void test_XMLHTTP(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(state == 0, "got %d, expected 0\n", state);
 
+    event = create_dispevent();
+    ref = IDispatch_AddRef(event);
+    ok(ref == 2, "got %d\n", ref);
+    IDispatch_Release(event);
+
+    hr = IXMLHttpRequest_put_onreadystatechange(pXMLHttpRequest, event);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ref = IDispatch_AddRef(event);
+    ok(ref == 3, "got %d\n", ref);
+    IDispatch_Release(event);
+
+    g_unexpectedcall = g_expectedcall = 0;
+
     hr = IXMLHttpRequest_open(pXMLHttpRequest, method, url, async, dummy, dummy);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(g_unexpectedcall == 0, "unexpected disp event call\n");
+    ok(g_expectedcall == 1 || broken(g_expectedcall == 0) /* win2k */, "no expected disp event call\n");
 
     /* status code after ::open() */
     status = 0xdeadbeef;
@@ -3225,6 +3361,7 @@ todo_wine {
 
     SysFreeString(url);
 
+    IDispatch_Release(event);
     IXMLHttpRequest_Release(pXMLHttpRequest);
     free_bstrs();
 }
