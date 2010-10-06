@@ -33,9 +33,8 @@ static unsigned be_arm_get_addr(HANDLE hThread, const CONTEXT* ctx,
         return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Pc);
     case be_cpu_addr_stack:
         return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Sp);
-    default:
     case be_cpu_addr_frame:
-        dbg_printf("not done\n");
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->Fp);
     }
     return FALSE;
 }
