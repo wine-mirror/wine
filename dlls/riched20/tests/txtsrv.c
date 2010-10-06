@@ -612,7 +612,7 @@ static BOOL init_texthost(void)
        ITextServices object. */
     pCreateTextServices = (void*)GetProcAddress(hmoduleRichEdit, "CreateTextServices");
     result = (*pCreateTextServices)(NULL,(ITextHost*)dummyTextHost, &init);
-    ok(result == S_OK, "Did not return OK when created. Returned %x\n", result);
+    ok(result == S_OK, "Did not return S_OK when created (result =  %x)\n", result);
     if (result != S_OK) {
         CoTaskMemFree(dummyTextHost);
         skip("CreateTextServices failed.\n");
@@ -621,7 +621,7 @@ static BOOL init_texthost(void)
 
     result = IUnknown_QueryInterface(init, &IID_ITextServices,
                                      (void **)&txtserv);
-    ok((result == S_OK) && (txtserv != NULL), "Querying interface failed\n");
+    ok((result == S_OK) && (txtserv != NULL), "Querying interface failed (result = %x, txtserv = %p)\n", result, txtserv);
     IUnknown_Release(init);
     if (!((result == S_OK) && (txtserv != NULL))) {
         CoTaskMemFree(dummyTextHost);
@@ -630,6 +630,12 @@ static BOOL init_texthost(void)
     }
 
     return TRUE;
+}
+
+static void free_texthost(void)
+{
+    IUnknown_Release(txtserv);
+    CoTaskMemFree(dummyTextHost);
 }
 
 static void test_TxGetText(void)
@@ -641,10 +647,9 @@ static void test_TxGetText(void)
         return;
 
     hres = ITextServices_TxGetText(txtserv, &rettext);
-    ok(hres == S_OK, "ITextServices_TxGetText failed\n");
+    ok(hres == S_OK, "ITextServices_TxGetText failed (result = %x)\n", hres);
 
-    IUnknown_Release(txtserv);
-    CoTaskMemFree(dummyTextHost);
+    free_texthost();
 }
 
 static void test_TxSetText(void)
@@ -657,19 +662,18 @@ static void test_TxSetText(void)
         return;
 
     hres = ITextServices_TxSetText(txtserv, settext);
-    ok(hres == S_OK, "ITextServices_TxSetText failed\n");
+    ok(hres == S_OK, "ITextServices_TxSetText failed (result = %x)\n", hres);
 
     hres = ITextServices_TxGetText(txtserv, &rettext);
-    ok(hres == S_OK, "ITextServices_TxGetText failed\n");
+    ok(hres == S_OK, "ITextServices_TxGetText failed (result = %x)\n", hres);
 
     ok(SysStringLen(rettext) == 4,
-                 "String returned of wrong length\n");
+                 "String returned of wrong length (expected 4, got %d)\n", SysStringLen(rettext));
     ok(memcmp(rettext,settext,SysStringByteLen(rettext)) == 0,
                  "String returned differs\n");
 
     SysFreeString(rettext);
-    IUnknown_Release(txtserv);
-    CoTaskMemFree(dummyTextHost);
+    free_texthost();
 }
 
 static void test_TxGetNaturalSize(void) {
@@ -708,9 +712,7 @@ static void test_TxGetNaturalSize(void) {
     ret = GetCharWidth32(hdcDraw,'A','Z',charwidth_caps_text);
     if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
         win_skip("GetCharWidth32 is not available\n");
-        RestoreDC(hdcDraw,1);
-        ReleaseDC(NULL,hdcDraw);
-        return;
+        goto cleanup;
     }
 
     /* Make measurements in MM_TEXT */
@@ -718,13 +720,21 @@ static void test_TxGetNaturalSize(void) {
     xdim = 0; ydim = 0;
 
     result = ITextServices_TxSetText(txtserv, oneA);
-    ok(result == S_OK, "ITextServices_TxSetText failed\n");
+    ok(result == S_OK, "ITextServices_TxSetText failed (result = %x)\n", result);
+    if (result != S_OK) {
+        skip("Could not set text\n");
+        goto cleanup;
+    }
 
     result = ITextServices_TxGetNaturalSize(txtserv, DVASPECT_CONTENT,
                                             hdcDraw, NULL, NULL,
                                             TXTNS_FITTOCONTENT, &psizelExtent,
                                             &xdim, &ydim);
-    todo_wine ok(result == S_OK, "TxGetNaturalSize failed\n");
+    todo_wine ok(result == S_OK, "TxGetNaturalSize failed (result = %x)\n", result);
+    if (result != S_OK) {
+        skip("TxGetNaturalSize measurements failed\n");
+        goto cleanup;
+    }
     todo_wine ok(ydim == tmInfo_text.tmHeight,
                  "Height calculated incorrectly (expected %d, got %d)\n",
                  tmInfo_text.tmHeight, ydim);
@@ -733,11 +743,10 @@ static void test_TxGetNaturalSize(void) {
                  "Width calculated incorrectly (expected %d {+1}, got %d)\n",
                  charwidth_caps_text[0], xdim);
 
+cleanup:
     RestoreDC(hdcDraw,1);
     ReleaseDC(NULL,hdcDraw);
-
-    IUnknown_Release(txtserv);
-    CoTaskMemFree(dummyTextHost);
+    free_texthost();
 }
 
 static void test_TxDraw(void)
@@ -757,11 +766,10 @@ static void test_TxDraw(void)
         result = ITextServices_TxDraw(txtserv, dwAspect, 0, pvAspect, ptd,
                                       tmphdc, hicTargetDev, &client, NULL,
                                       NULL, NULL, 0, 0);
-        ok(result == S_OK, "TxDraw failed\n");
+        ok(result == S_OK, "TxDraw failed (result = %x)\n", result);
     }
 
-    IUnknown_Release(txtserv);
-    CoTaskMemFree(dummyTextHost);
+    free_texthost();
 
 }
 
@@ -776,8 +784,7 @@ START_TEST( txtsrv )
 
     if (init_texthost())
     {
-        IUnknown_Release(txtserv);
-        CoTaskMemFree(dummyTextHost);
+        free_texthost();
 
         test_TxGetText();
         test_TxSetText();
