@@ -92,7 +92,7 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     heap_free(wszKey);
     if(res != ERROR_SUCCESS) {
         TRACE("Could not open protocol handler key\n");
-        return E_FAIL;
+        return MK_E_SYNTAX;
     }
     
     size = sizeof(str_clsid);
@@ -100,7 +100,7 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || type != REG_SZ) {
         WARN("Could not get protocol CLSID res=%d\n", res);
-        return E_FAIL;
+        return MK_E_SYNTAX;
     }
 
     hres = CLSIDFromString(str_clsid, &clsid);
@@ -115,7 +115,8 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     if(!ret)
         return S_OK;
 
-    return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)ret);
+    hres = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)ret);
+    return SUCCEEDED(hres) ? S_OK : MK_E_SYNTAX;
 }
 
 static HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol, BOOL urlmon_protocol)
@@ -247,7 +248,7 @@ HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, BOOL *urlmon_protocol, I
     hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(schema[0]),
             &schema_len, 0);
     if(FAILED(hres) || !schema_len)
-        return schema_len ? hres : E_FAIL;
+        return schema_len ? hres : MK_E_SYNTAX;
 
     EnterCriticalSection(&session_cs);
 

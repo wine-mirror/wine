@@ -3028,6 +3028,17 @@ static void test_CreateBinding(void)
     hres = IInternetSession_UnregisterNameSpace(session, &ClassFactory, wsz_test);
     ok(hres == S_OK, "UnregisterNameSpace failed: %08x\n", hres);
 
+    hres = IInternetSession_CreateBinding(session, NULL, test_url, NULL, NULL, &protocol, 0);
+    ok(hres == S_OK, "CreateBinding failed: %08x\n", hres);
+    ok(protocol != NULL, "protocol == NULL\n");
+
+    SET_EXPECT(QueryService_InternetProtocol);
+    hres = IInternetProtocol_Start(protocol, test_url, &protocol_sink, &bind_info, 0, 0);
+    ok(hres == MK_E_SYNTAX, "Start failed: %08x, expected MK_E_SYNTAX\n", hres);
+    CHECK_CALLED(QueryService_InternetProtocol);
+
+    IInternetProtocol_Release(protocol);
+
     IInternetSession_Release(session);
 }
 
@@ -3181,8 +3192,8 @@ START_TEST(protocol)
     pReleaseBindInfo = (void*) GetProcAddress(hurlmon, "ReleaseBindInfo");
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
 
-    if (!pCoInternetGetSession || !pReleaseBindInfo) {
-        win_skip("Various needed functions not present in IE 4.0\n");
+    if(!GetProcAddress(hurlmon, "CompareSecurityIds")) {
+        win_skip("Various needed functions not present, too old IE\n");
         return;
     }
 
