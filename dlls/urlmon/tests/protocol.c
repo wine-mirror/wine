@@ -120,6 +120,8 @@ DEFINE_EXPECT(MimeFilter_UnlockRequest);
 DEFINE_EXPECT(MimeFilter_Read);
 DEFINE_EXPECT(MimeFilter_Switch);
 DEFINE_EXPECT(MimeFilter_Continue);
+DEFINE_EXPECT(Stream_Seek);
+DEFINE_EXPECT(Stream_Read);
 
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 static const WCHAR index_url[] =
@@ -136,8 +138,8 @@ static const WCHAR gzipW[] = {'g','z','i','p',0};
 static HRESULT expect_hrResult;
 static LPCWSTR file_name, http_url, expect_wsz;
 static IInternetProtocol *async_protocol = NULL;
-static BOOL first_data_notif, http_is_first, http_post_test, test_redirect;
-static int state = 0, prot_state, read_report_data;
+static BOOL first_data_notif, http_is_first, test_redirect;
+static int prot_state, read_report_data, post_stream_read;
 static DWORD bindf, ex_priority , pi;
 static IInternetProtocol *binding_protocol, *filtered_protocol;
 static IInternetBindInfo *prot_bind_info;
@@ -146,9 +148,16 @@ static void *expect_pv;
 static HANDLE event_complete, event_complete2, event_continue, event_continue_done;
 static BOOL binding_test;
 static PROTOCOLDATA protocoldata, *pdata, continue_protdata;
-static DWORD prot_read, pi, filter_state;
-static BOOL security_problem;
+static DWORD prot_read, pi, filter_state, http_post_test, thread_id;
+static BOOL security_problem, test_async_req;
 static BOOL async_read_pending, mimefilter_test, direct_read, wait_for_switch, emulate_prot, short_read, test_abort;
+
+enum {
+    STATE_CONNECTING,
+    STATE_SENDINGREQUEST,
+    STATE_STARTDOWNLOADING,
+    STATE_DOWNLOADING
+} state;
 
 static enum {
     FILE_TEST,
@@ -180,6 +189,8 @@ static const WCHAR binding_urls[][130] = {
     {'m','k',':','t','e','s','t',0},
     {'t','e','s','t',':','/','/','f','i','l','e','.','h','t','m','l',0}
 };
+
+static const CHAR post_data[] = "mode=Test";
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -310,12 +321,6 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
         if (http_post_test)
         {
             addl_headers = CoTaskMemAlloc(sizeof(wszHeaders));
-            if (!addl_headers)
-            {
-                http_post_test = FALSE;
-                skip("Out of memory\n");
-                return E_OUTOFMEMORY;
-            }
             memcpy(addl_headers, wszHeaders, sizeof(wszHeaders));
             *pszAdditionalHeaders = addl_headers;
         }
@@ -420,6 +425,133 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 static IServiceProvider service_provider = { &ServiceProviderVtbl };
 
+static HRESULT WINAPI Stream_QueryInterface(IStream *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Stream_AddRef(IStream *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Stream_Release(IStream *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Stream_Read(IStream *iface, void *pv,
+        ULONG cb, ULONG *pcbRead)
+{
+    CHECK_EXPECT2(Stream_Read);
+
+    ok(GetCurrentThreadId() != thread_id, "wrong thread %d\n", GetCurrentThreadId());
+
+    ok(pv != NULL, "pv == NULL\n");
+    ok(cb == 0x20000 || broken(cb == 0x2000), "cb = %d\n", cb);
+    ok(pcbRead != NULL, "pcbRead == NULL\n");
+
+    if(post_stream_read) {
+        *pcbRead = 0;
+        return S_FALSE;
+    }
+
+    memcpy(pv, post_data, sizeof(post_data)-1);
+    post_stream_read += *pcbRead = sizeof(post_data)-1;
+    return S_OK;
+}
+
+static HRESULT WINAPI Stream_Write(IStream *iface, const void *pv,
+        ULONG cb, ULONG *pcbWritten)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Seek(IStream *iface, LARGE_INTEGER dlibMove,
+        DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+{
+    CHECK_EXPECT(Stream_Seek);
+
+    ok(!dlibMove.QuadPart, "dlibMove != 0\n");
+    ok(dwOrigin == STREAM_SEEK_SET, "dwOrigin = %d\n", dwOrigin);
+    ok(!plibNewPosition, "plibNewPosition == NULL\n");
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Stream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_CopyTo(IStream *iface, IStream *pstm,
+        ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Commit(IStream *iface, DWORD grfCommitFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Revert(IStream *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_LockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+        ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_UnlockRegion(IStream *iface,
+        ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Stat(IStream *iface, STATSTG *pstatstg,
+        DWORD dwStatFlag)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Clone(IStream *iface, IStream **ppstm)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl StreamVtbl = {
+    Stream_QueryInterface,
+    Stream_AddRef,
+    Stream_Release,
+    Stream_Read,
+    Stream_Write,
+    Stream_Seek,
+    Stream_SetSize,
+    Stream_CopyTo,
+    Stream_Commit,
+    Stream_Revert,
+    Stream_LockRegion,
+    Stream_UnlockRegion,
+    Stream_Stat,
+    Stream_Clone
+};
+
+static IStream Stream = { &StreamVtbl };
+
 static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
 {
     return QueryInterface(riid, ppv);
@@ -439,7 +571,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
 {
     HRESULT hres;
 
-    if(!state) {
+    if(state == STATE_CONNECTING) {
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
             CLEAR_CALLED(ReportProgress_COOKIE_SENT);
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
@@ -461,6 +593,15 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         if(test_redirect)
             CHECK_CALLED(ReportProgress_REDIRECTING);
+        state = test_async_req ? STATE_SENDINGREQUEST : STATE_STARTDOWNLOADING;
+    }
+
+    switch(state) {
+    case STATE_SENDINGREQUEST:
+        SET_EXPECT(Stream_Read);
+        SET_EXPECT(ReportProgress_SENDINGREQUEST);
+        break;
+    case STATE_STARTDOWNLOADING:
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
             SET_EXPECT(OnResponse);
             if(tested_protocol == HTTPS_TEST || test_redirect)
@@ -469,20 +610,29 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             if(bindf & BINDF_NEEDFILE)
                 SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
         }
+    default:
+        break;
     }
 
-    SET_EXPECT(ReportData);
+    if(state != STATE_SENDINGREQUEST)
+        SET_EXPECT(ReportData);
     hres = IInternetProtocol_Continue(async_protocol, protocol_data);
     ok(hres == S_OK, "Continue failed: %08x\n", hres);
-    if(tested_protocol == FTP_TEST)
+    if(tested_protocol == FTP_TEST || security_problem)
         CLEAR_CALLED(ReportData);
-    else if (! security_problem)
+    else if(state != STATE_SENDINGREQUEST)
         CHECK_CALLED(ReportData);
 
-    if (!state) {
+    switch(state) {
+    case STATE_SENDINGREQUEST:
+        CHECK_CALLED(Stream_Read);
+        CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+        state = STATE_STARTDOWNLOADING;
+        break;
+    case STATE_STARTDOWNLOADING:
         if (! security_problem)
         {
-            state = 1;
+            state = STATE_DOWNLOADING;
             if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
                 CHECK_CALLED(OnResponse);
                 if(tested_protocol == HTTPS_TEST)
@@ -499,6 +649,8 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             security_problem = FALSE;
             SET_EXPECT(ReportProgress_CONNECTING);
         }
+    default:
+        break;
     }
 }
 
@@ -769,8 +921,8 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
 
         if(!(bindf & BINDF_FROMURLMON) &&
            !(grfBSCF & BSCF_LASTDATANOTIFICATION)) {
-            if(!state) {
-                state = 1;
+            if(state == STATE_CONNECTING) {
+                state = STATE_DOWNLOADING;
                 if(http_is_first) {
                     CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
                     CHECK_CALLED(ReportProgress_CONNECTING);
@@ -1004,8 +1156,6 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
 {
     DWORD cbSize;
 
-    static const CHAR szPostData[] = "mode=Test";
-
     CHECK_EXPECT(GetBindInfo);
 
     ok(grfBINDF != NULL, "grfBINDF == NULL\n");
@@ -1019,21 +1169,37 @@ static HRESULT WINAPI BindInfo_GetBindInfo(IInternetBindInfo *iface, DWORD *grfB
     memset(pbindinfo, 0, cbSize);
     pbindinfo->cbSize = cbSize;
 
-    if (http_post_test)
+    if(http_post_test)
     {
-        /* Must be GMEM_FIXED, GMEM_MOVABLE does not work properly
-         * with urlmon on native (Win98 and WinXP) */
-        U(pbindinfo->stgmedData).hGlobal = GlobalAlloc(GPTR, sizeof(szPostData));
-        if (!U(pbindinfo->stgmedData).hGlobal)
-        {
-            http_post_test = FALSE;
-            skip("Out of memory\n");
-            return E_OUTOFMEMORY;
-        }
-        lstrcpy((LPSTR)U(pbindinfo->stgmedData).hGlobal, szPostData);
-        pbindinfo->cbstgmedData = sizeof(szPostData)-1;
+        pbindinfo->cbstgmedData = sizeof(post_data)-1;
         pbindinfo->dwBindVerb = BINDVERB_POST;
-        pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;
+        pbindinfo->stgmedData.tymed = http_post_test;
+
+        if(http_post_test == TYMED_HGLOBAL) {
+            HGLOBAL data;
+
+            /* Must be GMEM_FIXED, GMEM_MOVABLE does not work properly */
+            data = GlobalAlloc(GPTR, sizeof(post_data));
+            memcpy(data, post_data, sizeof(post_data));
+            U(pbindinfo->stgmedData).hGlobal = data;
+        }else {
+            IStream *post_stream;
+            HGLOBAL data;
+            HRESULT hres;
+
+            if(0) {
+            /* Must be GMEM_FIXED, GMEM_MOVABLE does not work properly */
+            data = GlobalAlloc(GPTR, sizeof(post_data));
+            memcpy(data, post_data, sizeof(post_data));
+            U(pbindinfo->stgmedData).hGlobal = data;
+
+            hres = CreateStreamOnHGlobal(data, FALSE, &post_stream);
+            ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
+
+            U(pbindinfo->stgmedData).pstm =post_stream;/* &Stream; */
+            }
+            U(pbindinfo->stgmedData).pstm = &Stream;
+        }
     }
 
     return S_OK;
@@ -1982,6 +2148,7 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_SHORT_READ  0x0040
 #define TEST_REDIRECT    0x0080
 #define TEST_ABORT       0x0100
+#define TEST_ASYNCREQ    0x0200
 
 static void init_test(int prot, DWORD flags)
 {
@@ -1993,6 +2160,7 @@ static void init_test(int prot, DWORD flags)
     async_read_pending = TRUE;
     mimefilter_test = (flags & TEST_FILTER) != 0;
     filter_state = 0;
+    post_stream_read = 0;
     ResetEvent(event_complete);
     ResetEvent(event_complete2);
     ResetEvent(event_continue);
@@ -2001,12 +2169,13 @@ static void init_test(int prot, DWORD flags)
     filtered_sink = NULL;
     http_is_first = (flags & TEST_FIRST_HTTP) != 0;
     first_data_notif = TRUE;
-    state = 0;
+    state = STATE_CONNECTING;
+    test_async_req = (flags & TEST_ASYNCREQ) != 0;
     direct_read = (flags & TEST_DIRECT_READ) != 0;
-    http_post_test = (flags & TEST_POST) != 0;
     emulate_prot = (flags & TEST_EMULATEPROT) != 0;
     wait_for_switch = TRUE;
     short_read = (flags & TEST_SHORT_READ) != 0;
+    http_post_test = TYMED_NULL;
     test_redirect = (flags & TEST_REDIRECT) != 0;
     test_abort = (flags & TEST_ABORT) != 0;
 }
@@ -2410,8 +2579,11 @@ static BOOL http_protocol_start(LPCWSTR url)
     SET_EXPECT(QueryService_HttpNegotiate);
     SET_EXPECT(BeginningTransaction);
     SET_EXPECT(GetRootSecurityId);
-    if (http_post_test)
+    if(http_post_test) {
         SET_EXPECT(GetBindString_POST_COOKIE);
+        if(http_post_test == TYMED_ISTREAM)
+            SET_EXPECT(Stream_Seek);
+    }
 
     hres = IInternetProtocol_Start(async_protocol, url, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08x\n", hres);
@@ -2431,8 +2603,11 @@ static BOOL http_protocol_start(LPCWSTR url)
     CHECK_CALLED(BeginningTransaction);
     /* GetRootSecurityId called on WinXP but not on Win98 */
     CLEAR_CALLED(GetRootSecurityId);
-    if (http_post_test)
+    if(http_post_test) {
         CHECK_CALLED(GetBindString_POST_COOKIE);
+        if(http_post_test == TYMED_ISTREAM)
+            CHECK_CALLED(Stream_Seek);
+    }
 
     return TRUE;
 }
@@ -2481,7 +2656,7 @@ static void test_http_info(IInternetProtocol *protocol)
 
 /* is_first refers to whether this is the first call to this function
  * _for this url_ */
-static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
+static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tymed)
 {
     IInternetProtocolInfo *protocol_info;
     IClassFactory *factory;
@@ -2490,6 +2665,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
 
     init_test(prot, flags);
     http_url = url;
+    http_post_test = tymed;
 
     hres = CoGetClassObject(prot == HTTPS_TEST ? &CLSID_HttpSProtocol : &CLSID_HttpProtocol,
             CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
@@ -2640,32 +2816,35 @@ static void test_http_protocol(void)
 
     trace("Testing http protocol (not from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
-    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_FIRST_HTTP);
+    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_FIRST_HTTP, TYMED_NULL);
 
     trace("Testing http protocol (from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(winehq_url, HTTP_TEST, 0);
+    test_http_protocol_url(winehq_url, HTTP_TEST, 0, TYMED_NULL);
 
     trace("Testing http protocol (to file)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NEEDFILE;
-    test_http_protocol_url(winehq_url, HTTP_TEST, 0);
+    test_http_protocol_url(winehq_url, HTTP_TEST, 0, TYMED_NULL);
 
     trace("Testing http protocol (post data)...\n");
     /* Without this flag we get a ReportProgress_CACHEFILENAMEAVAILABLE
      * notification with BINDVERB_POST */
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    test_http_protocol_url(posttest_url, HTTP_TEST, TEST_FIRST_HTTP|TEST_POST);
+    test_http_protocol_url(posttest_url, HTTP_TEST, TEST_FIRST_HTTP|TEST_POST, TYMED_HGLOBAL);
+
+    trace("Testing http protocol (post data stream)...\n");
+    test_http_protocol_url(posttest_url, HTTP_TEST, TEST_FIRST_HTTP|TEST_POST|TEST_ASYNCREQ, TYMED_ISTREAM);
 
     trace("Testing http protocol (direct read)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_DIRECT_READ);
+    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_DIRECT_READ, TYMED_NULL);
 
     trace("Testing http protocol (redirected)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT);
+    test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT, TYMED_NULL);
 
     trace("Testing http protocol abort...\n");
-    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_ABORT);
+    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_ABORT, TYMED_NULL);
 
     test_early_abort(&CLSID_HttpProtocol);
     test_early_abort(&CLSID_HttpSProtocol);
@@ -2679,7 +2858,7 @@ static void test_https_protocol(void)
 
     trace("Testing https protocol (from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    test_http_protocol_url(codeweavers_url, HTTPS_TEST, TEST_FIRST_HTTP);
+    test_http_protocol_url(codeweavers_url, HTTPS_TEST, TEST_FIRST_HTTP, TYMED_NULL);
 }
 
 
@@ -2700,7 +2879,7 @@ static void test_ftp_protocol(void)
     trace("Testing ftp protocol...\n");
 
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    state = 0;
+    state = STATE_STARTDOWNLOADING;
     tested_protocol = FTP_TEST;
     first_data_notif = TRUE;
     expect_hrResult = E_PENDING;
@@ -3203,6 +3382,7 @@ START_TEST(protocol)
     event_complete2 = CreateEvent(NULL, FALSE, FALSE, NULL);
     event_continue = CreateEvent(NULL, FALSE, FALSE, NULL);
     event_continue_done = CreateEvent(NULL, FALSE, FALSE, NULL);
+    thread_id = GetCurrentThreadId();
 
     register_filter();
 
