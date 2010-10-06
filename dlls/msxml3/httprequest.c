@@ -2,7 +2,7 @@
  *    IXMLHTTPRequest implementation
  *
  * Copyright 2008 Alistair Leslie-Hughes
- * Copyright 2010 Nikolay Sivov for Codeweavers
+ * Copyright 2010 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,9 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "config.h"
 
@@ -84,6 +86,19 @@ static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
     return (httprequest *)((char*)iface - FIELD_OFFSET(httprequest, lpVtbl));
 }
 
+static void httprequest_setreadystate(httprequest *This, READYSTATE state)
+{
+    This->state = state;
+
+    if (This->sink)
+    {
+        DISPPARAMS params;
+
+        memset(&params, 0, sizeof(params));
+        IDispatch_Invoke(This->sink, 0, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, 0, 0, 0);
+    }
+}
+
 struct BindStatusCallback
 {
     const IBindStatusCallbackVtbl *lpBindStatusCallbackVtbl;
@@ -92,6 +107,9 @@ struct BindStatusCallback
 
     IBinding *binding;
     httprequest *request;
+
+    /* response data */
+    IStream *stream;
 };
 
 static inline BindStatusCallback *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
@@ -171,6 +189,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     if (!ref)
     {
         if (This->binding) IBinding_Release(This->binding);
+        if (This->stream) IStream_Release(This->stream);
         heap_free(This);
     }
 
@@ -189,7 +208,9 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
     This->binding = pbind;
     IBinding_AddRef(pbind);
 
-    return S_OK;
+    httprequest_setreadystate(This->request, READYSTATE_LOADED);
+
+    return CreateStreamOnHGlobal(NULL, TRUE, &This->stream);
 }
 
 static HRESULT WINAPI BindStatusCallback_GetPriority(IBindStatusCallback *iface, LONG *pPriority)
@@ -228,6 +249,15 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     TRACE("(%p)->(0x%08x %s)\n", This, hr, debugstr_w(error));
 
+    if (This->binding)
+    {
+        IBinding_Release(This->binding);
+        This->binding = NULL;
+    }
+
+    if (hr == S_OK)
+        httprequest_setreadystate(This->request, READYSTATE_COMPLETE);
+
     return S_OK;
 }
 
@@ -253,13 +283,26 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
 }
 
 static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *iface,
-        DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed)
+        DWORD flags, DWORD size, FORMATETC *format, STGMEDIUM *stgmed)
 {
     BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    DWORD read, written;
+    BYTE buf[4096];
+    HRESULT hr;
 
-    FIXME("(%p)->(%08x %d %p %p): stub\n", This, grfBSCF, dwSize, pformatetc, pstgmed);
+    TRACE("(%p)->(%08x %d %p %p)\n", This, flags, size, format, stgmed);
 
-    return E_NOTIMPL;
+    do
+    {
+        hr = IStream_Read(stgmed->u.pstm, buf, sizeof(buf), &read);
+        if (hr != S_OK) break;
+
+        hr = IStream_Write(This->stream, buf, read, &written);
+    } while((hr == S_OK) && written != 0 && read != 0);
+
+    httprequest_setreadystate(This->request, READYSTATE_INTERACTIVE);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *iface,
@@ -388,6 +431,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
     bsc->ref = 1;
     bsc->request = This;
     bsc->binding = NULL;
+    bsc->stream = NULL;
 
     hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)bsc, NULL, 0);
     if (hr == S_OK)
@@ -414,19 +458,6 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
 
     *obj = bsc;
     return hr;
-}
-
-static void httprequest_setreadystate(httprequest *This, READYSTATE state)
-{
-    This->state = state;
-
-    if (This->sink)
-    {
-        DISPPARAMS params;
-
-        memset(&params, 0, sizeof(params));
-        IDispatch_Invoke(This->sink, 0, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, 0, 0, 0);
-    }
 }
 
 static HRESULT WINAPI httprequest_QueryInterface(IXMLHTTPRequest *iface, REFIID riid, void **ppvObject)
