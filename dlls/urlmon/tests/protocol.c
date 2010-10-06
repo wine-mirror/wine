@@ -2958,6 +2958,14 @@ static void test_ftp_protocol(void)
 
     test_protocol_terminate(async_protocol);
 
+    if(pCreateUri) {
+        IInternetProtocolEx *protocolex;
+
+        hres = IInternetProtocol_QueryInterface(async_protocol, &IID_IInternetProtocolEx, (void**)&protocolex);
+        ok(hres == S_OK, "Could not get IInternetProtocolEx iface: %08x\n", hres);
+        IInternetProtocolEx_Release(protocolex);
+    }
+
     ref = IInternetProtocol_Release(async_protocol);
     ok(!ref, "ref=%d\n", ref);
 
