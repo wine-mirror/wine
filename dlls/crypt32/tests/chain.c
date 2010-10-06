@@ -3852,7 +3852,7 @@ static const ChainPolicyCheck ignoredBadDateNestingBasePolicyCheck = {
 
 static const ChainPolicyCheck ignoredInvalidDateBasePolicyCheck = {
  { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
- { 0, CERT_E_EXPIRED, 0, 1, NULL}, NULL, TODO_ELEMENTS
+ { 0, CERT_E_EXPIRED, 0, 1, NULL}, &badDateNestingStatus, TODO_ELEMENTS
 };
 
 static const ChainPolicyCheck ignoredInvalidUsageBasePolicyCheck = {
@@ -3964,7 +3964,7 @@ static const ChainPolicyCheck stanfordPolicyCheckWithoutMatchingName = {
 
 static const ChainPolicyCheck invalidExtensionPolicyCheck = {
  { sizeof(chain30) / sizeof(chain30[0]), chain30 },
- { 0, CERT_E_CRITICAL, 0, 1, NULL}, NULL, 0
+ { 0, CERT_E_CRITICAL, 0, 1, NULL}, &badDateNestingStatus, 0
 };
 
 static const ChainPolicyCheck authenticodePolicyCheck[] = {
