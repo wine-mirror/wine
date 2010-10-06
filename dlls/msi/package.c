@@ -1292,6 +1292,9 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
     WCHAR *template, *p, *q;
     DWORD i, count;
 
+    package->version = msi_suminfo_get_int32( si, PID_PAGECOUNT );
+    TRACE("version: %d\n", package->version);
+
     template = msi_suminfo_dup_string( si, PID_TEMPLATE );
     if (!template)
         return ERROR_SUCCESS; /* native accepts missing template property */
@@ -1316,7 +1319,7 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
     {
         WARN("unknown platform %s\n", debugstr_w(template));
         msi_free( template );
-        return ERROR_PATCH_PACKAGE_INVALID;
+        return ERROR_INSTALL_PLATFORM_UNSUPPORTED;
     }
 
     count = 1;
@@ -1343,6 +1346,32 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
 
     msi_free( template );
     return ERROR_SUCCESS;
+}
+
+static UINT validate_package( MSIPACKAGE *package )
+{
+    static const BOOL is_64bit = sizeof(void *) > sizeof(int);
+    BOOL is_wow64;
+    UINT i;
+
+    IsWow64Process( GetCurrentProcess(), &is_wow64 );
+    if (package->platform == PLATFORM_X64)
+    {
+        if (!is_64bit && !is_wow64)
+            return ERROR_INSTALL_PLATFORM_UNSUPPORTED;
+        if (package->version < 200)
+            return ERROR_INSTALL_PACKAGE_INVALID;
+    }
+    if (!package->num_langids)
+    {
+        return ERROR_SUCCESS;
+    }
+    for (i = 0; i < package->num_langids; i++)
+    {
+        if (!package->langids[i] || IsValidLocale( package->langids[i], LCID_INSTALLED ))
+            return ERROR_SUCCESS;
+    }
+    return ERROR_INSTALL_LANGUAGE_UNSUPPORTED;
 }
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
@@ -1474,6 +1503,12 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         return r;
     }
 
+    r = validate_package( package );
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &package->hdr );
+        return r;
+    }
     msi_set_property( package->db, Database, db->path );
 
     if( UrlIsW( szPackage, URLIS_URL ) )
