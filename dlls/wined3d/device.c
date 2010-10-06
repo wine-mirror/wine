@@ -6354,15 +6354,30 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
     if (!pPresentationParameters->Windowed != !swapchain->presentParms.Windowed
             || DisplayModeChanged)
     {
+        BOOL filter = This->filter_messages;
+        This->filter_messages = TRUE;
+
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
 
         if (!pPresentationParameters->Windowed)
         {
-            if(swapchain->presentParms.Windowed) {
+            if (swapchain->presentParms.Windowed)
+            {
+                HWND focus_window = This->createParms.hFocusWindow;
+                if (!focus_window) focus_window = pPresentationParameters->hDeviceWindow;
+                if (FAILED(hr = IWineD3DDevice_AcquireFocusWindow(iface, focus_window)))
+                {
+                    ERR("Failed to acquire focus window, hr %#x.\n", hr);
+                    IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+                    return hr;
+                }
+
                 /* switch from windowed to fs */
                 swapchain_setup_fullscreen_window(swapchain, pPresentationParameters->BackBufferWidth,
                         pPresentationParameters->BackBufferHeight);
-            } else {
+            }
+            else
+            {
                 /* Fullscreen -> fullscreen mode change */
                 MoveWindow(swapchain->device_window, 0, 0,
                            pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight,
@@ -6373,9 +6388,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
         {
             /* Fullscreen -> windowed switch */
             swapchain_restore_fullscreen_window(swapchain);
+            IWineD3DDevice_ReleaseFocusWindow(iface);
         }
         swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
-    } else if(!pPresentationParameters->Windowed) {
+
+        This->filter_messages = filter;
+    }
+    else if (!pPresentationParameters->Windowed)
+    {
         DWORD style = This->style, exStyle = This->exStyle;
         /* If we're in fullscreen, and the mode wasn't changed, we have to get the window back into
          * the right position. Some applications(Battlefield 2, Guild Wars) move it and then call
