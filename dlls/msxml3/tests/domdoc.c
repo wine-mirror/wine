@@ -3188,6 +3188,8 @@ static void test_XMLHTTP(void)
         'c','r','o','s','s','o','v','e','r','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
         'x','m','l','t','e','s','t','.','x','m','l',0};
     static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
+    static const CHAR xmltestbodyA[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>\n";
+
     IXMLHttpRequest *pXMLHttpRequest;
     BSTR bstrResponse, method, url;
     VARIANT dummy;
@@ -3358,6 +3360,18 @@ todo_wine {
         return;
     }
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_get_responseText(pXMLHttpRequest, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_get_responseText(pXMLHttpRequest, &bstrResponse);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if(hr == S_OK)
+    {
+        ok(!memcmp(bstrResponse, _bstr_(xmltestbodyA), sizeof(xmltestbodyA)*sizeof(WCHAR)),
+            "expected %s, got %s\n", xmltestbodyA, wine_dbgstr_w(bstrResponse));
+        SysFreeString(bstrResponse);
+    }
 
     SysFreeString(url);
 

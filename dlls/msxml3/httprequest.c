@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+#include <libxml/encoding.h>
+
 static const WCHAR MethodGetW[] = {'G','E','T',0};
 static const WCHAR MethodPutW[] = {'P','U','T',0};
 static const WCHAR MethodPostW[] = {'P','O','S','T',0};
@@ -770,13 +772,53 @@ static HRESULT WINAPI httprequest_get_responseXML(IXMLHTTPRequest *iface, IDispa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI httprequest_get_responseText(IXMLHTTPRequest *iface, BSTR *pbstrBody)
+static HRESULT WINAPI httprequest_get_responseText(IXMLHTTPRequest *iface, BSTR *body)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    HGLOBAL hglobal;
+    HRESULT hr;
 
-    FIXME("stub %p %p\n", This, pbstrBody);
+    TRACE("(%p)->(%p)\n", This, body);
 
-    return E_NOTIMPL;
+    if (!body) return E_INVALIDARG;
+    if (This->state != READYSTATE_COMPLETE) return E_FAIL;
+
+    hr = GetHGlobalFromStream(This->bsc->stream, &hglobal);
+    if (hr == S_OK)
+    {
+        xmlChar *ptr = GlobalLock(hglobal);
+        DWORD size = GlobalSize(hglobal);
+        xmlCharEncoding encoding = XML_CHAR_ENCODING_UTF8;
+
+        /* try to determine data encoding */
+        if (size >= 4)
+        {
+            encoding = xmlDetectCharEncoding(ptr, 4);
+            TRACE("detected encoding: %s\n", xmlGetCharEncodingName(encoding));
+            if ( encoding != XML_CHAR_ENCODING_UTF8 &&
+                 encoding != XML_CHAR_ENCODING_UTF16LE &&
+                 encoding != XML_CHAR_ENCODING_NONE )
+            {
+                FIXME("unsupported encoding: %s\n", xmlGetCharEncodingName(encoding));
+                GlobalUnlock(hglobal);
+                return E_FAIL;
+            }
+        }
+
+        /* without BOM assume UTF-8 */
+        if (encoding == XML_CHAR_ENCODING_UTF8 ||
+            encoding == XML_CHAR_ENCODING_NONE )
+        {
+            *body = bstr_from_xmlChar(ptr);
+        }
+        else
+            *body = SysAllocStringByteLen((LPCSTR)ptr, size);
+
+        if (!*body) hr = E_OUTOFMEMORY;
+        GlobalUnlock(hglobal);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI httprequest_get_responseBody(IXMLHTTPRequest *iface, VARIANT *pvarBody)
