@@ -4040,8 +4040,8 @@ static void show_cert_chain(HWND hwnd, struct hierarchy_data *data)
             tvis.u.item.pszText = name;
             tvis.u.item.state = TVIS_EXPANDED;
             tvis.u.item.stateMask = TVIS_EXPANDED;
-            if (i == 1 &&
-             (provSigner->pChainContext->TrustStatus.dwErrorStatus &
+            if (i == 1 && (!provSigner->pChainContext ||
+             provSigner->pChainContext->TrustStatus.dwErrorStatus &
              CERT_TRUST_IS_PARTIAL_CHAIN))
             {
                 /* The root of the chain has a special case:  if the chain is
