@@ -99,9 +99,6 @@ HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
 
             IDirect3DSurface9_Release(topsurf);
 
-            if (level == srclevel + 1)
-                return D3DERR_INVALIDCALL;
-
             return D3D_OK;
         }
 
