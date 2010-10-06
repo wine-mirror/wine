@@ -3491,7 +3491,7 @@ static ChainCheck chainCheck[] = {
      { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_INVALID_EXTENSION |
        CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT, 0 },
      1, simpleStatus30 },
-   TODO_ERROR },
+   0 },
  { { sizeof(selfSignedChain) / sizeof(selfSignedChain[0]), selfSignedChain },
    { { 0, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_UNTRUSTED_ROOT, 0 },

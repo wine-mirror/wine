@@ -1971,7 +1971,8 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
         if (!CRYPT_CriticalExtensionsSupported(
          chain->rgpElement[i]->pCertContext))
             chain->rgpElement[i]->TrustStatus.dwErrorStatus |=
-             CERT_TRUST_INVALID_EXTENSION;
+             CERT_TRUST_INVALID_EXTENSION |
+             CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT;
         CRYPT_CombineTrustStatus(&chain->TrustStatus,
          &chain->rgpElement[i]->TrustStatus);
     }
