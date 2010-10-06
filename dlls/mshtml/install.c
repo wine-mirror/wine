@@ -476,9 +476,11 @@ BOOL install_wine_gecko(BOOL silent)
     }else {
         /*
          * Try to find Gecko .cab file in following order:
-         * - directory stored in GeckoCabDir value of HKCU/Software/MSHTML key
-         * - $datadir/gecko
-         * - download from URL stored in GeckoUrl value of HKCU/Software/MSHTML key
+         * - directory stored in GeckoCabDir value of HKCU/Wine/Software/MSHTML key
+         * - $datadir/gecko/
+         * - $GECKO_DATADIR/wine/gecko/
+         * - /usr/share/wine/gecko/
+         * - download from URL stored in GeckoUrl value of HKCU/Wine/Software/MSHTML key
          */
         if(!install_from_registered_dir()
            && !install_from_default_dir()
