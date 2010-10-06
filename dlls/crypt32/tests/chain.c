@@ -3506,10 +3506,13 @@ static ChainCheck chainCheck[] = {
    { { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_PREFERRED_ISSUER },
      { 0, 0 },
        1, iTunesSimpleStatus }, 0 },
- /* The google chain may or may not have its root trusted, so ignore the error
+ /* The google chain may or may not have its root trusted, so ignore the error.
+  * The chain is also considered not time nested on Win98, so ignore that
+  * error too.
   */
  { { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
-   { { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_PREFERRED_ISSUER },
+   { { CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_NOT_TIME_NESTED,
+       CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_NOT_TIME_VALID, 0 },
        1, googleSimpleStatus }, 0 },
  /* The openssl chain may or may not have its root trusted, so ignore the error
