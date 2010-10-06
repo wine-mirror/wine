@@ -178,65 +178,67 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
 
 static void handle_docobj_load(HTMLDocumentObj *doc)
 {
-    IOleCommandTarget *olecmd = NULL;
     HRESULT hres;
 
-    if(!doc->client)
-        return;
-
-    hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
-    if(SUCCEEDED(hres)) {
-        if(doc->download_state) {
-            VARIANT state, progress;
-
-            V_VT(&progress) = VT_I4;
-            V_I4(&progress) = 0;
-            IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS,
-                    OLECMDEXECOPT_DONTPROMPTUSER, &progress, NULL);
-
-            V_VT(&state) = VT_I4;
-            V_I4(&state) = 0;
-            IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE,
-                    OLECMDEXECOPT_DONTPROMPTUSER, &state, NULL);
-        }
-
-        IOleCommandTarget_Exec(olecmd, &CGID_ShellDocView, 103, 0, NULL, NULL);
-        IOleCommandTarget_Exec(olecmd, &CGID_MSHTML, IDM_PARSECOMPLETE, 0, NULL, NULL);
-        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_HTTPEQUIV_DONE, 0, NULL, NULL);
-
-        IOleCommandTarget_Release(olecmd);
+    if(doc->nscontainer->editor_controller) {
+        nsIController_Release(doc->nscontainer->editor_controller);
+        doc->nscontainer->editor_controller = NULL;
     }
+
+    if(doc->usermode == EDITMODE)
+        handle_edit_load(&doc->basedoc);
+
+    if(doc->client) {
+        IOleCommandTarget *olecmd = NULL;
+
+        hres = IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+        if(SUCCEEDED(hres)) {
+            if(doc->download_state) {
+                VARIANT state, progress;
+
+                V_VT(&progress) = VT_I4;
+                V_I4(&progress) = 0;
+                IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS,
+                        OLECMDEXECOPT_DONTPROMPTUSER, &progress, NULL);
+
+                V_VT(&state) = VT_I4;
+                V_I4(&state) = 0;
+                IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETDOWNLOADSTATE,
+                        OLECMDEXECOPT_DONTPROMPTUSER, &state, NULL);
+            }
+
+            IOleCommandTarget_Exec(olecmd, &CGID_ShellDocView, 103, 0, NULL, NULL);
+            IOleCommandTarget_Exec(olecmd, &CGID_MSHTML, IDM_PARSECOMPLETE, 0, NULL, NULL);
+            IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_HTTPEQUIV_DONE, 0, NULL, NULL);
+
+            IOleCommandTarget_Release(olecmd);
+        }
+    }
+
     doc->download_state = 0;
 }
 
 static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event)
 {
     HTMLDocumentNode *doc = NSEVENTLIST_THIS(iface)->This->doc;
-    HTMLDocumentObj *doc_obj;
     nsIDOMHTMLElement *nsbody = NULL;
+    HTMLDocumentObj *doc_obj = NULL;
 
     TRACE("(%p)\n", doc);
 
     if(!doc || !doc->basedoc.window)
         return NS_ERROR_FAILURE;
-    doc_obj = doc->basedoc.doc_obj;
+    if(doc->basedoc.doc_obj && doc->basedoc.doc_obj->basedoc.doc_node == doc)
+        doc_obj = doc->basedoc.doc_obj;
 
     connect_scripts(doc->basedoc.window);
 
-    if(doc_obj->nscontainer->editor_controller) {
-        nsIController_Release(doc_obj->nscontainer->editor_controller);
-        doc_obj->nscontainer->editor_controller = NULL;
-    }
-
-    if(doc_obj->usermode == EDITMODE)
-        handle_edit_load(&doc_obj->basedoc);
-
-    if(doc == doc_obj->basedoc.doc_node)
+    if(doc_obj)
         handle_docobj_load(doc_obj);
 
     set_ready_state(doc->basedoc.window, READYSTATE_COMPLETE);
 
-    if(doc == doc_obj->basedoc.doc_node) {
+    if(doc_obj) {
         if(doc_obj->view_sink)
             IAdviseSink_OnViewChange(doc_obj->view_sink, DVASPECT_CONTENT, -1);
 
