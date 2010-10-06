@@ -2149,6 +2149,7 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_REDIRECT    0x0080
 #define TEST_ABORT       0x0100
 #define TEST_ASYNCREQ    0x0200
+#define TEST_USEIURI     0x0400
 
 static void init_test(int prot, DWORD flags)
 {
@@ -2565,10 +2566,16 @@ static void test_file_protocol(void) {
     test_file_protocol_fail();
 }
 
-static BOOL http_protocol_start(LPCWSTR url)
+static BOOL http_protocol_start(LPCWSTR url, BOOL use_iuri)
 {
     static BOOL got_user_agent = FALSE;
+    IUri *uri = NULL;
     HRESULT hres;
+
+    if(use_iuri && pCreateUri) {
+        hres = pCreateUri(url, 0, 0, &uri);
+        ok(hres == S_OK, "CreateUri failed: %08x\n", hres);
+    }
 
     SET_EXPECT(GetBindInfo);
     if (!(bindf & BINDF_FROMURLMON))
@@ -2585,8 +2592,21 @@ static BOOL http_protocol_start(LPCWSTR url)
             SET_EXPECT(Stream_Seek);
     }
 
-    hres = IInternetProtocol_Start(async_protocol, url, &protocol_sink, &bind_info, 0, 0);
-    ok(hres == S_OK, "Start failed: %08x\n", hres);
+    if(uri) {
+        IInternetProtocolEx *protocolex;
+
+        hres = IInternetProtocol_QueryInterface(async_protocol, &IID_IInternetProtocolEx, (void**)&protocolex);
+        ok(hres == S_OK, "Could not get IInternetProtocolEx iface: %08x\n", hres);
+
+        hres = IInternetProtocolEx_StartEx(protocolex, uri, &protocol_sink, &bind_info, 0, 0);
+        ok(hres == S_OK, "Start failed: %08x\n", hres);
+
+        IInternetProtocolEx_Release(protocolex);
+        IUri_Release(uri);
+    }else {
+        hres = IInternetProtocol_Start(async_protocol, url, &protocol_sink, &bind_info, 0, 0);
+        ok(hres == S_OK, "Start failed: %08x\n", hres);
+    }
     if(FAILED(hres))
         return FALSE;
 
@@ -2714,7 +2734,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
             SET_EXPECT(Switch);
         }
 
-        if(!http_protocol_start(url))
+        if(!http_protocol_start(url, (flags & TEST_USEIURI) != 0))
             return;
 
         if(!direct_read && !test_abort)
@@ -2837,7 +2857,7 @@ static void test_http_protocol(void)
 
     trace("Testing http protocol (direct read)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_DIRECT_READ, TYMED_NULL);
+    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_DIRECT_READ|TEST_USEIURI, TYMED_NULL);
 
     trace("Testing http protocol (redirected)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
@@ -3375,6 +3395,9 @@ START_TEST(protocol)
         win_skip("Various needed functions not present, too old IE\n");
         return;
     }
+
+    if(!pCreateUri)
+        win_skip("CreateUri not supported\n");
 
     OleInitialize(NULL);
 
