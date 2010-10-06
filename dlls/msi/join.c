@@ -60,8 +60,6 @@ static UINT JOIN_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *v
     UINT cols = 0;
     UINT prev_rows = 1;
 
-    TRACE("%d, %d\n", row, col);
-
     if (col == 0 || col > jv->columns)
          return ERROR_FUNCTION_FAILED;
 
