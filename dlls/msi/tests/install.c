@@ -61,6 +61,7 @@ static const char *msifile2 = "winetest2.msi";
 static const char *mstfile = "winetest.mst";
 static CHAR CURR_DIR[MAX_PATH];
 static CHAR PROG_FILES_DIR[MAX_PATH];
+static CHAR PROG_FILES_DIR_NATIVE[MAX_PATH];
 static CHAR COMMON_FILES_DIR[MAX_PATH];
 static CHAR APP_DATA_DIR[MAX_PATH];
 static CHAR WINDOWS_DIR[MAX_PATH];
@@ -589,6 +590,18 @@ static const CHAR sdp_custom_action_dat[] = "Action\tType\tSource\tTarget\tISCom
                                             "s72\ti2\tS64\tS0\tS255\n"
                                             "CustomAction\tAction\n"
                                             "SetDirProperty\t51\tMSITESTDIR\t[CommonFilesFolder]msitest\\\t\n";
+
+static const CHAR pv_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "LaunchConditions\t\t100\n"
+                                              "CostInitialize\t\t800\n"
+                                              "FileCost\t\t900\n"
+                                              "CostFinalize\t\t1000\n"
+                                              "InstallValidate\t\t1400\n"
+                                              "InstallInitialize\t\t1500\n"
+                                              "InstallFiles\t\t4000\n"
+                                              "InstallFinalize\t\t6600\n";
 
 static const CHAR cie_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
@@ -3102,6 +3115,18 @@ static const msi_table icon_base_tables[] =
     ADD_TABLE(icon_property),
 };
 
+static const msi_table pv_tables[] =
+{
+    ADD_TABLE(rof_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(pv_install_exec_seq),
+    ADD_TABLE(rof_media),
+    ADD_TABLE(property)
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
@@ -3455,6 +3480,12 @@ static BOOL get_system_dirs(void)
         return FALSE;
     }
 
+    size = MAX_PATH;
+    if (RegQueryValueExA(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)PROG_FILES_DIR_NATIVE, &size)) {
+        RegCloseKey(hkey);
+        return FALSE;
+    }
+
     RegCloseKey(hkey);
 
     if(GetWindowsDirectoryA(WINDOWS_DIR, MAX_PATH) != ERROR_SUCCESS)
@@ -3519,6 +3550,20 @@ static BOOL delete_pf(const CHAR *rel_path, BOOL is_file)
         return RemoveDirectoryA(path);
 }
 
+static BOOL delete_pf_native(const CHAR *rel_path, BOOL is_file)
+{
+    CHAR path[MAX_PATH];
+
+    lstrcpyA(path, PROG_FILES_DIR_NATIVE);
+    lstrcatA(path, "\\");
+    lstrcatA(path, rel_path);
+
+    if (is_file)
+        return DeleteFileA(path);
+    else
+        return RemoveDirectoryA(path);
+}
+
 static BOOL delete_cf(const CHAR *rel_path, BOOL is_file)
 {
     CHAR path[MAX_PATH];
@@ -3558,7 +3603,7 @@ static void write_file(const CHAR *filename, const char *data, int data_size)
     CloseHandle(hf);
 }
 
-static void write_msi_summary_info(MSIHANDLE db, INT wordcount)
+static void write_msi_summary_info(MSIHANDLE db, INT version, INT wordcount, const char *template)
 {
     MSIHANDLE summary;
     UINT r;
@@ -3566,14 +3611,14 @@ static void write_msi_summary_info(MSIHANDLE db, INT wordcount)
     r = MsiGetSummaryInformationA(db, NULL, 5, &summary);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    r = MsiSummaryInfoSetPropertyA(summary, PID_TEMPLATE, VT_LPSTR, 0, NULL, ";1033");
+    r = MsiSummaryInfoSetPropertyA(summary, PID_TEMPLATE, VT_LPSTR, 0, NULL, template);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_REVNUMBER, VT_LPSTR, 0, NULL,
                                    "{004757CA-5092-49c2-AD20-28E1CE0DF5F2}");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    r = MsiSummaryInfoSetPropertyA(summary, PID_PAGECOUNT, VT_I4, 100, NULL, NULL);
+    r = MsiSummaryInfoSetPropertyA(summary, PID_PAGECOUNT, VT_I4, version, NULL, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_WORDCOUNT, VT_I4, wordcount, NULL, NULL);
@@ -3590,10 +3635,14 @@ static void write_msi_summary_info(MSIHANDLE db, INT wordcount)
 }
 
 #define create_database(name, tables, num_tables) \
-    create_database_wordcount(name, tables, num_tables, 0);
+    create_database_wordcount(name, tables, num_tables, 100, 0, ";1033");
+
+#define create_database_template(name, tables, num_tables, version, template) \
+    create_database_wordcount(name, tables, num_tables, version, 0, template);
 
 static void create_database_wordcount(const CHAR *name, const msi_table *tables,
-                                      int num_tables, INT wordcount)
+                                      int num_tables, INT version, INT wordcount,
+                                      const char *template)
 {
     MSIHANDLE db;
     UINT r;
@@ -3615,7 +3664,7 @@ static void create_database_wordcount(const CHAR *name, const msi_table *tables,
         DeleteFileA(table->filename);
     }
 
-    write_msi_summary_info(db, wordcount);
+    write_msi_summary_info(db, version, wordcount, template);
 
     r = MsiDatabaseCommit(db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -8509,7 +8558,7 @@ static void test_adminimage(void)
 
     create_database_wordcount(msifile, ai_tables,
                               sizeof(ai_tables) / sizeof(msi_table),
-                              msidbSumInfoSourceTypeAdminImage);
+                              100, msidbSumInfoSourceTypeAdminImage, ";1033");
 
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -10706,6 +10755,138 @@ static void test_sourcedir_props(void)
     DeleteFile(msifile);
 }
 
+static void test_package_validation(void)
+{
+    UINT r;
+    BOOL wow64 = FALSE;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &wow64);
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+    create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;1033");
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+    ok(delete_pf("msitest", FALSE), "directory does not exist\n");
+
+    DeleteFile(msifile);
+    create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;9999");
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_INSTALL_LANGUAGE_UNSUPPORTED, "Expected ERROR_INSTALL_LANGUAGE_UNSUPPORTED, got %u\n", r);
+    ok(!delete_pf("msitest\\maximus", TRUE), "file exists\n");
+    ok(!delete_pf("msitest", FALSE), "directory exists\n");
+
+    DeleteFile(msifile);
+    create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel32;0");
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_INSTALL_PLATFORM_UNSUPPORTED, "Expected ERROR_INSTALL_PLATFORM_UNSUPPORTED, got %u\n", r);
+    ok(!delete_pf("msitest\\maximus", TRUE), "file exists\n");
+    ok(!delete_pf("msitest", FALSE), "directory exists\n");
+
+    if (is_64bit && !wow64)
+    {
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
+
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "x64;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_INSTALL_PACKAGE_INVALID, "Expected ERROR_INSTALL_PACKAGE_INVALID, got %u\n", r);
+        ok(!delete_pf("msitest\\maximus", TRUE), "file exists\n");
+        ok(!delete_pf("msitest", FALSE), "directory exists\n");
+
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 200, "x64;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
+    }
+    else if (wow64)
+    {
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
+
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "x64;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_INSTALL_PACKAGE_INVALID, "Expected ERROR_INSTALL_PACKAGE_INVALID,, got %u\n", r);
+        ok(!delete_pf_native("msitest\\maximus", TRUE), "file exists\n");
+        ok(!delete_pf_native("msitest", FALSE), "directory exists\n");
+
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 200, "x64;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf_native("msitest\\maximus", TRUE), "file exists\n");
+        ok(delete_pf_native("msitest", FALSE), "directory exists\n");
+    }
+    else
+    {
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
+        ok(delete_pf("msitest", FALSE), "directory does not exist\n");
+
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "x64;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_INSTALL_PLATFORM_UNSUPPORTED, "Expected ERROR_INSTALL_PLATFORM_UNSUPPORTED, got %u\n", r);
+        ok(!delete_pf("msitest\\maximus", TRUE), "file exists\n");
+        ok(!delete_pf("msitest", FALSE), "directory exists\n");
+
+        DeleteFile(msifile);
+        create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 200, "x64;0");
+
+        r = MsiInstallProductA(msifile, NULL);
+        ok(r == ERROR_INSTALL_PLATFORM_UNSUPPORTED, "Expected ERROR_INSTALL_PLATFORM_UNSUPPORTED, got %u\n", r);
+        ok(!delete_pf("msitest\\maximus", TRUE), "file exists\n");
+        ok(!delete_pf("msitest", FALSE), "directory exists\n");
+    }
+
+error:
+    /* Delete the files in the temp (current) folder */
+    DeleteFile(msifile);
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -10819,6 +11000,7 @@ START_TEST(install)
     test_register_mime_info();
     test_icon_table();
     test_sourcedir_props();
+    test_package_validation();
 
     DeleteFileA(log_file);
 
