@@ -281,18 +281,34 @@ VfwCapture_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 }
 
 /** IBaseFilter methods **/
+static IPin* WINAPI VfwCapture_GetPin(IBaseFilter *iface, int pos)
+{
+    VfwCapture *This = (VfwCapture *)iface;
+
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef(This->pOutputPin);
+    return This->pOutputPin;
+}
+
+static LONG WINAPI VfwCapture_GetPinCount(IBaseFilter *iface)
+{
+    return 1;
+}
+
+static LONG WINAPI VfwCapture_GetPinVersion(IBaseFilter *iface)
+{
+    /* Our pins are static, not changing so setting static tick count is ok */
+    return 0;
+}
 
 static HRESULT WINAPI
 VfwCapture_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    ENUMPINDETAILS epd;
-    VfwCapture *This = (VfwCapture *)iface;
-
     TRACE("(%p)\n", ppEnum);
 
-    epd.cPins = 1;
-    epd.ppPins = &This->pOutputPin;
-    return IEnumPinsImpl_Construct(&epd, ppEnum);
+    return EnumPins_Construct(iface, VfwCapture_GetPin, VfwCapture_GetPinCount, VfwCapture_GetPinVersion, ppEnum);
 }
 
 static HRESULT WINAPI VfwCapture_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

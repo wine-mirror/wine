@@ -395,21 +395,32 @@ HRESULT WINAPI Parser_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClo
 /** IBaseFilter implementation **/
 
 /* FIXME: WRONG */
-static HRESULT Parser_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+static IPin* WINAPI Parser_GetPin(IBaseFilter *iface, int pos)
 {
     ParserImpl *This = (ParserImpl *)iface;
-
-    *lastsynctick = This->lastpinchange;
 
     TRACE("Asking for pos %x\n", pos);
 
     /* Input pin also has a pin, hence the > and not >= */
-    if (pos > This->cStreams)
-        return S_FALSE;
+    if (pos > This->cStreams || pos < 0)
+        return NULL;
 
-    *pin = This->ppPins[pos];
-    IPin_AddRef(*pin);
-    return S_OK;
+    IPin_AddRef(This->ppPins[pos]);
+    return This->ppPins[pos];
+}
+
+static LONG WINAPI Parser_GetPinCount(IBaseFilter *iface)
+{
+    ParserImpl *This = (ParserImpl *)iface;
+
+    return This->cStreams;
+}
+
+static LONG WINAPI Parser_GetPinVersion(IBaseFilter *iface)
+{
+    ParserImpl *This = (ParserImpl *)iface;
+
+    return This->lastpinchange;
 }
 
 HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
@@ -418,7 +429,7 @@ HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    return IEnumPinsImpl_Construct(ppEnum, Parser_GetPin, iface);
+    return EnumPins_Construct(iface, Parser_GetPin, Parser_GetPinCount, Parser_GetPinVersion, ppEnum);
 }
 
 HRESULT WINAPI Parser_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

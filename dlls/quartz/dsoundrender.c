@@ -702,19 +702,27 @@ static HRESULT WINAPI DSoundRender_GetSyncSource(IBaseFilter * iface, IReference
 
 /** IBaseFilter implementation **/
 
-static HRESULT DSoundRender_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+static IPin* WINAPI DSoundRender_GetPin(IBaseFilter *iface, int pos)
 {
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef((IPin*)This->pInputPin);
+    return (IPin*)This->pInputPin;
+}
+
+static LONG WINAPI DSoundRender_GetPinCount(IBaseFilter *iface)
+{
     /* Our pins are static, not changing so setting static tick count is ok */
-    *lastsynctick = 0;
+    return 1;
+}
 
-    if (pos >= 1)
-        return S_FALSE;
-
-    *pin = (IPin *)This->pInputPin;
-    IPin_AddRef(*pin);
-    return S_OK;
+static LONG WINAPI DSoundRender_GetPinVersion(IBaseFilter *iface)
+{
+    /* Our pins are static, not changing so setting static tick count is ok */
+    return 0;
 }
 
 static HRESULT WINAPI DSoundRender_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
@@ -723,7 +731,7 @@ static HRESULT WINAPI DSoundRender_EnumPins(IBaseFilter * iface, IEnumPins **ppE
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    return IEnumPinsImpl_Construct(ppEnum, DSoundRender_GetPin, iface);
+    return EnumPins_Construct(iface, DSoundRender_GetPin, DSoundRender_GetPinCount, DSoundRender_GetPinVersion, ppEnum);
 }
 
 static HRESULT WINAPI DSoundRender_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

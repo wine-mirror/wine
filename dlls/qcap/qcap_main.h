@@ -37,14 +37,6 @@ extern IUnknown * WINAPI QCAP_createInfinitePinTeeFilter(IUnknown *pUnkOuter, HR
 extern IUnknown * WINAPI QCAP_createSmartTeeFilter(IUnknown *pUnkOuter, HRESULT *phr);
 extern IUnknown * WINAPI QCAP_createAudioInputMixerPropertyPage(IUnknown *pUnkOuter, HRESULT *phr);
 
-typedef struct tagENUMPINDETAILS
-{
-       ULONG cPins;
-       IPin ** ppPins;
-} ENUMPINDETAILS;
-
-HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** ppEnum);
-
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards); 
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
 

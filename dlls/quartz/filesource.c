@@ -522,19 +522,33 @@ static HRESULT WINAPI AsyncReader_GetSyncSource(IBaseFilter * iface, IReferenceC
 
 /** IBaseFilter methods **/
 
-static HRESULT AsyncReader_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+static IPin* WINAPI AsyncReader_GetPin(IBaseFilter *iface, int pos)
+{
+    AsyncReader *This = (AsyncReader *)iface;
+
+    if (pos >= 1 || !This->pOutputPin)
+        return NULL;
+
+    IPin_AddRef(This->pOutputPin);
+    return This->pOutputPin;
+}
+
+static LONG WINAPI AsyncReader_GetPinCount(IBaseFilter *iface)
+{
+    AsyncReader *This = (AsyncReader *)iface;
+
+    if (!This->pOutputPin)
+        return 0;
+    else
+        return 1;
+}
+
+static LONG WINAPI AsyncReader_GetPinVersion(IBaseFilter *iface)
 {
     AsyncReader *This = (AsyncReader *)iface;
 
     /* Our pins are almost static, not changing so setting static tick count is ok */
-    *lastsynctick = This->lastpinchange;
-
-    if (pos >= 1 || !This->pOutputPin)
-        return S_FALSE;
-
-    *pin = This->pOutputPin;
-    IPin_AddRef(*pin);
-    return S_OK;
+    return This->lastpinchange;
 }
 
 static HRESULT WINAPI AsyncReader_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
@@ -543,7 +557,7 @@ static HRESULT WINAPI AsyncReader_EnumPins(IBaseFilter * iface, IEnumPins **ppEn
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    return IEnumPinsImpl_Construct(ppEnum, AsyncReader_GetPin, iface);
+    return EnumPins_Construct(iface, AsyncReader_GetPin, AsyncReader_GetPinCount, AsyncReader_GetPinVersion, ppEnum);
 }
 
 static HRESULT WINAPI AsyncReader_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

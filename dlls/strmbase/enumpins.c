@@ -2,6 +2,7 @@
  * Implementation of IEnumPins Interface
  *
  * Copyright 2003 Robert Shearman
+ * Copyright 2010 Aric Stewart, CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,11 +19,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "quartz_private.h"
+#define COBJMACROS
 
+#include "dshow.h"
+#include "wine/strmbase.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
 typedef struct IEnumPinsImpl
 {
@@ -30,13 +33,15 @@ typedef struct IEnumPinsImpl
     LONG refCount;
     ULONG uIndex;
     IBaseFilter *base;
-    FNOBTAINPIN receive_pin;
-    DWORD synctime;
+    BaseFilter_GetPin receive_pin;
+    BaseFilter_GetPinCount receive_pincount;
+    BaseFilter_GetPinVersion receive_version;
+    DWORD Version;
 } IEnumPinsImpl;
 
 static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 
-HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, IBaseFilter *base)
+HRESULT WINAPI EnumPins_Construct(IBaseFilter *base,  BaseFilter_GetPin receive_pin, BaseFilter_GetPinCount receive_pincount, BaseFilter_GetPinVersion receive_version, IEnumPins ** ppEnum)
 {
     IEnumPinsImpl * pEnumPins;
 
@@ -53,11 +58,12 @@ HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, IB
     pEnumPins->refCount = 1;
     pEnumPins->uIndex = 0;
     pEnumPins->receive_pin = receive_pin;
+    pEnumPins->receive_pincount = receive_pincount;
+    pEnumPins->receive_version = receive_version;
     pEnumPins->base = base;
     IBaseFilter_AddRef(base);
     *ppEnum = (IEnumPins *)(&pEnumPins->lpVtbl);
-
-    receive_pin(base, ~0, NULL, &pEnumPins->synctime);
+    pEnumPins->Version = receive_version(base);
 
     TRACE("Created new enumerator (%p)\n", *ppEnum);
     return S_OK;
@@ -65,7 +71,7 @@ HRESULT IEnumPinsImpl_Construct(IEnumPins ** ppEnum, FNOBTAINPIN receive_pin, IB
 
 static HRESULT WINAPI IEnumPinsImpl_QueryInterface(IEnumPins * iface, REFIID riid, LPVOID * ppv)
 {
-    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -80,7 +86,7 @@ static HRESULT WINAPI IEnumPinsImpl_QueryInterface(IEnumPins * iface, REFIID rii
         return S_OK;
     }
 
-    FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
+    FIXME("No interface for %s!\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
 }
@@ -115,7 +121,6 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
 {
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
-    DWORD synctime = This->synctime;
     HRESULT hr = S_OK;
     ULONG i = 0;
 
@@ -130,19 +135,20 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
     if (pcFetched)
         *pcFetched = 0;
 
+    if (This->Version != This->receive_version(This->base))
+        return VFW_E_ENUM_OUT_OF_SYNC;
+
     while (i < cPins && hr == S_OK)
     {
-        hr = This->receive_pin(This->base, This->uIndex + i, &ppPins[i], &synctime);
+       IPin *pin;
+       pin = This->receive_pin(This->base, This->uIndex + i);
 
-        if (hr == S_OK)
-            ++i;
-
-        if (synctime != This->synctime)
-            break;
+       if (!pin)
+         break;
+       else
+         ppPins[i] = pin;
+       ++i;
     }
-
-    if (!i && synctime != This->synctime)
-        return VFW_E_ENUM_OUT_OF_SYNC;
 
     if (pcFetched)
         *pcFetched = i;
@@ -156,23 +162,17 @@ static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin **
 static HRESULT WINAPI IEnumPinsImpl_Skip(IEnumPins * iface, ULONG cPins)
 {
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
-    DWORD synctime = This->synctime;
-    HRESULT hr;
-    IPin *pin = NULL;
 
     TRACE("(%u)\n", cPins);
 
-    hr = This->receive_pin(This->base, This->uIndex + cPins, &pin, &synctime);
-    if (pin)
-        IPin_Release(pin);
-
-    if (synctime != This->synctime)
+    if (This->Version != This->receive_version(This->base))
         return VFW_E_ENUM_OUT_OF_SYNC;
 
-    if (hr == S_OK)
-        This->uIndex += cPins;
+    if (This->receive_pincount(This->base) >= This->uIndex + cPins)
+        return S_FALSE;
 
-    return hr;
+    This->uIndex += cPins;
+    return S_OK;
 }
 
 static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
@@ -180,7 +180,7 @@ static HRESULT WINAPI IEnumPinsImpl_Reset(IEnumPins * iface)
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
 
     TRACE("IEnumPinsImpl::Reset()\n");
-    This->receive_pin(This->base, ~0, NULL, &This->synctime);
+    This->Version = This->receive_version(This->base);
 
     This->uIndex = 0;
     return S_OK;
@@ -193,7 +193,7 @@ static HRESULT WINAPI IEnumPinsImpl_Clone(IEnumPins * iface, IEnumPins ** ppEnum
 
     TRACE("(%p)\n", ppEnum);
 
-    hr = IEnumPinsImpl_Construct(ppEnum, This->receive_pin, This->base);
+    hr = EnumPins_Construct(This->base, This->receive_pin, This->receive_pincount, This->receive_version, ppEnum);
     if (FAILED(hr))
         return hr;
     return IEnumPins_Skip(*ppEnum, This->uIndex);

@@ -12,7 +12,6 @@ C_SRCS = \
 	enumfilters.c \
 	enummedia.c \
 	enummoniker.c \
-	enumpins.c \
 	enumregfilters.c \
 	filesource.c \
 	filtergraph.c \

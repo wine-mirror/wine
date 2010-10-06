@@ -906,19 +906,26 @@ static HRESULT WINAPI VideoRenderer_GetSyncSource(IBaseFilter * iface, IReferenc
 
 /** IBaseFilter implementation **/
 
-static HRESULT VideoRenderer_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+static IPin* WINAPI VideoRenderer_GetPin(IBaseFilter *iface, int pos)
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef((IPin *)This->pInputPin);
+    return (IPin *)This->pInputPin;
+}
+
+static LONG WINAPI VideoRenderer_GetPinCount(IBaseFilter *iface)
+{
+    return 1;
+}
+
+static LONG WINAPI VideoRenderer_GetPinVersion(IBaseFilter *iface)
+{
     /* Our pins are static, not changing so setting static tick count is ok */
-    *lastsynctick = 0;
-
-    if (pos >= 1)
-        return S_FALSE;
-
-    *pin = (IPin *)This->pInputPin;
-    IPin_AddRef(*pin);
-    return S_OK;
+    return 0;
 }
 
 static HRESULT WINAPI VideoRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
@@ -927,7 +934,7 @@ static HRESULT WINAPI VideoRenderer_EnumPins(IBaseFilter * iface, IEnumPins **pp
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    return IEnumPinsImpl_Construct(ppEnum, VideoRenderer_GetPin, iface);
+    return EnumPins_Construct(iface, VideoRenderer_GetPin, VideoRenderer_GetPinCount, VideoRenderer_GetPinVersion,  ppEnum);
 }
 
 static HRESULT WINAPI VideoRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

@@ -399,19 +399,26 @@ static HRESULT WINAPI NullRenderer_GetSyncSource(IBaseFilter * iface, IReference
 
 /** IBaseFilter implementation **/
 
-static HRESULT NullRenderer_GetPin(IBaseFilter *iface, ULONG pos, IPin **pin, DWORD *lastsynctick)
+static IPin* WINAPI NullRenderer_GetPin(IBaseFilter *iface, int pos)
 {
     NullRendererImpl *This = (NullRendererImpl *)iface;
 
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef((IPin *)This->pInputPin);
+    return (IPin *)This->pInputPin;
+}
+
+static LONG WINAPI NullRenderer_GetPinCount(IBaseFilter *iface)
+{
+    return 1;
+}
+
+static LONG WINAPI NullRenderer_GetPinVersion(IBaseFilter *iface)
+{
     /* Our pins are static, not changing so setting static tick count is ok */
-    *lastsynctick = 0;
-
-    if (pos >= 1)
-        return S_FALSE;
-
-    *pin = (IPin *)This->pInputPin;
-    IPin_AddRef(*pin);
-    return S_OK;
+    return 0;
 }
 
 static HRESULT WINAPI NullRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
@@ -420,7 +427,7 @@ static HRESULT WINAPI NullRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppE
 
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    return IEnumPinsImpl_Construct(ppEnum, NullRenderer_GetPin, iface);
+    return EnumPins_Construct(iface, NullRenderer_GetPin, NullRenderer_GetPinCount, NullRenderer_GetPinVersion, ppEnum);
 }
 
 static HRESULT WINAPI NullRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)

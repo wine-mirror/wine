@@ -27,4 +27,10 @@ void WINAPI DeleteMediaType(AM_MEDIA_TYPE * pMediaType);
 typedef HRESULT (WINAPI *BasePin_GetMediaType)(IPin* iface, int iPosition, AM_MEDIA_TYPE *amt);
 typedef LONG (WINAPI *BasePin_GetMediaTypeVersion)(IPin* iface);
 
+typedef IPin* (WINAPI *BaseFilter_GetPin)(IBaseFilter* iface, int iPosition);
+typedef LONG (WINAPI *BaseFilter_GetPinCount)(IBaseFilter* iface);
+typedef LONG (WINAPI *BaseFilter_GetPinVersion)(IBaseFilter* iface);
+
 HRESULT WINAPI EnumMediaTypes_Construct(IPin *iface, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum);
+
+HRESULT WINAPI EnumPins_Construct(IBaseFilter *base,  BaseFilter_GetPin receive_pin, BaseFilter_GetPinCount receive_pincount, BaseFilter_GetPinVersion receive_version, IEnumPins ** ppEnum);
