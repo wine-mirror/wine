@@ -29,6 +29,7 @@
 #include "fdi.h"
 #include "msi.h"
 #include "msiquery.h"
+#include "msidefs.h"
 #include "objbase.h"
 #include "objidl.h"
 #include "winnls.h"
@@ -928,6 +929,10 @@ static inline void msi_feature_set_state(MSIPACKAGE *package,
     {
         feature->ActionRequest = state;
         feature->Action = state;
+    }
+    if (feature->Attributes & msidbFeatureAttributesUIDisallowAbsent)
+    {
+        feature->Action = INSTALLSTATE_UNKNOWN;
     }
 }
 
