@@ -100,7 +100,8 @@ typedef struct GifImageDesc {
 typedef struct GifFileType {
     GifWord SWidth, SHeight,        /* Screen dimensions. */
       SColorResolution,         /* How many colors can we generate? */
-      SBackGroundColor;         /* I hope you understand this one... */
+      SBackGroundColor,         /* I hope you understand this one... */
+      SAspectRatio;             /* Pixel aspect ratio, in 1/64 units, starting at 1:4. */
     ColorMapObject *SColorMap;  /* NULL if not exists. */
     int ImageCount;             /* Number of current image */
     GifImageDesc Image;         /* Block describing current image */

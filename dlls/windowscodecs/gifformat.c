@@ -123,8 +123,15 @@ static HRESULT WINAPI GifFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface
 static HRESULT WINAPI GifFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    GifFrameDecode *This = (GifFrameDecode*)iface;
+    const GifWord aspect_word = This->parent->gif->SAspectRatio;
+    const double aspect = (aspect_word > 0) ? ((aspect_word + 15.0) / 64.0) : 1.0;
+    TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
+
+    *pDpiX = 96.0 / aspect;
+    *pDpiY = 96.0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
