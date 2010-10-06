@@ -483,7 +483,9 @@ NTSTATUS WINAPI LsaLookupSids(
         (*Names)[i].Name.Length = 0;
         (*Names)[i].Name.MaximumLength = 0;
         (*Names)[i].Name.Buffer = NULL;
-        if (LookupAccountSidW(NULL, Sids[i], NULL, &name_size, NULL, &domain_size, &use))
+
+        if (!LookupAccountSidW(NULL, Sids[i], NULL, &name_size, NULL, &domain_size, &use) &&
+            GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {
             LSA_UNICODE_STRING domain;
 
@@ -502,11 +504,11 @@ NTSTATUS WINAPI LsaLookupSids(
                 domain.Buffer = NULL;
             }
 
-            (*Names)[i].Use = use;
             (*Names)[i].Name.Length = (name_size - 1) * sizeof(WCHAR);
             (*Names)[i].Name.MaximumLength = name_size * sizeof(WCHAR);
-            (*Names)[i].Name.Buffer = HeapAlloc(GetProcessHeap(),0,name_size * sizeof(WCHAR));
+            (*Names)[i].Name.Buffer = HeapAlloc(GetProcessHeap(), 0, name_size * sizeof(WCHAR));
             LookupAccountSidW(NULL, Sids[i], (*Names)[i].Name.Buffer, &name_size, domain.Buffer, &domain_size, &use);
+            (*Names)[i].Use = use;
 
             if (domain_size)
                 (*Names)[i].DomainIndex = build_domain(*ReferencedDomains, &domain);
