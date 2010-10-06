@@ -3257,6 +3257,21 @@ static const SimpleChainStatusCheck opensslSimpleStatus[] = {
  { sizeof(opensslElementStatus) / sizeof(opensslElementStatus[0]),
    opensslElementStatus },
 };
+/* The OpenSSL chain may not have its root trusted, in which case the chain
+ * is truncated (on Win98).
+ */
+static CONST_DATA_BLOB incompleteOpensslChain[] = {
+ { sizeof(global_sign_ca), global_sign_ca },
+ { sizeof(openssl_org), openssl_org },
+};
+static const CERT_TRUST_STATUS incompleteOpensslElementStatus[] = {
+ { CERT_TRUST_IS_NOT_TIME_VALID, CERT_TRUST_HAS_KEY_MATCH_ISSUER },
+ { CERT_TRUST_NO_ERROR, CERT_TRUST_HAS_KEY_MATCH_ISSUER },
+};
+static const SimpleChainStatusCheck incompleteOpensslSimpleStatus[] = {
+ { sizeof(incompleteOpensslElementStatus) / sizeof(incompleteOpensslElementStatus[0]),
+   incompleteOpensslElementStatus },
+};
 /* entrust_ca -> aaa_certificate_services -> cs_stanford_edu */
 /* cs.stanford.edu's cert is only valid from 7/16/2009 to 7/16/2012, so with
  * the date tested (October 2007) it's not time valid.
@@ -3515,12 +3530,6 @@ static ChainCheck chainCheck[] = {
        CERT_TRUST_HAS_PREFERRED_ISSUER },
      { CERT_TRUST_IS_NOT_TIME_VALID, 0 },
        1, googleSimpleStatus }, 0 },
- /* The openssl chain may or may not have its root trusted, so ignore the error
-  */
- { { sizeof(opensslChain) / sizeof(opensslChain[0]), opensslChain },
-   { { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_PREFERRED_ISSUER },
-     { CERT_TRUST_IS_NOT_TIME_VALID, 0 },
-       1, opensslSimpleStatus }, 0 },
  /* The stanford chain may or may not have its root trusted, so ignore the error
   */
  { { sizeof(stanfordChain) / sizeof(stanfordChain[0]), stanfordChain },
@@ -3548,6 +3557,20 @@ static ChainCheck chainCheckNoStore[] = {
      1, simpleStatus8NoStore },
    0 },
 };
+
+ /* The openssl chain may or may not have its root trusted, so ignore the error
+  */
+static ChainCheck opensslChainCheck =
+ { { sizeof(opensslChain) / sizeof(opensslChain[0]), opensslChain },
+   { { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_PREFERRED_ISSUER },
+     { CERT_TRUST_IS_NOT_TIME_VALID, 0 },
+       1, opensslSimpleStatus }, 0 };
+static ChainCheck incompleteOpensslChainCheck =
+ { { sizeof(incompleteOpensslChain) / sizeof(incompleteOpensslChain[0]),
+     incompleteOpensslChain },
+   { { CERT_TRUST_IS_UNTRUSTED_ROOT, CERT_TRUST_HAS_PREFERRED_ISSUER },
+     { CERT_TRUST_IS_NOT_TIME_VALID | CERT_TRUST_IS_PARTIAL_CHAIN, 0 },
+       1, incompleteOpensslSimpleStatus }, 0 };
 
 /* Chain27 checks a certificate with a subject alternate name containing an
  * embedded NULL.  Newer crypt32 versions fail to decode such alternate names,
@@ -3721,6 +3744,28 @@ static void testGetCertChain(void)
              "chainCheck", i);
             pCertFreeCertificateChain(chain);
         }
+    }
+    chain = getChain(NULL, &opensslChainCheck.certs, 0, TRUE, &oct2007,
+     opensslChainCheck.todo, 0);
+    if (chain)
+    {
+        ok(chain->TrustStatus.dwErrorStatus ==
+         opensslChainCheck.status.status.dwErrorStatus ||
+         broken((chain->TrustStatus.dwErrorStatus &
+         ~incompleteOpensslChainCheck.status.statusToIgnore.dwErrorStatus) ==
+         (incompleteOpensslChainCheck.status.status.dwErrorStatus &
+         ~incompleteOpensslChainCheck.status.statusToIgnore.dwErrorStatus)),
+         "unexpected chain error status %08x\n",
+         chain->TrustStatus.dwErrorStatus);
+        if (opensslChainCheck.status.status.dwErrorStatus ==
+         chain->TrustStatus.dwErrorStatus)
+            checkChainStatus(chain, &opensslChainCheck.status,
+             opensslChainCheck.todo, "opensslChainCheck", 0);
+        else
+            checkChainStatus(chain, &incompleteOpensslChainCheck.status,
+             incompleteOpensslChainCheck.todo, "incompleteOpensslChainCheck",
+             0);
+        pCertFreeCertificateChain(chain);
     }
     for (i = 0; i < sizeof(chainCheckNoStore) / sizeof(chainCheckNoStore[0]);
      i++)
