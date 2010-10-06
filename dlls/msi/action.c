@@ -1785,7 +1785,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             BOOL feature_state = ((feature->Level > 0) &&
                                   (feature->Level <= level));
 
-            if ((feature_state) && (feature->Action == INSTALLSTATE_UNKNOWN))
+            if (feature_state && feature->ActionRequest == INSTALLSTATE_UNKNOWN)
             {
                 if (feature->Attributes & msidbFeatureAttributesFavorSource)
                     msi_feature_set_state(package, feature, INSTALLSTATE_SOURCE);
@@ -1814,7 +1814,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             BOOL selected = feature->Level > 0 && feature->Level <= level;
 
-            if (selected && feature->Action == INSTALLSTATE_UNKNOWN)
+            if (selected && feature->ActionRequest == INSTALLSTATE_UNKNOWN)
             {
                  msi_feature_set_state(package, feature, feature->Installed);
             }
@@ -1839,7 +1839,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
             if (cl->component->ForceLocalState &&
-                feature->Action == INSTALLSTATE_SOURCE)
+                feature->ActionRequest == INSTALLSTATE_SOURCE)
             {
                 msi_feature_set_state(package, feature, INSTALLSTATE_LOCAL);
                 break;
@@ -1850,7 +1850,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             component = cl->component;
 
-            switch (feature->Action)
+            switch (feature->ActionRequest)
             {
             case INSTALLSTATE_ABSENT:
                 component->anyAbsent = 1;
