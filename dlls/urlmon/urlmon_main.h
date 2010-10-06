@@ -80,6 +80,8 @@ HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, v
 HRESULT create_binding_protocol(LPCWSTR url, BOOL from_urlmon, IInternetProtocol **protocol);
 void set_binding_sink(IInternetProtocol *bind_protocol, IInternetProtocolSink *sink, IInternetBindInfo *bind_info);
 IWinInetInfo *get_wininet_info(IInternetProtocol*);
+HRESULT create_default_callback(IBindStatusCallback**);
+HRESULT wrap_callback(IBindStatusCallback*,IBindStatusCallback**);
 
 typedef struct ProtocolVtbl ProtocolVtbl;
 

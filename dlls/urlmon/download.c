@@ -171,14 +171,16 @@ static HRESULT WINAPI DownloadBSC_OnStopBinding(IBindStatusCallback *iface,
 
     TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
 
-    if(This->cache_file) {
-        BOOL b;
+    if(This->file_name) {
+        if(This->cache_file) {
+            BOOL b;
 
-        b = CopyFileW(This->cache_file, This->file_name, FALSE);
-        if(!b)
-            FIXME("CopyFile failed: %u\n", GetLastError());
-    }else {
-        FIXME("No cache file\n");
+            b = CopyFileW(This->cache_file, This->file_name, FALSE);
+            if(!b)
+                FIXME("CopyFile failed: %u\n", GetLastError());
+        }else {
+            FIXME("No cache file\n");
+        }
     }
 
     if(This->callback)
@@ -301,7 +303,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     DwlServiceProvider_QueryService
 };
 
-static IBindStatusCallback *DownloadBSC_Create(IBindStatusCallback *callback, LPCWSTR file_name)
+static HRESULT DownloadBSC_Create(IBindStatusCallback *callback, LPCWSTR file_name, IBindStatusCallback **ret_callback)
 {
     DownloadBSC *ret = heap_alloc(sizeof(*ret));
 
@@ -315,7 +317,22 @@ static IBindStatusCallback *DownloadBSC_Create(IBindStatusCallback *callback, LP
         IBindStatusCallback_AddRef(callback);
     ret->callback = callback;
 
-    return STATUSCLB(ret);
+    *ret_callback = STATUSCLB(ret);
+    return S_OK;
+}
+
+HRESULT create_default_callback(IBindStatusCallback **ret)
+{
+    IBindStatusCallback *callback;
+    HRESULT hres;
+
+    hres = DownloadBSC_Create(NULL, NULL, &callback);
+    if(FAILED(hres))
+        return hres;
+
+    hres = wrap_callback(callback, ret);
+    IBindStatusCallback_Release(callback);
+    return hres;
 }
 
 /***********************************************************************
@@ -348,7 +365,10 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR szFi
     if(pCaller)
         FIXME("pCaller not supported\n");
 
-    callback = DownloadBSC_Create(lpfnCB, szFileName);
+    hres = DownloadBSC_Create(lpfnCB, szFileName, &callback);
+    if(FAILED(hres))
+        return hres;
+
     hres = CreateAsyncBindCtx(0, callback, NULL, &bindctx);
     IBindStatusCallback_Release(callback);
     if(FAILED(hres))

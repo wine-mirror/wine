@@ -1369,12 +1369,12 @@ static HRESULT get_callback(IBindCtx *pbc, IBindStatusCallback **callback)
     HRESULT hres;
 
     hres = IBindCtx_GetObjectParam(pbc, bscb_holderW, &unk);
-    if(SUCCEEDED(hres)) {
-        hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)callback);
-        IUnknown_Release(unk);
-    }
+    if(FAILED(hres))
+        return create_default_callback(callback);
 
-    return SUCCEEDED(hres) ? S_OK : INET_E_DATA_NOT_AVAILABLE;
+    hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)callback);
+    IUnknown_Release(unk);
+    return hres;
 }
 
 static BOOL is_urlmon_protocol(LPCWSTR url)

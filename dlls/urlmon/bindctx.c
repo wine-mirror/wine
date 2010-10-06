@@ -477,7 +477,7 @@ static void set_callback(BindStatusCallback *This, IBindStatusCallback *bsc)
     This->serv_prov = hres == S_OK ? serv_prov : NULL;
 }
 
-static HRESULT wrap_callback(IBindStatusCallback *bsc, IBindStatusCallback **ret_iface)
+HRESULT wrap_callback(IBindStatusCallback *bsc, IBindStatusCallback **ret_iface)
 {
     BindStatusCallback *ret;
 
