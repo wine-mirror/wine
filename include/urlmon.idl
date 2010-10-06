@@ -1826,6 +1826,8 @@ interface IUriBuilder: IUnknown
         [out] BOOL *pfModified);
 };
 
+cpp_quote("HRESULT WINAPI CreateIUriBuilder(IUri*,DWORD,DWORD_PTR,IUriBuilder**);")
+
 /*****************************************************************************
  * IInternetProtocolEx interface
  */
