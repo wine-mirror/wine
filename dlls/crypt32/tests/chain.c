@@ -2655,62 +2655,64 @@ typedef struct _SimpleChainStatusCheck
 
 static void checkElementStatus(const CERT_TRUST_STATUS *expected,
  const CERT_TRUST_STATUS *got, const CERT_TRUST_STATUS *ignore,
- DWORD todo, DWORD testIndex, DWORD chainIndex, DWORD elementIndex)
+ DWORD todo, LPCSTR testName, DWORD testIndex, DWORD chainIndex,
+ DWORD elementIndex)
 {
     if (got->dwErrorStatus == expected->dwErrorStatus)
         ok(got->dwErrorStatus == expected->dwErrorStatus,
-         "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
-         testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
+         "%s[%d], element [%d,%d]: expected error %08x, got %08x\n",
+         testName, testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
          got->dwErrorStatus);
     else if (todo & TODO_ERROR)
         todo_wine
         ok(got->dwErrorStatus == expected->dwErrorStatus ||
          broken((got->dwErrorStatus & ~ignore->dwErrorStatus) ==
          (expected->dwErrorStatus & ~ignore->dwErrorStatus)),
-         "Chain %d, element [%d,%d]: expected error %08x, got %08x\n",
-         testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
+         "%s[%d], element [%d,%d]: expected error %08x, got %08x\n",
+         testName, testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
          got->dwErrorStatus);
     else
         ok(got->dwErrorStatus == expected->dwErrorStatus ||
          broken((got->dwErrorStatus & ~ignore->dwErrorStatus) ==
          (expected->dwErrorStatus & ~ignore->dwErrorStatus)),
-         "Chain %d, element [%d,%d]: expected error %08x, got %08x. %08x is "
+         "%s[%d], element [%d,%d]: expected error %08x, got %08x. %08x is "
          "expected if no valid Verisign root certificate is available.\n",
-         testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
+         testName, testIndex, chainIndex, elementIndex, expected->dwErrorStatus,
          got->dwErrorStatus, CERT_TRUST_IS_UNTRUSTED_ROOT);
     if (got->dwInfoStatus == expected->dwInfoStatus)
         ok(got->dwInfoStatus == expected->dwInfoStatus,
-         "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
-         testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
+         "%s[%d], element [%d,%d]: expected info %08x, got %08x\n",
+         testName, testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
          got->dwInfoStatus);
     else if (todo & TODO_INFO)
         todo_wine
         ok(got->dwInfoStatus == expected->dwInfoStatus ||
          broken((got->dwInfoStatus & ~ignore->dwInfoStatus) ==
          (expected->dwInfoStatus & ~ignore->dwInfoStatus)),
-         "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
-         testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
+         "%s[%d], element [%d,%d]: expected info %08x, got %08x\n",
+         testName, testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
          got->dwInfoStatus);
     else
         ok(got->dwInfoStatus == expected->dwInfoStatus ||
          broken((got->dwInfoStatus & ~ignore->dwInfoStatus) ==
          (expected->dwInfoStatus & ~ignore->dwInfoStatus)),
-         "Chain %d, element [%d,%d]: expected info %08x, got %08x\n",
-         testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
+         "%s[%d], element [%d,%d]: expected info %08x, got %08x\n",
+         testName, testIndex, chainIndex, elementIndex, expected->dwInfoStatus,
          got->dwInfoStatus);
 }
 
 static void checkSimpleChainStatus(const CERT_SIMPLE_CHAIN *simpleChain,
  const SimpleChainStatusCheck *simpleChainStatus,
- const CERT_TRUST_STATUS *ignore, DWORD todo, DWORD testIndex, DWORD chainIndex)
+ const CERT_TRUST_STATUS *ignore, DWORD todo, LPCSTR testName, DWORD testIndex,
+ DWORD chainIndex)
 {
     if (todo & TODO_ELEMENTS)
         todo_wine ok(simpleChain->cElement == simpleChainStatus->cElement,
-         "Chain %d: expected %d elements, got %d\n", testIndex,
+         "%s[%d]: expected %d elements, got %d\n", testName, testIndex,
          simpleChainStatus->cElement, simpleChain->cElement);
     else
         ok(simpleChain->cElement == simpleChainStatus->cElement,
-         "Chain %d: expected %d elements, got %d\n", testIndex,
+         "%s[%d]: expected %d elements, got %d\n", testName, testIndex,
          simpleChainStatus->cElement, simpleChain->cElement);
     if (simpleChain->cElement == simpleChainStatus->cElement)
     {
@@ -2718,8 +2720,8 @@ static void checkSimpleChainStatus(const CERT_SIMPLE_CHAIN *simpleChain,
 
         for (i = 0; i < simpleChain->cElement; i++)
             checkElementStatus(&simpleChainStatus->rgElementStatus[i],
-             &simpleChain->rgpElement[i]->TrustStatus, ignore, todo, testIndex,
-             chainIndex, i);
+             &simpleChain->rgpElement[i]->TrustStatus, ignore, todo, testName,
+             testIndex, chainIndex, i);
     }
 }
 
@@ -2732,10 +2734,11 @@ typedef struct _ChainStatusCheck
 } ChainStatusCheck;
 
 static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
- const ChainStatusCheck *chainStatus, DWORD todo, DWORD testIndex)
+ const ChainStatusCheck *chainStatus, DWORD todo, LPCSTR testName,
+ DWORD testIndex)
 {
     ok(chain->cChain == chainStatus->cChain,
-     "Chain %d: expected %d simple chains, got %d\n", testIndex,
+     "%s[%d]: expected %d simple chains, got %d\n", testName, testIndex,
      chainStatus->cChain, chain->cChain);
     if (todo & TODO_ERROR &&
      chain->TrustStatus.dwErrorStatus != chainStatus->status.dwErrorStatus)
@@ -2745,8 +2748,8 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
          ~chainStatus->statusToIgnore.dwErrorStatus) ==
          (chainStatus->status.dwErrorStatus &
          ~chainStatus->statusToIgnore.dwErrorStatus)),
-         "Chain %d: expected error %08x, got %08x\n",
-         testIndex, chainStatus->status.dwErrorStatus,
+         "%s[%d]: expected error %08x, got %08x\n",
+         testName, testIndex, chainStatus->status.dwErrorStatus,
          chain->TrustStatus.dwErrorStatus);
     else
         ok(chain->TrustStatus.dwErrorStatus ==
@@ -2755,9 +2758,9 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
          ~chainStatus->statusToIgnore.dwErrorStatus) ==
          (chainStatus->status.dwErrorStatus &
          ~chainStatus->statusToIgnore.dwErrorStatus)),
-         "Chain %d: expected error %08x, got %08x. %08x is expected if no valid "
+         "%s[%d]: expected error %08x, got %08x. %08x is expected if no valid "
          "Verisign root certificate is available.\n",
-         testIndex, chainStatus->status.dwErrorStatus,
+         testName, testIndex, chainStatus->status.dwErrorStatus,
          chain->TrustStatus.dwErrorStatus, CERT_TRUST_IS_UNTRUSTED_ROOT);
     if (todo & TODO_INFO &&
      chain->TrustStatus.dwInfoStatus != chainStatus->status.dwInfoStatus)
@@ -2767,8 +2770,8 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
          ~chainStatus->statusToIgnore.dwInfoStatus) ==
          (chainStatus->status.dwInfoStatus &
          ~chainStatus->statusToIgnore.dwInfoStatus)),
-         "Chain %d: expected info %08x, got %08x\n",
-         testIndex, chainStatus->status.dwInfoStatus,
+         "%s[%d]: expected info %08x, got %08x\n",
+         testName, testIndex, chainStatus->status.dwInfoStatus,
          chain->TrustStatus.dwInfoStatus);
     else
         ok(chain->TrustStatus.dwInfoStatus ==
@@ -2777,8 +2780,8 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
          ~chainStatus->statusToIgnore.dwInfoStatus) ==
          (chainStatus->status.dwInfoStatus &
          ~chainStatus->statusToIgnore.dwInfoStatus)),
-         "Chain %d: expected info %08x, got %08x\n",
-         testIndex, chainStatus->status.dwInfoStatus,
+         "%s[%d]: expected info %08x, got %08x\n",
+         testName, testIndex, chainStatus->status.dwInfoStatus,
          chain->TrustStatus.dwInfoStatus);
     if (chain->cChain == chainStatus->cChain)
     {
@@ -2787,7 +2790,7 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
         for (i = 0; i < chain->cChain; i++)
             checkSimpleChainStatus(chain->rgpChain[i],
              &chainStatus->rgChainStatus[i], &chainStatus->statusToIgnore,
-             todo, testIndex, i);
+             todo, testName, testIndex, i);
     }
 }
 
@@ -3712,7 +3715,7 @@ static void testGetCertChain(void)
         if (chain)
         {
             checkChainStatus(chain, &chainCheck[i].status, chainCheck[i].todo,
-             i);
+             "chainCheck", i);
             pCertFreeCertificateChain(chain);
         }
     }
@@ -3724,7 +3727,7 @@ static void testGetCertChain(void)
         if (chain)
         {
             checkChainStatus(chain, &chainCheckNoStore[i].status,
-             chainCheckNoStore[i].todo, i);
+             chainCheckNoStore[i].todo, "chainCheckNoStore", i);
             pCertFreeCertificateChain(chain);
         }
     }
@@ -3743,10 +3746,11 @@ static void testGetCertChain(void)
         if (chainCheckEmbeddedNull.status.status.dwErrorStatus ==
          chain->TrustStatus.dwErrorStatus)
             checkChainStatus(chain, &chainCheckEmbeddedNull.status,
-             chainCheckEmbeddedNull.todo, 0);
+             chainCheckEmbeddedNull.todo, "chainCheckEmbeddedNull", 0);
         else
             checkChainStatus(chain, &chainCheckEmbeddedNullBroken.status,
-             chainCheckEmbeddedNullBroken.todo, 0);
+             chainCheckEmbeddedNullBroken.todo, "chainCheckEmbeddedNullBroken",
+             0);
         pCertFreeCertificateChain(chain);
     }
 }
