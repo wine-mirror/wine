@@ -3918,9 +3918,13 @@ static const ChainPolicyCheck googlePolicyCheckWithMatchingNameExpired = {
  { 0, CERT_E_EXPIRED, 0, 0, NULL}, NULL, 0
 };
 
+/* Win98 sees the chain as expired, even though it isn't for the date tested */
+static const CERT_CHAIN_POLICY_STATUS expiredStatus =
+ { 0, CERT_E_EXPIRED, 0, 0, NULL };
+
 static const ChainPolicyCheck googlePolicyCheckWithMatchingName = {
  { sizeof(googleChain) / sizeof(googleChain[0]), googleChain },
- { 0, 0, -1, -1, NULL}, NULL, 0
+ { 0, 0, -1, -1, NULL}, &expiredStatus, 0
 };
 
 /* Windows NT 4 has a different error code when the name doesn't match. */
@@ -3932,14 +3936,18 @@ static const ChainPolicyCheck iTunesPolicyCheckWithoutMatchingName = {
  { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, &noMatchingNameBrokenStatus, 0
 };
 
+/* Win98 does not trust the root of the OpenSSL chain or the Stanford chain */
+static const CERT_CHAIN_POLICY_STATUS untrustedRootStatus =
+ { 0, CERT_E_UNTRUSTEDROOT, 0, 0, NULL };
+
 static const ChainPolicyCheck opensslPolicyCheckWithMatchingName = {
  { sizeof(opensslChain) / sizeof(opensslChain[0]), opensslChain },
- { 0, 0, -1, -1, NULL}, NULL, 0
+ { 0, 0, -1, -1, NULL}, &untrustedRootStatus, 0
 };
 
 static const ChainPolicyCheck opensslPolicyCheckWithoutMatchingName = {
  { sizeof(opensslChain) / sizeof(opensslChain[0]), opensslChain },
- { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
+ { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, &untrustedRootStatus, 0
 };
 
 static const ChainPolicyCheck winehqPolicyCheckWithMatchingName = {
@@ -3954,12 +3962,12 @@ static const ChainPolicyCheck winehqPolicyCheckWithoutMatchingName = {
 
 static const ChainPolicyCheck stanfordPolicyCheckWithMatchingName = {
  { sizeof(stanfordChain) / sizeof(stanfordChain[0]), stanfordChain },
- { 0, 0, -1, -1, NULL}, NULL, 0
+ { 0, 0, -1, -1, NULL}, &untrustedRootStatus, 0
 };
 
 static const ChainPolicyCheck stanfordPolicyCheckWithoutMatchingName = {
  { sizeof(stanfordChain) / sizeof(stanfordChain[0]), stanfordChain },
- { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, NULL, 0
+ { 0, CERT_E_CN_NO_MATCH, 0, 0, NULL}, &untrustedRootStatus, 0
 };
 
 static const ChainPolicyCheck invalidExtensionPolicyCheck = {
