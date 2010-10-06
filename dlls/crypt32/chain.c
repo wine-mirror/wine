@@ -2954,6 +2954,16 @@ static BOOL WINAPI verify_base_policy(LPCSTR szPolicyOID,
          CERT_TRUST_IS_NOT_VALID_FOR_USAGE, &pPolicyStatus->lChainIndex,
          &pPolicyStatus->lElementIndex);
     }
+    if (!pPolicyStatus->dwError &&
+     pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT &&
+     !(checks & CERT_CHAIN_POLICY_IGNORE_NOT_SUPPORTED_CRITICAL_EXT_FLAG))
+    {
+        pPolicyStatus->dwError = CERT_E_CRITICAL;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
     return TRUE;
 }
 
@@ -3375,6 +3385,14 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
         pPolicyStatus->dwError = CERT_E_REVOCATION_FAILURE;
         find_element_with_error(pChainContext,
          CERT_TRUST_IS_OFFLINE_REVOCATION, &pPolicyStatus->lChainIndex,
+         &pPolicyStatus->lElementIndex);
+    }
+    else if (pChainContext->TrustStatus.dwErrorStatus &
+     CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT)
+    {
+        pPolicyStatus->dwError = CERT_E_CRITICAL;
+        find_element_with_error(pChainContext,
+         CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT, &pPolicyStatus->lChainIndex,
          &pPolicyStatus->lElementIndex);
     }
     else

@@ -3964,7 +3964,7 @@ static const ChainPolicyCheck stanfordPolicyCheckWithoutMatchingName = {
 
 static const ChainPolicyCheck invalidExtensionPolicyCheck = {
  { sizeof(chain30) / sizeof(chain30[0]), chain30 },
- { 0, CERT_E_CRITICAL, 0, 1, NULL}, NULL, TODO_ERROR
+ { 0, CERT_E_CRITICAL, 0, 1, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck authenticodePolicyCheck[] = {
