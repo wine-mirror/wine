@@ -45,6 +45,9 @@ static const char *a_very_long_env_string =
 void __cdecl __getmainargs(int *, char ***, char ***, int, int *);
 void __cdecl __wgetmainargs(int *, wchar_t ***, wchar_t ***, int, int *);
 
+static char ***(__cdecl *p__p__environ)(void);
+static WCHAR ***(__cdecl *p__p__wenviron)(void);
+
 static char ***p_environ;
 static WCHAR ***p_wenviron;
 
@@ -52,6 +55,8 @@ static void init(void)
 {
     HMODULE hmod = GetModuleHandleA("msvcrt.dll");
 
+    p__p__environ = (void *)GetProcAddress(hmod, "__p__environ");
+    p__p__wenviron = (void *)GetProcAddress(hmod, "__p__wenviron");
     p_environ = (void *)GetProcAddress(hmod, "_environ");
     p_wenviron = (void *)GetProcAddress(hmod, "_wenviron");
 }
@@ -80,6 +85,15 @@ static void test__environ(void)
         skip( "_environ pointers are not valid\n" );
         return;
     }
+
+    /* Examine the returned pointer from __p__environ(), if available. */
+    if (p__p__environ)
+    {
+        ok( *p__p__environ() == *p_environ,
+            "Expected _environ pointers to be identical\n" );
+    }
+    else
+        skip( "__p__environ() is not available\n" );
 
     /* Note that msvcrt from Windows versions older than Vista
      * expects the mode pointer parameter to be valid.*/
@@ -125,6 +139,15 @@ static void test__wenviron(void)
         return;
     }
 
+    /* Examine the returned pointer from __p__wenviron(), if available. */
+    if (p__p__wenviron)
+    {
+        ok( *p__p__wenviron() == NULL,
+            "Expected _wenviron pointers to be NULL\n" );
+    }
+    else
+        skip( "__p__wenviron() is not available\n" );
+
     /* __getmainargs doesn't initialize _wenviron. */
     __getmainargs(&argc, &argv, &envp, 0, &mode);
 
@@ -151,6 +174,14 @@ static void test__wenviron(void)
     {
         skip( "Initial environment block pointer is not valid\n" );
         return;
+    }
+
+    /* Examine the returned pointer from __p__wenviron(),
+     * if available, after _wenviron is initialized. */
+    if (p__p__wenviron)
+    {
+        ok( *p__p__wenviron() == *p_wenviron,
+            "Expected _wenviron pointers to be identical\n" );
     }
 
     for (i = 0; ; i++)
