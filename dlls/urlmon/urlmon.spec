@@ -12,6 +12,7 @@
 @ stub CoInstall
 @ stdcall CoInternetCombineUrl(wstr wstr long wstr long ptr long)
 @ stdcall CoInternetCompareUrl(wstr wstr long)
+@ stdcall CoInternetCombineIUri(ptr ptr long ptr long)
 @ stdcall CoInternetCreateSecurityManager(ptr ptr long)
 @ stdcall CoInternetCreateZoneManager(ptr ptr long)
 @ stub CoInternetGetProtocolFlags

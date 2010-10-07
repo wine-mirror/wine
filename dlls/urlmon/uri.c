@@ -5588,3 +5588,13 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
     *ppIUriBuilder = URIBUILDER(ret);
     return S_OK;
 }
+
+/***********************************************************************
+ *           CoInternetCombineIUri (urlmon.@)
+ */
+HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD dwCombineFlags,
+                                     IUri **ppCombinedUri, DWORD_PTR dwReserved)
+{
+    FIXME("(%p %p %x %p %x): stub\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+    return E_NOTIMPL;
+}
