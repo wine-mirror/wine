@@ -1348,13 +1348,15 @@ HRESULT SHAPE_CheckFontForRequiredFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANA
     if (!psc->GSUB_Table)
         psc->GSUB_Table = load_gsub_table(hdc);
 
+    /* we need to have at least one of the required features */
     i = 0;
     while (ShapingData[psa->eScript].requiredFeatures[i])
     {
         feature = load_GSUB_feature(hdc, psa, psc, ShapingData[psa->eScript].requiredFeatures[i]);
-        if (!feature)
-            return USP_E_SCRIPT_NOT_IN_FONT;
+        if (feature)
+            return S_OK;
         i++;
     }
-    return S_OK;
+
+    return USP_E_SCRIPT_NOT_IN_FONT;
 }
