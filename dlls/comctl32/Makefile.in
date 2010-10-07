@@ -52,6 +52,7 @@ RC_SRCS = \
 	comctl_Eo.rc \
 	comctl_Es.rc \
 	comctl_Fr.rc \
+	comctl_He.rc \
 	comctl_Hu.rc \
 	comctl_It.rc \
 	comctl_Ja.rc \
