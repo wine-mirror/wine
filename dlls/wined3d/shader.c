@@ -37,6 +37,7 @@ static const char * const shader_opcode_names[] =
 {
     /* WINED3DSIH_ABS           */ "abs",
     /* WINED3DSIH_ADD           */ "add",
+    /* WINED3DSIH_AND           */ "and",
     /* WINED3DSIH_BEM           */ "bem",
     /* WINED3DSIH_BREAK         */ "break",
     /* WINED3DSIH_BREAKC        */ "breakc",

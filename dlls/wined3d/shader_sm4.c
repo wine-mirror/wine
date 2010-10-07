@@ -49,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 enum wined3d_sm4_opcode
 {
     WINED3D_SM4_OP_ADD      = 0x00,
+    WINED3D_SM4_OP_AND      = 0x01,
     WINED3D_SM4_OP_BREAK    = 0x02,
     WINED3D_SM4_OP_BREAKC   = 0x03,
     WINED3D_SM4_OP_CUT      = 0x09,
@@ -113,6 +114,7 @@ struct sysval_map
 static const struct wined3d_sm4_opcode_info opcode_table[] =
 {
     {WINED3D_SM4_OP_ADD,    WINED3DSIH_ADD,         1,  2},
+    {WINED3D_SM4_OP_AND,    WINED3DSIH_AND,         1,  2},
     {WINED3D_SM4_OP_BREAK,  WINED3DSIH_BREAK,       0,  0},
     {WINED3D_SM4_OP_BREAKC, WINED3DSIH_BREAKP,      0,  1},
     {WINED3D_SM4_OP_CUT,    WINED3DSIH_CUT,         0,  0},
