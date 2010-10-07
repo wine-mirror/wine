@@ -1,0 +1,582 @@
+/*
+ *  Task Manager
+ *
+ *  Copyright 1999-2001 Brian Palmer
+ *  Copyright 2010 Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resource.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+/*
+ Menu
+*/
+
+IDR_TASKMANAGER MENU
+BEGIN
+    POPUP "&קובץ"
+    BEGIN
+        MENUITEM "משימה &חדשה (הפעלה...)",          ID_FILE_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "י&ציאה ממנהל המשימות",          ID_FILE_EXIT
+    END
+    POPUP "&אפשרויות"
+    BEGIN
+        MENUITEM "&תמיד עליון",              ID_OPTIONS_ALWAYSONTOP
+        , CHECKED
+        MENUITEM "מזעור &בעת השימוש",            ID_OPTIONS_MINIMIZEONUSE
+        , CHECKED
+        MENUITEM "הסתרה &בעת מזעור",        ID_OPTIONS_HIDEWHENMINIMIZED
+        , CHECKED
+        MENUITEM "ה&צגת משימות 16 סיביות",          ID_OPTIONS_SHOW16BITTASKS
+        , CHECKED
+    END
+    POPUP "&תצוגה"
+    BEGIN
+        MENUITEM "&רענון כעת",                ID_VIEW_REFRESH
+        POPUP "מהירות ה&עדכון"
+        BEGIN
+            MENUITEM "&גבוהה",                       ID_VIEW_UPDATESPEED_HIGH
+            MENUITEM "&רגילה",                     ID_VIEW_UPDATESPEED_NORMAL
+            , CHECKED
+            MENUITEM "&נמוכה",                        ID_VIEW_UPDATESPEED_LOW
+            MENUITEM "&מושהית",                     ID_VIEW_UPDATESPEED_PAUSED
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "סמלים &גדולים",                ID_VIEW_LARGE
+        MENUITEM "סמלים &קטנים",                ID_VIEW_SMALL
+        MENUITEM "&פרטים",                    ID_VIEW_DETAILS, CHECKED
+        MENUITEM "&בחירת עמודות...",          ID_VIEW_SELECTCOLUMNS
+        POPUP "היס&טוריית המעבד"
+        BEGIN
+            MENUITEM "תרשים אחד ל&כול המעבדים",        ID_VIEW_CPUHISTORY_ONEGRAPHALL
+
+            MENUITEM "תרשים &אחד לכול מעבד",          ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
+            , CHECKED
+        END
+        MENUITEM "הצגת זמני ה&קרנל",          ID_VIEW_SHOWKERNELTIMES
+    END
+    POPUP "&חלונות"
+    BEGIN
+        MENUITEM "פריסה או&פקית",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "פריסה &אנכית",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "מ&זעור",                   ID_WINDOWS_MINIMIZE
+        MENUITEM "ה&גדלה",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "&דירוג",                    ID_WINDOWS_CASCADE
+        MENUITEM "&קידום לחזית",             ID_WINDOWS_BRINGTOFRONT
+    END
+    POPUP "ע&זרה"
+    BEGIN
+        MENUITEM "&נושאי העזרה במנהל המשימות",   ID_HELP_TOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "על &אודות מנהל המשימות",         ID_HELP_ABOUT
+    END
+END
+
+IDR_WINDOWSMENU MENU
+BEGIN
+    MENUITEM "פריסה או&פקית",          ID_WINDOWS_TILEHORIZONTALLY
+    MENUITEM "פריסה &אנכית",            ID_WINDOWS_TILEVERTICALLY
+    MENUITEM "מ&זעור",                   ID_WINDOWS_MINIMIZE
+    MENUITEM "ה&גדלה",                   ID_WINDOWS_MAXIMIZE
+    MENUITEM "&דירוג",                    ID_WINDOWS_CASCADE
+    MENUITEM "&קידום לחזית",             ID_WINDOWS_BRINGTOFRONT
+END
+
+IDR_APPLICATION_PAGE_CONTEXT1 MENU
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "משימה &חדשה (הפעלה...)",          ID_FILE_NEW
+        MENUITEM SEPARATOR
+        MENUITEM "סמלים &גדולים",                ID_VIEW_LARGE
+        MENUITEM "סמלים &קטנים",                ID_VIEW_SMALL
+        MENUITEM "&פרטים",                    ID_VIEW_DETAILS, CHECKED
+    END
+END
+
+IDR_APPLICATION_PAGE_CONTEXT2 MENU
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "מע&בר אל",                  ID_APPLICATION_PAGE_SWITCHTO
+        MENUITEM "&קידום לחזית",             ID_WINDOWS_BRINGTOFRONT
+        MENUITEM SEPARATOR
+        MENUITEM "פריסה או&פקית",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "פריסה &אנכית",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "מ&זעור",                   ID_WINDOWS_MINIMIZE
+        MENUITEM "ה&גדלה",                   ID_WINDOWS_MAXIMIZE
+        MENUITEM "&דירוג",                    ID_WINDOWS_CASCADE
+        MENUITEM SEPARATOR
+        MENUITEM "&סיום המשימה",                   ID_APPLICATION_PAGE_ENDTASK
+        MENUITEM "מעבר ל&תהליך",              ID_APPLICATION_PAGE_GOTOPROCESS
+    END
+END
+
+IDR_TRAY_POPUP MENU
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&שחזור",                    ID_RESTORE
+        MENUITEM "&סגירה",                      ID_FILE_EXIT
+        MENUITEM SEPARATOR
+        MENUITEM "&תמיד עליון",              ID_OPTIONS_ALWAYSONTOP
+    END
+END
+
+IDR_PROCESS_PAGE_CONTEXT MENU
+BEGIN
+    POPUP "DUMMY"
+    BEGIN
+        MENUITEM "&סיום תהליך",                ID_PROCESS_PAGE_ENDPROCESS
+        MENUITEM "סיום ע&ץ התהליך",           ID_PROCESS_PAGE_ENDPROCESSTREE
+
+        MENUITEM "&ניפוי שגיאות",                      ID_PROCESS_PAGE_DEBUG
+        MENUITEM SEPARATOR
+        POPUP "הגדרת &עדיפות"
+        BEGIN
+            MENUITEM "&זמן אמת",                   ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+
+            MENUITEM "&גבוהה",                       ID_PROCESS_PAGE_SETPRIORITY_HIGH
+
+            MENUITEM "יותר &מרגילה",                ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+
+            MENUITEM "&רגילה",                     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
+
+            MENUITEM "&פחות מרגילה",                ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+
+            MENUITEM "&נמוכה",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
+
+        END
+        MENUITEM "הגדרת &קירבה...",            ID_PROCESS_PAGE_SETAFFINITY
+	MENUITEM "עריכת &ערוצי ניפוי שגיאות...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+    END
+END
+
+/*
+ Dialog
+*/
+
+IDD_TASKMGR_DIALOG DIALOG  0, 0, 264, 246
+STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
+    WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
+    WS_THICKFRAME
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "מנהל המשימות"
+MENU IDR_TASKMANAGER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "Tab1",IDC_TAB,"SysTabControl32",WS_TABSTOP,3,3,257,228
+END
+
+IDD_APPLICATION_PAGE DIALOG  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+EXSTYLE WS_EX_LAYOUTRTL
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
+                    LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
+    PUSHBUTTON      "&משימה חדשה...",IDC_NEWTASK,187,189,53,14
+    PUSHBUTTON      "מ&עבר אל",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
+    PUSHBUTTON      "&סיום המשימה",IDC_ENDTASK,75,189,53,14,WS_DISABLED
+END
+
+IDD_PROCESS_PAGE DIALOG  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+EXSTYLE WS_EX_LAYOUTRTL
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
+                    WS_BORDER | WS_TABSTOP,7,7,233,177
+    PUSHBUTTON      "&סיום התהליך",IDC_ENDPROCESS,171,189,69,14
+    CONTROL         "הצגת תהליכים מ&כל המשתמשים",IDC_SHOWALLPROCESSES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,111,10
+END
+
+/*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
+IDD_PERFORMANCE_PAGE DIALOGEX  0, 0, 247, 210
+STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+EXSTYLE WS_EX_LAYOUTRTL
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX        "שימוש במעבד",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
+    GROUPBOX        "שימוש בזיכרון",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
+    GROUPBOX        "סיכומים",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "ניצולת הדפדוף המרבית (ק׳)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "זיכרון פיזי (ק׳)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "זיכרון קרנל (ק׳)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
+    LTEXT           "מזהים ייחודיים",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
+    LTEXT           "תת־תהליכים",IDS_TOTALS_THREAD_COUNT,12,140,27,8
+    LTEXT           "תהליכים",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
+    EDITTEXT        IDC_TOTALS_HANDLE_COUNT,65,131,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_THREAD_COUNT,65,140,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_TOTALS_PROCESS_COUNT,65,149,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "סך הכול",IDS_COMMIT_CHARGE_TOTAL,12,175,27,8
+    LTEXT           "מגבלה",IDS_COMMIT_CHARGE_LIMIT,12,184,15,8
+    LTEXT           "שיא",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
+    EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_LIMIT,65,184,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_COMMIT_CHARGE_PEAK,65,193,45,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "סך הכול",IDS_PHYSICAL_MEMORY_TOTAL,137,131,27,8
+    LTEXT           "זמין",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,30,8
+    LTEXT           "מטמון המערכת",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,46,8
+    EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,185,131,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_AVAILABLE,185,140,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    LTEXT           "סך הכול",IDS_KERNEL_MEMORY_TOTAL,137,174,27,8
+    LTEXT           "בדפדוף",IDS_KERNEL_MEMORY_PAGED,137,184,21,8
+    LTEXT           "מחוץ לדפדוף",IDS_KERNEL_MEMORY_NONPAGED,137,193,34,8
+    EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_PAGED,185,184,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    EDITTEXT        IDC_KERNEL_MEMORY_NONPAGED,185,193,48,8,ES_RIGHT |
+                    ES_READONLY | ES_NUMBER | NOT WS_BORDER
+    GROUPBOX        "היסטוריית השימוש במעבד",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
+    GROUPBOX        "היסטוריית השימוש בזיכרון",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
+    PUSHBUTTON      "תצוגת השימשו במעבד",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
+		    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "תצוגת השימוש בזיכרון",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
+                    WS_EX_CLIENTEDGE
+    PUSHBUTTON      "היסטוריית השימוש במעבד",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
+                    153,37,0,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "היסטוריית השימוש בזיכרון",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+                    153,37,0,WS_EX_CLIENTEDGE
+END
+
+IDD_DEBUG_CHANNELS_DIALOG DIALOG  0, 0, 247, 210
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "ערוצי ניפוי שגיאות"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP |
+		    LVS_SORTASCENDING,7,7,233,177
+    PUSHBUTTON      "סגירה",IDOK,171,189,69,14
+END
+
+IDD_AFFINITY_DIALOG DIALOG  0, 0, 231, 154
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "קירבה למעבדים"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "אישור",IDOK,120,133,50,14
+    PUSHBUTTON      "ביטול",IDCANCEL,174,133,50,14
+    LTEXT           "הגדרות הקירבה למעבדים שולטים על אילו מעבדים יורשה התהליך לרוץ.",
+                    IDC_STATIC,5,5,220,16
+    CONTROL         "מעבד 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    11,28,37,10
+    CONTROL         "מעבד 1",IDC_CPU1,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,41,37,10
+    CONTROL         "מעבד 2",IDC_CPU2,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,54,37,10
+    CONTROL         "מעבד 3",IDC_CPU3,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,67,37,10
+    CONTROL         "מעבד 4",IDC_CPU4,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,80,37,10
+    CONTROL         "מעבד 5",IDC_CPU5,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,93,37,10
+    CONTROL         "מעבד 6",IDC_CPU6,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,106,37,10
+    CONTROL         "מעבד 7",IDC_CPU7,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,11,119,37,10
+    CONTROL         "מעבד 8",IDC_CPU8,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,61,28,37,10
+    CONTROL         "מעבד 9",IDC_CPU9,"Button",BS_AUTOCHECKBOX | WS_DISABLED |
+                    WS_TABSTOP,61,41,37,10
+    CONTROL         "מעבד 10",IDC_CPU10,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,54,41,10
+    CONTROL         "מעבד 11",IDC_CPU11,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,67,41,10
+    CONTROL         "מעבד 12",IDC_CPU12,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,80,41,10
+    CONTROL         "מעבד 13",IDC_CPU13,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,93,41,10
+    CONTROL         "מעבד 14",IDC_CPU14,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,106,41,10
+    CONTROL         "מעבד 15",IDC_CPU15,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,61,119,41,10
+    CONTROL         "מעבד 16",IDC_CPU16,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,28,41,10
+    CONTROL         "מעבד 17",IDC_CPU17,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,41,41,10
+    CONTROL         "מעבד 18",IDC_CPU18,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,54,41,10
+    CONTROL         "מעבד 19",IDC_CPU19,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,67,41,10
+    CONTROL         "מעבד 20",IDC_CPU20,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,80,41,10
+    CONTROL         "מעבד 21",IDC_CPU21,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,93,41,10
+    CONTROL         "מעבד 22",IDC_CPU22,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,106,41,10
+    CONTROL         "מעבד 23",IDC_CPU23,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,116,119,41,10
+    CONTROL         "מעבד 24",IDC_CPU24,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,28,41,10
+    CONTROL         "מעבד 25",IDC_CPU25,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,41,41,10
+    CONTROL         "מעבד 26",IDC_CPU26,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,54,41,10
+    CONTROL         "מעבד 27",IDC_CPU27,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,67,41,10
+    CONTROL         "מעבד 28",IDC_CPU28,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,80,41,10
+    CONTROL         "מעבד 29",IDC_CPU29,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,93,41,10
+    CONTROL         "מעבד 30",IDC_CPU30,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,106,41,10
+    CONTROL         "מעבד 31",IDC_CPU31,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,175,119,41,10
+END
+
+IDD_COLUMNS_DIALOG DIALOG  0, 0, 195, 199
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "בחירת עמודות"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "אישור",IDOK,84,178,50,14
+    PUSHBUTTON      "ביטול",IDCANCEL,138,178,50,14
+    LTEXT           "נא לבחור את העמודות שיופיעו בעמוד התהליכים במנהל המשימות.",
+                    IDC_STATIC,7,7,181,17
+    CONTROL         "שם ה&תמונה",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
+                    WS_DISABLED | WS_TABSTOP,7,28,56,10
+    CONTROL         "מזהה התהליך (&PID)",IDC_PID,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
+    CONTROL         "&שימוש במעבד",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,50,53,10
+    CONTROL         "&זמן המעבד",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,61,48,10
+    CONTROL         "שימוש ב&זיכרון",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,72,63,10
+    CONTROL         "שי&נוי השימוש בזיכרון",IDC_MEMORYUSAGEDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,82,10
+    CONTROL         "ש&יא השימוש בזיכרון",IDC_PEAKMEMORYUSAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,94,82,10
+    CONTROL         "כש&לי דפדוף",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,105,53,10
+    CONTROL         "&עצמים של USER",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,116,62,10
+    CONTROL         "פעולות קריאה של קלט/פלט",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,127,49,10
+    CONTROL         "בתים שנקראו על ידי קלט/פלט",IDC_IOREADBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,138,65,10
+    CONTROL         "מזהה ה&פעלה",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,149,50,10
+    CONTROL         "&שם משתמש",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,160,51,10
+    CONTROL         "שי&נוי בכשלי הדפדוף",IDC_PAGEFAULTSDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
+    CONTROL         "גודל הזיכרון ה&ווירטואלי",IDC_VIRTUALMEMORYSIZE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,39,77,10
+    CONTROL         "מ&אגר בדפדוף",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,50,53,10
+    CONTROL         "מאגר מחו&ץ לדפדוף",IDC_NONPAGEDPOOL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,61,67,10
+    CONTROL         "עדיפות &בסיס",IDC_BASEPRIORITY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,72,55,10
+    CONTROL         "&ספירת מזהים ייחודיים",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,83,59,10
+    CONTROL         "ספירת תת־תהלי&כים",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,94,59,10
+    CONTROL         "עצמים של GDI",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,105,55,10
+    CONTROL         "פעולות כתיבה של קלט/פלט",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,116,49,10
+    CONTROL         "בתים שנכתבו על ידי קלט פלט",IDC_IOWRITEBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,127,65,10
+    CONTROL         "פעולות קלט/פלט אחרות",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,138,46,10
+    CONTROL         "בתים של פעולות קלט/פלט אחרות",IDC_IOOTHERBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,149,65,10
+END
+
+/*
+ String Table
+*/
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "מנהל המשימות"
+    IDC_TASKMGR             "מנהל המשימות"
+    IDS_RUNDLG_CAPTION      "יצירת משימה חדשה"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_NEW             "הרצת תכנית חדשה"
+    ID_OPTIONS_ALWAYSONTOP  "מנהל המשימות יישאר בקידמת החלונות האחרים אלא אם כן ימוזער"
+    ID_OPTIONS_MINIMIZEONUSE
+                            "מנהל המשימות ממוזער כאשר מתבצעת פעולת מעבר אל"
+    ID_OPTIONS_HIDEWHENMINIMIZED "הסתרת מנהל המשימות כאשר הוא ממוזער"
+    ID_VIEW_REFRESH         "אילוץ מנהל המשימות להתעדכן כעת, ללא כל תלות בהגדרות מהירות העדכון"
+    ID_VIEW_LARGE           "הצגת משימות באמצעות סמלים גדולים"
+    ID_VIEW_SMALL           "הצגת משימות באמצעות סמלים קטנים"
+    ID_VIEW_DETAILS         "הצגת פרטים על כל משימה"
+    ID_VIEW_UPDATESPEED_HIGH "עדכון התצוגה פעמיים בשנייה"
+    ID_VIEW_UPDATESPEED_NORMAL "עדכון התצוגה בכל שתי שניות"
+    ID_VIEW_UPDATESPEED_LOW "עדכון התצוגה בכל ארבע שניות"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_UPDATESPEED_PAUSED "ללא עדכון אוטומטי"
+    ID_WINDOWS_TILEHORIZONTALLY
+                            "פריסת החלונות אופקית על גבי שולחן העבודה"
+    ID_WINDOWS_TILEVERTICALLY "פריסת החלונות אנכית על גבי שולחן העבודה"
+    ID_WINDOWS_MINIMIZE     "מזעור החלונות"
+    ID_WINDOWS_MAXIMIZE     "הגדלת החלונות"
+    ID_WINDOWS_CASCADE      "דירוג החלונות באלכסון על גבי שולחן העבודה"
+    ID_WINDOWS_BRINGTOFRONT "קידום החלון לקידמה אך מבלי לעבור אליו"
+    ID_HELP_TOPICS          "הצגת נושאי העזרה של מנהל המשימות"
+    ID_HELP_ABOUT           "Displays program information, version number, and copyright"
+    ID_FILE_EXIT            "יציאה מיישום מנהל המשימות"
+    ID_OPTIONS_SHOW16BITTASKS
+                            "הצגת משימות 16 סיביות תחת ה־ntvdm.exe המשוייך להן"
+    ID_VIEW_SELECTCOLUMNS   "בחירה אילו עמודות יופיעו בעמוד התהליכים"
+    ID_VIEW_SHOWKERNELTIMES "הצגת זמן הקרנל בתרשימי הביצועים"
+    ID_VIEW_CPUHISTORY_ONEGRAPHALL
+                            "תרשים היסטוריה יחיד שמציג את סך כל ניצולת המעבד"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "לכל מעבד יש תרשים היסטוריה משלו"
+    ID_APPLICATION_PAGE_SWITCHTO
+                            "קידום משימה לקידמה, העברת המיקוד למשימה זו"
+END
+
+STRINGTABLE
+BEGIN
+    ID_ENDTASK              "בקשה מהתהליכים הנבחרים להסתיים"
+    ID_GOTOPROCESS          "החלפת המיקוד לתהליך של המשימה הנבחרת"
+    ID_RESTORE              "שחזור מנהל המשימות ממצבו המוסתר"
+    ID_PROCESS_PAGE_ENDPROCESS "הסרת התהליך מהמערכת"
+    ID_PROCESS_PAGE_ENDPROCESSTREE
+                            "הסרת תהליך זה על כל צאצאיו מהמערכת"
+    ID_PROCESS_PAGE_DEBUG   "הצמדת מנפה השגיאות לתהליך זה"
+    ID_PROCESS_PAGE_SETAFFINITY
+                            "שליטה על אילו מעבדים יורשה התהליך לרוץ"
+    ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+                            "הגדרת התהליך למחלקת עדיפות זמן אמת (REALTIME)"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "הגדרת התהליך למחלקת עדיפות גבוהה (HIGH)"
+    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+                            "הגדרת התהליך למחלקת עדיפות יותר מרגילה (ABOVE NORMAL)"
+    ID_PROCESS_PAGE_SETPRIORITY_NORMAL
+                            "הגדרת התהליך למחלקת עדיפות רגילה (NORMAL)"
+    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+                            "הגדרת התהליך למחלקת עדיפות פחות מרגילה (BELOW NORMAL)"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW "הגדרת התהליך למחלקת עדיפות נמוכה (LOW)"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "שליטה בערוצי ניפוי השגיאות"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_VIEW_LARGE                     "סמלים &גדולים"
+    IDS_VIEW_SMALL                     "סמלים &קטנים"
+    IDS_VIEW_DETAILS                   "&פרטים"
+    IDS_WINDOWS                        "&חלונות"
+    IDS_VIEW_SELECTCOLUMNS             "בחירת &עמודות..."
+    IDS_OPTIONS_SHOW16BITTASKS         "הצגת משימות &16 סיביות"
+    IDS_VIEW_CPUHISTORY                "היס&טוריית המעבד"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "תרשים &אחד לכל המעבדים"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "תרשים אחד לכול מ&עבד"
+    IDS_VIEW_SHOWKERNELTIMES           "הצגת זמני ה&קרנל"
+    IDS_APPLICATIONS                   "יישומים"
+    IDS_PROCESSES                      "תהליכים"
+    IDS_PERFORMANCE                    "ביצועים"
+    IDS_STATUS_BAR_CPU_USAGE           "שימוש במעבד: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "תהליכים: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "שימוש בזיכרון: %d ק׳ / %d ק׳"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_IMAGENAME         "שם התמונה"
+    IDS_PID               "מזהה התהליך"
+    IDS_CPUUSAGE          "שימוש במעבד"
+    IDS_CPUTIME           "זמן מעבד"
+    IDS_MEMORYUSAGE       "שימוש בזיכרון"
+    IDS_MEMORYUSAGEDELTA  "שינוי השימוש בזיכרון"
+    IDS_PEAKMEMORYUSAGE   "שיא שימוש בזיכרון"
+    IDS_PAGEFAULTS        "כשלי דפדוף"
+    IDS_USEROBJECTS       "עצמי USER"
+    IDS_IOREADS           "קלט/פלט קריאות"
+    IDS_IOREADBYTES       "קלט/פלט בתים שנקראו"
+    IDS_SESSIONID         "מזהה הפעלה"
+    IDS_USERNAME          "שם משתמש"
+    IDS_PAGEFAULTSDELTA   "שינוי בקובץ הדפדוף"
+    IDS_VIRTUALMEMORYSIZE "גודל הזיכרון הווירטואלי"
+    IDS_PAGEDPOOL         "תור הדפדוף"
+    IDS_NONPAGEDPOOL      "מאגר מחוץ לקובץ הדפדוף"
+    IDS_BASEPRIORITY      "עדיפות בסיס"
+    IDS_HANDLECOUNT       "מזהים ייחודיים"
+    IDS_THREADCOUNT       "תת־תהליכים"
+    IDS_GDIOBJECTS        "עצמי GDI"
+    IDS_IOWRITES          "כתיבות קלט/פלט"
+    IDS_IOWRITEBYTES      "קלט/פלט בתים שנכתבו"
+    IDS_IOOTHER           "קלט/פלט אחר"
+    IDS_IOOTHERBYTES      "קלט/פלט בתים אחר"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_WARNING_TITLE               "אזהרת מנהל המשימות"
+    IDS_PRIORITY_CHANGE_MESSAGE     "אזהרה: שינוי מחלקת העדיפות עלולה לגרום לתוצאות בלתי רצויות לרבות\n\
+                                     אבדן נתונים ואבדן יציבות המערכת. האם אכן ברצונך לשנות\n\
+                                     את מחלקת העדיפות?"
+    IDS_PRIORITY_UNABLE2CHANGE      "לא ניתן לשנות את העדיפות"
+    IDS_TERMINATE_MESSAGE           "אזהרה: סיום משימה עלול לגרום לתוצאות בלתי רצויות לרבות אבדן נתונים\n\
+                                     ואבדן יציבות המערכת. לתהליך לא תינתן ההזדמנות לשמור את מצבו או את\n\
+                                     הנתונים טרם סיומו. האם אכן ברצונך לסיים את התהליך?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "לא ניתן לסיים את היישום"
+    IDS_DEBUG_MESSAGE               "אזהרה: ניפוי שגיאות בתהליך זה עלול לגרום לאבדן נתונים.\n\
+                                     האם אכן ברצונך להצמיד את מנפה השגיאות?"
+    IDS_DEBUG_UNABLE2DEBUG          "לא ניתן לנפות שגיאות בתהליך"
+    IDS_AFFINITY_ERROR_MESSAGE      "לתהליך חייבת להיות קירבה למעבד אחד לפחות"
+    IDS_AFFINITY_ERROR_TITLE        "אפשרות שגויה"
+    IDS_AFFINITY_UNABLE2ACCESS      "לא ניתן לגשת או להגדיר קירבה לתהליך"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "תהליך חוסר פעילות המערכת"
+    IDS_APPLICATION_NOT_RESPONDING     "לא מגיב"
+    IDS_APPLICATION_RUNNING            "פעיל"
+    IDS_APPLICATION_TASK               "משימה"
+    IDS_APPLICATION_STATUS             "צמצב"
+    IDS_DEBUG_CHANNEL                  "ערוצי ניפוי"
+    IDS_DEBUG_CHANNEL_FIXME            "לתיקון"
+    IDS_DEBUG_CHANNEL_ERR              "שגיאה"
+    IDS_DEBUG_CHANNEL_WARN             "אזהרה"
+    IDS_DEBUG_CHANNEL_TRACE            "מעקב"
+END
