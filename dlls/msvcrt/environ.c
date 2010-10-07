@@ -34,7 +34,7 @@ char * CDECL MSVCRT_getenv(const char *name)
     char **environ;
     unsigned int length=strlen(name);
 
-    for (environ = *__p__environ(); *environ; environ++)
+    for (environ = MSVCRT__environ; *environ; environ++)
     {
         char *str = *environ;
         char *pos = strchr(str,'=');
@@ -55,7 +55,11 @@ MSVCRT_wchar_t * CDECL _wgetenv(const MSVCRT_wchar_t *name)
     MSVCRT_wchar_t **environ;
     unsigned int length=strlenW(name);
 
-    for (environ = *__p__wenviron(); *environ; environ++)
+    /* Initialize the _wenviron array if it's not already created. */
+    if (!MSVCRT__wenviron)
+        MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
+
+    for (environ = MSVCRT__wenviron; *environ; environ++)
     {
         MSVCRT_wchar_t *str = *environ;
         MSVCRT_wchar_t *pos = strchrW(str,'=');
