@@ -1,0 +1,336 @@
+/*
+ * Copyright 1998 Juergen Schmied
+ * Copyright 2010 Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "shresdef.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+MENU_001 MENU
+BEGIN
+	MENUITEM "סמלים &גדולים",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "סמלים &קטנים",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&רשימה",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&פרטים",		FCIDM_SHVIEW_REPORTVIEW
+END
+
+/*
+ shellview background menu
+*/
+MENU_002 MENU
+BEGIN
+	POPUP ""
+	BEGIN
+	  POPUP "&תצוגה"
+	  BEGIN
+	    MENUITEM "סמלים &גדולים",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "סמלים &קטנים",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&רשימה",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&פרטים",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "סי&דור הסמלים"
+	  BEGIN
+	    MENUITEM "לפי &שם",	0x30	/* column 0 */
+	    MENUITEM "לפי &סוג",	0x32	/* column 2 */
+	    MENUITEM "לפי &גודל",	0x31	/* ... */
+	    MENUITEM "לפי &תאריך",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "סידור &אוטומטי",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "יישור הסמלים בשורות",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "רענון",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "הדבקה",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "הדבקה כקישור",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "חדש"
+	  BEGIN
+	    MENUITEM "&תיקייה חדשה",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "&קישור חדש",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "מאפיינים",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+/*
+ shellview item menu
+*/
+MENU_SHV_FILE MENU
+BEGIN
+	POPUP ""
+	BEGIN
+	  MENUITEM "&בחירה"		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&עיון",		FCIDM_SHVIEW_EXPLORE
+	  MENUITEM "&פתיחה",		FCIDM_SHVIEW_OPEN
+	  MENUITEM SEPARATOR
+	  MENUITEM "&גזירה",		FCIDM_SHVIEW_CUT
+	  MENUITEM "ה&עתקה",		FCIDM_SHVIEW_COPY
+	  MENUITEM SEPARATOR
+	  MENUITEM "&יצירת קישור",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "מ&חיקה",		FCIDM_SHVIEW_DELETE
+	  MENUITEM "&שינוי שם",		FCIDM_SHVIEW_RENAME
+	  MENUITEM SEPARATOR
+	  MENUITEM "&מאפיינים",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+MENU_CPANEL MENU
+BEGIN
+    POPUP "&קובץ"
+    BEGIN
+        MENUITEM SEPARATOR
+        MENUITEM "י&ציאה", IDM_CPANEL_EXIT
+    END
+
+    POPUP "&תצוגה"
+    BEGIN
+        MENUITEM "סמלים &גדולים", FCIDM_SHVIEW_BIGICON
+        MENUITEM "סמלים &גדולים", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&רשימה", FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&פרטים", FCIDM_SHVIEW_REPORTVIEW
+    END
+
+    POPUP "ע&זרה"
+    BEGIN
+        MENUITEM "על &אודות לוח הבקרה...", IDM_CPANEL_ABOUT
+    END
+END
+
+SHBRSFORFOLDER_MSGBOX DIALOG 15, 40, 188, 192
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "עיון אחר תיקייה"
+FONT 8, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "אישור", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "ביטול", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+ LTEXT "", IDD_TITLE, 4, 4, 180, 12
+ LTEXT "", IDD_STATUS, 4, 25, 180, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	4, 40, 180, 120
+}
+
+SHNEWBRSFORFOLDER_MSGBOX DIALOG 15, 40, 218, 196
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "עיון אחר תיקייה"
+FONT 8, "MS Shell Dlg"
+{
+ LTEXT "", IDD_TITLE, 10, 8, 198, 24
+ LTEXT "", IDD_STATUS, 10, 25, 198, 12
+ LTEXT "תיקייה:", IDD_FOLDER, 10, 156, 40, 12
+ CONTROL "", IDD_TREEVIEW, "SysTreeView32",
+	TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
+	WS_BORDER | WS_TABSTOP,
+	12, 38, 194, 105
+ EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "י&צירת תיקייה חדשה", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "אישור", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "ביטול", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "הודעה"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON "&כן", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "כ&ן להכול", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&לא", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&ביטול", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    ICON "", IDD_ICON, 10, 10, 16, 16
+    LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
+}
+
+SHELL_ABOUT_MSGBOX DIALOG 15, 40, 220, 152
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "על אודות %s"
+FONT 10, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "אישור", IDOK, 153, 133, 60, 12, WS_TABSTOP
+ PUSHBUTTON "ה&רישיון של Wine...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
+ ICON "", stc1, 10, 10, 30, 30
+ LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
+ LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
+ LTEXT "פועל על גבי %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Wine מוגשת לך על ידי:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+}
+
+SHELL_RUN_DLG DIALOG 0, 0, 227, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION ""
+FONT 8, "MS Shell Dlg"
+{
+ ICON "", IDC_RUNDLG_ICON, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "נא להזין את שם התכנית, התיקייה, המסמך או משאב האינטרנט ו־Wine תפתח אותם עבורך.", IDC_RUNDLG_DESCRIPTION, 36, 11, 182, 18
+ LTEXT "&פתיחה:", IDC_RUNDLG_LABEL, 7, 39, 24, 10
+ CONTROL "", IDC_RUNDLG_EDITPATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+ DEFPUSHBUTTON "אישור", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "ביטול", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&עיון...", IDC_RUNDLG_BROWSE, 170, 63, 50, 14, WS_TABSTOP
+}
+
+STRINGTABLE
+{
+        /* columns in the shellview */
+	IDS_SHV_COLUMN1		"קובץ"
+	IDS_SHV_COLUMN2		"גודל"
+	IDS_SHV_COLUMN3		"סוג"
+	IDS_SHV_COLUMN4		"תאריך השינוי"
+	IDS_SHV_COLUMN5		"תכונות"
+	IDS_SHV_COLUMN6		"גודל"
+	IDS_SHV_COLUMN7		"הגודל הזמין"
+	IDS_SHV_COLUMN8		"שם"
+	IDS_SHV_COLUMN9		"הערות"
+	IDS_SHV_COLUMN10	"בעלים"
+	IDS_SHV_COLUMN11	"קבוצה"
+	IDS_SHV_COLUMN_DELFROM	"המיקום המקורי"
+	IDS_SHV_COLUMN_DELDATE	"תאריך המחיקה"
+	IDS_SHV_COL_DOCS	"מסמכים"
+	IDS_SHV_COL_STATUS	"מצב"
+	IDS_SHV_COL_LOCATION	"מיקום"
+	IDS_SHV_COL_MODEL	"דגם"
+
+        /* special folders */
+	IDS_DESKTOP		"שולחן העבודה"
+	IDS_MYCOMPUTER		"המחשב שלי"
+	IDS_RECYCLEBIN_FOLDER_NAME      "אשפה"
+	IDS_CONTROLPANEL	"לוח הבקרה"
+
+        /* context menus */
+	IDS_VIEW_LARGE		"סמלים &גדולים"
+	IDS_VIEW_SMALL		"סמלים &קטנים"
+	IDS_VIEW_LIST		"&רשימה"
+	IDS_VIEW_DETAILS	"&פרטים"
+	IDS_SELECT		"בחירה"
+	IDS_OPEN		"פתיחה"
+
+	IDS_CREATEFOLDER_DENIED "לא ניתן ליצור תיקייה חדשה: ההרשאה נדחתה."
+	IDS_CREATEFOLDER_CAPTION "אירעה שגיאה במהלך יצירת תיקייה חדשה"
+	IDS_DELETEITEM_CAPTION "אישור מחיקת קובץ"
+	IDS_DELETEFOLDER_CAPTION "אישור מחיקת תיקייה"
+	IDS_DELETEITEM_TEXT "האם אכן ברצונך למחוק את '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "האם אכן ברצונך למחוק %1 פריטים אלה?"
+	IDS_DELETESELECTED_TEXT "האם אכן ברצונך מחוק את הפריט הנבחר?"
+	IDS_TRASHITEM_TEXT "האם אכן ברצונך לשלוח את '%1' לאשפה?"
+	IDS_TRASHFOLDER_TEXT "האם אכן שברצונך לשלוח את התיקייה '%1' על כל תוכנה לאשפה?"
+	IDS_TRASHMULTIPLE_TEXT "האם אכן ברצונך לשלוח %1 פריטים אלה לאשפה?"
+	IDS_CANTTRASH_TEXT "לא ניתן לשלוח את הפריט '%1' לאשפה. האם ברצונך למחוק אותו במקום?"
+	IDS_OVERWRITEFILE_TEXT "תיקייה זו כבר מכילה קובץ בשם '%1'.\n\nהאם ברצונך להחליפו?"
+	IDS_OVERWRITEFILE_CAPTION "אישור שכתוב על קובץ"
+	IDS_OVERWRITEFOLDER_TEXT "תיקייה זו כבר מכילה תיקייה בשם '%1'.\n\n"\
+	    "אם לקבצים בתיקייה היעד יש את אותם השמות כמו לקבצים שבתיקייה\n"\
+	    "הנבחרת הם יוחלפו. האם ברצונך להעביר או להעתיק את התיקייה?"
+
+        /* message box strings */
+        IDS_RESTART_TITLE       "הפעלה מחדש"
+        IDS_RESTART_PROMPT      "האם ברצונך לדמות הפעלה מחדש של Windows?"
+        IDS_SHUTDOWN_TITLE      "כיבוי"
+        IDS_SHUTDOWN_PROMPT     "האם ברצונך לכבות את הפעלת ה־Wine שלך?"
+
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Unable to display Run File dialog box (internal error)"
+        IDS_RUNDLG_BROWSE_ERROR    "Unable to display Browse dialog box (internal error)"
+        IDS_RUNDLG_BROWSE_CAPTION  "עיון"
+        IDS_RUNDLG_BROWSE_FILTER   "קובצי הפעלה\0*.exe\0כל הקבצים\0*.*\0\0"
+
+        /* shell folder path default values */
+	IDS_PROGRAMS                "תפריט ההתחלה\\תכניות"
+	IDS_PERSONAL                "המסמכים שלי"
+	IDS_FAVORITES               "מועדפים"
+	IDS_STARTUP                 "תפריט ההתחלה\\תכניות\\הפעלה"
+	IDS_RECENT                  "אחרונים"
+	IDS_SENDTO                  "שליחה אל"
+	IDS_STARTMENU               "תפריט ההתחלה"
+	IDS_MYMUSIC                 "המוזיקה שלי"
+	IDS_MYVIDEO                 "הווידאו שלי"
+	IDS_DESKTOPDIRECTORY        "שולחן העבודה"
+	IDS_NETHOOD                 "שכנים ברשת"
+	IDS_TEMPLATES               "תבניות"
+	IDS_APPDATA                 "Application Data"
+	IDS_PRINTHOOD               "הדפסה ברשת"
+	IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
+	IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "Local Settings\\History"
+	IDS_PROGRAM_FILES           "Program Files"
+	IDS_PROGRAM_FILESX86        "Program Files (x86)"
+	IDS_MYPICTURES              "התמונות שלי"
+	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+	IDS_PROGRAM_FILES_COMMONX86 "Program Files (x86)\\Common Files"
+	IDS_COMMON_DOCUMENTS        "מסמכים"
+	IDS_ADMINTOOLS              "תפריט ההתחלה\\תכניות\\כלי ניהול"
+	IDS_COMMON_MUSIC            "מוזיקה"
+	IDS_COMMON_PICTURES         "תמונות"
+	IDS_COMMON_VIDEO            "וידאו"
+	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+	IDS_CONTACTS                "אנשי קשר"
+	IDS_LINKS                   "קישורים"
+	IDS_PHOTO_ALBUMS            "תמונות\\מצגות"
+	IDS_PLAYLISTS               "מוזיקה\\רשימות השמעה"
+	IDS_PUBLIC_DOWNLOADS        "הורדות"
+	IDS_PUBLIC_GAME_TASKS       "Microsoft\\Windows\\GameExplorer"
+	IDS_PUBLIC_LIBRARIES        "Microsoft\\Windows\\Libraries"
+	IDS_PUBLIC_RINGTONES        "Microsoft\\Windows\\Ringtones"
+	IDS_SAMPLE_MUSIC            "מוזיקה\\מוזיקה לדוגמה"
+	IDS_SAMPLE_PICTURES         "תמונות\\תמונות לדוגמה"
+	IDS_SAMPLE_PLAYLISTS        "מוזיקה\\רשימות השמעה לדוגמה"
+	IDS_SAMPLE_VIDEOS           "וידאו\\קטעי וידאו לדוגמה"
+	IDS_SAVED_GAMES             "משחקים שמורים"
+	IDS_SAVED_SEARCHES          "חיפושים"
+	IDS_USER_PROFILES           "משתמשים"
+	IDS_COMMON_OEM_LINKS        "OEM Links"
+	IDS_DOCUMENTS               "מסמכים"
+	IDS_DOWNLOADS               "הורדות"
+	IDS_LOCAL_APPDATA_LOW       "AppData\\LocalLow"
+
+	IDS_NEWFOLDER		"תיקייה חדשה"
+
+	IDS_CPANEL_TITLE            "לוח הבקרה של Wine"
+	IDS_CPANEL_NAME             "שם"
+	IDS_CPANEL_DESCRIPTION      "תיאור"
+
+        IDS_SHLEXEC_NOASSOC         "אין תכנית Windows המוגדרת לפתיחת סוג כזה של קבצים."
+}
+
+STRINGTABLE
+{
+IDS_LICENSE_CAPTION,            "הרישיון של Wine"
+IDS_LICENSE,
+"Wine הנה תכנה חופשית; ניתן להפיץ ו/או לשנות אותה תחת תנאי הרישיון \
+הציבורי הפחות כללי של  GNU כפי שפורסם על ידי מוסד התכנה החופשית; או \
+גרסה 2.1 של הרישיון או (לבחירתך) כל גרסה עדכנית יותר.\n\n \
+Wine מופצת בתקווה שתביא תועלת, אך ללא כל אחריות; אפילו לא מרומזת למטרות, \
+‎מסחר או התאמה לצרכים מסוימים. נא לעיין בתנאי הרישיון הציבורי הפחות כללי של GNU \
+לפרטים נוספים.\n\n\
+ל־Wine אמור היה להיות מצורף עותק של הרישיון הציבורי הפחות כללי של GNU; \
+במידה שלא כך הדבר, באפשרותך לכתוב אל Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+}

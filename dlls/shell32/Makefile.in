@@ -64,6 +64,7 @@ RC_SRCS = \
 	shell32_Es.rc \
 	shell32_Fi.rc \
 	shell32_Fr.rc \
+	shell32_He.rc \
 	shell32_Hu.rc \
 	shell32_It.rc \
 	shell32_Ja.rc \
