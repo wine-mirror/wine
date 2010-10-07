@@ -50,6 +50,27 @@ static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
     return (ParserImpl *)((char*)iface - FIELD_OFFSET(ParserImpl, mediaSeeking.lpVtbl));
 }
 
+/* FIXME: WRONG */
+static IPin* WINAPI Parser_GetPin(IBaseFilter *iface, int pos)
+{
+    ParserImpl *This = (ParserImpl *)iface;
+
+    TRACE("Asking for pos %x\n", pos);
+
+    /* Input pin also has a pin, hence the > and not >= */
+    if (pos > This->cStreams || pos < 0)
+        return NULL;
+
+    IPin_AddRef(This->ppPins[pos]);
+    return This->ppPins[pos];
+}
+
+static LONG WINAPI Parser_GetPinCount(IBaseFilter *iface)
+{
+    ParserImpl *This = (ParserImpl *)iface;
+
+    return This->cStreams;
+}
 
 HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest, STOPPROCESSPROC fnDone, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
 {
@@ -57,10 +78,9 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     PIN_INFO piInput;
 
     /* pTransformFilter is already allocated */
-    BaseFilter_Init(&pParser->filter, Parser_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter"));
+    BaseFilter_Init(&pParser->filter, Parser_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter"), Parser_GetPin, Parser_GetPinCount);
 
     pParser->fnDisconnect = fnDisconnect;
-    pParser->lastpinchange = GetTickCount();
 
     pParser->cStreams = 0;
     pParser->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
@@ -354,42 +374,9 @@ HRESULT WINAPI Parser_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClo
 
 /** IBaseFilter implementation **/
 
-/* FIXME: WRONG */
-static IPin* WINAPI Parser_GetPin(IBaseFilter *iface, int pos)
-{
-    ParserImpl *This = (ParserImpl *)iface;
-
-    TRACE("Asking for pos %x\n", pos);
-
-    /* Input pin also has a pin, hence the > and not >= */
-    if (pos > This->cStreams || pos < 0)
-        return NULL;
-
-    IPin_AddRef(This->ppPins[pos]);
-    return This->ppPins[pos];
-}
-
-static LONG WINAPI Parser_GetPinCount(IBaseFilter *iface)
-{
-    ParserImpl *This = (ParserImpl *)iface;
-
-    return This->cStreams;
-}
-
-static LONG WINAPI Parser_GetPinVersion(IBaseFilter *iface)
-{
-    ParserImpl *This = (ParserImpl *)iface;
-
-    return This->lastpinchange;
-}
-
 HRESULT WINAPI Parser_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 {
-    ParserImpl *This = (ParserImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumPins_Construct(iface, Parser_GetPin, Parser_GetPinCount, Parser_GetPinVersion, ppEnum);
+    return BaseFilterImpl_EnumPins(iface,ppEnum);
 }
 
 HRESULT WINAPI Parser_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
@@ -439,7 +426,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
         pin->pin.custom_allocator = 1;
         This->cStreams++;
-        This->lastpinchange = GetTickCount();
+        BaseFilterImpl_IncrementPinVersion((IBaseFilter*)This);
         CoTaskMemFree(ppOldPins);
     }
     else
@@ -472,7 +459,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
         IPin_Release(ppOldPins[i + 1]);
     }
 
-    This->lastpinchange = GetTickCount();
+    BaseFilterImpl_IncrementPinVersion((IBaseFilter*)This);
     This->cStreams = 0;
     CoTaskMemFree(ppOldPins);
 

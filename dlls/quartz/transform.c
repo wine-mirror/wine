@@ -74,13 +74,31 @@ static HRESULT WINAPI TransformFilter_Output_QueryAccept(IPin *iface, const AM_M
     return S_FALSE;
 }
 
+static IPin* WINAPI TransformFilter_GetPin(IBaseFilter *iface, int pos)
+{
+    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+
+    if (pos >= This->npins || pos < 0)
+        return NULL;
+
+    IPin_AddRef(This->ppPins[pos]);
+    return This->ppPins[pos];
+}
+
+static LONG WINAPI TransformFilter_GetPinCount(IBaseFilter *iface)
+{
+    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+
+    return (This->npins+1);
+}
+
 HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, const TransformFuncsTable* pFuncsTable)
 {
     HRESULT hr;
     PIN_INFO piInput;
     PIN_INFO piOutput;
 
-    BaseFilter_Init(&pTransformFilter->filter, &TransformFilter_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": TransformFilterImpl.csFilter"));
+    BaseFilter_Init(&pTransformFilter->filter, &TransformFilter_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": TransformFilterImpl.csFilter"), TransformFilter_GetPin, TransformFilter_GetPinCount);
 
     /* pTransformFilter is already allocated */
     pTransformFilter->pFuncsTable = pFuncsTable;
@@ -270,39 +288,6 @@ static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tS
 
 /** IBaseFilter implementation **/
 
-static IPin* WINAPI TransformFilter_GetPin(IBaseFilter *iface, int pos)
-{
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
-
-    if (pos >= This->npins || pos < 0)
-        return NULL;
-
-    IPin_AddRef(This->ppPins[pos]);
-    return This->ppPins[pos];
-}
-
-static LONG WINAPI TransformFilter_GetPinCount(IBaseFilter *iface)
-{
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
-
-    return (This->npins+1);
-}
-
-static LONG WINAPI TransformFilter_GetPinVersion(IBaseFilter *iface)
-{
-    /* Our pins are static, not changing so setting static tick count is ok */
-    return 0;
-}
-
-static HRESULT WINAPI TransformFilter_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
-{
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumPins_Construct(iface, TransformFilter_GetPin, TransformFilter_GetPinCount, TransformFilter_GetPinVersion, ppEnum);
-}
-
 static HRESULT WINAPI TransformFilter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
     TransformFilterImpl *This = (TransformFilterImpl *)iface;
@@ -324,7 +309,7 @@ static const IBaseFilterVtbl TransformFilter_Vtbl =
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    TransformFilter_EnumPins,
+    BaseFilterImpl_EnumPins,
     TransformFilter_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,

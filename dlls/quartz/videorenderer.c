@@ -535,6 +535,22 @@ static HRESULT WINAPI VideoRenderer_CheckMediaType(IPin *iface, const AM_MEDIA_T
     return S_FALSE;
 }
 
+static IPin* WINAPI VideoRenderer_GetPin(IBaseFilter *iface, int pos)
+{
+    VideoRendererImpl *This = (VideoRendererImpl *)iface;
+
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef((IPin *)This->pInputPin);
+    return (IPin *)This->pInputPin;
+}
+
+static LONG WINAPI VideoRenderer_GetPinCount(IBaseFilter *iface)
+{
+    return 1;
+}
+
 HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -552,7 +568,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pVideoRenderer->bAggregatable = FALSE;
     pVideoRenderer->IInner_vtbl = &IInner_VTable;
 
-    BaseFilter_Init(&pVideoRenderer->filter, &VideoRenderer_Vtbl, &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"));
+    BaseFilter_Init(&pVideoRenderer->filter, &VideoRenderer_Vtbl, &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), VideoRenderer_GetPin, VideoRenderer_GetPinCount);
 
     pVideoRenderer->IBasicVideo_vtbl = &IBasicVideo_VTable;
     pVideoRenderer->IVideoWindow_vtbl = &IVideoWindow_VTable;
@@ -840,37 +856,6 @@ static HRESULT WINAPI VideoRenderer_GetState(IBaseFilter * iface, DWORD dwMilliS
 
 /** IBaseFilter implementation **/
 
-static IPin* WINAPI VideoRenderer_GetPin(IBaseFilter *iface, int pos)
-{
-    VideoRendererImpl *This = (VideoRendererImpl *)iface;
-
-    if (pos >= 1 || pos < 0)
-        return NULL;
-
-    IPin_AddRef((IPin *)This->pInputPin);
-    return (IPin *)This->pInputPin;
-}
-
-static LONG WINAPI VideoRenderer_GetPinCount(IBaseFilter *iface)
-{
-    return 1;
-}
-
-static LONG WINAPI VideoRenderer_GetPinVersion(IBaseFilter *iface)
-{
-    /* Our pins are static, not changing so setting static tick count is ok */
-    return 0;
-}
-
-static HRESULT WINAPI VideoRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
-{
-    VideoRendererImpl *This = (VideoRendererImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumPins_Construct(iface, VideoRenderer_GetPin, VideoRenderer_GetPinCount, VideoRenderer_GetPinVersion,  ppEnum);
-}
-
 static HRESULT WINAPI VideoRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
@@ -894,7 +879,7 @@ static const IBaseFilterVtbl VideoRenderer_Vtbl =
     VideoRenderer_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    VideoRenderer_EnumPins,
+    BaseFilterImpl_EnumPins,
     VideoRenderer_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,

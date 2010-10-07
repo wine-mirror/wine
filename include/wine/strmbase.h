@@ -136,6 +136,10 @@ typedef struct BaseFilter
 	IReferenceClock * pClock;
 	FILTER_INFO filterInfo;
 	CLSID clsid;
+	LONG pinVersion;
+
+	BaseFilter_GetPin pfnGetPin;
+	BaseFilter_GetPinCount pfnGetPinCount;
 } BaseFilter;
 
 HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
@@ -145,8 +149,12 @@ HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid);
 HRESULT WINAPI BaseFilterImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState );
 HRESULT WINAPI BaseFilterImpl_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);
 HRESULT WINAPI BaseFilterImpl_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock);
+HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum);
 HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo);
 HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName );
 HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
 
-HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo);
+LONG WINAPI BaseFilterImpl_GetPinVersion(IBaseFilter* This);
+VOID WINAPI BaseFilterImpl_IncrementPinVersion(IBaseFilter* This);
+
+HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, BaseFilter_GetPin pfGetPin, BaseFilter_GetPinCount pfGetPinCount);

@@ -363,6 +363,23 @@ static HRESULT WINAPI DSoundRender_CheckMediaType(IPin *iface, const AM_MEDIA_TY
     return S_OK;
 }
 
+static IPin* WINAPI DSoundRender_GetPin(IBaseFilter *iface, int pos)
+{
+    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
+
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef((IPin*)This->pInputPin);
+    return (IPin*)This->pInputPin;
+}
+
+static LONG WINAPI DSoundRender_GetPinCount(IBaseFilter *iface)
+{
+    /* Our pins are static */
+    return 1;
+}
+
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -381,7 +398,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return E_OUTOFMEMORY;
     ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
-    BaseFilter_Init(&pDSoundRender->filter, &DSoundRender_Vtbl, &CLSID_DSoundRender, (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"));
+    BaseFilter_Init(&pDSoundRender->filter, &DSoundRender_Vtbl, &CLSID_DSoundRender, (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), DSoundRender_GetPin, DSoundRender_GetPinCount);
 
     pDSoundRender->IBasicAudio_vtbl = &IBasicAudio_Vtbl;
     pDSoundRender->IReferenceClock_vtbl = &IReferenceClock_Vtbl;
@@ -627,38 +644,6 @@ static HRESULT WINAPI DSoundRender_GetState(IBaseFilter * iface, DWORD dwMilliSe
 
 /** IBaseFilter implementation **/
 
-static IPin* WINAPI DSoundRender_GetPin(IBaseFilter *iface, int pos)
-{
-    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
-
-    if (pos >= 1 || pos < 0)
-        return NULL;
-
-    IPin_AddRef((IPin*)This->pInputPin);
-    return (IPin*)This->pInputPin;
-}
-
-static LONG WINAPI DSoundRender_GetPinCount(IBaseFilter *iface)
-{
-    /* Our pins are static, not changing so setting static tick count is ok */
-    return 1;
-}
-
-static LONG WINAPI DSoundRender_GetPinVersion(IBaseFilter *iface)
-{
-    /* Our pins are static, not changing so setting static tick count is ok */
-    return 0;
-}
-
-static HRESULT WINAPI DSoundRender_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
-{
-    DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumPins_Construct(iface, DSoundRender_GetPin, DSoundRender_GetPinCount, DSoundRender_GetPinVersion, ppEnum);
-}
-
 static HRESULT WINAPI DSoundRender_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
@@ -684,7 +669,7 @@ static const IBaseFilterVtbl DSoundRender_Vtbl =
     DSoundRender_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    DSoundRender_EnumPins,
+    BaseFilterImpl_EnumPins,
     DSoundRender_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,

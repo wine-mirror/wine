@@ -142,6 +142,16 @@ HRESULT WINAPI BaseFilterImpl_GetSyncSource(IBaseFilter * iface, IReferenceClock
     return S_OK;
 }
 
+HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
+{
+    BaseFilter *This = (BaseFilter*)iface;
+
+    TRACE("(%p)->(%p)\n", iface, ppEnum);
+
+    return EnumPins_Construct(iface, This->pfnGetPin, This->pfnGetPinCount, BaseFilterImpl_GetPinVersion, ppEnum);
+}
+
+
 HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
     BaseFilter *This = (BaseFilter*)iface;
@@ -182,7 +192,21 @@ HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVend
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const  IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo)
+LONG WINAPI BaseFilterImpl_GetPinVersion(IBaseFilter * iface)
+{
+    BaseFilter * This = (BaseFilter*)iface;
+    TRACE("(%p)\n", This);
+    return This->pinVersion;
+}
+
+VOID WINAPI BaseFilterImpl_IncrementPinVersion(IBaseFilter * iface)
+{
+    BaseFilter * This = (BaseFilter*)iface;
+    InterlockedIncrement(&This->pinVersion);
+    TRACE("(%p) -> New pinVersion %i\n", This,This->pinVersion);
+}
+
+HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, BaseFilter_GetPin pfGetPin, BaseFilter_GetPinCount pfGetPinCount)
 {
     This->lpVtbl = Vtbl;
     This->refCount = 1;
@@ -193,6 +217,10 @@ HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const  IBaseFilterVtbl *Vtbl, 
     ZeroMemory(&This->filterInfo, sizeof(FILTER_INFO));
     This->clsid = *pClsid;
     This->csFilter.DebugInfo->Spare[0] = DebugInfo;
+    This->pinVersion = 1;
+
+    This->pfnGetPin = pfGetPin;
+    This->pfnGetPinCount = pfGetPinCount;
 
     return S_OK;
 }

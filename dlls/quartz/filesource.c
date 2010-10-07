@@ -42,8 +42,6 @@ typedef struct AsyncReader
     BaseFilter filter;
     const IFileSourceFilterVtbl * lpVtblFSF;
 
-    DWORD lastpinchange;
-
     IPin * pOutputPin;
     LPOLESTR pszFileName;
     AM_MEDIA_TYPE * pmt;
@@ -330,6 +328,27 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
     return hr;
 }
 
+static IPin* WINAPI AsyncReader_GetPin(IBaseFilter *iface, int pos)
+{
+    AsyncReader *This = (AsyncReader *)iface;
+
+    if (pos >= 1 || !This->pOutputPin)
+        return NULL;
+
+    IPin_AddRef(This->pOutputPin);
+    return This->pOutputPin;
+}
+
+static LONG WINAPI AsyncReader_GetPinCount(IBaseFilter *iface)
+{
+    AsyncReader *This = (AsyncReader *)iface;
+
+    if (!This->pOutputPin)
+        return 0;
+    else
+        return 1;
+}
+
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     AsyncReader *pAsyncRead;
@@ -342,11 +361,10 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (!pAsyncRead)
         return E_OUTOFMEMORY;
 
-    BaseFilter_Init(&pAsyncRead->filter, &AsyncReader_Vtbl, &CLSID_AsyncReader, (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"));
+    BaseFilter_Init(&pAsyncRead->filter, &AsyncReader_Vtbl, &CLSID_AsyncReader, (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), AsyncReader_GetPin, AsyncReader_GetPinCount);
 
     pAsyncRead->lpVtblFSF = &FileSource_Vtbl;
     pAsyncRead->pOutputPin = NULL;
-    pAsyncRead->lastpinchange = GetTickCount();
 
     pAsyncRead->pszFileName = NULL;
     pAsyncRead->pmt = NULL;
@@ -459,44 +477,6 @@ static HRESULT WINAPI AsyncReader_Run(IBaseFilter * iface, REFERENCE_TIME tStart
 
 /** IBaseFilter methods **/
 
-static IPin* WINAPI AsyncReader_GetPin(IBaseFilter *iface, int pos)
-{
-    AsyncReader *This = (AsyncReader *)iface;
-
-    if (pos >= 1 || !This->pOutputPin)
-        return NULL;
-
-    IPin_AddRef(This->pOutputPin);
-    return This->pOutputPin;
-}
-
-static LONG WINAPI AsyncReader_GetPinCount(IBaseFilter *iface)
-{
-    AsyncReader *This = (AsyncReader *)iface;
-
-    if (!This->pOutputPin)
-        return 0;
-    else
-        return 1;
-}
-
-static LONG WINAPI AsyncReader_GetPinVersion(IBaseFilter *iface)
-{
-    AsyncReader *This = (AsyncReader *)iface;
-
-    /* Our pins are almost static, not changing so setting static tick count is ok */
-    return This->lastpinchange;
-}
-
-static HRESULT WINAPI AsyncReader_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
-{
-    AsyncReader *This = (AsyncReader *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumPins_Construct(iface, AsyncReader_GetPin, AsyncReader_GetPinCount, AsyncReader_GetPinVersion, ppEnum);
-}
-
 static HRESULT WINAPI AsyncReader_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
     FIXME("(%s, %p)\n", debugstr_w(Id), ppPin);
@@ -516,7 +496,7 @@ static const IBaseFilterVtbl AsyncReader_Vtbl =
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    AsyncReader_EnumPins,
+    BaseFilterImpl_EnumPins,
     AsyncReader_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
@@ -564,7 +544,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
     /* create pin */
     hr = FileAsyncReader_Construct(hFile, (IBaseFilter *)&This->filter.lpVtbl, &This->filter.csFilter, &This->pOutputPin);
-    This->lastpinchange = GetTickCount();
+    BaseFilterImpl_IncrementPinVersion((IBaseFilter *)&This->filter.lpVtbl);
 
     if (SUCCEEDED(hr))
         hr = IPin_QueryInterface(This->pOutputPin, &IID_IAsyncReader, (LPVOID *)&pReader);

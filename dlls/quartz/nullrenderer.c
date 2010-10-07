@@ -86,6 +86,22 @@ static HRESULT WINAPI NullRenderer_CheckMediaType(IPin *iface, const AM_MEDIA_TY
     return S_OK;
 }
 
+static IPin* WINAPI NullRenderer_GetPin(IBaseFilter *iface, int pos)
+{
+    NullRendererImpl *This = (NullRendererImpl *)iface;
+
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef((IPin *)This->pInputPin);
+    return (IPin *)This->pInputPin;
+}
+
+static LONG WINAPI NullRenderer_GetPinCount(IBaseFilter *iface)
+{
+    return 1;
+}
+
 HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
     HRESULT hr;
@@ -102,7 +118,7 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pNullRenderer->bAggregatable = FALSE;
     pNullRenderer->IInner_vtbl = &IInner_VTable;
 
-    BaseFilter_Init(&pNullRenderer->filter, &NullRenderer_Vtbl, &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"));
+    BaseFilter_Init(&pNullRenderer->filter, &NullRenderer_Vtbl, &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), NullRenderer_GetPin, NullRenderer_GetPinCount);
 
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
@@ -319,37 +335,6 @@ static HRESULT WINAPI NullRenderer_Run(IBaseFilter * iface, REFERENCE_TIME tStar
 
 /** IBaseFilter implementation **/
 
-static IPin* WINAPI NullRenderer_GetPin(IBaseFilter *iface, int pos)
-{
-    NullRendererImpl *This = (NullRendererImpl *)iface;
-
-    if (pos >= 1 || pos < 0)
-        return NULL;
-
-    IPin_AddRef((IPin *)This->pInputPin);
-    return (IPin *)This->pInputPin;
-}
-
-static LONG WINAPI NullRenderer_GetPinCount(IBaseFilter *iface)
-{
-    return 1;
-}
-
-static LONG WINAPI NullRenderer_GetPinVersion(IBaseFilter *iface)
-{
-    /* Our pins are static, not changing so setting static tick count is ok */
-    return 0;
-}
-
-static HRESULT WINAPI NullRenderer_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
-{
-    NullRendererImpl *This = (NullRendererImpl *)iface;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
-
-    return EnumPins_Construct(iface, NullRenderer_GetPin, NullRenderer_GetPinCount, NullRenderer_GetPinVersion, ppEnum);
-}
-
 static HRESULT WINAPI NullRenderer_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
     NullRendererImpl *This = (NullRendererImpl *)iface;
@@ -381,7 +366,7 @@ static const IBaseFilterVtbl NullRenderer_Vtbl =
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    NullRenderer_EnumPins,
+    BaseFilterImpl_EnumPins,
     NullRenderer_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,

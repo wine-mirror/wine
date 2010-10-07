@@ -79,6 +79,21 @@ typedef struct VfwPinImpl
     const IKsPropertySetVtbl * KSP_VT;
 } VfwPinImpl;
 
+static IPin* WINAPI VfwCapture_GetPin(IBaseFilter *iface, int pos)
+{
+    VfwCapture *This = (VfwCapture *)iface;
+
+    if (pos >= 1 || pos < 0)
+        return NULL;
+
+    IPin_AddRef(This->pOutputPin);
+    return This->pOutputPin;
+}
+
+static LONG WINAPI VfwCapture_GetPinCount(IBaseFilter *iface)
+{
+    return 1;
+}
 
 IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
 {
@@ -97,7 +112,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
     if (!pVfwCapture)
         return NULL;
 
-    BaseFilter_Init(&pVfwCapture->filter, &VfwCapture_Vtbl, &CLSID_VfwCapture, (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"));
+    BaseFilter_Init(&pVfwCapture->filter, &VfwCapture_Vtbl, &CLSID_VfwCapture, (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"), VfwCapture_GetPin, VfwCapture_GetPinCount);
 
     pVfwCapture->IAMStreamConfig_vtbl = &IAMStreamConfig_VTable;
     pVfwCapture->IAMVideoProcAmp_vtbl = &IAMVideoProcAmp_VTable;
@@ -222,36 +237,6 @@ static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 }
 
 /** IBaseFilter methods **/
-static IPin* WINAPI VfwCapture_GetPin(IBaseFilter *iface, int pos)
-{
-    VfwCapture *This = (VfwCapture *)iface;
-
-    if (pos >= 1 || pos < 0)
-        return NULL;
-
-    IPin_AddRef(This->pOutputPin);
-    return This->pOutputPin;
-}
-
-static LONG WINAPI VfwCapture_GetPinCount(IBaseFilter *iface)
-{
-    return 1;
-}
-
-static LONG WINAPI VfwCapture_GetPinVersion(IBaseFilter *iface)
-{
-    /* Our pins are static, not changing so setting static tick count is ok */
-    return 0;
-}
-
-static HRESULT WINAPI
-VfwCapture_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
-{
-    TRACE("(%p)\n", ppEnum);
-
-    return EnumPins_Construct(iface, VfwCapture_GetPin, VfwCapture_GetPinCount, VfwCapture_GetPinVersion, ppEnum);
-}
-
 static HRESULT WINAPI VfwCapture_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
     FIXME("(%s, %p) - stub\n", debugstr_w(Id), ppPin);
@@ -270,7 +255,7 @@ static const IBaseFilterVtbl VfwCapture_Vtbl =
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    VfwCapture_EnumPins,
+    BaseFilterImpl_EnumPins,
     VfwCapture_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
