@@ -36,6 +36,7 @@
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCreateUriWithFragment)(LPCWSTR, LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCreateIUriBuilder)(IUri*, DWORD, DWORD_PTR, IUriBuilder**);
+static HRESULT (WINAPI *pCoInternetCombineIUri)(IUri*,IUri*,DWORD,IUri**,DWORD_PTR);
 
 static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
         '.','o','r','g','/',0};
@@ -8633,6 +8634,37 @@ static void test_IUriBuilder_Misc(void) {
     if(uri) IUri_Release(uri);
 }
 
+static void test_CoInternetCombineIUri(void) {
+    HRESULT hr;
+    IUri *base, *relative, *result;
+
+    base = NULL;
+    hr = pCreateUri(http_urlW, 0, 0, &base);
+    ok(SUCCEEDED(hr), "Error: Expected CreateUri to succeed, got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        result = (void*) 0xdeadbeef;
+        hr = pCoInternetCombineIUri(base, NULL, 0, &result, 0);
+        ok(hr == E_INVALIDARG, "Error: CoInternetCombineIUri returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+        ok(!result, "Error: Expected 'result' to be NULL, was %p.\n", result);
+    }
+
+    relative = NULL;
+    hr = pCreateUri(http_urlW, 0, 0, &relative);
+    ok(SUCCEEDED(hr), "Error: Expected CreateUri to succeed, got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) {
+        result = (void*) 0xdeadbeef;
+        hr = pCoInternetCombineIUri(NULL, relative, 0, &result, 0);
+        ok(hr == E_INVALIDARG, "Error: CoInternetCombineIUri returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+        ok(!result, "Error: Expected 'result' to be NULL, was %p.\n", result);
+    }
+
+    hr = pCoInternetCombineIUri(base, relative, 0, NULL, 0);
+    ok(hr == E_INVALIDARG, "Error: CoInternetCombineIUri returned 0x%08x, expected 0x%08x.\n", hr, E_INVALIDARG);
+
+    if(base) IUri_Release(base);
+    if(relative) IUri_Release(relative);
+}
+
 START_TEST(uri) {
     HMODULE hurlmon;
 
@@ -8640,6 +8672,7 @@ START_TEST(uri) {
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
     pCreateUriWithFragment = (void*) GetProcAddress(hurlmon, "CreateUriWithFragment");
     pCreateIUriBuilder = (void*) GetProcAddress(hurlmon, "CreateIUriBuilder");
+    pCoInternetCombineIUri = (void*) GetProcAddress(hurlmon, "CoInternetCombineIUri");
 
     if(!pCreateUri) {
         win_skip("CreateUri is not present, skipping tests.\n");
@@ -8711,4 +8744,7 @@ START_TEST(uri) {
 
     trace("test IUriBuilder miscellaneous...\n");
     test_IUriBuilder_Misc();
+
+    trace("test CoInternetCombineIUri...\n");
+    test_CoInternetCombineIUri();
 }

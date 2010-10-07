@@ -5595,6 +5595,16 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
 HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD dwCombineFlags,
                                      IUri **ppCombinedUri, DWORD_PTR dwReserved)
 {
+    TRACE("(%p %p %x %p %x)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+
+    if(!ppCombinedUri)
+        return E_INVALIDARG;
+
+    if(!pBaseUri || !pRelativeUri) {
+        *ppCombinedUri = NULL;
+        return E_INVALIDARG;
+    }
+
     FIXME("(%p %p %x %p %x): stub\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
     return E_NOTIMPL;
 }
