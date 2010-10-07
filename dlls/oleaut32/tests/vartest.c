@@ -1615,6 +1615,9 @@ static void test_VarUdateFromDate(void)
   }
   /* This just demostrates the non-linear nature of values prior to the epoch */
   DT2UD(-4.0,0,S_OK,26,12,1899,0,0,0,0,2,360);
+  /* Numerical oddity: for 0.0 < x < 1.0, x and -x represent the same datetime */
+  todo_wine DT2UD(-0.25,0,S_OK,30,12,1899,6,0,0,0,6,364);
+  DT2UD(0.25,0,S_OK,30,12,1899,6,0,0,0,6,364);
 }
 
 
@@ -1686,6 +1689,9 @@ static void test_VarDateFromUdate(void)
   }
   /* This just demostrates the non-linear nature of values prior to the epoch */
   UD2T(26,12,1899,0,0,0,0,2,360,0,S_OK,-4.0);
+  /* for DATE values 0.0 < x < 1.0, x and -x represent the same datetime */
+  /* but when converting to DATE, prefer the positive versions */
+  UD2T(30,12,1899,6,0,0,0,6,364,0,S_OK,0.25);
 }
 
 static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
