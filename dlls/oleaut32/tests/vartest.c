@@ -1609,14 +1609,12 @@ static void test_VarUdateFromDate(void)
   DT2UD(29221.7508765432,0,S_OK,1,1,1980,18,1,16,0,2,1); /* 6:18:02 PM */
 
   /* Test handling of times on dates prior to the epoch */
-  todo_wine {
-    DT2UD(-5.25,0,S_OK,25,12,1899,6,0,0,0,1,359);
-    DT2UD(-5.9999884259259,0,S_OK,25,12,1899,23,59,59,0,1,359);
-  }
+  DT2UD(-5.25,0,S_OK,25,12,1899,6,0,0,0,1,359);
+  DT2UD(-5.9999884259259,0,S_OK,25,12,1899,23,59,59,0,1,359);
   /* This just demostrates the non-linear nature of values prior to the epoch */
   DT2UD(-4.0,0,S_OK,26,12,1899,0,0,0,0,2,360);
   /* Numerical oddity: for 0.0 < x < 1.0, x and -x represent the same datetime */
-  todo_wine DT2UD(-0.25,0,S_OK,30,12,1899,6,0,0,0,6,364);
+  DT2UD(-0.25,0,S_OK,30,12,1899,6,0,0,0,6,364);
   DT2UD(0.25,0,S_OK,30,12,1899,6,0,0,0,6,364);
 }
 
@@ -1683,10 +1681,8 @@ static void test_VarDateFromUdate(void)
   UD2T(1,13,1980,0,0,0,0,2,1,0,S_OK,29587.0);                        /* Rolls fwd to 1/1/1981 */
 
   /* Test handling of times on dates prior to the epoch */
-  todo_wine {
-    UD2T(25,12,1899,6,0,0,0,1,359,0,S_OK,-5.25);
-    UD2T(25,12,1899,23,59,59,0,1,359,0,S_OK,-5.9999884259259);
-  }
+  UD2T(25,12,1899,6,0,0,0,1,359,0,S_OK,-5.25);
+  UD2T(25,12,1899,23,59,59,0,1,359,0,S_OK,-5.9999884259259);
   /* This just demostrates the non-linear nature of values prior to the epoch */
   UD2T(26,12,1899,0,0,0,0,2,360,0,S_OK,-4.0);
   /* for DATE values 0.0 < x < 1.0, x and -x represent the same datetime */

@@ -1359,7 +1359,7 @@ INT WINAPI VariantTimeToSystemTime(double dateIn, LPSYSTEMTIME lpSt)
 HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DATE *pDateOut)
 {
   UDATE ud;
-  double dateVal;
+  double dateVal, dateSign;
 
   TRACE("(%p->%d/%d/%d %d:%d:%d:%d %d %d,0x%08x,0x%08x,%p)\n", pUdateIn,
         pUdateIn->st.wMonth, pUdateIn->st.wDay, pUdateIn->st.wYear,
@@ -1381,10 +1381,13 @@ HRESULT WINAPI VarDateFromUdateEx(UDATE *pUdateIn, LCID lcid, ULONG dwFlags, DAT
   /* Date */
   dateVal = VARIANT_DateFromJulian(VARIANT_JulianFromDMY(ud.st.wYear, ud.st.wMonth, ud.st.wDay));
 
+  /* Sign */
+  dateSign = (dateVal < 0.0) ? -1.0 : 1.0;
+
   /* Time */
-  dateVal += ud.st.wHour / 24.0;
-  dateVal += ud.st.wMinute / 1440.0;
-  dateVal += ud.st.wSecond / 86400.0;
+  dateVal += ud.st.wHour / 24.0 * dateSign;
+  dateVal += ud.st.wMinute / 1440.0 * dateSign;
+  dateVal += ud.st.wSecond / 86400.0 * dateSign;
 
   TRACE("Returning %g\n", dateVal);
   *pDateOut = dateVal;
@@ -1447,7 +1450,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
 
   datePart = dateIn < 0.0 ? ceil(dateIn) : floor(dateIn);
   /* Compensate for int truncation (always downwards) */
-  timePart = dateIn - datePart + 0.00000000001;
+  timePart = fabs(dateIn - datePart) + 0.00000000001;
   if (timePart >= 1.0)
     timePart -= 0.00000000001;
 
