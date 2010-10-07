@@ -158,3 +158,51 @@ LONG WINAPI BaseFilterImpl_GetPinVersion(IBaseFilter* This);
 VOID WINAPI BaseFilterImpl_IncrementPinVersion(IBaseFilter* This);
 
 HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, BaseFilter_GetPin pfGetPin, BaseFilter_GetPinCount pfGetPinCount);
+
+/* Transform Filter */
+typedef struct TransformFilter
+{
+	BaseFilter filter;
+
+	IPin **ppPins;
+	ULONG npins;
+	AM_MEDIA_TYPE pmt;
+
+	const struct TransformFilterFuncTable * pFuncsTable;
+} TransformFilter;
+
+typedef HRESULT (WINAPI *TransformFilter_StartStreaming) (TransformFilter *iface);
+typedef HRESULT (WINAPI *TransformFilter_StopStreaming) (TransformFilter *iface);
+typedef HRESULT (WINAPI *TransformFilter_Receive) (TransformFilter* iface, IMediaSample* pIn);
+typedef HRESULT (WINAPI *TransformFilter_CompleteConnect) (TransformFilter *iface, PIN_DIRECTION dir, IPin *pPin);
+typedef HRESULT (WINAPI *TransformFilter_BreakConnect) (TransformFilter *iface, PIN_DIRECTION dir);
+typedef HRESULT (WINAPI *TransformFilter_SetMediaType) (TransformFilter *iface, PIN_DIRECTION dir, const AM_MEDIA_TYPE *pMediaType);
+typedef HRESULT (WINAPI *TransformFilter_CheckInputType) (TransformFilter *iface, const AM_MEDIA_TYPE *pMediaType);
+typedef HRESULT (WINAPI *TransformFilter_EndOfStream) (TransformFilter *iface);
+typedef HRESULT (WINAPI *TransformFilter_BeginFlush) (TransformFilter *iface);
+typedef HRESULT (WINAPI *TransformFilter_EndFlush) (TransformFilter *iface);
+typedef HRESULT (WINAPI *TransformFilter_NewSegment) (TransformFilter *iface,
+REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
+
+typedef struct TransformFilterFuncTable {
+    TransformFilter_StartStreaming pfnStartStreaming;
+    TransformFilter_Receive pfnReceive;
+    TransformFilter_StopStreaming pfnStopStreaming;
+    TransformFilter_CheckInputType pfnCheckInputType;
+    TransformFilter_SetMediaType pfnSetMediaType;
+    TransformFilter_CompleteConnect pfnCompleteConnect;
+    TransformFilter_BreakConnect pfnBreakConnect;
+    TransformFilter_EndOfStream pfnEndOfStream;
+    TransformFilter_BeginFlush pfnBeginFlush;
+    TransformFilter_EndFlush pfnEndFlush;
+    TransformFilter_NewSegment pfnNewSegment;
+} TransformFilterFuncTable;
+
+HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
+ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface);
+HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter * iface);
+HRESULT WINAPI TransformFilterImpl_Pause(IBaseFilter * iface);
+HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart);
+HRESULT WINAPI TransformFilterImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin);
+
+HRESULT TransformFilter_Construct( const IBaseFilterVtbl *filterVtbl, LONG filter_size, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, IBaseFilter ** ppTransformFilter);

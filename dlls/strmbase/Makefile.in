@@ -4,6 +4,7 @@ C_SRCS = \
 	enumpins.c \
 	filter.c \
 	mediatype.c \
-	pin.c
+	pin.c \
+	transform.c
 
 @MAKE_IMPLIB_RULES@

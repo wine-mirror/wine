@@ -24,7 +24,6 @@ C_SRCS = \
 	pin.c \
 	regsvr.c \
 	systemclock.c \
-	transform.c \
 	videorenderer.c \
 	waveparser.c
 

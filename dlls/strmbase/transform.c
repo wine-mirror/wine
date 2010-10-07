@@ -2,6 +2,7 @@
  * Transform Filter (Base for decoders, etc...)
  *
  * Copyright 2005 Christian Costa
+ * Copyright 2010 Aric Stewart, CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,17 +18,15 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
 #include "config.h"
+#include <stdarg.h>
 
-#include "quartz_private.h"
-#include "control_private.h"
-#include "pin.h"
+#define COBJMACROS
 
-#include "amvideo.h"
 #include "windef.h"
 #include "winbase.h"
 #include "dshow.h"
+#include "amvideo.h"
 #include "strmif.h"
 #include "vfw.h"
 
@@ -35,10 +34,9 @@
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/strmbase.h"
 
-#include "transform.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const WCHAR wcsOutputPinName[] = {'o','u','t','p','u','t',' ','p','i','n',0};
@@ -49,22 +47,53 @@ static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
 static HRESULT WINAPI TransformFilter_Input_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
-    TransformFilterImpl* This = (TransformFilterImpl *)((BasePin *)iface)->pinInfo.pFilter;
-    TRACE("%p\n", iface);
-    dump_AM_MEDIA_TYPE(pmt);
+    BaseInputPin* This = (BaseInputPin*) iface;
+    TransformFilter * pTransform;
 
-    if (This->pFuncsTable->pfnQueryConnect)
-        return This->pFuncsTable->pfnQueryConnect(This, pmt);
+    TRACE("%p\n", iface);
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
+
+    if (pTransform->pFuncsTable->pfnCheckInputType)
+        return pTransform->pFuncsTable->pfnCheckInputType(pTransform, pmt);
     /* Assume OK if there's no query method (the connection will fail if
        needed) */
     return S_OK;
 }
 
+static HRESULT WINAPI TransformFilter_Input_Receive(IPin *iface, IMediaSample *pInSample)
+{
+    HRESULT hr = S_FALSE;
+    BaseInputPin* This = (BaseInputPin*) iface;
+    TransformFilter * pTransform;
+    TRACE("%p\n", iface);
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
+
+    EnterCriticalSection(&pTransform->filter.csFilter);
+    if (pTransform->filter.state == State_Stopped)
+    {
+        LeaveCriticalSection(&pTransform->filter.csFilter);
+        return VFW_E_WRONG_STATE;
+    }
+
+    if (This->end_of_stream || This->flushing)
+    {
+        LeaveCriticalSection(&pTransform->filter.csFilter);
+        return S_FALSE;
+    }
+    LeaveCriticalSection(&pTransform->filter.csFilter);
+
+    if (pTransform->pFuncsTable->pfnReceive)
+        hr = pTransform->pFuncsTable->pfnReceive(pTransform, pInSample);
+    else
+        hr = S_FALSE;
+
+    return hr;
+}
 
 static HRESULT WINAPI TransformFilter_Output_QueryAccept(IPin *iface, const AM_MEDIA_TYPE * pmt)
 {
     BasePin *This = (BasePin *)iface;
-    TransformFilterImpl *pTransformFilter = (TransformFilterImpl *)This->pinInfo.pFilter;
+    TransformFilter *pTransformFilter = (TransformFilter *)This->pinInfo.pFilter;
     AM_MEDIA_TYPE* outpmt = &pTransformFilter->pmt;
     TRACE("%p\n", iface);
 
@@ -76,7 +105,7 @@ static HRESULT WINAPI TransformFilter_Output_QueryAccept(IPin *iface, const AM_M
 
 static IPin* WINAPI TransformFilter_GetPin(IBaseFilter *iface, int pos)
 {
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    TransformFilter *This = (TransformFilter *)iface;
 
     if (pos >= This->npins || pos < 0)
         return NULL;
@@ -87,18 +116,18 @@ static IPin* WINAPI TransformFilter_GetPin(IBaseFilter *iface, int pos)
 
 static LONG WINAPI TransformFilter_GetPinCount(IBaseFilter *iface)
 {
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    TransformFilter *This = (TransformFilter *)iface;
 
     return (This->npins+1);
 }
 
-HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, const TransformFuncsTable* pFuncsTable)
+static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, TransformFilter* pTransformFilter)
 {
     HRESULT hr;
     PIN_INFO piInput;
     PIN_INFO piOutput;
 
-    BaseFilter_Init(&pTransformFilter->filter, &TransformFilter_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": TransformFilterImpl.csFilter"), TransformFilter_GetPin, TransformFilter_GetPinCount);
+    BaseFilter_Init(&pTransformFilter->filter, pVtbl, pClsid, (DWORD_PTR)(__FILE__ ": TransformFilter.csFilter"), TransformFilter_GetPin, TransformFilter_GetPinCount);
 
     /* pTransformFilter is already allocated */
     pTransformFilter->pFuncsTable = pFuncsTable;
@@ -115,7 +144,7 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
     piOutput.pFilter = (IBaseFilter *)pTransformFilter;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
-    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, TransformFilter_Input_CheckMediaType, pFuncsTable->pfnProcessSampleData, &pTransformFilter->filter.csFilter, NULL, &pTransformFilter->ppPins[0]);
+    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, TransformFilter_Input_CheckMediaType, TransformFilter_Input_Receive, &pTransformFilter->filter.csFilter, NULL, &pTransformFilter->ppPins[0]);
 
     if (SUCCEEDED(hr))
     {
@@ -129,58 +158,57 @@ HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSI
 
         if (FAILED(hr))
             ERR("Cannot create output pin (%x)\n", hr);
-        else
-        {
-            ISeekingPassThru *passthru;
-            hr = CoCreateInstance(&CLSID_SeekingPassThru, (IUnknown*)pTransformFilter, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&pTransformFilter->seekthru_unk);
-            IUnknown_QueryInterface(pTransformFilter->seekthru_unk, &IID_ISeekingPassThru, (void**)&passthru);
-            ISeekingPassThru_Init(passthru, FALSE, (IPin*)pTransformFilter->ppPins[0]);
-            ISeekingPassThru_Release(passthru);
-        }
     }
     if (FAILED(hr))
     {
         CoTaskMemFree(pTransformFilter->ppPins);
         BaseFilterImpl_Release((IBaseFilter*)pTransformFilter);
-        CoTaskMemFree(pTransformFilter);
     }
 
     return hr;
 }
 
-static HRESULT WINAPI TransformFilter_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+HRESULT TransformFilter_Construct(const IBaseFilterVtbl *pVtbl, LONG filter_size, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, IBaseFilter ** ppTransformFilter)
 {
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
-    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
+    TransformFilter* pTf;
 
-    *ppv = NULL;
+    *ppTransformFilter = NULL;
 
-    if (IsEqualIID(riid, &IID_IUnknown))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IPersist))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = This;
-    else if (IsEqualIID(riid, &IID_IMediaSeeking))
-        return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
+    assert(filter_size >= sizeof(TransformFilter));
 
-    if (*ppv)
+    pTf = CoTaskMemAlloc(filter_size);
+    ZeroMemory(pTf, filter_size);
+
+    if (!pTf)
+        return E_OUTOFMEMORY;
+
+    if (SUCCEEDED(TransformFilter_Init(pVtbl, pClsid, pFuncsTable, pTf)))
     {
-        IUnknown_AddRef((IUnknown *)(*ppv));
+        *ppTransformFilter = (IBaseFilter*)(&pTf->filter.lpVtbl);
         return S_OK;
     }
 
-    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow))
-        FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
-
-    return E_NOINTERFACE;
+    CoTaskMemFree(pTf);
+    return E_FAIL;
 }
 
-static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
+HRESULT WINAPI TransformFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    HRESULT hr;
+    TransformFilter *This = (TransformFilter *)iface;
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, debugstr_guid(riid), ppv);
+
+    hr = BaseFilterImpl_QueryInterface(iface, riid, ppv);
+
+    if (FAILED(hr) && (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow)))
+        FIXME("No interface for %s!\n", debugstr_guid(riid));
+
+    return hr;
+}
+
+ULONG WINAPI TransformFilterImpl_Release(IBaseFilter * iface)
+{
+    TransformFilter *This = (TransformFilter *)iface;
     ULONG refCount = BaseFilterImpl_Release(iface);
 
     TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
@@ -217,9 +245,9 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
 
 /** IMediaFilter methods **/
 
-static HRESULT WINAPI TransformFilter_Stop(IBaseFilter * iface)
+HRESULT WINAPI TransformFilterImpl_Stop(IBaseFilter * iface)
 {
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    TransformFilter *This = (TransformFilter *)iface;
     HRESULT hr = S_OK;
 
     TRACE("(%p/%p)\n", This, iface);
@@ -227,17 +255,17 @@ static HRESULT WINAPI TransformFilter_Stop(IBaseFilter * iface)
     EnterCriticalSection(&This->filter.csFilter);
     {
         This->filter.state = State_Stopped;
-        if (This->pFuncsTable->pfnProcessEnd)
-            hr = This->pFuncsTable->pfnProcessEnd(This);
+        if (This->pFuncsTable->pfnStopStreaming)
+            hr = This->pFuncsTable->pfnStopStreaming(This);
     }
     LeaveCriticalSection(&This->filter.csFilter);
 
     return hr;
 }
 
-static HRESULT WINAPI TransformFilter_Pause(IBaseFilter * iface)
+HRESULT WINAPI TransformFilterImpl_Pause(IBaseFilter * iface)
 {
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    TransformFilter *This = (TransformFilter *)iface;
     HRESULT hr;
 
     TRACE("(%p/%p)->()\n", This, iface);
@@ -257,10 +285,10 @@ static HRESULT WINAPI TransformFilter_Pause(IBaseFilter * iface)
     return hr;
 }
 
-static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
+HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     HRESULT hr = S_OK;
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    TransformFilter *This = (TransformFilter *)iface;
 
     TRACE("(%p/%p)->(%s)\n", This, iface, wine_dbgstr_longlong(tStart));
 
@@ -269,8 +297,8 @@ static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tS
         if (This->filter.state == State_Stopped)
         {
             ((BaseInputPin *)This->ppPins[0])->end_of_stream = 0;
-            if (This->pFuncsTable->pfnProcessBegin)
-                hr = This->pFuncsTable->pfnProcessBegin(This);
+            if (This->pFuncsTable->pfnStartStreaming)
+                hr = This->pFuncsTable->pfnStartStreaming(This);
             if (SUCCEEDED(hr))
                 hr = BaseOutputPinImpl_Active((BaseOutputPin *)This->ppPins[1]);
         }
@@ -288,9 +316,9 @@ static HRESULT WINAPI TransformFilter_Run(IBaseFilter * iface, REFERENCE_TIME tS
 
 /** IBaseFilter implementation **/
 
-static HRESULT WINAPI TransformFilter_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
+HRESULT WINAPI TransformFilterImpl_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 {
-    TransformFilterImpl *This = (TransformFilterImpl *)iface;
+    TransformFilter *This = (TransformFilter *)iface;
 
     TRACE("(%p/%p)->(%p,%p)\n", This, iface, debugstr_w(Id), ppPin);
 
@@ -299,18 +327,18 @@ static HRESULT WINAPI TransformFilter_FindPin(IBaseFilter * iface, LPCWSTR Id, I
 
 static const IBaseFilterVtbl TransformFilter_Vtbl =
 {
-    TransformFilter_QueryInterface,
+    TransformFilterImpl_QueryInterface,
     BaseFilterImpl_AddRef,
-    TransformFilter_Release,
+    TransformFilterImpl_Release,
     BaseFilterImpl_GetClassID,
-    TransformFilter_Stop,
-    TransformFilter_Pause,
-    TransformFilter_Run,
+    TransformFilterImpl_Stop,
+    TransformFilterImpl_Pause,
+    TransformFilterImpl_Run,
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
     BaseFilterImpl_EnumPins,
-    TransformFilter_FindPin,
+    TransformFilterImpl_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     BaseFilterImpl_JoinFilterGraph,
     BaseFilterImpl_QueryVendorInfo
@@ -319,14 +347,14 @@ static const IBaseFilterVtbl TransformFilter_Vtbl =
 static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 {
     BaseInputPin* This = (BaseInputPin*) iface;
-    TransformFilterImpl* pTransform;
+    TransformFilter* pTransform;
     IPin* ppin;
     HRESULT hr;
-    
+
     TRACE("(%p)->()\n", iface);
 
     /* Since we process samples synchronously, just forward notification downstream */
-    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
     if (!pTransform)
         hr = E_FAIL;
     else
@@ -345,19 +373,24 @@ static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     BaseInputPin* This = (BaseInputPin*) iface;
-    TransformFilterImpl* pTransform;
-    HRESULT hr;
+    TransformFilter* pTransform;
+    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%p, %p)\n", iface, pReceivePin, pmt);
 
-    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
 
-    hr = pTransform->pFuncsTable->pfnConnectInput(This, pmt);
+    if (pTransform->pFuncsTable->pfnSetMediaType)
+        hr = pTransform->pFuncsTable->pfnSetMediaType(pTransform, PINDIR_INPUT, pmt);
+
+    if (SUCCEEDED(hr) && pTransform->pFuncsTable->pfnCompleteConnect)
+        hr = pTransform->pFuncsTable->pfnCompleteConnect(pTransform, PINDIR_INPUT, pReceivePin);
+
     if (SUCCEEDED(hr))
     {
         hr = BaseInputPinImpl_ReceiveConnection(iface, pReceivePin, pmt);
-        if (FAILED(hr))
-            pTransform->pFuncsTable->pfnCleanup(This);
+        if (FAILED(hr) && pTransform->pFuncsTable->pfnBreakConnect)
+            pTransform->pFuncsTable->pfnBreakConnect(pTransform, PINDIR_INPUT);
     }
 
     return hr;
@@ -366,12 +399,13 @@ static HRESULT WINAPI TransformFilter_InputPin_ReceiveConnection(IPin * iface, I
 static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
 {
     BaseInputPin* This = (BaseInputPin*) iface;
-    TransformFilterImpl* pTransform;
+    TransformFilter* pTransform;
 
     TRACE("(%p)->()\n", iface);
 
-    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
-    pTransform->pFuncsTable->pfnCleanup(This);
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
+    if (pTransform->pFuncsTable->pfnBreakConnect)
+        pTransform->pFuncsTable->pfnBreakConnect(pTransform, PINDIR_INPUT);
 
     return BasePinImpl_Disconnect(iface);
 }
@@ -379,15 +413,15 @@ static HRESULT WINAPI TransformFilter_InputPin_Disconnect(IPin * iface)
 static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
 {
     BaseInputPin* This = (BaseInputPin*) iface;
-    TransformFilterImpl* pTransform;
+    TransformFilter* pTransform;
     HRESULT hr = S_OK;
 
     TRACE("(%p)->()\n", iface);
 
-    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
     EnterCriticalSection(&pTransform->filter.csFilter);
     if (pTransform->pFuncsTable->pfnBeginFlush)
-        hr = pTransform->pFuncsTable->pfnBeginFlush(This);
+        hr = pTransform->pFuncsTable->pfnBeginFlush(pTransform);
     if (SUCCEEDED(hr))
         hr = BaseInputPinImpl_BeginFlush(iface);
     LeaveCriticalSection(&pTransform->filter.csFilter);
@@ -397,15 +431,15 @@ static HRESULT WINAPI TransformFilter_InputPin_BeginFlush(IPin * iface)
 static HRESULT WINAPI TransformFilter_InputPin_EndFlush(IPin * iface)
 {
     BaseInputPin* This = (BaseInputPin*) iface;
-    TransformFilterImpl* pTransform;
+    TransformFilter* pTransform;
     HRESULT hr = S_OK;
 
     TRACE("(%p)->()\n", iface);
 
-    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
     EnterCriticalSection(&pTransform->filter.csFilter);
     if (pTransform->pFuncsTable->pfnEndFlush)
-        hr = pTransform->pFuncsTable->pfnEndFlush(This);
+        hr = pTransform->pFuncsTable->pfnEndFlush(pTransform);
     if (SUCCEEDED(hr))
         hr = BaseInputPinImpl_EndFlush(iface);
     LeaveCriticalSection(&pTransform->filter.csFilter);
@@ -415,22 +449,22 @@ static HRESULT WINAPI TransformFilter_InputPin_EndFlush(IPin * iface)
 static HRESULT WINAPI TransformFilter_InputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
 {
     BaseInputPin* This = (BaseInputPin*) iface;
-    TransformFilterImpl* pTransform;
+    TransformFilter* pTransform;
     HRESULT hr = S_OK;
 
     TRACE("(%p)->()\n", iface);
 
-    pTransform = (TransformFilterImpl*)This->pin.pinInfo.pFilter;
+    pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
     EnterCriticalSection(&pTransform->filter.csFilter);
     if (pTransform->pFuncsTable->pfnNewSegment)
-        hr = pTransform->pFuncsTable->pfnNewSegment(This, tStart, tStop, dRate);
+        hr = pTransform->pFuncsTable->pfnNewSegment(pTransform, tStart, tStop, dRate);
     if (SUCCEEDED(hr))
         hr = BaseInputPinImpl_NewSegment(iface, tStart, tStop, dRate);
     LeaveCriticalSection(&pTransform->filter.csFilter);
     return hr;
 }
 
-static const IPinVtbl TransformFilter_InputPin_Vtbl = 
+static const IPinVtbl TransformFilter_InputPin_Vtbl =
 {
     BaseInputPinImpl_QueryInterface,
     BasePinImpl_AddRef,
@@ -455,7 +489,7 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
 static HRESULT WINAPI TransformFilter_Output_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     BasePin *This = (BasePin *)iface;
-    TransformFilterImpl *pTransform = (TransformFilterImpl *)This->pinInfo.pFilter;
+    TransformFilter *pTransform = (TransformFilter *)This->pinInfo.pFilter;
 
     if (iPosition < 0)
         return E_INVALIDARG;
