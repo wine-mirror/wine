@@ -56,8 +56,11 @@ MAKE_FUNCPTR(png_get_image_height);
 MAKE_FUNCPTR(png_get_image_width);
 MAKE_FUNCPTR(png_get_io_ptr);
 MAKE_FUNCPTR(png_get_pHYs);
+MAKE_FUNCPTR(png_get_progressive_ptr);
 MAKE_FUNCPTR(png_get_PLTE);
 MAKE_FUNCPTR(png_get_tRNS);
+MAKE_FUNCPTR(png_process_data);
+MAKE_FUNCPTR(png_progressive_combine_row);
 MAKE_FUNCPTR(png_set_bgr);
 MAKE_FUNCPTR(png_set_error_fn);
 #if HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8
@@ -69,6 +72,7 @@ MAKE_FUNCPTR(png_set_filler);
 MAKE_FUNCPTR(png_set_gray_to_rgb);
 MAKE_FUNCPTR(png_set_IHDR);
 MAKE_FUNCPTR(png_set_pHYs);
+MAKE_FUNCPTR(png_set_progressive_read_fn);
 MAKE_FUNCPTR(png_set_read_fn);
 MAKE_FUNCPTR(png_set_strip_16);
 MAKE_FUNCPTR(png_set_tRNS_to_alpha);
@@ -76,6 +80,7 @@ MAKE_FUNCPTR(png_set_write_fn);
 MAKE_FUNCPTR(png_read_end);
 MAKE_FUNCPTR(png_read_image);
 MAKE_FUNCPTR(png_read_info);
+MAKE_FUNCPTR(png_read_update_info);
 MAKE_FUNCPTR(png_write_end);
 MAKE_FUNCPTR(png_write_info);
 MAKE_FUNCPTR(png_write_rows);
@@ -103,8 +108,11 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_get_image_width);
         LOAD_FUNCPTR(png_get_io_ptr);
         LOAD_FUNCPTR(png_get_pHYs);
+        LOAD_FUNCPTR(png_get_progressive_ptr);
         LOAD_FUNCPTR(png_get_PLTE);
         LOAD_FUNCPTR(png_get_tRNS);
+        LOAD_FUNCPTR(png_process_data);
+        LOAD_FUNCPTR(png_progressive_combine_row);
         LOAD_FUNCPTR(png_set_bgr);
         LOAD_FUNCPTR(png_set_error_fn);
 #if HAVE_PNG_SET_EXPAND_GRAY_1_2_4_TO_8
@@ -116,6 +124,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_set_gray_to_rgb);
         LOAD_FUNCPTR(png_set_IHDR);
         LOAD_FUNCPTR(png_set_pHYs);
+        LOAD_FUNCPTR(png_set_progressive_read_fn);
         LOAD_FUNCPTR(png_set_read_fn);
         LOAD_FUNCPTR(png_set_strip_16);
         LOAD_FUNCPTR(png_set_tRNS_to_alpha);
@@ -123,6 +132,7 @@ static void *load_libpng(void)
         LOAD_FUNCPTR(png_read_end);
         LOAD_FUNCPTR(png_read_image);
         LOAD_FUNCPTR(png_read_info);
+        LOAD_FUNCPTR(png_read_update_info);
         LOAD_FUNCPTR(png_write_end);
         LOAD_FUNCPTR(png_write_info);
         LOAD_FUNCPTR(png_write_rows);
@@ -155,7 +165,6 @@ typedef struct {
     LONG ref;
     png_structp png_ptr;
     png_infop info_ptr;
-    png_infop end_info;
     BOOL initialized;
     int bpp;
     int width, height;
@@ -214,7 +223,7 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
     if (ref == 0)
     {
         if (This->png_ptr)
-            ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
+            ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, NULL);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This->image_bits);
@@ -231,86 +240,18 @@ static HRESULT WINAPI PngDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
     return E_NOTIMPL;
 }
 
-static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
+static void info_callback(png_structp png_ptr, png_infop info)
 {
-    IStream *stream = ppng_get_io_ptr(png_ptr);
-    HRESULT hr;
-    ULONG bytesread;
-
-    hr = IStream_Read(stream, data, length, &bytesread);
-    if (FAILED(hr) || bytesread != length)
-    {
-        ppng_error(png_ptr, "failed reading data");
-    }
-}
-
-static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
-    WICDecodeOptions cacheOptions)
-{
-    PngDecoder *This = (PngDecoder*)iface;
-    LARGE_INTEGER seek;
-    HRESULT hr=S_OK;
-    png_bytep *row_pointers=NULL;
-    UINT image_size;
-    UINT i;
     int color_type, bit_depth;
     png_bytep trans;
     int num_trans;
     png_uint_32 transparency;
     png_color_16p trans_values;
-    jmp_buf jmpbuf;
+    UINT image_size;
+    HRESULT hr = S_OK;
+    PngDecoder *This;
 
-    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
-
-    EnterCriticalSection(&This->lock);
-
-    /* initialize libpng */
-    This->png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (!This->png_ptr)
-    {
-        hr = E_FAIL;
-        goto end;
-    }
-
-    This->info_ptr = ppng_create_info_struct(This->png_ptr);
-    if (!This->info_ptr)
-    {
-        ppng_destroy_read_struct(&This->png_ptr, NULL, NULL);
-        This->png_ptr = NULL;
-        hr = E_FAIL;
-        goto end;
-    }
-
-    This->end_info = ppng_create_info_struct(This->png_ptr);
-    if (!This->info_ptr)
-    {
-        ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, NULL);
-        This->png_ptr = NULL;
-        hr = E_FAIL;
-        goto end;
-    }
-
-    /* set up setjmp/longjmp error handling */
-    if (setjmp(jmpbuf))
-    {
-        ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
-        HeapFree(GetProcessHeap(), 0, row_pointers);
-        This->png_ptr = NULL;
-        hr = E_FAIL;
-        goto end;
-    }
-    ppng_set_error_fn(This->png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
-
-    /* seek to the start of the stream */
-    seek.QuadPart = 0;
-    hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
-    if (FAILED(hr)) goto end;
-
-    /* set up custom i/o handling */
-    ppng_set_read_fn(This->png_ptr, pIStream, user_read_data);
-
-    /* read the header */
-    ppng_read_info(This->png_ptr, This->info_ptr);
+    This = (PngDecoder*) ppng_get_progressive_ptr(png_ptr);
 
     /* choose a pixel format */
     color_type = ppng_get_color_type(This->png_ptr, This->info_ptr);
@@ -409,7 +350,6 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         goto end;
     }
 
-    /* read the image data */
     This->width = ppng_get_image_width(This->png_ptr, This->info_ptr);
     This->height = ppng_get_image_height(This->png_ptr, This->info_ptr);
     This->stride = This->width * This->bpp;
@@ -422,24 +362,96 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         goto end;
     }
 
-    row_pointers = HeapAlloc(GetProcessHeap(), 0, sizeof(png_bytep)*This->height);
-    if (!row_pointers)
+    ppng_read_update_info(This->png_ptr, This->info_ptr);
+    This->initialized = TRUE;
+
+end:
+    if (FAILED(hr))
+        ERR("PNG info parsing failed, hr=0x%08X\n", hr);
+}
+
+static void row_callback(png_structp png_ptr, png_bytep new_row,
+                         png_uint_32 row_num, int pass)
+{
+    png_bytep old_row;
+    PngDecoder *This;
+
+    This = (PngDecoder*) ppng_get_progressive_ptr(png_ptr);
+    if (!This->initialized)
+        return;
+
+    old_row = ((png_bytep)This->image_bits) + row_num*This->stride;
+    ppng_progressive_combine_row(png_ptr, old_row, new_row);
+}
+
+static void end_callback(png_structp png_ptr, png_infop info)
+{
+}
+
+static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
+    WICDecodeOptions cacheOptions)
+{
+    PngDecoder *This = (PngDecoder*)iface;
+    LARGE_INTEGER seek;
+    HRESULT hr=S_OK;
+    png_bytep *row_pointers=NULL;
+    jmp_buf jmpbuf;
+    BYTE buffer[8096];
+    ULONG bytesRead = 0;
+
+    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    /* initialize libpng */
+    This->png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!This->png_ptr)
     {
-        hr = E_OUTOFMEMORY;
+        hr = E_FAIL;
         goto end;
     }
 
-    for (i=0; i<This->height; i++)
-        row_pointers[i] = This->image_bits + i * This->stride;
+    This->info_ptr = ppng_create_info_struct(This->png_ptr);
+    if (!This->info_ptr)
+    {
+        ppng_destroy_read_struct(&This->png_ptr, NULL, NULL);
+        This->png_ptr = NULL;
+        hr = E_FAIL;
+        goto end;
+    }
 
-    ppng_read_image(This->png_ptr, row_pointers);
+    /* set up setjmp/longjmp error handling */
+    if (setjmp(jmpbuf))
+    {
+        ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, NULL);
+        HeapFree(GetProcessHeap(), 0, row_pointers);
+        This->png_ptr = NULL;
+        hr = E_FAIL;
+        goto end;
+    }
+    ppng_set_error_fn(This->png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
 
-    HeapFree(GetProcessHeap(), 0, row_pointers);
-    row_pointers = NULL;
+    /* seek to the start of the stream */
+    seek.QuadPart = 0;
+    hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr)) goto end;
 
-    ppng_read_end(This->png_ptr, This->end_info);
+    /* set up progressive loading */
+    ppng_set_progressive_read_fn(This->png_ptr, (void*)This,
+        info_callback, row_callback, end_callback);
 
-    This->initialized = TRUE;
+    do
+    {
+        hr = IStream_Read(pIStream, buffer, sizeof(buffer), &bytesRead);
+        if (SUCCEEDED(hr))
+            ppng_process_data(This->png_ptr, This->info_ptr, buffer, bytesRead);
+    } while (bytesRead == sizeof(buffer));
+    if (hr == S_FALSE)
+        hr = S_OK;
+    if (FAILED(hr))
+        ERR("reading PNG file failed, error 0x%08X\n", hr);
+    if (!This->initialized)
+        hr = E_FAIL;
 
 end:
 
@@ -751,7 +763,6 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->ref = 1;
     This->png_ptr = NULL;
     This->info_ptr = NULL;
-    This->end_info = NULL;
     This->initialized = FALSE;
     This->image_bits = NULL;
     InitializeCriticalSection(&This->lock);
