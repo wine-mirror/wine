@@ -219,7 +219,6 @@ static HRESULT WINAPI ID3DXSpriteImpl_Begin(LPD3DXSPRITE iface, DWORD flags)
     if(flags>D3DXSPRITE_FLAGLIMIT || This->ready) return D3DERR_INVALIDCALL;
 
 /* TODO: Implement flags:
-D3DXSPRITE_ALPHABLEND: enables alpha blending
 D3DXSPRITE_BILLBOARD: makes the sprite always face the camera
 D3DXSPRITE_DONOTMODIFY_RENDERSTATE: name says it all
 D3DXSPRITE_OBJECTSPACE: do not change device transforms
@@ -227,6 +226,15 @@ D3DXSPRITE_SORT_DEPTH_BACKTOFRONT: sort by position
 D3DXSPRITE_SORT_DEPTH_FRONTTOBACK: sort by position
 D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
 */
+/* Seems like alpha blending is always enabled, regardless of D3DXSPRITE_ALPHABLEND flag */
+    if(flags & (D3DXSPRITE_BILLBOARD |
+                D3DXSPRITE_DONOTMODIFY_RENDERSTATE | D3DXSPRITE_OBJECTSPACE |
+                D3DXSPRITE_SORT_DEPTH_BACKTOFRONT))
+        FIXME("Flags unsupported: %#x\n", flags);
+    /* These flags should only matter to performances */
+    else if(flags & (D3DXSPRITE_SORT_DEPTH_FRONTTOBACK | D3DXSPRITE_SORT_TEXTURE))
+        TRACE("Flags unsupported: %#x\n", flags);
+
     if(This->vdecl==NULL) {
         static const D3DVERTEXELEMENT9 elements[] =
         {
