@@ -35,8 +35,8 @@ IDR_REGEDIT_MENU MENU
 BEGIN
     POPUP "&רישום המערכת"
     BEGIN
-        MENUITEM "יי&בוא קובץ לרישום המערכת...",    ID_REGISTRY_IMPORTREGISTRYFILE
-        MENUITEM "יי&צוא קובץ מרישום המערכת...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM "י&בוא קובץ לרישום המערכת...",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "י&צוא קובץ מרישום המערכת...",    ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
         MENUITEM "התחברות לרישום מערכת ב&רשת...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
         MENUITEM "&ניתוק מרישום מערכת ברשת...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
@@ -82,7 +82,7 @@ BEGIN
     END
     POPUP "ע&זרה"
     BEGIN
-        MENUITEM "נושאי הע&עזרה\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM "נושאי הע&זרה\tF1",            ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
         MENUITEM "על &אודות עורך רישום המערכת",      ID_HELP_ABOUT
     END
@@ -113,7 +113,7 @@ BEGIN
         MENUITEM "&מחיקה\tDel",                ID_EDIT_DELETE
         MENUITEM "&שינוי שם\tF2",                 ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "יי&צוא...",                  ID_EDIT_EXPORT
+        MENUITEM "י&צוא...",                  ID_EDIT_EXPORT
         MENUITEM "ה&עתקת שם המפתח",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&חיפוש\tCtrlF",               ID_EDIT_FIND, GRAYED
@@ -131,7 +131,7 @@ STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
 EXSTYLE WS_EX_LAYOUTRTL
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX "ייצוא רישום המערכת", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    GROUPBOX "יצוא רישומי מערכת", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
     AUTORADIOBUTTON "ה&כול", IDC_EXPORT_ALL, 12, 15, 244, 12
     AUTORADIOBUTTON "ה&ענפים הנבחרים:", IDC_EXPORT_SELECTED, 12, 30, 70, 12
     EDITTEXT IDC_EXPORT_PATH, 82, 30, 184, 12
@@ -270,9 +270,9 @@ BEGIN
     ID_EDIT_NEW_BINARYVALUE "הוספת ערך בינרי חדש"
     ID_EDIT_NEW_DWORDVALUE  "הוספת ערך חדש בגודל שני word"
     ID_EDIT_NEW_MULTI_STRINGVALUE "הוספת ערך מרובה מחרוזות חדש"
-    ID_REGISTRY_IMPORTREGISTRYFILE "ייבוא קובץ טקסט לתוך רישום המערכת"
+    ID_REGISTRY_IMPORTREGISTRYFILE "יבוא קובץ טקסט לתוך רישום המערכת"
     ID_REGISTRY_EXPORTREGISTRYFILE
-                            "ייצוא כל רישום המערכת או רק חלק ממנו לקובץ טקסט"
+                            "יצוא כל רישום המערכת או רק חלק ממנו לקובץ טקסט"
     ID_REGISTRY_CONNECTNETWORKREGISTRY
                             "התחברות לרישום מערכת של מחשב מרוחק"
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
@@ -295,7 +295,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "העתקת שם המפתח הנבחר ללוח הגזירים"
     ID_EDIT_FIND            "חיפוש מחרוזת טקסט בין מפתחות, ערכים ונתונים"
     ID_EDIT_FINDNEXT        "חיפוש המופע הבא של טקסט שצוין בחיפוש הקודם"
-    ID_EDIT_EXPORT          "ייצוא הענף הנבחר מרישום המערכת לקובץ טקסט"
+    ID_EDIT_EXPORT          "יצוא הענף הנבחר מרישום המערכת לקובץ טקסט"
 END
 
 STRINGTABLE
@@ -315,15 +315,15 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_FILEDIALOG_IMPORT_TITLE   "ייבוא קובץ רישום מערכת"
-    IDS_FILEDIALOG_EXPORT_TITLE   "ייצוא קובץ רישום מערכת"
+    IDS_FILEDIALOG_IMPORT_TITLE   "יבוא קובץ רישום מערכת"
+    IDS_FILEDIALOG_EXPORT_TITLE   "יצוא קובץ רישום מערכת"
     IDS_FILEDIALOG_FILTER         "קובצי רישום מערכת\0*.reg\0קובצי רישום מערכת שלWin9x/NT4 (REGEDIT4)\0*.reg\0כל הקבצים (*.*)\0*.*\0\0"
 END
 
 STRINGTABLE
 BEGIN
     IDS_REGISTRY_ROOT_NAME           "המחשב שלי"
-    IDS_REGISTRY_DEFAULT_VALUE       "(ברירת המחדל)"
+    IDS_REGISTRY_DEFAULT_VALUE       "(בררת המחדל)"
     IDS_REGISTRY_VALUE_NOT_SET       "(לא הוגדר ערך)"
     IDS_REGISTRY_VALUE_CANT_DISPLAY  "(לא ניתן להציג את הערך)"
     IDS_REGISTRY_UNKNOWN_TYPE        "(%d לא ידוע)"
