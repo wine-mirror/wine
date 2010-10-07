@@ -540,6 +540,22 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Microsoft.XMLHTTP",
 	"1.0"
     },
+    {   &CLSID_XMLHTTP26,
+	"XML HTTP 2.6",
+	NULL,
+	"msxml3.dll",
+	"Apartment",
+	"Msxml2.XMLHTTP.2.6",
+	"2.6"
+    },
+    {   &CLSID_XMLHTTP30,
+	"XML HTTP 3.0",
+	NULL,
+	"msxml3.dll",
+	"Apartment",
+	"Msxml2.XMLHTTP.3.0",
+	"3.0"
+    },
     {   &CLSID_XMLDSOControl,
 	"XML Data Source Object",
 	NULL,
@@ -699,6 +715,16 @@ static struct progid const progid_list[] = {
     {   "Microsoft.XMLHTTP.1.0",
 	"XML HTTP Request",
 	&CLSID_XMLHTTPRequest,
+	NULL
+    },
+    {   "Msxml2.XMLHTTP.2.6",
+	"XML HTTP 2.6",
+	&CLSID_XMLHTTP26,
+	NULL
+    },
+    {   "Msxml2.XMLHTTP.3.0",
+	"XML HTTP 3.0",
+	&CLSID_XMLHTTP30,
 	NULL
     },
     {   "Microsoft.XMLDSO",

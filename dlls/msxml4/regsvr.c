@@ -385,6 +385,14 @@ static struct regsvr_coclass const coclass_list[] = {
     "Microsoft.FreeThreadedDOMDocument4.0",
     "4.0"
     },
+    {   &CLSID_XMLHTTP40,
+    "XML HTTP 4.0",
+    NULL,
+    "msxml4.dll",
+    "Apartment",
+    "Msxml2.XMLHTTP.4.0",
+    "4.0"
+    },
     { NULL }			/* list terminator */
 };
 
@@ -395,6 +403,11 @@ static struct progid const progid_list[] = {
     {   "Msxml2.DOMDocument.4.0",
 	"XML DOM Document 4.0",
 	&CLSID_DOMDocument40,
+	NULL
+    },
+    {   "Msxml2.XMLHTTP.4.0",
+	"XML HTTP 4.0",
+	&CLSID_XMLHTTP40,
 	NULL
     },
     {   "Msxml2.SAXXMLReader.4.0",

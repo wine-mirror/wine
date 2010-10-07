@@ -317,8 +317,6 @@ static HRESULT WINAPI BindStatusCallback_OnObjectAvailable(IBindStatusCallback *
     return E_NOTIMPL;
 }
 
-#undef STATUSCLB_THIS
-
 static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
     BindStatusCallback_QueryInterface,
     BindStatusCallback_AddRef,
@@ -401,8 +399,6 @@ static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD c
 
     return S_OK;
 }
-
-#undef HTTPNEG2_THIS
 
 static const IHttpNegotiateVtbl BSCHttpNegotiateVtbl = {
     BSCHttpNegotiate_QueryInterface,

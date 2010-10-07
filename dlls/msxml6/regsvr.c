@@ -346,6 +346,14 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Msxml2.DOMDocument",
 	"6.0"
     },
+    {   &CLSID_XMLHTTP60,
+	"XML HTTP 6.0",
+	NULL,
+	"msxml6.dll",
+	"Apartment",
+	"Msxml2.XMLHTTP.6.0",
+	"6.0"
+    },
     {   &CLSID_XMLSchemaCache60,
     "XML Schema Cache 6.0",
     NULL,
@@ -388,6 +396,11 @@ static struct progid const progid_list[] = {
     {   "Msxml2.DOMDocument.6.0",
 	"XML DOM Document 6.0",
 	&CLSID_DOMDocument60,
+	NULL
+    },
+    {   "Msxml2.XMLHTTP.6.0",
+	"XML XMLHTTP 6.0",
+	&CLSID_XMLHTTP60,
 	NULL
     },
     {   "Msxml2.XMLSchemaCache.6.0",
