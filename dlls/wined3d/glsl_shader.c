@@ -5041,6 +5041,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_MIN           */ shader_glsl_map2gl,
     /* WINED3DSIH_MOV           */ shader_glsl_mov,
     /* WINED3DSIH_MOVA          */ shader_glsl_mov,
+    /* WINED3DSIH_MOVC          */ NULL,
     /* WINED3DSIH_MUL           */ shader_glsl_arith,
     /* WINED3DSIH_NOP           */ NULL,
     /* WINED3DSIH_NRM           */ shader_glsl_nrm,

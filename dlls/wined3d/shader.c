@@ -87,6 +87,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_MIN           */ "min",
     /* WINED3DSIH_MOV           */ "mov",
     /* WINED3DSIH_MOVA          */ "mova",
+    /* WINED3DSIH_MOVC          */ "movc",
     /* WINED3DSIH_MUL           */ "mul",
     /* WINED3DSIH_NOP           */ "nop",
     /* WINED3DSIH_NRM           */ "nrm",
