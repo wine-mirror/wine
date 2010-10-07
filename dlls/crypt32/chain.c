@@ -2989,13 +2989,30 @@ static BYTE msTestPubKey2[] = {
 0x71,0x9e,0x06,0xd9,0xbf,0xbb,0x31,0x69,0xa3,0xf6,0x30,0xa0,0x78,0x7b,0x18,
 0xdd,0x50,0x4d,0x79,0x1e,0xeb,0x61,0xc1,0x02,0x03,0x01,0x00,0x01 };
 
+static void dump_authenticode_extra_chain_policy_para(
+ AUTHENTICODE_EXTRA_CERT_CHAIN_POLICY_PARA *extraPara)
+{
+    if (extraPara)
+    {
+        TRACE_(chain)("cbSize = %d\n", extraPara->cbSize);
+        TRACE_(chain)("dwRegPolicySettings = %08x\n",
+         extraPara->dwRegPolicySettings);
+        TRACE_(chain)("pSignerInfo = %p\n", extraPara->pSignerInfo);
+    }
+}
+
 static BOOL WINAPI verify_authenticode_policy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
 {
     BOOL ret = verify_base_policy(szPolicyOID, pChainContext, pPolicyPara,
      pPolicyStatus);
+    AUTHENTICODE_EXTRA_CERT_CHAIN_POLICY_PARA *extraPara = NULL;
 
+    if (pPolicyPara)
+        extraPara = pPolicyPara->pvExtraPolicyPara;
+    if (TRACE_ON(chain))
+        dump_authenticode_extra_chain_policy_para(extraPara);
     if (ret && pPolicyStatus->dwError == CERT_E_UNTRUSTEDROOT)
     {
         CERT_PUBLIC_KEY_INFO msPubKey = { { 0 } };
@@ -3323,6 +3340,18 @@ static BOOL match_dns_to_subject_dn(PCCERT_CONTEXT cert, LPCWSTR server_name)
     return matches;
 }
 
+static void dump_ssl_extra_chain_policy_para(HTTPSPolicyCallbackData *sslPara)
+{
+    if (sslPara)
+    {
+        TRACE_(chain)("cbSize = %d\n", sslPara->u.cbSize);
+        TRACE_(chain)("dwAuthType = %d\n", sslPara->dwAuthType);
+        TRACE_(chain)("fdwChecks = %08x\n", sslPara->fdwChecks);
+        TRACE_(chain)("pwszServerName = %s\n",
+         debugstr_w(sslPara->pwszServerName));
+    }
+}
+
 static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
@@ -3332,6 +3361,8 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
 
     if (pPolicyPara)
         sslPara = pPolicyPara->pvExtraPolicyPara;
+    if (TRACE_ON(chain))
+        dump_ssl_extra_chain_policy_para(sslPara);
     if (sslPara && sslPara->u.cbSize >= sizeof(HTTPSPolicyCallbackData))
         checks = sslPara->fdwChecks;
     pPolicyStatus->lChainIndex = pPolicyStatus->lElementIndex = -1;
@@ -3570,6 +3601,16 @@ typedef BOOL (WINAPI *CertVerifyCertificateChainPolicyFunc)(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus);
 
+static void dump_policy_para(PCERT_CHAIN_POLICY_PARA para)
+{
+    if (para)
+    {
+        TRACE_(chain)("cbSize = %d\n", para->cbSize);
+        TRACE_(chain)("dwFlags = %08x\n", para->dwFlags);
+        TRACE_(chain)("pvExtraPolicyPara = %p\n", para->pvExtraPolicyPara);
+    }
+}
+
 BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus)
@@ -3581,6 +3622,8 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
 
     TRACE("(%s, %p, %p, %p)\n", debugstr_a(szPolicyOID), pChainContext,
      pPolicyPara, pPolicyStatus);
+    if (TRACE_ON(chain))
+        dump_policy_para(pPolicyPara);
 
     if (IS_INTOID(szPolicyOID))
     {
