@@ -1408,8 +1408,17 @@ static void test_HashData(void)
 
 START_TEST(url)
 {
+  char *pFunc;
 
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+
+  /* SHCreateStreamOnFileEx was introduced in shlwapi v6.0 */
+  pFunc = (void*)GetProcAddress(hShlwapi, "SHCreateStreamOnFileEx");
+  if(!pFunc){
+      win_skip("Too old shlwapi version\n");
+      return;
+  }
+
   pUrlUnescapeA = (void *) GetProcAddress(hShlwapi, "UrlUnescapeA");
   pUrlUnescapeW = (void *) GetProcAddress(hShlwapi, "UrlUnescapeW");
   pUrlIsA = (void *) GetProcAddress(hShlwapi, "UrlIsA");
