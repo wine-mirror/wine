@@ -25,6 +25,7 @@ RC_SRCS = \
 	cdlg_Es.rc \
 	cdlg_Fi.rc \
 	cdlg_Fr.rc \
+	cdlg_He.rc \
 	cdlg_Hu.rc \
 	cdlg_It.rc \
 	cdlg_Ja.rc \
