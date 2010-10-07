@@ -4278,6 +4278,28 @@ static void check_base_policy(void)
      invalidExtensionPolicyCheck, &oct2007, &policyPara);
 }
 
+static void check_authenticode_policy(void)
+{
+    CERT_CHAIN_POLICY_PARA policyPara = { 0 };
+    SYSTEMTIME epochStart = { 0 };
+
+    /* The authenticode policy doesn't seem to check anything beyond the base
+     * policy.  It might check for chains signed by the MS test cert, but none
+     * of these chains is.
+     */
+    CHECK_CHAIN_POLICY_STATUS_ARRAY(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
+     authenticodePolicyCheck, &oct2007, NULL);
+    policyPara.cbSize = sizeof(policyPara);
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
+    CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
+     ignoredUnknownCAPolicyCheck, &oct2007, &policyPara);
+    CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
+     ignoredUnknownCAPolicyCheck, &epochStart, &policyPara);
+    policyPara.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+    CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
+     ignoredInvalidDateBasePolicyCheck, &oct2007, &policyPara);
+}
+
 static void check_ssl_policy(void)
 {
     CERT_CHAIN_POLICY_PARA policyPara = { 0 };
@@ -4516,12 +4538,7 @@ static void testVerifyCertChainPolicy(void)
 
     check_base_policy();
     check_ssl_policy();
-    /* The authenticode policy doesn't seem to check anything beyond the base
-     * policy.  It might check for chains signed by the MS test cert, but none
-     * of these chains is.
-     */
-    CHECK_CHAIN_POLICY_STATUS_ARRAY(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
-     authenticodePolicyCheck, &oct2007, NULL);
+    check_authenticode_policy();
     CHECK_CHAIN_POLICY_STATUS_ARRAY(CERT_CHAIN_POLICY_BASIC_CONSTRAINTS, NULL,
      basicConstraintsPolicyCheck, &oct2007, NULL);
 }
