@@ -67,16 +67,16 @@ static HRESULT WINAPI ACMWrapper_ProcessSampleData(IPin *iface, IMediaSample *pS
     HRESULT hr;
     LONGLONG tStart = -1, tStop = -1, tMed;
 
-    EnterCriticalSection(&This->tf.csFilter);
-    if (This->tf.state == State_Stopped)
+    EnterCriticalSection(&This->tf.filter.csFilter);
+    if (This->tf.filter.state == State_Stopped)
     {
-        LeaveCriticalSection(&This->tf.csFilter);
+        LeaveCriticalSection(&This->tf.filter.csFilter);
         return VFW_E_WRONG_STATE;
     }
 
     if (pin->end_of_stream || pin->flushing)
     {
-        LeaveCriticalSection(&This->tf.csFilter);
+        LeaveCriticalSection(&This->tf.filter.csFilter);
         return S_FALSE;
     }
 
@@ -84,7 +84,7 @@ static HRESULT WINAPI ACMWrapper_ProcessSampleData(IPin *iface, IMediaSample *pS
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        LeaveCriticalSection(&This->tf.csFilter);
+        LeaveCriticalSection(&This->tf.filter.csFilter);
         return hr;
     }
 
@@ -112,7 +112,7 @@ static HRESULT WINAPI ACMWrapper_ProcessSampleData(IPin *iface, IMediaSample *pS
     if (FAILED(hr))
     {
         ERR("Unable to retrieve media type\n");
-        LeaveCriticalSection(&This->tf.csFilter);
+        LeaveCriticalSection(&This->tf.filter.csFilter);
         return hr;
     }
 
@@ -125,7 +125,7 @@ static HRESULT WINAPI ACMWrapper_ProcessSampleData(IPin *iface, IMediaSample *pS
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
-            LeaveCriticalSection(&This->tf.csFilter);
+            LeaveCriticalSection(&This->tf.filter.csFilter);
             return hr;
         }
         IMediaSample_SetPreroll(pOutSample, preroll);
@@ -205,9 +205,9 @@ static HRESULT WINAPI ACMWrapper_ProcessSampleData(IPin *iface, IMediaSample *pS
         }
         TRACE("Sample stop time: %u.%03u\n", (DWORD)(tStart/10000000), (DWORD)((tStart/10000)%1000));
 
-        LeaveCriticalSection(&This->tf.csFilter);
+        LeaveCriticalSection(&This->tf.filter.csFilter);
         hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
-        EnterCriticalSection(&This->tf.csFilter);
+        EnterCriticalSection(&This->tf.filter.csFilter);
 
         if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
             if (FAILED(hr))
@@ -231,7 +231,7 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
-    LeaveCriticalSection(&This->tf.csFilter);
+    LeaveCriticalSection(&This->tf.filter.csFilter);
     return hr;
 }
 

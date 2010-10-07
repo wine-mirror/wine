@@ -57,15 +57,9 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     PIN_INFO piInput;
 
     /* pTransformFilter is already allocated */
-    pParser->clsid = *pClsid;
-    pParser->lpVtbl = Parser_Vtbl;
-    pParser->refCount = 1;
-    InitializeCriticalSection(&pParser->csFilter);
-    pParser->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter");
-    pParser->state = State_Stopped;
-    pParser->pClock = NULL;
+    BaseFilter_Init(&pParser->filter, Parser_Vtbl, pClsid, (DWORD_PTR)(__FILE__ ": ParserImpl.csFilter"));
+
     pParser->fnDisconnect = fnDisconnect;
-    ZeroMemory(&pParser->filterInfo, sizeof(FILTER_INFO));
     pParser->lastpinchange = GetTickCount();
 
     pParser->cStreams = 0;
@@ -85,10 +79,10 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     if (!rate)
         rate = Parser_ChangeRate;
 
-    MediaSeekingImpl_Init((IBaseFilter*)pParser, stop, current, rate, &pParser->mediaSeeking, &pParser->csFilter);
+    MediaSeekingImpl_Init((IBaseFilter*)pParser, stop, current, rate, &pParser->mediaSeeking, &pParser->filter.csFilter);
     pParser->mediaSeeking.lpVtbl = &Parser_Seeking_Vtbl;
 
-    hr = PullPin_Construct(&Parser_InputPin_Vtbl, &piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, fnCleanup, fnRequest, fnDone, &pParser->csFilter, (IPin **)&pParser->pInputPin);
+    hr = PullPin_Construct(&Parser_InputPin_Vtbl, &piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, fnCleanup, fnRequest, fnDone, &pParser->filter.csFilter, (IPin **)&pParser->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -98,8 +92,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     else
     {
         CoTaskMemFree(pParser->ppPins);
-        pParser->csFilter.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&pParser->csFilter);
+        BaseFilterImpl_Release((IBaseFilter*)pParser);
         CoTaskMemFree(pParser);
     }
 
@@ -133,12 +126,7 @@ HRESULT WINAPI Parser_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * 
 
 ULONG WINAPI Parser_AddRef(IBaseFilter * iface)
 {
-    ParserImpl *This = (ParserImpl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
-
-    return refCount;
+    return BaseFilterImpl_AddRef(iface);
 }
 
 void Parser_Destroy(ParserImpl *This)
@@ -146,11 +134,8 @@ void Parser_Destroy(ParserImpl *This)
     IPin *connected = NULL;
     ULONG pinref;
 
-    assert(!This->refCount);
+    assert(!This->filter.refCount);
     PullPin_WaitForStateChange(This->pInputPin, INFINITE);
-
-    if (This->pClock)
-        IReferenceClock_Release(This->pClock);
 
     /* Don't need to clean up output pins, freeing input pin will do that */
     IPin_ConnectedTo((IPin *)This->pInputPin, &connected);
@@ -172,10 +157,6 @@ void Parser_Destroy(ParserImpl *This)
     }
 
     CoTaskMemFree(This->ppPins);
-    This->lpVtbl = NULL;
-
-    This->csFilter.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->csFilter);
 
     TRACE("Destroying parser\n");
     CoTaskMemFree(This);
@@ -184,7 +165,7 @@ void Parser_Destroy(ParserImpl *This)
 ULONG WINAPI Parser_Release(IBaseFilter * iface)
 {
     ParserImpl *This = (ParserImpl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->refCount);
+    ULONG refCount = BaseFilterImpl_Release(iface);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
@@ -202,7 +183,7 @@ HRESULT WINAPI Parser_GetClassID(IBaseFilter * iface, CLSID * pClsid)
 
     TRACE("(%p)\n", pClsid);
 
-    *pClsid = This->clsid;
+    *pClsid = This->filter.clsid;
 
     return S_OK;
 }
@@ -220,24 +201,24 @@ HRESULT WINAPI Parser_Stop(IBaseFilter * iface)
     EnterCriticalSection(&pin->thread_lock);
 
     IAsyncReader_BeginFlush(This->pInputPin->pReader);
-    EnterCriticalSection(&This->csFilter);
+    EnterCriticalSection(&This->filter.csFilter);
 
-    if (This->state == State_Stopped)
+    if (This->filter.state == State_Stopped)
     {
-        LeaveCriticalSection(&This->csFilter);
+        LeaveCriticalSection(&This->filter.csFilter);
         IAsyncReader_EndFlush(This->pInputPin->pReader);
         LeaveCriticalSection(&pin->thread_lock);
         return S_OK;
     }
 
-    This->state = State_Stopped;
+    This->filter.state = State_Stopped;
 
     for (i = 1; i < (This->cStreams + 1); i++)
     {
         BaseOutputPinImpl_Inactive((BaseOutputPin *)This->ppPins[i]);
     }
 
-    LeaveCriticalSection(&This->csFilter);
+    LeaveCriticalSection(&This->filter.csFilter);
 
     PullPin_PauseProcessing(This->pInputPin);
     PullPin_WaitForStateChange(This->pInputPin, INFINITE);
@@ -256,26 +237,26 @@ HRESULT WINAPI Parser_Pause(IBaseFilter * iface)
     TRACE("()\n");
 
     EnterCriticalSection(&pin->thread_lock);
-    EnterCriticalSection(&This->csFilter);
+    EnterCriticalSection(&This->filter.csFilter);
 
-    if (This->state == State_Paused)
+    if (This->filter.state == State_Paused)
     {
-        LeaveCriticalSection(&This->csFilter);
+        LeaveCriticalSection(&This->filter.csFilter);
         LeaveCriticalSection(&pin->thread_lock);
         return S_OK;
     }
 
-    if (This->state == State_Stopped)
+    if (This->filter.state == State_Stopped)
     {
-        LeaveCriticalSection(&This->csFilter);
+        LeaveCriticalSection(&This->filter.csFilter);
         hr = IBaseFilter_Run(iface, -1);
-        EnterCriticalSection(&This->csFilter);
+        EnterCriticalSection(&This->filter.csFilter);
     }
 
     if (SUCCEEDED(hr))
-        This->state = State_Paused;
+        This->filter.state = State_Paused;
 
-    LeaveCriticalSection(&This->csFilter);
+    LeaveCriticalSection(&This->filter.csFilter);
     LeaveCriticalSection(&pin->thread_lock);
 
     return hr;
@@ -292,19 +273,19 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
 
     EnterCriticalSection(&pin->thread_lock);
-    EnterCriticalSection(&This->csFilter);
+    EnterCriticalSection(&This->filter.csFilter);
     {
         HRESULT hr_any = VFW_E_NOT_CONNECTED;
 
-        if (This->state == State_Running || This->state == State_Paused)
+        if (This->filter.state == State_Running || This->filter.state == State_Paused)
         {
-            This->state = State_Running;
-            LeaveCriticalSection(&This->csFilter);
+            This->filter.state = State_Running;
+            LeaveCriticalSection(&This->filter.csFilter);
             LeaveCriticalSection(&pin->thread_lock);
             return S_OK;
         }
 
-        This->rtStreamStart = tStart;
+        This->filter.rtStreamStart = tStart;
 
         for (i = 1; i < (This->cStreams + 1); i++)
         {
@@ -316,15 +297,15 @@ HRESULT WINAPI Parser_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
         hr = hr_any;
         if (SUCCEEDED(hr))
         {
-            LeaveCriticalSection(&This->csFilter);
+            LeaveCriticalSection(&This->filter.csFilter);
             hr = PullPin_StartProcessing(This->pInputPin);
-            EnterCriticalSection(&This->csFilter);
+            EnterCriticalSection(&This->filter.csFilter);
         }
 
         if (SUCCEEDED(hr))
-            This->state = State_Running;
+            This->filter.state = State_Running;
     }
-    LeaveCriticalSection(&This->csFilter);
+    LeaveCriticalSection(&This->filter.csFilter);
     LeaveCriticalSection(&pin->thread_lock);
 
     return hr;
@@ -339,11 +320,11 @@ HRESULT WINAPI Parser_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FI
     TRACE("(%d, %p)\n", dwMilliSecsTimeout, pState);
 
     EnterCriticalSection(&pin->thread_lock);
-    EnterCriticalSection(&This->csFilter);
+    EnterCriticalSection(&This->filter.csFilter);
     {
-        *pState = This->state;
+        *pState = This->filter.state;
     }
-    LeaveCriticalSection(&This->csFilter);
+    LeaveCriticalSection(&This->filter.csFilter);
 
     if (This->pInputPin && (PullPin_WaitForStateChange(This->pInputPin, dwMilliSecsTimeout) == S_FALSE))
         hr = VFW_S_STATE_INTERMEDIATE;
@@ -360,15 +341,7 @@ HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock
     TRACE("(%p)\n", pClock);
 
     EnterCriticalSection(&pin->thread_lock);
-    EnterCriticalSection(&This->csFilter);
-    {
-        if (This->pClock)
-            IReferenceClock_Release(This->pClock);
-        This->pClock = pClock;
-        if (This->pClock)
-            IReferenceClock_AddRef(This->pClock);
-    }
-    LeaveCriticalSection(&This->csFilter);
+    BaseFilterImpl_SetSyncSource(iface,pClock);
     LeaveCriticalSection(&pin->thread_lock);
 
     return S_OK;
@@ -376,19 +349,7 @@ HRESULT WINAPI Parser_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock
 
 HRESULT WINAPI Parser_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
 {
-    ParserImpl *This = (ParserImpl *)iface;
-
-    TRACE("(%p)\n", ppClock);
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        *ppClock = This->pClock;
-        if (This->pClock)
-            IReferenceClock_AddRef(This->pClock);
-    }
-    LeaveCriticalSection(&This->csFilter);
-    
-    return S_OK;
+    return BaseFilterImpl_GetSyncSource(iface, ppClock);
 }
 
 /** IBaseFilter implementation **/
@@ -442,43 +403,17 @@ HRESULT WINAPI Parser_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin **ppPin)
 
 HRESULT WINAPI Parser_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
 {
-    ParserImpl *This = (ParserImpl *)iface;
-
-    TRACE("(%p)\n", pInfo);
-
-    strcpyW(pInfo->achName, This->filterInfo.achName);
-    pInfo->pGraph = This->filterInfo.pGraph;
-
-    if (pInfo->pGraph)
-        IFilterGraph_AddRef(pInfo->pGraph);
-    
-    return S_OK;
+    return BaseFilterImpl_QueryFilterInfo(iface, pInfo);
 }
 
 HRESULT WINAPI Parser_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName)
 {
-    HRESULT hr = S_OK;
-    ParserImpl *This = (ParserImpl *)iface;
-
-    TRACE("(%p, %s)\n", pGraph, debugstr_w(pName));
-
-    EnterCriticalSection(&This->csFilter);
-    {
-        if (pName)
-            strcpyW(This->filterInfo.achName, pName);
-        else
-            *This->filterInfo.achName = '\0';
-        This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
-    }
-    LeaveCriticalSection(&This->csFilter);
-
-    return hr;
+    return BaseFilterImpl_JoinFilterGraph(iface, pGraph, pName);
 }
 
 HRESULT WINAPI Parser_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
 {
-    TRACE("(%p)\n", pVendorInfo);
-    return E_NOTIMPL;
+    return BaseFilterImpl_QueryVendorInfo(iface, pVendorInfo);
 }
 
 HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt)
@@ -491,7 +426,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     This->ppPins = CoTaskMemAlloc((This->cStreams + 2) * sizeof(IPin *));
     memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
 
-    hr = BaseOutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, NULL, &This->csFilter, This->ppPins + (This->cStreams + 1));
+    hr = BaseOutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, NULL, &This->filter.csFilter, This->ppPins + (This->cStreams + 1));
 
     if (SUCCEEDED(hr))
     {

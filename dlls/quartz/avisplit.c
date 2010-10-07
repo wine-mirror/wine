@@ -1239,7 +1239,7 @@ static ULONG WINAPI AVISplitter_Release(IBaseFilter *iface)
     AVISplitterImpl *This = (AVISplitterImpl *)iface;
     ULONG ref;
 
-    ref = InterlockedDecrement(&This->Parser.refCount);
+    ref = InterlockedDecrement(&This->Parser.filter.refCount);
 
     TRACE("(%p)->() Release from %d\n", This, ref + 1);
 
@@ -1275,7 +1275,7 @@ static HRESULT AVISplitter_seek(IBaseFilter *iface)
     IPin_BeginFlush((IPin *)pPin);
 
     /* Make sure this is done while stopped, BeginFlush takes care of this */
-    EnterCriticalSection(&This->Parser.csFilter);
+    EnterCriticalSection(&This->Parser.filter.csFilter);
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
         Parser_OutputPin *pin = (Parser_OutputPin *)This->Parser.ppPins[1+x];
@@ -1377,7 +1377,7 @@ static HRESULT AVISplitter_seek(IBaseFilter *iface)
         stream->preroll = preroll;
         stream->seek = 1;
     }
-    LeaveCriticalSection(&This->Parser.csFilter);
+    LeaveCriticalSection(&This->Parser.filter.csFilter);
 
     TRACE("Done flushing\n");
     IPin_EndFlush((IPin *)pPin);

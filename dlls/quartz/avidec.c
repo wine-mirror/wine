@@ -80,16 +80,16 @@ static HRESULT WINAPI AVIDec_ProcessSampleData(IPin *iface, IMediaSample *pSampl
     LPBYTE pbSrcStream;
     LONGLONG tStart, tStop;
 
-    EnterCriticalSection(&This->tf.csFilter);
-    if (This->tf.state == State_Stopped)
+    EnterCriticalSection(&This->tf.filter.csFilter);
+    if (This->tf.filter.state == State_Stopped)
     {
-        LeaveCriticalSection(&This->tf.csFilter);
+        LeaveCriticalSection(&This->tf.filter.csFilter);
         return VFW_E_WRONG_STATE;
     }
 
     if (pin->end_of_stream || pin->flushing)
     {
-        LeaveCriticalSection(&This->tf.csFilter);
+        LeaveCriticalSection(&This->tf.filter.csFilter);
         return S_FALSE;
     }
 
@@ -149,7 +149,7 @@ static HRESULT WINAPI AVIDec_ProcessSampleData(IPin *iface, IMediaSample *pSampl
     else
         IMediaSample_SetTime(pOutSample, NULL, NULL);
 
-    LeaveCriticalSection(&This->tf.csFilter);
+    LeaveCriticalSection(&This->tf.filter.csFilter);
     hr = BaseOutputPinImpl_Deliver((BaseOutputPin*)This->tf.ppPins[1], pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);
@@ -160,7 +160,7 @@ error:
     if (pOutSample)
         IMediaSample_Release(pOutSample);
 
-    LeaveCriticalSection(&This->tf.csFilter);
+    LeaveCriticalSection(&This->tf.filter.csFilter);
     return hr;
 }
 

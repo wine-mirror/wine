@@ -37,16 +37,8 @@ typedef struct TransformFuncsTable {
 
 struct TransformFilterImpl
 {
-    const IBaseFilterVtbl * lpVtbl;
+    BaseFilter filter;
     IUnknown *seekthru_unk;
-
-    LONG refCount;
-    CRITICAL_SECTION csFilter;
-    FILTER_STATE state;
-    REFERENCE_TIME rtStreamStart;
-    IReferenceClock * pClock;
-    FILTER_INFO filterInfo;
-    CLSID clsid;
 
     IPin **ppPins;
     ULONG npins;

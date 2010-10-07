@@ -124,3 +124,29 @@ HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, BasePin_CheckMediaType pQueryAccept, BaseInputPin_Receive pSampleProc,  LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
+
+typedef struct BaseFilter
+{
+	const struct IBaseFilterVtbl *lpVtbl;
+	LONG refCount;
+	CRITICAL_SECTION csFilter;
+
+	FILTER_STATE state;
+	REFERENCE_TIME rtStreamStart;
+	IReferenceClock * pClock;
+	FILTER_INFO filterInfo;
+	CLSID clsid;
+} BaseFilter;
+
+HRESULT WINAPI BaseFilterImpl_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv);
+ULONG WINAPI BaseFilterImpl_AddRef(IBaseFilter * iface);
+ULONG WINAPI BaseFilterImpl_Release(IBaseFilter * iface);
+HRESULT WINAPI BaseFilterImpl_GetClassID(IBaseFilter * iface, CLSID * pClsid);
+HRESULT WINAPI BaseFilterImpl_GetState(IBaseFilter * iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState );
+HRESULT WINAPI BaseFilterImpl_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock);
+HRESULT WINAPI BaseFilterImpl_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock);
+HRESULT WINAPI BaseFilterImpl_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo);
+HRESULT WINAPI BaseFilterImpl_JoinFilterGraph(IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName );
+HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo);
+
+HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo);

@@ -214,7 +214,7 @@ static HRESULT WAVEParserImpl_seek(IBaseFilter *iface)
     IPin_BeginFlush((IPin *)pPin);
 
     /* Make sure this is done while stopped, BeginFlush takes care of this */
-    EnterCriticalSection(&This->Parser.csFilter);
+    EnterCriticalSection(&This->Parser.filter.csFilter);
     IPin_ConnectedTo(This->Parser.ppPins[1], &victim);
     if (victim)
     {
@@ -224,7 +224,7 @@ static HRESULT WAVEParserImpl_seek(IBaseFilter *iface)
 
     pPin->rtStart = pPin->rtCurrent = bytepos;
     ((Parser_OutputPin *)This->Parser.ppPins[1])->dwSamplesProcessed = 0;
-    LeaveCriticalSection(&This->Parser.csFilter);
+    LeaveCriticalSection(&This->Parser.filter.csFilter);
 
     TRACE("Done flushing\n");
     IPin_EndFlush((IPin *)pPin);

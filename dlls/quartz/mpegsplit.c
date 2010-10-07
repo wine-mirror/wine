@@ -675,7 +675,7 @@ static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
         IPin_BeginFlush((IPin *)pin);
 
         /* Make sure this is done while stopped, BeginFlush takes care of this */
-        EnterCriticalSection(&This->Parser.csFilter);
+        EnterCriticalSection(&This->Parser.filter.csFilter);
         memcpy(This->header, header, 4);
         IPin_ConnectedTo(This->Parser.ppPins[1], &victim);
         if (victim)
@@ -688,7 +688,7 @@ static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
         pin->rtStop = MEDIATIME_FROM_BYTES((REFERENCE_TIME)This->EndOfFile);
         This->seek = TRUE;
         This->position = newpos;
-        LeaveCriticalSection(&This->Parser.csFilter);
+        LeaveCriticalSection(&This->Parser.filter.csFilter);
 
         TRACE("Done flushing\n");
         IPin_EndFlush((IPin *)pin);

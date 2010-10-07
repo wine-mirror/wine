@@ -28,17 +28,10 @@ typedef HRESULT (*PFN_DISCONNECT) (LPVOID iface);
 
 struct ParserImpl
 {
-    const IBaseFilterVtbl *lpVtbl;
+    BaseFilter filter;
 
-    LONG refCount;
-    CRITICAL_SECTION csFilter;
-    FILTER_STATE state;
-    REFERENCE_TIME rtStreamStart;
-    IReferenceClock * pClock;
     PFN_CLEANUP fnCleanup;
     PFN_DISCONNECT fnDisconnect;
-    FILTER_INFO filterInfo;
-    CLSID clsid;
 
     PullPin * pInputPin;
     IPin ** ppPins;

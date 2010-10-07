@@ -59,17 +59,13 @@ static HRESULT VfwPin_Construct( IBaseFilter *, LPCRITICAL_SECTION, IPin ** );
 
 typedef struct VfwCapture
 {
-    const IBaseFilterVtbl * lpVtbl;
+    BaseFilter filter;
     const IAMStreamConfigVtbl * IAMStreamConfig_vtbl;
     const IAMVideoProcAmpVtbl * IAMVideoProcAmp_vtbl;
     const IPersistPropertyBagVtbl * IPersistPropertyBag_vtbl;
 
     BOOL init;
     Capture *driver_info;
-    LONG refCount;
-    FILTER_INFO filterInfo;
-    FILTER_STATE state;
-    CRITICAL_SECTION csFilter;
 
     IPin * pOutputPin;
 } VfwCapture;
@@ -101,19 +97,15 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
     if (!pVfwCapture)
         return NULL;
 
-    pVfwCapture->lpVtbl = &VfwCapture_Vtbl;
+    BaseFilter_Init(&pVfwCapture->filter, &VfwCapture_Vtbl, &CLSID_VfwCapture, (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"));
+
     pVfwCapture->IAMStreamConfig_vtbl = &IAMStreamConfig_VTable;
     pVfwCapture->IAMVideoProcAmp_vtbl = &IAMVideoProcAmp_VTable;
     pVfwCapture->IPersistPropertyBag_vtbl = &IPersistPropertyBag_VTable;
-    pVfwCapture->refCount = 1;
-    pVfwCapture->filterInfo.achName[0] = '\0';
-    pVfwCapture->filterInfo.pGraph = NULL;
-    pVfwCapture->state = State_Stopped;
     pVfwCapture->init = FALSE;
-    InitializeCriticalSection(&pVfwCapture->csFilter);
-    pVfwCapture->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter");
-    hr = VfwPin_Construct((IBaseFilter *)&pVfwCapture->lpVtbl,
-                   &pVfwCapture->csFilter, &pVfwCapture->pOutputPin);
+
+    hr = VfwPin_Construct((IBaseFilter *)&pVfwCapture->filter.lpVtbl,
+                   &pVfwCapture->filter.csFilter, &pVfwCapture->pOutputPin);
     if (FAILED(hr))
     {
         CoTaskMemFree(pVfwCapture);
@@ -173,20 +165,10 @@ static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI VfwCapture_AddRef(IBaseFilter * iface)
-{
-    VfwCapture *This = (VfwCapture *)iface;
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-
-    TRACE("%p->() New refcount: %d\n", This, refCount);
-
-    return refCount;
-}
-
 static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
 {
     VfwCapture *This = (VfwCapture *)iface;
-    ULONG refCount = InterlockedDecrement(&This->refCount);
+    ULONG refCount = BaseFilterImpl_Release(iface);
 
     TRACE("%p->() New refcount: %d\n", This, refCount);
 
@@ -197,8 +179,8 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
         TRACE("destroying everything\n");
         if (This->init)
         {
-            if (This->state != State_Stopped)
-                qcap_driver_stop(This->driver_info, &This->state);
+            if (This->filter.state != State_Stopped)
+                qcap_driver_stop(This->driver_info, &This->filter.state);
             qcap_driver_destroy(This->driver_info);
         }
         pin = (BasePin*) This->pOutputPin;
@@ -208,22 +190,10 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
             IPin_Disconnect(This->pOutputPin);
         }
         IPin_Release(This->pOutputPin);
-        This->csFilter.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection(&This->csFilter);
-        This->lpVtbl = NULL;
         CoTaskMemFree(This);
         ObjectRefCount(FALSE);
     }
     return refCount;
-}
-
-/** IPersist methods **/
-
-static HRESULT WINAPI VfwCapture_GetClassID(IBaseFilter * iface, CLSID * pClsid)
-{
-    TRACE("(%p)\n", pClsid);
-    *pClsid = CLSID_VfwCapture;
-    return S_OK;
 }
 
 /** IMediaFilter methods **/
@@ -233,7 +203,7 @@ static HRESULT WINAPI VfwCapture_Stop(IBaseFilter * iface)
     VfwCapture *This = (VfwCapture *)iface;
 
     TRACE("()\n");
-    return qcap_driver_stop(This->driver_info, &This->state);
+    return qcap_driver_stop(This->driver_info, &This->filter.state);
 }
 
 static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
@@ -241,42 +211,14 @@ static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
     VfwCapture *This = (VfwCapture *)iface;
 
     TRACE("()\n");
-    return qcap_driver_pause(This->driver_info, &This->state);
+    return qcap_driver_pause(This->driver_info, &This->filter.state);
 }
 
 static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     VfwCapture *This = (VfwCapture *)iface;
     TRACE("(%x%08x)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
-    return qcap_driver_run(This->driver_info, &This->state);
-}
-
-static HRESULT WINAPI
-VfwCapture_GetState( IBaseFilter * iface, DWORD dwMilliSecsTimeout,
-                     FILTER_STATE *pState )
-{
-    VfwCapture *This = (VfwCapture *)iface;
-
-    TRACE("(%u, %p)\n", dwMilliSecsTimeout, pState);
-
-    *pState = This->state;
-    return S_OK;
-}
-
-static HRESULT WINAPI
-VfwCapture_SetSyncSource(IBaseFilter * iface, IReferenceClock *pClock)
-{
-    TRACE("(%p)\n", pClock);
-
-    return S_OK;
-}
-
-static HRESULT WINAPI
-VfwCapture_GetSyncSource(IBaseFilter * iface, IReferenceClock **ppClock)
-{
-    TRACE("(%p)\n", ppClock);
-
-    return S_OK;
+    return qcap_driver_run(This->driver_info, &This->filter.state);
 }
 
 /** IBaseFilter methods **/
@@ -316,60 +258,23 @@ static HRESULT WINAPI VfwCapture_FindPin(IBaseFilter * iface, LPCWSTR Id, IPin *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI VfwCapture_QueryFilterInfo(IBaseFilter * iface, FILTER_INFO *pInfo)
-{
-    VfwCapture *This = (VfwCapture *)iface;
-
-    TRACE("(%p)\n", pInfo);
-
-    lstrcpyW(pInfo->achName, This->filterInfo.achName);
-    pInfo->pGraph = This->filterInfo.pGraph;
-
-    if (pInfo->pGraph)
-        IFilterGraph_AddRef(pInfo->pGraph);
-    return S_OK;
-}
-
-static HRESULT WINAPI
-VfwCapture_JoinFilterGraph( IBaseFilter * iface, IFilterGraph *pGraph, LPCWSTR pName )
-{
-    VfwCapture *This = (VfwCapture *)iface;
-
-    TRACE("(%p, %s)\n", pGraph, debugstr_w(pName));
-
-    if (pName)
-        lstrcpyW(This->filterInfo.achName, pName);
-    else
-        *This->filterInfo.achName = 0;
-    This->filterInfo.pGraph = pGraph; /* NOTE: do NOT increase ref. count */
-
-    return S_OK;
-}
-
-static HRESULT WINAPI
-VfwCapture_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
-{
-    FIXME("(%p) - stub\n", pVendorInfo);
-    return E_NOTIMPL;
-}
-
 static const IBaseFilterVtbl VfwCapture_Vtbl =
 {
     VfwCapture_QueryInterface,
-    VfwCapture_AddRef,
+    BaseFilterImpl_AddRef,
     VfwCapture_Release,
-    VfwCapture_GetClassID,
+    BaseFilterImpl_GetClassID,
     VfwCapture_Stop,
     VfwCapture_Pause,
     VfwCapture_Run,
-    VfwCapture_GetState,
-    VfwCapture_SetSyncSource,
-    VfwCapture_GetSyncSource,
+    BaseFilterImpl_GetState,
+    BaseFilterImpl_SetSyncSource,
+    BaseFilterImpl_GetSyncSource,
     VfwCapture_EnumPins,
     VfwCapture_FindPin,
-    VfwCapture_QueryFilterInfo,
-    VfwCapture_JoinFilterGraph,
-    VfwCapture_QueryVendorInfo
+    BaseFilterImpl_QueryFilterInfo,
+    BaseFilterImpl_JoinFilterGraph,
+    BaseFilterImpl_QueryVendorInfo
 };
 
 /* AMStreamConfig interface, we only need to implement {G,S}etFormat */
@@ -417,7 +322,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 
     TRACE("(%p): %p->%p\n", iface, pmt, pmt ? pmt->pbFormat : NULL);
 
-    if (This->state != State_Stopped)
+    if (This->filter.state != State_Stopped)
     {
         TRACE("Returning not stopped error\n");
         return VFW_E_NOT_STOPPED;
@@ -441,9 +346,9 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
     }
 
     hr = qcap_driver_set_format(This->driver_info, pmt);
-    if (SUCCEEDED(hr) && This->filterInfo.pGraph && pin->pConnectedTo )
+    if (SUCCEEDED(hr) && This->filter.filterInfo.pGraph && pin->pConnectedTo )
     {
-        hr = IFilterGraph_Reconnect(This->filterInfo.pGraph, This->pOutputPin);
+        hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, This->pOutputPin);
         if (SUCCEEDED(hr))
             TRACE("Reconnection completed, with new media format..\n");
     }
