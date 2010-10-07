@@ -2336,7 +2336,7 @@ enum message_type
     user_handle_t  previous;      /* previous window in Z order */
     rectangle_t    window;        /* window rectangle (in parent coords) */
     rectangle_t    client;        /* client rectangle (in parent coords) */
-    VARARG(valid,rectangles);     /* valid rectangles from WM_NCCALCSIZE (in client coords) */
+    VARARG(valid,rectangles);     /* valid rectangles from WM_NCCALCSIZE (in parent coords) */
 @REPLY
     unsigned int   new_style;     /* new window style */
     unsigned int   new_ex_style;  /* new window extended style */

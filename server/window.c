@@ -2137,10 +2137,10 @@ DECL_HANDLER(set_window_pos)
     {
         rectangle_t valid_rects[2];
         memcpy( valid_rects, (const rectangle_t *)get_req_data() + 1, 2 * sizeof(rectangle_t) );
-        if (win->ex_style & WS_EX_LAYOUTRTL)
+        if (win->parent && win->parent->ex_style & WS_EX_LAYOUTRTL)
         {
-            mirror_rect( &win->client_rect, &valid_rects[0] );
-            mirror_rect( &win->client_rect, &valid_rects[1] );
+            mirror_rect( &win->parent->client_rect, &valid_rects[0] );
+            mirror_rect( &win->parent->client_rect, &valid_rects[1] );
         }
         set_window_pos( win, previous, flags, &window_rect, &client_rect, &visible_rect, valid_rects );
     }
