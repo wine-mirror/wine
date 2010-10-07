@@ -5535,6 +5535,373 @@ static const uri_builder_remove_test uri_builder_remove_tests[] = {
     }
 };
 
+typedef struct _uri_combine_test {
+    const char  *base_uri;
+    DWORD       base_create_flags;
+    const char  *relative_uri;
+    DWORD       relative_create_flags;
+    DWORD       combine_flags;
+    HRESULT     expected;
+    BOOL        todo;
+
+    uri_str_property    str_props[URI_STR_PROPERTY_COUNT];
+    uri_dword_property  dword_props[URI_DWORD_PROPERTY_COUNT];
+} uri_combine_test;
+
+static const uri_combine_test uri_combine_tests[] = {
+    {   "http://google.com/fun/stuff",0,
+        "../not/fun/stuff",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://google.com/not/fun/stuff",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/not/fun/stuff",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/not/fun/stuff",S_OK},
+            {"/not/fun/stuff",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/not/fun/stuff",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/test",0,
+        "zip://test.com/cool",0,
+        0,S_OK,TRUE,
+        {
+            {"zip://test.com/cool",S_OK},
+            {"test.com",S_OK},
+            {"zip://test.com/cool",S_OK},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"/cool",S_OK},
+            {"/cool",S_OK},
+            {"",S_FALSE},
+            {"zip://test.com/cool",S_OK},
+            {"zip",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/use/base/path",0,
+        "?relative",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://google.com/use/base/path?relative",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/use/base/path?relative",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/use/base/path",S_OK},
+            {"/use/base/path?relative",S_OK},
+            {"?relative",S_OK},
+            {"http://google.com/use/base/path?relative",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/path",0,
+        "/test/../test/.././testing",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://google.com/testing",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/testing",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/testing",S_OK},
+            {"/testing",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/testing",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/path",0,
+        "/test/../test/.././testing",Uri_CREATE_ALLOW_RELATIVE,
+        URL_DONT_SIMPLIFY,S_OK,TRUE,
+        {
+            {"http://google.com:80/test/../test/.././testing",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com:80/test/../test/.././testing",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/test/../test/.././testing",S_OK},
+            {"/test/../test/.././testing",S_OK},
+            {"",S_FALSE},
+            {"http://google.com:80/test/../test/.././testing",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org/test/abc",0,
+        "testing/abc/../test",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://winehq.org/test/testing/test",S_OK},
+            {"winehq.org",S_OK},
+            {"http://winehq.org/test/testing/test",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/test/testing/test",S_OK},
+            {"/test/testing/test",S_OK},
+            {"",S_FALSE},
+            {"http://winehq.org/test/testing/test",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org/test/abc",0,
+        "testing/abc/../test",Uri_CREATE_ALLOW_RELATIVE,
+        URL_DONT_SIMPLIFY,S_OK,TRUE,
+        {
+            {"http://winehq.org:80/test/testing/abc/../test",S_OK},
+            {"winehq.org",S_OK},
+            {"http://winehq.org:80/test/testing/abc/../test",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/test/testing/abc/../test",S_OK},
+            {"/test/testing/abc/../test",S_OK},
+            {"",S_FALSE},
+            {"http://winehq.org:80/test/testing/abc/../test",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org/test?query",0,
+        "testing",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://winehq.org/testing",S_OK},
+            {"winehq.org",S_OK},
+            {"http://winehq.org/testing",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/testing",S_OK},
+            {"/testing",S_OK},
+            {"",S_FALSE},
+            {"http://winehq.org/testing",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org/test#frag",0,
+        "testing",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://winehq.org/testing",S_OK},
+            {"winehq.org",S_OK},
+            {"http://winehq.org/testing",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/testing",S_OK},
+            {"/testing",S_OK},
+            {"",S_FALSE},
+            {"http://winehq.org/testing",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "testing?query#frag",Uri_CREATE_ALLOW_RELATIVE,
+        "test",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"test",S_OK},
+            {"",S_FALSE},
+            {"test",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"test",S_OK},
+            {"test",S_OK},
+            {"",S_FALSE},
+            {"test",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "file:///c:/test/test",0,
+        "/testing.mp3",Uri_CREATE_ALLOW_RELATIVE,
+        URL_FILE_USE_PATHURL,S_OK,TRUE,
+        {
+            {"file://c:\\testing.mp3",S_OK},
+            {"",S_FALSE},
+            {"file://c:\\testing.mp3",S_OK},
+            {"",S_FALSE},
+            {".mp3",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"c:\\testing.mp3",S_OK},
+            {"c:\\testing.mp3",S_OK},
+            {"",S_FALSE},
+            {"file://c:\\testing.mp3",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "file:///c:/test/test",0,
+        "/testing.mp3",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"file:///c:/testing.mp3",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/testing.mp3",S_OK},
+            {"",S_FALSE},
+            {".mp3",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/testing.mp3",S_OK},
+            {"/c:/testing.mp3",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/testing.mp3",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "file://test.com/test/test",0,
+        "/testing.mp3",Uri_CREATE_ALLOW_RELATIVE,
+        URL_FILE_USE_PATHURL,S_OK,TRUE,
+        {
+            {"file://\\\\test.com\\testing.mp3",S_OK},
+            {"test.com",S_OK},
+            {"file://\\\\test.com\\testing.mp3",S_OK},
+            {"test.com",S_OK},
+            {".mp3",S_OK},
+            {"",S_FALSE},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"\\testing.mp3",S_OK},
+            {"\\testing.mp3",S_OK},
+            {"",S_FALSE},
+            {"file://\\\\test.com\\testing.mp3",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    }
+};
+
 static inline LPWSTR a2w(LPCSTR str) {
     LPWSTR ret = NULL;
 
@@ -8637,6 +9004,7 @@ static void test_IUriBuilder_Misc(void) {
 static void test_CoInternetCombineIUri(void) {
     HRESULT hr;
     IUri *base, *relative, *result;
+    DWORD i;
 
     base = NULL;
     hr = pCreateUri(http_urlW, 0, 0, &base);
@@ -8663,6 +9031,94 @@ static void test_CoInternetCombineIUri(void) {
 
     if(base) IUri_Release(base);
     if(relative) IUri_Release(relative);
+
+    for(i = 0; i < sizeof(uri_combine_tests)/sizeof(uri_combine_tests[0]); ++i) {
+        LPWSTR baseW = a2w(uri_combine_tests[i].base_uri);
+
+        hr = pCreateUri(baseW, uri_combine_tests[i].base_create_flags, 0, &base);
+        ok(SUCCEEDED(hr), "Error: Expected CreateUri to succeed, got 0x%08x on uri_combine_tests[%d].\n", hr, i);
+        if(SUCCEEDED(hr)) {
+            LPWSTR relativeW = a2w(uri_combine_tests[i].relative_uri);
+
+            hr = pCreateUri(relativeW, uri_combine_tests[i].relative_create_flags, 0, &relative);
+            ok(SUCCEEDED(hr), "Error: Expected CreateUri to succeed, got 0x%08x on uri_combine_tests[%d].\n", hr, i);
+            if(SUCCEEDED(hr)) {
+                result = NULL;
+
+                hr = pCoInternetCombineIUri(base, relative, uri_combine_tests[i].combine_flags, &result, 0);
+                if(uri_combine_tests[i].todo) {
+                    todo_wine {
+                        ok(hr == uri_combine_tests[i].expected,
+                            "Error: CoInternetCombineIUri returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].\n",
+                            hr, uri_combine_tests[i].expected, i);
+                    }
+                } else {
+                    ok(hr == uri_combine_tests[i].expected,
+                        "Error: CoInternetCombineIUri returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].\n",
+                        hr, uri_combine_tests[i]. expected, i);
+                }
+                if(SUCCEEDED(hr)) {
+                    DWORD j;
+
+                    for(j = 0; j < sizeof(uri_combine_tests[i].str_props)/sizeof(uri_combine_tests[i].str_props[0]); ++j) {
+                        uri_str_property prop = uri_combine_tests[i].str_props[j];
+                        BSTR received;
+
+                        hr = IUri_GetPropertyBSTR(result, j, &received, 0);
+                        if(prop.todo) {
+                            todo_wine {
+                                ok(hr == prop.expected,
+                                    "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].str_props[%d].\n",
+                                    hr, prop.expected, i, j);
+                            }
+                            todo_wine {
+                                ok(!strcmp_aw(prop.value, received),
+                                    "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                                    prop.value, wine_dbgstr_w(received), i, j);
+                            }
+                        } else {
+                            ok(hr == prop.expected,
+                                "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].str_props[%d].\n",
+                                hr, prop.expected, i, j);
+                            ok(!strcmp_aw(prop.value, received),
+                                "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
+                                prop.value, wine_dbgstr_w(received), i, j);
+                        }
+                        SysFreeString(received);
+                    }
+
+                    for(j = 0; j < sizeof(uri_combine_tests[i].dword_props)/sizeof(uri_combine_tests[i].dword_props[0]); ++j) {
+                        uri_dword_property prop = uri_combine_tests[i].dword_props[j];
+                        DWORD received;
+
+                        hr = IUri_GetPropertyDWORD(result, j+Uri_PROPERTY_DWORD_START, &received, 0);
+                        if(prop.todo) {
+                            todo_wine {
+                                ok(hr == prop.expected,
+                                    "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].dword_props[%d].\n",
+                                    hr, prop.expected, i, j);
+                            }
+                            todo_wine {
+                                ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
+                                    prop.value, received, i, j);
+                            }
+                        } else {
+                            ok(hr == prop.expected,
+                                "Error: IUri_GetPropertyDWORD returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].dword_props[%d].\n",
+                                hr, prop.expected, i, j);
+                            ok(prop.value == received, "Error: Expected %d, but got %d instead on uri_combine_tests[%d].dword_props[%d].\n",
+                                prop.value, received, i, j);
+                        }
+                    }
+                }
+                if(result) IUri_Release(result);
+            }
+            if(relative) IUri_Release(relative);
+            heap_free(relativeW);
+        }
+        if(base) IUri_Release(base);
+        heap_free(baseW);
+    }
 }
 
 START_TEST(uri) {
