@@ -744,6 +744,9 @@ static void X11DRV_Expose( HWND hwnd, XEvent *xev )
 
     if (event->window != root_window)
     {
+        if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+            mirror_rect( &data->client_rect, &rect );
+
         SERVER_START_REQ( update_window_zorder )
         {
             req->window      = wine_server_user_handle( hwnd );

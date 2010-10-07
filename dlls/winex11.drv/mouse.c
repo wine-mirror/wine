@@ -238,13 +238,18 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
         /* ignore event if a button is pressed, since the mouse is then grabbed too */
         !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask|Button6Mask|Button7Mask)))
     {
+        RECT rect;
+        SetRect( &rect, x, y, x + 1, y + 1 );
+        if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+            mirror_rect( &data->client_rect, &rect );
+
         SERVER_START_REQ( update_window_zorder )
         {
             req->window      = wine_server_user_handle( hwnd );
-            req->rect.left   = x;
-            req->rect.top    = y;
-            req->rect.right  = x + 1;
-            req->rect.bottom = y + 1;
+            req->rect.left   = rect.left;
+            req->rect.top    = rect.top;
+            req->rect.right  = rect.right;
+            req->rect.bottom = rect.bottom;
             wine_server_call( req );
         }
         SERVER_END_REQ;
