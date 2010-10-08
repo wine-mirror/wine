@@ -3349,6 +3349,9 @@ static int FILEDLG95_LOOKIN_InsertItemAfterParent(HWND hwnd,LPITEMIDLIST pidl)
 
   TRACE("\n");
 
+  if (pidl == pidlParent)
+    return -1;
+
   iParentPos = FILEDLG95_LOOKIN_SearchItem(hwnd,(WPARAM)pidlParent,SEARCH_PIDL);
 
   if(iParentPos < 0)
