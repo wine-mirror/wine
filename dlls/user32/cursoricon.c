@@ -1866,19 +1866,72 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
  */
 BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
 {
+    ICONINFOEXW infoW;
+
+    infoW.cbSize = sizeof(infoW);
+    if (!GetIconInfoExW( hIcon, &infoW )) return FALSE;
+    iconinfo->fIcon    = infoW.fIcon;
+    iconinfo->xHotspot = infoW.xHotspot;
+    iconinfo->yHotspot = infoW.yHotspot;
+    iconinfo->hbmColor = infoW.hbmColor;
+    iconinfo->hbmMask  = infoW.hbmMask;
+    return TRUE;
+}
+
+/**********************************************************************
+ *              GetIconInfoExA (USER32.@)
+ */
+BOOL WINAPI GetIconInfoExA( HICON icon, ICONINFOEXA *info )
+{
+    ICONINFOEXW infoW;
+
+    if (info->cbSize != sizeof(*info))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    infoW.cbSize = sizeof(infoW);
+    if (!GetIconInfoExW( icon, &infoW )) return FALSE;
+    info->fIcon    = infoW.fIcon;
+    info->xHotspot = infoW.xHotspot;
+    info->yHotspot = infoW.yHotspot;
+    info->hbmColor = infoW.hbmColor;
+    info->hbmMask  = infoW.hbmMask;
+    info->wResID   = infoW.wResID;
+    WideCharToMultiByte( CP_ACP, 0, infoW.szModName, -1, info->szModName, MAX_PATH, NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, infoW.szResName, -1, info->szResName, MAX_PATH, NULL, NULL );
+    return TRUE;
+}
+
+/**********************************************************************
+ *              GetIconInfoExW (USER32.@)
+ */
+BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
+{
     struct cursoricon_object *ptr;
 
-    if (!(ptr = get_icon_ptr( hIcon ))) return FALSE;
+    if (info->cbSize != sizeof(*info))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!(ptr = get_icon_ptr( icon )))
+    {
+        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        return FALSE;
+    }
 
-    TRACE("%p => %dx%d\n", hIcon, ptr->width, ptr->height);
+    TRACE("%p => %dx%d\n", icon, ptr->width, ptr->height);
 
-    iconinfo->fIcon    = ptr->is_icon;
-    iconinfo->xHotspot = ptr->hotspot.x;
-    iconinfo->yHotspot = ptr->hotspot.y;
-    iconinfo->hbmColor = copy_bitmap( ptr->frames[0].color );
-    iconinfo->hbmMask  = copy_bitmap( ptr->frames[0].mask );
-    release_icon_ptr( hIcon, ptr );
-
+    info->fIcon        = ptr->is_icon;
+    info->xHotspot     = ptr->hotspot.x;
+    info->yHotspot     = ptr->hotspot.y;
+    info->hbmColor     = copy_bitmap( ptr->frames[0].color );
+    info->hbmMask      = copy_bitmap( ptr->frames[0].mask );
+    info->wResID       = 0;  /* FIXME */
+    info->szModName[0] = 0;  /* FIXME */
+    info->szResName[0] = 0;  /* FIXME */
+    release_icon_ptr( icon, ptr );
     return TRUE;
 }
 
