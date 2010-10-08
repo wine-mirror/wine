@@ -641,7 +641,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct
              * Relative addressing tokens are ignored, but that's
              * okay, since we'll catch any address registers when
              * they are initialized (required by spec). */
-            if (ins.dst_count)
+            for (i = 0; i < ins.dst_count; ++i)
             {
                 struct wined3d_shader_src_param dst_rel_addr;
                 struct wined3d_shader_dst_param dst_param;
@@ -1164,11 +1164,11 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)shader->baseShader.device;
     const struct wined3d_shader_frontend *fe = shader->baseShader.frontend;
     void *fe_data = shader->baseShader.frontend_data;
+    struct wined3d_shader_src_param dst_rel_addr[2];
     struct wined3d_shader_src_param src_rel_addr[4];
+    struct wined3d_shader_dst_param dst_param[2];
     struct wined3d_shader_src_param src_param[4];
     struct wined3d_shader_version shader_version;
-    struct wined3d_shader_src_param dst_rel_addr;
-    struct wined3d_shader_dst_param dst_param;
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_context ctx;
     const DWORD *ptr = byte_code;
@@ -1182,7 +1182,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
     ctx.backend_data = backend_ctx;
 
     ins.ctx = &ctx;
-    ins.dst = &dst_param;
+    ins.dst = dst_param;
     ins.src = src_param;
     shader->baseShader.parse_state.current_row = 0;
 
@@ -1221,8 +1221,11 @@ void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffe
             continue;
         }
 
-        /* Destination token */
-        if (ins.dst_count) fe->shader_read_dst_param(fe_data, &ptr, &dst_param, &dst_rel_addr);
+        /* Destination tokens */
+        for (i = 0; i < ins.dst_count; ++i)
+        {
+            fe->shader_read_dst_param(fe_data, &ptr, &dst_param[i], &dst_rel_addr[i]);
+        }
 
         /* Predication token */
         if (ins.predicate)
@@ -1393,13 +1396,14 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
         }
         else
         {
-            struct wined3d_shader_src_param dst_rel_addr, src_rel_addr;
-            struct wined3d_shader_dst_param dst_param;
+            struct wined3d_shader_src_param dst_rel_addr[2];
+            struct wined3d_shader_src_param src_rel_addr;
+            struct wined3d_shader_dst_param dst_param[2];
             struct wined3d_shader_src_param src_param;
 
-            if (ins.dst_count)
+            for (i = 0; i < ins.dst_count; ++i)
             {
-                fe->shader_read_dst_param(fe_data, &ptr, &dst_param, &dst_rel_addr);
+                fe->shader_read_dst_param(fe_data, &ptr, &dst_param[i], &dst_rel_addr[i]);
             }
 
             /* Print out predication source token first - it follows
@@ -1438,12 +1442,12 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                 TRACE("p");
             }
 
-            /* We already read the destination token, print it. */
-            if (ins.dst_count)
+            /* We already read the destination tokens, print them. */
+            for (i = 0; i < ins.dst_count; ++i)
             {
-                shader_dump_ins_modifiers(&dst_param);
-                TRACE(" ");
-                shader_dump_dst_param(&dst_param, &shader_version);
+                shader_dump_ins_modifiers(&dst_param[i]);
+                TRACE(!i ? " " : ", ");
+                shader_dump_dst_param(&dst_param[i], &shader_version);
             }
 
             /* Other source tokens */
