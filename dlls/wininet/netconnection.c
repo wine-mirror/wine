@@ -152,7 +152,6 @@ MAKE_FUNCPTR(SSL_CTX_set_default_verify_paths);
 MAKE_FUNCPTR(SSL_CTX_set_verify);
 MAKE_FUNCPTR(SSL_get_current_cipher);
 MAKE_FUNCPTR(SSL_CIPHER_get_bits);
-MAKE_FUNCPTR(X509_STORE_CTX_get_ex_data);
 
 /* OpenSSL's libcrypto functions that we use */
 MAKE_FUNCPTR(BIO_new_fp);
@@ -162,6 +161,7 @@ MAKE_FUNCPTR(CRYPTO_set_locking_callback);
 MAKE_FUNCPTR(ERR_free_strings);
 MAKE_FUNCPTR(ERR_get_error);
 MAKE_FUNCPTR(ERR_error_string);
+MAKE_FUNCPTR(X509_STORE_CTX_get_ex_data);
 MAKE_FUNCPTR(i2d_X509);
 MAKE_FUNCPTR(sk_num);
 MAKE_FUNCPTR(sk_value);
@@ -431,7 +431,6 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNSSL(SSL_CTX_set_verify);
         DYNSSL(SSL_get_current_cipher);
         DYNSSL(SSL_CIPHER_get_bits);
-	DYNSSL(X509_STORE_CTX_get_ex_data);
 #undef DYNSSL
 
 #define DYNCRYPTO(x) \
@@ -449,6 +448,7 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNCRYPTO(ERR_free_strings);
 	DYNCRYPTO(ERR_get_error);
 	DYNCRYPTO(ERR_error_string);
+	DYNCRYPTO(X509_STORE_CTX_get_ex_data);
 	DYNCRYPTO(i2d_X509);
 	DYNCRYPTO(sk_num);
 	DYNCRYPTO(sk_value);
