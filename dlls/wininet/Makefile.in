@@ -28,6 +28,7 @@ RC_SRCS = \
 	wininet_Es.rc \
 	wininet_Fi.rc \
 	wininet_Fr.rc \
+	wininet_He.rc \
 	wininet_Hu.rc \
 	wininet_It.rc \
 	wininet_Ja.rc \
