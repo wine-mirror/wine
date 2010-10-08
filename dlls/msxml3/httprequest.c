@@ -766,13 +766,34 @@ static HRESULT WINAPI httprequest_get_statusText(IXMLHTTPRequest *iface, BSTR *p
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI httprequest_get_responseXML(IXMLHTTPRequest *iface, IDispatch **ppBody)
+static HRESULT WINAPI httprequest_get_responseXML(IXMLHTTPRequest *iface, IDispatch **body)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    IXMLDOMDocument3 *doc;
+    HRESULT hr;
+    BSTR str;
 
-    FIXME("stub %p %p\n", This, ppBody);
+    TRACE("(%p)->(%p)\n", This, body);
 
-    return E_NOTIMPL;
+    if (!body) return E_INVALIDARG;
+    if (This->state != READYSTATE_COMPLETE) return E_FAIL;
+
+    hr = DOMDocument_create(&CLSID_DOMDocument, NULL, (void**)&doc);
+    if (hr != S_OK) return hr;
+
+    hr = IXMLHTTPRequest_get_responseText(iface, &str);
+    if (hr == S_OK)
+    {
+        VARIANT_BOOL ok;
+
+        hr = IXMLDOMDocument3_loadXML(doc, str, &ok);
+        SysFreeString(str);
+    }
+
+    IXMLDOMDocument3_QueryInterface(doc, &IID_IDispatch, (void**)body);
+    IXMLDOMDocument3_Release(doc);
+
+    return hr;
 }
 
 static HRESULT WINAPI httprequest_get_responseText(IXMLHTTPRequest *iface, BSTR *body)
