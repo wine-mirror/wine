@@ -1662,18 +1662,18 @@ static void dump_extension(const CERT_EXTENSION *ext)
         dump_netscape_cert_type(ext);
 }
 
-static LPCWSTR filetime_to_str(const FILETIME *time)
+static LPCSTR filetime_to_str(const FILETIME *time)
 {
-    static WCHAR date[80];
-    WCHAR dateFmt[80]; /* sufficient for all versions of LOCALE_SSHORTDATE */
+    static char date[80];
+    char dateFmt[80]; /* sufficient for all versions of LOCALE_SSHORTDATE */
     SYSTEMTIME sysTime;
 
     if (!time) return NULL;
 
-    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
+    GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
      sizeof(dateFmt) / sizeof(dateFmt[0]));
     FileTimeToSystemTime(time, &sysTime);
-    GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
+    GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
      sizeof(date) / sizeof(date[0]));
     return date;
 }
@@ -1705,8 +1705,8 @@ static void dump_element(PCCERT_CONTEXT cert)
         CryptMemFree(name);
     }
     TRACE_(chain)("valid from %s to %s\n",
-     debugstr_w(filetime_to_str(&cert->pCertInfo->NotBefore)),
-     debugstr_w(filetime_to_str(&cert->pCertInfo->NotAfter)));
+     filetime_to_str(&cert->pCertInfo->NotBefore),
+     filetime_to_str(&cert->pCertInfo->NotAfter));
     TRACE_(chain)("%d extensions\n", cert->pCertInfo->cExtension);
     for (i = 0; i < cert->pCertInfo->cExtension; i++)
         dump_extension(&cert->pCertInfo->rgExtension[i]);
@@ -1893,7 +1893,7 @@ static void CRYPT_CheckSimpleChain(PCertificateChainEngine engine,
     CERT_BASIC_CONSTRAINTS2_INFO constraints = { FALSE, FALSE, 0 };
 
     TRACE_(chain)("checking chain with %d elements for time %s\n",
-     chain->cElement, debugstr_w(filetime_to_str(time)));
+     chain->cElement, filetime_to_str(time));
     for (i = chain->cElement - 1; i >= 0; i--)
     {
         BOOL isRoot;
