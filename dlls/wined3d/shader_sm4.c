@@ -90,8 +90,8 @@ enum wined3d_sm4_register_type
 
 enum wined3d_sm4_immconst_type
 {
-    WINED3D_SM4_IMMCONST_FLOAT  = 0x1,
-    WINED3D_SM4_IMMCONST_FLOAT4 = 0x2,
+    WINED3D_SM4_IMMCONST_SCALAR = 0x1,
+    WINED3D_SM4_IMMCONST_VEC4   = 0x2,
 };
 
 struct wined3d_sm4_data
@@ -354,14 +354,14 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
 
         switch(immconst_type)
         {
-            case WINED3D_SM4_IMMCONST_FLOAT:
-                src_param->reg.immconst_type = WINED3D_IMMCONST_FLOAT;
+            case WINED3D_SM4_IMMCONST_SCALAR:
+                src_param->reg.immconst_type = WINED3D_IMMCONST_SCALAR;
                 memcpy(src_param->reg.immconst_data, *ptr, 1 * sizeof(DWORD));
                 *ptr += 1;
                 break;
 
-            case WINED3D_SM4_IMMCONST_FLOAT4:
-                src_param->reg.immconst_type = WINED3D_IMMCONST_FLOAT4;
+            case WINED3D_SM4_IMMCONST_VEC4:
+                src_param->reg.immconst_type = WINED3D_IMMCONST_VEC4;
                 memcpy(src_param->reg.immconst_data, *ptr, 4 * sizeof(DWORD));
                 *ptr += 4;
                 break;

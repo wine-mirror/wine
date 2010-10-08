@@ -313,8 +313,8 @@ typedef enum _WINED3DSHADER_PARAM_REGISTER_TYPE
 
 enum wined3d_immconst_type
 {
-    WINED3D_IMMCONST_FLOAT,
-    WINED3D_IMMCONST_FLOAT4,
+    WINED3D_IMMCONST_SCALAR,
+    WINED3D_IMMCONST_VEC4,
 };
 
 #define WINED3DSP_NOSWIZZLE (0 | (1 << 2) | (2 << 4) | (3 << 6))
@@ -2821,13 +2821,7 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
             }
 
         case WINED3DSPR_IMMCONST:
-            switch(reg->immconst_type)
-            {
-                case WINED3D_IMMCONST_FLOAT:
-                    return TRUE;
-                default:
-                    return FALSE;
-            }
+            return reg->immconst_type == WINED3D_IMMCONST_SCALAR;
 
         default:
             return FALSE;
