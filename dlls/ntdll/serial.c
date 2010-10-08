@@ -143,12 +143,7 @@ static NTSTATUS get_baud_rate(int fd, SERIAL_BAUD_RATE* sbr)
         ERR("tcgetattr error '%s'\n", strerror(errno));
         return FILE_GetNtStatus();
     }
-#ifndef __EMX__
-#ifdef CBAUD
-    speed = port.c_cflag & CBAUD;
-#else
     speed = cfgetospeed(&port);
-#endif
     switch (speed)
     {
     case B0:            sbr->BaudRate = 0;      break;
@@ -183,9 +178,6 @@ static NTSTATUS get_baud_rate(int fd, SERIAL_BAUD_RATE* sbr)
         ERR("unknown speed %x\n", speed);
         return STATUS_INVALID_PARAMETER;
     }
-#else
-    return STATUS_INVALID_PARAMETER;
-#endif
     return STATUS_SUCCESS;
 }
 
@@ -429,46 +421,44 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
         return FILE_GetNtStatus();
     }
 
-#ifdef CBAUD
-    port.c_cflag &= ~CBAUD;
     switch (sbr->BaudRate)
     {
-    case 0:             port.c_cflag |= B0;     break;
-    case 50:            port.c_cflag |= B50;    break;
-    case 75:            port.c_cflag |= B75;    break;
-    case 110:   
-    case CBR_110:       port.c_cflag |= B110;   break;
-    case 134:           port.c_cflag |= B134;   break;
-    case 150:           port.c_cflag |= B150;   break;
-    case 200:           port.c_cflag |= B200;   break;
-    case 300:           
-    case CBR_300:       port.c_cflag |= B300;   break;
+    case 0:         cfsetospeed( &port, B0 ); break;
+    case 50:        cfsetospeed( &port, B50 ); break;
+    case 75:        cfsetospeed( &port, B75 ); break;
+    case 110:
+    case CBR_110:   cfsetospeed( &port, B110 ); break;
+    case 134:       cfsetospeed( &port, B134 ); break;
+    case 150:       cfsetospeed( &port, B150 ); break;
+    case 200:       cfsetospeed( &port, B200 ); break;
+    case 300:
+    case CBR_300:   cfsetospeed( &port, B300 ); break;
     case 600:
-    case CBR_600:       port.c_cflag |= B600;   break;
+    case CBR_600:   cfsetospeed( &port, B600 ); break;
     case 1200:
-    case CBR_1200:	port.c_cflag |= B1200;  break;
-    case 1800:		port.c_cflag |= B1800;	break;
+    case CBR_1200:  cfsetospeed( &port, B1200 ); break;
+    case 1800:      cfsetospeed( &port, B1800 ); break;
     case 2400:
-    case CBR_2400:	port.c_cflag |= B2400;	break;
+    case CBR_2400:  cfsetospeed( &port, B2400 ); break;
     case 4800:
-    case CBR_4800:	port.c_cflag |= B4800;	break;
+    case CBR_4800:  cfsetospeed( &port, B4800 ); break;
     case 9600:
-    case CBR_9600:	port.c_cflag |= B9600;	break;
+    case CBR_9600:  cfsetospeed( &port, B9600 ); break;
     case 19200:
-    case CBR_19200:	port.c_cflag |= B19200;	break;
+    case CBR_19200: cfsetospeed( &port, B19200 ); break;
     case 38400:
-    case CBR_38400:	port.c_cflag |= B38400;	break;
+    case CBR_38400: cfsetospeed( &port, B38400 ); break;
 #ifdef B57600
-    case 57600:		port.c_cflag |= B57600;	break;
+    case 57600: cfsetospeed( &port, B57600 ); break;
 #endif
 #ifdef B115200
-    case 115200:	port.c_cflag |= B115200;break;
+    case 115200: cfsetospeed( &port, B115200 ); break;
 #endif
 #ifdef B230400
-    case 230400:	port.c_cflag |= B230400;break;
+    case 230400: cfsetospeed( &port, B230400 ); break;
 #endif
 #ifdef B460800
-    case 460800:	port.c_cflag |= B460800;break;
+    case 460800: cfsetospeed( &port, B460800 ); break;
 #endif
     default:
 #if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCSSERIAL)
@@ -490,7 +480,7 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
                  "(see man setserial). If you have incapacitated a Hayes type modem,\n"
                  "reset it and it will probably recover.\n", sbr->BaudRate, arby);
             ioctl(fd, TIOCSSERIAL, &nuts);
-            port.c_cflag |= B38400;
+            cfsetospeed( &port, B38400 );
         }
         break;
 #else     /* Don't have linux/serial.h or lack TIOCSSERIAL */
@@ -498,54 +488,7 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
         return STATUS_NOT_SUPPORTED;
 #endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
     }
-#elif !defined(__EMX__)
-    switch (sbr->BaudRate)
-    {
-    case 0:             port.c_ospeed = B0;     break;
-    case 50:            port.c_ospeed = B50;    break;
-    case 75:            port.c_ospeed = B75;    break;
-    case 110:
-    case CBR_110:       port.c_ospeed = B110;   break;
-    case 134:           port.c_ospeed = B134;   break;
-    case 150:           port.c_ospeed = B150;   break;
-    case 200:           port.c_ospeed = B200;   break;
-    case 300:
-    case CBR_300:       port.c_ospeed = B300;   break;
-    case 600:
-    case CBR_600:       port.c_ospeed = B600;   break;
-    case 1200:
-    case CBR_1200:      port.c_ospeed = B1200;  break;
-    case 1800:          port.c_ospeed = B1800;  break;
-    case 2400:
-    case CBR_2400:      port.c_ospeed = B2400;  break;
-    case 4800:
-    case CBR_4800:      port.c_ospeed = B4800;  break;
-    case 9600:
-    case CBR_9600:      port.c_ospeed = B9600;  break;
-    case 19200:
-    case CBR_19200:     port.c_ospeed = B19200; break;
-    case 38400:
-    case CBR_38400:     port.c_ospeed = B38400; break;
-#ifdef B57600
-    case 57600:
-    case CBR_57600:     port.c_ospeed = B57600; break;
-#endif
-#ifdef B115200
-    case 115200:
-    case CBR_115200:    port.c_ospeed = B115200;break;
-#endif
-#ifdef B230400
-    case 230400:	port.c_ospeed = B230400;break;
-#endif
-#ifdef B460800
-    case 460800:	port.c_ospeed = B460800;break;
-#endif
-    default:
-        ERR("baudrate %d\n", sbr->BaudRate);
-        return STATUS_NOT_SUPPORTED;
-    }
-    port.c_ispeed = port.c_ospeed;
-#endif
+    cfsetispeed( &port, cfgetospeed(&port) );
     if (tcsetattr(fd, TCSANOW, &port) == -1)
     {
         ERR("tcsetattr error '%s'\n", strerror(errno));
