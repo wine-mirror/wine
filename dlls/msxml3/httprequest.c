@@ -90,9 +90,11 @@ static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
 
 static void httprequest_setreadystate(httprequest *This, READYSTATE state)
 {
+    READYSTATE last = This->state;
+
     This->state = state;
 
-    if (This->sink)
+    if (This->sink && last != state)
     {
         DISPPARAMS params;
 
