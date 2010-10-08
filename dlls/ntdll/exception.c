@@ -48,14 +48,17 @@ typedef struct
 
 static struct list vectored_handlers = LIST_INIT(vectored_handlers);
 
-static RTL_CRITICAL_SECTION vectored_handlers_section;
-static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_RWLOCK vectored_handlers_lock;
+
+/**********************************************************************
+ *           exceptions_init
+ *
+ * Initialize read/write lock used by the vectored exception handling.
+ */
+void exceptions_init(void)
 {
-    0, 0, &vectored_handlers_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": vectored_handlers_section") }
-};
-static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+    RtlInitializeResource(&vectored_handlers_lock);
+}
 
 /**********************************************************************
  *           wait_suspend
@@ -162,7 +165,7 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     except_ptrs.ExceptionRecord = rec;
     except_ptrs.ContextRecord = context;
 
-    RtlEnterCriticalSection( &vectored_handlers_section );
+    RtlAcquireResourceShared( &vectored_handlers_lock, TRUE );
     LIST_FOR_EACH( ptr, &vectored_handlers )
     {
         VECTORED_HANDLER *handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
@@ -172,7 +175,7 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
         TRACE( "handler at %p returned %x\n", handler->func, ret );
         if (ret == EXCEPTION_CONTINUE_EXECUTION) break;
     }
-    RtlLeaveCriticalSection( &vectored_handlers_section );
+    RtlReleaseResource( &vectored_handlers_lock );
     return ret;
 }
 
@@ -214,10 +217,10 @@ PVOID WINAPI RtlAddVectoredExceptionHandler( ULONG first, PVECTORED_EXCEPTION_HA
     if (handler)
     {
         handler->func = func;
-        RtlEnterCriticalSection( &vectored_handlers_section );
+        RtlAcquireResourceExclusive( &vectored_handlers_lock, TRUE );
         if (first) list_add_head( &vectored_handlers, &handler->entry );
         else list_add_tail( &vectored_handlers, &handler->entry );
-        RtlLeaveCriticalSection( &vectored_handlers_section );
+        RtlReleaseResource( &vectored_handlers_lock );
     }
     return handler;
 }
@@ -231,7 +234,7 @@ ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
     struct list *ptr;
     ULONG ret = FALSE;
 
-    RtlEnterCriticalSection( &vectored_handlers_section );
+    RtlAcquireResourceExclusive( &vectored_handlers_lock, TRUE );
     LIST_FOR_EACH( ptr, &vectored_handlers )
     {
         VECTORED_HANDLER *curr_handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
@@ -242,7 +245,7 @@ ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
             break;
         }
     }
-    RtlLeaveCriticalSection( &vectored_handlers_section );
+    RtlReleaseResource( &vectored_handlers_lock );
     if (ret) RtlFreeHeap( GetProcessHeap(), 0, handler );
     return ret;
 }

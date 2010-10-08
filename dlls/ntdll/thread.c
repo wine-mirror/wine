@@ -296,6 +296,7 @@ HANDLE thread_init(void)
     user_shared_data->TickCountMultiplier = 1 << 24;
 
     fill_cpu_info();
+    exceptions_init();
 
     return exe_file;
 }
