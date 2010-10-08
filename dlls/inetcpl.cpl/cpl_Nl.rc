@@ -26,5 +26,37 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_CPL_NAME        "Internet-instellingen"
-    IDS_CPL_INFO        "Configureer Wine Internet Browser en gerelateerde instellingen" 
+    IDS_CPL_INFO        "Configureer Wine Internet Browser en gerelateerde instellingen"
+END
+
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Algemeen"
+BEGIN
+
+    GROUPBOX    " Startpagina ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "Hier kunt u het adres kiezen dat gebruikt wordt als uw startpagina.",
+                IDC_STATIC, 58, 10, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "&Huidige pagina", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "&Standaardpagina", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "&Lege pagina", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Inhoud"
+BEGIN
+
+    GROUPBOX    " Certificaten ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Certificaten worden gebruikt voor uw persoonlijke identificatie en om certificaat-autoriteiten en uitgevers te identificeren.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Certificaten...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON  "Uitgevers...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
 END
