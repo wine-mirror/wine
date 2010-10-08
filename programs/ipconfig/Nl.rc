@@ -44,4 +44,5 @@ STRINGTABLE
     STRING_DHCP_ENABLED, "DHCP geactiveerd"
     STRING_YES, "Ja"
     STRING_NO, "Nee"
+    STRING_DEFAULT_GATEWAY, "Standaard gateway"
 }
