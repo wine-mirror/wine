@@ -3141,6 +3141,11 @@ START_TEST(url)
     hurlmon = GetModuleHandle("urlmon.dll");
     pCreateAsyncBindCtxEx = (void*) GetProcAddress(hurlmon, "CreateAsyncBindCtxEx");
 
+    if(!GetProcAddress(hurlmon, "CompareSecurityIds")) {
+        win_skip("Too old IE\n");
+        return;
+    }
+
     complete_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     complete_event2 = CreateEvent(NULL, FALSE, FALSE, NULL);
     thread_id = GetCurrentThreadId();
