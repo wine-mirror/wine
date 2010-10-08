@@ -940,7 +940,6 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
         info->frames[0].mask  = mask;
         info->frames[0].alpha = alpha;
         release_icon_ptr( hObj, info );
-        USER_Driver->pCreateCursorIcon( hObj );
     }
     else
     {
@@ -1184,6 +1183,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
 {
     POINT hotspot;
     BITMAPINFO *bmi;
+    HICON icon;
 
     TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
                    bits, cbSize, dwVersion, width, height,
@@ -1205,8 +1205,10 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
         bmi = (BITMAPINFO *)(pt + 2);
     }
 
-    return CURSORICON_CreateIconFromBMI( bmi, hotspot, bIcon, dwVersion,
+    icon = CURSORICON_CreateIconFromBMI( bmi, hotspot, bIcon, dwVersion,
 					 width, height, cFlag );
+    if (icon) USER_Driver->pCreateCursorIcon( icon );
+    return icon;
 }
 
 
@@ -1274,6 +1276,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
 end:
     TRACE("loaded %s -> %p\n", debugstr_w( filename ), hIcon );
     UnmapViewOfFile( bits );
+    if (hIcon) USER_Driver->pCreateCursorIcon( hIcon );
     return hIcon;
 }
 
