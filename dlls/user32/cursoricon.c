@@ -85,9 +85,6 @@ typedef struct tagICONCACHE
     HRSRC                hRsrc;
     HRSRC                hGroupRsrc;
     HICON                hIcon;
-
-    INT                  count;
-
 } ICONCACHE;
 
 static struct list icon_cache = LIST_INIT( icon_cache );
@@ -412,7 +409,6 @@ static HICON CURSORICON_FindSharedIcon( HMODULE hModule, HRSRC hRsrc )
     LIST_FOR_EACH_ENTRY( ptr, &icon_cache, ICONCACHE, entry )
         if ( ptr->hModule == hModule && ptr->hRsrc == hRsrc )
         {
-            ptr->count++;
             hIcon = ptr->hIcon;
             break;
         }
@@ -468,34 +464,10 @@ static void CURSORICON_AddSharedIcon( HMODULE hModule, HRSRC hRsrc, HRSRC hGroup
     ptr->hRsrc   = hRsrc;
     ptr->hIcon  = hIcon;
     ptr->hGroupRsrc = hGroupRsrc;
-    ptr->count   = 1;
 
     EnterCriticalSection( &IconCrst );
     list_add_head( &icon_cache, &ptr->entry );
     LeaveCriticalSection( &IconCrst );
-}
-
-/**********************************************************************
- *	    CURSORICON_DelSharedIcon
- */
-static INT CURSORICON_DelSharedIcon( HICON hIcon )
-{
-    INT count = -1;
-    ICONCACHE *ptr;
-
-    EnterCriticalSection( &IconCrst );
-
-    LIST_FOR_EACH_ENTRY( ptr, &icon_cache, ICONCACHE, entry )
-        if ( ptr->hIcon == hIcon )
-        {
-            if ( ptr->count > 0 ) ptr->count--;
-            count = ptr->count;
-            break;
-        }
-
-    LeaveCriticalSection( &IconCrst );
-
-    return count;
 }
 
 /**********************************************************************
@@ -1599,8 +1571,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
 {
     TRACE_(icon)("%p\n", hIcon );
 
-    if (CURSORICON_DelSharedIcon( hIcon ) == -1)
-        free_icon_handle( hIcon );
+    if (!CURSORICON_FindCache( hIcon )) free_icon_handle( hIcon );
     return TRUE;
 }
 
