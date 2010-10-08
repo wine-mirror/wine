@@ -824,13 +824,55 @@ static HRESULT WINAPI httprequest_get_responseText(IXMLHTTPRequest *iface, BSTR 
     return hr;
 }
 
-static HRESULT WINAPI httprequest_get_responseBody(IXMLHTTPRequest *iface, VARIANT *pvarBody)
+static HRESULT WINAPI httprequest_get_responseBody(IXMLHTTPRequest *iface, VARIANT *body)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    HGLOBAL hglobal;
+    HRESULT hr;
 
-    FIXME("stub %p %p\n", This, pvarBody);
+    TRACE("(%p)->(%p)\n", This, body);
 
-    return E_NOTIMPL;
+    if (!body) return E_INVALIDARG;
+    if (This->state != READYSTATE_COMPLETE) return E_FAIL;
+
+    hr = GetHGlobalFromStream(This->bsc->stream, &hglobal);
+    if (hr == S_OK)
+    {
+        void *ptr = GlobalLock(hglobal);
+        DWORD size = GlobalSize(hglobal);
+
+        SAFEARRAYBOUND bound;
+        SAFEARRAY *array;
+
+        bound.lLbound = 0;
+        bound.cElements = size;
+        array = SafeArrayCreate(VT_UI1, 1, &bound);
+
+        if (array)
+        {
+            void *dest;
+
+            V_VT(body) = VT_ARRAY | VT_UI1;
+            V_ARRAY(body) = array;
+
+            hr = SafeArrayAccessData(array, &dest);
+            if (hr == S_OK)
+            {
+                memcpy(dest, ptr, size);
+                SafeArrayUnaccessData(array);
+            }
+            else
+            {
+                VariantClear(body);
+            }
+        }
+        else
+            hr = E_FAIL;
+
+        GlobalUnlock(hglobal);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI httprequest_get_responseStream(IXMLHTTPRequest *iface, VARIANT *pvarBody)

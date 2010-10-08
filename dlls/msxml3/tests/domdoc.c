@@ -3195,7 +3195,8 @@ static void test_XMLHTTP(void)
     VARIANT dummy;
     VARIANT async;
     VARIANT varbody;
-    LONG state, status, ref;
+    LONG state, status, ref, bound;
+    void *ptr;
     IDispatch *event;
     HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
                                   CLSCTX_INPROC_SERVER, &IID_IXMLHttpRequest,
@@ -3387,6 +3388,27 @@ todo_wine {
             "expected %s, got %s\n", xmltestbodyA, wine_dbgstr_w(bstrResponse));
         SysFreeString(bstrResponse);
     }
+
+    hr = IXMLHttpRequest_get_responseBody(pXMLHttpRequest, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    V_VT(&varbody) = VT_EMPTY;
+    hr = IXMLHttpRequest_get_responseBody(pXMLHttpRequest, &varbody);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&varbody) == (VT_ARRAY|VT_UI1), "got type %d, expected %d\n", V_VT(&varbody), VT_ARRAY|VT_UI1);
+    ok(SafeArrayGetDim(V_ARRAY(&varbody)) == 1, "got %d, expected one dimension\n", SafeArrayGetDim(V_ARRAY(&varbody)));
+
+    bound = -1;
+    hr = SafeArrayGetLBound(V_ARRAY(&varbody), 1, &bound);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(bound == 0, "got %d, expected zero bound\n", bound);
+
+    hr = SafeArrayAccessData(V_ARRAY(&varbody), &ptr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(memcmp(ptr, xmltestbodyA, sizeof(xmltestbodyA)-1) == 0, "got wrond body data\n");
+    SafeArrayUnaccessData(V_ARRAY(&varbody));
+
+    VariantClear(&varbody);
 
     SysFreeString(url);
 
