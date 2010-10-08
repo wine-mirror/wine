@@ -1018,6 +1018,10 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
             TRACE("cb");
             break;
 
+        case WINED3DSPR_NULL:
+            TRACE("null");
+            break;
+
         default:
             TRACE("unhandled_rtype(%#x)", reg->type);
             break;
@@ -1044,7 +1048,9 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
         }
         TRACE(")");
     }
-    else if (reg->type != WINED3DSPR_RASTOUT && reg->type != WINED3DSPR_MISCTYPE)
+    else if (reg->type != WINED3DSPR_RASTOUT
+            && reg->type != WINED3DSPR_MISCTYPE
+            && reg->type != WINED3DSPR_NULL)
     {
         if (reg->array_idx != ~0U)
         {
@@ -1077,7 +1083,7 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
 
     shader_dump_register(&param->reg, shader_version);
 
-    if (write_mask != WINED3DSP_WRITEMASK_ALL)
+    if (write_mask && write_mask != WINED3DSP_WRITEMASK_ALL)
     {
         static const char *write_mask_chars = "xyzw";
 
