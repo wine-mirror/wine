@@ -145,7 +145,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_MUL,    WINED3DSIH_MUL,         1,  2},
     {WINED3D_SM4_OP_RET,    WINED3DSIH_RET,         0,  0},
     {WINED3D_SM4_OP_RSQ,    WINED3DSIH_RSQ,         1,  1},
-    {WINED3D_SM4_OP_SINCOS, WINED3DSIH_SINCOS,      1,  2},
+    {WINED3D_SM4_OP_SINCOS, WINED3DSIH_SINCOS,      2,  1},
 };
 
 static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
