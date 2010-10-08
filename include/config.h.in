@@ -466,6 +466,9 @@
 /* Define to 1 if you have the <mach-o/dyld_images.h> header file. */
 #undef HAVE_MACH_O_DYLD_IMAGES_H
 
+/* Define to 1 if you have the <mach-o/loader.h> header file. */
+#undef HAVE_MACH_O_LOADER_H
+
 /* Define to 1 if you have the <mach-o/nlist.h> header file. */
 #undef HAVE_MACH_O_NLIST_H
 

@@ -418,6 +418,7 @@ AC_CHECK_HEADERS(\
 	linux/types.h \
 	linux/ucdrom.h \
 	mach-o/nlist.h \
+	mach-o/loader.h \
 	mach/mach.h \
 	mach/machine.h \
 	machine/cpu.h \
