@@ -3225,6 +3225,9 @@ if (0)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 
+    hr = IXMLHttpRequest_abort(pXMLHttpRequest);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     /* send before open */
     hr = IXMLHttpRequest_send(pXMLHttpRequest, dummy);
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
@@ -3266,7 +3269,7 @@ if (0)
     state = -1;
     hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, &state);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(state == 0, "got %d, expected 0\n", state);
+    ok(state == READYSTATE_UNINITIALIZED, "got %d, expected READYSTATE_UNINITIALIZED\n", state);
 
     event = create_dispevent();
     ref = IDispatch_AddRef(event);
@@ -3297,7 +3300,19 @@ if (0)
     state = -1;
     hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, &state);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(state == 1, "got %d, expected 1\n", state);
+    ok(state == READYSTATE_LOADING, "got %d, expected READYSTATE_LOADING\n", state);
+
+    hr = IXMLHttpRequest_abort(pXMLHttpRequest);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    state = -1;
+    hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, &state);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(state == READYSTATE_UNINITIALIZED || broken(state == READYSTATE_LOADING) /* win98, win2k */,
+        "got %d, expected READYSTATE_UNINITIALIZED\n", state);
+
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, method, url, async, dummy, dummy);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, _bstr_("header1"), _bstr_("value1"));
     ok(hr == S_OK, "got 0x%08x\n", hr);

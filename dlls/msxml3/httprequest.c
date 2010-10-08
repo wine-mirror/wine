@@ -731,9 +731,14 @@ static HRESULT WINAPI httprequest_abort(IXMLHTTPRequest *iface)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
 
-    FIXME("stub (%p)\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    BindStatusCallback_Detach(This->bsc);
+    This->bsc = NULL;
+
+    httprequest_setreadystate(This, READYSTATE_UNINITIALIZED);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI httprequest_get_status(IXMLHTTPRequest *iface, LONG *status)
