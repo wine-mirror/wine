@@ -38,6 +38,7 @@
 #include "wine/server.h"
 #include "controls.h"
 #include "user_private.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -76,15 +77,10 @@ static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
 
 /**********************************************************************
  * ICONCACHE for cursors/icons loaded with LR_SHARED.
- *
- * FIXME: This should not be allocated on the system heap, but on a
- *        subsystem-global heap (i.e. one for all Win16 processes,
- *        and one for each Win32 process).
  */
 typedef struct tagICONCACHE
 {
-    struct tagICONCACHE *next;
-
+    struct list          entry;
     HMODULE              hModule;
     HRSRC                hRsrc;
     HRSRC                hGroupRsrc;
@@ -94,7 +90,7 @@ typedef struct tagICONCACHE
 
 } ICONCACHE;
 
-static ICONCACHE *IconAnchor = NULL;
+static struct list icon_cache = LIST_INIT( icon_cache );
 
 static CRITICAL_SECTION IconCrst;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -413,7 +409,7 @@ static HICON CURSORICON_FindSharedIcon( HMODULE hModule, HRSRC hRsrc )
 
     EnterCriticalSection( &IconCrst );
 
-    for ( ptr = IconAnchor; ptr; ptr = ptr->next )
+    LIST_FOR_EACH_ENTRY( ptr, &icon_cache, ICONCACHE, entry )
         if ( ptr->hModule == hModule && ptr->hRsrc == hRsrc )
         {
             ptr->count++;
@@ -443,16 +439,15 @@ static ICONCACHE* CURSORICON_FindCache(HICON hIcon)
 {
     ICONCACHE *ptr;
     ICONCACHE *pRet=NULL;
-    BOOL IsFound = FALSE;
 
     EnterCriticalSection( &IconCrst );
 
-    for (ptr = IconAnchor; ptr != NULL && !IsFound; ptr = ptr->next)
+    LIST_FOR_EACH_ENTRY( ptr, &icon_cache, ICONCACHE, entry )
     {
         if ( hIcon == ptr->hIcon )
         {
-            IsFound = TRUE;
             pRet = ptr;
+            break;
         }
     }
 
@@ -476,8 +471,7 @@ static void CURSORICON_AddSharedIcon( HMODULE hModule, HRSRC hRsrc, HRSRC hGroup
     ptr->count   = 1;
 
     EnterCriticalSection( &IconCrst );
-    ptr->next    = IconAnchor;
-    IconAnchor   = ptr;
+    list_add_head( &icon_cache, &ptr->entry );
     LeaveCriticalSection( &IconCrst );
 }
 
@@ -491,7 +485,7 @@ static INT CURSORICON_DelSharedIcon( HICON hIcon )
 
     EnterCriticalSection( &IconCrst );
 
-    for ( ptr = IconAnchor; ptr; ptr = ptr->next )
+    LIST_FOR_EACH_ENTRY( ptr, &icon_cache, ICONCACHE, entry )
         if ( ptr->hIcon == hIcon )
         {
             if ( ptr->count > 0 ) ptr->count--;
