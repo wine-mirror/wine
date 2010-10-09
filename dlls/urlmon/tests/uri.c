@@ -5578,7 +5578,7 @@ static const uri_combine_test uri_combine_tests[] = {
     },
     {   "http://google.com/test",0,
         "zip://test.com/cool",0,
-        0,S_OK,TRUE,
+        0,S_OK,FALSE,
         {
             {"zip://test.com/cool",S_OK},
             {"test.com",S_OK},
@@ -5897,6 +5897,95 @@ static const uri_combine_test uri_combine_tests[] = {
             {Uri_HOST_DNS,S_OK},
             {0,S_FALSE},
             {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* URL_DONT_SIMPLIFY has no effect. */
+    {   "http://google.com/test",0,
+        "zip://test.com/cool/../cool/test",0,
+        URL_DONT_SIMPLIFY,S_OK,FALSE,
+        {
+            {"zip://test.com/cool/test",S_OK},
+            {"test.com",S_OK},
+            {"zip://test.com/cool/test",S_OK},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"/cool/test",S_OK},
+            {"/cool/test",S_OK},
+            {"",S_FALSE},
+            /* The resulting IUri has the same Raw URI as the relative URI (only IE 8).
+             * On IE 7 it reduces the path in the Raw URI.
+             */
+            {"zip://test.com/cool/../cool/test",S_OK,FALSE,"zip://test.com/cool/test"},
+            {"zip",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_UNKNOWN,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* FILE_USE_PATHURL has no effect in IE 8, in IE 7 the
+     * resulting URI is converted into a dos path.
+     */
+    {   "http://google.com/test",0,
+        "file:///c:/test/",0,
+        URL_FILE_USE_PATHURL,S_OK,FALSE,
+        {
+            {"file:///c:/test/",S_OK,FALSE,"file://c:\\test\\"},
+            {"",S_FALSE},
+            {"file:///c:/test/",S_OK,FALSE,"file://c:\\test\\"},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/test/",S_OK,FALSE,"c:\\test\\"},
+            {"/c:/test/",S_OK,FALSE,"c:\\test\\"},
+            {"",S_FALSE},
+            {"file:///c:/test/",S_OK,FALSE,"file://c:\\test\\"},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://google.com/test",0,
+        "http://test.com/test#%30test",0,
+        URL_DONT_UNESCAPE_EXTRA_INFO,S_OK,FALSE,
+        {
+            {"http://test.com/test#0test",S_OK},
+            {"test.com",S_OK},
+            {"http://test.com/test#0test",S_OK},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"#0test",S_OK},
+            {"test.com",S_OK},
+            {"",S_FALSE},
+            {"/test",S_OK},
+            {"/test",S_OK},
+            {"",S_FALSE},
+            /* IE 7 decodes the %30 to a 0 in the Raw URI. */
+            {"http://test.com/test#%30test",S_OK,FALSE,"http://test.com/test#0test"},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
     }
@@ -9072,7 +9161,8 @@ static void test_CoInternetCombineIUri(void) {
                                     hr, prop.expected, i, j);
                             }
                             todo_wine {
-                                ok(!strcmp_aw(prop.value, received),
+                                ok(!strcmp_aw(prop.value, received) ||
+                                   broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
                                     "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
                                     prop.value, wine_dbgstr_w(received), i, j);
                             }
@@ -9080,7 +9170,8 @@ static void test_CoInternetCombineIUri(void) {
                             ok(hr == prop.expected,
                                 "Error: IUri_GetPropertyBSTR returned 0x%08x, expected 0x%08x on uri_combine_tests[%d].str_props[%d].\n",
                                 hr, prop.expected, i, j);
-                            ok(!strcmp_aw(prop.value, received),
+                            ok(!strcmp_aw(prop.value, received) ||
+                               broken(prop.broken_value && !strcmp_aw(prop.broken_value, received)),
                                 "Error: Expected %s but got %s instead on uri_combine_tests[%d].str_props[%d].\n",
                                 prop.value, wine_dbgstr_w(received), i, j);
                         }

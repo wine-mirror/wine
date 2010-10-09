@@ -5589,12 +5589,63 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
     return S_OK;
 }
 
+static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result) {
+    Uri *ret;
+    HRESULT hr;
+    parse_data data;
+
+    /* Base case is when the relative Uri has a scheme name,
+     * if it does, then 'result' will contain the same data
+     * as the relative Uri.
+     */
+    if(relative->scheme_start > -1) {
+        DWORD create_flags = 0;
+
+        memset(&data, 0, sizeof(parse_data));
+
+        data.uri = SysAllocString(relative->raw_uri);
+        if(!data.uri) {
+            IUri_Release(URI(ret));
+            *result = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        parse_uri(&data, 0);
+
+        ret = create_uri_obj();
+        if(!ret) {
+            *result = NULL;
+            return E_OUTOFMEMORY;
+        }
+
+        ret->raw_uri = data.uri;
+        hr = canonicalize_uri(&data, ret, 0);
+        if(FAILED(hr)) {
+            IUri_Release(URI(ret));
+            *result = NULL;
+            return hr;
+        }
+
+        apply_default_flags(&create_flags);
+        ret->create_flags = create_flags;
+
+        *result = URI(ret);
+    } else {
+        *result = NULL;
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 /***********************************************************************
  *           CoInternetCombineIUri (urlmon.@)
  */
 HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD dwCombineFlags,
                                      IUri **ppCombinedUri, DWORD_PTR dwReserved)
 {
+    HRESULT hr;
+    Uri *relative, *base;
     TRACE("(%p %p %x %p %x)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
 
     if(!ppCombinedUri)
@@ -5605,6 +5656,17 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
         return E_INVALIDARG;
     }
 
-    FIXME("(%p %p %x %p %x): stub\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
-    return E_NOTIMPL;
+    relative = get_uri_obj(pRelativeUri);
+    base = get_uri_obj(pBaseUri);
+    if(!relative || !base) {
+        *ppCombinedUri = NULL;
+        FIXME("(%p %p %x %p %x) Unknown IUri types not supported yet.\n",
+            pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+        return E_NOTIMPL;
+    }
+
+    hr = combine_uri(base, relative, dwCombineFlags, ppCombinedUri);
+    if(hr == E_NOTIMPL)
+        FIXME("(%p %p %x %p %x): stub\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+    return hr;
 }
