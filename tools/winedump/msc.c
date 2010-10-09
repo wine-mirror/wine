@@ -1059,10 +1059,10 @@ int codeview_dump_symbols(const void* root, unsigned long size)
                    sym->stack_v3.symtype, curr_func);
             break;
 
-        case S_BPREL_XXXX_V3:
-            printf("\tS-BP-relative XXXX V3: '%s' @%d type:%x unkn:%x (in %s)\n",
-                   sym->stack_xxxx_v3.name, sym->stack_xxxx_v3.offset,
-                   sym->stack_xxxx_v3.symtype, sym->stack_xxxx_v3.unknown, curr_func);
+        case S_REGREL_V3:
+            printf("\tS-Reg-relative V3: '%s' @%d type:%x reg:%x (in %s)\n",
+                   sym->regrel_v3.name, sym->regrel_v3.offset,
+                   sym->regrel_v3.symtype, sym->regrel_v3.reg, curr_func);
             break;
 
         case S_REGISTER_V1:
