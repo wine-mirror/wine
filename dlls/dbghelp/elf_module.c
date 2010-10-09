@@ -989,7 +989,7 @@ BOOL elf_load_debug_info(struct module* module, struct image_file_map* fmap)
  *
  * Gathers some more information for an ELF module from a given file
  */
-BOOL elf_fetch_file_info(const WCHAR* name, DWORD* base,
+BOOL elf_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
                          DWORD* size, DWORD* checksum)
 {
     struct image_file_map fmap;
@@ -1502,7 +1502,7 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
-BOOL elf_fetch_file_info(const WCHAR* name, DWORD* base,
+BOOL elf_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
                          DWORD* size, DWORD* checksum)
 {
     return FALSE;

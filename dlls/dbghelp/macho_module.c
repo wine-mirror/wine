@@ -903,7 +903,7 @@ BOOL macho_load_debug_info(struct module* module, struct macho_file_map* fmap)
  *
  * Gathers some more information for a Mach-O module from a given file
  */
-BOOL macho_fetch_file_info(const WCHAR* name, DWORD* base,
+BOOL macho_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
                            DWORD* size, DWORD* checksum)
 {
     struct macho_file_map fmap;
@@ -1416,7 +1416,7 @@ BOOL    macho_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
-BOOL macho_fetch_file_info(const WCHAR* name, DWORD* base,
+BOOL macho_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
                            DWORD* size, DWORD* checksum)
 {
     return FALSE;
