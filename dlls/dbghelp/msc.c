@@ -1324,8 +1324,8 @@ static int codeview_parse_type_table(struct codeview_type_parse* ctp)
 /*========================================================================
  * Process CodeView line number information.
  */
-static unsigned codeview_get_address(const struct msc_debug_info* msc_dbg,
-                                     unsigned seg, unsigned offset);
+static unsigned long codeview_get_address(const struct msc_debug_info* msc_dbg,
+                                          unsigned seg, unsigned offset);
 
 static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const BYTE* linetab,
                                    int size, BOOL pascal_str)
@@ -1338,7 +1338,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
     const unsigned short*       linenos;
     const struct startend*      start;
     unsigned                    source;
-    unsigned                    addr, func_addr0;
+    unsigned long               addr, func_addr0;
     struct symt_function*       func;
     const struct codeview_linetab_block* ltb;
 
@@ -1379,7 +1379,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
                     /* FIXME: at least labels support line numbers */
                     if (!func || func->symt.tag != SymTagFunction)
                     {
-                        WARN("--not a func at %04x:%08x %x tag=%d\n",
+                        WARN("--not a func at %04x:%08x %lx tag=%d\n",
                              ltb->seg, ltb->offsets[k], addr, func ? func->symt.tag : -1);
                         func = NULL;
                         break;
@@ -1396,7 +1396,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
                                     const char* strimage, DWORD strsize)
 {
     unsigned    i;
-    DWORD       addr;
+    DWORD_PTR       addr;
     const struct codeview_linetab2*     lt2;
     const struct codeview_linetab2*     lt2_files = NULL;
     const struct codeview_lt2blk_lines* lines_blk;
@@ -1440,7 +1440,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
             /* FIXME: at least labels support line numbers */
             if (!func || func->symt.tag != SymTagFunction)
             {
-                WARN("--not a func at %04x:%08x %x tag=%d\n",
+                WARN("--not a func at %04x:%08x %lx tag=%d\n",
                      lines_blk->seg, lines_blk->start, addr, func ? func->symt.tag : -1);
                 break;
             }
@@ -1483,8 +1483,8 @@ static unsigned int codeview_map_offset(const struct msc_debug_info* msc_dbg,
     return 0;
 }
 
-static unsigned codeview_get_address(const struct msc_debug_info* msc_dbg, 
-                                     unsigned seg, unsigned offset)
+static unsigned long codeview_get_address(const struct msc_debug_info* msc_dbg,
+                                          unsigned seg, unsigned offset)
 {
     int			        nsect = msc_dbg->nsect;
     const IMAGE_SECTION_HEADER* sectp = msc_dbg->sectp;
@@ -1502,7 +1502,7 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
 {
     if (name && *name)
     {
-        unsigned        address = codeview_get_address(msc_dbg, segment, offset);
+        unsigned long   address = codeview_get_address(msc_dbg, segment, offset);
 
         if (force || !symt_find_nearest(msc_dbg->module, address))
         {
