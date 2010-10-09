@@ -948,12 +948,11 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
  *
  * Loads ELF debugging information from the module image file.
  */
-BOOL elf_load_debug_info(struct module* module, struct image_file_map* fmap)
+BOOL elf_load_debug_info(struct module* module)
 {
     BOOL                        ret = TRUE;
     struct pool                 pool;
     struct hash_table           ht_symtab;
-    struct image_file_map       my_fmap;
     struct module_format*       modfmt;
 
     if (module->type != DMT_ELF || !(modfmt = module->format_info[DFI_ELF]) || !modfmt->u.elf_info)
@@ -965,22 +964,9 @@ BOOL elf_load_debug_info(struct module* module, struct image_file_map* fmap)
     pool_init(&pool, 65536);
     hash_table_init(&pool, &ht_symtab, 256);
 
-    if (!fmap)
-    {
-        fmap = &my_fmap;
-        ret = elf_map_file(module->module.LoadedImageName, fmap);
-    }
-    if (ret)
-        ret = elf_load_debug_info_from_map(module, fmap, &pool, &ht_symtab);
-
-    if (ret)
-    {
-        modfmt->u.elf_info->file_map = *fmap;
-        elf_reset_file_map(fmap);
-    }
+    ret = elf_load_debug_info_from_map(module, &modfmt->u.elf_info->file_map, &pool, &ht_symtab);
 
     pool_destroy(&pool);
-    if (fmap == &my_fmap) elf_unmap_file(fmap);
     return ret;
 }
 
@@ -1090,14 +1076,14 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
 
         elf_module_info->elf_addr = load_offset;
 
+        elf_module_info->file_map = fmap;
+        elf_reset_file_map(&fmap);
         if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         {
             elf_info->module->module.SymType = SymDeferred;
-            elf_module_info->file_map = fmap;
-            elf_reset_file_map(&fmap);
             ret = TRUE;
         }
-        else ret = elf_load_debug_info(elf_info->module, &fmap);
+        else ret = elf_load_debug_info(elf_info->module);
 
         elf_module_info->elf_mark = 1;
         elf_module_info->elf_loader = 0;
@@ -1523,7 +1509,7 @@ struct module*  elf_load_module(struct process* pcs, const WCHAR* name, unsigned
     return NULL;
 }
 
-BOOL elf_load_debug_info(struct module* module, struct image_file_map* fmap)
+BOOL elf_load_debug_info(struct module* module)
 {
     return FALSE;
 }

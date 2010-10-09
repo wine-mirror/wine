@@ -511,7 +511,7 @@ typedef BOOL (*enum_modules_cb)(const WCHAR*, unsigned long addr, void* user);
 extern BOOL         elf_enum_modules(HANDLE hProc, enum_modules_cb, void*);
 extern BOOL         elf_fetch_file_info(const WCHAR* name, DWORD_PTR* base, DWORD* size, DWORD* checksum);
 struct image_file_map;
-extern BOOL         elf_load_debug_info(struct module* module, struct image_file_map* fmap);
+extern BOOL         elf_load_debug_info(struct module* module);
 extern struct module*
                     elf_load_module(struct process* pcs, const WCHAR* name, unsigned long);
 extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);

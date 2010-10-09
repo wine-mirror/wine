@@ -310,7 +310,7 @@ BOOL module_get_debug(struct module_pair* pair)
         else switch (pair->effective->type)
         {
         case DMT_ELF:
-            ret = elf_load_debug_info(pair->effective, NULL);
+            ret = elf_load_debug_info(pair->effective);
             break;
         case DMT_PE:
             idslW64.SizeOfStruct = sizeof(idslW64);
