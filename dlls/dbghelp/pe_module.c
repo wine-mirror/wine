@@ -733,7 +733,7 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
  *
  */
 struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
-                                     HANDLE hFile, DWORD base, DWORD size)
+                                     HANDLE hFile, DWORD64 base, DWORD size)
 {
     struct module*              module = NULL;
     BOOL                        opened = FALSE;
