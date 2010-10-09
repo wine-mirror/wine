@@ -804,7 +804,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
     dispex_prop_t *prop;
     HRESULT hres;
 
-    static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r'};
+    static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r',0};
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
 
     hres = find_prop_name_prot(constr, prototypeW, &prop);
