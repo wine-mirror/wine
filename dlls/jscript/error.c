@@ -105,8 +105,6 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
             msg = NULL;
         }else {
             ret = SysAllocString(object_errorW);
-            if(!V_BSTR(retv))
-                hres = E_OUTOFMEMORY;
         }
     }
 
