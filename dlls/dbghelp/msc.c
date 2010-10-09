@@ -95,7 +95,7 @@ static void dump(const void* ptr, unsigned len)
  * Process CodeView type information.
  */
 
-#define MAX_BUILTIN_TYPES	0x0604
+#define MAX_BUILTIN_TYPES	0x06FF
 #define FIRST_DEFINABLE_TYPE    0x1000
 
 static struct symt*     cv_basic_types[MAX_BUILTIN_TYPES];
@@ -145,37 +145,68 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_UINT8]  = &symt_new_basic(module, btUInt,  "UINT8", 8)->symt;
     cv_basic_types[T_HRESULT]= &symt_new_basic(module, btUInt,  "HRESULT", 4)->symt;
 
-    cv_basic_types[T_32PVOID]   = &symt_new_pointer(module, cv_basic_types[T_VOID])->symt;
-    cv_basic_types[T_32PCHAR]   = &symt_new_pointer(module, cv_basic_types[T_CHAR])->symt;
-    cv_basic_types[T_32PSHORT]  = &symt_new_pointer(module, cv_basic_types[T_SHORT])->symt;
-    cv_basic_types[T_32PLONG]   = &symt_new_pointer(module, cv_basic_types[T_LONG])->symt;
-    cv_basic_types[T_32PQUAD]   = &symt_new_pointer(module, cv_basic_types[T_QUAD])->symt;
-    cv_basic_types[T_32PUCHAR]  = &symt_new_pointer(module, cv_basic_types[T_UCHAR])->symt;
-    cv_basic_types[T_32PUSHORT] = &symt_new_pointer(module, cv_basic_types[T_USHORT])->symt;
-    cv_basic_types[T_32PULONG]  = &symt_new_pointer(module, cv_basic_types[T_ULONG])->symt;
-    cv_basic_types[T_32PUQUAD]  = &symt_new_pointer(module, cv_basic_types[T_UQUAD])->symt;
-    cv_basic_types[T_32PBOOL08] = &symt_new_pointer(module, cv_basic_types[T_BOOL08])->symt;
-    cv_basic_types[T_32PBOOL16] = &symt_new_pointer(module, cv_basic_types[T_BOOL16])->symt;
-    cv_basic_types[T_32PBOOL32] = &symt_new_pointer(module, cv_basic_types[T_BOOL32])->symt;
-    cv_basic_types[T_32PBOOL64] = &symt_new_pointer(module, cv_basic_types[T_BOOL64])->symt;
-    cv_basic_types[T_32PREAL32] = &symt_new_pointer(module, cv_basic_types[T_REAL32])->symt;
-    cv_basic_types[T_32PREAL64] = &symt_new_pointer(module, cv_basic_types[T_REAL64])->symt;
-    cv_basic_types[T_32PREAL80] = &symt_new_pointer(module, cv_basic_types[T_REAL80])->symt;
-    cv_basic_types[T_32PRCHAR]  = &symt_new_pointer(module, cv_basic_types[T_RCHAR])->symt;
-    cv_basic_types[T_32PWCHAR]  = &symt_new_pointer(module, cv_basic_types[T_WCHAR])->symt;
-    cv_basic_types[T_32PINT2]   = &symt_new_pointer(module, cv_basic_types[T_INT2])->symt;
-    cv_basic_types[T_32PUINT2]  = &symt_new_pointer(module, cv_basic_types[T_UINT2])->symt;
-    cv_basic_types[T_32PINT4]   = &symt_new_pointer(module, cv_basic_types[T_INT4])->symt;
-    cv_basic_types[T_32PUINT4]  = &symt_new_pointer(module, cv_basic_types[T_UINT4])->symt;
-    cv_basic_types[T_32PINT8]   = &symt_new_pointer(module, cv_basic_types[T_INT8])->symt;
-    cv_basic_types[T_32PUINT8]  = &symt_new_pointer(module, cv_basic_types[T_UINT8])->symt;
-    cv_basic_types[T_32PHRESULT]= &symt_new_pointer(module, cv_basic_types[T_HRESULT])->symt;
+    if (sizeof(void*) == 4)
+    {
+        cv_basic_types[T_32PVOID]   = &symt_new_pointer(module, cv_basic_types[T_VOID])->symt;
+        cv_basic_types[T_32PCHAR]   = &symt_new_pointer(module, cv_basic_types[T_CHAR])->symt;
+        cv_basic_types[T_32PSHORT]  = &symt_new_pointer(module, cv_basic_types[T_SHORT])->symt;
+        cv_basic_types[T_32PLONG]   = &symt_new_pointer(module, cv_basic_types[T_LONG])->symt;
+        cv_basic_types[T_32PQUAD]   = &symt_new_pointer(module, cv_basic_types[T_QUAD])->symt;
+        cv_basic_types[T_32PUCHAR]  = &symt_new_pointer(module, cv_basic_types[T_UCHAR])->symt;
+        cv_basic_types[T_32PUSHORT] = &symt_new_pointer(module, cv_basic_types[T_USHORT])->symt;
+        cv_basic_types[T_32PULONG]  = &symt_new_pointer(module, cv_basic_types[T_ULONG])->symt;
+        cv_basic_types[T_32PUQUAD]  = &symt_new_pointer(module, cv_basic_types[T_UQUAD])->symt;
+        cv_basic_types[T_32PBOOL08] = &symt_new_pointer(module, cv_basic_types[T_BOOL08])->symt;
+        cv_basic_types[T_32PBOOL16] = &symt_new_pointer(module, cv_basic_types[T_BOOL16])->symt;
+        cv_basic_types[T_32PBOOL32] = &symt_new_pointer(module, cv_basic_types[T_BOOL32])->symt;
+        cv_basic_types[T_32PBOOL64] = &symt_new_pointer(module, cv_basic_types[T_BOOL64])->symt;
+        cv_basic_types[T_32PREAL32] = &symt_new_pointer(module, cv_basic_types[T_REAL32])->symt;
+        cv_basic_types[T_32PREAL64] = &symt_new_pointer(module, cv_basic_types[T_REAL64])->symt;
+        cv_basic_types[T_32PREAL80] = &symt_new_pointer(module, cv_basic_types[T_REAL80])->symt;
+        cv_basic_types[T_32PRCHAR]  = &symt_new_pointer(module, cv_basic_types[T_RCHAR])->symt;
+        cv_basic_types[T_32PWCHAR]  = &symt_new_pointer(module, cv_basic_types[T_WCHAR])->symt;
+        cv_basic_types[T_32PINT2]   = &symt_new_pointer(module, cv_basic_types[T_INT2])->symt;
+        cv_basic_types[T_32PUINT2]  = &symt_new_pointer(module, cv_basic_types[T_UINT2])->symt;
+        cv_basic_types[T_32PINT4]   = &symt_new_pointer(module, cv_basic_types[T_INT4])->symt;
+        cv_basic_types[T_32PUINT4]  = &symt_new_pointer(module, cv_basic_types[T_UINT4])->symt;
+        cv_basic_types[T_32PINT8]   = &symt_new_pointer(module, cv_basic_types[T_INT8])->symt;
+        cv_basic_types[T_32PUINT8]  = &symt_new_pointer(module, cv_basic_types[T_UINT8])->symt;
+        cv_basic_types[T_32PHRESULT]= &symt_new_pointer(module, cv_basic_types[T_HRESULT])->symt;
 
-    /* The .pdb file can refer to 64 bit pointers values even on 32 bits applications. */
-    udt = symt_new_udt(module, "PVOID64", 8, UdtStruct);
-    symt_add_udt_element(module, udt, "ptr64_low", cv_basic_types[T_LONG], 0, 32);
-    symt_add_udt_element(module, udt, "ptr64_high", cv_basic_types[T_LONG], 32, 32);
-    cv_basic_types[0x603]= &udt->symt;
+        /* The .pdb file can refer to 64 bit pointers values even on 32 bits applications. */
+        udt = symt_new_udt(module, "PVOID64", 8, UdtStruct);
+        symt_add_udt_element(module, udt, "ptr64_low", cv_basic_types[T_LONG], 0, 32);
+        symt_add_udt_element(module, udt, "ptr64_high", cv_basic_types[T_LONG], 32, 32);
+        cv_basic_types[T_64PVOID]= &udt->symt;
+    }
+    else
+    {
+        cv_basic_types[T_64PVOID]   = &symt_new_pointer(module, cv_basic_types[T_VOID])->symt;
+        cv_basic_types[T_64PCHAR]   = &symt_new_pointer(module, cv_basic_types[T_CHAR])->symt;
+        cv_basic_types[T_64PSHORT]  = &symt_new_pointer(module, cv_basic_types[T_SHORT])->symt;
+        cv_basic_types[T_64PLONG]   = &symt_new_pointer(module, cv_basic_types[T_LONG])->symt;
+        cv_basic_types[T_64PQUAD]   = &symt_new_pointer(module, cv_basic_types[T_QUAD])->symt;
+        cv_basic_types[T_64PUCHAR]  = &symt_new_pointer(module, cv_basic_types[T_UCHAR])->symt;
+        cv_basic_types[T_64PUSHORT] = &symt_new_pointer(module, cv_basic_types[T_USHORT])->symt;
+        cv_basic_types[T_64PULONG]  = &symt_new_pointer(module, cv_basic_types[T_ULONG])->symt;
+        cv_basic_types[T_64PUQUAD]  = &symt_new_pointer(module, cv_basic_types[T_UQUAD])->symt;
+        cv_basic_types[T_64PBOOL08] = &symt_new_pointer(module, cv_basic_types[T_BOOL08])->symt;
+        cv_basic_types[T_64PBOOL16] = &symt_new_pointer(module, cv_basic_types[T_BOOL16])->symt;
+        cv_basic_types[T_64PBOOL32] = &symt_new_pointer(module, cv_basic_types[T_BOOL32])->symt;
+        cv_basic_types[T_64PBOOL64] = &symt_new_pointer(module, cv_basic_types[T_BOOL64])->symt;
+        cv_basic_types[T_64PREAL32] = &symt_new_pointer(module, cv_basic_types[T_REAL32])->symt;
+        cv_basic_types[T_64PREAL64] = &symt_new_pointer(module, cv_basic_types[T_REAL64])->symt;
+        cv_basic_types[T_64PREAL80] = &symt_new_pointer(module, cv_basic_types[T_REAL80])->symt;
+        cv_basic_types[T_64PRCHAR]  = &symt_new_pointer(module, cv_basic_types[T_RCHAR])->symt;
+        cv_basic_types[T_64PWCHAR]  = &symt_new_pointer(module, cv_basic_types[T_WCHAR])->symt;
+        cv_basic_types[T_64PINT2]   = &symt_new_pointer(module, cv_basic_types[T_INT2])->symt;
+        cv_basic_types[T_64PUINT2]  = &symt_new_pointer(module, cv_basic_types[T_UINT2])->symt;
+        cv_basic_types[T_64PINT4]   = &symt_new_pointer(module, cv_basic_types[T_INT4])->symt;
+        cv_basic_types[T_64PUINT4]  = &symt_new_pointer(module, cv_basic_types[T_UINT4])->symt;
+        cv_basic_types[T_64PINT8]   = &symt_new_pointer(module, cv_basic_types[T_INT8])->symt;
+        cv_basic_types[T_64PUINT8]  = &symt_new_pointer(module, cv_basic_types[T_UINT8])->symt;
+        cv_basic_types[T_64PHRESULT]= &symt_new_pointer(module, cv_basic_types[T_HRESULT])->symt;
+    }
 }
 
 static int leaf_as_variant(VARIANT* v, const unsigned short int* leaf)
