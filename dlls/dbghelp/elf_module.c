@@ -1000,7 +1000,8 @@ BOOL elf_fetch_file_info(const WCHAR* name, DWORD_PTR* base,
  *	1 on success
  */
 static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
-                          unsigned long load_offset, struct elf_info* elf_info)
+                          unsigned long load_offset, unsigned long dyn_addr,
+                          struct elf_info* elf_info)
 {
     BOOL                        ret = FALSE;
     struct image_file_map       fmap;
@@ -1113,6 +1114,7 @@ leave:
 static BOOL elf_load_file_from_path(HANDLE hProcess,
                                     const WCHAR* filename,
                                     unsigned long load_offset,
+                                    unsigned long dyn_addr,
                                     const char* path,
                                     struct elf_info* elf_info)
 {
@@ -1137,7 +1139,7 @@ static BOOL elf_load_file_from_path(HANDLE hProcess,
 	strcpyW(fn, s);
 	strcatW(fn, S_SlashW);
 	strcatW(fn, filename);
-	ret = elf_load_file(hProcess, fn, load_offset, elf_info);
+	ret = elf_load_file(hProcess, fn, load_offset, dyn_addr, elf_info);
 	HeapFree(GetProcessHeap(), 0, fn);
 	if (ret) break;
 	s = (t) ? (t+1) : NULL;
@@ -1155,6 +1157,7 @@ static BOOL elf_load_file_from_path(HANDLE hProcess,
 static BOOL elf_load_file_from_dll_path(HANDLE hProcess,
                                         const WCHAR* filename,
                                         unsigned long load_offset,
+                                        unsigned long dyn_addr,
                                         struct elf_info* elf_info)
 {
     BOOL ret = FALSE;
@@ -1175,7 +1178,7 @@ static BOOL elf_load_file_from_dll_path(HANDLE hProcess,
         MultiByteToWideChar(CP_UNIXCP, 0, path, -1, name, len);
         strcatW( name, S_SlashW );
         strcatW( name, filename );
-        ret = elf_load_file(hProcess, name, load_offset, elf_info);
+        ret = elf_load_file(hProcess, name, load_offset, dyn_addr, elf_info);
         HeapFree( GetProcessHeap(), 0, name );
     }
     return ret;
@@ -1187,7 +1190,7 @@ static BOOL elf_load_file_from_dll_path(HANDLE hProcess,
  * lookup a file in standard ELF locations, and if found, load it
  */
 static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
-                                     unsigned long load_offset,
+                                     unsigned long load_offset, unsigned long dyn_addr,
                                      struct elf_info* elf_info)
 {
     BOOL                ret = FALSE;
@@ -1203,19 +1206,23 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
     }
 
     if (strstrW(filename, S_libstdcPPW)) return FALSE; /* We know we can't do it */
-    ret = elf_load_file(pcs, filename, load_offset, elf_info);
+    ret = elf_load_file(pcs, filename, load_offset, dyn_addr, elf_info);
     /* if relative pathname, try some absolute base dirs */
     if (!ret && !strchrW(filename, '/'))
     {
-        ret = elf_load_file_from_path(pcs, filename, load_offset,
+        ret = elf_load_file_from_path(pcs, filename, load_offset, dyn_addr,
                                       getenv("PATH"), elf_info) ||
-            elf_load_file_from_path(pcs, filename, load_offset,
+            elf_load_file_from_path(pcs, filename, load_offset, dyn_addr,
                                     getenv("LD_LIBRARY_PATH"), elf_info);
-        if (!ret) ret = elf_load_file_from_dll_path(pcs, filename, load_offset, elf_info);
+        if (!ret) ret = elf_load_file_from_dll_path(pcs, filename,
+                                                    load_offset, dyn_addr, elf_info);
     }
     
     return ret;
 }
+
+typedef BOOL (*enum_elf_modules_cb)(const WCHAR*, unsigned long load_addr,
+                                    unsigned long dyn_addr, void* user);
 
 /******************************************************************
  *		elf_enum_modules_internal
@@ -1224,7 +1231,7 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
  */
 static BOOL elf_enum_modules_internal(const struct process* pcs,
                                       const WCHAR* main_name,
-                                      enum_modules_cb cb, void* user)
+                                      enum_elf_modules_cb cb, void* user)
 {
     struct r_debug      dbg_hdr;
     void*               lm_addr;
@@ -1254,7 +1261,7 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
 	    bufstr[sizeof(bufstr) - 1] = '\0';
             MultiByteToWideChar(CP_UNIXCP, 0, bufstr, -1, bufstrW, sizeof(bufstrW) / sizeof(WCHAR));
             if (main_name && !bufstrW[0]) strcpyW(bufstrW, main_name);
-            if (!cb(bufstrW, (unsigned long)lm.l_addr, user)) break;
+            if (!cb(bufstrW, (unsigned long)lm.l_addr, (unsigned long)lm.l_ld, user)) break;
 	}
     }
     return TRUE;
@@ -1266,11 +1273,12 @@ struct elf_sync
     struct elf_info     elf_info;
 };
 
-static BOOL elf_enum_sync_cb(const WCHAR* name, unsigned long addr, void* user)
+static BOOL elf_enum_sync_cb(const WCHAR* name, unsigned long load_addr,
+                             unsigned long dyn_addr, void* user)
 {
     struct elf_sync*    es = user;
 
-    elf_search_and_load_file(es->pcs, name, addr, &es->elf_info);
+    elf_search_and_load_file(es->pcs, name, load_addr, dyn_addr, &es->elf_info);
     return TRUE;
 }
 
@@ -1338,11 +1346,11 @@ static BOOL elf_search_loader(struct process* pcs, struct elf_info* elf_info)
     {
         WCHAR   tmp[MAX_PATH];
         MultiByteToWideChar(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp) / sizeof(WCHAR));
-        ret = elf_search_and_load_file(pcs, tmp, 0, elf_info);
+        ret = elf_search_and_load_file(pcs, tmp, 0, 0, elf_info);
     }
     else
     {
-        ret = elf_search_and_load_file(pcs, S_WineW, 0, elf_info);
+        ret = elf_search_and_load_file(pcs, S_WineW, 0, 0, elf_info);
     }
     return ret;
 }
@@ -1363,6 +1371,19 @@ BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
     return (pcs->dbg_hdr_addr = elf_info.dbg_hdr_addr) != 0;
 }
 
+struct elf_enum_user
+{
+    enum_modules_cb     cb;
+    void*               user;
+};
+
+static BOOL elf_enum_modules_translate(const WCHAR* name, unsigned long load_addr,
+                                       unsigned long dyn_addr, void* user)
+{
+    struct elf_enum_user*       eeu = user;
+    return eeu->cb(name, load_addr, eeu->user);
+}
+
 /******************************************************************
  *		elf_enum_modules
  *
@@ -1375,13 +1396,16 @@ BOOL elf_enum_modules(HANDLE hProc, enum_modules_cb cb, void* user)
     struct process      pcs;
     struct elf_info     elf_info;
     BOOL                ret;
+    struct elf_enum_user eeu;
 
     memset(&pcs, 0, sizeof(pcs));
     pcs.handle = hProc;
     elf_info.flags = ELF_INFO_DEBUG_HEADER | ELF_INFO_NAME;
     if (!elf_search_loader(&pcs, &elf_info)) return FALSE;
     pcs.dbg_hdr_addr = elf_info.dbg_hdr_addr;
-    ret = elf_enum_modules_internal(&pcs, elf_info.module_name, cb, user);
+    eeu.cb = cb;
+    eeu.user = user;
+    ret = elf_enum_modules_internal(&pcs, elf_info.module_name, elf_enum_modules_translate, &eeu);
     HeapFree(GetProcessHeap(), 0, (char*)elf_info.module_name);
     return ret;
 }
@@ -1400,7 +1424,8 @@ struct elf_load
  * Callback for elf_load_module, used to walk the list of loaded
  * modules.
  */
-static BOOL elf_load_cb(const WCHAR* name, unsigned long addr, void* user)
+static BOOL elf_load_cb(const WCHAR* name, unsigned long load_addr,
+                        unsigned long dyn_addr, void* user)
 {
     struct elf_load*    el = user;
     const WCHAR*        p;
@@ -1412,7 +1437,7 @@ static BOOL elf_load_cb(const WCHAR* name, unsigned long addr, void* user)
     if (!p++) p = name;
     if (!memcmp(p, el->name, lstrlenW(el->name) * sizeof(WCHAR)))
     {
-        el->ret = elf_search_and_load_file(el->pcs, name, addr, &el->elf_info);
+        el->ret = elf_search_and_load_file(el->pcs, name, load_addr, dyn_addr, &el->elf_info);
         return FALSE;
     }
     return TRUE;
@@ -1450,7 +1475,7 @@ struct module*  elf_load_module(struct process* pcs, const WCHAR* name, unsigned
     else if (addr)
     {
         el.name = name;
-        el.ret = elf_search_and_load_file(pcs, el.name, addr, &el.elf_info);
+        el.ret = elf_search_and_load_file(pcs, el.name, addr, 0, &el.elf_info);
     }
     if (!el.ret) return NULL;
     assert(el.elf_info.module);
