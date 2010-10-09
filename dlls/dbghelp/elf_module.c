@@ -1017,12 +1017,6 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
     if (!fmap.u.elf.elf_start && !load_offset)
         ERR("Relocatable ELF %s, but no load address. Loading at 0x0000000\n",
             debugstr_w(filename));
-    if (fmap.u.elf.elf_start && load_offset)
-    {
-        WARN("Non-relocatable ELF %s, but load address of 0x%08lx supplied. "
-             "Assuming load address is corrupt\n", debugstr_w(filename), load_offset);
-        load_offset = 0;
-    }
 
     if (elf_info->flags & ELF_INFO_DEBUG_HEADER)
     {
@@ -1042,6 +1036,9 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
                 if (dyn.d_tag == DT_DEBUG)
                 {
                     elf_info->dbg_hdr_addr = dyn.d_un.d_ptr;
+                    if (load_offset == 0 && dyn_addr == 0) /* likely the case */
+                        /* Assume this module (the Wine loader) has been loaded at its preferred address */
+                        dyn_addr = ism.fmap->u.elf.sect[ism.sidx].shdr.sh_addr;
                     break;
                 }
                 ptr += sizeof(dyn);
@@ -1055,12 +1052,28 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
     {
         struct elf_module_info *elf_module_info;
         struct module_format*   modfmt;
+        struct image_section_map ism;
+        unsigned long           modbase = load_offset;
+
+        if (elf_find_section(&fmap, ".dynamic", SHT_DYNAMIC, &ism))
+        {
+            unsigned long rva_dyn = elf_get_map_rva(&ism);
+
+            TRACE("For module %s, got ELF (start=%lx dyn=%lx), link_map (start=%lx dyn=%lx)\n",
+                  debugstr_w(filename), (unsigned long)fmap.u.elf.elf_start, rva_dyn,
+                  load_offset, dyn_addr);
+            if (dyn_addr && load_offset + rva_dyn != dyn_addr)
+            {
+                WARN("\thave to relocate: %lx\n", dyn_addr - rva_dyn);
+                modbase = dyn_addr - rva_dyn;
+            }
+	} else WARN("For module %s, no .dynamic section\n", debugstr_w(filename));
+        elf_end_find(&fmap);
 
         modfmt = HeapAlloc(GetProcessHeap(), 0,
                           sizeof(struct module_format) + sizeof(struct elf_module_info));
         if (!modfmt) goto leave;
-        elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE,
-                                      (load_offset) ? load_offset : fmap.u.elf.elf_start,
+        elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE, modbase,
                                       fmap.u.elf.elf_size, 0, calc_crc32(fmap.u.elf.fd));
         if (!elf_info->module)
         {
