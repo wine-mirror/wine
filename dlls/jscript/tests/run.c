@@ -69,6 +69,7 @@ DEFINE_EXPECT(testobj_value);
 DEFINE_EXPECT(testobj_prop_d);
 DEFINE_EXPECT(testobj_noprop_d);
 DEFINE_EXPECT(GetItemInfo_testVal);
+DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
@@ -94,6 +95,7 @@ static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
 static IDispatch *script_disp;
 static int invoke_version;
+static IActiveScriptError *script_error;
 
 static BSTR a2bstr(const char *str)
 {
@@ -689,6 +691,34 @@ static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
 
 static IActiveScriptSite ActiveScriptSite = { &ActiveScriptSiteVtbl };
 
+static HRESULT WINAPI ActiveScriptSite_OnScriptError_CheckError(IActiveScriptSite *iface, IActiveScriptError *pscripterror)
+{
+    ok(pscripterror != NULL, "ActiveScriptSite_OnScriptError -- expected pscripterror to be set, got NULL\n");
+
+    script_error = pscripterror;
+    IUnknown_AddRef(script_error);
+
+    CHECK_EXPECT(ActiveScriptSite_OnScriptError);
+
+    return S_OK;
+}
+
+static const IActiveScriptSiteVtbl ActiveScriptSite_CheckErrorVtbl = {
+    ActiveScriptSite_QueryInterface,
+    ActiveScriptSite_AddRef,
+    ActiveScriptSite_Release,
+    ActiveScriptSite_GetLCID,
+    ActiveScriptSite_GetItemInfo,
+    ActiveScriptSite_GetDocVersionString,
+    ActiveScriptSite_OnScriptTerminate,
+    ActiveScriptSite_OnStateChange,
+    ActiveScriptSite_OnScriptError_CheckError,
+    ActiveScriptSite_OnEnterScript,
+    ActiveScriptSite_OnLeaveScript
+};
+
+static IActiveScriptSite ActiveScriptSite_CheckError = { &ActiveScriptSite_CheckErrorVtbl };
+
 static HRESULT set_script_prop(IActiveScript *engine, DWORD property, VARIANT *val)
 {
     IActiveScriptProperty *script_prop;
@@ -812,6 +842,148 @@ static HRESULT parse_htmlscript(BSTR script_str)
     return hres;
 }
 
+static void test_IActiveScriptError(IActiveScriptError *error, SCODE errorcode, ULONG line, LONG pos, BSTR script_source, BSTR description, BSTR line_text)
+{
+    HRESULT hres;
+    DWORD source_context;
+    ULONG line_number;
+    LONG char_position;
+    BSTR linetext;
+    EXCEPINFO excep;
+
+    /* IActiveScriptError_GetSourcePosition */
+
+    hres = IActiveScriptError_GetSourcePosition(error, NULL, NULL, NULL);
+    ok(hres == S_OK, "IActiveScriptError_GetSourcePosition -- hres: expected S_OK, got 0x%08x\n", hres);
+
+    source_context = 0xdeadbeef;
+    hres = IActiveScriptError_GetSourcePosition(error, &source_context, NULL, NULL);
+    ok(hres == S_OK, "IActiveScriptError_GetSourcePosition -- hres: expected S_OK, got 0x%08x\n", hres);
+    ok(source_context == 0, "IActiveScriptError_GetSourcePosition -- source_context: expected 0, got 0x%08x\n", source_context);
+
+    line_number = 0xdeadbeef;
+    hres = IActiveScriptError_GetSourcePosition(error, NULL, &line_number, NULL);
+    ok(hres == S_OK, "IActiveScriptError_GetSourcePosition -- hres: expected S_OK, got 0x%08x\n", hres);
+    ok(line_number == line, "IActiveScriptError_GetSourcePosition -- line_number: expected %d, got %d\n", line, line_number);
+
+    char_position = 0xdeadbeef;
+    hres = IActiveScriptError_GetSourcePosition(error, NULL, NULL, &char_position);
+    ok(hres == S_OK, "IActiveScriptError_GetSourcePosition -- hres: expected S_OK, got 0x%08x\n", hres);
+    ok(char_position == pos, "IActiveScriptError_GetSourcePosition -- char_position: expected %d, got %d\n", pos, char_position);
+
+    /* IActiveScriptError_GetSourceLineText */
+
+    hres = IActiveScriptError_GetSourceLineText(error, NULL);
+    ok(hres == E_POINTER, "IActiveScriptError_GetSourceLineText -- hres: expected E_POINTER, got 0x%08x\n", hres);
+
+    linetext = NULL;
+    hres = IActiveScriptError_GetSourceLineText(error, &linetext);
+    if (line_text) {
+        ok(hres == S_OK, "IActiveScriptError_GetSourceLineText -- hres: expected S_OK, got 0x%08x\n", hres);
+        ok(linetext != NULL && !lstrcmpW(linetext, line_text),
+           "IActiveScriptError_GetSourceLineText -- expected %s, got %s\n", wine_dbgstr_w(line_text), wine_dbgstr_w(linetext));
+    } else {
+        ok(hres == E_FAIL, "IActiveScriptError_GetSourceLineText -- hres: expected S_OK, got 0x%08x\n", hres);
+        ok(linetext == NULL,
+           "IActiveScriptError_GetSourceLineText -- expected NULL, got %s\n", wine_dbgstr_w(linetext));
+    }
+    SysFreeString(linetext);
+
+    /* IActiveScriptError_GetExceptionInfo */
+
+    hres = IActiveScriptError_GetExceptionInfo(error, NULL);
+    ok(hres == E_POINTER, "IActiveScriptError_GetExceptionInfo -- hres: expected E_POINTER, got 0x%08x\n", hres);
+
+    excep.wCode = 0xdead;
+    excep.wReserved = 0xdead;
+    excep.bstrSource = (BSTR)0xdeadbeef;
+    excep.bstrDescription = (BSTR)0xdeadbeef;
+    excep.bstrHelpFile = (BSTR)0xdeadbeef;
+    excep.dwHelpContext = 0xdeadbeef;
+    excep.pvReserved = (void *)0xdeadbeef;
+    excep.pfnDeferredFillIn = (void *)0xdeadbeef;
+    excep.scode = 0xdeadbeef;
+
+    hres = IActiveScriptError_GetExceptionInfo(error, &excep);
+    ok(hres == S_OK, "IActiveScriptError_GetExceptionInfo -- hres: expected S_OK, got 0x%08x\n", hres);
+
+    ok(excep.wCode == 0, "IActiveScriptError_GetExceptionInfo -- excep.wCode: expected 0, got 0x%08x\n", excep.wCode);
+    ok(excep.wReserved == 0, "IActiveScriptError_GetExceptionInfo -- excep.wReserved: expected 0, got %d\n", excep.wReserved);
+    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
+        skip("Non-english locale (test with hardcoded strings)\n");
+    else {
+        ok(excep.bstrSource != NULL && !lstrcmpW(excep.bstrSource, script_source),
+           "IActiveScriptError_GetExceptionInfo -- excep.bstrSource is not valid: expected %s, got %s\n",
+           wine_dbgstr_w(script_source), wine_dbgstr_w(excep.bstrSource));
+        ok(excep.bstrDescription != NULL && !lstrcmpW(excep.bstrDescription, description),
+           "IActiveScriptError_GetExceptionInfo -- excep.bstrDescription is not valid: got %s\n", wine_dbgstr_w(excep.bstrDescription));
+    }
+    ok(excep.bstrHelpFile == NULL,
+       "IActiveScriptError_GetExceptionInfo -- excep.bstrHelpFile: expected NULL, got %s\n", wine_dbgstr_w(excep.bstrHelpFile));
+    ok(excep.dwHelpContext == 0, "IActiveScriptError_GetExceptionInfo -- excep.dwHelpContext: expected 0, got %d\n", excep.dwHelpContext);
+    ok(excep.pvReserved == NULL, "IActiveScriptError_GetExceptionInfo -- excep.pvReserved: expected NULL, got %p\n", excep.pvReserved);
+    ok(excep.pfnDeferredFillIn == NULL, "IActiveScriptError_GetExceptionInfo -- excep.pfnDeferredFillIn: expected NULL, got %p\n", excep.pfnDeferredFillIn);
+    ok(excep.scode == errorcode, "IActiveScriptError_GetExceptionInfo -- excep.scode: expected 0x%08x, got 0x%08x\n", errorcode, excep.scode);
+
+    SysFreeString(excep.bstrSource);
+    SysFreeString(excep.bstrDescription);
+    SysFreeString(excep.bstrHelpFile);
+}
+
+static void parse_script_with_error(DWORD flags, BSTR script_str, SCODE errorcode, ULONG line, LONG pos, BSTR script_source, BSTR description, BSTR line_text)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    HRESULT hres;
+
+    engine = create_script();
+    if(!engine)
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        IActiveScript_Release(engine);
+        return;
+    }
+
+    hres = IActiveScriptParse64_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite_CheckError);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, testW,
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|flags);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    hres = IActiveScript_GetScriptDispatch(engine, NULL, &script_disp);
+    ok(hres == S_OK, "GetScriptDispatch failed: %08x\n", hres);
+    ok(script_disp != NULL, "script_disp == NULL\n");
+    ok(script_disp != (IDispatch*)&Global, "script_disp == Global\n");
+
+    script_error = NULL;
+    SET_EXPECT(ActiveScriptSite_OnScriptError);
+    hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    todo_wine ok(hres == 0x80020101, "parse_script_with_error should have returned 0x80020101, got: 0x%08x\n", hres);
+    todo_wine CHECK_CALLED(ActiveScriptSite_OnScriptError);
+
+    if (script_error)
+    {
+        test_IActiveScriptError(script_error, errorcode, line, pos, script_source, description, line_text);
+
+        IUnknown_Release(script_error);
+    }
+
+    IDispatch_Release(script_disp);
+    IActiveScript_Release(engine);
+    IUnknown_Release(parser);
+}
+
 static void parse_script_af(DWORD flags, const char *src)
 {
     BSTR tmp;
@@ -826,6 +998,23 @@ static void parse_script_af(DWORD flags, const char *src)
 static void parse_script_a(const char *src)
 {
     parse_script_af(SCRIPTITEM_GLOBALMEMBERS, src);
+}
+
+static void parse_script_with_error_a(const char *src, SCODE errorcode, ULONG line, LONG pos, LPCSTR source, LPCSTR desc, LPCSTR linetext)
+{
+    BSTR tmp, script_source, description, line_text;
+
+    tmp = a2bstr(src);
+    script_source = a2bstr(source);
+    description = a2bstr(desc);
+    line_text = a2bstr(linetext);
+
+    parse_script_with_error(SCRIPTITEM_GLOBALMEMBERS, tmp, errorcode, line, pos, script_source, description, line_text);
+
+    SysFreeString(line_text);
+    SysFreeString(description);
+    SysFreeString(script_source);
+    SysFreeString(tmp);
 }
 
 static HRESULT parse_htmlscript_a(const char *src)
@@ -1086,6 +1275,48 @@ static void run_tests(void)
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     hres = parse_htmlscript_a("var a=1;\nif(a\n-->0) a=5;\n");
     ok(hres != S_OK, "ParseScriptText have not failed\n");
+
+    parse_script_with_error_a(
+        "?",
+        0x800a03ea, 0, 0,
+        "Microsoft JScript compilation error",
+        "Syntax error",
+        "?");
+
+    parse_script_with_error_a(
+        "var a=1;\nif(a\n-->0) a=5;\n",
+        0x800a03ee, 2, 0,
+        "Microsoft JScript compilation error",
+        "Expected ')'",
+        "-->0) a=5;");
+
+    parse_script_with_error_a(
+        "new 3;",
+        0x800a01bd, 0, 0,
+        "Microsoft JScript runtime error",
+        "Object doesn't support this action",
+        NULL);
+
+    parse_script_with_error_a(
+        "new null;",
+        0x800a138f, 0, 0,
+        "Microsoft JScript runtime error",
+        "Object expected",
+        NULL);
+
+    parse_script_with_error_a(
+        "var a;\nnew null;",
+        0x800a138f, 1, 0,
+        "Microsoft JScript runtime error",
+        "Object expected",
+        NULL);
+
+    parse_script_with_error_a(
+        "var a; new null;",
+        0x800a138f, 0, 7,
+        "Microsoft JScript runtime error",
+        "Object expected",
+        NULL);
 }
 
 static BOOL check_jscript(void)
