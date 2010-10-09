@@ -636,7 +636,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
     {
         if (ste->used) continue;
 
-        addr = module->format_info[DFI_ELF]->u.elf_info->elf_addr + ste->symp->st_value;
+        addr = module->reloc_delta + ste->symp->st_value;
 
         j = elf_is_in_thunk_area(ste->symp->st_value, thunks);
         if (j >= 0) /* thunk found */
@@ -728,7 +728,7 @@ static int elf_new_public_symbols(struct module* module, const struct hash_table
     while ((ste = hash_table_iter_up(&hti)))
     {
         symt_new_public(module, ste->compiland, ste->ht_elt.name,
-                        module->format_info[DFI_ELF]->u.elf_info->elf_addr + ste->symp->st_value,
+                        module->reloc_delta + ste->symp->st_value,
                         ste->symp->st_size);
     }
     return TRUE;
@@ -926,8 +926,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             image_unmap_section(&stab_sect);
             image_unmap_section(&stabstr_sect);
         }
-        lret = dwarf2_parse(module, module->format_info[DFI_ELF]->u.elf_info->elf_addr,
-                            thunks, fmap);
+        lret = dwarf2_parse(module, module->reloc_delta, thunks, fmap);
         ret = ret || lret;
     }
     if (strstrW(module->module.ModuleName, S_ElfW) ||
