@@ -1625,6 +1625,8 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
     switch(pstgmed->tymed) {
     case TYMED_ISTREAM:
         if(grfBSCF & BSCF_FIRSTDATANOTIFICATION) {
+            STATSTG stat;
+
             hres = IStream_Write(U(*pstgmed).pstm, buf, 10, NULL);
             ok(hres == STG_E_ACCESSDENIED,
                "Write failed: %08x, expected STG_E_ACCESSDENIED\n", hres);
@@ -1634,6 +1636,30 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
 
             hres = IStream_Revert(U(*pstgmed).pstm);
             ok(hres == E_NOTIMPL, "Revert failed: %08x, expected E_NOTIMPL\n", hres);
+
+            hres = IStream_Stat(U(*pstgmed).pstm, NULL, STATFLAG_NONAME);
+            ok(hres == E_FAIL, "hres = %x\n", hres);
+            if(use_cache_file && emulate_protocol) {
+                hres = IStream_Stat(U(*pstgmed).pstm, &stat, STATFLAG_DEFAULT);
+                ok(hres == S_OK, "hres = %x\n", hres);
+                ok(!lstrcmpW(stat.pwcsName, cache_file_name),
+                        "stat.pwcsName = %s, cache_file_name = %s\n",
+                        wine_dbgstr_w(stat.pwcsName), wine_dbgstr_w(cache_file_name));
+                CoTaskMemFree(stat.pwcsName);
+                ok(U(stat.cbSize).LowPart == (bindf&BINDF_ASYNCHRONOUS?0:6500),
+                        "stat.cbSize.LowPart = %u\n", U(stat.cbSize).LowPart);
+            } else {
+                hres = IStream_Stat(U(*pstgmed).pstm, &stat, STATFLAG_NONAME);
+                ok(hres == S_OK, "hres = %x\n", hres);
+                ok(!stat.pwcsName || broken(stat.pwcsName!=NULL),
+                        "stat.pwcsName = %s\n", wine_dbgstr_w(stat.pwcsName));
+            }
+            ok(stat.type == STGTY_STREAM, "stat.type = %x\n", stat.type);
+            ok(U(stat.cbSize).HighPart == 0, "stat.cbSize.HighPart != 0\n");
+            ok(stat.grfMode == (U(stat.cbSize).LowPart?GENERIC_READ:0), "stat.grfMode = %x\n", stat.grfMode);
+            ok(stat.grfLocksSupported == 0, "stat.grfLocksSupported = %x\n", stat.grfLocksSupported);
+            ok(stat.grfStateBits == 0, "stat.grfStateBits = %x\n", stat.grfStateBits);
+            ok(stat.reserved == 0, "stat.reserved = %x\n", stat.reserved);
         }
 
         ok(U(*pstgmed).pstm != NULL, "U(*pstgmed).pstm == NULL\n");

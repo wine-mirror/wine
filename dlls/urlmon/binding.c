@@ -632,8 +632,30 @@ static HRESULT WINAPI ProtocolStream_Stat(IStream *iface, STATSTG *pstatstg,
                                          DWORD dwStatFlag)
 {
     ProtocolStream *This = STREAM_THIS(iface);
-    FIXME("(%p)->(%p %08x)\n", This, pstatstg, dwStatFlag);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %08x)\n", This, pstatstg, dwStatFlag);
+
+    if(!pstatstg)
+        return E_FAIL;
+
+    memset(pstatstg, 0, sizeof(STATSTG));
+
+    if(!(dwStatFlag&STATFLAG_NONAME) && This->buf->cache_file) {
+        pstatstg->pwcsName = CoTaskMemAlloc((lstrlenW(This->buf->cache_file)+1)*sizeof(WCHAR));
+        if(!pstatstg->pwcsName)
+            return STG_E_INSUFFICIENTMEMORY;
+
+        lstrcpyW(pstatstg->pwcsName, This->buf->cache_file);
+    }
+
+    pstatstg->type = STGTY_STREAM;
+    if(This->buf->file != INVALID_HANDLE_VALUE) {
+        GetFileSizeEx(This->buf->file, (PLARGE_INTEGER)&pstatstg->cbSize);
+        GetFileTime(This->buf->file, &pstatstg->ctime, &pstatstg->atime, &pstatstg->mtime);
+        if(pstatstg->cbSize.QuadPart)
+            pstatstg->grfMode = GENERIC_READ;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ProtocolStream_Clone(IStream *iface, IStream **ppstm)
