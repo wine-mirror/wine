@@ -452,6 +452,13 @@ START_TEST(shreg)
         if (!hkey) return;
 
 	hshlwapi = GetModuleHandleA("shlwapi.dll");
+
+        /* SHCreateStreamOnFileEx was introduced in shlwapi v6.0 */
+        if(!GetProcAddress(hshlwapi, "SHCreateStreamOnFileEx")){
+            win_skip("Too old shlwapi version\n");
+            return;
+        }
+
         pSHCopyKeyA=(SHCopyKeyA_func)GetProcAddress(hshlwapi,"SHCopyKeyA");
         pSHRegGetPathA=(SHRegGetPathA_func)GetProcAddress(hshlwapi,"SHRegGetPathA");
         pSHRegGetValueA=(SHRegGetValueA_func)GetProcAddress(hshlwapi,"SHRegGetValueA");

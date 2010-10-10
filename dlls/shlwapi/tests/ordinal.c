@@ -2770,6 +2770,12 @@ START_TEST(ordinal)
     is_win2k_and_lower = GetProcAddress(hShlwapi, "StrChrNW") == 0;
     is_win9x = GetProcAddress(hShlwapi, (LPSTR)99) == 0; /* StrCpyNXA */
 
+    /* SHCreateStreamOnFileEx was introduced in shlwapi v6.0 */
+    if(!GetProcAddress(hShlwapi, "SHCreateStreamOnFileEx")){
+        win_skip("Too old shlwapi version\n");
+        return;
+    }
+
     init_pointers();
 
     hmlang = LoadLibraryA("mlang.dll");

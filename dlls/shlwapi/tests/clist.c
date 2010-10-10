@@ -212,9 +212,15 @@ static HRESULT (WINAPI *pSHLWAPI_213)(_IDummyStream*);
 static HRESULT (WINAPI *pSHLWAPI_214)(_IDummyStream*,ULARGE_INTEGER*);
 
 
-static void InitFunctionPtrs(void)
+static BOOL InitFunctionPtrs(void)
 {
   SHLWAPI_hshlwapi = GetModuleHandleA("shlwapi.dll");
+
+  /* SHCreateStreamOnFileEx was introduced in shlwapi v6.0 */
+  if(!GetProcAddress(SHLWAPI_hshlwapi, "SHCreateStreamOnFileEx")){
+      win_skip("Too old shlwapi version\n");
+      return FALSE;
+  }
 
   pSHLWAPI_17 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)17);
   ok(pSHLWAPI_17 != 0, "No Ordinal 17\n");
@@ -238,6 +244,8 @@ static void InitFunctionPtrs(void)
   ok(pSHLWAPI_213 != 0, "No Ordinal 213\n");
   pSHLWAPI_214 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)214);
   ok(pSHLWAPI_214 != 0, "No Ordinal 214\n");
+
+  return TRUE;
 }
 
 static void InitDummyStream(_IDummyStream* iface)
@@ -623,7 +631,8 @@ static void test_SHLWAPI_214(void)
 
 START_TEST(clist)
 {
-  InitFunctionPtrs();
+  if(!InitFunctionPtrs())
+    return;
 
   test_CList();
 

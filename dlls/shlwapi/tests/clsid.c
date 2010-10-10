@@ -185,6 +185,13 @@ static void test_CLSIDFromProgIDWrap(void)
 START_TEST(clsid)
 {
   hShlwapi = GetModuleHandleA("shlwapi.dll");
+
+  /* SHCreateStreamOnFileEx was introduced in shlwapi v6.0 */
+  if(!GetProcAddress(hShlwapi, "SHCreateStreamOnFileEx")){
+      win_skip("Too old shlwapi version\n");
+      return;
+  }
+
   pSHLWAPI_269 = (void*)GetProcAddress(hShlwapi, (LPSTR)269);
   pSHLWAPI_23 = (void*)GetProcAddress(hShlwapi, (LPSTR)23);
 
