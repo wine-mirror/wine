@@ -2348,6 +2348,9 @@ static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags,
  *      it isn't an unknown scheme type.
  *
  *  4)  If it's a file scheme and the host is "localhost" it's removed.
+ *
+ *  5)  If it's a file scheme and Uri_CREATE_FILE_USE_DOS_PATH is set,
+ *      then the UNC path characters are added before the host name.
  */
 static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
                                   DWORD flags, BOOL computeOnly) {
@@ -2355,8 +2358,6 @@ static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
             {'l','o','c','a','l','h','o','s','t',0};
     const WCHAR *ptr;
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
-
-    uri->host_start = uri->canon_len;
 
     if(data->scheme_type == URL_SCHEME_FILE &&
        data->host_len == lstrlenW(localhostW)) {
@@ -2367,6 +2368,17 @@ static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
             return TRUE;
         }
     }
+
+    if(data->scheme_type == URL_SCHEME_FILE && flags & Uri_CREATE_FILE_USE_DOS_PATH) {
+        if(!computeOnly) {
+            uri->canon_uri[uri->canon_len] = '\\';
+            uri->canon_uri[uri->canon_len+1] = '\\';
+        }
+        uri->canon_len += 2;
+        uri->authority_start = uri->canon_len;
+    }
+
+    uri->host_start = uri->canon_len;
 
     for(ptr = data->host; ptr < data->host+data->host_len; ++ptr) {
         if(*ptr == '%' && known_scheme) {
