@@ -6237,6 +6237,25 @@ static void test_rtl_layout(void)
     DestroyWindow( parent );
 }
 
+static void test_FindWindowEx(void)
+{
+    HWND found;
+    CHAR title[1];
+
+    title[0] = 0;
+
+    found = FindWindowExA( 0, 0, "MainWindowClass", title );
+    ok( found == NULL, "expected a NULL hwnd\n" );
+    found = FindWindowExA( 0, 0, "MainWindowClass", NULL );
+    ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
+    /* test behaviour with a window title that is an empty character */
+    found = FindWindowExA( 0, 0, "Shell_TrayWnd", title );
+todo_wine
+    ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
+    found = FindWindowExA( 0, 0, "Shell_TrayWnd", NULL );
+    ok( found != NULL, "found is NULL, expected a valid hwnd\n" );
+}
+
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
@@ -6332,6 +6351,7 @@ START_TEST(win)
     test_Expose();
     test_layered_window();
 
+    test_FindWindowEx();
     test_SetForegroundWindow(hwndMain);
     test_shell_window();
     test_handles( hwndMain );
