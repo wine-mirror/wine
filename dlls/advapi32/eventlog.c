@@ -817,3 +817,12 @@ ULONG WINAPI EventRegister( LPCGUID provider, PENABLECALLBACK callback, PVOID co
     FIXME("%s, %p, %p, %p\n", debugstr_guid(provider), callback, context, handle);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * QueryTraceW [ADVAPI32.@]
+ */
+ULONG WINAPI QueryTraceW( TRACEHANDLE handle, LPCWSTR sessionname, PEVENT_TRACE_PROPERTIES properties )
+{
+    FIXME("%s %s %p: stub\n", wine_dbgstr_longlong(handle), debugstr_w(sessionname), properties);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

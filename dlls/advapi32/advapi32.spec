@@ -459,7 +459,7 @@
 @ stdcall QueryServiceStatus(long ptr)
 @ stdcall QueryServiceStatusEx (long long ptr long ptr)
 # @ stub QueryTraceA
-# @ stub QueryTraceW
+@ stdcall QueryTraceW(int64 wstr ptr)
 # @ stub QueryUsersOnEncryptedFile
 @ stdcall QueryWindows31FilesMigration(long)
 # @ stub ReadEncryptedFileRaw
