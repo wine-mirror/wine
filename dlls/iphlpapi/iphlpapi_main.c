@@ -924,11 +924,55 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
     return ERROR_SUCCESS;
 }
 
+static ULONG get_dns_server_addresses(PIP_ADAPTER_DNS_SERVER_ADDRESS address, ULONG *len)
+{
+    DWORD size;
+
+    initialise_resolver();
+    /* FIXME: no support for IPv6 DNS server addresses.  Doing so requires
+     * sizeof SOCKADDR_STORAGE instead, and using _res._u._ext.nsaddrs when
+     * available.
+     */
+    size = _res.nscount * (sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(SOCKADDR));
+    if (!address || *len < size)
+    {
+        *len = size;
+        return ERROR_BUFFER_OVERFLOW;
+    }
+    *len = size;
+    if (_res.nscount > 0)
+    {
+        PIP_ADAPTER_DNS_SERVER_ADDRESS addr;
+        int i;
+
+        for (i = 0, addr = address; i < _res.nscount && addr;
+             i++, addr = addr->Next)
+        {
+            SOCKADDR_IN *sin;
+
+            addr->Address.iSockaddrLength = sizeof(SOCKADDR);
+            addr->Address.lpSockaddr =
+             (LPSOCKADDR)((PBYTE)addr + sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS));
+            sin = (SOCKADDR_IN *)addr->Address.lpSockaddr;
+            sin->sin_family = WS_AF_INET;
+            sin->sin_port = _res.nsaddr_list[i].sin_port;
+            memcpy(&sin->sin_addr, &_res.nsaddr_list[i].sin_addr, sizeof(sin->sin_addr));
+            if (i == _res.nscount - 1)
+                addr->Next = NULL;
+            else
+                addr->Next =
+                 (PIP_ADAPTER_DNS_SERVER_ADDRESS)((PBYTE)addr +
+                 sizeof(IP_ADAPTER_DNS_SERVER_ADDRESS) + sizeof(SOCKADDR));
+        }
+    }
+    return ERROR_SUCCESS;
+}
+
 ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
                                   PIP_ADAPTER_ADDRESSES aa, PULONG buflen)
 {
     InterfaceIndexTable *table;
-    ULONG i, size, total_size, ret = ERROR_NO_DATA;
+    ULONG i, size, dns_server_size, total_size, ret = ERROR_NO_DATA;
 
     TRACE("(%d, %08x, %p, %p, %p)\n", family, flags, reserved, aa, buflen);
 
@@ -951,9 +995,20 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
         }
         total_size += size;
     }
+    if (!(flags & GAA_FLAG_SKIP_DNS_SERVER))
+    {
+        /* Since DNS servers aren't really per adapter, get enough space for a
+         * single copy of them.
+         */
+        get_dns_server_addresses(NULL, &dns_server_size);
+        total_size += dns_server_size;
+    }
     if (aa && *buflen >= total_size)
     {
         ULONG bytes_left = size = total_size;
+        PIP_ADAPTER_ADDRESSES first_aa = aa;
+        PIP_ADAPTER_DNS_SERVER_ADDRESS firstDns;
+
         for (i = 0; i < table->numIndexes; i++)
         {
             if ((ret = adapterAddressesFromIndex(family, flags, table->indexes[i], aa, &size)))
@@ -966,6 +1021,16 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
                 aa->Next = (IP_ADAPTER_ADDRESSES *)((char *)aa + size);
                 aa = aa->Next;
                 size = bytes_left -= size;
+            }
+        }
+        if (!(flags & GAA_FLAG_SKIP_DNS_SERVER))
+        {
+            firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)aa + total_size - dns_server_size);
+            get_dns_server_addresses(firstDns, &dns_server_size);
+            for (aa = first_aa; aa; aa = aa->Next)
+            {
+                if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
+                    aa->FirstDnsServerAddress = firstDns;
             }
         }
         ret = ERROR_SUCCESS;
