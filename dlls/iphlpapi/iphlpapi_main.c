@@ -716,7 +716,8 @@ static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
     return row;
 }
 
-static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
+static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
+                                       IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
     ULONG ret, i, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
     DWORD *v4addrs = NULL;
@@ -725,26 +726,29 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
 
     if (family == WS_AF_INET)
     {
-        ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
-                                                    GetProcessHeap(), 0);
-        if (!ret)
+        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        if (!ret && flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
         {
-            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
-            num_v4_gateways = count_v4_gateways(index, routeTable);
+            ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
+                                                        GetProcessHeap(), 0);
+            if (!ret)
+                num_v4_gateways = count_v4_gateways(index, routeTable);
         }
     }
     else if (family == WS_AF_INET6)
         ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
     else if (family == WS_AF_UNSPEC)
     {
-        ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
-                                                    GetProcessHeap(), 0);
-        if (!ret)
+        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        if (!ret && flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
         {
-            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
-            num_v4_gateways = count_v4_gateways(index, routeTable);
+            ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
+                                                        GetProcessHeap(), 0);
             if (!ret)
+            {
+                num_v4_gateways = count_v4_gateways(index, routeTable);
                 ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+            }
         }
     }
     else
@@ -929,7 +933,7 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
     for (i = 0; i < table->numIndexes; i++)
     {
         size = 0;
-        if ((ret = adapterAddressesFromIndex(family, table->indexes[i], NULL, &size)))
+        if ((ret = adapterAddressesFromIndex(family, flags, table->indexes[i], NULL, &size)))
         {
             HeapFree(GetProcessHeap(), 0, table);
             return ret;
@@ -941,7 +945,7 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
         ULONG bytes_left = size = total_size;
         for (i = 0; i < table->numIndexes; i++)
         {
-            if ((ret = adapterAddressesFromIndex(family, table->indexes[i], aa, &size)))
+            if ((ret = adapterAddressesFromIndex(family, flags, table->indexes[i], aa, &size)))
             {
                 HeapFree(GetProcessHeap(), 0, table);
                 return ret;
