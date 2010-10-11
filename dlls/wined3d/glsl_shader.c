@@ -5025,6 +5025,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IFC           */ shader_glsl_ifc,
     /* WINED3DSIH_IGE           */ NULL,
     /* WINED3DSIH_IMUL          */ NULL,
+    /* WINED3DSIH_ITOF          */ NULL,
     /* WINED3DSIH_LABEL         */ shader_glsl_label,
     /* WINED3DSIH_LIT           */ shader_glsl_lit,
     /* WINED3DSIH_LOG           */ shader_glsl_log,
