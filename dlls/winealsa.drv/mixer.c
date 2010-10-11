@@ -431,7 +431,7 @@ static void ALSA_MixerInit(void)
     info = HeapAlloc( GetProcessHeap(), 0, snd_ctl_card_info_sizeof());
     for (x = 0; x < MAX_MIXERS; ++x)
     {
-        int card, err, capcontrols = 0;
+        int card, err, capcontrols, total_elems = 0;
         char cardind[6], cardname[10];
 
         snd_ctl_t *ctl;
@@ -486,12 +486,15 @@ static void ALSA_MixerInit(void)
         /* First, lets see what's available..
          * If there are multiple Master or Captures, all except 1 will be added as slaves
          */
+        total_elems = snd_mixer_get_count(mixdev[mixnum].mix);
+        TRACE("Total elems: %d\n", total_elems);
+
         for (elem = snd_mixer_first_elem(mixdev[mixnum].mix); elem; elem = snd_mixer_elem_next(elem))
             if (!strcasecmp(snd_mixer_selem_get_name(elem), "Master") && !mastelem)
                 mastelem = elem;
             else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Capture") && !captelem)
                 captelem = elem;
-            else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Mic") && !micelem && !mastelem)
+            else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Mic") && !micelem && !mastelem && total_elems == 1)
                 /* this is what snd-usb-audio mics look like; just a Mic control and that's it.*/
                 micelem = elem;
             else if (!blacklisted(elem))
