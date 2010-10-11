@@ -54,6 +54,7 @@ static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
 
 static BOOL on_win9x = FALSE;
+static BOOL is_wow64;
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
 static const char *msifile = "msitest.msi";
@@ -3726,7 +3727,6 @@ static void test_MsiInstallProduct(void)
     HKEY hkey;
     DWORD num, size, type;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (on_win9x)
     {
@@ -3739,7 +3739,7 @@ static void test_MsiInstallProduct(void)
         return;
     }
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* szPackagePath is NULL */
@@ -5059,7 +5059,6 @@ static void test_publish_registerproduct(void)
     char temp[MAX_PATH];
     char keypath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64 = FALSE;
 
     static const CHAR uninstall[] = "Software\\Microsoft\\Windows\\CurrentVersion"
                                     "\\Uninstall\\{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
@@ -5089,7 +5088,7 @@ static void test_publish_registerproduct(void)
 
     create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
@@ -5108,7 +5107,7 @@ static void test_publish_registerproduct(void)
     res = RegOpenKeyA(HKEY_CURRENT_USER, userugkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall_32node, 0, KEY_ALL_ACCESS, &hkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -5215,7 +5214,7 @@ static void test_publish_registerproduct(void)
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, userugkey, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall_32node, 0, KEY_ALL_ACCESS, &hkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -5330,7 +5329,7 @@ static void test_publish_publishproduct(void)
     CHAR keypath[MAX_PATH];
     CHAR temp[MAX_PATH];
     CHAR path[MAX_PATH];
-    BOOL wow64, old_installer = FALSE;
+    BOOL old_installer = FALSE;
     REGSAM access = KEY_ALL_ACCESS;
 
     static const CHAR prodpath[] = "Software\\Microsoft\\Windows\\CurrentVersion"
@@ -5362,7 +5361,7 @@ static void test_publish_publishproduct(void)
 
     create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
@@ -5563,7 +5562,6 @@ static void test_publish_publishfeatures(void)
     LPSTR usersid;
     CHAR keypath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     static const CHAR cupath[] = "Software\\Microsoft\\Installer\\Features"
                                  "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
@@ -5589,7 +5587,7 @@ static void test_publish_publishfeatures(void)
 
     create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
@@ -5699,11 +5697,10 @@ static void get_owner_company(LPSTR *owner, LPSTR *company)
     LONG res;
     HKEY hkey;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     *owner = *company = NULL;
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     res = RegOpenKeyA(HKEY_CURRENT_USER,
@@ -5749,7 +5746,6 @@ static void test_publish_registeruser(void)
     LPSTR owner, company;
     CHAR keypath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     static const CHAR keyfmt[] =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
@@ -5771,7 +5767,7 @@ static void test_publish_registeruser(void)
 
     create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
@@ -5842,7 +5838,6 @@ static void test_publish_processcomponents(void)
     CHAR keypath[MAX_PATH];
     CHAR program_files_maximus[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     static const CHAR keyfmt[] =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\"
@@ -5864,7 +5859,7 @@ static void test_publish_processcomponents(void)
 
     create_database(msifile, ppc_tables, sizeof(ppc_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
@@ -5978,7 +5973,6 @@ static void test_publish(void)
     CHAR prodcode[] = "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}";
     char date[MAX_PATH], temp[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64 = FALSE;
 
     static const CHAR subkey[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
     static const CHAR subkey_32node[] = "Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
@@ -5997,7 +5991,7 @@ static void test_publish(void)
     get_date_str(date);
     GetTempPath(MAX_PATH, temp);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, subkey, 0, KEY_ALL_ACCESS, &uninstall);
@@ -6081,7 +6075,7 @@ static void test_publish(void)
     ok(r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r);
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -6163,7 +6157,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -6246,7 +6240,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -6306,7 +6300,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -6366,7 +6360,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -6449,7 +6443,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -7544,7 +7538,6 @@ static void test_writeregistryvalues(void)
     DWORD type, size;
     CHAR path[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (is_process_limited())
     {
@@ -7557,7 +7550,7 @@ static void test_writeregistryvalues(void)
 
     create_database(msifile, wrv_tables, sizeof(wrv_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -8166,7 +8159,6 @@ static void test_MsiConfigureProductEx(void)
     HKEY props, source;
     CHAR keypath[MAX_PATH * 2], localpack[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (on_win9x)
     {
@@ -8186,7 +8178,7 @@ static void test_MsiConfigureProductEx(void)
 
     create_database(msifile, mcp_tables, sizeof(mcp_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -9412,7 +9404,6 @@ static void test_feature_override(void)
 {
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (is_process_limited())
     {
@@ -9426,7 +9417,7 @@ static void test_feature_override(void)
     create_file("msitest\\notpreselected.txt", 1000);
     create_database(msifile, fo_tables, sizeof(fo_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     r = MsiInstallProductA(msifile, "ADDLOCAL=override");
@@ -9773,7 +9764,6 @@ static void test_register_font(void)
     HKEY key;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (is_process_limited())
     {
@@ -9785,7 +9775,7 @@ static void test_register_font(void)
     create_file("msitest\\font.ttf", 1000);
     create_database(msifile, font_tables, sizeof(font_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -10112,7 +10102,6 @@ static void test_remove_registry_values(void)
     LONG res;
     HKEY key;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (is_process_limited())
     {
@@ -10124,7 +10113,7 @@ static void test_remove_registry_values(void)
     create_file("msitest\\registry.txt", 1000);
     create_database(msifile, rrv_tables, sizeof(rrv_tables) / sizeof(msi_table));
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -10160,7 +10149,7 @@ static void test_remove_registry_values(void)
     ok(res == ERROR_SUCCESS, "key removed\n");
     RegCloseKey(key);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\key2", 0, KEY_ALL_ACCESS, &key);
         ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
@@ -10178,7 +10167,7 @@ static void test_remove_registry_values(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\key1", 0, KEY_ALL_ACCESS, &key);
         ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
@@ -10197,7 +10186,7 @@ static void test_remove_registry_values(void)
     ok(res == ERROR_SUCCESS, "key removed\n");
     RegCloseKey(key);
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\keyB", 0, KEY_ALL_ACCESS, &key);
         ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
@@ -10782,16 +10771,12 @@ static void test_sourcedir_props(void)
 static void test_package_validation(void)
 {
     UINT r;
-    BOOL wow64 = FALSE;
 
     if (is_process_limited())
     {
         skip("process is limited\n");
         return;
     }
-
-    if (pIsWow64Process)
-        pIsWow64Process(GetCurrentProcess(), &wow64);
 
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\maximus", 500);
@@ -10825,7 +10810,7 @@ static void test_package_validation(void)
     ok(!delete_pf("msitest\\maximus", TRUE), "file exists\n");
     ok(!delete_pf("msitest", FALSE), "directory exists\n");
 
-    if (is_64bit && !wow64)
+    if (is_64bit && !is_wow64)
     {
         DeleteFile(msifile);
         create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;0");
@@ -10851,7 +10836,7 @@ static void test_package_validation(void)
         ok(delete_pf("msitest\\maximus", TRUE), "file does not exist\n");
         ok(delete_pf("msitest", FALSE), "directory does not exist\n");
     }
-    else if (wow64)
+    else if (is_wow64)
     {
         DeleteFile(msifile);
         create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "Intel;0");
@@ -10921,6 +10906,9 @@ START_TEST(install)
     init_functionpointers();
 
     on_win9x = check_win9x();
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
     GetCurrentDirectoryA(MAX_PATH, prev_path);
     GetTempPath(MAX_PATH, temp_path);

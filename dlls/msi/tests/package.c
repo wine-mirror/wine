@@ -31,6 +31,7 @@
 
 #include "wine/test.h"
 
+static BOOL is_wow64;
 static const char msifile[] = "winetest-package.msi";
 static char CURR_DIR[MAX_PATH];
 
@@ -260,9 +261,8 @@ static void set_component_path(LPCSTR filename, MSIINSTALLCONTEXT context,
     LPCSTR prod = NULL;
     HKEY hkey;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
@@ -324,9 +324,8 @@ static void delete_component_path(LPCSTR guid, MSIINSTALLCONTEXT context, LPSTR 
     CHAR comppath[MAX_PATH];
     CHAR prodpath[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     MultiByteToWideChar(CP_ACP, 0, guid, -1, guidW, MAX_PATH);
@@ -9867,10 +9866,9 @@ static void test_installprops(void)
     int res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64 = FALSE;
     SYSTEM_INFO si;
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     GetCurrentDirectory(MAX_PATH, path);
@@ -10052,7 +10050,7 @@ static void test_installprops(void)
         }
         else if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
         {
-            if (!wow64)
+            if (!is_wow64)
             {
                 buf[0] = 0;
                 size = MAX_PATH;
@@ -12371,7 +12369,6 @@ static void test_MsiGetProductProperty(void)
     UINT r;
     SC_HANDLE scm;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     scm = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
     if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
@@ -12386,7 +12383,7 @@ static void test_MsiGetProductProperty(void)
 
     create_test_guid(prodcode, prod_squashed);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
@@ -12795,6 +12792,9 @@ START_TEST(package)
     BOOL ret = FALSE;
 
     init_functionpointers();
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 

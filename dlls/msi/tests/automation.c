@@ -32,6 +32,8 @@
 
 #include "wine/test.h"
 
+static BOOL is_wow64;
+
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
@@ -2427,9 +2429,8 @@ static void test_Installer_InstallProduct(void)
     int iValue, iCount;
     IDispatch *pStringList = NULL;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     create_test_files();
@@ -2731,6 +2732,10 @@ START_TEST(automation)
     IUnknown *pUnk;
 
     init_functionpointers();
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
+
     GetSystemTimeAsFileTime(&systemtime);
 
     GetCurrentDirectoryA(MAX_PATH, prev_path);

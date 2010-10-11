@@ -31,6 +31,8 @@
 
 #include "wine/test.h"
 
+static BOOL is_wow64;
+
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static BOOLEAN (WINAPI *pGetUserNameExA)(EXTENDED_NAME_FORMAT, LPSTR, PULONG);
@@ -650,7 +652,6 @@ static void test_MsiSourceListAddSourceEx(void)
     HKEY prodkey, userkey, hkey, url, net;
     DWORD size;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiSourceListAddSourceExA)
     {
@@ -665,7 +666,7 @@ static void test_MsiSourceListAddSourceEx(void)
         return;
     }
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* GetLastError is not set by the function */
@@ -1038,7 +1039,6 @@ static void test_MsiSourceListEnumSources(void)
     HKEY url, net, source;
     DWORD size;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiSourceListEnumSourcesA)
     {
@@ -1053,7 +1053,7 @@ static void test_MsiSourceListEnumSources(void)
         return;
     }
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* GetLastError is not set by the function */
@@ -1656,7 +1656,6 @@ static void test_MsiSourceListSetInfo(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiSourceListSetInfoA)
     {
@@ -1671,7 +1670,7 @@ static void test_MsiSourceListSetInfo(void)
         return;
     }
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* GetLastError is not set by the function */
@@ -2082,7 +2081,6 @@ static void test_MsiSourceListAddMediaDisk(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiSourceListAddMediaDiskA)
     {
@@ -2097,7 +2095,7 @@ static void test_MsiSourceListAddMediaDisk(void)
         return;
     }
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* GetLastError is not set by the function */
@@ -2397,7 +2395,6 @@ static void test_MsiSourceListEnumMediaDisks(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiSourceListEnumMediaDisksA)
     {
@@ -2412,7 +2409,7 @@ static void test_MsiSourceListEnumMediaDisks(void)
         return;
     }
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* GetLastError is not set by the function */
@@ -3211,7 +3208,6 @@ static void test_MsiSourceListAddSource(void)
     HKEY prodkey, userkey, net, source;
     DWORD size;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiSourceListAddSourceA)
     {
@@ -3240,7 +3236,7 @@ static void test_MsiSourceListAddSource(void)
     }
     trace("username: %s\n", username);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* GetLastError is not set by the function */
@@ -3477,6 +3473,9 @@ machine_tests:
 START_TEST(source)
 {
     init_functionpointers();
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
     test_MsiSourceListGetInfo();
     test_MsiSourceListAddSourceEx();

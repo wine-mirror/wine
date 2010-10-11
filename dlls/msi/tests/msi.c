@@ -29,6 +29,7 @@
 
 #include "wine/test.h"
 
+static BOOL is_wow64;
 static const char msifile[] = "winetest.msi";
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
@@ -244,9 +245,8 @@ static void test_null(void)
     LPBYTE lpData = NULL;
     INSTALLSTATE state;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     r = pMsiOpenPackageExW(NULL, 0, &hpkg);
@@ -575,12 +575,11 @@ static void test_MsiQueryProductState(void)
     HKEY prodkey;
     DWORD data;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL prodcode */
@@ -861,14 +860,13 @@ static void test_MsiQueryFeatureState(void)
     LPSTR usersid;
     LONG res;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
     compose_base85_guid(component, comp_base85 + 20, comp_squashed2);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL prodcode */
@@ -1274,7 +1272,6 @@ static void test_MsiQueryComponentState(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     static const INSTALLSTATE MAGIC_ERROR = 0xdeadbeef;
 
@@ -1288,7 +1285,7 @@ static void test_MsiQueryComponentState(void)
     compose_base85_guid(component, comp_base85, comp_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szProductCode */
@@ -1605,14 +1602,13 @@ static void test_MsiGetComponentPath(void)
     LPSTR usersid;
     DWORD size, val;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
     LONG res;
 
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szProduct */
@@ -2135,14 +2131,13 @@ static void test_MsiGetProductCode(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(prodcode2, prod2_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* szComponent is NULL */
@@ -2403,14 +2398,13 @@ static void test_MsiEnumClients(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(prodcode2, prod2_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szComponent */
@@ -2854,13 +2848,12 @@ static void test_MsiGetProductInfo(void)
     LPSTR usersid;
     DWORD sz, val = 42;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(packcode, pack_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szProduct */
@@ -4141,7 +4134,6 @@ static void test_MsiGetProductInfoEx(void)
     LPSTR usersid;
     DWORD sz;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiGetProductInfoExA)
     {
@@ -4153,7 +4145,7 @@ static void test_MsiGetProductInfoEx(void)
     create_test_guid(packcode, pack_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szProductCode */
@@ -6895,12 +6887,11 @@ static void test_MsiGetUserInfo(void)
     LPSTR usersid;
     LONG res;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szProduct */
@@ -7480,7 +7471,6 @@ static void test_MsiOpenProduct(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     GetCurrentDirectoryA(MAX_PATH, path);
     lstrcatA(path, "\\");
@@ -7488,7 +7478,7 @@ static void test_MsiOpenProduct(void)
     create_test_guid(prodcode, prod_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     hdb = create_package_db(prodcode);
@@ -7802,12 +7792,11 @@ static void test_MsiEnumPatchesEx_usermanaged(LPCSTR usersid, LPCSTR expectedsid
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(patch, patch_squashed);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* MSIPATCHSTATE_APPLIED */
@@ -8406,12 +8395,11 @@ static void test_MsiEnumPatchesEx_userunmanaged(LPCSTR usersid, LPCSTR expecteds
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(patch, patch_squashed);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* MSIPATCHSTATE_APPLIED */
@@ -8870,12 +8858,11 @@ static void test_MsiEnumPatchesEx_machine(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(patch, patch_squashed);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* MSIPATCHSTATE_APPLIED */
@@ -9575,13 +9562,12 @@ static void test_MsiEnumPatches(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(patchcode, patch_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szProduct */
@@ -10276,7 +10262,6 @@ static void test_MsiGetPatchInfoEx(void)
     LONG res;
     UINT r;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     if (!pMsiGetPatchInfoExA)
     {
@@ -10288,7 +10273,7 @@ static void test_MsiGetPatchInfoEx(void)
     create_test_guid(patchcode, patch_squashed);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     /* NULL szPatchCode */
@@ -11299,13 +11284,12 @@ static void test_MsiGetPatchInfo(void)
     DWORD size;
     LONG res;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(patch_code, patch_squashed);
     create_test_guid(prod_code, prod_squashed);
     MultiByteToWideChar(CP_ACP, 0, patch_code, -1, patch_codeW, MAX_PATH);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     r = MsiGetPatchInfoA(NULL, NULL, NULL, NULL);
@@ -11486,14 +11470,13 @@ static void test_MsiEnumProducts(void)
     char *usersid;
     HKEY key1, key2, key3;
     REGSAM access = KEY_ALL_ACCESS;
-    BOOL wow64;
 
     create_test_guid(product1, product_squashed1);
     create_test_guid(product2, product_squashed2);
     create_test_guid(product3, product_squashed3);
     get_user_sid(&usersid);
 
-    if (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &wow64) && wow64)
+    if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
     strcpy(keypath1, "Software\\Classes\\Installer\\Products\\");
@@ -11562,6 +11545,9 @@ static void test_MsiEnumProducts(void)
 START_TEST(msi)
 {
     init_functionpointers();
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
     test_usefeature();
     test_null();
