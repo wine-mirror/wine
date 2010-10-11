@@ -27,6 +27,8 @@
 #include <stdio.h> /*printf*/
 #include <errno.h>
 
+#define _MAX__TIME64_T     (((__time64_t)0x00000007 << 32) | 0x93406FFF)
+
 #define SECSPERDAY         86400
 #define SECSPERHOUR        3600
 #define SECSPERMIN         60
@@ -38,6 +40,7 @@ static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
 static errno_t    (__cdecl *p_gmtime32_s)(struct tm*, __time32_t*);
 static errno_t    (__cdecl *p_strtime_s)(char*,size_t);
 static errno_t    (__cdecl *p_strdate_s)(char*,size_t);
+static errno_t    (__cdecl *p_localtime64_s)(struct tm*, __time64_t*);
 
 static void init(void)
 {
@@ -48,6 +51,7 @@ static void init(void)
     p_mkgmtime32 = (void*)GetProcAddress(hmod, "_mkgmtime32");
     p_strtime_s = (void*)GetProcAddress(hmod, "_strtime_s");
     p_strdate_s = (void*)GetProcAddress(hmod, "_strdate_s");
+    p_localtime64_s = (void*)GetProcAddress(hmod, "_localtime64_s");
 }
 
 static int get_test_year(time_t *start)
@@ -421,6 +425,71 @@ static void test_wstrtime(void)
     ok(count == 3, "Wrong format: count = %d, should be 3\n", count);
 }
 
+static void test_localtime64_s(void)
+{
+    struct tm tm;
+    __time64_t time;
+    errno_t err;
+
+    if (!p_localtime64_s)
+    {
+        win_skip("Skipping _localtime64_s tests\n");
+        return;
+    }
+
+    errno = EBADF;
+    err = p_localtime64_s(NULL, NULL);
+    ok(err == EINVAL, "Expected _localtime64_s to return EINVAL, got %d\n", err);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    time = 0xdeadbeef;
+    err = p_localtime64_s(NULL, &time);
+    ok(err == EINVAL, "Expected _localtime64_s to return EINVAL, got %d\n", err);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    memset(&tm, 0, sizeof(tm));
+    errno = EBADF;
+    err = p_localtime64_s(&tm, NULL);
+    ok(err == EINVAL, "Expected _localtime64_s to return EINVAL, got %d\n", err);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(tm.tm_sec == -1 && tm.tm_min == -1 && tm.tm_hour == -1 &&
+       tm.tm_mday == -1 && tm.tm_mon == -1 && tm.tm_year == -1 &&
+       tm.tm_wday == -1 && tm.tm_yday == -1 && tm.tm_isdst == -1,
+       "Expected tm structure members to be initialized to -1, got "
+       "(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", tm.tm_sec, tm.tm_min,
+       tm.tm_hour, tm.tm_mday, tm.tm_mon, tm.tm_year, tm.tm_wday, tm.tm_yday,
+       tm.tm_isdst);
+
+    memset(&tm, 0, sizeof(tm));
+    time = -1;
+    errno = EBADF;
+    err = p_localtime64_s(&tm, &time);
+    ok(err == EINVAL, "Expected _localtime64_s to return EINVAL, got %d\n", err);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(tm.tm_sec == -1 && tm.tm_min == -1 && tm.tm_hour == -1 &&
+       tm.tm_mday == -1 && tm.tm_mon == -1 && tm.tm_year == -1 &&
+       tm.tm_wday == -1 && tm.tm_yday == -1 && tm.tm_isdst == -1,
+       "Expected tm structure members to be initialized to -1, got "
+       "(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", tm.tm_sec, tm.tm_min,
+       tm.tm_hour, tm.tm_mday, tm.tm_mon, tm.tm_year, tm.tm_wday, tm.tm_yday,
+       tm.tm_isdst);
+
+    memset(&tm, 0, sizeof(tm));
+    time = _MAX__TIME64_T + 1;
+    errno = EBADF;
+    err = p_localtime64_s(&tm, &time);
+    ok(err == EINVAL, "Expected _localtime64_s to return EINVAL, got %d\n", err);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(tm.tm_sec == -1 && tm.tm_min == -1 && tm.tm_hour == -1 &&
+       tm.tm_mday == -1 && tm.tm_mon == -1 && tm.tm_year == -1 &&
+       tm.tm_wday == -1 && tm.tm_yday == -1 && tm.tm_isdst == -1,
+       "Expected tm structure members to be initialized to -1, got "
+       "(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", tm.tm_sec, tm.tm_min,
+       tm.tm_hour, tm.tm_mday, tm.tm_mon, tm.tm_year, tm.tm_wday, tm.tm_yday,
+       tm.tm_isdst);
+}
+
 START_TEST(time)
 {
     init();
@@ -433,4 +502,5 @@ START_TEST(time)
     test_strtime();
     test_wstrdate();
     test_wstrtime();
+    test_localtime64_s();
 }

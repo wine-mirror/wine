@@ -622,7 +622,7 @@
 @ cdecl _localtime32(ptr) MSVCRT__localtime32
 # stub _localtime32_s
 @ cdecl _localtime64(ptr) MSVCRT__localtime64
-# stub _localtime64_s
+@ cdecl _localtime64_s(ptr ptr)
 @ cdecl _lock(long)
 @ cdecl _locking(long long long) MSVCRT__locking
 @ cdecl _logb( double )

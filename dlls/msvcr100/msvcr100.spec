@@ -849,7 +849,7 @@
 @ cdecl _localtime32(ptr) msvcrt._localtime32
 @ stub _localtime32_s
 @ cdecl _localtime64(ptr) msvcrt._localtime64
-@ stub _localtime64_s
+@ cdecl _localtime64_s(ptr ptr) msvcrt._localtime64_s
 @ cdecl _lock(long) msvcrt._lock
 @ stub _lock_file
 @ cdecl _locking(long long long) msvcrt._locking

@@ -78,6 +78,19 @@ static inline void unix_tm_to_msvcrt( struct MSVCRT_tm *dest, const struct tm *s
     dest->tm_isdst = src->tm_isdst;
 }
 
+static inline void write_invalid_msvcrt_tm( struct MSVCRT_tm *tm )
+{
+    tm->tm_sec = -1;
+    tm->tm_min = -1;
+    tm->tm_hour = -1;
+    tm->tm_mday = -1;
+    tm->tm_mon = -1;
+    tm->tm_year = -1;
+    tm->tm_wday = -1;
+    tm->tm_yday = -1;
+    tm->tm_isdst = -1;
+}
+
 #define SECSPERDAY        86400
 /* 1601 to 1970 is 369 years plus 89 leap days */
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
@@ -203,6 +216,38 @@ struct MSVCRT_tm* CDECL MSVCRT__localtime64(const MSVCRT___time64_t* secs)
     _munlock(_TIME_LOCK);
 
     return &data->time_buffer;
+}
+
+/*********************************************************************
+ *      _localtime64_s (MSVCRT.@)
+ */
+int CDECL _localtime64_s(struct MSVCRT_tm *time, const MSVCRT___time64_t *secs)
+{
+    struct tm *tm;
+    time_t seconds;
+
+    if (!time || !secs || *secs < 0 || *secs > _MAX__TIME64_T)
+    {
+        if (time)
+            write_invalid_msvcrt_tm(time);
+
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    seconds = *secs;
+
+    _mlock(_TIME_LOCK);
+    if (!(tm = localtime(&seconds)))
+    {
+        _munlock(_TIME_LOCK);
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    unix_tm_to_msvcrt(time, tm);
+    _munlock(_TIME_LOCK);
+    return 0;
 }
 
 /*********************************************************************

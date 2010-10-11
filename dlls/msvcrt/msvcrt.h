@@ -717,6 +717,8 @@ typedef void (__cdecl *MSVCRT___sighandler_t)(int);
 
 #define MSVCRT__TRUNCATE ((MSVCRT_size_t)-1)
 
+#define _MAX__TIME64_T    (((MSVCRT___time64_t)0x00000007 << 32) | 0x93406FFF)
+
 void  __cdecl    MSVCRT_free(void*);
 void* __cdecl    MSVCRT_malloc(MSVCRT_size_t);
 void* __cdecl    MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);
