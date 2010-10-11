@@ -24,6 +24,7 @@
 #include <winbase.h>
 #include <winerror.h>
 #include <wincrypt.h>
+#include <shlwapi.h>
 #include "wine/test.h"
 
 static const BYTE bigCert[] = {
@@ -316,13 +317,14 @@ static void make_tmp_file(LPSTR path)
 static void test_retrieveObjectByUrl(void)
 {
     BOOL ret;
-    char tmpfile[MAX_PATH * 2], *ptr, url[MAX_PATH + 8];
+    char tmpfile[MAX_PATH * 2], url[MAX_PATH + 8];
     CRYPT_BLOB_ARRAY *pBlobArray;
     PCCERT_CONTEXT cert;
     PCCRL_CONTEXT crl;
     HCERTSTORE store;
     CRYPT_RETRIEVE_AUX_INFO aux = { 0 };
     FILETIME ft = { 0 };
+    DWORD urllen;
 
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL);
@@ -332,17 +334,8 @@ static void test_retrieveObjectByUrl(void)
        GetLastError(), GetLastError());
 
     make_tmp_file(tmpfile);
-    ptr = strchr(tmpfile, ':');
-    if (ptr)
-        ptr += 2; /* skip colon and first slash */
-    else
-        ptr = tmpfile;
-    snprintf(url, sizeof(url), "file:///%s", ptr);
-    do {
-        ptr = strchr(url, '\\');
-        if (ptr)
-            *ptr = '/';
-    } while (ptr);
+    urllen = sizeof(url);
+    UrlCanonicalizeA(tmpfile, url, &urllen, URL_WININET_COMPATIBILITY);
 
     pBlobArray = (CRYPT_BLOB_ARRAY *)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, NULL, 0, 0, (void **)&pBlobArray,
