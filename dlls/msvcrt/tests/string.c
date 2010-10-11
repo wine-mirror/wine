@@ -59,6 +59,7 @@ static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
 static errno_t (__cdecl *p_gcvt_s)(char*,size_t,double,int);
+static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 
@@ -1277,6 +1278,98 @@ static void test_gcvt(void)
     ok(buf[0] == '\0', "buf[0] = %c\n", buf[0]);
 }
 
+static void test__itoa_s(void)
+{
+    errno_t ret;
+    char buffer[33];
+
+    if (!p_itoa_s)
+    {
+        win_skip("Skipping _itoa_s tests\n");
+        return;
+    }
+
+    errno = EBADF;
+    ret = p_itoa_s(0, NULL, 0, 0);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_itoa_s(0, buffer, 0, 0);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == 'X', "Expected the output buffer to be untouched\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_itoa_s(0, buffer, sizeof(buffer), 0);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_itoa_s(0, buffer, sizeof(buffer), 64);
+    ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_itoa_s(12345678, buffer, 4, 10);
+    ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
+    ok(errno == ERANGE, "Expected errno to be ERANGE, got %d\n", errno);
+    ok(!memcmp(buffer, "\000765", 4),
+       "Expected the output buffer to be null terminated with truncated output\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_itoa_s(12345678, buffer, 8, 10);
+    ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
+    ok(errno == ERANGE, "Expected errno to be ERANGE, got %d\n", errno);
+    ok(!memcmp(buffer, "\0007654321", 8),
+       "Expected the output buffer to be null terminated with truncated output\n");
+
+    memset(buffer, 'X', sizeof(buffer));
+    errno = EBADF;
+    ret = p_itoa_s(-12345678, buffer, 9, 10);
+    ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
+    ok(errno == ERANGE, "Expected errno to be ERANGE, got %d\n", errno);
+    ok(!memcmp(buffer, "\00087654321", 9),
+       "Expected the output buffer to be null terminated with truncated output\n");
+
+    ret = p_itoa_s(12345678, buffer, 9, 10);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "12345678"),
+       "Expected output buffer string to be \"12345678\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(43690, buffer, sizeof(buffer), 2);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "1010101010101010"),
+       "Expected output buffer string to be \"1010101010101010\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(1092009, buffer, sizeof(buffer), 36);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "nell"),
+       "Expected output buffer string to be \"nell\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(5704, buffer, sizeof(buffer), 18);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "hag"),
+       "Expected output buffer string to be \"hag\", got \"%s\"\n",
+       buffer);
+
+    ret = p_itoa_s(-12345678, buffer, sizeof(buffer), 10);
+    ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "-12345678"),
+       "Expected output buffer string to be \"-12345678\", got \"%s\"\n",
+       buffer);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1302,6 +1395,7 @@ START_TEST(string)
     pmbstowcs_s = (void *)GetProcAddress(hMsvcrt, "mbstowcs_s");
     pwcstombs_s = (void *)GetProcAddress(hMsvcrt, "wcstombs_s");
     p_gcvt_s = (void *)GetProcAddress(hMsvcrt, "_gcvt_s");
+    p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1336,4 +1430,5 @@ START_TEST(string)
     test__strtod();
     test_mbstowcs();
     test_gcvt();
+    test__itoa_s();
 }

@@ -148,6 +148,7 @@ char*         __cdecl _fullpath(char*,const char*,size_t);
 char*         __cdecl _gcvt(double,int,char*);
 char*         __cdecl _i64toa(__int64,char*,int);
 char*         __cdecl _itoa(int,char*,int);
+errno_t       __cdecl _itoa_s(int,char*,size_t,int);
 char*         __cdecl _ltoa(__msvcrt_long,char*,int);
 __msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
 __msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);

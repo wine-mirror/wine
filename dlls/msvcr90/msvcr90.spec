@@ -668,7 +668,7 @@
 @ stub _iswxdigit_l
 @ stub _isxdigit_l
 @ cdecl _itoa(long ptr long) msvcrt._itoa
-@ stub _itoa_s
+@ cdecl _itoa_s(long ptr long long) msvcrt._itoa_s
 @ cdecl _itow(long ptr long) msvcrt._itow
 @ stub _itow_s
 @ cdecl _j0(double) msvcrt._j0

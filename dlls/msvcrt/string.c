@@ -637,6 +637,81 @@ unsigned __int64 CDECL MSVCRT_strtoui64(const char *nptr, char **endptr, int bas
 }
 
 /*********************************************************************
+ *  _itoa_s (MSVCRT.@)
+ */
+int CDECL _itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
+{
+    unsigned int val, digit;
+    int is_negative;
+    char buffer[33], *pos;
+    size_t len;
+
+    if (!str || !size || radix < 2 || radix > 36)
+    {
+        if (str && size)
+            str[0] = '\0';
+
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if (value < 0 && radix == 10)
+    {
+        is_negative = 1;
+        val = -value;
+    }
+    else
+    {
+        is_negative = 0;
+        val = value;
+    }
+
+    pos = buffer + 32;
+    *pos = '\0';
+
+    do
+    {
+        digit = val % radix;
+        val /= radix;
+
+        if (digit < 10)
+            *--pos = '0' + digit;
+        else
+            *--pos = 'a' + digit - 10;
+    }
+    while (val != 0);
+
+    if (is_negative)
+        *--pos = '-';
+
+    len = buffer + 33 - pos;
+    if (len > size)
+    {
+        size_t i;
+        char *p = str;
+
+        /* Copy the temporary buffer backwards up to the available number of
+         * characters. Don't copy the negative sign if present. */
+
+        if (is_negative)
+        {
+            p++;
+            size--;
+        }
+
+        for (pos = buffer + 31, i = 0; i < size; i++)
+            *p++ = *pos--;
+
+        str[0] = '\0';
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    memcpy(str, pos, len);
+    return 0;
+}
+
+/*********************************************************************
  *  _ui64toa_s (MSVCRT.@)
  */
 int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,

@@ -607,7 +607,7 @@
 # stub _iswxdigit_l
 # stub _isxdigit_l
 @ cdecl _itoa(long ptr long) ntdll._itoa
-# stub _itoa_s
+@ cdecl _itoa_s(long ptr long long)
 @ cdecl _itow(long ptr long) ntdll._itow
 # stub _itow_s
 @ cdecl _j0(double)
