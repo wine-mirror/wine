@@ -726,15 +726,14 @@ static void test_TxGetNaturalSize(void) {
         goto cleanup;
     }
 
+    SetLastError(0xdeadbeef);
     result = ITextServices_TxGetNaturalSize(txtserv, DVASPECT_CONTENT,
                                             hdcDraw, NULL, NULL,
                                             TXTNS_FITTOCONTENT, &psizelExtent,
                                             &xdim, &ydim);
-    todo_wine ok(result == S_OK, "TxGetNaturalSize failed (result = %x)\n", result);
-    if (result != S_OK) {
-        skip("TxGetNaturalSize measurements failed\n");
-        goto cleanup;
-    }
+    todo_wine ok(result == S_OK || broken(result == E_FAIL), /* WINXP Arabic Language */
+        "TxGetNaturalSize gave unexpected return value (result = %x)\n", result);
+    if (result == S_OK) {
     todo_wine ok(ydim == tmInfo_text.tmHeight,
                  "Height calculated incorrectly (expected %d, got %d)\n",
                  tmInfo_text.tmHeight, ydim);
@@ -742,6 +741,9 @@ static void test_TxGetNaturalSize(void) {
     todo_wine ok(xdim >= charwidth_caps_text[0] && xdim <= charwidth_caps_text[0] + 1,
                  "Width calculated incorrectly (expected %d {+1}, got %d)\n",
                  charwidth_caps_text[0], xdim);
+    } else
+        skip("TxGetNaturalSize measurements not performed (xdim = %d, ydim = %d, result = %x, error = %x)\n",
+             xdim, ydim, result, GetLastError());
 
 cleanup:
     RestoreDC(hdcDraw,1);
