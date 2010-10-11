@@ -40,4 +40,5 @@ STRINGTABLE
     STRING_SEARCH_FAILED, "Fehler: Konnte Prozess \"%s\" nicht finden.\n"
     STRING_ENUM_FAILED, "Fehler: Konnte die Prozessliste nicht Enumerieren.\n"
     STRING_TERMINATE_FAILED, "Fehler: Konnte Prozess \"%s\" nicht beenden.\n"
+    STRING_SELF_TERMINATION, "Fehler: Eigenen Prozess beenden ist nicht gestattet.\n"
 }
