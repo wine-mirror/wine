@@ -260,6 +260,26 @@ struct MSVCRT_tm* CDECL MSVCRT__localtime32(const MSVCRT___time32_t* secs)
 }
 
 /*********************************************************************
+ *      _localtime32_s (MSVCRT.@)
+ */
+int CDECL _localtime32_s(struct MSVCRT_tm *time, const MSVCRT___time32_t *secs)
+{
+    MSVCRT___time64_t secs64;
+
+    if (!time || !secs || *secs < 0)
+    {
+        if (time)
+            write_invalid_msvcrt_tm(time);
+
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    secs64 = *secs;
+    return _localtime64_s(time, &secs64);
+}
+
+/*********************************************************************
  *      localtime (MSVCRT.@)
  */
 #ifdef _WIN64

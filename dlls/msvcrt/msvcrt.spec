@@ -620,7 +620,7 @@
 @ cdecl -i386 _local_unwind2(ptr long)
 @ cdecl -i386 _local_unwind4(ptr ptr long)
 @ cdecl _localtime32(ptr) MSVCRT__localtime32
-# stub _localtime32_s
+@ cdecl _localtime32_s(ptr ptr)
 @ cdecl _localtime64(ptr) MSVCRT__localtime64
 @ cdecl _localtime64_s(ptr ptr)
 @ cdecl _lock(long)
