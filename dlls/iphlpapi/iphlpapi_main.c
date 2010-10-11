@@ -719,14 +719,15 @@ static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
 static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
                                        IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
-    ULONG ret, i, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
+    ULONG ret = ERROR_SUCCESS, i, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
     DWORD *v4addrs = NULL;
     SOCKET_ADDRESS *v6addrs = NULL;
     PMIB_IPFORWARDTABLE routeTable = NULL;
 
     if (family == WS_AF_INET)
     {
-        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        if (!(flags & GAA_FLAG_SKIP_UNICAST))
+            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
         if (!ret && flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
         {
             ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
@@ -736,10 +737,14 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
         }
     }
     else if (family == WS_AF_INET6)
-        ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+    {
+        if (!(flags & GAA_FLAG_SKIP_UNICAST))
+            ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+    }
     else if (family == WS_AF_UNSPEC)
     {
-        ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
+        if (!(flags & GAA_FLAG_SKIP_UNICAST))
+            ret = v4addressesFromIndex(index, &v4addrs, &num_v4addrs);
         if (!ret && flags & GAA_FLAG_INCLUDE_ALL_GATEWAYS)
         {
             ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
@@ -747,7 +752,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
             if (!ret)
             {
                 num_v4_gateways = count_v4_gateways(index, routeTable);
-                ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
+                if (!(flags & GAA_FLAG_SKIP_UNICAST))
+                    ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
             }
         }
     }
