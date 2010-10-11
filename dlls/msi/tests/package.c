@@ -1076,6 +1076,8 @@ static void test_settargetpath(void)
     }
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
@@ -3329,6 +3331,8 @@ static void test_states(void)
     ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
@@ -3811,6 +3815,8 @@ static void test_states(void)
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
     MsiCloseHandle( hpkg );
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     /* publish the features and components */
     r = MsiInstallProduct(msifile, "ADDLOCAL=one,four ADDSOURCE=two,three REMOVE=six,seven REINSTALL=eight,nine,ten");
@@ -7779,6 +7785,8 @@ static void test_removefiles(void)
     r = MsiSetProperty( hpkg, "TARGETDIR", CURR_DIR );
     ok( r == ERROR_SUCCESS, "set property failed\n");
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
@@ -7875,6 +7883,8 @@ static void test_appsearch(void)
     MsiCloseHandle( hdb );
     if (r != ERROR_SUCCESS)
         goto done;
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoAction( hpkg, "AppSearch" );
     ok( r == ERROR_SUCCESS, "AppSearch failed: %d\n", r);
@@ -8085,6 +8095,8 @@ static void test_appsearch_complocator(void)
 
     r = MsiSetPropertyA(hpkg, "SIGPROP8", "october");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -8629,6 +8641,8 @@ static void test_appsearch_reglocator(void)
     r = package_from_db(hdb, &hpkg);
     ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -9055,6 +9069,8 @@ static void test_appsearch_inilocator(void)
     }
     ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -9358,6 +9374,8 @@ static void test_appsearch_drlocator(void)
     }
     ok(r == ERROR_SUCCESS, "Expected a valid package handle %u\n", r);
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -9629,6 +9647,8 @@ static void test_featureparents(void)
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
     MsiCloseHandle( hdb );
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
@@ -10223,6 +10243,8 @@ static void test_launchconditions(void)
     r = MsiSetProperty( hpkg, "X", "1" );
     ok( r == ERROR_SUCCESS, "failed to set property\n" );
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     /* invalid conditions are ignored */
     r = MsiDoAction( hpkg, "LaunchConditions" );
     ok( r == ERROR_SUCCESS, "cost init failed\n" );
@@ -10244,8 +10266,6 @@ static void test_ccpsearch(void)
     CHAR prop[MAX_PATH];
     DWORD size = MAX_PATH;
     UINT r;
-
-    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     hdb = create_package_db();
     ok(hdb, "failed to create package database\n");
@@ -10284,6 +10304,8 @@ static void test_ccpsearch(void)
     ok(r == ERROR_SUCCESS, "failed to create package %u\n", r);
 
     MsiCloseHandle(hdb);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoAction(hpkg, "CCPSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -10480,6 +10502,8 @@ static void test_complocator(void)
                        "{8B1034B7-BD5E-41ac-B52C-0105D3DFD74D}", NULL, FALSE);
     set_component_path("neosodon", MSIINSTALLCONTEXT_MACHINE,
                        "{0B499649-197A-48EF-93D2-AF1C17ED6E90}", NULL, FALSE);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoAction(hpkg, "AppSearch");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -10786,6 +10810,8 @@ static void test_MsiGetSourcePath(void)
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoAction(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "cost init failed\n");
@@ -11429,6 +11455,8 @@ static void test_shortlongsource(void)
     CreateDirectoryA("one", NULL);
     CreateDirectoryA("four", NULL);
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
@@ -11749,6 +11777,8 @@ static void test_sourcedir(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoAction(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
@@ -12168,11 +12198,9 @@ static void test_access(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     test_file_access(msifile, create_commit);
-
     MsiCloseHandle(hdb);
 
     test_file_access(msifile, create_close);
-
     DeleteFileA(msifile);
 
     r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATEDIRECT, &hdb);
@@ -12184,11 +12212,9 @@ static void test_access(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     test_file_access(msifile, create_commit);
-
     MsiCloseHandle(hdb);
 
     test_file_access(msifile, create_close);
-
     DeleteFileA(msifile);
 }
 

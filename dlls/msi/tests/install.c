@@ -727,10 +727,15 @@ static const CHAR pp_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "PublishProduct\tPUBLISH_PRODUCT=1 Or FULL=1\t6400\n"
                                               "InstallFinalize\t\t6600";
 
+static const CHAR pp_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "maximus\t{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}\tMSITESTDIR\t0\t\tmaximus\n";
+
 static const CHAR ppc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                         "s72\tS38\ts72\ti2\tS255\tS72\n"
                                         "Component\tComponent\n"
-                                        "maximus\t{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}\tMSITESTDIR\t0\tUILevel=5\tmaximus\n"
+                                        "maximus\t{DF2CBABC-3BCC-47E5-A998-448D1C0C895B}\tMSITESTDIR\t0\t\tmaximus\n"
                                         "augustus\t{5AD3C142-CEF8-490D-B569-784D80670685}\tMSITESTDIR\t1\t\taugustus\n";
 
 static const CHAR ppc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
@@ -2465,7 +2470,7 @@ static const msi_table spf_tables[] =
 
 static const msi_table pp_tables[] =
 {
-    ADD_TABLE(ci_component),
+    ADD_TABLE(pp_component),
     ADD_TABLE(directory),
     ADD_TABLE(rof_feature),
     ADD_TABLE(rof_feature_comp),
@@ -3750,6 +3755,8 @@ static void test_MsiInstallProduct(void)
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     /* szPackagePath is NULL */
     r = MsiInstallProductA(NULL, "INSTALL=ALL");
     ok(r == ERROR_INVALID_PARAMETER,
@@ -4042,6 +4049,8 @@ static void test_MsiSetComponentState(void)
     lstrcpy(path, CURR_DIR);
     lstrcat(path, "\\");
     lstrcat(path, msifile);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiOpenPackage(path, &package);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -5778,7 +5787,7 @@ static void test_publish_registeruser(void)
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
-    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     /* RegisterUser, per-user */
     r = MsiInstallProductA(msifile, "REGISTER_USER=1");
@@ -5870,7 +5879,7 @@ static void test_publish_processcomponents(void)
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
-    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     /* ProcessComponents, per-user */
     r = MsiInstallProductA(msifile, "PROCESS_COMPONENTS=1");
@@ -6016,7 +6025,7 @@ static void test_publish(void)
 
     create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
 
-    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     state = MsiQueryProductState("{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
@@ -6549,7 +6558,7 @@ static void test_publishsourcelist(void)
 
     create_database(msifile, pp_tables, sizeof(pp_tables) / sizeof(msi_table));
 
-    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -7169,7 +7178,7 @@ static void test_removefiles(void)
 
     create_database(msifile, rem_tables, sizeof(rem_tables) / sizeof(msi_table));
 
-    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -7326,7 +7335,7 @@ static void test_movefiles(void)
 
     create_database(msifile, mov_tables, sizeof(mov_tables) / sizeof(msi_table));
 
-    MsiSetInternalUI(INSTALLUILEVEL_FULL, NULL);
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     /* if the source or dest property is not a full path,
      * windows tries to access it as a network resource
@@ -8561,6 +8570,8 @@ static void test_adminimage(void)
                               sizeof(ai_tables) / sizeof(msi_table),
                               100, msidbSumInfoSourceTypeAdminImage, ";1033");
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
@@ -8705,6 +8716,8 @@ static void test_shortcut(void)
     create_test_files();
     create_database(msifile, sc_tables, sizeof(sc_tables) / sizeof(msi_table));
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
     {
@@ -8779,6 +8792,8 @@ static void test_envvar(void)
 
     res = RegSetValueExA(env, "MSITESTVAR2", 0, REG_SZ, (const BYTE *)"0", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -8887,6 +8902,8 @@ static void test_preselected(void)
 
     create_test_files();
     create_database(msifile, ps_tables, sizeof(ps_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, "ADDLOCAL=One");
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -9026,8 +9043,6 @@ static void test_allusers_prop(void)
     create_test_files();
     create_database(msifile, aup2_tables, sizeof(aup2_tables) / sizeof(msi_table));
 
-    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
-
     /* ALLUSERS property set to 1 */
     r = MsiInstallProductA(msifile, "FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -9053,8 +9068,6 @@ static void test_allusers_prop(void)
     create_test_files();
     create_database(msifile, aup3_tables, sizeof(aup3_tables) / sizeof(msi_table));
 
-    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
-
     /* ALLUSERS property set to 2 */
     r = MsiInstallProductA(msifile, "FULL=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -9079,8 +9092,6 @@ static void test_allusers_prop(void)
 
     create_test_files();
     create_database(msifile, aup4_tables, sizeof(aup4_tables) / sizeof(msi_table));
-
-    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     /* ALLUSERS property set to 2, conditioned on ALLUSERS = 1 */
     r = MsiInstallProductA(msifile, "FULL=1");
@@ -9428,6 +9439,8 @@ static void test_feature_override(void)
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, "ADDLOCAL=override");
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -10646,6 +10659,8 @@ static void test_icon_table(void)
 
     create_database(msifile, icon_base_tables, sizeof(icon_base_tables) / sizeof(msi_table));
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     res = MsiOpenDatabase(msifile, MSIDBOPEN_TRANSACT, &hdb);
     ok(res == ERROR_SUCCESS, "failed to open db: %d\n", res);
 
@@ -10865,7 +10880,7 @@ static void test_package_validation(void)
         create_database_template(msifile, pv_tables, sizeof(pv_tables)/sizeof(msi_table), 100, "x64;0");
 
         r = MsiInstallProductA(msifile, NULL);
-        ok(r == ERROR_INSTALL_PACKAGE_INVALID, "Expected ERROR_INSTALL_PACKAGE_INVALID,, got %u\n", r);
+        ok(r == ERROR_INSTALL_PACKAGE_INVALID, "Expected ERROR_INSTALL_PACKAGE_INVALID, got %u\n", r);
         ok(!delete_pf_native("msitest\\maximus", TRUE), "file exists\n");
         ok(!delete_pf_native("msitest", FALSE), "directory exists\n");
 

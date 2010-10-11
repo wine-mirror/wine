@@ -2272,6 +2272,8 @@ static void test_formatrecord_tables(void)
     ok( r == ERROR_SUCCESS, "format record failed: %d\n", r);
     ok( !lstrcmp( buf, "1:  " ), "Expected '1:  ', got %s\n", buf );
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiDoAction(hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "CostInitialize failed: %d\n", r);
 
@@ -2411,6 +2413,8 @@ static void test_processmessage(void)
 {
     MSIHANDLE hrec, package;
     UINT r;
+
+    MsiSetInternalUI(INSTALLUILEVEL_BASIC, NULL);
 
     r = helper_createpackage( msifile, &package );
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
