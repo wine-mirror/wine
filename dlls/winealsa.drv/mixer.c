@@ -491,7 +491,10 @@ static void ALSA_MixerInit(void)
 
         for (elem = snd_mixer_first_elem(mixdev[mixnum].mix); elem; elem = snd_mixer_elem_next(elem))
             if (!strcasecmp(snd_mixer_selem_get_name(elem), "Master") && !mastelem)
+            {
                 mastelem = elem;
+                ++(mixdev[mixnum].chans);
+            }
             else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Capture") && !captelem)
                 captelem = elem;
             else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Mic") && !micelem && !mastelem && total_elems == 1)
@@ -517,13 +520,12 @@ static void ALSA_MixerInit(void)
                         headelem = elem;
                     else if (!strcasecmp(snd_mixer_selem_get_name(elem), "PCM") && !pcmelem)
                         pcmelem = elem;
-                    else
-                        ++(mixdev[mixnum].chans);
+                    ++(mixdev[mixnum].chans);
                 }
             }
 
-        /* Add master channel, uncounted channels and an extra for capture  */
-        mixdev[mixnum].chans += !!mastelem + !!headelem + !!pcmelem + 1;
+        /* Add dummy capture channel, wanted by Windows  */
+        mixdev[mixnum].chans += 1;
 
         /* If there is only 'Capture' and 'Master', this device is not worth it */
         if (mixdev[mixnum].chans == 2)
