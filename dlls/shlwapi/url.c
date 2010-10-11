@@ -276,6 +276,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     LPWSTR lpszUrlCpy, url, wk2, mp, mp2;
     INT state;
     DWORD nByteLen, nLen, nWkLen;
+    BOOL is_file_url;
     WCHAR slash = '\0';
 
     static const WCHAR wszFile[] = {'f','i','l','e',':'};
@@ -318,14 +319,13 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
         return E_OUTOFMEMORY;
     }
 
+    is_file_url = !strncmpW(wszFile, url, sizeof(wszFile)/sizeof(WCHAR));
+
     if ((nByteLen >= sizeof(wszHttp) &&
-         !memcmp(wszHttp, url, sizeof(wszHttp))) ||
-        (nByteLen >= sizeof(wszFile) &&
-         !memcmp(wszFile, url, sizeof(wszFile))))
+         !memcmp(wszHttp, url, sizeof(wszHttp))) || is_file_url)
         slash = '/';
 
-    if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszFile)
-            && !memcmp(wszFile, url, sizeof(wszFile)))
+    if((dwFlags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY)) && is_file_url)
         slash = '\\';
 
     if(nByteLen >= sizeof(wszRes) && !memcmp(wszRes, url, sizeof(wszRes))) {
@@ -351,7 +351,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     if(url[1] == ':') { /* Assume path */
         memcpy(wk2, wszFilePrefix, sizeof(wszFilePrefix));
         wk2 += sizeof(wszFilePrefix)/sizeof(WCHAR);
-        if (dwFlags & URL_FILE_USE_PATHURL)
+        if (dwFlags & (URL_FILE_USE_PATHURL | URL_WININET_COMPATIBILITY))
         {
             slash = '\\';
             --wk2;
@@ -359,6 +359,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
         else
             dwFlags |= URL_ESCAPE_UNSAFE;
         state = 5;
+        is_file_url = TRUE;
     }
 
     while (*wk1) {
@@ -379,14 +380,47 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
             if (*wk1 != '/') {state = 6; break;}
             *wk2++ = *wk1++;
             if((dwFlags & URL_FILE_USE_PATHURL) && nByteLen >= sizeof(wszLocalhost)
-                        && !strncmpW(wszFile, url, sizeof(wszFile)/sizeof(WCHAR))
+                        && is_file_url
                         && !memcmp(wszLocalhost, wk1, sizeof(wszLocalhost))){
                 wk1 += sizeof(wszLocalhost)/sizeof(WCHAR);
                 while(*wk1 == '\\' && (dwFlags & URL_FILE_USE_PATHURL))
                     wk1++;
             }
-            if(*wk1 == '/' && (dwFlags & URL_FILE_USE_PATHURL))
+
+            if(*wk1 == '/' && (dwFlags & URL_FILE_USE_PATHURL)){
                 wk1++;
+            }else if(is_file_url){
+                const WCHAR *body = wk1;
+
+                while(*body == '/')
+                    ++body;
+
+                if(isalnumW(*body) && *(body+1) == ':'){
+                    if(!(dwFlags & (URL_WININET_COMPATIBILITY | URL_FILE_USE_PATHURL))){
+                        if(slash)
+                            *wk2++ = slash;
+                        else
+                            *wk2++ = '/';
+                    }
+                }else{
+                    if(dwFlags & URL_WININET_COMPATIBILITY){
+                        if(*wk1 == '/' && *(wk1+1) != '/'){
+                            *wk2++ = '\\';
+                        }else{
+                            *wk2++ = '\\';
+                            *wk2++ = '\\';
+                        }
+                    }else{
+                        if(*wk1 == '/' && *(wk1+1) != '/'){
+                            if(slash)
+                                *wk2++ = slash;
+                            else
+                                *wk2++ = '/';
+                        }
+                    }
+                }
+                wk1 = body;
+            }
             state = 4;
             break;
         case 3:
