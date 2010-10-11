@@ -51,6 +51,41 @@ char* CDECL _strdup(const char* str)
 }
 
 /*********************************************************************
+ *		_strlwr_s (MSVCRT.@)
+ */
+int CDECL _strlwr_s(char *str, MSVCRT_size_t len)
+{
+    char *ptr = str;
+
+    if (!str || !len)
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    while (len && *ptr)
+    {
+        len--;
+        ptr++;
+    }
+
+    if (!len)
+    {
+        str[0] = '\0';
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    while (*str)
+    {
+        *str = tolower(*str);
+        str++;
+    }
+
+    return 0;
+}
+
+/*********************************************************************
  *		_strnset (MSVCRT.@)
  */
 char* CDECL MSVCRT__strnset(char* str, int value, MSVCRT_size_t len)

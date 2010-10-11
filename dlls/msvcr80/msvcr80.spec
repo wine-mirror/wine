@@ -996,7 +996,7 @@
 @ stub _stricoll_l
 @ cdecl _strlwr(str) msvcrt._strlwr
 @ stub _strlwr_l
-@ stub _strlwr_s
+@ cdecl _strlwr_s(ptr long) msvcrt._strlwr_s
 @ stub _strlwr_s_l
 @ stub _strncoll
 @ stub _strncoll_l

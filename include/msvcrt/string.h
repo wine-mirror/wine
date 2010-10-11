@@ -48,6 +48,7 @@ errno_t __cdecl strerror_s(char*,size_t,int);
 int   __cdecl _stricmp(const char*,const char*);
 int   __cdecl _stricoll(const char*,const char*);
 char* __cdecl _strlwr(char*);
+errno_t __cdecl _strlwr_s(char*,size_t);
 int   __cdecl _strnicmp(const char*,const char*,size_t);
 char* __cdecl _strnset(char*,int,size_t);
 char* __cdecl _strrev(char*);

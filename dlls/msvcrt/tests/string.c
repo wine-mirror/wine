@@ -60,6 +60,7 @@ static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
 static errno_t (__cdecl *p_gcvt_s)(char*,size_t,double,int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
+static errno_t (__cdecl *p_strlwr_s)(char*,size_t);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 
@@ -1370,6 +1371,63 @@ static void test__itoa_s(void)
        buffer);
 }
 
+static void test__strlwr_s(void)
+{
+    errno_t ret;
+    char buffer[20];
+
+    if (!p_strlwr_s)
+    {
+        win_skip("Skipping _strlwr_s tests\n");
+        return;
+    }
+
+    errno = EBADF;
+    ret = p_strlwr_s(NULL, 0);
+    ok(ret == EINVAL, "Expected _strlwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    ret = p_strlwr_s(NULL, sizeof(buffer));
+    ok(ret == EINVAL, "Expected _strlwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    ret = p_strlwr_s(buffer, 0);
+    ok(ret == EINVAL, "Expected _strlwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    strcpy(buffer, "GoRrIsTeR");
+    errno = EBADF;
+    ret = p_strlwr_s(buffer, 5);
+    ok(ret == EINVAL, "Expected _strlwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(!memcmp(buffer, "\0oRrIsTeR", sizeof("\0oRrIsTeR")),
+       "Expected the output buffer to be \"gorrIsTeR\"\n");
+
+    strcpy(buffer, "GoRrIsTeR");
+    errno = EBADF;
+    ret = p_strlwr_s(buffer, sizeof("GoRrIsTeR") - 1);
+    ok(ret == EINVAL, "Expected _strlwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+    ok(!memcmp(buffer, "\0oRrIsTeR", sizeof("\0oRrIsTeR")),
+       "Expected the output buffer to be \"gorrIsTeR\"\n");
+
+    strcpy(buffer, "GoRrIsTeR");
+    ret = p_strlwr_s(buffer, sizeof("GoRrIsTeR"));
+    ok(ret == 0, "Expected _strlwr_s to return 0, got %d\n", ret);
+    ok(!strcmp(buffer, "gorrister"),
+       "Expected the output buffer to be \"gorrister\", got \"%s\"\n",
+       buffer);
+
+    memcpy(buffer, "GoRrIsTeR\0ELLEN", sizeof("GoRrIsTeR\0ELLEN"));
+    ret = p_strlwr_s(buffer, sizeof(buffer));
+    ok(ret == 0, "Expected _strlwr_s to return 0, got %d\n", ret);
+    ok(!memcmp(buffer, "gorrister\0ELLEN", sizeof("gorrister\0ELLEN")),
+       "Expected the output buffer to be \"gorrister\\0ELLEN\", got \"%s\"\n",
+       buffer);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1396,6 +1454,7 @@ START_TEST(string)
     pwcstombs_s = (void *)GetProcAddress(hMsvcrt, "wcstombs_s");
     p_gcvt_s = (void *)GetProcAddress(hMsvcrt, "_gcvt_s");
     p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
+    p_strlwr_s = (void *)GetProcAddress(hMsvcrt, "_strlwr_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1431,4 +1490,5 @@ START_TEST(string)
     test_mbstowcs();
     test_gcvt();
     test__itoa_s();
+    test__strlwr_s();
 }
