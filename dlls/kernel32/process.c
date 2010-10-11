@@ -2297,25 +2297,25 @@ UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 /**********************************************************************
  *	    LoadModule    (KERNEL32.@)
  */
-HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
+DWORD WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 {
     LOADPARMS32 *params = paramBlock;
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
-    HINSTANCE hInstance;
+    DWORD ret;
     LPSTR cmdline, p;
     char filename[MAX_PATH];
     BYTE len;
 
-    if (!name) return (HINSTANCE)ERROR_FILE_NOT_FOUND;
+    if (!name) return ERROR_FILE_NOT_FOUND;
 
     if (!SearchPathA( NULL, name, ".exe", sizeof(filename), filename, NULL ) &&
         !SearchPathA( NULL, name, NULL, sizeof(filename), filename, NULL ))
-        return ULongToHandle(GetLastError());
+        return GetLastError();
 
     len = (BYTE)params->lpCmdLine[0];
     if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + len + 2 )))
-        return (HINSTANCE)ERROR_NOT_ENOUGH_MEMORY;
+        return ERROR_NOT_ENOUGH_MEMORY;
 
     strcpy( cmdline, filename );
     p = cmdline + strlen(cmdline);
@@ -2337,19 +2337,19 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
         /* Give 30 seconds to the app to come up */
         if (wait_input_idle( info.hProcess, 30000 ) == WAIT_FAILED)
             WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
-        hInstance = (HINSTANCE)33;
+        ret = 33;
         /* Close off the handles */
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
-    else if ((hInstance = ULongToHandle(GetLastError())) >= (HINSTANCE)32)
+    else if ((ret = GetLastError()) >= 32)
     {
-        FIXME("Strange error set by CreateProcess: %p\n", hInstance );
-        hInstance = (HINSTANCE)11;
+        FIXME("Strange error set by CreateProcess: %u\n", ret );
+        ret = 11;
     }
 
     HeapFree( GetProcessHeap(), 0, cmdline );
-    return hInstance;
+    return ret;
 }
 
 
