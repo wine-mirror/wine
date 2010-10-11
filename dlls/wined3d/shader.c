@@ -99,6 +99,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_REP           */ "rep",
     /* WINED3DSIH_RET           */ "ret",
     /* WINED3DSIH_RSQ           */ "rsq",
+    /* WINED3DSIH_SAMPLE        */ "sample",
     /* WINED3DSIH_SETP          */ "setp",
     /* WINED3DSIH_SGE           */ "sge",
     /* WINED3DSIH_SGN           */ "sgn",
