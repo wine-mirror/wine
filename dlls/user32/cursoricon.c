@@ -25,6 +25,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -37,6 +38,7 @@
 #include "wine/exception.h"
 #include "wine/server.h"
 #include "controls.h"
+#include "win.h"
 #include "user_private.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
@@ -75,30 +77,7 @@ static HDC screen_dc;
 
 static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
 
-
-/**********************************************************************
- * ICONCACHE for cursors/icons loaded with LR_SHARED.
- */
-typedef struct tagICONCACHE
-{
-    struct list          entry;
-    HMODULE              hModule;
-    HRSRC                hRsrc;
-    HRSRC                hGroupRsrc;
-    HICON                hIcon;
-} ICONCACHE;
-
 static struct list icon_cache = LIST_INIT( icon_cache );
-
-static CRITICAL_SECTION IconCrst;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &IconCrst,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": IconCrst") }
-};
-static CRITICAL_SECTION IconCrst = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 
 /**********************************************************************
  * User objects management
@@ -114,9 +93,11 @@ struct cursoricon_frame
 struct cursoricon_object
 {
     struct user_object      obj;        /* object header */
+    struct list             entry;      /* entry in shared icons list */
     ULONG_PTR               param;      /* opaque param used by 16-bit code */
     HMODULE                 module;     /* module for icons loaded from resources */
     LPWSTR                  resname;    /* resource name for icons loaded from resources */
+    HRSRC                   rsrc;       /* resource for shared icons */
     BOOL                    is_icon;    /* whether icon or cursor */
     UINT                    width;
     UINT                    height;
@@ -161,6 +142,8 @@ static BOOL free_icon_handle( HICON handle )
     {
         ULONG_PTR param = obj->param;
         UINT i;
+
+        assert( !obj->rsrc );  /* shared icons can't be freed */
 
         for (i=0; i<obj->num_frames; i++)
         {
@@ -401,77 +384,19 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
 }
 
 /**********************************************************************
- *	    CURSORICON_FindSharedIcon
+ *              is_icon_shared
  */
-static HICON CURSORICON_FindSharedIcon( HMODULE hModule, HRSRC hRsrc )
+static BOOL is_icon_shared( HICON handle )
 {
-    HICON hIcon = 0;
-    ICONCACHE *ptr;
+    struct cursoricon_object *info;
+    BOOL ret = FALSE;
 
-    EnterCriticalSection( &IconCrst );
-
-    LIST_FOR_EACH_ENTRY( ptr, &icon_cache, ICONCACHE, entry )
-        if ( ptr->hModule == hModule && ptr->hRsrc == hRsrc )
-        {
-            hIcon = ptr->hIcon;
-            break;
-        }
-
-    LeaveCriticalSection( &IconCrst );
-
-    return hIcon;
-}
-
-/*************************************************************************
- * CURSORICON_FindCache
- *
- * Given a handle, find the corresponding cache element
- *
- * PARAMS
- *      Handle     [I] handle to an Image
- *
- * RETURNS
- *     Success: The cache entry
- *     Failure: NULL
- *
- */
-static ICONCACHE* CURSORICON_FindCache(HICON hIcon)
-{
-    ICONCACHE *ptr;
-    ICONCACHE *pRet=NULL;
-
-    EnterCriticalSection( &IconCrst );
-
-    LIST_FOR_EACH_ENTRY( ptr, &icon_cache, ICONCACHE, entry )
+    if ((info = get_icon_ptr( handle )))
     {
-        if ( hIcon == ptr->hIcon )
-        {
-            pRet = ptr;
-            break;
-        }
+        ret = info->rsrc != NULL;
+        release_icon_ptr( handle, info );
     }
-
-    LeaveCriticalSection( &IconCrst );
-
-    return pRet;
-}
-
-/**********************************************************************
- *	    CURSORICON_AddSharedIcon
- */
-static void CURSORICON_AddSharedIcon( HMODULE hModule, HRSRC hRsrc, HRSRC hGroupRsrc, HICON hIcon )
-{
-    ICONCACHE *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(ICONCACHE) );
-    if ( !ptr ) return;
-
-    ptr->hModule = hModule;
-    ptr->hRsrc   = hRsrc;
-    ptr->hIcon  = hIcon;
-    ptr->hGroupRsrc = hGroupRsrc;
-
-    EnterCriticalSection( &IconCrst );
-    list_add_head( &icon_cache, &ptr->entry );
-    LeaveCriticalSection( &IconCrst );
+    return ret;
 }
 
 /**********************************************************************
@@ -849,7 +774,7 @@ done:
     return ret;
 }
 
-static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi, HMODULE module, LPCWSTR resname,
+static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi, HMODULE module, LPCWSTR resname, HRSRC rsrc,
                                            POINT hotspot, BOOL bIcon, INT width, INT height, UINT cFlag )
 {
     HICON hObj;
@@ -908,6 +833,11 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi, HMODULE module, LPCW
         }
         else info->resname = MAKEINTRESOURCEW( LOWORD(resname) );
 
+        if (module && (cFlag & LR_SHARED))
+        {
+            info->rsrc = rsrc;
+            list_add_head( &icon_cache, &info->entry );
+        }
         release_icon_ptr( hObj, info );
         USER_Driver->pCreateCursorIcon( hObj );
     }
@@ -1180,7 +1110,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
         bmi = (BITMAPINFO *)(pt + 2);
     }
 
-    return CURSORICON_CreateIconFromBMI( bmi, NULL, NULL, hotspot, bIcon, width, height, cFlag );
+    return CURSORICON_CreateIconFromBMI( bmi, NULL, NULL, NULL, hotspot, bIcon, width, height, cFlag );
 }
 
 
@@ -1242,7 +1172,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
 
     hotspot.x = entry->xHotspot;
     hotspot.y = entry->yHotspot;
-    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)&bits[entry->dwDIBOffset], NULL, NULL,
+    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)&bits[entry->dwDIBOffset], NULL, NULL, NULL,
 					  hotspot, !fCursor, width, height, loadflags );
 end:
     TRACE("loaded %s -> %p\n", debugstr_w( filename ), hIcon );
@@ -1261,7 +1191,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 {
     HANDLE handle = 0;
     HICON hIcon = 0;
-    HRSRC hRsrc, hGroupRsrc;
+    HRSRC hRsrc;
     CURSORICONDIR *dir;
     CURSORICONDIRENTRY *dirEntry;
     LPBYTE bits;
@@ -1285,7 +1215,6 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     if (!(hRsrc = FindResourceW( hInstance, name,
                                  (LPWSTR)(fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON) )))
         return 0;
-    hGroupRsrc = hRsrc;
 
     /* Find the best entry in the directory */
 
@@ -1306,9 +1235,21 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
                                 (LPWSTR)(fCursor ? RT_CURSOR : RT_ICON) ))) return 0;
 
     /* If shared icon, check whether it was already loaded */
-    if (    (loadflags & LR_SHARED)
-         && (hIcon = CURSORICON_FindSharedIcon( hInstance, hRsrc ) ) != 0 )
-        return hIcon;
+    if (loadflags & LR_SHARED)
+    {
+        struct cursoricon_object *ptr;
+
+        USER_Lock();
+        LIST_FOR_EACH_ENTRY( ptr, &icon_cache, struct cursoricon_object, entry )
+        {
+            if (ptr->module != hInstance) continue;
+            if (ptr->rsrc != hRsrc) continue;
+            hIcon = ptr->obj.handle;
+            break;
+        }
+        USER_Unlock();
+        if (hIcon) return hIcon;
+    }
 
     if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
     bits = LockResource( handle );
@@ -1325,15 +1266,9 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         hotspot.y = pt[1];
         bits += 2 * sizeof(SHORT);
     }
-    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)bits, hInstance, name, hotspot,
-                                          !fCursor, width, height, loadflags );
+    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)bits, hInstance, name, hRsrc,
+                                          hotspot, !fCursor, width, height, loadflags );
     FreeResource( handle );
-
-    /* If shared icon, add to icon cache */
-
-    if ( hIcon && (loadflags & LR_SHARED) )
-        CURSORICON_AddSharedIcon( hInstance, hRsrc, hGroupRsrc, hIcon );
-
     return hIcon;
 }
 
@@ -1447,7 +1382,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
 {
     TRACE_(icon)("%p\n", hIcon );
 
-    if (!CURSORICON_FindCache( hIcon )) free_icon_handle( hIcon );
+    if (!is_icon_shared( hIcon )) free_icon_handle( hIcon );
     return TRUE;
 }
 
@@ -2591,7 +2526,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
 
             if (!(icon = get_icon_ptr( hnd ))) return 0;
 
-            if (icon->module && (flags & LR_COPYFROMRESOURCE))
+            if (icon->rsrc && (flags & LR_COPYFROMRESOURCE))
                 res = CURSORICON_Load( icon->module, icon->resname, desiredx, desiredy, depth,
                                        type == IMAGE_CURSOR, flags );
             else
