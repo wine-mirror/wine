@@ -82,7 +82,6 @@ typedef struct VideoRendererImpl
     BOOL bUnkOuterValid;
     BOOL bAggregatable;
     REFERENCE_TIME rtLastStop;
-    MediaSeekingImpl mediaSeeking;
     LONG WindowStyle;
 
     /* During pause we can hold a single sample, for use in GetCurrentImage */

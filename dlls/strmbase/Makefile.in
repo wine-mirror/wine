@@ -5,6 +5,7 @@ C_SRCS = \
 	filter.c \
 	mediatype.c \
 	pin.c \
+	seeking.c \
 	transform.c
 
 @MAKE_IMPLIB_RULES@

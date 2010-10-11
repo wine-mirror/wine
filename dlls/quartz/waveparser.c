@@ -49,6 +49,11 @@ typedef struct WAVEParserImpl
     DWORD dwLength;
 } WAVEParserImpl;
 
+static inline WAVEParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (WAVEParserImpl*)((char*)iface - FIELD_OFFSET(WAVEParserImpl, Parser.sourceSeeking.lpVtbl));
+}
+
 static LONGLONG bytepos_to_duration(WAVEParserImpl *This, LONGLONG bytepos)
 {
     LONGLONG duration = BYTES_FROM_MEDIATIME(bytepos - This->StartOfFile);
@@ -140,7 +145,7 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
             This->Parser.pInputPin->rtCurrent = tStart;
     }
 
-    if (tStop >= This->EndOfFile || (bytepos_to_duration(This, tStop) >= This->Parser.mediaSeeking.llStop) || hr == VFW_E_NOT_CONNECTED)
+    if (tStop >= This->EndOfFile || (bytepos_to_duration(This, tStop) >= This->Parser.sourceSeeking.llStop) || hr == VFW_E_NOT_CONNECTED)
     {
         unsigned int i;
 
@@ -184,14 +189,14 @@ static HRESULT WAVEParser_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
     return S_FALSE;
 }
 
-static HRESULT WAVEParserImpl_seek(IBaseFilter *iface)
+static HRESULT WINAPI WAVEParserImpl_seek(IMediaSeeking *iface)
 {
-    WAVEParserImpl *This = (WAVEParserImpl *)iface;
+    WAVEParserImpl *This = impl_from_IMediaSeeking(iface);
     PullPin *pPin = This->Parser.pInputPin;
     IPin *victim = NULL;
     LONGLONG newpos, curpos, endpos, bytepos;
 
-    newpos = This->Parser.mediaSeeking.llCurrent;
+    newpos = This->Parser.sourceSeeking.llCurrent;
     curpos = bytepos_to_duration(This, pPin->rtCurrent);
     endpos = bytepos_to_duration(This, This->EndOfFile);
     bytepos = duration_to_bytepos(This, newpos);
@@ -319,9 +324,9 @@ static HRESULT WAVEParser_InputPin_PreConnect(IPin * iface, IPin * pConnectPin, 
     hr = Parser_AddPin(&(pWAVEParser->Parser), &piOutput, props, &amt);
     CoTaskMemFree(amt.pbFormat);
 
-    pWAVEParser->Parser.mediaSeeking.llCurrent = 0;
-    pWAVEParser->Parser.mediaSeeking.llStop = pWAVEParser->Parser.mediaSeeking.llDuration = bytepos_to_duration(pWAVEParser, pWAVEParser->EndOfFile);
-    TRACE("Duration: %u seconds\n", (DWORD)(pWAVEParser->Parser.mediaSeeking.llDuration / (LONGLONG)10000000));
+    pWAVEParser->Parser.sourceSeeking.llCurrent = 0;
+    pWAVEParser->Parser.sourceSeeking.llStop = pWAVEParser->Parser.sourceSeeking.llDuration = bytepos_to_duration(pWAVEParser, pWAVEParser->EndOfFile);
+    TRACE("Duration: %u seconds\n", (DWORD)(pWAVEParser->Parser.sourceSeeking.llDuration / (LONGLONG)10000000));
 
     This->rtStop = pWAVEParser->EndOfFile;
     This->rtStart = pWAVEParser->StartOfFile;

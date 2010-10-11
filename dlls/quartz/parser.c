@@ -20,7 +20,6 @@
  */
 
 #include "quartz_private.h"
-#include "control_private.h"
 #include "pin.h"
 
 #include "vfwmsgs.h"
@@ -41,13 +40,13 @@ static const IMediaSeekingVtbl Parser_Seeking_Vtbl;
 static const IPinVtbl Parser_OutputPin_Vtbl;
 static const IPinVtbl Parser_InputPin_Vtbl;
 
-static HRESULT Parser_ChangeCurrent(IBaseFilter *iface);
-static HRESULT Parser_ChangeStop(IBaseFilter *iface);
-static HRESULT Parser_ChangeRate(IBaseFilter *iface);
+static HRESULT WINAPI Parser_ChangeStart(IMediaSeeking *iface);
+static HRESULT WINAPI Parser_ChangeStop(IMediaSeeking *iface);
+static HRESULT WINAPI Parser_ChangeRate(IMediaSeeking *iface);
 
 static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
-    return (ParserImpl *)((char*)iface - FIELD_OFFSET(ParserImpl, mediaSeeking.lpVtbl));
+    return (ParserImpl *)((char*)iface - FIELD_OFFSET(ParserImpl, sourceSeeking.lpVtbl));
 }
 
 /* FIXME: WRONG */
@@ -72,7 +71,7 @@ static LONG WINAPI Parser_GetPinCount(IBaseFilter *iface)
     return This->cStreams;
 }
 
-HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest, STOPPROCESSPROC fnDone, CHANGEPROC stop, CHANGEPROC current, CHANGEPROC rate)
+HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, const CLSID* pClsid, PFN_PROCESS_SAMPLE fnProcessSample, PFN_QUERY_ACCEPT fnQueryAccept, PFN_PRE_CONNECT fnPreConnect, PFN_CLEANUP fnCleanup, PFN_DISCONNECT fnDisconnect, REQUESTPROC fnRequest, STOPPROCESSPROC fnDone, SourceSeeking_ChangeStop stop, SourceSeeking_ChangeStart start, SourceSeeking_ChangeRate rate)
 {
     HRESULT hr;
     PIN_INFO piInput;
@@ -90,8 +89,8 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     piInput.pFilter = (IBaseFilter *)pParser;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    if (!current)
-        current = Parser_ChangeCurrent;
+    if (!start)
+        start = Parser_ChangeStart;
 
     if (!stop)
         stop = Parser_ChangeStop;
@@ -99,8 +98,7 @@ HRESULT Parser_Create(ParserImpl* pParser, const IBaseFilterVtbl *Parser_Vtbl, c
     if (!rate)
         rate = Parser_ChangeRate;
 
-    MediaSeekingImpl_Init((IBaseFilter*)pParser, stop, current, rate, &pParser->mediaSeeking, &pParser->filter.csFilter);
-    pParser->mediaSeeking.lpVtbl = &Parser_Seeking_Vtbl;
+    SourceSeeking_Init(&pParser->sourceSeeking, &Parser_Seeking_Vtbl, stop, start, rate,  &pParser->filter.csFilter);
 
     hr = PullPin_Construct(&Parser_InputPin_Vtbl, &piInput, fnProcessSample, (LPVOID)pParser, fnQueryAccept, fnCleanup, fnRequest, fnDone, &pParser->filter.csFilter, (IPin **)&pParser->pInputPin);
 
@@ -466,19 +464,19 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
     return S_OK;
 }
 
-static HRESULT Parser_ChangeCurrent(IBaseFilter *iface)
+static HRESULT WINAPI Parser_ChangeStart(IMediaSeeking *iface)
 {
-    FIXME("(%p) filter hasn't implemented current position change!\n", iface);
+    FIXME("(%p) filter hasn't implemented start position change!\n", iface);
     return S_OK;
 }
 
-static HRESULT Parser_ChangeStop(IBaseFilter *iface)
+static HRESULT WINAPI Parser_ChangeStop(IMediaSeeking *iface)
 {
     FIXME("(%p) filter hasn't implemented stop position change!\n", iface);
     return S_OK;
 }
 
-static HRESULT Parser_ChangeRate(IBaseFilter *iface)
+static HRESULT WINAPI Parser_ChangeRate(IMediaSeeking *iface)
 {
     FIXME("(%p) filter hasn't implemented rate change!\n", iface);
     return S_OK;
@@ -511,23 +509,23 @@ static const IMediaSeekingVtbl Parser_Seeking_Vtbl =
     Parser_Seeking_QueryInterface,
     Parser_Seeking_AddRef,
     Parser_Seeking_Release,
-    MediaSeekingImpl_GetCapabilities,
-    MediaSeekingImpl_CheckCapabilities,
-    MediaSeekingImpl_IsFormatSupported,
-    MediaSeekingImpl_QueryPreferredFormat,
-    MediaSeekingImpl_GetTimeFormat,
-    MediaSeekingImpl_IsUsingTimeFormat,
-    MediaSeekingImpl_SetTimeFormat,
-    MediaSeekingImpl_GetDuration,
-    MediaSeekingImpl_GetStopPosition,
-    MediaSeekingImpl_GetCurrentPosition,
-    MediaSeekingImpl_ConvertTimeFormat,
-    MediaSeekingImpl_SetPositions,
-    MediaSeekingImpl_GetPositions,
-    MediaSeekingImpl_GetAvailable,
-    MediaSeekingImpl_SetRate,
-    MediaSeekingImpl_GetRate,
-    MediaSeekingImpl_GetPreroll
+    SourceSeekingImpl_GetCapabilities,
+    SourceSeekingImpl_CheckCapabilities,
+    SourceSeekingImpl_IsFormatSupported,
+    SourceSeekingImpl_QueryPreferredFormat,
+    SourceSeekingImpl_GetTimeFormat,
+    SourceSeekingImpl_IsUsingTimeFormat,
+    SourceSeekingImpl_SetTimeFormat,
+    SourceSeekingImpl_GetDuration,
+    SourceSeekingImpl_GetStopPosition,
+    SourceSeekingImpl_GetCurrentPosition,
+    SourceSeekingImpl_ConvertTimeFormat,
+    SourceSeekingImpl_SetPositions,
+    SourceSeekingImpl_GetPositions,
+    SourceSeekingImpl_GetAvailable,
+    SourceSeekingImpl_SetRate,
+    SourceSeekingImpl_GetRate,
+    SourceSeekingImpl_GetPreroll
 };
 
 static HRESULT WINAPI Parser_OutputPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)

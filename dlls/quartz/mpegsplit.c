@@ -77,6 +77,11 @@ typedef struct MPEGSplitterImpl
     struct seek_entry *seektable;
 } MPEGSplitterImpl;
 
+static inline MPEGSplitterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (MPEGSplitterImpl *)((char*)iface - FIELD_OFFSET(MPEGSplitterImpl, Parser.sourceSeeking.lpVtbl));
+}
+
 static int MPEGSplitter_head_check(const BYTE *header)
 {
     /* If this is a possible start code, check for a system or video header */
@@ -280,7 +285,7 @@ static HRESULT MPEGSplitter_process_sample(LPVOID iface, IMediaSample * pSample,
         }
     }
 
-    if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile || This->position >= This->Parser.mediaSeeking.llStop)
+    if (BYTES_FROM_MEDIATIME(tStop) >= This->EndOfFile || This->position >= This->Parser.sourceSeeking.llStop)
     {
         unsigned int i;
 
@@ -587,9 +592,9 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
             TRACE("Parsing took %u ms\n", GetTickCount() - ticks);
             This->duration = duration;
 
-            This->Parser.mediaSeeking.llCurrent = 0;
-            This->Parser.mediaSeeking.llDuration = duration;
-            This->Parser.mediaSeeking.llStop = duration;
+            This->Parser.sourceSeeking.llCurrent = 0;
+            This->Parser.sourceSeeking.llDuration = duration;
+            This->Parser.sourceSeeking.llStop = duration;
             break;
         }
         case MPEG_VIDEO_HEADER:
@@ -618,15 +623,15 @@ static HRESULT MPEGSplitter_cleanup(LPVOID iface)
     return S_OK;
 }
 
-static HRESULT MPEGSplitter_seek(IBaseFilter *iface)
+static HRESULT WINAPI MPEGSplitter_seek(IMediaSeeking *iface)
 {
-    MPEGSplitterImpl *This = (MPEGSplitterImpl*)iface;
+    MPEGSplitterImpl *This = impl_from_IMediaSeeking(iface);
     PullPin *pPin = This->Parser.pInputPin;
     LONGLONG newpos, timepos, bytepos;
     HRESULT hr = S_OK;
     BYTE header[4];
 
-    newpos = This->Parser.mediaSeeking.llCurrent;
+    newpos = This->Parser.sourceSeeking.llCurrent;
 
     if (newpos > This->duration)
     {

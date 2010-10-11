@@ -101,6 +101,11 @@ struct thread_args {
     DWORD stream;
 };
 
+static inline AVISplitterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
+    return (AVISplitterImpl *)((char*)iface - FIELD_OFFSET(AVISplitterImpl, Parser.sourceSeeking.lpVtbl));
+}
+
 /* The threading stuff cries for an explanation
  *
  * PullPin starts processing and calls AVISplitter_first_request
@@ -970,16 +975,16 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 
         frames *= stream->streamheader.dwScale;
         /* Keep accuracy as high as possible for duration */
-        This->Parser.mediaSeeking.llDuration = frames * 10000000;
-        This->Parser.mediaSeeking.llDuration /= stream->streamheader.dwRate;
-        This->Parser.mediaSeeking.llStop = This->Parser.mediaSeeking.llDuration;
-        This->Parser.mediaSeeking.llCurrent = 0;
+        This->Parser.sourceSeeking.llDuration = frames * 10000000;
+        This->Parser.sourceSeeking.llDuration /= stream->streamheader.dwRate;
+        This->Parser.sourceSeeking.llStop = This->Parser.sourceSeeking.llDuration;
+        This->Parser.sourceSeeking.llCurrent = 0;
 
         frames /= stream->streamheader.dwRate;
 
         TRACE("Duration: %d days, %d hours, %d minutes and %d.%03u seconds\n", (DWORD)(frames / 86400),
         (DWORD)((frames % 86400) / 3600), (DWORD)((frames % 3600) / 60), (DWORD)(frames % 60),
-        (DWORD)(This->Parser.mediaSeeking.llDuration/10000) % 1000);
+        (DWORD)(This->Parser.sourceSeeking.llDuration/10000) % 1000);
     }
 
     return S_OK;
@@ -1252,15 +1257,15 @@ static ULONG WINAPI AVISplitter_Release(IBaseFilter *iface)
     return ref;
 }
 
-static HRESULT AVISplitter_seek(IBaseFilter *iface)
+static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
 {
-    AVISplitterImpl *This = (AVISplitterImpl *)iface;
+    AVISplitterImpl *This = impl_from_IMediaSeeking(iface);
     PullPin *pPin = This->Parser.pInputPin;
     LONGLONG newpos, endpos;
     DWORD x;
 
-    newpos = This->Parser.mediaSeeking.llCurrent;
-    endpos = This->Parser.mediaSeeking.llDuration;
+    newpos = This->Parser.sourceSeeking.llCurrent;
+    endpos = This->Parser.sourceSeeking.llDuration;
 
     if (newpos > endpos)
     {
