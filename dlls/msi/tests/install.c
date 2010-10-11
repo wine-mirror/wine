@@ -7537,7 +7537,6 @@ static void test_writeregistryvalues(void)
     HKEY hkey;
     DWORD type, size;
     CHAR path[MAX_PATH];
-    REGSAM access = KEY_ALL_ACCESS;
 
     if (is_process_limited())
     {
@@ -7549,9 +7548,6 @@ static void test_writeregistryvalues(void)
     create_file("msitest\\augustus", 500);
 
     create_database(msifile, wrv_tables, sizeof(wrv_tables) / sizeof(msi_table));
-
-    if (is_wow64)
-        access |= KEY_WOW64_64KEY;
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -7565,7 +7561,10 @@ static void test_writeregistryvalues(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File installed\n");
 
-    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
+    if (is_64bit && !is_wow64)
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Wine\\msitest", 0, KEY_ALL_ACCESS, &hkey);
+    else
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", 0, KEY_ALL_ACCESS, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     size = MAX_PATH;
@@ -7577,6 +7576,8 @@ static void test_writeregistryvalues(void)
     ok(size == 15, "Expected 15, got %d\n", size);
     ok(type == REG_MULTI_SZ, "Expected REG_MULTI_SZ, got %d\n", type);
 
+    RegDeleteValueA(hkey, "Value");
+    RegCloseKey(hkey);
     RegDeleteKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Wine\\msitest");
 
 error:
@@ -10485,7 +10486,10 @@ static void test_register_class_info(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
+    if (is_64bit && !is_wow64)
+        res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Wow6432Node\\CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
+    else
+        res = RegOpenKeyA(HKEY_CLASSES_ROOT, "CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
     ok(res == ERROR_SUCCESS, "key not created\n");
     RegCloseKey(hkey);
 
@@ -10500,7 +10504,10 @@ static void test_register_class_info(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
+    if (is_64bit && !is_wow64)
+        res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Wow6432Node\\CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
+    else
+        res = RegOpenKeyA(HKEY_CLASSES_ROOT, "CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "FileType\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
