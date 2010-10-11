@@ -39,6 +39,7 @@
 #include "controls.h"
 #include "user_private.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -114,6 +115,8 @@ struct cursoricon_object
 {
     struct user_object      obj;        /* object header */
     ULONG_PTR               param;      /* opaque param used by 16-bit code */
+    HMODULE                 module;     /* module for icons loaded from resources */
+    LPWSTR                  resname;    /* resource name for icons loaded from resources */
     BOOL                    is_icon;    /* whether icon or cursor */
     UINT                    width;
     UINT                    height;
@@ -165,6 +168,7 @@ static BOOL free_icon_handle( HICON handle )
             if (obj->frames[i].color) DeleteObject( obj->frames[i].color );
             DeleteObject( obj->frames[i].mask );
         }
+        if (!IS_INTRESOURCE( obj->resname )) HeapFree( GetProcessHeap(), 0, obj->resname );
         HeapFree( GetProcessHeap(), 0, obj );
         if (wow_handlers.free_icon_param && param) wow_handlers.free_icon_param( param );
         USER_Driver->pDestroyCursorIcon( handle );
@@ -845,21 +849,12 @@ done:
     return ret;
 }
 
-static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
-					   POINT hotspot, BOOL bIcon,
-					   DWORD dwVersion,
-					   INT width, INT height,
-					   UINT cFlag )
+static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi, HMODULE module, LPCWSTR resname,
+                                           POINT hotspot, BOOL bIcon, INT width, INT height, UINT cFlag )
 {
     HICON hObj;
     HBITMAP color = 0, mask = 0, alpha = 0;
     BOOL do_stretch;
-
-    if (dwVersion == 0x00020000)
-    {
-        FIXME_(cursor)("\t2.xx resources are not supported\n");
-        return 0;
-    }
 
     /* Check bitmap header */
 
@@ -899,13 +894,22 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi,
         struct cursoricon_object *info = get_icon_ptr( hObj );
 
         info->is_icon = bIcon;
+        info->module  = module;
         info->hotspot = hotspot;
         info->width   = width;
         info->height  = height;
         info->frames[0].color = color;
         info->frames[0].mask  = mask;
         info->frames[0].alpha = alpha;
+        if (!IS_INTRESOURCE(resname))
+        {
+            info->resname = HeapAlloc( GetProcessHeap(), 0, (strlenW(resname) + 1) * sizeof(WCHAR) );
+            if (info->resname) strcpyW( info->resname, resname );
+        }
+        else info->resname = MAKEINTRESOURCEW( LOWORD(resname) );
+
         release_icon_ptr( hObj, info );
+        USER_Driver->pCreateCursorIcon( hObj );
     }
     else
     {
@@ -1149,13 +1153,18 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
 {
     POINT hotspot;
     BITMAPINFO *bmi;
-    HICON icon;
 
     TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
                    bits, cbSize, dwVersion, width, height,
                    bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
 
     if (!bits) return 0;
+
+    if (dwVersion == 0x00020000)
+    {
+        FIXME_(cursor)("\t2.xx resources are not supported\n");
+        return 0;
+    }
 
     if (bIcon)
     {
@@ -1171,10 +1180,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
         bmi = (BITMAPINFO *)(pt + 2);
     }
 
-    icon = CURSORICON_CreateIconFromBMI( bmi, hotspot, bIcon, dwVersion,
-					 width, height, cFlag );
-    if (icon) USER_Driver->pCreateCursorIcon( icon );
-    return icon;
+    return CURSORICON_CreateIconFromBMI( bmi, NULL, NULL, hotspot, bIcon, width, height, cFlag );
 }
 
 
@@ -1236,13 +1242,11 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
 
     hotspot.x = entry->xHotspot;
     hotspot.y = entry->yHotspot;
-    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)&bits[entry->dwDIBOffset],
-					  hotspot, !fCursor, 0x00030000,
-					  width, height, loadflags );
+    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)&bits[entry->dwDIBOffset], NULL, NULL,
+					  hotspot, !fCursor, width, height, loadflags );
 end:
     TRACE("loaded %s -> %p\n", debugstr_w( filename ), hIcon );
     UnmapViewOfFile( bits );
-    if (hIcon) USER_Driver->pCreateCursorIcon( hIcon );
     return hIcon;
 }
 
@@ -1263,6 +1267,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     LPBYTE bits;
     WORD wResId;
     DWORD dwBytesInRes;
+    POINT hotspot;
 
     TRACE("%p, %s, %dx%d, depth %d, fCursor %d, flags 0x%04x\n",
           hInstance, debugstr_w(name), width, height, depth, fCursor, loadflags);
@@ -1307,8 +1312,21 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 
     if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
     bits = LockResource( handle );
-    hIcon = CreateIconFromResourceEx( bits, dwBytesInRes,
-                                      !fCursor, 0x00030000, width, height, loadflags);
+
+    if (!fCursor)
+    {
+        hotspot.x = width / 2;
+        hotspot.y = height / 2;
+    }
+    else /* get the hotspot */
+    {
+        SHORT *pt = (SHORT *)bits;
+        hotspot.x = pt[0];
+        hotspot.y = pt[1];
+        bits += 2 * sizeof(SHORT);
+    }
+    hIcon = CURSORICON_CreateIconFromBMI( (BITMAPINFO *)bits, hInstance, name, hotspot,
+                                          !fCursor, width, height, loadflags );
     FreeResource( handle );
 
     /* If shared icon, add to icon cache */
