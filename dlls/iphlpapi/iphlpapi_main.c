@@ -723,7 +723,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
     SOCKET_ADDRESS *v6addrs = NULL;
     PMIB_IPFORWARDTABLE routeTable = NULL;
 
-    if (family == AF_INET)
+    if (family == WS_AF_INET)
     {
         ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
                                                     GetProcessHeap(), 0);
@@ -733,9 +733,9 @@ static ULONG adapterAddressesFromIndex(ULONG family, DWORD index, IP_ADAPTER_ADD
             num_v4_gateways = count_v4_gateways(index, routeTable);
         }
     }
-    else if (family == AF_INET6)
+    else if (family == WS_AF_INET6)
         ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
-    else if (family == AF_UNSPEC)
+    else if (family == WS_AF_UNSPEC)
     {
         ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
                                                     GetProcessHeap(), 0);
