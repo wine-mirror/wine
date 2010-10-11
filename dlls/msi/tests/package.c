@@ -2510,6 +2510,9 @@ static void test_states(void)
     r = add_property_entry( hdb, "'ProductVersion', '1.1.1'" );
     ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
 
+    r = add_property_entry( hdb, "'MSIFASTINSTALL', '1'" );
+    ok( r == ERROR_SUCCESS, "cannot add property entry: %d\n", r );
+
     r = create_install_execute_sequence_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create InstallExecuteSequence table: %d\n", r );
 

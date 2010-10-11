@@ -57,7 +57,8 @@ static const char property_dat[] =
     "ProductLanguage\t1033\n"
     "ProductName\tmsitest\n"
     "ProductVersion\t1.1.1\n"
-    "PATCHNEWSUMMARYSUBJECT\tInstaller Database\n";
+    "PATCHNEWSUMMARYSUBJECT\tInstaller Database\n"
+    "MSIFASTINSTALL\t1\n";
 
 static const char media_dat[] =
     "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"

@@ -79,7 +79,7 @@ static const CHAR directory_dat[] = "Directory\tDirectory_Parent\tDefaultDir\n"
                                     "MSITESTDIR\tProgramFilesFolder\tmsitest\n"
                                     "NEWDIR\tCABOUTDIR\tnew\n"
                                     "ProgramFilesFolder\tTARGETDIR\t.\n"
-                                    "TARGETDIR\t\tSourceDir";
+                                    "TARGETDIR\t\tSourceDir\n";
 
 static const CHAR feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
                                   "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
@@ -125,7 +125,7 @@ static const CHAR install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                            "InstallInitialize\t\t1500\n"
                                            "InstallValidate\t\t1400\n"
                                            "LaunchConditions\t\t100\n"
-                                           "WriteRegistryValues\tSourceDir And SOURCEDIR\t5000";
+                                           "WriteRegistryValues\tSourceDir And SOURCEDIR\t5000\n";
 
 static const CHAR media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
                                 "i2\ti4\tL64\tS255\tS32\tS72\n"
@@ -148,7 +148,8 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "ProductVersion\t1.1.1\n"
                                    "PROMPTROLLBACKCOST\tP\n"
                                    "Setup\tSetup\n"
-                                   "UpgradeCode\t{CE067E8D-2E1A-4367-B734-4EB2BDAD6565}";
+                                   "UpgradeCode\t{CE067E8D-2E1A-4367-B734-4EB2BDAD6565}\n"
+                                   "MSIFASTINSTALL\t1\n";
 
 static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
                                    "s72\ti2\tl255\tL255\tL0\ts72\n"
@@ -156,7 +157,7 @@ static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_
                                    "Apples\t1\tSOFTWARE\\Wine\\msitest\tName\timaname\tOne\n"
                                    "Oranges\t1\tSOFTWARE\\Wine\\msitest\tnumber\t#314\tTwo\n"
                                    "regdata\t1\tSOFTWARE\\Wine\\msitest\tblah\tbad\tdangler\n"
-                                   "OrderTest\t1\tSOFTWARE\\Wine\\msitest\tOrderTestName\tOrderTestValue\tcomponent";
+                                   "OrderTest\t1\tSOFTWARE\\Wine\\msitest\tOrderTestName\tOrderTestValue\tcomponent\n";
 
 typedef struct _msi_table
 {

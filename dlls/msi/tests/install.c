@@ -171,7 +171,8 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "AdminProperties\tPOSTADMIN\n"
                                    "ROOTDRIVE\tC:\\\n"
                                    "SERVNAME\tTestService\n"
-                                   "SERVDISP\tTestServiceDisp\n";
+                                   "SERVDISP\tTestServiceDisp\n"
+                                   "MSIFASTINSTALL\t1\n";
 
 static const CHAR aup_property_dat[] = "Property\tValue\n"
                                        "s72\tl0\n"
@@ -194,7 +195,8 @@ static const CHAR aup_property_dat[] = "Property\tValue\n"
                                        "AdminProperties\tPOSTADMIN\n"
                                        "ROOTDRIVE\tC:\\\n"
                                        "SERVNAME\tTestService\n"
-                                       "SERVDISP\tTestServiceDisp\n";
+                                       "SERVDISP\tTestServiceDisp\n"
+                                       "MSIFASTINSTALL\t1\n";
 
 static const CHAR aup2_property_dat[] = "Property\tValue\n"
                                         "s72\tl0\n"
@@ -217,7 +219,8 @@ static const CHAR aup2_property_dat[] = "Property\tValue\n"
                                         "AdminProperties\tPOSTADMIN\n"
                                         "ROOTDRIVE\tC:\\\n"
                                         "SERVNAME\tTestService\n"
-                                        "SERVDISP\tTestServiceDisp\n";
+                                        "SERVDISP\tTestServiceDisp\n"
+                                        "MSIFASTINSTALL\t1\n";
 
 static const CHAR icon_property_dat[] = "Property\tValue\n"
                                         "s72\tl0\n"
@@ -239,7 +242,8 @@ static const CHAR icon_property_dat[] = "Property\tValue\n"
                                         "AdminProperties\tPOSTADMIN\n"
                                         "ROOTDRIVE\tC:\\\n"
                                         "SERVNAME\tTestService\n"
-                                        "SERVDISP\tTestServiceDisp\n";
+                                        "SERVDISP\tTestServiceDisp\n"
+                                        "MSIFASTINSTALL\t1\n";
 
 static const CHAR shortcut_dat[] = "Shortcut\tDirectory_\tName\tComponent_\tTarget\tArguments\tDescription\tHotkey\tIcon_\tIconIndex\tShowCmd\tWkDir\n"
                                    "s72\ts72\tl128\ts72\ts72\tS255\tL255\tI2\tS72\tI2\tI2\tS72\n"
@@ -315,7 +319,8 @@ static const CHAR up_property_dat[] = "Property\tValue\n"
                                       "ROOTDRIVE\tC:\\\n"
                                       "SERVNAME\tTestService\n"
                                       "SERVDISP\tTestServiceDisp\n"
-                                      "RemovePreviousVersions\t1\n";
+                                      "RemovePreviousVersions\t1\n"
+                                      "MSIFASTINSTALL\t1\n";
 
 static const CHAR up2_property_dat[] = "Property\tValue\n"
                                        "s72\tl0\n"
@@ -337,7 +342,8 @@ static const CHAR up2_property_dat[] = "Property\tValue\n"
                                        "AdminProperties\tPOSTADMIN\n"
                                        "ROOTDRIVE\tC:\\\n"
                                        "SERVNAME\tTestService\n"
-                                       "SERVDISP\tTestServiceDisp\n";
+                                       "SERVDISP\tTestServiceDisp\n"
+                                       "MSIFASTINSTALL\t1\n";
 
 static const CHAR up3_property_dat[] = "Property\tValue\n"
                                        "s72\tl0\n"
@@ -360,7 +366,8 @@ static const CHAR up3_property_dat[] = "Property\tValue\n"
                                        "ROOTDRIVE\tC:\\\n"
                                        "SERVNAME\tTestService\n"
                                        "SERVDISP\tTestServiceDisp\n"
-                                       "RemovePreviousVersions\t1\n";
+                                       "RemovePreviousVersions\t1\n"
+                                       "MSIFASTINSTALL\t1\n";
 
 static const CHAR registry_dat[] = "Registry\tRoot\tKey\tName\tValue\tComponent_\n"
                                    "s72\ti2\tl255\tL255\tL0\ts72\n"
@@ -1294,7 +1301,8 @@ static const CHAR vp_property_dat[] = "Property\tValue\n"
                                       "ProductLanguage\t1033\n"
                                       "ProductName\tMSITEST\n"
                                       "ProductVersion\t1.1.1\n"
-                                      "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}\n";
+                                      "UpgradeCode\t{4C0EAA15-0264-4E5A-8758-609EF142B92D}\n"
+                                      "MSIFASTINSTALL\t1\n";
 
 static const CHAR vp_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
                                            "s72\ti2\tS64\tS0\tS255\n"
