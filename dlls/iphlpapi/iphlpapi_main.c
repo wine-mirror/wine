@@ -1539,6 +1539,46 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
     return ret;
 }
 
+/* Gets the DNS server list into the list beginning at list.  Assumes that
+ * a single server address may be placed at list if *len is at least
+ * sizeof(IP_ADDR_STRING) long.  Otherwise, list->Next is set to firstDynamic,
+ * and assumes that all remaining DNS servers are contiguously located
+ * beginning at firstDynamic.  On input, *len is assumed to be the total number
+ * of bytes available for all DNS servers, and is ignored if list is NULL.
+ * On return, *len is set to the total number of bytes required for all DNS
+ * servers.
+ * Returns ERROR_BUFFER_OVERFLOW if *len is insufficient,
+ * ERROR_SUCCESS otherwise.
+ */
+static DWORD get_dns_server_list(PIP_ADDR_STRING list,
+ PIP_ADDR_STRING firstDynamic, DWORD *len)
+{
+  DWORD size;
+
+  initialise_resolver();
+  size = _res.nscount * sizeof(IP_ADDR_STRING);
+  if (!list || *len < size) {
+    *len = size;
+    return ERROR_BUFFER_OVERFLOW;
+  }
+  *len = size;
+  if (_res.nscount > 0) {
+    PIP_ADDR_STRING ptr;
+    int i;
+
+    for (i = 0, ptr = list; i < _res.nscount && ptr; i++, ptr = ptr->Next) {
+      toIPAddressString(_res.nsaddr_list[i].sin_addr.s_addr,
+       ptr->IpAddress.String);
+      if (i == _res.nscount - 1)
+        ptr->Next = NULL;
+      else if (i == 0)
+        ptr->Next = firstDynamic;
+      else
+        ptr->Next = (PIP_ADDR_STRING)((PBYTE)ptr + sizeof(IP_ADDR_STRING));
+    }
+  }
+  return ERROR_SUCCESS;
+}
 
 /******************************************************************
  *    GetNetworkParams (IPHLPAPI.@)
@@ -1560,7 +1600,7 @@ DWORD WINAPI GetIpNetTable(PMIB_IPNETTABLE pIpNetTable, PULONG pdwSize, BOOL bOr
  */
 DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
 {
-  DWORD ret, size;
+  DWORD ret, size, serverListSize;
   LONG regReturn;
   HKEY hKey;
 
@@ -1568,9 +1608,8 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
   if (!pOutBufLen)
     return ERROR_INVALID_PARAMETER;
 
-  initialise_resolver();
-  size = sizeof(FIXED_INFO) + (_res.nscount > 0 ? (_res.nscount  - 1) *
-   sizeof(IP_ADDR_STRING) : 0);
+  get_dns_server_list(NULL, NULL, &serverListSize);
+  size = sizeof(FIXED_INFO) + serverListSize - sizeof(IP_ADDR_STRING);
   if (!pFixedInfo || *pOutBufLen < size) {
     *pOutBufLen = size;
     return ERROR_BUFFER_OVERFLOW;
@@ -1581,22 +1620,11 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
   GetComputerNameExA(ComputerNameDnsHostname, pFixedInfo->HostName, &size);
   size = sizeof(pFixedInfo->DomainName);
   GetComputerNameExA(ComputerNameDnsDomain, pFixedInfo->DomainName, &size);
-  if (_res.nscount > 0) {
-    PIP_ADDR_STRING ptr;
-    int i;
-
-    for (i = 0, ptr = &pFixedInfo->DnsServerList; i < _res.nscount && ptr;
-     i++, ptr = ptr->Next) {
-      toIPAddressString(_res.nsaddr_list[i].sin_addr.s_addr,
-       ptr->IpAddress.String);
-      if (i == _res.nscount - 1)
-        ptr->Next = NULL;
-      else if (i == 0)
-        ptr->Next = (PIP_ADDR_STRING)((LPBYTE)pFixedInfo + sizeof(FIXED_INFO));
-      else
-        ptr->Next = (PIP_ADDR_STRING)((PBYTE)ptr + sizeof(IP_ADDR_STRING));
-    }
-  }
+  get_dns_server_list(&pFixedInfo->DnsServerList,
+   (PIP_ADDR_STRING)((BYTE *)pFixedInfo + sizeof(FIXED_INFO)),
+   &serverListSize);
+  /* Assume the first DNS server in the list is the "current" DNS server: */
+  pFixedInfo->CurrentDnsServer = &pFixedInfo->DnsServerList;
   pFixedInfo->NodeType = HYBRID_NODETYPE;
   regReturn = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
    "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey);
