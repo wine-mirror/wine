@@ -968,11 +968,56 @@ static ULONG get_dns_server_addresses(PIP_ADAPTER_DNS_SERVER_ADDRESS address, UL
     return ERROR_SUCCESS;
 }
 
+static BOOL is_ip_address_string(const char *str)
+{
+    struct in_addr in;
+    int ret;
+
+    ret = inet_aton(str, &in);
+    return ret != 0;
+}
+
+static ULONG get_dns_suffix(WCHAR *suffix, ULONG *len)
+{
+    ULONG size, i;
+    char *found_suffix = NULL;
+
+    initialise_resolver();
+    /* Always return a NULL-terminated string, even if it's empty. */
+    size = sizeof(WCHAR);
+    for (i = 0, found_suffix = NULL;
+         !found_suffix && i < MAXDNSRCH + 1 && _res.dnsrch[i]; i++)
+    {
+        /* This uses a heuristic to select a DNS suffix:
+         * the first, non-IP address string is selected.
+         */
+        if (!is_ip_address_string(_res.dnsrch[i]))
+            found_suffix = _res.dnsrch[i];
+    }
+    if (found_suffix)
+        size += strlen(found_suffix) * sizeof(WCHAR);
+    if (!suffix || *len < size)
+    {
+        *len = size;
+        return ERROR_BUFFER_OVERFLOW;
+    }
+    *len = size;
+    if (found_suffix)
+    {
+        char *p;
+
+        for (p = found_suffix; *p; p++)
+            *suffix++ = *p;
+    }
+    *suffix = 0;
+    return ERROR_SUCCESS;
+}
+
 ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
                                   PIP_ADAPTER_ADDRESSES aa, PULONG buflen)
 {
     InterfaceIndexTable *table;
-    ULONG i, size, dns_server_size, total_size, ret = ERROR_NO_DATA;
+    ULONG i, size, dns_server_size, dns_suffix_size, total_size, ret = ERROR_NO_DATA;
 
     TRACE("(%d, %08x, %p, %p, %p)\n", family, flags, reserved, aa, buflen);
 
@@ -1003,11 +1048,17 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
         get_dns_server_addresses(NULL, &dns_server_size);
         total_size += dns_server_size;
     }
+    /* Since DNS suffix also isn't really per adapter, get enough space for a
+     * single copy of it.
+     */
+    get_dns_suffix(NULL, &dns_suffix_size);
+    total_size += dns_suffix_size;
     if (aa && *buflen >= total_size)
     {
         ULONG bytes_left = size = total_size;
         PIP_ADAPTER_ADDRESSES first_aa = aa;
         PIP_ADAPTER_DNS_SERVER_ADDRESS firstDns;
+        WCHAR *dnsSuffix;
 
         for (i = 0; i < table->numIndexes; i++)
         {
@@ -1025,13 +1076,21 @@ ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
         }
         if (!(flags & GAA_FLAG_SKIP_DNS_SERVER))
         {
-            firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)aa + total_size - dns_server_size);
+            firstDns = (PIP_ADAPTER_DNS_SERVER_ADDRESS)((BYTE *)aa + total_size - dns_server_size - dns_suffix_size);
             get_dns_server_addresses(firstDns, &dns_server_size);
             for (aa = first_aa; aa; aa = aa->Next)
             {
                 if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
                     aa->FirstDnsServerAddress = firstDns;
             }
+        }
+        aa = first_aa;
+        dnsSuffix = (WCHAR *)((BYTE *)aa + total_size - dns_suffix_size);
+        get_dns_suffix(dnsSuffix, &dns_suffix_size);
+        for (; aa; aa = aa->Next)
+        {
+            if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK && aa->OperStatus == IfOperStatusUp)
+                aa->DnsSuffix = dnsSuffix;
         }
         ret = ERROR_SUCCESS;
     }
