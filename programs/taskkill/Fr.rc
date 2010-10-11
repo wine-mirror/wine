@@ -41,4 +41,5 @@ STRINGTABLE
     STRING_SEARCH_FAILED, "Erreur : processus \"%s\" introuvable.\n"
     STRING_ENUM_FAILED, "Erreur : impossible d'énumérer la liste de processus.\n"
     STRING_TERMINATE_FAILED, "Erreur : impossible de terminer le processus \"%s\".\n"
+    STRING_SELF_TERMINATION, "Erreur : un processus ne peut pas s'auto-terminer.\n"
 }
