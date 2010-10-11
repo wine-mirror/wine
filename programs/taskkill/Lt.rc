@@ -41,4 +41,5 @@ STRINGTABLE
     STRING_SEARCH_FAILED, "Klaida: nepavyko rasti proceso „%s“.\n"
     STRING_ENUM_FAILED, "Klaida: nepavyko gauti procesų sąrašo.\n"
     STRING_TERMINATE_FAILED, "Klaida: nepavyko nutraukti proceso „%s“.\n"
+    STRING_SELF_TERMINATION, "Klaida: savo proceso priverstinis nutraukimas negalimas.\n"
 }
