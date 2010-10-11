@@ -875,9 +875,9 @@ static HRESULT WINAPI GameExplorerImpl_VerifyAccess(
 {
     GameExplorerImpl *This = impl_from_IGameExplorer(iface);
 
-    TRACE("(%p, %s, %p)\n", This, debugstr_w(sGDFBinaryPath), pHasAccess);
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    FIXME("(%p, %s, %p)\n", This, debugstr_w(sGDFBinaryPath), pHasAccess);
+    *pHasAccess = TRUE;
+    return S_OK;
 }
 
 static const struct IGameExplorerVtbl GameExplorerImplVtbl =
