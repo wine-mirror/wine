@@ -284,17 +284,9 @@ int CDECL MSVCRT__gmtime64_s(struct MSVCRT_tm *res, const MSVCRT___time64_t *sec
     SYSTEMTIME st;
     ULONGLONG time;
 
-    if(!res || !secs || *secs<0) {
-        if(res) {
-            res->tm_sec = -1;
-            res->tm_min = -1;
-            res->tm_hour = -1;
-            res->tm_mday = -1;
-            res->tm_year = -1;
-            res->tm_mon = -1;
-            res->tm_wday = -1;
-            res->tm_yday = -1;
-            res->tm_isdst = -1;
+    if (!res || !secs || *secs < 0) {
+        if (res) {
+            write_invalid_msvcrt_tm(res);
         }
 
         *MSVCRT__errno() = MSVCRT_EINVAL;
