@@ -956,20 +956,20 @@ static void test_LoadImage(void)
         infoexA.cbSize = sizeof(infoexA);
         ret = pGetIconInfoExA( handle, &infoexA );
         ok( ret, "GetIconInfoEx failed err %d\n", GetLastError() );
-        todo_wine ok( infoexA.wResID == (UINT_PTR)IDI_HAND, "GetIconInfoEx wrong resid %x\n", infoexA.wResID );
+        ok( infoexA.wResID == (UINT_PTR)IDI_HAND, "GetIconInfoEx wrong resid %x\n", infoexA.wResID );
         /* the A version is broken on 64-bit, it truncates the string after the first char */
         if (is_win64 && infoexA.szModName[0] && infoexA.szModName[1] == 0)
             trace( "GetIconInfoExA broken on Win64\n" );
         else
-            todo_wine ok( GetModuleHandleA(infoexA.szModName) == GetModuleHandleA("user32.dll"),
-                          "GetIconInfoEx wrong module %s\n", infoexA.szModName );
+            ok( GetModuleHandleA(infoexA.szModName) == GetModuleHandleA("user32.dll"),
+                "GetIconInfoEx wrong module %s\n", infoexA.szModName );
         ok( infoexA.szResName[0] == 0, "GetIconInfoEx wrong name %s\n", infoexA.szResName );
         infoexW.cbSize = sizeof(infoexW);
         ret = pGetIconInfoExW( handle, &infoexW );
         ok( ret, "GetIconInfoEx failed err %d\n", GetLastError() );
-        todo_wine ok( infoexW.wResID == (UINT_PTR)IDI_HAND, "GetIconInfoEx wrong resid %x\n", infoexW.wResID );
-        todo_wine ok( GetModuleHandleW(infoexW.szModName) == GetModuleHandleA("user32.dll"),
-                      "GetIconInfoEx wrong module %s\n", wine_dbgstr_w(infoexW.szModName) );
+        ok( infoexW.wResID == (UINT_PTR)IDI_HAND, "GetIconInfoEx wrong resid %x\n", infoexW.wResID );
+        ok( GetModuleHandleW(infoexW.szModName) == GetModuleHandleA("user32.dll"),
+            "GetIconInfoEx wrong module %s\n", wine_dbgstr_w(infoexW.szModName) );
         ok( infoexW.szResName[0] == 0, "GetIconInfoEx wrong name %s\n", wine_dbgstr_w(infoexW.szResName) );
     }
     SetLastError(0xdeadbeef);

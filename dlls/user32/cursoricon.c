@@ -1911,9 +1911,15 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
     info->yHotspot     = ptr->hotspot.y;
     info->hbmColor     = copy_bitmap( ptr->frames[0].color );
     info->hbmMask      = copy_bitmap( ptr->frames[0].mask );
-    info->wResID       = 0;  /* FIXME */
-    info->szModName[0] = 0;  /* FIXME */
-    info->szResName[0] = 0;  /* FIXME */
+    info->wResID       = 0;
+    info->szModName[0] = 0;
+    info->szResName[0] = 0;
+    if (ptr->module)
+    {
+        GetModuleFileNameW( ptr->module, info->szModName, MAX_PATH );
+        if (IS_INTRESOURCE( ptr->resname )) info->wResID = LOWORD( ptr->resname );
+        else lstrcpynW( info->szResName, ptr->resname, MAX_PATH );
+    }
     release_icon_ptr( icon, ptr );
     return TRUE;
 }
