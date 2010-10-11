@@ -46,6 +46,7 @@
 #define MSITYPE_TEMPORARY 0x4000
 
 #define MAX_STREAM_NAME_LEN     62
+#define LONG_STR_BYTES  3
 
 /* Install UI level mask for AND operation to exclude flags */
 #define INSTALLUILEVEL_MASK             0x0007
@@ -684,7 +685,7 @@ extern VOID msi_destroy_stringtable( string_table *st );
 extern const WCHAR *msi_string_lookup_id( const string_table *st, UINT id );
 extern HRESULT msi_init_string_table( IStorage *stg );
 extern string_table *msi_load_string_table( IStorage *stg, UINT *bytes_per_strref );
-extern UINT msi_save_string_table( const string_table *st, IStorage *storage );
+extern UINT msi_save_string_table( const string_table *st, IStorage *storage, UINT *bytes_per_strref );
 
 extern BOOL TABLE_Exists( MSIDATABASE *db, LPCWSTR name );
 extern MSICONDITION MSI_DatabaseIsTablePersistent( MSIDATABASE *db, LPCWSTR table );

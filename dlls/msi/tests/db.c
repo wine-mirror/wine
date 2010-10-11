@@ -5498,16 +5498,13 @@ static void test_stringtable(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmp(buffer, "one"), "Expected one, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "one"), "Expected one, got '%s'\n", buffer);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewFetch(hview, &hrec);
-    todo_wine
-    {
-        ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
-    }
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
 
     r = MsiViewClose(hview);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -5535,7 +5532,7 @@ static void test_stringtable(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmp(buffer, "two"), "Expected two, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "two"), "Expected two, got '%s'\n", buffer);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -5552,7 +5549,7 @@ static void test_stringtable(void)
     sz = sizeof(buffer);
     r = MsiRecordGetString(hrec, 2, buffer, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmp(buffer, "five"), "Expected five, got %s\n", buffer);
+    ok(!lstrcmp(buffer, "five"), "Expected five, got '%s'\n", buffer);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
@@ -5580,11 +5577,8 @@ static void test_stringtable(void)
 
     hr = IStream_Read(stm, data, MAX_PATH, &read);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
-    todo_wine
-    {
-        ok(read == 4, "Expected 4, got %d\n", read);
-        ok(!memcmp(data, data10, read), "Unexpected data\n");
-    }
+    ok(read == 4, "Expected 4, got %d\n", read);
+    todo_wine ok(!memcmp(data, data10, read), "Unexpected data\n");
 
     hr = IStream_Release(stm);
     ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
