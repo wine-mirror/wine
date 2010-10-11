@@ -204,6 +204,7 @@ static BOOL get_process_name_from_pid(DWORD pid, WCHAR *buf, DWORD chars)
 static int send_close_messages(void)
 {
     DWORD *pid_list, pid_list_size;
+    DWORD self_pid = GetCurrentProcessId();
     unsigned int i;
     int status_code = 0;
 
@@ -234,6 +235,13 @@ static int send_close_messages(void)
             DWORD pid = atoiW(task_list[i]);
             struct pid_close_info info = { pid };
 
+            if (pid == self_pid)
+            {
+                taskkill_message(STRING_SELF_TERMINATION);
+                status_code = 1;
+                continue;
+            }
+
             EnumWindows(pid_enum_proc, (LPARAM)&info);
             if (info.found)
                 taskkill_message_printfW(STRING_CLOSE_PID_SEARCH, pid);
@@ -258,6 +266,13 @@ static int send_close_messages(void)
                     struct pid_close_info info = { pid_list[index] };
 
                     found_process = TRUE;
+                    if (pid_list[index] == self_pid)
+                    {
+                        taskkill_message(STRING_SELF_TERMINATION);
+                        status_code = 1;
+                        continue;
+                    }
+
                     EnumWindows(pid_enum_proc, (LPARAM)&info);
                     taskkill_message_printfW(STRING_CLOSE_PROC_SRCH, process_name, pid_list[index]);
                 }
@@ -278,6 +293,7 @@ static int send_close_messages(void)
 static int terminate_processes(void)
 {
     DWORD *pid_list, pid_list_size;
+    DWORD self_pid = GetCurrentProcessId();
     unsigned int i;
     int status_code = 0;
 
@@ -307,6 +323,13 @@ static int terminate_processes(void)
         {
             DWORD pid = atoiW(task_list[i]);
             HANDLE process;
+
+            if (pid == self_pid)
+            {
+                taskkill_message(STRING_SELF_TERMINATION);
+                status_code = 1;
+                continue;
+            }
 
             process = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
             if (!process)
@@ -340,6 +363,13 @@ static int terminate_processes(void)
                     !strcmpiW(process_name, task_list[i]))
                 {
                     HANDLE process;
+
+                    if (pid_list[index] == self_pid)
+                    {
+                        taskkill_message(STRING_SELF_TERMINATION);
+                        status_code = 1;
+                        continue;
+                    }
 
                     process = OpenProcess(PROCESS_TERMINATE, FALSE, pid_list[index]);
                     if (!process)

@@ -38,4 +38,5 @@ STRINGTABLE
     STRING_SEARCH_FAILED, "Error: Could not find process \"%s\".\n"
     STRING_ENUM_FAILED, "Error: Unable to enumerate the process list.\n"
     STRING_TERMINATE_FAILED, "Error: Unable to terminate process \"%s\".\n"
+    STRING_SELF_TERMINATION, "Error: Process self-termination is not permitted.\n"
 }
