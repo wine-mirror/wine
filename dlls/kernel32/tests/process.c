@@ -56,6 +56,7 @@
 
 static HINSTANCE hkernel32;
 static void   (WINAPI *pGetNativeSystemInfo)(LPSYSTEM_INFO);
+static BOOL   (WINAPI *pGetSystemRegistryQuota)(PDWORD, PDWORD);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
 static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
@@ -197,6 +198,7 @@ static int     init(void)
 
     hkernel32 = GetModuleHandleA("kernel32");
     pGetNativeSystemInfo = (void *) GetProcAddress(hkernel32, "GetNativeSystemInfo");
+    pGetSystemRegistryQuota = (void *) GetProcAddress(hkernel32, "GetSystemRegistryQuota");
     pIsWow64Process = (void *) GetProcAddress(hkernel32, "IsWow64Process");
     pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
     pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
@@ -1831,6 +1833,34 @@ static void test_SystemInfo(void)
     }
 }
 
+static void test_RegistryQuota(void)
+{
+    BOOL ret;
+    DWORD max_quota, used_quota;
+
+    if (!pGetSystemRegistryQuota)
+    {
+        win_skip("GetSystemRegistryQuota is not available\n");
+        return;
+    }
+
+    ret = pGetSystemRegistryQuota(NULL, NULL);
+    ok(ret == TRUE,
+       "Expected GetSystemRegistryQuota to return TRUE, got %d\n", ret);
+
+    ret = pGetSystemRegistryQuota(&max_quota, NULL);
+    ok(ret == TRUE,
+       "Expected GetSystemRegistryQuota to return TRUE, got %d\n", ret);
+
+    ret = pGetSystemRegistryQuota(NULL, &used_quota);
+    ok(ret == TRUE,
+       "Expected GetSystemRegistryQuota to return TRUE, got %d\n", ret);
+
+    ret = pGetSystemRegistryQuota(&max_quota, &used_quota);
+    ok(ret == TRUE,
+       "Expected GetSystemRegistryQuota to return TRUE, got %d\n", ret);
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -1856,6 +1886,7 @@ START_TEST(process)
     test_ProcessName();
     test_Handles();
     test_SystemInfo();
+    test_RegistryQuota();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)

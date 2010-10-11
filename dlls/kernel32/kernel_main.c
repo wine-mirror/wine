@@ -207,3 +207,19 @@ DWORD WINAPI GetTickCount(void)
 {
     return GetTickCount64();
 }
+
+/******************************************************************************
+ *           GetSystemRegistryQuota       (KERNEL32.@)
+ */
+BOOL WINAPI GetSystemRegistryQuota(PDWORD pdwQuotaAllowed, PDWORD pdwQuotaUsed)
+{
+    FIXME("(%p, %p) faking reported quota values\n", pdwQuotaAllowed, pdwQuotaUsed);
+
+    if (pdwQuotaAllowed)
+        *pdwQuotaAllowed = 2 * 1000 * 1000 * 1000; /* 2 GB */
+
+    if (pdwQuotaUsed)
+        *pdwQuotaUsed = 100 * 1000 * 1000; /* 100 MB */
+
+    return TRUE;
+}
