@@ -1754,6 +1754,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_AcquireFocusWindow(IWineD3DDevice *ifac
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
+    TRACE("iface %p, window %p.\n", iface, window);
+
     if (!wined3d_register_window(window, device))
     {
         ERR("Failed to register window %p.\n", window);
@@ -1769,6 +1771,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_AcquireFocusWindow(IWineD3DDevice *ifac
 static void WINAPI IWineD3DDeviceImpl_ReleaseFocusWindow(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("iface %p.\n", iface);
 
     if (device->focus_window) wined3d_unregister_window(device->focus_window);
     device->focus_window = NULL;
