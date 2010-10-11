@@ -2893,7 +2893,8 @@ static void X11DRV_FONT_InitX11Metrics( void )
   int       i, x_count, buf_size;
   char      *buffer;
   HKEY hkey;
-
+  XFontStruct*  x_fs;
+  char fontcheck_name[] = "-*-*-*-*-normal-*-[12 0 0 12]-*-72-*-*-*-iso8859-1";
 
   wine_tsx11_lock();
   x_pattern = XListFonts(gdi_display, "*", MAX_FONTS, &x_count );
@@ -2966,15 +2967,12 @@ static void X11DRV_FONT_InitX11Metrics( void )
   XFreeFontNames(x_pattern);
 
   /* check if we're dealing with X11 R6 server */
+  if( (x_fs = safe_XLoadQueryFont(gdi_display, fontcheck_name)) )
   {
-      XFontStruct*  x_fs;
-      strcpy(buffer, "-*-*-*-*-normal-*-[12 0 0 12]-*-72-*-*-*-iso8859-1");
-      if( (x_fs = safe_XLoadQueryFont(gdi_display, buffer)) )
-      {
-	  text_caps |= TC_SF_X_YINDEP;
-	  XFreeFont(gdi_display, x_fs);
-      }
+    text_caps |= TC_SF_X_YINDEP;
+    XFreeFont(gdi_display, x_fs);
   }
+
   wine_tsx11_unlock();
 
   HeapFree(GetProcessHeap(), 0, buffer);
