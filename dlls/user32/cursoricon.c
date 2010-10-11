@@ -1338,148 +1338,6 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 }
 
 
-/*************************************************************************
- * CURSORICON_ExtCopy
- *
- * Copies an Image from the Cache if LR_COPYFROMRESOURCE is specified
- *
- * PARAMS
- *      Handle     [I] handle to an Image
- *      nType      [I] Type of Handle (IMAGE_CURSOR | IMAGE_ICON)
- *      iDesiredCX [I] The Desired width of the Image
- *      iDesiredCY [I] The desired height of the Image
- *      nFlags     [I] The flags from CopyImage
- *
- * RETURNS
- *     Success: The new handle of the Image
- *
- * NOTES
- *     LR_COPYDELETEORG and LR_MONOCHROME are currently not implemented.
- *     LR_MONOCHROME should be implemented by CreateIconFromResourceEx.
- *     LR_COPYFROMRESOURCE will only work if the Image is in the Cache.
- *
- *
- */
-
-static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
-                                INT iDesiredCX, INT iDesiredCY,
-                                UINT nFlags)
-{
-    HICON hNew=0;
-
-    TRACE_(icon)("hIcon %p, nType %u, iDesiredCX %i, iDesiredCY %i, nFlags %u\n",
-                 hIcon, nType, iDesiredCX, iDesiredCY, nFlags);
-
-    if(hIcon == 0)
-    {
-        return 0;
-    }
-
-    /* Best Fit or Monochrome */
-    if( (nFlags & LR_COPYFROMRESOURCE
-        && (iDesiredCX > 0 || iDesiredCY > 0))
-        || nFlags & LR_MONOCHROME)
-    {
-        ICONCACHE* pIconCache = CURSORICON_FindCache(hIcon);
-
-        /* Not Found in Cache, then do a straight copy
-        */
-        if(pIconCache == NULL)
-        {
-            hNew = CopyIcon( hIcon );
-            if(nFlags & LR_COPYFROMRESOURCE)
-            {
-                TRACE_(icon)("LR_COPYFROMRESOURCE: Failed to load from cache\n");
-            }
-        }
-        else
-        {
-            int iTargetCY = iDesiredCY, iTargetCX = iDesiredCX;
-            LPBYTE pBits;
-            HANDLE hMem;
-            HRSRC hRsrc;
-            DWORD dwBytesInRes;
-            WORD wResId;
-            CURSORICONDIR *pDir;
-            CURSORICONDIRENTRY *pDirEntry;
-            BOOL bIsIcon = (nType == IMAGE_ICON);
-
-            /* Completing iDesiredCX CY for Monochrome Bitmaps if needed
-            */
-            if(((nFlags & LR_MONOCHROME) && !(nFlags & LR_COPYFROMRESOURCE))
-                || (iDesiredCX == 0 && iDesiredCY == 0))
-            {
-                iDesiredCY = GetSystemMetrics(bIsIcon ?
-                    SM_CYICON : SM_CYCURSOR);
-                iDesiredCX = GetSystemMetrics(bIsIcon ?
-                    SM_CXICON : SM_CXCURSOR);
-            }
-
-            /* Retrieve the CURSORICONDIRENTRY
-            */
-            if (!(hMem = LoadResource( pIconCache->hModule ,
-                            pIconCache->hGroupRsrc)))
-            {
-                return 0;
-            }
-            if (!(pDir = LockResource( hMem )))
-            {
-                return 0;
-            }
-
-            /* Find Best Fit
-            */
-            if(bIsIcon)
-            {
-                pDirEntry = CURSORICON_FindBestIconRes(
-                                pDir, iDesiredCX, iDesiredCY, 256 );
-            }
-            else
-            {
-                pDirEntry = CURSORICON_FindBestCursorRes(
-                                pDir, iDesiredCX, iDesiredCY, 1);
-            }
-
-            wResId = pDirEntry->wResId;
-            dwBytesInRes = pDirEntry->dwBytesInRes;
-            FreeResource(hMem);
-
-            TRACE_(icon)("ResID %u, BytesInRes %u, Width %d, Height %d DX %d, DY %d\n",
-                wResId, dwBytesInRes,  pDirEntry->ResInfo.icon.bWidth,
-                pDirEntry->ResInfo.icon.bHeight, iDesiredCX, iDesiredCY);
-
-            /* Get the Best Fit
-            */
-            if (!(hRsrc = FindResourceW(pIconCache->hModule ,
-                MAKEINTRESOURCEW(wResId), (LPWSTR)(bIsIcon ? RT_ICON : RT_CURSOR))))
-            {
-                return 0;
-            }
-            if (!(hMem = LoadResource( pIconCache->hModule , hRsrc )))
-            {
-                return 0;
-            }
-
-            pBits = LockResource( hMem );
-
-            if(nFlags & LR_DEFAULTSIZE)
-            {
-                iTargetCY = GetSystemMetrics(SM_CYICON);
-                iTargetCX = GetSystemMetrics(SM_CXICON);
-            }
-
-            /* Create a New Icon with the proper dimension
-            */
-            hNew = CreateIconFromResourceEx( pBits, dwBytesInRes,
-                       bIsIcon, 0x00030000, iTargetCX, iTargetCY, nFlags);
-            FreeResource(hMem);
-        }
-    }
-    else hNew = CopyIcon( hIcon );
-    return hNew;
-}
-
-
 /***********************************************************************
  *		CreateCursor (USER32.@)
  */
@@ -2719,13 +2577,30 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
             return res;
         }
         case IMAGE_ICON:
-                return CURSORICON_ExtCopy(hnd,type, desiredx, desiredy, flags);
         case IMAGE_CURSOR:
-                /* Should call CURSORICON_ExtCopy but more testing
-                 * needs to be done before we change this
-                 */
-                if (flags) FIXME("Flags are ignored\n");
-                return CopyCursor(hnd);
+        {
+            struct cursoricon_object *icon;
+            HICON res = 0;
+            int depth = (flags & LR_MONOCHROME) ? 1 : GetDeviceCaps( screen_dc, BITSPIXEL );
+
+            if (flags & LR_DEFAULTSIZE)
+            {
+                if (!desiredx) desiredx = GetSystemMetrics( type == IMAGE_ICON ? SM_CXICON : SM_CXCURSOR );
+                if (!desiredy) desiredy = GetSystemMetrics( type == IMAGE_ICON ? SM_CYICON : SM_CYCURSOR );
+            }
+
+            if (!(icon = get_icon_ptr( hnd ))) return 0;
+
+            if (icon->module && (flags & LR_COPYFROMRESOURCE))
+                res = CURSORICON_Load( icon->module, icon->resname, desiredx, desiredy, depth,
+                                       type == IMAGE_CURSOR, flags );
+            else
+                res = CopyIcon( hnd ); /* FIXME: change size if necessary */
+            release_icon_ptr( hnd, icon );
+
+            if (res && (flags & LR_COPYDELETEORG)) DeleteObject( hnd );
+            return res;
+        }
     }
     return 0;
 }
