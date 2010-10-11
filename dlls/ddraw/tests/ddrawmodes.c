@@ -558,7 +558,36 @@ static void testcooperativelevels_normal(void)
     surfacedesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
 
     /* Do some tests with DDSCL_NORMAL mode */
-
+    /* Fullscreen mode + normal mode + exclusive mode */
+    rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL);
+    todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
+    /* Try creating a double buffered primary in fullscreen + exclusive + normal mode */
+    rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
+    if (rc == DDERR_UNSUPPORTEDMODE)
+        skip("Unsupported mode\n");
+    else
+    {
+        todo_wine ok(rc == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", rc);
+        todo_wine ok(surface!=NULL, "Returned NULL surface pointer \n");
+    }
+    if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
+    /* Exclusive mode + normal mode */
+    rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_EXCLUSIVE | DDSCL_NORMAL);
+    ok(rc==DDERR_INVALIDPARAMS,"SetCooperativeLevel(DDSCL_EXCLUSIVE | DDSCL_NORMAL) returned: %x\n",rc);
+    /* Fullscreen mode + normal mode */
+    rc = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_NORMAL);
+    todo_wine ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_FULLSCREEN | DDSCL_NORMAL) returned: %x\n",rc);
+    /* Try creating a double buffered primary in fullscreen + normal mode */
+    rc = IDirectDraw_CreateSurface(lpDD, &surfacedesc, &surface, NULL);
+    if (rc == DDERR_UNSUPPORTEDMODE)
+        skip("Unsupported mode\n");
+    else
+    {
+        ok(rc == DDERR_NOEXCLUSIVEMODE, "IDirectDraw_CreateSurface returned %08x\n", rc);
+        ok(surface == NULL, "Returned surface pointer is %p\n", surface);
+    }
+    if(surface && surface != (IDirectDrawSurface *)0xdeadbeef) IDirectDrawSurface_Release(surface);
+    /* Normal mode */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_NORMAL);
     ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_NORMAL) returned: %x\n",rc);
