@@ -116,3 +116,10 @@ HRESULT WINAPI D3DGetDebugInfo(const void *data, SIZE_T data_size, ID3DBlob **bl
 
     return d3dcompiler_get_blob_part(data, data_size, D3D_BLOB_DEBUG_INFO, 0, blob);
 }
+
+HRESULT WINAPI D3DStripShader(const void *data, SIZE_T data_size, UINT flags, ID3D10Blob **blob)
+{
+    TRACE("data %p, data_size %lu, flags %#x, blob %p\n", data, data_size, flags, blob);
+
+    return d3dcompiler_strip_shader(data, data_size, flags, blob);
+}

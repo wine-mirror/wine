@@ -55,6 +55,7 @@ HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size) D
 
 /* blob handling */
 HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob) DECLSPEC_HIDDEN;
+HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT flags, ID3DBlob **blob) DECLSPEC_HIDDEN;
 
 /* Shader assembler definitions */
 typedef enum _shader_type {
@@ -585,7 +586,9 @@ void SlDeleteShader(struct bwriter_shader *shader);
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_PCSG MAKE_TAG('P', 'C', 'S', 'G')
+#define TAG_RDEF MAKE_TAG('R', 'D', 'E', 'F')
 #define TAG_SDBG MAKE_TAG('S', 'D', 'B', 'G')
+#define TAG_STAT MAKE_TAG('S', 'T', 'A', 'T')
 #define TAG_XNAP MAKE_TAG('X', 'N', 'A', 'P')
 #define TAG_XNAS MAKE_TAG('X', 'N', 'A', 'S')
 

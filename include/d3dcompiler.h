@@ -45,6 +45,16 @@ HRESULT WINAPI D3DCompile(const void *data, SIZE_T data_size, const char *filena
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, const char *entrypoint,
         const char *target, UINT sflags, UINT eflags, ID3DBlob **shader, ID3DBlob **error_messages);
 
+typedef enum D3DCOMPILER_STRIP_FLAGS
+{
+    D3DCOMPILER_STRIP_REFLECTION_DATA = 1,
+    D3DCOMPILER_STRIP_DEBUG_INFO = 2,
+    D3DCOMPILER_STRIP_TEST_BLOBS = 4,
+    D3DCOMPILER_STRIP_FORCE_DWORD = 0x7fffffff
+} D3DCOMPILER_STRIP_FLAGS;
+
+HRESULT WINAPI D3DStripShader(const void *data, SIZE_T data_size, UINT flags, ID3DBlob **blob);
+
 typedef enum D3D_BLOB_PART
 {
     D3D_BLOB_INPUT_SIGNATURE_BLOB,

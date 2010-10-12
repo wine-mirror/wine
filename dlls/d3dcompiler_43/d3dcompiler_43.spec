@@ -14,4 +14,4 @@
 @ stdcall D3DPreprocess(ptr long str ptr ptr ptr ptr)
 @ stub D3DReflect
 @ stub D3DReturnFailure1
-@ stub D3DStripShader
+@ stdcall D3DStripShader(ptr long long ptr)

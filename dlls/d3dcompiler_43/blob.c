@@ -285,3 +285,92 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
 
     return hr;
 }
+
+static BOOL check_blob_strip(DWORD tag, UINT flags)
+{
+    BOOL add = TRUE;
+
+    if (flags & D3DCOMPILER_STRIP_TEST_BLOBS) FIXME("Unhandled flag D3DCOMPILER_STRIP_TEST_BLOBS.\n");
+
+    switch(tag)
+    {
+        case TAG_RDEF:
+        case TAG_STAT:
+            if (flags & D3DCOMPILER_STRIP_REFLECTION_DATA) add = FALSE;
+            break;
+
+        case TAG_SDBG:
+            if (flags & D3DCOMPILER_STRIP_DEBUG_INFO) add = FALSE;
+            break;
+
+        default:
+            break;
+    }
+
+    TRACE("%s tag %s\n", add ? "Add" : "Skip", debugstr_an((const char *)&tag, 4));
+
+    return add;
+}
+
+HRESULT d3dcompiler_strip_shader(const void *data, SIZE_T data_size, UINT flags, ID3DBlob **blob)
+{
+    struct dxbc src_dxbc, dst_dxbc;
+    HRESULT hr;
+    unsigned int i;
+
+    if (!blob)
+    {
+        WARN("NULL for blob specified\n");
+        return E_FAIL;
+    }
+
+    if (!data || !data_size)
+    {
+        WARN("Invalid arguments: data %p, data_size %lu\n", data, data_size);
+        return D3DERR_INVALIDCALL;
+    }
+
+    hr = dxbc_parse(data, data_size, &src_dxbc);
+    if (FAILED(hr))
+    {
+        WARN("Failed to parse blob part\n");
+        return hr;
+    }
+
+    /* src_dxbc.count >= dst_dxbc.count */
+    hr = dxbc_init(&dst_dxbc, src_dxbc.count);
+    if (FAILED(hr))
+    {
+        dxbc_destroy(&src_dxbc);
+        WARN("Failed to init dxbc\n");
+        return hr;
+    }
+
+    for (i = 0; i < src_dxbc.count; ++i)
+    {
+        struct dxbc_section *section = &src_dxbc.sections[i];
+
+        if (check_blob_strip(section->tag, flags))
+        {
+            hr = dxbc_add_section(&dst_dxbc, section->tag, section->data, section->data_size);
+            if (FAILED(hr))
+            {
+                dxbc_destroy(&src_dxbc);
+                dxbc_destroy(&dst_dxbc);
+                WARN("Failed to add section to dxbc\n");
+                return hr;
+            }
+        }
+    }
+
+    hr = dxbc_write_blob(&dst_dxbc, blob);
+    if (FAILED(hr))
+    {
+        WARN("Failed to write blob part\n");
+    }
+
+    dxbc_destroy(&src_dxbc);
+    dxbc_destroy(&dst_dxbc);
+
+    return hr;
+}
