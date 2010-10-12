@@ -5258,11 +5258,91 @@ end:
  */
 BOOL WINAPI SetDefaultPrinterW(LPCWSTR pszPrinter)
 {
+    WCHAR   default_printer[MAX_PATH];
+    LPWSTR  buffer = NULL;
+    HKEY    hreg;
+    DWORD   size;
+    DWORD   namelen;
+    LONG    lres;
 
     TRACE("(%s)\n", debugstr_w(pszPrinter));
+    if ((pszPrinter == NULL) || (pszPrinter[0] == '\0')) {
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+        default_printer[0] = '\0';
+        size = sizeof(default_printer)/sizeof(WCHAR);
+
+        /* if we have a default Printer, do nothing. */
+        if (GetDefaultPrinterW(default_printer, &size))
+            return TRUE;
+
+        pszPrinter = NULL;
+        /* we have no default Printer: search local Printers and use the first */
+        if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, PrintersW, 0, KEY_READ, &hreg)) {
+
+            default_printer[0] = '\0';
+            size = sizeof(default_printer)/sizeof(WCHAR);
+            if (!RegEnumKeyExW(hreg, 0, default_printer, &size, NULL, NULL, NULL, NULL)) {
+
+                pszPrinter = default_printer;
+                TRACE("using %s\n", debugstr_w(pszPrinter));
+            }
+            RegCloseKey(hreg);
+        }
+
+        if (pszPrinter == NULL) {
+            TRACE("no local printer found\n");
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            return FALSE;
+        }
+    }
+
+    /* "pszPrinter" is never empty or NULL here. */
+    namelen = lstrlenW(pszPrinter);
+    size = namelen + (MAX_PATH * 2) + 3; /* printer,driver,port and a 0 */
+    buffer = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+    if (!buffer ||
+        (RegOpenKeyExW(HKEY_CURRENT_USER, user_printers_reg_key, 0, KEY_READ, &hreg) != ERROR_SUCCESS)) {
+        HeapFree(GetProcessHeap(), 0, buffer);
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+
+    /* read the devices entry for the printer (driver,port) to build the string for the
+       default device entry (printer,driver,port) */
+    memcpy(buffer, pszPrinter, namelen * sizeof(WCHAR));
+    buffer[namelen] = ',';
+    namelen++; /* move index to the start of the driver */
+
+    size = ((MAX_PATH * 2) + 2) * sizeof(WCHAR); /* driver,port and a 0 */
+    lres = RegQueryValueExW(hreg, pszPrinter, NULL, NULL, (LPBYTE) (&buffer[namelen]), &size);
+    if (!lres) {
+        TRACE("set device to %s\n", debugstr_w(buffer));
+
+        if (!WriteProfileStringW(windowsW, deviceW, buffer)) {
+            TRACE("failed to set the device entry: %d\n", GetLastError());
+            lres = ERROR_INVALID_PRINTER_NAME;
+        }
+
+        /* remove the next section, when INIFileMapping is implemented */
+        {
+            HKEY hdev;
+            if (!RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hdev)) {
+                RegSetValueExW(hdev, deviceW, 0, REG_SZ, (LPBYTE)buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR));
+                RegCloseKey(hdev);
+            }
+        }
+    }
+    else
+    {
+        if (lres != ERROR_FILE_NOT_FOUND)
+            FIXME("RegQueryValueExW failed with %d for %s\n", lres, debugstr_w(pszPrinter));
+
+        SetLastError(ERROR_INVALID_PRINTER_NAME);
+    }
+
+    RegCloseKey(hreg);
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return (lres == ERROR_SUCCESS);
 }
 
 /******************************************************************************
@@ -5273,13 +5353,19 @@ BOOL WINAPI SetDefaultPrinterW(LPCWSTR pszPrinter)
  */
 BOOL WINAPI SetDefaultPrinterA(LPCSTR pszPrinter)
 {
+    LPWSTR  bufferW = NULL;
+    BOOL    res;
 
     TRACE("(%s)\n", debugstr_a(pszPrinter));
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    if(pszPrinter) {
+        INT len = MultiByteToWideChar(CP_ACP, 0, pszPrinter, -1, NULL, 0);
+        bufferW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (bufferW) MultiByteToWideChar(CP_ACP, 0, pszPrinter, -1, bufferW, len);
+    }
+    res = SetDefaultPrinterW(bufferW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
+    return res;
 }
-
 
 /******************************************************************************
  *		SetPrinterDataExA   (WINSPOOL.@)
