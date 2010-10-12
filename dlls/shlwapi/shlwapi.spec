@@ -512,7 +512,7 @@
 516 stdcall -noname SKGetValueW(long wstr wstr long long long)
 517 stub -noname SKSetValueW
 518 stub -noname SKDeleteValueW
-519 stub -noname SKAllocValueW
+519 stdcall -noname SKAllocValueW(long wstr wstr ptr ptr ptr)
 520 stub -noname SHPropertyBag_ReadBSTR
 521 stub -noname SHPropertyBag_ReadPOINTL
 522 stub -noname SHPropertyBag_WritePOINTL

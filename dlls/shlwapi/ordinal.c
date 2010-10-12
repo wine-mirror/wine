@@ -4604,6 +4604,43 @@ HRESULT WINAPI IUnknown_OnFocusChangeIS(LPUNKNOWN lpUnknown, LPUNKNOWN pFocusObj
 }
 
 /***********************************************************************
+ *		SKAllocValueW (SHLWAPI.519)
+ */
+HRESULT WINAPI SKAllocValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value, DWORD *type,
+        LPVOID *data, DWORD *count)
+{
+    DWORD ret, size;
+    HKEY hkey;
+
+    TRACE("(0x%x, %s, %s, %p, %p, %p)\n", flags, debugstr_w(subkey),
+        debugstr_w(value), type, data, count);
+
+    hkey = SHGetShellKey(flags, subkey, FALSE);
+    if (!hkey)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    ret = SHQueryValueExW(hkey, value, NULL, type, NULL, &size);
+    if (ret) {
+        RegCloseKey(hkey);
+        return HRESULT_FROM_WIN32(ret);
+    }
+
+    size += 2;
+    *data = LocalAlloc(0, size);
+    if (!*data) {
+        RegCloseKey(hkey);
+        return E_OUTOFMEMORY;
+    }
+
+    ret = SHQueryValueExW(hkey, value, NULL, type, *data, &size);
+    if (count)
+        *count = size;
+
+    RegCloseKey(hkey);
+    return HRESULT_FROM_WIN32(ret);
+}
+
+/***********************************************************************
  *		SKGetValueW (SHLWAPI.516)
  */
 HRESULT WINAPI SKGetValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value, DWORD *type,
