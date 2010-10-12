@@ -41,4 +41,5 @@ STRINGTABLE
     STRING_SEARCH_FAILED, "에러: 프로세스 \"%s\"를 찾을 수 없습니다.\n"
     STRING_ENUM_FAILED, "에러: 프로세스 목록을 열거 할 수 업습니다.\n"
     STRING_TERMINATE_FAILED, "에러: \"%s\" 프로세스를 중단시킬 수 없습니다.\n"
+    STRING_SELF_TERMINATION, "에러: 프로세스 자가 종료는 허용되지 않습니다.\n"
 }
