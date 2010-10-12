@@ -28,6 +28,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
+#define WINED3D_SM4_REGISTER_MODIFIER           (1 << 31)
+
 #define WINED3D_SM4_REGISTER_ORDER_SHIFT        20
 #define WINED3D_SM4_REGISTER_ORDER_MASK         (0x3 << WINED3D_SM4_REGISTER_ORDER_SHIFT)
 
@@ -343,6 +345,12 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
     else
     {
         src_param->reg.type = register_type_table[register_type];
+    }
+
+    if (token & WINED3D_SM4_REGISTER_MODIFIER)
+    {
+        DWORD modifier = *(*ptr)++;
+        FIXME("Skipping modifier 0x%08x.\n", modifier);
     }
 
     order = (token & WINED3D_SM4_REGISTER_ORDER_MASK) >> WINED3D_SM4_REGISTER_ORDER_SHIFT;
