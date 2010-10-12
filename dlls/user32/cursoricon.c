@@ -1880,18 +1880,18 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                  hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags );
 
     if (!(ptr = get_icon_ptr( hIcon ))) return FALSE;
-    if (!(hMemDC = CreateCompatibleDC( hdc )))
-    {
-        release_icon_ptr( hIcon, ptr );
-        return FALSE;
-    }
-
     if (istep >= ptr->num_frames)
     {
         TRACE_(icon)("Stepped past end of animated frames=%d\n", istep);
         release_icon_ptr( hIcon, ptr );
         return FALSE;
     }
+    if (!(hMemDC = CreateCompatibleDC( hdc )))
+    {
+        release_icon_ptr( hIcon, ptr );
+        return FALSE;
+    }
+
     if (flags & DI_NOMIRROR)
         FIXME_(icon)("Ignoring flag DI_NOMIRROR\n");
 
