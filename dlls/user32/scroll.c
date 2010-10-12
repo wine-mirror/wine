@@ -1426,6 +1426,13 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
     case WM_LBUTTONDBLCLK:
     case WM_LBUTTONDOWN:
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEGRIP)
+        {
+            SendMessageW( GetParent(hwnd), WM_SYSCOMMAND,
+                          SC_SIZE + ((GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) ?
+                                     WMSZ_BOTTOMLEFT : WMSZ_BOTTOMRIGHT), lParam );
+        }
+        else
         {
 	    POINT pt;
 	    pt.x = (short)LOWORD(lParam);
@@ -1518,6 +1525,14 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             if (!wParam) EndPaint(hwnd, &ps);
         }
         break;
+
+    case WM_SETCURSOR:
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEGRIP)
+        {
+            ULONG_PTR cursor = (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) ? IDC_SIZENESW : IDC_SIZENWSE;
+            return (LRESULT)SetCursor( LoadCursorA( 0, (LPSTR)cursor ));
+        }
+        return DefWindowProcW( hwnd, message, wParam, lParam );
 
     case SBM_SETPOS:
         return SetScrollPos( hwnd, SB_CTL, wParam, (BOOL)lParam );
