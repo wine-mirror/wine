@@ -511,7 +511,7 @@
 515 stdcall -noname SHGetViewStatePropertyBag(ptr wstr long ptr ptr)
 516 stdcall -noname SKGetValueW(long wstr wstr long long long)
 517 stub -noname SKSetValueW
-518 stub -noname SKDeleteValueW
+518 stdcall -noname SKDeleteValueW(long wstr wstr)
 519 stdcall -noname SKAllocValueW(long wstr wstr ptr ptr ptr)
 520 stub -noname SHPropertyBag_ReadBSTR
 521 stub -noname SHPropertyBag_ReadPOINTL

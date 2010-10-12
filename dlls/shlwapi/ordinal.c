@@ -4641,6 +4641,26 @@ HRESULT WINAPI SKAllocValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value, DWORD *
 }
 
 /***********************************************************************
+ *		SKDeleteValueW (SHLWAPI.518)
+ */
+HRESULT WINAPI SKDeleteValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value)
+{
+    DWORD ret;
+    HKEY hkey;
+
+    TRACE("(0x%x, %s %s)\n", flags, debugstr_w(subkey), debugstr_w(value));
+
+    hkey = SHGetShellKey(flags, subkey, FALSE);
+    if (!hkey)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    ret = RegDeleteValueW(hkey, value);
+
+    RegCloseKey(hkey);
+    return HRESULT_FROM_WIN32(ret);
+}
+
+/***********************************************************************
  *		SKGetValueW (SHLWAPI.516)
  */
 HRESULT WINAPI SKGetValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value, DWORD *type,
