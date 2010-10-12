@@ -907,13 +907,8 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
      * and replace the ddraw surfaces with the wined3d surfaces
      * So far no blitting operations using surfaces in the bltfx struct are supported anyway.
      */
-    hr = IWineD3DSurface_Blt(This->WineD3DSurface,
-                             DestRect,
-                             Src ? Src->WineD3DSurface : NULL,
-                             SrcRect,
-                             Flags,
-                             (WINEDDBLTFX *) DDBltFx,
-                             WINED3DTEXF_POINT);
+    hr = IWineD3DSurface_Blt(This->WineD3DSurface, DestRect, Src ? Src->WineD3DSurface : NULL,
+            SrcRect, Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
 
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
