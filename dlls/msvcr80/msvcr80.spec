@@ -299,7 +299,7 @@
 @ cdecl __threadid() msvcrt.__threadid
 @ stub __timezone
 @ cdecl __toascii(long) msvcrt.__toascii
-@ stub __tzname
+@ cdecl __tzname() msvcrt.__p__tzname
 @ cdecl __unDName(ptr str long ptr ptr long) msvcrt.__unDName
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long) msvcrt.__unDNameEx
 @ stub __unDNameHelper
