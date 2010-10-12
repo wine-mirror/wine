@@ -62,6 +62,10 @@ static HRESULT (WINAPI *pSHIShellFolder_EnumObjects)(LPSHELLFOLDER, HWND, SHCONT
 static DWORD   (WINAPI *pSHGetIniStringW)(LPCWSTR, LPCWSTR, LPWSTR, DWORD, LPCWSTR);
 static BOOL    (WINAPI *pSHSetIniStringW)(LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR);
 static HKEY    (WINAPI *pSHGetShellKey)(DWORD, LPCWSTR, BOOL);
+static HRESULT (WINAPI *pSKGetValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD*, void*, DWORD*);
+static HRESULT (WINAPI *pSKSetValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD, void*, DWORD);
+static HRESULT (WINAPI *pSKDeleteValueW)(DWORD, LPCWSTR, LPCWSTR);
+static HRESULT (WINAPI *pSKAllocValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD*, void**, DWORD*);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2701,7 +2705,9 @@ static void test_SHGetShellKey(void)
     static const WCHAR WineTestW[] = { 'W','i','n','e','T','e','s','t',0 };
 
     void *pPathBuildRootW = GetProcAddress(hShlwapi, "PathBuildRootW");
+    DWORD *alloc_data, data, size;
     HKEY hkey;
+    HRESULT hres;
 
     if (!pSHGetShellKey)
     {
@@ -2754,6 +2760,50 @@ static void test_SHGetShellKey(void)
     ok(hkey != NULL, "Can't create key\n");
     ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delte key\n");
     RegCloseKey(hkey);
+
+    if (!pSKGetValueW || !pSKSetValueW || !pSKDeleteValueW || !pSKAllocValueW)
+    {
+        win_skip("SKGetValueW, SKSetValueW, SKDeleteValueW or SKAllocValueW not available\n");
+        return;
+    }
+
+    hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, &data, &size);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %x\n", hres);
+
+    data = 1234;
+    hres = pSKSetValueW(SHKEY_Root_HKLM, WineTestW, NULL, REG_DWORD, &data, sizeof(DWORD));
+    ok(hres == S_OK, "hres = %x\n", hres);
+
+    size = 1;
+    hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, NULL, &size);
+    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(size == sizeof(DWORD), "size = %d\n", size);
+
+    data = 0xdeadbeef;
+    hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, &data, &size);
+    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(size == sizeof(DWORD), "size = %d\n", size);
+    ok(data == 1234, "data = %d\n", data);
+
+    hres = pSKAllocValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, (void**)&alloc_data, &size);
+    ok(hres == S_OK, "hres= %x\n", hres);
+    ok(size == sizeof(DWORD), "size = %d\n", size);
+    ok(*alloc_data == 1234, "*alloc_data = %d\n", *alloc_data);
+    LocalFree(alloc_data);
+
+    hres = pSKDeleteValueW(SHKEY_Root_HKLM, WineTestW, NULL);
+    ok(hres == S_OK, "hres = %x\n", hres);
+
+    hres = pSKDeleteValueW(SHKEY_Root_HKLM, WineTestW, NULL);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %x\n", hres);
+
+    hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, &data, &size);
+    ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %x\n", hres);
+
+    hkey = pSHGetShellKey(SHKEY_Root_HKLM, NULL, FALSE);
+    ok(hkey != NULL, "Can't create key\n");
+    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delte key\n");
+    RegCloseKey(hkey);
 }
 
 static void init_pointers(void)
@@ -2782,6 +2832,10 @@ static void init_pointers(void)
     MAKEFUNC(SHGetShellKey, 491);
     MAKEFUNC(SHPropertyBag_ReadLONG, 496);
     MAKEFUNC(IUnknown_ProfferService, 514);
+    MAKEFUNC(SKGetValueW, 516);
+    MAKEFUNC(SKSetValueW, 517);
+    MAKEFUNC(SKDeleteValueW, 518);
+    MAKEFUNC(SKAllocValueW, 519);
 #undef MAKEFUNC
 }
 
