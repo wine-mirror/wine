@@ -285,19 +285,22 @@ static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
  */
 static HBITMAP copy_bitmap( HBITMAP bitmap )
 {
-    HDC src, dst;
-    HBITMAP new_bitmap;
+    HDC src, dst = 0;
+    HBITMAP new_bitmap = 0;
     BITMAP bmp;
 
     if (!bitmap) return 0;
     if (!GetObjectW( bitmap, sizeof(bmp), &bmp )) return 0;
 
-    src = CreateCompatibleDC( 0 );
-    dst = CreateCompatibleDC( 0 );
-    SelectObject( src, bitmap );
-    new_bitmap = CreateCompatibleBitmap( src, bmp.bmWidth, bmp.bmHeight );
-    SelectObject( dst, new_bitmap );
-    BitBlt( dst, 0, 0, bmp.bmWidth, bmp.bmHeight, src, 0, 0, SRCCOPY );
+    if ((src = CreateCompatibleDC( 0 )) && (dst = CreateCompatibleDC( 0 )))
+    {
+        SelectObject( src, bitmap );
+        if ((new_bitmap = CreateCompatibleBitmap( src, bmp.bmWidth, bmp.bmHeight )))
+        {
+            SelectObject( dst, new_bitmap );
+            BitBlt( dst, 0, 0, bmp.bmWidth, bmp.bmHeight, src, 0, 0, SRCCOPY );
+        }
+    }
     DeleteDC( dst );
     DeleteDC( src );
     return new_bitmap;
@@ -1685,6 +1688,7 @@ BOOL WINAPI GetIconInfoExA( HICON icon, ICONINFOEXA *info )
 BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
 {
     struct cursoricon_object *ptr;
+    BOOL ret = TRUE;
 
     if (info->cbSize != sizeof(*info))
     {
@@ -1713,8 +1717,14 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
         if (IS_INTRESOURCE( ptr->resname )) info->wResID = LOWORD( ptr->resname );
         else lstrcpynW( info->szResName, ptr->resname, MAX_PATH );
     }
+    if (!info->hbmMask || (!info->hbmColor && ptr->frames[0].color))
+    {
+        DeleteObject( info->hbmMask );
+        DeleteObject( info->hbmColor );
+        ret = FALSE;
+    }
     release_icon_ptr( icon, ptr );
-    return TRUE;
+    return ret;
 }
 
 /* copy an icon bitmap, even when it can't be selected into a DC */
