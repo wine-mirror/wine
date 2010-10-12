@@ -458,9 +458,8 @@ static BOOL CUPS_LoadPrinters(void)
     nrofdests = pcupsGetDests(&dests);
     TRACE("Found %d CUPS %s:\n", nrofdests, (nrofdests == 1) ? "printer" : "printers");
     for (i=0;i<nrofdests;i++) {
-        /* FIXME: replace "LPR:" with "CUPS:". Fix printing output first */
-        port = HeapAlloc(GetProcessHeap(), 0, strlen("LPR:") + strlen(dests[i].name)+1);
-        sprintf(port,"LPR:%s", dests[i].name);
+        port = HeapAlloc(GetProcessHeap(), 0, strlen("CUPS:") + strlen(dests[i].name)+1);
+        sprintf(port,"CUPS:%s", dests[i].name);
         /* FIXME: remove extension. Fix gdi32/drivers and comdlg32/printdlg first */
         devline = HeapAlloc(GetProcessHeap(), 0, sizeof("WINEPS.DRV,,15,45") + strlen(port));
         sprintf(devline, "WINEPS.DRV,%s", port);
@@ -484,6 +483,7 @@ static BOOL CUPS_LoadPrinters(void)
             /* Printer already in registry, delete the tag added in WINSPOOL_LoadSystemPrinters
                and continue */
             TRACE("Printer already exists\n");
+            RegSetValueExA(hkeyPrinter, "Port", 0, REG_SZ, (LPBYTE)port, strlen(port) + 1); /* overwrite LPR:* port */
             RegDeleteValueW(hkeyPrinter, May_Delete_Value);
             RegCloseKey(hkeyPrinter);
         } else {
@@ -518,12 +518,12 @@ static BOOL CUPS_LoadPrinters(void)
 
         hadprinter = TRUE;
         if (dests[i].is_default) {
-            WINSPOOL_SetDefaultPrinter(dests[i].name, dests[i].name, TRUE);
+            SetDefaultPrinterA(dests[i].name);
             haddefault = TRUE;
         }
     }
     if (hadprinter & !haddefault)
-        WINSPOOL_SetDefaultPrinter(dests[0].name, dests[0].name, TRUE);
+        SetDefaultPrinterA(dests[0].name);
     pcupsFreeDests(nrofdests, dests);
     RegCloseKey(hkeyPrinters);
     return hadprinter;

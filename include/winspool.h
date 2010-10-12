@@ -1541,6 +1541,10 @@ BOOL WINAPI GetDefaultPrinterA(LPSTR pName, LPDWORD pcbNameSize);
 BOOL WINAPI GetDefaultPrinterW(LPWSTR pName, LPDWORD pcbNameSize);
 #define GetDefaultPrinter WINELIB_NAME_AW(GetDefaultPrinter)
 
+BOOL WINAPI SetDefaultPrinterA(LPCSTR);
+BOOL WINAPI SetDefaultPrinterW(LPCWSTR);
+#define SetDefaultPrinter WINELIB_NAME_AW(SetDefaultPrinter)
+
 BOOL WINAPI DeletePrinterDriverA(LPSTR pName, LPSTR pEnvironment,
 				 LPSTR pDriverName);
 BOOL WINAPI DeletePrinterDriverW(LPWSTR pName, LPWSTR pEnvironment,
