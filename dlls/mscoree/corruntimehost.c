@@ -669,10 +669,16 @@ __int32 WINAPI _CorExeMain(void)
     ICLRRuntimeInfo *info;
     RuntimeHost *host;
     HRESULT hr;
+    int i;
 
     get_utf8_args(&argc, &argv);
 
     GetModuleFileNameW(NULL, filename, MAX_PATH);
+
+    TRACE("%s", debugstr_w(filename));
+    for (i=0; i<argc; i++)
+        TRACE(" %s", debugstr_a(argv[i]));
+    TRACE("\n");
 
     filenameA = WtoA(filename);
     if (!filenameA)
