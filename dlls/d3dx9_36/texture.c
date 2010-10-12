@@ -2,6 +2,7 @@
  * Copyright 2009 Tony Wasserka
  * Copyright 2010 Christian Costa
  * Copyright 2010 Owen Rudge for CodeWeavers
+ * Copyright 2010 Matteo Bruni for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -45,6 +46,21 @@ static UINT make_pow2(UINT num)
     return result;
 }
 
+static HRESULT get_surface(D3DRESOURCETYPE type, LPDIRECT3DBASETEXTURE9 tex,
+                           int face, UINT level, LPDIRECT3DSURFACE9 *surf)
+{
+    switch (type)
+    {
+        case D3DRTYPE_TEXTURE:
+            return IDirect3DTexture9_GetSurfaceLevel((IDirect3DTexture9*) tex, level, surf);
+        case D3DRTYPE_CUBETEXTURE:
+            return IDirect3DCubeTexture9_GetCubeMapSurface((IDirect3DCubeTexture9*) tex, face, level, surf);
+        default:
+            ERR("Unexpected texture type\n");
+            return E_NOTIMPL;
+    }
+}
+
 HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
                                  CONST PALETTEENTRY *palette,
                                  UINT srclevel,
@@ -52,6 +68,7 @@ HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
 {
     UINT level = srclevel + 1;
     HRESULT hr;
+    D3DRESOURCETYPE type;
 
     TRACE("(%p, %p, %d, %d)\n", texture, palette, srclevel, filter);
 
@@ -64,46 +81,64 @@ HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
     if (srclevel >= IDirect3DBaseTexture9_GetLevelCount(texture))
         return D3DERR_INVALIDCALL;
 
-    switch (IDirect3DBaseTexture9_GetType(texture))
+    switch (type = IDirect3DBaseTexture9_GetType(texture))
     {
         case D3DRTYPE_TEXTURE:
+        case D3DRTYPE_CUBETEXTURE:
         {
             IDirect3DSurface9 *topsurf, *mipsurf;
             D3DSURFACE_DESC desc;
+            int i, numfaces;
+
+            if (type == D3DRTYPE_TEXTURE)
+            {
+                numfaces = 1;
+                IDirect3DTexture9_GetLevelDesc((IDirect3DTexture9*) texture, srclevel, &desc);
+            }
+            else
+            {
+                numfaces = 6;
+                IDirect3DCubeTexture9_GetLevelDesc((IDirect3DTexture9*) texture, srclevel, &desc);
+            }
 
             if (filter == D3DX_DEFAULT)
             {
-                IDirect3DTexture9_GetLevelDesc((IDirect3DTexture9*) texture, srclevel, &desc);
-
                 if (is_pow2(desc.Width) && is_pow2(desc.Height))
                     filter = D3DX_FILTER_BOX;
                 else
                     filter = D3DX_FILTER_BOX | D3DX_FILTER_DITHER;
             }
 
-            hr = IDirect3DTexture9_GetSurfaceLevel((IDirect3DTexture9*) texture, srclevel, &topsurf);
-
-            if (FAILED(hr))
-                return D3DERR_INVALIDCALL;
-
-            while (IDirect3DTexture9_GetSurfaceLevel((IDirect3DTexture9*) texture, level, &mipsurf) == D3D_OK)
+            for (i = 0; i < numfaces; i++)
             {
-                hr = D3DXLoadSurfaceFromSurface(mipsurf, palette, NULL, topsurf, palette, NULL, filter, 0);
-                IDirect3DSurface9_Release(mipsurf);
+                level = srclevel + 1;
+                hr = get_surface(type, texture, i, srclevel, &topsurf);
 
                 if (FAILED(hr))
-                    break;
+                    return D3DERR_INVALIDCALL;
 
-                level++;
+                while (get_surface(type, texture, i, level, &mipsurf) == D3D_OK)
+                {
+                    hr = D3DXLoadSurfaceFromSurface(mipsurf, palette, NULL, topsurf, palette, NULL, filter, 0);
+                    IDirect3DSurface9_Release(topsurf);
+                    topsurf = mipsurf;
+
+                    if (FAILED(hr))
+                        break;
+
+                    level++;
+                }
+
+                IDirect3DSurface9_Release(topsurf);
+                if (FAILED(hr))
+                    return hr;
             }
-
-            IDirect3DSurface9_Release(topsurf);
 
             return D3D_OK;
         }
 
         default:
-            FIXME("Implement volume and cube texture filtering\n");
+            FIXME("Implement volume texture filtering\n");
             return E_NOTIMPL;
     }
 }

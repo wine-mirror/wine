@@ -3,6 +3,7 @@
  *
  * Copyright 2009 Tony Wasserka
  * Copyright 2010 Owen Rudge for CodeWeavers
+ * Copyright 2010 Matteo Bruni for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -398,6 +399,7 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
 static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
 {
     IDirect3DTexture9 *tex;
+    IDirect3DCubeTexture9 *cubetex;
     HRESULT hr;
 
     hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 5, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex, NULL);
@@ -433,7 +435,6 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
     else
         skip("Failed to create texture\n");
 
-
     hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &tex, NULL);
 
     if (SUCCEEDED(hr))
@@ -444,6 +445,25 @@ static void test_D3DXFilterTexture(IDirect3DDevice9 *device)
     }
     else
         skip("Failed to create texture\n");
+
+    /* Cube texture test */
+    hr = IDirect3DDevice9_CreateCubeTexture(device, 256, 5, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &cubetex, NULL);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) cubetex, NULL, 0, D3DX_FILTER_NONE);
+        ok(hr == D3D_OK, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) cubetex, NULL, 0, D3DX_FILTER_BOX + 1); /* Invalid filter */
+        ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = D3DXFilterTexture((IDirect3DBaseTexture9*) cubetex, NULL, 5, D3DX_FILTER_NONE); /* Invalid miplevel */
+        ok(hr == D3DERR_INVALIDCALL, "D3DXFilterTexture returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    }
+    else
+        skip("Failed to create texture\n");
+
+    IDirect3DCubeTexture9_Release(cubetex);
 }
 
 START_TEST(texture)
