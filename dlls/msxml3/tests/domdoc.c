@@ -3334,15 +3334,13 @@ if (0)
         IXMLHttpRequest_Release(pXMLHttpRequest);
         return;
     }
-    todo_wine ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* status code after ::send() */
     status = 0xdeadbeef;
     hr = IXMLHttpRequest_get_status(pXMLHttpRequest, &status);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(status == 200, "got %d\n", status);
-}
 
     /* another ::send() after completed request */
     hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
@@ -3351,12 +3349,13 @@ todo_wine {
     VariantClear(&varbody);
 
     hr = IXMLHttpRequest_get_responseText(pXMLHttpRequest, &bstrResponse);
-    todo_wine ok(hr == S_OK, "IXMLHttpRequest_get_responseText should have succeeded instead of failing with 0x%08x\n", hr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     /* the server currently returns "FAILED" because the Content-Type header is
      * not what the server expects */
     if(hr == S_OK)
     {
-        ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)), "bstrResponse differs from what was expected\n");
+        todo_wine ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)),
+            "expected %s, got %s\n", wine_dbgstr_w(wszExpectedResponse), wine_dbgstr_w(bstrResponse));
         SysFreeString(bstrResponse);
     }
 

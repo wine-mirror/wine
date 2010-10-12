@@ -114,6 +114,9 @@ struct BindStatusCallback
 
     /* response data */
     IStream *stream;
+
+    /* request body data */
+    HGLOBAL body;
 };
 
 static inline BindStatusCallback *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
@@ -194,6 +197,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     {
         if (This->binding) IBinding_Release(This->binding);
         if (This->stream) IStream_Release(This->stream);
+        if (This->body) GlobalFree(This->body);
         heap_free(This);
     }
 
@@ -240,7 +244,7 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface, 
 {
     BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
 
-    TRACE("%p)->(%u %u %u %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
+    TRACE("(%p)->(%u %u %u %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
             debugstr_w(szStatusText));
 
     return S_OK;
@@ -275,10 +279,13 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
     *bind_flags = 0;
     if (This->request->async) *bind_flags |= BINDF_ASYNCHRONOUS;
 
-    if (This->request->verb != BINDVERB_GET)
+    if (This->request->verb != BINDVERB_GET && This->body)
     {
-        FIXME("only GET verb supported. Got %d\n", This->request->verb);
-        return E_FAIL;
+        pbindinfo->stgmedData.tymed = TYMED_HGLOBAL;
+        pbindinfo->stgmedData.u.hGlobal = This->body;
+        pbindinfo->cbstgmedData = GlobalSize(This->body);
+        /* callback owns passed body pointer */
+        IBindStatusCallback_QueryInterface(iface, &IID_IUnknown, (void**)&pbindinfo->stgmedData.pUnkForRelease);
     }
 
     pbindinfo->dwBindVerb = This->request->verb;
@@ -410,7 +417,7 @@ static const IHttpNegotiateVtbl BSCHttpNegotiateVtbl = {
     BSCHttpNegotiate_OnResponse
 };
 
-static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback **obj)
+static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback **obj, const VARIANT *body)
 {
     BindStatusCallback *bsc;
     IBindCtx *pbc;
@@ -432,6 +439,31 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
     bsc->request = This;
     bsc->binding = NULL;
     bsc->stream = NULL;
+    bsc->body = NULL;
+
+    TRACE("created callback %p\n", bsc);
+
+    if (This->verb != BINDVERB_GET)
+    {
+        if (V_VT(body) == VT_BSTR)
+        {
+            LONG size = SysStringLen(V_BSTR(body)) * sizeof(WCHAR);
+            void *ptr;
+
+            bsc->body = GlobalAlloc(GMEM_FIXED, size);
+            if (!bsc->body)
+            {
+                heap_free(bsc);
+                return E_OUTOFMEMORY;
+            }
+
+            ptr = GlobalLock(bsc->body);
+            memcpy(ptr, V_BSTR(body), size);
+            GlobalUnlock(bsc->body);
+        }
+        else
+            FIXME("unsupported body data type %d\n", V_VT(body));
+    }
 
     hr = RegisterBindStatusCallback(pbc, (IBindStatusCallback*)bsc, NULL, 0);
     if (hr == S_OK)
@@ -710,7 +742,7 @@ static HRESULT WINAPI httprequest_getAllResponseHeaders(IXMLHTTPRequest *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI httprequest_send(IXMLHTTPRequest *iface, VARIANT varBody)
+static HRESULT WINAPI httprequest_send(IXMLHTTPRequest *iface, VARIANT body)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
     BindStatusCallback *bsc = NULL;
@@ -720,7 +752,7 @@ static HRESULT WINAPI httprequest_send(IXMLHTTPRequest *iface, VARIANT varBody)
 
     if (This->state != READYSTATE_LOADING) return E_FAIL;
 
-    hr = BindStatusCallback_create(This, &bsc);
+    hr = BindStatusCallback_create(This, &bsc, &body);
     if (FAILED(hr)) return hr;
 
     BindStatusCallback_Detach(This->bsc);
