@@ -86,7 +86,6 @@ static void
 NC_AdjustRectOuter (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
 {
     int adjust;
-    if(style & WS_ICONIC) return;
 
     if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) ==
         WS_EX_STATICEDGE)
@@ -99,7 +98,7 @@ NC_AdjustRectOuter (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
         if ((exStyle & WS_EX_DLGMODALFRAME) ||
             (style & (WS_THICKFRAME|WS_DLGFRAME))) adjust = 2; /* outer */
     }
-    if (style & WS_THICKFRAME)
+    if ((style & WS_THICKFRAME) && !(exStyle & WS_EX_DLGMODALFRAME))
         adjust +=  ( GetSystemMetrics (SM_CXFRAME)
                    - GetSystemMetrics (SM_CXDLGFRAME)); /* The resize border */
     if ((style & (WS_BORDER|WS_DLGFRAME)) ||
@@ -140,8 +139,6 @@ NC_AdjustRectOuter (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
 static void
 NC_AdjustRectInner (LPRECT rect, DWORD style, DWORD exStyle)
 {
-    if(style & WS_ICONIC) return;
-
     if (exStyle & WS_EX_CLIENTEDGE)
         InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
 
@@ -390,11 +387,8 @@ BOOL WINAPI AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
  */
 BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
-    /* Correct the window style */
-    style &= (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME | WS_CHILD);
-    exStyle &= (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE |
-                WS_EX_STATICEDGE | WS_EX_TOOLWINDOW);
-    if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
+    if (style & WS_ICONIC) return TRUE;
+    style &= ~(WS_HSCROLL | WS_VSCROLL);
 
     TRACE("(%s) %08x %d %08x\n", wine_dbgstr_rect(rect), style, menu, exStyle );
 
@@ -424,7 +418,7 @@ LRESULT NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
     if (cls_style & CS_VREDRAW) result |= WVR_VREDRAW;
     if (cls_style & CS_HREDRAW) result |= WVR_HREDRAW;
 
-    if (!IsIconic(hwnd))
+    if (!(style & WS_ICONIC))
     {
         NC_AdjustRectOuter( &tmpRect, style, FALSE, exStyle );
 
