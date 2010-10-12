@@ -88,6 +88,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM4_RT_INPUT        = 0x1,
     WINED3D_SM4_RT_OUTPUT       = 0x2,
     WINED3D_SM4_RT_IMMCONST     = 0x4,
+    WINED3D_SM4_RT_SAMPLER      = 0x6,
     WINED3D_SM4_RT_CONSTBUFFER  = 0x8,
     WINED3D_SM4_RT_NULL         = 0xd,
 };
@@ -164,7 +165,7 @@ static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
     /* UNKNOWN */                       0,
     /* WINED3D_SM4_RT_IMMCONST */       WINED3DSPR_IMMCONST,
     /* UNKNOWN */                       0,
-    /* UNKNOWN */                       0,
+    /* WINED3D_SM4_RT_SAMPLER */        WINED3DSPR_SAMPLER,
     /* UNKNOWN */                       0,
     /* WINED3D_SM4_RT_CONSTBUFFER */    WINED3DSPR_CONSTBUFFER,
     /* UNKNOWN */                       0,
