@@ -3354,7 +3354,7 @@ if (0)
      * not what the server expects */
     if(hr == S_OK)
     {
-        todo_wine ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)),
+        ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)),
             "expected %s, got %s\n", wine_dbgstr_w(wszExpectedResponse), wine_dbgstr_w(bstrResponse));
         SysFreeString(bstrResponse);
     }

@@ -865,7 +865,11 @@ static HRESULT WINAPI httprequest_get_responseText(IXMLHTTPRequest *iface, BSTR 
         if (encoding == XML_CHAR_ENCODING_UTF8 ||
             encoding == XML_CHAR_ENCODING_NONE )
         {
-            *body = bstr_from_xmlChar(ptr);
+            DWORD length = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)ptr, size, NULL, 0);
+
+            *body = SysAllocStringLen(NULL, length);
+            if (*body)
+                MultiByteToWideChar( CP_UTF8, 0, (LPCSTR)ptr, size, *body, length);
         }
         else
             *body = SysAllocStringByteLen((LPCSTR)ptr, size);
