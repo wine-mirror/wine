@@ -23,6 +23,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
+#define WINED3D_SM4_INSTRUCTION_MODIFIER        (1 << 31)
+
 #define WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT    24
 #define WINED3D_SM4_INSTRUCTION_LENGTH_MASK     (0xf << WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT)
 
@@ -326,6 +328,12 @@ static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d
     ins->predicate = 0;
     ins->dst_count = opcode_info->dst_count;
     ins->src_count = opcode_info->src_count;
+
+    if (token & WINED3D_SM4_INSTRUCTION_MODIFIER)
+    {
+        DWORD modifier = *(*ptr)++;
+        FIXME("Skipping modifier 0x%08x.\n", modifier);
+    }
 }
 
 static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
