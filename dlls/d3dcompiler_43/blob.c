@@ -137,6 +137,10 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
             if (tag == TAG_ISGN || tag == TAG_OSGN) add = TRUE;
             break;
 
+        case D3D_BLOB_PATCH_CONSTANT_SIGNATURE_BLOB:
+            if (tag == TAG_PCSG) add = TRUE;
+            break;
+
         case D3D_BLOB_DEBUG_INFO:
             if (tag == TAG_SDBG) add = TRUE;
             break;
@@ -208,6 +212,7 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
     {
         case D3D_BLOB_INPUT_SIGNATURE_BLOB:
         case D3D_BLOB_OUTPUT_SIGNATURE_BLOB:
+        case D3D_BLOB_PATCH_CONSTANT_SIGNATURE_BLOB:
         case D3D_BLOB_DEBUG_INFO:
             if (count != 1) count = 0;
             break;
