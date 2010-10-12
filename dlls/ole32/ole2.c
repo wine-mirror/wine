@@ -2224,19 +2224,19 @@ static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
 
     if (*trackerInfo->pdwEffect & DROPEFFECT_MOVE)
     {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(1));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(2));
     }
     else if (*trackerInfo->pdwEffect & DROPEFFECT_COPY)
     {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(2));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(3));
     }
     else if (*trackerInfo->pdwEffect & DROPEFFECT_LINK)
     {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(3));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(4));
     }
     else
     {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(0));
+      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(1));
     }
 
     SetCursor(hCur);
