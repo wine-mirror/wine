@@ -776,13 +776,13 @@ static void test_EM_POSFROMCHAR(void)
     else if (i == 1)
     {
       ok(pl.y > 0, "EM_POSFROMCHAR reports y=%d, expected > 0\n", pl.y);
-      ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+      ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected %d\n", pl.x, xpos);
       height = pl.y;
     }
     else
     {
       ok(pl.y == i * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, i * height);
-      ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+      ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected %d\n", pl.x, xpos);
     }
   }
 
@@ -790,13 +790,13 @@ static void test_EM_POSFROMCHAR(void)
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, 50 * 16);
   ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
   ok(pl.y == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, 50 * height);
-  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected %d\n", pl.x, xpos);
 
   /* Testing position way past end of text */
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, 55 * 16);
   ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
   ok(pl.y == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, 50 * height);
-  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected %d\n", pl.x, xpos);
 
 
   /* Testing that vertical scrolling does, in fact, have an effect on EM_POSFROMCHAR */
@@ -809,20 +809,20 @@ static void test_EM_POSFROMCHAR(void)
     ok(pl.y == (i - 1) * height,
         "EM_POSFROMCHAR reports y=%d, expected %d\n",
         pl.y, (i - 1) * height);
-    ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+    ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected %d\n", pl.x, xpos);
   }
 
   /* Testing position at end of text */
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, 50 * 16);
   ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
   ok(pl.y == (50 - 1) * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, (50 - 1) * height);
-  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected %d\n", pl.x, xpos);
 
   /* Testing position way past end of text */
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pl, 55 * 16);
   ok(result == 0, "EM_POSFROMCHAR returned %ld, expected 0\n", result);
   ok(pl.y == (50 - 1) * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", pl.y, (50 - 1) * height);
-  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", pl.x);
+  ok(pl.x == xpos, "EM_POSFROMCHAR reports x=%d, expected %d\n", pl.x, xpos);
 
   /* Testing that horizontal scrolling does, in fact, have an effect on EM_POSFROMCHAR */
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
