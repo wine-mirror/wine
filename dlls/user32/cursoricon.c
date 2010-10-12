@@ -1199,7 +1199,6 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
     CURSORICONDIRENTRY *dirEntry;
     LPBYTE bits;
     WORD wResId;
-    DWORD dwBytesInRes;
     POINT hotspot;
 
     TRACE("%p, %s, %dx%d, depth %d, fCursor %d, flags 0x%04x\n",
@@ -1229,7 +1228,6 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         dirEntry = CURSORICON_FindBestIconRes( dir, width, height, depth );
     if (!dirEntry) return 0;
     wResId = dirEntry->wResId;
-    dwBytesInRes = dirEntry->dwBytesInRes;
     FreeResource( handle );
 
     /* Load the resource */
