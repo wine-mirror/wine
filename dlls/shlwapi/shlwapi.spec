@@ -509,8 +509,8 @@
 513 stub -noname IStream_WritePidl
 514 stdcall -noname IUnknown_ProfferService(ptr ptr ptr ptr)
 515 stdcall -noname SHGetViewStatePropertyBag(ptr wstr long ptr ptr)
-516 stdcall -noname SKGetValueW(long wstr wstr long long long)
-517 stub -noname SKSetValueW
+516 stdcall -noname SKGetValueW(long wstr wstr ptr ptr ptr)
+517 stdcall -noname SKSetValueW(long wstr wstr long ptr long)
 518 stdcall -noname SKDeleteValueW(long wstr wstr)
 519 stdcall -noname SKAllocValueW(long wstr wstr ptr ptr ptr)
 520 stub -noname SHPropertyBag_ReadBSTR

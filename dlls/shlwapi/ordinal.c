@@ -4673,9 +4673,34 @@ HRESULT WINAPI SKGetValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value, DWORD *ty
         debugstr_w(value), type, data, count);
 
     hkey = SHGetShellKey(flags, subkey, FALSE);
-    ret = SHQueryValueExW(hkey, value, NULL, type, data, count);
-    RegCloseKey(hkey);
+    if (!hkey)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
+    ret = SHQueryValueExW(hkey, value, NULL, type, data, count);
+
+    RegCloseKey(hkey);
+    return HRESULT_FROM_WIN32(ret);
+}
+
+/***********************************************************************
+ *		SKSetValueW (SHLWAPI.516)
+ */
+HRESULT WINAPI SKSetValueW(DWORD flags, LPCWSTR subkey, LPCWSTR value,
+        DWORD type, void *data, DWORD count)
+{
+    DWORD ret;
+    HKEY hkey;
+
+    TRACE("(0x%x, %s, %s, %x, %p, %d)\n", flags, debugstr_w(subkey),
+            debugstr_w(value), type, data, count);
+
+    hkey = SHGetShellKey(flags, subkey, TRUE);
+    if (!hkey)
+        return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    ret = RegSetValueExW(hkey, value, 0, type, data, count);
+
+    RegCloseKey(hkey);
     return HRESULT_FROM_WIN32(ret);
 }
 
