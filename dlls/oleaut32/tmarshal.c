@@ -615,6 +615,7 @@ serialize_param(
         vartype = VT_SAFEARRAY;
 
     switch (vartype) {
+    case VT_DATE:
     case VT_I8:
     case VT_UI8:
     case VT_R8:
@@ -911,6 +912,7 @@ deserialize_param(
 	    }
 	    return S_OK;
 	}
+        case VT_DATE:
         case VT_I8:
         case VT_UI8:
         case VT_R8:
