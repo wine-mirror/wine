@@ -31,8 +31,9 @@
 
 #include "wine/test.h"
 
+static BOOL is_wow64;
+
 /* function pointers */
-static HMODULE hSetupAPI;
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoList)(GUID*,HWND);
 static HDEVINFO (WINAPI *pSetupDiCreateDeviceInfoListExW)(GUID*,HWND,PCWSTR,PVOID);
 static BOOL     (WINAPI *pSetupDiCreateDeviceInterfaceA)(HDEVINFO, PSP_DEVINFO_DATA, const GUID *, PCSTR, DWORD, PSP_DEVICE_INTERFACE_DATA);
@@ -57,13 +58,15 @@ static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyA)(HDEVINFO, PSP_DEVIN
 static BOOL     (WINAPI *pSetupDiSetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, const BYTE *, DWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyA)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
 static BOOL     (WINAPI *pSetupDiGetDeviceRegistryPropertyW)(HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD);
+static BOOL     (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 /* This is a unique guid for testing purposes */
 static GUID guid = {0x6a55b5a4, 0x3f65, 0x11db, {0xb7,0x04,0x00,0x11,0x95,0x5c,0x2b,0xdb}};
 
 static void init_function_pointers(void)
 {
-    hSetupAPI = GetModuleHandleA("setupapi.dll");
+    HMODULE hSetupAPI = GetModuleHandleA("setupapi.dll");
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
 
     pSetupDiCreateDeviceInfoA = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoA");
     pSetupDiCreateDeviceInfoW = (void *)GetProcAddress(hSetupAPI, "SetupDiCreateDeviceInfoW");
@@ -89,6 +92,7 @@ static void init_function_pointers(void)
     pSetupDiSetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiSetDeviceRegistryPropertyW");
     pSetupDiGetDeviceRegistryPropertyA = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyA");
     pSetupDiGetDeviceRegistryPropertyW = (void *)GetProcAddress(hSetupAPI, "SetupDiGetDeviceRegistryPropertyW");
+    pIsWow64Process = (void *)GetProcAddress(hKernel32, "IsWow64Process");
 }
 
 static void change_reg_permissions(const WCHAR *regkey)
@@ -141,8 +145,12 @@ static BOOL remove_device(void)
 
     SetLastError(0xdeadbeef);
     ret = pSetupDiCallClassInstaller(DIF_REMOVE, set, &devInfo);
-    todo_wine
-    ok(ret, "SetupDiCallClassInstaller(DIF_REMOVE...) failed: %08x\n", GetLastError());
+    if(is_wow64)
+        todo_wine ok(!ret && GetLastError() == ERROR_IN_WOW64,
+                     "SetupDiCallClassInstaller(DIF_REMOVE...) succeeded: %08x\n", GetLastError());
+    else
+        todo_wine ok(ret,
+                     "SetupDiCallClassInstaller(DIF_REMOVE...) failed: %08x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ok(pSetupDiDestroyDeviceInfoList(set),
@@ -1007,8 +1015,8 @@ static void testDevRegKey(void)
 
         /* Cleanup */
         ret = remove_device();
-        todo_wine
-        ok(ret, "Expected the device to be removed: %08x\n", GetLastError());
+        if(!is_wow64)
+            todo_wine ok(ret, "Expected the device to be removed: %08x\n", GetLastError());
 
         /* FIXME: Only do the RegDeleteKey, once Wine is fixed */
         if (!ret)
@@ -1091,8 +1099,10 @@ static void testRegisterAndGetDetail(void)
     {
         static const char path[] =
             "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
+        static const char path_wow64[] =
+            "\\\\?\\root#legacy_bogus#0001#{6a55b5a4-3f65-11db-b704-0011955c2bdb}";
         static const char path_w2k[] =
-         "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\";
+            "\\\\?\\root#legacy_bogus#0000#{6a55b5a4-3f65-11db-b704-0011955c2bdb}\\";
         PSP_DEVICE_INTERFACE_DETAIL_DATA_A detail = NULL;
 
         detail = HeapAlloc(GetProcessHeap(), 0, dwSize);
@@ -1106,10 +1116,13 @@ static void testRegisterAndGetDetail(void)
             /* FIXME: This one only worked because old data wasn't removed properly. As soon
              * as all the tests are cleaned up correctly this has to be (or should be) fixed
              */
-            todo_wine
-            ok(!lstrcmpiA(path, detail->DevicePath) ||
-             !lstrcmpiA(path_w2k, detail->DevicePath), "Unexpected path %s\n",
-             detail->DevicePath);
+            if(is_wow64)
+                ok(!lstrcmpiA(path_wow64, detail->DevicePath),
+                   "Unexpected path %s\n", detail->DevicePath);
+            else
+                todo_wine ok(!lstrcmpiA(path, detail->DevicePath) ||
+                             !lstrcmpiA(path_w2k, detail->DevicePath),
+                             "Unexpected path %s\n", detail->DevicePath);
             HeapFree(GetProcessHeap(), 0, detail);
         }
     }
@@ -1118,8 +1131,8 @@ static void testRegisterAndGetDetail(void)
 
     /* Cleanup */
     ret = remove_device();
-    todo_wine
-    ok(ret, "Expected the device to be removed: %08x\n", GetLastError());
+    if(!is_wow64)
+        todo_wine ok(ret, "Expected the device to be removed: %08x\n", GetLastError());
 
     /* FIXME: Only do the RegDeleteKey, once Wine is fixed */
     if (!ret)
@@ -1228,8 +1241,8 @@ static void testDeviceRegistryPropertyA(void)
     pSetupDiDestroyDeviceInfoList(set);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, bogus, &key);
-    todo_wine
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
+    if(!is_wow64)
+        todo_wine ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
     /* FIXME: Remove when Wine is fixed */
     if (res == ERROR_SUCCESS)
     {
@@ -1334,8 +1347,8 @@ static void testDeviceRegistryPropertyW(void)
     pSetupDiDestroyDeviceInfoList(set);
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, bogus, &key);
-    todo_wine
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
+    if(!is_wow64)
+        todo_wine ok(res == ERROR_FILE_NOT_FOUND, "Expected key to not exist\n");
     /* FIXME: Remove when Wine is fixed */
     if (res == ERROR_SUCCESS)
     {
@@ -1532,6 +1545,9 @@ START_TEST(devinst)
         win_skip("Win9x/WinMe has totally different behavior\n");
         return;
     }
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
 
     if (pSetupDiCreateDeviceInfoListExW)
         test_SetupDiCreateDeviceInfoListEx();
