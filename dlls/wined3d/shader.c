@@ -1027,6 +1027,10 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
             TRACE("null");
             break;
 
+        case WINED3DSPR_RESOURCE:
+            TRACE("t");
+            break;
+
         default:
             TRACE("unhandled_rtype(%#x)", reg->type);
             break;

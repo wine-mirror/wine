@@ -166,7 +166,7 @@ static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
     /* WINED3D_SM4_RT_IMMCONST */       WINED3DSPR_IMMCONST,
     /* UNKNOWN */                       0,
     /* WINED3D_SM4_RT_SAMPLER */        WINED3DSPR_SAMPLER,
-    /* UNKNOWN */                       0,
+    /* WINED3D_SM4_RT_RESOURCE */       WINED3DSPR_RESOURCE,
     /* WINED3D_SM4_RT_CONSTBUFFER */    WINED3DSPR_CONSTBUFFER,
     /* UNKNOWN */                       0,
     /* UNKNOWN */                       0,
