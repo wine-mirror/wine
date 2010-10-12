@@ -149,6 +149,10 @@ static BOOL check_blob_part(DWORD tag, D3D_BLOB_PART part)
             if (tag == TAG_SDBG) add = TRUE;
             break;
 
+        case D3D_BLOB_LEGACY_SHADER:
+            if (tag == TAG_Aon9) add = TRUE;
+            break;
+
         default:
             FIXME("Unhandled D3D_BLOB_PART %s.\n", debug_d3dcompiler_d3d_blob_part(part));
             break;
@@ -218,6 +222,7 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
         case D3D_BLOB_OUTPUT_SIGNATURE_BLOB:
         case D3D_BLOB_PATCH_CONSTANT_SIGNATURE_BLOB:
         case D3D_BLOB_DEBUG_INFO:
+        case D3D_BLOB_LEGACY_SHADER:
             if (count != 1) count = 0;
             break;
 
@@ -243,7 +248,7 @@ HRESULT d3dcompiler_get_blob_part(const void *data, SIZE_T data_size, D3D_BLOB_P
     }
 
     /* some parts aren't full DXBCs, they contain only the data */
-    if (count == 1 && (part == D3D_BLOB_DEBUG_INFO))
+    if (count == 1 && (part == D3D_BLOB_DEBUG_INFO || part == D3D_BLOB_LEGACY_SHADER))
     {
         hr = D3DCreateBlob(dst_dxbc.sections[0].data_size, blob);
         if (SUCCEEDED(hr))
