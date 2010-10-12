@@ -61,7 +61,7 @@ static HWND    (WINAPI *pSHCreateWorkerWindowA)(LONG, HWND, DWORD, DWORD, HMENU,
 static HRESULT (WINAPI *pSHIShellFolder_EnumObjects)(LPSHELLFOLDER, HWND, SHCONTF, IEnumIDList**);
 static DWORD   (WINAPI *pSHGetIniStringW)(LPCWSTR, LPCWSTR, LPWSTR, DWORD, LPCWSTR);
 static BOOL    (WINAPI *pSHSetIniStringW)(LPCWSTR, LPCWSTR, LPCWSTR, LPCWSTR);
-static HKEY    (WINAPI *pSHGetShellKey)(DWORD, LPWSTR, BOOL);
+static HKEY    (WINAPI *pSHGetShellKey)(DWORD, LPCWSTR, BOOL);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2680,15 +2680,28 @@ static void test_SHSetIniString(void)
 }
 
 enum _shellkey_flags {
-    SHKEY_Explorer  = 0x00,
-    SHKEY_Root_HKCU = 0x01
+    SHKEY_Root_HKCU = 0x1,
+    SHKEY_Root_HKLM = 0x2,
+    SHKEY_Key_Explorer  = 0x00,
+    SHKEY_Key_Shell = 0x10,
+    SHKEY_Key_ShellNoRoam = 0x20,
+    SHKEY_Key_Classes = 0x30,
+    SHKEY_Subkey_Default = 0x0000,
+    SHKEY_Subkey_ResourceName = 0x1000,
+    SHKEY_Subkey_Handlers = 0x2000,
+    SHKEY_Subkey_Associations = 0x3000,
+    SHKEY_Subkey_Volatile = 0x4000,
+    SHKEY_Subkey_MUICache = 0x5000,
+    SHKEY_Subkey_FileExts = 0x6000
 };
 
 static void test_SHGetShellKey(void)
 {
+    static const WCHAR ShellFoldersW[] = { 'S','h','e','l','l',' ','F','o','l','d','e','r','s',0 };
+    static const WCHAR WineTestW[] = { 'W','i','n','e','T','e','s','t',0 };
+
     void *pPathBuildRootW = GetProcAddress(hShlwapi, "PathBuildRootW");
-    HKEY hkey, hkey2;
-    DWORD ret;
+    HKEY hkey;
 
     if (!pSHGetShellKey)
     {
@@ -2709,30 +2722,38 @@ static void test_SHGetShellKey(void)
         return;
     }
 
-    /* marking broken cause latest Vista+ versions fail here */
+    /* Vista+ limits SHKEY enumeration values */
     SetLastError(0xdeadbeef);
-    hkey = pSHGetShellKey(SHKEY_Explorer, NULL, FALSE);
-    ok(hkey == NULL || broken(hkey != NULL), "got %p\n", hkey);
+    hkey = pSHGetShellKey(SHKEY_Key_Explorer, ShellFoldersW, FALSE);
     if (hkey)
     {
-        hkey2 = 0;
-        ret = RegOpenKeyExA(hkey, "Shell Folders", 0, KEY_READ, &hkey2);
-        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
-        ok(hkey2 != NULL, "got %p\n", hkey2);
-        RegCloseKey( hkey2 );
-        RegCloseKey( hkey );
+        /* Tests not working on Vista+ */
+        RegCloseKey(hkey);
+
+        hkey = pSHGetShellKey(SHKEY_Root_HKLM|SHKEY_Key_Classes, NULL, FALSE);
+        ok(hkey != NULL, "hkey = NULL\n");
+        RegCloseKey(hkey);
     }
 
-    hkey = pSHGetShellKey(SHKEY_Explorer | SHKEY_Root_HKCU, NULL, FALSE);
-    ok(hkey != NULL, "got %p\n", hkey);
+    hkey = pSHGetShellKey(SHKEY_Root_HKCU|SHKEY_Key_Explorer, ShellFoldersW, FALSE);
+    ok(hkey != NULL, "hkey = NULL\n");
+    RegCloseKey(hkey);
 
-    hkey2 = 0;
-    ret = RegOpenKeyExA(hkey, "Shell Folders", 0, KEY_READ, &hkey2);
-    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
-    ok(hkey2 != NULL, "got %p\n", hkey2);
-    RegCloseKey( hkey2 );
+    hkey = pSHGetShellKey(SHKEY_Root_HKLM|SHKEY_Key_Explorer, ShellFoldersW, FALSE);
+    ok(hkey != NULL, "hkey = NULL\n");
+    RegCloseKey(hkey);
 
-    RegCloseKey( hkey );
+    hkey = pSHGetShellKey(SHKEY_Root_HKLM, WineTestW, FALSE);
+    ok(hkey == NULL, "hkey != NULL\n");
+
+    hkey = pSHGetShellKey(SHKEY_Root_HKLM, WineTestW, TRUE);
+    ok(hkey != NULL, "Can't create key\n");
+    RegCloseKey(hkey);
+
+    hkey = pSHGetShellKey(SHKEY_Root_HKLM, NULL, FALSE);
+    ok(hkey != NULL, "Can't create key\n");
+    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delte key\n");
+    RegCloseKey(hkey);
 }
 
 static void init_pointers(void)
