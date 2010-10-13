@@ -6017,6 +6017,123 @@ static const uri_combine_test uri_combine_tests[] = {
             {URL_SCHEME_HTTP,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    /* Windows validates the path component from the relative Uri. */
+    {   "http://google.com/test",0,
+        "/Te%XXst",Uri_CREATE_ALLOW_RELATIVE,
+        0,E_INVALIDARG,TRUE
+    },
+    /* Windows doesn't validate the query from the relative Uri. */
+    {   "http://google.com/test",0,
+        "?Tes%XXt",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://google.com/test?Tes%XXt",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/test?Tes%XXt",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/test",S_OK},
+            {"/test?Tes%XXt",S_OK},
+            {"?Tes%XXt",S_OK},
+            {"http://google.com/test?Tes%XXt",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* Windows doesn't validate the fragment from the relative Uri. */
+    {   "http://google.com/test",0,
+        "#Tes%XXt",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"http://google.com/test#Tes%XXt",S_OK},
+            {"google.com",S_OK},
+            {"http://google.com/test#Tes%XXt",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"#Tes%XXt",S_OK},
+            {"google.com",S_OK},
+            {"",S_FALSE},
+            {"/test",S_OK},
+            {"/test",S_OK},
+            {"",S_FALSE},
+            {"http://google.com/test#Tes%XXt",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* Creates an IUri which contains an invalid dos path char. */
+    {   "file:///c:/test",0,
+        "/test<ing",Uri_CREATE_ALLOW_RELATIVE,
+        URL_FILE_USE_PATHURL,S_OK,TRUE,
+        {
+            {"file://c:\\test<ing",S_OK},
+            {"",S_FALSE},
+            {"file://c:\\test<ing",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"c:\\test<ing",S_OK},
+            {"c:\\test<ing",S_OK},
+            {"",S_FALSE},
+            {"file://c:\\test<ing",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    /* Appends the path after the drive letter (if any). */
+    {   "file:///c:/test",0,
+        "/c:/testing",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,TRUE,
+        {
+            {"file:///c:/c:/testing",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/c:/testing",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/c:/testing",S_OK},
+            {"/c:/c:/testing",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/c:/testing",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 
