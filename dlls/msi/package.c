@@ -1350,7 +1350,6 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
 
 static UINT validate_package( MSIPACKAGE *package )
 {
-    static const BOOL is_64bit = sizeof(void *) > sizeof(int);
     BOOL is_wow64;
     UINT i;
 

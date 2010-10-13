@@ -40,8 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-static const BOOL is_64bit = sizeof(void *) > sizeof(int);
-
 /* 
  * This module will be all the helper functions for registry access by the
  * installer bits. 
