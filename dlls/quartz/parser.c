@@ -45,6 +45,8 @@ static HRESULT WINAPI Parser_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_ChangeRate(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
 static HRESULT WINAPI Parser_OutputPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt);
+static HRESULT WINAPI Parser_OutputPin_DecideAllocator(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc);
+static HRESULT WINAPI Parser_OutputPin_BreakConnect(BaseOutputPin *This);
 
 static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
@@ -416,7 +418,9 @@ static const  BasePinFuncTable output_BaseFuncTable = {
 };
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
-    Parser_OutputPin_DecideBufferSize
+    Parser_OutputPin_DecideBufferSize,
+    Parser_OutputPin_DecideAllocator,
+    Parser_OutputPin_BreakConnect
 };
 
 HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt)
@@ -440,7 +444,6 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
         pin->dwSamplesProcessed = 0;
 
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
-        pin->pin.custom_allocator = 1;
         pin->allocProps = *props;
         This->cStreams++;
         BaseFilterImpl_IncrementPinVersion((BaseFilter*)This);
@@ -471,7 +474,7 @@ static HRESULT Parser_RemoveOutputPins(ParserImpl * This)
 
     for (i = 0; i < This->cStreams; i++)
     {
-        hr = BaseOutputPinImpl_BreakConnect((BaseOutputPin *)ppOldPins[i + 1]);
+        hr = ((BaseOutputPin *)ppOldPins[i + 1])->pFuncsTable->pfnBreakConnect((BaseOutputPin *)ppOldPins[i + 1]);
         TRACE("Disconnect: %08x\n", hr);
         IPin_Release(ppOldPins[i + 1]);
     }
@@ -575,6 +578,41 @@ static HRESULT WINAPI Parser_OutputPin_GetMediaType(BasePin *iface, int iPositio
     return S_OK;
 }
 
+static HRESULT WINAPI Parser_OutputPin_DecideAllocator(BaseOutputPin *iface, IMemInputPin *pPin, IMemAllocator **pAlloc)
+{
+    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    HRESULT hr;
+
+    pAlloc = NULL;
+
+    if (This->alloc)
+        hr = IMemInputPin_NotifyAllocator(pPin, This->alloc, This->readonly);
+    else
+        hr = VFW_E_NO_ALLOCATOR;
+
+    return hr;
+}
+
+static HRESULT WINAPI Parser_OutputPin_BreakConnect(BaseOutputPin *This)
+{
+    HRESULT hr;
+
+    TRACE("(%p)->()\n", This);
+
+    EnterCriticalSection(This->pin.pCritSec);
+    if (!This->pin.pConnectedTo || !This->pMemInputPin)
+        hr = VFW_E_NOT_CONNECTED;
+    else
+    {
+        hr = IPin_Disconnect(This->pin.pConnectedTo);
+        IPin_Disconnect((IPin *)This);
+    }
+    LeaveCriticalSection(This->pin.pCritSec);
+
+    return hr;
+}
+
+
 static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
@@ -628,7 +666,7 @@ static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin,
 
     /* Set the allocator to our input pin's */
     EnterCriticalSection(This->pin.pin.pCritSec);
-    This->pin.alloc = parser->pInputPin->pAlloc;
+    This->alloc = parser->pInputPin->pAlloc;
     LeaveCriticalSection(This->pin.pin.pCritSec);
 
     return BaseOutputPinImpl_Connect(iface, pReceivePin, pmt);

@@ -695,7 +695,7 @@ HRESULT WINAPI BaseOutputPinImpl_BreakConnect(BaseOutputPin *This)
     {
         if (!This->pin.pConnectedTo || !This->pMemInputPin)
             hr = VFW_E_NOT_CONNECTED;
-        else if (!This->custom_allocator)
+        else
         {
             IMemAllocator * pAlloc = NULL;
 
@@ -709,10 +709,6 @@ HRESULT WINAPI BaseOutputPinImpl_BreakConnect(BaseOutputPin *This)
 
             if (SUCCEEDED(hr))
                 hr = IPin_Disconnect(This->pin.pConnectedTo);
-        }
-        else /* Kill the allocator! */
-        {
-            hr = IPin_Disconnect(This->pin.pConnectedTo);
         }
         IPin_Disconnect((IPin *)This);
     }
@@ -730,35 +726,23 @@ HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputP
 {
     HRESULT hr;
 
-    if (!This->custom_allocator)
+    hr = IMemInputPin_GetAllocator(pPin, pAlloc);
+
+    if (hr == VFW_E_NO_ALLOCATOR)
+        /* Input pin provides no allocator, use standard memory allocator */
+        hr = BaseOutputPinImpl_InitAllocator(This, pAlloc);
+
+    if (SUCCEEDED(hr))
     {
-        hr = IMemInputPin_GetAllocator(pPin, pAlloc);
+        ALLOCATOR_PROPERTIES rProps;
+        ZeroMemory(&rProps, sizeof(ALLOCATOR_PROPERTIES));
 
-        if (hr == VFW_E_NO_ALLOCATOR)
-            /* Input pin provides no allocator, use standard memory allocator */
-            hr = BaseOutputPinImpl_InitAllocator(This, pAlloc);
-
-        if (SUCCEEDED(hr))
-        {
-            ALLOCATOR_PROPERTIES rProps;
-            ZeroMemory(&rProps, sizeof(ALLOCATOR_PROPERTIES));
-
-            IMemInputPin_GetAllocatorRequirements(pPin, &rProps);
-            hr = This->pFuncsTable->pfnDecideBufferSize(This, *pAlloc, &rProps);
-        }
-
-        if (SUCCEEDED(hr))
-            hr = IMemInputPin_NotifyAllocator(pPin, *pAlloc, This->readonly);
+        IMemInputPin_GetAllocatorRequirements(pPin, &rProps);
+        hr = This->pFuncsTable->pfnDecideBufferSize(This, *pAlloc, &rProps);
     }
-    else
-    {
-        pAlloc = NULL;
 
-        if (This->alloc)
-            hr = IMemInputPin_NotifyAllocator(pPin, This->alloc, This->readonly);
-        else
-            hr = VFW_E_NO_ALLOCATOR;
-    }
+    if (SUCCEEDED(hr))
+        hr = IMemInputPin_NotifyAllocator(pPin, *pAlloc, FALSE);
 
     return hr;
 }
@@ -793,7 +777,7 @@ HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(BasePin* iface, IPin * pRecei
 
         if (SUCCEEDED(hr))
         {
-            hr = BaseOutputPinImpl_DecideAllocator(This, This->pMemInputPin, &pMemAlloc);
+            hr = This->pFuncsTable->pfnDecideAllocator(This, This->pMemInputPin, &pMemAlloc);
             if (pMemAlloc)
                 IMemAllocator_Release(pMemAlloc);
         }
@@ -836,13 +820,6 @@ static HRESULT OutputPin_Init(const IPinVtbl *OutputPin_Vtbl, const PIN_INFO * p
     /* Output pin attributes */
     pPinImpl->pMemInputPin = NULL;
     pPinImpl->pFuncsTable = pBaseOutputFuncsTable;
-
-    /* If custom_allocator is set, you will need to specify an allocator
-     * in the alloc member of the struct before an output pin can connect
-     */
-    pPinImpl->custom_allocator = 0;
-    pPinImpl->alloc = NULL;
-    pPinImpl->readonly = FALSE;
 
     return S_OK;
 }

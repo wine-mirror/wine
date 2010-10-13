@@ -57,20 +57,21 @@ typedef struct BaseOutputPin
 {
 	/* inheritance C style! */
 	BasePin pin;
-
 	IMemInputPin * pMemInputPin;
-	BOOL custom_allocator;
-	IMemAllocator *alloc;
-	BOOL readonly;
 
 	const struct BaseOutputPinFuncTable* pFuncsTable;
 } BaseOutputPin;
 
 typedef HRESULT (WINAPI *BaseOutputPin_DecideBufferSize)(BaseOutputPin *This, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
+typedef HRESULT (WINAPI *BaseOutputPin_DecideAllocator)(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc);
+typedef HRESULT (WINAPI *BaseOutputPin_BreakConnect)(BaseOutputPin * This);
 
 typedef struct BaseOutputPinFuncTable {
-	/* Required */
+	/* Required for BaseOutputPinImpl_DecideAllocator */
 	BaseOutputPin_DecideBufferSize pfnDecideBufferSize;
+	/* Required for BaseOutputPinImpl_AttemptConnection */
+	BaseOutputPin_DecideAllocator pfnDecideAllocator;
+	BaseOutputPin_BreakConnect pfnBreakConnect;
 } BaseOutputPinFuncTable;
 
 typedef struct BaseInputPin

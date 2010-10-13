@@ -698,7 +698,9 @@ static const  BasePinFuncTable output_BaseFuncTable = {
 };
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
-   VfwPin_DecideBufferSize
+    VfwPin_DecideBufferSize,
+    BaseOutputPinImpl_DecideAllocator,
+    BaseOutputPinImpl_BreakConnect
 };
 
 static HRESULT

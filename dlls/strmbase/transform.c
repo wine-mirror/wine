@@ -162,7 +162,9 @@ static const  BasePinFuncTable tf_output_BaseFuncTable = {
 };
 
 static const BaseOutputPinFuncTable tf_output_BaseOutputFuncTable = {
-    TransformFilter_Output_DecideBufferSize
+    TransformFilter_Output_DecideBufferSize,
+    BaseOutputPinImpl_DecideAllocator,
+    BaseOutputPinImpl_BreakConnect
 };
 
 static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, TransformFilter* pTransformFilter)

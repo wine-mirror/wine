@@ -838,7 +838,9 @@ static const  BasePinFuncTable output_BaseFuncTable = {
 };
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
-    FileAsyncReaderPin_DecideBufferSize
+    FileAsyncReaderPin_DecideBufferSize,
+    BaseOutputPinImpl_DecideAllocator,
+    BaseOutputPinImpl_BreakConnect
 };
 
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
