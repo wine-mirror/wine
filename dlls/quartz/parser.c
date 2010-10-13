@@ -44,6 +44,7 @@ static HRESULT WINAPI Parser_ChangeStart(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_ChangeRate(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
+static HRESULT WINAPI Parser_OutputPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt);
 
 static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
@@ -409,7 +410,9 @@ HRESULT WINAPI Parser_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVendorInfo)
 
 static const  BasePinFuncTable output_BaseFuncTable = {
     NULL,
-    BaseOutputPinImpl_AttemptConnection
+    BaseOutputPinImpl_AttemptConnection,
+    BasePinImpl_GetMediaTypeVersion,
+    Parser_OutputPin_GetMediaType
 };
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
@@ -618,15 +621,6 @@ static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
     return refCount;
 }
 
-static HRESULT WINAPI Parser_OutputPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
-{
-    TRACE("(%p)\n", ppEnum);
-
-    /* override this method to allow enumeration of your types */
-
-    return EnumMediaTypes_Construct((BasePin*)iface, Parser_OutputPin_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
-}
-
 static HRESULT WINAPI Parser_OutputPin_Connect(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
@@ -664,7 +658,7 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
     Parser_OutputPin_QueryAccept,
-    Parser_OutputPin_EnumMediaTypes,
+    BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,

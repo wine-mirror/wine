@@ -760,13 +760,6 @@ static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
     return refCount;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
-{
-    TRACE("(%p)\n", ppEnum);
-
-    return EnumMediaTypes_Construct((BasePin*)iface, FileAsyncReaderPin_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
-}
-
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
 {
     FileAsyncReaderPin_QueryInterface,
@@ -781,7 +774,7 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
     BasePinImpl_QueryDirection,
     BasePinImpl_QueryId,
     FileAsyncReaderPin_QueryAccept,
-    FileAsyncReaderPin_EnumMediaTypes,
+    BasePinImpl_EnumMediaTypes,
     BasePinImpl_QueryInternalConnections,
     BaseOutputPinImpl_EndOfStream,
     BaseOutputPinImpl_BeginFlush,
@@ -839,7 +832,9 @@ static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(BaseOutputPin *iface, 
 
 static const  BasePinFuncTable output_BaseFuncTable = {
     NULL,
-    FileAsyncReaderPin_AttemptConnection
+    FileAsyncReaderPin_AttemptConnection,
+    BasePinImpl_GetMediaTypeVersion,
+    FileAsyncReaderPin_GetMediaType
 };
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {

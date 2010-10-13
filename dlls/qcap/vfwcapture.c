@@ -692,7 +692,9 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocato
 
 static const  BasePinFuncTable output_BaseFuncTable = {
     NULL,
-    BaseOutputPinImpl_AttemptConnection
+    BaseOutputPinImpl_AttemptConnection,
+    VfwPin_GetMediaTypeVersion,
+    VfwPin_GetMediaType
 };
 
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
@@ -784,7 +786,7 @@ VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
     VfwPinImpl *This = (VfwPinImpl *)iface;
     hr = qcap_driver_get_format(This->driver_info, &pmt);
     if (SUCCEEDED(hr))
-        hr = EnumMediaTypes_Construct((BasePin*)iface, VfwPin_GetMediaType, VfwPin_GetMediaTypeVersion, ppEnum);
+        hr = BasePinImpl_EnumMediaTypes(iface, ppEnum);
     TRACE("%p -- %x\n", This, hr);
     DeleteMediaType(pmt);
 

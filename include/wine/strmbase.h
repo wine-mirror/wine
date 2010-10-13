@@ -48,6 +48,9 @@ typedef struct BasePinFuncTable {
 	BasePin_CheckMediaType pfnCheckMediaType;
 	/* Required for Output Pins*/
 	BasePin_AttemptConnection pfnAttemptConnection;
+	/* Required for BasePinImpl_EnumMediaTypes */
+	BasePin_GetMediaTypeVersion pfnGetMediaTypeVersion;
+	BasePin_GetMediaType pfnGetMediaType;
 } BasePinFuncTable;
 
 typedef struct BaseOutputPin

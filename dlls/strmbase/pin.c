@@ -320,7 +320,7 @@ HRESULT WINAPI BasePinImpl_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnu
 
     /* override this method to allow enumeration of your types */
 
-    return EnumMediaTypes_Construct(This, BasePinImpl_GetMediaType, BasePinImpl_GetMediaTypeVersion , ppEnum);
+    return EnumMediaTypes_Construct(This, This->pFuncsTable->pfnGetMediaType, This->pFuncsTable->pfnGetMediaTypeVersion , ppEnum);
 }
 
 HRESULT WINAPI BasePinImpl_QueryInternalConnections(IPin * iface, IPin ** apPin, ULONG * cPin)
