@@ -297,7 +297,7 @@
 @ cdecl __sys_nerr() msvcr90.__sys_nerr
 @ cdecl __threadhandle() msvcrt.__threadhandle
 @ cdecl __threadid() msvcrt.__threadid
-@ stub __timezone
+@ cdecl __timezone() msvcrt.__p__timezone
 @ cdecl __toascii(long) msvcrt.__toascii
 @ cdecl __tzname() msvcrt.__p__tzname
 @ cdecl __unDName(ptr str long ptr ptr long) msvcrt.__unDName
