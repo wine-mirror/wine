@@ -222,13 +222,6 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
         if (type & msidbCustomActionTypeNoImpersonate)
             WARN("msidbCustomActionTypeNoImpersonate not handled\n");
 
-        if (type & msidbCustomActionTypeRollback)
-        {
-            FIXME("Rollback only action... rollbacks not supported yet\n");
-            schedule_action(package, ROLLBACK_SCRIPT, action);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
         if (!execute)
         {
             LPWSTR actiondata = msi_dup_property(package->db, action);
@@ -238,12 +231,17 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
 
             if (type & msidbCustomActionTypeCommit)
             {
-                TRACE("Deferring Commit Action!\n");
+                TRACE("Deferring commit action\n");
                 schedule_action(package, COMMIT_SCRIPT, deferred);
+            }
+            else if (type & msidbCustomActionTypeRollback)
+            {
+                FIXME("Deferring rollback only action... rollbacks not supported yet\n");
+                schedule_action(package, ROLLBACK_SCRIPT, deferred);
             }
             else
             {
-                TRACE("Deferring Action!\n");
+                TRACE("Deferring action\n");
                 schedule_action(package, INSTALL_SCRIPT, deferred);
             }
 
