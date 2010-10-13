@@ -258,20 +258,14 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
         {
             LPWSTR actiondata = msi_dup_property( package->db, action );
 
-            switch (script)
-            {
-            case INSTALL_SCRIPT:
+            if (type & msidbCustomActionTypeInScript)
                 package->scheduled_action_running = TRUE;
-                break;
-            case COMMIT_SCRIPT:
+
+            if (type & msidbCustomActionTypeCommit)
                 package->commit_action_running = TRUE;
-                break;
-            case ROLLBACK_SCRIPT:
+
+            if (type & msidbCustomActionTypeRollback)
                 package->rollback_action_running = TRUE;
-                break;
-            default:
-                break;
-            }
 
             if (deferred_data)
                 set_deferred_action_props(package, deferred_data);
