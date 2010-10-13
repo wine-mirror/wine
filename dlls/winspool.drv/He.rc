@@ -1,0 +1,45 @@
+/*
+ * Hebrew resources for winspool
+ *
+ * Copyright 2005  Huw Davies
+ * Copyright 2010  Yaron Shahrabani <sh.yaron@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "wspool.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_HEBREW, SUBLANG_DEFAULT
+
+FILENAME_DIALOG DIALOG 6, 18, 245, 47
+STYLE DS_CONTEXTHELP | DS_MODALFRAME | DS_SETFONT | DS_SETFOREGROUND | WS_POPUPWINDOW | WS_VISIBLE | WS_CAPTION
+EXSTYLE WS_EX_LAYOUTRTL
+CAPTION "הדפסה לקובץ"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT "שם קובץ ה&פלט:", -1, 7, 13, 194, 13, WS_VISIBLE
+    EDITTEXT EDITBOX, 6, 28, 174, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    DEFPUSHBUTTON "אישור", IDOK, 199, 10, 40, 14, WS_VISIBLE
+    PUSHBUTTON "ביטול", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
+END
+
+STRINGTABLE
+{
+    IDS_CAPTION "פתחה מקומית"
+    IDS_FILE_EXISTS "קובץ הפלט כבר קיים. יש ללחוץ על אישור כדי לשכתב עליו."
+    IDS_CANNOT_OPEN "לא ניתן ליצור את קובץ הפלט."
+}
