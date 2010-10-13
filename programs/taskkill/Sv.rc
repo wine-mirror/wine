@@ -39,5 +39,6 @@ STRINGTABLE
     STRING_TERM_PROC_SEARCH, "Tvingade fram nedstängning av processen \"%s\" med PID %u.\n"
     STRING_SEARCH_FAILED, "Fel: Kunde inte hitta processen \"%s\".\n"
     STRING_ENUM_FAILED, "Fel: Kunde inte räkna upp processlistan.\n"
-    STRING_TERMINATE_FAILED, "Fel: Kunde inte avbryta processen \"%s\".\n"
+    STRING_TERMINATE_FAILED, "Fel: Kunde inte avsluta processen \"%s\".\n"
+    STRING_SELF_TERMINATION, "Fel: Processen får inte avsluta sig själv.\n"
 }
