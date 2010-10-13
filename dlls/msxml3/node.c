@@ -450,26 +450,20 @@ static HRESULT WINAPI xmlnode_insertBefore(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI xmlnode_replaceChild(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* newChild,
-    IXMLDOMNode* oldChild,
-    IXMLDOMNode** outOldChild)
+HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *oldChild,
+        IXMLDOMNode **ret)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlnode *old_child, *new_child;
     xmlDocPtr leaving_doc;
     xmlNode *my_ancestor;
-
-    TRACE("(%p)->(%p %p %p)\n", This, newChild, oldChild, outOldChild);
 
     /* Do not believe any documentation telling that newChild == NULL
        means removal. It does certainly *not* apply to msxml3! */
     if(!newChild || !oldChild)
         return E_INVALIDARG;
 
-    if(outOldChild)
-        *outOldChild = NULL;
+    if(ret)
+        *ret = NULL;
 
     old_child = get_node_obj(oldChild);
     if(!old_child) {
@@ -479,7 +473,7 @@ static HRESULT WINAPI xmlnode_replaceChild(
 
     if(old_child->node->parent != This->node)
     {
-        WARN("childNode %p is not a child of %p\n", oldChild, iface);
+        WARN("childNode %p is not a child of %p\n", oldChild, This);
         return E_INVALIDARG;
     }
 
@@ -511,13 +505,23 @@ static HRESULT WINAPI xmlnode_replaceChild(
 
     xmldoc_add_orphan(old_child->node->doc, old_child->node);
 
-    if(outOldChild)
+    if(ret)
     {
         IXMLDOMNode_AddRef(oldChild);
-        *outOldChild = oldChild;
+        *ret = oldChild;
     }
 
     return S_OK;
+}
+
+static HRESULT WINAPI xmlnode_replaceChild(
+    IXMLDOMNode *iface,
+    IXMLDOMNode* newChild,
+    IXMLDOMNode* oldChild,
+    IXMLDOMNode** outOldChild)
+{
+    ERR("Should not be called\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI xmlnode_removeChild(
@@ -1852,7 +1856,10 @@ static HRESULT WINAPI unknode_replaceChild(
     IXMLDOMNode** outOldNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_replaceChild( IXMLDOMNode_from_impl(&This->node), newNode, oldNode, outOldNode );
+
+    FIXME("(%p)->(%p %p %p)\n", This, newNode, oldNode, outOldNode);
+
+    return node_replace_child(&This->node, newNode, oldNode, outOldNode);
 }
 
 static HRESULT WINAPI unknode_removeChild(

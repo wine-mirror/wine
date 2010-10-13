@@ -325,7 +325,11 @@ static HRESULT WINAPI domfrag_replaceChild(
     IXMLDOMNode** outOldNode)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_replaceChild( IXMLDOMNode_from_impl(&This->node), newNode, oldNode, outOldNode );
+
+    TRACE("(%p)->(%p %p %p)\n", This, newNode, oldNode, outOldNode);
+
+    /* TODO: test */
+    return node_replace_child(&This->node, newNode, oldNode, outOldNode);
 }
 
 static HRESULT WINAPI domfrag_removeChild(

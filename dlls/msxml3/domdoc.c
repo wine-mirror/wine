@@ -1029,7 +1029,10 @@ static HRESULT WINAPI domdoc_replaceChild(
     IXMLDOMNode** outOldChild)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_replaceChild( IXMLDOMNode_from_impl(&This->node), newChild, oldChild, outOldChild );
+
+    TRACE("(%p)->(%p %p %p)\n", This, newChild, oldChild, outOldChild);
+
+    return node_replace_child(&This->node, newChild, oldChild, outOldChild);
 }
 
 
