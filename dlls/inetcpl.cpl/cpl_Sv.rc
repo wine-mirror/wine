@@ -31,11 +31,28 @@ BEGIN
     IDS_CPL_INFO        "Konfigurera Wines webbläsare och tillhörande inställningar"
 END
 
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Allmänt"
+BEGIN
+
+    GROUPBOX    " Startsida ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "Du kan välja vilken adress som ska användas som startsida.",
+                IDC_STATIC, 58, 10, 252, 10
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "&Aktuell sida", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "&Förvald sida", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "&Blank sida", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
 /* "Content" propsheet */
 IDD_CONTENT DIALOG  0, 0, 320, 220
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
-CAPTION "Content"
+CAPTION "Innehåll"
 BEGIN
 
     GROUPBOX    " Certifikat ", IDC_STATIC, 4, 4, 312, 50
