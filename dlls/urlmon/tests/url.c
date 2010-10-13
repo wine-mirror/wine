@@ -189,7 +189,7 @@ static IInternetProtocolSink *protocol_sink = NULL;
 static IBinding *current_binding;
 static HANDLE complete_event, complete_event2;
 static HRESULT binding_hres;
-static BOOL have_IHttpNegotiate2, use_bscex;
+static BOOL have_IHttpNegotiate2, use_bscex, is_async_prot;
 static BOOL test_redirect, use_cache_file, callback_read, no_callback, test_abort;
 static WCHAR cache_file_name[MAX_PATH];
 
@@ -1601,6 +1601,9 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
        download_state);
     data_available = TRUE;
 
+    if(bind_to_object && !is_async_prot)
+        ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION), "grfBSCF = %x\n", grfBSCF);
+
     ok(pformatetc != NULL, "pformatetx == NULL\n");
     if(pformatetc) {
         if (mime_type[0]) {
@@ -2452,6 +2455,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     callback_read = !(flags & BINDTEST_NO_CALLBACK_READ);
     no_callback = (flags & BINDTEST_NO_CALLBACK) != 0;
     test_abort = (flags & BINDTEST_ABORT) != 0;
+    is_async_prot = protocol == HTTP_TEST || protocol == HTTPS_TEST || protocol == FTP_TEST || protocol == WINETEST_TEST;
 }
 
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)

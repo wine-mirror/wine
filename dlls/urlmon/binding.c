@@ -1566,7 +1566,8 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, I
         set_binding_sink(binding->protocol, PROTSINK(binding), BINDINF(binding));
         if(binding_ctx->redirect_url)
             IBindStatusCallback_OnProgress(binding->callback, 0, 0, BINDSTATUS_REDIRECTING, binding_ctx->redirect_url);
-        report_data(binding, 0, 0, 0);
+        report_data(binding, BSCF_FIRSTDATANOTIFICATION | (binding_ctx->download_state == END_DOWNLOAD ? BSCF_LASTDATANOTIFICATION : 0),
+                0, 0);
     }else {
         hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
                  BINDINF(binding), PI_APARTMENTTHREADED|PI_MIMEVERIFICATION, 0);
