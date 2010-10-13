@@ -598,7 +598,7 @@ static void ps_1_x_header(struct bc_writer *This, const struct bwriter_shader *s
 
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
-    write_constF(shader, buffer, TRUE);
+    write_constF(shader, buffer, FALSE);
 }
 
 static void ps_1_4_header(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
@@ -619,7 +619,7 @@ static void ps_1_4_header(struct bc_writer *This, const struct bwriter_shader *s
 
     /* Declare the shader type and version */
     put_dword(buffer, This->version);
-    write_constF(shader, buffer, TRUE);
+    write_constF(shader, buffer, FALSE);
 }
 
 static void end(struct bc_writer *This, const struct bwriter_shader *shader, struct bytecode_buffer *buffer) {
