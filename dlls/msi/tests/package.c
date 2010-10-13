@@ -36,6 +36,7 @@ static const char msifile[] = "winetest-package.msi";
 static char CURR_DIR[MAX_PATH];
 
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
+static INSTALLSTATE (WINAPI *pMsiGetComponentPathExA)(LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPSTR, LPDWORD);
 static HRESULT (WINAPI *pSHGetFolderPathA)(HWND, int, HANDLE, DWORD, LPSTR);
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
@@ -62,6 +63,7 @@ static void init_functionpointers(void)
     p ## func = (void*)GetProcAddress(mod, #func);
 
     GET_PROC(hmsi, MsiApplyMultiplePatchesA);
+    GET_PROC(hmsi, MsiGetComponentPathExA);
     GET_PROC(hshell32, SHGetFolderPathA);
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
@@ -12829,8 +12831,11 @@ START_TEST(package)
 
     /* Create a restore point ourselves so we circumvent the multitude of restore points
      * that would have been created by all the installation and removal tests.
+     *
+     * This is not needed on version 5.0 where setting MSIFASTINSTALL prevents the
+     * creation of restore points.
      */
-    if (pSRSetRestorePointA)
+    if (pSRSetRestorePointA && !pMsiGetComponentPathExA)
     {
         memset(&status, 0, sizeof(status));
         ret = notify_system_change(BEGIN_NESTED_SYSTEM_CHANGE, &status);
@@ -12868,7 +12873,7 @@ START_TEST(package)
     test_MsiApplyMultiplePatches();
     test_MsiApplyPatch();
 
-    if (pSRSetRestorePointA && ret)
+    if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {
         ret = notify_system_change(END_NESTED_SYSTEM_CHANGE, &status);
         if (ret)

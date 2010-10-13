@@ -42,6 +42,8 @@ static UINT (WINAPI *pMsiSourceListEnumSourcesA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, DWORD, LPSTR, LPDWORD);
 static UINT (WINAPI *pMsiSourceListGetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
+static INSTALLSTATE (WINAPI *pMsiGetComponentPathExA)
+    (LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPSTR, LPDWORD);
 
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 static BOOL (WINAPI *pGetTokenInformation)( HANDLE, TOKEN_INFORMATION_CLASS, LPVOID, DWORD, PDWORD );
@@ -3266,6 +3268,7 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiSetExternalUIRecord);
     GET_PROC(hmsi, MsiSourceListEnumSourcesA);
     GET_PROC(hmsi, MsiSourceListGetInfoA);
+    GET_PROC(hmsi, MsiGetComponentPathExA);
 
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
     GET_PROC(hadvapi32, GetTokenInformation);
@@ -10955,8 +10958,11 @@ START_TEST(install)
 
     /* Create a restore point ourselves so we circumvent the multitude of restore points
      * that would have been created by all the installation and removal tests.
+     *
+     * This is not needed on version 5.0 where setting MSIFASTINSTALL prevents the
+     * creation of restore points.
      */
-    if (pSRSetRestorePointA)
+    if (pSRSetRestorePointA && !pMsiGetComponentPathExA)
     {
         memset(&status, 0, sizeof(status));
         ret = notify_system_change(BEGIN_NESTED_SYSTEM_CHANGE, &status);
@@ -11046,7 +11052,7 @@ START_TEST(install)
 
     DeleteFileA(log_file);
 
-    if (pSRSetRestorePointA && ret)
+    if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {
         ret = notify_system_change(END_NESTED_SYSTEM_CHANGE, &status);
         if (ret)
