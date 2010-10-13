@@ -1,0 +1,8 @@
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+MODULE    = aspnet_regiis.exe
+APPMODE   = -mconsole -municode
+
+C_SRCS = \
+	main.c
+
+@MAKE_PROG_RULES@
