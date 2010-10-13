@@ -1247,10 +1247,16 @@ static nsresult NSAPI nsChannel_VisitResponseHeaders(nsIHttpChannel *iface,
 static nsresult NSAPI nsChannel_IsNoStoreResponse(nsIHttpChannel *iface, PRBool *_retval)
 {
     nsChannel *This = NSCHANNEL_THIS(iface);
+    http_header_t *header;
 
-    FIXME("(%p)->(%p)\n", This, _retval);
+    static const WCHAR cache_controlW[] = {'C','a','c','h','e','-','C','o','n','t','r','o','l'};
+    static const WCHAR no_storeW[] = {'n','o','-','s','t','o','r','e',0};
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    TRACE("(%p)->(%p)\n", This, _retval);
+
+    header = find_http_header(&This->response_headers, cache_controlW, sizeof(cache_controlW)/sizeof(WCHAR));
+    *_retval = header && !strcmpiW(header->data, no_storeW);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_IsNoCacheResponse(nsIHttpChannel *iface, PRBool *_retval)
