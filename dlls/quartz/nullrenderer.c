@@ -61,14 +61,13 @@ typedef struct NullRendererImpl
     BOOL bAggregatable;
 } NullRendererImpl;
 
-static HRESULT WINAPI NullRenderer_Receive(IPin *iface, IMediaSample * pSample)
+static HRESULT WINAPI NullRenderer_Receive(BaseInputPin *pin, IMediaSample * pSample)
 {
-    BaseInputPin *pin = (BaseInputPin*)iface;
     NullRendererImpl *This = ((NullRendererImpl*)pin->pin.pinInfo.pFilter);
     HRESULT hr = S_OK;
     REFERENCE_TIME start, stop;
 
-    TRACE("%p %p\n", iface, pSample);
+    TRACE("%p %p\n", pin, pSample);
 
     if (SUCCEEDED(IMediaSample_GetTime(pSample, &start, &stop)))
         MediaSeekingPassThru_RegisterMediaTime(This->seekthru_unk, start);
@@ -80,13 +79,13 @@ static HRESULT WINAPI NullRenderer_Receive(IPin *iface, IMediaSample * pSample)
     return hr;
 }
 
-static HRESULT WINAPI NullRenderer_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI NullRenderer_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE * pmt)
 {
     TRACE("Not a stub!\n");
     return S_OK;
 }
 
-static IPin* WINAPI NullRenderer_GetPin(IBaseFilter *iface, int pos)
+static IPin* WINAPI NullRenderer_GetPin(BaseFilter *iface, int pos)
 {
     NullRendererImpl *This = (NullRendererImpl *)iface;
 
@@ -97,10 +96,25 @@ static IPin* WINAPI NullRenderer_GetPin(IBaseFilter *iface, int pos)
     return (IPin *)This->pInputPin;
 }
 
-static LONG WINAPI NullRenderer_GetPinCount(IBaseFilter *iface)
+static LONG WINAPI NullRenderer_GetPinCount(BaseFilter *iface)
 {
     return 1;
 }
+
+static const BaseFilterFuncTable BaseFuncTable = {
+    NullRenderer_GetPin,
+    NullRenderer_GetPinCount
+};
+
+static const  BasePinFuncTable input_BaseFuncTable = {
+    NullRenderer_CheckMediaType,
+    NULL
+};
+
+static const BaseInputPinFuncTable input_BaseInputFuncTable = {
+   NullRenderer_Receive
+};
+
 
 HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
@@ -118,14 +132,14 @@ HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pNullRenderer->bAggregatable = FALSE;
     pNullRenderer->IInner_vtbl = &IInner_VTable;
 
-    BaseFilter_Init(&pNullRenderer->filter, &NullRenderer_Vtbl, &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), NullRenderer_GetPin, NullRenderer_GetPinCount);
+    BaseFilter_Init(&pNullRenderer->filter, &NullRenderer_Vtbl, &CLSID_NullRenderer, (DWORD_PTR)(__FILE__ ": NullRendererImpl.csFilter"), &BaseFuncTable);
 
     /* construct input pin */
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pNullRenderer;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    hr = BaseInputPin_Construct(&NullRenderer_InputPin_Vtbl, &piInput, NullRenderer_CheckMediaType, NullRenderer_Receive, &pNullRenderer->filter.csFilter, NULL, (IPin **)&pNullRenderer->pInputPin);
+    hr = BaseInputPin_Construct(&NullRenderer_InputPin_Vtbl, &piInput, &input_BaseFuncTable, &input_BaseInputFuncTable, &pNullRenderer->filter.csFilter, NULL, (IPin **)&pNullRenderer->pInputPin);
 
     if (SUCCEEDED(hr))
     {

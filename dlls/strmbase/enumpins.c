@@ -32,7 +32,7 @@ typedef struct IEnumPinsImpl
     const IEnumPinsVtbl * lpVtbl;
     LONG refCount;
     ULONG uIndex;
-    IBaseFilter *base;
+    BaseFilter *base;
     BaseFilter_GetPin receive_pin;
     BaseFilter_GetPinCount receive_pincount;
     BaseFilter_GetPinVersion receive_version;
@@ -41,7 +41,7 @@ typedef struct IEnumPinsImpl
 
 static const struct IEnumPinsVtbl IEnumPinsImpl_Vtbl;
 
-HRESULT WINAPI EnumPins_Construct(IBaseFilter *base,  BaseFilter_GetPin receive_pin, BaseFilter_GetPinCount receive_pincount, BaseFilter_GetPinVersion receive_version, IEnumPins ** ppEnum)
+HRESULT WINAPI EnumPins_Construct(BaseFilter *base,  BaseFilter_GetPin receive_pin, BaseFilter_GetPinCount receive_pincount, BaseFilter_GetPinVersion receive_version, IEnumPins ** ppEnum)
 {
     IEnumPinsImpl * pEnumPins;
 
@@ -61,7 +61,7 @@ HRESULT WINAPI EnumPins_Construct(IBaseFilter *base,  BaseFilter_GetPin receive_
     pEnumPins->receive_pincount = receive_pincount;
     pEnumPins->receive_version = receive_version;
     pEnumPins->base = base;
-    IBaseFilter_AddRef(base);
+    IBaseFilter_AddRef((IBaseFilter*)base);
     *ppEnum = (IEnumPins *)(&pEnumPins->lpVtbl);
     pEnumPins->Version = receive_version(base);
 
@@ -110,7 +110,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
 
     if (!refCount)
     {
-        IBaseFilter_Release(This->base);
+        IBaseFilter_Release((IBaseFilter*)This->base);
         CoTaskMemFree(This);
         return 0;
     }

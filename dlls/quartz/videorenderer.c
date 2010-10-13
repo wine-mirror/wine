@@ -346,16 +346,15 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_Receive(IPin* iface, IMediaSample * pSample)
+static HRESULT WINAPI VideoRenderer_Receive(BaseInputPin* pin, IMediaSample * pSample)
 {
-    BaseInputPin* pin = (BaseInputPin*)iface;
     VideoRendererImpl *This = (VideoRendererImpl *)pin->pin.pinInfo.pFilter;
     LPBYTE pbSrcStream = NULL;
     LONG cbSrcStream = 0;
     REFERENCE_TIME tStart, tStop;
     HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", iface, pSample);
+    TRACE("(%p)->(%p)\n", pin, pSample);
 
     EnterCriticalSection(&This->filter.csFilter);
 
@@ -484,7 +483,7 @@ static HRESULT WINAPI VideoRenderer_Receive(IPin* iface, IMediaSample * pSample)
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI VideoRenderer_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE * pmt)
 {
     BaseInputPin* pin = (BaseInputPin*)iface;
     VideoRendererImpl *This = (VideoRendererImpl *)pin->pin.pinInfo.pFilter;
@@ -534,7 +533,7 @@ static HRESULT WINAPI VideoRenderer_CheckMediaType(IPin *iface, const AM_MEDIA_T
     return S_FALSE;
 }
 
-static IPin* WINAPI VideoRenderer_GetPin(IBaseFilter *iface, int pos)
+static IPin* WINAPI VideoRenderer_GetPin(BaseFilter *iface, int pos)
 {
     VideoRendererImpl *This = (VideoRendererImpl *)iface;
 
@@ -545,10 +544,24 @@ static IPin* WINAPI VideoRenderer_GetPin(IBaseFilter *iface, int pos)
     return (IPin *)This->pInputPin;
 }
 
-static LONG WINAPI VideoRenderer_GetPinCount(IBaseFilter *iface)
+static LONG WINAPI VideoRenderer_GetPinCount(BaseFilter *iface)
 {
     return 1;
 }
+
+static const BaseFilterFuncTable BaseFuncTable = {
+    VideoRenderer_GetPin,
+    VideoRenderer_GetPinCount
+};
+
+static const  BasePinFuncTable input_BaseFuncTable = {
+    VideoRenderer_CheckMediaType,
+    NULL
+};
+
+static const BaseInputPinFuncTable input_BaseInputFuncTable = {
+    VideoRenderer_Receive
+};
 
 HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
@@ -567,7 +580,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     pVideoRenderer->bAggregatable = FALSE;
     pVideoRenderer->IInner_vtbl = &IInner_VTable;
 
-    BaseFilter_Init(&pVideoRenderer->filter, &VideoRenderer_Vtbl, &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), VideoRenderer_GetPin, VideoRenderer_GetPinCount);
+    BaseFilter_Init(&pVideoRenderer->filter, &VideoRenderer_Vtbl, &CLSID_VideoRenderer, (DWORD_PTR)(__FILE__ ": VideoRendererImpl.csFilter"), &BaseFuncTable);
 
     pVideoRenderer->IBasicVideo_vtbl = &IBasicVideo_VTable;
     pVideoRenderer->IVideoWindow_vtbl = &IVideoWindow_VTable;
@@ -586,7 +599,7 @@ HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv)
     piInput.pFilter = (IBaseFilter *)pVideoRenderer;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    hr = BaseInputPin_Construct(&VideoRenderer_InputPin_Vtbl, &piInput, VideoRenderer_CheckMediaType, VideoRenderer_Receive, &pVideoRenderer->filter.csFilter, NULL, (IPin **)&pVideoRenderer->pInputPin);
+    hr = BaseInputPin_Construct(&VideoRenderer_InputPin_Vtbl, &piInput, &input_BaseFuncTable, &input_BaseInputFuncTable, &pVideoRenderer->filter.csFilter, NULL, (IPin **)&pVideoRenderer->pInputPin);
 
     if (SUCCEEDED(hr))
     {

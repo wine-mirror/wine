@@ -207,9 +207,8 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, const BYTE *d
     return hr;
 }
 
-static HRESULT WINAPI DSoundRender_Receive(IPin *iface, IMediaSample * pSample)
+static HRESULT WINAPI DSoundRender_Receive(BaseInputPin *pin, IMediaSample * pSample)
 {
-    BaseInputPin *pin = (BaseInputPin*)iface;
     DSoundRenderImpl *This = (DSoundRenderImpl*)pin->pin.pinInfo.pFilter;
     LPBYTE pbSrcStream = NULL;
     LONG cbSrcStream = 0;
@@ -217,7 +216,7 @@ static HRESULT WINAPI DSoundRender_Receive(IPin *iface, IMediaSample * pSample)
     HRESULT hr;
     AM_MEDIA_TYPE *amt;
 
-    TRACE("%p %p\n", iface, pSample);
+    TRACE("%p %p\n", pin, pSample);
 
     /* Slightly incorrect, Pause completes when a frame is received so we should signal
      * pause completion here, but for sound playing a single frame doesn't make sense
@@ -341,7 +340,7 @@ static HRESULT WINAPI DSoundRender_Receive(IPin *iface, IMediaSample * pSample)
     return hr;
 }
 
-static HRESULT WINAPI DSoundRender_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI DSoundRender_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE * pmt)
 {
     WAVEFORMATEX* format;
 
@@ -363,7 +362,7 @@ static HRESULT WINAPI DSoundRender_CheckMediaType(IPin *iface, const AM_MEDIA_TY
     return S_OK;
 }
 
-static IPin* WINAPI DSoundRender_GetPin(IBaseFilter *iface, int pos)
+static IPin* WINAPI DSoundRender_GetPin(BaseFilter *iface, int pos)
 {
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
 
@@ -374,11 +373,26 @@ static IPin* WINAPI DSoundRender_GetPin(IBaseFilter *iface, int pos)
     return (IPin*)This->pInputPin;
 }
 
-static LONG WINAPI DSoundRender_GetPinCount(IBaseFilter *iface)
+static LONG WINAPI DSoundRender_GetPinCount(BaseFilter *iface)
 {
     /* Our pins are static */
     return 1;
 }
+
+static const BaseFilterFuncTable BaseFuncTable = {
+    DSoundRender_GetPin,
+    DSoundRender_GetPinCount
+};
+
+static const  BasePinFuncTable input_BaseFuncTable = {
+    DSoundRender_CheckMediaType,
+    NULL
+};
+
+static const BaseInputPinFuncTable input_BaseInputFuncTable = {
+    DSoundRender_Receive
+};
+
 
 HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
@@ -398,7 +412,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
         return E_OUTOFMEMORY;
     ZeroMemory(pDSoundRender, sizeof(DSoundRenderImpl));
 
-    BaseFilter_Init(&pDSoundRender->filter, &DSoundRender_Vtbl, &CLSID_DSoundRender, (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), DSoundRender_GetPin, DSoundRender_GetPinCount);
+    BaseFilter_Init(&pDSoundRender->filter, &DSoundRender_Vtbl, &CLSID_DSoundRender, (DWORD_PTR)(__FILE__ ": DSoundRenderImpl.csFilter"), &BaseFuncTable);
 
     pDSoundRender->IBasicAudio_vtbl = &IBasicAudio_Vtbl;
     pDSoundRender->IReferenceClock_vtbl = &IReferenceClock_Vtbl;
@@ -408,7 +422,7 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     piInput.dir = PINDIR_INPUT;
     piInput.pFilter = (IBaseFilter *)pDSoundRender;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
-    hr = BaseInputPin_Construct(&DSoundRender_InputPin_Vtbl, &piInput, DSoundRender_CheckMediaType, DSoundRender_Receive, &pDSoundRender->filter.csFilter, NULL, (IPin **)&pDSoundRender->pInputPin);
+    hr = BaseInputPin_Construct(&DSoundRender_InputPin_Vtbl, &piInput, &input_BaseFuncTable, &input_BaseInputFuncTable, &pDSoundRender->filter.csFilter, NULL, (IPin **)&pDSoundRender->pInputPin);
 
     if (SUCCEEDED(hr))
     {
@@ -694,7 +708,7 @@ static HRESULT WINAPI DSoundRender_InputPin_ReceiveConnection(IPin * iface, IPin
         if (This->pin.pConnectedTo)
             hr = VFW_E_ALREADY_CONNECTED;
 
-        if (SUCCEEDED(hr) && This->fnCheckMediaType(iface, pmt) != S_OK)
+        if (SUCCEEDED(hr) && This->pin.pFuncsTable->pfnCheckMediaType((BasePin*)This, pmt) != S_OK)
             hr = VFW_E_TYPE_NOT_ACCEPTED;
 
         if (SUCCEEDED(hr))

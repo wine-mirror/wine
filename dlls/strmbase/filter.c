@@ -148,7 +148,7 @@ HRESULT WINAPI BaseFilterImpl_EnumPins(IBaseFilter * iface, IEnumPins **ppEnum)
 
     TRACE("(%p)->(%p)\n", iface, ppEnum);
 
-    return EnumPins_Construct(iface, This->pfnGetPin, This->pfnGetPinCount, BaseFilterImpl_GetPinVersion, ppEnum);
+    return EnumPins_Construct(This, This->pFuncsTable->pfnGetPin, This->pFuncsTable->pfnGetPinCount, BaseFilterImpl_GetPinVersion, ppEnum);
 }
 
 
@@ -192,21 +192,19 @@ HRESULT WINAPI BaseFilterImpl_QueryVendorInfo(IBaseFilter * iface, LPWSTR *pVend
     return E_NOTIMPL;
 }
 
-LONG WINAPI BaseFilterImpl_GetPinVersion(IBaseFilter * iface)
+LONG WINAPI BaseFilterImpl_GetPinVersion(BaseFilter * This)
 {
-    BaseFilter * This = (BaseFilter*)iface;
     TRACE("(%p)\n", This);
     return This->pinVersion;
 }
 
-VOID WINAPI BaseFilterImpl_IncrementPinVersion(IBaseFilter * iface)
+VOID WINAPI BaseFilterImpl_IncrementPinVersion(BaseFilter * This)
 {
-    BaseFilter * This = (BaseFilter*)iface;
     InterlockedIncrement(&This->pinVersion);
     TRACE("(%p) -> New pinVersion %i\n", This,This->pinVersion);
 }
 
-HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, BaseFilter_GetPin pfGetPin, BaseFilter_GetPinCount pfGetPinCount)
+HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, const CLSID *pClsid, DWORD_PTR DebugInfo, const BaseFilterFuncTable* pBaseFuncsTable)
 {
     This->lpVtbl = Vtbl;
     This->refCount = 1;
@@ -219,8 +217,7 @@ HRESULT WINAPI BaseFilter_Init(BaseFilter * This, const IBaseFilterVtbl *Vtbl, c
     This->csFilter.DebugInfo->Spare[0] = DebugInfo;
     This->pinVersion = 1;
 
-    This->pfnGetPin = pfGetPin;
-    This->pfnGetPinCount = pfGetPinCount;
+    This->pFuncsTable = pBaseFuncsTable;
 
     return S_OK;
 }

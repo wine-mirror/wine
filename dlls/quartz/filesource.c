@@ -328,7 +328,7 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
     return hr;
 }
 
-static IPin* WINAPI AsyncReader_GetPin(IBaseFilter *iface, int pos)
+static IPin* WINAPI AsyncReader_GetPin(BaseFilter *iface, int pos)
 {
     AsyncReader *This = (AsyncReader *)iface;
 
@@ -339,7 +339,7 @@ static IPin* WINAPI AsyncReader_GetPin(IBaseFilter *iface, int pos)
     return This->pOutputPin;
 }
 
-static LONG WINAPI AsyncReader_GetPinCount(IBaseFilter *iface)
+static LONG WINAPI AsyncReader_GetPinCount(BaseFilter *iface)
 {
     AsyncReader *This = (AsyncReader *)iface;
 
@@ -348,6 +348,11 @@ static LONG WINAPI AsyncReader_GetPinCount(IBaseFilter *iface)
     else
         return 1;
 }
+
+static const BaseFilterFuncTable BaseFuncTable = {
+    AsyncReader_GetPin,
+    AsyncReader_GetPinCount
+};
 
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
 {
@@ -361,7 +366,7 @@ HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (!pAsyncRead)
         return E_OUTOFMEMORY;
 
-    BaseFilter_Init(&pAsyncRead->filter, &AsyncReader_Vtbl, &CLSID_AsyncReader, (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), AsyncReader_GetPin, AsyncReader_GetPinCount);
+    BaseFilter_Init(&pAsyncRead->filter, &AsyncReader_Vtbl, &CLSID_AsyncReader, (DWORD_PTR)(__FILE__ ": AsyncReader.csFilter"), &BaseFuncTable);
 
     pAsyncRead->lpVtblFSF = &FileSource_Vtbl;
     pAsyncRead->pOutputPin = NULL;
@@ -544,7 +549,7 @@ static HRESULT WINAPI FileSource_Load(IFileSourceFilter * iface, LPCOLESTR pszFi
 
     /* create pin */
     hr = FileAsyncReader_Construct(hFile, (IBaseFilter *)&This->filter.lpVtbl, &This->filter.csFilter, &This->pOutputPin);
-    BaseFilterImpl_IncrementPinVersion((IBaseFilter *)&This->filter.lpVtbl);
+    BaseFilterImpl_IncrementPinVersion((BaseFilter *)&This->filter.lpVtbl);
 
     if (SUCCEEDED(hr))
         hr = IPin_QueryInterface(This->pOutputPin, &IID_IAsyncReader, (LPVOID *)&pReader);
@@ -690,7 +695,7 @@ static HRESULT WINAPI FileAsyncReaderPin_QueryAccept(IPin *iface, const AM_MEDIA
     return S_FALSE;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI FileAsyncReaderPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     FileAsyncReader *This = (FileAsyncReader *)iface;
     if (iPosition < 0)
@@ -759,7 +764,7 @@ static HRESULT WINAPI FileAsyncReaderPin_EnumMediaTypes(IPin * iface, IEnumMedia
 {
     TRACE("(%p)\n", ppEnum);
 
-    return EnumMediaTypes_Construct(iface, FileAsyncReaderPin_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
+    return EnumMediaTypes_Construct((BasePin*)iface, FileAsyncReaderPin_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
 }
 
 static const IPinVtbl FileAsyncReaderPin_Vtbl = 
@@ -788,7 +793,7 @@ static const IPinVtbl FileAsyncReaderPin_Vtbl =
 /* specific AM_MEDIA_TYPE - it cannot be NULL */
 /* this differs from standard OutputPin_AttemptConnection only in that it
  * doesn't need the IMemInputPin interface on the receiving pin */
-static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(IPin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(BasePin * iface, IPin * pReceivePin, const AM_MEDIA_TYPE * pmt)
 {
     BaseOutputPin *This = (BaseOutputPin *)iface;
     HRESULT hr;
@@ -802,7 +807,7 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(IPin * iface, IPin * 
     IPin_AddRef(pReceivePin);
     CopyMediaType(&This->pin.mtCurrent, pmt);
 
-    hr = IPin_ReceiveConnection(pReceivePin, iface, pmt);
+    hr = IPin_ReceiveConnection(pReceivePin, (IPin*)iface, pmt);
 
     if (FAILED(hr))
     {
@@ -815,7 +820,7 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(IPin * iface, IPin * 
     return hr;
 }
 
-static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     FileAsyncReader *This = (FileAsyncReader *)iface;
     ALLOCATOR_PROPERTIES actual;
@@ -832,6 +837,14 @@ static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(IPin *iface, IMemAlloc
     return IMemAllocator_SetProperties(pAlloc, &This->allocProps, &actual);
 }
 
+static const  BasePinFuncTable output_BaseFuncTable = {
+    NULL,
+    FileAsyncReaderPin_AttemptConnection
+};
+
+static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+    FileAsyncReaderPin_DecideBufferSize
+};
 
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
@@ -842,7 +855,7 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
     strcpyW(piOutput.achName, wszOutputPinName);
-    hr = BaseOutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, FileAsyncReaderPin_DecideBufferSize, FileAsyncReaderPin_AttemptConnection, pCritSec, ppPin);
+    hr = BaseOutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, &output_BaseFuncTable, &output_BaseOutputFuncTable, pCritSec, ppPin);
 
     if (SUCCEEDED(hr))
     {

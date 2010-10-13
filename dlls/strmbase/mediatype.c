@@ -87,7 +87,7 @@ typedef struct IEnumMediaTypesImpl
 {
     const IEnumMediaTypesVtbl * lpVtbl;
     LONG refCount;
-    IPin *basePin;
+    BasePin *basePin;
     BasePin_GetMediaType enumMediaFunction;
     BasePin_GetMediaTypeVersion mediaVersionFunction;
     LONG currentVersion;
@@ -97,7 +97,7 @@ typedef struct IEnumMediaTypesImpl
 
 static const struct IEnumMediaTypesVtbl IEnumMediaTypesImpl_Vtbl;
 
-HRESULT WINAPI EnumMediaTypes_Construct(IPin *basePin, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum)
+HRESULT WINAPI EnumMediaTypes_Construct(BasePin *basePin, BasePin_GetMediaType enumFunc, BasePin_GetMediaTypeVersion versionFunc, IEnumMediaTypes ** ppEnum)
 {
     ULONG i;
     IEnumMediaTypesImpl * pEnumMediaTypes = CoTaskMemAlloc(sizeof(IEnumMediaTypesImpl));
@@ -113,7 +113,7 @@ HRESULT WINAPI EnumMediaTypes_Construct(IPin *basePin, BasePin_GetMediaType enum
     pEnumMediaTypes->uIndex = 0;
     pEnumMediaTypes->enumMediaFunction = enumFunc;
     pEnumMediaTypes->mediaVersionFunction = versionFunc;
-    IPin_AddRef(basePin);
+    IPin_AddRef((IPin*)basePin);
     pEnumMediaTypes->basePin = basePin;
 
     i = 0;
@@ -183,7 +183,7 @@ static ULONG WINAPI IEnumMediaTypesImpl_Release(IEnumMediaTypes * iface)
             if (This->enumMediaDetails.pMediaTypes[i].pbFormat)
                 CoTaskMemFree(This->enumMediaDetails.pMediaTypes[i].pbFormat);
         CoTaskMemFree(This->enumMediaDetails.pMediaTypes);
-        IPin_Release(This->basePin);
+        IPin_Release((IPin*)This->basePin);
         CoTaskMemFree(This);
     }
     return refCount;

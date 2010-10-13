@@ -45,7 +45,7 @@ static const IBaseFilterVtbl TransformFilter_Vtbl;
 static const IPinVtbl TransformFilter_InputPin_Vtbl;
 static const IPinVtbl TransformFilter_OutputPin_Vtbl;
 
-static HRESULT WINAPI TransformFilter_Input_CheckMediaType(IPin *iface, const AM_MEDIA_TYPE * pmt)
+static HRESULT WINAPI TransformFilter_Input_CheckMediaType(BasePin *iface, const AM_MEDIA_TYPE * pmt)
 {
     BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilter * pTransform;
@@ -60,12 +60,11 @@ static HRESULT WINAPI TransformFilter_Input_CheckMediaType(IPin *iface, const AM
     return S_OK;
 }
 
-static HRESULT WINAPI TransformFilter_Input_Receive(IPin *iface, IMediaSample *pInSample)
+static HRESULT WINAPI TransformFilter_Input_Receive(BaseInputPin *This, IMediaSample *pInSample)
 {
     HRESULT hr = S_FALSE;
-    BaseInputPin* This = (BaseInputPin*) iface;
     TransformFilter * pTransform;
-    TRACE("%p\n", iface);
+    TRACE("%p\n", This);
     pTransform = (TransformFilter*)This->pin.pinInfo.pFilter;
 
     EnterCriticalSection(&pTransform->filter.csFilter);
@@ -103,14 +102,13 @@ static HRESULT WINAPI TransformFilter_Output_QueryAccept(IPin *iface, const AM_M
     return S_FALSE;
 }
 
-static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(BaseOutputPin *This, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    BasePin *This = (BasePin *)iface;
-    TransformFilter *pTransformFilter = (TransformFilter *)This->pinInfo.pFilter;
+    TransformFilter *pTransformFilter = (TransformFilter *)This->pin.pinInfo.pFilter;
     return pTransformFilter->pFuncsTable->pfnDecideBufferSize(pTransformFilter, pAlloc, ppropInputRequest);
 }
 
-static IPin* WINAPI TransformFilter_GetPin(IBaseFilter *iface, int pos)
+static IPin* WINAPI TransformFilter_GetPin(BaseFilter *iface, int pos)
 {
     TransformFilter *This = (TransformFilter *)iface;
 
@@ -121,12 +119,35 @@ static IPin* WINAPI TransformFilter_GetPin(IBaseFilter *iface, int pos)
     return This->ppPins[pos];
 }
 
-static LONG WINAPI TransformFilter_GetPinCount(IBaseFilter *iface)
+static LONG WINAPI TransformFilter_GetPinCount(BaseFilter *iface)
 {
     TransformFilter *This = (TransformFilter *)iface;
 
     return (This->npins+1);
 }
+
+static const BaseFilterFuncTable tfBaseFuncTable = {
+    TransformFilter_GetPin,
+    TransformFilter_GetPinCount
+};
+
+static const  BasePinFuncTable tf_input_BaseFuncTable = {
+    TransformFilter_Input_CheckMediaType,
+    NULL,
+};
+
+static const BaseInputPinFuncTable tf_input_BaseInputFuncTable = {
+    TransformFilter_Input_Receive
+};
+
+static const  BasePinFuncTable tf_output_BaseFuncTable = {
+    NULL,
+    BaseOutputPinImpl_AttemptConnection,
+};
+
+static const BaseOutputPinFuncTable tf_output_BaseOutputFuncTable = {
+    TransformFilter_Output_DecideBufferSize
+};
 
 static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* pClsid, const TransformFilterFuncTable* pFuncsTable, TransformFilter* pTransformFilter)
 {
@@ -134,7 +155,7 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
     PIN_INFO piInput;
     PIN_INFO piOutput;
 
-    BaseFilter_Init(&pTransformFilter->filter, pVtbl, pClsid, (DWORD_PTR)(__FILE__ ": TransformFilter.csFilter"), TransformFilter_GetPin, TransformFilter_GetPinCount);
+    BaseFilter_Init(&pTransformFilter->filter, pVtbl, pClsid, (DWORD_PTR)(__FILE__ ": TransformFilter.csFilter"), &tfBaseFuncTable);
 
     /* pTransformFilter is already allocated */
     pTransformFilter->pFuncsTable = pFuncsTable;
@@ -151,11 +172,11 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
     piOutput.pFilter = (IBaseFilter *)pTransformFilter;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
-    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, TransformFilter_Input_CheckMediaType, TransformFilter_Input_Receive, &pTransformFilter->filter.csFilter, NULL, &pTransformFilter->ppPins[0]);
+    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, &tf_input_BaseFuncTable, &tf_input_BaseInputFuncTable, &pTransformFilter->filter.csFilter, NULL, &pTransformFilter->ppPins[0]);
 
     if (SUCCEEDED(hr))
     {
-        hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin), &piOutput, TransformFilter_Output_DecideBufferSize, NULL, &pTransformFilter->filter.csFilter, &pTransformFilter->ppPins[1]);
+        hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin), &piOutput, &tf_output_BaseFuncTable, &tf_output_BaseOutputFuncTable, &pTransformFilter->filter.csFilter, &pTransformFilter->ppPins[1]);
 
         if (FAILED(hr))
             ERR("Cannot create output pin (%x)\n", hr);
@@ -487,9 +508,8 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     TransformFilter_InputPin_NewSegment
 };
 
-static HRESULT WINAPI TransformFilter_Output_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI TransformFilter_Output_GetMediaType(BasePin *This, int iPosition, AM_MEDIA_TYPE *pmt)
 {
-    BasePin *This = (BasePin *)iface;
     TransformFilter *pTransform = (TransformFilter *)This->pinInfo.pFilter;
 
     if (iPosition < 0)
@@ -505,7 +525,7 @@ static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumM
     BasePin *This = (BasePin *)iface;
     TRACE("(%p/%p)->(%p)\n", This, iface, ppEnum);
 
-    return EnumMediaTypes_Construct(iface, TransformFilter_Output_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
+    return EnumMediaTypes_Construct(This, TransformFilter_Output_GetMediaType, BasePinImpl_GetMediaTypeVersion, ppEnum);
 }
 
 static const IPinVtbl TransformFilter_OutputPin_Vtbl =

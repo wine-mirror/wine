@@ -79,7 +79,7 @@ typedef struct VfwPinImpl
     const IKsPropertySetVtbl * KSP_VT;
 } VfwPinImpl;
 
-static IPin* WINAPI VfwCapture_GetPin(IBaseFilter *iface, int pos)
+static IPin* WINAPI VfwCapture_GetPin(BaseFilter *iface, int pos)
 {
     VfwCapture *This = (VfwCapture *)iface;
 
@@ -90,10 +90,15 @@ static IPin* WINAPI VfwCapture_GetPin(IBaseFilter *iface, int pos)
     return This->pOutputPin;
 }
 
-static LONG WINAPI VfwCapture_GetPinCount(IBaseFilter *iface)
+static LONG WINAPI VfwCapture_GetPinCount(BaseFilter *iface)
 {
     return 1;
 }
+
+static const BaseFilterFuncTable BaseFuncTable = {
+    VfwCapture_GetPin,
+    VfwCapture_GetPinCount
+};
 
 IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
 {
@@ -112,7 +117,7 @@ IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
     if (!pVfwCapture)
         return NULL;
 
-    BaseFilter_Init(&pVfwCapture->filter, &VfwCapture_Vtbl, &CLSID_VfwCapture, (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"), VfwCapture_GetPin, VfwCapture_GetPinCount);
+    BaseFilter_Init(&pVfwCapture->filter, &VfwCapture_Vtbl, &CLSID_VfwCapture, (DWORD_PTR)(__FILE__ ": VfwCapture.csFilter"), &BaseFuncTable);
 
     pVfwCapture->IAMStreamConfig_vtbl = &IAMStreamConfig_VTable;
     pVfwCapture->IAMVideoProcAmp_vtbl = &IAMVideoProcAmp_VTable;
@@ -646,7 +651,7 @@ static const IKsPropertySetVtbl KSP_VTable =
    KSP_QuerySupported
 };
 
-static HRESULT WINAPI VfwPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
+static HRESULT WINAPI VfwPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {
     VfwPinImpl *This = (VfwPinImpl *)iface;
     AM_MEDIA_TYPE *vfw_pmt;
@@ -664,12 +669,12 @@ static HRESULT WINAPI VfwPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_T
     return hr;
 }
 
-LONG WINAPI VfwPin_GetMediaTypeVersion(IPin *iface)
+LONG WINAPI VfwPin_GetMediaTypeVersion(BasePin *iface)
 {
     return 1;
 }
 
-static HRESULT WINAPI VfwPin_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
     ALLOCATOR_PROPERTIES actual;
 
@@ -684,6 +689,15 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc
 
     return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
 }
+
+static const  BasePinFuncTable output_BaseFuncTable = {
+    NULL,
+    BaseOutputPinImpl_AttemptConnection
+};
+
+static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+   VfwPin_DecideBufferSize
+};
 
 static HRESULT
 VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
@@ -700,7 +714,7 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     lstrcpyW(piOutput.achName, wszOutputPinName);
     ObjectRefCount(TRUE);
 
-    hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, VfwPin_DecideBufferSize, NULL, pCritSec, ppPin);
+    hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, &output_BaseFuncTable, &output_BaseOutputFuncTable, pCritSec, ppPin);
 
     if (SUCCEEDED(hr))
     {
@@ -770,7 +784,7 @@ VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
     VfwPinImpl *This = (VfwPinImpl *)iface;
     hr = qcap_driver_get_format(This->driver_info, &pmt);
     if (SUCCEEDED(hr))
-        hr = EnumMediaTypes_Construct(iface, VfwPin_GetMediaType, VfwPin_GetMediaTypeVersion, ppEnum);
+        hr = EnumMediaTypes_Construct((BasePin*)iface, VfwPin_GetMediaType, VfwPin_GetMediaTypeVersion, ppEnum);
     TRACE("%p -- %x\n", This, hr);
     DeleteMediaType(pmt);
 
