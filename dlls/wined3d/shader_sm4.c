@@ -366,7 +366,29 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
     if (token & WINED3D_SM4_REGISTER_MODIFIER)
     {
         DWORD modifier = *(*ptr)++;
-        FIXME("Skipping modifier 0x%08x.\n", modifier);
+
+        /* FIXME: This will probably break down at some point. The SM4
+         * modifiers look like flags, while wined3d currently has an enum
+         * with possible combinations, e.g. WINED3DSPSM_ABSNEG. */
+        switch (modifier)
+        {
+            case 0x41:
+                src_param->modifiers = WINED3DSPSM_NEG;
+                break;
+
+            case 0x81:
+                src_param->modifiers = WINED3DSPSM_ABS;
+                break;
+
+            default:
+                FIXME("Skipping modifier 0x%08x.\n", modifier);
+                src_param->modifiers = WINED3DSPSM_NONE;
+                break;
+        }
+    }
+    else
+    {
+        src_param->modifiers = WINED3DSPSM_NONE;
     }
 
     order = (token & WINED3D_SM4_REGISTER_ORDER_MASK) >> WINED3D_SM4_REGISTER_ORDER_SHIFT;
@@ -409,7 +431,6 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
         src_param->swizzle = (token & WINED3D_SM4_SWIZZLE_MASK) >> WINED3D_SM4_SWIZZLE_SHIFT;
     }
 
-    src_param->modifiers = 0;
     src_param->reg.rel_addr = NULL;
 
     map_register(priv, &src_param->reg);
