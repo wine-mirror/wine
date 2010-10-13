@@ -11,6 +11,7 @@ RC_SRCS = \
 	cpl_De.rc \
 	cpl_En.rc \
 	cpl_Fr.rc \
+	cpl_He.rc \
 	cpl_It.rc \
 	cpl_Ko.rc \
 	cpl_Lt.rc \
