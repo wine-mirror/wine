@@ -4972,6 +4972,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_IMUL          */ NULL,
     /* WINED3DSIH_ITOF          */ NULL,
     /* WINED3DSIH_LABEL         */ shader_hw_label,
+    /* WINED3DSIH_LD            */ NULL,
     /* WINED3DSIH_LIT           */ shader_hw_map2gl,
     /* WINED3DSIH_LOG           */ shader_hw_log_pow,
     /* WINED3DSIH_LOGP          */ shader_hw_log_pow,
