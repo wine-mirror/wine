@@ -82,7 +82,7 @@ static LRESULT CALLBACK callback_child(HWND hwnd, UINT msg, WPARAM wParam, LPARA
             SetLastError(0xdeadbeef);
             ret = DestroyCursor((HCURSOR) lParam);
             error = GetLastError();
-            todo_wine ok(!ret || broken(ret) /* win9x */, "DestroyCursor on the active cursor succeeded.\n");
+            ok(!ret || broken(ret) /* win9x */, "DestroyCursor on the active cursor succeeded.\n");
             ok(error == ERROR_DESTROY_OBJECT_OF_OTHER_THREAD ||
                error == 0xdeadbeef,  /* vista */
                 "Last error: %u\n", error);
@@ -1769,8 +1769,8 @@ static void test_DestroyCursor(void)
 
     SetLastError(0xdeadbeef);
     ret = GetIconInfo( cursor, &new_info );
-    todo_wine ok( !ret || broken(ret), /* nt4 */ "GetIconInfo succeeded\n" );
-    todo_wine ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE ||
+    ok( !ret || broken(ret), /* nt4 */ "GetIconInfo succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE ||
         broken(GetLastError() == 0xdeadbeef), /* win9x */
         "wrong error %u\n", GetLastError() );
 
@@ -1824,7 +1824,7 @@ static void test_DestroyCursor(void)
     if (new_cursor != cursor)  /* win9x */
         ok(cursor2 == new_cursor, "SetCursor returned %p/%p\n", cursor2, cursor);
     else
-        todo_wine ok(!cursor2, "SetCursor returned %p/%p\n", cursor2, cursor);
+        ok(!cursor2, "SetCursor returned %p/%p\n", cursor2, cursor);
     ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
 
     cursor2 = GetCursor();
@@ -1835,7 +1835,7 @@ static void test_DestroyCursor(void)
     if (new_cursor != cursor)  /* win9x */
         ok( ret, "DestroyCursor succeeded\n" );
     else
-        todo_wine ok( !ret, "DestroyCursor succeeded\n" );
+        ok( !ret, "DestroyCursor succeeded\n" );
     error = GetLastError();
     ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE || GetLastError() == 0xdeadbeef,
         "wrong error %u\n", GetLastError() );

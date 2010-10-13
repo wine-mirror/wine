@@ -387,22 +387,6 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
 }
 
 /**********************************************************************
- *              is_icon_shared
- */
-static BOOL is_icon_shared( HICON handle )
-{
-    struct cursoricon_object *info;
-    BOOL ret = FALSE;
-
-    if ((info = get_icon_ptr( handle )))
-    {
-        ret = info->rsrc != NULL;
-        release_icon_ptr( handle, info );
-    }
-    return ret;
-}
-
-/**********************************************************************
  *              get_icon_size
  */
 BOOL get_icon_size( HICON handle, SIZE *size )
@@ -1357,7 +1341,11 @@ HICON WINAPI CopyIcon( HICON hIcon )
     struct cursoricon_object *ptrOld, *ptrNew;
     HICON hNew;
 
-    if (!(ptrOld = get_icon_ptr( hIcon ))) return 0;
+    if (!(ptrOld = get_icon_ptr( hIcon )))
+    {
+        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
+        return 0;
+    }
     if ((hNew = alloc_icon_handle(1)))
     {
         ptrNew = get_icon_ptr( hNew );
@@ -1381,10 +1369,19 @@ HICON WINAPI CopyIcon( HICON hIcon )
  */
 BOOL WINAPI DestroyIcon( HICON hIcon )
 {
+    BOOL ret = FALSE;
+    struct cursoricon_object *obj = get_icon_ptr( hIcon );
+
     TRACE_(icon)("%p\n", hIcon );
 
-    if (!is_icon_shared( hIcon )) free_icon_handle( hIcon );
-    return TRUE;
+    if (obj)
+    {
+        BOOL shared = (obj->rsrc != NULL);
+        release_icon_ptr( hIcon, obj );
+        ret = (GetCursor() != hIcon);
+        if (!shared) free_icon_handle( hIcon );
+    }
+    return ret;
 }
 
 
@@ -1393,11 +1390,6 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
  */
 BOOL WINAPI DestroyCursor( HCURSOR hCursor )
 {
-    if (GetCursor() == hCursor)
-    {
-        WARN_(cursor)("Destroying active cursor!\n" );
-        return FALSE;
-    }
     return DestroyIcon( hCursor );
 }
 
@@ -1419,6 +1411,7 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
  */
 HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
 {
+    struct cursoricon_object *obj;
     HCURSOR hOldCursor;
     int show_count;
     BOOL ret;
@@ -1441,6 +1434,9 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
 
     /* Change the cursor shape only if it is visible */
     if (show_count >= 0 && hOldCursor != hCursor) USER_Driver->pSetCursor( hCursor );
+
+    if (!(obj = get_icon_ptr( hOldCursor ))) return 0;
+    release_icon_ptr( hOldCursor, obj );
     return hOldCursor;
 }
 
