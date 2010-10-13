@@ -127,6 +127,12 @@ static void ps_1_1_test(void) {
             "mov_d4 r0, r1\n",
             {0xffff0101, 0x00000001, 0x8e0f0000, 0x80e40001, 0x0000ffff}
         },
+        {   /* shader 2 */
+            "ps.1.1\n"
+            "def c2, 0, 0., 0, 0.\n",
+            {0xffff0101, 0x00000051, 0xa00f0002, 0x00000000, 0x00000000, 0x00000000,
+             0x00000000, 0x0000ffff}
+        },
     };
 
     exec_tests("ps_1_1", tests, sizeof(tests) / sizeof(tests[0]));
