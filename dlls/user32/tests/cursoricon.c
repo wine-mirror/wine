@@ -1731,8 +1731,8 @@ static void test_ShowCursor(void)
 static void test_DestroyCursor(void)
 {
     static const BYTE bmp_bits[4096];
-    ICONINFO cursorInfo;
-    HCURSOR cursor, cursor2;
+    ICONINFO cursorInfo, new_info;
+    HCURSOR cursor, cursor2, new_cursor;
     BOOL ret;
     DWORD error;
     UINT display_bpp;
@@ -1760,23 +1760,85 @@ static void test_DestroyCursor(void)
     ok(!ret || broken(ret)  /* succeeds on win9x */, "DestroyCursor on the active cursor succeeded\n");
     error = GetLastError();
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
-    if (!ret)
-    {
-        cursor2 = GetCursor();
-        ok(cursor2 == cursor, "Active was set to %p when trying to destroy it\n", cursor2);
-        SetCursor(NULL);
 
-        /* Trying to destroy the cursor properly fails now with
-         * ERROR_INVALID_CURSOR_HANDLE.  This happens because we called
-         * DestroyCursor() 2+ times after calling SetCursor().  The calls to
-         * GetCursor() and SetCursor(NULL) in between make no difference. */
+    new_cursor = GetCursor();
+    if (ret)  /* win9x replaces cursor by another one on destroy */
+        ok(new_cursor != cursor, "GetCursor returned %p/%p\n", new_cursor, cursor);
+    else
+        ok(new_cursor == cursor, "GetCursor returned %p/%p\n", new_cursor, cursor);
+
+    SetLastError(0xdeadbeef);
+    ret = GetIconInfo( cursor, &new_info );
+    todo_wine ok( !ret || broken(ret), /* nt4 */ "GetIconInfo succeeded\n" );
+    todo_wine ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE ||
+        broken(GetLastError() == 0xdeadbeef), /* win9x */
+        "wrong error %u\n", GetLastError() );
+
+    if (ret)  /* nt4 delays destruction until cursor changes */
+    {
+        DeleteObject( new_info.hbmColor );
+        DeleteObject( new_info.hbmMask );
+
         SetLastError(0xdeadbeef);
-        ret = DestroyCursor(cursor);
-        todo_wine ok(!ret, "DestroyCursor succeeded.\n");
-        error = GetLastError();
-        ok(error == ERROR_INVALID_CURSOR_HANDLE || error == 0xdeadbeef, /* vista */
-           "Last error: 0x%08x\n", error);
+        ret = DestroyCursor( cursor );
+        ok( !ret, "DestroyCursor succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE || GetLastError() == 0xdeadbeef,
+            "wrong error %u\n", GetLastError() );
+
+        SetLastError(0xdeadbeef);
+        cursor2 = SetCursor( cursor );
+        ok( cursor2 == cursor, "SetCursor returned %p/%p\n", cursor2, cursor);
+        ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE || GetLastError() == 0xdeadbeef,
+            "wrong error %u\n", GetLastError() );
     }
+    else
+    {
+        SetLastError(0xdeadbeef);
+        cursor2 = CopyCursor( cursor );
+        ok(!cursor2, "CopyCursor succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE ||
+            broken(GetLastError() == 0xdeadbeef), /* win9x */
+            "wrong error %u\n", GetLastError() );
+
+        SetLastError(0xdeadbeef);
+        ret = DestroyCursor( cursor );
+        if (new_cursor != cursor)  /* win9x */
+            ok( ret, "DestroyCursor succeeded\n" );
+        else
+            ok( !ret, "DestroyCursor succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE || GetLastError() == 0xdeadbeef,
+            "wrong error %u\n", GetLastError() );
+
+        SetLastError(0xdeadbeef);
+        cursor2 = SetCursor( cursor );
+        ok(!cursor2, "SetCursor returned %p/%p\n", cursor2, cursor);
+        ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE || GetLastError() == 0xdeadbeef,
+            "wrong error %u\n", GetLastError() );
+    }
+
+    cursor2 = GetCursor();
+    ok(cursor2 == new_cursor, "GetCursor returned %p/%p\n", cursor2, new_cursor);
+
+    SetLastError(0xdeadbeef);
+    cursor2 = SetCursor( 0 );
+    if (new_cursor != cursor)  /* win9x */
+        ok(cursor2 == new_cursor, "SetCursor returned %p/%p\n", cursor2, cursor);
+    else
+        todo_wine ok(!cursor2, "SetCursor returned %p/%p\n", cursor2, cursor);
+    ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+    cursor2 = GetCursor();
+    ok(!cursor2, "GetCursor returned %p/%p\n", cursor2, cursor);
+
+    SetLastError(0xdeadbeef);
+    ret = DestroyCursor(cursor);
+    if (new_cursor != cursor)  /* win9x */
+        ok( ret, "DestroyCursor succeeded\n" );
+    else
+        todo_wine ok( !ret, "DestroyCursor succeeded\n" );
+    error = GetLastError();
+    ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE || GetLastError() == 0xdeadbeef,
+        "wrong error %u\n", GetLastError() );
 
     DeleteObject(cursorInfo.hbmMask);
     DeleteObject(cursorInfo.hbmColor);
