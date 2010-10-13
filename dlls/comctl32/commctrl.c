@@ -1698,7 +1698,7 @@ HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *pTaskConfig, int *pnBu
 {
     FIXME("%p, %p, %p, %p\n", pTaskConfig, pnButton, pnRadioButton, pfVerificationFlagChecked);
 
-    if (pnButton) *pnButton = IDOK;
+    if (pnButton) *pnButton = IDYES;
     if (pnRadioButton) *pnRadioButton = pTaskConfig->nDefaultButton;
     if (pfVerificationFlagChecked) *pfVerificationFlagChecked = TRUE;
     return S_OK;
