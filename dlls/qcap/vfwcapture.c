@@ -669,30 +669,38 @@ LONG WINAPI VfwPin_GetMediaTypeVersion(IPin *iface)
     return 1;
 }
 
+static HRESULT WINAPI VfwPin_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    ALLOCATOR_PROPERTIES actual;
+
+    /* What we put here doesn't matter, the
+       driver function should override it then commit */
+    if (!ppropInputRequest->cBuffers)
+        ppropInputRequest->cBuffers = 3;
+    if (!ppropInputRequest->cbBuffer)
+        ppropInputRequest->cbBuffer = 230400;
+    if (!ppropInputRequest->cbAlign)
+        ppropInputRequest->cbAlign = 1;
+
+    return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
+}
+
 static HRESULT
 VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
                   IPin ** ppPin )
 {
     static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
-    ALLOCATOR_PROPERTIES ap;
     PIN_INFO piOutput;
     HRESULT hr;
 
     ppPin = NULL;
-
-    /* What we put here doesn't matter, the
-       driver function should override it then commit */
-    ap.cBuffers = 3;
-    ap.cbBuffer = 230400;
-    ap.cbAlign = 1;
-    ap.cbPrefix = 0;
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
     lstrcpyW(piOutput.achName, wszOutputPinName);
     ObjectRefCount(TRUE);
 
-    hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, &ap, NULL, pCritSec, ppPin);
+    hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, VfwPin_DecideBufferSize, NULL, pCritSec, ppPin);
 
     if (SUCCEEDED(hr))
     {

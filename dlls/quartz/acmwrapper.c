@@ -264,8 +264,6 @@ static HRESULT WINAPI ACMWrapper_SetMediaType(TransformFilter *tf, PIN_DIRECTION
         {
             This->has = drv;
 
-            /* Update buffer size of media samples in output */
-            ((BaseOutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pWfOut->nAvgBytesPerSec / 2;
             TRACE("Connection accepted\n");
             return S_OK;
         }
@@ -294,8 +292,6 @@ static HRESULT WINAPI ACMWrapper_CompleteConnect(TransformFilter *tf, PIN_DIRECT
     {
         This->has = drv;
 
-        /* Update buffer size of media samples in output */
-        ((BaseOutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pWfOut->nAvgBytesPerSec / 2;
         TRACE("Connection accepted\n");
         return S_OK;
     }
@@ -323,7 +319,25 @@ static HRESULT WINAPI ACMWrapper_BreakConnect(TransformFilter *tf, PIN_DIRECTION
     return S_OK;
 }
 
+static HRESULT WINAPI ACMWrapper_DecideBufferSize(TransformFilter *tf, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    ACMWrapperImpl *pACM = (ACMWrapperImpl*)tf;
+    ALLOCATOR_PROPERTIES actual;
+
+    if (!ppropInputRequest->cbAlign)
+        ppropInputRequest->cbAlign = 1;
+
+    if (ppropInputRequest->cbBuffer < pACM->pWfOut->nAvgBytesPerSec / 2)
+            ppropInputRequest->cbBuffer = pACM->pWfOut->nAvgBytesPerSec / 2;
+
+    if (!ppropInputRequest->cBuffers)
+        ppropInputRequest->cBuffers = 1;
+
+    return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
+}
+
 static const TransformFilterFuncTable ACMWrapper_FuncsTable = {
+    ACMWrapper_DecideBufferSize,
     NULL,
     ACMWrapper_Receive,
     NULL,

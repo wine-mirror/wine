@@ -28,6 +28,7 @@ typedef HRESULT (WINAPI *BasePin_GetMediaType)(IPin* iface, int iPosition, AM_ME
 typedef LONG (WINAPI *BasePin_GetMediaTypeVersion)(IPin* iface);
 typedef HRESULT (WINAPI *BasePin_AttemptConnection)(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt);
 typedef HRESULT (WINAPI *BasePin_CheckMediaType)(IPin *iface, const AM_MEDIA_TYPE *pmt);
+typedef HRESULT (WINAPI *BaseOutputPin_DecideBufferSize)(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
 
 typedef IPin* (WINAPI *BaseFilter_GetPin)(IBaseFilter* iface, int iPosition);
 typedef LONG (WINAPI *BaseFilter_GetPinCount)(IBaseFilter* iface);
@@ -58,10 +59,10 @@ typedef struct BaseOutputPin
 
 	IMemInputPin * pMemInputPin;
 	BasePin_AttemptConnection pAttemptConnection;
+	BaseOutputPin_DecideBufferSize pDecideBufferSize;
 	BOOL custom_allocator;
 	IMemAllocator *alloc;
 	BOOL readonly;
-	ALLOCATOR_PROPERTIES allocProps;
 } BaseOutputPin;
 
 typedef struct BaseInputPin
@@ -110,7 +111,10 @@ HRESULT WINAPI BaseOutputPinImpl_Deliver(BaseOutputPin * This, IMediaSample * pS
 HRESULT WINAPI BaseOutputPinImpl_BreakConnect(BaseOutputPin * This);
 HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin * This);
 HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin * This);
-HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, BasePin_AttemptConnection pConnectProc, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
+HRESULT WINAPI BaseOutputPinImpl_InitAllocator(BaseOutputPin *This, IMemAllocator **pMemAlloc);
+HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(BaseOutputPin *This, IMemInputPin *pPin, IMemAllocator **pAlloc);
+
+HRESULT WINAPI BaseOutputPin_Construct(const IPinVtbl *OutputPin_Vtbl, LONG outputpin_size, const PIN_INFO * pPinInfo, BaseOutputPin_DecideBufferSize pBufferProc, BasePin_AttemptConnection pConnectProc, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 
 /* Base Input Pin */
 HRESULT WINAPI BaseInputPinImpl_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv);
@@ -171,6 +175,7 @@ typedef struct TransformFilter
 	const struct TransformFilterFuncTable * pFuncsTable;
 } TransformFilter;
 
+typedef HRESULT (WINAPI *TransformFilter_DecideBufferSize) (TransformFilter *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
 typedef HRESULT (WINAPI *TransformFilter_StartStreaming) (TransformFilter *iface);
 typedef HRESULT (WINAPI *TransformFilter_StopStreaming) (TransformFilter *iface);
 typedef HRESULT (WINAPI *TransformFilter_Receive) (TransformFilter* iface, IMediaSample* pIn);
@@ -185,6 +190,7 @@ typedef HRESULT (WINAPI *TransformFilter_NewSegment) (TransformFilter *iface,
 REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 typedef struct TransformFilterFuncTable {
+    TransformFilter_DecideBufferSize pfnDecideBufferSize;
     TransformFilter_StartStreaming pfnStartStreaming;
     TransformFilter_Receive pfnReceive;
     TransformFilter_StopStreaming pfnStopStreaming;

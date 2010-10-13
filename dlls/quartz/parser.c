@@ -43,6 +43,7 @@ static const IPinVtbl Parser_InputPin_Vtbl;
 static HRESULT WINAPI Parser_ChangeStart(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI Parser_ChangeRate(IMediaSeeking *iface);
+static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest);
 
 static inline ParserImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
@@ -411,7 +412,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
     This->ppPins = CoTaskMemAlloc((This->cStreams + 2) * sizeof(IPin *));
     memcpy(This->ppPins, ppOldPins, (This->cStreams + 1) * sizeof(IPin *));
 
-    hr = BaseOutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, props, NULL, &This->filter.csFilter, This->ppPins + (This->cStreams + 1));
+    hr = BaseOutputPin_Construct(&Parser_OutputPin_Vtbl, sizeof(Parser_OutputPin), piOutput, Parser_OutputPin_DecideBufferSize, NULL, &This->filter.csFilter, This->ppPins + (This->cStreams + 1));
 
     if (SUCCEEDED(hr))
     {
@@ -423,6 +424,7 @@ HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PR
 
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
         pin->pin.custom_allocator = 1;
+        pin->allocProps = *props;
         This->cStreams++;
         BaseFilterImpl_IncrementPinVersion((IBaseFilter*)This);
         CoTaskMemFree(ppOldPins);
@@ -527,6 +529,23 @@ static const IMediaSeekingVtbl Parser_Seeking_Vtbl =
     SourceSeekingImpl_GetRate,
     SourceSeekingImpl_GetPreroll
 };
+
+static HRESULT WINAPI Parser_OutputPin_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    Parser_OutputPin *This = (Parser_OutputPin *)iface;
+    ALLOCATOR_PROPERTIES actual;
+
+    if (ppropInputRequest->cbAlign && ppropInputRequest->cbAlign != This->allocProps.cbAlign)
+        FIXME("Requested Buffer cbAlign mismatch %i,%i\n",This->allocProps.cbAlign, ppropInputRequest->cbAlign);
+    if (ppropInputRequest->cbPrefix)
+        FIXME("Requested Buffer cbPrefix mismatch %i,%i\n",This->allocProps.cbPrefix, ppropInputRequest->cbPrefix);
+    if (ppropInputRequest->cbBuffer)
+        FIXME("Requested Buffer cbBuffer mismatch %i,%i\n",This->allocProps.cbBuffer, ppropInputRequest->cbBuffer);
+    if (ppropInputRequest->cBuffers)
+        FIXME("Requested Buffer cBuffers mismatch %i,%i\n",This->allocProps.cBuffers, ppropInputRequest->cBuffers);
+
+    return IMemAllocator_SetProperties(pAlloc, &This->allocProps, &actual);
+}
 
 static HRESULT WINAPI Parser_OutputPin_GetMediaType(IPin *iface, int iPosition, AM_MEDIA_TYPE *pmt)
 {

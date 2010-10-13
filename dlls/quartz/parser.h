@@ -45,6 +45,7 @@ typedef struct Parser_OutputPin
 
     AM_MEDIA_TYPE * pmt;
     LONGLONG dwSamplesProcessed;
+    ALLOCATOR_PROPERTIES allocProps;
 } Parser_OutputPin;
 
 extern HRESULT Parser_AddPin(ParserImpl * This, const PIN_INFO * piOutput, ALLOCATOR_PROPERTIES * props, const AM_MEDIA_TYPE * amt);

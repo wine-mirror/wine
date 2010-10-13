@@ -656,6 +656,7 @@ typedef struct FileAsyncReader
     BaseOutputPin pin;
     const struct IAsyncReaderVtbl * lpVtblAR;
 
+    ALLOCATOR_PROPERTIES allocProps;
     HANDLE hFile;
     BOOL bFlushing;
     /* Why would you need more? Every sample has its own handle */
@@ -814,6 +815,24 @@ static HRESULT WINAPI FileAsyncReaderPin_AttemptConnection(IPin * iface, IPin * 
     return hr;
 }
 
+static HRESULT WINAPI FileAsyncReaderPin_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    FileAsyncReader *This = (FileAsyncReader *)iface;
+    ALLOCATOR_PROPERTIES actual;
+
+    if (ppropInputRequest->cbAlign && ppropInputRequest->cbAlign != This->allocProps.cbAlign)
+        FIXME("Requested Buffer cbAlign mismatch %i,%i\n",This->allocProps.cbAlign, ppropInputRequest->cbAlign);
+    if (ppropInputRequest->cbPrefix)
+        FIXME("Requested Buffer cbPrefix mismatch %i,%i\n",This->allocProps.cbPrefix, ppropInputRequest->cbPrefix);
+    if (ppropInputRequest->cbBuffer)
+        FIXME("Requested Buffer cbBuffer mismatch %i,%i\n",This->allocProps.cbBuffer, ppropInputRequest->cbBuffer);
+    if (ppropInputRequest->cBuffers)
+        FIXME("Requested Buffer cBuffers mismatch %i,%i\n",This->allocProps.cBuffers, ppropInputRequest->cBuffers);
+
+    return IMemAllocator_SetProperties(pAlloc, &This->allocProps, &actual);
+}
+
+
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     PIN_INFO piOutput;
@@ -823,7 +842,7 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
     strcpyW(piOutput.achName, wszOutputPinName);
-    hr = BaseOutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, NULL, FileAsyncReaderPin_AttemptConnection, pCritSec, ppPin);
+    hr = BaseOutputPin_Construct(&FileAsyncReaderPin_Vtbl, sizeof(FileAsyncReader), &piOutput, FileAsyncReaderPin_DecideBufferSize, FileAsyncReaderPin_AttemptConnection, pCritSec, ppPin);
 
     if (SUCCEEDED(hr))
     {
@@ -933,7 +952,7 @@ done:
                     This->handle_list[This->samples + 1 + x] = This->handle_list[x];
             }
             This->handle_list[This->samples] = CreateEventW(NULL, 1, 0, NULL);
-            This->pin.allocProps = *pProps;
+            This->allocProps = *pProps;
         }
         else
         {

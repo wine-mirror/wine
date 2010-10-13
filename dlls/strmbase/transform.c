@@ -103,6 +103,13 @@ static HRESULT WINAPI TransformFilter_Output_QueryAccept(IPin *iface, const AM_M
     return S_FALSE;
 }
 
+static HRESULT WINAPI TransformFilter_Output_DecideBufferSize(IPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    BasePin *This = (BasePin *)iface;
+    TransformFilter *pTransformFilter = (TransformFilter *)This->pinInfo.pFilter;
+    return pTransformFilter->pFuncsTable->pfnDecideBufferSize(pTransformFilter, pAlloc, ppropInputRequest);
+}
+
 static IPin* WINAPI TransformFilter_GetPin(IBaseFilter *iface, int pos)
 {
     TransformFilter *This = (TransformFilter *)iface;
@@ -148,13 +155,7 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
 
     if (SUCCEEDED(hr))
     {
-        ALLOCATOR_PROPERTIES props;
-        props.cbAlign = 1;
-        props.cbPrefix = 0;
-        props.cbBuffer = 0; /* Will be updated at connection time */
-        props.cBuffers = 1;
-
-        hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin), &piOutput, &props, NULL, &pTransformFilter->filter.csFilter, &pTransformFilter->ppPins[1]);
+        hr = BaseOutputPin_Construct(&TransformFilter_OutputPin_Vtbl, sizeof(BaseOutputPin), &piOutput, TransformFilter_Output_DecideBufferSize, NULL, &pTransformFilter->filter.csFilter, &pTransformFilter->ppPins[1]);
 
         if (FAILED(hr))
             ERR("Cannot create output pin (%x)\n", hr);

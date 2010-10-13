@@ -279,11 +279,6 @@ static HRESULT WINAPI AVIDec_CompleteConnect(TransformFilter *tf, PIN_DIRECTION 
 
     TRACE("(%p)\n", This);
 
-    if (dir == PINDIR_INPUT)
-    {
-        /* Update buffer size of media samples in output */
-        ((BaseOutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pBihOut->biSizeImage;
-    }
     return S_OK;
 }
 
@@ -310,7 +305,25 @@ static HRESULT WINAPI AVIDec_BreakConnect(TransformFilter *tf, PIN_DIRECTION dir
     return S_OK;
 }
 
+static HRESULT WINAPI AVIDec_DecideBufferSize(TransformFilter *tf, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+{
+    AVIDecImpl *pAVI = (AVIDecImpl*)tf;
+    ALLOCATOR_PROPERTIES actual;
+
+    if (!ppropInputRequest->cbAlign)
+        ppropInputRequest->cbAlign = 1;
+
+    if (ppropInputRequest->cbBuffer < pAVI->pBihOut->biSizeImage)
+            ppropInputRequest->cbBuffer = pAVI->pBihOut->biSizeImage;
+
+    if (!ppropInputRequest->cBuffers)
+        ppropInputRequest->cBuffers = 1;
+
+    return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
+}
+
 static const TransformFilterFuncTable AVIDec_FuncsTable = {
+    AVIDec_DecideBufferSize,
     AVIDec_StartStreaming,
     AVIDec_Receive,
     AVIDec_StopStreaming,
