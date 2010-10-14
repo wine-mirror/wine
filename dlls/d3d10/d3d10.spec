@@ -11,7 +11,7 @@
 @ stdcall D3D10GetGeometryShaderProfile(ptr)
 @ stub D3D10GetInputAndOutputSignatureBlob
 @ stdcall D3D10GetInputSignatureBlob(ptr long ptr) d3dcompiler_43.D3DGetInputSignatureBlob
-@ stub D3D10GetOutputSignatureBlob
+@ stdcall D3D10GetOutputSignatureBlob(ptr long ptr) d3dcompiler_43.D3DGetOutputSignatureBlob
 @ stdcall D3D10GetPixelShaderProfile(ptr)
 @ stub D3D10GetShaderDebugInfo
 @ stub D3D10GetVersion

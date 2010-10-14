@@ -291,5 +291,6 @@ LPCSTR WINAPI D3D10GetPixelShaderProfile(ID3D10Device *device);
 
 HRESULT WINAPI D3D10ReflectShader(const void *data, SIZE_T data_size, ID3D10ShaderReflection **reflector);
 HRESULT WINAPI D3D10GetInputSignatureBlob(const void *data, SIZE_T data_size, ID3D10Blob **blob);
+HRESULT WINAPI D3D10GetOutputSignatureBlob(const void *data, SIZE_T data_size, ID3D10Blob **blob);
 
 #endif /* __WINE_D3D10SHADER_H */
