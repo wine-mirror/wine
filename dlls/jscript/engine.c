@@ -179,7 +179,7 @@ void scope_release(scope_chain_t *scope)
 }
 
 HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t *var_disp,
-        scope_chain_t *scope, exec_ctx_t **ret)
+        scope_chain_t *scope, BOOL is_global, exec_ctx_t **ret)
 {
     exec_ctx_t *ctx;
 
@@ -188,6 +188,7 @@ HRESULT create_exec_ctx(script_ctx_t *script_ctx, IDispatch *this_obj, jsdisp_t 
         return E_OUTOFMEMORY;
 
     ctx->ref = 1;
+    ctx->is_global = is_global;
 
     if(this_obj)
         ctx->this_obj = this_obj;
@@ -410,7 +411,7 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
     return FALSE;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, exec_type_t exec_type,
+HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, BOOL from_eval,
         jsexcept_t *ei, VARIANT *retv)
 {
     script_ctx_t *script = parser->script;
@@ -447,7 +448,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         if(!name)
             return E_OUTOFMEMORY;
 
-        if(!lookup_global_members(parser->script, name, NULL))
+        if(!ctx->is_global || !lookup_global_members(parser->script, name, NULL))
             hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
         SysFreeString(name);
         if(FAILED(hres))
@@ -489,14 +490,10 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
         return hres;
     }
 
-    if(retv && (exec_type == EXECT_EVAL || rt.type == RT_RETURN))
-        *retv = val;
-    else {
-        if (retv) {
-            VariantInit(retv);
-        }
+    if(!retv || (!from_eval && rt.type != RT_RETURN))
         VariantClear(&val);
-    }
+    if(retv)
+        *retv = val;
     return S_OK;
 }
 

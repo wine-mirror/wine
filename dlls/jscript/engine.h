@@ -102,6 +102,7 @@ struct _exec_ctx_t {
     scope_chain_t *scope_chain;
     jsdisp_t *var_disp;
     IDispatch *this_obj;
+    BOOL is_global;
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)
@@ -109,15 +110,9 @@ static inline void exec_addref(exec_ctx_t *ctx)
     ctx->ref++;
 }
 
-typedef enum {
-    EXECT_PROGRAM,
-    EXECT_FUNCTION,
-    EXECT_EVAL
-} exec_type_t;
-
 void exec_release(exec_ctx_t*);
-HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,exec_ctx_t**);
-HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,exec_type_t,jsexcept_t*,VARIANT*);
+HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,exec_ctx_t**);
+HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,BOOL,jsexcept_t*,VARIANT*);
 
 typedef struct _statement_t statement_t;
 typedef struct _expression_t expression_t;

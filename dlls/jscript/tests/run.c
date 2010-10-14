@@ -1214,11 +1214,17 @@ static void run_tests(void)
     parse_script_a("var testPropGet");
     CHECK_CALLED(global_propget_d);
 
+    SET_EXPECT(global_propget_d);
+    parse_script_a("eval('var testPropGet;');");
+    CHECK_CALLED(global_propget_d);
+
     SET_EXPECT(global_notexists_d);
     parse_script_a("var notExists; notExists = 1;");
     CHECK_CALLED(global_notexists_d);
 
     parse_script_a("function f() { var testPropGet; }");
+    parse_script_a("(function () { var testPropGet; })();");
+    parse_script_a("(function () { eval('var testPropGet;'); })();");
 
     parse_script_a("ok((testObj instanceof Object) === false, 'testObj is instance of Object');");
 

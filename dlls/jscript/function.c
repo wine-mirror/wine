@@ -209,7 +209,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 
     hres = scope_push(function->scope_chain, var_disp, &scope);
     if(SUCCEEDED(hres)) {
-        hres = create_exec_ctx(ctx, this_obj, var_disp, scope, &exec_ctx);
+        hres = create_exec_ctx(ctx, this_obj, var_disp, scope, FALSE, &exec_ctx);
         scope_release(scope);
     }
     jsdisp_release(var_disp);
@@ -218,7 +218,7 @@ static HRESULT invoke_source(script_ctx_t *ctx, FunctionInstance *function, IDis
 
         prev_args = function->arguments;
         function->arguments = arg_disp;
-        hres = exec_source(exec_ctx, function->parser, function->source, EXECT_FUNCTION, ei, retv);
+        hres = exec_source(exec_ctx, function->parser, function->source, FALSE, ei, retv);
         function->arguments = prev_args;
 
         jsdisp_release(arg_disp);

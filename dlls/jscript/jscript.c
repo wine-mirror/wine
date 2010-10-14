@@ -97,14 +97,14 @@ static HRESULT exec_global_code(JScript *This, parser_ctx_t *parser_ctx)
     jsexcept_t jsexcept;
     HRESULT hres;
 
-    hres = create_exec_ctx(This->ctx, NULL, This->ctx->global, NULL, &exec_ctx);
+    hres = create_exec_ctx(This->ctx, NULL, This->ctx->global, NULL, TRUE, &exec_ctx);
     if(FAILED(hres))
         return hres;
 
     IActiveScriptSite_OnEnterScript(This->site);
 
     memset(&jsexcept, 0, sizeof(jsexcept));
-    hres = exec_source(exec_ctx, parser_ctx, parser_ctx->source, EXECT_PROGRAM, &jsexcept, NULL);
+    hres = exec_source(exec_ctx, parser_ctx, parser_ctx->source, FALSE, &jsexcept, NULL);
     VariantClear(&jsexcept.var);
     exec_release(exec_ctx);
 
