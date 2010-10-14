@@ -52,7 +52,98 @@ static void test_create_blob(void)
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
+static const D3D_BLOB_PART parts[] =
+{
+   D3D_BLOB_INPUT_SIGNATURE_BLOB, D3D_BLOB_OUTPUT_SIGNATURE_BLOB, D3D_BLOB_INPUT_AND_OUTPUT_SIGNATURE_BLOB,
+   D3D_BLOB_PATCH_CONSTANT_SIGNATURE_BLOB, D3D_BLOB_ALL_SIGNATURE_BLOB, D3D_BLOB_DEBUG_INFO,
+   D3D_BLOB_LEGACY_SHADER, D3D_BLOB_XNA_PREPASS_SHADER, D3D_BLOB_XNA_SHADER,
+   D3D_BLOB_TEST_ALTERNATE_SHADER, D3D_BLOB_TEST_COMPILE_DETAILS, D3D_BLOB_TEST_COMPILE_PERF
+};
+
+/*
+ * test_blob_part - fxc.exe /E VS /Tvs_4_0_level_9_0 /Fx
+ */
+#if 0
+float4 VS(float4 position : POSITION, float4 pos : SV_POSITION) : SV_POSITION
+{
+  return position;
+}
+#endif
+static DWORD test_blob_part[] = {
+0x43425844, 0x0ef2a70f, 0x6a548011, 0x91ff9409, 0x9973a43d, 0x00000001, 0x000002e0, 0x00000008,
+0x00000040, 0x0000008c, 0x000000d8, 0x0000013c, 0x00000180, 0x000001fc, 0x00000254, 0x000002ac,
+0x53414e58, 0x00000044, 0x00000044, 0xfffe0200, 0x00000020, 0x00000024, 0x00240000, 0x00240000,
+0x00240000, 0x00240000, 0x00240000, 0xfffe0200, 0x0200001f, 0x80000005, 0x900f0000, 0x02000001,
+0xc00f0000, 0x80e40000, 0x0000ffff, 0x50414e58, 0x00000044, 0x00000044, 0xfffe0200, 0x00000020,
+0x00000024, 0x00240000, 0x00240000, 0x00240000, 0x00240000, 0x00240000, 0xfffe0200, 0x0200001f,
+0x80000005, 0x900f0000, 0x02000001, 0xc00f0000, 0x80e40000, 0x0000ffff, 0x396e6f41, 0x0000005c,
+0x0000005c, 0xfffe0200, 0x00000034, 0x00000028, 0x00240000, 0x00240000, 0x00240000, 0x00240000,
+0x00240001, 0x00000000, 0xfffe0200, 0x0200001f, 0x80000005, 0x900f0000, 0x04000004, 0xc0030000,
+0x90ff0000, 0xa0e40000, 0x90e40000, 0x02000001, 0xc00c0000, 0x90e40000, 0x0000ffff, 0x52444853,
+0x0000003c, 0x00010040, 0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2,
+0x00000000, 0x00000001, 0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+0x54415453, 0x00000074, 0x00000002, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000,
+0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x46454452,
+0x00000050, 0x00000000, 0x00000000, 0x00000000, 0x0000001c, 0xfffe0400, 0x00000100, 0x0000001c,
+0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d,
+0x39207265, 0x2e39322e, 0x2e323539, 0x31313133, 0xababab00, 0x4e475349, 0x00000050, 0x00000002,
+0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000041,
+0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f, 0x49534f50, 0x4e4f4954, 0x5f565300,
+0x49534f50, 0x4e4f4954, 0xababab00, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49,
+};
+
+static void test_get_blob_part(void)
+{
+    ID3DBlob *blob, *blob2;
+    HRESULT hr;
+    ULONG refcount;
+
+    hr = D3DCreateBlob(1, &blob2);
+    ok(hr == S_OK, "D3DCreateBlob failed with %x\n", hr);
+    blob = blob2;
+
+    /* invalid cases */
+    hr = D3DGetBlobPart(NULL, test_blob_part[6], D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+    ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
+
+    hr = D3DGetBlobPart(NULL, 0, D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+    ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
+
+    hr = D3DGetBlobPart(NULL, test_blob_part[6], D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+
+    hr = D3DGetBlobPart(NULL, 0, D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+
+    hr = D3DGetBlobPart(test_blob_part, 0, D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+    ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
+
+    hr = D3DGetBlobPart(test_blob_part, test_blob_part[6], D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+
+    hr = D3DGetBlobPart(test_blob_part, 0, D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+
+    hr = D3DGetBlobPart(test_blob_part, test_blob_part[6], D3D_BLOB_INPUT_SIGNATURE_BLOB, 1, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+    ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
+
+    hr = D3DGetBlobPart(test_blob_part, test_blob_part[6], 0xffffffff, 0, &blob);
+    ok(hr == D3DERR_INVALIDCALL, "D3DGetBlobPart failed with %x\n", hr);
+    ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
+
+    refcount = ID3D10Blob_Release(blob2);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+}
+
 START_TEST(blob)
 {
     test_create_blob();
+    test_get_blob_part();
 }
