@@ -33,6 +33,12 @@
  */
 #define D3DERR_INVALIDCALL 0x8876086c
 
+#define MAKE_TAG(ch0, ch1, ch2, ch3) \
+    ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
+    ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
+#define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
+
 static void test_create_blob(void)
 {
     ID3D10Blob *blob;
@@ -100,6 +106,9 @@ static void test_get_blob_part(void)
     ID3DBlob *blob, *blob2;
     HRESULT hr;
     ULONG refcount;
+    DWORD *dword;
+    SIZE_T size;
+    UINT i;
 
     hr = D3DCreateBlob(1, &blob2);
     ok(hr == S_OK, "D3DCreateBlob failed with %x\n", hr);
@@ -139,6 +148,37 @@ static void test_get_blob_part(void)
     ok(blob2 == blob, "D3DGetBlobPart failed got %p, expected %p\n", blob, blob2);
 
     refcount = ID3D10Blob_Release(blob2);
+    ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+
+    /* D3D_BLOB_INPUT_SIGNATURE_BLOB */
+    hr = D3DGetBlobPart(test_blob_part, test_blob_part[6], D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, &blob);
+    ok(hr == S_OK, "D3DGetBlobPart failed, got %x, expected %x\n", hr, S_OK);
+
+    size = ID3D10Blob_GetBufferSize(blob);
+    ok(size == 124, "GetBufferSize failed, got %lu, expected %u\n", size, 124);
+
+    dword = ((DWORD*)ID3D10Blob_GetBufferPointer(blob));
+    ok(TAG_DXBC == *dword, "DXBC got %#x, expected %#x.\n", *dword, TAG_DXBC);
+    ok(TAG_ISGN == *(dword+9), "ISGN got %#x, expected %#x.\n", *(dword+9), TAG_ISGN);
+
+    for (i = 0; i < sizeof(parts) / sizeof(parts[0]); i++)
+    {
+        hr = D3DGetBlobPart(dword, size, parts[i], 0, &blob2);
+
+        if (parts[i] == D3D_BLOB_INPUT_SIGNATURE_BLOB)
+        {
+            ok(hr == S_OK, "D3DGetBlobPart failed, got %x, expected %x\n", hr, S_OK);
+
+            refcount = ID3D10Blob_Release(blob2);
+            ok(!refcount, "ID3DBlob has %u references left\n", refcount);
+        }
+        else
+        {
+            ok(hr == E_FAIL, "D3DGetBlobPart failed, got %x, expected %x\n", hr, E_FAIL);
+        }
+    }
+
+    refcount = ID3D10Blob_Release(blob);
     ok(!refcount, "ID3DBlob has %u references left\n", refcount);
 }
 
