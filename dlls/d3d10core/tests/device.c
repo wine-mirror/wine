@@ -95,7 +95,7 @@ static void test_device_interfaces(ID3D10Device *device)
     ok(SUCCEEDED(hr), "ID3D10Device does not implement ID3D10Device\n");
 }
 
-static void test_create_texture(ID3D10Device *device)
+static void test_create_texture2d(ID3D10Device *device)
 {
     D3D10_TEXTURE2D_DESC desc;
     ID3D10Texture2D *texture;
@@ -140,6 +140,41 @@ static void test_create_texture(ID3D10Device *device)
     ok(FAILED(hr), "Texture should not implement IDXGISurface\n");
     if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
     ID3D10Texture2D_Release(texture);
+}
+
+static void test_create_texture3d(ID3D10Device *device)
+{
+    D3D10_TEXTURE3D_DESC desc;
+    ID3D10Texture3D *texture;
+    IDXGISurface *surface;
+    HRESULT hr;
+
+    desc.Width = 64;
+    desc.Height = 64;
+    desc.Depth = 64;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.Usage = D3D10_USAGE_DEFAULT;
+    desc.BindFlags = D3D10_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateTexture3D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 3d texture, hr %#x.\n", hr);
+
+    hr = ID3D10Texture3D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(FAILED(hr), "Texture should not implement IDXGISurface.\n");
+    if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
+    ID3D10Texture3D_Release(texture);
+
+    desc.MipLevels = 0;
+    hr = ID3D10Device_CreateTexture3D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 3d texture, hr %#x.\n", hr);
+
+    hr = ID3D10Texture3D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(FAILED(hr), "Texture should not implement IDXGISurface.\n");
+    if (SUCCEEDED(hr)) IDXGISurface_Release(surface);
+    ID3D10Texture3D_Release(texture);
 }
 
 static void test_create_rendertarget_view(ID3D10Device *device)
@@ -214,7 +249,8 @@ START_TEST(device)
     }
 
     test_device_interfaces(device);
-    test_create_texture(device);
+    test_create_texture2d(device);
+    test_create_texture3d(device);
     test_create_rendertarget_view(device);
 
     refcount = ID3D10Device_Release(device);

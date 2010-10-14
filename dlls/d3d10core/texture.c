@@ -242,3 +242,178 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
 
     return S_OK;
 }
+
+static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D *iface, REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D10Texture3D)
+            || IsEqualGUID(riid, &IID_ID3D10Resource)
+            || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
+{
+    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    ULONG refcount = InterlockedIncrement(&texture->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", texture, refcount);
+
+    if (refcount == 1) IWineD3DVolumeTexture_AddRef(texture->wined3d_texture);
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d10_texture3d_wined3d_object_released(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
+{
+    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    ULONG refcount = InterlockedDecrement(&texture->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", texture, refcount);
+
+    if (!refcount)
+    {
+        IWineD3DVolumeTexture_Release(texture->wined3d_texture);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d10_texture3d_GetDevice(ID3D10Texture3D *iface, ID3D10Device **device)
+{
+    FIXME("iface %p, device %p stub!\n", iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_texture3d_GetPrivateData(ID3D10Texture3D *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
+            iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateData(ID3D10Texture3D *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
+            iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateDataInterface(ID3D10Texture3D *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d10_texture3d_GetType(ID3D10Texture3D *iface,
+        D3D10_RESOURCE_DIMENSION *resource_dimension)
+{
+    TRACE("iface %p, resource_dimension %p.\n", iface, resource_dimension);
+
+    *resource_dimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
+}
+
+static void STDMETHODCALLTYPE d3d10_texture3d_SetEvictionPriority(ID3D10Texture3D *iface, UINT eviction_priority)
+{
+    FIXME("iface %p, eviction_priority %u stub!\n", iface, eviction_priority);
+}
+
+static UINT STDMETHODCALLTYPE d3d10_texture3d_GetEvictionPriority(ID3D10Texture3D *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UINT sub_resource,
+        D3D10_MAP map_type, UINT map_flags, D3D10_MAPPED_TEXTURE3D *mapped_texture)
+{
+    FIXME("iface %p, sub_resource %u, map_type %u, map_flags %#x, mapped_texture %p stub!\n",
+            iface, sub_resource, map_type, map_flags, mapped_texture);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT sub_resource)
+{
+    FIXME("iface %p, sub_resource %u stub!\n", iface, sub_resource);
+}
+
+static void STDMETHODCALLTYPE d3d10_texture3d_GetDesc(ID3D10Texture3D *iface, D3D10_TEXTURE3D_DESC *desc)
+{
+    struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = texture->desc;
+}
+
+static const struct ID3D10Texture3DVtbl d3d10_texture3d_vtbl =
+{
+    /* IUnknown methods */
+    d3d10_texture3d_QueryInterface,
+    d3d10_texture3d_AddRef,
+    d3d10_texture3d_Release,
+    /* ID3D10DeviceChild methods */
+    d3d10_texture3d_GetDevice,
+    d3d10_texture3d_GetPrivateData,
+    d3d10_texture3d_SetPrivateData,
+    d3d10_texture3d_SetPrivateDataInterface,
+    /* ID3D10Resource methods */
+    d3d10_texture3d_GetType,
+    d3d10_texture3d_SetEvictionPriority,
+    d3d10_texture3d_GetEvictionPriority,
+    /* ID3D10Texture3D methods */
+    d3d10_texture3d_Map,
+    d3d10_texture3d_Unmap,
+    d3d10_texture3d_GetDesc,
+};
+
+static const struct wined3d_parent_ops d3d10_texture3d_wined3d_parent_ops =
+{
+    d3d10_texture3d_wined3d_object_released,
+};
+
+HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_device *device,
+        const D3D10_TEXTURE3D_DESC *desc)
+{
+    HRESULT hr;
+
+    texture->vtbl = &d3d10_texture3d_vtbl;
+    texture->refcount = 1;
+    texture->desc = *desc;
+
+    FIXME("Implement DXGI<->wined3d usage conversion.\n");
+
+    hr = IWineD3DDevice_CreateVolumeTexture(device->wined3d_device, desc->Width, desc->Height, desc->Depth,
+            desc->MipLevels, desc->Usage, wined3dformat_from_dxgi_format(desc->Format), WINED3DPOOL_DEFAULT,
+            texture, &d3d10_texture3d_wined3d_parent_ops, &texture->wined3d_texture);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create wined3d texture, hr %#x.\n", hr);
+        return hr;
+    }
+
+    return S_OK;
+}

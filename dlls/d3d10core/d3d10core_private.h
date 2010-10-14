@@ -94,6 +94,19 @@ struct d3d10_texture2d
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
         const D3D10_TEXTURE2D_DESC *desc) DECLSPEC_HIDDEN;
 
+/* ID3D10Texture3D */
+struct d3d10_texture3d
+{
+    const struct ID3D10Texture3DVtbl *vtbl;
+    LONG refcount;
+
+    IWineD3DVolumeTexture *wined3d_texture;
+    D3D10_TEXTURE3D_DESC desc;
+};
+
+HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_device *device,
+        const D3D10_TEXTURE3D_DESC *desc) DECLSPEC_HIDDEN;
+
 /* ID3D10Buffer */
 struct d3d10_buffer
 {

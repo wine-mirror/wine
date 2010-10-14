@@ -688,9 +688,31 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device *iface,
         const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Texture3D **texture)
 {
-    FIXME("iface %p, desc %p, data %p, texture %p stub!\n", iface, desc, data, texture);
+    struct d3d10_device *device = (struct d3d10_device *)iface;
+    struct d3d10_texture3d *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, data %p, texture %p.\n", iface, desc, data, texture);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D10 texture3d object memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = d3d10_texture3d_init(object, device, desc);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize texture, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created 3D texture %p.\n", object);
+    *texture = (ID3D10Texture3D *)object;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Device *iface,
